@@ -1,5 +1,5 @@
 import { useMode } from '../context/ModeContext'
-import { featuresForMode } from '../features/registry'
+import { groupedFeatures } from '../features/registry'
 import ModeSwitcher from './ModeSwitcher'
 import AccountBox from './AccountBox'
 
@@ -11,8 +11,7 @@ interface Props {
   className?: string
 }
 
-// 側邊欄 — 品牌 / 模式切換 / 該模式嘅功能導覽
-// 桌面版固定喺左，手機版會喺抽屜入面重用同一個元件。
+// 側邊欄 — 品牌 / 模式切換 / 該模式嘅功能導覽（分組）
 export default function Sidebar({
   activeId,
   onSelect,
@@ -20,7 +19,7 @@ export default function Sidebar({
   className = '',
 }: Props) {
   const { modeDef } = useMode()
-  const features = featuresForMode(modeDef.id)
+  const groups = groupedFeatures(modeDef.id)
 
   const choose = (id: string | null) => {
     onSelect(id)
@@ -28,9 +27,7 @@ export default function Sidebar({
   }
 
   return (
-    <aside
-      className={`flex w-72 shrink-0 flex-col bg-white ${className}`}
-    >
+    <aside className={`flex w-72 shrink-0 flex-col bg-white ${className}`}>
       {/* 品牌 */}
       <div className="flex items-center justify-between px-5 py-5">
         <div className="flex items-center gap-2.5">
@@ -67,8 +64,8 @@ export default function Sidebar({
         <ModeSwitcher />
       </div>
 
-      {/* 功能導覽 */}
-      <nav className="mt-5 flex-1 space-y-1 overflow-y-auto px-4">
+      {/* 功能導覽（分組） */}
+      <nav className="mt-4 flex-1 space-y-0.5 overflow-y-auto px-4 pb-4">
         <button
           onClick={() => choose(null)}
           className={navClass(activeId === null)}
@@ -77,38 +74,45 @@ export default function Sidebar({
           <span>首頁概覽</span>
         </button>
 
-        <p className="px-3 pb-1 pt-5 text-xs font-semibold uppercase tracking-wider text-slate-400">
-          {modeDef.name}功能
-        </p>
-
-        {features.map((f) => (
-          <button
-            key={f.id}
-            onClick={() => choose(f.id)}
-            className={navClass(activeId === f.id)}
-          >
-            <span className="text-base">{f.icon}</span>
-            <span className="flex-1 text-left">{f.name}</span>
-            {f.status === 'soon' && (
-              <span className="rounded-md bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-400">
-                即將
-              </span>
-            )}
-          </button>
+        {groups.map((g) => (
+          <div key={g.group}>
+            <p className="px-3 pb-1 pt-4 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+              {g.group}
+            </p>
+            {g.items.map((f) => (
+              <button
+                key={f.id}
+                onClick={() => choose(f.id)}
+                className={navClass(activeId === f.id)}
+              >
+                <span className="text-base">{f.icon}</span>
+                <span className="flex-1 text-left">{f.name}</span>
+                {f.status === 'soon' && (
+                  <span className="rounded-md bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-400">
+                    即將
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
         ))}
       </nav>
 
       {/* 頁腳：帳戶區 + 版本 */}
       <div className="border-t border-slate-100">
         <AccountBox />
-        <div className="px-5 pb-3 text-xs text-slate-300">v0.1 · 初步框架</div>
+        <div className="px-5 pb-3 text-xs text-slate-300">v0.3 · {countLabel(groups)} 個功能</div>
       </div>
     </aside>
   )
 }
 
+function countLabel(groups: { items: unknown[] }[]) {
+  return groups.reduce((n, g) => n + g.items.length, 0)
+}
+
 function navClass(active: boolean) {
   return active
-    ? 'flex w-full items-center gap-2.5 rounded-xl bg-accent-soft px-3 py-2.5 text-sm font-semibold text-accent-strong'
-    : 'flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-600 transition hover:bg-slate-50'
+    ? 'flex w-full items-center gap-2.5 rounded-xl bg-accent-soft px-3 py-2 text-sm font-semibold text-accent-strong'
+    : 'flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-50'
 }

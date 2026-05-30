@@ -19,6 +19,8 @@ export interface Feature {
   description: string
   /** emoji 圖示 */
   icon: string
+  /** 分組（側邊欄 / 首頁用嚟歸類），例如 '概覽'、'教學' */
+  group: string
   /** 功能本體 (React 元件)。'soon' 狀態可以唔提供 */
   component?: ComponentType
   /** 'ready' = 可用；'soon' = 預留位（即將推出） */

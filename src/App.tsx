@@ -76,7 +76,7 @@ function AppShell() {
                     {feature.description}
                   </p>
                 </div>
-                <div className="rounded-3xl border border-slate-200/80 bg-white p-5 shadow-sm sm:p-6">
+                <div>
                   {feature.status === 'ready' && feature.component ? (
                     <feature.component />
                   ) : (

@@ -1,16 +1,16 @@
 import { useMode } from '../context/ModeContext'
-import { featuresForMode } from '../features/registry'
+import { groupedFeatures } from '../features/registry'
 import FeatureCard from '../components/FeatureCard'
 
 interface Props {
   onOpen: (id: string) => void
 }
 
-// 首頁概覽 — 按目前模式顯示問候語同功能網格
+// 首頁概覽 — 按目前模式分組顯示功能
 export default function Home({ onOpen }: Props) {
   const { modeDef } = useMode()
-  const features = featuresForMode(modeDef.id)
-  const ready = features.filter((f) => f.status === 'ready').length
+  const groups = groupedFeatures(modeDef.id)
+  const total = groups.reduce((n, g) => n + g.items.length, 0)
 
   return (
     <div className="space-y-7">
@@ -26,22 +26,23 @@ export default function Home({ onOpen }: Props) {
             {modeDef.tagline}
           </h1>
           <p className="mt-3 max-w-md text-sm opacity-90">
-            而家有 {ready} 個功能可以即刻用，仲有更多即將推出。
-            隨時喺左上角切換另一個模式。
+            呢個模式有 {total} 個功能。隨時喺左上角切換另一個模式。
           </p>
         </div>
       </header>
 
-      <section>
-        <h2 className="mb-4 text-xs font-semibold uppercase tracking-wider text-slate-400">
-          功能
-        </h2>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {features.map((f) => (
-            <FeatureCard key={f.id} feature={f} onOpen={onOpen} />
-          ))}
-        </div>
-      </section>
+      {groups.map((g) => (
+        <section key={g.group}>
+          <h2 className="mb-4 text-xs font-semibold uppercase tracking-wider text-slate-400">
+            {g.group}
+          </h2>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {g.items.map((f) => (
+              <FeatureCard key={f.id} feature={f} onOpen={onOpen} />
+            ))}
+          </div>
+        </section>
+      ))}
     </div>
   )
 }
