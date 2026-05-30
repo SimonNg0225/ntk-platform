@@ -10,12 +10,16 @@ import {
   EmptyState,
   IconButton,
 } from '../../ui'
+import { useToast } from '../../context/ToastContext'
+import { useConfirm } from '../../context/ConfirmContext'
 
 type Filter = 'all' | 'active' | 'done'
 
 // 待辦 / 批改清單
 export default function TodoWidget() {
   const tasks = useCollection(tasksCol)
+  const toast = useToast()
+  const confirm = useConfirm()
   const [draft, setDraft] = useState('')
   const [filter, setFilter] = useState<Filter>('all')
 
@@ -24,10 +28,22 @@ export default function TodoWidget() {
     if (!text) return
     tasksCol.add({ text, done: false, createdAt: new Date().toISOString() })
     setDraft('')
+    toast.success('已新增待辦')
   }
   const toggle = (id: string) => {
     const t = tasks.find((x) => x.id === id)
     if (t) tasksCol.update(id, { done: !t.done })
+  }
+  const remove = async (id: string, text: string) => {
+    const ok = await confirm({
+      title: '刪除待辦？',
+      message: `「${text}」將會被刪除，呢個動作無法復原。`,
+      confirmText: '刪除',
+      tone: 'danger',
+    })
+    if (!ok) return
+    tasksCol.remove(id)
+    toast.success('已刪除待辦')
   }
 
   const sorted = [...tasks].sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1))
@@ -79,7 +95,7 @@ export default function TodoWidget() {
           hint="喺上面新增一項，開始清你嘅清單。"
         />
       ) : (
-        <Card className="divide-y divide-slate-100 overflow-hidden">
+        <Card className="divide-y divide-slate-100 overflow-hidden dark:divide-slate-700">
           {visible.map((t) => (
             <div
               key={t.id}
@@ -94,15 +110,15 @@ export default function TodoWidget() {
               <span
                 className={
                   t.done
-                    ? 'flex-1 text-sm text-slate-400 line-through'
-                    : 'flex-1 text-sm text-slate-800'
+                    ? 'flex-1 text-sm text-slate-400 line-through dark:text-slate-500'
+                    : 'flex-1 text-sm text-slate-800 dark:text-slate-100'
                 }
               >
                 {t.text}
               </span>
               <IconButton
                 label="刪除"
-                onClick={() => tasksCol.remove(t.id)}
+                onClick={() => remove(t.id, t.text)}
                 className="opacity-0 transition group-hover:opacity-100 hover:text-rose-500"
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none">

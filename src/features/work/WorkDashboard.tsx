@@ -32,6 +32,7 @@ function greeting(hour: number): string {
 
 export default function WorkDashboard() {
   const { open } = useNav();
+  const toast = useToast();
   const tasks = useCollection(tasksCol);
   const timetable = useCollection(timetableCol);
   const classes = useCollection(classesCol);
@@ -98,8 +99,8 @@ export default function WorkDashboard() {
     <div className="space-y-6">
       {/* 問候語 + 日期 */}
       <header>
-        <h2 className="text-xl font-bold text-slate-900">{hello}！</h2>
-        <p className="mt-1 text-sm text-slate-500">{dateLabel}</p>
+        <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">{hello}！</h2>
+        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{dateLabel}</p>
       </header>
 
       {/* 統計卡 */}
@@ -170,12 +171,12 @@ export default function WorkDashboard() {
                     </span>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">
-                        <span className="truncate text-sm font-medium text-slate-800">
+                        <span className="truncate text-sm font-medium text-slate-800 dark:text-slate-100">
                           {label}
                         </span>
                         {isNext && <Badge tone="accent">下一堂</Badge>}
                       </div>
-                      <span className="text-xs text-slate-500">{slot.subject}</span>
+                      <span className="text-xs text-slate-500 dark:text-slate-400">{slot.subject}</span>
                     </div>
                     {slot.room ? <Badge tone="slate">{slot.room}</Badge> : null}
                   </Card>
@@ -207,11 +208,14 @@ export default function WorkDashboard() {
                   <input
                     type="checkbox"
                     checked={false}
-                    onChange={() => tasksCol.update(task.id, { done: true })}
+                    onChange={() => {
+                      tasksCol.update(task.id, { done: true });
+                      toast.success('已完成待辦');
+                    }}
                     aria-label={`完成：${task.text}`}
-                    className="h-4 w-4 flex-none cursor-pointer rounded border-slate-300 text-accent focus:ring-accent/30"
+                    className="h-4 w-4 flex-none cursor-pointer rounded border-slate-300 text-accent focus:ring-accent/30 dark:border-slate-600"
                   />
-                  <span className="flex-1 text-sm text-slate-800">{task.text}</span>
+                  <span className="flex-1 text-sm text-slate-800 dark:text-slate-100">{task.text}</span>
                 </Card>
               </li>
             ))}
@@ -229,8 +233,8 @@ export default function WorkDashboard() {
             {classProgress.map((cp) => (
               <div key={cp.id}>
                 <div className="mb-1.5 flex items-center justify-between text-sm">
-                  <span className="font-medium text-slate-800">{cp.name}</span>
-                  <span className="text-slate-500">
+                  <span className="font-medium text-slate-800 dark:text-slate-100">{cp.name}</span>
+                  <span className="text-slate-500 dark:text-slate-400">
                     {cp.done}/{cp.total}（{cp.percent}%）
                   </span>
                 </div>
@@ -260,7 +264,7 @@ export default function WorkDashboard() {
               <IconButton label={action.label} onClick={() => open(action.key)}>
                 <span className="text-xl">{action.icon}</span>
               </IconButton>
-              <span className="text-sm font-medium text-slate-700">{action.label}</span>
+              <span className="text-sm font-medium text-slate-700 dark:text-slate-200">{action.label}</span>
             </Card>
           ))}
         </div>
