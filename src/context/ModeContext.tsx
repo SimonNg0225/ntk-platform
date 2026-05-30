@@ -49,6 +49,8 @@ export function ModeProvider({ children }: { children: ReactNode }) {
     root.style.setProperty('--accent', def.accent)
     root.style.setProperty('--accent-soft', def.accentSoft)
     root.style.setProperty('--accent-strong', def.accentStrong)
+    root.style.setProperty('--accent-grad-from', def.gradFrom)
+    root.style.setProperty('--accent-grad-to', def.gradTo)
     root.dataset.mode = mode
     localStorage.setItem(STORAGE_KEY, mode)
   }, [mode])

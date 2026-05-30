@@ -1,0 +1,78 @@
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from 'react'
+import type { Session, User } from '@supabase/supabase-js'
+import { supabase, isSupabaseConfigured } from '../lib/supabase'
+
+// ============================================================
+//  AuthContext
+//  ------------------------------------------------------------
+//  管理登入狀態（Google 登入）。
+//  未接 Supabase 時 configured=false，App 以訪客模式運作。
+// ============================================================
+
+interface AuthContextValue {
+  user: User | null
+  session: Session | null
+  loading: boolean
+  /** 有冇接好 Supabase（即係可唔可以登入） */
+  configured: boolean
+  signInWithGoogle: () => Promise<void>
+  signOut: () => Promise<void>
+}
+
+const AuthContext = createContext<AuthContextValue | null>(null)
+
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const [session, setSession] = useState<Session | null>(null)
+  const [loading, setLoading] = useState(isSupabaseConfigured)
+
+  useEffect(() => {
+    if (!supabase) return
+    // 開頁先攞返現有 session
+    supabase.auth.getSession().then(({ data }) => {
+      setSession(data.session)
+      setLoading(false)
+    })
+    // 之後監聽登入 / 登出
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => {
+      setSession(s)
+    })
+    return () => sub.subscription.unsubscribe()
+  }, [])
+
+  const value = useMemo<AuthContextValue>(
+    () => ({
+      user: session?.user ?? null,
+      session,
+      loading,
+      configured: isSupabaseConfigured,
+      signInWithGoogle: async () => {
+        if (!supabase) return
+        await supabase.auth.signInWithOAuth({
+          provider: 'google',
+          options: { redirectTo: window.location.origin },
+        })
+      },
+      signOut: async () => {
+        if (!supabase) return
+        await supabase.auth.signOut()
+      },
+    }),
+    [session, loading],
+  )
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
+}
+
+// eslint-disable-next-line react-refresh/only-export-components
+export function useAuth(): AuthContextValue {
+  const ctx = useContext(AuthContext)
+  if (!ctx) throw new Error('useAuth 必須喺 <AuthProvider> 入面用')
+  return ctx
+}

@@ -17,3 +17,8 @@ pnpm-debug.log*
 
 # typescript build info
 *.tsbuildinfo
+
+# next.js / vercel artifacts (此 project 用 Vite)
+.next
+.vercel
+next-env.d.ts

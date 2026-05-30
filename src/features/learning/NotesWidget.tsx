@@ -1,28 +1,20 @@
 import { useState } from 'react'
-import { useLocalStorage } from '../../hooks/useLocalStorage'
+import { useCollection } from '../../lib/store'
+import { notesCol } from '../../data/collections'
 
-// 學習筆記 — 示範一個「會記住資料」嘅互動功能
-interface Note {
-  id: number
-  text: string
-  created: string
-}
-
+// 學習筆記
 export default function NotesWidget() {
-  const [notes, setNotes] = useLocalStorage<Note[]>('ntk.learning.notes', [])
+  const notes = useCollection(notesCol)
   const [draft, setDraft] = useState('')
 
   const add = () => {
     const text = draft.trim()
     if (!text) return
-    setNotes([
-      { id: Date.now(), text, created: new Date().toLocaleString('zh-HK') },
-      ...notes,
-    ])
+    notesCol.add({ content: text, createdAt: new Date().toISOString() })
     setDraft('')
   }
 
-  const remove = (id: number) => setNotes(notes.filter((n) => n.id !== id))
+  const sorted = [...notes].sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1))
 
   return (
     <div className="space-y-4">
@@ -32,33 +24,35 @@ export default function NotesWidget() {
           onChange={(e) => setDraft(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && add()}
           placeholder="記低一個學到嘅重點…"
-          className="flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-accent focus:ring-2 focus:ring-accent/30"
+          className="flex-1 rounded-xl border border-slate-300 px-3 py-2 text-sm outline-none focus:border-accent focus:ring-2 focus:ring-accent/30"
         />
         <button
           onClick={add}
-          className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white transition hover:bg-accent-strong"
+          className="rounded-xl bg-accent px-4 py-2 text-sm font-medium text-white transition hover:bg-accent-strong"
         >
           加入
         </button>
       </div>
 
-      {notes.length === 0 ? (
-        <p className="rounded-lg bg-slate-50 px-4 py-8 text-center text-sm text-slate-400">
+      {sorted.length === 0 ? (
+        <p className="rounded-xl bg-slate-50 px-4 py-8 text-center text-sm text-slate-400">
           仲未有筆記，喺上面打低你嘅第一個學習重點啦 ✍️
         </p>
       ) : (
         <ul className="space-y-2">
-          {notes.map((n) => (
+          {sorted.map((n) => (
             <li
               key={n.id}
-              className="group flex items-start justify-between gap-3 rounded-lg border border-slate-200 bg-white px-4 py-3"
+              className="group flex items-start justify-between gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3"
             >
               <div>
-                <p className="text-sm text-slate-800">{n.text}</p>
-                <p className="mt-1 text-xs text-slate-400">{n.created}</p>
+                <p className="text-sm text-slate-800">{n.content}</p>
+                <p className="mt-1 text-xs text-slate-400">
+                  {new Date(n.createdAt).toLocaleString('zh-HK')}
+                </p>
               </div>
               <button
-                onClick={() => remove(n.id)}
+                onClick={() => notesCol.remove(n.id)}
                 className="text-xs text-slate-300 opacity-0 transition group-hover:opacity-100 hover:text-red-500"
               >
                 刪除

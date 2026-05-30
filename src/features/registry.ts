@@ -4,34 +4,77 @@ import type { ModeId } from '../modes/modes'
 // 學習模式功能
 import NotesWidget from './learning/NotesWidget'
 import GoalsWidget from './learning/GoalsWidget'
+import Flashcards from './learning/Flashcards'
+import FocusTimer from './learning/FocusTimer'
+import Journal from './learning/Journal'
+import LearningDashboard from './learning/LearningDashboard'
+import ReadingList from './learning/ReadingList'
+import HabitTracker from './learning/HabitTracker'
 
 // 工作模式功能
 import TodoWidget from './work/TodoWidget'
 import ClassesWidget from './work/ClassesWidget'
+import CurriculumProgress from './work/CurriculumProgress'
+import QuestionBank from './work/QuestionBank'
+import ResourceLibrary from './work/ResourceLibrary'
+import Gradebook from './work/Gradebook'
+import LessonPlanner from './work/LessonPlanner'
+import Timetable from './work/Timetable'
+import Attendance from './work/Attendance'
+import ParentComms from './work/ParentComms'
+import MeetingNotes from './work/MeetingNotes'
+import WorkDashboard from './work/WorkDashboard'
+
+// 共用功能
+import Calendar from './shared/Calendar'
+import GlobalSearch from './shared/GlobalSearch'
+import Inbox from './shared/Inbox'
 
 // ============================================================
-//  功能註冊表 (Feature Registry)
-//  ------------------------------------------------------------
-//  呢度係成個平台嘅「擴充中心」。
-//
-//  ★ 想加一個新功能？只需要：
-//    1. 喺 src/features/<mode>/ 整一個元件
-//    2. 喺下面 FEATURES 陣列加多一個項目
-//    3. 完成！側邊欄、首頁概覽會自動顯示
-//
-//  modes:  呢個功能屬於邊啲模式（可以同時屬於兩個）
-//  status: 'ready' = 可用 / 'soon' = 預留位（即將推出）
+//  功能註冊表 (Feature Registry) — 平台擴充中心
+//  加新功能：整個元件 → 喺下面加一項（填 group）→ 完成。
 // ============================================================
 
 export const FEATURES: Feature[] = [
-  // ───────── 學習模式 ─────────
+  // ═══════════ 學習模式 ═══════════
+  {
+    id: 'learning-dashboard',
+    modes: ['learning'],
+    name: '學習儀表板',
+    description: '今日複習、連續日數、目標、最近筆記一覽。',
+    icon: '📊',
+    group: '概覽',
+    component: LearningDashboard,
+    status: 'ready',
+  },
   {
     id: 'learning-notes',
     modes: ['learning'],
     name: '學習筆記',
     description: '隨手記低學到嘅重點，自動儲存。',
     icon: '📝',
+    group: '知識管理',
     component: NotesWidget,
+    status: 'ready',
+  },
+  {
+    id: 'learning-flashcards',
+    modes: ['learning'],
+    name: '知識卡 + 複習',
+    description: '間隔重複（SRS），到期先彈出嚟複習。',
+    icon: '🧠',
+    group: '知識管理',
+    component: Flashcards,
+    status: 'ready',
+  },
+  {
+    id: 'learning-reading',
+    modes: ['learning'],
+    name: '閱讀清單',
+    description: '收藏想睇嘅書同文章，分狀態追蹤。',
+    icon: '📖',
+    group: '知識管理',
+    component: ReadingList,
     status: 'ready',
   },
   {
@@ -40,43 +83,60 @@ export const FEATURES: Feature[] = [
     name: '學習目標',
     description: '設定目標、追蹤進度。',
     icon: '🎯',
+    group: '目標與習慣',
     component: GoalsWidget,
     status: 'ready',
   },
   {
-    id: 'learning-reading',
+    id: 'learning-habits',
     modes: ['learning'],
-    name: '閱讀清單',
-    description: '收藏想睇嘅書同文章。',
-    icon: '📖',
-    status: 'soon',
-  },
-  {
-    id: 'learning-flashcards',
-    modes: ['learning'],
-    name: '知識卡片',
-    description: '用記憶卡複習重點概念。',
-    icon: '🧠',
-    status: 'soon',
-  },
-
-  // ───────── 工作模式 ─────────
-  {
-    id: 'work-tasks',
-    modes: ['work'],
-    name: '待辦 / 批改',
-    description: '備課、批改、行政事項一覽。',
-    icon: '✅',
-    component: TodoWidget,
+    name: '習慣追蹤',
+    description: '每日打卡，建立學習好習慣。',
+    icon: '🔥',
+    group: '目標與習慣',
+    component: HabitTracker,
     status: 'ready',
   },
   {
-    id: 'work-classes',
+    id: 'learning-focus',
+    modes: ['learning'],
+    name: '專注計時器',
+    description: '番茄鐘專注 / 休息循環 + 統計。',
+    icon: '⏱️',
+    group: '目標與習慣',
+    component: FocusTimer,
+    status: 'ready',
+  },
+  {
+    id: 'learning-journal',
+    modes: ['learning'],
+    name: '學習日誌',
+    description: '每日反思，連續記低成長軌跡。',
+    icon: '📓',
+    group: '目標與習慣',
+    component: Journal,
+    status: 'ready',
+  },
+
+  // ═══════════ 工作模式 ═══════════
+  {
+    id: 'work-dashboard',
     modes: ['work'],
-    name: '班別管理',
-    description: '記錄你任教嘅班別同學生。',
-    icon: '🏫',
-    component: ClassesWidget,
+    name: '工作儀表板',
+    description: '今日課堂、待辦、待跟進、各班進度一覽。',
+    icon: '🧭',
+    group: '概覽',
+    component: WorkDashboard,
+    status: 'ready',
+  },
+  {
+    id: 'work-curriculum',
+    modes: ['work'],
+    name: '課程進度',
+    description: '對住 BAFS 課程大綱追蹤每班進度。',
+    icon: '📊',
+    group: '教學',
+    component: CurriculumProgress,
     status: 'ready',
   },
   {
@@ -85,34 +145,154 @@ export const FEATURES: Feature[] = [
     name: '備課 / 教案',
     description: '撰寫同整理 BAFS 教學計劃。',
     icon: '📋',
-    status: 'soon',
+    group: '教學',
+    component: LessonPlanner,
+    status: 'ready',
+  },
+  {
+    id: 'work-timetable',
+    modes: ['work'],
+    name: '時間表',
+    description: '每週教學時間表一覽。',
+    icon: '🗓️',
+    group: '教學',
+    component: Timetable,
+    status: 'ready',
+  },
+  {
+    id: 'work-questions',
+    modes: ['work'],
+    name: 'BAFS 題庫',
+    description: '按課題／題型／難度儲存題目。',
+    icon: '🧩',
+    group: '教學',
+    component: QuestionBank,
+    status: 'ready',
   },
   {
     id: 'work-resources',
     modes: ['work'],
-    name: '教學資源',
+    name: '教學資源庫',
     description: '收藏講義、試題、教材連結。',
     icon: '🗂️',
-    status: 'soon',
+    group: '教學',
+    component: ResourceLibrary,
+    status: 'ready',
+  },
+  {
+    id: 'work-classes',
+    modes: ['work'],
+    name: '班別管理',
+    description: '記錄你任教嘅班別同學生。',
+    icon: '🏫',
+    group: '學生',
+    component: ClassesWidget,
+    status: 'ready',
+  },
+  {
+    id: 'work-gradebook',
+    modes: ['work'],
+    name: '成績管理',
+    description: '記錄評估分數、計平均、睇弱項。',
+    icon: '📈',
+    group: '學生',
+    component: Gradebook,
+    status: 'ready',
+  },
+  {
+    id: 'work-attendance',
+    modes: ['work'],
+    name: '點名 / 出席',
+    description: '每堂記錄學生出席狀況。',
+    icon: '🙋',
+    group: '學生',
+    component: Attendance,
+    status: 'ready',
+  },
+  {
+    id: 'work-parent-comms',
+    modes: ['work'],
+    name: '家長溝通',
+    description: '記錄與家長／學生嘅聯絡同跟進。',
+    icon: '📞',
+    group: '學生',
+    component: ParentComms,
+    status: 'ready',
+  },
+  {
+    id: 'work-tasks',
+    modes: ['work'],
+    name: '待辦 / 批改',
+    description: '備課、批改、行政事項一覽。',
+    icon: '✅',
+    group: '行政',
+    component: TodoWidget,
+    status: 'ready',
+  },
+  {
+    id: 'work-meeting-notes',
+    modes: ['work'],
+    name: '會議筆記',
+    description: '會議與行政事項筆記。',
+    icon: '🗒️',
+    group: '行政',
+    component: MeetingNotes,
+    status: 'ready',
   },
 
-  // ───────── 兩個模式共用（示範跨模式功能）─────────
+  // ═══════════ 兩個模式共用 ═══════════
   {
     id: 'calendar',
     modes: ['learning', 'work'],
     name: '行事曆',
     description: '統一管理學習與工作日程。',
     icon: '📅',
-    status: 'soon',
+    group: '工具',
+    component: Calendar,
+    status: 'ready',
+  },
+  {
+    id: 'search',
+    modes: ['learning', 'work'],
+    name: '全域搜尋',
+    description: '一次過搵晒筆記、題目、資源、教案…',
+    icon: '🔍',
+    group: '工具',
+    component: GlobalSearch,
+    status: 'ready',
+  },
+  {
+    id: 'inbox',
+    modes: ['learning', 'work'],
+    name: '快速擷取',
+    description: '一秒掉低諗法，遲啲轉成待辦或筆記。',
+    icon: '📥',
+    group: '工具',
+    component: Inbox,
+    status: 'ready',
   },
 ]
 
-/** 攞返某個模式可以見到嘅功能 */
+// 攞返某個模式可以見到嘅功能
 export function featuresForMode(mode: ModeId): Feature[] {
   return FEATURES.filter((f) => f.modes.includes(mode))
 }
 
-/** 用 id 攞返一個功能 */
+// 攞返某個模式嘅功能，按 group 分組（保持註冊次序）
+export function groupedFeatures(mode: ModeId): { group: string; items: Feature[] }[] {
+  const groups: { group: string; items: Feature[] }[] = []
+  for (const f of featuresForMode(mode)) {
+    let g = groups.find((x) => x.group === f.group)
+    if (!g) {
+      g = { group: f.group, items: [] }
+      groups.push(g)
+    }
+    g.items.push(f)
+  }
+  return groups
+}
+
+// 用 id 攞返一個功能
 export function getFeature(id: string): Feature | undefined {
   return FEATURES.find((f) => f.id === id)
 }
