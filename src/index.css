@@ -1,0 +1,22 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* 預設主題色（學習模式）— 切換模式時由 ModeContext 覆寫 */
+  --accent: #0f9d6b;
+  --accent-soft: #e6f6ef;
+  --accent-strong: #0a7a52;
+
+  font-family:
+    'Noto Sans HK', system-ui, -apple-system, 'PingFang HK',
+    'Microsoft JhengHei', sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
