@@ -11,6 +11,7 @@ import {
 } from '../../data/collections'
 import { isDue } from '../../lib/srs'
 import { useNav } from '../../context/NavContext'
+import { useSettings } from '../../context/SettingsContext'
 import {
   Card,
   Badge,
@@ -59,6 +60,7 @@ export default function LearningDashboard() {
   const habitLogs = useCollection(habitLogsCol)
   const reading = useCollection(readingCol)
   const { open } = useNav()
+  const { displayName } = useSettings()
 
   const today = fmt(new Date())
   const dueCount = cards.filter(isDue).length
@@ -122,8 +124,9 @@ export default function LearningDashboard() {
     <div className="space-y-5">
       {/* 問候 */}
       <div>
-        <h1 className="text-xl font-bold text-slate-800">
-          {greeting()}，今日學啲乜？
+        <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100">
+          {greeting()}
+          {displayName ? `，${displayName}` : ''}，今日學啲乜？
         </h1>
         <p className="mt-0.5 text-sm text-slate-400">{todayLabel()}</p>
       </div>
@@ -173,14 +176,14 @@ export default function LearningDashboard() {
                 className={`flex w-full items-center gap-3 rounded-xl px-2 py-2 text-left text-sm transition ${
                   t.done
                     ? 'cursor-default text-slate-400'
-                    : 'text-slate-700 hover:bg-slate-50'
+                    : 'text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800/50'
                 }`}
               >
                 <span
                   className={`flex h-5 w-5 flex-none items-center justify-center rounded-full border text-[11px] ${
                     t.done
                       ? 'border-emerald-400 bg-emerald-400 text-white'
-                      : 'border-slate-300'
+                      : 'border-slate-300 dark:border-slate-600'
                   }`}
                 >
                   {t.done ? '✓' : ''}
@@ -242,7 +245,7 @@ export default function LearningDashboard() {
             {topGoals.map((g) => (
               <li key={g.id}>
                 <div className="mb-1 flex items-center justify-between gap-2">
-                  <span className="truncate text-sm text-slate-700">
+                  <span className="truncate text-sm text-slate-700 dark:text-slate-200">
                     {g.title}
                   </span>
                   <span className="flex-none text-xs font-bold text-accent">
@@ -281,7 +284,7 @@ export default function LearningDashboard() {
             {readingNow.map((r) => (
               <li
                 key={r.id}
-                className="flex items-center gap-2 text-sm text-slate-700"
+                className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200"
               >
                 <span className="text-base">📖</span>
                 <span className="truncate">{r.title}</span>
@@ -319,7 +322,10 @@ export default function LearningDashboard() {
         ) : (
           <ul className="space-y-1.5">
             {recentNotes.map((n) => (
-              <li key={n.id} className="truncate text-sm text-slate-600">
+              <li
+                key={n.id}
+                className="truncate text-sm text-slate-600 dark:text-slate-300"
+              >
                 · {n.content}
               </li>
             ))}
@@ -344,13 +350,13 @@ function Action({
   return (
     <button
       onClick={onClick}
-      className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-4 text-left transition hover:-translate-y-0.5 hover:border-accent/40 hover:shadow-md"
+      className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-4 text-left transition hover:-translate-y-0.5 hover:border-accent/40 hover:shadow-md dark:border-slate-700 dark:bg-slate-800"
     >
       <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent-soft text-lg">
         {icon}
       </span>
       <div>
-        <p className="text-sm font-semibold text-slate-800">{title}</p>
+        <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">{title}</p>
         <p className="text-xs text-slate-400">{desc}</p>
       </div>
     </button>

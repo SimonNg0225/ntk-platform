@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useCollection } from '../../lib/store'
+import { useToast } from '../../context/ToastContext'
 import { classesCol, topicsCol, progressCol } from '../../data/collections'
 import type { ProgressStatus } from '../../data/types'
 import {
@@ -38,6 +39,7 @@ function fmtDate(iso?: string): string {
 }
 
 export default function CurriculumProgress() {
+  const toast = useToast()
   const classes = useCollection(classesCol)
   const topics = useCollection(topicsCol)
   const progress = useCollection(progressCol)
@@ -73,6 +75,15 @@ export default function CurriculumProgress() {
         status: next,
         dateDone: next === 'done' ? new Date().toISOString() : undefined,
       })
+    }
+    // 小提升：當呢一下令全部課題完成，畀個鼓勵 toast（其餘狀態更新唔嘈）
+    if (next === 'done' && topics.length > 0) {
+      const doneAfter = topics.filter((t) =>
+        t.id === topicId ? true : statusOf(t.id) === 'done',
+      ).length
+      if (doneAfter === topics.length) {
+        toast.success(`${activeClass.name} 已完成全部課題 🎉`)
+      }
     }
   }
 
@@ -151,7 +162,7 @@ export default function CurriculumProgress() {
       {/* 整體進度 */}
       <Card className="p-4">
         <div className="flex items-center justify-between">
-          <span className="text-sm font-medium text-slate-700">
+          <span className="text-sm font-medium text-slate-700 dark:text-slate-200">
             {activeClass?.name} 整體進度
           </span>
           <span className="text-sm font-bold text-accent-strong">
@@ -159,7 +170,7 @@ export default function CurriculumProgress() {
           </span>
         </div>
         <ProgressBar value={pct} className="mt-2" />
-        <p className="mt-2 text-xs text-slate-400">
+        <p className="mt-2 text-xs text-slate-400 dark:text-slate-500">
           撳課題右邊嘅狀態掣可以循環：未開始 → 進行中 → 完成
         </p>
       </Card>
@@ -202,7 +213,7 @@ export default function CurriculumProgress() {
                     className="flex w-full items-center justify-between gap-2 py-1.5"
                   >
                     <span className="flex items-center gap-2">
-                      <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                      <span className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
                         {part.part}
                       </span>
                       <Badge tone="slate">
@@ -244,12 +255,12 @@ export default function CurriculumProgress() {
                           : 0
                         return (
                           <Card key={area.area} className="overflow-hidden">
-                            <div className="bg-slate-50 px-4 py-2.5">
+                            <div className="bg-slate-50 px-4 py-2.5 dark:bg-slate-800/50">
                               <div className="flex items-center justify-between gap-3">
-                                <span className="text-sm font-semibold text-slate-700">
+                                <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">
                                   {area.area}
                                 </span>
-                                <span className="shrink-0 text-xs font-medium text-slate-400">
+                                <span className="shrink-0 text-xs font-medium text-slate-400 dark:text-slate-500">
                                   {done}/{total}
                                 </span>
                               </div>
@@ -258,7 +269,7 @@ export default function CurriculumProgress() {
                                 className="mt-2 h-1.5"
                               />
                             </div>
-                            <ul className="divide-y divide-slate-100">
+                            <ul className="divide-y divide-slate-100 dark:divide-slate-700">
                               {area.items.map((tp) => {
                                 const rec = recordOf(tp.id)
                                 const st = rec?.status ?? 'not_started'
@@ -270,7 +281,7 @@ export default function CurriculumProgress() {
                                     key={tp.id}
                                     className="flex items-center justify-between gap-3 px-4 py-2.5"
                                   >
-                                    <span className="flex min-w-0 items-center gap-2 text-sm text-slate-700">
+                                    <span className="flex min-w-0 items-center gap-2 text-sm text-slate-700 dark:text-slate-200">
                                       <span
                                         className={`h-2 w-2 shrink-0 rounded-full ${cfg.dot}`}
                                       />
@@ -278,7 +289,7 @@ export default function CurriculumProgress() {
                                         {tp.topic}
                                       </span>
                                       {dateLabel && (
-                                        <span className="shrink-0 text-xs text-slate-400">
+                                        <span className="shrink-0 text-xs text-slate-400 dark:text-slate-500">
                                           ✓ {dateLabel}
                                         </span>
                                       )}

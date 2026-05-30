@@ -2,6 +2,8 @@ import { useMemo, useState } from 'react'
 import { useCollection } from '../../lib/store'
 import { eventsCol } from '../../data/collections'
 import type { CalendarEvent } from '../../data/types'
+import { useToast } from '../../context/ToastContext'
+import { useConfirm } from '../../context/ConfirmContext'
 import {
   Badge,
   Button,
@@ -82,6 +84,8 @@ function sortByTime(a: CalendarEvent, b: CalendarEvent): number {
 
 export default function Calendar() {
   const events = useCollection(eventsCol)
+  const toast = useToast()
+  const confirm = useConfirm()
 
   const today = useMemo(() => new Date(), [])
   const todayKey = useMemo(() => toKey(today), [today])
@@ -189,10 +193,19 @@ export default function Calendar() {
     eventsCol.add(payload)
     setSelectedKey(fDate)
     setModalOpen(false)
+    toast.success('已新增活動')
   }
 
-  function handleRemove(id: CalendarEvent['id']) {
-    eventsCol.remove(id)
+  async function handleRemove(ev: CalendarEvent) {
+    const ok = await confirm({
+      title: '刪除活動？',
+      message: `確定要刪除「${ev.title}」？此動作無法復原。`,
+      confirmText: '刪除',
+      tone: 'danger',
+    })
+    if (!ok) return
+    eventsCol.remove(ev.id)
+    toast.success('已刪除活動')
   }
 
   const monthLabel = `${viewYear}年${viewMonth + 1}月`
@@ -214,7 +227,7 @@ export default function Calendar() {
                 />
               </svg>
             </IconButton>
-            <h2 className="min-w-[6.5rem] text-center text-lg font-semibold text-slate-800">
+            <h2 className="min-w-[6.5rem] text-center text-lg font-semibold text-slate-800 dark:text-slate-100">
               {monthLabel}
             </h2>
             <IconButton label="下一個月" onClick={goNextMonth}>
@@ -240,7 +253,7 @@ export default function Calendar() {
         </header>
 
         {/* 星期標頭 */}
-        <div className="mb-1 grid grid-cols-7 gap-1 text-center text-xs font-medium text-slate-400">
+        <div className="mb-1 grid grid-cols-7 gap-1 text-center text-xs font-medium text-slate-400 dark:text-slate-500">
           {WEEKDAYS.map((w) => (
             <div key={w} className="py-1">
               {w}
@@ -264,8 +277,8 @@ export default function Calendar() {
               : isToday
                 ? 'bg-accent-soft text-accent-strong'
                 : inMonth
-                  ? 'text-slate-700 hover:bg-slate-100'
-                  : 'text-slate-300 hover:bg-slate-50'
+                  ? 'text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-700/60'
+                  : 'text-slate-300 hover:bg-slate-50 dark:text-slate-600 dark:hover:bg-slate-800'
 
             return (
               <button
@@ -292,7 +305,7 @@ export default function Calendar() {
                     <span
                       key={ev.id}
                       className={`flex items-center gap-1 truncate text-[10px] leading-tight ${
-                        isSelected ? 'text-white/90' : 'text-slate-500'
+                        isSelected ? 'text-white/90' : 'text-slate-500 dark:text-slate-400'
                       }`}
                     >
                       <span
@@ -306,7 +319,7 @@ export default function Calendar() {
                   {dayEvents.length > 2 && (
                     <span
                       className={`text-[10px] leading-tight ${
-                        isSelected ? 'text-white/80' : 'text-slate-400'
+                        isSelected ? 'text-white/80' : 'text-slate-400 dark:text-slate-500'
                       }`}
                     >
                       ＋{dayEvents.length - 2}
@@ -334,7 +347,7 @@ export default function Calendar() {
       {/* 選定日子 + 當日事件 */}
       <Card className="p-4 sm:p-5">
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-          <h3 className="text-base font-semibold text-slate-800">
+          <h3 className="text-base font-semibold text-slate-800 dark:text-slate-100">
             {formatLongDate(selectedKey)}
           </h3>
           <Button variant="secondary" size="sm" onClick={openAddModal}>
@@ -353,7 +366,7 @@ export default function Calendar() {
             {selectedEvents.map((ev) => (
               <li
                 key={ev.id}
-                className="flex items-start gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2.5"
+                className="flex items-start gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2.5 dark:border-slate-700 dark:bg-slate-800"
               >
                 <span
                   className={`mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full ${TYPE_DOT[toneOf(ev.type)]}`}
@@ -363,18 +376,18 @@ export default function Calendar() {
                     {ev.time && (
                       <Badge tone="slate">{ev.time}</Badge>
                     )}
-                    <span className="truncate font-medium text-slate-800">{ev.title}</span>
+                    <span className="truncate font-medium text-slate-800 dark:text-slate-100">{ev.title}</span>
                     {ev.type && <Badge tone={toneOf(ev.type)}>{ev.type}</Badge>}
                   </div>
                   {ev.notes && (
-                    <p className="mt-1 whitespace-pre-wrap break-words text-sm text-slate-500">
+                    <p className="mt-1 whitespace-pre-wrap break-words text-sm text-slate-500 dark:text-slate-400">
                       {ev.notes}
                     </p>
                   )}
                 </div>
                 <IconButton
                   label={`刪除「${ev.title}」`}
-                  onClick={() => handleRemove(ev.id)}
+                  onClick={() => handleRemove(ev)}
                   className="hover:bg-rose-50 hover:text-rose-600"
                 >
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
@@ -407,7 +420,7 @@ export default function Calendar() {
                   <button
                     type="button"
                     onClick={() => jumpTo(ev.date)}
-                    className="flex w-full items-center gap-3 rounded-xl border border-slate-200 px-3 py-2.5 text-left transition hover:bg-accent-soft focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+                    className="flex w-full items-center gap-3 rounded-xl border border-slate-200 px-3 py-2.5 text-left transition hover:bg-accent-soft focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:border-slate-700"
                   >
                     <div className="flex w-14 shrink-0 flex-col items-center rounded-lg bg-accent-soft py-1 text-accent-strong">
                       <span className="text-xs">{d.getMonth() + 1}月</span>
@@ -417,9 +430,9 @@ export default function Calendar() {
                       <div className="flex flex-wrap items-center gap-2">
                         {ev.time && <span className="text-xs font-medium text-accent">{ev.time}</span>}
                         {ev.type && <Badge tone={toneOf(ev.type)}>{ev.type}</Badge>}
-                        <span className="truncate font-medium text-slate-800">{ev.title}</span>
+                        <span className="truncate font-medium text-slate-800 dark:text-slate-100">{ev.title}</span>
                       </div>
-                      <span className="text-xs text-slate-400">星期{WEEKDAYS[d.getDay()]}</span>
+                      <span className="text-xs text-slate-400 dark:text-slate-500">星期{WEEKDAYS[d.getDay()]}</span>
                     </div>
                   </button>
                 </li>

@@ -13,6 +13,8 @@ import {
   SectionTitle,
   Textarea,
 } from '../../ui'
+import { useToast } from '../../context/ToastContext'
+import { useConfirm } from '../../context/ConfirmContext'
 
 const today = () => new Date().toISOString().slice(0, 10)
 
@@ -39,6 +41,8 @@ const emptyDraft = (): Draft => ({
 
 export default function MeetingNotes() {
   const notes = useCollection(meetingNotesCol)
+  const toast = useToast()
+  const confirm = useConfirm()
 
   // 新增 / 編輯 Modal
   const [modalOpen, setModalOpen] = useState(false)
@@ -105,16 +109,26 @@ export default function MeetingNotes() {
     }
     if (editingId) {
       meetingNotesCol.update(editingId, payload)
+      toast.success('已儲存筆記')
     } else {
       meetingNotesCol.add({ ...payload, createdAt: new Date().toISOString() })
+      toast.success('已新增筆記')
     }
     setModalOpen(false)
     setEditingId(null)
   }
 
-  function removeNote(id: string) {
-    meetingNotesCol.remove(id)
-    if (expandedId === id) setExpandedId(null)
+  async function removeNote(note: MeetingNote) {
+    const ok = await confirm({
+      title: '刪除筆記？',
+      message: `「${note.title}」將會被永久刪除，呢個動作無法復原。`,
+      confirmText: '刪除',
+      tone: 'danger',
+    })
+    if (!ok) return
+    meetingNotesCol.remove(note.id)
+    if (expandedId === note.id) setExpandedId(null)
+    toast.success('已刪除筆記')
   }
 
   return (

@@ -10,10 +10,14 @@ import {
   EmptyState,
   IconButton,
 } from '../../ui'
+import { useToast } from '../../context/ToastContext'
+import { useConfirm } from '../../context/ConfirmContext'
 
 // 學習目標 + 進度追蹤
 export default function GoalsWidget() {
   const goals = useCollection(goalsCol)
+  const toast = useToast()
+  const confirm = useConfirm()
   const [draft, setDraft] = useState('')
 
   const add = () => {
@@ -21,14 +25,27 @@ export default function GoalsWidget() {
     if (!title) return
     goalsCol.add({ title, progress: 0, createdAt: new Date().toISOString() })
     setDraft('')
+    toast.success('已新增目標 🎯')
   }
 
   const bump = (id: string, delta: number) => {
     const g = goals.find((x) => x.id === id)
     if (!g) return
-    goalsCol.update(id, {
-      progress: Math.max(0, Math.min(100, g.progress + delta)),
+    const next = Math.max(0, Math.min(100, g.progress + delta))
+    goalsCol.update(id, { progress: next })
+    if (next === 100 && g.progress < 100) toast.success('恭喜達成目標 🎉')
+  }
+
+  const removeGoal = async (id: string, title: string) => {
+    const ok = await confirm({
+      title: '刪除目標？',
+      message: `確定要刪除「${title}」？呢個動作無法復原。`,
+      confirmText: '刪除',
+      tone: 'danger',
     })
+    if (!ok) return
+    goalsCol.remove(id)
+    toast.success('已刪除目標')
   }
 
   const sorted = [...goals].sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1))
@@ -67,7 +84,7 @@ export default function GoalsWidget() {
           {sorted.map((g) => (
             <Card key={g.id} className="group p-4">
               <div className="flex items-center justify-between gap-2">
-                <span className="text-sm font-medium text-slate-800">
+                <span className="text-sm font-medium text-slate-800 dark:text-slate-100">
                   {g.title}
                 </span>
                 <span className="shrink-0 text-xs font-semibold text-accent">
@@ -94,7 +111,7 @@ export default function GoalsWidget() {
                 </Button>
                 <IconButton
                   label="刪除目標"
-                  onClick={() => goalsCol.remove(g.id)}
+                  onClick={() => removeGoal(g.id, g.title)}
                   className="ml-auto opacity-0 transition group-hover:opacity-100 hover:text-rose-500"
                 >
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none">

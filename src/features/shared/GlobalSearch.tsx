@@ -165,8 +165,8 @@ export default function GlobalSearch() {
   return (
     <div className="mx-auto w-full max-w-2xl p-4 sm:p-6">
       <header className="mb-4">
-        <h1 className="text-xl font-bold text-slate-900 sm:text-2xl">全域搜尋</h1>
-        <p className="mt-1 text-sm text-slate-500">
+        <h1 className="text-xl font-bold text-slate-900 sm:text-2xl dark:text-slate-100">全域搜尋</h1>
+        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
           一次過喺所有筆記、題庫、資源、教案、班別、學生入面搵嘢（大細楷不分）。
         </p>
       </header>
@@ -186,7 +186,7 @@ export default function GlobalSearch() {
         />
 
         {trimmed && (
-          <p className="mt-3 flex items-center gap-2 text-sm text-slate-500">
+          <p className="mt-3 flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
             共
             <Badge tone="accent">{totalHits}</Badge>
             項命中
@@ -231,14 +231,14 @@ export default function GlobalSearch() {
                     <button
                       type="button"
                       onClick={() => open(group.featureId)}
-                      className="w-full rounded-2xl border border-slate-200 bg-white px-3 py-2 text-left text-sm text-slate-700 transition-colors hover:border-accent hover:bg-accent hover:text-white focus:outline-none focus:ring-2 focus:ring-accent/30"
+                      className="w-full rounded-2xl border border-slate-200 bg-white px-3 py-2 text-left text-sm text-slate-700 transition-colors hover:border-accent hover:bg-accent hover:text-white focus:outline-none focus:ring-2 focus:ring-accent/30 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:border-accent dark:hover:bg-accent dark:hover:text-white"
                     >
                       {hit.snippet}
                     </button>
                   </li>
                 ))}
                 {group.hits.length > MAX_PER_GROUP && (
-                  <li className="px-1 text-xs text-slate-400">
+                  <li className="px-1 text-xs text-slate-400 dark:text-slate-500">
                     仲有 {group.hits.length - MAX_PER_GROUP} 項，撳上面任何一條去
                     {group.label}查看。
                   </li>

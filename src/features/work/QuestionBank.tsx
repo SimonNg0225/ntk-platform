@@ -1,5 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useCollection } from '../../lib/store'
+import { useToast } from '../../context/ToastContext'
+import { useConfirm } from '../../context/ConfirmContext'
 import { questionsCol, topicsCol } from '../../data/collections'
 import type { Difficulty, Question, QuestionType } from '../../data/types'
 import {
@@ -78,6 +80,8 @@ const formFromQuestion = (q: Question): FormState => ({
 })
 
 export default function QuestionBank() {
+  const toast = useToast()
+  const confirm = useConfirm()
   const questions = useCollection(questionsCol)
   const topics = useCollection(topicsCol)
 
@@ -147,6 +151,29 @@ export default function QuestionBank() {
   const openEdit = (q: Question) => {
     setEditing(q)
     setShowForm(true)
+  }
+
+  const removeQuestion = async (q: Question) => {
+    const ok = await confirm({
+      title: '刪除題目？',
+      message: '此題目將會由題庫永久移除，無法復原。',
+      confirmText: '刪除',
+      tone: 'danger',
+    })
+    if (!ok) return
+    questionsCol.remove(q.id)
+    setSelected((prev) => {
+      if (!prev.has(q.id)) return prev
+      const next = new Set(prev)
+      next.delete(q.id)
+      return next
+    })
+    toast.success('已刪除題目')
+  }
+
+  const openPaper = () => {
+    setShowPaper(true)
+    toast.success(`已選 ${selectedQuestions.length} 條題目 · 共 ${selectedMarks} 分`)
   }
 
   return (
@@ -219,7 +246,7 @@ export default function QuestionBank() {
       {/* 組卷狀態列 */}
       {paperMode && (
         <Card className="flex flex-wrap items-center justify-between gap-2 border-accent/30 bg-accent-soft/50 p-3">
-          <p className="text-sm text-slate-700">
+          <p className="text-sm text-slate-700 dark:text-slate-200">
             已選 <span className="font-bold text-accent-strong">
               {selectedQuestions.length}
             </span>{' '}
@@ -240,7 +267,7 @@ export default function QuestionBank() {
             <Button
               size="sm"
               disabled={selectedQuestions.length === 0}
-              onClick={() => setShowPaper(true)}
+              onClick={openPaper}
             >
               預覽試卷
             </Button>
@@ -249,7 +276,9 @@ export default function QuestionBank() {
       )}
 
       {/* 題目列表 */}
-      <p className="text-xs text-slate-400">共 {filtered.length} 條題目</p>
+      <p className="text-xs text-slate-400 dark:text-slate-500">
+        共 {filtered.length} 條題目
+      </p>
       <ul className="space-y-2">
         {filtered.map((q) => (
           <Card key={q.id} className="p-4">
@@ -265,7 +294,7 @@ export default function QuestionBank() {
               )}
               <button
                 onClick={() => setExpanded(expanded === q.id ? null : q.id)}
-                className="flex-1 text-left text-sm text-slate-800"
+                className="flex-1 text-left text-sm text-slate-800 dark:text-slate-100"
               >
                 {q.stem}
               </button>
@@ -283,7 +312,7 @@ export default function QuestionBank() {
                 </IconButton>
                 <IconButton
                   label="刪除題目"
-                  onClick={() => questionsCol.remove(q.id)}
+                  onClick={() => removeQuestion(q)}
                   className="hover:text-rose-500"
                 >
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
@@ -307,7 +336,7 @@ export default function QuestionBank() {
               {q.marks ? <Badge>{q.marks} 分</Badge> : null}
             </div>
             {expanded === q.id && (
-              <div className="mt-3 space-y-1.5 border-t border-slate-100 pt-3 text-sm">
+              <div className="mt-3 space-y-1.5 border-t border-slate-100 pt-3 text-sm dark:border-slate-700">
                 {q.type === 'mc' && q.options && (
                   <ul className="space-y-1">
                     {q.options.map((o, i) => (
@@ -315,8 +344,8 @@ export default function QuestionBank() {
                         key={i}
                         className={
                           i === q.answerIndex
-                            ? 'font-semibold text-emerald-700'
-                            : 'text-slate-600'
+                            ? 'font-semibold text-emerald-700 dark:text-emerald-400'
+                            : 'text-slate-600 dark:text-slate-300'
                         }
                       >
                         {String.fromCharCode(65 + i)}. {o}
@@ -326,15 +355,17 @@ export default function QuestionBank() {
                   </ul>
                 )}
                 {q.type !== 'mc' && q.answer && (
-                  <p className="text-slate-600">
-                    <span className="font-semibold text-slate-700">
+                  <p className="text-slate-600 dark:text-slate-300">
+                    <span className="font-semibold text-slate-700 dark:text-slate-200">
                       參考答案：
                     </span>
                     {q.answer}
                   </p>
                 )}
                 {q.type !== 'mc' && !q.answer && (
-                  <p className="text-xs text-slate-400">未有參考答案</p>
+                  <p className="text-xs text-slate-400 dark:text-slate-500">
+                    未有參考答案
+                  </p>
                 )}
               </div>
             )}
@@ -383,6 +414,7 @@ function QuestionFormModal({
   topics: { id: string; topic: string }[]
   onClose: () => void
 }) {
+  const toast = useToast()
   const [form, setForm] = useState<FormState>(() =>
     editing ? formFromQuestion(editing) : emptyForm(topics[0]?.id ?? ''),
   )
@@ -404,8 +436,10 @@ function QuestionFormModal({
     }
     if (editing) {
       questionsCol.update(editing.id, payload)
+      toast.success('已儲存題目修改')
     } else {
       questionsCol.add({ ...payload, createdAt: new Date().toISOString() })
+      toast.success('已新增題目')
     }
     onClose()
   }
@@ -546,12 +580,12 @@ function PaperPreviewModal({
   return (
     <Modal open={open} onClose={onClose} title="預覽試卷">
       <div className="space-y-4">
-        <div className="flex items-center justify-between border-b border-slate-200 pb-3">
+        <div className="flex items-center justify-between border-b border-slate-200 pb-3 dark:border-slate-700">
           <div>
-            <p className="text-sm font-semibold text-slate-800">
+            <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">
               BAFS 自擬試卷
             </p>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-slate-500 dark:text-slate-400">
               共 {questions.length} 題 · 總分 {totalMarks} 分
             </p>
           </div>
@@ -564,14 +598,14 @@ function PaperPreviewModal({
           {questions.map((q, idx) => (
             <li key={q.id} className="space-y-1.5">
               <div className="flex items-start gap-2">
-                <span className="text-sm font-semibold text-slate-700">
+                <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">
                   {idx + 1}.
                 </span>
                 <div className="flex-1 space-y-1.5">
-                  <p className="text-sm text-slate-800">
+                  <p className="text-sm text-slate-800 dark:text-slate-100">
                     {q.stem}
                     {q.marks ? (
-                      <span className="ml-1 text-xs text-slate-400">
+                      <span className="ml-1 text-xs text-slate-400 dark:text-slate-500">
                         （{q.marks} 分）
                       </span>
                     ) : null}
@@ -584,7 +618,7 @@ function PaperPreviewModal({
                     <Badge tone="accent">{topicName(q.topicId)}</Badge>
                   </div>
                   {q.type === 'mc' && q.options && (
-                    <ul className="space-y-0.5 pl-1 text-sm text-slate-600">
+                    <ul className="space-y-0.5 pl-1 text-sm text-slate-600 dark:text-slate-300">
                       {q.options.map((o, i) => (
                         <li key={i}>
                           {String.fromCharCode(65 + i)}. {o}
@@ -599,7 +633,7 @@ function PaperPreviewModal({
         </ol>
 
         {questions.length === 0 && (
-          <p className="py-6 text-center text-sm text-slate-400">
+          <p className="py-6 text-center text-sm text-slate-400 dark:text-slate-500">
             未揀任何題目。
           </p>
         )}

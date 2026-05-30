@@ -16,6 +16,8 @@ import {
   StatCard,
   Textarea,
 } from '../../ui'
+import { useToast } from '../../context/ToastContext'
+import { useConfirm } from '../../context/ConfirmContext'
 
 const TYPE_LABEL: Record<ResourceType, string> = {
   handout: '講義',
@@ -41,6 +43,8 @@ type FilterType = 'all' | ResourceType
 export default function ResourceLibrary() {
   const resources = useCollection(resourcesCol)
   const topics = useCollection(topicsCol)
+  const toast = useToast()
+  const confirm = useConfirm()
 
   const [showForm, setShowForm] = useState(false)
   const [fType, setFType] = useState<FilterType>('all')
@@ -75,6 +79,18 @@ export default function ResourceLibrary() {
     [resources, fType, fTopic, search],
   )
 
+  const removeResource = async (id: string, title: string) => {
+    const ok = await confirm({
+      title: '刪除資源？',
+      message: `「${title}」將會被永久刪除，呢個動作無法復原。`,
+      confirmText: '刪除',
+      tone: 'danger',
+    })
+    if (!ok) return
+    resourcesCol.remove(id)
+    toast.success('已刪除資源')
+  }
+
   const pillOptions: { id: FilterType; label: string }[] = [
     { id: 'all', label: '全部' },
     ...TYPE_KEYS.map((k) => ({
@@ -86,8 +102,10 @@ export default function ResourceLibrary() {
   return (
     <div className="space-y-4">
       <header className="space-y-1">
-        <h1 className="text-2xl font-semibold text-slate-900">教學資源庫</h1>
-        <p className="text-sm text-slate-500">
+        <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-100">
+          教學資源庫
+        </h1>
+        <p className="text-sm text-slate-500 dark:text-slate-400">
           收集講義、簡報、試題、連結同筆記，按類型或課題快速搵返。
         </p>
       </header>
@@ -148,7 +166,7 @@ export default function ResourceLibrary() {
                 </div>
                 <IconButton
                   label="刪除"
-                  onClick={() => resourcesCol.remove(r.id)}
+                  onClick={() => removeResource(r.id, r.title)}
                   className="opacity-0 transition group-hover:opacity-100 hover:text-rose-500"
                 >
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
@@ -162,14 +180,18 @@ export default function ResourceLibrary() {
                   </svg>
                 </IconButton>
               </div>
-              <p className="mt-3 text-sm font-semibold text-slate-800">
+              <p className="mt-3 text-sm font-semibold text-slate-800 dark:text-slate-100">
                 {r.title}
               </p>
               <div className="mt-1.5 flex flex-wrap gap-1.5">
                 <Badge tone="accent">{TYPE_LABEL[r.type]}</Badge>
                 {r.topicId && <Badge tone="slate">{topicName(r.topicId)}</Badge>}
               </div>
-              {r.notes && <p className="mt-2 text-xs text-slate-500">{r.notes}</p>}
+              {r.notes && (
+                <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+                  {r.notes}
+                </p>
+              )}
               {r.url && (
                 <a
                   href={r.url}
@@ -194,6 +216,7 @@ export default function ResourceLibrary() {
 
 function AddForm({ onDone }: { onDone: () => void }) {
   const topics = useCollection(topicsCol)
+  const toast = useToast()
   const [title, setTitle] = useState('')
   const [type, setType] = useState<ResourceType>('link')
   const [url, setUrl] = useState('')
@@ -210,6 +233,7 @@ function AddForm({ onDone }: { onDone: () => void }) {
       notes: notes.trim() || undefined,
       createdAt: new Date().toISOString(),
     })
+    toast.success('已新增資源')
     onDone()
   }
 

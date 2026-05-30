@@ -3,6 +3,7 @@ import { useCollection } from '../../lib/store'
 import { attendanceCol, classesCol, studentsCol } from '../../data/collections'
 import type { AttendanceRecord, AttendanceStatus } from '../../data/types'
 import { Button, Card, EmptyState, Pills, SectionTitle, StatCard } from '../../ui'
+import { useToast } from '../../context/ToastContext'
 
 const STATUS_OPTIONS: { value: AttendanceStatus; label: string }[] = [
   { value: 'present', label: '出席' },
@@ -24,6 +25,7 @@ export default function Attendance() {
   const classes = useCollection(classesCol)
   const students = useCollection(studentsCol)
   const attendance = useCollection(attendanceCol)
+  const toast = useToast()
 
   const [classId, setClassId] = useState<string>('')
   const [date, setDate] = useState<string>(todayStr())
@@ -78,6 +80,7 @@ export default function Attendance() {
   }
 
   function markAllPresent() {
+    if (classStudents.length === 0) return
     for (const s of classStudents) {
       const existing = recordByStudent.get(s.id)
       if (existing) {
@@ -93,6 +96,7 @@ export default function Attendance() {
         })
       }
     }
+    toast.success('已將全班標記為出席')
   }
 
   function statusButtonClass(status: AttendanceStatus, active: boolean): string {
@@ -121,10 +125,10 @@ export default function Attendance() {
   return (
     <div className="mx-auto max-w-3xl space-y-6 p-4 sm:p-6">
       <header className="space-y-1">
-        <h1 className="text-xl font-semibold text-slate-900 sm:text-2xl">
+        <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100 sm:text-2xl">
           點名 / 出席
         </h1>
-        <p className="text-sm text-slate-500">
+        <p className="text-sm text-slate-500 dark:text-slate-400">
           揀班別同日期，為學生標記出席狀態。
         </p>
       </header>
@@ -148,7 +152,7 @@ export default function Attendance() {
             <div className="flex flex-col gap-1 pt-1 sm:max-w-xs">
               <label
                 htmlFor="attendance-date"
-                className="text-xs font-medium text-slate-600"
+                className="text-xs font-medium text-slate-600 dark:text-slate-300"
               >
                 日期
               </label>
@@ -157,7 +161,7 @@ export default function Attendance() {
                 type="date"
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
-                className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/25"
+                className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/25 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
               />
             </div>
           </section>
@@ -205,10 +209,10 @@ export default function Attendance() {
                     <Card key={s.id} className="p-3">
                       <li className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                         <div className="min-w-0">
-                          <div className="truncate font-medium text-slate-900">
+                          <div className="truncate font-medium text-slate-900 dark:text-slate-100">
                             {s.name}
                           </div>
-                          <div className="text-xs text-slate-400">
+                          <div className="text-xs text-slate-400 dark:text-slate-500">
                             {s.studentNo ? `學號 ${s.studentNo}` : '未有學號'}
                             {current ? ` · ${STATUS_LABEL[current]}` : ' · 未標記'}
                           </div>

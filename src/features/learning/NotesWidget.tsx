@@ -1,5 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useCollection } from '../../lib/store'
+import { useToast } from '../../context/ToastContext'
+import { useConfirm } from '../../context/ConfirmContext'
 import { notesCol } from '../../data/collections'
 import type { Note } from '../../data/types'
 import {
@@ -60,6 +62,8 @@ function relativeTime(iso: string): string {
 const TRUNCATE_LEN = 220
 
 function NoteCard({ note }: { note: Note }) {
+  const toast = useToast()
+  const confirm = useConfirm()
   const [expanded, setExpanded] = useState(false)
   const [editing, setEditing] = useState(false)
   const [editDraft, setEditDraft] = useState(note.content)
@@ -81,6 +85,21 @@ function NoteCard({ note }: { note: Note }) {
     if (!text) return
     notesCol.update(note.id, { content: text })
     setEditing(false)
+    toast.success('已更新筆記')
+  }
+
+  const removeNote = async () => {
+    if (
+      !(await confirm({
+        title: '刪除筆記？',
+        message: '此筆記會被永久刪除，無法復原。',
+        confirmText: '刪除',
+        tone: 'danger',
+      }))
+    )
+      return
+    notesCol.remove(note.id)
+    toast.success('已刪除筆記')
   }
 
   if (editing) {
@@ -114,7 +133,7 @@ function NoteCard({ note }: { note: Note }) {
   return (
     <Card className="group p-3 sm:p-4">
       <div className="flex items-start justify-between gap-3">
-        <p className="min-w-0 flex-1 whitespace-pre-wrap break-words text-sm leading-relaxed text-slate-800">
+        <p className="min-w-0 flex-1 whitespace-pre-wrap break-words text-sm leading-relaxed text-slate-800 dark:text-slate-100">
           {shownContent}
         </p>
         <div className="flex shrink-0 items-center gap-0.5 opacity-60 transition group-hover:opacity-100">
@@ -131,7 +150,7 @@ function NoteCard({ note }: { note: Note }) {
           </IconButton>
           <IconButton
             label="刪除筆記"
-            onClick={() => notesCol.remove(note.id)}
+            onClick={removeNote}
             className="hover:text-rose-500"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
@@ -162,7 +181,7 @@ function NoteCard({ note }: { note: Note }) {
             #{t}
           </Badge>
         ))}
-        <span className="ml-auto text-xs text-slate-400">
+        <span className="ml-auto text-xs text-slate-400 dark:text-slate-400">
           {relativeTime(note.createdAt)}
         </span>
       </div>
@@ -172,15 +191,19 @@ function NoteCard({ note }: { note: Note }) {
 
 export default function NotesWidget() {
   const notes = useCollection(notesCol)
+  const toast = useToast()
   const [draft, setDraft] = useState('')
   const [query, setQuery] = useState('')
   const [activeTag, setActiveTag] = useState<string | null>(null)
+
+  const draftLen = draft.trim().length
 
   const add = () => {
     const text = draft.trim()
     if (!text) return
     notesCol.add({ content: text, createdAt: new Date().toISOString() })
     setDraft('')
+    toast.success('已新增筆記')
   }
 
   // 全部標籤（去重、附帶筆記數，按用量排序）
@@ -242,7 +265,12 @@ export default function NotesWidget() {
             placeholder="記低一個學到嘅重點…（⌘/Ctrl + Enter 加入）"
           />
         </Field>
-        <div className="mt-2 flex justify-end">
+        <div className="mt-2 flex items-center justify-end gap-3">
+          {draftLen > 0 && (
+            <span className="text-xs text-slate-400 dark:text-slate-400">
+              {draftLen} 字
+            </span>
+          )}
           <Button size="sm" onClick={add} disabled={!draft.trim()}>
             加入筆記
           </Button>
@@ -251,7 +279,7 @@ export default function NotesWidget() {
 
       {/* 搜尋 */}
       <div className="relative">
-        <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+        <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-400">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
             <circle
               cx="11"
@@ -302,7 +330,7 @@ export default function NotesWidget() {
 
       {/* 篩選狀態 / 結果數 */}
       {hasFilter && (
-        <div className="flex items-center justify-between text-xs text-slate-400">
+        <div className="flex items-center justify-between text-xs text-slate-400 dark:text-slate-400">
           <span>
             搵到 {visible.length} 則
             {activeTag && (
@@ -317,7 +345,7 @@ export default function NotesWidget() {
               setQuery('')
               setActiveTag(null)
             }}
-            className="font-medium text-slate-500 hover:text-slate-700"
+            className="font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
           >
             清除篩選
           </button>

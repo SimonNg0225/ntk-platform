@@ -2,9 +2,13 @@ import { useState } from 'react';
 import { useCollection } from '../../lib/store';
 import { inboxCol, tasksCol, notesCol } from '../../data/collections';
 import { Input, Button, Card, Badge, EmptyState } from '../../ui';
+import { useToast } from '../../context/ToastContext';
+import { useConfirm } from '../../context/ConfirmContext';
 
 export default function Inbox() {
   const items = useCollection(inboxCol);
+  const toast = useToast();
+  const confirm = useConfirm();
   const [text, setText] = useState('');
 
   const sorted = [...items].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
@@ -26,22 +30,32 @@ export default function Inbox() {
   const toTask = (id: string, itemText: string) => {
     tasksCol.add({ text: itemText, done: false, createdAt: new Date().toISOString() });
     inboxCol.remove(id);
+    toast.success('已轉做待辦');
   };
 
   const toNote = (id: string, itemText: string) => {
     notesCol.add({ content: itemText, createdAt: new Date().toISOString() });
     inboxCol.remove(id);
+    toast.success('已轉做筆記');
   };
 
-  const remove = (id: string) => {
+  const remove = async (id: string) => {
+    const ok = await confirm({
+      title: '刪除呢項？',
+      message: '確定要刪除呢個擷取項目？此動作無法復原。',
+      confirmText: '刪除',
+      tone: 'danger',
+    });
+    if (!ok) return;
     inboxCol.remove(id);
+    toast.success('已刪除');
   };
 
   return (
     <div className="mx-auto w-full max-w-2xl p-4 sm:p-6">
       <header className="mb-4 sm:mb-6">
-        <h1 className="text-xl font-bold text-slate-900 sm:text-2xl">快速擷取 Inbox</h1>
-        <p className="mt-1 text-sm text-slate-500">
+        <h1 className="text-xl font-bold text-slate-900 sm:text-2xl dark:text-slate-100">快速擷取 Inbox</h1>
+        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
           一秒掉低一個諗法，遲啲再整理成待辦或筆記。
         </p>
       </header>
@@ -76,8 +90,8 @@ export default function Inbox() {
         <ul className="mt-3 flex flex-col gap-3">
           {sorted.map((item) => (
             <Card key={item.id} className="p-4">
-              <p className="whitespace-pre-wrap break-words text-slate-900">{item.text}</p>
-              <p className="mt-1 text-xs text-slate-400">
+              <p className="whitespace-pre-wrap break-words text-slate-900 dark:text-slate-100">{item.text}</p>
+              <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
                 {new Date(item.createdAt).toLocaleString('zh-HK')}
               </p>
               <div className="mt-3 flex flex-wrap gap-2">

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useCollection } from '../../lib/store'
 import { focusCol } from '../../data/collections'
 import { Button, Input, StatCard, Pills } from '../../ui'
+import { useToast } from '../../context/ToastContext'
 
 const PRESETS = [
   { focus: 25, brk: 5 },
@@ -11,6 +12,7 @@ const PRESETS = [
 
 export default function FocusTimer() {
   const sessions = useCollection(focusCol)
+  const toast = useToast()
   const [preset, setPreset] = useState(PRESETS[0])
   const [phase, setPhase] = useState<'focus' | 'break'>('focus')
   const [secondsLeft, setSecondsLeft] = useState(PRESETS[0].focus * 60)
@@ -18,23 +20,22 @@ export default function FocusTimer() {
   const [label, setLabel] = useState('')
   const tick = useRef<number | null>(null)
 
-  // 倒數
+  // 倒數（tick 只負責遞減，唔喺 updater 入面叫 toast / setState）
   useEffect(() => {
     if (!running) return
     tick.current = window.setInterval(() => {
-      setSecondsLeft((s) => {
-        if (s <= 1) {
-          handlePhaseEnd()
-          return 0
-        }
-        return s - 1
-      })
+      setSecondsLeft((s) => (s <= 1 ? 0 : s - 1))
     }, 1000)
     return () => {
       if (tick.current) window.clearInterval(tick.current)
     }
+  }, [running])
+
+  // 倒數到 0 → 結束呢一節，喺 effect 入面安全處理副作用同 toast
+  useEffect(() => {
+    if (running && secondsLeft === 0) handlePhaseEnd()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [running, phase, preset])
+  }, [running, secondsLeft])
 
   function handlePhaseEnd() {
     if (phase === 'focus') {
@@ -46,9 +47,11 @@ export default function FocusTimer() {
       })
       setPhase('break')
       setSecondsLeft(preset.brk * 60)
+      toast.success('完成一節專注 🍅')
     } else {
       setPhase('focus')
       setSecondsLeft(preset.focus * 60)
+      toast.info('休息完啦，繼續努力 💪')
     }
     setRunning(false)
   }
@@ -95,7 +98,14 @@ export default function FocusTimer() {
       {/* 計時圈 */}
       <div className="relative mx-auto flex h-56 w-56 items-center justify-center">
         <svg className="absolute inset-0 -rotate-90" viewBox="0 0 100 100">
-          <circle cx="50" cy="50" r="45" fill="none" stroke="#e2e8f0" strokeWidth="6" />
+          <circle
+            cx="50"
+            cy="50"
+            r="45"
+            fill="none"
+            className="stroke-slate-200 dark:stroke-slate-700"
+            strokeWidth="6"
+          />
           <circle
             cx="50"
             cy="50"
@@ -113,7 +123,7 @@ export default function FocusTimer() {
           <p className="text-xs font-medium uppercase tracking-wider text-slate-400">
             {phase === 'focus' ? '專注中' : '休息'}
           </p>
-          <p className="mt-1 text-5xl font-bold tabular-nums text-slate-800">
+          <p className="mt-1 text-5xl font-bold tabular-nums text-slate-800 dark:text-slate-100">
             {mm}:{ss}
           </p>
         </div>

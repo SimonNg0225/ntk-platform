@@ -1,4 +1,5 @@
 import { useMode } from '../context/ModeContext'
+import { useSettings } from '../context/SettingsContext'
 import { groupedFeatures } from '../features/registry'
 import FeatureCard from '../components/FeatureCard'
 
@@ -9,8 +10,10 @@ interface Props {
 // 首頁概覽 — 按目前模式分組顯示功能
 export default function Home({ onOpen }: Props) {
   const { modeDef } = useMode()
+  const { displayName } = useSettings()
   const groups = groupedFeatures(modeDef.id)
   const total = groups.reduce((n, g) => n + g.items.length, 0)
+  const greeting = displayName.trim() ? `早晨，${displayName.trim()}` : modeDef.tagline
 
   return (
     <div className="space-y-7">
@@ -23,7 +26,7 @@ export default function Home({ onOpen }: Props) {
             {modeDef.icon} {modeDef.name}
           </p>
           <h1 className="mt-2 text-2xl font-bold sm:text-3xl">
-            {modeDef.tagline}
+            {greeting}
           </h1>
           <p className="mt-3 max-w-md text-sm opacity-90">
             呢個模式有 {total} 個功能。隨時喺左上角切換另一個模式。
@@ -33,7 +36,7 @@ export default function Home({ onOpen }: Props) {
 
       {groups.map((g) => (
         <section key={g.group}>
-          <h2 className="mb-4 text-xs font-semibold uppercase tracking-wider text-slate-400">
+          <h2 className="mb-4 text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-400">
             {g.group}
           </h2>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
