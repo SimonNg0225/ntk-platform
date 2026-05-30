@@ -3,15 +3,19 @@
 @tailwind utilities;
 
 :root {
-  /* 預設主題色（學習模式）— 切換模式時由 ModeContext 覆寫 */
-  --accent: #0f9d6b;
-  --accent-soft: #e6f6ef;
-  --accent-strong: #0a7a52;
+  /* 預設主題色（學習模式·海軍藍）— 切換模式時由 ModeContext 覆寫 */
+  --accent: #2f6cb3;
+  --accent-soft: #e9f0f9;
+  --accent-strong: #234f86;
+  --accent-grad-from: #3a74bb;
+  --accent-grad-to: #1f4a7d;
 
   font-family:
     'Noto Sans HK', system-ui, -apple-system, 'PingFang HK',
     'Microsoft JhengHei', sans-serif;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  color-scheme: light;
 }
 
 html,
@@ -19,4 +23,47 @@ body,
 #root {
   height: 100%;
   margin: 0;
+}
+
+body {
+  background: #f4f7fb; /* 淡海軍藍灰底 */
+}
+
+/* 文字選取色跟主題 */
+::selection {
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+}
+
+/* 手機抽屜滑入動畫 */
+@keyframes slideIn {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+/* 漸變主視覺（Hero）共用 class */
+.hero-gradient {
+  background-image: linear-gradient(
+    135deg,
+    var(--accent-grad-from),
+    var(--accent-grad-to)
+  );
+}
+
+/* 自訂 scrollbar，幼身啲、配合淡色主題 */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+}
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+*::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
 }

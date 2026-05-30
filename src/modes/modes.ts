@@ -27,18 +27,26 @@ export interface ModeDef {
   accentSoft: string
   /** 深色 (hover / 強調) — --accent-strong */
   accentStrong: string
+  /** Hero 漸變起點 — --accent-grad-from */
+  gradFrom: string
+  /** Hero 漸變終點 — --accent-grad-to */
+  gradTo: string
 }
 
+// 統一主題：海軍藍 × 白。
+// 兩個模式用唔同濃淡嘅藍嚟分辨 —— 學習較明亮、工作較深沉。
 export const MODES: Record<ModeId, ModeDef> = {
   learning: {
     id: 'learning',
     name: '學習模式',
     short: '學習',
     tagline: '提升個人知識增長',
-    icon: '📚',
-    accent: '#0f9d6b', // emerald
-    accentSoft: '#e6f6ef',
-    accentStrong: '#0a7a52',
+    icon: '📘',
+    accent: '#2f6cb3', // 中海軍藍（較明亮）
+    accentSoft: '#e9f0f9',
+    accentStrong: '#234f86',
+    gradFrom: '#3a74bb',
+    gradTo: '#1f4a7d',
   },
   work: {
     id: 'work',
@@ -46,9 +54,11 @@ export const MODES: Record<ModeId, ModeDef> = {
     short: '工作',
     tagline: 'BAFS 教學．工作效能',
     icon: '💼',
-    accent: '#3b5bdb', // indigo
-    accentSoft: '#eaeefb',
-    accentStrong: '#2f48ad',
+    accent: '#1e3a5f', // 深海軍藍
+    accentSoft: '#e8edf4',
+    accentStrong: '#142a44',
+    gradFrom: '#2b4d74',
+    gradTo: '#15293f',
   },
 }
 
