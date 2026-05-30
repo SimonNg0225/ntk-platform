@@ -8,6 +8,8 @@ import GoalsWidget from './learning/GoalsWidget'
 // 工作模式功能
 import TodoWidget from './work/TodoWidget'
 import ClassesWidget from './work/ClassesWidget'
+import CurriculumProgress from './work/CurriculumProgress'
+import QuestionBank from './work/QuestionBank'
 
 // ============================================================
 //  功能註冊表 (Feature Registry)
@@ -80,6 +82,24 @@ export const FEATURES: Feature[] = [
     status: 'ready',
   },
   {
+    id: 'work-curriculum',
+    modes: ['work'],
+    name: '課程進度',
+    description: '對住 BAFS 課程大綱追蹤每班進度。',
+    icon: '📊',
+    component: CurriculumProgress,
+    status: 'ready',
+  },
+  {
+    id: 'work-questions',
+    modes: ['work'],
+    name: 'BAFS 題庫',
+    description: '按課題／題型／難度儲存題目。',
+    icon: '🧩',
+    component: QuestionBank,
+    status: 'ready',
+  },
+  {
     id: 'work-lesson-plan',
     modes: ['work'],
     name: '備課 / 教案',
@@ -90,9 +110,17 @@ export const FEATURES: Feature[] = [
   {
     id: 'work-resources',
     modes: ['work'],
-    name: '教學資源',
+    name: '教學資源庫',
     description: '收藏講義、試題、教材連結。',
     icon: '🗂️',
+    status: 'soon',
+  },
+  {
+    id: 'work-gradebook',
+    modes: ['work'],
+    name: '成績管理',
+    description: '記錄評估分數、計平均、睇弱項。',
+    icon: '📈',
     status: 'soon',
   },
 
