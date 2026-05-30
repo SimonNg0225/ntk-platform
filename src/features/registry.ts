@@ -8,6 +8,8 @@ import Flashcards from './learning/Flashcards'
 import FocusTimer from './learning/FocusTimer'
 import Journal from './learning/Journal'
 import LearningDashboard from './learning/LearningDashboard'
+import ReadingList from './learning/ReadingList'
+import HabitTracker from './learning/HabitTracker'
 
 // 工作模式功能
 import TodoWidget from './work/TodoWidget'
@@ -16,20 +18,14 @@ import CurriculumProgress from './work/CurriculumProgress'
 import QuestionBank from './work/QuestionBank'
 import ResourceLibrary from './work/ResourceLibrary'
 import Gradebook from './work/Gradebook'
+import LessonPlanner from './work/LessonPlanner'
+import Timetable from './work/Timetable'
+import Attendance from './work/Attendance'
+import ParentComms from './work/ParentComms'
+import MeetingNotes from './work/MeetingNotes'
 
-// ============================================================
-//  功能註冊表 (Feature Registry)
-//  ------------------------------------------------------------
-//  呢度係成個平台嘅「擴充中心」。
-//
-//  ★ 想加一個新功能？只需要：
-//    1. 喺 src/features/<mode>/ 整一個元件
-//    2. 喺下面 FEATURES 陣列加多一個項目
-//    3. 完成！側邊欄、首頁概覽會自動顯示
-//
-//  modes:  呢個功能屬於邊啲模式（可以同時屬於兩個）
-//  status: 'ready' = 可用 / 'soon' = 預留位（即將推出）
-// ============================================================
+// 共用功能
+import Calendar from './shared/Calendar'
 
 export const FEATURES: Feature[] = [
   // ───────── 學習模式 ─────────
@@ -61,14 +57,6 @@ export const FEATURES: Feature[] = [
     status: 'ready',
   },
   {
-    id: 'learning-reading',
-    modes: ['learning'],
-    name: '閱讀清單',
-    description: '收藏想睇嘅書同文章。',
-    icon: '📖',
-    status: 'soon',
-  },
-  {
     id: 'learning-flashcards',
     modes: ['learning'],
     name: '知識卡 + 複習',
@@ -95,6 +83,24 @@ export const FEATURES: Feature[] = [
     component: Journal,
     status: 'ready',
   },
+  {
+    id: 'learning-reading',
+    modes: ['learning'],
+    name: '閱讀清單',
+    description: '收藏想睇嘅書同文章，分狀態追蹤。',
+    icon: '📖',
+    component: ReadingList,
+    status: 'ready',
+  },
+  {
+    id: 'learning-habits',
+    modes: ['learning'],
+    name: '習慣追蹤',
+    description: '每日打卡，建立學習好習慣。',
+    icon: '🔥',
+    component: HabitTracker,
+    status: 'ready',
+  },
 
   // ───────── 工作模式 ─────────
   {
@@ -116,12 +122,30 @@ export const FEATURES: Feature[] = [
     status: 'ready',
   },
   {
+    id: 'work-timetable',
+    modes: ['work'],
+    name: '時間表',
+    description: '每週教學時間表一覽。',
+    icon: '🗓️',
+    component: Timetable,
+    status: 'ready',
+  },
+  {
     id: 'work-curriculum',
     modes: ['work'],
     name: '課程進度',
     description: '對住 BAFS 課程大綱追蹤每班進度。',
     icon: '📊',
     component: CurriculumProgress,
+    status: 'ready',
+  },
+  {
+    id: 'work-lesson-plan',
+    modes: ['work'],
+    name: '備課 / 教案',
+    description: '撰寫同整理 BAFS 教學計劃。',
+    icon: '📋',
+    component: LessonPlanner,
     status: 'ready',
   },
   {
@@ -132,14 +156,6 @@ export const FEATURES: Feature[] = [
     icon: '🧩',
     component: QuestionBank,
     status: 'ready',
-  },
-  {
-    id: 'work-lesson-plan',
-    modes: ['work'],
-    name: '備課 / 教案',
-    description: '撰寫同整理 BAFS 教學計劃。',
-    icon: '📋',
-    status: 'soon',
   },
   {
     id: 'work-resources',
@@ -159,24 +175,52 @@ export const FEATURES: Feature[] = [
     component: Gradebook,
     status: 'ready',
   },
+  {
+    id: 'work-attendance',
+    modes: ['work'],
+    name: '點名 / 出席',
+    description: '每堂記錄學生出席狀況。',
+    icon: '🙋',
+    component: Attendance,
+    status: 'ready',
+  },
+  {
+    id: 'work-parent-comms',
+    modes: ['work'],
+    name: '家長溝通',
+    description: '記錄與家長／學生嘅聯絡同跟進。',
+    icon: '📞',
+    component: ParentComms,
+    status: 'ready',
+  },
+  {
+    id: 'work-meeting-notes',
+    modes: ['work'],
+    name: '會議筆記',
+    description: '會議與行政事項筆記。',
+    icon: '🗒️',
+    component: MeetingNotes,
+    status: 'ready',
+  },
 
-  // ───────── 兩個模式共用（示範跨模式功能）─────────
+  // ───────── 兩個模式共用 ─────────
   {
     id: 'calendar',
     modes: ['learning', 'work'],
     name: '行事曆',
     description: '統一管理學習與工作日程。',
     icon: '📅',
-    status: 'soon',
+    component: Calendar,
+    status: 'ready',
   },
 ]
 
-/** 攞返某個模式可以見到嘅功能 */
+// 攞返某個模式可以見到嘅功能
 export function featuresForMode(mode: ModeId): Feature[] {
   return FEATURES.filter((f) => f.modes.includes(mode))
 }
 
-/** 用 id 攞返一個功能 */
+// 用 id 攞返一個功能
 export function getFeature(id: string): Feature | undefined {
   return FEATURES.find((f) => f.id === id)
 }
