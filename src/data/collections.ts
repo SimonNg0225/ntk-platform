@@ -16,6 +16,16 @@ import type {
   Note,
   Goal,
   Task,
+  CalendarEvent,
+  ReadingItem,
+  Habit,
+  HabitLog,
+  LessonPlan,
+  TimetableSlot,
+  AttendanceRecord,
+  ParentComm,
+  MeetingNote,
+  InboxItem,
 } from './types'
 
 // ============================================================
@@ -65,3 +75,15 @@ export const tasksCol = createCollection<Task>('work_tasks', [
   { id: 'task-2', text: '預備下星期市場營銷課堂', done: false, createdAt: new Date().toISOString() },
   { id: 'task-3', text: '上載功課到學校平台', done: true, createdAt: new Date().toISOString() },
 ])
+
+// ───── 新一批功能 ─────
+export const eventsCol = createCollection<CalendarEvent>('events', [])
+export const readingCol = createCollection<ReadingItem>('reading_items', [])
+export const habitsCol = createCollection<Habit>('habits', [])
+export const habitLogsCol = createCollection<HabitLog>('habit_logs', [])
+export const lessonPlansCol = createCollection<LessonPlan>('lesson_plans', [])
+export const timetableCol = createCollection<TimetableSlot>('timetable', [])
+export const attendanceCol = createCollection<AttendanceRecord>('attendance', [])
+export const parentCommsCol = createCollection<ParentComm>('parent_comms', [])
+export const meetingNotesCol = createCollection<MeetingNote>('meeting_notes', [])
+export const inboxCol = createCollection<InboxItem>('inbox', [])

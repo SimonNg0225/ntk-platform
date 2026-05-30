@@ -135,3 +135,94 @@ export interface Task extends Entity {
   done: boolean
   createdAt: string
 }
+
+// ───── 新一批功能 ─────
+
+// 行事曆（兩個模式共用）
+export interface CalendarEvent extends Entity {
+  title: string
+  date: string // YYYY-MM-DD
+  time?: string // HH:mm
+  mode?: 'learning' | 'work' | 'both'
+  type?: string // 測驗 / 會議 / 死線 / 提醒…
+  notes?: string
+}
+
+// 閱讀清單（學習）
+export type ReadingStatus = 'to_read' | 'reading' | 'done'
+export interface ReadingItem extends Entity {
+  title: string
+  author?: string
+  url?: string
+  status: ReadingStatus
+  notes?: string
+  createdAt: string
+}
+
+// 習慣追蹤（學習）
+export interface Habit extends Entity {
+  name: string
+  icon?: string
+  createdAt: string
+}
+export interface HabitLog extends Entity {
+  habitId: string
+  date: string // YYYY-MM-DD（有記錄 = 當日完成）
+}
+
+// 備課 / 教案（工作）
+export interface LessonPlan extends Entity {
+  title: string
+  classId?: string
+  topicId?: string
+  date?: string
+  objectives?: string
+  activities?: string
+  resourcesNote?: string
+  createdAt: string
+}
+
+// 時間表（工作）
+export interface TimetableSlot extends Entity {
+  day: number // 1=一 … 6=六
+  period: number // 第幾節
+  classId?: string
+  subject: string
+  room?: string
+}
+
+// 出席（工作）
+export type AttendanceStatus = 'present' | 'absent' | 'late'
+export interface AttendanceRecord extends Entity {
+  classId: string
+  studentId: string
+  date: string // YYYY-MM-DD
+  status: AttendanceStatus
+}
+
+// 家長 / 學生溝通記錄（工作）
+export interface ParentComm extends Entity {
+  classId: string
+  studentId?: string
+  date: string
+  channel: string // 電話 / 電郵 / 面談 / 手冊
+  summary: string
+  followUp?: boolean
+  createdAt: string
+}
+
+// 會議 / 行政筆記（工作）
+export interface MeetingNote extends Entity {
+  title: string
+  date: string
+  content: string
+  tags?: string[]
+  createdAt: string
+}
+
+// 快速擷取 Inbox（共用）
+export interface InboxItem extends Entity {
+  text: string
+  mode?: 'learning' | 'work'
+  createdAt: string
+}
