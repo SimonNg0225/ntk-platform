@@ -12,6 +12,7 @@ import {
   studentsCol,
 } from '../../data/collections'
 import { useNav } from '../../context/NavContext'
+import { Input, Card, Badge, SectionTitle, EmptyState } from '../../ui'
 import type {
   Note,
   Question,
@@ -171,40 +172,47 @@ export default function GlobalSearch() {
       </header>
 
       {/* 搜尋框 */}
-      <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5">
+      <Card className="p-4 sm:p-5">
         <label htmlFor="global-search" className="sr-only">
           全域搜尋
         </label>
-        <input
+        <Input
           id="global-search"
           autoFocus
           type="search"
           value={keyword}
           onChange={(e) => setKeyword(e.target.value)}
           placeholder="搜尋筆記、題庫、資源、班別、學生…"
-          className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/30"
         />
 
         {trimmed && (
-          <p className="mt-3 text-sm text-slate-500">
-            共{' '}
-            <span className="font-semibold text-accent-strong">{totalHits}</span>{' '}
+          <p className="mt-3 flex items-center gap-2 text-sm text-slate-500">
+            共
+            <Badge tone="accent">{totalHits}</Badge>
             項命中
           </p>
         )}
-      </div>
+      </Card>
 
       {/* 未輸入提示 */}
       {!trimmed && (
-        <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-8 text-center text-sm text-slate-400">
-          輸入關鍵字即時開始搜尋。
+        <div className="mt-4">
+          <EmptyState
+            icon="🔍"
+            title="輸入關鍵字即時開始搜尋"
+            hint="一次過喺所有筆記、題庫、資源、教案、班別、學生入面搵嘢。"
+          />
         </div>
       )}
 
       {/* 有輸入但無結果 */}
       {trimmed && totalHits === 0 && (
-        <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-8 text-center text-sm text-slate-400">
-          搵唔到「<span className="text-slate-600">{trimmed}</span>」嘅結果。
+        <div className="mt-4">
+          <EmptyState
+            icon="🤔"
+            title={`搵唔到「${trimmed}」嘅結果`}
+            hint="試下換個關鍵字，或者檢查有冇打錯字。"
+          />
         </div>
       )}
 
@@ -212,18 +220,10 @@ export default function GlobalSearch() {
       {trimmed && totalHits > 0 && (
         <div className="mt-4 space-y-4">
           {visibleGroups.map((group) => (
-            <section
-              key={group.featureId}
-              className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5"
-            >
-              <div className="mb-3 flex items-baseline justify-between">
-                <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-                  {group.label}
-                </h2>
-                <span className="rounded-full bg-accent-soft px-2.5 py-0.5 text-xs font-medium text-accent-strong">
-                  {group.hits.length}
-                </span>
-              </div>
+            <Card key={group.featureId} className="p-4 sm:p-5">
+              <SectionTitle right={<Badge tone="accent">{group.hits.length}</Badge>}>
+                {group.label}
+              </SectionTitle>
 
               <ul className="space-y-2">
                 {group.hits.slice(0, MAX_PER_GROUP).map((hit) => (
@@ -244,7 +244,7 @@ export default function GlobalSearch() {
                   </li>
                 )}
               </ul>
-            </section>
+            </Card>
           ))}
         </div>
       )}

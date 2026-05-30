@@ -1,8 +1,20 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useCollection } from '../../lib/store'
 import { decksCol, cardsCol } from '../../data/collections'
 import { isDue, schedule, RATING_LABEL, todayStr, type Rating } from '../../lib/srs'
 import type { Card } from '../../data/types'
+import {
+  Button,
+  Input,
+  Textarea,
+  Card as UICard,
+  Badge,
+  EmptyState,
+  ProgressBar,
+  StatCard,
+  Modal,
+  IconButton,
+} from '../../ui'
 
 type View =
   | { name: 'decks' }
@@ -47,6 +59,8 @@ function DeckList({
   const cards = useCollection(cardsCol)
   const [name, setName] = useState('')
 
+  const totalDue = cards.filter(isDue).length
+
   const add = () => {
     if (!name.trim()) return
     decksCol.add({ name: name.trim(), createdAt: new Date().toISOString() })
@@ -55,20 +69,28 @@ function DeckList({
 
   return (
     <div className="space-y-4">
+      {/* 總覽 StatCard */}
+      <div className="grid grid-cols-3 gap-3">
+        <StatCard label="牌組" value={decks.length} unit="組" icon="📚" />
+        <StatCard
+          label="今日要複習"
+          value={totalDue}
+          unit="張"
+          icon="🔥"
+          highlight
+        />
+        <StatCard label="總卡數" value={cards.length} unit="張" icon="🗂️" />
+      </div>
+
       <div className="flex gap-2">
-        <input
+        <Input
           value={name}
           onChange={(e) => setName(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && add()}
           placeholder="新牌組名稱（例如 會計概念）"
-          className="flex-1 rounded-xl border border-slate-300 px-3 py-2 text-sm outline-none focus:border-accent focus:ring-2 focus:ring-accent/30"
+          className="flex-1"
         />
-        <button
-          onClick={add}
-          className="rounded-xl bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-strong"
-        >
-          ＋ 牌組
-        </button>
+        <Button onClick={add}>＋ 牌組</Button>
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2">
@@ -76,50 +98,57 @@ function DeckList({
           const deckCards = cards.filter((c) => c.deckId === d.id)
           const due = deckCards.filter(isDue).length
           return (
-            <div
-              key={d.id}
-              className="group rounded-2xl border border-slate-200 bg-white p-4"
-            >
-              <div className="flex items-start justify-between">
+            <UICard key={d.id} className="group p-4">
+              <div className="flex items-start justify-between gap-2">
                 <p className="text-base font-semibold text-slate-800">
                   {d.name}
                 </p>
-                <button
+                <Button
+                  variant="ghost"
+                  size="sm"
                   onClick={() => {
+                    if (!confirm(`刪除牌組「${d.name}」？卡片亦會一併刪除。`))
+                      return
                     decksCol.remove(d.id)
                     deckCards.forEach((c) => cardsCol.remove(c.id))
                   }}
-                  className="text-xs text-slate-300 opacity-0 transition group-hover:opacity-100 hover:text-red-500"
+                  className="text-slate-300 opacity-0 transition group-hover:opacity-100 hover:text-rose-500"
                 >
                   刪除
-                </button>
+                </Button>
               </div>
               <p className="mt-1 text-xs text-slate-400">
                 {deckCards.length} 張卡 · 今日到期{' '}
                 <span className="font-semibold text-accent">{due}</span>
               </p>
               <div className="mt-3 flex gap-2">
-                <button
+                <Button
                   onClick={() => onReview(d.id)}
                   disabled={due === 0}
-                  className="flex-1 rounded-lg bg-accent px-3 py-1.5 text-sm font-medium text-white transition hover:bg-accent-strong disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400"
+                  size="sm"
+                  className="flex-1"
                 >
                   複習 {due > 0 && `(${due})`}
-                </button>
-                <button
+                </Button>
+                <Button
+                  variant="secondary"
+                  size="sm"
                   onClick={() => onOpen(d.id)}
-                  className="rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-50"
                 >
                   管理
-                </button>
+                </Button>
               </div>
-            </div>
+            </UICard>
           )
         })}
         {decks.length === 0 && (
-          <p className="rounded-xl bg-slate-50 px-4 py-10 text-center text-sm text-slate-400 sm:col-span-2">
-            仲未有牌組。上面建立一個，開始整知識卡。
-          </p>
+          <div className="sm:col-span-2">
+            <EmptyState
+              icon="🗂️"
+              title="仲未有牌組"
+              hint="上面建立一個，開始整知識卡同間隔重複溫習。"
+            />
+          </div>
         )}
       </div>
     </div>
@@ -141,6 +170,8 @@ function DeckDetail({
   const deck = decks.find((d) => d.id === deckId)
   const [front, setFront] = useState('')
   const [back, setBack] = useState('')
+  const [renameOpen, setRenameOpen] = useState(false)
+  const [renameValue, setRenameValue] = useState('')
 
   const due = cards.filter(isDue).length
 
@@ -156,80 +187,136 @@ function DeckDetail({
       dueDate: todayStr(),
       createdAt: new Date().toISOString(),
     })
+    // 連續輸入：清空 + focus 返 front，方便連續加多張
     setFront('')
     setBack('')
+    document.getElementById('card-front')?.focus()
+  }
+
+  const saveRename = () => {
+    const v = renameValue.trim()
+    if (!v) return
+    decksCol.update(deckId, { name: v })
+    setRenameOpen(false)
   }
 
   return (
     <div className="space-y-4">
-      <button
-        onClick={onBack}
-        className="text-sm text-slate-400 hover:text-accent"
-      >
+      <Button variant="ghost" size="sm" onClick={onBack}>
         ← 返回所有牌組
-      </button>
-      <div className="flex items-center justify-between">
-        <h3 className="text-lg font-bold text-slate-800">{deck?.name}</h3>
-        <button
-          onClick={onReview}
-          disabled={due === 0}
-          className="rounded-lg bg-accent px-3 py-1.5 text-sm font-medium text-white hover:bg-accent-strong disabled:bg-slate-200 disabled:text-slate-400"
-        >
+      </Button>
+
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-1.5">
+          <h3 className="text-lg font-bold text-slate-800">{deck?.name}</h3>
+          <IconButton
+            label="改名"
+            onClick={() => {
+              setRenameValue(deck?.name ?? '')
+              setRenameOpen(true)
+            }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+              <path
+                d="M4 20h4l10-10-4-4L4 16v4zM14 6l4 4"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </IconButton>
+        </div>
+        <Button onClick={onReview} disabled={due === 0} size="sm">
           開始複習 {due > 0 && `(${due})`}
-        </button>
+        </Button>
       </div>
 
+      {/* 新增卡（支援連續輸入） */}
       <div className="space-y-2 rounded-2xl border border-accent/30 bg-accent-soft/40 p-4">
-        <input
+        <Input
+          id="card-front"
           value={front}
           onChange={(e) => setFront(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') document.getElementById('card-back')?.focus()
+          }}
           placeholder="正面（問題）"
-          className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm outline-none focus:border-accent"
         />
-        <textarea
+        <Textarea
+          id="card-back"
           value={back}
           onChange={(e) => setBack(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) add()
+          }}
           placeholder="背面（答案）"
           rows={2}
-          className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm outline-none focus:border-accent"
         />
-        <button
-          onClick={add}
-          className="w-full rounded-xl bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-strong"
-        >
-          加入卡片
-        </button>
+        <Button onClick={add} className="w-full">
+          加入卡片（可連續加）
+        </Button>
       </div>
 
       <ul className="space-y-2">
         {cards.map((c) => (
-          <li
-            key={c.id}
-            className="group rounded-2xl border border-slate-200 bg-white p-3"
-          >
-            <div className="flex items-start justify-between gap-2">
-              <div className="flex-1">
-                <p className="text-sm font-medium text-slate-800">{c.front}</p>
-                <p className="mt-1 text-sm text-slate-500">{c.back}</p>
+          <li key={c.id} className="group">
+            <UICard className="p-3">
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-slate-800">
+                    {c.front}
+                  </p>
+                  <p className="mt-1 text-sm text-slate-500">{c.back}</p>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => cardsCol.remove(c.id)}
+                  className="text-slate-300 opacity-0 transition group-hover:opacity-100 hover:text-rose-500"
+                >
+                  刪除
+                </Button>
               </div>
-              <button
-                onClick={() => cardsCol.remove(c.id)}
-                className="text-xs text-slate-300 opacity-0 transition group-hover:opacity-100 hover:text-red-500"
-              >
-                刪除
-              </button>
-            </div>
-            <p className="mt-1.5 text-[11px] text-slate-300">
-              {isDue(c) ? '今日到期' : `下次複習：${c.dueDate}`}
-            </p>
+              <div className="mt-2">
+                {isDue(c) ? (
+                  <Badge tone="accent">今日到期</Badge>
+                ) : (
+                  <Badge tone="slate">下次 {c.dueDate}</Badge>
+                )}
+              </div>
+            </UICard>
           </li>
         ))}
         {cards.length === 0 && (
-          <li className="rounded-xl bg-slate-50 px-4 py-8 text-center text-sm text-slate-400">
-            仲未有卡片
+          <li>
+            <EmptyState icon="📝" title="仲未有卡片" hint="上面加第一張卡。" />
           </li>
         )}
       </ul>
+
+      {/* 改名 Modal */}
+      <Modal
+        open={renameOpen}
+        onClose={() => setRenameOpen(false)}
+        title="牌組改名"
+      >
+        <div className="space-y-3">
+          <Input
+            value={renameValue}
+            onChange={(e) => setRenameValue(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && saveRename()}
+            placeholder="牌組名稱"
+            autoFocus
+          />
+          <div className="flex justify-end gap-2">
+            <Button variant="secondary" onClick={() => setRenameOpen(false)}>
+              取消
+            </Button>
+            <Button onClick={saveRename}>儲存</Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   )
 }
@@ -249,25 +336,36 @@ function ReviewSession({
   )
   const [flipped, setFlipped] = useState(false)
   const [done, setDone] = useState(0)
+  // 開場張數（用嚟計進度）
+  const total = useMemo(
+    () =>
+      allCards.filter((c) => c.deckId === deckId && isDue(c)).length,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  )
 
   const currentId = queue[0]
   const card: Card | undefined = allCards.find((c) => c.id === currentId)
 
   if (!card) {
     return (
-      <div className="space-y-4 text-center">
+      <UICard className="space-y-4 p-8 text-center">
         <p className="text-4xl">🎉</p>
         <p className="text-lg font-semibold text-slate-800">複習完成！</p>
-        <p className="text-sm text-slate-500">今次複習咗 {done} 次。</p>
-        <button
-          onClick={onDone}
-          className="rounded-xl bg-accent px-5 py-2 text-sm font-medium text-white hover:bg-accent-strong"
-        >
+        <p className="text-sm text-slate-500">
+          今次複習咗 <span className="font-semibold text-accent">{done}</span>{' '}
+          張卡。
+        </p>
+        <Button onClick={onDone} size="lg">
           返回牌組
-        </button>
-      </div>
+        </Button>
+      </UICard>
     )
   }
+
+  const remaining = queue.length
+  // 進度以「未剩低 / 總數」估算
+  const progress = total > 0 ? ((total - remaining) / total) * 100 : 0
 
   const rate = (rating: Rating) => {
     cardsCol.update(card.id, schedule(card, rating))
@@ -283,17 +381,19 @@ function ReviewSession({
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between text-xs text-slate-400">
-        <button onClick={onDone} className="hover:text-accent">
+        <Button variant="ghost" size="sm" onClick={onDone}>
           ← 結束複習
-        </button>
+        </Button>
         <span>
-          進度 {done} · 剩 {queue.length}
+          已複習 {done} · 剩 <span className="font-semibold">{remaining}</span> 張
         </span>
       </div>
 
-      <div
+      <ProgressBar value={progress} />
+
+      <UICard
         onClick={() => setFlipped((f) => !f)}
-        className="flex min-h-[200px] cursor-pointer flex-col items-center justify-center rounded-3xl border border-slate-200 bg-white p-6 text-center shadow-sm"
+        className="flex min-h-[200px] flex-col items-center justify-center p-6 text-center"
       >
         <p className="text-xs uppercase tracking-wider text-slate-300">
           {flipped ? '答案' : '問題'}（撳一下翻面）
@@ -301,27 +401,25 @@ function ReviewSession({
         <p className="mt-3 text-lg font-medium text-slate-800">
           {flipped ? card.back : card.front}
         </p>
-      </div>
+      </UICard>
 
       {flipped ? (
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
           {(['again', 'hard', 'good', 'easy'] as Rating[]).map((r) => (
-            <button
+            <Button
               key={r}
+              variant="secondary"
               onClick={() => rate(r)}
-              className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-medium text-slate-700 transition hover:border-accent hover:bg-accent-soft"
+              className="hover:border-accent hover:bg-accent-soft"
             >
               {RATING_LABEL[r]}
-            </button>
+            </Button>
           ))}
         </div>
       ) : (
-        <button
-          onClick={() => setFlipped(true)}
-          className="w-full rounded-xl bg-accent px-4 py-3 text-sm font-medium text-white hover:bg-accent-strong"
-        >
+        <Button onClick={() => setFlipped(true)} size="lg" className="w-full">
           顯示答案
-        </button>
+        </Button>
       )}
     </div>
   )

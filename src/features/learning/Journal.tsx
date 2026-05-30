@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useCollection } from '../../lib/store'
 import { journalCol } from '../../data/collections'
+import { Textarea, Button, Card, Badge, SectionTitle, EmptyState } from '../../ui'
 
 const MOODS = ['😀', '🙂', '😐', '😓', '😣']
 const PROMPTS = [
@@ -54,40 +55,32 @@ export default function Journal() {
           </div>
         </div>
         <p className="text-xs text-slate-400">{PROMPTS.join('　')}</p>
-        <textarea
+        <Textarea
           value={content}
           onChange={(e) => setContent(e.target.value)}
           rows={5}
           placeholder="寫低今日嘅學習反思…"
-          className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm outline-none focus:border-accent focus:ring-2 focus:ring-accent/30"
         />
-        <button
-          onClick={save}
-          className="w-full rounded-xl bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-strong"
-        >
+        <Button onClick={save} className="w-full">
           {saved ? '已儲存 ✓' : todayEntry ? '更新今日日誌' : '儲存今日日誌'}
-        </button>
+        </Button>
       </div>
 
       {/* 過往 */}
-      {past.length > 0 && (
+      {past.length > 0 ? (
         <div>
-          <h3 className="mb-2 text-xs font-bold uppercase tracking-wider text-slate-400">
-            過往日誌
-          </h3>
+          <SectionTitle>過往日誌</SectionTitle>
           <ul className="space-y-2">
             {past.map((e) => (
-              <li
-                key={e.id}
-                className="group rounded-2xl border border-slate-200 bg-white p-4"
-              >
+              <Card key={e.id} className="group p-4">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-medium text-slate-500">
-                    {e.mood} {e.date}
+                  <span className="flex items-center gap-2 text-xs font-medium text-slate-500">
+                    {e.mood && <Badge tone="accent">{e.mood}</Badge>}
+                    {e.date}
                   </span>
                   <button
                     onClick={() => journalCol.remove(e.id)}
-                    className="text-xs text-slate-300 opacity-0 transition group-hover:opacity-100 hover:text-red-500"
+                    className="text-xs text-slate-300 opacity-0 transition group-hover:opacity-100 hover:text-rose-500"
                   >
                     刪除
                   </button>
@@ -95,10 +88,16 @@ export default function Journal() {
                 <p className="mt-1.5 whitespace-pre-wrap text-sm text-slate-700">
                   {e.content}
                 </p>
-              </li>
+              </Card>
             ))}
           </ul>
         </div>
+      ) : (
+        <EmptyState
+          icon="📔"
+          title="仲未有過往日誌"
+          hint="每日寫低一啲反思，慢慢就會儲落一本屬於你嘅學習日記。"
+        />
       )}
     </div>
   )

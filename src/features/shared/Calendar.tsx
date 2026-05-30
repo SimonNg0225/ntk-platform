@@ -2,28 +2,66 @@ import { useMemo, useState } from 'react'
 import { useCollection } from '../../lib/store'
 import { eventsCol } from '../../data/collections'
 import type { CalendarEvent } from '../../data/types'
+import {
+  Badge,
+  Button,
+  Card,
+  EmptyState,
+  Field,
+  IconButton,
+  Input,
+  Modal,
+  SectionTitle,
+  Select,
+  Textarea,
+} from '../../ui'
 
 const WEEKDAYS = ['日', '一', '二', '三', '四', '五', '六'] as const
 
-const EVENT_TYPES = ['測驗', '會議', '死線', '提醒'] as const
+const EVENT_TYPES = ['測驗', '會議', '死線', '提醒', '其他'] as const
 type EventType = (typeof EVENT_TYPES)[number]
 
+type TypeTone = 'rose' | 'blue' | 'amber' | 'accent' | 'slate'
+
+/** 事件類型 → Badge 色調 */
+const TYPE_TONE: Record<EventType, TypeTone> = {
+  測驗: 'rose',
+  會議: 'blue',
+  死線: 'amber',
+  提醒: 'accent',
+  其他: 'slate',
+}
+
+/** 事件類型 → 月曆小圓點 / 直紋色（Tailwind class） */
+const TYPE_DOT: Record<TypeTone, string> = {
+  rose: 'bg-rose-500',
+  blue: 'bg-blue-500',
+  amber: 'bg-amber-500',
+  accent: 'bg-accent',
+  slate: 'bg-slate-400',
+}
+
+function toneOf(type?: string): TypeTone {
+  if (type && type in TYPE_TONE) return TYPE_TONE[type as EventType]
+  return 'slate'
+}
+
 /** 將 Date 轉成本地時區嘅 YYYY-MM-DD（避免用 toISOString 出現時差問題） */
-function toDateKey(d: Date): string {
+function toKey(d: Date): string {
   const y = d.getFullYear()
-  const m = String(d.getMonth() + 1).padStart(2, '0')
-  const day = String(d.getDate()).padStart(2, '0')
-  return `${y}-${m}-${day}`
+  const mm = String(d.getMonth() + 1).padStart(2, '0')
+  const dd = String(d.getDate()).padStart(2, '0')
+  return `${y}-${mm}-${dd}`
 }
 
 /** 由 YYYY-MM-DD 砌返一個本地 Date（中午，避開時區邊界） */
-function fromDateKey(key: string): Date {
+function fromKey(key: string): Date {
   const [y, m, d] = key.split('-').map(Number)
   return new Date(y, (m ?? 1) - 1, d ?? 1, 12, 0, 0, 0)
 }
 
 function formatLongDate(key: string): string {
-  const d = fromDateKey(key)
+  const d = fromKey(key)
   return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日（星期${WEEKDAYS[d.getDay()]}）`
 }
 
@@ -38,52 +76,59 @@ function buildMonthGrid(year: number, month: number): Date[] {
   return cells
 }
 
+function sortByTime(a: CalendarEvent, b: CalendarEvent): number {
+  return (a.time ?? '').localeCompare(b.time ?? '')
+}
+
 export default function Calendar() {
   const events = useCollection(eventsCol)
 
   const today = useMemo(() => new Date(), [])
-  const todayKey = useMemo(() => toDateKey(today), [today])
+  const todayKey = useMemo(() => toKey(today), [today])
 
   const [viewYear, setViewYear] = useState(today.getFullYear())
   const [viewMonth, setViewMonth] = useState(today.getMonth())
   const [selectedKey, setSelectedKey] = useState<string>(todayKey)
 
-  // 新增表單狀態
-  const [title, setTitle] = useState('')
-  const [time, setTime] = useState('')
-  const [type, setType] = useState<EventType | ''>('')
-  const [notes, setNotes] = useState('')
+  // 新增 Modal 狀態
+  const [modalOpen, setModalOpen] = useState(false)
+  const [fTitle, setFTitle] = useState('')
+  const [fDate, setFDate] = useState(todayKey)
+  const [fTime, setFTime] = useState('')
+  const [fType, setFType] = useState<EventType | ''>('')
+  const [fNotes, setFNotes] = useState('')
 
-  // 每日事件數量（用嚟畫小圓點）
-  const countByDate = useMemo(() => {
-    const map = new Map<string, number>()
+  // 每日事件（用嚟畫月曆格小圓點 + 預覽 title）
+  const eventsByDate = useMemo(() => {
+    const map = new Map<string, CalendarEvent[]>()
     for (const ev of events) {
-      map.set(ev.date, (map.get(ev.date) ?? 0) + 1)
+      const list = map.get(ev.date)
+      if (list) list.push(ev)
+      else map.set(ev.date, [ev])
     }
+    for (const list of map.values()) list.sort(sortByTime)
     return map
   }, [events])
 
   const monthCells = useMemo(() => buildMonthGrid(viewYear, viewMonth), [viewYear, viewMonth])
 
-  const selectedEvents = useMemo(() => {
-    return events
-      .filter((ev) => ev.date === selectedKey)
-      .slice()
-      .sort((a, b) => (a.time ?? '').localeCompare(b.time ?? ''))
-  }, [events, selectedKey])
+  const selectedEvents = useMemo(
+    () => events.filter((ev) => ev.date === selectedKey).slice().sort(sortByTime),
+    [events, selectedKey],
+  )
 
   const upcoming = useMemo(() => {
-    const start = fromDateKey(todayKey)
-    const end = new Date(start.getFullYear(), start.getMonth(), start.getDate() + 8) // 未來 7 日（含今日起 8 個邊界）
+    const start = fromKey(todayKey)
+    const end = new Date(start.getFullYear(), start.getMonth(), start.getDate() + 8)
     return events
       .filter((ev) => {
-        const d = fromDateKey(ev.date)
+        const d = fromKey(ev.date)
         return d >= start && d < end
       })
       .slice()
       .sort((a, b) => {
         if (a.date !== b.date) return a.date.localeCompare(b.date)
-        return (a.time ?? '').localeCompare(b.time ?? '')
+        return sortByTime(a, b)
       })
   }, [events, todayKey])
 
@@ -113,23 +158,37 @@ export default function Calendar() {
     setSelectedKey(todayKey)
   }
 
+  function jumpTo(key: string) {
+    const d = fromKey(key)
+    setViewYear(d.getFullYear())
+    setViewMonth(d.getMonth())
+    setSelectedKey(key)
+  }
+
+  function openAddModal() {
+    setFTitle('')
+    setFDate(selectedKey)
+    setFTime('')
+    setFType('')
+    setFNotes('')
+    setModalOpen(true)
+  }
+
   function handleAdd(e: React.FormEvent) {
     e.preventDefault()
-    const trimmed = title.trim()
+    const trimmed = fTitle.trim()
     if (!trimmed) return
     const payload: Omit<CalendarEvent, 'id'> = {
       title: trimmed,
-      date: selectedKey,
+      date: fDate,
     }
-    if (time) payload.time = time
-    if (type) payload.type = type
-    const trimmedNotes = notes.trim()
+    if (fTime) payload.time = fTime
+    if (fType) payload.type = fType
+    const trimmedNotes = fNotes.trim()
     if (trimmedNotes) payload.notes = trimmedNotes
     eventsCol.add(payload)
-    setTitle('')
-    setTime('')
-    setType('')
-    setNotes('')
+    setSelectedKey(fDate)
+    setModalOpen(false)
   }
 
   function handleRemove(id: CalendarEvent['id']) {
@@ -141,36 +200,43 @@ export default function Calendar() {
   return (
     <div className="space-y-4 sm:space-y-6">
       {/* 月曆卡片 */}
-      <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+      <Card className="p-4 sm:p-5">
         <header className="mb-4 flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={goPrevMonth}
-              aria-label="上一個月"
-              className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 text-slate-600 transition hover:bg-accent-soft hover:text-accent-strong focus:outline-none focus:ring-2 focus:ring-accent/30"
-            >
-              ‹
-            </button>
+          <div className="flex items-center gap-1">
+            <IconButton label="上一個月" onClick={goPrevMonth}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                <path
+                  d="M15 6l-6 6 6 6"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </IconButton>
             <h2 className="min-w-[6.5rem] text-center text-lg font-semibold text-slate-800">
               {monthLabel}
             </h2>
-            <button
-              type="button"
-              onClick={goNextMonth}
-              aria-label="下一個月"
-              className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 text-slate-600 transition hover:bg-accent-soft hover:text-accent-strong focus:outline-none focus:ring-2 focus:ring-accent/30"
-            >
-              ›
-            </button>
+            <IconButton label="下一個月" onClick={goNextMonth}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                <path
+                  d="M9 6l6 6-6 6"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </IconButton>
           </div>
-          <button
-            type="button"
-            onClick={goToday}
-            className="rounded-xl border border-accent bg-accent-soft px-3 py-1.5 text-sm font-medium text-accent-strong transition hover:bg-accent hover:text-white focus:outline-none focus:ring-2 focus:ring-accent/30"
-          >
-            今日
-          </button>
+          <div className="flex items-center gap-2">
+            <Button variant="secondary" size="sm" onClick={goToday}>
+              今日
+            </Button>
+            <Button size="sm" onClick={openAddModal}>
+              ＋ 新增
+            </Button>
+          </div>
         </header>
 
         {/* 星期標頭 */}
@@ -185,18 +251,18 @@ export default function Calendar() {
         {/* 日期格仔 */}
         <div className="grid grid-cols-7 gap-1">
           {monthCells.map((cell) => {
-            const key = toDateKey(cell)
+            const key = toKey(cell)
             const inMonth = cell.getMonth() === viewMonth
             const isToday = key === todayKey
             const isSelected = key === selectedKey
-            const count = countByDate.get(key) ?? 0
+            const dayEvents = eventsByDate.get(key) ?? []
 
             const base =
-              'relative flex aspect-square flex-col items-center justify-center rounded-xl text-sm transition focus:outline-none focus:ring-2 focus:ring-accent/30'
+              'relative flex aspect-square flex-col items-stretch rounded-xl p-1 text-left text-sm transition focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40'
             const tone = isSelected
-              ? 'bg-accent text-white font-semibold'
+              ? 'bg-accent text-white'
               : isToday
-                ? 'bg-accent-soft text-accent-strong font-semibold'
+                ? 'bg-accent-soft text-accent-strong'
                 : inMonth
                   ? 'text-slate-700 hover:bg-slate-100'
                   : 'text-slate-300 hover:bg-slate-50'
@@ -207,180 +273,210 @@ export default function Calendar() {
                 type="button"
                 onClick={() => setSelectedKey(key)}
                 aria-pressed={isSelected}
-                aria-label={`${formatLongDate(key)}${count ? `，有 ${count} 項活動` : ''}`}
+                aria-label={`${formatLongDate(key)}${
+                  dayEvents.length ? `，有 ${dayEvents.length} 項活動` : ''
+                }`}
                 className={`${base} ${tone}`}
               >
-                <span>{cell.getDate()}</span>
-                {count > 0 && (
-                  <span
-                    className={`absolute bottom-1 h-1.5 w-1.5 rounded-full ${
-                      isSelected ? 'bg-white' : 'bg-accent'
-                    }`}
-                  />
-                )}
+                <span
+                  className={`text-center text-xs font-semibold sm:text-sm ${
+                    isToday && !isSelected ? 'text-accent-strong' : ''
+                  }`}
+                >
+                  {cell.getDate()}
+                </span>
+
+                {/* 桌面：顯示最多 2 條 title，多過就 +N */}
+                <div className="mt-0.5 hidden min-h-0 flex-1 flex-col gap-0.5 overflow-hidden sm:flex">
+                  {dayEvents.slice(0, 2).map((ev) => (
+                    <span
+                      key={ev.id}
+                      className={`flex items-center gap-1 truncate text-[10px] leading-tight ${
+                        isSelected ? 'text-white/90' : 'text-slate-500'
+                      }`}
+                    >
+                      <span
+                        className={`h-1.5 w-1.5 shrink-0 rounded-full ${
+                          isSelected ? 'bg-white' : TYPE_DOT[toneOf(ev.type)]
+                        }`}
+                      />
+                      <span className="truncate">{ev.title}</span>
+                    </span>
+                  ))}
+                  {dayEvents.length > 2 && (
+                    <span
+                      className={`text-[10px] leading-tight ${
+                        isSelected ? 'text-white/80' : 'text-slate-400'
+                      }`}
+                    >
+                      ＋{dayEvents.length - 2}
+                    </span>
+                  )}
+                </div>
+
+                {/* 手機：只顯示類型小圓點 */}
+                <div className="mt-auto flex items-center justify-center gap-0.5 pb-0.5 sm:hidden">
+                  {dayEvents.slice(0, 3).map((ev) => (
+                    <span
+                      key={ev.id}
+                      className={`h-1.5 w-1.5 rounded-full ${
+                        isSelected ? 'bg-white' : TYPE_DOT[toneOf(ev.type)]
+                      }`}
+                    />
+                  ))}
+                </div>
               </button>
             )
           })}
         </div>
-      </section>
+      </Card>
 
-      {/* 選定日子 + 新增 */}
-      <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
-        <h3 className="text-base font-semibold text-slate-800">{formatLongDate(selectedKey)}</h3>
+      {/* 選定日子 + 當日事件 */}
+      <Card className="p-4 sm:p-5">
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+          <h3 className="text-base font-semibold text-slate-800">
+            {formatLongDate(selectedKey)}
+          </h3>
+          <Button variant="secondary" size="sm" onClick={openAddModal}>
+            ＋ 新增活動
+          </Button>
+        </div>
 
-        {/* 當日事件清單 */}
-        <ul className="mt-3 space-y-2">
-          {selectedEvents.length === 0 && (
-            <li className="rounded-xl border border-dashed border-slate-200 px-3 py-6 text-center text-sm text-slate-400">
-              呢日暫時無活動
-            </li>
-          )}
-          {selectedEvents.map((ev) => (
-            <li
-              key={ev.id}
-              className="flex items-start gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2.5"
-            >
-              <div className="min-w-0 flex-1">
-                <div className="flex flex-wrap items-center gap-2">
-                  {ev.time && (
-                    <span className="shrink-0 rounded-lg bg-accent-soft px-1.5 py-0.5 text-xs font-medium text-accent-strong">
-                      {ev.time}
-                    </span>
-                  )}
-                  <span className="truncate font-medium text-slate-800">{ev.title}</span>
-                  {ev.type && (
-                    <span className="shrink-0 rounded-lg border border-accent px-1.5 py-0.5 text-xs text-accent-strong">
-                      {ev.type}
-                    </span>
-                  )}
-                </div>
-                {ev.notes && (
-                  <p className="mt-1 whitespace-pre-wrap break-words text-sm text-slate-500">
-                    {ev.notes}
-                  </p>
-                )}
-              </div>
-              <button
-                type="button"
-                onClick={() => handleRemove(ev.id)}
-                aria-label={`刪除「${ev.title}」`}
-                className="shrink-0 rounded-lg px-2 py-1 text-sm text-slate-400 transition hover:bg-rose-50 hover:text-rose-600 focus:outline-none focus:ring-2 focus:ring-accent/30"
+        {selectedEvents.length === 0 ? (
+          <EmptyState
+            icon="🗓️"
+            title="呢日暫時無活動"
+            hint="撳「新增活動」加入測驗、會議、死線或提醒。"
+          />
+        ) : (
+          <ul className="space-y-2">
+            {selectedEvents.map((ev) => (
+              <li
+                key={ev.id}
+                className="flex items-start gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2.5"
               >
-                刪除
-              </button>
-            </li>
-          ))}
-        </ul>
-
-        {/* 新增表單 */}
-        <form onSubmit={handleAdd} className="mt-4 space-y-3 border-t border-slate-100 pt-4">
-          <p className="text-sm font-medium text-slate-600">新增活動</p>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <label className="block sm:col-span-2">
-              <span className="mb-1 block text-xs text-slate-500">標題（必填）</span>
-              <input
-                type="text"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="例如：中文默書"
-                className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-800 placeholder:text-slate-300 focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/30"
-              />
-            </label>
-            <label className="block">
-              <span className="mb-1 block text-xs text-slate-500">時間（選填）</span>
-              <input
-                type="time"
-                value={time}
-                onChange={(e) => setTime(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-800 focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/30"
-              />
-            </label>
-            <label className="block">
-              <span className="mb-1 block text-xs text-slate-500">類型（選填）</span>
-              <select
-                value={type}
-                onChange={(e) => setType(e.target.value as EventType | '')}
-                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/30"
-              >
-                <option value="">未分類</option>
-                {EVENT_TYPES.map((t) => (
-                  <option key={t} value={t}>
-                    {t}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="block sm:col-span-2">
-              <span className="mb-1 block text-xs text-slate-500">備註（選填）</span>
-              <textarea
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                rows={2}
-                placeholder="補充資料……"
-                className="w-full resize-y rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-800 placeholder:text-slate-300 focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/30"
-              />
-            </label>
-          </div>
-          <button
-            type="submit"
-            disabled={!title.trim()}
-            className="w-full rounded-xl bg-accent px-4 py-2 text-sm font-semibold text-white transition hover:bg-accent-strong focus:outline-none focus:ring-2 focus:ring-accent/30 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
-          >
-            加入活動
-          </button>
-        </form>
-      </section>
-
-      {/* 即將到嚟 */}
-      <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
-        <h3 className="text-base font-semibold text-slate-800">即將到嚟（未來 7 日）</h3>
-        <ul className="mt-3 space-y-2">
-          {upcoming.length === 0 && (
-            <li className="rounded-xl border border-dashed border-slate-200 px-3 py-6 text-center text-sm text-slate-400">
-              未來 7 日暫時無活動
-            </li>
-          )}
-          {upcoming.map((ev) => (
-            <li key={ev.id}>
-              <button
-                type="button"
-                onClick={() => {
-                  const d = fromDateKey(ev.date)
-                  setViewYear(d.getFullYear())
-                  setViewMonth(d.getMonth())
-                  setSelectedKey(ev.date)
-                }}
-                className="flex w-full items-center gap-3 rounded-xl border border-slate-200 px-3 py-2.5 text-left transition hover:bg-accent-soft focus:outline-none focus:ring-2 focus:ring-accent/30"
-              >
-                <div className="flex w-14 shrink-0 flex-col items-center rounded-lg bg-accent-soft py-1 text-accent-strong">
-                  <span className="text-xs">
-                    {fromDateKey(ev.date).getMonth() + 1}月
-                  </span>
-                  <span className="text-base font-semibold leading-none">
-                    {fromDateKey(ev.date).getDate()}
-                  </span>
-                </div>
+                <span
+                  className={`mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full ${TYPE_DOT[toneOf(ev.type)]}`}
+                />
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
                     {ev.time && (
-                      <span className="text-xs font-medium text-accent">{ev.time}</span>
+                      <Badge tone="slate">{ev.time}</Badge>
                     )}
                     <span className="truncate font-medium text-slate-800">{ev.title}</span>
-                    {ev.type && (
-                      <span className="shrink-0 rounded-lg border border-accent px-1.5 py-0.5 text-xs text-accent-strong">
-                        {ev.type}
-                      </span>
-                    )}
+                    {ev.type && <Badge tone={toneOf(ev.type)}>{ev.type}</Badge>}
                   </div>
-                  <span className="text-xs text-slate-400">
-                    星期{WEEKDAYS[fromDateKey(ev.date).getDay()]}
-                  </span>
+                  {ev.notes && (
+                    <p className="mt-1 whitespace-pre-wrap break-words text-sm text-slate-500">
+                      {ev.notes}
+                    </p>
+                  )}
                 </div>
-              </button>
-            </li>
-          ))}
-        </ul>
-      </section>
+                <IconButton
+                  label={`刪除「${ev.title}」`}
+                  onClick={() => handleRemove(ev.id)}
+                  className="hover:bg-rose-50 hover:text-rose-600"
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                    <path
+                      d="M6 7h12M9 7V5h6v2m-7 0v12a1 1 0 001 1h6a1 1 0 001-1V7"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </IconButton>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Card>
+
+      {/* 即將到嚟 */}
+      <Card className="p-4 sm:p-5">
+        <SectionTitle>即將到嚟 · 未來 7 日</SectionTitle>
+        {upcoming.length === 0 ? (
+          <EmptyState icon="✨" title="未來 7 日暫時無活動" />
+        ) : (
+          <ul className="space-y-2">
+            {upcoming.map((ev) => {
+              const d = fromKey(ev.date)
+              return (
+                <li key={ev.id}>
+                  <button
+                    type="button"
+                    onClick={() => jumpTo(ev.date)}
+                    className="flex w-full items-center gap-3 rounded-xl border border-slate-200 px-3 py-2.5 text-left transition hover:bg-accent-soft focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+                  >
+                    <div className="flex w-14 shrink-0 flex-col items-center rounded-lg bg-accent-soft py-1 text-accent-strong">
+                      <span className="text-xs">{d.getMonth() + 1}月</span>
+                      <span className="text-base font-semibold leading-none">{d.getDate()}</span>
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        {ev.time && <span className="text-xs font-medium text-accent">{ev.time}</span>}
+                        {ev.type && <Badge tone={toneOf(ev.type)}>{ev.type}</Badge>}
+                        <span className="truncate font-medium text-slate-800">{ev.title}</span>
+                      </div>
+                      <span className="text-xs text-slate-400">星期{WEEKDAYS[d.getDay()]}</span>
+                    </div>
+                  </button>
+                </li>
+              )
+            })}
+          </ul>
+        )}
+      </Card>
+
+      {/* 新增事件 Modal */}
+      <Modal open={modalOpen} onClose={() => setModalOpen(false)} title="新增活動">
+        <form onSubmit={handleAdd} className="space-y-3">
+          <Field label="標題（必填）">
+            <Input
+              type="text"
+              value={fTitle}
+              onChange={(e) => setFTitle(e.target.value)}
+              placeholder="例如：中文默書"
+              autoFocus
+            />
+          </Field>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Field label="日期">
+              <Input type="date" value={fDate} onChange={(e) => setFDate(e.target.value)} />
+            </Field>
+            <Field label="時間（選填）">
+              <Input type="time" value={fTime} onChange={(e) => setFTime(e.target.value)} />
+            </Field>
+          </div>
+          <Field label="類型（選填）">
+            <Select value={fType} onChange={(e) => setFType(e.target.value as EventType | '')}>
+              <option value="">未分類</option>
+              {EVENT_TYPES.map((t) => (
+                <option key={t} value={t}>
+                  {t}
+                </option>
+              ))}
+            </Select>
+          </Field>
+          <Field label="備註（選填）">
+            <Textarea
+              value={fNotes}
+              onChange={(e) => setFNotes(e.target.value)}
+              rows={2}
+              placeholder="補充資料……"
+            />
+          </Field>
+          <div className="flex justify-end gap-2 pt-1">
+            <Button type="button" variant="ghost" onClick={() => setModalOpen(false)}>
+              取消
+            </Button>
+            <Button type="submit" disabled={!fTitle.trim()}>
+              加入活動
+            </Button>
+          </div>
+        </form>
+      </Modal>
     </div>
   )
 }

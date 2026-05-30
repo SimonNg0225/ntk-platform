@@ -5,9 +5,20 @@ import {
   notesCol,
   focusCol,
   journalCol,
+  habitsCol,
+  habitLogsCol,
+  readingCol,
 } from '../../data/collections'
 import { isDue } from '../../lib/srs'
 import { useNav } from '../../context/NavContext'
+import {
+  Card,
+  Badge,
+  SectionTitle,
+  EmptyState,
+  StatCard,
+  ProgressBar,
+} from '../../ui'
 
 function fmt(d: Date) {
   return d.toISOString().slice(0, 10)
@@ -24,21 +35,40 @@ function computeStreak(dates: Set<string>): number {
   return streak
 }
 
+function greeting(): string {
+  const h = new Date().getHours()
+  if (h < 6) return '夜深啦'
+  if (h < 12) return '早晨'
+  if (h < 18) return '午安'
+  return '晚安'
+}
+
+function todayLabel(): string {
+  const d = new Date()
+  const week = ['日', '一', '二', '三', '四', '五', '六'][d.getDay()]
+  return `${d.getMonth() + 1}月${d.getDate()}日 · 星期${week}`
+}
+
 export default function LearningDashboard() {
   const cards = useCollection(cardsCol)
   const goals = useCollection(goalsCol)
   const notes = useCollection(notesCol)
   const focus = useCollection(focusCol)
   const journal = useCollection(journalCol)
+  const habits = useCollection(habitsCol)
+  const habitLogs = useCollection(habitLogsCol)
+  const reading = useCollection(readingCol)
   const { open } = useNav()
 
+  const today = fmt(new Date())
   const dueCount = cards.filter(isDue).length
 
-  // 活躍日期（複習 / 專注 / 日誌）→ streak
+  // 活躍日期（複習 / 專注 / 日誌 / 習慣）→ streak
   const activeDates = new Set<string>()
   cards.forEach((c) => c.lastReviewed && activeDates.add(c.lastReviewed.slice(0, 10)))
   focus.forEach((f) => activeDates.add(f.startedAt.slice(0, 10)))
   journal.forEach((j) => activeDates.add(j.date))
+  habitLogs.forEach((l) => activeDates.add(l.date))
   const streak = computeStreak(activeDates)
 
   // 本週
@@ -51,9 +81,38 @@ export default function LearningDashboard() {
     .filter((f) => new Date(f.startedAt) >= weekAgo)
     .reduce((s, f) => s + f.durationMin, 0)
 
-  const goalAvg = goals.length
-    ? Math.round(goals.reduce((s, g) => s + g.progress, 0) / goals.length)
-    : 0
+  // 今日任務
+  const habitsDoneToday = habits.filter((h) =>
+    habitLogs.some((l) => l.habitId === h.id && l.date === today),
+  ).length
+  const journaledToday = journal.some((j) => j.date === today)
+
+  const tasks = [
+    {
+      label: dueCount > 0 ? `溫習 ${dueCount} 張閃卡` : '閃卡已清',
+      done: dueCount === 0,
+      target: 'learning-flashcards',
+    },
+    {
+      label:
+        habits.length > 0
+          ? `完成習慣 ${habitsDoneToday}/${habits.length}`
+          : '仲未設定習慣',
+      done: habits.length > 0 && habitsDoneToday === habits.length,
+      target: 'learning-habits',
+    },
+    {
+      label: journaledToday ? '今日已寫日誌' : '寫今日日誌',
+      done: journaledToday,
+      target: 'learning-journal',
+    },
+  ]
+
+  const topGoals = [...goals]
+    .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1))
+    .slice(0, 3)
+
+  const readingNow = reading.filter((r) => r.status === 'reading').slice(0, 3)
 
   const recentNotes = [...notes]
     .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1))
@@ -61,13 +120,80 @@ export default function LearningDashboard() {
 
   return (
     <div className="space-y-5">
-      {/* 統計卡 */}
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Stat label="今日要複習" value={`${dueCount}`} unit="張" highlight />
-        <Stat label="連續學習" value={`${streak}`} unit="日 🔥" />
-        <Stat label="本週複習" value={`${reviewedThisWeek}`} unit="張" />
-        <Stat label="本週專注" value={`${focusMinThisWeek}`} unit="分鐘" />
+      {/* 問候 */}
+      <div>
+        <h1 className="text-xl font-bold text-slate-800">
+          {greeting()}，今日學啲乜？
+        </h1>
+        <p className="mt-0.5 text-sm text-slate-400">{todayLabel()}</p>
       </div>
+
+      {/* 統計卡（可撳） */}
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <StatCard
+          label="今日要複習"
+          value={dueCount}
+          unit="張"
+          icon="🧠"
+          highlight
+          onClick={() => open('learning-flashcards')}
+        />
+        <StatCard
+          label="連續學習"
+          value={streak}
+          unit="日 🔥"
+          icon="🔥"
+          onClick={() => open('learning-journal')}
+        />
+        <StatCard
+          label="本週複習"
+          value={reviewedThisWeek}
+          unit="張"
+          icon="📚"
+          onClick={() => open('learning-flashcards')}
+        />
+        <StatCard
+          label="本週專注"
+          value={focusMinThisWeek}
+          unit="分鐘"
+          icon="⏱️"
+          onClick={() => open('learning-focus')}
+        />
+      </div>
+
+      {/* 今日任務 */}
+      <Card className="p-4">
+        <SectionTitle>今日任務</SectionTitle>
+        <ul className="space-y-2">
+          {tasks.map((t) => (
+            <li key={t.label}>
+              <button
+                onClick={() => !t.done && open(t.target)}
+                disabled={t.done}
+                className={`flex w-full items-center gap-3 rounded-xl px-2 py-2 text-left text-sm transition ${
+                  t.done
+                    ? 'cursor-default text-slate-400'
+                    : 'text-slate-700 hover:bg-slate-50'
+                }`}
+              >
+                <span
+                  className={`flex h-5 w-5 flex-none items-center justify-center rounded-full border text-[11px] ${
+                    t.done
+                      ? 'border-emerald-400 bg-emerald-400 text-white'
+                      : 'border-slate-300'
+                  }`}
+                >
+                  {t.done ? '✓' : ''}
+                </span>
+                <span className={t.done ? 'line-through' : ''}>{t.label}</span>
+                {!t.done && (
+                  <span className="ml-auto text-xs text-accent">去做 →</span>
+                )}
+              </button>
+            </li>
+          ))}
+        </ul>
+      </Card>
 
       {/* 快速動作 */}
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
@@ -92,42 +218,106 @@ export default function LearningDashboard() {
       </div>
 
       {/* 目標進度 */}
-      <div className="rounded-2xl border border-slate-200 bg-white p-4">
-        <div className="flex items-center justify-between">
-          <p className="text-sm font-semibold text-slate-700">學習目標</p>
-          <button
-            onClick={() => open('learning-goals')}
-            className="text-xs text-accent hover:underline"
-          >
-            管理 →
-          </button>
-        </div>
-        <div className="mt-2 flex items-center gap-3">
-          <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-slate-100">
-            <div
-              className="h-full rounded-full bg-accent transition-all"
-              style={{ width: `${goalAvg}%` }}
-            />
-          </div>
-          <span className="text-sm font-bold text-accent">{goalAvg}%</span>
-        </div>
-      </div>
+      <Card className="p-4">
+        <SectionTitle
+          right={
+            <button
+              onClick={() => open('learning-goals')}
+              className="text-xs text-accent hover:underline"
+            >
+              管理 →
+            </button>
+          }
+        >
+          學習目標
+        </SectionTitle>
+        {topGoals.length === 0 ? (
+          <EmptyState
+            icon="🎯"
+            title="仲未有目標"
+            hint="設定學習目標，追蹤每一步進度。"
+          />
+        ) : (
+          <ul className="space-y-3">
+            {topGoals.map((g) => (
+              <li key={g.id}>
+                <div className="mb-1 flex items-center justify-between gap-2">
+                  <span className="truncate text-sm text-slate-700">
+                    {g.title}
+                  </span>
+                  <span className="flex-none text-xs font-bold text-accent">
+                    {g.progress}%
+                  </span>
+                </div>
+                <ProgressBar value={g.progress} />
+              </li>
+            ))}
+          </ul>
+        )}
+      </Card>
+
+      {/* 在讀書籍 */}
+      <Card className="p-4">
+        <SectionTitle
+          right={
+            <button
+              onClick={() => open('learning-reading')}
+              className="text-xs text-accent hover:underline"
+            >
+              書架 →
+            </button>
+          }
+        >
+          在讀書籍
+        </SectionTitle>
+        {readingNow.length === 0 ? (
+          <EmptyState
+            icon="📖"
+            title="而家無喺度讀緊嘅書"
+            hint="加本書入閱讀清單，開始閱讀之旅。"
+          />
+        ) : (
+          <ul className="space-y-2">
+            {readingNow.map((r) => (
+              <li
+                key={r.id}
+                className="flex items-center gap-2 text-sm text-slate-700"
+              >
+                <span className="text-base">📖</span>
+                <span className="truncate">{r.title}</span>
+                {r.author && (
+                  <Badge tone="slate" className="ml-auto flex-none">
+                    {r.author}
+                  </Badge>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+      </Card>
 
       {/* 最近筆記 */}
-      <div className="rounded-2xl border border-slate-200 bg-white p-4">
-        <div className="flex items-center justify-between">
-          <p className="text-sm font-semibold text-slate-700">最近筆記</p>
-          <button
-            onClick={() => open('learning-notes')}
-            className="text-xs text-accent hover:underline"
-          >
-            全部 →
-          </button>
-        </div>
+      <Card className="p-4">
+        <SectionTitle
+          right={
+            <button
+              onClick={() => open('learning-notes')}
+              className="text-xs text-accent hover:underline"
+            >
+              全部 →
+            </button>
+          }
+        >
+          最近筆記
+        </SectionTitle>
         {recentNotes.length === 0 ? (
-          <p className="mt-2 text-sm text-slate-400">仲未有筆記。</p>
+          <EmptyState
+            icon="📝"
+            title="仲未有筆記"
+            hint="隨手記低諗法同重點。"
+          />
         ) : (
-          <ul className="mt-2 space-y-1.5">
+          <ul className="space-y-1.5">
             {recentNotes.map((n) => (
               <li key={n.id} className="truncate text-sm text-slate-600">
                 · {n.content}
@@ -135,37 +325,7 @@ export default function LearningDashboard() {
             ))}
           </ul>
         )}
-      </div>
-    </div>
-  )
-}
-
-function Stat({
-  label,
-  value,
-  unit,
-  highlight,
-}: {
-  label: string
-  value: string
-  unit: string
-  highlight?: boolean
-}) {
-  return (
-    <div
-      className={`rounded-2xl border p-4 ${
-        highlight
-          ? 'border-accent/30 bg-accent-soft'
-          : 'border-slate-200 bg-white'
-      }`}
-    >
-      <p className="text-xs text-slate-500">{label}</p>
-      <p
-        className={`mt-1 text-2xl font-bold ${highlight ? 'text-accent-strong' : 'text-slate-800'}`}
-      >
-        {value}
-        <span className="ml-1 text-sm font-normal text-slate-400">{unit}</span>
-      </p>
+      </Card>
     </div>
   )
 }
