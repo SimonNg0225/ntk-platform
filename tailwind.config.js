@@ -1,5 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 export default {
+  darkMode: 'class',
   content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
   theme: {
     extend: {
@@ -8,6 +9,9 @@ export default {
         accent: 'var(--accent)',
         'accent-soft': 'var(--accent-soft)',
         'accent-strong': 'var(--accent-strong)',
+        // 介面表面色（深色模式自動切換）
+        surface: 'var(--surface)',
+        'surface-2': 'var(--surface-2)',
       },
       fontFamily: {
         sans: [

@@ -10,12 +10,25 @@
   --accent-grad-from: #3a74bb;
   --accent-grad-to: #1f4a7d;
 
+  /* 介面表面色（淺色模式預設）— 深色模式由 html.dark 覆寫 */
+  --app-bg: #f4f7fb;
+  --surface: #ffffff;
+  --surface-2: #f8fafc;
+
   font-family:
     'Noto Sans HK', system-ui, -apple-system, 'PingFang HK',
     'Microsoft JhengHei', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   color-scheme: light;
+}
+
+/* 深色模式：調暗背景與表面，主題藍自動調亮一級令對比足夠 */
+html.dark {
+  --app-bg: #0f172a;
+  --surface: #1e293b;
+  --surface-2: #172033;
+  color-scheme: dark;
 }
 
 html,
@@ -26,7 +39,7 @@ body,
 }
 
 body {
-  background: #f4f7fb; /* 淡海軍藍灰底 */
+  background: var(--app-bg);
 }
 
 /* 文字選取色跟主題 */
@@ -42,6 +55,18 @@ body {
   }
   to {
     transform: translateX(0);
+  }
+}
+
+/* Toast 彈入動畫 */
+@keyframes toastIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
