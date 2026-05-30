@@ -23,9 +23,12 @@ import Timetable from './work/Timetable'
 import Attendance from './work/Attendance'
 import ParentComms from './work/ParentComms'
 import MeetingNotes from './work/MeetingNotes'
+import WorkDashboard from './work/WorkDashboard'
 
 // 共用功能
 import Calendar from './shared/Calendar'
+import GlobalSearch from './shared/GlobalSearch'
+import Inbox from './shared/Inbox'
 
 export const FEATURES: Feature[] = [
   // ───────── 學習模式 ─────────
@@ -103,6 +106,15 @@ export const FEATURES: Feature[] = [
   },
 
   // ───────── 工作模式 ─────────
+  {
+    id: 'work-dashboard',
+    modes: ['work'],
+    name: '工作儀表板',
+    description: '今日課堂、待辦、待跟進、各班進度一覽。',
+    icon: '🧭',
+    component: WorkDashboard,
+    status: 'ready',
+  },
   {
     id: 'work-tasks',
     modes: ['work'],
@@ -211,6 +223,24 @@ export const FEATURES: Feature[] = [
     description: '統一管理學習與工作日程。',
     icon: '📅',
     component: Calendar,
+    status: 'ready',
+  },
+  {
+    id: 'search',
+    modes: ['learning', 'work'],
+    name: '全域搜尋',
+    description: '一次過搵晒筆記、題目、資源、教案…',
+    icon: '🔍',
+    component: GlobalSearch,
+    status: 'ready',
+  },
+  {
+    id: 'inbox',
+    modes: ['learning', 'work'],
+    name: '快速擷取',
+    description: '一秒掉低諗法，遲啲轉成待辦或筆記。',
+    icon: '📥',
+    component: Inbox,
     status: 'ready',
   },
 ]
