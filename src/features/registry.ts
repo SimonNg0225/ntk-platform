@@ -10,6 +10,8 @@ import TodoWidget from './work/TodoWidget'
 import ClassesWidget from './work/ClassesWidget'
 import CurriculumProgress from './work/CurriculumProgress'
 import QuestionBank from './work/QuestionBank'
+import ResourceLibrary from './work/ResourceLibrary'
+import Gradebook from './work/Gradebook'
 
 // ============================================================
 //  功能註冊表 (Feature Registry)
@@ -113,7 +115,8 @@ export const FEATURES: Feature[] = [
     name: '教學資源庫',
     description: '收藏講義、試題、教材連結。',
     icon: '🗂️',
-    status: 'soon',
+    component: ResourceLibrary,
+    status: 'ready',
   },
   {
     id: 'work-gradebook',
@@ -121,7 +124,8 @@ export const FEATURES: Feature[] = [
     name: '成績管理',
     description: '記錄評估分數、計平均、睇弱項。',
     icon: '📈',
-    status: 'soon',
+    component: Gradebook,
+    status: 'ready',
   },
 
   // ───────── 兩個模式共用（示範跨模式功能）─────────
