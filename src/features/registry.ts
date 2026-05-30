@@ -4,6 +4,10 @@ import type { ModeId } from '../modes/modes'
 // 學習模式功能
 import NotesWidget from './learning/NotesWidget'
 import GoalsWidget from './learning/GoalsWidget'
+import Flashcards from './learning/Flashcards'
+import FocusTimer from './learning/FocusTimer'
+import Journal from './learning/Journal'
+import LearningDashboard from './learning/LearningDashboard'
 
 // 工作模式功能
 import TodoWidget from './work/TodoWidget'
@@ -29,6 +33,15 @@ import Gradebook from './work/Gradebook'
 
 export const FEATURES: Feature[] = [
   // ───────── 學習模式 ─────────
+  {
+    id: 'learning-dashboard',
+    modes: ['learning'],
+    name: '學習儀表板',
+    description: '今日複習、連續日數、目標、最近筆記一覽。',
+    icon: '📊',
+    component: LearningDashboard,
+    status: 'ready',
+  },
   {
     id: 'learning-notes',
     modes: ['learning'],
@@ -58,10 +71,29 @@ export const FEATURES: Feature[] = [
   {
     id: 'learning-flashcards',
     modes: ['learning'],
-    name: '知識卡片',
-    description: '用記憶卡複習重點概念。',
+    name: '知識卡 + 複習',
+    description: '間隔重複（SRS），到期先彈出嚟複習。',
     icon: '🧠',
-    status: 'soon',
+    component: Flashcards,
+    status: 'ready',
+  },
+  {
+    id: 'learning-focus',
+    modes: ['learning'],
+    name: '專注計時器',
+    description: '番茄鐘專注 / 休息循環 + 統計。',
+    icon: '⏱️',
+    component: FocusTimer,
+    status: 'ready',
+  },
+  {
+    id: 'learning-journal',
+    modes: ['learning'],
+    name: '學習日誌',
+    description: '每日反思，連續記低成長軌跡。',
+    icon: '📓',
+    component: Journal,
+    status: 'ready',
   },
 
   // ───────── 工作模式 ─────────

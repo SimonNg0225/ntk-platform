@@ -1,33 +1,24 @@
 import { useState } from 'react'
-import { useLocalStorage } from '../../hooks/useLocalStorage'
+import { useCollection } from '../../lib/store'
+import { tasksCol } from '../../data/collections'
 
-// 待辦 / 批改清單 — BAFS 教師日常工作示範
-interface Task {
-  id: number
-  text: string
-  done: boolean
-}
-
-const SEED: Task[] = [
-  { id: 1, text: '批改 5A 班會計練習', done: false },
-  { id: 2, text: '預備下星期成本會計課堂', done: false },
-  { id: 3, text: '上載功課到學校平台', done: true },
-]
-
+// 待辦 / 批改清單
 export default function TodoWidget() {
-  const [tasks, setTasks] = useLocalStorage<Task[]>('ntk.work.tasks', SEED)
+  const tasks = useCollection(tasksCol)
   const [draft, setDraft] = useState('')
 
   const add = () => {
     const text = draft.trim()
     if (!text) return
-    setTasks([{ id: Date.now(), text, done: false }, ...tasks])
+    tasksCol.add({ text, done: false, createdAt: new Date().toISOString() })
     setDraft('')
   }
-  const toggle = (id: number) =>
-    setTasks(tasks.map((t) => (t.id === id ? { ...t, done: !t.done } : t)))
-  const remove = (id: number) => setTasks(tasks.filter((t) => t.id !== id))
+  const toggle = (id: string) => {
+    const t = tasks.find((x) => x.id === id)
+    if (t) tasksCol.update(id, { done: !t.done })
+  }
 
+  const sorted = [...tasks].sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1))
   const remaining = tasks.filter((t) => !t.done).length
 
   return (
@@ -38,11 +29,11 @@ export default function TodoWidget() {
           onChange={(e) => setDraft(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && add()}
           placeholder="新增一項待辦（批改 / 備課 / 行政…）"
-          className="flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-accent focus:ring-2 focus:ring-accent/30"
+          className="flex-1 rounded-xl border border-slate-300 px-3 py-2 text-sm outline-none focus:border-accent focus:ring-2 focus:ring-accent/30"
         />
         <button
           onClick={add}
-          className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white transition hover:bg-accent-strong"
+          className="rounded-xl bg-accent px-4 py-2 text-sm font-medium text-white transition hover:bg-accent-strong"
         >
           加入
         </button>
@@ -51,10 +42,10 @@ export default function TodoWidget() {
       <p className="text-xs text-slate-400">仲有 {remaining} 項未完成</p>
 
       <ul className="space-y-2">
-        {tasks.map((t) => (
+        {sorted.map((t) => (
           <li
             key={t.id}
-            className="group flex items-center gap-3 rounded-lg border border-slate-200 bg-white px-4 py-3"
+            className="group flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3"
           >
             <input
               type="checkbox"
@@ -72,7 +63,7 @@ export default function TodoWidget() {
               {t.text}
             </span>
             <button
-              onClick={() => remove(t.id)}
+              onClick={() => tasksCol.remove(t.id)}
               className="text-xs text-slate-300 opacity-0 transition group-hover:opacity-100 hover:text-red-500"
             >
               刪除

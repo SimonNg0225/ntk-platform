@@ -13,6 +13,9 @@ import type {
   Card,
   JournalEntry,
   FocusSession,
+  Note,
+  Goal,
+  Task,
 } from './types'
 
 // ============================================================
@@ -41,3 +44,24 @@ export const decksCol = createCollection<Deck>('decks', [])
 export const cardsCol = createCollection<Card>('cards', [])
 export const journalCol = createCollection<JournalEntry>('journal', [])
 export const focusCol = createCollection<FocusSession>('focus_sessions', [])
+
+export const notesCol = createCollection<Note>('learning_notes', [])
+export const goalsCol = createCollection<Goal>('learning_goals', [
+  {
+    id: 'goal-1',
+    title: '溫習 BAFS 課程內容（商業管理）',
+    progress: 60,
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: 'goal-2',
+    title: '睇完一本管理學書',
+    progress: 25,
+    createdAt: new Date().toISOString(),
+  },
+])
+export const tasksCol = createCollection<Task>('work_tasks', [
+  { id: 'task-1', text: '批改 5A 班練習', done: false, createdAt: new Date().toISOString() },
+  { id: 'task-2', text: '預備下星期市場營銷課堂', done: false, createdAt: new Date().toISOString() },
+  { id: 'task-3', text: '上載功課到學校平台', done: true, createdAt: new Date().toISOString() },
+])

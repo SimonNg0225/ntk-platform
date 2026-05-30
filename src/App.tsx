@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { ModeProvider, useMode } from './context/ModeContext'
 import { AuthProvider } from './context/AuthContext'
+import { NavProvider } from './context/NavContext'
 import Sidebar from './components/Sidebar'
 import MobileTopBar from './components/MobileTopBar'
 import Home from './pages/Home'
@@ -23,6 +24,7 @@ function AppShell() {
   const feature = activeId ? getFeature(activeId) : undefined
 
   return (
+    <NavProvider open={setActiveId}>
     <div className="flex h-screen overflow-hidden bg-[#f4f7fb] text-slate-900">
       {/* 桌面側邊欄 */}
       <Sidebar
@@ -87,6 +89,7 @@ function AppShell() {
         </div>
       </main>
     </div>
+    </NavProvider>
   )
 }
 

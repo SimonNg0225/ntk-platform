@@ -118,3 +118,20 @@ export interface FocusSession extends Entity {
   label?: string
   completed: boolean
 }
+
+export interface Note extends Entity {
+  content: string
+  createdAt: string
+}
+
+export interface Goal extends Entity {
+  title: string
+  progress: number // 0-100
+  createdAt: string
+}
+
+export interface Task extends Entity {
+  text: string
+  done: boolean
+  createdAt: string
+}

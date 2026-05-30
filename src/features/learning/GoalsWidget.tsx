@@ -1,39 +1,26 @@
 import { useState } from 'react'
-import { useLocalStorage } from '../../hooks/useLocalStorage'
+import { useCollection } from '../../lib/store'
+import { goalsCol } from '../../data/collections'
 
-// 學習目標 + 進度追蹤 — 示範進度條互動
-interface Goal {
-  id: number
-  title: string
-  progress: number // 0 - 100
-}
-
-const SEED: Goal[] = [
-  { id: 1, title: '溫習 BAFS 課程內容（會計部分）', progress: 60 },
-  { id: 2, title: '睇完一本管理學書', progress: 25 },
-]
-
+// 學習目標 + 進度追蹤
 export default function GoalsWidget() {
-  const [goals, setGoals] = useLocalStorage<Goal[]>('ntk.learning.goals', SEED)
+  const goals = useCollection(goalsCol)
   const [draft, setDraft] = useState('')
 
   const add = () => {
     const title = draft.trim()
     if (!title) return
-    setGoals([...goals, { id: Date.now(), title, progress: 0 }])
+    goalsCol.add({ title, progress: 0, createdAt: new Date().toISOString() })
     setDraft('')
   }
 
-  const bump = (id: number, delta: number) =>
-    setGoals(
-      goals.map((g) =>
-        g.id === id
-          ? { ...g, progress: Math.max(0, Math.min(100, g.progress + delta)) }
-          : g,
-      ),
-    )
-
-  const remove = (id: number) => setGoals(goals.filter((g) => g.id !== id))
+  const bump = (id: string, delta: number) => {
+    const g = goals.find((x) => x.id === id)
+    if (!g) return
+    goalsCol.update(id, {
+      progress: Math.max(0, Math.min(100, g.progress + delta)),
+    })
+  }
 
   return (
     <div className="space-y-4">
@@ -43,11 +30,11 @@ export default function GoalsWidget() {
           onChange={(e) => setDraft(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && add()}
           placeholder="新增一個學習目標…"
-          className="flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-accent focus:ring-2 focus:ring-accent/30"
+          className="flex-1 rounded-xl border border-slate-300 px-3 py-2 text-sm outline-none focus:border-accent focus:ring-2 focus:ring-accent/30"
         />
         <button
           onClick={add}
-          className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white transition hover:bg-accent-strong"
+          className="rounded-xl bg-accent px-4 py-2 text-sm font-medium text-white transition hover:bg-accent-strong"
         >
           新增目標
         </button>
@@ -57,7 +44,7 @@ export default function GoalsWidget() {
         {goals.map((g) => (
           <li
             key={g.id}
-            className="rounded-lg border border-slate-200 bg-white px-4 py-3"
+            className="rounded-xl border border-slate-200 bg-white px-4 py-3"
           >
             <div className="flex items-center justify-between gap-2">
               <span className="text-sm font-medium text-slate-800">
@@ -87,7 +74,7 @@ export default function GoalsWidget() {
                 +10%
               </button>
               <button
-                onClick={() => remove(g.id)}
+                onClick={() => goalsCol.remove(g.id)}
                 className="ml-auto text-xs text-slate-300 hover:text-red-500"
               >
                 刪除
