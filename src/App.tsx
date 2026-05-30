@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { ModeProvider, useMode } from './context/ModeContext'
+import { AuthProvider } from './context/AuthContext'
 import Sidebar from './components/Sidebar'
 import MobileTopBar from './components/MobileTopBar'
 import Home from './pages/Home'
@@ -91,8 +92,10 @@ function AppShell() {
 
 export default function App() {
   return (
-    <ModeProvider>
-      <AppShell />
-    </ModeProvider>
+    <AuthProvider>
+      <ModeProvider>
+        <AppShell />
+      </ModeProvider>
+    </AuthProvider>
   )
 }

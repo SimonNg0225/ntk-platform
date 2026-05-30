@@ -1,6 +1,7 @@
 import { useMode } from '../context/ModeContext'
 import { featuresForMode } from '../features/registry'
 import ModeSwitcher from './ModeSwitcher'
+import AccountBox from './AccountBox'
 
 interface Props {
   activeId: string | null
@@ -97,9 +98,10 @@ export default function Sidebar({
         ))}
       </nav>
 
-      {/* 頁腳 */}
-      <div className="border-t border-slate-100 px-5 py-3 text-xs text-slate-400">
-        v0.1 · 初步框架
+      {/* 頁腳：帳戶區 + 版本 */}
+      <div className="border-t border-slate-100">
+        <AccountBox />
+        <div className="px-5 pb-3 text-xs text-slate-300">v0.1 · 初步框架</div>
       </div>
     </aside>
   )
