@@ -1,11 +1,23 @@
 import { useState } from 'react'
 import { useCollection } from '../../lib/store'
 import { tasksCol } from '../../data/collections'
+import {
+  Input,
+  Button,
+  Card,
+  StatCard,
+  Pills,
+  EmptyState,
+  IconButton,
+} from '../../ui'
+
+type Filter = 'all' | 'active' | 'done'
 
 // 待辦 / 批改清單
 export default function TodoWidget() {
   const tasks = useCollection(tasksCol)
   const [draft, setDraft] = useState('')
+  const [filter, setFilter] = useState<Filter>('all')
 
   const add = () => {
     const text = draft.trim()
@@ -20,57 +32,92 @@ export default function TodoWidget() {
 
   const sorted = [...tasks].sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1))
   const remaining = tasks.filter((t) => !t.done).length
+  const completed = tasks.length - remaining
+
+  const visible = sorted.filter((t) =>
+    filter === 'all' ? true : filter === 'active' ? !t.done : t.done,
+  )
 
   return (
     <div className="space-y-4">
+      <div className="grid grid-cols-2 gap-3">
+        <StatCard label="待辦" value={remaining} unit="項" icon="📝" highlight />
+        <StatCard label="已完成" value={completed} unit="項" icon="✅" />
+      </div>
+
       <div className="flex gap-2">
-        <input
+        <Input
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && add()}
           placeholder="新增一項待辦（批改 / 備課 / 行政…）"
-          className="flex-1 rounded-xl border border-slate-300 px-3 py-2 text-sm outline-none focus:border-accent focus:ring-2 focus:ring-accent/30"
+          className="flex-1"
         />
-        <button
-          onClick={add}
-          className="rounded-xl bg-accent px-4 py-2 text-sm font-medium text-white transition hover:bg-accent-strong"
-        >
-          加入
-        </button>
+        <Button onClick={add}>加入</Button>
       </div>
 
-      <p className="text-xs text-slate-400">仲有 {remaining} 項未完成</p>
+      <Pills<Filter>
+        options={[
+          { id: 'all', label: '全部' },
+          { id: 'active', label: '未完成' },
+          { id: 'done', label: '已完成' },
+        ]}
+        active={filter}
+        onChange={setFilter}
+      />
 
-      <ul className="space-y-2">
-        {sorted.map((t) => (
-          <li
-            key={t.id}
-            className="group flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3"
-          >
-            <input
-              type="checkbox"
-              checked={t.done}
-              onChange={() => toggle(t.id)}
-              className="h-4 w-4 accent-[color:var(--accent)]"
-            />
-            <span
-              className={
-                t.done
-                  ? 'flex-1 text-sm text-slate-400 line-through'
-                  : 'flex-1 text-sm text-slate-800'
-              }
+      {visible.length === 0 ? (
+        <EmptyState
+          icon="🗒️"
+          title={
+            filter === 'done'
+              ? '仲未有完成嘅項目'
+              : filter === 'active'
+                ? '冇未完成嘅項目'
+                : '仲未有待辦'
+          }
+          hint="喺上面新增一項，開始清你嘅清單。"
+        />
+      ) : (
+        <Card className="divide-y divide-slate-100 overflow-hidden">
+          {visible.map((t) => (
+            <div
+              key={t.id}
+              className="group flex items-center gap-3 px-4 py-3"
             >
-              {t.text}
-            </span>
-            <button
-              onClick={() => tasksCol.remove(t.id)}
-              className="text-xs text-slate-300 opacity-0 transition group-hover:opacity-100 hover:text-red-500"
-            >
-              刪除
-            </button>
-          </li>
-        ))}
-      </ul>
+              <input
+                type="checkbox"
+                checked={t.done}
+                onChange={() => toggle(t.id)}
+                className="h-4 w-4 accent-[color:var(--accent)]"
+              />
+              <span
+                className={
+                  t.done
+                    ? 'flex-1 text-sm text-slate-400 line-through'
+                    : 'flex-1 text-sm text-slate-800'
+                }
+              >
+                {t.text}
+              </span>
+              <IconButton
+                label="刪除"
+                onClick={() => tasksCol.remove(t.id)}
+                className="opacity-0 transition group-hover:opacity-100 hover:text-rose-500"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                  <path
+                    d="M6 6l12 12M18 6L6 18"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                  />
+                </svg>
+              </IconButton>
+            </div>
+          ))}
+        </Card>
+      )}
     </div>
   )
 }

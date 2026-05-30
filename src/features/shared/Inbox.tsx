@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useCollection } from '../../lib/store';
 import { inboxCol, tasksCol, notesCol } from '../../data/collections';
+import { Input, Button, Card, Badge, EmptyState } from '../../ui';
 
 export default function Inbox() {
   const items = useCollection(inboxCol);
@@ -46,68 +47,66 @@ export default function Inbox() {
       </header>
 
       <div className="flex flex-col gap-2 sm:flex-row">
-        <input
+        <Input
           type="text"
           value={text}
           autoFocus
           onChange={(e) => setText(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder="掉低一個諗法⋯⋯"
-          className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-accent/30"
         />
-        <button
-          type="button"
-          onClick={capture}
-          className="shrink-0 rounded-xl bg-accent px-5 py-2.5 font-medium text-white transition-colors hover:bg-accent-strong focus:outline-none focus:ring-2 focus:ring-accent/30"
-        >
+        <Button type="button" onClick={capture} className="shrink-0">
           擷取
-        </button>
+        </Button>
       </div>
 
       <div className="mt-4 flex items-center justify-between sm:mt-6">
-        <span className="text-sm text-slate-500">總共 {sorted.length} 項</span>
+        <Badge tone="accent">總共 {sorted.length} 項</Badge>
       </div>
 
       {sorted.length === 0 ? (
-        <div className="mt-3 rounded-2xl border border-slate-200 bg-white p-8 text-center">
-          <p className="text-slate-500">Inbox 空空如也 ✨</p>
-          <p className="mt-1 text-sm text-slate-400">有諗法就即刻掉低，唔使諗點分類。</p>
+        <div className="mt-3">
+          <EmptyState
+            icon="✨"
+            title="Inbox 空空如也"
+            hint="有諗法就即刻掉低，唔使諗點分類。"
+          />
         </div>
       ) : (
         <ul className="mt-3 flex flex-col gap-3">
           {sorted.map((item) => (
-            <li
-              key={item.id}
-              className="rounded-2xl border border-slate-200 bg-white p-4"
-            >
+            <Card key={item.id} className="p-4">
               <p className="whitespace-pre-wrap break-words text-slate-900">{item.text}</p>
               <p className="mt-1 text-xs text-slate-400">
                 {new Date(item.createdAt).toLocaleString('zh-HK')}
               </p>
               <div className="mt-3 flex flex-wrap gap-2">
-                <button
+                <Button
                   type="button"
+                  size="sm"
+                  variant="secondary"
                   onClick={() => toTask(item.id, item.text)}
-                  className="rounded-xl bg-accent-soft px-3 py-1.5 text-sm font-medium text-accent-strong transition-colors hover:bg-accent hover:text-white focus:outline-none focus:ring-2 focus:ring-accent/30"
                 >
                   轉做待辦 ✅
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
+                  size="sm"
+                  variant="secondary"
                   onClick={() => toNote(item.id, item.text)}
-                  className="rounded-xl bg-accent-soft px-3 py-1.5 text-sm font-medium text-accent-strong transition-colors hover:bg-accent hover:text-white focus:outline-none focus:ring-2 focus:ring-accent/30"
                 >
                   轉做筆記 📝
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
+                  size="sm"
+                  variant="ghost"
                   onClick={() => remove(item.id)}
-                  className="rounded-xl border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-500 transition-colors hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-accent/30"
                 >
                   刪除
-                </button>
+                </Button>
               </div>
-            </li>
+            </Card>
           ))}
         </ul>
       )}

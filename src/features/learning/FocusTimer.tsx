@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useCollection } from '../../lib/store'
 import { focusCol } from '../../data/collections'
+import { Button, Input, StatCard, Pills } from '../../ui'
 
 const PRESETS = [
   { focus: 25, brk: 5 },
@@ -77,20 +78,18 @@ export default function FocusTimer() {
 
   return (
     <div className="space-y-5">
-      <div className="flex justify-center gap-2">
-        {PRESETS.map((p) => (
-          <button
-            key={p.focus}
-            onClick={() => choosePreset(p)}
-            className={
-              p.focus === preset.focus
-                ? 'rounded-full bg-accent px-3 py-1 text-xs font-semibold text-white'
-                : 'rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600 hover:bg-slate-200'
-            }
-          >
-            {p.focus}/{p.brk}
-          </button>
-        ))}
+      <div className="flex justify-center">
+        <Pills<string>
+          options={PRESETS.map((p) => ({
+            id: String(p.focus),
+            label: `${p.focus}/${p.brk}`,
+          }))}
+          active={String(preset.focus)}
+          onChange={(id) => {
+            const p = PRESETS.find((x) => String(x.focus) === id)
+            if (p) choosePreset(p)
+          }}
+        />
       </div>
 
       {/* 計時圈 */}
@@ -121,40 +120,29 @@ export default function FocusTimer() {
       </div>
 
       {phase === 'focus' && (
-        <input
+        <Input
           value={label}
           onChange={(e) => setLabel(e.target.value)}
           placeholder="而家專注緊咩？（選填）"
-          className="w-full rounded-xl border border-slate-300 px-3 py-2 text-center text-sm outline-none focus:border-accent focus:ring-2 focus:ring-accent/30"
+          className="text-center"
         />
       )}
 
-      <div className="flex justify-center gap-3">
-        <button
-          onClick={() => setRunning((r) => !r)}
-          className="rounded-xl bg-accent px-8 py-2.5 text-sm font-semibold text-white hover:bg-accent-strong"
-        >
+      <div className="flex flex-wrap justify-center gap-3">
+        <Button size="lg" onClick={() => setRunning((r) => !r)}>
           {running ? '暫停' : '開始'}
-        </button>
-        <button
-          onClick={reset}
-          className="rounded-xl border border-slate-200 px-5 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50"
-        >
+        </Button>
+        <Button size="lg" variant="secondary" onClick={reset}>
           重設
-        </button>
-        <button
-          onClick={handlePhaseEnd}
-          className="rounded-xl border border-slate-200 px-5 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50"
-        >
+        </Button>
+        <Button size="lg" variant="secondary" onClick={handlePhaseEnd}>
           跳過
-        </button>
+        </Button>
       </div>
 
-      <div className="rounded-2xl border border-slate-200 bg-white p-4 text-center">
-        <p className="text-sm text-slate-500">今日已完成</p>
-        <p className="mt-1 text-2xl font-bold text-accent">
-          {todaySessions.length} 節 · {todayMin} 分鐘
-        </p>
+      <div className="grid grid-cols-2 gap-3">
+        <StatCard label="今日節數" value={todaySessions.length} unit="節" icon="🍅" highlight />
+        <StatCard label="今日分鐘" value={todayMin} unit="分鐘" icon="⏱️" />
       </div>
     </div>
   )

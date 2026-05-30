@@ -2,6 +2,20 @@ import { useMemo, useState } from 'react'
 import { useCollection } from '../../lib/store'
 import { resourcesCol, topicsCol } from '../../data/collections'
 import type { ResourceType } from '../../data/types'
+import {
+  Badge,
+  Button,
+  Card,
+  EmptyState,
+  Field,
+  IconButton,
+  Input,
+  Modal,
+  Pills,
+  Select,
+  StatCard,
+  Textarea,
+} from '../../ui'
 
 const TYPE_LABEL: Record<ResourceType, string> = {
   handout: '講義',
@@ -20,22 +34,39 @@ const TYPE_ICON: Record<ResourceType, string> = {
   note: '🗒️',
 }
 
+const TYPE_KEYS = Object.keys(TYPE_LABEL) as ResourceType[]
+
+type FilterType = 'all' | ResourceType
+
 export default function ResourceLibrary() {
   const resources = useCollection(resourcesCol)
   const topics = useCollection(topicsCol)
 
   const [showForm, setShowForm] = useState(false)
-  const [fType, setFType] = useState('')
+  const [fType, setFType] = useState<FilterType>('all')
   const [fTopic, setFTopic] = useState('')
   const [search, setSearch] = useState('')
 
   const topicName = (id?: string) =>
     id ? (topics.find((t) => t.id === id)?.topic ?? '') : ''
 
+  const typeCounts = useMemo(() => {
+    const counts: Record<ResourceType, number> = {
+      handout: 0,
+      slides: 0,
+      paper: 0,
+      link: 0,
+      video: 0,
+      note: 0,
+    }
+    for (const r of resources) counts[r.type] += 1
+    return counts
+  }, [resources])
+
   const filtered = useMemo(
     () =>
       resources
-        .filter((r) => (fType ? r.type === fType : true))
+        .filter((r) => (fType !== 'all' ? r.type === fType : true))
         .filter((r) => (fTopic ? r.topicId === fTopic : true))
         .filter((r) =>
           search ? r.title.toLowerCase().includes(search.toLowerCase()) : true,
@@ -44,40 +75,47 @@ export default function ResourceLibrary() {
     [resources, fType, fTopic, search],
   )
 
+  const pillOptions: { id: FilterType; label: string }[] = [
+    { id: 'all', label: '全部' },
+    ...TYPE_KEYS.map((k) => ({
+      id: k as FilterType,
+      label: `${TYPE_ICON[k]} ${TYPE_LABEL[k]}`,
+    })),
+  ]
+
   return (
     <div className="space-y-4">
+      <header className="space-y-1">
+        <h1 className="text-2xl font-semibold text-slate-900">教學資源庫</h1>
+        <p className="text-sm text-slate-500">
+          收集講義、簡報、試題、連結同筆記，按類型或課題快速搵返。
+        </p>
+      </header>
+
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+        {TYPE_KEYS.map((k) => (
+          <StatCard
+            key={k}
+            label={TYPE_LABEL[k]}
+            value={typeCounts[k]}
+            icon={TYPE_ICON[k]}
+            highlight={fType === k}
+            onClick={() => setFType((prev) => (prev === k ? 'all' : k))}
+          />
+        ))}
+      </div>
+
       <div className="flex flex-wrap items-center gap-2">
-        <input
+        <Input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="搜尋資源…"
-          className="min-w-[140px] flex-1 rounded-xl border border-slate-300 px-3 py-2 text-sm outline-none focus:border-accent focus:ring-2 focus:ring-accent/30"
+          className="min-w-[140px] flex-1"
         />
-        <button
-          onClick={() => setShowForm((v) => !v)}
-          className="rounded-xl bg-accent px-4 py-2 text-sm font-medium text-white transition hover:bg-accent-strong"
-        >
-          {showForm ? '收起' : '＋ 新增資源'}
-        </button>
-      </div>
-
-      <div className="flex flex-wrap gap-2">
-        <select
-          value={fType}
-          onChange={(e) => setFType(e.target.value)}
-          className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 outline-none focus:border-accent"
-        >
-          <option value="">全部類型</option>
-          {(Object.keys(TYPE_LABEL) as ResourceType[]).map((k) => (
-            <option key={k} value={k}>
-              {TYPE_LABEL[k]}
-            </option>
-          ))}
-        </select>
-        <select
+        <Select
           value={fTopic}
           onChange={(e) => setFTopic(e.target.value)}
-          className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 outline-none focus:border-accent"
+          className="w-auto"
         >
           <option value="">全部課題</option>
           {topics.map((t) => (
@@ -85,62 +123,71 @@ export default function ResourceLibrary() {
               {t.topic}
             </option>
           ))}
-        </select>
+        </Select>
+        <Button onClick={() => setShowForm(true)}>＋ 新增資源</Button>
       </div>
 
-      {showForm && <AddForm onDone={() => setShowForm(false)} />}
+      <Pills options={pillOptions} active={fType} onChange={setFType} />
 
-      <div className="grid gap-3 sm:grid-cols-2">
-        {filtered.map((r) => (
-          <div
-            key={r.id}
-            className="group flex flex-col rounded-2xl border border-slate-200 bg-white p-4"
-          >
-            <div className="flex items-start justify-between">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent-soft text-lg">
-                {TYPE_ICON[r.type]}
+      {filtered.length === 0 ? (
+        <EmptyState
+          icon="📚"
+          title="未有符合嘅資源"
+          hint="撳「＋ 新增資源」開始建立你嘅教材庫，或者調整篩選條件。"
+          action={
+            <Button onClick={() => setShowForm(true)}>＋ 新增資源</Button>
+          }
+        />
+      ) : (
+        <div className="grid gap-3 sm:grid-cols-2">
+          {filtered.map((r) => (
+            <Card key={r.id} className="group flex flex-col p-4">
+              <div className="flex items-start justify-between">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent-soft text-lg">
+                  {TYPE_ICON[r.type]}
+                </div>
+                <IconButton
+                  label="刪除"
+                  onClick={() => resourcesCol.remove(r.id)}
+                  className="opacity-0 transition group-hover:opacity-100 hover:text-rose-500"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                    <path
+                      d="M4 7h16M9 7V5a1 1 0 011-1h4a1 1 0 011 1v2m-9 0v12a1 1 0 001 1h8a1 1 0 001-1V7"
+                      stroke="currentColor"
+                      strokeWidth="1.6"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </IconButton>
               </div>
-              <button
-                onClick={() => resourcesCol.remove(r.id)}
-                className="text-xs text-slate-300 opacity-0 transition group-hover:opacity-100 hover:text-red-500"
-              >
-                刪除
-              </button>
-            </div>
-            <p className="mt-3 text-sm font-semibold text-slate-800">
-              {r.title}
-            </p>
-            <div className="mt-1.5 flex flex-wrap gap-1.5">
-              <span className="rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-500">
-                {TYPE_LABEL[r.type]}
-              </span>
-              {r.topicId && (
-                <span className="rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-500">
-                  {topicName(r.topicId)}
-                </span>
+              <p className="mt-3 text-sm font-semibold text-slate-800">
+                {r.title}
+              </p>
+              <div className="mt-1.5 flex flex-wrap gap-1.5">
+                <Badge tone="accent">{TYPE_LABEL[r.type]}</Badge>
+                {r.topicId && <Badge tone="slate">{topicName(r.topicId)}</Badge>}
+              </div>
+              {r.notes && <p className="mt-2 text-xs text-slate-500">{r.notes}</p>}
+              {r.url && (
+                <a
+                  href={r.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-3 text-xs font-medium text-accent hover:underline"
+                >
+                  開啟連結 →
+                </a>
               )}
-            </div>
-            {r.notes && (
-              <p className="mt-2 text-xs text-slate-500">{r.notes}</p>
-            )}
-            {r.url && (
-              <a
-                href={r.url}
-                target="_blank"
-                rel="noreferrer"
-                className="mt-3 text-xs font-medium text-accent hover:underline"
-              >
-                開啟連結 →
-              </a>
-            )}
-          </div>
-        ))}
-        {filtered.length === 0 && (
-          <p className="rounded-xl bg-slate-50 px-4 py-10 text-center text-sm text-slate-400 sm:col-span-2">
-            未有資源。撳「＋ 新增資源」開始建立你嘅教材庫。
-          </p>
-        )}
-      </div>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      <Modal open={showForm} onClose={() => setShowForm(false)} title="新增資源">
+        <AddForm onDone={() => setShowForm(false)} />
+      </Modal>
     </div>
   )
 }
@@ -167,57 +214,59 @@ function AddForm({ onDone }: { onDone: () => void }) {
   }
 
   return (
-    <div className="space-y-3 rounded-2xl border border-accent/30 bg-accent-soft/40 p-4">
-      <input
-        value={title}
-        onChange={(e) => setTitle(e.target.value)}
-        placeholder="資源標題…"
-        className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm outline-none focus:border-accent focus:ring-2 focus:ring-accent/30"
-      />
-      <div className="flex flex-wrap gap-2">
-        <select
-          value={type}
-          onChange={(e) => setType(e.target.value as ResourceType)}
-          className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 outline-none focus:border-accent"
-        >
-          {(Object.keys(TYPE_LABEL) as ResourceType[]).map((k) => (
-            <option key={k} value={k}>
-              {TYPE_LABEL[k]}
-            </option>
-          ))}
-        </select>
-        <select
-          value={topicId}
-          onChange={(e) => setTopicId(e.target.value)}
-          className="flex-1 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 outline-none focus:border-accent"
-        >
-          <option value="">（選填）課題</option>
-          {topics.map((t) => (
-            <option key={t.id} value={t.id}>
-              {t.topic}
-            </option>
-          ))}
-        </select>
+    <div className="space-y-3">
+      <Field label="資源標題">
+        <Input
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder="資源標題…"
+        />
+      </Field>
+      <div className="grid grid-cols-2 gap-3">
+        <Field label="類型">
+          <Select
+            value={type}
+            onChange={(e) => setType(e.target.value as ResourceType)}
+          >
+            {TYPE_KEYS.map((k) => (
+              <option key={k} value={k}>
+                {TYPE_ICON[k]} {TYPE_LABEL[k]}
+              </option>
+            ))}
+          </Select>
+        </Field>
+        <Field label="課題（選填）">
+          <Select
+            value={topicId}
+            onChange={(e) => setTopicId(e.target.value)}
+          >
+            <option value="">未選擇</option>
+            {topics.map((t) => (
+              <option key={t.id} value={t.id}>
+                {t.topic}
+              </option>
+            ))}
+          </Select>
+        </Field>
       </div>
-      <input
-        value={url}
-        onChange={(e) => setUrl(e.target.value)}
-        placeholder="連結 URL（選填）"
-        className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm outline-none focus:border-accent focus:ring-2 focus:ring-accent/30"
-      />
-      <textarea
-        value={notes}
-        onChange={(e) => setNotes(e.target.value)}
-        placeholder="備註（選填）"
-        rows={2}
-        className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm outline-none focus:border-accent focus:ring-2 focus:ring-accent/30"
-      />
-      <button
-        onClick={save}
-        className="w-full rounded-xl bg-accent px-4 py-2 text-sm font-medium text-white transition hover:bg-accent-strong"
-      >
+      <Field label="連結 URL（選填）">
+        <Input
+          value={url}
+          onChange={(e) => setUrl(e.target.value)}
+          placeholder="https://…"
+        />
+      </Field>
+      <Field label="備註（選填）">
+        <Textarea
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+          placeholder="備註…"
+          rows={2}
+        />
+      </Field>
+      <Button onClick={save} className="w-full">
         儲存資源
-      </button>
+      </Button>
     </div>
   )
 }

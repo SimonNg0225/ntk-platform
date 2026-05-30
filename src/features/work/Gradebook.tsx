@@ -7,6 +7,19 @@ import {
   scoresCol,
   topicsCol,
 } from '../../data/collections'
+import {
+  Badge,
+  Button,
+  Card,
+  EmptyState,
+  Field,
+  IconButton,
+  Input,
+  Pills,
+  Select,
+  StatCard,
+  Tabs,
+} from '../../ui'
 
 type Tab = 'grid' | 'students' | 'assessments' | 'analysis'
 
@@ -17,6 +30,28 @@ const TABS: { id: Tab; label: string }[] = [
   { id: 'analysis', label: '分析' },
 ]
 
+// ───── 等級（按百分比）─────
+function gradeOf(
+  pct: number,
+): { label: string; tone: 'green' | 'accent' | 'amber' | 'rose' } {
+  if (pct >= 75) return { label: '優', tone: 'green' }
+  if (pct >= 60) return { label: '良', tone: 'accent' }
+  if (pct >= 50) return { label: '及格', tone: 'amber' }
+  return { label: '待改進', tone: 'rose' }
+}
+
+function pctTone(pct: number): 'rose' | 'amber' | 'accent' {
+  if (pct < 50) return 'rose'
+  if (pct < 70) return 'amber'
+  return 'accent'
+}
+
+const BAR_FILL: Record<'rose' | 'amber' | 'accent', string> = {
+  rose: 'bg-rose-400',
+  amber: 'bg-amber-400',
+  accent: 'bg-accent',
+}
+
 export default function Gradebook() {
   const classes = useCollection(classesCol)
   const [classId, setClassId] = useState(classes[0]?.id ?? '')
@@ -26,45 +61,23 @@ export default function Gradebook() {
 
   if (classes.length === 0) {
     return (
-      <p className="rounded-xl bg-slate-50 px-4 py-10 text-center text-sm text-slate-400">
-        仲未有班別。先去「班別管理」新增班別。
-      </p>
+      <EmptyState
+        icon="🏫"
+        title="仲未有班別"
+        hint="請先去「班別管理」新增班別，先可以記錄成績。"
+      />
     )
   }
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap gap-2">
-        {classes.map((c) => (
-          <button
-            key={c.id}
-            onClick={() => setClassId(c.id)}
-            className={
-              c.id === activeClass?.id
-                ? 'rounded-full bg-accent px-4 py-1.5 text-sm font-semibold text-white'
-                : 'rounded-full bg-slate-100 px-4 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-200'
-            }
-          >
-            {c.name}
-          </button>
-        ))}
-      </div>
+      <Pills
+        options={classes.map((c) => ({ id: c.id, label: c.name }))}
+        active={activeClass?.id ?? ''}
+        onChange={setClassId}
+      />
 
-      <div className="flex gap-1 rounded-xl bg-slate-100 p-1">
-        {TABS.map((t) => (
-          <button
-            key={t.id}
-            onClick={() => setTab(t.id)}
-            className={
-              tab === t.id
-                ? 'flex-1 rounded-lg bg-white px-3 py-1.5 text-sm font-semibold text-slate-800 shadow-sm'
-                : 'flex-1 rounded-lg px-3 py-1.5 text-sm font-medium text-slate-500'
-            }
-          >
-            {t.label}
-          </button>
-        ))}
-      </div>
+      <Tabs tabs={TABS} active={tab} onChange={setTab} />
 
       {activeClass && tab === 'grid' && <ScoreGrid classId={activeClass.id} />}
       {activeClass && tab === 'students' && (
@@ -109,11 +122,25 @@ function ScoreGrid({ classId }: { classId: string }) {
     return Math.round((ps.reduce((s, x) => s + x, 0) / ps.length) * 100)
   }
 
+  // 全班各評估平均（百分比）
+  const assessmentAvg = (aId: string, max: number) => {
+    const ps = students
+      .map((s) => {
+        const sc = getScore(aId, s.id)?.score
+        return sc != null ? sc / max : null
+      })
+      .filter((x): x is number => x != null)
+    if (ps.length === 0) return null
+    return Math.round((ps.reduce((s, x) => s + x, 0) / ps.length) * 100)
+  }
+
   if (students.length === 0 || assessments.length === 0) {
     return (
-      <p className="rounded-xl bg-slate-50 px-4 py-10 text-center text-sm text-slate-400">
-        請先喺「學生」同「評估」分頁加入資料，先可以填成績。
-      </p>
+      <EmptyState
+        icon="📝"
+        title="未夠資料填成績"
+        hint="請先喺「學生」同「評估」分頁加入資料，先可以填成績。"
+      />
     )
   }
 
@@ -131,8 +158,8 @@ function ScoreGrid({ classId }: { classId: string }) {
                 className="whitespace-nowrap px-3 py-2 text-center font-semibold text-slate-600"
               >
                 {a.name}
-                <span className="block text-[10px] font-normal text-slate-400">
-                  /{a.maxScore}
+                <span className="mt-0.5 block text-[10px] font-normal text-slate-400">
+                  {a.type} · 滿分 {a.maxScore}
                 </span>
               </th>
             ))}
@@ -147,35 +174,80 @@ function ScoreGrid({ classId }: { classId: string }) {
             return (
               <tr key={s.id} className="border-t border-slate-100">
                 <td className="sticky left-0 z-10 bg-white px-3 py-2 font-medium text-slate-700">
+                  {s.studentNo && (
+                    <span className="mr-1.5 text-xs text-slate-400">
+                      {s.studentNo}
+                    </span>
+                  )}
                   {s.name}
                 </td>
-                {assessments.map((a) => (
-                  <td key={a.id} className="px-2 py-1.5 text-center">
-                    <input
-                      type="number"
-                      value={getScore(a.id, s.id)?.score ?? ''}
-                      onChange={(e) =>
-                        setScore(a.id, s.id, e.target.value, a.maxScore)
-                      }
-                      className="w-14 rounded-lg border border-slate-200 px-1.5 py-1 text-center outline-none focus:border-accent"
-                    />
-                  </td>
-                ))}
-                <td
-                  className={`px-3 py-2 text-center font-semibold ${
-                    avg == null
-                      ? 'text-slate-300'
-                      : avg < 50
-                        ? 'text-rose-600'
-                        : 'text-accent'
-                  }`}
-                >
-                  {avg == null ? '—' : `${avg}%`}
+                {assessments.map((a) => {
+                  const sc = getScore(a.id, s.id)?.score
+                  const low = sc != null && sc / a.maxScore < 0.5
+                  return (
+                    <td key={a.id} className="px-2 py-1.5 text-center">
+                      <input
+                        type="number"
+                        value={sc ?? ''}
+                        onChange={(e) =>
+                          setScore(a.id, s.id, e.target.value, a.maxScore)
+                        }
+                        className={`w-14 rounded-lg border px-1.5 py-1 text-center font-medium outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/25 ${
+                          low
+                            ? 'border-rose-300 bg-rose-50 text-rose-600'
+                            : 'border-slate-200 text-slate-800'
+                        }`}
+                      />
+                    </td>
+                  )
+                })}
+                <td className="px-3 py-2 text-center">
+                  {avg == null ? (
+                    <span className="text-slate-300">—</span>
+                  ) : (
+                    <div className="flex items-center justify-center gap-1.5">
+                      <span
+                        className={`font-semibold ${
+                          avg < 50 ? 'text-rose-600' : 'text-accent'
+                        }`}
+                      >
+                        {avg}%
+                      </span>
+                      <Badge tone={gradeOf(avg).tone}>
+                        {gradeOf(avg).label}
+                      </Badge>
+                    </div>
+                  )}
                 </td>
               </tr>
             )
           })}
         </tbody>
+        <tfoot>
+          <tr className="border-t-2 border-slate-200 bg-slate-50">
+            <td className="sticky left-0 z-10 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-500">
+              全班平均
+            </td>
+            {assessments.map((a) => {
+              const av = assessmentAvg(a.id, a.maxScore)
+              return (
+                <td
+                  key={a.id}
+                  className={`px-3 py-2 text-center text-xs font-semibold ${
+                    av == null
+                      ? 'text-slate-300'
+                      : av < 50
+                        ? 'text-rose-600'
+                        : 'text-slate-600'
+                  }`}
+                >
+                  {av == null ? '—' : `${av}%`}
+                </td>
+              )
+            })}
+            <td className="px-3 py-2" />
+          </tr>
+        </tfoot>
       </table>
     </div>
   )
@@ -196,48 +268,55 @@ function StudentsTab({ classId }: { classId: string }) {
 
   return (
     <div className="space-y-3">
-      <div className="flex flex-wrap gap-2">
-        <input
-          value={no}
-          onChange={(e) => setNo(e.target.value)}
-          placeholder="學號"
-          className="w-24 rounded-xl border border-slate-300 px-3 py-2 text-sm outline-none focus:border-accent"
-        />
-        <input
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && add()}
-          placeholder="學生姓名"
-          className="flex-1 rounded-xl border border-slate-300 px-3 py-2 text-sm outline-none focus:border-accent"
-        />
-        <button
-          onClick={add}
-          className="rounded-xl bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-strong"
-        >
-          加入
-        </button>
+      <div className="flex flex-wrap items-end gap-2">
+        <div className="w-24">
+          <Field label="學號">
+            <Input value={no} onChange={(e) => setNo(e.target.value)} placeholder="選填" />
+          </Field>
+        </div>
+        <div className="min-w-[160px] flex-1">
+          <Field label="學生姓名">
+            <Input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && add()}
+              placeholder="輸入姓名"
+            />
+          </Field>
+        </div>
+        <Button onClick={add}>加入</Button>
       </div>
-      <ul className="divide-y divide-slate-100 rounded-2xl border border-slate-200 bg-white">
-        {students.map((s) => (
-          <li key={s.id} className="group flex items-center gap-3 px-4 py-2.5">
-            {s.studentNo && (
-              <span className="text-xs text-slate-400">{s.studentNo}</span>
-            )}
-            <span className="flex-1 text-sm text-slate-700">{s.name}</span>
-            <button
-              onClick={() => studentsCol.remove(s.id)}
-              className="text-xs text-slate-300 opacity-0 transition group-hover:opacity-100 hover:text-red-500"
-            >
-              刪除
-            </button>
-          </li>
-        ))}
-        {students.length === 0 && (
-          <li className="px-4 py-8 text-center text-sm text-slate-400">
-            仲未有學生
-          </li>
-        )}
-      </ul>
+      {students.length === 0 ? (
+        <EmptyState icon="🧑‍🎓" title="仲未有學生" hint="喺上面輸入姓名加入第一位學生。" />
+      ) : (
+        <Card>
+          <ul className="divide-y divide-slate-100">
+            {students.map((s) => (
+              <li key={s.id} className="group flex items-center gap-3 px-4 py-2.5">
+                {s.studentNo && (
+                  <Badge tone="slate">{s.studentNo}</Badge>
+                )}
+                <span className="flex-1 text-sm text-slate-700">{s.name}</span>
+                <IconButton
+                  label="刪除學生"
+                  onClick={() => studentsCol.remove(s.id)}
+                  className="opacity-0 transition group-hover:opacity-100 hover:text-rose-500"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                    <path
+                      d="M6 7h12M9 7V5h6v2m-7 0 1 12h6l1-12"
+                      stroke="currentColor"
+                      strokeWidth="1.8"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </IconButton>
+              </li>
+            ))}
+          </ul>
+        </Card>
+      )}
     </div>
   )
 }
@@ -270,74 +349,96 @@ function AssessmentsTab({ classId }: { classId: string }) {
 
   return (
     <div className="space-y-3">
-      <div className="space-y-2 rounded-2xl border border-accent/30 bg-accent-soft/40 p-4">
+      <Card className="space-y-3 border-accent/30 bg-accent-soft/40 p-4">
         <div className="flex flex-wrap gap-2">
-          <input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="評估名稱（例如 第一次測驗）"
-            className="min-w-[160px] flex-1 rounded-xl border border-slate-300 px-3 py-2 text-sm outline-none focus:border-accent"
-          />
-          <select
-            value={type}
-            onChange={(e) => setType(e.target.value)}
-            className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 outline-none focus:border-accent"
-          >
-            {['測驗', '考試', '功課', '專題'].map((t) => (
-              <option key={t}>{t}</option>
-            ))}
-          </select>
-          <input
-            value={maxScore}
-            onChange={(e) => setMaxScore(e.target.value.replace(/\D/g, ''))}
-            placeholder="滿分"
-            className="w-20 rounded-xl border border-slate-300 px-3 py-2 text-sm outline-none focus:border-accent"
-          />
+          <div className="min-w-[160px] flex-1">
+            <Field label="評估名稱">
+              <Input
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="例如 第一次測驗"
+              />
+            </Field>
+          </div>
+          <div className="w-28">
+            <Field label="類型">
+              <Select value={type} onChange={(e) => setType(e.target.value)}>
+                {['測驗', '考試', '功課', '專題'].map((t) => (
+                  <option key={t}>{t}</option>
+                ))}
+              </Select>
+            </Field>
+          </div>
+          <div className="w-20">
+            <Field label="滿分">
+              <Input
+                value={maxScore}
+                onChange={(e) => setMaxScore(e.target.value.replace(/\D/g, ''))}
+                placeholder="100"
+              />
+            </Field>
+          </div>
         </div>
-        <div className="flex gap-2">
-          <select
-            value={topicId}
-            onChange={(e) => setTopicId(e.target.value)}
-            className="flex-1 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 outline-none focus:border-accent"
-          >
-            <option value="">（選填）連住課題 — 之後可分析弱項</option>
-            {topics.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.topic}
-              </option>
-            ))}
-          </select>
-          <button
-            onClick={add}
-            className="rounded-xl bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-strong"
-          >
-            新增
-          </button>
+        <div className="flex items-end gap-2">
+          <div className="flex-1">
+            <Field label="課題（選填）" hint="連住課題之後可分析弱項">
+              <Select value={topicId} onChange={(e) => setTopicId(e.target.value)}>
+                <option value="">— 唔連課題 —</option>
+                {topics.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.topic}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+          </div>
+          <Button onClick={add}>新增</Button>
         </div>
-      </div>
-      <ul className="divide-y divide-slate-100 rounded-2xl border border-slate-200 bg-white">
-        {assessments.map((a) => (
-          <li key={a.id} className="group flex items-center gap-3 px-4 py-2.5">
-            <span className="flex-1 text-sm text-slate-700">
-              {a.name}
-              <span className="ml-2 text-xs text-slate-400">
-                {a.type} · 滿分 {a.maxScore}
-              </span>
-            </span>
-            <button
-              onClick={() => assessmentsCol.remove(a.id)}
-              className="text-xs text-slate-300 opacity-0 transition group-hover:opacity-100 hover:text-red-500"
-            >
-              刪除
-            </button>
-          </li>
-        ))}
-        {assessments.length === 0 && (
-          <li className="px-4 py-8 text-center text-sm text-slate-400">
-            仲未有評估
-          </li>
-        )}
-      </ul>
+      </Card>
+      {assessments.length === 0 ? (
+        <EmptyState
+          icon="🗂️"
+          title="仲未有評估"
+          hint="喺上面新增測驗、考試或功課，先可以入分。"
+        />
+      ) : (
+        <Card>
+          <ul className="divide-y divide-slate-100">
+            {assessments.map((a) => {
+              const topic = a.topicId
+                ? topics.find((t) => t.id === a.topicId)?.topic
+                : null
+              return (
+                <li key={a.id} className="group flex items-center gap-3 px-4 py-2.5">
+                  <span className="flex-1 text-sm text-slate-700">
+                    {a.name}
+                    <span className="ml-2 inline-flex flex-wrap items-center gap-1.5 align-middle">
+                      <Badge tone="slate">{a.type}</Badge>
+                      <Badge tone="accent">滿分 {a.maxScore}</Badge>
+                      {topic && <Badge tone="blue">{topic}</Badge>}
+                    </span>
+                  </span>
+                  <IconButton
+                    label="刪除評估"
+                    onClick={() => assessmentsCol.remove(a.id)}
+                    className="opacity-0 transition group-hover:opacity-100 hover:text-rose-500"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                      <path
+                        d="M6 7h12M9 7V5h6v2m-7 0 1 12h6l1-12"
+                        stroke="currentColor"
+                        strokeWidth="1.8"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </IconButton>
+                </li>
+              )
+            })}
+          </ul>
+        </Card>
+      )}
     </div>
   )
 }
@@ -370,6 +471,28 @@ function AnalysisTab({ classId }: { classId: string }) {
       ? Math.round((all.reduce((x, y) => x + y, 0) / all.length) * 100)
       : null
 
+    // 各學生平均
+    const studentAvgs = students
+      .map((s) => {
+        const ps = assessments
+          .map((a) => pctOf(a.id, s.id, a.maxScore))
+          .filter((x): x is number => x != null)
+        const avg = ps.length
+          ? Math.round((ps.reduce((x, y) => x + y, 0) / ps.length) * 100)
+          : null
+        return { name: s.name, avg }
+      })
+      .filter((x): x is { name: string; avg: number } => x.avg != null)
+
+    const sorted = [...studentAvgs].sort((a, b) => b.avg - a.avg)
+    const top = sorted[0] ?? null
+    const bottom = sorted.length ? sorted[sorted.length - 1] : null
+
+    // 已評估數（最少有一個分數嘅評估）
+    const gradedCount = assessments.filter((a) =>
+      students.some((s) => pctOf(a.id, s.id, a.maxScore) != null),
+    ).length
+
     // 按課題分析
     const byTopic = new Map<string, number[]>()
     assessments.forEach((a) => {
@@ -391,32 +514,53 @@ function AnalysisTab({ classId }: { classId: string }) {
       .sort((a, b) => a.avg - b.avg)
 
     // 需關注學生（平均 < 50%）
-    const weakStudents = students
-      .map((s) => {
-        const ps = assessments
-          .map((a) => pctOf(a.id, s.id, a.maxScore))
-          .filter((x): x is number => x != null)
-        const avg = ps.length
-          ? Math.round((ps.reduce((x, y) => x + y, 0) / ps.length) * 100)
-          : null
-        return { name: s.name, avg }
-      })
-      .filter((x) => x.avg != null && x.avg < 50)
+    const weakStudents = studentAvgs.filter((x) => x.avg < 50)
 
-    return { classAvg, topicStats, weakStudents }
+    return { classAvg, top, bottom, gradedCount, topicStats, weakStudents }
   }, [students, assessments, scores, topics])
+
+  if (students.length === 0 || assessments.length === 0) {
+    return (
+      <EmptyState
+        icon="📊"
+        title="未夠資料分析"
+        hint="加入學生同評估、入埋分數後，呢度會自動整理班級表現。"
+      />
+    )
+  }
 
   return (
     <div className="space-y-4">
-      <div className="rounded-2xl border border-slate-200 bg-white p-4">
-        <p className="text-sm text-slate-500">班級平均</p>
-        <p className="mt-1 text-3xl font-bold text-accent">
-          {stats.classAvg == null ? '—' : `${stats.classAvg}%`}
-        </p>
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <StatCard
+          label="班級平均"
+          value={stats.classAvg == null ? '—' : stats.classAvg}
+          unit={stats.classAvg == null ? undefined : '%'}
+          icon="🎯"
+          highlight
+        />
+        <StatCard
+          label="最高分學生"
+          value={stats.top ? stats.top.name : '—'}
+          unit={stats.top ? `${stats.top.avg}%` : undefined}
+          icon="🏆"
+        />
+        <StatCard
+          label="最低分學生"
+          value={stats.bottom ? stats.bottom.name : '—'}
+          unit={stats.bottom ? `${stats.bottom.avg}%` : undefined}
+          icon="📉"
+        />
+        <StatCard
+          label="已評估數"
+          value={stats.gradedCount}
+          unit={`/ ${assessments.length}`}
+          icon="🗂️"
+        />
       </div>
 
-      <div className="rounded-2xl border border-slate-200 bg-white p-4">
-        <p className="mb-2 text-sm font-semibold text-slate-700">
+      <Card className="p-4">
+        <p className="mb-3 text-sm font-semibold text-slate-700">
           各課題表現（由弱到強）
         </p>
         {stats.topicStats.length === 0 ? (
@@ -424,26 +568,36 @@ function AnalysisTab({ classId }: { classId: string }) {
             將評估連住課題，就會喺度睇到弱項分析。
           </p>
         ) : (
-          <ul className="space-y-2">
-            {stats.topicStats.map((t) => (
-              <li key={t.topic}>
-                <div className="flex justify-between text-xs text-slate-500">
-                  <span>{t.topic}</span>
-                  <span>{t.avg}%</span>
-                </div>
-                <div className="mt-1 h-2 w-full overflow-hidden rounded-full bg-slate-100">
-                  <div
-                    className={`h-full rounded-full ${t.avg < 50 ? 'bg-rose-400' : t.avg < 70 ? 'bg-amber-400' : 'bg-accent'}`}
-                    style={{ width: `${t.avg}%` }}
-                  />
-                </div>
-              </li>
-            ))}
+          <ul className="space-y-3">
+            {stats.topicStats.map((t) => {
+              const tone = pctTone(t.avg)
+              return (
+                <li key={t.topic}>
+                  <div className="mb-1 flex items-center justify-between text-xs">
+                    <span className="text-slate-600">{t.topic}</span>
+                    <span className="flex items-center gap-1.5">
+                      <span className="font-semibold text-slate-700">
+                        {t.avg}%
+                      </span>
+                      <Badge tone={gradeOf(t.avg).tone}>
+                        {gradeOf(t.avg).label}
+                      </Badge>
+                    </span>
+                  </div>
+                  <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100">
+                    <div
+                      className={`h-full rounded-full transition-all ${BAR_FILL[tone]}`}
+                      style={{ width: `${t.avg}%` }}
+                    />
+                  </div>
+                </li>
+              )
+            })}
           </ul>
         )}
-      </div>
+      </Card>
 
-      <div className="rounded-2xl border border-slate-200 bg-white p-4">
+      <Card className="p-4">
         <p className="mb-2 text-sm font-semibold text-slate-700">
           需關注學生（平均低於 50%）
         </p>
@@ -452,16 +606,13 @@ function AnalysisTab({ classId }: { classId: string }) {
         ) : (
           <div className="flex flex-wrap gap-2">
             {stats.weakStudents.map((s) => (
-              <span
-                key={s.name}
-                className="rounded-full bg-rose-100 px-3 py-1 text-xs font-medium text-rose-700"
-              >
+              <Badge key={s.name} tone="rose">
                 {s.name} · {s.avg}%
-              </span>
+              </Badge>
             ))}
           </div>
         )}
-      </div>
+      </Card>
     </div>
   )
 }
