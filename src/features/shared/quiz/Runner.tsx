@@ -342,11 +342,15 @@ export function QuizRunner({
         </Button>
         <div className="flex items-center gap-2">
           {isTimed && (
-            <Badge tone="accent" icon={Trophy} className="tabular-nums">
+            <Badge tone="accent" icon={Trophy} className="tabular-nums" aria-live="polite">
               {earned} 分
             </Badge>
           )}
-          <span className="text-xs font-medium tabular-nums text-slate-500 dark:text-slate-400">
+          <span
+            className="text-xs font-medium tabular-nums text-slate-500 dark:text-slate-400"
+            aria-live="polite"
+            aria-label={`第 ${currentIdx + 1} 題，共 ${total} 題`}
+          >
             {currentIdx + 1} / {total}
           </span>
           <Button
@@ -355,6 +359,8 @@ export function QuizRunner({
             icon={LayoutGrid}
             onClick={() => setShowNav((v) => !v)}
             className={cx(showNav && 'bg-slate-100 dark:bg-slate-800')}
+            aria-pressed={showNav}
+            aria-expanded={showNav}
           >
             導航
           </Button>
@@ -375,10 +381,13 @@ export function QuizRunner({
               return (
                 <button
                   key={q.questionId}
+                  type="button"
                   onClick={() => {
                     setCurrentIdx(i)
                     setShowNav(false)
                   }}
+                  aria-current={i === currentIdx ? 'true' : undefined}
+                  aria-label={`第 ${i + 1} 題${done ? '（已作答）' : '（未作答）'}${flagged ? '（已標記）' : ''}`}
                   className={cx(
                     'relative flex h-9 items-center justify-center rounded-lg text-xs font-semibold tabular-nums transition',
                     i === currentIdx
@@ -421,6 +430,7 @@ export function QuizRunner({
                   : 'text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-700',
               )}
               aria-label="標記呢題"
+              aria-pressed={!!flags[current.questionId]}
               title="標記（F）"
             >
               <Flag size={16} className={cx(flags[current.questionId] && 'fill-current')} />
@@ -467,6 +477,7 @@ export function QuizRunner({
             )}
             {graded && (
               <div
+                aria-live="polite"
                 className={cx(
                   'rounded-xl border p-3 text-sm',
                   shortCorrect
@@ -499,7 +510,10 @@ export function QuizRunner({
 
         {/* timed：呢題得分回饋 */}
         {isTimed && isAnswered && (
-          <div className="flex items-center gap-1.5 border-t border-slate-100 pt-3 text-sm dark:border-slate-700">
+          <div
+            aria-live="polite"
+            className="flex items-center gap-1.5 border-t border-slate-100 pt-3 text-sm dark:border-slate-700"
+          >
             <Zap size={15} className="text-accent" />
             <span className="text-slate-600 dark:text-slate-300">本題得分</span>
             <span className="ml-auto text-lg font-bold tabular-nums text-accent-strong dark:text-accent">

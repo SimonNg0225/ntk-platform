@@ -3,6 +3,7 @@ import type { AttendanceRecord, AttendanceStatus, Student } from '../../../data/
 import { Badge, cx } from '../../../ui'
 import {
   STATUS_GLYPH,
+  STATUS_LABEL,
   STATUS_STYLE,
   isWeekend,
   rateTone,
@@ -113,6 +114,7 @@ export default function RegisterGrid({
                         type="button"
                         onClick={() => onCycle(s.id, k, nextStatus(st))}
                         title={`${s.name}・${k}`}
+                        aria-label={`${s.name}・${k}：${st ? STATUS_LABEL[st] : '未標記'}`}
                         className={cx(
                           'flex h-8 w-full items-center justify-center text-xs font-semibold tabular-nums transition focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent/40',
                           st

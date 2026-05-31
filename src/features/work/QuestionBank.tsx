@@ -608,6 +608,7 @@ function BankView(props: {
         <Card className="flex flex-wrap items-center gap-2 border-accent/30 bg-accent-soft/50 p-3">
           <button
             onClick={selectAllFiltered}
+            aria-pressed={allFilteredSelected}
             className="inline-flex items-center gap-1.5 text-sm font-medium text-accent-strong dark:text-accent"
           >
             {allFilteredSelected ? <CheckSquare size={16} /> : <Square size={16} />}
@@ -663,7 +664,10 @@ function BankView(props: {
       )}
 
       {/* 列表 */}
-      <p className="text-xs text-slate-400 dark:text-slate-500">
+      <p
+        className="text-xs text-slate-400 dark:text-slate-500"
+        aria-live="polite"
+      >
         顯示 <span className="nums">{filtered.length}</span> 條題目
       </p>
       <ul className="space-y-2">
@@ -681,6 +685,7 @@ function BankView(props: {
               )}
               <button
                 onClick={() => setExpanded(expanded === q.id ? null : q.id)}
+                aria-expanded={expanded === q.id}
                 className="flex-1 text-left text-sm text-slate-800 dark:text-slate-100"
               >
                 {q.stem}
@@ -1150,6 +1155,7 @@ function PaperStudio({
                     <button
                       key={t.id}
                       onClick={() => toggleBpTopic(t.id)}
+                      aria-pressed={on}
                       className={
                         on
                           ? 'rounded-full bg-accent px-2.5 py-1 text-xs font-medium text-white'
@@ -1655,7 +1661,10 @@ function ImportModal({
 
         {text.trim() && (
           <div className="rounded-lg border border-slate-200 bg-slate-50/60 p-3 dark:border-slate-700 dark:bg-slate-900/40">
-            <div className="mb-2 flex items-center gap-2 text-xs">
+            <div
+              className="mb-2 flex items-center gap-2 text-xs"
+              aria-live="polite"
+            >
               <Badge tone="green">可匯入 {preview.parsed.length}</Badge>
               {preview.skipped > 0 && (
                 <Badge tone="amber">略過 {preview.skipped}</Badge>
@@ -2049,7 +2058,10 @@ function AIGenerateModal({
           </Field>
 
           {busy && (
-            <div className="space-y-2 rounded-xl border border-slate-200/80 bg-slate-50/60 p-3 dark:border-slate-700/80 dark:bg-slate-900/40">
+            <div
+              className="space-y-2 rounded-xl border border-slate-200/80 bg-slate-50/60 p-3 dark:border-slate-700/80 dark:bg-slate-900/40"
+              aria-live="polite"
+            >
               <p className="text-sm text-slate-500 dark:text-slate-400">
                 AI 諗緊題目，請等一等…
               </p>

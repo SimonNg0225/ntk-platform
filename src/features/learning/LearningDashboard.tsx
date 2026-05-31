@@ -298,7 +298,10 @@ export default function LearningDashboard() {
             學習活動走勢
           </SectionTitle>
           <ActivityArea signals={signals} height={96} />
-          <div className="mt-3 flex items-center gap-3 border-t border-slate-100 pt-3 dark:border-slate-800">
+          <div
+            className="mt-3 flex items-center gap-3 border-t border-slate-100 pt-3 dark:border-slate-800"
+            aria-live="polite"
+          >
             <div className="flex items-center gap-2.5">
               <MiniRing value={kpis.habitRate} size={46} stroke={5} tone={kpis.habitRate >= 100 ? 'green' : 'accent'}>
                 <span className="text-[10px] font-bold tabular-nums text-slate-600 dark:text-slate-300">
@@ -323,7 +326,11 @@ export default function LearningDashboard() {
           <SectionTitle
             icon={Check}
             right={
-              <span className="text-xs font-medium tabular-nums text-slate-400">
+              <span
+                className="text-xs font-medium tabular-nums text-slate-400"
+                aria-live="polite"
+                aria-label={`今日任務完成 ${tasksDone} / ${tasks.length}`}
+              >
                 {tasksDone}/{tasks.length}
               </span>
             }
@@ -557,7 +564,9 @@ function CustomizeModal({
               return (
                 <button
                   key={k.id}
+                  type="button"
                   onClick={() => toggleKpi(k.id)}
+                  aria-pressed={on}
                   className={cx(
                     'inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium transition',
                     on
@@ -571,7 +580,9 @@ function CustomizeModal({
               )
             })}
           </div>
-          <p className="mt-1.5 text-[11px] tabular-nums text-slate-400">已選 {prefs.kpis.length}/4</p>
+          <p className="mt-1.5 text-[11px] tabular-nums text-slate-400" aria-live="polite">
+            已選 {prefs.kpis.length}/4
+          </p>
         </section>
 
         {/* 密度 */}

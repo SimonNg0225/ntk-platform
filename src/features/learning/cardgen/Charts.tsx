@@ -34,7 +34,8 @@ export function GenTrend({
     const gen = new Map<string, number>()
     const sav = new Map<string, number>()
     for (const r of records) {
-      const k = r.ts.slice(0, 10)
+      // r.ts 係 UTC ISO，要用本地日期 key 先同下面 dayKey(本地) 對齊
+      const k = dayKey(new Date(r.ts))
       gen.set(k, (gen.get(k) ?? 0) + r.generated)
       sav.set(k, (sav.get(k) ?? 0) + r.saved)
     }

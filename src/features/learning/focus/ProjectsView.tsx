@@ -277,9 +277,12 @@ function ProjectModal({
             {EMOJIS.map((e) => (
               <button
                 key={e}
+                type="button"
+                aria-label={`圖示 ${e}`}
+                aria-pressed={icon === e}
                 onClick={() => setIcon(e)}
                 className={cx(
-                  'flex h-9 w-9 items-center justify-center rounded-lg text-lg transition',
+                  'flex h-9 w-9 items-center justify-center rounded-lg text-lg transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
                   icon === e
                     ? 'bg-accent-soft ring-2 ring-accent dark:bg-accent/15'
                     : 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600',
@@ -299,13 +302,15 @@ function ProjectModal({
               return (
                 <button
                   key={c}
+                  type="button"
                   onClick={() => setColor(c)}
                   className={cx(
-                    'h-8 w-8 rounded-full transition',
+                    'h-8 w-8 rounded-full transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-800',
                     pal.dot,
                     color === c ? 'ring-2 ring-offset-2 ring-slate-400 dark:ring-offset-slate-800' : 'hover:scale-110',
                   )}
-                  aria-label={c}
+                  aria-label={`顏色 ${c}`}
+                  aria-pressed={color === c}
                 />
               )
             })}

@@ -30,9 +30,18 @@ const SUGGESTIONS = [
 const SYSTEM =
   '你係用戶「NTK 平台」嘅私人 AI 助理。下面係佢嘅個人資料摘要，請主要根據呢啲資料（配合常識）用繁體中文（可書面廣東話）扼要、有條理咁回答。如果資料唔夠就照答並提一句。唔好捏造唔存在嘅具體資料。'
 
+/** 本地時區 YYYY-MM-DD（避開 toISOString 當 UTC 嘅時差） */
+function todayKey(): string {
+  const d = new Date()
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
+
 /** 由各 collection 砌一段精簡 context（上限約 4000 字） */
 function buildContext(): string {
-  const today = new Date().toISOString().slice(0, 10)
+  const today = todayKey()
   const parts: string[] = []
 
   const notes = richNotesCol
@@ -179,6 +188,7 @@ export default function AskData() {
             ref={inputRef}
             rows={2}
             className="flex-1"
+            aria-label="問關於你資料嘅問題"
             placeholder="例如：我今個星期最緊要做咩？（Enter 送出）"
             value={q}
             onChange={(e) => setQ(e.target.value)}
@@ -212,10 +222,18 @@ export default function AskData() {
 
       {answer !== null && (
         <Card padded>
-          <div className="whitespace-pre-wrap break-words text-sm leading-relaxed text-slate-800 dark:text-slate-100">
+          <div
+            role="status"
+            aria-live="polite"
+            aria-busy={busy}
+            className="whitespace-pre-wrap break-words text-sm leading-relaxed text-slate-800 dark:text-slate-100"
+          >
             {answer}
             {busy && (
-              <span className="ml-0.5 inline-block h-4 w-1.5 animate-pulse bg-current align-middle" />
+              <span
+                aria-hidden="true"
+                className="ml-0.5 inline-block h-4 w-1.5 animate-pulse bg-current align-middle"
+              />
             )}
           </div>
         </Card>

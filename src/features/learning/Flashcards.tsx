@@ -224,8 +224,9 @@ function DeckHome({
                 <Menu
                   align="end"
                   trigger={
-                    <span className="rounded-lg p-1 text-slate-300 transition hover:bg-slate-100 hover:text-slate-500 dark:hover:bg-slate-700">
+                    <span className="rounded-lg p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-500 dark:hover:bg-slate-700">
                       <MoreVertical size={16} />
+                      <span className="sr-only">{d.name} 更多操作</span>
                     </span>
                   }
                   items={[
@@ -742,6 +743,7 @@ function DeckSettingsModal({
             max={999}
             value={newPerDay}
             onChange={(e) => setNewPerDay(e.target.value)}
+            aria-label="每日新卡上限"
           />
           <p className="mt-1 text-[11px] text-slate-400 dark:text-slate-500">
             每次複習最多引入幾多張未學過嘅新卡（避免一下子太多）。

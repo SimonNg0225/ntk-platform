@@ -28,7 +28,8 @@ export default function YearView({
               >
                 {month + 1}月
               </button>
-              <div className="grid grid-cols-7 gap-px text-center text-[9px] text-slate-300 dark:text-slate-600">
+              <div className="grid grid-cols-7 gap-px text-center text-[9px] text-slate-400 dark:text-slate-500">
+
                 {WEEKDAYS.map((w) => (
                   <div key={w} className="pb-0.5">
                     {w}
@@ -46,6 +47,8 @@ export default function YearView({
                     <button
                       key={key}
                       type="button"
+                      aria-label={`${month + 1}月${cell.getDate()}日${has ? '，有活動' : ''}`}
+                      aria-current={isToday ? 'date' : undefined}
                       onClick={() => onPickDay(key)}
                       className={cx(
                         'flex aspect-square items-center justify-center rounded-full text-[10px] tabular-nums transition-colors',

@@ -759,7 +759,10 @@ function RecordsTab({
             />
             {selected.size > 0 ? `已揀 ${selected.size} 筆` : `全選（${visible.length}）`}
           </label>
-          <span className="flex items-center gap-3 tabular-nums text-slate-400">
+          <span
+            className="flex items-center gap-3 tabular-nums text-slate-400"
+            aria-live="polite"
+          >
             {totalShown.inc > 0 && (
               <span className="text-emerald-600 dark:text-emerald-400">+{fmtMoney(totalShown.inc)}</span>
             )}
@@ -957,13 +960,13 @@ function BudgetsTab({
           {bRows.map((r) => {
             const cat = catOf(r.categoryId)
             return (
-              <Card
-                key={r.categoryId}
-                hover
-                className="cursor-pointer p-3.5"
-                onClick={() => cat && setEditCat(cat)}
-              >
-                <div className="flex items-center gap-3">
+              <Card key={r.categoryId} hover className="p-3.5">
+                <button
+                  type="button"
+                  onClick={() => cat && setEditCat(cat)}
+                  aria-label={`編輯 ${cat?.name ?? '未分類'} 預算`}
+                  className="flex w-full items-center gap-3 rounded-lg text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+                >
                   <BudgetRing pct={r.pct} over={r.status === 'over'} />
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center justify-between gap-2">
@@ -1012,7 +1015,7 @@ function BudgetsTab({
                       </span>
                     </div>
                   </div>
-                </div>
+                </button>
               </Card>
             )
           })}

@@ -108,6 +108,10 @@ export default function WeekGrid({
                   const hasConflict = conflictKeys.has(key)
                   const dimmed =
                     !!dimClassId && !!slot && slot.classId !== dimClassId
+                  const cellPos = `星期${dayShort(day)} 第 ${bell.period} 節`
+                  const cellLabel = slot
+                    ? `編輯 ${cellPos}：${title || className || '課堂'}${hasConflict ? '（撞堂）' : ''}`
+                    : `新增課堂 — ${cellPos}`
                   return (
                     <td
                       key={day}
@@ -118,6 +122,7 @@ export default function WeekGrid({
                     >
                       <button
                         type="button"
+                        aria-label={cellLabel}
                         onClick={() => onOpenCell(day, bell.period)}
                         className={cx(
                           'group relative flex h-[78px] w-full flex-col items-start gap-1 rounded-lg p-2 text-left transition focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',

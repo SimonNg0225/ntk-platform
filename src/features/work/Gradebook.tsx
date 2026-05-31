@@ -379,6 +379,7 @@ function ScoreGrid({ classId, className }: { classId: string; className: string 
                         <input
                           type="number"
                           inputMode="numeric"
+                          aria-label={`${s.name}・${a.name} 分數（滿分 ${a.maxScore}）`}
                           value={sc ?? ''}
                           onChange={(e) =>
                             setScore(a.id, s.id, e.target.value, a.maxScore)
@@ -1336,6 +1337,7 @@ function AssessmentsTab({ classId }: { classId: string }) {
                     <select
                       value={a.topicId ?? ''}
                       onChange={(e) => setField(a.id, { topicId: e.target.value })}
+                      aria-label={`${a.name} — 連結課題`}
                       className="max-w-[200px] cursor-pointer rounded-md border border-slate-200 bg-white px-2 py-1 text-xs text-slate-600 outline-none focus:border-accent dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
                     >
                       <option value="">— 未連 —</option>
@@ -1353,6 +1355,7 @@ function AssessmentsTab({ classId }: { classId: string }) {
                       type="date"
                       value={a.date ?? ''}
                       onChange={(e) => setField(a.id, { date: e.target.value })}
+                      aria-label={`${a.name} — 評估日期`}
                       className="cursor-pointer rounded-md border border-slate-200 bg-white px-2 py-1 text-xs text-slate-600 outline-none focus:border-accent dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
                     />
                   </div>
@@ -1513,6 +1516,7 @@ function SchemeTab({ classId }: { classId: string }) {
                   step={5}
                   value={v}
                   onChange={(e) => setWeight(t, Number(e.target.value))}
+                  aria-label={`「${t}」類別權重（%）`}
                   className="h-1.5 flex-1 cursor-pointer appearance-none rounded-full bg-slate-200 accent-accent dark:bg-slate-700"
                 />
                 <div className="flex w-16 items-center">
@@ -1521,6 +1525,7 @@ function SchemeTab({ classId }: { classId: string }) {
                     onChange={(e) =>
                       setWeight(t, Number(e.target.value.replace(/\D/g, '')) || 0)
                     }
+                    aria-label={`「${t}」類別權重百分比`}
                     className="text-center tabular-nums"
                   />
                   <span className="ml-1 text-sm text-slate-400">%</span>

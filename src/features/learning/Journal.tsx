@@ -394,7 +394,7 @@ export default function Journal() {
                 onClick={() => openEdit(d)}
                 className="flex w-full items-start gap-3 rounded-lg bg-white/70 p-2.5 text-left transition hover:bg-white dark:bg-slate-800/60 dark:hover:bg-slate-800"
               >
-                <span className="shrink-0 text-lg">{d.mood || '📝'}</span>
+                <span aria-hidden="true" className="shrink-0 text-lg">{d.mood || '📝'}</span>
                 <div className="min-w-0">
                   <p className="text-xs font-medium tabular-nums text-accent-strong dark:text-accent">
                     {d.date.slice(0, 4)} 年 · {today.slice(0, 4) === d.date.slice(0, 4) ? '' : `${Number(today.slice(0, 4)) - Number(d.date.slice(0, 4))} 年前`}
@@ -432,6 +432,7 @@ export default function Journal() {
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="搜尋標題、內文、感恩…"
+                aria-label="搜尋日誌"
               />
             </div>
             <SegmentedControl<SortId>
@@ -450,6 +451,7 @@ export default function Journal() {
           <div className="flex flex-wrap items-center gap-1.5">
             <button
               onClick={() => setFavOnly((v) => !v)}
+              aria-pressed={favOnly}
               className={cx(
                 'inline-flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-medium transition',
                 favOnly
@@ -467,13 +469,15 @@ export default function Journal() {
                 <button
                   key={m.emoji}
                   title={m.label}
+                  aria-label={`篩選心情：${m.label}`}
+                  aria-pressed={on}
                   onClick={() => setMoodFilter(on ? null : m.emoji)}
                   className={cx(
                     'rounded-md px-2 py-1 text-sm transition',
                     on ? 'bg-accent-soft ring-1 ring-accent/30 dark:bg-accent/15' : 'opacity-50 hover:opacity-100',
                   )}
                 >
-                  {m.emoji}
+                  <span aria-hidden="true">{m.emoji}</span>
                 </button>
               )
             })}
@@ -488,6 +492,8 @@ export default function Journal() {
                   <button
                     key={tag}
                     onClick={() => setTagFilter(on ? null : tag)}
+                    aria-pressed={on}
+                    aria-label={`標籤 ${tag}，${count} 篇`}
                     className={cx(
                       'inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-medium transition',
                       on
@@ -506,7 +512,9 @@ export default function Journal() {
           {/* 篩選狀態 */}
           {hasFilter && (
             <div className="flex items-center justify-between text-xs text-slate-400">
-              <span className="tabular-nums">搵到 {visible.length} 篇</span>
+              <span className="tabular-nums" aria-live="polite">
+                搵到 {visible.length} 篇
+              </span>
               <button
                 onClick={clearFilters}
                 className="inline-flex items-center gap-1 font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
@@ -628,10 +636,14 @@ function EntryCard({
         <div className="flex min-w-0 items-center gap-2">
           {doc.mood ? (
             <Tooltip label={md?.label ?? '心情'}>
-              <span className="text-xl leading-none">{doc.mood}</span>
+              <span className="text-xl leading-none" role="img" aria-label={md?.label ?? '心情'}>
+                {doc.mood}
+              </span>
             </Tooltip>
           ) : (
-            <span className="text-xl leading-none text-slate-300 dark:text-slate-600">📝</span>
+            <span aria-hidden="true" className="text-xl leading-none text-slate-300 dark:text-slate-600">
+              📝
+            </span>
           )}
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-1.5">
@@ -700,6 +712,8 @@ function EntryCard({
             <button
               key={t}
               onClick={() => onPickTag(t)}
+              aria-pressed={on}
+              aria-label={`以標籤 ${t} 篩選`}
               className={cx(
                 'rounded-md px-1.5 py-0.5 text-[11px] font-medium transition',
                 on

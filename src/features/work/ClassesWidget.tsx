@@ -514,8 +514,9 @@ function ClassDetail({
         icon={School}
         breadcrumb={
           <button
+            type="button"
             onClick={onBack}
-            className="inline-flex items-center gap-1 hover:text-accent"
+            className="inline-flex items-center gap-1 hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-1 rounded"
           >
             <ArrowLeft size={13} /> 全部班別
           </button>
@@ -780,7 +781,7 @@ function Roster({
                         {GENDER_META[m.gender].label}
                       </Badge>
                     ) : (
-                      <span className="text-slate-300">—</span>
+                      <span className="text-slate-400 dark:text-slate-500">—</span>
                     )}
                   </Td>
                   <Td align="center" className="tabular-nums text-slate-500">
@@ -799,7 +800,10 @@ function Roster({
       )}
 
       {filtered.length > 0 && (
-        <p className="text-right text-xs tabular-nums text-slate-400 dark:text-slate-500">
+        <p
+          className="text-right text-xs tabular-nums text-slate-400 dark:text-slate-500"
+          aria-live="polite"
+        >
           顯示 {filtered.length} / {roster.length} 位
         </p>
       )}

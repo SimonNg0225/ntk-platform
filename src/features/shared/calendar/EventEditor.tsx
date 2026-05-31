@@ -400,6 +400,8 @@ export default function EventEditor({
                   <button
                     key={i}
                     type="button"
+                    aria-pressed={on}
+                    aria-label={`星期${w}`}
                     onClick={() =>
                       setByWeekday((prev) =>
                         prev.includes(i)

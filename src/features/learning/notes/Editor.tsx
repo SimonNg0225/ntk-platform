@@ -197,6 +197,7 @@ export default function Editor({
                 key={ck}
                 type="button"
                 aria-label={`色標 ${c.label}`}
+                aria-pressed={on}
                 onClick={() => patch({ color: ck })}
                 className={cx(
                   'h-4 w-4 rounded-full transition',
@@ -384,8 +385,12 @@ export default function Editor({
           <span className="tabular-nums">
             {words} 字 · {chars} 字元 · 約 {readingMinutes(words)} 分鐘
           </span>
-          <span className={cx('transition-opacity', dirty ? 'opacity-100' : 'opacity-0')}>
-            儲存中…
+          <span
+            role="status"
+            aria-live="polite"
+            className={cx('transition-opacity', dirty ? 'opacity-100' : 'opacity-0')}
+          >
+            {dirty ? '儲存中…' : ''}
           </span>
         </div>
       </div>
@@ -409,10 +414,13 @@ function PreviewBody({
             <button
               key={i}
               type="button"
+              role="checkbox"
+              aria-checked={l.done}
               onClick={() => onToggle(l.lineIndex)}
               className="flex w-full items-start gap-2 rounded-md px-1 py-0.5 text-left transition hover:bg-slate-100/70 dark:hover:bg-slate-700/40"
             >
               <span
+                aria-hidden="true"
                 className={cx(
                   'mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded border text-[10px]',
                   l.done

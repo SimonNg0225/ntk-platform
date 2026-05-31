@@ -63,6 +63,7 @@ import {
   planOf,
   paceOf,
   todayKey,
+  toKey,
   fmtDate,
   groupTopics,
   countStatuses,
@@ -354,6 +355,7 @@ function ListView({
           )}
           {grouped.length > 0 && (
             <button
+              type="button"
               onClick={toggleAll}
               className="ml-auto text-xs font-medium text-accent-strong hover:underline dark:text-accent"
             >
@@ -364,6 +366,7 @@ function ListView({
       </Card>
 
       {/* 課題列表 */}
+      <div aria-live="polite">
       {grouped.length === 0 ? (
         <EmptyState
           icon={ListChecks}
@@ -382,9 +385,11 @@ function ListView({
             return (
               <div key={part.part}>
                 <button
+                  type="button"
                   onClick={() =>
                     setCollapsed((prev) => ({ ...prev, [part.part]: !prev[part.part] }))
                   }
+                  aria-expanded={!isCollapsed}
                   className="flex w-full items-center justify-between gap-2 py-1.5"
                 >
                   <span className="flex items-center gap-2">
@@ -457,6 +462,7 @@ function ListView({
           })}
         </div>
       )}
+      </div>
 
       {editing && (
         <PlanEditor
@@ -538,8 +544,10 @@ function TopicRow({
         {(['not_started', 'in_progress', 'done'] as ProgressStatus[]).map((s) => (
           <Tooltip key={s} label={STATUS_META[s].label}>
             <button
+              type="button"
               onClick={() => onSetStatus(s)}
               aria-label={`設為${STATUS_META[s].label}`}
+              aria-pressed={status === s}
               className={cx(
                 'h-5 w-5 rounded-full ring-1 ring-inset transition',
                 status === s
@@ -551,6 +559,7 @@ function TopicRow({
         ))}
       </div>
       <button
+        type="button"
         onClick={onCycle}
         className="shrink-0 sm:hidden"
         aria-label={`切換狀態：${cfg.label}`}
@@ -1067,7 +1076,11 @@ function AnalysisView({
   // 計劃 vs 實際累積（按月 bucket）
   const pacing = useMemo<PacingPoint[]>(() => {
     // 收集所有目標月 + 完成月
-    const monthKey = (iso: string) => iso.slice(0, 7) // YYYY-MM
+    // targetDate 係純日期（YYYY-MM-DD）；dateDone 係完整 ISO（toISOString，UTC）。
+    // 完整 ISO 要先轉本地日期，先同 targetDate / nowMonth（皆本地）一致，
+    // 否則 UTC 以東時區（如香港 +8）月底完成會被算入下一個月。
+    const monthKey = (iso: string) =>
+      (iso.includes('T') ? toKey(new Date(iso)) : iso).slice(0, 7) // YYYY-MM
     const planned: string[] = []
     const done: string[] = []
     for (const t of topics) {

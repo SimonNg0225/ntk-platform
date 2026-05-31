@@ -315,7 +315,7 @@ export default function ReviewScreen({
           {isCram && <Badge tone="amber">衝刺模式</Badge>}
           {mode === 'typed' && <Badge tone="blue">打字作答</Badge>}
           {mode === 'starred' && <Badge tone="rose">已標記</Badge>}
-          <span className="text-xs text-slate-400 dark:text-slate-500">
+          <span className="text-xs text-slate-400 dark:text-slate-500" aria-live="polite">
             剩 <span className="font-semibold tabular-nums">{remaining}</span> 張
           </span>
         </div>
@@ -368,7 +368,7 @@ export default function ReviewScreen({
               ))}
             </div>
           )}
-          <p className="text-[11px] uppercase tracking-wider text-slate-300 dark:text-slate-500">
+          <p className="text-[11px] uppercase tracking-wider text-slate-500 dark:text-slate-400">
             問題
           </p>
           <p className="text-xl font-medium text-slate-800 dark:text-slate-100">
@@ -378,7 +378,7 @@ export default function ReviewScreen({
           {flipped && (
             <>
               <div className="my-1 h-px w-16 bg-slate-200 dark:bg-slate-700" />
-              <p className="text-[11px] uppercase tracking-wider text-slate-300 dark:text-slate-500">
+              <p className="text-[11px] uppercase tracking-wider text-slate-500 dark:text-slate-400">
                 答案
               </p>
               <p className="text-lg text-slate-700 dark:text-slate-200">{card.back}</p>
@@ -409,6 +409,8 @@ export default function ReviewScreen({
       {/* typed 結果 */}
       {typedCorrect !== null && (
         <div
+          role="status"
+          aria-live="polite"
           className={cx(
             'flex items-center gap-2 rounded-lg px-3 py-2 text-sm',
             typedCorrect

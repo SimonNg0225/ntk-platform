@@ -367,7 +367,10 @@ export default function HabitTracker() {
                   { id: 'name', label: '名稱' },
                 ]}
               />
-              <span className="text-xs tabular-nums text-slate-400 dark:text-slate-500">
+              <span
+                aria-live="polite"
+                className="text-xs tabular-nums text-slate-400 dark:text-slate-500"
+              >
                 {visible.length} 個習慣
               </span>
             </div>
@@ -449,12 +452,14 @@ export default function HabitTracker() {
       {view === 'stats' && <StatsView habits={activeHabits} byHabit={byHabit} />}
 
       {/* 全部達標慶祝（今日視圖外也提示一次） */}
-      {view === 'today' && allDone && (
-        <div className="flex items-center justify-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 py-3 text-sm font-medium text-emerald-700 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-300">
-          <PartyPopper size={18} />
-          今日全部習慣完成，keep it up！
-        </div>
-      )}
+      <div aria-live="polite">
+        {view === 'today' && allDone && (
+          <div className="flex items-center justify-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 py-3 text-sm font-medium text-emerald-700 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-300">
+            <PartyPopper size={18} />
+            今日全部習慣完成，keep it up！
+          </div>
+        )}
+      </div>
 
       {/* 編輯器 */}
       <HabitEditor
@@ -502,7 +507,7 @@ function TodayRing({
   return (
     <Card className="flex items-center gap-5 p-5">
       <div className="relative h-32 w-32 shrink-0">
-        <svg viewBox="0 0 120 120" className="h-full w-full -rotate-90">
+        <svg viewBox="0 0 120 120" className="h-full w-full -rotate-90" aria-hidden="true">
           <circle
             cx="60"
             cy="60"

@@ -656,6 +656,8 @@ export default function AIAssistant() {
 
           <div className="flex items-center justify-between border-t border-slate-200/70 p-2 dark:border-slate-700/60">
             <button
+              type="button"
+              aria-pressed={showArchived}
               onClick={() => setShowArchived((v) => !v)}
               className={cx(
                 'inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs transition',
@@ -667,6 +669,7 @@ export default function AIAssistant() {
               <Archive size={13} /> {showArchived ? '返對話' : '封存'}
             </button>
             <button
+              type="button"
               onClick={() => setStatsOpen(true)}
               className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs text-slate-400 transition hover:text-slate-600 dark:hover:text-slate-300"
             >
@@ -755,7 +758,10 @@ export default function AIAssistant() {
 
           <Menu
             trigger={
-              <span className="inline-flex items-center rounded-lg border border-slate-200 bg-white p-1.5 text-slate-500 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700">
+              <span
+                aria-label="更多操作"
+                className="inline-flex items-center rounded-lg border border-slate-200 bg-white p-1.5 text-slate-500 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700"
+              >
                 <Command size={16} />
               </span>
             }
@@ -829,16 +835,18 @@ export default function AIAssistant() {
                 />
               ))}
               {streaming !== null && (
-                <MessageBubble
-                  msg={{ id: '__stream', threadId: '', role: 'model', content: streaming, createdAt: '' }}
-                  streaming
-                  isLast
-                  canRegen={false}
-                  onCopy={() => {}}
-                  onRegen={() => {}}
-                  onEdit={() => {}}
-                  onDelete={() => {}}
-                />
+                <div aria-live="polite" aria-busy={busy}>
+                  <MessageBubble
+                    msg={{ id: '__stream', threadId: '', role: 'model', content: streaming, createdAt: '' }}
+                    streaming
+                    isLast
+                    canRegen={false}
+                    onCopy={() => {}}
+                    onRegen={() => {}}
+                    onEdit={() => {}}
+                    onDelete={() => {}}
+                  />
+                </div>
               )}
             </>
           )}
@@ -856,9 +864,10 @@ export default function AIAssistant() {
                 <FileText size={11} />
                 <span className="max-w-[10rem] truncate">{c.title}</span>
                 <button
+                  type="button"
                   onClick={() => setContexts(activeContexts.filter((x) => x.id !== c.id))}
                   className="ml-0.5 rounded-full hover:bg-black/10"
-                  aria-label="移除"
+                  aria-label={`移除上下文：${c.title}`}
                 >
                   <X size={11} />
                 </button>
@@ -1010,9 +1019,19 @@ function ThreadRow({
 }) {
   return (
     <div
+      role="button"
+      tabIndex={0}
+      aria-current={active ? 'true' : undefined}
+      aria-label={title}
       onClick={onClick}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          onClick()
+        }
+      }}
       className={cx(
-        'group flex cursor-pointer items-center gap-2 rounded-lg px-2 py-1.5 text-sm transition',
+        'group flex cursor-pointer items-center gap-2 rounded-lg px-2 py-1.5 text-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
         active
           ? 'bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent'
           : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700/60',
@@ -1029,7 +1048,10 @@ function ThreadRow({
       >
         <Menu
           trigger={
-            <span className="rounded p-0.5 text-slate-400 hover:bg-black/5 hover:text-slate-600 dark:hover:bg-white/10">
+            <span
+              aria-label="對話選項"
+              className="rounded p-0.5 text-slate-400 hover:bg-black/5 hover:text-slate-600 dark:hover:bg-white/10"
+            >
               <ChevronDown size={13} />
             </span>
           }
@@ -1594,7 +1616,7 @@ function ContextPicker({
             {current.map((c) => (
               <span key={c.id} className="inline-flex items-center gap-1 rounded-full bg-accent-soft px-2 py-0.5 text-[11px] text-accent-strong dark:bg-accent/15 dark:text-accent">
                 {c.title}
-                <button onClick={() => onChange(current.filter((x) => x.id !== c.id))} aria-label="移除">
+                <button type="button" onClick={() => onChange(current.filter((x) => x.id !== c.id))} aria-label={`移除：${c.title}`}>
                   <X size={11} />
                 </button>
               </span>
@@ -1619,6 +1641,8 @@ function ContextItem({
 }) {
   return (
     <button
+      type="button"
+      aria-pressed={selected}
       onClick={onToggle}
       className={cx(
         'flex w-full items-start gap-2 rounded-lg border p-2.5 text-left transition',

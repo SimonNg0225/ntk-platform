@@ -464,8 +464,17 @@ export default function GlobalSearch() {
   const copyText = useCallback(
     (text: string) => {
       try {
-        navigator.clipboard?.writeText(text)
-        toast.success('已複製到剪貼簿')
+        const p = navigator.clipboard?.writeText(text)
+        // writeText 回 Promise；async 失敗（權限／非安全內容）唔會行 sync catch，
+        // 要顯式接住 rejection，先唔會誤報「已複製」+ 避免 unhandled rejection
+        if (p) {
+          p.then(
+            () => toast.success('已複製到剪貼簿'),
+            () => toast.error('複製失敗'),
+          )
+        } else {
+          toast.error('複製失敗')
+        }
       } catch {
         toast.error('複製失敗')
       }
@@ -605,6 +614,7 @@ export default function GlobalSearch() {
           <button
             type="button"
             onClick={() => setScopeMode((v) => !v)}
+            aria-pressed={scopeMode}
             className={cx(
               'inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-medium transition',
               scopeMode
@@ -616,7 +626,11 @@ export default function GlobalSearch() {
           </button>
           <div className="flex-1" />
           {hasQuery && (
-            <span className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
+            <span
+              className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400"
+              aria-live="polite"
+              aria-atomic="true"
+            >
               <Badge tone="accent" className="tabular-nums">
                 {total}
               </Badge>
@@ -626,7 +640,8 @@ export default function GlobalSearch() {
                   <button
                     type="button"
                     onClick={() => togglePin(query || raw)}
-                    aria-label="釘選搜尋"
+                    aria-label={isPinned(query || raw, pins) ? '取消釘選此搜尋' : '釘選此搜尋'}
+                    aria-pressed={isPinned(query || raw, pins)}
                     className={cx(
                       'rounded-md p-1 transition',
                       isPinned(query || raw, pins)
@@ -839,6 +854,7 @@ function ResultRow({
     <button
       ref={rowRef}
       type="button"
+      aria-current={active ? 'true' : undefined}
       onMouseEnter={onHover}
       onClick={onOpen}
       className={cx(

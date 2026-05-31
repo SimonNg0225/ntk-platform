@@ -506,6 +506,13 @@ export default function TodoWidget() {
         </div>
       )}
 
+      {/* 搜尋結果計數（螢幕閱讀器即時播報）*/}
+      {view !== 'stats' && search.trim() && (
+        <p className="sr-only" role="status" aria-live="polite">
+          搜尋「{search.trim()}」找到 {filtered.length} 項
+        </p>
+      )}
+
       {/* 標籤列 */}
       {view !== 'stats' && allTags.length > 0 && (
         <div className="flex flex-wrap items-center gap-1.5">
@@ -515,6 +522,8 @@ export default function TodoWidget() {
               key={t}
               type="button"
               onClick={() => setActiveTag((c) => (c === t ? null : t))}
+              aria-pressed={activeTag === t}
+              aria-label={`標籤篩選 ${t}`}
             >
               <Badge tone={activeTag === t ? 'accent' : 'slate'}>{t}</Badge>
             </button>
@@ -669,7 +678,8 @@ function TaskRow({
         <button
           type="button"
           onClick={() => onSelect(task.id)}
-          aria-label="選取"
+          aria-label={selected ? '取消選取' : '選取'}
+          aria-pressed={selected}
           className={cx(
             'mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md border-2 transition',
             selected
@@ -1095,6 +1105,7 @@ function SidebarItem({
     <button
       type="button"
       onClick={onClick}
+      aria-current={active ? 'true' : undefined}
       className={cx(
         'flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-sm transition',
         active
@@ -1129,6 +1140,7 @@ function ScopeChip({
     <button
       type="button"
       onClick={onClick}
+      aria-current={active ? 'true' : undefined}
       className={cx(
         'inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-1.5 text-sm font-medium transition',
         active

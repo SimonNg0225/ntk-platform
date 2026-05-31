@@ -485,7 +485,11 @@ export default function MeetingNotes() {
           {allTags.length > 0 && (
             <div className="flex flex-wrap items-center gap-1.5">
               <span className="text-xs text-slate-400 dark:text-slate-500">標籤：</span>
-              <button type="button" onClick={() => setActiveTag(null)}>
+              <button
+                type="button"
+                onClick={() => setActiveTag(null)}
+                aria-pressed={activeTag === null}
+              >
                 <Badge tone={activeTag === null ? 'accent' : 'slate'}>全部</Badge>
               </button>
               {allTags.map((tag) => (
@@ -493,12 +497,21 @@ export default function MeetingNotes() {
                   key={tag}
                   type="button"
                   onClick={() => setActiveTag((c) => (c === tag ? null : tag))}
+                  aria-pressed={activeTag === tag}
+                  aria-label={`篩選標籤 ${tag}`}
                 >
                   <Badge tone={activeTag === tag ? 'accent' : 'slate'}>#{tag}</Badge>
                 </button>
               ))}
             </div>
           )}
+
+          {/* 篩選結果數（螢幕閱讀器即時播報） */}
+          <p role="status" aria-live="polite" className="sr-only">
+            {search.trim() || typeFilter !== 'all' || activeTag !== null
+              ? `${visibleNotes.length} 則符合篩選`
+              : `共 ${visibleNotes.length} 則筆記`}
+          </p>
 
           {/* 列表 */}
           {visibleNotes.length === 0 ? (
@@ -738,7 +751,21 @@ function NoteRow({
   return (
     <Card hover className="p-4 sm:p-5">
       <div className="flex items-start gap-3">
-        <div className="min-w-0 flex-1 cursor-pointer" onClick={onOpen}>
+        <div
+          className="min-w-0 flex-1 cursor-pointer rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+          role="button"
+          tabIndex={0}
+          aria-label={`開啟筆記：${note.title}`}
+          onClick={onOpen}
+          onKeyDown={(e) => {
+            // 只當焦點喺呢個容器本身先觸發（避免內嵌標籤按鈕嘅 Enter/Space 冒泡）
+            if (e.target !== e.currentTarget) return
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault()
+              onOpen()
+            }
+          }}
+        >
           <div className="flex flex-wrap items-center gap-2">
             {meta.pinned && (
               <Pin size={13} className="shrink-0 text-accent" fill="currentColor" />
@@ -792,7 +819,16 @@ function NoteRow({
               </Badge>
             )}
             {note.tags?.map((t) => (
-              <button key={t} type="button" onClick={() => onTag(t)}>
+              <button
+                key={t}
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onTag(t)
+                }}
+                aria-pressed={activeTag === t}
+                aria-label={`篩選標籤 ${t}`}
+              >
                 <Badge tone={activeTag === t ? 'accent' : 'slate'}>#{t}</Badge>
               </button>
             ))}
@@ -815,6 +851,7 @@ function NoteRow({
             trigger={
               <span className="inline-flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300">
                 <MoreVertical size={16} />
+                <span className="sr-only">{note.title} 更多操作</span>
               </span>
             }
             items={[

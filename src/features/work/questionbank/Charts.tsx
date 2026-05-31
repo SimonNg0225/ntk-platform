@@ -205,6 +205,7 @@ export function CoverageMatrix({ rows }: { rows: TopicRow[] }) {
       <div className="mb-2 flex items-center justify-end gap-1">
         <button
           onClick={() => setSort('topic')}
+          aria-pressed={sort === 'topic'}
           className={cx(
             'rounded-md px-2 py-0.5 text-[11px] font-medium transition',
             sort === 'topic'
@@ -216,6 +217,7 @@ export function CoverageMatrix({ rows }: { rows: TopicRow[] }) {
         </button>
         <button
           onClick={() => setSort('total')}
+          aria-pressed={sort === 'total'}
           className={cx(
             'rounded-md px-2 py-0.5 text-[11px] font-medium transition',
             sort === 'total'

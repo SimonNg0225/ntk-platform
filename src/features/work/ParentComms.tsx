@@ -560,6 +560,8 @@ export default function ParentComms() {
             <button
               type="button"
               onClick={() => setShowFilters((v) => !v)}
+              aria-expanded={showFilters}
+              aria-controls="parent-comms-filters"
               className={cx(
                 'inline-flex items-center justify-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
                 showFilters || activeFilterCount > 0
@@ -579,7 +581,7 @@ export default function ParentComms() {
 
           {showFilters && (
             <Card className="space-y-3 p-3 sm:p-4">
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              <div id="parent-comms-filters" className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
                 <LabeledSelect
                   label="班別"
                   value={filterClassId}
@@ -664,7 +666,7 @@ export default function ParentComms() {
             </Card>
           )}
 
-          <p className="text-xs text-slate-400 dark:text-slate-500">
+          <p className="text-xs text-slate-400 dark:text-slate-500" aria-live="polite">
             顯示 <span className="tabular-nums">{filteredRows.length}</span> / {allRows.length} 條記錄
           </p>
         </div>
@@ -848,6 +850,7 @@ function FollowUpPanel({
       <button
         type="button"
         onClick={() => setCollapsed((v) => !v)}
+        aria-expanded={!collapsed}
         className="flex w-full items-center justify-between gap-2 px-4 py-3 text-left transition hover:bg-slate-50 dark:hover:bg-slate-800/50"
       >
         <span className="flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-200">
@@ -1135,22 +1138,30 @@ function TableView({
     return <EmptyState icon={LayoutList} title="無記錄" hint="調整篩選或新增記錄。" />
   }
 
-  const SortHead = ({ k, label, align }: { k: SortKey; label: string; align?: 'left' | 'center' }) => (
-    <Th align={align}>
-      <button
-        type="button"
-        onClick={() => onSort(k)}
-        className={cx(
-          'inline-flex items-center gap-1 transition hover:text-slate-700 dark:hover:text-slate-200',
-          sortKey === k && 'text-accent-strong dark:text-accent',
-        )}
-      >
-        {label}
-        {sortKey === k &&
-          (sortDir === 'asc' ? <ChevronUp size={13} /> : <ChevronDown size={13} />)}
-      </button>
-    </Th>
-  )
+  const SortHead = ({ k, label, align }: { k: SortKey; label: string; align?: 'left' | 'center' }) => {
+    const activeSort = sortKey === k
+    return (
+      <Th align={align}>
+        <button
+          type="button"
+          onClick={() => onSort(k)}
+          aria-label={
+            activeSort
+              ? `${label}（目前${sortDir === 'asc' ? '升序' : '降序'}排序，按一下切換）`
+              : `按${label}排序`
+          }
+          className={cx(
+            'inline-flex items-center gap-1 transition hover:text-slate-700 dark:hover:text-slate-200',
+            activeSort && 'text-accent-strong dark:text-accent',
+          )}
+        >
+          {label}
+          {activeSort &&
+            (sortDir === 'asc' ? <ChevronUp size={13} /> : <ChevronDown size={13} />)}
+        </button>
+      </Th>
+    )
+  }
 
   return (
     <div className="space-y-3">
@@ -1311,8 +1322,17 @@ function StudentsView({
     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
       {list.map((s) => {
         const sentimentTotal = s.positive + s.neutral + s.concern
+        const clickable = !!s.classId
         return (
-          <Card key={s.studentId} hover className="p-4" onClick={() => s.classId && onFilterStudent(s.classId, s.studentId)}>
+          <Card key={s.studentId} hover={clickable} className="relative p-4">
+            {clickable && (
+              <button
+                type="button"
+                onClick={() => onFilterStudent(s.classId, s.studentId)}
+                aria-label={`篩選 ${s.name} 嘅溝通記錄`}
+                className="absolute inset-0 z-10 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-900"
+              />
+            )}
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0">
                 <p className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">

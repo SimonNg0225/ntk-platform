@@ -139,6 +139,8 @@ export default function Calendar() {
           <button
             key={c.id}
             type="button"
+            aria-pressed={c.visible}
+            aria-label={`${c.name}（${c.visible ? '顯示中，按一下隱藏' : '已隱藏，按一下顯示'}）`}
             onClick={() => toggleCal(c.id, c.visible)}
             className={cx(
               'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium transition',

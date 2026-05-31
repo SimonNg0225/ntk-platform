@@ -21,6 +21,7 @@ function Swatches({
           key={ck}
           type="button"
           aria-label={CAL_COLORS[ck].label}
+          aria-pressed={value === ck}
           onClick={() => onPick(ck)}
           className={cx(
             'h-5 w-5 rounded-full transition',
@@ -83,6 +84,7 @@ export default function CalendarManager({
             <div className="flex items-center gap-2">
               <Input
                 value={c.name}
+                aria-label="行事曆名稱"
                 onChange={(e) => calendarsCol.update(c.id, { name: e.target.value })}
                 className="flex-1"
               />
@@ -112,6 +114,7 @@ export default function CalendarManager({
             <span className={cx('h-4 w-4 shrink-0 rounded-full', CAL_COLORS[newColor].dot)} />
             <Input
               value={newName}
+              aria-label="新行事曆名稱"
               onChange={(e) => setNewName(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && addCal()}
               placeholder="新行事曆名稱"

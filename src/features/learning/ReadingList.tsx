@@ -430,6 +430,7 @@ export default function ReadingList() {
                 <button
                   type="button"
                   onClick={() => setShelfFilter(null)}
+                  aria-pressed={!shelfFilter}
                   className={cx(
                     'rounded-full px-2.5 py-0.5 text-xs font-medium transition-colors',
                     !shelfFilter
@@ -444,6 +445,7 @@ export default function ReadingList() {
                     key={s}
                     type="button"
                     onClick={() => setShelfFilter(shelfFilter === s ? null : s)}
+                    aria-pressed={shelfFilter === s}
                     className={cx(
                       'rounded-full px-2.5 py-0.5 text-xs font-medium transition-colors',
                       shelfFilter === s
@@ -471,11 +473,22 @@ export default function ReadingList() {
                   </option>
                 ))}
               </Select>
-              <IconButton label="切換升降序" onClick={() => setSortAsc((v) => !v)} active={sortAsc}>
+              <IconButton
+                label={sortAsc ? '切換為降序' : '切換為升序'}
+                onClick={() => setSortAsc((v) => !v)}
+                active={sortAsc}
+              >
                 <ArrowDownUp size={18} />
               </IconButton>
             </div>
           </div>
+
+          {/* 篩選結果數（螢幕閱讀器即時播報） */}
+          <p role="status" aria-live="polite" className="sr-only">
+            {query.trim() || shelfFilter || statusFilter !== 'all'
+              ? `${filtered.length} 本符合篩選`
+              : `共 ${filtered.length} 本`}
+          </p>
 
           {/* 清單 / 書庫 */}
           {filtered.length === 0 ? (
@@ -728,7 +741,7 @@ function LibraryGrid({
                 {b.rating ? (
                   <StarRating value={b.rating} size={13} readOnly />
                 ) : (
-                  <span className="text-[11px] text-slate-300 dark:text-slate-600">未評分</span>
+                  <span className="text-[11px] text-slate-400 dark:text-slate-500">未評分</span>
                 )}
               </div>
 

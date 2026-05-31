@@ -325,14 +325,16 @@ export default function TimerView({
           return (
             <button
               key={k}
+              type="button"
               disabled={running}
+              aria-pressed={on}
               onClick={() => {
                 setPhase(k)
                 startRef.current = null
                 setSecondsLeft(minutesFor(k) * 60)
               }}
               className={cx(
-                'flex flex-1 items-center justify-center gap-1.5 rounded-md px-2 py-1.5 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-50',
+                'flex flex-1 items-center justify-center gap-1.5 rounded-md px-2 py-1.5 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 disabled:cursor-not-allowed disabled:opacity-50',
                 on
                   ? 'bg-white text-slate-800 shadow-xs dark:bg-slate-700 dark:text-slate-100'
                   : 'text-slate-500 hover:text-slate-700 dark:text-slate-400',
@@ -352,10 +354,13 @@ export default function TimerView({
           return (
             <button
               key={p.id}
+              type="button"
               disabled={running}
+              aria-pressed={on}
+              aria-label={`預設 ${p.focus} 分專注／${p.short} 分短休息／${p.long} 分長休息`}
               onClick={() => applyPreset(p)}
               className={cx(
-                'rounded-full px-3 py-1 text-xs font-medium tabular-nums transition disabled:opacity-50',
+                'rounded-full px-3 py-1 text-xs font-medium tabular-nums transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 disabled:opacity-50',
                 on
                   ? 'bg-accent text-white shadow-sm dark:shadow-none'
                   : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700',
@@ -390,7 +395,11 @@ export default function TimerView({
             {meta.label}
             {running && <span className="ml-0.5 h-1.5 w-1.5 animate-pulse rounded-full bg-current" />}
           </p>
-          <p className="mt-1 text-[3.5rem] font-bold leading-none tabular-nums slashed-zero text-slate-800 dark:text-slate-100">
+          <p
+            role="timer"
+            aria-label={`${meta.label}剩餘 ${fmtClock(secondsLeft)}`}
+            className="mt-1 text-[3.5rem] font-bold leading-none tabular-nums slashed-zero text-slate-800 dark:text-slate-100"
+          >
             {fmtClock(secondsLeft)}
           </p>
           {phase === 'focus' && (
@@ -433,11 +442,13 @@ export default function TimerView({
             {tags.map((t) => (
               <button
                 key={t}
+                type="button"
+                aria-label={`移除標籤 #${t}`}
                 onClick={() => setTags(tags.filter((x) => x !== t))}
-                className="inline-flex items-center gap-1 rounded-md bg-accent-soft px-2 py-0.5 text-[11px] font-medium text-accent-strong transition hover:bg-accent/20 dark:bg-accent/15 dark:text-accent"
+                className="inline-flex items-center gap-1 rounded-md bg-accent-soft px-2 py-0.5 text-[11px] font-medium text-accent-strong transition hover:bg-accent/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:bg-accent/15 dark:text-accent"
               >
                 #{t}
-                <span className="text-accent/60">×</span>
+                <span aria-hidden="true" className="text-accent/60">×</span>
               </button>
             ))}
             <div className="relative">
@@ -482,16 +493,21 @@ export default function TimerView({
       <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-xs text-slate-500 dark:text-slate-400">
         {phase === 'focus' && (
           <button
+            type="button"
             onClick={addInterruption}
-            className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 transition hover:bg-slate-100 dark:hover:bg-slate-800"
+            aria-label={`記錄分心，目前 ${interruptions} 次`}
+            className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:hover:bg-slate-800"
           >
             <AlertCircle size={14} />
             分心 <span className="font-semibold tabular-nums text-slate-700 dark:text-slate-200">{interruptions}</span>
           </button>
         )}
         <button
+          type="button"
+          aria-pressed={settings.chimeSound}
+          aria-label={settings.chimeSound ? '完成鈴聲：開（點擊關閉）' : '完成鈴聲：關（點擊開啟）'}
           onClick={() => patchSettings({ chimeSound: !settings.chimeSound })}
-          className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 transition hover:bg-slate-100 dark:hover:bg-slate-800"
+          className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:hover:bg-slate-800"
         >
           {settings.chimeSound ? <Volume2 size={14} /> : <VolumeX size={14} />}
           鈴聲{settings.chimeSound ? '開' : '關'}
@@ -541,15 +557,18 @@ export default function TimerView({
               {[1, 2, 3, 4, 5].map((n) => (
                 <button
                   key={n}
+                  type="button"
+                  aria-label={`評 ${n} 分`}
+                  aria-pressed={rating === n}
                   onClick={() => setRating(n)}
                   className={cx(
-                    'flex h-10 flex-1 items-center justify-center rounded-lg text-lg transition',
+                    'flex h-10 flex-1 items-center justify-center rounded-lg text-lg transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
                     rating >= n
                       ? 'bg-accent text-white shadow-sm'
                       : 'bg-slate-100 text-slate-400 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600',
                   )}
                 >
-                  {rating >= n ? '★' : '☆'}
+                  <span aria-hidden="true">{rating >= n ? '★' : '☆'}</span>
                 </button>
               ))}
             </div>

@@ -636,37 +636,39 @@ export default function Inbox() {
             }}
           />
           {tagOptions.length > 0 && (
-            <Menu
-              align="start"
-              trigger={
-                <span
-                  className={cx(
-                    'inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium transition',
-                    tagFilter
-                      ? 'bg-accent text-white'
-                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700',
-                  )}
+            <div className="inline-flex items-center gap-1">
+              <Menu
+                align="start"
+                trigger={
+                  <span
+                    className={cx(
+                      'inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium transition',
+                      tagFilter
+                        ? 'bg-accent text-white'
+                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700',
+                    )}
+                  >
+                    <Hash size={12} />
+                    {tagFilter ?? '標籤'}
+                  </span>
+                }
+                items={tagOptions.map((t) => ({
+                  id: t,
+                  label: '#' + t,
+                  icon: Hash,
+                  onSelect: () => setTagFilter(t),
+                }))}
+              />
+              {tagFilter && (
+                <IconButton
+                  label={`清除標籤過濾「${tagFilter}」`}
+                  size="sm"
+                  onClick={() => setTagFilter(null)}
                 >
-                  <Hash size={12} />
-                  {tagFilter ?? '標籤'}
-                  {tagFilter && (
-                    <X
-                      size={12}
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        setTagFilter(null)
-                      }}
-                    />
-                  )}
-                </span>
-              }
-              items={tagOptions.map((t) => ({
-                id: t,
-                label: '#' + t,
-                icon: Hash,
-                onSelect: () => setTagFilter(t),
-              }))}
-            />
+                  <X size={14} />
+                </IconButton>
+              )}
+            </div>
           )}
         </div>
       )}
@@ -686,7 +688,7 @@ export default function Inbox() {
 
       {/* 批量工具列 */}
       <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2" aria-live="polite">
           <Badge tone="accent">
             {tab === 'inbox' ? '待處理' : '已歸檔'} {visible.length} 項
           </Badge>
@@ -796,7 +798,7 @@ export default function Inbox() {
                   {g.label}
                 </span>
                 <span className="h-px flex-1 bg-slate-100 dark:bg-slate-800" />
-                <span className="text-xs tabular-nums text-slate-300 dark:text-slate-600">
+                <span className="text-xs tabular-nums text-slate-400 dark:text-slate-500">
                   {g.rows.length}
                 </span>
               </div>
@@ -1037,6 +1039,7 @@ function InboxRowCard({
               align="end"
               trigger={
                 <span className="inline-flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800">
+                  <span className="sr-only">更多動作</span>
                   <ChevronDownIcon />
                 </span>
               }

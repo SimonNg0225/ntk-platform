@@ -251,6 +251,7 @@ export function YearHeatmap({
                   <Tooltip key={cell.key} label={`${longDate(cell.key)} · ${cell.count} 篇`}>
                     <button
                       type="button"
+                      aria-label={`${longDate(cell.key)} · ${cell.count} 篇`}
                       onClick={onPick ? () => onPick(cell.key) : undefined}
                       className={
                         'h-2.5 w-2.5 rounded-[2px] ring-1 ring-inset ring-black/5 transition hover:ring-accent dark:ring-white/5 ' +

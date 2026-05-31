@@ -59,6 +59,9 @@ export default function MonthView({
             <button
               key={key}
               type="button"
+              aria-label={`${cell.getMonth() + 1}月${cell.getDate()}日，${list.length} 項活動`}
+              aria-current={isToday ? 'date' : undefined}
+              aria-pressed={isSelected}
               onClick={() => onSelectDay(key)}
               onDragOver={(e) => {
                 if (dragRef.current) e.preventDefault()

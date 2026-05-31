@@ -614,6 +614,7 @@ function WidgetFrame({
           trigger={
             <span className="rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-700">
               <Settings2 size={15} />
+              <span className="sr-only">{meta.label} 區塊設定</span>
             </span>
           }
           items={[
@@ -696,11 +697,13 @@ function KpiWidget({ kpis, open }: { kpis: Kpi[]; open: (id: string) => void }) 
       {kpis.map((k) => {
         const Icon = KPI_ICON[k.icon]
         return (
-          <div
+          <button
             key={k.key}
+            type="button"
             onClick={() => open(k.navTo)}
+            aria-label={`${k.label}：${k.value}${k.unit ?? ''}${k.delta ? `，${k.delta.text}` : ''}`}
             className={cx(
-              'relative cursor-pointer rounded-xl border p-4 transition hover:-translate-y-0.5 hover:shadow-md',
+              'relative cursor-pointer rounded-xl border p-4 text-left transition hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-900',
               k.highlight
                 ? 'border-accent/30 bg-accent-soft dark:border-accent/40 dark:bg-accent/15'
                 : 'border-slate-200 bg-white shadow-xs dark:border-slate-700 dark:bg-slate-800 dark:shadow-none',
@@ -734,7 +737,7 @@ function KpiWidget({ kpis, open }: { kpis: Kpi[]; open: (id: string) => void }) 
                 {k.delta.text}
               </span>
             )}
-          </div>
+          </button>
         )
       })}
     </section>
@@ -770,7 +773,7 @@ function FocusWidget({ ctx }: { ctx: WidgetCtx }) {
           <Sparkles size={14} />
           今日聚焦
         </div>
-        <p className="mt-1.5 text-base font-semibold leading-snug">{line}</p>
+        <p className="mt-1.5 text-base font-semibold leading-snug" aria-live="polite">{line}</p>
       </div>
       <div className="grid grid-cols-3 divide-x divide-slate-200/80 dark:divide-slate-700/60">
         {chips.map((c) => (

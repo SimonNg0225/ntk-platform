@@ -272,7 +272,7 @@ export default function NotesWidget() {
   }
 
   function bulkExport() {
-    download(`筆記匯出-${visible.length ? checkedNotes.length : 0}則.md`, notesToMarkdown(checkedNotes), 'text/markdown')
+    download(`筆記匯出-${checkedNotes.length}則.md`, notesToMarkdown(checkedNotes), 'text/markdown')
     toast.success('已匯出 Markdown')
     exitSelect()
   }
@@ -372,6 +372,7 @@ export default function NotesWidget() {
                       setMobilePane('list')
                       exitSelect()
                     }}
+                    aria-current={on ? 'page' : undefined}
                     className={cx(
                       'flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-sm transition',
                       on
@@ -420,6 +421,7 @@ export default function NotesWidget() {
                       setMobilePane('list')
                       exitSelect()
                     }}
+                    aria-current={on ? 'page' : undefined}
                     className={cx(
                       'flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-sm transition',
                       on
@@ -508,6 +510,8 @@ export default function NotesWidget() {
                     <button
                       key={tag}
                       onClick={() => setActiveTag(on ? null : tag)}
+                      aria-pressed={on}
+                      aria-label={`標籤 ${tag}（${count}）${on ? '，已篩選' : ''}`}
                       className={cx(
                         'inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-medium transition',
                         on
@@ -538,7 +542,10 @@ export default function NotesWidget() {
           {/* 批量操作條 */}
           {selectMode && (
             <Card className="flex flex-wrap items-center gap-2 p-2">
-              <span className="px-1 text-xs font-medium text-slate-500 dark:text-slate-400">
+              <span
+                aria-live="polite"
+                className="px-1 text-xs font-medium text-slate-500 dark:text-slate-400"
+              >
                 已選 <span className="tabular-nums">{checked.size}</span> /{' '}
                 <span className="tabular-nums">{visible.length}</span>
               </span>
@@ -734,6 +741,8 @@ function NoteRow({
   return (
     <button
       onClick={selectMode ? onToggleCheck : onOpen}
+      aria-pressed={selectMode ? checked : undefined}
+      aria-current={!selectMode && active ? 'true' : undefined}
       className={cx(
         'group block w-full rounded-xl border p-3 text-left transition',
         color.card ||
@@ -747,6 +756,7 @@ function NoteRow({
       <div className="flex items-start gap-2">
         {selectMode && (
           <span
+            aria-hidden="true"
             className={cx(
               'mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded border text-[10px]',
               checked
@@ -841,7 +851,12 @@ function NoteTable({
           return (
             <Tr key={n.id} onClick={() => onOpen(n.id)}>
               <Td>
-                <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => onOpen(n.id)}
+                  aria-current={n.id === selectedId ? 'true' : undefined}
+                  className="flex items-center gap-1.5 text-left"
+                >
                   {n.pinned && <Pin size={12} className="fill-current text-accent" />}
                   {n.favorite && (
                     <Star size={12} className="fill-current text-amber-500" />
@@ -854,7 +869,7 @@ function NoteTable({
                   >
                     {deriveTitle(n)}
                   </span>
-                </div>
+                </button>
               </Td>
               <Td>
                 <span className="text-xs text-slate-500 dark:text-slate-400">

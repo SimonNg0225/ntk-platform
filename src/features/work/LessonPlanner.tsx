@@ -695,7 +695,10 @@ export default function LessonPlanner() {
             </div>
             <div className="flex items-center gap-2">
               <Badge tone="slate">
-                <span className="tabular-nums">{weekTotal}</span> 個課堂
+                <span className="tabular-nums" aria-live="polite">
+                  {weekTotal}
+                </span>{' '}
+                個課堂
               </Badge>
               <Button
                 size="sm"
@@ -714,6 +717,7 @@ export default function LessonPlanner() {
               return (
                 <div
                   key={key}
+                  aria-current={isToday ? 'date' : undefined}
                   className={cx(
                     'flex min-h-[8rem] flex-col rounded-xl border bg-white p-2 dark:bg-slate-800/60',
                     isToday
@@ -1033,7 +1037,11 @@ function PlanCard({
           </button>
           <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
             <Tooltip label="撳一下切換狀態">
-              <button type="button" onClick={onCycleStatus}>
+              <button
+                type="button"
+                onClick={onCycleStatus}
+                aria-label={`狀態：${sMeta.label}，撳一下切換`}
+              >
                 <Badge tone={sMeta.tone} icon={SIcon}>
                   {sMeta.label}
                 </Badge>
@@ -1063,6 +1071,7 @@ function PlanCard({
             trigger={
               <span className="inline-flex items-center justify-center rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600 dark:text-slate-500 dark:hover:bg-slate-800">
                 <MoreVertical size={17} strokeWidth={1.8} />
+                <span className="sr-only">{plan.title} 更多操作</span>
               </span>
             }
             items={[

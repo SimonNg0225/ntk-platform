@@ -291,7 +291,17 @@ export default function TimeGridView({
                     <div
                       key={`${p.occ.event.id}-${p.occ.dateKey}`}
                       role="button"
+                      tabIndex={0}
+                      aria-label={`${p.occ.event.title}，${p.occ.event.time ?? ''}${
+                        p.occ.event.endTime ? `–${p.occ.event.endTime}` : ''
+                      }`}
                       onPointerDown={(e) => startDrag(e, p, 'move')}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault()
+                          onOpenEvent(p.occ.event, p.occ.dateKey)
+                        }
+                      }}
                       onClick={(e) => {
                         e.stopPropagation()
                         if (movedRef.current) {
@@ -325,8 +335,9 @@ export default function TimeGridView({
                               : ''}
                         </span>
                       )}
-                      {/* 底邊縮放手柄 */}
+                      {/* 底邊縮放手柄（純拖拉；鍵盤用戶可開編輯器改時間） */}
                       <span
+                        aria-hidden
                         onPointerDown={(e) => startDrag(e, p, 'resize')}
                         className="absolute inset-x-0 bottom-0 h-2 cursor-ns-resize"
                       />

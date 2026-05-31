@@ -30,6 +30,17 @@ function blankDraft(date: string): EntryDraft {
   return { date, title: '', content: '', mood: '', weather: '', gratitude: '', favorite: false }
 }
 
+// 天氣 emoji 嘅可讀名（無障礙標籤用）
+const WEATHER_LABEL: Record<string, string> = {
+  '☀️': '晴天',
+  '⛅': '多雲',
+  '☁️': '陰天',
+  '🌧️': '落雨',
+  '⛈️': '雷雨',
+  '❄️': '落雪',
+  '🌫️': '有霧',
+}
+
 export function draftFromDoc(doc: JournalDoc): EntryDraft {
   return {
     date: doc.date,
@@ -158,6 +169,8 @@ export function EntryEditor({
                     key={m.emoji}
                     type="button"
                     title={m.label}
+                    aria-label={m.label}
+                    aria-pressed={on}
                     onClick={() => set('mood', on ? '' : m.emoji)}
                     className={
                       'flex h-10 flex-1 items-center justify-center rounded-lg border text-lg transition ' +
@@ -166,7 +179,7 @@ export function EntryEditor({
                         : 'border-slate-200 opacity-50 hover:opacity-100 dark:border-slate-700')
                     }
                   >
-                    {m.emoji}
+                    <span aria-hidden="true">{m.emoji}</span>
                   </button>
                 )
               })}
@@ -176,10 +189,14 @@ export function EntryEditor({
             <div className="flex flex-wrap gap-1.5">
               {WEATHER.map((w) => {
                 const on = draft.weather === w
+                const label = WEATHER_LABEL[w] ?? '天氣'
                 return (
                   <button
                     key={w}
                     type="button"
+                    title={label}
+                    aria-label={label}
+                    aria-pressed={on}
                     onClick={() => set('weather', on ? '' : w)}
                     className={
                       'flex h-10 w-10 items-center justify-center rounded-lg border text-lg transition ' +
@@ -188,7 +205,7 @@ export function EntryEditor({
                         : 'border-slate-200 opacity-50 hover:opacity-100 dark:border-slate-700')
                     }
                   >
-                    {w}
+                    <span aria-hidden="true">{w}</span>
                   </button>
                 )
               })}

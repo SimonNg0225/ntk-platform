@@ -14,7 +14,7 @@ import {
   ChevronRight,
   CheckCircle2,
 } from 'lucide-react'
-import { useCollection } from '../../lib/store'
+import { useCollection, uid } from '../../lib/store'
 import { goalsCol } from '../../data/collections'
 import type { Goal } from '../../data/types'
 import {
@@ -115,10 +115,13 @@ export default function GoalsWidget() {
     const active = enriched.filter((e) => e.status === 'active').length
     const paused = enriched.filter((e) => e.status === 'paused').length
     const avg = total ? Math.round(enriched.reduce((s, e) => s + e.progress, 0) / total) : 0
-    // 近 7 日有簽到嘅日數（動量）
+    // 近 7 日有簽到嘅日數（動量）— 用本地日曆日做 key（避免 UTC slice 喺 UTC+8 落錯日）
     const recent = new Set<string>()
     const cut = Date.now() - 7 * 864e5
-    for (const c of checkins) if (new Date(c.createdAt).getTime() >= cut) recent.add(c.createdAt.slice(0, 10))
+    for (const c of checkins) {
+      const d = new Date(c.createdAt)
+      if (d.getTime() >= cut) recent.add(`${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`)
+    }
     // 即將到期（7 日內、未完成）
     const dueSoon = enriched.filter((e) => {
       if (e.status === 'done') return false
@@ -195,7 +198,7 @@ export default function GoalsWidget() {
   function quickAdd() {
     const title = quick.trim()
     if (!title) return
-    const id = (typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : `${Date.now()}`)
+    const id = uid()
     goalsCol.add({ id, title, progress: 0, createdAt: new Date().toISOString() })
     goalMetaCol.add({ id, category: catFilter === 'all' ? 'study' : catFilter, priority: 'medium', status: 'active' })
     setQuick('')
@@ -298,6 +301,13 @@ export default function GoalsWidget() {
             </Select>
           </div>
         </div>
+      )}
+
+      {/* 動態結果數（畀螢幕閱讀器播報；篩選時生效）*/}
+      {view !== 'insights' && isFiltering && enriched.length > 0 && (
+        <p className="sr-only" role="status" aria-live="polite">
+          搵到 {filtered.length} 個符合嘅目標
+        </p>
       )}
 
       {/* ───────── 內容 ───────── */}
@@ -407,14 +417,16 @@ function ListView({ items, onOpen }: { items: EnrichedGoal[]; onOpen: (id: strin
                   <span className={cx('inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-md', cat.text)}>
                     <CatIcon size={14} />
                   </span>
-                  <span
+                  <button
+                    type="button"
+                    onClick={() => onOpen(e.goal.id)}
                     className={cx(
-                      'truncate text-sm font-medium',
+                      'truncate text-left text-sm font-medium outline-none focus-visible:underline',
                       e.status === 'done' ? 'text-slate-400' : 'text-slate-800 dark:text-slate-100',
                     )}
                   >
                     {e.goal.title}
-                  </span>
+                  </button>
                 </div>
                 <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-400">
                   {e.milestones.length > 0 && (
@@ -460,14 +472,16 @@ function GoalCard({ e, onOpen }: { e: EnrichedGoal; onOpen: (id: string) => void
           <span className={cx('flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ring-1 ring-inset', cat.ring, cat.text)}>
             <CatIcon size={15} />
           </span>
-          <span
+          <button
+            type="button"
+            onClick={() => onOpen(e.goal.id)}
             className={cx(
-              'truncate text-sm font-semibold',
+              'truncate text-left text-sm font-semibold outline-none focus-visible:underline',
               isDone ? 'text-slate-400' : 'text-slate-800 dark:text-slate-100',
             )}
           >
             {e.goal.title}
-          </span>
+          </button>
         </div>
         {isDone ? (
           <CheckCircle2 size={18} className="shrink-0 text-emerald-500" />

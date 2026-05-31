@@ -300,7 +300,10 @@ export default function BrowseView() {
       {/* 批量操作列 */}
       {selected.size > 0 && (
         <div className="flex flex-wrap items-center gap-2 rounded-xl border border-accent/30 bg-accent-soft/50 px-3 py-2 dark:border-accent/40 dark:bg-accent/10">
-          <span className="text-sm font-medium text-accent-strong dark:text-accent">
+          <span
+            className="text-sm font-medium text-accent-strong dark:text-accent"
+            aria-live="polite"
+          >
             已選 <span className="tabular-nums">{selected.size}</span> 張
           </span>
           <span className="mx-1 h-4 w-px bg-accent/20" />
@@ -335,13 +338,17 @@ export default function BrowseView() {
         <>
           <div className="flex items-center justify-between px-1 text-xs text-slate-400 dark:text-slate-500">
             <button
+              type="button"
               onClick={toggleAll}
-              className="inline-flex items-center gap-1.5 hover:text-accent"
+              aria-pressed={allSelected}
+              className="inline-flex items-center gap-1.5 hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-1 rounded"
             >
               {allSelected ? <CheckSquare size={14} /> : <Square size={14} />}
               {allSelected ? '取消全選' : '全選'}
             </button>
-            <span className="tabular-nums">{sorted.length} 張</span>
+            <span className="tabular-nums" aria-live="polite">
+              {sorted.length} 張
+            </span>
           </div>
           <Table>
             <Thead>
@@ -558,13 +565,22 @@ function EditCardModal({
           <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-300">
             正面（問題）
           </label>
-          <Input value={front} onChange={(e) => setFront(e.target.value)} autoFocus />
+          <Input
+            value={front}
+            onChange={(e) => setFront(e.target.value)}
+            autoFocus
+            aria-label="正面（問題）"
+          />
         </div>
         <div>
           <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-300">
             背面（答案）
           </label>
-          <Input value={back} onChange={(e) => setBack(e.target.value)} />
+          <Input
+            value={back}
+            onChange={(e) => setBack(e.target.value)}
+            aria-label="背面（答案）"
+          />
         </div>
         <div>
           <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-300">
@@ -578,8 +594,10 @@ function EditCardModal({
               >
                 #{t}
                 <button
+                  type="button"
+                  aria-label={`移除標籤 ${t}`}
                   onClick={() => setTagList((l) => l.filter((x) => x !== t))}
-                  className="hover:text-rose-500"
+                  className="rounded hover:text-rose-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
                 >
                   <X size={11} />
                 </button>
@@ -596,6 +614,7 @@ function EditCardModal({
               }
             }}
             placeholder="輸入標籤，Enter 加入"
+            aria-label="新增標籤"
           />
         </div>
         <div>
@@ -606,6 +625,7 @@ function EditCardModal({
             value={noteVal}
             onChange={(e) => setNoteVal(e.target.value)}
             placeholder="額外提示 / 記憶法"
+            aria-label="私人備註（選填）"
           />
         </div>
       </div>

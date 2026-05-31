@@ -262,8 +262,9 @@ export default function GoalEditor({
                     type="button"
                     onClick={() => toggleMs(m.id)}
                     aria-pressed={m.done}
+                    aria-label={m.done ? `標記「${m.title}」為未完成` : `標記「${m.title}」為完成`}
                     className={cx(
-                      'flex h-4 w-4 shrink-0 items-center justify-center rounded border transition-colors',
+                      'flex h-4 w-4 shrink-0 items-center justify-center rounded border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-1',
                       m.done
                         ? 'border-accent bg-accent text-white'
                         : 'border-slate-300 bg-white dark:border-slate-600 dark:bg-slate-700',
@@ -284,14 +285,20 @@ export default function GoalEditor({
                     {m.title}
                   </span>
                   {/* 權重 */}
-                  <div className="flex shrink-0 items-center gap-0.5" title="權重（越大佔比越重）">
+                  <div
+                    className="flex shrink-0 items-center gap-0.5"
+                    role="group"
+                    aria-label={`「${m.title}」權重（越大佔比越重）`}
+                  >
                     {[1, 2, 3].map((w) => (
                       <button
                         key={w}
                         type="button"
                         onClick={() => setWeight(m.id, w)}
+                        aria-label={`設定權重為 ${w}`}
+                        aria-pressed={(m.weight || 1) === w}
                         className={cx(
-                          'h-1.5 w-3 rounded-full transition-colors',
+                          'h-1.5 w-3 rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
                           (m.weight || 1) >= w ? 'bg-accent' : 'bg-slate-200 dark:bg-slate-600',
                         )}
                       />

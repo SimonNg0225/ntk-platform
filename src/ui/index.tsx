@@ -422,12 +422,25 @@ export function StatCard({
   return (
     <div
       onClick={onClick}
+      role={onClick ? 'button' : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      onKeyDown={
+        onClick
+          ? (e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault()
+                onClick()
+              }
+            }
+          : undefined
+      }
       className={cx(
         'relative rounded-xl border p-4 transition',
         highlight
           ? 'border-accent/30 bg-accent-soft dark:border-accent/40 dark:bg-accent/15'
           : 'border-slate-200 bg-white shadow-xs dark:border-slate-700 dark:bg-slate-800 dark:shadow-none',
-        onClick && 'cursor-pointer hover:-translate-y-0.5 hover:shadow-md',
+        onClick &&
+          'cursor-pointer hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
       )}
     >
       <div className="flex items-center gap-1.5">
@@ -949,6 +962,7 @@ export function Menu({
   trigger,
   items,
   align = 'end',
+  label = '更多操作',
 }: {
   trigger: ReactNode
   items: {
@@ -960,6 +974,7 @@ export function Menu({
     disabled?: boolean
   }[]
   align?: 'start' | 'end'
+  label?: string
 }) {
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement | null>(null)
@@ -980,7 +995,14 @@ export function Menu({
   }, [open])
   return (
     <div ref={ref} className="relative inline-flex">
-      <button type="button" className="inline-flex" onClick={() => setOpen((v) => !v)}>
+      <button
+        type="button"
+        className="inline-flex"
+        aria-label={label}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        onClick={() => setOpen((v) => !v)}
+      >
         {trigger}
       </button>
       {open && (
@@ -1037,9 +1059,11 @@ export function SegmentedControl<T extends string>({
           <button
             key={o.id}
             type="button"
+            aria-label={o.label || o.id}
+            aria-pressed={on}
             onClick={() => onChange(o.id)}
             className={cx(
-              'inline-flex items-center gap-1.5 rounded-md font-medium transition-colors',
+              'inline-flex items-center gap-1.5 rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
               pad,
               on
                 ? 'bg-white text-slate-800 shadow-xs dark:bg-slate-700 dark:text-slate-100'

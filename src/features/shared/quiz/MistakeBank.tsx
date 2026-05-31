@@ -173,7 +173,7 @@ export function MistakeBank({ onPractice }: { onPractice: (questionIds: string[]
       {filtered.length === 0 ? (
         <EmptyState icon={Search} title="無符合嘅題目" hint="試吓換個篩選或關鍵字。" />
       ) : (
-        <ul className="space-y-2">
+        <ul className="space-y-2" aria-live="polite">
           {filtered.map((m) => {
             const gone = !existingIds.has(m.questionId)
             return (

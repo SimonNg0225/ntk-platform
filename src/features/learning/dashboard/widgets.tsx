@@ -424,7 +424,9 @@ export function HabitsTodayWidget({
             return (
               <li key={h.id}>
                 <button
+                  type="button"
                   onClick={() => onToggle(h.id, !done)}
+                  aria-pressed={done}
                   className={cx(
                     'flex w-full items-center gap-2.5 rounded-xl px-2 py-1.5 text-left text-sm transition',
                     'hover:bg-slate-50 dark:hover:bg-slate-800/50',

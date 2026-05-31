@@ -171,6 +171,7 @@ export function SetupView({
                       key={m.id}
                       type="button"
                       onClick={() => set('mode', m.id)}
+                      aria-pressed={on}
                       className={cx(
                         'flex flex-col items-center gap-1.5 rounded-xl border p-3 text-center transition',
                         on
@@ -211,7 +212,7 @@ export function SetupView({
                 active={settings.difficulty}
                 onChange={(v) => set('difficulty', v as DiffFilter)}
               />
-              <p className="text-xs text-slate-400 dark:text-slate-500">
+              <p className="text-xs text-slate-400 dark:text-slate-500" aria-live="polite">
                 符合條件題目：<span className="font-semibold text-accent">{matched.length}</span> 題
               </p>
             </div>
@@ -356,6 +357,7 @@ function ToggleChip({
       type="button"
       disabled={disabled}
       onClick={onClick}
+      aria-pressed={active}
       className={cx(
         'inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-40',
         active

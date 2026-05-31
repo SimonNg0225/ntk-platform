@@ -318,10 +318,11 @@ export default function StudentProfile({
                   {t}
                   <button
                     type="button"
+                    aria-label={`移除標籤 ${t}`}
                     onClick={() => setTags(tags.filter((x) => x !== t))}
-                    className="hover:text-rose-500"
+                    className="rounded hover:text-rose-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
                   >
-                    ×
+                    <span aria-hidden="true">×</span>
                   </button>
                 </span>
               ))}

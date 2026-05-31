@@ -132,11 +132,17 @@ export function buildMomentum(
   current: number,
   days: number,
 ): MomentumPoint[] {
+  // 用「本地日曆日」做 key（同下面時間軸一致）。
+  // 用 createdAt.slice(0,10) 會攞到 UTC 日：喺 UTC+8 等時區，凌晨簽到會
+  // 落錯一日、對唔到時間軸而被遺漏。改用本地日期分量保持一致。
+  const localKey = (iso: string): string => {
+    const d = new Date(iso)
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+  }
   // 整理：每日最後一筆簽到
   const byDay = new Map<string, number>()
   for (const c of checkins) {
-    const k = c.createdAt.slice(0, 10)
-    byDay.set(k, c.progress) // 後者覆蓋前者（已按時間順序餵入）
+    byDay.set(localKey(c.createdAt), c.progress) // 後者覆蓋前者（已按時間順序餵入）
   }
   const out: MomentumPoint[] = []
   const today = new Date()
@@ -146,7 +152,7 @@ export function buildMomentum(
   startBoundary.setDate(today.getDate() - (days - 1))
   const startKey = `${startBoundary.getFullYear()}-${String(startBoundary.getMonth() + 1).padStart(2, '0')}-${String(startBoundary.getDate()).padStart(2, '0')}`
   for (const c of checkins) {
-    if (c.createdAt.slice(0, 10) < startKey) last = c.progress
+    if (localKey(c.createdAt) < startKey) last = c.progress
   }
   for (let i = days - 1; i >= 0; i -= 1) {
     const d = new Date(today)

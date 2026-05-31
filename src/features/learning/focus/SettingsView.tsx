@@ -99,8 +99,9 @@ export default function SettingsView({
 
       {/* 重設 */}
       <button
+        type="button"
         onClick={() => patch({ ...DEFAULT_SETTINGS })}
-        className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-400 transition hover:text-accent"
+        className="inline-flex items-center gap-1.5 rounded-md text-xs font-medium text-slate-400 transition hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
       >
         <RefreshCw size={13} />
         還原預設設定
@@ -124,8 +125,12 @@ function Toggle({
 }) {
   return (
     <button
+      type="button"
+      role="switch"
+      aria-checked={on}
+      aria-label={label}
       onClick={() => onChange(!on)}
-      className="flex w-full items-center gap-3 rounded-xl border border-slate-200 bg-white p-3 text-left transition hover:border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-slate-600"
+      className="flex w-full items-center gap-3 rounded-xl border border-slate-200 bg-white p-3 text-left transition hover:border-slate-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-slate-600"
     >
       <span className={cx('flex h-8 w-8 shrink-0 items-center justify-center rounded-lg', on ? 'bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent' : 'bg-slate-100 text-slate-400 dark:bg-slate-700')}>
         <I size={16} />

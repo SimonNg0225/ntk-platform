@@ -335,7 +335,11 @@ export default function Timetable() {
 
       {/* 撞堂橫額 */}
       {conflicts.length > 0 && (
-        <div className="flex items-start gap-2 rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-300 print:hidden">
+        <div
+          role="alert"
+          aria-live="assertive"
+          className="flex items-start gap-2 rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-300 print:hidden"
+        >
           <AlertTriangle size={16} className="mt-0.5 shrink-0" />
           <div>
             <p className="font-medium">偵測到 {conflicts.length} 個撞堂</p>
@@ -485,7 +489,10 @@ function TodayPanel({
         </div>
 
         {upNext ? (
-          <div className="flex items-center gap-3 rounded-lg border border-slate-200/70 bg-white/70 px-3 py-2 dark:border-slate-700 dark:bg-slate-800/70">
+          <div
+            aria-live="polite"
+            className="flex items-center gap-3 rounded-lg border border-slate-200/70 bg-white/70 px-3 py-2 dark:border-slate-700 dark:bg-slate-800/70"
+          >
             <div
               className={cx(
                 'h-9 w-1 rounded-full',
@@ -525,7 +532,7 @@ function TodayPanel({
           </div>
         ) : (
           !isWeekend && (
-            <p className="text-sm text-slate-400">
+            <p className="text-sm text-slate-500 dark:text-slate-400">
               {nowMin > 16 * 60 ? '今日課堂已完' : '今日未有更多課堂'}
             </p>
           )

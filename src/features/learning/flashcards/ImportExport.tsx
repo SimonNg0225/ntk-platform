@@ -236,12 +236,16 @@ export default function ImportExport({
     <Modal open={open} onClose={onClose} title="匯入 / 匯出" size="lg">
       <div className="mb-4 flex w-full gap-1 rounded-lg bg-slate-100 p-1 dark:bg-slate-800/80">
         <button
+          type="button"
+          aria-pressed={tab === 'export'}
           onClick={() => setTab('export')}
           className={tabCls(tab === 'export')}
         >
           <Download size={15} /> 匯出
         </button>
         <button
+          type="button"
+          aria-pressed={tab === 'import'}
           onClick={() => setTab('import')}
           className={tabCls(tab === 'import')}
         >
@@ -258,6 +262,7 @@ export default function ImportExport({
             <Select
               value={exportDeckId}
               onChange={(e) => setExportDeckId(e.target.value)}
+              aria-label="匯出牌組"
             >
               {decks.map((d) => (
                 <option key={d.id} value={d.id}>
@@ -273,6 +278,7 @@ export default function ImportExport({
             <Select
               value={exportFmt}
               onChange={(e) => setExportFmt(e.target.value as 'csv' | 'json')}
+              aria-label="匯出格式"
             >
               <option value="csv">CSV（正面, 背面, 標籤）— Excel 開得</option>
               <option value="json">JSON（連排程進度 + 中繼，可完整還原）</option>
@@ -291,6 +297,7 @@ export default function ImportExport({
             <Select
               value={importDeckId}
               onChange={(e) => setImportDeckId(e.target.value)}
+              aria-label="匯入去邊個牌組"
             >
               <option value="__new__">＋ 新牌組</option>
               {decks.map((d) => (
@@ -311,6 +318,7 @@ export default function ImportExport({
               onChange={(e) => setImportText(e.target.value)}
               placeholder={'光合作用係咩?,植物用光造養分,生物;DSE\n需求定律,價跌量升,經濟'}
               className="font-mono text-xs"
+              aria-label="貼上匯入內容（CSV / TSV 或 JSON）"
             />
           </div>
 
@@ -326,6 +334,7 @@ export default function ImportExport({
               type="file"
               accept=".csv,.tsv,.txt,.json"
               className="hidden"
+              aria-label="選擇 CSV 或 JSON 檔匯入"
               onChange={(e) => {
                 const f = e.target.files?.[0]
                 if (f) handleFile(f)

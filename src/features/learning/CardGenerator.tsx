@@ -573,6 +573,7 @@ export default function CardGenerator() {
                     type="button"
                     onClick={() => setType(ct.id)}
                     disabled={busy}
+                    aria-pressed={on}
                     className={cx(
                       'flex flex-col items-start gap-1 rounded-xl border p-3 text-left transition disabled:opacity-50',
                       on
@@ -740,7 +741,10 @@ export default function CardGenerator() {
                 </Button>
               )}
               {busy && (
-                <span className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
+                <span
+                  aria-live="polite"
+                  className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400"
+                >
                   <span className="h-2 w-2 animate-pulse rounded-full bg-accent" />
                   AI 生成緊…
                   {progress > 0 && (
@@ -843,7 +847,10 @@ export default function CardGenerator() {
               </div>
 
               {filtered.length === 0 ? (
-                <p className="py-6 text-center text-sm text-slate-400 dark:text-slate-500">
+                <p
+                  aria-live="polite"
+                  className="py-6 text-center text-sm text-slate-400 dark:text-slate-500"
+                >
                   冇符合「{query}」嘅草稿
                 </p>
               ) : (

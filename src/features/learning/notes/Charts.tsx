@@ -217,7 +217,12 @@ export function DonutChart({ slices }: { slices: DonutSlice[] }) {
     )
   return (
     <div className="flex items-center gap-4">
-      <svg viewBox="0 0 100 100" className="h-28 w-28 shrink-0 -rotate-90">
+      <svg
+        viewBox="0 0 100 100"
+        className="h-28 w-28 shrink-0 -rotate-90"
+        role="img"
+        aria-label={`筆記本分佈，共 ${total} 則`}
+      >
         <circle
           cx="50"
           cy="50"

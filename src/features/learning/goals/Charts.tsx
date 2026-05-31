@@ -34,7 +34,7 @@ export function ProgressRing({
           ? 'stroke-rose-500'
           : 'stroke-accent'
   return (
-    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="shrink-0 -rotate-90">
+    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-hidden="true" className="shrink-0 -rotate-90">
       <circle
         cx={size / 2}
         cy={size / 2}
@@ -81,7 +81,7 @@ export function StatusDonut({
   return (
     <div className="flex items-center gap-5">
       <div className="relative shrink-0" style={{ width: size, height: size }}>
-        <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="-rotate-90">
+        <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-hidden="true" className="-rotate-90">
           <circle cx={size / 2} cy={size / 2} r={r} fill="none" strokeWidth={stroke} className="stroke-slate-100 dark:stroke-slate-700" />
           {segments.map((seg) => {
             if (seg.value === 0) return null
@@ -164,6 +164,7 @@ export function MomentumChart({
         width="100%"
         viewBox={`0 0 ${width} ${height}`}
         preserveAspectRatio="none"
+        aria-hidden="true"
         className="overflow-visible"
         onMouseLeave={() => setHover(null)}
       >

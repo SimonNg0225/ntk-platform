@@ -274,6 +274,7 @@ export function TaskEditor({
                     type="checkbox"
                     checked={s.done}
                     onChange={() => toggleSub(s)}
+                    aria-label={`${s.done ? '取消完成' : '完成'}子任務：${s.text}`}
                     className="h-3.5 w-3.5 accent-[color:var(--accent)]"
                   />
                   <span

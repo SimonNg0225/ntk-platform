@@ -197,7 +197,7 @@ export default function HistoryView({
       </div>
 
       <div className="flex items-center justify-between">
-        <p className="text-xs text-slate-400">
+        <p aria-live="polite" className="text-xs text-slate-400">
           共 <span className="font-medium tabular-nums text-slate-600 dark:text-slate-300">{filtered.length}</span> 筆紀錄
         </p>
         <div className="flex gap-2">
@@ -422,13 +422,16 @@ function EditModal({
             {[1, 2, 3, 4, 5].map((n) => (
               <button
                 key={n}
+                type="button"
+                aria-label={`評 ${n} 分`}
+                aria-pressed={rating === n}
                 onClick={() => setRating(rating === n ? 0 : n)}
                 className={cx(
-                  'flex h-9 flex-1 items-center justify-center rounded-lg text-base transition',
+                  'flex h-9 flex-1 items-center justify-center rounded-lg text-base transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
                   rating >= n ? 'bg-accent text-white' : 'bg-slate-100 text-slate-400 dark:bg-slate-700',
                 )}
               >
-                {rating >= n ? '★' : '☆'}
+                <span aria-hidden="true">{rating >= n ? '★' : '☆'}</span>
               </button>
             ))}
           </div>

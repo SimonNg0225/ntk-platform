@@ -130,6 +130,7 @@ export function TopicMasteryBars({
             type="button"
             disabled={!onPick}
             onClick={() => onPick?.(r.topicId)}
+            aria-label={onPick ? `練習「${nameOf(r.topicId)}」課題（命中 ${r.pct}%）` : undefined}
             className={cx(
               'flex w-full items-center gap-2 rounded-lg px-1 py-0.5 text-left transition',
               onPick && 'hover:bg-slate-50 dark:hover:bg-slate-800/60',
@@ -261,7 +262,9 @@ export function PracticeHeatmap({ cells }: { cells: HeatCell[] }) {
     if (cells.length === 0) return []
     const first = cells[0]
     const [y, m, d] = first.key.split('-').map(Number)
-    const dow = new Date(y, (m ?? 1) - 1, d ?? 1).getDay()
+    const rawDow = new Date(y, (m ?? 1) - 1, d ?? 1).getDay()
+    // 防呆：若 key 損壞令日期變 NaN，getDay() 會回 NaN，Array(NaN) 會擲 RangeError
+    const dow = Number.isNaN(rawDow) ? 0 : rawDow
     const padded: (HeatCell | null)[] = [...Array(dow).fill(null), ...cells]
     const out: (HeatCell | null)[][] = []
     for (let i = 0; i < padded.length; i += 7) out.push(padded.slice(i, i + 7))
@@ -349,7 +352,9 @@ export function RangeToggle({
       {options.map((o) => (
         <button
           key={o.value}
+          type="button"
           onClick={() => onChange(o.value)}
+          aria-pressed={value === o.value}
           className={cx(
             'rounded-md px-2 py-0.5 text-[11px] font-medium transition',
             value === o.value

@@ -350,7 +350,7 @@ function RollCall({ classId }: { classId: string }) {
             <span className="font-medium text-slate-600 dark:text-slate-300">
               點名進度
             </span>
-            <span className="tabular-nums text-slate-400">
+            <span className="tabular-nums text-slate-400" aria-live="polite">
               {markedCount}/{classStudents.length}
             </span>
           </div>
@@ -439,7 +439,11 @@ function RollCall({ classId }: { classId: string }) {
                       </div>
                     </div>
                   </div>
-                  <div className="flex flex-wrap items-center gap-2">
+                  <div
+                    className="flex flex-wrap items-center gap-2"
+                    role="group"
+                    aria-label={`${s.name} 出席狀態`}
+                  >
                     {STATUS_ORDER.map((st) => {
                       const active = current === st
                       const style = STATUS_STYLE[st]
@@ -449,6 +453,7 @@ function RollCall({ classId }: { classId: string }) {
                           type="button"
                           onClick={() => mark(s.id, st)}
                           aria-pressed={active}
+                          aria-label={`標記${s.name}為${STATUS_LABEL[st]}`}
                           className={cx(
                             'rounded-xl px-3 py-1.5 text-sm font-medium transition focus:outline-none focus-visible:ring-2',
                             active ? style.solid : style.soft,
@@ -512,6 +517,7 @@ function DateNav({
         type="date"
         value={date}
         onChange={(e) => e.target.value && setDate(e.target.value)}
+        aria-label="選擇點名日期"
         className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/25 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
       />
       {!isToday && (

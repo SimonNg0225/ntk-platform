@@ -289,8 +289,9 @@ export default function GoalDetail({
                     type="button"
                     onClick={() => toggleMilestone(m.id, m.done)}
                     aria-pressed={m.done}
+                    aria-label={m.done ? `標記「${m.title}」為未完成` : `標記「${m.title}」為完成`}
                     className={cx(
-                      'flex h-5 w-5 shrink-0 items-center justify-center rounded-md border transition-colors',
+                      'flex h-5 w-5 shrink-0 items-center justify-center rounded-md border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-1',
                       m.done
                         ? 'border-emerald-500 bg-emerald-500 text-white'
                         : 'border-slate-300 hover:border-accent dark:border-slate-600',
