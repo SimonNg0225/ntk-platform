@@ -325,7 +325,7 @@ export default function NotesWidget() {
         </span>
         <div className="min-w-0 flex-1">
           <h2 className="truncate text-base font-semibold tracking-tight text-slate-800 dark:text-slate-100">
-            學習筆記
+            個人筆記
           </h2>
           <p className="text-xs text-slate-400 dark:text-slate-500">
             <span className="tabular-nums">{counts.all}</span> 則筆記 ·{' '}

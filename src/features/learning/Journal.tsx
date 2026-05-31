@@ -313,12 +313,12 @@ export default function Journal() {
 
   const exportMd = () => {
     if (docs.length === 0) return toast.error('未有日誌可匯出')
-    downloadText(`學習日誌_${today}.md`, toMarkdown(docs), 'text/markdown')
+    downloadText(`個人日誌_${today}.md`, toMarkdown(docs), 'text/markdown')
     toast.success(`已匯出 ${docs.length} 篇（Markdown）`)
   }
   const exportJson = () => {
     if (docs.length === 0) return toast.error('未有日誌可匯出')
-    downloadText(`學習日誌_${today}.json`, JSON.stringify(docs, null, 2), 'application/json')
+    downloadText(`個人日誌_${today}.json`, JSON.stringify(docs, null, 2), 'application/json')
     toast.success(`已匯出 ${docs.length} 篇（JSON）`)
   }
 
@@ -530,7 +530,7 @@ export default function Journal() {
             <EmptyState
               icon={NotebookPen}
               title="仲未有日誌"
-              hint="每日寫低一啲反思，慢慢就會儲落一本屬於你嘅學習日記。"
+              hint="每日寫低一啲反思，慢慢就會儲落一本屬於你嘅個人日記。"
               action={
                 <Button icon={Plus} onClick={() => openNew()}>
                   寫第一篇

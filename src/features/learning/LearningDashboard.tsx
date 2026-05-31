@@ -204,7 +204,7 @@ export default function LearningDashboard() {
       icon: Timer,
     },
     {
-      label: journaledToday ? '今日已寫日誌' : '寫今日學習日誌',
+      label: journaledToday ? '今日已寫日誌' : '寫今日日誌',
       done: journaledToday,
       target: 'learning-journal',
       icon: BookText,
@@ -237,7 +237,7 @@ export default function LearningDashboard() {
         <div>
           <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100">
             {greeting()}
-            {displayName ? `，${displayName}` : ''}，今日學啲乜？
+            {displayName ? `，${displayName}` : ''}，今日想做啲乜？
           </h1>
           <p className="mt-0.5 flex items-center gap-2 text-sm text-slate-400">
             <span>{longToday()}</span>
@@ -295,7 +295,7 @@ export default function LearningDashboard() {
               />
             }
           >
-            學習活動走勢
+            活動走勢
           </SectionTitle>
           <ActivityArea signals={signals} height={96} />
           <div
@@ -682,7 +682,7 @@ function buildKpiCards(ids: KpiId[], k: ReturnType<typeof computeKpis>): KpiCard
     },
     streak: {
       id: 'streak',
-      label: '連續學習',
+      label: '連續活躍',
       value: k.streak,
       unit: '日',
       icon: Flame,

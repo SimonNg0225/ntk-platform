@@ -398,7 +398,7 @@ function StudyModeModal({
   ]
 
   return (
-    <Modal open onClose={onClose} title="揀學習模式" size="sm">
+    <Modal open onClose={onClose} title="揀練習模式" size="sm">
       <div className="grid gap-2">
         {modes.map((m) => (
           <button

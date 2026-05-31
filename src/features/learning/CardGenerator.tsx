@@ -547,7 +547,7 @@ export default function CardGenerator() {
             <SectionTitle
               icon={Sparkles}
               right={
-                <Tooltip label="由學習筆記帶入內容">
+                <Tooltip label="由個人筆記帶入內容">
                   <Button
                     variant="ghost"
                     size="sm"
@@ -1184,8 +1184,8 @@ export default function CardGenerator() {
         {notes.length === 0 ? (
           <EmptyState
             icon={StickyNote}
-            title="仲未有學習筆記"
-            hint="去「學習筆記」記低重點，呢度就可以一鍵帶入做生成材料。"
+            title="仲未有個人筆記"
+            hint="去「個人筆記」記低重點，呢度就可以一鍵帶入做生成材料。"
           />
         ) : (
           <ul className="max-h-[60vh] space-y-2 overflow-y-auto">

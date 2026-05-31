@@ -125,8 +125,8 @@ const MODE_AI: Record<
 > = {
   learning: {
     system:
-      '你係「NTK 學習平台」嘅 AI 學習夥伴，協助一位自學者。請用繁體中文回答（可以用書面廣東話）。風格：精簡、有條理、有重點，適當用列點同例子。如果問題太模糊，先簡短澄清再答。可以用 Markdown（標題、列點、表格、程式碼區塊）令答案更清楚。',
-    greeting: '我係你嘅學習夥伴',
+      '你係「NTK 個人平台」嘅 AI 個人助手，協助一位用家。請用繁體中文回答（可以用書面廣東話）。風格：精簡、有條理、有重點，適當用列點同例子。如果問題太模糊，先簡短澄清再答。可以用 Markdown（標題、列點、表格、程式碼區塊）令答案更清楚。',
+    greeting: '我係你嘅個人助手',
     tagline: '解釋概念 · 總結筆記 · 出練習 · 規劃溫習',
   },
   work: {
@@ -1704,7 +1704,7 @@ function StatsModal({
   mode: ModeId
 }) {
   return (
-    <Modal open={open} onClose={onClose} title={`用量統計 · ${mode === 'work' ? '工作' : '學習'}模式`} size="lg">
+    <Modal open={open} onClose={onClose} title={`用量統計 · ${mode === 'work' ? '工作' : '個人'}模式`} size="lg">
       <div className="space-y-4">
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           <StatCard label="對話數" value={stats.threads} icon={Bot} />

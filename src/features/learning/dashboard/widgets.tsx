@@ -332,10 +332,10 @@ export function GoalsWidget({
   return (
     <Card className="p-4">
       <SectionTitle icon={Target} right={<GoLink onClick={() => open('learning-goals')} label="管理" />}>
-        學習目標
+        個人目標
       </SectionTitle>
       {rows.length === 0 ? (
-        <EmptyState icon={Target} title="仲未有目標" hint="設定學習目標，追蹤每一步進度。" />
+        <EmptyState icon={Target} title="仲未有目標" hint="設定個人目標，追蹤每一步進度。" />
       ) : (
         <ul className="space-y-3">
           {rows.map((r) => {
@@ -415,7 +415,7 @@ export function HabitsTodayWidget({
         今日習慣
       </SectionTitle>
       {due.length === 0 ? (
-        <EmptyState icon={Flame} title="今日無習慣" hint="設定每日習慣，建立學習節奏。" />
+        <EmptyState icon={Flame} title="今日無習慣" hint="設定每日習慣，建立生活節奏。" />
       ) : (
         <ul className="space-y-1">
           {due.slice(0, 6).map((h) => {
@@ -631,7 +631,7 @@ export function ActivityWidget({ items, open }: { items: ActivityItem[]; open: O
     <Card className="p-4">
       <SectionTitle icon={TrendingUp}>最近活動</SectionTitle>
       {items.length === 0 ? (
-        <EmptyState icon={Clock} title="仲未有活動" hint="開始學習，呢度會記低你嘅每一步。" />
+        <EmptyState icon={Clock} title="仲未有活動" hint="開始記錄，呢度會記低你嘅每一步。" />
       ) : (
         <ul className="space-y-2.5">
           {items.map((it) => {
