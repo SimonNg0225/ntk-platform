@@ -18,7 +18,7 @@ import type {
 import { useToast } from '../../../context/ToastContext'
 import { useConfirm } from '../../../context/ConfirmContext'
 import { Button, Field, Input, Modal, Select, Textarea, cx } from '../../../ui'
-import { colorOf } from './util'
+import { WEEKDAYS, colorOf } from './util'
 
 const FREQ_OPTIONS: { v: RecurrenceFreq; l: string }[] = [
   { v: 'none', l: '不重複' },
@@ -118,16 +118,18 @@ export default function EventEditor({
     String(editing?.recurrence?.interval ?? 1),
   )
   const [until, setUntil] = useState(editing?.recurrence?.until ?? '')
+  const [byWeekday, setByWeekday] = useState<number[]>(
+    editing?.recurrence?.byWeekday ?? [],
+  )
   const [alert, setAlert] = useState(editing?.alertMinutes ?? -1)
   const [url, setUrl] = useState(editing?.url ?? '')
   const [notes, setNotes] = useState(editing?.notes ?? '')
-  const [askScope, setAskScope] = useState(false)
+  const [scopeAction, setScopeAction] = useState<null | 'delete' | 'save'>(null)
 
   const cat = calendars.find((c) => c.id === calendarId)
   const valid = title.trim().length > 0 && startDate !== ''
 
-  function save() {
-    if (!valid) return
+  function buildPayload(): Omit<CalendarEvent, 'id'> {
     const payload: Omit<CalendarEvent, 'id'> = {
       title: title.trim(),
       date: startDate,
@@ -148,12 +150,24 @@ export default function EventEditor({
         freq,
         interval: Math.max(1, Number(interval) || 1),
         ...(until ? { until } : {}),
+        ...(freq === 'weekly' && byWeekday.length
+          ? { byWeekday: [...byWeekday].sort((a, b) => a - b) }
+          : {}),
       }
     }
-    // 保留重複事件原有例外
-    if (editing?.exDates?.length) payload.exDates = editing.exDates
+    return payload
+  }
 
+  function save() {
+    if (!valid) return
+    // 編輯緊「重複事件嘅某次」→ 問改此 / 全部
+    if (editing && editing.recurrence && occurrenceKey) {
+      setScopeAction('save')
+      return
+    }
+    const payload = buildPayload()
     if (editing) {
+      if (editing.exDates?.length) payload.exDates = editing.exDates
       eventsCol.update(editing.id, payload)
       toast.success('已儲存活動')
     } else {
@@ -164,10 +178,35 @@ export default function EventEditor({
     onClose()
   }
 
+  function saveAll() {
+    if (!editing) return
+    const payload = buildPayload()
+    if (editing.exDates?.length) payload.exDates = editing.exDates
+    eventsCol.update(editing.id, payload)
+    toast.success('已更新所有活動')
+    onSaved?.(startDate)
+    onClose()
+  }
+
+  function saveThis() {
+    if (!editing || !occurrenceKey) return
+    // 原系列：將此 occurrence 加入例外（嗰日唔再出現）
+    const ex = Array.from(new Set([...(editing.exDates ?? []), occurrenceKey]))
+    eventsCol.update(editing.id, { exDates: ex })
+    // 建立此日獨立（非重複）事件，帶新值
+    const payload = buildPayload()
+    delete payload.recurrence
+    delete payload.exDates
+    eventsCol.add(payload)
+    toast.success('已更新此活動')
+    onSaved?.(startDate)
+    onClose()
+  }
+
   async function remove() {
     if (!editing) return
     if (editing.recurrence) {
-      setAskScope(true) // 重複事件：問刪此 / 全部
+      setScopeAction('delete') // 重複事件：問刪此 / 全部
       return
     }
     const ok = await confirm({
@@ -341,6 +380,37 @@ export default function EventEditor({
           )}
         </div>
 
+        {freq === 'weekly' && (
+          <Field label="喺呢啲日子重複（留空 = 跟開始日）">
+            <div className="flex flex-wrap gap-1.5">
+              {WEEKDAYS.map((w, i) => {
+                const on = byWeekday.includes(i)
+                return (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() =>
+                      setByWeekday((prev) =>
+                        prev.includes(i)
+                          ? prev.filter((d) => d !== i)
+                          : [...prev, i],
+                      )
+                    }
+                    className={cx(
+                      'h-8 w-8 rounded-full text-sm font-medium transition',
+                      on
+                        ? 'bg-accent text-white'
+                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700',
+                    )}
+                  >
+                    {w}
+                  </button>
+                )
+              })}
+            </div>
+          </Field>
+        )}
+
         {freq !== 'none' && (
           <Field label="重複至（選填，留空 = 永遠）">
             <Input
@@ -409,21 +479,33 @@ export default function EventEditor({
       </div>
     </Modal>
 
-      {askScope && editing && (
-        <Modal open onClose={() => setAskScope(false)} title="刪除重複活動" size="sm">
+      {scopeAction && editing && (
+        <Modal
+          open
+          onClose={() => setScopeAction(null)}
+          title={scopeAction === 'delete' ? '刪除重複活動' : '更新重複活動'}
+          size="sm"
+        >
           <p className="mb-3 text-sm text-slate-600 dark:text-slate-300">
-            「{editing.title}」係重複活動，你想點刪除？
+            「{editing.title}」係重複活動，你想
+            {scopeAction === 'delete' ? '刪除' : '更新'}邊啲？
           </p>
           <div className="flex flex-col gap-2">
             {occurrenceKey && (
-              <Button variant="secondary" onClick={deleteThis}>
-                僅刪此活動（{occurrenceKey}）
+              <Button
+                variant="secondary"
+                onClick={scopeAction === 'delete' ? deleteThis : saveThis}
+              >
+                僅{scopeAction === 'delete' ? '刪除' : '更新'}此活動（{occurrenceKey}）
               </Button>
             )}
-            <Button variant="danger" onClick={deleteAll}>
-              刪除所有活動
+            <Button
+              variant={scopeAction === 'delete' ? 'danger' : 'primary'}
+              onClick={scopeAction === 'delete' ? deleteAll : saveAll}
+            >
+              {scopeAction === 'delete' ? '刪除' : '更新'}所有活動
             </Button>
-            <Button variant="ghost" onClick={() => setAskScope(false)}>
+            <Button variant="ghost" onClick={() => setScopeAction(null)}>
               取消
             </Button>
           </div>

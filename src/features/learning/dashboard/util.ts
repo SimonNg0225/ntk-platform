@@ -19,10 +19,9 @@ import { computeProgress } from '../goals/util'
 import type { JournalDoc } from '../journal/util'
 import { moodScore } from '../journal/util'
 import { isDue } from '../../../lib/srs'
-import { journalDocsCol } from '../Journal'
 
-// 日誌真實資料源：用返 Journal 個 canonical collection（同一 instance，即時同步、唔再重複建立）
-export { journalDocsCol }
+// 日誌真實資料源 journalDocsCol 喺 ../journal/store（單一 canonical instance）；
+// LearningDashboard 直接由嗰度 import，同其他功能 col 一致，唔再經呢度轉手。
 
 // ───────── 日期工具（本地時區，避開 toISOString 時差）─────────
 export const WEEKDAYS = ['日', '一', '二', '三', '四', '五', '六'] as const

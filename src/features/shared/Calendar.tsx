@@ -174,6 +174,7 @@ export default function Calendar() {
           selectedKey={cursorKey}
           onSelectDay={(k) => setCursor(fromKey(k))}
           onOpenEvent={openEdit}
+          onMoveToDay={(ev, dk) => eventsCol.update(ev.id, { date: dk })}
           onMoreDay={(k) => {
             setCursor(fromKey(k))
             setView('day')
@@ -187,6 +188,9 @@ export default function Calendar() {
           occByDate={occByDate}
           onOpenEvent={openEdit}
           onCreateAt={createAt}
+          onMoveEvent={(ev, time, endTime) =>
+            eventsCol.update(ev.id, { time, endTime, allDay: false })
+          }
           onPickDay={(k) => {
             setCursor(fromKey(k))
             setView('day')

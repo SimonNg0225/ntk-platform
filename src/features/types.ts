@@ -1,4 +1,4 @@
-import type { ComponentType } from 'react'
+import type { ComponentType, LazyExoticComponent } from 'react'
 import type { ModeId } from '../modes/modes'
 
 // ============================================================
@@ -21,8 +21,8 @@ export interface Feature {
   icon: string
   /** 分組（側邊欄 / 首頁用嚟歸類），例如 '概覽'、'教學' */
   group: string
-  /** 功能本體 (React 元件)。'soon' 狀態可以唔提供 */
-  component?: ComponentType
+  /** 功能本體 (React 元件)。'soon' 狀態可以唔提供。可為動態載入 (lazy)。 */
+  component?: ComponentType | LazyExoticComponent<ComponentType>
   /** 'ready' = 可用；'soon' = 預留位（即將推出） */
   status: 'ready' | 'soon'
 }

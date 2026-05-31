@@ -134,17 +134,47 @@ export function expandOccurrences(
   const interval = Math.max(1, rec.interval ?? 1)
   const maxCount = rec.count ?? Infinity
   const end = fromKey(endKey)
-  let cur = fromKey(ev.date)
+  const seriesStart = fromKey(ev.date)
   let count = 0
   let guard = 0
 
+  // 統一處理一個候選日：回 'stop' 代表整個系列到此為止
+  const consider = (d: Date): 'stop' | 'cont' => {
+    if (count >= maxCount) return 'stop'
+    if (d > end) return 'stop'
+    const key = toKey(d)
+    if (rec.until && key > rec.until) return 'stop'
+    if (d >= seriesStart) {
+      if (key >= startKey && key <= endKey && !ex.has(key)) out.push(key)
+      count += 1
+    }
+    return 'cont'
+  }
+
+  // 每週 + 指定星期幾（例如逢一三五）：每 interval 週，喺選中嘅星期出現
+  if (rec.freq === 'weekly' && rec.byWeekday && rec.byWeekday.length) {
+    const days = [...new Set(rec.byWeekday)].sort((a, b) => a - b)
+    let weekStart = startOfWeek(seriesStart)
+    while (guard++ < 3000) {
+      let stopped = false
+      for (const wd of days) {
+        const d = addDays(weekStart, wd)
+        if (d < seriesStart) continue // 第一週跳過開始日之前
+        if (consider(d) === 'stop') {
+          stopped = true
+          break
+        }
+      }
+      if (stopped || weekStart > end) break
+      weekStart = addDays(weekStart, interval * 7)
+    }
+    return out
+  }
+
+  // 其餘：由開始日逐步 advance
+  let cur = seriesStart
   while (guard++ < 3000) {
-    if (count >= maxCount) break
-    if (cur > end) break
-    const key = toKey(cur)
-    if (rec.until && key > rec.until) break
-    if (key >= startKey && key <= endKey && !ex.has(key)) out.push(key)
-    count += 1
+    if (consider(cur) === 'stop') break
     cur = advance(cur, rec.freq, interval)
   }
   return out
@@ -162,6 +192,10 @@ export function recurrenceLabel(rule?: RecurrenceRule): string {
           ? '個月'
           : '年'
   let base = n === 1 ? `每${unit}` : `每 ${n} ${unit}`
+  if (rule.freq === 'weekly' && rule.byWeekday && rule.byWeekday.length) {
+    const names = [...rule.byWeekday].sort((a, b) => a - b).map((d) => WEEKDAYS[d]).join('')
+    base += ` ${names}`
+  }
   if (rule.until) base += `，至 ${rule.until}`
   else if (rule.count) base += `，共 ${rule.count} 次`
   return base

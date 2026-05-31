@@ -1,39 +1,53 @@
+import { lazy, type ComponentType, type LazyExoticComponent } from 'react'
 import type { Feature } from './types'
 import type { ModeId } from '../modes/modes'
 
+// 動態載入 feature 元件 → 各功能拆獨立 chunk，到用先 load（縮細初始 bundle）。
+// .preload：App idle 時背景預載全部，確保所有功能嘅 collection 都登記（同步 / 匯出完整）。
+type LazyFeature = LazyExoticComponent<ComponentType> & {
+  preload: () => Promise<unknown>
+}
+function lazyFeature(
+  loader: () => Promise<{ default: ComponentType }>,
+): LazyFeature {
+  const C = lazy(loader) as LazyFeature
+  C.preload = loader
+  return C
+}
+
 // 學習模式功能
-import NotesWidget from './learning/NotesWidget'
-import GoalsWidget from './learning/GoalsWidget'
-import Flashcards from './learning/Flashcards'
-import CardGenerator from './learning/CardGenerator'
-import FocusTimer from './learning/FocusTimer'
-import Journal from './learning/Journal'
-import LearningDashboard from './learning/LearningDashboard'
-import ReadingList from './learning/ReadingList'
-import HabitTracker from './learning/HabitTracker'
+const NotesWidget = lazyFeature(() => import('./learning/NotesWidget'))
+const GoalsWidget = lazyFeature(() => import('./learning/GoalsWidget'))
+const Flashcards = lazyFeature(() => import('./learning/Flashcards'))
+const CardGenerator = lazyFeature(() => import('./learning/CardGenerator'))
+const FocusTimer = lazyFeature(() => import('./learning/FocusTimer'))
+const Journal = lazyFeature(() => import('./learning/Journal'))
+const LearningDashboard = lazyFeature(() => import('./learning/LearningDashboard'))
+const ReadingList = lazyFeature(() => import('./learning/ReadingList'))
+const HabitTracker = lazyFeature(() => import('./learning/HabitTracker'))
 
 // 工作模式功能
-import TodoWidget from './work/TodoWidget'
-import ClassesWidget from './work/ClassesWidget'
-import CurriculumProgress from './work/CurriculumProgress'
-import QuestionBank from './work/QuestionBank'
-import ResourceLibrary from './work/ResourceLibrary'
-import Gradebook from './work/Gradebook'
-import LessonPlanner from './work/LessonPlanner'
-import Timetable from './work/Timetable'
-import Attendance from './work/Attendance'
-import ParentComms from './work/ParentComms'
-import MeetingNotes from './work/MeetingNotes'
-import BudgetTracker from './work/BudgetTracker'
-import WorkDashboard from './work/WorkDashboard'
+const TodoWidget = lazyFeature(() => import('./work/TodoWidget'))
+const ClassesWidget = lazyFeature(() => import('./work/ClassesWidget'))
+const CurriculumProgress = lazyFeature(() => import('./work/CurriculumProgress'))
+const QuestionBank = lazyFeature(() => import('./work/QuestionBank'))
+const ResourceLibrary = lazyFeature(() => import('./work/ResourceLibrary'))
+const Gradebook = lazyFeature(() => import('./work/Gradebook'))
+const LessonPlanner = lazyFeature(() => import('./work/LessonPlanner'))
+const Timetable = lazyFeature(() => import('./work/Timetable'))
+const Attendance = lazyFeature(() => import('./work/Attendance'))
+const ParentComms = lazyFeature(() => import('./work/ParentComms'))
+const MeetingNotes = lazyFeature(() => import('./work/MeetingNotes'))
+const BudgetTracker = lazyFeature(() => import('./work/BudgetTracker'))
+const WorkDashboard = lazyFeature(() => import('./work/WorkDashboard'))
 
 // 共用功能
-import Calendar from './shared/Calendar'
-import Countdown from './shared/Countdown'
-import GlobalSearch from './shared/GlobalSearch'
-import Inbox from './shared/Inbox'
-import QuizMode from './shared/QuizMode'
-import AIAssistant from './shared/AIAssistant'
+const Calendar = lazyFeature(() => import('./shared/Calendar'))
+const Countdown = lazyFeature(() => import('./shared/Countdown'))
+const GlobalSearch = lazyFeature(() => import('./shared/GlobalSearch'))
+const Inbox = lazyFeature(() => import('./shared/Inbox'))
+const QuizMode = lazyFeature(() => import('./shared/QuizMode'))
+const AIAssistant = lazyFeature(() => import('./shared/AIAssistant'))
 
 // ============================================================
 //  功能註冊表 (Feature Registry) — 平台擴充中心
@@ -360,4 +374,13 @@ export function groupedFeatures(mode: ModeId): { group: string; items: Feature[]
 // 用 id 攞返一個功能
 export function getFeature(id: string): Feature | undefined {
   return FEATURES.find((f) => f.id === id)
+}
+
+// 背景預載全部功能 chunk（App idle 時呼叫）：令所有 lazy 功能嘅 collection
+// 都會建立並登記入 collectionRegistry，確保雲端同步 / 匯出匯入覆蓋齊全。
+export function preloadAllFeatures(): void {
+  for (const f of FEATURES) {
+    const c = f.component as Partial<LazyFeature> | undefined
+    if (c && typeof c.preload === 'function') void c.preload()
+  }
 }

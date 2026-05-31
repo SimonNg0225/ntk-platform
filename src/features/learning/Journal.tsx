@@ -25,8 +25,9 @@ import {
   Trash2,
   X,
 } from 'lucide-react'
-import { createCollection, useCollection } from '../../lib/store'
+import { useCollection } from '../../lib/store'
 import { journalCol } from '../../data/collections'
+import { journalDocsCol } from './journal/store'
 import {
   Badge,
   Button,
@@ -84,12 +85,10 @@ import {
 //   · 連續寫作天數、字數、活躍日統計
 //   · 「歷年今日」回顧
 //   · 匯出 Markdown / JSON、複製單篇
-//  資料：自家 createCollection('journal_v2')；首次由舊 journal 遷移
+//  資料：journal/store 嘅 journalDocsCol（'journal_v2'）；首次由舊 journal 遷移
 // ============================================================
 
-// 自家較豐富嘅集合（唔掂 data/collections.ts）。export 出去做 canonical instance，
-// 等學習儀表板等其他功能共用同一個（避免重複 createCollection 同 key 而唔同步）。
-export const journalDocsCol = createCollection<JournalDoc>('journal_v2', [])
+// journalDocsCol 嘅 canonical instance 喺 ./journal/store（同學習儀表板共用同一個）。
 
 // 由舊 JournalEntry 結構安全遷移（只做一次）
 const MIGRATION_FLAG = 'ntk.journal_v2_migrated'

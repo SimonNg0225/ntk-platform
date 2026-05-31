@@ -1,4 +1,10 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type PointerEvent as ReactPointerEvent,
+} from 'react'
 import type { CalendarEvent } from '../../../data/types'
 import { cx } from '../../../ui'
 import {
@@ -14,6 +20,12 @@ import {
 } from './util'
 
 const HOUR_PX = 48
+const SNAP = 15 // 拖拉對齊到 15 分鐘
+
+function fmtMin(min: number): string {
+  const m = Math.max(0, Math.min(1439, Math.round(min)))
+  return `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`
+}
 
 function endMinutes(ev: CalendarEvent): number {
   const s = minutesOf(ev.time)
@@ -76,12 +88,14 @@ export default function TimeGridView({
   onOpenEvent,
   onCreateAt,
   onPickDay,
+  onMoveEvent,
 }: {
   days: string[]
   occByDate: Map<string, Occurrence[]>
   onOpenEvent: (ev: CalendarEvent, dateKey: string) => void
   onCreateAt: (dateKey: string, time: string) => void
   onPickDay: (dateKey: string) => void
+  onMoveEvent: (ev: CalendarEvent, time: string, endTime: string) => void
 }) {
   const tKey = todayKey()
   const [nowMin, setNowMin] = useState(() => {
@@ -89,6 +103,9 @@ export default function TimeGridView({
     return d.getHours() * 60 + d.getMinutes()
   })
   const scrollRef = useRef<HTMLDivElement>(null)
+  // 拖拉中嘅事件即時位置（preview）
+  const [drag, setDrag] = useState<{ id: string; start: number; end: number } | null>(null)
+  const movedRef = useRef(false)
 
   useEffect(() => {
     const id = setInterval(() => {
@@ -101,6 +118,42 @@ export default function TimeGridView({
   useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = 7 * HOUR_PX
   }, [])
+
+  // 拖拉：move = 改開始時間（保持時長）；resize = 改結束時間。snap 15 分鐘。
+  function startDrag(e: ReactPointerEvent, p: Laid, mode: 'move' | 'resize') {
+    e.preventDefault()
+    e.stopPropagation()
+    const origStart = p.start
+    const origEnd = p.end
+    const dur = origEnd - origStart
+    const startY = e.clientY
+    movedRef.current = false
+    let live = { start: origStart, end: origEnd }
+    setDrag({ id: p.occ.event.id, start: origStart, end: origEnd })
+
+    const onMove = (ev: PointerEvent) => {
+      const delta = Math.round((((ev.clientY - startY) / HOUR_PX) * 60) / SNAP) * SNAP
+      if (delta !== 0) movedRef.current = true
+      if (mode === 'move') {
+        const s = Math.max(0, Math.min(1440 - dur, origStart + delta))
+        live = { start: s, end: s + dur }
+      } else {
+        const en = Math.max(origStart + SNAP, Math.min(1440, origEnd + delta))
+        live = { start: origStart, end: en }
+      }
+      setDrag({ id: p.occ.event.id, start: live.start, end: live.end })
+    }
+    const onUp = () => {
+      window.removeEventListener('pointermove', onMove)
+      window.removeEventListener('pointerup', onUp)
+      if (movedRef.current && (live.start !== origStart || live.end !== origEnd)) {
+        onMoveEvent(p.occ.event, fmtMin(live.start), fmtMin(live.end))
+      }
+      setDrag(null)
+    }
+    window.addEventListener('pointermove', onMove)
+    window.addEventListener('pointerup', onUp)
+  }
 
   const layouts = useMemo(() => {
     const m = new Map<string, Laid[]>()
@@ -226,17 +279,25 @@ export default function TimeGridView({
 
                 {/* 事件方塊 */}
                 {laid.map((p) => {
-                  const top = (p.start / 60) * HOUR_PX
-                  const height = Math.max(((p.end - p.start) / 60) * HOUR_PX, 18)
+                  const dragging = drag?.id === p.occ.event.id
+                  const s = dragging ? drag!.start : p.start
+                  const en = dragging ? drag!.end : p.end
+                  const top = (s / 60) * HOUR_PX
+                  const height = Math.max(((en - s) / 60) * HOUR_PX, 18)
                   const widthPct = 100 / p.lanes
                   const leftPct = p.lane * widthPct
                   const c = colorOf(p.occ.category?.color)
                   return (
-                    <button
+                    <div
                       key={`${p.occ.event.id}-${p.occ.dateKey}`}
-                      type="button"
+                      role="button"
+                      onPointerDown={(e) => startDrag(e, p, 'move')}
                       onClick={(e) => {
                         e.stopPropagation()
+                        if (movedRef.current) {
+                          movedRef.current = false
+                          return
+                        }
                         onOpenEvent(p.occ.event, p.occ.dateKey)
                       }}
                       style={{
@@ -246,7 +307,8 @@ export default function TimeGridView({
                         width: `calc(${widthPct}% - 4px)`,
                       }}
                       className={cx(
-                        'absolute z-10 overflow-hidden rounded-md px-1.5 py-0.5 text-left text-[11px] leading-tight shadow-sm',
+                        'absolute z-10 cursor-move touch-none select-none overflow-hidden rounded-md px-1.5 py-0.5 text-left text-[11px] leading-tight shadow-sm',
+                        dragging && 'z-30 opacity-90 ring-2 ring-accent/50',
                         c.block,
                       )}
                     >
@@ -255,11 +317,20 @@ export default function TimeGridView({
                       </span>
                       {height > 28 && (
                         <span className="block truncate tabular-nums opacity-70">
-                          {p.occ.event.time}
-                          {p.occ.event.endTime ? `–${p.occ.event.endTime}` : ''}
+                          {dragging ? fmtMin(s) : p.occ.event.time}
+                          {dragging
+                            ? `–${fmtMin(en)}`
+                            : p.occ.event.endTime
+                              ? `–${p.occ.event.endTime}`
+                              : ''}
                         </span>
                       )}
-                    </button>
+                      {/* 底邊縮放手柄 */}
+                      <span
+                        onPointerDown={(e) => startDrag(e, p, 'resize')}
+                        className="absolute inset-x-0 bottom-0 h-2 cursor-ns-resize"
+                      />
+                    </div>
                   )
                 })}
               </div>

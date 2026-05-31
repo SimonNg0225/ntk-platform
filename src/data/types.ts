@@ -145,6 +145,7 @@ export interface RecurrenceRule {
   interval?: number // 每 N（預設 1）
   until?: string // YYYY-MM-DD（重複到此日為止，選填）
   count?: number // 或重複 N 次後停（選填）
+  byWeekday?: number[] // 每週重複時指定星期幾（0=日…6=六），空 = 跟開始日嗰日
 }
 
 // 行事曆分類（多個有色行事曆，可開關顯示）

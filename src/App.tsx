@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { ModeProvider, useMode } from './context/ModeContext'
 import { AuthProvider } from './context/AuthContext'
 import { NavProvider } from './context/NavContext'
@@ -11,7 +11,7 @@ import CommandPalette from './components/CommandPalette'
 import Home from './pages/Home'
 import Settings from './pages/Settings'
 import ComingSoon from './components/ComingSoon'
-import { getFeature } from './features/registry'
+import { getFeature, preloadAllFeatures } from './features/registry'
 import { FeatureIcon } from './features/featureIcons'
 
 // 主框架：側邊欄 + 主內容區。
@@ -28,6 +28,12 @@ function AppShell() {
   useEffect(() => {
     setActiveId(null)
   }, [mode])
+
+  // 背景預載全部功能 chunk（idle）→ 導航即時 + 所有 collection 登記齊（同步/匯出完整）
+  useEffect(() => {
+    const id = setTimeout(() => preloadAllFeatures(), 1200)
+    return () => clearTimeout(id)
+  }, [])
 
   // ⌘K / Ctrl+K 開指令面板
   useEffect(() => {
@@ -122,7 +128,15 @@ function AppShell() {
                   </div>
                   <div>
                     {feature.status === 'ready' && feature.component ? (
-                      <feature.component />
+                      <Suspense
+                        fallback={
+                          <div className="py-20 text-center text-sm text-slate-400">
+                            載入中…
+                          </div>
+                        }
+                      >
+                        <feature.component />
+                      </Suspense>
                     ) : (
                       <ComingSoon name={feature.name} />
                     )}

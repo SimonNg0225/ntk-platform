@@ -1,3 +1,4 @@
+import { useRef } from 'react'
 import type { CalendarEvent } from '../../../data/types'
 import { cx } from '../../../ui'
 import {
@@ -18,6 +19,7 @@ export default function MonthView({
   onSelectDay,
   onOpenEvent,
   onMoreDay,
+  onMoveToDay,
 }: {
   year: number
   month: number
@@ -26,9 +28,11 @@ export default function MonthView({
   onSelectDay: (key: string) => void
   onOpenEvent: (ev: CalendarEvent, dateKey: string) => void
   onMoreDay: (key: string) => void
+  onMoveToDay: (ev: CalendarEvent, dateKey: string) => void
 }) {
   const cells = monthMatrix(year, month)
   const tKey = todayKey()
+  const dragRef = useRef<{ ev: CalendarEvent; from: string } | null>(null)
 
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700/60">
@@ -56,6 +60,14 @@ export default function MonthView({
               key={key}
               type="button"
               onClick={() => onSelectDay(key)}
+              onDragOver={(e) => {
+                if (dragRef.current) e.preventDefault()
+              }}
+              onDrop={() => {
+                const d = dragRef.current
+                dragRef.current = null
+                if (d && d.from !== key) onMoveToDay(d.ev, key)
+              }}
               className={cx(
                 'group flex min-h-0 flex-col items-stretch border-b border-r border-slate-100 p-1 text-left transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent/40 dark:border-slate-800',
                 isSun && '',
@@ -89,12 +101,19 @@ export default function MonthView({
                     <button
                       key={`${occ.event.id}-${occ.dateKey}`}
                       type="button"
+                      draggable
+                      onDragStart={() => {
+                        dragRef.current = { ev: occ.event, from: occ.dateKey }
+                      }}
+                      onDragEnd={() => {
+                        dragRef.current = null
+                      }}
                       onClick={(e) => {
                         e.stopPropagation()
                         onOpenEvent(occ.event, occ.dateKey)
                       }}
                       className={cx(
-                        'flex items-center gap-1 truncate rounded px-1 py-0.5 text-left text-[11px] leading-tight',
+                        'flex cursor-grab items-center gap-1 truncate rounded px-1 py-0.5 text-left text-[11px] leading-tight active:cursor-grabbing',
                         c.chip,
                       )}
                     >

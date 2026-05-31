@@ -13,6 +13,7 @@ import { focusLogsCol, focusProjectsCol, focusSettingsCol, getSettings } from '.
 import { habitV2Col, habitLogV2Col, migrateLegacyHabits } from './habits/types'
 import { goalMetaCol, milestonesCol } from './goals/types'
 import { richNotesCol } from './notes/store'
+import { journalDocsCol } from './journal/store'
 import type { CalendarEvent, CalendarCategory, Countdown, QuizAttempt } from '../../data/types'
 import type { KpiData, DaySignal, ActivityItem } from './dashboard/util'
 import { useNav } from '../../context/NavContext'
@@ -73,7 +74,6 @@ import {
   trendOf,
   fmtMin,
   dashPrefsCol,
-  journalDocsCol,
   readPrefs,
   visibleWidgets,
   WIDGET_DEFS,
