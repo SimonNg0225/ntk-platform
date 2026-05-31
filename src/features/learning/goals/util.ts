@@ -181,5 +181,8 @@ export function relTime(iso: string): string {
   if (hrs < 24) return `${hrs} 小時前`
   const days = Math.floor(hrs / 24)
   if (days < 30) return `${days} 日前`
-  return fromKey(iso.slice(0, 10)).toLocaleDateString('zh-HK', { month: 'short', day: 'numeric' })
+  // 用本地日曆日（同 buildMomentum 一致）：iso.slice(0,10) 攞嘅係 UTC 日，
+  // 喺 UTC+8 等時區，本地凌晨但 UTC 未過午夜嘅簽到會顯示錯一日。
+  const d = new Date(iso)
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate(), 12).toLocaleDateString('zh-HK', { month: 'short', day: 'numeric' })
 }

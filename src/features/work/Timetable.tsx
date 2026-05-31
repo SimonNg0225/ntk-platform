@@ -47,6 +47,7 @@ import {
   downloadText,
   findUpNext,
   fmtDuration,
+  lastLessonEndMin,
   lessonPeriods,
   minutesOf,
   slotKey,
@@ -186,6 +187,9 @@ export default function Timetable() {
   )
 
   const bellMap = useMemo(() => bellByPeriod(bells), [bells])
+
+  // 今日最後一節放學時間（畀「今日課堂已完」文案用，唔好寫死 16:00）
+  const lastEndMin = useMemo(() => lastLessonEndMin(bells), [bells])
 
   // ── 編輯器 ──
   function openCell(day: number, period: number) {
@@ -329,6 +333,7 @@ export default function Timetable() {
           todayCount={todayCount}
           upNext={upNext}
           nowMin={nowMin}
+          lastEndMin={lastEndMin}
           classNameById={classNameById}
         />
       </div>
@@ -462,12 +467,14 @@ function TodayPanel({
   todayCount,
   upNext,
   nowMin,
+  lastEndMin,
   classNameById,
 }: {
   todayDay: number
   todayCount: number
   upNext: ReturnType<typeof findUpNext>
   nowMin: number
+  lastEndMin: number
   classNameById: Map<string, string>
 }) {
   const isWeekend = todayDay === 0
@@ -533,7 +540,7 @@ function TodayPanel({
         ) : (
           !isWeekend && (
             <p className="text-sm text-slate-500 dark:text-slate-400">
-              {nowMin > 16 * 60 ? '今日課堂已完' : '今日未有更多課堂'}
+              {nowMin >= lastEndMin ? '今日課堂已完' : '今日未有更多課堂'}
             </p>
           )
         )}

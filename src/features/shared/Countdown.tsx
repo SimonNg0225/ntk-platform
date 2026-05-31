@@ -42,7 +42,7 @@ const WEEKDAYS = ['日', '一', '二', '三', '四', '五', '六'] as const
 type Tone = 'rose' | 'amber' | 'green' | 'slate'
 
 /** 緊急度 → Badge tone（今日 / <=3 日 rose、<=14 日 amber、其餘 green、已過去 slate）。 */
-function toneOf(days: number): Tone {
+export function toneOf(days: number): Tone {
   if (days < 0) return 'slate'
   if (days <= 3) return 'rose'
   if (days <= 14) return 'amber'
@@ -74,28 +74,29 @@ const CATEGORY_OPTIONS: CountdownCategory[] = [
 ]
 
 /** 將 Date 轉成本地時區嘅 YYYY-MM-DD（避免 toISOString 時差問題）。 */
-function toKey(d: Date): string {
+export function toKey(d: Date): string {
   const y = d.getFullYear()
   const mm = String(d.getMonth() + 1).padStart(2, '0')
   const dd = String(d.getDate()).padStart(2, '0')
   return `${y}-${mm}-${dd}`
 }
 
-/** 由 YYYY-MM-DD 砌返一個本地 Date（中午，避開時區邊界）。 */
-function fromKey(key: string): Date {
+/** 由 YYYY-MM-DD 砌返一個本地 Date（中午，避開時區邊界）。畸形 key 回傳 Invalid Date。 */
+export function fromKey(key: string): Date {
   const [y, m, d] = key.split('-').map(Number)
-  return new Date(y, (m ?? 1) - 1, d ?? 1, 12, 0, 0, 0)
+  if (!Number.isFinite(y) || !Number.isFinite(m) || !Number.isFinite(d)) return new Date(NaN)
+  return new Date(y, m - 1, d, 12, 0, 0, 0)
 }
 
 /** 仲有幾多日：同一日 = 0、明日 = 1、琴日 = -1。today 同 target 同基準（當地中午）。 */
-function daysUntil(dateKey: string, todayKey: string): number {
+export function daysUntil(dateKey: string, todayKey: string): number {
   const target = fromKey(dateKey)
   const today = fromKey(todayKey)
   return Math.round((target.getTime() - today.getTime()) / 864e5)
 }
 
 /** 格式化：M月D日（星期X），可加時間。 */
-function formatDate(dateKey: string, time?: string): string {
+export function formatDate(dateKey: string, time?: string): string {
   const d = fromKey(dateKey)
   const base = `${d.getMonth() + 1}月${d.getDate()}日（星期${WEEKDAYS[d.getDay()]}）`
   return time ? `${base} ${time}` : base

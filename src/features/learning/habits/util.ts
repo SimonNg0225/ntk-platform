@@ -143,7 +143,9 @@ export function rateOverDays(
   }
   if (freq.kind === 'weekly') {
     // 每週 N 次：分母 = 週數 × N，分子 = 實際完成（封頂）。
-    const weeks = Math.max(1, Math.round(windowDays / 7))
+    // 用精確週數（windowDays / 7），唔取整：30 日橫跨 4.29 週而非 4，
+    // 取整會少計分母、令部分完成率偏高。target=0（windowDays/times=0）由下方守衞。
+    const weeks = windowDays / 7
     const target = weeks * freq.times
     return target > 0 ? Math.min(100, Math.round((completed / target) * 100)) : 0
   }
@@ -159,8 +161,11 @@ export function thisWeekProgress(
   const start = addDays(today, -today.getDay()) // 本週日
   let count = 0
   for (let i = 0; i <= today.getDay(); i += 1) {
-    const k = toKey(addDays(start, i))
-    if (done.has(k)) count += 1
+    const day = addDays(start, i)
+    const k = toKey(day)
+    // 只數「排程日」嘅完成，令分子基數同 target（排程日數）一致：
+    // weekdays 模式喺非排程日（如逢一至五習慣嘅星期日）打卡唔應計入。
+    if (isScheduledDay(freq, day.getDay()) && done.has(k)) count += 1
   }
   let target = 7
   if (freq.kind === 'weekly') target = freq.times

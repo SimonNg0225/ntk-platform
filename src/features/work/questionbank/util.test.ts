@@ -99,6 +99,16 @@ describe('sortQuestions', () => {
     expect(sortQuestions([], 'new')).toEqual([])
     expect(sortQuestions([], 'difficulty')).toEqual([])
   })
+
+  it('createdAt 相同：保持輸入次序（comparator 自反，穩定排序）', () => {
+    const list = [
+      q({ id: 'a', createdAt: '2026-01-01T00:00:00Z' }),
+      q({ id: 'b', createdAt: '2026-01-01T00:00:00Z' }),
+    ]
+    // 相等元素 compare = 0 → stable；修正前 'new' 會反轉成 b,a
+    expect(sortQuestions(list, 'new').map((x) => x.id)).toEqual(['a', 'b'])
+    expect(sortQuestions(list, 'old').map((x) => x.id)).toEqual(['a', 'b'])
+  })
 })
 
 // ============================================================

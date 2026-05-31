@@ -382,6 +382,11 @@ describe('scoreSeries（按時間升序折線資料）', () => {
     expect(out.map((p) => p.pct)).toEqual([25, 100, 50])
     expect(out[0]).toMatchObject({ total: 4, correct: 1 })
   })
+  it('createdAt 相同：保持輸入次序（comparator 自反，穩定）', () => {
+    const a1 = attempt({ id: 'a1', createdAt: '2026-05-02T10:00:00', total: 4, correctCount: 2 })
+    const a2 = attempt({ id: 'a2', createdAt: '2026-05-02T10:00:00', total: 4, correctCount: 3 })
+    expect(scoreSeries([a1, a2]).map((p) => p.attemptId)).toEqual(['a1', 'a2'])
+  })
 })
 
 // ============================================================

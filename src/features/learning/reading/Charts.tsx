@@ -203,7 +203,7 @@ const HEAT_LEVELS = [
   'bg-accent',
 ]
 
-function heatLevel(pages: number): number {
+export function heatLevel(pages: number): number {
   if (pages <= 0) return 0
   if (pages < 15) return 1
   if (pages < 40) return 2

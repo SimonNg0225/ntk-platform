@@ -401,6 +401,15 @@ describe('toMarkdown', () => {
     expect(md.indexOf('新')).toBeLessThan(md.indexOf('舊'))
   })
 
+  it('同日多篇：保持輸入次序（comparator 自反，穩定）', () => {
+    // 同日 → compare = 0 → stable；修正前同日（date<date 為 false → -1）會反轉
+    const md = toMarkdown([
+      doc({ id: '1', date: '2026-05-04', content: '先寫' }),
+      doc({ id: '2', date: '2026-05-04', content: '後寫' }),
+    ])
+    expect(md.indexOf('先寫')).toBeLessThan(md.indexOf('後寫'))
+  })
+
   it('有標題用標題做 heading；感恩 + 標籤都出', () => {
     const md = toMarkdown([
       doc({

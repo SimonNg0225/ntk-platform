@@ -128,8 +128,12 @@ export function buildQueue(opts: QueueOpts): string[] {
     pool = pool.filter((c) => metaById.get(c.id)?.flagged)
   } else if (mode === 'srs' || mode === 'typed') {
     const due = pool.filter(isDueToday)
-    // 已複習過（repetitions>0）嘅到期卡 + 受限新卡
-    const reviewDue = due.filter((c) => c.repetitions > 0)
+    // 已複習過（repetitions>0）嘅到期卡，受每日複習上限規限（0 = 不限）
+    let reviewDue = due.filter((c) => c.repetitions > 0)
+    if (pref.reviewPerDay > 0) {
+      reviewDue = reviewDue.slice(0, pref.reviewPerDay)
+    }
+    // 未學過嘅新卡，受每日新卡上限規限
     const newDue = due
       .filter((c) => c.repetitions === 0)
       .slice(0, Math.max(0, pref.newPerDay))
@@ -169,8 +173,10 @@ export function previewIntervals(card: Card): Record<Rating, string> {
     if (rating === 'again') return 0
     if (reps === 0) return rating === 'easy' ? 3 : 1
     if (reps === 1) return rating === 'easy' ? 8 : 6
+    // easy：對齊 lib/srs.schedule —— 佢對 easy 會先 ease += 0.15 再乘 1.3，
+    // 故此處同樣用 (ease + 0.15) * 1.3，避免預估永遠少報約 1 日。
     const factor =
-      rating === 'hard' ? 1.2 : rating === 'easy' ? ease * 1.3 : ease
+      rating === 'hard' ? 1.2 : rating === 'easy' ? (ease + 0.15) * 1.3 : ease
     return Math.max(1, Math.round(cur * factor))
   }
 

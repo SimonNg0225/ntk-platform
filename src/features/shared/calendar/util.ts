@@ -96,21 +96,43 @@ export function colorOf(color: string | undefined) {
 }
 
 // ───────── 重複展開 ─────────
-function advance(d: Date, freq: RecurrenceRule['freq'], interval: number): Date {
-  const y = d.getFullYear()
-  const m = d.getMonth()
-  const day = d.getDate()
+/** 某年某月（month 0-indexed）嘅日數 */
+function daysInMonth(year: number, month: number): number {
+  return new Date(year, month + 1, 0).getDate()
+}
+
+/**
+ * 由 series 開始日計第 i 個 occurrence（i 由 0 起）。
+ * monthly/yearly 由 seriesStart 嘅 day-of-month 作基準逐步推算，跨短月時
+ * clamp 返當月最後一日（如 1/31 → 2/28 → 3/31…），唔會由 roll 後嘅日期繼續
+ * 漂移；yearly 由閏日 2/29 起非閏年同樣 clamp 到 2/28，唔會永久變 3/1。
+ */
+function nthOccurrence(
+  seriesStart: Date,
+  freq: RecurrenceRule['freq'],
+  interval: number,
+  i: number,
+): Date {
+  const y0 = seriesStart.getFullYear()
+  const m0 = seriesStart.getMonth()
+  const d0 = seriesStart.getDate()
   switch (freq) {
     case 'daily':
-      return new Date(y, m, day + interval, 12)
+      return new Date(y0, m0, d0 + i * interval, 12)
     case 'weekly':
-      return new Date(y, m, day + interval * 7, 12)
-    case 'monthly':
-      return new Date(y, m + interval, day, 12)
-    case 'yearly':
-      return new Date(y + interval, m, day, 12)
+      return new Date(y0, m0, d0 + i * interval * 7, 12)
+    case 'monthly': {
+      const total = m0 + i * interval
+      const y = y0 + Math.floor(total / 12)
+      const m = ((total % 12) + 12) % 12
+      return new Date(y, m, Math.min(d0, daysInMonth(y, m)), 12)
+    }
+    case 'yearly': {
+      const y = y0 + i * interval
+      return new Date(y, m0, Math.min(d0, daysInMonth(y, m0)), 12)
+    }
     default:
-      return new Date(y, m, day + 1, 12)
+      return new Date(y0, m0, d0 + i, 12)
   }
 }
 
@@ -171,11 +193,11 @@ export function expandOccurrences(
     return out
   }
 
-  // 其餘：由開始日逐步 advance
-  let cur = seriesStart
+  // 其餘：由開始日逐步推算第 i 個 occurrence（monthly/yearly clamp，唔漂移）
+  let i = 0
   while (guard++ < 3000) {
-    if (consider(cur) === 'stop') break
-    cur = advance(cur, rec.freq, interval)
+    if (consider(nthOccurrence(seriesStart, rec.freq, interval, i)) === 'stop') break
+    i += 1
   }
   return out
 }

@@ -59,6 +59,16 @@ describe('totalPhaseMinutes', () => {
   it('負數照加（時長理論上唔應負，但唔特別 clamp）', () => {
     expect(totalPhaseMinutes([phase(20), phase(-5)])).toBe(15)
   })
+
+  it('單元素', () => {
+    expect(totalPhaseMinutes([phase(42)])).toBe(42)
+  })
+
+  it('大量環節相加', () => {
+    // 100 個各 3 分鐘 = 300
+    const many = Array.from({ length: 100 }, () => phase(3))
+    expect(totalPhaseMinutes(many)).toBe(300)
+  })
 })
 
 // ============================================================
@@ -78,6 +88,18 @@ describe('materialsDone', () => {
 
   it('全部完成', () => {
     expect(materialsDone([mat(true), mat(true)])).toEqual({ done: 2, total: 2 })
+  })
+
+  it('全部未完成', () => {
+    expect(materialsDone([mat(false), mat(false), mat(false)])).toEqual({
+      done: 0,
+      total: 3,
+    })
+  })
+
+  it('單元素', () => {
+    expect(materialsDone([mat(true)])).toEqual({ done: 1, total: 1 })
+    expect(materialsDone([mat(false)])).toEqual({ done: 0, total: 1 })
   })
 })
 
@@ -110,6 +132,21 @@ describe('keyOf / fromKey（本地日期，唔係 UTC）', () => {
     expect(d.getFullYear()).toBe(2026)
     expect(d.getMonth()).toBe(4) // 5 月 → index 4
     expect(d.getDate()).toBe(4)
+  })
+
+  it('keyOf 閏日 02-29', () => {
+    expect(keyOf(new Date(2024, 1, 29, 12))).toBe('2024-02-29')
+  })
+
+  it('fromKey 缺月/日有 fallback（m??1、d??1）', () => {
+    // 只得年份 → 1 月 1 日
+    const onlyYear = fromKey('2026')
+    expect(onlyYear.getFullYear()).toBe(2026)
+    expect(onlyYear.getMonth()).toBe(0) // m ?? 1 → index 0
+    expect(onlyYear.getDate()).toBe(1) // d ?? 1
+    expect(keyOf(onlyYear)).toBe('2026-01-01')
+    // 缺日 → 該月 1 日
+    expect(keyOf(fromKey('2026-03'))).toBe('2026-03-01')
   })
 })
 
@@ -176,6 +213,11 @@ describe('startOfWeekKey（週一為首）', () => {
     // 用 00:00 構造，仍應落喺 05-04（星期一）
     expect(startOfWeekKey(new Date(2026, 4, 6, 0, 0))).toBe('2026-05-04')
   })
+
+  it('跨年：星期日退回上一年週一（diff -6，唔好錯算成下一個週一）', () => {
+    // 2023-01-01 = 星期日 → 對應週一係 2022-12-26
+    expect(startOfWeekKey(new Date(2023, 0, 1, 12))).toBe('2022-12-26')
+  })
 })
 
 // ============================================================
@@ -200,6 +242,17 @@ describe('weekdayDateKeys', () => {
       '2026-07-01',
       '2026-07-02',
       '2026-07-03',
+    ])
+  })
+
+  it('跨年週（只 5 個，唔含週末）', () => {
+    // 週一 2026-12-28 → 一~五 跨入 2027 年
+    expect(weekdayDateKeys('2026-12-28')).toEqual([
+      '2026-12-28',
+      '2026-12-29',
+      '2026-12-30',
+      '2026-12-31',
+      '2027-01-01',
     ])
   })
 })
@@ -230,6 +283,10 @@ describe('longDateLabel', () => {
     // 2026-01-01 = 星期四
     expect(longDateLabel('2026-01-01')).toBe('2026年1月1日（星期四）')
   })
+
+  it('閏日 2024-02-29（星期四）', () => {
+    expect(longDateLabel('2024-02-29')).toBe('2024年2月29日（星期四）')
+  })
 })
 
 // ============================================================
@@ -249,6 +306,16 @@ describe('weekRangeLabel（週一 → 週五）', () => {
   it('同月（雙位數日）', () => {
     // 週一 2026-05-11 → 週五 2026-05-15
     expect(weekRangeLabel('2026-05-11')).toBe('5月11–15日')
+  })
+
+  it('週五啱啱月底（同月，唔跨月分支）', () => {
+    // 週一 2026-07-27 → 週五 2026-07-31（7 月最後一日）
+    expect(weekRangeLabel('2026-07-27')).toBe('7月27–31日')
+  })
+
+  it('跨年（12 月 → 1 月，月 index 不同 → 走兩段分支）', () => {
+    // 週一 2026-12-28 → 週五 2027-01-01
+    expect(weekRangeLabel('2026-12-28')).toBe('12/28 – 1/1')
   })
 })
 
@@ -300,5 +367,79 @@ describe('computeCoverage', () => {
     const res = computeCoverage(topics, new Set(), new Set(['x']))
     expect(res[0].plannedTopics).toBe(0)
     expect(res[0].taughtTopics).toBe(1)
+  })
+
+  it('同範疇多課題：total / planned / taught 累加正確', () => {
+    // 範疇 A 有 4 個課題：2 個 planned（其中 1 個 taught）
+    const topics: Topic[] = [
+      topic({ id: 'a1', area: 'A', order: 0 }),
+      topic({ id: 'a2', area: 'A', order: 1 }),
+      topic({ id: 'a3', area: 'A', order: 2 }),
+      topic({ id: 'a4', area: 'A', order: 3 }),
+    ]
+    const res = computeCoverage(topics, new Set(['a1', 'a2']), new Set(['a1']))
+    expect(res).toHaveLength(1)
+    expect(res[0]).toEqual({
+      area: 'A',
+      part: '必修',
+      totalTopics: 4,
+      plannedTopics: 2,
+      taughtTopics: 1,
+    })
+  })
+
+  it('範疇首見 topic 決定 order（後續同範疇 topic order 較細不影響排序）', () => {
+    // A 首見 order=1（後面 a2 order=0 唔應拉低 A 嘅排序鍵）；B 首見 order=2
+    const topics: Topic[] = [
+      topic({ id: 'a1', area: 'A', order: 1 }),
+      topic({ id: 'b1', area: 'B', order: 2 }),
+      topic({ id: 'a2', area: 'A', order: 0 }),
+    ]
+    const res = computeCoverage(topics, new Set(), new Set())
+    // 用首見 order：A(1) < B(2) → A 在前
+    expect(res.map((r) => r.area)).toEqual(['A', 'B'])
+  })
+
+  it('範疇首見 order 相同時排序穩定（保留首見次序）', () => {
+    // A、B 首見 order 都係 0；穩定排序應保留出現次序 A 先 B 後
+    const topics: Topic[] = [
+      topic({ id: 'a1', area: 'A', order: 0 }),
+      topic({ id: 'b1', area: 'B', order: 0 }),
+    ]
+    const res = computeCoverage(topics, new Set(), new Set())
+    expect(res.map((r) => r.area)).toEqual(['A', 'B'])
+  })
+
+  it('topicId 唔喺任何集合 → 0/0（只計 total）', () => {
+    const topics: Topic[] = [
+      topic({ id: 't1', area: 'A', order: 0 }),
+      topic({ id: 't2', area: 'A', order: 1 }),
+    ]
+    const res = computeCoverage(topics, new Set(), new Set())
+    expect(res[0]).toEqual({
+      area: 'A',
+      part: '必修',
+      totalTopics: 2,
+      plannedTopics: 0,
+      taughtTopics: 0,
+    })
+  })
+
+  it('ghost topicId（已刪課題仍被引用）唔會令 plannedTopics 超過 totalTopics', () => {
+    // 只得 1 個有效課題 t1，但 planned 集合含一個 ghost 'deleted-1'
+    // （該 topicId 已唔存在於 topics）。computeCoverage 以 topics 為迴圈基準，
+    // 故 ghost 不會被計入任何範疇 → plannedTopics 受 totalTopics 上限約束。
+    const topics: Topic[] = [topic({ id: 't1', area: 'A', order: 0 })]
+    const res = computeCoverage(
+      topics,
+      new Set(['t1', 'deleted-1']),
+      new Set(['t1', 'deleted-1']),
+    )
+    expect(res).toHaveLength(1)
+    expect(res[0].totalTopics).toBe(1)
+    expect(res[0].plannedTopics).toBe(1) // ghost 唔計，封頂 1（≤ total）
+    expect(res[0].taughtTopics).toBe(1)
+    // 每範疇 planned 永遠 ≤ total（覆蓋率分範疇圖唔會超 100%）
+    expect(res[0].plannedTopics).toBeLessThanOrEqual(res[0].totalTopics)
   })
 })

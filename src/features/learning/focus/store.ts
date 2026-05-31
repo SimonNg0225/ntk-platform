@@ -67,7 +67,8 @@ export interface DayStat {
   sessions: number // 完成嘅專注節
 }
 
-/** [from, to] 內逐日聚合（focus + completed）。回傳由舊到新。 */
+/** [from, to] 內逐日聚合（只計 completed 嘅 focus；minutes 同 sessions 同一基數，
+ *  同 totalsOf.focusMin 對齊）。回傳由舊到新。 */
 export function dailySeries(logs: FocusLog[], from: Date, to: Date): DayStat[] {
   const map = new Map<string, DayStat>()
   let cur = new Date(from.getFullYear(), from.getMonth(), from.getDate())
@@ -78,12 +79,12 @@ export function dailySeries(logs: FocusLog[], from: Date, to: Date): DayStat[] {
     cur = addDays(cur, 1)
   }
   for (const l of logs) {
-    if (!isCountable(l)) continue
+    if (!isCountable(l) || !l.completed) continue
     const k = keyOf(l.startedAt)
     const d = map.get(k)
     if (!d) continue
     d.minutes += l.actualMin
-    if (l.completed) d.sessions += 1
+    d.sessions += 1
   }
   return [...map.values()]
 }
@@ -130,7 +131,7 @@ export function longestStreak(logs: FocusLog[]): number {
 export function weekdayDistribution(logs: FocusLog[]): number[] {
   const out = [0, 0, 0, 0, 0, 0, 0]
   for (const l of logs) {
-    if (!isCountable(l)) continue
+    if (!isCountable(l) || !l.completed) continue
     out[new Date(l.startedAt).getDay()] += l.actualMin
   }
   return out
@@ -140,7 +141,7 @@ export function weekdayDistribution(logs: FocusLog[]): number[] {
 export function hourDistribution(logs: FocusLog[]): number[] {
   const out = new Array(24).fill(0) as number[]
   for (const l of logs) {
-    if (!isCountable(l)) continue
+    if (!isCountable(l) || !l.completed) continue
     out[new Date(l.startedAt).getHours()] += l.actualMin
   }
   return out
@@ -155,11 +156,11 @@ export interface ProjectStat {
 export function projectBreakdown(logs: FocusLog[]): ProjectStat[] {
   const map = new Map<string | null, ProjectStat>()
   for (const l of logs) {
-    if (!isCountable(l)) continue
+    if (!isCountable(l) || !l.completed) continue
     const id = l.projectId ?? null
     const s = map.get(id) ?? { projectId: id, minutes: 0, sessions: 0 }
     s.minutes += l.actualMin
-    if (l.completed) s.sessions += 1
+    s.sessions += 1
     map.set(id, s)
   }
   return [...map.values()].sort((a, b) => b.minutes - a.minutes)
@@ -169,7 +170,7 @@ export function projectBreakdown(logs: FocusLog[]): ProjectStat[] {
 export function tagBreakdown(logs: FocusLog[]): { tag: string; minutes: number }[] {
   const map = new Map<string, number>()
   for (const l of logs) {
-    if (!isCountable(l) || !l.tags) continue
+    if (!isCountable(l) || !l.completed || !l.tags) continue
     for (const t of l.tags) map.set(t, (map.get(t) ?? 0) + l.actualMin)
   }
   return [...map.entries()]

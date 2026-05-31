@@ -264,10 +264,11 @@ describe('activeKeysOf', () => {
   })
 
   it('彙整 focus(完成) / 卡複習 / 習慣 / 日誌 四源', () => {
+    // 卡 lastReviewed 用本地日 key（keyOf）→ 用 TZ-naive 時間，跨時區都穩定落 05-05。
     const s = activeKeysOf(
       emptyInput({
         focusLogs: [flog({ id: 'f1', startedAt: '2026-05-04T08:30:00' })],
-        cards: [card({ id: 'c1', lastReviewed: '2026-05-05T23:00:00.000Z' })],
+        cards: [card({ id: 'c1', lastReviewed: '2026-05-05T23:00:00' })],
         habitLogs: [{ id: 'hl1', habitId: 'h1', date: '2026-05-06' }],
         journal: [jdoc({ id: 'j1', date: '2026-05-07' })],
       }),

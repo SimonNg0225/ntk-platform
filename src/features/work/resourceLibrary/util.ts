@@ -326,7 +326,12 @@ export function relativeDate(iso?: string): string {
     if (hrs < 1) return '剛剛'
     return `${hrs} 小時前`
   }
-  const days = Math.floor(diffMs / day)
+  // 以「本地午夜到午夜」嘅日曆日差計（非經過毫秒），避免跨午夜 <24h
+  // 誤出『0 日前』；Math.round 抵銷 DST 嘅 ±1 小時偏移。
+  const startThen = new Date(then.getFullYear(), then.getMonth(), then.getDate())
+  const startNow = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  const days = Math.round((startNow.getTime() - startThen.getTime()) / day)
+  if (days < 0) return '剛剛' // 未來時戳（時鐘偏差）→ clamp，唔出負日
   if (days === 1) return '昨日'
   if (days < 7) return `${days} 日前`
   if (days < 30) return `${Math.floor(days / 7)} 週前`

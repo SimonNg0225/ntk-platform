@@ -296,14 +296,14 @@ describe('computeWorkload 工作量統計', () => {
   })
 
   it('maxConsecutive：連堂計到最長，遇空堂重設', () => {
-    // P1,P2,P3 連 + P5 + P6,P7 → 最長 = 3 (P1-3)
+    // P3,P4,P5 係同一個 block（中間冇小息/午膳）連 3 堂 → 最長 = 3
+    // P7,P8 另一段連 2；P6 空堂令 P5→P6→P7 唔接埋一齊
     const slots = [
-      slot({ id: 'a', day: 1, period: 1 }),
-      slot({ id: 'b', day: 1, period: 2 }),
       slot({ id: 'c', day: 1, period: 3 }),
+      slot({ id: 'd', day: 1, period: 4 }),
       slot({ id: 'e', day: 1, period: 5 }),
-      slot({ id: 'f', day: 1, period: 6 }),
       slot({ id: 'g', day: 1, period: 7 }),
+      slot({ id: 'h', day: 1, period: 8 }),
     ]
     const w = computeWorkload(slots, bells, days, classNames)
     expect(w.maxConsecutive).toBe(3)

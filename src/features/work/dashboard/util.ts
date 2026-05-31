@@ -276,8 +276,10 @@ export function buildClassProgress(
     const done = rows.filter((p) => p.status === 'done').length
     const inProgress = rows.filter((p) => p.status === 'in_progress').length
     const total = totalTopics || rows.length
-    const percent = total > 0 ? Math.round((done / total) * 100) : 0
-    return { id: k.id, name: k.name, done, inProgress, total, percent }
+    // done 可能多過 total（刪咗 topic 但 progress 列殘留）→ clamp，避免顯示 5/3（167%）
+    const doneCapped = Math.min(done, total)
+    const percent = total > 0 ? Math.min(100, Math.round((done / total) * 100)) : 0
+    return { id: k.id, name: k.name, done: doneCapped, inProgress, total, percent }
   })
 }
 
@@ -335,9 +337,12 @@ export function buildGradeSummary(
   if (withScores.length === 0) {
     return { bins: emptyBins(), average: 0, graded: 0, max: 0 }
   }
+  // 統一做日 key（10 字）再比較：避免裸 date '2026-05-10' 同 ISO createdAt
+  // '2026-05-10T08:00…' 因長度唔同而字典序錯位（同曆日下誤選只有 createdAt 嗰份）
+  const dayKey = (a: Assessment) => (a.date ?? a.createdAt).slice(0, 10)
   const latest = withScores
     .slice()
-    .sort((a, b) => (b.date ?? b.createdAt).localeCompare(a.date ?? a.createdAt))[0]
+    .sort((a, b) => dayKey(b).localeCompare(dayKey(a)))[0]
   const rows = scores.filter(
     (s) => s.assessmentId === latest.id && s.score != null,
   )

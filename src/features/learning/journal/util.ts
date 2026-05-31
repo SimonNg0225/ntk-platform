@@ -225,7 +225,9 @@ export function moodTrend(docs: JournalDoc[], days: number): MoodPoint[] {
     const s = moodScore(d.mood)
     if (s) out.push({ key, score: s, emoji: d.mood! })
   }
-  return out.sort((a, b) => (a.key < b.key ? -1 : 1))
+  return out.sort((a, b) =>
+    a.key === b.key ? 0 : a.key < b.key ? -1 : 1,
+  )
 }
 
 /** 心情分佈：每級幾多篇（依量表次序，5→1） */
@@ -326,7 +328,9 @@ export function heatLevel(count: number): string {
 // ───────── 匯出 ─────────
 /** 整批日誌 → Markdown（最新喺上） */
 export function toMarkdown(docs: JournalDoc[]): string {
-  const sorted = [...docs].sort((a, b) => (a.date < b.date ? 1 : -1))
+  const sorted = [...docs].sort((a, b) =>
+    a.date === b.date ? 0 : a.date < b.date ? 1 : -1,
+  )
   const lines: string[] = ['# 學習日誌', '']
   for (const d of sorted) {
     const head = [longDate(d.date), d.mood, d.weather].filter(Boolean).join(' · ')

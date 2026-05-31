@@ -89,6 +89,21 @@ export function durationMin(b: BellRow): number {
   return Math.max(0, minutesOf(b.end) - minutesOf(b.start))
 }
 
+/**
+ * 當日最後一節（lesson）嘅放學時間（由 0:00 起嘅分鐘）。
+ * 用嚟判斷「今日課堂已完」而唔好寫死 16:00（鐘聲可由用家自訂，含晚課）。
+ * 無任何 lesson → 0。
+ */
+export function lastLessonEndMin(bells: BellRow[]): number {
+  let end = 0
+  for (const b of bells) {
+    if (b.kind !== 'lesson') continue
+    const e = minutesOf(b.end)
+    if (e > end) end = e
+  }
+  return end
+}
+
 // 把分鐘變返「X 小時 Y 分」/「Y 分」
 export function fmtDuration(mins: number): string {
   const h = Math.floor(mins / 60)
@@ -286,14 +301,18 @@ export function computeWorkload(
 ): Workload {
   const periods = lessonPeriods(bells)
   const bellMap = bellByPeriod(bells)
-  const occupied = new Set(slots.map((s) => slotKey(s.day, s.period)))
+  // 只計落喺顯示星期(days)範圍內嘅 slot，令 total / byDay / byClass / 分鐘一致
+  // （否則範圍外嘅堂會入 total 但唔入 byDay，總數同每日分佈對唔上）
+  const daySet = new Set(days)
+  const inRange = slots.filter((s) => daySet.has(s.day))
+  const occupied = new Set(inRange.map((s) => slotKey(s.day, s.period)))
 
   const byDayMap = new Map<number, number>()
   const byClassMap = new Map<string, number>()
   const byPeriodMap = new Map<number, number>()
   let totalMinutes = 0
 
-  for (const s of slots) {
+  for (const s of inRange) {
     byDayMap.set(s.day, (byDayMap.get(s.day) ?? 0) + 1)
     byPeriodMap.set(s.period, (byPeriodMap.get(s.period) ?? 0) + 1)
     const cKey = s.classId ?? '__none__'
@@ -333,8 +352,13 @@ export function computeWorkload(
   let maxConsecutive = 0
   for (const day of days) {
     let run = 0
-    for (const p of periods) {
-      if (occupied.has(slotKey(day, p))) {
+    // 行返整個鐘聲序列：遇到小息/午膳要斷開 run（嗰刻有得抖，唔算連堂）
+    for (const b of bells) {
+      if (b.kind !== 'lesson') {
+        run = 0
+        continue
+      }
+      if (occupied.has(slotKey(day, b.period))) {
         run++
         maxConsecutive = Math.max(maxConsecutive, run)
       } else {
@@ -346,7 +370,7 @@ export function computeWorkload(
   const daysWithLessons = byDay.filter((d) => d.count > 0).length
 
   return {
-    total: slots.length,
+    total: inRange.length,
     byDay,
     byClass,
     byPeriod,

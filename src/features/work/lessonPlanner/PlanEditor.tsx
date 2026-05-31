@@ -88,7 +88,7 @@ export function planToDraft(p: LessonPlan, meta: PlanMeta | undefined): PlanDraf
   }
 }
 
-function fmtMin(min: number): string {
+export function fmtMin(min: number): string {
   if (min < 60) return `${min} 分鐘`
   const h = Math.floor(min / 60)
   const m = min % 60

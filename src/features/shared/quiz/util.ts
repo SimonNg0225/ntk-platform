@@ -146,6 +146,15 @@ export function shuffle<T>(arr: T[]): T[] {
 
 const pad2 = (n: number) => String(n).padStart(2, '0')
 
+// 本地時區日期 key（YYYY-MM-DD）。整個 repo 用本地 key 避開 toISOString 的 UTC 漂移
+// （見 calendar/util.ts toKey）；createdAt 由 new Date().toISOString() 寫入係 UTC，
+// 故凌晨做題若直接 slice ISO 會落錯日。非法日期則退回 slice(0,10)。
+function localDayKey(iso: string): string {
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return iso.slice(0, 10)
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`
+}
+
 // ISO → `YYYY-MM-DD HH:mm`
 export function formatDateTime(iso: string): string {
   const d = new Date(iso)
@@ -343,7 +352,9 @@ export interface ScorePoint {
 // 由 attempts（任意次序）→ 按時間升序嘅命中率折線資料
 export function scoreSeries(attempts: QuizAttempt[]): ScorePoint[] {
   return [...attempts]
-    .sort((a, b) => (a.createdAt < b.createdAt ? -1 : 1))
+    .sort((a, b) =>
+      a.createdAt === b.createdAt ? 0 : a.createdAt < b.createdAt ? -1 : 1,
+    )
     .map((a) => ({
       attemptId: a.id,
       createdAt: a.createdAt,
@@ -423,22 +434,30 @@ export function practiceHeatmap(attempts: QuizAttempt[], days: number): HeatCell
 
 // 連續練習日數（current / best）—— 以「有做題嘅日」計
 export function practiceStreak(attempts: QuizAttempt[]): { current: number; best: number } {
-  const days = new Set(attempts.map((a) => a.createdAt.slice(0, 10)))
+  // 用本地日期 key 砌「有做題的日」Set（對齊 practiceHeatmap / calendar；
+  // createdAt 係 UTC ISO，直接 slice 會令凌晨做題塌入前一日、低估連續日數）。
+  const days = new Set(attempts.map((a) => localDayKey(a.createdAt)))
   if (days.size === 0) return { current: 0, best: 0 }
+  // 由 key 砌返本地 Date（中午，避開 DST 邊界令相鄰日差仍為 1）。
+  const fromKey = (key: string): Date => {
+    const [y, m, d] = key.split('-').map(Number)
+    return new Date(y, (m ?? 1) - 1, d ?? 1, 12, 0, 0, 0)
+  }
   const sorted = [...days].sort()
   let best = 1
   let run = 1
   for (let i = 1; i < sorted.length; i++) {
-    const prev = new Date(sorted[i - 1])
-    const cur = new Date(sorted[i])
+    const prev = fromKey(sorted[i - 1])
+    const cur = fromKey(sorted[i])
     const diff = Math.round((cur.getTime() - prev.getTime()) / 864e5)
     if (diff === 1) run++
     else run = 1
     if (run > best) best = run
   }
-  // current：由今日（或昨日）往回連續
-  const todayKey = new Date().toISOString().slice(0, 10)
-  const yKey = new Date(Date.now() - 864e5).toISOString().slice(0, 10)
+  // current：由今日（或昨日）往回連續。全程本地 key，與 days set 一致。
+  const now = new Date()
+  const todayKey = localDayKey(now.toISOString())
+  const yKey = localDayKey(new Date(now.getTime() - 864e5).toISOString())
   let cursor: string | null = days.has(todayKey)
     ? todayKey
     : days.has(yKey)
@@ -447,7 +466,7 @@ export function practiceStreak(attempts: QuizAttempt[]): { current: number; best
   let current = 0
   while (cursor && days.has(cursor)) {
     current++
-    const d = new Date(cursor)
+    const d = fromKey(cursor)
     d.setDate(d.getDate() - 1)
     cursor = `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`
   }

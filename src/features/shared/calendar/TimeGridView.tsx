@@ -22,12 +22,12 @@ import {
 const HOUR_PX = 48
 const SNAP = 15 // 拖拉對齊到 15 分鐘
 
-function fmtMin(min: number): string {
+export function fmtMin(min: number): string {
   const m = Math.max(0, Math.min(1439, Math.round(min)))
   return `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`
 }
 
-function endMinutes(ev: CalendarEvent): number {
+export function endMinutes(ev: CalendarEvent): number {
   const s = minutesOf(ev.time)
   if (ev.endTime) {
     const e = minutesOf(ev.endTime)
@@ -45,7 +45,7 @@ interface Laid {
 }
 
 /** 同日重疊事件分欄（cluster-based lane assignment） */
-function layoutDay(list: Occurrence[]): Laid[] {
+export function layoutDay(list: Occurrence[]): Laid[] {
   const timed = list
     .filter((o) => !isAllDay(o.event))
     .map((o) => ({ occ: o, start: minutesOf(o.event.time), end: endMinutes(o.event), lane: 0, lanes: 1 }))

@@ -66,7 +66,9 @@ export function sortQuestions(list: Question[], key: SortKey): Question[] {
   const arr = [...list]
   switch (key) {
     case 'old':
-      return arr.sort((a, b) => (a.createdAt < b.createdAt ? -1 : 1))
+      return arr.sort((a, b) =>
+        a.createdAt === b.createdAt ? 0 : a.createdAt < b.createdAt ? -1 : 1,
+      )
     case 'marksDesc':
       return arr.sort((a, b) => (b.marks ?? 0) - (a.marks ?? 0))
     case 'marksAsc':
@@ -77,7 +79,9 @@ export function sortQuestions(list: Question[], key: SortKey): Question[] {
       )
     case 'new':
     default:
-      return arr.sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1))
+      return arr.sort((a, b) =>
+        a.createdAt === b.createdAt ? 0 : a.createdAt < b.createdAt ? 1 : -1,
+      )
   }
 }
 
@@ -330,7 +334,7 @@ export function assemblePaper(
   const shortfall: Record<Difficulty, number> = { easy: 0, medium: 0, hard: 0 }
 
   for (const diff of DIFF_ORDER) {
-    const need = Math.max(0, bp.counts[diff] | 0)
+    const need = Math.max(0, Math.floor(bp.counts[diff] || 0))
     if (need === 0) continue
     const pool = shuffle(inScope.filter((q) => q.difficulty === diff))
 

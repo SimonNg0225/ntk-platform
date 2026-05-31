@@ -374,13 +374,30 @@ function dateToIso(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
-function stepCycle(d: Date, cycle: RecurrenceCycle): Date {
-  const next = new Date(d)
-  if (cycle === 'weekly') next.setDate(next.getDate() + 7)
-  else if (cycle === 'biweekly') next.setDate(next.getDate() + 14)
-  else if (cycle === 'monthly') next.setMonth(next.getMonth() + 1)
-  else next.setFullYear(next.getFullYear() + 1)
-  return next
+function stepCycle(d: Date, cycle: RecurrenceCycle, anchorDay: number): Date {
+  if (cycle === 'weekly') {
+    const next = new Date(d)
+    next.setDate(next.getDate() + 7)
+    return next
+  }
+  if (cycle === 'biweekly') {
+    const next = new Date(d)
+    next.setDate(next.getDate() + 14)
+    return next
+  }
+  // monthly / yearly：由 anchorDay 重新錨定（而非盲目 setMonth／setFullYear），
+  // 否則月底錨點（29/30/31）會溢位入下下個月並永久污染日期（e.g. Jan-31 +1 月 = Mar-3），
+  // 閏日 Feb-29 +1 年亦會漂成 Mar-1。改為 clamp 到當月最後一日。
+  let y = d.getFullYear()
+  let m = d.getMonth()
+  if (cycle === 'monthly') m += 1
+  else y += 1
+  if (m > 11) {
+    y += Math.floor(m / 12)
+    m %= 12
+  }
+  const lastDay = new Date(y, m + 1, 0).getDate()
+  return new Date(y, m, Math.min(anchorDay, lastDay))
 }
 
 export const CYCLE_LABEL: Record<RecurrenceCycle, string> = {
@@ -407,17 +424,21 @@ export function dueRecurring(list: RecurringTx[]): DueInfo[] {
     if (!due) continue
     out.push({ recurring: r, dueDate: due, overdueDays: daysBetween(due, today) })
   }
-  return out.sort((a, b) => (a.dueDate < b.dueDate ? -1 : 1))
+  return out.sort((a, b) =>
+    a.dueDate === b.dueDate ? 0 : a.dueDate < b.dueDate ? -1 : 1,
+  )
 }
 
 /** 推算某定期項目「將來下一次」到期日（用嚟顯示未到期項目嘅預告） */
 export function upcomingDue(r: RecurringTx): string {
   const today = todayIso()
-  let cursor = r.lastPosted ? stepCycle(isoToDate(r.lastPosted), r.cycle) : isoToDate(r.startDate)
+  let cursor = r.lastPosted
+    ? stepCycle(isoToDate(r.lastPosted), r.cycle, r.anchorDay)
+    : isoToDate(r.startDate)
   const todayD = isoToDate(today)
   let guard = 0
-  while (cursor < todayD && guard < 600) {
-    cursor = stepCycle(cursor, r.cycle)
+  while (cursor < todayD && guard < 5000) {
+    cursor = stepCycle(cursor, r.cycle, r.anchorDay)
     guard += 1
   }
   return dateToIso(cursor)
@@ -426,12 +447,14 @@ export function upcomingDue(r: RecurringTx): string {
 /** 推「到 onIso 為止」最後一次應入帳日（未入過或上次已過一週期）；無 = null */
 function lastDueOnOrBefore(r: RecurringTx, onIso: string): string | null {
   const on = isoToDate(onIso)
-  let cursor = r.lastPosted ? stepCycle(isoToDate(r.lastPosted), r.cycle) : isoToDate(r.startDate)
+  let cursor = r.lastPosted
+    ? stepCycle(isoToDate(r.lastPosted), r.cycle, r.anchorDay)
+    : isoToDate(r.startDate)
   if (cursor > on) return null
   let last = dateToIso(cursor)
   let guard = 0
-  while (guard < 600) {
-    const nxt = stepCycle(isoToDate(last), r.cycle)
+  while (guard < 5000) {
+    const nxt = stepCycle(isoToDate(last), r.cycle, r.anchorDay)
     if (nxt > on) break
     last = dateToIso(nxt)
     guard += 1

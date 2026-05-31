@@ -176,10 +176,10 @@ export function buildSeatGrid(
   const byId = new Map(students.map((s) => [s.id, s]))
   const placed: (Student | null)[] = []
   const seated = new Set<string>()
-  // 先放有固定座位嘅
+  // 先放有固定座位嘅（若該位已被佔用，唔覆寫；交返畀下面補位流程，避免學生消失）
   for (const s of students) {
     const m = metaFor(s.id, metas)
-    if (typeof m.seat === 'number' && m.seat >= 0) {
+    if (typeof m.seat === 'number' && m.seat >= 0 && !placed[m.seat]) {
       placed[m.seat] = s
       seated.add(s.id)
     }

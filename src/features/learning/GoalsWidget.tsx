@@ -120,7 +120,8 @@ export default function GoalsWidget() {
     const cut = Date.now() - 7 * 864e5
     for (const c of checkins) {
       const d = new Date(c.createdAt)
-      if (d.getTime() >= cut) recent.add(`${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`)
+      if (d.getTime() >= cut)
+        recent.add(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`)
     }
     // 即將到期（7 日內、未完成）
     const dueSoon = enriched.filter((e) => {

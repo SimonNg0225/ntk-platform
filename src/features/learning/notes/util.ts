@@ -145,6 +145,7 @@ export function compareNotes(a: RichNote, b: RichNote, key: SortKey): number {
   if (a.pinned !== b.pinned) return a.pinned ? -1 : 1
   switch (key) {
     case 'created':
+      if (a.createdAt === b.createdAt) return 0
       return a.createdAt < b.createdAt ? 1 : -1
     case 'title':
       return deriveTitle(a).localeCompare(deriveTitle(b), 'zh-HK')
@@ -152,6 +153,7 @@ export function compareNotes(a: RichNote, b: RichNote, key: SortKey): number {
       return wordCount(b.content) - wordCount(a.content)
     case 'updated':
     default:
+      if (a.updatedAt === b.updatedAt) return 0
       return a.updatedAt < b.updatedAt ? 1 : -1
   }
 }

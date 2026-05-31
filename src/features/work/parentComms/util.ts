@@ -314,8 +314,8 @@ export interface MonthlyPoint {
   total: number
 }
 
-export function monthlyTrend(rows: CommRow[], months: number): MonthlyPoint[] {
-  const keys = recentMonthKeys(months)
+export function monthlyTrend(rows: CommRow[], months: number, anchor = new Date()): MonthlyPoint[] {
+  const keys = recentMonthKeys(months, anchor)
   const idx = new Map<string, MonthlyPoint>(
     keys.map((k) => {
       const m = Number(k.slice(5))

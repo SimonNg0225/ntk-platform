@@ -280,6 +280,26 @@ describe('compareNotes', () => {
     expect(compareNotes(older, newer, 'created')).toBe(1)
   })
 
+  it('時間相同 → 0（comparator 自反，created / updated 唔可以係 ±1）', () => {
+    const x = note({
+      content: '',
+      createdAt: '2026-05-04T08:00:00.000Z',
+      updatedAt: '2026-05-04T08:00:00.000Z',
+    })
+    // 自反：同一物件比較必為 0
+    expect(compareNotes(x, x, 'created')).toBe(0)
+    expect(compareNotes(x, x, 'updated')).toBe(0)
+    // 兩筆但時間相同（皆非置頂）→ 0，確保穩定排序
+    const y = note({
+      id: 'y',
+      content: '',
+      createdAt: '2026-05-04T08:00:00.000Z',
+      updatedAt: '2026-05-04T08:00:00.000Z',
+    })
+    expect(compareNotes(x, y, 'created')).toBe(0)
+    expect(compareNotes(x, y, 'updated')).toBe(0)
+  })
+
   it('words：字數多排前（負數表示 a 在前）', () => {
     const many = note({ content: 'one two three four five' }) // 5 拉丁詞
     const few = note({ content: 'one two' }) // 2

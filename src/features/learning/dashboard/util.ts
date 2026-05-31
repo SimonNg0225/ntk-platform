@@ -177,7 +177,7 @@ export function buildDaySignals(input: DashInput, days: number): DaySignal[] {
   const reviewByDay = new Map<string, number>()
   for (const c of input.cards) {
     if (!c.lastReviewed) continue
-    const k = c.lastReviewed.slice(0, 10)
+    const k = keyOf(c.lastReviewed) // 本地日（與 focus / 習慣 / 日誌 一致；避 UTC 漂移）
     reviewByDay.set(k, (reviewByDay.get(k) ?? 0) + 1)
   }
   const habitByDay = new Map<string, number>()
@@ -213,7 +213,7 @@ export function activeKeysOf(input: DashInput): Set<string> {
   const s = new Set<string>()
   for (const l of input.focusLogs)
     if (l.kind === 'focus' && l.completed) s.add(keyOf(l.startedAt))
-  for (const c of input.cards) if (c.lastReviewed) s.add(c.lastReviewed.slice(0, 10))
+  for (const c of input.cards) if (c.lastReviewed) s.add(keyOf(c.lastReviewed))
   for (const l of input.habitLogs) s.add(l.date)
   for (const j of input.journal) s.add(j.date)
   return s
@@ -258,7 +258,7 @@ function countReviews(cards: Card[], fromKeyStr: string, toKeyStr: string): numb
   let n = 0
   for (const c of cards) {
     if (!c.lastReviewed) continue
-    const k = c.lastReviewed.slice(0, 10)
+    const k = keyOf(c.lastReviewed) // 本地日（與 focus 計法一致；避 UTC 漂移）
     if (k >= fromKeyStr && k <= toKeyStr) n += 1
   }
   return n
@@ -380,7 +380,9 @@ export function buildActivity(
       id: `c-${c.id}`,
       kind: 'review',
       text: `複習咗一張卡：${truncate(c.front, 24)}`,
-      at: c.lastReviewed,
+      // 統一用本地日正午（同習慣/日誌/書事件一致），避免 UTC instant 同
+      // 本地正午字串混排令時間線次序錯亂（lastReviewed 由 srs.ts 寫 UTC）。
+      at: `${keyOf(c.lastReviewed)}T12:00:00`,
       target: 'learning-flashcards',
     })
   }

@@ -306,16 +306,18 @@ describe('previewIntervals', () => {
     expect(r.easy).toBe('8 日')
   })
 
-  it('reps ≥ 2：hard = round(cur·1.2)，good = round(cur·ease)，easy = round(cur·ease·1.3)', () => {
-    // cur=6, ease=2.5 → hard round(7.2)=7日；good round(15)=15日；easy round(19.5)=20日
+  it('reps ≥ 2：hard = round(cur·1.2)，good = round(cur·ease)，easy = round(cur·(ease+0.15)·1.3)', () => {
+    // cur=6, ease=2.5 → hard round(7.2)=7日；good round(15)=15日；
+    // easy 對齊 schedule（ease 先 +0.15）：round(6·2.65·1.3)=round(20.67)=21日
     const r = previewIntervals(mkCard({ repetitions: 2, intervalDays: 6, ease: 2.5 }))
     expect(r.hard).toBe('7 日')
     expect(r.good).toBe('15 日')
-    expect(r.easy).toBe('20 日')
+    expect(r.easy).toBe('21 日')
   })
 
   it('reps ≥ 2 + 長間隔：good/easy 進位到月（cur=15, ease=2.5）', () => {
-    // hard round(18)=18日；good round(37.5)=38日→round(38/30)=1個月；easy round(48.75)=49日→2個月
+    // hard round(18)=18日；good round(37.5)=38日→round(38/30)=1個月；
+    // easy round(15·2.65·1.3)=round(51.675)=52日→round(52/30)=2個月
     const r = previewIntervals(mkCard({ repetitions: 2, intervalDays: 15, ease: 2.5 }))
     expect(r.hard).toBe('18 日')
     expect(r.good).toBe('1 個月')

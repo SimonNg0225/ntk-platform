@@ -38,10 +38,12 @@ const ALERT_OPTIONS: { v: number; l: string }[] = [
   { v: 1440, l: '1 日前' },
 ]
 
-function plusHour(t: string): string {
+export function plusHour(t: string): string {
   const [h, m] = t.split(':').map(Number)
-  const tot = ((h || 0) + 1) * 60 + (m || 0)
-  const hh = Math.floor(tot / 60) % 24
+  // 加 1 小時作結束時間預設；clamp 喺 23:59 唔好 wrap 過午夜，
+  // 否則結束時間預設會早過開始（如 23:30 變 00:30）。
+  const tot = Math.min(23 * 60 + 59, ((h || 0) + 1) * 60 + (m || 0))
+  const hh = Math.floor(tot / 60)
   const mm = tot % 60
   return `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`
 }

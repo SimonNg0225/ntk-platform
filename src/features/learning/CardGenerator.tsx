@@ -115,7 +115,7 @@ type TopTab = 'generate' | 'history' | 'stats'
 type DeckTab = 'existing' | 'new'
 
 // 正規化 front 做去重比對（去空白 / 標點 / 大小寫）
-function normFront(s: string): string {
+export function normFront(s: string): string {
   return s
     .toLowerCase()
     .replace(/[\s，。.,?？!！；;：:【】()（）「」"'`_\-—＿]+/g, '')

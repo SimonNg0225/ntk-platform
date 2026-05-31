@@ -13,8 +13,19 @@ export const RATING_LABEL: Record<Rating, string> = {
   easy: '😎 好易',
 }
 
+/**
+ * 本地時區 YYYY-MM-DD。刻意唔用 `toISOString().slice(0,10)`（嗰個係 UTC 切日）：
+ * 喺 UTC+8（HKT）早上 UTC 仲未過午夜，會切到「噖日」，令到期日差一日。
+ */
+export function localDateStr(d: Date): string {
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
+
 export function todayStr(): string {
-  return new Date().toISOString().slice(0, 10)
+  return localDateStr(new Date())
 }
 
 export function isDue(card: Card): boolean {
@@ -52,7 +63,7 @@ export function schedule(card: Card, rating: Rating): Partial<Card> {
     ease: Math.round(ease * 100) / 100,
     intervalDays,
     repetitions,
-    dueDate: due.toISOString().slice(0, 10),
+    dueDate: localDateStr(due),
     lastReviewed: new Date().toISOString(),
   }
 }

@@ -1,5 +1,12 @@
-import { describe, it, expect } from 'vitest'
-import { schedule, RATING_LABEL, type Rating } from './srs'
+// 時區敏感測試：srs 用「本地時區」date key（避 toISOString 的 UTC 漂移）。
+// 部分測試要喺 UTC+N 先睇到「本地日 ≠ UTC 日」嘅差異，故喺 import 前鎖死
+// TZ = Asia/Hong_Kong（同 bug report 一致：HKT 早上 toISOString 會切到噖日）。
+// 本 repo tsconfig 無 @types/node，故自行最小宣告 process（只用 env.TZ）。
+declare const process: { env: Record<string, string | undefined> }
+process.env.TZ = 'Asia/Hong_Kong'
+
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { schedule, todayStr, localDateStr, isDue, RATING_LABEL, type Rating } from './srs'
 import type { Card } from '../data/types'
 
 // 建一張卡（SM-2 預設：ease 2.5 / interval 0 / reps 0），可覆寫。
@@ -134,5 +141,71 @@ describe('RATING_LABEL', () => {
       expect(RATING_LABEL[k]).toBeTruthy()
       expect(typeof RATING_LABEL[k]).toBe('string')
     }
+  })
+})
+
+// ============================================================
+//  localDateStr — 本地時區 YYYY-MM-DD 純函式（deterministic）
+//  以「本地 component」建構 Date（new Date(y, mIdx, d, …)）：構造同格式化
+//  兩邊都讀本地 component，故斷言喺任何 host TZ 都成立（唔靠機器時區）。
+// ============================================================
+describe('localDateStr — 本地時區格式化', () => {
+  it('一般日子格式化為 YYYY-MM-DD（月份 index 由 0 起）', () => {
+    expect(localDateStr(new Date(2026, 4, 31, 7, 0, 0))).toBe('2026-05-31') // 5 月 = index 4
+  })
+
+  it('月 / 日補零成兩位數', () => {
+    expect(localDateStr(new Date(2026, 0, 5))).toBe('2026-01-05') // 1 月 5 日
+    expect(localDateStr(new Date(2026, 8, 9))).toBe('2026-09-09') // 9 月 9 日
+  })
+
+  it('唔受時 / 分 / 秒影響：同一本地日任何時刻都回同一 key', () => {
+    expect(localDateStr(new Date(2026, 4, 31, 0, 0, 0))).toBe('2026-05-31') // 凌晨
+    expect(localDateStr(new Date(2026, 4, 31, 23, 59, 59))).toBe('2026-05-31') // 臨晚
+  })
+
+  it('年 / 月邊界正確', () => {
+    expect(localDateStr(new Date(2026, 11, 31, 12))).toBe('2026-12-31') // 年尾
+    expect(localDateStr(new Date(2027, 0, 1, 0))).toBe('2027-01-01') // 年頭
+  })
+})
+
+// ============================================================
+//  時區邊界（HKT 早上）：todayStr / schedule().dueDate 用「本地日」
+//  ------------------------------------------------------------
+//  TZ 已鎖死 HKT（UTC+8）。鎖死「今日」= 2026-05-31 07:00 本地，
+//  即 2026-05-30T23:00:00Z —— 舊 code（toISOString().slice）會切到 UTC
+//  噖日「2026-05-30」，差一日；新 code 回本地日「2026-05-31」。
+// ============================================================
+describe('時區邊界：本地日 vs UTC 切日（守護 off-by-one）', () => {
+  beforeEach(() => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date(2026, 4, 31, 7, 0, 0)) // 07:00 HKT = 2026-05-30T23:00:00Z
+  })
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it('守護：TZ pin 生效 = HKT（UTC+8，offset -480）', () => {
+    // 若 pin 無效（V8 已快取 ambient TZ），以下時區邊界斷言會失去意義。
+    expect(new Date(2026, 4, 31, 7).getTimezoneOffset()).toBe(-480)
+  })
+
+  it('todayStr()：HKT 07:00 回本地「今日」（唔係 UTC 噖日 2026-05-30）', () => {
+    expect(todayStr()).toBe('2026-05-31') // 舊 UTC 寫法會回 '2026-05-30'
+    expect(todayStr()).toBe(localDateStr(new Date())) // 同 localDateStr 同源
+  })
+
+  it('schedule().dueDate：good(interval 1) 回本地聽日 2026-06-01（唔係 UTC 2026-05-31）', () => {
+    const r = schedule(card(), 'good') // reps 0→1 → interval 1
+    expect(r.intervalDays).toBe(1)
+    expect(r.dueDate).toBe('2026-06-01') // 舊 UTC 寫法會回 '2026-05-31'（差一日）
+  })
+
+  it('一致性：again 排今日，配合 todayStr() 即時 due（兩邊同一本地基準）', () => {
+    const r = schedule(card(), 'again') // interval 0 → due = 今日（本地）
+    expect(r.dueDate).toBe('2026-05-31')
+    expect(r.dueDate).toBe(todayStr())
+    expect(isDue(card({ dueDate: r.dueDate! }))).toBe(true)
   })
 })

@@ -52,7 +52,8 @@ export function relativeLabel(key?: string): string {
 export function progressPct(book: Book): number {
   if (book.status === 'done') return 100
   if (!book.totalPages || book.totalPages <= 0) return 0
-  return Math.min(100, Math.round(((book.currentPage ?? 0) / book.totalPages) * 100))
+  // 未讀完用 floor：99.5%（如 199/200）唔應 round 成 100%，否則同真·讀完冇得分。
+  return Math.min(100, Math.floor(((book.currentPage ?? 0) / book.totalPages) * 100))
 }
 
 export function totalPagesRead(book: Book): number {
@@ -193,7 +194,9 @@ export function monthlyFinished(books: Book[], months = 12): MonthBucket[] {
   }
   for (const book of books) {
     if (book.status !== 'done') continue
-    const fin = book.finishedOn ?? book.createdAt.slice(0, 10)
+    // finishedOn 已是本地 key；createdAt 係 ISO(UTC)，要轉本地 key 先 slice，
+    // 否則 HK 凌晨建立的書 UTC 會跌去前一日 → 落錯月份桶（甚至跌出今年）。
+    const fin = book.finishedOn ?? toKey(new Date(book.createdAt))
     const key = fin.slice(0, 7)
     const bucket = index.get(key)
     if (bucket) {
