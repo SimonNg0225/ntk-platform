@@ -11,6 +11,9 @@ import {
 } from '../../data/collections'
 import { richNotesCol } from '../learning/notes/store'
 import { journalDocsCol } from '../learning/journal/store'
+import { healthLogsCol, getGoals as getHealthGoals } from '../learning/health/store'
+import { summarize as summarizeHealth } from '../learning/health/util'
+import { workoutCol } from '../learning/fitness/training/store'
 import { Button, Card, EmptyState, Textarea } from '../../ui'
 
 // ============================================================
@@ -95,6 +98,34 @@ function buildContext(): string {
       '【近期日誌】\n' +
         journal
           .map((j) => `- ${j.date}${j.mood ? ' ' + j.mood : ''}：${j.content.slice(0, 100).replace(/\n/g, ' ')}`)
+          .join('\n'),
+    )
+
+  const hlogs = healthLogsCol.get()
+  if (hlogs.length) {
+    const s = summarizeHealth(hlogs, getHealthGoals())
+    const bits: string[] = []
+    if (s.weightKg != null)
+      bits.push(
+        `體重 ${s.weightKg.toFixed(1)}kg${s.weightDelta7 != null ? `（近 7 日 ${s.weightDelta7 > 0 ? '+' : ''}${s.weightDelta7.toFixed(1)}）` : ''}`,
+      )
+    if (s.sleepAvg7 != null) bits.push(`睡眠 7 日均 ${s.sleepAvg7.toFixed(1)} 小時`)
+    bits.push(`本週運動 ${s.exerciseWeek} 分鐘`)
+    if (s.moodAvg7 != null) bits.push(`心情 7 日均 ${s.moodAvg7.toFixed(1)}/5`)
+    if (s.streak > 0) bits.push(`連續記錄 ${s.streak} 日`)
+    parts.push('【健康近況】\n' + bits.map((b) => `- ${b}`).join('\n'))
+  }
+
+  const workouts = workoutCol
+    .get()
+    .slice()
+    .sort((a, b) => b.date.localeCompare(a.date))
+    .slice(0, 5)
+  if (workouts.length)
+    parts.push(
+      '【近期訓練】\n' +
+        workouts
+          .map((w) => `- ${w.date}${w.title ? ' ' + w.title : ''}（${w.exercises.length} 個動作）`)
           .join('\n'),
     )
 
