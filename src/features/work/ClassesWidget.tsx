@@ -884,7 +884,7 @@ function AddStudent({
       }
     >
       <div className="space-y-4">
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
           <Field label="學號">
             <Input
               value={no}
@@ -893,15 +893,16 @@ function AddStudent({
               placeholder="12"
             />
           </Field>
-          <Field label="姓名" required>
-            <Input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && save()}
-              placeholder="陳大文"
-              className="col-span-2"
-            />
-          </Field>
+          <div className="sm:col-span-2">
+            <Field label="姓名" required>
+              <Input
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && save()}
+                placeholder="陳大文"
+              />
+            </Field>
+          </div>
         </div>
         <Field label="性別">
           <div className="flex gap-2">
@@ -1192,7 +1193,7 @@ function ClassEditor({
       }
     >
       <div className="space-y-4">
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
           <Field label="班別" required hint="例如 5A">
             <Input
               value={name}
@@ -1200,14 +1201,15 @@ function ClassEditor({
               placeholder="5A"
             />
           </Field>
-          <Field label="科目 / 組別">
-            <Input
-              value={subject}
-              onChange={(e) => setSubject(e.target.value)}
-              placeholder="BAFS（商業管理）"
-              className="col-span-2"
-            />
-          </Field>
+          <div className="sm:col-span-2">
+            <Field label="科目 / 組別">
+              <Input
+                value={subject}
+                onChange={(e) => setSubject(e.target.value)}
+                placeholder="BAFS（商業管理）"
+              />
+            </Field>
+          </div>
         </div>
         <div className="grid grid-cols-2 gap-3">
           <Field label="班主任">

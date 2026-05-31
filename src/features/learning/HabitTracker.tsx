@@ -243,7 +243,7 @@ export default function HabitTracker() {
       />
 
       {/* 頂部統計 */}
-      <section className="grid grid-cols-3 gap-3">
+      <section className="grid grid-cols-2 gap-3 sm:grid-cols-3">
         <StatCard
           label="今日完成"
           value={`${stats.doneToday}/${stats.dueToday}`}

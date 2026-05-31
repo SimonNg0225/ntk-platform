@@ -1097,9 +1097,9 @@ function StartScreen({
                   type="button"
                   onClick={() => onRemoveRecent(r.id)}
                   aria-label="移除"
-                  className="mr-1 rounded-md p-1 text-slate-300 opacity-0 transition hover:text-rose-500 group-hover:opacity-100 dark:text-slate-600"
+                  className="mr-1 rounded-md p-2 text-slate-300 opacity-0 transition hover:text-rose-500 focus-visible:opacity-100 group-hover:opacity-100 max-sm:opacity-100 dark:text-slate-600"
                 >
-                  <X size={13} />
+                  <X size={14} />
                 </button>
               </li>
             ))}

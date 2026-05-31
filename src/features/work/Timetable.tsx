@@ -664,20 +664,22 @@ function SettingsModal({
                 >
                   {r.kind === 'lesson' ? `第 ${r.period} 節` : r.label}
                 </span>
-                <Input
-                  type="time"
-                  value={r.start}
-                  onChange={(e) => patchRow(i, { start: e.target.value })}
-                  className="w-28 py-1 text-xs"
-                />
-                <span className="text-slate-300">–</span>
-                <Input
-                  type="time"
-                  value={r.end}
-                  onChange={(e) => patchRow(i, { end: e.target.value })}
-                  className="w-28 py-1 text-xs"
-                />
-                <span className="ml-auto text-[11px] tabular-nums text-slate-400">
+                <div className="flex flex-1 min-w-0 items-center gap-1">
+                  <Input
+                    type="time"
+                    value={r.start}
+                    onChange={(e) => patchRow(i, { start: e.target.value })}
+                    className="w-full min-w-0 py-1 text-xs"
+                  />
+                  <span className="text-slate-300">–</span>
+                  <Input
+                    type="time"
+                    value={r.end}
+                    onChange={(e) => patchRow(i, { end: e.target.value })}
+                    className="w-full min-w-0 py-1 text-xs"
+                  />
+                </div>
+                <span className="ml-auto shrink-0 text-[11px] tabular-nums text-slate-400">
                   {Math.max(0, minutesOf(r.end) - minutesOf(r.start))} 分
                 </span>
               </div>

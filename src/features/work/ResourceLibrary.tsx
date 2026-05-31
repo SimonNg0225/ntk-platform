@@ -807,7 +807,7 @@ function GridView({
             <button
               type="button"
               onClick={() => onDetail(res.id)}
-              className="mt-3 rounded text-left text-sm font-semibold text-slate-800 hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:text-slate-100 dark:hover:text-accent"
+              className="mt-3 w-full break-words rounded text-left text-sm font-semibold text-slate-800 hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:text-slate-100 dark:hover:text-accent"
             >
               {res.title}
             </button>
@@ -829,7 +829,7 @@ function GridView({
             )}
 
             {res.notes && (
-              <p className="mt-2 line-clamp-2 text-xs text-slate-500 dark:text-slate-400">
+              <p className="mt-2 line-clamp-2 break-words text-xs text-slate-500 dark:text-slate-400">
                 {res.notes}
               </p>
             )}

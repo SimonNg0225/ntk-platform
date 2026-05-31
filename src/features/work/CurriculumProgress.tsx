@@ -534,7 +534,7 @@ function TopicRow({
         size="sm"
         onClick={onEditPlan}
         active={!!plan?.targetDate}
-        className="opacity-0 transition group-hover:opacity-100 focus-visible:opacity-100"
+        className="opacity-100 sm:opacity-0 sm:transition sm:group-hover:opacity-100 sm:focus-visible:opacity-100"
       >
         <CalendarClock size={15} />
       </IconButton>
@@ -736,7 +736,7 @@ function ScheduleView({
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <StatCard label="已排期課題" value={scheduledCount} unit={`/ ${topics.length}`} icon={CalendarClock} />
         <StatCard label="計劃總節數" value={totalPeriods} unit="節" icon={Gauge} />
         <StatCard

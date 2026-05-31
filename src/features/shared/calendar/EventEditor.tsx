@@ -298,10 +298,11 @@ export default function EventEditor({
           <Toggle checked={allDay} onChange={setAllDay} label="全日" />
           <div className="mt-3 grid gap-3 sm:grid-cols-2">
             <Field label="開始">
-              <div className="flex gap-2">
+              <div className="flex flex-col gap-2 sm:flex-row">
                 <Input
                   type="date"
                   value={startDate}
+                  className="min-w-0"
                   onChange={(e) => {
                     setStartDate(e.target.value)
                     if (endDate < e.target.value) setEndDate(e.target.value)
@@ -312,17 +313,18 @@ export default function EventEditor({
                     type="time"
                     value={startTime}
                     onChange={(e) => setStartTime(e.target.value)}
-                    className="w-32"
+                    className="w-full min-w-0 sm:w-32"
                   />
                 )}
               </div>
             </Field>
             <Field label="結束">
-              <div className="flex gap-2">
+              <div className="flex flex-col gap-2 sm:flex-row">
                 <Input
                   type="date"
                   value={endDate}
                   min={startDate}
+                  className="min-w-0"
                   onChange={(e) => setEndDate(e.target.value)}
                 />
                 {!allDay && (
@@ -330,7 +332,7 @@ export default function EventEditor({
                     type="time"
                     value={endTime}
                     onChange={(e) => setEndTime(e.target.value)}
-                    className="w-32"
+                    className="w-full min-w-0 sm:w-32"
                   />
                 )}
               </div>

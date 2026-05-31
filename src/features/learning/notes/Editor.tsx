@@ -199,14 +199,19 @@ export default function Editor({
                 aria-label={`色標 ${c.label}`}
                 aria-pressed={on}
                 onClick={() => patch({ color: ck })}
-                className={cx(
-                  'h-4 w-4 rounded-full transition',
-                  c.swatch,
-                  on
-                    ? 'ring-2 ring-slate-400 ring-offset-1 dark:ring-slate-300 dark:ring-offset-slate-800'
-                    : 'hover:scale-110',
-                )}
-              />
+                className="group flex h-8 w-8 items-center justify-center rounded-full"
+              >
+                <span
+                  aria-hidden="true"
+                  className={cx(
+                    'h-4 w-4 rounded-full transition',
+                    c.swatch,
+                    on
+                      ? 'ring-2 ring-slate-400 ring-offset-1 dark:ring-slate-300 dark:ring-offset-slate-800'
+                      : 'group-hover:scale-110',
+                  )}
+                />
+              </button>
             )
           })}
         </div>
@@ -417,7 +422,7 @@ function PreviewBody({
               role="checkbox"
               aria-checked={l.done}
               onClick={() => onToggle(l.lineIndex)}
-              className="flex w-full items-start gap-2 rounded-md px-1 py-0.5 text-left transition hover:bg-slate-100/70 dark:hover:bg-slate-700/40"
+              className="flex w-full min-w-0 items-start gap-2 rounded-md px-1 py-0.5 text-left transition hover:bg-slate-100/70 dark:hover:bg-slate-700/40"
             >
               <span
                 aria-hidden="true"
@@ -432,6 +437,7 @@ function PreviewBody({
               </span>
               <span
                 className={cx(
+                  'min-w-0 break-words',
                   l.done && 'text-slate-400 line-through dark:text-slate-500',
                 )}
               >

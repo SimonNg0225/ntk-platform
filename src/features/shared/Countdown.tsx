@@ -206,7 +206,7 @@ export default function Countdown() {
       </header>
 
       {/* 頂部統計 */}
-      <section className="grid grid-cols-3 gap-3">
+      <section className="grid grid-cols-2 gap-3 sm:grid-cols-3">
         <StatCard label="項目總數" value={upcoming.length} unit="個" icon={ClipboardList} />
         <StatCard
           label="最近一項"

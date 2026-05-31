@@ -343,7 +343,7 @@ export default function BookModal({
                     <button
                       type="button"
                       onClick={() => delSession(s.id)}
-                      className="ml-auto text-slate-300 transition-colors hover:text-rose-500 dark:text-slate-600"
+                      className="-my-1 -mr-1 ml-auto inline-flex shrink-0 items-center justify-center rounded p-1.5 text-slate-300 transition-colors hover:text-rose-500 dark:text-slate-600"
                       aria-label="刪除記錄"
                     >
                       <X size={13} />
@@ -364,7 +364,12 @@ export default function BookModal({
                   className="inline-flex items-center gap-1 rounded-full bg-accent-soft px-2.5 py-1 text-xs font-medium text-accent-strong dark:bg-accent/15 dark:text-accent"
                 >
                   {s}
-                  <button type="button" onClick={() => removeShelf(s)} aria-label={`移除 ${s}`}>
+                  <button
+                    type="button"
+                    onClick={() => removeShelf(s)}
+                    aria-label={`移除 ${s}`}
+                    className="-my-1 -mr-1.5 inline-flex shrink-0 items-center justify-center rounded-full p-1.5 transition-colors hover:text-rose-500"
+                  >
                     <X size={12} />
                   </button>
                 </span>

@@ -70,7 +70,7 @@ export function OptionRow({
       >
         {shortcut ?? String.fromCharCode(65 + index)}
       </span>
-      <span className="flex-1 pt-0.5">{text}</span>
+      <span className="flex-1 pt-0.5 break-words [overflow-wrap:anywhere]">{text}</span>
       {graded && isAnswer && (
         <Check size={16} strokeWidth={2.5} className="mt-1 shrink-0 text-emerald-600 dark:text-emerald-400" />
       )}

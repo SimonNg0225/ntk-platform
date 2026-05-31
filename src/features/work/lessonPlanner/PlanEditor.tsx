@@ -418,9 +418,9 @@ export default function PlanEditor({
                                 updPhase(p.id, { label: e.target.value })
                               }
                               placeholder="環節名稱（如：引入）"
-                              className="flex-1"
+                              className="min-w-0 flex-1"
                             />
-                            <div className="relative w-24 shrink-0">
+                            <div className="relative w-16 shrink-0">
                               <Input
                                 type="number"
                                 min={0}
@@ -434,9 +434,9 @@ export default function PlanEditor({
                                     ),
                                   })
                                 }
-                                className="pr-9 text-right"
+                                className="pr-7 text-right"
                               />
-                              <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-slate-400">
+                              <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-xs text-slate-400">
                                 分
                               </span>
                             </div>

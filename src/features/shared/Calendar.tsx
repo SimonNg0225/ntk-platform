@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { ChevronLeft, ChevronRight, Plus, SlidersHorizontal } from 'lucide-react'
 import { useCollection } from '../../lib/store'
 import { eventsCol, calendarsCol } from '../../data/collections'
@@ -33,10 +33,27 @@ function addMonths(d: Date, n: number): Date {
   return new Date(d.getFullYear(), d.getMonth() + n, d.getDate(), 12)
 }
 
+// 是否 ≥ sm 斷點（640px）。手機週視圖塞唔落 7 欄，改逐日睇。
+function useIsWide(): boolean {
+  const query = '(min-width: 640px)'
+  const [wide, setWide] = useState(
+    () => typeof matchMedia !== 'undefined' && matchMedia(query).matches,
+  )
+  useEffect(() => {
+    if (typeof matchMedia === 'undefined') return
+    const mq = matchMedia(query)
+    const handler = () => setWide(mq.matches)
+    mq.addEventListener('change', handler)
+    return () => mq.removeEventListener('change', handler)
+  }, [])
+  return wide
+}
+
 export default function Calendar() {
   const events = useCollection(eventsCol)
   const cals = useCollection(calendarsCol)
 
+  const isWide = useIsWide()
   const [view, setView] = useState<View>('month')
   const [cursor, setCursor] = useState(() => new Date())
   const cursorKey = toKey(cursor)
@@ -75,15 +92,19 @@ export default function Calendar() {
     if (view === 'month') return monthLabel(cursor.getFullYear(), cursor.getMonth())
     if (view === 'day') return longDateLabel(cursorKey)
     if (view === 'year') return `${cursor.getFullYear()}年`
+    // 週視圖喺手機收成單日，標題跟住顯示嗰一日。
+    if (!isWide) return longDateLabel(cursorKey)
     const wk = weekKeys(cursor)
     const a = fromKey(wk[0])
     const b = fromKey(wk[6])
     return `${a.getMonth() + 1}月${a.getDate()}日 – ${b.getMonth() + 1}月${b.getDate()}日`
-  }, [view, cursor, cursorKey])
+  }, [view, cursor, cursorKey, isWide])
 
   function nav(dir: number) {
+    // 手機週視圖收窄成單日，逐日翻；闊屏先逐週翻。
+    const weekStep = view === 'week' && isWide ? 7 : 1
     if (view === 'month') setCursor((d) => addMonths(d, dir))
-    else if (view === 'week') setCursor((d) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + dir * 7, 12))
+    else if (view === 'week') setCursor((d) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + dir * weekStep, 12))
     else if (view === 'day') setCursor((d) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + dir, 12))
     else setCursor((d) => new Date(d.getFullYear() + dir, d.getMonth(), d.getDate(), 12))
   }
@@ -186,7 +207,7 @@ export default function Calendar() {
 
       {(view === 'week' || view === 'day') && (
         <TimeGridView
-          days={view === 'week' ? weekKeys(cursor) : [cursorKey]}
+          days={view === 'week' && isWide ? weekKeys(cursor) : [cursorKey]}
           occByDate={occByDate}
           onOpenEvent={openEdit}
           onCreateAt={createAt}

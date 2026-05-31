@@ -301,7 +301,7 @@ export default function GoalDetail({
                   </button>
                   <span
                     className={cx(
-                      'min-w-0 flex-1 text-sm',
+                      'min-w-0 flex-1 break-words text-sm',
                       m.done ? 'text-slate-400 line-through' : 'text-slate-700 dark:text-slate-200',
                     )}
                   >
@@ -374,15 +374,14 @@ export default function GoalDetail({
                     {c.progress}%
                   </span>
                   <div className="min-w-0 flex-1">
-                    {c.note && <p className="text-sm text-slate-700 dark:text-slate-200">{c.note}</p>}
+                    {c.note && <p className="whitespace-pre-wrap break-words text-sm text-slate-700 dark:text-slate-200">{c.note}</p>}
                     <p className="text-xs text-slate-400">{relTime(c.createdAt)}</p>
                   </div>
                   <IconButton
                     label="刪除簽到"
                     tone="danger"
-                    size="sm"
                     onClick={() => removeCheckin(c.id)}
-                    className="opacity-0 transition group-hover:opacity-100"
+                    className="min-h-[36px] min-w-[36px] opacity-100 transition focus-within:opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100"
                   >
                     <Trash2 size={14} />
                   </IconButton>

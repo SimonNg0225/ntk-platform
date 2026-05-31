@@ -686,7 +686,7 @@ function BankView(props: {
               <button
                 onClick={() => setExpanded(expanded === q.id ? null : q.id)}
                 aria-expanded={expanded === q.id}
-                className="flex-1 text-left text-sm text-slate-800 dark:text-slate-100"
+                className="flex-1 min-w-0 break-words text-left text-sm text-slate-800 dark:text-slate-100"
               >
                 {q.stem}
               </button>
@@ -726,11 +726,11 @@ function BankView(props: {
                         key={i}
                         className={
                           i === q.answerIndex
-                            ? 'flex items-center gap-1 font-semibold text-emerald-700 dark:text-emerald-400'
-                            : 'text-slate-600 dark:text-slate-300'
+                            ? 'flex min-w-0 items-center gap-1 font-semibold text-emerald-700 dark:text-emerald-400'
+                            : 'min-w-0 text-slate-600 dark:text-slate-300'
                         }
                       >
-                        <span>
+                        <span className="min-w-0 break-words">
                           {String.fromCharCode(65 + i)}. {o}
                         </span>
                         {i === q.answerIndex && (
@@ -741,7 +741,7 @@ function BankView(props: {
                   </ul>
                 )}
                 {q.type !== 'mc' && q.answer && (
-                  <p className="text-slate-600 dark:text-slate-300">
+                  <p className="break-words text-slate-600 dark:text-slate-300">
                     <span className="font-semibold text-slate-700 dark:text-slate-200">
                       參考答案：
                     </span>

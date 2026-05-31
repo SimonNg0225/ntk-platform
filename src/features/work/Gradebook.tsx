@@ -1147,7 +1147,7 @@ function StudentsTab({ classId }: { classId: string }) {
                     <IconButton
                       label="編輯學生"
                       onClick={() => startEdit(s.id, s.name, s.studentNo)}
-                      className="opacity-0 transition group-hover:opacity-100"
+                      className="opacity-100 transition focus-visible:opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
                     >
                       <Pencil size={15} strokeWidth={1.8} />
                     </IconButton>
@@ -1155,7 +1155,7 @@ function StudentsTab({ classId }: { classId: string }) {
                       label="刪除學生"
                       tone="danger"
                       onClick={() => remove(s.id, s.name)}
-                      className="opacity-0 transition group-hover:opacity-100"
+                      className="opacity-100 transition focus-visible:opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
                     >
                       <Trash2 size={16} strokeWidth={1.8} />
                     </IconButton>
@@ -1326,7 +1326,7 @@ function AssessmentsTab({ classId }: { classId: string }) {
                       label="刪除評估"
                       tone="danger"
                       onClick={() => remove(a.id, a.name)}
-                      className="opacity-0 transition group-hover:opacity-100"
+                      className="opacity-100 transition focus-visible:opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
                     >
                       <Trash2 size={16} strokeWidth={1.8} />
                     </IconButton>

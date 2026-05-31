@@ -977,7 +977,7 @@ export default function CardGenerator() {
                               <p className="text-[10px] uppercase tracking-wider text-slate-400">
                                 背面
                               </p>
-                              <p className="mt-1 whitespace-pre-wrap text-sm font-medium text-slate-700 dark:text-slate-200">
+                              <p className="mt-1 whitespace-pre-wrap break-words text-sm font-medium text-slate-700 dark:text-slate-200">
                                 {d.back}
                               </p>
                             </div>

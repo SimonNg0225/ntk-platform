@@ -858,7 +858,7 @@ function RecordsTab({
                       label="刪除記錄"
                       tone="danger"
                       onClick={() => removeOne(t)}
-                      className="opacity-0 transition group-hover:opacity-100"
+                      className="sm:opacity-0 sm:transition sm:group-hover:opacity-100"
                     >
                       <Trash2 size={16} />
                     </IconButton>
@@ -1520,7 +1520,7 @@ function RecurringTab({
                       label="刪除"
                       tone="danger"
                       onClick={() => remove(r)}
-                      className="opacity-0 transition group-hover:opacity-100"
+                      className="sm:opacity-0 sm:transition sm:group-hover:opacity-100"
                     >
                       <Trash2 size={16} />
                     </IconButton>
@@ -1912,7 +1912,7 @@ function CategoryManager({
                       label={`刪除分類 ${c.name}`}
                       tone="danger"
                       onClick={() => remove(c)}
-                      className="opacity-0 transition group-hover:opacity-100"
+                      className="sm:opacity-0 sm:transition sm:group-hover:opacity-100"
                     >
                       <Trash2 size={16} />
                     </IconButton>

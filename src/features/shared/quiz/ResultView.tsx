@@ -224,7 +224,7 @@ export function ResultView({
                     <Badge tone="slate" icon={Flag}>已從題庫移除</Badge>
                   )}
                 </div>
-                <p className="text-sm font-medium text-slate-800 dark:text-slate-100">{it.stem}</p>
+                <p className="text-sm font-medium text-slate-800 dark:text-slate-100 break-words [overflow-wrap:anywhere]">{it.stem}</p>
                 {short ? (
                   <div
                     className={cx(
@@ -235,7 +235,7 @@ export function ResultView({
                     )}
                   >
                     <span className="font-semibold text-slate-600 dark:text-slate-300">參考答案：</span>
-                    <span className="text-slate-700 dark:text-slate-200">
+                    <span className="text-slate-700 dark:text-slate-200 break-words [overflow-wrap:anywhere]">
                       {it.options[0] ?? '（無）'}
                     </span>
                   </div>

@@ -29,62 +29,68 @@ export function TrendChart({ data }: { data: TrendPoint[] }) {
 
   return (
     <div>
-      <div className="relative flex h-32 items-end gap-1">
-        {/* 新增：底層淺長條 */}
-        {data.map((d) => (
-          <div
-            key={d.key}
-            className="group flex flex-1 flex-col items-center justify-end"
-            title={`${d.key}：新增 ${d.created} · 完成 ${d.completed}`}
-          >
-            <div
-              className="w-full rounded-sm bg-slate-100 transition-all dark:bg-slate-800"
-              style={{ height: `${(d.created / max) * 100}%` }}
-            />
-          </div>
-        ))}
-        {/* 完成：折線 overlay */}
-        {data.length > 1 && (
-          <svg
-            viewBox={`0 0 ${w} ${h}`}
-            preserveAspectRatio="none"
-            className="pointer-events-none absolute inset-0 h-full w-full overflow-visible"
-          >
-            <polyline
-              points={pts.join(' ')}
-              fill="none"
-              className="stroke-accent"
-              strokeWidth={2}
-              strokeLinejoin="round"
-              strokeLinecap="round"
-              vectorEffect="non-scaling-stroke"
-            />
-            {data.map((d, i) => {
-              const x = (i / (data.length - 1)) * w
-              const y = h - (d.completed / max) * h
-              return (
-                <circle
-                  key={d.key}
-                  cx={x}
-                  cy={y}
-                  r={2.5}
-                  className="fill-accent"
+      {/* 90 日時固定 gap 會撐爆窄螢幕 → 外層可橫捲；內層 min-w-full 平時填滿卡，
+          bar 最小闊度 min-w-[4px]：bar 多到平均 <4px（如 90 日窄機）就溢出觸發橫捲 */}
+      <div className="overflow-x-auto pb-1">
+        <div className="min-w-full">
+          <div className="relative flex h-32 items-end gap-1">
+            {/* 新增：底層淺長條 */}
+            {data.map((d) => (
+              <div
+                key={d.key}
+                className="group flex min-w-[4px] flex-1 flex-col items-center justify-end"
+                title={`${d.key}：新增 ${d.created} · 完成 ${d.completed}`}
+              >
+                <div
+                  className="w-full rounded-sm bg-slate-100 transition-all dark:bg-slate-800"
+                  style={{ height: `${(d.created / max) * 100}%` }}
+                />
+              </div>
+            ))}
+            {/* 完成：折線 overlay */}
+            {data.length > 1 && (
+              <svg
+                viewBox={`0 0 ${w} ${h}`}
+                preserveAspectRatio="none"
+                className="pointer-events-none absolute inset-0 h-full w-full overflow-visible"
+              >
+                <polyline
+                  points={pts.join(' ')}
+                  fill="none"
+                  className="stroke-accent"
+                  strokeWidth={2}
+                  strokeLinejoin="round"
+                  strokeLinecap="round"
                   vectorEffect="non-scaling-stroke"
                 />
-              )
-            })}
-          </svg>
-        )}
-      </div>
-      <div className="mt-1.5 flex gap-1">
-        {data.map((d, i) => (
-          <span
-            key={d.key}
-            className="flex-1 text-center text-[9px] tabular-nums text-slate-400 dark:text-slate-500"
-          >
-            {i % Math.ceil(data.length / 7) === 0 ? d.label : ''}
-          </span>
-        ))}
+                {data.map((d, i) => {
+                  const x = (i / (data.length - 1)) * w
+                  const y = h - (d.completed / max) * h
+                  return (
+                    <circle
+                      key={d.key}
+                      cx={x}
+                      cy={y}
+                      r={2.5}
+                      className="fill-accent"
+                      vectorEffect="non-scaling-stroke"
+                    />
+                  )
+                })}
+              </svg>
+            )}
+          </div>
+          <div className="mt-1.5 flex gap-1">
+            {data.map((d, i) => (
+              <span
+                key={d.key}
+                className="min-w-[4px] flex-1 text-center text-[9px] tabular-nums text-slate-400 dark:text-slate-500"
+              >
+                {i % Math.ceil(data.length / 7) === 0 ? d.label : ''}
+              </span>
+            ))}
+          </div>
+        </div>
       </div>
       <Legend
         items={[

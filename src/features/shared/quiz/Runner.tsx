@@ -438,7 +438,7 @@ export function QuizRunner({
           </div>
         </div>
 
-        <p className="text-base font-medium leading-relaxed text-slate-800 dark:text-slate-100">
+        <p className="text-base font-medium leading-relaxed text-slate-800 dark:text-slate-100 break-words [overflow-wrap:anywhere]">
           {current.stem}
         </p>
 
@@ -489,7 +489,7 @@ export function QuizRunner({
                   {shortCorrect ? <Check size={15} /> : null}
                   {shortCorrect ? '答啱（自動比對）' : '參考答案'}
                 </p>
-                <p className="mt-1 text-slate-700 dark:text-slate-200">{current.explanation}</p>
+                <p className="mt-1 text-slate-700 dark:text-slate-200 break-words [overflow-wrap:anywhere]">{current.explanation}</p>
                 {!shortCorrect && (
                   <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                     你答：{shortVal.trim() || '（空白）'}
@@ -502,7 +502,7 @@ export function QuizRunner({
 
         {/* instant：批改後解釋（MC，如有） */}
         {graded && isMc && current.explanation && (
-          <div className="border-t border-slate-100 pt-3 text-sm text-slate-600 dark:border-slate-700 dark:text-slate-300">
+          <div className="border-t border-slate-100 pt-3 text-sm text-slate-600 dark:border-slate-700 dark:text-slate-300 break-words [overflow-wrap:anywhere]">
             <span className="font-semibold text-slate-700 dark:text-slate-200">解釋：</span>
             {current.explanation}
           </div>

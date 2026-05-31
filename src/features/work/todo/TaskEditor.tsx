@@ -292,7 +292,7 @@ export function TaskEditor({
                     size="sm"
                     tone="danger"
                     onClick={() => removeSub(s)}
-                    className="opacity-0 group-hover:opacity-100"
+                    className="opacity-100 transition sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100"
                   >
                     <Trash2 size={13} />
                   </IconButton>

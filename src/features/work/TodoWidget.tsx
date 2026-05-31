@@ -759,7 +759,7 @@ function TaskRow({
       </button>
 
       {!selecting && (
-        <div className="flex shrink-0 items-center gap-0.5 opacity-0 transition group-hover:opacity-100">
+        <div className="flex shrink-0 items-center gap-0.5 opacity-100 transition sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100">
           <IconButton label="編輯" size="sm" onClick={() => onOpen(task.id)}>
             <Pencil size={14} />
           </IconButton>

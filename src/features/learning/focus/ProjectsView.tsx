@@ -179,19 +179,19 @@ function ProjectCard({
             <span className="tabular-nums">{stat?.sessions ?? 0} 節</span>
           </div>
         </div>
-        <div className="flex shrink-0 items-center gap-0.5 opacity-0 transition group-hover:opacity-100">
+        <div className="flex shrink-0 items-center gap-0.5 transition focus-within:opacity-100 sm:opacity-0 sm:group-hover:opacity-100">
           <Tooltip label="編輯">
-            <IconButton label="編輯" size="sm" onClick={onEdit}>
+            <IconButton label="編輯" size="md" className="p-2" onClick={onEdit}>
               <Pencil size={14} />
             </IconButton>
           </Tooltip>
           <Tooltip label={project.archived ? '復原' : '封存'}>
-            <IconButton label={project.archived ? '復原' : '封存'} size="sm" onClick={onArchive}>
+            <IconButton label={project.archived ? '復原' : '封存'} size="md" className="p-2" onClick={onArchive}>
               {project.archived ? <ArchiveRestore size={14} /> : <Archive size={14} />}
             </IconButton>
           </Tooltip>
           <Tooltip label="刪除">
-            <IconButton label="刪除" size="sm" tone="danger" onClick={onDelete}>
+            <IconButton label="刪除" size="md" className="p-2" tone="danger" onClick={onDelete}>
               <Trash2 size={14} />
             </IconButton>
           </Tooltip>

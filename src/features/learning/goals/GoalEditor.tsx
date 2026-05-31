@@ -307,9 +307,8 @@ export default function GoalEditor({
                   <IconButton
                     label="刪除里程碑"
                     tone="danger"
-                    size="sm"
                     onClick={() => removeMs(m.id)}
-                    className="opacity-0 transition group-hover:opacity-100"
+                    className="min-h-[36px] min-w-[36px] opacity-100 transition focus-within:opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100"
                   >
                     <Trash2 size={14} />
                   </IconButton>

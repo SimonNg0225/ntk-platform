@@ -663,7 +663,7 @@ function EntryCard({
             </p>
           </div>
         </div>
-        <div className="flex shrink-0 items-center gap-0.5 opacity-0 transition group-hover:opacity-100">
+        <div className="flex shrink-0 items-center gap-0.5 opacity-100 transition [&_button]:p-2 sm:opacity-0 sm:[&_button]:p-1 sm:group-hover:opacity-100 group-focus-within:opacity-100">
           <Tooltip label={doc.favorite ? '取消精選' : '設為精選'}>
             <IconButton label="精選" size="sm" active={doc.favorite} onClick={onToggleFav}>
               <Star size={14} className={doc.favorite ? 'fill-amber-400 text-amber-400' : ''} />

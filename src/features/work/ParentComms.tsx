@@ -1072,21 +1072,21 @@ function TimelineCard({
           )}
         </div>
         <div className="flex shrink-0 flex-col items-end gap-1">
-          <div className="flex gap-0.5">
+          <div className="flex gap-1.5">
             <Tooltip label={comm.followUp ? '標記為已完成' : '重新標記待跟進'}>
               <IconButton
                 label="切換跟進狀態"
-                size="sm"
+                className="min-h-[36px] min-w-[36px]"
                 active={comm.followUp}
                 onClick={onToggle}
               >
                 {comm.followUp ? <Check size={15} /> : <Hourglass size={15} />}
               </IconButton>
             </Tooltip>
-            <IconButton label="編輯記錄" size="sm" onClick={onEdit}>
+            <IconButton label="編輯記錄" className="min-h-[36px] min-w-[36px]" onClick={onEdit}>
               <Pencil size={15} />
             </IconButton>
-            <IconButton label="刪除記錄" size="sm" tone="danger" onClick={onRemove}>
+            <IconButton label="刪除記錄" className="min-h-[36px] min-w-[36px]" tone="danger" onClick={onRemove}>
               <Trash2 size={15} />
             </IconButton>
           </div>

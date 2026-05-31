@@ -868,7 +868,12 @@ function AgendaWidget({
               </button>
               {/* 右側：類別 / 課室 / 完成掣 */}
               {it.kind === 'task' && it.taskId ? (
-                <IconButton label="完成待辦" size="sm" onClick={() => completeTask(it.taskId!)}>
+                <IconButton
+                  label="完成待辦"
+                  size="sm"
+                  className="min-h-[40px] min-w-[40px]"
+                  onClick={() => completeTask(it.taskId!)}
+                >
                   <Check size={16} />
                 </IconButton>
               ) : it.badge && it.badge !== '全日' ? (

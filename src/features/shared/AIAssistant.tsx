@@ -172,7 +172,10 @@ export default function AIAssistant() {
   const [input, setInput] = useState('')
   const [streaming, setStreaming] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
-  const [sidebarOpen, setSidebarOpen] = useState(true)
+  // 手機（<sm）預設收埋側欄（避免抽屜開頁即遮住內容）；sm 以上維持展開
+  const [sidebarOpen, setSidebarOpen] = useState(
+    () => typeof window === 'undefined' || window.innerWidth >= 640,
+  )
   const [showArchived, setShowArchived] = useState(false)
   const [search, setSearch] = useState('')
 
@@ -450,12 +453,18 @@ export default function AIAssistant() {
     [currentThreadId],
   )
 
+  // 手機（<sm）揀完／開新對話後收埋抽屜，避免遮住對話內容
+  function closeSidebarOnMobile() {
+    if (typeof window !== 'undefined' && window.innerWidth < 640) setSidebarOpen(false)
+  }
+
   // ── thread 操作 ──
   function newConversation() {
     abortRef.current?.abort()
     setCurrentThreadId(null)
     setStreaming(null)
     setInput('')
+    closeSidebarOnMobile()
     setTimeout(() => inputRef.current?.focus(), 0)
   }
 
@@ -463,6 +472,7 @@ export default function AIAssistant() {
     abortRef.current?.abort()
     setStreaming(null)
     setCurrentThreadId(id)
+    closeSidebarOnMobile()
   }
 
   async function deleteThread(id: string) {
@@ -589,10 +599,24 @@ export default function AIAssistant() {
 
   return (
     <div className="flex h-[78vh] gap-3">
-      {/* ───────── 側欄：對話清單 ───────── */}
+      {/* ───────── 側欄：對話清單（手機=抽屜 overlay；sm+=inline）───────── */}
       {sidebarOpen && (
-        <aside className="hidden w-64 shrink-0 flex-col rounded-2xl border border-slate-200/80 bg-white dark:border-slate-700/70 dark:bg-slate-800/60 sm:flex">
+        <button
+          type="button"
+          aria-label="關閉側欄"
+          onClick={() => setSidebarOpen(false)}
+          className="fixed inset-0 z-30 animate-fade-in bg-slate-900/40 backdrop-blur-sm sm:hidden"
+        />
+      )}
+      {sidebarOpen && (
+        <aside className="fixed inset-y-0 left-0 z-40 flex w-64 max-w-[82vw] shrink-0 flex-col border-r border-slate-200/80 bg-white shadow-overlay dark:border-slate-700/70 dark:bg-slate-800 sm:static sm:z-auto sm:max-w-none sm:rounded-2xl sm:border sm:shadow-none sm:dark:bg-slate-800/60">
           <div className="space-y-2 border-b border-slate-200/70 p-2.5 dark:border-slate-700/60">
+            <div className="flex items-center justify-between sm:hidden">
+              <span className="px-0.5 text-xs font-semibold text-slate-500 dark:text-slate-400">對話</span>
+              <IconButton label="關閉側欄" size="sm" onClick={() => setSidebarOpen(false)}>
+                <X size={16} />
+              </IconButton>
+            </div>
             <Button fullWidth size="sm" icon={MessageSquarePlus} onClick={newConversation}>
               新對話
             </Button>
@@ -1176,7 +1200,7 @@ function MessageBubble({
           className={
             isUser
               ? 'max-w-full whitespace-pre-wrap break-words rounded-2xl rounded-br-md bg-accent px-4 py-2.5 text-sm text-white'
-              : 'min-w-0 max-w-full rounded-2xl rounded-bl-md border border-slate-200 bg-white px-4 py-2.5 text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100'
+              : 'min-w-0 max-w-full overflow-hidden break-words rounded-2xl rounded-bl-md border border-slate-200 bg-white px-4 py-2.5 text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100'
           }
         >
           {isUser ? (

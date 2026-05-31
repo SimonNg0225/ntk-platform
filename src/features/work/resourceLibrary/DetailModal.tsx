@@ -199,7 +199,7 @@ export function DetailModal({
         <div className="flex items-start gap-3">
           <TypeIconBox type={res.type} />
           <div className="min-w-0 flex-1">
-            <p className="text-base font-semibold text-slate-800 dark:text-slate-100">
+            <p className="break-words text-base font-semibold text-slate-800 dark:text-slate-100">
               {res.title}
             </p>
             <div className="mt-1 flex flex-wrap items-center gap-2">
@@ -265,7 +265,7 @@ export function DetailModal({
 
         {/* 備註 */}
         {res.notes && (
-          <p className="whitespace-pre-wrap rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-600 dark:bg-slate-800/50 dark:text-slate-300">
+          <p className="whitespace-pre-wrap break-words rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-600 dark:bg-slate-800/50 dark:text-slate-300">
             {res.notes}
           </p>
         )}

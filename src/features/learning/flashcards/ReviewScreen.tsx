@@ -371,7 +371,7 @@ export default function ReviewScreen({
           <p className="text-[11px] uppercase tracking-wider text-slate-500 dark:text-slate-400">
             問題
           </p>
-          <p className="text-xl font-medium text-slate-800 dark:text-slate-100">
+          <p className="max-w-full break-words text-xl font-medium text-slate-800 dark:text-slate-100">
             {card.front}
           </p>
 
@@ -381,7 +381,7 @@ export default function ReviewScreen({
               <p className="text-[11px] uppercase tracking-wider text-slate-500 dark:text-slate-400">
                 答案
               </p>
-              <p className="text-lg text-slate-700 dark:text-slate-200">{card.back}</p>
+              <p className="max-w-full break-words text-lg text-slate-700 dark:text-slate-200">{card.back}</p>
               {meta?.note && (
                 <p className="mt-1 text-xs italic text-slate-400 dark:text-slate-500">
                   💡 {meta.note}
