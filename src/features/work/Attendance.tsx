@@ -4,6 +4,13 @@ import { attendanceCol, classesCol, studentsCol } from '../../data/collections'
 import type { AttendanceRecord, AttendanceStatus } from '../../data/types'
 import { Button, Card, EmptyState, Pills, SectionTitle, StatCard } from '../../ui'
 import { useToast } from '../../context/ToastContext'
+import {
+  AlarmClock,
+  Ban,
+  CheckSquare,
+  GraduationCap,
+  School,
+} from 'lucide-react'
 
 const STATUS_OPTIONS: { value: AttendanceStatus; label: string }[] = [
   { value: 'present', label: '出席' },
@@ -110,11 +117,11 @@ export default function Attendance() {
     if (status === 'late') {
       return active
         ? `${base} bg-amber-500 text-white hover:bg-amber-600 focus-visible:ring-amber-500/40`
-        : `${base} bg-amber-50 text-amber-700 hover:bg-amber-500 hover:text-white focus-visible:ring-amber-500/40`
+        : `${base} bg-amber-50 text-amber-700 hover:bg-amber-500 hover:text-white focus-visible:ring-amber-500/40 dark:bg-amber-500/10 dark:text-amber-300 dark:hover:bg-amber-500 dark:hover:text-white`
     }
     return active
       ? `${base} bg-rose-500 text-white hover:bg-rose-600 focus-visible:ring-rose-500/40`
-      : `${base} bg-rose-50 text-rose-700 hover:bg-rose-500 hover:text-white focus-visible:ring-rose-500/40`
+      : `${base} bg-rose-50 text-rose-700 hover:bg-rose-500 hover:text-white focus-visible:ring-rose-500/40 dark:bg-rose-500/10 dark:text-rose-300 dark:hover:bg-rose-500 dark:hover:text-white`
   }
 
   const pillOptions = classes.map((c) => ({
@@ -135,7 +142,7 @@ export default function Attendance() {
 
       {classes.length === 0 ? (
         <EmptyState
-          icon="🏫"
+          icon={School}
           title="未有班別"
           hint="請先去「班別管理」新增班別，先可以點名。"
         />
@@ -173,11 +180,11 @@ export default function Attendance() {
                 label="出席"
                 value={stats.present}
                 unit="人"
-                icon="✅"
+                icon={CheckSquare}
                 highlight
               />
-              <StatCard label="遲到" value={stats.late} unit="人" icon="⏰" />
-              <StatCard label="缺席" value={stats.absent} unit="人" icon="🚫" />
+              <StatCard label="遲到" value={stats.late} unit="人" icon={AlarmClock} />
+              <StatCard label="缺席" value={stats.absent} unit="人" icon={Ban} />
             </section>
           )}
 
@@ -197,7 +204,7 @@ export default function Attendance() {
 
             {classStudents.length === 0 ? (
               <EmptyState
-                icon="🧑‍🎓"
+                icon={GraduationCap}
                 title="此班別未有學生"
                 hint="請去「班別管理 / 成績管理」加入學生。"
               />

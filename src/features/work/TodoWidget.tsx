@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { NotebookPen, CheckSquare, StickyNote, Plus, Trash2 } from 'lucide-react'
 import { useCollection } from '../../lib/store'
 import { tasksCol } from '../../data/collections'
 import {
@@ -57,8 +58,8 @@ export default function TodoWidget() {
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-3">
-        <StatCard label="待辦" value={remaining} unit="項" icon="📝" highlight />
-        <StatCard label="已完成" value={completed} unit="項" icon="✅" />
+        <StatCard label="待辦" value={remaining} unit="項" icon={NotebookPen} highlight />
+        <StatCard label="已完成" value={completed} unit="項" icon={CheckSquare} />
       </div>
 
       <div className="flex gap-2">
@@ -69,7 +70,7 @@ export default function TodoWidget() {
           placeholder="新增一項待辦（批改 / 備課 / 行政…）"
           className="flex-1"
         />
-        <Button onClick={add}>加入</Button>
+        <Button onClick={add} icon={Plus}>加入</Button>
       </div>
 
       <Pills<Filter>
@@ -84,7 +85,7 @@ export default function TodoWidget() {
 
       {visible.length === 0 ? (
         <EmptyState
-          icon="🗒️"
+          icon={StickyNote}
           title={
             filter === 'done'
               ? '仲未有完成嘅項目'
@@ -121,14 +122,7 @@ export default function TodoWidget() {
                 onClick={() => remove(t.id, t.text)}
                 className="opacity-0 transition group-hover:opacity-100 hover:text-rose-500"
               >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                  <path
-                    d="M6 6l12 12M18 6L6 18"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                  />
-                </svg>
+                <Trash2 size={16} strokeWidth={2} />
               </IconButton>
             </div>
           ))}

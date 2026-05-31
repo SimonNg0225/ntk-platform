@@ -13,6 +13,7 @@ import {
 } from '../../data/collections'
 import { useNav } from '../../context/NavContext'
 import { Input, Card, Badge, SectionTitle, EmptyState } from '../../ui'
+import { Search, HelpCircle } from 'lucide-react'
 import type {
   Note,
   Question,
@@ -180,6 +181,7 @@ export default function GlobalSearch() {
           id="global-search"
           autoFocus
           type="search"
+          icon={Search}
           value={keyword}
           onChange={(e) => setKeyword(e.target.value)}
           placeholder="搜尋筆記、題庫、資源、班別、學生…"
@@ -188,7 +190,7 @@ export default function GlobalSearch() {
         {trimmed && (
           <p className="mt-3 flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
             共
-            <Badge tone="accent">{totalHits}</Badge>
+            <Badge tone="accent" className="tabular-nums">{totalHits}</Badge>
             項命中
           </p>
         )}
@@ -198,7 +200,7 @@ export default function GlobalSearch() {
       {!trimmed && (
         <div className="mt-4">
           <EmptyState
-            icon="🔍"
+            icon={Search}
             title="輸入關鍵字即時開始搜尋"
             hint="一次過喺所有筆記、題庫、資源、教案、班別、學生入面搵嘢。"
           />
@@ -209,7 +211,7 @@ export default function GlobalSearch() {
       {trimmed && totalHits === 0 && (
         <div className="mt-4">
           <EmptyState
-            icon="🤔"
+            icon={HelpCircle}
             title={`搵唔到「${trimmed}」嘅結果`}
             hint="試下換個關鍵字，或者檢查有冇打錯字。"
           />
@@ -221,7 +223,13 @@ export default function GlobalSearch() {
         <div className="mt-4 space-y-4">
           {visibleGroups.map((group) => (
             <Card key={group.featureId} className="p-4 sm:p-5">
-              <SectionTitle right={<Badge tone="accent">{group.hits.length}</Badge>}>
+              <SectionTitle
+                right={
+                  <Badge tone="accent" className="tabular-nums">
+                    {group.hits.length}
+                  </Badge>
+                }
+              >
                 {group.label}
               </SectionTitle>
 
@@ -239,7 +247,11 @@ export default function GlobalSearch() {
                 ))}
                 {group.hits.length > MAX_PER_GROUP && (
                   <li className="px-1 text-xs text-slate-400 dark:text-slate-500">
-                    仲有 {group.hits.length - MAX_PER_GROUP} 項，撳上面任何一條去
+                    仲有{' '}
+                    <span className="tabular-nums">
+                      {group.hits.length - MAX_PER_GROUP}
+                    </span>{' '}
+                    項，撳上面任何一條去
                     {group.label}查看。
                   </li>
                 )}

@@ -22,6 +22,18 @@ import {
   StatCard,
   Tabs,
 } from '../../ui'
+import {
+  BarChart3,
+  Download,
+  FolderOpen,
+  GraduationCap,
+  NotebookPen,
+  School,
+  Target,
+  TrendingDown,
+  Trash2,
+  Trophy,
+} from 'lucide-react'
 
 type Tab = 'grid' | 'students' | 'assessments' | 'analysis'
 
@@ -64,7 +76,7 @@ export default function Gradebook() {
   if (classes.length === 0) {
     return (
       <EmptyState
-        icon="🏫"
+        icon={School}
         title="仲未有班別"
         hint="請先去「班別管理」新增班別，先可以記錄成績。"
       />
@@ -182,7 +194,7 @@ function ScoreGrid({
   if (students.length === 0 || assessments.length === 0) {
     return (
       <EmptyState
-        icon="📝"
+        icon={NotebookPen}
         title="未夠資料填成績"
         hint="請先喺「學生」同「評估」分頁加入資料，先可以填成績。"
       />
@@ -192,8 +204,8 @@ function ScoreGrid({
   return (
     <div className="space-y-3">
       <div className="flex justify-end">
-        <Button variant="secondary" size="sm" onClick={exportCsv}>
-          ⬇ 匯出 CSV
+        <Button variant="secondary" size="sm" icon={Download} onClick={exportCsv}>
+          匯出 CSV
         </Button>
       </div>
       <div className="overflow-x-auto rounded-2xl border border-slate-200 dark:border-slate-700">
@@ -246,7 +258,7 @@ function ScoreGrid({
                         onChange={(e) =>
                           setScore(a.id, s.id, e.target.value, a.maxScore)
                         }
-                        className={`w-14 rounded-lg border px-1.5 py-1 text-center font-medium outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/25 ${
+                        className={`w-14 rounded-lg border px-1.5 py-1 text-center font-medium tabular-nums outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/25 ${
                           low
                             ? 'border-rose-300 bg-rose-50 text-rose-600 dark:border-rose-800 dark:bg-rose-950/40 dark:text-rose-300'
                             : 'border-slate-200 text-slate-800 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100'
@@ -261,7 +273,7 @@ function ScoreGrid({
                   ) : (
                     <div className="flex items-center justify-center gap-1.5">
                       <span
-                        className={`font-semibold ${
+                        className={`font-semibold tabular-nums ${
                           avg < 50
                             ? 'text-rose-600 dark:text-rose-400'
                             : 'text-accent'
@@ -289,7 +301,7 @@ function ScoreGrid({
               return (
                 <td
                   key={a.id}
-                  className={`px-3 py-2 text-center text-xs font-semibold ${
+                  className={`px-3 py-2 text-center text-xs font-semibold tabular-nums ${
                     av == null
                       ? 'text-slate-300'
                       : av < 50
@@ -359,7 +371,7 @@ function StudentsTab({ classId }: { classId: string }) {
         <Button onClick={add}>加入</Button>
       </div>
       {students.length === 0 ? (
-        <EmptyState icon="🧑‍🎓" title="仲未有學生" hint="喺上面輸入姓名加入第一位學生。" />
+        <EmptyState icon={GraduationCap} title="仲未有學生" hint="喺上面輸入姓名加入第一位學生。" />
       ) : (
         <Card>
           <ul className="divide-y divide-slate-100 dark:divide-slate-700">
@@ -376,15 +388,7 @@ function StudentsTab({ classId }: { classId: string }) {
                   onClick={() => remove(s.id, s.name)}
                   className="opacity-0 transition group-hover:opacity-100 hover:text-rose-500"
                 >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                    <path
-                      d="M6 7h12M9 7V5h6v2m-7 0 1 12h6l1-12"
-                      stroke="currentColor"
-                      strokeWidth="1.8"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
+                  <Trash2 size={16} strokeWidth={1.8} />
                 </IconButton>
               </li>
             ))}
@@ -486,7 +490,7 @@ function AssessmentsTab({ classId }: { classId: string }) {
       </Card>
       {assessments.length === 0 ? (
         <EmptyState
-          icon="🗂️"
+          icon={FolderOpen}
           title="仲未有評估"
           hint="喺上面新增測驗、考試或功課，先可以入分。"
         />
@@ -512,15 +516,7 @@ function AssessmentsTab({ classId }: { classId: string }) {
                     onClick={() => remove(a.id, a.name)}
                     className="opacity-0 transition group-hover:opacity-100 hover:text-rose-500"
                   >
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                      <path
-                        d="M6 7h12M9 7V5h6v2m-7 0 1 12h6l1-12"
-                        stroke="currentColor"
-                        strokeWidth="1.8"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
+                    <Trash2 size={16} strokeWidth={1.8} />
                   </IconButton>
                 </li>
               )
@@ -611,7 +607,7 @@ function AnalysisTab({ classId }: { classId: string }) {
   if (students.length === 0 || assessments.length === 0) {
     return (
       <EmptyState
-        icon="📊"
+        icon={BarChart3}
         title="未夠資料分析"
         hint="加入學生同評估、入埋分數後，呢度會自動整理班級表現。"
       />
@@ -625,26 +621,26 @@ function AnalysisTab({ classId }: { classId: string }) {
           label="班級平均"
           value={stats.classAvg == null ? '—' : stats.classAvg}
           unit={stats.classAvg == null ? undefined : '%'}
-          icon="🎯"
+          icon={Target}
           highlight
         />
         <StatCard
           label="最高分學生"
           value={stats.top ? stats.top.name : '—'}
           unit={stats.top ? `${stats.top.avg}%` : undefined}
-          icon="🏆"
+          icon={Trophy}
         />
         <StatCard
           label="最低分學生"
           value={stats.bottom ? stats.bottom.name : '—'}
           unit={stats.bottom ? `${stats.bottom.avg}%` : undefined}
-          icon="📉"
+          icon={TrendingDown}
         />
         <StatCard
           label="已評估數"
           value={stats.gradedCount}
           unit={`/ ${assessments.length}`}
-          icon="🗂️"
+          icon={FolderOpen}
         />
       </div>
 
@@ -667,7 +663,7 @@ function AnalysisTab({ classId }: { classId: string }) {
                       {t.topic}
                     </span>
                     <span className="flex items-center gap-1.5">
-                      <span className="font-semibold text-slate-700 dark:text-slate-200">
+                      <span className="font-semibold tabular-nums text-slate-700 dark:text-slate-200">
                         {t.avg}%
                       </span>
                       <Badge tone={gradeOf(t.avg).tone}>
@@ -697,7 +693,7 @@ function AnalysisTab({ classId }: { classId: string }) {
         ) : (
           <div className="flex flex-wrap gap-2">
             {stats.weakStudents.map((s) => (
-              <Badge key={s.name} tone="rose">
+              <Badge key={s.name} tone="rose" className="tabular-nums">
                 {s.name} · {s.avg}%
               </Badge>
             ))}

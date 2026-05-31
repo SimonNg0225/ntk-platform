@@ -26,6 +26,12 @@ import type {
   ParentComm,
   MeetingNote,
   InboxItem,
+  Countdown,
+  AiThread,
+  AiMessage,
+  Transaction,
+  TxCategory,
+  QuizAttempt,
 } from './types'
 
 // ============================================================
@@ -87,12 +93,58 @@ export const attendanceCol = createCollection<AttendanceRecord>('attendance', []
 export const parentCommsCol = createCollection<ParentComm>('parent_comms', [])
 export const meetingNotesCol = createCollection<MeetingNote>('meeting_notes', [])
 export const inboxCol = createCollection<InboxItem>('inbox', [])
+export const countdownsCol = createCollection<Countdown>('countdowns', [
+  {
+    id: 'cd-seed-1',
+    title: 'BAFS 模擬試',
+    date: new Date(Date.now() + 7 * 864e5).toISOString().slice(0, 10),
+    category: 'exam',
+    mode: 'both',
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: 'cd-seed-2',
+    title: '提交專題報告',
+    date: new Date(Date.now() + 21 * 864e5).toISOString().slice(0, 10),
+    category: 'deadline',
+    mode: 'both',
+    createdAt: new Date().toISOString(),
+  },
+])
+
+// AI 對話歷史（兩個模式共用，按 mode 區分）
+export const aiThreadsCol = createCollection<AiThread>('ai_threads', [])
+export const aiMessagesCol = createCollection<AiMessage>('ai_messages', [])
+
+// 收支記帳（個人理財）預設分類
+const DEFAULT_CATEGORIES: TxCategory[] = [
+  { id: 'cat-salary', name: '薪金', kind: 'income', icon: '💼', createdAt: new Date().toISOString() },
+  { id: 'cat-other-income', name: '其他收入', kind: 'income', icon: '➕', createdAt: new Date().toISOString() },
+  { id: 'cat-food', name: '飲食', kind: 'expense', icon: '🍜', createdAt: new Date().toISOString() },
+  { id: 'cat-transport', name: '交通', kind: 'expense', icon: '🚇', createdAt: new Date().toISOString() },
+  { id: 'cat-shopping', name: '購物', kind: 'expense', icon: '🛍️', createdAt: new Date().toISOString() },
+  { id: 'cat-bills', name: '帳單／水電', kind: 'expense', icon: '🧾', createdAt: new Date().toISOString() },
+  { id: 'cat-entertainment', name: '娛樂', kind: 'expense', icon: '🎮', createdAt: new Date().toISOString() },
+  { id: 'cat-other-expense', name: '其他支出', kind: 'expense', icon: '📦', createdAt: new Date().toISOString() },
+]
+
+export const txCategoriesCol = createCollection<TxCategory>('tx_categories', DEFAULT_CATEGORIES)
+export const transactionsCol = createCollection<Transaction>('transactions', [])
+
+// 自我測驗紀錄（learning + work 共用）
+export const quizAttemptsCol = createCollection<QuizAttempt>('quiz_attempts', [])
 
 // ============================================================
 //  全部集合登記表（用嚟匯出 / 匯入 / 清除資料）
 //  key 對應 localStorage 名稱（唔含 ntk. 前綴）
 // ============================================================
-export const ALL_COLLECTIONS: { key: string; col: { get: () => unknown[]; set: (v: never[]) => void } }[] = [
+export interface SyncableCollection {
+  get: () => unknown[]
+  set: (v: never[]) => void
+  subscribe: (listener: () => void) => () => void
+}
+
+export const ALL_COLLECTIONS: { key: string; col: SyncableCollection }[] = [
   { key: 'topics', col: topicsCol },
   { key: 'classes', col: classesCol },
   { key: 'students', col: studentsCol },
@@ -118,6 +170,12 @@ export const ALL_COLLECTIONS: { key: string; col: { get: () => unknown[]; set: (
   { key: 'parent_comms', col: parentCommsCol },
   { key: 'meeting_notes', col: meetingNotesCol },
   { key: 'inbox', col: inboxCol },
+  { key: 'countdowns', col: countdownsCol },
+  { key: 'ai_threads', col: aiThreadsCol },
+  { key: 'ai_messages', col: aiMessagesCol },
+  { key: 'tx_categories', col: txCategoriesCol },
+  { key: 'transactions', col: transactionsCol },
+  { key: 'quiz_attempts', col: quizAttemptsCol },
 ]
 
 // 匯出全部資料做一個 JSON 物件

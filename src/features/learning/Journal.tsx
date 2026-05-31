@@ -1,7 +1,17 @@
 import { useState } from 'react'
+import { BookText, Calendar, Check, NotebookPen, Trash2 } from 'lucide-react'
 import { useCollection } from '../../lib/store'
 import { journalCol } from '../../data/collections'
-import { Textarea, Button, Card, Badge, SectionTitle, EmptyState } from '../../ui'
+import {
+  Textarea,
+  Button,
+  Card,
+  Badge,
+  SectionTitle,
+  EmptyState,
+  IconButton,
+  Tooltip,
+} from '../../ui'
 import { useToast } from '../../context/ToastContext'
 import { useConfirm } from '../../context/ConfirmContext'
 
@@ -56,8 +66,9 @@ export default function Journal() {
       {/* 今日 */}
       <div className="space-y-3 rounded-2xl border border-accent/30 bg-accent-soft/40 p-4">
         <div className="flex items-center justify-between">
-          <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
-            今日反思 · {today}
+          <p className="flex items-center gap-1.5 text-sm font-semibold text-slate-700 dark:text-slate-200">
+            <NotebookPen size={15} className="text-accent" />
+            今日反思 · <span className="tabular-nums">{today}</span>
           </p>
           <div className="flex gap-1">
             {MOODS.map((m) => (
@@ -78,8 +89,12 @@ export default function Journal() {
           rows={5}
           placeholder="寫低今日嘅學習反思…"
         />
-        <Button onClick={save} className="w-full">
-          {saved ? '已儲存 ✓' : todayEntry ? '更新今日日誌' : '儲存今日日誌'}
+        <Button
+          onClick={save}
+          fullWidth
+          icon={saved ? Check : undefined}
+        >
+          {saved ? '已儲存' : todayEntry ? '更新今日日誌' : '儲存今日日誌'}
         </Button>
       </div>
 
@@ -93,14 +108,23 @@ export default function Journal() {
                 <div className="flex items-center justify-between">
                   <span className="flex items-center gap-2 text-xs font-medium text-slate-500 dark:text-slate-400">
                     {e.mood && <Badge tone="accent">{e.mood}</Badge>}
-                    {e.date}
+                    <span className="inline-flex items-center gap-1">
+                      <Calendar size={12} className="text-slate-400 dark:text-slate-500" />
+                      <span className="tabular-nums">{e.date}</span>
+                    </span>
                   </span>
-                  <button
-                    onClick={() => removeEntry(e.id, e.date)}
-                    className="text-xs text-slate-300 opacity-0 transition group-hover:opacity-100 hover:text-rose-500"
-                  >
-                    刪除
-                  </button>
+                  <span className="opacity-0 transition group-hover:opacity-100">
+                    <Tooltip label="刪除">
+                      <IconButton
+                        label="刪除日誌"
+                        tone="danger"
+                        size="sm"
+                        onClick={() => removeEntry(e.id, e.date)}
+                      >
+                        <Trash2 size={14} />
+                      </IconButton>
+                    </Tooltip>
+                  </span>
                 </div>
                 <p className="mt-1.5 whitespace-pre-wrap text-sm text-slate-700 dark:text-slate-200">
                   {e.content}
@@ -111,7 +135,7 @@ export default function Journal() {
         </div>
       ) : (
         <EmptyState
-          icon="📔"
+          icon={BookText}
           title="仲未有過往日誌"
           hint="每日寫低一啲反思，慢慢就會儲落一本屬於你嘅學習日記。"
         />

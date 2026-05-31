@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { Calendar, Plus } from 'lucide-react'
 import { useCollection } from '../../lib/store'
 import { timetableCol, classesCol } from '../../data/collections'
 import type { TimetableSlot } from '../../data/types'
@@ -131,7 +132,7 @@ export default function Timetable() {
       </header>
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-        <StatCard label="每週總堂數" value={slots.length} unit="節" icon="📅" />
+        <StatCard label="每週總堂數" value={slots.length} unit="節" icon={Calendar} />
       </div>
 
       <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800">
@@ -164,7 +165,7 @@ export default function Timetable() {
           <tbody>
             {PERIODS.map((period) => (
               <tr key={period}>
-                <th className="border-b border-slate-200 bg-slate-50 p-3 text-left font-medium text-slate-500 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-400">
+                <th className="border-b border-slate-200 bg-slate-50 p-3 text-left font-medium tabular-nums text-slate-500 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-400">
                   第 {period} 節
                 </th>
                 {DAYS.map((d) => {
@@ -205,7 +206,11 @@ export default function Timetable() {
                             </div>
                           </>
                         ) : (
-                          <span className="text-xs text-slate-300 dark:text-slate-600">＋</span>
+                          <Plus
+                            size={16}
+                            className="m-auto text-slate-300 dark:text-slate-600"
+                            aria-hidden
+                          />
                         )}
                       </button>
                     </td>
@@ -224,7 +229,7 @@ export default function Timetable() {
       >
         {editor && (
           <div className="space-y-4">
-            <p className="text-sm text-slate-500 dark:text-slate-400">
+            <p className="text-sm tabular-nums text-slate-500 dark:text-slate-400">
               {DAYS.find((d) => d.day === editor.day)?.label} · 第 {editor.period}{' '}
               節
             </p>

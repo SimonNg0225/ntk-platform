@@ -1,4 +1,12 @@
 import { useMemo, useState } from 'react'
+import {
+  BookMarked,
+  Bookmark,
+  BookOpen,
+  CheckSquare,
+  ExternalLink,
+  Trash2,
+} from 'lucide-react'
 import { useCollection } from '../../lib/store'
 import { useToast } from '../../context/ToastContext'
 import { useConfirm } from '../../context/ConfirmContext'
@@ -146,26 +154,26 @@ export default function ReadingList() {
           label="總數"
           value={items.length}
           unit="本"
-          icon="📚"
+          icon={BookMarked}
           highlight
         />
         <StatCard
           label={STATUS_LABEL.to_read}
           value={counts.to_read}
           unit="本"
-          icon="🔖"
+          icon={Bookmark}
         />
         <StatCard
           label={STATUS_LABEL.reading}
           value={counts.reading}
           unit="本"
-          icon="📖"
+          icon={BookOpen}
         />
         <StatCard
           label={STATUS_LABEL.done}
           value={counts.done}
           unit="本"
-          icon="✅"
+          icon={CheckSquare}
         />
       </div>
 
@@ -225,7 +233,7 @@ export default function ReadingList() {
       {/* 清單 */}
       {filtered.length === 0 ? (
         <EmptyState
-          icon="📖"
+          icon={BookOpen}
           title={query.trim() ? '搵唔到符合嘅項目' : '未有閱讀項目'}
           hint={
             query.trim()
@@ -273,8 +281,8 @@ export default function ReadingList() {
                 <div className="mt-3 flex flex-wrap items-center gap-2">
                   {item.url && (
                     <a href={item.url} target="_blank" rel="noreferrer">
-                      <Button size="sm" variant="ghost">
-                        🔗 開啟
+                      <Button size="sm" variant="ghost" icon={ExternalLink}>
+                        開啟
                       </Button>
                     </a>
                   )}
@@ -288,18 +296,10 @@ export default function ReadingList() {
                   <div className="ml-auto">
                     <IconButton
                       label="刪除"
-                      className="hover:text-rose-600"
+                      tone="danger"
                       onClick={() => removeItem(item)}
                     >
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                        <path
-                          d="M5 7h14M9 7V5h6v2m-7 0v12a1 1 0 001 1h6a1 1 0 001-1V7"
-                          stroke="currentColor"
-                          strokeWidth="1.6"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </svg>
+                      <Trash2 size={18} />
                     </IconButton>
                   </div>
                 </div>

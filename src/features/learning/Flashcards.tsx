@@ -17,6 +17,17 @@ import {
   Modal,
   IconButton,
 } from '../../ui'
+import {
+  ArrowLeft,
+  BookMarked,
+  Flame,
+  FolderOpen,
+  NotebookPen,
+  PartyPopper,
+  Pencil,
+  Plus,
+  Trash2,
+} from 'lucide-react'
 
 type View =
   | { name: 'decks' }
@@ -76,15 +87,15 @@ function DeckList({
     <div className="space-y-4">
       {/* 總覽 StatCard */}
       <div className="grid grid-cols-3 gap-3">
-        <StatCard label="牌組" value={decks.length} unit="組" icon="📚" />
+        <StatCard label="牌組" value={decks.length} unit="組" icon={BookMarked} />
         <StatCard
           label="今日要複習"
           value={totalDue}
           unit="張"
-          icon="🔥"
+          icon={Flame}
           highlight
         />
-        <StatCard label="總卡數" value={cards.length} unit="張" icon="🗂️" />
+        <StatCard label="總卡數" value={cards.length} unit="張" icon={FolderOpen} />
       </div>
 
       <div className="flex gap-2">
@@ -95,7 +106,7 @@ function DeckList({
           placeholder="新牌組名稱（例如 會計概念）"
           className="flex-1"
         />
-        <Button onClick={add}>＋ 牌組</Button>
+        <Button onClick={add} icon={Plus}>牌組</Button>
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2">
@@ -111,6 +122,7 @@ function DeckList({
                 <Button
                   variant="ghost"
                   size="sm"
+                  icon={Trash2}
                   onClick={async () => {
                     if (
                       !(await confirm({
@@ -131,8 +143,8 @@ function DeckList({
                 </Button>
               </div>
               <p className="mt-1 text-xs text-slate-400 dark:text-slate-400">
-                {deckCards.length} 張卡 · 今日到期{' '}
-                <span className="font-semibold text-accent">{due}</span>
+                <span className="tabular-nums">{deckCards.length}</span> 張卡 · 今日到期{' '}
+                <span className="font-semibold tabular-nums text-accent">{due}</span>
               </p>
               <div className="mt-3 flex gap-2">
                 <Button
@@ -157,7 +169,7 @@ function DeckList({
         {decks.length === 0 && (
           <div className="sm:col-span-2">
             <EmptyState
-              icon="🗂️"
+              icon={FolderOpen}
               title="仲未有牌組"
               hint="上面建立一個，開始整知識卡同間隔重複溫習。"
             />
@@ -219,8 +231,8 @@ function DeckDetail({
 
   return (
     <div className="space-y-4">
-      <Button variant="ghost" size="sm" onClick={onBack}>
-        ← 返回所有牌組
+      <Button variant="ghost" size="sm" icon={ArrowLeft} onClick={onBack}>
+        返回所有牌組
       </Button>
 
       <div className="flex items-center justify-between gap-2">
@@ -233,15 +245,7 @@ function DeckDetail({
               setRenameOpen(true)
             }}
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-              <path
-                d="M4 20h4l10-10-4-4L4 16v4zM14 6l4 4"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
+            <Pencil size={16} />
           </IconButton>
         </div>
         <Button onClick={onReview} disabled={due === 0} size="sm">
@@ -289,6 +293,7 @@ function DeckDetail({
                 <Button
                   variant="ghost"
                   size="sm"
+                  icon={Trash2}
                   onClick={async () => {
                     if (
                       !(await confirm({
@@ -319,7 +324,7 @@ function DeckDetail({
         ))}
         {cards.length === 0 && (
           <li>
-            <EmptyState icon="📝" title="仲未有卡片" hint="上面加第一張卡。" />
+            <EmptyState icon={NotebookPen} title="仲未有卡片" hint="上面加第一張卡。" />
           </li>
         )}
       </ul>
@@ -380,10 +385,14 @@ function ReviewSession({
   if (!card) {
     return (
       <UICard className="space-y-4 p-8 text-center">
-        <p className="text-4xl">🎉</p>
+        <PartyPopper
+          size={40}
+          strokeWidth={1.5}
+          className="mx-auto text-accent"
+        />
         <p className="text-lg font-semibold text-slate-800 dark:text-slate-100">複習完成！</p>
         <p className="text-sm text-slate-500 dark:text-slate-400">
-          今次複習咗 <span className="font-semibold text-accent">{done}</span>{' '}
+          今次複習咗 <span className="font-semibold tabular-nums text-accent">{done}</span>{' '}
           張卡。
         </p>
         <Button onClick={onDone} size="lg">
@@ -413,11 +422,12 @@ function ReviewSession({
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between text-xs text-slate-400 dark:text-slate-400">
-        <Button variant="ghost" size="sm" onClick={onDone}>
-          ← 結束複習
+        <Button variant="ghost" size="sm" icon={ArrowLeft} onClick={onDone}>
+          結束複習
         </Button>
         <span>
-          已複習 {done} · 剩 <span className="font-semibold">{remaining}</span> 張
+          已複習 <span className="tabular-nums">{done}</span> · 剩{' '}
+          <span className="font-semibold tabular-nums">{remaining}</span> 張
         </span>
       </div>
 

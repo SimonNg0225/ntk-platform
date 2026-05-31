@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Plus, School, Trash2, Users } from 'lucide-react'
 import { useCollection } from '../../lib/store'
 import { classesCol, studentsCol } from '../../data/collections'
 import {
@@ -56,8 +57,8 @@ export default function ClassesWidget() {
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-3">
-        <StatCard label="班別總數" value={classes.length} unit="班" icon="🏫" highlight />
-        <StatCard label="學生總數" value={students.length} unit="位" icon="👥" />
+        <StatCard label="班別總數" value={classes.length} unit="班" icon={School} highlight />
+        <StatCard label="學生總數" value={students.length} unit="位" icon={Users} />
       </div>
 
       <div className="flex flex-wrap gap-2">
@@ -75,14 +76,14 @@ export default function ClassesWidget() {
           placeholder="科目 / 組別"
           className="min-w-[8rem] flex-1"
         />
-        <Button onClick={add} className="shrink-0">
+        <Button onClick={add} icon={Plus} className="shrink-0">
           新增班別
         </Button>
       </div>
 
       {classes.length === 0 ? (
         <EmptyState
-          icon="🏫"
+          icon={School}
           title="仲未有班別"
           hint="喺上面新增一個班別，之後課程進度同成績管理都會用到。"
         />
@@ -101,21 +102,16 @@ export default function ClassesWidget() {
                     onClick={() => remove(c.id, c.name)}
                     className="opacity-0 transition group-hover:opacity-100 hover:text-rose-500"
                   >
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                      <path
-                        d="M6 6l12 12M18 6L6 18"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                      />
-                    </svg>
+                    <Trash2 size={16} strokeWidth={2} />
                   </IconButton>
                 </div>
                 <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                   {c.subject}
                 </p>
                 <div className="mt-3">
-                  <Badge tone="accent">👥 {count} 位學生</Badge>
+                  <Badge tone="accent" icon={Users}>
+                    <span className="tabular-nums">{count}</span> 位學生
+                  </Badge>
                 </div>
               </Card>
             )

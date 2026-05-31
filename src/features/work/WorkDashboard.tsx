@@ -21,6 +21,18 @@ import {
   ProgressBar,
   IconButton,
 } from '../../ui';
+import {
+  NotebookPen,
+  BookMarked,
+  Phone,
+  Calendar,
+  CalendarDays,
+  CheckSquare,
+  Palmtree,
+  PartyPopper,
+  School,
+} from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 
 const WEEKDAY_LABELS = ['日', '一', '二', '三', '四', '五', '六'];
 
@@ -108,26 +120,26 @@ export default function WorkDashboard() {
         <StatCard
           label="未完成待辦"
           value={openTasks.length}
-          icon="📝"
+          icon={NotebookPen}
           onClick={() => open('work-tasks')}
         />
         <StatCard
           label="今日課堂節數"
           value={todaySlots.length}
-          icon="📚"
+          icon={BookMarked}
           onClick={() => open('work-timetable')}
         />
         <StatCard
           label="待跟進家長"
           value={followUpCount}
-          icon="📞"
+          icon={Phone}
           highlight={followUpCount > 0}
           onClick={() => open('calendar')}
         />
         <StatCard
           label="未來 7 日事件"
           value={upcomingEventsCount}
-          icon="📅"
+          icon={Calendar}
           onClick={() => open('calendar')}
         />
       </section>
@@ -138,10 +150,10 @@ export default function WorkDashboard() {
           今日課堂
         </SectionTitle>
         {jsDay === 0 ? (
-          <EmptyState icon="🌴" title="星期日休息" hint="今日無堂，好好抖一抖。" />
+          <EmptyState icon={Palmtree} title="星期日休息" hint="今日無堂，好好抖一抖。" />
         ) : todaySlots.length === 0 ? (
           <EmptyState
-            icon="📚"
+            icon={BookMarked}
             title="今日未有課堂安排"
             hint="可以去時間表設定上課節數。"
             action={
@@ -166,7 +178,7 @@ export default function WorkDashboard() {
                         : 'flex items-center gap-3 p-3'
                     }
                   >
-                    <span className="flex h-9 w-9 flex-none items-center justify-center rounded-full bg-accent-soft text-sm font-semibold text-accent-strong">
+                    <span className="flex h-9 w-9 flex-none items-center justify-center rounded-full bg-accent-soft text-sm font-semibold tabular-nums text-accent-strong">
                       {slot.period}
                     </span>
                     <div className="min-w-0 flex-1">
@@ -199,7 +211,7 @@ export default function WorkDashboard() {
           未完成待辦
         </SectionTitle>
         {openTasks.length === 0 ? (
-          <EmptyState icon="🎉" title="沒有未完成待辦" hint="做得好，全部清晒！" />
+          <EmptyState icon={PartyPopper} title="沒有未完成待辦" hint="做得好，全部清晒！" />
         ) : (
           <ul className="space-y-2">
             {openTasks.slice(0, 5).map((task) => (
@@ -227,14 +239,14 @@ export default function WorkDashboard() {
       <section>
         <SectionTitle>各班課程進度</SectionTitle>
         {classProgress.length === 0 ? (
-          <EmptyState icon="🏫" title="未有班別資料" hint="加入班別後即可追蹤進度。" />
+          <EmptyState icon={School} title="未有班別資料" hint="加入班別後即可追蹤進度。" />
         ) : (
           <Card className="space-y-4 p-4">
             {classProgress.map((cp) => (
               <div key={cp.id}>
                 <div className="mb-1.5 flex items-center justify-between text-sm">
                   <span className="font-medium text-slate-800 dark:text-slate-100">{cp.name}</span>
-                  <span className="text-slate-500 dark:text-slate-400">
+                  <span className="tabular-nums text-slate-500 dark:text-slate-400">
                     {cp.done}/{cp.total}（{cp.percent}%）
                   </span>
                 </div>
@@ -249,12 +261,12 @@ export default function WorkDashboard() {
       <section>
         <SectionTitle>快速動作</SectionTitle>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          {[
-            { key: 'work-tasks', label: '待辦事項', icon: '📝' },
-            { key: 'work-attendance', label: '點名考勤', icon: '✅' },
-            { key: 'work-timetable', label: '時間表', icon: '🗓️' },
-            { key: 'calendar', label: '行事曆', icon: '📅' },
-          ].map((action) => (
+          {([
+            { key: 'work-tasks', label: '待辦事項', icon: NotebookPen },
+            { key: 'work-attendance', label: '點名考勤', icon: CheckSquare },
+            { key: 'work-timetable', label: '時間表', icon: CalendarDays },
+            { key: 'calendar', label: '行事曆', icon: Calendar },
+          ] as { key: string; label: string; icon: LucideIcon }[]).map((action) => (
             <Card
               key={action.key}
               hover
@@ -262,7 +274,7 @@ export default function WorkDashboard() {
               className="flex flex-col items-center gap-2 p-4 text-center"
             >
               <IconButton label={action.label} onClick={() => open(action.key)}>
-                <span className="text-xl">{action.icon}</span>
+                <action.icon size={20} strokeWidth={2} />
               </IconButton>
               <span className="text-sm font-medium text-slate-700 dark:text-slate-200">{action.label}</span>
             </Card>

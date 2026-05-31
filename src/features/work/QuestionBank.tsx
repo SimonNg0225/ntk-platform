@@ -1,7 +1,25 @@
 import { useMemo, useState } from 'react'
-import { useCollection } from '../../lib/store'
+import {
+  ArrowLeft,
+  BookMarked,
+  Bot,
+  Check,
+  FolderOpen,
+  Lock,
+  NotebookPen,
+  Pencil,
+  Plus,
+  Printer,
+  RotateCcw,
+  Sparkles,
+  Trash2,
+} from 'lucide-react'
+import { uid, useCollection } from '../../lib/store'
 import { useToast } from '../../context/ToastContext'
 import { useConfirm } from '../../context/ConfirmContext'
+import { useAuth } from '../../context/AuthContext'
+import { complete, isAIConfigured, type AIModel } from '../../lib/aiClient'
+import { extractJsonArray } from '../../lib/aiJson'
 import { questionsCol, topicsCol } from '../../data/collections'
 import type { Difficulty, Question, QuestionType } from '../../data/types'
 import {
@@ -96,6 +114,9 @@ export default function QuestionBank() {
   const [editing, setEditing] = useState<Question | null>(null)
   const [showForm, setShowForm] = useState(false)
 
+  // AI 出題 Modal
+  const [showAI, setShowAI] = useState(false)
+
   // 組卷
   const [paperMode, setPaperMode] = useState(false)
   const [selected, setSelected] = useState<Set<string>>(new Set())
@@ -180,7 +201,7 @@ export default function QuestionBank() {
     <div className="space-y-4">
       {/* 統計 */}
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
-        <StatCard label="題目總數" value={stats.total} icon="📚" highlight />
+        <StatCard label="題目總數" value={stats.total} icon={BookMarked} highlight />
         {TYPE_ORDER.map((t) => (
           <StatCard
             key={t}
@@ -201,14 +222,20 @@ export default function QuestionBank() {
         />
         <Button
           variant={paperMode ? 'secondary' : 'ghost'}
+          icon={FolderOpen}
           onClick={() => {
             setPaperMode((v) => !v)
             if (paperMode) setSelected(new Set())
           }}
         >
-          {paperMode ? '退出組卷' : '🗂 組卷'}
+          {paperMode ? '退出組卷' : '組卷'}
         </Button>
-        <Button onClick={openAdd}>＋ 新增題目</Button>
+        <Button variant="secondary" icon={Sparkles} onClick={() => setShowAI(true)}>
+          AI 出題
+        </Button>
+        <Button icon={Plus} onClick={openAdd}>
+          新增題目
+        </Button>
       </div>
 
       {/* 篩選 */}
@@ -247,11 +274,11 @@ export default function QuestionBank() {
       {paperMode && (
         <Card className="flex flex-wrap items-center justify-between gap-2 border-accent/30 bg-accent-soft/50 p-3">
           <p className="text-sm text-slate-700 dark:text-slate-200">
-            已選 <span className="font-bold text-accent-strong">
+            已選 <span className="nums font-bold text-accent-strong">
               {selectedQuestions.length}
             </span>{' '}
             條題目 · 總分{' '}
-            <span className="font-bold text-accent-strong">{selectedMarks}</span>{' '}
+            <span className="nums font-bold text-accent-strong">{selectedMarks}</span>{' '}
             分
           </p>
           <div className="flex gap-2">
@@ -277,7 +304,7 @@ export default function QuestionBank() {
 
       {/* 題目列表 */}
       <p className="text-xs text-slate-400 dark:text-slate-500">
-        共 {filtered.length} 條題目
+        共 <span className="nums">{filtered.length}</span> 條題目
       </p>
       <ul className="space-y-2">
         {filtered.map((q) => (
@@ -300,30 +327,14 @@ export default function QuestionBank() {
               </button>
               <div className="flex shrink-0 items-center gap-0.5">
                 <IconButton label="編輯題目" onClick={() => openEdit(q)}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                    <path
-                      d="M4 20h4l10-10-4-4L4 16v4zM14 6l4 4"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
+                  <Pencil size={16} />
                 </IconButton>
                 <IconButton
                   label="刪除題目"
+                  tone="danger"
                   onClick={() => removeQuestion(q)}
-                  className="hover:text-rose-500"
                 >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                    <path
-                      d="M5 7h14M9 7V5h6v2M7 7l1 13h8l1-13"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
+                  <Trash2 size={16} />
                 </IconButton>
               </div>
             </div>
@@ -333,7 +344,7 @@ export default function QuestionBank() {
                 {DIFF_LABEL[q.difficulty]}
               </Badge>
               <Badge tone="accent">{topicName(q.topicId)}</Badge>
-              {q.marks ? <Badge>{q.marks} 分</Badge> : null}
+              {q.marks ? <Badge className="nums">{q.marks} 分</Badge> : null}
             </div>
             {expanded === q.id && (
               <div className="mt-3 space-y-1.5 border-t border-slate-100 pt-3 text-sm dark:border-slate-700">
@@ -344,12 +355,16 @@ export default function QuestionBank() {
                         key={i}
                         className={
                           i === q.answerIndex
-                            ? 'font-semibold text-emerald-700 dark:text-emerald-400'
+                            ? 'flex items-center gap-1 font-semibold text-emerald-700 dark:text-emerald-400'
                             : 'text-slate-600 dark:text-slate-300'
                         }
                       >
-                        {String.fromCharCode(65 + i)}. {o}
-                        {i === q.answerIndex && ' ✓'}
+                        <span>
+                          {String.fromCharCode(65 + i)}. {o}
+                        </span>
+                        {i === q.answerIndex && (
+                          <Check size={14} className="shrink-0" aria-label="正確答案" />
+                        )}
                       </li>
                     ))}
                   </ul>
@@ -374,10 +389,14 @@ export default function QuestionBank() {
       </ul>
       {filtered.length === 0 && (
         <EmptyState
-          icon="📝"
+          icon={NotebookPen}
           title="未有符合條件嘅題目"
-          hint="撳「＋ 新增題目」開始建立你嘅 BAFS 題庫。"
-          action={<Button onClick={openAdd}>＋ 新增題目</Button>}
+          hint="撳「新增題目」開始建立你嘅 BAFS 題庫。"
+          action={
+            <Button icon={Plus} onClick={openAdd}>
+              新增題目
+            </Button>
+          }
         />
       )}
 
@@ -389,6 +408,11 @@ export default function QuestionBank() {
           topics={topics}
           onClose={() => setShowForm(false)}
         />
+      )}
+
+      {/* AI 出題 Modal */}
+      {showAI && (
+        <AIGenerateModal topics={topics} onClose={() => setShowAI(false)} />
       )}
 
       {/* 預覽試卷 Modal */}
@@ -586,11 +610,17 @@ function PaperPreviewModal({
               BAFS 自擬試卷
             </p>
             <p className="text-xs text-slate-500 dark:text-slate-400">
-              共 {questions.length} 題 · 總分 {totalMarks} 分
+              共 <span className="nums">{questions.length}</span> 題 · 總分{' '}
+              <span className="nums">{totalMarks}</span> 分
             </p>
           </div>
-          <Button size="sm" variant="secondary" onClick={() => window.print()}>
-            🖨 列印
+          <Button
+            size="sm"
+            variant="secondary"
+            icon={Printer}
+            onClick={() => window.print()}
+          >
+            列印
           </Button>
         </div>
 
@@ -605,7 +635,7 @@ function PaperPreviewModal({
                   <p className="text-sm text-slate-800 dark:text-slate-100">
                     {q.stem}
                     {q.marks ? (
-                      <span className="ml-1 text-xs text-slate-400 dark:text-slate-500">
+                      <span className="nums ml-1 text-xs text-slate-400 dark:text-slate-500">
                         （{q.marks} 分）
                       </span>
                     ) : null}
@@ -644,6 +674,378 @@ function PaperPreviewModal({
           </Button>
         </div>
       </div>
+    </Modal>
+  )
+}
+
+// ───────── AI 出題 Modal ─────────
+// 老師揀課題／題型（mc／short）／難度／條數 → 叫 Gemini 出題 →
+// AI 回 JSON → 逐條 parse 成草稿 → 預覽剔選 → 逐條 questionsCol.add()。
+// 入庫後完美重用現有篩選／組卷／列印流程，毋須任何後續改動。
+
+// AI 出題刻意只支援 mc / short（long / case 太開放、難 auto-parse）
+type AIType = 'mc' | 'short'
+const AI_TYPE_OPTIONS: { id: AIType; label: string }[] = [
+  { id: 'mc', label: TYPE_LABEL.mc },
+  { id: 'short', label: TYPE_LABEL.short },
+]
+const COUNT_OPTIONS = [3, 5, 8, 10]
+const AI_MODEL: AIModel = 'gemini-2.5-flash'
+
+// AI 回嘅一條題目草稿（純前端暫存，唔 export、唔入 types.ts、唔落 collection）
+// _key：建立時用 uid() 派一個穩定 key，等內聯編輯題幹時 <Textarea> 唔會
+//       因為 re-render 重新 mount 而失焦。
+type Draft = {
+  _key: string
+  stem: string
+  options?: string[]
+  answerIndex?: number
+  answer?: string
+  marks?: number
+  _selected: boolean
+}
+
+// 將 AI 回嘅一條 unknown 安全收窄成 Draft（唔合格回 null）
+function toDraft(raw: unknown, type: AIType): Draft | null {
+  if (typeof raw !== 'object' || raw === null) return null
+  const o = raw as Record<string, unknown>
+  const stem = typeof o.stem === 'string' ? o.stem.trim() : ''
+  if (!stem) return null
+
+  const marks = typeof o.marks === 'number' && o.marks > 0 ? o.marks : undefined
+
+  if (type === 'mc') {
+    if (!Array.isArray(o.options)) return null
+    const options = o.options
+      .filter((x): x is string => typeof x === 'string')
+      .map((x) => x.trim())
+      .filter(Boolean)
+    if (options.length < 2) return null
+    const idx = typeof o.answerIndex === 'number' ? o.answerIndex : 0
+    const answerIndex = idx >= 0 && idx < options.length ? idx : 0
+    return { _key: uid(), stem, options, answerIndex, marks, _selected: true }
+  }
+
+  // short：要有參考答案
+  const answer = typeof o.answer === 'string' ? o.answer.trim() : ''
+  if (!answer) return null
+  return { _key: uid(), stem, answer, marks, _selected: true }
+}
+
+function buildPrompt(
+  topicName: string,
+  type: AIType,
+  difficulty: Difficulty,
+  count: number,
+  extra: string,
+): string {
+  const diffWord = DIFF_LABEL[difficulty]
+  const shape =
+    type === 'mc'
+      ? '{ "stem": "題幹", "options": ["選項A", "選項B", "選項C", "選項D"], "answerIndex": 0, "marks": 1 }（answerIndex 由 0 起，指向正確選項；至少 3 個選項）'
+      : '{ "stem": "題幹", "answer": "參考答案", "marks": 3 }'
+  return [
+    `你係香港高中 BAFS（企業、會計與財務概論）科老師。請就課題「${topicName}」出 ${count} 條${TYPE_LABEL[type]}，難度為「${diffWord}」。`,
+    '內容要貼合香港高中 BAFS 課程，用繁體中文。',
+    extra.trim() ? `額外要求：${extra.trim()}` : '',
+    '',
+    `只回一個 JSON 陣列（唔好有任何解釋文字、唔好 markdown），每個元素格式：${shape}`,
+    '陣列以外唔好有任何文字。',
+  ]
+    .filter(Boolean)
+    .join('\n')
+}
+
+function AIGenerateModal({
+  topics,
+  onClose,
+}: {
+  topics: { id: string; topic: string }[]
+  onClose: () => void
+}) {
+  const toast = useToast()
+  const { user } = useAuth()
+
+  const [topicId, setTopicId] = useState(topics[0]?.id ?? '')
+  const [type, setType] = useState<AIType>('mc')
+  const [difficulty, setDifficulty] = useState<Difficulty>('medium')
+  const [count, setCount] = useState(5)
+  const [extra, setExtra] = useState('')
+
+  const [step, setStep] = useState<'setup' | 'review'>('setup')
+  const [busy, setBusy] = useState(false)
+  const [drafts, setDrafts] = useState<Draft[]>([])
+
+  const topicName = topics.find((t) => t.id === topicId)?.topic ?? ''
+  const selectedCount = drafts.filter((d) => d._selected).length
+
+  const generate = async () => {
+    if (!topicId || busy) return
+    setBusy(true)
+    try {
+      const out = await complete({
+        model: AI_MODEL,
+        messages: [
+          {
+            role: 'user',
+            content: buildPrompt(topicName, type, difficulty, count, extra),
+          },
+        ],
+      })
+      const rows = extractJsonArray<unknown>(out)
+      const parsed = rows
+        .map((r) => toDraft(r, type))
+        .filter((d): d is Draft => d !== null)
+      if (parsed.length === 0) {
+        toast.error('AI 出嘅題目格式唔啱，請再試一次。')
+        return
+      }
+      setDrafts(parsed)
+      setStep('review')
+    } catch (e) {
+      toast.error((e as Error).message || 'AI 出題失敗，請再試一次。')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const toggleDraft = (idx: number) =>
+    setDrafts((prev) =>
+      prev.map((d, i) => (i === idx ? { ...d, _selected: !d._selected } : d)),
+    )
+
+  const editStem = (idx: number, stem: string) =>
+    setDrafts((prev) => prev.map((d, i) => (i === idx ? { ...d, stem } : d)))
+
+  const setAll = (value: boolean) =>
+    setDrafts((prev) => prev.map((d) => ({ ...d, _selected: value })))
+
+  const commit = () => {
+    const chosen = drafts.filter((d) => d._selected && d.stem.trim())
+    if (chosen.length === 0) return
+    for (const d of chosen) {
+      questionsCol.add({
+        topicId,
+        type,
+        difficulty,
+        stem: d.stem.trim(),
+        options: type === 'mc' ? d.options?.filter((o) => o.trim()) : undefined,
+        answerIndex: type === 'mc' ? d.answerIndex : undefined,
+        answer: type !== 'mc' ? d.answer?.trim() : undefined,
+        marks: d.marks ?? undefined,
+        source: 'AI 生成',
+        createdAt: new Date().toISOString(),
+      })
+    }
+    toast.success(`已加入 ${chosen.length} 條題目到題庫`)
+    onClose()
+  }
+
+  // ── 守門：未啟用 / 未登入 ──────────────────────────────────
+  if (!isAIConfigured || !user) {
+    return (
+      <Modal open onClose={onClose} title="AI 出題">
+        <div className="space-y-4">
+          {!isAIConfigured ? (
+            <EmptyState
+              icon={Bot}
+              title="AI 助手未啟用"
+              hint="要設定好 Supabase 並部署 gemini Edge Function 先用到。步驟見 docs/SETUP.md。"
+            />
+          ) : (
+            <EmptyState
+              icon={Lock}
+              title="請先登入先可以用 AI 出題"
+              hint="喺左下角用 Google 登入後就用得。"
+            />
+          )}
+          <div className="flex justify-end">
+            <Button variant="secondary" onClick={onClose}>
+              關閉
+            </Button>
+          </div>
+        </div>
+      </Modal>
+    )
+  }
+
+  return (
+    <Modal open onClose={onClose} title="AI 出題">
+      {step === 'setup' ? (
+        <div className="space-y-3">
+          <Field label="課題">
+            <Select
+              value={topicId}
+              onChange={(e) => setTopicId(e.target.value)}
+            >
+              {topics.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.topic}
+                </option>
+              ))}
+            </Select>
+          </Field>
+
+          <Field label="題型">
+            <Pills options={AI_TYPE_OPTIONS} active={type} onChange={setType} />
+          </Field>
+
+          <Field label="難度">
+            <Pills
+              options={DIFF_ORDER.map((d) => ({ id: d, label: DIFF_LABEL[d] }))}
+              active={difficulty}
+              onChange={setDifficulty}
+            />
+          </Field>
+
+          <Field label="條數">
+            <Select
+              value={String(count)}
+              onChange={(e) => setCount(Number(e.target.value))}
+              className="w-28"
+            >
+              {COUNT_OPTIONS.map((n) => (
+                <option key={n} value={n}>
+                  {n} 條
+                </option>
+              ))}
+            </Select>
+          </Field>
+
+          <Field label="補充指示（可留空）">
+            <Textarea
+              value={extra}
+              onChange={(e) => setExtra(e.target.value)}
+              placeholder="例如：集中考定義同例子、題目要貼香港情境…"
+              rows={2}
+              disabled={busy}
+            />
+          </Field>
+
+          {busy && (
+            <div className="space-y-2 rounded-xl border border-slate-200/80 bg-slate-50/60 p-3 dark:border-slate-700/80 dark:bg-slate-900/40">
+              <p className="text-sm text-slate-500 dark:text-slate-400">
+                AI 諗緊題目，請等一等…
+              </p>
+              <div className="h-2 w-full animate-pulse rounded-full bg-slate-200 dark:bg-slate-700" />
+              <div className="h-2 w-3/4 animate-pulse rounded-full bg-slate-200 dark:bg-slate-700" />
+            </div>
+          )}
+
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="secondary" onClick={onClose}>
+              取消
+            </Button>
+            <Button
+              icon={Sparkles}
+              loading={busy}
+              onClick={generate}
+              disabled={busy || !topicId}
+            >
+              {busy ? '生成中…' : '生成'}
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <Badge tone="accent">
+              {topicName} · {TYPE_LABEL[type]} · {DIFF_LABEL[difficulty]} · 共{' '}
+              <span className="nums">{drafts.length}</span> 條
+            </Badge>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-slate-400 dark:text-slate-500">
+                已選 <span className="nums">{selectedCount}／{drafts.length}</span>
+              </span>
+              <Button variant="ghost" size="sm" onClick={() => setAll(true)}>
+                全選
+              </Button>
+              <Button variant="ghost" size="sm" onClick={() => setAll(false)}>
+                取消全選
+              </Button>
+            </div>
+          </div>
+
+          <ul className="space-y-2">
+            {drafts.map((d, idx) => (
+              <Card key={d._key} className="p-3">
+                <div className="flex items-start gap-3">
+                  <input
+                    type="checkbox"
+                    checked={d._selected}
+                    onChange={() => toggleDraft(idx)}
+                    className="mt-1 h-4 w-4 shrink-0 accent-[color:var(--accent)]"
+                    aria-label="加入題庫"
+                  />
+                  <div className="flex-1 space-y-1.5">
+                    <Textarea
+                      value={d.stem}
+                      onChange={(e) => editStem(idx, e.target.value)}
+                      rows={2}
+                      className="text-sm"
+                    />
+                    {type === 'mc' && d.options && (
+                      <ul className="space-y-0.5 pl-1 text-sm">
+                        {d.options.map((o, i) => (
+                          <li
+                            key={i}
+                            className={
+                              i === d.answerIndex
+                                ? 'flex items-center gap-1 font-semibold text-emerald-700 dark:text-emerald-400'
+                                : 'text-slate-600 dark:text-slate-300'
+                            }
+                          >
+                            <span>
+                              {String.fromCharCode(65 + i)}. {o}
+                            </span>
+                            {i === d.answerIndex && (
+                              <Check size={14} className="shrink-0" aria-label="正確答案" />
+                            )}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                    {type === 'short' && d.answer && (
+                      <p className="text-sm text-slate-600 dark:text-slate-300">
+                        <span className="font-semibold text-slate-700 dark:text-slate-200">
+                          參考答案：
+                        </span>
+                        {d.answer}
+                      </p>
+                    )}
+                    <div className="flex flex-wrap gap-1.5 pt-0.5">
+                      <Badge tone="blue">{TYPE_LABEL[type]}</Badge>
+                      <Badge tone={DIFF_TONE[difficulty]}>
+                        {DIFF_LABEL[difficulty]}
+                      </Badge>
+                      <Badge tone="accent">{topicName}</Badge>
+                      {d.marks ? <Badge className="nums">{d.marks} 分</Badge> : null}
+                    </div>
+                  </div>
+                </div>
+              </Card>
+            ))}
+          </ul>
+
+          <div className="flex flex-wrap justify-end gap-2 pt-2">
+            <Button variant="ghost" icon={ArrowLeft} onClick={() => setStep('setup')}>
+              重新設定
+            </Button>
+            <Button
+              variant="secondary"
+              icon={RotateCcw}
+              loading={busy}
+              onClick={generate}
+              disabled={busy}
+            >
+              {busy ? '生成中…' : '再生成'}
+            </Button>
+            <Button onClick={commit} disabled={selectedCount === 0}>
+              加入題庫（<span className="nums">{selectedCount}</span>）
+            </Button>
+          </div>
+        </div>
+      )}
     </Modal>
   )
 }

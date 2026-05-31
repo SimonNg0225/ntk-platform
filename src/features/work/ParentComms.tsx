@@ -17,15 +17,28 @@ import {
 } from '../../ui'
 import { useToast } from '../../context/ToastContext'
 import { useConfirm } from '../../context/ConfirmContext'
+import {
+  Plus,
+  Phone,
+  Mail,
+  Handshake,
+  BookText,
+  MessageSquare,
+  StickyNote,
+  Hourglass,
+  Check,
+  Trash2,
+} from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 
 const CHANNELS = ['電話', '電郵', '面談', '手冊'] as const
 type Channel = (typeof CHANNELS)[number]
 
-const CHANNEL_ICON: Record<string, string> = {
-  電話: '📞',
-  電郵: '✉️',
-  面談: '🤝',
-  手冊: '📔',
+const CHANNEL_ICON: Record<string, LucideIcon> = {
+  電話: Phone,
+  電郵: Mail,
+  面談: Handshake,
+  手冊: BookText,
 }
 
 const today = () => new Date().toISOString().slice(0, 10)
@@ -141,19 +154,19 @@ export default function ParentComms() {
             記錄同家長或學生嘅聯絡內容，並標示需要跟進嘅事項。
           </p>
         </div>
-        <Button onClick={openModal} className="shrink-0">
-          + 新增記錄
+        <Button onClick={openModal} icon={Plus} className="shrink-0">
+          新增記錄
         </Button>
       </header>
 
       {/* 統計 */}
       <section className="grid grid-cols-2 gap-3">
-        <StatCard label="總記錄" value={comms.length} unit="條" icon="🗒️" />
+        <StatCard label="總記錄" value={comms.length} unit="條" icon={StickyNote} />
         <StatCard
           label="待跟進"
           value={followUpCount}
           unit="條"
-          icon="⏳"
+          icon={Hourglass}
           highlight={followUpCount > 0}
         />
       </section>
@@ -196,7 +209,7 @@ export default function ParentComms() {
       <section className="space-y-3">
         {visibleComms.length === 0 ? (
           <EmptyState
-            icon="💬"
+            icon={MessageSquare}
             title={comms.length === 0 ? '暫無溝通記錄' : '無符合篩選嘅記錄'}
             hint={
               comms.length === 0
@@ -208,11 +221,11 @@ export default function ParentComms() {
           visibleComms.map((c) => (
             <Card key={c.id} className="p-4">
               <div className="flex flex-wrap items-center gap-2">
-                <span className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                <span className="text-sm font-semibold tabular-nums text-slate-900 dark:text-slate-100">
                   {c.date}
                 </span>
-                <Badge tone="accent">
-                  {CHANNEL_ICON[c.channel] ?? '🗨️'} {c.channel}
+                <Badge tone="accent" icon={CHANNEL_ICON[c.channel] ?? MessageSquare}>
+                  {c.channel}
                 </Badge>
                 {c.followUp && (
                   <button
@@ -225,9 +238,10 @@ export default function ParentComms() {
                   >
                     <Badge
                       tone="amber"
+                      icon={Hourglass}
                       className="cursor-pointer transition hover:brightness-95"
                     >
-                      ⏳ 待跟進
+                      待跟進
                     </Badge>
                   </button>
                 )}
@@ -242,26 +256,20 @@ export default function ParentComms() {
                   >
                     <Badge
                       tone="green"
+                      icon={Check}
                       className="cursor-pointer transition hover:brightness-95"
                     >
-                      ✓ 已跟進
+                      已跟進
                     </Badge>
                   </button>
                 )}
                 <IconButton
                   label="刪除記錄"
+                  tone="danger"
                   onClick={() => removeComm(c)}
-                  className="ml-auto hover:text-rose-600"
+                  className="ml-auto"
                 >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                    <path
-                      d="M6 7h12M9 7V5h6v2M7 7l1 12h8l1-12"
-                      stroke="currentColor"
-                      strokeWidth="1.8"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
+                  <Trash2 size={16} />
                 </IconButton>
               </div>
               <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
@@ -330,7 +338,7 @@ export default function ParentComms() {
               >
                 {CHANNELS.map((ch) => (
                   <option key={ch} value={ch}>
-                    {CHANNEL_ICON[ch]} {ch}
+                    {ch}
                   </option>
                 ))}
               </Select>

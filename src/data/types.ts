@@ -226,3 +226,73 @@ export interface InboxItem extends Entity {
   mode?: 'learning' | 'work'
   createdAt: string
 }
+
+// 重要日子倒數（兩個模式共用）
+export type CountdownCategory = 'exam' | 'deadline' | 'assessment' | 'event' | 'other'
+export interface Countdown extends Entity {
+  title: string
+  date: string // YYYY-MM-DD（目標日子）
+  time?: string // HH:mm（選填，顯示用）
+  category?: CountdownCategory
+  mode?: 'learning' | 'work' | 'both' // 同 CalendarEvent 一致；用嚟過濾
+  notes?: string
+  createdAt: string
+}
+
+// ───── AI 助手（對話歷史）─────
+export interface AiThread extends Entity {
+  mode: 'learning' | 'work'
+  title: string
+  createdAt: string
+}
+
+export interface AiMessage extends Entity {
+  threadId: string
+  role: 'user' | 'model'
+  content: string
+  createdAt: string
+}
+
+// ───── 收支記帳（個人理財，工作模式）─────
+export type TxKind = 'income' | 'expense'
+
+export interface Transaction extends Entity {
+  kind: TxKind
+  amount: number // 正數，單位：元（最多 2 位小數）
+  categoryId: string // 對應 TxCategory.id；可指向已刪分類，UI fallback「未分類」
+  date: string // YYYY-MM-DD（記帳日）
+  note?: string
+  createdAt: string // ISO，用嚟同日多筆排序
+}
+
+export interface TxCategory extends Entity {
+  name: string
+  kind: TxKind // 收入分類 / 支出分類分開
+  icon?: string // emoji
+  createdAt: string
+}
+
+// ───── 自我測驗（題庫做題存檔，learning + work 共用）─────
+// 每題答題快照：把當時題目內容一齊存落，將來題庫改咗都唔影響歷史紀錄
+export interface QuizAttemptItem {
+  questionId: string
+  topicId: string
+  difficulty: Difficulty // 重用現有 Difficulty type，唔使新增
+  stem: string
+  options: string[]
+  answerIndex: number // 正確答案 index
+  selectedIndex: number | null // 用家所選；null = 跳過 / 未答
+  correct: boolean
+}
+
+export interface QuizAttempt extends Entity {
+  createdAt: string // ISO，當交卷一刻
+  mode: 'learning' | 'work' // 喺邊個模式做（對齊 InboxItem / CalendarEvent 嘅 mode 慣例）
+  title: string // 自動產生，例如「全部課題 · 中 · 10 題」
+  topicIds: string[] // 測驗範圍（空陣列 = 全部課題）
+  difficulty: Difficulty | 'all' // 範圍難度（'all' = 不限）
+  total: number // 題數
+  correctCount: number // 答啱數
+  durationSec: number // 用時（秒）
+  items: QuizAttemptItem[] // 逐題快照（用嚟對答案 + 弱項分析 + 重做錯題）
+}

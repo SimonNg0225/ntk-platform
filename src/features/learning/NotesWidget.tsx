@@ -15,6 +15,7 @@ import {
   SectionTitle,
   Textarea,
 } from '../../ui'
+import { Pencil, PenLine, Search, Trash2 } from 'lucide-react'
 
 // ============================================================
 //  學習筆記（Notion / Apple Notes 風）
@@ -138,30 +139,10 @@ function NoteCard({ note }: { note: Note }) {
         </p>
         <div className="flex shrink-0 items-center gap-0.5 opacity-60 transition group-hover:opacity-100">
           <IconButton label="編輯筆記" onClick={startEdit}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-              <path
-                d="M4 20h4l10-10-4-4L4 16v4zM14 6l4 4"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
+            <Pencil size={16} strokeWidth={2} />
           </IconButton>
-          <IconButton
-            label="刪除筆記"
-            onClick={removeNote}
-            className="hover:text-rose-500"
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-              <path
-                d="M5 7h14M9 7V5h6v2M7 7l1 12h8l1-12"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
+          <IconButton label="刪除筆記" onClick={removeNote} tone="danger">
+            <Trash2 size={16} strokeWidth={2} />
           </IconButton>
         </div>
       </div>
@@ -245,7 +226,7 @@ export default function NotesWidget() {
       <SectionTitle
         right={
           <Badge tone="slate">
-            {notes.length} 則筆記
+            <span className="tabular-nums">{notes.length}</span> 則筆記
           </Badge>
         }
       >
@@ -268,7 +249,7 @@ export default function NotesWidget() {
         <div className="mt-2 flex items-center justify-end gap-3">
           {draftLen > 0 && (
             <span className="text-xs text-slate-400 dark:text-slate-400">
-              {draftLen} 字
+              <span className="tabular-nums">{draftLen}</span> 字
             </span>
           )}
           <Button size="sm" onClick={add} disabled={!draft.trim()}>
@@ -278,31 +259,12 @@ export default function NotesWidget() {
       </Card>
 
       {/* 搜尋 */}
-      <div className="relative">
-        <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-400">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-            <circle
-              cx="11"
-              cy="11"
-              r="7"
-              stroke="currentColor"
-              strokeWidth="2"
-            />
-            <path
-              d="M20 20l-3.5-3.5"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-            />
-          </svg>
-        </span>
-        <Input
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="搜尋筆記內容…"
-          className="pl-9"
-        />
-      </div>
+      <Input
+        icon={Search}
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        placeholder="搜尋筆記內容…"
+      />
 
       {/* 標籤列 */}
       {allTags.length > 0 && (
@@ -321,7 +283,7 @@ export default function NotesWidget() {
                 }
               >
                 #{tag}
-                <span className="opacity-60">{count}</span>
+                <span className="tabular-nums opacity-60">{count}</span>
               </button>
             )
           })}
@@ -332,7 +294,7 @@ export default function NotesWidget() {
       {hasFilter && (
         <div className="flex items-center justify-between text-xs text-slate-400 dark:text-slate-400">
           <span>
-            搵到 {visible.length} 則
+            搵到 <span className="tabular-nums">{visible.length}</span> 則
             {activeTag && (
               <>
                 {' '}
@@ -355,13 +317,13 @@ export default function NotesWidget() {
       {/* 列表 */}
       {notes.length === 0 ? (
         <EmptyState
-          icon="✍️"
+          icon={PenLine}
           title="仲未有筆記"
           hint="喺上面打低你嘅第一個學習重點，記得用 #標籤 分類！"
         />
       ) : visible.length === 0 ? (
         <EmptyState
-          icon="🔍"
+          icon={Search}
           title="搵唔到相符嘅筆記"
           hint="試下改吓關鍵字或者清除標籤篩選。"
         />

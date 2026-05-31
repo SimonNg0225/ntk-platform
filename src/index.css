@@ -2,33 +2,98 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ============================================================
+   精煉海軍藍 token 架構（三層）
+   ① 動態主題（ModeContext 覆寫 5 個變數）② 靜態結構 ③ 語意
+   ⚠️ --accent* / --accent-grad-* 由 ModeContext.setProperty 動態覆寫；
+      :root 只係首屏 fallback（=學習模式色），切勿搬走或硬寫死。
+   ============================================================ */
 :root {
-  /* 預設主題色（學習模式·海軍藍）— 切換模式時由 ModeContext 覆寫 */
-  --accent: #2f6cb3;
+  /* ① 動態主題色（學習模式 fallback；切模式時 ModeContext 覆寫呢 5 個） */
+  --accent: #2f6cb3; /* navy-600 / 學習 */
   --accent-soft: #e9f0f9;
-  --accent-strong: #234f86;
-  --accent-grad-from: #3a74bb;
+  --accent-strong: #234f86; /* navy-700 */
+  --accent-grad-from: #3a74bb; /* navy-500 */
   --accent-grad-to: #1f4a7d;
 
-  /* 介面表面色（淺色模式預設）— 深色模式由 html.dark 覆寫 */
+  /* ② 靜態結構色 — 淺色（深色喺 html.dark 覆寫；ModeContext 唔掂） */
   --app-bg: #f4f7fb;
   --surface: #ffffff;
-  --surface-2: #f8fafc;
+  --surface-2: #f8fafc; /* slate-50 */
+  --surface-3: #f1f5f9; /* slate-100 — hover / 巢狀 */
+  --border: #e2e8f0; /* slate-200 — 俐落細邊框 */
+  --border-strong: #cbd5e1; /* slate-300 */
+  --ring: var(--accent); /* focus 環跟主題藍 */
 
+  /* 文字分層 — 淺色 */
+  --text: #1e293b; /* slate-800 標題/正文 */
+  --text-secondary: #475569; /* slate-600 */
+  --text-muted: #94a3b8; /* slate-400 */
+  --text-inverse: #ffffff;
+
+  /* ③ 語意色（淺色；深色只覆寫 *-soft） */
+  --success: #10b981; --success-soft: #ecfdf5; --success-strong: #047857;
+  --warning: #f59e0b; --warning-soft: #fffbeb; --warning-strong: #b45309;
+  --danger: #e11d48; --danger-soft: #fff1f2; --danger-strong: #be123c;
+  --info: #2563eb; --info-soft: #eff6ff; --info-strong: #1d4ed8;
+
+  /* type scale（字級/行高）— tailwind fontSize 引用 */
+  --fs-2xs: 11px; --lh-2xs: 16px;
+  --fs-xs: 12px; --lh-xs: 16px;
+  --fs-sm: 13.5px; --lh-sm: 20px;
+  --fs-base: 15px; --lh-base: 24px;
+  --fs-lg: 17px; --lh-lg: 26px;
+  --fs-xl: 20px; --lh-xl: 28px;
+  --fs-2xl: 24px; --lh-2xl: 32px;
+  --fs-3xl: 30px; --lh-3xl: 38px;
+
+  /* elevation（克制、藍灰調）— tailwind boxShadow 引用 */
+  --shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.04);
+  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.05), 0 1px 3px rgba(15, 23, 42, 0.04);
+  --shadow-md: 0 4px 12px -2px rgba(15, 23, 42, 0.08);
+  --shadow-overlay: 0 16px 48px -8px rgba(15, 23, 42, 0.24);
+
+  /* 字體：Inter 行拉丁/數字，Noto Sans HK / 系統字行中文（per-glyph fallback） */
   font-family:
-    'Noto Sans HK', system-ui, -apple-system, 'PingFang HK',
-    'Microsoft JhengHei', sans-serif;
+    'Inter', 'Noto Sans HK', system-ui, -apple-system, 'PingFang HK',
+    'Microsoft JhengHei', 'Segoe UI', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   color-scheme: light;
 }
 
-/* 深色模式：調暗背景與表面，主題藍自動調亮一級令對比足夠 */
+/* 深色：navy-tinted slate（非純黑），只覆寫會變嘅 token；唔掂 --accent* */
 html.dark {
-  --app-bg: #0f172a;
-  --surface: #1e293b;
-  --surface-2: #172033;
+  --app-bg: #0f172a; /* slate-900 */
+  --surface: #1e293b; /* slate-800 */
+  --surface-2: #172033; /* navy-850 */
+  --surface-3: #243349; /* hover */
+  --border: #334155; /* slate-700 */
+  --border-strong: #475569; /* slate-600 */
+  --ring: var(--accent);
+
+  --text: #f1f5f9; /* slate-100 */
+  --text-secondary: #cbd5e1; /* slate-300 */
+  --text-muted: #94a3b8; /* slate-400 */
+  --text-inverse: #0f172a;
+
+  --success-soft: rgba(16, 185, 129, 0.15);
+  --warning-soft: rgba(245, 158, 11, 0.15);
+  --danger-soft: rgba(225, 29, 72, 0.15);
+  --info-soft: rgba(37, 99, 235, 0.15);
+
+  --shadow-xs: 0 1px 2px rgba(2, 6, 12, 0.4);
+  --shadow-sm: 0 1px 2px rgba(2, 6, 12, 0.5), 0 1px 3px rgba(2, 6, 12, 0.4);
+  --shadow-md: 0 4px 14px -2px rgba(2, 6, 12, 0.55);
+  --shadow-overlay: 0 16px 48px -8px rgba(2, 6, 12, 0.7);
+
   color-scheme: dark;
+}
+
+/* 數字對齊 utility（統計 / 金額 / 倒數 / 時間用） */
+.nums {
+  font-variant-numeric: tabular-nums slashed-zero;
+  font-feature-settings: 'tnum' 1;
 }
 
 html,

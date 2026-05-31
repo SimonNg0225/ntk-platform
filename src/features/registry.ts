@@ -5,6 +5,7 @@ import type { ModeId } from '../modes/modes'
 import NotesWidget from './learning/NotesWidget'
 import GoalsWidget from './learning/GoalsWidget'
 import Flashcards from './learning/Flashcards'
+import CardGenerator from './learning/CardGenerator'
 import FocusTimer from './learning/FocusTimer'
 import Journal from './learning/Journal'
 import LearningDashboard from './learning/LearningDashboard'
@@ -23,12 +24,16 @@ import Timetable from './work/Timetable'
 import Attendance from './work/Attendance'
 import ParentComms from './work/ParentComms'
 import MeetingNotes from './work/MeetingNotes'
+import BudgetTracker from './work/BudgetTracker'
 import WorkDashboard from './work/WorkDashboard'
 
 // 共用功能
 import Calendar from './shared/Calendar'
+import Countdown from './shared/Countdown'
 import GlobalSearch from './shared/GlobalSearch'
 import Inbox from './shared/Inbox'
+import QuizMode from './shared/QuizMode'
+import AIAssistant from './shared/AIAssistant'
 
 // ============================================================
 //  功能註冊表 (Feature Registry) — 平台擴充中心
@@ -45,6 +50,26 @@ export const FEATURES: Feature[] = [
     icon: '📊',
     group: '概覽',
     component: LearningDashboard,
+    status: 'ready',
+  },
+  {
+    id: 'learning-ai',
+    modes: ['learning'],
+    name: '學習夥伴 AI',
+    description: '問答、解釋概念、總結筆記、出練習。',
+    icon: '🤖',
+    group: 'AI',
+    component: AIAssistant,
+    status: 'ready',
+  },
+  {
+    id: 'learning-card-generator',
+    modes: ['learning'],
+    name: 'AI 生成知識卡',
+    description: '貼上主題或筆記，AI 一鍵生成知識卡，直接存入牌組複習。',
+    icon: '✨',
+    group: 'AI',
+    component: CardGenerator,
     status: 'ready',
   },
   {
@@ -127,6 +152,16 @@ export const FEATURES: Feature[] = [
     icon: '🧭',
     group: '概覽',
     component: WorkDashboard,
+    status: 'ready',
+  },
+  {
+    id: 'work-ai',
+    modes: ['work'],
+    name: 'BAFS 教學 AI',
+    description: '出題、教案大綱、批改評語、課堂活動。',
+    icon: '🤖',
+    group: 'AI',
+    component: AIAssistant,
     status: 'ready',
   },
   {
@@ -239,6 +274,16 @@ export const FEATURES: Feature[] = [
     component: MeetingNotes,
     status: 'ready',
   },
+  {
+    id: 'work-budget',
+    modes: ['work'],
+    name: '收支記帳',
+    description: '記錄每日收入支出，睇本月結餘同分類佔比。',
+    icon: '💰',
+    group: '理財',
+    component: BudgetTracker,
+    status: 'ready',
+  },
 
   // ═══════════ 兩個模式共用 ═══════════
   {
@@ -269,6 +314,26 @@ export const FEATURES: Feature[] = [
     icon: '📥',
     group: '工具',
     component: Inbox,
+    status: 'ready',
+  },
+  {
+    id: 'countdown',
+    modes: ['learning', 'work'],
+    name: '重要日子倒數',
+    description: '考試、死線、評估倒數，大數字一眼睇晒仲有幾多日。',
+    icon: '⏳',
+    group: '工具',
+    component: Countdown,
+    status: 'ready',
+  },
+  {
+    id: 'quiz',
+    modes: ['learning', 'work'],
+    name: '自我測驗',
+    description: '由 BAFS 題庫抽 MC 即時做題、自動批改、出分同弱項分析。',
+    icon: '📝',
+    group: '工具',
+    component: QuizMode,
     status: 'ready',
   },
 ]

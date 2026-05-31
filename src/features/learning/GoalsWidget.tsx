@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Plus, Target, TrendingUp, Trash2 } from 'lucide-react'
 import { useCollection } from '../../lib/store'
 import { goalsCol } from '../../data/collections'
 import {
@@ -25,7 +26,7 @@ export default function GoalsWidget() {
     if (!title) return
     goalsCol.add({ title, progress: 0, createdAt: new Date().toISOString() })
     setDraft('')
-    toast.success('已新增目標 🎯')
+    toast.success('已新增目標')
   }
 
   const bump = (id: string, delta: number) => {
@@ -33,7 +34,7 @@ export default function GoalsWidget() {
     if (!g) return
     const next = Math.max(0, Math.min(100, g.progress + delta))
     goalsCol.update(id, { progress: next })
-    if (next === 100 && g.progress < 100) toast.success('恭喜達成目標 🎉')
+    if (next === 100 && g.progress < 100) toast.success('恭喜達成目標')
   }
 
   const removeGoal = async (id: string, title: string) => {
@@ -56,8 +57,8 @@ export default function GoalsWidget() {
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-3">
-        <StatCard label="目標數" value={goals.length} unit="個" icon="🎯" highlight />
-        <StatCard label="平均進度" value={avgProgress} unit="%" icon="📈" />
+        <StatCard label="目標數" value={goals.length} unit="個" icon={Target} highlight />
+        <StatCard label="平均進度" value={avgProgress} unit="%" icon={TrendingUp} />
       </div>
 
       <div className="flex gap-2">
@@ -68,14 +69,14 @@ export default function GoalsWidget() {
           placeholder="新增一個學習目標…"
           className="flex-1"
         />
-        <Button onClick={add} className="shrink-0">
+        <Button onClick={add} icon={Plus} className="shrink-0">
           新增目標
         </Button>
       </div>
 
       {sorted.length === 0 ? (
         <EmptyState
-          icon="🎯"
+          icon={Target}
           title="仲未有學習目標"
           hint="喺上面新增一個目標，一步步追蹤你嘅進度。"
         />
@@ -87,7 +88,7 @@ export default function GoalsWidget() {
                 <span className="text-sm font-medium text-slate-800 dark:text-slate-100">
                   {g.title}
                 </span>
-                <span className="shrink-0 text-xs font-semibold text-accent">
+                <span className="shrink-0 text-xs font-semibold tabular-nums text-accent">
                   {g.progress}%
                 </span>
               </div>
@@ -111,17 +112,11 @@ export default function GoalsWidget() {
                 </Button>
                 <IconButton
                   label="刪除目標"
+                  tone="danger"
                   onClick={() => removeGoal(g.id, g.title)}
-                  className="ml-auto opacity-0 transition group-hover:opacity-100 hover:text-rose-500"
+                  className="ml-auto opacity-0 transition group-hover:opacity-100"
                 >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                    <path
-                      d="M6 6l12 12M18 6L6 18"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                    />
-                  </svg>
+                  <Trash2 size={16} />
                 </IconButton>
               </div>
             </Card>

@@ -13,6 +13,19 @@ import { isDue } from '../../lib/srs'
 import { useNav } from '../../context/NavContext'
 import { useSettings } from '../../context/SettingsContext'
 import {
+  Brain,
+  Flame,
+  BookMarked,
+  Timer,
+  BookText,
+  BookOpen,
+  Target,
+  NotebookPen,
+  Check,
+  ChevronRight,
+} from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
+import {
   Card,
   Badge,
   SectionTitle,
@@ -137,29 +150,29 @@ export default function LearningDashboard() {
           label="今日要複習"
           value={dueCount}
           unit="張"
-          icon="🧠"
+          icon={Brain}
           highlight
           onClick={() => open('learning-flashcards')}
         />
         <StatCard
           label="連續學習"
           value={streak}
-          unit="日 🔥"
-          icon="🔥"
+          unit="日"
+          icon={Flame}
           onClick={() => open('learning-journal')}
         />
         <StatCard
           label="本週複習"
           value={reviewedThisWeek}
           unit="張"
-          icon="📚"
+          icon={BookMarked}
           onClick={() => open('learning-flashcards')}
         />
         <StatCard
           label="本週專注"
           value={focusMinThisWeek}
           unit="分鐘"
-          icon="⏱️"
+          icon={Timer}
           onClick={() => open('learning-focus')}
         />
       </div>
@@ -180,17 +193,20 @@ export default function LearningDashboard() {
                 }`}
               >
                 <span
-                  className={`flex h-5 w-5 flex-none items-center justify-center rounded-full border text-[11px] ${
+                  className={`flex h-5 w-5 flex-none items-center justify-center rounded-full border ${
                     t.done
                       ? 'border-emerald-400 bg-emerald-400 text-white'
                       : 'border-slate-300 dark:border-slate-600'
                   }`}
                 >
-                  {t.done ? '✓' : ''}
+                  {t.done && <Check size={12} strokeWidth={3} />}
                 </span>
                 <span className={t.done ? 'line-through' : ''}>{t.label}</span>
                 {!t.done && (
-                  <span className="ml-auto text-xs text-accent">去做 →</span>
+                  <span className="ml-auto inline-flex items-center gap-0.5 text-xs text-accent">
+                    去做
+                    <ChevronRight size={14} />
+                  </span>
                 )}
               </button>
             </li>
@@ -201,19 +217,19 @@ export default function LearningDashboard() {
       {/* 快速動作 */}
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <Action
-          icon="🧠"
+          icon={Brain}
           title="開始複習"
           desc={dueCount > 0 ? `${dueCount} 張到期` : '今日已清'}
           onClick={() => open('learning-flashcards')}
         />
         <Action
-          icon="⏱️"
+          icon={Timer}
           title="開始專注"
           desc="番茄鐘計時"
           onClick={() => open('learning-focus')}
         />
         <Action
-          icon="📓"
+          icon={BookText}
           title="寫日誌"
           desc="記低今日反思"
           onClick={() => open('learning-journal')}
@@ -226,9 +242,10 @@ export default function LearningDashboard() {
           right={
             <button
               onClick={() => open('learning-goals')}
-              className="text-xs text-accent hover:underline"
+              className="inline-flex items-center gap-0.5 text-xs text-accent hover:underline"
             >
-              管理 →
+              管理
+              <ChevronRight size={13} />
             </button>
           }
         >
@@ -236,7 +253,7 @@ export default function LearningDashboard() {
         </SectionTitle>
         {topGoals.length === 0 ? (
           <EmptyState
-            icon="🎯"
+            icon={Target}
             title="仲未有目標"
             hint="設定學習目標，追蹤每一步進度。"
           />
@@ -248,7 +265,7 @@ export default function LearningDashboard() {
                   <span className="truncate text-sm text-slate-700 dark:text-slate-200">
                     {g.title}
                   </span>
-                  <span className="flex-none text-xs font-bold text-accent">
+                  <span className="flex-none text-xs font-bold tabular-nums text-accent">
                     {g.progress}%
                   </span>
                 </div>
@@ -265,9 +282,10 @@ export default function LearningDashboard() {
           right={
             <button
               onClick={() => open('learning-reading')}
-              className="text-xs text-accent hover:underline"
+              className="inline-flex items-center gap-0.5 text-xs text-accent hover:underline"
             >
-              書架 →
+              書架
+              <ChevronRight size={13} />
             </button>
           }
         >
@@ -275,7 +293,7 @@ export default function LearningDashboard() {
         </SectionTitle>
         {readingNow.length === 0 ? (
           <EmptyState
-            icon="📖"
+            icon={BookOpen}
             title="而家無喺度讀緊嘅書"
             hint="加本書入閱讀清單，開始閱讀之旅。"
           />
@@ -286,7 +304,7 @@ export default function LearningDashboard() {
                 key={r.id}
                 className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200"
               >
-                <span className="text-base">📖</span>
+                <BookOpen size={16} className="flex-none text-slate-400" />
                 <span className="truncate">{r.title}</span>
                 {r.author && (
                   <Badge tone="slate" className="ml-auto flex-none">
@@ -305,9 +323,10 @@ export default function LearningDashboard() {
           right={
             <button
               onClick={() => open('learning-notes')}
-              className="text-xs text-accent hover:underline"
+              className="inline-flex items-center gap-0.5 text-xs text-accent hover:underline"
             >
-              全部 →
+              全部
+              <ChevronRight size={13} />
             </button>
           }
         >
@@ -315,7 +334,7 @@ export default function LearningDashboard() {
         </SectionTitle>
         {recentNotes.length === 0 ? (
           <EmptyState
-            icon="📝"
+            icon={NotebookPen}
             title="仲未有筆記"
             hint="隨手記低諗法同重點。"
           />
@@ -337,12 +356,12 @@ export default function LearningDashboard() {
 }
 
 function Action({
-  icon,
+  icon: Icon,
   title,
   desc,
   onClick,
 }: {
-  icon: string
+  icon: LucideIcon
   title: string
   desc: string
   onClick: () => void
@@ -350,10 +369,10 @@ function Action({
   return (
     <button
       onClick={onClick}
-      className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-4 text-left transition hover:-translate-y-0.5 hover:border-accent/40 hover:shadow-md dark:border-slate-700 dark:bg-slate-800"
+      className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-4 text-left transition hover:-translate-y-0.5 hover:border-accent/40 hover:shadow-md dark:border-slate-700 dark:bg-slate-800"
     >
-      <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent-soft text-lg">
-        {icon}
+      <span className="flex h-10 w-10 flex-none items-center justify-center rounded-xl bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
+        <Icon size={20} strokeWidth={2} />
       </span>
       <div>
         <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">{title}</p>

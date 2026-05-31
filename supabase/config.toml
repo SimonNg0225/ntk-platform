@@ -1,0 +1,8 @@
+# Supabase CLI 本地設定。完整選項見 https://supabase.com/docs/guides/cli/config
+# project_id 只係本地 CLI 嘅識別名；真正連去邊個雲端 project 係靠
+#   supabase link --project-ref <你的 project ref>
+project_id = "ntk-platform"
+
+[functions.gemini]
+# 由 Supabase 閘道先驗證 JWT，再加 function 內部 getUser，雙重保險。
+verify_jwt = true

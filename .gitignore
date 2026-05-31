@@ -22,3 +22,14 @@ pnpm-debug.log*
 .next
 .vercel
 next-env.d.ts
+
+# supabase CLI 暫存
+supabase/.branches
+supabase/.temp
+
+# secrets：任何含 key 嘅檔都唔好 commit（Gemini key 只可放 Supabase secret）
+*.secrets
+env.secrets
+.env
+.env.*
+!.env.example

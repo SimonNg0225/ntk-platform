@@ -3,6 +3,7 @@ import { useCollection } from '../../lib/store'
 import { focusCol } from '../../data/collections'
 import { Button, Input, StatCard, Pills } from '../../ui'
 import { useToast } from '../../context/ToastContext'
+import { Timer, Clock } from 'lucide-react'
 
 const PRESETS = [
   { focus: 25, brk: 5 },
@@ -151,8 +152,8 @@ export default function FocusTimer() {
       </div>
 
       <div className="grid grid-cols-2 gap-3">
-        <StatCard label="今日節數" value={todaySessions.length} unit="節" icon="🍅" highlight />
-        <StatCard label="今日分鐘" value={todayMin} unit="分鐘" icon="⏱️" />
+        <StatCard label="今日節數" value={todaySessions.length} unit="節" icon={Timer} highlight />
+        <StatCard label="今日分鐘" value={todayMin} unit="分鐘" icon={Clock} />
       </div>
     </div>
   )

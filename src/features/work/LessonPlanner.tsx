@@ -16,7 +16,9 @@ import {
   EmptyState,
   IconButton,
   Modal,
+  Tooltip,
 } from '../../ui'
+import { Plus, Pencil, Copy, Trash2, Calendar, NotebookPen } from 'lucide-react'
 
 type Draft = {
   title: string
@@ -156,9 +158,10 @@ export default function LessonPlanner() {
   return (
     <div className="space-y-4">
       <SectionTitle
+        icon={NotebookPen}
         right={
-          <Button size="sm" onClick={openCreate}>
-            ＋ 新增教案
+          <Button size="sm" icon={Plus} onClick={openCreate}>
+            新增教案
           </Button>
         }
       >
@@ -199,7 +202,7 @@ export default function LessonPlanner() {
       {/* 教案列表 */}
       {visible.length === 0 ? (
         <EmptyState
-          icon="📝"
+          icon={NotebookPen}
           title={hasFilter ? '揾唔到符合條件嘅教案' : '仲未有教案'}
           hint={
             hasFilter
@@ -208,8 +211,8 @@ export default function LessonPlanner() {
           }
           action={
             hasFilter ? undefined : (
-              <Button size="sm" onClick={openCreate}>
-                ＋ 新增教案
+              <Button size="sm" icon={Plus} onClick={openCreate}>
+                新增教案
               </Button>
             )
           }
@@ -228,7 +231,11 @@ export default function LessonPlanner() {
                       <Badge tone="accent">{className(p.classId)}</Badge>
                     )}
                     {p.topicId && <Badge>{topicName(p.topicId)}</Badge>}
-                    {p.date && <Badge tone="blue">📅 {p.date}</Badge>}
+                    {p.date && (
+                      <Badge tone="blue" icon={Calendar}>
+                        <span className="tabular-nums">{p.date}</span>
+                      </Badge>
+                    )}
                   </div>
                   {firstLine(p.objectives) && (
                     <p className="mt-2 line-clamp-1 text-xs text-slate-500 dark:text-slate-400">
@@ -240,43 +247,25 @@ export default function LessonPlanner() {
                   )}
                 </div>
                 <div className="flex shrink-0 items-center gap-0.5">
-                  <IconButton label="編輯教案" onClick={() => openEdit(p)}>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                      <path
-                        d="M4 20h4l10-10-4-4L4 16v4zM14 6l4 4"
-                        stroke="currentColor"
-                        strokeWidth="1.8"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                  </IconButton>
-                  <IconButton label="複製教案" onClick={() => duplicate(p)}>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                      <path
-                        d="M9 9h9v9H9zM6 15H5V6h9v1"
-                        stroke="currentColor"
-                        strokeWidth="1.8"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                  </IconButton>
-                  <IconButton
-                    label="刪除教案"
-                    onClick={() => remove(p)}
-                    className="hover:text-rose-500"
-                  >
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                      <path
-                        d="M5 7h14M9 7V5h6v2M7 7l1 12h8l1-12"
-                        stroke="currentColor"
-                        strokeWidth="1.8"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                  </IconButton>
+                  <Tooltip label="編輯教案">
+                    <IconButton label="編輯教案" onClick={() => openEdit(p)}>
+                      <Pencil size={18} strokeWidth={1.8} />
+                    </IconButton>
+                  </Tooltip>
+                  <Tooltip label="複製教案">
+                    <IconButton label="複製教案" onClick={() => duplicate(p)}>
+                      <Copy size={18} strokeWidth={1.8} />
+                    </IconButton>
+                  </Tooltip>
+                  <Tooltip label="刪除教案">
+                    <IconButton
+                      label="刪除教案"
+                      tone="danger"
+                      onClick={() => remove(p)}
+                    >
+                      <Trash2 size={18} strokeWidth={1.8} />
+                    </IconButton>
+                  </Tooltip>
                 </div>
               </div>
 

@@ -1,4 +1,6 @@
+import { Menu as MenuIcon, Search } from 'lucide-react'
 import { useMode } from '../context/ModeContext'
+import { IconButton } from '../ui'
 import ModeSwitcher from './ModeSwitcher'
 
 // 手機頂欄（只喺細螢幕顯示）：漢堡選單 + 品牌 + 搜尋 + 緊湊模式切換
@@ -12,29 +14,18 @@ export default function MobileTopBar({
   const { modeDef } = useMode()
 
   return (
-    <header className="sticky top-0 z-20 flex items-center gap-3 border-b border-slate-200 bg-white/90 px-4 py-3 backdrop-blur dark:border-slate-800 dark:bg-slate-900/90 md:hidden">
-      <button
-        onClick={onMenu}
-        className="rounded-lg p-1 text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
-        aria-label="開啟選單"
-      >
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-          <path
-            d="M4 7h16M4 12h16M4 17h16"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-          />
-        </svg>
-      </button>
+    <header className="sticky top-0 z-20 flex items-center gap-3 border-b border-slate-200 bg-white/90 px-4 py-2.5 backdrop-blur-md dark:border-slate-800 dark:bg-slate-900/90 md:hidden">
+      <IconButton label="開啟選單" onClick={onMenu}>
+        <MenuIcon size={22} strokeWidth={1.75} />
+      </IconButton>
 
       <div className="flex items-center gap-2">
-        <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-accent text-sm font-bold text-white">
+        <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-accent text-sm font-bold text-white shadow-sm ring-1 ring-inset ring-white/10">
           N
         </div>
         <span className="text-sm font-bold text-slate-800 dark:text-slate-100">
           NTK
-          <span className="ml-1 font-normal text-slate-400">
+          <span className="ml-1 font-medium text-slate-400 dark:text-slate-500">
             · {modeDef.short}
           </span>
         </span>
@@ -42,21 +33,9 @@ export default function MobileTopBar({
 
       <div className="ml-auto flex items-center gap-1">
         {onSearch && (
-          <button
-            onClick={onSearch}
-            className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
-            aria-label="搜尋"
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-              <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="2" />
-              <path
-                d="M20 20l-3-3"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-              />
-            </svg>
-          </button>
+          <IconButton label="搜尋" onClick={onSearch}>
+            <Search size={20} strokeWidth={1.75} />
+          </IconButton>
         )}
         <ModeSwitcher size="compact" />
       </div>

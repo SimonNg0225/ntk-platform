@@ -14,6 +14,16 @@ import {
   StatCard,
   IconButton,
 } from '../../ui';
+import {
+  CheckSquare,
+  ClipboardList,
+  Flame,
+  Check,
+  Trash2,
+  PartyPopper,
+  Sprout,
+  Plus,
+} from 'lucide-react';
 
 const ICON_CHOICES = ['🏃', '📚', '💧', '🧘', '🥗', '😴', '✍️', '🎯'];
 
@@ -148,21 +158,23 @@ export default function HabitTracker() {
 
       {/* 頂部統計 */}
       <section className="grid grid-cols-3 gap-3">
-        <StatCard label="習慣總數" value={stats.total} unit="個" icon="📋" />
+        <StatCard label="習慣總數" value={stats.total} unit="個" icon={ClipboardList} />
         <StatCard
           label="今日完成"
           value={`${stats.doneToday}/${stats.total}`}
-          icon="✅"
+          icon={CheckSquare}
           highlight={allDone}
         />
-        <StatCard label="最長連續" value={stats.maxStreak} unit="日" icon="🔥" />
+        <StatCard label="最長連續" value={stats.maxStreak} unit="日" icon={Flame} />
       </section>
 
       {/* 今日總完成率 */}
       <Card className="p-4">
         <div className="mb-2 flex items-center justify-between">
           <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">今日總完成率</span>
-          <Badge tone={allDone ? 'green' : 'accent'}>{completionRate}%</Badge>
+          <Badge tone={allDone ? 'green' : 'accent'}>
+            <span className="tabular-nums">{completionRate}%</span>
+          </Badge>
         </div>
         <div className="h-3 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-700">
           <div
@@ -171,10 +183,13 @@ export default function HabitTracker() {
           />
         </div>
         {allDone ? (
-          <p className="mt-2 text-sm font-medium text-emerald-600">今日全部完成 🎉 好嘢，keep it up！</p>
+          <p className="mt-2 flex items-center gap-1.5 text-sm font-medium text-emerald-600 dark:text-emerald-400">
+            <PartyPopper size={16} />
+            今日全部完成，好嘢，keep it up！
+          </p>
         ) : stats.total > 0 ? (
           <p className="mt-2 text-xs text-slate-400 dark:text-slate-400">
-            仲差 {stats.total - stats.doneToday} 個就完成今日所有習慣。
+            仲差 <span className="tabular-nums">{stats.total - stats.doneToday}</span> 個就完成今日所有習慣。
           </p>
         ) : null}
       </Card>
@@ -193,7 +208,7 @@ export default function HabitTracker() {
             placeholder="例如：每日跑步"
             className="flex-1"
           />
-          <Button type="button" onClick={handleAdd} disabled={!name.trim()}>
+          <Button type="button" icon={Plus} onClick={handleAdd} disabled={!name.trim()}>
             新增
           </Button>
         </div>
@@ -225,7 +240,7 @@ export default function HabitTracker() {
         <SectionTitle>我的習慣</SectionTitle>
         {habits.length === 0 ? (
           <EmptyState
-            icon="🌱"
+            icon={Sprout}
             title="仲未有習慣"
             hint="喺上面新增一個習慣，揀返個 emoji，每日撳格仔打卡。"
           />
@@ -248,8 +263,8 @@ export default function HabitTracker() {
                         {habit.name}
                       </h3>
                       <div className="mt-1 flex flex-wrap items-center gap-1.5">
-                        <Badge tone={streak > 0 ? 'amber' : 'slate'}>
-                          🔥 {streak} 日
+                        <Badge tone={streak > 0 ? 'amber' : 'slate'} icon={Flame}>
+                          <span className="tabular-nums">{streak}</span> 日
                         </Badge>
                         {doneToday ? (
                           <Badge tone="green">今日已完成</Badge>
@@ -262,17 +277,10 @@ export default function HabitTracker() {
                   <IconButton
                     label={`刪除習慣 ${habit.name}`}
                     onClick={() => handleDelete(habit)}
-                    className="shrink-0 hover:text-rose-600"
+                    tone="danger"
+                    className="shrink-0"
                   >
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                      <path
-                        d="M6 7h12M9 7V5h6v2M7 7l1 12h8l1-12"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
+                    <Trash2 size={18} />
                   </IconButton>
                 </div>
 
@@ -300,14 +308,14 @@ export default function HabitTracker() {
                           aria-pressed={done}
                           aria-label={`${date} ${done ? '已完成' : '未完成'}`}
                           className={[
-                            'aspect-square w-full rounded-lg text-[11px] font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
+                            'flex aspect-square w-full items-center justify-center rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
                             done
                               ? 'bg-accent text-white hover:bg-accent-strong'
                               : 'bg-slate-100 text-slate-400 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-400 dark:hover:bg-slate-600',
                             isToday ? 'ring-2 ring-accent/40 ring-offset-1' : '',
                           ].join(' ')}
                         >
-                          {done ? '✓' : ''}
+                          {done ? <Check size={14} strokeWidth={2.5} /> : null}
                         </button>
                       </div>
                     );

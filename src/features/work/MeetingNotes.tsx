@@ -13,6 +13,16 @@ import {
   SectionTitle,
   Textarea,
 } from '../../ui'
+import {
+  Calendar,
+  ChevronDown,
+  ChevronUp,
+  NotebookPen,
+  Pencil,
+  Plus,
+  Search,
+  Trash2,
+} from 'lucide-react'
 import { useToast } from '../../context/ToastContext'
 import { useConfirm } from '../../context/ConfirmContext'
 
@@ -139,17 +149,19 @@ export default function MeetingNotes() {
             會議 / 行政筆記
           </h1>
           <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-            記錄會議重點同行政事項，方便日後翻查。共 {notes.length} 則。
+            記錄會議重點同行政事項，方便日後翻查。共{' '}
+            <span className="nums">{notes.length}</span> 則。
           </p>
         </div>
-        <Button onClick={openAdd} className="shrink-0">
-          + 新增筆記
+        <Button onClick={openAdd} icon={Plus} className="shrink-0">
+          新增筆記
         </Button>
       </header>
 
       {/* 搜尋 / 篩選 */}
       <section className="space-y-3">
         <Input
+          icon={Search}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="搜尋標題或內容…"
@@ -183,7 +195,7 @@ export default function MeetingNotes() {
       <section className="space-y-3">
         {visibleNotes.length === 0 ? (
           <EmptyState
-            icon="📝"
+            icon={NotebookPen}
             title={notes.length === 0 ? '未有筆記' : '無符合搜尋嘅筆記'}
             hint={
               notes.length === 0
@@ -206,8 +218,9 @@ export default function MeetingNotes() {
                   <h3 className="text-base font-semibold text-slate-800 dark:text-slate-100">
                     {note.title}
                   </h3>
-                  <span className="shrink-0 text-xs text-slate-400 dark:text-slate-500">
-                    {note.date}
+                  <span className="inline-flex shrink-0 items-center gap-1 text-xs text-slate-400 dark:text-slate-500">
+                    <Calendar size={13} strokeWidth={2} />
+                    <span className="nums">{note.date}</span>
                   </span>
                 </div>
 
@@ -240,23 +253,30 @@ export default function MeetingNotes() {
                       onClick={() =>
                         setExpandedId((cur) => (cur === note.id ? null : note.id))
                       }
-                      className="text-xs font-medium text-accent hover:text-accent-strong"
+                      className="inline-flex items-center gap-1 text-xs font-medium text-accent hover:text-accent-strong"
                     >
+                      {isExpanded ? (
+                        <ChevronUp size={13} strokeWidth={2} />
+                      ) : (
+                        <ChevronDown size={13} strokeWidth={2} />
+                      )}
                       {isExpanded ? '收起' : '展開全文'}
                     </button>
                   )}
                   <button
                     type="button"
                     onClick={() => openEdit(note)}
-                    className="text-xs font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+                    className="inline-flex items-center gap-1 text-xs font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
                   >
+                    <Pencil size={13} strokeWidth={2} />
                     編輯
                   </button>
                   <button
                     type="button"
                     onClick={() => removeNote(note)}
-                    className="text-xs font-medium text-rose-500 hover:text-rose-600"
+                    className="inline-flex items-center gap-1 text-xs font-medium text-rose-500 hover:text-rose-600 dark:text-rose-400 dark:hover:text-rose-300"
                   >
+                    <Trash2 size={13} strokeWidth={2} />
                     刪除
                   </button>
                 </div>
@@ -325,7 +345,12 @@ export default function MeetingNotes() {
             >
               取消
             </Button>
-            <Button type="button" onClick={handleSave} disabled={!canSave}>
+            <Button
+              type="button"
+              onClick={handleSave}
+              disabled={!canSave}
+              icon={editingId ? undefined : Plus}
+            >
               {editingId ? '儲存' : '新增筆記'}
             </Button>
           </div>

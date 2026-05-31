@@ -1,4 +1,14 @@
 import { useMemo, useState } from 'react'
+import {
+  BookMarked,
+  Check,
+  CheckSquare,
+  ChevronDown,
+  Hourglass,
+  NotebookPen,
+  School,
+  Target,
+} from 'lucide-react'
 import { useCollection } from '../../lib/store'
 import { useToast } from '../../context/ToastContext'
 import { classesCol, topicsCol, progressCol } from '../../data/collections'
@@ -135,7 +145,7 @@ export default function CurriculumProgress() {
   if (classes.length === 0) {
     return (
       <EmptyState
-        icon="🏫"
+        icon={School}
         title="仲未有班別"
         hint="先去「班別管理」新增班別，再返嚟標記課程進度。"
       />
@@ -153,10 +163,10 @@ export default function CurriculumProgress() {
 
       {/* 頂部統計 */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <StatCard label="總課題" value={topics.length} unit="個" icon="📚" />
-        <StatCard label="已完成" value={doneCount} unit="個" icon="✅" />
-        <StatCard label="進行中" value={inProgressCount} unit="個" icon="⏳" />
-        <StatCard label="完成度" value={pct} unit="%" icon="🎯" highlight />
+        <StatCard label="總課題" value={topics.length} unit="個" icon={BookMarked} />
+        <StatCard label="已完成" value={doneCount} unit="個" icon={CheckSquare} />
+        <StatCard label="進行中" value={inProgressCount} unit="個" icon={Hourglass} />
+        <StatCard label="完成度" value={pct} unit="%" icon={Target} highlight />
       </div>
 
       {/* 整體進度 */}
@@ -165,7 +175,7 @@ export default function CurriculumProgress() {
           <span className="text-sm font-medium text-slate-700 dark:text-slate-200">
             {activeClass?.name} 整體進度
           </span>
-          <span className="text-sm font-bold text-accent-strong">
+          <span className="nums text-sm font-bold text-accent-strong">
             {doneCount}/{topics.length}（{pct}%）
           </span>
         </div>
@@ -194,7 +204,7 @@ export default function CurriculumProgress() {
 
         {grouped.length === 0 ? (
           <EmptyState
-            icon="📝"
+            icon={NotebookPen}
             title="仲未有課題"
             hint="課題資料載入後會喺度顯示。"
           />
@@ -216,30 +226,19 @@ export default function CurriculumProgress() {
                       <span className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
                         {part.part}
                       </span>
-                      <Badge tone="slate">
+                      <Badge tone="slate" className="nums">
                         {partDone}/{partItems.length}
                       </Badge>
                     </span>
                     <IconButton
                       label={isCollapsed ? '展開' : '收起'}
                     >
-                      <svg
-                        width="16"
-                        height="16"
-                        viewBox="0 0 24 24"
-                        fill="none"
+                      <ChevronDown
+                        size={16}
                         className={`transition-transform ${
                           isCollapsed ? '' : 'rotate-180'
                         }`}
-                      >
-                        <path
-                          d="M6 9l6 6 6-6"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </svg>
+                      />
                     </IconButton>
                   </button>
 
@@ -260,7 +259,7 @@ export default function CurriculumProgress() {
                                 <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">
                                   {area.area}
                                 </span>
-                                <span className="shrink-0 text-xs font-medium text-slate-400 dark:text-slate-500">
+                                <span className="nums shrink-0 text-xs font-medium text-slate-400 dark:text-slate-500">
                                   {done}/{total}
                                 </span>
                               </div>
@@ -289,8 +288,11 @@ export default function CurriculumProgress() {
                                         {tp.topic}
                                       </span>
                                       {dateLabel && (
-                                        <span className="shrink-0 text-xs text-slate-400 dark:text-slate-500">
-                                          ✓ {dateLabel}
+                                        <span className="inline-flex shrink-0 items-center gap-0.5 text-xs text-slate-400 dark:text-slate-500">
+                                          <Check size={12} className="text-emerald-500" />
+                                          <span className="tabular-nums">
+                                            {dateLabel}
+                                          </span>
                                         </span>
                                       )}
                                     </span>

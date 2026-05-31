@@ -5,6 +5,15 @@ import type { CalendarEvent } from '../../data/types'
 import { useToast } from '../../context/ToastContext'
 import { useConfirm } from '../../context/ConfirmContext'
 import {
+  CalendarDays,
+  ChevronLeft,
+  ChevronRight,
+  Clock,
+  Plus,
+  Sparkles,
+  Trash2,
+} from 'lucide-react'
+import {
   Badge,
   Button,
   Card,
@@ -217,37 +226,21 @@ export default function Calendar() {
         <header className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-1">
             <IconButton label="上一個月" onClick={goPrevMonth}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                <path
-                  d="M15 6l-6 6 6 6"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
+              <ChevronLeft size={20} strokeWidth={2} />
             </IconButton>
-            <h2 className="min-w-[6.5rem] text-center text-lg font-semibold text-slate-800 dark:text-slate-100">
+            <h2 className="min-w-[6.5rem] text-center text-lg font-semibold tabular-nums text-slate-800 dark:text-slate-100">
               {monthLabel}
             </h2>
             <IconButton label="下一個月" onClick={goNextMonth}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                <path
-                  d="M9 6l6 6-6 6"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
+              <ChevronRight size={20} strokeWidth={2} />
             </IconButton>
           </div>
           <div className="flex items-center gap-2">
             <Button variant="secondary" size="sm" onClick={goToday}>
               今日
             </Button>
-            <Button size="sm" onClick={openAddModal}>
-              ＋ 新增
+            <Button size="sm" icon={Plus} onClick={openAddModal}>
+              新增
             </Button>
           </div>
         </header>
@@ -292,7 +285,7 @@ export default function Calendar() {
                 className={`${base} ${tone}`}
               >
                 <span
-                  className={`text-center text-xs font-semibold sm:text-sm ${
+                  className={`text-center text-xs font-semibold tabular-nums sm:text-sm ${
                     isToday && !isSelected ? 'text-accent-strong' : ''
                   }`}
                 >
@@ -318,11 +311,11 @@ export default function Calendar() {
                   ))}
                   {dayEvents.length > 2 && (
                     <span
-                      className={`text-[10px] leading-tight ${
+                      className={`text-[10px] leading-tight tabular-nums ${
                         isSelected ? 'text-white/80' : 'text-slate-400 dark:text-slate-500'
                       }`}
                     >
-                      ＋{dayEvents.length - 2}
+                      +{dayEvents.length - 2}
                     </span>
                   )}
                 </div>
@@ -350,14 +343,14 @@ export default function Calendar() {
           <h3 className="text-base font-semibold text-slate-800 dark:text-slate-100">
             {formatLongDate(selectedKey)}
           </h3>
-          <Button variant="secondary" size="sm" onClick={openAddModal}>
-            ＋ 新增活動
+          <Button variant="secondary" size="sm" icon={Plus} onClick={openAddModal}>
+            新增活動
           </Button>
         </div>
 
         {selectedEvents.length === 0 ? (
           <EmptyState
-            icon="🗓️"
+            icon={CalendarDays}
             title="呢日暫時無活動"
             hint="撳「新增活動」加入測驗、會議、死線或提醒。"
           />
@@ -374,7 +367,9 @@ export default function Calendar() {
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
                     {ev.time && (
-                      <Badge tone="slate">{ev.time}</Badge>
+                      <Badge tone="slate" icon={Clock} className="tabular-nums">
+                        {ev.time}
+                      </Badge>
                     )}
                     <span className="truncate font-medium text-slate-800 dark:text-slate-100">{ev.title}</span>
                     {ev.type && <Badge tone={toneOf(ev.type)}>{ev.type}</Badge>}
@@ -388,17 +383,9 @@ export default function Calendar() {
                 <IconButton
                   label={`刪除「${ev.title}」`}
                   onClick={() => handleRemove(ev)}
-                  className="hover:bg-rose-50 hover:text-rose-600"
+                  tone="danger"
                 >
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                    <path
-                      d="M6 7h12M9 7V5h6v2m-7 0v12a1 1 0 001 1h6a1 1 0 001-1V7"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
+                  <Trash2 size={18} strokeWidth={2} />
                 </IconButton>
               </li>
             ))}
@@ -410,7 +397,7 @@ export default function Calendar() {
       <Card className="p-4 sm:p-5">
         <SectionTitle>即將到嚟 · 未來 7 日</SectionTitle>
         {upcoming.length === 0 ? (
-          <EmptyState icon="✨" title="未來 7 日暫時無活動" />
+          <EmptyState icon={Sparkles} title="未來 7 日暫時無活動" />
         ) : (
           <ul className="space-y-2">
             {upcoming.map((ev) => {
@@ -422,13 +409,13 @@ export default function Calendar() {
                     onClick={() => jumpTo(ev.date)}
                     className="flex w-full items-center gap-3 rounded-xl border border-slate-200 px-3 py-2.5 text-left transition hover:bg-accent-soft focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:border-slate-700"
                   >
-                    <div className="flex w-14 shrink-0 flex-col items-center rounded-lg bg-accent-soft py-1 text-accent-strong">
-                      <span className="text-xs">{d.getMonth() + 1}月</span>
-                      <span className="text-base font-semibold leading-none">{d.getDate()}</span>
+                    <div className="flex w-14 shrink-0 flex-col items-center rounded-lg bg-accent-soft py-1 text-accent-strong dark:bg-accent/15 dark:text-accent">
+                      <span className="text-xs tabular-nums">{d.getMonth() + 1}月</span>
+                      <span className="text-base font-semibold leading-none tabular-nums">{d.getDate()}</span>
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2">
-                        {ev.time && <span className="text-xs font-medium text-accent">{ev.time}</span>}
+                        {ev.time && <span className="text-xs font-medium tabular-nums text-accent">{ev.time}</span>}
                         {ev.type && <Badge tone={toneOf(ev.type)}>{ev.type}</Badge>}
                         <span className="truncate font-medium text-slate-800 dark:text-slate-100">{ev.title}</span>
                       </div>

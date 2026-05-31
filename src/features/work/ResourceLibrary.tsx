@@ -1,4 +1,17 @@
 import { useMemo, useState } from 'react'
+import {
+  BookMarked,
+  Clapperboard,
+  ClipboardList,
+  FileText,
+  Link as LinkIcon,
+  Plus,
+  Presentation,
+  Search,
+  StickyNote,
+  Trash2,
+} from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 import { useCollection } from '../../lib/store'
 import { resourcesCol, topicsCol } from '../../data/collections'
 import type { ResourceType } from '../../data/types'
@@ -15,6 +28,7 @@ import {
   Select,
   StatCard,
   Textarea,
+  Tooltip,
 } from '../../ui'
 import { useToast } from '../../context/ToastContext'
 import { useConfirm } from '../../context/ConfirmContext'
@@ -27,13 +41,13 @@ const TYPE_LABEL: Record<ResourceType, string> = {
   video: '影片',
   note: '筆記',
 }
-const TYPE_ICON: Record<ResourceType, string> = {
-  handout: '📄',
-  slides: '📊',
-  paper: '📝',
-  link: '🔗',
-  video: '🎬',
-  note: '🗒️',
+const TYPE_ICON: Record<ResourceType, LucideIcon> = {
+  handout: FileText,
+  slides: Presentation,
+  paper: ClipboardList,
+  link: LinkIcon,
+  video: Clapperboard,
+  note: StickyNote,
 }
 
 const TYPE_KEYS = Object.keys(TYPE_LABEL) as ResourceType[]
@@ -95,7 +109,7 @@ export default function ResourceLibrary() {
     { id: 'all', label: '全部' },
     ...TYPE_KEYS.map((k) => ({
       id: k as FilterType,
-      label: `${TYPE_ICON[k]} ${TYPE_LABEL[k]}`,
+      label: TYPE_LABEL[k],
     })),
   ]
 
@@ -124,12 +138,18 @@ export default function ResourceLibrary() {
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
-        <Input
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="搜尋資源…"
-          className="min-w-[140px] flex-1"
-        />
+        <div className="relative min-w-[140px] flex-1">
+          <Search
+            size={16}
+            className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+          />
+          <Input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="搜尋資源…"
+            className="pl-9"
+          />
+        </div>
         <Select
           value={fTopic}
           onChange={(e) => setFTopic(e.target.value)}
@@ -142,68 +162,73 @@ export default function ResourceLibrary() {
             </option>
           ))}
         </Select>
-        <Button onClick={() => setShowForm(true)}>＋ 新增資源</Button>
+        <Button icon={Plus} onClick={() => setShowForm(true)}>
+          新增資源
+        </Button>
       </div>
 
       <Pills options={pillOptions} active={fType} onChange={setFType} />
 
       {filtered.length === 0 ? (
         <EmptyState
-          icon="📚"
+          icon={BookMarked}
           title="未有符合嘅資源"
-          hint="撳「＋ 新增資源」開始建立你嘅教材庫，或者調整篩選條件。"
+          hint="撳「新增資源」開始建立你嘅教材庫，或者調整篩選條件。"
           action={
-            <Button onClick={() => setShowForm(true)}>＋ 新增資源</Button>
+            <Button icon={Plus} onClick={() => setShowForm(true)}>
+              新增資源
+            </Button>
           }
         />
       ) : (
         <div className="grid gap-3 sm:grid-cols-2">
-          {filtered.map((r) => (
-            <Card key={r.id} className="group flex flex-col p-4">
-              <div className="flex items-start justify-between">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent-soft text-lg">
-                  {TYPE_ICON[r.type]}
+          {filtered.map((r) => {
+            const TypeIcon = TYPE_ICON[r.type]
+            return (
+              <Card key={r.id} className="group flex flex-col p-4">
+                <div className="flex items-start justify-between">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
+                    <TypeIcon size={20} strokeWidth={1.75} />
+                  </div>
+                  <Tooltip label="刪除">
+                    <IconButton
+                      label="刪除"
+                      tone="danger"
+                      onClick={() => removeResource(r.id, r.title)}
+                      className="opacity-0 transition group-hover:opacity-100"
+                    >
+                      <Trash2 size={16} />
+                    </IconButton>
+                  </Tooltip>
                 </div>
-                <IconButton
-                  label="刪除"
-                  onClick={() => removeResource(r.id, r.title)}
-                  className="opacity-0 transition group-hover:opacity-100 hover:text-rose-500"
-                >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                    <path
-                      d="M4 7h16M9 7V5a1 1 0 011-1h4a1 1 0 011 1v2m-9 0v12a1 1 0 001 1h8a1 1 0 001-1V7"
-                      stroke="currentColor"
-                      strokeWidth="1.6"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                </IconButton>
-              </div>
-              <p className="mt-3 text-sm font-semibold text-slate-800 dark:text-slate-100">
-                {r.title}
-              </p>
-              <div className="mt-1.5 flex flex-wrap gap-1.5">
-                <Badge tone="accent">{TYPE_LABEL[r.type]}</Badge>
-                {r.topicId && <Badge tone="slate">{topicName(r.topicId)}</Badge>}
-              </div>
-              {r.notes && (
-                <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-                  {r.notes}
+                <p className="mt-3 text-sm font-semibold text-slate-800 dark:text-slate-100">
+                  {r.title}
                 </p>
-              )}
-              {r.url && (
-                <a
-                  href={r.url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="mt-3 text-xs font-medium text-accent hover:underline"
-                >
-                  開啟連結 →
-                </a>
-              )}
-            </Card>
-          ))}
+                <div className="mt-1.5 flex flex-wrap gap-1.5">
+                  <Badge tone="accent">{TYPE_LABEL[r.type]}</Badge>
+                  {r.topicId && (
+                    <Badge tone="slate">{topicName(r.topicId)}</Badge>
+                  )}
+                </div>
+                {r.notes && (
+                  <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+                    {r.notes}
+                  </p>
+                )}
+                {r.url && (
+                  <a
+                    href={r.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-accent hover:underline"
+                  >
+                    開啟連結
+                    <LinkIcon size={12} />
+                  </a>
+                )}
+              </Card>
+            )
+          })}
         </div>
       )}
 
@@ -254,7 +279,7 @@ function AddForm({ onDone }: { onDone: () => void }) {
           >
             {TYPE_KEYS.map((k) => (
               <option key={k} value={k}>
-                {TYPE_ICON[k]} {TYPE_LABEL[k]}
+                {TYPE_LABEL[k]}
               </option>
             ))}
           </Select>

@@ -12,6 +12,7 @@ import Home from './pages/Home'
 import Settings from './pages/Settings'
 import ComingSoon from './components/ComingSoon'
 import { getFeature } from './features/registry'
+import { FeatureIcon } from './features/featureIcons'
 
 // 主框架：側邊欄 + 主內容區。
 // - 桌面（md 以上）：側邊欄固定喺左
@@ -112,7 +113,7 @@ function AppShell() {
                   </button>
                   <div>
                     <h1 className="flex items-center gap-2 text-2xl font-bold text-slate-800 dark:text-slate-100">
-                      <span>{feature.icon}</span>
+                      <FeatureIcon icon={feature.icon} size={24} className="text-accent" />
                       {feature.name}
                     </h1>
                     <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">

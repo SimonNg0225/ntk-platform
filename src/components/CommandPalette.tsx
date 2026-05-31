@@ -1,7 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { Search } from 'lucide-react'
 import { FEATURES } from '../features/registry'
+import { FeatureIcon } from '../features/featureIcons'
 import { useMode } from '../context/ModeContext'
 import { MODES, MODE_ORDER } from '../modes/modes'
+import { Kbd, cx } from '../ui'
 
 // ============================================================
 //  指令面板 (Command Palette) — 按 ⌘K / Ctrl+K 開啟
@@ -40,7 +43,6 @@ export default function CommandPalette({ open, onClose, onNavigate }: Props) {
     }
     const list: Item[] = []
 
-    // 首頁
     list.push({
       id: 'home',
       label: '首頁概覽',
@@ -49,7 +51,6 @@ export default function CommandPalette({ open, onClose, onNavigate }: Props) {
       action: () => onNavigate(null),
     })
 
-    // 目前模式功能
     FEATURES.filter((f) => f.modes.includes(mode)).forEach((f) =>
       list.push({
         id: f.id,
@@ -60,7 +61,6 @@ export default function CommandPalette({ open, onClose, onNavigate }: Props) {
       }),
     )
 
-    // 切換到另一模式
     MODE_ORDER.filter((m) => m !== mode).forEach((m) =>
       list.push({
         id: `mode-${m}`,
@@ -74,9 +74,7 @@ export default function CommandPalette({ open, onClose, onNavigate }: Props) {
       }),
     )
 
-    return q
-      ? list.filter((i) => i.label.toLowerCase().includes(q))
-      : list
+    return q ? list.filter((i) => i.label.toLowerCase().includes(q)) : list
   }, [query, mode, onNavigate, setMode])
 
   useEffect(() => {
@@ -99,9 +97,9 @@ export default function CommandPalette({ open, onClose, onNavigate }: Props) {
         className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
         onClick={onClose}
       />
-      <div className="relative z-10 w-full max-w-lg overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-slate-800">
-        <div className="flex items-center gap-2 border-b border-slate-100 px-4 dark:border-slate-700">
-          <span className="text-slate-400">🔍</span>
+      <div className="relative z-10 w-full max-w-lg overflow-hidden rounded-xl bg-white shadow-overlay ring-1 ring-slate-900/5 dark:bg-slate-800 dark:ring-white/10">
+        <div className="flex items-center gap-2.5 border-b border-slate-100 px-4 dark:border-slate-700">
+          <Search size={18} strokeWidth={1.75} className="text-slate-400" />
           <input
             ref={inputRef}
             value={query}
@@ -123,9 +121,7 @@ export default function CommandPalette({ open, onClose, onNavigate }: Props) {
             placeholder="搜尋功能、切換模式…"
             className="flex-1 bg-transparent py-3.5 text-sm text-slate-800 outline-none placeholder:text-slate-400 dark:text-slate-100"
           />
-          <kbd className="hidden rounded border border-slate-200 px-1.5 py-0.5 text-[10px] text-slate-400 dark:border-slate-600 sm:block">
-            ESC
-          </kbd>
+          <Kbd className="hidden sm:inline-flex">ESC</Kbd>
         </div>
         <ul className="max-h-80 overflow-y-auto p-2">
           {items.length === 0 && (
@@ -133,24 +129,52 @@ export default function CommandPalette({ open, onClose, onNavigate }: Props) {
               搵唔到「{query}」
             </li>
           )}
-          {items.map((item, idx) => (
-            <li key={item.id}>
-              <button
-                onMouseEnter={() => setActive(idx)}
-                onClick={() => run(idx)}
-                className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm transition ${
-                  idx === active
-                    ? 'bg-accent-soft text-accent-strong dark:bg-accent/20 dark:text-accent'
-                    : 'text-slate-700 dark:text-slate-200'
-                }`}
-              >
-                <span className="text-base">{item.icon}</span>
-                <span className="flex-1 font-medium">{item.label}</span>
-                <span className="text-xs text-slate-400">{item.hint}</span>
-              </button>
-            </li>
-          ))}
+          {items.map((item, idx) => {
+            const on = idx === active
+            return (
+              <li key={item.id} aria-selected={on} role="option">
+                <button
+                  onMouseEnter={() => setActive(idx)}
+                  onClick={() => run(idx)}
+                  className={cx(
+                    'flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm transition-colors',
+                    on
+                      ? 'bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent'
+                      : 'text-slate-700 dark:text-slate-200',
+                  )}
+                >
+                  <FeatureIcon
+                    icon={item.icon}
+                    size={18}
+                    className={on ? 'text-accent' : 'text-slate-400'}
+                  />
+                  <span className="flex-1 font-medium">{item.label}</span>
+                  <span
+                    className={cx(
+                      'text-xs',
+                      on
+                        ? 'text-accent-strong/70 dark:text-accent/70'
+                        : 'text-slate-400',
+                    )}
+                  >
+                    {item.hint}
+                  </span>
+                </button>
+              </li>
+            )
+          })}
         </ul>
+        <div className="flex items-center gap-3 border-t border-slate-100 px-4 py-2 text-[11px] text-slate-400 dark:border-slate-700 dark:text-slate-500">
+          <span className="flex items-center gap-1">
+            <Kbd>↑↓</Kbd> 選擇
+          </span>
+          <span className="flex items-center gap-1">
+            <Kbd>↵</Kbd> 開啟
+          </span>
+          <span className="flex items-center gap-1">
+            <Kbd>esc</Kbd> 關閉
+          </span>
+        </div>
       </div>
     </div>
   )

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Inbox as InboxIcon, CheckSquare, NotebookPen, Trash2, Plus, Clock } from 'lucide-react';
 import { useCollection } from '../../lib/store';
 import { inboxCol, tasksCol, notesCol } from '../../data/collections';
 import { Input, Button, Card, Badge, EmptyState } from '../../ui';
@@ -69,7 +70,7 @@ export default function Inbox() {
           onKeyDown={handleKeyDown}
           placeholder="掉低一個諗法⋯⋯"
         />
-        <Button type="button" onClick={capture} className="shrink-0">
+        <Button type="button" icon={Plus} onClick={capture} className="shrink-0">
           擷取
         </Button>
       </div>
@@ -81,7 +82,7 @@ export default function Inbox() {
       {sorted.length === 0 ? (
         <div className="mt-3">
           <EmptyState
-            icon="✨"
+            icon={InboxIcon}
             title="Inbox 空空如也"
             hint="有諗法就即刻掉低，唔使諗點分類。"
           />
@@ -91,30 +92,34 @@ export default function Inbox() {
           {sorted.map((item) => (
             <Card key={item.id} className="p-4">
               <p className="whitespace-pre-wrap break-words text-slate-900 dark:text-slate-100">{item.text}</p>
-              <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
-                {new Date(item.createdAt).toLocaleString('zh-HK')}
+              <p className="mt-1 flex items-center gap-1 text-xs text-slate-400 dark:text-slate-500">
+                <Clock size={12} className="shrink-0" />
+                <span className="tabular-nums">{new Date(item.createdAt).toLocaleString('zh-HK')}</span>
               </p>
               <div className="mt-3 flex flex-wrap gap-2">
                 <Button
                   type="button"
                   size="sm"
                   variant="secondary"
+                  icon={CheckSquare}
                   onClick={() => toTask(item.id, item.text)}
                 >
-                  轉做待辦 ✅
+                  轉做待辦
                 </Button>
                 <Button
                   type="button"
                   size="sm"
                   variant="secondary"
+                  icon={NotebookPen}
                   onClick={() => toNote(item.id, item.text)}
                 >
-                  轉做筆記 📝
+                  轉做筆記
                 </Button>
                 <Button
                   type="button"
                   size="sm"
                   variant="ghost"
+                  icon={Trash2}
                   onClick={() => remove(item.id)}
                 >
                   刪除

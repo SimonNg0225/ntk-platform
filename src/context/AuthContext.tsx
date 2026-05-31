@@ -8,6 +8,7 @@ import {
 } from 'react'
 import type { Session, User } from '@supabase/supabase-js'
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
+import { attachSync, detachSync } from '../lib/sync'
 
 // ============================================================
 //  AuthContext
@@ -45,6 +46,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     })
     return () => sub.subscription.unsubscribe()
   }, [])
+
+  // 登入後啟動雲端同步；登出 / 切換 user 時停止
+  const userId = session?.user?.id
+  useEffect(() => {
+    if (!isSupabaseConfigured) return
+    if (userId) void attachSync(userId)
+    else detachSync()
+    return () => detachSync()
+  }, [userId])
 
   const value = useMemo<AuthContextValue>(
     () => ({
