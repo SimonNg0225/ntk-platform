@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import {
   Button,
   Card,
@@ -18,9 +18,10 @@ import {
   CalendarDays,
   ListChecks,
   Flame,
+  Camera,
 } from 'lucide-react'
 import { complete, type AIModel } from '../../../../lib/aiClient'
-import { stripJsonFence } from '../../../../lib/aiJson'
+import { stripJsonFence, parseJsonArray } from '../../../../lib/aiJson'
 import { useToast } from '../../../../context/ToastContext'
 import { useCollection } from '../../../../lib/store'
 import { coachPlansCol, type CoachDay, type CoachPlan } from './store'
@@ -128,6 +129,53 @@ export default function PlanGen({ model }: { model: AIModel }) {
   const [busy, setBusy] = useState(false)
   const [result, setResult] = useState<CoachDay[] | null>(null)
   const [saved, setSaved] = useState(false)
+
+  // 拍照識別器材（Gemini Vision）：相 → 認出清單內器材 → 自動勾選
+  const fileRef = useRef<HTMLInputElement>(null)
+  const [recog, setRecog] = useState(false)
+
+  function recognizeEquipment(file: File) {
+    const reader = new FileReader()
+    reader.onload = async () => {
+      const dataUrl = String(reader.result)
+      const comma = dataUrl.indexOf(',')
+      const semi = dataUrl.indexOf(';')
+      const b64 = comma >= 0 ? dataUrl.slice(comma + 1) : ''
+      const mimeType = semi > 5 ? dataUrl.slice(5, semi) : 'image/jpeg'
+      if (!b64) {
+        toast.error('讀唔到相，請再試')
+        return
+      }
+      setRecog(true)
+      try {
+        const raw = await complete({
+          model,
+          messages: [
+            {
+              role: 'user',
+              content: `睇呢張健身房／器材相，從以下清單揀出相入面真係見到嘅器材：${EQUIPMENT.join('、')}。只回 JSON 字串陣列（只可以用清單內嘅名），唔好任何解說文字。例：["槓鈴","啞鈴"]`,
+              images: [{ mimeType, data: b64 }],
+            },
+          ],
+        })
+        const list = parseJsonArray<string>(raw) || []
+        const matched = EQUIPMENT.filter((e) =>
+          list.some((x) => typeof x === 'string' && x.includes(e)),
+        )
+        if (matched.length > 0) {
+          setEquip(matched)
+          toast.success(`識別到：${matched.join('、')}`)
+        } else {
+          toast.info('相中認唔到清單內嘅器材，請手動揀')
+        }
+      } catch (e) {
+        toast.error((e as Error).message || '識別失敗，請再試')
+      } finally {
+        setRecog(false)
+      }
+    }
+    reader.readAsDataURL(file)
+  }
 
   const goalLabel = useMemo(
     () => GOALS.find((g) => g.id === goal)?.label ?? '增肌',
@@ -259,6 +307,28 @@ export default function PlanGen({ model }: { model: AIModel }) {
                 </button>
               )
             })}
+          </div>
+          <div className="mt-2">
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => {
+                const f = e.target.files?.[0]
+                if (f) recognizeEquipment(f)
+                e.target.value = ''
+              }}
+            />
+            <Button
+              variant="ghost"
+              size="sm"
+              icon={Camera}
+              loading={recog}
+              onClick={() => fileRef.current?.click()}
+            >
+              {recog ? 'AI 識別中…' : '影相 / 上載相 → AI 識別器材'}
+            </Button>
           </div>
         </Field>
 

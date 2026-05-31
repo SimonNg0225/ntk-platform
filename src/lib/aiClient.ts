@@ -11,9 +11,16 @@ import { supabase, isSupabaseConfigured } from './supabase'
 
 export type AIModel = 'gemini-2.5-flash' | 'gemini-2.5-pro'
 
+export interface AIImage {
+  mimeType: string
+  data: string // base64（唔含 data: 前綴）
+}
+
 export interface AIMessage {
   role: 'user' | 'model'
   content: string
+  /** 多模態：附帶圖片畀 Gemini Vision 分析（例：拍照識別器材 / 姿勢） */
+  images?: AIImage[]
 }
 
 export interface AIChatOptions {

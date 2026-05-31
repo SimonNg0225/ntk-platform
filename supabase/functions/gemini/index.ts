@@ -31,9 +31,15 @@ const corsHeaders = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 }
 
+interface InlineImage {
+  mimeType: string
+  data: string // base64（唔含 data: 前綴）
+}
+
 interface ChatMessage {
   role: 'user' | 'model'
   content: string
+  images?: InlineImage[]
 }
 
 interface RequestBody {
@@ -99,10 +105,17 @@ Deno.serve(async (req: Request) => {
     typeof body.temperature === 'number' ? body.temperature : 0.7
 
   // ── 砌 Gemini payload ────────────────────────────────────
-  const contents = messages.map((m) => ({
-    role: m.role === 'model' ? 'model' : 'user',
-    parts: [{ text: String(m.content ?? '') }],
-  }))
+  const contents = messages.map((m) => {
+    const parts: Record<string, unknown>[] = [{ text: String(m.content ?? '') }]
+    if (Array.isArray(m.images)) {
+      for (const im of m.images) {
+        if (im?.data && im?.mimeType) {
+          parts.push({ inlineData: { mimeType: im.mimeType, data: im.data } })
+        }
+      }
+    }
+    return { role: m.role === 'model' ? 'model' : 'user', parts }
+  })
 
   const payload: Record<string, unknown> = {
     contents,
