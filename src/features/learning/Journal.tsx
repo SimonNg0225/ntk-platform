@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { useCollection } from '../../lib/store'
 import { journalCol } from '../../data/collections'
 import { Textarea, Button, Card, Badge, SectionTitle, EmptyState } from '../../ui'
+import { useToast } from '../../context/ToastContext'
+import { useConfirm } from '../../context/ConfirmContext'
 
 const MOODS = ['😀', '🙂', '😐', '😓', '😣']
 const PROMPTS = [
@@ -12,6 +14,8 @@ const PROMPTS = [
 
 export default function Journal() {
   const entries = useCollection(journalCol)
+  const toast = useToast()
+  const confirm = useConfirm()
   const today = new Date().toISOString().slice(0, 10)
   const todayEntry = entries.find((e) => e.date === today)
 
@@ -27,7 +31,20 @@ export default function Journal() {
       journalCol.add({ date: today, content: content.trim(), mood })
     }
     setSaved(true)
+    toast.success('已儲存日誌')
     setTimeout(() => setSaved(false), 1500)
+  }
+
+  const removeEntry = async (id: string, date: string) => {
+    const ok = await confirm({
+      title: '刪除日誌？',
+      message: `確定要刪除 ${date} 嘅日誌？呢個動作無法復原。`,
+      confirmText: '刪除',
+      tone: 'danger',
+    })
+    if (!ok) return
+    journalCol.remove(id)
+    toast.success('已刪除日誌')
   }
 
   const past = [...entries]
@@ -39,7 +56,7 @@ export default function Journal() {
       {/* 今日 */}
       <div className="space-y-3 rounded-2xl border border-accent/30 bg-accent-soft/40 p-4">
         <div className="flex items-center justify-between">
-          <p className="text-sm font-semibold text-slate-700">
+          <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
             今日反思 · {today}
           </p>
           <div className="flex gap-1">
@@ -74,18 +91,18 @@ export default function Journal() {
             {past.map((e) => (
               <Card key={e.id} className="group p-4">
                 <div className="flex items-center justify-between">
-                  <span className="flex items-center gap-2 text-xs font-medium text-slate-500">
+                  <span className="flex items-center gap-2 text-xs font-medium text-slate-500 dark:text-slate-400">
                     {e.mood && <Badge tone="accent">{e.mood}</Badge>}
                     {e.date}
                   </span>
                   <button
-                    onClick={() => journalCol.remove(e.id)}
+                    onClick={() => removeEntry(e.id, e.date)}
                     className="text-xs text-slate-300 opacity-0 transition group-hover:opacity-100 hover:text-rose-500"
                   >
                     刪除
                   </button>
                 </div>
-                <p className="mt-1.5 whitespace-pre-wrap text-sm text-slate-700">
+                <p className="mt-1.5 whitespace-pre-wrap text-sm text-slate-700 dark:text-slate-200">
                   {e.content}
                 </p>
               </Card>

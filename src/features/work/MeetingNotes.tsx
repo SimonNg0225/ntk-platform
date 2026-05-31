@@ -13,6 +13,8 @@ import {
   SectionTitle,
   Textarea,
 } from '../../ui'
+import { useToast } from '../../context/ToastContext'
+import { useConfirm } from '../../context/ConfirmContext'
 
 const today = () => new Date().toISOString().slice(0, 10)
 
@@ -39,6 +41,8 @@ const emptyDraft = (): Draft => ({
 
 export default function MeetingNotes() {
   const notes = useCollection(meetingNotesCol)
+  const toast = useToast()
+  const confirm = useConfirm()
 
   // 新增 / 編輯 Modal
   const [modalOpen, setModalOpen] = useState(false)
@@ -105,26 +109,36 @@ export default function MeetingNotes() {
     }
     if (editingId) {
       meetingNotesCol.update(editingId, payload)
+      toast.success('已儲存筆記')
     } else {
       meetingNotesCol.add({ ...payload, createdAt: new Date().toISOString() })
+      toast.success('已新增筆記')
     }
     setModalOpen(false)
     setEditingId(null)
   }
 
-  function removeNote(id: string) {
-    meetingNotesCol.remove(id)
-    if (expandedId === id) setExpandedId(null)
+  async function removeNote(note: MeetingNote) {
+    const ok = await confirm({
+      title: '刪除筆記？',
+      message: `「${note.title}」將會被永久刪除，呢個動作無法復原。`,
+      confirmText: '刪除',
+      tone: 'danger',
+    })
+    if (!ok) return
+    meetingNotesCol.remove(note.id)
+    if (expandedId === note.id) setExpandedId(null)
+    toast.success('已刪除筆記')
   }
 
   return (
     <div className="mx-auto w-full max-w-3xl space-y-6 p-4 sm:p-6">
       <header className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1 className="text-xl font-semibold text-slate-900 sm:text-2xl">
+          <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100 sm:text-2xl">
             會議 / 行政筆記
           </h1>
-          <p className="mt-1 text-sm text-slate-500">
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
             記錄會議重點同行政事項，方便日後翻查。共 {notes.length} 則。
           </p>
         </div>
@@ -189,10 +203,10 @@ export default function MeetingNotes() {
             return (
               <Card key={note.id} className="space-y-2 p-4 sm:p-5">
                 <div className="flex items-start justify-between gap-3">
-                  <h3 className="text-base font-semibold text-slate-800">
+                  <h3 className="text-base font-semibold text-slate-800 dark:text-slate-100">
                     {note.title}
                   </h3>
-                  <span className="shrink-0 text-xs text-slate-400">
+                  <span className="shrink-0 text-xs text-slate-400 dark:text-slate-500">
                     {note.date}
                   </span>
                 </div>
@@ -215,7 +229,7 @@ export default function MeetingNotes() {
                   </div>
                 )}
 
-                <p className="whitespace-pre-wrap text-sm text-slate-600">
+                <p className="whitespace-pre-wrap text-sm text-slate-600 dark:text-slate-300">
                   {shown}
                 </p>
 
@@ -234,13 +248,13 @@ export default function MeetingNotes() {
                   <button
                     type="button"
                     onClick={() => openEdit(note)}
-                    className="text-xs font-medium text-slate-500 hover:text-slate-700"
+                    className="text-xs font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
                   >
                     編輯
                   </button>
                   <button
                     type="button"
-                    onClick={() => removeNote(note.id)}
+                    onClick={() => removeNote(note)}
                     className="text-xs font-medium text-rose-500 hover:text-rose-600"
                   >
                     刪除

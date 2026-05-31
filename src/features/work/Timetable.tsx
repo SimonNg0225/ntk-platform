@@ -11,6 +11,8 @@ import {
   Select,
   StatCard,
 } from '../../ui'
+import { useToast } from '../../context/ToastContext'
+import { useConfirm } from '../../context/ConfirmContext'
 
 const DAYS: { day: number; label: string }[] = [
   { day: 1, label: '星期一' },
@@ -36,6 +38,8 @@ export default function Timetable() {
   const slots = useCollection(timetableCol)
   const classes = useCollection(classesCol)
   const [editor, setEditor] = useState<EditorState | null>(null)
+  const toast = useToast()
+  const confirm = useConfirm()
 
   const today = new Date().getDay() // 0=日 … 6=六
 
@@ -95,23 +99,33 @@ export default function Timetable() {
 
     if (editor.slotId) {
       timetableCol.update(editor.slotId, payload)
+      toast.success('已更新課堂')
     } else {
       timetableCol.add(payload)
+      toast.success('已新增課堂')
     }
     setEditor(null)
   }
 
-  function handleRemove() {
+  async function handleRemove() {
     if (!editor?.slotId) return
+    const ok = await confirm({
+      title: '刪除課堂？',
+      message: '呢節課堂將會喺時間表移除，呢個動作無法復原。',
+      confirmText: '刪除',
+      tone: 'danger',
+    })
+    if (!ok) return
     timetableCol.remove(editor.slotId)
+    toast.success('已刪除課堂')
     setEditor(null)
   }
 
   return (
     <div className="space-y-4">
       <header className="space-y-1">
-        <h1 className="text-2xl font-semibold text-slate-900">時間表</h1>
-        <p className="text-sm text-slate-500">
+        <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-100">時間表</h1>
+        <p className="text-sm text-slate-500 dark:text-slate-400">
           每週教學時間表，撳格子新增或編輯一節課堂。
         </p>
       </header>
@@ -120,11 +134,11 @@ export default function Timetable() {
         <StatCard label="每週總堂數" value={slots.length} unit="節" icon="📅" />
       </div>
 
-      <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white">
+      <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800">
         <table className="w-full min-w-[640px] border-collapse text-sm">
           <thead>
             <tr>
-              <th className="w-20 border-b border-slate-200 bg-slate-50 p-3 text-left font-medium text-slate-500">
+              <th className="w-20 border-b border-slate-200 bg-slate-50 p-3 text-left font-medium text-slate-500 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-400">
                 節數
               </th>
               {DAYS.map((d) => {
@@ -132,10 +146,10 @@ export default function Timetable() {
                 return (
                   <th
                     key={d.day}
-                    className={`border-b border-l border-slate-200 p-3 text-center font-medium ${
+                    className={`border-b border-l border-slate-200 p-3 text-center font-medium dark:border-slate-700 ${
                       isToday
                         ? 'bg-accent-soft text-accent-strong'
-                        : 'bg-slate-50 text-slate-600'
+                        : 'bg-slate-50 text-slate-600 dark:bg-slate-800/50 dark:text-slate-300'
                     }`}
                   >
                     {d.label}
@@ -150,7 +164,7 @@ export default function Timetable() {
           <tbody>
             {PERIODS.map((period) => (
               <tr key={period}>
-                <th className="border-b border-slate-200 bg-slate-50 p-3 text-left font-medium text-slate-500">
+                <th className="border-b border-slate-200 bg-slate-50 p-3 text-left font-medium text-slate-500 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-400">
                   第 {period} 節
                 </th>
                 {DAYS.map((d) => {
@@ -163,7 +177,7 @@ export default function Timetable() {
                   return (
                     <td
                       key={d.day}
-                      className={`border-b border-l border-slate-200 p-1.5 align-top ${
+                      className={`border-b border-l border-slate-200 p-1.5 align-top dark:border-slate-700 ${
                         isToday ? 'bg-accent-soft/30' : ''
                       }`}
                     >
@@ -173,7 +187,7 @@ export default function Timetable() {
                         className={`flex h-20 w-full flex-col items-start justify-start gap-1 rounded-xl border border-transparent p-2 text-left transition focus:outline-none focus:ring-2 focus:ring-accent/30 ${
                           slot
                             ? 'bg-accent-soft hover:bg-accent-soft/80'
-                            : 'hover:bg-slate-50'
+                            : 'hover:bg-slate-50 dark:hover:bg-slate-700'
                         }`}
                       >
                         {slot ? (
@@ -191,7 +205,7 @@ export default function Timetable() {
                             </div>
                           </>
                         ) : (
-                          <span className="text-xs text-slate-300">＋</span>
+                          <span className="text-xs text-slate-300 dark:text-slate-600">＋</span>
                         )}
                       </button>
                     </td>
@@ -210,7 +224,7 @@ export default function Timetable() {
       >
         {editor && (
           <div className="space-y-4">
-            <p className="text-sm text-slate-500">
+            <p className="text-sm text-slate-500 dark:text-slate-400">
               {DAYS.find((d) => d.day === editor.day)?.label} · 第 {editor.period}{' '}
               節
             </p>

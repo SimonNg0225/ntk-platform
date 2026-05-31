@@ -24,8 +24,8 @@ const BTN_BASE =
 const BTN_VARIANT: Record<ButtonVariant, string> = {
   primary: 'bg-accent text-white hover:bg-accent-strong shadow-sm',
   secondary:
-    'border border-slate-200 bg-white text-slate-700 hover:bg-slate-50',
-  ghost: 'text-slate-600 hover:bg-slate-100',
+    'border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700',
+  ghost: 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800',
   danger: 'bg-rose-600 text-white hover:bg-rose-700',
 }
 const BTN_SIZE: Record<ButtonSize, string> = {
@@ -56,7 +56,7 @@ export function Button({
 
 // ───────── Input / Textarea / Select ─────────
 const FIELD =
-  'w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-accent focus:ring-2 focus:ring-accent/25 disabled:bg-slate-50'
+  'w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-accent focus:ring-2 focus:ring-accent/25 disabled:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-500 dark:disabled:bg-slate-900'
 
 export function Input({
   className,
@@ -96,7 +96,9 @@ export function Field({
   return (
     <label className="block space-y-1">
       {label && (
-        <span className="text-xs font-medium text-slate-600">{label}</span>
+        <span className="text-xs font-medium text-slate-600 dark:text-slate-300">
+          {label}
+        </span>
       )}
       {children}
       {hint && <span className="block text-xs text-slate-400">{hint}</span>}
@@ -120,7 +122,7 @@ export function Card({
     <div
       onClick={onClick}
       className={cx(
-        'rounded-2xl border border-slate-200/80 bg-white shadow-sm',
+        'rounded-2xl border border-slate-200/80 bg-white shadow-sm dark:border-slate-700/80 dark:bg-slate-800',
         hover && 'transition hover:-translate-y-0.5 hover:shadow-md',
         onClick && 'cursor-pointer',
         className,
@@ -195,9 +197,11 @@ export function EmptyState({
   action?: ReactNode
 }) {
   return (
-    <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-slate-50/60 px-6 py-12 text-center">
+    <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-slate-50/60 px-6 py-12 text-center dark:border-slate-700 dark:bg-slate-800/40">
       <span className="text-3xl">{icon}</span>
-      <p className="mt-3 text-sm font-medium text-slate-600">{title}</p>
+      <p className="mt-3 text-sm font-medium text-slate-600 dark:text-slate-300">
+        {title}
+      </p>
       {hint && <p className="mt-1 max-w-xs text-xs text-slate-400">{hint}</p>}
       {action && <div className="mt-4">{action}</div>}
     </div>
@@ -215,7 +219,7 @@ export function ProgressBar({
   return (
     <div
       className={cx(
-        'h-2 w-full overflow-hidden rounded-full bg-slate-100',
+        'h-2 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-700',
         className,
       )}
     >
@@ -249,19 +253,21 @@ export function StatCard({
       className={cx(
         'rounded-2xl border p-4 transition',
         highlight
-          ? 'border-accent/30 bg-accent-soft'
-          : 'border-slate-200 bg-white',
+          ? 'border-accent/30 bg-accent-soft dark:border-accent/40 dark:bg-accent/15'
+          : 'border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800',
         onClick && 'cursor-pointer hover:-translate-y-0.5 hover:shadow-md',
       )}
     >
       <div className="flex items-center gap-1.5">
         {icon && <span className="text-sm">{icon}</span>}
-        <p className="text-xs text-slate-500">{label}</p>
+        <p className="text-xs text-slate-500 dark:text-slate-400">{label}</p>
       </div>
       <p
         className={cx(
           'mt-1 text-2xl font-bold',
-          highlight ? 'text-accent-strong' : 'text-slate-800',
+          highlight
+            ? 'text-accent-strong dark:text-accent'
+            : 'text-slate-800 dark:text-slate-100',
         )}
       >
         {value}
@@ -286,7 +292,7 @@ export function Tabs<T extends string>({
   onChange: (id: T) => void
 }) {
   return (
-    <div className="flex gap-1 rounded-xl bg-slate-100 p-1">
+    <div className="flex gap-1 rounded-xl bg-slate-100 p-1 dark:bg-slate-800">
       {tabs.map((t) => (
         <button
           key={t.id}
@@ -294,8 +300,8 @@ export function Tabs<T extends string>({
           className={cx(
             'flex-1 rounded-lg px-3 py-1.5 text-sm font-medium transition',
             active === t.id
-              ? 'bg-white text-slate-800 shadow-sm'
-              : 'text-slate-500 hover:text-slate-700',
+              ? 'bg-white text-slate-800 shadow-sm dark:bg-slate-600 dark:text-slate-100'
+              : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200',
           )}
         >
           {t.label}
@@ -325,7 +331,7 @@ export function Pills<T extends string>({
             'rounded-full px-4 py-1.5 text-sm font-medium transition',
             active === o.id
               ? 'bg-accent text-white'
-              : 'bg-slate-100 text-slate-600 hover:bg-slate-200',
+              : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700',
           )}
         >
           {o.label}
@@ -354,13 +360,15 @@ export function Modal({
         className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
         onClick={onClose}
       />
-      <div className="relative z-10 max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-t-3xl bg-white p-5 shadow-2xl sm:rounded-3xl sm:p-6">
+      <div className="relative z-10 max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-t-3xl bg-white p-5 shadow-2xl dark:bg-slate-800 sm:rounded-3xl sm:p-6">
         {title && (
           <div className="mb-4 flex items-center justify-between">
-            <h3 className="text-base font-bold text-slate-800">{title}</h3>
+            <h3 className="text-base font-bold text-slate-800 dark:text-slate-100">
+              {title}
+            </h3>
             <button
               onClick={onClose}
-              className="rounded-lg p-1 text-slate-400 hover:bg-slate-100"
+              className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700"
               aria-label="關閉"
             >
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none">

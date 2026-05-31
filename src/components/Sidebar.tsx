@@ -6,6 +6,7 @@ import AccountBox from './AccountBox'
 interface Props {
   activeId: string | null
   onSelect: (id: string | null) => void
+  onOpenSettings?: () => void
   /** 喺手機抽屜入面用：揀完一項就關抽屜 */
   onClose?: () => void
   className?: string
@@ -15,6 +16,7 @@ interface Props {
 export default function Sidebar({
   activeId,
   onSelect,
+  onOpenSettings,
   onClose,
   className = '',
 }: Props) {
@@ -27,7 +29,9 @@ export default function Sidebar({
   }
 
   return (
-    <aside className={`flex w-72 shrink-0 flex-col bg-white ${className}`}>
+    <aside
+      className={`flex w-72 shrink-0 flex-col bg-white dark:bg-slate-900 ${className}`}
+    >
       {/* 品牌 */}
       <div className="flex items-center justify-between px-5 py-5">
         <div className="flex items-center gap-2.5">
@@ -35,7 +39,7 @@ export default function Sidebar({
             N
           </div>
           <div>
-            <p className="text-sm font-bold leading-none text-slate-800">
+            <p className="text-sm font-bold leading-none text-slate-800 dark:text-slate-100">
               NTK Platform
             </p>
             <p className="mt-1 text-xs text-slate-400">個人學習與工作平台</p>
@@ -44,7 +48,7 @@ export default function Sidebar({
         {onClose && (
           <button
             onClick={onClose}
-            className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 md:hidden"
+            className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 md:hidden"
             aria-label="關閉選單"
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
@@ -88,7 +92,7 @@ export default function Sidebar({
                 <span className="text-base">{f.icon}</span>
                 <span className="flex-1 text-left">{f.name}</span>
                 {f.status === 'soon' && (
-                  <span className="rounded-md bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-400">
+                  <span className="rounded-md bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-400 dark:bg-slate-800">
                     即將
                   </span>
                 )}
@@ -98,10 +102,22 @@ export default function Sidebar({
         ))}
       </nav>
 
-      {/* 頁腳：帳戶區 + 版本 */}
-      <div className="border-t border-slate-100">
+      {/* 頁腳：設定 + 帳戶區 + 版本 */}
+      <div className="border-t border-slate-100 dark:border-slate-800">
+        <button
+          onClick={() => {
+            onOpenSettings?.()
+            onClose?.()
+          }}
+          className={`${navClass(activeId === '__settings__')} m-2 w-[calc(100%-1rem)]`}
+        >
+          <span className="text-base">⚙️</span>
+          <span>設定</span>
+        </button>
         <AccountBox />
-        <div className="px-5 pb-3 text-xs text-slate-300">v0.3 · {countLabel(groups)} 個功能</div>
+        <div className="px-5 pb-3 text-xs text-slate-300 dark:text-slate-600">
+          v0.5 · {countLabel(groups)} 個功能
+        </div>
       </div>
     </aside>
   )
@@ -113,6 +129,6 @@ function countLabel(groups: { items: unknown[] }[]) {
 
 function navClass(active: boolean) {
   return active
-    ? 'flex w-full items-center gap-2.5 rounded-xl bg-accent-soft px-3 py-2 text-sm font-semibold text-accent-strong'
-    : 'flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-50'
+    ? 'flex w-full items-center gap-2.5 rounded-xl bg-accent-soft px-3 py-2 text-sm font-semibold text-accent-strong dark:bg-accent/20 dark:text-accent'
+    : 'flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800'
 }

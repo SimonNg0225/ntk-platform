@@ -1,5 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useCollection } from '../../lib/store'
+import { useToast } from '../../context/ToastContext'
+import { useConfirm } from '../../context/ConfirmContext'
 import { decksCol, cardsCol } from '../../data/collections'
 import { isDue, schedule, RATING_LABEL, todayStr, type Rating } from '../../lib/srs'
 import type { Card } from '../../data/types'
@@ -57,6 +59,8 @@ function DeckList({
 }) {
   const decks = useCollection(decksCol)
   const cards = useCollection(cardsCol)
+  const toast = useToast()
+  const confirm = useConfirm()
   const [name, setName] = useState('')
 
   const totalDue = cards.filter(isDue).length
@@ -65,6 +69,7 @@ function DeckList({
     if (!name.trim()) return
     decksCol.add({ name: name.trim(), createdAt: new Date().toISOString() })
     setName('')
+    toast.success('已新增牌組')
   }
 
   return (
@@ -100,24 +105,32 @@ function DeckList({
           return (
             <UICard key={d.id} className="group p-4">
               <div className="flex items-start justify-between gap-2">
-                <p className="text-base font-semibold text-slate-800">
+                <p className="text-base font-semibold text-slate-800 dark:text-slate-100">
                   {d.name}
                 </p>
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => {
-                    if (!confirm(`刪除牌組「${d.name}」？卡片亦會一併刪除。`))
+                  onClick={async () => {
+                    if (
+                      !(await confirm({
+                        title: '刪除牌組？',
+                        message: `牌組「${d.name}」連同 ${deckCards.length} 張卡片會一併刪除，無法復原。`,
+                        confirmText: '刪除',
+                        tone: 'danger',
+                      }))
+                    )
                       return
                     decksCol.remove(d.id)
                     deckCards.forEach((c) => cardsCol.remove(c.id))
+                    toast.success('已刪除牌組')
                   }}
                   className="text-slate-300 opacity-0 transition group-hover:opacity-100 hover:text-rose-500"
                 >
                   刪除
                 </Button>
               </div>
-              <p className="mt-1 text-xs text-slate-400">
+              <p className="mt-1 text-xs text-slate-400 dark:text-slate-400">
                 {deckCards.length} 張卡 · 今日到期{' '}
                 <span className="font-semibold text-accent">{due}</span>
               </p>
@@ -168,6 +181,8 @@ function DeckDetail({
   const decks = useCollection(decksCol)
   const cards = useCollection(cardsCol).filter((c) => c.deckId === deckId)
   const deck = decks.find((d) => d.id === deckId)
+  const toast = useToast()
+  const confirm = useConfirm()
   const [front, setFront] = useState('')
   const [back, setBack] = useState('')
   const [renameOpen, setRenameOpen] = useState(false)
@@ -191,6 +206,7 @@ function DeckDetail({
     setFront('')
     setBack('')
     document.getElementById('card-front')?.focus()
+    toast.success('已加入卡片')
   }
 
   const saveRename = () => {
@@ -198,6 +214,7 @@ function DeckDetail({
     if (!v) return
     decksCol.update(deckId, { name: v })
     setRenameOpen(false)
+    toast.success('已更新牌組名稱')
   }
 
   return (
@@ -208,7 +225,7 @@ function DeckDetail({
 
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-1.5">
-          <h3 className="text-lg font-bold text-slate-800">{deck?.name}</h3>
+          <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">{deck?.name}</h3>
           <IconButton
             label="改名"
             onClick={() => {
@@ -264,15 +281,27 @@ function DeckDetail({
             <UICard className="p-3">
               <div className="flex items-start justify-between gap-2">
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-slate-800">
+                  <p className="text-sm font-medium text-slate-800 dark:text-slate-100">
                     {c.front}
                   </p>
-                  <p className="mt-1 text-sm text-slate-500">{c.back}</p>
+                  <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{c.back}</p>
                 </div>
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => cardsCol.remove(c.id)}
+                  onClick={async () => {
+                    if (
+                      !(await confirm({
+                        title: '刪除卡片？',
+                        message: '此卡片會被永久刪除，無法復原。',
+                        confirmText: '刪除',
+                        tone: 'danger',
+                      }))
+                    )
+                      return
+                    cardsCol.remove(c.id)
+                    toast.success('已刪除卡片')
+                  }}
                   className="text-slate-300 opacity-0 transition group-hover:opacity-100 hover:text-rose-500"
                 >
                   刪除
@@ -330,6 +359,7 @@ function ReviewSession({
   onDone: () => void
 }) {
   const allCards = useCollection(cardsCol)
+  const toast = useToast()
   // 開場時鎖定到期隊列（用 id）
   const [queue, setQueue] = useState<string[]>(() =>
     allCards.filter((c) => c.deckId === deckId && isDue(c)).map((c) => c.id),
@@ -351,8 +381,8 @@ function ReviewSession({
     return (
       <UICard className="space-y-4 p-8 text-center">
         <p className="text-4xl">🎉</p>
-        <p className="text-lg font-semibold text-slate-800">複習完成！</p>
-        <p className="text-sm text-slate-500">
+        <p className="text-lg font-semibold text-slate-800 dark:text-slate-100">複習完成！</p>
+        <p className="text-sm text-slate-500 dark:text-slate-400">
           今次複習咗 <span className="font-semibold text-accent">{done}</span>{' '}
           張卡。
         </p>
@@ -374,13 +404,15 @@ function ReviewSession({
     setQueue((q) => {
       const [, ...rest] = q
       // 唔記得 → 排返去隊尾，今次再出
-      return rating === 'again' ? [...rest, card.id] : rest
+      const next = rating === 'again' ? [...rest, card.id] : rest
+      if (next.length === 0) toast.success('複習完成！繼續保持 💪')
+      return next
     })
   }
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between text-xs text-slate-400">
+      <div className="flex items-center justify-between text-xs text-slate-400 dark:text-slate-400">
         <Button variant="ghost" size="sm" onClick={onDone}>
           ← 結束複習
         </Button>
@@ -395,10 +427,10 @@ function ReviewSession({
         onClick={() => setFlipped((f) => !f)}
         className="flex min-h-[200px] flex-col items-center justify-center p-6 text-center"
       >
-        <p className="text-xs uppercase tracking-wider text-slate-300">
+        <p className="text-xs uppercase tracking-wider text-slate-300 dark:text-slate-500">
           {flipped ? '答案' : '問題'}（撳一下翻面）
         </p>
-        <p className="mt-3 text-lg font-medium text-slate-800">
+        <p className="mt-3 text-lg font-medium text-slate-800 dark:text-slate-100">
           {flipped ? card.back : card.front}
         </p>
       </UICard>

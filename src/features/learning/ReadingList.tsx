@@ -1,5 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useCollection } from '../../lib/store'
+import { useToast } from '../../context/ToastContext'
+import { useConfirm } from '../../context/ConfirmContext'
 import { readingCol } from '../../data/collections'
 import type { ReadingItem, ReadingStatus } from '../../data/types'
 import {
@@ -41,6 +43,8 @@ const VIEW_TABS: { id: ViewFilter; label: string }[] = [
 
 export default function ReadingList() {
   const items = useCollection(readingCol)
+  const toast = useToast()
+  const confirm = useConfirm()
 
   // 新增表單
   const [title, setTitle] = useState('')
@@ -74,11 +78,13 @@ export default function ReadingList() {
     setAuthor('')
     setUrl('')
     setNotes('')
+    toast.success('已新增閱讀項目')
   }
 
   function setStatus(item: ReadingItem, status: ReadingStatus) {
     if (item.status === status) return
     readingCol.update(item.id, { status })
+    toast.success(`已標記為「${STATUS_LABEL[status]}」`)
   }
 
   function toggleNotes(item: ReadingItem) {
@@ -94,6 +100,21 @@ export default function ReadingList() {
     const n = draftNotes.trim()
     readingCol.update(item.id, { notes: n || undefined })
     setOpenId(null)
+    toast.success('已儲存備註')
+  }
+
+  async function removeItem(item: ReadingItem) {
+    if (
+      !(await confirm({
+        title: '刪除閱讀項目？',
+        message: `「${item.title}」會被永久刪除，無法復原。`,
+        confirmText: '刪除',
+        tone: 'danger',
+      }))
+    )
+      return
+    readingCol.remove(item.id)
+    toast.success('已刪除')
   }
 
   const counts: Record<ReadingStatus, number> = {
@@ -220,11 +241,11 @@ export default function ReadingList() {
               <Card key={item.id} className="p-4" hover>
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
-                    <p className="truncate text-base font-semibold text-slate-800">
+                    <p className="truncate text-base font-semibold text-slate-800 dark:text-slate-100">
                       {item.title}
                     </p>
                     {item.author && (
-                      <p className="mt-0.5 truncate text-xs text-slate-500">
+                      <p className="mt-0.5 truncate text-xs text-slate-500 dark:text-slate-400">
                         {item.author}
                       </p>
                     )}
@@ -268,7 +289,7 @@ export default function ReadingList() {
                     <IconButton
                       label="刪除"
                       className="hover:text-rose-600"
-                      onClick={() => readingCol.remove(item.id)}
+                      onClick={() => removeItem(item)}
                     >
                       <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
                         <path
@@ -285,7 +306,7 @@ export default function ReadingList() {
 
                 {/* 備註展開 */}
                 {expanded && (
-                  <div className="mt-3 border-t border-slate-100 pt-3">
+                  <div className="mt-3 border-t border-slate-100 pt-3 dark:border-slate-700">
                     <Field label="備註">
                       <Textarea
                         value={draftNotes}

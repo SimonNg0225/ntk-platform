@@ -2,6 +2,8 @@ import { useMemo, useState } from 'react'
 import { useCollection } from '../../lib/store'
 import { lessonPlansCol, classesCol, topicsCol } from '../../data/collections'
 import type { LessonPlan } from '../../data/types'
+import { useToast } from '../../context/ToastContext'
+import { useConfirm } from '../../context/ConfirmContext'
 import {
   Button,
   Input,
@@ -42,6 +44,8 @@ export default function LessonPlanner() {
   const plans = useCollection(lessonPlansCol)
   const classes = useCollection(classesCol)
   const topics = useCollection(topicsCol)
+  const toast = useToast()
+  const confirm = useConfirm()
 
   const [filterClass, setFilterClass] = useState('')
   const [filterTopic, setFilterTopic] = useState('')
@@ -112,8 +116,10 @@ export default function LessonPlanner() {
         ...toPayload(draft),
         createdAt: new Date().toISOString(),
       })
+      toast.success('已新增教案')
     } else {
       lessonPlansCol.update(modalMode.id, toPayload(draft))
+      toast.success('已儲存教案')
     }
     closeModal()
   }
@@ -124,9 +130,20 @@ export default function LessonPlanner() {
       title: `${p.title}（副本）`,
       createdAt: new Date().toISOString(),
     })
+    toast.success('已複製教案')
   }
 
-  const remove = (id: string) => lessonPlansCol.remove(id)
+  const remove = async (p: LessonPlan) => {
+    const ok = await confirm({
+      title: '刪除教案？',
+      message: `「${p.title}」將會被永久刪除，呢個動作無法復原。`,
+      confirmText: '刪除',
+      tone: 'danger',
+    })
+    if (!ok) return
+    lessonPlansCol.remove(p.id)
+    toast.success('已刪除教案')
+  }
 
   const firstLine = (text?: string) => {
     if (!text) return ''
@@ -203,7 +220,7 @@ export default function LessonPlanner() {
             <Card key={p.id} className="p-3.5">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0 flex-1">
-                  <div className="text-sm font-semibold text-slate-800">
+                  <div className="text-sm font-semibold text-slate-800 dark:text-slate-100">
                     {p.title}
                   </div>
                   <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
@@ -214,8 +231,8 @@ export default function LessonPlanner() {
                     {p.date && <Badge tone="blue">📅 {p.date}</Badge>}
                   </div>
                   {firstLine(p.objectives) && (
-                    <p className="mt-2 line-clamp-1 text-xs text-slate-500">
-                      <span className="font-medium text-slate-400">
+                    <p className="mt-2 line-clamp-1 text-xs text-slate-500 dark:text-slate-400">
+                      <span className="font-medium text-slate-400 dark:text-slate-500">
                         目標：
                       </span>
                       {firstLine(p.objectives)}
@@ -247,7 +264,7 @@ export default function LessonPlanner() {
                   </IconButton>
                   <IconButton
                     label="刪除教案"
-                    onClick={() => remove(p.id)}
+                    onClick={() => remove(p)}
                     className="hover:text-rose-500"
                   >
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
@@ -264,7 +281,7 @@ export default function LessonPlanner() {
               </div>
 
               {(p.objectives || p.activities || p.resourcesNote) && (
-                <div className="mt-3 space-y-2.5 border-t border-slate-100 pt-3">
+                <div className="mt-3 space-y-2.5 border-t border-slate-100 pt-3 dark:border-slate-700">
                   {p.objectives && (
                     <Section label="教學目標" text={p.objectives} />
                   )}
@@ -371,10 +388,10 @@ export default function LessonPlanner() {
 function Section({ label, text }: { label: string; text: string }) {
   return (
     <div>
-      <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+      <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
         {label}
       </div>
-      <p className="mt-0.5 whitespace-pre-wrap text-xs leading-relaxed text-slate-600">
+      <p className="mt-0.5 whitespace-pre-wrap text-xs leading-relaxed text-slate-600 dark:text-slate-300">
         {text}
       </p>
     </div>

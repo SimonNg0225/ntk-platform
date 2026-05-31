@@ -1,5 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useCollection } from '../../lib/store';
+import { useToast } from '../../context/ToastContext';
+import { useConfirm } from '../../context/ConfirmContext';
 import { habitsCol, habitLogsCol } from '../../data/collections';
 import type { Habit, HabitLog } from '../../data/types';
 import {
@@ -54,6 +56,8 @@ function calcStreak(loggedDates: Set<string>): number {
 export default function HabitTracker() {
   const habits = useCollection<Habit>(habitsCol);
   const logs = useCollection<HabitLog>(habitLogsCol);
+  const toast = useToast();
+  const confirm = useConfirm();
 
   const [name, setName] = useState('');
   const [icon, setIcon] = useState<string>(ICON_CHOICES[0]);
@@ -103,6 +107,7 @@ export default function HabitTracker() {
     });
     setName('');
     setIcon(ICON_CHOICES[0]);
+    toast.success('已新增習慣');
   }
 
   function toggleLog(habitId: string, date: string) {
@@ -114,21 +119,31 @@ export default function HabitTracker() {
     }
   }
 
-  function handleDelete(habitId: string) {
-    const inner = logsByHabit.get(habitId);
+  async function handleDelete(habit: Habit) {
+    if (
+      !(await confirm({
+        title: '刪除習慣？',
+        message: `「${habit.name}」連同所有打卡記錄會一併刪除，無法復原。`,
+        confirmText: '刪除',
+        tone: 'danger',
+      }))
+    )
+      return;
+    const inner = logsByHabit.get(habit.id);
     if (inner) {
       for (const logId of inner.values()) {
         habitLogsCol.remove(logId);
       }
     }
-    habitsCol.remove(habitId);
+    habitsCol.remove(habit.id);
+    toast.success('已刪除習慣');
   }
 
   return (
     <div className="mx-auto w-full max-w-2xl space-y-6 p-4">
       <header className="space-y-1">
-        <h1 className="text-2xl font-bold text-slate-900">習慣追蹤</h1>
-        <p className="text-sm text-slate-500">建立每日習慣，撳格仔打卡，保持連續記錄。</p>
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">習慣追蹤</h1>
+        <p className="text-sm text-slate-500 dark:text-slate-400">建立每日習慣，撳格仔打卡，保持連續記錄。</p>
       </header>
 
       {/* 頂部統計 */}
@@ -146,10 +161,10 @@ export default function HabitTracker() {
       {/* 今日總完成率 */}
       <Card className="p-4">
         <div className="mb-2 flex items-center justify-between">
-          <span className="text-sm font-semibold text-slate-700">今日總完成率</span>
+          <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">今日總完成率</span>
           <Badge tone={allDone ? 'green' : 'accent'}>{completionRate}%</Badge>
         </div>
-        <div className="h-3 w-full overflow-hidden rounded-full bg-slate-100">
+        <div className="h-3 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-700">
           <div
             className="h-full rounded-full bg-accent transition-all"
             style={{ width: `${completionRate}%` }}
@@ -158,7 +173,7 @@ export default function HabitTracker() {
         {allDone ? (
           <p className="mt-2 text-sm font-medium text-emerald-600">今日全部完成 🎉 好嘢，keep it up！</p>
         ) : stats.total > 0 ? (
-          <p className="mt-2 text-xs text-slate-400">
+          <p className="mt-2 text-xs text-slate-400 dark:text-slate-400">
             仲差 {stats.total - stats.doneToday} 個就完成今日所有習慣。
           </p>
         ) : null}
@@ -195,7 +210,7 @@ export default function HabitTracker() {
                   'flex h-9 w-9 items-center justify-center rounded-xl border text-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
                   selected
                     ? 'border-accent bg-accent-soft text-accent-strong'
-                    : 'border-slate-200 bg-white hover:bg-slate-50',
+                    : 'border-slate-200 bg-white hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700',
                 ].join(' ')}
               >
                 {choice}
@@ -229,7 +244,7 @@ export default function HabitTracker() {
                       {habit.icon ?? '⭐'}
                     </span>
                     <div className="min-w-0">
-                      <h3 className="truncate text-base font-semibold text-slate-900">
+                      <h3 className="truncate text-base font-semibold text-slate-900 dark:text-slate-100">
                         {habit.name}
                       </h3>
                       <div className="mt-1 flex flex-wrap items-center gap-1.5">
@@ -246,7 +261,7 @@ export default function HabitTracker() {
                   </div>
                   <IconButton
                     label={`刪除習慣 ${habit.name}`}
-                    onClick={() => handleDelete(habit.id)}
+                    onClick={() => handleDelete(habit)}
                     className="shrink-0 hover:text-rose-600"
                   >
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
@@ -276,7 +291,7 @@ export default function HabitTracker() {
                           hideOnMobile ? 'hidden sm:flex' : 'flex',
                         ].join(' ')}
                       >
-                        <span className="text-[10px] text-slate-400">
+                        <span className="text-[10px] text-slate-400 dark:text-slate-400">
                           {weekdayLabel(date)}
                         </span>
                         <button
@@ -288,7 +303,7 @@ export default function HabitTracker() {
                             'aspect-square w-full rounded-lg text-[11px] font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
                             done
                               ? 'bg-accent text-white hover:bg-accent-strong'
-                              : 'bg-slate-100 text-slate-400 hover:bg-slate-200',
+                              : 'bg-slate-100 text-slate-400 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-400 dark:hover:bg-slate-600',
                             isToday ? 'ring-2 ring-accent/40 ring-offset-1' : '',
                           ].join(' ')}
                         >

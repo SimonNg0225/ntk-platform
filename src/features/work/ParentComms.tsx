@@ -15,6 +15,8 @@ import {
   StatCard,
   Textarea,
 } from '../../ui'
+import { useToast } from '../../context/ToastContext'
+import { useConfirm } from '../../context/ConfirmContext'
 
 const CHANNELS = ['電話', '電郵', '面談', '手冊'] as const
 type Channel = (typeof CHANNELS)[number]
@@ -32,6 +34,8 @@ export default function ParentComms() {
   const comms = useCollection(parentCommsCol)
   const classes = useCollection(classesCol)
   const students = useCollection(studentsCol)
+  const toast = useToast()
+  const confirm = useConfirm()
 
   // 新增 Modal + 表單狀態
   const [open, setOpen] = useState(false)
@@ -102,8 +106,21 @@ export default function ParentComms() {
       followUp,
       createdAt: new Date().toISOString(),
     })
+    toast.success('已新增溝通記錄')
     resetForm()
     setOpen(false)
+  }
+
+  const removeComm = async (c: ParentComm) => {
+    const ok = await confirm({
+      title: '刪除溝通記錄？',
+      message: `${describeTarget(c)}（${c.date}）嘅記錄將會被永久刪除，呢個動作無法復原。`,
+      confirmText: '刪除',
+      tone: 'danger',
+    })
+    if (!ok) return
+    parentCommsCol.remove(c.id)
+    toast.success('已刪除溝通記錄')
   }
 
   const describeTarget = (c: ParentComm) => {
@@ -117,10 +134,10 @@ export default function ParentComms() {
     <div className="mx-auto max-w-3xl space-y-6 p-4 sm:p-6">
       <header className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1 className="text-xl font-semibold text-slate-900 sm:text-2xl">
+          <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100 sm:text-2xl">
             家長 / 學生溝通記錄
           </h1>
-          <p className="mt-1 text-sm text-slate-500">
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
             記錄同家長或學生嘅聯絡內容，並標示需要跟進嘅事項。
           </p>
         </div>
@@ -145,7 +162,7 @@ export default function ParentComms() {
       <Card className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
           <label
-            className="text-sm font-medium text-slate-700"
+            className="text-sm font-medium text-slate-700 dark:text-slate-200"
             htmlFor="pc-filter-class"
           >
             按班別篩選
@@ -164,10 +181,10 @@ export default function ParentComms() {
             ))}
           </Select>
         </div>
-        <label className="flex items-center gap-2 text-sm text-slate-700">
+        <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200">
           <input
             type="checkbox"
-            className="h-4 w-4 rounded border-slate-300 text-accent focus:ring-accent/30"
+            className="h-4 w-4 rounded border-slate-300 text-accent focus:ring-accent/30 dark:border-slate-700"
             checked={onlyFollowUp}
             onChange={(e) => setOnlyFollowUp(e.target.checked)}
           />
@@ -191,7 +208,7 @@ export default function ParentComms() {
           visibleComms.map((c) => (
             <Card key={c.id} className="p-4">
               <div className="flex flex-wrap items-center gap-2">
-                <span className="text-sm font-semibold text-slate-900">
+                <span className="text-sm font-semibold text-slate-900 dark:text-slate-100">
                   {c.date}
                 </span>
                 <Badge tone="accent">
@@ -200,9 +217,10 @@ export default function ParentComms() {
                 {c.followUp && (
                   <button
                     type="button"
-                    onClick={() =>
+                    onClick={() => {
                       parentCommsCol.update(c.id, { followUp: false })
-                    }
+                      toast.success('已標記為已跟進')
+                    }}
                     title="撳一下標記為已跟進"
                   >
                     <Badge
@@ -216,9 +234,10 @@ export default function ParentComms() {
                 {!c.followUp && (
                   <button
                     type="button"
-                    onClick={() =>
+                    onClick={() => {
                       parentCommsCol.update(c.id, { followUp: true })
-                    }
+                      toast.info('已重新標記為待跟進')
+                    }}
                     title="撳一下重新標記為待跟進"
                   >
                     <Badge
@@ -231,7 +250,7 @@ export default function ParentComms() {
                 )}
                 <IconButton
                   label="刪除記錄"
-                  onClick={() => parentCommsCol.remove(c.id)}
+                  onClick={() => removeComm(c)}
                   className="ml-auto hover:text-rose-600"
                 >
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
@@ -245,8 +264,10 @@ export default function ParentComms() {
                   </svg>
                 </IconButton>
               </div>
-              <p className="mt-1 text-sm text-slate-600">{describeTarget(c)}</p>
-              <p className="mt-2 whitespace-pre-wrap text-sm text-slate-800">
+              <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
+                {describeTarget(c)}
+              </p>
+              <p className="mt-2 whitespace-pre-wrap text-sm text-slate-800 dark:text-slate-100">
                 {c.summary}
               </p>
             </Card>
@@ -325,10 +346,10 @@ export default function ParentComms() {
             />
           </Field>
 
-          <label className="flex items-center gap-2 text-sm text-slate-700">
+          <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200">
             <input
               type="checkbox"
-              className="h-4 w-4 rounded border-slate-300 text-accent focus:ring-accent/30"
+              className="h-4 w-4 rounded border-slate-300 text-accent focus:ring-accent/30 dark:border-slate-700"
               checked={followUp}
               onChange={(e) => setFollowUp(e.target.checked)}
             />

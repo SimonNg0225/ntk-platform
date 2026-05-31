@@ -7,14 +7,14 @@ export default function AccountBox() {
   // 未接 Supabase：顯示訪客模式提示
   if (!configured) {
     return (
-      <div className="px-5 py-3 text-xs text-slate-400">
+      <div className="px-5 py-3 text-xs text-slate-400 dark:text-slate-500">
         👤 訪客模式 · 資料暫存本機
       </div>
     )
   }
 
   if (loading) {
-    return <div className="px-5 py-3 text-xs text-slate-400">載入中…</div>
+    return <div className="px-5 py-3 text-xs text-slate-400 dark:text-slate-500">載入中…</div>
   }
 
   if (!user) {
@@ -22,7 +22,7 @@ export default function AccountBox() {
       <div className="px-4 py-3">
         <button
           onClick={signInWithGoogle}
-          className="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+          className="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
         >
           <GoogleIcon />
           用 Google 登入
@@ -52,11 +52,11 @@ export default function AccountBox() {
         </div>
       )}
       <div className="min-w-0 flex-1">
-        <p className="truncate text-xs font-medium text-slate-700">{name}</p>
+        <p className="truncate text-xs font-medium text-slate-700 dark:text-slate-200">{name}</p>
       </div>
       <button
         onClick={signOut}
-        className="text-xs text-slate-400 transition hover:text-red-500"
+        className="text-xs text-slate-400 transition hover:text-red-500 dark:text-slate-500"
       >
         登出
       </button>

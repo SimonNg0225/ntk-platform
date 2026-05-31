@@ -1,5 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useCollection } from '../../lib/store'
+import { useToast } from '../../context/ToastContext'
+import { useConfirm } from '../../context/ConfirmContext'
 import {
   classesCol,
   studentsCol,
@@ -79,7 +81,9 @@ export default function Gradebook() {
 
       <Tabs tabs={TABS} active={tab} onChange={setTab} />
 
-      {activeClass && tab === 'grid' && <ScoreGrid classId={activeClass.id} />}
+      {activeClass && tab === 'grid' && (
+        <ScoreGrid classId={activeClass.id} className={activeClass.name} />
+      )}
       {activeClass && tab === 'students' && (
         <StudentsTab classId={activeClass.id} />
       )}
@@ -94,7 +98,14 @@ export default function Gradebook() {
 }
 
 // ───── 成績表（學生 × 評估）─────
-function ScoreGrid({ classId }: { classId: string }) {
+function ScoreGrid({
+  classId,
+  className,
+}: {
+  classId: string
+  className: string
+}) {
+  const toast = useToast()
   const students = useCollection(studentsCol).filter((s) => s.classId === classId)
   const assessments = useCollection(assessmentsCol).filter(
     (a) => a.classId === classId,
@@ -134,6 +145,40 @@ function ScoreGrid({ classId }: { classId: string }) {
     return Math.round((ps.reduce((s, x) => s + x, 0) / ps.length) * 100)
   }
 
+  const exportCsv = () => {
+    const esc = (v: string | number) => {
+      const s = String(v)
+      return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s
+    }
+    const header = [
+      '學號',
+      '學生',
+      ...assessments.map((a) => `${a.name}（滿分${a.maxScore}）`),
+      '平均(%)',
+    ]
+    const rows = students.map((s) => {
+      const cells: (string | number)[] = [s.studentNo ?? '', s.name]
+      assessments.forEach((a) => {
+        const sc = getScore(a.id, s.id)?.score
+        cells.push(sc == null ? '' : sc)
+      })
+      const avg = studentAvg(s.id)
+      cells.push(avg == null ? '' : avg)
+      return cells
+    })
+    const csv = [header, ...rows].map((r) => r.map(esc).join(',')).join('\r\n')
+    const blob = new Blob([`﻿${csv}`], {
+      type: 'text/csv;charset=utf-8;',
+    })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `${className}_成績.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+    toast.success(`已匯出 ${className} 成績 CSV`)
+  }
+
   if (students.length === 0 || assessments.length === 0) {
     return (
       <EmptyState
@@ -145,17 +190,23 @@ function ScoreGrid({ classId }: { classId: string }) {
   }
 
   return (
-    <div className="overflow-x-auto rounded-2xl border border-slate-200">
+    <div className="space-y-3">
+      <div className="flex justify-end">
+        <Button variant="secondary" size="sm" onClick={exportCsv}>
+          ⬇ 匯出 CSV
+        </Button>
+      </div>
+      <div className="overflow-x-auto rounded-2xl border border-slate-200 dark:border-slate-700">
       <table className="min-w-full border-collapse text-sm">
         <thead>
-          <tr className="bg-slate-50">
-            <th className="sticky left-0 z-10 bg-slate-50 px-3 py-2 text-left font-semibold text-slate-600">
+          <tr className="bg-slate-50 dark:bg-slate-800/50">
+            <th className="sticky left-0 z-10 bg-slate-50 px-3 py-2 text-left font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
               學生
             </th>
             {assessments.map((a) => (
               <th
                 key={a.id}
-                className="whitespace-nowrap px-3 py-2 text-center font-semibold text-slate-600"
+                className="whitespace-nowrap px-3 py-2 text-center font-semibold text-slate-600 dark:text-slate-300"
               >
                 {a.name}
                 <span className="mt-0.5 block text-[10px] font-normal text-slate-400">
@@ -163,7 +214,7 @@ function ScoreGrid({ classId }: { classId: string }) {
                 </span>
               </th>
             ))}
-            <th className="px-3 py-2 text-center font-semibold text-slate-600">
+            <th className="px-3 py-2 text-center font-semibold text-slate-600 dark:text-slate-300">
               平均
             </th>
           </tr>
@@ -172,8 +223,11 @@ function ScoreGrid({ classId }: { classId: string }) {
           {students.map((s) => {
             const avg = studentAvg(s.id)
             return (
-              <tr key={s.id} className="border-t border-slate-100">
-                <td className="sticky left-0 z-10 bg-white px-3 py-2 font-medium text-slate-700">
+              <tr
+                key={s.id}
+                className="border-t border-slate-100 dark:border-slate-700"
+              >
+                <td className="sticky left-0 z-10 bg-white px-3 py-2 font-medium text-slate-700 dark:bg-slate-800 dark:text-slate-200">
                   {s.studentNo && (
                     <span className="mr-1.5 text-xs text-slate-400">
                       {s.studentNo}
@@ -194,8 +248,8 @@ function ScoreGrid({ classId }: { classId: string }) {
                         }
                         className={`w-14 rounded-lg border px-1.5 py-1 text-center font-medium outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/25 ${
                           low
-                            ? 'border-rose-300 bg-rose-50 text-rose-600'
-                            : 'border-slate-200 text-slate-800'
+                            ? 'border-rose-300 bg-rose-50 text-rose-600 dark:border-rose-800 dark:bg-rose-950/40 dark:text-rose-300'
+                            : 'border-slate-200 text-slate-800 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100'
                         }`}
                       />
                     </td>
@@ -208,7 +262,9 @@ function ScoreGrid({ classId }: { classId: string }) {
                     <div className="flex items-center justify-center gap-1.5">
                       <span
                         className={`font-semibold ${
-                          avg < 50 ? 'text-rose-600' : 'text-accent'
+                          avg < 50
+                            ? 'text-rose-600 dark:text-rose-400'
+                            : 'text-accent'
                         }`}
                       >
                         {avg}%
@@ -224,8 +280,8 @@ function ScoreGrid({ classId }: { classId: string }) {
           })}
         </tbody>
         <tfoot>
-          <tr className="border-t-2 border-slate-200 bg-slate-50">
-            <td className="sticky left-0 z-10 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-500">
+          <tr className="border-t-2 border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-800/50">
+            <td className="sticky left-0 z-10 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-500 dark:bg-slate-800 dark:text-slate-400">
               全班平均
             </td>
             {assessments.map((a) => {
@@ -237,8 +293,8 @@ function ScoreGrid({ classId }: { classId: string }) {
                     av == null
                       ? 'text-slate-300'
                       : av < 50
-                        ? 'text-rose-600'
-                        : 'text-slate-600'
+                        ? 'text-rose-600 dark:text-rose-400'
+                        : 'text-slate-600 dark:text-slate-300'
                   }`}
                 >
                   {av == null ? '—' : `${av}%`}
@@ -249,12 +305,15 @@ function ScoreGrid({ classId }: { classId: string }) {
           </tr>
         </tfoot>
       </table>
+      </div>
     </div>
   )
 }
 
 // ───── 學生分頁 ─────
 function StudentsTab({ classId }: { classId: string }) {
+  const toast = useToast()
+  const confirm = useConfirm()
   const students = useCollection(studentsCol).filter((s) => s.classId === classId)
   const [name, setName] = useState('')
   const [no, setNo] = useState('')
@@ -262,8 +321,21 @@ function StudentsTab({ classId }: { classId: string }) {
   const add = () => {
     if (!name.trim()) return
     studentsCol.add({ classId, name: name.trim(), studentNo: no.trim() || undefined })
+    toast.success(`已新增學生「${name.trim()}」`)
     setName('')
     setNo('')
+  }
+
+  const remove = async (id: string, sName: string) => {
+    const ok = await confirm({
+      title: '刪除學生？',
+      message: `將會移除「${sName}」及其所有成績記錄，此操作無法復原。`,
+      confirmText: '刪除',
+      tone: 'danger',
+    })
+    if (!ok) return
+    studentsCol.remove(id)
+    toast.success('已刪除學生')
   }
 
   return (
@@ -290,16 +362,18 @@ function StudentsTab({ classId }: { classId: string }) {
         <EmptyState icon="🧑‍🎓" title="仲未有學生" hint="喺上面輸入姓名加入第一位學生。" />
       ) : (
         <Card>
-          <ul className="divide-y divide-slate-100">
+          <ul className="divide-y divide-slate-100 dark:divide-slate-700">
             {students.map((s) => (
               <li key={s.id} className="group flex items-center gap-3 px-4 py-2.5">
                 {s.studentNo && (
                   <Badge tone="slate">{s.studentNo}</Badge>
                 )}
-                <span className="flex-1 text-sm text-slate-700">{s.name}</span>
+                <span className="flex-1 text-sm text-slate-700 dark:text-slate-200">
+                  {s.name}
+                </span>
                 <IconButton
                   label="刪除學生"
-                  onClick={() => studentsCol.remove(s.id)}
+                  onClick={() => remove(s.id, s.name)}
                   className="opacity-0 transition group-hover:opacity-100 hover:text-rose-500"
                 >
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
@@ -323,6 +397,8 @@ function StudentsTab({ classId }: { classId: string }) {
 
 // ───── 評估分頁 ─────
 function AssessmentsTab({ classId }: { classId: string }) {
+  const toast = useToast()
+  const confirm = useConfirm()
   const assessments = useCollection(assessmentsCol).filter(
     (a) => a.classId === classId,
   )
@@ -342,9 +418,22 @@ function AssessmentsTab({ classId }: { classId: string }) {
       topicId: topicId || undefined,
       createdAt: new Date().toISOString(),
     })
+    toast.success(`已新增評估「${name.trim()}」`)
     setName('')
     setMaxScore('100')
     setTopicId('')
+  }
+
+  const remove = async (id: string, aName: string) => {
+    const ok = await confirm({
+      title: '刪除評估？',
+      message: `將會移除「${aName}」及其所有成績記錄，此操作無法復原。`,
+      confirmText: '刪除',
+      tone: 'danger',
+    })
+    if (!ok) return
+    assessmentsCol.remove(id)
+    toast.success('已刪除評估')
   }
 
   return (
@@ -403,14 +492,14 @@ function AssessmentsTab({ classId }: { classId: string }) {
         />
       ) : (
         <Card>
-          <ul className="divide-y divide-slate-100">
+          <ul className="divide-y divide-slate-100 dark:divide-slate-700">
             {assessments.map((a) => {
               const topic = a.topicId
                 ? topics.find((t) => t.id === a.topicId)?.topic
                 : null
               return (
                 <li key={a.id} className="group flex items-center gap-3 px-4 py-2.5">
-                  <span className="flex-1 text-sm text-slate-700">
+                  <span className="flex-1 text-sm text-slate-700 dark:text-slate-200">
                     {a.name}
                     <span className="ml-2 inline-flex flex-wrap items-center gap-1.5 align-middle">
                       <Badge tone="slate">{a.type}</Badge>
@@ -420,7 +509,7 @@ function AssessmentsTab({ classId }: { classId: string }) {
                   </span>
                   <IconButton
                     label="刪除評估"
-                    onClick={() => assessmentsCol.remove(a.id)}
+                    onClick={() => remove(a.id, a.name)}
                     className="opacity-0 transition group-hover:opacity-100 hover:text-rose-500"
                   >
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
@@ -560,7 +649,7 @@ function AnalysisTab({ classId }: { classId: string }) {
       </div>
 
       <Card className="p-4">
-        <p className="mb-3 text-sm font-semibold text-slate-700">
+        <p className="mb-3 text-sm font-semibold text-slate-700 dark:text-slate-200">
           各課題表現（由弱到強）
         </p>
         {stats.topicStats.length === 0 ? (
@@ -574,9 +663,11 @@ function AnalysisTab({ classId }: { classId: string }) {
               return (
                 <li key={t.topic}>
                   <div className="mb-1 flex items-center justify-between text-xs">
-                    <span className="text-slate-600">{t.topic}</span>
+                    <span className="text-slate-600 dark:text-slate-300">
+                      {t.topic}
+                    </span>
                     <span className="flex items-center gap-1.5">
-                      <span className="font-semibold text-slate-700">
+                      <span className="font-semibold text-slate-700 dark:text-slate-200">
                         {t.avg}%
                       </span>
                       <Badge tone={gradeOf(t.avg).tone}>
@@ -584,7 +675,7 @@ function AnalysisTab({ classId }: { classId: string }) {
                       </Badge>
                     </span>
                   </div>
-                  <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100">
+                  <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-700">
                     <div
                       className={`h-full rounded-full transition-all ${BAR_FILL[tone]}`}
                       style={{ width: `${t.avg}%` }}
@@ -598,7 +689,7 @@ function AnalysisTab({ classId }: { classId: string }) {
       </Card>
 
       <Card className="p-4">
-        <p className="mb-2 text-sm font-semibold text-slate-700">
+        <p className="mb-2 text-sm font-semibold text-slate-700 dark:text-slate-200">
           需關注學生（平均低於 50%）
         </p>
         {stats.weakStudents.length === 0 ? (
