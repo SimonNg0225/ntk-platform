@@ -138,13 +138,40 @@ export interface Task extends Entity {
 
 // ───── 新一批功能 ─────
 
-// 行事曆（兩個模式共用）
+// ───── 行事曆（Apple Calendar 級）─────
+export type RecurrenceFreq = 'none' | 'daily' | 'weekly' | 'monthly' | 'yearly'
+export interface RecurrenceRule {
+  freq: RecurrenceFreq
+  interval?: number // 每 N（預設 1）
+  until?: string // YYYY-MM-DD（重複到此日為止，選填）
+  count?: number // 或重複 N 次後停（選填）
+}
+
+// 行事曆分類（多個有色行事曆，可開關顯示）
+export interface CalendarCategory extends Entity {
+  name: string
+  color: string // CalColor key（見 features/shared/calendar/util）
+  visible: boolean
+  createdAt: string
+}
+
+// 行事曆事件（兩個模式共用；新欄位全部選填，向後相容）
 export interface CalendarEvent extends Entity {
   title: string
-  date: string // YYYY-MM-DD
-  time?: string // HH:mm
+  date: string // YYYY-MM-DD（開始日）
+  time?: string // HH:mm（開始時間；無 = 全日）
+  // ── Apple Calendar 擴充 ──
+  endDate?: string // YYYY-MM-DD（結束日，預設 = date）
+  endTime?: string // HH:mm（結束時間）
+  allDay?: boolean
+  calendarId?: string // 對應 CalendarCategory.id
+  location?: string
+  url?: string
+  recurrence?: RecurrenceRule
+  exDates?: string[] // 重複事件被刪 / 改嘅 occurrence（YYYY-MM-DD）
+  alertMinutes?: number // 提前提醒（分鐘；顯示用）
   mode?: 'learning' | 'work' | 'both'
-  type?: string // 測驗 / 會議 / 死線 / 提醒…
+  type?: string // 舊欄位（測驗 / 會議 / 死線 / 提醒…）
   notes?: string
 }
 

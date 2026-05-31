@@ -32,6 +32,7 @@ import type {
   Transaction,
   TxCategory,
   QuizAttempt,
+  CalendarCategory,
 } from './types'
 
 // ============================================================
@@ -84,6 +85,13 @@ export const tasksCol = createCollection<Task>('work_tasks', [
 
 // ───── 新一批功能 ─────
 export const eventsCol = createCollection<CalendarEvent>('events', [])
+
+// 行事曆分類（多個有色行事曆，可開關）
+export const calendarsCol = createCollection<CalendarCategory>('calendars', [
+  { id: 'cal-personal', name: '個人', color: 'accent', visible: true, createdAt: new Date().toISOString() },
+  { id: 'cal-work', name: '工作', color: 'blue', visible: true, createdAt: new Date().toISOString() },
+  { id: 'cal-study', name: '學習', color: 'green', visible: true, createdAt: new Date().toISOString() },
+])
 export const readingCol = createCollection<ReadingItem>('reading_items', [])
 export const habitsCol = createCollection<Habit>('habits', [])
 export const habitLogsCol = createCollection<HabitLog>('habit_logs', [])
@@ -161,6 +169,7 @@ export const ALL_COLLECTIONS: { key: string; col: SyncableCollection }[] = [
   { key: 'learning_goals', col: goalsCol },
   { key: 'work_tasks', col: tasksCol },
   { key: 'events', col: eventsCol },
+  { key: 'calendars', col: calendarsCol },
   { key: 'reading_items', col: readingCol },
   { key: 'habits', col: habitsCol },
   { key: 'habit_logs', col: habitLogsCol },
