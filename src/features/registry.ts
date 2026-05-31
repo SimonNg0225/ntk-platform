@@ -26,6 +26,7 @@ const LearningDashboard = lazyFeature(() => import('./learning/LearningDashboard
 const ReadingList = lazyFeature(() => import('./learning/ReadingList'))
 const HabitTracker = lazyFeature(() => import('./learning/HabitTracker'))
 const HealthTracker = lazyFeature(() => import('./learning/HealthTracker'))
+const Fitness = lazyFeature(() => import('./learning/Fitness'))
 
 // 工作模式功能
 const TodoWidget = lazyFeature(() => import('./work/TodoWidget'))
@@ -163,9 +164,19 @@ export const FEATURES: Feature[] = [
     modes: ['learning'],
     name: '健康追蹤',
     description: '記錄體重、睡眠、運動、飲水、心情，睇趨勢同達標進度。',
-    icon: '💪',
+    icon: '🫀',
     group: '健康',
     component: HealthTracker,
+    status: 'ready',
+  },
+  {
+    id: 'learning-fitness',
+    modes: ['learning'],
+    name: '健身中心',
+    description: '體態數據、訓練記錄、AI 飲食營養、AI 教練、動作庫。',
+    icon: '🏋️',
+    group: '健康',
+    component: Fitness,
     status: 'ready',
   },
 

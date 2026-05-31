@@ -7,7 +7,7 @@ import {
   PartyPopper, Trophy, TrendingDown, Users, Palmtree, AlarmClock, Pin, Ban, Mail,
   Handshake, MessageSquare, FileText, Link, Clapperboard, BookMarked, Bookmark,
   Dumbbell, Zap, RotateCcw, Printer, Download, Lock, HelpCircle, Sprout, Star,
-  Receipt, Tag,
+  Receipt, Tag, HeartPulse,
 } from 'lucide-react'
 
 // ============================================================
@@ -78,6 +78,8 @@ const EMOJI_TO_ICON: Record<string, LucideIcon> = {
   '📚': BookMarked,
   '🔖': Bookmark,
   '💪': Dumbbell,
+  '🏋️': Dumbbell,
+  '🫀': HeartPulse,
   '⚡': Zap,
   '🔄': RotateCcw,
   '🖨': Printer,
