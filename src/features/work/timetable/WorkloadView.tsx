@@ -1,0 +1,290 @@
+import { useMemo } from 'react'
+import { CalendarDays, Clock, Layers, Coffee } from 'lucide-react'
+import { Card, EmptyState, SectionTitle, StatCard, cx } from '../../../ui'
+import {
+  colorOf,
+  dayLabel,
+  fmtDuration,
+  type Workload,
+} from './util'
+
+// ============================================================
+//  工作量分析（全自製 SVG / div 圖表，零依賴）
+//  - 每日節數直條圖
+//  - 每節（跨日）熱度橫條
+//  - 每班佔比甜甜圈
+//  - 空堂 vs 上堂（每日）
+// ============================================================
+
+export default function WorkloadView({
+  workload,
+  classColorKey,
+}: {
+  workload: Workload
+  // 班別 → 用嚟畀甜甜圈上色（key = classId 或 undefined）
+  classColorKey: (classId?: string) => string
+}) {
+  if (workload.total === 0) {
+    return (
+      <EmptyState
+        icon={CalendarDays}
+        title="未有課堂資料"
+        hint="去「週課表」撳格仔加堂，呢度就會出現工作量統計同圖表。"
+      />
+    )
+  }
+
+  const avgPerDay =
+    workload.daysWithLessons > 0
+      ? (workload.total / workload.daysWithLessons).toFixed(1)
+      : '0'
+
+  return (
+    <div className="space-y-4">
+      {/* 概覽數字 */}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <StatCard
+          label="每週總節數"
+          value={workload.total}
+          unit="節"
+          icon={Layers}
+        />
+        <StatCard
+          label="每週教學時數"
+          value={(workload.totalMinutes / 60).toFixed(1)}
+          unit="小時"
+          icon={Clock}
+          hint={fmtDuration(workload.totalMinutes)}
+        />
+        <StatCard
+          label="最忙一日"
+          value={workload.busiestDay ? workload.busiestDay.count : 0}
+          unit="節"
+          icon={CalendarDays}
+          hint={
+            workload.busiestDay ? dayLabel(workload.busiestDay.day) : undefined
+          }
+        />
+        <StatCard
+          label="最長連堂"
+          value={workload.maxConsecutive}
+          unit="節"
+          icon={Coffee}
+          hint={`平均每日 ${avgPerDay} 節`}
+        />
+      </div>
+
+      {/* 每日節數 + 每班佔比 */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <Card padded>
+          <SectionTitle icon={CalendarDays}>每日節數分佈</SectionTitle>
+          <DayBars workload={workload} />
+        </Card>
+
+        <Card padded>
+          <SectionTitle icon={Layers}>各班節數佔比</SectionTitle>
+          <ClassDonut workload={workload} classColorKey={classColorKey} />
+        </Card>
+      </div>
+
+      {/* 每節熱度 + 空堂 */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <Card padded>
+          <SectionTitle icon={Clock} description="邊幾節最多堂（跨星期累計）">
+            節次熱度
+          </SectionTitle>
+          <PeriodHeat workload={workload} />
+        </Card>
+
+        <Card padded>
+          <SectionTitle icon={Coffee} description="每日上堂 vs 空堂">
+            空堂分析
+          </SectionTitle>
+          <FreeBusy workload={workload} />
+        </Card>
+      </div>
+    </div>
+  )
+}
+
+// ───────── 每日節數：垂直條形圖 ─────────
+function DayBars({ workload }: { workload: Workload }) {
+  const max = Math.max(1, ...workload.byDay.map((d) => d.count))
+  return (
+    <div className="flex h-44 items-end justify-around gap-2 pt-2">
+      {workload.byDay.map((d) => {
+        const h = (d.count / max) * 100
+        const isBusiest = workload.busiestDay?.day === d.day && d.count > 0
+        return (
+          <div key={d.day} className="flex flex-1 flex-col items-center gap-1">
+            <span className="text-xs font-semibold tabular-nums text-slate-600 dark:text-slate-300">
+              {d.count}
+            </span>
+            <div className="flex w-full flex-1 items-end">
+              <div
+                className={cx(
+                  'w-full rounded-t-md transition-all duration-500',
+                  isBusiest
+                    ? 'bg-accent'
+                    : 'bg-accent/40 dark:bg-accent/30',
+                )}
+                style={{ height: `${Math.max(h, d.count > 0 ? 6 : 0)}%` }}
+              />
+            </div>
+            <span className="text-[11px] text-slate-400 dark:text-slate-500">
+              {dayLabel(d.day).replace('星期', '')}
+            </span>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+// ───────── 各班佔比：SVG 甜甜圈 ─────────
+function ClassDonut({
+  workload,
+  classColorKey,
+}: {
+  workload: Workload
+  classColorKey: (classId?: string) => string
+}) {
+  const total = workload.total
+  const R = 52
+  const C = 2 * Math.PI * R
+  const segments = useMemo(() => {
+    let acc = 0
+    return workload.byClass.map((c) => {
+      const frac = c.count / total
+      const seg = {
+        ...c,
+        colorKey: classColorKey(c.classId),
+        dash: frac * C,
+        offset: -acc * C,
+        pct: Math.round(frac * 100),
+      }
+      acc += frac
+      return seg
+    })
+  }, [workload.byClass, total, C, classColorKey])
+
+  return (
+    <div className="flex flex-col items-center gap-4 sm:flex-row">
+      <div className="relative h-36 w-36 shrink-0">
+        <svg viewBox="0 0 140 140" className="h-full w-full -rotate-90">
+          <circle
+            cx="70"
+            cy="70"
+            r={R}
+            fill="none"
+            strokeWidth="16"
+            className="stroke-slate-100 dark:stroke-slate-700"
+          />
+          {segments.map((s) => (
+            <circle
+              key={s.label}
+              cx="70"
+              cy="70"
+              r={R}
+              fill="none"
+              strokeWidth="16"
+              strokeDasharray={`${s.dash} ${C - s.dash}`}
+              strokeDashoffset={s.offset}
+              className={cx('transition-all duration-700', colorOf(s.colorKey).bar)}
+              style={{ stroke: 'currentColor' }}
+            />
+          ))}
+        </svg>
+        <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+          <span className="text-2xl font-bold tabular-nums text-slate-800 dark:text-slate-100">
+            {total}
+          </span>
+          <span className="text-[11px] text-slate-400">總節數</span>
+        </div>
+      </div>
+      <ul className="flex-1 space-y-1.5">
+        {segments.map((s) => (
+          <li key={s.label} className="flex items-center gap-2 text-sm">
+            <span
+              className={cx('h-2.5 w-2.5 shrink-0 rounded-full', colorOf(s.colorKey).bar)}
+            />
+            <span className="flex-1 truncate text-slate-600 dark:text-slate-300">
+              {s.label}
+            </span>
+            <span className="tabular-nums text-slate-400">{s.count}</span>
+            <span className="w-10 text-right tabular-nums text-xs font-medium text-slate-500 dark:text-slate-400">
+              {s.pct}%
+            </span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  )
+}
+
+// ───────── 每節熱度：橫條 ─────────
+function PeriodHeat({ workload }: { workload: Workload }) {
+  const max = Math.max(1, ...workload.byPeriod.map((p) => p.count))
+  return (
+    <div className="space-y-1.5">
+      {workload.byPeriod.map((p) => {
+        const w = (p.count / max) * 100
+        return (
+          <div key={p.period} className="flex items-center gap-2">
+            <span className="w-12 shrink-0 text-right text-[11px] tabular-nums text-slate-400">
+              第 {p.period} 節
+            </span>
+            <div className="h-4 flex-1 overflow-hidden rounded bg-slate-100 dark:bg-slate-700/60">
+              <div
+                className="h-full rounded bg-gradient-to-r from-accent/60 to-accent transition-all duration-500"
+                style={{ width: `${Math.max(w, p.count > 0 ? 4 : 0)}%` }}
+              />
+            </div>
+            <span className="w-5 text-right text-xs tabular-nums text-slate-500 dark:text-slate-400">
+              {p.count}
+            </span>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+// ───────── 空堂 vs 上堂：堆疊橫條 ─────────
+function FreeBusy({ workload }: { workload: Workload }) {
+  return (
+    <div className="space-y-2">
+      {workload.freeByDay.map((d) => {
+        const tot = d.busy + d.free
+        const busyPct = tot > 0 ? (d.busy / tot) * 100 : 0
+        return (
+          <div key={d.day} className="flex items-center gap-2">
+            <span className="w-8 shrink-0 text-xs text-slate-400">
+              {dayLabel(d.day).replace('星期', '')}
+            </span>
+            <div className="flex h-5 flex-1 overflow-hidden rounded-md bg-slate-100 dark:bg-slate-700/60">
+              <div
+                className="flex items-center justify-end bg-accent pr-1 text-[10px] font-medium text-white transition-all duration-500"
+                style={{ width: `${busyPct}%` }}
+              >
+                {d.busy > 0 && busyPct > 18 ? d.busy : ''}
+              </div>
+            </div>
+            <span className="w-16 shrink-0 text-right text-[11px] tabular-nums text-slate-400">
+              {d.busy} 堂 · {d.free} 空
+            </span>
+          </div>
+        )
+      })}
+      <div className="flex items-center gap-3 pt-1 text-[11px] text-slate-400">
+        <span className="flex items-center gap-1">
+          <span className="h-2.5 w-2.5 rounded-sm bg-accent" /> 上堂
+        </span>
+        <span className="flex items-center gap-1">
+          <span className="h-2.5 w-2.5 rounded-sm bg-slate-200 dark:bg-slate-600" />{' '}
+          空堂
+        </span>
+      </div>
+    </div>
+  )
+}
