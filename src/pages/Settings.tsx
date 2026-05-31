@@ -8,6 +8,7 @@ import {
   ALL_COLLECTIONS,
 } from '../data/collections'
 import { Card, Button, Field, Input, SectionTitle } from '../ui'
+import { seedAllDemo } from '../lib/demoData'
 
 // 設定頁：外觀、個人資料、資料管理（匯出/匯入/清除）
 export default function Settings() {
@@ -27,6 +28,11 @@ export default function Settings() {
     a.click()
     URL.revokeObjectURL(url)
     toast.success('已匯出備份檔案')
+  }
+
+  const loadDemo = async () => {
+    const n = await seedAllDemo()
+    toast.success(n > 0 ? `已載入 ${n} 筆示範資料` : '已有資料，毋須再載入')
   }
 
   const onFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -127,6 +133,9 @@ export default function Settings() {
             onChange={onFile}
             className="hidden"
           />
+          <Button variant="secondary" onClick={loadDemo}>
+            ✨ 載入示範資料
+          </Button>
           <Button variant="danger" onClick={clearAll}>
             🗑 清除所有資料
           </Button>

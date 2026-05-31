@@ -8,6 +8,9 @@ import { ConfirmProvider } from './context/ConfirmContext'
 import Sidebar from './components/Sidebar'
 import MobileTopBar from './components/MobileTopBar'
 import CommandPalette from './components/CommandPalette'
+import { OnboardingModal } from './components/OnboardingModal'
+import { useToast } from './context/ToastContext'
+import { seedAllDemo, hasOnboarded, markOnboarded } from './lib/demoData'
 import Home from './pages/Home'
 import Settings from './pages/Settings'
 import ComingSoon from './components/ComingSoon'
@@ -24,6 +27,8 @@ function AppShell() {
   const [activeId, setActiveId] = useState<string | null>(null)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [paletteOpen, setPaletteOpen] = useState(false)
+  const [onboardOpen, setOnboardOpen] = useState(() => !hasOnboarded())
+  const toast = useToast()
 
   // 切換模式時，返返去首頁（因為功能會唔同）
   useEffect(() => {
@@ -154,6 +159,20 @@ function AppShell() {
           open={paletteOpen}
           onClose={() => setPaletteOpen(false)}
           onNavigate={navigate}
+        />
+
+        <OnboardingModal
+          open={onboardOpen}
+          onClose={() => {
+            markOnboarded()
+            setOnboardOpen(false)
+          }}
+          onLoadDemo={async () => {
+            const n = await seedAllDemo()
+            markOnboarded()
+            setOnboardOpen(false)
+            toast.success(n > 0 ? `已載入 ${n} 筆示範資料 🎉` : '已有資料，毋須載入')
+          }}
         />
       </div>
     </NavProvider>
