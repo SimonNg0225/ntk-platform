@@ -7,13 +7,10 @@ import {
 } from 'react'
 import { useCollection } from '../../lib/store'
 import {
-  notesCol,
   questionsCol,
   resourcesCol,
   lessonPlansCol,
   meetingNotesCol,
-  readingCol,
-  journalCol,
   classesCol,
   studentsCol,
   tasksCol,
@@ -27,14 +24,16 @@ import {
   topicsCol,
   inboxCol,
 } from '../../data/collections'
+// 深化功能嘅真資料喺各自 feature-local collection（唔係 legacy core col）
+import { richNotesCol, type RichNote } from '../learning/notes/store'
+import { journalDocsCol } from '../learning/journal/store'
+import type { JournalDoc } from '../learning/journal/util'
+import { booksCol, STATUS_LABEL, type Book } from '../learning/reading/types'
 import type {
-  Note,
   Question,
   Resource,
   LessonPlan,
   MeetingNote,
-  ReadingItem,
-  JournalEntry,
   Klass,
   Student,
   Task,
@@ -234,13 +233,13 @@ export default function GlobalSearch() {
   const rowRefs = useRef<Map<string, HTMLButtonElement>>(new Map())
 
   // 訂閱所有資料源
-  const notes = useCollection(notesCol)
+  const notes = useCollection(richNotesCol)
   const questions = useCollection(questionsCol)
   const resources = useCollection(resourcesCol)
   const lessonPlans = useCollection(lessonPlansCol)
   const meetingNotes = useCollection(meetingNotesCol)
-  const reading = useCollection(readingCol)
-  const journal = useCollection(journalCol)
+  const reading = useCollection(booksCol)
+  const journal = useCollection(journalDocsCol)
   const classes = useCollection(classesCol)
   const students = useCollection(studentsCol)
   const tasks = useCollection(tasksCol)
@@ -271,16 +270,18 @@ export default function GlobalSearch() {
     const push = (h: Hit | null) => h && out.push(h)
     const q = query
 
-    notes.forEach((n: Note) =>
-      push(buildHit('note', n.id, [{ title: firstLine(n.content), body: n.content }], relativeTime(n.createdAt) ?? undefined, [
-        { label: '建立', value: fmtDate(n.createdAt) },
-        { label: '字數', value: String(n.content.length) },
-      ], q)),
-    )
-    journal.forEach((j: JournalEntry) =>
-      push(buildHit('journal', j.id, [{ title: j.date + (j.mood ? ` · ${j.mood}` : ''), body: j.content }, { title: '', extra: (j.tags ?? []).join(' ') }], j.date, [
+    notes
+      .filter((n: RichNote) => !n.trashed)
+      .forEach((n: RichNote) =>
+        push(buildHit('note', n.id, [{ title: n.title || firstLine(n.content), body: n.content }], relativeTime(n.updatedAt) ?? undefined, [
+          { label: '更新', value: fmtDate(n.updatedAt) },
+          { label: '字數', value: String(n.content.length) },
+        ], q)),
+      )
+    journal.forEach((j: JournalDoc) =>
+      push(buildHit('journal', j.id, [{ title: (j.title || j.date) + (j.mood ? ` · ${j.mood}` : ''), body: [j.content, j.gratitude].filter(Boolean).join('\n') }], j.date, [
         { label: '日期', value: j.date },
-        ...(j.tags?.length ? [{ label: '標籤', value: j.tags.join('、') }] : []),
+        ...(j.mood ? [{ label: '心情', value: j.mood }] : []),
       ], q)),
     )
     goals.forEach((g: Goal) =>
@@ -289,10 +290,10 @@ export default function GlobalSearch() {
         { label: '建立', value: fmtDate(g.createdAt) },
       ], q)),
     )
-    reading.forEach((r: ReadingItem) =>
-      push(buildHit('reading', r.id, [{ title: r.title, body: r.notes }, { title: '', extra: r.author }], r.author ? `作者：${r.author}` : READ_STATUS[r.status], [
-        { label: '狀態', value: READ_STATUS[r.status] },
-        ...(r.author ? [{ label: '作者', value: r.author }] : []),
+    reading.forEach((b: Book) =>
+      push(buildHit('reading', b.id, [{ title: b.title, body: [b.notes, b.review].filter(Boolean).join('\n') }, { title: '', extra: [b.author, ...(b.shelves ?? [])].filter(Boolean).join(' ') }], b.author ? `作者：${b.author}` : STATUS_LABEL[b.status], [
+        { label: '狀態', value: STATUS_LABEL[b.status] },
+        ...(b.author ? [{ label: '作者', value: b.author }] : []),
       ], q)),
     )
     decks.forEach((d: Deck) =>
@@ -547,7 +548,19 @@ export default function GlobalSearch() {
         inboxCol.add({ id: uid(), text, mode, createdAt: now })
         toast.success('已加入快速擷取')
       } else if (target === 'note') {
-        notesCol.add({ id: uid(), content: text, createdAt: now })
+        richNotesCol.add({
+          id: uid(),
+          title: '',
+          content: text,
+          notebookId: null,
+          pinned: false,
+          favorite: false,
+          archived: false,
+          trashed: false,
+          color: 'none',
+          createdAt: now,
+          updatedAt: now,
+        })
         toast.success('已建立學習筆記')
       } else {
         tasksCol.add({ id: uid(), text, done: false, createdAt: now })
@@ -1136,12 +1149,6 @@ function daysToLabel(dateStr: string): string {
   return ` · 過咗 ${-days} 日`
 }
 
-// ───────── 標籤對照 ─────────
-const READ_STATUS: Record<string, string> = {
-  to_read: '想睇',
-  reading: '睇緊',
-  done: '睇完',
-}
 const QTYPE: Record<string, string> = { mc: '選擇題', short: '短答', long: '長答', case: '個案' }
 const DIFF: Record<string, string> = { easy: '易', medium: '中', hard: '難' }
 const RES_TYPE: Record<string, string> = {
