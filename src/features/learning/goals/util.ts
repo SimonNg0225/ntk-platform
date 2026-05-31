@@ -162,6 +162,7 @@ export function buildMomentum(
 
 // ───────── 雜項 ─────────
 export function clampPct(n: number): number {
+  if (!Number.isFinite(n)) return 0 // 防 NaN / ±Infinity 污染進度
   return Math.max(0, Math.min(100, Math.round(n)))
 }
 

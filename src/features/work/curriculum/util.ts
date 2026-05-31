@@ -37,6 +37,15 @@ export function todayKey(): string {
 
 export function fmtDate(iso?: string): string {
   if (!iso) return ''
+  // 純日期（YYYY-MM-DD）要當「本地日期」解析，
+  // 否則 new Date('2026-03-01') 會當 UTC 午夜，喺 UTC 以西時區
+  // getMonth/getDate 會退一日（off-by-one），同 toKey 嘅本地時區原則不一致。
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso)
+  if (m) {
+    const month = Number(m[2])
+    const day = Number(m[3])
+    return `${month}月${day}日`
+  }
   const d = new Date(iso)
   if (Number.isNaN(d.getTime())) return ''
   return `${d.getMonth() + 1}月${d.getDate()}日`

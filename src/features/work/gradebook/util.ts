@@ -312,6 +312,25 @@ export function histogram(values: number[]): HistBin[] {
 // ───────── 日期標籤（評估趨勢用）─────────
 export function shortDate(iso?: string): string {
   if (!iso) return ''
+  // 純日期字串（YYYY-MM-DD）會被 new Date() 當成 UTC 午夜解析，
+  // 喺 UTC 以西時區會 off-by-one（例如 2026-01-15 變 1/14）。
+  // 故此偵測純日期就用本地時區砌 Date，確保顯示嘅係本地日期。
+  const dateOnly = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso)
+  if (dateOnly) {
+    const y = Number(dateOnly[1])
+    const mo = Number(dateOnly[2])
+    const day = Number(dateOnly[3])
+    const d = new Date(y, mo - 1, day)
+    // 確認無滾溢（如 2026-13-40 會被 Date 默默進位），否則當無效日期
+    if (
+      d.getFullYear() !== y ||
+      d.getMonth() !== mo - 1 ||
+      d.getDate() !== day
+    ) {
+      return ''
+    }
+    return `${mo}/${day}`
+  }
   const d = new Date(iso)
   if (Number.isNaN(d.getTime())) return ''
   return `${d.getMonth() + 1}/${d.getDate()}`

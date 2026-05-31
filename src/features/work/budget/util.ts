@@ -498,6 +498,7 @@ export function applyFilters(
 /** 交易排序：日期新→舊，同日按 createdAt 新→舊 */
 export function sortTxDesc(a: Transaction, b: Transaction): number {
   if (a.date !== b.date) return a.date < b.date ? 1 : -1
+  if (a.createdAt === b.createdAt) return 0
   return a.createdAt < b.createdAt ? 1 : -1
 }
 

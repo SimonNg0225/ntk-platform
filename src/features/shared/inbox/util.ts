@@ -90,7 +90,9 @@ export function relativeTime(iso: string, now = Date.now()): string {
   if (wk < 5) return `${wk} 週前`
   const mo = Math.floor(day / 30)
   if (mo < 12) return `${mo} 個月前`
-  return `${Math.floor(day / 365)} 年前`
+  // 用月份基準換算年（避免 day/30 與 day/365 唔一致，喺第 360–364 日
+  // 出現「0 年前」嘅錯值）
+  return `${Math.floor(mo / 12)} 年前`
 }
 
 export function fullTime(iso: string): string {
