@@ -19,10 +19,11 @@ import {
 import {
   aiThreadsCol,
   aiMessagesCol,
-  notesCol,
   meetingNotesCol,
-  journalCol,
 } from '../../data/collections'
+import { richNotesCol } from '../learning/notes/store'
+import { deriveTitle, snippet } from '../learning/notes/util'
+import { journalDocsCol } from '../learning/journal/store'
 import type { AiMessage } from '../../data/types'
 import { useCollection } from '../../lib/store'
 import type { ModeId } from '../../modes/modes'
@@ -1517,9 +1518,9 @@ function ContextPicker({
   mode: ModeId
   toast: ReturnType<typeof useToast>
 }) {
-  const notes = useCollection(notesCol)
+  const notes = useCollection(richNotesCol)
   const meetings = useCollection(meetingNotesCol)
-  const journals = useCollection(journalCol)
+  const journals = useCollection(journalDocsCol)
   const [tab, setTab] = useState<'note' | 'meeting' | 'journal' | 'text'>(
     mode === 'work' ? 'meeting' : 'note',
   )
@@ -1574,21 +1575,27 @@ function ContextPicker({
 
       <div className="max-h-[46vh] space-y-1.5 overflow-y-auto">
         {tab === 'note' &&
-          (notes.length === 0 ? (
-            <EmptyState icon={StickyNote} title="未有筆記" />
-          ) : (
-            notes
-              .filter((n) => filt(n.content))
-              .map((n) => (
-                <ContextItem
-                  key={n.id}
-                  selected={has(n.id)}
-                  title={n.content.split('\n')[0].slice(0, 40) || '（空白筆記）'}
-                  preview={n.content}
-                  onToggle={() => toggle({ id: n.id, kind: 'note', title: n.content.split('\n')[0].slice(0, 40) || '筆記', content: n.content })}
-                />
-              ))
-          ))}
+          (() => {
+            const activeNotes = notes.filter((n) => !n.archived && !n.trashed)
+            return activeNotes.length === 0 ? (
+              <EmptyState icon={StickyNote} title="未有筆記" />
+            ) : (
+              activeNotes
+                .filter((n) => filt(deriveTitle(n) + n.content))
+                .map((n) => {
+                  const title = deriveTitle(n)
+                  return (
+                    <ContextItem
+                      key={n.id}
+                      selected={has(n.id)}
+                      title={title}
+                      preview={snippet(n.content) || title}
+                      onToggle={() => toggle({ id: n.id, kind: 'note', title, content: n.content })}
+                    />
+                  )
+                })
+            )
+          })()}
 
         {tab === 'meeting' &&
           (meetings.length === 0 ? (
@@ -1612,7 +1619,7 @@ function ContextPicker({
             <EmptyState icon={BookOpen} title="未有日誌" />
           ) : (
             journals
-              .filter((j) => filt(j.content))
+              .filter((j) => filt(`${j.date} ${j.title ?? ''} ${j.content}`))
               .map((j) => (
                 <ContextItem
                   key={j.id}

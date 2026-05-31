@@ -9,6 +9,7 @@ import {
 import type { Session, User } from '@supabase/supabase-js'
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
 import { attachSync, detachSync } from '../lib/sync'
+import { preloadAllFeatures } from '../features/registry'
 
 // ============================================================
 //  AuthContext
@@ -51,9 +52,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const userId = session?.user?.id
   useEffect(() => {
     if (!isSupabaseConfigured) return
-    if (userId) void attachSync(userId)
-    else detachSync()
-    return () => detachSync()
+    let cancelled = false
+    if (userId) {
+      // 先確保所有 lazy-load feature 嘅 collection 都登記齊，再啟動同步；
+      // 否則 hydration 只覆蓋早期登記嘅核心 collection，feature 資料唔會
+      // cloud→local 同步，第一次本地寫入仲會反過嚟覆蓋雲端（跨裝置丟資料）。
+      void preloadAllFeatures().then(() => {
+        if (!cancelled) void attachSync(userId)
+      })
+    } else {
+      detachSync()
+    }
+    return () => {
+      cancelled = true
+      detachSync()
+    }
   }, [userId])
 
   const value = useMemo<AuthContextValue>(

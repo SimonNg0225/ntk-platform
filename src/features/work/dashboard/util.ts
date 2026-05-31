@@ -12,6 +12,7 @@ import type {
   Countdown,
 } from '../../../data/types'
 import type { TaskMeta } from '../todo/types'
+import { localDay } from '../todo/util'
 import { getOccurrences, colorOf, minutesOf } from '../../shared/calendar/util'
 import type {
   AgendaItem,
@@ -98,10 +99,10 @@ export function buildTaskTrend(tasks: MergedTask[], days: number): TrendPoint[] 
   }
   const idx = new Map(out.map((p, i) => [p.key, i]))
   for (const t of tasks) {
-    const ck = t.createdAt.slice(0, 10)
+    const ck = localDay(t.createdAt)
     if (idx.has(ck)) out[idx.get(ck)!].created++
     if (t.done && t.completedAt) {
-      const dk = t.completedAt.slice(0, 10)
+      const dk = localDay(t.completedAt)
       if (idx.has(dk)) out[idx.get(dk)!].completed++
     }
   }
@@ -114,7 +115,7 @@ export function buildHeat(tasks: MergedTask[], days: number): HeatCell[] {
   const counts = new Map<string, number>()
   for (const t of tasks) {
     if (t.done && t.completedAt) {
-      const k = t.completedAt.slice(0, 10)
+      const k = localDay(t.completedAt)
       counts.set(k, (counts.get(k) ?? 0) + 1)
     }
   }
@@ -145,7 +146,7 @@ export function completedInRange(
   let n = 0
   for (const t of tasks) {
     if (t.done && t.completedAt) {
-      const k = t.completedAt.slice(0, 10)
+      const k = localDay(t.completedAt)
       if (k >= startKey && k <= endKey) n++
     }
   }

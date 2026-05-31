@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Dices, Eraser, Minus, Plus, Shuffle, Users } from 'lucide-react'
 import type { Student } from '../../../data/types'
 import {
@@ -313,6 +313,12 @@ function RandomPicker({ students }: { students: Student[] }) {
   const [history, setHistory] = useState<string[]>([])
   const [noRepeat, setNoRepeat] = useState(true)
   const [rolling, setRolling] = useState(false)
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+
+  // 卸載時清理仍在跑嘅抽點名動畫 interval，避免卸載後 setState
+  useEffect(() => () => {
+    if (timerRef.current !== null) clearInterval(timerRef.current)
+  }, [])
 
   const pool = noRepeat
     ? students.filter((s) => !history.includes(s.id))
@@ -325,12 +331,13 @@ function RandomPicker({ students }: { students: Student[] }) {
     }
     setRolling(true)
     let ticks = 0
-    const timer = setInterval(() => {
+    timerRef.current = setInterval(() => {
       const r = students[Math.floor(Math.random() * students.length)]
       setPicked(r)
       ticks++
       if (ticks > 8) {
-        clearInterval(timer)
+        if (timerRef.current !== null) clearInterval(timerRef.current)
+        timerRef.current = null
         const final = pool[Math.floor(Math.random() * pool.length)]
         setPicked(final)
         setHistory((h) => [...h, final.id])

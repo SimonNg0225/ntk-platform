@@ -411,9 +411,11 @@ export function getFeature(id: string): Feature | undefined {
 
 // 背景預載全部功能 chunk（App idle 時呼叫）：令所有 lazy 功能嘅 collection
 // 都會建立並登記入 collectionRegistry，確保雲端同步 / 匯出匯入覆蓋齊全。
-export function preloadAllFeatures(): void {
+export function preloadAllFeatures(): Promise<void> {
+  const loaders: Promise<unknown>[] = []
   for (const f of FEATURES) {
     const c = f.component as Partial<LazyFeature> | undefined
-    if (c && typeof c.preload === 'function') void c.preload()
+    if (c && typeof c.preload === 'function') loaders.push(c.preload())
   }
+  return Promise.all(loaders).then(() => undefined)
 }

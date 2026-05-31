@@ -35,7 +35,9 @@ import {
   type AIModel,
 } from '../../lib/aiClient'
 import { parseJsonArray } from '../../lib/aiJson'
-import { decksCol, cardsCol, notesCol } from '../../data/collections'
+import { decksCol, cardsCol } from '../../data/collections'
+import { richNotesCol } from './notes/store'
+import { deriveTitle, snippet } from './notes/util'
 import { useCollection, uid } from '../../lib/store'
 import { todayStr } from '../../lib/srs'
 import { upsertMeta } from './flashcards/store'
@@ -130,7 +132,7 @@ export default function CardGenerator() {
 
   const decks = useCollection(decksCol)
   const allCards = useCollection(cardsCol)
-  const notes = useCollection(notesCol)
+  const notes = useCollection(richNotesCol)
   const history = useCollection(genHistoryCol)
 
   const [tab, setTab] = useState<TopTab>('generate')
@@ -518,6 +520,15 @@ export default function CardGenerator() {
     selectedCount > 0 &&
     !saving &&
     (deckTab === 'new' ? newDeckName.trim() !== '' : chosenDeckId !== '')
+
+  // 揀筆記 Modal：只列未刪嘅個人筆記，最近編輯排前
+  const pickableNotes = useMemo(
+    () =>
+      notes
+        .filter((n) => !n.trashed)
+        .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)),
+    [notes],
+  )
 
   // ── 統計數字 ──────────────────────────────────────────────
   const totalGen = history.reduce((s, r) => s + r.generated, 0)
@@ -1181,7 +1192,7 @@ export default function CardGenerator() {
         title="揀一篇筆記做主題"
         size="lg"
       >
-        {notes.length === 0 ? (
+        {pickableNotes.length === 0 ? (
           <EmptyState
             icon={StickyNote}
             title="仲未有個人筆記"
@@ -1189,24 +1200,25 @@ export default function CardGenerator() {
           />
         ) : (
           <ul className="max-h-[60vh] space-y-2 overflow-y-auto">
-            {[...notes]
-              .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
-              .map((n) => (
-                <li key={n.id}>
-                  <button
-                    type="button"
-                    onClick={() => useNoteAsTopic(n.content)}
-                    className="w-full rounded-xl border border-slate-200 p-3 text-left transition hover:border-accent/40 hover:bg-accent-soft/40 dark:border-slate-700 dark:hover:border-accent/40 dark:hover:bg-accent/10"
-                  >
-                    <p className="line-clamp-3 whitespace-pre-wrap text-sm text-slate-700 dark:text-slate-200">
-                      {n.content || '（空白筆記）'}
-                    </p>
-                    <p className="mt-1 text-[11px] tabular-nums text-slate-400 dark:text-slate-500">
-                      {new Date(n.createdAt).toLocaleDateString('zh-HK')}
-                    </p>
-                  </button>
-                </li>
-              ))}
+            {pickableNotes.map((n) => (
+              <li key={n.id}>
+                <button
+                  type="button"
+                  onClick={() => useNoteAsTopic(n.content)}
+                  className="w-full rounded-xl border border-slate-200 p-3 text-left transition hover:border-accent/40 hover:bg-accent-soft/40 dark:border-slate-700 dark:hover:border-accent/40 dark:hover:bg-accent/10"
+                >
+                  <p className="line-clamp-1 text-sm font-semibold text-slate-700 dark:text-slate-200">
+                    {deriveTitle(n)}
+                  </p>
+                  <p className="mt-0.5 line-clamp-2 text-xs text-slate-500 dark:text-slate-400">
+                    {snippet(n.content) || '（空白筆記）'}
+                  </p>
+                  <p className="mt-1 text-[11px] tabular-nums text-slate-400 dark:text-slate-500">
+                    {new Date(n.createdAt).toLocaleDateString('zh-HK')}
+                  </p>
+                </button>
+              </li>
+            ))}
           </ul>
         )}
       </Modal>

@@ -30,12 +30,14 @@ import { useCollection } from '../../lib/store'
 import {
   inboxCol,
   tasksCol,
-  notesCol,
   eventsCol,
   questionsCol,
   countdownsCol,
   topicsCol,
 } from '../../data/collections'
+// 筆記真資料喺 feature-local richNotesCol（notes_rich_v2）；legacy notesCol
+// 已無人讀，轉「筆記」要寫呢度先會喺筆記功能見到（同 GlobalSearch 一致）。
+import { richNotesCol } from '../learning/notes/store'
 import type { CountdownCategory } from '../../data/types'
 import {
   Button,
@@ -224,7 +226,18 @@ export default function Inbox() {
     if (kind === 'task') {
       tasksCol.add({ text: clean + tagSuffix, done: false, createdAt: iso })
     } else if (kind === 'note') {
-      notesCol.add({ content: row.item.text, createdAt: iso })
+      richNotesCol.add({
+        title: '',
+        content: row.item.text,
+        notebookId: null,
+        pinned: false,
+        favorite: false,
+        archived: false,
+        trashed: false,
+        color: 'none',
+        createdAt: iso,
+        updatedAt: iso,
+      })
     } else if (kind === 'question') {
       const firstTopic = topicsCol.get()[0]
       questionsCol.add({

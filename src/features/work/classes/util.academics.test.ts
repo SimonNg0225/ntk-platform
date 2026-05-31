@@ -110,7 +110,7 @@ describe('studentAcademics', () => {
     expect(r.gradedCount).toBe(0)
   })
 
-  it('出席率 = present / 全部，遲到 / 缺席分開計', () => {
+  it('出席率 = (present+late) / 全部（遲到計到，對齊點名），缺席分開計', () => {
     const records = [
       att({ studentId: 's1', status: 'present' }),
       att({ studentId: 's1', status: 'present' }),
@@ -119,9 +119,21 @@ describe('studentAcademics', () => {
     ]
     const r = studentAcademics('s1', [], [], records)
     expect(r.attTotal).toBe(4)
-    expect(r.attRate).toBe(50) // 2/4
+    expect(r.attRate).toBe(75) // (2 present + 1 late) / 4
     expect(r.lateCount).toBe(1)
     expect(r.absentCount).toBe(1)
+  })
+
+  it('全遲到 → 100%（遲到算「到」，與點名 / 工作儀表板定義一致，防回歸）', () => {
+    // 防回歸：班別管理曾把 late 當「無出席」，與專屬 Attendance 功能不一致
+    const records = [
+      att({ studentId: 's1', status: 'late' }),
+      att({ studentId: 's1', status: 'late' }),
+    ]
+    const r = studentAcademics('s1', [], [], records)
+    expect(r.attRate).toBe(100)
+    expect(r.lateCount).toBe(2)
+    expect(r.absentCount).toBe(0)
   })
 
   it('只數屬於該 studentId 嘅紀錄（其他學生唔混入）', () => {
@@ -230,8 +242,8 @@ describe('classAcademicSummary', () => {
     expect(r.total).toBe(3)
   })
 
-  it('班出席率用原始紀錄總數（present 重數，非由 rate 反推）', () => {
-    // s1：3 present / 4   s2：1 present / 1
+  it('班出席率用原始紀錄總數（「到」重數，非由 rate 反推）', () => {
+    // s1：3 到 / 4（1 缺席）  s2：1 到 / 1
     // 整體 = (3+1) / (4+1) = 4/5 = 80%
     const roster = [stu({ id: 's1' }), stu({ id: 's2' })]
     const records = [
@@ -246,14 +258,14 @@ describe('classAcademicSummary', () => {
     expect(r.attendedStudents).toBe(2)
   })
 
-  it('遲到計入分母但唔當出席（present 嚴格）', () => {
+  it('遲到計入「到」（present+late 皆算到，對齊點名定義）', () => {
     const roster = [stu({ id: 's1' })]
     const records = [
       att({ studentId: 's1', status: 'present', date: '01' }),
       att({ studentId: 's1', status: 'late', date: '02' }),
     ]
     const r = classAcademicSummary(roster, [], [], records)
-    expect(r.attendanceRate).toBe(50) // 1 present / 2
+    expect(r.attendanceRate).toBe(100) // (1 present + 1 late) / 2
   })
 
   it('跨班過濾：其他班學生嘅成績 / 出席唔會混入本班統計', () => {

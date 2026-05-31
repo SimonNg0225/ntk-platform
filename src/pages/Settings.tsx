@@ -2,11 +2,9 @@ import { useRef } from 'react'
 import { useSettings } from '../context/SettingsContext'
 import { useToast } from '../context/ToastContext'
 import { useConfirm } from '../context/ConfirmContext'
-import {
-  exportAllData,
-  importAllData,
-  ALL_COLLECTIONS,
-} from '../data/collections'
+import { exportAllData, importAllData } from '../data/collections'
+import { collectionRegistry } from '../lib/store'
+import { preloadAllFeatures } from '../features/registry'
 import { Card, Button, Field, Input, SectionTitle } from '../ui'
 import { seedAllDemo } from '../lib/demoData'
 
@@ -64,7 +62,11 @@ export default function Settings() {
       tone: 'danger',
     })))
       return
-    for (const { col } of ALL_COLLECTIONS) col.set([] as never[])
+    // 先確保所有 lazy feature collection 登記齊，再用 collectionRegistry
+    // 清晒（同匯出/匯入同源）—— 唔係淨係清靜態核心清單，避免大量 feature
+    // 資料（筆記/日誌/健康/健身…）殘留。
+    await preloadAllFeatures()
+    for (const col of collectionRegistry.values()) col.set([] as never[])
     toast.success('已清除所有資料')
   }
 

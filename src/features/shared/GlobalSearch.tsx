@@ -1,5 +1,6 @@
 import {
   useCallback,
+  useDeferredValue,
   useEffect,
   useMemo,
   useRef,
@@ -257,6 +258,10 @@ export default function GlobalSearch() {
 
   const parsed = useMemo(() => parseQuery(raw.trim(), ALL_KIND_IDS), [raw])
   const query = parsed.text
+  // 效能：每個 keystroke 都會令 allHits（18 個資料源全量建 Hit + 評分）重算，
+  // 大資料下打字會卡。用 useDeferredValue 把「評分／過濾／結果渲染」降為低優先，
+  // 輸入框即時更新、重運算延後一拍跟上。輸入鍵盤 chrome 仍用即時 query。
+  const deferredQuery = useDeferredValue(query)
 
   // 班別 / 課題 對照（畀題目、學生、教案做副標）
   const classById = useMemo(() => new Map(classes.map((c) => [c.id, c.name])), [classes])
@@ -268,7 +273,7 @@ export default function GlobalSearch() {
   const allHits = useMemo<Hit[]>(() => {
     const out: Hit[] = []
     const push = (h: Hit | null) => h && out.push(h)
-    const q = query
+    const q = deferredQuery
 
     notes
       .filter((n: RichNote) => !n.trashed)
@@ -389,7 +394,7 @@ export default function GlobalSearch() {
     )
     return out
   }, [
-    query, notes, journal, goals, reading, decks, cards, questions, resources,
+    deferredQuery, notes, journal, goals, reading, decks, cards, questions, resources,
     lessonPlans, meetingNotes, classes, students, tasks, topics, transactions,
     events, countdowns, inbox, classById, topicById, catById, deckById,
   ])
@@ -400,13 +405,13 @@ export default function GlobalSearch() {
     if (scopeMode) list = list.filter((h) => KIND_META[h.kindId].modes.includes(mode))
     if (parsed.typeFilter) list = list.filter((h) => h.kindId === parsed.typeFilter)
     if (kindFilter !== 'all') list = list.filter((h) => h.kindId === kindFilter)
-    if (query) list = list.slice().sort((a, b) => b.score - a.score)
+    if (deferredQuery) list = list.slice().sort((a, b) => b.score - a.score)
     else
       list = list
         .slice()
         .sort((a, b) => a.kindLabel.localeCompare(b.kindLabel) || a.title.localeCompare(b.title))
     return list
-  }, [allHits, scopeMode, mode, parsed.typeFilter, kindFilter, query])
+  }, [allHits, scopeMode, mode, parsed.typeFilter, kindFilter, deferredQuery])
 
   // 統計：每類命中數（畀 Pills 顯示）
   const kindCounts = useMemo(() => {
@@ -443,7 +448,7 @@ export default function GlobalSearch() {
   // active index 邊界 + query 變就重置
   useEffect(() => {
     setActiveIdx(0)
-  }, [query, kindFilter, scopeMode, view, mode])
+  }, [deferredQuery, kindFilter, scopeMode, view, mode])
   useEffect(() => {
     if (activeIdx > flatVisible.length - 1) setActiveIdx(Math.max(0, flatVisible.length - 1))
   }, [flatVisible.length, activeIdx])
@@ -725,7 +730,7 @@ export default function GlobalSearch() {
                   <ResultRow
                     key={h.id}
                     hit={h}
-                    query={query}
+                    query={deferredQuery}
                     active={i === activeIdx}
                     index={i}
                     onHover={() => setActiveIdx(i)}
@@ -756,7 +761,7 @@ export default function GlobalSearch() {
                           <ResultRow
                             key={h.id}
                             hit={h}
-                            query={query}
+                            query={deferredQuery}
                             active={flatIdx === activeIdx}
                             index={flatIdx}
                             onHover={() => setActiveIdx(flatIdx)}
@@ -778,7 +783,7 @@ export default function GlobalSearch() {
               {activeHit ? (
                 <PreviewPanel
                   hit={activeHit}
-                  query={query}
+                  query={deferredQuery}
                   onOpen={() => goFeature(activeHit)}
                   onCopy={() => copyText(activeHit.body || activeHit.title)}
                   onPushInbox={() => {

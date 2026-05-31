@@ -153,12 +153,13 @@ export default function StudentProfile({
       : null
 
     const myAtt = attendance.filter((r) => r.studentId === student.id)
-    const present = myAtt.filter((r) => r.status === 'present').length
-    const attRate = myAtt.length
-      ? Math.round((present / myAtt.length) * 100)
-      : null
     const lateCount = myAtt.filter((r) => r.status === 'late').length
     const absentCount = myAtt.filter((r) => r.status === 'absent').length
+    // 出席率：present + late 皆算「到」（對齊點名 / 工作儀表板定義），缺席唔算
+    const attended = myAtt.length - absentCount
+    const attRate = myAtt.length
+      ? Math.round((attended / myAtt.length) * 100)
+      : null
 
     const myComms = comms
       .filter((c: ParentComm) => c.studentId === student.id)

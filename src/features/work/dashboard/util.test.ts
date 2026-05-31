@@ -195,17 +195,17 @@ describe('completionStreak', () => {
 // ============================================================
 describe('completedInRange', () => {
   const tasks: MergedTask[] = [
-    mtask({ id: '1', done: true, completedAt: '2026-05-01T09:00:00.000Z' }),
-    mtask({ id: '2', done: true, completedAt: '2026-05-04T23:59:00.000Z' }),
-    mtask({ id: '3', done: true, completedAt: '2026-05-08T00:00:00.000Z' }),
-    mtask({ id: '4', done: false, completedAt: '2026-05-04T09:00:00.000Z' }), // 未完成不計
+    mtask({ id: '1', done: true, completedAt: '2026-05-01T09:00:00' }),
+    mtask({ id: '2', done: true, completedAt: '2026-05-04T23:59:00' }),
+    mtask({ id: '3', done: true, completedAt: '2026-05-08T00:00:00' }),
+    mtask({ id: '4', done: false, completedAt: '2026-05-04T09:00:00' }), // 未完成不計
     mtask({ id: '5', done: true }), // 無 completedAt 不計
   ]
   it('閉區間（含首尾日）', () => {
     // 05-01..05-04：#1、#2 → 2
     expect(completedInRange(tasks, '2026-05-01', '2026-05-04')).toBe(2)
   })
-  it('端點包含（completedAt 取前 10 字做日 key）', () => {
+  it('端點包含（completedAt 經 localDay 做本地日 key）', () => {
     // 05-04..05-08：#2、#3 → 2
     expect(completedInRange(tasks, '2026-05-04', '2026-05-08')).toBe(2)
   })

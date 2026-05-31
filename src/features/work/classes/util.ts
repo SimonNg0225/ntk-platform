@@ -305,7 +305,7 @@ export interface StudentAcademics {
   avgPct: number | null
   /** 計入平均嘅已評分數目 */
   gradedCount: number
-  /** 出席率（present / 全部紀錄 × 100）；無紀錄 → null */
+  /** 出席率（(present+late) / 全部紀錄 × 100，遲到計到；對齊點名功能）；無紀錄 → null */
   attRate: number | null
   /** 出席紀錄總日數 */
   attTotal: number
@@ -348,7 +348,8 @@ export function studentAcademics(
     else if (r.status === 'absent') absentCount++
     else if (r.status === 'late') lateCount++
   }
-  const attRate = attTotal ? Math.round((present / attTotal) * 100) : null
+  // 出席率：present + late 皆算「到」（對齊點名 / 工作儀表板定義），缺席唔算
+  const attRate = attTotal ? Math.round(((present + lateCount) / attTotal) * 100) : null
 
   return { avgPct, gradedCount: pcts.length, attRate, attTotal, absentCount, lateCount }
 }
@@ -372,7 +373,7 @@ export interface ClassAcademicSummary {
   avgGradePct: number | null
   /** 有已評分嘅學生人數（班平均分嘅 N）*/
   gradedStudents: number
-  /** 班出席率 %（全班 present 總數 / 全班紀錄總數）；無紀錄 → null */
+  /** 班出席率 %（全班「到」(present+late) 總數 / 全班紀錄總數）；無紀錄 → null */
   attendanceRate: number | null
   /** 有出席紀錄嘅學生人數 */
   attendedStudents: number
@@ -385,7 +386,7 @@ export interface ClassAcademicSummary {
 /**
  * 把一班學生嘅成績 / 出席聚合成班情摘要。
  * - 班平均分：對「有已評分」嘅學生 avg 取等權平均（避免多測驗學生過度加權）。
- * - 班出席率：用原始紀錄總數，較能反映實際整體出席。
+ * - 班出席率：present + late 皆算「到」（對齊點名 / 工作儀表板），用原始紀錄總數。
  * - 全部守空名冊 / 無資料 / 除零。
  */
 export function classAcademicSummary(
@@ -411,8 +412,9 @@ export function classAcademicSummary(
     if (a.attTotal > 0) {
       attendedSet.add(s.id)
       attTotalAll += a.attTotal
-      // 由 rate 反推 present 會有捨入誤差，故直接重數 present
-      attPresent += a.attTotal - a.absentCount - a.lateCount
+      // 「到」= present + late（對齊點名定義）。由 rate 反推會有捨入誤差，
+      // 故由原始計數直接重算：到 = 總數 - 缺席
+      attPresent += a.attTotal - a.absentCount
     }
     if (isAtRisk(a)) atRiskCount++
   }

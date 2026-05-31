@@ -4,6 +4,7 @@ import { useCollection } from '../../lib/store'
 import { eventsCol, calendarsCol } from '../../data/collections'
 import type { CalendarEvent } from '../../data/types'
 import { Button, IconButton, SegmentedControl, cx } from '../../ui'
+import { useToast } from '../../context/ToastContext'
 import EventEditor from './calendar/EventEditor'
 import MonthView from './calendar/MonthView'
 import TimeGridView from './calendar/TimeGridView'
@@ -52,6 +53,17 @@ function useIsWide(): boolean {
 export default function Calendar() {
   const events = useCollection(eventsCol)
   const cals = useCollection(calendarsCol)
+  const toast = useToast()
+
+  // 拖拉移動：重複事件唔好盲改 master（會搬郁／重錨成個系列，繞過「僅此次/全部」）。
+  // 暫擋住 + 引導去編輯器處理，避免破壞重複規則。
+  const blockRecurringDrag = (ev: CalendarEvent): boolean => {
+    if (ev.recurrence) {
+      toast.info('重複事件請開編輯器調整（可揀「僅此次」或「全部」）')
+      return true
+    }
+    return false
+  }
 
   const isWide = useIsWide()
   const [view, setView] = useState<View>('month')
@@ -197,7 +209,9 @@ export default function Calendar() {
           selectedKey={cursorKey}
           onSelectDay={(k) => setCursor(fromKey(k))}
           onOpenEvent={openEdit}
-          onMoveToDay={(ev, dk) => eventsCol.update(ev.id, { date: dk })}
+          onMoveToDay={(ev, dk) => {
+            if (!blockRecurringDrag(ev)) eventsCol.update(ev.id, { date: dk })
+          }}
           onMoreDay={(k) => {
             setCursor(fromKey(k))
             setView('day')
@@ -211,9 +225,11 @@ export default function Calendar() {
           occByDate={occByDate}
           onOpenEvent={openEdit}
           onCreateAt={createAt}
-          onMoveEvent={(ev, time, endTime) =>
-            eventsCol.update(ev.id, { time, endTime, allDay: false })
-          }
+          onMoveEvent={(ev, time, endTime) => {
+            if (!blockRecurringDrag(ev)) {
+              eventsCol.update(ev.id, { time, endTime, allDay: false })
+            }
+          }}
           onPickDay={(k) => {
             setCursor(fromKey(k))
             setView('day')

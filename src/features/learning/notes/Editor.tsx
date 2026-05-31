@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   Archive,
   ArchiveRestore,
@@ -91,26 +91,55 @@ export default function Editor({
   const [content, setContent] = useState(note.content)
   const [mode, setMode] = useState<'edit' | 'preview'>('edit')
 
-  // 切換到另一則筆記時，載入新內容
+  // 持有「目前 title/content 屬於邊一則筆記」+ 已寫入快照。
+  // 用嚟喺切走 / 卸載時即時 flush 未存內容（避免遺失），同時
+  // 靠 saved 快照避免重複 / 多餘寫入。
+  const live = useRef({
+    id: note.id,
+    title,
+    content,
+    savedTitle: note.title,
+    savedContent: note.content,
+  })
+  live.current.title = title
+  live.current.content = content
+
+  // 即時寫入 ref 當下持有嗰則筆記；只在內容真有改動時寫，寫完更新快照。
+  const flushNow = useCallback(() => {
+    const s = live.current
+    if (s.title === s.savedTitle && s.content === s.savedContent) return
+    richNotesCol.update(s.id, {
+      title: s.title,
+      content: s.content,
+      updatedAt: new Date().toISOString(),
+    })
+    s.savedTitle = s.title
+    s.savedContent = s.content
+  }, [])
+
+  // 切換到另一則筆記時：cleanup 先 flush 舊筆記（此時 ref 仍持有舊 id +
+  // 最新輸入），再載入新內容並重設快照。卸載時 cleanup 亦會 flush。
   useEffect(() => {
     setTitle(note.title)
     setContent(note.content)
     setMode('edit')
+    live.current = {
+      id: note.id,
+      title: note.title,
+      content: note.content,
+      savedTitle: note.title,
+      savedContent: note.content,
+    }
+    return flushNow
   }, [note.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Debounced 自動儲存（內容 / 標題改變）
   const dirty = title !== note.title || content !== note.content
   useEffect(() => {
     if (!dirty) return
-    const t = setTimeout(() => {
-      richNotesCol.update(note.id, {
-        title,
-        content,
-        updatedAt: new Date().toISOString(),
-      })
-    }, 600)
+    const t = setTimeout(flushNow, 600)
     return () => clearTimeout(t)
-  }, [title, content, dirty, note.id])
+  }, [title, content, dirty, note.id, flushNow])
 
   const tags = useMemo(() => parseTags(content), [content])
   const words = wordCount(content)
