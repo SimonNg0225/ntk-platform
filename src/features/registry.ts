@@ -25,6 +25,7 @@ const Journal = lazyFeature(() => import('./learning/Journal'))
 const LearningDashboard = lazyFeature(() => import('./learning/LearningDashboard'))
 const ReadingList = lazyFeature(() => import('./learning/ReadingList'))
 const HabitTracker = lazyFeature(() => import('./learning/HabitTracker'))
+const HealthTracker = lazyFeature(() => import('./learning/HealthTracker'))
 
 // 工作模式功能
 const TodoWidget = lazyFeature(() => import('./work/TodoWidget'))
@@ -155,6 +156,16 @@ export const FEATURES: Feature[] = [
     icon: '📓',
     group: '目標與習慣',
     component: Journal,
+    status: 'ready',
+  },
+  {
+    id: 'learning-health',
+    modes: ['learning'],
+    name: '健康追蹤',
+    description: '記錄體重、睡眠、運動、飲水、心情，睇趨勢同達標進度。',
+    icon: '💪',
+    group: '健康',
+    component: HealthTracker,
     status: 'ready',
   },
 
@@ -291,7 +302,7 @@ export const FEATURES: Feature[] = [
   },
   {
     id: 'work-budget',
-    modes: ['work'],
+    modes: ['learning', 'work'],
     name: '收支記帳',
     description: '記錄每日收入支出，睇本月結餘同分類佔比。',
     icon: '💰',
