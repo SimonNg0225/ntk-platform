@@ -203,3 +203,15 @@ body {
   background: #cbd5e1;
   border-radius: 9999px;
 }
+
+/* 無障礙：尊重「減少動態效果」系統設定 */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
