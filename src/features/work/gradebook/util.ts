@@ -23,6 +23,12 @@ export interface GradingScheme extends Entity {
   scale: GradeScaleKey
   /** 計平均時剔除每類最低分一次（drop lowest）*/
   dropLowest: boolean
+  /**
+   * 自訂等級分界（選填，向後相容）：每種等級制 → { 等級 label → 百分比下限 }。
+   * 只覆蓋有提供嘅 label 嘅 min；其餘沿用內建。空 / 缺值 → 全用內建。
+   * 例：{ hkdse: { '5**': 90, '3': 45 } } 把 5** 收緊到 90、合格線降到 45。
+   */
+  bandCuts?: Partial<Record<GradeScaleKey, Record<string, number>>>
   updatedAt: string
 }
 
@@ -108,9 +114,47 @@ export function bandsOf(scale: GradeScaleKey): GradeBand[] {
       : PERCENT_BANDS
 }
 
-export function gradeOf(pct: number, scale: GradeScaleKey): GradeBand {
-  const bands = bandsOf(scale)
-  return bands.find((b) => pct >= b.min) ?? bands[bands.length - 1]
+/**
+ * 把內建等級制套用「自訂分界」(label → 百分比下限) 後回傳。
+ * 規則（守邊界 / 缺值 / 亂序）：
+ *  - 只覆蓋有 finite 數值嘅 label 嘅 min，clamp 落 0–100；其餘沿用內建。
+ *  - 最底一級（內建 min=0）強制保持 0，確保任何分數都有對應等級（唔會漏底）。
+ *  - 覆蓋後按 min 由高到低重新排序，令 gradeOf 嘅「由高揾第一個 >=」邏輯仍正確，
+ *    即使老師亂咁填（例如把 5* 設得高過 5**）。
+ * cuts 為 undefined / 空物件 → 直接回內建（zero-cost、向後相容）。
+ */
+export function resolveBands(
+  scale: GradeScaleKey,
+  cuts?: Record<string, number>,
+): GradeBand[] {
+  const base = bandsOf(scale)
+  if (!cuts || Object.keys(cuts).length === 0) return base
+  const next = base.map((b) => {
+    // 最底一級永遠由 0 起，唔接受覆蓋（避免分數跌穿所有 band）
+    if (b.min === 0) return b
+    const raw = cuts[b.label]
+    if (raw == null || !Number.isFinite(raw)) return b
+    const min = Math.max(0, Math.min(100, raw))
+    return min === b.min ? b : { ...b, min }
+  })
+  // 亂序保護：由高到低排（同分時保持原本相對次序 = 穩定排序）
+  return [...next].sort((a, b) => b.min - a.min)
+}
+
+/** 等級制每級嘅內建下限（畀 UI 顯示「預設」對照用）*/
+export function defaultBandCuts(scale: GradeScaleKey): Record<string, number> {
+  const out: Record<string, number> = {}
+  for (const b of bandsOf(scale)) out[b.label] = b.min
+  return out
+}
+
+export function gradeOf(
+  pct: number,
+  scale: GradeScaleKey,
+  bands?: GradeBand[],
+): GradeBand {
+  const list = bands ?? bandsOf(scale)
+  return list.find((b) => pct >= b.min) ?? list[list.length - 1]
 }
 
 // 通用「分數高低」色調（用於進度條/儲存格底色，與等級制無關）

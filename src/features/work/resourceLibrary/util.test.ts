@@ -17,6 +17,11 @@ import {
   topOpened,
   topicCoverage,
   emptyMeta,
+  daysSince,
+  isStale,
+  staleRows,
+  lastActivityIso,
+  DEFAULT_STALE_OPTS,
   DEFAULT_FILTER,
   type ResourceMeta,
   type ResourceFolder,
@@ -561,6 +566,122 @@ describe('emptyMeta', () => {
     expect(m.folderId).toBeUndefined()
     expect(m.rating).toBeUndefined()
     expect(m.lastOpened).toBeUndefined()
+  })
+})
+
+// ============================================================
+//  daysSince — 日曆日差（注入 now，守缺值 / 無效 / 未來 / 同日）
+// ============================================================
+describe('daysSince', () => {
+  const now = new Date(2026, 4, 31, 10, 0, 0) // 本地 2026-05-31 10:00
+
+  it('缺值 → undefined', () => {
+    expect(daysSince(undefined, now)).toBeUndefined()
+  })
+  it('無效日期字串 → undefined（唔回 NaN）', () => {
+    expect(daysSince('not-a-date', now)).toBeUndefined()
+  })
+  it('同一日 → 0', () => {
+    expect(daysSince(new Date(2026, 4, 31, 1, 0, 0).toISOString(), now)).toBe(0)
+  })
+  it('昨日 → 1', () => {
+    expect(daysSince(new Date(2026, 4, 30, 23, 0, 0).toISOString(), now)).toBe(1)
+  })
+  it('30 日前 → 30', () => {
+    expect(daysSince(new Date(2026, 4, 1, 10, 0, 0).toISOString(), now)).toBe(30)
+  })
+  it('未來時戳 → clamp 至 0（唔出負）', () => {
+    expect(daysSince(new Date(2026, 5, 5, 10, 0, 0).toISOString(), now)).toBe(0)
+  })
+})
+
+// ============================================================
+//  lastActivityIso — 開過用 lastOpened，否則 fallback createdAt
+// ============================================================
+describe('lastActivityIso', () => {
+  it('有 lastOpened 用 lastOpened', () => {
+    const r = row(
+      { id: 'a', createdAt: '2026-01-01T00:00:00.000Z' },
+      { lastOpened: '2026-03-03T00:00:00.000Z' },
+    )
+    expect(lastActivityIso(r)).toBe('2026-03-03T00:00:00.000Z')
+  })
+  it('無 lastOpened 退回 createdAt', () => {
+    const r = row({ id: 'a', createdAt: '2026-01-01T00:00:00.000Z' })
+    expect(lastActivityIso(r)).toBe('2026-01-01T00:00:00.000Z')
+  })
+})
+
+// ============================================================
+//  isStale / staleRows — 「需要整理」偵測（注入 now）
+// ============================================================
+describe('isStale', () => {
+  const now = new Date(2026, 4, 31, 12, 0, 0) // 2026-05-31
+  const opts = DEFAULT_STALE_OPTS // staleDays 60 / neverOpenedDays 30
+  const iso = (y: number, m: number, d: number) => new Date(y, m - 1, d, 12).toISOString()
+
+  it('從未開啟 + 加入未夠 neverOpenedDays → 唔算', () => {
+    // 加入 10 日前（< 30）
+    expect(isStale(row({ id: 'a', createdAt: iso(2026, 5, 21) }), opts, now)).toBe(false)
+  })
+  it('從未開啟 + 加入剛好達 neverOpenedDays（邊界含）→ 算', () => {
+    expect(isStale(row({ id: 'a', createdAt: iso(2026, 5, 1) }), opts, now)).toBe(true) // 30 日
+  })
+  it('開過但距上次開啟達 staleDays（邊界含）→ 算', () => {
+    const r = row(
+      { id: 'a', createdAt: iso(2025, 1, 1) },
+      { opens: 5, lastOpened: iso(2026, 4, 1) }, // 60 日前
+    )
+    expect(isStale(r, opts, now)).toBe(true)
+  })
+  it('開過但近期（< staleDays）→ 唔算', () => {
+    const r = row(
+      { id: 'a', createdAt: iso(2025, 1, 1) },
+      { opens: 5, lastOpened: iso(2026, 5, 20) }, // 11 日前
+    )
+    expect(isStale(r, opts, now)).toBe(false)
+  })
+  it('opens > 0 但缺 lastOpened（舊資料）→ 當從未開啟，按加入日判', () => {
+    const fresh = row({ id: 'a', createdAt: iso(2026, 5, 21) }, { opens: 3 })
+    const old = row({ id: 'b', createdAt: iso(2026, 1, 1) }, { opens: 3 })
+    expect(isStale(fresh, opts, now)).toBe(false)
+    expect(isStale(old, opts, now)).toBe(true)
+  })
+  it('封存 / 失效一律唔當 stale（交返各自視圖）', () => {
+    const base = { id: 'a', createdAt: iso(2025, 1, 1) }
+    expect(isStale(row(base, { opens: 0, archived: true }), opts, now)).toBe(false)
+    expect(isStale(row(base, { opens: 0, broken: true }), opts, now)).toBe(false)
+  })
+  it('預設 opts（唔傳）行為一致', () => {
+    expect(isStale(row({ id: 'a', createdAt: iso(2026, 5, 1) }), undefined, now)).toBe(true)
+  })
+})
+
+describe('staleRows', () => {
+  const now = new Date(2026, 4, 31, 12, 0, 0)
+  const iso = (y: number, m: number, d: number) => new Date(y, m - 1, d, 12).toISOString()
+
+  it('空輸入 → 空陣列', () => {
+    expect(staleRows([], DEFAULT_STALE_OPTS, now)).toEqual([])
+  })
+  it('全部活躍 → 空陣列', () => {
+    const rows = [
+      row({ id: 'a', createdAt: iso(2026, 5, 25) }, { opens: 2, lastOpened: iso(2026, 5, 25) }),
+      row({ id: 'b', createdAt: iso(2026, 5, 28) }),
+    ]
+    expect(staleRows(rows, DEFAULT_STALE_OPTS, now)).toEqual([])
+  })
+  it('只回 stale，最耐冇活動排最前', () => {
+    const rows = [
+      // idle 60 日（lastOpened 4/1）
+      row({ id: 'recent-stale', createdAt: iso(2024, 1, 1) }, { opens: 1, lastOpened: iso(2026, 4, 1) }),
+      // 活躍，唔應入
+      row({ id: 'active', createdAt: iso(2026, 5, 20) }, { opens: 9, lastOpened: iso(2026, 5, 20) }),
+      // 從未開啟、好舊（createdAt 2025-06-01）→ 活動時刻最早，排最前
+      row({ id: 'never-old', createdAt: iso(2025, 6, 1) }),
+    ]
+    const out = staleRows(rows, DEFAULT_STALE_OPTS, now)
+    expect(out.map((r) => r.res.id)).toEqual(['never-old', 'recent-stale'])
   })
 })
 

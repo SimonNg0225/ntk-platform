@@ -3,6 +3,7 @@ import {
   Archive,
   BarChart3,
   BookMarked,
+  CalendarClock,
   CheckSquare,
   ExternalLink,
   FolderPlus,
@@ -56,6 +57,7 @@ import {
   TYPE_ORDER,
   applyFilter,
   folderColor,
+  isStale,
   joinMeta,
   logOpen,
   pruneOrphans,
@@ -92,6 +94,7 @@ const SMART_VIEWS: { id: SmartView; label: string; icon: LucideIcon }[] = [
   { id: 'all', label: '全部資源', icon: BookMarked },
   { id: 'favorites', label: '收藏', icon: Star },
   { id: 'recent_opened', label: '最近開啟', icon: ExternalLink },
+  { id: 'stale', label: '需要整理', icon: CalendarClock },
   { id: 'unsorted', label: '未分類', icon: Inbox },
   { id: 'broken', label: '失效連結', icon: Link2Off },
   { id: 'archived', label: '封存', icon: Archive },
@@ -179,6 +182,7 @@ export default function ResourceLibrary() {
       all: live.length,
       favorites: live.filter((r) => r.meta.favorite).length,
       recent_opened: live.filter((r) => r.meta.lastOpened).length,
+      stale: live.filter((r) => isStale(r)).length,
       unsorted: live.filter((r) => !r.meta.folderId).length,
       broken: live.filter((r) => r.meta.broken).length,
       archived: allRows.filter((r) => r.meta.archived).length,
@@ -473,16 +477,25 @@ export default function ResourceLibrary() {
               topicName={topicName}
             />
           ) : filtered.length === 0 ? (
-            <EmptyState
-              icon={BookMarked}
-              title="未有符合嘅資源"
-              hint="撳「新增資源」開始建立你嘅教材庫，或者調整篩選條件。"
-              action={
-                <Button icon={Plus} onClick={() => setShowAdd(true)}>
-                  新增資源
-                </Button>
-              }
-            />
+            filter.smart === 'stale' && activeFilterCount === 0 && !filter.search ? (
+              <EmptyState
+                icon={CalendarClock}
+                title="資源庫好乾淨"
+                hint="冇久未開啟或者從未用過嘅資源，全部都整理得貼貼服服。"
+              />
+            ) : (
+              <EmptyState
+                icon={BookMarked}
+                art="empty-resources"
+                title="未有符合嘅資源"
+                hint="撳「新增資源」開始建立你嘅教材庫，或者調整篩選條件。"
+                action={
+                  <Button icon={Plus} onClick={() => setShowAdd(true)}>
+                    新增資源
+                  </Button>
+                }
+              />
+            )
           ) : view === 'grid' ? (
             <GridView
               rows={filtered}

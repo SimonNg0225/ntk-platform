@@ -8,8 +8,11 @@ import {
   collectActions,
   typeDistribution,
   actionStats,
+  actionsByOwner,
+  UNASSIGNED_OWNER,
   noteToPlainText,
   buildPrintHtml,
+  todayKey,
   type NoteMeta,
   type ActionItem,
   type MergedNote,
@@ -302,6 +305,93 @@ describe('actionStats — 行動統計（純計數部分）', () => {
     const s = actionStats([openAction({ done: true }), openAction({ id: 'b', done: true })])
     expect(s.completionPct).toBe(100)
     expect(s.open).toBe(0)
+  })
+})
+
+// ── actionsByOwner（問責分組：邊個欠咩跟進）────────────────
+describe('actionsByOwner — 按負責人分組未完成項目', () => {
+  it('空陣列 → 空結果', () => {
+    expect(actionsByOwner([])).toEqual([])
+  })
+
+  it('無 owner / 空白 owner 歸入未指派桶（UNASSIGNED_OWNER）', () => {
+    const groups = actionsByOwner([
+      openAction({ id: 'a1', owner: undefined }),
+      openAction({ id: 'a2', owner: '   ' }), // 全空白都當未指派
+    ])
+    expect(groups).toHaveLength(1)
+    expect(groups[0].owner).toBe(UNASSIGNED_OWNER)
+    expect(groups[0].unassigned).toBe(true)
+    expect(groups[0].open).toBe(2)
+    expect(groups[0].items).toHaveLength(2)
+  })
+
+  it('owner 前後空白會 trim 後當同一人', () => {
+    const groups = actionsByOwner([
+      openAction({ id: 'a1', owner: 'amy' }),
+      openAction({ id: 'a2', owner: '  amy  ' }),
+    ])
+    expect(groups).toHaveLength(1)
+    expect(groups[0].owner).toBe('amy')
+    expect(groups[0].open).toBe(2)
+  })
+
+  it('已完成項目計入 total/done 但唔入 items，亦唔當 open', () => {
+    const groups = actionsByOwner([
+      openAction({ id: 'a1', owner: 'amy', done: true }),
+      openAction({ id: 'a2', owner: 'amy', done: false }),
+    ])
+    expect(groups).toHaveLength(1)
+    const g = groups[0]
+    expect(g.total).toBe(2)
+    expect(g.done).toBe(1)
+    expect(g.open).toBe(1)
+    expect(g.items.map((i) => i.id)).toEqual(['a2']) // 只得未完成
+  })
+
+  it('只有已完成項目嘅人：open=0、items 為空', () => {
+    const groups = actionsByOwner([openAction({ owner: 'bob', done: true })])
+    expect(groups[0].open).toBe(0)
+    expect(groups[0].done).toBe(1)
+    expect(groups[0].items).toEqual([])
+  })
+
+  it('overdue 只數未完成且到期日早於今日', () => {
+    const today = todayKey()
+    const past = '2000-01-01' // 一定早過今日
+    const groups = actionsByOwner([
+      openAction({ id: 'a1', owner: 'amy', due: past, done: false }), // 逾期
+      openAction({ id: 'a2', owner: 'amy', due: today, done: false }), // 今日到期，唔算逾期
+      openAction({ id: 'a3', owner: 'amy', due: past, done: true }), // 已完成，唔數
+    ])
+    const g = groups[0]
+    expect(g.overdue).toBe(1)
+    expect(g.open).toBe(2)
+    expect(g.done).toBe(1)
+  })
+
+  it('排序：未完成數多者在前，未指派永遠墊底', () => {
+    const groups = actionsByOwner([
+      openAction({ id: 'u1', owner: undefined }), // 未指派 1
+      openAction({ id: 'b1', owner: 'bob' }), // bob 1 項
+      openAction({ id: 'a1', owner: 'amy' }), // amy 2 項
+      openAction({ id: 'a2', owner: 'amy' }),
+    ])
+    expect(groups.map((g) => g.owner)).toEqual(['amy', 'bob', UNASSIGNED_OWNER])
+    expect(groups[groups.length - 1].unassigned).toBe(true)
+  })
+
+  it('未完成數相同時，逾期多者在前', () => {
+    const past = '2000-01-01'
+    const groups = actionsByOwner([
+      // amy：2 項未完成、0 逾期
+      openAction({ id: 'a1', owner: 'amy' }),
+      openAction({ id: 'a2', owner: 'amy' }),
+      // cara：2 項未完成、1 逾期 → 應排 amy 前面
+      openAction({ id: 'c1', owner: 'cara', due: past }),
+      openAction({ id: 'c2', owner: 'cara' }),
+    ])
+    expect(groups.map((g) => g.owner)).toEqual(['cara', 'amy'])
   })
 })
 

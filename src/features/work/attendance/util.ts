@@ -259,6 +259,119 @@ export function tallyByStudent(
   return out
 }
 
+// ───────── 個別學生摘要（drill-down）─────────
+// 班級層面已有 tallyByStudent / 趨勢 / 排行；呢組純函式專為「單一學生」
+// 嘅深入摘要服務，補足之前未被聚合嘅 attendance_notes（病假類別 / 遲到分鐘 /
+// 早退），同埋 currentAbsentStreak 以外嘅指標。全部守空 / 缺值 / 除零。
+
+/**
+ * 期內「最長」連續缺席段（唔同 currentAbsentStreak 嘅「最近」段）。
+ * 與 currentAbsentStreak 一致：未標記 / 無上堂日 gap 跳過唔斷，遇 present/late 即斷。
+ * @param records 已過濾到該班嘅 AttendanceRecord（含其他學生亦可）
+ * @param studentId 目標學生
+ * @param dayKeys 統計窗口（任意次序，內部按真實日期排序）
+ */
+export function longestAbsentStreak(
+  records: AttendanceRecord[],
+  studentId: string,
+  dayKeys: string[],
+): number {
+  const byDate = new Map<string, AttendanceStatus>()
+  for (const r of records) {
+    if (r.studentId === studentId) byDate.set(r.date, r.status)
+  }
+  const sortedDays = [...dayKeys].sort()
+  let longest = 0
+  let run = 0
+  for (const day of sortedDays) {
+    const st = byDate.get(day)
+    if (st === undefined) continue // gap：跳過，唔斷亦唔加
+    if (st === 'absent') {
+      run += 1
+      if (run > longest) longest = run
+    } else {
+      run = 0 // present / late → 斷
+    }
+  }
+  return longest
+}
+
+/**
+ * 窗口內該學生「最後一次有出席（present 或 late）」嘅日 key；從未出席返 null。
+ * 用嚟提示「已經幾耐冇返學」。
+ */
+export function lastPresentKey(
+  records: AttendanceRecord[],
+  studentId: string,
+  dayKeys: string[],
+): string | null {
+  const present = new Set<string>()
+  for (const r of records) {
+    if (r.studentId === studentId && (r.status === 'present' || r.status === 'late')) {
+      present.add(r.date)
+    }
+  }
+  if (present.size === 0) return null
+  const sortedDays = [...dayKeys].sort()
+  for (let i = sortedDays.length - 1; i >= 0; i--) {
+    if (present.has(sortedDays[i])) return sortedDays[i]
+  }
+  return null
+}
+
+export interface NoteSummary {
+  /** 各缺席類別出現次數（病 / 事 / 公 / 無故）；缺類別不計 */
+  byKind: Record<AbsenceKind, number>
+  /** 准假（病 / 事 / 公）合計 */
+  excusedCount: number
+  /** 無故缺席合計 */
+  unexcusedCount: number
+  /** 有填遲到分鐘嘅次數 */
+  lateLoggedCount: number
+  /** 遲到分鐘總和 */
+  lateMinutesTotal: number
+  /** 平均每次遲到分鐘（只計有填者）；無資料 null（避免除零 NaN）*/
+  lateMinutesAvg: number | null
+  /** 標記早退次數 */
+  earlyLeaveCount: number
+}
+
+/**
+ * 聚合一批 attendance_notes（通常已過濾到某學生某窗口）。
+ * 守：空陣列 → 全 0、lateMinutesAvg = null；缺欄位唔當數；負分鐘夾 0。
+ */
+export function summarizeNotes(notes: AttendanceNote[]): NoteSummary {
+  const byKind: Record<AbsenceKind, number> = {
+    sick: 0,
+    personal: 0,
+    official: 0,
+    unexcused: 0,
+  }
+  let lateLoggedCount = 0
+  let lateMinutesTotal = 0
+  let earlyLeaveCount = 0
+  for (const n of notes) {
+    if (n.absenceKind) byKind[n.absenceKind] += 1
+    if (typeof n.lateMinutes === 'number' && n.lateMinutes > 0) {
+      lateLoggedCount += 1
+      lateMinutesTotal += n.lateMinutes
+    }
+    if (n.earlyLeave) earlyLeaveCount += 1
+  }
+  const excusedCount = byKind.sick + byKind.personal + byKind.official
+  const lateMinutesAvg =
+    lateLoggedCount === 0 ? null : Math.round(lateMinutesTotal / lateLoggedCount)
+  return {
+    byKind,
+    excusedCount,
+    unexcusedCount: byKind.unexcused,
+    lateLoggedCount,
+    lateMinutesTotal,
+    lateMinutesAvg,
+    earlyLeaveCount,
+  }
+}
+
 /** 出席率 → 色調（配合 ProgressBar / Badge tone）*/
 export function rateTone(rate: number | null): 'green' | 'accent' | 'amber' | 'rose' | 'slate' {
   if (rate == null) return 'slate'

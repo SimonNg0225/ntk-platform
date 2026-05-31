@@ -41,7 +41,9 @@ import {
   Search,
   Square,
   Trash2,
+  UserRound,
   Users,
+  UserX,
 } from 'lucide-react'
 import { useToast } from '../../context/ToastContext'
 import { useConfirm } from '../../context/ConfirmContext'
@@ -55,6 +57,7 @@ import {
   MEETING_TYPE_META,
   MEETING_TYPE_ORDER,
   actionStats,
+  actionsByOwner,
   collectActions,
   fromKey,
   keyOf,
@@ -74,6 +77,7 @@ import {
   type MergedNote,
   type NoteMeta,
   type OpenAction,
+  type OwnerGroup,
 } from './meetingNotes/util'
 
 // ============================================================
@@ -130,8 +134,9 @@ export default function MeetingNotes() {
   const [activeTag, setActiveTag] = useState<string | null>(null)
   const [sortKey, setSortKey] = useState<SortKey>('date_desc')
 
-  // 行動中心篩選
+  // 行動中心篩選 + 分組方式（清單 / 按負責人）
   const [actionFilter, setActionFilter] = useState<ActionFilter>('open')
+  const [actionGroupBy, setActionGroupBy] = useState<'list' | 'owner'>('list')
 
   // 編輯器
   const [editorOpen, setEditorOpen] = useState(false)
@@ -232,6 +237,13 @@ export default function MeetingNotes() {
         return b.noteDate.localeCompare(a.noteDate)
       })
   }, [allActions, actionFilter])
+
+  // ───────── 行動中心：按負責人問責分組（只計未完成）─────────
+  // 「按負責人」本身就係篩選維度，固定睇全部未完成項目，唔受上方 segment 影響。
+  const ownerGroups = useMemo(
+    () => actionsByOwner(allActions).filter((g) => g.open > 0),
+    [allActions],
+  )
 
   // ───────── 圖表資料 ─────────
   const monthBars = useMemo(() => monthlyMeetingBars(merged, 6), [merged])
@@ -517,6 +529,7 @@ export default function MeetingNotes() {
           {visibleNotes.length === 0 ? (
             <EmptyState
               icon={NotebookPen}
+              art={notes.length === 0 ? 'empty-meeting' : undefined}
               title={notes.length === 0 ? '未有筆記' : '無符合條件嘅筆記'}
               hint={
                 notes.length === 0
@@ -583,44 +596,84 @@ export default function MeetingNotes() {
       {/* ═══════════ 行動中心 ═══════════ */}
       {view === 'actions' && (
         <div className="space-y-4">
-          <SegmentedControl<ActionFilter>
-            value={actionFilter}
-            onChange={setActionFilter}
-            options={[
-              { id: 'open', label: `待跟進 (${stats.open})` },
-              { id: 'overdue', label: `逾期 (${stats.overdue})` },
-              { id: 'soon', label: `快到期 (${stats.dueSoon})` },
-              { id: 'done', label: `已完成 (${stats.done})` },
-              { id: 'all', label: `全部 (${stats.total})` },
-            ]}
-          />
+          {/* 分組方式：清單 / 按負責人（問責視圖）*/}
+          <div className="flex justify-end">
+            <SegmentedControl<'list' | 'owner'>
+              size="sm"
+              value={actionGroupBy}
+              onChange={setActionGroupBy}
+              options={[
+                { id: 'list', label: '清單' },
+                { id: 'owner', label: '按負責人' },
+              ]}
+            />
+          </div>
 
-          {filteredActions.length === 0 ? (
+          {actionGroupBy === 'list' ? (
+            <>
+              <SegmentedControl<ActionFilter>
+                value={actionFilter}
+                onChange={setActionFilter}
+                options={[
+                  { id: 'open', label: `待跟進 (${stats.open})` },
+                  { id: 'overdue', label: `逾期 (${stats.overdue})` },
+                  { id: 'soon', label: `快到期 (${stats.dueSoon})` },
+                  { id: 'done', label: `已完成 (${stats.done})` },
+                  { id: 'all', label: `全部 (${stats.total})` },
+                ]}
+              />
+
+              {filteredActions.length === 0 ? (
+                <EmptyState
+                  icon={ListChecks}
+                  title={
+                    stats.total === 0
+                      ? '未有跟進行動'
+                      : actionFilter === 'open'
+                        ? '冇待跟進項目 🎉'
+                        : '無符合嘅項目'
+                  }
+                  hint={
+                    stats.total === 0
+                      ? '喺筆記內容用 - [ ] 寫行動項目，或喺編輯器手動加。'
+                      : undefined
+                  }
+                />
+              ) : (
+                <div className="space-y-2">
+                  {filteredActions.map((a) => (
+                    <ActionRow
+                      key={`${a.noteId}-${a.id}`}
+                      action={a}
+                      onToggle={() => toggleAction(a.noteId, a.id)}
+                      onOpenNote={() => {
+                        setView('notes')
+                        setDetailId(a.noteId)
+                      }}
+                    />
+                  ))}
+                </div>
+              )}
+            </>
+          ) : ownerGroups.length === 0 ? (
             <EmptyState
-              icon={ListChecks}
-              title={
-                stats.total === 0
-                  ? '未有跟進行動'
-                  : actionFilter === 'open'
-                    ? '冇待跟進項目 🎉'
-                    : '無符合嘅項目'
-              }
-              hint={
-                stats.total === 0
-                  ? '喺筆記內容用 - [ ] 寫行動項目，或喺編輯器手動加。'
-                  : undefined
-              }
+              icon={UserRound}
+              title="冇待跟進項目 🎉"
+              hint="所有行動都完成咗，或者未有任何跟進行動。"
             />
           ) : (
-            <div className="space-y-2">
-              {filteredActions.map((a) => (
-                <ActionRow
-                  key={`${a.noteId}-${a.id}`}
-                  action={a}
-                  onToggle={() => toggleAction(a.noteId, a.id)}
-                  onOpenNote={() => {
+            <div className="space-y-3">
+              <p role="status" aria-live="polite" className="sr-only">
+                {`${ownerGroups.length} 位負責人有待跟進項目`}
+              </p>
+              {ownerGroups.map((g) => (
+                <OwnerGroupCard
+                  key={g.owner}
+                  group={g}
+                  onToggle={(noteId, actionId) => toggleAction(noteId, actionId)}
+                  onOpenNote={(noteId) => {
                     setView('notes')
-                    setDetailId(a.noteId)
+                    setDetailId(noteId)
                   }}
                 />
               ))}
@@ -959,6 +1012,68 @@ function ActionRow({
         </Badge>
       )}
     </div>
+  )
+}
+
+// ============================================================
+//  行動中心 · 按負責人分組卡（問責視圖：邊個欠咩跟進）
+// ============================================================
+function OwnerGroupCard({
+  group,
+  onToggle,
+  onOpenNote,
+}: {
+  group: OwnerGroup
+  onToggle: (noteId: string, actionId: string) => void
+  onOpenNote: (noteId: string) => void
+}) {
+  const name = group.unassigned ? '未指派' : group.owner
+  return (
+    <Card className="overflow-hidden p-0">
+      {/* 負責人標頭 */}
+      <div className="flex items-center gap-2.5 border-b border-slate-100 bg-slate-50/60 px-4 py-2.5 dark:border-slate-700/60 dark:bg-slate-800/40">
+        <span
+          className={cx(
+            'inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full',
+            group.unassigned
+              ? 'bg-slate-200 text-slate-500 dark:bg-slate-700 dark:text-slate-400'
+              : 'bg-accent-soft text-accent-strong dark:bg-accent/20 dark:text-accent',
+          )}
+          aria-hidden="true"
+        >
+          {group.unassigned ? <UserX size={15} /> : <UserRound size={15} />}
+        </span>
+        <span
+          className={cx(
+            'min-w-0 flex-1 truncate text-sm font-semibold',
+            group.unassigned
+              ? 'text-slate-500 dark:text-slate-400'
+              : 'text-slate-800 dark:text-slate-100',
+          )}
+        >
+          {group.unassigned ? '未指派' : `@${name}`}
+        </span>
+        <div className="flex shrink-0 items-center gap-1.5">
+          {group.overdue > 0 && (
+            <Badge tone="rose" dot>
+              逾期 {group.overdue}
+            </Badge>
+          )}
+          <Badge tone="amber">{group.open} 待跟進</Badge>
+        </div>
+      </div>
+      {/* 該負責人嘅未完成項目 */}
+      <div className="space-y-2 p-3">
+        {group.items.map((a) => (
+          <ActionRow
+            key={`${a.noteId}-${a.id}`}
+            action={a}
+            onToggle={() => onToggle(a.noteId, a.id)}
+            onOpenNote={() => onOpenNote(a.noteId)}
+          />
+        ))}
+      </div>
+    </Card>
   )
 }
 

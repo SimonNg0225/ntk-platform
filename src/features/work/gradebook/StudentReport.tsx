@@ -7,6 +7,7 @@ import {
   assessmentSortKey,
   gradeOf,
   shortDate,
+  type GradeBand,
   type GradeScaleKey,
   type GradingScheme,
   type StudentResult,
@@ -28,6 +29,7 @@ export default function StudentReport({
   classAvg,
   assessmentAvg,
   scheme,
+  bands,
   className,
 }: {
   open: boolean
@@ -40,6 +42,8 @@ export default function StudentReport({
   /** assessmentId → 全班平均(%) */
   assessmentAvg: Map<string, number | null>
   scheme: GradingScheme
+  /** 已套用自訂分界嘅 bands（未提供則用內建）*/
+  bands?: GradeBand[]
   className: string
 }) {
   if (!result) return null
@@ -48,7 +52,7 @@ export default function StudentReport({
     assessmentSortKey(a).localeCompare(assessmentSortKey(b)),
   )
   const total = result.weighted
-  const band = total != null ? gradeOf(total, scale) : null
+  const band = total != null ? gradeOf(total, scale, bands) : null
   const trend = sorted
     .map((a) => result.perAssessment[a.id])
     .filter((x): x is number => x != null)
@@ -179,7 +183,7 @@ export default function StudentReport({
                 const p = result.perAssessment[a.id]
                 const av = assessmentAvg.get(a.id) ?? null
                 const diff = p != null && av != null ? p - av : null
-                const t = p != null ? gradeOf(p, scale).tone : 'slate'
+                const t = p != null ? gradeOf(p, scale, bands).tone : 'slate'
                 return (
                   <tr key={a.id}>
                     <td className="px-3 py-2 text-slate-700 dark:text-slate-200">

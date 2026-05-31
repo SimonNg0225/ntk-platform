@@ -1,6 +1,8 @@
 import { useMemo, useState } from 'react'
 import {
+  AlertTriangle,
   ArrowLeft,
+  CalendarCheck,
   ClipboardList,
   Download,
   GraduationCap,
@@ -17,8 +19,20 @@ import {
   Users,
 } from 'lucide-react'
 import { useCollection } from '../../lib/store'
-import { classesCol, studentsCol } from '../../data/collections'
-import type { Klass, Student } from '../../data/types'
+import {
+  assessmentsCol,
+  attendanceCol,
+  classesCol,
+  scoresCol,
+  studentsCol,
+} from '../../data/collections'
+import type {
+  Assessment,
+  AttendanceRecord,
+  Klass,
+  Score,
+  Student,
+} from '../../data/types'
 import {
   Badge,
   Button,
@@ -31,6 +45,7 @@ import {
   Modal,
   PageHeader,
   Pills,
+  ProgressBar,
   Select,
   StatCard,
   Table,
@@ -58,6 +73,7 @@ import {
   type StudentStatus,
 } from './classes/types'
 import {
+  classAcademicSummary,
   classMetaFor,
   classSizes,
   completenessOf,
@@ -66,7 +82,9 @@ import {
   initials,
   metaFor,
   parseBulk,
+  pctTone,
   sortStudents,
+  type ClassAcademicSummary,
 } from './classes/util'
 import {
   BarList,
@@ -230,6 +248,7 @@ export default function ClassesWidget() {
           {classes.length === 0 ? (
             <EmptyState
               icon={School}
+              art="empty-classes"
               title="仲未有班別"
               hint="新增第一個班別，成績、出席、進度等功能都會用到同一批班別。"
               action={
@@ -364,6 +383,7 @@ function ClassGrid({
     return (
       <EmptyState
         icon={School}
+        art="empty-classes"
         title="仲未有班別"
         hint="新增一個班別開始建立名冊。"
         action={
@@ -486,6 +506,9 @@ function ClassDetail({
   const allStudents = useCollection(studentsCol)
   const studentMetas = useCollection(studentMetaCol)
   const classMetas = useCollection(classMetaCol)
+  const scores = useCollection(scoresCol)
+  const assessments = useCollection(assessmentsCol)
+  const attendance = useCollection(attendanceCol)
   const [tab, setTab] = useState<DetailTab>('roster')
   const [showEdit, setShowEdit] = useState(false)
 
@@ -561,7 +584,15 @@ function ClassDetail({
           onColsChange={setSeatCols}
         />
       )}
-      {tab === 'analytics' && <Analytics roster={roster} metas={studentMetas} />}
+      {tab === 'analytics' && (
+        <Analytics
+          roster={roster}
+          metas={studentMetas}
+          scores={scores}
+          assessments={assessments}
+          attendance={attendance}
+        />
+      )}
 
       {showEdit && (
         <ClassEditor
@@ -1025,12 +1056,22 @@ function BulkAdd({
 function Analytics({
   roster,
   metas,
+  scores,
+  assessments,
+  attendance,
 }: {
   roster: Student[]
   metas: StudentMeta[]
+  scores: Score[]
+  assessments: Assessment[]
+  attendance: AttendanceRecord[]
 }) {
   const demo = useMemo(() => demographicsOf(roster, metas), [roster, metas])
   const comp = useMemo(() => completenessOf(roster, metas), [roster, metas])
+  const health = useMemo(
+    () => classAcademicSummary(roster, scores, assessments, attendance),
+    [roster, scores, assessments, attendance],
+  )
 
   if (roster.length === 0)
     return (
@@ -1043,6 +1084,8 @@ function Analytics({
 
   return (
     <div className="grid gap-4 lg:grid-cols-2">
+      <ClassHealthCard health={health} />
+
       <Card padded>
         <div className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
           性別分布
@@ -1108,6 +1151,115 @@ function Analytics({
       </Card>
     </div>
   )
+}
+
+// ───────── 班情健康摘要卡（跨功能：成績 + 出席 + 需關注）─────────
+function ClassHealthCard({ health }: { health: ClassAcademicSummary }) {
+  const noData =
+    health.avgGradePct == null &&
+    health.attendanceRate == null &&
+    health.atRiskCount === 0
+  const attTone =
+    health.attendanceRate == null
+      ? 'accent'
+      : health.attendanceRate >= 90
+        ? 'green'
+        : health.attendanceRate >= 80
+          ? 'accent'
+          : 'rose'
+
+  return (
+    <Card padded className="lg:col-span-2">
+      <div className="mb-3 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+        <GraduationCap size={14} />
+        班情健康
+        <span className="ml-auto text-[10px] font-normal normal-case tracking-normal text-slate-400 dark:text-slate-500">
+          綜合成績 / 出席（唯讀）
+        </span>
+      </div>
+
+      {noData ? (
+        <p className="py-4 text-center text-sm text-slate-400 dark:text-slate-500">
+          仲未有成績或出席紀錄。喺「成績」同「點名」功能輸入後，呢度會自動彙整班情。
+        </p>
+      ) : (
+        <div className="grid gap-4 sm:grid-cols-3">
+          {/* 班平均分 */}
+          <div className="rounded-xl border border-slate-200 p-3 dark:border-slate-700">
+            <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
+              <GraduationCap size={13} className="text-slate-400" />
+              班平均分
+            </div>
+            <p className="mt-1 flex items-baseline gap-1.5">
+              <span className="text-2xl font-bold tabular-nums text-slate-800 dark:text-slate-100">
+                {health.avgGradePct == null ? '—' : `${health.avgGradePct}%`}
+              </span>
+              {health.avgGradePct != null && (
+                <Badge tone={pctTone(health.avgGradePct)} dot>
+                  {gradeBandLabel(health.avgGradePct)}
+                </Badge>
+              )}
+            </p>
+            <p className="mt-0.5 text-[11px] tabular-nums text-slate-400 dark:text-slate-500">
+              {health.gradedStudents}/{health.total} 位已有成績
+            </p>
+          </div>
+
+          {/* 班出席率 */}
+          <div className="rounded-xl border border-slate-200 p-3 dark:border-slate-700">
+            <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
+              <CalendarCheck size={13} className="text-slate-400" />
+              班出席率
+            </div>
+            <p className="mt-1 text-2xl font-bold tabular-nums text-slate-800 dark:text-slate-100">
+              {health.attendanceRate == null ? '—' : `${health.attendanceRate}%`}
+            </p>
+            {health.attendanceRate != null ? (
+              <div className="mt-1.5">
+                <ProgressBar value={health.attendanceRate} tone={attTone} size="sm" />
+              </div>
+            ) : (
+              <p className="mt-0.5 text-[11px] text-slate-400 dark:text-slate-500">
+                未有點名紀錄
+              </p>
+            )}
+          </div>
+
+          {/* 需關注 */}
+          <div
+            className={cx(
+              'rounded-xl border p-3',
+              health.atRiskCount > 0
+                ? 'border-amber-300/70 bg-amber-50/60 dark:border-amber-500/40 dark:bg-amber-500/10'
+                : 'border-slate-200 dark:border-slate-700',
+            )}
+          >
+            <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
+              <AlertTriangle
+                size={13}
+                className={health.atRiskCount > 0 ? 'text-amber-500' : 'text-slate-400'}
+              />
+              需關注
+            </div>
+            <p className="mt-1 text-2xl font-bold tabular-nums text-slate-800 dark:text-slate-100">
+              {health.atRiskCount}
+              <span className="ml-1 text-xs font-normal text-slate-400">位</span>
+            </p>
+            <p className="mt-0.5 text-[11px] text-slate-400 dark:text-slate-500">
+              成績 &lt;50% 或出席 &lt;80%
+            </p>
+          </div>
+        </div>
+      )}
+    </Card>
+  )
+}
+
+function gradeBandLabel(pct: number): string {
+  if (pct >= 80) return '優'
+  if (pct >= 65) return '良'
+  if (pct >= 50) return '及格'
+  return '待加強'
 }
 
 // ============================================================

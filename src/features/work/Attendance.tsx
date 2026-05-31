@@ -25,20 +25,26 @@ import { useConfirm } from '../../context/ConfirmContext'
 import {
   ABSENCE_KIND_LABEL,
   ABSENCE_KIND_OPTIONS,
+  STATUS_GLYPH,
   STATUS_LABEL,
   STATUS_ORDER,
   STATUS_STYLE,
   type AttendanceNote,
+  type StudentTally,
   countDay,
   downloadCsv,
   isExcused,
+  lastPresentKey,
   longDateLabel,
+  longestAbsentStreak,
   monthDays,
   monthLabel,
   rateBarTone,
   rateTone,
   recentDayKeys,
   shiftKey,
+  shortDateLabel,
+  summarizeNotes,
   tallyByStudent,
   todayKey,
 } from './attendance/util'
@@ -833,7 +839,9 @@ function Analytics({ classId, className }: { classId: string; className: string 
   const toast = useToast()
   const students = useCollection(studentsCol)
   const attendance = useCollection(attendanceCol)
+  const notes = useCollection(notesCol)
   const [range, setRange] = useState<Range>(30)
+  const [focusId, setFocusId] = useState<string | null>(null) // 個別學生摘要
 
   const classStudents = useMemo(
     () => students.filter((s) => s.classId === classId),
@@ -936,6 +944,31 @@ function Analytics({ classId, className }: { classId: string; className: string 
     )
   }
 
+  // ── 個別學生摘要（drill-down）所需資料 ──
+  const focusStudent = focusId ? classStudents.find((s) => s.id === focusId) : undefined
+  const focusData = useMemo(() => {
+    if (!focusId) return null
+    const tally = tallies.get(focusId) ?? null
+    const noteList = notes.filter(
+      (n) => n.classId === classId && n.studentId === focusId && dayKeySet.has(n.date),
+    )
+    return {
+      tally,
+      longestStreak: longestAbsentStreak(rangeRecords, focusId, dayKeys),
+      lastPresent: lastPresentKey(rangeRecords, focusId, dayKeys),
+      noteSummary: summarizeNotes(noteList),
+      // 逐日時間軸（只列有點名嘅日；由舊到新）
+      timeline: dayKeys
+        .map((k) => {
+          const r = rangeRecords.find(
+            (x) => x.studentId === focusId && x.date === k,
+          )
+          return r ? { dateKey: k, status: r.status } : null
+        })
+        .filter((x): x is { dateKey: string; status: AttendanceStatus } => x != null),
+    }
+  }, [focusId, tallies, notes, classId, dayKeySet, rangeRecords, dayKeys])
+
   const hasData = overall.marked > 0
 
   return (
@@ -960,6 +993,7 @@ function Analytics({ classId, className }: { classId: string; className: string 
 
       {!hasData ? (
         <EmptyState
+          art="empty-attendance"
           icon={LineChart}
           title="呢段期間未有點名記錄"
           hint="去「點名」分頁開始點名，呢度就會自動整理出席率趨勢同排行。"
@@ -1034,44 +1068,62 @@ function Analytics({ classId, className }: { classId: string; className: string 
             )}
           </Card>
 
-          {/* 個人排行 */}
+          {/* 個人排行（撳一行睇個別摘要） */}
           <Card className="p-4">
-            <SectionTitle icon={Users} description="按出席率排序，反映個人考勤">
+            <SectionTitle
+              icon={Users}
+              description="按出席率排序；撳一行睇個別學生摘要"
+            >
               學生出席率排行
             </SectionTitle>
-            <ul className="space-y-2.5">
+            <ul className="space-y-1">
               {ranked.map(({ student, t }, i) => (
                 <li key={student.id}>
-                  <div className="mb-1 flex items-center justify-between gap-2 text-sm">
-                    <span className="flex min-w-0 items-center gap-2">
-                      <span className="w-5 shrink-0 text-right text-xs tabular-nums text-slate-400">
-                        {i + 1}
-                      </span>
-                      <span className="truncate font-medium text-slate-700 dark:text-slate-200">
-                        {student.name}
-                      </span>
-                      {t.late > 0 && (
-                        <span className="shrink-0 text-[11px] tabular-nums text-amber-600 dark:text-amber-300">
-                          遲{t.late}
+                  <button
+                    type="button"
+                    onClick={() => setFocusId(student.id)}
+                    aria-label={`查看 ${student.name} 出席摘要`}
+                    className="group w-full rounded-lg px-2 py-1.5 text-left transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:hover:bg-slate-700/40"
+                  >
+                    <div className="mb-1 flex items-center justify-between gap-2 text-sm">
+                      <span className="flex min-w-0 items-center gap-2">
+                        <span className="w-5 shrink-0 text-right text-xs tabular-nums text-slate-400">
+                          {i + 1}
                         </span>
-                      )}
-                      {t.absent > 0 && (
-                        <span className="shrink-0 text-[11px] tabular-nums text-rose-600 dark:text-rose-300">
-                          缺{t.absent}
+                        <span className="truncate font-medium text-slate-700 group-hover:text-slate-900 dark:text-slate-200 dark:group-hover:text-slate-50">
+                          {student.name}
                         </span>
-                      )}
-                    </span>
-                    <span
-                      className={cx(
-                        'shrink-0 font-semibold tabular-nums',
-                        STATUS_STYLE.present.text,
-                        t.rate != null && t.rate < 80 && 'text-rose-600 dark:text-rose-300',
-                      )}
-                    >
-                      {t.rate}%
-                    </span>
-                  </div>
-                  <ProgressBar value={t.rate ?? 0} tone={rateBarTone(t.rate)} size="sm" />
+                        {t.late > 0 && (
+                          <span className="shrink-0 text-[11px] tabular-nums text-amber-600 dark:text-amber-300">
+                            遲{t.late}
+                          </span>
+                        )}
+                        {t.absent > 0 && (
+                          <span className="shrink-0 text-[11px] tabular-nums text-rose-600 dark:text-rose-300">
+                            缺{t.absent}
+                          </span>
+                        )}
+                      </span>
+                      <span className="flex shrink-0 items-center gap-1.5">
+                        <span
+                          className={cx(
+                            'font-semibold tabular-nums',
+                            STATUS_STYLE.present.text,
+                            t.rate != null &&
+                              t.rate < 80 &&
+                              'text-rose-600 dark:text-rose-300',
+                          )}
+                        >
+                          {t.rate}%
+                        </span>
+                        <ChevronRight
+                          size={15}
+                          className="text-slate-300 transition group-hover:text-slate-400 dark:text-slate-600 dark:group-hover:text-slate-500"
+                        />
+                      </span>
+                    </div>
+                    <ProgressBar value={t.rate ?? 0} tone={rateBarTone(t.rate)} size="sm" />
+                  </button>
                 </li>
               ))}
             </ul>
@@ -1081,6 +1133,223 @@ function Analytics({ classId, className }: { classId: string; className: string 
           <WeekdayBreakdown records={rangeRecords} />
         </>
       )}
+
+      <StudentSummaryModal
+        open={!!focusId}
+        onClose={() => setFocusId(null)}
+        studentName={focusStudent?.name ?? ''}
+        studentNo={focusStudent?.studentNo}
+        rangeDays={range}
+        data={focusData}
+      />
+    </div>
+  )
+}
+
+// 個別學生出席摘要（drill-down modal）
+// 聚合班級分析未顯示嘅 per-student 維度：最長連續缺席、最後出席日、
+// 缺席原因分類、遲到分鐘、早退，加逐堂時間軸。
+function StudentSummaryModal({
+  open,
+  onClose,
+  studentName,
+  studentNo,
+  rangeDays,
+  data,
+}: {
+  open: boolean
+  onClose: () => void
+  studentName: string
+  studentNo?: string
+  rangeDays: number
+  data: {
+    tally: StudentTally | null
+    longestStreak: number
+    lastPresent: string | null
+    noteSummary: ReturnType<typeof summarizeNotes>
+    timeline: { dateKey: string; status: AttendanceStatus }[]
+  } | null
+}) {
+  const t = data?.tally
+  const ns = data?.noteSummary
+  const hasMarks = !!t && t.marked > 0
+  const kindRows = ns
+    ? ABSENCE_KIND_OPTIONS.filter((o) => ns.byKind[o.value] > 0)
+    : []
+
+  return (
+    <Modal open={open} onClose={onClose} title={`出席摘要 — ${studentName}`} size="md">
+      {!hasMarks || !t || !ns || !data ? (
+        <p className="py-4 text-center text-sm text-slate-400 dark:text-slate-500">
+          呢位學生喺近 {rangeDays} 日內未有點名記錄。
+        </p>
+      ) : (
+        <div className="space-y-5">
+          {/* 概要 */}
+          <div className="flex flex-wrap items-center gap-2 text-sm">
+            {studentNo && (
+              <span className="text-xs text-slate-400">學號 {studentNo}</span>
+            )}
+            <Badge tone={rateTone(t.rate)} className="tabular-nums">
+              出席率 {t.rate}%
+            </Badge>
+            <span className="text-xs text-slate-400">
+              近 {rangeDays} 日 · 已點 {t.marked} 堂
+            </span>
+          </div>
+
+          {/* 三態 + 出席率進度 */}
+          <div>
+            <div className="grid grid-cols-3 gap-2">
+              <MiniStat label="出席" value={t.present} tone="present" />
+              <MiniStat label="遲到" value={t.late} tone="late" />
+              <MiniStat label="缺席" value={t.absent} tone="absent" />
+            </div>
+            <div className="mt-2">
+              <ProgressBar value={t.rate ?? 0} tone={rateBarTone(t.rate)} size="sm" />
+            </div>
+          </div>
+
+          {/* 關鍵指標 */}
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+            <FactCell
+              label="目前連續缺席"
+              value={t.currentAbsentStreak > 0 ? `${t.currentAbsentStreak} 日` : '—'}
+              tone={t.currentAbsentStreak >= 2 ? 'rose' : 'slate'}
+            />
+            <FactCell
+              label="期內最長連續缺席"
+              value={data.longestStreak > 0 ? `${data.longestStreak} 日` : '—'}
+              tone={data.longestStreak >= 3 ? 'rose' : 'slate'}
+            />
+            <FactCell
+              label="最後一次出席"
+              value={data.lastPresent ? shortDateLabel(data.lastPresent) : '從未'}
+              tone={data.lastPresent ? 'slate' : 'rose'}
+            />
+          </div>
+
+          {/* 細項聚合（病假類別 / 遲到分鐘 / 早退） */}
+          {(kindRows.length > 0 ||
+            ns.lateLoggedCount > 0 ||
+            ns.earlyLeaveCount > 0) && (
+            <div>
+              <SectionTitle icon={ClipboardList}>細項統計</SectionTitle>
+              <div className="space-y-2 text-sm">
+                {kindRows.length > 0 && (
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <span className="text-xs text-slate-400">缺席原因</span>
+                    {kindRows.map((o) => (
+                      <Badge
+                        key={o.value}
+                        tone={isExcused(o.value) ? 'blue' : 'rose'}
+                        className="tabular-nums"
+                      >
+                        {ABSENCE_KIND_LABEL[o.value]} {ns.byKind[o.value]}
+                      </Badge>
+                    ))}
+                    {ns.unexcusedCount > 0 && (
+                      <span className="text-[11px] text-rose-500 dark:text-rose-400">
+                        無故 {ns.unexcusedCount} 次
+                      </span>
+                    )}
+                  </div>
+                )}
+                {ns.lateLoggedCount > 0 && (
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <span className="text-xs text-slate-400">遲到分鐘</span>
+                    <Badge tone="amber" className="tabular-nums">
+                      共 {ns.lateMinutesTotal} 分（{ns.lateLoggedCount} 次）
+                    </Badge>
+                    {ns.lateMinutesAvg != null && (
+                      <span className="text-[11px] tabular-nums text-slate-400">
+                        平均 {ns.lateMinutesAvg} 分 / 次
+                      </span>
+                    )}
+                  </div>
+                )}
+                {ns.earlyLeaveCount > 0 && (
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <span className="text-xs text-slate-400">早退</span>
+                    <Badge tone="slate" className="tabular-nums">
+                      {ns.earlyLeaveCount} 次
+                    </Badge>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* 逐堂時間軸 */}
+          <div>
+            <SectionTitle icon={CalendarDays} description="由舊到新，逐個有點名日">
+              出席時間軸
+            </SectionTitle>
+            <div className="flex flex-wrap gap-1">
+              {data.timeline.map((d) => (
+                <span
+                  key={d.dateKey}
+                  title={`${longDateLabel(d.dateKey)}：${STATUS_LABEL[d.status]}`}
+                  className={cx(
+                    'flex h-7 w-7 items-center justify-center rounded-md text-[11px] font-semibold',
+                    STATUS_STYLE[d.status].cell,
+                  )}
+                >
+                  {STATUS_GLYPH[d.status]}
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+    </Modal>
+  )
+}
+
+function MiniStat({
+  label,
+  value,
+  tone,
+}: {
+  label: string
+  value: number
+  tone: AttendanceStatus
+}) {
+  return (
+    <div
+      className={cx(
+        'rounded-lg px-3 py-2 text-center',
+        STATUS_STYLE[tone].cell,
+      )}
+    >
+      <div className="text-lg font-bold tabular-nums">{value}</div>
+      <div className="text-[11px] font-medium opacity-80">{label}</div>
+    </div>
+  )
+}
+
+function FactCell({
+  label,
+  value,
+  tone,
+}: {
+  label: string
+  value: string
+  tone: 'slate' | 'rose'
+}) {
+  return (
+    <div className="rounded-lg border border-slate-200 bg-white px-3 py-2 dark:border-slate-700 dark:bg-slate-800">
+      <div className="text-[11px] text-slate-400">{label}</div>
+      <div
+        className={cx(
+          'mt-0.5 text-sm font-semibold tabular-nums',
+          tone === 'rose'
+            ? 'text-rose-600 dark:text-rose-300'
+            : 'text-slate-700 dark:text-slate-200',
+        )}
+      >
+        {value}
+      </div>
     </div>
   )
 }

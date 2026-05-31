@@ -338,6 +338,21 @@ export function relativeDate(iso?: string): string {
   return `${then.getFullYear()}/${then.getMonth() + 1}/${then.getDate()}`
 }
 
+/**
+ * 兩個時刻相隔幾多「日曆日」（向下取整，負數 clamp 至 0）。
+ * 以本地午夜計，避免跨午夜 <24h 出 0；缺值回 undefined。
+ * @param iso 起點 ISO；@param now 參考點（預設此刻，注入方便測試）
+ */
+export function daysSince(iso: string | undefined, now: Date = new Date()): number | undefined {
+  if (!iso) return undefined
+  const then = new Date(iso)
+  if (Number.isNaN(then.getTime())) return undefined
+  const startThen = new Date(then.getFullYear(), then.getMonth(), then.getDate())
+  const startNow = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  const d = Math.round((startNow.getTime() - startThen.getTime()) / 864e5)
+  return d < 0 ? 0 : d
+}
+
 // ───────── 標籤 ─────────
 /** 由全部資源抽出標籤 → 次數，按次數降序 */
 export function tagFrequency(resources: Resource[]): { tag: string; count: number }[] {
@@ -347,6 +362,69 @@ export function tagFrequency(resources: Resource[]): { tag: string; count: numbe
   return [...map.entries()]
     .map(([tag, count]) => ({ tag, count }))
     .sort((a, b) => b.count - a.count || a.tag.localeCompare(b.tag))
+}
+
+// ============================================================
+//  「需要整理」偵測（久未開啟 / 加咗好耐都未開過）
+//  ------------------------------------------------------------
+//  純衍生（唔加任何資料欄位，全部靠現有 createdAt / lastOpened /
+//  opens），向後相容。畀「整理你嘅資源庫」呢類維護動作用。
+// ============================================================
+
+/** 一條資源「最後有活動」嘅時刻：開過就用 lastOpened，否則 fallback 加入時間 */
+export function lastActivityIso(row: ResourceRow): string {
+  return row.meta.lastOpened ?? row.res.createdAt
+}
+
+export interface StaleOpts {
+  /** 視為「久未開啟」嘅日數門檻（含邊界：>= 即算） */
+  staleDays: number
+  /** 「加咗咁多日都未開過一次」即當需要整理（含邊界） */
+  neverOpenedDays: number
+}
+/** 預設門檻：60 日未掂 = 過時；加入超過 30 日仍 0 開啟 = 應檢視 */
+export const DEFAULT_STALE_OPTS: StaleOpts = {
+  staleDays: 60,
+  neverOpenedDays: 30,
+}
+
+/**
+ * 判斷一條資源係咪「需要整理」（封存 / 失效嘅唔當 stale，交返各自視圖處理）。
+ * 規則（符合任一即係）：
+ *   1. 從未開啟（opens 0）且加入已達 neverOpenedDays。
+ *   2. 開過，但距上次開啟已達 staleDays。
+ * @param now 注入參考時刻方便測試
+ */
+export function isStale(
+  row: ResourceRow,
+  opts: StaleOpts = DEFAULT_STALE_OPTS,
+  now: Date = new Date(),
+): boolean {
+  if (row.meta.archived || row.meta.broken) return false
+  if (row.meta.opens <= 0 || !row.meta.lastOpened) {
+    const age = daysSince(row.res.createdAt, now)
+    return age !== undefined && age >= opts.neverOpenedDays
+  }
+  const idle = daysSince(row.meta.lastOpened, now)
+  return idle !== undefined && idle >= opts.staleDays
+}
+
+/**
+ * 全部「需要整理」資源，排序：最耐冇活動嘅排最前（最迫切先整理）。
+ * 同活動時刻再以標題穩定排序。
+ */
+export function staleRows(
+  rows: ResourceRow[],
+  opts: StaleOpts = DEFAULT_STALE_OPTS,
+  now: Date = new Date(),
+): ResourceRow[] {
+  return rows
+    .filter((r) => isStale(r, opts, now))
+    .sort(
+      (a, b) =>
+        lastActivityIso(a).localeCompare(lastActivityIso(b)) ||
+        a.res.title.localeCompare(b.res.title, 'zh-HK'),
+    )
 }
 
 // ============================================================
@@ -374,6 +452,7 @@ export type SmartView =
   | 'all'
   | 'favorites'
   | 'recent_opened'
+  | 'stale'
   | 'unsorted'
   | 'broken'
   | 'archived'
@@ -428,6 +507,7 @@ export function applyFilter(rows: ResourceRow[], f: FilterState): ResourceRow[] 
       if (meta.archived) return false
       if (f.smart === 'favorites' && !meta.favorite) return false
       if (f.smart === 'recent_opened' && !meta.lastOpened) return false
+      if (f.smart === 'stale' && !isStale(row)) return false
       if (f.smart === 'unsorted' && meta.folderId) return false
       if (f.smart === 'broken' && !meta.broken) return false
     }

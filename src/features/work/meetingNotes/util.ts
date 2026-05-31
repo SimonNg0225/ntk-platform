@@ -492,6 +492,59 @@ export function actionStats(actions: OpenAction[]): ActionStats {
   }
 }
 
+// ───────── 按負責人分組（問責視圖：邊個欠咩跟進）─────────
+// 媲美 Fellow / Asana 嘅「My / per-person」匯總：跨所有會議攤平行動，
+// 以負責人 (owner) 收口；無負責人歸入「未指派」桶。每組計未完成 / 逾期 /
+// 完成數，並保留該組仍未完成嘅項目（已按 OpenAction 排序）。
+export const UNASSIGNED_OWNER = '__unassigned__'
+
+export interface OwnerGroup {
+  owner: string // 實際負責人名；未指派為 UNASSIGNED_OWNER
+  unassigned: boolean
+  open: number // 未完成數
+  overdue: number // 未完成且已逾期
+  done: number // 已完成數
+  total: number // 該組總數
+  items: OpenAction[] // 該組仍未完成嘅項目（傳入次序保留）
+}
+
+export function actionsByOwner(actions: OpenAction[]): OwnerGroup[] {
+  const today = todayKey()
+  const map = new Map<string, OwnerGroup>()
+  for (const a of actions) {
+    const name = a.owner?.trim()
+    const key = name ? name : UNASSIGNED_OWNER
+    let g = map.get(key)
+    if (!g) {
+      g = {
+        owner: key,
+        unassigned: !name,
+        open: 0,
+        overdue: 0,
+        done: 0,
+        total: 0,
+        items: [],
+      }
+      map.set(key, g)
+    }
+    g.total += 1
+    if (a.done) {
+      g.done += 1
+    } else {
+      g.open += 1
+      g.items.push(a)
+      if (a.due && a.due < today) g.overdue += 1
+    }
+  }
+  // 排序：未指派永遠墊底；其餘按未完成數（多→少）、再逾期數、再名稱
+  return Array.from(map.values()).sort((a, b) => {
+    if (a.unassigned !== b.unassigned) return a.unassigned ? 1 : -1
+    if (b.open !== a.open) return b.open - a.open
+    if (b.overdue !== a.overdue) return b.overdue - a.overdue
+    return a.owner.localeCompare(b.owner)
+  })
+}
+
 // ============================================================
 //  匯出 / 列印（生成獨立 HTML，零依賴）
 // ============================================================

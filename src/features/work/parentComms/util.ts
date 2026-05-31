@@ -404,6 +404,53 @@ export function sortRows(
   })
 }
 
+// ───────── 批量重排跟進到期日（表格多選）─────────
+//  net-new：現有批量動作得「完成跟進 / 匯出 / 刪除」，欠咗「一次過排
+//  / 改跟進到期日」。呢度抽純函式計出每條記錄要點改（patch comm.followUp
+//  + meta.followUpDate），方便主元件直接 apply 並做 toast，亦易單測。
+//  · targetDate = undefined → 清除到期日（保留待跟進狀態）
+//  · targetDate = 日期 key → 設為待跟進 + 該到期日
+//  向後相容：只寫現有 optional 欄位，舊資料照常。
+export interface FollowUpReschedulePlan {
+  /** 需要更新嘅記錄（已過濾走「冇變化」嘅）*/
+  changes: {
+    commId: string
+    metaId?: string
+    /** comm.followUp 是否需要由 false → true */
+    setFollowUp: boolean
+    /** meta.followUpDate 目標值（undefined = 清除）*/
+    followUpDate?: string
+  }[]
+  /** 會新設 / 改期嘅條數 */
+  scheduled: number
+  /** 會由「已完成」重開成待跟進嘅條數 */
+  reopened: number
+}
+
+export function planFollowUpReschedule(
+  rows: CommRow[],
+  targetDate: string | undefined,
+): FollowUpReschedulePlan {
+  const changes: FollowUpReschedulePlan['changes'] = []
+  let scheduled = 0
+  let reopened = 0
+  for (const { comm, meta } of rows) {
+    const sameDate = (meta?.followUpDate ?? undefined) === (targetDate ?? undefined)
+    // 已係待跟進、且到期日無變 → 跳過（無謂寫入）
+    if (comm.followUp && sameDate) continue
+    const setFollowUp = !comm.followUp
+    if (setFollowUp) reopened += 1
+    if (targetDate !== undefined && !sameDate) scheduled += 1
+    changes.push({
+      commId: comm.id,
+      metaId: meta?.id,
+      setFollowUp,
+      followUpDate: targetDate,
+    })
+  }
+  return { changes, scheduled, reopened }
+}
+
 // ───────── CSV 匯出（BOM，Excel 正確讀中文）─────────
 function esc(v: string | number): string {
   const s = String(v ?? '')

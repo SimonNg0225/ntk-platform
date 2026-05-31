@@ -32,6 +32,7 @@ import {
   BarChart3,
   Bell,
   BookText,
+  CalendarClock,
   Check,
   CheckCheck,
   ChevronDown,
@@ -84,7 +85,9 @@ import {
   followUpBucket,
   longDateLabel,
   monthlyTrend,
+  planFollowUpReschedule,
   relativeDayLabel,
+  shiftKey,
   shortDateLabel,
   sortRows,
   summarizeByStudent,
@@ -387,6 +390,28 @@ export default function ParentComms() {
       }
     setSelected(new Set())
     toast.success(n > 0 ? `已完成 ${n} 項跟進` : '所選記錄冇待跟進')
+  }
+  const batchReschedule = (targetDate: string | undefined) => {
+    const plan = planFollowUpReschedule(selectedRows, targetDate)
+    if (plan.changes.length === 0) {
+      toast.info('所選記錄已經係呢個跟進狀態')
+      return
+    }
+    const updatedAt = new Date().toISOString()
+    for (const ch of plan.changes) {
+      if (ch.setFollowUp) parentCommsCol.update(ch.commId, { followUp: true })
+      // 只改 followUpDate，保留其餘 meta 欄位；冇 meta 先建立
+      if (ch.metaId) metaCol.update(ch.metaId, { followUpDate: ch.followUpDate, updatedAt })
+      else metaCol.add({ commId: ch.commId, followUpDate: ch.followUpDate, updatedAt })
+    }
+    setSelected(new Set())
+    if (targetDate === undefined) toast.success(`已清除 ${plan.changes.length} 項跟進到期日`)
+    else {
+      const parts: string[] = []
+      if (plan.scheduled > 0) parts.push(`排期 ${plan.scheduled} 項`)
+      if (plan.reopened > 0) parts.push(`重開 ${plan.reopened} 項`)
+      toast.success(`跟進到期日 ${shortDateLabel(targetDate)}：${parts.join('、') || '已更新'}`)
+    }
   }
   const batchDelete = async () => {
     const ok = await confirm({
@@ -707,6 +732,7 @@ export default function ParentComms() {
           onToggleOne={toggleSelect}
           selectedCount={selectedRows.length}
           onBatchDone={batchMarkDone}
+          onBatchReschedule={batchReschedule}
           onBatchDelete={batchDelete}
           onBatchExport={() => exportCsv(selectedRows)}
           onClearSelection={() => setSelected(new Set())}
@@ -822,6 +848,104 @@ function FollowUpChip({ meta, today }: { meta?: CommMeta; today: string }) {
         ? `${BUCKET_LABEL[bucket]}・${shortDateLabel(meta.followUpDate)}`
         : '待跟進'}
     </Badge>
+  )
+}
+
+// ============================================================
+//  批量重排跟進到期日（表格多選工具列）
+// ============================================================
+function RescheduleControl({
+  today,
+  onApply,
+}: {
+  today: string
+  onApply: (targetDate: string | undefined) => void
+}) {
+  const [open, setOpen] = useState(false)
+  const [custom, setCustom] = useState('')
+
+  const apply = (date: string | undefined) => {
+    onApply(date)
+    setOpen(false)
+    setCustom('')
+  }
+
+  const presets: { label: string; days: number }[] = [
+    { label: '明日', days: 1 },
+    { label: '3 日後', days: 3 },
+    { label: '1 週後', days: 7 },
+    { label: '2 週後', days: 14 },
+  ]
+
+  return (
+    <div className="relative">
+      <Button
+        size="sm"
+        variant="secondary"
+        icon={CalendarClock}
+        aria-haspopup="dialog"
+        aria-expanded={open}
+        onClick={() => setOpen((v) => !v)}
+      >
+        排跟進期
+      </Button>
+      {open && (
+        <>
+          {/* 點外面收起（透明遮罩） */}
+          <button
+            type="button"
+            aria-label="關閉跟進排期"
+            className="fixed inset-0 z-20 cursor-default"
+            onClick={() => setOpen(false)}
+          />
+          <div
+            role="dialog"
+            aria-label="設定所選記錄嘅跟進到期日"
+            className="absolute right-0 z-30 mt-2 w-60 space-y-3 rounded-xl border border-slate-200 bg-white p-3 shadow-lg dark:border-slate-700 dark:bg-slate-800"
+          >
+            <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
+              將所選記錄設為待跟進，到期日：
+            </p>
+            <div className="flex flex-wrap gap-1.5">
+              {presets.map((p) => (
+                <button
+                  key={p.days}
+                  type="button"
+                  onClick={() => apply(shiftKey(today, p.days))}
+                  className="rounded-md bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700 transition hover:bg-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600"
+                >
+                  {p.label}
+                </button>
+              ))}
+            </div>
+            <div className="flex items-center gap-1.5">
+              <Input
+                type="date"
+                aria-label="自訂跟進到期日"
+                value={custom}
+                onChange={(e) => setCustom(e.target.value)}
+              />
+              <IconButton
+                label="套用自訂日期"
+                size="sm"
+                disabled={!custom}
+                onClick={() => custom && apply(custom)}
+              >
+                <Check size={15} />
+              </IconButton>
+            </div>
+            <button
+              type="button"
+              onClick={() => apply(undefined)}
+              className="flex w-full items-center justify-center gap-1 rounded-md border border-slate-200 py-1.5 text-xs font-medium text-slate-500 transition hover:bg-slate-50 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:border-slate-700 dark:text-slate-400 dark:hover:bg-slate-700/50 dark:hover:text-slate-200"
+            >
+              <X size={13} />
+              清除到期日（保留待跟進）
+            </button>
+          </div>
+        </>
+      )}
+    </div>
   )
 }
 
@@ -1112,6 +1236,7 @@ function TableView({
   onToggleOne,
   selectedCount,
   onBatchDone,
+  onBatchReschedule,
   onBatchDelete,
   onBatchExport,
   onClearSelection,
@@ -1129,6 +1254,7 @@ function TableView({
   onToggleOne: (id: string) => void
   selectedCount: number
   onBatchDone: () => void
+  onBatchReschedule: (targetDate: string | undefined) => void
   onBatchDelete: () => void
   onBatchExport: () => void
   onClearSelection: () => void
@@ -1174,6 +1300,7 @@ function TableView({
             <Button size="sm" variant="secondary" icon={CheckCheck} onClick={onBatchDone}>
               完成跟進
             </Button>
+            <RescheduleControl today={today} onApply={onBatchReschedule} />
             <Button size="sm" variant="secondary" icon={Download} onClick={onBatchExport}>
               匯出
             </Button>

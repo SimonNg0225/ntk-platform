@@ -73,10 +73,13 @@ export function Histogram({
 export function GradeDonut({
   counts,
   scale,
+  bands,
   size = 132,
 }: {
   counts: { band: GradeBand; n: number }[]
   scale: GradeScaleKey
+  /** 自訂分界後嘅 bands（圖例用）；未提供則用內建 */
+  bands?: GradeBand[]
   size?: number
 }) {
   const total = counts.reduce((a, b) => a + b.n, 0)
@@ -143,7 +146,7 @@ export function GradeDonut({
         })}
       </svg>
       <div className="space-y-1">
-        {bandsOf(scale)
+        {(bands ?? bandsOf(scale))
           .map((band) => ({
             band,
             n: counts.find((c2) => c2.band.label === band.label)?.n ?? 0,

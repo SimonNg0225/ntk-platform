@@ -38,6 +38,7 @@ import {
   ListChecks,
   NotebookPen,
   Pencil,
+  RotateCcw,
   School,
   SlidersHorizontal,
   Target,
@@ -56,6 +57,7 @@ import {
   assessmentSortKey,
   bandsOf,
   computeResults,
+  defaultBandCuts,
   ensureScheme,
   gradeOf,
   gradingSchemesCol,
@@ -65,6 +67,7 @@ import {
   pctFor,
   pctTone,
   quartiles,
+  resolveBands,
   round1,
   shortDate,
   stdev,
@@ -102,6 +105,7 @@ export default function Gradebook() {
     return (
       <EmptyState
         icon={School}
+        art="empty-gradebook"
         title="仲未有班別"
         hint="請先去「班別管理」新增班別，先可以記錄成績。"
       />
@@ -151,7 +155,12 @@ function useClassData(classId: string) {
       ),
     [assessmentsRaw],
   )
-  return { students, assessments, scores, scheme }
+  // 套用自訂等級分界（無設定 → 內建）。所有等級顯示經此 bands。
+  const bands = useMemo(
+    () => resolveBands(scheme.scale, scheme.bandCuts?.[scheme.scale]),
+    [scheme.scale, scheme.bandCuts],
+  )
+  return { students, assessments, scores, scheme, bands }
 }
 
 // ============================================================
@@ -161,7 +170,7 @@ type SortMode = 'name' | 'total-desc' | 'total-asc'
 
 function ScoreGrid({ classId, className }: { classId: string; className: string }) {
   const toast = useToast()
-  const { students, assessments, scores, scheme } = useClassData(classId)
+  const { students, assessments, scores, scheme, bands } = useClassData(classId)
   const [sortMode, setSortMode] = useState<SortMode>('name')
   const [heatmap, setHeatmap] = useState(true)
   const [reportFor, setReportFor] = useState<string | null>(null)
@@ -257,7 +266,7 @@ function ScoreGrid({ classId, className }: { classId: string; className: string 
         cells.push(rec?.score == null ? '' : rec.score)
       })
       cells.push(r.weighted == null ? '' : r.weighted)
-      cells.push(r.weighted == null ? '' : gradeOf(r.weighted, scheme.scale).label)
+      cells.push(r.weighted == null ? '' : gradeOf(r.weighted, scheme.scale, bands).label)
       cells.push(rankById.get(r.student.id) ?? '')
       return cells
     })
@@ -269,6 +278,7 @@ function ScoreGrid({ classId, className }: { classId: string; className: string 
     return (
       <EmptyState
         icon={NotebookPen}
+        art="empty-gradebook"
         title="未夠資料填成績"
         hint="請先喺「學生」同「評估」分頁加入資料，先可以填成績。"
       />
@@ -347,7 +357,7 @@ function ScoreGrid({ classId, className }: { classId: string; className: string 
             {orderedResults.map((r) => {
               const s = r.student
               const total = r.weighted
-              const band = total != null ? gradeOf(total, scheme.scale) : null
+              const band = total != null ? gradeOf(total, scheme.scale, bands) : null
               const rank = rankById.get(s.id)
               return (
                 <tr
@@ -473,6 +483,7 @@ function ScoreGrid({ classId, className }: { classId: string; className: string 
         classAvg={classAvg}
         assessmentAvg={assessmentAvg}
         scheme={scheme}
+        bands={bands}
         className={className}
       />
     </div>
@@ -501,7 +512,7 @@ const ANALYSIS_VIEWS: { id: AnalysisView; label: string }[] = [
 ]
 
 function AnalysisTab({ classId, className }: { classId: string; className: string }) {
-  const { students, assessments, scores, scheme } = useClassData(classId)
+  const { students, assessments, scores, scheme, bands } = useClassData(classId)
   const topics = useCollection(topicsCol)
   const [view, setView] = useState<AnalysisView>('overview')
 
@@ -537,11 +548,10 @@ function AnalysisTab({ classId, className }: { classId: string; className: strin
       ? Math.round((submittedTotal / expectedTotal) * 100)
       : 0
 
-    // 等級分佈（按 scheme.scale）
-    const bands = bandsOf(scheme.scale)
+    // 等級分佈（按 scheme.scale + 自訂分界）
     const gradeCounts = bands.map((band) => ({
       band,
-      n: totals.filter((t) => gradeOf(t, scheme.scale).label === band.label)
+      n: totals.filter((t) => gradeOf(t, scheme.scale, bands).label === band.label)
         .length,
     }))
 
@@ -581,7 +591,7 @@ function AnalysisTab({ classId, className }: { classId: string; className: strin
         students.some((s) => pctFor(scores, a.id, s.id, a.maxScore) != null),
       ).length,
     }
-  }, [results, students, assessments, scores, scheme])
+  }, [results, students, assessments, scores, scheme, bands])
 
   // 逐項評估統計
   const perAssessment = useMemo(() => {
@@ -752,7 +762,7 @@ function AnalysisTab({ classId, className }: { classId: string; className: strin
               <p className="mb-3 text-sm font-semibold text-slate-700 dark:text-slate-200">
                 等級佔比（{SCALE_LABEL[scheme.scale]}）
               </p>
-              <GradeDonut counts={stats.gradeCounts} scale={scheme.scale} />
+              <GradeDonut counts={stats.gradeCounts} scale={scheme.scale} bands={bands} />
             </Card>
 
             <Card className="p-4">
@@ -808,7 +818,7 @@ function AnalysisTab({ classId, className }: { classId: string; className: strin
       {view === 'assessments' && (
         <div className="space-y-3">
           {perAssessment.map((x) => {
-            const band = x.avg != null ? gradeOf(x.avg, scheme.scale) : null
+            const band = x.avg != null ? gradeOf(x.avg, scheme.scale, bands) : null
             return (
               <Card key={x.a.id} className="p-4">
                 <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
@@ -866,7 +876,7 @@ function AnalysisTab({ classId, className }: { classId: string; className: strin
             <ul className="space-y-3">
               {topicStats.map((t) => {
                 const tone = pctTone(t.avg)
-                const band = gradeOf(t.avg, scheme.scale)
+                const band = gradeOf(t.avg, scheme.scale, bands)
                 return (
                   <li key={t.id}>
                     <div className="mb-1 flex items-center justify-between text-xs">
@@ -909,7 +919,7 @@ function AnalysisTab({ classId, className }: { classId: string; className: strin
           ) : (
             <ul className="divide-y divide-slate-100 dark:divide-slate-800">
               {ranking.map((r, i) => {
-                const band = gradeOf(r.weighted!, scheme.scale)
+                const band = gradeOf(r.weighted!, scheme.scale, bands)
                 const medal =
                   i === 0
                     ? 'text-amber-500'
@@ -1428,6 +1438,40 @@ function SchemeTab({ classId }: { classId: string }) {
     toast.success('已把權重正規化為合計 100%')
   }
 
+  // ── 自訂等級分界 ──
+  const baseBands = bandsOf(scheme.scale)
+  const defaultCuts = defaultBandCuts(scheme.scale)
+  // 目前生效嘅 cuts（已覆蓋預設）；只有最高那幾級可調，最底一級固定 0
+  const currentCuts: Record<string, number> = {
+    ...defaultCuts,
+    ...(scheme.bandCuts?.[scheme.scale] ?? {}),
+  }
+  const editableBands = baseBands.filter((b) => b.min > 0) // 最底級固定 0，唔列
+  const customized = baseBands.some(
+    (b) => b.min > 0 && currentCuts[b.label] !== defaultCuts[b.label],
+  )
+  // 驗證：分界要嚴格遞減（高級下限 > 低級下限），否則等級會壓縮
+  const cutsValid = editableBands.every((b, i) => {
+    const next = editableBands[i + 1]
+    const lower = next ? currentCuts[next.label] : 0
+    return currentCuts[b.label] > lower
+  })
+
+  const setBandCut = (label: string, raw: number) => {
+    const v = Math.max(0, Math.min(100, Math.round(raw) || 0))
+    const scaleCuts = { ...currentCuts, [label]: v }
+    persist({
+      bandCuts: { ...(scheme.bandCuts ?? {}), [scheme.scale]: scaleCuts },
+    })
+  }
+
+  const resetBandCuts = () => {
+    const rest = { ...(scheme.bandCuts ?? {}) }
+    delete rest[scheme.scale]
+    persist({ bandCuts: rest })
+    toast.success('已還原為預設分界')
+  }
+
   return (
     <div className="space-y-4">
       <Card className="space-y-4 p-4">
@@ -1469,6 +1513,86 @@ function SchemeTab({ classId }: { classId: string }) {
             每類剔除最低分一次
           </label>
         </div>
+      </Card>
+
+      <Card className="space-y-3 p-4">
+        <div className="flex items-start justify-between gap-2">
+          <div>
+            <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+              等級分界（自訂）
+            </p>
+            <p className="text-xs text-slate-400 dark:text-slate-500">
+              調整「{SCALE_LABEL[scheme.scale]}」每級嘅百分比下限，配合你校本標準。
+              最低一級固定由 0 起。未改 = 用預設。
+            </p>
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            icon={RotateCcw}
+            onClick={resetBandCuts}
+            disabled={!customized}
+          >
+            還原預設
+          </Button>
+        </div>
+
+        <ul className="space-y-2">
+          {editableBands.map((b, i) => {
+            const next = editableBands[i + 1]
+            const lower = next ? currentCuts[next.label] : 0
+            const cur = currentCuts[b.label]
+            const isDefault = cur === defaultCuts[b.label]
+            const bad = cur <= lower
+            return (
+              <li key={b.label} className="flex items-center gap-3">
+                <Badge tone={b.tone} className="w-12 shrink-0 justify-center">
+                  {b.label}
+                </Badge>
+                <span className="text-xs text-slate-400 dark:text-slate-500">
+                  ≥
+                </span>
+                <div className="flex w-20 items-center">
+                  {/* ring 用 box-shadow，唔會同 Input 既有 border utility 撞色（Tailwind 同特異度按 CSS 次序，border-rose 會輸畀 base border-slate） */}
+                  <span
+                    className={cx(
+                      'block flex-1 rounded-lg',
+                      bad && 'ring-2 ring-rose-400 dark:ring-rose-500',
+                    )}
+                  >
+                    <Input
+                      value={String(cur)}
+                      onChange={(e) =>
+                        setBandCut(
+                          b.label,
+                          Number(e.target.value.replace(/\D/g, '')) || 0,
+                        )
+                      }
+                      aria-label={`「${b.label}」等級嘅百分比下限`}
+                      aria-invalid={bad || undefined}
+                      className="text-center tabular-nums"
+                    />
+                  </span>
+                  <span className="ml-1 text-sm text-slate-400">%</span>
+                </div>
+                <span className="flex-1 text-xs tabular-nums text-slate-400 dark:text-slate-500">
+                  {i === 0 ? `${cur} 分以上` : `${cur}–${currentCuts[editableBands[i - 1].label]} 分`}
+                  {!isDefault && (
+                    <span className="ml-1.5 text-accent">
+                      （預設 {defaultCuts[b.label]}）
+                    </span>
+                  )}
+                </span>
+              </li>
+            )
+          })}
+        </ul>
+
+        {!cutsValid && (
+          <p className="rounded-lg bg-rose-50/70 px-3 py-2 text-xs text-rose-600 dark:bg-rose-950/30 dark:text-rose-300">
+            分界要由高到低嚴格遞減（高等級嘅下限要大過低等級），否則部分等級會無人落到。請調整紅框數值。
+          </p>
+        )}
       </Card>
 
       <Card className="space-y-3 p-4">
