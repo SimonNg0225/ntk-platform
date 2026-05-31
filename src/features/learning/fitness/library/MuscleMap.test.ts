@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { regionFor, regionsFor } from './MuscleMap'
+import { EXERCISES } from './data'
 
 describe('regionFor — 肌群名 fuzzy 對應區域', () => {
   it('三角肌各變體 → shoulders', () => {
@@ -49,6 +50,15 @@ describe('regionFor — 肌群名 fuzzy 對應區域', () => {
     expect(regionFor('胸大肌上部')).toBe('chest')
     expect(regionFor('外星肌')).toBeNull()
   })
+  it('空字串 / 非字串 → null（守衞，唔 throw）', () => {
+    expect(regionFor('')).toBeNull()
+    // @ts-expect-error 故意傳錯型別測守衞
+    expect(regionFor(null)).toBeNull()
+    // @ts-expect-error 故意傳錯型別測守衞
+    expect(regionFor(undefined)).toBeNull()
+    // @ts-expect-error 故意傳錯型別測守衞
+    expect(regionFor(123)).toBeNull()
+  })
 })
 
 describe('regionsFor — 多肌群去重', () => {
@@ -59,5 +69,36 @@ describe('regionsFor — 多肌群去重', () => {
   it('空 / 全未知 → 空 set', () => {
     expect(regionsFor([]).size).toBe(0)
     expect(regionsFor(['外星肌', 'xyz']).size).toBe(0)
+  })
+  it('非陣列守衞（回空 set，唔 throw）', () => {
+    // @ts-expect-error 故意傳錯型別測守衞
+    expect(regionsFor(null).size).toBe(0)
+    // @ts-expect-error 故意傳錯型別測守衞
+    expect(regionsFor(undefined).size).toBe(0)
+  })
+  it('陣列含空字串 / 非字串元素照樣安全略過', () => {
+    // @ts-expect-error 混入非字串元素測守衞
+    const s = regionsFor(['胸大肌', '', null, undefined, '臀大肌'])
+    expect(s).toEqual(new Set(['chest', 'glutes']))
+  })
+})
+
+// ───────── 圖譜 × curated 資料一致性（防新增動作肌群名認唔到 → 全灰人體）─────────
+describe('MuscleMap 對 curated 動作資料完整覆蓋', () => {
+  it('每個動作至少有一條主肌群對應到區域（唔會全灰）', () => {
+    const orphan = EXERCISES.filter(
+      (e) => regionsFor(e.primaryMuscles).size === 0,
+    ).map((e) => e.id)
+    expect(orphan).toEqual([])
+  })
+
+  it('全部出現過嘅肌群名（主+次）都對應到已知區域', () => {
+    const unknown = new Set<string>()
+    for (const e of EXERCISES) {
+      for (const m of [...e.primaryMuscles, ...e.secondaryMuscles]) {
+        if (regionFor(m) === null) unknown.add(m)
+      }
+    }
+    expect([...unknown]).toEqual([])
   })
 })

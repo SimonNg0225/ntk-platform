@@ -123,6 +123,17 @@ describe('filterExercises', () => {
     // @ts-expect-error 故意傳錯型別測守衞
     expect(filterExercises(undefined)).toEqual([])
   })
+
+  it('name 缺失時搜尋唔 throw（守衞），無 q 仍保留', () => {
+    const withMissingName: Exercise[] = [
+      // @ts-expect-error 故意省略 name 測守衞
+      { id: 'no-name', category: '胸', equipment: ['槓鈴'], primaryMuscles: [], secondaryMuscles: [], formCues: [], safety: '' },
+    ]
+    // 有 q：缺 name 視作空字串，唔命中、唔 throw
+    expect(filterExercises(withMissingName, { q: '臥推' })).toEqual([])
+    // 無 q：照保留（其他條件唔篩）
+    expect(filterExercises(withMissingName).map((e) => e.id)).toEqual(['no-name'])
+  })
 })
 
 describe('muscleIndex', () => {

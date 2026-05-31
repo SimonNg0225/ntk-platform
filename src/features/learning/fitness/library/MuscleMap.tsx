@@ -10,8 +10,9 @@ export type Region =
   | 'abs' | 'obliques' | 'lats' | 'traps' | 'upperback' | 'lowerback'
   | 'quads' | 'hamstrings' | 'glutes' | 'calves' | 'adductors'
 
-/** 單個肌群名 → 區域（fuzzy；認唔到回 null） */
+/** 單個肌群名 → 區域（fuzzy；認唔到、空字串、非字串都回 null） */
 export function regionFor(muscle: string): Region | null {
+  if (typeof muscle !== 'string' || !muscle) return null
   const m = muscle
   if (m.includes('胸')) return 'chest'
   if (m.includes('三角') || m === '肩' || m.includes('旋轉肌')) return 'shoulders'
@@ -34,6 +35,7 @@ export function regionFor(muscle: string): Region | null {
 
 export function regionsFor(muscles: string[]): Set<Region> {
   const s = new Set<Region>()
+  if (!Array.isArray(muscles)) return s
   for (const m of muscles) {
     const r = regionFor(m)
     if (r) s.add(r)
@@ -157,10 +159,10 @@ export function MuscleMap({
       </div>
       <div className="mt-2 flex items-center justify-center gap-4 text-[11px] text-slate-500 dark:text-slate-400">
         <span className="flex items-center gap-1.5">
-          <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ background: PRIMARY }} /> 主要肌
+          <span aria-hidden="true" className="inline-block h-2.5 w-2.5 rounded-full" style={{ background: PRIMARY }} /> 主要肌
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ background: SECONDARY }} /> 協同肌
+          <span aria-hidden="true" className="inline-block h-2.5 w-2.5 rounded-full" style={{ background: SECONDARY }} /> 協同肌
         </span>
       </div>
     </div>

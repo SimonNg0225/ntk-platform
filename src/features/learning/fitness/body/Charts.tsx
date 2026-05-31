@@ -19,11 +19,14 @@ export function TrendChart({
   color,
   unit = '',
   height = 180,
+  label = '指標',
 }: {
   data: SeriesPoint[]
   color: string
   unit?: string
   height?: number
+  /** 無障礙用：指標名（畀 SVG aria-label，例「體重」） */
+  label?: string
 }) {
   const gid = useId().replace(/[:]/g, '')
   const pts = data
@@ -69,11 +72,11 @@ export function TrendChart({
     <div className="w-full">
       <div className="relative w-full" style={{ height }}>
         {/* y 軸 min / max 標籤 */}
-        <span className="absolute left-0 top-0 text-[10px] tabular-nums text-slate-300 dark:text-slate-600">
+        <span className="absolute left-0 top-0 text-[10px] tabular-nums text-slate-500 dark:text-slate-400">
           {round(hi, 1)}
           {unit}
         </span>
-        <span className="absolute bottom-4 left-0 text-[10px] tabular-nums text-slate-300 dark:text-slate-600">
+        <span className="absolute bottom-4 left-0 text-[10px] tabular-nums text-slate-500 dark:text-slate-400">
           {round(lo, 1)}
           {unit}
         </span>
@@ -81,6 +84,8 @@ export function TrendChart({
           viewBox="0 0 100 100"
           preserveAspectRatio="none"
           className="absolute inset-0 ml-9 h-full w-[calc(100%-2.25rem)] overflow-visible"
+          role="img"
+          aria-label={`${label}趨勢折線圖：${pts.length} 個記錄點，由 ${round(lo, 1)}${unit} 到 ${round(hi, 1)}${unit}，最新 ${round(last.value, 1)}${unit}`}
         >
           <defs>
             <linearGradient id={`area-${gid}`} x1="0" y1="0" x2="0" y2="1">
@@ -252,11 +257,11 @@ export function DualLineChart({
       </div>
       <div className="relative w-full" style={{ height }}>
         {/* y 軸 min / max（兩線共用） */}
-        <span className="absolute left-0 top-0 text-[10px] tabular-nums text-slate-300 dark:text-slate-600">
+        <span className="absolute left-0 top-0 text-[10px] tabular-nums text-slate-500 dark:text-slate-400">
           {round(hi, 1)}
           {unit}
         </span>
-        <span className="absolute bottom-4 left-0 text-[10px] tabular-nums text-slate-300 dark:text-slate-600">
+        <span className="absolute bottom-4 left-0 text-[10px] tabular-nums text-slate-500 dark:text-slate-400">
           {round(lo, 1)}
           {unit}
         </span>

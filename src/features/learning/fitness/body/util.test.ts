@@ -524,3 +524,60 @@ describe('recompSeries', () => {
     ])
   })
 })
+
+// ============================================================
+//  邊緣個案補強（守衞分支：除零 / 非整數 days / 無基準 / clamp）
+// ============================================================
+describe('邊緣個案補強', () => {
+  // ── metricTrend：全部記錄都喺 cutoff 之前 → 基準會塌到最新一筆 → delta null ──
+  it('metricTrend：所有記錄都早過 cutoff（無較近基準）→ delta null', () => {
+    // cutoff = anchor − 30 = 2026-05-01；兩筆都喺 4 月（≤ cutoff）
+    const data = [
+      e({ date: '2026-04-10', weightKg: 80 }),
+      e({ date: '2026-04-20', weightKg: 79 }),
+    ]
+    const r = metricTrend(data, 'weightKg', 30, ANCHOR)
+    // 最新 = 04-20；prev 迴圈停喺最後一筆 ≤ cutoff（即 04-20 本身）→ 同一筆 → null
+    expect(r).toEqual({ latest: 79, latestDate: '2026-04-20', delta: null })
+  })
+
+  // ── seriesOf / recompSeries：非整數 days 用 Math.floor（唔會多出半格） ──
+  it('seriesOf：非整數 days 取整（3.9 → 3 格）', () => {
+    expect(seriesOf([], 'weightKg', 3.9, ANCHOR)).toHaveLength(3)
+  })
+  it('recompSeries：非整數 days 取整（5.4 → 5 格）', () => {
+    expect(recompSeries([], 5.4, ANCHOR)).toHaveLength(5)
+  })
+
+  // ── projectedGoalDate：剩極少 + 速率夠快 → daysAway clamp 落最少 1（唔會 0/負） ──
+  it('projectedGoalDate：差距極小 → daysAway 最少 1 日', () => {
+    // 14 日由 80 跌到 75.05（-4.95kg）→ 約 -2.475kg/週；剩 -0.05kg → ceil(極小)=1
+    const data = [
+      e({ date: '2026-05-17', weightKg: 80 }),
+      e({ date: '2026-05-31', weightKg: 75.05 }),
+    ]
+    const r = projectedGoalDate(data, 75, 30, ANCHOR)
+    expect(r.daysAway).toBe(1)
+    expect(r.dateKey).toBe('2026-06-01') // anchor + 1 日（本地 key，非 UTC）
+    expect(r.reached).toBe(false)
+  })
+
+  // ── fmtDelta：自訂小數位 + 單位（覆蓋 digits 參數路徑） ──
+  it('fmtDelta：digits=2 保留兩位小數', () => {
+    expect(fmtDelta(1.234, ' kg', 2)).toBe('+1.23 kg')
+    expect(fmtDelta(-0.018, '%', 2)).toBe('-0.02%')
+  })
+
+  // ── compositionChange：非整數 days 仍取窗內首尾（Math.floor 邊界） ──
+  it('compositionChange：非整數 days 用 floor 界窗', () => {
+    // days=2.9 → floor 2 → 窗 [2026-05-30, 2026-05-31]；05-29 嗰筆喺窗外
+    const data = [
+      e({ date: '2026-05-29', weightKg: 82, bodyFatPct: 26 }), // 窗外
+      e({ date: '2026-05-30', weightKg: 80, bodyFatPct: 25 }),
+      e({ date: '2026-05-31', weightKg: 79, bodyFatPct: 24 }),
+    ]
+    const r = compositionChange(data, 2.9, ANCHOR)
+    expect(r.fromDate).toBe('2026-05-30')
+    expect(r.toDate).toBe('2026-05-31')
+  })
+})

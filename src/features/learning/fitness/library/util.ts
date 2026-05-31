@@ -33,7 +33,7 @@ export function filterExercises(
   const equipment = filter.equipment
 
   return all.filter((ex) => {
-    if (q && !ex.name.toLowerCase().includes(q)) return false
+    if (q && !(ex.name ?? '').toLowerCase().includes(q)) return false
     if (category && category !== '全部' && ex.category !== category) return false
     if (
       equipment &&

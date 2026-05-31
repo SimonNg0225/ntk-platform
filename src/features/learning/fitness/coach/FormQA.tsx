@@ -128,14 +128,14 @@ export default function FormQA({ model }: { model: AIModel }) {
       >
         {empty ? (
           <div className="flex h-full flex-col items-center justify-center gap-5 px-4 text-center">
-            <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
+            <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent" aria-hidden="true">
               <Bot size={32} strokeWidth={1.75} />
             </span>
             <div>
               <p className="text-lg font-semibold text-slate-700 dark:text-slate-200">
                 動作姿勢問答
               </p>
-              <p className="mt-1 text-sm text-slate-400 dark:text-slate-500">
+              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                 問任何動作技術或安全問題，教練即時答你
               </p>
             </div>
@@ -145,12 +145,12 @@ export default function FormQA({ model }: { model: AIModel }) {
                   key={s}
                   type="button"
                   onClick={() => void send(s)}
-                  className="group flex items-start gap-2 rounded-xl border border-slate-200 bg-white p-3 text-left transition hover:-translate-y-0.5 hover:border-accent hover:shadow-md dark:border-slate-700 dark:bg-slate-800"
+                  className="group flex items-start gap-2 rounded-xl border border-slate-200 bg-white p-3 text-left transition hover:-translate-y-0.5 hover:border-accent hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:border-slate-700 dark:bg-slate-800"
                 >
-                  <span className="mt-0.5 rounded-lg bg-slate-100 p-1.5 text-slate-400 transition group-hover:bg-accent-soft group-hover:text-accent dark:bg-slate-700">
+                  <span className="mt-0.5 rounded-lg bg-slate-100 p-1.5 text-slate-400 transition group-hover:bg-accent-soft group-hover:text-accent dark:bg-slate-700" aria-hidden="true">
                     <Sparkles size={14} />
                   </span>
-                  <span className="text-xs font-medium text-slate-700 dark:text-slate-200">
+                  <span className="min-w-0 break-words text-xs font-medium text-slate-700 dark:text-slate-200">
                     {s}
                   </span>
                 </button>
@@ -175,6 +175,7 @@ export default function FormQA({ model }: { model: AIModel }) {
       <div className="rounded-2xl border border-slate-200 bg-white p-2 shadow-xs dark:border-slate-700 dark:bg-slate-800 dark:shadow-none">
         <Textarea
           rows={2}
+          aria-label="向 AI 教練提問動作姿勢問題"
           className="border-0 bg-transparent px-2 py-1 shadow-none focus:ring-0 dark:bg-transparent"
           placeholder="例如：深蹲膝蓋內扣點改？（Enter 送出 · Shift+Enter 換行）"
           value={input}
@@ -229,7 +230,7 @@ function Bubble({
     <div className={cx('flex', isUser ? 'justify-end' : 'justify-start')}>
       <div className={isUser ? 'max-w-[85%]' : 'flex w-full max-w-[90%] items-start gap-2'}>
         {!isUser && (
-          <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
+          <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent" aria-hidden="true">
             <Bot size={15} />
           </span>
         )}
@@ -242,7 +243,10 @@ function Bubble({
         >
           {content}
           {streaming && (
-            <span className="ml-0.5 inline-block h-4 w-1.5 animate-pulse bg-current align-middle" />
+            <span
+              className="ml-0.5 inline-block h-4 w-1.5 animate-pulse bg-current align-middle"
+              aria-hidden="true"
+            />
           )}
         </div>
       </div>

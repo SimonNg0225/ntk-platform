@@ -28,9 +28,18 @@ export function VolumeBars({
         未有資料。
       </p>
     )
+  // 畀讀屏軟件嘅文字摘要（純視覺柱狀圖否則無資訊）。
+  const total = bars.reduce((s, b) => s + (b.volume > 0 ? b.volume : 0), 0)
+  const peak = bars.reduce(
+    (best, b) => (b.volume > best.volume ? b : best),
+    bars[0],
+  )
+  const chartLabel = hasData
+    ? `總訓練量柱狀圖，共 ${bars.length} 段，合計 ${fmtVol(total)} kg，最高 ${peak.label} ${fmtVol(peak.volume)} kg`
+    : `總訓練量柱狀圖，共 ${bars.length} 段，呢段時間未有訓練量`
   return (
-    <div>
-      <div className="flex h-40 items-end gap-1.5">
+    <div role="img" aria-label={chartLabel}>
+      <div className="flex h-40 items-end gap-1.5" aria-hidden="true">
         {bars.map((b, i) => {
           const isLast = highlightLast && i === bars.length - 1
           const pct = hasData
@@ -123,30 +132,49 @@ export function RpeTrend({
   })
   if (cur !== '') segs.push(cur.trim())
 
+  // 讀屏摘要：有資料嘅點數 + 最新值 + 高疲勞（>=8）段數。
+  const withData = points.filter((p) => p.value > 0)
+  const latest = withData[withData.length - 1]
+  const highCount = withData.filter((p) => p.value >= 8).length
+  const rpeLabel =
+    `平均 RPE（疲勞）走勢折線，共 ${withData.length} 段有資料` +
+    (latest ? `，最新 ${latest.label} RPE ${latest.value}` : '') +
+    (highCount > 0 ? `，其中 ${highCount} 段達高疲勞（RPE 8 或以上）` : '')
+
   return (
     <div className="w-full">
       <div className="relative w-full" style={{ height }}>
-        {/* 參考線：RPE 8（高疲勞警戒） */}
+        {/* 參考線：RPE 8（高疲勞警戒）— 純視覺輔助線 */}
         <div
           className="absolute left-7 right-0 border-t border-dashed border-amber-300/70 dark:border-amber-500/30"
           style={{ top: `${y(8)}%` }}
+          aria-hidden="true"
         />
         <span
-          className="absolute left-0 -translate-y-1/2 text-[9px] tabular-nums text-amber-400 dark:text-amber-500/70"
+          className="absolute left-0 -translate-y-1/2 text-[9px] tabular-nums text-amber-500 dark:text-amber-500/80"
           style={{ top: `${y(8)}%` }}
+          aria-hidden="true"
         >
           8
         </span>
-        <span className="absolute left-0 top-0 text-[9px] tabular-nums text-slate-300 dark:text-slate-600">
+        <span
+          className="absolute left-0 top-0 text-[9px] tabular-nums text-slate-400 dark:text-slate-500"
+          aria-hidden="true"
+        >
           10
         </span>
-        <span className="absolute bottom-3 left-0 text-[9px] tabular-nums text-slate-300 dark:text-slate-600">
+        <span
+          className="absolute bottom-3 left-0 text-[9px] tabular-nums text-slate-400 dark:text-slate-500"
+          aria-hidden="true"
+        >
           1
         </span>
         <svg
           viewBox="0 0 100 100"
           preserveAspectRatio="none"
           className="absolute inset-0 ml-7 h-full w-[calc(100%-1.75rem)] overflow-visible"
+          role="img"
+          aria-label={rpeLabel}
         >
           <defs>
             <linearGradient id={`rpe-${gid}`} x1="0" y1="0" x2="0" y2="1">

@@ -176,7 +176,7 @@ export default function BodyView() {
             記低 InBody 式身體組成，睇增肌減脂趨勢。
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Button
             variant="secondary"
             size="sm"
@@ -346,7 +346,12 @@ export default function BodyView() {
               })}
             </div>
 
-            <TrendChart data={series} color={trendCfg.color} unit={trendCfg.unit} />
+            <TrendChart
+              data={series}
+              color={trendCfg.color}
+              unit={trendCfg.unit}
+              label={trendCfg.label}
+            />
           </Card>
 
           {/* ── 增肌減脂分析 ── */}
@@ -675,7 +680,7 @@ function HistoryRow({
             <span
               key={i}
               className={cx(
-                c.muted ? 'text-slate-300 dark:text-slate-600' : 'text-slate-500 dark:text-slate-400',
+                c.muted ? 'text-slate-400 dark:text-slate-500' : 'text-slate-500 dark:text-slate-400',
               )}
             >
               {c.v}

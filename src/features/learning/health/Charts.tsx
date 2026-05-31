@@ -43,8 +43,10 @@ export function LineTrend({
   if (!hasData) {
     return (
       <div
-        className="flex items-center justify-center rounded-lg border border-dashed border-slate-200 text-xs text-slate-400 dark:border-slate-700 dark:text-slate-500"
+        className="flex items-center justify-center rounded-lg border border-dashed border-slate-200 text-xs text-slate-500 dark:border-slate-700 dark:text-slate-400"
         style={{ height: H }}
+        role="img"
+        aria-label="未有足夠資料"
       >
         未有足夠資料
       </div>
@@ -84,7 +86,8 @@ export function LineTrend({
       style={{ height: H }}
       preserveAspectRatio="none"
       role="img"
-      aria-label={`趨勢圖，最新 ${lastPt ? lastPt.v.toFixed(decimals) + unit : ''}`}
+      focusable="false"
+      aria-label={lastPt ? `趨勢圖，最新 ${lastPt.v.toFixed(decimals)}${unit}` : '趨勢圖'}
     >
       <defs>
         <linearGradient id={gid} x1="0" y1="0" x2="0" y2="1">
@@ -121,21 +124,34 @@ export function WeekBars({
   unit?: string
 }) {
   const color = TONE_COLOR[tone]
-  const max = Math.max(1, ...data.map((d) => d.value))
+  // 守衞缺值 / NaN / 負值 → 0，避免高度算式回 NaN。
+  const safe = (v: number) => (Number.isFinite(v) && v > 0 ? v : 0)
+  const max = Math.max(1, ...data.map((d) => safe(d.value)))
+  const label = data.length
+    ? `每日${unit ? `（${unit}）` : ''}：${data.map((d) => `${d.label} ${safe(d.value)}`).join('、')}`
+    : '未有資料'
   return (
-    <div className="flex items-end justify-between gap-1.5" style={{ height: 96 }}>
+    <div
+      className="flex items-end justify-between gap-1.5"
+      style={{ height: 96 }}
+      role="img"
+      aria-label={label}
+    >
       {data.map((d, i) => {
-        const h = Math.round((d.value / max) * 72)
+        const h = Math.round((safe(d.value) / max) * 72)
         return (
           <div key={i} className="flex flex-1 flex-col items-center gap-1">
             <div className="flex w-full flex-1 items-end justify-center">
               <div
-                className={cx('w-full max-w-[26px] rounded-md transition-all', d.value === 0 && 'opacity-30')}
+                aria-hidden="true"
+                className={cx('w-full max-w-[26px] rounded-md transition-all', safe(d.value) === 0 && 'opacity-30')}
                 style={{ height: Math.max(3, h), background: color, opacity: d.highlight ? 1 : 0.78 }}
-                title={`${d.value}${unit}`}
+                title={`${safe(d.value)}${unit}`}
               />
             </div>
-            <span className="text-[10px] tabular-nums text-slate-400">{d.label}</span>
+            <span className="text-[10px] tabular-nums text-slate-500 dark:text-slate-400" aria-hidden="true">
+              {d.label}
+            </span>
           </div>
         )
       })}
@@ -160,11 +176,13 @@ export function GoalRing({
   const color = TONE_COLOR[tone]
   const r = (size - stroke) / 2
   const c = 2 * Math.PI * r
-  const clamped = Math.max(0, Math.min(100, pct))
+  // 守衞 NaN / Infinity / 缺值 → 0，避免 strokeDasharray 變 NaN 令環消失。
+  const clamped = Number.isFinite(pct) ? Math.max(0, Math.min(100, pct)) : 0
   const dash = (clamped / 100) * c
   return (
     <div className="relative inline-flex items-center justify-center" style={{ width: size, height: size }}>
-      <svg width={size} height={size} className="-rotate-90">
+      {/* 進度數值已由 children 以文字呈現，環本身純裝飾 → 對 SR 隱藏 */}
+      <svg width={size} height={size} className="-rotate-90" aria-hidden="true" focusable="false">
         <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="currentColor" strokeWidth={stroke} className="text-slate-200 dark:text-slate-700" />
         <circle
           cx={size / 2}

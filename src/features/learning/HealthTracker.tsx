@@ -75,11 +75,11 @@ export default function HealthTracker() {
       <Card className="p-4 sm:p-5">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="flex items-center gap-2 text-base font-bold text-slate-800 dark:text-slate-100">
-            <Flame size={18} className="text-accent" />
+            <Flame size={18} className="text-accent" aria-hidden="true" />
             今日記錄
             {summary.streak > 0 && (
               <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-700 dark:bg-amber-500/15 dark:text-amber-400">
-                連續 {summary.streak} 日 🔥
+                連續 {summary.streak} 日 <span aria-hidden="true">🔥</span>
               </span>
             )}
           </h2>
@@ -138,9 +138,12 @@ export default function HealthTracker() {
             </GoalRing>
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-1.5 text-sm font-medium text-slate-600 dark:text-slate-300">
-                <Droplet size={15} className="text-sky-500" /> 飲水
+                <Droplet size={15} className="text-sky-500" aria-hidden="true" /> 飲水
               </div>
-              <div className="mt-0.5 text-xs tabular-nums text-slate-400">
+              <div
+                className="mt-0.5 break-words text-xs tabular-nums text-slate-500 dark:text-slate-400"
+                aria-live="polite"
+              >
                 {summary.waterToday} / {goals.waterTargetMl} ml
               </div>
               <div className="mt-1.5 flex gap-1.5">
@@ -148,6 +151,7 @@ export default function HealthTracker() {
                   variant="secondary"
                   size="sm"
                   icon={Plus}
+                  aria-label="加 250 ml"
                   onClick={() => set({ waterMl: (todayLog?.waterMl ?? 0) + 250 })}
                 >
                   250
@@ -170,7 +174,7 @@ export default function HealthTracker() {
         {/* 心情 */}
         <div className="mt-4">
           <div className="mb-1.5 flex items-center gap-1.5 text-sm font-medium text-slate-600 dark:text-slate-300">
-            <Smile size={15} className="text-amber-500" /> 今日心情
+            <Smile size={15} className="text-amber-500" aria-hidden="true" /> 今日心情
           </div>
           <div className="flex gap-2">
             {MOOD_EMOJI.map((emoji, i) => {
@@ -200,6 +204,7 @@ export default function HealthTracker() {
         {/* 備註 */}
         <div className="mt-4">
           <Input
+            aria-label="今日備註"
             placeholder="今日身體 / 飲食 / 狀態備註…"
             value={draft.note}
             onChange={(e) => setDraft((d) => ({ ...d, note: e.target.value }))}
@@ -252,7 +257,7 @@ export default function HealthTracker() {
         <Card className="p-4 sm:p-5">
           <div className="mb-3 flex items-center justify-between">
             <h2 className="flex items-center gap-2 text-base font-bold text-slate-800 dark:text-slate-100">
-              <TrendingUp size={18} className="text-accent" />
+              <TrendingUp size={18} className="text-accent" aria-hidden="true" />
               趨勢
             </h2>
             <SegmentedControl
@@ -321,7 +326,7 @@ function Stepper({
   return (
     <div className="rounded-xl border border-slate-200 p-3 dark:border-slate-700">
       <div className="flex items-center gap-1.5 text-sm font-medium text-slate-600 dark:text-slate-300">
-        <Icon size={15} className="text-emerald-500" /> {label}
+        <Icon size={15} className="text-emerald-500" aria-hidden="true" /> {label}
       </div>
       <div className="mt-1.5 flex items-center gap-2">
         <Button
@@ -332,9 +337,13 @@ function Stepper({
           aria-label={`減 ${step} ${unit}`}
           onClick={() => onSet(Math.max(0, value - step))}
         />
-        <span className="min-w-[3.5rem] text-center text-lg font-bold tabular-nums text-slate-800 dark:text-slate-100">
+        <span
+          className="min-w-[3.5rem] text-center text-lg font-bold tabular-nums text-slate-800 dark:text-slate-100"
+          aria-live="polite"
+          aria-label={`${label} ${value} ${unit}`}
+        >
           {value}
-          <span className="ml-1 text-xs font-normal text-slate-400">{unit}</span>
+          <span className="ml-1 text-xs font-normal text-slate-500 dark:text-slate-400">{unit}</span>
         </span>
         <Button variant="ghost" size="sm" icon={Plus} aria-label={`加 ${step} ${unit}`} onClick={() => onSet(value + step)} />
         <div className="flex-1" />
@@ -362,8 +371,8 @@ function TrendBlock({
   return (
     <div>
       <div className="mb-1 flex items-center justify-between text-xs font-medium text-slate-500 dark:text-slate-400">
-        <span>{title}</span>
-        <span className="text-slate-400">{unit}</span>
+        <span className="min-w-0 break-words">{title}</span>
+        <span className="ml-2 shrink-0 text-slate-500 dark:text-slate-400">{unit}</span>
       </div>
       {children}
     </div>

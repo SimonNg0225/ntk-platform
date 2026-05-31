@@ -69,14 +69,14 @@ interface RawPlan {
   days?: unknown
 }
 
-function str(v: unknown, fallback = ''): string {
+export function str(v: unknown, fallback = ''): string {
   if (typeof v === 'string') return v.trim()
-  if (typeof v === 'number') return String(v)
+  if (typeof v === 'number' && Number.isFinite(v)) return String(v)
   return fallback
 }
 
 /** 將 AI 回應安全解析成 CoachDay[]（缺值有守衞，唔會擲）。回 null = 解析失敗。 */
-function parsePlan(raw: string): CoachDay[] | null {
+export function parsePlan(raw: string): CoachDay[] | null {
   let obj: RawPlan
   try {
     obj = JSON.parse(stripJsonFence(raw)) as RawPlan
@@ -105,7 +105,7 @@ function parsePlan(raw: string): CoachDay[] | null {
   return days.length > 0 ? days : null
 }
 
-function buildPrompt(goalLabel: string, equip: string[], daysPerWeek: number): string {
+export function buildPrompt(goalLabel: string, equip: string[], daysPerWeek: number): string {
   const eq = equip.length > 0 ? equip.join('、') : '徒手'
   return [
     `你係專業健身教練。請為一位訓練者設計一份「每週 ${daysPerWeek} 日」嘅訓練課表。`,
@@ -136,6 +136,10 @@ export default function PlanGen({ model }: { model: AIModel }) {
 
   function recognizeEquipment(file: File) {
     const reader = new FileReader()
+    reader.onerror = () => {
+      setRecog(false)
+      toast.error('讀唔到相，請再試')
+    }
     reader.onload = async () => {
       const dataUrl = String(reader.result)
       const comma = dataUrl.indexOf(',')
@@ -265,6 +269,7 @@ export default function PlanGen({ model }: { model: AIModel }) {
                 >
                   <I
                     size={18}
+                    aria-hidden="true"
                     className={cx(
                       on ? 'text-accent-strong dark:text-accent' : 'text-slate-400',
                     )}
@@ -279,7 +284,7 @@ export default function PlanGen({ model }: { model: AIModel }) {
                   >
                     {g.label}
                   </span>
-                  <span className="text-[11px] text-slate-400">{g.desc}</span>
+                  <span className="text-[11px] text-slate-400 dark:text-slate-500">{g.desc}</span>
                 </button>
               )
             })}
@@ -421,13 +426,13 @@ function DayCard({ day }: { day: CoachDay }) {
   return (
     <Card padded className="space-y-3">
       <div className="flex items-center justify-between gap-2">
-        <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100">
+        <h3 className="min-w-0 break-words text-sm font-bold text-slate-800 dark:text-slate-100">
           {day.day}
         </h3>
         <Badge tone="accent">{day.focus}</Badge>
       </div>
       {day.exercises.length === 0 ? (
-        <p className="text-xs text-slate-400">（休息 / 無動作）</p>
+        <p className="text-xs text-slate-400 dark:text-slate-500">（休息 / 無動作）</p>
       ) : (
         <ul className="space-y-2">
           {day.exercises.map((ex, i) => (
@@ -436,7 +441,7 @@ function DayCard({ day }: { day: CoachDay }) {
               className="rounded-lg border border-slate-100 bg-slate-50/60 p-2.5 dark:border-slate-700/60 dark:bg-slate-900/30"
             >
               <div className="flex items-center justify-between gap-2">
-                <span className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                <span className="min-w-0 break-words text-sm font-medium text-slate-700 dark:text-slate-200">
                   {ex.name}
                 </span>
                 <span className="shrink-0 tabular-nums text-xs font-semibold text-accent-strong dark:text-accent">
@@ -444,7 +449,7 @@ function DayCard({ day }: { day: CoachDay }) {
                 </span>
               </div>
               {ex.note && (
-                <p className="mt-1 text-[11px] leading-relaxed text-slate-400">
+                <p className="mt-1 break-words text-[11px] leading-relaxed text-slate-400 dark:text-slate-500">
                   {ex.note}
                 </p>
               )}
@@ -467,7 +472,7 @@ function SavedPlanRow({
   return (
     <Card className="overflow-hidden">
       <div className="flex items-center gap-3 p-3">
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent" aria-hidden="true">
           <Dumbbell size={16} />
         </span>
         <button
@@ -479,7 +484,7 @@ function SavedPlanRow({
           <p className="truncate text-sm font-semibold text-slate-700 dark:text-slate-200">
             {plan.title}
           </p>
-          <p className="mt-0.5 truncate text-[11px] text-slate-400">
+          <p className="mt-0.5 truncate text-[11px] text-slate-400 dark:text-slate-500">
             每週 {plan.daysPerWeek} 日 · {plan.equipment.join('、') || '徒手'}
           </p>
         </button>

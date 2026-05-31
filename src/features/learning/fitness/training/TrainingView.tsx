@@ -163,7 +163,10 @@ export default function TrainingView() {
       {/* ── 標題列 ── */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-start gap-3">
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
+          <span
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent"
+            aria-hidden="true"
+          >
             <Dumbbell size={18} />
           </span>
           <div>
@@ -1148,6 +1151,7 @@ function WorkoutEditor({
                       }
                       placeholder="8"
                       aria-label={`動作 ${exIdx + 1} 第 ${setIdx + 1} 組次數`}
+                      className="min-w-0"
                     />
                     <Input
                       type="number"
@@ -1160,6 +1164,7 @@ function WorkoutEditor({
                       }
                       placeholder="60"
                       aria-label={`動作 ${exIdx + 1} 第 ${setIdx + 1} 組重量`}
+                      className="min-w-0"
                     />
                     <Input
                       type="number"
@@ -1172,6 +1177,7 @@ function WorkoutEditor({
                       }
                       placeholder="1-10"
                       aria-label={`動作 ${exIdx + 1} 第 ${setIdx + 1} 組 RPE`}
+                      className="min-w-0"
                     />
                     <IconButton
                       label="刪除呢組"

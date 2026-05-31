@@ -37,29 +37,31 @@ interface Advice {
   cautions: string[]
 }
 
-function num(v: string): number | null {
+export function num(v: string): number | null {
   const n = Number(v)
   return Number.isFinite(n) && n > 0 ? n : null
 }
 
 /** BMI（缺值/除零守衞）。回 null = 資料不足。 */
-function bmi(heightCm: string, weightKg: string): number | null {
+export function bmi(heightCm: string, weightKg: string): number | null {
   const h = num(heightCm)
   const w = num(weightKg)
   if (h === null || w === null) return null
   const m = h / 100
   if (m <= 0) return null
-  return Math.round((w / (m * m)) * 10) / 10
+  const result = w / (m * m)
+  if (!Number.isFinite(result)) return null
+  return Math.round(result * 10) / 10
 }
 
-function bmiBand(value: number): { label: string; tone: string } {
+export function bmiBand(value: number): { label: string; tone: string } {
   if (value < 18.5) return { label: '偏輕', tone: 'text-sky-500' }
   if (value < 24) return { label: '正常', tone: 'text-emerald-500' }
   if (value < 27) return { label: '過重', tone: 'text-amber-500' }
   return { label: '肥胖', tone: 'text-rose-500' }
 }
 
-function buildPrompt(f: FormState, bmiValue: number | null): string {
+export function buildPrompt(f: FormState, bmiValue: number | null): string {
   const lines = [
     `身高：${f.height || '未提供'} cm`,
     `體重：${f.weight || '未提供'} kg`,
@@ -80,12 +82,12 @@ function buildPrompt(f: FormState, bmiValue: number | null): string {
   ].join('\n')
 }
 
-function strArr(v: unknown): string[] {
+export function strArr(v: unknown): string[] {
   if (!Array.isArray(v)) return []
   return v.map((x) => (typeof x === 'string' ? x.trim() : '')).filter(Boolean)
 }
 
-function parseAdvice(raw: string): Advice | null {
+export function parseAdvice(raw: string): Advice | null {
   let obj: { bullets?: unknown; cautions?: unknown }
   try {
     // 同 aiJson.stripJsonFence 一致：剝走 code fence
@@ -217,20 +219,20 @@ export default function Assess({ model }: { model: AIModel }) {
       </Card>
 
       {advice && (
-        <div className="space-y-3">
+        <div className="space-y-3" aria-live="polite">
           {advice.bullets.length > 0 && (
             <Card padded>
               <h3 className="mb-3 flex items-center gap-2 text-sm font-bold text-slate-800 dark:text-slate-100">
-                <Sparkles size={16} className="text-accent-strong dark:text-accent" />
+                <Sparkles size={16} className="text-accent-strong dark:text-accent" aria-hidden="true" />
                 訓練重點
               </h3>
               <ul className="space-y-2">
                 {advice.bullets.map((b, i) => (
                   <li key={i} className="flex items-start gap-2.5 text-sm">
-                    <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent-soft text-[11px] font-bold text-accent-strong dark:bg-accent/15 dark:text-accent">
+                    <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent-soft text-[11px] font-bold text-accent-strong dark:bg-accent/15 dark:text-accent" aria-hidden="true">
                       {i + 1}
                     </span>
-                    <span className="leading-relaxed text-slate-700 dark:text-slate-200">
+                    <span className="min-w-0 break-words leading-relaxed text-slate-700 dark:text-slate-200">
                       {b}
                     </span>
                   </li>
@@ -245,7 +247,7 @@ export default function Assess({ model }: { model: AIModel }) {
               className="border-amber-200 bg-amber-50/60 dark:border-amber-500/30 dark:bg-amber-500/10"
             >
               <h3 className="mb-3 flex items-center gap-2 text-sm font-bold text-amber-700 dark:text-amber-300">
-                <AlertTriangle size={16} />
+                <AlertTriangle size={16} aria-hidden="true" />
                 注意事項
               </h3>
               <ul className="space-y-2">
@@ -256,16 +258,16 @@ export default function Assess({ model }: { model: AIModel }) {
                       'flex items-start gap-2 text-sm leading-relaxed text-amber-800 dark:text-amber-200',
                     )}
                   >
-                    <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500" />
-                    {c}
+                    <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500" aria-hidden="true" />
+                    <span className="min-w-0 break-words">{c}</span>
                   </li>
                 ))}
               </ul>
             </Card>
           )}
 
-          <p className="flex items-center justify-center gap-1.5 text-center text-[11px] text-slate-400">
-            <RefreshCw size={12} />
+          <p className="flex items-center justify-center gap-1.5 text-center text-[11px] text-slate-400 dark:text-slate-500">
+            <RefreshCw size={12} aria-hidden="true" />
             建議由 AI 生成，僅供參考；如涉痛症或傷患，請諮詢專業醫療人員。
           </p>
         </div>

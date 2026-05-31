@@ -168,7 +168,10 @@ export default function LibraryView() {
         />
       ) : (
         <>
-          <p className="text-xs text-slate-400 dark:text-slate-500">
+          <p
+            className="text-xs text-slate-500 dark:text-slate-400"
+            aria-live="polite"
+          >
             顯示 {filtered.length} / {EXERCISES.length} 個動作
           </p>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -383,8 +386,8 @@ function DetailModal({
 
         {/* form cues */}
         <section>
-          <h4 className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-            <Target size={14} /> 動作重點
+          <h4 className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+            <Target size={14} aria-hidden="true" /> 動作重點
           </h4>
           <ul className="space-y-1.5">
             {exercise.formCues.map((cue, i) => (
@@ -404,7 +407,7 @@ function DetailModal({
         {/* safety */}
         <section className="rounded-lg border border-amber-200 bg-amber-50/70 p-3 dark:border-amber-500/20 dark:bg-amber-500/10">
           <h4 className="mb-1 flex items-center gap-1.5 text-xs font-semibold text-amber-700 dark:text-amber-300">
-            <ShieldAlert size={14} /> 安全提示
+            <ShieldAlert size={14} aria-hidden="true" /> 安全提示
           </h4>
           <p className="text-sm text-amber-800 dark:text-amber-200">
             {exercise.safety}
@@ -412,13 +415,17 @@ function DetailModal({
         </section>
 
         {/* AI 解釋（gate：未設定就靜態提示，唔 call） */}
-        <section className="rounded-lg border border-slate-200 bg-slate-50/70 p-3 dark:border-slate-700 dark:bg-slate-800/50">
+        <section
+          className="rounded-lg border border-slate-200 bg-slate-50/70 p-3 dark:border-slate-700 dark:bg-slate-800/50"
+          aria-live="polite"
+          aria-busy={aiBusy}
+        >
           <h4 className="mb-2 flex items-center gap-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400">
-            <Sparkles size={14} /> AI 教練解釋
+            <Sparkles size={14} aria-hidden="true" /> AI 教練解釋
           </h4>
           {!isAIConfigured ? (
-            <p className="flex items-start gap-1.5 text-xs text-slate-400 dark:text-slate-500">
-              <Bot size={14} className="mt-0.5 shrink-0" />
+            <p className="flex items-start gap-1.5 text-xs text-slate-500 dark:text-slate-400">
+              <Bot size={14} className="mt-0.5 shrink-0" aria-hidden="true" />
               需要先設定雲端 AI（見 docs/SETUP.md）。
             </p>
           ) : aiText ? (

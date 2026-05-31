@@ -199,7 +199,11 @@ function CalorieRing({
   const stroke = over ? FIT_TONE.rose : FIT_TONE.emerald
   return (
     <div className="relative flex h-[140px] w-[140px] shrink-0 items-center justify-center">
-      <svg viewBox="0 0 140 140" className="h-full w-full -rotate-90">
+      <svg
+        viewBox="0 0 140 140"
+        className="h-full w-full -rotate-90"
+        aria-hidden="true"
+      >
         <circle
           cx="70"
           cy="70"
@@ -220,7 +224,12 @@ function CalorieRing({
           style={{ transition: 'stroke-dasharray 0.5s ease-out' }}
         />
       </svg>
-      <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+      <div
+        className="absolute inset-0 flex flex-col items-center justify-center text-center"
+        role="status"
+        aria-live="polite"
+        aria-label={`已攝取 ${Math.round(consumed)} kcal，目標 ${Math.round(goal)} kcal，${over ? `超標 ${Math.round(consumed - goal)} kcal` : `仲剩 ${left} kcal`}`}
+      >
         <span className="text-2xl font-bold tabular-nums slashed-zero text-slate-800 dark:text-slate-100">
           {Math.round(consumed)}
         </span>
@@ -263,7 +272,7 @@ function MacroBar({
     <div>
       <div className="mb-1 flex items-center justify-between text-xs">
         <span className="flex items-center gap-1 font-medium text-slate-600 dark:text-slate-300">
-          <I size={13} style={{ color }} />
+          <I size={13} style={{ color }} aria-hidden="true" />
           {label}
         </span>
         <span className="tabular-nums text-slate-500 dark:text-slate-400">
@@ -275,7 +284,14 @@ function MacroBar({
           {unit}
         </span>
       </div>
-      <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-700">
+      <div
+        className="h-2 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-700"
+        role="progressbar"
+        aria-valuenow={pct}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-label={`${label}達標 ${pct}%（${Math.round(value)} / ${Math.round(goal)}${unit}）`}
+      >
         <div
           className="h-full rounded-full transition-all duration-500 ease-out"
           style={{
@@ -308,6 +324,9 @@ function WeeklyBars({
   const max = Math.max(goalCal, ...data.map((d) => d.calories), 1)
   const totalWeek = data.reduce((s, d) => s + d.calories, 0)
   const avg = Math.round(totalWeek / 7)
+  const chartLabel = `近 7 日卡路里：${data
+    .map((d) => `${WEEKDAY_LABELS[fromKey(d.key).getDay()]} ${d.calories}`)
+    .join('、')}（kcal）；平均 ${avg}，目標 ${Math.round(goalCal)}`
   return (
     <div>
       <div className="mb-2 flex items-center justify-between">
@@ -322,7 +341,7 @@ function WeeklyBars({
           目標 {Math.round(goalCal)}
         </span>
       </div>
-      <div className="flex h-32 items-end gap-1.5">
+      <div className="flex h-32 items-end gap-1.5" role="img" aria-label={chartLabel}>
         {data.map((d) => {
           const h = (d.calories / max) * 100
           const wd = WEEKDAY_LABELS[fromKey(d.key).getDay()]
@@ -602,7 +621,7 @@ export default function NutritionView() {
   return (
     <div className="space-y-4">
       {/* ── 頂部：日期導航 + 目標掣 ── */}
-      <div className="flex items-center justify-between gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-1">
           <IconButton
             label="前一日"
@@ -687,7 +706,10 @@ export default function NutritionView() {
       {/* ── 主輸入：AI 自然語言 ── */}
       <Card className="space-y-3 p-4">
         <div className="flex items-center gap-1.5">
-          <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
+          <span
+            className="flex h-7 w-7 items-center justify-center rounded-lg bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent"
+            aria-hidden="true"
+          >
             <Wand2 size={15} />
           </span>
           <div className="min-w-0">
@@ -717,7 +739,11 @@ export default function NutritionView() {
         {frequent.length > 0 && (
           <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-3 dark:border-slate-700 dark:bg-slate-800/40">
             <div className="mb-2 flex items-center gap-1.5">
-              <History size={13} className="text-slate-400 dark:text-slate-500" />
+              <History
+                size={13}
+                className="text-slate-400 dark:text-slate-500"
+                aria-hidden="true"
+              />
               <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
                 常食快速加（撳即記入「{MEAL_META[meal].label}」）
               </span>
@@ -753,6 +779,8 @@ export default function NutritionView() {
               value={text}
               onChange={(e) => setText(e.target.value)}
               disabled={busy}
+              aria-busy={busy}
+              aria-label="講你食咗咩，AI 幫你計營養"
               placeholder="今日午餐食咗半碗白飯、一塊煎雞胸、一隻烚蛋同少少西蘭花…"
             />
             <div className="flex flex-wrap items-center gap-2">
@@ -781,7 +809,7 @@ export default function NutritionView() {
         ) : (
           <div className="space-y-3">
             <div className="flex items-start gap-2 rounded-lg border border-dashed border-slate-200 bg-slate-50/60 px-3 py-2.5 text-xs text-slate-500 dark:border-slate-700 dark:bg-slate-800/40 dark:text-slate-400">
-              <Bot size={15} className="mt-0.5 shrink-0" />
+              <Bot size={15} className="mt-0.5 shrink-0" aria-hidden="true" />
               <span>
                 需要先設定雲端 AI（見 docs/SETUP.md）。未設定都可以用下面「手動新增」記錄飲食。
               </span>
@@ -798,10 +826,13 @@ export default function NutritionView() {
 
         {/* AI 草稿：逐項微調再落地 */}
         {drafts.length > 0 && (
-          <div className="space-y-2 rounded-xl border border-accent/30 bg-accent-soft/40 p-3 dark:border-accent/40 dark:bg-accent/10">
+          <div
+            className="space-y-2 rounded-xl border border-accent/30 bg-accent-soft/40 p-3 dark:border-accent/40 dark:bg-accent/10"
+            aria-live="polite"
+          >
             <div className="flex items-center justify-between">
               <span className="flex items-center gap-1.5 text-xs font-semibold text-accent-strong dark:text-accent">
-                <Sparkles size={14} />
+                <Sparkles size={14} aria-hidden="true" />
                 AI 解析結果（可微調）
               </span>
               <Badge tone="accent">
@@ -888,7 +919,7 @@ export default function NutritionView() {
       <Card className="space-y-3 p-4">
         <div className="flex items-center justify-between">
           <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-            <Utensils size={14} />
+            <Utensils size={14} aria-hidden="true" />
             {isToday ? '今日' : dateLabel} 飲食日誌
           </span>
           {dayEntries.length > 0 && (
@@ -914,7 +945,7 @@ export default function NutritionView() {
                   {/* 餐段標題 + 小計 */}
                   <div className="mb-1 flex items-center justify-between border-b border-slate-100 pb-1 dark:border-slate-800">
                     <span className="flex items-center gap-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300">
-                      <MI size={14} style={{ color: m.color }} />
+                      <MI size={14} style={{ color: m.color }} aria-hidden="true" />
                       {m.label}
                       <span className="tabular-nums text-slate-400 dark:text-slate-500">
                         · {g.entries.length}
@@ -944,7 +975,10 @@ export default function NutritionView() {
                         key={e.id}
                         className="group flex items-center gap-3 py-2.5"
                       >
-                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400">
+                        <div
+                          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400"
+                          aria-hidden="true"
+                        >
                           <Flame size={16} />
                         </div>
                         <div className="min-w-0 flex-1">
@@ -990,7 +1024,7 @@ export default function NutritionView() {
       {/* ── 近 7 日卡路里柱狀 ── */}
       <Card className="p-4">
         <div className="mb-3 flex items-center gap-1.5">
-          <BarChart3 size={14} className="text-slate-400" />
+          <BarChart3 size={14} className="text-slate-400" aria-hidden="true" />
           <span className="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
             近 7 日卡路里
           </span>

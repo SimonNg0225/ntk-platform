@@ -3,6 +3,9 @@ import type { HealthLog, HealthGoals } from './types'
 import {
   toKey,
   fromKey,
+  addDays,
+  addDaysKey,
+  todayKey,
   recentDays,
   byDate,
   valueOn,
@@ -42,6 +45,26 @@ describe('日期 key（本地時區，無 UTC 漂移）', () => {
   it('recentDays：含 anchor 當日、由舊到新', () => {
     expect(recentDays(3, ANCHOR)).toEqual(['2026-05-30', '2026-05-31', '2026-06-01'])
     expect(recentDays(1, ANCHOR)).toEqual(['2026-06-01'])
+  })
+  it('recentDays(0) → 空陣列（守衞，唔崩）', () => {
+    expect(recentDays(0, ANCHOR)).toEqual([])
+  })
+  it('addDays：跨月 / 跨年正確（用本地分量，非毫秒加減）', () => {
+    expect(toKey(addDays(fromKey('2026-06-01'), -1))).toBe('2026-05-31') // 跨月退一
+    expect(toKey(addDays(fromKey('2026-01-01'), -1))).toBe('2025-12-31') // 跨年退一
+    expect(toKey(addDays(fromKey('2026-02-28'), 1))).toBe('2026-03-01') // 平年 2 月底
+    expect(toKey(addDays(fromKey('2024-02-28'), 1))).toBe('2024-02-29') // 閏年 2 月底
+  })
+  it('addDaysKey：直接用 key 進退、零位移為原日', () => {
+    expect(addDaysKey('2026-06-01', 0)).toBe('2026-06-01')
+    expect(addDaysKey('2026-06-01', 7)).toBe('2026-06-08')
+    expect(addDaysKey('2026-12-31', 1)).toBe('2027-01-01')
+  })
+  it('todayKey：預設用本地當下、可傳 anchor', () => {
+    expect(todayKey(ANCHOR)).toBe('2026-06-01')
+    // 預設參數應回一個合法本地 key（roundtrip 穩定）
+    const k = todayKey()
+    expect(toKey(fromKey(k))).toBe(k)
   })
 })
 
@@ -135,6 +158,23 @@ describe('weightTrend', () => {
     expect(t?.latestKg).toBe(70.5)
     expect(t?.deltaKg).toBeCloseTo(-1.5, 5)
   })
+  it('全部資料都喺截止日之前：最新即基準 → delta null（唔虛報變化）', () => {
+    // 兩筆都係 1 個月前（遠早於 7 日 cutoff），prev 會落到 latest 自己。
+    const logs = [log('2026-04-20', { weightKg: 72 }), log('2026-05-01', { weightKg: 71 })]
+    const t = weightTrend(logs, 7, ANCHOR)
+    expect(t?.latestKg).toBe(71)
+    expect(t?.deltaKg).toBeNull()
+  })
+  it('忽略非有限體重（NaN/Infinity 唔污染趨勢）', () => {
+    const logs = [
+      log('2026-05-25', { weightKg: 72 }),
+      log('2026-05-28', { weightKg: NaN }),
+      log('2026-06-01', { weightKg: 70 }),
+    ]
+    const t = weightTrend(logs, 7, ANCHOR)
+    expect(t?.latestKg).toBe(70)
+    expect(t?.deltaKg).toBeCloseTo(-2, 5)
+  })
 })
 
 describe('goalPct', () => {
@@ -147,6 +187,13 @@ describe('goalPct', () => {
     expect(goalPct(1500, -5)).toBe(0)
     expect(goalPct(0, 2000)).toBe(0)
     expect(goalPct(-100, 2000)).toBe(0)
+  })
+  it('NaN / Infinity 輸入 → 0（永不回 NaN / Infinity）', () => {
+    expect(goalPct(NaN, 2000)).toBe(0)
+    expect(goalPct(1500, NaN)).toBe(0)
+    expect(goalPct(Infinity, 2000)).toBe(0)
+    expect(goalPct(1500, Infinity)).toBe(0) // 1500/Inf=0 → 仍係有限 0
+    expect(Number.isFinite(goalPct(1500, Infinity))).toBe(true)
   })
 })
 

@@ -436,4 +436,65 @@ describe('frequentFoods', () => {
     expect(frequentFoods(entries, 0)).toEqual([])
     expect(frequentFoods(entries, -3)).toEqual([])
   })
+
+  it('小數 limit 向下取整（2.9 → 取 2）', () => {
+    const entries: FoodEntry[] = [
+      entry({ id: '1', label: 'A', calories: 10 }),
+      entry({ id: '2', label: 'B', calories: 20 }),
+      entry({ id: '3', label: 'C', calories: 30 }),
+    ]
+    expect(frequentFoods(entries, 2.9)).toHaveLength(2)
+  })
+
+  it('NaN limit → 0 → 空陣列（守衞）', () => {
+    const entries: FoodEntry[] = [entry({ id: '1', label: '飯', calories: 200 })]
+    expect(frequentFoods(entries, NaN as unknown as number)).toEqual([])
+  })
+})
+
+// ============================================================
+//  防護：聚合函式對「非陣列」runtime 輸入嘅守衞
+//  ------------------------------------------------------------
+//  落地資料若因損壞 / 舊格式 / AI 回非陣列而唔係 array，
+//  聚合函式唔可以掟 error，要安全回退（ZERO / [] / 7 日 0）。
+// ============================================================
+describe('非陣列輸入守衞（防 runtime 崩潰）', () => {
+  const notArrays = [null, undefined, {}, 'oops', 42] as unknown as FoodEntry[][]
+
+  it('dayTotals 非陣列 → 全 0（非 NaN / 非掟錯）', () => {
+    for (const bad of notArrays) {
+      expect(dayTotals(bad, '2026-05-31')).toEqual({
+        calories: 0,
+        proteinG: 0,
+        fatG: 0,
+        carbG: 0,
+      })
+    }
+  })
+
+  it('mealGroups 非陣列 → 空陣列', () => {
+    for (const bad of notArrays) {
+      expect(mealGroups(bad, '2026-05-31')).toEqual([])
+    }
+  })
+
+  it('frequentFoods 非陣列 → 空陣列', () => {
+    for (const bad of notArrays) {
+      expect(frequentFoods(bad)).toEqual([])
+    }
+  })
+
+  it('weeklyCalories 非陣列 → 仍回 7 日、每日 0（柱狀圖唔崩）', () => {
+    const anchor = new Date(2026, 4, 31, 12)
+    for (const bad of notArrays) {
+      const out = weeklyCalories(bad, anchor)
+      expect(out).toHaveLength(7)
+      expect(out.every((d) => d.calories === 0)).toBe(true)
+      expect(out[6].key).toBe('2026-05-31')
+    }
+  })
+
+  it('normalizeItem 陣列輸入 → null（typeof object 但無有效欄位）', () => {
+    expect(normalizeItem([] as unknown as never)).toBeNull()
+  })
 })
