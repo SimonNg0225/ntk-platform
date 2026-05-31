@@ -1,4 +1,4 @@
-import { createElement, forwardRef, useEffect, useRef, useState } from 'react'
+import { createElement, forwardRef, useEffect, useId, useRef, useState } from 'react'
 import type {
   ButtonHTMLAttributes,
   InputHTMLAttributes,
@@ -599,6 +599,50 @@ export function Modal({
   footer?: ReactNode
   closeOnBackdrop?: boolean
 }) {
+  const panelRef = useRef<HTMLDivElement>(null)
+  const titleId = useId()
+
+  // 開啟時：鎖 body 捲動、初始焦點入面板、Esc 關閉、Tab focus-trap；
+  // 關閉/卸載時還原焦點同捲動（無障礙對話框標準行為）。
+  useEffect(() => {
+    if (!open) return
+    const prevActive = document.activeElement as HTMLElement | null
+    const prevOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    panelRef.current?.focus()
+
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.stopPropagation()
+        onClose()
+        return
+      }
+      if (e.key !== 'Tab') return
+      const panel = panelRef.current
+      if (!panel) return
+      const nodes = panel.querySelectorAll<HTMLElement>(
+        'a[href],button:not([disabled]),textarea:not([disabled]),input:not([disabled]),select:not([disabled]),[tabindex]:not([tabindex="-1"])',
+      )
+      if (nodes.length === 0) return
+      const first = nodes[0]
+      const last = nodes[nodes.length - 1]
+      const active = document.activeElement
+      if (e.shiftKey && (active === first || active === panel)) {
+        e.preventDefault()
+        last.focus()
+      } else if (!e.shiftKey && active === last) {
+        e.preventDefault()
+        first.focus()
+      }
+    }
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('keydown', onKey)
+      document.body.style.overflow = prevOverflow
+      prevActive?.focus?.()
+    }
+  }, [open, onClose])
+
   if (!open) return null
   const maxW =
     size === 'sm'
@@ -615,14 +659,22 @@ export function Modal({
         onClick={closeOnBackdrop ? onClose : undefined}
       />
       <div
+        ref={panelRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={title ? titleId : undefined}
+        tabIndex={-1}
         className={cx(
-          'relative z-10 max-h-[85vh] w-full animate-scale-in overflow-y-auto rounded-t-2xl border border-slate-200 bg-white p-5 shadow-overlay dark:border-slate-700 dark:bg-slate-800 sm:rounded-2xl sm:p-6',
+          'relative z-10 max-h-[85vh] w-full animate-scale-in overflow-y-auto rounded-t-2xl border border-slate-200 bg-white p-5 shadow-overlay focus:outline-none dark:border-slate-700 dark:bg-slate-800 sm:rounded-2xl sm:p-6',
           maxW,
         )}
       >
         {title && (
           <div className="mb-4 flex items-center justify-between">
-            <h3 className="text-base font-bold text-slate-800 dark:text-slate-100">
+            <h3
+              id={titleId}
+              className="text-base font-bold text-slate-800 dark:text-slate-100"
+            >
               {title}
             </h3>
             <button
