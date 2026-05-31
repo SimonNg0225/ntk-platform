@@ -6,6 +6,7 @@ import type {
   SelectHTMLAttributes,
   TextareaHTMLAttributes,
 } from 'react'
+import { Illustration } from '../components/Illustration'
 import {
   ArrowDownRight,
   ArrowUpRight,
@@ -323,15 +324,20 @@ export function EmptyState({
   title,
   hint,
   action,
+  art,
 }: {
   icon?: IconType
   title: string
   hint?: string
   action?: ReactNode
+  /** public/art/<art>.png 插圖名；有圖就顯示（取代 icon），未生成則靜靜退回 icon/無 */
+  art?: string
 }) {
   return (
     <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-slate-200 bg-slate-50/60 px-6 py-12 text-center dark:border-slate-700 dark:bg-slate-800/40">
-      {typeof icon === 'string' ? (
+      {art ? (
+        <Illustration name={art} className="mb-1 h-28 w-28 object-contain" />
+      ) : typeof icon === 'string' ? (
         <span className="text-3xl">{icon}</span>
       ) : (
         <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500">
