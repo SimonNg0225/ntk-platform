@@ -48,6 +48,7 @@ const GlobalSearch = lazyFeature(() => import('./shared/GlobalSearch'))
 const Inbox = lazyFeature(() => import('./shared/Inbox'))
 const QuizMode = lazyFeature(() => import('./shared/QuizMode'))
 const AIAssistant = lazyFeature(() => import('./shared/AIAssistant'))
+const AskData = lazyFeature(() => import('./shared/AskData'))
 
 // ============================================================
 //  功能註冊表 (Feature Registry) — 平台擴充中心
@@ -300,6 +301,16 @@ export const FEATURES: Feature[] = [
   },
 
   // ═══════════ 兩個模式共用 ═══════════
+  {
+    id: 'ask-data',
+    modes: ['learning', 'work'],
+    name: '問我嘅資料 AI',
+    description: 'AI 根據你嘅筆記 / 待辦 / 目標 / 日程回答你嘅問題。',
+    icon: '✨',
+    group: 'AI',
+    component: AskData,
+    status: 'ready',
+  },
   {
     id: 'calendar',
     modes: ['learning', 'work'],
