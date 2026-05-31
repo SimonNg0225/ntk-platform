@@ -1,5 +1,11 @@
 import { recentDays } from '../common'
-import type { FoodEntry, Macros, RawFoodItem } from './types'
+import type {
+  FoodEntry,
+  FrequentFood,
+  Macros,
+  MealSlot,
+  RawFoodItem,
+} from './types'
 
 // ============================================================
 //  AI 飲食營養 — 純函式（無 React / 無 AI；全部可測）
@@ -114,4 +120,104 @@ export function macroKcal(macros: Macros): {
     fat: Math.round(safeNum(macros.fatG) * 9),
     carb: Math.round(safeNum(macros.carbG) * 4),
   }
+}
+
+// ============================================================
+//  每餐分段 + 常食快速再記（新增純函式）
+// ============================================================
+
+/** 餐段顯示次序（同 MealSlot；'other' 永遠排尾） */
+export const MEAL_ORDER: readonly MealSlot[] = [
+  'breakfast',
+  'lunch',
+  'dinner',
+  'snack',
+  'other',
+] as const
+
+const MEAL_SET = new Set<MealSlot>(MEAL_ORDER)
+
+/**
+ * 把任意值收斂成合法 MealSlot；缺值 / 唔識 → 'other'（向後相容舊資料）。
+ */
+export function normalizeMeal(v: unknown): MealSlot {
+  return typeof v === 'string' && MEAL_SET.has(v as MealSlot)
+    ? (v as MealSlot)
+    : 'other'
+}
+
+/** 一個餐段嘅分組結果：該餐全部紀錄（保留傳入次序）+ 四大營養小計。 */
+export interface MealGroup {
+  meal: MealSlot
+  entries: FoodEntry[]
+  subtotal: Macros
+}
+
+/**
+ * 把某一日嘅飲食紀錄按餐分組 + 各餐小計，依 MEAL_ORDER 排序。
+ * 只回「當日 + 有紀錄」嘅餐段（空段唔出，免日誌堆白卡）。
+ * 舊資料無 meal 歸入 'other'；缺 / 負值經 safeNum 收斂。
+ * 注意：純分組，唔改原陣列次序（呼叫端自行決定新→舊定舊→新）。
+ */
+export function mealGroups(entries: FoodEntry[], date: string): MealGroup[] {
+  if (!Array.isArray(entries) || entries.length === 0 || !date) return []
+  const buckets = new Map<MealSlot, MealGroup>()
+  for (const e of entries) {
+    if (!e || e.date !== date) continue
+    const meal = normalizeMeal(e.meal)
+    let g = buckets.get(meal)
+    if (!g) {
+      g = { meal, entries: [], subtotal: { ...ZERO } }
+      buckets.set(meal, g)
+    }
+    g.entries.push(e)
+    g.subtotal.calories += safeNum(e.calories)
+    g.subtotal.proteinG += safeNum(e.proteinG)
+    g.subtotal.fatG += safeNum(e.fatG)
+    g.subtotal.carbG += safeNum(e.carbG)
+  }
+  return MEAL_ORDER.map((m) => buckets.get(m)).filter(
+    (g): g is MealGroup => g !== undefined,
+  )
+}
+
+/** 把 label + macros 組成穩定去重 key（同名同營養 = 同一款常食）。 */
+function foodKey(
+  label: string,
+  m: { calories: number; proteinG: number; fatG: number; carbG: number },
+): string {
+  return [label, m.calories, m.proteinG, m.fatG, m.carbG].join('|')
+}
+
+/**
+ * 由歷史 FoodEntry 去重統計「常食」清單，最常用排先（次數多→次數同則名先）。
+ * 同名 + 四個 macros 完全相同視為同一款；label 去前後空白後比較。
+ * 空 label（trim 後）唔計。負 / 缺值經 safeNum 收斂後先做 key（保證穩定）。
+ * limit ≤ 0 → 回空陣列；預設取前 8 款。
+ */
+export function frequentFoods(
+  entries: FoodEntry[],
+  limit = 8,
+): FrequentFood[] {
+  if (!Array.isArray(entries) || entries.length === 0) return []
+  const max = Math.floor(safeNum(limit))
+  if (max <= 0) return []
+  const acc = new Map<string, FrequentFood>()
+  for (const e of entries) {
+    if (!e) continue
+    const label = typeof e.label === 'string' ? e.label.trim() : ''
+    if (!label) continue
+    const calories = safeNum(e.calories)
+    const proteinG = safeNum(e.proteinG)
+    const fatG = safeNum(e.fatG)
+    const carbG = safeNum(e.carbG)
+    const key = foodKey(label, { calories, proteinG, fatG, carbG })
+    const cur = acc.get(key)
+    if (cur) cur.count += 1
+    else
+      acc.set(key, { key, label, calories, proteinG, fatG, carbG, count: 1 })
+  }
+  return Array.from(acc.values())
+    .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label))
+    .slice(0, max)
 }

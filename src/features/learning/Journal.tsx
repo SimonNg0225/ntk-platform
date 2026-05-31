@@ -45,6 +45,7 @@ import {
 import { useToast } from '../../context/ToastContext'
 import { useConfirm } from '../../context/ConfirmContext'
 import {
+  MoodCalendar,
   MoodDistributionChart,
   MonthlyBars,
   MoodTrendChart,
@@ -53,9 +54,12 @@ import {
 } from './journal/Charts'
 import { EntryEditor, type EntryDraft } from './journal/EntryEditor'
 import {
+  MONTHS_SHORT,
   MOODS,
   allTagsOf,
+  anniversaryEntries,
   buildHeatGrid,
+  buildMoodMonth,
   countWords,
   currentStreak,
   excerpt,
@@ -227,13 +231,8 @@ export default function Journal() {
     return groups
   }, [visible])
 
-  // 「歷年今日」：同月同日（唔同年），最近喺上
-  const onThisDay = useMemo(() => {
-    const mmdd = today.slice(5)
-    return docs
-      .filter((d) => d.date.slice(5) === mmdd && d.date !== today)
-      .sort((a, b) => (a.date > b.date ? -1 : 1))
-  }, [docs, today])
+  // 「歷年今日」：同月同日（唔同年），最近喺上（純函式聚合）
+  const onThisDay = useMemo(() => anniversaryEntries(docs, today), [docs, today])
 
   const hasFilter = Boolean(query.trim() || moodFilter || tagFilter || favOnly)
   const clearFilters = () => {
@@ -388,16 +387,17 @@ export default function Journal() {
         <Card className="border-accent/30 bg-accent-soft/40 p-4 dark:bg-accent/10">
           <SectionTitle icon={CalendarHeart}>歷年今日 · {mediumDate(today)}</SectionTitle>
           <div className="space-y-2">
-            {onThisDay.map((d) => (
+            {onThisDay.map(({ doc: d, yearsAgo }) => (
               <button
                 key={d.id}
                 onClick={() => openEdit(d)}
+                aria-label={`${yearsAgo} 年前嘅今日：${d.title?.trim() || excerpt(d.content, 40)}`}
                 className="flex w-full items-start gap-3 rounded-lg bg-white/70 p-2.5 text-left transition hover:bg-white dark:bg-slate-800/60 dark:hover:bg-slate-800"
               >
                 <span aria-hidden="true" className="shrink-0 text-lg">{d.mood || '📝'}</span>
                 <div className="min-w-0">
                   <p className="text-xs font-medium tabular-nums text-accent-strong dark:text-accent">
-                    {d.date.slice(0, 4)} 年 · {today.slice(0, 4) === d.date.slice(0, 4) ? '' : `${Number(today.slice(0, 4)) - Number(d.date.slice(0, 4))} 年前`}
+                    {yearsAgo} 年前 · {d.date.slice(0, 4)} 年
                   </p>
                   <p className="truncate text-sm text-slate-600 dark:text-slate-300">
                     {d.title?.trim() || excerpt(d.content, 60)}
@@ -743,7 +743,7 @@ function EntryCard({
 }
 
 // ============================================================
-//  熱力圖視圖（年度活動格 + 換年）
+//  熱力圖視圖（年度活動格 + 換年）+ 心情月曆（按月睇心情分佈）
 // ============================================================
 function HeatmapView({
   docs,
@@ -794,7 +794,81 @@ function HeatmapView({
           <span className="text-slate-400">撳格仔可寫 / 開該日日誌</span>
         </div>
       </Card>
+
+      <MoodCalendarCard docs={docs} onPickDate={onPickDate} />
     </div>
+  )
+}
+
+// ───────── 心情月曆卡（月度心情分佈 heatmap）─────────
+function MoodCalendarCard({
+  docs,
+  onPickDate,
+}: {
+  docs: JournalDoc[]
+  onPickDate: (key: string) => void
+}) {
+  const now = new Date()
+  const [ym, setYm] = useState<{ y: number; m: number }>({ y: now.getFullYear(), m: now.getMonth() })
+  const month = useMemo(() => buildMoodMonth(docs, ym.y, ym.m), [docs, ym])
+
+  const step = (delta: number) =>
+    setYm(({ y, m }) => {
+      const d = new Date(y, m + delta, 1)
+      return { y: d.getFullYear(), m: d.getMonth() }
+    })
+
+  // 唔行去未來月份
+  const isThisMonth = ym.y === now.getFullYear() && ym.m === now.getMonth()
+
+  return (
+    <Card className="p-4">
+      <div className="mb-3 flex items-center justify-between">
+        <SectionTitle
+          icon={CalendarHeart}
+          right={
+            month.avgScore !== null ? (
+              <Badge tone="accent">
+                平均心情 <span className="tabular-nums">{month.avgScore.toFixed(1)}</span> / 5
+              </Badge>
+            ) : undefined
+          }
+        >
+          心情月曆
+        </SectionTitle>
+        <div className="flex items-center gap-1">
+          <IconButton label="上一個月" size="sm" onClick={() => step(-1)}>
+            <ChevronLeft size={16} />
+          </IconButton>
+          <span className="w-24 text-center text-sm font-semibold tabular-nums text-slate-700 dark:text-slate-200">
+            {ym.y} 年 {MONTHS_SHORT[ym.m]}
+          </span>
+          <IconButton label="下一個月" size="sm" disabled={isThisMonth} onClick={() => step(1)}>
+            <ChevronRight size={16} />
+          </IconButton>
+        </div>
+      </div>
+
+      <MoodCalendar month={month} onPick={onPickDate} />
+
+      {/* 圖例 + 摘要 */}
+      <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-slate-500 dark:text-slate-400">
+        <span className="inline-flex items-center gap-1.5">
+          {MOODS.map((m) => (
+            <span key={m.emoji} className="inline-flex items-center gap-0.5">
+              <span aria-hidden="true" className="h-2.5 w-2.5 rounded-[3px]" style={{ backgroundColor: m.hex }} />
+              <span aria-hidden="true">{m.emoji}</span>
+            </span>
+          ))}
+        </span>
+        <span>
+          有心情 <span className="font-semibold tabular-nums text-slate-700 dark:text-slate-200">{month.moodDays}</span> 日
+          {month.activeDays > month.moodDays && (
+            <span className="text-slate-400">（活躍 {month.activeDays} 日）</span>
+          )}
+        </span>
+      </div>
+    </Card>
   )
 }
 

@@ -263,6 +263,36 @@ export function weekdayCounts(docs: JournalDoc[]): number[] {
   return out
 }
 
+// ───────── 歷年今日 / 回顧 ─────────
+export interface Anniversary {
+  doc: JournalDoc
+  /** 距今幾多年（today 嘅年份 − 該篇年份；一定 ≥ 1） */
+  yearsAgo: number
+}
+
+/**
+ * 「歷年今日」：揾返同月同日（MM-DD 相同）但唔同年嘅舊日誌。
+ * - 排除「今日」嗰篇（同年同月同日）同所有未來日子（yearsAgo ≤ 0）。
+ * - 最近嗰年喺最前；同年多篇按 updatedAt 新→舊（穩定）。
+ * - 純函式：要邊一日由 caller 用功能本地 key helper（todayKey）傳入，避開 UTC 漂移。
+ */
+export function anniversaryEntries(docs: JournalDoc[], today: string): Anniversary[] {
+  const mmdd = today.slice(5)
+  const thisYear = Number(today.slice(0, 4))
+  const out: Anniversary[] = []
+  for (const doc of docs) {
+    if (doc.date.slice(5) !== mmdd) continue
+    const yearsAgo = thisYear - Number(doc.date.slice(0, 4))
+    if (yearsAgo <= 0) continue // 排除今日及未來
+    out.push({ doc, yearsAgo })
+  }
+  out.sort((a, b) => {
+    if (a.yearsAgo !== b.yearsAgo) return a.yearsAgo - b.yearsAgo // 近→遠
+    return a.doc.updatedAt > b.doc.updatedAt ? -1 : a.doc.updatedAt < b.doc.updatedAt ? 1 : 0
+  })
+  return out
+}
+
 // ───────── 年度熱力圖（GitHub 風 contribution grid）─────────
 export interface HeatCell {
   key: string
@@ -323,6 +353,96 @@ export function heatLevel(count: number): string {
   if (count === 2) return 'bg-accent/55 dark:bg-accent/50'
   if (count === 3) return 'bg-accent/80 dark:bg-accent/75'
   return 'bg-accent dark:bg-accent'
+}
+
+// ───────── 心情月曆 heatmap（一個月一格網，按當日心情著色）─────────
+export interface MoodDay {
+  key: string // YYYY-MM-DD
+  day: number // 該月第幾日（1..31）；padding 格亦填真實日數
+  inMonth: boolean // 是否屬當前顯示月份
+  mood?: string // 當日代表心情 emoji（同日多篇 → 取最後修改嗰篇）
+  def?: MoodDef // 對應心情定義（含 hex / chip，畀月曆著色）
+  count: number // 當日日誌篇數
+}
+export interface MoodMonth {
+  year: number
+  month: number // 0..11
+  weeks: MoodDay[][] // 每週一行，7 格（日→六），首尾補鄰月 padding
+  /** 該月有心情紀錄嘅日數 */
+  moodDays: number
+  /** 該月有日誌嘅日數（唔理有冇心情） */
+  activeDays: number
+  /** 該月有心情嘅日子平均分（1..5），無則 null */
+  avgScore: number | null
+}
+
+/**
+ * 砌一個月嘅心情月曆 grid：由該月 1 號嗰個星期日起、補到尾週星期六，
+ * 每格帶當日「代表心情」（同日多篇取 updatedAt 最新）。沿用本地日期
+ * helper（toKey/fromKey），避開 UTC 漂移；純函式可獨立測試。
+ */
+export function buildMoodMonth(docs: JournalDoc[], year: number, month: number): MoodMonth {
+  // 收當月每日：代表心情（最後修改）+ 篇數
+  const byDate = new Map<string, { mood?: string; updatedAt: string; count: number }>()
+  const ymPrefix = `${year}-${String(month + 1).padStart(2, '0')}`
+  for (const d of docs) {
+    if (d.date.slice(0, 7) !== ymPrefix) continue
+    const prev = byDate.get(d.date)
+    if (!prev) {
+      byDate.set(d.date, { mood: d.mood, updatedAt: d.updatedAt, count: 1 })
+    } else {
+      prev.count += 1
+      // 較新嗰篇（且有心情）做代表；若新嗰篇無心情則保留舊心情
+      if (d.updatedAt >= prev.updatedAt) {
+        prev.updatedAt = d.updatedAt
+        if (d.mood) prev.mood = d.mood
+      } else if (!prev.mood && d.mood) {
+        prev.mood = d.mood
+      }
+    }
+  }
+
+  const first = new Date(year, month, 1, 12)
+  const start = new Date(first)
+  start.setDate(first.getDate() - first.getDay()) // 退到星期日
+  const last = new Date(year, month + 1, 0, 12) // 該月最後一日
+  const end = new Date(last)
+  end.setDate(last.getDate() + (6 - last.getDay())) // 進到星期六
+
+  const weeks: MoodDay[][] = []
+  let moodDays = 0
+  let scoreSum = 0
+  let scoreN = 0
+  const cur = new Date(start)
+  while (cur <= end) {
+    const week: MoodDay[] = []
+    for (let dow = 0; dow < 7; dow++) {
+      const key = toKey(cur)
+      const inMonth = cur.getFullYear() === year && cur.getMonth() === month
+      const rec = inMonth ? byDate.get(key) : undefined
+      const mood = rec?.mood
+      const def = moodDef(mood)
+      week.push({ key, day: cur.getDate(), inMonth, mood, def, count: rec?.count ?? 0 })
+      if (inMonth && mood) {
+        moodDays += 1
+        if (def) {
+          scoreSum += def.score
+          scoreN += 1
+        }
+      }
+      cur.setDate(cur.getDate() + 1)
+    }
+    weeks.push(week)
+  }
+
+  return {
+    year,
+    month,
+    weeks,
+    moodDays,
+    activeDays: byDate.size,
+    avgScore: scoreN ? scoreSum / scoreN : null,
+  }
 }
 
 // ───────── 匯出 ─────────

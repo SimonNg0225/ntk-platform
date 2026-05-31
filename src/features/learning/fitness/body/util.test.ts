@@ -16,6 +16,10 @@ import {
   fmtDate,
   fmtDelta,
   deltaDir,
+  goalProgress,
+  weightRateKgPerWeek,
+  projectedGoalDate,
+  recompSeries,
 } from './util'
 import type { BodyEntry } from './types'
 
@@ -331,4 +335,192 @@ describe('deltaDir', () => {
   it('負 → down', () => expect(deltaDir(-2)).toBe('down'))
   it('零 → flat', () => expect(deltaDir(0)).toBe('flat'))
   it('null → flat', () => expect(deltaDir(null)).toBe('flat'))
+})
+
+// ============================================================
+//  goalProgress（起點 → 目標 進度）
+// ============================================================
+describe('goalProgress', () => {
+  it('減重目標：80→75，現 78 → 行咗 40%', () => {
+    // (78-80)/(75-80) = -2/-5 = 0.4
+    const r = goalProgress(78, 80, 75)
+    expect(r.pct).toBe(40)
+    expect(r.movedKg).toBe(-2)
+    expect(r.remainingKg).toBe(-3)
+    expect(r.losing).toBe(true)
+    expect(r.reached).toBe(false)
+  })
+  it('增重目標：60→70，現 65 → 50%', () => {
+    const r = goalProgress(65, 60, 70)
+    expect(r.pct).toBe(50)
+    expect(r.losing).toBe(false)
+    expect(r.reached).toBe(false)
+  })
+  it('行過頭 clamp 落 100（減重到 73 < 目標 75）', () => {
+    const r = goalProgress(73, 80, 75)
+    expect(r.pct).toBe(100)
+    expect(r.reached).toBe(true) // 已達/越過
+  })
+  it('行反方向 clamp 落 0（減重目標但變重）', () => {
+    const r = goalProgress(82, 80, 75)
+    expect(r.pct).toBe(0)
+    expect(r.reached).toBe(false)
+  })
+  it('起點＝目標（除零守衞）→ pct null', () => {
+    const r = goalProgress(70, 75, 75)
+    expect(r.pct).toBeNull()
+    expect(r.reached).toBe(false)
+  })
+  it('起點＝目標且 current 已等於 → reached', () => {
+    const r = goalProgress(75, 75, 75)
+    expect(r.pct).toBeNull()
+    expect(r.reached).toBe(true)
+  })
+  it('剛好達標：減重 current=target → 100 + reached', () => {
+    const r = goalProgress(75, 80, 75)
+    expect(r.pct).toBe(100)
+    expect(r.reached).toBe(true)
+  })
+  it('缺任一值 → 全 null', () => {
+    expect(goalProgress(undefined, 80, 75).pct).toBeNull()
+    expect(goalProgress(78, undefined, 75).movedKg).toBeNull()
+    expect(goalProgress(78, 80, undefined).remainingKg).toBeNull()
+    expect(goalProgress(NaN, 80, 75).pct).toBeNull()
+  })
+})
+
+// ============================================================
+//  weightRateKgPerWeek（kg/週 斜率）
+// ============================================================
+describe('weightRateKgPerWeek', () => {
+  it('14 日跌 1.4kg → -0.7 kg/週', () => {
+    // 首尾相差 14 日，跌 1.4kg → perDay -0.1 → -0.7/週
+    const data = [
+      e({ date: '2026-05-17', weightKg: 80 }),
+      e({ date: '2026-05-31', weightKg: 78.6 }),
+    ]
+    expect(weightRateKgPerWeek(data, 30, ANCHOR)).toBe(-0.7)
+  })
+  it('增重：7 日升 0.5kg → +0.5 kg/週', () => {
+    const data = [
+      e({ date: '2026-05-24', weightKg: 70 }),
+      e({ date: '2026-05-31', weightKg: 70.5 }),
+    ]
+    expect(weightRateKgPerWeek(data, 30, ANCHOR)).toBe(0.5)
+  })
+  it('只得一筆 → null', () => {
+    expect(weightRateKgPerWeek([e({ date: '2026-05-31', weightKg: 78 })], 30, ANCHOR)).toBeNull()
+  })
+  it('首尾同日（除零守衞）→ null', () => {
+    // 同一日兩條：byDate/entriesOf 後得一筆 → 不足兩筆
+    const data = [e({ date: '2026-05-31', weightKg: 78 })]
+    expect(weightRateKgPerWeek(data, 30, ANCHOR)).toBeNull()
+  })
+  it('窗外記錄唔計（只剩一筆 → null）', () => {
+    const data = [
+      e({ date: '2026-01-01', weightKg: 90 }),
+      e({ date: '2026-05-31', weightKg: 78 }),
+    ]
+    expect(weightRateKgPerWeek(data, 14, ANCHOR)).toBeNull()
+  })
+  it('空陣列 → null', () => expect(weightRateKgPerWeek([], 30, ANCHOR)).toBeNull())
+  it('days ≤ 0 → null', () => {
+    const data = [
+      e({ date: '2026-05-24', weightKg: 80 }),
+      e({ date: '2026-05-31', weightKg: 79 }),
+    ]
+    expect(weightRateKgPerWeek(data, 0, ANCHOR)).toBeNull()
+  })
+})
+
+// ============================================================
+//  projectedGoalDate（達標預計日；反方向 / 速率 0 → null）
+// ============================================================
+describe('projectedGoalDate', () => {
+  it('減重中：現 78.6、目標 75、-0.7kg/週 → 外推出日期', () => {
+    // 14 日跌 1.4 → perDay -0.1；仲要跌 3.6kg → ceil(3.6/0.1)=36 日 → 2026-07-06
+    const data = [
+      e({ date: '2026-05-17', weightKg: 80 }),
+      e({ date: '2026-05-31', weightKg: 78.6 }),
+    ]
+    const r = projectedGoalDate(data, 75, 30, ANCHOR)
+    expect(r.rateKgPerWeek).toBe(-0.7)
+    expect(r.daysAway).toBe(36)
+    expect(r.dateKey).toBe('2026-07-06')
+    expect(r.reached).toBe(false)
+  })
+  it('速率 0（體重持平）→ 全 null，唔亂推', () => {
+    const data = [
+      e({ date: '2026-05-17', weightKg: 78 }),
+      e({ date: '2026-05-31', weightKg: 78 }),
+    ]
+    const r = projectedGoalDate(data, 75, 30, ANCHOR)
+    expect(r.dateKey).toBeNull()
+    expect(r.daysAway).toBeNull()
+    expect(r.reached).toBe(false)
+  })
+  it('反方向（目標減重但體重在升）→ null，唔亂推', () => {
+    const data = [
+      e({ date: '2026-05-17', weightKg: 78 }),
+      e({ date: '2026-05-31', weightKg: 79.4 }), // 升緊
+    ]
+    const r = projectedGoalDate(data, 75, 30, ANCHOR)
+    expect(r.dateKey).toBeNull()
+    expect(r.rateKgPerWeek).toBeNull()
+  })
+  it('已達標（current=target）→ reached，dateKey null', () => {
+    const data = [
+      e({ date: '2026-05-17', weightKg: 80 }),
+      e({ date: '2026-05-31', weightKg: 75 }),
+    ]
+    const r = projectedGoalDate(data, 75, 30, ANCHOR)
+    expect(r.reached).toBe(true)
+    expect(r.dateKey).toBeNull()
+  })
+  it('缺目標 → 全 null', () => {
+    const data = [
+      e({ date: '2026-05-17', weightKg: 80 }),
+      e({ date: '2026-05-31', weightKg: 78 }),
+    ]
+    expect(projectedGoalDate(data, undefined, 30, ANCHOR).dateKey).toBeNull()
+  })
+  it('無體重記錄 → 全 null', () => {
+    expect(projectedGoalDate([], 75, 30, ANCHOR).dateKey).toBeNull()
+  })
+  it('得一筆體重（算唔到速率）→ null', () => {
+    const r = projectedGoalDate([e({ date: '2026-05-31', weightKg: 78 })], 75, 30, ANCHOR)
+    expect(r.dateKey).toBeNull()
+  })
+})
+
+// ============================================================
+//  recompSeries（脂肪 vs 瘦體重 雙線）
+// ============================================================
+describe('recompSeries', () => {
+  it('逐日雙線；缺體脂嗰日兩線皆 null（斷點）', () => {
+    const data = [
+      e({ date: '2026-05-31', weightKg: 80, bodyFatPct: 20 }), // fat16 lean64
+      e({ date: '2026-05-29', weightKg: 80 }), // 冇體脂 → null
+    ]
+    const r = recompSeries(data, 3, ANCHOR)
+    expect(r).toEqual([
+      { date: '2026-05-29', fat: null, lean: null },
+      { date: '2026-05-30', fat: null, lean: null },
+      { date: '2026-05-31', fat: 16, lean: 64 },
+    ])
+  })
+  it('長度等於 days', () => {
+    expect(recompSeries([], 14, ANCHOR)).toHaveLength(14)
+  })
+  it('days ≤ 0 → 空陣列', () => {
+    expect(recompSeries([], 0, ANCHOR)).toEqual([])
+    expect(recompSeries([], -5, ANCHOR)).toEqual([])
+  })
+  it('空資料 → 全 null', () => {
+    const r = recompSeries([], 2, ANCHOR)
+    expect(r).toEqual([
+      { date: '2026-05-30', fat: null, lean: null },
+      { date: '2026-05-31', fat: null, lean: null },
+    ])
+  })
 })

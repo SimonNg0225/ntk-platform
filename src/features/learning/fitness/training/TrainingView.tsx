@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   Dumbbell,
   Plus,
@@ -12,6 +12,11 @@ import {
   Sparkles,
   ChevronDown,
   ChevronUp,
+  Timer,
+  Play,
+  Pause,
+  RotateCcw,
+  Calculator,
 } from 'lucide-react'
 import {
   Card,
@@ -25,6 +30,7 @@ import {
   Badge,
   IconButton,
   Textarea,
+  cx,
 } from '../../../../ui'
 import { useToast } from '../../../../context/ToastContext'
 import {
@@ -49,6 +55,10 @@ import {
   weeklyTrend,
   volumeTrend,
   daysSinceLastWorkout,
+  lastSetOf,
+  computePlates,
+  formatClock,
+  DEFAULT_PLATES_KG,
 } from './util'
 import { VolumeBars, RpeTrend, fmtVol } from './Charts'
 
@@ -67,6 +77,7 @@ export default function TrainingView() {
   const [period, setPeriod] = useState<PeriodMode>('days')
   const [confirmDel, setConfirmDel] = useState<Workout | null>(null)
   const [prOpen, setPrOpen] = useState(false)
+  const [plateOpen, setPlateOpen] = useState(false)
 
   // ── 聚合（全部 memo，依賴 workouts）──
   const sorted = useMemo(() => sortWorkoutsDesc(workouts), [workouts])
@@ -164,9 +175,18 @@ export default function TrainingView() {
             </p>
           </div>
         </div>
-        <Button icon={Plus} onClick={openNew} className="shrink-0">
-          記錄訓練
-        </Button>
+        <div className="flex shrink-0 gap-2">
+          <Button
+            variant="secondary"
+            icon={Calculator}
+            onClick={() => setPlateOpen(true)}
+          >
+            槓片計算
+          </Button>
+          <Button icon={Plus} onClick={openNew}>
+            記錄訓練
+          </Button>
+        </div>
       </div>
 
       {/* ── KPI ── */}
@@ -330,6 +350,7 @@ export default function TrainingView() {
       {modalOpen && (
         <WorkoutEditor
           initial={editing}
+          history={workouts}
           onClose={() => {
             setModalOpen(false)
             setEditing(null)
@@ -363,7 +384,258 @@ export default function TrainingView() {
           確定刪除「{confirmDel?.title || confirmDel?.date}」？此操作無法復原。
         </p>
       </Modal>
+
+      {/* ── 槓片計算器 ── */}
+      <PlateCalculator open={plateOpen} onClose={() => setPlateOpen(false)} />
     </div>
+  )
+}
+
+// ============================================================
+//  組間休息計時器（純前端 setInterval，卸載清 timer）
+// ------------------------------------------------------------
+//  - 預設秒數可調（加 / 減 15s，常用 60/90/120 快捷）。
+//  - 倒數到 0 → onDone（呼叫者出 toast）+ 視覺提示，計時器停。
+//  - 卸載 / 關閉一定清 interval（防 React state update on unmounted）。
+// ============================================================
+const REST_PRESETS = [60, 90, 120, 180] as const
+
+function RestTimer({
+  onClose,
+  onDone,
+  defaultSeconds = 90,
+}: {
+  onClose: () => void
+  onDone: () => void
+  defaultSeconds?: number
+}) {
+  const [duration, setDuration] = useState(defaultSeconds)
+  const [remaining, setRemaining] = useState(defaultSeconds)
+  const [running, setRunning] = useState(true)
+  const [finished, setFinished] = useState(false)
+  // 用 ref 攞最新 onDone，避免 effect 因 callback 身份變而重起 interval。
+  const onDoneRef = useRef(onDone)
+  useEffect(() => {
+    onDoneRef.current = onDone
+  }, [onDone])
+
+  useEffect(() => {
+    if (!running) return
+    const id = window.setInterval(() => {
+      setRemaining((r) => {
+        if (r <= 1) {
+          window.clearInterval(id)
+          setRunning(false)
+          setFinished(true)
+          onDoneRef.current()
+          return 0
+        }
+        return r - 1
+      })
+    }, 1000)
+    // 卸載 / running 變更 → 清 timer（鐵則：元件卸載要清）。
+    return () => window.clearInterval(id)
+  }, [running])
+
+  function reset(toSeconds: number) {
+    const s = Math.max(0, Math.floor(toSeconds))
+    setDuration(s)
+    setRemaining(s)
+    setFinished(false)
+    setRunning(s > 0)
+  }
+  function adjust(delta: number) {
+    reset(duration + delta)
+  }
+
+  const pct = duration > 0 ? Math.max(0, Math.min(100, (remaining / duration) * 100)) : 0
+
+  return (
+    <div
+      className={cx(
+        'mt-3 rounded-xl border p-3 transition-colors',
+        finished
+          ? 'border-emerald-300 bg-emerald-50 dark:border-emerald-500/40 dark:bg-emerald-500/10'
+          : 'border-accent/30 bg-accent-soft/50 dark:border-accent/30 dark:bg-accent/10',
+      )}
+      role="group"
+      aria-label="組間休息計時器"
+    >
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <Timer
+            size={16}
+            className={finished ? 'text-emerald-600 dark:text-emerald-400' : 'text-accent'}
+          />
+          <span
+            className="text-xl font-bold tabular-nums text-slate-800 dark:text-slate-100"
+            aria-live="polite"
+          >
+            {formatClock(remaining)}
+          </span>
+          {finished && (
+            <Badge tone="green" dot>
+              休息完
+            </Badge>
+          )}
+        </div>
+        <div className="flex items-center gap-0.5">
+          <IconButton label="減 15 秒" size="sm" onClick={() => adjust(-15)}>
+            <span className="text-xs font-semibold tabular-nums">−15</span>
+          </IconButton>
+          <IconButton label="加 15 秒" size="sm" onClick={() => adjust(15)}>
+            <span className="text-xs font-semibold tabular-nums">+15</span>
+          </IconButton>
+          {finished ? (
+            <IconButton
+              label="重新計時"
+              size="sm"
+              onClick={() => reset(duration)}
+            >
+              <RotateCcw size={15} />
+            </IconButton>
+          ) : (
+            <IconButton
+              label={running ? '暫停' : '繼續'}
+              size="sm"
+              active={running}
+              onClick={() => setRunning((v) => !v)}
+            >
+              {running ? <Pause size={15} /> : <Play size={15} />}
+            </IconButton>
+          )}
+          <IconButton label="關閉計時器" size="sm" onClick={onClose}>
+            <X size={15} />
+          </IconButton>
+        </div>
+      </div>
+      {/* 進度條 */}
+      <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/60 dark:bg-slate-900/50">
+        <div
+          className={cx(
+            'h-full rounded-full transition-[width] duration-1000 ease-linear',
+            finished ? 'bg-emerald-500' : 'bg-accent',
+          )}
+          style={{ width: `${finished ? 100 : pct}%` }}
+        />
+      </div>
+      {/* 常用秒數快捷 */}
+      <div className="mt-2 flex flex-wrap gap-1.5">
+        {REST_PRESETS.map((s) => (
+          <button
+            key={s}
+            onClick={() => reset(s)}
+            aria-pressed={duration === s}
+            className={cx(
+              'rounded-md px-2 py-0.5 text-xs font-medium tabular-nums transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
+              duration === s
+                ? 'bg-accent text-white'
+                : 'bg-white text-slate-600 ring-1 ring-inset ring-slate-200 hover:bg-slate-50 dark:bg-slate-900 dark:text-slate-300 dark:ring-slate-700 dark:hover:bg-slate-800',
+            )}
+          >
+            {formatClock(s)}
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// ============================================================
+//  槓片計算器（Modal）：目標總重 → 每邊槓片組合
+// ============================================================
+function PlateCalculator({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const [target, setTarget] = useState('100')
+  const [bar, setBar] = useState('20')
+
+  const plan = useMemo(() => {
+    const t = Number(target)
+    const b = Number(bar)
+    return computePlates(
+      Number.isFinite(t) ? t : 0,
+      Number.isFinite(b) && b >= 0 ? b : 20,
+      DEFAULT_PLATES_KG,
+    )
+  }, [target, bar])
+
+  return (
+    <Modal open={open} onClose={onClose} size="md" title="槓片計算器">
+      <div className="space-y-4">
+        <p className="text-xs text-slate-500 dark:text-slate-400">
+          輸入目標總重同空槓重，計每邊要上嘅槓片（{DEFAULT_PLATES_KG.join('／')}
+          kg）。
+        </p>
+        <div className="grid grid-cols-2 gap-3">
+          <Field label="目標總重 (kg)" required>
+            <Input
+              type="number"
+              inputMode="decimal"
+              min={0}
+              step="0.5"
+              value={target}
+              onChange={(e) => setTarget(e.target.value)}
+              placeholder="100"
+              aria-label="目標總重 kg"
+            />
+          </Field>
+          <Field label="空槓重 (kg)" hint="標準 20、女槓 15">
+            <Input
+              type="number"
+              inputMode="decimal"
+              min={0}
+              step="0.5"
+              value={bar}
+              onChange={(e) => setBar(e.target.value)}
+              placeholder="20"
+              aria-label="空槓重 kg"
+            />
+          </Field>
+        </div>
+
+        {/* 結果 */}
+        <div className="rounded-xl border border-slate-200 p-4 dark:border-slate-700">
+          {plan.belowBar ? (
+            <p className="text-center text-sm text-slate-500 dark:text-slate-400">
+              目標低過空槓重（{bar || 0}kg），唔使上片。
+            </p>
+          ) : plan.perSide.length === 0 ? (
+            <p className="text-center text-sm text-slate-500 dark:text-slate-400">
+              {Number(target) === Number(bar)
+                ? '啱啱好係空槓重，唔使上片。'
+                : '湊唔到任何一片（可用槓片太大）。'}
+            </p>
+          ) : (
+            <>
+              <p className="mb-2 text-xs font-medium uppercase tracking-wide text-slate-400">
+                每邊（×2）
+              </p>
+              <div className="flex flex-wrap items-center gap-1.5">
+                {plan.perSide.map((p, i) => (
+                  <span
+                    key={i}
+                    className="inline-flex items-center rounded-md bg-accent-soft px-2.5 py-1 text-sm font-semibold tabular-nums text-accent-strong dark:bg-accent/15 dark:text-accent"
+                  >
+                    {p}
+                  </span>
+                ))}
+              </div>
+            </>
+          )}
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-3 text-sm dark:border-slate-700/60">
+            <span className="text-slate-500 dark:text-slate-400">實際可達</span>
+            <span className="font-semibold tabular-nums text-slate-800 dark:text-slate-100">
+              {fmtVol(plan.achievableKg)} kg
+            </span>
+          </div>
+          {plan.remainderKg > 0 && (
+            <div className="mt-1.5 flex items-center justify-between gap-2 text-xs">
+              <span className="text-amber-600 dark:text-amber-400">湊唔齊</span>
+              <Badge tone="amber">差 {fmtVol(plan.remainderKg)} kg</Badge>
+            </div>
+          )}
+        </div>
+      </div>
+    </Modal>
   )
 }
 
@@ -634,10 +906,12 @@ function toDraft(w: Workout | null): {
 
 function WorkoutEditor({
   initial,
+  history,
   onClose,
   onSave,
 }: {
   initial: Workout | null
+  history: Workout[]
   onClose: () => void
   onSave: (data: Omit<Workout, 'id' | 'createdAt'>) => void
 }) {
@@ -647,6 +921,8 @@ function WorkoutEditor({
   const [title, setTitle] = useState(start.title)
   const [note, setNote] = useState(start.note)
   const [exercises, setExercises] = useState<DraftExercise[]>(start.exercises)
+  // 組間休息計時器（一個編輯器一個，避免多 timer 撞）。
+  const [restFor, setRestFor] = useState<string | null>(null)
 
   // 即時預覽 volume
   const previewVol = useMemo(
@@ -685,12 +961,38 @@ function WorkoutEditor({
     setExercises((prev) =>
       prev.map((e) => {
         if (e.key !== exKey) return e
-        // 預填上一組重量，省輸入
         const last = e.sets[e.sets.length - 1]
-        const next: DraftSet = last
-          ? { reps: last.reps, weightKg: last.weightKg, rpe: '' }
-          : blankSet()
+        // 1) 同動作有上一組 → 帶上一組重量次數（省輸入）。
+        // 2) 第一組（未填） → 由歷史搵「上次同名動作」最後一組預填。
+        let next: DraftSet
+        if (last && (last.reps.trim() !== '' || last.weightKg.trim() !== '')) {
+          next = { reps: last.reps, weightKg: last.weightKg, rpe: '' }
+        } else {
+          const prevSet = lastSetOf(history, e.name)
+          next = prevSet
+            ? { reps: String(prevSet.reps), weightKg: String(prevSet.weightKg), rpe: '' }
+            : blankSet()
+        }
         return { ...e, sets: [...e.sets, next] }
+      }),
+    )
+  }
+
+  /** 動作名 blur 時：若第一組仍空白，用上次同名動作最後一組預填（加快記錄）。 */
+  function prefillFromHistory(exKey: string) {
+    setExercises((prev) =>
+      prev.map((e) => {
+        if (e.key !== exKey) return e
+        const onlySet = e.sets.length === 1 ? e.sets[0] : null
+        const empty =
+          onlySet && onlySet.reps.trim() === '' && onlySet.weightKg.trim() === ''
+        if (!empty) return e
+        const prevSet = lastSetOf(history, e.name)
+        if (!prevSet) return e
+        return {
+          ...e,
+          sets: [{ reps: String(prevSet.reps), weightKg: String(prevSet.weightKg), rpe: '' }],
+        }
       }),
     )
   }
@@ -803,6 +1105,7 @@ function WorkoutEditor({
                 <Input
                   value={ex.name}
                   onChange={(e) => patchExercise(ex.key, { name: e.target.value })}
+                  onBlur={() => prefillFromHistory(ex.key)}
                   placeholder="動作名（例：槓鈴臥推）"
                   className="flex-1"
                 />
@@ -819,17 +1122,18 @@ function WorkoutEditor({
 
               {/* set 列 */}
               <div className="mt-2.5 space-y-1.5">
-                <div className="grid grid-cols-[1.5rem_1fr_1fr_1fr_1.75rem] items-center gap-1.5 px-0.5 text-[10px] font-medium uppercase tracking-wide text-slate-400">
+                <div className="grid grid-cols-[1.5rem_1fr_1fr_1fr_1.75rem_1.75rem] items-center gap-1.5 px-0.5 text-[10px] font-medium uppercase tracking-wide text-slate-400">
                   <span className="text-center">#</span>
                   <span>次數</span>
                   <span>重量 kg</span>
                   <span>RPE</span>
                   <span />
+                  <span />
                 </div>
                 {ex.sets.map((st, setIdx) => (
                   <div
                     key={setIdx}
-                    className="grid grid-cols-[1.5rem_1fr_1fr_1fr_1.75rem] items-center gap-1.5"
+                    className="grid grid-cols-[1.5rem_1fr_1fr_1fr_1.75rem_1.75rem] items-center gap-1.5"
                   >
                     <span className="text-center text-xs tabular-nums text-slate-400">
                       {setIdx + 1}
@@ -878,15 +1182,41 @@ function WorkoutEditor({
                     >
                       <Trash2 size={14} />
                     </IconButton>
+                    <IconButton
+                      label={`完成第 ${setIdx + 1} 組，開組間休息計時`}
+                      size="sm"
+                      active={restFor === ex.key}
+                      onClick={() => setRestFor(ex.key)}
+                    >
+                      <Timer size={14} />
+                    </IconButton>
                   </div>
                 ))}
               </div>
-              <button
-                onClick={() => addSet(ex.key)}
-                className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-accent transition hover:text-accent-strong focus-visible:outline-none focus-visible:underline"
-              >
-                <Plus size={13} /> 加一組
-              </button>
+              <div className="mt-2 flex flex-wrap items-center gap-3">
+                <button
+                  onClick={() => addSet(ex.key)}
+                  className="inline-flex items-center gap-1 text-xs font-medium text-accent transition hover:text-accent-strong focus-visible:outline-none focus-visible:underline"
+                >
+                  <Plus size={13} /> 加一組
+                </button>
+                {restFor !== ex.key && (
+                  <button
+                    onClick={() => setRestFor(ex.key)}
+                    className="inline-flex items-center gap-1 text-xs font-medium text-slate-500 transition hover:text-accent focus-visible:outline-none focus-visible:underline dark:text-slate-400"
+                  >
+                    <Timer size={13} /> 組間休息
+                  </button>
+                )}
+              </div>
+              {restFor === ex.key && (
+                <RestTimer
+                  onClose={() => setRestFor(null)}
+                  onDone={() =>
+                    toast.success(`休息完！可以練下一組「${ex.name.trim() || '動作'}」`)
+                  }
+                />
+              )}
             </div>
           ))}
         </div>

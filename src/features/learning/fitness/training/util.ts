@@ -261,6 +261,109 @@ export function daysSinceLastWorkout(
   return diff < 0 ? 0 : diff
 }
 
+/**
+ * 由全部訓練紀錄搵某動作（按 trim 後同名）最近一次嘅最後一組 set。
+ * 用嚟記錄新一組時預填 reps / weightKg（加快輸入）。
+ * 「最近」= date 最新；同日 tie 用 createdAt 最新；同筆內取 sets 最後一組。
+ * 搵唔到（無同名 / 嗰次無 set）→ null。rpe 故意唔帶（每組自覺費力唔同）。
+ */
+export function lastSetOf(
+  workouts: Workout[],
+  name: string,
+): { reps: number; weightKg: number } | null {
+  const target = (name ?? '').trim()
+  if (target === '') return null
+  const sorted = sortWorkoutsDesc(workouts)
+  for (const w of sorted) {
+    if (!w || !Array.isArray(w.exercises)) continue
+    for (const ex of w.exercises) {
+      if ((ex?.name ?? '').trim() !== target) continue
+      if (!Array.isArray(ex.sets) || ex.sets.length === 0) continue
+      const last = ex.sets[ex.sets.length - 1]
+      return { reps: num(last?.reps, 0), weightKg: num(last?.weightKg, 0) }
+    }
+  }
+  return null
+}
+
+/**
+ * 槓片計算器：目標總重 targetKg、空槓 barKg、每邊可用槓片（kg，預設標準片）。
+ * 回每邊要上嘅槓片組合（由重到輕）+ 實際可達總重 + 差額（湊唔齊嘅餘數）。
+ * 守則：
+ *  - targetKg <= barKg（含等於 / 低過槓重）→ plates 空、差額即 target-bar（負或 0）。
+ *  - 每邊重量 = (target - bar) / 2；用貪心由大到細擺片。
+ *  - 「奇數 / 唔夠片」→ remainderKg > 0（湊唔到部分），achievableKg 為實際可達。
+ *  - 全程守 NaN / 負 → 0；available 會過濾非正值並由大到細排。
+ */
+export interface PlatePlan {
+  /** 每邊由重到輕嘅槓片（kg）。total = bar + 2×Σ。 */
+  perSide: number[]
+  /** 實際可達總重（kg）：bar + 2 × 每邊片總和。 */
+  achievableKg: number
+  /** 湊唔齊嘅餘數（kg，>= 0）；0 = 啱啱好。 */
+  remainderKg: number
+  /** 是否低過空槓（target < bar）。 */
+  belowBar: boolean
+}
+
+export const DEFAULT_PLATES_KG = [25, 20, 15, 10, 5, 2.5, 1.25] as const
+
+export function computePlates(
+  targetKg: number,
+  barKg = 20,
+  available: readonly number[] = DEFAULT_PLATES_KG,
+): PlatePlan {
+  const target = num(targetKg, 0)
+  const bar = num(barKg, 0)
+  const belowBar = target < bar
+  // 低過 / 等於空槓：無得上片，餘數為差距（clamp >= 0）。
+  if (target <= bar) {
+    return {
+      perSide: [],
+      achievableKg: bar,
+      remainderKg: Math.max(0, target - bar),
+      belowBar,
+    }
+  }
+  // 每邊需要嘅重量（總額外重量除以二）。
+  let perSideRemaining = (target - bar) / 2
+  // 只收正值、由大到細（複製避免改原陣列）。
+  const plates = [...available]
+    .map((p) => num(p, 0))
+    .filter((p) => p > 0)
+    .sort((a, b) => b - a)
+  const perSide: number[] = []
+  // 浮點容差：1.25kg 片相加會有微誤差，用 epsilon 防卡死。
+  const EPS = 1e-9
+  for (const plate of plates) {
+    while (perSideRemaining + EPS >= plate) {
+      perSide.push(plate)
+      perSideRemaining -= plate
+    }
+  }
+  const perSideUsed = perSide.reduce((s, p) => s + p, 0)
+  const achievableKg = bar + perSideUsed * 2
+  // 餘數 = 目標 - 實際（每邊湊唔到嘅 ×2）；clamp 微負為 0。
+  const remainderKg = Math.max(0, Math.round((target - achievableKg) * 1e6) / 1e6)
+  return {
+    perSide,
+    achievableKg: Math.round(achievableKg * 1e6) / 1e6,
+    remainderKg,
+    belowBar,
+  }
+}
+
+/**
+ * 秒數格式化做 M:SS（畀組間休息計時器顯示）。
+ * 負 / NaN → '0:00'；會向下取整秒。
+ */
+export function formatClock(totalSeconds: number): string {
+  const s = Math.max(0, Math.floor(num(totalSeconds, 0)))
+  const m = Math.floor(s / 60)
+  const rem = s % 60
+  return `${m}:${String(rem).padStart(2, '0')}`
+}
+
 // ── 內部本地日期 helper（避免 import toKey/addDays 造成耦合，行為一致）──
 function toLocalKey(d: Date): string {
   const y = d.getFullYear()

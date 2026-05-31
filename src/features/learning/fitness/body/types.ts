@@ -26,9 +26,16 @@ export interface BodyEntry extends Entity {
 /** 可量度數值指標 key（畀趨勢 / KPI 共用）。內臟脂肪係等級，分開處理。 */
 export type MetricKey = 'weightKg' | 'bodyFatPct' | 'skeletalMuscleKg'
 
-/** 體態設定（單例）：身高用嚟計 BMI。 */
+/** 體態設定（單例）：身高用嚟計 BMI；體重目標用嚟計進度 / 達標預計。 */
 export interface BodyProfile extends Entity {
   heightCm?: number
+  /** 目標體重（kg）。可選；冇就唔顯示進度條。 */
+  weightTargetKg?: number
+  /**
+   * 進度起點體重（kg）。可選 —— 舊資料冇此欄，UI 會 fallback 用最早一筆
+   * 體重記錄做起點，保持向後相容。
+   */
+  weightStartKg?: number
   updatedAt?: string
 }
 

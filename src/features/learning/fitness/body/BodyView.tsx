@@ -10,6 +10,9 @@ import {
   Activity,
   Flame,
   PencilLine,
+  Target,
+  CalendarClock,
+  Trophy,
 } from 'lucide-react'
 import {
   Card,
@@ -22,6 +25,7 @@ import {
   EmptyState,
   Badge,
   IconButton,
+  ProgressBar,
   cx,
 } from '../../../../ui'
 import { useToast } from '../../../../context/ToastContext'
@@ -35,13 +39,18 @@ import {
   metricTrend,
   seriesOf,
   compositionChange,
+  goalProgress,
+  projectedGoalDate,
+  recompSeries,
+  entriesOf,
   fmtDate,
   fmtDelta,
   deltaDir,
   round,
   isNum,
 } from './util'
-import { TrendChart } from './Charts'
+import type { GoalProgress, GoalEta } from './util'
+import { TrendChart, DualLineChart } from './Charts'
 
 // ============================================================
 //  體態數據（InBody 式身體組成）主視圖
@@ -84,10 +93,12 @@ export default function BodyView() {
   const [recordOpen, setRecordOpen] = useState(false)
   const [editEntry, setEditEntry] = useState<BodyEntry | null>(null)
   const [heightOpen, setHeightOpen] = useState(false)
+  const [goalOpen, setGoalOpen] = useState(false)
   const [range, setRange] = useState<RangeDays>(30)
   const [trendMetric, setTrendMetric] = useState<TrendMetricId>('weightKg')
 
   const heightCm = profile.heightCm
+  const targetKg = profile.weightTargetKg
 
   // ── KPI：最新值 + ~30 日 trend ──
   const weight = useMemo(() => metricTrend(entries, 'weightKg', 30), [entries])
@@ -123,6 +134,24 @@ export default function BodyView() {
   const comp = useMemo(() => compositionChange(entries, range), [entries, range])
   const compBadge = VERDICT_BADGE[comp.verdict] ?? VERDICT_BADGE.stable
 
+  // ── 脂肪量 vs 瘦體重 雙線（同一時間軸；睇 recomp 趨勢）──
+  const recompData = useMemo(() => recompSeries(entries, range), [entries, range])
+
+  // ── 目標體重進度（起點 fallback：profile.weightStartKg → 最早一筆體重）──
+  const startKg = useMemo(() => {
+    if (isNum(profile.weightStartKg)) return profile.weightStartKg
+    return entriesOf(entries, 'weightKg')[0]?.value
+  }, [profile.weightStartKg, entries])
+  const goal = useMemo(
+    () => goalProgress(weight?.latest, startKg, targetKg),
+    [weight, startKg, targetKg],
+  )
+  // 達標預計日：用所選區間嘅速率線性外推（速率 0 / 反方向 → null）。
+  const eta = useMemo(
+    () => projectedGoalDate(entries, targetKg, range),
+    [entries, targetKg, range],
+  )
+
   // ── 歷史（新→舊）──
   const history = useMemo(
     () => [...entries].sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0)),
@@ -155,6 +184,14 @@ export default function BodyView() {
             onClick={() => setHeightOpen(true)}
           >
             {isNum(heightCm) ? `${heightCm} cm` : '設身高'}
+          </Button>
+          <Button
+            variant="secondary"
+            size="sm"
+            icon={Target}
+            onClick={() => setGoalOpen(true)}
+          >
+            {isNum(targetKg) ? `目標 ${round(targetKg, 1)} kg` : '設目標'}
           </Button>
           <Button
             variant="primary"
@@ -252,6 +289,16 @@ export default function BodyView() {
             </div>
           )}
 
+          {/* ── 目標體重進度 ── */}
+          <GoalCard
+            targetKg={targetKg}
+            startKg={startKg}
+            currentKg={weight?.latest}
+            goal={goal}
+            eta={eta}
+            onSetGoal={() => setGoalOpen(true)}
+          />
+
           {/* ── 趨勢折線圖 ── */}
           <Card padded>
             <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
@@ -344,6 +391,20 @@ export default function BodyView() {
                 )}
               </div>
             )}
+
+            {/* 脂肪量 vs 瘦體重 雙線疊圖（同一時間軸睇 recomp 走勢） */}
+            <div className="mt-4 border-t border-slate-100 pt-4 dark:border-slate-800">
+              <h3 className="mb-2 text-xs font-semibold text-slate-600 dark:text-slate-300">
+                脂肪量 vs 瘦體重
+              </h3>
+              <DualLineChart
+                data={recompData.map((p) => ({ date: p.date, a: p.fat, b: p.lean }))}
+                series={{
+                  a: { label: '脂肪量', color: FIT_TONE.amber },
+                  b: { label: '瘦體重', color: FIT_TONE.emerald },
+                }}
+              />
+            </div>
           </Card>
 
           {/* ── 歷史列表 ── */}
@@ -402,6 +463,19 @@ export default function BodyView() {
         }}
       />
 
+      {/* ── 目標體重 Modal ── */}
+      <GoalModal
+        open={goalOpen}
+        targetKg={targetKg}
+        startKg={profile.weightStartKg}
+        latestKg={weight?.latest}
+        onClose={() => setGoalOpen(false)}
+        onSaved={() => {
+          toast.success('已更新目標')
+          setGoalOpen(false)
+        }}
+      />
+
       {/* ── 誠實私隱 ── */}
       <p className="pt-1 text-center text-xs text-slate-400 dark:text-slate-500">
         體態數據只存喺你裝置；登入後同步到你自己嘅 Supabase。本工具僅供個人健康參考，唔構成醫療建議。
@@ -413,6 +487,122 @@ export default function BodyView() {
 // ============================================================
 //  子元件
 // ============================================================
+
+// ───────── 目標體重進度 + 達標預計 ─────────
+
+function GoalCard({
+  targetKg,
+  startKg,
+  currentKg,
+  goal,
+  eta,
+  onSetGoal,
+}: {
+  targetKg?: number
+  startKg?: number
+  currentKg?: number
+  goal: GoalProgress
+  eta: GoalEta
+  onSetGoal: () => void
+}) {
+  // 未設目標：提示設定（唔靜靜消失）。
+  if (!isNum(targetKg)) {
+    return (
+      <Card padded>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-start gap-2.5">
+            <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
+              <Target size={17} />
+            </span>
+            <div>
+              <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                未設目標體重
+              </p>
+              <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+                設定目標後即見進度條同達標預計日。
+              </p>
+            </div>
+          </div>
+          <Button variant="secondary" size="sm" icon={Target} onClick={onSetGoal}>
+            設定目標
+          </Button>
+        </div>
+      </Card>
+    )
+  }
+
+  const pct = goal.pct
+  const reached = goal.reached
+  // 進度條色調：達標綠、減重藍、增重 accent。
+  const tone: 'accent' | 'green' = reached ? 'green' : 'accent'
+
+  return (
+    <Card padded>
+      <div className="mb-3 flex items-center justify-between">
+        <h2 className="flex items-center gap-1.5 text-sm font-semibold text-slate-700 dark:text-slate-200">
+          <Target size={16} className="text-accent" />
+          目標體重進度
+        </h2>
+        {reached ? (
+          <Badge tone="green">
+            <Trophy size={12} className="mr-0.5 inline" />
+            已達標
+          </Badge>
+        ) : (
+          <Badge tone="slate">目標 {round(targetKg, 1)} kg</Badge>
+        )}
+      </div>
+
+      {/* 起點 → 現在 → 目標 */}
+      <div className="mb-2 flex items-end justify-between gap-2 text-xs">
+        <span className="text-slate-500 dark:text-slate-400">
+          起點 {isNum(startKg) ? `${round(startKg, 1)}kg` : '—'}
+        </span>
+        <span className="text-base font-bold tabular-nums text-slate-800 dark:text-slate-100">
+          {isNum(currentKg) ? `${round(currentKg, 1)}kg` : '—'}
+        </span>
+        <span className="text-slate-500 dark:text-slate-400">
+          目標 {round(targetKg, 1)}kg
+        </span>
+      </div>
+
+      {pct === null ? (
+        <p className="text-xs text-slate-400 dark:text-slate-500">
+          {isNum(startKg)
+            ? '起點同目標相同，未量度到進度範圍。'
+            : '需要一筆體重記錄做起點先計到進度。'}
+        </p>
+      ) : (
+        <>
+          <ProgressBar value={pct} tone={tone} showValue />
+          <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-xs">
+            <span className="text-slate-500 dark:text-slate-400">
+              {reached
+                ? '已達到目標 👏'
+                : goal.remainingKg != null
+                  ? `仲差 ${Math.abs(goal.remainingKg)}kg`
+                  : ''}
+            </span>
+            {/* 達標預計日 */}
+            <span className="inline-flex items-center gap-1 text-slate-500 dark:text-slate-400">
+              <CalendarClock size={13} className="text-accent" />
+              {eta.reached
+                ? '已達標'
+                : eta.dateKey
+                  ? `預計 ${fmtDate(eta.dateKey)}（約 ${eta.daysAway} 日）`
+                  : '預計：速率不足 / 方向相反，暫推算不到'}
+            </span>
+          </div>
+          {eta.dateKey && eta.rateKgPerWeek != null && (
+            <p className="mt-1 text-[11px] text-slate-400 dark:text-slate-500">
+              按近期 {fmtDelta(eta.rateKgPerWeek, ' kg')}/週 線性外推（僅供參考，實際會浮動）。
+            </p>
+          )}
+        </>
+      )}
+    </Card>
+  )
+}
 
 function DeltaTile({
   label,
@@ -734,6 +924,113 @@ function HeightModal({
           }}
         />
       </Field>
+    </Modal>
+  )
+}
+
+// ───────── 目標體重 Modal ─────────
+
+function GoalModal({
+  open,
+  targetKg,
+  startKg,
+  latestKg,
+  onClose,
+  onSaved,
+}: {
+  open: boolean
+  targetKg?: number
+  startKg?: number
+  latestKg?: number
+  onClose: () => void
+  onSaved: () => void
+}) {
+  const [target, setTarget] = useState('')
+  const [start, setStart] = useState('')
+  const [seeded, setSeeded] = useState(false)
+  if (open && !seeded) {
+    setTarget(isNum(targetKg) ? String(targetKg) : '')
+    // 起點預填：已存起點 → 用佢；否則用最新體重（畀用家確認後落 profile）。
+    setStart(isNum(startKg) ? String(startKg) : isNum(latestKg) ? String(round(latestKg, 1)) : '')
+    setSeeded(true)
+  }
+  if (!open && seeded) setSeeded(false)
+
+  const parsePos = (s: string): number | undefined | null => {
+    const t = s.trim()
+    if (t === '') return undefined
+    const n = Number(t)
+    return Number.isFinite(n) && n > 0 && n < 500 ? n : null
+  }
+  const t = parsePos(target)
+  const st = parsePos(start)
+  const targetInvalid = t === null || t === undefined // 目標必填
+  const startInvalid = st === null // 起點選填，但若填咗要有效
+  const canSave = !targetInvalid && !startInvalid
+
+  const submit = () => {
+    if (!canSave) return
+    saveProfile({
+      weightTargetKg: round(t as number, 1),
+      // 起點可選：留空 → undefined（UI 會 fallback 用最早一筆記錄）。
+      weightStartKg: typeof st === 'number' ? round(st, 1) : undefined,
+    })
+    onSaved()
+  }
+
+  return (
+    <Modal
+      open={open}
+      onClose={onClose}
+      title="設定目標體重"
+      size="sm"
+      footer={
+        <>
+          <Button variant="ghost" onClick={onClose}>
+            取消
+          </Button>
+          <Button onClick={submit} disabled={!canSave}>
+            儲存
+          </Button>
+        </>
+      }
+    >
+      <div className="space-y-3">
+        <Field label="目標體重 (kg)" hint="想去到嘅體重">
+          <Input
+            type="number"
+            inputMode="decimal"
+            step="0.1"
+            min="0"
+            placeholder="例如 70"
+            value={target}
+            icon={Target}
+            invalid={target.trim() !== '' && targetInvalid}
+            autoFocus
+            onChange={(e) => setTarget(e.target.value)}
+          />
+        </Field>
+        <Field
+          label="起點體重 (kg)"
+          hint="計進度條用；留空就由最早一筆記錄起計"
+          error={startInvalid ? '請輸入有效體重' : undefined}
+        >
+          <Input
+            type="number"
+            inputMode="decimal"
+            step="0.1"
+            min="0"
+            placeholder="例如 80"
+            value={start}
+            icon={Scale}
+            invalid={startInvalid}
+            onChange={(e) => setStart(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') submit()
+            }}
+          />
+        </Field>
+      </div>
     </Modal>
   )
 }

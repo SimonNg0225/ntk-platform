@@ -6,6 +6,8 @@ import {
   daysBetween,
   dueBucket,
   dueLabel,
+  groupByDue,
+  DUE_BUCKET_ORDER,
   parseQuickAdd,
   projColorCls,
   smartSort,
@@ -133,6 +135,82 @@ describe('dueBucket', () => {
     expect(dueBucket('2026-05-12', ref)).toBe('soon') // +2
     expect(dueBucket('2026-05-17', ref)).toBe('soon') // +7（含）
     expect(dueBucket('2026-05-18', ref)).toBe('later') // +8
+  })
+})
+
+// ── groupByDue：智能分組（單次分桶；邊界今日/逾期/無期）──────
+describe('groupByDue', () => {
+  const ref = '2026-05-10'
+
+  it('空陣列：六個桶齊全且全空', () => {
+    const g = groupByDue([], ref)
+    expect(Object.keys(g).sort()).toEqual(
+      ['later', 'none', 'overdue', 'soon', 'today', 'tomorrow'].sort(),
+    )
+    expect(DUE_BUCKET_ORDER.every((k) => g[k].length === 0)).toBe(true)
+  })
+
+  it('邊界：逾期 / 今日 / 無到期 各落正確桶', () => {
+    const overdue = task({ id: 'o', meta: { due: '2026-05-09' } }) // ref 前一日
+    const todayT = task({ id: 't', meta: { due: ref } }) // 同 ref
+    const noDue = task({ id: 'n', meta: {} }) // 無到期
+    const g = groupByDue([overdue, todayT, noDue], ref)
+    expect(g.overdue.map((t) => t.id)).toEqual(['o'])
+    expect(g.today.map((t) => t.id)).toEqual(['t'])
+    expect(g.none.map((t) => t.id)).toEqual(['n'])
+    // 其餘桶空
+    expect(g.tomorrow.length + g.soon.length + g.later.length).toBe(0)
+  })
+
+  it('聽日 / 未來 7 日（含）/ 之後（8 日）邊界', () => {
+    const tmr = task({ id: '1', meta: { due: '2026-05-11' } }) // +1
+    const soon7 = task({ id: '7', meta: { due: '2026-05-17' } }) // +7 含
+    const later8 = task({ id: '8', meta: { due: '2026-05-18' } }) // +8
+    const g = groupByDue([tmr, soon7, later8], ref)
+    expect(g.tomorrow.map((t) => t.id)).toEqual(['1'])
+    expect(g.soon.map((t) => t.id)).toEqual(['7'])
+    expect(g.later.map((t) => t.id)).toEqual(['8'])
+  })
+
+  it('預設排除已完成（done 唔入任何桶）', () => {
+    const done = task({ id: 'd', done: true, meta: { due: ref } })
+    const active = task({ id: 'a', done: false, meta: { due: ref } })
+    const g = groupByDue([done, active], ref)
+    expect(g.today.map((t) => t.id)).toEqual(['a'])
+  })
+
+  it('includeDone：已完成都入桶', () => {
+    const done = task({ id: 'd', done: true, meta: { due: ref } })
+    const active = task({ id: 'a', done: false, meta: { due: ref } })
+    const g = groupByDue([done, active], ref, { includeDone: true })
+    expect(g.today.map((t) => t.id).sort()).toEqual(['a', 'd'])
+  })
+
+  it('傳 sorter：每桶內按 sorter 排（同桶同到期 → 優先級）', () => {
+    const p3 = task({ id: 'p3', meta: { due: ref, priority: 3 } })
+    const p1 = task({ id: 'p1', meta: { due: ref, priority: 1 } })
+    const g = groupByDue([p3, p1], ref, { sorter: smartSort })
+    expect(g.today.map((t) => t.id)).toEqual(['p1', 'p3']) // P1 先
+  })
+
+  it('無 sorter：桶內保留輸入次序（穩定，唔排）', () => {
+    const a = task({ id: 'a', meta: { due: ref, priority: 3 } })
+    const b = task({ id: 'b', meta: { due: ref, priority: 1 } })
+    const g = groupByDue([a, b], ref) // 無 sorter
+    expect(g.today.map((t) => t.id)).toEqual(['a', 'b']) // 原次序
+  })
+
+  it('多項同桶累加', () => {
+    const g = groupByDue(
+      [
+        task({ id: 'a', meta: { due: '2026-05-08' } }), // overdue
+        task({ id: 'b', meta: { due: '2026-05-07' } }), // overdue
+        task({ id: 'c', meta: {} }), // none
+      ],
+      ref,
+    )
+    expect(g.overdue.length).toBe(2)
+    expect(g.none.length).toBe(1)
   })
 })
 

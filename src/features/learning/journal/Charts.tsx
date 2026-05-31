@@ -8,6 +8,7 @@ import {
   mediumDate,
   type HeatGrid,
   type MoodDef,
+  type MoodMonth,
   type MoodPoint,
 } from './util'
 
@@ -274,6 +275,82 @@ export function YearHeatmap({
           ))}
           <span>多</span>
         </div>
+      </div>
+    </div>
+  )
+}
+
+// ───────── 心情月曆 heatmap（一個月一格網，按當日心情著色）─────────
+export function MoodCalendar({
+  month,
+  onPick,
+}: {
+  month: MoodMonth
+  onPick?: (key: string) => void
+}) {
+  return (
+    <div>
+      {/* 星期標頭 */}
+      <div className="mb-1 grid grid-cols-7 gap-1.5">
+        {WEEKDAYS.map((w, i) => (
+          <div
+            key={i}
+            className={
+              'text-center text-[10px] font-medium ' +
+              (i === 0 || i === 6 ? 'text-slate-400' : 'text-slate-500 dark:text-slate-400')
+            }
+          >
+            {w}
+          </div>
+        ))}
+      </div>
+      {/* 日格 */}
+      <div className="grid grid-cols-7 gap-1.5">
+        {month.weeks.flat().map((cell) => {
+          if (!cell.inMonth) {
+            // 鄰月補格：留空、低調，唔可點
+            return (
+              <div
+                key={cell.key}
+                aria-hidden="true"
+                className="aspect-square rounded-md text-right text-[10px] leading-none text-transparent"
+              />
+            )
+          }
+          const colored = Boolean(cell.def)
+          const label = cell.mood
+            ? `${longDate(cell.key)} · ${cell.def?.label ?? '心情'}${cell.count > 1 ? ` · ${cell.count} 篇` : ''}`
+            : cell.count > 0
+              ? `${longDate(cell.key)} · ${cell.count} 篇（未標心情）`
+              : `${longDate(cell.key)} · 未有日誌`
+          return (
+            <Tooltip key={cell.key} label={label}>
+              <button
+                type="button"
+                aria-label={label}
+                onClick={onPick ? () => onPick(cell.key) : undefined}
+                style={colored ? { backgroundColor: cell.def!.hex } : undefined}
+                className={
+                  'group/cell relative flex aspect-square flex-col items-center justify-center gap-0.5 rounded-md ring-1 ring-inset transition focus:outline-none focus-visible:ring-2 focus-visible:ring-accent ' +
+                  (colored
+                    ? 'text-white ring-black/5 hover:brightness-110 dark:ring-white/10'
+                    : cell.count > 0
+                      ? 'bg-accent-soft text-accent-strong ring-accent/20 hover:brightness-95 dark:bg-accent/15 dark:text-accent'
+                      : 'bg-slate-50 text-slate-400 ring-slate-200/70 hover:bg-slate-100 dark:bg-slate-800/60 dark:text-slate-500 dark:ring-slate-700')
+                }
+              >
+                <span className={'text-[10px] leading-none tabular-nums ' + (colored ? 'opacity-90' : '')}>
+                  {cell.day}
+                </span>
+                {cell.mood ? (
+                  <span aria-hidden="true" className="text-sm leading-none">{cell.mood}</span>
+                ) : cell.count > 0 ? (
+                  <span aria-hidden="true" className="text-sm leading-none">📝</span>
+                ) : null}
+              </button>
+            </Tooltip>
+          )
+        })}
       </div>
     </div>
   )

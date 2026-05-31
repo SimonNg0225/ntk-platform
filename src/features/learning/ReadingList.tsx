@@ -57,6 +57,7 @@ import {
   computeStats,
   download,
   exportJson,
+  finishedInYear,
   monthlyFinished,
   parseImport,
   progressPct,
@@ -143,6 +144,7 @@ export default function ReadingList() {
   const year = thisYear()
   const challenge = challenges.find((c) => c.year === year)
   const stats = useMemo(() => computeStats(books), [books])
+  const finishedThisYearCount = useMemo(() => finishedInYear(books, year), [books, year])
 
   const allShelves = useMemo(() => {
     const set = new Set<string>()
@@ -310,12 +312,7 @@ export default function ReadingList() {
         />
         <StatCard
           label="今年讀完"
-          value={
-            monthlyFinished(books, 12).reduce(
-              (s, m) => (m.key.startsWith(String(year)) ? s + m.books : s),
-              0,
-            )
-          }
+          value={finishedThisYearCount}
           unit="本"
           icon={CheckSquare}
         />
@@ -331,10 +328,7 @@ export default function ReadingList() {
       <ReadingChallenge
         year={year}
         target={challenge?.target ?? 0}
-        done={monthlyFinished(books, 12).reduce(
-          (s, m) => (m.key.startsWith(String(year)) ? s + m.books : s),
-          0,
-        )}
+        done={finishedThisYearCount}
         onSet={setChallenge}
       />
 

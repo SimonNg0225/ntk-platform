@@ -194,10 +194,7 @@ export function monthlyFinished(books: Book[], months = 12): MonthBucket[] {
   }
   for (const book of books) {
     if (book.status !== 'done') continue
-    // finishedOn 已是本地 key；createdAt 係 ISO(UTC)，要轉本地 key 先 slice，
-    // 否則 HK 凌晨建立的書 UTC 會跌去前一日 → 落錯月份桶（甚至跌出今年）。
-    const fin = book.finishedOn ?? toKey(new Date(book.createdAt))
-    const key = fin.slice(0, 7)
+    const key = finishedMonthKey(book) // YYYY-MM（本地 key，無 UTC 漂移）
     const bucket = index.get(key)
     if (bucket) {
       bucket.books += 1
@@ -205,6 +202,39 @@ export function monthlyFinished(books: Book[], months = 12): MonthBucket[] {
     }
   }
   return buckets
+}
+
+/**
+ * 一本書「讀完」嘅本地年月 key（YYYY-MM）。
+ * finishedOn 已是本地 key；createdAt 係 ISO(UTC)，要先轉本地 key，
+ * 否則 HK 凌晨建立嘅書 UTC 會跌去前一日 → 落錯月份（甚至跌出今年）。
+ */
+function finishedKey(book: Book): string {
+  return book.finishedOn ?? toKey(new Date(book.createdAt))
+}
+
+function finishedMonthKey(book: Book): string {
+  return finishedKey(book).slice(0, 7)
+}
+
+/**
+ * 指定年份「讀完」嘅本數（年度閱讀挑戰用）。
+ * 只計 status='done'，按 finishedOn 本地年份歸類；缺 finishedOn 用 createdAt 本地年份。
+ * 不受 monthlyFinished 嘅 12 個月窗口限制 → 任何時候統計都準。
+ */
+export function finishedInYear(books: Book[], year: number): number {
+  const prefix = `${year}-`
+  let n = 0
+  for (const book of books) {
+    if (book.status !== 'done') continue
+    if (finishedKey(book).startsWith(prefix)) n += 1
+  }
+  return n
+}
+
+/** 今年讀完本數（thisYear() 即時年份）。 */
+export function finishedThisYear(books: Book[]): number {
+  return finishedInYear(books, thisYear())
 }
 
 // ───────── 活動熱圖（過去 N 週，每日 session 頁數）─────────

@@ -59,6 +59,45 @@ export function dueBucket(due: string | undefined, ref = todayISO()): DueBucket 
   return 'later'
 }
 
+// 分組顯示順序（早→遲；none 包尾）。views 照此順序逐桶渲染。
+export const DUE_BUCKET_ORDER: DueBucket[] = [
+  'overdue',
+  'today',
+  'tomorrow',
+  'soon',
+  'later',
+  'none',
+]
+
+// 一次過將任務按到期分桶（智能分組視圖）。預設只計未完成（done 過濾），
+// 同 UpcomingView 行為一致；single-pass，避免逐桶重掃。回傳每個桶（含空桶，
+// 鍵齊全方便 view 直接攞）。傳入 sorter 即每桶內排序。
+export function groupByDue(
+  tasks: FullTask[],
+  ref = todayISO(),
+  opts: {
+    includeDone?: boolean
+    sorter?: (a: FullTask, b: FullTask) => number
+  } = {},
+): Record<DueBucket, FullTask[]> {
+  const out: Record<DueBucket, FullTask[]> = {
+    overdue: [],
+    today: [],
+    tomorrow: [],
+    soon: [],
+    later: [],
+    none: [],
+  }
+  for (const t of tasks) {
+    if (!opts.includeDone && t.done) continue
+    out[dueBucket(t.meta.due, ref)].push(t)
+  }
+  if (opts.sorter) {
+    for (const k of DUE_BUCKET_ORDER) out[k].sort(opts.sorter)
+  }
+  return out
+}
+
 const WEEKDAY = ['日', '一', '二', '三', '四', '五', '六']
 
 // 人類可讀嘅到期文字（相對 + 星期）

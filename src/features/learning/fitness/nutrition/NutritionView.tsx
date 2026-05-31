@@ -20,6 +20,11 @@ import {
   Settings2,
   RotateCcw,
   CalendarDays,
+  Coffee,
+  Sun,
+  Moon,
+  Cookie,
+  History,
 } from 'lucide-react'
 import {
   Card,
@@ -33,6 +38,7 @@ import {
   IconButton,
   Textarea,
   Tooltip,
+  Pills,
   cx,
 } from '../../../../ui'
 import {
@@ -66,8 +72,16 @@ import {
   weeklyCalories,
   normalizeItem,
   macroKcal,
+  mealGroups,
+  frequentFoods,
 } from './util'
-import type { FoodEntry, ParsedItem, RawFoodItem } from './types'
+import type {
+  FoodEntry,
+  FrequentFood,
+  MealSlot,
+  ParsedItem,
+  RawFoodItem,
+} from './types'
 
 // ============================================================
 //  AI 飲食營養（自然語言 → macros）
@@ -76,11 +90,14 @@ import type { FoodEntry, ParsedItem, RawFoodItem } from './types'
 //     （complete() 要求只回 JSON {items:[…]}；stripJsonFence
 //      + JSON.parse，try/catch 失敗 toast）→ 逐項可微調再落地。
 //  ② 手動新增 fallback：直接填 label + 四個數（唔使 AI）。
-//  ③ 當日總計 vs 目標：卡路里進度環 + 三大營養素進度條 + 剩餘。
-//  ④ 飲食日誌（當日列表可刪）+ 近 7 日卡路里柱狀。
-//  ⑤ 目標可改（cal / P / F / C，可重設預設）。
-//  AI gate：!isAIConfigured 顯示靜態提示，但手動輸入照用。
+//  ③ 常食快速再記：由歷史去重統計最常用，一撳即加返今日（唔使再 AI）。
+//  ④ 每餐分段：揀餐段（早/午/晚/小食）落地；日誌按餐分組 + 各餐小計。
+//  ⑤ 當日總計 vs 目標：卡路里進度環 + 三大營養素進度條 + 剩餘。
+//  ⑥ 飲食日誌（當日按餐分組可刪）+ 近 7 日卡路里柱狀。
+//  ⑦ 目標可改（cal / P / F / C，可重設預設）。
+//  AI gate：!isAIConfigured 顯示靜態提示，但手動 / 常食照用。
 //  全部計算抽去 util.ts（已測）；日期用 ../common 本地 key。
+//  舊資料無 meal → 歸入「其他」（向後相容）。
 // ============================================================
 
 interface AIResult {
@@ -134,6 +151,35 @@ const EMPTY_MANUAL: ManualForm = {
   proteinG: '',
   fatG: '',
   carbG: '',
+}
+
+// ───────── 餐段顯示資料（label + icon + 色調）─────────
+const MEAL_META: Record<
+  MealSlot,
+  { label: string; icon: typeof Coffee; color: string }
+> = {
+  breakfast: { label: '早餐', icon: Coffee, color: FIT_TONE.amber },
+  lunch: { label: '午餐', icon: Sun, color: FIT_TONE.emerald },
+  dinner: { label: '晚餐', icon: Moon, color: FIT_TONE.indigo },
+  snack: { label: '小食', icon: Cookie, color: FIT_TONE.sky },
+  other: { label: '其他', icon: Utensils, color: FIT_TONE.rose },
+}
+
+// 揀餐段嘅 Pills 選項（新增飲食時揀；唔含「其他」—— 其他只係舊資料 fallback）
+const MEAL_PILL_OPTIONS: { id: MealSlot; label: string }[] = [
+  { id: 'breakfast', label: '早餐' },
+  { id: 'lunch', label: '午餐' },
+  { id: 'dinner', label: '晚餐' },
+  { id: 'snack', label: '小食' },
+]
+
+/** 依當下時鐘估計預設餐段（純前端體驗；< 11 早 / < 15 午 / < 21 晚 / 否則小食）。 */
+function guessMeal(d: Date = new Date()): MealSlot {
+  const h = d.getHours()
+  if (h < 11) return 'breakfast'
+  if (h < 15) return 'lunch'
+  if (h < 21) return 'dinner'
+  return 'snack'
 }
 
 // ───────── 卡路里進度環（純 SVG，深色友善）─────────
@@ -337,6 +383,9 @@ export default function NutritionView() {
   const [dateKey, setDateKey] = useState<string>(todayKey())
   const isToday = dateKey === todayKey()
 
+  // ── 揀餐段（AI / 手動 / 常食 共用同一個目標餐段）───────────
+  const [meal, setMeal] = useState<MealSlot>(() => guessMeal())
+
   // ── AI 自然語言輸入 ───────────────────────────────────────
   const [text, setText] = useState('')
   const [busy, setBusy] = useState(false)
@@ -355,7 +404,7 @@ export default function NutritionView() {
     carbG: String(goals.carbG),
   })
 
-  // 當日紀錄（新→舊）
+  // 當日紀錄（新→舊）—— 統計卡 / 計數仍用呢個
   const dayEntries = useMemo(
     () =>
       entries
@@ -363,6 +412,15 @@ export default function NutritionView() {
         .sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
     [entries, dateKey],
   )
+
+  // 當日按餐分組（已排好 MEAL_ORDER；同餐內依 createdAt 新→舊）
+  const groups = useMemo(
+    () => mealGroups(dayEntries, dateKey),
+    [dayEntries, dateKey],
+  )
+
+  // 常食：由全部歷史去重統計最常用（取前 8）
+  const frequent = useMemo(() => frequentFoods(entries, 8), [entries])
 
   const totals = useMemo(() => dayTotals(entries, dateKey), [entries, dateKey])
   const totalsKcal = macroKcal(totals)
@@ -437,7 +495,7 @@ export default function NutritionView() {
     setDrafts((ds) => ds.filter((d) => d.key !== key))
   }
 
-  // 落地全部草稿做當日 FoodEntry
+  // 落地全部草稿做當日 FoodEntry（歸入當下揀嘅餐段）
   function commitDrafts() {
     if (drafts.length === 0) return
     const now = Date.now()
@@ -449,6 +507,7 @@ export default function NutritionView() {
         proteinG: d.proteinG,
         fatG: d.fatG,
         carbG: d.carbG,
+        meal,
         // 微錯開 createdAt 保持輸入次序（新→舊排序穩定）
         createdAt: new Date(now + i).toISOString(),
       })
@@ -456,7 +515,22 @@ export default function NutritionView() {
     const n = drafts.length
     setDrafts([])
     setText('')
-    toast.success(`已加入 ${n} 項到 ${dateKey} 飲食日誌`)
+    toast.success(`已加入 ${n} 項到「${MEAL_META[meal].label}」`)
+  }
+
+  // 常食快速再記：一撳即用同樣 macros 加返今日（歸入當下揀嘅餐段）
+  function quickAdd(f: FrequentFood) {
+    foodCol.add({
+      date: dateKey,
+      label: f.label,
+      calories: f.calories,
+      proteinG: f.proteinG,
+      fatG: f.fatG,
+      carbG: f.carbG,
+      meal,
+      createdAt: new Date().toISOString(),
+    })
+    toast.success(`已加入「${f.label}」到「${MEAL_META[meal].label}」`)
   }
 
   // ── 手動新增 ──────────────────────────────────────────────
@@ -473,11 +547,12 @@ export default function NutritionView() {
       proteinG: Math.max(0, Number(manual.proteinG) || 0),
       fatG: Math.max(0, Number(manual.fatG) || 0),
       carbG: Math.max(0, Number(manual.carbG) || 0),
+      meal,
       createdAt: new Date().toISOString(),
     })
     setManual(EMPTY_MANUAL)
     setManualOpen(false)
-    toast.success('已加入飲食日誌')
+    toast.success(`已加入「${MEAL_META[meal].label}」`)
   }
 
   function removeEntry(id: string) {
@@ -624,6 +699,52 @@ export default function NutritionView() {
             </p>
           </div>
         </div>
+
+        {/* 揀餐段：AI / 手動 / 常食 加入時都歸入呢一餐 */}
+        <div>
+          <label className="mb-1.5 block text-[11px] font-medium uppercase tracking-wider text-slate-400 dark:text-slate-500">
+            加入邊一餐
+          </label>
+          <Pills
+            options={MEAL_PILL_OPTIONS}
+            active={meal === 'other' ? 'breakfast' : meal}
+            onChange={setMeal}
+            size="sm"
+          />
+        </div>
+
+        {/* 常食快速再記：一撳即加返今日（唔使再打 / 叫 AI） */}
+        {frequent.length > 0 && (
+          <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-3 dark:border-slate-700 dark:bg-slate-800/40">
+            <div className="mb-2 flex items-center gap-1.5">
+              <History size={13} className="text-slate-400 dark:text-slate-500" />
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                常食快速加（撳即記入「{MEAL_META[meal].label}」）
+              </span>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {frequent.map((f) => (
+                <button
+                  key={f.key}
+                  type="button"
+                  onClick={() => quickAdd(f)}
+                  title={`P${Math.round(f.proteinG)} · F${Math.round(f.fatG)} · C${Math.round(f.carbG)} · 用過 ${f.count} 次`}
+                  aria-label={`加入 ${f.label}，${Math.round(f.calories)} kcal`}
+                  className="group inline-flex max-w-full items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-600 transition hover:border-accent/50 hover:bg-accent-soft hover:text-accent-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:border-accent/50 dark:hover:bg-accent/10 dark:hover:text-accent"
+                >
+                  <Plus
+                    size={12}
+                    className="shrink-0 text-slate-400 transition group-hover:text-accent-strong dark:text-slate-500 dark:group-hover:text-accent"
+                  />
+                  <span className="truncate">{f.label}</span>
+                  <span className="shrink-0 tabular-nums text-slate-400 dark:text-slate-500">
+                    {Math.round(f.calories)}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         {isAIConfigured ? (
           <>
@@ -784,42 +905,85 @@ export default function NutritionView() {
             hint="用上面 AI 分析講你食咗咩，或者撳「手動新增」自己填。"
           />
         ) : (
-          <ul className="divide-y divide-slate-100 dark:divide-slate-800">
-            {dayEntries.map((e) => (
-              <li
-                key={e.id}
-                className="group flex items-center gap-3 py-2.5"
-              >
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400">
-                  <Flame size={16} />
+          <div className="space-y-4">
+            {groups.map((g) => {
+              const m = MEAL_META[g.meal]
+              const MI = m.icon
+              return (
+                <div key={g.meal}>
+                  {/* 餐段標題 + 小計 */}
+                  <div className="mb-1 flex items-center justify-between border-b border-slate-100 pb-1 dark:border-slate-800">
+                    <span className="flex items-center gap-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300">
+                      <MI size={14} style={{ color: m.color }} />
+                      {m.label}
+                      <span className="tabular-nums text-slate-400 dark:text-slate-500">
+                        · {g.entries.length}
+                      </span>
+                    </span>
+                    <span className="text-[11px] tabular-nums text-slate-500 dark:text-slate-400">
+                      <span className="font-semibold text-slate-700 dark:text-slate-200">
+                        {Math.round(g.subtotal.calories)}
+                      </span>{' '}
+                      kcal
+                      <span className="ml-2 text-slate-400 dark:text-slate-500">
+                        <span className="text-rose-500">
+                          P {Math.round(g.subtotal.proteinG)}
+                        </span>{' '}
+                        <span className="text-amber-500">
+                          F {Math.round(g.subtotal.fatG)}
+                        </span>{' '}
+                        <span className="text-sky-500">
+                          C {Math.round(g.subtotal.carbG)}
+                        </span>
+                      </span>
+                    </span>
+                  </div>
+                  <ul className="divide-y divide-slate-100 dark:divide-slate-800">
+                    {g.entries.map((e) => (
+                      <li
+                        key={e.id}
+                        className="group flex items-center gap-3 py-2.5"
+                      >
+                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400">
+                          <Flame size={16} />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-medium text-slate-700 dark:text-slate-200">
+                            {e.label}
+                          </p>
+                          <p className="flex flex-wrap gap-x-2 text-[11px] tabular-nums text-slate-400 dark:text-slate-500">
+                            <span className="text-rose-500">
+                              P {Math.round(e.proteinG)}
+                            </span>
+                            <span className="text-amber-500">
+                              F {Math.round(e.fatG)}
+                            </span>
+                            <span className="text-sky-500">
+                              C {Math.round(e.carbG)}
+                            </span>
+                          </p>
+                        </div>
+                        <span className="shrink-0 text-sm font-semibold tabular-nums text-slate-700 dark:text-slate-200">
+                          {Math.round(e.calories)}
+                          <span className="ml-0.5 text-[10px] font-normal text-slate-400">
+                            kcal
+                          </span>
+                        </span>
+                        <IconButton
+                          label={`刪除 ${e.label}`}
+                          tone="danger"
+                          onClick={() => removeEntry(e.id)}
+                          className="opacity-0 transition group-hover:opacity-100"
+                        >
+                          <Trash2 size={16} />
+                        </IconButton>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium text-slate-700 dark:text-slate-200">
-                    {e.label}
-                  </p>
-                  <p className="flex flex-wrap gap-x-2 text-[11px] tabular-nums text-slate-400 dark:text-slate-500">
-                    <span className="text-rose-500">P {Math.round(e.proteinG)}</span>
-                    <span className="text-amber-500">F {Math.round(e.fatG)}</span>
-                    <span className="text-sky-500">C {Math.round(e.carbG)}</span>
-                  </p>
-                </div>
-                <span className="shrink-0 text-sm font-semibold tabular-nums text-slate-700 dark:text-slate-200">
-                  {Math.round(e.calories)}
-                  <span className="ml-0.5 text-[10px] font-normal text-slate-400">
-                    kcal
-                  </span>
-                </span>
-                <IconButton
-                  label={`刪除 ${e.label}`}
-                  tone="danger"
-                  onClick={() => removeEntry(e.id)}
-                  className="opacity-0 transition group-hover:opacity-100"
-                >
-                  <Trash2 size={16} />
-                </IconButton>
-              </li>
-            ))}
-          </ul>
+              )
+            })}
+          </div>
         )}
       </Card>
 
@@ -883,6 +1047,14 @@ export default function NutritionView() {
               value={manual.label}
               onChange={(e) => setManual({ ...manual, label: e.target.value })}
               placeholder="例如：白飯一碗"
+            />
+          </Field>
+          <Field label="餐段">
+            <Pills
+              options={MEAL_PILL_OPTIONS}
+              active={meal === 'other' ? 'breakfast' : meal}
+              onChange={setMeal}
+              size="sm"
             />
           </Field>
           <div className="grid grid-cols-2 gap-3">

@@ -15,6 +15,9 @@ import {
   sortWorkoutsDesc,
   volumeTrend,
   daysSinceLastWorkout,
+  lastSetOf,
+  computePlates,
+  formatClock,
 } from './util'
 import type { Workout, WorkoutSet } from './types'
 
@@ -383,5 +386,173 @@ describe('daysSinceLastWorkout', () => {
   })
   it('無記錄 → null', () => {
     expect(daysSinceLastWorkout([], ANCHOR)).toBeNull()
+  })
+})
+
+// ============================================================
+//  lastSetOf（新一組預填）
+// ============================================================
+
+describe('lastSetOf', () => {
+  it('取最近一次同名動作嘅最後一組 reps/weight', () => {
+    const data = [
+      w({
+        id: 'old',
+        date: key(-2),
+        exercises: [{ name: '臥推', sets: [set(8, 60), set(8, 62)] }],
+      }),
+      w({
+        id: 'new',
+        date: key(0),
+        exercises: [{ name: '臥推', sets: [set(5, 70), set(3, 75)] }],
+      }),
+    ]
+    expect(lastSetOf(data, '臥推')).toEqual({ reps: 3, weightKg: 75 })
+  })
+  it('同名 trim 後一致；rpe 唔帶出嚟', () => {
+    const data = [
+      w({ date: key(0), exercises: [{ name: ' 深蹲 ', sets: [set(5, 100, 8)] }] }),
+    ]
+    expect(lastSetOf(data, '深蹲')).toEqual({ reps: 5, weightKg: 100 })
+  })
+  it('同日 tie 用 createdAt 最新一筆', () => {
+    const data = [
+      w({
+        id: 'early',
+        date: key(0),
+        createdAt: '2026-05-31T08:00:00.000Z',
+        exercises: [{ name: '硬舉', sets: [set(5, 100)] }],
+      }),
+      w({
+        id: 'late',
+        date: key(0),
+        createdAt: '2026-05-31T20:00:00.000Z',
+        exercises: [{ name: '硬舉', sets: [set(3, 120)] }],
+      }),
+    ]
+    expect(lastSetOf(data, '硬舉')).toEqual({ reps: 3, weightKg: 120 })
+  })
+  it('搵唔到同名 → null', () => {
+    const data = [w({ date: key(0), exercises: [{ name: '臥推', sets: [set(8, 60)] }] })]
+    expect(lastSetOf(data, '划船')).toBeNull()
+  })
+  it('同名但嗰次無 set → 跳去再上一次有 set 嘅', () => {
+    const data = [
+      w({ id: 'a', date: key(-3), exercises: [{ name: '臥推', sets: [set(8, 60)] }] }),
+      w({ id: 'b', date: key(0), exercises: [{ name: '臥推', sets: [] }] }),
+    ]
+    expect(lastSetOf(data, '臥推')).toEqual({ reps: 8, weightKg: 60 })
+  })
+  it('空名 / 空陣列 → null', () => {
+    expect(lastSetOf([], '臥推')).toBeNull()
+    expect(lastSetOf([w({ date: key(0) })], '   ')).toBeNull()
+  })
+  it('NaN / 缺值守衞 → 0', () => {
+    const data = [
+      w({ date: key(0), exercises: [{ name: 'x', sets: [{ reps: NaN, weightKg: 50 }] }] }),
+    ]
+    expect(lastSetOf(data, 'x')).toEqual({ reps: 0, weightKg: 50 })
+  })
+})
+
+// ============================================================
+//  computePlates（槓片計算器）
+// ============================================================
+
+describe('computePlates', () => {
+  it('標準：100kg / 20kg 槓 → 每邊 40kg = 25+15', () => {
+    const plan = computePlates(100, 20)
+    expect(plan.perSide).toEqual([25, 15])
+    expect(plan.achievableKg).toBe(100)
+    expect(plan.remainderKg).toBe(0)
+    expect(plan.belowBar).toBe(false)
+  })
+  it('貪心由大到細：60kg / 20kg → 每邊 20kg = 單片 20', () => {
+    const plan = computePlates(60, 20)
+    expect(plan.perSide).toEqual([20])
+    expect(plan.achievableKg).toBe(60)
+    expect(plan.remainderKg).toBe(0)
+  })
+  it('用到細片：62.5kg / 20kg → 每邊 21.25 = 20+1.25', () => {
+    const plan = computePlates(62.5, 20)
+    expect(plan.perSide).toEqual([20, 1.25])
+    expect(plan.achievableKg).toBe(62.5)
+    expect(plan.remainderKg).toBe(0)
+  })
+  it('奇數 / 湊唔齊：63kg / 20kg → 餘數 > 0，achievable 為實際可達', () => {
+    const plan = computePlates(63, 20)
+    // 每邊 21.5：25 太大跳過、20、1.25 → 21.25，餘 0.25/邊 → 總餘 0.5
+    expect(plan.perSide).toEqual([20, 1.25])
+    expect(plan.achievableKg).toBe(62.5)
+    expect(plan.remainderKg).toBeCloseTo(0.5, 6)
+  })
+  it('等於空槓 → 空片、無餘數', () => {
+    const plan = computePlates(20, 20)
+    expect(plan.perSide).toEqual([])
+    expect(plan.achievableKg).toBe(20)
+    expect(plan.remainderKg).toBe(0)
+    expect(plan.belowBar).toBe(false)
+  })
+  it('低過空槓 → belowBar、空片', () => {
+    const plan = computePlates(15, 20)
+    expect(plan.perSide).toEqual([])
+    expect(plan.achievableKg).toBe(20)
+    expect(plan.belowBar).toBe(true)
+    expect(plan.remainderKg).toBe(0) // target-bar 為負 → clamp 0
+  })
+  it('唔夠片（available 只得 5kg）：50kg / 20kg → 每邊 15 = 5+5+5', () => {
+    const plan = computePlates(50, 20, [5])
+    expect(plan.perSide).toEqual([5, 5, 5])
+    expect(plan.achievableKg).toBe(50)
+    expect(plan.remainderKg).toBe(0)
+  })
+  it('available 全部太大 → 一片都上唔到，全部餘數', () => {
+    const plan = computePlates(45, 20, [25])
+    // 每邊 12.5，25 上唔到 → 空片，餘 25
+    expect(plan.perSide).toEqual([])
+    expect(plan.achievableKg).toBe(20)
+    expect(plan.remainderKg).toBeCloseTo(25, 6)
+  })
+  it('自訂空槓重（女槓 15kg）：55kg / 15kg → 每邊 20 = 單片 20', () => {
+    const plan = computePlates(55, 15)
+    expect(plan.perSide).toEqual([20])
+    expect(plan.achievableKg).toBe(55)
+  })
+  it('過濾非正槓片 + NaN 守衞', () => {
+    const plan = computePlates(50, 20, [25, 0, -5, NaN, 5] as number[])
+    // 每邊 15：25 太大、5+5+5
+    expect(plan.perSide).toEqual([5, 5, 5])
+    expect(plan.remainderKg).toBe(0)
+  })
+  it('NaN target → 當 0，低過槓 → belowBar', () => {
+    const plan = computePlates(NaN, 20)
+    expect(plan.perSide).toEqual([])
+    expect(plan.belowBar).toBe(true)
+  })
+  it('唔改原 available 陣列', () => {
+    const avail = [2.5, 25, 5]
+    const copy = [...avail]
+    computePlates(60, 20, avail)
+    expect(avail).toEqual(copy)
+  })
+})
+
+// ============================================================
+//  formatClock（休息計時器顯示）
+// ============================================================
+
+describe('formatClock', () => {
+  it('秒 → M:SS', () => {
+    expect(formatClock(90)).toBe('1:30')
+    expect(formatClock(0)).toBe('0:00')
+    expect(formatClock(59)).toBe('0:59')
+    expect(formatClock(125)).toBe('2:05')
+  })
+  it('向下取整秒', () => {
+    expect(formatClock(90.9)).toBe('1:30')
+  })
+  it('負 / NaN → 0:00（守衞）', () => {
+    expect(formatClock(-5)).toBe('0:00')
+    expect(formatClock(NaN)).toBe('0:00')
   })
 })

@@ -64,6 +64,7 @@ import {
   daysBetween,
   dueBucket,
   dueLabel,
+  groupByDue,
   localDay,
   offsetFromToday,
   parseQuickAdd,
@@ -826,12 +827,10 @@ function TodayView(props: {
   const today = todayISO()
   const projOf = (t: FullTask) => projects.find((p) => p.id === t.meta.projectId)
 
-  const overdue = tasks
-    .filter((t) => !t.done && dueBucket(t.meta.due, today) === 'overdue')
-    .sort(sorter)
-  const todayList = tasks
-    .filter((t) => !t.done && dueBucket(t.meta.due, today) === 'today')
-    .sort(sorter)
+  // 共用分桶（未完成）→ 今日視圖只取逾期 + 今日。
+  const grouped = groupByDue(tasks, today, { sorter })
+  const overdue = grouped.overdue
+  const todayList = grouped.today
   const doneToday = tasks
     .filter((t) => t.done && t.meta.completedAt && localDay(t.meta.completedAt) === today)
     .sort((a, b) => (a.meta.completedAt! < b.meta.completedAt! ? 1 : -1))
@@ -885,17 +884,16 @@ function UpcomingView(props: {
   const { tasks, sorter, projects } = props
   const today = todayISO()
   const projOf = (t: FullTask) => projects.find((p) => p.id === t.meta.projectId)
-  const active = tasks.filter((t) => !t.done)
 
-  const buckets = {
-    overdue: active.filter((t) => dueBucket(t.meta.due, today) === 'overdue').sort(sorter),
-    today: active.filter((t) => dueBucket(t.meta.due, today) === 'today').sort(sorter),
-    tomorrow: active.filter((t) => dueBucket(t.meta.due, today) === 'tomorrow').sort(sorter),
-    soon: active.filter((t) => dueBucket(t.meta.due, today) === 'soon').sort(sorter),
-    later: active.filter((t) => dueBucket(t.meta.due, today) === 'later').sort(sorter),
-    none: active.filter((t) => dueBucket(t.meta.due, today) === 'none').sort(sorter),
-  }
-  const total = active.length
+  // 單次分桶（未完成）→ 每桶內按目前排序。
+  const buckets = groupByDue(tasks, today, { sorter })
+  const total =
+    buckets.overdue.length +
+    buckets.today.length +
+    buckets.tomorrow.length +
+    buckets.soon.length +
+    buckets.later.length +
+    buckets.none.length
 
   if (total === 0)
     return (
