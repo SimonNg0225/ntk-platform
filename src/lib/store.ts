@@ -28,6 +28,13 @@ export interface Collection<T extends Entity> {
   subscribe: (listener: () => void) => () => void
 }
 
+/**
+ * 全部 createCollection 出嚟嘅 collection 自動登記喺度（key = 去咗 ntk. 前綴
+ * 嘅 storage key）。畀雲端同步 / 匯出匯入 / 清除資料統一枚舉 —— 各功能自家喺
+ * 自己檔建立嘅 collection 都會自動納入，唔使手動逐個登記。
+ */
+export const collectionRegistry = new Map<string, Collection<Entity>>()
+
 export function createCollection<T extends Entity>(
   key: string,
   seed: T[] = [],
@@ -65,7 +72,7 @@ export function createCollection<T extends Entity>(
     listeners.forEach((l) => l())
   }
 
-  return {
+  const api: Collection<T> = {
     get: () => items,
     set: (next) => {
       items = next
@@ -94,6 +101,8 @@ export function createCollection<T extends Entity>(
       return () => listeners.delete(listener)
     },
   }
+  collectionRegistry.set(key, api as unknown as Collection<Entity>)
+  return api
 }
 
 /** React hook：訂閱一個集合，資料變即時 re-render */

@@ -1,5 +1,5 @@
 import { supabase } from './supabase'
-import { ALL_COLLECTIONS } from '../data/collections'
+import { collectionRegistry } from './store'
 
 // ============================================================
 //  雲端同步 (Supabase ⇄ 本地集合)
@@ -73,7 +73,7 @@ export async function attachSync(userId: string): Promise<void> {
   }
 
   // 2) 套用：雲端有 → 覆蓋本地；雲端冇 → seed 本地上雲
-  for (const { key, col } of ALL_COLLECTIONS) {
+  for (const [key, col] of collectionRegistry) {
     if (cloud.has(key)) {
       col.set(cloud.get(key) as never[]) // cloud 優先
     } else {
@@ -84,7 +84,7 @@ export async function attachSync(userId: string): Promise<void> {
   hydrating = false
 
   // 3) 監聽本地改動 → 寫返上雲（hydration 期間唔會 push）
-  for (const { key, col } of ALL_COLLECTIONS) {
+  for (const [key, col] of collectionRegistry) {
     const unsub = col.subscribe(() => {
       if (hydrating || attachedUserId !== userId) return
       schedulePush(userId, key, col.get)

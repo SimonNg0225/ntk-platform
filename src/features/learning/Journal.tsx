@@ -87,8 +87,9 @@ import {
 //  資料：自家 createCollection('journal_v2')；首次由舊 journal 遷移
 // ============================================================
 
-// 自家較豐富嘅集合（唔掂 data/collections.ts）
-const journalDocsCol = createCollection<JournalDoc>('journal_v2', [])
+// 自家較豐富嘅集合（唔掂 data/collections.ts）。export 出去做 canonical instance，
+// 等學習儀表板等其他功能共用同一個（避免重複 createCollection 同 key 而唔同步）。
+export const journalDocsCol = createCollection<JournalDoc>('journal_v2', [])
 
 // 由舊 JournalEntry 結構安全遷移（只做一次）
 const MIGRATION_FLAG = 'ntk.journal_v2_migrated'

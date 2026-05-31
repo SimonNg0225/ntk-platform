@@ -1,4 +1,4 @@
-import { createCollection } from '../lib/store'
+import { createCollection, collectionRegistry } from '../lib/store'
 import { BAFS_TOPICS } from './bafs'
 import type {
   Topic,
@@ -190,7 +190,7 @@ export const ALL_COLLECTIONS: { key: string; col: SyncableCollection }[] = [
 // 匯出全部資料做一個 JSON 物件
 export function exportAllData() {
   const data: Record<string, unknown[]> = {}
-  for (const { key, col } of ALL_COLLECTIONS) data[key] = col.get()
+  for (const [key, col] of collectionRegistry) data[key] = col.get()
   return { version: 1, exportedAt: new Date().toISOString(), data }
 }
 
@@ -204,7 +204,7 @@ export function importAllData(payload: unknown): number {
     throw new Error('檔案格式唔啱')
   const data = (payload as { data: Record<string, unknown[]> }).data
   let count = 0
-  for (const { key, col } of ALL_COLLECTIONS) {
+  for (const [key, col] of collectionRegistry) {
     if (Array.isArray(data[key])) {
       col.set(data[key] as never[])
       count++

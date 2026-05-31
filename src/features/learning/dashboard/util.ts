@@ -19,10 +19,10 @@ import { computeProgress } from '../goals/util'
 import type { JournalDoc } from '../journal/util'
 import { moodScore } from '../journal/util'
 import { isDue } from '../../../lib/srs'
+import { journalDocsCol } from '../Journal'
 
-// 日誌真實資料源：Journal 功能用自己嘅 'journal_v2'（唔 export），
-// 呢度開一個同 key 嘅讀取 handle（同 localStorage 對齊，回儀表板即時重讀）。
-export const journalDocsCol = createCollection<JournalDoc>('journal_v2', [])
+// 日誌真實資料源：用返 Journal 個 canonical collection（同一 instance，即時同步、唔再重複建立）
+export { journalDocsCol }
 
 // ───────── 日期工具（本地時區，避開 toISOString 時差）─────────
 export const WEEKDAYS = ['日', '一', '二', '三', '四', '五', '六'] as const
