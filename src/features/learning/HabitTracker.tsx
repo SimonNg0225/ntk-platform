@@ -1,331 +1,593 @@
-import { useMemo, useState } from 'react';
-import { useCollection } from '../../lib/store';
-import { useToast } from '../../context/ToastContext';
-import { useConfirm } from '../../context/ConfirmContext';
-import { habitsCol, habitLogsCol } from '../../data/collections';
-import type { Habit, HabitLog } from '../../data/types';
+import { useEffect, useMemo, useState } from 'react'
+import { useCollection } from '../../lib/store'
+import { useToast } from '../../context/ToastContext'
+import { useConfirm } from '../../context/ConfirmContext'
 import {
+  PageHeader,
   Button,
-  Input,
   Card,
-  Badge,
-  SectionTitle,
+  Tabs,
+  Input,
+  Select,
   EmptyState,
-  StatCard,
+  SegmentedControl,
   IconButton,
-} from '../../ui';
+  StatCard,
+  cx,
+} from '../../ui'
 import {
-  CheckSquare,
-  ClipboardList,
+  Target,
+  Plus,
+  Search,
   Flame,
-  Check,
+  CheckSquare,
+  Sparkles,
+  Sprout,
+  Archive,
+  ArchiveRestore,
   Trash2,
   PartyPopper,
-  Sprout,
-  Plus,
-} from 'lucide-react';
+  ListChecks,
+  BarChart3,
+  CalendarDays,
+} from 'lucide-react'
+import {
+  habitV2Col,
+  habitLogV2Col,
+  migrateLegacyHabits,
+  colorOf,
+  freqLabel,
+  type Habit,
+} from './habits/types'
+import {
+  logsByHabit,
+  overallStats,
+  currentStreak,
+  todayKey,
+} from './habits/util'
+import HabitRow from './habits/HabitRow'
+import HabitEditor from './habits/HabitEditor'
+import HabitDetail from './habits/HabitDetail'
+import StatsView from './habits/StatsView'
 
-const ICON_CHOICES = ['🏃', '📚', '💧', '🧘', '🥗', '😴', '✍️', '🎯'];
+// ============================================================
+//  習慣追蹤（Streaks / Habitify 級）
+//  ------------------------------------------------------------
+//  視圖：今日打卡 · 全部習慣 · 統計分析
+//  深度：頻率目標、連續/最長 streak、年度 heatmap、完成趨勢圖、
+//        星期分佈、每週統計、分類篩選、搜尋、排序、封存、目標里程碑。
+// ============================================================
 
-// 最近迷你格日數：手機 7 日、闊屏 14 日（用 CSS 控制顯示）。
-const TIMELINE_DAYS = 14;
-
-/** 由今日起回推 n 日，回傳 YYYY-MM-DD 字串陣列（由舊到新）。 */
-function recentDates(days: number): string[] {
-  const today = new Date();
-  const result: string[] = [];
-  for (let i = days - 1; i >= 0; i -= 1) {
-    const d = new Date(today);
-    d.setDate(today.getDate() - i);
-    result.push(d.toISOString().slice(0, 10));
-  }
-  return result;
-}
-
-/** 由某日標籤（星期幾）。 */
-function weekdayLabel(dateStr: string): string {
-  const labels = ['日', '一', '二', '三', '四', '五', '六'];
-  return labels[new Date(`${dateStr}T00:00:00`).getDay()];
-}
-
-/** 計算由今日起連續完成嘅日數。 */
-function calcStreak(loggedDates: Set<string>): number {
-  let streak = 0;
-  const cursor = new Date();
-  // 若今日未完成，由琴日開始計（保留琴日嘅 streak）。
-  if (!loggedDates.has(cursor.toISOString().slice(0, 10))) {
-    cursor.setDate(cursor.getDate() - 1);
-  }
-  while (loggedDates.has(cursor.toISOString().slice(0, 10))) {
-    streak += 1;
-    cursor.setDate(cursor.getDate() - 1);
-  }
-  return streak;
-}
+type View = 'today' | 'all' | 'stats'
+type SortKey = 'order' | 'streak' | 'name'
 
 export default function HabitTracker() {
-  const habits = useCollection<Habit>(habitsCol);
-  const logs = useCollection<HabitLog>(habitLogsCol);
-  const toast = useToast();
-  const confirm = useConfirm();
+  const toast = useToast()
+  const confirm = useConfirm()
 
-  const [name, setName] = useState('');
-  const [icon, setIcon] = useState<string>(ICON_CHOICES[0]);
+  // 首次：由舊 collection 遷移
+  useEffect(() => {
+    migrateLegacyHabits()
+  }, [])
 
-  const today = new Date().toISOString().slice(0, 10);
-  const days = useMemo(() => recentDates(TIMELINE_DAYS), []);
+  const habits = useCollection<Habit>(habitV2Col)
+  const logs = useCollection(habitLogV2Col)
 
-  // 以 habitId 分組 logs，方便查 / 取 logId。
-  const logsByHabit = useMemo(() => {
-    const map = new Map<string, Map<string, string>>();
-    for (const log of logs) {
-      let inner = map.get(log.habitId);
-      if (!inner) {
-        inner = new Map<string, string>();
-        map.set(log.habitId, inner);
+  const [view, setView] = useState<View>('today')
+  const [query, setQuery] = useState('')
+  const [category, setCategory] = useState<string>('all')
+  const [sort, setSort] = useState<SortKey>('order')
+  const [showArchived, setShowArchived] = useState(false)
+
+  const [editorOpen, setEditorOpen] = useState(false)
+  const [editing, setEditing] = useState<Habit | undefined>(undefined)
+  const [detailId, setDetailId] = useState<string | null>(null)
+
+  const today = todayKey()
+
+  // logs → habitId → Set<dateKey>
+  const byHabit = useMemo(() => logsByHabit(logs), [logs])
+
+  // 啟用中（未封存）
+  const activeHabits = useMemo(() => habits.filter((h) => !h.archived), [habits])
+  const archivedHabits = useMemo(() => habits.filter((h) => h.archived), [habits])
+
+  // 分類選項
+  const categories = useMemo(() => {
+    const set = new Set<string>()
+    for (const h of activeHabits) if (h.category) set.add(h.category)
+    return Array.from(set).sort()
+  }, [activeHabits])
+
+  // 篩選 + 搜尋 + 排序
+  const visible = useMemo(() => {
+    let list = activeHabits
+    if (category !== 'all') list = list.filter((h) => h.category === category)
+    const q = query.trim().toLowerCase()
+    if (q)
+      list = list.filter(
+        (h) =>
+          h.name.toLowerCase().includes(q) ||
+          (h.category ?? '').toLowerCase().includes(q),
+      )
+    const arr = [...list]
+    arr.sort((a, b) => {
+      if (sort === 'name') return a.name.localeCompare(b.name)
+      if (sort === 'streak') {
+        const sa = currentStreak(byHabit.get(a.id) ?? new Set(), a.frequency)
+        const sb = currentStreak(byHabit.get(b.id) ?? new Set(), b.frequency)
+        return sb - sa
       }
-      inner.set(log.date, log.id);
+      return a.order - b.order
+    })
+    return arr
+  }, [activeHabits, category, query, sort, byHabit])
+
+  // 今日待辦：依「應做」分拆
+  const todayBuckets = useMemo(() => {
+    const wd = new Date().getDay()
+    const due: Habit[] = []
+    const notDue: Habit[] = []
+    for (const h of visible) {
+      const sched =
+        h.frequency.kind !== 'weekdays' || h.frequency.days.includes(wd)
+      if (sched) due.push(h)
+      else notDue.push(h)
     }
-    return map;
-  }, [logs]);
+    // 今日已完成排後
+    due.sort((a, b) => {
+      const da = (byHabit.get(a.id) ?? new Set()).has(today) ? 1 : 0
+      const db = (byHabit.get(b.id) ?? new Set()).has(today) ? 1 : 0
+      return da - db
+    })
+    return { due, notDue }
+  }, [visible, byHabit, today])
 
-  // 頂部統計：總數、今日完成、最長 streak。
-  const stats = useMemo(() => {
-    let doneToday = 0;
-    let maxStreak = 0;
-    for (const habit of habits) {
-      const inner = logsByHabit.get(habit.id);
-      const loggedDates = new Set<string>(inner ? Array.from(inner.keys()) : []);
-      if (loggedDates.has(today)) doneToday += 1;
-      const streak = calcStreak(loggedDates);
-      if (streak > maxStreak) maxStreak = streak;
-    }
-    return { total: habits.length, doneToday, maxStreak };
-  }, [habits, logsByHabit, today]);
+  const stats = useMemo(() => overallStats(visible, byHabit), [visible, byHabit])
+  const allDone = stats.dueToday > 0 && stats.doneToday === stats.dueToday
 
-  const completionRate =
-    stats.total > 0 ? Math.round((stats.doneToday / stats.total) * 100) : 0;
-  const allDone = stats.total > 0 && stats.doneToday === stats.total;
+  const detailHabit = detailId ? habits.find((h) => h.id === detailId) ?? null : null
 
-  function handleAdd() {
-    const trimmed = name.trim();
-    if (!trimmed) return;
-    habitsCol.add({
-      name: trimmed,
-      icon,
-      createdAt: new Date().toISOString(),
-    });
-    setName('');
-    setIcon(ICON_CHOICES[0]);
-    toast.success('已新增習慣');
-  }
-
+  // ───────── 動作 ─────────
   function toggleLog(habitId: string, date: string) {
-    const existingId = logsByHabit.get(habitId)?.get(date);
-    if (existingId) {
-      habitLogsCol.remove(existingId);
-    } else {
-      habitLogsCol.add({ habitId, date });
-    }
+    const existing = logs.find((l) => l.habitId === habitId && l.date === date)
+    if (existing) habitLogV2Col.remove(existing.id)
+    else habitLogV2Col.add({ habitId, date })
   }
 
-  async function handleDelete(habit: Habit) {
-    if (
-      !(await confirm({
-        title: '刪除習慣？',
-        message: `「${habit.name}」連同所有打卡記錄會一併刪除，無法復原。`,
-        confirmText: '刪除',
-        tone: 'danger',
-      }))
-    )
-      return;
-    const inner = logsByHabit.get(habit.id);
-    if (inner) {
-      for (const logId of inner.values()) {
-        habitLogsCol.remove(logId);
-      }
-    }
-    habitsCol.remove(habit.id);
-    toast.success('已刪除習慣');
+  function openCreate() {
+    setEditing(undefined)
+    setEditorOpen(true)
   }
+
+  function openEdit(h: Habit) {
+    setEditing(h)
+    setEditorOpen(true)
+    setDetailId(null)
+  }
+
+  function handleSave(
+    data: Omit<Habit, 'id' | 'order' | 'createdAt' | 'archived'>,
+  ) {
+    if (editing) {
+      habitV2Col.update(editing.id, data)
+      toast.success('已更新習慣')
+    } else {
+      const maxOrder = habits.reduce((m, h) => Math.max(m, h.order), -1)
+      habitV2Col.add({
+        ...data,
+        order: maxOrder + 1,
+        archived: false,
+        createdAt: new Date().toISOString(),
+      })
+      toast.success('已新增習慣')
+    }
+    setEditorOpen(false)
+    setEditing(undefined)
+  }
+
+  async function handleDeleteFromEditor() {
+    if (!editing) return
+    const ok = await confirm({
+      title: '刪除習慣？',
+      message: `「${editing.name}」連同所有打卡記錄會一併刪除，無法復原。`,
+      confirmText: '刪除',
+      tone: 'danger',
+    })
+    if (!ok) return
+    deleteHabit(editing.id)
+    setEditorOpen(false)
+    setEditing(undefined)
+  }
+
+  function deleteHabit(id: string) {
+    for (const l of logs.filter((l) => l.habitId === id)) {
+      habitLogV2Col.remove(l.id)
+    }
+    habitV2Col.remove(id)
+    toast.success('已刪除習慣')
+  }
+
+  function toggleArchive(h: Habit) {
+    habitV2Col.update(h.id, { archived: !h.archived })
+    toast.info(h.archived ? '已還原習慣' : '已封存習慣')
+  }
+
+  async function confirmDeleteArchived(h: Habit) {
+    const ok = await confirm({
+      title: '永久刪除？',
+      message: `「${h.name}」連同所有打卡記錄會被刪除。`,
+      confirmText: '刪除',
+      tone: 'danger',
+    })
+    if (ok) deleteHabit(h.id)
+  }
+
+  const tabs: { id: View; label: string }[] = [
+    { id: 'today', label: '今日' },
+    { id: 'all', label: '全部' },
+    { id: 'stats', label: '統計' },
+  ]
 
   return (
-    <div className="mx-auto w-full max-w-2xl space-y-6 p-4">
-      <header className="space-y-1">
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">習慣追蹤</h1>
-        <p className="text-sm text-slate-500 dark:text-slate-400">建立每日習慣，撳格仔打卡，保持連續記錄。</p>
-      </header>
+    <div className="mx-auto w-full max-w-3xl space-y-5 p-4">
+      <PageHeader
+        title="習慣追蹤"
+        description="養成每日習慣，保持連續記錄，用數據睇住自己進步。"
+        icon={Target}
+        actions={
+          <Button icon={Plus} onClick={openCreate}>
+            新增習慣
+          </Button>
+        }
+      />
 
       {/* 頂部統計 */}
       <section className="grid grid-cols-3 gap-3">
-        <StatCard label="習慣總數" value={stats.total} unit="個" icon={ClipboardList} />
         <StatCard
           label="今日完成"
-          value={`${stats.doneToday}/${stats.total}`}
+          value={`${stats.doneToday}/${stats.dueToday}`}
           icon={CheckSquare}
           highlight={allDone}
+          hint={`完成率 ${stats.todayRate}%`}
         />
-        <StatCard label="最長連續" value={stats.maxStreak} unit="日" icon={Flame} />
+        <StatCard label="最長連續" value={stats.bestCurrentStreak} unit="日" icon={Flame} />
+        <StatCard
+          label="近 7 日完美"
+          value={stats.perfectDays7}
+          unit="日"
+          icon={Sparkles}
+          hint="全部達標"
+        />
       </section>
 
-      {/* 今日總完成率 */}
-      <Card className="p-4">
-        <div className="mb-2 flex items-center justify-between">
-          <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">今日總完成率</span>
-          <Badge tone={allDone ? 'green' : 'accent'}>
-            <span className="tabular-nums">{completionRate}%</span>
-          </Badge>
-        </div>
-        <div className="h-3 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-700">
-          <div
-            className="h-full rounded-full bg-accent transition-all"
-            style={{ width: `${completionRate}%` }}
-          />
-        </div>
-        {allDone ? (
-          <p className="mt-2 flex items-center gap-1.5 text-sm font-medium text-emerald-600 dark:text-emerald-400">
-            <PartyPopper size={16} />
-            今日全部完成，好嘢，keep it up！
-          </p>
-        ) : stats.total > 0 ? (
-          <p className="mt-2 text-xs text-slate-400 dark:text-slate-400">
-            仲差 <span className="tabular-nums">{stats.total - stats.doneToday}</span> 個就完成今日所有習慣。
-          </p>
-        ) : null}
-      </Card>
+      <Tabs<View>
+        tabs={tabs}
+        active={view}
+        onChange={setView}
+        icons={{ today: ListChecks, all: CalendarDays, stats: BarChart3 }}
+      />
 
-      {/* 新增習慣 */}
-      <Card className="p-4">
-        <SectionTitle>新增習慣</SectionTitle>
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-          <Input
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') handleAdd();
-            }}
-            placeholder="例如：每日跑步"
-            className="flex-1"
-          />
-          <Button type="button" icon={Plus} onClick={handleAdd} disabled={!name.trim()}>
-            新增
-          </Button>
+      {/* ───────── 今日 ───────── */}
+      {view === 'today' && (
+        <div className="space-y-5">
+          {activeHabits.length === 0 ? (
+            <EmptyState
+              icon={Sprout}
+              title="仲未有習慣"
+              hint="撳「新增習慣」開始，揀 emoji、顏色同頻率，每日打卡保持連續。"
+              action={
+                <Button icon={Plus} onClick={openCreate}>
+                  新增第一個習慣
+                </Button>
+              }
+            />
+          ) : (
+            <>
+              <TodayRing
+                done={stats.doneToday}
+                total={stats.dueToday}
+                rate={stats.todayRate}
+                allDone={allDone}
+              />
+
+              {todayBuckets.due.length > 0 && (
+                <Card className="divide-y divide-slate-100 dark:divide-slate-700/60">
+                  {todayBuckets.due.map((h) => (
+                    <HabitRow
+                      key={h.id}
+                      habit={h}
+                      done={byHabit.get(h.id) ?? new Set()}
+                      onToggle={toggleLog}
+                      onOpen={(hh) => setDetailId(hh.id)}
+                    />
+                  ))}
+                </Card>
+              )}
+
+              {todayBuckets.notDue.length > 0 && (
+                <div>
+                  <p className="mb-2 px-1 text-xs font-medium uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                    今日非排程
+                  </p>
+                  <Card className="divide-y divide-slate-100 opacity-70 dark:divide-slate-700/60">
+                    {todayBuckets.notDue.map((h) => (
+                      <HabitRow
+                        key={h.id}
+                        habit={h}
+                        done={byHabit.get(h.id) ?? new Set()}
+                        onToggle={toggleLog}
+                        onOpen={(hh) => setDetailId(hh.id)}
+                      />
+                    ))}
+                  </Card>
+                </div>
+              )}
+            </>
+          )}
         </div>
-        <div className="mt-3 flex flex-wrap gap-2">
-          {ICON_CHOICES.map((choice) => {
-            const selected = choice === icon;
-            return (
+      )}
+
+      {/* ───────── 全部 ───────── */}
+      {view === 'all' && (
+        <div className="space-y-4">
+          {/* 工具列：搜尋 + 分類 + 排序 */}
+          <Card className="space-y-3 p-3">
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <Input
+                icon={Search}
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="搜尋習慣 / 分類…"
+                className="flex-1"
+              />
+              <div className="flex gap-2">
+                <Select
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value)}
+                  className="flex-1 sm:w-36"
+                >
+                  <option value="all">全部分類</option>
+                  {categories.map((c) => (
+                    <option key={c} value={c}>
+                      {c}
+                    </option>
+                  ))}
+                </Select>
+              </div>
+            </div>
+            <div className="flex items-center justify-between gap-2">
+              <SegmentedControl<SortKey>
+                size="sm"
+                value={sort}
+                onChange={setSort}
+                options={[
+                  { id: 'order', label: '預設' },
+                  { id: 'streak', label: '連續' },
+                  { id: 'name', label: '名稱' },
+                ]}
+              />
+              <span className="text-xs tabular-nums text-slate-400 dark:text-slate-500">
+                {visible.length} 個習慣
+              </span>
+            </div>
+          </Card>
+
+          {visible.length === 0 ? (
+            <EmptyState
+              icon={Search}
+              title="搵唔到習慣"
+              hint="試下換個關鍵字或分類，或者新增一個習慣。"
+            />
+          ) : (
+            <Card className="divide-y divide-slate-100 dark:divide-slate-700/60">
+              {visible.map((h) => (
+                <HabitRow
+                  key={h.id}
+                  habit={h}
+                  done={byHabit.get(h.id) ?? new Set()}
+                  onToggle={toggleLog}
+                  onOpen={(hh) => setDetailId(hh.id)}
+                />
+              ))}
+            </Card>
+          )}
+
+          {/* 封存區 */}
+          {archivedHabits.length > 0 && (
+            <div>
               <button
-                key={choice}
                 type="button"
-                onClick={() => setIcon(choice)}
-                aria-pressed={selected}
-                className={[
-                  'flex h-9 w-9 items-center justify-center rounded-xl border text-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
-                  selected
-                    ? 'border-accent bg-accent-soft text-accent-strong'
-                    : 'border-slate-200 bg-white hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700',
-                ].join(' ')}
+                onClick={() => setShowArchived((v) => !v)}
+                className="flex w-full items-center gap-2 px-1 py-2 text-xs font-medium uppercase tracking-wide text-slate-400 transition hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300"
               >
-                {choice}
+                <Archive size={14} />
+                已封存（{archivedHabits.length}）
+                <span className="ml-auto normal-case">{showArchived ? '收起' : '展開'}</span>
               </button>
-            );
-          })}
-        </div>
-      </Card>
-
-      {/* 習慣列表 */}
-      <section className="space-y-3">
-        <SectionTitle>我的習慣</SectionTitle>
-        {habits.length === 0 ? (
-          <EmptyState
-            icon={Sprout}
-            title="仲未有習慣"
-            hint="喺上面新增一個習慣，揀返個 emoji，每日撳格仔打卡。"
-          />
-        ) : (
-          habits.map((habit) => {
-            const inner = logsByHabit.get(habit.id);
-            const loggedDates = new Set<string>(inner ? Array.from(inner.keys()) : []);
-            const streak = calcStreak(loggedDates);
-            const doneToday = loggedDates.has(today);
-
-            return (
-              <Card key={habit.id} className="p-4" hover>
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex min-w-0 items-center gap-3">
-                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent-soft text-xl">
-                      {habit.icon ?? '⭐'}
-                    </span>
-                    <div className="min-w-0">
-                      <h3 className="truncate text-base font-semibold text-slate-900 dark:text-slate-100">
-                        {habit.name}
-                      </h3>
-                      <div className="mt-1 flex flex-wrap items-center gap-1.5">
-                        <Badge tone={streak > 0 ? 'amber' : 'slate'} icon={Flame}>
-                          <span className="tabular-nums">{streak}</span> 日
-                        </Badge>
-                        {doneToday ? (
-                          <Badge tone="green">今日已完成</Badge>
-                        ) : (
-                          <Badge tone="slate">今日未完成</Badge>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                  <IconButton
-                    label={`刪除習慣 ${habit.name}`}
-                    onClick={() => handleDelete(habit)}
-                    tone="danger"
-                    className="shrink-0"
-                  >
-                    <Trash2 size={18} />
-                  </IconButton>
-                </div>
-
-                {/* 最近打卡格：手機顯示尾 7 日、sm 以上顯示全 14 日 */}
-                <div className="mt-4 flex gap-1.5">
-                  {days.map((date, idx) => {
-                    const done = loggedDates.has(date);
-                    const isToday = date === today;
-                    // 頭 7 日（idx < 7）喺手機隱藏，避免擠迫。
-                    const hideOnMobile = idx < TIMELINE_DAYS - 7;
+              {showArchived && (
+                <Card className="divide-y divide-slate-100 dark:divide-slate-700/60">
+                  {archivedHabits.map((h) => {
+                    const spec = colorOf(h.color)
                     return (
-                      <div
-                        key={date}
-                        className={[
-                          'flex flex-1 flex-col items-center gap-1',
-                          hideOnMobile ? 'hidden sm:flex' : 'flex',
-                        ].join(' ')}
-                      >
-                        <span className="text-[10px] text-slate-400 dark:text-slate-400">
-                          {weekdayLabel(date)}
+                      <div key={h.id} className="flex items-center gap-3 p-3">
+                        <span className={cx('flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-base', spec.soft)}>
+                          {h.icon ?? '⭐'}
                         </span>
-                        <button
-                          type="button"
-                          onClick={() => toggleLog(habit.id, date)}
-                          aria-pressed={done}
-                          aria-label={`${date} ${done ? '已完成' : '未完成'}`}
-                          className={[
-                            'flex aspect-square w-full items-center justify-center rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
-                            done
-                              ? 'bg-accent text-white hover:bg-accent-strong'
-                              : 'bg-slate-100 text-slate-400 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-400 dark:hover:bg-slate-600',
-                            isToday ? 'ring-2 ring-accent/40 ring-offset-1' : '',
-                          ].join(' ')}
-                        >
-                          {done ? <Check size={14} strokeWidth={2.5} /> : null}
-                        </button>
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-medium text-slate-600 dark:text-slate-300">
+                            {h.name}
+                          </p>
+                          <p className="text-xs text-slate-400 dark:text-slate-500">
+                            {freqLabel(h.frequency)} · 累計 {(byHabit.get(h.id)?.size ?? 0)} 次
+                          </p>
+                        </div>
+                        <IconButton label="還原" onClick={() => toggleArchive(h)}>
+                          <ArchiveRestore size={17} />
+                        </IconButton>
+                        <IconButton label="永久刪除" tone="danger" onClick={() => confirmDeleteArchived(h)}>
+                          <Trash2 size={17} />
+                        </IconButton>
                       </div>
-                    );
+                    )
                   })}
-                </div>
-              </Card>
-            );
-          })
-        )}
-      </section>
+                </Card>
+              )}
+            </div>
+          )}
+
+          {/* 啟用中習慣的封存入口（在詳情外快速封存） */}
+          {visible.length > 0 && (
+            <p className="px-1 text-center text-xs text-slate-400 dark:text-slate-500">
+              想暫停某個習慣？喺習慣詳情可封存而唔刪除記錄。
+            </p>
+          )}
+        </div>
+      )}
+
+      {/* ───────── 統計 ───────── */}
+      {view === 'stats' && <StatsView habits={activeHabits} byHabit={byHabit} />}
+
+      {/* 全部達標慶祝（今日視圖外也提示一次） */}
+      {view === 'today' && allDone && (
+        <div className="flex items-center justify-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 py-3 text-sm font-medium text-emerald-700 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-300">
+          <PartyPopper size={18} />
+          今日全部習慣完成，keep it up！
+        </div>
+      )}
+
+      {/* 編輯器 */}
+      <HabitEditor
+        open={editorOpen}
+        habit={editing}
+        onClose={() => {
+          setEditorOpen(false)
+          setEditing(undefined)
+        }}
+        onSave={handleSave}
+        onDelete={editing ? handleDeleteFromEditor : undefined}
+      />
+
+      {/* 詳情 */}
+      <HabitDetailWithArchive
+        habit={detailHabit}
+        done={detailHabit ? byHabit.get(detailHabit.id) ?? new Set() : new Set()}
+        onClose={() => setDetailId(null)}
+        onToggle={toggleLog}
+        onEdit={openEdit}
+        onArchive={(h) => {
+          toggleArchive(h)
+          setDetailId(null)
+        }}
+      />
     </div>
-  );
+  )
+}
+
+// ───────── 今日完成環（自製 SVG 圓環）─────────
+function TodayRing({
+  done,
+  total,
+  rate,
+  allDone,
+}: {
+  done: number
+  total: number
+  rate: number
+  allDone: boolean
+}) {
+  const R = 52
+  const C = 2 * Math.PI * R
+  const dash = (rate / 100) * C
+  return (
+    <Card className="flex items-center gap-5 p-5">
+      <div className="relative h-32 w-32 shrink-0">
+        <svg viewBox="0 0 120 120" className="h-full w-full -rotate-90">
+          <circle
+            cx="60"
+            cy="60"
+            r={R}
+            fill="none"
+            strokeWidth="12"
+            className="stroke-slate-100 dark:stroke-slate-700"
+          />
+          <circle
+            cx="60"
+            cy="60"
+            r={R}
+            fill="none"
+            strokeWidth="12"
+            strokeLinecap="round"
+            stroke={allDone ? 'rgb(16 185 129)' : 'var(--accent)'}
+            strokeDasharray={`${dash} ${C}`}
+            className="transition-all duration-700 ease-out"
+          />
+        </svg>
+        <div className="absolute inset-0 flex flex-col items-center justify-center">
+          <span
+            className={cx(
+              'text-3xl font-bold tabular-nums',
+              allDone ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-800 dark:text-slate-100',
+            )}
+          >
+            {rate}%
+          </span>
+          <span className="text-xs tabular-nums text-slate-400 dark:text-slate-500">
+            {done}/{total}
+          </span>
+        </div>
+      </div>
+      <div className="min-w-0">
+        <h3 className="text-base font-bold text-slate-800 dark:text-slate-100">
+          {allDone ? '今日全部完成 🎉' : '今日進度'}
+        </h3>
+        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+          {allDone
+            ? '全部排程習慣都打咗卡，好嘢！'
+            : total - done > 0
+              ? `仲差 ${total - done} 個就完成今日全部排程習慣。`
+              : '今日冇排程習慣，放鬆下。'}
+        </p>
+      </div>
+    </Card>
+  )
+}
+
+// ───────── 詳情包一層：加封存按鈕 footer（透過自家 wrapper 避免改 HabitDetail 簽名）─────────
+function HabitDetailWithArchive({
+  habit,
+  done,
+  onClose,
+  onToggle,
+  onEdit,
+  onArchive,
+}: {
+  habit: Habit | null
+  done: Set<string>
+  onClose: () => void
+  onToggle: (habitId: string, dateKey: string) => void
+  onEdit: (habit: Habit) => void
+  onArchive: (habit: Habit) => void
+}) {
+  if (!habit) return null
+  return (
+    <>
+      <HabitDetail
+        habit={habit}
+        done={done}
+        onClose={onClose}
+        onToggle={onToggle}
+        onEdit={onEdit}
+      />
+      {/* 浮動封存鈕（左下，避免改 HabitDetail footer） */}
+      <button
+        type="button"
+        onClick={() => onArchive(habit)}
+        className="fixed bottom-6 left-1/2 z-[60] inline-flex -translate-x-1/2 items-center gap-1.5 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 shadow-lg transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 sm:left-auto sm:right-8 sm:translate-x-0"
+      >
+        <Archive size={16} />
+        封存呢個習慣
+      </button>
+    </>
+  )
 }

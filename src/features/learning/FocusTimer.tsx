@@ -1,159 +1,104 @@
-import { useEffect, useRef, useState } from 'react'
+import { useMemo, useState } from 'react'
+import { Timer, BarChart3, History, FolderKanban, Settings2, Flame, Target } from 'lucide-react'
+import { PageHeader, Tabs, Badge } from '../../ui'
 import { useCollection } from '../../lib/store'
-import { focusCol } from '../../data/collections'
-import { Button, Input, StatCard, Pills } from '../../ui'
-import { useToast } from '../../context/ToastContext'
-import { Timer, Clock } from 'lucide-react'
+import {
+  focusLogsCol,
+  focusProjectsCol,
+  focusSettingsCol,
+  getSettings,
+  SETTINGS_ID,
+  currentStreak,
+  todayKey,
+  keyOf,
+  fmtDuration,
+} from './focus/store'
+import TimerView from './focus/TimerView'
+import StatsView from './focus/StatsView'
+import HistoryView from './focus/HistoryView'
+import ProjectsView from './focus/ProjectsView'
+import SettingsView from './focus/SettingsView'
+import type { FocusSettings } from './focus/types'
 
-const PRESETS = [
-  { focus: 25, brk: 5 },
-  { focus: 50, brk: 10 },
-  { focus: 15, brk: 3 },
-]
+type TabId = 'timer' | 'stats' | 'history' | 'projects' | 'settings'
 
 export default function FocusTimer() {
-  const sessions = useCollection(focusCol)
-  const toast = useToast()
-  const [preset, setPreset] = useState(PRESETS[0])
-  const [phase, setPhase] = useState<'focus' | 'break'>('focus')
-  const [secondsLeft, setSecondsLeft] = useState(PRESETS[0].focus * 60)
-  const [running, setRunning] = useState(false)
-  const [label, setLabel] = useState('')
-  const tick = useRef<number | null>(null)
+  const logs = useCollection(focusLogsCol)
+  const projects = useCollection(focusProjectsCol)
+  const settingsAll = useCollection(focusSettingsCol)
+  const settings = getSettings(settingsAll)
 
-  // 倒數（tick 只負責遞減，唔喺 updater 入面叫 toast / setState）
-  useEffect(() => {
-    if (!running) return
-    tick.current = window.setInterval(() => {
-      setSecondsLeft((s) => (s <= 1 ? 0 : s - 1))
-    }, 1000)
-    return () => {
-      if (tick.current) window.clearInterval(tick.current)
+  const [tab, setTab] = useState<TabId>('timer')
+
+  function patchSettings(patch: Partial<FocusSettings>) {
+    focusSettingsCol.update(SETTINGS_ID, patch)
+  }
+
+  // header 小統計
+  const { todayMin, todaySessions, streak } = useMemo(() => {
+    const tk = todayKey()
+    const todayFocus = logs.filter(
+      (l) => l.kind === 'focus' && l.completed && keyOf(l.startedAt) === tk,
+    )
+    return {
+      todayMin: todayFocus.reduce((s, l) => s + l.actualMin, 0),
+      todaySessions: todayFocus.length,
+      streak: currentStreak(logs),
     }
-  }, [running])
-
-  // 倒數到 0 → 結束呢一節，喺 effect 入面安全處理副作用同 toast
-  useEffect(() => {
-    if (running && secondsLeft === 0) handlePhaseEnd()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [running, secondsLeft])
-
-  function handlePhaseEnd() {
-    if (phase === 'focus') {
-      focusCol.add({
-        startedAt: new Date().toISOString(),
-        durationMin: preset.focus,
-        label: label.trim() || undefined,
-        completed: true,
-      })
-      setPhase('break')
-      setSecondsLeft(preset.brk * 60)
-      toast.success('完成一節專注 🍅')
-    } else {
-      setPhase('focus')
-      setSecondsLeft(preset.focus * 60)
-      toast.info('休息完啦，繼續努力 💪')
-    }
-    setRunning(false)
-  }
-
-  const reset = () => {
-    setRunning(false)
-    setSecondsLeft((phase === 'focus' ? preset.focus : preset.brk) * 60)
-  }
-
-  const choosePreset = (p: (typeof PRESETS)[number]) => {
-    setPreset(p)
-    setPhase('focus')
-    setRunning(false)
-    setSecondsLeft(p.focus * 60)
-  }
-
-  const mm = String(Math.floor(secondsLeft / 60)).padStart(2, '0')
-  const ss = String(secondsLeft % 60).padStart(2, '0')
-
-  // 今日統計
-  const today = new Date().toISOString().slice(0, 10)
-  const todaySessions = sessions.filter((s) => s.startedAt.slice(0, 10) === today)
-  const todayMin = todaySessions.reduce((sum, s) => sum + s.durationMin, 0)
-
-  const totalSec = (phase === 'focus' ? preset.focus : preset.brk) * 60
-  const pct = ((totalSec - secondsLeft) / totalSec) * 100
+  }, [logs])
 
   return (
     <div className="space-y-5">
-      <div className="flex justify-center">
-        <Pills<string>
-          options={PRESETS.map((p) => ({
-            id: String(p.focus),
-            label: `${p.focus}/${p.brk}`,
-          }))}
-          active={String(preset.focus)}
-          onChange={(id) => {
-            const p = PRESETS.find((x) => String(x.focus) === id)
-            if (p) choosePreset(p)
-          }}
-        />
-      </div>
+      <PageHeader
+        icon={Timer}
+        title="專注番茄鐘"
+        description="番茄工作法 · 專案分類 · 深度數據分析"
+        actions={
+          <div className="flex items-center gap-2">
+            <Badge tone="accent" icon={Target}>
+              今日 {todaySessions} 節 · {fmtDuration(todayMin)}
+            </Badge>
+            {streak > 0 && (
+              <Badge tone="amber" icon={Flame}>
+                連續 {streak} 日
+              </Badge>
+            )}
+          </div>
+        }
+      />
 
-      {/* 計時圈 */}
-      <div className="relative mx-auto flex h-56 w-56 items-center justify-center">
-        <svg className="absolute inset-0 -rotate-90" viewBox="0 0 100 100">
-          <circle
-            cx="50"
-            cy="50"
-            r="45"
-            fill="none"
-            className="stroke-slate-200 dark:stroke-slate-700"
-            strokeWidth="6"
+      <Tabs<TabId>
+        active={tab}
+        onChange={setTab}
+        icons={{
+          timer: Timer,
+          stats: BarChart3,
+          history: History,
+          projects: FolderKanban,
+          settings: Settings2,
+        }}
+        tabs={[
+          { id: 'timer', label: '計時' },
+          { id: 'stats', label: '數據' },
+          { id: 'history', label: '紀錄' },
+          { id: 'projects', label: '專案' },
+          { id: 'settings', label: '設定' },
+        ]}
+      />
+
+      <div className="animate-fade-in">
+        {tab === 'timer' && (
+          <TimerView
+            settings={settings}
+            logs={logs}
+            projects={projects}
+            patchSettings={patchSettings}
           />
-          <circle
-            cx="50"
-            cy="50"
-            r="45"
-            fill="none"
-            stroke="var(--accent)"
-            strokeWidth="6"
-            strokeLinecap="round"
-            strokeDasharray={2 * Math.PI * 45}
-            strokeDashoffset={2 * Math.PI * 45 * (1 - pct / 100)}
-            style={{ transition: 'stroke-dashoffset 1s linear' }}
-          />
-        </svg>
-        <div className="text-center">
-          <p className="text-xs font-medium uppercase tracking-wider text-slate-400">
-            {phase === 'focus' ? '專注中' : '休息'}
-          </p>
-          <p className="mt-1 text-5xl font-bold tabular-nums text-slate-800 dark:text-slate-100">
-            {mm}:{ss}
-          </p>
-        </div>
-      </div>
-
-      {phase === 'focus' && (
-        <Input
-          value={label}
-          onChange={(e) => setLabel(e.target.value)}
-          placeholder="而家專注緊咩？（選填）"
-          className="text-center"
-        />
-      )}
-
-      <div className="flex flex-wrap justify-center gap-3">
-        <Button size="lg" onClick={() => setRunning((r) => !r)}>
-          {running ? '暫停' : '開始'}
-        </Button>
-        <Button size="lg" variant="secondary" onClick={reset}>
-          重設
-        </Button>
-        <Button size="lg" variant="secondary" onClick={handlePhaseEnd}>
-          跳過
-        </Button>
-      </div>
-
-      <div className="grid grid-cols-2 gap-3">
-        <StatCard label="今日節數" value={todaySessions.length} unit="節" icon={Timer} highlight />
-        <StatCard label="今日分鐘" value={todayMin} unit="分鐘" icon={Clock} />
+        )}
+        {tab === 'stats' && <StatsView logs={logs} projects={projects} />}
+        {tab === 'history' && <HistoryView logs={logs} projects={projects} />}
+        {tab === 'projects' && <ProjectsView projects={projects} logs={logs} />}
+        {tab === 'settings' && <SettingsView settings={settings} patch={patchSettings} />}
       </div>
     </div>
   )
