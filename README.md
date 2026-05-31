@@ -2,8 +2,9 @@
 
 個人**學習與工作**平台 —— 一個可以隨時切換模式嘅個人入口，目標係提升個人知識增長同工作效能。
 
-> 版本 `v0.2`。海軍藍主題、手機 responsive，兩個模式（📘 學習 / 💼 工作）都有可運作功能。
-> 資料暫存本機（localStorage），結構同 Supabase 對齊，將來接雲端 + AI 無痛升級（見 `docs/ROADMAP.md`）。
+> 版本 `v1.0`。精煉海軍藍主題、手機 responsive、無障礙（a11y）、PWA 離線可用，兩個模式（📘 學習 / 💼 工作）共 27 個功能全部可運作。
+> 資料存本機（localStorage）並可登入後雲端同步（Supabase），AI 助手接 Gemini；未設定時以「訪客模式」純本機運作。設定見 [`docs/SETUP.md`](docs/SETUP.md)。
+> ⌘K / Ctrl+K 隨時開指令面板快速跳轉。
 
 ## ✨ 核心概念
 
@@ -23,7 +24,9 @@
 | 📘 學習 | 知識卡 + 間隔重複 🧠（SM-2） | ✅ 可用 |
 | 📘 學習 | 專注計時器 ⏱️（番茄鐘） | ✅ 可用 |
 | 📘 學習 | 學習日誌 📓 | ✅ 可用 |
-| 📘 學習 | 閱讀清單 📖 | 🚧 即將推出 |
+| 📘 學習 | AI 生成知識卡 🤖（一鍵出卡 + 匯入複習） | ✅ 可用 |
+| 📘 學習 | 閱讀清單 📖（進度 / 筆記 / 統計） | ✅ 可用 |
+| 📘 學習 | 習慣追蹤 🔥（連續日數 / 完成率） | ✅ 可用 |
 | 💼 工作 | BAFS 教學 AI 🤖（出題 / 教案 / 批改評語） | ✅ 可用 |
 | 💼 工作 | 待辦 / 批改 ✅ | ✅ 可用 |
 | 💼 工作 | 班別管理 🏫 | ✅ 可用 |
@@ -31,12 +34,30 @@
 | 💼 工作 | BAFS 題庫 🧩 | ✅ 可用 |
 | 💼 工作 | 教學資源庫 🗂️ | ✅ 可用 |
 | 💼 工作 | 成績管理 📈（成績表 + 弱項分析） | ✅ 可用 |
-| 💼 工作 | 備課 / 教案 📋 | 🚧 即將推出 |
-| 兩者共用 | 行事曆 📅 | 🚧 即將推出 |
+| 💼 工作 | 備課 / 教案 📋（教案編輯 + 範本） | ✅ 可用 |
+| 💼 工作 | 時間表 🗓️（每週課堂） | ✅ 可用 |
+| 💼 工作 | 點名 / 出席 🙋（出席率 / 統計） | ✅ 可用 |
+| 💼 工作 | 家長溝通 ✉️（聯絡記錄 + 範本） | ✅ 可用 |
+| 💼 工作 | 會議筆記 📝 | ✅ 可用 |
+| 💼 工作 | 收支記帳 💰（分類 / 趨勢 / 預算） | ✅ 可用 |
+| 💼 工作 | 工作儀表板 📊 | ✅ 可用 |
+| 💼 工作 | BAFS 教學 AI 🤖 / 問我嘅資料 AI 🔮 | ✅ 可用 |
+| 兩者共用 | 行事曆 📅（Apple 級：月/週/日/年 + 重複 + 拖拉縮放） | ✅ 可用 |
+| 兩者共用 | 全域搜尋 🔍 / 快速擷取 ⚡ / 重要日子倒數 ⏳ / 自我測驗 🧪 | ✅ 可用 |
 
-> **Supabase 雲端 + Gemini AI 已接入。** Google 登入、資料雲端同步、AI 助手（兩個模式）都喺 code 度做好；
+> **Supabase 雲端 + Gemini AI 已接入。** Google 登入、資料雲端同步（全部 collection 自動同步）、AI 助手（兩個模式）都喺 code 度做好；
 > 設定好你自己嘅 Supabase project + Gemini key 即可啟用，未設定時以「訪客模式」（資料存本機）運作。
 > 一次性設定步驟見 **[`docs/SETUP.md`](docs/SETUP.md)**。
+
+## 🛡️ 工程品質
+
+- **無障礙（a11y）**：icon 按鈕有 aria-label、動態區 aria-live、toggle 有 aria-pressed/current；Modal 有 `role=dialog` + focus-trap + Esc 關閉；對話框/選單鍵盤可達。
+- **手機 responsive**：27 個功能全部 375px 起無橫向溢出；表格橫捲、多欄手機收窄、觸控目標 ≥36px。
+- **測試**：1200+ 個 vitest 單元測試（純函式 / 業務計算 / 行事曆重複引擎），GitHub Actions CI 每次 push 跑 build + test。
+- **穩健**：Error Boundary 防單一功能崩潰拖垮全 app；空 / 邊緣資料有 guard。
+- **效能**：每個功能 React.lazy 分包（code-split）+ idle 預載；vendor（react/supabase/lucide）獨立 chunk。
+- **PWA**：可安裝、離線可用（vite-plugin-pwa + Workbox）。
+- **深色模式**：navy-tinted slate，全功能支援。
 
 ## 🚀 點樣行起
 
@@ -52,8 +73,9 @@ npm run preview  # 預覽打包後嘅版本
 ## 🛠️ 點樣加新功能
 
 1. 喺 `src/features/learning/` 或 `src/features/work/` 整一個 React 元件。
-2. 喺 `src/features/registry.ts` 嘅 `FEATURES` 陣列加多一個項目（填 `name`、`icon`、`modes`、`component`、`status`）。
-3. 搞掂！側邊欄同首頁概覽會自動顯示新功能。
+2. 喺 `src/features/registry.ts` 嘅 `FEATURES` 陣列加項目：`id`、`name`、`icon`、`modes`、`group`、`component: lazyFeature(() => import('./...'))`（自動分包）。
+3. 要持久化資料？喺功能資料夾用 `createCollection<T>('key', ...)`（會自動登記去 `collectionRegistry`，登入後一齊雲端同步 + 匯出）。
+4. 搞掂！側邊欄、首頁概覽、⌘K 指令面板會自動顯示新功能。
 
 想加多一個模式（例如「研究模式」）？喺 `src/modes/modes.ts` 嘅 `MODES` 加多一個就得。
 
@@ -62,14 +84,18 @@ npm run preview  # 預覽打包後嘅版本
 ```
 src/
 ├── modes/modes.ts            # 模式定義（學習 / 工作、主題色）
-├── context/ModeContext.tsx   # 模式狀態 + 切換 + 記憶
-├── hooks/useLocalStorage.ts  # 資料持久化小工具
+├── context/                  # Mode / Auth / Settings / Toast / Confirm / Nav 狀態
+├── lib/
+│   ├── store.ts              # ★ createCollection（localStorage）+ collectionRegistry
+│   ├── sync.ts               # 登入後逐 collection 雲端同步（last-write-wins）
+│   ├── supabase.ts           # Supabase client + Google OAuth
+│   └── ai.ts                 # Gemini 串流（經 Supabase Edge Function 代理）
+├── ui/index.tsx              # ★ 共用元件庫（Button/Card/Modal/Table/EmptyState…）
 ├── features/
-│   ├── types.ts              # Feature 型別
-│   ├── registry.ts           # ★ 功能註冊表（擴充中心）
-│   ├── learning/             # 學習模式功能
-│   └── work/                 # 工作模式功能
-├── components/               # 側邊欄、模式切換掣、功能卡…
+│   ├── registry.ts           # ★ 功能註冊表（React.lazy 分包 + 擴充中心）
+│   ├── featureIcons.tsx      # lucide 圖示系統
+│   ├── learning/  work/  shared/   # 功能（每個 = 主元件 + 同名子資料夾放 util/store/charts）
+├── components/               # Sidebar / MobileTopBar / CommandPalette(⌘K) / ErrorBoundary
 ├── pages/Home.tsx            # 首頁概覽
-└── App.tsx                   # 主框架
+└── App.tsx                   # 主框架（Suspense + ErrorBoundary + ⌘K）
 ```
