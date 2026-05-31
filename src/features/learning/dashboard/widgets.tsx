@@ -17,6 +17,7 @@ import {
   TrendingUp,
   Clock,
   MapPin,
+  HeartPulse,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { Badge, Card, EmptyState, ProgressBar, SectionTitle, cx } from '../../../ui'
@@ -46,6 +47,8 @@ import {
   isAllDay,
   colorOf as calColorOf,
 } from '../../shared/calendar/util'
+import { useHealthLogs, useHealthGoals } from '../health/store'
+import { summarize as summarizeHealth } from '../health/util'
 
 // ============================================================
 //  儀表板各 widget（自給自足卡片）
@@ -69,6 +72,46 @@ function GoLink({ onClick, label }: { onClick: () => void; label: string }) {
       {label}
       <ChevronRight size={13} />
     </button>
+  )
+}
+
+// ───────── 健康快照 ─────────
+export function HealthWidget({ open }: { open: Open }) {
+  const logs = useHealthLogs()
+  const goals = useHealthGoals()
+  const s = summarizeHealth(logs, goals)
+  const rows: [string, string][] = [
+    ['睡眠（7 日均）', s.sleepAvg7 != null ? `${s.sleepAvg7.toFixed(1)} 小時` : '—'],
+    ['本週運動', `${s.exerciseWeek} 分鐘`],
+    ['心情（7 日均）', s.moodAvg7 != null ? `${s.moodAvg7.toFixed(1)} / 5` : '—'],
+  ]
+  if (s.streak > 0) rows.push(['連續記錄', `${s.streak} 日 🔥`])
+  return (
+    <Card className="p-4">
+      <SectionTitle icon={HeartPulse} right={<GoLink onClick={() => open('learning-health')} label="記錄" />}>
+        健康
+      </SectionTitle>
+      {logs.length === 0 ? (
+        <EmptyState icon={HeartPulse} title="仲未記錄" hint="記低今日體重、睡眠、運動、飲水同心情。" />
+      ) : (
+        <div className="flex items-center gap-4">
+          <MiniRing value={s.waterPct} size={68} stroke={7}>
+            <span className="text-sm font-bold tabular-nums text-slate-700 dark:text-slate-200">
+              {s.waterPct}%
+            </span>
+            <span className="text-[10px] text-slate-400">飲水</span>
+          </MiniRing>
+          <div className="min-w-0 flex-1 space-y-1 text-sm">
+            {rows.map(([k, v]) => (
+              <div key={k} className="flex items-center justify-between gap-2">
+                <span className="text-slate-500 dark:text-slate-400">{k}</span>
+                <span className="font-semibold tabular-nums text-slate-700 dark:text-slate-200">{v}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </Card>
   )
 }
 

@@ -428,6 +428,7 @@ describe('readPrefs', () => {
       'flashcards',
       'goals',
       'habits',
+      'health',
       'reading',
       'quiz',
       'activity',

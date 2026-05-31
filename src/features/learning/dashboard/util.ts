@@ -442,6 +442,7 @@ export type WidgetId =
   | 'mood'
   | 'quiz'
   | 'flashcards'
+  | 'health'
 
 export interface WidgetDef {
   id: WidgetId
@@ -453,8 +454,9 @@ export const WIDGET_DEFS: WidgetDef[] = [
   { id: 'rings', label: '今日聚焦環', desc: '專注 · 複習 · 習慣 三環進度' },
   { id: 'agenda', label: '今日日程', desc: '行事曆事件 + 倒數' },
   { id: 'flashcards', label: '知識卡複習', desc: '到期卡 + 記憶曲線' },
-  { id: 'goals', label: '學習目標', desc: '加權進度 + 到期' },
+  { id: 'goals', label: '個人目標', desc: '加權進度 + 到期' },
   { id: 'habits', label: '習慣打卡', desc: '今日應做習慣，一撳完成' },
+  { id: 'health', label: '健康快照', desc: '飲水 · 睡眠 · 運動 · 心情' },
   { id: 'reading', label: '在讀書籍', desc: '進度 + 本週頁數' },
   { id: 'mood', label: '心情走勢', desc: '近 14 日日誌心情' },
   { id: 'quiz', label: '測驗表現', desc: '近期測驗準確率' },
@@ -472,6 +474,7 @@ export const DEFAULT_WIDGET_ORDER: WidgetId[] = [
   'flashcards',
   'goals',
   'habits',
+  'health',
   'reading',
   'mood',
   'quiz',

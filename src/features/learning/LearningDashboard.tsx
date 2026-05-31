@@ -63,6 +63,7 @@ import {
   MoodWidget,
   QuizWidget,
   ActivityWidget,
+  HealthWidget,
 } from './dashboard/widgets'
 import {
   greeting,
@@ -472,6 +473,8 @@ function WidgetSlot({
       return <QuizWidget attempts={quizAttempts} open={open} />
     case 'activity':
       return <ActivityWidget items={activity} open={open} />
+    case 'health':
+      return <HealthWidget open={open} />
     default:
       return null
   }
