@@ -283,6 +283,7 @@ export default function HealthTracker() {
       ) : (
         <EmptyState
           icon={Flame}
+          art="empty-health"
           title="開始記錄你嘅健康"
           hint="喺上面填今日體重、睡眠、運動、飲水同心情，趨勢圖會慢慢長出嚟。"
         />
