@@ -134,7 +134,7 @@ export default function Settings() {
       </Card>
 
       <p className="text-center text-xs text-slate-400">
-        NTK Platform · 個人學習與工作平台
+        NTK Platform · 個人與工作平台
       </p>
     </div>
   )

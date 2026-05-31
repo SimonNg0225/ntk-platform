@@ -1,7 +1,7 @@
 // ============================================================
 //  模式定義 (Modes)
 //  ------------------------------------------------------------
-//  呢個平台核心就係「模式切換」：學習模式 vs 工作模式。
+//  呢個平台核心就係「模式切換」：個人模式 vs 工作模式。
 //  每個模式有自己嘅名稱、主題色、標語。
 //  切換模式時，主題色會經 CSS 變數套用落成個介面。
 //
@@ -13,7 +13,7 @@ export type ModeId = 'learning' | 'work'
 
 export interface ModeDef {
   id: ModeId
-  /** 完整名稱，例如「學習模式」 */
+  /** 完整名稱，例如「個人模式」 */
   name: string
   /** 短名，用喺切換掣 */
   short: string
@@ -34,13 +34,13 @@ export interface ModeDef {
 }
 
 // 統一主題：海軍藍 × 白。
-// 兩個模式用唔同濃淡嘅藍嚟分辨 —— 學習較明亮、工作較深沉。
+// 兩個模式用唔同濃淡嘅藍嚟分辨 —— 個人較明亮、工作較深沉。
 export const MODES: Record<ModeId, ModeDef> = {
   learning: {
     id: 'learning',
-    name: '學習模式',
-    short: '學習',
-    tagline: '提升個人知識增長',
+    name: '個人模式',
+    short: '個人',
+    tagline: '記錄生活，持續成長',
     icon: '📘',
     accent: '#2f6cb3', // 中海軍藍（較明亮）
     accentSoft: '#e9f0f9',

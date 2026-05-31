@@ -15,7 +15,7 @@ function lazyFeature(
   return C
 }
 
-// 學習模式功能
+// 個人模式功能
 const NotesWidget = lazyFeature(() => import('./learning/NotesWidget'))
 const GoalsWidget = lazyFeature(() => import('./learning/GoalsWidget'))
 const Flashcards = lazyFeature(() => import('./learning/Flashcards'))
@@ -56,11 +56,11 @@ const AskData = lazyFeature(() => import('./shared/AskData'))
 // ============================================================
 
 export const FEATURES: Feature[] = [
-  // ═══════════ 學習模式 ═══════════
+  // ═══════════ 個人模式 ═══════════
   {
     id: 'learning-dashboard',
     modes: ['learning'],
-    name: '學習儀表板',
+    name: '個人儀表板',
     description: '今日複習、連續日數、目標、最近筆記一覽。',
     icon: '📊',
     group: '概覽',
@@ -70,7 +70,7 @@ export const FEATURES: Feature[] = [
   {
     id: 'learning-ai',
     modes: ['learning'],
-    name: '學習夥伴 AI',
+    name: '個人 AI 助手',
     description: '問答、解釋概念、總結筆記、出練習。',
     icon: '🤖',
     group: 'AI',
@@ -90,7 +90,7 @@ export const FEATURES: Feature[] = [
   {
     id: 'learning-notes',
     modes: ['learning'],
-    name: '學習筆記',
+    name: '個人筆記',
     description: '隨手記低學到嘅重點，自動儲存。',
     icon: '📝',
     group: '知識管理',
@@ -120,7 +120,7 @@ export const FEATURES: Feature[] = [
   {
     id: 'learning-goals',
     modes: ['learning'],
-    name: '學習目標',
+    name: '個人目標',
     description: '設定目標、追蹤進度。',
     icon: '🎯',
     group: '目標與習慣',
@@ -131,7 +131,7 @@ export const FEATURES: Feature[] = [
     id: 'learning-habits',
     modes: ['learning'],
     name: '習慣追蹤',
-    description: '每日打卡，建立學習好習慣。',
+    description: '每日打卡，建立個人好習慣。',
     icon: '🔥',
     group: '目標與習慣',
     component: HabitTracker,
@@ -150,7 +150,7 @@ export const FEATURES: Feature[] = [
   {
     id: 'learning-journal',
     modes: ['learning'],
-    name: '學習日誌',
+    name: '個人日誌',
     description: '每日反思，連續記低成長軌跡。',
     icon: '📓',
     group: '目標與習慣',
@@ -315,7 +315,7 @@ export const FEATURES: Feature[] = [
     id: 'calendar',
     modes: ['learning', 'work'],
     name: '行事曆',
-    description: '統一管理學習與工作日程。',
+    description: '統一管理個人與工作日程。',
     icon: '📅',
     group: '工具',
     component: Calendar,

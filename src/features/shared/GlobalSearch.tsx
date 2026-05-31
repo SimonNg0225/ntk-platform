@@ -146,9 +146,9 @@ interface SourceKind {
 }
 
 const KIND_META: Record<string, Omit<SourceKind, 'id'>> = {
-  note: { label: '學習筆記', featureId: 'learning-notes', icon: FileText, tone: 'accent', modes: ['learning'] },
-  journal: { label: '學習日誌', featureId: 'learning-journal', icon: NotebookPen, tone: 'accent', modes: ['learning'] },
-  goal: { label: '學習目標', featureId: 'learning-goals', icon: Target, tone: 'green', modes: ['learning'] },
+  note: { label: '個人筆記', featureId: 'learning-notes', icon: FileText, tone: 'accent', modes: ['learning'] },
+  journal: { label: '個人日誌', featureId: 'learning-journal', icon: NotebookPen, tone: 'accent', modes: ['learning'] },
+  goal: { label: '個人目標', featureId: 'learning-goals', icon: Target, tone: 'green', modes: ['learning'] },
   reading: { label: '閱讀清單', featureId: 'learning-reading', icon: BookOpen, tone: 'blue', modes: ['learning'] },
   deck: { label: '知識卡牌組', featureId: 'learning-flashcards', icon: Layers, tone: 'accent', modes: ['learning'] },
   card: { label: '知識卡', featureId: 'learning-flashcards', icon: Layers, tone: 'accent', modes: ['learning'] },
@@ -570,7 +570,7 @@ export default function GlobalSearch() {
           createdAt: now,
           updatedAt: now,
         })
-        toast.success('已建立學習筆記')
+        toast.success('已建立個人筆記')
       } else {
         tasksCol.add({ id: uid(), text, done: false, createdAt: now })
         toast.success('已建立待辦')
@@ -622,7 +622,7 @@ export default function GlobalSearch() {
                 : 'border-slate-200 bg-white text-slate-500 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700',
             )}
           >
-            {scopeMode ? `只搜${mode === 'learning' ? '學習' : '工作'}模式` : '搜全部模式'}
+            {scopeMode ? `只搜${mode === 'learning' ? '個人' : '工作'}模式` : '搜全部模式'}
           </button>
           <div className="flex-1" />
           {hasQuery && (

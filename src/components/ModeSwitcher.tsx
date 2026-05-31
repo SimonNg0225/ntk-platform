@@ -1,7 +1,7 @@
 import { useMode } from '../context/ModeContext'
 import { MODES, MODE_ORDER } from '../modes/modes'
 
-// 模式切換掣 — 平台核心互動：一撳就喺學習 / 工作之間切換
+// 模式切換掣 — 平台核心互動：一撳就喺個人 / 工作之間切換
 // size: 'full' = 側邊欄用 / 'compact' = 手機頂欄用
 export default function ModeSwitcher({
   size = 'full',
