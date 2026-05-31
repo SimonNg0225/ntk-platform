@@ -55,6 +55,17 @@ export async function attachSync(userId: string): Promise<void> {
   attachedUserId = userId
   hydrating = true
 
+  // 0) 確保所有 lazy-load feature 嘅 collection 都登記齊，先 hydrate / 訂閱；
+  //    否則只覆蓋早期登記嘅核心 collection（feature 資料跨裝置會漏同步，
+  //    第一次本地寫入仲會反過嚟覆蓋雲端）。用動態 import 避免 lib→features 靜態循環。
+  try {
+    const reg = await import('../features/registry')
+    await reg.preloadAllFeatures()
+  } catch {
+    /* 預載失敗唔阻同步：照用已登記嘅 collection */
+  }
+  if (attachedUserId !== userId) return // preload 期間若已登出 / 切 user 就停
+
   // 1) 一次過拉晒雲端資料（RLS 已保證只會攞到自己嘅 row）
   const cloud = new Map<string, unknown[]>()
   try {
