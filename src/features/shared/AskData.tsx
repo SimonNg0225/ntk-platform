@@ -64,7 +64,7 @@ function buildContext(): string {
   const goals = goalsCol.get()
   if (goals.length)
     parts.push(
-      '【學習目標】\n' + goals.map((g) => `- ${g.title}（進度 ${g.progress}%）`).join('\n'),
+      '【個人目標】\n' + goals.map((g) => `- ${g.title}（進度 ${g.progress}%）`).join('\n'),
     )
 
   const events = eventsCol

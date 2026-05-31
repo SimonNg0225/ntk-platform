@@ -315,7 +315,8 @@ export default function GoalsWidget() {
       {enriched.length === 0 ? (
         <EmptyState
           icon={Target}
-          title="仲未有學習目標"
+          art="empty-goals"
+          title="仲未有個人目標"
           hint="設定一個目標，拆成里程碑，逐步追蹤進度同動量。"
           action={
             <Button onClick={openNew} icon={Plus}>

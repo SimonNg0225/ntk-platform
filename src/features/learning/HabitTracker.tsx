@@ -274,6 +274,7 @@ export default function HabitTracker() {
           {activeHabits.length === 0 ? (
             <EmptyState
               icon={Sprout}
+              art="empty-habits"
               title="仲未有習慣"
               hint="撳「新增習慣」開始，揀 emoji、顏色同頻率，每日打卡保持連續。"
               action={

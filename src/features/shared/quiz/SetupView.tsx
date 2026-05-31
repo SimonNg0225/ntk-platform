@@ -311,7 +311,7 @@ export function SetupView({
                     </Badge>
                     {isTimed && <Badge tone="accent" icon={Trophy}>搶分</Badge>}
                     <Badge tone={a.mode === 'work' ? 'blue' : 'accent'}>
-                      {a.mode === 'work' ? '工作' : '學習'}
+                      {a.mode === 'work' ? '工作' : '個人'}
                     </Badge>
                   </div>
 

@@ -245,6 +245,7 @@ export default function Countdown() {
           tab === 'upcoming' ? (
             <EmptyState
               icon={Hourglass}
+              art="empty-countdown"
               title="未來暫時無倒數"
               hint="撳「新增倒數」加入考試、死線或評估日子。"
               action={

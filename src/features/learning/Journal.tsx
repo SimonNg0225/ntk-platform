@@ -529,6 +529,7 @@ export default function Journal() {
           {docs.length === 0 ? (
             <EmptyState
               icon={NotebookPen}
+              art="empty-journal"
               title="仲未有日誌"
               hint="每日寫低一啲反思，慢慢就會儲落一本屬於你嘅個人日記。"
               action={
