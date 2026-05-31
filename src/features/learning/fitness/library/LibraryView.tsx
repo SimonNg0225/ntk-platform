@@ -26,6 +26,7 @@ import { useAuth } from '../../../../context/AuthContext'
 import { complete, isAIConfigured } from '../../../../lib/aiClient'
 import { stripJsonFence } from '../../../../lib/aiJson'
 import { EXERCISES, type Exercise, type ExerciseCategory } from './data'
+import { MuscleMap } from './MuscleMap'
 import {
   countByCategory,
   equipmentList,
@@ -358,6 +359,13 @@ function DetailModal({
             </Button>
           </div>
         </div>
+
+        {/* 2D 肌群圖 */}
+        <MuscleMap
+          primaryMuscles={exercise.primaryMuscles}
+          secondaryMuscles={exercise.secondaryMuscles}
+          className="rounded-xl border border-slate-200 bg-slate-50/50 py-3 dark:border-slate-700 dark:bg-slate-800/40"
+        />
 
         {/* 肌群 */}
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
