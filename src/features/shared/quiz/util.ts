@@ -401,7 +401,12 @@ export interface HeatCell {
 export function practiceHeatmap(attempts: QuizAttempt[], days: number): HeatCell[] {
   const counts = new Map<string, number>()
   for (const a of attempts) {
-    const key = a.createdAt.slice(0, 10)
+    // 用本地日期分桶，對齊下面用 getFullYear/getMonth/getDate 砌嘅格仔
+    // （直接 slice ISO 係 UTC，凌晨做題會落錯日 / 「今日」格永遠 0）
+    const ad = new Date(a.createdAt)
+    const key = Number.isNaN(ad.getTime())
+      ? a.createdAt.slice(0, 10)
+      : `${ad.getFullYear()}-${pad2(ad.getMonth() + 1)}-${pad2(ad.getDate())}`
     counts.set(key, (counts.get(key) ?? 0) + a.total)
   }
   const out: HeatCell[] = []

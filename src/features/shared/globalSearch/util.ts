@@ -157,7 +157,8 @@ export function snippetAround(
   indices: number[],
   pad = 36,
 ): { text: string; offset: number } {
-  const flatten = (s: string) => s.replace(/[\n\r\t]+/g, ' ')
+  // 逐字元換成空格（唔用 + 合併連續空白），確保長度 1:1，令高亮 index 精準映射
+  const flatten = (s: string) => s.replace(/[\n\r\t]/g, ' ')
   if (indices.length === 0) {
     const cut = flatten(text.slice(0, pad * 2))
     return { text: cut + (text.length > pad * 2 ? '…' : ''), offset: 0 }

@@ -1720,7 +1720,12 @@ function DuplicatesModal({
 
   const resolveGroup = async (gi: number) => {
     const g = groups[gi]
-    const keepId = keep[gi]
+    if (!g) return
+    // 保留 id 必須屬於本組；若 state 落後（組別重算後 index 偏移）就 fallback
+    // 保留第一條，避免「揀嘅 id 唔喺組入面」而刪走成組（連應保留嗰條）。
+    const keepId = g.questions.some((q) => q.id === keep[gi])
+      ? keep[gi]
+      : g.questions[0].id
     const toRemove = g.questions.filter((q) => q.id !== keepId)
     if (toRemove.length === 0) return
     const ok = await confirm({

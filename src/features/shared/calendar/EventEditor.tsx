@@ -18,7 +18,7 @@ import type {
 import { useToast } from '../../../context/ToastContext'
 import { useConfirm } from '../../../context/ConfirmContext'
 import { Button, Field, Input, Modal, Select, Textarea, cx } from '../../../ui'
-import { WEEKDAYS, colorOf } from './util'
+import { WEEKDAYS, addDays, colorOf, fromKey, toKey } from './util'
 
 const FREQ_OPTIONS: { v: RecurrenceFreq; l: string }[] = [
   { v: 'none', l: '不重複' },
@@ -193,13 +193,24 @@ export default function EventEditor({
     // 原系列：將此 occurrence 加入例外（嗰日唔再出現）
     const ex = Array.from(new Set([...(editing.exDates ?? []), occurrenceKey]))
     eventsCol.update(editing.id, { exDates: ex })
-    // 建立此日獨立（非重複）事件，帶新值
+    // 建立此日獨立（非重複）事件，帶新值。
+    // 編輯器嘅日期欄預設係「系列開始日」(editing.date)，而非今次被編輯嗰個
+    // occurrence；若照用 startDate，新事件會錯誤落喺系列開始日（重複咗 +
+    // 被編輯嗰日反而消失）。所以以 occurrenceKey 為基準，套返用戶喺日期欄
+    // 相對系列開始日所作嘅位移，保留時長。
     const payload = buildPayload()
     delete payload.recurrence
     delete payload.exDates
+    const dayDelta = Math.round(
+      (fromKey(occurrenceKey).getTime() - fromKey(editing.date).getTime()) / 86400000,
+    )
+    payload.date = toKey(addDays(fromKey(payload.date), dayDelta))
+    if (payload.endDate) {
+      payload.endDate = toKey(addDays(fromKey(payload.endDate), dayDelta))
+    }
     eventsCol.add(payload)
     toast.success('已更新此活動')
-    onSaved?.(startDate)
+    onSaved?.(payload.date)
     onClose()
   }
 

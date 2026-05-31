@@ -57,6 +57,7 @@ import {
   actionStats,
   collectActions,
   fromKey,
+  keyOf,
   mergeNotes,
   monthlyMeetingBars,
   noteMetaCol,
@@ -108,7 +109,7 @@ function longDateLabel(key: string): string {
 function dueBadgeTone(due: string | undefined, done: boolean) {
   if (done || !due) return null
   const today = todayKey()
-  const soon = new Date(Date.now() + 7 * 864e5).toISOString().slice(0, 10)
+  const soon = keyOf(new Date(Date.now() + 7 * 864e5))
   if (due < today) return { tone: 'rose' as const, label: '逾期' }
   if (due <= soon) return { tone: 'amber' as const, label: '快到期' }
   return { tone: 'slate' as const, label: '' }
@@ -206,7 +207,7 @@ export default function MeetingNotes() {
   // ───────── 行動中心：扁平化 + 篩選 + 分組 ─────────
   const filteredActions = useMemo(() => {
     const today = todayKey()
-    const soon = new Date(Date.now() + 7 * 864e5).toISOString().slice(0, 10)
+    const soon = keyOf(new Date(Date.now() + 7 * 864e5))
     return allActions
       .filter((a) => {
         switch (actionFilter) {

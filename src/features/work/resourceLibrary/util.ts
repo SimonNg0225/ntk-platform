@@ -554,7 +554,7 @@ export function addedTrend(
   const buckets = new Map<string, number>()
   for (let i = days - 1; i >= 0; i--) buckets.set(addDaysKey(today, -i), 0)
   for (const r of rows) {
-    const key = r.res.createdAt.slice(0, 10)
+    const key = keyOf(new Date(r.res.createdAt))
     if (buckets.has(key)) buckets.set(key, (buckets.get(key) ?? 0) + 1)
   }
   return [...buckets.entries()].map(([key, count]) => ({
@@ -573,7 +573,7 @@ export function openTrend(
   const buckets = new Map<string, number>()
   for (let i = days - 1; i >= 0; i--) buckets.set(addDaysKey(today, -i), 0)
   for (const l of logs) {
-    const key = l.ts.slice(0, 10)
+    const key = keyOf(new Date(l.ts))
     if (buckets.has(key)) buckets.set(key, (buckets.get(key) ?? 0) + 1)
   }
   return [...buckets.entries()].map(([key, count]) => ({

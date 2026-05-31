@@ -633,6 +633,7 @@ function AnalysisTab({ classId, className }: { classId: string; className: strin
     })
     return [...byTopic.entries()]
       .map(([tid, arr]) => ({
+        id: tid,
         topic: topics.find((t) => t.id === tid)?.topic ?? '未分類',
         area: topics.find((t) => t.id === tid)?.area ?? '',
         avg: round1(mean(arr) ?? 0),
@@ -866,7 +867,7 @@ function AnalysisTab({ classId, className }: { classId: string; className: strin
                 const tone = pctTone(t.avg)
                 const band = gradeOf(t.avg, scheme.scale)
                 return (
-                  <li key={t.topic}>
+                  <li key={t.id}>
                     <div className="mb-1 flex items-center justify-between text-xs">
                       <span className="flex items-center gap-1.5 text-slate-600 dark:text-slate-300">
                         {t.area && (

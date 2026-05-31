@@ -30,6 +30,14 @@ export function offsetFromToday(n: number): string {
   return addDays(todayISO(), n)
 }
 
+// 將一個完整 ISO 時間戳（UTC，如 createdAt / completedAt）轉成「本地」
+// 嘅 YYYY-MM-DD。直接 slice(0,10) 會攞到 UTC 日期，喺 UTC+8 等時區會
+// 偏差一日（例如本地凌晨完成 → UTC 仲係尋日）。要同 todayISO()/到期日
+// 等本地日期一致比較，必須先轉本地。
+export function localDay(iso: string): string {
+  return localISO(new Date(iso))
+}
+
 // 兩個 ISO 相差幾多日（b - a，正=b 喺後）
 export function daysBetween(a: string, b: string): number {
   const pa = a.split('-').map(Number)
@@ -268,10 +276,10 @@ export function buildTrend(tasks: FullTask[], days: number): TrendPoint[] {
   }
   const idx = new Map(out.map((p, i) => [p.key, i]))
   for (const t of tasks) {
-    const ck = t.createdAt.slice(0, 10)
+    const ck = localDay(t.createdAt)
     if (idx.has(ck)) out[idx.get(ck)!].created++
     if (t.done && t.meta.completedAt) {
-      const dk = t.meta.completedAt.slice(0, 10)
+      const dk = localDay(t.meta.completedAt)
       if (idx.has(dk)) out[idx.get(dk)!].completed++
     }
   }
@@ -289,7 +297,7 @@ export function buildHeat(tasks: FullTask[], days: number): HeatCell[] {
   const counts = new Map<string, number>()
   for (const t of tasks) {
     if (t.done && t.meta.completedAt) {
-      const k = t.meta.completedAt.slice(0, 10)
+      const k = localDay(t.meta.completedAt)
       counts.set(k, (counts.get(k) ?? 0) + 1)
     }
   }

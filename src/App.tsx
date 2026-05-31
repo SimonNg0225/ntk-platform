@@ -11,6 +11,7 @@ import CommandPalette from './components/CommandPalette'
 import Home from './pages/Home'
 import Settings from './pages/Settings'
 import ComingSoon from './components/ComingSoon'
+import ErrorBoundary from './components/ErrorBoundary'
 import { getFeature, preloadAllFeatures } from './features/registry'
 import { FeatureIcon } from './features/featureIcons'
 
@@ -128,15 +129,17 @@ function AppShell() {
                   </div>
                   <div>
                     {feature.status === 'ready' && feature.component ? (
-                      <Suspense
-                        fallback={
-                          <div className="py-20 text-center text-sm text-slate-400">
-                            載入中…
-                          </div>
-                        }
-                      >
-                        <feature.component />
-                      </Suspense>
+                      <ErrorBoundary key={feature.id} onReset={() => navigate(null)}>
+                        <Suspense
+                          fallback={
+                            <div className="py-20 text-center text-sm text-slate-400">
+                              載入中…
+                            </div>
+                          }
+                        >
+                          <feature.component />
+                        </Suspense>
+                      </ErrorBoundary>
                     ) : (
                       <ComingSoon name={feature.name} />
                     )}

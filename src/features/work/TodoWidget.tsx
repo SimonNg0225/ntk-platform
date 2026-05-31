@@ -64,6 +64,7 @@ import {
   daysBetween,
   dueBucket,
   dueLabel,
+  localDay,
   offsetFromToday,
   parseQuickAdd,
   projColorCls,
@@ -822,7 +823,7 @@ function TodayView(props: {
     .filter((t) => !t.done && dueBucket(t.meta.due, today) === 'today')
     .sort(sorter)
   const doneToday = tasks
-    .filter((t) => t.done && t.meta.completedAt?.slice(0, 10) === today)
+    .filter((t) => t.done && t.meta.completedAt && localDay(t.meta.completedAt) === today)
     .sort((a, b) => (a.meta.completedAt! < b.meta.completedAt! ? 1 : -1))
 
   const empty = overdue.length === 0 && todayList.length === 0 && doneToday.length === 0

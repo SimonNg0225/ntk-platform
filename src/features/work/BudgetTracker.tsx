@@ -73,6 +73,7 @@ import {
   fmtDate,
   fmtMoney,
   inMonth,
+  monthKey,
   monthLabel,
   monthlyTrend,
   pruneBudgets,
@@ -117,7 +118,7 @@ export default function BudgetTracker() {
   const recurring = useCollection(recurringCol)
   const toast = useToast()
 
-  const [month, setMonth] = useState(() => new Date().toISOString().slice(0, 7))
+  const [month, setMonth] = useState(() => monthKey(new Date()))
   const [tab, setTab] = useState<TopTab>('overview')
 
   // 新增 / 編輯 Modal
@@ -182,7 +183,7 @@ export default function BudgetTracker() {
             <ChevronLeft size={18} />
           </IconButton>
           <button
-            onClick={() => setMonth(new Date().toISOString().slice(0, 7))}
+            onClick={() => setMonth(monthKey(new Date()))}
             className="min-w-[7rem] rounded-md px-2 py-1 text-center text-sm font-semibold tabular-nums text-slate-800 transition hover:bg-slate-100 dark:text-slate-100 dark:hover:bg-slate-700"
             title="返回本月"
           >
@@ -318,7 +319,7 @@ export default function BudgetTracker() {
           editing={editing}
           presetKind={presetKind}
           cats={cats}
-          defaultDate={month === new Date().toISOString().slice(0, 7) ? todayIso() : `${month}-01`}
+          defaultDate={month === monthKey(new Date()) ? todayIso() : `${month}-01`}
           onClose={() => setShowForm(false)}
           onSaved={(m) => toast.success(m)}
         />
@@ -359,7 +360,7 @@ function OverviewTab({
 }) {
   const cells = useMemo(() => dailyBreakdown(monthTxs, month), [monthTxs, month])
   const todayDay =
-    month === new Date().toISOString().slice(0, 7) ? Number(todayIso().slice(8, 10)) : null
+    month === monthKey(new Date()) ? Number(todayIso().slice(8, 10)) : null
 
   const donutSegs = expenseCats.slice(0, 7).map((row, i) => ({
     label: catOf(row.categoryId)?.name ?? '未分類',
@@ -892,7 +893,7 @@ function BudgetsTab({
 
   const [editCat, setEditCat] = useState<TxCategory | null>(null)
 
-  const isCurrent = month === new Date().toISOString().slice(0, 7)
+  const isCurrent = month === monthKey(new Date())
 
   return (
     <div className="space-y-4 animate-fade-in">
@@ -1260,7 +1261,7 @@ function AnalysisTab({
           <Stat
             label="月底預測"
             value={fmtMoney(stats.projectedExpense)}
-            hint={month === new Date().toISOString().slice(0, 7) ? '按目前速度' : '實際'}
+            hint={month === monthKey(new Date()) ? '按目前速度' : '實際'}
           />
           <Stat
             label="儲蓄率"

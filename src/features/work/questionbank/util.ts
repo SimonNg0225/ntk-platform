@@ -558,7 +558,8 @@ export function rowsToQuestions(
       DIFF_FROM_TEXT[(r[cDiff] ?? '').trim().toLowerCase()] ?? 'medium'
     const topicId = findTopic(r[cTopic] ?? '')
     const marksRaw = (r[cMarks] ?? '').replace(/[^\d.]/g, '')
-    const marks = marksRaw ? Number(marksRaw) : undefined
+    const marksNum = marksRaw ? Number(marksRaw) : NaN
+    const marks = Number.isFinite(marksNum) ? marksNum : undefined
 
     if (type === 'mc') {
       const options = [r[cA], r[cB], r[cC], r[cD]]

@@ -1016,7 +1016,7 @@ function PlanCard({
   const sMeta = STATUS_META[status]
   const SIcon = STATUS_ICON[status]
   const dur = meta?.durationMin ?? totalPhaseMinutes(meta?.phases ?? [])
-  const phaseCount = meta?.phases.length ?? 0
+  const phaseCount = meta?.phases?.length ?? 0
   const mat = materialsDone(meta?.materials ?? [])
   const matPct = mat.total ? Math.round((mat.done / mat.total) * 100) : 0
 
