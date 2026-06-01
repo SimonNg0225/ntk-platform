@@ -261,6 +261,35 @@ export function computeStats(rows: InboxRow[], now = Date.now()): InboxStats {
   }
 }
 
+// ───────── 「拖延中」：久未處理嘅待處理項 ─────────
+// GTD inbox 大忌係嘢掉咗入去就沉底。揾出擱置超過 N 日嘅待處理項，
+// 喺頂顯示輕量提示並可一 click 揭最舊。純衍生、零 schema 改動。
+export const STALE_DAYS = 7
+
+/**
+ * 篩出擱置超過 `days` 日嘅「待處理」項目（已歸檔不計），按最舊→最新排。
+ * `days <= 0` 視為「全部待處理」。無效 createdAt 一律排除。
+ */
+export function staleInboxRows(
+  rows: InboxRow[],
+  days = STALE_DAYS,
+  now = Date.now(),
+): InboxRow[] {
+  const cutoff = now - days * 864e5
+  return rows
+    .filter((r) => !r.archived)
+    .filter((r) => {
+      const t = new Date(r.item.createdAt).getTime()
+      return !Number.isNaN(t) && t <= cutoff
+    })
+    .sort(byOldest)
+}
+
+/** 純粹按時間舊→新（最舊排頭），畀「按最舊排」用 */
+export function byOldest(a: InboxRow, b: InboxRow): number {
+  return a.item.createdAt.localeCompare(b.item.createdAt)
+}
+
 // ───────── 全部已用標籤（畀 filter 用）─────────
 export function allTags(rows: InboxRow[]): string[] {
   const set = new Set<string>()

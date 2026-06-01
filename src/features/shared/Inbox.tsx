@@ -25,6 +25,8 @@ import {
   Lightbulb,
   AlertTriangle,
   ChevronDown,
+  Clock,
+  ArrowDownWideNarrow,
 } from 'lucide-react'
 import { useCollection } from '../../lib/store'
 import {
@@ -88,7 +90,10 @@ import {
   dayGroupLabel,
   buildRow,
   sortRows,
+  byOldest,
   computeStats,
+  staleInboxRows,
+  STALE_DAYS,
   allTags,
   guessKind,
   type InboxRow,
@@ -149,6 +154,7 @@ export default function Inbox() {
   const [selectMode, setSelectMode] = useState(false)
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [cursor, setCursor] = useState(0) // 鍵盤聚焦索引
+  const [sortOldest, setSortOldest] = useState(false) // 「按最舊排」清拖延
   const [showStats, setShowStats] = useState(false)
   const [aiBusy, setAiBusy] = useState(false)
   const [eventDraft, setEventDraft] = useState<{ row: InboxRow } | null>(null)
@@ -172,6 +178,8 @@ export default function Inbox() {
 
   const tagOptions = useMemo(() => allTags(allRows), [allRows])
   const stats = useMemo(() => computeStats(allRows), [allRows])
+  // 「拖延中」：擱置超過 N 日嘅待處理項（提示 + 一 click 按最舊排）
+  const staleRows = useMemo(() => staleInboxRows(allRows, STALE_DAYS), [allRows])
 
   // ── 過濾（tab / kind / tag / 文字）+ 排序 ─────────────────
   const visible = useMemo(() => {
@@ -186,8 +194,8 @@ export default function Inbox() {
           r.item.text.toLowerCase().includes(q) ||
           r.tags.some((t) => t.includes(q)),
       )
-      .sort(sortRows)
-  }, [allRows, tab, kindFilter, tagFilter, search])
+      .sort(sortOldest ? byOldest : sortRows)
+  }, [allRows, tab, kindFilter, tagFilter, search, sortOldest])
 
   // 分組（按日）
   const groups = useMemo(() => {
@@ -227,6 +235,16 @@ export default function Inbox() {
     setTab('inbox')
     captureRef.current?.focus()
   }, [text, mode])
+
+  // ── 「拖延中」：跳去待處理 + 清過濾 + 按最舊排，聚焦最舊 ──
+  const reviewStale = useCallback(() => {
+    setTab('inbox')
+    setKindFilter('all')
+    setTagFilter(null)
+    setSearch('')
+    setSortOldest(true)
+    setCursor(0)
+  }, [])
 
   // ── 轉換邏輯 ─────────────────────────────────────────────
   function convert(row: InboxRow, kind: InboxKind) {
@@ -587,6 +605,48 @@ export default function Inbox() {
           </Button>
         </div>
       </div>
+
+      {/* 「拖延中」提示：擱置超過 N 日嘅待處理項，一 click 按最舊排 */}
+      {staleRows.length > 0 && tab === 'inbox' && !sortOldest && (
+        <button
+          type="button"
+          onClick={reviewStale}
+          className="group mt-4 flex w-full items-center gap-2.5 rounded-2xl border border-amber-200 bg-amber-50 px-3.5 py-2.5 text-left text-amber-800 transition hover:border-amber-300 hover:bg-amber-100/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/50 dark:border-amber-500/25 dark:bg-amber-500/10 dark:text-amber-200 dark:hover:bg-amber-500/15"
+        >
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-600 dark:bg-amber-500/20 dark:text-amber-300">
+            <Clock size={16} />
+          </span>
+          <span className="min-w-0 flex-1 text-sm leading-snug">
+            有{' '}
+            <span className="font-semibold tabular-nums">{staleRows.length}</span>{' '}
+            件擱咗超過{' '}
+            <span className="font-semibold tabular-nums">{STALE_DAYS}</span>{' '}
+            日仲未處理，唔好等佢哋沉底。
+          </span>
+          <span className="flex shrink-0 items-center gap-1 text-xs font-medium text-amber-700 dark:text-amber-300">
+            <ArrowDownWideNarrow size={14} />
+            按最舊排
+          </span>
+        </button>
+      )}
+
+      {/* 正喺「按最舊排」清拖延：畀返一鍵還原預設排序 */}
+      {sortOldest && tab === 'inbox' && (
+        <div className="mt-4 flex items-center justify-between gap-2 rounded-2xl border border-amber-200 bg-amber-50 px-3.5 py-2 text-sm text-amber-800 dark:border-amber-500/25 dark:bg-amber-500/10 dark:text-amber-200">
+          <span className="flex items-center gap-1.5">
+            <ArrowDownWideNarrow size={14} className="shrink-0" />
+            正按最舊排，由擱得最耐嗰件做起。
+          </span>
+          <Button
+            type="button"
+            size="sm"
+            variant="ghost"
+            onClick={() => setSortOldest(false)}
+          >
+            還原排序
+          </Button>
+        </div>
+      )}
 
       {/* 統計面板 */}
       {showStats && (

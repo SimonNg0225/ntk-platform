@@ -10,7 +10,10 @@ import {
   guessKind,
   buildRow,
   sortRows,
+  byOldest,
   computeStats,
+  staleInboxRows,
+  STALE_DAYS,
   allTags,
   type InboxRow,
 } from './util'
@@ -296,5 +299,70 @@ describe('computeStats', () => {
     expect(e.weekCaptured).toBe(0)
     expect(e.oldestInboxIso).toBeUndefined()
     expect(e.topTags).toEqual([])
+  })
+})
+
+describe('byOldest（純時間舊→新）', () => {
+  it('最舊排頭', () => {
+    const older = row({ item: item({ id: 'o', createdAt: '2026-05-01T00:00:00' }) })
+    const newer = row({ item: item({ id: 'n', createdAt: '2026-05-20T00:00:00' }) })
+    expect(byOldest(older, newer)).toBeLessThan(0)
+    expect(byOldest(newer, older)).toBeGreaterThan(0)
+  })
+  it('唔理置頂（與 sortRows 唔同）', () => {
+    const pinnedNew = row({ item: item({ id: 'p', createdAt: '2026-05-20T00:00:00' }), pinned: true })
+    const old = row({ item: item({ id: 'o', createdAt: '2026-05-01T00:00:00' }) })
+    // byOldest 只睇時間：舊嗰個排頭，置頂不影響
+    expect([pinnedNew, old].sort(byOldest).map((r) => r.item.id)).toEqual(['o', 'p'])
+  })
+})
+
+describe('staleInboxRows（拖延中：擱置超過 N 日嘅待處理）', () => {
+  it('預設門檻 = STALE_DAYS（7 日）', () => {
+    expect(STALE_DAYS).toBe(7)
+  })
+  it('只計超過門檻嘅待處理項，按最舊→最新排', () => {
+    const rows: InboxRow[] = [
+      row({ item: item({ id: 'fresh', createdAt: minus(2 * DAY) }) }), // 2 日：未夠耐
+      row({ item: item({ id: 'edge', createdAt: minus(7 * DAY) }) }), // 啱 7 日：算
+      row({ item: item({ id: 'old', createdAt: minus(20 * DAY) }) }), // 20 日
+      row({ item: item({ id: 'oldest', createdAt: minus(40 * DAY) }) }), // 40 日
+    ]
+    const stale = staleInboxRows(rows, 7, NOW)
+    expect(stale.map((r) => r.item.id)).toEqual(['oldest', 'old', 'edge'])
+  })
+  it('排除已歸檔（即使好舊）', () => {
+    const rows: InboxRow[] = [
+      row({ item: item({ id: 'a', createdAt: minus(30 * DAY) }), archived: true }),
+      row({ item: item({ id: 'b', createdAt: minus(30 * DAY) }) }),
+    ]
+    expect(staleInboxRows(rows, 7, NOW).map((r) => r.item.id)).toEqual(['b'])
+  })
+  it('門檻可調（自訂 days）', () => {
+    const rows: InboxRow[] = [
+      row({ item: item({ id: 'a', createdAt: minus(10 * DAY) }) }),
+      row({ item: item({ id: 'b', createdAt: minus(40 * DAY) }) }),
+    ]
+    expect(staleInboxRows(rows, 30, NOW).map((r) => r.item.id)).toEqual(['b'])
+    expect(staleInboxRows(rows, 5, NOW).map((r) => r.item.id)).toEqual(['b', 'a'])
+  })
+  it('days <= 0 → 全部待處理（按最舊排）', () => {
+    const rows: InboxRow[] = [
+      row({ item: item({ id: 'new', createdAt: minus(1000) }) }),
+      row({ item: item({ id: 'old', createdAt: minus(5 * DAY) }) }),
+    ]
+    expect(staleInboxRows(rows, 0, NOW).map((r) => r.item.id)).toEqual(['old', 'new'])
+  })
+  it('無效 createdAt 一律排除', () => {
+    const rows: InboxRow[] = [
+      row({ item: item({ id: 'bad', createdAt: 'not-a-date' }) }),
+      row({ item: item({ id: 'ok', createdAt: minus(30 * DAY) }) }),
+    ]
+    expect(staleInboxRows(rows, 7, NOW).map((r) => r.item.id)).toEqual(['ok'])
+  })
+  it('冇拖延項 → 空陣列', () => {
+    const rows: InboxRow[] = [row({ item: item({ id: 'a', createdAt: minus(1 * DAY) }) })]
+    expect(staleInboxRows(rows, 7, NOW)).toEqual([])
+    expect(staleInboxRows([], 7, NOW)).toEqual([])
   })
 })
