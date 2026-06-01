@@ -112,9 +112,20 @@ export default function HealthTracker() {
   const logs = useHealthLogs()
   const goals = useHealthGoals()
   const toast = useToast()
-  const today = todayKey()
+  // today 由定時器推動：長開唔 reload 嘅 PWA 過咗午夜亦會跟住換日（每分鐘 tick，跟其餘畫面慣例）
+  const [today, setToday] = useState(() => todayKey())
   const [range, setRange] = useState<Range>('14')
   const [goalsOpen, setGoalsOpen] = useState(false)
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      setToday((prev) => {
+        const next = todayKey()
+        return next === prev ? prev : next
+      })
+    }, 60000)
+    return () => clearInterval(id)
+  }, [])
 
   const todayLog = useMemo(() => byDate(logs).get(today), [logs, today])
   const summary = useMemo(() => summarize(logs, goals), [logs, goals])
@@ -132,7 +143,8 @@ export default function HealthTracker() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [today])
 
-  const set = (patch: Partial<Parameters<typeof logDay>[1]>) => logDay(today, patch)
+  // 寫入永遠用即時計算嘅日期 key，避免 stale closure 把資料寫落舊日（跨午夜安全）
+  const set = (patch: Partial<Parameters<typeof logDay>[1]>) => logDay(todayKey(), patch)
 
   const commitNum = (raw: string, key: 'weightKg' | 'sleepHrs', max: number) => {
     if (raw.trim() === '') return
