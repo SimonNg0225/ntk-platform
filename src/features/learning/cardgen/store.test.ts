@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest'
-import { genHistoryCol, recentHistory } from './store'
+import { genHistoryCol, recentHistory, markSaved } from './store'
 import type { GenRecord } from './types'
 
 // ============================================================
@@ -122,5 +122,112 @@ describe('recentHistory', () => {
     // collection 內部次序唔受影響（recentHistory 用 [...].sort 複製）
     expect(genHistoryCol.get()).toBe(before)
     expect(genHistoryCol.get().map((r) => r.id)).toEqual(['a', 'b'])
+  })
+})
+
+// ============================================================
+//  markSaved：生成後補回「已存數 / 牌組名」嘅唯一寫入點
+//  ------------------------------------------------------------
+//  本質係 genHistoryCol.update(id, { saved, deckName }) 嘅薄包裝：
+//  patch 命中嗰條 record 嘅 saved / deckName，其餘欄位原封不動；
+//  id 唔存在則 collection 內容不變（亦唔 throw）。
+// ============================================================
+describe('markSaved', () => {
+  it('命中已存在 record：只改 saved / deckName，其餘欄位不變', () => {
+    const original = rec('a', '2026-04-01T08:00:00.000Z')
+    genHistoryCol.set([original])
+
+    markSaved('a', 5, '生物科')
+
+    const out = genHistoryCol.get()
+    expect(out).toHaveLength(1)
+    const after = out[0]
+    // 目標兩欄被更新
+    expect(after.saved).toBe(5)
+    expect(after.deckName).toBe('生物科')
+    // 其餘欄位（topic / type / generated / ts 等）原封不動
+    expect(after.id).toBe('a')
+    expect(after.ts).toBe('2026-04-01T08:00:00.000Z')
+    expect(after.topic).toBe('topic-a')
+    expect(after.type).toBe('qa')
+    expect(after.generated).toBe(1)
+    expect(after.difficulty).toBe('basic')
+    expect(after.lang).toBe('zh')
+    expect(after.model).toBe('gemini-2.5-flash')
+  })
+
+  it('多條 record：只更新目標 id，其他 record 完全不受影響', () => {
+    genHistoryCol.set([
+      rec('a', '2026-01-01T00:00:00.000Z'),
+      rec('b', '2026-02-01T00:00:00.000Z'),
+      rec('c', '2026-03-01T00:00:00.000Z'),
+    ])
+
+    markSaved('b', 3, '化學科')
+
+    const byId = Object.fromEntries(genHistoryCol.get().map((r) => [r.id, r]))
+    // b 被更新
+    expect(byId.b.saved).toBe(3)
+    expect(byId.b.deckName).toBe('化學科')
+    // a、c 維持原 seed（saved=0、無 deckName）
+    expect(byId.a.saved).toBe(0)
+    expect(byId.a.deckName).toBeUndefined()
+    expect(byId.c.saved).toBe(0)
+    expect(byId.c.deckName).toBeUndefined()
+  })
+
+  it('id 唔存在：collection 內容無變化，亦唔 throw', () => {
+    genHistoryCol.set([
+      rec('a', '2026-01-01T00:00:00.000Z'),
+      rec('b', '2026-02-01T00:00:00.000Z'),
+    ])
+
+    expect(() => markSaved('does-not-exist', 9, '幽靈牌組')).not.toThrow()
+
+    // 內容（逐欄值）維持原狀；無新增、無被改
+    const out = genHistoryCol.get()
+    expect(out).toHaveLength(2)
+    expect(out.map((r) => r.id)).toEqual(['a', 'b'])
+    expect(out.every((r) => r.saved === 0)).toBe(true)
+    expect(out.every((r) => r.deckName === undefined)).toBe(true)
+  })
+
+  it('saved = 0：可把已存數重置為 0（亦覆寫 deckName）', () => {
+    const original: GenRecord = {
+      ...rec('a', '2026-01-01T00:00:00.000Z'),
+      saved: 7,
+      deckName: '舊牌組',
+    }
+    genHistoryCol.set([original])
+
+    markSaved('a', 0, '新牌組')
+
+    const after = genHistoryCol.get()[0]
+    expect(after.saved).toBe(0)
+    expect(after.deckName).toBe('新牌組')
+  })
+
+  it('經 recentHistory 讀返：markSaved 後見到最新 saved / deckName', () => {
+    genHistoryCol.set([
+      rec('old', '2026-01-01T00:00:00.000Z'),
+      rec('new', '2026-03-01T00:00:00.000Z'),
+    ])
+
+    markSaved('new', 4, '物理科')
+
+    // recentHistory 由同一 collection 取數 → 應反映更新
+    const out = recentHistory(10)
+    const target = out.find((r) => r.id === 'new')
+    expect(target).toBeDefined()
+    expect(target?.saved).toBe(4)
+    expect(target?.deckName).toBe('物理科')
+    // 未被標記嗰條維持 saved=0
+    expect(out.find((r) => r.id === 'old')?.saved).toBe(0)
+  })
+
+  it('空 collection 對任何 id markSaved：仍係空、唔 throw', () => {
+    // beforeEach 已 set([])，此處再明確驗證空 collection 邊界
+    expect(() => markSaved('whatever', 1, '牌組')).not.toThrow()
+    expect(genHistoryCol.get()).toEqual([])
   })
 })
