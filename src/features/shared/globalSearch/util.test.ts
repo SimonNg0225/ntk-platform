@@ -1,10 +1,18 @@
-import { describe, it, expect } from 'vitest'
+// relativeTime 嘅 >=7 日退化分支用 new Date(t).getFullYear()/getMonth()/getDate()
+// （讀「本地時區」component），故喺 import 前鎖死 TZ = Asia/Hong_Kong（跟 srs.test.ts
+// 同樣手法）：令絕對日期斷言喺任何 host TZ 都成立。其餘相對分支只睇 epoch diff，
+// 與時區無關。本 repo tsconfig 無 @types/node，故自行最小宣告 process（只用 env.TZ）。
+declare const process: { env: Record<string, string | undefined> }
+process.env.TZ = 'Asia/Hong_Kong'
+
+import { describe, it, expect, vi, afterEach } from 'vitest'
 import {
   fuzzyMatch,
   highlightSegments,
   snippetAround,
   parseQuery,
   isPinned,
+  relativeTime,
 } from './util'
 import type { PinnedSearch } from './util'
 
@@ -13,8 +21,10 @@ import type { PinnedSearch } from './util'
 //  ------------------------------------------------------------
 //  只測「同樣輸入永遠同樣輸出、無 side effect」嘅純函式：
 //    fuzzyMatch / highlightSegments / snippetAround / parseQuery / isPinned
+//  relativeTime：無 now 參數（內部裸 Date.now），改用 vi fake timers 釘死系統
+//  時間後測（見檔尾 describe）。
 //  跳過：pushRecent / clearRecents / removeRecent / togglePin（寫 collection
-//  + 用 Date.now）、relativeTime（依賴系統當前時間，無 now 參數）。
+//  + 用 Date.now）。
 //  全部預期值用第一性原理人手計，唔靠跑 code 反推。
 // ============================================================
 
@@ -271,5 +281,106 @@ describe('isPinned — 釘選判斷（trim + 大細階無關）', () => {
 
   it('多個釘選中任一相符即 true', () => {
     expect(isPinned('TODO', [pin('note'), pin('todo'), pin('q')])).toBe(true)
+  })
+})
+
+// ============================================================
+//  relativeTime（globalSearch 版）— 缺 now 參數，靠 vi 釘死系統時間先可測
+//  ------------------------------------------------------------
+//  簽名係 relativeTime(iso?): string | null，內部用裸 Date.now()（與 inbox 版
+//  收 now 參數唔同 → 呢個係缺陷源頭：無法純函式注入，只能 fake timers）。
+//  分支（全部用第一性原理人手計門檻）：
+//    diff < 6e4(60s)        → '啱啱'
+//    diff < 36e5(1hr)       → '{floor(diff/6e4)} 分鐘前'
+//    diff < 864e5(24hr)     → '{floor(diff/36e5)} 小時前'
+//    diff < 7×864e5(7日)    → '{floor(diff/864e5)} 日前'
+//    其餘                    → 'YYYY/M/D'（本地 component，月/日「唔補零」，與
+//                              inbox 版退化成「N 週/月/年前」唔同）
+//  時間錨：NOW 固定一個 UTC 瞬間；相對分支只睇 diff（與 TZ 無關），絕對分支
+//  靠頂部 TZ pin（HKT）令本地 Y/M/D 確定。
+// ============================================================
+describe('relativeTime（globalSearch 版，fake timers 釘死 now）', () => {
+  const MIN = 6e4 // 60_000ms
+  const HOUR = 36e5 // 3_600_000ms
+  const DAY = 864e5 // 86_400_000ms
+  // 錨定「現在」= 2026-06-01T12:00:00Z（任意但固定）。
+  const NOW = Date.UTC(2026, 5, 1, 12, 0, 0)
+  // 由 NOW 倒數 ms 構造 iso（UTC ISO；relativeTime 只關心 epoch diff）。
+  const ago = (ms: number): string => new Date(NOW - ms).toISOString()
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  // 每個 case 入面先釘死系統時間（取代裸 Date.now()）。
+  const pin = () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(NOW)
+  }
+
+  it('undefined → null（無 iso）', () => {
+    pin()
+    expect(relativeTime(undefined)).toBeNull()
+    expect(relativeTime()).toBeNull()
+  })
+
+  it('非法 iso → null（Date.parse 回 NaN）', () => {
+    pin()
+    expect(relativeTime('not-a-date')).toBeNull()
+    expect(relativeTime('')).toBeNull() // 空字串先撞 !iso 短路 → null
+  })
+
+  it('diff < 60s → 「啱啱」（含 0 同 59s 邊界）', () => {
+    pin()
+    expect(relativeTime(ago(0))).toBe('啱啱') // 啱啱同一刻
+    expect(relativeTime(ago(30 * 1000))).toBe('啱啱') // 30s
+    expect(relativeTime(ago(MIN - 1))).toBe('啱啱') // 59.999s 仍 < 6e4
+  })
+
+  it('分鐘分支：60s 起、59 分鐘上限（floor）', () => {
+    pin()
+    // 剛好 60s：diff < 6e4 false → 入分鐘分支，floor(60000/6e4)=1
+    expect(relativeTime(ago(MIN))).toBe('1 分鐘前')
+    expect(relativeTime(ago(5 * MIN))).toBe('5 分鐘前')
+    expect(relativeTime(ago(59 * MIN))).toBe('59 分鐘前') // 上限：< 36e5
+  })
+
+  it('小時分支：剛好 1hr 起、23 小時上限（floor）', () => {
+    pin()
+    // 剛好 1hr：diff < 36e5 false → 入小時分支，floor(3600000/36e5)=1
+    expect(relativeTime(ago(HOUR))).toBe('1 小時前')
+    expect(relativeTime(ago(HOUR + 59 * MIN))).toBe('1 小時前') // 1h59m 仍係「1 小時前」
+    expect(relativeTime(ago(23 * HOUR))).toBe('23 小時前') // 上限：< 864e5
+  })
+
+  it('日分支：剛好 24hr 起、6 日上限（floor）', () => {
+    pin()
+    // 剛好 24hr：diff < 864e5 false → 入日分支，floor(86400000/864e5)=1
+    expect(relativeTime(ago(DAY))).toBe('1 日前')
+    expect(relativeTime(ago(DAY + 23 * HOUR))).toBe('1 日前') // 1d23h 仍係「1 日前」
+    expect(relativeTime(ago(6 * DAY))).toBe('6 日前') // 上限：< 7×864e5
+  })
+
+  it('>= 7 日退化成絕對日期「YYYY/M/D」（本地 component，月/日唔補零）', () => {
+    pin()
+    // 構造一個本地（HKT, UTC+8）日子係 2026/3/5 嘅瞬間：2026-03-05T00:00:00+08:00。
+    // 距 NOW 遠超 7 日，必入絕對分支。月=3、日=5 皆單位數 → 驗證「唔補零」。
+    expect(relativeTime('2026-03-05T00:00:00+08:00')).toBe('2026/3/5')
+    // 兩位數月/日照常顯示（唔加多餘前綴）。
+    expect(relativeTime('2025-12-25T08:00:00+08:00')).toBe('2025/12/25')
+  })
+
+  it('剛好 7 日 → 已退化成絕對日期（唔再係「7 日前」）', () => {
+    pin()
+    // diff = 7×864e5：diff < 7×DAY false → 絕對分支。
+    // NOW=2026-06-01T12:00Z，減 7 日 = 2026-05-25T12:00Z = HKT 2026-05-25 20:00 → 2026/5/25
+    expect(relativeTime(ago(7 * DAY))).toBe('2026/5/25')
+  })
+
+  it('本地時區邊界：UTC 與 HKT 跨日令絕對日期差一日（守護 TZ pin 生效）', () => {
+    pin()
+    // 2026-03-04T20:00:00Z：UTC 係 3/4，但 HKT(+8) 係 3/5 04:00。
+    // relativeTime 用本地 component → 回 '2026/3/5'（若 TZ pin 失效會變 '2026/3/4'）。
+    expect(relativeTime('2026-03-04T20:00:00Z')).toBe('2026/3/5')
   })
 })
