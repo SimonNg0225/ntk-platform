@@ -763,40 +763,46 @@ export default function GlobalSearch() {
                 ))}
               </UICard>
             ) : (
-              grouped.map((g) => {
-                const startIdx = flatVisible.findIndex((h) => h.id === g.hits[0].id)
-                const GIcon = g.icon
-                const gTone = KIND_META[g.kindId].tone
-                return (
-                  <UICard key={g.kindId} className="overflow-hidden">
-                    <div className="flex items-center gap-2 border-b border-slate-100 px-3 py-2.5 dark:border-slate-700/60">
-                      <Badge tone={gTone} icon={GIcon}>
-                        {g.label}
-                      </Badge>
-                      <span className="text-xs tabular-nums text-slate-400 dark:text-slate-500">
-                        {g.hits.length} 項
-                      </span>
-                    </div>
-                    <div className="p-1.5">
-                      {g.hits.map((h, j) => {
-                        const flatIdx = startIdx + j
-                        return (
-                          <ResultRow
-                            key={h.id}
-                            hit={h}
-                            query={deferredQuery}
-                            active={flatIdx === activeIdx}
-                            index={flatIdx}
-                            onHover={() => setActiveIdx(flatIdx)}
-                            onOpen={() => goFeature(h)}
-                            rowRef={(el) => registerRow(rowRefs, h.id, el)}
-                          />
-                        )
-                      })}
-                    </div>
-                  </UICard>
-                )
-              })
+              // flatVisible 就係 grouped 順序 flatMap，故各組起始 index = 前面各組 hits 長度之和；
+              // 用 running offset O(1) 累加，等價於原本逐組 findIndex（避免 O(組數 × 結果數) 掃描）。
+              (() => {
+                let startIdx = 0
+                return grouped.map((g) => {
+                  const groupStart = startIdx
+                  startIdx += g.hits.length
+                  const GIcon = g.icon
+                  const gTone = KIND_META[g.kindId].tone
+                  return (
+                    <UICard key={g.kindId} className="overflow-hidden">
+                      <div className="flex items-center gap-2 border-b border-slate-100 px-3 py-2.5 dark:border-slate-700/60">
+                        <Badge tone={gTone} icon={GIcon}>
+                          {g.label}
+                        </Badge>
+                        <span className="text-xs tabular-nums text-slate-400 dark:text-slate-500">
+                          {g.hits.length} 項
+                        </span>
+                      </div>
+                      <div className="p-1.5">
+                        {g.hits.map((h, j) => {
+                          const flatIdx = groupStart + j
+                          return (
+                            <ResultRow
+                              key={h.id}
+                              hit={h}
+                              query={deferredQuery}
+                              active={flatIdx === activeIdx}
+                              index={flatIdx}
+                              onHover={() => setActiveIdx(flatIdx)}
+                              onOpen={() => goFeature(h)}
+                              rowRef={(el) => registerRow(rowRefs, h.id, el)}
+                            />
+                          )
+                        })}
+                      </div>
+                    </UICard>
+                  )
+                })
+              })()
             )}
           </div>
 
