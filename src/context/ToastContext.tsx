@@ -2,6 +2,7 @@ import {
   createContext,
   useCallback,
   useContext,
+  useMemo,
   useState,
   type ReactNode,
 } from 'react'
@@ -54,11 +55,14 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     }, 3000)
   }, [])
 
-  const api: ToastApi = {
-    success: (m) => push('success', m),
-    error: (m) => push('error', m),
-    info: (m) => push('info', m),
-  }
+  const api = useMemo<ToastApi>(
+    () => ({
+      success: (m) => push('success', m),
+      error: (m) => push('error', m),
+      info: (m) => push('info', m),
+    }),
+    [push],
+  )
 
   return (
     <ToastContext.Provider value={api}>
