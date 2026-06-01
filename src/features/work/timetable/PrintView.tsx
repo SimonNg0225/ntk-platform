@@ -3,6 +3,7 @@ import { cx } from '../../../ui'
 import {
   autoColorFor,
   colorOf,
+  cycleShort,
   dayShort,
   type BellRow,
   type SlotMeta,
@@ -16,6 +17,7 @@ import {
 
 export default function PrintView({
   title,
+  cycle,
   bells,
   days,
   slotByKey,
@@ -23,6 +25,7 @@ export default function PrintView({
   classNameById,
 }: {
   title: string
+  cycle?: boolean
   bells: BellRow[]
   days: number[]
   slotByKey: Map<string, TimetableSlot>
@@ -51,7 +54,7 @@ export default function PrintView({
                 key={day}
                 className="border border-slate-300 bg-slate-50 p-1 text-slate-600 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-300"
               >
-                星期{dayShort(day)}
+                {cycle ? `Day ${cycleShort(day)}` : `星期${dayShort(day)}`}
               </th>
             ))}
           </tr>

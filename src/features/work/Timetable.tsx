@@ -428,6 +428,7 @@ export default function Timetable() {
       {view === 'print' && (
         <PrintView
           title="教學時間表"
+          cycle={cycle}
           bells={bells}
           days={days}
           slotByKey={slotByKey}
