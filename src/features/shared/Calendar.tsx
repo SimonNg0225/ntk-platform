@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
-import { ChevronLeft, ChevronRight, Plus, SlidersHorizontal } from 'lucide-react'
+import { CalendarArrowDown, ChevronLeft, ChevronRight, Plus, SlidersHorizontal } from 'lucide-react'
 import { useCollection } from '../../lib/store'
-import { eventsCol, calendarsCol } from '../../data/collections'
+import { eventsCol, calendarsCol, countdownsCol } from '../../data/collections'
 import type { CalendarEvent } from '../../data/types'
 import { Button, IconButton, SegmentedControl, cx } from '../../ui'
 import { useToast } from '../../context/ToastContext'
@@ -10,6 +10,7 @@ import MonthView from './calendar/MonthView'
 import TimeGridView from './calendar/TimeGridView'
 import YearView from './calendar/YearView'
 import CalendarManager from './calendar/CalendarManager'
+import IcsExportModal from './calendar/IcsExportModal'
 import {
   colorOf,
   fromKey,
@@ -53,6 +54,7 @@ function useIsWide(): boolean {
 export default function Calendar() {
   const events = useCollection(eventsCol)
   const cals = useCollection(calendarsCol)
+  const countdowns = useCollection(countdownsCol)
   const toast = useToast()
 
   // 拖拉移動：重複事件唔好盲改 master（會搬郁／重錨成個系列，繞過「僅此次/全部」）。
@@ -75,6 +77,7 @@ export default function Calendar() {
   const [editingOcc, setEditingOcc] = useState<string | undefined>(undefined)
   const [createTime, setCreateTime] = useState<string | undefined>(undefined)
   const [managerOpen, setManagerOpen] = useState(false)
+  const [exportOpen, setExportOpen] = useState(false)
 
   // 視圖範圍
   const { rangeStart, rangeEnd } = useMemo(() => {
@@ -200,6 +203,13 @@ export default function Calendar() {
         >
           <SlidersHorizontal size={13} /> 管理
         </button>
+        <button
+          type="button"
+          onClick={() => setExportOpen(true)}
+          className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium text-slate-400 transition hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+        >
+          <CalendarArrowDown size={13} /> 匯出 .ics
+        </button>
       </div>
 
       {/* 視圖主體 */}
@@ -267,6 +277,15 @@ export default function Calendar() {
 
       {managerOpen && (
         <CalendarManager calendars={cals} onClose={() => setManagerOpen(false)} />
+      )}
+
+      {exportOpen && (
+        <IcsExportModal
+          events={events}
+          cats={cals}
+          countdowns={countdowns}
+          onClose={() => setExportOpen(false)}
+        />
       )}
     </div>
   )
