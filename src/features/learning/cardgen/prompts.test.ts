@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { assembleDraft, buildUserPrompt } from './prompts'
+import { assembleDraft, buildSystemPrompt, buildUserPrompt } from './prompts'
 import type { RawCard } from './types'
 
 // ============================================================
@@ -311,5 +311,171 @@ describe('buildUserPrompt', () => {
     expect(buildUserPrompt('市場營銷 4P', 8, [])).toContain(
       '主題 / 筆記材料：\n市場營銷 4P\n\n',
     )
+  })
+})
+
+// ============================================================
+//  buildSystemPrompt：拼 SHAPE_INSTRUCT[type] / DIFFICULTY_INSTRUCT[difficulty]
+//  / LANG_INSTRUCT[lang] 三個查表 + 固定 JSON-only 尾段。
+//  ------------------------------------------------------------
+//  三個維度任何一個串錯表都唔會被 assembleDraft / buildUserPrompt 測到，
+//  故此處逐維度斷言對應關鍵字，再抽 type×lang 組合做 cross-product sanity。
+// ============================================================
+
+describe('buildSystemPrompt — 卡型 SHAPE_INSTRUCT 嵌入', () => {
+  it('qa：含「卡型：」標籤 + 問題/答案描述', () => {
+    const p = buildSystemPrompt('qa', 'basic', 'zh')
+    expect(p).toContain('卡型：')
+    expect(p).toContain('{"front":"問題","back":"答案"}')
+  })
+
+  it('cloze：含兩重花括號挖空描述（花括號 + {{）', () => {
+    const p = buildSystemPrompt('cloze', 'basic', 'zh')
+    expect(p).toContain('兩重花括號')
+    expect(p).toContain('{{葉綠體}}')
+  })
+
+  it('tf：含「true 或 false」+ 真假各半提示', () => {
+    const p = buildSystemPrompt('tf', 'basic', 'zh')
+    expect(p).toContain('true 或 false')
+    expect(p).toContain('唔好全部都係真')
+  })
+
+  it('term：含名詞/定義描述', () => {
+    const p = buildSystemPrompt('term', 'basic', 'zh')
+    expect(p).toContain('{"front":"名詞或術語","back":"定義同解釋"}')
+  })
+
+  it('四種卡型各自嵌入唔同 SHAPE（互不串）', () => {
+    const qa = buildSystemPrompt('qa', 'basic', 'zh')
+    const term = buildSystemPrompt('term', 'basic', 'zh')
+    const cloze = buildSystemPrompt('cloze', 'basic', 'zh')
+    const tf = buildSystemPrompt('tf', 'basic', 'zh')
+    // cloze 專屬「兩重花括號」唔應出現喺其餘卡型
+    expect(term).not.toContain('兩重花括號')
+    expect(tf).not.toContain('兩重花括號')
+    // tf 專屬「true 或 false」唔應出現喺其餘卡型
+    expect(qa).not.toContain('true 或 false')
+    expect(cloze).not.toContain('true 或 false')
+  })
+})
+
+describe('buildSystemPrompt — 難度 DIFFICULTY_INSTRUCT 嵌入', () => {
+  it('basic：含「核心定義」措辭', () => {
+    const p = buildSystemPrompt('qa', 'basic', 'zh')
+    expect(p).toContain('難度：')
+    expect(p).toContain('核心定義')
+  })
+
+  it('intermediate：含「理解同應用」措辭', () => {
+    const p = buildSystemPrompt('qa', 'intermediate', 'zh')
+    expect(p).toContain('考理解同應用')
+  })
+
+  it('challenge：含「容易混淆」措辭', () => {
+    const p = buildSystemPrompt('qa', 'challenge', 'zh')
+    expect(p).toContain('容易混淆')
+  })
+
+  it('三種難度互不串（basic ≠ intermediate ≠ challenge）', () => {
+    const basic = buildSystemPrompt('qa', 'basic', 'zh')
+    const inter = buildSystemPrompt('qa', 'intermediate', 'zh')
+    const chal = buildSystemPrompt('qa', 'challenge', 'zh')
+    // basic 專屬「啱啱接觸」唔應出現喺進階 / 挑戰
+    expect(inter).not.toContain('啱啱接觸')
+    expect(chal).not.toContain('啱啱接觸')
+    // challenge 專屬「容易混淆」唔應出現喺基礎 / 進階
+    expect(basic).not.toContain('容易混淆')
+    expect(inter).not.toContain('容易混淆')
+  })
+})
+
+describe('buildSystemPrompt — 語言 LANG_INSTRUCT 嵌入', () => {
+  it('zh：含「全部內容用繁體中文」', () => {
+    const p = buildSystemPrompt('qa', 'basic', 'zh')
+    expect(p).toContain('語言：')
+    expect(p).toContain('全部內容用繁體中文。')
+  })
+
+  it('en：含「English only」', () => {
+    const p = buildSystemPrompt('qa', 'basic', 'en')
+    expect(p).toContain('Write every field in English only.')
+  })
+
+  it('bi：含「雙語」+ 括號附英文格式', () => {
+    const p = buildSystemPrompt('qa', 'basic', 'bi')
+    expect(p).toContain('雙語')
+    expect(p).toContain('繁體中文（English）')
+  })
+
+  it('en 唔會誤嵌 zh-only 措辭（語言維度唔串）', () => {
+    const en = buildSystemPrompt('qa', 'basic', 'en')
+    // zh-only 嘅整句「全部內容用繁體中文。」唔應出現喺英文版
+    expect(en).not.toContain('全部內容用繁體中文。')
+    // bi-only 嘅雙語格式句亦唔應出現
+    expect(en).not.toContain('雙語')
+  })
+})
+
+describe('buildSystemPrompt — 固定頭尾段（與 type/difficulty/lang 無關）', () => {
+  it('永遠含開首角色設定', () => {
+    const p = buildSystemPrompt('tf', 'challenge', 'en')
+    expect(p).toContain('你係一個專業嘅知識卡')
+  })
+
+  it('永遠含『只輸出一個 JSON 陣列』固定尾段', () => {
+    // 全 union 組合都應含此句
+    const types = ['qa', 'term', 'cloze', 'tf'] as const
+    const diffs = ['basic', 'intermediate', 'challenge'] as const
+    const langs = ['zh', 'en', 'bi'] as const
+    for (const t of types)
+      for (const d of diffs)
+        for (const l of langs)
+          expect(buildSystemPrompt(t, d, l)).toContain('只輸出一個 JSON 陣列')
+  })
+
+  it('永遠含『唔好加 ``` 圍欄』反 markdown 指示', () => {
+    expect(buildSystemPrompt('cloze', 'intermediate', 'bi')).toContain(
+      '唔好加 ``` 圍欄',
+    )
+  })
+
+  it('六行結構：角色 / 卡型 / 難度 / 語言 / 獨立成立 / JSON-only，用 \\n 連接', () => {
+    const lines = buildSystemPrompt('qa', 'basic', 'zh').split('\n')
+    expect(lines).toHaveLength(6)
+    expect(lines[1].startsWith('卡型：')).toBe(true)
+    expect(lines[2].startsWith('難度：')).toBe(true)
+    expect(lines[3].startsWith('語言：')).toBe(true)
+  })
+})
+
+describe('buildSystemPrompt — cross-product sanity（確認唔串表）', () => {
+  it('(tf, challenge, en)：tf shape + challenge 措辭 + 英文，三者並存且唔互污', () => {
+    const p = buildSystemPrompt('tf', 'challenge', 'en')
+    expect(p).toContain('true 或 false') // tf shape
+    expect(p).toContain('容易混淆') // challenge difficulty
+    expect(p).toContain('English only') // en lang
+    // 唔應夾帶其他維度嘅專屬句
+    expect(p).toContain('卡型：')
+    expect(p).not.toContain('兩重花括號') // 唔係 cloze
+    expect(p).not.toContain('啱啱接觸') // 唔係 basic
+  })
+
+  it('(cloze, basic, bi)：cloze shape + basic 措辭 + 雙語，三者並存', () => {
+    const p = buildSystemPrompt('cloze', 'basic', 'bi')
+    expect(p).toContain('兩重花括號') // cloze shape
+    expect(p).toContain('核心定義') // basic difficulty
+    expect(p).toContain('繁體中文（English）') // bi lang
+    expect(p).not.toContain('true 或 false') // 唔係 tf
+    expect(p).not.toContain('容易混淆') // 唔係 challenge
+  })
+
+  it('同 difficulty/lang 下唔同 type 只係「卡型：」行有別', () => {
+    const qa = buildSystemPrompt('qa', 'intermediate', 'en').split('\n')
+    const tf = buildSystemPrompt('tf', 'intermediate', 'en').split('\n')
+    // 難度行（index 2）同語言行（index 3）相同，卡型行（index 1）唔同
+    expect(qa[2]).toBe(tf[2])
+    expect(qa[3]).toBe(tf[3])
+    expect(qa[1]).not.toBe(tf[1])
   })
 })
