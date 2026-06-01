@@ -49,6 +49,27 @@ export function plusHour(t: string): string {
   return `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`
 }
 
+/**
+ * 「整體編輯」儲存用：將完整 payload 套落原事件，並真正剔走被清空（undefined）
+ * 嘅 optional 欄位 —— store.update() 係 merge `{...old, ...patch}`，剷唔到 key，
+ * 所以呢度自己砌返一個乾淨物件再用 set() 整體取代。保留原 id 同 exDates。
+ */
+export function applyFullEdit(
+  existing: CalendarEvent,
+  payload: Omit<CalendarEvent, 'id'>,
+): CalendarEvent {
+  const merged: Record<string, unknown> = {
+    ...existing,
+    ...payload,
+    id: existing.id,
+    exDates: existing.exDates,
+  }
+  for (const k of Object.keys(merged)) {
+    if (merged[k] === undefined) delete merged[k]
+  }
+  return merged as unknown as CalendarEvent
+}
+
 function Toggle({
   checked,
   onChange,
@@ -133,30 +154,33 @@ export default function EventEditor({
   const valid = title.trim().length > 0 && startDate !== ''
 
   function buildPayload(): Omit<CalendarEvent, 'id'> {
+    // 「整體編輯」嘅 payload：每個 optional 欄位都顯式表達（空 = undefined），
+    // 唔好「省略 key」。否則用 merge 儲存時，清空咗嘅欄位會殘留舊值
+    // （最嚴重：改成『不重複』後 recurrence 殘留 → 事件永遠繼續重複）。
+    // saveThis() 係新增獨立事件（fresh add），唔受 merge 影響。
     const payload: Omit<CalendarEvent, 'id'> = {
       title: title.trim(),
       date: startDate,
       allDay,
-    }
-    if (!allDay) {
-      if (startTime) payload.time = startTime
-      if (endTime) payload.endTime = endTime
-    }
-    if (endDate && endDate !== startDate) payload.endDate = endDate
-    if (calendarId) payload.calendarId = calendarId
-    if (location.trim()) payload.location = location.trim()
-    if (url.trim()) payload.url = url.trim()
-    if (notes.trim()) payload.notes = notes.trim()
-    if (alert >= 0) payload.alertMinutes = alert
-    if (freq !== 'none') {
-      payload.recurrence = {
-        freq,
-        interval: Math.max(1, Number(interval) || 1),
-        ...(until ? { until } : {}),
-        ...(freq === 'weekly' && byWeekday.length
-          ? { byWeekday: [...byWeekday].sort((a, b) => a - b) }
-          : {}),
-      }
+      time: !allDay && startTime ? startTime : undefined,
+      endTime: !allDay && endTime ? endTime : undefined,
+      endDate: endDate && endDate !== startDate ? endDate : undefined,
+      calendarId: calendarId || undefined,
+      location: location.trim() || undefined,
+      url: url.trim() || undefined,
+      notes: notes.trim() || undefined,
+      alertMinutes: alert >= 0 ? alert : undefined,
+      recurrence:
+        freq !== 'none'
+          ? {
+              freq,
+              interval: Math.max(1, Number(interval) || 1),
+              ...(until ? { until } : {}),
+              ...(freq === 'weekly' && byWeekday.length
+                ? { byWeekday: [...byWeekday].sort((a, b) => a - b) }
+                : {}),
+            }
+          : undefined,
     }
     return payload
   }
@@ -170,8 +194,9 @@ export default function EventEditor({
     }
     const payload = buildPayload()
     if (editing) {
-      if (editing.exDates?.length) payload.exDates = editing.exDates
-      eventsCol.update(editing.id, payload)
+      // 整體取代（剔走清空欄位），唔可以用 merge update —— 見 applyFullEdit
+      const next = applyFullEdit(editing, payload)
+      eventsCol.set(eventsCol.get().map((e) => (e.id === editing.id ? next : e)))
       toast.success('已儲存活動')
     } else {
       eventsCol.add(payload)
@@ -184,8 +209,9 @@ export default function EventEditor({
   function saveAll() {
     if (!editing) return
     const payload = buildPayload()
-    if (editing.exDates?.length) payload.exDates = editing.exDates
-    eventsCol.update(editing.id, payload)
+    // 整體取代（剔走清空欄位）—— 見 applyFullEdit；唔可以用 merge update
+    const next = applyFullEdit(editing, payload)
+    eventsCol.set(eventsCol.get().map((e) => (e.id === editing.id ? next : e)))
     toast.success('已更新所有活動')
     onSaved?.(startDate)
     onClose()
