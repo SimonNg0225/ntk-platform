@@ -18,6 +18,9 @@ import {
   scoreSeries,
   topicMastery,
   difficultyMastery,
+  attemptsToCsvRows,
+  itemsResultString,
+  QUIZ_CSV_HEADER,
   BASE_POINTS,
   SPEED_BONUS,
   DEFAULT_SETTINGS,
@@ -434,5 +437,115 @@ describe('difficultyMastery（難度掌握度）', () => {
       { diff: 'easy', correct: 1, total: 2 },
       { diff: 'hard', correct: 1, total: 1 },
     ])
+  })
+})
+
+// ============================================================
+describe('itemsResultString（逐題對錯緊湊字串）', () => {
+  it('啱 → ✓、錯 → ✗，保留作答次序', () => {
+    const items = [
+      item({ correct: true }),
+      item({ correct: false }),
+      item({ correct: true }),
+      item({ correct: true }),
+      item({ correct: false }),
+    ]
+    expect(itemsResultString(items)).toBe('✓✗✓✓✗')
+  })
+  it('空題 → 空字串', () => {
+    expect(itemsResultString([])).toBe('')
+  })
+})
+
+// ============================================================
+describe('attemptsToCsvRows（匯出試算表：成績 + 逐題對錯）', () => {
+  // 釘死本地時區 = Asia/Hong_Kong（vitest.config 已設）；formatDateTime 用本地時間。
+  const nameOf = (id: string) => ({ T1: '細胞分裂', T2: '光合作用' }[id] ?? '未分類')
+
+  it('空輸入：只得表頭一行', () => {
+    const out = attemptsToCsvRows([], nameOf)
+    expect(out).toHaveLength(1)
+    expect(out[0]).toEqual([...QUIZ_CSV_HEADER])
+  })
+
+  it('表頭固定 9 欄（日期…逐題對錯）', () => {
+    expect([...QUIZ_CSV_HEADER]).toEqual([
+      '日期',
+      '模式',
+      '範圍',
+      '難度',
+      '題數',
+      '答啱',
+      '命中率%',
+      '用時',
+      '逐題對錯',
+    ])
+  })
+
+  it('一行：欄位映射 + 命中率% + mm:ss 用時 + 逐題 ✓✗', () => {
+    const a = attempt({
+      createdAt: '2026-05-04T10:30:00',
+      mode: 'learning',
+      topicIds: ['T1'],
+      difficulty: 'medium',
+      total: 4,
+      correctCount: 3,
+      durationSec: 95, // 01:35
+      items: [
+        item({ correct: true }),
+        item({ correct: true }),
+        item({ correct: false }),
+        item({ correct: true }),
+      ],
+    })
+    const [, row] = attemptsToCsvRows([a], nameOf)
+    expect(row).toEqual([
+      '2026-05-04 10:30',
+      '學習',
+      '細胞分裂',
+      '中',
+      4,
+      3,
+      75, // round(3/4*100)
+      '01:35',
+      '✓✓✗✓',
+    ])
+  })
+
+  it('全部課題（topicIds 空）→ 範圍「全部課題」；不限難度 → 「不限」；work → 「工作」', () => {
+    const a = attempt({
+      mode: 'work',
+      topicIds: [],
+      difficulty: 'all',
+      total: 0,
+      correctCount: 0,
+      durationSec: 0,
+      items: [],
+    })
+    const [, row] = attemptsToCsvRows([a], nameOf)
+    expect(row[1]).toBe('工作')
+    expect(row[2]).toBe('全部課題')
+    expect(row[3]).toBe('不限')
+    expect(row[6]).toBe(0) // 0 題 → 命中率 0（pct 防除零）
+    expect(row[7]).toBe('00:00')
+    expect(row[8]).toBe('')
+  })
+
+  it('多課題範圍：以 / 串連課題名（找唔到 → 未分類）', () => {
+    const a = attempt({ topicIds: ['T1', 'T2', 'TX'] })
+    const [, row] = attemptsToCsvRows([a], nameOf)
+    expect(row[2]).toBe('細胞分裂 / 光合作用 / 未分類')
+  })
+
+  it('多次：最新喺前（createdAt 降序），唔 mutate 入參', () => {
+    const older = attempt({ id: 'old', createdAt: '2026-05-01T08:00:00' })
+    const newer = attempt({ id: 'new', createdAt: '2026-05-10T08:00:00' })
+    const input = [older, newer]
+    const out = attemptsToCsvRows(input, nameOf)
+    // 第 0 行係表頭；data 由第 1 行起
+    expect(out[1][0]).toBe('2026-05-10 08:00')
+    expect(out[2][0]).toBe('2026-05-01 08:00')
+    // 入參次序不變（純函式）
+    expect(input.map((a) => a.id)).toEqual(['old', 'new'])
   })
 })

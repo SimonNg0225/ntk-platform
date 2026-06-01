@@ -432,6 +432,67 @@ export function practiceHeatmap(attempts: QuizAttempt[], days: number): HeatCell
   return out
 }
 
+// ============================================================
+//  匯出 CSV（成績 + 逐題對錯）——同 AIAssistant 匯出文化一致
+//  ------------------------------------------------------------
+//  純函式核心：QuizAttempt[] → 試算表二維陣列（含表頭，最新喺前）。
+//  CSV 轉義 / Blob 下載沿用 work/shared/csv（零新依賴、Excel BOM）。
+// ============================================================
+
+// 平台模式（learning / work）中文標籤——對齊全 repo「學習 / 工作」叫法
+export const ATTEMPT_MODE_LABEL: Record<'learning' | 'work', string> = {
+  learning: '學習',
+  work: '工作',
+}
+
+export const QUIZ_CSV_HEADER = [
+  '日期',
+  '模式',
+  '範圍',
+  '難度',
+  '題數',
+  '答啱',
+  '命中率%',
+  '用時',
+  '逐題對錯',
+] as const
+
+// 逐題對錯 → 緊湊字串（✓ = 啱、✗ = 錯），保留作答次序
+export function itemsResultString(items: QuizAttemptItem[]): string {
+  return items.map((it) => (it.correct ? '✓' : '✗')).join('')
+}
+
+// QuizAttempt[] → 試算表（表頭 + 每次一行，最新喺前）。
+// topicName：把 topicId 還原做課題名（找唔到 → '未分類'，對齊 StatsView）。
+export function attemptsToCsvRows(
+  attempts: QuizAttempt[],
+  topicName: (id: string) => string,
+): (string | number)[][] {
+  const sorted = [...attempts].sort((a, b) =>
+    a.createdAt === b.createdAt ? 0 : a.createdAt < b.createdAt ? 1 : -1,
+  )
+  const rows: (string | number)[][] = sorted.map((a) => {
+    const scope = a.topicIds.length
+      ? a.topicIds.map(topicName).join(' / ')
+      : '全部課題'
+    return [
+      formatDateTime(a.createdAt),
+      ATTEMPT_MODE_LABEL[a.mode],
+      scope,
+      DIFF_FILTER_LABEL[a.difficulty],
+      a.total,
+      a.correctCount,
+      pct(a.correctCount, a.total),
+      fmtDuration(a.durationSec),
+      itemsResultString(a.items),
+    ]
+  })
+  return [[...QUIZ_CSV_HEADER], ...rows]
+}
+
+// CSV 轉義 + 下載：共用 work/shared 嗰份（行為與其他匯出完全一致）。
+export { csvEscape, downloadCsv } from '../../work/shared/csv'
+
 // 連續練習日數（current / best）—— 以「有做題嘅日」計
 export function practiceStreak(attempts: QuizAttempt[]): { current: number; best: number } {
   // 用本地日期 key 砌「有做題的日」Set（對齊 practiceHeatmap / calendar；

@@ -4,14 +4,18 @@ import { quizAttemptsCol, topicsCol } from '../../../data/collections'
 import {
   Activity,
   CalendarRange,
+  Download,
   Flame,
   Layers,
   Target,
   TrendingUp,
 } from 'lucide-react'
-import { Card, EmptyState, SectionTitle, StatCard } from '../../../ui'
+import { Button, Card, EmptyState, SectionTitle, StatCard } from '../../../ui'
+import { useToast } from '../../../context/ToastContext'
 import {
+  attemptsToCsvRows,
   difficultyMastery,
+  downloadCsv,
   pct,
   practiceHeatmap,
   practiceStreak,
@@ -34,9 +38,20 @@ import {
 export function StatsView({ onPractice }: { onPractice: (topicId: string) => void }) {
   const attempts = useCollection(quizAttemptsCol)
   const topics = useCollection(topicsCol)
+  const toast = useToast()
   const topicName = (id: string) => topics.find((t) => t.id === id)?.topic ?? '未分類'
 
   const [heatRange, setHeatRange] = useState(119)
+
+  // 匯出全部測驗紀錄做 CSV（成績 + 逐題對錯），同 AI 助手匯出文化一致
+  const exportCsv = () => {
+    const today = new Date()
+    const stamp = `${today.getFullYear()}${String(today.getMonth() + 1).padStart(2, '0')}${String(
+      today.getDate(),
+    ).padStart(2, '0')}`
+    downloadCsv(`測驗紀錄_${stamp}.csv`, attemptsToCsvRows(attempts, topicName))
+    toast.success(`已匯出 ${attempts.length} 次測驗紀錄 CSV`)
+  }
 
   const series = useMemo(() => scoreSeries(attempts), [attempts])
   const topics_ = useMemo(() => topicMastery(attempts), [attempts])
@@ -84,6 +99,13 @@ export function StatsView({ onPractice }: { onPractice: (topicId: string) => voi
 
   return (
     <div className="animate-fade-in space-y-4">
+      {/* 匯出 CSV（成績 + 逐題對錯） */}
+      <div className="flex justify-end">
+        <Button variant="secondary" size="sm" icon={Download} onClick={exportCsv}>
+          匯出 CSV
+        </Button>
+      </div>
+
       {/* KPI */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <StatCard
