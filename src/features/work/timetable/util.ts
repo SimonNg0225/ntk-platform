@@ -427,6 +427,67 @@ export function computeWorkload(
   }
 }
 
+// ───────── 空堂時段查詢（free-period finder）─────────
+// computeWorkload 只計每日空堂「數量」；老師仲想知邊日邊節有得抖／改簿／開會，
+// 以及邊幾節係連續成一段（例如星期三 第3–4節 09:55–11:15 連續 2 節）。
+// 純衍生自已有 slots + bells + 顯示日子，唔改任何持久化資料。
+export interface FreeSegment {
+  day: number
+  periods: number[] // 連續嘅 lesson 節數（升序，例如 [3, 4]）
+  start: string // 段首節開始時間 HH:mm
+  end: string // 段尾節結束時間 HH:mm
+  minutes: number // 由 start 到 end 嘅總分鐘（含段內可能夾住嘅 break）
+}
+
+/**
+ * 列出全部空嘅 (day, period)，並按「連續成段」分組。
+ * 連續性同 maxConsecutive 一致：遇到小息/午膳會斷段（嗰刻已經有得抖，
+ * 唔當同一段連續空檔），亦會被任何有堂嘅節打斷。
+ * - 只考慮顯示範圍(days)內、且鐘聲序列中嘅 lesson 節。
+ * - 範圍外或唔喺鐘聲嘅 slot 唔影響空堂判斷。
+ * 回傳已排序（先 day 升序，後段首 period 升序）嘅 FreeSegment 陣列。
+ */
+export function computeFreePeriods(
+  slots: TimetableSlot[],
+  bells: BellRow[],
+  days: number[],
+): FreeSegment[] {
+  const daySet = new Set(days)
+  const occupied = new Set(
+    slots.filter((s) => daySet.has(s.day)).map((s) => slotKey(s.day, s.period)),
+  )
+
+  const out: FreeSegment[] = []
+  for (const day of days) {
+    let run: BellRow[] = []
+    const flush = () => {
+      if (run.length === 0) return
+      out.push({
+        day,
+        periods: run.map((b) => b.period),
+        start: run[0].start,
+        end: run[run.length - 1].end,
+        minutes: Math.max(0, minutesOf(run[run.length - 1].end) - minutesOf(run[0].start)),
+      })
+      run = []
+    }
+    // 行返整個鐘聲序列：break 斷段、有堂嘅 lesson 斷段，連住嘅空 lesson 歸一段
+    for (const b of bells) {
+      if (b.kind !== 'lesson') {
+        flush()
+        continue
+      }
+      if (occupied.has(slotKey(day, b.period))) {
+        flush()
+      } else {
+        run.push(b)
+      }
+    }
+    flush()
+  }
+  return out
+}
+
 // ───────── 今日 / 下一堂 ─────────
 export interface UpNext {
   slot: TimetableSlot

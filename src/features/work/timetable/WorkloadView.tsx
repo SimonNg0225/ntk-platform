@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
-import { CalendarDays, Clock, Layers, Coffee } from 'lucide-react'
-import { Card, EmptyState, SectionTitle, StatCard, cx } from '../../../ui'
+import { CalendarDays, Clock, Layers, Coffee, CupSoda } from 'lucide-react'
+import { Badge, Card, EmptyState, SectionTitle, StatCard, cx } from '../../../ui'
 import {
   colorOf,
   cycleLabel,
@@ -8,6 +8,7 @@ import {
   dayLabel,
   dayShort,
   fmtDuration,
+  type FreeSegment,
   type Workload,
 } from './util'
 
@@ -23,12 +24,15 @@ export default function WorkloadView({
   workload,
   classColorKey,
   cycle,
+  freeSegments = [],
 }: {
   workload: Workload
   // 班別 → 用嚟畀甜甜圈上色（key = classId 或 undefined）
   classColorKey: (classId?: string) => string
   // 日循環模式：日子標籤用 Day A–F 而唔係星期一至六
   cycle?: boolean
+  // 空堂時段（連續成段，含鐘聲時間）— 純衍生自 slots/bells/days
+  freeSegments?: FreeSegment[]
 }) {
   if (workload.total === 0) {
     return (
@@ -113,6 +117,22 @@ export default function WorkloadView({
           <FreeBusy workload={workload} cycle={cycle} />
         </Card>
       </div>
+
+      {/* 空堂時段（連續成段，含鐘聲時間）*/}
+      <Card padded>
+        <SectionTitle
+          icon={CupSoda}
+          description="邊日邊節有得抖／改簿／開會（連續節數會合成一段）"
+          right={
+            <span className="text-[11px] tabular-nums text-slate-400">
+              共 {freeSegments.length} 段
+            </span>
+          }
+        >
+          空堂時段
+        </SectionTitle>
+        <FreeSegments segments={freeSegments} cycle={cycle} />
+      </Card>
     </div>
   )
 }
@@ -295,6 +315,72 @@ function FreeBusy({ workload, cycle }: { workload: Workload; cycle?: boolean }) 
           空堂
         </span>
       </div>
+    </div>
+  )
+}
+
+// ───────── 空堂時段：逐日列出每段（含鐘聲時間 + 連堂標示）─────────
+function FreeSegments({
+  segments,
+  cycle,
+}: {
+  segments: FreeSegment[]
+  cycle?: boolean
+}) {
+  // 依出現次序按 day 分組（computeFreePeriods 已先 day 後 period 排好）
+  const byDay = useMemo(() => {
+    const groups: { day: number; segs: FreeSegment[] }[] = []
+    for (const s of segments) {
+      const g = groups[groups.length - 1]
+      if (g && g.day === s.day) g.segs.push(s)
+      else groups.push({ day: s.day, segs: [s] })
+    }
+    return groups
+  }, [segments])
+
+  if (segments.length === 0) {
+    return (
+      <p className="py-4 text-center text-sm text-slate-400 dark:text-slate-500">
+        顯示範圍內冇空堂 — 堂堂爆滿。
+      </p>
+    )
+  }
+
+  const periodLabel = (periods: number[]) =>
+    periods.length > 1
+      ? `第 ${periods[0]}–${periods[periods.length - 1]} 節`
+      : `第 ${periods[0]} 節`
+
+  return (
+    <div className="space-y-3">
+      {byDay.map(({ day, segs }) => (
+        <div key={day} className="flex flex-col gap-1.5 sm:flex-row sm:items-start">
+          <span className="w-14 shrink-0 pt-1 text-xs font-semibold text-slate-500 dark:text-slate-400">
+            {cycle ? cycleLabel(day) : dayLabel(day)}
+          </span>
+          <div className="flex flex-1 flex-wrap gap-1.5">
+            {segs.map((s) => (
+              <div
+                key={s.periods.join('-')}
+                className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50/60 px-2.5 py-1.5 dark:border-slate-700 dark:bg-slate-800/40"
+              >
+                <span className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                  {periodLabel(s.periods)}
+                </span>
+                <span className="text-xs tabular-nums text-slate-400">
+                  {s.start}–{s.end}
+                </span>
+                {s.periods.length > 1 && (
+                  <Badge tone="green">連續 {s.periods.length} 節</Badge>
+                )}
+                <span className="text-[11px] tabular-nums text-slate-400">
+                  {fmtDuration(s.minutes)}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
     </div>
   )
 }

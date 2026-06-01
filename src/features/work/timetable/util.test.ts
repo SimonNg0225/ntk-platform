@@ -18,6 +18,7 @@ import {
   clampApplyDays,
   detectConflicts,
   computeWorkload,
+  computeFreePeriods,
   findUpNext,
   buildCsv,
   SLOT_COLORS,
@@ -417,6 +418,131 @@ describe('computeWorkload 工作量統計', () => {
     const w = computeWorkload(slots, bells, days, classNames)
     expect(w.total).toBe(2) // 兩條 slot 都計入總數
     expect(w.totalMinutes).toBe(40) // 但 period 99 無對應鐘聲 → 唔加分鐘
+  })
+})
+
+describe('computeFreePeriods 空堂時段查詢', () => {
+  const bells = DEFAULT_BELLS // P1 P2 [小息] P3 P4 P5 [午膳] P6 P7 P8
+  const days = [1, 2, 3, 4, 5, 6]
+
+  it('全空：每日按 break 切成 3 段（P1-2 / P3-5 / P6-8）', () => {
+    const segs = computeFreePeriods([], bells, [1])
+    expect(segs).toHaveLength(3)
+    expect(segs[0]).toEqual({
+      day: 1,
+      periods: [1, 2],
+      start: '08:15',
+      end: '09:35',
+      minutes: 80,
+    })
+    expect(segs[1].periods).toEqual([3, 4, 5])
+    expect(segs[2].periods).toEqual([6, 7, 8])
+  })
+
+  it('題述示例：星期三 P3,P4 空 → 一段 09:55–11:15 連續 2 節', () => {
+    // 三填滿 P1,P2,P5,P6,P7,P8（只剩 P3,P4 空），其餘日全填以隔離
+    const filled: TimetableSlot[] = []
+    for (const day of days) {
+      for (const p of [1, 2, 3, 4, 5, 6, 7, 8]) {
+        if (day === 3 && (p === 3 || p === 4)) continue
+        filled.push(slot({ id: `${day}-${p}`, day, period: p }))
+      }
+    }
+    const segs = computeFreePeriods(filled, bells, days)
+    expect(segs).toHaveLength(1)
+    expect(segs[0]).toEqual({
+      day: 3,
+      periods: [3, 4],
+      start: '09:55',
+      end: '11:15',
+      minutes: 80,
+    })
+  })
+
+  it('有堂嘅節會打斷連續空檔（P3 上緊 → P1-2 同 P4-5 分兩段）', () => {
+    // 自訂無 break 鐘聲，淨睇「有堂」斷段
+    const b = [
+      lesson(1, '09:00', '09:40'),
+      lesson(2, '09:40', '10:20'),
+      lesson(3, '10:20', '11:00'),
+      lesson(4, '11:00', '11:40'),
+      lesson(5, '11:40', '12:20'),
+    ]
+    const slots = [slot({ id: 'a', day: 2, period: 3 })] // 只 P3 有堂
+    const segs = computeFreePeriods(slots, b, [2])
+    expect(segs).toHaveLength(2)
+    expect(segs[0]).toEqual({
+      day: 2,
+      periods: [1, 2],
+      start: '09:00',
+      end: '10:20',
+      minutes: 80,
+    })
+    expect(segs[1]).toEqual({
+      day: 2,
+      periods: [4, 5],
+      start: '11:00',
+      end: '12:20',
+      minutes: 80,
+    })
+  })
+
+  it('小息/午膳即使前後皆空都要斷段（同 maxConsecutive 一致）', () => {
+    // P2 同 P3 都空，但中間隔小息 → 唔可以併成一段
+    const slots = [1, 4, 5, 6, 7, 8].map((p) => slot({ id: `p${p}`, day: 1, period: p }))
+    // 剩低空：P2（小息前）、P3（小息後）
+    const segs = computeFreePeriods(slots, bells, [1])
+    expect(segs).toHaveLength(2)
+    expect(segs[0].periods).toEqual([2])
+    expect(segs[1].periods).toEqual([3])
+  })
+
+  it('某日完全無空堂 → 嗰日唔出現任何段', () => {
+    const slots = [1, 2, 3, 4, 5, 6, 7, 8].map((p) =>
+      slot({ id: `p${p}`, day: 2, period: p }),
+    )
+    const segs = computeFreePeriods(slots, bells, [2])
+    expect(segs).toEqual([])
+  })
+
+  it('排序：先 day 升序，後段首 period 升序', () => {
+    // day2 全填、day1 同 day3 剩 P1-2 空
+    const slots: TimetableSlot[] = []
+    for (const p of [1, 2, 3, 4, 5, 6, 7, 8]) slots.push(slot({ id: `2-${p}`, day: 2, period: p }))
+    for (const day of [1, 3]) {
+      for (const p of [3, 4, 5, 6, 7, 8]) slots.push(slot({ id: `${day}-${p}`, day, period: p }))
+    }
+    const segs = computeFreePeriods(slots, bells, [1, 2, 3])
+    expect(segs.map((s) => s.day)).toEqual([1, 3]) // day2 無空堂；day1 先於 day3
+    expect(segs.every((s) => s.periods[0] === 1)).toBe(true)
+  })
+
+  it('範圍外日子嘅 slot 唔影響空堂（只睇 days 內）', () => {
+    // days 只一；星期二（範圍外）填滿都唔關事；星期一全空
+    const slots = [1, 2, 3, 4, 5, 6, 7, 8].map((p) =>
+      slot({ id: `2-${p}`, day: 2, period: p }),
+    )
+    const segs = computeFreePeriods(slots, bells, [1])
+    expect(segs).toHaveLength(3) // 星期一照常 3 段全空
+    expect(segs.every((s) => s.day === 1)).toBe(true)
+  })
+
+  it('唔喺鐘聲嘅 slot（period 99）唔當佔用任何 lesson 節', () => {
+    const slots = [slot({ id: 'x', day: 1, period: 99 })]
+    const segs = computeFreePeriods(slots, bells, [1])
+    // P1..P8 全空 → 仍 3 段
+    expect(segs).toHaveLength(3)
+  })
+
+  it('minutes 跨段內 break 一齊計（連住空檔含夾住嘅小息時間）', () => {
+    // 自訂：P1,P2 空，中間夾 break；P1 09:00 起、P2 10:00 收
+    const b = [
+      lesson(1, '09:00', '09:40'),
+      lesson(2, '09:40', '10:00'),
+    ]
+    const segs = computeFreePeriods([], b, [1])
+    expect(segs).toHaveLength(1)
+    expect(segs[0].minutes).toBe(60) // 09:00 → 10:00
   })
 })
 

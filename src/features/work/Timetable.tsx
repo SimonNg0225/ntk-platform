@@ -43,6 +43,7 @@ import {
   buildCsv,
   clampApplyDays,
   colorOf,
+  computeFreePeriods,
   computeWorkload,
   cycleDayForDate,
   cycleShort,
@@ -186,6 +187,12 @@ export default function Timetable() {
   const workload = useMemo(
     () => computeWorkload(visibleSlots, bells, days, classNameById),
     [visibleSlots, bells, days, classNameById],
+  )
+
+  // ── 空堂時段（連續成段，含鐘聲時間）──
+  const freeSegments = useMemo(
+    () => computeFreePeriods(visibleSlots, bells, days),
+    [visibleSlots, bells, days],
   )
 
   // ── 今日 / 下一堂 ──
@@ -432,7 +439,12 @@ export default function Timetable() {
       )}
 
       {view === 'workload' && (
-        <WorkloadView workload={workload} classColorKey={classColorKey} cycle={cycle} />
+        <WorkloadView
+          workload={workload}
+          classColorKey={classColorKey}
+          cycle={cycle}
+          freeSegments={freeSegments}
+        />
       )}
 
       {view === 'print' && (
