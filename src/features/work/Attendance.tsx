@@ -922,6 +922,31 @@ function Analytics({ classId, className }: { classId: string; className: string 
       .sort((a, b) => b.t.currentAbsentStreak - a.t.currentAbsentStreak)
   }, [classStudents, tallies])
 
+  // ── 個別學生摘要（drill-down）所需資料 ──
+  const focusStudent = focusId ? classStudents.find((s) => s.id === focusId) : undefined
+  const focusData = useMemo(() => {
+    if (!focusId) return null
+    const tally = tallies.get(focusId) ?? null
+    const noteList = notes.filter(
+      (n) => n.classId === classId && n.studentId === focusId && dayKeySet.has(n.date),
+    )
+    return {
+      tally,
+      longestStreak: longestAbsentStreak(rangeRecords, focusId, dayKeys),
+      lastPresent: lastPresentKey(rangeRecords, focusId, dayKeys),
+      noteSummary: summarizeNotes(noteList),
+      // 逐日時間軸（只列有點名嘅日；由舊到新）
+      timeline: dayKeys
+        .map((k) => {
+          const r = rangeRecords.find(
+            (x) => x.studentId === focusId && x.date === k,
+          )
+          return r ? { dateKey: k, status: r.status } : null
+        })
+        .filter((x): x is { dateKey: string; status: AttendanceStatus } => x != null),
+    }
+  }, [focusId, tallies, notes, classId, dayKeySet, rangeRecords, dayKeys])
+
   function exportSummaryCsv() {
     const header = ['學號', '學生', '出席', '遲到', '缺席', '已點日數', '出席率(%)', '連續缺席']
     const rows = ranked.map(({ student, t }) => [
@@ -947,31 +972,6 @@ function Analytics({ classId, className }: { classId: string; className: string 
       />
     )
   }
-
-  // ── 個別學生摘要（drill-down）所需資料 ──
-  const focusStudent = focusId ? classStudents.find((s) => s.id === focusId) : undefined
-  const focusData = useMemo(() => {
-    if (!focusId) return null
-    const tally = tallies.get(focusId) ?? null
-    const noteList = notes.filter(
-      (n) => n.classId === classId && n.studentId === focusId && dayKeySet.has(n.date),
-    )
-    return {
-      tally,
-      longestStreak: longestAbsentStreak(rangeRecords, focusId, dayKeys),
-      lastPresent: lastPresentKey(rangeRecords, focusId, dayKeys),
-      noteSummary: summarizeNotes(noteList),
-      // 逐日時間軸（只列有點名嘅日；由舊到新）
-      timeline: dayKeys
-        .map((k) => {
-          const r = rangeRecords.find(
-            (x) => x.studentId === focusId && x.date === k,
-          )
-          return r ? { dateKey: k, status: r.status } : null
-        })
-        .filter((x): x is { dateKey: string; status: AttendanceStatus } => x != null),
-    }
-  }, [focusId, tallies, notes, classId, dayKeySet, rangeRecords, dayKeys])
 
   const hasData = overall.marked > 0
 
