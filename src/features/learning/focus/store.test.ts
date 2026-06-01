@@ -1,3 +1,11 @@
+// 時區敏感：store 一律用本地欄位（getHours/getMinutes/getDate…），避 toISOString
+// 的 UTC 漂移。fmtTime 測試以「本地建構 ISO」斷言 HH:mm，本身唔靠機器時區；
+// 但為求同 srs.test.ts 一致、並守護「fmtTime 用本地時間（非 UTC）」嘅契約，
+// 喺 import 前鎖死 TZ = Asia/Hong_Kong（V8 首次用 Date 即快取，故必須最前）。
+// 本 repo tsconfig 無 @types/node，故自行最小宣告 process（只用 env.TZ）。
+declare const process: { env: Record<string, string | undefined> }
+process.env.TZ = 'Asia/Hong_Kong'
+
 import { describe, it, expect } from 'vitest'
 import {
   dailySeries,
@@ -10,14 +18,17 @@ import {
   totalsOf,
   fmtDuration,
   fmtClock,
+  fmtTime,
   relativeDay,
   logsToCsv,
   dayKey,
   addDays,
   todayKey,
+  getSettings,
+  SETTINGS_ID,
   type DayStat,
 } from './store'
-import type { FocusLog } from './types'
+import { DEFAULT_SETTINGS, type FocusLog, type FocusSettings } from './types'
 
 // ──────────────────────────────────────────────────────────────
 //  Helpers — 本地時區固定時間，避開 toISOString 的 UTC 漂移。
@@ -747,5 +758,98 @@ describe('logsToCsv（CSV 匯出）', () => {
     const csv = logsToCsv([focusLog({ projectId: undefined, startedAt: localISO(2026, 5, 4, 9) })], projName)
     const cells = csv.split('\n')[1].split(',')
     expect(cells[4]).toBe('""')
+  })
+})
+
+// ════════════════════════════════════════════════════════════════
+//  getSettings（由設定陣列搵 SETTINGS_ID 條，搵唔到 fallback default）
+//  設定集合契約：只得一條 record（id 固定 = SETTINGS_ID）。
+// ════════════════════════════════════════════════════════════════
+describe('getSettings（搵 SETTINGS_ID 條，缺則 fallback DEFAULT_SETTINGS）', () => {
+  // 完整一條設定（與 DEFAULT 不同值），用以驗證「原樣回該條、唔被 default 覆蓋」。
+  const customSettings: FocusSettings = {
+    id: SETTINGS_ID,
+    focusMin: 50,
+    shortBreakMin: 10,
+    longBreakMin: 20,
+    longBreakEvery: 3,
+    autoStartBreaks: true,
+    autoStartFocus: true,
+    tickSound: true,
+    chimeSound: false,
+    dailyGoal: 12,
+  }
+
+  it('陣列含 SETTINGS_ID 條 → 原樣回該條（同一 reference、唔混入 default）', () => {
+    const found = getSettings([customSettings])
+    expect(found).toBe(customSettings) // 回原物件本身（find 結果），非新建副本
+    expect(found.focusMin).toBe(50) // 用自訂值，唔被 DEFAULT_SETTINGS.focusMin(25) 蓋
+    expect(found.autoStartFocus).toBe(true)
+  })
+
+  it('多條時揀中 id === SETTINGS_ID 嗰條（忽略其他 id）', () => {
+    const other: FocusSettings = { ...customSettings, id: 'other-id', focusMin: 99 }
+    const found = getSettings([other, customSettings])
+    expect(found).toBe(customSettings)
+    expect(found.focusMin).toBe(50)
+  })
+
+  it('空陣列 → fallback：id === SETTINGS_ID + 全 DEFAULT_SETTINGS', () => {
+    const fb = getSettings([])
+    expect(fb.id).toBe(SETTINGS_ID)
+    // fallback 攤平 DEFAULT_SETTINGS（逐欄等值）
+    expect(fb).toEqual({ id: SETTINGS_ID, ...DEFAULT_SETTINGS })
+    expect(fb.focusMin).toBe(25)
+    expect(fb.dailyGoal).toBe(8)
+    expect(fb.chimeSound).toBe(true)
+  })
+
+  it('陣列只有其他 id 嘅 record → 仍 fallback default（搵唔到目標 id）', () => {
+    const other: FocusSettings = { ...customSettings, id: 'someone-else' }
+    const fb = getSettings([other])
+    expect(fb.id).toBe(SETTINGS_ID)
+    expect(fb).toEqual({ id: SETTINGS_ID, ...DEFAULT_SETTINGS })
+    // 確認無錯攞咗 other 嘅自訂值
+    expect(fb.focusMin).toBe(DEFAULT_SETTINGS.focusMin)
+  })
+})
+
+// ════════════════════════════════════════════════════════════════
+//  fmtTime（ISO → 本地 HH:mm，補零；唔受 UTC 漂移）
+//  與 store 其他本地時間慣例一致：用 getHours/getMinutes（非 UTC）。
+//  fixtures 用本地建構 ISO（new Date(y,m,d,hh,mm).toISOString()），
+//  故斷言喺任何 host TZ 都成立。
+// ════════════════════════════════════════════════════════════════
+describe('fmtTime（ISO → 本地 HH:mm，時 / 分補零）', () => {
+  it('時 / 分都補零成兩位（09:05）', () => {
+    expect(fmtTime(new Date(2026, 4, 4, 9, 5, 0).toISOString())).toBe('09:05')
+  })
+
+  it('只分需要補零（13:07）', () => {
+    expect(fmtTime(new Date(2026, 4, 4, 13, 7, 0).toISOString())).toBe('13:07')
+  })
+
+  it('午夜邊界 00:00', () => {
+    expect(fmtTime(new Date(2026, 4, 4, 0, 0, 0).toISOString())).toBe('00:00')
+  })
+
+  it('午夜後一分鐘 00:01（時補零）', () => {
+    expect(fmtTime(new Date(2026, 4, 4, 0, 1, 0).toISOString())).toBe('00:01')
+  })
+
+  it('日終邊界 23:59', () => {
+    expect(fmtTime(new Date(2026, 4, 4, 23, 59, 0).toISOString())).toBe('23:59')
+  })
+
+  it('唔受 UTC 漂移：HKT 凌晨（對應 UTC 前一日晚）仍回本地時鐘', () => {
+    // 本地 00:30 HKT = 前一日 16:30 UTC；用 UTC 寫法會回 '16:30'（錯）。
+    // fmtTime 用 getHours/getMinutes → 應回本地 '00:30'。
+    expect(fmtTime(new Date(2026, 4, 4, 0, 30, 0).toISOString())).toBe('00:30')
+    // 守護 TZ pin 真正生效（HKT = UTC+8）；否則上面時區斷言失去意義。
+    expect(new Date(2026, 4, 4, 0, 30, 0).getTimezoneOffset()).toBe(-480)
+  })
+
+  it('秒被忽略（只取時 / 分，唔進位）', () => {
+    expect(fmtTime(new Date(2026, 4, 4, 8, 9, 59).toISOString())).toBe('08:09')
   })
 })
