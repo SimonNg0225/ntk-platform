@@ -127,13 +127,16 @@ export default function HealthTracker() {
     return () => clearInterval(id)
   }, [])
 
-  const todayLog = useMemo(() => byDate(logs).get(today), [logs, today])
+  // 同一 render 內 todayLog / 換日 effect / exerciseWeek 都要按日期查 log，
+  // 統一砌一次 Map（byDate 純函式，回傳值與重複砌完全一致）。
+  const logMap = useMemo(() => byDate(logs), [logs])
+  const todayLog = useMemo(() => logMap.get(today), [logMap, today])
   const summary = useMemo(() => summarize(logs, goals), [logs, goals])
 
   // 體重 / 睡眠 / 備註用本地草稿，blur 先寫（打字順暢）；換日重置。
   const [draft, setDraft] = useState({ weight: '', sleep: '', note: '' })
   useEffect(() => {
-    const l = byDate(logs).get(today)
+    const l = logMap.get(today)
     setDraft({
       weight: l?.weightKg != null ? String(l.weightKg) : '',
       sleep: l?.sleepHrs != null ? String(l.sleepHrs) : '',
@@ -159,10 +162,10 @@ export default function HealthTracker() {
     () =>
       recentDays(7).map((d) => ({
         label: WEEKDAY_LABELS[fromKey(d).getDay()],
-        value: byDate(logs).get(d)?.exerciseMin ?? 0,
+        value: logMap.get(d)?.exerciseMin ?? 0,
         highlight: d === today,
       })),
-    [logs, today],
+    [logMap, today],
   )
 
   const hasAny = logs.length > 0
