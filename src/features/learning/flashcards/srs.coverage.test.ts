@@ -249,6 +249,138 @@ describe('buildQueue（srs / typed —— 到期過濾 + 每日新卡上限）',
 })
 
 // ═════════════════════════════════════════════════════════════
+//  buildQueue —— order='random'（Fisher–Yates 洗牌）
+//  ------------------------------------------------------------
+//  既有測試只覆 'added' / 'due'，'random' 分支從未行過。洗牌雖隨機，
+//  但有兩類可確定驗證嘅性質：
+//    (A) 不變式：集合不變（唔丟卡、唔加卡、無重複），與 Math.random 無關。
+//    (B) 確定排列：spyOn(Math.random) 餵固定序列 → 鎖死實際次序，
+//        守住 Fisher–Yates 迴圈邊界（i>0，自尾向頭）。
+//  用 cram 模式令 pool 原樣（除暫停）直送 sortQueue，避開「今日」依賴。
+// ═════════════════════════════════════════════════════════════
+describe("buildQueue（order='random' —— Fisher–Yates 洗牌）", () => {
+  // 餵一條固定 Math.random 序列（依消耗次序回傳），盡頭後回 0
+  const stubRandom = (seq: number[]) => {
+    let k = 0
+    return vi.spyOn(Math, 'random').mockImplementation(() => seq[k++] ?? 0)
+  }
+  afterEach(() => {
+    vi.restoreAllMocks() // 還原 Math.random，免污染其他 test
+  })
+
+  // ── (A) 不變式：洗牌後仍係同一組 id（排序後相等於輸入集合）──
+  it('回傳同一組 id：長度一致、無重複、無遺漏（與 random 值無關）', () => {
+    const ids = ['a', 'b', 'c', 'd', 'e']
+    const cards: Card[] = ids.map((id) => mkCard({ id }))
+    // 用一條「亂數」序列（非全 0），確保真係有打亂而唔係剛好原樣
+    stubRandom([0.7, 0.1, 0.9, 0.3])
+    const q = buildQueue({
+      deckId: 'd',
+      cards,
+      metas: [],
+      pref: mkPref({ order: 'random' }),
+      mode: 'cram',
+    })
+    expect(q).toHaveLength(ids.length) // 唔加唔減
+    expect(new Set(q).size).toBe(ids.length) // 無重複
+    expect([...q].sort()).toEqual([...ids].sort()) // 集合相等（排序後比）
+  })
+
+  it('暫停卡先排除、再洗牌：集合 = 非暫停卡（洗牌唔會救返暫停卡）', () => {
+    const cards: Card[] = [
+      mkCard({ id: 'a' }),
+      mkCard({ id: 'susp' }),
+      mkCard({ id: 'b' }),
+      mkCard({ id: 'c' }),
+    ]
+    const metas: CardMeta[] = [mkMeta({ id: 'susp', suspended: true })]
+    stubRandom([0.5, 0.5, 0.5])
+    const q = buildQueue({
+      deckId: 'd',
+      cards,
+      metas,
+      pref: mkPref({ order: 'random' }),
+      mode: 'cram',
+    })
+    expect([...q].sort()).toEqual(['a', 'b', 'c'])
+    expect(q).not.toContain('susp')
+  })
+
+  // ── (B) 確定排列：鎖死實際次序 ──
+  it('Math.random 固定回 0：[a,b,c,d] → [b,c,d,a]（自尾向頭逐次與頭交換）', () => {
+    // i=3: j=floor(0×4)=0 → [d,b,c,a]
+    // i=2: j=floor(0×3)=0 → [c,b,d,a]
+    // i=1: j=floor(0×2)=0 → [b,c,d,a]；i=0 唔行（邊界 i>0）
+    const cards: Card[] = ['a', 'b', 'c', 'd'].map((id) => mkCard({ id }))
+    stubRandom([0, 0, 0])
+    const q = buildQueue({
+      deckId: 'd',
+      cards,
+      metas: [],
+      pref: mkPref({ order: 'random' }),
+      mode: 'cram',
+    })
+    expect(q).toEqual(['b', 'c', 'd', 'a'])
+  })
+
+  it('固定序列 [0.99,0,0.5]：[a,b,c,d] → [c,b,a,d]（含頂界 j=i 自交換 no-op）', () => {
+    // i=3: j=floor(0.99×4)=3 → swap(3,3) no-op → [a,b,c,d]（守 j 可達 i）
+    // i=2: j=floor(0×3)=0     → swap(2,0)       → [c,b,a,d]
+    // i=1: j=floor(0.5×2)=1   → swap(1,1) no-op → [c,b,a,d]
+    const cards: Card[] = ['a', 'b', 'c', 'd'].map((id) => mkCard({ id }))
+    stubRandom([0.99, 0, 0.5])
+    const q = buildQueue({
+      deckId: 'd',
+      cards,
+      metas: [],
+      pref: mkPref({ order: 'random' }),
+      mode: 'cram',
+    })
+    expect(q).toEqual(['c', 'b', 'a', 'd'])
+  })
+
+  it('洗牌消耗剛好 n−1 次 Math.random（每個 i∈[1,n−1] 一次）', () => {
+    const cards: Card[] = ['a', 'b', 'c', 'd', 'e'].map((id) => mkCard({ id }))
+    const spy = stubRandom([0.2, 0.4, 0.6, 0.8])
+    buildQueue({
+      deckId: 'd',
+      cards,
+      metas: [],
+      pref: mkPref({ order: 'random' }),
+      mode: 'cram',
+    })
+    expect(spy).toHaveBeenCalledTimes(cards.length - 1) // 5 張 → 4 次
+  })
+
+  // ── 邊界：單張卡 / 空陣列 → 原樣、唔 throw、唔掂 Math.random ──
+  it('單張卡：原樣回傳，迴圈唔行（唔呼叫 Math.random）', () => {
+    const spy = stubRandom([0.5])
+    const q = buildQueue({
+      deckId: 'd',
+      cards: [mkCard({ id: 'solo' })],
+      metas: [],
+      pref: mkPref({ order: 'random' }),
+      mode: 'cram',
+    })
+    expect(q).toEqual(['solo'])
+    expect(spy).not.toHaveBeenCalled() // i 由 0 開始即 i>0 false
+  })
+
+  it('空陣列：回 []（唔 throw、唔呼叫 Math.random）', () => {
+    const spy = stubRandom([0.5])
+    const q = buildQueue({
+      deckId: 'd',
+      cards: [],
+      metas: [],
+      pref: mkPref({ order: 'random' }),
+      mode: 'cram',
+    })
+    expect(q).toEqual([])
+    expect(spy).not.toHaveBeenCalled()
+  })
+})
+
+// ═════════════════════════════════════════════════════════════
 //  computeStreak —— current 分支（srs.test.ts 只測 best）
 // ═════════════════════════════════════════════════════════════
 describe('computeStreak（current：由今日／昨日往回數）', () => {
