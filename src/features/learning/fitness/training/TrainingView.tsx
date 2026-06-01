@@ -51,7 +51,7 @@ import {
   prByExercise,
   maxRpe,
   sortWorkoutsDesc,
-  dailyVolume,
+  dailyVolumeRpe,
   weeklyTrend,
   volumeTrend,
   daysSinceLastWorkout,
@@ -200,21 +200,23 @@ export default function TrainingView() {
   const trend = useMemo(() => volumeTrend(workouts), [workouts])
   const sinceLast = useMemo(() => daysSinceLastWorkout(workouts), [workouts])
 
+  // 一次過攞近 7 日每日 volume + RPE（避免重複 dailyVolume + 逐日重掃全表算 RPE）。
+  const days7 = useMemo(() => dailyVolumeRpe(workouts, 7), [workouts])
   const dayBars = useMemo(
     () =>
-      dailyVolume(workouts, 7).map((d) => ({
+      days7.map((d) => ({
         label: WEEKDAY_LABELS[fromKey(d.key).getDay()],
         volume: d.volume,
       })),
-    [workouts],
+    [days7],
   )
   const dayRpe = useMemo(
     () =>
-      dailyVolume(workouts, 7).map((d) => ({
+      days7.map((d) => ({
         label: WEEKDAY_LABELS[fromKey(d.key).getDay()],
-        value: avgRpe(workouts, 1, fromKey(d.key)),
+        value: d.avgRpe,
       })),
-    [workouts],
+    [days7],
   )
   const weekTrend = useMemo(() => weeklyTrend(workouts, 8), [workouts])
   const weekBars = useMemo(

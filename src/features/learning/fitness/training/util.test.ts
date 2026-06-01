@@ -6,6 +6,7 @@ import {
   workoutSetCount,
   est1RM,
   dailyVolume,
+  dailyVolumeRpe,
   weeklyTrend,
   weeklyVolume,
   weeklySessions,
@@ -19,6 +20,7 @@ import {
   computePlates,
   formatClock,
 } from './util'
+import { fromKey } from '../common'
 import type { Workout, WorkoutSet } from './types'
 
 // 固定 anchor（中午，避免時區跨日）：2026-05-31（星期日）
@@ -160,6 +162,66 @@ describe('dailyVolume', () => {
   })
   it('days=0 → 空', () => {
     expect(dailyVolume([], 0, ANCHOR)).toHaveLength(0)
+  })
+})
+
+// ============================================================
+//  dailyVolumeRpe（一次過 volume + 每日 RPE）
+// ============================================================
+
+describe('dailyVolumeRpe', () => {
+  it('volume 同 dailyVolume 一致，每日 avgRpe = 該日有 RPE set 平均', () => {
+    const data = [
+      w({
+        id: 'a',
+        date: key(0),
+        exercises: [{ name: 'x', sets: [set(5, 100, 8), set(5, 100, 10)] }],
+      }), // 今日 1000 / RPE (8+10)/2=9
+      w({
+        id: 'b',
+        date: key(-2),
+        exercises: [{ name: 'y', sets: [set(8, 50, 6)] }],
+      }), // 前2日 400 / RPE 6
+    ]
+    const out = dailyVolumeRpe(data, 3, ANCHOR)
+    expect(out).toHaveLength(3)
+    expect(out.map((d) => d.key)).toEqual([key(-2), key(-1), key(0)])
+    // volume 同 dailyVolume 對齊
+    expect(out.map((d) => d.volume)).toEqual(
+      dailyVolume(data, 3, ANCHOR).map((d) => d.volume),
+    )
+    expect(out[0].avgRpe).toBe(6)
+    expect(out[1].avgRpe).toBe(0) // 嗰日無記錄
+    expect(out[2].avgRpe).toBe(9)
+  })
+
+  it('每日 avgRpe 等同 avgRpe(workouts, 1, fromKey(key))（行為一致）', () => {
+    const data = [
+      w({ id: 'a', date: key(0), exercises: [{ name: 'x', sets: [set(5, 100, 7), set(5, 100, 8), set(5, 100, 8)] }] }), // 23/3=7.7
+      w({ id: 'b', date: key(-1), exercises: [{ name: 'y', sets: [set(5, 80)] }] }), // 無 RPE → 0
+      w({ id: 'c', date: key(-3), exercises: [{ name: 'z', sets: [set(5, 60, 5)] }] }),
+    ]
+    const out = dailyVolumeRpe(data, 7, ANCHOR)
+    for (const d of out) {
+      expect(d.avgRpe).toBe(avgRpe(data, 1, fromKey(d.key)))
+    }
+  })
+
+  it('同一日多筆 workout 合併（volume 相加、RPE 跨筆一齊平均）', () => {
+    const data = [
+      w({ id: 'a', date: key(0), exercises: [{ name: 'x', sets: [set(5, 100, 8)] }] }),
+      w({ id: 'b', date: key(0), exercises: [{ name: 'y', sets: [set(5, 100, 6)] }] }),
+    ]
+    const out = dailyVolumeRpe(data, 1, ANCHOR)
+    expect(out[0].volume).toBe(1000)
+    expect(out[0].avgRpe).toBe(7) // (8+6)/2
+  })
+
+  it('空陣列 → 全 0，長度仍對；days=0 → 空', () => {
+    const out = dailyVolumeRpe([], 7, ANCHOR)
+    expect(out).toHaveLength(7)
+    expect(out.every((d) => d.volume === 0 && d.avgRpe === 0)).toBe(true)
+    expect(dailyVolumeRpe([], 0, ANCHOR)).toHaveLength(0)
   })
 })
 

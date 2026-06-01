@@ -76,6 +76,38 @@ export function dailyVolume(
 }
 
 /**
+ * 由 anchor 起回推 n 日（含當日）嘅每日 volume + 平均 RPE，由舊到新。
+ * 一次過 group-by-date 計，避免逐日重掃全部 workouts。
+ * 回 { key, volume, avgRpe }[]，長度恒為 n。
+ * （每日 avgRpe 等同 avgRpe(workouts, 1, fromKey(key))，行為一致。）
+ */
+export function dailyVolumeRpe(
+  workouts: Workout[],
+  days: number,
+  anchor: Date = new Date(),
+): { key: string; volume: number; avgRpe: number }[] {
+  const n = Math.max(0, Math.floor(days))
+  const keys = recentDays(n, anchor)
+  const list = Array.isArray(workouts) ? workouts : []
+  // 按日期分組，避免每個 key 各自 filter 全表。
+  const byDate = new Map<string, Workout[]>()
+  for (const w of list) {
+    if (!w) continue
+    const bucket = byDate.get(w.date)
+    if (bucket) bucket.push(w)
+    else byDate.set(w.date, [w])
+  }
+  return keys.map((key) => {
+    const sameDay = byDate.get(key) ?? []
+    return {
+      key,
+      volume: sameDay.reduce((s, w) => s + workoutVolume(w), 0),
+      avgRpe: avgRpeOf(sameDay),
+    }
+  })
+}
+
+/**
  * 由 anchor 起回推 weeks 個「7 日週」嘅每週 volume + 平均 RPE，由舊到新。
  * 每週 = [anchor-7k-6 .. anchor-7k]。回 { label, volume, avgRpe, sessions }[]。
  */
