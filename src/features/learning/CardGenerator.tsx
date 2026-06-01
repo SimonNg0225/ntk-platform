@@ -127,6 +127,26 @@ export function normFront(s: string): string {
     .trim()
 }
 
+// 重算每張草稿嘅 dup 旗標：撞目標牌組現有 front 或撞前面草稿（normFront 後）即重複。
+// 純函式（畀 effect + 測試共用）：seen-set 去重係跨整個 list、有次序性，故喺此一次過算。
+// 若冇任何 flag 反轉就原樣回傳同一個 array ref（changed guard），令 setState 短路、唔會多餘 re-render。
+export function recomputeDup(
+  drafts: DraftCard[],
+  targetFronts: Set<string>,
+): DraftCard[] {
+  if (drafts.length === 0) return drafts
+  const seen = new Set<string>()
+  let changed = false
+  const next = drafts.map((d) => {
+    const nf = normFront(d.front)
+    const dup = targetFronts.has(nf) || seen.has(nf)
+    seen.add(nf)
+    if (dup !== d.dup) changed = true
+    return dup === d.dup ? d : { ...d, dup }
+  })
+  return changed ? next : drafts
+}
+
 export default function CardGenerator() {
   const { user } = useAuth()
   const toast = useToast()
@@ -188,22 +208,17 @@ export default function CardGenerator() {
     return set
   }, [allCards, deckTab, chosenDeckId])
 
-  // 草稿變 / 目標牌組變 → 重算重複旗標
+  // 草稿 front 簽名：任何 front 改動（inline 編輯 / swap / regenOne）都要重算 dup。
+  // 用 normFront 入簽名 → 淨係 dup 相關（正規化後）front 真正變先觸發 effect。
+  const draftFrontsSig = useMemo(
+    () => drafts.map((d) => d.id + ':' + normFront(d.front)).join('|'),
+    [drafts],
+  )
+  // 草稿變 / 目標牌組變 → 重算重複旗標。
+  // recomputeDup 嘅 changed guard 喺冇 flag 反轉時回傳同一 array ref，令 setState 短路、唔會多餘 re-render。
   useEffect(() => {
-    setDrafts((ds) => {
-      if (ds.length === 0) return ds
-      const seen = new Set<string>()
-      let changed = false
-      const next = ds.map((d) => {
-        const nf = normFront(d.front)
-        const dup = targetFronts.has(nf) || seen.has(nf)
-        seen.add(nf)
-        if (dup !== d.dup) changed = true
-        return dup === d.dup ? d : { ...d, dup }
-      })
-      return changed ? next : ds
-    })
-  }, [targetFronts])
+    setDrafts((ds) => recomputeDup(ds, targetFronts))
+  }, [targetFronts, draftFrontsSig])
 
   const tags = useMemo(
     () =>
