@@ -218,6 +218,17 @@ function ScoreGrid({ classId, className }: { classId: string; className: string 
     [results],
   )
 
+  // 以 `${評估}|${學生}` 為鍵索引原始分數，令格仔取分由全表 find()（O(分數)）降到 O(1)。
+  // 保留 find() 的「首個命中為準」語意：若有重複記錄，只記第一個（後來者唔覆蓋）。
+  const scoreByKey = useMemo(() => {
+    const m = new Map<string, number | null>()
+    for (const x of scores) {
+      const key = `${x.assessmentId}|${x.studentId}`
+      if (!m.has(key)) m.set(key, x.score)
+    }
+    return m
+  }, [scores])
+
   // 名次（按加權總分）
   const ranked = useMemo(
     () =>
@@ -431,11 +442,7 @@ function ScoreGrid({ classId, className }: { classId: string; className: string 
                     {s.name}
                   </td>
                   {assessments.map((a) => {
-                    const rec = scores.find(
-                      (x) =>
-                        x.assessmentId === a.id && x.studentId === s.id,
-                    )
-                    const sc = rec?.score
+                    const sc = scoreByKey.get(`${a.id}|${s.id}`)
                     const p = r.perAssessment[a.id]
                     const tone = p != null ? pctTone(p) : null
                     const cellBg =
