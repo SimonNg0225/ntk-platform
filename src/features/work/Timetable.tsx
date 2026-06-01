@@ -422,7 +422,7 @@ export default function Timetable() {
       )}
 
       {view === 'workload' && (
-        <WorkloadView workload={workload} classColorKey={classColorKey} />
+        <WorkloadView workload={workload} classColorKey={classColorKey} cycle={cycle} />
       )}
 
       {view === 'print' && (

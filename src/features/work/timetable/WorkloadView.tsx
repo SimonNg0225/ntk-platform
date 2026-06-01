@@ -3,7 +3,10 @@ import { CalendarDays, Clock, Layers, Coffee } from 'lucide-react'
 import { Card, EmptyState, SectionTitle, StatCard, cx } from '../../../ui'
 import {
   colorOf,
+  cycleLabel,
+  cycleShort,
   dayLabel,
+  dayShort,
   fmtDuration,
   type Workload,
 } from './util'
@@ -19,10 +22,13 @@ import {
 export default function WorkloadView({
   workload,
   classColorKey,
+  cycle,
 }: {
   workload: Workload
   // 班別 → 用嚟畀甜甜圈上色（key = classId 或 undefined）
   classColorKey: (classId?: string) => string
+  // 日循環模式：日子標籤用 Day A–F 而唔係星期一至六
+  cycle?: boolean
 }) {
   if (workload.total === 0) {
     return (
@@ -62,7 +68,11 @@ export default function WorkloadView({
           unit="節"
           icon={CalendarDays}
           hint={
-            workload.busiestDay ? dayLabel(workload.busiestDay.day) : undefined
+            workload.busiestDay
+              ? cycle
+                ? cycleLabel(workload.busiestDay.day)
+                : dayLabel(workload.busiestDay.day)
+              : undefined
           }
         />
         <StatCard
@@ -78,7 +88,7 @@ export default function WorkloadView({
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <Card padded>
           <SectionTitle icon={CalendarDays}>每日節數分佈</SectionTitle>
-          <DayBars workload={workload} />
+          <DayBars workload={workload} cycle={cycle} />
         </Card>
 
         <Card padded>
@@ -100,7 +110,7 @@ export default function WorkloadView({
           <SectionTitle icon={Coffee} description="每日上堂 vs 空堂">
             空堂分析
           </SectionTitle>
-          <FreeBusy workload={workload} />
+          <FreeBusy workload={workload} cycle={cycle} />
         </Card>
       </div>
     </div>
@@ -108,7 +118,7 @@ export default function WorkloadView({
 }
 
 // ───────── 每日節數：垂直條形圖 ─────────
-function DayBars({ workload }: { workload: Workload }) {
+function DayBars({ workload, cycle }: { workload: Workload; cycle?: boolean }) {
   const max = Math.max(1, ...workload.byDay.map((d) => d.count))
   return (
     <div className="flex h-44 items-end justify-around gap-2 pt-2">
@@ -132,7 +142,7 @@ function DayBars({ workload }: { workload: Workload }) {
               />
             </div>
             <span className="text-[11px] text-slate-400 dark:text-slate-500">
-              {dayLabel(d.day).replace('星期', '')}
+              {cycle ? cycleShort(d.day) : dayShort(d.day)}
             </span>
           </div>
         )
@@ -251,7 +261,7 @@ function PeriodHeat({ workload }: { workload: Workload }) {
 }
 
 // ───────── 空堂 vs 上堂：堆疊橫條 ─────────
-function FreeBusy({ workload }: { workload: Workload }) {
+function FreeBusy({ workload, cycle }: { workload: Workload; cycle?: boolean }) {
   return (
     <div className="space-y-2">
       {workload.freeByDay.map((d) => {
@@ -260,7 +270,7 @@ function FreeBusy({ workload }: { workload: Workload }) {
         return (
           <div key={d.day} className="flex items-center gap-2">
             <span className="w-8 shrink-0 text-xs text-slate-400">
-              {dayLabel(d.day).replace('星期', '')}
+              {cycle ? cycleShort(d.day) : dayShort(d.day)}
             </span>
             <div className="flex h-5 flex-1 overflow-hidden rounded-md bg-slate-100 dark:bg-slate-700/60">
               <div

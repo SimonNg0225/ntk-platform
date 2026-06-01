@@ -2,6 +2,8 @@ import { describe, it, expect } from 'vitest'
 import {
   dayLabel,
   dayShort,
+  cycleLabel,
+  cycleShort,
   weekCycleLabel,
   weeksOverlap,
   lessonPeriods,
@@ -52,6 +54,26 @@ describe('星期 dayLabel / dayShort', () => {
   it('未知星期 fallback', () => {
     expect(dayLabel(7)).toBe('星期7')
     expect(dayShort(0)).toBe('0')
+  })
+})
+
+describe('日循環 cycleLabel / cycleShort', () => {
+  it('day 1..6 → Day A..F（cycle 模式標籤）', () => {
+    expect(cycleLabel(1)).toBe('Day A')
+    expect(cycleLabel(2)).toBe('Day B')
+    expect(cycleLabel(6)).toBe('Day F')
+    expect(cycleShort(1)).toBe('A')
+    expect(cycleShort(2)).toBe('B')
+    expect(cycleShort(6)).toBe('F')
+  })
+  it('cycle 標籤同星期標籤截然不同（WorkloadView 回歸保護）', () => {
+    // cycle 模式唔可以顯示成「星期X / 二三…」，否則 NTK 老師會睇錯日子
+    expect(cycleShort(2)).not.toBe(dayShort(2))
+    expect(cycleLabel(2)).not.toBe(dayLabel(2))
+  })
+  it('超範圍 fallback', () => {
+    expect(cycleShort(7)).toBe('7')
+    expect(cycleLabel(7)).toBe('Day 7')
   })
 })
 
