@@ -672,15 +672,15 @@ function GoalCard({
                   ? `仲差 ${Math.abs(goal.remainingKg)}kg`
                   : ''}
             </span>
-            {/* 達標預計日 */}
-            <span className="inline-flex items-center gap-1 text-slate-500 dark:text-slate-400">
-              <CalendarClock size={13} className="text-accent" />
-              {eta.reached
-                ? '已達標'
-                : eta.dateKey
+            {/* 達標預計日：已達標／越過目標時唔再推「幾時達標」，免同左邊「已達到目標」對沖 */}
+            {!reached && (
+              <span className="inline-flex items-center gap-1 text-slate-500 dark:text-slate-400">
+                <CalendarClock size={13} className="text-accent" />
+                {eta.dateKey
                   ? `預計 ${fmtDate(eta.dateKey)}（約 ${eta.daysAway} 日）`
                   : '預計：速率不足 / 方向相反，暫推算不到'}
-            </span>
+              </span>
+            )}
           </div>
           {eta.dateKey && eta.rateKgPerWeek != null && (
             <p className="mt-1 text-[11px] text-slate-400 dark:text-slate-500">
