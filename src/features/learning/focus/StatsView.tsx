@@ -266,27 +266,29 @@ export default function StatsView({
       <section className="rounded-3xl border border-slate-200/80 bg-white p-4 dark:border-slate-700/60 dark:bg-slate-800 sm:p-5">
         <SectionTitle icon={Activity}>星期分佈</SectionTitle>
         <div className="flex items-end gap-2" style={{ height: 120 }}>
-          {weekday.map((m, i) => {
-            const max = Math.max(...weekday, 1)
-            const h = (m / max) * 100
-            return (
-              <div key={i} className="flex flex-1 flex-col items-center justify-end gap-1">
-                <span className="text-[10px] tabular-nums text-slate-400">
-                  {m > 0 ? Math.round(m) : ''}
-                </span>
-                <div
-                  className={cx(
-                    'w-full rounded-t-md transition-all duration-500',
-                    i === bestWeekday && m > 0 ? 'bg-accent' : 'bg-accent/40',
-                  )}
-                  style={{ height: `${Math.max(h, m > 0 ? 5 : 2)}%` }}
-                />
-                <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
-                  {WEEKDAY_LABELS[i]}
-                </span>
-              </div>
-            )
-          })}
+          {(() => {
+            const wdMax = Math.max(...weekday, 1)
+            return weekday.map((m, i) => {
+              const h = (m / wdMax) * 100
+              return (
+                <div key={i} className="flex flex-1 flex-col items-center justify-end gap-1">
+                  <span className="text-[10px] tabular-nums text-slate-400">
+                    {m > 0 ? Math.round(m) : ''}
+                  </span>
+                  <div
+                    className={cx(
+                      'w-full rounded-t-md transition-all duration-500',
+                      i === bestWeekday && m > 0 ? 'bg-accent' : 'bg-accent/40',
+                    )}
+                    style={{ height: `${Math.max(h, m > 0 ? 5 : 2)}%` }}
+                  />
+                  <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                    {WEEKDAY_LABELS[i]}
+                  </span>
+                </div>
+              )
+            })
+          })()}
         </div>
       </section>
 
