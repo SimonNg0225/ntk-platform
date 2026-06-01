@@ -22,6 +22,7 @@ import {
   Search,
   Sparkles,
   Star,
+  Tag,
   Trash2,
   X,
 } from 'lucide-react'
@@ -74,11 +75,13 @@ import {
   promptOfDay,
   relativeTime,
   stripUndefined,
+  tagInsights,
   toMarkdown,
   todayKey,
   weekdayCounts,
   downloadText,
   type JournalDoc,
+  type TagInsight,
 } from './journal/util'
 
 // ============================================================
@@ -952,6 +955,7 @@ function StatsView({ docs }: { docs: JournalDoc[] }) {
   const dist = useMemo(() => moodDistribution(docs), [docs])
   const monthly = useMemo(() => monthlyCounts(docs, 12), [docs])
   const weekday = useMemo(() => weekdayCounts(docs), [docs])
+  const tagRows = useMemo(() => tagInsights(docs, 8), [docs])
 
   const avgMood = useMemo(() => {
     const scored = docs.map((d) => moodDef(d.mood)?.score).filter((s): s is number => s !== undefined)
@@ -1018,10 +1022,76 @@ function StatsView({ docs }: { docs: JournalDoc[] }) {
         </Card>
       </div>
 
+      {tagRows.length > 0 && (
+        <Card className="rounded-2xl p-4">
+          <SectionTitle
+            icon={Tag}
+            right={<Badge tone="slate">{tagRows.length} 個標籤</Badge>}
+          >
+            標籤洞察
+          </SectionTitle>
+          <TagInsightsList rows={tagRows} />
+        </Card>
+      )}
+
       <Card className="rounded-2xl p-4">
         <SectionTitle icon={BarChart3}>近 12 個月日誌數</SectionTitle>
         <MonthlyBars data={monthly} />
       </Card>
+    </div>
+  )
+}
+
+// ───────── 標籤洞察列表（最常用標籤：篇數 / 累積字數 / 平均心情）─────────
+function TagInsightsList({ rows }: { rows: TagInsight[] }) {
+  const maxCount = Math.max(1, ...rows.map((r) => r.count))
+  return (
+    <div className="space-y-2.5">
+      {rows.map((r) => (
+        <div key={r.tag} className="flex items-center gap-2.5">
+          <span className="w-24 shrink-0 truncate text-xs font-medium text-accent-strong dark:text-accent">
+            #{r.tag}
+          </span>
+          <div
+            className="h-2.5 flex-1 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800"
+            role="img"
+            aria-label={`${r.count} 篇`}
+          >
+            <div
+              className="h-full rounded-full bg-accent transition-all duration-500"
+              style={{ width: `${(r.count / maxCount) * 100}%` }}
+            />
+          </div>
+          <span className="flex shrink-0 items-center justify-end gap-2.5 text-[11px] tabular-nums text-slate-500 dark:text-slate-400">
+            <Tooltip label={`${r.count} 篇日誌`}>
+              <span className="inline-flex w-9 items-center justify-end gap-0.5">
+                <BookText size={11} />
+                {r.count}
+              </span>
+            </Tooltip>
+            <Tooltip label={`累積 ${r.words.toLocaleString()} 字 · 平均 ${r.avgWords} 字／篇`}>
+              <span className="inline-flex w-14 items-center justify-end gap-0.5">
+                <Sparkles size={11} />
+                {r.words.toLocaleString()}
+              </span>
+            </Tooltip>
+            {r.avgMood !== null && r.moodDef ? (
+              <Tooltip label={`平均心情 ${r.avgMood.toFixed(1)} / 5（${r.moodDef.label}）`}>
+                <span className="inline-flex w-12 items-center justify-end gap-0.5">
+                  <span aria-hidden="true" className="text-sm leading-none">{r.moodDef.emoji}</span>
+                  <span style={{ color: r.moodDef.hex }}>{r.avgMood.toFixed(1)}</span>
+                </span>
+              </Tooltip>
+            ) : (
+              <Tooltip label="呢個標籤未標過心情">
+                <span className="inline-flex w-12 items-center justify-end text-slate-300 dark:text-slate-600">
+                  —
+                </span>
+              </Tooltip>
+            )}
+          </span>
+        </div>
+      ))}
     </div>
   )
 }

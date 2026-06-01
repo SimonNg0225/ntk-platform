@@ -17,6 +17,8 @@ import {
   stripUndefined,
   longestStreak,
   moodDistribution,
+  moodByScore,
+  tagInsights,
   weekdayCounts,
   buildHeatGrid,
   heatLevel,
@@ -336,6 +338,126 @@ describe('moodDistribution', () => {
     const dist = moodDistribution([])
     expect(dist).toHaveLength(5)
     expect(dist.every((x) => x.count === 0)).toBe(true)
+  })
+})
+
+describe('moodByScore', () => {
+  it('1..5 各對應正確 emoji（5=😀 … 1=😣）', () => {
+    expect(moodByScore(5)?.emoji).toBe('😀')
+    expect(moodByScore(4)?.emoji).toBe('🙂')
+    expect(moodByScore(3)?.emoji).toBe('😐')
+    expect(moodByScore(2)?.emoji).toBe('😓')
+    expect(moodByScore(1)?.emoji).toBe('😣')
+  })
+
+  it('範圍外分數 → undefined', () => {
+    expect(moodByScore(0)).toBeUndefined()
+    expect(moodByScore(6)).toBeUndefined()
+  })
+})
+
+describe('tagInsights', () => {
+  it('空 docs → 空陣列', () => {
+    expect(tagInsights([])).toEqual([])
+  })
+
+  it('無標籤嘅篇章唔產生任何洞察', () => {
+    const docs = [doc({ id: '1', content: '今日好攰，乜標籤都冇' })]
+    expect(tagInsights(docs)).toEqual([])
+  })
+
+  it('合併明文 + 內文 #標籤，篇數 / 累積字數 / 平均心情', () => {
+    const docs = [
+      // React：score 5（😀），countWords('學咗 react hooks')：CJK 2 + 詞 2 = 4
+      doc({ id: '1', content: '學咗 #react hooks', mood: '😀' }),
+      // React + ts：score 3（😐），countWords('溫習 #react #ts')：CJK 2 + 詞 2('react','ts') = 4
+      doc({ id: '2', content: '溫習 #react #ts', mood: '😐' }),
+    ]
+    const out = tagInsights(docs)
+    // 依篇數降序：react(2) 在前，ts(1) 在後
+    expect(out.map((t) => t.tag)).toEqual(['react', 'ts'])
+
+    const react = out.find((t) => t.tag.toLowerCase() === 'react')!
+    expect(react.count).toBe(2)
+    expect(react.words).toBe(8) // 4 + 4
+    expect(react.avgWords).toBe(4) // round(8 / 2)
+    expect(react.avgMood).toBeCloseTo(4) // (5 + 3) / 2
+    expect(react.moodDef?.emoji).toBe('🙂') // round(4) = 4 → 🙂
+
+    const ts = out.find((t) => t.tag.toLowerCase() === 'ts')!
+    expect(ts.count).toBe(1)
+    expect(ts.words).toBe(4)
+    expect(ts.avgMood).toBeCloseTo(3)
+    expect(ts.moodDef?.emoji).toBe('😐')
+  })
+
+  it('case-insensitive 歸併，顯示用首次出現嘅寫法', () => {
+    const docs = [
+      doc({ id: '1', content: '一 #React' }),
+      doc({ id: '2', content: '二 #react' }),
+      doc({ id: '3', content: '三 #REACT' }),
+    ]
+    const out = tagInsights(docs)
+    expect(out).toHaveLength(1)
+    expect(out[0].tag).toBe('React') // 首次出現嘅大小寫
+    expect(out[0].count).toBe(3)
+  })
+
+  it('同一篇重複出現同一標籤只計一次（allTagsOf 已去重）', () => {
+    const docs = [doc({ id: '1', content: '#focus #focus #focus 做嘢' })]
+    const out = tagInsights(docs)
+    expect(out).toHaveLength(1)
+    expect(out[0].count).toBe(1)
+  })
+
+  it('無心情嘅標籤 → avgMood / moodDef 皆 null', () => {
+    const docs = [doc({ id: '1', content: '#diary 純文字無心情' })]
+    const out = tagInsights(docs)
+    expect(out[0].avgMood).toBeNull()
+    expect(out[0].moodDef).toBeNull()
+  })
+
+  it('平均心情只計有標心情嘅篇章（無心情嗰篇唔拉低平均）', () => {
+    const docs = [
+      doc({ id: '1', content: '#x 開心', mood: '😀' }), // score 5
+      doc({ id: '2', content: '#x 冇心情' }), // 無心情，唔入平均
+    ]
+    const x = tagInsights(docs).find((t) => t.tag === 'x')!
+    expect(x.count).toBe(2) // 篇數照計兩篇
+    expect(x.avgMood).toBeCloseTo(5) // 平均只計有心情嗰篇
+  })
+
+  it('依篇數降序排序，同篇數再依累積字數降序', () => {
+    const docs = [
+      // a：2 篇（字較少）
+      doc({ id: 'a1', content: '#a 短' }),
+      doc({ id: 'a2', content: '#a 短' }),
+      // b：2 篇（字較多）→ 同篇數應排 a 前面
+      doc({ id: 'b1', content: '#b 比較長啲嘅內容文字' }),
+      doc({ id: 'b2', content: '#b 比較長啲嘅內容文字' }),
+      // c：1 篇 → 排最後
+      doc({ id: 'c1', content: '#c 一篇' }),
+    ]
+    const out = tagInsights(docs)
+    expect(out.map((t) => t.tag)).toEqual(['b', 'a', 'c'])
+  })
+
+  it('limit > 0 截斷至最常用嘅前 N 個', () => {
+    const docs = [
+      doc({ id: '1', content: '#a #a-dummy' }), // a:1
+      doc({ id: '2', content: '#a 再多一篇' }), // a:2
+      doc({ id: '3', content: '#b 一篇' }), // b:1
+      doc({ id: '4', content: '#c 一篇' }), // c:1
+    ]
+    const out = tagInsights(docs, 2)
+    expect(out).toHaveLength(2)
+    expect(out[0].tag.toLowerCase()).toBe('a') // 最常用喺前
+  })
+
+  it('limit <= 0 → 全部回傳', () => {
+    const docs = [doc({ id: '1', content: '#a #b #c' })]
+    expect(tagInsights(docs, 0)).toHaveLength(3)
+    expect(tagInsights(docs, -1)).toHaveLength(3)
   })
 })
 

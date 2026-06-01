@@ -51,6 +51,12 @@ export function moodScore(emoji?: string): number | undefined {
   return moodDef(emoji)?.score
 }
 
+const MOOD_BY_SCORE = new Map(MOODS.map((m) => [m.score, m]))
+/** 由分數（1..5）查心情定義（平均心情著色 / emoji 用）；無對應則 undefined */
+export function moodByScore(score: number): MoodDef | undefined {
+  return MOOD_BY_SCORE.get(score)
+}
+
 // ───────── 天氣 ─────────
 export const WEATHER = ['☀️', '⛅', '☁️', '🌧️', '⛈️', '❄️', '🌫️'] as const
 
@@ -252,6 +258,67 @@ export function moodDistribution(docs: JournalDoc[]): { def: MoodDef; count: num
   const counts = new Map<string, number>()
   for (const d of docs) if (d.mood) counts.set(d.mood, (counts.get(d.mood) ?? 0) + 1)
   return MOODS.map((def) => ({ def, count: counts.get(def.emoji) ?? 0 }))
+}
+
+// ───────── 標籤洞察（按標籤聚合：篇數 / 累積字數 / 平均心情）─────────
+export interface TagInsight {
+  tag: string // 顯示用標籤（保留首次出現嘅大小寫）
+  count: number // 用咗呢個標籤嘅篇數
+  words: number // 該標籤所有篇章嘅累積字數
+  avgWords: number // 平均每篇字數（四捨五入）
+  /** 有標心情嘅篇章平均分（1..5），全部無心情則 null */
+  avgMood: number | null
+  /** avgMood 對應嘅最近心情級別定義（著色 / emoji 用），null 則無 */
+  moodDef: MoodDef | null
+}
+
+/**
+ * 按標籤聚合洞察：每個標籤計篇數、累積字數、平均心情分。
+ * - 標籤合併「明文 + 內文 #標籤」（allTagsOf），同一篇同一標籤只計一次。
+ * - case-insensitive 歸併（'#React' 同 '#react' 當同一個），顯示用首次出現嘅寫法。
+ * - avgMood 只計有標心情嘅篇章；moodDef 取最接近平均分嘅量表級別（同 SVG 軸一致），
+ *   方便 UI 以該級別嘅 hex 著色。
+ * - 依篇數降序、同分再依累積字數降序（穩定、可重現）；limit 截斷（≤0 全回）。
+ * 純函式，零依賴，可獨立單元測試。
+ */
+export function tagInsights(docs: JournalDoc[], limit = 0): TagInsight[] {
+  const agg = new Map<
+    string,
+    { tag: string; count: number; words: number; moodSum: number; moodN: number }
+  >()
+  for (const d of docs) {
+    const tags = allTagsOf(d)
+    if (tags.length === 0) continue
+    const w = countWords(d.content)
+    const score = moodScore(d.mood)
+    for (const t of tags) {
+      const k = t.toLowerCase()
+      let e = agg.get(k)
+      if (!e) {
+        e = { tag: t, count: 0, words: 0, moodSum: 0, moodN: 0 }
+        agg.set(k, e)
+      }
+      e.count += 1
+      e.words += w
+      if (score !== undefined) {
+        e.moodSum += score
+        e.moodN += 1
+      }
+    }
+  }
+  const out: TagInsight[] = [...agg.values()].map((e) => {
+    const avgMood = e.moodN ? e.moodSum / e.moodN : null
+    return {
+      tag: e.tag,
+      count: e.count,
+      words: e.words,
+      avgWords: e.count ? Math.round(e.words / e.count) : 0,
+      avgMood,
+      moodDef: avgMood === null ? null : (moodByScore(Math.round(avgMood)) ?? null),
+    }
+  })
+  out.sort((a, b) => (b.count !== a.count ? b.count - a.count : b.words - a.words))
+  return limit > 0 ? out.slice(0, limit) : out
 }
 
 /** 近 n 個月每月日誌數（由舊到新） */
