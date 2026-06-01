@@ -57,12 +57,11 @@ import {
   cardState,
   fmtInterval,
   isLeech,
-  metaOf,
   prefOf,
   STATE_LABEL,
   STATE_TONE,
 } from './flashcards/srs'
-import type { StudyMode, TopView } from './flashcards/types'
+import type { CardMeta, StudyMode, TopView } from './flashcards/types'
 
 // ============================================================
 //  知識卡 + 間隔重複（深化至 Anki 級）
@@ -72,6 +71,16 @@ import type { StudyMode, TopView } from './flashcards/types'
 //  全部喺 features/learning/flashcards/ 自家 collection。
 //  零新 npm，圖表全 SVG/div 自製。
 // ============================================================
+
+// metaById.get() 揾唔到時嘅 fallback，shape 同 metaOf() 內部 fallback 一致
+const EMPTY_META: CardMeta = {
+  id: '',
+  tags: [],
+  suspended: false,
+  flagged: false,
+  lapses: 0,
+  updatedAt: '',
+}
 
 type Screen =
   | { name: 'home' }
@@ -592,7 +601,7 @@ function DeckDetail({
       {/* 卡片清單 */}
       <ul className="space-y-2">
         {cards.map((c) => {
-          const meta = metaOf(metas, c.id)
+          const meta = metaById.get(c.id) ?? EMPTY_META
           const st = cardState(c, meta)
           const leech = isLeech(meta)
           return (
