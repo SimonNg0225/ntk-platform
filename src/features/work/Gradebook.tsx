@@ -65,7 +65,6 @@ import {
   histogram,
   mean,
   median,
-  pctFor,
   pctTone,
   quartiles,
   resolveBands,
@@ -262,17 +261,17 @@ function ScoreGrid({ classId, className }: { classId: string; className: string 
     return arr
   }, [results, sortMode])
 
-  // 每評估全班平均
+  // 每評估全班平均（讀已 memo 嘅 results.perAssessment，免逐格重掃 scores）
   const assessmentAvg = useMemo(() => {
     const m = new Map<string, number | null>()
     for (const a of assessments) {
-      const pts = students
-        .map((s) => pctFor(scores, a.id, s.id, a.maxScore))
+      const pts = results
+        .map((r) => r.perAssessment[a.id])
         .filter((x): x is number => x != null)
       m.set(a.id, mean(pts))
     }
     return m
-  }, [assessments, students, scores])
+  }, [assessments, results])
 
   const classAvg = useMemo(() => {
     const vals = results
@@ -323,7 +322,7 @@ function ScoreGrid({ classId, className }: { classId: string; className: string 
 
   const reportResult = reportFor ? resultById.get(reportFor) ?? null : null
   const gradedAssessments = assessments.filter((a) =>
-    students.some((s) => pctFor(scores, a.id, s.id, a.maxScore) != null),
+    results.some((r) => r.perAssessment[a.id] != null),
   ).length
 
   return (
@@ -706,16 +705,16 @@ function AnalysisTab({ classId, className }: { classId: string; className: strin
       box,
       weak,
       gradedCount: assessments.filter((a) =>
-        students.some((s) => pctFor(scores, a.id, s.id, a.maxScore) != null),
+        results.some((r) => r.perAssessment[a.id] != null),
       ).length,
     }
-  }, [results, students, assessments, scores, scheme, bands])
+  }, [results, students, assessments, scheme, bands])
 
-  // 逐項評估統計
+  // 逐項評估統計（讀已 memo 嘅 results.perAssessment，免逐格重掃 scores）
   const perAssessment = useMemo(() => {
     return assessments.map((a) => {
-      const pts = students
-        .map((s) => pctFor(scores, a.id, s.id, a.maxScore))
+      const pts = results
+        .map((r) => r.perAssessment[a.id])
         .filter((x): x is number => x != null)
       return {
         a,
@@ -744,15 +743,15 @@ function AnalysisTab({ classId, className }: { classId: string; className: strin
         })(),
       }
     })
-  }, [assessments, students, scores, stats.passMark])
+  }, [assessments, results, stats.passMark])
 
-  // 課題弱項
+  // 課題弱項（讀已 memo 嘅 results.perAssessment，免逐格重掃 scores）
   const topicStats = useMemo(() => {
     const byTopic = new Map<string, number[]>()
     assessments.forEach((a) => {
       if (!a.topicId) return
-      students.forEach((s) => {
-        const p = pctFor(scores, a.id, s.id, a.maxScore)
+      results.forEach((r) => {
+        const p = r.perAssessment[a.id]
         if (p != null) {
           const arr = byTopic.get(a.topicId!) ?? []
           arr.push(p)
@@ -769,7 +768,7 @@ function AnalysisTab({ classId, className }: { classId: string; className: strin
         n: arr.length,
       }))
       .sort((a, b) => a.avg - b.avg)
-  }, [assessments, students, scores, topics])
+  }, [assessments, results, topics])
 
   // 趨勢
   const trendPoints = useMemo(
