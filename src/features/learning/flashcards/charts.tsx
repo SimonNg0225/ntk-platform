@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import { cx } from '../../../ui'
 import type { Rating } from '../../../lib/srs'
 import {
+  type DueCalCell,
   type ForecastBar,
   type HeatCell,
   type IntervalBin,
@@ -161,6 +162,99 @@ export function ForecastChart({ bars }: { bars: ForecastBar[] }) {
           { color: 'bg-emerald-500', label: '熟卡' },
         ]}
       />
+    </div>
+  )
+}
+
+// ───────── 2b. 到期負荷日曆（未來 N 週，7 欄 × N 列）─────────
+export function DueCalendar({
+  data,
+}: {
+  data: { weeks: DueCalCell[][]; total: number; max: number }
+}) {
+  const { weeks, total, max } = data
+
+  const level = (count: number): number => {
+    if (count === 0) return 0
+    const r = count / Math.max(1, max)
+    if (r <= 0.25) return 1
+    if (r <= 0.5) return 2
+    if (r <= 0.75) return 3
+    return 4
+  }
+  // 未來用「琥珀→紅」暖色，同過去（accent 海軍藍）形成對照：負荷越重越紅
+  const LEVEL_CLS = [
+    'bg-slate-100 dark:bg-slate-800',
+    'bg-amber-200 dark:bg-amber-500/35',
+    'bg-amber-400 dark:bg-amber-500/60',
+    'bg-orange-500/80',
+    'bg-rose-500',
+  ]
+  const TEXT_CLS = [
+    'text-slate-400 dark:text-slate-500',
+    'text-amber-700 dark:text-amber-200',
+    'text-amber-900 dark:text-amber-100',
+    'text-white',
+    'text-white',
+  ]
+
+  if (total === 0) {
+    return (
+      <p className="py-8 text-center text-sm text-slate-500 dark:text-slate-400">
+        未來幾週都冇卡到期，唞下啦 🎉
+      </p>
+    )
+  }
+
+  return (
+    <div>
+      <div className="grid grid-cols-7 gap-[3px] text-center text-[9px] leading-none text-slate-400 dark:text-slate-500">
+        {WEEKDAYS.map((w) => (
+          <span key={w}>{w}</span>
+        ))}
+      </div>
+      <div className="mt-1 space-y-[3px]">
+        {weeks.map((week, wi) => (
+          <div key={wi} className="grid grid-cols-7 gap-[3px]">
+            {week.map((cell, di) => {
+              if (!cell.inRange)
+                return <span key={di} className="aspect-square" />
+              const lv = level(cell.count)
+              return (
+                <span
+                  key={di}
+                  title={`${cell.key}：${cell.count} 張到期`}
+                  className={cx(
+                    'flex aspect-square items-center justify-center rounded-[3px] text-[10px] font-semibold tabular-nums ring-1 ring-inset ring-slate-900/5 transition dark:ring-white/5',
+                    LEVEL_CLS[lv],
+                    TEXT_CLS[lv],
+                    cell.isToday &&
+                      'ring-2 ring-accent ring-offset-1 ring-offset-white dark:ring-offset-slate-900',
+                  )}
+                >
+                  {cell.count > 0 ? cell.count : ''}
+                </span>
+              )
+            })}
+          </div>
+        ))}
+      </div>
+      <div className="mt-2 flex items-center justify-between text-[11px] text-slate-400 dark:text-slate-500">
+        <span className="tabular-nums">
+          未來合共{' '}
+          <span className="font-semibold text-slate-600 dark:text-slate-300">
+            {total}
+          </span>{' '}
+          張到期
+        </span>
+        <span className="flex items-center gap-1">
+          少
+          {LEVEL_CLS.map((c, i) => (
+            <span key={i} className={cx('h-[10px] w-[10px] rounded-[2px]', c)} />
+          ))}
+          多
+        </span>
+      </div>
     </div>
   )
 }

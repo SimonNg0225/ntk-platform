@@ -16,6 +16,7 @@ import {
   computeStreak,
   dailyReviewCounts,
   dueForecast,
+  dueLoadCalendar,
   intervalHistogram,
   retention,
   reviewHeatmap,
@@ -26,6 +27,7 @@ import {
   AnswerBars,
   DailyTrend,
   Donut,
+  DueCalendar,
   ForecastChart,
   Heatmap,
   IntervalChart,
@@ -47,6 +49,7 @@ export default function StatsView() {
 
   const [deckId, setDeckId] = useState<string>('all')
   const [heatRange, setHeatRange] = useState(119)
+  const [dueWeeks, setDueWeeks] = useState(6)
 
   // 範圍過濾
   const cards = useMemo(
@@ -66,6 +69,10 @@ export default function StatsView() {
     [scopedLogs, heatRange],
   )
   const forecast = useMemo(() => dueForecast(cards, metas, 14), [cards, metas])
+  const dueCal = useMemo(
+    () => dueLoadCalendar(cards, metas, dueWeeks),
+    [cards, metas, dueWeeks],
+  )
   const answers = useMemo(() => answerBreakdown(scopedLogs), [scopedLogs])
   const states = useMemo(() => stateBreakdown(cards, metas), [cards, metas])
   const intervals = useMemo(() => intervalHistogram(cards), [cards])
@@ -173,6 +180,28 @@ export default function StatsView() {
           複習熱力圖
         </SectionTitle>
         <Heatmap cells={heat} />
+      </Card>
+
+      {/* 到期負荷日曆（未來） */}
+      <Card className="p-4">
+        <SectionTitle
+          icon={CalendarRange}
+          description="未來每日要溫幾多卡（顏色越深負荷越重，今日有框）"
+          right={
+            <RangeToggle
+              value={dueWeeks}
+              onChange={setDueWeeks}
+              options={[
+                { value: 4, label: '4 週' },
+                { value: 6, label: '6 週' },
+                { value: 9, label: '9 週' },
+              ]}
+            />
+          }
+        >
+          到期負荷日曆
+        </SectionTitle>
+        <DueCalendar data={dueCal} />
       </Card>
 
       <div className="grid gap-4 lg:grid-cols-2">

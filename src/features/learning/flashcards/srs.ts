@@ -289,6 +289,74 @@ export function dueForecast(
   return buckets
 }
 
+// ───── 到期負荷日曆（未來 N 週，7 欄 × N 列，按當日到期卡數著色）─────
+// 對齊 dueForecast 語意：新卡 / 暫停卡唔計；逾期卡歸今日。
+// 由今日（含）起向後鋪 weeks×7 日，再補頭部空白令第一格落正確星期（日=0）。
+export interface DueCalCell {
+  key: string
+  count: number
+  isToday: boolean
+  inRange: boolean // 是否屬統計區間（補白格 false；天數超出 weeks×7 亦 false）
+}
+export function dueLoadCalendar(
+  cards: Card[],
+  metas: CardMeta[],
+  weeks = 6,
+): { weeks: DueCalCell[][]; total: number; max: number } {
+  const span = Math.max(0, weeks) * 7
+  const metaById = new Map(metas.map((m) => [m.id, m]))
+  const today = todayStr()
+
+  // 統計每日到期卡數（只計區間內；逾期歸今日）
+  const counts = new Map<string, number>()
+  for (let i = 0; i < span; i++) counts.set(addDaysKey(today, i), 0)
+  for (const c of cards) {
+    if (metaById.get(c.id)?.suspended) continue
+    if (c.repetitions === 0) continue // 新卡唔計
+    const key = c.dueDate < today ? today : c.dueDate
+    if (!counts.has(key)) continue // 超出區間
+    counts.set(key, (counts.get(key) ?? 0) + 1)
+  }
+
+  // 頭部補白：令今日落喺正確星期欄（日=0 … 六=6）
+  const [y, m, d] = today.split('-').map(Number)
+  const dow = new Date(y, (m ?? 1) - 1, d ?? 1).getDay()
+  const cells: DueCalCell[] = []
+  for (let i = 0; i < dow; i++) {
+    cells.push({ key: `pad-${i}`, count: 0, isToday: false, inRange: false })
+  }
+  for (let i = 0; i < span; i++) {
+    const key = addDaysKey(today, i)
+    cells.push({
+      key,
+      count: counts.get(key) ?? 0,
+      isToday: i === 0,
+      inRange: true,
+    })
+  }
+  // 尾部補白：補滿最後一行
+  while (cells.length % 7 !== 0) {
+    cells.push({
+      key: `pad-end-${cells.length}`,
+      count: 0,
+      isToday: false,
+      inRange: false,
+    })
+  }
+
+  const out: DueCalCell[][] = []
+  for (let i = 0; i < cells.length; i += 7) out.push(cells.slice(i, i + 7))
+
+  let total = 0
+  let max = 0
+  for (const c of cells) {
+    if (!c.inRange) continue
+    total += c.count
+    if (c.count > max) max = c.count
+  }
+  return { weeks: out, total, max }
+}
+
 // ───── 留存率：依評分 again 為「答錯」─────
 export function retention(logs: ReviewLog[]): {
   rate: number

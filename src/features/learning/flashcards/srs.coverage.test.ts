@@ -9,6 +9,7 @@ import {
   computeStreak,
   reviewHeatmap,
   dueForecast,
+  dueLoadCalendar,
   dailyReviewCounts,
   addDaysKey,
   diffDays,
@@ -842,5 +843,118 @@ describe('retention（額外邊界）', () => {
       mkLog({ prevInterval: 6, rating: 'again' }),
     ])
     expect(r.rate).toBe(50)
+  })
+})
+
+// ═════════════════════════════════════════════════════════════
+//  dueLoadCalendar —— 未來到期負荷日曆（7 欄 × N 週，calendar 對齊）
+//  TODAY = 2026-05-15 係星期五（getDay() = 5）→ 頭部補 5 格空白。
+// ═════════════════════════════════════════════════════════════
+describe('dueLoadCalendar（未來 N 週每日到期卡數，日曆格對齊）', () => {
+  // 攤平所有 cell（含補白）方便斷言
+  const flat = (r: ReturnType<typeof dueLoadCalendar>) => r.weeks.flat()
+  // 只取區間內（真正日子）cell
+  const real = (r: ReturnType<typeof dueLoadCalendar>) =>
+    flat(r).filter((c) => c.inRange)
+
+  it('空卡 → total 0、max 0、區間內 span = weeks×7 格', () => {
+    const r = dueLoadCalendar([], [], 4)
+    expect(r.total).toBe(0)
+    expect(r.max).toBe(0)
+    expect(real(r).length).toBe(28)
+    expect(real(r).every((c) => c.count === 0)).toBe(true)
+  })
+
+  it('每行 7 格（grid 對齊），週數 = ceil((dow + span)/7)', () => {
+    // dow=5（週五）+ span=28 = 33 → ceil(33/7)=5 行
+    const r = dueLoadCalendar([], [], 4)
+    expect(r.weeks.every((w) => w.length === 7)).toBe(true)
+    expect(r.weeks.length).toBe(5)
+  })
+
+  it('頭部補 5 格空白（週五），第 6 格先係今日且 isToday', () => {
+    const r = dueLoadCalendar([], [], 4)
+    const cells = flat(r)
+    // 前 5 格 = 補白（inRange false、無 isToday）
+    expect(cells.slice(0, 5).every((c) => !c.inRange && !c.isToday)).toBe(true)
+    expect(cells[5].inRange).toBe(true)
+    expect(cells[5].isToday).toBe(true)
+    expect(cells[5].key).toBe(TODAY)
+    // 區間內有且只有一格 isToday
+    expect(real(r).filter((c) => c.isToday).length).toBe(1)
+  })
+
+  it('區間內第一格係今日、最後一格 = 今日 +（span-1）', () => {
+    const r = dueLoadCalendar([], [], 4)
+    const rs = real(r)
+    expect(rs[0].key).toBe(TODAY)
+    expect(rs[rs.length - 1].key).toBe(addDaysKey(TODAY, 27))
+  })
+
+  it('尾部補白令最後一行補滿 7 格（補白 inRange false）', () => {
+    const r = dueLoadCalendar([], [], 4)
+    const last = r.weeks[r.weeks.length - 1]
+    expect(last.length).toBe(7)
+    // 5 行 ×7 = 35 格 = 5 補頭 + 28 真 + 2 補尾
+    expect(flat(r).filter((c) => !c.inRange).length).toBe(7)
+  })
+
+  it('到期卡正確落格並計入 total / max（同日累加）', () => {
+    const cards: Card[] = [
+      mkCard({ id: 'a', repetitions: 3, intervalDays: 5, dueDate: TODAY }),
+      mkCard({ id: 'b', repetitions: 3, intervalDays: 5, dueDate: TODAY }),
+      mkCard({ id: 'c', repetitions: 3, intervalDays: 5, dueDate: addDaysKey(TODAY, 3) }),
+    ]
+    const r = dueLoadCalendar(cards, [], 4)
+    const cell = real(r).find((c) => c.key === TODAY)
+    expect(cell?.count).toBe(2)
+    expect(real(r).find((c) => c.key === addDaysKey(TODAY, 3))?.count).toBe(1)
+    expect(r.total).toBe(3)
+    expect(r.max).toBe(2)
+  })
+
+  it('逾期卡（dueDate < 今日）歸入今日格', () => {
+    const cards: Card[] = [
+      mkCard({ id: 'over', repetitions: 3, intervalDays: 5, dueDate: addDaysKey(TODAY, -8) }),
+    ]
+    const r = dueLoadCalendar(cards, [], 4)
+    expect(real(r).find((c) => c.key === TODAY)?.count).toBe(1)
+    expect(r.total).toBe(1)
+  })
+
+  it('新卡（reps 0）唔計入', () => {
+    const cards: Card[] = [
+      mkCard({ id: 'new', repetitions: 0, intervalDays: 0, dueDate: TODAY }),
+    ]
+    const r = dueLoadCalendar(cards, [], 4)
+    expect(r.total).toBe(0)
+  })
+
+  it('暫停卡唔計入', () => {
+    const cards: Card[] = [
+      mkCard({ id: 'susp', repetitions: 3, intervalDays: 5, dueDate: TODAY }),
+    ]
+    const metas: CardMeta[] = [mkMeta({ id: 'susp', suspended: true })]
+    const r = dueLoadCalendar(cards, metas, 4)
+    expect(r.total).toBe(0)
+  })
+
+  it('到期日超出區間（>span 日後）→ 唔計入', () => {
+    const cards: Card[] = [
+      mkCard({ id: 'far', repetitions: 3, intervalDays: 5, dueDate: addDaysKey(TODAY, 200) }),
+    ]
+    const r = dueLoadCalendar(cards, [], 4)
+    expect(r.total).toBe(0)
+  })
+
+  it('預設 weeks = 6（區間 42 格）', () => {
+    const r = dueLoadCalendar([], [])
+    expect(real(r).length).toBe(42)
+  })
+
+  it('weeks = 0 → 無真實格、total 0（唔會爆）', () => {
+    const r = dueLoadCalendar([], [], 0)
+    expect(real(r).length).toBe(0)
+    expect(r.total).toBe(0)
   })
 })
