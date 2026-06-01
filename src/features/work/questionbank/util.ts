@@ -506,6 +506,24 @@ export interface ParsedRow {
   marks?: number
 }
 
+// 把 MC 選項去除空白項，並按壓縮後嘅新位置重新對應正確答案 index。
+// 表單／AI 草稿固定渲染 A–D 四格，中間留空會令 filter 後嘅 options 同
+// 原本嘅 answerIndex 錯位（出界或指向錯選項）。呢度一次過 trim + filter +
+// remap，畀儲存路徑用，確保 options 同 answerIndex 永遠一致。
+export function compactMcOptions(
+  options: string[],
+  answerIndex: number,
+): { options: string[]; answerIndex: number } {
+  const kept = options
+    .map((o, i) => ({ o: o.trim(), i }))
+    .filter((x) => x.o)
+  const newIdx = kept.findIndex((x) => x.i === answerIndex)
+  return {
+    options: kept.map((x) => x.o),
+    answerIndex: newIdx < 0 ? 0 : newIdx,
+  }
+}
+
 // 把 CSV rows（含表頭）轉成可入庫嘅 ParsedRow[]，附帶被略過嘅行數
 export function rowsToQuestions(
   rows: string[][],

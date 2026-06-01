@@ -4,6 +4,7 @@ import {
   computeStats,
   difficultyIndexLabel,
   buildTopicRows,
+  compactMcOptions,
   coverageGaps,
   normStem,
   similarity,
@@ -748,6 +749,57 @@ describe('rowsToQuestions', () => {
   it('空課題名 → fallback 第一個課題', () => {
     const rows = [['', 'short', 'easy', '題幹', '', '', '', '', '', '']]
     expect(rowsToQuestions(rows, topics).parsed[0].topicId).toBe('T1')
+  })
+})
+
+// ============================================================
+//  compactMcOptions — 去空白選項後 remap answerIndex
+// ============================================================
+describe('compactMcOptions', () => {
+  it('無空白項：原樣保留，index 不變', () => {
+    const r = compactMcOptions(['A', 'B', 'C', 'D'], 3)
+    expect(r.options).toEqual(['A', 'B', 'C', 'D'])
+    expect(r.answerIndex).toBe(3)
+  })
+
+  it('中間留空（C 空、標 D=3）：filter 後 index 跟住前移到 2', () => {
+    // 填 A、B、D 並標 D = index 3，C 留空 → [A,B,D]，答案應指向 D（新 index 2）
+    const r = compactMcOptions(['A', 'B', '', 'D'], 3)
+    expect(r.options).toEqual(['A', 'B', 'D'])
+    expect(r.answerIndex).toBe(2)
+    // 重要：唔可以再係 3（會出界），亦唔可以靜默指向錯選項
+    expect(r.options[r.answerIndex]).toBe('D')
+  })
+
+  it('留空嘅係 A（index 0）：其後選項前移一格，答案要跟住對應', () => {
+    // A 留空，標正確答案係原本 index 1（B）→ 壓縮後 B 變 index 0
+    const r = compactMcOptions(['', 'B', 'C', 'D'], 1)
+    expect(r.options).toEqual(['B', 'C', 'D'])
+    expect(r.answerIndex).toBe(0)
+    expect(r.options[r.answerIndex]).toBe('B')
+  })
+
+  it('正確答案嗰格本身被留空：fallback 去 0，唔會指向已刪走嘅選項', () => {
+    // 標 C（index 2）做答案但 C 留空 → C 被刪，answerIndex 對唔到 → fallback 0
+    const r = compactMcOptions(['A', 'B', '', 'D'], 2)
+    expect(r.options).toEqual(['A', 'B', 'D'])
+    expect(r.answerIndex).toBe(0)
+    expect(r.answerIndex).toBeLessThan(r.options.length)
+  })
+
+  it('會 trim 選項並按 trim 後嘅內容判斷空白', () => {
+    const r = compactMcOptions(['  A  ', '   ', 'C', ''], 2)
+    expect(r.options).toEqual(['A', 'C'])
+    // 原 index 2（C）→ 壓縮後變 index 1
+    expect(r.answerIndex).toBe(1)
+    expect(r.options[r.answerIndex]).toBe('C')
+  })
+
+  it('結果嘅 answerIndex 永遠喺界內（防出界）', () => {
+    const r = compactMcOptions(['A', '', '', ''], 3)
+    expect(r.options).toEqual(['A'])
+    expect(r.answerIndex).toBe(0)
+    expect(r.answerIndex).toBeLessThan(r.options.length)
   })
 })
 

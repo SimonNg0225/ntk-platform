@@ -60,6 +60,7 @@ import {
   assemblePaper,
   buildPrintHtml,
   buildTopicRows,
+  compactMcOptions,
   computeStats,
   coverageGaps,
   csvTemplate,
@@ -1572,14 +1573,18 @@ function QuestionFormModal({
 
   const save = () => {
     if (!form.stem.trim() || !form.topicId) return
+    // MC：去除空白選項後要重新對應 answerIndex，否則中間留空會令正確答案錯位／出界
+    const mc =
+      form.type === 'mc'
+        ? compactMcOptions(form.options, form.answerIndex)
+        : null
     const payload = {
       topicId: form.topicId,
       type: form.type,
       difficulty: form.difficulty,
       stem: form.stem.trim(),
-      options:
-        form.type === 'mc' ? form.options.filter((o) => o.trim()) : undefined,
-      answerIndex: form.type === 'mc' ? form.answerIndex : undefined,
+      options: mc ? mc.options : undefined,
+      answerIndex: mc ? mc.answerIndex : undefined,
       answer: form.type !== 'mc' ? form.answer.trim() : undefined,
       marks: form.marks ? Number(form.marks) : undefined,
     }
@@ -2150,13 +2155,18 @@ function AIGenerateModal({
     const chosen = drafts.filter((d) => d._selected && d.stem.trim())
     if (chosen.length === 0) return
     for (const d of chosen) {
+      // 同 QuestionFormModal：去空白選項後 remap answerIndex，避免正確答案錯位
+      const mc =
+        type === 'mc'
+          ? compactMcOptions(d.options ?? [], d.answerIndex ?? 0)
+          : null
       questionsCol.add({
         topicId,
         type,
         difficulty,
         stem: d.stem.trim(),
-        options: type === 'mc' ? d.options?.filter((o) => o.trim()) : undefined,
-        answerIndex: type === 'mc' ? d.answerIndex : undefined,
+        options: mc ? mc.options : undefined,
+        answerIndex: mc ? mc.answerIndex : undefined,
         answer: type !== 'mc' ? d.answer?.trim() : undefined,
         marks: d.marks ?? undefined,
         source: 'AI 生成',
