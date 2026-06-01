@@ -216,6 +216,93 @@ export function buildMomentum(
   return out
 }
 
+/**
+ * 近 `days` 日嘅「淨推進」（動量排序用）。
+ * = current − 窗口起點前嘅基線進度（窗前最後一筆簽到；無則 0）。
+ * 取值範圍可正可負（倒退就負），無簽到時退為 0（無資料 ≠ 有推進）。
+ * 用本地日曆日界定窗口起點，同 buildMomentum 一致（避 UTC slice 漂移）。
+ */
+export function momentumGain(
+  checkins: { createdAt: string; progress: number }[],
+  current: number,
+  days: number,
+  now: Date = new Date(),
+): number {
+  if (checkins.length === 0) return 0
+  const localKey = (iso: string): string => {
+    const d = new Date(iso)
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+  }
+  const start = new Date(now)
+  start.setDate(now.getDate() - (days - 1))
+  const startKey = `${start.getFullYear()}-${String(start.getMonth() + 1).padStart(2, '0')}-${String(start.getDate()).padStart(2, '0')}`
+  // 窗前最後一筆 = 基線（checkins 已按時間遞增；後者覆蓋前者）
+  let baseline = 0
+  let sawBefore = false
+  for (const c of checkins) {
+    if (localKey(c.createdAt) < startKey) {
+      baseline = c.progress
+      sawBefore = true
+    }
+  }
+  // 窗前無任何簽到 → 基線當 0（由零開始推進，gain = current）
+  return current - (sawBefore ? baseline : 0)
+}
+
+// ───────── 狀態 + 到期視窗 篩選 ─────────
+export type StatusFilter = 'all' | 'active' | 'due7' | 'overdue' | 'paused' | 'done'
+
+/** 篩選預測所需嘅最小目標形狀（狀態 + 目標日）。 */
+export interface StatusFilterTarget {
+  status: GoalStatus
+  targetDate?: string
+}
+
+export const STATUS_FILTERS: { id: StatusFilter; label: string }[] = [
+  { id: 'all', label: '全部' },
+  { id: 'active', label: '進行中' },
+  { id: 'due7', label: '7 日內到期' },
+  { id: 'overdue', label: '已逾期' },
+  { id: 'paused', label: '暫停' },
+  { id: 'done', label: '已完成' },
+]
+
+/**
+ * 一個目標是否符合「狀態 + 到期視窗」篩選。
+ * - all：全部
+ * - active / paused / done：純按狀態
+ * - due7：未完成 + 目標日喺今日起 7 日內（0..7，inclusive）
+ * - overdue：未完成 + 目標日已過（< 0）
+ * 到期類視窗會排除已完成（done）目標——已達成嘅唔當「快到期/逾期」。
+ */
+export function matchesStatusFilter(
+  t: StatusFilterTarget,
+  filter: StatusFilter,
+): boolean {
+  switch (filter) {
+    case 'all':
+      return true
+    case 'active':
+      return t.status === 'active'
+    case 'paused':
+      return t.status === 'paused'
+    case 'done':
+      return t.status === 'done'
+    case 'due7': {
+      if (t.status === 'done') return false
+      const d = daysUntil(t.targetDate)
+      return d !== undefined && d >= 0 && d <= 7
+    }
+    case 'overdue': {
+      if (t.status === 'done') return false
+      const d = daysUntil(t.targetDate)
+      return d !== undefined && d < 0
+    }
+    default:
+      return true
+  }
+}
+
 // ───────── 雜項 ─────────
 export function clampPct(n: number): number {
   if (!Number.isFinite(n)) return 0 // 防 NaN / ±Infinity 污染進度

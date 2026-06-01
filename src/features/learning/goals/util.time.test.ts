@@ -1,10 +1,18 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
-import { daysUntil, dueLabel, buildMomentum, relTime } from './util'
+import {
+  daysUntil,
+  dueLabel,
+  buildMomentum,
+  relTime,
+  momentumGain,
+  matchesStatusFilter,
+  STATUS_FILTERS,
+} from './util'
 
 // ============================================================
 //  時間相依純函式 — 用 fake timers 鎖死「現在」做 deterministic 測。
 //  （本 repo 用「本地時區」key 避 UTC 漂移；測試環境為 Asia/Hong_Kong = UTC+8。）
-//  涵蓋：daysUntil / dueLabel / buildMomentum / relTime
+//  涵蓋：daysUntil / dueLabel / buildMomentum / relTime / momentumGain / matchesStatusFilter
 // ============================================================
 
 // 本地日曆日 key（同 source 慣例：getMonth()+1、padStart 2）
@@ -197,5 +205,111 @@ describe('relTime（相對時間；>30 日舊項回本地日曆日標籤）', ()
       day: 'numeric',
     })
     expect(relTime(iso)).toBe(expected)
+  })
+})
+
+describe('momentumGain（近 N 日淨推進；窗前最後簽到做基線）', () => {
+  beforeEach(() => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date(2026, 4, 31, 9, 0, 0)) // 本地 2026-05-31
+  })
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  // 本地中午建立 ISO，避 fake timer 下 UTC 漂移影響窗口落格
+  const at = (y: number, m: number, d: number, progress: number) => ({
+    createdAt: new Date(y, m - 1, d, 12, 0, 0).toISOString(),
+    progress,
+  })
+
+  it('無簽到 → 0（無資料 ≠ 有推進）', () => {
+    expect(momentumGain([], 80, 14)).toBe(0)
+  })
+
+  it('窗前無基線：gain = current（由零開始推進）', () => {
+    // 14 日窗 = 05-18..05-31。只喺 05-25 簽到一次 → 基線視為 0。
+    expect(momentumGain([at(2026, 5, 25, 60)], 60, 14)).toBe(60)
+  })
+
+  it('窗前有基線：gain = current − 窗前最後簽到值', () => {
+    // 14 日窗 = 05-18..05-31。窗前 05-10(=30) 做基線；current=75 → gain 45。
+    expect(momentumGain([at(2026, 5, 10, 30), at(2026, 5, 28, 70)], 75, 14)).toBe(45)
+  })
+
+  it('窗前多筆 → 取最後一筆做基線（後者覆蓋）', () => {
+    // 窗前兩筆 05-08(=10)、05-12(=40)：基線取 40；current=40 → gain 0。
+    expect(momentumGain([at(2026, 5, 8, 10), at(2026, 5, 12, 40)], 40, 14)).toBe(0)
+  })
+
+  it('倒退 → 負數（current 低過基線）', () => {
+    // 窗前 05-10(=80)；current 跌到 50 → gain -30。
+    expect(momentumGain([at(2026, 5, 10, 80)], 50, 14)).toBe(-30)
+  })
+
+  it('窗口邊界：窗第一日（含）嘅簽到唔當基線', () => {
+    // 14 日窗起點 = 05-18。喺 05-18 簽到（窗內）→ 唔做基線，基線仍 0。
+    expect(momentumGain([at(2026, 5, 18, 25)], 90, 14)).toBe(90)
+    // 但 05-17（窗前一日）就做基線。
+    expect(momentumGain([at(2026, 5, 17, 25)], 90, 14)).toBe(65)
+  })
+
+  it('接受注入 now（唔靠系統時鐘）', () => {
+    // 明確傳 now=2026-05-31；7 日窗起點 05-25，窗前 05-20(=20) 基線；current 50 → 30。
+    const now = new Date(2026, 4, 31, 9, 0, 0)
+    expect(momentumGain([at(2026, 5, 20, 20)], 50, 7, now)).toBe(30)
+  })
+})
+
+describe('matchesStatusFilter（狀態 + 到期視窗 篩選）', () => {
+  beforeEach(() => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date(2026, 4, 31, 9, 0, 0)) // 本地 2026-05-31
+  })
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it('all → 任何目標都收', () => {
+    expect(matchesStatusFilter({ status: 'active' }, 'all')).toBe(true)
+    expect(matchesStatusFilter({ status: 'done' }, 'all')).toBe(true)
+    expect(matchesStatusFilter({ status: 'paused', targetDate: '2026-05-01' }, 'all')).toBe(true)
+  })
+
+  it('純狀態：active / paused / done 只比對 status', () => {
+    expect(matchesStatusFilter({ status: 'active' }, 'active')).toBe(true)
+    expect(matchesStatusFilter({ status: 'paused' }, 'active')).toBe(false)
+    expect(matchesStatusFilter({ status: 'paused' }, 'paused')).toBe(true)
+    expect(matchesStatusFilter({ status: 'done' }, 'done')).toBe(true)
+    expect(matchesStatusFilter({ status: 'active' }, 'done')).toBe(false)
+  })
+
+  it('due7：今日起 0..7 日內到期 + 未完成', () => {
+    expect(matchesStatusFilter({ status: 'active', targetDate: '2026-05-31' }, 'due7')).toBe(true) // d=0
+    expect(matchesStatusFilter({ status: 'active', targetDate: '2026-06-07' }, 'due7')).toBe(true) // d=7 邊界
+    expect(matchesStatusFilter({ status: 'active', targetDate: '2026-06-08' }, 'due7')).toBe(false) // d=8 過界
+    expect(matchesStatusFilter({ status: 'active', targetDate: '2026-05-30' }, 'due7')).toBe(false) // 已逾期
+    expect(matchesStatusFilter({ status: 'active' }, 'due7')).toBe(false) // 無目標日
+  })
+
+  it('due7：已完成唔當快到期（即使目標日喺窗內）', () => {
+    expect(matchesStatusFilter({ status: 'done', targetDate: '2026-06-01' }, 'due7')).toBe(false)
+  })
+
+  it('overdue：目標日已過 + 未完成', () => {
+    expect(matchesStatusFilter({ status: 'active', targetDate: '2026-05-30' }, 'overdue')).toBe(true) // d=-1
+    expect(matchesStatusFilter({ status: 'paused', targetDate: '2026-05-01' }, 'overdue')).toBe(true)
+    expect(matchesStatusFilter({ status: 'active', targetDate: '2026-05-31' }, 'overdue')).toBe(false) // d=0 今日唔算逾期
+    expect(matchesStatusFilter({ status: 'active', targetDate: '2026-06-10' }, 'overdue')).toBe(false)
+    expect(matchesStatusFilter({ status: 'active' }, 'overdue')).toBe(false) // 無目標日
+  })
+
+  it('overdue：已完成唔當逾期', () => {
+    expect(matchesStatusFilter({ status: 'done', targetDate: '2026-05-01' }, 'overdue')).toBe(false)
+  })
+
+  it('STATUS_FILTERS 第一項係 all（畀 UI 預設）', () => {
+    expect(STATUS_FILTERS[0].id).toBe('all')
+    expect(STATUS_FILTERS.map((f) => f.id)).toEqual(['all', 'active', 'due7', 'overdue', 'paused', 'done'])
   })
 })

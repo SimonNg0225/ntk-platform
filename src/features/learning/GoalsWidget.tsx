@@ -49,13 +49,17 @@ import {
   computeProgress,
   dueLabel,
   daysUntil,
+  momentumGain,
+  matchesStatusFilter,
+  STATUS_FILTERS,
+  type StatusFilter,
 } from './goals/util'
 import { StatusDonut, CategoryBars, ProgressRing } from './goals/Charts'
 import GoalEditor, { type EditorSeed } from './goals/GoalEditor'
 import GoalDetail from './goals/GoalDetail'
 
 type ViewId = 'board' | 'list' | 'insights'
-type SortId = 'recent' | 'progress' | 'due' | 'priority' | 'name'
+type SortId = 'recent' | 'progress' | 'due' | 'priority' | 'momentum' | 'name'
 type CatFilter = GoalCategory | 'all'
 
 // 一個目標 + 佢嘅元資料 + 里程碑（運算用）
@@ -65,6 +69,8 @@ interface EnrichedGoal {
   milestones: Milestone[]
   progress: number
   status: GoalMeta['status']
+  /** 近 14 日淨推進（動量排序用；由簽到歷史計） */
+  momentum: number
 }
 
 export default function GoalsWidget() {
@@ -77,6 +83,7 @@ export default function GoalsWidget() {
   const [view, setView] = useState<ViewId>('board')
   const [query, setQuery] = useState('')
   const [catFilter, setCatFilter] = useState<CatFilter>('all')
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
   const [sort, setSort] = useState<SortId>('recent')
   const [quick, setQuick] = useState('')
 
@@ -96,6 +103,18 @@ export default function GoalsWidget() {
     return map
   }, [allMilestones])
 
+  // 每個目標嘅簽到（按時間遞增排好，畀 momentumGain 用）
+  const checkinsByGoal = useMemo(() => {
+    const map = new Map<string, typeof checkins>()
+    for (const c of checkins) {
+      const arr = map.get(c.goalId)
+      if (arr) arr.push(c)
+      else map.set(c.goalId, [c])
+    }
+    for (const arr of map.values()) arr.sort((a, b) => (a.createdAt < b.createdAt ? -1 : 1))
+    return map
+  }, [checkins])
+
   const enriched: EnrichedGoal[] = useMemo(
     () =>
       goals.map((goal) => {
@@ -103,9 +122,10 @@ export default function GoalsWidget() {
         const milestones = msByGoal.get(goal.id) ?? []
         const progress = computeProgress(milestones, goal.progress)
         const status: GoalMeta['status'] = meta?.status ?? (progress >= 100 ? 'done' : 'active')
-        return { goal, meta, milestones, progress, status }
+        const momentum = momentumGain(checkinsByGoal.get(goal.id) ?? [], progress, 14)
+        return { goal, meta, milestones, progress, status, momentum }
       }),
-    [goals, metaById, msByGoal],
+    [goals, metaById, msByGoal, checkinsByGoal],
   )
 
   // ───────── 統計 ─────────
@@ -142,6 +162,7 @@ export default function GoalsWidget() {
     const q = query.trim().toLowerCase()
     let list = enriched.filter((e) => {
       if (catFilter !== 'all' && (e.meta?.category ?? 'study') !== catFilter) return false
+      if (!matchesStatusFilter({ status: e.status, targetDate: e.meta?.targetDate }, statusFilter)) return false
       if (q && !e.goal.title.toLowerCase().includes(q) && !(e.meta?.notes ?? '').toLowerCase().includes(q)) return false
       return true
     })
@@ -153,6 +174,10 @@ export default function GoalsWidget() {
           return a.goal.title.localeCompare(b.goal.title, 'zh-HK')
         case 'priority':
           return priorityRank(b.meta?.priority) - priorityRank(a.meta?.priority)
+        case 'momentum':
+          // 近 14 日推進多者排先；打和回退「最新建立」保穩定次序
+          if (b.momentum !== a.momentum) return b.momentum - a.momentum
+          return a.goal.createdAt < b.goal.createdAt ? 1 : -1
         case 'due': {
           const da = daysUntil(a.meta?.targetDate)
           const db = daysUntil(b.meta?.targetDate)
@@ -166,7 +191,7 @@ export default function GoalsWidget() {
       }
     })
     return list
-  }, [enriched, query, catFilter, sort])
+  }, [enriched, query, catFilter, statusFilter, sort])
 
   // 分類計數（畀 Pills 顯示）
   const catCounts = useMemo(() => {
@@ -174,6 +199,17 @@ export default function GoalsWidget() {
     for (const e of enriched) {
       const c = (e.meta?.category ?? 'study') as GoalCategory
       counts[c] = (counts[c] ?? 0) + 1
+    }
+    return counts
+  }, [enriched])
+
+  // 狀態 + 到期視窗計數（每個 pill 各自跑 matchesStatusFilter，定義一致唔走樣）
+  const statusCounts = useMemo(() => {
+    const counts: Partial<Record<StatusFilter, number>> = {}
+    for (const f of STATUS_FILTERS) {
+      counts[f.id] = enriched.filter((e) =>
+        matchesStatusFilter({ status: e.status, targetDate: e.meta?.targetDate }, f.id),
+      ).length
     }
     return counts
   }, [enriched])
@@ -214,7 +250,7 @@ export default function GoalsWidget() {
     setEditor({ open: true, seed: { goalId } })
   }
 
-  const isFiltering = query.trim() !== '' || catFilter !== 'all'
+  const isFiltering = query.trim() !== '' || catFilter !== 'all' || statusFilter !== 'all'
 
   return (
     <div className="space-y-5">
@@ -285,6 +321,13 @@ export default function GoalsWidget() {
             size="sm"
             counts={catCounts}
           />
+          <Pills<StatusFilter>
+            options={STATUS_FILTERS}
+            active={statusFilter}
+            onChange={setStatusFilter}
+            size="sm"
+            counts={statusCounts}
+          />
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
             <Input
               value={query}
@@ -296,6 +339,7 @@ export default function GoalsWidget() {
             <Select value={sort} onChange={(e) => setSort(e.target.value as SortId)} className="sm:w-44">
               <option value="recent">最新建立</option>
               <option value="progress">進度（高→低）</option>
+              <option value="momentum">動量（近 14 日）</option>
               <option value="due">截止日（近→遠）</option>
               <option value="priority">優先程度</option>
               <option value="name">名稱</option>
