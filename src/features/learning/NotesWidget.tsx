@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   Archive,
   BarChart3,
@@ -24,6 +24,7 @@ import {
   Trash2,
   TrendingDown,
   TrendingUp,
+  Upload,
   X,
 } from 'lucide-react'
 import { useCollection } from '../../lib/store'
@@ -65,7 +66,9 @@ import {
   computeStats,
   deriveTitle,
   download,
+  exportNotesJson,
   notesToMarkdown,
+  parseNotesImport,
   parseTags,
   relativeTime,
   snippet,
@@ -116,6 +119,7 @@ export default function NotesWidget() {
   const [checked, setChecked] = useState<Set<string>>(new Set())
   const [nbModal, setNbModal] = useState(false)
   const [mobilePane, setMobilePane] = useState<'list' | 'detail'>('list')
+  const fileRef = useRef<HTMLInputElement>(null)
 
   // 各 scope 計數（側欄徽章）
   const active = useMemo(
@@ -277,6 +281,40 @@ export default function NotesWidget() {
     exitSelect()
   }
 
+  // 全量 JSON 備份（含筆記本／釘選／色標／時間，可完整還原）
+  function exportJson() {
+    const today = new Date().toISOString().slice(0, 10)
+    download(`筆記備份-${today}.json`, exportNotesJson(notes, notebooks), 'application/json')
+    toast.success('已匯出 JSON 備份')
+  }
+
+  // 揀檔匯入：按 id 去重略過已有（筆記 + 筆記本各自去重後合併）
+  function onPickFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = () => {
+      const parsed = parseNotesImport(String(reader.result))
+      if (!parsed) {
+        toast.error('檔案格式唔啱')
+        return
+      }
+      const noteIds = new Set(richNotesCol.get().map((n) => n.id))
+      const freshNotes = parsed.notes.filter((n) => !noteIds.has(n.id))
+      const nbIds = new Set(notebooksCol.get().map((nb) => nb.id))
+      const freshNbs = parsed.notebooks.filter((nb) => !nbIds.has(nb.id))
+      if (freshNotes.length) richNotesCol.set([...richNotesCol.get(), ...freshNotes])
+      if (freshNbs.length) notebooksCol.set([...notebooksCol.get(), ...freshNbs])
+      const skipped =
+        parsed.notes.length - freshNotes.length + (parsed.notebooks.length - freshNbs.length)
+      toast.success(
+        `已匯入 ${freshNotes.length} 則筆記 · ${freshNbs.length} 個筆記本（略過 ${skipped} 個重複）`,
+      )
+    }
+    reader.readAsText(file)
+    e.target.value = ''
+  }
+
   async function emptyTrash() {
     const trashed = notes.filter((n) => n.trashed)
     if (!trashed.length) return
@@ -332,6 +370,31 @@ export default function NotesWidget() {
             <span className="tabular-nums">{stats.totalWords.toLocaleString()}</span> 字
           </p>
         </div>
+        <Button
+          size="sm"
+          variant="ghost"
+          icon={Download}
+          onClick={exportJson}
+          title="匯出 JSON 備份（含筆記本／釘選／色標／時間，可完整還原）"
+        >
+          <span className="hidden md:inline">匯出</span>
+        </Button>
+        <Button
+          size="sm"
+          variant="ghost"
+          icon={Upload}
+          onClick={() => fileRef.current?.click()}
+          title="匯入 JSON 備份（按 id 去重，略過已有）"
+        >
+          <span className="hidden md:inline">匯入</span>
+        </Button>
+        <input
+          ref={fileRef}
+          type="file"
+          accept="application/json,.json"
+          className="hidden"
+          onChange={onPickFile}
+        />
         <Button
           size="sm"
           variant={showStats ? 'primary' : 'secondary'}

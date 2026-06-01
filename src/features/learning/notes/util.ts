@@ -1,4 +1,4 @@
-import type { RichNote } from './store'
+import type { Notebook, RichNote } from './store'
 
 // ============================================================
 //  Notes 工具：解析（標籤 / 待辦 / 摘要）、統計、圖表資料
@@ -293,4 +293,86 @@ export function download(filename: string, text: string, mime = 'text/plain') {
   a.click()
   a.remove()
   setTimeout(() => URL.revokeObjectURL(url), 1000)
+}
+
+// ───────── 全量 JSON 備份 / 還原（含筆記本／釘選／色標／時間）─────────
+export interface NotesBackup {
+  version: number
+  exportedAt: string
+  notes: RichNote[]
+  notebooks: Notebook[]
+}
+
+const NOTES_BACKUP_VERSION = 1
+
+/** 把筆記 + 筆記本打包成可完整還原嘅 JSON（pretty） */
+export function exportNotesJson(notes: RichNote[], notebooks: Notebook[]): string {
+  const payload: NotesBackup = {
+    version: NOTES_BACKUP_VERSION,
+    exportedAt: new Date().toISOString(),
+    notes,
+    notebooks,
+  }
+  return JSON.stringify(payload, null, 2)
+}
+
+function genId(): string {
+  return `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
+}
+function asString(v: unknown, fallback = ''): string {
+  return typeof v === 'string' ? v : fallback
+}
+function asIso(v: unknown): string {
+  return typeof v === 'string' && v ? v : new Date().toISOString()
+}
+
+function normalizeNote(d: Record<string, unknown>): RichNote {
+  return {
+    id: asString(d.id) || genId(),
+    title: asString(d.title),
+    content: asString(d.content),
+    notebookId: typeof d.notebookId === 'string' ? d.notebookId : null,
+    pinned: d.pinned === true,
+    favorite: d.favorite === true,
+    archived: d.archived === true,
+    trashed: d.trashed === true,
+    color: asString(d.color, 'none') || 'none',
+    createdAt: asIso(d.createdAt),
+    updatedAt: asIso(d.updatedAt),
+  }
+}
+
+function normalizeNotebook(d: Record<string, unknown>): Notebook {
+  return {
+    id: asString(d.id) || genId(),
+    name: asString(d.name) || '未命名筆記本',
+    color: asString(d.color, 'slate') || 'slate',
+    createdAt: asIso(d.createdAt),
+  }
+}
+
+/**
+ * 寬鬆解析匯入的備份 JSON（仿 reading/util.ts parseImport）。
+ * 容忍舊格式 / 缺欄位：逐欄補預設（false / 空字串 / now ISO），
+ * 非陣列欄位過濾成空陣列。完全唔似備份（無 notes 又無 notebooks 陣列）→ null。
+ */
+export function parseNotesImport(
+  raw: string,
+): { notes: RichNote[]; notebooks: Notebook[] } | null {
+  try {
+    const data = JSON.parse(raw) as Record<string, unknown>
+    if (!data || typeof data !== 'object' || Array.isArray(data)) return null
+    const rawNotes = Array.isArray(data.notes) ? data.notes : null
+    const rawNotebooks = Array.isArray(data.notebooks) ? data.notebooks : null
+    // 至少要有一個係陣列，先當係有效備份（避免接受任意物件）
+    if (!rawNotes && !rawNotebooks) return null
+    return {
+      notes: (rawNotes ?? []).map((n) => normalizeNote(n as Record<string, unknown>)),
+      notebooks: (rawNotebooks ?? []).map((n) =>
+        normalizeNotebook(n as Record<string, unknown>),
+      ),
+    }
+  } catch {
+    return null
+  }
 }
