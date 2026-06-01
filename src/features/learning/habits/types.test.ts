@@ -1,5 +1,12 @@
 import { describe, it, expect } from 'vitest'
-import { freqLabel, isScheduledDay, type HabitFrequency } from './types'
+import {
+  colorOf,
+  freqLabel,
+  isScheduledDay,
+  HABIT_COLORS,
+  HABIT_COLOR_KEYS,
+  type HabitFrequency,
+} from './types'
 
 // ============================================================
 //  頻率標籤 + 排程日判斷（純函式，無時間 / DOM 依賴）
@@ -75,6 +82,55 @@ describe('isScheduledDay（某星期 0-6 係咪應做日）', () => {
     const f: HabitFrequency = { kind: 'weekdays', days: [] }
     for (let wd = 0; wd <= 6; wd += 1) {
       expect(isScheduledDay(f, wd)).toBe(false)
+    }
+  })
+})
+
+// ============================================================
+//  colorOf（顏色 key → HabitColorSpec，含 fallback 到 accent）
+//  純查表函式，無時間 / DOM 依賴。
+// ============================================================
+
+describe('colorOf（顏色查找 + fallback）', () => {
+  it('已知 key 回對應 spec（同 HABIT_COLORS[key] 為同一引用）', () => {
+    expect(colorOf('blue')).toBe(HABIT_COLORS.blue)
+    expect(colorOf('rose')).toBe(HABIT_COLORS.rose)
+    // 抽查欄位值，確保唔係意外指錯 spec
+    expect(colorOf('blue').label).toBe('藍')
+    expect(colorOf('rose').heat).toEqual(HABIT_COLORS.rose.heat)
+  })
+
+  it('全部已知 key 都回各自對應 spec（覆蓋整個 union）', () => {
+    for (const key of HABIT_COLOR_KEYS) {
+      expect(colorOf(key)).toBe(HABIT_COLORS[key])
+    }
+  })
+
+  it('undefined → fallback 到 accent', () => {
+    expect(colorOf(undefined)).toBe(HABIT_COLORS.accent)
+  })
+
+  it('未知字串 → fallback 到 accent', () => {
+    expect(colorOf('bogus')).toBe(HABIT_COLORS.accent)
+    expect(colorOf('BLUE')).toBe(HABIT_COLORS.accent) // 大小寫敏感：唔等於 'blue'
+  })
+
+  it('空字串 → fallback 到 accent（邊界）', () => {
+    expect(colorOf('')).toBe(HABIT_COLORS.accent)
+  })
+
+  // NOTE: 原型鍵（'toString' / 'constructor' 等）case 暫不加 —— 見下方說明：
+  // colorOf 用 HABIT_COLORS[c] ?? accent，普通物件 index 會撞到 Object.prototype，
+  // colorOf('toString') 會回 Object.prototype.toString（函式）而非 accent spec，?? 唔兜底。
+  // 屬 source bug，呢輪只報告唔改 source，亦唔加會編碼錯誤行為嘅斷言。
+
+  it('回傳 heat 永遠係 5 個元素（heatmap 唔會 index out of range）', () => {
+    // 已知色、fallback、空字串 — 任何輸入都要 5 級填色
+    for (const input of ['blue', 'rose', 'bogus', '', undefined] as const) {
+      const spec = colorOf(input)
+      expect(Array.isArray(spec.heat)).toBe(true)
+      expect(spec.heat).toHaveLength(5)
+      spec.heat.forEach((cls) => expect(typeof cls).toBe('string'))
     }
   })
 })
