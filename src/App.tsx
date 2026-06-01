@@ -8,6 +8,7 @@ import { ConfirmProvider } from './context/ConfirmContext'
 import Sidebar from './components/Sidebar'
 import MobileTopBar from './components/MobileTopBar'
 import CommandPalette from './components/CommandPalette'
+import ShortcutsModal from './features/shared/shortcuts/ShortcutsModal'
 import { OnboardingModal } from './components/OnboardingModal'
 import { useToast } from './context/ToastContext'
 import { seedAllDemo, hasOnboarded, markOnboarded } from './lib/demoData'
@@ -27,6 +28,7 @@ function AppShell() {
   const [activeId, setActiveId] = useState<string | null>(null)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [paletteOpen, setPaletteOpen] = useState(false)
+  const [shortcutsOpen, setShortcutsOpen] = useState(false)
   const [onboardOpen, setOnboardOpen] = useState(() => !hasOnboarded())
   const toast = useToast()
 
@@ -48,6 +50,21 @@ function AppShell() {
         e.preventDefault()
         setPaletteOpen((v) => !v)
       }
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [])
+
+  // ? (Shift+/) 彈出鍵盤快捷鍵速查；喺輸入框 / 可編輯區聚焦時唔觸發
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key !== '?' || e.metaKey || e.ctrlKey || e.altKey) return
+      const t = e.target as HTMLElement | null
+      const tag = t?.tagName
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || t?.isContentEditable)
+        return
+      e.preventDefault()
+      setShortcutsOpen(true)
     }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
@@ -160,6 +177,11 @@ function AppShell() {
           open={paletteOpen}
           onClose={() => setPaletteOpen(false)}
           onNavigate={navigate}
+        />
+
+        <ShortcutsModal
+          open={shortcutsOpen}
+          onClose={() => setShortcutsOpen(false)}
         />
 
         <OnboardingModal
