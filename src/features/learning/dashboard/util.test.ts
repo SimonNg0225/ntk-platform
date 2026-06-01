@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import {
   WEEKDAYS,
   dayKey,
@@ -6,6 +6,8 @@ import {
   addDays,
   keyOf,
   rangeKeys,
+  greeting,
+  longToday,
   fmtMin,
   longestStreakOf,
   trendOf,
@@ -169,6 +171,82 @@ describe('WEEKDAYS 常量', () => {
     expect(WEEKDAYS[6]).toBe('六')
     // 2026-05-04 係星期一
     expect(WEEKDAYS[fromKey('2026-05-04').getDay()]).toBe('一')
+  })
+})
+
+// ═══════════════════════════════════════════════════════════
+//  greeting()（無參數版，讀 new Date().getHours()）
+//  ------------------------------------------------------------
+//  注意：work/dashboard 嘅 greeting(h) 收參數版另有測；呢度係 learning
+//  無參數版，內部讀「當前鐘點」，故須 vi.useFakeTimers + setSystemTime 釘鐘。
+//  只依賴本地 getHours()，故喺任何 host TZ（本 repo 已鎖 HKT）皆 deterministic。
+//  覆蓋全部 4 個時段桶 + 每個邊界（<5 / <12 / <18 / else）。
+// ═══════════════════════════════════════════════════════════
+describe('greeting（無參數，依本地鐘點分 4 時段）', () => {
+  beforeEach(() => vi.useFakeTimers())
+  afterEach(() => vi.useRealTimers())
+
+  // 釘死「今日」某一鐘點（本地建構，分鐘隨意），回 greeting()
+  const at = (h: number, min = 0): string => {
+    vi.setSystemTime(new Date(2026, 4, 15, h, min, 0))
+    return greeting()
+  }
+
+  it('夜深啦：00:00 起、04:59 邊界上限', () => {
+    expect(at(0)).toBe('夜深啦')
+    expect(at(2)).toBe('夜深啦') // 02:00（題述範例）
+    expect(at(4, 59)).toBe('夜深啦') // 04:59 仍 < 5
+  })
+
+  it('早晨：05:00 邊界下限、11:59 邊界上限', () => {
+    expect(at(5)).toBe('早晨') // 05:00 → 由「夜深啦」轉「早晨」
+    expect(at(11, 59)).toBe('早晨') // 11:59 仍 < 12
+  })
+
+  it('午安：12:00 邊界下限、17:59 邊界上限', () => {
+    expect(at(12)).toBe('午安') // 12:00 → 由「早晨」轉「午安」
+    expect(at(17, 59)).toBe('午安') // 17:59 仍 < 18
+  })
+
+  it('晚安：18:00 邊界下限、23:00', () => {
+    expect(at(18)).toBe('晚安') // 18:00 → 由「午安」轉「晚安」
+    expect(at(23)).toBe('晚安') // 一日最後一個鐘點
+  })
+})
+
+// ═══════════════════════════════════════════════════════════
+//  longToday()（無參數，讀 new Date() 砌「M月D日 · 星期X」）
+//  ------------------------------------------------------------
+//  月 / 日不補零（與 dayKey 的兩位數補零格式刻意不同）；星期由本地
+//  getDay() 經 WEEKDAYS 對照。同樣須釘鐘先 deterministic。
+// ═══════════════════════════════════════════════════════════
+describe('longToday（無參數，砌中文長日期）', () => {
+  beforeEach(() => vi.useFakeTimers())
+  afterEach(() => vi.useRealTimers())
+
+  it('2026-05-31（星期日）→「5月31日 · 星期日」', () => {
+    vi.setSystemTime(new Date(2026, 4, 31, 12, 0, 0)) // 5 月 = index 4；星期日
+    expect(longToday()).toBe('5月31日 · 星期日')
+  })
+
+  it('單位數月 / 日不補零（1月5日，星期一）— 與 dayKey 補零格式區別', () => {
+    vi.setSystemTime(new Date(2026, 0, 5, 9, 30, 0)) // 1 月 5 日（星期一）
+    expect(longToday()).toBe('1月5日 · 星期一')
+    // 同日 dayKey 係補零格式，確認 longToday 刻意唔補零
+    expect(dayKey(new Date(2026, 0, 5, 9, 30, 0))).toBe('2026-01-05')
+  })
+
+  it('跨月 / 年尾兩位數月日（12月31日，星期四）', () => {
+    vi.setSystemTime(new Date(2026, 11, 31, 23, 59, 0)) // 12 月 31 日（星期四）
+    expect(longToday()).toBe('12月31日 · 星期四')
+  })
+
+  it('唔受時 / 分影響：同一本地日任何鐘點回同一字串', () => {
+    vi.setSystemTime(new Date(2026, 8, 9, 0, 0, 0)) // 9 月 9 日凌晨（星期三）
+    const atMidnight = longToday()
+    vi.setSystemTime(new Date(2026, 8, 9, 23, 59, 59)) // 同日臨晚
+    expect(longToday()).toBe(atMidnight)
+    expect(atMidnight).toBe('9月9日 · 星期三')
   })
 })
 
