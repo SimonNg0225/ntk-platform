@@ -126,7 +126,7 @@ export default function HabitDetail({
       </div>
 
       {habit.notes && (
-        <p className="mb-5 rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-600 dark:bg-slate-700/40 dark:text-slate-300">
+        <p className="mb-5 rounded-xl border border-slate-200/70 bg-slate-50 px-3.5 py-2.5 text-sm leading-relaxed text-slate-600 dark:border-slate-700/50 dark:bg-slate-700/40 dark:text-slate-300">
           {habit.notes}
         </p>
       )}
@@ -190,7 +190,7 @@ export default function HabitDetail({
         >
           月曆檢視（點格補打卡）
         </SectionTitle>
-        <div className="grid grid-cols-7 gap-1">
+        <div className="grid grid-cols-7 gap-1 rounded-2xl border border-slate-200/70 bg-slate-50/50 p-2.5 dark:border-slate-700/50 dark:bg-slate-800/40">
           {WEEKDAY_LABELS.map((w) => (
             <div key={w} className="py-1 text-center text-[11px] font-medium text-slate-400 dark:text-slate-500">
               {w}
@@ -214,12 +214,12 @@ export default function HabitDetail({
                 aria-pressed={isDone}
                 aria-label={`${key} ${isDone ? '已完成' : '未完成'}`}
                 className={cx(
-                  'flex aspect-square items-center justify-center rounded-lg text-xs font-medium tabular-nums transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 disabled:cursor-not-allowed disabled:opacity-30',
+                  'flex aspect-square items-center justify-center rounded-lg text-xs font-medium tabular-nums transition focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 disabled:cursor-not-allowed disabled:opacity-30',
                   isDone
-                    ? spec.solid
+                    ? cx(spec.solid, 'shadow-xs')
                     : scheduled
-                      ? 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-700/60 dark:text-slate-300 dark:hover:bg-slate-600'
-                      : 'text-slate-300 hover:bg-slate-100 dark:text-slate-600 dark:hover:bg-slate-700/40',
+                      ? 'bg-white text-slate-600 hover:bg-slate-100 dark:bg-slate-700/60 dark:text-slate-300 dark:hover:bg-slate-600'
+                      : 'text-slate-300 hover:bg-white dark:text-slate-600 dark:hover:bg-slate-700/40',
                   !inMonth && 'opacity-40',
                   isToday && !isDone && cx('ring-2 ring-inset', spec.ring),
                 )}

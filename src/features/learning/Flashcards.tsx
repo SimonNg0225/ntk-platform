@@ -181,20 +181,22 @@ function DeckHome({
       </div>
 
       {/* 新增 + 匯入匯出 */}
-      <div className="flex flex-wrap gap-2">
-        <Input
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && add()}
-          placeholder="新牌組名稱（例如 會計概念）"
-          className="min-w-[180px] flex-1"
-        />
-        <Button onClick={add} icon={Plus}>
-          牌組
-        </Button>
-        <Button variant="secondary" icon={Upload} onClick={() => setIoOpen(true)}>
-          匯入 / 匯出
-        </Button>
+      <div className="rounded-2xl border border-slate-200/80 bg-slate-50/60 p-3 dark:border-slate-700/60 dark:bg-slate-800/40">
+        <div className="flex flex-wrap items-center gap-2">
+          <Input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && add()}
+            placeholder="開個新牌組⋯⋯（例如 會計概念）"
+            className="min-w-[180px] flex-1 bg-white dark:bg-slate-800"
+          />
+          <Button onClick={add} icon={Plus} disabled={!name.trim()}>
+            建立牌組
+          </Button>
+          <Button variant="secondary" icon={Upload} onClick={() => setIoOpen(true)}>
+            匯入 / 匯出
+          </Button>
+        </div>
       </div>
 
       {/* 牌組卡 */}
@@ -211,15 +213,33 @@ function DeckHome({
           const newToday = Math.min(newCount, pref.newPerDay)
 
           return (
-            <UICard key={d.id} className="group p-4">
+            <div
+              key={d.id}
+              className="group flex flex-col rounded-3xl border border-slate-200/80 bg-white p-4 shadow-xs transition duration-200 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md dark:border-slate-700/60 dark:bg-slate-800 dark:shadow-none dark:hover:border-slate-600"
+            >
               <div className="flex items-start justify-between gap-2">
                 <button
                   onClick={() => onOpen(d.id)}
-                  className="min-w-0 flex-1 text-left"
+                  className="flex min-w-0 flex-1 items-center gap-3 text-left"
                 >
-                  <p className="truncate text-base font-semibold text-slate-800 hover:text-accent dark:text-slate-100">
-                    {d.name}
-                  </p>
+                  <span
+                    className={cx(
+                      'flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl transition group-hover:scale-105',
+                      due > 0
+                        ? 'bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent'
+                        : 'bg-slate-100 text-slate-400 dark:bg-slate-700/60 dark:text-slate-400',
+                    )}
+                  >
+                    <Layers size={20} />
+                  </span>
+                  <span className="min-w-0">
+                    <p className="truncate text-base font-semibold text-slate-800 group-hover:text-accent dark:text-slate-100">
+                      {d.name}
+                    </p>
+                    <p className="text-xs text-slate-400 dark:text-slate-500">
+                      <span className="tabular-nums">{deckCards.length}</span> 張卡
+                    </p>
+                  </span>
                 </button>
                 <Menu
                   align="end"
@@ -267,24 +287,23 @@ function DeckHome({
               </div>
 
               {/* 狀態小計 */}
-              <div className="mt-1.5 flex flex-wrap items-center gap-2 text-xs">
-                <span className="text-slate-400 dark:text-slate-500">
-                  <span className="tabular-nums">{deckCards.length}</span> 張
-                </span>
-                {due > 0 && (
-                  <Badge tone="accent" dot>
-                    到期 {due}
-                  </Badge>
-                )}
-                {newToday > 0 && (
-                  <Badge tone="blue" dot>
-                    新卡 {newToday}
-                  </Badge>
-                )}
-              </div>
+              {(due > 0 || newToday > 0) && (
+                <div className="mt-2.5 flex flex-wrap items-center gap-1.5 text-xs">
+                  {due > 0 && (
+                    <Badge tone="accent" dot>
+                      到期 {due}
+                    </Badge>
+                  )}
+                  {newToday > 0 && (
+                    <Badge tone="blue" dot>
+                      新卡 {newToday}
+                    </Badge>
+                  )}
+                </div>
+              )}
 
               {/* 熟悉度進度 */}
-              <div className="mt-3">
+              <div className="mt-3 flex-1">
                 <div className="mb-1 flex items-center justify-between text-[11px] text-slate-400 dark:text-slate-500">
                   <span>熟悉度</span>
                   <span className="tabular-nums">{Math.round(matPct)}%</span>
@@ -303,22 +322,27 @@ function DeckHome({
                   icon={Play}
                   className="flex-1"
                 >
-                  {due > 0 ? `複習 (${due})` : '學習'}
+                  {due > 0 ? `複習 (${due})` : '開始學習'}
                 </Button>
                 <Button variant="secondary" size="sm" icon={Layers} onClick={() => setStudyFor(d.id)}>
                   模式
                 </Button>
               </div>
-            </UICard>
+            </div>
           )
         })}
 
         {decks.length === 0 && (
           <div className="sm:col-span-2">
             <EmptyState
-              icon={FolderOpen}
-              title="仲未有牌組"
-              hint="上面建立一個，或用「匯入」貼 CSV 一次過入一批卡。"
+              icon={Layers}
+              title="開個牌組，由第一張卡開始"
+              hint="上面打個名就建立得；或者用「匯入」貼一批 CSV / JSON，一次過入晒。"
+              action={
+                <Button variant="secondary" icon={Upload} onClick={() => setIoOpen(true)}>
+                  匯入現有卡片
+                </Button>
+              }
             />
           </div>
         )}
@@ -651,8 +675,8 @@ function DeckDetail({
           <li>
             <EmptyState
               icon={Sparkles}
-              title="仲未有卡片"
-              hint="上面加第一張，或試下「AI 生成知識卡」自動整一批。"
+              title="呢個牌組仲未有卡"
+              hint="上面加你第一張卡，或者試下「AI 生成知識卡」幫你自動整一批。"
             />
           </li>
         )}

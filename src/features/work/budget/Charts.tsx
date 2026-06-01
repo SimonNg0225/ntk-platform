@@ -1,4 +1,5 @@
 import { useId, useMemo } from 'react'
+import { LineChart } from 'lucide-react'
 import { cx } from '../../../ui'
 import {
   WEEKDAY_LABEL,
@@ -21,6 +22,23 @@ import {
 // ============================================================
 
 const ACCENT = 'var(--accent)'
+
+// 圖表內柔和空狀態（細 icon + 一句友善文案，唔好淨係寫「無資料」）
+function ChartEmpty({ message, height }: { message: string; height?: number }) {
+  return (
+    <div
+      className="flex flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-slate-200 bg-slate-50/50 px-4 py-6 text-center dark:border-slate-700/60 dark:bg-slate-800/30"
+      style={height ? { minHeight: height } : undefined}
+      role="img"
+      aria-label={message}
+    >
+      <span className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 text-slate-400 dark:bg-slate-700/60 dark:text-slate-500">
+        <LineChart size={17} strokeWidth={1.75} />
+      </span>
+      <p className="text-xs text-slate-500 dark:text-slate-400">{message}</p>
+    </div>
+  )
+}
 
 // 分類佔比循環色（HEX，畀 SVG stroke / fill 用）
 export const SLICE_HEX = [
@@ -108,23 +126,28 @@ export function CategoryDonut({
           </text>
         </g>
       </svg>
-      <ul className="w-full flex-1 space-y-1.5">
+      <ul className="w-full flex-1 space-y-0.5">
         {segments.slice(0, 7).map((seg, i) => {
           const pct = total > 0 ? Math.round((seg.value / total) * 100) : 0
           return (
-            <li key={i} className="flex items-center justify-between gap-2 text-sm">
+            <li
+              key={i}
+              className="flex items-center justify-between gap-2 rounded-lg px-2 py-1 text-sm transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/60"
+            >
               <span className="flex min-w-0 items-center gap-2 text-slate-600 dark:text-slate-300">
                 <span
-                  className="h-2.5 w-2.5 shrink-0 rounded-sm"
+                  className="h-2.5 w-2.5 shrink-0 rounded-full"
                   style={{ background: seg.color }}
                 />
                 <span className="truncate">{seg.label}</span>
               </span>
-              <span className="flex shrink-0 items-center gap-2">
+              <span className="flex shrink-0 items-center gap-2.5">
                 <span className="font-semibold tabular-nums text-slate-700 dark:text-slate-200">
                   {fmtMoney(seg.value)}
                 </span>
-                <span className="w-8 text-right tabular-nums text-slate-400">{pct}%</span>
+                <span className="min-w-[2.75rem] rounded-full bg-slate-100 px-1.5 py-0.5 text-right text-[11px] font-medium tabular-nums text-slate-500 dark:bg-slate-700/60 dark:text-slate-400">
+                  {pct}%
+                </span>
               </span>
             </li>
           )
@@ -141,12 +164,7 @@ export function CashflowBars({ rows }: { rows: TrendRow[] }) {
     [rows],
   )
   const hasData = rows.some((r) => r.income > 0 || r.expense > 0)
-  if (!hasData)
-    return (
-      <p className="py-8 text-center text-sm text-slate-400 dark:text-slate-500">
-        未有足夠資料畫趨勢。
-      </p>
-    )
+  if (!hasData) return <ChartEmpty message="累積幾個月記錄，就會見到收支趨勢。" height={176} />
   return (
     <div>
       <div className="flex h-44 items-end gap-2">
@@ -187,12 +205,7 @@ export function BalanceTrend({ rows, height = 168 }: { rows: TrendRow[]; height?
   const values = rows.map((r) => r.balance)
   const hasData = rows.some((r) => r.income > 0 || r.expense > 0)
   const max = Math.max(1, ...values.map((v) => Math.abs(v)))
-  if (!hasData)
-    return (
-      <div className="flex items-center justify-center text-sm text-slate-400" style={{ height }}>
-        未有足夠資料。
-      </div>
-    )
+  if (!hasData) return <ChartEmpty message="記低幾個月收支，淨結餘走勢會喺度顯示。" height={height} />
   const W = 100
   const padX = 3
   const usableW = W - padX * 2
@@ -279,12 +292,7 @@ export function DailySpendChart({
 }) {
   const max = useMemo(() => Math.max(1, ...cells.map((c) => c.expense)), [cells])
   const hasData = cells.some((c) => c.expense > 0)
-  if (!hasData)
-    return (
-      <p className="py-6 text-center text-sm text-slate-400 dark:text-slate-500">
-        本月暫時冇支出。
-      </p>
-    )
+  if (!hasData) return <ChartEmpty message="今個月仲未有支出，記低第一筆就見到走勢。" height={112} />
   return (
     <div>
       <div className="flex h-28 items-end gap-px">
@@ -381,7 +389,7 @@ export function SpendingHeatmap({ cells }: { cells: DayCell[] }) {
         <span className="flex items-center gap-1">
           少
           {LEVEL_CLS.map((cls, i) => (
-            <span key={i} className={cx('h-[10px] w-[10px] rounded-[2px]', cls)} />
+            <span key={i} className={cx('h-[11px] w-[11px] rounded-[3px] ring-1 ring-inset ring-slate-900/5 dark:ring-white/5', cls)} />
           ))}
           多
         </span>

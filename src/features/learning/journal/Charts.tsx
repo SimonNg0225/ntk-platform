@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { Sparkles } from 'lucide-react'
 import { Tooltip } from '../../../ui'
 import {
   MOODS,
@@ -165,7 +166,7 @@ export function MonthlyBars({ data }: { data: { label: string; ym: string; count
               )}
               <div
                 className={
-                  'w-full rounded-t-md transition-all duration-500 ' +
+                  'w-full rounded-t-lg transition-all duration-500 ' +
                   (d.count > 0 ? 'bg-accent hover:bg-accent-strong' : 'bg-slate-200 dark:bg-slate-700')
                 }
                 style={{ height: h }}
@@ -194,12 +195,12 @@ export function WeekdayBars({ counts }: { counts: number[] }) {
             <div className="flex flex-1 flex-col items-center justify-end gap-1">
               <div
                 className={
-                  'w-full rounded-t-md transition-all duration-500 ' +
+                  'w-full rounded-t-lg transition-all duration-500 ' +
                   (c === 0
                     ? 'bg-slate-200 dark:bg-slate-700'
                     : weekend
-                      ? 'bg-accent/60'
-                      : 'bg-accent')
+                      ? 'bg-accent/60 hover:bg-accent/80'
+                      : 'bg-accent hover:bg-accent-strong')
                 }
                 style={{ height: h }}
               />
@@ -359,8 +360,9 @@ export function MoodCalendar({
 // ───────── 共用：圖表空狀態 ─────────
 function ChartEmpty({ label }: { label: string }) {
   return (
-    <div className="flex h-28 items-center justify-center rounded-lg border border-dashed border-slate-200 text-xs text-slate-400 dark:border-slate-700">
-      {label}
+    <div className="flex h-28 flex-col items-center justify-center gap-1.5 rounded-xl border border-dashed border-slate-200 bg-slate-50/50 text-slate-400 dark:border-slate-700 dark:bg-slate-800/40 dark:text-slate-500">
+      <Sparkles size={18} className="opacity-70" />
+      <span className="text-xs">{label}</span>
     </div>
   )
 }

@@ -69,7 +69,7 @@ export function BarChart({
             >
               <div
                 className={cx(
-                  'w-full rounded-t-[3px] transition-all duration-300',
+                  'w-full rounded-t-md transition-all duration-300',
                   d.value === 0
                     ? 'bg-slate-100 dark:bg-slate-800'
                     : isHi

@@ -7,6 +7,9 @@ import {
   Sparkles,
   Star,
   Target,
+  PersonStanding,
+  Layers,
+  type LucideIcon,
 } from 'lucide-react'
 import {
   Badge,
@@ -17,7 +20,6 @@ import {
   Input,
   Modal,
   SegmentedControl,
-  StatCard,
   cx,
 } from '../../../../ui'
 import { createCollection, useCollection, type Entity } from '../../../../lib/store'
@@ -58,6 +60,74 @@ const TONE_BY_CAT: Record<ExerciseCategory, 'accent' | 'green' | 'amber' | 'rose
   全身: 'accent',
 }
 
+// 動作卡 icon chip 配色（依分類；寫足整串畀 Tailwind 掃到）
+const CAT_CHIP: Record<ExerciseCategory, string> = {
+  胸: 'bg-rose-50 text-rose-600 dark:bg-rose-500/15 dark:text-rose-300',
+  背: 'bg-blue-50 text-blue-600 dark:bg-blue-500/15 dark:text-blue-300',
+  腿: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-300',
+  肩: 'bg-amber-50 text-amber-600 dark:bg-amber-500/15 dark:text-amber-300',
+  手臂: 'bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent',
+  核心: 'bg-amber-50 text-amber-600 dark:bg-amber-500/15 dark:text-amber-300',
+  全身: 'bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent',
+}
+
+// ───────── 概覽小磚（暖色 bento）─────────
+type StatTone = 'accent' | 'sky' | 'violet'
+const STAT_TONE: Record<StatTone, string> = {
+  accent: 'bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent',
+  sky: 'bg-sky-50 text-sky-600 dark:bg-sky-500/15 dark:text-sky-300',
+  violet: 'bg-violet-50 text-violet-600 dark:bg-violet-500/15 dark:text-violet-300',
+}
+function MiniStat({
+  label,
+  value,
+  unit,
+  icon: Icon,
+  tone,
+  highlight,
+}: {
+  label: string
+  value: number | string
+  unit?: string
+  icon: LucideIcon
+  tone: StatTone
+  highlight?: boolean
+}) {
+  return (
+    <div
+      className={cx(
+        'flex flex-col justify-between rounded-3xl border p-4 transition duration-200 hover:-translate-y-0.5 hover:shadow-md',
+        highlight
+          ? 'border-accent/30 bg-accent-soft dark:border-accent/40 dark:bg-accent/15'
+          : 'border-slate-200/80 bg-white hover:border-slate-300 dark:border-slate-700/60 dark:bg-slate-800 dark:hover:border-slate-600',
+      )}
+    >
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-medium text-slate-400 dark:text-slate-500">{label}</span>
+        <span
+          className={cx(
+            'flex h-8 w-8 items-center justify-center rounded-xl',
+            highlight ? 'bg-accent text-white' : STAT_TONE[tone],
+          )}
+        >
+          <Icon size={16} />
+        </span>
+      </div>
+      <p className="mt-3 flex items-baseline gap-1">
+        <span
+          className={cx(
+            'text-2xl font-bold tabular-nums slashed-zero',
+            highlight ? 'text-accent-strong dark:text-accent' : 'text-slate-800 dark:text-slate-100',
+          )}
+        >
+          {value}
+        </span>
+        {unit && <span className="text-sm font-medium text-slate-400">{unit}</span>}
+      </p>
+    </div>
+  )
+}
+
 export default function LibraryView() {
   const favs = useCollection(favCol)
   const toast = useToast()
@@ -90,15 +160,16 @@ export default function LibraryView() {
 
   return (
     <div className="space-y-5">
-      {/* 概覽 */}
+      {/* 概覽（暖色 bento）*/}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <StatCard label="動作總數" value={EXERCISES.length} icon={Dumbbell} />
-        <StatCard label="分類" value={CATEGORIES.length} unit="類" icon={Target} />
-        <StatCard label="涵蓋肌群" value={muscleCount} icon="💪" />
-        <StatCard
+        <MiniStat label="動作總數" value={EXERCISES.length} icon={Dumbbell} tone="accent" />
+        <MiniStat label="分類" value={CATEGORIES.length} unit="類" icon={Layers} tone="sky" />
+        <MiniStat label="涵蓋肌群" value={muscleCount} icon={PersonStanding} tone="violet" />
+        <MiniStat
           label="我的收藏"
           value={favs.length}
           icon={Star}
+          tone="accent"
           highlight={favs.length > 0}
         />
       </div>
@@ -246,9 +317,17 @@ function ExerciseCard({
         <button
           type="button"
           onClick={onOpen}
-          className="min-w-0 flex-1 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-2 rounded"
+          className="flex min-w-0 flex-1 items-center gap-2.5 rounded text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-2"
           aria-label={`查看 ${exercise.name} 詳情`}
         >
+          <span
+            className={cx(
+              'flex h-9 w-9 shrink-0 items-center justify-center rounded-xl',
+              CAT_CHIP[exercise.category],
+            )}
+          >
+            <Dumbbell size={16} />
+          </span>
           <h3 className="truncate text-sm font-semibold text-slate-800 dark:text-slate-100">
             {exercise.name}
           </h3>
@@ -266,7 +345,7 @@ function ExerciseCard({
       <button
         type="button"
         onClick={onOpen}
-        className="mt-2 flex flex-1 flex-col items-start gap-2 text-left focus-visible:outline-none"
+        className="mt-3 flex flex-1 flex-col items-start gap-2 text-left focus-visible:outline-none"
         tabIndex={-1}
       >
         <div className="flex flex-wrap items-center gap-1.5">

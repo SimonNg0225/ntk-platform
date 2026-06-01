@@ -255,6 +255,9 @@ export default function ImportExport({
 
       {tab === 'export' ? (
         <div className="space-y-3">
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            揀個牌組備份落本機——CSV 方便用 Excel 開，JSON 連埋排程進度。
+          </p>
           <div>
             <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-300">
               牌組
@@ -290,6 +293,9 @@ export default function ImportExport({
         </div>
       ) : (
         <div className="space-y-3">
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            貼上 CSV / TSV 或 JSON，亦可以揀檔——一次過入一批卡。
+          </p>
           <div>
             <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-300">
               匯入去
@@ -350,9 +356,9 @@ export default function ImportExport({
 
 function tabCls(active: boolean): string {
   return [
-    'flex flex-1 items-center justify-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition',
+    'flex flex-1 items-center justify-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium transition',
     active
-      ? 'bg-white text-slate-800 shadow-xs dark:bg-slate-700 dark:text-slate-100'
+      ? 'bg-white text-accent-strong shadow-xs dark:bg-slate-700 dark:text-accent'
       : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200',
   ].join(' ')
 }

@@ -11,8 +11,11 @@ import {
   Smile,
   TrendingDown,
   TrendingUp,
+  ArrowDownRight,
+  ArrowUpRight,
+  type LucideIcon,
 } from 'lucide-react'
-import { Card, Button, Input, Field, StatCard, Modal, SegmentedControl, EmptyState, cx } from '../../ui'
+import { Card, Button, Input, Field, Modal, SegmentedControl, EmptyState, cx } from '../../ui'
 import { useToast } from '../../context/ToastContext'
 import { useHealthLogs, useHealthGoals, logDay, saveGoals } from './health/store'
 import { MOOD_EMOJI } from './health/types'
@@ -21,6 +24,89 @@ import { byDate, todayKey, seriesOf, summarize, recentDays, WEEKDAY_LABELS, from
 import { LineTrend, WeekBars, GoalRing } from './health/Charts'
 
 type Range = '14' | '30'
+
+// 指標磚色調（淺底深字 + 深色 /15，跟設計系統分類色）
+type Tone = 'accent' | 'indigo' | 'emerald' | 'amber' | 'sky' | 'rose'
+const TONE_CHIP: Record<Tone, string> = {
+  accent: 'bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent',
+  indigo: 'bg-indigo-50 text-indigo-600 dark:bg-indigo-500/15 dark:text-indigo-300',
+  emerald: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-300',
+  amber: 'bg-amber-50 text-amber-600 dark:bg-amber-500/15 dark:text-amber-300',
+  sky: 'bg-sky-50 text-sky-600 dark:bg-sky-500/15 dark:text-sky-300',
+  rose: 'bg-rose-50 text-rose-600 dark:bg-rose-500/15 dark:text-rose-300',
+}
+
+// ───────── 指標磚（bento 風：tone icon chip + 大數字 + 趨勢 / 達標）─────────
+function MetricTile({
+  icon: Icon,
+  tone,
+  label,
+  value,
+  unit,
+  hint,
+  highlight,
+  trend,
+  progress,
+}: {
+  icon: LucideIcon
+  tone: Tone
+  label: string
+  value: string | number
+  unit?: string
+  hint?: string
+  highlight?: boolean
+  trend?: { dir: 'up' | 'down' | 'flat'; value: string }
+  progress?: number
+}) {
+  return (
+    <div
+      className={cx(
+        'flex flex-col justify-between rounded-3xl border p-4 transition duration-200',
+        highlight
+          ? 'border-accent/30 bg-accent-soft/60 dark:border-accent/40 dark:bg-accent/10'
+          : 'border-slate-200/80 bg-white shadow-xs hover:border-slate-300 hover:shadow-md dark:border-slate-700/60 dark:bg-slate-800 dark:shadow-none dark:hover:border-slate-600',
+      )}
+    >
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-medium text-slate-400 dark:text-slate-500">{label}</span>
+        <span className={cx('flex h-8 w-8 items-center justify-center rounded-xl', TONE_CHIP[tone])}>
+          <Icon size={16} aria-hidden="true" />
+        </span>
+      </div>
+      <div className="mt-2">
+        <p className="flex items-baseline gap-1">
+          <span className="text-2xl font-bold tabular-nums text-slate-800 dark:text-slate-100">
+            {value}
+          </span>
+          {unit && <span className="text-sm font-medium text-slate-400">{unit}</span>}
+          {trend && trend.dir !== 'flat' && (
+            <span
+              className={cx(
+                'ml-auto inline-flex items-center gap-0.5 text-xs font-semibold tabular-nums',
+                trend.dir === 'up' ? 'text-emerald-500' : 'text-rose-500',
+              )}
+            >
+              {trend.dir === 'up' ? <ArrowUpRight size={13} /> : <ArrowDownRight size={13} />}
+              {trend.value}
+            </span>
+          )}
+        </p>
+        {progress != null && (
+          <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-700/60">
+            <div
+              className={cx(
+                'h-full rounded-full transition-all duration-500',
+                progress >= 100 ? 'bg-emerald-500' : 'bg-accent',
+              )}
+              style={{ width: `${Math.min(100, Math.max(0, progress))}%` }}
+            />
+          </div>
+        )}
+        {hint && <p className="mt-1 truncate text-[11px] text-slate-400 dark:text-slate-500">{hint}</p>}
+      </div>
+    </div>
+  )
+}
 
 export default function HealthTracker() {
   const logs = useHealthLogs()
@@ -73,16 +159,21 @@ export default function HealthTracker() {
     <div className="space-y-5">
       {/* ── 今日記錄 ── */}
       <Card className="p-4 sm:p-5">
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="flex items-center gap-2 text-base font-bold text-slate-800 dark:text-slate-100">
-            <Flame size={18} className="text-accent" aria-hidden="true" />
-            今日記錄
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
+              <Flame size={18} aria-hidden="true" />
+            </span>
+            <div>
+              <h2 className="text-base font-bold text-slate-800 dark:text-slate-100">今日記錄</h2>
+              <p className="text-xs text-slate-500 dark:text-slate-400">記低今日身體狀態</p>
+            </div>
             {summary.streak > 0 && (
-              <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-700 dark:bg-amber-500/15 dark:text-amber-400">
-                連續 {summary.streak} 日 <span aria-hidden="true">🔥</span>
+              <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-1 text-xs font-semibold tabular-nums text-amber-700 ring-1 ring-inset ring-amber-200 dark:bg-amber-500/15 dark:text-amber-300 dark:ring-amber-500/20">
+                <Flame size={12} aria-hidden="true" /> 連續 {summary.streak} 日
               </span>
             )}
-          </h2>
+          </div>
           <Button variant="ghost" size="sm" icon={Target} onClick={() => setGoalsOpen(true)}>
             目標
           </Button>
@@ -213,53 +304,66 @@ export default function HealthTracker() {
         </div>
       </Card>
 
-      {/* ── KPI 概覽 ── */}
+      {/* ── KPI 概覽（bento 指標磚）── */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <StatCard
+        <MetricTile
           icon={Scale}
+          tone="accent"
           label="體重"
           value={summary.weightKg != null ? summary.weightKg.toFixed(1) : '—'}
-          unit={summary.weightKg != null ? 'kg' : ''}
+          unit={summary.weightKg != null ? 'kg' : undefined}
+          hint={summary.weightKg == null ? '記低今日體重' : '近 7 日變化'}
           trend={
             summary.weightDelta7 != null
               ? {
-                  value: `${summary.weightDelta7 > 0 ? '+' : ''}${summary.weightDelta7.toFixed(1)}kg / 週`,
+                  value: `${summary.weightDelta7 > 0 ? '+' : ''}${summary.weightDelta7.toFixed(1)}kg`,
                   dir: summary.weightDelta7 < 0 ? 'down' : summary.weightDelta7 > 0 ? 'up' : 'flat',
                 }
               : undefined
           }
         />
-        <StatCard
+        <MetricTile
           icon={Moon}
-          label="睡眠（7 日均）"
+          tone="indigo"
+          label="睡眠 · 7 日均"
           value={summary.sleepAvg7 != null ? summary.sleepAvg7.toFixed(1) : '—'}
-          unit={summary.sleepAvg7 != null ? '小時' : ''}
+          unit={summary.sleepAvg7 != null ? '小時' : undefined}
+          hint={`目標 ${goals.sleepTargetHrs} 小時`}
           highlight={summary.sleepAvg7 != null && summary.sleepAvg7 >= goals.sleepTargetHrs}
         />
-        <StatCard
+        <MetricTile
           icon={Dumbbell}
+          tone="emerald"
           label="本週運動"
           value={summary.exerciseWeek}
           unit="分鐘"
-          hint={`目標 ${goals.exerciseTargetMin}（${summary.exercisePct}%）`}
+          hint={`目標 ${goals.exerciseTargetMin} 分鐘`}
+          progress={summary.exercisePct}
           highlight={summary.exercisePct >= 100}
         />
-        <StatCard
+        <MetricTile
           icon={Smile}
-          label="心情（7 日均）"
+          tone="amber"
+          label="心情 · 7 日均"
           value={summary.moodAvg7 != null ? summary.moodAvg7.toFixed(1) : '—'}
-          unit={summary.moodAvg7 != null ? '/5' : ''}
+          unit={summary.moodAvg7 != null ? '/5' : undefined}
+          hint={summary.moodAvg7 == null ? '今日心情如何？' : '近 7 日平均'}
         />
       </div>
 
       {/* ── 趨勢 ── */}
       {hasAny ? (
         <Card className="p-4 sm:p-5">
-          <div className="mb-3 flex items-center justify-between">
-            <h2 className="flex items-center gap-2 text-base font-bold text-slate-800 dark:text-slate-100">
-              <TrendingUp size={18} className="text-accent" aria-hidden="true" />
-              趨勢
-            </h2>
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
+                <TrendingUp size={18} aria-hidden="true" />
+              </span>
+              <div>
+                <h2 className="text-base font-bold text-slate-800 dark:text-slate-100">趨勢</h2>
+                <p className="text-xs text-slate-500 dark:text-slate-400">睇吓近期變化</p>
+              </div>
+            </div>
             <SegmentedControl
               value={range}
               onChange={setRange}
@@ -287,10 +391,15 @@ export default function HealthTracker() {
         </Card>
       ) : (
         <EmptyState
-          icon={Flame}
+          icon={TrendingUp}
           art="empty-health"
           title="開始記錄你嘅健康"
           hint="喺上面填今日體重、睡眠、運動、飲水同心情，趨勢圖會慢慢長出嚟。"
+          action={
+            <Button variant="secondary" size="sm" icon={Target} onClick={() => setGoalsOpen(true)}>
+              先設定目標
+            </Button>
+          }
         />
       )}
 
@@ -369,10 +478,14 @@ function TrendBlock({
   children: React.ReactNode
 }) {
   return (
-    <div>
-      <div className="mb-1 flex items-center justify-between text-xs font-medium text-slate-500 dark:text-slate-400">
-        <span className="min-w-0 break-words">{title}</span>
-        <span className="ml-2 shrink-0 text-slate-500 dark:text-slate-400">{unit}</span>
+    <div className="rounded-2xl bg-slate-50/60 p-3 dark:bg-slate-800/40">
+      <div className="mb-2 flex items-center justify-between">
+        <span className="min-w-0 break-words text-sm font-semibold text-slate-700 dark:text-slate-200">
+          {title}
+        </span>
+        <span className="ml-2 shrink-0 rounded-full bg-white px-2 py-0.5 text-[11px] font-medium text-slate-500 ring-1 ring-inset ring-slate-200/70 dark:bg-slate-800 dark:text-slate-400 dark:ring-slate-700/60">
+          {unit}
+        </span>
       </div>
       {children}
     </div>

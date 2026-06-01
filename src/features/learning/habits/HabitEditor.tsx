@@ -161,11 +161,11 @@ export default function HabitEditor({
       }
     >
       <div className="space-y-5">
-        {/* 名稱 + 即時預覽 */}
-        <div className="flex items-center gap-3">
+        {/* 名稱 + 即時預覽（柔和預覽面板） */}
+        <div className="flex items-center gap-3.5 rounded-2xl border border-slate-200/80 bg-slate-50/60 p-3.5 dark:border-slate-700/60 dark:bg-slate-800/40">
           <span
             className={cx(
-              'flex h-12 w-12 shrink-0 items-center justify-center rounded-xl text-2xl',
+              'flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl text-3xl shadow-xs transition-colors',
               colorOf(d.color).soft,
             )}
           >
@@ -175,7 +175,7 @@ export default function HabitEditor({
             value={d.name}
             onChange={(e) => patch('name', e.target.value)}
             placeholder="習慣名稱，例如：每日跑步"
-            className="flex-1"
+            className="flex-1 border-transparent bg-white text-base font-medium shadow-xs dark:bg-slate-800"
             autoFocus
           />
         </div>
@@ -192,53 +192,54 @@ export default function HabitEditor({
           />
         </Field>
 
-        {/* Emoji */}
-        <Field label="圖示">
-          <div className="flex flex-wrap gap-2">
-            {ICON_CHOICES.map((c) => {
-              const on = c === d.icon
-              return (
-                <button
-                  key={c}
-                  type="button"
-                  onClick={() => patch('icon', c)}
-                  aria-pressed={on}
-                  className={cx(
-                    'flex h-9 w-9 items-center justify-center rounded-xl border text-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
-                    on
-                      ? 'border-accent bg-accent-soft'
-                      : 'border-slate-200 bg-white hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700',
-                  )}
-                >
-                  {c}
-                </button>
-              )
-            })}
-          </div>
-        </Field>
+        {/* 外觀（圖示 + 顏色） */}
+        <div className="space-y-4 rounded-2xl border border-slate-200/80 p-4 dark:border-slate-700/60">
+          <Field label="圖示">
+            <div className="flex flex-wrap gap-2">
+              {ICON_CHOICES.map((c) => {
+                const on = c === d.icon
+                return (
+                  <button
+                    key={c}
+                    type="button"
+                    onClick={() => patch('icon', c)}
+                    aria-pressed={on}
+                    className={cx(
+                      'flex h-9 w-9 items-center justify-center rounded-xl border text-lg transition focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
+                      on
+                        ? 'border-accent bg-accent-soft shadow-xs'
+                        : 'border-slate-200 bg-white hover:-translate-y-0.5 hover:border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-slate-600',
+                    )}
+                  >
+                    {c}
+                  </button>
+                )
+              })}
+            </div>
+          </Field>
 
-        {/* 顏色 */}
-        <Field label="顏色">
-          <div className="flex flex-wrap gap-2">
-            {HABIT_COLOR_KEYS.map((c) => {
-              const on = c === d.color
-              return (
-                <button
-                  key={c}
-                  type="button"
-                  onClick={() => patch('color', c)}
-                  aria-label={colorOf(c).label}
-                  aria-pressed={on}
-                  className={cx(
-                    'h-8 w-8 rounded-full ring-2 ring-offset-2 transition dark:ring-offset-slate-800',
-                    colorOf(c).dot,
-                    on ? 'ring-slate-400 dark:ring-slate-300' : 'ring-transparent',
-                  )}
-                />
-              )
-            })}
-          </div>
-        </Field>
+          <Field label="顏色">
+            <div className="flex flex-wrap gap-2.5">
+              {HABIT_COLOR_KEYS.map((c) => {
+                const on = c === d.color
+                return (
+                  <button
+                    key={c}
+                    type="button"
+                    onClick={() => patch('color', c)}
+                    aria-label={colorOf(c).label}
+                    aria-pressed={on}
+                    className={cx(
+                      'h-8 w-8 rounded-full ring-2 ring-offset-2 transition hover:scale-110 dark:ring-offset-slate-800',
+                      colorOf(c).dot,
+                      on ? 'ring-slate-400 dark:ring-slate-300' : 'ring-transparent',
+                    )}
+                  />
+                )
+              })}
+            </div>
+          </Field>
+        </div>
 
         {/* 頻率 */}
         <Field label="頻率">

@@ -108,8 +108,8 @@ export function ForecastChart({ bars }: { bars: ForecastBar[] }) {
   const totalDue = bars.reduce((s, b) => s + b.young + b.mature, 0)
   if (totalDue === 0) {
     return (
-      <p className="py-8 text-center text-sm text-slate-400 dark:text-slate-500">
-        未來冇卡到期 🎉
+      <p className="py-8 text-center text-sm text-slate-500 dark:text-slate-400">
+        未來冇卡到期，輕鬆一下 🎉
       </p>
     )
   }
@@ -266,8 +266,8 @@ export function AnswerBars({ data }: { data: Record<Rating, number> }) {
   const total = order.reduce((s, r) => s + data[r], 0)
   if (total === 0)
     return (
-      <p className="py-6 text-center text-sm text-slate-400 dark:text-slate-500">
-        仲未有複習紀錄
+      <p className="py-6 text-center text-sm text-slate-500 dark:text-slate-400">
+        做多一節複習，就見到你嘅評分分布。
       </p>
     )
   return (
@@ -309,8 +309,8 @@ export function IntervalChart({ bins }: { bins: IntervalBin[] }) {
   const total = bins.reduce((s, b) => s + b.count, 0)
   if (total === 0)
     return (
-      <p className="py-6 text-center text-sm text-slate-400 dark:text-slate-500">
-        仲未有已排程嘅卡
+      <p className="py-6 text-center text-sm text-slate-500 dark:text-slate-400">
+        開始複習後，呢度會顯示卡片間隔分布。
       </p>
     )
   return (
@@ -423,16 +423,16 @@ export function RangeToggle({
   options: { value: number; label: string }[]
 }) {
   return (
-    <div className="inline-flex gap-1">
+    <div className="inline-flex gap-1 rounded-full bg-slate-100 p-0.5 dark:bg-slate-800">
       {options.map((o) => (
         <button
           key={o.value}
           onClick={() => onChange(o.value)}
           className={cx(
-            'rounded-md px-2 py-0.5 text-[11px] font-medium transition',
+            'rounded-full px-2.5 py-0.5 text-[11px] font-medium transition',
             value === o.value
-              ? 'bg-accent text-white'
-              : 'bg-slate-100 text-slate-500 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700',
+              ? 'bg-accent text-white shadow-sm dark:shadow-none'
+              : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200',
           )}
         >
           {o.label}

@@ -258,7 +258,7 @@ export default function BookModal({
           </div>
 
           {/* 進度 */}
-          <div className="rounded-xl border border-slate-200 p-3 dark:border-slate-700/60">
+          <div className="rounded-2xl border border-slate-200/80 bg-slate-50/50 p-3.5 dark:border-slate-700/60 dark:bg-slate-800/40">
             <div className="mb-2 flex items-center justify-between">
               <p className="text-xs font-medium text-slate-600 dark:text-slate-300">閱讀進度</p>
               <Badge tone={STATUS_TONE[book.status]} dot>
@@ -284,19 +284,19 @@ export default function BookModal({
                 className="w-24 text-center tabular-nums"
               />
               <span className="text-xs text-slate-400">頁</span>
-              <span className="ml-auto text-sm font-semibold tabular-nums text-accent">{pct}%</span>
+              <span className={cx('ml-auto text-lg font-bold tabular-nums', book.status === 'done' ? 'text-emerald-500' : 'text-accent')}>{pct}%</span>
             </div>
             <ProgressBar
               value={pct}
               tone={book.status === 'done' ? 'green' : 'accent'}
-              className="mt-2"
+              className="mt-2.5"
             />
           </div>
 
           {/* 加閱讀時段 */}
-          <div className="rounded-xl border border-dashed border-slate-300 p-3 dark:border-slate-600">
-            <p className="mb-2 flex items-center gap-1.5 text-xs font-medium text-slate-600 dark:text-slate-300">
-              <CalendarDays size={13} /> 記錄一次閱讀
+          <div className="rounded-2xl border border-dashed border-slate-300/80 p-3.5 dark:border-slate-600/80">
+            <p className="mb-2.5 flex items-center gap-1.5 text-xs font-medium text-slate-600 dark:text-slate-300">
+              <CalendarDays size={14} className="text-accent" /> 記錄一次閱讀
             </p>
             <div className="flex flex-wrap items-end gap-2">
               <input

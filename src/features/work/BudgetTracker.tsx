@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import {
+  ArrowDownRight,
+  ArrowUpRight,
   CalendarClock,
   CheckCircle2,
   ChevronLeft,
@@ -22,6 +24,7 @@ import {
   TrendingUp,
   Wallet,
   X,
+  type LucideIcon,
 } from 'lucide-react'
 import { useCollection } from '../../lib/store'
 import { useToast } from '../../context/ToastContext'
@@ -43,7 +46,6 @@ import {
   SegmentedControl,
   Select,
   Separator,
-  StatCard,
   Tabs,
   cx,
 } from '../../ui'
@@ -178,13 +180,13 @@ export default function BudgetTracker() {
     <div className="space-y-4">
       {/* 月份選擇 + 記一筆 */}
       <div className="flex flex-wrap items-center gap-2">
-        <div className="flex items-center gap-1 rounded-lg border border-slate-200 bg-white p-0.5 dark:border-slate-700 dark:bg-slate-800">
+        <div className="flex items-center gap-1 rounded-full border border-slate-200/80 bg-white p-1 shadow-xs dark:border-slate-700/60 dark:bg-slate-800 dark:shadow-none">
           <IconButton label="上個月" onClick={() => setMonth((m) => shiftMonth(m, -1))}>
             <ChevronLeft size={18} />
           </IconButton>
           <button
             onClick={() => setMonth(monthKey(new Date()))}
-            className="min-w-[7rem] rounded-md px-2 py-1 text-center text-sm font-semibold tabular-nums text-slate-800 transition hover:bg-slate-100 dark:text-slate-100 dark:hover:bg-slate-700"
+            className="min-w-[7rem] rounded-full px-3 py-1 text-center text-sm font-semibold tabular-nums text-slate-800 transition hover:bg-slate-100 dark:text-slate-100 dark:hover:bg-slate-700"
             title="返回本月"
           >
             {monthLabel(month)}
@@ -207,33 +209,45 @@ export default function BudgetTracker() {
         </Button>
       </div>
 
-      {/* 三大統計 */}
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-        <StatCard label="收入" value={fmtMoney(stats.income)} icon={TrendingUp} />
-        <StatCard
+      {/* 結餘 hero + 收支 / 儲蓄率支援磚 */}
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        {/* 結餘 hero（主視覺，跨 2 格）*/}
+        <section className="hero-gradient relative col-span-2 flex flex-col justify-between overflow-hidden rounded-3xl p-5 text-white shadow-lg shadow-accent/25">
+          <div className="pointer-events-none absolute -right-8 -top-10 h-36 w-36 rounded-full bg-white/10 blur-2xl" />
+          <div className="relative flex items-center justify-between">
+            <span className="text-xs font-medium text-white/80">{monthLabel(month)} · 本月結餘</span>
+            <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-white/15 backdrop-blur">
+              <Wallet size={16} />
+            </span>
+          </div>
+          <div className="relative mt-3">
+            <p className="text-3xl font-bold tabular-nums sm:text-4xl">{fmtMoney(stats.balance)}</p>
+            <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-white/80">
+              <span className="inline-flex items-center gap-1 tabular-nums">
+                <ArrowUpRight size={13} /> 收入 {fmtMoney(stats.income)}
+              </span>
+              <span className="inline-flex items-center gap-1 tabular-nums">
+                <ArrowDownRight size={13} /> 支出 {fmtMoney(stats.expense)}
+              </span>
+            </div>
+          </div>
+        </section>
+
+        <BudgetStatTile
+          icon={TrendingDown}
+          tone="rose"
           label="支出"
           value={fmtMoney(stats.expense)}
-          icon={TrendingDown}
           trend={expenseTrend}
-        />
-        <StatCard
-          label="結餘"
-          value={
-            stats.balance < 0 ? (
-              <span className="text-rose-600 dark:text-rose-400">{fmtMoney(stats.balance)}</span>
-            ) : (
-              fmtMoney(stats.balance)
-            )
-          }
-          icon={Wallet}
-          highlight
-        />
-        <StatCard
-          label="儲蓄率"
-          value={stats.savingsRate == null ? '—' : `${stats.savingsRate}`}
-          unit={stats.savingsRate == null ? undefined : '%'}
-          icon={Sparkles}
           hint={stats.count > 0 ? `共 ${stats.count} 筆` : undefined}
+        />
+        <BudgetStatTile
+          icon={Sparkles}
+          tone="emerald"
+          label="儲蓄率"
+          value={stats.savingsRate == null ? '—' : String(stats.savingsRate)}
+          unit={stats.savingsRate == null ? undefined : '%'}
+          hint={stats.savingsRate == null ? '記低收支即計' : '收入用剩比率'}
         />
       </div>
 
@@ -328,6 +342,63 @@ export default function BudgetTracker() {
   )
 }
 
+// ───────── 支援統計磚（bento 風：tone icon chip + 數字 + 趨勢）─────────
+type TileTone = 'rose' | 'emerald' | 'accent' | 'amber'
+const TILE_CHIP: Record<TileTone, string> = {
+  rose: 'bg-rose-50 text-rose-600 dark:bg-rose-500/15 dark:text-rose-300',
+  emerald: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-300',
+  accent: 'bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent',
+  amber: 'bg-amber-50 text-amber-600 dark:bg-amber-500/15 dark:text-amber-300',
+}
+function BudgetStatTile({
+  icon: Icon,
+  tone,
+  label,
+  value,
+  unit,
+  hint,
+  trend,
+}: {
+  icon: LucideIcon
+  tone: TileTone
+  label: string
+  value: string
+  unit?: string
+  hint?: string
+  trend?: { value: string; dir: 'up' | 'down' | 'flat' }
+}) {
+  return (
+    <div className="flex flex-col justify-between rounded-3xl border border-slate-200/80 bg-white p-4 shadow-xs transition duration-200 hover:border-slate-300 hover:shadow-md dark:border-slate-700/60 dark:bg-slate-800 dark:shadow-none dark:hover:border-slate-600">
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-medium text-slate-400 dark:text-slate-500">{label}</span>
+        <span className={cx('flex h-8 w-8 items-center justify-center rounded-xl', TILE_CHIP[tone])}>
+          <Icon size={16} aria-hidden="true" />
+        </span>
+      </div>
+      <div className="mt-2">
+        <p className="flex items-baseline gap-1">
+          <span className="text-2xl font-bold tabular-nums text-slate-800 dark:text-slate-100">
+            {value}
+          </span>
+          {unit && <span className="text-sm font-medium text-slate-400">{unit}</span>}
+          {trend && trend.dir !== 'flat' && (
+            <span
+              className={cx(
+                'ml-auto inline-flex items-center gap-0.5 text-xs font-semibold tabular-nums',
+                trend.dir === 'up' ? 'text-rose-500' : 'text-emerald-500',
+              )}
+            >
+              {trend.dir === 'up' ? <ArrowUpRight size={13} /> : <ArrowDownRight size={13} />}
+              {trend.value}
+            </span>
+          )}
+        </p>
+        {hint && <p className="mt-1 truncate text-[11px] text-slate-400 dark:text-slate-500">{hint}</p>}
+      </div>
+    </div>
+  )
+}
+
 // ============================================================
 //  總覽 Tab
 // ============================================================
@@ -407,10 +478,12 @@ function OverviewTab({
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         {/* 分類佔比 */}
-        <Card className="p-4">
+        <Card className="rounded-2xl p-4">
           <SectionTitle icon={PieChart}>本月支出分類</SectionTitle>
           {donutSegs.length === 0 ? (
-            <p className="py-8 text-center text-sm text-slate-400">本月暫時冇支出。</p>
+            <p className="py-8 text-center text-sm text-slate-500 dark:text-slate-400">
+              今個月仲未有支出記錄。
+            </p>
           ) : (
             <CategoryDonut
               segments={donutSegs}
@@ -421,7 +494,7 @@ function OverviewTab({
         </Card>
 
         {/* 預算速覽 */}
-        <Card className="p-4">
+        <Card className="rounded-2xl p-4">
           <SectionTitle
             icon={Target}
             right={
@@ -437,7 +510,7 @@ function OverviewTab({
           </SectionTitle>
           {bRows.length === 0 ? (
             <div className="flex flex-col items-center gap-2 py-6 text-center">
-              <p className="text-sm text-slate-400">仲未設預算。</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400">仲未為分類設預算。</p>
               <Button size="sm" variant="secondary" icon={Target} onClick={onGoBudgets}>
                 設定分類預算
               </Button>
@@ -492,7 +565,7 @@ function OverviewTab({
       </div>
 
       {/* 本月每日支出走勢 */}
-      <Card className="p-4">
+      <Card className="rounded-2xl p-4">
         <SectionTitle
           icon={TrendingDown}
           right={
@@ -521,18 +594,18 @@ function OverviewTab({
       </Card>
 
       {/* 最近交易 */}
-      <Card className="p-4">
+      <Card className="rounded-2xl p-4">
         <SectionTitle icon={Receipt}>最近交易</SectionTitle>
-        <ul className="space-y-1.5">
+        <ul className="space-y-0.5">
           {recent.map((t) => {
             const cat = catOf(t.categoryId)
             const income = t.kind === 'income'
             return (
               <li
                 key={t.id}
-                className="flex items-center gap-3 rounded-lg px-1 py-1.5 text-sm"
+                className="flex items-center gap-3 rounded-xl px-2 py-2 text-sm transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/60"
               >
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-base dark:bg-slate-700">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-base dark:bg-slate-700/60">
                   {cat?.icon ?? '🏷️'}
                 </span>
                 <span className="min-w-0 flex-1 truncate text-slate-700 dark:text-slate-200">
@@ -810,7 +883,7 @@ function RecordsTab({
               <Card
                 key={t.id}
                 className={cx(
-                  'group p-3 transition',
+                  'group rounded-2xl p-3 transition duration-200 hover:border-slate-300 hover:shadow-md dark:hover:border-slate-600',
                   checked && 'ring-2 ring-accent/40',
                 )}
               >
@@ -822,7 +895,7 @@ function RecordsTab({
                     className="h-4 w-4 shrink-0 cursor-pointer rounded border-slate-300 text-accent focus:ring-accent/40 dark:border-slate-600 dark:bg-slate-700"
                     aria-label="揀選記錄"
                   />
-                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-lg dark:bg-slate-700">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-slate-100 text-lg dark:bg-slate-700/60">
                     {cat?.icon ?? '🏷️'}
                   </span>
                   <div className="min-w-0 flex-1">
@@ -902,16 +975,21 @@ function BudgetsTab({
     <div className="space-y-4 animate-fade-in">
       {/* 總預算卡 */}
       {bRows.length > 0 && (
-        <Card className="p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs text-slate-500 dark:text-slate-400">本月總預算</p>
-              <p className="mt-0.5 text-2xl font-bold tabular-nums text-slate-800 dark:text-slate-100">
-                {fmtMoney(bSummary.totalSpent)}
-                <span className="ml-1 text-sm font-normal text-slate-400">
-                  / {fmtMoney(bSummary.totalLimit)}
-                </span>
-              </p>
+        <Card className="rounded-2xl p-4">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
+                <Target size={17} aria-hidden="true" />
+              </span>
+              <div>
+                <p className="text-xs text-slate-500 dark:text-slate-400">本月總預算</p>
+                <p className="mt-0.5 text-2xl font-bold tabular-nums text-slate-800 dark:text-slate-100">
+                  {fmtMoney(bSummary.totalSpent)}
+                  <span className="ml-1 text-sm font-normal text-slate-400">
+                    / {fmtMoney(bSummary.totalLimit)}
+                  </span>
+                </p>
+              </div>
             </div>
             <div className="text-right">
               <p
@@ -1165,7 +1243,7 @@ function AnalysisTab({
   return (
     <div className="space-y-4 animate-fade-in">
       {/* 收支趨勢 */}
-      <Card className="p-4">
+      <Card className="rounded-2xl p-4">
         <SectionTitle
           icon={TrendingUp}
           right={
@@ -1186,14 +1264,14 @@ function AnalysisTab({
       </Card>
 
       {/* 淨結餘走勢 */}
-      <Card className="p-4">
+      <Card className="rounded-2xl p-4">
         <SectionTitle icon={Wallet}>每月淨結餘</SectionTitle>
         <BalanceTrend rows={trend} />
       </Card>
 
       {/* 分類佔比（可切收 / 支）+ heatmap */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <Card className="p-4">
+        <Card className="rounded-2xl p-4">
           <SectionTitle
             icon={PieChart}
             right={
@@ -1211,8 +1289,8 @@ function AnalysisTab({
             本月{kind === 'expense' ? '支出' : '收入'}分類
           </SectionTitle>
           {catStats.length === 0 ? (
-            <p className="py-8 text-center text-sm text-slate-400">
-              本月暫時冇{kind === 'expense' ? '支出' : '收入'}。
+            <p className="py-8 text-center text-sm text-slate-500 dark:text-slate-400">
+              今個月仲未有{kind === 'expense' ? '支出' : '收入'}記錄。
             </p>
           ) : (
             <ul className="space-y-3">
@@ -1249,14 +1327,14 @@ function AnalysisTab({
           )}
         </Card>
 
-        <Card className="p-4">
+        <Card className="rounded-2xl p-4">
           <SectionTitle icon={TrendingDown}>本月消費熱力</SectionTitle>
           <SpendingHeatmap cells={dailyBreakdown(monthTxs, month)} />
         </Card>
       </div>
 
       {/* 統計摘要 */}
-      <Card className="p-4">
+      <Card className="rounded-2xl p-4">
         <SectionTitle icon={Sparkles}>本月數據</SectionTitle>
         <div className="grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-4">
           <Stat label="日均支出" value={fmtMoney(stats.dailyAvg)} />
@@ -1888,7 +1966,7 @@ function CategoryManager({
       <div>
         <SectionTitle>{title}</SectionTitle>
         {list.length === 0 ? (
-          <p className="text-sm text-slate-400">仲未有分類。</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400">下面加返個分類就得。</p>
         ) : (
           <Card>
             <ul className="divide-y divide-slate-100 dark:divide-slate-700">

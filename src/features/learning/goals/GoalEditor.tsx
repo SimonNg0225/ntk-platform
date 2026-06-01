@@ -2,7 +2,7 @@
 //  學習目標 — 建立 / 編輯 Modal（含里程碑管理）
 // ============================================================
 import { useEffect, useMemo, useState } from 'react'
-import { GripVertical, Plus, Trash2, Target } from 'lucide-react'
+import { GripVertical, Plus, Trash2, Target, Flag } from 'lucide-react'
 import {
   Modal,
   Button,
@@ -227,11 +227,12 @@ export default function GoalEditor({
         </Field>
 
         {/* 里程碑 */}
-        <div>
-          <div className="mb-1.5 flex items-center justify-between">
-            <span className="text-xs font-medium text-slate-600 dark:text-slate-300">
+        <div className="rounded-2xl border border-slate-200/80 bg-slate-50/50 p-3.5 dark:border-slate-700/60 dark:bg-slate-800/40">
+          <div className="mb-2 flex items-center justify-between">
+            <span className="flex items-center gap-1.5 text-sm font-medium text-slate-700 dark:text-slate-200">
+              <Flag size={14} className="text-accent" />
               里程碑
-              <span className="ml-1 font-normal text-slate-400">（拆細步驟，自動計加權進度）</span>
+              <span className="font-normal text-slate-400">· 拆細步驟，自動計加權進度</span>
             </span>
             {previewProgress != null && (
               <span className="text-xs font-semibold tabular-nums text-accent">

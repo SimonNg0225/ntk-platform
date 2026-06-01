@@ -48,6 +48,7 @@ import {
   challengeCol,
   FORMAT_LABEL,
   STATUS_LABEL,
+  STATUS_ORDER,
   STATUS_TONE,
   type Book,
   type BookStatus,
@@ -510,6 +511,7 @@ export default function ReadingList() {
               onToggleSelect={toggleSelect}
               onOpen={(id) => setOpenId(id)}
               onQuickStatus={quickStatus}
+              grouped={statusFilter === 'all' && !shelfFilter && !query.trim() && sortKey === 'added'}
             />
           ) : (
             <ListView
@@ -560,26 +562,27 @@ function ReadingChallenge({
 
   if (target <= 0 && !editing) {
     return (
-      <Card className="flex flex-wrap items-center gap-3 p-4">
-        <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-accent-soft text-accent dark:bg-accent/15">
-          <Target size={18} />
+      <div className="flex flex-wrap items-center gap-3 rounded-3xl border border-accent/30 bg-accent-soft/50 p-4 dark:border-accent/30 dark:bg-accent/10">
+        <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-accent text-white shadow-sm dark:shadow-none">
+          <Target size={19} />
         </span>
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-medium text-slate-700 dark:text-slate-200">設定 {year} 年閱讀挑戰</p>
-          <p className="text-xs text-slate-400">定個目標，追蹤今年讀完幾多本。</p>
+          <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">定個 {year} 年閱讀挑戰</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400">立個小目標，睇住自己今年讀完幾多本。</p>
         </div>
-        <Button size="sm" variant="secondary" onClick={() => setEditing(true)}>
+        <Button size="sm" onClick={() => setEditing(true)}>
           設定目標
         </Button>
-      </Card>
+      </div>
     )
   }
 
   const R = 26
   const C = 2 * Math.PI * R
+  const reached = done >= target
 
   return (
-    <Card className="flex items-center gap-4 p-4">
+    <div className="flex items-center gap-4 rounded-3xl border border-slate-200/80 bg-white p-4 shadow-xs dark:border-slate-700/60 dark:bg-slate-800 dark:shadow-none sm:p-5">
       <div className="relative h-[68px] w-[68px] shrink-0">
         <svg viewBox="0 0 68 68" className="-rotate-90">
           <circle cx="34" cy="34" r={R} fill="none" strokeWidth="7" className="stroke-slate-100 dark:stroke-slate-700/60" />
@@ -590,17 +593,17 @@ function ReadingChallenge({
             fill="none"
             strokeWidth="7"
             strokeLinecap="round"
-            className="stroke-accent transition-all duration-700"
+            className={cx('transition-all duration-700', reached ? 'stroke-emerald-500' : 'stroke-accent')}
             strokeDasharray={C}
             strokeDashoffset={C * (1 - pct / 100)}
           />
         </svg>
-        <div className="absolute inset-0 flex items-center justify-center text-sm font-bold tabular-nums text-accent">
+        <div className={cx('absolute inset-0 flex items-center justify-center text-sm font-bold tabular-nums', reached ? 'text-emerald-500' : 'text-accent')}>
           {pct}%
         </div>
       </div>
       <div className="min-w-0 flex-1">
-        <p className="flex items-center gap-1.5 text-sm font-semibold text-slate-700 dark:text-slate-200">
+        <p className="flex items-center gap-1.5 text-sm font-semibold text-slate-800 dark:text-slate-100">
           <Target size={15} className="text-accent" /> {year} 年閱讀挑戰
         </p>
         {editing ? (
@@ -646,13 +649,136 @@ function ReadingChallenge({
           </>
         )}
       </div>
-    </Card>
+    </div>
   )
 }
 
 // ============================================================
 //  書庫（封面 grid）
 // ============================================================
+function BookCoverCard({
+  b,
+  selectMode,
+  selected,
+  onToggleSelect,
+  onOpen,
+  onQuickStatus,
+}: {
+  b: Book
+  selectMode: boolean
+  selected: Set<string>
+  onToggleSelect: (id: string) => void
+  onOpen: (id: string) => void
+  onQuickStatus: (book: Book, status: BookStatus) => void
+}) {
+  const pct = progressPct(b)
+  const sel = selected.has(b.id)
+  return (
+    <button
+      type="button"
+      onClick={() => (selectMode ? onToggleSelect(b.id) : onOpen(b.id))}
+      className={cx(
+        'group flex flex-col overflow-hidden rounded-3xl border border-slate-200/80 bg-white text-left shadow-xs transition duration-200 hover:-translate-y-1 hover:border-slate-300 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:border-slate-700/60 dark:bg-slate-800 dark:shadow-none dark:hover:border-slate-600',
+        sel && 'ring-2 ring-accent',
+      )}
+    >
+      {/* 封面 */}
+      <div className="relative aspect-[2/3] overflow-hidden bg-gradient-to-br from-accent-soft to-slate-100 dark:from-accent/15 dark:to-slate-800">
+        {b.cover ? (
+          <img src={b.cover} alt={b.title} className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]" />
+        ) : (
+          <div className="flex h-full w-full flex-col items-center justify-center p-3 text-center">
+            <BookOpen size={28} className="text-accent/70" />
+            <span className="mt-2 line-clamp-4 text-xs font-semibold text-slate-600 dark:text-slate-300">
+              {b.title}
+            </span>
+          </div>
+        )}
+        {/* 狀態圓點 */}
+        <span
+          className={cx(
+            'absolute left-2 top-2 h-2.5 w-2.5 rounded-full ring-2 ring-white dark:ring-slate-900',
+            STATUS_DOT[b.status],
+          )}
+          title={STATUS_LABEL[b.status]}
+        />
+        {b.favorite && (
+          <span className="absolute right-2 top-2 text-amber-400 drop-shadow">
+            <Star size={15} fill="currentColor" />
+          </span>
+        )}
+        {selectMode && (
+          <span
+            className={cx(
+              'absolute right-2 bottom-2 flex h-5 w-5 items-center justify-center rounded-md border-2 transition-colors',
+              sel
+                ? 'border-accent bg-accent text-white'
+                : 'border-white bg-black/20 text-transparent',
+            )}
+          >
+            <CheckSquare size={12} />
+          </span>
+        )}
+        {/* 在讀進度條 */}
+        {b.status === 'reading' && pct > 0 && (
+          <div className="absolute inset-x-0 bottom-0">
+            <ProgressBar value={pct} size="sm" className="rounded-none" />
+          </div>
+        )}
+      </div>
+
+      {/* 資料 */}
+      <div className="flex flex-1 flex-col p-3">
+        <p className="truncate text-sm font-semibold text-slate-800 dark:text-slate-100">{b.title}</p>
+        {b.author && (
+          <p className="truncate text-xs text-slate-500 dark:text-slate-400">{b.author}</p>
+        )}
+        <div className="mt-1.5 flex items-center justify-between">
+          {b.rating ? (
+            <StarRating value={b.rating} size={13} readOnly />
+          ) : b.status === 'reading' && pct > 0 ? (
+            <span className="text-[11px] font-medium tabular-nums text-accent">已讀 {pct}%</span>
+          ) : (
+            <span className="text-[11px] text-slate-400 dark:text-slate-500">未評分</span>
+          )}
+        </div>
+
+        {/* hover 快速切換（非選取模式） */}
+        {!selectMode && (
+          <div className="mt-2 hidden grid-cols-2 gap-1.5 group-hover:grid">
+            {b.status !== 'reading' && (
+              <span
+                role="button"
+                tabIndex={-1}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onQuickStatus(b, 'reading')
+                }}
+                className="rounded-lg bg-accent-soft px-1.5 py-1 text-center text-[11px] font-medium text-accent-strong transition-colors hover:bg-accent hover:text-white dark:bg-accent/15 dark:text-accent"
+              >
+                在讀
+              </span>
+            )}
+            {b.status !== 'done' && (
+              <span
+                role="button"
+                tabIndex={-1}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onQuickStatus(b, 'done')
+                }}
+                className="rounded-lg bg-emerald-50 px-1.5 py-1 text-center text-[11px] font-medium text-emerald-700 transition-colors hover:bg-emerald-500 hover:text-white dark:bg-emerald-500/10 dark:text-emerald-300"
+              >
+                讀完
+              </span>
+            )}
+          </div>
+        )}
+      </div>
+    </button>
+  )
+}
+
 function LibraryGrid({
   books,
   selectMode,
@@ -660,6 +786,7 @@ function LibraryGrid({
   onToggleSelect,
   onOpen,
   onQuickStatus,
+  grouped,
 }: {
   books: Book[]
   selectMode: boolean
@@ -667,109 +794,41 @@ function LibraryGrid({
   onToggleSelect: (id: string) => void
   onOpen: (id: string) => void
   onQuickStatus: (book: Book, status: BookStatus) => void
+  grouped: boolean
 }) {
+  const cardProps = { selectMode, selected, onToggleSelect, onOpen, onQuickStatus }
+  const gridCls = 'grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5'
+
+  // 篩選 / 排序時退為單一網格；預設按狀態分組（想讀 → 在讀 → 讀完 → 棄讀），每組一個色調標頭。
+  if (!grouped) {
+    return (
+      <div className={gridCls}>
+        {books.map((b) => (
+          <BookCoverCard key={b.id} b={b} {...cardProps} />
+        ))}
+      </div>
+    )
+  }
+
   return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-      {books.map((b) => {
-        const pct = progressPct(b)
-        const sel = selected.has(b.id)
+    <div className="space-y-6">
+      {STATUS_ORDER.map((st) => {
+        const group = books.filter((b) => b.status === st)
+        if (group.length === 0) return null
         return (
-          <Card
-            key={b.id}
-            hover
-            onClick={() => (selectMode ? onToggleSelect(b.id) : onOpen(b.id))}
-            className={cx('group overflow-hidden', sel && 'ring-2 ring-accent')}
-          >
-            {/* 封面 */}
-            <div className="relative aspect-[2/3] overflow-hidden bg-gradient-to-br from-accent-soft to-slate-100 dark:from-accent/15 dark:to-slate-800">
-              {b.cover ? (
-                <img src={b.cover} alt={b.title} className="h-full w-full object-cover" />
-              ) : (
-                <div className="flex h-full w-full flex-col items-center justify-center p-3 text-center">
-                  <BookOpen size={28} className="text-accent/70" />
-                  <span className="mt-2 line-clamp-4 text-xs font-semibold text-slate-600 dark:text-slate-300">
-                    {b.title}
-                  </span>
-                </div>
-              )}
-              {/* 狀態圓點 */}
-              <span
-                className={cx(
-                  'absolute left-2 top-2 h-2.5 w-2.5 rounded-full ring-2 ring-white dark:ring-slate-900',
-                  STATUS_DOT[b.status],
-                )}
-                title={STATUS_LABEL[b.status]}
-              />
-              {b.favorite && (
-                <span className="absolute right-2 top-2 text-amber-400 drop-shadow">
-                  <Star size={15} fill="currentColor" />
-                </span>
-              )}
-              {selectMode && (
-                <span
-                  className={cx(
-                    'absolute right-2 bottom-2 flex h-5 w-5 items-center justify-center rounded-md border-2 transition-colors',
-                    sel
-                      ? 'border-accent bg-accent text-white'
-                      : 'border-white bg-black/20 text-transparent',
-                  )}
-                >
-                  <CheckSquare size={12} />
-                </span>
-              )}
-              {/* 在讀進度條 */}
-              {b.status === 'reading' && pct > 0 && (
-                <div className="absolute inset-x-0 bottom-0">
-                  <ProgressBar value={pct} size="sm" className="rounded-none" />
-                </div>
-              )}
+          <section key={st}>
+            <div className="mb-3 flex items-center gap-2">
+              <Badge tone={STATUS_TONE[st]} dot>
+                {STATUS_LABEL[st]}
+              </Badge>
+              <span className="text-xs font-medium tabular-nums text-slate-400">{group.length}</span>
             </div>
-
-            {/* 資料 */}
-            <div className="p-2.5">
-              <p className="truncate text-sm font-semibold text-slate-800 dark:text-slate-100">{b.title}</p>
-              {b.author && (
-                <p className="truncate text-xs text-slate-400 dark:text-slate-500">{b.author}</p>
-              )}
-              <div className="mt-1.5 flex items-center justify-between">
-                {b.rating ? (
-                  <StarRating value={b.rating} size={13} readOnly />
-                ) : (
-                  <span className="text-[11px] text-slate-400 dark:text-slate-500">未評分</span>
-                )}
-              </div>
-
-              {/* hover 快速切換（非選取模式） */}
-              {!selectMode && (
-                <div className="mt-2 hidden grid-cols-2 gap-1 group-hover:grid">
-                  {b.status !== 'reading' && (
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        onQuickStatus(b, 'reading')
-                      }}
-                      className="rounded-md bg-accent-soft px-1.5 py-1 text-[11px] font-medium text-accent-strong hover:bg-accent hover:text-white dark:bg-accent/15 dark:text-accent"
-                    >
-                      在讀
-                    </button>
-                  )}
-                  {b.status !== 'done' && (
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        onQuickStatus(b, 'done')
-                      }}
-                      className="rounded-md bg-emerald-50 px-1.5 py-1 text-[11px] font-medium text-emerald-700 hover:bg-emerald-500 hover:text-white dark:bg-emerald-500/10 dark:text-emerald-300"
-                    >
-                      讀完
-                    </button>
-                  )}
-                </div>
-              )}
+            <div className={gridCls}>
+              {group.map((b) => (
+                <BookCoverCard key={b.id} b={b} {...cardProps} />
+              ))}
             </div>
-          </Card>
+          </section>
         )
       })}
     </div>

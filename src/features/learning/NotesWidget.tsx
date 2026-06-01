@@ -317,18 +317,18 @@ export default function NotesWidget() {
       : sidebarItems.find((i) => i.scope.kind === scope.kind)?.label ?? '筆記'
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       {/* 頂部列 */}
-      <div className="flex items-center gap-2">
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
-          <NotebookIcon size={18} />
+      <div className="flex items-center gap-3">
+        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
+          <NotebookIcon size={20} />
         </span>
         <div className="min-w-0 flex-1">
-          <h2 className="truncate text-base font-semibold tracking-tight text-slate-800 dark:text-slate-100">
+          <h2 className="truncate text-lg font-semibold tracking-tight text-slate-800 dark:text-slate-100">
             個人筆記
           </h2>
-          <p className="text-xs text-slate-400 dark:text-slate-500">
-            <span className="tabular-nums">{counts.all}</span> 則筆記 ·{' '}
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            <span className="tabular-nums">{counts.all}</span> 則筆記 · 已寫{' '}
             <span className="tabular-nums">{stats.totalWords.toLocaleString()}</span> 字
           </p>
         </div>
@@ -359,7 +359,7 @@ export default function NotesWidget() {
             mobilePane === 'detail' ? 'hidden' : 'block',
           )}
         >
-          <Card className="p-2">
+          <Card className="rounded-2xl p-2">
             <nav className="space-y-0.5">
               {sidebarItems.map((it) => {
                 const on = isActiveScope(it.scope)
@@ -394,7 +394,7 @@ export default function NotesWidget() {
           </Card>
 
           {/* 筆記本 */}
-          <Card className="p-2">
+          <Card className="rounded-2xl p-2">
             <div className="flex items-center justify-between px-1.5 pb-1">
               <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
                 筆記本
@@ -406,7 +406,7 @@ export default function NotesWidget() {
             <nav className="space-y-0.5">
               {notebooks.length === 0 && (
                 <p className="px-2 py-1.5 text-xs text-slate-400 dark:text-slate-500">
-                  仲未有筆記本
+                  撳右上角 ＋ 開個筆記本歸類
                 </p>
               )}
               {notebooks.map((nb) => {
@@ -541,7 +541,7 @@ export default function NotesWidget() {
 
           {/* 批量操作條 */}
           {selectMode && (
-            <Card className="flex flex-wrap items-center gap-2 p-2">
+            <Card className="flex flex-wrap items-center gap-2 rounded-2xl p-2">
               <span
                 aria-live="polite"
                 className="px-1 text-xs font-medium text-slate-500 dark:text-slate-400"
@@ -582,26 +582,31 @@ export default function NotesWidget() {
           {visible.length === 0 ? (
             <EmptyState
               icon={scope.kind === 'trash' ? Trash2 : hasFilter ? Search : FileText}
+              art={
+                !hasFilter && (scope.kind === 'all' || scope.kind === 'notebook')
+                  ? 'empty-notes'
+                  : undefined
+              }
               title={
                 hasFilter
-                  ? '搵唔到相符筆記'
+                  ? '搵唔到相符嘅筆記'
                   : scope.kind === 'trash'
-                    ? '垃圾桶係空嘅'
+                    ? '垃圾桶乾乾淨淨'
                     : scope.kind === 'archived'
-                      ? '未有封存筆記'
-                      : '仲未有筆記'
+                      ? '未有封存嘅筆記'
+                      : '由一則筆記開始'
               }
               hint={
                 hasFilter
-                  ? '試下改吓關鍵字或清除標籤篩選。'
+                  ? '試下換個關鍵字，或者清除標籤篩選。'
                   : scope.kind === 'all' || scope.kind === 'notebook'
-                    ? '撳「新筆記」開始書寫，用 #標籤 同 - [ ] 待辦組織內容。'
+                    ? '記低靈感、課堂重點或者待辦——用 #標籤 分類、- [ ] 整待辦，慢慢儲成你嘅知識庫。'
                     : undefined
               }
               action={
                 !hasFilter && (scope.kind === 'all' || scope.kind === 'notebook') ? (
                   <Button size="sm" icon={Plus} onClick={createNote}>
-                    新筆記
+                    寫第一則筆記
                   </Button>
                 ) : undefined
               }
@@ -645,7 +650,7 @@ export default function NotesWidget() {
           )}
         >
           {selected ? (
-            <Card className="flex h-full min-h-[28rem] flex-col p-3 sm:p-4">
+            <Card className="flex h-full min-h-[28rem] flex-col rounded-2xl p-3 sm:p-4">
               <button
                 onClick={() => setMobilePane('list')}
                 className="mb-2 inline-flex items-center gap-1 self-start text-xs font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 lg:hidden"
@@ -659,17 +664,22 @@ export default function NotesWidget() {
               />
             </Card>
           ) : (
-            <Card className="hidden h-full min-h-[28rem] items-center justify-center p-6 lg:flex">
-              <div className="text-center">
-                <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500">
-                  <Pencil size={22} />
+            <Card className="hidden h-full min-h-[28rem] items-center justify-center rounded-2xl p-6 lg:flex">
+              <div className="max-w-xs text-center">
+                <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
+                  <Pencil size={24} />
                 </span>
-                <p className="mt-3 text-sm font-medium text-slate-500 dark:text-slate-400">
-                  揀一則筆記嚟編輯
+                <p className="mt-4 text-sm font-semibold text-slate-700 dark:text-slate-200">
+                  揀一則筆記，喺呢度書寫
                 </p>
-                <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
-                  或者撳右上角「新筆記」開始。
+                <p className="mt-1 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+                  撳左邊任何一則打開，或者開一則全新嘅。
                 </p>
+                <div className="mt-4">
+                  <Button size="sm" icon={Plus} onClick={createNote}>
+                    新筆記
+                  </Button>
+                </div>
               </div>
             </Card>
           )}
@@ -744,21 +754,21 @@ function NoteRow({
       aria-pressed={selectMode ? checked : undefined}
       aria-current={!selectMode && active ? 'true' : undefined}
       className={cx(
-        'group block w-full rounded-xl border p-3 text-left transition',
+        'group relative block w-full overflow-hidden rounded-2xl border p-3.5 text-left transition duration-200',
         color.card ||
-          'border-slate-200 bg-white dark:border-slate-700/60 dark:bg-slate-800',
+          'border-slate-200/80 bg-white dark:border-slate-700/60 dark:bg-slate-800',
         active
-          ? 'ring-2 ring-accent/50'
-          : 'hover:border-slate-300 hover:shadow-sm dark:hover:border-slate-600',
+          ? 'border-accent/50 shadow-sm ring-1 ring-accent/40 dark:border-accent/50'
+          : 'hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md dark:hover:border-slate-600',
         grid && 'h-full',
       )}
     >
-      <div className="flex items-start gap-2">
+      <div className="flex items-start gap-2.5">
         {selectMode && (
           <span
             aria-hidden="true"
             className={cx(
-              'mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded border text-[10px]',
+              'mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-md border text-[10px] transition',
               checked
                 ? 'border-accent bg-accent text-white'
                 : 'border-slate-300 dark:border-slate-600',
@@ -775,14 +785,14 @@ function NoteRow({
             {note.favorite && (
               <Star size={12} className="shrink-0 fill-current text-amber-500" />
             )}
-            <span className="truncate text-sm font-semibold text-slate-800 dark:text-slate-100">
+            <span className="truncate text-[15px] font-semibold leading-snug text-slate-800 dark:text-slate-100">
               {title}
             </span>
           </div>
           {sn && (
             <p
               className={cx(
-                'mt-0.5 text-xs text-slate-500 dark:text-slate-400',
+                'mt-1 text-xs leading-relaxed text-slate-500 dark:text-slate-400',
                 grid ? 'line-clamp-3' : 'line-clamp-2',
               )}
             >
@@ -792,7 +802,7 @@ function NoteRow({
         </div>
       </div>
 
-      <div className="mt-2 flex flex-wrap items-center gap-1.5">
+      <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
         {check.total > 0 && (
           <Badge tone={check.done === check.total ? 'green' : 'slate'}>
             <ListChecks size={11} />
@@ -804,7 +814,7 @@ function NoteRow({
         {tags.slice(0, grid ? 4 : 2).map((t) => (
           <span
             key={t}
-            className="rounded bg-accent-soft px-1.5 py-0.5 text-[10px] font-medium text-accent-strong dark:bg-accent/15 dark:text-accent"
+            className="rounded-md bg-accent-soft px-1.5 py-0.5 text-[10px] font-medium text-accent-strong dark:bg-accent/15 dark:text-accent"
           >
             #{t}
           </span>
@@ -935,7 +945,7 @@ function StatsPanel({
     : 0
 
   return (
-    <Card className="space-y-4 p-3 sm:p-4">
+    <Card className="space-y-4 rounded-2xl p-3 sm:p-4">
       {/* KPI */}
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
         <StatCard

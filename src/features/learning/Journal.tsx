@@ -71,6 +71,7 @@ import {
   moodDistribution,
   moodTrend,
   parseTags,
+  promptOfDay,
   relativeTime,
   toMarkdown,
   todayKey,
@@ -331,6 +332,22 @@ export default function Journal() {
 
   return (
     <div className="space-y-5">
+      {/* ───────── 標題 ───────── */}
+      <div className="flex items-center gap-3">
+        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
+          <BookText size={20} />
+        </span>
+        <div className="min-w-0 flex-1">
+          <h2 className="truncate text-lg font-semibold tracking-tight text-slate-800 dark:text-slate-100">
+            個人日誌
+          </h2>
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            記低每日嘅反思同心情 · 共{' '}
+            <span className="tabular-nums">{stats.total}</span> 篇
+          </p>
+        </div>
+      </div>
+
       {/* ───────── 頂部：操作列 ───────── */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <SegmentedControl<ViewId>
@@ -384,7 +401,7 @@ export default function Journal() {
 
       {/* ───────── 歷年今日 ───────── */}
       {onThisDay.length > 0 && view === 'timeline' && (
-        <Card className="border-accent/30 bg-accent-soft/40 p-4 dark:bg-accent/10">
+        <Card className="rounded-2xl border-accent/30 bg-accent-soft/40 p-4 dark:bg-accent/10">
           <SectionTitle icon={CalendarHeart}>歷年今日 · {mediumDate(today)}</SectionTitle>
           <div className="space-y-2">
             {onThisDay.map(({ doc: d, yearsAgo }) => (
@@ -392,9 +409,15 @@ export default function Journal() {
                 key={d.id}
                 onClick={() => openEdit(d)}
                 aria-label={`${yearsAgo} 年前嘅今日：${d.title?.trim() || excerpt(d.content, 40)}`}
-                className="flex w-full items-start gap-3 rounded-lg bg-white/70 p-2.5 text-left transition hover:bg-white dark:bg-slate-800/60 dark:hover:bg-slate-800"
+                className="flex w-full items-center gap-3 rounded-xl bg-white/70 p-2.5 text-left transition hover:bg-white dark:bg-slate-800/60 dark:hover:bg-slate-800"
               >
-                <span aria-hidden="true" className="shrink-0 text-lg">{d.mood || '📝'}</span>
+                {d.mood ? (
+                  <span aria-hidden="true" className="shrink-0 text-lg leading-none">{d.mood}</span>
+                ) : (
+                  <span aria-hidden="true" className="shrink-0 text-accent/70">
+                    <History size={18} />
+                  </span>
+                )}
                 <div className="min-w-0">
                   <p className="text-xs font-medium tabular-nums text-accent-strong dark:text-accent">
                     {yearsAgo} 年前 · {d.date.slice(0, 4)} 年
@@ -407,6 +430,27 @@ export default function Journal() {
             ))}
           </div>
         </Card>
+      )}
+
+      {/* ───────── 今日提示（未寫今日時，溫和邀請） ───────── */}
+      {view === 'timeline' && docs.length > 0 && !existingDates.has(today) && (
+        <button
+          onClick={() => openNew()}
+          className="group flex w-full items-center gap-3 rounded-2xl border border-accent/30 bg-accent-soft/50 p-4 text-left transition duration-200 hover:-translate-y-0.5 hover:border-accent/50 hover:shadow-md dark:border-accent/30 dark:bg-accent/10"
+        >
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent text-white transition group-hover:scale-105">
+            <PenLine size={18} />
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-semibold text-accent-strong dark:text-accent">
+              今日仲未寫，記低一筆？
+            </p>
+            <p className="mt-0.5 truncate text-xs text-slate-500 dark:text-slate-400">
+              {promptOfDay(today)}
+            </p>
+          </div>
+          <ChevronRight size={18} className="shrink-0 text-accent" />
+        </button>
       )}
 
       {/* ───────── 視圖內容 ───────── */}
@@ -473,8 +517,10 @@ export default function Journal() {
                   aria-pressed={on}
                   onClick={() => setMoodFilter(on ? null : m.emoji)}
                   className={cx(
-                    'rounded-md px-2 py-1 text-sm transition',
-                    on ? 'bg-accent-soft ring-1 ring-accent/30 dark:bg-accent/15' : 'opacity-50 hover:opacity-100',
+                    'rounded-lg px-2 py-1 text-base leading-none transition',
+                    on
+                      ? 'bg-white shadow-xs ring-1 ring-accent/40 dark:bg-slate-700'
+                      : 'opacity-60 hover:bg-slate-100 hover:opacity-100 dark:hover:bg-slate-800',
                   )}
                 >
                   <span aria-hidden="true">{m.emoji}</span>
@@ -632,18 +678,34 @@ function EntryCard({
   const shown = isLong && !expanded ? doc.content.slice(0, TRUNCATE).trimEnd() + '…' : doc.content
 
   return (
-    <Card className={cx('group p-4', isToday && 'ring-1 ring-accent/30')}>
+    <Card
+      hover
+      className={cx(
+        'group rounded-2xl p-4',
+        isToday && 'border-accent/40 ring-1 ring-accent/30',
+      )}
+    >
       <div className="flex items-start justify-between gap-3">
-        <div className="flex min-w-0 items-center gap-2">
+        <div className="flex min-w-0 items-center gap-2.5">
           {doc.mood ? (
             <Tooltip label={md?.label ?? '心情'}>
-              <span className="text-xl leading-none" role="img" aria-label={md?.label ?? '心情'}>
+              <span
+                role="img"
+                aria-label={md?.label ?? '心情'}
+                className={cx(
+                  'flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-lg leading-none',
+                  md?.chip ?? 'bg-slate-100 dark:bg-slate-800',
+                )}
+              >
                 {doc.mood}
               </span>
             </Tooltip>
           ) : (
-            <span aria-hidden="true" className="text-xl leading-none text-slate-300 dark:text-slate-600">
-              📝
+            <span
+              aria-hidden="true"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500"
+            >
+              <NotebookPen size={17} />
             </span>
           )}
           <div className="min-w-0">
@@ -688,7 +750,7 @@ function EntryCard({
         </div>
       </div>
 
-      <p className="mt-2 whitespace-pre-wrap break-words text-sm leading-relaxed text-slate-700 dark:text-slate-200">
+      <p className="mt-3 whitespace-pre-wrap break-words text-sm leading-relaxed text-slate-700 dark:text-slate-200">
         {shown}
       </p>
       {isLong && (
@@ -701,8 +763,9 @@ function EntryCard({
       )}
 
       {doc.gratitude?.trim() && (
-        <p className="mt-2 rounded-lg bg-emerald-50/70 px-3 py-1.5 text-xs text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300">
-          🙏 {doc.gratitude}
+        <p className="mt-2.5 flex items-start gap-1.5 rounded-xl bg-emerald-50/70 px-3 py-2 text-xs leading-relaxed text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300">
+          <span aria-hidden="true" className="shrink-0">🙏</span>
+          <span>{doc.gratitude}</span>
         </p>
       )}
 
@@ -767,7 +830,7 @@ function HeatmapView({
 
   return (
     <div className="space-y-4">
-      <Card className="p-4">
+      <Card className="rounded-2xl p-4">
         <div className="mb-3 flex items-center justify-between">
           <SectionTitle icon={CalendarDays}>
             {year} 年寫作活動
@@ -910,7 +973,7 @@ function StatsView({ docs }: { docs: JournalDoc[] }) {
 
   return (
     <div className="space-y-4">
-      <Card className="p-4">
+      <Card className="rounded-2xl p-4">
         <SectionTitle
           icon={Sparkles}
           right={
@@ -927,12 +990,12 @@ function StatsView({ docs }: { docs: JournalDoc[] }) {
       </Card>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <Card className="p-4">
+        <Card className="rounded-2xl p-4">
           <SectionTitle icon={PenLine}>心情分佈</SectionTitle>
           <MoodDistributionChart data={dist} />
         </Card>
 
-        <Card className="p-4">
+        <Card className="rounded-2xl p-4">
           <SectionTitle
             icon={CalendarDays}
             right={
@@ -947,7 +1010,7 @@ function StatsView({ docs }: { docs: JournalDoc[] }) {
         </Card>
       </div>
 
-      <Card className="p-4">
+      <Card className="rounded-2xl p-4">
         <SectionTitle icon={BarChart3}>近 12 個月日誌數</SectionTitle>
         <MonthlyBars data={monthly} />
       </Card>

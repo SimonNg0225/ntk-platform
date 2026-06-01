@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import {
   Dumbbell,
   Plus,
@@ -17,13 +17,13 @@ import {
   Pause,
   RotateCcw,
   Calculator,
+  type LucideIcon,
 } from 'lucide-react'
 import {
   Card,
   Button,
   Input,
   Field,
-  StatCard,
   Modal,
   SegmentedControl,
   EmptyState,
@@ -67,6 +67,119 @@ import { VolumeBars, RpeTrend, fmtVol } from './Charts'
 // ============================================================
 
 type PeriodMode = 'days' | 'weeks'
+
+// ───────── 訓練 KPI 磚配色（暖色 bento）─────────
+type MetricTone = 'accent' | 'sky' | 'amber' | 'emerald'
+const METRIC_TONE: Record<MetricTone, string> = {
+  accent: 'bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent',
+  sky: 'bg-sky-50 text-sky-600 dark:bg-sky-500/15 dark:text-sky-300',
+  amber: 'bg-amber-50 text-amber-600 dark:bg-amber-500/15 dark:text-amber-300',
+  emerald: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-300',
+}
+
+// 暖色 bento KPI 磚（可選 highlight 主色底 / onClick）
+function MetricTile({
+  label,
+  value,
+  unit,
+  hint,
+  icon: Icon,
+  tone,
+  highlight,
+  delta,
+  onClick,
+}: {
+  label: string
+  value: number | string
+  unit?: string
+  hint?: string
+  icon: LucideIcon
+  tone: MetricTone
+  highlight?: boolean
+  delta?: { value: string; dir: 'up' | 'down' | 'flat' }
+  onClick?: () => void
+}) {
+  const Tag = onClick ? 'button' : 'div'
+  return (
+    <Tag
+      {...(onClick ? { onClick, type: 'button' as const } : {})}
+      className={cx(
+        'flex flex-col justify-between rounded-3xl border p-4 text-left transition duration-200',
+        highlight
+          ? 'border-accent/30 bg-accent-soft dark:border-accent/40 dark:bg-accent/15'
+          : 'border-slate-200/80 bg-white dark:border-slate-700/60 dark:bg-slate-800',
+        onClick &&
+          'cursor-pointer hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:hover:border-slate-600',
+      )}
+    >
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-medium text-slate-400 dark:text-slate-500">{label}</span>
+        <span
+          className={cx(
+            'flex h-8 w-8 items-center justify-center rounded-xl',
+            highlight ? 'bg-accent text-white' : METRIC_TONE[tone],
+          )}
+        >
+          <Icon size={16} />
+        </span>
+      </div>
+      <div className="mt-3">
+        <p className="flex items-baseline gap-1">
+          <span
+            className={cx(
+              'text-2xl font-bold tabular-nums slashed-zero',
+              highlight ? 'text-accent-strong dark:text-accent' : 'text-slate-800 dark:text-slate-100',
+            )}
+          >
+            {value}
+          </span>
+          {unit && <span className="text-sm font-medium text-slate-400">{unit}</span>}
+          {delta && delta.dir !== 'flat' && (
+            <span
+              className={cx(
+                'ml-auto text-xs font-semibold tabular-nums',
+                delta.dir === 'up' ? 'text-emerald-500' : 'text-rose-500',
+              )}
+            >
+              {delta.dir === 'up' ? '↑' : '↓'} {delta.value}
+            </span>
+          )}
+        </p>
+        {hint && <p className="mt-0.5 truncate text-[11px] text-slate-400 dark:text-slate-500">{hint}</p>}
+      </div>
+    </Tag>
+  )
+}
+
+// 暖色區塊標題：tone-coloured icon chip + 標題
+function SectionHead({
+  icon: Icon,
+  children,
+  desc,
+  right,
+}: {
+  icon: LucideIcon
+  children: ReactNode
+  desc?: string
+  right?: ReactNode
+}) {
+  return (
+    <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+      <div className="flex items-start gap-2">
+        <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
+          <Icon size={15} />
+        </span>
+        <div>
+          <h2 className="flex items-center gap-1.5 text-sm font-semibold text-slate-700 dark:text-slate-200">
+            {children}
+          </h2>
+          {desc && <p className="mt-0.5 text-xs text-slate-400 dark:text-slate-500">{desc}</p>}
+        </div>
+      </div>
+      {right}
+    </div>
+  )
+}
 
 export default function TrainingView() {
   const toast = useToast()
@@ -162,21 +275,13 @@ export default function TrainingView() {
     <div className="space-y-5">
       {/* ── 標題列 ── */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-start gap-3">
-          <span
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent"
-            aria-hidden="true"
-          >
-            <Dumbbell size={18} />
-          </span>
-          <div>
-            <h1 className="text-lg font-semibold tracking-tight text-slate-800 dark:text-slate-100">
-              訓練記錄 · 週期化
-            </h1>
-            <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
-              記低每組重量次數，睇訓練量同疲勞趨勢，追每個動作 PR。
-            </p>
-          </div>
+        <div>
+          <h2 className="text-base font-semibold tracking-tight text-slate-800 dark:text-slate-100">
+            訓練記錄 · 週期化
+          </h2>
+          <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
+            記低每組重量次數，睇訓練量同疲勞趨勢，追每個動作 PR。
+          </p>
         </div>
         <div className="flex shrink-0 gap-2">
           <Button
@@ -192,40 +297,44 @@ export default function TrainingView() {
         </div>
       </div>
 
-      {/* ── KPI ── */}
+      {/* ── KPI（暖色 bento）── */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <StatCard
+        <MetricTile
           label="本週訓練量"
           value={fmtVol(wkVolume)}
           unit="kg"
           icon={Activity}
+          tone="accent"
           highlight
-          trend={
+          delta={
             trend.pct !== 0
               ? { value: `${Math.abs(trend.pct)}%`, dir: trend.dir }
               : undefined
           }
           hint="近 7 日總和（reps×kg）"
         />
-        <StatCard
+        <MetricTile
           label="本週次數"
           value={wkSessions}
           unit="次"
           icon={CalendarDays}
+          tone="sky"
           hint={sinceLast === null ? '未有記錄' : `距上次 ${sinceLast} 日`}
         />
-        <StatCard
+        <MetricTile
           label="平均 RPE"
           value={wkRpe > 0 ? wkRpe.toFixed(1) : '—'}
           unit={wkRpe > 0 ? '/10' : undefined}
           icon={Flame}
+          tone="amber"
           hint="疲勞指標（近 7 日）"
         />
-        <StatCard
+        <MetricTile
           label="動作 PR"
           value={prs.length}
           unit="個"
           icon={Trophy}
+          tone="emerald"
           onClick={prs.length > 0 ? () => setPrOpen((v) => !v) : undefined}
           hint={prs.length > 0 ? '點擊睇全部' : '記錄後自動追蹤'}
         />
@@ -233,25 +342,23 @@ export default function TrainingView() {
 
       {/* ── 週期視圖 ── */}
       <Card padded>
-        <div className="mb-4 flex items-center justify-between gap-3">
-          <div>
-            <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
-              週期視圖
-            </h2>
-            <p className="mt-0.5 text-xs text-slate-400 dark:text-slate-500">
-              訓練量（柱）對疲勞 RPE（線），睇加量定減載。
-            </p>
-          </div>
-          <SegmentedControl<PeriodMode>
-            size="sm"
-            value={period}
-            onChange={setPeriod}
-            options={[
-              { id: 'days', label: '近 7 日' },
-              { id: 'weeks', label: '近 8 週' },
-            ]}
-          />
-        </div>
+        <SectionHead
+          icon={Activity}
+          desc="訓練量（柱）對疲勞 RPE（線），睇加量定減載。"
+          right={
+            <SegmentedControl<PeriodMode>
+              size="sm"
+              value={period}
+              onChange={setPeriod}
+              options={[
+                { id: 'days', label: '近 7 日' },
+                { id: 'weeks', label: '近 8 週' },
+              ]}
+            />
+          }
+        >
+          週期視圖
+        </SectionHead>
         <div className="grid gap-5 lg:grid-cols-2">
           <div>
             <p className="mb-2 flex items-center gap-1.5 text-xs font-medium text-slate-500 dark:text-slate-400">
@@ -288,7 +395,7 @@ export default function TrainingView() {
             {prs.map((pr) => (
               <div
                 key={pr.name}
-                className="flex items-center justify-between gap-2 rounded-lg border border-slate-200 bg-slate-50/60 px-3 py-2 dark:border-slate-700 dark:bg-slate-800/40"
+                className="flex items-center justify-between gap-2 rounded-2xl border border-slate-200 bg-slate-50/60 px-3.5 py-2.5 transition hover:border-slate-300 dark:border-slate-700 dark:bg-slate-800/40 dark:hover:border-slate-600"
               >
                 <span className="min-w-0 truncate text-sm font-medium text-slate-700 dark:text-slate-200">
                   {pr.name}
@@ -842,8 +949,18 @@ function CoachInsight({ workouts }: { workouts: Workout[] }) {
           記錄至少一次訓練後即可分析。
         </p>
       )}
+      {loading && !insight && (
+        <div className="mt-3 flex items-center gap-2 rounded-2xl bg-accent-soft/60 px-3 py-3 text-sm text-slate-500 dark:bg-accent/10 dark:text-slate-300">
+          <span className="flex gap-1" aria-hidden="true">
+            <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-accent [animation-delay:-0.2s]" />
+            <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-accent [animation-delay:-0.1s]" />
+            <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-accent" />
+          </span>
+          教練分析緊你嘅訓練趨勢…
+        </div>
+      )}
       {insight && (
-        <div className="mt-3 whitespace-pre-wrap rounded-lg bg-accent-soft/60 p-3 text-sm leading-relaxed text-slate-700 dark:bg-accent/10 dark:text-slate-200">
+        <div className="mt-3 whitespace-pre-wrap rounded-2xl bg-accent-soft/60 p-3.5 text-sm leading-relaxed text-slate-700 dark:bg-accent/10 dark:text-slate-200">
           {insight}
         </div>
       )}

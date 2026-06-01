@@ -161,9 +161,9 @@ function ProjectCard({
   const goal = project.dailyGoal ?? 0
   const today = stat?.today ?? 0
   return (
-    <div className={cx('group rounded-xl border border-slate-200 bg-white p-4 transition hover:shadow-md dark:border-slate-700 dark:bg-slate-800', project.archived && 'opacity-60')}>
+    <div className={cx('group rounded-3xl border border-slate-200/80 bg-white p-4 transition duration-200 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md dark:border-slate-700/60 dark:bg-slate-800 dark:hover:border-slate-600', project.archived && 'opacity-60')}>
       <div className="flex items-start gap-3">
-        <span className={cx('flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-lg', pal.soft)}>
+        <span className={cx('flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-lg', pal.soft)}>
           {project.icon || <Target size={18} className={pal.text} />}
         </span>
         <div className="min-w-0 flex-1">

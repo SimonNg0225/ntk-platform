@@ -7,11 +7,9 @@ import type { Card } from '../../../data/types'
 import {
   Badge,
   Button,
-  Card as UICard,
   IconButton,
   Input,
   Kbd,
-  ProgressBar,
   cx,
 } from '../../../ui'
 import {
@@ -21,6 +19,7 @@ import {
   Flag,
   PartyPopper,
   RotateCcw,
+  Sparkles,
   Undo2,
   X,
 } from 'lucide-react'
@@ -54,27 +53,31 @@ const RATING_KEY: Record<string, Rating> = {
 const RATING_ORDER: Rating[] = ['again', 'hard', 'good', 'easy']
 const RATING_UI: Record<
   Rating,
-  { label: string; cls: string; key: string }
+  { label: string; cls: string; dot: string; key: string }
 > = {
   again: {
     label: '唔記得',
     key: '1',
-    cls: 'border-rose-200 text-rose-600 hover:bg-rose-50 dark:border-rose-500/30 dark:text-rose-400 dark:hover:bg-rose-500/10',
+    dot: 'bg-rose-500',
+    cls: 'border-rose-200 bg-rose-50/40 text-rose-600 hover:border-rose-300 hover:bg-rose-50 dark:border-rose-500/30 dark:bg-rose-500/5 dark:text-rose-400 dark:hover:bg-rose-500/10',
   },
   hard: {
     label: '有啲難',
     key: '2',
-    cls: 'border-amber-200 text-amber-600 hover:bg-amber-50 dark:border-amber-500/30 dark:text-amber-400 dark:hover:bg-amber-500/10',
+    dot: 'bg-amber-500',
+    cls: 'border-amber-200 bg-amber-50/40 text-amber-600 hover:border-amber-300 hover:bg-amber-50 dark:border-amber-500/30 dark:bg-amber-500/5 dark:text-amber-400 dark:hover:bg-amber-500/10',
   },
   good: {
     label: '記得',
     key: '3',
-    cls: 'border-accent/40 text-accent-strong hover:bg-accent-soft dark:text-accent dark:hover:bg-accent/10',
+    dot: 'bg-accent',
+    cls: 'border-accent/40 bg-accent-soft/50 text-accent-strong hover:border-accent/60 hover:bg-accent-soft dark:text-accent dark:bg-accent/5 dark:hover:bg-accent/10',
   },
   easy: {
     label: '好易',
     key: '4',
-    cls: 'border-emerald-200 text-emerald-600 hover:bg-emerald-50 dark:border-emerald-500/30 dark:text-emerald-400 dark:hover:bg-emerald-500/10',
+    dot: 'bg-emerald-500',
+    cls: 'border-emerald-200 bg-emerald-50/40 text-emerald-600 hover:border-emerald-300 hover:bg-emerald-50 dark:border-emerald-500/30 dark:bg-emerald-500/5 dark:text-emerald-400 dark:hover:bg-emerald-500/10',
   },
 }
 
@@ -265,34 +268,50 @@ export default function ReviewScreen({
       sessionRatings.length > 0
         ? Math.round((correct / sessionRatings.length) * 100)
         : 0
+    const cheer =
+      acc >= 90 ? '記得好穩，繼續保持 ✨' : acc >= 70 ? '進步緊，明天再溫鞏固記憶。' : '記憶要時間，慢慢嚟一定得。'
     return (
-      <UICard className="space-y-5 p-8 text-center">
-        <PartyPopper size={40} strokeWidth={1.5} className="mx-auto text-accent" />
-        <div>
-          <p className="text-lg font-semibold text-slate-800 dark:text-slate-100">
-            {isCram ? '衝刺完成！' : '複習完成！'}
-          </p>
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-            今次過咗 <span className="font-semibold tabular-nums text-accent">{done}</span> 張
-            {sessionRatings.length > 0 && (
-              <>
-                {' '}· 答對率{' '}
-                <span className="font-semibold tabular-nums text-emerald-600 dark:text-emerald-400">
-                  {acc}%
-                </span>
-              </>
-            )}
-          </p>
-        </div>
-        {sessionRatings.length > 0 && (
-          <div className="mx-auto max-w-xs text-left">
-            <AnswerBars data={breakdown} />
+      <div className="mx-auto max-w-md animate-fade-in-up">
+        <div className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-sm dark:border-slate-700/60 dark:bg-slate-800 dark:shadow-none">
+          <div className="hero-gradient relative flex flex-col items-center gap-3 px-6 py-8 text-center text-white">
+            <div className="pointer-events-none absolute -right-6 -top-8 h-32 w-32 rounded-full bg-white/10 blur-2xl" />
+            <span className="relative flex h-14 w-14 items-center justify-center rounded-2xl bg-white/15 backdrop-blur">
+              <PartyPopper size={28} strokeWidth={1.75} />
+            </span>
+            <div className="relative">
+              <p className="text-xl font-bold tracking-tight">
+                {isCram ? '衝刺完成！' : '複習完成！'}
+              </p>
+              <p className="mt-1 text-sm text-white/80">{cheer}</p>
+            </div>
           </div>
-        )}
-        <Button onClick={onDone} size="lg">
-          返回
-        </Button>
-      </UICard>
+          <div className="space-y-5 p-6">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="rounded-2xl bg-slate-50 p-4 text-center dark:bg-slate-800/60">
+                <p className="text-3xl font-bold tabular-nums text-accent">{done}</p>
+                <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">今次過卡</p>
+              </div>
+              <div className="rounded-2xl bg-slate-50 p-4 text-center dark:bg-slate-800/60">
+                <p className="text-3xl font-bold tabular-nums text-emerald-600 dark:text-emerald-400">
+                  {sessionRatings.length > 0 ? `${acc}%` : '—'}
+                </p>
+                <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">答對率</p>
+              </div>
+            </div>
+            {sessionRatings.length > 0 && (
+              <div className="text-left">
+                <p className="mb-2 text-xs font-medium text-slate-400 dark:text-slate-500">
+                  今次評分分布
+                </p>
+                <AnswerBars data={breakdown} />
+              </div>
+            )}
+            <Button onClick={onDone} size="lg" fullWidth icon={ArrowLeft}>
+              返回牌組
+            </Button>
+          </div>
+        </div>
+      </div>
     )
   }
 
@@ -305,7 +324,7 @@ export default function ReviewScreen({
       : null
 
   return (
-    <div className="space-y-4">
+    <div className="mx-auto max-w-2xl space-y-4">
       {/* 頂列 */}
       <div className="flex items-center justify-between gap-2">
         <Button variant="ghost" size="sm" icon={ArrowLeft} onClick={onDone}>
@@ -315,18 +334,30 @@ export default function ReviewScreen({
           {isCram && <Badge tone="amber">衝刺模式</Badge>}
           {mode === 'typed' && <Badge tone="blue">打字作答</Badge>}
           {mode === 'starred' && <Badge tone="rose">已標記</Badge>}
-          <span className="text-xs text-slate-400 dark:text-slate-500" aria-live="polite">
-            剩 <span className="font-semibold tabular-nums">{remaining}</span> 張
+          <span className="text-xs text-slate-500 dark:text-slate-400" aria-live="polite">
+            剩 <span className="font-semibold tabular-nums text-slate-700 dark:text-slate-200">{remaining}</span> 張
           </span>
         </div>
       </div>
 
-      <ProgressBar value={progress} />
+      {/* 進度（柔和、accent） */}
+      <div
+        className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800"
+        role="progressbar"
+        aria-valuenow={Math.round(progress)}
+        aria-valuemin={0}
+        aria-valuemax={100}
+      >
+        <div
+          className="h-full rounded-full bg-accent transition-all duration-300 ease-out"
+          style={{ width: `${progress}%` }}
+        />
+      </div>
 
-      {/* 卡片 */}
-      <UICard className="relative min-h-[240px] overflow-hidden">
+      {/* 卡片（centrepiece：柔和升起、accent 微光、翻面有觸感） */}
+      <div className="relative">
         {/* 角落：標記 / 暫停 / 撤銷 */}
-        <div className="absolute right-2 top-2 z-10 flex gap-0.5">
+        <div className="absolute right-2.5 top-2.5 z-10 flex gap-0.5">
           <IconButton
             label="撤銷上一答 (Z)"
             size="sm"
@@ -351,9 +382,12 @@ export default function ReviewScreen({
         <button
           type="button"
           onClick={() => !flipped && setFlipped(true)}
+          aria-label={flipped ? '已翻面' : '撳一下翻面睇答案'}
           className={cx(
-            'flex min-h-[240px] w-full flex-col items-center justify-center gap-3 p-6 text-center',
-            !flipped && 'cursor-pointer',
+            'flex min-h-[300px] w-full flex-col items-center justify-center gap-4 rounded-3xl border bg-white p-8 text-center transition duration-200 dark:bg-slate-800',
+            flipped
+              ? 'border-accent/30 shadow-lg shadow-accent/10 dark:border-accent/30'
+              : 'border-slate-200/80 shadow-sm hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md dark:border-slate-700/60 dark:shadow-none dark:hover:border-slate-600',
           )}
         >
           {meta && meta.tags.length > 0 && (
@@ -361,36 +395,38 @@ export default function ReviewScreen({
               {meta.tags.map((t) => (
                 <span
                   key={t}
-                  className="rounded bg-slate-100 px-1.5 py-px text-[10px] text-slate-400 dark:bg-slate-700 dark:text-slate-400"
+                  className="rounded-md bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-500 dark:bg-slate-700/70 dark:text-slate-300"
                 >
                   #{t}
                 </span>
               ))}
             </div>
           )}
-          <p className="text-[11px] uppercase tracking-wider text-slate-500 dark:text-slate-400">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:bg-slate-700/60 dark:text-slate-400">
             問題
-          </p>
-          <p className="max-w-full break-words text-xl font-medium text-slate-800 dark:text-slate-100">
+          </span>
+          <p className="max-w-full break-words text-2xl font-semibold leading-snug text-slate-800 dark:text-slate-100">
             {card.front}
           </p>
 
           {flipped && (
-            <>
-              <div className="my-1 h-px w-16 bg-slate-200 dark:bg-slate-700" />
-              <p className="text-[11px] uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                答案
+            <div className="flex w-full animate-fade-in-up flex-col items-center gap-3">
+              <div className="my-1 h-px w-12 bg-slate-200 dark:bg-slate-700" />
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-accent-soft px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-accent-strong dark:bg-accent/15 dark:text-accent">
+                <Sparkles size={11} /> 答案
+              </span>
+              <p className="max-w-full break-words text-lg leading-relaxed text-slate-700 dark:text-slate-200">
+                {card.back}
               </p>
-              <p className="max-w-full break-words text-lg text-slate-700 dark:text-slate-200">{card.back}</p>
               {meta?.note && (
-                <p className="mt-1 text-xs italic text-slate-400 dark:text-slate-500">
+                <p className="mt-0.5 flex items-start gap-1.5 rounded-xl bg-amber-50/70 px-3 py-1.5 text-xs italic text-amber-700 dark:bg-amber-500/10 dark:text-amber-300">
                   💡 {meta.note}
                 </p>
               )}
-            </>
+            </div>
           )}
         </button>
-      </UICard>
+      </div>
 
       {/* typed 模式：作答框 */}
       {mode === 'typed' && !flipped && (
@@ -401,6 +437,7 @@ export default function ReviewScreen({
             onKeyDown={(e) => e.key === 'Enter' && setFlipped(true)}
             placeholder="打你嘅答案，Enter 對答案"
             autoFocus
+            className="flex-1"
           />
           <Button onClick={() => setFlipped(true)}>對答案</Button>
         </div>
@@ -412,20 +449,27 @@ export default function ReviewScreen({
           role="status"
           aria-live="polite"
           className={cx(
-            'flex items-center gap-2 rounded-lg px-3 py-2 text-sm',
+            'flex animate-fade-in items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-medium',
             typedCorrect
               ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300'
               : 'bg-rose-50 text-rose-700 dark:bg-rose-500/10 dark:text-rose-300',
           )}
         >
-          {typedCorrect ? <Check size={16} /> : <X size={16} />}
-          {typedCorrect ? '答啱！' : `你答：${typed.trim() || '（空白）'}`}
+          <span
+            className={cx(
+              'flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-white',
+              typedCorrect ? 'bg-emerald-500' : 'bg-rose-500',
+            )}
+          >
+            {typedCorrect ? <Check size={13} strokeWidth={3} /> : <X size={13} strokeWidth={3} />}
+          </span>
+          {typedCorrect ? '答啱！記憶穩固。' : `你答：${typed.trim() || '（空白）'}`}
         </div>
       )}
 
       {/* 操作區 */}
       {flipped ? (
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+        <div className="grid animate-fade-in grid-cols-2 gap-2 sm:grid-cols-4">
           {RATING_ORDER.map((r) => {
             const ui = RATING_UI[r]
             return (
@@ -433,18 +477,20 @@ export default function ReviewScreen({
                 key={r}
                 onClick={() => rate(r)}
                 className={cx(
-                  'flex flex-col items-center gap-1 rounded-xl border bg-white py-2.5 transition active:scale-[0.98] dark:bg-slate-800',
+                  'group flex flex-col items-center gap-1.5 rounded-2xl border py-3 transition duration-150 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-900',
                   ui.cls,
                 )}
               >
                 <span className="flex items-center gap-1.5 text-sm font-semibold">
-                  <Kbd>{ui.key}</Kbd>
+                  <span className={cx('h-1.5 w-1.5 rounded-full', ui.dot)} />
                   {ui.label}
                 </span>
-                {!isCram && intervals && (
-                  <span className="text-[10px] tabular-nums opacity-70">
+                {!isCram && intervals ? (
+                  <span className="text-[11px] font-medium tabular-nums opacity-70">
                     {intervals[r]}
                   </span>
+                ) : (
+                  <Kbd className="opacity-70">{ui.key}</Kbd>
                 )}
               </button>
             )
@@ -461,7 +507,7 @@ export default function ReviewScreen({
       )}
 
       {/* 捷徑提示 */}
-      <p className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[11px] text-slate-400 dark:text-slate-500">
+      <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1.5 text-[11px] text-slate-400 dark:text-slate-500">
         <span className="inline-flex items-center gap-1">
           <Kbd>Space</Kbd> 翻面
         </span>
@@ -478,11 +524,11 @@ export default function ReviewScreen({
           <Kbd>S</Kbd> 暫停
         </span>
         {undoStack.length > 0 && (
-          <button onClick={undo} className="inline-flex items-center gap-1 text-accent hover:underline">
-            <RotateCcw size={11} /> 撤銷
+          <button onClick={undo} className="inline-flex items-center gap-1 font-medium text-accent hover:underline">
+            <RotateCcw size={11} /> 撤銷上一答
           </button>
         )}
-      </p>
+      </div>
     </div>
   )
 }

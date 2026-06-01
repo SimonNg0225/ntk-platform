@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, type ReactNode } from 'react'
 import {
   Scale,
   Percent,
@@ -13,13 +13,13 @@ import {
   Target,
   CalendarClock,
   Trophy,
+  type LucideIcon,
 } from 'lucide-react'
 import {
   Card,
   Button,
   Input,
   Field,
-  StatCard,
   Modal,
   SegmentedControl,
   EmptyState,
@@ -84,6 +84,87 @@ const TREND_METRICS = [
 ] as const
 
 type TrendMetricId = (typeof TREND_METRICS)[number]['id']
+
+// ───────── 體態 KPI 磚配色（暖色 bento，配合儀表板語言）─────────
+type MetricTone = 'sky' | 'amber' | 'emerald' | 'accent'
+const METRIC_TONE: Record<MetricTone, string> = {
+  sky: 'bg-sky-50 text-sky-600 dark:bg-sky-500/15 dark:text-sky-300',
+  amber: 'bg-amber-50 text-amber-600 dark:bg-amber-500/15 dark:text-amber-300',
+  emerald: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-300',
+  accent: 'bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent',
+}
+
+// 暖色 bento KPI 磚：tone-coloured icon chip + 大數字 + 趨勢
+function MetricTile({
+  label,
+  value,
+  unit,
+  hint,
+  icon: Icon,
+  tone,
+  delta,
+}: {
+  label: string
+  value: number | string
+  unit?: string
+  hint?: string
+  icon: LucideIcon
+  tone: MetricTone
+  delta?: { value: string; dir: 'up' | 'down' | 'flat' }
+}) {
+  return (
+    <div className="flex flex-col justify-between rounded-3xl border border-slate-200/80 bg-white p-4 transition duration-200 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md dark:border-slate-700/60 dark:bg-slate-800 dark:hover:border-slate-600">
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-medium text-slate-400 dark:text-slate-500">{label}</span>
+        <span className={cx('flex h-8 w-8 items-center justify-center rounded-xl', METRIC_TONE[tone])}>
+          <Icon size={16} />
+        </span>
+      </div>
+      <div className="mt-3">
+        <p className="flex items-baseline gap-1">
+          <span className="text-2xl font-bold tabular-nums slashed-zero text-slate-800 dark:text-slate-100">
+            {value}
+          </span>
+          {unit && <span className="text-sm font-medium text-slate-400">{unit}</span>}
+          {delta && delta.dir !== 'flat' && (
+            <span
+              className={cx(
+                'ml-auto text-xs font-semibold tabular-nums',
+                delta.dir === 'up' ? 'text-emerald-500' : 'text-rose-500',
+              )}
+            >
+              {delta.dir === 'up' ? '↑' : '↓'} {delta.value}
+            </span>
+          )}
+        </p>
+        {hint && <p className="mt-0.5 truncate text-[11px] text-slate-400 dark:text-slate-500">{hint}</p>}
+      </div>
+    </div>
+  )
+}
+
+// 暖色區塊標題：tone-coloured icon chip + 標題（取代生硬細標）
+function SectionHead({
+  icon: Icon,
+  children,
+  right,
+}: {
+  icon: LucideIcon
+  children: ReactNode
+  right?: ReactNode
+}) {
+  return (
+    <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+      <h2 className="flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-200">
+        <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
+          <Icon size={15} />
+        </span>
+        {children}
+      </h2>
+      {right}
+    </div>
+  )
+}
 
 export default function BodyView() {
   const entries = useBodyEntries()
@@ -166,12 +247,9 @@ export default function BodyView() {
       {/* ── 標題列 ── */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="flex items-center gap-2 text-lg font-semibold tracking-tight text-slate-800 dark:text-slate-100">
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
-              <Scale size={18} />
-            </span>
+          <h2 className="text-base font-semibold tracking-tight text-slate-800 dark:text-slate-100">
             體態數據
-          </h1>
+          </h2>
           <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
             記低 InBody 式身體組成，睇增肌減脂趨勢。
           </p>
@@ -220,49 +298,53 @@ export default function BodyView() {
         />
       ) : (
         <>
-          {/* ── KPI 卡 ── */}
+          {/* ── KPI 卡（暖色 bento）── */}
           <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-            <StatCard
+            <MetricTile
               label="體重"
               icon={Scale}
+              tone="sky"
               value={weight ? round(weight.latest, 1) : '—'}
               unit={weight ? 'kg' : undefined}
-              trend={
+              delta={
                 weight?.delta != null
                   ? { value: fmtDelta(weight.delta, 'kg'), dir: deltaDir(weight.delta) }
                   : undefined
               }
-              hint={weight ? `最近：${fmtDate(weight.latestDate)}` : '未記錄'}
+              hint={weight ? `最近 ${fmtDate(weight.latestDate)}` : '未記錄'}
             />
-            <StatCard
+            <MetricTile
               label="體脂率"
               icon={Percent}
+              tone="amber"
               value={fat ? round(fat.latest, 1) : '—'}
               unit={fat ? '%' : undefined}
-              trend={
+              delta={
                 fat?.delta != null
                   ? { value: fmtDelta(fat.delta, '%'), dir: deltaDir(fat.delta) }
                   : undefined
               }
-              hint={fat ? `最近：${fmtDate(fat.latestDate)}` : '未記錄'}
+              hint={fat ? `最近 ${fmtDate(fat.latestDate)}` : '未記錄'}
             />
-            <StatCard
+            <MetricTile
               label="骨骼肌"
               icon={Dumbbell}
+              tone="emerald"
               value={muscle ? round(muscle.latest, 1) : '—'}
               unit={muscle ? 'kg' : undefined}
-              trend={
+              delta={
                 muscle?.delta != null
                   ? { value: fmtDelta(muscle.delta, 'kg'), dir: deltaDir(muscle.delta) }
                   : undefined
               }
-              hint={muscle ? `最近：${fmtDate(muscle.latestDate)}` : '未記錄'}
+              hint={muscle ? `最近 ${fmtDate(muscle.latestDate)}` : '未記錄'}
             />
-            <StatCard
+            <MetricTile
               label="BMI"
               icon={Gauge}
+              tone="accent"
               value={bmiNow ?? '—'}
-              trend={
+              delta={
                 bmiDelta != null
                   ? { value: fmtDelta(bmiDelta), dir: deltaDir(bmiDelta) }
                   : undefined
@@ -301,22 +383,23 @@ export default function BodyView() {
 
           {/* ── 趨勢折線圖 ── */}
           <Card padded>
-            <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-              <h2 className="flex items-center gap-1.5 text-sm font-semibold text-slate-700 dark:text-slate-200">
-                <Activity size={16} className="text-accent" />
-                趨勢
-              </h2>
-              <SegmentedControl<`${RangeDays}`>
-                size="sm"
-                value={`${range}`}
-                onChange={(v) => setRange(Number(v) as RangeDays)}
-                options={[
-                  { id: '14', label: '14 日' },
-                  { id: '30', label: '30 日' },
-                  { id: '90', label: '90 日' },
-                ]}
-              />
-            </div>
+            <SectionHead
+              icon={Activity}
+              right={
+                <SegmentedControl<`${RangeDays}`>
+                  size="sm"
+                  value={`${range}`}
+                  onChange={(v) => setRange(Number(v) as RangeDays)}
+                  options={[
+                    { id: '14', label: '14 日' },
+                    { id: '30', label: '30 日' },
+                    { id: '90', label: '90 日' },
+                  ]}
+                />
+              }
+            >
+              趨勢
+            </SectionHead>
 
             {/* 指標切換 */}
             <div className="mb-3 flex flex-wrap gap-2">
@@ -329,7 +412,7 @@ export default function BodyView() {
                     onClick={() => setTrendMetric(m.id)}
                     aria-pressed={on}
                     className={cx(
-                      'inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
+                      'inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-medium transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
                       on
                         ? 'text-white shadow-sm'
                         : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700',
@@ -356,15 +439,16 @@ export default function BodyView() {
 
           {/* ── 增肌減脂分析 ── */}
           <Card padded>
-            <div className="mb-3 flex items-center justify-between">
-              <h2 className="flex items-center gap-1.5 text-sm font-semibold text-slate-700 dark:text-slate-200">
-                <Flame size={16} className="text-accent" />
-                增肌減脂分析
-              </h2>
-              <Badge tone={compBadge.tone}>
-                {compBadge.emoji} 近 {range} 日
-              </Badge>
-            </div>
+            <SectionHead
+              icon={Flame}
+              right={
+                <Badge tone={compBadge.tone}>
+                  {compBadge.emoji} 近 {range} 日
+                </Badge>
+              }
+            >
+              增肌減脂分析
+            </SectionHead>
 
             {comp.verdict === 'insufficient' ? (
               <p className="text-sm text-slate-500 dark:text-slate-400">
@@ -414,11 +498,10 @@ export default function BodyView() {
 
           {/* ── 歷史列表 ── */}
           <Card padded>
-            <h2 className="mb-3 flex items-center gap-1.5 text-sm font-semibold text-slate-700 dark:text-slate-200">
-              <PencilLine size={16} className="text-accent" />
+            <SectionHead icon={PencilLine}>
               歷史記錄
               <span className="text-xs font-normal text-slate-400">（{history.length}）</span>
-            </h2>
+            </SectionHead>
             <ul className="divide-y divide-slate-100 dark:divide-slate-800">
               {history.map((row) => (
                 <HistoryRow
@@ -543,20 +626,21 @@ function GoalCard({
 
   return (
     <Card padded>
-      <div className="mb-3 flex items-center justify-between">
-        <h2 className="flex items-center gap-1.5 text-sm font-semibold text-slate-700 dark:text-slate-200">
-          <Target size={16} className="text-accent" />
-          目標體重進度
-        </h2>
-        {reached ? (
-          <Badge tone="green">
-            <Trophy size={12} className="mr-0.5 inline" />
-            已達標
-          </Badge>
-        ) : (
-          <Badge tone="slate">目標 {round(targetKg, 1)} kg</Badge>
-        )}
-      </div>
+      <SectionHead
+        icon={Target}
+        right={
+          reached ? (
+            <Badge tone="green">
+              <Trophy size={12} className="mr-0.5 inline" />
+              已達標
+            </Badge>
+          ) : (
+            <Badge tone="slate">目標 {round(targetKg, 1)} kg</Badge>
+          )
+        }
+      >
+        目標體重進度
+      </SectionHead>
 
       {/* 起點 → 現在 → 目標 */}
       <div className="mb-2 flex items-end justify-between gap-2 text-xs">
@@ -631,7 +715,7 @@ function DeltaTile({
         ? 'text-emerald-600 dark:text-emerald-400'
         : 'text-rose-500 dark:text-rose-400'
   return (
-    <div className="rounded-lg border border-slate-200 bg-slate-50/60 p-3 dark:border-slate-700 dark:bg-slate-800/40">
+    <div className="rounded-2xl border border-slate-200 bg-slate-50/60 p-3.5 dark:border-slate-700 dark:bg-slate-800/40">
       <p className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
         <I size={13} className="text-slate-400" />
         {label}
@@ -665,7 +749,7 @@ function HistoryRow({
     },
   ]
   return (
-    <li className="flex items-center justify-between gap-3 py-2.5">
+    <li className="group -mx-2 flex items-center justify-between gap-3 rounded-xl px-2 py-2.5 transition hover:bg-slate-50 dark:hover:bg-slate-800/50">
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
           <span className="text-sm font-medium text-slate-700 dark:text-slate-200">

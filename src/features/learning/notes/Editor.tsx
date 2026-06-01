@@ -200,7 +200,7 @@ export default function Editor({
   return (
     <div className="flex h-full flex-col">
       {/* 工具列 */}
-      <div className="flex flex-wrap items-center gap-1 border-b border-slate-200 px-1 pb-2 dark:border-slate-700">
+      <div className="flex flex-wrap items-center gap-1 border-b border-slate-200/80 px-1 pb-2 dark:border-slate-700/60">
         <IconButton
           label={note.pinned ? '取消釘選' : '釘選'}
           active={note.pinned}
@@ -307,8 +307,9 @@ export default function Editor({
             </option>
           ))}
         </Select>
-        <span className="hidden text-slate-300 dark:text-slate-600 sm:inline">
-          ·
+        <span className="hidden h-4 w-px bg-slate-200 dark:bg-slate-700 sm:inline-block" />
+        <span className="hidden text-[11px] font-medium text-slate-400 dark:text-slate-500 sm:inline">
+          套範本
         </span>
         <div className="flex flex-wrap items-center gap-1">
           {TEMPLATES.map((t) => (
@@ -316,9 +317,9 @@ export default function Editor({
               key={t.label}
               type="button"
               onClick={() => applyTemplate(t.body)}
-              className="rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-500 transition hover:bg-slate-200 hover:text-slate-700 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700"
+              className="rounded-lg bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-500 transition hover:bg-accent-soft hover:text-accent-strong dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-accent/15 dark:hover:text-accent"
             >
-              + {t.label}
+              {t.label}
             </button>
           ))}
         </div>
@@ -327,18 +328,18 @@ export default function Editor({
       {/* 內容區 */}
       <div
         className={cx(
-          'min-h-0 flex-1 overflow-y-auto rounded-xl border p-3 sm:p-4',
+          'min-h-0 flex-1 overflow-y-auto rounded-2xl border p-4 sm:p-5',
           color.card ||
-            'border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800/40',
+            'border-slate-200/80 bg-slate-50/40 dark:border-slate-700/60 dark:bg-slate-800/40',
         )}
       >
         <input
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder="標題"
-          className="w-full bg-transparent text-lg font-semibold text-slate-800 outline-none placeholder:text-slate-300 dark:text-slate-100 dark:placeholder:text-slate-600"
+          placeholder="畀個標題…"
+          className="w-full bg-transparent text-xl font-semibold tracking-tight text-slate-800 outline-none placeholder:text-slate-300 dark:text-slate-100 dark:placeholder:text-slate-600"
         />
-        <div className="mb-2 mt-0.5 text-[11px] text-slate-400 dark:text-slate-500">
+        <div className="mb-3 mt-1 text-[11px] tabular-nums text-slate-400 dark:text-slate-500">
           建立於 {fullDateTime(note.createdAt)}
         </div>
 
@@ -377,9 +378,9 @@ export default function Editor({
               ref={taRef}
               value={content}
               onChange={(e) => setContent(e.target.value)}
-              rows={Math.max(10, Math.min(28, content.split('\n').length + 2))}
-              placeholder="開始書寫…（支援 #標籤、- [ ] 待辦）"
-              className="border-0 bg-transparent px-0 leading-relaxed shadow-none focus:ring-0 dark:bg-transparent"
+              rows={Math.max(12, Math.min(28, content.split('\n').length + 2))}
+              placeholder="由呢度開始書寫……　可以用 #標籤 分類、- [ ] 整待辦。"
+              className="border-0 bg-transparent px-0 text-[15px] leading-7 shadow-none focus:ring-0 dark:bg-transparent"
             />
           </>
         ) : (

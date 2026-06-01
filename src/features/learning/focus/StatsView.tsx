@@ -160,7 +160,7 @@ export default function StatsView({
       </div>
 
       {/* 每日趨勢直條 */}
-      <section className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800 sm:p-5">
+      <section className="rounded-3xl border border-slate-200/80 bg-white p-4 dark:border-slate-700/60 dark:bg-slate-800 sm:p-5">
         <SectionTitle
           icon={Activity}
           right={<Badge tone="slate">每日專注分鐘</Badge>}
@@ -182,11 +182,11 @@ export default function StatsView({
 
       {/* 熱力圖 + 折線 */}
       <div className="grid gap-4 lg:grid-cols-2">
-        <section className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800 sm:p-5">
+        <section className="rounded-3xl border border-slate-200/80 bg-white p-4 dark:border-slate-700/60 dark:bg-slate-800 sm:p-5">
           <SectionTitle icon={Flame}>專注熱力圖</SectionTitle>
           <Heatmap cells={heat} />
         </section>
-        <section className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800 sm:p-5">
+        <section className="rounded-3xl border border-slate-200/80 bg-white p-4 dark:border-slate-700/60 dark:bg-slate-800 sm:p-5">
           <SectionTitle icon={TrendingUp}>累積趨勢線</SectionTitle>
           <LineChart
             values={series.map((d) => d.minutes)}
@@ -200,7 +200,7 @@ export default function StatsView({
 
       {/* 專案佔比 + 黃金時段 */}
       <div className="grid gap-4 lg:grid-cols-2">
-        <section className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800 sm:p-5">
+        <section className="rounded-3xl border border-slate-200/80 bg-white p-4 dark:border-slate-700/60 dark:bg-slate-800 sm:p-5">
           <SectionTitle icon={Target}>專案佔比</SectionTitle>
           {byProject.length > 0 && totals.focusMin > 0 ? (
             <div className="flex flex-col items-center gap-4 sm:flex-row">
@@ -237,7 +237,7 @@ export default function StatsView({
           )}
         </section>
 
-        <section className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800 sm:p-5">
+        <section className="rounded-3xl border border-slate-200/80 bg-white p-4 dark:border-slate-700/60 dark:bg-slate-800 sm:p-5">
           <SectionTitle icon={Clock}>一日黃金時段</SectionTitle>
           <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-around">
             <HourRadial hours={hours} />
@@ -262,7 +262,7 @@ export default function StatsView({
       </div>
 
       {/* 星期分佈條 */}
-      <section className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800 sm:p-5">
+      <section className="rounded-3xl border border-slate-200/80 bg-white p-4 dark:border-slate-700/60 dark:bg-slate-800 sm:p-5">
         <SectionTitle icon={Activity}>星期分佈</SectionTitle>
         <div className="flex items-end gap-2" style={{ height: 120 }}>
           {weekday.map((m, i) => {
@@ -291,7 +291,7 @@ export default function StatsView({
 
       {/* 標籤 + 中斷統計 */}
       <div className="grid gap-4 lg:grid-cols-2">
-        <section className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800 sm:p-5">
+        <section className="rounded-3xl border border-slate-200/80 bg-white p-4 dark:border-slate-700/60 dark:bg-slate-800 sm:p-5">
           <SectionTitle icon={Target}>熱門標籤</SectionTitle>
           {byTag.length ? (
             <div className="space-y-2">
@@ -320,7 +320,7 @@ export default function StatsView({
           )}
         </section>
 
-        <section className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800 sm:p-5">
+        <section className="rounded-3xl border border-slate-200/80 bg-white p-4 dark:border-slate-700/60 dark:bg-slate-800 sm:p-5">
           <SectionTitle icon={Zap}>專注品質</SectionTitle>
           <div className="grid grid-cols-2 gap-3">
             <Mini label="完成率" value={`${Math.round(totals.completionRate)}%`} sub={`放棄 ${totals.abandoned} 節`} />
@@ -336,7 +336,7 @@ export default function StatsView({
 
 function Mini({ label, value, sub }: { label: string; value: string; sub: string }) {
   return (
-    <div className="rounded-lg bg-slate-50 p-3 dark:bg-slate-900/40">
+    <div className="rounded-xl border border-slate-200/70 bg-slate-50/70 p-3 dark:border-slate-700/50 dark:bg-slate-900/40">
       <p className="text-xs text-slate-500 dark:text-slate-400">{label}</p>
       <p className="mt-0.5 text-xl font-bold tabular-nums text-slate-800 dark:text-slate-100">{value}</p>
       <p className="text-[11px] text-slate-400">{sub}</p>

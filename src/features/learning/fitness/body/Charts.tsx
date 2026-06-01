@@ -1,4 +1,5 @@
 import { useId } from 'react'
+import { Activity } from 'lucide-react'
 import { cx } from '../../../../ui'
 import { fmtDate, round } from './util'
 
@@ -36,10 +37,11 @@ export function TrendChart({
   if (pts.length === 0) {
     return (
       <div
-        className="flex items-center justify-center text-sm text-slate-400 dark:text-slate-500"
+        className="flex flex-col items-center justify-center gap-1 text-center text-sm text-slate-400 dark:text-slate-500"
         style={{ height }}
       >
-        呢個區間未有記錄。
+        <Activity size={20} className="opacity-60" aria-hidden="true" />
+        呢個區間未有記錄，記多幾日就見到走勢。
       </div>
     )
   }

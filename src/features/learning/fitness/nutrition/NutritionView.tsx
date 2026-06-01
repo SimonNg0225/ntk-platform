@@ -31,7 +31,6 @@ import {
   Button,
   Input,
   Field,
-  StatCard,
   Modal,
   EmptyState,
   Badge,
@@ -172,6 +171,47 @@ const MEAL_PILL_OPTIONS: { id: MealSlot; label: string }[] = [
   { id: 'dinner', label: '晚餐' },
   { id: 'snack', label: '小食' },
 ]
+
+// 範例提問（撳一下即填入輸入框，降低落手門檻）
+const EXAMPLE_MEALS = [
+  '半碗白飯、一塊煎雞胸、一隻烚蛋',
+  '一個菠蘿包加凍奶茶',
+  '兩件壽司、一碗麵豉湯',
+  '雞肉沙律加少少油醋汁',
+] as const
+
+// 三大營養素達標小磚（暖色 bento）
+function MiniStat({
+  label,
+  value,
+  icon: I,
+  color,
+}: {
+  label: string
+  value: number
+  icon: typeof Beef
+  color: string
+}) {
+  return (
+    <div className="flex flex-col justify-between rounded-3xl border border-slate-200/80 bg-white p-4 transition duration-200 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md dark:border-slate-700/60 dark:bg-slate-800 dark:hover:border-slate-600">
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-medium text-slate-400 dark:text-slate-500">{label}</span>
+        <span
+          className="flex h-8 w-8 items-center justify-center rounded-xl"
+          style={{ backgroundColor: `${color}1f`, color }}
+        >
+          <I size={16} />
+        </span>
+      </div>
+      <p className="mt-3 flex items-baseline gap-1">
+        <span className="text-2xl font-bold tabular-nums slashed-zero text-slate-800 dark:text-slate-100">
+          {value}
+        </span>
+        <span className="text-sm font-medium text-slate-400">%</span>
+      </p>
+    </div>
+  )
+}
 
 /** 依當下時鐘估計預設餐段（純前端體驗；< 11 早 / < 15 午 / < 21 晚 / 否則小食）。 */
 function guessMeal(d: Date = new Date()): MealSlot {
@@ -669,6 +709,10 @@ export default function NutritionView() {
 
       {/* ── 當日總計 vs 目標 ── */}
       <Card className="p-4 sm:p-5">
+        <div className="mb-4 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+          <Flame size={14} aria-hidden="true" />
+          當日攝取 vs 目標
+        </div>
         <div className="flex flex-col items-center gap-5 sm:flex-row sm:items-center sm:gap-6">
           <CalorieRing consumed={totals.calories} goal={goals.calories} />
           <div className="grid w-full flex-1 gap-3 sm:grid-cols-1">
@@ -774,6 +818,22 @@ export default function NutritionView() {
 
         {isAIConfigured ? (
           <>
+            {/* 範例提問 chips：撳一下即填入（降低落手門檻） */}
+            {!text.trim() && !busy && (
+              <div className="flex flex-wrap gap-2">
+                {EXAMPLE_MEALS.map((ex) => (
+                  <button
+                    key={ex}
+                    type="button"
+                    onClick={() => setText(ex)}
+                    className="inline-flex max-w-full items-center gap-1 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs text-slate-500 transition hover:border-accent/50 hover:bg-accent-soft hover:text-accent-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 dark:hover:border-accent/50 dark:hover:bg-accent/10 dark:hover:text-accent"
+                  >
+                    <Sparkles size={11} className="shrink-0 opacity-70" />
+                    <span className="truncate">{ex}</span>
+                  </button>
+                ))}
+              </div>
+            )}
             <Textarea
               rows={3}
               value={text}
@@ -1036,25 +1096,25 @@ export default function NutritionView() {
         />
       </Card>
 
-      {/* ── 快速統計卡 ── */}
+      {/* ── 快速統計卡（暖色 bento）── */}
       <div className="grid grid-cols-3 gap-3">
-        <StatCard
+        <MiniStat
           label="蛋白達標"
           value={macroPct(totals.proteinG, goals.proteinG)}
-          unit="%"
           icon={Beef}
+          color={FIT_TONE.rose}
         />
-        <StatCard
+        <MiniStat
           label="脂肪達標"
           value={macroPct(totals.fatG, goals.fatG)}
-          unit="%"
           icon={Droplet}
+          color={FIT_TONE.amber}
         />
-        <StatCard
+        <MiniStat
           label="碳水達標"
           value={macroPct(totals.carbG, goals.carbG)}
-          unit="%"
           icon={Wheat}
+          color={FIT_TONE.sky}
         />
       </div>
 

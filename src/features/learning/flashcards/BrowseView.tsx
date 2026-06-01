@@ -280,9 +280,9 @@ export default function BrowseView() {
               key={t}
               onClick={() => setTagFilter((prev) => (prev === t ? '' : t))}
               className={cx(
-                'rounded-md px-2 py-0.5 text-[11px] font-medium transition',
+                'rounded-full px-2.5 py-0.5 text-[11px] font-medium transition',
                 tagFilter === t
-                  ? 'bg-accent text-white'
+                  ? 'bg-accent text-white shadow-sm dark:shadow-none'
                   : 'bg-slate-100 text-slate-500 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700',
               )}
             >
@@ -299,11 +299,12 @@ export default function BrowseView() {
 
       {/* 批量操作列 */}
       {selected.size > 0 && (
-        <div className="flex flex-wrap items-center gap-2 rounded-xl border border-accent/30 bg-accent-soft/50 px-3 py-2 dark:border-accent/40 dark:bg-accent/10">
+        <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-accent/30 bg-accent-soft/50 px-3 py-2 dark:border-accent/40 dark:bg-accent/10">
           <span
-            className="text-sm font-medium text-accent-strong dark:text-accent"
+            className="inline-flex items-center gap-1.5 text-sm font-semibold text-accent-strong dark:text-accent"
             aria-live="polite"
           >
+            <CheckSquare size={15} />
             已選 <span className="tabular-nums">{selected.size}</span> 張
           </span>
           <span className="mx-1 h-4 w-px bg-accent/20" />
@@ -333,7 +334,15 @@ export default function BrowseView() {
 
       {/* 表格 */}
       {sorted.length === 0 ? (
-        <EmptyState icon={Search} title="冇符合嘅卡" hint="調整搜尋或篩選條件。" />
+        <EmptyState
+          icon={Search}
+          title="搵唔到符合嘅卡"
+          hint={
+            allCards.length === 0
+              ? '仲未有任何卡片——去「牌組」加幾張，或匯入一批先。'
+              : '試下換個關鍵字，或者放寬上面嘅篩選。'
+          }
+        />
       ) : (
         <>
           <div className="flex items-center justify-between px-1 text-xs text-slate-400 dark:text-slate-500">

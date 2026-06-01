@@ -12,7 +12,6 @@ import {
   EmptyState,
   SegmentedControl,
   IconButton,
-  StatCard,
   cx,
 } from '../../ui'
 import {
@@ -20,7 +19,6 @@ import {
   Plus,
   Search,
   Flame,
-  CheckSquare,
   Sparkles,
   Sprout,
   Archive,
@@ -244,20 +242,29 @@ export default function HabitTracker() {
 
       {/* 頂部統計 */}
       <section className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-        <StatCard
+        <MiniStat
           label="今日完成"
           value={`${stats.doneToday}/${stats.dueToday}`}
-          icon={CheckSquare}
-          highlight={allDone}
           hint={`完成率 ${stats.todayRate}%`}
+          icon={ListChecks}
+          tone="accent"
+          highlight={allDone}
         />
-        <StatCard label="最長連續" value={stats.bestCurrentStreak} unit="日" icon={Flame} />
-        <StatCard
+        <MiniStat
+          label="最長連續"
+          value={stats.bestCurrentStreak}
+          unit="日"
+          icon={Flame}
+          tone="amber"
+        />
+        <MiniStat
           label="近 7 日完美"
           value={stats.perfectDays7}
           unit="日"
-          icon={Sparkles}
           hint="全部達標"
+          icon={Sparkles}
+          tone="emerald"
+          className="col-span-2 sm:col-span-1"
         />
       </section>
 
@@ -293,35 +300,45 @@ export default function HabitTracker() {
               />
 
               {todayBuckets.due.length > 0 && (
-                <Card className="divide-y divide-slate-100 dark:divide-slate-700/60">
-                  {todayBuckets.due.map((h) => (
-                    <HabitRow
-                      key={h.id}
-                      habit={h}
-                      done={byHabit.get(h.id) ?? new Set()}
-                      onToggle={toggleLog}
-                      onOpen={(hh) => setDetailId(hh.id)}
-                    />
-                  ))}
-                </Card>
-              )}
-
-              {todayBuckets.notDue.length > 0 && (
-                <div>
-                  <p className="mb-2 px-1 text-xs font-medium uppercase tracking-wide text-slate-400 dark:text-slate-500">
-                    今日非排程
+                <div className="space-y-2">
+                  <p className="px-1 text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                    今日排程 · {todayBuckets.due.length}
                   </p>
-                  <Card className="divide-y divide-slate-100 opacity-70 dark:divide-slate-700/60">
-                    {todayBuckets.notDue.map((h) => (
+                  {todayBuckets.due.map((h) => (
+                    <Card
+                      key={h.id}
+                      hover
+                      className="rounded-2xl border-slate-200/80 dark:border-slate-700/60"
+                    >
                       <HabitRow
-                        key={h.id}
                         habit={h}
                         done={byHabit.get(h.id) ?? new Set()}
                         onToggle={toggleLog}
                         onOpen={(hh) => setDetailId(hh.id)}
                       />
-                    ))}
-                  </Card>
+                    </Card>
+                  ))}
+                </div>
+              )}
+
+              {todayBuckets.notDue.length > 0 && (
+                <div className="space-y-2">
+                  <p className="px-1 text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                    今日休息日
+                  </p>
+                  {todayBuckets.notDue.map((h) => (
+                    <Card
+                      key={h.id}
+                      className="rounded-2xl border-slate-200/70 opacity-70 dark:border-slate-700/50"
+                    >
+                      <HabitRow
+                        habit={h}
+                        done={byHabit.get(h.id) ?? new Set()}
+                        onToggle={toggleLog}
+                        onOpen={(hh) => setDetailId(hh.id)}
+                      />
+                    </Card>
+                  ))}
                 </div>
               )}
             </>
@@ -384,17 +401,22 @@ export default function HabitTracker() {
               hint="試下換個關鍵字或分類，或者新增一個習慣。"
             />
           ) : (
-            <Card className="divide-y divide-slate-100 dark:divide-slate-700/60">
+            <div className="space-y-2">
               {visible.map((h) => (
-                <HabitRow
+                <Card
                   key={h.id}
-                  habit={h}
-                  done={byHabit.get(h.id) ?? new Set()}
-                  onToggle={toggleLog}
-                  onOpen={(hh) => setDetailId(hh.id)}
-                />
+                  hover
+                  className="rounded-2xl border-slate-200/80 dark:border-slate-700/60"
+                >
+                  <HabitRow
+                    habit={h}
+                    done={byHabit.get(h.id) ?? new Set()}
+                    onToggle={toggleLog}
+                    onOpen={(hh) => setDetailId(hh.id)}
+                  />
+                </Card>
               ))}
-            </Card>
+            </div>
           )}
 
           {/* 封存區 */}
@@ -490,6 +512,61 @@ export default function HabitTracker() {
   )
 }
 
+// ───────── 小統計磚（頂部三格；溫暖 chip + 大數字）─────────
+type StatTone = 'accent' | 'amber' | 'emerald'
+const STAT_TONE: Record<StatTone, { chip: string; val: string }> = {
+  accent: { chip: 'bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent', val: 'text-accent-strong dark:text-accent' },
+  amber: { chip: 'bg-amber-50 text-amber-600 dark:bg-amber-500/15 dark:text-amber-300', val: 'text-amber-600 dark:text-amber-400' },
+  emerald: { chip: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-300', val: 'text-emerald-600 dark:text-emerald-400' },
+}
+
+function MiniStat({
+  label,
+  value,
+  unit,
+  hint,
+  icon: Icon,
+  tone,
+  highlight,
+  className,
+}: {
+  label: string
+  value: number | string
+  unit?: string
+  hint?: string
+  icon: typeof Flame
+  tone: StatTone
+  highlight?: boolean
+  className?: string
+}) {
+  const t = STAT_TONE[tone]
+  return (
+    <div
+      className={cx(
+        'flex flex-col justify-between gap-3 rounded-3xl border p-4 transition duration-200',
+        highlight
+          ? 'border-emerald-300/60 bg-emerald-50/70 dark:border-emerald-500/30 dark:bg-emerald-500/10'
+          : 'border-slate-200/80 bg-white dark:border-slate-700/60 dark:bg-slate-800',
+        className,
+      )}
+    >
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-medium text-slate-400 dark:text-slate-500">{label}</span>
+        <span className={cx('flex h-8 w-8 items-center justify-center rounded-xl', highlight ? STAT_TONE.emerald.chip : t.chip)}>
+          <Icon size={16} />
+        </span>
+      </div>
+      <div>
+        <p className="flex items-baseline gap-1">
+          <span className={cx('text-2xl font-bold tabular-nums', highlight ? STAT_TONE.emerald.val : t.val)}>{value}</span>
+          {unit && <span className="text-sm font-medium text-slate-400">{unit}</span>}
+        </p>
+        {hint && <p className="mt-0.5 truncate text-[11px] text-slate-400 dark:text-slate-500">{hint}</p>}
+      </div>
+    </div>
+  )
+}
+
 // ───────── 今日完成環（自製 SVG 圓環）─────────
 function TodayRing({
   done,
@@ -506,7 +583,16 @@ function TodayRing({
   const C = 2 * Math.PI * R
   const dash = (rate / 100) * C
   return (
-    <Card className="flex items-center gap-5 p-5">
+    <Card
+      className={cx(
+        'relative flex items-center gap-5 overflow-hidden p-5',
+        allDone &&
+          'border-emerald-300/60 bg-gradient-to-br from-emerald-50/80 to-white dark:border-emerald-500/30 dark:from-emerald-500/10 dark:to-slate-800',
+      )}
+    >
+      {allDone && (
+        <div className="pointer-events-none absolute -right-10 -top-12 h-36 w-36 rounded-full bg-emerald-400/10 blur-2xl" />
+      )}
       <div className="relative h-32 w-32 shrink-0">
         <svg viewBox="0 0 120 120" className="h-full w-full -rotate-90" aria-hidden="true">
           <circle
@@ -515,7 +601,7 @@ function TodayRing({
             r={R}
             fill="none"
             strokeWidth="12"
-            className="stroke-slate-100 dark:stroke-slate-700"
+            className="stroke-slate-100 dark:stroke-slate-700/70"
           />
           <circle
             cx="60"
@@ -543,11 +629,11 @@ function TodayRing({
           </span>
         </div>
       </div>
-      <div className="min-w-0">
+      <div className="relative min-w-0">
         <h3 className="text-base font-bold text-slate-800 dark:text-slate-100">
           {allDone ? '今日全部完成 🎉' : '今日進度'}
         </h3>
-        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+        <p className="mt-1 text-sm leading-relaxed text-slate-500 dark:text-slate-400">
           {allDone
             ? '全部排程習慣都打咗卡，好嘢！'
             : total - done > 0

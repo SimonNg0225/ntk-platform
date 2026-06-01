@@ -246,14 +246,14 @@ export default function GoalsWidget() {
       </div>
 
       {/* 快速新增 + 完整新增 */}
-      <div className="flex gap-2">
+      <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-slate-200/80 bg-slate-50/60 p-2 dark:border-slate-700/60 dark:bg-slate-800/40">
         <Input
           value={quick}
           onChange={(e) => setQuick(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && quickAdd()}
-          placeholder="快速新增一個目標…"
+          placeholder="今個禮拜想達成啲咩？打低個目標…"
           icon={Target}
-          className="flex-1"
+          className="min-w-[12rem] flex-1 border-transparent bg-white shadow-none dark:bg-slate-900/40"
         />
         <Button onClick={quickAdd} icon={Plus} variant="secondary" className="shrink-0">
           快速加
@@ -367,10 +367,10 @@ function BoardView({
       </div>
     )
   }
-  const columns: { id: GoalMeta['status']; label: string }[] = [
-    { id: 'active', label: '進行中' },
-    { id: 'paused', label: '暫停' },
-    { id: 'done', label: '已完成' },
+  const columns: { id: GoalMeta['status']; label: string; empty: string }[] = [
+    { id: 'active', label: '進行中', empty: '未有進行中嘅目標' },
+    { id: 'paused', label: '暫停', empty: '冇暫停嘅目標' },
+    { id: 'done', label: '已完成', empty: '仲未達成任何目標' },
   ]
   return (
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
@@ -379,15 +379,15 @@ function BoardView({
         const st = statusMeta(col.id)
         return (
           <div key={col.id} className="space-y-2.5">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 px-1">
               <Badge tone={st.tone as 'accent'} dot>
                 {col.label}
               </Badge>
-              <span className="text-xs tabular-nums text-slate-400">{colItems.length}</span>
+              <span className="text-xs font-medium tabular-nums text-slate-400">{colItems.length}</span>
             </div>
             {colItems.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-slate-200 px-3 py-6 text-center text-xs text-slate-400 dark:border-slate-700">
-                未有目標
+              <div className="rounded-3xl border border-dashed border-slate-200/80 bg-slate-50/40 px-3 py-7 text-center text-xs text-slate-400 dark:border-slate-700/60 dark:bg-slate-800/30 dark:text-slate-500">
+                {col.empty}
               </div>
             ) : (
               colItems.map((e) => <GoalCard key={e.goal.id} e={e} onOpen={onOpen} />)
@@ -410,46 +410,47 @@ function ListView({ items, onOpen }: { items: EnrichedGoal[]; onOpen: (id: strin
         const due = dueLabel(e.meta?.targetDate)
         const doneMs = e.milestones.filter((m) => m.done).length
         const CatIcon = cat.icon
+        const isDone = e.status === 'done'
         return (
           <li key={e.goal.id}>
-            <Card hover onClick={() => onOpen(e.goal.id)} className="flex items-center gap-3 p-3">
-              <ProgressRing value={e.progress} size={40} stroke={5} tone={e.progress >= 100 ? 'green' : 'accent'} />
+            <button
+              type="button"
+              onClick={() => onOpen(e.goal.id)}
+              className="group flex w-full items-center gap-3.5 rounded-2xl border border-slate-200/80 bg-white p-3 text-left shadow-xs transition duration-200 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:border-slate-700/60 dark:bg-slate-800 dark:shadow-none dark:hover:border-slate-600"
+            >
+              <ProgressRing value={e.progress} size={40} stroke={5} tone={isDone ? 'green' : 'accent'} />
               <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2">
-                  <span className={cx('inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-md', cat.text)}>
+                <div className="flex items-center gap-1.5">
+                  <span className={cx('inline-flex h-5 w-5 shrink-0 items-center justify-center', cat.text)}>
                     <CatIcon size={14} />
                   </span>
-                  <button
-                    type="button"
-                    onClick={() => onOpen(e.goal.id)}
-                    className={cx(
-                      'truncate text-left text-sm font-medium outline-none focus-visible:underline',
-                      e.status === 'done' ? 'text-slate-400' : 'text-slate-800 dark:text-slate-100',
-                    )}
-                  >
+                  <span className={cx(
+                    'truncate text-sm font-medium',
+                    isDone ? 'text-slate-400' : 'text-slate-800 dark:text-slate-100',
+                  )}>
                     {e.goal.title}
-                  </button>
+                  </span>
                 </div>
-                <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-400">
+                <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500 dark:text-slate-400">
                   {e.milestones.length > 0 && (
                     <span className="inline-flex items-center gap-1">
-                      <Flag size={11} />
+                      <Flag size={11} className="text-slate-400" />
                       <span className="tabular-nums">
                         {doneMs}/{e.milestones.length}
                       </span>
                     </span>
                   )}
                   {due && (
-                    <span className={cx('inline-flex items-center gap-1', due.tone === 'rose' && 'text-rose-500')}>
+                    <span className={cx('inline-flex items-center gap-1', due.tone === 'rose' ? 'font-medium text-rose-500' : due.tone === 'amber' && 'text-amber-600 dark:text-amber-400')}>
                       <CalendarClock size={11} />
                       {due.text}
                     </span>
                   )}
                 </div>
               </div>
-              <span className="shrink-0 text-sm font-semibold tabular-nums text-accent">{e.progress}%</span>
-              <ChevronRight size={16} className="shrink-0 text-slate-300 dark:text-slate-600" />
-            </Card>
+              <span className={cx('shrink-0 text-sm font-bold tabular-nums', isDone ? 'text-emerald-500' : 'text-accent')}>{e.progress}%</span>
+              <ChevronRight size={16} className="shrink-0 text-slate-300 transition-transform duration-200 group-hover:translate-x-0.5 dark:text-slate-600" />
+            </button>
           </li>
         )
       })}
@@ -468,46 +469,47 @@ function GoalCard({ e, onOpen }: { e: EnrichedGoal; onOpen: (id: string) => void
   const CatIcon = cat.icon
   const isDone = e.status === 'done'
   return (
-    <Card hover onClick={() => onOpen(e.goal.id)} className="group p-4">
-      <div className="flex items-start justify-between gap-2">
-        <div className="flex min-w-0 items-center gap-2">
-          <span className={cx('flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ring-1 ring-inset', cat.ring, cat.text)}>
-            <CatIcon size={15} />
-          </span>
-          <button
-            type="button"
-            onClick={() => onOpen(e.goal.id)}
-            className={cx(
-              'truncate text-left text-sm font-semibold outline-none focus-visible:underline',
-              isDone ? 'text-slate-400' : 'text-slate-800 dark:text-slate-100',
-            )}
-          >
+    <button
+      type="button"
+      onClick={() => onOpen(e.goal.id)}
+      className="group flex w-full flex-col rounded-3xl border border-slate-200/80 bg-white p-4 text-left shadow-xs transition duration-200 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:border-slate-700/60 dark:bg-slate-800 dark:shadow-none dark:hover:border-slate-600"
+    >
+      <div className="flex items-start gap-2.5">
+        <span className={cx('flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl ring-1 ring-inset transition duration-200 group-hover:scale-105', cat.ring, cat.text)}>
+          <CatIcon size={17} />
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className={cx(
+            'truncate text-sm font-semibold leading-snug',
+            isDone ? 'text-slate-400' : 'text-slate-800 dark:text-slate-100',
+          )}>
             {e.goal.title}
-          </button>
+          </p>
+          <p className="mt-0.5 truncate text-xs text-slate-400 dark:text-slate-500">{cat.label}</p>
         </div>
         {isDone ? (
           <CheckCircle2 size={18} className="shrink-0 text-emerald-500" />
         ) : (
-          e.meta?.priority === 'high' && <Flag size={15} className="shrink-0 text-rose-500" />
+          e.meta?.priority === 'high' && <Flag size={15} className="mt-0.5 shrink-0 text-rose-500" />
         )}
       </div>
 
-      <div className="mt-3 flex items-center gap-2">
+      <div className="mt-3.5 flex items-center gap-2.5">
         <ProgressBar value={e.progress} tone={isDone ? 'green' : 'accent'} className="flex-1" />
-        <span className="shrink-0 text-xs font-semibold tabular-nums text-accent">{e.progress}%</span>
+        <span className={cx('shrink-0 text-sm font-bold tabular-nums', isDone ? 'text-emerald-500' : 'text-accent')}>{e.progress}%</span>
       </div>
 
       {(e.milestones.length > 0 || due || pr.id !== 'medium') && (
         <div className="mt-3 flex flex-wrap items-center gap-1.5">
           {e.milestones.length > 0 && (
-            <Badge tone="slate" icon={Flag}>
+            <Badge tone={doneMs === e.milestones.length ? 'green' : 'slate'} icon={Flag}>
               <span className="tabular-nums">
                 {doneMs}/{e.milestones.length}
               </span>
             </Badge>
           )}
           {due && (
-            <Badge tone={due.tone as 'amber'} icon={CalendarClock}>
+            <Badge tone={due.tone as 'amber'} icon={CalendarClock} dot={due.tone === 'rose'}>
               {due.text}
             </Badge>
           )}
@@ -516,7 +518,7 @@ function GoalCard({ e, onOpen }: { e: EnrichedGoal; onOpen: (id: string) => void
           )}
         </div>
       )}
-    </Card>
+    </button>
   )
 }
 

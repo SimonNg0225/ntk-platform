@@ -229,14 +229,16 @@ export default function GoalDetail({
         </div>
 
         {/* 進度條 + 手動調整（無里程碑時）*/}
-        <div>
-          <div className="mb-1.5 flex items-center justify-between text-xs">
-            <span className="font-medium text-slate-500 dark:text-slate-400">整體進度</span>
-            <span className="font-semibold tabular-nums text-accent">{progress}%</span>
+        <div className="rounded-2xl border border-slate-200/80 bg-slate-50/50 p-4 dark:border-slate-700/60 dark:bg-slate-800/40">
+          <div className="mb-2 flex items-baseline justify-between">
+            <span className="text-xs font-medium text-slate-500 dark:text-slate-400">整體進度</span>
+            <span className={cx('text-lg font-bold tabular-nums', progress >= 100 ? 'text-emerald-500' : 'text-accent')}>{progress}%</span>
           </div>
           <ProgressBar value={progress} tone={progress >= 100 ? 'green' : 'accent'} />
-          {!hasMilestones && (
-            <div className="mt-2.5 flex items-center gap-2">
+          {hasMilestones ? (
+            <p className="mt-2 text-xs text-slate-400 dark:text-slate-500">由里程碑加權自動計算</p>
+          ) : (
+            <div className="mt-3 flex items-center gap-1.5">
               {[-25, -10, +10, +25].map((d) => (
                 <Button
                   key={d}
@@ -254,7 +256,7 @@ export default function GoalDetail({
 
         {/* 狀態流轉 */}
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <span className="text-xs font-medium text-slate-500 dark:text-slate-400">狀態</span>
+          <span className="text-sm font-medium text-slate-600 dark:text-slate-300">狀態</span>
           <SegmentedControl<GoalStatus>
             options={STATUSES.map((s) => ({ id: s.id, label: s.label }))}
             value={meta?.status ?? 'active'}
@@ -283,7 +285,12 @@ export default function GoalDetail({
               {milestones.map((m) => (
                 <li
                   key={m.id}
-                  className="flex items-center gap-2.5 rounded-lg border border-slate-200 bg-white px-3 py-2 dark:border-slate-700 dark:bg-slate-800"
+                  className={cx(
+                    'flex items-center gap-2.5 rounded-xl border px-3 py-2.5 transition-colors',
+                    m.done
+                      ? 'border-emerald-200/70 bg-emerald-50/50 dark:border-emerald-500/20 dark:bg-emerald-500/5'
+                      : 'border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800',
+                  )}
                 >
                   <button
                     type="button"
@@ -316,9 +323,12 @@ export default function GoalDetail({
               ))}
             </ul>
           ) : (
-            <p className="rounded-lg border border-dashed border-slate-200 px-3 py-3 text-center text-xs text-slate-400 dark:border-slate-700">
-              未設里程碑。撳「編輯」加入拆細步驟，進度會自動計算。
-            </p>
+            <div className="rounded-xl border border-dashed border-slate-200/80 bg-slate-50/50 px-4 py-5 text-center dark:border-slate-700/60 dark:bg-slate-800/30">
+              <p className="text-sm text-slate-500 dark:text-slate-400">仲未拆細步驟</p>
+              <p className="mt-0.5 text-xs text-slate-400 dark:text-slate-500">
+                撳右上「編輯」加入里程碑，進度就會自動計算。
+              </p>
+            </div>
           )}
         </section>
 

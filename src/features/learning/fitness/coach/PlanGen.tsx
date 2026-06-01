@@ -261,19 +261,22 @@ export default function PlanGen({ model }: { model: AIModel }) {
                   aria-pressed={on}
                   onClick={() => setGoal(g.id)}
                   className={cx(
-                    'flex flex-col items-start gap-1 rounded-xl border p-3 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
+                    'group flex flex-col items-start gap-1.5 rounded-2xl border p-3.5 text-left transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
                     on
-                      ? 'border-accent/40 bg-accent-soft dark:border-accent/40 dark:bg-accent/15'
-                      : 'border-slate-200 bg-white hover:border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-slate-600',
+                      ? 'border-accent/40 bg-accent-soft shadow-sm dark:border-accent/40 dark:bg-accent/15'
+                      : 'border-slate-200 bg-white hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md dark:border-slate-700 dark:bg-slate-800 dark:hover:border-slate-600',
                   )}
                 >
-                  <I
-                    size={18}
-                    aria-hidden="true"
+                  <span
                     className={cx(
-                      on ? 'text-accent-strong dark:text-accent' : 'text-slate-400',
+                      'flex h-8 w-8 items-center justify-center rounded-xl transition',
+                      on
+                        ? 'bg-accent text-white'
+                        : 'bg-slate-100 text-slate-500 group-hover:scale-105 dark:bg-slate-700/60 dark:text-slate-300',
                     )}
-                  />
+                  >
+                    <I size={16} aria-hidden="true" />
+                  </span>
                   <span
                     className={cx(
                       'text-sm font-semibold',
@@ -376,8 +379,30 @@ export default function PlanGen({ model }: { model: AIModel }) {
         )}
       </Card>
 
+      {/* ── 生成中：友善骨架（柔和點動）── */}
+      {busy && (
+        <div className="space-y-3">
+          <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
+            <span className="flex gap-1" aria-hidden="true">
+              <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-accent [animation-delay:-0.2s]" />
+              <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-accent [animation-delay:-0.1s]" />
+              <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-accent" />
+            </span>
+            AI 教練幫你度緊「{goalLabel}」課表…
+          </div>
+          <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+            {Array.from({ length: Math.min(daysPerWeek, 4) }).map((_, i) => (
+              <div
+                key={i}
+                className="h-36 animate-pulse rounded-3xl border border-slate-200/80 bg-slate-100/70 dark:border-slate-700/60 dark:bg-slate-800/60"
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* ── 生成結果 ── */}
-      {result && result.length > 0 && (
+      {!busy && result && result.length > 0 && (
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <SectionTitle icon={CalendarDays}>本週課表</SectionTitle>
@@ -424,10 +449,13 @@ export default function PlanGen({ model }: { model: AIModel }) {
 
 function DayCard({ day }: { day: CoachDay }) {
   return (
-    <Card padded className="space-y-3">
+    <Card padded hover className="space-y-3">
       <div className="flex items-center justify-between gap-2">
-        <h3 className="min-w-0 break-words text-sm font-bold text-slate-800 dark:text-slate-100">
-          {day.day}
+        <h3 className="flex min-w-0 items-center gap-2 text-sm font-bold text-slate-800 dark:text-slate-100">
+          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
+            <CalendarDays size={14} />
+          </span>
+          <span className="break-words">{day.day}</span>
         </h3>
         <Badge tone="accent">{day.focus}</Badge>
       </div>
@@ -438,13 +466,13 @@ function DayCard({ day }: { day: CoachDay }) {
           {day.exercises.map((ex, i) => (
             <li
               key={i}
-              className="rounded-lg border border-slate-100 bg-slate-50/60 p-2.5 dark:border-slate-700/60 dark:bg-slate-900/30"
+              className="rounded-xl border border-slate-100 bg-slate-50/60 p-2.5 transition hover:border-slate-200 dark:border-slate-700/60 dark:bg-slate-900/30 dark:hover:border-slate-700"
             >
               <div className="flex items-center justify-between gap-2">
                 <span className="min-w-0 break-words text-sm font-medium text-slate-700 dark:text-slate-200">
                   {ex.name}
                 </span>
-                <span className="shrink-0 tabular-nums text-xs font-semibold text-accent-strong dark:text-accent">
+                <span className="shrink-0 rounded-md bg-accent-soft px-1.5 py-0.5 tabular-nums text-xs font-semibold text-accent-strong dark:bg-accent/15 dark:text-accent">
                   {ex.sets} × {ex.reps}
                 </span>
               </div>

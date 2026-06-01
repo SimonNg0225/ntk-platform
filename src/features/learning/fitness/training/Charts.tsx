@@ -25,7 +25,7 @@ export function VolumeBars({
   if (bars.length === 0)
     return (
       <p className="py-8 text-center text-sm text-slate-400 dark:text-slate-500">
-        未有資料。
+        記低一次訓練就見到訓練量。
       </p>
     )
   // 畀讀屏軟件嘅文字摘要（純視覺柱狀圖否則無資訊）。

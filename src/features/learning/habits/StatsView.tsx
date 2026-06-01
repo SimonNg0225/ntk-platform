@@ -145,7 +145,7 @@ export default function StatsView({
       </div>
 
       {/* 30 日完成趨勢（SVG 面積折線） */}
-      <Card className="p-4 sm:p-5">
+      <Card className="rounded-3xl p-4 sm:p-5">
         <SectionTitle icon={Activity}>30 日完成趨勢</SectionTitle>
         <TrendArea data={trend30.map((d) => d.rate)} />
         <div className="mt-1 flex justify-between text-[10px] text-slate-400 dark:text-slate-500">
@@ -154,9 +154,9 @@ export default function StatsView({
         </div>
       </Card>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         {/* 逐星期幾完成率 */}
-        <Card className="p-4 sm:p-5">
+        <Card className="rounded-3xl p-4 sm:p-5">
           <SectionTitle icon={BarChart3}>星期分佈</SectionTitle>
           <div className="flex items-end justify-between gap-2" style={{ height: 140 }}>
             {byWeekday.map((d, i) => {
@@ -188,7 +188,7 @@ export default function StatsView({
         </Card>
 
         {/* 近 12 週每週完成次數 */}
-        <Card className="p-4 sm:p-5">
+        <Card className="rounded-3xl p-4 sm:p-5">
           <SectionTitle icon={BarChart3}>每週打卡次數</SectionTitle>
           <div className="flex items-end justify-between gap-1" style={{ height: 140 }}>
             {weekly.map((w, i) => {
@@ -215,16 +215,21 @@ export default function StatsView({
       </div>
 
       {/* 逐習慣完成率排行 */}
-      <Card className="p-4 sm:p-5">
+      <Card className="rounded-3xl p-4 sm:p-5">
         <SectionTitle icon={TrendingUp} description="過去 30 日排程完成率">
           習慣排行
         </SectionTitle>
-        <div className="space-y-3">
+        <div className="space-y-1">
           {ranking.map((r) => {
             const spec = colorOf(r.habit.color)
             return (
-              <div key={r.habit.id} className="flex items-center gap-3">
-                <span className="w-6 shrink-0 text-center text-base">{r.habit.icon ?? '⭐'}</span>
+              <div
+                key={r.habit.id}
+                className="flex items-center gap-3 rounded-xl px-2 py-2 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/60"
+              >
+                <span className={cx('flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-base', spec.soft)}>
+                  {r.habit.icon ?? '⭐'}
+                </span>
                 <div className="min-w-0 flex-1">
                   <div className="mb-1 flex items-center justify-between gap-2">
                     <span className="truncate text-sm font-medium text-slate-700 dark:text-slate-200">
@@ -241,7 +246,7 @@ export default function StatsView({
                     />
                   </div>
                 </div>
-                <div className="flex w-16 shrink-0 items-center justify-end gap-1 text-xs tabular-nums text-amber-600 dark:text-amber-400">
+                <div className="flex w-14 shrink-0 items-center justify-end gap-1 text-xs font-medium tabular-nums text-amber-600 dark:text-amber-400">
                   <Flame size={13} />
                   {r.cur}
                 </div>

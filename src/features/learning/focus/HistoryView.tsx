@@ -221,10 +221,11 @@ export default function HistoryView({
         <div className="space-y-5">
           {grouped.map(([key, arr]) => (
             <div key={key}>
-              <div className="mb-2 flex items-center justify-between">
+              <div className="mb-2.5 flex items-center gap-2.5">
                 <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
                   {relativeDay(key)}
                 </h3>
+                <span className="h-px flex-1 bg-slate-200/70 dark:bg-slate-700/50" />
                 {dayTotal(arr) > 0 && (
                   <Badge tone="accent">{fmtDuration(dayTotal(arr))}</Badge>
                 )}
@@ -286,11 +287,11 @@ function LogRow({
   return (
     <div
       className={cx(
-        'group flex items-start gap-3 rounded-xl border border-slate-200 bg-white p-3 transition hover:border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-slate-600',
+        'group flex items-start gap-3 rounded-2xl border border-slate-200/80 bg-white p-3.5 transition duration-200 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md dark:border-slate-700/60 dark:bg-slate-800 dark:hover:border-slate-600',
         !log.completed && 'opacity-70',
       )}
     >
-      <span className={cx('mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg', log.kind === 'focus' ? pal.soft : 'bg-slate-100 dark:bg-slate-700')}>
+      <span className={cx('mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl', log.kind === 'focus' ? pal.soft : 'bg-slate-100 dark:bg-slate-700')}>
         <meta.icon size={16} className={log.kind === 'focus' ? pal.text : 'text-slate-400'} />
       </span>
 
