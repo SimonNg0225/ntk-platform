@@ -314,6 +314,7 @@ export default function AIAssistant() {
       setStreaming('')
 
       let full = ''
+      let aborted = false
       try {
         for await (const chunk of streamChat({
           messages: history,
@@ -327,9 +328,12 @@ export default function AIAssistant() {
         }
       } catch (e) {
         const err = e as Error
-        if (err.name !== 'AbortError') toast.error(err.message || 'AI 出錯')
+        if (err.name === 'AbortError') aborted = true
+        else toast.error(err.message || 'AI 出錯')
       } finally {
-        if (full.trim()) {
+        // 串流被 abort（切對話／開新對話／封存／停止掣）時丟棄半截回覆，
+        // 唔好把截斷訊息持久化落 thread（避免殘留半截 AI 訊息 / 資料不一致）。
+        if (!aborted && full.trim()) {
           aiMessagesCol.add({
             threadId,
             role: 'model',
