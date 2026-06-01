@@ -21,16 +21,8 @@ import {
   milestonesCol,
   type GoalCategory,
   type GoalPriority,
-  type Milestone,
 } from './types'
-import { CATEGORIES, PRIORITIES } from './util'
-
-interface DraftMilestone {
-  id: string
-  title: string
-  done: boolean
-  weight: number
-}
+import { CATEGORIES, PRIORITIES, syncMilestonesInto, type DraftMilestone } from './util'
 
 export interface EditorSeed {
   goalId?: string // 有 = 編輯；無 = 新增
@@ -158,23 +150,10 @@ export default function GoalEditor({
     onClose()
   }
 
-  // 把 draft 里程碑寫返 collection（先刪舊有、再加新嘅，簡單可靠）
+  // 把 draft 里程碑寫返 collection（按 id upsert：保留原 createdAt，
+  // 只在 done 狀態真正轉換時改 doneAt，避免每次儲存都重設時間戳）
   function syncMilestones(goalId: string) {
-    const old = milestonesCol.get().filter((m) => m.goalId === goalId)
-    for (const m of old) milestonesCol.remove(m.id)
-    milestones.forEach((m, i) => {
-      const rec: Omit<Milestone, 'id'> & { id?: string } = {
-        id: m.id,
-        goalId,
-        title: m.title,
-        done: m.done,
-        weight: Math.max(1, m.weight || 1),
-        order: i,
-        createdAt: new Date().toISOString(),
-        doneAt: m.done ? new Date().toISOString() : undefined,
-      }
-      milestonesCol.add(rec)
-    })
+    syncMilestonesInto(milestonesCol, goalId, milestones)
   }
 
   return (

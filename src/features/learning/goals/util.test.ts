@@ -7,6 +7,9 @@ import {
   fromKey,
   computeProgress,
   clampPct,
+  syncMilestonesInto,
+  type DraftMilestone,
+  type MilestoneStore,
   CATEGORIES,
   PRIORITIES,
   STATUSES,
@@ -194,5 +197,164 @@ describe('clampPct（夾到 [0,100] + 四捨五入）', () => {
     expect(clampPct(-Infinity)).toBe(0)
     // 真實情境：goal.progress 為 undefined 時 undefined + 10
     expect(clampPct((undefined as unknown as number) + 10)).toBe(0)
+  })
+})
+
+// ───────── syncMilestonesInto（upsert，保留時間戳）─────────
+// 迴歸測試：GoalEditor 原本「先全刪再重 add」會將每個里程碑嘅 createdAt
+// 同已完成嘅 doneAt 重設為儲存當刻 → 原始建立／完成時間永久流失。
+// 改成按 id upsert 後，純編輯標題唔應改動呢兩個時間戳。
+
+// 造一個最小 in-memory MilestoneStore（仿 createCollection 行為）
+function makeStore(seed: Milestone[]): MilestoneStore & { all: () => Milestone[] } {
+  let items: Milestone[] = [...seed]
+  return {
+    get: () => items,
+    add: (data) => {
+      const item = { id: data.id ?? 'auto', ...data } as Milestone
+      items = [...items, item]
+      return item
+    },
+    update: (id, patch) => {
+      items = items.map((i) => (i.id === id ? { ...i, ...patch } : i))
+    },
+    remove: (id) => {
+      items = items.filter((i) => i.id !== id)
+    },
+    all: () => items,
+  }
+}
+
+const draft = (over: Partial<DraftMilestone>): DraftMilestone => ({
+  id: 'm1',
+  title: 't',
+  done: false,
+  weight: 1,
+  ...over,
+})
+
+describe('syncMilestonesInto（按 id upsert，保留 createdAt / doneAt）', () => {
+  const CREATED = '2026-01-02T03:04:05.000Z'
+  const DONE_AT = '2026-02-03T04:05:06.000Z'
+  const NOW = '2026-06-01T00:00:00.000Z'
+
+  it('純編輯既有里程碑標題：createdAt 不變、doneAt 不變（核心迴歸）', () => {
+    const store = makeStore([
+      { id: 'a', goalId: 'g', title: '舊標題', done: true, weight: 2, order: 0, createdAt: CREATED, doneAt: DONE_AT },
+    ])
+    syncMilestonesInto(
+      store,
+      'g',
+      [draft({ id: 'a', title: '新標題', done: true, weight: 2 })],
+      () => NOW,
+    )
+    const m = store.all().find((x) => x.id === 'a')!
+    expect(m.title).toBe('新標題')
+    expect(m.createdAt).toBe(CREATED) // 唔可以被重設
+    expect(m.doneAt).toBe(DONE_AT) // 已完成嘅完成時間唔可以被重設
+  })
+
+  it('改其他里程碑唔影響無關里程碑嘅時間戳', () => {
+    const store = makeStore([
+      { id: 'a', goalId: 'g', title: 'A', done: true, weight: 1, order: 0, createdAt: CREATED, doneAt: DONE_AT },
+      { id: 'b', goalId: 'g', title: 'B', done: false, weight: 1, order: 1, createdAt: '2026-01-05T00:00:00.000Z' },
+    ])
+    syncMilestonesInto(
+      store,
+      'g',
+      [
+        draft({ id: 'a', title: 'A', done: true, weight: 1 }),
+        draft({ id: 'b', title: 'B 改咗', done: false, weight: 1 }),
+      ],
+      () => NOW,
+    )
+    const a = store.all().find((x) => x.id === 'a')!
+    expect(a.createdAt).toBe(CREATED)
+    expect(a.doneAt).toBe(DONE_AT)
+  })
+
+  it('done 由 false→true：寫入 doneAt = now', () => {
+    const store = makeStore([
+      { id: 'a', goalId: 'g', title: 'A', done: false, weight: 1, order: 0, createdAt: CREATED },
+    ])
+    syncMilestonesInto(store, 'g', [draft({ id: 'a', done: true })], () => NOW)
+    const a = store.all().find((x) => x.id === 'a')!
+    expect(a.done).toBe(true)
+    expect(a.doneAt).toBe(NOW)
+    expect(a.createdAt).toBe(CREATED)
+  })
+
+  it('done 由 true→false：清走 doneAt', () => {
+    const store = makeStore([
+      { id: 'a', goalId: 'g', title: 'A', done: true, weight: 1, order: 0, createdAt: CREATED, doneAt: DONE_AT },
+    ])
+    syncMilestonesInto(store, 'g', [draft({ id: 'a', done: false })], () => NOW)
+    const a = store.all().find((x) => x.id === 'a')!
+    expect(a.done).toBe(false)
+    expect(a.doneAt).toBeUndefined()
+  })
+
+  it('新里程碑：add 並寫 createdAt = now；done 則 doneAt = now', () => {
+    const store = makeStore([])
+    syncMilestonesInto(
+      store,
+      'g',
+      [
+        draft({ id: 'new1', title: '未完成', done: false }),
+        draft({ id: 'new2', title: '已完成', done: true }),
+      ],
+      () => NOW,
+    )
+    const n1 = store.all().find((x) => x.id === 'new1')!
+    const n2 = store.all().find((x) => x.id === 'new2')!
+    expect(n1.createdAt).toBe(NOW)
+    expect(n1.doneAt).toBeUndefined()
+    expect(n2.createdAt).toBe(NOW)
+    expect(n2.doneAt).toBe(NOW)
+  })
+
+  it('草稿移除咗嘅里程碑：由 collection 刪走', () => {
+    const store = makeStore([
+      { id: 'a', goalId: 'g', title: 'A', done: false, weight: 1, order: 0, createdAt: CREATED },
+      { id: 'b', goalId: 'g', title: 'B', done: false, weight: 1, order: 1, createdAt: CREATED },
+    ])
+    // 草稿只剩 a
+    syncMilestonesInto(store, 'g', [draft({ id: 'a', title: 'A' })], () => NOW)
+    expect(store.all().map((m) => m.id)).toEqual(['a'])
+  })
+
+  it('order 按草稿次序重寫；weight 0/負數夾到最低 1', () => {
+    const store = makeStore([
+      { id: 'a', goalId: 'g', title: 'A', done: false, weight: 3, order: 0, createdAt: CREATED },
+      { id: 'b', goalId: 'g', title: 'B', done: false, weight: 3, order: 1, createdAt: CREATED },
+    ])
+    // 調轉次序：b 先、a 後；a weight 設 0（應變 1）
+    syncMilestonesInto(
+      store,
+      'g',
+      [
+        draft({ id: 'b', title: 'B', weight: 2 }),
+        draft({ id: 'a', title: 'A', weight: 0 }),
+      ],
+      () => NOW,
+    )
+    const a = store.all().find((x) => x.id === 'a')!
+    const b = store.all().find((x) => x.id === 'b')!
+    expect(b.order).toBe(0)
+    expect(a.order).toBe(1)
+    expect(a.weight).toBe(1) // 0 → 1
+    expect(b.weight).toBe(2)
+  })
+
+  it('只處理指定 goalId，其他 goal 嘅里程碑唔受影響', () => {
+    const store = makeStore([
+      { id: 'a', goalId: 'g1', title: 'A', done: false, weight: 1, order: 0, createdAt: CREATED },
+      { id: 'x', goalId: 'g2', title: 'X', done: true, weight: 1, order: 0, createdAt: CREATED, doneAt: DONE_AT },
+    ])
+    // 對 g1 做 sync，但草稿為空 → 只刪 g1 嘅，唔可以掂 g2
+    syncMilestonesInto(store, 'g1', [], () => NOW)
+    expect(store.all().map((m) => m.id)).toEqual(['x'])
+    const x = store.all().find((m) => m.id === 'x')!
+    expect(x.doneAt).toBe(DONE_AT)
   })
 })

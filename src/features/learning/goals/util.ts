@@ -117,6 +117,56 @@ export function computeProgress(
   return Math.round((done / total) * 100)
 }
 
+// ───────── 里程碑寫返（upsert，保留時間戳）─────────
+/** GoalEditor 草稿里程碑（只帶 UI 可編輯欄位） */
+export interface DraftMilestone {
+  id: string
+  title: string
+  done: boolean
+  weight: number
+}
+
+/** syncMilestonesInto 需要嘅最小 collection 介面（方便測試 / 解耦） */
+export interface MilestoneStore {
+  get: () => Milestone[]
+  add: (data: Omit<Milestone, 'id'> & { id?: string }) => unknown
+  update: (id: string, patch: Partial<Milestone>) => void
+  remove: (id: string) => void
+}
+
+/**
+ * 把草稿里程碑寫返 collection（按 id upsert）。
+ * - 既有里程碑：update，保留原 createdAt；只在 done 由 false→true 時寫
+ *   doneAt、true→false 時清 doneAt，其餘沿用舊 doneAt。
+ * - 新里程碑：add（createdAt = now）。
+ * - 草稿已移除嘅：remove。
+ * 避免「先全刪再重 add」會把所有 createdAt/doneAt 重設為當刻的資料污染。
+ */
+export function syncMilestonesInto(
+  col: MilestoneStore,
+  goalId: string,
+  drafts: DraftMilestone[],
+  now: () => string = () => new Date().toISOString(),
+): void {
+  const old = col.get().filter((m) => m.goalId === goalId)
+  const oldById = new Map(old.map((m) => [m.id, m]))
+  const keep = new Set(drafts.map((m) => m.id))
+  // 1) 刪走草稿已移除嘅
+  for (const m of old) if (!keep.has(m.id)) col.remove(m.id)
+  // 2) upsert：既有就 update（唔郁 createdAt），新嘅先 add
+  drafts.forEach((m, i) => {
+    const prev = oldById.get(m.id)
+    const weight = Math.max(1, m.weight || 1)
+    // done 由 false→true 先寫 doneAt；true→false 清；其餘沿用舊值
+    const doneAt = m.done ? (prev?.done ? prev.doneAt : now()) : undefined
+    if (prev) {
+      col.update(m.id, { title: m.title, done: m.done, weight, order: i, doneAt })
+    } else {
+      col.add({ id: m.id, goalId, title: m.title, done: m.done, weight, order: i, createdAt: now(), doneAt })
+    }
+  })
+}
+
 // ───────── 動量（最近進度趨勢）─────────
 export interface MomentumPoint {
   key: string // YYYY-MM-DD
