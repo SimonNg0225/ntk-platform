@@ -221,6 +221,49 @@ export function hasOperators(p: ParsedQuery): boolean {
   return p.typeFilter !== null || p.pinnedOnly || p.recentOnly || p.sortRecent
 }
 
+// ───────── type: 運算子自動完成（輸入框下方輕量 suggestion 列）─────────
+//  使用者「正喺度打」最後一個 token 形如 type:<partial> 時，提示匹配嘅 kind。
+//  純函式：純粹睇 raw 字串嘅最後一個 token，回相關 kind + 補全後嘅完整 raw。
+//  設計取捨：
+//    • 只認「最後一個 token」做活躍輸入（貼合一般由右邊打字嘅心智模型）。
+//    • partial 大細階無關，用「子字串包含」配 id 或 label（中文 label 都搵到）。
+//    • partial 為空（啱啱打完 "type:"）→ 列出全部 kind（畀人揀）。
+//    • 已經係完整有效 type:<id>（partial === 某 id）→ 唔再提示（避免冗餘彈層）。
+export interface TypeSuggestion {
+  id: string // kind id（補入 type: 後面）
+  label: string // 顯示用中文標籤
+  /** 撳落去後，成個搜尋框應變成嘅 raw 值（補全當前 token 為 type:<id> 並加尾空格） */
+  fill: string
+}
+
+/**
+ * 根據 raw 嘅「最後一個 token」判斷係咪正喺度打 type:，回匹配建議。
+ * @param raw        搜尋框原文
+ * @param validTypes 所有合法 kind id
+ * @param labelOf    kind id → 中文標籤（用嚟顯示 + 比對）
+ * @returns          匹配嘅建議陣列；唔係喺度打 type: → 空陣列
+ */
+export function typeSuggestions(
+  raw: string,
+  validTypes: string[],
+  labelOf: (id: string) => string,
+): TypeSuggestion[] {
+  // 末端係空白 → 當前 token 已「完成」，唔提示（避免打完空格仍彈層）
+  if (raw.length > 0 && /\s$/.test(raw)) return []
+  const tokens = raw.split(/\s+/)
+  const last = tokens[tokens.length - 1] ?? ''
+  const m = /^type:(.*)$/i.exec(last)
+  if (!m) return []
+  const partial = m[1].toLowerCase()
+  // 已經係完整且有效嘅 type:<id> → 唔重複提示
+  if (partial && validTypes.includes(partial)) return []
+  const prefix = tokens.slice(0, -1).join(' ')
+  const head = prefix ? prefix + ' ' : ''
+  return validTypes
+    .filter((id) => !partial || id.includes(partial) || labelOf(id).toLowerCase().includes(partial))
+    .map((id) => ({ id, label: labelOf(id), fill: `${head}type:${id} ` }))
+}
+
 // ───────── 運算子套用：過濾（is:pinned / in:recent）+ 排序（sort:recent）─────────
 //  收一個極輕量 shape（唔綁死 Hit），方便純函式測試。
 //    score：相關度（query 命中分；無 query 時為 0）

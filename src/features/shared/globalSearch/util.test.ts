@@ -13,6 +13,7 @@ import {
   parseQuery,
   hasOperators,
   applyOperators,
+  typeSuggestions,
   RECENT_DAYS,
   isPinned,
   relativeTime,
@@ -333,6 +334,89 @@ describe('hasOperators — 有冇任何運算子生效', () => {
   })
   it('sortRecent → true', () => {
     expect(hasOperators({ ...base, sortRecent: true })).toBe(true)
+  })
+})
+
+describe('typeSuggestions — type: 運算子自動完成（純函式）', () => {
+  // 測試用 kind 表：id → 中文 label（仿真實 KIND_META 子集）
+  const LABELS: Record<string, string> = {
+    note: '個人筆記',
+    journal: '個人日誌',
+    task: '待辦事項',
+    tx: '收支記帳',
+  }
+  const KINDS = Object.keys(LABELS) // ['note','journal','task','tx']
+  const labelOf = (id: string) => LABELS[id] ?? id
+  const sug = (raw: string) => typeSuggestions(raw, KINDS, labelOf)
+  const ids = (raw: string) => sug(raw).map((s) => s.id)
+
+  it('唔係喺度打 type: → 空陣列（普通關鍵字）', () => {
+    expect(sug('hello')).toEqual([])
+    expect(sug('')).toEqual([])
+  })
+
+  it('啱啱打完 "type:"（partial 空）→ 列出全部 kind', () => {
+    expect(ids('type:')).toEqual(KINDS)
+  })
+
+  it('partial 配 id 子字串（"type:no" → note）', () => {
+    expect(ids('type:no')).toEqual(['note'])
+  })
+
+  it('partial 配中文 label 子字串（"type:記帳" → tx）', () => {
+    expect(ids('type:記帳')).toEqual(['tx'])
+  })
+
+  it('partial 同時配多個 id（"type:t" → note, task, tx）', () => {
+    // 含 't' 嘅 id：note(no-t-e)、task、tx；'journal' 唔含 → 排除
+    expect(ids('type:t')).toEqual(['note', 'task', 'tx'])
+  })
+
+  it('partial 配前綴以外位置（"type:x" → tx，子字串非只字頭）', () => {
+    expect(ids('type:x')).toEqual(['tx'])
+  })
+
+  it('大細階無關（"type:NO" → note）', () => {
+    expect(ids('type:NO')).toEqual(['note'])
+  })
+
+  it('已經係完整有效 type:<id> → 唔再提示（避免冗餘）', () => {
+    expect(sug('type:note')).toEqual([])
+  })
+
+  it('完整有效 id 後加空格 → 末端空白，token 已完成 → 唔提示', () => {
+    expect(sug('type:note ')).toEqual([])
+  })
+
+  it('只睇最後一個 token：前面有關鍵字照計，後面 token 先觸發', () => {
+    // 「marketing 」之後正打 type:j → 只剩 journal
+    expect(ids('marketing type:j')).toEqual(['journal'])
+  })
+
+  it('fill 會補全當前 token 為 type:<id> 並保留前綴 + 加尾空格', () => {
+    const out = sug('marketing type:j')
+    expect(out).toHaveLength(1)
+    expect(out[0].fill).toBe('marketing type:j '.replace('type:j ', 'type:journal '))
+    expect(out[0].fill).toBe('marketing type:journal ')
+    expect(out[0].label).toBe('個人日誌')
+  })
+
+  it('partial 空時 fill 亦保留前綴（"q type:" → "q type:<id> "）', () => {
+    const out = sug('q type:')
+    expect(out.map((s) => s.fill)).toEqual([
+      'q type:note ',
+      'q type:journal ',
+      'q type:task ',
+      'q type:tx ',
+    ])
+  })
+
+  it('partial 完全唔配任何 kind → 空陣列', () => {
+    expect(sug('type:zzz')).toEqual([])
+  })
+
+  it('末端空白（純關鍵字後加空格）→ 唔提示', () => {
+    expect(sug('hello ')).toEqual([])
   })
 })
 

@@ -99,6 +99,7 @@ import {
   parseQuery,
   applyOperators,
   hasOperators,
+  typeSuggestions,
   RECENT_DAYS,
   pushRecent,
   clearRecents,
@@ -228,8 +229,8 @@ function toMs(s?: string): number | undefined {
   return Number.isNaN(t) ? undefined : t
 }
 
-// 視圖模式
-type ViewMode = 'grouped' | 'ranked'
+// 視圖模式（grouped 分類 / ranked 最相關 / recent 最近——按 hit 既有 ts 排）
+type ViewMode = 'grouped' | 'ranked' | 'recent'
 
 export default function GlobalSearch() {
   const { open } = useNav()
@@ -272,6 +273,12 @@ export default function GlobalSearch() {
 
   const parsed = useMemo(() => parseQuery(raw.trim(), ALL_KIND_IDS), [raw])
   const query = parsed.text
+  // type: 自動完成建議（睇原始 raw，唔 trim——尾隨空格代表 token 已完成）。
+  // 只喺目前模式 scope 下提示相關 kind，貼合使用者實際睇到嘅結果。
+  const typeSugs = useMemo(() => {
+    const valid = scopeMode ? ALL_KIND_IDS.filter((k) => KIND_META[k].modes.includes(mode)) : ALL_KIND_IDS
+    return typeSuggestions(raw, valid, (id) => KIND_META[id]?.label ?? id)
+  }, [raw, scopeMode, mode])
   // 效能：每個 keystroke 都會令 allHits（18 個資料源全量建 Hit + 評分）重算，
   // 大資料下打字會卡。用 useDeferredValue 把「評分／過濾／結果渲染」降為低優先，
   // 輸入框即時更新、重運算延後一拍跟上。輸入鍵盤 chrome 仍用即時 query。
@@ -413,17 +420,21 @@ export default function GlobalSearch() {
     events, countdowns, inbox, classById, topicById, catById, deckById,
   ])
 
+  // 「最近」排序生效條件：view='recent' 視圖 或 sort:recent 運算子（兩者共用同一
+  // applyOperators 路徑，避免重複實作排序）。grouped 視圖唔受影響（仍按類別分組）。
+  const sortRecent = parsed.sortRecent || view === 'recent'
+
   // 過濾：mode scope + type 運算子 + 類別 pill；is:pinned / in:recent 過濾；
-  // 排序：sort:recent → 依時間戳；否則 query → score，無 query → 類別 + 標題
+  // 排序：最近（view/運算子）→ 依時間戳；否則 query → score，無 query → 類別 + 標題
   const filtered = useMemo(() => {
     let list = allHits
     if (scopeMode) list = list.filter((h) => KIND_META[h.kindId].modes.includes(mode))
     if (parsed.typeFilter) list = list.filter((h) => h.kindId === parsed.typeFilter)
     if (kindFilter !== 'all') list = list.filter((h) => h.kindId === kindFilter)
-    // is:pinned / in:recent 過濾（純函式，唔 mutate）
-    list = applyOperators(list, parsed, Date.now())
-    // sort:recent 已喺 applyOperators 內排好；否則按既有規則排
-    if (!parsed.sortRecent) {
+    // is:pinned / in:recent 過濾 + 最近排序（純函式，唔 mutate）
+    list = applyOperators(list, { ...parsed, sortRecent }, Date.now())
+    // 最近排序已喺 applyOperators 內排好；否則按既有規則排
+    if (!sortRecent) {
       if (deferredQuery) list = list.slice().sort((a, b) => b.score - a.score)
       else
         list = list
@@ -433,7 +444,7 @@ export default function GlobalSearch() {
     return list
   }, [
     allHits, scopeMode, mode, parsed.typeFilter, parsed.pinnedOnly, parsed.recentOnly,
-    parsed.sortRecent, kindFilter, deferredQuery,
+    sortRecent, kindFilter, deferredQuery,
   ])
 
   // 統計：每類命中數（畀 Pills 顯示）。要計埋 is:pinned / in:recent 運算子過濾
@@ -464,9 +475,10 @@ export default function GlobalSearch() {
     }))
   }, [filtered])
 
-  // 鍵盤導航用嘅「扁平可見序」（兩種視圖都要一致 index）
+  // 鍵盤導航用嘅「扁平可見序」（三種視圖都要一致 index）
+  // ranked / recent 同樣係扁平清單；grouped 先按類別分組
   const flatVisible = useMemo(() => {
-    if (view === 'ranked') return filtered
+    if (view !== 'grouped') return filtered
     return grouped.flatMap((g) => g.hits)
   }, [view, filtered, grouped])
 
@@ -654,6 +666,46 @@ export default function GlobalSearch() {
           )}
         </div>
 
+        {/* type: 自動完成 — 打緊 type: 即喺輸入框下彈輕量建議列，撳即補全 */}
+        {typeSugs.length > 0 && (
+          <div
+            className="mt-2 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800"
+            role="listbox"
+            aria-label="type 運算子建議"
+          >
+            <div className="flex items-center gap-1.5 border-b border-slate-100 px-3 py-1.5 text-[11px] font-medium uppercase tracking-wider text-slate-400 dark:border-slate-700/60 dark:text-slate-500">
+              <Hash size={12} />
+              限定類別
+            </div>
+            <div className="max-h-56 overflow-y-auto p-1">
+              {typeSugs.map((s) => {
+                const SIcon = KIND_META[s.id].icon
+                return (
+                  <button
+                    key={s.id}
+                    type="button"
+                    role="option"
+                    aria-selected={parsed.typeFilter === s.id}
+                    onClick={() => {
+                      setRaw(s.fill)
+                      focusInput()
+                    }}
+                    className="group flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left transition-colors hover:bg-slate-50 dark:hover:bg-slate-700/40"
+                  >
+                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-slate-100 text-slate-400 transition-colors group-hover:bg-accent group-hover:text-white dark:bg-slate-700 dark:text-slate-400">
+                      <SIcon size={13} />
+                    </span>
+                    <span className="truncate text-sm text-slate-700 dark:text-slate-200">{s.label}</span>
+                    <span className="ml-auto shrink-0 font-mono text-xs text-slate-400 dark:text-slate-500">
+                      type:{s.id}
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
         {/* 控制列 */}
         <div className="mt-3 flex flex-wrap items-center gap-2">
           <SegmentedControl
@@ -661,6 +713,7 @@ export default function GlobalSearch() {
             options={[
               { id: 'grouped' as const, label: '分類' },
               { id: 'ranked' as const, label: '最相關' },
+              { id: 'recent' as const, label: '最近' },
             ]}
             value={view}
             onChange={setView}
@@ -773,7 +826,7 @@ export default function GlobalSearch() {
         <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_22rem]">
           {/* 結果清單 */}
           <div className="space-y-3">
-            {view === 'ranked' ? (
+            {view !== 'grouped' ? (
               <UICard className="overflow-hidden p-1.5">
                 {filtered.map((h, i) => (
                   <ResultRow
