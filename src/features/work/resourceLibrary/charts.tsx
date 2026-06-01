@@ -1,4 +1,13 @@
 import { useId, useMemo } from 'react'
+import {
+  FolderTree,
+  Hash,
+  LineChart as LineChartIcon,
+  PieChart,
+  Tags,
+  TrendingUp,
+} from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 import { cx } from '../../../ui'
 import { TYPE_COLOR, TYPE_LABEL, folderColor } from './util'
 import type { FolderStat, TypeStat } from './util'
@@ -13,6 +22,26 @@ function strokeOfBar(bar: string): string {
   return bar.replace('bg-', 'stroke-')
 }
 
+// 友善空狀態（柔和大 icon + 一句鼓勵文案，取代生硬「未有資料」）
+function ChartEmpty({
+  icon: I,
+  children,
+}: {
+  icon: LucideIcon
+  children: React.ReactNode
+}) {
+  return (
+    <div className="flex flex-col items-center justify-center gap-2 py-8 text-center">
+      <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500">
+        <I size={20} strokeWidth={1.75} />
+      </span>
+      <p className="max-w-[16rem] text-xs leading-relaxed text-slate-400 dark:text-slate-500">
+        {children}
+      </p>
+    </div>
+  )
+}
+
 // ───────── 1. 類型占比甜甜圈（SVG，多段）─────────
 export function TypeDonut({ stats, total }: { stats: TypeStat[]; total: number }) {
   const size = 132
@@ -25,9 +54,9 @@ export function TypeDonut({ stats, total }: { stats: TypeStat[]; total: number }
 
   if (total === 0)
     return (
-      <p className="py-10 text-center text-sm text-slate-400 dark:text-slate-500">
-        未有資源
-      </p>
+      <ChartEmpty icon={PieChart}>
+        加入資源後，呢度會顯示各類型嘅占比。
+      </ChartEmpty>
     )
 
   return (
@@ -113,9 +142,9 @@ export function FolderBars({ stats }: { stats: FolderStat[] }) {
   const visible = stats.filter((s) => s.count > 0)
   if (visible.length === 0)
     return (
-      <p className="py-6 text-center text-sm text-slate-400 dark:text-slate-500">
-        未有分類資源
-      </p>
+      <ChartEmpty icon={FolderTree}>
+        將資源放入收藏夾，就會見到每個夾嘅分佈。
+      </ChartEmpty>
     )
   return (
     <ul className="space-y-2.5">
@@ -193,9 +222,9 @@ export function ActivityChart({
 
   if (totalAdded === 0 && totalOpened === 0)
     return (
-      <p className="py-10 text-center text-sm text-slate-400 dark:text-slate-500">
-        近 30 日未有新增或開啟紀錄
-      </p>
+      <ChartEmpty icon={LineChartIcon}>
+        近 30 日未有新增或開啟紀錄，開幾條資源就會見到趨勢。
+      </ChartEmpty>
     )
 
   return (
@@ -292,9 +321,9 @@ export function TagCloud({
   const max = useMemo(() => Math.max(1, ...tags.map((t) => t.count)), [tags])
   if (tags.length === 0)
     return (
-      <p className="py-6 text-center text-sm text-slate-400 dark:text-slate-500">
-        未有標籤
-      </p>
+      <ChartEmpty icon={Hash}>
+        畀資源加啲標籤，常用標籤就會喺呢度浮現。
+      </ChartEmpty>
     )
   return (
     <div className="flex flex-wrap items-center gap-2">
@@ -339,27 +368,34 @@ export function OpenLeaderboard({
   const max = useMemo(() => Math.max(1, ...rows.map((r) => r.opens)), [rows])
   if (rows.length === 0)
     return (
-      <p className="py-6 text-center text-sm text-slate-400 dark:text-slate-500">
-        仲未有開啟紀錄
-      </p>
+      <ChartEmpty icon={TrendingUp}>
+        開過嘅教材會喺呢度排名，睇下邊份用得最多。
+      </ChartEmpty>
     )
   return (
-    <ol className="space-y-2">
+    <ol className="space-y-2.5">
       {rows.map((r, i) => (
         <li key={r.id} className="flex items-center gap-2.5">
-          <span className="w-4 shrink-0 text-right text-xs font-semibold tabular-nums text-slate-400 dark:text-slate-500">
+          <span
+            className={cx(
+              'flex h-6 w-6 shrink-0 items-center justify-center rounded-lg text-xs font-bold tabular-nums',
+              i === 0
+                ? 'bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent'
+                : 'bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500',
+            )}
+          >
             {i + 1}
           </span>
           <div className="min-w-0 flex-1">
-            <div className="mb-0.5 flex items-center justify-between gap-2">
+            <div className="mb-1 flex items-center justify-between gap-2">
               <span className="truncate text-xs text-slate-600 dark:text-slate-300">
                 {r.title}
               </span>
-              <span className="shrink-0 tabular-nums text-xs font-medium text-slate-500 dark:text-slate-400">
+              <span className="shrink-0 tabular-nums text-xs font-semibold text-slate-500 dark:text-slate-400">
                 {r.opens}
               </span>
             </div>
-            <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+            <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
               <div
                 className="h-full rounded-full bg-gradient-to-r from-accent to-accent-strong transition-all duration-500"
                 style={{ width: `${(r.opens / max) * 100}%` }}
@@ -381,9 +417,9 @@ export function CoverageBars({
   const max = useMemo(() => Math.max(1, ...rows.map((r) => r.count)), [rows])
   if (rows.length === 0)
     return (
-      <p className="py-6 text-center text-sm text-slate-400 dark:text-slate-500">
-        未有連結課題嘅資源
-      </p>
+      <ChartEmpty icon={Tags}>
+        將資源連結到課題，就會見到各課題嘅覆蓋情況。
+      </ChartEmpty>
     )
   return (
     <ul className="space-y-2.5">

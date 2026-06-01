@@ -1,15 +1,22 @@
 import { useMemo, useState } from 'react'
 import {
+  Activity,
   Archive,
   ArchiveRestore,
   ExternalLink,
   FolderInput,
+  History,
+  Link as LinkIcon,
   Link2Off,
+  NotebookPen,
+  Pencil,
   Save,
   Star,
+  StickyNote,
   Tag as TagIcon,
   Trash2,
 } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 import { useCollection } from '../../../lib/store'
 import { resourcesCol, topicsCol } from '../../../data/collections'
 import type { ResourceType } from '../../../data/types'
@@ -194,15 +201,15 @@ export function DetailModal({
   // ── 詳情模式 ──
   return (
     <Modal open onClose={onClose} title="資源詳情" size="lg">
-      <div className="space-y-4">
+      <div className="space-y-5">
         {/* 標頭 */}
-        <div className="flex items-start gap-3">
+        <div className="flex items-start gap-3.5">
           <TypeIconBox type={res.type} />
           <div className="min-w-0 flex-1">
-            <p className="break-words text-base font-semibold text-slate-800 dark:text-slate-100">
+            <p className="break-words text-lg font-semibold leading-snug text-slate-800 dark:text-slate-100">
               {res.title}
             </p>
-            <div className="mt-1 flex flex-wrap items-center gap-2">
+            <div className="mt-2 flex flex-wrap items-center gap-1.5">
               <Badge tone="accent">{TYPE_LABEL[res.type]}</Badge>
               {topicName && <Badge tone="slate">{topicName}</Badge>}
               {folder && (
@@ -217,7 +224,7 @@ export function DetailModal({
                 </span>
               )}
               {meta.broken && <Badge tone="rose" icon={Link2Off}>連結失效</Badge>}
-              {meta.archived && <Badge tone="slate">已封存</Badge>}
+              {meta.archived && <Badge tone="slate" icon={Archive}>已封存</Badge>}
             </div>
           </div>
           <Tooltip label={meta.favorite ? '取消收藏' : '收藏'}>
@@ -234,17 +241,18 @@ export function DetailModal({
           </Tooltip>
         </div>
 
-        {/* 連結 + 開啟 */}
+        {/* 連結 + 開啟（主行動）*/}
         {res.url ? (
-          <div className="flex items-center justify-between gap-2 rounded-lg border border-slate-200 bg-slate-50/60 px-3 py-2 dark:border-slate-700 dark:bg-slate-800/50">
+          <div className="flex items-center justify-between gap-2 rounded-2xl border border-accent/20 bg-accent-soft/40 px-3.5 py-3 dark:border-accent/25 dark:bg-accent/10">
             <FaviconChip domain={domain} />
             <Button size="sm" icon={ExternalLink} onClick={open}>
-              開啟
+              開啟連結
             </Button>
           </div>
         ) : (
-          <p className="rounded-lg border border-dashed border-slate-200 px-3 py-2 text-xs text-slate-400 dark:border-slate-700 dark:text-slate-500">
-            此資源沒有連結（純筆記 / 實體教材）
+          <p className="flex items-center gap-2 rounded-2xl border border-dashed border-slate-200 px-3.5 py-3 text-xs text-slate-500 dark:border-slate-700 dark:text-slate-400">
+            <StickyNote size={14} className="shrink-0 text-slate-400" />
+            純筆記 / 實體教材，未有連結。
           </p>
         )}
 
@@ -255,7 +263,7 @@ export function DetailModal({
             {res.tags.map((t) => (
               <span
                 key={t}
-                className="rounded-md bg-slate-100 px-1.5 py-0.5 text-[11px] text-slate-600 dark:bg-slate-800 dark:text-slate-300"
+                className="rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300"
               >
                 #{t}
               </span>
@@ -265,31 +273,34 @@ export function DetailModal({
 
         {/* 備註 */}
         {res.notes && (
-          <p className="whitespace-pre-wrap break-words rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-600 dark:bg-slate-800/50 dark:text-slate-300">
-            {res.notes}
-          </p>
+          <div>
+            <SectionLabel icon={NotebookPen}>備註</SectionLabel>
+            <p className="whitespace-pre-wrap break-words rounded-2xl bg-slate-50 px-3.5 py-3 text-sm leading-relaxed text-slate-600 dark:bg-slate-800/50 dark:text-slate-300">
+              {res.notes}
+            </p>
+          </div>
         )}
 
         {/* 評分 + 收藏夾 */}
-        <div className="grid grid-cols-2 gap-3">
-          <div className="rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-700">
-            <p className="mb-1 text-[11px] font-medium text-slate-500 dark:text-slate-400">
-              評分
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div className="rounded-2xl border border-slate-200/80 px-3.5 py-3 dark:border-slate-700/60">
+            <p className="mb-1.5 flex items-center gap-1.5 text-[11px] font-medium text-slate-500 dark:text-slate-400">
+              <Star size={12} className="text-slate-400" /> 評分
             </p>
             <StarRating
               value={meta.rating ?? 0}
               onChange={(v) => setMeta({ rating: v })}
-              size={18}
+              size={20}
             />
           </div>
-          <div className="rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-700">
-            <p className="mb-1 flex items-center gap-1 text-[11px] font-medium text-slate-500 dark:text-slate-400">
-              <FolderInput size={12} /> 收藏夾
+          <div className="rounded-2xl border border-slate-200/80 px-3.5 py-3 dark:border-slate-700/60">
+            <p className="mb-1.5 flex items-center gap-1.5 text-[11px] font-medium text-slate-500 dark:text-slate-400">
+              <FolderInput size={12} className="text-slate-400" /> 收藏夾
             </p>
             <Select
               value={meta.folderId ?? ''}
               onChange={(e) => setMeta({ folderId: e.target.value || undefined })}
-              className="py-1 text-xs"
+              className="py-1.5 text-xs"
             >
               <option value="">未分類</option>
               {folders.map((f) => (
@@ -302,25 +313,26 @@ export function DetailModal({
         </div>
 
         {/* 使用統計 */}
-        <div className="grid grid-cols-3 gap-2 text-center">
-          <Stat label="開啟次數" value={meta.opens} />
-          <Stat label="最後開啟" value={relativeDate(meta.lastOpened)} small />
-          <Stat label="加入於" value={relativeDate(res.createdAt)} small />
+        <div>
+          <SectionLabel icon={Activity}>使用情況</SectionLabel>
+          <div className="grid grid-cols-3 gap-2 text-center">
+            <Stat label="開啟次數" value={meta.opens} />
+            <Stat label="最後開啟" value={relativeDate(meta.lastOpened)} small />
+            <Stat label="加入於" value={relativeDate(res.createdAt)} small />
+          </div>
         </div>
 
         {/* 開啟歷史 */}
         {history.length > 0 && (
           <div>
-            <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-slate-400">
-              最近開啟
-            </p>
-            <ul className="space-y-1">
+            <SectionLabel icon={History}>最近開啟</SectionLabel>
+            <ul className="space-y-1.5 rounded-2xl bg-slate-50 px-3.5 py-3 dark:bg-slate-800/50">
               {history.map((h) => (
                 <li
                   key={h.id}
                   className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400"
                 >
-                  <span className="h-1 w-1 rounded-full bg-slate-300 dark:bg-slate-600" />
+                  <span className="h-1.5 w-1.5 rounded-full bg-accent/50" />
                   <span className="tabular-nums">
                     {new Date(h.ts).toLocaleString('zh-HK', {
                       month: 'numeric',
@@ -340,7 +352,7 @@ export function DetailModal({
         {/* 動作列 */}
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex flex-wrap gap-2">
-            <Button variant="secondary" size="sm" onClick={() => setEditing(true)}>
+            <Button variant="secondary" size="sm" icon={Pencil} onClick={() => setEditing(true)}>
               編輯
             </Button>
             <Button
@@ -377,6 +389,24 @@ export function DetailModal({
   )
 }
 
+// 小節標題：accent icon chip + 標籤（暖化、統一分組節奏）
+function SectionLabel({
+  icon: I,
+  children,
+}: {
+  icon: LucideIcon
+  children: React.ReactNode
+}) {
+  return (
+    <p className="mb-2 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+      <span className="flex h-5 w-5 items-center justify-center rounded-md bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
+        <I size={11} />
+      </span>
+      {children}
+    </p>
+  )
+}
+
 function Stat({
   label,
   value,
@@ -387,7 +417,7 @@ function Stat({
   small?: boolean
 }) {
   return (
-    <div className="rounded-lg bg-slate-50 px-2 py-2 dark:bg-slate-800/50">
+    <div className="rounded-2xl bg-slate-50 px-2 py-2.5 dark:bg-slate-800/50">
       <p
         className={cx(
           'font-bold tabular-nums text-slate-800 dark:text-slate-100',
@@ -501,14 +531,25 @@ export function AddResourceModal({
         </>
       }
     >
-      <div className="space-y-3">
-        <Field label="連結 URL" hint={domain ? `偵測到網域：${domain}` : '貼上連結，會自動猜類型'}>
-          <Input
-            value={url}
-            onChange={(e) => onUrlChange(e.target.value)}
-            placeholder="https://…（選填）"
-          />
-        </Field>
+      <div className="space-y-3.5">
+        {/* URL 智能入口 — 貼連結即自動猜類型 */}
+        <div className="rounded-2xl border border-slate-200/80 bg-slate-50/60 p-3.5 dark:border-slate-700/60 dark:bg-slate-800/40">
+          <Field
+            label="連結 URL"
+            hint={
+              domain
+                ? `偵測到網域：${domain}，已幫你猜咗類型`
+                : '貼上連結（如 YouTube、PDF、Google Docs），會自動猜類型。'
+            }
+          >
+            <Input
+              value={url}
+              onChange={(e) => onUrlChange(e.target.value)}
+              placeholder="https://…（選填）"
+              icon={LinkIcon}
+            />
+          </Field>
+        </div>
         <Field label="標題" required>
           <Input
             value={title}

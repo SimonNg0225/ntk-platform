@@ -9,6 +9,7 @@ import {
   FolderPlus,
   Inbox,
   LayoutGrid,
+  Library,
   Link2Off,
   List as ListIcon,
   MoreVertical,
@@ -33,6 +34,7 @@ import {
   Field,
   IconButton,
   Input,
+  Kbd,
   Menu,
   Modal,
   Select,
@@ -53,6 +55,7 @@ import {
   FOLDER_COLORS,
   FOLDER_COLOR_KEYS,
   SORT_LABEL,
+  TYPE_COLOR,
   TYPE_LABEL,
   TYPE_ORDER,
   applyFilter,
@@ -107,6 +110,23 @@ const VIEW_OPTIONS: { id: TopView; label: string; icon: LucideIcon }[] = [
   { id: 'insights', label: '洞察統計', icon: BarChart3 },
 ]
 
+// 類型 tone chip（每種資源類型一隻色 + 圓點，對齊統計圖表語言，一眼分到類型）
+function TypeChip({ type }: { type: ResourceType }) {
+  const c = TYPE_COLOR[type]
+  return (
+    <span
+      className={cx(
+        'inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-medium',
+        c.chipBg,
+        c.chipText,
+      )}
+    >
+      <span className={cx('h-1.5 w-1.5 rounded-full', c.dot)} />
+      {TYPE_LABEL[type]}
+    </span>
+  )
+}
+
 // 視圖切換（icon-only；每粒有 aria-label + aria-current，鍵盤 / 螢幕閱讀器友好）
 function ViewSwitcher({
   value,
@@ -119,26 +139,27 @@ function ViewSwitcher({
     <div
       role="group"
       aria-label="切換視圖"
-      className="inline-flex rounded-lg border border-slate-200 bg-slate-50 p-0.5 dark:border-slate-700 dark:bg-slate-800/60"
+      className="inline-flex rounded-xl border border-slate-200 bg-slate-50 p-0.5 dark:border-slate-700 dark:bg-slate-800/60"
     >
       {VIEW_OPTIONS.map((o) => {
         const on = value === o.id
         return (
-          <button
-            key={o.id}
-            type="button"
-            onClick={() => onChange(o.id)}
-            aria-label={o.label}
-            aria-current={on ? 'true' : undefined}
-            className={cx(
-              'inline-flex items-center gap-1.5 rounded-md px-3 py-1 text-sm font-medium transition-colors',
-              on
-                ? 'bg-white text-slate-800 shadow-xs dark:bg-slate-700 dark:text-slate-100'
-                : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200',
-            )}
-          >
-            <o.icon size={15} />
-          </button>
+          <Tooltip key={o.id} label={o.label}>
+            <button
+              type="button"
+              onClick={() => onChange(o.id)}
+              aria-label={o.label}
+              aria-current={on ? 'true' : undefined}
+              className={cx(
+                'inline-flex items-center justify-center rounded-lg px-3 py-1.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
+                on
+                  ? 'bg-white text-accent-strong shadow-xs dark:bg-slate-700 dark:text-accent'
+                  : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200',
+              )}
+            >
+              <o.icon size={16} strokeWidth={2} />
+            </button>
+          </Tooltip>
         )
       })}
     </div>
@@ -310,13 +331,18 @@ export default function ResourceLibrary() {
   return (
     <div className="space-y-4">
       <header className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div className="space-y-1">
-          <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-100">
-            教學資源庫
-          </h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400">
-            收藏夾整理講義、簡報、試題、連結同筆記，追蹤使用情況，快速搵返常用教材。
-          </p>
+        <div className="flex items-start gap-3">
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
+            <Library size={22} strokeWidth={1.9} />
+          </span>
+          <div className="space-y-1">
+            <h1 className="text-xl font-semibold tracking-tight text-slate-800 dark:text-slate-100">
+              教學資源庫
+            </h1>
+            <p className="max-w-xl text-sm leading-relaxed text-slate-500 dark:text-slate-400">
+              用收藏夾整理講義、簡報、試題、連結同筆記，追蹤使用情況，一搜即搵返常用教材。
+            </p>
+          </div>
         </div>
         <div className="flex shrink-0 items-center gap-2">
           <Tooltip label="管理收藏夾">
@@ -358,18 +384,22 @@ export default function ResourceLibrary() {
                 ref={searchRef}
                 value={filter.search}
                 onChange={(e) => patch({ search: e.target.value })}
-                placeholder="搜尋標題 / 備註 / 網域 / 標籤…  （按 / ）"
-                className="w-full rounded-lg border border-slate-300 bg-white py-2 pl-9 pr-8 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-accent focus:ring-2 focus:ring-accent/30 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-500"
+                placeholder="搜尋標題 / 備註 / 網域 / 標籤…"
+                className="w-full rounded-xl border border-slate-300 bg-white py-2 pl-9 pr-16 text-sm text-slate-800 shadow-xs outline-none transition placeholder:text-slate-400 focus:border-accent focus:ring-2 focus:ring-accent/30 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-500 dark:shadow-none"
               />
-              {filter.search && (
+              {filter.search ? (
                 <button
                   type="button"
                   onClick={() => patch({ search: '' })}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-0.5 text-slate-400 hover:text-slate-600"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-700"
                   aria-label="清除搜尋"
                 >
                   <X size={14} />
                 </button>
+              ) : (
+                <Kbd className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2">
+                  /
+                </Kbd>
               )}
             </div>
 
@@ -378,7 +408,7 @@ export default function ResourceLibrary() {
               onChange={(e) =>
                 patch({ type: e.target.value as ResourceType | 'all' })
               }
-              className="w-auto"
+              className="w-auto rounded-xl"
               aria-label="類型篩選"
             >
               <option value="all">全部類型</option>
@@ -392,7 +422,7 @@ export default function ResourceLibrary() {
             <Select
               value={filter.topicId}
               onChange={(e) => patch({ topicId: e.target.value })}
-              className="hidden w-auto sm:block"
+              className="hidden w-auto rounded-xl sm:block"
               aria-label="課題篩選"
             >
               <option value="">全部課題</option>
@@ -406,7 +436,7 @@ export default function ResourceLibrary() {
             <Select
               value={filter.sort}
               onChange={(e) => patch({ sort: e.target.value as SortKey })}
-              className="w-auto"
+              className="w-auto rounded-xl"
               aria-label="排序"
             >
               {(Object.keys(SORT_LABEL) as SortKey[]).map((k) => (
@@ -480,7 +510,7 @@ export default function ResourceLibrary() {
             filter.smart === 'stale' && activeFilterCount === 0 && !filter.search ? (
               <EmptyState
                 icon={CalendarClock}
-                title="資源庫好乾淨"
+                title="資源庫好乾淨 ✨"
                 hint="冇久未開啟或者從未用過嘅資源，全部都整理得貼貼服服。"
               />
             ) : (
@@ -488,7 +518,7 @@ export default function ResourceLibrary() {
                 icon={BookMarked}
                 art="empty-resources"
                 title="未有符合嘅資源"
-                hint="撳「新增資源」開始建立你嘅教材庫，或者調整篩選條件。"
+                hint="撳「新增資源」開始建立你嘅教材庫，貼條連結就會自動幫你猜類型；或者調整下篩選條件。"
                 action={
                   <Button icon={Plus} onClick={() => setShowAdd(true)}>
                     新增資源
@@ -602,9 +632,9 @@ function Sidebar({
               onClick={() => patch({ smart: v.id, folderId: 'all' })}
               aria-current={on ? 'page' : undefined}
               className={cx(
-                'inline-flex shrink-0 items-center gap-2 rounded-lg px-2.5 py-1.5 text-sm font-medium transition lg:w-full',
+                'inline-flex shrink-0 items-center gap-2 rounded-xl px-2.5 py-2 text-sm font-medium transition lg:w-full',
                 on
-                  ? 'bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent'
+                  ? 'bg-accent-soft text-accent-strong shadow-xs dark:bg-accent/15 dark:text-accent dark:shadow-none'
                   : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800',
               )}
             >
@@ -684,7 +714,7 @@ function FolderRow({
       onClick={onClick}
       aria-current={active ? 'true' : undefined}
       className={cx(
-        'flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-sm transition',
+        'flex w-full items-center gap-2 rounded-xl px-2.5 py-2 text-sm transition',
         active
           ? 'bg-slate-100 font-medium text-slate-800 dark:bg-slate-800 dark:text-slate-100'
           : 'text-slate-600 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800/60',
@@ -770,10 +800,10 @@ function GridView({
           <Card
             key={res.id}
             className={cx(
-              'group relative flex flex-col p-4 transition',
+              'group relative flex flex-col rounded-3xl p-4 transition duration-200',
               isSel
-                ? 'ring-2 ring-accent ring-offset-1 ring-offset-white dark:ring-offset-slate-900'
-                : 'hover:-translate-y-0.5 hover:shadow-md',
+                ? 'border-accent/50 ring-2 ring-accent ring-offset-1 ring-offset-white dark:ring-offset-slate-900'
+                : 'hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md dark:hover:border-slate-600',
               meta.broken && 'opacity-80',
             )}
           >
@@ -794,7 +824,9 @@ function GridView({
             </button>
 
             <div className="flex items-start justify-between pl-7">
-              <TypeIconBox type={res.type} />
+              <span className="transition duration-200 group-hover:scale-105">
+                <TypeIconBox type={res.type} />
+              </span>
               <div className="flex items-center gap-0.5">
                 <Tooltip label={meta.favorite ? '取消收藏' : '收藏'}>
                   <IconButton
@@ -820,19 +852,23 @@ function GridView({
             <button
               type="button"
               onClick={() => onDetail(res.id)}
-              className="mt-3 w-full break-words rounded text-left text-sm font-semibold text-slate-800 hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:text-slate-100 dark:hover:text-accent"
+              className="mt-3 w-full break-words rounded text-left text-[15px] font-semibold leading-snug text-slate-800 transition-colors hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:text-slate-100 dark:hover:text-accent"
             >
               {res.title}
             </button>
 
-            <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-              <Badge tone="slate">{TYPE_LABEL[res.type]}</Badge>
+            <div className="mt-2 flex flex-wrap items-center gap-1.5">
+              <TypeChip type={res.type} />
               {res.topicId && (
-                <span className="text-[11px] text-slate-400 dark:text-slate-500">
+                <span className="inline-flex items-center rounded-md bg-slate-100 px-2 py-0.5 text-[11px] text-slate-500 dark:bg-slate-700/60 dark:text-slate-400">
                   {topicName(res.topicId)}
                 </span>
               )}
-              {meta.broken && <Badge tone="rose">失效</Badge>}
+              {meta.broken && (
+                <Badge tone="rose" icon={Link2Off}>
+                  失效
+                </Badge>
+              )}
             </div>
 
             {(meta.rating ?? 0) > 0 && (
@@ -842,42 +878,45 @@ function GridView({
             )}
 
             {res.notes && (
-              <p className="mt-2 line-clamp-2 break-words text-xs text-slate-500 dark:text-slate-400">
+              <p className="mt-2 line-clamp-2 break-words text-xs leading-relaxed text-slate-500 dark:text-slate-400">
                 {res.notes}
               </p>
             )}
 
             {res.tags && res.tags.length > 0 && (
-              <div className="mt-2 flex flex-wrap gap-1">
+              <div className="mt-2.5 flex flex-wrap gap-1">
                 {res.tags.slice(0, 3).map((t) => (
                   <span
                     key={t}
-                    className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] text-slate-500 dark:bg-slate-800 dark:text-slate-400"
+                    className="rounded-md bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-500 dark:bg-slate-800 dark:text-slate-400"
                   >
                     #{t}
                   </span>
                 ))}
                 {res.tags.length > 3 && (
-                  <span className="text-[10px] text-slate-400">+{res.tags.length - 3}</span>
+                  <span className="self-center text-[10px] text-slate-400">
+                    +{res.tags.length - 3}
+                  </span>
                 )}
               </div>
             )}
 
-            <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-2.5 dark:border-slate-700/60">
+            {/* footer 貼底，令唔同高度嘅卡對齊 */}
+            <div className="mt-auto flex items-center justify-between gap-2 border-t border-slate-100 pt-3 dark:border-slate-700/60">
               <FaviconChip domain={domain} />
               {res.url ? (
                 <button
                   type="button"
                   onClick={() => onOpen(res)}
                   aria-label={`開啟「${res.title}」（新分頁）`}
-                  className="inline-flex items-center gap-1 rounded text-xs font-medium text-accent hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+                  className="inline-flex shrink-0 items-center gap-1 rounded-lg bg-accent-soft px-2.5 py-1 text-xs font-semibold text-accent-strong transition hover:bg-accent hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:bg-accent/15 dark:text-accent dark:hover:bg-accent dark:hover:text-white"
                 >
                   開啟
                   <ExternalLink size={12} aria-hidden="true" />
                 </button>
               ) : (
-                <span className="text-[11px] text-slate-400">
-                  {meta.opens > 0 ? `開過 ${meta.opens} 次` : '無連結'}
+                <span className="shrink-0 text-[11px] text-slate-400">
+                  {meta.opens > 0 ? `開過 ${meta.opens} 次` : '純筆記'}
                 </span>
               )}
             </div>
@@ -996,7 +1035,7 @@ function ListView({
                 </div>
               </Td>
               <Td className="hidden sm:table-cell">
-                <Badge tone="slate">{TYPE_LABEL[res.type]}</Badge>
+                <TypeChip type={res.type} />
               </Td>
               <Td className="hidden md:table-cell">
                 {folder ? (
@@ -1094,25 +1133,27 @@ function BoardView({
         return (
           <div
             key={col.id}
-            className="flex w-72 shrink-0 flex-col rounded-xl border border-slate-200 bg-slate-50/60 dark:border-slate-700/60 dark:bg-slate-800/40"
+            className="flex w-72 shrink-0 flex-col rounded-2xl border border-slate-200/80 bg-slate-50/60 dark:border-slate-700/60 dark:bg-slate-800/40"
           >
-            <div className="flex items-center justify-between gap-2 border-b border-slate-200 px-3 py-2 dark:border-slate-700/60">
+            <div className="flex items-center justify-between gap-2 border-b border-slate-200/80 px-3 py-2.5 dark:border-slate-700/60">
               <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-700 dark:text-slate-200">
                 <span className={cx('h-2.5 w-2.5 rounded-full', folderColor(col.color).dot)} />
                 {col.name}
               </span>
-              <span className="tabular-nums text-xs text-slate-400">{items.length}</span>
+              <span className="inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-slate-200/70 px-1.5 text-[11px] font-medium tabular-nums text-slate-500 dark:bg-slate-700/60 dark:text-slate-400">
+                {items.length}
+              </span>
             </div>
             <div className="flex-1 space-y-2 overflow-y-auto p-2" style={{ maxHeight: '60vh' }}>
               {items.length === 0 ? (
-                <p className="py-6 text-center text-xs text-slate-400 dark:text-slate-500">
-                  空
+                <p className="px-2 py-8 text-center text-xs text-slate-400 dark:text-slate-500">
+                  用卡片選單將資源移到呢個收藏夾
                 </p>
               ) : (
                 items.map(({ res, meta, domain }) => (
                   <div
                     key={res.id}
-                    className="group rounded-lg border border-slate-200 bg-white p-2.5 shadow-xs transition hover:border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-slate-600"
+                    className="group rounded-xl border border-slate-200/80 bg-white p-2.5 shadow-xs transition duration-200 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md dark:border-slate-700 dark:bg-slate-800 dark:shadow-none dark:hover:border-slate-600"
                   >
                     <div className="flex items-start gap-2">
                       <TypeIconBox type={res.type} size="sm" />
@@ -1200,9 +1241,9 @@ function BulkBar({
   onDelete: () => void
 }) {
   return (
-    <div className="fixed inset-x-0 bottom-4 z-40 flex justify-center px-4">
-      <div className="flex flex-wrap items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-overlay dark:border-slate-700 dark:bg-slate-800">
-        <span className="px-1 text-sm font-medium text-slate-700 dark:text-slate-200">
+    <div className="fixed inset-x-0 bottom-4 z-40 flex animate-fade-in-up justify-center px-4">
+      <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2 shadow-overlay dark:border-slate-700 dark:bg-slate-800">
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-accent-soft px-2.5 py-1 text-sm font-medium text-accent-strong dark:bg-accent/15 dark:text-accent">
           已選 <span className="tabular-nums">{count}</span> 項
         </span>
         <Separator orientation="vertical" className="h-5" />
@@ -1320,7 +1361,7 @@ function FolderManager({
     <Modal open={open} onClose={onClose} title="管理收藏夾" size="md">
       <div className="space-y-4">
         {/* 新增 */}
-        <div className="rounded-xl border border-slate-200 p-3 dark:border-slate-700">
+        <div className="rounded-2xl border border-slate-200/80 bg-slate-50/60 p-3.5 dark:border-slate-700/60 dark:bg-slate-800/40">
           <Field label="新收藏夾名稱">
             <div className="flex gap-2">
               <Input
@@ -1334,8 +1375,8 @@ function FolderManager({
               </Button>
             </div>
           </Field>
-          <div className="mt-2 flex items-center gap-1.5">
-            <span className="text-[11px] text-slate-400">顏色</span>
+          <div className="mt-2.5 flex items-center gap-1.5">
+            <span className="text-[11px] text-slate-500 dark:text-slate-400">顏色</span>
             {FOLDER_COLOR_KEYS.map((c) => (
               <button
                 key={c}
@@ -1357,13 +1398,15 @@ function FolderManager({
 
         {/* 列表 */}
         {ordered.length === 0 ? (
-          <p className="py-4 text-center text-sm text-slate-400">仲未有收藏夾</p>
+          <p className="py-6 text-center text-sm text-slate-400 dark:text-slate-500">
+            仲未有收藏夾，喺上面開一個開始整理。
+          </p>
         ) : (
           <ul className="space-y-1.5">
             {ordered.map((f) => (
               <li
                 key={f.id}
-                className="flex items-center gap-2 rounded-lg border border-slate-200 px-2.5 py-2 dark:border-slate-700"
+                className="flex items-center gap-2 rounded-xl border border-slate-200/80 px-2.5 py-2 transition hover:border-slate-300 dark:border-slate-700/60 dark:hover:border-slate-600"
               >
                 <Menu
                   align="start"
