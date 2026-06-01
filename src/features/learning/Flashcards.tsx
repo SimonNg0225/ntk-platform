@@ -62,6 +62,7 @@ import {
   STATE_TONE,
 } from './flashcards/srs'
 import type { CardMeta, StudyMode, TopView } from './flashcards/types'
+import type { Card } from '../../data/types'
 
 // ============================================================
 //  知識卡 + 間隔重複（深化至 Anki 級）
@@ -161,6 +162,17 @@ function DeckHome({
 
   const metaById = useMemo(() => new Map(metas.map((m) => [m.id, m])), [metas])
 
+  // 卡按牌組分組一次（避免每個牌組各掃一次全部卡：O(decks × cards) → O(cards)）
+  const cardsByDeck = useMemo(() => {
+    const m = new Map<string, Card[]>()
+    for (const c of cards) {
+      const a = m.get(c.deckId)
+      if (a) a.push(c)
+      else m.set(c.deckId, [c])
+    }
+    return m
+  }, [cards])
+
   // 全域 KPI
   const activeCards = useMemo(
     () => cards.filter((c) => !metaById.get(c.id)?.suspended),
@@ -211,7 +223,7 @@ function DeckHome({
       {/* 牌組卡 */}
       <div className="grid gap-3 sm:grid-cols-2">
         {decks.map((d) => {
-          const deckCards = cards.filter((c) => c.deckId === d.id)
+          const deckCards = cardsByDeck.get(d.id) ?? []
           const active = deckCards.filter((c) => !metaById.get(c.id)?.suspended)
           const due = active.filter(isDue).length
           const newCount = active.filter((c) => c.repetitions === 0).length
