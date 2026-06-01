@@ -75,8 +75,15 @@ export function logsByHabit(logs: HabitLog[]): Map<string, Set<string>> {
 // ───────── 連續日（streak）─────────
 // 計法尊重頻率：對於「指定星期」習慣，跳過非排程日唔會中斷連續。
 // 「每日」「每週 N 次」就用日曆連續（最直觀）。
-export function currentStreak(done: Set<string>, freq: HabitFrequency): number {
-  const today = todayKey()
+// anchor 預設 new Date()（即真實今日）；可傳明確日期把「今日」釘死，
+// 方便 streakAtRisk 在同一錨點計算，亦方便測試。屬純增量：既有 2-arg
+// caller 行為不變。
+export function currentStreak(
+  done: Set<string>,
+  freq: HabitFrequency,
+  anchor: Date = new Date(),
+): number {
+  const today = toKey(anchor)
   // 起點：今日完成 → 由今日計；否則由琴日計（保住琴日 streak）。
   let cursor = done.has(today) ? today : addDaysKey(today, -1)
   let streak = 0
@@ -293,6 +300,42 @@ export function overallStats(
     todayRate: dueToday > 0 ? Math.round((doneToday / dueToday) * 100) : 0,
     perfectDays7: perfect,
   }
+}
+
+// ───────── 斷 streak 警報（今日未保住嘅連勝）─────────
+export interface AtRiskHabit {
+  id: string
+  name: string
+  streak: number
+}
+
+/**
+ * 揀出「今日就會斷」嘅連勝習慣：
+ *   ① 今日係排程日（應做）
+ *   ② 今日未完成（done 內冇 anchor 當日 key）
+ *   ③ 目前 currentStreak >= 1（即仲有連勝可保 / 可斷）
+ * 已封存習慣略過。回傳按 streak 由大到小排（同分按名稱穩定排序）。
+ * anchor 預設真實今日；測試可傳明確日期釘死。純讀取，唔改任何狀態。
+ */
+export function streakAtRisk(
+  habits: Habit[],
+  byHabit: Map<string, Set<string>>,
+  anchor: Date = new Date(),
+): AtRiskHabit[] {
+  const wd = anchor.getDay()
+  const todayK = toKey(anchor)
+  const out: AtRiskHabit[] = []
+  for (const h of habits) {
+    if (h.archived) continue
+    if (!isScheduledDay(h.frequency, wd)) continue
+    const done = byHabit.get(h.id) ?? new Set<string>()
+    if (done.has(todayK)) continue // 今日已保住
+    const streak = currentStreak(done, h.frequency, anchor)
+    if (streak < 1) continue // 冇連勝可斷
+    out.push({ id: h.id, name: h.name, streak })
+  }
+  out.sort((a, b) => b.streak - a.streak || a.name.localeCompare(b.name))
+  return out
 }
 
 // ───────── 數字格式 ─────────

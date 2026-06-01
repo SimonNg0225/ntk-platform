@@ -5,6 +5,7 @@ import {
   rateOverDays,
   thisWeekProgress,
   overallStats,
+  streakAtRisk,
 } from './util'
 import type { Habit, HabitFrequency } from './types'
 
@@ -408,5 +409,128 @@ describe('overallStats（多習慣聚合）', () => {
     expect(s.dueToday).toBe(1) // 只 h1
     expect(s.doneToday).toBe(1)
     expect(s.todayRate).toBe(100)
+  })
+})
+
+describe('streakAtRisk（今日就會斷嘅連勝）', () => {
+  // 直接傳 anchor（本地正午）令斷言 deterministic，毋須 setSystemTime。
+  const anchor = (y: number, m1: number, d: number) => new Date(y, m1 - 1, d, 12, 0, 0, 0)
+  const habit = (
+    id: string,
+    frequency: HabitFrequency,
+    extra?: Partial<Habit>,
+  ): Habit => ({
+    id,
+    name: id,
+    color: 'accent',
+    frequency,
+    goalKind: 'build',
+    targetStreak: 0,
+    archived: false,
+    order: 0,
+    createdAt: '2026-01-01T00:00:00.000Z',
+    ...extra,
+  })
+
+  it('空習慣 → 空陣列', () => {
+    expect(streakAtRisk([], new Map(), anchor(2026, 5, 30))).toEqual([])
+  })
+
+  it('今日 due + 未完成 + streak>=1 → 入選（用琴日起算 streak）', () => {
+    // 今日 5/30（六）daily 未打卡，但 5/28、5/29 連續 → streak 2 可斷。
+    const habits = [habit('h1', daily)]
+    const byHabit = new Map([['h1', set('2026-05-28', '2026-05-29')]])
+    expect(streakAtRisk(habits, byHabit, anchor(2026, 5, 30))).toEqual([
+      { id: 'h1', name: 'h1', streak: 2 },
+    ])
+  })
+
+  it('今日已完成 → 唔入選（已保住）', () => {
+    const habits = [habit('h1', daily)]
+    const byHabit = new Map([['h1', set('2026-05-29', '2026-05-30')]])
+    expect(streakAtRisk(habits, byHabit, anchor(2026, 5, 30))).toEqual([])
+  })
+
+  it('streak=0（琴日都斷咗）→ 唔入選', () => {
+    // 今日 5/30 未完成、琴日 5/29 亦未完成 → currentStreak 由琴日起算即 0。
+    const habits = [habit('h1', daily)]
+    const byHabit = new Map([['h1', set('2026-05-27')]])
+    expect(streakAtRisk(habits, byHabit, anchor(2026, 5, 30))).toEqual([])
+  })
+
+  it('今日非排程日（weekdays 唔包今日）→ 唔入選', () => {
+    // h1 逢週一，今日 5/30（六）非排程 → 即使有連勝都唔算「今日要保」。
+    const habits = [habit('h1', { kind: 'weekdays', days: [1] })]
+    const byHabit = new Map([['h1', set('2026-05-25')]])
+    expect(streakAtRisk(habits, byHabit, anchor(2026, 5, 30))).toEqual([])
+  })
+
+  it('已封存習慣略過（即使今日 due + 有連勝）', () => {
+    const habits = [habit('h1', daily, { archived: true })]
+    const byHabit = new Map([['h1', set('2026-05-28', '2026-05-29')]])
+    expect(streakAtRisk(habits, byHabit, anchor(2026, 5, 30))).toEqual([])
+  })
+
+  it('多個 at-risk → 按 streak 由大到小排', () => {
+    const habits = [
+      habit('低', daily),
+      habit('高', daily),
+      habit('中', daily),
+    ]
+    const byHabit = new Map([
+      ['低', set('2026-05-29')], // streak 1
+      ['高', set('2026-05-27', '2026-05-28', '2026-05-29')], // streak 3
+      ['中', set('2026-05-28', '2026-05-29')], // streak 2
+    ])
+    const r = streakAtRisk(habits, byHabit, anchor(2026, 5, 30))
+    expect(r.map((x) => x.name)).toEqual(['高', '中', '低'])
+    expect(r.map((x) => x.streak)).toEqual([3, 2, 1])
+  })
+
+  it('同 streak → 按名稱排序（穩定、與輸入次序無關）', () => {
+    // 故意逆序輸入（B 先 A 後），同 streak 時應按名稱升序回 A、B。
+    const habits = [habit('B', daily), habit('A', daily)]
+    const byHabit = new Map([
+      ['B', set('2026-05-29')],
+      ['A', set('2026-05-29')],
+    ])
+    const r = streakAtRisk(habits, byHabit, anchor(2026, 5, 30))
+    expect(r.map((x) => x.name)).toEqual(['A', 'B'])
+  })
+
+  it('weekdays：跨週末連勝保住 → 今日（週一）未打卡仍算 at-risk', () => {
+    // h1 逢一至五；上週一至五全完成（22 五… 等），今日 6/1（週一）未打卡。
+    // 週末 5/30、5/31 非排程日跳過唔中斷 → streak 接得返。
+    const monToFriH = habit('h1', monToFri)
+    const byHabit = new Map([
+      [
+        'h1',
+        set('2026-05-25', '2026-05-26', '2026-05-27', '2026-05-28', '2026-05-29'),
+      ],
+    ])
+    const r = streakAtRisk([monToFriH], byHabit, anchor(2026, 6, 1)) // 週一
+    expect(r).toHaveLength(1)
+    expect(r[0].id).toBe('h1')
+    expect(r[0].streak).toBe(5) // 上週一至五
+  })
+
+  it('mixed：only due+未完成+streak>=1 嘅入選（綜合篩選）', () => {
+    pinToday(2026, 5, 30) // 同時驗 anchor 預設 = 真實今日
+    const habits = [
+      habit('done-today', daily), // 今日已完成 → 排除
+      habit('no-streak', daily), // 無連勝 → 排除
+      habit('off-day', { kind: 'weekdays', days: [1] }), // 今日非排程 → 排除
+      habit('at-risk', daily), // 入選
+    ]
+    const byHabit = new Map([
+      ['done-today', set('2026-05-30')],
+      ['no-streak', new Set<string>()],
+      ['off-day', set('2026-05-25')],
+      ['at-risk', set('2026-05-28', '2026-05-29')],
+    ])
+    // 唔傳 anchor，靠 setSystemTime 釘死今日 → 驗預設參數路徑
+    const r = streakAtRisk(habits, byHabit)
+    expect(r.map((x) => x.id)).toEqual(['at-risk'])
+    expect(r[0].streak).toBe(2)
   })
 })

@@ -28,6 +28,7 @@ import {
   ListChecks,
   BarChart3,
   CalendarDays,
+  AlertTriangle,
 } from 'lucide-react'
 import {
   habitV2Col,
@@ -41,7 +42,9 @@ import {
   logsByHabit,
   overallStats,
   currentStreak,
+  streakAtRisk,
   todayKey,
+  type AtRiskHabit,
 } from './habits/util'
 import HabitRow from './habits/HabitRow'
 import HabitEditor from './habits/HabitEditor'
@@ -125,8 +128,15 @@ export default function HabitTracker() {
   // 用 activeHabits（而非 visible），令「今日」分頁唔受「全部」分頁殘留嘅
   // 分類/搜尋篩選影響——今日分頁本身冇任何篩選 UI，否則用家會見到今日進度
   // 莫名其妙縮細／部分習慣消失。
+  // 斷 streak 警報：今日應做、今日未打、目前仲有連勝（一打就保、唔打清零）。
+  const atRisk = useMemo(
+    () => streakAtRisk(activeHabits, byHabit),
+    [activeHabits, byHabit],
+  )
+
   const todayBuckets = useMemo(() => {
     const wd = new Date().getDay()
+    const atRiskIds = new Set(atRisk.map((a) => a.id))
     const due: Habit[] = []
     const notDue: Habit[] = []
     for (const h of activeHabits) {
@@ -135,14 +145,15 @@ export default function HabitTracker() {
       if (sched) due.push(h)
       else notDue.push(h)
     }
-    // 今日已完成排後
-    due.sort((a, b) => {
-      const da = (byHabit.get(a.id) ?? new Set()).has(today) ? 1 : 0
-      const db = (byHabit.get(b.id) ?? new Set()).has(today) ? 1 : 0
-      return da - db
-    })
+    // 排序優先級：at-risk 未完成（0）→ 其餘未完成（1）→ 今日已完成（2）。
+    // 同組內維持原 order（穩定排序）。
+    const rank = (h: Habit) => {
+      if ((byHabit.get(h.id) ?? new Set()).has(today)) return 2
+      return atRiskIds.has(h.id) ? 0 : 1
+    }
+    due.sort((a, b) => rank(a) - rank(b))
     return { due, notDue }
-  }, [activeHabits, byHabit, today])
+  }, [activeHabits, byHabit, today, atRisk])
 
   // 頂部統計磚每個分頁都顯示，定位係全域 dashboard，故同樣用 activeHabits，
   // 避免被「全部」分頁嘅篩選靜默縮細。
@@ -306,6 +317,10 @@ export default function HabitTracker() {
                 rate={stats.todayRate}
                 allDone={allDone}
               />
+
+              {atRisk.length > 0 && (
+                <AtRiskBanner items={atRisk} onPick={setDetailId} />
+              )}
 
               {todayBuckets.due.length > 0 && (
                 <div className="space-y-2">
@@ -572,6 +587,58 @@ function MiniStat({
         {hint && <p className="mt-0.5 truncate text-[11px] text-slate-400 dark:text-slate-500">{hint}</p>}
       </div>
     </div>
+  )
+}
+
+// ───────── 斷 streak 警報 banner（今日未保住嘅連勝）─────────
+//  rose/amber 暖警示色，跟 HabitDetail 既有 ring/solid 風格。
+//  撳任一 chip 直接開該習慣詳情（去打卡）。最多列 4 個，其餘收成 +N。
+function AtRiskBanner({
+  items,
+  onPick,
+}: {
+  items: AtRiskHabit[]
+  onPick: (id: string) => void
+}) {
+  const shown = items.slice(0, 4)
+  const rest = items.length - shown.length
+  return (
+    <Card className="border-rose-200/80 bg-rose-50/70 p-3.5 dark:border-rose-500/25 dark:bg-rose-500/10">
+      <div className="flex items-start gap-2.5" role="region" aria-label="斷連勝警報">
+        <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-rose-100 text-rose-600 dark:bg-rose-500/20 dark:text-rose-300">
+          <AlertTriangle size={16} />
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-semibold text-rose-700 dark:text-rose-300">
+            {items.length} 個連勝今日未保住
+          </p>
+          <p className="mt-0.5 text-xs text-rose-600/80 dark:text-rose-300/70">
+            再唔打卡今日就會清零，撳一下即去保住。
+          </p>
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {shown.map((it) => (
+              <button
+                key={it.id}
+                type="button"
+                onClick={() => onPick(it.id)}
+                className="inline-flex items-center gap-1 rounded-full bg-white/80 px-2.5 py-1 text-xs font-medium text-rose-700 shadow-xs ring-1 ring-inset ring-rose-200 transition hover:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-400/50 dark:bg-rose-500/15 dark:text-rose-200 dark:ring-rose-500/30 dark:hover:bg-rose-500/25"
+              >
+                <span className="max-w-[7rem] truncate">{it.name}</span>
+                <span className="inline-flex items-center gap-0.5 tabular-nums text-rose-500 dark:text-rose-300/90">
+                  <Flame size={11} />
+                  {it.streak}
+                </span>
+              </button>
+            ))}
+            {rest > 0 && (
+              <span className="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium text-rose-500/80 dark:text-rose-300/70">
+                +{rest}
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
+    </Card>
   )
 }
 
