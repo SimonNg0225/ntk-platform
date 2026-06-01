@@ -4,6 +4,7 @@ import {
   monthlyFinished,
   activityHeatmap,
   progressPct,
+  computeStreaks,
 } from './util'
 import { heatLevel } from './Charts'
 import type { Book, ReadingSession } from './types'
@@ -319,5 +320,125 @@ describe('progressPct — 99.5% 邊界（bug#2）', () => {
 
   it('在讀超頁 250/200 仍封頂 100%（floor 後 min 照封頂，沿用既有行為）', () => {
     expect(progressPct(book({ status: 'reading', totalPages: 200, currentPage: 250 }))).toBe(100)
+  })
+})
+
+// ============================================================
+//  computeStreaks — currentStreak「數到正數」分支
+//  ------------------------------------------------------------
+//  既有 util.test.ts / extra.test.ts 全用 2020 古早 session 日期，
+//  currentStreak 永遠 0，故「今日往回數 / 今日無但尋日有 / 遇斷裂即停」
+//  三條 current 路徑同 longest 嘅互動完全未行。
+//  此處鎖死「今日」= 本地 2026-05-31（跟 extra.test.ts 做法），
+//  全部用相對今日嘅 session.date 斷言正確 currentStreak（同 longest 互動）。
+//  ── 為何用本地 constructor 落 system time：source 用 todayKey()/addDays()
+//     全經本地 getter，故任何 CI TZ 結果一致（無 UTC 漂移）。
+// ============================================================
+describe('computeStreaks — currentStreak 正數分支（鎖今日 2026-05-31）', () => {
+  beforeEach(() => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date(2026, 4, 31, 10, 0, 0)) // 本地 2026-05-31
+  })
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it('(1) 今日 + 連續往前 2 日 → currentStreak=3（longest 同樣 3）', () => {
+    const books = [
+      book({
+        sessions: [
+          session({ id: '1', date: '2026-05-29' }),
+          session({ id: '2', date: '2026-05-30' }),
+          session({ id: '3', date: '2026-05-31' }), // 今日
+        ],
+      }),
+    ]
+    const r = computeStreaks(books)
+    expect(r.currentStreak).toBe(3)
+    expect(r.longestStreak).toBe(3)
+  })
+
+  it('(2) 今日無 session 但尋日有、再前一日亦有 → 由尋日計起 currentStreak=2', () => {
+    // 今日(5-31)無；尋日(5-30)有 → cursor 退到尋日往回數：5-30、5-29 → 2
+    const books = [
+      book({
+        sessions: [
+          session({ id: '1', date: '2026-05-29' }),
+          session({ id: '2', date: '2026-05-30' }), // 尋日（最近一日）
+        ],
+      }),
+    ]
+    const r = computeStreaks(books)
+    expect(r.currentStreak).toBe(2)
+    expect(r.longestStreak).toBe(2)
+  })
+
+  it('(3) 今日同尋日都無 → currentStreak=0，但 longest 仍係舊段長度', () => {
+    // 舊段 5-20..5-22 連續 3：current 因今日/尋日皆無 → 0；longest 唔受影響仍 3
+    const books = [
+      book({
+        sessions: [
+          session({ id: '1', date: '2026-05-20' }),
+          session({ id: '2', date: '2026-05-21' }),
+          session({ id: '3', date: '2026-05-22' }),
+        ],
+      }),
+    ]
+    const r = computeStreaks(books)
+    expect(r.currentStreak).toBe(0)
+    expect(r.longestStreak).toBe(3)
+  })
+
+  it('(4) 今日有、尋日無（中間斷）→ currentStreak=1（longest 取舊長段）', () => {
+    // 今日(5-31)有但尋日(5-30)無 → 今日往回即斷 → current 1。
+    // 另有舊連續段 5-24..5-26（長 3）→ longest 3，與 current 1 並存。
+    const books = [
+      book({
+        sessions: [
+          session({ id: 'old1', date: '2026-05-24' }),
+          session({ id: 'old2', date: '2026-05-25' }),
+          session({ id: 'old3', date: '2026-05-26' }),
+          session({ id: 'today', date: '2026-05-31' }), // 今日，孤立（5-30 缺）
+        ],
+      }),
+    ]
+    const r = computeStreaks(books)
+    expect(r.currentStreak).toBe(1)
+    expect(r.longestStreak).toBe(3)
+  })
+
+  it('(5) 跨書同日 session 去重唔會撐大 current（兩本書同日 → 當一日）', () => {
+    // 兩本書都喺今日(5-31)有 session；加埋尋日(5-30)一次 → current 應為 2，唔係 3。
+    const books = [
+      book({ id: 'A', sessions: [session({ id: 'a1', date: '2026-05-31' })] }),
+      book({ id: 'B', sessions: [session({ id: 'b1', date: '2026-05-31' })] }), // 同日另一本
+      book({ id: 'C', sessions: [session({ id: 'c1', date: '2026-05-30' })] }),
+    ]
+    const r = computeStreaks(books)
+    expect(r.currentStreak).toBe(2) // 5-31（去重）、5-30
+    expect(r.longestStreak).toBe(2)
+  })
+
+  it('(6) 跨月回退：今日 6/1 連到 5/31、5/30 → current 正確 3', () => {
+    // 改鎖今日為本地 2026-06-01；cursor 由 6-1 退到 5-31、5-30（fromKey/addDays 跨月退）。
+    vi.setSystemTime(new Date(2026, 5, 1, 10, 0, 0)) // 本地 2026-06-01
+    const books = [
+      book({
+        sessions: [
+          session({ id: '1', date: '2026-05-30' }),
+          session({ id: '2', date: '2026-05-31' }),
+          session({ id: '3', date: '2026-06-01' }), // 今日
+        ],
+      }),
+    ]
+    const r = computeStreaks(books)
+    expect(r.currentStreak).toBe(3)
+    expect(r.longestStreak).toBe(3)
+  })
+
+  it('守護：鎖定基準日確為本地 2026-05-31（令相對 session 日期斷言穩定）', () => {
+    expect(new Date().getFullYear()).toBe(2026)
+    expect(new Date().getMonth()).toBe(4) // 5月 = index 4
+    expect(new Date().getDate()).toBe(31)
   })
 })
