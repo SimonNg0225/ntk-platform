@@ -1,4 +1,5 @@
 import { createCollection, collectionRegistry } from '../lib/store'
+import { localDateStr } from '../lib/srs'
 import { BAFS_TOPICS } from './bafs'
 import { NTK_SLOTS, NTK_CYCLE_CALENDAR } from './ntk-seed'
 import type {
@@ -112,7 +113,7 @@ export const countdownsCol = createCollection<Countdown>('countdowns', [
   {
     id: 'cd-seed-1',
     title: 'BAFS 模擬試',
-    date: new Date(Date.now() + 7 * 864e5).toISOString().slice(0, 10),
+    date: localDateStr(new Date(Date.now() + 7 * 864e5)),
     category: 'exam',
     mode: 'both',
     createdAt: new Date().toISOString(),
@@ -120,7 +121,7 @@ export const countdownsCol = createCollection<Countdown>('countdowns', [
   {
     id: 'cd-seed-2',
     title: '提交專題報告',
-    date: new Date(Date.now() + 21 * 864e5).toISOString().slice(0, 10),
+    date: localDateStr(new Date(Date.now() + 21 * 864e5)),
     category: 'deadline',
     mode: 'both',
     createdAt: new Date().toISOString(),
