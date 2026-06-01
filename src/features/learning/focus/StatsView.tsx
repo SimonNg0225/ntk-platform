@@ -49,10 +49,11 @@ export default function StatsView({
 }) {
   const [range, setRange] = useState<Range>('30d')
 
+  const projById = useMemo(() => new Map(projects.map((p) => [p.id, p])), [projects])
   const projName = (id?: string | null) =>
-    projects.find((p) => p.id === id)?.name ?? '未分類'
+    (id != null ? projById.get(id)?.name : undefined) ?? '未分類'
   const projColor = (id?: string | null) =>
-    projects.find((p) => p.id === id)?.color ?? 'slate'
+    (id != null ? projById.get(id)?.color : undefined) ?? 'slate'
 
   // 範圍內 logs
   const { rangedLogs, from, to, days } = useMemo(() => {
