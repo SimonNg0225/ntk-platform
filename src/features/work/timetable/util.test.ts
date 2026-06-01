@@ -4,6 +4,7 @@ import {
   dayShort,
   cycleLabel,
   cycleShort,
+  cycleDayForDate,
   weekCycleLabel,
   weeksOverlap,
   lessonPeriods,
@@ -75,6 +76,53 @@ describe('日循環 cycleLabel / cycleShort', () => {
   it('超範圍 fallback', () => {
     expect(cycleShort(7)).toBe('7')
     expect(cycleLabel(7)).toBe('Day 7')
+  })
+})
+
+describe('cycleDayForDate 校曆查日期 → cycle day', () => {
+  // 由日期(YYYY-MM-DD)經校曆映射到 cycle day(1..6)，直接決定 Timetable / WorkDashboard
+  // 嘅「今日堂」顯示。命中回 cycleDay；假期/未排（搵唔到）回 null。
+  const cal = [
+    { date: '2026-05-04', cycleDay: 3 },
+    { date: '2026-05-05', cycleDay: 4 },
+    { date: '2026-05-06', cycleDay: 5 },
+  ]
+
+  it('命中：日期喺校曆 → 回對應 cycle day', () => {
+    expect(cycleDayForDate('2026-05-04', cal)).toBe(3)
+    expect(cycleDayForDate('2026-05-05', cal)).toBe(4)
+    expect(cycleDayForDate('2026-05-06', cal)).toBe(5)
+  })
+
+  it('搵唔到：日期唔喺校曆（假期/未排日）→ 回 null', () => {
+    // 5-04 同 5-05 之間若係週末/假期，根本唔會喺校曆 → 唔應該揀錯某日課堂
+    expect(cycleDayForDate('2026-05-07', cal)).toBeNull()
+    expect(cycleDayForDate('2026-12-25', cal)).toBeNull()
+  })
+
+  it('空校曆 [] → 一律 null（未匯入校曆時唔會誤揀）', () => {
+    expect(cycleDayForDate('2026-05-04', [])).toBeNull()
+  })
+
+  it('重複日期：find 命中首見嗰條（取第一筆相符）', () => {
+    const dup = [
+      { date: '2026-05-04', cycleDay: 3 },
+      { date: '2026-05-04', cycleDay: 6 }, // 後來重複，應被忽略
+    ]
+    expect(cycleDayForDate('2026-05-04', dup)).toBe(3)
+  })
+
+  it('cycleDay 為 0 都要原樣回 0（唔好被當 falsy 誤回 null）', () => {
+    // 0 係 falsy，若 code 用 `e?.cycleDay || null` 會錯回 null；此 case 守護返
+    const zero = [{ date: '2026-05-04', cycleDay: 0 }]
+    expect(cycleDayForDate('2026-05-04', zero)).toBe(0)
+    expect(cycleDayForDate('2026-05-04', zero)).not.toBeNull()
+  })
+
+  it('日期 key 必須完全相符（唔做模糊/前綴比對）', () => {
+    // 防止 '2026-05-0' 之類部分字串誤命中 '2026-05-04'
+    expect(cycleDayForDate('2026-05-0', cal)).toBeNull()
+    expect(cycleDayForDate('2026-05-040', cal)).toBeNull()
   })
 })
 
