@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react'
+import { memo, useState, type ReactNode } from 'react'
 import { Check, Copy } from 'lucide-react'
 import { cx } from '../../../ui'
 
@@ -156,7 +156,7 @@ function isTableDivider(line: string): boolean {
 }
 
 // ───────── 主渲染：逐行掃描成 block ─────────
-export function Markdown({ text, className }: { text: string; className?: string }) {
+function MarkdownImpl({ text, className }: { text: string; className?: string }) {
   const lines = text.split('\n')
   const blocks: ReactNode[] = []
   let i = 0
@@ -301,3 +301,7 @@ export function Markdown({ text, className }: { text: string; className?: string
 
   return <div className={cx('space-y-1', className)}>{blocks}</div>
 }
+
+// memo：text 係字串，shallow compare 完美 —— 打字時 content 無變嘅訊息唔會重新解析
+// markdown（之前每打一字都重解析所有訊息，造成「跳/唔連貫」）。
+export const Markdown = memo(MarkdownImpl)
