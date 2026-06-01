@@ -18,7 +18,6 @@ import {
   clampApplyDays,
   detectConflicts,
   computeWorkload,
-  jsDayToTimetable,
   findUpNext,
   buildCsv,
   SLOT_COLORS,
@@ -240,14 +239,6 @@ describe('slotKey', () => {
   it('day-period 格式', () => {
     expect(slotKey(1, 1)).toBe('1-1')
     expect(slotKey(6, 8)).toBe('6-8')
-  })
-})
-
-describe('jsDayToTimetable', () => {
-  it('一至六一致，星期日(0)→0', () => {
-    expect(jsDayToTimetable(1)).toBe(1) // 一
-    expect(jsDayToTimetable(6)).toBe(6) // 六
-    expect(jsDayToTimetable(0)).toBe(0) // 日 → 無堂
   })
 })
 

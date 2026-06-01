@@ -428,11 +428,6 @@ export function computeWorkload(
 }
 
 // ───────── 今日 / 下一堂 ─────────
-// JS getDay(): 0=日 … 6=六。我哋 day 1..6 對應一至六。
-export function jsDayToTimetable(jsDay: number): number {
-  return jsDay // 1..6 一致；0（星期日）→ 0（無堂）
-}
-
 export interface UpNext {
   slot: TimetableSlot
   bell: BellRow
