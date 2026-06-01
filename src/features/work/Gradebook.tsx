@@ -44,6 +44,8 @@ import {
   Sparkles,
   Target,
   Trash2,
+  TrendingDown,
+  TrendingUp,
   Trophy,
   UserCheck,
   Users,
@@ -66,7 +68,9 @@ import {
   mean,
   median,
   pctTone,
+  percentileOf,
   quartiles,
+  rankByImprovement,
   resolveBands,
   round1,
   shortDate,
@@ -273,12 +277,13 @@ function ScoreGrid({ classId, className }: { classId: string; className: string 
     return m
   }, [assessments, results])
 
-  const classAvg = useMemo(() => {
-    const vals = results
-      .map((r) => r.weighted)
-      .filter((x): x is number => x != null)
-    return mean(vals)
-  }, [results])
+  // 全班加權總分（有分嘅），同時供班平均同百分位用
+  const classTotals = useMemo(
+    () =>
+      results.map((r) => r.weighted).filter((x): x is number => x != null),
+    [results],
+  )
+  const classAvg = useMemo(() => mean(classTotals), [classTotals])
 
   const exportCsv = () => {
     const header = [
@@ -562,6 +567,11 @@ function ScoreGrid({ classId, className }: { classId: string; className: string 
         result={reportResult}
         rank={reportFor ? (rankById.get(reportFor) ?? null) : null}
         classSize={ranked.length}
+        percentile={
+          reportResult?.weighted != null
+            ? percentileOf(reportResult.weighted, classTotals)
+            : null
+        }
         assessments={assessments}
         classAvg={classAvg}
         assessmentAvg={assessmentAvg}
@@ -790,6 +800,16 @@ function AnalysisTab({ classId, className }: { classId: string; className: strin
         .sort((a, b) => (b.weighted ?? 0) - (a.weighted ?? 0)),
     [results],
   )
+
+  // 進步榜：按時間次序逐評估 % 計線性趨勢，抽最進步 / 最退步
+  const improvement = useMemo(() => {
+    const orderedIds = [...assessments]
+      .sort((a, b) =>
+        assessmentSortKey(a).localeCompare(assessmentSortKey(b)),
+      )
+      .map((a) => a.id)
+    return rankByImprovement(results, orderedIds)
+  }, [results, assessments])
 
   const exportSummary = () => {
     const header = ['評估', '類型', '已交', '平均(%)', '中位數(%)', '標準差', '及格率(%)']
@@ -1030,7 +1050,88 @@ function AnalysisTab({ classId, className }: { classId: string; className: strin
         </Card>
       )}
 
-      {view === 'ranking' && (
+      {view === 'ranking' && (() => {
+        const improved = improvement.filter((e) => (e.slope ?? 0) > 0).slice(0, 3)
+        const declined = improvement
+          .filter((e) => (e.slope ?? 0) < 0)
+          .slice(-3)
+          .reverse()
+        const fmtSlope = (s: number) =>
+          `${s >= 0 ? '+' : ''}${round1(s)} 分/評估`
+        return (
+      <>
+        {(improved.length > 0 || declined.length > 0) && (
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Card className="rounded-3xl p-4">
+              <ChartHead icon={TrendingUp} tone="emerald">
+                進步最大
+                <span className="ml-1 font-normal text-slate-400">
+                  逐評估走勢向上
+                </span>
+              </ChartHead>
+              {improved.length === 0 ? (
+                <p className="mt-3 text-sm text-slate-400 dark:text-slate-500">
+                  暫時未有明顯上升嘅同學。
+                </p>
+              ) : (
+                <ul className="mt-2 space-y-1">
+                  {improved.map((e) => (
+                    <li
+                      key={e.student.id}
+                      className="flex items-center gap-2 rounded-xl px-2 py-1.5 text-sm"
+                    >
+                      <span className="flex-1 truncate text-slate-700 dark:text-slate-200">
+                        {e.student.studentNo && (
+                          <span className="mr-1.5 text-xs text-slate-400">
+                            {e.student.studentNo}
+                          </span>
+                        )}
+                        {e.student.name}
+                      </span>
+                      <span className="shrink-0 text-xs tabular-nums font-semibold text-emerald-600 dark:text-emerald-400">
+                        {fmtSlope(e.slope!)}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </Card>
+            <Card className="rounded-3xl p-4">
+              <ChartHead icon={TrendingDown} tone="rose">
+                需要關注
+                <span className="ml-1 font-normal text-slate-400">
+                  逐評估走勢向下
+                </span>
+              </ChartHead>
+              {declined.length === 0 ? (
+                <p className="mt-3 text-sm text-slate-400 dark:text-slate-500">
+                  暫時未有明顯下跌嘅同學，繼續保持。
+                </p>
+              ) : (
+                <ul className="mt-2 space-y-1">
+                  {declined.map((e) => (
+                    <li
+                      key={e.student.id}
+                      className="flex items-center gap-2 rounded-xl px-2 py-1.5 text-sm"
+                    >
+                      <span className="flex-1 truncate text-slate-700 dark:text-slate-200">
+                        {e.student.studentNo && (
+                          <span className="mr-1.5 text-xs text-slate-400">
+                            {e.student.studentNo}
+                          </span>
+                        )}
+                        {e.student.name}
+                      </span>
+                      <span className="shrink-0 text-xs tabular-nums font-semibold text-rose-600 dark:text-rose-400">
+                        {fmtSlope(e.slope!)}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </Card>
+          </div>
+        )}
         <Card className="rounded-3xl p-2">
           {ranking.length === 0 ? (
             <EmptyState icon={Trophy} title="排名榜未開賽" hint="入分之後，班內名次就會即刻排好。" />
@@ -1093,7 +1194,9 @@ function AnalysisTab({ classId, className }: { classId: string; className: strin
             </ul>
           )}
         </Card>
-      )}
+      </>
+        )
+      })()}
     </div>
   )
 }

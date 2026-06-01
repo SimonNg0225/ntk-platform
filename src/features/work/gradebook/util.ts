@@ -329,6 +329,104 @@ export function computeResults(
   })
 }
 
+// ───────── 班內百分位（percentile rank）─────────
+/**
+ * 把一個數值轉成喺整個分佈入面嘅百分位（0–100）。
+ * 用「低於 + 一半相等」嘅標準定義（midrank），對打和友善、唔會偏高/偏低：
+ *   pr = (低於 value 嘅個數 + 0.5 × 等於 value 嘅個數) / 總數 × 100
+ * 好處：
+ *  - 最高分唔會永遠 100、最低分唔會永遠 0（同分學生攤分位置，公平）。
+ *  - 全部同分 → 大家都 50（中間）。
+ * 規則：
+ *  - all 為空 → null（無從比較）。
+ *  - value 唔喺 all 入面都照計（當作「插入」嘅相對位置），方便傳入已知總分。
+ *  - 結果 clamp 落 0–100 並四捨五入到整數（百分位慣常用整數顯示）。
+ */
+export function percentileOf(value: number, all: number[]): number | null {
+  if (!all.length) return null
+  let below = 0
+  let equal = 0
+  for (const x of all) {
+    if (x < value) below += 1
+    else if (x === value) equal += 1
+  }
+  const pr = ((below + 0.5 * equal) / all.length) * 100
+  return Math.round(Math.max(0, Math.min(100, pr)))
+}
+
+// ───────── 評估趨勢（most-improved / declining）─────────
+/**
+ * 用最小二乘法計一條學生「逐評估 %」嘅簡單線性趨勢斜率（每個評估嘅升幅，單位：百分點/評估）。
+ * x = 已交評估嘅次序（0,1,2…，只計有分嘅，跳過未交），y = 該評估百分比。
+ * 回傳：
+ *  - 正數 = 一路上升、負數 = 一路下跌、0 = 平。
+ *  - 少於 2 個有效分數 → null（無從定走勢）。
+ *  - 全部同分 → 0（無升跌）。
+ * 注意：orderedIds 決定時間次序（呼叫方應先按 assessmentSortKey 排好）。
+ */
+export function assessmentTrendSlope(
+  perAssessment: Record<string, number | null>,
+  orderedIds: string[],
+): number | null {
+  const ys: number[] = []
+  for (const id of orderedIds) {
+    const p = perAssessment[id]
+    if (p != null) ys.push(p)
+  }
+  const n = ys.length
+  if (n < 2) return null
+  // x = 0..n-1；用閉式解（centered）避免大數相消。
+  const xMean = (n - 1) / 2
+  const yMean = ys.reduce((a, b) => a + b, 0) / n
+  let num = 0
+  let den = 0
+  for (let i = 0; i < n; i++) {
+    const dx = i - xMean
+    num += dx * (ys[i] - yMean)
+    den += dx * dx
+  }
+  if (den === 0) return 0
+  return num / den
+}
+
+export interface ImprovementEntry {
+  student: Student
+  /** 線性趨勢斜率（百分點/評估），null = 有效分數不足 */
+  slope: number | null
+  /** 用於計斜率嘅有效評估數 */
+  points: number
+}
+
+/**
+ * 由 computeResults 嘅結果衍生「進步榜」：每位學生嘅趨勢斜率，由高到低排（最進步喺前）。
+ * 只保留有得計斜率（≥2 個有效分數）嘅學生；同斜率時按學生姓名穩定排序。
+ * UI 可直接喺頭/尾抽 most-improved / declining。
+ */
+export function rankByImprovement(
+  results: StudentResult[],
+  orderedIds: string[],
+): ImprovementEntry[] {
+  return results
+    .map((r) => {
+      let points = 0
+      for (const id of orderedIds) if (r.perAssessment[id] != null) points += 1
+      return {
+        student: r.student,
+        slope: assessmentTrendSlope(r.perAssessment, orderedIds),
+        points,
+      }
+    })
+    .filter((e): e is ImprovementEntry => e.slope != null)
+    .sort(
+      (a, b) =>
+        (b.slope ?? 0) - (a.slope ?? 0) ||
+        (a.student.studentNo ?? a.student.name).localeCompare(
+          b.student.studentNo ?? b.student.name,
+          'zh-Hant',
+        ),
+    )
+}
+
 // ───────── 分數分佈直方圖（10 個 bin）─────────
 export interface HistBin {
   from: number

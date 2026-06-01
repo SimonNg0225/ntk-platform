@@ -25,6 +25,7 @@ export default function StudentReport({
   result,
   rank,
   classSize,
+  percentile,
   assessments,
   classAvg,
   assessmentAvg,
@@ -37,6 +38,8 @@ export default function StudentReport({
   result: StudentResult | null
   rank: number | null
   classSize: number
+  /** 班內百分位（0–100）；null = 無從比較 */
+  percentile: number | null
   assessments: Assessment[]
   classAvg: number | null
   /** assessmentId → 全班平均(%) */
@@ -92,6 +95,7 @@ export default function StudentReport({
       <div class="big">${total == null ? '—' : Math.round(total) + '%'}　<span style="font-size:20px;color:#64748b">${band ? band.label : ''}</span></div>
       <div class="meta">
         <div><span>班內名次</span><b>${rank == null ? '—' : rank + ' / ' + classSize}</b></div>
+        <div><span>班內百分位</span><b>${percentile == null ? '—' : percentile + 'th'}</b></div>
         <div><span>已交評估</span><b>${result.submitted} / ${result.expected}</b></div>
         <div><span>班級平均</span><b>${classAvg == null ? '—' : Math.round(classAvg) + '%'}</b></div>
       </div>
@@ -146,6 +150,22 @@ export default function StudentReport({
                   {' '}
                   / {classSize}
                 </span>
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-slate-500 dark:text-slate-400">百分位</p>
+              <p className="mt-0.5 text-lg font-semibold tabular-nums text-slate-700 dark:text-slate-200">
+                {percentile == null ? (
+                  '—'
+                ) : (
+                  <>
+                    {percentile}
+                    <span className="text-sm font-normal text-slate-400">
+                      {' '}
+                      th
+                    </span>
+                  </>
+                )}
               </p>
             </div>
             <div>
