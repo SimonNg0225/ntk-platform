@@ -46,13 +46,23 @@ import {
   STATE_LABEL,
   STATE_TONE,
 } from './srs'
-import type { BrowseSort, BrowseStateFilter } from './types'
+import type { BrowseSort, BrowseStateFilter, CardMeta } from './types'
 
 // ============================================================
 //  Browse（Anki Browser 級）
 //  全卡表格 + 搜尋 + 狀態/標籤篩選 + 多欄排序 + 批量操作
 //  （暫停 / 標記 / 加標籤 / 移牌組 / 重設排程 / 刪除）
 // ============================================================
+
+// metaById.get() 揾唔到時嘅 fallback，shape 同 metaOf() 內部 fallback 一致
+const EMPTY_META: CardMeta = {
+  id: '',
+  tags: [],
+  suspended: false,
+  flagged: false,
+  lapses: 0,
+  updatedAt: '',
+}
 
 const SORT_OPTIONS: { id: BrowseSort; label: string }[] = [
   { id: 'created_desc', label: '最新加入' },
@@ -374,7 +384,7 @@ export default function BrowseView() {
             </Thead>
             <Tbody>
               {sorted.map((c) => {
-                const meta = metaOf(metas, c.id)
+                const meta = metaById.get(c.id) ?? EMPTY_META
                 const st = cardState(c, meta)
                 const leech = isLeech(meta)
                 const checked = selected.has(c.id)
