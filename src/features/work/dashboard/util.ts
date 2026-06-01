@@ -13,6 +13,12 @@ import type {
 } from '../../../data/types'
 import type { TaskMeta } from '../todo/types'
 import { localDay } from '../todo/util'
+import {
+  buildTrendCore,
+  buildHeatCore,
+  completionStreak as completionStreakCore,
+  type DateHelpers,
+} from '../trendHeat'
 import { getOccurrences, colorOf, minutesOf } from '../../shared/calendar/util'
 import type {
   AgendaItem,
@@ -88,54 +94,36 @@ export function mergeTasks(tasks: Task[], metas: TaskMeta[]): MergedTask[] {
   })
 }
 
+// 本地日期工具：localKey(new Date()) 做今日、addKey 推窗口、localDay 歸日。
+// 注入共用核心（buildTrendCore / buildHeatCore），輸出與原逐行實作一致。
+const DATE_HELPERS: DateHelpers = {
+  todayKey: () => localKey(new Date()),
+  addDays: addKey,
+  localDay,
+}
+
 // ───────── 待辦完成趨勢（近 N 日）─────────
 export function buildTaskTrend(tasks: MergedTask[], days: number): TrendPoint[] {
-  const today = localKey(new Date())
-  const out: TrendPoint[] = []
-  for (let i = days - 1; i >= 0; i--) {
-    const key = addKey(today, -i)
-    const [, , d] = key.split('-')
-    out.push({ key, label: String(Number(d)), created: 0, completed: 0 })
-  }
-  const idx = new Map(out.map((p, i) => [p.key, i]))
-  for (const t of tasks) {
-    const ck = localDay(t.createdAt)
-    if (idx.has(ck)) out[idx.get(ck)!].created++
-    if (t.done && t.completedAt) {
-      const dk = localDay(t.completedAt)
-      if (idx.has(dk)) out[idx.get(dk)!].completed++
-    }
-  }
-  return out
+  return buildTrendCore(
+    tasks,
+    days,
+    (t) => t.createdAt,
+    (t) => (t.done ? t.completedAt : undefined),
+    DATE_HELPERS,
+  )
 }
 
 // ───────── 完成熱力（近 N 日）+ streak ─────────
 export function buildHeat(tasks: MergedTask[], days: number): HeatCell[] {
-  const today = localKey(new Date())
-  const counts = new Map<string, number>()
-  for (const t of tasks) {
-    if (t.done && t.completedAt) {
-      const k = localDay(t.completedAt)
-      counts.set(k, (counts.get(k) ?? 0) + 1)
-    }
-  }
-  const cells: HeatCell[] = []
-  for (let i = days - 1; i >= 0; i--) {
-    const key = addKey(today, -i)
-    cells.push({ key, count: counts.get(key) ?? 0 })
-  }
-  return cells
+  return buildHeatCore(
+    tasks,
+    days,
+    (t) => (t.done ? t.completedAt : undefined),
+    DATE_HELPERS,
+  )
 }
 
-export function completionStreak(cells: HeatCell[]): number {
-  let streak = 0
-  for (let i = cells.length - 1; i >= 0; i--) {
-    if (cells[i].count > 0) streak++
-    else if (i === cells.length - 1) continue // 今日未做都唔斷
-    else break
-  }
-  return streak
-}
+export const completionStreak = completionStreakCore
 
 // 計某段日子內完成嘅待辦數（週對比用）
 export function completedInRange(

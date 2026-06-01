@@ -1,4 +1,11 @@
 import type { FullTask, Priority, Project } from './types'
+import {
+  buildTrendCore,
+  buildHeatCore,
+  type DateHelpers,
+  type TrendPoint as TrendPointType,
+  type HeatCell as HeatCellType,
+} from '../trendHeat'
 
 // ============================================================
 //  待辦：純函式工具（日期 / 智能解析 / 分組 / 統計）
@@ -297,63 +304,35 @@ export function smartSort(a: FullTask, b: FullTask): number {
   return a.meta.order - b.meta.order
 }
 
-// ───────── 統計：近 N 日完成趨勢 ─────────
-export interface TrendPoint {
-  key: string // YYYY-MM-DD
-  label: string // 日
-  created: number
-  completed: number
+// ───────── 統計：趨勢 / 熱力 / streak（共用核心，見 ../trendHeat）─────────
+// TrendPoint / HeatCell 型別同 completionStreak 由共用模組提供（re-export
+// 維持原有 './util' 公開名）；buildTrend / buildHeat 注入本地日期工具與
+// 「meta.completedAt」accessor，輸出與原逐行實作完全一致。
+export type { TrendPoint, HeatCell } from '../trendHeat'
+export { completionStreak } from '../trendHeat'
+
+// 本地日期工具：todayISO 做今日、addDays 推窗口、localDay 歸日。
+const DATE_HELPERS: DateHelpers = {
+  todayKey: todayISO,
+  addDays,
+  localDay,
 }
 
-export function buildTrend(tasks: FullTask[], days: number): TrendPoint[] {
-  const today = todayISO()
-  const out: TrendPoint[] = []
-  for (let i = days - 1; i >= 0; i--) {
-    const key = addDays(today, -i)
-    const [, , d] = key.split('-')
-    out.push({ key, label: String(Number(d)), created: 0, completed: 0 })
-  }
-  const idx = new Map(out.map((p, i) => [p.key, i]))
-  for (const t of tasks) {
-    const ck = localDay(t.createdAt)
-    if (idx.has(ck)) out[idx.get(ck)!].created++
-    if (t.done && t.meta.completedAt) {
-      const dk = localDay(t.meta.completedAt)
-      if (idx.has(dk)) out[idx.get(dk)!].completed++
-    }
-  }
-  return out
+export function buildTrend(tasks: FullTask[], days: number): TrendPointType[] {
+  return buildTrendCore(
+    tasks,
+    days,
+    (t) => t.createdAt,
+    (t) => (t.done ? t.meta.completedAt : undefined),
+    DATE_HELPERS,
+  )
 }
 
-// ───────── 統計：完成熱力（近 N 週）─────────
-export interface HeatCell {
-  key: string
-  count: number
-}
-export function buildHeat(tasks: FullTask[], days: number): HeatCell[] {
-  const today = todayISO()
-  const cells: HeatCell[] = []
-  const counts = new Map<string, number>()
-  for (const t of tasks) {
-    if (t.done && t.meta.completedAt) {
-      const k = localDay(t.meta.completedAt)
-      counts.set(k, (counts.get(k) ?? 0) + 1)
-    }
-  }
-  for (let i = days - 1; i >= 0; i--) {
-    const key = addDays(today, -i)
-    cells.push({ key, count: counts.get(key) ?? 0 })
-  }
-  return cells
-}
-
-// 連續完成日數（streak，由今日／尋日起計）
-export function completionStreak(cells: HeatCell[]): number {
-  let streak = 0
-  for (let i = cells.length - 1; i >= 0; i--) {
-    if (cells[i].count > 0) streak++
-    else if (i === cells.length - 1) continue // 今日仲未做都唔斷
-    else break
-  }
-  return streak
+export function buildHeat(tasks: FullTask[], days: number): HeatCellType[] {
+  return buildHeatCore(
+    tasks,
+    days,
+    (t) => (t.done ? t.meta.completedAt : undefined),
+    DATE_HELPERS,
+  )
 }
