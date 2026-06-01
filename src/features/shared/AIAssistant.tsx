@@ -984,17 +984,35 @@ const Composer = memo(function Composer({
   onOpenTemplate: () => void
   onOpenContext: () => void
 }) {
+  // 「完全非受控」輸入區：打字唔會引起任何 React state 改變／re-render。
+  // 之前就算抽咗去 Composer，每打一字都仲 setText → Composer subtree（連個 textarea）
+  // 重新 render；iOS Safari／中文 IME 喺呢個 subtree 重 render 嗰刻會中斷組字、
+  // 收埋鍵盤（「每打一字就彈走輸入法／打唔到字」）。
+  // 而家文字 100% 以 DOM（ref.current.value）為準；字數同送出掣狀態用 ref 直接改 DOM，
+  // 完全唔行 React state，所以打字途中個 subtree 一次都唔會 re-render。
   const ref = useRef<HTMLTextAreaElement | null>(null)
-  // textarea 改為「非受控」：實際文字以 DOM（ref.current.value）為準，唔再綁 value={text}。
-  // text state 淨係用嚟畀字數顯示／送出掣 enable，唔會寫返落 textarea。
-  // 關鍵：打字途中 React 唔再改寫 textarea 嘅 value／游標，
-  // 中文 IME 組字先唔會被打斷（之前每打一個字都重寫 value → 輸入法彈走）。
-  const [text, setText] = useState(seed.text)
+  const countRef = useRef<HTMLSpanElement | null>(null)
+  const sendRef = useRef<HTMLSpanElement | null>(null)
+
+  // 依家嘅輸入內容 → 即時更新「字數」同「送出掣」可否撳（純 DOM，唔 setState）
+  const syncUi = () => {
+    const v = ref.current?.value ?? ''
+    const has = v.trim().length > 0
+    if (countRef.current) {
+      countRef.current.textContent = has
+        ? `${approxWords(v)} 字 · ~${approxTokens(v)} tokens`
+        : ''
+    }
+    if (sendRef.current) {
+      sendRef.current.style.opacity = has ? '1' : '0.4'
+      sendRef.current.style.pointerEvents = has ? 'auto' : 'none'
+    }
+  }
 
   useEffect(() => {
     const el = ref.current
     if (el) el.value = seed.text
-    setText(seed.text)
+    syncUi()
     requestAnimationFrame(() => {
       const node = ref.current
       if (!node) return
@@ -1006,11 +1024,12 @@ const Composer = memo(function Composer({
   }, [seed.n])
 
   const submit = () => {
-    const t = (ref.current?.value ?? text).trim()
+    const el = ref.current
+    const t = (el?.value ?? '').trim()
     if (!t || busy) return
     onSend(t)
-    if (ref.current) ref.current.value = ''
-    setText('')
+    if (el) el.value = ''
+    syncUi()
   }
 
   function onKeyDown(e: KeyboardEvent<HTMLTextAreaElement>) {
@@ -1021,7 +1040,6 @@ const Composer = memo(function Composer({
     }
   }
 
-  const trimmed = text.trim()
   return (
     <div className="sticky bottom-0 rounded-3xl border border-slate-200/80 bg-white p-2 shadow-sm transition focus-within:border-accent/50 focus-within:ring-2 focus-within:ring-accent/20 dark:border-slate-700/70 dark:bg-slate-800 dark:shadow-none">
       <Textarea
@@ -1030,7 +1048,7 @@ const Composer = memo(function Composer({
         className="resize-none border-0 bg-transparent px-2.5 py-1.5 text-[13.5px] leading-relaxed shadow-none focus:ring-0 dark:bg-transparent"
         placeholder={`打你想問嘅嘢…（Enter 送出 · Shift+Enter 換行 · ${MOD}/ 範本）`}
         defaultValue={seed.text}
-        onChange={(e) => setText(e.target.value)}
+        onInput={syncUi}
         onKeyDown={onKeyDown}
         disabled={busy}
       />
@@ -1045,20 +1063,21 @@ const Composer = memo(function Composer({
             <Paperclip size={16} />
           </IconButton>
         </Tooltip>
-        {trimmed && (
-          <span className="ml-1 text-[11px] tabular-nums text-slate-400 dark:text-slate-500">
-            {approxWords(text)} 字 · ~{approxTokens(text)} tokens
-          </span>
-        )}
+        <span
+          ref={countRef}
+          className="ml-1 text-[11px] tabular-nums text-slate-400 empty:hidden dark:text-slate-500"
+        />
         <div className="flex-1" />
         {busy ? (
           <Button variant="secondary" size="sm" icon={Square} onClick={onStop}>
             停止
           </Button>
         ) : (
-          <Button size="sm" iconRight={Send} onClick={submit} disabled={!trimmed}>
-            送出
-          </Button>
+          <span ref={sendRef} style={{ opacity: 0.4, pointerEvents: 'none' }}>
+            <Button size="sm" iconRight={Send} onClick={submit}>
+              送出
+            </Button>
+          </span>
         )}
       </div>
     </div>
