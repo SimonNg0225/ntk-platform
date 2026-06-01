@@ -15,8 +15,18 @@ import {
 
 // 設定頁：外觀、個人資料、資料管理（匯出/匯入/清除）
 export default function Settings() {
-  const { theme, setTheme, displayName, setDisplayName, lastBackupAt, markBackup } =
-    useSettings()
+  const {
+    theme,
+    setTheme,
+    displayName,
+    setDisplayName,
+    lastBackupAt,
+    markBackup,
+    reduceMotion,
+    setReduceMotion,
+    compactDensity,
+    setCompactDensity,
+  } = useSettings()
   const toast = useToast()
   const confirm = useConfirm()
   const fileRef = useRef<HTMLInputElement>(null)
@@ -145,6 +155,25 @@ export default function Settings() {
             </button>
           ))}
         </div>
+
+        {/* 可達性偏好（純 CSS 開關，預設關＝行為不變） */}
+        <div className="mt-5 border-t border-slate-100 pt-4 dark:border-slate-800">
+          <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+            可達性
+          </p>
+          <ToggleRow
+            label="減少動態效果"
+            hint="收起頁面動畫同過場，畫面更安靜"
+            checked={reduceMotion}
+            onChange={setReduceMotion}
+          />
+          <ToggleRow
+            label="緊湊密度"
+            hint="收窄主內容邊距，一屏睇多啲"
+            checked={compactDensity}
+            onChange={setCompactDensity}
+          />
+        </div>
       </Card>
 
       {/* 個人資料 */}
@@ -248,6 +277,47 @@ export default function Settings() {
       <p className="text-center text-xs text-slate-400">
         NTK Platform · 個人與工作平台
       </p>
+    </div>
+  )
+}
+
+// 設定用嘅可達性開關列（label + 說明 + 右側 switch）。用原生 button 做
+// role=switch，鍵盤可達；同 repo 其他 aria-pressed 切換風格一致。
+function ToggleRow({
+  label,
+  hint,
+  checked,
+  onChange,
+}: {
+  label: string
+  hint: string
+  checked: boolean
+  onChange: (v: boolean) => void
+}) {
+  return (
+    <div className="flex items-center justify-between gap-4 py-2">
+      <div className="min-w-0">
+        <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
+          {label}
+        </p>
+        <p className="text-xs text-slate-500 dark:text-slate-400">{hint}</p>
+      </div>
+      <button
+        type="button"
+        role="switch"
+        aria-checked={checked}
+        aria-label={label}
+        onClick={() => onChange(!checked)}
+        className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 ${
+          checked ? 'bg-accent' : 'bg-slate-300 dark:bg-slate-600'
+        }`}
+      >
+        <span
+          className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-sm transition-transform ${
+            checked ? 'translate-x-5' : 'translate-x-0.5'
+          }`}
+        />
+      </button>
     </div>
   )
 }

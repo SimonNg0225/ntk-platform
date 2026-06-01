@@ -6,6 +6,14 @@ import {
   useState,
   type ReactNode,
 } from 'react'
+import {
+  APPEARANCE_DEFAULTS,
+  appearanceHtmlClasses,
+  normalizeAppearancePrefs,
+  REDUCE_MOTION_CLASS,
+  COMPACT_DENSITY_CLASS,
+  type AppearancePrefs,
+} from '../features/settings/appearancePrefs'
 
 // ============================================================
 //  設定系統（深色模式、密度、預設模式…）
@@ -19,6 +27,10 @@ interface Settings {
   displayName: string
   /** 上次匯出備份嘅時間戳（ISO）；未備份過 = null */
   lastBackupAt: string | null
+  /** 減少動態效果（可達性偏好；預設關＝行為不變，套 .reduce-motion） */
+  reduceMotion: boolean
+  /** 緊湊密度（可達性偏好；預設關＝行為不變，套 .density-compact） */
+  compactDensity: boolean
 }
 
 interface SettingsApi extends Settings {
@@ -26,19 +38,33 @@ interface SettingsApi extends Settings {
   setDisplayName: (n: string) => void
   /** 記低「啱啱成功匯出備份」嘅時間戳（設定頁匯出成功後呼叫） */
   markBackup: () => void
+  /** 開關「減少動態效果」 */
+  setReduceMotion: (v: boolean) => void
+  /** 開關「緊湊密度」 */
+  setCompactDensity: (v: boolean) => void
   /** 目前實際生效嘅深淺（system 會解析做 light/dark） */
   resolvedDark: boolean
 }
 
 const STORAGE_KEY = 'ntk.settings'
-const DEFAULTS: Settings = { theme: 'system', displayName: '', lastBackupAt: null }
+const DEFAULTS: Settings = {
+  theme: 'system',
+  displayName: '',
+  lastBackupAt: null,
+  ...APPEARANCE_DEFAULTS,
+}
 
 const SettingsContext = createContext<SettingsApi | null>(null)
 
 function load(): Settings {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
-    if (raw) return { ...DEFAULTS, ...JSON.parse(raw) }
+    if (raw) {
+      const parsed = JSON.parse(raw)
+      // 正規化外觀偏好：壞值 / 缺欄位一律 fallback 做關（保住「不變行為」）
+      const appearance: AppearancePrefs = normalizeAppearancePrefs(parsed)
+      return { ...DEFAULTS, ...parsed, ...appearance }
+    }
   } catch {
     /* ignore */
   }
@@ -74,6 +100,20 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     document.documentElement.classList.toggle('dark', resolvedDark)
   }, [resolvedDark])
 
+  // 套用外觀可達性 class（.reduce-motion / .density-compact）到 <html>。
+  // 預設全關 → 兩個 class 都唔加，行為同未加功能前一模一樣。
+  useEffect(() => {
+    const root = document.documentElement
+    const active = new Set(
+      appearanceHtmlClasses({
+        reduceMotion: settings.reduceMotion,
+        compactDensity: settings.compactDensity,
+      }),
+    )
+    root.classList.toggle(REDUCE_MOTION_CLASS, active.has(REDUCE_MOTION_CLASS))
+    root.classList.toggle(COMPACT_DENSITY_CLASS, active.has(COMPACT_DENSITY_CLASS))
+  }, [settings.reduceMotion, settings.compactDensity])
+
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(settings))
   }, [settings])
@@ -87,6 +127,10 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
         setSettings((s) => ({ ...s, displayName })),
       markBackup: () =>
         setSettings((s) => ({ ...s, lastBackupAt: new Date().toISOString() })),
+      setReduceMotion: (reduceMotion) =>
+        setSettings((s) => ({ ...s, reduceMotion })),
+      setCompactDensity: (compactDensity) =>
+        setSettings((s) => ({ ...s, compactDensity })),
     }),
     [settings, resolvedDark],
   )

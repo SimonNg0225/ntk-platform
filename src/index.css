@@ -220,3 +220,36 @@ body {
     scroll-behavior: auto !important;
   }
 }
+
+/* ============================================================
+   外觀可達性偏好（設定 → 外觀；由 SettingsContext 套 class 到 <html>）
+   ⚠️ 純 opt-in：冇呢兩個 class 時完全唔影響任何嘢，預設行為不變。
+   ============================================================ */
+
+/* 減少動態效果：用戶喺設定手動開（即使系統未設 prefers-reduced-motion）。
+   同上面系統 query 一致：將 transition / animation 收到極短。 */
+html.reduce-motion *,
+html.reduce-motion *::before,
+html.reduce-motion *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}
+
+/* 緊湊密度：收窄主內容容器嘅 padding，一屏睇到多啲。
+   只縮 .app-content（App.tsx 主內容 wrapper）嘅外距，唔郁卡片內部。 */
+html.density-compact .app-content {
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+}
+@media (min-width: 640px) {
+  html.density-compact .app-content {
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+    padding-left: 1.25rem;
+    padding-right: 1.25rem;
+  }
+}
