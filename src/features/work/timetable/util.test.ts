@@ -14,6 +14,7 @@ import {
   colorOf,
   autoColorFor,
   slotKey,
+  clampApplyDays,
   detectConflicts,
   computeWorkload,
   jsDayToTimetable,
@@ -484,5 +485,35 @@ describe('buildCsv 匯出', () => {
   it('空 slots → 只有表頭', () => {
     const csv = buildCsv([], bells, days, classNames, new Map())
     expect(csv).toBe('星期,節數,時間,科目,班別,課室,循環週,備註')
+  })
+})
+
+// ───────── clampApplyDays（批量套用守門，防孤兒 slot）─────────
+describe('clampApplyDays', () => {
+  it('剔除顯示範圍外嘅日子（星期六當設定收窄為一至五）', () => {
+    // 批量 picker 永遠列一至六；顯示範圍只一至五 → 星期六(6) 唔可寫入
+    expect(clampApplyDays([1, 3, 6], [1, 2, 3, 4, 5])).toEqual([1, 3])
+  })
+
+  it('全部喺範圍內 → 原樣保留', () => {
+    expect(clampApplyDays([1, 2, 5], [1, 2, 3, 4, 5])).toEqual([1, 2, 5])
+  })
+
+  it('全部喺範圍外 → 空陣列（呼叫端據此唔寫入任何 slot）', () => {
+    expect(clampApplyDays([6], [1, 2, 3, 4, 5])).toEqual([])
+  })
+
+  it('保留原次序，去重', () => {
+    expect(clampApplyDays([3, 1, 3, 2, 6, 1], [1, 2, 3])).toEqual([3, 1, 2])
+  })
+
+  it('當前格(d.day)永遠喺顯示範圍內 → 夾完至少保留當前日', () => {
+    // 格只由 WeekGrid 範圍內可開，故 applyDays 一定含一個範圍內嘅當前日
+    expect(clampApplyDays([2], [1, 2, 3, 4, 5])).toEqual([2])
+    expect(clampApplyDays([4, 6], [1, 2, 3, 4, 5])).toEqual([4]) // 6 被剔，4 留低
+  })
+
+  it('空輸入 → 空輸出', () => {
+    expect(clampApplyDays([], [1, 2, 3])).toEqual([])
   })
 })

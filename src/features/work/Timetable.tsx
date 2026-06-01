@@ -41,6 +41,7 @@ import {
   autoColorFor,
   bellByPeriod,
   buildCsv,
+  clampApplyDays,
   colorOf,
   computeWorkload,
   cycleDayForDate,
@@ -236,13 +237,22 @@ export default function Timetable() {
   }
 
   function saveDraft(d: EditorDraft, applyDays: number[]) {
+    // 只套用到顯示範圍(days)內嘅日子，避免寫入永不顯示／無法刪除嘅孤兒 slot。
+    // 批量 picker 永遠列一至六，但顯示範圍可被收窄（如設定還原為一至五）。
+    // 當前格 d.day 必定喺 days 內（格只由 WeekGrid 範圍內可開），夾完至少保留當前日。
+    const targetDays = clampApplyDays(applyDays, days)
+    if (targetDays.length === 0) {
+      setDraft(null)
+      return
+    }
+
     const subject = d.subject.trim()
     const room = d.room.trim()
     const classId = d.classId || undefined
     const finalSubject =
       subject || (classId ? (classNameById.get(classId) ?? '') : '')
 
-    for (const day of applyDays) {
+    for (const day of targetDays) {
       const key = slotKey(day, d.period)
       const existing = slotByKey.get(key)
       const payload = {
@@ -270,8 +280,8 @@ export default function Timetable() {
     }
 
     toast.success(
-      applyDays.length > 1
-        ? `已套用到 ${applyDays.length} 日`
+      targetDays.length > 1
+        ? `已套用到 ${targetDays.length} 日`
         : d.slotId
           ? '已更新課堂'
           : '已新增課堂',

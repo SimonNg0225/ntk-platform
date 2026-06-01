@@ -224,6 +224,28 @@ export function slotKey(day: number, period: number): string {
   return `${day}-${period}`
 }
 
+/**
+ * 把「批量套用」嘅目標日子夾到顯示範圍(visibleDays)內。
+ * 批量 picker 用 DAY_DEFS（永遠一至六），但顯示範圍可被設定收窄（如一至五），
+ * 範圍外嘅日子若寫入會變成永不顯示、亦唔入工作量統計、無法由 WeekGrid 點開刪除嘅孤兒 slot。
+ * 喺寫入前夾範圍即可堵塞。保留原次序、去重。
+ */
+export function clampApplyDays(
+  applyDays: number[],
+  visibleDays: number[],
+): number[] {
+  const allowed = new Set(visibleDays)
+  const seen = new Set<number>()
+  const out: number[] = []
+  for (const day of applyDays) {
+    if (allowed.has(day) && !seen.has(day)) {
+      seen.add(day)
+      out.push(day)
+    }
+  }
+  return out
+}
+
 // ───────── 衝突偵測 ─────────
 export type ConflictKind = 'class' | 'room'
 export interface Conflict {
