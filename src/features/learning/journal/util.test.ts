@@ -14,6 +14,7 @@ import {
   parseTags,
   allTagsOf,
   excerpt,
+  stripUndefined,
   longestStreak,
   moodDistribution,
   weekdayCounts,
@@ -241,6 +242,34 @@ describe('excerpt', () => {
 
   it('空字串 → 空字串', () => {
     expect(excerpt('', 140)).toBe('')
+  })
+})
+
+// ───────────────────────── 物件工具 ─────────────────────────
+describe('stripUndefined', () => {
+  it('去走值為 undefined 嘅 key（其餘原樣保留）', () => {
+    const out = stripUndefined({ a: 1, b: undefined, c: 'x' })
+    expect(out).toEqual({ a: 1, c: 'x' })
+    expect(Object.keys(out)).toEqual(['a', 'c']) // b 嘅 key 真係唔存在（唔係 = undefined）
+  })
+
+  it('只去 undefined：null / 0 / "" / false 等 falsy 值一律保留', () => {
+    const out = stripUndefined({ z: 0, e: '', f: false, n: null, u: undefined })
+    expect(out).toEqual({ z: 0, e: '', f: false, n: null })
+    expect('u' in out).toBe(false)
+  })
+
+  it('回新物件、唔改原物件（純函式）', () => {
+    const src = { a: 1, b: undefined }
+    const out = stripUndefined(src)
+    expect(out).not.toBe(src)
+    expect('b' in src).toBe(true) // 原物件原封不動
+    expect('b' in out).toBe(false)
+  })
+
+  it('全 undefined → 空物件；空物件 → 空物件', () => {
+    expect(stripUndefined({ a: undefined, b: undefined })).toEqual({})
+    expect(stripUndefined({})).toEqual({})
   })
 })
 

@@ -73,6 +73,7 @@ import {
   parseTags,
   promptOfDay,
   relativeTime,
+  stripUndefined,
   toMarkdown,
   todayKey,
   weekdayCounts,
@@ -256,7 +257,11 @@ export default function Journal() {
   const handleSave = (d: EntryDraft) => {
     const now = new Date().toISOString()
     if (editing) {
-      journalDocsCol.update(editing.id, {
+      // 編輯器係改「成篇」：整篇取代而非 merge patch。清空咗嘅 optional 欄位
+      // 要真正消失 —— update 嘅 {...i,...patch} 唔識刪 key，patch undefined 只
+      // 會喺 in-memory 留低顯式 undefined（persist 後又 drop，前後唔一致）。
+      const next = stripUndefined<JournalDoc>({
+        ...editing,
         date: d.date,
         title: d.title || undefined,
         content: d.content,
@@ -266,19 +271,22 @@ export default function Journal() {
         favorite: d.favorite,
         updatedAt: now,
       })
+      journalDocsCol.set(journalDocsCol.get().map((doc) => (doc.id === editing.id ? next : doc)))
       toast.success('已更新日誌')
     } else {
-      journalDocsCol.add({
-        date: d.date,
-        title: d.title || undefined,
-        content: d.content,
-        mood: d.mood || undefined,
-        weather: d.weather || undefined,
-        gratitude: d.gratitude || undefined,
-        favorite: d.favorite,
-        createdAt: now,
-        updatedAt: now,
-      })
+      journalDocsCol.add(
+        stripUndefined({
+          date: d.date,
+          title: d.title || undefined,
+          content: d.content,
+          mood: d.mood || undefined,
+          weather: d.weather || undefined,
+          gratitude: d.gratitude || undefined,
+          favorite: d.favorite,
+          createdAt: now,
+          updatedAt: now,
+        }),
+      )
       toast.success('已儲存日誌')
     }
     setEditorOpen(false)

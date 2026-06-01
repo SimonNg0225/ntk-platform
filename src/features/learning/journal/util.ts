@@ -172,6 +172,23 @@ export function excerpt(text: string, len = 140): string {
   return flat.length > len ? flat.slice(0, len).trimEnd() + '…' : flat
 }
 
+// ───────── 物件 / store 寫入工具 ─────────
+/**
+ * 淺層去走「值為 undefined」嘅 key，回傳同型別嘅新物件（唔改原物件）。
+ * 寫入 collection 前用：清走 optional 欄位嘅顯式 undefined。否則 in-memory
+ * 物件會帶住 `key: undefined`，但 persist（JSON.stringify）會 drop 咗，造成
+ * reload 前後唔一致（Object.keys / exactOptional 式 narrowing 會行為不定）。
+ * 只去 undefined —— null / 0 / '' / false 等 falsy 值一律保留。
+ */
+export function stripUndefined<T extends object>(obj: T): T {
+  const out: Partial<T> = {}
+  for (const key of Object.keys(obj) as (keyof T)[]) {
+    const v = obj[key]
+    if (v !== undefined) out[key] = v
+  }
+  return out as T
+}
+
 // ───────── 連續天數（streak）─────────
 /** 由今日起連續有日誌嘅日數（今日未寫就由琴日計起，唔斷 streak） */
 export function currentStreak(dateSet: Set<string>): number {
