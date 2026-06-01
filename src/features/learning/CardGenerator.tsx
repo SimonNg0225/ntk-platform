@@ -75,11 +75,7 @@ import {
   buildUserPrompt,
   assembleDraft,
 } from './cardgen/prompts'
-import {
-  genHistoryCol,
-  recentHistory,
-  markSaved,
-} from './cardgen/store'
+import { genHistoryCol, markSaved } from './cardgen/store'
 import { GenTrend, TypeDonut } from './cardgen/Charts'
 import type {
   CardType,
@@ -240,6 +236,13 @@ export default function CardGenerator() {
         d.front.toLowerCase().includes(q) || d.back.toLowerCase().includes(q),
     )
   }, [drafts, query])
+
+  // 最近 40 條歷史（新→舊）：用已 subscribe 嘅 history memo，
+  // 避免每次 render 經 recentHistory 重新由 collection 複製 + 排序
+  const recent = useMemo(
+    () => [...history].sort((a, b) => b.ts.localeCompare(a.ts)).slice(0, 40),
+    [history],
+  )
 
   // ── 守門：未啟用 / 未登入 ──────────────────────────────────
   if (!isAIConfigured) {
@@ -1188,7 +1191,7 @@ export default function CardGenerator() {
             />
           ) : (
             <ul className="space-y-2">
-              {recentHistory(40).map((r) => (
+              {recent.map((r) => (
                 <li
                   key={r.id}
                   className="flex items-start gap-3 rounded-2xl border border-slate-200/80 p-3.5 transition duration-200 hover:border-slate-300 hover:shadow-xs dark:border-slate-700/60 dark:hover:border-slate-600"
