@@ -6,6 +6,7 @@ import {
   Plus,
   Star,
   Trash2,
+  TrendingUp,
   X,
 } from 'lucide-react'
 import {
@@ -36,6 +37,7 @@ import { StarRating } from './StarRating'
 import {
   daysBetween,
   progressPct,
+  readingPace,
   relativeLabel,
   todayKey,
   totalPagesRead,
@@ -73,6 +75,7 @@ export default function BookModal({
   const pct = progressPct(book)
   const pagesRead = totalPagesRead(book)
   const span = daysBetween(book.startedOn, book.finishedOn)
+  const pace = readingPace(book)
 
   const shelfSuggestions = useMemo(
     () => allShelves.filter((s) => !book.shelves.includes(s)),
@@ -291,6 +294,16 @@ export default function BookModal({
               tone={book.status === 'done' ? 'green' : 'accent'}
               className="mt-2.5"
             />
+            {pace && (
+              <p className="mt-2 flex items-center gap-1.5 text-[11px] text-slate-500 dark:text-slate-400">
+                <TrendingUp size={13} className="shrink-0 text-accent" />
+                <span>
+                  約每日 <span className="tabular-nums font-medium text-slate-600 dark:text-slate-300">{Math.round(pace.pagesPerDay)}</span> 頁
+                  {' · 預計 '}
+                  <span className="tabular-nums font-medium text-slate-600 dark:text-slate-300">{relativeLabel(pace.etaKey)}</span>讀完
+                </span>
+              </p>
+            )}
           </div>
 
           {/* 加閱讀時段 */}

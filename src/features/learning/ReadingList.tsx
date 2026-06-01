@@ -13,6 +13,7 @@ import {
   Star,
   Target,
   Trash2,
+  TrendingUp,
   Upload,
 } from 'lucide-react'
 import { useCollection } from '../../lib/store'
@@ -62,6 +63,8 @@ import {
   monthlyFinished,
   parseImport,
   progressPct,
+  readingPace,
+  relativeLabel,
   thisYear,
   todayKey,
 } from './reading/util'
@@ -672,6 +675,7 @@ function BookCoverCard({
   onQuickStatus: (book: Book, status: BookStatus) => void
 }) {
   const pct = progressPct(b)
+  const pace = readingPace(b)
   const sel = selected.has(b.id)
   return (
     <button
@@ -742,6 +746,16 @@ function BookCoverCard({
             <span className="text-[11px] text-slate-400 dark:text-slate-500">未評分</span>
           )}
         </div>
+
+        {/* hover 顯示閱讀步速 + 預計讀完（只在「在讀」且資料齊全時） */}
+        {!selectMode && pace && (
+          <p className="mt-1.5 hidden items-center gap-1 text-[10px] leading-tight text-slate-500 group-hover:flex dark:text-slate-400">
+            <TrendingUp size={11} className="shrink-0 text-accent" />
+            <span className="truncate">
+              每日 {Math.round(pace.pagesPerDay)} 頁 · {relativeLabel(pace.etaKey)}讀完
+            </span>
+          </p>
+        )}
 
         {/* hover 快速切換（非選取模式） */}
         {!selectMode && (

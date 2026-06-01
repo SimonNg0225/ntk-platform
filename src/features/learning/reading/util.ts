@@ -63,6 +63,41 @@ export function totalPagesRead(book: Book): number {
   return Math.max(fromSessions, book.currentPage ?? 0)
 }
 
+// ───────── 閱讀步速 + 預計讀完日（衍生統計） ─────────
+export interface ReadingPace {
+  pagesPerDay: number // 平均每日頁數
+  remainingPages: number // 仲要讀幾多頁
+  daysLeft: number // 按步速推算仲要幾日（≥1）
+  etaKey: string // 預計讀完日（YYYY-MM-DD，本地）
+}
+
+/**
+ * 對「在讀」而且有 startedOn + 已知 totalPages 嘅書，
+ * 計平均每日頁數同推算預計讀完日。
+ * daysElapsed 用 daysBetween（含頭尾、本地時區）；pagesRead 用 totalPagesRead。
+ * 缺料（非 reading / 無 startedOn / 無 totalPages / 未讀任何頁 / 已讀完無剩）→ null。
+ */
+export function readingPace(book: Book, today: string = todayKey()): ReadingPace | null {
+  if (book.status !== 'reading') return null
+  if (!book.startedOn) return null
+  if (!book.totalPages || book.totalPages <= 0) return null
+
+  const pagesRead = totalPagesRead(book)
+  if (pagesRead <= 0) return null
+
+  const daysElapsed = daysBetween(book.startedOn, today) ?? 1
+  const pagesPerDay = pagesRead / Math.max(1, daysElapsed)
+  if (pagesPerDay <= 0) return null
+
+  const remainingPages = Math.max(0, book.totalPages - (book.currentPage ?? 0))
+  if (remainingPages <= 0) return null
+
+  const daysLeft = Math.max(1, Math.ceil(remainingPages / pagesPerDay))
+  const etaKey = toKey(addDays(fromKey(today), daysLeft))
+
+  return { pagesPerDay, remainingPages, daysLeft, etaKey }
+}
+
 // ───────── 統計彙總 ─────────
 export interface Stats {
   total: number
