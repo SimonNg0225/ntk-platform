@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import {
   localISO,
   addDays,
@@ -13,6 +13,7 @@ import {
   smartSort,
   completionStreak,
   todayISO,
+  offsetFromToday,
 } from './util'
 import type { HeatCell } from './util'
 import type { FullTask, Project, TaskMeta, Priority } from './types'
@@ -88,6 +89,71 @@ describe('addDays', () => {
     expect(addDays('2026-03-01', -1)).toBe('2026-02-28') // 2026 平年
     expect(addDays('2024-03-01', -1)).toBe('2024-02-29') // 2024 閏年
     expect(addDays('2026-02-28', 1)).toBe('2026-03-01')
+  })
+})
+
+// ── offsetFromToday：由今日起 +N 日（today 基準 + 偏移方向）──
+//  = addDays(todayISO(), n)，但組合行為（用 today 做基準、方向正確）
+//  本身未鎖。用 fake timers + setSystemTime 釘死「今日」（TZ 已喺
+//  vitest.config 釘死 HKT；setSystemTime 用本地分量建構，本地日無歧義），
+//  令斷言 deterministic（跟 srs.test.ts 風格）。
+describe('offsetFromToday', () => {
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it('0 偏移 = 今日（todayISO 同源）', () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date(2026, 4, 15, 12, 0, 0)) // 2026-05-15 本地正午
+    expect(offsetFromToday(0)).toBe('2026-05-15')
+    expect(offsetFromToday(0)).toBe(todayISO()) // 必然同 today 基準一致
+  })
+
+  it('+1 = 聽日；-1 = 尋日（偏移方向正確）', () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date(2026, 4, 15, 12, 0, 0)) // 2026-05-15
+    expect(offsetFromToday(1)).toBe('2026-05-16')
+    expect(offsetFromToday(-1)).toBe('2026-05-14')
+  })
+
+  it('唔受當日時 / 分 / 秒影響（凌晨 / 臨晚同一基準）', () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date(2026, 4, 15, 0, 0, 0)) // 凌晨
+    expect(offsetFromToday(0)).toBe('2026-05-15')
+    expect(offsetFromToday(1)).toBe('2026-05-16')
+    vi.setSystemTime(new Date(2026, 4, 15, 23, 59, 59)) // 臨晚（同一本地日）
+    expect(offsetFromToday(0)).toBe('2026-05-15')
+    expect(offsetFromToday(1)).toBe('2026-05-16')
+  })
+
+  it('跨月邊界：今日月尾 +1 → 下月一號', () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date(2026, 4, 31, 9, 0, 0)) // 2026-05-31
+    expect(offsetFromToday(1)).toBe('2026-06-01')
+  })
+
+  it('跨年邊界：今日 12-31 +1 → 翌年 01-01；01-01 -1 → 前一年尾', () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date(2026, 11, 31, 9, 0, 0)) // 2026-12-31
+    expect(offsetFromToday(1)).toBe('2027-01-01')
+    vi.setSystemTime(new Date(2026, 0, 1, 9, 0, 0)) // 2026-01-01
+    expect(offsetFromToday(-1)).toBe('2025-12-31')
+  })
+
+  it('大跨度 +30（與 addDays 同基準一致）', () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date(2026, 4, 15, 9, 0, 0)) // 2026-05-15
+    // 5-15 + 30 日：5 月剩 16 日（到 5-31），餘 14 日入 6 月 → 6-14
+    expect(offsetFromToday(30)).toBe('2026-06-14')
+    expect(offsetFromToday(30)).toBe(addDays(todayISO(), 30)) // = addDays(today, n)
+  })
+
+  it('HKT 早上（UTC 仲係噖日）仍回本地今日 +N（off-by-one 防護）', () => {
+    vi.useFakeTimers()
+    // 07:00 HKT = 2026-05-30T23:00:00Z；若用 UTC 切日會回 05-30，差一日。
+    vi.setSystemTime(new Date(2026, 4, 31, 7, 0, 0))
+    expect(offsetFromToday(0)).toBe('2026-05-31') // 本地今日，唔係 UTC 05-30
+    expect(offsetFromToday(1)).toBe('2026-06-01')
   })
 })
 
