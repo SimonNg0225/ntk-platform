@@ -1,4 +1,4 @@
-import { useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useSettings } from '../context/SettingsContext'
 import { useToast } from '../context/ToastContext'
 import { useConfirm } from '../context/ConfirmContext'
@@ -7,13 +7,45 @@ import { collectionRegistry } from '../lib/store'
 import { preloadAllFeatures } from '../features/registry'
 import { Card, Button, Field, Input, SectionTitle } from '../ui'
 import { seedAllDemo } from '../lib/demoData'
+import {
+  summarizeData,
+  formatBackupReminder,
+  type DataOverview,
+} from '../features/settings/dataOverview'
 
 // 設定頁：外觀、個人資料、資料管理（匯出/匯入/清除）
 export default function Settings() {
-  const { theme, setTheme, displayName, setDisplayName } = useSettings()
+  const { theme, setTheme, displayName, setDisplayName, lastBackupAt, markBackup } =
+    useSettings()
   const toast = useToast()
   const confirm = useConfirm()
   const fileRef = useRef<HTMLInputElement>(null)
+  const [overview, setOverview] = useState<DataOverview | null>(null)
+
+  // 我的資料一覽：先 preload 全部 feature collection 登記齊（同匯出/匯入同源），
+  // 再枚舉 collectionRegistry 數每個集合筆數。之後訂閱所有 collection，資料一
+  // 變即時重算（匯入/清除/載入示範後個一覽會跟住更新）。
+  useEffect(() => {
+    let alive = true
+    const recompute = () => {
+      if (alive) setOverview(summarizeData(exportAllData().data))
+    }
+    const unsubs: (() => void)[] = []
+    preloadAllFeatures()
+      .catch(() => {})
+      .finally(() => {
+        if (!alive) return
+        recompute()
+        for (const col of collectionRegistry.values())
+          unsubs.push(col.subscribe(recompute))
+      })
+    return () => {
+      alive = false
+      unsubs.forEach((u) => u())
+    }
+  }, [])
+
+  const reminder = formatBackupReminder(lastBackupAt)
 
   const doExport = async () => {
     // 先確保所有 lazy feature collection 登記齊，再枚舉 collectionRegistry
@@ -33,6 +65,7 @@ export default function Settings() {
     a.download = `ntk-backup-${new Date().toISOString().slice(0, 10)}.json`
     a.click()
     URL.revokeObjectURL(url)
+    markBackup()
     toast.success('已匯出備份檔案')
   }
 
@@ -126,12 +159,69 @@ export default function Settings() {
         </Field>
       </Card>
 
+      {/* 我的資料一覽 */}
+      <Card className="p-5">
+        <SectionTitle right={
+          overview ? (
+            <span className="text-xs font-semibold tabular-nums text-accent-strong dark:text-accent">
+              共 {overview.total} 筆
+            </span>
+          ) : undefined
+        }>
+          我的資料一覽
+        </SectionTitle>
+        <p className="mb-3 text-sm text-slate-500 dark:text-slate-400">
+          睇清楚本機儲存咗幾多嘢，匯出備份前心裡有數。
+        </p>
+        {!overview ? (
+          <p className="text-sm text-slate-400">計緊…</p>
+        ) : overview.nonEmpty === 0 ? (
+          <p className="text-sm text-slate-400">
+            仲未有資料。可以喺下面載入示範資料試吓。
+          </p>
+        ) : (
+          <ul className="grid grid-cols-2 gap-x-4 gap-y-1.5 sm:grid-cols-3">
+            {overview.rows
+              .filter((r) => r.count > 0)
+              .map((r) => (
+                <li
+                  key={r.key}
+                  className="flex items-baseline justify-between gap-2 border-b border-slate-100 py-1 text-sm dark:border-slate-800"
+                >
+                  <span className="truncate text-slate-600 dark:text-slate-300">
+                    {r.label}
+                  </span>
+                  <span className="shrink-0 font-semibold tabular-nums text-slate-800 dark:text-slate-100">
+                    {r.count}
+                    <span className="ml-0.5 text-xs font-normal text-slate-400">
+                      {r.unit}
+                    </span>
+                  </span>
+                </li>
+              ))}
+          </ul>
+        )}
+      </Card>
+
       {/* 資料管理 */}
       <Card className="p-5">
         <SectionTitle>資料管理</SectionTitle>
         <p className="mb-3 text-sm text-slate-500 dark:text-slate-400">
           你嘅資料目前儲存喺呢部裝置嘅瀏覽器。定期匯出備份，或者喺換機時匯入。
         </p>
+        <div
+          className={`mb-3 flex items-center gap-2 rounded-lg px-3 py-2 text-sm ${
+            reminder.stale
+              ? 'bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400'
+              : 'bg-slate-50 text-slate-500 dark:bg-slate-800 dark:text-slate-400'
+          }`}
+        >
+          <span>{reminder.stale ? '⚠️' : '🛟'}</span>
+          <span>{reminder.text}</span>
+          {reminder.stale && (
+            <span className="font-medium">· 建議而家匯出備份</span>
+          )}
+        </div>
         <div className="flex flex-wrap gap-2">
           <Button variant="secondary" onClick={doExport}>
             ⬇ 匯出備份

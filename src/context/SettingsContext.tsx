@@ -17,17 +17,21 @@ type ThemeMode = 'light' | 'dark' | 'system'
 interface Settings {
   theme: ThemeMode
   displayName: string
+  /** 上次匯出備份嘅時間戳（ISO）；未備份過 = null */
+  lastBackupAt: string | null
 }
 
 interface SettingsApi extends Settings {
   setTheme: (t: ThemeMode) => void
   setDisplayName: (n: string) => void
+  /** 記低「啱啱成功匯出備份」嘅時間戳（設定頁匯出成功後呼叫） */
+  markBackup: () => void
   /** 目前實際生效嘅深淺（system 會解析做 light/dark） */
   resolvedDark: boolean
 }
 
 const STORAGE_KEY = 'ntk.settings'
-const DEFAULTS: Settings = { theme: 'system', displayName: '' }
+const DEFAULTS: Settings = { theme: 'system', displayName: '', lastBackupAt: null }
 
 const SettingsContext = createContext<SettingsApi | null>(null)
 
@@ -81,6 +85,8 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       setTheme: (theme) => setSettings((s) => ({ ...s, theme })),
       setDisplayName: (displayName) =>
         setSettings((s) => ({ ...s, displayName })),
+      markBackup: () =>
+        setSettings((s) => ({ ...s, lastBackupAt: new Date().toISOString() })),
     }),
     [settings, resolvedDark],
   )
