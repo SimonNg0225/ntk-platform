@@ -31,6 +31,8 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
   const resolver = useRef<((v: boolean) => void) | null>(null)
 
   const confirm = useCallback<ConfirmFn>((options) => {
+    // 若有未決對話框，先以 false 結算舊嗰個，避免前一個 Promise 永久 pending（孤兒）
+    resolver.current?.(false)
     setOpts(options)
     return new Promise<boolean>((resolve) => {
       resolver.current = resolve
