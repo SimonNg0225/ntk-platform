@@ -158,7 +158,13 @@ export const HABIT_COLORS: Record<HabitColor, HabitColorSpec> = {
 export const HABIT_COLOR_KEYS = Object.keys(HABIT_COLORS) as HabitColor[]
 
 export function colorOf(c: string | undefined): HabitColorSpec {
-  return HABIT_COLORS[c as HabitColor] ?? HABIT_COLORS.accent
+  // 用 own-property 檢查：唔可以靠 `HABIT_COLORS[c] ?? accent`，因為原型鍵
+  // （如 'toString' / 'constructor'）會撞穿物件原型回傳函式（非 nullish），
+  // ?? 兜唔到，caller 會收到函式而非 HabitColorSpec，讀 spec.heat[i] 即 crash。
+  if (c && Object.prototype.hasOwnProperty.call(HABIT_COLORS, c)) {
+    return HABIT_COLORS[c as HabitColor]
+  }
+  return HABIT_COLORS.accent
 }
 
 // ───────── 頻率目標（每日 / 每週 N 次 / 指定星期）─────────

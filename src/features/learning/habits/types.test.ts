@@ -119,10 +119,16 @@ describe('colorOf（顏色查找 + fallback）', () => {
     expect(colorOf('')).toBe(HABIT_COLORS.accent)
   })
 
-  // NOTE: 原型鍵（'toString' / 'constructor' 等）case 暫不加 —— 見下方說明：
-  // colorOf 用 HABIT_COLORS[c] ?? accent，普通物件 index 會撞到 Object.prototype，
-  // colorOf('toString') 會回 Object.prototype.toString（函式）而非 accent spec，?? 唔兜底。
-  // 屬 source bug，呢輪只報告唔改 source，亦唔加會編碼錯誤行為嘅斷言。
+  it('原型鍵（toString / constructor / __proto__ …）→ fallback 到 accent（唔可以漏穿 Object.prototype）', () => {
+    // 回歸守護：colorOf 必須用 own-property 檢查；若用 HABIT_COLORS[c] ?? accent，
+    // 原型鍵會撞到 Object.prototype 回傳函式（非 nullish），?? 兜唔到 → caller crash。
+    for (const evil of ['toString', 'constructor', 'hasOwnProperty', 'valueOf', '__proto__', 'isPrototypeOf']) {
+      const spec = colorOf(evil)
+      expect(spec).toBe(HABIT_COLORS.accent)
+      expect(typeof spec).toBe('object') // 唔係函式
+      expect(spec.heat).toHaveLength(5) // caller 讀 spec.heat[i] 唔會炸
+    }
+  })
 
   it('回傳 heat 永遠係 5 個元素（heatmap 唔會 index out of range）', () => {
     // 已知色、fallback、空字串 — 任何輸入都要 5 級填色
