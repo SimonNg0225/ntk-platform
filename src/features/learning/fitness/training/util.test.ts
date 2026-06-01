@@ -19,6 +19,10 @@ import {
   lastSetOf,
   computePlates,
   formatClock,
+  exerciseNames,
+  filterByExercise,
+  workoutsToSetRows,
+  SET_ROW_HEADER,
 } from './util'
 import { fromKey } from '../common'
 import type { Workout, WorkoutSet } from './types'
@@ -616,5 +620,134 @@ describe('formatClock', () => {
   it('負 / NaN → 0:00（守衞）', () => {
     expect(formatClock(-5)).toBe('0:00')
     expect(formatClock(NaN)).toBe('0:00')
+  })
+})
+
+// ============================================================
+//  exerciseNames（篩選下拉用）
+// ============================================================
+
+describe('exerciseNames', () => {
+  it('去重 + trim + 字序排', () => {
+    const data = [
+      w({ date: key(0), exercises: [{ name: '臥推', sets: [set(5, 60)] }, { name: '深蹲', sets: [set(5, 100)] }] }),
+      w({ date: key(-1), exercises: [{ name: ' 臥推 ', sets: [set(5, 62)] }, { name: '硬舉', sets: [set(5, 120)] }] }),
+    ]
+    const names = exerciseNames(data)
+    // 去重後得 3 個（臥推 / 深蹲 / 硬舉），唔重複
+    expect(names).toHaveLength(3)
+    expect(new Set(names).size).toBe(3)
+    expect(names).toContain('臥推')
+    expect(names).toContain('深蹲')
+    expect(names).toContain('硬舉')
+    // 穩定排序：同一輸入兩次結果一致
+    expect(exerciseNames(data)).toEqual(names)
+  })
+  it('空名 / 純空白跳過', () => {
+    const data = [w({ date: key(0), exercises: [{ name: '   ', sets: [set(5, 60)] }, { name: '', sets: [set(5, 60)] }] })]
+    expect(exerciseNames(data)).toEqual([])
+  })
+  it('空陣列 / 守衞 → 空', () => {
+    expect(exerciseNames([])).toEqual([])
+    expect(exerciseNames([w({ date: key(0), exercises: [] })])).toEqual([])
+  })
+})
+
+// ============================================================
+//  filterByExercise（按動作篩選歷史）
+// ============================================================
+
+describe('filterByExercise', () => {
+  const data = [
+    w({ id: 'a', date: key(0), exercises: [{ name: '臥推', sets: [set(5, 60)] }, { name: '飛鳥', sets: [set(12, 10)] }] }),
+    w({ id: 'b', date: key(-1), exercises: [{ name: '深蹲', sets: [set(5, 100)] }] }),
+    w({ id: 'c', date: key(-2), exercises: [{ name: ' 臥推 ', sets: [set(5, 62)] }] }),
+  ]
+  it('只保留含該動作嘅 workout（trim 後同名）', () => {
+    expect(filterByExercise(data, '臥推').map((x) => x.id)).toEqual(['a', 'c'])
+    expect(filterByExercise(data, '深蹲').map((x) => x.id)).toEqual(['b'])
+  })
+  it('空白名 → 全部（原樣，唔過濾）', () => {
+    expect(filterByExercise(data, '').map((x) => x.id)).toEqual(['a', 'b', 'c'])
+    expect(filterByExercise(data, '   ').map((x) => x.id)).toEqual(['a', 'b', 'c'])
+  })
+  it('搵唔到 → 空', () => {
+    expect(filterByExercise(data, '划船')).toEqual([])
+  })
+  it('唔改原陣列、唔排序（保留入參次序）', () => {
+    const copy = [...data]
+    const out = filterByExercise(data, '')
+    expect(data).toEqual(copy)
+    expect(out).not.toBe(data) // 新陣列
+  })
+  it('空陣列 / 守衞', () => {
+    expect(filterByExercise([], '臥推')).toEqual([])
+  })
+})
+
+// ============================================================
+//  workoutsToSetRows（CSV 每組一行）
+// ============================================================
+
+describe('workoutsToSetRows', () => {
+  it('每組 set 一行，欄序對齊 SET_ROW_HEADER；組序由 1 起', () => {
+    const data = [
+      w({
+        id: 'a',
+        date: key(0),
+        exercises: [{ name: '臥推', sets: [set(8, 60, 7), set(6, 65)] }],
+      }),
+    ]
+    const rows = workoutsToSetRows(data)
+    expect(SET_ROW_HEADER).toHaveLength(7)
+    expect(rows).toHaveLength(2)
+    // 第一組：有 RPE
+    expect(rows[0]).toEqual([key(0), '臥推', 1, 8, 60, 7, Math.round(60 * (1 + 8 / 30) * 10) / 10])
+    // 第二組：缺 RPE → '' 空格（唔當 0），組序遞增
+    expect(rows[1]).toEqual([key(0), '臥推', 2, 6, 65, '', Math.round(65 * (1 + 6 / 30) * 10) / 10])
+  })
+  it('按 date 新→舊排（同 sortWorkoutsDesc），同筆內按動作 → set 原序', () => {
+    const data = [
+      w({ id: 'old', date: key(-2), exercises: [{ name: '深蹲', sets: [set(5, 100)] }] }),
+      w({
+        id: 'new',
+        date: key(0),
+        exercises: [
+          { name: '臥推', sets: [set(5, 60)] },
+          { name: '划船', sets: [set(8, 40)] },
+        ],
+      }),
+    ]
+    const rows = workoutsToSetRows(data)
+    // 新嗰日（兩動作）先，舊嗰日後
+    expect(rows.map((r) => [r[0], r[1]])).toEqual([
+      [key(0), '臥推'],
+      [key(0), '划船'],
+      [key(-2), '深蹲'],
+    ])
+  })
+  it('空名動作標「動作」；冇 set 嘅動作唔出行', () => {
+    const data = [
+      w({
+        date: key(0),
+        exercises: [
+          { name: '  ', sets: [set(10, 0)] },
+          { name: '熱身', sets: [] },
+        ],
+      }),
+    ]
+    const rows = workoutsToSetRows(data)
+    expect(rows).toHaveLength(1)
+    expect(rows[0][1]).toBe('動作')
+  })
+  it('reps/weight NaN/負守衞 → 0；自重（weight 0）est1RM = 0', () => {
+    const data = [
+      w({ date: key(0), exercises: [{ name: '引體', sets: [{ reps: NaN, weightKg: -5 } as WorkoutSet] }] }),
+    ]
+    const rows = workoutsToSetRows(data)
+    expect(rows[0]).toEqual([key(0), '引體', 1, 0, 0, '', 0])
+  })
+  it('空陣列 → 空', () => {
+    expect(workoutsToSetRows([])).toEqual([])
   })
 })

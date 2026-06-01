@@ -236,6 +236,82 @@ export function prByExercise(workouts: Workout[]): Map<string, ExercisePR> {
   return map
 }
 
+/**
+ * 由全部訓練紀錄抽出曾練過嘅動作名（trim 後去重），用嚟做篩選下拉。
+ * 空名跳過；按本地（zh）字序排，順序穩定。
+ */
+export function exerciseNames(workouts: Workout[]): string[] {
+  const set = new Set<string>()
+  const list = Array.isArray(workouts) ? workouts : []
+  for (const w of list) {
+    if (!w || !Array.isArray(w.exercises)) continue
+    for (const ex of w.exercises) {
+      const name = (ex?.name ?? '').trim()
+      if (name) set.add(name)
+    }
+  }
+  return Array.from(set).sort((a, b) => a.localeCompare(b, 'zh-Hant'))
+}
+
+/**
+ * 篩選：只保留含某動作（trim 後同名）嘅 workout。
+ * name 空白 → 當「全部」，原樣回傳（唔過濾）。唔改原陣列、唔排序
+ * （排序交畀呼叫者，行為同既有清單一致）。
+ */
+export function filterByExercise(workouts: Workout[], name: string): Workout[] {
+  const list = Array.isArray(workouts) ? workouts : []
+  const target = (name ?? '').trim()
+  if (target === '') return [...list]
+  return list.filter(
+    (w) =>
+      w &&
+      Array.isArray(w.exercises) &&
+      w.exercises.some((ex) => (ex?.name ?? '').trim() === target),
+  )
+}
+
+/** CSV 匯出表頭（每組 set 一行）。 */
+export const SET_ROW_HEADER = [
+  '日期',
+  '動作',
+  '組序',
+  '次數',
+  '重量(kg)',
+  'RPE',
+  '估算1RM',
+] as const
+
+/**
+ * 攤平所有訓練成「每組 set 一行」嘅二維資料（畀 CSV 匯出）。
+ * 欄序對齊 SET_ROW_HEADER：日期 / 動作 / 組序 / 次數 / 重量 / RPE / 估算1RM。
+ *  - 順序：date 新→舊（同 sortWorkoutsDesc），同筆內按動作 → set 原序，組序由 1 起。
+ *  - 缺 RPE → ''（空格，唔當 0）。est1RM 四捨五入 0.1；reps/weight 守 NaN/負 → 0。
+ *  - 空名動作標「動作」（同列表顯示一致）。冇 set 嘅動作唔出行。
+ */
+export function workoutsToSetRows(
+  workouts: Workout[],
+): (string | number)[][] {
+  const rows: (string | number)[][] = []
+  for (const w of sortWorkoutsDesc(workouts)) {
+    if (!w || !Array.isArray(w.exercises)) continue
+    for (const ex of w.exercises) {
+      if (!Array.isArray(ex?.sets)) continue
+      const name = (ex.name ?? '').trim() || '動作'
+      ex.sets.forEach((set, i) => {
+        const reps = num(set?.reps, 0)
+        const weightKg = num(set?.weightKg, 0)
+        const rpe =
+          typeof set?.rpe === 'number' && Number.isFinite(set.rpe)
+            ? set.rpe
+            : ''
+        const e1 = Math.round(est1RM(set?.weightKg, set?.reps) * 10) / 10
+        rows.push([w.date, name, i + 1, reps, weightKg, rpe, e1])
+      })
+    }
+  }
+  return rows
+}
+
 /** 一次訓練嘅最高單組 RPE（用嚟標疲勞，缺則 null）。 */
 export function maxRpe(w: Workout): number | null {
   if (!w || !Array.isArray(w.exercises)) return null

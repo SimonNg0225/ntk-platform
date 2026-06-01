@@ -17,6 +17,7 @@ import {
   Pause,
   RotateCcw,
   Calculator,
+  Download,
   type LucideIcon,
 } from 'lucide-react'
 import {
@@ -25,6 +26,7 @@ import {
   Input,
   Field,
   Modal,
+  Select,
   SegmentedControl,
   EmptyState,
   Badge,
@@ -32,6 +34,7 @@ import {
   Textarea,
   cx,
 } from '../../../../ui'
+import { downloadCsv } from '../../../work/shared/csv'
 import { useToast } from '../../../../context/ToastContext'
 import {
   complete,
@@ -59,6 +62,10 @@ import {
   computePlates,
   formatClock,
   DEFAULT_PLATES_KG,
+  exerciseNames,
+  filterByExercise,
+  workoutsToSetRows,
+  SET_ROW_HEADER,
 } from './util'
 import { VolumeBars, RpeTrend, fmtVol } from './Charts'
 
@@ -191,6 +198,8 @@ export default function TrainingView() {
   const [confirmDel, setConfirmDel] = useState<Workout | null>(null)
   const [prOpen, setPrOpen] = useState(false)
   const [plateOpen, setPlateOpen] = useState(false)
+  // 訓練紀錄清單：按動作篩選（''＝全部）
+  const [exFilter, setExFilter] = useState('')
 
   // ── 聚合（全部 memo，依賴 workouts）──
   const sorted = useMemo(() => sortWorkoutsDesc(workouts), [workouts])
@@ -237,6 +246,30 @@ export default function TrainingView() {
 
   const volBars = period === 'days' ? dayBars : weekBars
   const rpePts = period === 'days' ? dayRpe : weekRpe
+
+  // ── 動作篩選 + CSV 匯出 ──
+  const exNames = useMemo(() => exerciseNames(workouts), [workouts])
+  // 篩選名若已唔存在（刪/改後）→ 當「全部」，避免清單變空無法復原。
+  const activeFilter = exFilter && exNames.includes(exFilter) ? exFilter : ''
+  // 清單按動作篩 + 新→舊排（圖表 / KPI / PR 仍用全歷史）。
+  const filteredSorted = useMemo(
+    () => sortWorkoutsDesc(filterByExercise(workouts, activeFilter)),
+    [workouts, activeFilter],
+  )
+
+  function exportCsv() {
+    const rows = workoutsToSetRows(filterByExercise(workouts, activeFilter))
+    if (rows.length === 0) {
+      toast.info('未有可匯出嘅組數')
+      return
+    }
+    const tag = activeFilter ? `_${activeFilter}` : ''
+    downloadCsv(`訓練紀錄${tag}_${todayKey()}.csv`, [
+      [...SET_ROW_HEADER],
+      ...rows,
+    ])
+    toast.success(`已匯出 ${rows.length} 組 CSV`)
+  }
 
   // ── 動作 ──
   function openNew() {
@@ -423,15 +456,42 @@ export default function TrainingView() {
 
       {/* ── Session 列表 ── */}
       <div>
-        <div className="mb-3 flex items-center justify-between">
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
           <h2 className="flex items-center gap-1.5 text-sm font-semibold text-slate-700 dark:text-slate-200">
             <CalendarDays size={15} /> 訓練紀錄
             {sorted.length > 0 && (
               <span className="text-xs font-normal text-slate-400">
-                （{sorted.length}）
+                （{activeFilter ? `${filteredSorted.length}／${sorted.length}` : sorted.length}）
               </span>
             )}
           </h2>
+          {sorted.length > 0 && (
+            <div className="flex items-center gap-2">
+              {exNames.length > 0 && (
+                <Select
+                  value={activeFilter}
+                  onChange={(e) => setExFilter(e.target.value)}
+                  aria-label="按動作篩選訓練紀錄"
+                  className="h-9 w-auto py-0 text-xs"
+                >
+                  <option value="">全部動作</option>
+                  {exNames.map((name) => (
+                    <option key={name} value={name}>
+                      {name}
+                    </option>
+                  ))}
+                </Select>
+              )}
+              <Button
+                variant="secondary"
+                size="sm"
+                icon={Download}
+                onClick={exportCsv}
+              >
+                匯出 CSV
+              </Button>
+            </div>
+          )}
         </div>
         {sorted.length === 0 ? (
           <EmptyState
@@ -444,9 +504,20 @@ export default function TrainingView() {
               </Button>
             }
           />
+        ) : filteredSorted.length === 0 ? (
+          <EmptyState
+            icon={Dumbbell}
+            title={`「${activeFilter}」未有紀錄`}
+            hint="揀返「全部動作」睇晒所有訓練。"
+            action={
+              <Button variant="secondary" onClick={() => setExFilter('')}>
+                清除篩選
+              </Button>
+            }
+          />
         ) : (
           <div className="space-y-3">
-            {sorted.map((w) => (
+            {filteredSorted.map((w) => (
               <WorkoutRow
                 key={w.id}
                 workout={w}
