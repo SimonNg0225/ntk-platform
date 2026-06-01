@@ -984,25 +984,32 @@ const Composer = memo(function Composer({
   onOpenTemplate: () => void
   onOpenContext: () => void
 }) {
-  const [text, setText] = useState(seed.text)
   const ref = useRef<HTMLTextAreaElement | null>(null)
+  // textarea 改為「非受控」：實際文字以 DOM（ref.current.value）為準，唔再綁 value={text}。
+  // text state 淨係用嚟畀字數顯示／送出掣 enable，唔會寫返落 textarea。
+  // 關鍵：打字途中 React 唔再改寫 textarea 嘅 value／游標，
+  // 中文 IME 組字先唔會被打斷（之前每打一個字都重寫 value → 輸入法彈走）。
+  const [text, setText] = useState(seed.text)
 
   useEffect(() => {
+    const el = ref.current
+    if (el) el.value = seed.text
     setText(seed.text)
     requestAnimationFrame(() => {
-      const el = ref.current
-      if (!el) return
-      el.focus()
-      el.selectionStart = el.selectionEnd = el.value.length
+      const node = ref.current
+      if (!node) return
+      node.focus()
+      node.selectionStart = node.selectionEnd = node.value.length
     })
     // 只喺 seed.n（父組件信號）變先載入；唔包 seed.text 入 deps 係刻意。
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [seed.n])
 
   const submit = () => {
-    const t = text.trim()
+    const t = (ref.current?.value ?? text).trim()
     if (!t || busy) return
     onSend(t)
+    if (ref.current) ref.current.value = ''
     setText('')
   }
 
@@ -1022,7 +1029,7 @@ const Composer = memo(function Composer({
         rows={2}
         className="resize-none border-0 bg-transparent px-2.5 py-1.5 text-[13.5px] leading-relaxed shadow-none focus:ring-0 dark:bg-transparent"
         placeholder={`打你想問嘅嘢…（Enter 送出 · Shift+Enter 換行 · ${MOD}/ 範本）`}
-        value={text}
+        defaultValue={seed.text}
         onChange={(e) => setText(e.target.value)}
         onKeyDown={onKeyDown}
         disabled={busy}
