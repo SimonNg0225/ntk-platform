@@ -389,20 +389,5 @@ export function rateBarTone(rate: number | null): 'accent' | 'green' | 'amber' |
   return 'rose'
 }
 
-// ───────── CSV 匯出 ─────────
-function esc(v: string | number): string {
-  const s = String(v)
-  return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s
-}
-
-export function downloadCsv(filename: string, rows: (string | number)[][]) {
-  const csv = rows.map((r) => r.map(esc).join(',')).join('\r\n')
-  // BOM 令 Excel 正確讀中文
-  const blob = new Blob([`﻿${csv}`], { type: 'text/csv;charset=utf-8;' })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = filename
-  a.click()
-  URL.revokeObjectURL(url)
-}
+// ───────── CSV 匯出（共用層，見 ../shared/csv；BOM 令 Excel 正確讀中文）─────────
+export { downloadCsv } from '../shared/csv'

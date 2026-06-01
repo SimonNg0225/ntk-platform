@@ -385,19 +385,5 @@ export function assessmentSortKey(a: Assessment): string {
   return a.date ?? a.createdAt ?? ''
 }
 
-// ───────── CSV 工具 ─────────
-export function csvEscape(v: string | number): string {
-  const s = String(v)
-  return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s
-}
-
-export function downloadCsv(filename: string, rows: (string | number)[][]) {
-  const csv = rows.map((r) => r.map(csvEscape).join(',')).join('\r\n')
-  const blob = new Blob([`﻿${csv}`], { type: 'text/csv;charset=utf-8;' })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = filename
-  a.click()
-  URL.revokeObjectURL(url)
-}
+// ───────── CSV 工具（共用層，見 ../shared/csv）─────────
+export { csvEscape, downloadCsv } from '../shared/csv'
