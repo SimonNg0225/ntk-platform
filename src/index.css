@@ -10,11 +10,11 @@
    ============================================================ */
 :root {
   /* ① 動態主題色（學習模式 fallback；切模式時 ModeContext 覆寫呢 5 個） */
-  --accent: #2f6cb3; /* navy-600 / 學習 */
-  --accent-soft: #e9f0f9;
-  --accent-strong: #234f86; /* navy-700 */
-  --accent-grad-from: #3a74bb; /* navy-500 */
-  --accent-grad-to: #1f4a7d;
+  --accent: #4f46e5; /* indigo-600 / 學習 */
+  --accent-soft: #eef2ff; /* indigo-50 */
+  --accent-strong: #4338ca; /* indigo-700 */
+  --accent-grad-from: #6366f1; /* indigo-500 */
+  --accent-grad-to: #4338ca; /* indigo-700 */
 
   /* ② 靜態結構色 — 淺色（深色喺 html.dark 覆寫；ModeContext 唔掂） */
   --app-bg: #f4f7fb;
@@ -101,6 +101,11 @@ body,
 #root {
   height: 100%;
   margin: 0;
+  /* iOS：鎖死橫向，頁面只准上下捲。任何撐爆視窗嘅子元素都會被 clip，唔會整頁左右拉。
+     需要橫捲嘅寬表格／橫向 chip 列各自用 overflow-x-auto 自行內捲。 */
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 body {

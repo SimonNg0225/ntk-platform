@@ -76,7 +76,7 @@ export default function QuizMode() {
     <div className="space-y-5">
       <PageHeader
         title="自我測驗"
-        description="抽題即測、自動批改、追蹤掌握度同操練錯題。"
+        description="由題庫抽題即刻開測，自動幫你批改、睇住掌握度、再操熟錯題。"
         icon={ClipboardList}
       />
 

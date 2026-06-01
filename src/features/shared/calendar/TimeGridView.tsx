@@ -166,28 +166,42 @@ export default function TimeGridView({
   )
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700/60">
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-xs dark:border-slate-700/60 dark:bg-slate-800 dark:shadow-none">
       {/* 日子標頭 */}
-      <div className="flex border-b border-slate-200 dark:border-slate-700">
-        <div className="w-14 shrink-0" />
+      <div className="flex border-b border-slate-200/70 dark:border-slate-700/60">
+        <div className="w-16 shrink-0" />
         {days.map((dk) => {
           const d = fromKey(dk)
           const isToday = dk === tKey
+          const isWeekend = d.getDay() === 0 || d.getDay() === 6
           return (
             <button
               key={dk}
               type="button"
               onClick={() => onPickDay(dk)}
-              className="flex flex-1 flex-col items-center gap-0.5 border-l border-slate-100 py-1.5 transition-colors hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800/50"
+              className={cx(
+                'flex flex-1 flex-col items-center gap-1 py-2 transition-colors first:border-l-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent/40',
+                'border-l border-slate-100 dark:border-slate-800/70',
+                isToday ? 'bg-accent-soft/50 dark:bg-accent/10' : 'hover:bg-slate-50 dark:hover:bg-slate-800/50',
+              )}
             >
-              <span className="text-[11px] text-slate-400 dark:text-slate-500">
+              <span
+                className={cx(
+                  'text-[11px] font-medium',
+                  isToday
+                    ? 'text-accent-strong dark:text-accent'
+                    : isWeekend
+                      ? 'text-slate-400 dark:text-slate-500'
+                      : 'text-slate-500 dark:text-slate-400',
+                )}
+              >
                 星期{WEEKDAYS[d.getDay()]}
               </span>
               <span
                 className={cx(
-                  'flex h-7 w-7 items-center justify-center rounded-full text-sm font-semibold tabular-nums',
+                  'flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold tabular-nums transition',
                   isToday
-                    ? 'bg-accent text-white'
+                    ? 'bg-accent text-white shadow-sm shadow-accent/30'
                     : 'text-slate-700 dark:text-slate-200',
                 )}
               >
@@ -200,14 +214,14 @@ export default function TimeGridView({
 
       {/* 全日列 */}
       {hasAllDay && (
-        <div className="flex border-b border-slate-200 dark:border-slate-700">
-          <div className="flex w-14 shrink-0 items-center justify-end pr-1.5 text-[10px] text-slate-400">
+        <div className="flex border-b border-slate-200/70 bg-slate-50/50 dark:border-slate-700/60 dark:bg-slate-800/40">
+          <div className="flex w-16 shrink-0 items-center justify-end pr-2 text-[10px] font-medium text-slate-400 dark:text-slate-500">
             全日
           </div>
           {days.map((dk) => (
             <div
               key={dk}
-              className="min-w-0 flex-1 space-y-0.5 border-l border-slate-100 p-1 dark:border-slate-800"
+              className="min-w-0 flex-1 space-y-1 border-l border-slate-100 p-1.5 first:border-l-0 dark:border-slate-800/70"
             >
               {(occByDate.get(dk) ?? [])
                 .filter((o) => isAllDay(o.event))
@@ -217,7 +231,7 @@ export default function TimeGridView({
                     type="button"
                     onClick={() => onOpenEvent(occ.event, occ.dateKey)}
                     className={cx(
-                      'block w-full truncate rounded px-1.5 py-0.5 text-left text-[11px]',
+                      'block w-full truncate rounded-lg px-2 py-1 text-left text-[11px] font-medium transition duration-200 hover:brightness-95 active:brightness-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:hover:brightness-110',
                       colorOf(occ.category?.color).chip,
                     )}
                   >
@@ -233,12 +247,12 @@ export default function TimeGridView({
       <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto">
         <div className="relative flex" style={{ height: 24 * HOUR_PX }}>
           {/* 小時標籤 */}
-          <div className="w-14 shrink-0">
+          <div className="w-16 shrink-0">
             {HOURS.map((h) => (
               <div
                 key={h}
                 style={{ height: HOUR_PX }}
-                className="relative -top-2 pr-1.5 text-right text-[10px] tabular-nums text-slate-400 dark:text-slate-500"
+                className="relative -top-2 pr-2 text-right text-[10px] font-medium tabular-nums text-slate-400 dark:text-slate-500"
               >
                 {h === 0 ? '' : hourLabel(h)}
               </div>
@@ -249,10 +263,17 @@ export default function TimeGridView({
           {days.map((dk) => {
             const laid = layouts.get(dk) ?? []
             const isToday = dk === tKey
+            const d = fromKey(dk)
+            const isWeekend = d.getDay() === 0 || d.getDay() === 6
             return (
               <div
                 key={dk}
-                className="relative min-w-0 flex-1 border-l border-slate-100 dark:border-slate-800"
+                className={cx(
+                  'relative min-w-0 flex-1 border-l border-slate-100 first:border-l-0 dark:border-slate-800/70',
+                  isToday
+                    ? 'bg-accent-soft/30 dark:bg-accent/[0.07]'
+                    : isWeekend && 'bg-slate-50/40 dark:bg-slate-900/20',
+                )}
               >
                 {/* 小時格（可撳新增） */}
                 {HOURS.map((h) => (
@@ -262,22 +283,27 @@ export default function TimeGridView({
                     aria-label={`新增 ${hourLabel(h)}:00`}
                     onClick={() => onCreateAt(dk, `${String(h).padStart(2, '0')}:00`)}
                     style={{ height: HOUR_PX }}
-                    className="block w-full border-b border-slate-100 transition-colors hover:bg-accent-soft/40 dark:border-slate-800/70 dark:hover:bg-accent/10"
+                    className={cx(
+                      'block w-full border-b transition-colors hover:bg-accent-soft/50 dark:hover:bg-accent/10',
+                      h === 23
+                        ? 'border-transparent'
+                        : 'border-slate-100/80 dark:border-slate-800/50',
+                    )}
                   />
                 ))}
 
-                {/* 現在時間紅線 */}
+                {/* 現在時間線（柔和 accent 指示） */}
                 {isToday && (
                   <div
                     className="pointer-events-none absolute left-0 right-0 z-20 flex items-center"
                     style={{ top: (nowMin / 60) * HOUR_PX }}
                   >
-                    <span className="-ml-1 h-2 w-2 rounded-full bg-rose-500" />
-                    <span className="h-px flex-1 bg-rose-500" />
+                    <span className="-ml-1.5 h-2.5 w-2.5 rounded-full bg-rose-500 ring-2 ring-white dark:ring-slate-800" />
+                    <span className="h-[1.5px] flex-1 bg-rose-500/80" />
                   </div>
                 )}
 
-                {/* 事件方塊 */}
+                {/* 事件 chip */}
                 {laid.map((p) => {
                   const dragging = drag?.id === p.occ.event.id
                   const s = dragging ? drag!.start : p.start
@@ -313,20 +339,20 @@ export default function TimeGridView({
                       style={{
                         top,
                         height,
-                        left: `calc(${leftPct}% + 2px)`,
-                        width: `calc(${widthPct}% - 4px)`,
+                        left: `calc(${leftPct}% + 3px)`,
+                        width: `calc(${widthPct}% - 6px)`,
                       }}
                       className={cx(
-                        'absolute z-10 cursor-move touch-none select-none overflow-hidden rounded-md px-1.5 py-0.5 text-left text-[11px] leading-tight shadow-sm',
-                        dragging && 'z-30 opacity-90 ring-2 ring-accent/50',
+                        'group absolute z-10 cursor-pointer touch-none select-none overflow-hidden rounded-lg px-2 py-1 text-left text-[11px] leading-tight shadow-sm transition duration-200 hover:shadow-md hover:brightness-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 dark:hover:brightness-110',
+                        dragging && 'z-30 cursor-grabbing opacity-95 shadow-md ring-2 ring-accent/50',
                         c.block,
                       )}
                     >
-                      <span className="block truncate font-medium">
+                      <span className="block truncate font-semibold">
                         {p.occ.event.title}
                       </span>
                       {height > 28 && (
-                        <span className="block truncate tabular-nums opacity-70">
+                        <span className="block truncate tabular-nums opacity-75">
                           {dragging ? fmtMin(s) : p.occ.event.time}
                           {dragging
                             ? `–${fmtMin(en)}`

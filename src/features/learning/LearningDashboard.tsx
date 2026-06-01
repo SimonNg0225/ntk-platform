@@ -24,35 +24,25 @@ import {
   Flame,
   Timer,
   BookText,
-  Target,
   Sliders,
   Eye,
   EyeOff,
   ArrowUp,
   ArrowDown,
-  Check,
-  ChevronRight,
   RotateCcw,
-  Sparkles,
-  BookOpen,
-  ListChecks,
-  Activity as ActivityIcon,
-  Zap,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import {
   Card,
-  StatCard,
   SectionTitle,
   Button,
   Modal,
   IconButton,
   Tooltip,
   SegmentedControl,
-  Badge,
   cx,
 } from '../../ui'
-import { ActivityArea, MiniRing } from './dashboard/charts'
+import BentoOverview from './dashboard/BentoOverview'
 import {
   RingsWidget,
   FlashcardsWidget,
@@ -66,24 +56,18 @@ import {
   HealthWidget,
 } from './dashboard/widgets'
 import {
-  greeting,
-  longToday,
   todayKey,
   buildDaySignals,
   computeKpis,
   buildActivity,
-  trendOf,
-  fmtMin,
   dashPrefsCol,
   readPrefs,
   visibleWidgets,
   WIDGET_DEFS,
-  KPI_DEFS,
   DEFAULT_PREFS,
   type DashInput,
   type DashPrefs,
   type WidgetId,
-  type KpiId,
 } from './dashboard/util'
 
 // ============================================================
@@ -96,12 +80,6 @@ import {
 //    focus logs / habits v2 / goals + milestones / journal docs /
 //    cards / quiz attempts / calendar）
 // ============================================================
-
-const RANGE_OPTS: { id: string; label: string }[] = [
-  { id: '14', label: '14 日' },
-  { id: '30', label: '30 日' },
-  { id: '90', label: '90 日' },
-]
 
 export default function LearningDashboard() {
   // 首次載入：遷移舊習慣 → v2（等儀表板見到資料）
@@ -211,8 +189,6 @@ export default function LearningDashboard() {
       icon: BookText,
     },
   ]
-  const tasksDone = tasks.filter((t) => t.done).length
-
   // ── 習慣打卡（直接喺儀表板完成）──
   function toggleHabit(habitId: string, done: boolean) {
     const existing = habitLogs.find((l) => l.habitId === habitId && l.date === today)
@@ -224,154 +200,30 @@ export default function LearningDashboard() {
     }
   }
 
-  // ── KPI 卡資料 ──
-  const kpiCards = useMemo(() => buildKpiCards(prefs.kpis, kpis), [prefs.kpis, kpis])
-
   // ── 可見 widget ──
   const visible = visibleWidgets(prefs)
   const compact = prefs.density === 'compact'
 
   return (
     <div className="space-y-5">
-      {/* 問候 + 工具 */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100">
-            {greeting()}
-            {displayName ? `，${displayName}` : ''}，今日想做啲乜？
-          </h1>
-          <p className="mt-0.5 flex items-center gap-2 text-sm text-slate-400">
-            <span>{longToday()}</span>
-            {kpis.streak > 0 && (
-              <Badge tone="amber" icon={Flame}>
-                連續 {kpis.streak} 日
-              </Badge>
-            )}
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="secondary"
-            size="sm"
-            icon={Zap}
-            onClick={() => open('learning-ai')}
-            className="hidden sm:inline-flex"
-          >
-            問 AI
-          </Button>
-          <Button variant="secondary" size="sm" icon={Sliders} onClick={() => setCustomizing(true)}>
-            自訂
-          </Button>
-        </div>
+      {/* 工具列 */}
+      <div className="flex justify-end">
+        <Button variant="secondary" size="sm" icon={Sliders} onClick={() => setCustomizing(true)}>
+          自訂
+        </Button>
       </div>
 
-      {/* KPI 卡（含趨勢） */}
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        {kpiCards.map((k) => (
-          <StatCard
-            key={k.id}
-            label={k.label}
-            value={k.value}
-            unit={k.unit}
-            icon={k.icon}
-            highlight={k.highlight}
-            trend={k.trend}
-            hint={k.hint}
-            onClick={() => open(k.target)}
-          />
-        ))}
-      </div>
-
-      {/* 活動走勢（面積圖）+ 今日任務 */}
-      <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
-        <Card className="p-4 lg:col-span-2">
-          <SectionTitle
-            icon={ActivityIcon}
-            right={
-              <SegmentedControl
-                size="sm"
-                options={RANGE_OPTS}
-                value={String(prefs.range)}
-                onChange={(v) => patchPrefs({ range: Number(v) })}
-              />
-            }
-          >
-            活動走勢
-          </SectionTitle>
-          <ActivityArea signals={signals} height={96} />
-          <div
-            className="mt-3 flex items-center gap-3 border-t border-slate-100 pt-3 dark:border-slate-800"
-            aria-live="polite"
-          >
-            <div className="flex items-center gap-2.5">
-              <MiniRing value={kpis.habitRate} size={46} stroke={5} tone={kpis.habitRate >= 100 ? 'green' : 'accent'}>
-                <span className="text-[10px] font-bold tabular-nums text-slate-600 dark:text-slate-300">
-                  {kpis.habitRate}%
-                </span>
-              </MiniRing>
-              <div className="leading-tight">
-                <p className="text-xs font-medium text-slate-600 dark:text-slate-300">今日達成</p>
-                <p className="text-[11px] text-slate-400">習慣完成率</p>
-              </div>
-            </div>
-            <div className="ml-auto grid grid-cols-3 gap-3 text-center">
-              <MiniStat label="本週專注" value={fmtMin(kpis.focusMinWeek)} />
-              <MiniStat label="本週複習" value={`${kpis.reviewsWeek}張`} />
-              <MiniStat label="最長連續" value={`${kpis.longestStreak}日`} />
-            </div>
-          </div>
-        </Card>
-
-        {/* 今日任務 */}
-        <Card className="p-4">
-          <SectionTitle
-            icon={Check}
-            right={
-              <span
-                className="text-xs font-medium tabular-nums text-slate-400"
-                aria-live="polite"
-                aria-label={`今日任務完成 ${tasksDone} / ${tasks.length}`}
-              >
-                {tasksDone}/{tasks.length}
-              </span>
-            }
-          >
-            今日任務
-          </SectionTitle>
-          <ul className="space-y-1">
-            {tasks.map((t) => (
-              <li key={t.label}>
-                <button
-                  onClick={() => !t.done && open(t.target)}
-                  disabled={t.done}
-                  className={cx(
-                    'flex w-full items-center gap-2.5 rounded-xl px-2 py-2 text-left text-sm transition',
-                    t.done
-                      ? 'cursor-default text-slate-400'
-                      : 'text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800/50',
-                  )}
-                >
-                  <span
-                    className={cx(
-                      'flex h-5 w-5 flex-none items-center justify-center rounded-full border',
-                      t.done
-                        ? 'border-emerald-400 bg-emerald-400 text-white'
-                        : 'border-slate-300 dark:border-slate-600',
-                    )}
-                  >
-                    {t.done && <Check size={12} strokeWidth={3} />}
-                  </span>
-                  <t.icon size={15} className={t.done ? 'text-slate-300 dark:text-slate-600' : 'text-slate-400'} />
-                  <span className={cx('truncate', t.done && 'line-through')}>{t.label}</span>
-                  {!t.done && (
-                    <ChevronRight size={14} className="ml-auto flex-none text-accent" />
-                  )}
-                </button>
-              </li>
-            ))}
-          </ul>
-        </Card>
-      </div>
+      {/* 重型 Bento overview（不規則磚 + 真實統計，全部由真實資料層彙整） */}
+      <BentoOverview
+        name={displayName}
+        kpis={kpis}
+        signals={signals}
+        focusGoalMin={focusGoalMin}
+        range={prefs.range}
+        onRange={(n) => patchPrefs({ range: n })}
+        tasks={tasks}
+        open={open}
+      />
 
       {/* 可配置 widget grid */}
       {visible.length === 0 ? (
@@ -480,16 +332,6 @@ function WidgetSlot({
   }
 }
 
-// ───────── 小型統計（活動圖下方）─────────
-function MiniStat({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="text-center">
-      <p className="text-base font-bold tabular-nums text-slate-800 dark:text-slate-100">{value}</p>
-      <p className="text-[11px] text-slate-400">{label}</p>
-    </div>
-  )
-}
-
 // ───────── 自訂面板 Modal ─────────
 function CustomizeModal({
   open,
@@ -521,21 +363,6 @@ function CustomizeModal({
     ;[next[idx], next[j]] = [next[j], next[idx]]
     patch({ widgetOrder: next })
   }
-  function toggleKpi(id: KpiId) {
-    const has = prefs.kpis.includes(id)
-    if (has) {
-      if (prefs.kpis.length <= 1) return // 至少留一個
-      patch({ kpis: prefs.kpis.filter((k) => k !== id) })
-    } else {
-      if (prefs.kpis.length >= 4) {
-        // 滿 4 個：踢走最舊一個
-        patch({ kpis: [...prefs.kpis.slice(1), id] })
-      } else {
-        patch({ kpis: [...prefs.kpis, id] })
-      }
-    }
-  }
-
   const defByOrder = order
     .map((id) => WIDGET_DEFS.find((w) => w.id === id))
     .filter((w): w is (typeof WIDGET_DEFS)[number] => !!w)
@@ -558,36 +385,6 @@ function CustomizeModal({
       }
     >
       <div className="space-y-5">
-        {/* KPI 揀選 */}
-        <section>
-          <SectionTitle description="揀最多 4 個喺頂部顯示（含趨勢）">概覽指標</SectionTitle>
-          <div className="flex flex-wrap gap-2">
-            {KPI_DEFS.map((k) => {
-              const on = prefs.kpis.includes(k.id)
-              return (
-                <button
-                  key={k.id}
-                  type="button"
-                  onClick={() => toggleKpi(k.id)}
-                  aria-pressed={on}
-                  className={cx(
-                    'inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium transition',
-                    on
-                      ? 'bg-accent text-white shadow-sm dark:shadow-none'
-                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700',
-                  )}
-                >
-                  {on && <Check size={14} />}
-                  {k.label}
-                </button>
-              )
-            })}
-          </div>
-          <p className="mt-1.5 text-[11px] tabular-nums text-slate-400" aria-live="polite">
-            已選 {prefs.kpis.length}/4
-          </p>
-        </section>
-
         {/* 密度 */}
         <section>
           <SectionTitle description="緊湊：每行 3 欄；舒適：每行 2 欄">版面密度</SectionTitle>
@@ -659,93 +456,3 @@ interface TaskItem {
   icon: LucideIcon
 }
 
-interface KpiCard {
-  id: KpiId
-  label: string
-  value: number | string
-  unit?: string
-  icon: LucideIcon
-  highlight?: boolean
-  trend?: { value: string; dir: 'up' | 'down' | 'flat' }
-  hint?: string
-  target: string
-}
-
-function buildKpiCards(ids: KpiId[], k: ReturnType<typeof computeKpis>): KpiCard[] {
-  const all: Record<KpiId, KpiCard> = {
-    due: {
-      id: 'due',
-      label: '今日要複習',
-      value: k.dueCards,
-      unit: '張',
-      icon: Brain,
-      highlight: k.dueCards > 0,
-      target: 'learning-flashcards',
-      hint: k.dueCards === 0 ? '已清晒 🎉' : undefined,
-    },
-    streak: {
-      id: 'streak',
-      label: '連續活躍',
-      value: k.streak,
-      unit: '日',
-      icon: Flame,
-      target: 'learning-journal',
-      hint: k.longestStreak > k.streak ? `最長 ${k.longestStreak} 日` : undefined,
-    },
-    focusWeek: {
-      id: 'focusWeek',
-      label: '本週專注',
-      value: Math.round(k.focusMinWeek),
-      unit: '分鐘',
-      icon: Timer,
-      trend: trendOf(k.focusMinWeek, k.focusMinPrevWeek),
-      target: 'learning-focus',
-    },
-    reviewsWeek: {
-      id: 'reviewsWeek',
-      label: '本週複習',
-      value: k.reviewsWeek,
-      unit: '張',
-      icon: Sparkles,
-      trend: trendOf(k.reviewsWeek, k.reviewsPrevWeek),
-      target: 'learning-flashcards',
-    },
-    habitRate: {
-      id: 'habitRate',
-      label: '今日習慣',
-      value: k.habitRate,
-      unit: '%',
-      icon: Flame,
-      target: 'learning-habits',
-      hint: k.habitDueToday > 0 ? `${k.habitDoneToday}/${k.habitDueToday} 完成` : '未設習慣',
-    },
-    goalsProgress: {
-      id: 'goalsProgress',
-      label: '目標進度',
-      value: k.goalsAvgProgress,
-      unit: '%',
-      icon: Target,
-      target: 'learning-goals',
-      hint: `${k.goalsActive} 個進行中`,
-    },
-    pagesWeek: {
-      id: 'pagesWeek',
-      label: '本週閱讀',
-      value: k.pagesWeek,
-      unit: '頁',
-      icon: BookOpen,
-      target: 'learning-reading',
-      hint: k.booksReading > 0 ? `${k.booksReading} 本在讀` : undefined,
-    },
-    journalWeek: {
-      id: 'journalWeek',
-      label: '本週日誌',
-      value: k.journalWeek,
-      unit: '篇',
-      icon: ListChecks,
-      target: 'learning-journal',
-      hint: k.moodAvg != null ? `心情 ${k.moodAvg}/5` : undefined,
-    },
-  }
-  return ids.map((id) => all[id]).filter(Boolean)
-}

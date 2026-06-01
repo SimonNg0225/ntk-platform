@@ -51,7 +51,6 @@ import { useMode } from '../../context/ModeContext'
 import { useToast } from '../../context/ToastContext'
 import { uid } from '../../lib/store'
 import {
-  Input,
   Card as UICard,
   Badge,
   EmptyState,
@@ -590,19 +589,43 @@ export default function GlobalSearch() {
 
   return (
     <div className="space-y-4">
-      {/* 搜尋列 */}
-      <UICard className="p-3 sm:p-4">
-        <div ref={searchBoxRef} onKeyDown={onKeyDown}>
-          <Input
+      {/* 搜尋列 — 命令面板風：大圓角、accent focus 環、貼身清除掣 */}
+      <UICard className="overflow-hidden p-3 sm:p-4">
+        <div
+          ref={searchBoxRef}
+          onKeyDown={onKeyDown}
+          className="group flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3 transition focus-within:border-accent focus-within:bg-white focus-within:ring-2 focus-within:ring-accent/25 dark:border-slate-700 dark:bg-slate-900/40 dark:focus-within:bg-slate-800"
+        >
+          <Search
+            size={20}
+            className="shrink-0 text-slate-400 transition-colors group-focus-within:text-accent"
+          />
+          <input
             id="global-search"
             autoFocus
             type="text"
-            icon={Search}
             value={raw}
             onChange={(e) => setRaw(e.target.value)}
-            placeholder="搜尋筆記、題庫、資源、班別、學生、行事曆… 試下 type:note"
+            placeholder="搜尋筆記、題庫、資源、班別、學生、行事曆…"
             aria-label="全域搜尋"
+            className="min-w-0 flex-1 bg-transparent text-[15px] text-slate-800 outline-none placeholder:text-slate-400 dark:text-slate-100 dark:placeholder:text-slate-500"
           />
+          {raw ? (
+            <button
+              type="button"
+              onClick={() => {
+                setRaw('')
+                setKindFilter('all')
+                focusInput()
+              }}
+              aria-label="清除搜尋"
+              className="shrink-0 rounded-full p-1 text-slate-400 transition hover:bg-slate-200/70 hover:text-slate-600 dark:hover:bg-slate-700 dark:hover:text-slate-200"
+            >
+              <X size={16} />
+            </button>
+          ) : (
+            <Kbd className="hidden shrink-0 sm:inline-flex">type:note</Kbd>
+          )}
         </div>
 
         {/* 控制列 */}
@@ -743,16 +766,16 @@ export default function GlobalSearch() {
               grouped.map((g) => {
                 const startIdx = flatVisible.findIndex((h) => h.id === g.hits[0].id)
                 const GIcon = g.icon
+                const gTone = KIND_META[g.kindId].tone
                 return (
                   <UICard key={g.kindId} className="overflow-hidden">
-                    <div className="flex items-center gap-2 border-b border-slate-100 px-3 py-2 dark:border-slate-700/60">
-                      <GIcon size={14} className="text-slate-400" />
-                      <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                    <div className="flex items-center gap-2 border-b border-slate-100 px-3 py-2.5 dark:border-slate-700/60">
+                      <Badge tone={gTone} icon={GIcon}>
                         {g.label}
-                      </h2>
-                      <Badge tone="slate" className="tabular-nums">
-                        {g.hits.length}
                       </Badge>
+                      <span className="text-xs tabular-nums text-slate-400 dark:text-slate-500">
+                        {g.hits.length} 項
+                      </span>
                     </div>
                     <div className="p-1.5">
                       {g.hits.map((h, j) => {

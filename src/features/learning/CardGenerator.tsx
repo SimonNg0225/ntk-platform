@@ -24,6 +24,9 @@ import {
   Trash2,
   FileText,
   Eye,
+  Lightbulb,
+  ArrowRight,
+  Pencil,
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { useToast } from '../../context/ToastContext'
@@ -167,6 +170,15 @@ export default function CardGenerator() {
   const [notePickOpen, setNotePickOpen] = useState(false)
   const [copiedId, setCopiedId] = useState<string | null>(null)
   const [lastRecordId, setLastRecordId] = useState<string | null>(null)
+  // 純表現層：邊幾張草稿展開咗 inline 編輯（預設淨係顯示卡面，撳鉛筆先改）
+  const [editingIds, setEditingIds] = useState<Set<string>>(new Set())
+  const toggleEditing = (id: string) =>
+    setEditingIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
 
   // 目標牌組現有卡嘅 front 正規化集合（去重用）
   const targetFronts = useMemo(() => {
@@ -538,7 +550,27 @@ export default function CardGenerator() {
   const activeType = CARD_TYPES.find((c) => c.id === type)
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
+      {/* ── 歡迎 hero：介紹生成工作室、暗示主行動 ── */}
+      <section className="hero-gradient relative overflow-hidden rounded-3xl px-6 py-7 text-white shadow-lg shadow-accent/25 sm:px-8">
+        <div className="pointer-events-none absolute -right-10 -top-12 h-44 w-44 rounded-full bg-white/10 blur-2xl" />
+        <div className="pointer-events-none absolute -bottom-14 right-24 h-32 w-32 rounded-full bg-white/10 blur-2xl" />
+        <div className="relative flex items-start gap-3">
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white/15 backdrop-blur">
+            <Wand2 size={22} />
+          </span>
+          <div>
+            <h1 className="text-xl font-bold tracking-tight sm:text-2xl">
+              AI 生成知識卡
+            </h1>
+            <p className="mt-1.5 max-w-md text-sm leading-relaxed text-white/80">
+              貼上一個主題或你嘅筆記，我幫你即時整出一疊溫習卡 ——
+              校對好就一鍵入牌組開始溫。
+            </p>
+          </div>
+        </div>
+      </section>
+
       <Tabs<TopTab>
         tabs={[
           { id: 'generate', label: '生成' },
@@ -554,9 +586,10 @@ export default function CardGenerator() {
       {tab === 'generate' && (
         <>
           {/* ① 生成設定 */}
-          <Card className="space-y-4 p-4">
+          <Card className="space-y-5 p-5">
             <SectionTitle
               icon={Sparkles}
+              description="揀卡型、貼上材料，調好數量同難度就生成"
               right={
                 <Tooltip label="由個人筆記帶入內容">
                   <Button
@@ -571,7 +604,7 @@ export default function CardGenerator() {
                 </Tooltip>
               }
             >
-              ① 生成設定
+              ① 想整咩卡
             </SectionTitle>
 
             {/* 卡型 segmented（大圖示） */}
@@ -586,15 +619,15 @@ export default function CardGenerator() {
                     disabled={busy}
                     aria-pressed={on}
                     className={cx(
-                      'flex flex-col items-start gap-1 rounded-xl border p-3 text-left transition disabled:opacity-50',
+                      'flex flex-col items-start gap-1.5 rounded-2xl border p-3 text-left transition duration-200 disabled:opacity-50',
                       on
-                        ? 'border-accent/40 bg-accent-soft/50 dark:border-accent/40 dark:bg-accent/10'
-                        : 'border-slate-200 bg-white hover:border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-slate-600',
+                        ? 'border-accent/40 bg-accent-soft/50 shadow-xs dark:border-accent/40 dark:bg-accent/10'
+                        : 'border-slate-200/80 bg-white hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md dark:border-slate-700/60 dark:bg-slate-800 dark:hover:border-slate-600',
                     )}
                   >
                     <span
                       className={cx(
-                        'flex h-7 w-7 items-center justify-center rounded-lg',
+                        'flex h-8 w-8 items-center justify-center rounded-xl transition',
                         on
                           ? 'bg-accent text-white'
                           : 'bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-300',
@@ -640,10 +673,11 @@ export default function CardGenerator() {
 
             {/* Prompt 範本庫 */}
             <div>
-              <p className="mb-1.5 text-xs font-medium text-slate-500 dark:text-slate-400">
-                範本庫（一 click 填）
+              <p className="mb-2 flex items-center gap-1.5 text-xs font-medium text-slate-500 dark:text-slate-400">
+                <Lightbulb size={13} className="text-amber-500" />
+                諗唔到主題？撳個範例即填
               </p>
-              <div className="flex flex-wrap gap-1.5">
+              <div className="flex flex-wrap gap-2">
                 {PRESETS.map((p) => (
                   <button
                     key={p.id}
@@ -653,7 +687,7 @@ export default function CardGenerator() {
                       setTopic(p.topic)
                       setType(p.type)
                     }}
-                    className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs text-slate-600 transition hover:border-accent/40 hover:bg-accent-soft/40 hover:text-accent-strong disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:border-accent/40 dark:hover:bg-accent/10 dark:hover:text-accent"
+                    className="inline-flex items-center gap-1.5 rounded-full border border-slate-200/80 bg-white px-3 py-1.5 text-xs text-slate-600 shadow-xs transition duration-200 hover:-translate-y-0.5 hover:border-accent/40 hover:bg-accent-soft/40 hover:text-accent-strong disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700/60 dark:bg-slate-800 dark:text-slate-300 dark:shadow-none dark:hover:border-accent/40 dark:hover:bg-accent/10 dark:hover:text-accent"
                   >
                     <span>{p.emoji}</span>
                     {p.label}
@@ -773,29 +807,44 @@ export default function CardGenerator() {
             </div>
           </Card>
 
-          {/* 串流進行緊嘅 skeleton（未有草稿時） */}
+          {/* 串流進行緊嘅 skeleton（未有草稿時）— 似緊咧緊嘅卡 */}
           {busy && drafts.length === 0 && (
-            <Card className="space-y-2 p-4">
+            <Card className="space-y-3 p-5">
+              <p className="flex items-center gap-1.5 text-xs font-medium text-slate-500 dark:text-slate-400">
+                <span className="h-2 w-2 animate-pulse rounded-full bg-accent" />
+                AI 落緊筆…
+                {progress > 0 && (
+                  <span className="tabular-nums">已收 {progress} 張</span>
+                )}
+              </p>
               {Array.from({ length: Math.min(count, 4) }).map((_, i) => (
                 <div
                   key={i}
-                  className="flex items-start gap-2 rounded-xl border border-slate-200 p-3 dark:border-slate-700"
+                  className="space-y-2.5 rounded-2xl border border-slate-200/80 p-4 dark:border-slate-700/60"
                 >
-                  <Skeleton className="mt-1 h-4 w-4 rounded" />
-                  <div className="flex-1 space-y-2">
-                    <Skeleton className="h-4 w-1/2" />
-                    <Skeleton className="h-8 w-full" />
-                  </div>
+                  <Skeleton className="h-4 w-20 rounded-full" />
+                  <Skeleton className="h-4 w-3/4" />
+                  <Skeleton className="h-9 w-full" />
                 </div>
               ))}
             </Card>
           )}
 
+          {/* 未生成又冇草稿：友善提示，引導下一步 */}
+          {!busy && drafts.length === 0 && (
+            <EmptyState
+              icon={Sparkles}
+              title="準備好就一齊出卡"
+              hint="喺上面貼上主題或筆記、撳「生成知識卡」，AI 就會即場整一疊畀你校對。"
+            />
+          )}
+
           {/* ② 預覽 / 編輯 */}
           {drafts.length > 0 && (
-            <Card className="space-y-3 p-4">
+            <Card className="space-y-4 p-5">
               <SectionTitle
                 icon={Eye}
+                description="翻面對下答案、改返啱、唔啱嘅就剔走"
                 right={
                   <div className="flex items-center gap-1.5">
                     {dupCount > 0 && (
@@ -813,7 +862,7 @@ export default function CardGenerator() {
                   </div>
                 }
               >
-                ② 預覽 / 編輯
+                ② 校對下啲卡
               </SectionTitle>
 
               {/* 工具列 */}
@@ -858,152 +907,189 @@ export default function CardGenerator() {
               </div>
 
               {filtered.length === 0 ? (
-                <p
-                  aria-live="polite"
-                  className="py-6 text-center text-sm text-slate-400 dark:text-slate-500"
-                >
-                  冇符合「{query}」嘅草稿
-                </p>
+                <EmptyState
+                  icon={Search}
+                  title={`搵唔到「${query}」`}
+                  hint="試下換個關鍵字，或者清空搜尋框睇返全部草稿。"
+                />
               ) : (
-                <ul className="space-y-2">
-                  {filtered.map((d) => (
-                    <li
-                      key={d.id}
-                      className={cx(
-                        'group rounded-xl border p-3 transition',
-                        !d.include
-                          ? 'border-slate-200 bg-white opacity-60 dark:border-slate-700 dark:bg-slate-800'
-                          : d.dup
-                            ? 'border-amber-300/60 bg-amber-50/50 dark:border-amber-500/30 dark:bg-amber-500/5'
-                            : 'border-accent/30 bg-accent-soft/40 dark:border-accent/40 dark:bg-accent/10',
-                      )}
-                    >
-                      <div className="flex items-start gap-2">
-                        <input
-                          type="checkbox"
-                          checked={d.include}
-                          onChange={(e) =>
-                            patchDraft(d.id, { include: e.target.checked })
-                          }
-                          aria-label="是否加入呢張"
-                          className="mt-1.5 h-4 w-4 shrink-0 cursor-pointer accent-accent"
-                        />
+                <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  {filtered.map((d) => {
+                    const editing = editingIds.has(d.id)
+                    return (
+                      <li
+                        key={d.id}
+                        className={cx(
+                          'group flex flex-col rounded-2xl border p-4 transition duration-200',
+                          !d.include
+                            ? 'border-slate-200/80 bg-slate-50/60 opacity-70 dark:border-slate-700/60 dark:bg-slate-800/40'
+                            : d.dup
+                              ? 'border-amber-300/70 bg-amber-50/60 shadow-xs dark:border-amber-500/30 dark:bg-amber-500/5'
+                              : 'border-accent/30 bg-accent-soft/30 shadow-xs hover:-translate-y-0.5 hover:shadow-md dark:border-accent/30 dark:bg-accent/[0.07]',
+                        )}
+                      >
+                        {/* 頂行：剔選 + 卡型 + 重複旗標 */}
+                        <div className="flex items-center gap-2">
+                          <label className="inline-flex cursor-pointer items-center">
+                            <input
+                              type="checkbox"
+                              checked={d.include}
+                              onChange={(e) =>
+                                patchDraft(d.id, { include: e.target.checked })
+                              }
+                              aria-label="是否加入呢張"
+                              className="h-4 w-4 shrink-0 cursor-pointer rounded accent-accent"
+                            />
+                          </label>
+                          <Badge tone="slate">{CARD_TYPE_LABEL[d.type]}</Badge>
+                          {d.dup && (
+                            <Badge tone="amber" dot>
+                              相似卡
+                            </Badge>
+                          )}
+                          <Tooltip label={editing ? '完成編輯' : '編輯內容'}>
+                            <IconButton
+                              label="編輯"
+                              active={editing}
+                              className="ml-auto"
+                              disabled={d.regenning}
+                              onClick={() => toggleEditing(d.id)}
+                            >
+                              <Pencil size={15} />
+                            </IconButton>
+                          </Tooltip>
+                        </div>
 
-                        <div className="min-w-0 flex-1 space-y-2">
-                          {/* meta 行 */}
-                          <div className="flex flex-wrap items-center gap-1.5">
-                            <Badge tone="slate">{CARD_TYPE_LABEL[d.type]}</Badge>
-                            {d.dup && (
-                              <Badge tone="amber" dot>
-                                牌組已有相似卡
-                              </Badge>
+                        {/* 卡身 */}
+                        {d.regenning ? (
+                          <div className="mt-3 space-y-2.5">
+                            <Skeleton className="h-4 w-3/4" />
+                            <Skeleton className="h-9 w-full" />
+                          </div>
+                        ) : editing ? (
+                          // 編輯態：露出輸入框
+                          <div className="mt-3 space-y-2">
+                            <Field label="正面（題目）">
+                              <Input
+                                value={d.front}
+                                onChange={(e) =>
+                                  patchDraft(d.id, { front: e.target.value })
+                                }
+                                placeholder="正面"
+                              />
+                            </Field>
+                            <Field label="背面（答案）">
+                              <Textarea
+                                rows={2}
+                                value={d.back}
+                                onChange={(e) =>
+                                  patchDraft(d.id, { back: e.target.value })
+                                }
+                                placeholder="背面"
+                              />
+                            </Field>
+                          </div>
+                        ) : (
+                          // 預覽態：似真卡，正面突出 + 答案柔和區
+                          <div className="mt-3 flex flex-1 flex-col gap-2.5">
+                            <div className="rounded-xl bg-white/70 p-3 dark:bg-slate-900/40">
+                              <p className="text-[10px] font-medium uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                                正面
+                              </p>
+                              <p className="mt-1 whitespace-pre-wrap break-words text-sm font-semibold text-slate-800 dark:text-slate-100">
+                                {d.front}
+                              </p>
+                            </div>
+                            {d.flipped ? (
+                              <div className="rounded-xl border border-dashed border-accent/40 bg-white p-3 dark:bg-slate-900">
+                                <p className="text-[10px] font-medium uppercase tracking-wider text-accent">
+                                  背面
+                                </p>
+                                <p className="mt-1 whitespace-pre-wrap break-words text-sm font-medium text-slate-700 dark:text-slate-200">
+                                  {d.back}
+                                </p>
+                              </div>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => patchDraft(d.id, { flipped: true })}
+                                className="flex items-center gap-1.5 rounded-xl border border-dashed border-slate-300/70 px-3 py-2 text-left text-xs text-slate-400 transition hover:border-accent/40 hover:text-accent dark:border-slate-600/70 dark:text-slate-500 dark:hover:text-accent"
+                              >
+                                <Eye size={13} className="shrink-0" />
+                                撳一下睇答案
+                              </button>
                             )}
                           </div>
+                        )}
 
-                          {d.regenning ? (
-                            <div className="space-y-2 py-1">
-                              <Skeleton className="h-4 w-1/2" />
-                              <Skeleton className="h-8 w-full" />
-                            </div>
-                          ) : (
-                            <>
-                              <Field label="正面">
-                                <Input
-                                  value={d.front}
-                                  onChange={(e) =>
-                                    patchDraft(d.id, { front: e.target.value })
-                                  }
-                                  placeholder="正面"
-                                />
-                              </Field>
-                              <Field label="背面">
-                                <Textarea
-                                  rows={2}
-                                  value={d.back}
-                                  onChange={(e) =>
-                                    patchDraft(d.id, { back: e.target.value })
-                                  }
-                                  placeholder="背面"
-                                />
-                              </Field>
-                            </>
-                          )}
-
-                          {/* 卡片動作 */}
-                          <div className="flex flex-wrap items-center gap-1">
-                            <Tooltip label="翻面預覽（似真卡）">
-                              <IconButton
-                                label="翻面"
-                                active={d.flipped}
-                                onClick={() =>
-                                  patchDraft(d.id, { flipped: !d.flipped })
-                                }
-                              >
-                                <Repeat size={16} />
-                              </IconButton>
-                            </Tooltip>
-                            <Tooltip label="前後互換">
-                              <IconButton label="互換" onClick={() => swap(d)}>
-                                <ArrowLeftRight size={16} />
-                              </IconButton>
-                            </Tooltip>
-                            <Tooltip label="AI 重新生成呢張">
-                              <IconButton
-                                label="重生"
-                                disabled={d.regenning}
-                                onClick={() => void regenOne(d)}
-                              >
-                                <RefreshCw
-                                  size={16}
-                                  className={d.regenning ? 'animate-spin' : ''}
-                                />
-                              </IconButton>
-                            </Tooltip>
-                            <Tooltip label="複製（正面⇥背面）">
-                              <IconButton
-                                label="複製"
-                                onClick={() => void copyDraft(d)}
-                              >
-                                {copiedId === d.id ? (
-                                  <Check size={16} className="text-emerald-500" />
-                                ) : (
-                                  <Copy size={16} />
-                                )}
-                              </IconButton>
-                            </Tooltip>
-                            <Tooltip label="移除呢張">
-                              <IconButton
-                                label="移除"
-                                tone="danger"
-                                onClick={() => removeDraft(d.id)}
-                              >
-                                <X size={16} />
-                              </IconButton>
-                            </Tooltip>
-                          </div>
-
-                          {/* 翻面預覽（真卡感覺） */}
-                          {d.flipped && (
-                            <div className="mt-1 rounded-lg border border-dashed border-accent/40 bg-white p-3 text-center dark:bg-slate-900">
-                              <p className="text-[10px] uppercase tracking-wider text-slate-400">
-                                背面
-                              </p>
-                              <p className="mt-1 whitespace-pre-wrap break-words text-sm font-medium text-slate-700 dark:text-slate-200">
-                                {d.back}
-                              </p>
-                            </div>
-                          )}
+                        {/* 卡片動作 */}
+                        <div className="mt-3 flex flex-wrap items-center gap-0.5 border-t border-slate-200/60 pt-2 dark:border-slate-700/50">
+                          <Tooltip label={d.flipped ? '收返答案' : '翻面睇答案'}>
+                            <IconButton
+                              label="翻面"
+                              active={d.flipped}
+                              onClick={() =>
+                                patchDraft(d.id, { flipped: !d.flipped })
+                              }
+                            >
+                              <Repeat size={16} />
+                            </IconButton>
+                          </Tooltip>
+                          <Tooltip label="前後互換">
+                            <IconButton label="互換" onClick={() => swap(d)}>
+                              <ArrowLeftRight size={16} />
+                            </IconButton>
+                          </Tooltip>
+                          <Tooltip label="AI 重新生成呢張">
+                            <IconButton
+                              label="重生"
+                              disabled={d.regenning}
+                              onClick={() => void regenOne(d)}
+                            >
+                              <RefreshCw
+                                size={16}
+                                className={d.regenning ? 'animate-spin' : ''}
+                              />
+                            </IconButton>
+                          </Tooltip>
+                          <Tooltip label="複製（正面⇥背面）">
+                            <IconButton
+                              label="複製"
+                              onClick={() => void copyDraft(d)}
+                            >
+                              {copiedId === d.id ? (
+                                <Check size={16} className="text-emerald-500" />
+                              ) : (
+                                <Copy size={16} />
+                              )}
+                            </IconButton>
+                          </Tooltip>
+                          <Tooltip label="移除呢張">
+                            <IconButton
+                              label="移除"
+                              tone="danger"
+                              className="ml-auto"
+                              onClick={() => removeDraft(d.id)}
+                            >
+                              <X size={16} />
+                            </IconButton>
+                          </Tooltip>
                         </div>
-                      </div>
-                    </li>
-                  ))}
+                      </li>
+                    )
+                  })}
                 </ul>
               )}
 
               <Separator />
 
               {/* ③ 目標牌組 + 寫入 */}
-              <SectionTitle icon={Layers}>③ 加入邊個牌組</SectionTitle>
+              <SectionTitle
+                icon={Layers}
+                description="揀個牌組，或者起一個新嘅嚟放呢批卡"
+              >
+                ③ 加入邊個牌組
+              </SectionTitle>
 
               <Tabs<DeckTab>
                 tabs={[
@@ -1049,23 +1135,25 @@ export default function CardGenerator() {
                 </p>
               )}
 
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <Button variant="ghost" onClick={() => void clearDrafts()}>
-                  重新嚟過
-                </Button>
-                <Button onClick={save} loading={saving} disabled={!canSave} icon={Plus}>
-                  加入牌組（<span className="nums">{selectedCount}</span> 張）
-                </Button>
+              <div className="rounded-2xl border border-accent/20 bg-accent-soft/40 p-3 dark:border-accent/25 dark:bg-accent/10">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <Button variant="ghost" onClick={() => void clearDrafts()}>
+                    清空重嚟
+                  </Button>
+                  <Button onClick={save} loading={saving} disabled={!canSave} icon={Plus}>
+                    加入牌組（<span className="nums">{selectedCount}</span> 張）
+                  </Button>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => nav.open('learning-flashcards')}
+                  className="mt-2 flex w-full items-center justify-center gap-1.5 text-xs text-slate-500 transition hover:text-accent dark:text-slate-400 dark:hover:text-accent"
+                >
+                  <Brain size={14} className="shrink-0" />
+                  加入後去「知識卡 + 複習」即刻溫
+                  <ArrowRight size={13} className="shrink-0" />
+                </button>
               </div>
-
-              <button
-                type="button"
-                onClick={() => nav.open('learning-flashcards')}
-                className="flex w-full items-center justify-center gap-1.5 text-xs text-slate-400 transition hover:text-accent dark:text-slate-500 dark:hover:text-accent"
-              >
-                <Brain size={14} className="shrink-0" />
-                加入後去「知識卡 + 複習」即刻溫 →
-              </button>
             </Card>
           )}
         </>
@@ -1073,8 +1161,10 @@ export default function CardGenerator() {
 
       {/* ══════════════ 歷史 ══════════════ */}
       {tab === 'history' && (
-        <Card className="space-y-3 p-4">
-          <SectionTitle icon={History}>生成歷史</SectionTitle>
+        <Card className="space-y-3 p-5">
+          <SectionTitle icon={History} description="每次生成都記低設定，撳重跑即可再嚟一次">
+            生成歷史
+          </SectionTitle>
           {history.length === 0 ? (
             <EmptyState
               icon={History}
@@ -1086,7 +1176,7 @@ export default function CardGenerator() {
               {recentHistory(40).map((r) => (
                 <li
                   key={r.id}
-                  className="flex items-start gap-3 rounded-xl border border-slate-200 p-3 dark:border-slate-700"
+                  className="flex items-start gap-3 rounded-2xl border border-slate-200/80 p-3.5 transition duration-200 hover:border-slate-300 hover:shadow-xs dark:border-slate-700/60 dark:hover:border-slate-600"
                 >
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium text-slate-700 dark:text-slate-200">
@@ -1173,12 +1263,12 @@ export default function CardGenerator() {
             />
           </div>
 
-          <Card className="p-4">
+          <Card className="p-5">
             <SectionTitle icon={BarChart3}>每日生成量（近 14 日）</SectionTitle>
             <GenTrend records={history} />
           </Card>
 
-          <Card className="p-4">
+          <Card className="p-5">
             <SectionTitle icon={FileText}>卡型占比</SectionTitle>
             <TypeDonut records={history} />
           </Card>

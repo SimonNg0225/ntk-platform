@@ -9,7 +9,10 @@ import {
   Dumbbell,
   FileCheck2,
   FolderOpen,
+  Layers,
   Play,
+  Shuffle,
+  Sparkles,
   Target,
   Timer,
   Trophy,
@@ -21,9 +24,7 @@ import {
   Card,
   EmptyState,
   Pills,
-  SectionTitle,
   Select,
-  StatCard,
   cx,
 } from '../../../ui'
 import {
@@ -39,7 +40,7 @@ import {
   isQuizableMc,
   isQuizableShort,
   pct,
-  scoreColor,
+  scoreTone,
   settingsFromAttempt,
   shuffle,
   type CountId,
@@ -51,12 +52,20 @@ import {
 
 // ============================================================
 //  SetupView — 開卷設定（模式 / 範圍 / 題型）+ 歷史紀錄
+//  ------------------------------------------------------------
+//  重塑：清楚層次（模式選擇置頂、選項分區呼吸）＋ 顯眼開始 CTA。
+//  純表現層；抽題 / 過濾 / 計分 / 歷史邏輯一概不變。
 // ============================================================
 
-const MODE_CARDS: { id: QuizMode; label: string; icon: typeof Play }[] = [
-  { id: 'practice', label: '練習', icon: Dumbbell },
-  { id: 'classic', label: '測驗', icon: FileCheck2 },
-  { id: 'timed', label: '搶分', icon: Zap },
+const MODE_CARDS: {
+  id: QuizMode
+  label: string
+  tagline: string
+  icon: typeof Play
+}[] = [
+  { id: 'practice', label: '練習', tagline: '即查即明', icon: Dumbbell },
+  { id: 'classic', label: '測驗', tagline: '模擬考試', icon: FileCheck2 },
+  { id: 'timed', label: '搶分', tagline: '計時挑戰', icon: Zap },
 ]
 
 export function SetupView({
@@ -142,103 +151,121 @@ export function SetupView({
   }
 
   return (
-    <div className="animate-fade-in space-y-5">
-      {/* 總覽 StatCard */}
+    <div className="animate-fade-in space-y-6">
+      {/* ── 概覽：三個迷你統計（細圖示 chip，唔搶 CTA 風頭）── */}
       <div className="grid grid-cols-3 gap-3">
-        <StatCard label="可測題數" value={totalPool} unit="題" icon={BookMarked} highlight />
-        <StatCard label="測驗次數" value={attempts.length} unit="次" icon={FolderOpen} />
-        <StatCard label="平均分" value={avgPct == null ? '—' : `${avgPct}%`} icon={Target} />
+        <MiniStat label="可測題目" value={totalPool} unit="題" icon={BookMarked} tone="accent" />
+        <MiniStat label="完成測驗" value={attempts.length} unit="次" icon={FolderOpen} tone="sky" />
+        <MiniStat
+          label="平均命中"
+          value={avgPct == null ? '—' : avgPct}
+          unit={avgPct == null ? undefined : '%'}
+          icon={Target}
+          tone="emerald"
+        />
       </div>
 
       {totalPool === 0 ? (
         <EmptyState
           icon={BookMarked}
-          title="題庫未有可測題目"
-          hint="先去『BAFS 題庫』新增有正確答案嘅選擇題（或有參考答案嘅短答題），再返嚟自測。"
+          title="題庫仲未有可以測嘅題目"
+          hint="去『BAFS 題庫』加幾條有正確答案嘅選擇題（或者有參考答案嘅短答題），返嚟就可以即刻開始自測。"
         />
       ) : (
-        <section>
-          <SectionTitle>開始測驗</SectionTitle>
-          <Card className="space-y-5 p-4">
-            {/* 模式（卡片式三選一） */}
-            <div className="space-y-2">
-              <span className="text-xs font-medium text-slate-600 dark:text-slate-300">模式</span>
-              <div className="grid grid-cols-3 gap-2">
-                {MODE_CARDS.map((m) => {
-                  const on = settings.mode === m.id
-                  return (
-                    <button
-                      key={m.id}
-                      type="button"
-                      onClick={() => set('mode', m.id)}
-                      aria-pressed={on}
+        <section className="space-y-5">
+          {/* 主行動入口：模式選擇（最大、最搶眼） */}
+          <div>
+            <p className="mb-3 text-sm font-semibold text-slate-800 dark:text-slate-100">
+              想點樣練習？
+            </p>
+            <div className="grid grid-cols-3 gap-2.5">
+              {MODE_CARDS.map((m) => {
+                const on = settings.mode === m.id
+                return (
+                  <button
+                    key={m.id}
+                    type="button"
+                    onClick={() => set('mode', m.id)}
+                    aria-pressed={on}
+                    className={cx(
+                      'group flex flex-col items-center gap-2 rounded-2xl border p-4 text-center transition duration-200',
+                      on
+                        ? 'border-accent bg-accent-soft text-accent-strong shadow-sm dark:border-accent/60 dark:bg-accent/15 dark:text-accent'
+                        : 'border-slate-200/80 bg-white text-slate-600 hover:-translate-y-0.5 hover:border-accent/40 hover:shadow-md dark:border-slate-700/60 dark:bg-slate-800 dark:text-slate-300 dark:hover:border-accent/40',
+                    )}
+                  >
+                    <span
                       className={cx(
-                        'flex flex-col items-center gap-1.5 rounded-xl border p-3 text-center transition',
+                        'flex h-11 w-11 items-center justify-center rounded-2xl transition duration-200',
                         on
-                          ? 'border-accent bg-accent-soft text-accent-strong dark:border-accent/60 dark:bg-accent/15 dark:text-accent'
-                          : 'border-slate-200 bg-white text-slate-600 hover:border-accent/40 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300',
+                          ? 'bg-accent text-white'
+                          : 'bg-slate-100 text-slate-500 group-hover:bg-accent-soft group-hover:text-accent-strong dark:bg-slate-700 dark:text-slate-300 dark:group-hover:bg-accent/15 dark:group-hover:text-accent',
                       )}
                     >
                       <m.icon size={20} strokeWidth={2} />
-                      <span className="text-sm font-semibold">{m.label}</span>
-                    </button>
-                  )
-                })}
-              </div>
-              <p className="text-xs text-slate-400 dark:text-slate-500">{QUIZ_MODE_HINT[settings.mode]}</p>
+                    </span>
+                    <span className="text-sm font-semibold">{m.label}</span>
+                    <span
+                      className={cx(
+                        'text-[11px]',
+                        on ? 'text-accent/80 dark:text-accent/80' : 'text-slate-400 dark:text-slate-500',
+                      )}
+                    >
+                      {m.tagline}
+                    </span>
+                  </button>
+                )
+              })}
             </div>
+            <p className="mt-2.5 flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
+              <Sparkles size={13} className="shrink-0 text-accent" />
+              {QUIZ_MODE_HINT[settings.mode]}
+            </p>
+          </div>
 
-            {/* 課題範圍 */}
-            <label className="block space-y-1.5">
-              <span className="text-xs font-medium text-slate-600 dark:text-slate-300">課題範圍</span>
-              <Select value={settings.topicId} onChange={(e) => set('topicId', e.target.value)}>
-                <option value="">全部課題</option>
-                {topics.map((t) => (
-                  <option key={t.id} value={t.id}>
-                    {t.topic}
-                  </option>
-                ))}
-              </Select>
-            </label>
-
-            {/* 難度 */}
-            <div className="space-y-1.5">
-              <span className="text-xs font-medium text-slate-600 dark:text-slate-300">難度</span>
-              <Pills
-                options={[
-                  { id: 'all', label: DIFF_FILTER_LABEL.all },
-                  ...DIFF_ORDER.map((d) => ({ id: d, label: DIFF_LABEL[d] })),
-                ]}
-                active={settings.difficulty}
-                onChange={(v) => set('difficulty', v as DiffFilter)}
-              />
-              <p className="text-xs text-slate-400 dark:text-slate-500" aria-live="polite">
-                符合條件題目：<span className="font-semibold text-accent">{matched.length}</span> 題
-              </p>
+          {/* 出題範圍：難度 / 課題 / 題數（分區、留白） */}
+          <Card padded className="space-y-5">
+            {/* 難度 + 課題（同一行呼吸） */}
+            <div className="grid gap-5 sm:grid-cols-2">
+              <div className="space-y-2">
+                <OptionLabel icon={Layers}>難度</OptionLabel>
+                <Pills
+                  options={[
+                    { id: 'all', label: DIFF_FILTER_LABEL.all },
+                    ...DIFF_ORDER.map((d) => ({ id: d, label: DIFF_LABEL[d] })),
+                  ]}
+                  active={settings.difficulty}
+                  onChange={(v) => set('difficulty', v as DiffFilter)}
+                />
+              </div>
+              <div className="space-y-2">
+                <OptionLabel icon={FolderOpen}>課題範圍</OptionLabel>
+                <Select value={settings.topicId} onChange={(e) => set('topicId', e.target.value)}>
+                  <option value="">全部課題</option>
+                  {topics.map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.topic}
+                    </option>
+                  ))}
+                </Select>
+              </div>
             </div>
 
             {/* 題數 */}
-            <div className="space-y-1.5">
-              <span className="text-xs font-medium text-slate-600 dark:text-slate-300">題數</span>
+            <div className="space-y-2">
+              <OptionLabel icon={Target}>題數</OptionLabel>
               <Pills
                 options={COUNT_OPTIONS}
                 active={settings.count}
                 onChange={(v) => set('count', v as CountId)}
                 counts={countAvail}
               />
-              {cappedByPool && (
-                <p className="text-xs text-amber-600 dark:text-amber-400">
-                  可用題目唔夠，實際出 {takeCount} 題。
-                </p>
-              )}
             </div>
 
             {/* 計時秒數（只 timed 模式顯示） */}
             {settings.mode === 'timed' && (
-              <div className="space-y-1.5">
-                <span className="flex items-center gap-1 text-xs font-medium text-slate-600 dark:text-slate-300">
-                  <Timer size={13} /> 每題限時
-                </span>
+              <div className="space-y-2">
+                <OptionLabel icon={Timer}>每題限時</OptionLabel>
                 <Pills
                   options={TIME_OPTIONS}
                   active={String(settings.timeLimit)}
@@ -248,47 +275,99 @@ export function SetupView({
             )}
 
             {/* 進階選項 */}
-            <div className="flex flex-wrap gap-2">
-              <ToggleChip
-                label="包含短答題"
-                hint={`+${shortPool.length}`}
-                active={settings.includeShort}
-                disabled={shortPool.length === 0}
-                onClick={() => set('includeShort', !settings.includeShort)}
-              />
-              <ToggleChip
-                label="打亂選項次序"
-                active={settings.shuffleOptions}
-                onClick={() => set('shuffleOptions', !settings.shuffleOptions)}
-              />
+            <div className="space-y-2">
+              <OptionLabel icon={Shuffle}>進階</OptionLabel>
+              <div className="flex flex-wrap gap-2">
+                <ToggleChip
+                  label="包含短答題"
+                  hint={shortPool.length > 0 ? `+${shortPool.length}` : undefined}
+                  active={settings.includeShort}
+                  disabled={shortPool.length === 0}
+                  onClick={() => set('includeShort', !settings.includeShort)}
+                />
+                <ToggleChip
+                  label="打亂選項次序"
+                  active={settings.shuffleOptions}
+                  onClick={() => set('shuffleOptions', !settings.shuffleOptions)}
+                />
+              </div>
             </div>
-
-            <Button size="lg" className="w-full" icon={Play} disabled={takeCount === 0} onClick={start}>
-              {takeCount === 0
-                ? '無符合條件題目'
-                : `開始（${takeCount} 題） · ${scopeLabel} · ${DIFF_FILTER_LABEL[settings.difficulty]}`}
-            </Button>
           </Card>
+
+          {/* ── 出卷概要 + 開始 CTA（一個沉穩的行動區）── */}
+          <div className="rounded-3xl border border-accent/30 bg-accent-soft/60 p-4 dark:border-accent/30 dark:bg-accent/10 sm:p-5">
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge tone="accent">{scopeLabel}</Badge>
+              <Badge tone="slate">{DIFF_FILTER_LABEL[settings.difficulty]}</Badge>
+              <Badge tone={takeCount > 0 ? 'accent' : 'rose'} className="tabular-nums">
+                {takeCount} 題
+              </Badge>
+              {settings.mode === 'timed' && (
+                <Badge tone="amber" icon={Timer} className="tabular-nums">
+                  {settings.timeLimit} 秒／題
+                </Badge>
+              )}
+              <span className="ml-auto text-xs text-slate-500 dark:text-slate-400" aria-live="polite">
+                符合條件 <span className="font-semibold tabular-nums text-accent-strong dark:text-accent">{matched.length}</span> 題
+              </span>
+            </div>
+            {cappedByPool && (
+              <p className="mt-2 text-xs text-amber-600 dark:text-amber-400">
+                呢個範圍題目唔夠 {wantCount} 題，實際出 {takeCount} 題。
+              </p>
+            )}
+            <Button
+              size="lg"
+              fullWidth
+              icon={Play}
+              disabled={takeCount === 0}
+              onClick={start}
+              className="mt-3"
+            >
+              {takeCount === 0 ? '冇符合條件嘅題目' : `開始測驗 · ${takeCount} 題`}
+            </Button>
+          </div>
         </section>
       )}
 
-      {/* 歷史紀錄 */}
+      {/* ── 歷史紀錄 ── */}
       <section>
-        <SectionTitle>歷史紀錄</SectionTitle>
+        <div className="mb-3 flex items-center gap-2">
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+            歷史紀錄
+          </h2>
+          {historyDesc.length > 0 && (
+            <Badge tone="slate" className="tabular-nums">{historyDesc.length}</Badge>
+          )}
+        </div>
         {historyDesc.length === 0 ? (
           <EmptyState
             icon={FolderOpen}
             title="仲未有測驗紀錄"
-            hint="完成第一次自測之後，成績會喺呢度睇返、重溫同重做錯題。"
+            hint="完成第一次自測之後，每次成績都會喺呢度，方便你重溫同重做錯題。"
           />
         ) : (
-          <ul className="space-y-2">
+          <ul className="space-y-2.5">
             {historyDesc.map((a) => {
               const p = pct(a.correctCount, a.total)
               const isTimed = a.title.includes('搶分')
               return (
-                <Card key={a.id} className="p-4">
-                  <div className="flex items-start justify-between gap-3">
+                <Card key={a.id} hover padded>
+                  <div className="flex items-start gap-3">
+                    {/* 命中率環形數字（左側錨點，建立節奏） */}
+                    <div
+                      className={cx(
+                        'flex h-12 w-12 shrink-0 flex-col items-center justify-center rounded-2xl text-base font-bold tabular-nums',
+                        p >= 80
+                          ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-300'
+                          : p >= 50
+                            ? 'bg-amber-50 text-amber-600 dark:bg-amber-500/15 dark:text-amber-300'
+                            : 'bg-rose-50 text-rose-600 dark:bg-rose-500/15 dark:text-rose-300',
+                      )}
+                    >
+                      {p}
+                      <span className="text-[9px] font-medium opacity-70">%</span>
+                    </div>
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-semibold text-slate-800 dark:text-slate-100">
                         {a.title}
@@ -296,34 +375,30 @@ export function SetupView({
                       <p className="mt-0.5 text-xs text-slate-400 dark:text-slate-500">
                         {formatDateTime(a.createdAt)}
                       </p>
-                    </div>
-                    <div className={cx('shrink-0 text-2xl font-bold tabular-nums', scoreColor(p))}>
-                      {p}%
+                      <div className="mt-2 flex flex-wrap gap-1.5">
+                        <Badge tone={scoreTone(p)}>
+                          <span className="tabular-nums">{a.correctCount}/{a.total}</span> 答啱
+                        </Badge>
+                        <Badge tone="slate" icon={Timer}>
+                          <span className="tabular-nums">{fmtDuration(a.durationSec)}</span>
+                        </Badge>
+                        {isTimed && <Badge tone="accent" icon={Trophy}>搶分</Badge>}
+                        <Badge tone={a.mode === 'work' ? 'blue' : 'accent'}>
+                          {a.mode === 'work' ? '工作' : '個人'}
+                        </Badge>
+                      </div>
                     </div>
                   </div>
 
-                  <div className="mt-2 flex flex-wrap gap-1.5">
-                    <Badge tone="slate">
-                      <span className="tabular-nums">{a.correctCount}/{a.total}</span> 題
-                    </Badge>
-                    <Badge tone="slate" icon={Timer}>
-                      <span className="tabular-nums">{fmtDuration(a.durationSec)}</span>
-                    </Badge>
-                    {isTimed && <Badge tone="accent" icon={Trophy}>搶分</Badge>}
-                    <Badge tone={a.mode === 'work' ? 'blue' : 'accent'}>
-                      {a.mode === 'work' ? '工作' : '個人'}
-                    </Badge>
-                  </div>
-
-                  <div className="mt-3 flex gap-2">
-                    <Button variant="ghost" size="sm" onClick={() => onReview(a.id, settingsFromAttempt(a))}>
+                  <div className="mt-3 flex gap-2 border-t border-slate-100 pt-3 dark:border-slate-700/60">
+                    <Button variant="secondary" size="sm" onClick={() => onReview(a.id, settingsFromAttempt(a))}>
                       重溫
                     </Button>
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => removeAttempt(a)}
-                      className="hover:text-rose-500"
+                      className="ml-auto text-slate-400 hover:text-rose-500"
                     >
                       刪除
                     </Button>
@@ -335,6 +410,52 @@ export function SetupView({
         )}
       </section>
     </div>
+  )
+}
+
+// ── 迷你統計（細圖示 chip + 數字，輔助資訊，唔搶主行動）──
+type StatTone = 'accent' | 'sky' | 'emerald'
+const STAT_CHIP: Record<StatTone, string> = {
+  accent: 'bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent',
+  sky: 'bg-sky-50 text-sky-600 dark:bg-sky-500/15 dark:text-sky-300',
+  emerald: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-300',
+}
+function MiniStat({
+  label,
+  value,
+  unit,
+  icon: Icon,
+  tone,
+}: {
+  label: string
+  value: number | string
+  unit?: string
+  icon: typeof Play
+  tone: StatTone
+}) {
+  return (
+    <div className="flex flex-col gap-2 rounded-2xl border border-slate-200/80 bg-white p-3.5 dark:border-slate-700/60 dark:bg-slate-800">
+      <span className={cx('flex h-8 w-8 items-center justify-center rounded-xl', STAT_CHIP[tone])}>
+        <Icon size={16} />
+      </span>
+      <div>
+        <p className="flex items-baseline gap-0.5">
+          <span className="text-2xl font-bold tabular-nums text-slate-800 dark:text-slate-100">{value}</span>
+          {unit && <span className="text-sm font-medium text-slate-400">{unit}</span>}
+        </p>
+        <p className="text-[11px] text-slate-400 dark:text-slate-500">{label}</p>
+      </div>
+    </div>
+  )
+}
+
+// ── 區塊小標題（圖示 + 文字）──
+function OptionLabel({ icon: Icon, children }: { icon: typeof Play; children: React.ReactNode }) {
+  return (
+    <span className="flex items-center gap-1.5 text-xs font-medium text-slate-600 dark:text-slate-300">
+      <Icon size={13} className="text-slate-400" />
+      {children}
+    </span>
   )
 }
 

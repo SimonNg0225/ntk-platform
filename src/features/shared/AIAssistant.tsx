@@ -31,7 +31,6 @@ import {
   Button,
   IconButton,
   Input,
-  Select,
   Textarea,
   Field,
   EmptyState,
@@ -714,25 +713,20 @@ export default function AIAssistant() {
             </IconButton>
           </Tooltip>
 
-          <Select
-            className="w-auto py-1.5 text-xs"
+          {/* 模型（輕量 segmented，唔似表單 select） */}
+          <SegmentedControl
+            size="sm"
             value={activeModel}
-            onChange={(e) => setModel(e.target.value as AIModel)}
-            aria-label="選擇模型"
-          >
-            {MODELS.map((m) => (
-              <option key={m.id} value={m.id}>
-                {m.label}
-              </option>
-            ))}
-          </Select>
+            onChange={(id) => setModel(id as AIModel)}
+            options={MODELS.map((m) => ({ id: m.id, label: m.label }))}
+          />
 
           {/* 人格 */}
           <Menu
             align="start"
             trigger={
-              <span className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs text-slate-600 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700">
-                <Sparkles size={13} /> {personaLabel}
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200/80 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 transition hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700">
+                <Sparkles size={13} className="text-accent" /> {personaLabel}
                 <ChevronDown size={12} className="text-slate-400" />
               </span>
             }
@@ -746,7 +740,7 @@ export default function AIAssistant() {
 
           {/* 溫度 */}
           <Tooltip label="創意度（temperature）">
-            <span className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1 dark:border-slate-700 dark:bg-slate-800">
+            <span className="inline-flex items-center gap-2 rounded-full border border-slate-200/80 bg-white px-3 py-1.5 dark:border-slate-700 dark:bg-slate-800">
               <Thermometer size={13} className="text-slate-400" />
               <input
                 type="range"
@@ -758,7 +752,7 @@ export default function AIAssistant() {
                 className="h-1 w-16 cursor-pointer accent-accent"
                 aria-label="溫度"
               />
-              <span className="w-6 tabular-nums text-[11px] text-slate-500">{activeTemp.toFixed(1)}</span>
+              <span className="w-6 tabular-nums text-[11px] font-medium text-slate-500 dark:text-slate-400">{activeTemp.toFixed(1)}</span>
             </span>
           </Tooltip>
 
@@ -828,7 +822,7 @@ export default function AIAssistant() {
         {/* 訊息區 */}
         <div
           ref={scrollRef}
-          className="flex-1 space-y-4 overflow-y-auto rounded-2xl border border-slate-200/80 bg-slate-50/50 p-4 dark:border-slate-700/80 dark:bg-slate-900/40"
+          className="flex-1 space-y-6 overflow-y-auto rounded-3xl border border-slate-200/70 bg-slate-50/60 p-4 dark:border-slate-700/60 dark:bg-slate-900/30 sm:px-5 sm:py-5"
         >
           {messages.length === 0 && streaming === null ? (
             <Welcome
@@ -880,18 +874,20 @@ export default function AIAssistant() {
         {/* 上下文 chip 列（有就顯示） */}
         {activeContexts.length > 0 && (
           <div className="flex flex-wrap items-center gap-1.5 px-1">
-            <span className="text-[11px] text-slate-400">上下文：</span>
+            <span className="inline-flex items-center gap-1 text-[11px] font-medium text-slate-400 dark:text-slate-500">
+              <Paperclip size={11} /> 上下文
+            </span>
             {activeContexts.map((c) => (
               <span
                 key={c.id}
-                className="inline-flex items-center gap-1 rounded-full bg-accent-soft px-2 py-0.5 text-[11px] text-accent-strong dark:bg-accent/15 dark:text-accent"
+                className="inline-flex items-center gap-1.5 rounded-full bg-accent-soft py-1 pl-2.5 pr-1.5 text-[11px] font-medium text-accent-strong ring-1 ring-inset ring-accent/15 dark:bg-accent/15 dark:text-accent dark:ring-accent/20"
               >
                 <FileText size={11} />
                 <span className="max-w-[10rem] truncate">{c.title}</span>
                 <button
                   type="button"
                   onClick={() => setContexts(activeContexts.filter((x) => x.id !== c.id))}
-                  className="ml-0.5 rounded-full hover:bg-black/10"
+                  className="flex h-4 w-4 items-center justify-center rounded-full text-accent-strong/70 transition hover:bg-accent/15 hover:text-accent-strong focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent/50 dark:text-accent/70 dark:hover:bg-accent/20 dark:hover:text-accent"
                   aria-label={`移除上下文：${c.title}`}
                 >
                   <X size={11} />
@@ -901,19 +897,19 @@ export default function AIAssistant() {
           </div>
         )}
 
-        {/* 輸入區 */}
-        <div className="rounded-2xl border border-slate-200 bg-white p-2 shadow-xs dark:border-slate-700 dark:bg-slate-800 dark:shadow-none">
+        {/* 輸入區（貼底） */}
+        <div className="sticky bottom-0 rounded-3xl border border-slate-200/80 bg-white p-2 shadow-sm transition focus-within:border-accent/50 focus-within:ring-2 focus-within:ring-accent/20 dark:border-slate-700/70 dark:bg-slate-800 dark:shadow-none">
           <Textarea
             ref={inputRef}
             rows={2}
-            className="border-0 bg-transparent px-2 py-1 shadow-none focus:ring-0 dark:bg-transparent"
+            className="resize-none border-0 bg-transparent px-2.5 py-1.5 text-[13.5px] leading-relaxed shadow-none focus:ring-0 dark:bg-transparent"
             placeholder={`打你想問嘅嘢…（Enter 送出 · Shift+Enter 換行 · ${MOD}/ 範本）`}
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={onInputKeyDown}
             disabled={busy}
           />
-          <div className="flex items-center gap-1.5 px-1 pt-1">
+          <div className="flex items-center gap-1 px-0.5 pt-1">
             <Tooltip label={`範本庫（${MOD}/）`}>
               <IconButton label="範本庫" size="sm" onClick={() => setTemplateOpen(true)}>
                 <Library size={16} />
@@ -925,7 +921,7 @@ export default function AIAssistant() {
               </IconButton>
             </Tooltip>
             {input.trim() && (
-              <span className="text-[11px] tabular-nums text-slate-400">
+              <span className="ml-1 text-[11px] tabular-nums text-slate-400 dark:text-slate-500">
                 {inputWords} 字 · ~{approxTokens(input)} tokens
               </span>
             )}
@@ -935,7 +931,7 @@ export default function AIAssistant() {
                 停止
               </Button>
             ) : (
-              <Button size="sm" iconRight={CornerDownLeft} onClick={() => void send(input)} disabled={!input.trim()}>
+              <Button size="sm" iconRight={Send} onClick={() => void send(input)} disabled={!input.trim()}>
                 送出
               </Button>
             )}
@@ -1106,40 +1102,83 @@ function Welcome({
   onOpenLibrary: () => void
 }) {
   return (
-    <div className="flex h-full flex-col items-center justify-center gap-5 px-4 text-center">
-      <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
-        <Bot size={32} strokeWidth={1.75} />
-      </span>
-      <div>
-        <p className="text-lg font-semibold text-slate-700 dark:text-slate-200">{greeting}</p>
-        <p className="mt-1 text-sm text-slate-400 dark:text-slate-500">{tagline}</p>
+    <div className="mx-auto flex h-full max-w-2xl flex-col items-center justify-center gap-6 px-2 py-6 text-center sm:py-8">
+      <div className="flex flex-col items-center gap-4">
+        <span className="relative flex h-16 w-16 items-center justify-center rounded-2xl bg-accent-soft text-accent-strong shadow-sm shadow-accent/20 dark:bg-accent/15 dark:text-accent dark:shadow-none">
+          <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-white text-accent ring-1 ring-accent/20 dark:bg-slate-800 dark:ring-accent/30">
+            <Sparkles size={11} className="fill-current" />
+          </span>
+          <Bot size={30} strokeWidth={1.75} />
+        </span>
+        <div className="space-y-2">
+          <p className="text-xl font-semibold tracking-tight text-slate-800 dark:text-slate-100">
+            你好，{greeting}
+          </p>
+          <p className="text-sm leading-relaxed text-slate-500 dark:text-slate-400">
+            想由邊度開始？揀一個落手位，或者直接打你想問嘅嘢。
+          </p>
+          <div className="flex flex-wrap items-center justify-center gap-1.5 pt-0.5">
+            {tagline.split(/\s*·\s*/).map((part) => (
+              <span
+                key={part}
+                className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-medium text-slate-500 dark:bg-slate-800 dark:text-slate-400"
+              >
+                {part}
+              </span>
+            ))}
+          </div>
+        </div>
       </div>
-      <div className="grid w-full max-w-xl grid-cols-1 gap-2 sm:grid-cols-2">
-        {templates.map((t) => (
-          <button
-            key={t.id}
-            onClick={() => onPick(t)}
-            className="group flex items-start gap-2 rounded-xl border border-slate-200 bg-white p-3 text-left transition hover:-translate-y-0.5 hover:border-accent hover:shadow-md dark:border-slate-700 dark:bg-slate-800"
-          >
-            <span className="mt-0.5 rounded-lg bg-slate-100 p-1.5 text-slate-400 transition group-hover:bg-accent-soft group-hover:text-accent dark:bg-slate-700">
-              <Sparkles size={14} />
-            </span>
-            <span className="min-w-0">
-              <span className="block text-xs font-semibold text-slate-700 dark:text-slate-200">{t.title}</span>
-              <span className="mt-0.5 block truncate text-[11px] text-slate-400">{t.category}</span>
-            </span>
-          </button>
-        ))}
+
+      <div className="w-full">
+        <div className="mb-2.5 flex items-center gap-2 px-0.5 text-left">
+          <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+            試吓問我
+          </span>
+          <span className="h-px flex-1 bg-slate-200/70 dark:bg-slate-700/60" />
+        </div>
+        <div className="grid w-full grid-cols-1 gap-2 sm:grid-cols-2">
+          {templates.map((t, idx) => {
+            const tone = WELCOME_TONES[idx % WELCOME_TONES.length]
+            return (
+              <button
+                key={t.id}
+                onClick={() => onPick(t)}
+                className="group flex items-center gap-3 rounded-2xl border border-slate-200/80 bg-white p-3 text-left shadow-xs transition duration-200 hover:-translate-y-0.5 hover:border-accent/40 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:border-slate-700/60 dark:bg-slate-800 dark:shadow-none dark:hover:border-accent/50"
+              >
+                <span className={cx('flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition duration-200 group-hover:scale-105', tone)}>
+                  <Sparkles size={16} />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-sm font-medium text-slate-700 dark:text-slate-200">{t.title}</span>
+                  <span className="mt-0.5 block truncate text-[11px] text-slate-400 dark:text-slate-500">{t.category}</span>
+                </span>
+                <CornerDownLeft size={14} className="shrink-0 text-slate-300 opacity-0 transition group-hover:opacity-100 dark:text-slate-600" />
+              </button>
+            )
+          })}
+        </div>
       </div>
+
       <button
         onClick={onOpenLibrary}
-        className="inline-flex items-center gap-1.5 text-xs font-medium text-accent hover:underline"
+        className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium text-slate-500 transition hover:bg-slate-100 hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-accent"
       >
         <Library size={14} /> 睇晒全部範本
       </button>
     </div>
   )
 }
+
+// 歡迎區 chip 的分類色（輪流用，避免一式一樣的灰底 grid）
+const WELCOME_TONES = [
+  'bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent',
+  'bg-violet-50 text-violet-600 dark:bg-violet-500/15 dark:text-violet-300',
+  'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-300',
+  'bg-amber-50 text-amber-600 dark:bg-amber-500/15 dark:text-amber-300',
+  'bg-sky-50 text-sky-600 dark:bg-sky-500/15 dark:text-sky-300',
+  'bg-rose-50 text-rose-600 dark:bg-rose-500/15 dark:text-rose-300',
+]
 
 function MessageBubble({
   msg,
@@ -1174,8 +1213,8 @@ function MessageBubble({
   if (editing) {
     return (
       <div className="flex justify-end">
-        <div className="w-full max-w-[85%] space-y-2 rounded-2xl border border-accent/40 bg-white p-2 dark:bg-slate-800">
-          <Textarea rows={3} value={draft} onChange={(e) => setDraft(e.target.value)} autoFocus />
+        <div className="w-full max-w-[88%] space-y-2 rounded-2xl border border-accent/40 bg-white p-2.5 shadow-sm ring-1 ring-accent/10 dark:bg-slate-800 dark:shadow-none">
+          <Textarea rows={3} value={draft} onChange={(e) => setDraft(e.target.value)} autoFocus className="text-sm" />
           <div className="flex justify-end gap-2">
             <Button variant="ghost" size="sm" onClick={() => { setDraft(msg.content); setEditing(false) }}>
               取消
@@ -1189,31 +1228,50 @@ function MessageBubble({
     )
   }
 
+  const waiting = streaming && msg.content.length === 0
+
   return (
-    <div className={cx('group flex flex-col gap-1', isUser ? 'items-end' : 'items-start')}>
-      <div className={isUser ? 'flex items-start gap-2' : 'flex w-full items-start gap-2'}>
-        {!isUser && (
-          <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
-            <Bot size={15} />
-          </span>
-        )}
-        <div
-          className={
+    <div className={cx('group flex flex-col gap-1.5', isUser ? 'items-end' : 'items-start')}>
+      <div className={cx('flex max-w-[88%] items-start gap-2.5', isUser ? 'flex-row-reverse' : 'w-full')}>
+        <span
+          className={cx(
+            'mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold',
             isUser
-              ? 'max-w-full whitespace-pre-wrap break-words rounded-2xl rounded-br-md bg-accent px-4 py-2.5 text-sm text-white'
-              : 'min-w-0 max-w-full overflow-hidden break-words rounded-2xl rounded-bl-md border border-slate-200 bg-white px-4 py-2.5 text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100'
-          }
-        >
-          {isUser ? (
-            msg.content
-          ) : (
-            <>
-              <Markdown text={msg.content} />
-              {streaming && (
-                <span className="ml-0.5 inline-block h-4 w-1.5 animate-pulse bg-current align-middle" />
-              )}
-            </>
+              ? 'bg-slate-200 text-slate-500 dark:bg-slate-700 dark:text-slate-300'
+              : 'bg-accent-soft text-accent-strong ring-1 ring-accent/15 dark:bg-accent/15 dark:text-accent dark:ring-accent/20',
           )}
+        >
+          {isUser ? '你' : <Bot size={16} />}
+        </span>
+        <div className="min-w-0">
+          <span
+            className={cx(
+              'mb-1 block px-1 text-[11px] font-medium text-slate-400 dark:text-slate-500',
+              isUser ? 'text-right' : 'text-left',
+            )}
+          >
+            {isUser ? '你' : 'AI 助手'}
+          </span>
+          <div
+            className={
+              isUser
+                ? 'max-w-full whitespace-pre-wrap break-words rounded-2xl rounded-tr-md bg-accent px-4 py-2.5 text-[13.5px] leading-relaxed text-white shadow-sm shadow-accent/20 dark:shadow-none'
+                : 'min-w-0 max-w-full overflow-hidden break-words rounded-2xl rounded-tl-md border border-slate-200/80 bg-white px-4 py-3 text-slate-700 shadow-xs dark:border-slate-700/60 dark:bg-slate-800 dark:text-slate-100 dark:shadow-none'
+            }
+          >
+            {isUser ? (
+              msg.content
+            ) : waiting ? (
+              <TypingDots />
+            ) : (
+              <>
+                <Markdown text={msg.content} />
+                {streaming && (
+                  <span className="ml-0.5 inline-block h-3.5 w-[3px] animate-pulse rounded-full bg-accent align-[-0.1em]" />
+                )}
+              </>
+            )}
+          </div>
         </div>
       </div>
 
@@ -1222,7 +1280,7 @@ function MessageBubble({
         <div
           className={cx(
             'flex items-center gap-0.5 opacity-0 transition group-hover:opacity-100',
-            isUser ? 'pr-1' : 'pl-9',
+            isUser ? 'pr-1' : 'pl-[42px]',
           )}
         >
           <Tooltip label={copied ? '已複製' : '複製'}>
@@ -1254,6 +1312,21 @@ function MessageBubble({
         </div>
       )}
     </div>
+  )
+}
+
+// 等 AI 開始回覆時的柔和「打緊字」點動
+function TypingDots() {
+  return (
+    <span className="flex items-center gap-1.5 py-0.5" aria-label="AI 正在輸入">
+      {[0, 1, 2].map((i) => (
+        <span
+          key={i}
+          className="h-2 w-2 animate-bounce rounded-full bg-accent/50 dark:bg-accent/60"
+          style={{ animationDelay: `${i * 0.16}s`, animationDuration: '1s' }}
+        />
+      ))}
+    </span>
   )
 }
 

@@ -20,7 +20,7 @@ function renderInline(text: string, keyBase: string): ReactNode[] {
       nodes.push(
         <code
           key={`${keyBase}-c${ci}`}
-          className="rounded bg-slate-100 px-1 py-0.5 font-mono text-[0.85em] text-accent-strong dark:bg-slate-900/70 dark:text-accent"
+          className="rounded-md bg-accent-soft/70 px-1.5 py-0.5 font-mono text-[0.82em] text-accent-strong ring-1 ring-inset ring-accent/15 dark:bg-accent/15 dark:text-accent dark:ring-accent/20"
         >
           {part.slice(1, -1)}
         </code>,
@@ -38,7 +38,7 @@ function renderInline(text: string, keyBase: string): ReactNode[] {
             href={link[2]}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-accent underline decoration-accent/40 underline-offset-2 hover:decoration-accent"
+            className="font-medium text-accent underline decoration-accent/30 decoration-1 underline-offset-2 transition-colors hover:decoration-accent"
           >
             {link[1]}
           </a>,
@@ -51,7 +51,7 @@ function renderInline(text: string, keyBase: string): ReactNode[] {
         const key = `${keyBase}-c${ci}-l${li}-s${si}`
         if (/^(\*\*|__).+(\*\*|__)$/.test(s)) {
           nodes.push(
-            <strong key={key} className="font-semibold text-slate-900 dark:text-white">
+            <strong key={key} className="font-semibold text-slate-800 dark:text-slate-100">
               {s.slice(2, -2)}
             </strong>,
           )
@@ -80,21 +80,22 @@ function CodeBlock({ code, lang }: { code: string; lang?: string }) {
     })
   }
   return (
-    <div className="group relative my-2 overflow-hidden rounded-lg border border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-900/70">
-      <div className="flex items-center justify-between border-b border-slate-200 bg-slate-100/70 px-3 py-1 dark:border-slate-700 dark:bg-slate-800/70">
-        <span className="font-mono text-[10px] uppercase tracking-wide text-slate-400">
+    <div className="group relative my-3 overflow-hidden rounded-xl border border-slate-200/80 bg-slate-50/80 dark:border-slate-700/70 dark:bg-slate-900/60">
+      <div className="flex items-center justify-between border-b border-slate-200/70 bg-slate-100/60 px-3 py-1.5 dark:border-slate-700/60 dark:bg-slate-800/50">
+        <span className="flex items-center gap-1.5 font-mono text-[10px] font-medium uppercase tracking-wider text-slate-400">
+          <span className="h-1.5 w-1.5 rounded-full bg-slate-300 dark:bg-slate-600" />
           {lang || 'code'}
         </span>
         <button
           onClick={copy}
-          className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[11px] text-slate-400 transition hover:bg-slate-200 hover:text-slate-600 dark:hover:bg-slate-700 dark:hover:text-slate-200"
+          className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] text-slate-400 opacity-0 transition hover:bg-slate-200/70 hover:text-slate-600 focus-visible:opacity-100 group-hover:opacity-100 dark:hover:bg-slate-700/70 dark:hover:text-slate-200"
         >
-          {copied ? <Check size={12} /> : <Copy size={12} />}
+          {copied ? <Check size={12} className="text-emerald-500" /> : <Copy size={12} />}
           {copied ? '已複製' : '複製'}
         </button>
       </div>
-      <pre className="overflow-x-auto p-3 text-[12.5px] leading-relaxed">
-        <code className="font-mono text-slate-800 dark:text-slate-100">{code}</code>
+      <pre className="overflow-x-auto p-3.5 text-[12.5px] leading-relaxed">
+        <code className="font-mono text-slate-700 dark:text-slate-200">{code}</code>
       </pre>
     </div>
   )
@@ -110,25 +111,25 @@ function MdTable({ rows }: { rows: string[] }) {
   const header = parse(rows[0])
   const body = rows.slice(2).map(parse) // rows[1] 係分隔線
   return (
-    <div className="my-2 overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700">
+    <div className="my-3 overflow-x-auto rounded-xl border border-slate-200/80 dark:border-slate-700/70">
       <table className="w-full text-[13px]">
-        <thead className="bg-slate-50 dark:bg-slate-800/60">
+        <thead className="bg-slate-50/90 dark:bg-slate-800/50">
           <tr>
             {header.map((h, i) => (
               <th
                 key={i}
-                className="px-3 py-1.5 text-left font-semibold text-slate-600 dark:text-slate-300"
+                className="whitespace-nowrap px-3.5 py-2 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400"
               >
                 {renderInline(h, `th${i}`)}
               </th>
             ))}
           </tr>
         </thead>
-        <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+        <tbody className="divide-y divide-slate-100 dark:divide-slate-800/80">
           {body.map((r, ri) => (
-            <tr key={ri}>
+            <tr key={ri} className="transition-colors hover:bg-slate-50/70 dark:hover:bg-slate-800/40">
               {r.map((c, ci) => (
-                <td key={ci} className="px-3 py-1.5 text-slate-700 dark:text-slate-200">
+                <td key={ci} className="px-3.5 py-2 text-slate-600 dark:text-slate-300">
                   {renderInline(c, `td${ri}-${ci}`)}
                 </td>
               ))}
@@ -166,18 +167,18 @@ export function Markdown({ text, className }: { text: string; className?: string
   const flushList = () => {
     if (!listBuf) return
     const { ordered, items } = listBuf
-    const cls = 'my-1.5 space-y-1 pl-5 text-[13.5px] leading-relaxed'
+    const cls = 'my-2 space-y-1.5 pl-5 text-[13.5px] leading-relaxed text-slate-600 dark:text-slate-300 marker:text-accent/70 dark:marker:text-accent/80'
     blocks.push(
       ordered ? (
-        <ol key={key++} className={cx('list-decimal', cls)}>
+        <ol key={key++} className={cx('list-decimal marker:font-medium marker:text-slate-400 dark:marker:text-slate-500', cls)}>
           {items.map((it, k) => (
-            <li key={k}>{renderInline(it, `ol${key}-${k}`)}</li>
+            <li key={k} className="pl-1">{renderInline(it, `ol${key}-${k}`)}</li>
           ))}
         </ol>
       ) : (
         <ul key={key++} className={cx('list-disc', cls)}>
           {items.map((it, k) => (
-            <li key={k}>{renderInline(it, `ul${key}-${k}`)}</li>
+            <li key={k} className="pl-1">{renderInline(it, `ul${key}-${k}`)}</li>
           ))}
         </ul>
       ),
@@ -222,13 +223,15 @@ export function Markdown({ text, className }: { text: string; className?: string
       flushList()
       const level = heading[1].length
       const content = heading[2]
-      const sizes = ['text-base', 'text-[15px]', 'text-sm', 'text-sm']
+      const sizes = ['text-[15px]', 'text-sm', 'text-[13.5px]', 'text-[13.5px]']
       blocks.push(
         <p
           key={key++}
           className={cx(
-            'mt-2.5 font-bold text-slate-900 dark:text-white',
+            'mb-1 mt-3.5 font-semibold tracking-tight text-slate-800 first:mt-0 dark:text-slate-100',
             sizes[level - 1],
+            level <= 2 &&
+              'flex items-center gap-2 before:h-3.5 before:w-1 before:rounded-full before:bg-accent/70',
           )}
         >
           {renderInline(content, `h${key}`)}
@@ -244,7 +247,7 @@ export function Markdown({ text, className }: { text: string; className?: string
       blocks.push(
         <blockquote
           key={key++}
-          className="my-1.5 border-l-2 border-accent/40 pl-3 text-[13.5px] italic text-slate-500 dark:text-slate-400"
+          className="my-2 rounded-r-lg border-l-[3px] border-accent/50 bg-accent-soft/40 py-1.5 pl-3 pr-2 text-[13.5px] leading-relaxed text-slate-600 dark:bg-accent/10 dark:text-slate-300"
         >
           {renderInline(line.slice(2), `q${key}`)}
         </blockquote>,
@@ -257,7 +260,7 @@ export function Markdown({ text, className }: { text: string; className?: string
     if (/^(-{3,}|\*{3,}|_{3,})\s*$/.test(line)) {
       flushList()
       blocks.push(
-        <hr key={key++} className="my-3 border-slate-200 dark:border-slate-700" />,
+        <hr key={key++} className="my-4 border-slate-200/70 dark:border-slate-700/60" />,
       )
       i++
       continue
@@ -288,7 +291,7 @@ export function Markdown({ text, className }: { text: string; className?: string
     // 普通段落
     flushList()
     blocks.push(
-      <p key={key++} className="text-[13.5px] leading-relaxed">
+      <p key={key++} className="text-[13.5px] leading-[1.7] text-slate-600 dark:text-slate-300">
         {renderInline(line, `p${key}`)}
       </p>,
     )
@@ -296,5 +299,5 @@ export function Markdown({ text, className }: { text: string; className?: string
   }
   flushList()
 
-  return <div className={cx('space-y-0.5', className)}>{blocks}</div>
+  return <div className={cx('space-y-1', className)}>{blocks}</div>
 }

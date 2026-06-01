@@ -1,5 +1,19 @@
 import { useRef, useState, type KeyboardEvent } from 'react'
-import { Bot, Lock, Send, Sparkles, Square } from 'lucide-react'
+import {
+  Bot,
+  Lock,
+  Send,
+  Sparkles,
+  Square,
+  CornerDownLeft,
+  User,
+  AlertTriangle,
+  NotebookPen,
+  ListTodo,
+  Target,
+  CalendarDays,
+} from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 import { streamChat, isAIConfigured, type AIMessage } from '../../lib/aiClient'
 import { useAuth } from '../../context/AuthContext'
 import { useCollection } from '../../lib/store'
@@ -14,7 +28,7 @@ import { journalDocsCol } from '../learning/journal/store'
 import { healthLogsCol, getGoals as getHealthGoals } from '../learning/health/store'
 import { summarize as summarizeHealth } from '../learning/health/util'
 import { workoutCol } from '../learning/fitness/training/store'
-import { Button, Card, EmptyState, Textarea } from '../../ui'
+import { Button, EmptyState, Textarea, cx } from '../../ui'
 
 // ============================================================
 //  「問我嘅資料」AI — 全域個人助理
@@ -23,11 +37,12 @@ import { Button, Card, EmptyState, Textarea } from '../../ui'
 //  經 Supabase Edge Function 問 Gemini，扼要回答。未啟用 / 未登入優雅守門。
 // ============================================================
 
-const SUGGESTIONS = [
-  '我今個星期有咩重要事？',
-  '總結我最近嘅筆記重點',
-  '我仲有咩未完成待辦？',
-  '根據我嘅目標，建議下一步點做',
+// 範例提問：撳一下即時帶入並發問。配一隻 lucide icon 暗示資料來源。
+const SUGGESTIONS: { text: string; icon: LucideIcon }[] = [
+  { text: '我今個星期有咩重要事？', icon: CalendarDays },
+  { text: '總結我最近嘅筆記重點', icon: NotebookPen },
+  { text: '我仲有咩未完成待辦？', icon: ListTodo },
+  { text: '根據我嘅目標，建議下一步點做', icon: Target },
 ]
 
 const SYSTEM =
@@ -140,6 +155,8 @@ export default function AskData() {
 
   const [q, setQ] = useState('')
   const [answer, setAnswer] = useState<string | null>(null)
+  // askedQuestion：已送出嘅問題（用嚟喺對話度顯示「你」嗰格），同 q 輸入框分開。
+  const [askedQuestion, setAskedQuestion] = useState('')
   const [busy, setBusy] = useState(false)
   const abortRef = useRef<AbortController | null>(null)
   const inputRef = useRef<HTMLTextAreaElement | null>(null)
@@ -167,6 +184,7 @@ export default function AskData() {
     const text = question.trim()
     if (!text || busy) return
     setQ(text)
+    setAskedQuestion(text)
     setBusy(true)
     setAnswer('')
     const controller = new AbortController()
@@ -204,30 +222,158 @@ export default function AskData() {
     }
   }
 
+  // 渲染期判斷：answer 由 ask() 設成 `出錯：…` 時當錯誤氣泡顯示（唔改邏輯）。
+  const isError = answer != null && answer.startsWith('出錯：')
+  const errorText = isError ? answer.replace(/^出錯：/, '') : ''
+  const started = answer !== null
+  const showCaret = busy && !isError
+
   return (
-    <div className="space-y-4">
-      <Card padded>
-        <div className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-200">
-          <Sparkles size={16} className="text-accent" />
-          問任何關於你資料嘅問題
+    <div className="mx-auto max-w-3xl space-y-5">
+      {/* ── 歡迎區：柔和漸變，介紹助手做咩 ── */}
+      {!started && (
+        <section className="hero-gradient relative animate-fade-in-up overflow-hidden rounded-3xl px-6 py-8 text-white shadow-lg shadow-accent/25 sm:px-8 sm:py-9">
+          <div className="pointer-events-none absolute -right-10 -top-12 h-44 w-44 rounded-full bg-white/10 blur-2xl" />
+          <div className="pointer-events-none absolute -bottom-16 right-24 h-36 w-36 rounded-full bg-white/10 blur-2xl" />
+          <div className="relative">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-xs font-medium backdrop-blur">
+              <Sparkles size={13} /> 私人 AI 助理
+            </span>
+            <h1 className="mt-4 text-2xl font-bold tracking-tight">
+              問我關於你嘅一切
+            </h1>
+            <p className="mt-2 max-w-md text-sm leading-relaxed text-white/80">
+              我會睇返你嘅筆記、待辦、目標、日程同日誌，幫你扼要解答 ——
+              想知有咩重要事、想總結重點，問我就得。
+            </p>
+          </div>
+        </section>
+      )}
+
+      {/* ── 對話區：你 / AI 兩格分明，柔和氣泡 ── */}
+      {started && (
+        <div className="space-y-4">
+          {/* 你 */}
+          {askedQuestion && (
+            <div className="flex animate-fade-in-up justify-end gap-2.5">
+              <div className="max-w-[85%] rounded-2xl rounded-br-md bg-accent px-4 py-2.5 text-sm leading-relaxed text-white shadow-sm">
+                {askedQuestion}
+              </div>
+              <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-200 text-slate-500 dark:bg-slate-700 dark:text-slate-300">
+                <User size={16} />
+              </span>
+            </div>
+          )}
+
+          {/* AI */}
+          <div className="flex animate-fade-in-up gap-2.5">
+            <span
+              className={cx(
+                'mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full',
+                isError
+                  ? 'bg-rose-50 text-rose-500 dark:bg-rose-500/15 dark:text-rose-300'
+                  : 'bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent',
+              )}
+            >
+              {isError ? <AlertTriangle size={16} /> : <Sparkles size={16} />}
+            </span>
+
+            {isError ? (
+              <div className="max-w-[85%] rounded-2xl rounded-tl-md border border-rose-200/70 bg-rose-50/70 px-4 py-3 dark:border-rose-500/30 dark:bg-rose-500/10">
+                <p className="text-sm font-medium text-rose-700 dark:text-rose-300">
+                  唔好意思，啱啱有啲問題
+                </p>
+                <p className="mt-1 break-words text-xs leading-relaxed text-rose-600/90 dark:text-rose-300/80">
+                  {errorText}
+                </p>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  className="mt-3"
+                  onClick={() => void ask(askedQuestion)}
+                >
+                  再試一次
+                </Button>
+              </div>
+            ) : answer === '' && busy ? (
+              // 載入：柔和點動
+              <div
+                role="status"
+                aria-live="polite"
+                aria-busy="true"
+                className="flex items-center gap-1.5 rounded-2xl rounded-tl-md border border-slate-200/80 bg-white px-4 py-3.5 dark:border-slate-700/60 dark:bg-slate-800"
+              >
+                <span className="h-2 w-2 animate-bounce rounded-full bg-accent [animation-delay:-0.3s]" />
+                <span className="h-2 w-2 animate-bounce rounded-full bg-accent [animation-delay:-0.15s]" />
+                <span className="h-2 w-2 animate-bounce rounded-full bg-accent" />
+                <span className="ml-1.5 text-xs text-slate-400 dark:text-slate-500">
+                  睇緊你嘅資料…
+                </span>
+              </div>
+            ) : (
+              <div
+                role="status"
+                aria-live="polite"
+                aria-busy={busy}
+                className="max-w-[85%] whitespace-pre-wrap break-words rounded-2xl rounded-tl-md border border-slate-200/80 bg-white px-4 py-3 text-sm leading-relaxed text-slate-700 shadow-xs dark:border-slate-700/60 dark:bg-slate-800 dark:text-slate-200 dark:shadow-none"
+              >
+                {answer}
+                {showCaret && (
+                  <span
+                    aria-hidden="true"
+                    className="ml-0.5 inline-block h-4 w-1.5 animate-pulse rounded-sm bg-accent align-middle"
+                  />
+                )}
+              </div>
+            )}
+          </div>
         </div>
-        <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
-          AI 會睇你嘅筆記、待辦、目標、日程同日誌嚟答你。
-        </p>
-        <div className="mt-3 flex items-end gap-2">
+      )}
+
+      {/* ── 範例提問 chips（撳一下即發問）── */}
+      {(!started || (!busy && !isError)) && (
+        <div className={cx(started && 'border-t border-slate-200/70 pt-4 dark:border-slate-700/60')}>
+          <p className="mb-2 flex items-center gap-1.5 text-xs font-medium text-slate-400 dark:text-slate-500">
+            <Sparkles size={12} />
+            {started ? '繼續問下去' : '試下問'}
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {SUGGESTIONS.map((s) => (
+              <button
+                key={s.text}
+                type="button"
+                onClick={() => void ask(s.text)}
+                disabled={busy}
+                className="group inline-flex items-center gap-1.5 rounded-full border border-slate-200/80 bg-white px-3.5 py-1.5 text-xs text-slate-600 shadow-xs transition duration-200 hover:-translate-y-0.5 hover:border-accent/40 hover:bg-accent-soft/50 hover:text-accent-strong disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700/60 dark:bg-slate-800 dark:text-slate-300 dark:shadow-none dark:hover:border-accent/40 dark:hover:bg-accent/10 dark:hover:text-accent"
+              >
+                <s.icon size={13} className="text-slate-400 transition group-hover:text-accent" />
+                {s.text}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── 輸入區：圓潤、focus 有 accent 環、送出掣明顯 ── */}
+      <div className="sticky bottom-3 z-10">
+        <div className="flex items-end gap-2 rounded-2xl border border-slate-200/80 bg-white/95 p-2 shadow-md backdrop-blur transition focus-within:border-accent focus-within:ring-2 focus-within:ring-accent/30 dark:border-slate-700/60 dark:bg-slate-800/95 dark:shadow-none">
           <Textarea
             ref={inputRef}
-            rows={2}
-            className="flex-1"
+            rows={1}
+            className="max-h-40 min-h-[40px] flex-1 resize-none border-0 bg-transparent px-2 py-2 shadow-none focus:border-0 focus:ring-0 dark:bg-transparent"
             aria-label="問關於你資料嘅問題"
-            placeholder="例如：我今個星期最緊要做咩？（Enter 送出）"
+            placeholder="問我啲咩呢？例如：我今個星期最緊要做咩？"
             value={q}
             onChange={(e) => setQ(e.target.value)}
             onKeyDown={onKeyDown}
             disabled={busy}
           />
           {busy ? (
-            <Button variant="secondary" icon={Square} onClick={() => abortRef.current?.abort()}>
+            <Button
+              variant="secondary"
+              icon={Square}
+              onClick={() => abortRef.current?.abort()}
+            >
               停止
             </Button>
           ) : (
@@ -236,39 +382,10 @@ export default function AskData() {
             </Button>
           )}
         </div>
-        <div className="mt-3 flex flex-wrap gap-2">
-          {SUGGESTIONS.map((s) => (
-            <button
-              key={s}
-              type="button"
-              onClick={() => void ask(s)}
-              disabled={busy}
-              className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-600 transition hover:border-accent hover:text-accent disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
-            >
-              {s}
-            </button>
-          ))}
-        </div>
-      </Card>
-
-      {answer !== null && (
-        <Card padded>
-          <div
-            role="status"
-            aria-live="polite"
-            aria-busy={busy}
-            className="whitespace-pre-wrap break-words text-sm leading-relaxed text-slate-800 dark:text-slate-100"
-          >
-            {answer}
-            {busy && (
-              <span
-                aria-hidden="true"
-                className="ml-0.5 inline-block h-4 w-1.5 animate-pulse bg-current align-middle"
-              />
-            )}
-          </div>
-        </Card>
-      )}
+        <p className="mt-1.5 hidden items-center justify-center gap-1 text-center text-[11px] text-slate-400 dark:text-slate-500 sm:flex">
+          <CornerDownLeft size={11} /> Enter 送出 · Shift + Enter 換行
+        </p>
+      </div>
     </div>
   )
 }

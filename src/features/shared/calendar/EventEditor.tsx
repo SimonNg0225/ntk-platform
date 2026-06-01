@@ -3,6 +3,7 @@ import {
   AlignLeft,
   Bell,
   CalendarDays,
+  Check,
   Clock,
   Link2,
   MapPin,
@@ -63,17 +64,17 @@ function Toggle({
       role="switch"
       aria-checked={checked}
       onClick={() => onChange(!checked)}
-      className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-200"
+      className="flex items-center gap-2.5 rounded-lg text-sm font-medium text-slate-700 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:text-slate-200 dark:focus-visible:ring-offset-slate-800"
     >
       <span
         className={cx(
-          'relative h-5 w-9 rounded-full transition-colors',
+          'relative h-5 w-9 rounded-full transition-colors duration-200',
           checked ? 'bg-accent' : 'bg-slate-300 dark:bg-slate-600',
         )}
       >
         <span
           className={cx(
-            'absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-all',
+            'absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-all duration-200',
             checked ? 'left-[1.125rem]' : 'left-0.5',
           )}
         />
@@ -271,34 +272,37 @@ export default function EventEditor({
           <Button variant="secondary" onClick={onClose}>
             取消
           </Button>
-          <Button onClick={save} disabled={!valid}>
-            {editing ? '儲存' : '新增'}
+          <Button icon={Check} onClick={save} disabled={!valid}>
+            {editing ? '儲存' : '加入行事曆'}
           </Button>
         </>
       }
     >
-      <div className="space-y-3">
-        <Field label="標題">
-          <Input
+      <div className="space-y-5">
+        {/* 標題 — 放大，作為主焦點 */}
+        <div>
+          <input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="活動名稱"
+            placeholder="想安排啲咩？"
             autoFocus
+            className="w-full border-0 border-b border-slate-200 bg-transparent pb-2 text-lg font-semibold text-slate-800 outline-none transition-colors placeholder:font-normal placeholder:text-slate-400 focus:border-accent dark:border-slate-700 dark:text-slate-100 dark:placeholder:text-slate-500"
           />
-        </Field>
+        </div>
 
         <Field label="地點">
           <Input
             icon={MapPin}
             value={location}
             onChange={(e) => setLocation(e.target.value)}
-            placeholder="加入地點（選填）"
+            placeholder="喺邊度？（選填）"
           />
         </Field>
 
-        <div className="rounded-xl border border-slate-200 p-3 dark:border-slate-700">
-          <Toggle checked={allDay} onChange={setAllDay} label="全日" />
-          <div className="mt-3 grid gap-3 sm:grid-cols-2">
+        {/* 時間 — 分組卡片，留多啲呼吸位 */}
+        <div className="space-y-3 rounded-2xl border border-slate-200/80 bg-slate-50/50 p-4 dark:border-slate-700/60 dark:bg-slate-800/40">
+          <Toggle checked={allDay} onChange={setAllDay} label="全日活動" />
+          <div className="grid gap-3 sm:grid-cols-2">
             <Field label="開始">
               <div className="flex flex-col gap-2 sm:flex-row">
                 <Input
@@ -358,87 +362,97 @@ export default function EventEditor({
           </div>
         </Field>
 
-        <div className="grid gap-3 sm:grid-cols-2">
-          <Field label="重複">
-            <Select
-              value={freq}
-              onChange={(e) => setFreq(e.target.value as RecurrenceFreq)}
-            >
-              {FREQ_OPTIONS.map((o) => (
-                <option key={o.v} value={o.v}>
-                  {o.l}
-                </option>
-              ))}
-            </Select>
-          </Field>
-          {freq !== 'none' && (
-            <Field label="每隔">
-              <div className="flex items-center gap-2">
-                <Input
-                  type="number"
-                  min={1}
-                  value={interval}
-                  onChange={(e) => setIntervalN(e.target.value)}
-                  className="w-20"
-                />
-                <span className="text-sm text-slate-500 dark:text-slate-400">
-                  {freq === 'daily'
-                    ? '日'
-                    : freq === 'weekly'
-                      ? '週'
-                      : freq === 'monthly'
-                        ? '個月'
-                        : '年'}
-                </span>
+        {/* 重複 — 分組卡片，揀咗先展開細節 */}
+        <div
+          className={cx(
+            'space-y-3 rounded-2xl border p-4 transition-colors',
+            freq !== 'none'
+              ? 'border-slate-200/80 bg-slate-50/50 dark:border-slate-700/60 dark:bg-slate-800/40'
+              : 'border-slate-200/80 dark:border-slate-700/60',
+          )}
+        >
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Field label="重複">
+              <Select
+                value={freq}
+                onChange={(e) => setFreq(e.target.value as RecurrenceFreq)}
+              >
+                {FREQ_OPTIONS.map((o) => (
+                  <option key={o.v} value={o.v}>
+                    {o.l}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+            {freq !== 'none' && (
+              <Field label="每隔">
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="number"
+                    min={1}
+                    value={interval}
+                    onChange={(e) => setIntervalN(e.target.value)}
+                    className="w-20"
+                  />
+                  <span className="text-sm text-slate-500 dark:text-slate-400">
+                    {freq === 'daily'
+                      ? '日'
+                      : freq === 'weekly'
+                        ? '週'
+                        : freq === 'monthly'
+                          ? '個月'
+                          : '年'}
+                  </span>
+                </div>
+              </Field>
+            )}
+          </div>
+
+          {freq === 'weekly' && (
+            <Field label="揀邊幾日重複（留空就跟開始日）">
+              <div className="flex flex-wrap gap-1.5">
+                {WEEKDAYS.map((w, i) => {
+                  const on = byWeekday.includes(i)
+                  return (
+                    <button
+                      key={i}
+                      type="button"
+                      aria-pressed={on}
+                      aria-label={`星期${w}`}
+                      onClick={() =>
+                        setByWeekday((prev) =>
+                          prev.includes(i)
+                            ? prev.filter((d) => d !== i)
+                            : [...prev, i],
+                        )
+                      }
+                      className={cx(
+                        'h-9 w-9 rounded-full text-sm font-medium transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
+                        on
+                          ? 'bg-accent text-white shadow-sm shadow-accent/25'
+                          : 'bg-white text-slate-600 ring-1 ring-inset ring-slate-200 hover:bg-slate-100 hover:text-slate-800 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700 dark:hover:bg-slate-700',
+                      )}
+                    >
+                      {w}
+                    </button>
+                  )
+                })}
               </div>
             </Field>
           )}
+
+          {freq !== 'none' && (
+            <Field label="重複到幾時（選填，留空就一直重複）">
+              <Input
+                type="date"
+                icon={Repeat}
+                value={until}
+                min={startDate}
+                onChange={(e) => setUntil(e.target.value)}
+              />
+            </Field>
+          )}
         </div>
-
-        {freq === 'weekly' && (
-          <Field label="喺呢啲日子重複（留空 = 跟開始日）">
-            <div className="flex flex-wrap gap-1.5">
-              {WEEKDAYS.map((w, i) => {
-                const on = byWeekday.includes(i)
-                return (
-                  <button
-                    key={i}
-                    type="button"
-                    aria-pressed={on}
-                    aria-label={`星期${w}`}
-                    onClick={() =>
-                      setByWeekday((prev) =>
-                        prev.includes(i)
-                          ? prev.filter((d) => d !== i)
-                          : [...prev, i],
-                      )
-                    }
-                    className={cx(
-                      'h-8 w-8 rounded-full text-sm font-medium transition',
-                      on
-                        ? 'bg-accent text-white'
-                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700',
-                    )}
-                  >
-                    {w}
-                  </button>
-                )
-              })}
-            </div>
-          </Field>
-        )}
-
-        {freq !== 'none' && (
-          <Field label="重複至（選填，留空 = 永遠）">
-            <Input
-              type="date"
-              icon={Repeat}
-              value={until}
-              min={startDate}
-              onChange={(e) => setUntil(e.target.value)}
-            />
-          </Field>
-        )}
 
         <div className="grid gap-3 sm:grid-cols-2">
           <Field label="提醒">
@@ -468,28 +482,28 @@ export default function EventEditor({
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             rows={2}
-            placeholder="補充資料……"
+            placeholder="想補充啲咩？（選填）"
           />
         </Field>
 
-        {/* 圖示提示列（純裝飾，呼應 Apple 編輯器欄位） */}
-        <div className="flex flex-wrap gap-3 pt-1 text-xs text-slate-400 dark:text-slate-500">
-          <span className="inline-flex items-center gap-1">
-            <CalendarDays size={13} /> {startDate}
+        {/* 摘要列 — 一眼睇晒已填嘅重點 */}
+        <div className="flex flex-wrap items-center gap-2 border-t border-slate-200/70 pt-4 text-xs text-slate-500 dark:border-slate-700/60 dark:text-slate-400">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-1 font-medium tabular-nums dark:bg-slate-800">
+            <CalendarDays size={13} className="text-slate-400" /> {startDate}
           </span>
           {!allDay && (
-            <span className="inline-flex items-center gap-1">
-              <Clock size={13} /> {startTime}–{endTime}
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-1 font-medium tabular-nums dark:bg-slate-800">
+              <Clock size={13} className="text-slate-400" /> {startTime}–{endTime}
             </span>
           )}
           {alert >= 0 && (
-            <span className="inline-flex items-center gap-1">
-              <Bell size={13} /> {ALERT_OPTIONS.find((a) => a.v === alert)?.l}
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-1 font-medium dark:bg-slate-800">
+              <Bell size={13} className="text-slate-400" /> {ALERT_OPTIONS.find((a) => a.v === alert)?.l}
             </span>
           )}
           {notes.trim() && (
-            <span className="inline-flex items-center gap-1">
-              <AlignLeft size={13} /> 有備註
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-1 font-medium dark:bg-slate-800">
+              <AlignLeft size={13} className="text-slate-400" /> 有備註
             </span>
           )}
         </div>
@@ -503,26 +517,27 @@ export default function EventEditor({
           title={scopeAction === 'delete' ? '刪除重複活動' : '更新重複活動'}
           size="sm"
         >
-          <p className="mb-3 text-sm text-slate-600 dark:text-slate-300">
-            「{editing.title}」係重複活動，你想
-            {scopeAction === 'delete' ? '刪除' : '更新'}邊啲？
+          <p className="mb-4 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+            「{editing.title}」係重複活動，你想{scopeAction === 'delete' ? '刪除' : '更新'}邊一啲？
           </p>
           <div className="flex flex-col gap-2">
             {occurrenceKey && (
               <Button
                 variant="secondary"
+                fullWidth
                 onClick={scopeAction === 'delete' ? deleteThis : saveThis}
               >
-                僅{scopeAction === 'delete' ? '刪除' : '更新'}此活動（{occurrenceKey}）
+                只{scopeAction === 'delete' ? '刪除' : '更新'}呢一日（{occurrenceKey}）
               </Button>
             )}
             <Button
               variant={scopeAction === 'delete' ? 'danger' : 'primary'}
+              fullWidth
               onClick={scopeAction === 'delete' ? deleteAll : saveAll}
             >
-              {scopeAction === 'delete' ? '刪除' : '更新'}所有活動
+              {scopeAction === 'delete' ? '刪除' : '更新'}成個系列
             </Button>
-            <Button variant="ghost" onClick={() => setScopeAction(null)}>
+            <Button variant="ghost" fullWidth onClick={() => setScopeAction(null)}>
               取消
             </Button>
           </div>

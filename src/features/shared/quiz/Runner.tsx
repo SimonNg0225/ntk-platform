@@ -334,7 +334,7 @@ export function QuizRunner({
   const shortCorrect = current.kind === 'short' && shortMatches(shortVal, current.explanation)
 
   return (
-    <div className="animate-fade-in space-y-4">
+    <div className="animate-fade-in mx-auto max-w-2xl space-y-4">
       {/* 頂部列 */}
       <div className="flex items-center justify-between gap-2">
         <Button variant="ghost" size="sm" icon={ArrowLeft} onClick={abort}>
@@ -347,11 +347,12 @@ export function QuizRunner({
             </Badge>
           )}
           <span
-            className="text-xs font-medium tabular-nums text-slate-500 dark:text-slate-400"
+            className="text-sm font-semibold tabular-nums text-slate-700 dark:text-slate-200"
             aria-live="polite"
             aria-label={`第 ${currentIdx + 1} 題，共 ${total} 題`}
           >
-            {currentIdx + 1} / {total}
+            {currentIdx + 1}
+            <span className="text-xs font-medium text-slate-400 dark:text-slate-500"> / {total}</span>
           </span>
           <Button
             variant="ghost"
@@ -367,7 +368,13 @@ export function QuizRunner({
         </div>
       </div>
 
-      <ProgressBar value={(answeredCount / total) * 100} />
+      {/* 柔和進度：已答 / 總數（細身、accent 填充） */}
+      <div className="flex items-center gap-3">
+        <ProgressBar value={(answeredCount / total) * 100} size="sm" className="flex-1" />
+        <span className="shrink-0 text-[11px] font-medium tabular-nums text-slate-400 dark:text-slate-500">
+          已答 {answeredCount}/{total}
+        </span>
+      </div>
 
       {/* 題目導航格（Kahoot / 試卷風） */}
       {showNav && (
@@ -409,7 +416,7 @@ export function QuizRunner({
       )}
 
       {/* 題目卡 */}
-      <Card key={current.questionId} className="animate-fade-in space-y-4 p-5">
+      <Card key={current.questionId} className="animate-fade-in space-y-5 p-5 sm:p-6">
         <div className="flex flex-wrap items-center gap-1.5">
           <Badge tone="accent">{topicName(current.topicId)}</Badge>
           <Badge tone={DIFF_TONE[current.difficulty]}>{DIFF_LABEL[current.difficulty]}</Badge>
@@ -438,7 +445,7 @@ export function QuizRunner({
           </div>
         </div>
 
-        <p className="text-base font-medium leading-relaxed text-slate-800 dark:text-slate-100 break-words [overflow-wrap:anywhere]">
+        <p className="text-lg font-medium leading-relaxed text-slate-800 dark:text-slate-100 break-words [overflow-wrap:anywhere]">
           {current.stem}
         </p>
 

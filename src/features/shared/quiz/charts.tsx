@@ -41,7 +41,7 @@ export function ScoreLineChart({ points }: { points: ScorePoint[] }) {
   if (points.length === 0) {
     return (
       <p className="py-8 text-center text-sm text-slate-400 dark:text-slate-500">
-        仲未有測驗紀錄
+        做多幾次測驗，呢度就會畫出你嘅命中率走勢。
       </p>
     )
   }
@@ -89,10 +89,10 @@ export function ScoreLineChart({ points }: { points: ScorePoint[] }) {
           </circle>
         ))}
       </svg>
-      <div className="mt-1 flex items-center justify-between text-[11px] text-slate-400 dark:text-slate-500">
+      <div className="mt-1.5 flex items-center justify-between text-[11px] text-slate-400 dark:text-slate-500">
         <span>最早</span>
         <span className="tabular-nums">
-          共 {points.length} 次 · 最近{' '}
+          共 {points.length} 次 · 最近一次{' '}
           <span className="font-semibold text-slate-600 dark:text-slate-300">
             {points[points.length - 1].pct}%
           </span>
@@ -116,14 +116,20 @@ export function TopicMasteryBars({
   if (rows.length === 0)
     return (
       <p className="py-6 text-center text-sm text-slate-400 dark:text-slate-500">
-        仲未有課題資料
+        測驗多幾次，就會見到邊個課題要加把勁。
       </p>
     )
   return (
-    <div className="space-y-2.5">
+    <div className="space-y-2">
       {rows.map((r) => {
-        const tone =
+        const fill =
           r.pct >= 80 ? 'bg-emerald-500' : r.pct >= 50 ? 'bg-amber-500' : 'bg-rose-500'
+        const pctCls =
+          r.pct >= 80
+            ? 'text-emerald-600 dark:text-emerald-400'
+            : r.pct >= 50
+              ? 'text-amber-600 dark:text-amber-400'
+              : 'text-rose-600 dark:text-rose-400'
         return (
           <button
             key={r.topicId}
@@ -132,20 +138,23 @@ export function TopicMasteryBars({
             onClick={() => onPick?.(r.topicId)}
             aria-label={onPick ? `練習「${nameOf(r.topicId)}」課題（命中 ${r.pct}%）` : undefined}
             className={cx(
-              'flex w-full items-center gap-2 rounded-lg px-1 py-0.5 text-left transition',
+              'flex w-full items-center gap-3 rounded-xl px-2 py-1.5 text-left transition',
               onPick && 'hover:bg-slate-50 dark:hover:bg-slate-800/60',
             )}
           >
-            <span className="w-24 shrink-0 truncate text-xs font-medium text-slate-600 dark:text-slate-300">
+            <span className="w-20 shrink-0 truncate text-xs font-medium text-slate-700 dark:text-slate-200 sm:w-24">
               {nameOf(r.topicId)}
             </span>
-            <div className="h-4 flex-1 overflow-hidden rounded-md bg-slate-100 dark:bg-slate-800">
+            <div className="h-2 flex-1 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
               <div
-                className={cx('h-full rounded-md transition-all duration-500', tone)}
-                style={{ width: `${Math.max(r.pct, r.total > 0 ? 4 : 0)}%` }}
+                className={cx('h-full rounded-full transition-all duration-500 ease-out', fill)}
+                style={{ width: `${Math.max(r.pct, r.total > 0 ? 6 : 0)}%` }}
               />
             </div>
-            <span className="w-16 shrink-0 text-right text-xs tabular-nums text-slate-400 dark:text-slate-500">
+            <span className={cx('w-9 shrink-0 text-right text-xs font-semibold tabular-nums', pctCls)}>
+              {r.pct}%
+            </span>
+            <span className="w-12 shrink-0 text-right text-[11px] tabular-nums text-slate-400 dark:text-slate-500">
               {r.correct}/{r.total}
             </span>
           </button>
@@ -186,7 +195,9 @@ export function DifficultyDonut({
 
   if (total === 0)
     return (
-      <p className="py-6 text-center text-sm text-slate-400 dark:text-slate-500">冇資料</p>
+      <p className="py-6 text-center text-sm text-slate-400 dark:text-slate-500">
+        仲未夠資料分難度，做多幾題先。
+      </p>
     )
 
   return (

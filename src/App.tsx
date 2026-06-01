@@ -98,7 +98,8 @@ function AppShell() {
             onSearch={() => setPaletteOpen(true)}
           />
 
-          <div className="flex-1 overflow-y-auto">
+          {/* overflow-x-hidden：杜絕任何過寬子元素令整頁可左右捲（iOS 尤甚）；寬表格各自有 overflow-x-auto 內捲，唔受影響 */}
+          <div className="min-w-0 flex-1 overflow-x-hidden overflow-y-auto">
             <div className="mx-auto max-w-5xl px-4 py-6 sm:px-8 sm:py-8">
               {isSettings ? (
                 <div className="space-y-5">

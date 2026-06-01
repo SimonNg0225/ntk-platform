@@ -142,23 +142,25 @@ export default function Calendar() {
   }
 
   return (
-    <div className="flex h-[78vh] flex-col gap-3">
-      {/* 工具列 */}
-      <div className="flex flex-wrap items-center gap-2">
-        <div className="flex items-center gap-0.5">
-          <IconButton label="上一個" onClick={() => nav(-1)}>
-            <ChevronLeft size={20} />
-          </IconButton>
-          <h2 className="min-w-[8rem] text-center text-base font-semibold tabular-nums text-slate-800 dark:text-slate-100 sm:text-lg">
-            {title}
-          </h2>
-          <IconButton label="下一個" onClick={() => nav(1)}>
-            <ChevronRight size={20} />
-          </IconButton>
+    <div className="flex h-[78vh] flex-col gap-4">
+      {/* 工具列 — 月份標題 + 前後／今日導覽，右邊放檢視切換同新增 */}
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-2.5">
+        <h2 className="text-lg font-bold tracking-tight text-slate-800 dark:text-slate-100 sm:text-xl">
+          {title}
+        </h2>
+        <div className="flex items-center gap-1">
+          <div className="flex items-center rounded-xl border border-slate-200/80 bg-white p-0.5 shadow-xs dark:border-slate-700/60 dark:bg-slate-800 dark:shadow-none">
+            <IconButton label="上一個" onClick={() => nav(-1)}>
+              <ChevronLeft size={18} />
+            </IconButton>
+            <IconButton label="下一個" onClick={() => nav(1)}>
+              <ChevronRight size={18} />
+            </IconButton>
+          </div>
+          <Button variant="secondary" size="sm" onClick={() => setCursor(new Date())}>
+            今日
+          </Button>
         </div>
-        <Button variant="secondary" size="sm" onClick={() => setCursor(new Date())}>
-          今日
-        </Button>
         <div className="flex-1" />
         <SegmentedControl options={VIEWS} value={view} onChange={setView} />
         <Button size="sm" icon={Plus} onClick={openCreate}>
@@ -166,8 +168,8 @@ export default function Calendar() {
         </Button>
       </div>
 
-      {/* 行事曆開關 */}
-      <div className="flex flex-wrap items-center gap-1.5">
+      {/* 行事曆開關 — 圓潤彩色 pill，撳一下顯示／隱藏 */}
+      <div className="flex flex-wrap items-center gap-2">
         {cals.map((c) => (
           <button
             key={c.id}
@@ -176,15 +178,15 @@ export default function Calendar() {
             aria-label={`${c.name}（${c.visible ? '顯示中，按一下隱藏' : '已隱藏，按一下顯示'}）`}
             onClick={() => toggleCal(c.id, c.visible)}
             className={cx(
-              'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium transition',
+              'inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
               c.visible
-                ? 'border-slate-200 bg-white text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200'
-                : 'border-transparent bg-slate-100 text-slate-400 line-through dark:bg-slate-800/60 dark:text-slate-500',
+                ? 'border-slate-200/80 bg-white text-slate-600 shadow-xs hover:border-slate-300 hover:text-slate-800 dark:border-slate-700/60 dark:bg-slate-800 dark:text-slate-300 dark:shadow-none dark:hover:text-slate-100'
+                : 'border-transparent bg-slate-100/80 text-slate-400 line-through hover:text-slate-500 dark:bg-slate-800/60 dark:text-slate-500',
             )}
           >
             <span
               className={cx(
-                'h-2.5 w-2.5 rounded-full',
+                'h-2.5 w-2.5 rounded-full transition',
                 c.visible ? colorOf(c.color).dot : 'bg-slate-300 dark:bg-slate-600',
               )}
             />
@@ -194,7 +196,7 @@ export default function Calendar() {
         <button
           type="button"
           onClick={() => setManagerOpen(true)}
-          className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium text-slate-400 transition hover:text-accent"
+          className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium text-slate-400 transition hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
         >
           <SlidersHorizontal size={13} /> 管理
         </button>

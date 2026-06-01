@@ -33,8 +33,9 @@ export interface ModeDef {
   gradTo: string
 }
 
-// 統一主題：海軍藍 × 白。
-// 兩個模式用唔同濃淡嘅藍嚟分辨 —— 個人較明亮、工作較深沉。
+// 雙模式主色（「Indigo × Teal on Slate」配色方案）：
+// 個人＝靛藍 indigo（learning indigo + progress green），工作＝青藍 teal（teal focus）。
+// 兩色都係「學習＋生產力」類產品嘅典型主色，一眼分得出兩個模式；中性色用 slate（喺 index.css）。
 export const MODES: Record<ModeId, ModeDef> = {
   learning: {
     id: 'learning',
@@ -42,11 +43,11 @@ export const MODES: Record<ModeId, ModeDef> = {
     short: '個人',
     tagline: '記錄生活，持續成長',
     icon: '📘',
-    accent: '#2f6cb3', // 中海軍藍（較明亮）
-    accentSoft: '#e9f0f9',
-    accentStrong: '#234f86',
-    gradFrom: '#3a74bb',
-    gradTo: '#1f4a7d',
+    accent: '#4f46e5', // indigo-600
+    accentSoft: '#eef2ff', // indigo-50
+    accentStrong: '#4338ca', // indigo-700
+    gradFrom: '#6366f1', // indigo-500
+    gradTo: '#4338ca', // indigo-700
   },
   work: {
     id: 'work',
@@ -54,11 +55,11 @@ export const MODES: Record<ModeId, ModeDef> = {
     short: '工作',
     tagline: 'BAFS 教學．工作效能',
     icon: '💼',
-    accent: '#1e3a5f', // 深海軍藍
-    accentSoft: '#e8edf4',
-    accentStrong: '#142a44',
-    gradFrom: '#2b4d74',
-    gradTo: '#15293f',
+    accent: '#0d9488', // teal-600
+    accentSoft: '#f0fdfa', // teal-50
+    accentStrong: '#0f766e', // teal-700
+    gradFrom: '#14b8a6', // teal-500
+    gradTo: '#0f766e', // teal-700
   },
 }
 
