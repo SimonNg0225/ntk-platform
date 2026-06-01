@@ -302,6 +302,114 @@ export function overallStats(
   }
 }
 
+// ───────── 星期分佈洞察（最易堅持／最易甩底 + 逐習慣最常完成嘅星期）─────────
+export interface WeekdayRate {
+  weekday: number // 0=日 … 6=六
+  label: string
+  rate: number // 0-100（按排程日計）
+  due: number
+  done: number
+}
+
+export interface HabitBestWeekday {
+  id: string
+  name: string
+  weekday: number // 完成次數最多嗰日（0-6）
+  label: string
+  count: number // 喺嗰日完成幾多次
+}
+
+export interface WeekdayInsights {
+  /** 7 個星期幾各自完成率（由日到六，方便對齊既有長條圖）。 */
+  perWeekday: WeekdayRate[]
+  /** 完成率最高嘅星期幾（只計有排程嘅日；全無排程 → null）。 */
+  best: WeekdayRate | null
+  /** 完成率最低嘅星期幾（最易甩底；只計有排程嘅日）。 */
+  worst: WeekdayRate | null
+  /** 逐習慣最常完成嘅星期幾（零完成嘅習慣略過；按完成次數由多到少）。 */
+  perHabitBest: HabitBestWeekday[]
+}
+
+/**
+ * 由 byHabit 完成集合衍生「星期分佈洞察」：
+ *   ① 每個星期幾整體完成率（尊重 weekdays 排程，分母只計排程日）
+ *   ② 完成率最高 / 最低嘅星期幾（best / worst，只比有排程嘅日）
+ *   ③ 逐習慣最常完成嘅星期幾（按該習慣喺各日嘅完成次數）
+ * windowDays 預設 84（12 週），同 StatsView 既有星期長條圖一致。
+ * anchor 預設真實今日；測試可傳明確日期釘死。純讀取，唔改任何狀態。
+ * 同分一律按星期 index（0→6）穩定排序，令結果 deterministic。
+ */
+export function weekdayInsights(
+  habits: Habit[],
+  byHabit: Map<string, Set<string>>,
+  windowDays = 84,
+  anchor: Date = new Date(),
+): WeekdayInsights {
+  const days = recentDays(windowDays, anchor)
+  const acc = Array.from({ length: 7 }, () => ({ due: 0, done: 0 }))
+  // 逐習慣 × 星期幾完成次數
+  const perHabitCounts = new Map<string, number[]>()
+  for (const h of habits) perHabitCounts.set(h.id, Array.from({ length: 7 }, () => 0))
+
+  for (const k of days) {
+    const wd = weekdayOf(k)
+    for (const h of habits) {
+      const scheduled = h.frequency.kind !== 'weekdays' || h.frequency.days.includes(wd)
+      const done = (byHabit.get(h.id) ?? new Set<string>()).has(k)
+      if (scheduled) {
+        acc[wd].due += 1
+        if (done) acc[wd].done += 1
+      }
+      // 逐習慣最常完成日：數實際完成（即使係非排程日嘅補打卡都算「呢日做咗」）
+      if (done) {
+        const counts = perHabitCounts.get(h.id)
+        if (counts) counts[wd] += 1
+      }
+    }
+  }
+
+  const perWeekday: WeekdayRate[] = acc.map((a, wd) => ({
+    weekday: wd,
+    label: WEEKDAY_LABELS[wd],
+    rate: a.due > 0 ? Math.round((a.done / a.due) * 100) : 0,
+    due: a.due,
+    done: a.done,
+  }))
+
+  // best / worst 只比「有排程」嘅星期幾；同分按 weekday index 升序（穩定）。
+  const scheduledDays = perWeekday.filter((d) => d.due > 0)
+  let best: WeekdayRate | null = null
+  let worst: WeekdayRate | null = null
+  for (const d of scheduledDays) {
+    if (best === null || d.rate > best.rate) best = d
+    if (worst === null || d.rate < worst.rate) worst = d
+  }
+
+  const perHabitBest: HabitBestWeekday[] = []
+  for (const h of habits) {
+    const counts = perHabitCounts.get(h.id) ?? []
+    let bestWd = -1
+    let bestCount = 0
+    for (let wd = 0; wd < 7; wd += 1) {
+      if (counts[wd] > bestCount) {
+        bestCount = counts[wd]
+        bestWd = wd
+      }
+    }
+    if (bestWd < 0 || bestCount === 0) continue // 零完成略過
+    perHabitBest.push({
+      id: h.id,
+      name: h.name,
+      weekday: bestWd,
+      label: WEEKDAY_LABELS[bestWd],
+      count: bestCount,
+    })
+  }
+  perHabitBest.sort((a, b) => b.count - a.count || a.weekday - b.weekday || a.name.localeCompare(b.name))
+
+  return { perWeekday, best, worst, perHabitBest }
+}
+
 // ───────── 斷 streak 警報（今日未保住嘅連勝）─────────
 export interface AtRiskHabit {
   id: string

@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { Card, SectionTitle, EmptyState, StatCard, cx } from '../../../ui'
-import { BarChart3, Flame, CalendarCheck, TrendingUp, Activity } from 'lucide-react'
+import { BarChart3, Flame, CalendarCheck, TrendingUp, Activity, Lightbulb, ThumbsUp, ThumbsDown } from 'lucide-react'
 import { colorOf, type Habit } from './types'
 import {
   bestStreak,
@@ -10,8 +10,10 @@ import {
   weekdayOf,
   toKey,
   addDays,
+  weekdayInsights,
   WEEKDAY_LABELS,
   MONTH_LABELS,
+  type WeekdayInsights,
 } from './util'
 
 // ============================================================
@@ -62,6 +64,10 @@ export default function StatsView({
       rate: a.due > 0 ? a.done / a.due : 0,
     }))
   }, [habits, byHabit])
+
+  // ─── 星期分佈洞察（最易堅持／最易甩底 + 逐習慣最常完成日）───
+  // 與上面星期長條圖同窗口（84 日 = 12 週），淨係加總結 + 排行。
+  const insights = useMemo(() => weekdayInsights(habits, byHabit), [habits, byHabit])
 
   // ─── 近 12 週每週完成總次數 ───
   const weekly = useMemo(() => {
@@ -211,6 +217,9 @@ export default function StatsView({
         </Card>
       </div>
 
+      {/* 星期分佈洞察（最易堅持／最易甩底 + 逐習慣最常完成日） */}
+      <WeekdayInsightCard insights={insights} habits={habits} />
+
       {/* 逐習慣完成率排行 */}
       <Card className="rounded-3xl p-4 sm:p-5">
         <SectionTitle icon={TrendingUp} description="過去 30 日排程完成率">
@@ -308,5 +317,109 @@ function TrendArea({ data }: { data: number[] }) {
         vectorEffect="non-scaling-stroke"
       />
     </svg>
+  )
+}
+
+// ───────── 星期分佈洞察卡（純衍生自 byHabit，無新狀態） ─────────
+function WeekdayInsightCard({
+  insights,
+  habits,
+}: {
+  insights: WeekdayInsights
+  habits: Habit[]
+}) {
+  const { best, worst, perHabitBest } = insights
+  const habitById = useMemo(() => {
+    const m = new Map<string, Habit>()
+    for (const h of habits) m.set(h.id, h)
+    return m
+  }, [habits])
+
+  // 完全冇排程日（best=null）兼且冇任何完成 → 唔顯示卡（避免空殼）。
+  if (!best && perHabitBest.length === 0) return null
+
+  // best === worst（得一個有排程嘅星期幾）就唔重複出 worst chip。
+  const showWorst = worst != null && best != null && worst.weekday !== best.weekday
+  const topHabits = perHabitBest.slice(0, 5)
+
+  return (
+    <Card className="rounded-3xl p-4 sm:p-5">
+      <SectionTitle icon={Lightbulb} description="過去 12 週按完成率衍生">
+        星期洞察
+      </SectionTitle>
+
+      {best && (
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+          <div className="flex items-center gap-3 rounded-2xl bg-emerald-50 px-3 py-2.5 dark:bg-emerald-500/10">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
+              <ThumbsUp size={16} />
+            </span>
+            <div className="min-w-0">
+              <p className="text-[11px] font-medium uppercase tracking-wide text-emerald-600/80 dark:text-emerald-400/80">
+                最易堅持
+              </p>
+              <p className="text-sm font-semibold text-emerald-700 dark:text-emerald-300">
+                星期{best.label}
+                <span className="ml-1.5 text-xs font-normal tabular-nums text-emerald-600/70 dark:text-emerald-400/70">
+                  {best.rate}% 完成率
+                </span>
+              </p>
+            </div>
+          </div>
+
+          {showWorst && worst && (
+            <div className="flex items-center gap-3 rounded-2xl bg-rose-50 px-3 py-2.5 dark:bg-rose-500/10">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-rose-500/15 text-rose-600 dark:text-rose-400">
+                <ThumbsDown size={16} />
+              </span>
+              <div className="min-w-0">
+                <p className="text-[11px] font-medium uppercase tracking-wide text-rose-600/80 dark:text-rose-400/80">
+                  最易甩底
+                </p>
+                <p className="text-sm font-semibold text-rose-700 dark:text-rose-300">
+                  星期{worst.label}
+                  <span className="ml-1.5 text-xs font-normal tabular-nums text-rose-600/70 dark:text-rose-400/70">
+                    {worst.rate}% 完成率
+                  </span>
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {topHabits.length > 0 && (
+        <div className="mt-4">
+          <p className="mb-2 text-xs font-medium text-slate-400 dark:text-slate-500">
+            各習慣最常完成嘅日子
+          </p>
+          <div className="space-y-1">
+            {topHabits.map((p) => {
+              const h = habitById.get(p.id)
+              const spec = colorOf(h?.color)
+              return (
+                <div
+                  key={p.id}
+                  className="flex items-center gap-3 rounded-xl px-2 py-1.5 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/60"
+                >
+                  <span className={cx('flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-sm', spec.soft)}>
+                    {h?.icon ?? '⭐'}
+                  </span>
+                  <span className="min-w-0 flex-1 truncate text-sm text-slate-700 dark:text-slate-200">
+                    {p.name}
+                  </span>
+                  <span className="shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-500 dark:bg-slate-700/60 dark:text-slate-300">
+                    星期{p.label}
+                  </span>
+                  <span className="w-10 shrink-0 text-right text-xs tabular-nums text-slate-400 dark:text-slate-500">
+                    {p.count} 次
+                  </span>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
+    </Card>
   )
 }

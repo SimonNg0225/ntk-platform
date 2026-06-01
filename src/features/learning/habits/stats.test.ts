@@ -6,6 +6,7 @@ import {
   thisWeekProgress,
   overallStats,
   streakAtRisk,
+  weekdayInsights,
 } from './util'
 import type { Habit, HabitFrequency } from './types'
 
@@ -532,5 +533,148 @@ describe('streakAtRisk（今日就會斷嘅連勝）', () => {
     const r = streakAtRisk(habits, byHabit)
     expect(r.map((x) => x.id)).toEqual(['at-risk'])
     expect(r[0].streak).toBe(2)
+  })
+})
+
+describe('weekdayInsights（星期分佈洞察：最易堅持／最易甩底 + 逐習慣最常完成日）', () => {
+  // 直接傳 anchor（本地正午）令斷言 deterministic。
+  const anchor = (y: number, m1: number, d: number) => new Date(y, m1 - 1, d, 12, 0, 0, 0)
+  const habit = (id: string, frequency: HabitFrequency, name = id): Habit => ({
+    id,
+    name,
+    color: 'accent',
+    frequency,
+    goalKind: 'build',
+    targetStreak: 0,
+    archived: false,
+    order: 0,
+    createdAt: '2026-01-01T00:00:00.000Z',
+  })
+
+  // 窗口用 7 日 + anchor 5/30（六）：恰好每個星期幾各出現一次。
+  //   5/24=日 5/25=一 5/26=二 5/27=三 5/28=四 5/29=五 5/30=六
+  const win = 7
+  const at530 = anchor(2026, 5, 30)
+
+  it('習慣=[] → 全空，best/worst 為 null', () => {
+    const r = weekdayInsights([], new Map(), win, at530)
+    expect(r.best).toBeNull()
+    expect(r.worst).toBeNull()
+    expect(r.perHabitBest).toEqual([])
+    // perWeekday 仍有 7 格，rate 全 0、due 全 0
+    expect(r.perWeekday).toHaveLength(7)
+    expect(r.perWeekday.map((d) => d.rate)).toEqual([0, 0, 0, 0, 0, 0, 0])
+    expect(r.perWeekday.every((d) => d.due === 0)).toBe(true)
+  })
+
+  it('perWeekday 由日到六對齊，標籤正確', () => {
+    const habits = [habit('h1', daily)]
+    const byHabit = new Map([['h1', set('2026-05-25')]]) // 只完成週一
+    const r = weekdayInsights(habits, byHabit, win, at530)
+    expect(r.perWeekday.map((d) => d.weekday)).toEqual([0, 1, 2, 3, 4, 5, 6])
+    expect(r.perWeekday.map((d) => d.label)).toEqual(['日', '一', '二', '三', '四', '五', '六'])
+    // daily：每個星期幾各 1 due；只週一完成 → 週一 100%、其餘 0%
+    expect(r.perWeekday[1]).toMatchObject({ weekday: 1, due: 1, done: 1, rate: 100 })
+    expect(r.perWeekday[0]).toMatchObject({ due: 1, done: 0, rate: 0 })
+  })
+
+  it('best = 完成率最高、worst = 最低（daily 全週 due=1）', () => {
+    // 完成 一/二/三（3 日），其餘 4 日未做。daily → 每日 due=1。
+    const habits = [habit('h1', daily)]
+    const byHabit = new Map([['h1', set('2026-05-25', '2026-05-26', '2026-05-27')]])
+    const r = weekdayInsights(habits, byHabit, win, at530)
+    // 完成日 rate=100、未完成日 rate=0。best 同分（一/二/三皆 100）→ 取最細 index = 一(1)。
+    expect(r.best).toMatchObject({ weekday: 1, rate: 100 })
+    // worst 同分（日/四/五/六皆 0）→ 取最細 index = 日(0)。
+    expect(r.worst).toMatchObject({ weekday: 0, rate: 0 })
+  })
+
+  it('weekdays 排程：非排程日唔計入 due（best/worst 只比有排程嘅日）', () => {
+    // 逢一三五；窗口內排程日 = 一(25)/三(27)/五(29)，各 due=1。
+    // 完成 一 + 三，五未做 → 一/三 100%、五 0%；其餘 4 日 due=0 唔參與。
+    const habits = [habit('h1', { kind: 'weekdays', days: [1, 3, 5] })]
+    const byHabit = new Map([['h1', set('2026-05-25', '2026-05-27')]])
+    const r = weekdayInsights(habits, byHabit, win, at530)
+    // 非排程日 due=0
+    expect(r.perWeekday[0].due).toBe(0) // 日
+    expect(r.perWeekday[2].due).toBe(0) // 二
+    expect(r.perWeekday[1].due).toBe(1) // 一
+    expect(r.perWeekday[5]).toMatchObject({ due: 1, done: 0, rate: 0 }) // 五
+    // best 同分（一/三 100）→ 一(1)；worst = 五(5) 0%（due=0 嘅日唔當 worst）
+    expect(r.best).toMatchObject({ weekday: 1, rate: 100 })
+    expect(r.worst).toMatchObject({ weekday: 5, rate: 0 })
+  })
+
+  it('perHabitBest：逐習慣最常完成嘅星期幾（按完成次數，跨多週累加）', () => {
+    // 窗口 21 日（3 週）+ anchor 5/30。3 個週一：5/11? 唔係 — 用實際日曆：
+    //   往回 3 週嘅週一 = 5/11、5/18、5/25；週三 = 5/13、5/20、5/27。
+    const win21 = 21
+    const habits = [habit('h1', daily, '阿一')]
+    // h1：週一完成 3 次、週三完成 1 次 → 最常 = 週一(1)，count 3
+    const byHabit = new Map([
+      ['h1', set('2026-05-11', '2026-05-18', '2026-05-25', '2026-05-13')],
+    ])
+    const r = weekdayInsights(habits, byHabit, win21, at530)
+    expect(r.perHabitBest).toEqual([
+      { id: 'h1', name: '阿一', weekday: 1, label: '一', count: 3 },
+    ])
+  })
+
+  it('perHabitBest：零完成嘅習慣略過', () => {
+    const habits = [habit('h1', daily), habit('h2', daily)]
+    const byHabit = new Map([['h1', set('2026-05-25')]]) // h2 全無完成
+    const r = weekdayInsights(habits, byHabit, win, at530)
+    expect(r.perHabitBest.map((x) => x.id)).toEqual(['h1'])
+  })
+
+  it('perHabitBest：多習慣按完成次數由多到少排（同次數按 weekday → name）', () => {
+    const win21 = 21
+    const habits = [
+      habit('few', daily, '少'),
+      habit('many', daily, '多'),
+    ]
+    const byHabit = new Map([
+      // 少：週二完成 1 次
+      ['few', set('2026-05-12')],
+      // 多：週一完成 3 次
+      ['many', set('2026-05-11', '2026-05-18', '2026-05-25')],
+    ])
+    const r = weekdayInsights(habits, byHabit, win21, at530)
+    expect(r.perHabitBest.map((x) => x.name)).toEqual(['多', '少'])
+    expect(r.perHabitBest.map((x) => x.count)).toEqual([3, 1])
+  })
+
+  it('perHabitBest：同習慣兩個星期幾打平 → 取最細 weekday index', () => {
+    // 週一(25) 同 週二(26) 各完成 1 次 → 打平取 一(1)。
+    const habits = [habit('h1', daily)]
+    const byHabit = new Map([['h1', set('2026-05-25', '2026-05-26')]])
+    const r = weekdayInsights(habits, byHabit, win, at530)
+    expect(r.perHabitBest).toHaveLength(1)
+    expect(r.perHabitBest[0]).toMatchObject({ weekday: 1, count: 1 })
+  })
+
+  it('預設參數路徑：唔傳 anchor 用真實今日（fake timer 釘死）', () => {
+    vi.setSystemTime(at530) // 釘今日為 5/30
+    const habits = [habit('h1', daily)]
+    const byHabit = new Map([['h1', set('2026-05-25')]])
+    // 唔傳 windowDays / anchor → 默認 84 日窗口、anchor=今日；
+    // 84 日窗口含 5/25（週一）→ 至少有完成、best 應為週一。
+    const r = weekdayInsights(habits, byHabit)
+    expect(r.perWeekday).toHaveLength(7)
+    expect(r.best?.weekday).toBe(1) // 唯一有完成嘅日 → 完成率最高
+    expect(r.perHabitBest[0]).toMatchObject({ id: 'h1', weekday: 1 })
+  })
+
+  it('補打卡喺非排程日：唔計入 due/rate，但計入 perHabitBest 完成次數', () => {
+    // 逢週一（只週一排程）；但用家喺週六(30)補打卡咗一次 + 週一(25)正常打卡。
+    const habits = [habit('h1', { kind: 'weekdays', days: [1] })]
+    const byHabit = new Map([['h1', set('2026-05-25', '2026-05-30')]])
+    const r = weekdayInsights(habits, byHabit, win, at530)
+    // 週六非排程 → due=0、rate=0（唔受補打卡影響）
+    expect(r.perWeekday[6]).toMatchObject({ due: 0, done: 0, rate: 0 })
+    // 週一排程 + 完成 → due=1 done=1 rate=100
+    expect(r.perWeekday[1]).toMatchObject({ due: 1, done: 1, rate: 100 })
+    // perHabitBest：週一同週六各完成 1 次打平 → 取最細 index 週一(1)
+    expect(r.perHabitBest[0]).toMatchObject({ weekday: 1, count: 1 })
   })
 })
