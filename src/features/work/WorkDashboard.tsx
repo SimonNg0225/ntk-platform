@@ -233,7 +233,27 @@ export default function WorkDashboard() {
   const [capture, setCapture] = useState('')
 
   const cycleCalendar = useCollection(cycleCalendarCol)
-  const now = useMemo(() => new Date(), [])
+  // 常駐 PWA：分頁可開幾日唔 reload。每分鐘 + 回到前景重取現在時間，
+  // 令 todayKey / 時鐘跨午夜跟住跳（避免凍結喺首次掛載嗰一刻）。
+  const [now, setNow] = useState(() => new Date())
+  useEffect(() => {
+    const sync = () => {
+      const next = new Date()
+      // 同分鐘唔觸發 re-render（避免每秒重算）
+      setNow((prev) =>
+        prev.getMinutes() === next.getMinutes() && prev.getHours() === next.getHours() &&
+        localKey(prev) === localKey(next)
+          ? prev
+          : next,
+      )
+    }
+    const id = window.setInterval(sync, 60000)
+    document.addEventListener('visibilitychange', sync)
+    return () => {
+      window.clearInterval(id)
+      document.removeEventListener('visibilitychange', sync)
+    }
+  }, [])
   const todayKey = localKey(now)
   const jsDay = now.getDay()
   // cycle 模式（校曆有 seed 即啟用）：今日(日期)→ 校曆 → cycle day(1..6) 用嚟篩今日堂；
