@@ -213,7 +213,15 @@ export function ResultView({
                   <Badge tone="accent">{topicName(it.topicId)}</Badge>
                   <Badge tone={DIFF_TONE[it.difficulty]}>{DIFF_LABEL[it.difficulty]}</Badge>
                   {short && <Badge tone="slate">短答</Badge>}
-                  {it.selectedIndex === null && !it.correct ? (
+                  {short ? (
+                    // 短答：itemFromFrozen 對唔啱（無論有冇輸入）一律 selectedIndex=null，
+                    // 故唔可靠 selectedIndex 判「未作答」，直接以 correct 區分答啱／答錯。
+                    it.correct ? (
+                      <Badge tone="green">答啱</Badge>
+                    ) : (
+                      <Badge tone="rose">答錯</Badge>
+                    )
+                  ) : it.selectedIndex === null && !it.correct ? (
                     <Badge tone="slate">未作答</Badge>
                   ) : it.correct ? (
                     <Badge tone="green">答啱</Badge>
