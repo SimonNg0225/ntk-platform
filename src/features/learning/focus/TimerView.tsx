@@ -163,9 +163,13 @@ export default function TimerView({
 
   // 倒數到 0
   useEffect(() => {
+    // 評分 modal 開住時暫停自動推進：背景倒數停喺 0，待用家儲存／略過
+    // （saveReview / onClose 會 setReview(null)）後本 effect 重跑，
+    // 嗰刻 running 仍 true、secondsLeft 仍 0，即時補做 finishPhase 完成本節。
+    if (review) return
     if (running && secondsLeft === 0) finishPhase(true)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [running, secondsLeft])
+  }, [running, secondsLeft, review])
 
   // 鍵盤捷徑：空白=開始/暫停、R=重設、S=跳過
   useEffect(() => {
