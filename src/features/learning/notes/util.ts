@@ -251,6 +251,8 @@ export function computeStats(active: RichNote[], all: RichNote[]): NotesStats {
     nbMap.set(id, (nbMap.get(id) ?? 0) + 1)
   }
 
+  const allTags = tagCounts(active)
+
   return {
     total: active.length,
     pinned: active.filter((n) => n.pinned).length,
@@ -261,11 +263,11 @@ export function computeStats(active: RichNote[], all: RichNote[]): NotesStats {
     avgWords: active.length ? Math.round(totalWords / active.length) : 0,
     todoTotal,
     todoDone,
-    tagCount: tagCounts(active).length,
+    tagCount: allTags.length,
     activeDays,
     last7,
     prev7,
-    topTags: tagCounts(active).slice(0, 8),
+    topTags: allTags.slice(0, 8),
     daily,
     notebookDist: [...nbMap.entries()].map(([id, count]) => ({ id, count })),
   }
