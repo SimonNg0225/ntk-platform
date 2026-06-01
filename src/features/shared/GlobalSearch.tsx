@@ -97,6 +97,9 @@ import {
   highlightSegments,
   snippetAround,
   parseQuery,
+  applyOperators,
+  hasOperators,
+  RECENT_DAYS,
   pushRecent,
   clearRecents,
   removeRecent,
@@ -133,6 +136,8 @@ interface Hit {
   subtitle?: string // 次要資訊（日期、分類…）
   body?: string // 預覽全文
   meta: { label: string; value: string }[] // 預覽中繼資料
+  ts?: number // 可排序時間戳（ms epoch；in:recent / sort:recent 用）
+  pinned?: boolean // 底層實體係咪釘選（is:pinned 用）
 }
 
 // 資料源描述（一個 kind = 一類資料）
@@ -176,6 +181,7 @@ function buildHit(
   subtitle: string | undefined,
   meta: { label: string; value: string }[],
   query: string,
+  opts?: { ts?: number; pinned?: boolean },
 ): Hit | null {
   const m = KIND_META[kindId]
   // 對每個欄位做 fuzzy，攞最高分嗰個做命中欄位
@@ -210,7 +216,16 @@ function buildHit(
     subtitle,
     body: fields.find((f) => f.body)?.body,
     meta,
+    ts: opts?.ts,
+    pinned: opts?.pinned,
   }
+}
+
+// ISO / 日期字串 → ms epoch（畀 in:recent / sort:recent 排序用）；無效回 undefined
+function toMs(s?: string): number | undefined {
+  if (!s) return undefined
+  const t = Date.parse(s)
+  return Number.isNaN(t) ? undefined : t
 }
 
 // 視圖模式
@@ -280,37 +295,37 @@ export default function GlobalSearch() {
         push(buildHit('note', n.id, [{ title: n.title || firstLine(n.content), body: n.content }], relativeTime(n.updatedAt) ?? undefined, [
           { label: '更新', value: fmtDate(n.updatedAt) },
           { label: '字數', value: String(n.content.length) },
-        ], q)),
+        ], q, { ts: toMs(n.updatedAt), pinned: n.pinned })),
       )
     journal.forEach((j: JournalDoc) =>
       push(buildHit('journal', j.id, [{ title: (j.title || j.date) + (j.mood ? ` · ${j.mood}` : ''), body: [j.content, j.gratitude].filter(Boolean).join('\n') }], j.date, [
         { label: '日期', value: j.date },
         ...(j.mood ? [{ label: '心情', value: j.mood }] : []),
-      ], q)),
+      ], q, { ts: toMs(j.updatedAt) ?? toMs(j.date) })),
     )
     goals.forEach((g: Goal) =>
       push(buildHit('goal', g.id, [{ title: g.title }], `進度 ${g.progress}%`, [
         { label: '進度', value: `${g.progress}%` },
         { label: '建立', value: fmtDate(g.createdAt) },
-      ], q)),
+      ], q, { ts: toMs(g.createdAt) })),
     )
     reading.forEach((b: Book) =>
       push(buildHit('reading', b.id, [{ title: b.title, body: [b.notes, b.review].filter(Boolean).join('\n') }, { title: '', extra: [b.author, ...(b.shelves ?? [])].filter(Boolean).join(' ') }], b.author ? `作者：${b.author}` : STATUS_LABEL[b.status], [
         { label: '狀態', value: STATUS_LABEL[b.status] },
         ...(b.author ? [{ label: '作者', value: b.author }] : []),
-      ], q)),
+      ], q, { ts: toMs(b.createdAt) })),
     )
     decks.forEach((d: Deck) =>
       push(buildHit('deck', d.id, [{ title: d.name, body: d.description }], d.description, [
         { label: '建立', value: fmtDate(d.createdAt) },
         { label: '卡數', value: String(cards.filter((c) => c.deckId === d.id).length) },
-      ], q)),
+      ], q, { ts: toMs(d.createdAt) })),
     )
     cards.forEach((c: Card) =>
       push(buildHit('card', c.id, [{ title: c.front, body: c.back }], deckById.get(c.deckId), [
         { label: '牌組', value: deckById.get(c.deckId) ?? '—' },
         { label: '答案', value: c.back.slice(0, 80) },
-      ], q)),
+      ], q, { ts: toMs(c.createdAt) })),
     )
     questions.forEach((qn: Question) =>
       push(buildHit('question', qn.id, [{ title: qn.stem, body: qn.answer ?? (qn.options ?? []).join(' / ') }, { title: '', extra: (qn.tags ?? []).join(' ') }], `${QTYPE[qn.type]} · ${DIFF[qn.difficulty]}`, [
@@ -318,27 +333,27 @@ export default function GlobalSearch() {
         { label: '難度', value: DIFF[qn.difficulty] },
         { label: '課題', value: topicById.get(qn.topicId) ?? '—' },
         ...(qn.marks ? [{ label: '分數', value: String(qn.marks) }] : []),
-      ], q)),
+      ], q, { ts: toMs(qn.createdAt) })),
     )
     resources.forEach((r: Resource) =>
       push(buildHit('resource', r.id, [{ title: r.title, body: r.notes }, { title: '', extra: (r.tags ?? []).join(' ') }], RES_TYPE[r.type] ?? r.type, [
         { label: '類型', value: RES_TYPE[r.type] ?? r.type },
         ...(r.url ? [{ label: '連結', value: r.url }] : []),
         ...(r.tags?.length ? [{ label: '標籤', value: r.tags.join('、') }] : []),
-      ], q)),
+      ], q, { ts: toMs(r.createdAt) })),
     )
     lessonPlans.forEach((l: LessonPlan) =>
       push(buildHit('lesson', l.id, [{ title: l.title, body: [l.objectives, l.activities].filter(Boolean).join('\n\n') }], l.classId ? classById.get(l.classId) : l.date, [
         ...(l.date ? [{ label: '日期', value: l.date }] : []),
         ...(l.classId ? [{ label: '班別', value: classById.get(l.classId) ?? '—' }] : []),
         ...(l.topicId ? [{ label: '課題', value: topicById.get(l.topicId) ?? '—' }] : []),
-      ], q)),
+      ], q, { ts: toMs(l.createdAt) ?? toMs(l.date) })),
     )
     meetingNotes.forEach((mn: MeetingNote) =>
       push(buildHit('meeting', mn.id, [{ title: mn.title, body: mn.content }, { title: '', extra: (mn.tags ?? []).join(' ') }], mn.date, [
         { label: '日期', value: mn.date },
         ...(mn.tags?.length ? [{ label: '標籤', value: mn.tags.join('、') }] : []),
-      ], q)),
+      ], q, { ts: toMs(mn.createdAt) ?? toMs(mn.date) })),
     )
     classes.forEach((c: Klass) =>
       push(buildHit('klass', c.id, [{ title: c.name, extra: c.subject }], c.subject, [
@@ -356,7 +371,7 @@ export default function GlobalSearch() {
       push(buildHit('task', t.id, [{ title: t.text }], t.done ? '已完成' : '待辦', [
         { label: '狀態', value: t.done ? '已完成' : '待辦' },
         { label: '建立', value: fmtDate(t.createdAt) },
-      ], q)),
+      ], q, { ts: toMs(t.createdAt) })),
     )
     topics.forEach((t: Topic) =>
       push(buildHit('topic', t.id, [{ title: t.topic, extra: `${t.part} · ${t.area}` }], `${t.part} · ${t.area}`, [
@@ -371,25 +386,25 @@ export default function GlobalSearch() {
         { label: '金額', value: `$${t.amount}` },
         { label: '分類', value: cat?.name ?? '未分類' },
         { label: '日期', value: t.date },
-      ], q))
+      ], q, { ts: toMs(t.createdAt) ?? toMs(t.date) }))
     })
     events.forEach((e: CalendarEvent) =>
       push(buildHit('event', e.id, [{ title: e.title, body: e.notes }, { title: '', extra: e.location }], `${e.date}${e.time ? ' ' + e.time : ''}`, [
         { label: '日期', value: e.date },
         ...(e.time ? [{ label: '時間', value: e.time }] : []),
         ...(e.location ? [{ label: '地點', value: e.location }] : []),
-      ], q)),
+      ], q, { ts: toMs(`${e.date}${e.time ? 'T' + e.time : ''}`) })),
     )
     countdowns.forEach((c: Countdown) =>
       push(buildHit('countdown', c.id, [{ title: c.title, body: c.notes }], `${c.date}${daysToLabel(c.date)}`, [
         { label: '目標日', value: c.date },
         { label: '倒數', value: daysToLabel(c.date).trim() || '—' },
-      ], q)),
+      ], q, { ts: toMs(c.createdAt) ?? toMs(c.date) })),
     )
     inbox.forEach((it) =>
       push(buildHit('inbox', it.id, [{ title: it.text }], relativeTime(it.createdAt) ?? undefined, [
         { label: '擷取', value: fmtDate(it.createdAt) },
-      ], q)),
+      ], q, { ts: toMs(it.createdAt) })),
     )
     return out
   }, [
@@ -398,29 +413,40 @@ export default function GlobalSearch() {
     events, countdowns, inbox, classById, topicById, catById, deckById,
   ])
 
-  // 過濾：mode scope + type 運算子 + 類別 pill；再按 score 排
+  // 過濾：mode scope + type 運算子 + 類別 pill；is:pinned / in:recent 過濾；
+  // 排序：sort:recent → 依時間戳；否則 query → score，無 query → 類別 + 標題
   const filtered = useMemo(() => {
     let list = allHits
     if (scopeMode) list = list.filter((h) => KIND_META[h.kindId].modes.includes(mode))
     if (parsed.typeFilter) list = list.filter((h) => h.kindId === parsed.typeFilter)
     if (kindFilter !== 'all') list = list.filter((h) => h.kindId === kindFilter)
-    if (deferredQuery) list = list.slice().sort((a, b) => b.score - a.score)
-    else
-      list = list
-        .slice()
-        .sort((a, b) => a.kindLabel.localeCompare(b.kindLabel) || a.title.localeCompare(b.title))
+    // is:pinned / in:recent 過濾（純函式，唔 mutate）
+    list = applyOperators(list, parsed, Date.now())
+    // sort:recent 已喺 applyOperators 內排好；否則按既有規則排
+    if (!parsed.sortRecent) {
+      if (deferredQuery) list = list.slice().sort((a, b) => b.score - a.score)
+      else
+        list = list
+          .slice()
+          .sort((a, b) => a.kindLabel.localeCompare(b.kindLabel) || a.title.localeCompare(b.title))
+    }
     return list
-  }, [allHits, scopeMode, mode, parsed.typeFilter, kindFilter, deferredQuery])
+  }, [
+    allHits, scopeMode, mode, parsed.typeFilter, parsed.pinnedOnly, parsed.recentOnly,
+    parsed.sortRecent, kindFilter, deferredQuery,
+  ])
 
-  // 統計：每類命中數（畀 Pills 顯示）
+  // 統計：每類命中數（畀 Pills 顯示）。要計埋 is:pinned / in:recent 運算子過濾
+  // （但唔計 type: / kindFilter 本身），令 pill 數同實際結果一致。
   const kindCounts = useMemo(() => {
-    const base = scopeMode
+    let base = scopeMode
       ? allHits.filter((h) => KIND_META[h.kindId].modes.includes(mode))
       : allHits
+    base = applyOperators(base, parsed, Date.now())
     const c: Record<string, number> = { all: base.length }
     for (const h of base) c[h.kindId] = (c[h.kindId] ?? 0) + 1
     return c
-  }, [allHits, scopeMode, mode])
+  }, [allHits, scopeMode, mode, parsed.pinnedOnly, parsed.recentOnly, parsed.sortRecent])
 
   // 群組視圖：分類分組（保留類別順序）
   const grouped = useMemo(() => {
@@ -584,7 +610,7 @@ export default function GlobalSearch() {
     [query, mode, toast],
   )
 
-  const hasQuery = query.length > 0 || parsed.typeFilter !== null
+  const hasQuery = query.length > 0 || hasOperators(parsed)
   const total = filtered.length
 
   return (
@@ -1161,9 +1187,33 @@ function StartScreen({
           </button>
         ))}
       </div>
+
+      {/* 運算子（Raycast 風 power-user 提示）— 撳一下即套入搜尋框 */}
+      <div className="flex flex-wrap items-center gap-2 px-1 text-xs text-slate-400 dark:text-slate-500">
+        <span>運算子：</span>
+        {OPERATOR_HINTS.map((op) => (
+          <Tooltip key={op.token} label={op.desc}>
+            <button
+              type="button"
+              onClick={() => onPick(op.fill)}
+              className="rounded-full border border-slate-200 bg-white px-2.5 py-1 font-mono font-medium text-slate-500 transition hover:border-accent hover:text-accent dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 dark:hover:border-accent dark:hover:text-accent"
+            >
+              {op.token}
+            </button>
+          </Tooltip>
+        ))}
+      </div>
     </div>
   )
 }
+
+// 運算子提示（StartScreen 顯示；token = 標籤，fill = 撳落去套入搜尋框嘅字）
+const OPERATOR_HINTS: { token: string; fill: string; desc: string }[] = [
+  { token: 'type:note', fill: 'type:note ', desc: '限定某類資料（例如 type:note 淨係筆記）' },
+  { token: 'is:pinned', fill: 'is:pinned ', desc: '淨係顯示已釘選嘅項目' },
+  { token: 'in:recent', fill: 'in:recent ', desc: `淨係喺最近 ${RECENT_DAYS} 日更新／建立嘅嘢搵` },
+  { token: 'sort:recent', fill: 'sort:recent ', desc: '改用「最近」排序而唔係相關度' },
+]
 
 // ───────── 小工具 ─────────
 function registerRow(

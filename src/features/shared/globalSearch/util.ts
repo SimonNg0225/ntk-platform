@@ -174,24 +174,92 @@ export function snippetAround(
   return { text: `${prefix}${body}${suffix}`, offset: start - prefix.length }
 }
 
-// ───────── 搜尋運算子解析（type: / is:）─────────
+// ───────── 搜尋運算子解析（type: / is:pinned / in:recent / sort:recent）─────────
+//  Raycast 風 power-user 運算子。全部 additive、大細階無關：
+//    type:<kind>  → 限定某類資料（kind 要喺 validTypes 先生效，否則當普通字）
+//    is:pinned    → 淨係顯示「釘選」嘅命中（底層實體 pinned = true）
+//    in:recent    → 淨係喺「最近更新／建立」嘅嘢入面搵（RECENT_DAYS 內）
+//    sort:recent  → 改用「最近」排序（依時間戳）而唔係相關度
+//  認唔到嘅運算子（例如 is:foo / sort:bar）一律當普通關鍵字保留，唔報錯。
 export interface ParsedQuery {
   text: string // 去除運算子後嘅關鍵字
   typeFilter: string | null // 例如 'note'（對應 SourceKind.id）
+  pinnedOnly: boolean // is:pinned
+  recentOnly: boolean // in:recent
+  sortRecent: boolean // sort:recent
 }
+
+// in:recent 嘅「最近」窗口（日）。純資料：方便測試 + UI 顯示一致。
+export const RECENT_DAYS = 14
+
 export function parseQuery(raw: string, validTypes: string[]): ParsedQuery {
   let typeFilter: string | null = null
+  let pinnedOnly = false
+  let recentOnly = false
+  let sortRecent = false
   const tokens = raw.split(/\s+/)
   const rest: string[] = []
   for (const tk of tokens) {
-    const m = /^type:(\S+)$/i.exec(tk)
-    if (m && validTypes.includes(m[1].toLowerCase())) {
-      typeFilter = m[1].toLowerCase()
+    const mType = /^type:(\S+)$/i.exec(tk)
+    if (mType && validTypes.includes(mType[1].toLowerCase())) {
+      typeFilter = mType[1].toLowerCase()
+    } else if (/^is:pinned$/i.test(tk)) {
+      pinnedOnly = true
+    } else if (/^in:recent$/i.test(tk)) {
+      recentOnly = true
+    } else if (/^sort:recent$/i.test(tk)) {
+      sortRecent = true
     } else {
       rest.push(tk)
     }
   }
-  return { text: rest.join(' ').trim(), typeFilter }
+  return { text: rest.join(' ').trim(), typeFilter, pinnedOnly, recentOnly, sortRecent }
+}
+
+// 有任何運算子生效（除咗淨打關鍵字）→ 用嚟判斷「應唔應該顯示結果區」。
+export function hasOperators(p: ParsedQuery): boolean {
+  return p.typeFilter !== null || p.pinnedOnly || p.recentOnly || p.sortRecent
+}
+
+// ───────── 運算子套用：過濾（is:pinned / in:recent）+ 排序（sort:recent）─────────
+//  收一個極輕量 shape（唔綁死 Hit），方便純函式測試。
+//    score：相關度（query 命中分；無 query 時為 0）
+//    ts：可排序時間戳（ms epoch）；undefined = 冇時間資訊（例如班別 / 課題）
+//    pinned：底層實體係咪釘選
+export interface OperableHit {
+  score: number
+  ts?: number
+  pinned?: boolean
+}
+
+/**
+ * 按已解析運算子過濾 + 排序一批命中。純函式（唔 mutate 入參）。
+ *  • is:pinned  → 只留 pinned === true
+ *  • in:recent  → 只留 ts 喺 [now - RECENT_DAYS, now] 內（冇 ts 嘅一律隔走）
+ *  • sort:recent → 依 ts 由新到舊排（冇 ts 嘅沉底）；否則維持入參次序（交由呼叫方按 score / 字母排）
+ * 回傳全新陣列。
+ */
+export function applyOperators<T extends OperableHit>(
+  hits: T[],
+  parsed: Pick<ParsedQuery, 'pinnedOnly' | 'recentOnly' | 'sortRecent'>,
+  now: number,
+): T[] {
+  let list = hits
+  if (parsed.pinnedOnly) list = list.filter((h) => h.pinned === true)
+  if (parsed.recentOnly) {
+    const floor = now - RECENT_DAYS * 864e5
+    list = list.filter((h) => h.ts != null && h.ts >= floor && h.ts <= now)
+  }
+  if (parsed.sortRecent) {
+    // 穩定排序：依 ts 由新到舊；冇 ts（undefined）視為最舊沉底。
+    list = list
+      .slice()
+      .sort((a, b) => (b.ts ?? -Infinity) - (a.ts ?? -Infinity))
+  } else if (list === hits) {
+    // 冇做過任何過濾 → 回新陣列避免外部誤改原陣列
+    list = hits.slice()
+  }
+  return list
 }
 
 // ───────── 時間標籤（相對） ─────────

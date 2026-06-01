@@ -11,6 +11,9 @@ import {
   highlightSegments,
   snippetAround,
   parseQuery,
+  hasOperators,
+  applyOperators,
+  RECENT_DAYS,
   isPinned,
   relativeTime,
 } from './util'
@@ -216,53 +219,198 @@ describe('snippetAround — 命中窗 + offset 映射', () => {
   })
 })
 
-describe('parseQuery — type: 運算子解析', () => {
+describe('parseQuery — 運算子解析（type: / is:pinned / in:recent / sort:recent）', () => {
+  // 共用：方便補齊 ParsedQuery 新增嘅三個 boolean（預設全 false）
+  const PQ = (over: Partial<ReturnType<typeof parseQuery>>) => ({
+    text: '',
+    typeFilter: null,
+    pinnedOnly: false,
+    recentOnly: false,
+    sortRecent: false,
+    ...over,
+  })
+
   it('抽出有效 type: 並保留其餘關鍵字', () => {
-    expect(parseQuery('hello type:note world', ['note', 'todo'])).toEqual({
-      text: 'hello world',
-      typeFilter: 'note',
-    })
+    expect(parseQuery('hello type:note world', ['note', 'todo'])).toEqual(
+      PQ({ text: 'hello world', typeFilter: 'note' }),
+    )
   })
 
   it('type: 大細階無關（正規化成細階）', () => {
-    expect(parseQuery('type:NOTE hi', ['note'])).toEqual({
-      text: 'hi',
-      typeFilter: 'note',
-    })
+    expect(parseQuery('type:NOTE hi', ['note'])).toEqual(PQ({ text: 'hi', typeFilter: 'note' }))
   })
 
   it('無效 type 當作普通關鍵字保留', () => {
-    expect(parseQuery('type:xyz hi', ['note'])).toEqual({
-      text: 'type:xyz hi',
-      typeFilter: null,
-    })
+    expect(parseQuery('type:xyz hi', ['note'])).toEqual(PQ({ text: 'type:xyz hi' }))
   })
 
   it('只得 type: → text 空、typeFilter 設定', () => {
-    expect(parseQuery('type:note', ['note'])).toEqual({ text: '', typeFilter: 'note' })
+    expect(parseQuery('type:note', ['note'])).toEqual(PQ({ typeFilter: 'note' }))
   })
 
   it('空字串輸入 → text 空、無 filter', () => {
-    expect(parseQuery('', ['note'])).toEqual({ text: '', typeFilter: null })
+    expect(parseQuery('', ['note'])).toEqual(PQ({}))
   })
 
   it('純空白輸入 → text trim 後為空', () => {
-    expect(parseQuery('   ', ['note'])).toEqual({ text: '', typeFilter: null })
+    expect(parseQuery('   ', ['note'])).toEqual(PQ({}))
   })
 
   it('type: 後無值（type: 加空格）唔當運算子', () => {
     // /^type:(\S+)$/ 要至少一個非空白字元，"type:" 單獨 token 唔匹配
-    expect(parseQuery('type: hi', ['note'])).toEqual({
-      text: 'type: hi',
-      typeFilter: null,
-    })
+    expect(parseQuery('type: hi', ['note'])).toEqual(PQ({ text: 'type: hi' }))
   })
 
   it('多個 type: → 最後一個有效嘅勝出', () => {
-    expect(parseQuery('type:note type:todo x', ['note', 'todo'])).toEqual({
-      text: 'x',
-      typeFilter: 'todo',
-    })
+    expect(parseQuery('type:note type:todo x', ['note', 'todo'])).toEqual(
+      PQ({ text: 'x', typeFilter: 'todo' }),
+    )
+  })
+
+  // ── 新運算子：is:pinned / in:recent / sort:recent ──
+  it('is:pinned → pinnedOnly true，token 由 text 抽走', () => {
+    expect(parseQuery('marketing is:pinned', ['note'])).toEqual(
+      PQ({ text: 'marketing', pinnedOnly: true }),
+    )
+  })
+
+  it('in:recent → recentOnly true', () => {
+    expect(parseQuery('marketing in:recent', ['note'])).toEqual(
+      PQ({ text: 'marketing', recentOnly: true }),
+    )
+  })
+
+  it('sort:recent → sortRecent true', () => {
+    expect(parseQuery('budget sort:recent', ['note'])).toEqual(
+      PQ({ text: 'budget', sortRecent: true }),
+    )
+  })
+
+  it('運算子大細階無關', () => {
+    expect(parseQuery('IS:PINNED In:Recent SORT:recent', ['note'])).toEqual(
+      PQ({ pinnedOnly: true, recentOnly: true, sortRecent: true }),
+    )
+  })
+
+  it('多個運算子可同時組合（含 type:）', () => {
+    expect(parseQuery('q type:note is:pinned sort:recent', ['note'])).toEqual(
+      PQ({ text: 'q', typeFilter: 'note', pinnedOnly: true, sortRecent: true }),
+    )
+  })
+
+  it('認唔到嘅 is:/sort: 變體當普通關鍵字保留（唔誤觸）', () => {
+    expect(parseQuery('is:foo sort:bar in:xyz', ['note'])).toEqual(
+      PQ({ text: 'is:foo sort:bar in:xyz' }),
+    )
+  })
+
+  it('運算子重複亦只係 true（冪等）', () => {
+    expect(parseQuery('is:pinned is:pinned hi', ['note'])).toEqual(
+      PQ({ text: 'hi', pinnedOnly: true }),
+    )
+  })
+
+  it('運算子內嵌喺關鍵字中間：照樣抽走、保留前後字', () => {
+    expect(parseQuery('foo in:recent bar', ['note'])).toEqual(
+      PQ({ text: 'foo bar', recentOnly: true }),
+    )
+  })
+})
+
+describe('hasOperators — 有冇任何運算子生效', () => {
+  const base = { text: '', typeFilter: null, pinnedOnly: false, recentOnly: false, sortRecent: false }
+  it('全 false / 純文字 → false', () => {
+    expect(hasOperators({ ...base, text: 'hello' })).toBe(false)
+  })
+  it('typeFilter 設定 → true', () => {
+    expect(hasOperators({ ...base, typeFilter: 'note' })).toBe(true)
+  })
+  it('pinnedOnly → true', () => {
+    expect(hasOperators({ ...base, pinnedOnly: true })).toBe(true)
+  })
+  it('recentOnly → true', () => {
+    expect(hasOperators({ ...base, recentOnly: true })).toBe(true)
+  })
+  it('sortRecent → true', () => {
+    expect(hasOperators({ ...base, sortRecent: true })).toBe(true)
+  })
+})
+
+describe('applyOperators — 運算子過濾 + 排序（純函式）', () => {
+  const NOW = Date.UTC(2026, 5, 1, 12, 0, 0) // 2026-06-01T12:00Z
+  const DAY = 864e5
+  // 工廠：score / ts / pinned 任意組合
+  const h = (id: string, over: Partial<{ score: number; ts: number; pinned: boolean }> = {}) => ({
+    id,
+    score: over.score ?? 0,
+    ts: over.ts,
+    pinned: over.pinned,
+  })
+  const off = (cfg: Partial<{ pinnedOnly: boolean; recentOnly: boolean; sortRecent: boolean }>) => ({
+    pinnedOnly: false,
+    recentOnly: false,
+    sortRecent: false,
+    ...cfg,
+  })
+
+  it('無任何運算子 → 內容不變、但係新陣列（唔 mutate 入參）', () => {
+    const input = [h('a'), h('b')]
+    const out = applyOperators(input, off({}), NOW)
+    expect(out).toEqual(input)
+    expect(out).not.toBe(input) // 回新陣列
+  })
+
+  it('is:pinned → 只留 pinned === true（undefined / false 都隔走）', () => {
+    const input = [h('a', { pinned: true }), h('b', { pinned: false }), h('c')]
+    const out = applyOperators(input, off({ pinnedOnly: true }), NOW)
+    expect(out.map((x) => x.id)).toEqual(['a'])
+  })
+
+  it('in:recent → 只留 ts 喺 [now - RECENT_DAYS, now] 內', () => {
+    const input = [
+      h('today', { ts: NOW }), // 啱 now → 留
+      h('edge-in', { ts: NOW - RECENT_DAYS * DAY }), // 剛好 floor → 留（>=）
+      h('too-old', { ts: NOW - RECENT_DAYS * DAY - 1 }), // 早一毫秒 → 隔走
+      h('future', { ts: NOW + 1 }), // 未來 → 隔走（> now）
+      h('no-ts'), // 冇 ts → 隔走
+    ]
+    const out = applyOperators(input, off({ recentOnly: true }), NOW)
+    expect(out.map((x) => x.id)).toEqual(['today', 'edge-in'])
+  })
+
+  it('sort:recent → 依 ts 由新到舊；冇 ts 沉底（穩定）', () => {
+    const input = [
+      h('mid', { ts: NOW - 3 * DAY }),
+      h('newest', { ts: NOW }),
+      h('noA'), // 冇 ts
+      h('oldest', { ts: NOW - 10 * DAY }),
+      h('noB'), // 冇 ts
+    ]
+    const out = applyOperators(input, off({ sortRecent: true }), NOW)
+    // 有 ts 嘅由新到舊；兩個冇 ts 沉底並維持原相對次序（noA 在 noB 前）
+    expect(out.map((x) => x.id)).toEqual(['newest', 'mid', 'oldest', 'noA', 'noB'])
+  })
+
+  it('sort:recent 唔 mutate 入參（原陣列次序不變）', () => {
+    const input = [h('a', { ts: 1 }), h('b', { ts: 3 }), h('c', { ts: 2 })]
+    const snapshot = input.map((x) => x.id)
+    applyOperators(input, off({ sortRecent: true }), NOW)
+    expect(input.map((x) => x.id)).toEqual(snapshot)
+  })
+
+  it('組合：is:pinned + in:recent + sort:recent（先過濾後排）', () => {
+    const input = [
+      h('a', { pinned: true, ts: NOW - 2 * DAY }), // 釘 + 近 → 留
+      h('b', { pinned: true, ts: NOW - 1 * DAY }), // 釘 + 更近 → 留（排頭）
+      h('c', { pinned: true, ts: NOW - 100 * DAY }), // 釘但太舊 → in:recent 隔走
+      h('d', { pinned: false, ts: NOW }), // 近但無釘 → is:pinned 隔走
+    ]
+    const out = applyOperators(input, off({ pinnedOnly: true, recentOnly: true, sortRecent: true }), NOW)
+    expect(out.map((x) => x.id)).toEqual(['b', 'a'])
+  })
+
+  it('空陣列 → 空陣列（任何運算子）', () => {
+    expect(applyOperators([], off({ pinnedOnly: true, recentOnly: true, sortRecent: true }), NOW)).toEqual([])
   })
 })
 
