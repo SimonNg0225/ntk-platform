@@ -8,6 +8,7 @@ import {
   isWeekend,
   rateTone,
   tallyByStudent,
+  todayKey,
 } from './util'
 
 // ============================================================
@@ -55,32 +56,44 @@ export default function RegisterGrid({
     [records, students, dayKeys],
   )
 
+  const today = todayKey()
+
   return (
-    <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700/60">
+    <div className="overflow-x-auto rounded-2xl border border-slate-200/80 dark:border-slate-700/60">
       <table className="border-collapse text-sm">
         <thead>
           <tr className="bg-slate-50/80 dark:bg-slate-800/60">
-            <th className="sticky left-0 z-20 min-w-[120px] border-b border-r border-slate-200 bg-slate-50/95 px-3 py-2 text-left text-xs font-semibold text-slate-500 backdrop-blur dark:border-slate-700 dark:bg-slate-800/95 dark:text-slate-400">
+            <th className="sticky left-0 z-20 min-w-[120px] border-b border-r border-slate-200/80 bg-slate-50/95 px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 backdrop-blur dark:border-slate-700/60 dark:bg-slate-800/95 dark:text-slate-400">
               學生
             </th>
             {dayKeys.map((k) => {
               const day = Number(k.slice(8, 10))
               const we = isWeekend(k)
+              const isToday = k === today
               return (
                 <th
                   key={k}
                   className={cx(
-                    'w-8 border-b border-slate-200 px-0 py-2 text-center text-[11px] font-semibold tabular-nums dark:border-slate-700',
-                    we
-                      ? 'bg-slate-100/70 text-slate-400 dark:bg-slate-900/40 dark:text-slate-600'
-                      : 'text-slate-500 dark:text-slate-400',
+                    'w-8 border-b border-slate-200/80 px-0 py-2.5 text-center text-[11px] font-semibold tabular-nums dark:border-slate-700/60',
+                    isToday
+                      ? 'bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent'
+                      : we
+                        ? 'bg-slate-100/70 text-slate-400 dark:bg-slate-900/40 dark:text-slate-600'
+                        : 'text-slate-500 dark:text-slate-400',
                   )}
                 >
-                  {day}
+                  {isToday ? (
+                    <span className="flex flex-col items-center leading-none">
+                      <span>{day}</span>
+                      <span className="mt-0.5 h-1 w-1 rounded-full bg-accent" />
+                    </span>
+                  ) : (
+                    day
+                  )}
                 </th>
               )
             })}
-            <th className="sticky right-0 z-20 min-w-[64px] border-b border-l border-slate-200 bg-slate-50/95 px-2 py-2 text-center text-xs font-semibold text-slate-500 backdrop-blur dark:border-slate-700 dark:bg-slate-800/95 dark:text-slate-400">
+            <th className="sticky right-0 z-20 min-w-[64px] border-b border-l border-slate-200/80 bg-slate-50/95 px-2 py-2.5 text-center text-xs font-semibold uppercase tracking-wide text-slate-500 backdrop-blur dark:border-slate-700/60 dark:bg-slate-800/95 dark:text-slate-400">
               出席率
             </th>
           </tr>
@@ -90,8 +103,8 @@ export default function RegisterGrid({
             const inner = idx.get(s.id)
             const tally = tallies.get(s.id)
             return (
-              <tr key={s.id} className="border-t border-slate-100 dark:border-slate-800">
-                <td className="sticky left-0 z-10 min-w-[120px] border-r border-slate-200 bg-white px-3 py-1.5 dark:border-slate-700 dark:bg-slate-800">
+              <tr key={s.id} className="group border-t border-slate-100 transition-colors hover:bg-slate-50/50 dark:border-slate-800 dark:hover:bg-slate-800/30">
+                <td className="sticky left-0 z-10 min-w-[120px] border-r border-slate-200/80 bg-white px-3 py-1.5 transition-colors group-hover:bg-slate-50/95 dark:border-slate-700/60 dark:bg-slate-800 dark:group-hover:bg-slate-800/95">
                   <div className="truncate font-medium text-slate-700 dark:text-slate-200">
                     {s.name}
                   </div>
@@ -102,12 +115,14 @@ export default function RegisterGrid({
                 {dayKeys.map((k) => {
                   const st = inner?.get(k)
                   const we = isWeekend(k)
+                  const isToday = k === today
                   return (
                     <td
                       key={k}
                       className={cx(
                         'border-l border-slate-100 p-0 text-center dark:border-slate-800/80',
-                        we && 'bg-slate-50/60 dark:bg-slate-900/30',
+                        isToday && 'bg-accent-soft/40 dark:bg-accent/5',
+                        we && !isToday && 'bg-slate-50/60 dark:bg-slate-900/30',
                       )}
                     >
                       <button
@@ -127,7 +142,7 @@ export default function RegisterGrid({
                     </td>
                   )
                 })}
-                <td className="sticky right-0 z-10 min-w-[64px] border-l border-slate-200 bg-white px-2 py-1.5 text-center dark:border-slate-700 dark:bg-slate-800">
+                <td className="sticky right-0 z-10 min-w-[64px] border-l border-slate-200/80 bg-white px-2 py-1.5 text-center transition-colors group-hover:bg-slate-50/95 dark:border-slate-700/60 dark:bg-slate-800 dark:group-hover:bg-slate-800/95">
                   {tally && tally.marked > 0 ? (
                     <Badge tone={rateTone(tally.rate)} className="tabular-nums">
                       {tally.rate}%

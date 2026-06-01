@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import type { ReactNode } from 'react'
 import type { ParentComm, Klass, Student } from '../../../data/types'
 import {
   Button,
@@ -10,6 +11,7 @@ import {
   Textarea,
   cx,
 } from '../../../ui'
+import type { LucideIcon } from 'lucide-react'
 import {
   CATEGORY_OPTIONS,
   CHANNELS,
@@ -25,12 +27,44 @@ import {
   shiftKey,
   todayKey,
 } from './util'
-import { FileText, Sparkles } from 'lucide-react'
+import {
+  CalendarClock,
+  FileText,
+  MessageSquareText,
+  Smile,
+  Sparkles,
+  Users,
+} from 'lucide-react'
 
 // ============================================================
 //  溝通記錄編輯器（新增 / 編輯共用）
 //  寫返兩層：核心欄位 → parentCommsCol；進階 metadata → 本地 metaCol
 // ============================================================
+
+// 表單分組標題：小 accent icon + 標籤，畀表單有節奏、唔生硬
+function Section({
+  icon: I,
+  title,
+  children,
+}: {
+  icon: LucideIcon
+  title: string
+  children: ReactNode
+}) {
+  return (
+    <section className="space-y-3">
+      <div className="flex items-center gap-2">
+        <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
+          <I size={13} />
+        </span>
+        <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+          {title}
+        </h3>
+      </div>
+      {children}
+    </section>
+  )
+}
 
 export interface CommDraft {
   classId: string
@@ -187,103 +221,106 @@ export default function CommEditor({
       size="lg"
       title={editing ? '編輯溝通記錄' : '新增溝通記錄'}
     >
-      <form onSubmit={submit} className="space-y-4">
+      <form onSubmit={submit} className="space-y-5">
         {/* 對象 */}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Field label="班別" required>
-            <Select
-              value={d.classId}
-              onChange={(e) => {
-                set('classId', e.target.value)
-                set('studentId', '')
-              }}
-            >
-              <option value="">請揀班別</option>
-              {classes.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                  {c.subject ? `（${c.subject}）` : ''}
-                </option>
-              ))}
-            </Select>
-          </Field>
+        <Section icon={Users} title="對象">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <Field label="班別" required>
+              <Select
+                value={d.classId}
+                onChange={(e) => {
+                  set('classId', e.target.value)
+                  set('studentId', '')
+                }}
+              >
+                <option value="">請揀班別</option>
+                {classes.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                    {c.subject ? `（${c.subject}）` : ''}
+                  </option>
+                ))}
+              </Select>
+            </Field>
 
-          <Field label="學生（選填）">
-            <Select
-              value={d.studentId}
-              disabled={!d.classId}
-              onChange={(e) => set('studentId', e.target.value)}
-            >
-              <option value="">{d.classId ? '全班 / 不指定' : '請先揀班別'}</option>
-              {formStudents.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.name}
-                  {s.studentNo ? `（${s.studentNo}）` : ''}
-                </option>
-              ))}
-            </Select>
-          </Field>
-        </div>
+            <Field label="學生（選填）">
+              <Select
+                value={d.studentId}
+                disabled={!d.classId}
+                onChange={(e) => set('studentId', e.target.value)}
+              >
+                <option value="">{d.classId ? '全班 / 不指定' : '請先揀班別'}</option>
+                {formStudents.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name}
+                    {s.studentNo ? `（${s.studentNo}）` : ''}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+          </div>
+        </Section>
 
-        {/* 方向 + 聯絡人 */}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Field label="方向">
-            <div className="grid grid-cols-2 gap-2">
-              {DIRECTIONS.map((dir) => (
-                <button
-                  key={dir}
-                  type="button"
-                  onClick={() => set('direction', dir)}
-                  className={cx(
-                    'rounded-lg border px-3 py-2 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
-                    d.direction === dir
-                      ? 'border-accent bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent'
-                      : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700',
-                  )}
-                >
-                  {DIRECTION_LABEL[dir]}
-                </button>
-              ))}
-            </div>
-          </Field>
+        {/* 聯絡詳情 */}
+        <Section icon={CalendarClock} title="聯絡詳情">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <Field label="方向">
+              <div className="grid grid-cols-2 gap-2">
+                {DIRECTIONS.map((dir) => (
+                  <button
+                    key={dir}
+                    type="button"
+                    onClick={() => set('direction', dir)}
+                    className={cx(
+                      'rounded-lg border px-3 py-2 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
+                      d.direction === dir
+                        ? 'border-accent bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent'
+                        : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700',
+                    )}
+                  >
+                    {DIRECTION_LABEL[dir]}
+                  </button>
+                ))}
+              </div>
+            </Field>
 
-          <Field label="聯絡人（選填）" hint="例如：陳太、父親">
-            <Input
-              value={d.contactName}
-              onChange={(e) => set('contactName', e.target.value)}
-              placeholder="家長 / 監護人稱呼"
-            />
-          </Field>
-        </div>
+            <Field label="聯絡人（選填）" hint="例如：陳太、父親">
+              <Input
+                value={d.contactName}
+                onChange={(e) => set('contactName', e.target.value)}
+                placeholder="家長 / 監護人稱呼"
+              />
+            </Field>
+          </div>
 
-        {/* 日期 / 方式 / 分類 */}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <Field label="日期">
-            <Input type="date" value={d.date} onChange={(e) => set('date', e.target.value)} />
-          </Field>
-          <Field label="聯絡方式">
-            <Select value={d.channel} onChange={(e) => set('channel', e.target.value as Channel)}>
-              {CHANNELS.map((ch) => (
-                <option key={ch} value={ch}>
-                  {ch}
-                </option>
-              ))}
-            </Select>
-          </Field>
-          <Field label="主題分類">
-            <Select
-              value={d.category}
-              onChange={(e) => set('category', e.target.value as Category | '')}
-            >
-              <option value="">未分類</option>
-              {CATEGORY_OPTIONS.map((o) => (
-                <option key={o.value} value={o.value}>
-                  {o.label}
-                </option>
-              ))}
-            </Select>
-          </Field>
-        </div>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <Field label="日期">
+              <Input type="date" value={d.date} onChange={(e) => set('date', e.target.value)} />
+            </Field>
+            <Field label="聯絡方式">
+              <Select value={d.channel} onChange={(e) => set('channel', e.target.value as Channel)}>
+                {CHANNELS.map((ch) => (
+                  <option key={ch} value={ch}>
+                    {ch}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+            <Field label="主題分類">
+              <Select
+                value={d.category}
+                onChange={(e) => set('category', e.target.value as Category | '')}
+              >
+                <option value="">未分類</option>
+                {CATEGORY_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+          </div>
+        </Section>
 
         {/* 內容 + 範本 */}
         <Field
@@ -291,7 +328,8 @@ export default function CommEditor({
           required
         >
           <div className="mb-1.5 flex items-center justify-between">
-            <span className="text-xs text-slate-400 dark:text-slate-500">
+            <span className="flex items-center gap-1.5 text-xs text-slate-400 dark:text-slate-500">
+              <MessageSquareText size={13} />
               記錄溝通重點
             </span>
             {templates.length > 0 && (
@@ -323,37 +361,54 @@ export default function CommEditor({
         {/* 觀感 */}
         <Field label="溝通觀感（選填）">
           <div className="grid grid-cols-3 gap-2">
-            {(['positive', 'neutral', 'concern'] as Outcome[]).map((o) => (
-              <button
-                key={o}
-                type="button"
-                onClick={() => set('outcome', d.outcome === o ? '' : o)}
-                className={cx(
-                  'rounded-lg border px-3 py-2 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
-                  d.outcome === o
-                    ? o === 'positive'
-                      ? 'border-emerald-400 bg-emerald-50 text-emerald-700 dark:border-emerald-500/40 dark:bg-emerald-500/10 dark:text-emerald-300'
-                      : o === 'concern'
-                        ? 'border-rose-400 bg-rose-50 text-rose-700 dark:border-rose-500/40 dark:bg-rose-500/10 dark:text-rose-300'
-                        : 'border-slate-300 bg-slate-100 text-slate-700 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-200'
-                    : 'border-slate-200 bg-white text-slate-500 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700',
-                )}
-              >
-                {OUTCOME_LABEL[o]}
-              </button>
-            ))}
+            {(['positive', 'neutral', 'concern'] as Outcome[]).map((o) => {
+              const ICON: Record<Outcome, LucideIcon> = {
+                positive: Smile,
+                neutral: MessageSquareText,
+                concern: Smile,
+              }
+              const I = ICON[o]
+              return (
+                <button
+                  key={o}
+                  type="button"
+                  onClick={() => set('outcome', d.outcome === o ? '' : o)}
+                  className={cx(
+                    'inline-flex items-center justify-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
+                    d.outcome === o
+                      ? o === 'positive'
+                        ? 'border-emerald-400 bg-emerald-50 text-emerald-700 dark:border-emerald-500/40 dark:bg-emerald-500/10 dark:text-emerald-300'
+                        : o === 'concern'
+                          ? 'border-rose-400 bg-rose-50 text-rose-700 dark:border-rose-500/40 dark:bg-rose-500/10 dark:text-rose-300'
+                          : 'border-slate-300 bg-slate-100 text-slate-700 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-200'
+                      : 'border-slate-200 bg-white text-slate-500 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700',
+                  )}
+                >
+                  <I size={14} />
+                  {OUTCOME_LABEL[o]}
+                </button>
+              )
+            })}
           </div>
         </Field>
 
         {/* 跟進 */}
-        <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-3 dark:border-slate-700 dark:bg-slate-800/40">
-          <label className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-200">
+        <div
+          className={cx(
+            'rounded-2xl border p-3.5 transition-colors',
+            d.followUp
+              ? 'border-accent/30 bg-accent-soft/40 dark:border-accent/30 dark:bg-accent/10'
+              : 'border-slate-200 bg-slate-50/60 dark:border-slate-700 dark:bg-slate-800/40',
+          )}
+        >
+          <label className="flex cursor-pointer items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-200">
             <input
               type="checkbox"
               className="h-4 w-4 rounded border-slate-300 text-accent focus:ring-accent/30 dark:border-slate-700"
               checked={d.followUp}
               onChange={(e) => set('followUp', e.target.checked)}
             />
+            <CalendarClock size={15} className="text-accent" />
             需要跟進
           </label>
           {d.followUp && (

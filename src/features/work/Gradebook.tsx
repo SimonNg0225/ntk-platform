@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, type ReactNode } from 'react'
 import { useCollection } from '../../lib/store'
 import { useToast } from '../../context/ToastContext'
 import { useConfirm } from '../../context/ConfirmContext'
@@ -41,6 +41,7 @@ import {
   RotateCcw,
   School,
   SlidersHorizontal,
+  Sparkles,
   Target,
   Trash2,
   Trophy,
@@ -94,6 +95,24 @@ const TAB_ICONS: Partial<Record<Tab, typeof BarChart3>> = {
   scheme: SlidersHorizontal,
 }
 
+function GradebookHeader() {
+  return (
+    <header className="flex items-start gap-3">
+      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
+        <GraduationCap size={22} />
+      </span>
+      <div>
+        <h1 className="text-xl font-semibold tracking-tight text-slate-800 dark:text-slate-100 sm:text-2xl">
+          成績管理
+        </h1>
+        <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
+          加權計分、等級分佈、課題弱項同個人成績單——對齊學校評核標準。
+        </p>
+      </div>
+    </header>
+  )
+}
+
 export default function Gradebook() {
   const classes = useCollection(classesCol)
   const [classId, setClassId] = useState(classes[0]?.id ?? '')
@@ -103,24 +122,30 @@ export default function Gradebook() {
 
   if (classes.length === 0) {
     return (
-      <EmptyState
-        icon={School}
-        art="empty-gradebook"
-        title="仲未有班別"
-        hint="請先去「班別管理」新增班別，先可以記錄成績。"
-      />
+      <div className="space-y-5">
+        <GradebookHeader />
+        <EmptyState
+          icon={School}
+          art="empty-gradebook"
+          title="由第一班開始"
+          hint="先去「班別管理」開好班別，呢度就可以記錄成績、睇分析同打印成績單。"
+        />
+      </div>
     )
   }
 
   return (
-    <div className="space-y-4">
-      <Pills
-        options={classes.map((c) => ({ id: c.id, label: c.name }))}
-        active={activeClass?.id ?? ''}
-        onChange={setClassId}
-      />
+    <div className="space-y-5">
+      <GradebookHeader />
 
-      <Tabs tabs={TABS} active={tab} onChange={setTab} icons={TAB_ICONS} />
+      <div className="space-y-3 rounded-3xl border border-slate-200/80 bg-white p-3 shadow-xs dark:border-slate-700/60 dark:bg-slate-800 dark:shadow-none">
+        <Pills
+          options={classes.map((c) => ({ id: c.id, label: c.name }))}
+          active={activeClass?.id ?? ''}
+          onChange={setClassId}
+        />
+        <Tabs tabs={TABS} active={tab} onChange={setTab} icons={TAB_ICONS} />
+      </div>
 
       {activeClass && tab === 'grid' && (
         <ScoreGrid classId={activeClass.id} className={activeClass.name} />
@@ -279,16 +304,49 @@ function ScoreGrid({ classId, className }: { classId: string; className: string 
       <EmptyState
         icon={NotebookPen}
         art="empty-gradebook"
-        title="未夠資料填成績"
-        hint="請先喺「學生」同「評估」分頁加入資料，先可以填成績。"
+        title="準備好就可以入分"
+        hint="先去「學生」同「評估」分頁加入名單同測考，呢張成績表就會即刻郁起嚟。"
       />
     )
   }
 
   const reportResult = reportFor ? resultById.get(reportFor) ?? null : null
+  const gradedAssessments = assessments.filter((a) =>
+    students.some((s) => pctFor(scores, a.id, s.id, a.maxScore) != null),
+  ).length
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
+      {/* 速覽：班級平均 + 進度（層次：主數字退後做底，工具列做主行動）*/}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <div className="col-span-2 flex items-center justify-between rounded-3xl border border-accent/30 bg-accent-soft/60 px-4 py-3 dark:border-accent/40 dark:bg-accent/10">
+          <div>
+            <p className="text-xs font-medium text-accent-strong/80 dark:text-accent/80">
+              {scheme.weighted ? '班級加權平均' : '班級平均'}
+            </p>
+            <p className="mt-0.5 text-3xl font-bold tabular-nums text-accent-strong dark:text-accent">
+              {classAvg == null ? '—' : `${Math.round(classAvg)}%`}
+            </p>
+          </div>
+          <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/70 text-accent-strong dark:bg-white/10 dark:text-accent">
+            <Target size={22} />
+          </span>
+        </div>
+        <div className="rounded-3xl border border-slate-200/80 bg-white px-4 py-3 dark:border-slate-700/60 dark:bg-slate-800">
+          <p className="text-xs font-medium text-slate-400 dark:text-slate-500">學生</p>
+          <p className="mt-0.5 text-2xl font-bold tabular-nums text-slate-800 dark:text-slate-100">
+            {students.length}
+          </p>
+        </div>
+        <div className="rounded-3xl border border-slate-200/80 bg-white px-4 py-3 dark:border-slate-700/60 dark:bg-slate-800">
+          <p className="text-xs font-medium text-slate-400 dark:text-slate-500">已入分評估</p>
+          <p className="mt-0.5 text-2xl font-bold tabular-nums text-slate-800 dark:text-slate-100">
+            {gradedAssessments}
+            <span className="text-base font-medium text-slate-400">/{assessments.length}</span>
+          </p>
+        </div>
+      </div>
+
       {/* 工具列 */}
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
@@ -323,17 +381,17 @@ function ScoreGrid({ classId, className }: { classId: string; className: string 
         </div>
       </div>
 
-      <div className="overflow-x-auto rounded-2xl border border-slate-200 dark:border-slate-700">
+      <div className="overflow-x-auto rounded-2xl border border-slate-200/80 dark:border-slate-700/60">
         <table className="min-w-full border-collapse text-sm">
           <thead>
-            <tr className="bg-slate-50 dark:bg-slate-800/50">
-              <th className="sticky left-0 z-10 bg-slate-50 px-3 py-2 text-left font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+            <tr className="bg-slate-50/80 dark:bg-slate-800/60">
+              <th className="sticky left-0 z-10 border-b border-slate-200/80 bg-slate-50/95 px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 backdrop-blur dark:border-slate-700/60 dark:bg-slate-800/95 dark:text-slate-400">
                 學生
               </th>
               {assessments.map((a) => (
                 <th
                   key={a.id}
-                  className="whitespace-nowrap px-3 py-2 text-center font-semibold text-slate-600 dark:text-slate-300"
+                  className="whitespace-nowrap border-b border-slate-200/80 px-3 py-2.5 text-center font-semibold text-slate-600 dark:border-slate-700/60 dark:text-slate-300"
                 >
                   {a.name}
                   <span className="mt-0.5 block text-[10px] font-normal text-slate-400">
@@ -344,13 +402,13 @@ function ScoreGrid({ classId, className }: { classId: string; className: string 
                   </span>
                 </th>
               ))}
-              <th className="px-3 py-2 text-center font-semibold text-slate-600 dark:text-slate-300">
+              <th className="border-b border-slate-200/80 px-3 py-2.5 text-center font-semibold text-slate-600 dark:border-slate-700/60 dark:text-slate-300">
                 {scheme.weighted ? '加權總分' : '平均'}
               </th>
-              <th className="px-2 py-2 text-center font-semibold text-slate-600 dark:text-slate-300">
+              <th className="border-b border-slate-200/80 px-2 py-2.5 text-center font-semibold text-slate-600 dark:border-slate-700/60 dark:text-slate-300">
                 名次
               </th>
-              <th className="px-2 py-2" />
+              <th className="border-b border-slate-200/80 px-2 py-2.5 dark:border-slate-700/60" />
             </tr>
           </thead>
           <tbody>
@@ -362,9 +420,9 @@ function ScoreGrid({ classId, className }: { classId: string; className: string 
               return (
                 <tr
                   key={s.id}
-                  className="border-t border-slate-100 dark:border-slate-700"
+                  className="group border-t border-slate-100 transition-colors hover:bg-slate-50/60 dark:border-slate-800 dark:hover:bg-slate-800/40"
                 >
-                  <td className="sticky left-0 z-10 bg-white px-3 py-2 font-medium text-slate-700 dark:bg-slate-800 dark:text-slate-200">
+                  <td className="sticky left-0 z-10 bg-white px-3 py-2 font-medium text-slate-700 transition-colors group-hover:bg-slate-50/95 dark:bg-slate-800 dark:text-slate-200 dark:group-hover:bg-slate-800/95">
                     {s.studentNo && (
                       <span className="mr-1.5 text-xs text-slate-400">
                         {s.studentNo}
@@ -419,8 +477,27 @@ function ScoreGrid({ classId, className }: { classId: string; className: string 
                       </div>
                     )}
                   </td>
-                  <td className="px-2 py-2 text-center text-xs font-semibold tabular-nums text-slate-500 dark:text-slate-400">
-                    {rank ?? '—'}
+                  <td className="px-2 py-2 text-center">
+                    {rank == null ? (
+                      <span className="text-xs text-slate-300 dark:text-slate-600">—</span>
+                    ) : rank <= 3 ? (
+                      <span
+                        className={cx(
+                          'inline-flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold tabular-nums',
+                          rank === 1
+                            ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300'
+                            : rank === 2
+                              ? 'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300'
+                              : 'bg-orange-100 text-orange-700 dark:bg-orange-500/15 dark:text-orange-300',
+                        )}
+                      >
+                        {rank}
+                      </span>
+                    ) : (
+                      <span className="text-xs font-semibold tabular-nums text-slate-500 dark:text-slate-400">
+                        {rank}
+                      </span>
+                    )}
                   </td>
                   <td className="px-2 py-2 text-center">
                     <IconButton
@@ -435,8 +512,8 @@ function ScoreGrid({ classId, className }: { classId: string; className: string 
             })}
           </tbody>
           <tfoot>
-            <tr className="border-t-2 border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-800/50">
-              <td className="sticky left-0 z-10 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+            <tr className="border-t-2 border-slate-200/80 bg-slate-50/80 dark:border-slate-700/60 dark:bg-slate-800/60">
+              <td className="sticky left-0 z-10 bg-slate-50/95 px-3 py-2.5 text-xs font-semibold text-slate-500 backdrop-blur dark:bg-slate-800/95 dark:text-slate-400">
                 全班平均
               </td>
               {assessments.map((a) => {
@@ -486,6 +563,40 @@ function ScoreGrid({ classId, className }: { classId: string; className: string 
         bands={bands}
         className={className}
       />
+    </div>
+  )
+}
+
+// 卡片標題：小色 chip + 標題 + 選填說明（統一分析卡頭部，營造層次）
+const CHART_HEAD_CHIP: Record<'accent' | 'violet' | 'sky' | 'rose' | 'emerald' | 'amber', string> = {
+  accent: 'bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent',
+  violet: 'bg-violet-50 text-violet-600 dark:bg-violet-500/15 dark:text-violet-300',
+  sky: 'bg-sky-50 text-sky-600 dark:bg-sky-500/15 dark:text-sky-300',
+  rose: 'bg-rose-50 text-rose-600 dark:bg-rose-500/15 dark:text-rose-300',
+  emerald: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-300',
+  amber: 'bg-amber-50 text-amber-600 dark:bg-amber-500/15 dark:text-amber-300',
+}
+
+function ChartHead({
+  icon: Icon,
+  tone,
+  hint,
+  children,
+}: {
+  icon: typeof BarChart3
+  tone: keyof typeof CHART_HEAD_CHIP
+  hint?: string
+  children: ReactNode
+}) {
+  return (
+    <div className="mb-3 flex items-start gap-2.5">
+      <span className={cx('mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl', CHART_HEAD_CHIP[tone])}>
+        <Icon size={16} />
+      </span>
+      <div className="min-w-0">
+        <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">{children}</p>
+        {hint && <p className="mt-0.5 text-xs text-slate-400 dark:text-slate-500">{hint}</p>}
+      </div>
     </div>
   )
 }
@@ -692,8 +803,8 @@ function AnalysisTab({ classId, className }: { classId: string; className: strin
     return (
       <EmptyState
         icon={BarChart3}
-        title="未夠資料分析"
-        hint="加入學生同評估、入埋分數後，呢度會自動整理班級表現。"
+        title="分析住緊等你"
+        hint="加入學生同評估、入埋分數，呢度就會自動畫出分佈、等級佔比同課題強弱。"
       />
     )
   }
@@ -748,42 +859,41 @@ function AnalysisTab({ classId, className }: { classId: string; className: strin
           </div>
 
           <div className="grid gap-4 lg:grid-cols-2">
-            <Card className="p-4">
-              <p className="mb-3 text-sm font-semibold text-slate-700 dark:text-slate-200">
-                分數分佈（全班總分）
-              </p>
+            <Card className="rounded-3xl p-5">
+              <ChartHead icon={BarChart3} tone="accent">分數分佈（全班總分）</ChartHead>
               <Histogram bins={stats.hist} passMark={stats.passMark} />
               <p className="mt-2 text-xs text-slate-400 dark:text-slate-500">
                 每條代表落入該分數區間嘅學生人數；紅色為不及格區間。
               </p>
             </Card>
 
-            <Card className="p-4">
-              <p className="mb-3 text-sm font-semibold text-slate-700 dark:text-slate-200">
+            <Card className="rounded-3xl p-5">
+              <ChartHead icon={Trophy} tone="violet">
                 等級佔比（{SCALE_LABEL[scheme.scale]}）
-              </p>
+              </ChartHead>
               <GradeDonut counts={stats.gradeCounts} scale={scheme.scale} bands={bands} />
             </Card>
 
-            <Card className="p-4">
-              <p className="mb-3 text-sm font-semibold text-slate-700 dark:text-slate-200">
-                全班成績離散（箱形圖）
-              </p>
+            <Card className="rounded-3xl p-5">
+              <ChartHead icon={ArrowUpDown} tone="sky">全班成績離散（箱形圖）</ChartHead>
               <BoxPlot stats={stats.box} passMark={stats.passMark} />
             </Card>
 
-            <Card className="p-4">
-              <p className="mb-1 text-sm font-semibold text-slate-700 dark:text-slate-200">
+            <Card className="rounded-3xl p-5">
+              <ChartHead icon={UserCheck} tone="rose">
                 需關注學生（總分低於 {stats.passMark}%）
-              </p>
+              </ChartHead>
               {stats.weak.length === 0 ? (
-                <p className="mt-2 text-sm text-slate-400">暫時冇（或者未夠資料）。</p>
+                <div className="flex items-center gap-2 rounded-2xl bg-emerald-50/60 px-3 py-2.5 text-sm text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300">
+                  <Check size={16} strokeWidth={2.5} />
+                  暫時冇人跌穿及格線，全班企穩。
+                </div>
               ) : (
-                <ul className="mt-2 space-y-1.5">
+                <ul className="space-y-1.5">
                   {stats.weak.map((r) => (
                     <li
                       key={r.student.id}
-                      className="flex items-center justify-between rounded-lg bg-rose-50/60 px-3 py-1.5 text-sm dark:bg-rose-950/20"
+                      className="flex items-center justify-between rounded-xl bg-rose-50/60 px-3 py-1.5 text-sm dark:bg-rose-950/20"
                     >
                       <span className="text-slate-700 dark:text-slate-200">
                         {r.student.name}
@@ -803,13 +913,14 @@ function AnalysisTab({ classId, className }: { classId: string; className: strin
             </Card>
           </div>
 
-          <Card className="p-4">
-            <p className="mb-1 text-sm font-semibold text-slate-700 dark:text-slate-200">
+          <Card className="rounded-3xl p-5">
+            <ChartHead
+              icon={Sparkles}
+              tone="emerald"
+              hint="按評估日期排序，睇班級表現走勢。"
+            >
               評估趨勢（全班平均）
-            </p>
-            <p className="mb-3 text-xs text-slate-400 dark:text-slate-500">
-              按評估日期排序，睇班級表現走勢。
-            </p>
+            </ChartHead>
             <TrendLine points={trendPoints} passMark={stats.passMark} />
           </Card>
         </div>
@@ -820,7 +931,7 @@ function AnalysisTab({ classId, className }: { classId: string; className: strin
           {perAssessment.map((x) => {
             const band = x.avg != null ? gradeOf(x.avg, scheme.scale, bands) : null
             return (
-              <Card key={x.a.id} className="p-4">
+              <Card key={x.a.id} className="rounded-3xl p-5">
                 <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">
@@ -859,18 +970,19 @@ function AnalysisTab({ classId, className }: { classId: string; className: strin
       )}
 
       {view === 'topics' && (
-        <Card className="p-4">
-          <p className="mb-1 text-sm font-semibold text-slate-700 dark:text-slate-200">
+        <Card className="rounded-3xl p-5">
+          <ChartHead
+            icon={Target}
+            tone="amber"
+            hint="把評估連住 BAFS 課題（評估分頁設定），就會喺呢度睇到課題層面嘅強弱。"
+          >
             各課題表現（由弱到強）
-          </p>
-          <p className="mb-3 text-xs text-slate-400 dark:text-slate-500">
-            把評估連住 BAFS 課題（評估分頁設定），就會喺呢度睇到課題層面嘅強弱。
-          </p>
+          </ChartHead>
           {topicStats.length === 0 ? (
             <EmptyState
               icon={Target}
-              title="未有課題資料"
-              hint="去「評估」分頁，為測驗／考試揀返對應 BAFS 課題。"
+              title="未連起課題"
+              hint="去「評估」分頁，為測驗／考試揀返對應 BAFS 課題，就會睇到弱項。"
             />
           ) : (
             <ul className="space-y-3">
@@ -913,34 +1025,37 @@ function AnalysisTab({ classId, className }: { classId: string; className: strin
       )}
 
       {view === 'ranking' && (
-        <Card className="p-2">
+        <Card className="rounded-3xl p-2">
           {ranking.length === 0 ? (
-            <EmptyState icon={Trophy} title="未有成績" hint="入分後即見班內排名。" />
+            <EmptyState icon={Trophy} title="排名榜未開賽" hint="入分之後，班內名次就會即刻排好。" />
           ) : (
             <ul className="divide-y divide-slate-100 dark:divide-slate-800">
               {ranking.map((r, i) => {
                 const band = gradeOf(r.weighted!, scheme.scale, bands)
-                const medal =
-                  i === 0
-                    ? 'text-amber-500'
-                    : i === 1
-                      ? 'text-slate-400'
-                      : i === 2
-                        ? 'text-amber-700'
-                        : 'text-slate-300'
+                const rank = i + 1
                 return (
                   <li
                     key={r.student.id}
-                    className="flex items-center gap-3 px-3 py-2"
+                    className="flex items-center gap-3 rounded-xl px-3 py-2 transition-colors hover:bg-slate-50/70 dark:hover:bg-slate-800/40"
                   >
-                    <span
-                      className={cx(
-                        'w-7 text-center text-sm font-bold tabular-nums',
-                        i < 3 ? medal : 'text-slate-400',
-                      )}
-                    >
-                      {i + 1}
-                    </span>
+                    {rank <= 3 ? (
+                      <span
+                        className={cx(
+                          'flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm font-bold tabular-nums',
+                          rank === 1
+                            ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300'
+                            : rank === 2
+                              ? 'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300'
+                              : 'bg-orange-100 text-orange-700 dark:bg-orange-500/15 dark:text-orange-300',
+                        )}
+                      >
+                        {rank}
+                      </span>
+                    ) : (
+                      <span className="w-7 text-center text-sm font-bold tabular-nums text-slate-400">
+                        {rank}
+                      </span>
+                    )}
                     <span className="flex-1 text-sm text-slate-700 dark:text-slate-200">
                       {r.student.studentNo && (
                         <span className="mr-1.5 text-xs text-slate-400">
@@ -1093,7 +1208,7 @@ function StudentsTab({ classId }: { classId: string }) {
       </div>
 
       {showBulk && (
-        <Card className="space-y-2 border-accent/30 bg-accent-soft/30 p-4">
+        <Card className="space-y-2 rounded-2xl border-accent/30 bg-accent-soft/30 p-4">
           <Field
             label="批量加入（每行一位）"
             hint="格式：「學號 姓名」或淨係「姓名」。可由 Excel 直接複製貼上。"
@@ -1119,12 +1234,12 @@ function StudentsTab({ classId }: { classId: string }) {
       {students.length === 0 ? (
         <EmptyState
           icon={GraduationCap}
-          title="仲未有學生"
-          hint="喺上面輸入姓名加入第一位學生，或用「批量」一次過貼上整班。"
+          title="加入第一位學生"
+          hint="喺上面打個名就得，或者撳「批量」由 Excel 一次過貼晒成班入嚟。"
         />
       ) : (
-        <Card>
-          <div className="flex items-center justify-between px-4 py-2 text-xs text-slate-400">
+        <Card className="rounded-2xl">
+          <div className="flex items-center justify-between px-4 py-2.5 text-xs font-medium text-slate-400">
             <span>共 {students.length} 位學生</span>
           </div>
           <ul className="divide-y divide-slate-100 dark:divide-slate-700">
@@ -1250,7 +1365,7 @@ function AssessmentsTab({ classId }: { classId: string }) {
 
   return (
     <div className="space-y-3">
-      <Card className="space-y-3 border-accent/30 bg-accent-soft/40 p-4">
+      <Card className="space-y-3 rounded-2xl border-accent/30 bg-accent-soft/40 p-4">
         <div className="flex flex-wrap gap-2">
           <div className="min-w-[160px] flex-1">
             <Field label="評估名稱">
@@ -1314,11 +1429,11 @@ function AssessmentsTab({ classId }: { classId: string }) {
       {assessments.length === 0 ? (
         <EmptyState
           icon={FolderOpen}
-          title="仲未有評估"
-          hint="喺上面新增測驗、考試或功課，先可以入分。"
+          title="開一份評估先"
+          hint="喺上面加測驗、考試或功課；連埋課題仲可以做課題弱項分析。"
         />
       ) : (
-        <Card>
+        <Card className="rounded-2xl">
           <ul className="divide-y divide-slate-100 dark:divide-slate-700">
             {assessments.map((a) => {
               return (
@@ -1474,7 +1589,7 @@ function SchemeTab({ classId }: { classId: string }) {
 
   return (
     <div className="space-y-4">
-      <Card className="space-y-4 p-4">
+      <Card className="space-y-4 rounded-2xl p-5">
         <div>
           <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
             等級制
@@ -1515,7 +1630,7 @@ function SchemeTab({ classId }: { classId: string }) {
         </div>
       </Card>
 
-      <Card className="space-y-3 p-4">
+      <Card className="space-y-3 rounded-2xl p-5">
         <div className="flex items-start justify-between gap-2">
           <div>
             <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
@@ -1595,7 +1710,7 @@ function SchemeTab({ classId }: { classId: string }) {
         )}
       </Card>
 
-      <Card className="space-y-3 p-4">
+      <Card className="space-y-3 rounded-2xl p-5">
         <div className="flex items-center justify-between">
           <div>
             <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
@@ -1679,8 +1794,8 @@ function SchemeTab({ classId }: { classId: string }) {
         </div>
       </Card>
 
-      <Card className="flex items-start gap-3 p-4">
-        <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
+      <Card className="flex items-start gap-3 rounded-2xl bg-slate-50/60 p-5 dark:bg-slate-800/40">
+        <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
           <Calculator size={16} />
         </span>
         <div className="text-xs leading-relaxed text-slate-500 dark:text-slate-400">

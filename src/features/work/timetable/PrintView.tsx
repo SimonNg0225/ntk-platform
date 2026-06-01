@@ -30,13 +30,13 @@ export default function PrintView({
   classNameById: Map<string, string>
 }) {
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800 print:border-0 print:p-0 print:shadow-none">
-      <div className="mb-3 text-center">
-        <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100">
+    <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-slate-700/60 dark:bg-slate-800 dark:shadow-none print:rounded-none print:border-0 print:p-0 print:shadow-none">
+      <div className="mb-4 text-center">
+        <h2 className="text-lg font-bold tracking-tight text-slate-800 dark:text-slate-100">
           {title}
         </h2>
-        <p className="text-xs text-slate-400">
-          每週教學時間表 · 共 {slotByKey.size} 節
+        <p className="mt-0.5 text-xs text-slate-400 dark:text-slate-500">
+          每週教學時間表 · 共 <span className="tabular-nums">{slotByKey.size}</span> 節
         </p>
       </div>
 

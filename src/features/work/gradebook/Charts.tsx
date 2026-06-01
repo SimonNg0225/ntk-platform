@@ -50,10 +50,10 @@ export function Histogram({
             </span>
             <div
               className={cx(
-                'w-full rounded-t-sm transition-all duration-500',
+                'w-full rounded-t-md transition-all duration-500 group-hover:opacity-90',
                 fail
-                  ? 'bg-rose-400/80 dark:bg-rose-500/60'
-                  : 'bg-accent/80 dark:bg-accent/70',
+                  ? 'bg-rose-400/85 dark:bg-rose-500/60'
+                  : 'bg-accent/85 dark:bg-accent/70',
                 b.count === 0 && 'bg-slate-100 dark:bg-slate-800',
               )}
               style={{ height: `${Math.max(h, b.count ? 4 : 2)}%` }}
@@ -100,10 +100,10 @@ export function GradeDonut({
   if (total === 0) {
     return (
       <div
-        className="flex items-center justify-center rounded-full text-xs text-slate-400"
+        className="flex items-center justify-center rounded-full border border-dashed border-slate-200 text-xs text-slate-400 dark:border-slate-700 dark:text-slate-500"
         style={{ width: size, height: size }}
       >
-        未有資料
+        未有等級
       </div>
     )
   }
@@ -192,8 +192,8 @@ export function TrendLine({
   const gid = useId().replace(/[:]/g, '')
   if (points.length === 0) {
     return (
-      <div className="flex items-center justify-center text-xs text-slate-400" style={{ height }}>
-        未有資料
+      <div className="flex items-center justify-center rounded-2xl border border-dashed border-slate-200 text-xs text-slate-400 dark:border-slate-700 dark:text-slate-500" style={{ height }}>
+        入分後即見走勢
       </div>
     )
   }
@@ -301,7 +301,7 @@ export function BoxPlot({
 }) {
   if (!stats) {
     return (
-      <div className="flex h-12 items-center text-xs text-slate-400">未有資料</div>
+      <div className="flex h-12 items-center text-xs text-slate-400 dark:text-slate-500">未夠資料畫箱形圖</div>
     )
   }
   const pos = (v: number) => `${Math.max(0, Math.min(100, v))}%`

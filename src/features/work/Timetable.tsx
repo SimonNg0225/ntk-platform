@@ -627,9 +627,9 @@ function SettingsModal({
                   type="button"
                   onClick={() => toggleDay(d.day)}
                   className={cx(
-                    'rounded-md px-3 py-1.5 text-sm font-medium transition',
+                    'rounded-full px-3.5 py-1.5 text-sm font-medium transition',
                     on
-                      ? 'bg-accent text-white'
+                      ? 'bg-accent text-white shadow-sm dark:shadow-none'
                       : 'bg-slate-100 text-slate-500 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700',
                   )}
                 >

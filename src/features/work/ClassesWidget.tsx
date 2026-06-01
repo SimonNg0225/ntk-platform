@@ -1,14 +1,17 @@
 import { useMemo, useState } from 'react'
 import {
+  Activity,
   AlertTriangle,
   ArrowLeft,
   CalendarCheck,
   ClipboardList,
   Download,
   GraduationCap,
+  Home,
   LayoutGrid,
   ListChecks,
   Pencil,
+  PieChart,
   Plus,
   Search,
   Settings2,
@@ -17,6 +20,7 @@ import {
   Upload,
   UserPlus,
   Users,
+  type LucideIcon,
 } from 'lucide-react'
 import { useCollection } from '../../lib/store'
 import {
@@ -260,10 +264,7 @@ export default function ClassesWidget() {
           ) : (
             <div className="grid gap-4 lg:grid-cols-2">
               <Card padded>
-                <div className="mb-3 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-                  <Users size={14} />
-                  各班人數
-                </div>
+                <ChartHead icon={Users}>各班人數</ChartHead>
                 <ClassSizeChart
                   data={sizes.map(({ klass, count }) => ({
                     id: klass.id,
@@ -276,10 +277,7 @@ export default function ClassesWidget() {
               </Card>
 
               <Card padded>
-                <div className="mb-3 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-                  <GraduationCap size={14} />
-                  全校學生概況
-                </div>
+                <ChartHead icon={GraduationCap}>全校學生概況</ChartHead>
                 {students.length === 0 ? (
                   <p className="py-6 text-center text-sm text-slate-400 dark:text-slate-500">
                     仲未有學生資料
@@ -402,20 +400,29 @@ function ClassGrid({
         const d = demographicsOf(roster, studentMetas)
         const comp = completenessOf(roster, studentMetas)
         return (
-          <Card key={c.id} hover padded className="group" onClick={() => onOpen(c.id)}>
+          <Card
+            key={c.id}
+            hover
+            className="group relative overflow-hidden rounded-3xl p-5"
+            onClick={() => onOpen(c.id)}
+          >
+            {/* 班別色：頂部柔和色帶 */}
+            <span className={cx('absolute inset-x-0 top-0 h-1', TONE_BG[cm.color])} />
             <div className="flex items-start justify-between gap-2">
-              <div className="flex items-center gap-2">
+              <div className="flex min-w-0 items-center gap-3">
                 <span
                   className={cx(
-                    'h-9 w-1.5 rounded-full',
-                    TONE_BG[cm.color],
+                    'flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl transition duration-200 group-hover:scale-105',
+                    TONE_CHIP[cm.color],
                   )}
-                />
-                <div>
-                  <p className="text-lg font-bold leading-tight text-slate-800 dark:text-slate-100">
+                >
+                  <School size={20} />
+                </span>
+                <div className="min-w-0">
+                  <p className="truncate text-lg font-bold leading-tight text-slate-800 dark:text-slate-100">
                     {c.name}
                   </p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                  <p className="truncate text-xs text-slate-500 dark:text-slate-400">
                     {c.subject}
                   </p>
                 </div>
@@ -448,16 +455,18 @@ function ClassGrid({
             </div>
 
             {cm.formTeacher || cm.room || cm.term ? (
-              <div className="mt-2 flex flex-wrap gap-1.5">
+              <div className="mt-3 flex flex-wrap gap-1.5">
                 {cm.formTeacher && <Badge tone="slate">班主任 {cm.formTeacher}</Badge>}
                 {cm.room && <Badge tone="slate">{cm.room}</Badge>}
                 {cm.term && <Badge tone="slate">{cm.term}</Badge>}
               </div>
             ) : null}
 
-            <div className="mt-3 flex items-center justify-between text-sm">
+            <div className="mt-4 flex items-baseline justify-between">
               <span className="font-semibold tabular-nums text-slate-700 dark:text-slate-200">
-                {roster.length}
+                <span className="text-2xl font-bold text-slate-800 dark:text-slate-100">
+                  {roster.length}
+                </span>
                 <span className="ml-1 text-xs font-normal text-slate-400">
                   位學生
                 </span>
@@ -469,9 +478,9 @@ function ClassGrid({
             <div className="mt-2">
               <GenderStrip m={d.gender.M} f={d.gender.F} x={d.gender.X + d.genderUnknown} />
             </div>
-            <div className="mt-2 flex items-center justify-between text-[11px] text-slate-400 dark:text-slate-500">
+            <div className="mt-3 flex items-center justify-between text-[11px] text-slate-400 dark:text-slate-500">
               <span>資料完整度</span>
-              <span className="tabular-nums">{comp.pct}%</span>
+              <span className="font-medium tabular-nums">{comp.pct}%</span>
             </div>
           </Card>
         )
@@ -487,6 +496,16 @@ const TONE_BG: Record<ClassTone, string> = {
   amber: 'bg-amber-500',
   rose: 'bg-rose-500',
   slate: 'bg-slate-400',
+}
+
+// 班別色 icon chip（淺底深字，深色 /15）
+const TONE_CHIP: Record<ClassTone, string> = {
+  accent: 'bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent',
+  blue: 'bg-blue-50 text-blue-600 dark:bg-blue-500/15 dark:text-blue-300',
+  green: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-300',
+  amber: 'bg-amber-50 text-amber-600 dark:bg-amber-500/15 dark:text-amber-300',
+  rose: 'bg-rose-50 text-rose-600 dark:bg-rose-500/15 dark:text-rose-300',
+  slate: 'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300',
 }
 
 // ============================================================
@@ -1087,9 +1106,7 @@ function Analytics({
       <ClassHealthCard health={health} />
 
       <Card padded>
-        <div className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-          性別分布
-        </div>
+        <ChartHead icon={PieChart}>性別分布</ChartHead>
         <Donut
           segments={genderSegments(demo)}
           centerValue={String(roster.length)}
@@ -1098,9 +1115,7 @@ function Analytics({
       </Card>
 
       <Card padded>
-        <div className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-          就讀狀態
-        </div>
+        <ChartHead icon={Activity}>就讀狀態</ChartHead>
         <Donut
           segments={[
             { value: demo.status.active, tone: 'green', label: '在學' },
@@ -1113,9 +1128,7 @@ function Analytics({
       </Card>
 
       <Card padded>
-        <div className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-          班社 / House 分布
-        </div>
+        <ChartHead icon={Home}>班社 / House 分布</ChartHead>
         <BarList
           items={demo.house.map((h) => ({ label: h.name, value: h.count }))}
           emptyHint="仲未有學生填寫班社"
@@ -1123,9 +1136,7 @@ function Analytics({
       </Card>
 
       <Card padded>
-        <div className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-          名冊資料完整度
-        </div>
+        <ChartHead icon={ListChecks}>名冊資料完整度</ChartHead>
         <div className="flex items-center gap-5">
           <ProgressRing pct={comp.pct} tone="accent" label="整體" />
           <BarList
@@ -1153,6 +1164,26 @@ function Analytics({
   )
 }
 
+// 圖表卡標題：小 accent icon chip + 標籤（暖化、統一層次）
+function ChartHead({
+  icon: I,
+  children,
+}: {
+  icon: LucideIcon
+  children: React.ReactNode
+}) {
+  return (
+    <div className="mb-3 flex items-center gap-2">
+      <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
+        <I size={13} />
+      </span>
+      <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+        {children}
+      </span>
+    </div>
+  )
+}
+
 // ───────── 班情健康摘要卡（跨功能：成績 + 出席 + 需關注）─────────
 function ClassHealthCard({ health }: { health: ClassAcademicSummary }) {
   const noData =
@@ -1170,9 +1201,13 @@ function ClassHealthCard({ health }: { health: ClassAcademicSummary }) {
 
   return (
     <Card padded className="lg:col-span-2">
-      <div className="mb-3 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-        <GraduationCap size={14} />
-        班情健康
+      <div className="mb-3 flex items-center gap-2">
+        <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
+          <GraduationCap size={13} />
+        </span>
+        <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+          班情健康
+        </span>
         <span className="ml-auto text-[10px] font-normal normal-case tracking-normal text-slate-400 dark:text-slate-500">
           綜合成績 / 出席（唯讀）
         </span>

@@ -26,9 +26,13 @@ export function Donut({
   size?: number
 }) {
   const total = segments.reduce((s, x) => s + x.value, 0)
-  const r = (size - 16) / 2
+  const stroke = 14
+  const r = (size - stroke - 2) / 2
   const c = 2 * Math.PI * r
   const cx0 = size / 2
+  // 段與段之間留小縫，環形更精緻；單段時不留縫
+  const visible = segments.filter((s) => s.value > 0)
+  const gap = visible.length > 1 ? 0.012 * c : 0
   let offset = 0
   return (
     <div className="flex items-center gap-4">
@@ -38,13 +42,14 @@ export function Donut({
           cy={cx0}
           r={r}
           fill="none"
-          strokeWidth={13}
-          className="stroke-slate-100 dark:stroke-slate-800"
+          strokeWidth={stroke}
+          className="stroke-slate-100 dark:stroke-slate-800/80"
         />
         {total > 0 &&
           segments.map((seg, i) => {
             if (seg.value === 0) return null
-            const len = (seg.value / total) * c
+            const raw = (seg.value / total) * c
+            const len = Math.max(0, raw - gap)
             const el = (
               <circle
                 key={i}
@@ -52,9 +57,9 @@ export function Donut({
                 cy={cx0}
                 r={r}
                 fill="none"
-                strokeWidth={13}
-                strokeLinecap="butt"
-                className={TONE_STROKE[seg.tone]}
+                strokeWidth={stroke}
+                strokeLinecap={gap > 0 ? 'round' : 'butt'}
+                className={cx(TONE_STROKE[seg.tone], 'transition-all duration-700 ease-out')}
                 strokeDasharray={`${len} ${c - len}`}
                 strokeDashoffset={-offset}
               >
@@ -63,7 +68,7 @@ export function Donut({
                 </title>
               </circle>
             )
-            offset += len
+            offset += raw
             return el
           })}
         <g className="rotate-90" style={{ transformOrigin: 'center' }}>
@@ -85,11 +90,14 @@ export function Donut({
           </text>
         </g>
       </svg>
-      <ul className="flex-1 space-y-1.5">
+      <ul className="flex-1 space-y-1">
         {segments.map((seg, i) => (
-          <li key={i} className="flex items-center justify-between gap-2 text-sm">
+          <li
+            key={i}
+            className="flex items-center justify-between gap-2 rounded-lg px-1.5 py-1 text-sm transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/50"
+          >
             <span className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
-              <span className={cx('h-2.5 w-2.5 rounded-sm', TONE_FILL[seg.tone])} />
+              <span className={cx('h-2.5 w-2.5 rounded-full', TONE_FILL[seg.tone])} />
               {seg.label}
             </span>
             <span className="font-semibold tabular-nums text-slate-700 dark:text-slate-200">
@@ -131,7 +139,7 @@ export function ProgressRing({
           r={r}
           fill="none"
           strokeWidth={9}
-          className="stroke-slate-100 dark:stroke-slate-800"
+          className="stroke-slate-100 dark:stroke-slate-800/80"
         />
         <circle
           cx={cx0}
@@ -140,7 +148,7 @@ export function ProgressRing({
           fill="none"
           strokeWidth={9}
           strokeLinecap="round"
-          className={cx(TONE_STROKE[tone], 'transition-all duration-700')}
+          className={cx(TONE_STROKE[tone], 'transition-all duration-700 ease-out')}
           strokeDasharray={`${len} ${c - len}`}
         />
       </svg>
@@ -183,13 +191,13 @@ export function BarList({
             <span className="w-16 shrink-0 truncate text-xs font-medium text-slate-600 dark:text-slate-300">
               {it.label}
             </span>
-            <div className="h-5 flex-1 overflow-hidden rounded-md bg-slate-100 dark:bg-slate-800">
+            <div className="h-5 flex-1 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800/80">
               <div
                 className={cx(
-                  'flex h-full items-center justify-end rounded-md px-1.5 transition-all duration-500',
+                  'flex h-full items-center justify-end rounded-full px-1.5 transition-all duration-700 ease-out',
                   TONE_FILL[tone],
                 )}
-                style={{ width: `${Math.max(pct, it.value > 0 ? 10 : 0)}%` }}
+                style={{ width: `${Math.max(pct, it.value > 0 ? 12 : 0)}%` }}
               >
                 {it.value > 0 && (
                   <span className="text-[10px] font-semibold tabular-nums text-white">
@@ -244,9 +252,11 @@ export function ClassSizeChart({
               </span>
               <div
                 className={cx(
-                  'w-full rounded-t-md transition-all duration-500',
+                  'w-full rounded-t-lg transition-all duration-700 ease-out',
                   TONE_FILL[d.tone],
-                  on ? 'opacity-100 ring-2 ring-accent/40' : 'opacity-80 group-hover:opacity-100',
+                  on
+                    ? 'opacity-100 ring-2 ring-accent/40 ring-offset-1 ring-offset-white dark:ring-offset-slate-800'
+                    : 'opacity-80 group-hover:opacity-100',
                 )}
                 style={{ height: `${Math.max(h, d.count > 0 ? 6 : 2)}%` }}
               />
@@ -287,10 +297,13 @@ export function GenderStrip({
   if (total === 0) return null
   const seg = (n: number, cls: string) =>
     n > 0 ? (
-      <div className={cls} style={{ width: `${(n / total) * 100}%` }} />
+      <div
+        className={cx('transition-all duration-700 ease-out', cls)}
+        style={{ width: `${(n / total) * 100}%` }}
+      />
     ) : null
   return (
-    <div className="flex h-1.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+    <div className="flex h-1.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800/80">
       {seg(m, 'bg-blue-500')}
       {seg(f, 'bg-rose-500')}
       {seg(x, 'bg-slate-400')}

@@ -14,7 +14,6 @@ import {
   SectionTitle,
   SegmentedControl,
   Select,
-  StatCard,
   Tabs,
   Tooltip,
   cx,
@@ -44,6 +43,7 @@ import {
   UserRound,
   Users,
   UserX,
+  type LucideIcon,
 } from 'lucide-react'
 import { useToast } from '../../context/ToastContext'
 import { useConfirm } from '../../context/ConfirmContext'
@@ -117,6 +117,70 @@ function dueBadgeTone(due: string | undefined, done: boolean) {
   if (due < today) return { tone: 'rose' as const, label: '逾期' }
   if (due <= soon) return { tone: 'amber' as const, label: '快到期' }
   return { tone: 'slate' as const, label: '' }
+}
+
+// 筆記卡左側類型色條（對應 MEETING_TYPE_META 嘅 BadgeTone）
+const TYPE_RAIL: Record<string, string> = {
+  accent: 'bg-accent',
+  blue: 'bg-blue-500',
+  green: 'bg-emerald-500',
+  amber: 'bg-amber-500',
+  rose: 'bg-rose-500',
+  slate: 'bg-slate-300 dark:bg-slate-600',
+}
+
+// 統計磚分類色（同設計系統一致：淺底 + 深字 + 深色 /15）
+type StatTone = 'accent' | 'rose' | 'amber' | 'slate'
+const STAT_CHIP: Record<StatTone, string> = {
+  accent: 'bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent',
+  rose: 'bg-rose-50 text-rose-600 dark:bg-rose-500/15 dark:text-rose-300',
+  amber: 'bg-amber-50 text-amber-600 dark:bg-amber-500/15 dark:text-amber-300',
+  slate: 'bg-slate-100 text-slate-500 dark:bg-slate-700/60 dark:text-slate-300',
+}
+
+// 統計磚：圓角 + 分類色圖示 chip（取代 generic StatCard，視覺更有溫度）
+function MiniStat({
+  label, value, unit, hint, icon: Icon, tone, highlight,
+}: {
+  label: string
+  value: number | string
+  unit?: string
+  hint?: string
+  icon: LucideIcon
+  tone: StatTone
+  highlight?: boolean
+}) {
+  return (
+    <div
+      className={cx(
+        'flex flex-col gap-2 rounded-2xl border p-3.5 sm:p-4',
+        highlight
+          ? 'border-accent/30 bg-accent-soft/60 dark:border-accent/40 dark:bg-accent/10'
+          : 'border-slate-200/80 bg-white shadow-xs dark:border-slate-700/60 dark:bg-slate-800 dark:shadow-none',
+      )}
+    >
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-medium text-slate-500 dark:text-slate-400">{label}</span>
+        <span className={cx('flex h-7 w-7 items-center justify-center rounded-lg', STAT_CHIP[tone])}>
+          <Icon size={15} />
+        </span>
+      </div>
+      <div>
+        <p className="flex items-baseline gap-1">
+          <span
+            className={cx(
+              'text-2xl font-bold tabular-nums slashed-zero',
+              highlight ? 'text-accent-strong dark:text-accent' : 'text-slate-800 dark:text-slate-100',
+            )}
+          >
+            {value}
+          </span>
+          {unit && <span className="text-sm font-normal text-slate-400">{unit}</span>}
+        </p>
+        {hint && <p className="mt-0.5 truncate text-[11px] text-slate-400 dark:text-slate-500">{hint}</p>}
+      </div>
+    </div>
+  )
 }
 
 export default function MeetingNotes() {
@@ -396,14 +460,18 @@ export default function MeetingNotes() {
     <div className="mx-auto w-full max-w-4xl space-y-5 p-4 sm:p-6">
       {/* Header */}
       <header className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h1 className="flex items-center gap-2 text-xl font-semibold text-slate-900 dark:text-slate-100 sm:text-2xl">
-            <NotebookPen size={22} className="text-accent" />
-            會議 / 行政筆記
-          </h1>
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-            記錄會議、決議同跟進事項 —— 媲美 Notion / Fellow 嘅會議工作枱。
-          </p>
+        <div className="flex items-start gap-3">
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
+            <NotebookPen size={22} />
+          </span>
+          <div>
+            <h1 className="text-xl font-semibold tracking-tight text-slate-900 dark:text-slate-100 sm:text-2xl">
+              會議 / 行政筆記
+            </h1>
+            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+              記錄會議、決議同跟進事項，所有後續一目了然。
+            </p>
+          </div>
         </div>
         <Button onClick={openAdd} icon={Plus} className="shrink-0">
           新增筆記
@@ -412,32 +480,36 @@ export default function MeetingNotes() {
 
       {/* Stat 概覽 */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <StatCard
+        <MiniStat
           label="會議筆記"
           value={notes.length}
           unit="則"
           icon={NotebookPen}
+          tone="slate"
         />
-        <StatCard
+        <MiniStat
           label="待跟進"
           value={stats.open}
           unit="項"
           icon={ListChecks}
+          tone="accent"
           highlight={stats.open > 0}
           hint={`共 ${stats.total} 項 · 完成 ${stats.completionPct}%`}
         />
-        <StatCard
+        <MiniStat
           label="逾期"
           value={stats.overdue}
           unit="項"
           icon={AlarmClock}
-          hint={stats.overdue > 0 ? '需即時處理' : '冇逾期 🎉'}
+          tone={stats.overdue > 0 ? 'rose' : 'slate'}
+          hint={stats.overdue > 0 ? '需即時處理' : '一切順利'}
         />
-        <StatCard
+        <MiniStat
           label="7 日內到期"
           value={stats.dueSoon}
           unit="項"
           icon={CalendarClock}
+          tone="amber"
         />
       </div>
 
@@ -628,14 +700,14 @@ export default function MeetingNotes() {
                   icon={ListChecks}
                   title={
                     stats.total === 0
-                      ? '未有跟進行動'
+                      ? '仲未有跟進行動'
                       : actionFilter === 'open'
-                        ? '冇待跟進項目 🎉'
-                        : '無符合嘅項目'
+                        ? '全部跟進都完成咗 🎉'
+                        : '冇符合條件嘅項目'
                   }
                   hint={
                     stats.total === 0
-                      ? '喺筆記內容用 - [ ] 寫行動項目，或喺編輯器手動加。'
+                      ? '喺筆記內容用 - [ ] 寫低行動項目，或者喺編輯器逐項加入。'
                       : undefined
                   }
                 />
@@ -658,8 +730,8 @@ export default function MeetingNotes() {
           ) : ownerGroups.length === 0 ? (
             <EmptyState
               icon={UserRound}
-              title="冇待跟進項目 🎉"
-              hint="所有行動都完成咗，或者未有任何跟進行動。"
+              title="人人都清咗待辦 🎉"
+              hint="所有行動都跟進完成，或者仲未分派任何跟進事項。"
             />
           ) : (
             <div className="space-y-3">
@@ -688,8 +760,8 @@ export default function MeetingNotes() {
           {notes.length === 0 ? (
             <EmptyState
               icon={PieChart}
-              title="未有資料"
-              hint="新增幾場會議筆記後，呢度會顯示趨勢同分布圖表。"
+              title="統計仲係空白一片"
+              hint="記低幾場會議之後，呢度會慢慢長出趨勢同分布圖表。"
             />
           ) : (
             <>
@@ -800,9 +872,12 @@ function NoteRow({
   ).length
   // 內容摘要（去走 markdown 符號，取頭 2 行非空）
   const preview = useMemoPreview(note.content)
+  // 左側類型色條（柔和呼應會議類型 tone）
+  const railCls = TYPE_RAIL[tm.tone] ?? TYPE_RAIL.slate
 
   return (
-    <Card hover className="p-4 sm:p-5">
+    <Card hover className="relative overflow-hidden p-4 sm:p-5">
+      <span aria-hidden="true" className={cx('absolute inset-y-0 left-0 w-1', railCls)} />
       <div className="flex items-start gap-3">
         <div
           className="min-w-0 flex-1 cursor-pointer rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"

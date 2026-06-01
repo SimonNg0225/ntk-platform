@@ -4,15 +4,62 @@ import type { DayLoad, GradeBin, HeatCell, TrendPoint } from './types'
 
 // ============================================================
 //  工作儀表板自製圖表（純 SVG / div，零 npm 依賴）
-//  全部支援深色 + tabular-nums + 海軍藍 accent。
+//  全部支援深色 + tabular-nums + 主題 accent（工作＝青藍）。
 //   - TaskTrendChart：每日「新增 vs 完成」雙色長條 + 折線
 //   - HeatStrip：完成熱力橫帶（近 N 日，GitHub 草地風）
 //   - Donut：通用環形（出席率 / 課程整體進度）
 //   - GradeHistogram：成績分數區間直方圖
 //   - WeekLoadBars：本週每日課擔長條
+//   - MiniRing：單值迷你環（畀 Bento 小磚用）
 // ============================================================
 
 const ACCENT = 'var(--accent)'
+
+// ───────── 0. 迷你環形（單值，給 Bento 小磚用）─────────
+export function MiniRing({
+  value,
+  size = 56,
+  stroke = 6,
+  tone = 'accent',
+  children,
+}: {
+  value: number // 0-100
+  size?: number
+  stroke?: number
+  tone?: 'accent' | 'green' | 'amber' | 'rose'
+  children?: React.ReactNode
+}) {
+  const r = (size - stroke) / 2
+  const c = 2 * Math.PI * r
+  const pct = Math.max(0, Math.min(100, value))
+  const len = (pct / 100) * c
+  const strokeCls =
+    tone === 'green'
+      ? 'stroke-emerald-500'
+      : tone === 'amber'
+        ? 'stroke-amber-500'
+        : tone === 'rose'
+          ? 'stroke-rose-500'
+          : 'stroke-accent'
+  return (
+    <div className="relative inline-flex shrink-0 items-center justify-center" style={{ width: size, height: size }}>
+      <svg width={size} height={size} className="-rotate-90">
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" strokeWidth={stroke} className="stroke-slate-100 dark:stroke-slate-800" />
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={r}
+          fill="none"
+          strokeWidth={stroke}
+          strokeLinecap="round"
+          className={cx('transition-all duration-700 ease-out', strokeCls)}
+          strokeDasharray={`${len} ${c - len}`}
+        />
+      </svg>
+      <span className="absolute inset-0 flex items-center justify-center">{children}</span>
+    </div>
+  )
+}
 
 // ───────── 1. 待辦完成趨勢（新增 vs 完成）─────────
 export function TaskTrendChart({ data }: { data: TrendPoint[] }) {

@@ -6,6 +6,7 @@ import {
   Input,
   Modal,
   Pills,
+  ProgressBar,
   Select,
   Textarea,
   Tooltip,
@@ -354,15 +355,24 @@ export default function PlanEditor({
         {/* ─────── 教學流程（環節時間軸）─────── */}
         {tab === 'flow' && (
           <div className="space-y-3">
-            <div className="flex items-center justify-between gap-2">
+            <div
+              className={cx(
+                'flex items-center justify-between gap-2',
+                d.phases.length > 0 &&
+                  'rounded-xl bg-accent-soft/60 px-3 py-2 dark:bg-accent/10',
+              )}
+            >
               <div className="flex items-center gap-1.5 text-sm font-medium text-slate-600 dark:text-slate-300">
-                <Clock size={15} className="text-slate-400" />
+                <Clock
+                  size={15}
+                  className={totalMin > 0 ? 'text-accent' : 'text-slate-400'}
+                />
                 課堂總時長
                 <span
                   className={cx(
                     'tabular-nums',
                     totalMin > 0
-                      ? 'text-accent-strong dark:text-accent'
+                      ? 'font-semibold text-accent-strong dark:text-accent'
                       : 'text-slate-400',
                   )}
                 >
@@ -382,8 +392,16 @@ export default function PlanEditor({
             </div>
 
             {d.phases.length === 0 ? (
-              <div className="rounded-lg border border-dashed border-slate-200 bg-slate-50/60 px-4 py-8 text-center text-sm text-slate-400 dark:border-slate-700 dark:bg-slate-800/40 dark:text-slate-500">
-                仲未有教學環節。撳「套用三段式」快速開始，或自行新增。
+              <div className="flex flex-col items-center rounded-2xl border border-dashed border-slate-200 bg-slate-50/60 px-4 py-9 text-center dark:border-slate-700 dark:bg-slate-800/40">
+                <span className="flex h-11 w-11 items-center justify-center rounded-full bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
+                  <Clock size={20} strokeWidth={1.75} />
+                </span>
+                <p className="mt-3 text-sm font-medium text-slate-600 dark:text-slate-300">
+                  鋪排返堂課嘅節奏
+                </p>
+                <p className="mt-1 max-w-xs text-xs text-slate-400 dark:text-slate-500">
+                  撳「套用三段式」即刻有引入、講解、活動框架，或自行逐個環節加。
+                </p>
               </div>
             ) : (
               <ul className="space-y-2">
@@ -392,7 +410,7 @@ export default function PlanEditor({
                   return (
                     <li
                       key={p.id}
-                      className="rounded-lg border border-slate-200 bg-white p-2.5 dark:border-slate-700 dark:bg-slate-800/60"
+                      className="rounded-xl border border-slate-200/80 bg-white p-3 transition-colors hover:border-slate-300 dark:border-slate-700/60 dark:bg-slate-800/60 dark:hover:border-slate-600"
                     >
                       <div className="flex items-start gap-2">
                         {/* 排序握把 */}
@@ -488,17 +506,37 @@ export default function PlanEditor({
         {tab === 'materials' && (
           <div className="space-y-3">
             {d.materials.length > 0 && (
-              <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
-                <span>備課準備進度</span>
-                <span className="tabular-nums">
-                  {matDone}/{d.materials.length} 已備妥
-                </span>
+              <div className="rounded-xl bg-slate-50 px-3 py-2.5 dark:bg-slate-800/60">
+                <div className="flex items-center justify-between text-xs font-medium text-slate-600 dark:text-slate-300">
+                  <span>備課準備進度</span>
+                  <span className="tabular-nums text-slate-400 dark:text-slate-500">
+                    {matDone}/{d.materials.length} 已備妥
+                  </span>
+                </div>
+                <ProgressBar
+                  value={
+                    d.materials.length
+                      ? (matDone / d.materials.length) * 100
+                      : 0
+                  }
+                  size="sm"
+                  tone={matDone === d.materials.length ? 'green' : 'accent'}
+                  className="mt-2"
+                />
               </div>
             )}
 
             {d.materials.length === 0 ? (
-              <div className="rounded-lg border border-dashed border-slate-200 bg-slate-50/60 px-4 py-8 text-center text-sm text-slate-400 dark:border-slate-700 dark:bg-slate-800/40 dark:text-slate-500">
-                列出簡報、工作紙、影片連結等。剔咗 = 已準備好。
+              <div className="flex flex-col items-center rounded-2xl border border-dashed border-slate-200 bg-slate-50/60 px-4 py-9 text-center dark:border-slate-700 dark:bg-slate-800/40">
+                <span className="flex h-11 w-11 items-center justify-center rounded-full bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
+                  <Plus size={20} strokeWidth={1.75} />
+                </span>
+                <p className="mt-3 text-sm font-medium text-slate-600 dark:text-slate-300">
+                  列齊上堂要用嘅嘢
+                </p>
+                <p className="mt-1 max-w-xs text-xs text-slate-400 dark:text-slate-500">
+                  簡報、工作紙、影片連結都寫低；準備好就剔一剔，一眼睇晒進度。
+                </p>
               </div>
             ) : (
               <ul className="space-y-1.5">

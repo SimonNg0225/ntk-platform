@@ -110,6 +110,21 @@ export default function CurriculumProgress() {
 
   return (
     <div className="space-y-5">
+      {/* 標題列 — 主視覺 */}
+      <div className="flex items-start gap-3">
+        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
+          <Target size={22} />
+        </span>
+        <div>
+          <h1 className="text-xl font-bold tracking-tight text-slate-800 dark:text-slate-100">
+            課程進度
+          </h1>
+          <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
+            對照 BAFS 課程大綱，逐班追蹤教學進度同步伐。
+          </p>
+        </div>
+      </div>
+
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <Pills
           options={classes.map((c) => ({ id: c.id, label: c.name }))}
@@ -287,16 +302,21 @@ function ListView({
       </div>
 
       {/* 整體進度 */}
-      <Card className="p-4">
-        <div className="flex items-center justify-between">
-          <span className="text-sm font-medium text-slate-700 dark:text-slate-200">
-            {className} 整體完成度
-          </span>
-          <span className="nums text-sm font-bold text-accent-strong dark:text-accent">
-            {overall.done}/{topics.length}（{overall.pct}%）
+      <Card className="border-accent/20 bg-accent-soft/40 p-4 dark:border-accent/25 dark:bg-accent/10">
+        <div className="flex items-end justify-between gap-3">
+          <div>
+            <span className="text-sm font-medium text-slate-700 dark:text-slate-200">
+              {className} 整體完成度
+            </span>
+            <p className="nums mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+              已完成 {overall.done} / {topics.length} 個課題
+            </p>
+          </div>
+          <span className="nums text-2xl font-bold leading-none text-accent-strong dark:text-accent">
+            {overall.pct}%
           </span>
         </div>
-        <ProgressBar value={overall.pct} className="mt-2" />
+        <ProgressBar value={overall.pct} className="mt-2.5" />
       </Card>
 
       {/* 工具列：搜尋 + 篩選 + 匯出 */}
@@ -415,17 +435,35 @@ function ListView({
                       const ac = countStatuses(progress, classId, area.items.map((t) => t.id))
                       return (
                         <Card key={area.area} className="overflow-hidden">
-                          <div className="flex items-center justify-between gap-3 bg-slate-50 px-4 py-2.5 dark:bg-slate-800/50">
+                          <div
+                            className={cx(
+                              'flex items-center justify-between gap-3 px-4 py-2.5',
+                              ac.total > 0 && ac.done === ac.total
+                                ? 'bg-emerald-50/70 dark:bg-emerald-500/10'
+                                : 'bg-slate-50 dark:bg-slate-800/50',
+                            )}
+                          >
                             <div className="min-w-0 flex-1">
                               <div className="flex items-center justify-between gap-3">
                                 <span className="truncate text-sm font-semibold text-slate-700 dark:text-slate-200">
                                   {area.area}
                                 </span>
-                                <span className="nums shrink-0 text-xs font-medium text-slate-400 dark:text-slate-500">
+                                <span
+                                  className={cx(
+                                    'nums shrink-0 text-xs font-medium',
+                                    ac.total > 0 && ac.done === ac.total
+                                      ? 'text-emerald-600 dark:text-emerald-400'
+                                      : 'text-slate-400 dark:text-slate-500',
+                                  )}
+                                >
                                   {ac.done}/{ac.total}
                                 </span>
                               </div>
-                              <ProgressBar value={ac.pct} className="mt-2 h-1.5" />
+                              <ProgressBar
+                                value={ac.pct}
+                                tone={ac.total > 0 && ac.done === ac.total ? 'green' : 'accent'}
+                                className="mt-2 h-1.5"
+                              />
                             </div>
                             <Tooltip label="整個範疇標記完成">
                               <IconButton

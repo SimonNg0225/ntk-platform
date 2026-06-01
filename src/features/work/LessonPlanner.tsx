@@ -11,7 +11,6 @@ import {
   Field,
   Card,
   Badge,
-  SectionTitle,
   EmptyState,
   IconButton,
   Modal,
@@ -477,30 +476,36 @@ export default function LessonPlanner() {
   }
 
   return (
-    <div className="space-y-4">
-      <SectionTitle
-        icon={NotebookPen}
-        description="結構化備課：教學環節、教材清單、課程覆蓋、可列印"
-        right={
-          <div className="flex items-center gap-2">
-            <Tooltip label="範本庫">
-              <Button
-                size="sm"
-                variant="secondary"
-                icon={Sparkles}
-                onClick={() => setTemplatesOpen(true)}
-              >
-                範本
-              </Button>
-            </Tooltip>
-            <Button size="sm" icon={Plus} onClick={() => openCreate()}>
-              新增教案
-            </Button>
+    <div className="space-y-5">
+      {/* 標題列 — 主視覺 + 主行動 */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-start gap-3">
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
+            <NotebookPen size={22} />
+          </span>
+          <div>
+            <h1 className="text-xl font-bold tracking-tight text-slate-800 dark:text-slate-100">
+              備課 / 教案
+            </h1>
+            <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
+              結構化備課：教學環節、教材清單、課程覆蓋，仲可以列印。
+            </p>
           </div>
-        }
-      >
-        備課 / 教案
-      </SectionTitle>
+        </div>
+        <div className="flex shrink-0 items-center gap-2">
+          <Button
+            size="sm"
+            variant="secondary"
+            icon={Sparkles}
+            onClick={() => setTemplatesOpen(true)}
+          >
+            範本
+          </Button>
+          <Button size="sm" icon={Plus} onClick={() => openCreate()}>
+            新增教案
+          </Button>
+        </div>
+      </div>
 
       {/* 統計卡 */}
       <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
@@ -627,11 +632,11 @@ export default function LessonPlanner() {
           {visible.length === 0 ? (
             <EmptyState
               icon={NotebookPen}
-              title={hasFilter ? '揾唔到符合條件嘅教案' : '仲未有教案'}
+              title={hasFilter ? '揾唔到符合條件嘅教案' : '一齊開始第一份教案'}
               hint={
                 hasFilter
-                  ? '試吓清除篩選或搜尋條件。'
-                  : '撳「新增教案」開始，或由「範本」快速建立。'
+                  ? '試吓放寬篩選或搜尋條件，再睇睇。'
+                  : '備課由一份教案開始 — 寫低教學環節同教材，亦可由範本快速套用。'
               }
               action={
                 hasFilter ? (
@@ -719,10 +724,10 @@ export default function LessonPlanner() {
                   key={key}
                   aria-current={isToday ? 'date' : undefined}
                   className={cx(
-                    'flex min-h-[8rem] flex-col rounded-xl border bg-white p-2 dark:bg-slate-800/60',
+                    'flex min-h-[8rem] flex-col rounded-2xl border p-2 transition-colors',
                     isToday
-                      ? 'border-accent/40 ring-1 ring-accent/20 dark:border-accent/40'
-                      : 'border-slate-200 dark:border-slate-700/60',
+                      ? 'border-accent/40 bg-accent-soft/40 ring-1 ring-accent/20 dark:border-accent/40 dark:bg-accent/5'
+                      : 'border-slate-200/80 bg-white dark:border-slate-700/60 dark:bg-slate-800/60',
                   )}
                 >
                   <div className="mb-1.5 flex items-center justify-between px-0.5">
@@ -752,12 +757,12 @@ export default function LessonPlanner() {
                           type="button"
                           onClick={() => openEdit(p)}
                           className={cx(
-                            'rounded-lg border-l-[3px] bg-slate-50 px-2 py-1.5 text-left transition hover:bg-slate-100 dark:bg-slate-900/40 dark:hover:bg-slate-900/70',
+                            'rounded-xl border-l-[3px] bg-slate-50 px-2 py-1.5 text-left transition hover:-translate-y-0.5 hover:shadow-sm dark:bg-slate-900/40 dark:hover:bg-slate-900/70',
                             st === 'taught'
-                              ? 'border-emerald-500'
+                              ? 'border-emerald-400 hover:bg-emerald-50/70 dark:border-emerald-500/70'
                               : st === 'ready'
-                                ? 'border-amber-500'
-                                : 'border-slate-300 dark:border-slate-600',
+                                ? 'border-amber-400 hover:bg-amber-50/70 dark:border-amber-500/70'
+                                : 'border-slate-300 hover:bg-slate-100 dark:border-slate-600',
                           )}
                         >
                           <div className="flex items-center gap-1">
@@ -1023,19 +1028,34 @@ function PlanCard({
   const phaseCount = meta?.phases?.length ?? 0
   const mat = materialsDone(meta?.materials ?? [])
   const matPct = mat.total ? Math.round((mat.done / mat.total) * 100) : 0
+  // 左側狀態色條 — 令卡片一眼睇到備課進度，唔再千篇一律
+  const accentBar =
+    status === 'taught'
+      ? 'bg-emerald-400 dark:bg-emerald-500/70'
+      : status === 'ready'
+        ? 'bg-amber-400 dark:bg-amber-500/70'
+        : 'bg-slate-200 dark:bg-slate-700'
 
   return (
-    <Card className="flex flex-col p-3.5">
+    <Card
+      hover
+      className="group/card relative flex flex-col overflow-hidden p-3.5 pl-4"
+    >
+      {/* 狀態色條 */}
+      <span
+        aria-hidden
+        className={cx('absolute inset-y-0 left-0 w-1', accentBar)}
+      />
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0 flex-1">
           <button
             type="button"
             onClick={onEdit}
-            className="block text-left text-sm font-semibold text-slate-800 hover:text-accent dark:text-slate-100 dark:hover:text-accent"
+            className="block text-left text-[15px] font-semibold leading-snug text-slate-800 transition-colors hover:text-accent dark:text-slate-100 dark:hover:text-accent"
           >
             {plan.title}
           </button>
-          <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+          <div className="mt-2 flex flex-wrap items-center gap-1.5">
             <Tooltip label="撳一下切換狀態">
               <button
                 type="button"
@@ -1103,30 +1123,29 @@ function PlanCard({
       </div>
 
       {topicName && (
-        <p className="mt-2 truncate text-xs text-slate-500 dark:text-slate-400">
-          <span className="font-medium text-slate-400 dark:text-slate-500">課題：</span>
+        <p className="mt-2.5 truncate text-xs text-slate-500 dark:text-slate-400">
+          <span className="font-medium text-slate-400 dark:text-slate-500">課題 · </span>
           {topicName}
         </p>
       )}
       {objective && (
-        <p className="mt-1 line-clamp-2 text-xs text-slate-500 dark:text-slate-400">
-          <span className="font-medium text-slate-400 dark:text-slate-500">目標：</span>
+        <p className="mt-1 line-clamp-2 text-[13px] leading-relaxed text-slate-600 dark:text-slate-300">
           {objective}
         </p>
       )}
 
       {/* 底部 meta 條 */}
       {(phaseCount > 0 || dur > 0 || mat.total > 0) && (
-        <div className="mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-1.5 border-t border-slate-100 pt-2.5 dark:border-slate-700/60">
+        <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1.5 border-t border-slate-100 pt-2.5 dark:border-slate-700/60">
           {phaseCount > 0 && (
             <span className="inline-flex items-center gap-1 text-[11px] text-slate-500 dark:text-slate-400">
-              <ListChecks size={13} className="text-slate-400" />
+              <ListChecks size={13} className="text-accent/70" />
               <span className="tabular-nums">{phaseCount}</span> 環節
             </span>
           )}
           {dur > 0 && (
             <span className="inline-flex items-center gap-1 text-[11px] text-slate-500 dark:text-slate-400">
-              <Clock size={13} className="text-slate-400" />
+              <Clock size={13} className="text-accent/70" />
               <span className="tabular-nums">{dur}</span> 分鐘
             </span>
           )}

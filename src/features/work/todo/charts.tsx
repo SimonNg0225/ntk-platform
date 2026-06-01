@@ -42,7 +42,7 @@ export function TrendChart({ data }: { data: TrendPoint[] }) {
                 title={`${d.key}：新增 ${d.created} · 完成 ${d.completed}`}
               >
                 <div
-                  className="w-full rounded-sm bg-slate-100 transition-all dark:bg-slate-800"
+                  className="w-full rounded-md bg-slate-100 transition-all duration-300 group-hover:bg-slate-200 dark:bg-slate-800 dark:group-hover:bg-slate-700"
                   style={{ height: `${(d.created / max) * 100}%` }}
                 />
               </div>
@@ -154,7 +154,7 @@ export function CompletionHeatmap({ cells }: { cells: HeatCell[] }) {
                   key={di}
                   title={`${cell.key}：完成 ${cell.count} 項`}
                   className={cx(
-                    'h-[11px] w-[11px] rounded-[2px] ring-1 ring-inset ring-slate-900/5 transition dark:ring-white/5',
+                    'h-[11px] w-[11px] rounded-[3px] ring-1 ring-inset ring-slate-900/5 transition hover:ring-slate-900/15 dark:ring-white/5 dark:hover:ring-white/15',
                     LEVEL_CLS[level(cell.count)],
                   )}
                 />
@@ -284,7 +284,7 @@ export function HBars({
   if (total === 0)
     return (
       <p className="py-6 text-center text-sm text-slate-400 dark:text-slate-500">
-        仲未有資料
+        全部專案都清空咗 🎉
       </p>
     )
   const max = Math.max(1, ...data.map((d) => d.value))
@@ -297,10 +297,10 @@ export function HBars({
             <span className="w-20 shrink-0 truncate text-xs font-medium text-slate-600 dark:text-slate-300">
               {d.label}
             </span>
-            <div className="h-5 flex-1 overflow-hidden rounded-md bg-slate-100 dark:bg-slate-800">
+            <div className="h-5 flex-1 overflow-hidden rounded-lg bg-slate-100 dark:bg-slate-800">
               <div
                 className={cx(
-                  'flex h-full items-center justify-end rounded-md px-1.5 transition-all duration-500',
+                  'flex h-full items-center justify-end rounded-lg px-1.5 transition-all duration-500',
                   d.bar,
                 )}
                 style={{ width: `${Math.max(pct, d.value > 0 ? 10 : 0)}%` }}

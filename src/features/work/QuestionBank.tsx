@@ -1,4 +1,5 @@
 import { useMemo, useRef, useState } from 'react'
+import type { ReactNode } from 'react'
 import {
   ArrowLeft,
   BarChart3,
@@ -6,6 +7,7 @@ import {
   Bot,
   Check,
   CheckSquare,
+  ChevronRight,
   Copy,
   Download,
   FileText,
@@ -21,10 +23,12 @@ import {
   Search,
   Sparkles,
   Square,
+  Target,
   Trash2,
   Upload,
   Wand2,
   X,
+  type LucideIcon,
 } from 'lucide-react'
 import { createCollection, uid, useCollection } from '../../lib/store'
 import { useToast } from '../../context/ToastContext'
@@ -39,6 +43,7 @@ import {
   Badge,
   Button,
   Card,
+  cx,
   EmptyState,
   Field,
   IconButton,
@@ -130,6 +135,36 @@ const formFromQuestion = (q: Question): FormState => ({
 })
 
 type ViewId = 'bank' | 'analytics' | 'paper'
+
+// 題型 tone chip：每種題型一隻色（對齊統計圖表語言），淺底深字 + 深色 /15。
+// ⚠️ 寫足整串 class（Tailwind 靠掃字面值）。
+const TYPE_CHIP: Record<QuestionType, string> = {
+  mc: 'bg-blue-50 text-blue-600 dark:bg-blue-500/15 dark:text-blue-300',
+  short: 'bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent',
+  long: 'bg-violet-50 text-violet-600 dark:bg-violet-500/15 dark:text-violet-300',
+  case: 'bg-cyan-50 text-cyan-600 dark:bg-cyan-500/15 dark:text-cyan-300',
+}
+const TYPE_DOT: Record<QuestionType, string> = {
+  mc: 'bg-blue-500',
+  short: 'bg-accent',
+  long: 'bg-violet-500',
+  case: 'bg-cyan-500',
+}
+
+// 小型題型膠囊（pill）——比通用 Badge 多隻分類色，令列表一眼分到題型。
+function TypeChip({ type }: { type: QuestionType }) {
+  return (
+    <span
+      className={cx(
+        'inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-medium',
+        TYPE_CHIP[type],
+      )}
+    >
+      <span className={cx('h-1.5 w-1.5 rounded-full', TYPE_DOT[type])} />
+      {TYPE_LABEL[type]}
+    </span>
+  )
+}
 
 export default function QuestionBank() {
   const toast = useToast()
@@ -503,8 +538,8 @@ function BankView(props: {
 
   return (
     <div className="space-y-4">
-      {/* 工具列 */}
-      <div className="flex flex-wrap items-center gap-2">
+      {/* 工具列 — 搜尋為主、輔助操作成組、主行動（新增）最突出 */}
+      <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center">
         <Input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
@@ -512,50 +547,55 @@ function BankView(props: {
           icon={Search}
           className="min-w-[160px] flex-1"
         />
-        <Button
-          variant={selectMode ? 'secondary' : 'ghost'}
-          icon={CheckSquare}
-          onClick={() => {
-            setSelectMode(!selectMode)
-            if (selectMode) clearSelection()
-          }}
-        >
-          {selectMode ? '退出選取' : '選取'}
-        </Button>
-        <Button
-          variant="ghost"
-          icon={Copy}
-          onClick={onShowDup}
-          className="relative"
-        >
-          查重
-          {dupCount > 0 && (
-            <span className="ml-1 inline-flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-bold text-white">
-              {dupCount}
-            </span>
-          )}
-        </Button>
-        <Button variant="ghost" icon={Upload} onClick={onShowImport}>
-          匯入
-        </Button>
-        <Button variant="ghost" icon={Download} onClick={exportSelected}>
-          匯出
-        </Button>
-        <Button variant="secondary" icon={Sparkles} onClick={onShowAI}>
-          AI 出題
-        </Button>
-        <Button icon={Plus} onClick={openAdd}>
-          新增題目
-        </Button>
+        <div className="flex flex-wrap items-center gap-1.5">
+          <Button
+            variant={selectMode ? 'secondary' : 'ghost'}
+            size="sm"
+            icon={CheckSquare}
+            onClick={() => {
+              setSelectMode(!selectMode)
+              if (selectMode) clearSelection()
+            }}
+          >
+            {selectMode ? '退出選取' : '選取'}
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            icon={Copy}
+            onClick={onShowDup}
+            className="relative"
+          >
+            查重
+            {dupCount > 0 && (
+              <span className="ml-1 inline-flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-bold tabular-nums text-white">
+                {dupCount}
+              </span>
+            )}
+          </Button>
+          <Button variant="ghost" size="sm" icon={Upload} onClick={onShowImport}>
+            匯入
+          </Button>
+          <Button variant="ghost" size="sm" icon={Download} onClick={exportSelected}>
+            匯出
+          </Button>
+          <span className="mx-0.5 hidden h-5 w-px bg-slate-200 dark:bg-slate-700/60 sm:block" />
+          <Button variant="secondary" size="sm" icon={Sparkles} onClick={onShowAI}>
+            AI 出題
+          </Button>
+          <Button size="sm" icon={Plus} onClick={openAdd}>
+            新增題目
+          </Button>
+        </div>
       </div>
 
-      {/* 篩選 + 排序 */}
-      <Card className="space-y-2.5 p-3">
+      {/* 篩選 + 排序 — 分層：課題/排序揀單 + 題型/難度 pill 各自一行 */}
+      <Card className="space-y-3 p-4">
         <div className="flex flex-wrap items-center gap-2">
           <Select
             value={fTopic}
             onChange={(e) => setFTopic(e.target.value)}
-            className="max-w-[200px] flex-1"
+            className="max-w-[220px] flex-1"
           >
             <option value="">全部課題</option>
             {topics.map((t) => (
@@ -581,41 +621,53 @@ function BankView(props: {
             </Button>
           )}
         </div>
-        <Pills
-          options={[
-            { id: '', label: '全部題型' },
-            ...TYPE_ORDER.map((t) => ({ id: t, label: TYPE_LABEL[t] })),
-          ]}
-          active={fType}
-          onChange={(v) => setFType(v as '' | QuestionType)}
-          counts={{ '': stats.total, ...stats.byType }}
-          size="sm"
-        />
-        <Pills
-          options={[
-            { id: '', label: '全部難度' },
-            ...DIFF_ORDER.map((d) => ({ id: d, label: DIFF_LABEL[d] })),
-          ]}
-          active={fDiff}
-          onChange={(v) => setFDiff(v as '' | Difficulty)}
-          counts={{ '': stats.total, ...stats.byDiff }}
-          size="sm"
-        />
+        <div className="flex flex-col gap-2.5 border-t border-slate-100 pt-3 dark:border-slate-700/60">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="w-9 shrink-0 text-xs font-medium text-slate-400 dark:text-slate-500">
+              題型
+            </span>
+            <Pills
+              options={[
+                { id: '', label: '全部' },
+                ...TYPE_ORDER.map((t) => ({ id: t, label: TYPE_LABEL[t] })),
+              ]}
+              active={fType}
+              onChange={(v) => setFType(v as '' | QuestionType)}
+              counts={{ '': stats.total, ...stats.byType }}
+              size="sm"
+            />
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="w-9 shrink-0 text-xs font-medium text-slate-400 dark:text-slate-500">
+              難度
+            </span>
+            <Pills
+              options={[
+                { id: '', label: '全部' },
+                ...DIFF_ORDER.map((d) => ({ id: d, label: DIFF_LABEL[d] })),
+              ]}
+              active={fDiff}
+              onChange={(v) => setFDiff(v as '' | Difficulty)}
+              counts={{ '': stats.total, ...stats.byDiff }}
+              size="sm"
+            />
+          </div>
+        </div>
       </Card>
 
       {/* 批量操作列 */}
       {selectMode && (
-        <Card className="flex flex-wrap items-center gap-2 border-accent/30 bg-accent-soft/50 p-3">
+        <Card className="flex flex-wrap items-center gap-x-3 gap-y-2 border-accent/30 bg-accent-soft/50 p-3 dark:bg-accent/10">
           <button
             onClick={selectAllFiltered}
             aria-pressed={allFilteredSelected}
-            className="inline-flex items-center gap-1.5 text-sm font-medium text-accent-strong dark:text-accent"
+            className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-sm font-medium text-accent-strong transition hover:bg-accent/10 dark:text-accent"
           >
             {allFilteredSelected ? <CheckSquare size={16} /> : <Square size={16} />}
-            全選（{filtered.length}）
+            全選（<span className="tabular-nums">{filtered.length}</span>）
           </button>
           <span className="text-sm text-slate-600 dark:text-slate-300">
-            已選 <span className="nums font-bold text-accent-strong">{selected.size}</span> 條 · {selectedMarks} 分
+            已選 <span className="nums font-bold text-accent-strong dark:text-accent">{selected.size}</span> 條 · <span className="nums">{selectedMarks}</span> 分
           </span>
           <div className="ml-auto flex flex-wrap items-center gap-2">
             <Select
@@ -665,60 +717,80 @@ function BankView(props: {
 
       {/* 列表 */}
       <p
-        className="text-xs text-slate-400 dark:text-slate-500"
+        className="px-0.5 text-xs text-slate-400 dark:text-slate-500"
         aria-live="polite"
       >
-        顯示 <span className="nums">{filtered.length}</span> 條題目
+        顯示 <span className="nums font-medium text-slate-500 dark:text-slate-400">{filtered.length}</span> 條題目
       </p>
-      <ul className="space-y-2">
-        {filtered.map((q) => (
-          <Card key={q.id} className="p-4">
-            <div className="flex items-start gap-3">
-              {selectMode && (
-                <input
-                  type="checkbox"
-                  checked={selected.has(q.id)}
-                  onChange={() => toggleSelect(q.id)}
-                  className="mt-0.5 h-4 w-4 shrink-0 accent-[color:var(--accent)]"
-                  aria-label="選取題目"
-                />
-              )}
-              <button
-                onClick={() => setExpanded(expanded === q.id ? null : q.id)}
-                aria-expanded={expanded === q.id}
-                className="flex-1 min-w-0 break-words text-left text-sm text-slate-800 dark:text-slate-100"
-              >
-                {q.stem}
-              </button>
-              <div className="flex shrink-0 items-center gap-0.5">
-                <IconButton label="複製題目" onClick={() => duplicateQuestion(q)}>
-                  <Copy size={16} />
-                </IconButton>
-                <IconButton label="編輯題目" onClick={() => openEdit(q)}>
-                  <Pencil size={16} />
-                </IconButton>
-                <IconButton
-                  label="刪除題目"
-                  tone="danger"
-                  onClick={() => removeQuestion(q)}
-                >
-                  <Trash2 size={16} />
-                </IconButton>
-              </div>
-            </div>
-            <div className="mt-2 flex flex-wrap gap-1.5">
-              <Badge tone="blue">{TYPE_LABEL[q.type]}</Badge>
-              <Badge tone={DIFF_TONE[q.difficulty]}>{DIFF_LABEL[q.difficulty]}</Badge>
-              <Badge tone="accent">{topicName(q.topicId)}</Badge>
-              {q.marks ? <Badge className="nums">{q.marks} 分</Badge> : null}
-              {q.source?.includes('AI') && (
-                <Badge tone="slate" icon={Bot}>
-                  AI
-                </Badge>
-              )}
-            </div>
-            {expanded === q.id && (
-              <div className="mt-3 space-y-1.5 border-t border-slate-100 pt-3 text-sm dark:border-slate-700">
+      <ul className="space-y-2.5">
+        {filtered.map((q) => {
+          const isOpen = expanded === q.id
+          return (
+          <Card
+            key={q.id}
+            className="group/q overflow-hidden p-0 transition duration-200 hover:border-slate-300 hover:shadow-md dark:hover:border-slate-600"
+          >
+            <div className="flex items-stretch">
+              {/* 題型色軌 — 一眼分到題型 */}
+              <span className={cx('w-1 shrink-0', TYPE_DOT[q.type])} aria-hidden />
+              <div className="min-w-0 flex-1 p-4">
+                <div className="flex items-start gap-3">
+                  {selectMode && (
+                    <input
+                      type="checkbox"
+                      checked={selected.has(q.id)}
+                      onChange={() => toggleSelect(q.id)}
+                      className="mt-0.5 h-4 w-4 shrink-0 accent-[color:var(--accent)]"
+                      aria-label="選取題目"
+                    />
+                  )}
+                  <button
+                    onClick={() => setExpanded(isOpen ? null : q.id)}
+                    aria-expanded={isOpen}
+                    className="flex min-w-0 flex-1 items-start gap-2 break-words text-left text-[15px] font-medium leading-relaxed text-slate-800 dark:text-slate-100"
+                  >
+                    <ChevronRight
+                      size={16}
+                      className={cx(
+                        'mt-1 shrink-0 text-slate-300 transition-transform duration-200 group-hover/q:text-slate-400 dark:text-slate-600',
+                        isOpen && 'rotate-90 text-accent dark:text-accent',
+                      )}
+                    />
+                    <span className="min-w-0">{q.stem}</span>
+                  </button>
+                  <div className="flex shrink-0 items-center gap-0.5 opacity-70 transition group-hover/q:opacity-100">
+                    <IconButton label="複製題目" onClick={() => duplicateQuestion(q)}>
+                      <Copy size={16} />
+                    </IconButton>
+                    <IconButton label="編輯題目" onClick={() => openEdit(q)}>
+                      <Pencil size={16} />
+                    </IconButton>
+                    <IconButton
+                      label="刪除題目"
+                      tone="danger"
+                      onClick={() => removeQuestion(q)}
+                    >
+                      <Trash2 size={16} />
+                    </IconButton>
+                  </div>
+                </div>
+                <div className="mt-2.5 flex flex-wrap items-center gap-1.5 pl-6">
+                  <TypeChip type={q.type} />
+                  <Badge tone={DIFF_TONE[q.difficulty]} dot>{DIFF_LABEL[q.difficulty]}</Badge>
+                  <Badge tone="accent">{topicName(q.topicId)}</Badge>
+                  {q.marks ? (
+                    <span className="inline-flex items-center rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-medium tabular-nums text-slate-500 dark:bg-slate-700/60 dark:text-slate-400">
+                      {q.marks} 分
+                    </span>
+                  ) : null}
+                  {q.source?.includes('AI') && (
+                    <Badge tone="slate" icon={Bot}>
+                      AI
+                    </Badge>
+                  )}
+                </div>
+            {isOpen && (
+              <div className="ml-6 mt-3 space-y-1.5 border-t border-slate-100 pt-3 text-sm dark:border-slate-700/60">
                 {q.type === 'mc' && q.options && (
                   <ul className="space-y-1">
                     {q.options.map((o, i) => (
@@ -755,8 +827,11 @@ function BankView(props: {
                 )}
               </div>
             )}
+              </div>
+            </div>
           </Card>
-        ))}
+          )
+        })}
       </ul>
       {filtered.length === 0 && (
         <EmptyState
@@ -779,6 +854,46 @@ function BankView(props: {
           }
         />
       )}
+    </div>
+  )
+}
+
+// 分析卡標題（小色塊 icon + 標題 + 可選右側）——統一統計頁節奏。
+const CHART_HEAD_TONE: Record<
+  'accent' | 'blue' | 'amber' | 'violet' | 'rose',
+  string
+> = {
+  accent: 'bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent',
+  blue: 'bg-blue-50 text-blue-600 dark:bg-blue-500/15 dark:text-blue-300',
+  amber: 'bg-amber-50 text-amber-600 dark:bg-amber-500/15 dark:text-amber-300',
+  violet: 'bg-violet-50 text-violet-600 dark:bg-violet-500/15 dark:text-violet-300',
+  rose: 'bg-rose-50 text-rose-600 dark:bg-rose-500/15 dark:text-rose-300',
+}
+function ChartHead({
+  icon: Icon,
+  tone,
+  right,
+  children,
+}: {
+  icon: LucideIcon
+  tone: keyof typeof CHART_HEAD_TONE
+  right?: ReactNode
+  children: ReactNode
+}) {
+  return (
+    <div className="mb-3.5 flex items-center justify-between gap-2">
+      <h3 className="flex items-center gap-2 text-sm font-semibold text-slate-800 dark:text-slate-100">
+        <span
+          className={cx(
+            'flex h-7 w-7 items-center justify-center rounded-lg',
+            CHART_HEAD_TONE[tone],
+          )}
+        >
+          <Icon size={15} />
+        </span>
+        {children}
+      </h3>
+      {right}
     </div>
   )
 }
@@ -817,18 +932,14 @@ function AnalyticsView({
   return (
     <div className="space-y-4">
       <div className="grid gap-4 lg:grid-cols-2">
-        <Card className="p-4">
-          <h3 className="mb-3 text-sm font-semibold text-slate-700 dark:text-slate-200">
-            題型佔比
-          </h3>
+        <Card className="p-4 sm:p-5">
+          <ChartHead icon={Layers} tone="blue">題型佔比</ChartHead>
           <TypeDonut byType={stats.byType} />
         </Card>
-        <Card className="p-4">
-          <h3 className="mb-3 text-sm font-semibold text-slate-700 dark:text-slate-200">
-            難度分佈
-          </h3>
+        <Card className="p-4 sm:p-5">
+          <ChartHead icon={BarChart3} tone="amber">難度分佈</ChartHead>
           <DifficultyBars byDiff={stats.byDiff} />
-          <div className="mt-4 rounded-lg bg-slate-50 p-3 dark:bg-slate-900/40">
+          <div className="mt-4 rounded-xl bg-slate-50 p-3 dark:bg-slate-900/40">
             <div className="flex items-center justify-between text-xs">
               <span className="text-slate-500 dark:text-slate-400">卷面難度指數</span>
               <span className="font-semibold tabular-nums text-slate-700 dark:text-slate-200">
@@ -845,34 +956,37 @@ function AnalyticsView({
         </Card>
       </div>
 
-      <Card className="p-4">
-        <h3 className="mb-3 text-sm font-semibold text-slate-700 dark:text-slate-200">
-          課題覆蓋矩陣
-        </h3>
+      <Card className="p-4 sm:p-5">
+        <ChartHead icon={BookMarked} tone="accent">課題覆蓋矩陣</ChartHead>
         <CoverageMatrix rows={rows} />
       </Card>
 
       <div className="grid gap-4 lg:grid-cols-2">
-        <Card className="p-4">
-          <h3 className="mb-3 text-sm font-semibold text-slate-700 dark:text-slate-200">
-            題目最多嘅課題
-          </h3>
+        <Card className="p-4 sm:p-5">
+          <ChartHead icon={Sparkles} tone="violet">題目最多嘅課題</ChartHead>
           {topTopics.length === 0 ? (
             <p className="py-4 text-center text-sm text-slate-400 dark:text-slate-500">
               未有資料
             </p>
           ) : (
-            <ul className="space-y-2">
+            <ul className="space-y-2.5">
               {topTopics.map((r, i) => {
                 const max = topTopics[0].total || 1
                 return (
-                  <li key={r.topicId} className="flex items-center gap-2">
-                    <span className="w-5 shrink-0 text-center text-xs font-bold tabular-nums text-slate-400">
+                  <li key={r.topicId} className="flex items-center gap-2.5">
+                    <span
+                      className={cx(
+                        'flex h-6 w-6 shrink-0 items-center justify-center rounded-lg text-xs font-bold tabular-nums',
+                        i === 0
+                          ? 'bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent'
+                          : 'bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500',
+                      )}
+                    >
                       {i + 1}
                     </span>
                     <div className="min-w-0 flex-1">
-                      <div className="mb-0.5 flex items-center justify-between gap-2">
-                        <span className="truncate text-xs text-slate-600 dark:text-slate-300">
+                      <div className="mb-1 flex items-center justify-between gap-2">
+                        <span className="truncate text-xs font-medium text-slate-600 dark:text-slate-300">
                           {r.topic}
                         </span>
                         <span className="shrink-0 text-xs font-semibold tabular-nums text-slate-500 dark:text-slate-400">
@@ -893,23 +1007,26 @@ function AnalyticsView({
           )}
         </Card>
 
-        <Card className="p-4">
-          <h3 className="mb-3 flex items-center gap-1.5 text-sm font-semibold text-slate-700 dark:text-slate-200">
+        <Card className="p-4 sm:p-5">
+          <ChartHead
+            icon={Target}
+            tone="rose"
+            right={gaps.length > 0 ? <Badge tone="rose">{gaps.length}</Badge> : undefined}
+          >
             覆蓋缺口
-            {gaps.length > 0 && (
-              <Badge tone="rose">{gaps.length}</Badge>
-            )}
-          </h3>
+          </ChartHead>
           {gaps.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-6 text-center">
-              <Check size={28} className="text-emerald-500" />
-              <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+              <span className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-50 text-emerald-500 dark:bg-emerald-500/15 dark:text-emerald-400">
+                <Check size={26} />
+              </span>
+              <p className="mt-3 text-sm font-medium text-slate-600 dark:text-slate-300">
                 所有課題都有題目，覆蓋完整！
               </p>
             </div>
           ) : (
             <>
-              <p className="mb-2 text-xs text-slate-400 dark:text-slate-500">
+              <p className="mb-2.5 text-xs text-slate-400 dark:text-slate-500">
                 以下課題仲未有任何題目，建議補題：
               </p>
               <ul className="flex flex-wrap gap-1.5">
@@ -1118,8 +1235,8 @@ function PaperStudio({
         />
 
         {mode === 'auto' && (
-          <div className="space-y-3 rounded-lg border border-slate-200 bg-slate-50/60 p-3 dark:border-slate-700 dark:bg-slate-900/40">
-            <p className="text-xs text-slate-500 dark:text-slate-400">
+          <div className="space-y-3.5 rounded-2xl border border-slate-200/80 bg-slate-50/60 p-4 dark:border-slate-700/60 dark:bg-slate-900/40">
+            <p className="text-xs leading-relaxed text-slate-500 dark:text-slate-400">
               設定每個難度想出幾題，系統會喺範圍內隨機抽題並盡量平均覆蓋課題。
             </p>
             <div className="grid grid-cols-3 gap-2">
@@ -1156,11 +1273,12 @@ function PaperStudio({
                       key={t.id}
                       onClick={() => toggleBpTopic(t.id)}
                       aria-pressed={on}
-                      className={
+                      className={cx(
+                        'rounded-full border px-2.5 py-1 text-xs font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
                         on
-                          ? 'rounded-full bg-accent px-2.5 py-1 text-xs font-medium text-white'
-                          : 'rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700'
-                      }
+                          ? 'border-accent bg-accent text-white shadow-sm dark:shadow-none'
+                          : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700',
+                      )}
                     >
                       {t.topic}
                     </button>
@@ -1184,9 +1302,15 @@ function PaperStudio({
         {/* 左：題池（手動加題） */}
         {mode === 'manual' && (
           <Card className="p-4">
-            <h3 className="mb-3 text-sm font-semibold text-slate-700 dark:text-slate-200">
-              題池
-            </h3>
+            <div className="mb-3 flex items-center justify-between">
+              <h3 className="flex items-center gap-1.5 text-sm font-semibold text-slate-700 dark:text-slate-200">
+                <FolderOpen size={15} className="text-slate-400" />
+                題池
+              </h3>
+              <span className="text-xs tabular-nums text-slate-400 dark:text-slate-500">
+                {candidatePool.length} 條可揀
+              </span>
+            </div>
             <div className="space-y-2">
               <Input
                 value={mSearch}
@@ -1239,19 +1363,26 @@ function PaperStudio({
                 return (
                   <li
                     key={q.id}
-                    className="flex items-start gap-2 rounded-lg border border-slate-100 p-2 dark:border-slate-700/60"
+                    className={cx(
+                      'flex items-start gap-2 rounded-xl border p-2.5 transition',
+                      on
+                        ? 'border-accent/30 bg-accent-soft/40 dark:border-accent/30 dark:bg-accent/10'
+                        : 'border-slate-200/80 hover:border-slate-300 dark:border-slate-700/60 dark:hover:border-slate-600',
+                    )}
                   >
                     <div className="min-w-0 flex-1">
-                      <p className="line-clamp-2 text-xs text-slate-700 dark:text-slate-200">
+                      <p className="line-clamp-2 text-xs leading-relaxed text-slate-700 dark:text-slate-200">
                         {q.stem}
                       </p>
-                      <div className="mt-1 flex flex-wrap gap-1">
-                        <Badge tone="blue">{TYPE_LABEL[q.type]}</Badge>
-                        <Badge tone={DIFF_TONE[q.difficulty]}>
+                      <div className="mt-1.5 flex flex-wrap items-center gap-1">
+                        <TypeChip type={q.type} />
+                        <Badge tone={DIFF_TONE[q.difficulty]} dot>
                           {DIFF_LABEL[q.difficulty]}
                         </Badge>
                         {q.marks ? (
-                          <Badge className="nums">{q.marks} 分</Badge>
+                          <span className="inline-flex items-center rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-medium tabular-nums text-slate-500 dark:bg-slate-700/60 dark:text-slate-400">
+                            {q.marks} 分
+                          </span>
                         ) : null}
                       </div>
                     </div>
@@ -1277,12 +1408,13 @@ function PaperStudio({
         {/* 右：試卷內容 */}
         <Card className={mode === 'manual' ? 'p-4' : 'p-4 lg:col-span-2'}>
           <div className="mb-3 flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+            <h3 className="flex items-center gap-1.5 text-sm font-semibold text-slate-700 dark:text-slate-200">
+              <FileText size={15} className="text-slate-400" />
               試卷內容
             </h3>
-            <span className="text-xs text-slate-500 dark:text-slate-400">
-              <span className="nums font-semibold">{pickedQuestions.length}</span> 題 ·{' '}
-              <span className="nums font-semibold">{totalMarks}</span> 分
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+              <span className="nums font-semibold text-slate-700 dark:text-slate-200">{pickedQuestions.length}</span> 題 ·{' '}
+              <span className="nums font-semibold text-slate-700 dark:text-slate-200">{totalMarks}</span> 分
             </span>
           </div>
 
@@ -1301,21 +1433,25 @@ function PaperStudio({
               {pickedQuestions.map((q, idx) => (
                 <li
                   key={q.id}
-                  className="flex items-start gap-2 rounded-lg border border-slate-100 p-2.5 dark:border-slate-700/60"
+                  className="flex items-start gap-2.5 rounded-xl border border-slate-200/80 p-2.5 transition hover:border-slate-300 dark:border-slate-700/60 dark:hover:border-slate-600"
                 >
-                  <span className="mt-0.5 w-5 shrink-0 text-center text-xs font-bold tabular-nums text-slate-400">
+                  <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-accent-soft text-xs font-bold tabular-nums text-accent-strong dark:bg-accent/15 dark:text-accent">
                     {idx + 1}
                   </span>
                   <div className="min-w-0 flex-1">
-                    <p className="text-xs text-slate-700 dark:text-slate-200">
+                    <p className="text-xs leading-relaxed text-slate-700 dark:text-slate-200">
                       {q.stem}
                     </p>
-                    <div className="mt-1 flex flex-wrap gap-1">
+                    <div className="mt-1.5 flex flex-wrap items-center gap-1">
                       <Badge tone="accent">{topicName(q.topicId)}</Badge>
-                      <Badge tone={DIFF_TONE[q.difficulty]}>
+                      <Badge tone={DIFF_TONE[q.difficulty]} dot>
                         {DIFF_LABEL[q.difficulty]}
                       </Badge>
-                      {q.marks ? <Badge className="nums">{q.marks} 分</Badge> : null}
+                      {q.marks ? (
+                        <span className="inline-flex items-center rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-medium tabular-nums text-slate-500 dark:bg-slate-700/60 dark:text-slate-400">
+                          {q.marks} 分
+                        </span>
+                      ) : null}
                     </div>
                   </div>
                   <div className="flex shrink-0 flex-col">
@@ -1381,11 +1517,13 @@ function PaperStudio({
               .map((p) => (
                 <li
                   key={p.id}
-                  className="flex items-center gap-2 rounded-lg border border-slate-100 p-2.5 dark:border-slate-700/60"
+                  className="flex items-center gap-3 rounded-xl border border-slate-200/80 p-2.5 transition hover:border-slate-300 hover:shadow-xs dark:border-slate-700/60 dark:hover:border-slate-600"
                 >
-                  <FileText size={16} className="shrink-0 text-accent" />
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
+                    <FileText size={17} />
+                  </span>
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium text-slate-700 dark:text-slate-200">
+                    <p className="truncate text-sm font-medium text-slate-800 dark:text-slate-100">
                       {p.title}
                     </p>
                     <p className="text-xs text-slate-400 dark:text-slate-500">
@@ -1457,79 +1595,111 @@ function QuestionFormModal({
 
   return (
     <Modal open onClose={onClose} title={editing ? '編輯題目' : '新增題目'}>
-      <div className="space-y-3">
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-          <Field label="課題">
-            <Select
-              value={form.topicId}
-              onChange={(e) => set('topicId', e.target.value)}
-            >
-              {topics.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.topic}
-                </option>
-              ))}
-            </Select>
-          </Field>
-          <Field label="題型">
-            <Select
-              value={form.type}
-              onChange={(e) => set('type', e.target.value as QuestionType)}
-            >
-              {TYPE_ORDER.map((k) => (
-                <option key={k} value={k}>
-                  {TYPE_LABEL[k]}
-                </option>
-              ))}
-            </Select>
-          </Field>
-          <Field label="難度">
-            <Select
-              value={form.difficulty}
-              onChange={(e) => set('difficulty', e.target.value as Difficulty)}
-            >
-              {DIFF_ORDER.map((k) => (
-                <option key={k} value={k}>
-                  {DIFF_LABEL[k]}
-                </option>
-              ))}
-            </Select>
-          </Field>
-        </div>
+      <div className="space-y-5">
+        {/* 分類 — 收喺柔和子面板，同題目內容分區 */}
+        <section className="rounded-2xl border border-slate-200/80 bg-slate-50/60 p-4 dark:border-slate-700/60 dark:bg-slate-900/40">
+          <p className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+            分類
+          </p>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <Field label="課題">
+              <Select
+                value={form.topicId}
+                onChange={(e) => set('topicId', e.target.value)}
+              >
+                {topics.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.topic}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+            <Field label="題型">
+              <Select
+                value={form.type}
+                onChange={(e) => set('type', e.target.value as QuestionType)}
+              >
+                {TYPE_ORDER.map((k) => (
+                  <option key={k} value={k}>
+                    {TYPE_LABEL[k]}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+            <Field label="難度">
+              <Select
+                value={form.difficulty}
+                onChange={(e) => set('difficulty', e.target.value as Difficulty)}
+              >
+                {DIFF_ORDER.map((k) => (
+                  <option key={k} value={k}>
+                    {DIFF_LABEL[k]}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+          </div>
+        </section>
 
-        <Field label="題目內容">
+        <Field label="題目內容" required>
           <Textarea
             value={form.stem}
             onChange={(e) => set('stem', e.target.value)}
-            placeholder="題目內容…"
+            placeholder="輸入題幹內容…"
             rows={3}
           />
         </Field>
 
         {form.type === 'mc' ? (
-          <Field label="選項（揀返左邊個圈做正確答案）">
+          <Field
+            label="選項"
+            hint="撳左邊字母圈設定正確答案。"
+          >
             <div className="space-y-2">
-              {form.options.map((o, i) => (
-                <div key={i} className="flex items-center gap-2">
-                  <input
-                    type="radio"
-                    name="correct"
-                    checked={form.answerIndex === i}
-                    onChange={() => set('answerIndex', i)}
-                    className="h-4 w-4 accent-[color:var(--accent)]"
-                  />
-                  <Input
-                    value={o}
-                    onChange={(e) =>
-                      set(
-                        'options',
-                        form.options.map((x, k) => (k === i ? e.target.value : x)),
-                      )
-                    }
-                    placeholder={`選項 ${String.fromCharCode(65 + i)}`}
-                  />
-                </div>
-              ))}
+              {form.options.map((o, i) => {
+                const on = form.answerIndex === i
+                return (
+                  <label
+                    key={i}
+                    className={cx(
+                      'flex items-center gap-2.5 rounded-xl border p-1.5 pr-2 transition',
+                      on
+                        ? 'border-emerald-300 bg-emerald-50/60 dark:border-emerald-500/40 dark:bg-emerald-500/10'
+                        : 'border-transparent',
+                    )}
+                  >
+                    <span className="relative flex shrink-0 items-center">
+                      <input
+                        type="radio"
+                        name="correct"
+                        checked={on}
+                        onChange={() => set('answerIndex', i)}
+                        className="peer sr-only"
+                      />
+                      <span
+                        className={cx(
+                          'flex h-7 w-7 cursor-pointer items-center justify-center rounded-full text-xs font-bold transition peer-focus-visible:ring-2 peer-focus-visible:ring-accent/40',
+                          on
+                            ? 'bg-emerald-500 text-white'
+                            : 'bg-slate-100 text-slate-500 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600',
+                        )}
+                      >
+                        {String.fromCharCode(65 + i)}
+                      </span>
+                    </span>
+                    <Input
+                      value={o}
+                      onChange={(e) =>
+                        set(
+                          'options',
+                          form.options.map((x, k) => (k === i ? e.target.value : x)),
+                        )
+                      }
+                      placeholder={`選項 ${String.fromCharCode(65 + i)}`}
+                    />
+                  </label>
+                )
+              })}
             </div>
           </Field>
         ) : (
@@ -1537,27 +1707,31 @@ function QuestionFormModal({
             <Textarea
               value={form.answer}
               onChange={(e) => set('answer', e.target.value)}
-              placeholder="參考答案…"
+              placeholder="輸入參考答案…"
               rows={3}
             />
           </Field>
         )}
 
-        <Field label="分數">
+        <Field label="分數" hint="留空 = 唔計分。">
           <Input
             value={form.marks}
             onChange={(e) => set('marks', e.target.value.replace(/\D/g, ''))}
-            placeholder="分數（可留空）"
+            placeholder="例如 5"
             className="w-28"
             inputMode="numeric"
           />
         </Field>
 
-        <div className="flex justify-end gap-2 pt-2">
+        <div className="flex justify-end gap-2 border-t border-slate-100 pt-4 dark:border-slate-700/60">
           <Button variant="secondary" onClick={onClose}>
             取消
           </Button>
-          <Button onClick={save} disabled={!form.stem.trim() || !form.topicId}>
+          <Button
+            icon={editing ? Save : Plus}
+            onClick={save}
+            disabled={!form.stem.trim() || !form.topicId}
+          >
             {editing ? '儲存修改' : '新增題目'}
           </Button>
         </div>
@@ -1616,11 +1790,16 @@ function ImportModal({
 
   return (
     <Modal open onClose={onClose} title="匯入題目（CSV）" size="lg">
-      <div className="space-y-3">
-        <p className="text-xs text-slate-500 dark:text-slate-400">
-          支援 CSV：欄位為 課題、題型、難度、題幹、選項 A–D、答案、分數。題型 / 難度可用中英；MC
-          答案用 A/B/C/D。課題名稱會自動對應到最相近嘅課題。
-        </p>
+      <div className="space-y-4">
+        <div className="flex items-start gap-3 rounded-2xl border border-accent/20 bg-accent-soft/50 p-3.5 dark:border-accent/25 dark:bg-accent/10">
+          <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-accent text-white">
+            <Upload size={16} />
+          </span>
+          <p className="text-xs leading-relaxed text-slate-600 dark:text-slate-300">
+            CSV 欄位：課題、題型、難度、題幹、選項 A–D、答案、分數。題型 / 難度可用中英；MC
+            答案用 A/B/C/D；課題名稱會自動對應到最相近嘅課題。第一次用建議先下載範本。
+          </p>
+        </div>
 
         <div className="flex flex-wrap gap-2">
           <input
@@ -1660,23 +1839,23 @@ function ImportModal({
         </Field>
 
         {text.trim() && (
-          <div className="rounded-lg border border-slate-200 bg-slate-50/60 p-3 dark:border-slate-700 dark:bg-slate-900/40">
+          <div className="rounded-2xl border border-slate-200/80 bg-slate-50/60 p-3.5 dark:border-slate-700/60 dark:bg-slate-900/40">
             <div
-              className="mb-2 flex items-center gap-2 text-xs"
+              className="mb-2.5 flex items-center gap-2 text-xs"
               aria-live="polite"
             >
-              <Badge tone="green">可匯入 {preview.parsed.length}</Badge>
+              <Badge tone="green" dot>可匯入 {preview.parsed.length}</Badge>
               {preview.skipped > 0 && (
-                <Badge tone="amber">略過 {preview.skipped}</Badge>
+                <Badge tone="amber" dot>略過 {preview.skipped}</Badge>
               )}
             </div>
-            <ul className="max-h-44 space-y-1 overflow-y-auto">
+            <ul className="max-h-44 space-y-1.5 overflow-y-auto">
               {preview.parsed.slice(0, 8).map((r, i) => (
                 <li
                   key={i}
                   className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300"
                 >
-                  <Badge tone="blue">{TYPE_LABEL[r.type]}</Badge>
+                  <TypeChip type={r.type} />
                   <Badge tone={DIFF_TONE[r.difficulty]}>
                     {DIFF_LABEL[r.difficulty]}
                   </Badge>
@@ -1835,6 +2014,14 @@ const AI_TYPE_OPTIONS: { id: AIType; label: string }[] = [
 ]
 const COUNT_OPTIONS = [3, 5, 8, 10]
 const AI_MODEL: AIModel = 'gemini-2.5-flash'
+
+// 範例提問 chips — 撳一下即填入「補充指示」，令出題流程更親切。
+const AI_PROMPT_EXAMPLES = [
+  '貼香港中小企情境',
+  '集中考定義同例子',
+  '加入計算題',
+  '連埋常見錯誤分析',
+]
 
 type Draft = {
   _key: string
@@ -2010,42 +2197,54 @@ function AIGenerateModal({
   return (
     <Modal open onClose={onClose} title="AI 出題">
       {step === 'setup' ? (
-        <div className="space-y-3">
-          <Field label="課題">
-            <Select value={topicId} onChange={(e) => setTopicId(e.target.value)}>
-              {topics.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.topic}
-                </option>
-              ))}
-            </Select>
-          </Field>
+        <div className="space-y-5">
+          <div className="flex items-start gap-3 rounded-2xl border border-accent/20 bg-accent-soft/50 p-3.5 dark:border-accent/25 dark:bg-accent/10">
+            <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-accent text-white">
+              <Sparkles size={16} />
+            </span>
+            <p className="text-xs leading-relaxed text-slate-600 dark:text-slate-300">
+              揀好課題、題型同難度，AI 會幫你草擬一批貼合香港 BAFS 課程嘅題目。生成後可以逐條揀返要邊條先加入題庫。
+            </p>
+          </div>
 
-          <Field label="題型">
-            <Pills options={AI_TYPE_OPTIONS} active={type} onChange={setType} />
-          </Field>
+          <section className="space-y-3 rounded-2xl border border-slate-200/80 bg-slate-50/60 p-4 dark:border-slate-700/60 dark:bg-slate-900/40">
+            <Field label="課題">
+              <Select value={topicId} onChange={(e) => setTopicId(e.target.value)}>
+                {topics.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.topic}
+                  </option>
+                ))}
+              </Select>
+            </Field>
 
-          <Field label="難度">
-            <Pills
-              options={DIFF_ORDER.map((d) => ({ id: d, label: DIFF_LABEL[d] }))}
-              active={difficulty}
-              onChange={setDifficulty}
-            />
-          </Field>
+            <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
+              <Field label="題型">
+                <Pills options={AI_TYPE_OPTIONS} active={type} onChange={setType} />
+              </Field>
+              <Field label="條數">
+                <Select
+                  value={String(count)}
+                  onChange={(e) => setCount(Number(e.target.value))}
+                  className="w-28"
+                >
+                  {COUNT_OPTIONS.map((n) => (
+                    <option key={n} value={n}>
+                      {n} 條
+                    </option>
+                  ))}
+                </Select>
+              </Field>
+            </div>
 
-          <Field label="條數">
-            <Select
-              value={String(count)}
-              onChange={(e) => setCount(Number(e.target.value))}
-              className="w-28"
-            >
-              {COUNT_OPTIONS.map((n) => (
-                <option key={n} value={n}>
-                  {n} 條
-                </option>
-              ))}
-            </Select>
-          </Field>
+            <Field label="難度">
+              <Pills
+                options={DIFF_ORDER.map((d) => ({ id: d, label: DIFF_LABEL[d] }))}
+                active={difficulty}
+                onChange={setDifficulty}
+              />
+            </Field>
+          </section>
 
           <Field label="補充指示（可留空）">
             <Textarea
@@ -2056,21 +2255,37 @@ function AIGenerateModal({
               disabled={busy}
             />
           </Field>
+          <div className="-mt-2.5 flex flex-wrap gap-1.5">
+            {AI_PROMPT_EXAMPLES.map((ex) => (
+              <button
+                key={ex}
+                type="button"
+                disabled={busy}
+                onClick={() => setExtra((prev) => (prev.trim() ? `${prev}；${ex}` : ex))}
+                className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-600 transition hover:border-accent/40 hover:bg-accent-soft hover:text-accent-strong disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:border-accent/40 dark:hover:bg-accent/10 dark:hover:text-accent"
+              >
+                <Plus size={12} />
+                {ex}
+              </button>
+            ))}
+          </div>
 
           {busy && (
             <div
-              className="space-y-2 rounded-xl border border-slate-200/80 bg-slate-50/60 p-3 dark:border-slate-700/80 dark:bg-slate-900/40"
+              className="space-y-2 rounded-2xl border border-slate-200/80 bg-slate-50/60 p-4 dark:border-slate-700/80 dark:bg-slate-900/40"
               aria-live="polite"
             >
-              <p className="text-sm text-slate-500 dark:text-slate-400">
+              <p className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
+                <Sparkles size={15} className="animate-pulse text-accent" />
                 AI 諗緊題目，請等一等…
               </p>
-              <div className="h-2 w-full animate-pulse rounded-full bg-slate-200 dark:bg-slate-700" />
-              <div className="h-2 w-3/4 animate-pulse rounded-full bg-slate-200 dark:bg-slate-700" />
+              <div className="h-2.5 w-full animate-pulse rounded-full bg-slate-200 dark:bg-slate-700" />
+              <div className="h-2.5 w-4/5 animate-pulse rounded-full bg-slate-200 dark:bg-slate-700" />
+              <div className="h-2.5 w-3/5 animate-pulse rounded-full bg-slate-200 dark:bg-slate-700" />
             </div>
           )}
 
-          <div className="flex justify-end gap-2 pt-2">
+          <div className="flex justify-end gap-2 border-t border-slate-100 pt-4 dark:border-slate-700/60">
             <Button variant="secondary" onClick={onClose}>
               取消
             </Button>
@@ -2151,13 +2366,17 @@ function AIGenerateModal({
                         {d.answer}
                       </p>
                     )}
-                    <div className="flex flex-wrap gap-1.5 pt-0.5">
-                      <Badge tone="blue">{TYPE_LABEL[type]}</Badge>
-                      <Badge tone={DIFF_TONE[difficulty]}>
+                    <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+                      <TypeChip type={type} />
+                      <Badge tone={DIFF_TONE[difficulty]} dot>
                         {DIFF_LABEL[difficulty]}
                       </Badge>
                       <Badge tone="accent">{topicName}</Badge>
-                      {d.marks ? <Badge className="nums">{d.marks} 分</Badge> : null}
+                      {d.marks ? (
+                        <span className="inline-flex items-center rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-medium tabular-nums text-slate-500 dark:bg-slate-700/60 dark:text-slate-400">
+                          {d.marks} 分
+                        </span>
+                      ) : null}
                     </div>
                   </div>
                 </div>

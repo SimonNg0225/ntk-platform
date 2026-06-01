@@ -4,7 +4,9 @@ import {
   Check,
   Flag,
   GripVertical,
+  ListChecks,
   Plus,
+  StickyNote,
   Sun,
   Sunrise,
   Tag,
@@ -150,17 +152,24 @@ export function TaskEditor({
   return (
     <Modal open onClose={onClose} size="lg" title="任務詳情">
       <div className="space-y-5">
-        {/* 標題 + 完成 */}
-        <div className="flex items-start gap-3">
+        {/* 標題 + 完成（柔和底框，似 Things 打開卡）*/}
+        <div
+          className={cx(
+            'flex items-start gap-3 rounded-2xl border p-3.5 transition',
+            task.done
+              ? 'border-emerald-200/70 bg-emerald-50/50 dark:border-emerald-500/20 dark:bg-emerald-500/5'
+              : 'border-slate-200/80 bg-slate-50/60 dark:border-slate-700/60 dark:bg-slate-800/40',
+          )}
+        >
           <button
             type="button"
             onClick={() => onToggleTask(task)}
             aria-label={task.done ? '標記未完成' : '標記完成'}
             className={cx(
-              'mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 transition',
+              'mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 transition duration-200 active:scale-90',
               task.done
-                ? 'border-emerald-500 bg-emerald-500 text-white'
-                : 'border-slate-300 hover:border-accent dark:border-slate-600',
+                ? 'border-emerald-500 bg-emerald-500 text-white shadow-sm shadow-emerald-500/30'
+                : 'border-slate-300 hover:border-accent hover:bg-accent-soft/40 dark:border-slate-600',
             )}
           >
             {task.done && <Check size={14} strokeWidth={3} />}
@@ -171,115 +180,117 @@ export function TaskEditor({
             onBlur={commitText}
             rows={1}
             className={cx(
-              'min-h-0 resize-none border-0 px-0 py-0 text-base font-semibold shadow-none focus:ring-0',
+              'min-h-0 resize-none border-0 bg-transparent px-0 py-0.5 text-base font-semibold shadow-none focus:ring-0',
               task.done && 'text-slate-400 line-through dark:text-slate-500',
             )}
             placeholder="任務標題"
           />
         </div>
 
-        {/* 優先級 / 到期 / 專案 */}
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-          <Field label="優先級">
-            <div className="flex items-center gap-2">
-              <Flag size={15} className={pm.flag} />
-              <SegmentedControl<'1' | '2' | '3' | '4'>
-                size="sm"
-                options={PR_OPTIONS}
-                value={String(task.meta.priority) as '1' | '2' | '3' | '4'}
-                onChange={(v) => setPriority(Number(v) as Priority)}
+        {/* 屬性：優先級 / 專案 / 到期（一組柔和卡，唔似散開嘅表單）*/}
+        <div className="space-y-3 rounded-2xl border border-slate-200/80 p-4 dark:border-slate-700/60">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <Field label="優先級">
+              <div className="flex items-center gap-2">
+                <Flag size={15} className={pm.flag} />
+                <SegmentedControl<'1' | '2' | '3' | '4'>
+                  size="sm"
+                  options={PR_OPTIONS}
+                  value={String(task.meta.priority) as '1' | '2' | '3' | '4'}
+                  onChange={(v) => setPriority(Number(v) as Priority)}
+                />
+              </div>
+            </Field>
+
+            <Field label="專案">
+              <Select
+                value={task.meta.projectId ?? ''}
+                onChange={(e) => setProject(e.target.value || undefined)}
+              >
+                <option value="">收件匣</option>
+                {projects.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.emoji ? `${p.emoji} ` : ''}
+                    {p.name}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+
+            <Field label="到期">
+              <Input
+                type="date"
+                value={due ?? ''}
+                onChange={(e) => setDue(e.target.value || undefined)}
               />
-            </div>
-          </Field>
+            </Field>
+          </div>
 
-          <Field label="專案">
-            <Select
-              value={task.meta.projectId ?? ''}
-              onChange={(e) => setProject(e.target.value || undefined)}
-            >
-              <option value="">收件匣</option>
-              {projects.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.emoji ? `${p.emoji} ` : ''}
-                  {p.name}
-                </option>
-              ))}
-            </Select>
-          </Field>
-
-          <Field label="到期">
-            <Input
-              type="date"
-              value={due ?? ''}
-              onChange={(e) => setDue(e.target.value || undefined)}
+          {/* 到期快捷 + 狀態 */}
+          <div className="flex flex-wrap items-center gap-2 border-t border-slate-100 pt-3 dark:border-slate-700/60">
+            <QuickDue label="今日" icon={Sun} onClick={() => setDue(offsetFromToday(0))} />
+            <QuickDue label="聽日" icon={Sunrise} onClick={() => setDue(offsetFromToday(1))} />
+            <QuickDue
+              label="3 日後"
+              icon={CalendarClock}
+              onClick={() => setDue(offsetFromToday(3))}
             />
-          </Field>
-        </div>
-
-        {/* 到期快捷 + 狀態 */}
-        <div className="-mt-2 flex flex-wrap items-center gap-2">
-          <QuickDue label="今日" icon={Sun} onClick={() => setDue(offsetFromToday(0))} />
-          <QuickDue label="聽日" icon={Sunrise} onClick={() => setDue(offsetFromToday(1))} />
-          <QuickDue
-            label="3 日後"
-            icon={CalendarClock}
-            onClick={() => setDue(offsetFromToday(3))}
-          />
-          {due && (
-            <button
-              type="button"
-              onClick={() => setDue(undefined)}
-              className="inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs text-slate-400 hover:text-rose-500"
-            >
-              <X size={12} /> 清除到期
-            </button>
-          )}
-          {due && (
-            <Badge tone={dueDiff !== null && dueDiff < 0 ? 'rose' : dueDiff === 0 ? 'amber' : 'slate'}>
-              {dueLabel(due)}
-            </Badge>
-          )}
-          {project && (
-            <Badge tone="slate" className="gap-1">
-              <span className={cx('h-1.5 w-1.5 rounded-full', projColorCls(project.color).dot)} />
-              {project.emoji} {project.name}
-            </Badge>
-          )}
+            {due && (
+              <button
+                type="button"
+                onClick={() => setDue(undefined)}
+                className="inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs text-slate-400 transition hover:text-rose-500"
+              >
+                <X size={12} /> 清除到期
+              </button>
+            )}
+            {due && (
+              <Badge tone={dueDiff !== null && dueDiff < 0 ? 'rose' : dueDiff === 0 ? 'amber' : 'slate'}>
+                {dueLabel(due)}
+              </Badge>
+            )}
+            {project && (
+              <Badge tone="slate" className="gap-1">
+                <span className={cx('h-1.5 w-1.5 rounded-full', projColorCls(project.color).dot)} />
+                {project.emoji} {project.name}
+              </Badge>
+            )}
+          </div>
         </div>
 
         {/* 子任務 */}
-        <div className="space-y-2">
+        <div className="space-y-2.5">
           <div className="flex items-center justify-between">
-            <span className="flex items-center gap-1.5 text-xs font-medium text-slate-600 dark:text-slate-300">
-              <Check size={14} /> 子任務
-              {subtasks.length > 0 && (
-                <span className="tabular-nums text-slate-400">
-                  {subDone}/{subtasks.length}
-                </span>
-              )}
+            <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              <ListChecks size={14} /> 子任務
             </span>
+            {subtasks.length > 0 && (
+              <span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold tabular-nums text-slate-500 dark:bg-slate-700/60 dark:text-slate-400">
+                {subDone}/{subtasks.length}
+              </span>
+            )}
           </div>
           {subtasks.length > 0 && (
-            <ul className="space-y-1">
+            <ul className="space-y-0.5">
               {subtasks.map((s) => (
                 <li
                   key={s.id}
-                  className="group flex items-center gap-2 rounded-lg px-1 py-0.5"
+                  className="group flex items-center gap-2 rounded-xl px-1.5 py-1.5 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/50"
                 >
                   <GripVertical
                     size={13}
-                    className="shrink-0 text-slate-300 dark:text-slate-600"
+                    className="shrink-0 cursor-grab text-slate-300 dark:text-slate-600"
                   />
                   <input
                     type="checkbox"
                     checked={s.done}
                     onChange={() => toggleSub(s)}
                     aria-label={`${s.done ? '取消完成' : '完成'}子任務：${s.text}`}
-                    className="h-3.5 w-3.5 accent-[color:var(--accent)]"
+                    className="h-4 w-4 rounded accent-[color:var(--accent)]"
                   />
                   <span
                     className={cx(
-                      'flex-1 text-sm',
+                      'flex-1 text-sm transition-colors',
                       s.done
                         ? 'text-slate-400 line-through dark:text-slate-500'
                         : 'text-slate-700 dark:text-slate-200',
@@ -303,10 +314,11 @@ export function TaskEditor({
           <div className="flex gap-2">
             <Input
               id={subInputId}
+              icon={Plus}
               value={subDraft}
               onChange={(e) => setSubDraft(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && addSub()}
-              placeholder="加一個子任務…"
+              placeholder="拆解成更細嘅步驟…"
               className="flex-1"
             />
             <Button variant="secondary" icon={Plus} onClick={addSub}>
@@ -316,64 +328,68 @@ export function TaskEditor({
         </div>
 
         {/* 標籤 */}
-        <Field label="標籤">
-          <div className="space-y-2">
-            {task.meta.tags.length > 0 && (
-              <div className="flex flex-wrap gap-1.5">
-                {task.meta.tags.map((t) => (
-                  <span
-                    key={t}
-                    className="inline-flex items-center gap-1 rounded-md bg-accent-soft px-2 py-0.5 text-[11px] font-medium text-accent-strong dark:bg-accent/15 dark:text-accent"
+        <div className="space-y-2.5">
+          <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+            <Tag size={14} /> 標籤
+          </span>
+          {task.meta.tags.length > 0 && (
+            <div className="flex flex-wrap gap-1.5">
+              {task.meta.tags.map((t) => (
+                <span
+                  key={t}
+                  className="inline-flex items-center gap-1 rounded-md bg-accent-soft px-2 py-0.5 text-[11px] font-medium text-accent-strong dark:bg-accent/15 dark:text-accent"
+                >
+                  <Tag size={10} />
+                  {t}
+                  <button
+                    type="button"
+                    onClick={() => removeTag(t)}
+                    className="transition hover:text-rose-500"
+                    aria-label={`移除標籤 ${t}`}
                   >
-                    <Tag size={10} />
-                    {t}
-                    <button
-                      type="button"
-                      onClick={() => removeTag(t)}
-                      className="hover:text-rose-500"
-                      aria-label={`移除標籤 ${t}`}
-                    >
-                      <X size={11} />
-                    </button>
-                  </span>
-                ))}
-              </div>
-            )}
-            <Input
-              value={tagDraft}
-              onChange={(e) => setTagDraft(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault()
-                  addTag(tagDraft)
-                }
-              }}
-              placeholder="輸入標籤後按 Enter…"
-            />
-            {tagSuggest.length > 0 && (
-              <div className="flex flex-wrap gap-1.5">
-                {tagSuggest.map((t) => (
-                  <button key={t} type="button" onClick={() => addTag(t)}>
-                    <Badge tone="slate" className="hover:ring-accent/40">
-                      + {t}
-                    </Badge>
+                    <X size={11} />
                   </button>
-                ))}
-              </div>
-            )}
-          </div>
-        </Field>
+                </span>
+              ))}
+            </div>
+          )}
+          <Input
+            value={tagDraft}
+            onChange={(e) => setTagDraft(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault()
+                addTag(tagDraft)
+              }
+            }}
+            placeholder="輸入標籤後按 Enter…"
+          />
+          {tagSuggest.length > 0 && (
+            <div className="flex flex-wrap gap-1.5">
+              {tagSuggest.map((t) => (
+                <button key={t} type="button" onClick={() => addTag(t)}>
+                  <Badge tone="slate" className="transition hover:ring-accent/40">
+                    + {t}
+                  </Badge>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
 
         {/* 備註 */}
-        <Field label="備註">
+        <div className="space-y-2.5">
+          <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+            <StickyNote size={14} /> 備註
+          </span>
           <Textarea
             value={note}
             onChange={(e) => setNote(e.target.value)}
             onBlur={commitNote}
             placeholder="補充資料、連結、上下文…"
-            className="min-h-[80px]"
+            className="min-h-[90px]"
           />
-        </Field>
+        </div>
 
         <div className="flex items-center justify-between border-t border-slate-200 pt-4 dark:border-slate-700">
           <Button variant="ghost" icon={Trash2} onClick={askDelete} className="text-rose-500 hover:text-rose-600">
@@ -408,7 +424,7 @@ function QuickDue({
     <button
       type="button"
       onClick={onClick}
-      className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-600 transition hover:border-accent hover:text-accent dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+      className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-600 transition hover:border-accent/40 hover:bg-accent-soft hover:text-accent-strong dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-accent/15 dark:hover:text-accent"
     >
       <I size={13} />
       {label}

@@ -123,10 +123,10 @@ export default function StudentReport({
     >
       <div className="space-y-4">
         {/* 總覽 */}
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50/60 p-4 dark:border-slate-700 dark:bg-slate-800/40">
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-accent/25 bg-accent-soft/50 p-5 dark:border-accent/30 dark:bg-accent/10">
           <div>
-            <p className="text-xs text-slate-500 dark:text-slate-400">總成績</p>
-            <p className="flex items-baseline gap-2">
+            <p className="text-xs font-medium text-slate-500 dark:text-slate-400">總成績</p>
+            <p className="mt-0.5 flex items-baseline gap-2">
               <span
                 className={`text-4xl font-bold tabular-nums ${
                   band ? TONE_TEXT[band.tone] : 'text-slate-400'
@@ -140,7 +140,7 @@ export default function StudentReport({
           <div className="flex gap-5 text-center">
             <div>
               <p className="text-xs text-slate-500 dark:text-slate-400">班內名次</p>
-              <p className="text-lg font-semibold tabular-nums text-slate-700 dark:text-slate-200">
+              <p className="mt-0.5 text-lg font-semibold tabular-nums text-slate-700 dark:text-slate-200">
                 {rank == null ? '—' : `${rank}`}
                 <span className="text-sm font-normal text-slate-400">
                   {' '}
@@ -150,7 +150,7 @@ export default function StudentReport({
             </div>
             <div>
               <p className="text-xs text-slate-500 dark:text-slate-400">已交</p>
-              <p className="text-lg font-semibold tabular-nums text-slate-700 dark:text-slate-200">
+              <p className="mt-0.5 text-lg font-semibold tabular-nums text-slate-700 dark:text-slate-200">
                 {result.submitted}
                 <span className="text-sm font-normal text-slate-400">
                   {' '}
@@ -168,14 +168,14 @@ export default function StudentReport({
         </div>
 
         {/* 逐評估明細 */}
-        <div className="overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700">
+        <div className="overflow-hidden rounded-2xl border border-slate-200/80 dark:border-slate-700/60">
           <table className="w-full text-sm">
-            <thead className="bg-slate-50/80 text-xs text-slate-500 dark:bg-slate-800/60 dark:text-slate-400">
+            <thead className="border-b border-slate-200/80 bg-slate-50/80 text-xs uppercase tracking-wide text-slate-500 dark:border-slate-700/60 dark:bg-slate-800/60 dark:text-slate-400">
               <tr>
-                <th className="px-3 py-2 text-left font-semibold">評估</th>
-                <th className="px-3 py-2 text-center font-semibold">類型</th>
-                <th className="px-3 py-2 text-right font-semibold">得分</th>
-                <th className="px-3 py-2 text-right font-semibold">vs 班平均</th>
+                <th className="px-3 py-2.5 text-left font-semibold">評估</th>
+                <th className="px-3 py-2.5 text-center font-semibold">類型</th>
+                <th className="px-3 py-2.5 text-right font-semibold">得分</th>
+                <th className="px-3 py-2.5 text-right font-semibold">vs 班平均</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -185,7 +185,7 @@ export default function StudentReport({
                 const diff = p != null && av != null ? p - av : null
                 const t = p != null ? gradeOf(p, scale, bands).tone : 'slate'
                 return (
-                  <tr key={a.id}>
+                  <tr key={a.id} className="transition-colors hover:bg-slate-50/60 dark:hover:bg-slate-800/40">
                     <td className="px-3 py-2 text-slate-700 dark:text-slate-200">
                       {a.name}
                       {a.date && (

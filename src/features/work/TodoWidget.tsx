@@ -20,6 +20,7 @@ import {
   Tag,
   Trash2,
   X,
+  type LucideIcon,
 } from 'lucide-react'
 import { useCollection } from '../../lib/store'
 import { tasksCol } from '../../data/collections'
@@ -36,7 +37,6 @@ import {
   Modal,
   SectionTitle,
   SegmentedControl,
-  StatCard,
   Tabs,
   cx,
 } from '../../ui'
@@ -92,6 +92,81 @@ const SORT_LABEL: Record<SortMode, string> = {
   priority: '優先級',
   due: '到期',
   created: '建立',
+}
+
+// 統計磚分類色（淺底 + 深字 + 深色 /15；同設計系統一致）
+type StatTone = 'accent' | 'rose' | 'amber' | 'emerald' | 'slate'
+const STAT_CHIP: Record<StatTone, string> = {
+  accent: 'bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent',
+  rose: 'bg-rose-50 text-rose-600 dark:bg-rose-500/15 dark:text-rose-300',
+  amber: 'bg-amber-50 text-amber-600 dark:bg-amber-500/15 dark:text-amber-300',
+  emerald: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-300',
+  slate: 'bg-slate-100 text-slate-500 dark:bg-slate-700/60 dark:text-slate-300',
+}
+const STAT_VAL: Record<StatTone, string> = {
+  accent: 'text-accent-strong dark:text-accent',
+  rose: 'text-rose-600 dark:text-rose-400',
+  amber: 'text-slate-800 dark:text-slate-100',
+  emerald: 'text-slate-800 dark:text-slate-100',
+  slate: 'text-slate-800 dark:text-slate-100',
+}
+
+// 統計磚：圓角、分類色圖示 chip、可選 hover 微升（取代 generic StatCard）
+function MiniStat({
+  label, value, unit, hint, icon: Icon, tone, highlight, onClick,
+}: {
+  label: string
+  value: number | string
+  unit?: string
+  hint?: string
+  icon: LucideIcon
+  tone: StatTone
+  highlight?: boolean
+  onClick?: () => void
+}) {
+  const interactive = !!onClick
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={!interactive}
+      className={cx(
+        'group flex flex-col gap-2 rounded-2xl border p-3.5 text-left transition duration-200 sm:p-4',
+        highlight
+          ? 'border-accent/30 bg-accent-soft/60 dark:border-accent/40 dark:bg-accent/10'
+          : 'border-slate-200/80 bg-white shadow-xs dark:border-slate-700/60 dark:bg-slate-800 dark:shadow-none',
+        interactive
+          ? 'cursor-pointer hover:-translate-y-0.5 hover:shadow-md dark:hover:border-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40'
+          : 'cursor-default',
+      )}
+    >
+      <span className="flex items-center justify-between">
+        <span className="text-xs font-medium text-slate-500 dark:text-slate-400">{label}</span>
+        <span className={cx('flex h-7 w-7 items-center justify-center rounded-lg transition group-hover:scale-105', STAT_CHIP[tone])}>
+          <Icon size={15} />
+        </span>
+      </span>
+      <span>
+        <span className="flex items-baseline gap-1">
+          <span className={cx('text-2xl font-bold tabular-nums slashed-zero', STAT_VAL[tone])}>{value}</span>
+          {unit && <span className="text-sm font-normal text-slate-400">{unit}</span>}
+        </span>
+        {hint && <span className="mt-0.5 block truncate text-[11px] text-slate-400 dark:text-slate-500">{hint}</span>}
+      </span>
+    </button>
+  )
+}
+
+// 快速輸入語法提示 chip
+function SyntaxHint({ sym, label }: { sym: string; label: string }) {
+  return (
+    <span className="inline-flex items-center gap-1">
+      <code className="rounded bg-slate-200/70 px-1 py-px font-mono text-[10px] font-semibold text-slate-600 dark:bg-slate-700 dark:text-slate-300">
+        {sym}
+      </code>
+      {label}
+    </span>
+  )
 }
 
 export default function TodoWidget() {
@@ -384,7 +459,7 @@ export default function TodoWidget() {
         <Menu
           align="end"
           trigger={
-            <span className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200">
+            <span className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-slate-200/80 bg-white px-3 text-sm font-medium text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700/60 dark:bg-slate-800 dark:text-slate-200 dark:hover:border-slate-600">
               更多
               <ChevronRight size={14} className="rotate-90" />
             </span>
@@ -413,33 +488,36 @@ export default function TodoWidget() {
         />
       </div>
 
-      {/* 統計卡 */}
+      {/* 統計磚（呼吸感 · 分類色 chip · 可撳跳視圖）*/}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <StatCard
+        <MiniStat
           label="逾期"
           value={counts.overdue}
           unit="項"
           icon={Flag}
+          tone={counts.overdue > 0 ? 'rose' : 'slate'}
+          hint={counts.overdue > 0 ? '需要跟進' : '一切如常'}
           onClick={() => {
             setView('upcoming')
             setSearch('')
           }}
-          hint={counts.overdue > 0 ? '需要跟進' : '無逾期 👍'}
         />
-        <StatCard
+        <MiniStat
           label="今日到期"
           value={counts.todayDue}
           unit="項"
           icon={Sun}
+          tone="accent"
           highlight
+          hint={counts.todayDue > 0 ? '今日搞掂佢' : '今日好輕鬆'}
           onClick={() => setView('today')}
         />
-        <StatCard label="未完成" value={counts.active} unit="項" icon={CircleDashed} />
-        <StatCard label="已完成" value={counts.done} unit="項" icon={CheckCircle2} />
+        <MiniStat label="未完成" value={counts.active} unit="項" icon={CircleDashed} tone="amber" />
+        <MiniStat label="已完成" value={counts.done} unit="項" icon={CheckCircle2} tone="emerald" />
       </div>
 
-      {/* 快速輸入 */}
-      <div className="space-y-1.5">
+      {/* 快速輸入（圓潤、貼合、accent focus 環）*/}
+      <div className="space-y-2 rounded-2xl border border-slate-200/80 bg-slate-50/60 p-3 transition focus-within:border-accent/40 focus-within:bg-white dark:border-slate-700/60 dark:bg-slate-800/40 dark:focus-within:bg-slate-800">
         <div className="flex gap-2">
           <Input
             id={QUICK_INPUT_ID}
@@ -448,17 +526,17 @@ export default function TodoWidget() {
             onChange={(e) => setQuick(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && addQuick()}
             placeholder="新增待辦… 試吓「批改 5A 練習 !! #教學 @批改 +2」"
-            className="flex-1"
+            className="flex-1 border-transparent bg-white shadow-none dark:bg-slate-900/40"
           />
           <Button onClick={addQuick} icon={Plus}>
             加入
           </Button>
         </div>
-        <p className="px-1 text-[11px] text-slate-400 dark:text-slate-500">
-          <span className="font-medium text-slate-500 dark:text-slate-400">!</span> 優先級 ·{' '}
-          <span className="font-medium text-slate-500 dark:text-slate-400">#</span> 專案 ·{' '}
-          <span className="font-medium text-slate-500 dark:text-slate-400">@</span> 標籤 ·{' '}
-          <span className="font-medium text-slate-500 dark:text-slate-400">今日/聽日/+N</span> 到期
+        <p className="flex flex-wrap items-center gap-x-2 gap-y-1 px-1 text-[11px] text-slate-400 dark:text-slate-500">
+          <SyntaxHint sym="!" label="優先級" />
+          <SyntaxHint sym="#" label="專案" />
+          <SyntaxHint sym="@" label="標籤" />
+          <SyntaxHint sym="今日 / 聽日 / +N" label="到期" />
         </p>
       </div>
 
@@ -659,22 +737,32 @@ function TaskRow({
   const pm = PRIORITY_META[task.meta.priority]
   const due = task.meta.due
   const diff = due ? daysBetween(todayISO(), due) : null
-  const dueTone =
+  // 到期 chip 色調（逾期 rose / 今日 amber / 其餘柔和）
+  const dueChip =
     diff !== null && diff < 0
-      ? 'text-rose-500 dark:text-rose-400'
+      ? 'bg-rose-50 text-rose-600 dark:bg-rose-500/15 dark:text-rose-300'
       : diff === 0
-        ? 'text-amber-600 dark:text-amber-400'
-        : 'text-slate-400 dark:text-slate-500'
+        ? 'bg-amber-50 text-amber-600 dark:bg-amber-500/15 dark:text-amber-300'
+        : 'bg-slate-100 text-slate-500 dark:bg-slate-700/50 dark:text-slate-400'
   const subDone = task.subtasks.filter((s) => s.done).length
+  const hot = task.meta.priority <= 2 && !task.done
 
   return (
     <div
       className={cx(
-        'group flex items-start gap-3 px-3 py-2.5 transition-colors sm:px-4',
+        'group relative flex items-start gap-3 py-2.5 pl-4 pr-3 transition-colors sm:pl-5',
         selected && 'bg-accent-soft/60 dark:bg-accent/10',
         !selecting && 'hover:bg-slate-50 dark:hover:bg-slate-800/50',
       )}
     >
+      {/* 高優先級任務：左側色條（柔和提示緊要度，唔搶眼）*/}
+      {hot && (
+        <span
+          aria-hidden="true"
+          className={cx('absolute inset-y-1.5 left-0 w-1 rounded-full', pm.dot)}
+        />
+      )}
+
       {selecting ? (
         <button
           type="button"
@@ -696,12 +784,12 @@ function TaskRow({
           onClick={() => onToggle(task)}
           aria-label={task.done ? '標記未完成' : '標記完成'}
           className={cx(
-            'mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition',
+            'mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition duration-200 active:scale-90',
             task.done
-              ? 'border-emerald-500 bg-emerald-500 text-white'
+              ? 'border-emerald-500 bg-emerald-500 text-white shadow-sm shadow-emerald-500/30'
               : task.meta.priority <= 2
                 ? cx('hover:bg-slate-50 dark:hover:bg-slate-700', pm.flag.replace('text-', 'border-'))
-                : 'border-slate-300 hover:border-accent dark:border-slate-600',
+                : 'border-slate-300 hover:border-accent hover:bg-accent-soft/40 dark:border-slate-600',
           )}
         >
           {task.done && <Check size={12} strokeWidth={3} />}
@@ -714,49 +802,49 @@ function TaskRow({
         className="min-w-0 flex-1 text-left"
       >
         <div className="flex items-center gap-1.5">
-          {task.meta.priority <= 2 && !task.done && (
-            <Flag size={12} className={cx('shrink-0', pm.flag)} />
-          )}
+          {hot && <Flag size={12} className={cx('shrink-0', pm.flag)} />}
           <span
             className={cx(
-              'truncate text-sm',
+              'truncate text-sm transition-colors',
               task.done
                 ? 'text-slate-400 line-through dark:text-slate-500'
-                : 'text-slate-800 dark:text-slate-100',
+                : 'font-medium text-slate-800 dark:text-slate-100',
             )}
           >
             {task.text}
           </span>
         </div>
-        {/* meta 行 */}
-        <div className="mt-0.5 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[11px]">
-          {due && (
-            <span className={cx('inline-flex items-center gap-1 tabular-nums', dueTone)}>
-              <CalendarDays size={11} />
-              {dueLabel(due)}
-            </span>
-          )}
-          {project && (
-            <span className="inline-flex items-center gap-1 text-slate-400 dark:text-slate-500">
-              <span className={cx('h-1.5 w-1.5 rounded-full', projColorCls(project.color).dot)} />
-              {project.name}
-            </span>
-          )}
-          {task.subtasks.length > 0 && (
-            <span className="inline-flex items-center gap-1 tabular-nums text-slate-400 dark:text-slate-500">
-              <ListChecks size={11} />
-              {subDone}/{task.subtasks.length}
-            </span>
-          )}
-          {task.meta.tags.slice(0, 3).map((t) => (
-            <span key={t} className="text-slate-400 dark:text-slate-500">
-              #{t}
-            </span>
-          ))}
-          {task.meta.note && (
-            <Pencil size={10} className="text-slate-300 dark:text-slate-600" />
-          )}
-        </div>
+        {/* meta 行：到期 / 專案 / 子任務 / 標籤 —— 圓潤 tone chip */}
+        {(due || project || task.subtasks.length > 0 || task.meta.tags.length > 0 || task.meta.note) && (
+          <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[11px]">
+            {due && (
+              <span className={cx('inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 font-medium tabular-nums', dueChip)}>
+                <CalendarDays size={11} />
+                {dueLabel(due)}
+              </span>
+            )}
+            {project && (
+              <span className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-1.5 py-0.5 font-medium text-slate-500 dark:bg-slate-700/50 dark:text-slate-300">
+                <span className={cx('h-1.5 w-1.5 rounded-full', projColorCls(project.color).dot)} />
+                {project.name}
+              </span>
+            )}
+            {task.subtasks.length > 0 && (
+              <span className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-1.5 py-0.5 tabular-nums text-slate-500 dark:bg-slate-700/50 dark:text-slate-300">
+                <ListChecks size={11} />
+                {subDone}/{task.subtasks.length}
+              </span>
+            )}
+            {task.meta.tags.slice(0, 3).map((t) => (
+              <span key={t} className="text-slate-400 dark:text-slate-500">
+                #{t}
+              </span>
+            ))}
+            {task.meta.note && (
+              <Pencil size={10} className="text-slate-300 dark:text-slate-600" />
+            )}
+          </div>
+        )}
       </button>
 
       {!selecting && (
@@ -773,16 +861,18 @@ function TaskRow({
   )
 }
 
-// 一組（標題 + 任務）
+// 一組（標題 + 任務）—— 溫和 tone 圓點標頭 + 計數膠囊 + 卡片裝載
 function Group({
   title,
   tone = 'slate',
   count,
+  icon: Icon,
   children,
 }: {
   title: string
   tone?: 'slate' | 'rose' | 'amber' | 'accent'
   count: number
+  icon?: LucideIcon
   children: ReactNode
 }) {
   const toneCls =
@@ -793,14 +883,29 @@ function Group({
         : tone === 'accent'
           ? 'text-accent-strong dark:text-accent'
           : 'text-slate-500 dark:text-slate-400'
+  const dotCls =
+    tone === 'rose'
+      ? 'bg-rose-500'
+      : tone === 'amber'
+        ? 'bg-amber-500'
+        : tone === 'accent'
+          ? 'bg-accent'
+          : 'bg-slate-300 dark:bg-slate-600'
   if (count === 0) return null
   return (
-    <div className="space-y-1.5">
+    <div className="space-y-2">
       <div className="flex items-center gap-2 px-1">
+        {Icon ? (
+          <Icon size={14} className={toneCls} />
+        ) : (
+          <span className={cx('h-2 w-2 rounded-full', dotCls)} />
+        )}
         <h3 className={cx('text-xs font-semibold uppercase tracking-wider', toneCls)}>
           {title}
         </h3>
-        <span className="tabular-nums text-xs text-slate-400">{count}</span>
+        <span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold tabular-nums text-slate-500 dark:bg-slate-700/60 dark:text-slate-400">
+          {count}
+        </span>
       </div>
       <Card className="divide-y divide-slate-100 overflow-hidden dark:divide-slate-700/60">
         {children}
@@ -840,25 +945,25 @@ function TodayView(props: {
   if (empty)
     return (
       <EmptyState
-        icon={CheckCircle2}
-        title="今日清晒 🎉"
-        hint="冇逾期或今日到期嘅任務。喺上面快速輸入加一項，或者去「之後」睇將來嘅任務。"
+        icon={Sun}
+        title="今日好清爽 ☀️"
+        hint="冇逾期或今日到期嘅任務。喺上面快速輸入加一項，或者去「之後」睇將來嘅安排。"
       />
     )
 
   return (
-    <div className="space-y-4">
-      <Group title="逾期" tone="rose" count={overdue.length}>
+    <div className="space-y-5">
+      <Group title="逾期" tone="rose" icon={Flag} count={overdue.length}>
         {overdue.map((t) => (
           <TaskRow key={t.id} task={t} project={projOf(t)} {...rowProps(props, t.id)} />
         ))}
       </Group>
-      <Group title="今日" tone="amber" count={todayList.length}>
+      <Group title="今日" tone="amber" icon={Sun} count={todayList.length}>
         {todayList.map((t) => (
           <TaskRow key={t.id} task={t} project={projOf(t)} {...rowProps(props, t.id)} />
         ))}
       </Group>
-      <Group title="今日完成" count={doneToday.length}>
+      <Group title="今日完成" icon={CheckCircle2} count={doneToday.length}>
         {doneToday.map((t) => (
           <TaskRow key={t.id} task={t} project={projOf(t)} {...rowProps(props, t.id)} />
         ))}
@@ -899,39 +1004,39 @@ function UpcomingView(props: {
     return (
       <EmptyState
         icon={CalendarDays}
-        title="冇未完成嘅任務"
+        title="日程一片空白"
         hint="所有任務都搞掂咗，或者試吓喺上面加一項。"
       />
     )
 
   return (
-    <div className="space-y-4">
-      <Group title="逾期" tone="rose" count={buckets.overdue.length}>
+    <div className="space-y-5">
+      <Group title="逾期" tone="rose" icon={Flag} count={buckets.overdue.length}>
         {buckets.overdue.map((t) => (
           <TaskRow key={t.id} task={t} project={projOf(t)} {...rowProps(props, t.id)} />
         ))}
       </Group>
-      <Group title="今日" tone="amber" count={buckets.today.length}>
+      <Group title="今日" tone="amber" icon={Sun} count={buckets.today.length}>
         {buckets.today.map((t) => (
           <TaskRow key={t.id} task={t} project={projOf(t)} {...rowProps(props, t.id)} />
         ))}
       </Group>
-      <Group title="聽日" tone="accent" count={buckets.tomorrow.length}>
+      <Group title="聽日" tone="accent" icon={CalendarDays} count={buckets.tomorrow.length}>
         {buckets.tomorrow.map((t) => (
           <TaskRow key={t.id} task={t} project={projOf(t)} {...rowProps(props, t.id)} />
         ))}
       </Group>
-      <Group title="未來 7 日" count={buckets.soon.length}>
+      <Group title="未來 7 日" icon={CalendarDays} count={buckets.soon.length}>
         {buckets.soon.map((t) => (
           <TaskRow key={t.id} task={t} project={projOf(t)} {...rowProps(props, t.id)} />
         ))}
       </Group>
-      <Group title="之後" count={buckets.later.length}>
+      <Group title="之後" icon={CalendarDays} count={buckets.later.length}>
         {buckets.later.map((t) => (
           <TaskRow key={t.id} task={t} project={projOf(t)} {...rowProps(props, t.id)} />
         ))}
       </Group>
-      <Group title="無到期" count={buckets.none.length}>
+      <Group title="無到期" icon={InboxIcon} count={buckets.none.length}>
         {buckets.none.map((t) => (
           <TaskRow key={t.id} task={t} project={projOf(t)} {...rowProps(props, t.id)} />
         ))}
@@ -1066,8 +1171,8 @@ function AllView(props: {
         {visible.length === 0 ? (
           <EmptyState
             icon={InboxIcon}
-            title={activeProject === 'inbox' ? '收件匣係空嘅' : '呢度未有任務'}
-            hint="喺上面快速輸入加一項，或者揀第個專案。"
+            title={activeProject === 'inbox' ? '收件匣空空如也' : '呢個專案仲未有任務'}
+            hint="喺上面快速輸入加一項，或者揀返第個專案睇睇。"
           />
         ) : (
           <Card className="divide-y divide-slate-100 overflow-hidden dark:divide-slate-700/60">
@@ -1196,7 +1301,6 @@ function StatsView({ tasks, projects }: { tasks: FullTask[]; projects: Project[]
 
   // 近 range 日完成總數
   const completedInRange = trend.reduce((s, d) => s + d.completed, 0)
-  const createdInRange = trend.reduce((s, d) => s + d.created, 0)
 
   // 優先級占比（未完成）
   const prioSegments = ([1, 2, 3, 4] as Priority[])
@@ -1232,35 +1336,33 @@ function StatsView({ tasks, projects }: { tasks: FullTask[]; projects: Project[]
     return (
       <EmptyState
         icon={BarChart3}
-        title="仲未有資料"
-        hint="加幾項待辦、完成佢哋，呢度就會出生產力統計。"
+        title="統計仲係一張白紙"
+        hint="加幾項待辦、逐一完成，呢度就會慢慢長出你嘅生產力走勢同熱力圖。"
       />
     )
 
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <StatCard
+        <MiniStat
           label="連續完成"
           value={streak}
           unit="日"
           icon={Sparkles}
+          tone="accent"
           highlight
           hint={streak > 0 ? '繼續保持！' : '今日完成一項就開始'}
         />
-        <StatCard
+        <MiniStat
           label="完成率"
           value={completionRate}
           unit="%"
           icon={CheckCircle2}
-          trend={{
-            value: `${completedInRange}`,
-            dir: completedInRange >= createdInRange ? 'up' : 'down',
-          }}
+          tone="emerald"
           hint={`近 ${range} 日完成 ${completedInRange}`}
         />
-        <StatCard label="進行中" value={active.length} unit="項" icon={CircleDashed} />
-        <StatCard label="累計完成" value={completed.length} unit="項" icon={ListChecks} />
+        <MiniStat label="進行中" value={active.length} unit="項" icon={CircleDashed} tone="amber" />
+        <MiniStat label="累計完成" value={completed.length} unit="項" icon={ListChecks} tone="slate" />
       </div>
 
       <Card padded>

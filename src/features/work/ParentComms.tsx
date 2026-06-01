@@ -485,13 +485,18 @@ export default function ParentComms() {
     <div className="mx-auto max-w-5xl space-y-5 p-4 sm:p-6">
       {/* 標題 */}
       <header className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100 sm:text-2xl">
-            家長 / 學生溝通
-          </h1>
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-            記錄每次聯絡、追蹤跟進事項，掌握每位學生嘅溝通脈絡。
-          </p>
+        <div className="flex items-start gap-3">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
+            <MessageCircle size={20} />
+          </span>
+          <div>
+            <h1 className="text-xl font-semibold tracking-tight text-slate-900 dark:text-slate-100 sm:text-2xl">
+              家長 / 學生溝通
+            </h1>
+            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+              記錄每次聯絡、追蹤跟進事項，掌握每位學生嘅溝通脈絡。
+            </p>
+          </div>
         </div>
         <div className="flex shrink-0 items-center gap-2">
           <Menu
@@ -1105,7 +1110,13 @@ function TimelineView({
     <div className="space-y-5">
       {groups.map(([date, list]) => (
         <div key={date}>
-          <div className="mb-2 flex items-center gap-2">
+          <div className="mb-2.5 flex items-center gap-2">
+            <span
+              className={cx(
+                'h-2 w-2 shrink-0 rounded-full',
+                date === today ? 'bg-accent ring-4 ring-accent/15' : 'bg-slate-300 dark:bg-slate-600',
+              )}
+            />
             <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
               {longDateLabel(date)}
             </h3>
@@ -1180,11 +1191,11 @@ function TimelineCard({
             </Badge>
             <MetaBadges meta={meta} />
           </div>
-          <p className="mt-1.5 whitespace-pre-wrap text-sm text-slate-700 dark:text-slate-200">
+          <p className="mt-1.5 whitespace-pre-wrap text-sm leading-relaxed text-slate-700 dark:text-slate-200">
             {comm.summary}
           </p>
           {comm.followUp && (
-            <div className="mt-2 flex flex-wrap items-center gap-2 rounded-lg bg-amber-50/60 px-2.5 py-1.5 dark:bg-amber-500/10">
+            <div className="mt-2.5 flex flex-wrap items-center gap-2 rounded-xl border border-amber-200/60 bg-amber-50/60 px-3 py-2 dark:border-amber-500/20 dark:bg-amber-500/10">
               <FollowUpChip meta={meta} today={today} />
               {meta?.followUpNote && (
                 <span className="text-xs text-amber-700 dark:text-amber-300">

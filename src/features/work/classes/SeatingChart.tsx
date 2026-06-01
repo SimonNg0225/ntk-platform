@@ -1,5 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Dices, Eraser, Minus, Plus, Shuffle, Users } from 'lucide-react'
+import {
+  Dices,
+  Eraser,
+  Hand,
+  Minus,
+  Plus,
+  Presentation,
+  Shuffle,
+  Sparkles,
+  Users,
+} from 'lucide-react'
 import type { Student } from '../../../data/types'
 import {
   Badge,
@@ -39,8 +49,8 @@ export default function SeatingChart({
     return (
       <EmptyState
         icon={Users}
-        title="班入面仲未有學生"
-        hint="先喺「名冊」分頁加入學生，先可以排座位。"
+        title="未有學生，未能排位"
+        hint="先去「名冊」分頁加幾位學生入嚟，就可以喺度砌座位、隨機分組同抽點名。"
       />
     )
 
@@ -186,9 +196,11 @@ function SeatGrid({
 
   return (
     <div className="space-y-3">
-      <p className="text-center text-xs text-slate-400 dark:text-slate-500">
-        ── 黑板 / 講台 ──
-      </p>
+      {/* 黑板 / 講台 */}
+      <div className="mx-auto flex w-full max-w-md items-center justify-center gap-2 rounded-2xl bg-gradient-to-b from-slate-700 to-slate-800 py-2.5 text-xs font-medium tracking-wide text-slate-200 shadow-sm dark:from-slate-700/80 dark:to-slate-900">
+        <Presentation size={14} className="text-slate-400" />
+        黑板 / 講台
+      </div>
       <div
         className="grid gap-2"
         style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}
@@ -203,16 +215,24 @@ function SeatGrid({
                 type="button"
                 onClick={() => onSeatClick(stu?.id ?? null, idx)}
                 className={cx(
-                  'flex aspect-[5/4] flex-col items-center justify-center gap-0.5 rounded-lg border p-1 text-center transition',
+                  'relative flex aspect-[5/4] flex-col items-center justify-center gap-0.5 rounded-xl border p-1 text-center transition duration-200',
                   stu
                     ? on
-                      ? 'border-accent bg-accent text-white shadow-sm'
-                      : 'border-slate-200 bg-white text-slate-700 hover:border-accent/50 hover:bg-accent-soft dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-accent/15'
+                      ? 'border-accent bg-accent text-white shadow-md shadow-accent/30'
+                      : 'border-slate-200/80 bg-white text-slate-700 hover:-translate-y-0.5 hover:border-accent/50 hover:bg-accent-soft hover:shadow-sm dark:border-slate-700/60 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-accent/15'
                     : 'border-dashed border-slate-200 bg-slate-50/60 text-slate-300 hover:border-accent/40 hover:bg-accent-soft/50 dark:border-slate-700 dark:bg-slate-800/40 dark:text-slate-600',
                 )}
               >
                 {stu ? (
                   <>
+                    <span
+                      className={cx(
+                        'absolute left-1 top-1 text-[8px] font-semibold tabular-nums',
+                        on ? 'text-white/60' : 'text-slate-300 dark:text-slate-600',
+                      )}
+                    >
+                      {idx + 1}
+                    </span>
                     <span
                       className={cx(
                         'flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-semibold',
@@ -245,8 +265,16 @@ function SeatGrid({
           }),
         )}
       </div>
-      <div className="flex items-center justify-between">
-        <span className="text-xs text-slate-400 dark:text-slate-500">
+      <div className="flex items-center justify-between gap-2">
+        <span
+          className={cx(
+            'inline-flex items-center gap-1.5 text-xs transition-colors',
+            picked
+              ? 'font-medium text-accent-strong dark:text-accent'
+              : 'text-slate-400 dark:text-slate-500',
+          )}
+        >
+          <Hand size={13} />
           {picked ? '揀另一個座位即可交換 / 移動' : '點一位學生開始排位'}
         </span>
         <Button variant="ghost" size="sm" icon={Eraser} onClick={reset}>
@@ -273,18 +301,30 @@ function GroupMaker({ students }: { students: Student[] }) {
         </Button>
       </div>
       {groups.length === 0 ? (
-        <p className="py-6 text-center text-sm text-slate-400 dark:text-slate-500">
-          撳「隨機分組」即時將 {students.length} 位學生平均分組
-        </p>
+        <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-slate-50/60 px-6 py-10 text-center dark:border-slate-700 dark:bg-slate-800/40">
+          <span className="flex h-11 w-11 items-center justify-center rounded-full bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
+            <Shuffle size={20} />
+          </span>
+          <p className="mt-3 text-sm text-slate-500 dark:text-slate-400">
+            撳「隨機分組」即時將
+            <span className="mx-1 font-semibold tabular-nums text-slate-700 dark:text-slate-200">
+              {students.length}
+            </span>
+            位學生平均分組
+          </p>
+        </div>
       ) : (
         <div className="grid gap-3 sm:grid-cols-2">
           {groups.map((g, i) => (
             <div
               key={i}
-              className="rounded-xl border border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-800"
+              className="rounded-2xl border border-slate-200/80 bg-white p-3.5 shadow-xs transition duration-200 hover:shadow-md dark:border-slate-700/60 dark:bg-slate-800 dark:shadow-none"
             >
-              <div className="mb-2 flex items-center justify-between">
-                <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+              <div className="mb-2.5 flex items-center justify-between">
+                <span className="flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-200">
+                  <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-accent-soft text-xs font-bold tabular-nums text-accent-strong dark:bg-accent/15 dark:text-accent">
+                    {i + 1}
+                  </span>
                   第 {i + 1} 組
                 </span>
                 <Badge tone="accent">{g.length} 人</Badge>
@@ -293,8 +333,11 @@ function GroupMaker({ students }: { students: Student[] }) {
                 {g.map((s) => (
                   <span
                     key={s.id}
-                    className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2 py-0.5 text-xs text-slate-600 dark:bg-slate-700/60 dark:text-slate-300"
+                    className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 py-0.5 pl-1 pr-2.5 text-xs text-slate-600 dark:bg-slate-700/60 dark:text-slate-300"
                   >
+                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white text-[9px] font-semibold text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+                      {initials(s.name)}
+                    </span>
                     {s.name}
                   </span>
                 ))}
@@ -348,18 +391,19 @@ function RandomPicker({ students }: { students: Student[] }) {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col items-center gap-3 rounded-xl border border-slate-200 bg-gradient-to-b from-white to-slate-50 py-8 dark:border-slate-700 dark:from-slate-800 dark:to-slate-800/60">
+      <div className="relative flex flex-col items-center gap-3 overflow-hidden rounded-2xl border border-slate-200/80 bg-gradient-to-b from-white to-slate-50 py-9 dark:border-slate-700/60 dark:from-slate-800 dark:to-slate-800/50">
+        <div className="pointer-events-none absolute -right-10 -top-12 h-36 w-36 rounded-full bg-accent/5 blur-2xl dark:bg-accent/10" />
         {picked ? (
           <>
             <span
               className={cx(
-                'flex h-16 w-16 items-center justify-center rounded-full bg-accent-soft text-2xl font-bold text-accent-strong transition dark:bg-accent/15 dark:text-accent',
+                'relative flex h-20 w-20 items-center justify-center rounded-full bg-accent-soft text-2xl font-bold text-accent-strong ring-4 ring-accent/10 transition dark:bg-accent/15 dark:text-accent dark:ring-accent/20',
                 rolling && 'animate-pulse',
               )}
             >
               {initials(picked.name)}
             </span>
-            <div className="text-center">
+            <div className="relative text-center">
               <p className="text-xl font-bold text-slate-800 dark:text-slate-100">
                 {picked.name}
               </p>
@@ -371,11 +415,16 @@ function RandomPicker({ students }: { students: Student[] }) {
             </div>
           </>
         ) : (
-          <p className="text-sm text-slate-400 dark:text-slate-500">
-            撳下面個掣，隨機抽一位同學
-          </p>
+          <div className="relative flex flex-col items-center gap-2 text-center">
+            <span className="flex h-14 w-14 items-center justify-center rounded-full bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
+              <Sparkles size={24} />
+            </span>
+            <p className="text-sm text-slate-500 dark:text-slate-400">
+              撳下面個掣，隨機抽一位同學
+            </p>
+          </div>
         )}
-        <Button icon={Dices} onClick={draw} loading={rolling}>
+        <Button className="relative" icon={Dices} onClick={draw} loading={rolling}>
           {pool.length === 0 ? '重新開始一輪' : '抽一位'}
         </Button>
       </div>

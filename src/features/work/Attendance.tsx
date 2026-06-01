@@ -107,8 +107,8 @@ export default function Attendance() {
         <Header />
         <EmptyState
           icon={School}
-          title="未有班別"
-          hint="請先去「班別管理」新增班別，先可以點名。"
+          title="由第一班開始"
+          hint="先去「班別管理」開好班別，呢度就可以逐日點名同睇出席趨勢。"
         />
       </div>
     )
@@ -118,7 +118,7 @@ export default function Attendance() {
     <div className="mx-auto max-w-5xl space-y-5 p-4 sm:p-6">
       <Header />
 
-      <div className="space-y-3">
+      <div className="space-y-3 rounded-3xl border border-slate-200/80 bg-white p-3 shadow-xs dark:border-slate-700/60 dark:bg-slate-800 dark:shadow-none">
         <Pills
           options={classes.map((c) => ({
             id: c.id,
@@ -143,14 +143,18 @@ export default function Attendance() {
 
 function Header() {
   return (
-    <header className="space-y-1">
-      <h1 className="flex items-center gap-2 text-xl font-semibold text-slate-900 dark:text-slate-100 sm:text-2xl">
-        <CalendarCheck className="text-accent" size={24} />
-        點名 / 出席
-      </h1>
-      <p className="text-sm text-slate-500 dark:text-slate-400">
-        逐日點名、月度點名冊、出席率趨勢同連續缺席提示——對齊學校考勤系統。
-      </p>
+    <header className="flex items-start gap-3">
+      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
+        <CalendarCheck size={22} />
+      </span>
+      <div>
+        <h1 className="text-xl font-semibold tracking-tight text-slate-800 dark:text-slate-100 sm:text-2xl">
+          點名 / 出席
+        </h1>
+        <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
+          逐日點名、月度點名冊、出席率趨勢同連續缺席提示——對齊學校考勤系統。
+        </p>
+      </div>
     </header>
   )
 }
@@ -320,8 +324,8 @@ function RollCall({ classId }: { classId: string }) {
         <DateNav date={date} setDate={setDate} />
         <EmptyState
           icon={GraduationCap}
-          title="此班別未有學生"
-          hint="請去「班別管理 / 成績管理」加入學生，先可以點名。"
+          title="呢班仲未有學生"
+          hint="去「班別管理 / 成績管理」加入名單，返嚟就可以開始點名。"
         />
       </>
     )
@@ -351,7 +355,7 @@ function RollCall({ classId }: { classId: string }) {
             hint={`已點 ${markedCount}/${classStudents.length}`}
           />
         </div>
-        <Card className="p-3">
+        <Card className="rounded-2xl p-3.5">
           <div className="mb-1.5 flex items-center justify-between text-xs">
             <span className="font-medium text-slate-600 dark:text-slate-300">
               點名進度
@@ -413,7 +417,7 @@ function RollCall({ classId }: { classId: string }) {
                 note.reason?.trim())
             )
             return (
-              <Card key={s.id} className="p-3">
+              <Card key={s.id} hover className="rounded-2xl p-3.5">
                 <li className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div className="flex min-w-0 items-center gap-3">
                     <div className="min-w-0">
@@ -508,7 +512,7 @@ function DateNav({
   const isToday = date === todayKey()
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <div className="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-white p-1 dark:border-slate-700 dark:bg-slate-800">
+      <div className="inline-flex items-center gap-1 rounded-2xl border border-slate-200/80 bg-white p-1 shadow-xs dark:border-slate-700/60 dark:bg-slate-800 dark:shadow-none">
         <IconButton label="前一日" onClick={() => setDate(shiftKey(date, -1))}>
           <ChevronLeft size={18} />
         </IconButton>
@@ -740,8 +744,8 @@ function Register({ classId, className }: { classId: string; className: string }
     return (
       <EmptyState
         icon={GraduationCap}
-        title="此班別未有學生"
-        hint="請去「班別管理 / 成績管理」加入學生。"
+        title="呢班仲未有學生"
+        hint="去「班別管理 / 成績管理」加入名單，呢度就會郁起嚟。"
       />
     )
   }
@@ -752,7 +756,7 @@ function Register({ classId, className }: { classId: string; className: string }
     <div className="space-y-4">
       {/* 月份導航 + 操作 */}
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-white p-1 dark:border-slate-700 dark:bg-slate-800">
+        <div className="inline-flex items-center gap-1 rounded-2xl border border-slate-200/80 bg-white p-1 shadow-xs dark:border-slate-700/60 dark:bg-slate-800 dark:shadow-none">
           <IconButton label="上個月" onClick={() => shiftMonth(-1)}>
             <ChevronLeft size={18} />
           </IconButton>
@@ -793,22 +797,22 @@ function Register({ classId, className }: { classId: string; className: string }
       </div>
 
       {/* 圖例 */}
-      <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
-        <span className="inline-flex items-center gap-1.5">
-          <span className="flex h-5 w-5 items-center justify-center rounded text-[11px] font-semibold text-accent-strong dark:text-accent">
-            ✓
+      <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-50 px-2.5 py-1 dark:bg-slate-800/60">
+          <span className={cx('flex h-5 w-5 items-center justify-center rounded-md text-[11px] font-semibold', STATUS_STYLE.present.cell)}>
+            {STATUS_GLYPH.present}
           </span>
           出席
         </span>
-        <span className="inline-flex items-center gap-1.5">
-          <span className="flex h-5 w-5 items-center justify-center rounded text-[11px] font-semibold text-amber-600 dark:text-amber-300">
-            L
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-50 px-2.5 py-1 dark:bg-slate-800/60">
+          <span className={cx('flex h-5 w-5 items-center justify-center rounded-md text-[11px] font-semibold', STATUS_STYLE.late.cell)}>
+            {STATUS_GLYPH.late}
           </span>
           遲到
         </span>
-        <span className="inline-flex items-center gap-1.5">
-          <span className="flex h-5 w-5 items-center justify-center rounded text-[11px] font-semibold text-rose-600 dark:text-rose-300">
-            ✕
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-50 px-2.5 py-1 dark:bg-slate-800/60">
+          <span className={cx('flex h-5 w-5 items-center justify-center rounded-md text-[11px] font-semibold', STATUS_STYLE.absent.cell)}>
+            {STATUS_GLYPH.absent}
           </span>
           缺席
         </span>
@@ -938,8 +942,8 @@ function Analytics({ classId, className }: { classId: string; className: string 
     return (
       <EmptyState
         icon={GraduationCap}
-        title="此班別未有學生"
-        hint="請去「班別管理 / 成績管理」加入學生。"
+        title="呢班仲未有學生"
+        hint="去「班別管理 / 成績管理」加入名單，呢度就會郁起嚟。"
       />
     )
   }
@@ -995,8 +999,8 @@ function Analytics({ classId, className }: { classId: string; className: string 
         <EmptyState
           art="empty-attendance"
           icon={LineChart}
-          title="呢段期間未有點名記錄"
-          hint="去「點名」分頁開始點名，呢度就會自動整理出席率趨勢同排行。"
+          title="呢排未有點名記錄"
+          hint="去「點名」分頁開始點名，呢度就會自動畫出出席率趨勢、預警同排行。"
         />
       ) : (
         <>
@@ -1021,20 +1025,21 @@ function Analytics({ classId, className }: { classId: string; className: string 
           </div>
 
           {/* 趨勢圖 */}
-          <Card className="p-4">
+          <Card className="rounded-3xl p-5">
             <SectionTitle icon={LineChart}>每日出席率趨勢</SectionTitle>
             <TrendChart points={trend} />
           </Card>
 
           {/* 預警 */}
-          <Card className="p-4">
+          <Card className="rounded-3xl p-5">
             <SectionTitle icon={TriangleAlert} description="連續缺席 ≥ 2 次或出席率 < 80%">
               需要關注
             </SectionTitle>
             {alerts.length === 0 ? (
-              <p className="py-2 text-sm text-slate-400 dark:text-slate-500">
-                暫時冇學生觸發關注條件，全班出席良好。
-              </p>
+              <div className="flex items-center gap-2 rounded-2xl bg-emerald-50/60 px-3 py-2.5 text-sm text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300">
+                <CalendarCheck size={16} />
+                暫時冇人觸發關注條件，全班出席企穩。
+              </div>
             ) : (
               <ul className="space-y-2">
                 {alerts.map(({ student, t }) => (
@@ -1069,7 +1074,7 @@ function Analytics({ classId, className }: { classId: string; className: string 
           </Card>
 
           {/* 個人排行（撳一行睇個別摘要） */}
-          <Card className="p-4">
+          <Card className="rounded-3xl p-5">
             <SectionTitle
               icon={Users}
               description="按出席率排序；撳一行睇個別學生摘要"
@@ -1087,7 +1092,18 @@ function Analytics({ classId, className }: { classId: string; className: string 
                   >
                     <div className="mb-1 flex items-center justify-between gap-2 text-sm">
                       <span className="flex min-w-0 items-center gap-2">
-                        <span className="w-5 shrink-0 text-right text-xs tabular-nums text-slate-400">
+                        <span
+                          className={cx(
+                            'flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[11px] font-bold tabular-nums',
+                            i === 0
+                              ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300'
+                              : i === 1
+                                ? 'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300'
+                                : i === 2
+                                  ? 'bg-orange-100 text-orange-700 dark:bg-orange-500/15 dark:text-orange-300'
+                                  : 'text-slate-400',
+                          )}
+                        >
                           {i + 1}
                         </span>
                         <span className="truncate font-medium text-slate-700 group-hover:text-slate-900 dark:text-slate-200 dark:group-hover:text-slate-50">
@@ -1388,7 +1404,7 @@ function WeekdayBreakdown({ records }: { records: AttendanceRecord[] }) {
   if (visible.length === 0) return null
 
   return (
-    <Card className="p-4">
+    <Card className="rounded-3xl p-5">
       <SectionTitle icon={CalendarDays} description="睇吓邊日最多遲到 / 缺席">
         星期分佈
       </SectionTitle>

@@ -235,7 +235,7 @@ export default function NoteEditor({
         </>
       }
     >
-      <div className="space-y-4">
+      <div className="space-y-5">
         {/* 標題 + 類型 */}
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
           <div className="sm:col-span-2">
@@ -262,8 +262,8 @@ export default function NoteEditor({
           </Field>
         </div>
 
-        {/* 日期 / 時間 / 時長 / 地點 */}
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        {/* 日期 / 時間 / 時長 / 地點（一組柔和卡）*/}
+        <div className="grid grid-cols-2 gap-3 rounded-2xl border border-slate-200/80 p-4 dark:border-slate-700/60 sm:grid-cols-4">
           <Field label="日期">
             <Input
               type="date"
@@ -300,7 +300,7 @@ export default function NoteEditor({
         {/* 出席者 */}
         <div>
           <SectionTitle icon={Users}>出席者</SectionTitle>
-          <div className="flex flex-wrap items-center gap-1.5">
+          <div className="flex flex-wrap items-center gap-1.5 rounded-xl border border-slate-200/80 bg-slate-50/60 p-2 transition focus-within:border-accent/40 focus-within:bg-white dark:border-slate-700/60 dark:bg-slate-800/40 dark:focus-within:bg-slate-800">
             {draft.attendees.map((a) => (
               <span
                 key={a}
@@ -376,7 +376,7 @@ export default function NoteEditor({
           </SectionTitle>
           <Textarea
             ref={contentRef}
-            className="min-h-[160px] font-[450] leading-relaxed"
+            className="min-h-[180px] font-[450] leading-relaxed"
             value={draft.content}
             onChange={(e) => patch({ content: e.target.value })}
             placeholder={'會議重點…\n\n小貼士：\n- [ ] 行動項目（可加 @負責人 !2026-06-01）\n> 決議事項'}
@@ -441,23 +441,26 @@ export default function NoteEditor({
             跟進行動
           </SectionTitle>
           {draft.actions.length === 0 ? (
-            <p className="rounded-lg border border-dashed border-slate-200 px-3 py-3 text-center text-xs text-slate-400 dark:border-slate-700 dark:text-slate-500">
-              未有跟進項目。可手動加，或喺內容用{' '}
-              <code className="rounded bg-slate-100 px-1 dark:bg-slate-800">- [ ]</code>{' '}
-              寫好再撳「抽取」。
-            </p>
+            <div className="flex flex-col items-center gap-1 rounded-xl border border-dashed border-slate-200 bg-slate-50/50 px-3 py-5 text-center dark:border-slate-700 dark:bg-slate-800/30">
+              <CheckSquare size={20} className="text-slate-300 dark:text-slate-600" />
+              <p className="text-xs text-slate-400 dark:text-slate-500">
+                仲未有跟進項目。可手動加，或喺內容用{' '}
+                <code className="rounded bg-slate-100 px-1 dark:bg-slate-800">- [ ]</code>{' '}
+                寫好再撳「抽取」。
+              </p>
+            </div>
           ) : (
             <div className="space-y-2">
               {draft.actions.map((a) => (
                 <div
                   key={a.id}
-                  className="flex flex-wrap items-center gap-2 rounded-lg border border-slate-200 p-2 dark:border-slate-700"
+                  className="flex flex-wrap items-center gap-2 rounded-xl border border-slate-200/80 bg-white p-2.5 shadow-xs transition focus-within:border-accent/40 dark:border-slate-700/60 dark:bg-slate-800 dark:shadow-none"
                 >
                   <button
                     type="button"
                     onClick={() => updateAction(a.id, { done: !a.done })}
                     className={cx(
-                      'shrink-0 transition',
+                      'shrink-0 transition active:scale-90',
                       a.done
                         ? 'text-emerald-500'
                         : 'text-slate-300 hover:text-accent dark:text-slate-600',

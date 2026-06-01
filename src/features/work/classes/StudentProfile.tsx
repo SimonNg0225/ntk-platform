@@ -19,6 +19,7 @@ import {
   studentsCol,
 } from '../../../data/collections'
 import {
+  Avatar,
   Badge,
   Button,
   Field,
@@ -203,6 +204,31 @@ export default function StudentProfile({
         )
       }
     >
+      {/* 檔案頭：頭像 + 主要身分 chips */}
+      <div className="mb-4 flex items-center gap-3 rounded-2xl border border-slate-200/80 bg-slate-50/60 p-3.5 dark:border-slate-700/60 dark:bg-slate-800/40">
+        <Avatar name={name || student.name} size="lg" />
+        <div className="min-w-0 flex-1">
+          <p className="flex items-center gap-2 truncate text-base font-bold text-slate-800 dark:text-slate-100">
+            {name || student.name}
+            {studentNo.trim() && (
+              <span className="text-xs font-medium tabular-nums text-slate-400">
+                #{studentNo.trim()}
+              </span>
+            )}
+          </p>
+          <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+            <Badge tone={STATUS_META[status].tone} dot>
+              {STATUS_META[status].label}
+            </Badge>
+            {gender && (
+              <Badge tone={GENDER_META[gender].tone}>{GENDER_META[gender].label}</Badge>
+            )}
+            {house.trim() && <Badge tone="slate">{house.trim()}</Badge>}
+            {role.trim() && <Badge tone="accent">{role.trim()}</Badge>}
+          </div>
+        </div>
+      </div>
+
       <div className="mb-4">
         <SegmentedControl
           value={tab}
@@ -376,17 +402,25 @@ function Overview({
     comms: ParentComm[]
   }
 }) {
+  const attTone =
+    (overview.attRate ?? 0) >= 90
+      ? 'green'
+      : (overview.attRate ?? 0) >= 75
+        ? 'accent'
+        : 'rose'
   return (
     <div className="space-y-5">
       <div className="grid grid-cols-2 gap-3">
         <MiniStat
           icon={GraduationCap}
+          tone="accent"
           label="平均分"
           value={overview.avg == null ? '—' : `${overview.avg}%`}
           hint={`${overview.gradedCount} 個已評分`}
         />
         <MiniStat
           icon={CalendarCheck}
+          tone="emerald"
           label="出席率"
           value={overview.attRate == null ? '—' : `${overview.attRate}%`}
           hint={`共 ${overview.attTotal} 日紀錄`}
@@ -394,62 +428,58 @@ function Overview({
       </div>
 
       {overview.attTotal > 0 && (
-        <div className="rounded-xl border border-slate-200 p-3 dark:border-slate-700">
+        <div className="rounded-2xl border border-slate-200/80 bg-slate-50/60 p-3.5 dark:border-slate-700/60 dark:bg-slate-800/40">
           <div className="mb-2 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
-            <span>出席表現</span>
+            <span className="font-medium">出席表現</span>
             <span className="tabular-nums">
               遲到 {overview.lateCount} · 缺席 {overview.absentCount}
             </span>
           </div>
-          <ProgressBar
-            value={overview.attRate ?? 0}
-            tone={
-              (overview.attRate ?? 0) >= 90
-                ? 'green'
-                : (overview.attRate ?? 0) >= 75
-                  ? 'accent'
-                  : 'rose'
-            }
-            showValue
-          />
+          <ProgressBar value={overview.attRate ?? 0} tone={attTone} showValue />
         </div>
       )}
 
       <div>
-        <div className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+        <div className="mb-2.5 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
           <MessageSquare size={13} />
-          家長 / 學生溝通（{overview.comms.length}）
+          家長 / 學生溝通
+          <span className="ml-auto rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium tabular-nums normal-case tracking-normal text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+            {overview.comms.length}
+          </span>
         </div>
         {overview.comms.length === 0 ? (
-          <p className="rounded-lg border border-dashed border-slate-200 py-4 text-center text-xs text-slate-400 dark:border-slate-700 dark:text-slate-500">
-            仲未有溝通紀錄
-          </p>
+          <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-slate-50/60 py-7 text-center dark:border-slate-700 dark:bg-slate-800/40">
+            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500">
+              <MessageSquare size={18} />
+            </span>
+            <p className="mt-2 text-xs text-slate-400 dark:text-slate-500">
+              仲未有同呢位學生 / 家長嘅溝通紀錄
+            </p>
+          </div>
         ) : (
           <ul className="space-y-2">
             {overview.comms.slice(0, 5).map((c) => (
               <li
                 key={c.id}
-                className="rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-700"
+                className="rounded-xl border border-slate-200/80 bg-white px-3 py-2.5 transition-colors hover:border-slate-300 dark:border-slate-700/60 dark:bg-slate-800 dark:hover:border-slate-600"
               >
                 <div className="flex items-center justify-between gap-2">
-                  <Badge tone="blue">{c.channel}</Badge>
-                  <span className="text-xs tabular-nums text-slate-400">
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <Badge tone="blue">{c.channel}</Badge>
+                    {c.followUp && <Badge tone="amber" dot>待跟進</Badge>}
+                  </div>
+                  <span className="shrink-0 text-xs tabular-nums text-slate-400">
                     {c.date}
                   </span>
                 </div>
-                <p className="mt-1 line-clamp-2 text-sm text-slate-600 dark:text-slate-300">
+                <p className="mt-1.5 line-clamp-2 text-sm text-slate-600 dark:text-slate-300">
                   {c.summary}
                 </p>
-                {c.followUp && (
-                  <Badge tone="amber" className="mt-1">
-                    待跟進
-                  </Badge>
-                )}
               </li>
             ))}
           </ul>
         )}
-        <p className="mt-2 text-center text-[11px] text-slate-400 dark:text-slate-500">
+        <p className="mt-2.5 text-center text-[11px] text-slate-400 dark:text-slate-500">
           成績、出席、溝通詳情請到對應功能查閱
         </p>
       </div>
@@ -457,27 +487,39 @@ function Overview({
   )
 }
 
+type MiniTone = 'accent' | 'emerald'
+const MINI_TONE: Record<MiniTone, string> = {
+  accent: 'bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent',
+  emerald: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-300',
+}
+
 function MiniStat({
   icon: I,
   label,
   value,
   hint,
+  tone,
 }: {
   icon: typeof User
   label: string
   value: string
   hint: string
+  tone: MiniTone
 }) {
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-800">
-      <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
-        <I size={14} className="text-slate-400" />
-        {label}
+    <div className="rounded-2xl border border-slate-200/80 bg-white p-3.5 shadow-xs dark:border-slate-700/60 dark:bg-slate-800 dark:shadow-none">
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
+          {label}
+        </span>
+        <span className={cx('flex h-7 w-7 items-center justify-center rounded-lg', MINI_TONE[tone])}>
+          <I size={14} />
+        </span>
       </div>
-      <p className="mt-1 text-xl font-bold tabular-nums text-slate-800 dark:text-slate-100">
+      <p className="mt-1.5 text-2xl font-bold tabular-nums text-slate-800 dark:text-slate-100">
         {value}
       </p>
-      <p className="text-[11px] text-slate-400 dark:text-slate-500">{hint}</p>
+      <p className="mt-0.5 text-[11px] text-slate-400 dark:text-slate-500">{hint}</p>
     </div>
   )
 }

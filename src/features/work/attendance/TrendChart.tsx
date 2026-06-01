@@ -228,7 +228,7 @@ export default function TrendChart({ points }: { points: TrendPoint[] }) {
 
       {/* Tooltip */}
       {hp && hp.rate != null && (
-        <div className="pointer-events-none absolute left-1/2 top-0 -translate-x-1/2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs shadow-md dark:border-slate-700 dark:bg-slate-800">
+        <div className="pointer-events-none absolute left-1/2 top-0 -translate-x-1/2 rounded-xl border border-slate-200/80 bg-white px-3 py-2 text-xs shadow-md dark:border-slate-700/60 dark:bg-slate-800">
           <div className="font-semibold text-slate-700 dark:text-slate-200">
             {shortDateLabel(hp.dateKey)}（{weekdayOf(hp.dateKey)}）· {hp.rate}%
           </div>

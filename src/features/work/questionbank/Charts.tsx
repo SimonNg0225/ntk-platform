@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import type { Difficulty, QuestionType } from '../../../data/types'
-import { cx } from '../../../ui'
+import { cx, SegmentedControl } from '../../../ui'
 import {
   DIFF_LABEL,
   DIFF_ORDER,
@@ -89,17 +89,22 @@ export function TypeDonut({
           </span>
         </div>
       </div>
-      <ul className="min-w-0 flex-1 space-y-1.5">
+      <ul className="min-w-0 flex-1 space-y-1">
         {TYPE_ORDER.map((t) => (
-          <li key={t} className="flex items-center gap-2 text-xs">
-            <span className={cx('h-2.5 w-2.5 shrink-0 rounded-sm', TYPE_BG[t])} />
+          <li
+            key={t}
+            className="flex items-center gap-2 rounded-lg px-1.5 py-1 text-xs transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/60"
+          >
+            <span className={cx('h-2.5 w-2.5 shrink-0 rounded-full', TYPE_BG[t])} />
             <span className="truncate text-slate-600 dark:text-slate-300">
               {TYPE_LABEL[t]}
             </span>
-            <span className="ml-auto font-medium tabular-nums text-slate-500 dark:text-slate-400">
-              {byType[t]}
+            <span className="ml-auto flex items-baseline gap-1">
+              <span className="font-semibold tabular-nums text-slate-700 dark:text-slate-200">
+                {byType[t]}
+              </span>
               {total > 0 && (
-                <span className="ml-1 text-slate-400 dark:text-slate-500">
+                <span className="tabular-nums text-[11px] text-slate-400 dark:text-slate-500">
                   {Math.round((byType[t] / total) * 100)}%
                 </span>
               )}
@@ -131,36 +136,36 @@ export function DifficultyBars({
   const total = DIFF_ORDER.reduce((s, d) => s + byDiff[d], 0)
   if (total === 0)
     return (
-      <p className="py-6 text-center text-sm text-slate-400 dark:text-slate-500">
-        仲未有題目
+      <p className="py-8 text-center text-sm text-slate-400 dark:text-slate-500">
+        加入題目後，呢度會顯示易 / 中 / 難分佈。
       </p>
     )
   return (
-    <div className="space-y-2.5">
+    <div className="space-y-3">
       {DIFF_ORDER.map((d) => {
         const v = byDiff[d]
         const pct = (v / total) * 100
         return (
-          <div key={d} className="flex items-center gap-2">
-            <span className={cx('w-8 shrink-0 text-xs font-medium', DIFF_TEXT[d])}>
+          <div key={d} className="flex items-center gap-2.5">
+            <span className={cx('w-6 shrink-0 text-sm font-semibold', DIFF_TEXT[d])}>
               {DIFF_LABEL[d]}
             </span>
-            <div className="h-5 flex-1 overflow-hidden rounded-md bg-slate-100 dark:bg-slate-800">
+            <div className="h-6 flex-1 overflow-hidden rounded-lg bg-slate-100 dark:bg-slate-800">
               <div
                 className={cx(
-                  'flex h-full items-center justify-end rounded-md px-1.5 transition-all duration-500',
+                  'flex h-full items-center justify-end rounded-lg px-2 transition-all duration-500',
                   DIFF_BAR[d],
                 )}
-                style={{ width: `${Math.max(pct, v > 0 ? 9 : 0)}%` }}
+                style={{ width: `${Math.max(pct, v > 0 ? 10 : 0)}%` }}
               >
                 {v > 0 && (
-                  <span className="text-[10px] font-semibold tabular-nums text-white">
+                  <span className="text-[11px] font-bold tabular-nums text-white">
                     {v}
                   </span>
                 )}
               </div>
             </div>
-            <span className="w-9 shrink-0 text-right text-xs tabular-nums text-slate-400 dark:text-slate-500">
+            <span className="w-9 shrink-0 text-right text-xs font-medium tabular-nums text-slate-400 dark:text-slate-500">
               {Math.round(pct)}%
             </span>
           </div>
@@ -195,56 +200,41 @@ export function CoverageMatrix({ rows }: { rows: TopicRow[] }) {
 
   if (visible.length === 0)
     return (
-      <p className="py-6 text-center text-sm text-slate-400 dark:text-slate-500">
-        未有課題資料
+      <p className="py-8 text-center text-sm text-slate-400 dark:text-slate-500">
+        建立課題並出題後，呢度會顯示覆蓋熱圖。
       </p>
     )
 
   return (
     <div>
-      <div className="mb-2 flex items-center justify-end gap-1">
-        <button
-          onClick={() => setSort('topic')}
-          aria-pressed={sort === 'topic'}
-          className={cx(
-            'rounded-md px-2 py-0.5 text-[11px] font-medium transition',
-            sort === 'topic'
-              ? 'bg-accent text-white'
-              : 'bg-slate-100 text-slate-500 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700',
-          )}
-        >
-          按課題序
-        </button>
-        <button
-          onClick={() => setSort('total')}
-          aria-pressed={sort === 'total'}
-          className={cx(
-            'rounded-md px-2 py-0.5 text-[11px] font-medium transition',
-            sort === 'total'
-              ? 'bg-accent text-white'
-              : 'bg-slate-100 text-slate-500 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700',
-          )}
-        >
-          按題數
-        </button>
+      <div className="mb-3 flex items-center justify-end">
+        <SegmentedControl<'topic' | 'total'>
+          size="sm"
+          options={[
+            { id: 'topic', label: '按課題序' },
+            { id: 'total', label: '按題數' },
+          ]}
+          value={sort}
+          onChange={setSort}
+        />
       </div>
       <div className="overflow-x-auto">
         <table className="w-full border-separate border-spacing-y-1 text-xs">
           <thead>
             <tr className="text-slate-400 dark:text-slate-500">
-              <th className="px-2 py-1 text-left font-medium">課題</th>
+              <th className="px-2 py-1 text-left text-[11px] font-semibold uppercase tracking-wide">課題</th>
               {DIFF_ORDER.map((d) => (
-                <th key={d} className="w-12 px-1 py-1 text-center font-medium">
+                <th key={d} className="w-12 px-1 py-1 text-center text-[11px] font-semibold uppercase tracking-wide">
                   {DIFF_LABEL[d]}
                 </th>
               ))}
-              <th className="w-12 px-1 py-1 text-center font-medium">合計</th>
+              <th className="w-12 px-1 py-1 text-center text-[11px] font-semibold uppercase tracking-wide">合計</th>
             </tr>
           </thead>
           <tbody>
             {sorted.map((r) => (
               <tr key={r.topicId}>
-                <td className="max-w-[180px] truncate py-1 pr-2 text-slate-700 dark:text-slate-200">
+                <td className="max-w-[180px] truncate py-1 pr-2 font-medium text-slate-700 dark:text-slate-200">
                   {r.topic}
                 </td>
                 {DIFF_ORDER.map((d) => (
@@ -277,10 +267,21 @@ export function CoverageMatrix({ rows }: { rows: TopicRow[] }) {
           </tbody>
         </table>
       </div>
-      <p className="mt-2 text-[11px] text-slate-400 dark:text-slate-500">
-        顏色越深代表該（課題 × 難度）題目越多；
-        <span className="text-rose-400">紅色合計 0</span> = 仲未出題嘅課題。
-      </p>
+      <div className="mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[11px] text-slate-400 dark:text-slate-500">
+        <span className="inline-flex items-center gap-1.5">
+          <span className="text-slate-500 dark:text-slate-400">少</span>
+          <span className="flex overflow-hidden rounded-md">
+            <span className="h-3 w-4 bg-accent/15" />
+            <span className="h-3 w-4 bg-accent/35" />
+            <span className="h-3 w-4 bg-accent/55" />
+            <span className="h-3 w-4 bg-accent" />
+          </span>
+          <span className="text-slate-500 dark:text-slate-400">多</span>
+        </span>
+        <span className="inline-flex items-center gap-1">
+          <span className="font-semibold text-rose-400">紅色合計 0</span> = 仲未出題嘅課題
+        </span>
+      </div>
     </div>
   )
 }
