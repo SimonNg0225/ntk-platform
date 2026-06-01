@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { Student } from '../../../data/types'
 import type { StudentMeta } from './types'
 import {
@@ -7,6 +7,7 @@ import {
   initials,
   parseBulk,
   pctTone,
+  shuffle,
   sortStudents,
   splitGroups,
   studentSortKey,
@@ -29,6 +30,73 @@ const smeta = (over: Partial<StudentMeta> & { studentId: string }): StudentMeta 
   status: 'active',
   updatedAt: '2026-01-01',
   ...over,
+})
+
+// ============================================================
+//  shuffle — Fisher-Yates 洗牌（隨機分組 / 點名用）
+//  ------------------------------------------------------------
+//  之前只被 splitGroups 間接行到，從未直接守護其不變量：
+//  (1) 保持長度  (2) 為原元素之置換（無漏 / 無多）  (3) 純函式：
+//  唔變更輸入陣列（內部 [...arr] copy）。用 vi.spyOn(Math,'random')
+//  鎖死序列做 deterministic 斷言，避免靠運氣。
+// ============================================================
+describe('shuffle', () => {
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  it('回傳長度同輸入相等', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    expect(shuffle([1, 2, 3, 4, 5]).length).toBe(5)
+  })
+
+  it('回傳係輸入嘅置換（排序後同原陣列排序相等，無漏無多）', () => {
+    // mock 一個非平凡序列，確保真係有打亂（唔係原樣）但仍係同一組元素
+    const seq = [0.7, 0.1, 0.9, 0.3]
+    let k = 0
+    vi.spyOn(Math, 'random').mockImplementation(() => seq[k++ % seq.length])
+    const input = [10, 20, 30, 40, 50]
+    const out = shuffle(input)
+    const num = (a: number, b: number) => a - b
+    expect([...out].sort(num)).toEqual([...input].sort(num))
+    expect(new Set(out).size).toBe(input.length) // 無重複（即無元素被覆蓋遺失）
+  })
+
+  it('唔變更原陣列（純函式：原 arr 仍係原次序）', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0) // 任何洗牌結果都唔應回寫輸入
+    const input = [1, 2, 3, 4]
+    const snapshot = [...input]
+    const out = shuffle(input)
+    expect(input).toEqual(snapshot) // 入參次序不變
+    expect(out).not.toBe(input) // 回傳係新陣列（[...arr] copy）
+  })
+
+  it('deterministic：Math.random 永遠回 0 → 每步 swap 到 index 0（已知置換）', () => {
+    // Fisher-Yates：j = floor(0 × (i+1)) = 0，故每步同 a[0] 對調。
+    // [1,2,3,4]: i3 swap(3,0)→[4,2,3,1]; i2 swap(2,0)→[3,2,4,1]; i1 swap(1,0)→[2,3,4,1]
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    expect(shuffle([1, 2, 3, 4])).toEqual([2, 3, 4, 1])
+  })
+
+  it('deterministic：Math.random 近 1（每步 j === i）→ 原樣（恒等置換）', () => {
+    // j = floor(0.9999 × (i+1))：i3→floor(3.9996)=3、i2→2、i1→1，全部 j===i 無對調
+    vi.spyOn(Math, 'random').mockReturnValue(0.9999)
+    expect(shuffle([1, 2, 3, 4])).toEqual([1, 2, 3, 4])
+  })
+
+  it('空陣列 → []（回新空陣列，非同一引用）', () => {
+    const input: number[] = []
+    const out = shuffle(input)
+    expect(out).toEqual([])
+    expect(out).not.toBe(input) // 仍係 [...arr] 出嚟嘅新陣列
+  })
+
+  it('單元素 → 原樣（迴圈唔執行，i > 0 不成立）', () => {
+    // 單元素時 Math.random 根本唔會被叫；落唔落 mock 都一樣
+    const spy = vi.spyOn(Math, 'random')
+    expect(shuffle(['only'])).toEqual(['only'])
+    expect(spy).not.toHaveBeenCalled()
+  })
 })
 
 // ============================================================
