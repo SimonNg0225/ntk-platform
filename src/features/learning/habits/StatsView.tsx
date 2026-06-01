@@ -101,17 +101,14 @@ export default function StatsView({
 
   // ─── 摘要數字 ───
   const summary = useMemo(() => {
-    const totalDone = habits.reduce(
-      (sum, h) => sum + (byHabit.get(h.id)?.size ?? 0),
-      0,
-    )
+    const totalDone = ranking.reduce((s, r) => s + r.total, 0)
     const avg30 =
       ranking.length > 0
         ? Math.round(ranking.reduce((s, r) => s + r.rate, 0) / ranking.length)
         : 0
     const topBest = ranking.reduce((m, r) => Math.max(m, r.best), 0)
     return { totalDone, avg30, topBest }
-  }, [habits, byHabit, ranking])
+  }, [ranking])
 
   if (habits.length === 0) {
     return (
