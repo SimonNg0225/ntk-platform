@@ -168,6 +168,13 @@ export default function AIAssistant() {
     return m
   }, [allMeta])
 
+  // 每條對話訊息數快查（一次過 groupBy，側欄逐條 O(1) 查，免每 render O(N×M) 全掃）
+  const countByThread = useMemo(() => {
+    const m = new Map<string, number>()
+    for (const msg of allMessages) m.set(msg.threadId, (m.get(msg.threadId) ?? 0) + 1)
+    return m
+  }, [allMessages])
+
   // ── 本地 UI 狀態 ──
   const [currentThreadId, setCurrentThreadId] = useState<string | null>(null)
   // Composer 自管輸入 state；呢度只用 seed 餵佢（填範本/清空，n 一變先載入）。
@@ -638,7 +645,7 @@ export default function AIAssistant() {
                         active={t.id === currentThreadId}
                         pinned
                         archived={!!metaMap.get(t.id)?.archived}
-                        count={allMessages.filter((m) => m.threadId === t.id).length}
+                        count={countByThread.get(t.id) ?? 0}
                         onClick={() => selectThread(t.id)}
                         onPin={() => togglePin(t.id)}
                         onArchive={() => toggleArchive(t.id)}
@@ -657,7 +664,7 @@ export default function AIAssistant() {
                         active={t.id === currentThreadId}
                         pinned={false}
                         archived={!!metaMap.get(t.id)?.archived}
-                        count={allMessages.filter((m) => m.threadId === t.id).length}
+                        count={countByThread.get(t.id) ?? 0}
                         onClick={() => selectThread(t.id)}
                         onPin={() => togglePin(t.id)}
                         onArchive={() => toggleArchive(t.id)}
