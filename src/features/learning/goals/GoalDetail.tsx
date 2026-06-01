@@ -122,6 +122,10 @@ export default function GoalDetail({
     if (next >= 100) {
       ensureMeta({ status: 'done' })
       if (g.progress < 100) toast.success('恭喜達成目標')
+    } else if (meta?.status === 'done') {
+      // 進度跌返 <100（uncheck 里程碑 / 手動 −%）：撤銷 done，回復進行中，
+      // 令 meta.status 同 progress 一致；唔掂 'paused' 等非終態。
+      ensureMeta({ status: 'active' })
     }
   }
 
