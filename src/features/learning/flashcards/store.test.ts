@@ -135,7 +135,7 @@ describe('upsertPref — insert 分支（新 deckId）', () => {
 
   it('DeckPref 無 updatedAt 欄位 → insert 唔會無端加上', () => {
     upsertPref('d3', {})
-    const p = deckPrefCol.get()[0] as Record<string, unknown>
+    const p = deckPrefCol.get()[0] as unknown as Record<string, unknown>
     expect('updatedAt' in p).toBe(false)
   })
 })
@@ -155,7 +155,7 @@ describe('upsertPref — update 分支（已存在 deckId）', () => {
   it('update 唔會引入 updatedAt（DeckPref 無此欄；upsertPref 亦唔加）', () => {
     upsertPref('d1', { newPerDay: 7 })
     upsertPref('d1', { order: 'due' })
-    const p = deckPrefCol.get()[0] as Record<string, unknown>
+    const p = deckPrefCol.get()[0] as unknown as Record<string, unknown>
     expect('updatedAt' in p).toBe(false)
   })
 })

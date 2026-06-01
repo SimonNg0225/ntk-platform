@@ -15,7 +15,7 @@
 // ============================================================
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import type { Habit, HabitLog } from './types'
+import type { Habit } from './types'
 
 // ───────── 最小 in-memory localStorage shim（只實作用到嘅 API）─────────
 function makeLocalStorage() {
@@ -46,9 +46,6 @@ async function freshImport() {
 // 寫一個 collection 嘅初始 localStorage（用 createCollection 嘅 'ntk.' 前綴）。
 const seedCol = (key: string, value: unknown) =>
   ls.setItem(`ntk.${key}`, JSON.stringify(value))
-
-const readCol = <T>(key: string): T =>
-  JSON.parse(ls.getItem(`ntk.${key}`) ?? 'null') as T
 
 const FLAG_KEY = 'ntk.habits_v2_migrated'
 
