@@ -122,11 +122,14 @@ export default function HabitTracker() {
   }, [activeHabits, category, query, sort, byHabit])
 
   // 今日待辦：依「應做」分拆
+  // 用 activeHabits（而非 visible），令「今日」分頁唔受「全部」分頁殘留嘅
+  // 分類/搜尋篩選影響——今日分頁本身冇任何篩選 UI，否則用家會見到今日進度
+  // 莫名其妙縮細／部分習慣消失。
   const todayBuckets = useMemo(() => {
     const wd = new Date().getDay()
     const due: Habit[] = []
     const notDue: Habit[] = []
-    for (const h of visible) {
+    for (const h of activeHabits) {
       const sched =
         h.frequency.kind !== 'weekdays' || h.frequency.days.includes(wd)
       if (sched) due.push(h)
@@ -139,9 +142,14 @@ export default function HabitTracker() {
       return da - db
     })
     return { due, notDue }
-  }, [visible, byHabit, today])
+  }, [activeHabits, byHabit, today])
 
-  const stats = useMemo(() => overallStats(visible, byHabit), [visible, byHabit])
+  // 頂部統計磚每個分頁都顯示，定位係全域 dashboard，故同樣用 activeHabits，
+  // 避免被「全部」分頁嘅篩選靜默縮細。
+  const stats = useMemo(
+    () => overallStats(activeHabits, byHabit),
+    [activeHabits, byHabit],
+  )
   const allDone = stats.dueToday > 0 && stats.doneToday === stats.dueToday
 
   const detailHabit = detailId ? habits.find((h) => h.id === detailId) ?? null : null
