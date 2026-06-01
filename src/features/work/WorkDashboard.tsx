@@ -3,6 +3,7 @@ import { useCollection } from '../../lib/store'
 import {
   tasksCol,
   timetableCol,
+  cycleCalendarCol,
   classesCol,
   eventsCol,
   calendarsCol,
@@ -16,6 +17,7 @@ import {
   inboxCol,
 } from '../../data/collections'
 import { taskMetaCol } from './todo/store'
+import { cycleDayForDate } from './timetable/util'
 import { useNav } from '../../context/NavContext'
 import { useToast } from '../../context/ToastContext'
 import {
@@ -230,9 +232,14 @@ export default function WorkDashboard() {
   const [nameDraft, setNameDraft] = useState(layout.greetingName)
   const [capture, setCapture] = useState('')
 
+  const cycleCalendar = useCollection(cycleCalendarCol)
   const now = useMemo(() => new Date(), [])
   const todayKey = localKey(now)
   const jsDay = now.getDay()
+  // cycle 模式（校曆有 seed 即啟用）：今日(日期)→ 校曆 → cycle day(1..6) 用嚟篩今日堂；
+  // 唔喺校曆（週末/假期/考試/未排）→ 0 = 今日無堂。否則退回星期制。
+  const isCycle = cycleCalendar.length > 0
+  const ttDay = isCycle ? cycleDayForDate(todayKey, cycleCalendar) ?? 0 : jsDay
   const dateLabel = `${now.getMonth() + 1}月${now.getDate()}日 星期${WEEKDAY_LABELS[jsDay]}`
   const hello = greeting(now.getHours())
   const who = layout.greetingName.trim() || '老師'
@@ -294,8 +301,9 @@ export default function WorkDashboard() {
         countdowns,
         todayKey,
         jsDay,
+        slotDay: ttDay,
       }),
-    [timetable, classNameById, events, calendars, merged, countdowns, todayKey, jsDay],
+    [timetable, classNameById, events, calendars, merged, countdowns, todayKey, jsDay, ttDay],
   )
 
   const classProgress = useMemo(
@@ -324,7 +332,7 @@ export default function WorkDashboard() {
 
   // ── KPI（含本週 vs 上週對比）──
   const kpis = useMemo<Kpi[]>(() => {
-    const todaySlotCount = timetable.filter((s) => s.day === jsDay).length
+    const todaySlotCount = timetable.filter((s) => s.day === ttDay).length
     // 本週（近 7 日）vs 上週（前 7 日）完成待辦
     const thisWeek = completedInRange(merged, addKey(todayKey, -6), todayKey)
     const lastWeek = completedInRange(merged, addKey(todayKey, -13), addKey(todayKey, -7))

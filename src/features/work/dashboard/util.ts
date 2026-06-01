@@ -186,12 +186,14 @@ export function buildAgenda(opts: {
   countdowns: Countdown[]
   todayKey: string
   jsDay: number
+  /** cycle 模式：今日嘅 cycle day(1..6)，覆寫用嚟篩今日堂；無則用 jsDay（星期制）。 */
+  slotDay?: number
 }): AgendaItem[] {
-  const { timetable, classNameById, events, calendars, tasks, countdowns, todayKey, jsDay } = opts
+  const { timetable, classNameById, events, calendars, tasks, countdowns, todayKey, jsDay, slotDay } = opts
   const items: AgendaItem[] = []
 
-  // 課堂（星期日 jsDay=0 通常無）
-  for (const s of todaySlots(timetable, jsDay)) {
+  // 課堂：cycle 模式用 slotDay(cycle day)，否則用 jsDay（星期日=0 通常無）
+  for (const s of todaySlots(timetable, slotDay ?? jsDay)) {
     const label = s.classId ? classNameById.get(s.classId) ?? s.subject : s.subject
     items.push({
       id: `class-${s.id}`,

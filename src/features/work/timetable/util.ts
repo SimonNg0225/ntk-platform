@@ -28,6 +28,29 @@ export function dayShort(day: number): string {
   return DAY_DEFS.find((d) => d.day === day)?.short ?? String(day)
 }
 
+// ───────── 日循環（Day A–F）─────────
+// 部分學校（如本校）用 6 日循環取代固定星期：A=1 … F=6，直接對上 slot.day。
+// 邊個真實日期屬邊個 cycle day，由校曆決定（跳過週末/假期），存喺 cycleCalendar。
+export const CYCLE_LABELS = ['A', 'B', 'C', 'D', 'E', 'F'] as const
+
+/** day(1..6) → 'Day A'..'Day F'（cycle 模式欄標題用）。 */
+export function cycleLabel(day: number): string {
+  const c = CYCLE_LABELS[day - 1]
+  return c ? `Day ${c}` : `Day ${day}`
+}
+export function cycleShort(day: number): string {
+  return CYCLE_LABELS[day - 1] ?? String(day)
+}
+
+/** 由校曆查某日期(YYYY-MM-DD)係邊個 cycle day(1..6)；無記錄（假期/未排）回 null。 */
+export function cycleDayForDate(
+  dateKey: string,
+  calendar: { date: string; cycleDay: number }[],
+): number | null {
+  const e = calendar.find((c) => c.date === dateKey)
+  return e ? e.cycleDay : null
+}
+
 // ───────── 循環週（A/B 週）─────────
 export type WeekCycle = 'all' | 'A' | 'B'
 

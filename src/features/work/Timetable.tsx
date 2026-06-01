@@ -13,7 +13,8 @@ import {
   ChevronRight,
 } from 'lucide-react'
 import { createCollection, useCollection } from '../../lib/store'
-import { timetableCol, classesCol } from '../../data/collections'
+import { timetableCol, classesCol, cycleCalendarCol } from '../../data/collections'
+import { NTK_BELLS } from '../../data/ntk-seed'
 import type { Entity } from '../../lib/store'
 import {
   Badge,
@@ -42,6 +43,8 @@ import {
   buildCsv,
   colorOf,
   computeWorkload,
+  cycleDayForDate,
+  cycleShort,
   dayLabel,
   detectConflicts,
   downloadText,
@@ -78,10 +81,11 @@ const timetableMetaCol = createCollection<SlotMeta>('timetable_meta', [])
 // 設定（鐘聲時間 + 顯示日子）— 單一 row（id='config'）
 interface TimetableConfig extends Entity {
   bells: BellRow[]
-  days: number[] // 顯示嘅星期（1..6）
+  days: number[] // 顯示嘅日子（1..6；cycle 模式 = Day A..F）
+  cycle?: boolean // 日循環模式：欄變 Day A–F，「今日」由校曆決定
 }
 const timetableConfigCol = createCollection<TimetableConfig>('timetable_config', [
-  { id: 'config', bells: DEFAULT_BELLS, days: [1, 2, 3, 4, 5] },
+  { id: 'config', bells: NTK_BELLS, days: [1, 2, 3, 4, 5, 6], cycle: true },
 ])
 
 type ViewId = 'grid' | 'workload' | 'print'
@@ -91,6 +95,7 @@ export default function Timetable() {
   const classes = useCollection(classesCol)
   const metas = useCollection(timetableMetaCol)
   const configs = useCollection(timetableConfigCol)
+  const cycleCalendar = useCollection(cycleCalendarCol)
   const toast = useToast()
   const confirm = useConfirm()
 
@@ -113,11 +118,17 @@ export default function Timetable() {
   }, [])
 
   // 設定（fallback 預設，避免空集合）
-  const config = configs[0] ?? { id: 'config', bells: DEFAULT_BELLS, days: [1, 2, 3, 4, 5] }
-  const bells = config.bells?.length ? config.bells : DEFAULT_BELLS
-  const days = config.days?.length ? config.days : [1, 2, 3, 4, 5]
+  const config = configs[0] ?? { id: 'config', bells: NTK_BELLS, days: [1, 2, 3, 4, 5, 6], cycle: true }
+  const bells = config.bells?.length ? config.bells : NTK_BELLS
+  const days = config.days?.length ? config.days : [1, 2, 3, 4, 5, 6]
+  const cycle = !!config.cycle
 
-  const todayDay = new Date().getDay() // 0=日 … 6=六（1..6 對得上）
+  // cycle 模式：今日(日期) → 校曆 → cycle day(1..6)；否則用星期 getDay()。
+  const _now = new Date()
+  const todayKeyStr = `${_now.getFullYear()}-${String(_now.getMonth() + 1).padStart(2, '0')}-${String(_now.getDate()).padStart(2, '0')}`
+  const todayDay = cycle
+    ? cycleDayForDate(todayKeyStr, cycleCalendar) ?? 0
+    : _now.getDay() // 0=日 … 6=六（1..6 對得上）
 
   // ── 索引 ──
   const slotByKey = useMemo(() => {
@@ -330,6 +341,7 @@ export default function Timetable() {
       <div className="print:hidden">
         <TodayPanel
           todayDay={todayDay}
+          cycle={cycle}
           todayCount={todayCount}
           upNext={upNext}
           nowMin={nowMin}
@@ -398,6 +410,7 @@ export default function Timetable() {
         <WeekGrid
           bells={bells}
           days={days}
+          cycle={cycle}
           todayDay={todayDay}
           slotByKey={slotByKey}
           metaByKey={metaByKey}
@@ -464,6 +477,7 @@ export default function Timetable() {
 // ───────── 今日 / 下一堂 ─────────
 function TodayPanel({
   todayDay,
+  cycle,
   todayCount,
   upNext,
   nowMin,
@@ -471,13 +485,15 @@ function TodayPanel({
   classNameById,
 }: {
   todayDay: number
+  cycle?: boolean
   todayCount: number
   upNext: ReturnType<typeof findUpNext>
   nowMin: number
   lastEndMin: number
   classNameById: Map<string, string>
 }) {
-  const isWeekend = todayDay === 0
+  // cycle 模式：todayDay 0 = 今日唔喺校曆（週末/假期/未排）→ 當休息日。
+  const isWeekend = cycle ? todayDay < 1 : todayDay === 0
   return (
     <Card padded className="bg-gradient-to-br from-accent-soft/60 to-transparent dark:from-accent/10">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -487,7 +503,9 @@ function TodayPanel({
           </span>
           <div>
             <p className="text-xs text-slate-500 dark:text-slate-400">
-              {isWeekend ? '今日係假日' : `今日 ${dayLabel(todayDay)}`}
+              {isWeekend
+                ? cycle ? '今日唔使返學 / 未排堂' : '今日係假日'
+                : `今日 ${cycle ? `Day ${cycleShort(todayDay)}` : dayLabel(todayDay)}`}
             </p>
             <p className="text-lg font-semibold text-slate-800 dark:text-slate-100">
               {isWeekend ? '好好休息' : `共 ${todayCount} 節`}

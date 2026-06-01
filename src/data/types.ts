@@ -212,11 +212,18 @@ export interface LessonPlan extends Entity {
 
 // 時間表（工作）
 export interface TimetableSlot extends Entity {
-  day: number // 1=一 … 6=六
+  day: number // 1=一 … 6=六（cycle 模式下：1=Day A … 6=Day F）
   period: number // 第幾節
   classId?: string
   subject: string
   room?: string
+}
+
+/** 日循環校曆：某真實日期 → cycle day（1..6 = A..F）。id = date 'YYYY-MM-DD'。
+ *  跳過嘅日子（週末/假期/考試）唔會有記錄。 */
+export interface CycleCalendarEntry extends Entity {
+  date: string // YYYY-MM-DD
+  cycleDay: number // 1..6
 }
 
 // 出席（工作）

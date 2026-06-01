@@ -1,5 +1,6 @@
 import { createCollection, collectionRegistry } from '../lib/store'
 import { BAFS_TOPICS } from './bafs'
+import { NTK_SLOTS, NTK_CYCLE_CALENDAR } from './ntk-seed'
 import type {
   Topic,
   Klass,
@@ -33,6 +34,7 @@ import type {
   TxCategory,
   QuizAttempt,
   CalendarCategory,
+  CycleCalendarEntry,
 } from './types'
 
 // ============================================================
@@ -96,7 +98,12 @@ export const readingCol = createCollection<ReadingItem>('reading_items', [])
 export const habitsCol = createCollection<Habit>('habits', [])
 export const habitLogsCol = createCollection<HabitLog>('habit_logs', [])
 export const lessonPlansCol = createCollection<LessonPlan>('lesson_plans', [])
-export const timetableCol = createCollection<TimetableSlot>('timetable', [])
+export const timetableCol = createCollection<TimetableSlot>('timetable', NTK_SLOTS)
+// 日循環校曆：日期 → cycle day（1..6 = A..F）。空時 seed NTK 校曆。
+export const cycleCalendarCol = createCollection<CycleCalendarEntry>(
+  'cycle_calendar',
+  NTK_CYCLE_CALENDAR,
+)
 export const attendanceCol = createCollection<AttendanceRecord>('attendance', [])
 export const parentCommsCol = createCollection<ParentComm>('parent_comms', [])
 export const meetingNotesCol = createCollection<MeetingNote>('meeting_notes', [])

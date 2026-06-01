@@ -4,6 +4,7 @@ import { cx } from '../../../ui'
 import {
   autoColorFor,
   colorOf,
+  cycleShort,
   dayShort,
   type BellRow,
   type SlotMeta,
@@ -12,6 +13,7 @@ import {
 export default function WeekGrid({
   bells,
   days,
+  cycle,
   todayDay,
   slotByKey,
   metaByKey,
@@ -22,6 +24,7 @@ export default function WeekGrid({
 }: {
   bells: BellRow[]
   days: number[]
+  cycle?: boolean
   todayDay: number
   slotByKey: Map<string, TimetableSlot>
   metaByKey: Map<string, SlotMeta>
@@ -51,7 +54,7 @@ export default function WeekGrid({
                   )}
                 >
                   <span className="inline-flex items-center gap-1">
-                    星期{dayShort(day)}
+                    {cycle ? `Day ${cycleShort(day)}` : `星期${dayShort(day)}`}
                     {isToday && (
                       <span className="rounded-full bg-white/25 px-1.5 py-px text-[9px] font-bold">
                         今日
@@ -107,7 +110,7 @@ export default function WeekGrid({
                   const hasConflict = conflictKeys.has(key)
                   const dimmed =
                     !!dimClassId && !!slot && slot.classId !== dimClassId
-                  const cellPos = `星期${dayShort(day)} 第 ${bell.period} 節`
+                  const cellPos = `${cycle ? `Day ${cycleShort(day)}` : `星期${dayShort(day)}`} 第 ${bell.period} 節`
                   const cellLabel = slot
                     ? `編輯 ${cellPos}：${title || className || '課堂'}${hasConflict ? '（撞堂）' : ''}`
                     : `新增課堂 — ${cellPos}`
