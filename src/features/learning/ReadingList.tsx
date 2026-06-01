@@ -96,7 +96,6 @@ const SORT_OPTS: { value: SortKey; label: string }[] = [
 export default function ReadingList() {
   const books = useCollection(booksCol)
   const challenges = useCollection(challengeCol)
-  const legacy = useCollection(readingCol)
   const toast = useToast()
   const confirm = useConfirm()
 
@@ -105,6 +104,7 @@ export default function ReadingList() {
   useEffect(() => {
     if (migrated.current) return
     migrated.current = true
+    const legacy = readingCol.get()
     if (booksCol.get().length === 0 && legacy.length > 0) {
       booksCol.set(
         legacy.map((l) => ({
