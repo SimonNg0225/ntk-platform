@@ -1,4 +1,5 @@
 import {
+  memo,
   useCallback,
   useEffect,
   useMemo,
@@ -169,7 +170,9 @@ export default function AIAssistant() {
 
   // ── 本地 UI 狀態 ──
   const [currentThreadId, setCurrentThreadId] = useState<string | null>(null)
-  const [input, setInput] = useState('')
+  // Composer 自管輸入 state；呢度只用 seed 餵佢（填範本/清空，n 一變先載入）。
+  // 打字唔再 setState 喺呢個父組件 → 唔會 re-render 訊息/側欄（連 IME 都唔被打斷）。
+  const [seed, setSeed] = useState<{ text: string; n: number }>({ text: '', n: 0 })
   const [streaming, setStreaming] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   // 手機（<sm）預設收埋側欄（避免抽屜開頁即遮住內容）；sm 以上維持展開
@@ -194,7 +197,6 @@ export default function AIAssistant() {
 
   const abortRef = useRef<AbortController | null>(null)
   const scrollRef = useRef<HTMLDivElement | null>(null)
-  const inputRef = useRef<HTMLTextAreaElement | null>(null)
 
   // 現對話嘅 meta（若有）
   const currentMeta = currentThreadId ? metaMap.get(currentThreadId) : undefined
@@ -254,7 +256,7 @@ export default function AIAssistant() {
   // 切模式 → 重設
   useEffect(() => {
     setCurrentThreadId(null)
-    setInput('')
+    setSeed((s) => ({ text: '', n: s.n + 1 }))
     setStreaming(null)
     setSearch('')
     setShowArchived(false)
@@ -381,7 +383,7 @@ export default function AIAssistant() {
         content: text,
         createdAt: new Date().toISOString(),
       })
-      setInput('')
+      // 輸入框由 Composer 自己清空（佢 submit 後 setText('')）
       await runCompletion(threadId, model, persona, temp, contexts)
     },
     [
@@ -463,9 +465,8 @@ export default function AIAssistant() {
     abortRef.current?.abort()
     setCurrentThreadId(null)
     setStreaming(null)
-    setInput('')
+    setSeed((s) => ({ text: '', n: s.n + 1 })) // Composer 清空 + 自動 focus
     closeSidebarOnMobile()
-    setTimeout(() => inputRef.current?.focus(), 0)
   }
 
   function selectThread(id: string) {
@@ -501,13 +502,9 @@ export default function AIAssistant() {
     if (currentThreadId === id) newConversation()
   }
 
+  // 範本 / Welcome chip 填入輸入框：透過 seed 餵畀 Composer（佢會載入 + focus + 游標到尾）
   function applyText(text: string) {
-    setInput(text)
-    setTimeout(() => {
-      inputRef.current?.focus()
-      const el = inputRef.current
-      if (el) el.selectionStart = el.selectionEnd = el.value.length
-    }, 0)
+    setSeed((s) => ({ text, n: s.n + 1 }))
   }
 
   // 改 model / persona / temp：寫返現對話 meta（或 draft）
@@ -536,13 +533,6 @@ export default function AIAssistant() {
     const md = conversationToMarkdown(threadTitle, messages)
     downloadText(`${safeFilename(threadTitle)}.md`, md)
     toast.success('已匯出 Markdown')
-  }
-
-  function onInputKeyDown(e: KeyboardEvent<HTMLTextAreaElement>) {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault()
-      void send(input)
-    }
   }
 
   // ── 全域鍵盤 ──
@@ -595,7 +585,6 @@ export default function AIAssistant() {
 
   const personaLabel = personaById(activePersona).label
   const modelShort = MODELS.find((m) => m.id === activeModel)?.short ?? activeModel
-  const inputWords = approxWords(input)
 
   return (
     <div className="flex h-[78vh] gap-3">
@@ -897,46 +886,16 @@ export default function AIAssistant() {
           </div>
         )}
 
-        {/* 輸入區（貼底） */}
-        <div className="sticky bottom-0 rounded-3xl border border-slate-200/80 bg-white p-2 shadow-sm transition focus-within:border-accent/50 focus-within:ring-2 focus-within:ring-accent/20 dark:border-slate-700/70 dark:bg-slate-800 dark:shadow-none">
-          <Textarea
-            ref={inputRef}
-            rows={2}
-            className="resize-none border-0 bg-transparent px-2.5 py-1.5 text-[13.5px] leading-relaxed shadow-none focus:ring-0 dark:bg-transparent"
-            placeholder={`打你想問嘅嘢…（Enter 送出 · Shift+Enter 換行 · ${MOD}/ 範本）`}
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={onInputKeyDown}
-            disabled={busy}
-          />
-          <div className="flex items-center gap-1 px-0.5 pt-1">
-            <Tooltip label={`範本庫（${MOD}/）`}>
-              <IconButton label="範本庫" size="sm" onClick={() => setTemplateOpen(true)}>
-                <Library size={16} />
-              </IconButton>
-            </Tooltip>
-            <Tooltip label="連結上下文">
-              <IconButton label="上下文" size="sm" active={activeContexts.length > 0} onClick={() => setContextOpen(true)}>
-                <Paperclip size={16} />
-              </IconButton>
-            </Tooltip>
-            {input.trim() && (
-              <span className="ml-1 text-[11px] tabular-nums text-slate-400 dark:text-slate-500">
-                {inputWords} 字 · ~{approxTokens(input)} tokens
-              </span>
-            )}
-            <div className="flex-1" />
-            {busy ? (
-              <Button variant="secondary" size="sm" icon={Square} onClick={() => abortRef.current?.abort()}>
-                停止
-              </Button>
-            ) : (
-              <Button size="sm" iconRight={Send} onClick={() => void send(input)} disabled={!input.trim()}>
-                送出
-              </Button>
-            )}
-          </div>
-        </div>
+        {/* 輸入區（貼底）— 獨立 Composer：自管輸入 state，打字完全唔會 re-render 父組件 */}
+        <Composer
+          seed={seed}
+          busy={busy}
+          contextCount={activeContexts.length}
+          onSend={(t) => void send(t)}
+          onStop={() => abortRef.current?.abort()}
+          onOpenTemplate={() => setTemplateOpen(true)}
+          onOpenContext={() => setContextOpen(true)}
+        />
       </div>
 
       {/* ───────── Modals ───────── */}
@@ -1003,6 +962,101 @@ export default function AIAssistant() {
 // ════════════════════════════════════════════════════════════
 //  子元件
 // ════════════════════════════════════════════════════════════
+
+// ───────── 輸入區（獨立組件，自管 state）─────────
+// 關鍵修復：輸入 state 留喺呢度，打字唔會 re-render 父組件（訊息 / 側欄 / welcome 都唔郁），
+// 連中文 IME 組字都唔會被父組件嘅 re-render 打斷（之前每打一字都重 render → 「跳」）。
+// seed.n 一變 = 父組件要求載入文字（範本填入 / 開新對話清空 / 切模式）。
+const Composer = memo(function Composer({
+  seed,
+  busy,
+  contextCount,
+  onSend,
+  onStop,
+  onOpenTemplate,
+  onOpenContext,
+}: {
+  seed: { text: string; n: number }
+  busy: boolean
+  contextCount: number
+  onSend: (text: string) => void
+  onStop: () => void
+  onOpenTemplate: () => void
+  onOpenContext: () => void
+}) {
+  const [text, setText] = useState(seed.text)
+  const ref = useRef<HTMLTextAreaElement | null>(null)
+
+  useEffect(() => {
+    setText(seed.text)
+    requestAnimationFrame(() => {
+      const el = ref.current
+      if (!el) return
+      el.focus()
+      el.selectionStart = el.selectionEnd = el.value.length
+    })
+    // 只喺 seed.n（父組件信號）變先載入；唔包 seed.text 入 deps 係刻意。
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [seed.n])
+
+  const submit = () => {
+    const t = text.trim()
+    if (!t || busy) return
+    onSend(t)
+    setText('')
+  }
+
+  function onKeyDown(e: KeyboardEvent<HTMLTextAreaElement>) {
+    // 中文 IME 組字中（揀緊候選字）唔好攔截 Enter
+    if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
+      e.preventDefault()
+      submit()
+    }
+  }
+
+  const trimmed = text.trim()
+  return (
+    <div className="sticky bottom-0 rounded-3xl border border-slate-200/80 bg-white p-2 shadow-sm transition focus-within:border-accent/50 focus-within:ring-2 focus-within:ring-accent/20 dark:border-slate-700/70 dark:bg-slate-800 dark:shadow-none">
+      <Textarea
+        ref={ref}
+        rows={2}
+        className="resize-none border-0 bg-transparent px-2.5 py-1.5 text-[13.5px] leading-relaxed shadow-none focus:ring-0 dark:bg-transparent"
+        placeholder={`打你想問嘅嘢…（Enter 送出 · Shift+Enter 換行 · ${MOD}/ 範本）`}
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        onKeyDown={onKeyDown}
+        disabled={busy}
+      />
+      <div className="flex items-center gap-1 px-0.5 pt-1">
+        <Tooltip label={`範本庫（${MOD}/）`}>
+          <IconButton label="範本庫" size="sm" onClick={onOpenTemplate}>
+            <Library size={16} />
+          </IconButton>
+        </Tooltip>
+        <Tooltip label="連結上下文">
+          <IconButton label="上下文" size="sm" active={contextCount > 0} onClick={onOpenContext}>
+            <Paperclip size={16} />
+          </IconButton>
+        </Tooltip>
+        {trimmed && (
+          <span className="ml-1 text-[11px] tabular-nums text-slate-400 dark:text-slate-500">
+            {approxWords(text)} 字 · ~{approxTokens(text)} tokens
+          </span>
+        )}
+        <div className="flex-1" />
+        {busy ? (
+          <Button variant="secondary" size="sm" icon={Square} onClick={onStop}>
+            停止
+          </Button>
+        ) : (
+          <Button size="sm" iconRight={Send} onClick={submit} disabled={!trimmed}>
+            送出
+          </Button>
+        )}
+      </div>
+    </div>
+  )
+})
 
 function ThreadGroup({ label, children }: { label: string; children: React.ReactNode }) {
   return (
