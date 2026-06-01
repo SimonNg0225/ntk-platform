@@ -15,7 +15,15 @@ export default function Settings() {
   const confirm = useConfirm()
   const fileRef = useRef<HTMLInputElement>(null)
 
-  const doExport = () => {
+  const doExport = async () => {
+    // 先確保所有 lazy feature collection 登記齊，再枚舉 collectionRegistry
+    // 匯出（同匯入/清除/sync 同源）—— 否則功能 chunk 未載入時會匯出殘缺備份。
+    // preload 失敗唔阻匯出：照匯出已登記部分（同 sync.ts 的 catch 一致）。
+    try {
+      await preloadAllFeatures()
+    } catch {
+      /* ignore：照匯出已登記嘅 collection */
+    }
     const blob = new Blob([JSON.stringify(exportAllData(), null, 2)], {
       type: 'application/json',
     })
@@ -46,6 +54,9 @@ export default function Settings() {
     }
     try {
       const text = await file.text()
+      // 先確保所有 lazy feature collection 登記齊，再枚舉 collectionRegistry
+      // 匯入（同匯出/清除/sync 同源）—— 否則只覆寫已登記 col，其餘靜靜跳過。
+      await preloadAllFeatures()
       const n = importAllData(JSON.parse(text))
       toast.success(`已匯入 ${n} 類資料`)
     } catch {
