@@ -55,7 +55,9 @@ import {
   Smartphone,
   Trash2,
   TrendingUp,
+  UserPlus,
   Users,
+  UserX,
   X,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
@@ -74,10 +76,12 @@ import {
   BUILTIN_TEMPLATES,
   CATEGORY_LABEL,
   CATEGORY_STYLE,
+  DEFAULT_CONTACT_GAP_DAYS,
   DIRECTION_LABEL,
   OUTCOME_LABEL,
   OUTCOME_STYLE,
   buildOverview,
+  contactGaps,
   countByCategory,
   countByChannel,
   countByOutcome,
@@ -96,6 +100,8 @@ import {
   type CommMeta,
   type CommRow,
   type CommTemplate,
+  type ContactGap,
+  type ContactGapStatus,
   type FollowUpBucket,
   type SortDir,
   type SortKey,
@@ -163,6 +169,8 @@ export default function ParentComms() {
   // 編輯器
   const [editorOpen, setEditorOpen] = useState(false)
   const [editing, setEditing] = useState<CommRow | null>(null)
+  // 由「需聯絡」名單一鍵起草時，預填班別 / 學生
+  const [preset, setPreset] = useState<{ classId: string; studentId: string } | null>(null)
   const [templatesOpen, setTemplatesOpen] = useState(false)
 
   // 篩選 / 搜尋
@@ -302,6 +310,7 @@ export default function ParentComms() {
 
   const openNew = () => {
     setEditing(null)
+    setPreset(null)
     setEditorOpen(true)
   }
   const openEdit = (r: CommRow) => {
@@ -748,6 +757,7 @@ export default function ParentComms() {
       {tab === 'students' && (
         <StudentsView
           rows={filteredRows}
+          roster={filterClassId ? filterStudents : students}
           classMap={classMap}
           studentMap={studentMap}
           today={today}
@@ -756,6 +766,11 @@ export default function ParentComms() {
             setFilterStudentId(studentId)
             setShowFilters(true)
             setTab('timeline')
+          }}
+          onDraft={(classId, studentId) => {
+            setEditing(null)
+            setPreset({ classId, studentId })
+            setEditorOpen(true)
           }}
         />
       )}
@@ -766,12 +781,14 @@ export default function ParentComms() {
       <CommEditor
         open={editorOpen}
         editing={editing}
+        preset={preset ?? undefined}
         classes={classes}
         students={students}
         templates={templates}
         onClose={() => {
           setEditorOpen(false)
           setEditing(null)
+          setPreset(null)
         }}
         onSave={handleSave}
       />
@@ -1417,21 +1434,157 @@ function TableView({
 }
 
 // ============================================================
+//  需聯絡名單（contact-gap watchlist）
+//  ------------------------------------------------------------
+//  對齊班別名冊 + 溝通記錄，列出「從未聯絡」同「太耐冇聯絡（≥30 日）」
+//  嘅學生，畀老師一眼睇邊個家長係時候 reach out。純衍生（contactGaps），
+//  唔加任何欄位 / collection。
+// ============================================================
+function ContactGapPanel({
+  gaps,
+  studentMap,
+  classMap,
+  today,
+  onFilterStudent,
+  onDraft,
+}: {
+  gaps: ContactGap[]
+  studentMap: Map<string, { id: string; name: string; classId: string }>
+  classMap: Map<string, { id: string; name: string }>
+  today: string
+  onFilterStudent: (classId: string, studentId: string) => void
+  onDraft: (classId: string, studentId: string) => void
+}) {
+  const [collapsed, setCollapsed] = useState(false)
+  // 名冊乾淨（全部最近都聯絡過）→ 唔顯示空 panel
+  if (gaps.length === 0) return null
+
+  const never = gaps.filter((g) => g.status === 'never')
+  const stale = gaps.filter((g) => g.status === 'stale')
+
+  const sections: { status: ContactGapStatus; label: string; tone: 'rose' | 'amber'; items: ContactGap[] }[] = [
+    { status: 'never', label: '從未聯絡', tone: 'rose', items: never },
+    { status: 'stale', label: `太耐冇聯絡（≥ ${DEFAULT_CONTACT_GAP_DAYS} 日）`, tone: 'amber', items: stale },
+  ]
+
+  return (
+    <Card className="overflow-hidden border-amber-200/70 dark:border-amber-500/25">
+      <button
+        type="button"
+        onClick={() => setCollapsed((v) => !v)}
+        aria-expanded={!collapsed}
+        className="flex w-full items-center justify-between gap-2 px-4 py-3 text-left transition hover:bg-amber-50/50 dark:hover:bg-amber-500/5"
+      >
+        <span className="flex flex-wrap items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-200">
+          <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-100 text-amber-600 dark:bg-amber-500/15 dark:text-amber-300">
+            <UserX size={15} />
+          </span>
+          需聯絡名單
+          <span className="tabular-nums text-slate-400">（{gaps.length}）</span>
+          {never.length > 0 && (
+            <Badge tone="rose" dot>
+              {never.length} 從未聯絡
+            </Badge>
+          )}
+          {stale.length > 0 && (
+            <Badge tone="amber" dot>
+              {stale.length} 太耐
+            </Badge>
+          )}
+        </span>
+        {collapsed ? (
+          <ChevronDown size={18} className="text-slate-400" />
+        ) : (
+          <ChevronUp size={18} className="text-slate-400" />
+        )}
+      </button>
+      {!collapsed && (
+        <div className="space-y-3 border-t border-amber-100 px-4 py-3 dark:border-amber-500/15">
+          {sections
+            .filter((sec) => sec.items.length > 0)
+            .map((sec) => (
+              <div key={sec.status}>
+                <div className="mb-1.5 flex items-center gap-2">
+                  <Badge tone={sec.tone} dot>
+                    {sec.label}
+                  </Badge>
+                  <span className="text-xs tabular-nums text-slate-400">{sec.items.length}</span>
+                </div>
+                <ul className="space-y-1.5">
+                  {sec.items.map((g) => {
+                    const stu = studentMap.get(g.studentId)
+                    const name = stu?.name ?? '（已移除學生）'
+                    const classId = stu?.classId ?? ''
+                    const className = classId ? classMap.get(classId)?.name ?? '—' : '—'
+                    return (
+                      <li
+                        key={g.studentId}
+                        className="flex items-center gap-2 rounded-lg border border-slate-100 bg-slate-50/60 px-2.5 py-1.5 dark:border-slate-700/50 dark:bg-slate-800/40"
+                      >
+                        <button
+                          type="button"
+                          onClick={() => stu && onFilterStudent(classId, g.studentId)}
+                          disabled={!stu}
+                          className="min-w-0 flex-1 text-left disabled:cursor-default"
+                        >
+                          <span className="block truncate text-sm font-medium text-slate-700 dark:text-slate-200">
+                            {name}
+                          </span>
+                          <span className="block truncate text-xs text-slate-400 dark:text-slate-500">
+                            {className}
+                          </span>
+                        </button>
+                        <span className="shrink-0 text-right text-[11px] tabular-nums text-slate-400 dark:text-slate-500">
+                          {g.status === 'never'
+                            ? '未聯絡'
+                            : g.lastDate
+                              ? relativeDayLabel(g.lastDate, today)
+                              : '—'}
+                        </span>
+                        {stu && (
+                          <Tooltip label={`起草聯絡 ${name}`}>
+                            <IconButton
+                              label="起草聯絡"
+                              size="sm"
+                              onClick={() => onDraft(classId, g.studentId)}
+                            >
+                              <UserPlus size={15} />
+                            </IconButton>
+                          </Tooltip>
+                        )}
+                      </li>
+                    )
+                  })}
+                </ul>
+              </div>
+            ))}
+        </div>
+      )}
+    </Card>
+  )
+}
+
+// ============================================================
 //  視圖 3：學生名冊（CRM 聯絡卡）
 // ============================================================
 function StudentsView({
   rows,
+  roster,
   classMap,
   studentMap,
   today,
   onFilterStudent,
+  onDraft,
 }: {
   rows: CommRow[]
+  roster: { id: string; name: string; classId: string }[]
   classMap: Map<string, { id: string; name: string }>
   studentMap: Map<string, { id: string; name: string; classId: string }>
   today: string
   onFilterStudent: (classId: string, studentId: string) => void
+  onDraft: (classId: string, studentId: string) => void
 }) {
+  const gaps = useMemo(() => contactGaps(roster, rows, undefined, today), [roster, rows, today])
   const summaries = useMemo(() => summarizeByStudent(rows), [rows])
   const list = useMemo(() => {
     return [...summaries.values()]
@@ -1446,18 +1599,26 @@ function StudentsView({
       })
   }, [summaries, studentMap])
 
-  if (list.length === 0) {
-    return (
-      <EmptyState
-        icon={Users}
-        title="未有指定學生嘅記錄"
-        hint="喺新增記錄時揀埋學生，就會喺呢度睇到每位學生嘅溝通脈絡。"
-      />
-    )
-  }
-
   return (
-    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+    <div className="space-y-4">
+      {/* 需聯絡名單（從未聯絡 / 太耐冇聯絡） */}
+      <ContactGapPanel
+        gaps={gaps}
+        studentMap={studentMap}
+        classMap={classMap}
+        today={today}
+        onFilterStudent={onFilterStudent}
+        onDraft={onDraft}
+      />
+
+      {list.length === 0 ? (
+        <EmptyState
+          icon={Users}
+          title="未有指定學生嘅記錄"
+          hint="喺新增記錄時揀埋學生，就會喺呢度睇到每位學生嘅溝通脈絡。"
+        />
+      ) : (
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
       {list.map((s) => {
         const sentimentTotal = s.positive + s.neutral + s.concern
         const clickable = !!s.classId
@@ -1535,6 +1696,8 @@ function StudentsView({
           </Card>
         )
       })}
+        </div>
+      )}
     </div>
   )
 }

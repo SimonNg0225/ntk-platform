@@ -372,6 +372,63 @@ export function summarizeByStudent(rows: CommRow[]): Map<string, StudentSummary>
   return map
 }
 
+// ───────── 需聯絡名單（contact-gap watchlist）─────────
+//  net-new：原本「學生」分頁只列出有溝通記錄嘅人（summarizeByStudent 只
+//  覆蓋有 comm 嘅學生），完全睇唔到「成個學期都未聯絡過」嗰批。呢度用
+//  班別名冊對齊溝通記錄，自動列出：
+//   · 從未聯絡（never）：名冊上有，但全無溝通記錄
+//   · 太耐冇聯絡（stale）：距上次聯絡 ≥ staleDays（預設 30）
+//  純衍生，唔加任何欄位 / collection。排序：never 先（按名），再 stale 按
+//  「最耐冇聯絡」（daysSince 大 → 細）。
+export const DEFAULT_CONTACT_GAP_DAYS = 30
+
+export type ContactGapStatus = 'never' | 'stale'
+
+export interface ContactGap {
+  studentId: string
+  lastDate?: string // 最近一次溝通（never 時 undefined）
+  daysSince?: number // 距今日子（never 時 undefined）
+  status: ContactGapStatus
+}
+
+export function contactGaps(
+  students: { id: string; name?: string }[],
+  rows: CommRow[],
+  opts: { staleDays?: number } = {},
+  anchor: string = todayKey(),
+): ContactGap[] {
+  const staleDays = opts.staleDays ?? DEFAULT_CONTACT_GAP_DAYS
+  const summaries = summarizeByStudent(rows)
+  const anchorTime = fromKey(anchor).getTime()
+  const nameOf = new Map(students.map((s) => [s.id, s.name ?? '']))
+
+  const gaps: ContactGap[] = []
+  for (const stu of students) {
+    const last = summaries.get(stu.id)?.lastDate
+    if (!last) {
+      gaps.push({ studentId: stu.id, status: 'never' })
+      continue
+    }
+    const daysSince = Math.round((anchorTime - fromKey(last).getTime()) / 864e5)
+    if (daysSince >= staleDays) {
+      gaps.push({ studentId: stu.id, lastDate: last, daysSince, status: 'stale' })
+    }
+  }
+
+  return gaps.sort((a, b) => {
+    // never 先（按名升序），再 stale（按 daysSince 大 → 細）
+    if (a.status !== b.status) return a.status === 'never' ? -1 : 1
+    if (a.status === 'never') {
+      const cmp = (nameOf.get(a.studentId) ?? '').localeCompare(nameOf.get(b.studentId) ?? '')
+      return cmp !== 0 ? cmp : a.studentId.localeCompare(b.studentId)
+    }
+    // stale：daysSince 大排先；同日數用名做穩定排序
+    if (b.daysSince !== a.daysSince) return (b.daysSince ?? 0) - (a.daysSince ?? 0)
+    const cmp = (nameOf.get(a.studentId) ?? '').localeCompare(nameOf.get(b.studentId) ?? '')
+    return cmp !== 0 ? cmp : a.studentId.localeCompare(b.studentId)
+  })
+}
+
 // ───────── 排序 ─────────
 export type SortKey = 'date' | 'channel' | 'category' | 'followUp'
 export type SortDir = 'asc' | 'desc'

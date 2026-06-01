@@ -139,6 +139,7 @@ const DIRECTIONS: Direction[] = ['outgoing', 'incoming']
 export default function CommEditor({
   open,
   editing,
+  preset,
   classes,
   students,
   templates,
@@ -147,6 +148,8 @@ export default function CommEditor({
 }: {
   open: boolean
   editing: CommRow | null
+  /** 新增時預填班別 / 學生（例如由「需聯絡」名單一鍵起草）；editing 時忽略 */
+  preset?: { classId: string; studentId: string }
   classes: Klass[]
   students: Student[]
   templates: CommTemplate[]
@@ -157,8 +160,16 @@ export default function CommEditor({
 
   useEffect(() => {
     if (!open) return
-    setD(editing ? draftFromRow(editing) : emptyDraft())
-  }, [open, editing])
+    if (editing) {
+      setD(draftFromRow(editing))
+    } else {
+      setD({
+        ...emptyDraft(),
+        classId: preset?.classId ?? '',
+        studentId: preset?.studentId ?? '',
+      })
+    }
+  }, [open, editing, preset])
 
   const set = <K extends keyof CommDraft>(key: K, value: CommDraft[K]) =>
     setD((prev) => ({ ...prev, [key]: value }))
