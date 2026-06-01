@@ -160,6 +160,38 @@ export function loggingStreak(logs: HealthLog[], anchor: Date = new Date()): num
   return streak
 }
 
+// ───────── CSV 匯出 ─────────
+/**
+ * 健康每日記錄 → CSV（UTF-8，呼叫端自行加 BOM 畀 Excel）。
+ * 表頭固定 5 指標 + 備註，按 date 升序，缺值留空白；
+ * 備註換行轉空格。CSV 砌法（esc 雙引號跳脫 + 每格包引號 + join）
+ * 對齊 focus/store.ts logsToCsv，全 repo 同一風格。
+ */
+export function logsToCsv(logs: HealthLog[]): string {
+  const head = ['日期', '體重(kg)', '睡眠(小時)', '運動(分鐘)', '飲水(ml)', '心情(1-5)', '備註']
+  const esc = (v: string) => `"${v.replace(/"/g, '""')}"`
+  // 缺值（undefined / 非有限）→ 空白；有效數字 → 原值字串。
+  const num = (v: number | undefined) =>
+    typeof v === 'number' && Number.isFinite(v) ? String(v) : ''
+  const rows = logs
+    .slice()
+    .sort((a, b) => a.date.localeCompare(b.date))
+    .map((l) =>
+      [
+        l.date,
+        num(l.weightKg),
+        num(l.sleepHrs),
+        num(l.exerciseMin),
+        num(l.waterMl),
+        num(l.mood),
+        (l.note ?? '').replace(/\n/g, ' '),
+      ]
+        .map(esc)
+        .join(','),
+    )
+  return [head.map(esc).join(','), ...rows].join('\n')
+}
+
 export interface HealthSummary {
   weightKg: number | null
   weightDelta7: number | null

@@ -19,6 +19,7 @@ import {
   goalPct,
   loggingStreak,
   summarize,
+  logsToCsv,
 } from './util'
 
 const ANCHOR = new Date(2026, 5, 1, 12, 0, 0) // 2026-06-01 本地正午（星期一）
@@ -254,5 +255,45 @@ describe('summarize（整合快照，全程無 NaN）', () => {
     expect(s.moodAvg7).toBe(4)
     expect(s.streak).toBe(2)
     expect(s.loggedToday).toBe(true)
+  })
+})
+
+describe('logsToCsv（匯出；對齊 focus CSV 風格）', () => {
+  it('固定表頭：日期 + 5 指標 + 備註', () => {
+    const lines = logsToCsv([]).split('\n')
+    expect(lines).toHaveLength(1) // 空資料只得表頭
+    expect(lines[0]).toBe(
+      '"日期","體重(kg)","睡眠(小時)","運動(分鐘)","飲水(ml)","心情(1-5)","備註"',
+    )
+  })
+
+  it('按 date 升序輸出（唔靠入參次序）', () => {
+    const csv = logsToCsv([
+      log('2026-06-01', { weightKg: 70 }),
+      log('2026-05-30', { weightKg: 72 }),
+      log('2026-05-31', { weightKg: 71 }),
+    ])
+    const dates = csv.split('\n').slice(1).map((r) => r.split(',')[0])
+    expect(dates).toEqual(['"2026-05-30"', '"2026-05-31"', '"2026-06-01"'])
+  })
+
+  it('齊頭一行：五指標 + 備註全部填齊', () => {
+    const csv = logsToCsv([
+      log('2026-06-01', { weightKg: 70.5, sleepHrs: 7.5, exerciseMin: 30, waterMl: 1500, mood: 4, note: '好日子' }),
+    ])
+    expect(csv.split('\n')[1]).toBe(
+      '"2026-06-01","70.5","7.5","30","1500","4","好日子"',
+    )
+  })
+
+  it('缺值留空白（唔出 0 / undefined / NaN）', () => {
+    const csv = logsToCsv([log('2026-06-01', { weightKg: 70, mood: NaN })])
+    // 睡眠/運動/飲水缺 → 空；mood 為 NaN → 空（非有限唔當值）
+    expect(csv.split('\n')[1]).toBe('"2026-06-01","70","","","","",""')
+  })
+
+  it('備註：雙引號跳脫 + 換行轉空格（同 focus esc）', () => {
+    const csv = logsToCsv([log('2026-06-01', { note: '今日"攰"\n要早瞓' })])
+    expect(csv.split('\n')[1]).toBe('"2026-06-01","","","","","","今日""攰"" 要早瞓"')
   })
 })

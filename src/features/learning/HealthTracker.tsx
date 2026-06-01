@@ -3,6 +3,7 @@ import {
   Plus,
   Minus,
   Target,
+  Download,
   Flame,
   Scale,
   Moon,
@@ -20,7 +21,7 @@ import { useToast } from '../../context/ToastContext'
 import { useHealthLogs, useHealthGoals, logDay, saveGoals } from './health/store'
 import { MOOD_EMOJI } from './health/types'
 import type { HealthGoals } from './health/types'
-import { byDate, todayKey, seriesOf, summarize, recentDays, WEEKDAY_LABELS, fromKey } from './health/util'
+import { byDate, todayKey, seriesOf, summarize, recentDays, WEEKDAY_LABELS, fromKey, logsToCsv } from './health/util'
 import { LineTrend, WeekBars, GoalRing } from './health/Charts'
 
 type Range = '14' | '30'
@@ -157,6 +158,20 @@ export default function HealthTracker() {
     else set({ sleepHrs: n })
   }
 
+  // 一鍵匯出全部每日記錄做 CSV（UTF-8 BOM，中文 Excel 開到）；純讀取。
+  // Blob / a.download 流程對齊 focus/HistoryView.tsx exportCsv。
+  function exportCsv() {
+    const csv = logsToCsv(logs)
+    const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `health-${todayKey()}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+    toast.success(`已匯出 ${logs.length} 日記錄`)
+  }
+
   const days = range === '14' ? 14 : 30
   const exerciseWeek = useMemo(
     () =>
@@ -189,9 +204,21 @@ export default function HealthTracker() {
               </span>
             )}
           </div>
-          <Button variant="ghost" size="sm" icon={Target} onClick={() => setGoalsOpen(true)}>
-            目標
-          </Button>
+          <div className="flex shrink-0 items-center gap-1.5">
+            <Button
+              variant="ghost"
+              size="sm"
+              icon={Download}
+              onClick={exportCsv}
+              disabled={!hasAny}
+              title="匯出全部每日記錄做 CSV"
+            >
+              匯出
+            </Button>
+            <Button variant="ghost" size="sm" icon={Target} onClick={() => setGoalsOpen(true)}>
+              目標
+            </Button>
+          </div>
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
