@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   ArrowDownRight,
   ArrowUpRight,
@@ -22,6 +22,7 @@ import {
   Trash2,
   TrendingDown,
   TrendingUp,
+  Upload,
   Wallet,
   X,
   type LucideIcon,
@@ -47,6 +48,7 @@ import {
   Select,
   Separator,
   Tabs,
+  Textarea,
   cx,
 } from '../../ui'
 import {
@@ -67,6 +69,7 @@ import {
   budgetsCol,
   byCategory,
   computeMonthStats,
+  csvRowsToTx,
   dailyBreakdown,
   daysBetween,
   downloadCsv,
@@ -78,16 +81,19 @@ import {
   monthKey,
   monthLabel,
   monthlyTrend,
+  parseCsv,
   pruneBudgets,
   recurringCol,
   shiftMonth,
   sortTxDesc,
   todayIso,
+  txCsvTemplate,
   txToCsvRows,
   upcomingDue,
   upsertBudget,
   type BudgetRow,
   type Filters,
+  type ParsedTx,
   type RecurrenceCycle,
   type RecurringTx,
 } from './budget/util'
@@ -657,6 +663,7 @@ function RecordsTab({
   const confirm = useConfirm()
   const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS)
   const [showFilter, setShowFilter] = useState(false)
+  const [showImport, setShowImport] = useState(false)
   const [selected, setSelected] = useState<Set<string>>(new Set())
 
   const visible = useMemo(
@@ -747,10 +754,17 @@ function RecordsTab({
         >
           <Filter size={18} />
         </IconButton>
+        <IconButton label="匯入 CSV" onClick={() => setShowImport(true)}>
+          <Upload size={18} />
+        </IconButton>
         <IconButton label="匯出 CSV" onClick={exportCsv} disabled={visible.length === 0}>
           <Download size={18} />
         </IconButton>
       </div>
+
+      {showImport && (
+        <ImportTxModal cats={cats} catName={catName} onClose={() => setShowImport(false)} />
+      )}
 
       {/* 快速 kind pills */}
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -1897,6 +1911,168 @@ function TxFormModal({
           </Button>
           <Button onClick={save} disabled={!valid}>
             {editing ? '儲存修改' : '新增記錄'}
+          </Button>
+        </div>
+      </div>
+    </Modal>
+  )
+}
+
+// ============================================================
+//  CSV 匯入交易 Modal（鏡像題庫匯入：揀檔 / 貼上 → 預覽 → 確認入帳）
+// ============================================================
+function ImportTxModal({
+  cats,
+  catName,
+  onClose,
+}: {
+  cats: TxCategory[]
+  catName: (id: string) => string
+  onClose: () => void
+}) {
+  const toast = useToast()
+  const fileRef = useRef<HTMLInputElement>(null)
+  const [text, setText] = useState('')
+
+  const preview = useMemo(() => {
+    if (!text.trim()) return { parsed: [] as ParsedTx[], skipped: 0 }
+    return csvRowsToTx(parseCsv(text), cats)
+  }, [text, cats])
+
+  const unmatched = useMemo(
+    () => preview.parsed.filter((p) => !p.matched).length,
+    [preview.parsed],
+  )
+
+  const onFile = (file: File) => {
+    const reader = new FileReader()
+    reader.onload = () => setText(String(reader.result ?? ''))
+    reader.readAsText(file)
+  }
+
+  const downloadTemplate = () => {
+    downloadCsv('收支匯入範本.csv', parseCsv(txCsvTemplate()))
+  }
+
+  const commit = () => {
+    if (preview.parsed.length === 0) {
+      toast.error('未有可匯入嘅交易')
+      return
+    }
+    const now = new Date().toISOString()
+    for (const p of preview.parsed) {
+      transactionsCol.add({
+        kind: p.kind,
+        amount: p.amount,
+        categoryId: p.categoryId,
+        date: p.date,
+        note: p.note,
+        createdAt: now,
+      })
+    }
+    toast.success(`已匯入 ${preview.parsed.length} 筆交易`)
+    onClose()
+  }
+
+  return (
+    <Modal open onClose={onClose} title="匯入交易（CSV）" size="lg">
+      <div className="space-y-4">
+        <div className="flex items-start gap-3 rounded-2xl border border-accent/20 bg-accent-soft/50 p-3.5 dark:border-accent/25 dark:bg-accent/10">
+          <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-accent text-white">
+            <Upload size={16} />
+          </span>
+          <p className="text-xs leading-relaxed text-slate-600 dark:text-slate-300">
+            CSV 欄位：日期、類型（收入／支出）、分類、金額、備註，同匯出格式一樣。類型留空會按金額正負推斷；分類名會自動對應到最相近嘅現有分類，對唔到就落「未分類」。第一次用建議先下載範本。
+          </p>
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          <input
+            ref={fileRef}
+            type="file"
+            accept=".csv,text/csv,text/plain"
+            className="hidden"
+            onChange={(e) => {
+              const f = e.target.files?.[0]
+              if (f) onFile(f)
+            }}
+          />
+          <Button variant="secondary" icon={Upload} onClick={() => fileRef.current?.click()}>
+            選擇 CSV 檔
+          </Button>
+          <Button variant="ghost" icon={Download} onClick={downloadTemplate}>
+            下載範本
+          </Button>
+        </div>
+
+        <Field label="或直接貼上 CSV 內容">
+          <Textarea
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            placeholder="日期,類型,分類,金額,備註…"
+            rows={6}
+            className="font-mono text-xs"
+          />
+        </Field>
+
+        {text.trim() && (
+          <div className="rounded-2xl border border-slate-200/80 bg-slate-50/60 p-3.5 dark:border-slate-700/60 dark:bg-slate-900/40">
+            <div className="mb-2.5 flex flex-wrap items-center gap-2 text-xs" aria-live="polite">
+              <Badge tone="green" dot>
+                可匯入 {preview.parsed.length}
+              </Badge>
+              {unmatched > 0 && (
+                <Badge tone="amber" dot>
+                  未分類 {unmatched}
+                </Badge>
+              )}
+              {preview.skipped > 0 && (
+                <Badge tone="rose" dot>
+                  略過 {preview.skipped}
+                </Badge>
+              )}
+            </div>
+            <ul className="max-h-44 space-y-1.5 overflow-y-auto">
+              {preview.parsed.slice(0, 8).map((p, i) => (
+                <li
+                  key={i}
+                  className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300"
+                >
+                  <span className="shrink-0 tabular-nums text-slate-400">{fmtDate(p.date)}</span>
+                  <Badge tone={p.kind === 'income' ? 'green' : 'rose'}>
+                    {p.kind === 'income' ? '收入' : '支出'}
+                  </Badge>
+                  <span className="shrink-0 truncate text-slate-500 dark:text-slate-400">
+                    {p.matched ? catName(p.categoryId) : `未分類${p.rawCategory ? `（${p.rawCategory}）` : ''}`}
+                  </span>
+                  <span
+                    className={cx(
+                      'ml-auto shrink-0 font-semibold tabular-nums',
+                      p.kind === 'income'
+                        ? 'text-emerald-600 dark:text-emerald-400'
+                        : 'text-rose-600 dark:text-rose-400',
+                    )}
+                  >
+                    {p.kind === 'income' ? '+' : '−'}
+                    {fmtMoney(p.amount)}
+                  </span>
+                </li>
+              ))}
+              {preview.parsed.length > 8 && (
+                <li className="text-xs text-slate-400 dark:text-slate-500">
+                  …仲有 {preview.parsed.length - 8} 筆
+                </li>
+              )}
+            </ul>
+          </div>
+        )}
+
+        <div className="flex justify-end gap-2 pt-2">
+          <Button variant="secondary" onClick={onClose}>
+            取消
+          </Button>
+          <Button onClick={commit} disabled={preview.parsed.length === 0}>
+            匯入（{preview.parsed.length}）
           </Button>
         </div>
       </div>

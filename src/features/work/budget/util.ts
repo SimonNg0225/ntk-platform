@@ -546,3 +546,211 @@ export function txToCsvRows(
   ])
   return [header, ...body]
 }
+
+// ============================================================
+//  CSV 匯入（鏡像題庫零依賴 parser；解析→fuzzy 對分類→草稿，畀用戶預覽確認）
+//  ------------------------------------------------------------
+//  欄位（與匯出鏡像）：日期 / 類型(收/支) / 分類 / 金額 / 備註。
+//  - 類型：收入/income/收 → income；支出/expense/支 → expense；
+//    留空時由金額正負推斷（負 = 支出）。
+//  - 金額：去除貨幣符號/千分位，取絕對值（正負只代表類型）。
+//  - 分類：先喺同類型 fuzzy 對應現有 TxCategory，再跨類型；
+//    對唔到 → categoryId 留空（UI fallback「未分類」）。
+//  - 日期接受 YYYY-MM-DD / YYYY/M/D，正規化成 YYYY-MM-DD；
+//    無法解析成有效日期嘅行會略過。
+// ============================================================
+
+/** 簡易 CSV parser（支援引號包欄位 + 逃逸雙引號 + 換行；零依賴）。 */
+export function parseCsv(text: string): string[][] {
+  const rows: string[][] = []
+  let row: string[] = []
+  let field = ''
+  let inQuotes = false
+  let i = 0
+  const s = text.replace(/^﻿/, '').replace(/\r\n/g, '\n').replace(/\r/g, '\n')
+  while (i < s.length) {
+    const c = s[i]
+    if (inQuotes) {
+      if (c === '"') {
+        if (s[i + 1] === '"') {
+          field += '"'
+          i += 2
+          continue
+        }
+        inQuotes = false
+        i++
+        continue
+      }
+      field += c
+      i++
+      continue
+    }
+    if (c === '"') {
+      inQuotes = true
+      i++
+      continue
+    }
+    if (c === ',') {
+      row.push(field)
+      field = ''
+      i++
+      continue
+    }
+    if (c === '\n') {
+      row.push(field)
+      rows.push(row)
+      row = []
+      field = ''
+      i++
+      continue
+    }
+    field += c
+    i++
+  }
+  if (field.length > 0 || row.length > 0) {
+    row.push(field)
+    rows.push(row)
+  }
+  return rows.filter((r) => r.some((x) => x.trim() !== ''))
+}
+
+const KIND_FROM_TEXT: Record<string, TxKind> = {
+  income: 'income',
+  收入: 'income',
+  收: 'income',
+  入: 'income',
+  expense: 'expense',
+  支出: 'expense',
+  支: 'expense',
+  出: 'expense',
+}
+
+/** 把「2026/3/5」「2026-3-5」之類正規化成「2026-03-05」；非法 → null */
+function normalizeDate(raw: string): string | null {
+  const s = raw.trim()
+  const m = s.match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})/)
+  if (!m) return null
+  const y = Number(m[1])
+  const mo = Number(m[2])
+  const d = Number(m[3])
+  if (mo < 1 || mo > 12 || d < 1 || d > 31) return null
+  return `${y}-${String(mo).padStart(2, '0')}-${String(d).padStart(2, '0')}`
+}
+
+/** 匯入解析出嚟嘅一筆交易草稿（未寫入；categoryId 空 = 未對應到分類）。 */
+export interface ParsedTx {
+  kind: TxKind
+  amount: number
+  categoryId: string
+  date: string
+  note?: string
+  /** 原 CSV 分類名（畀預覽顯示，尤其對唔到分類時）。 */
+  rawCategory: string
+  /** 係咪成功對應到現有分類（false = 落「未分類」）。 */
+  matched: boolean
+}
+
+export interface ParsedTxResult {
+  parsed: ParsedTx[]
+  skipped: number
+}
+
+/**
+ * 把 CSV rows（可含表頭）轉成可入帳嘅交易草稿 + 略過行數。
+ * fuzzy 對應規則：完全同名 > 包含關係（同類型優先，再跨類型）。
+ */
+export function csvRowsToTx(rows: string[][], cats: TxCategory[]): ParsedTxResult {
+  if (rows.length === 0) return { parsed: [], skipped: 0 }
+
+  // 偵測首行係咪表頭（中英皆可）
+  const header = rows[0].map((h) => h.trim().toLowerCase())
+  const hasHeader =
+    header.includes('日期') ||
+    header.includes('date') ||
+    header.includes('類型') ||
+    header.includes('金額') ||
+    header.includes('amount')
+
+  const idx = (names: string[], fallback: number) => {
+    if (!hasHeader) return fallback
+    for (const n of names) {
+      const k = header.indexOf(n)
+      if (k >= 0) return k
+    }
+    return fallback
+  }
+  const cDate = idx(['日期', 'date'], 0)
+  const cKind = idx(['類型', 'type', 'kind'], 1)
+  const cCat = idx(['分類', 'category', 'cat'], 2)
+  const cAmt = idx(['金額', 'amount'], 3)
+  const cNote = idx(['備註', 'note', 'memo'], 4)
+
+  const body = hasHeader ? rows.slice(1) : rows
+
+  const findCategory = (name: string, kind: TxKind): { id: string; matched: boolean } => {
+    const n = name.trim()
+    if (!n) return { id: '', matched: false }
+    const lc = n.toLowerCase()
+    const sameKind = cats.filter((c) => c.kind === kind)
+    // 完全同名（先同類型，再跨類型）
+    const exact =
+      sameKind.find((c) => c.name === n) ?? cats.find((c) => c.name === n)
+    if (exact) return { id: exact.id, matched: true }
+    // 包含關係（先同類型，再跨類型）
+    const fuzzy =
+      sameKind.find(
+        (c) =>
+          c.name.toLowerCase().includes(lc) || lc.includes(c.name.toLowerCase()),
+      ) ??
+      cats.find(
+        (c) =>
+          c.name.toLowerCase().includes(lc) || lc.includes(c.name.toLowerCase()),
+      )
+    if (fuzzy) return { id: fuzzy.id, matched: true }
+    return { id: '', matched: false }
+  }
+
+  const parsed: ParsedTx[] = []
+  let skipped = 0
+  for (const r of body) {
+    const date = normalizeDate(r[cDate] ?? '')
+    if (!date) {
+      skipped++
+      continue
+    }
+    // 金額：去除貨幣符號 / 千分位，保留負號同小數點
+    const amtRaw = (r[cAmt] ?? '').replace(/[^0-9.\-]/g, '')
+    const amtNum = amtRaw === '' ? NaN : Number(amtRaw)
+    if (!Number.isFinite(amtNum) || amtNum === 0) {
+      skipped++
+      continue
+    }
+    // 類型：明示優先，否則由金額正負推斷（負 = 支出）
+    const kindText = (r[cKind] ?? '').trim().toLowerCase()
+    const kind: TxKind =
+      KIND_FROM_TEXT[kindText] ?? (amtNum < 0 ? 'expense' : 'income')
+    const rawCategory = (r[cCat] ?? '').trim()
+    const { id: categoryId, matched } = findCategory(rawCategory, kind)
+    const note = (r[cNote] ?? '').trim() || undefined
+    parsed.push({
+      kind,
+      amount: Math.abs(amtNum),
+      categoryId,
+      date,
+      note,
+      rawCategory,
+      matched,
+    })
+  }
+  return { parsed, skipped }
+}
+
+/** CSV 匯入範本（畀使用者下載對照；與匯出欄位一致）。 */
+export function txCsvTemplate(): string {
+  return [
+    '日期,類型,分類,金額,備註',
+    '2026-05-03,支出,飲食,68,午餐',
+    '2026-05-05,收入,薪金,18000,五月人工',
+    '2026/5/10,支出,交通,-50,八達通增值',
+  ].join('\n')
+}

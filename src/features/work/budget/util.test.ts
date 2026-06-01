@@ -24,6 +24,9 @@ import {
   sortTxDesc,
   csvEscape,
   txToCsvRows,
+  parseCsv,
+  csvRowsToTx,
+  txCsvTemplate,
   EMPTY_FILTERS,
   type BudgetEnvelope,
 } from './util'
@@ -469,5 +472,223 @@ describe('txToCsvRows', () => {
     expect(rows[1]).toEqual(['2026-03-10', '收入', '薪金', 9000, ''])
     expect(rows[2]).toEqual(['2026-03-05', '支出', '餐飲', -80, '午餐'])
     expect(rows[3]).toEqual(['2026-03-01', '支出', '未分類', -50, ''])
+  })
+})
+
+// ============================================================
+//  CSV 匯入：parseCsv（鏡像題庫零依賴 parser）
+// ============================================================
+
+describe('parseCsv', () => {
+  it('空輸入 → []', () => expect(parseCsv('')).toEqual([]))
+  it('純空白 / 空行過濾掉', () => {
+    expect(parseCsv('\n  \n,,\n')).toEqual([])
+  })
+  it('基本逗號切欄', () => {
+    expect(parseCsv('a,b,c')).toEqual([['a', 'b', 'c']])
+  })
+  it('檔尾無換行嘅最後一行都收得到', () => {
+    expect(parseCsv('a,b\nc,d')).toEqual([
+      ['a', 'b'],
+      ['c', 'd'],
+    ])
+  })
+  it('引號包欄位入面嘅逗號當文字', () => {
+    expect(parseCsv('a,"b,c",d')).toEqual([['a', 'b,c', 'd']])
+  })
+  it('逃逸雙引號（""→ "）', () => {
+    expect(parseCsv('"say ""hi"""')).toEqual([['say "hi"']])
+  })
+  it('引號內換行保留', () => {
+    expect(parseCsv('"line1\nline2",x')).toEqual([['line1\nline2', 'x']])
+  })
+  it('\\r\\n 同 \\r 都正規化成換行', () => {
+    expect(parseCsv('a,b\r\nc,d\re,f')).toEqual([
+      ['a', 'b'],
+      ['c', 'd'],
+      ['e', 'f'],
+    ])
+  })
+  it('去除開頭 BOM', () => {
+    expect(parseCsv('﻿日期,金額')).toEqual([['日期', '金額']])
+  })
+})
+
+// ============================================================
+//  CSV 匯入：csvRowsToTx（解析 + fuzzy 對分類 + 略過）
+// ============================================================
+
+describe('csvRowsToTx', () => {
+  const cats: TxCategory[] = [
+    { id: 'food', name: '飲食', kind: 'expense', createdAt: '2026-01-01T00:00:00Z' },
+    { id: 'transport', name: '交通', kind: 'expense', createdAt: '2026-01-01T00:00:00Z' },
+    { id: 'salary', name: '薪金', kind: 'income', createdAt: '2026-01-01T00:00:00Z' },
+  ]
+
+  it('空 rows → 空結果', () => {
+    expect(csvRowsToTx([], cats)).toEqual({ parsed: [], skipped: 0 })
+  })
+
+  it('帶表頭（中文）：依欄名定位、收入正/支出負、分類完全對應', () => {
+    const rows = parseCsv(
+      [
+        '日期,類型,分類,金額,備註',
+        '2026-05-03,支出,飲食,68,午餐',
+        '2026-05-05,收入,薪金,18000,五月人工',
+      ].join('\n'),
+    )
+    const { parsed, skipped } = csvRowsToTx(rows, cats)
+    expect(skipped).toBe(0)
+    expect(parsed).toHaveLength(2)
+    expect(parsed[0]).toMatchObject({
+      kind: 'expense',
+      amount: 68,
+      categoryId: 'food',
+      date: '2026-05-03',
+      note: '午餐',
+      matched: true,
+    })
+    expect(parsed[1]).toMatchObject({
+      kind: 'income',
+      amount: 18000,
+      categoryId: 'salary',
+      date: '2026-05-05',
+      note: '五月人工',
+      matched: true,
+    })
+  })
+
+  it('無表頭：用固定欄序（日期/類型/分類/金額/備註）', () => {
+    const rows = parseCsv('2026-05-03,支出,交通,50,巴士')
+    const { parsed } = csvRowsToTx(rows, cats)
+    expect(parsed[0]).toMatchObject({ categoryId: 'transport', amount: 50, kind: 'expense' })
+  })
+
+  it('類型留空：由金額正負推斷（負→支出、正→收入）', () => {
+    const rows = parseCsv(
+      ['日期,類型,分類,金額,備註', '2026-05-03,,飲食,-68,', '2026-05-05,,薪金,18000,'].join('\n'),
+    )
+    const { parsed } = csvRowsToTx(rows, cats)
+    expect(parsed[0]).toMatchObject({ kind: 'expense', amount: 68 })
+    expect(parsed[1]).toMatchObject({ kind: 'income', amount: 18000 })
+  })
+
+  it('金額取絕對值（正負只代表類型，唔會入負數）', () => {
+    const rows = parseCsv('2026-05-03,支出,飲食,-68,')
+    expect(csvRowsToTx(rows, cats).parsed[0].amount).toBe(68)
+  })
+
+  it('金額去除貨幣符號 / 千分位', () => {
+    const rows = parseCsv('2026-05-03,收入,薪金,"HK$18,000.50",')
+    expect(csvRowsToTx(rows, cats).parsed[0].amount).toBe(18000.5)
+  })
+
+  it('英文類型 income/expense 都認得', () => {
+    const rows = parseCsv(
+      ['date,type,category,amount,note', '2026-05-03,expense,飲食,68,', '2026-05-05,income,薪金,18000,'].join('\n'),
+    )
+    const { parsed } = csvRowsToTx(rows, cats)
+    expect(parsed[0].kind).toBe('expense')
+    expect(parsed[1].kind).toBe('income')
+  })
+
+  it('分類 fuzzy：部分包含都對應到', () => {
+    const rows = parseCsv('2026-05-03,支出,飲食開支,68,')
+    expect(csvRowsToTx(rows, cats).parsed[0]).toMatchObject({
+      categoryId: 'food',
+      matched: true,
+    })
+  })
+
+  it('分類對唔到 → categoryId 空 + matched=false + 保留原名', () => {
+    const rows = parseCsv('2026-05-03,支出,旅行,500,沖繩')
+    expect(csvRowsToTx(rows, cats).parsed[0]).toMatchObject({
+      categoryId: '',
+      matched: false,
+      rawCategory: '旅行',
+    })
+  })
+
+  it('同名跨類型：優先對應符合類型嗰個', () => {
+    const dualCats: TxCategory[] = [
+      { id: 'bonus-in', name: '獎金', kind: 'income', createdAt: '2026-01-01T00:00:00Z' },
+      { id: 'bonus-out', name: '獎金', kind: 'expense', createdAt: '2026-01-01T00:00:00Z' },
+    ]
+    const rows = parseCsv('2026-05-03,收入,獎金,1000,')
+    expect(csvRowsToTx(rows, dualCats).parsed[0].categoryId).toBe('bonus-in')
+  })
+
+  it('日期 YYYY/M/D 正規化成 YYYY-MM-DD（補零）', () => {
+    const rows = parseCsv('2026/5/3,支出,飲食,68,')
+    expect(csvRowsToTx(rows, cats).parsed[0].date).toBe('2026-05-03')
+  })
+
+  it('略過：無效日期 / 金額空白 / 金額零', () => {
+    const rows = parseCsv(
+      [
+        '日期,類型,分類,金額,備註',
+        '唔係日期,支出,飲食,68,',
+        '2026-05-03,支出,飲食,,缺金額',
+        '2026-05-04,支出,飲食,0,零',
+        '2026-05-05,支出,飲食,68,有效',
+      ].join('\n'),
+    )
+    const { parsed, skipped } = csvRowsToTx(rows, cats)
+    expect(skipped).toBe(3)
+    expect(parsed).toHaveLength(1)
+    expect(parsed[0].note).toBe('有效')
+  })
+
+  it('非法月份日子（13 月 / 32 日）略過', () => {
+    const rows = parseCsv(
+      ['日期,類型,分類,金額,備註', '2026-13-01,支出,飲食,10,', '2026-05-32,支出,飲食,10,'].join('\n'),
+    )
+    expect(csvRowsToTx(rows, cats).skipped).toBe(2)
+  })
+
+  it('備註留空 → note undefined（唔會變空字串）', () => {
+    const rows = parseCsv('2026-05-03,支出,飲食,68,')
+    expect(csvRowsToTx(rows, cats).parsed[0].note).toBeUndefined()
+  })
+})
+
+// ── 匯出 → 匯入往返：匯出嘅 CSV 餵返匯入應該還原到等價交易 ──
+describe('匯出 / 匯入往返一致', () => {
+  const cats: TxCategory[] = [
+    { id: 'food', name: '飲食', kind: 'expense', createdAt: '2026-01-01T00:00:00Z' },
+    { id: 'salary', name: '薪金', kind: 'income', createdAt: '2026-01-01T00:00:00Z' },
+  ]
+  it('txToCsvRows → CSV 文字 → parseCsv → csvRowsToTx 還原', () => {
+    const txs: Transaction[] = [
+      tx({ id: '1', date: '2026-03-05', kind: 'expense', categoryId: 'food', amount: 80, note: '午, 餐' }),
+      tx({ id: '2', date: '2026-03-10', kind: 'income', categoryId: 'salary', amount: 9000, note: '' }),
+    ]
+    const csvText = txToCsvRows(txs, cats)
+      .map((r) => r.map((v) => csvEscape(v)).join(','))
+      .join('\n')
+    const { parsed, skipped } = csvRowsToTx(parseCsv(csvText), cats)
+    expect(skipped).toBe(0)
+    // 匯出按日期新→舊：先 03-10（收入），再 03-05（支出）
+    expect(parsed[0]).toMatchObject({ kind: 'income', amount: 9000, categoryId: 'salary' })
+    expect(parsed[1]).toMatchObject({
+      kind: 'expense',
+      amount: 80,
+      categoryId: 'food',
+      note: '午, 餐',
+    })
+  })
+})
+
+describe('txCsvTemplate', () => {
+  it('範本可被自己解析 + 對應到預設分類', () => {
+    const cats: TxCategory[] = [
+      { id: 'food', name: '飲食', kind: 'expense', createdAt: '2026-01-01T00:00:00Z' },
+      { id: 'salary', name: '薪金', kind: 'income', createdAt: '2026-01-01T00:00:00Z' },
+      { id: 'transport', name: '交通', kind: 'expense', createdAt: '2026-01-01T00:00:00Z' },
+    ]
+    const { parsed, skipped } = csvRowsToTx(parseCsv(txCsvTemplate()), cats)
+    expect(skipped).toBe(0)
+    expect(parsed).toHaveLength(3)
+    expect(parsed.every((p) => p.matched)).toBe(true)
   })
 })
