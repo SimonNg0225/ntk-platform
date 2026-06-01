@@ -31,6 +31,8 @@ import {
   STATUS_STYLE,
   type AttendanceNote,
   type StudentTally,
+  CHRONIC_ABSENCE_PCT,
+  classifyAttendance,
   countDay,
   downloadCsv,
   isExcused,
@@ -922,6 +924,13 @@ function Analytics({ classId, className }: { classId: string; className: string 
       .sort((a, b) => b.t.currentAbsentStreak - a.t.currentAbsentStreak)
   }, [classStudents, tallies])
 
+  // 關注名單分類器：以窗口缺席率分流「需關注 / 全勤」（純函式，零新資料）
+  const classification = useMemo(() => classifyAttendance(tallies), [tallies])
+  const nameOf = useMemo(() => {
+    const m = new Map(classStudents.map((s) => [s.id, s]))
+    return (id: string) => m.get(id)
+  }, [classStudents])
+
   // ── 個別學生摘要（drill-down）所需資料 ──
   const focusStudent = focusId ? classStudents.find((s) => s.id === focusId) : undefined
   const focusData = useMemo(() => {
@@ -1072,6 +1081,86 @@ function Analytics({ classId, className }: { classId: string; className: string 
               </ul>
             )}
           </Card>
+
+          {/* 關注名單分類（缺席率窗口分流：需關注 / 全勤） */}
+          {(classification.chronic.length > 0 || classification.perfect.length > 0) && (
+            <div className="grid gap-4 lg:grid-cols-2">
+              <Card className="rounded-3xl p-5">
+                <SectionTitle
+                  icon={TriangleAlert}
+                  description={`窗口內缺席率 ≥ ${CHRONIC_ABSENCE_PCT}%`}
+                >
+                  長期缺席關注
+                </SectionTitle>
+                {classification.chronic.length === 0 ? (
+                  <p className="rounded-2xl bg-slate-50 px-3 py-2.5 text-sm text-slate-500 dark:bg-slate-800/60 dark:text-slate-400">
+                    暫時冇人達到長期缺席門檻。
+                  </p>
+                ) : (
+                  <ul className="space-y-1.5">
+                    {classification.chronic.map((c) => {
+                      const s = nameOf(c.studentId)
+                      if (!s) return null
+                      return (
+                        <li
+                          key={c.studentId}
+                          className="flex items-center justify-between gap-3 rounded-lg border border-rose-200/60 bg-rose-50/50 px-3 py-2 dark:border-rose-500/20 dark:bg-rose-500/5"
+                        >
+                          <span className="min-w-0 truncate font-medium text-slate-800 dark:text-slate-100">
+                            {s.name}
+                            <span className="ml-1.5 text-xs font-normal tabular-nums text-slate-400">
+                              缺 {c.absent}/{c.marked}
+                            </span>
+                          </span>
+                          <span className="flex shrink-0 items-center gap-1.5">
+                            {c.streak >= 2 && (
+                              <Badge tone="rose" icon={Ban} className="tabular-nums">
+                                連續 {c.streak} 日
+                              </Badge>
+                            )}
+                            <Badge tone="rose" className="tabular-nums">
+                              缺席率 {c.rate}%
+                            </Badge>
+                          </span>
+                        </li>
+                      )
+                    })}
+                  </ul>
+                )}
+              </Card>
+
+              <Card className="rounded-3xl p-5">
+                <SectionTitle icon={GraduationCap} description="窗口內有記錄且零缺席">
+                  全勤名單
+                </SectionTitle>
+                {classification.perfect.length === 0 ? (
+                  <p className="rounded-2xl bg-slate-50 px-3 py-2.5 text-sm text-slate-500 dark:bg-slate-800/60 dark:text-slate-400">
+                    窗口內暫時未有零缺席學生。
+                  </p>
+                ) : (
+                  <ul className="space-y-1.5">
+                    {classification.perfect.map((p) => {
+                      const s = nameOf(p.studentId)
+                      if (!s) return null
+                      return (
+                        <li
+                          key={p.studentId}
+                          className="flex items-center justify-between gap-3 rounded-lg border border-emerald-200/60 bg-emerald-50/50 px-3 py-2 dark:border-emerald-500/20 dark:bg-emerald-500/5"
+                        >
+                          <span className="min-w-0 truncate font-medium text-slate-800 dark:text-slate-100">
+                            {s.name}
+                          </span>
+                          <Badge tone="green" icon={CalendarCheck} className="tabular-nums">
+                            全勤 {p.marked} 堂
+                          </Badge>
+                        </li>
+                      )
+                    })}
+                  </ul>
+                )}
+              </Card>
+            </div>
+          )}
 
           {/* 個人排行（撳一行睇個別摘要） */}
           <Card className="rounded-3xl p-5">

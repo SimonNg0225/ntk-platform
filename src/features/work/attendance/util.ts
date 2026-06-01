@@ -259,6 +259,75 @@ export function tallyByStudent(
   return out
 }
 
+// ───────── 班級關注名單分類器（early-warning）─────────
+// 喺 tallyByStudent 之上加一層純分類：以已揀窗口（元件已有近 14/30/90 日
+// pills）計每生缺席率，自動分流「需關注（chronic）」同「全勤（perfect）」。
+// 風格對齊 classes/util.ts 嘅 isAtRisk（門檻常數 + 守資料不足）。
+// 只讀現有 StudentTally 欄位，零新資料、零 schema 改動。
+
+/** 缺席率達此 %（含）即列入「需關注（chronic）」，預設貼近常見校本警界 */
+export const CHRONIC_ABSENCE_PCT = 20
+
+export interface ChronicEntry {
+  studentId: string
+  /** 缺席率 %（absent / marked * 100，四捨五入）*/
+  rate: number
+  absent: number
+  marked: number
+  /** 目前連續缺席日數（沿用 tally 嘅 currentAbsentStreak）*/
+  streak: number
+}
+
+export interface PerfectEntry {
+  studentId: string
+  marked: number
+}
+
+export interface AttendanceClassification {
+  /** 缺席率 ≥ 門檻：按缺席率大→細、再 streak 大→細 */
+  chronic: ChronicEntry[]
+  /** 窗口內有記錄且零缺席：按已點日數大→細 */
+  perfect: PerfectEntry[]
+}
+
+/**
+ * 把 tallyByStudent 嘅結果分流成「需關注 / 全勤」兩張排好序嘅名單。
+ * - 只睇有記錄嘅學生（marked > 0），資料不足者唔分流（避免誤報）。
+ * - chronic：absent / marked * 100 ≥ chronicRatePct（用原始計數，避開 tally.rate 捨入誤差）。
+ * - perfect：absent === 0（窗口內全到，present / late 都算）。
+ * @param tallies tallyByStudent 輸出（studentId → StudentTally）
+ * @param opts.chronicRatePct 缺席率門檻 %（預設 CHRONIC_ABSENCE_PCT = 20）
+ */
+export function classifyAttendance(
+  tallies: Map<string, StudentTally>,
+  opts?: { chronicRatePct?: number },
+): AttendanceClassification {
+  const threshold = opts?.chronicRatePct ?? CHRONIC_ABSENCE_PCT
+  const chronic: ChronicEntry[] = []
+  const perfect: PerfectEntry[] = []
+
+  for (const [studentId, t] of tallies) {
+    if (t.marked <= 0) continue // 資料不足 → 兩邊都唔入
+    const absenceRate = Math.round((t.absent / t.marked) * 100)
+    if (absenceRate >= threshold) {
+      chronic.push({
+        studentId,
+        rate: absenceRate,
+        absent: t.absent,
+        marked: t.marked,
+        streak: t.currentAbsentStreak,
+      })
+    }
+    if (t.absent === 0) {
+      perfect.push({ studentId, marked: t.marked })
+    }
+  }
+
+  chronic.sort((a, b) => b.rate - a.rate || b.streak - a.streak)
+  perfect.sort((a, b) => b.marked - a.marked)
+  return { chronic, perfect }
+}
+
 // ───────── 個別學生摘要（drill-down）─────────
 // 班級層面已有 tallyByStudent / 趨勢 / 排行；呢組純函式專為「單一學生」
 // 嘅深入摘要服務，補足之前未被聚合嘅 attendance_notes（病假類別 / 遲到分鐘 /
