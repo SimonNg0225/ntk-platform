@@ -4,11 +4,14 @@ import {
   ArchiveRestore,
   CheckSquare,
   Copy,
+  CornerUpLeft,
   Download,
   Eye,
+  Link2,
   ListChecks,
   Pencil,
   Pin,
+  Sparkles,
   Star,
   Tag as TagIcon,
   Trash2,
@@ -17,6 +20,8 @@ import {
   Badge,
   Button,
   IconButton,
+  Menu,
+  Modal,
   ProgressBar,
   Select,
   Textarea,
@@ -24,6 +29,7 @@ import {
 } from '../../../ui'
 import { useToast } from '../../../context/ToastContext'
 import { useConfirm } from '../../../context/ConfirmContext'
+import { complete, isAIConfigured } from '../../../lib/aiClient'
 import {
   NOTE_COLOR_KEYS,
   noteColorOf,
@@ -32,35 +38,21 @@ import {
   type RichNote,
 } from './store'
 import {
+  backlinksOf,
   checklistStat,
+  deriveTitle,
   download,
   fullDateTime,
   noteToMarkdown,
   parseLines,
   parseTags,
+  parseWikiLinks,
   readingMinutes,
+  resolveNoteByTitle,
   toggleTodoLine,
   wordCount,
 } from './util'
-
-const TEMPLATES: { label: string; body: string }[] = [
-  {
-    label: '會議筆記',
-    body: '會議主題 #meeting\n\n日期：\n出席：\n\n討論重點：\n- \n\n待辦：\n- [ ] \n- [ ] ',
-  },
-  {
-    label: '康乃爾筆記',
-    body: '主題 #study\n\n## 重點 / 線索\n- \n\n## 筆記\n\n\n## 總結\n',
-  },
-  {
-    label: '待辦清單',
-    body: '清單 #todo\n\n- [ ] \n- [ ] \n- [ ] ',
-  },
-  {
-    label: 'SWOT',
-    body: 'SWOT 分析 #strategy\n\n優勢 S：\n劣勢 W：\n機會 O：\n威脅 T：',
-  },
-]
+import { NOTE_TEMPLATES } from './templates'
 
 // 在 textarea 游標位置插入文字
 function insertAtCursor(
@@ -74,13 +66,98 @@ function insertAtCursor(
   return current.slice(0, start) + insert + current.slice(end)
 }
 
+// ───────── / 斜線指令（插入區塊）─────────
+function todayStr(): string {
+  return new Date().toLocaleDateString('zh-HK', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  })
+}
+interface SlashCommand {
+  id: string
+  label: string
+  hint: string
+  keywords: string[]
+  /** 插入文字（可為函式，apply 時先計，例如日期） */
+  insert: string | (() => string)
+  /** 插入後游標相對插入起點嘅位置（預設 = 插入文字長度，即末尾） */
+  caret?: number
+}
+const SLASH_COMMANDS: SlashCommand[] = [
+  { id: 'h2', label: '標題', hint: '## 大標題', keywords: ['heading', 'h2', 'title'], insert: '## ' },
+  { id: 'h3', label: '小標題', hint: '### 小標題', keywords: ['heading', 'h3'], insert: '### ' },
+  { id: 'todo', label: '待辦', hint: '- [ ] 任務', keywords: ['todo', 'task', 'check'], insert: '- [ ] ' },
+  { id: 'bullet', label: '項目符號', hint: '- 清單', keywords: ['list', 'bullet', 'ul'], insert: '- ' },
+  { id: 'quote', label: '引言', hint: '> 引述', keywords: ['quote', 'blockquote'], insert: '> ' },
+  { id: 'divider', label: '分隔線', hint: '———', keywords: ['divider', 'hr', 'line'], insert: '---\n' },
+  {
+    id: 'table',
+    label: '表格',
+    hint: '兩欄表格',
+    keywords: ['table', 'grid'],
+    insert: '| 欄位 | 欄位 |\n| --- | --- |\n|  |  |\n',
+  },
+  { id: 'code', label: '程式碼', hint: '``` 區塊', keywords: ['code', 'pre'], insert: '```\n\n```\n', caret: 4 },
+  { id: 'date', label: '日期', hint: todayStr(), keywords: ['date', 'today'], insert: () => todayStr() + ' ' },
+  { id: 'link', label: '連結', hint: '[[筆記]]', keywords: ['link', 'wiki'], insert: '[[]]', caret: 2 },
+  { id: 'tag', label: '標籤', hint: '#標籤', keywords: ['tag', 'hashtag'], insert: '#' },
+]
+
+// ───────── AI × 筆記（一次過 complete） ─────────
+type AiKind = 'summary' | 'points' | 'tags' | 'polish'
+const AI_NOTE_SYSTEM =
+  '你係一個筆記助理。用繁體中文（可書面廣東話），簡潔、實用、貼題，唔好多餘客套。'
+const AI_NOTE_TASKS: Record<
+  AiKind,
+  { label: string; verb: string; apply: 'append' | 'replace'; prompt: (c: string) => string }
+> = {
+  summary: {
+    label: '摘要全文',
+    verb: '加到筆記末',
+    apply: 'append',
+    prompt: (c) =>
+      `為以下筆記寫一段精簡摘要（2-3 句），抽出核心重點，最前面加一行「## 摘要」：\n\n${c}`,
+  },
+  points: {
+    label: '列重點',
+    verb: '加到筆記末',
+    apply: 'append',
+    prompt: (c) =>
+      `將以下筆記整理成 3-6 個重點，每行用「- 」開頭，最前面加一行「## 重點」：\n\n${c}`,
+  },
+  tags: {
+    label: '建議標籤',
+    verb: '加到筆記末',
+    apply: 'append',
+    prompt: (c) =>
+      `為以下筆記建議 3-6 個分類標籤。淨係回傳以空格分隔嘅標籤，每個前面加 #，唔好任何其他文字：\n\n${c}`,
+  },
+  polish: {
+    label: '潤飾文字',
+    verb: '取代內文',
+    apply: 'replace',
+    prompt: (c) =>
+      `潤飾以下筆記嘅文字，令佢更清晰流暢，保留原意同 Markdown 結構。直接回傳潤飾後嘅全文，唔好加任何解釋：\n\n${c}`,
+  },
+}
+
 export default function Editor({
   note,
   notebooks,
+  allNotes,
+  onOpenLink,
+  onOpenNote,
   onClose,
 }: {
   note: RichNote
   notebooks: Notebook[]
+  /** 全部筆記（解析 [[連結]] / 反向連結用） */
+  allNotes: RichNote[]
+  /** 撳 [[標題]]：解析現有筆記就開，冇就建立 */
+  onOpenLink: (title: string) => void
+  /** 撳反向連結：直接以 id 開該筆記 */
+  onOpenNote: (id: string) => void
   onClose?: () => void
 }) {
   const toast = useToast()
@@ -90,6 +167,11 @@ export default function Editor({
   const [title, setTitle] = useState(note.title)
   const [content, setContent] = useState(note.content)
   const [mode, setMode] = useState<'edit' | 'preview'>('edit')
+  // / 斜線指令選單（at = '/' 喺內文嘅 index；top = 相對編輯區嘅大約 px）
+  const [slash, setSlash] = useState<{ query: string; at: number; top: number } | null>(null)
+  const [slashIdx, setSlashIdx] = useState(0)
+  // AI × 筆記：開緊邊個任務（null = 冇）
+  const [aiKind, setAiKind] = useState<AiKind | null>(null)
 
   // 持有「目前 title/content 屬於邊一則筆記」+ 已寫入快照。
   // 用嚟喺切走 / 卸載時即時 flush 未存內容（避免遺失），同時
@@ -151,6 +233,66 @@ export default function Editor({
     richNotesCol.update(note.id, { ...p, updatedAt: new Date().toISOString() })
   }
 
+  // 偵測游標前係咪 `(行首/空白)/查詢`，係就開斜線選單
+  function detectSlash() {
+    const ta = taRef.current
+    if (!ta) {
+      setSlash(null)
+      return
+    }
+    const caret = ta.selectionStart ?? 0
+    const before = ta.value.slice(0, caret)
+    const m = before.match(/(^|\s)\/([^\s/]*)$/)
+    if (!m) {
+      setSlash(null)
+      return
+    }
+    const query = m[2]
+    const at = caret - query.length - 1
+    const lineIndex = before.split('\n').length - 1
+    const top = Math.max(0, (lineIndex + 1) * 28 - ta.scrollTop)
+    setSlash((prev) => (prev && prev.at === at ? { ...prev, query, top } : { query, at, top }))
+    setSlashIdx(0)
+  }
+
+  // 套用斜線指令：用插入內容取代 `/查詢`，並擺好游標
+  function applySlash(cmd: SlashCommand) {
+    if (!slash) return
+    const ta = taRef.current
+    const caret = ta?.selectionStart ?? content.length
+    const text = typeof cmd.insert === 'function' ? cmd.insert() : cmd.insert
+    const next = content.slice(0, slash.at) + text + content.slice(caret)
+    const pos = slash.at + (cmd.caret ?? text.length)
+    setContent(next)
+    setSlash(null)
+    requestAnimationFrame(() => {
+      const el = taRef.current
+      if (el) {
+        el.focus()
+        el.setSelectionRange(pos, pos)
+      }
+    })
+  }
+
+  function runAi(kind: AiKind) {
+    if (!content.trim()) {
+      toast.info('未有內容可以畀 AI 處理')
+      return
+    }
+    if (!isAIConfigured) {
+      toast.info('AI 未啟用 — 要設定好 Supabase + Gemini（見 docs/SETUP.md）')
+      return
+    }
+    setAiKind(kind)
+  }
+
+  function applyAi(text: string, apply: 'append' | 'replace') {
+    if (apply === 'replace') setContent(text)
+    else setContent((c) => (c.trim() ? c.trimEnd() + '\n\n' : '') + text)
+    setAiKind(null)
+    toast.success('已套用')
+  }
+
   function applyTemplate(body: string) {
     if (content.trim() && content !== body) {
       setContent((c) => c.trimEnd() + '\n\n' + body)
@@ -196,6 +338,20 @@ export default function Editor({
   }
 
   const preview = useMemo(() => parseLines(content), [content])
+  // [[雙向連結]]：本篇射出去嘅連結 + 反向連結（用 live title/content 配對）
+  const outgoing = useMemo(() => parseWikiLinks(content), [content])
+  const backlinks = useMemo(
+    () => backlinksOf(allNotes.filter((n) => !n.trashed), { ...note, title, content }),
+    [allNotes, note, title, content],
+  )
+  const slashItems = useMemo(() => {
+    if (!slash) return [] as SlashCommand[]
+    const q = slash.query.toLowerCase()
+    if (!q) return SLASH_COMMANDS
+    return SLASH_COMMANDS.filter(
+      (c) => c.label.toLowerCase().includes(q) || c.keywords.some((k) => k.includes(q)),
+    )
+  }, [slash])
 
   return (
     <div className="flex h-full flex-col">
@@ -246,6 +402,31 @@ export default function Editor({
         </div>
 
         <div className="ml-auto flex items-center gap-1">
+          <Menu
+            align="end"
+            label="AI 助手"
+            trigger={
+              <span
+                title="AI 助手：摘要 / 重點 / 標籤 / 潤飾"
+                className="inline-flex items-center justify-center rounded-lg p-1.5 text-accent transition hover:bg-accent-soft dark:text-accent dark:hover:bg-accent/15"
+              >
+                <Sparkles size={17} />
+              </span>
+            }
+            items={(Object.keys(AI_NOTE_TASKS) as AiKind[]).map((k) => ({
+              id: k,
+              label: AI_NOTE_TASKS[k].label,
+              icon:
+                k === 'points'
+                  ? ListChecks
+                  : k === 'tags'
+                    ? TagIcon
+                    : k === 'polish'
+                      ? Pencil
+                      : Sparkles,
+              onSelect: () => runAi(k),
+            }))}
+          />
           <IconButton
             label={mode === 'edit' ? '預覽' : '編輯'}
             active={mode === 'preview'}
@@ -312,10 +493,11 @@ export default function Editor({
           套範本
         </span>
         <div className="flex flex-wrap items-center gap-1">
-          {TEMPLATES.map((t) => (
+          {NOTE_TEMPLATES.map((t) => (
             <button
-              key={t.label}
+              key={t.id}
               type="button"
+              title={t.hint}
               onClick={() => applyTemplate(t.body)}
               className="rounded-lg bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-500 transition hover:bg-accent-soft hover:text-accent-strong dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-accent/15 dark:hover:text-accent"
             >
@@ -391,17 +573,76 @@ export default function Editor({
             <Textarea
               ref={taRef}
               value={content}
-              onChange={(e) => setContent(e.target.value)}
+              onChange={(e) => {
+                setContent(e.target.value)
+                detectSlash()
+              }}
+              onKeyDown={(e) => {
+                if (!slash || slashItems.length === 0) return
+                if (e.key === 'ArrowDown') {
+                  e.preventDefault()
+                  setSlashIdx((i) => Math.min(i + 1, slashItems.length - 1))
+                } else if (e.key === 'ArrowUp') {
+                  e.preventDefault()
+                  setSlashIdx((i) => Math.max(i - 1, 0))
+                } else if (e.key === 'Enter' || e.key === 'Tab') {
+                  e.preventDefault()
+                  applySlash(slashItems[slashIdx] ?? slashItems[0])
+                } else if (e.key === 'Escape') {
+                  e.preventDefault()
+                  setSlash(null)
+                } else if (['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(e.key)) {
+                  setSlash(null)
+                }
+              }}
+              onBlur={() => setTimeout(() => setSlash(null), 150)}
               rows={Math.max(12, Math.min(28, content.split('\n').length + 2))}
-              placeholder="由呢度落筆……　可以用 #標籤 歸類、- [ ] 整待辦。"
+              placeholder="由呢度落筆……　可以用 #標籤 歸類、- [ ] 整待辦，打 / 插入區塊。"
               className="border-0 bg-transparent px-0 text-[15px] leading-7 shadow-none focus:ring-0 dark:bg-transparent"
             />
+            {slash && slashItems.length > 0 && (
+              <div
+                role="listbox"
+                aria-label="插入區塊"
+                className="absolute z-30 w-56 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg dark:border-slate-700 dark:bg-slate-800"
+                style={{ top: slash.top + 44, left: 0 }}
+              >
+                <div className="border-b border-slate-100 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:border-slate-700 dark:text-slate-500">
+                  插入區塊
+                </div>
+                {slashItems.map((c, i) => (
+                  <button
+                    key={c.id}
+                    type="button"
+                    role="option"
+                    aria-selected={i === slashIdx}
+                    onMouseDown={(e) => {
+                      e.preventDefault()
+                      applySlash(c)
+                    }}
+                    onMouseEnter={() => setSlashIdx(i)}
+                    className={cx(
+                      'flex w-full items-center justify-between gap-3 px-2.5 py-1.5 text-left text-sm transition',
+                      i === slashIdx
+                        ? 'bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent'
+                        : 'text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-700',
+                    )}
+                  >
+                    <span className="font-medium">{c.label}</span>
+                    <span className="truncate text-[11px] text-slate-400 dark:text-slate-500">
+                      {c.hint}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         ) : (
           <div className="relative">
             <PreviewBody
               lines={preview}
               onToggle={(idx) => setContent((c) => toggleTodoLine(c, idx))}
+              onOpenLink={onOpenLink}
             />
           </div>
         )}
@@ -432,6 +673,58 @@ export default function Editor({
             ))}
           </div>
         )}
+
+        {/* [[雙向連結]]：射出 + 反向連結 */}
+        {(outgoing.length > 0 || backlinks.length > 0) && (
+          <div className="space-y-1.5 border-t border-slate-200/60 pt-2 dark:border-slate-700/50">
+            {outgoing.length > 0 && (
+              <div className="flex flex-wrap items-center gap-1.5">
+                <span className="inline-flex items-center gap-1 text-[11px] font-medium text-slate-400 dark:text-slate-500">
+                  <Link2 size={12} /> 連結到
+                </span>
+                {outgoing.map((t) => {
+                  const exists = Boolean(resolveNoteByTitle(allNotes, t))
+                  return (
+                    <button
+                      key={t}
+                      type="button"
+                      onClick={() => onOpenLink(t)}
+                      title={exists ? `開「${t}」` : `建立並連結「${t}」`}
+                      className={cx(
+                        'inline-flex items-center gap-0.5 rounded-md px-1.5 py-0.5 text-[11px] font-medium transition',
+                        exists
+                          ? 'bg-accent-soft text-accent-strong hover:brightness-95 dark:bg-accent/15 dark:text-accent'
+                          : 'border border-dashed border-slate-300 text-slate-400 hover:border-accent hover:text-accent dark:border-slate-600',
+                      )}
+                    >
+                      {t}
+                      {!exists && <span aria-hidden="true"> ＋</span>}
+                    </button>
+                  )
+                })}
+              </div>
+            )}
+            {backlinks.length > 0 && (
+              <div className="flex flex-wrap items-center gap-1.5">
+                <span className="inline-flex items-center gap-1 text-[11px] font-medium text-slate-400 dark:text-slate-500">
+                  <CornerUpLeft size={12} /> 被連結（{backlinks.length}）
+                </span>
+                {backlinks.map((n) => (
+                  <button
+                    key={n.id}
+                    type="button"
+                    onClick={() => onOpenNote(n.id)}
+                    title={`開「${deriveTitle(n)}」`}
+                    className="inline-flex max-w-[12rem] items-center truncate rounded-md bg-slate-100 px-1.5 py-0.5 text-[11px] font-medium text-slate-600 transition hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+                  >
+                    {deriveTitle(n)}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
         <div className="flex items-center justify-between text-[11px] text-slate-400 dark:text-slate-500">
           <span className="tabular-nums">
             {words} 字 · {chars} 字元 · 約 {readingMinutes(words)} 分鐘
@@ -445,6 +738,15 @@ export default function Editor({
           </span>
         </div>
       </div>
+
+      {aiKind && (
+        <AINoteModal
+          kind={aiKind}
+          content={content}
+          onClose={() => setAiKind(null)}
+          onApply={applyAi}
+        />
+      )}
     </div>
   )
 }
@@ -453,9 +755,11 @@ export default function Editor({
 function PreviewBody({
   lines,
   onToggle,
+  onOpenLink,
 }: {
   lines: ReturnType<typeof parseLines>
   onToggle: (lineIndex: number) => void
+  onOpenLink: (title: string) => void
 }) {
   return (
     <div className="space-y-0.5 text-sm leading-relaxed text-slate-700 dark:text-slate-200">
@@ -487,7 +791,7 @@ function PreviewBody({
                   l.done && 'text-slate-400 line-through dark:text-slate-500',
                 )}
               >
-                {renderInline(l.text)}
+                {renderInline(l.text, onOpenLink)}
               </span>
             </button>
           )
@@ -495,7 +799,7 @@ function PreviewBody({
         if (!l.text.trim()) return <div key={i} className="h-3" />
         return (
           <p key={i} className="whitespace-pre-wrap break-words px-1">
-            {renderInline(l.text)}
+            {renderInline(l.text, onOpenLink)}
           </p>
         )
       })}
@@ -503,16 +807,136 @@ function PreviewBody({
   )
 }
 
-// 簡易 inline 渲染：高亮 #標籤
-function renderInline(text: string) {
-  const parts = text.split(/(#[\p{L}\p{N}_-]+)/gu)
-  return parts.map((p, i) =>
-    p.startsWith('#') && p.length > 1 ? (
-      <span key={i} className="font-medium text-accent-strong dark:text-accent">
-        {p}
-      </span>
-    ) : (
-      <span key={i}>{p}</span>
-    ),
+// 簡易 inline 渲染：高亮 #標籤 + 可點 [[雙向連結]]
+// 註：用 <span role="link"> 而非 <button>，因為呢個可能渲染喺待辦行嘅 <button> 入面（避免巢狀 button）。
+function renderInline(text: string, onLink?: (title: string) => void) {
+  const parts = text.split(/(\[\[[^[\]]+\]\]|#[\p{L}\p{N}_-]+)/gu)
+  return parts.map((p, i) => {
+    if (p.startsWith('[[') && p.endsWith(']]') && p.length > 4) {
+      const title = p.slice(2, -2).trim()
+      return (
+        <span
+          key={i}
+          role="link"
+          tabIndex={0}
+          onClick={(e) => {
+            e.stopPropagation()
+            onLink?.(title)
+          }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault()
+              e.stopPropagation()
+              onLink?.(title)
+            }
+          }}
+          className="cursor-pointer rounded px-0.5 font-medium text-accent-strong underline decoration-accent/40 underline-offset-2 transition hover:bg-accent-soft hover:decoration-accent dark:text-accent dark:hover:bg-accent/15"
+        >
+          {title}
+        </span>
+      )
+    }
+    if (p.startsWith('#') && p.length > 1) {
+      return (
+        <span key={i} className="font-medium text-accent-strong dark:text-accent">
+          {p}
+        </span>
+      )
+    }
+    return <span key={i}>{p}</span>
+  })
+}
+
+// ───────── AI × 筆記 結果 Modal ─────────
+function AINoteModal({
+  kind,
+  content,
+  onClose,
+  onApply,
+}: {
+  kind: AiKind
+  content: string
+  onClose: () => void
+  onApply: (text: string, apply: 'append' | 'replace') => void
+}) {
+  const task = AI_NOTE_TASKS[kind]
+  const toast = useToast()
+  const [loading, setLoading] = useState(true)
+  const [result, setResult] = useState('')
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    const ctrl = new AbortController()
+    setLoading(true)
+    setError(null)
+    setResult('')
+    complete({
+      messages: [{ role: 'user', content: task.prompt(content) }],
+      system: AI_NOTE_SYSTEM,
+      model: 'gemini-2.5-flash',
+      temperature: 0.4,
+      signal: ctrl.signal,
+    })
+      .then((out) => {
+        if (cancelled) return
+        setResult(out.trim())
+        setLoading(false)
+      })
+      .catch((e) => {
+        if (cancelled) return
+        setError((e as Error).message || 'AI 出錯')
+        setLoading(false)
+      })
+    return () => {
+      cancelled = true
+      ctrl.abort()
+    }
+  }, [kind, content, task])
+
+  const ready = !loading && !error && Boolean(result)
+
+  return (
+    <Modal
+      open
+      onClose={onClose}
+      size="md"
+      title={`AI · ${task.label}`}
+      footer={
+        <>
+          <Button variant="ghost" onClick={onClose}>
+            關閉
+          </Button>
+          <Button
+            variant="secondary"
+            icon={Copy}
+            disabled={!ready}
+            onClick={() => {
+              navigator.clipboard?.writeText(result)
+              toast.success('已複製')
+            }}
+          >
+            複製
+          </Button>
+          <Button disabled={!ready} onClick={() => onApply(result, task.apply)}>
+            {task.verb}
+          </Button>
+        </>
+      }
+    >
+      {loading ? (
+        <div className="flex items-center gap-2 py-10 text-sm text-slate-500 dark:text-slate-400">
+          <Sparkles size={16} className="animate-pulse text-accent" /> AI 生成緊…
+        </div>
+      ) : error ? (
+        <p className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700 dark:bg-rose-500/10 dark:text-rose-300">
+          {error}
+        </p>
+      ) : (
+        <div className="max-h-80 overflow-y-auto whitespace-pre-wrap break-words rounded-lg border border-slate-200 bg-slate-50/60 p-3 text-sm leading-relaxed text-slate-700 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-200">
+          {result}
+        </div>
+      )}
+    </Modal>
   )
 }

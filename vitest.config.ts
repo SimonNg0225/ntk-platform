@@ -12,5 +12,9 @@ export default defineConfig({
   test: {
     environment: 'node',
     include: ['src/**/*.test.ts'],
+    // collections.test.ts 嘅 preloadAllFeatures() 會動態 import 全部 feature
+    // chunk（cold）；喺成個 suite 並行 transform 嘅負載下，預設 5s 偶爾唔夠而
+    // 超時誤報。畀多啲緩衝（純函式 test 唔受影響）。
+    testTimeout: 20000,
   },
 })

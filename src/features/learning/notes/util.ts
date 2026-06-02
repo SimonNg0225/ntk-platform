@@ -90,6 +90,45 @@ export function snippet(content: string, max = 120): string {
   return base.length > max ? base.slice(0, max).trimEnd() + '…' : base
 }
 
+// ───────── [[雙向連結]]（wiki-link） ─────────
+const WIKILINK_RE = /\[\[([^[\]]+)\]\]/g
+/** 抽出內文所有 [[標題]] 連結目標（去重、保留次序、trim、忽略空白） */
+export function parseWikiLinks(content: string): string[] {
+  const out: string[] = []
+  const seen = new Set<string>()
+  for (const m of content.matchAll(WIKILINK_RE)) {
+    const title = m[1].trim()
+    if (!title) continue
+    const key = title.toLowerCase()
+    if (!seen.has(key)) {
+      seen.add(key)
+      out.push(title)
+    }
+  }
+  return out
+}
+
+/** 以顯示標題（deriveTitle）配對筆記，case-insensitive；配唔到回 undefined */
+export function resolveNoteByTitle(
+  notes: RichNote[],
+  title: string,
+): RichNote | undefined {
+  const t = title.trim().toLowerCase()
+  if (!t) return undefined
+  return notes.find((n) => deriveTitle(n).toLowerCase() === t)
+}
+
+/** 反向連結：邊啲筆記嘅內文 [[...]] 指住 target（按顯示標題配對，排除自己） */
+export function backlinksOf(notes: RichNote[], target: RichNote): RichNote[] {
+  const title = deriveTitle(target).toLowerCase()
+  if (!title) return []
+  return notes.filter(
+    (n) =>
+      n.id !== target.id &&
+      parseWikiLinks(n.content).some((l) => l.toLowerCase() === title),
+  )
+}
+
 // ───────── 字數 / 閱讀時間 ─────────
 export function wordCount(content: string): number {
   // 中英混合：CJK 逐字 + 拉丁字以空白分詞

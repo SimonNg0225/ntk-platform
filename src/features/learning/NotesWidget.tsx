@@ -2,8 +2,11 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import {
   Archive,
   BarChart3,
+  Bookmark,
+  BookmarkPlus,
   CheckSquare,
   ChevronLeft,
+  Columns3,
   Download,
   FileText,
   Folder,
@@ -58,9 +61,11 @@ import {
   noteColorOf,
   notebooksCol,
   richNotesCol,
+  savedFiltersCol,
   type FolderColor,
   type Notebook,
   type RichNote,
+  type SavedFilter,
 } from './notes/store'
 import {
   checklistStat,
@@ -73,6 +78,7 @@ import {
   parseNotesImport,
   parseTags,
   relativeTime,
+  resolveNoteByTitle,
   snippet,
   tagCounts,
   wordCount,
@@ -80,6 +86,7 @@ import {
 } from './notes/util'
 import { ActivityChart, DonutChart, TagBars, type DonutSlice } from './notes/Charts'
 import Editor from './notes/Editor'
+import { NOTE_TEMPLATES } from './notes/templates'
 
 // ============================================================
 //  學習筆記（Apple Notes / Notion 級）
@@ -99,7 +106,7 @@ type Scope =
   | { kind: 'trash' }
   | { kind: 'notebook'; id: string }
 
-type ViewMode = 'list' | 'grid' | 'table'
+type ViewMode = 'list' | 'grid' | 'table' | 'board'
 
 const FOLDER_COLOR_LABELS: { id: FolderColor; label: string }[] =
   FOLDER_COLOR_KEYS.map((k) => ({ id: k, label: folderColorOf(k).label }))
@@ -107,6 +114,7 @@ const FOLDER_COLOR_LABELS: { id: FolderColor; label: string }[] =
 export default function NotesWidget() {
   const notes = useCollection(richNotesCol)
   const notebooks = useCollection(notebooksCol)
+  const savedFilters = useCollection(savedFiltersCol)
   const toast = useToast()
   const confirm = useConfirm()
 
@@ -200,13 +208,13 @@ export default function NotesWidget() {
   const hasFilter = Boolean(query.trim() || activeTag)
 
   // ───────── 操作 ─────────
-  function createNote() {
+  function createNote(body = '') {
     const now = new Date().toISOString()
     const nb =
       scope.kind === 'notebook' ? scope.id : null
     const created = richNotesCol.add({
       title: '',
-      content: '',
+      content: body,
       notebookId: nb,
       pinned: false,
       favorite: false,
@@ -221,11 +229,73 @@ export default function NotesWidget() {
     setQuery('')
     setSelectedId(created.id)
     setMobilePane('detail')
+    if (body) toast.info('已用範本開新一頁')
   }
 
   function openNote(id: string) {
     setSelectedId(id)
     setMobilePane('detail')
+  }
+
+  // 跳去任何一則筆記（自動切到能見到佢嘅範圍 + 清走篩選），反向連結用
+  function revealNote(id: string) {
+    const n = notes.find((x) => x.id === id)
+    if (!n) return
+    setActiveTag(null)
+    setQuery('')
+    setScope(n.trashed ? { kind: 'trash' } : n.archived ? { kind: 'archived' } : { kind: 'all' })
+    setSelectedId(id)
+    setMobilePane('detail')
+  }
+
+  // 撳 [[標題]]：解析現有（非垃圾桶）筆記就跳去；冇就以該標題建立並連結
+  function openLink(title: string) {
+    const found = resolveNoteByTitle(notes.filter((n) => !n.trashed), title)
+    if (found) {
+      revealNote(found.id)
+      return
+    }
+    const now = new Date().toISOString()
+    const created = richNotesCol.add({
+      title,
+      content: '',
+      notebookId: scope.kind === 'notebook' ? scope.id : null,
+      pinned: false,
+      favorite: false,
+      archived: false,
+      trashed: false,
+      color: 'none',
+      createdAt: now,
+      updatedAt: now,
+    })
+    setActiveTag(null)
+    setQuery('')
+    setScope((s) => (s.kind === 'notebook' ? s : { kind: 'all' }))
+    setSelectedId(created.id)
+    setMobilePane('detail')
+    toast.success(`已建立並連結「${title}」`)
+  }
+
+  // ───────── 儲存篩選（智能檢視）─────────
+  function saveCurrentFilter() {
+    const q = query.trim()
+    const tag = activeTag
+    if (!q && !tag) return
+    if (savedFiltersCol.get().some((f) => f.tag === tag && f.query === q)) {
+      toast.info('已經儲存過呢個篩選')
+      return
+    }
+    const name = tag ? (q ? `#${tag} · ${q}` : `#${tag}`) : `「${q}」`
+    savedFiltersCol.add({ name, query: q, tag, createdAt: new Date().toISOString() })
+    toast.success('已儲存篩選')
+  }
+
+  function applySavedFilter(f: SavedFilter) {
+    setScope({ kind: 'all' })
+    setQuery(f.query)
+    setActiveTag(f.tag)
+    setMobilePane('list')
+    exitSelect()
   }
 
   function toggleCheck(id: string) {
@@ -420,6 +490,21 @@ export default function NotesWidget() {
               className="hidden"
               onChange={onPickFile}
             />
+            <Menu
+              align="end"
+              label="用範本開新筆記"
+              trigger={
+                <span className="inline-flex h-9 items-center gap-1.5 rounded-full border border-amber-200/80 bg-white/70 px-3 text-sm font-medium text-slate-600 backdrop-blur transition hover:bg-white dark:border-amber-500/20 dark:bg-slate-800/60 dark:text-slate-300 dark:hover:bg-slate-800">
+                  <FileText size={15} />
+                  <span className="hidden sm:inline">範本</span>
+                </span>
+              }
+              items={NOTE_TEMPLATES.map((t) => ({
+                id: t.id,
+                label: t.label,
+                onSelect: () => createNote(t.body),
+              }))}
+            />
             <Button
               size="sm"
               variant={showStats ? 'primary' : 'secondary'}
@@ -432,7 +517,7 @@ export default function NotesWidget() {
             <Button
               size="sm"
               icon={Plus}
-              onClick={createNote}
+              onClick={() => createNote()}
               className="h-9 rounded-full shadow-sm shadow-accent/25"
             >
               寫一頁
@@ -498,6 +583,33 @@ export default function NotesWidget() {
               })}
             </nav>
           </div>
+
+          {/* 智能檢視（儲存篩選） */}
+          {savedFilters.length > 0 && (
+            <div>
+              <IndexLabel>智能檢視</IndexLabel>
+              <nav className="space-y-0.5">
+                {savedFilters.map((f) => (
+                  <div key={f.id} className="group/sf flex items-center">
+                    <button
+                      onClick={() => applySavedFilter(f)}
+                      className="flex min-w-0 flex-1 items-center gap-2.5 rounded-xl py-1.5 pl-3 pr-2 text-sm text-slate-600 transition hover:bg-amber-50/70 dark:text-slate-300 dark:hover:bg-slate-700/50"
+                    >
+                      <Bookmark size={14} className="shrink-0 text-accent/70" />
+                      <span className="flex-1 truncate text-left">{f.name}</span>
+                    </button>
+                    <button
+                      onClick={() => savedFiltersCol.remove(f.id)}
+                      aria-label={`刪除智能檢視「${f.name}」`}
+                      className="ml-0.5 hidden shrink-0 rounded p-1 text-slate-300 transition hover:text-rose-500 group-hover/sf:block dark:text-slate-600"
+                    >
+                      <X size={13} />
+                    </button>
+                  </div>
+                ))}
+              </nav>
+            </div>
+          )}
 
           {/* 筆記本（卷冊） */}
           <div>
@@ -569,6 +681,7 @@ export default function NotesWidget() {
                 options={[
                   { id: 'list', label: '', icon: Rows3 },
                   { id: 'grid', label: '', icon: LayoutGrid },
+                  { id: 'board', label: '', icon: Columns3 },
                   { id: 'table', label: '', icon: ListChecks },
                 ]}
               />
@@ -591,6 +704,11 @@ export default function NotesWidget() {
                 {scope.kind === 'trash' && counts.trash > 0 && !selectMode && (
                   <Button size="sm" variant="ghost" icon={Trash2} onClick={emptyTrash}>
                     清空
+                  </Button>
+                )}
+                {hasFilter && !selectMode && (
+                  <Button size="sm" variant="ghost" icon={BookmarkPlus} onClick={saveCurrentFilter}>
+                    儲存
                   </Button>
                 )}
                 <Button
@@ -709,11 +827,18 @@ export default function NotesWidget() {
               }
               action={
                 !hasFilter && (scope.kind === 'all' || scope.kind === 'notebook') ? (
-                  <Button size="sm" icon={Pencil} onClick={createNote}>
+                  <Button size="sm" icon={Pencil} onClick={() => createNote()}>
                     落筆寫第一頁
                   </Button>
                 ) : undefined
               }
+            />
+          ) : view === 'board' ? (
+            <NoteBoard
+              notes={visible}
+              notebooks={notebooks}
+              selectedId={selectedId}
+              onOpen={openNote}
             />
           ) : view === 'table' ? (
             <NoteTable
@@ -769,6 +894,9 @@ export default function NotesWidget() {
               <Editor
                 note={selected}
                 notebooks={notebooks}
+                allNotes={notes}
+                onOpenLink={openLink}
+                onOpenNote={revealNote}
                 onClose={() => setMobilePane('list')}
               />
             </Card>
@@ -794,7 +922,7 @@ export default function NotesWidget() {
                   揀左邊任何一頁手記翻開，或者開一張全新稿紙。
                 </p>
                 <div className="mt-4">
-                  <Button size="sm" icon={Pencil} onClick={createNote}>
+                  <Button size="sm" icon={Pencil} onClick={() => createNote()}>
                     寫一頁
                   </Button>
                 </div>
@@ -1047,6 +1175,67 @@ function NoteTable({
         })}
       </Tbody>
     </Table>
+  )
+}
+
+// ───────── 看板視圖（按卷冊分欄）─────────
+function NoteBoard({
+  notes,
+  notebooks,
+  selectedId,
+  onOpen,
+}: {
+  notes: RichNote[]
+  notebooks: Notebook[]
+  selectedId: string | null
+  onOpen: (id: string) => void
+}) {
+  const columns: { id: string | null; name: string; color: string }[] = [
+    { id: null, name: '未分類', color: 'slate' },
+    ...notebooks.map((nb) => ({ id: nb.id as string | null, name: nb.name, color: nb.color })),
+  ]
+  return (
+    <div className="flex gap-3 overflow-x-auto pb-2">
+      {columns.map((col) => {
+        const items = notes.filter((n) => (n.notebookId ?? null) === col.id)
+        const c = folderColorOf(col.color)
+        return (
+          <div
+            key={col.id ?? '__none'}
+            className="flex w-64 shrink-0 flex-col rounded-2xl border border-slate-200/70 bg-slate-50/60 p-2 dark:border-slate-700/60 dark:bg-slate-900/30"
+          >
+            <div className="mb-2 flex items-center gap-2 px-1.5 py-1">
+              <span className={cx('h-2.5 w-2.5 shrink-0 rounded-full', c.dot)} />
+              <span className="flex-1 truncate text-sm font-semibold text-slate-700 dark:text-slate-200">
+                {col.name}
+              </span>
+              <span className="font-serif text-xs tabular-nums text-slate-400 dark:text-slate-500">
+                {items.length}
+              </span>
+            </div>
+            <div className="space-y-2">
+              {items.map((n) => (
+                <NoteRow
+                  key={n.id}
+                  note={n}
+                  grid
+                  active={n.id === selectedId}
+                  selectMode={false}
+                  checked={false}
+                  onToggleCheck={() => {}}
+                  onOpen={() => onOpen(n.id)}
+                />
+              ))}
+              {items.length === 0 && (
+                <p className="px-2 py-4 text-center text-xs italic text-slate-400 dark:text-slate-500">
+                  （空）
+                </p>
+              )}
+            </div>
+          </div>
+        )
+      })}
+    </div>
   )
 }
 

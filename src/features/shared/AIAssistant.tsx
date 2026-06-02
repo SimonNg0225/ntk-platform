@@ -12,6 +12,7 @@ import { useMode } from '../../context/ModeContext'
 import { useAuth } from '../../context/AuthContext'
 import { useToast } from '../../context/ToastContext'
 import { useConfirm } from '../../context/ConfirmContext'
+import { useNav } from '../../context/NavContext'
 import {
   streamChat,
   isAIConfigured,
@@ -23,7 +24,7 @@ import {
   aiMessagesCol,
   meetingNotesCol,
 } from '../../data/collections'
-import { richNotesCol } from '../learning/notes/store'
+import { richNotesCol, notebooksCol, folderColorOf, type Notebook } from '../learning/notes/store'
 import { deriveTitle, snippet } from '../learning/notes/util'
 import { journalDocsCol } from '../learning/journal/store'
 import type { AiMessage } from '../../data/types'
@@ -153,6 +154,7 @@ export default function AIAssistant() {
   const { user } = useAuth()
   const toast = useToast()
   const confirm = useConfirm()
+  const { open: goToFeature } = useNav()
 
   const cfg = MODE_AI[mode]
 
@@ -161,6 +163,7 @@ export default function AIAssistant() {
   const allMessages = useCollection(aiMessagesCol)
   const allMeta = useCollection(threadMetaCol)
   const customTemplates = useCollection(promptTemplatesCol)
+  const notebooks = useCollection(notebooksCol)
 
   // 旁掛 meta 快查
   const metaMap = useMemo(() => {
@@ -204,6 +207,8 @@ export default function AIAssistant() {
   const [statsOpen, setStatsOpen] = useState(false)
   const [paletteOpen, setPaletteOpen] = useState(false)
   const [renameTarget, setRenameTarget] = useState<string | null>(null)
+  // 「加入筆記」目標：要存做筆記嘅 AI 回覆內容（null = 冇開揀筆記本彈窗）
+  const [noteFor, setNoteFor] = useState<string | null>(null)
   // Dev-only：跳過 Supabase / 登入 gate 嚟測試 UI（尤其打字 bug）。
   // import.meta.env.DEV 喺 vite build 時為 false → 生產環境永遠睇唔到，亦觸發唔到。
   const [devBypass, setDevBypass] = useState(false)
@@ -470,6 +475,33 @@ export default function AIAssistant() {
       for (let i = idx; i < msgs.length; i++) aiMessagesCol.remove(msgs[i].id)
     },
     [currentThreadId],
+  )
+
+  // 將 AI 回覆內容存做一篇個人筆記（標題由內文首行自動推導）。
+  // 對齊 Inbox / 全域搜尋「轉筆記」嘅寫法：寫入 richNotesCol（notes_rich_v2）。
+  //  · notebookId：由「揀筆記本」彈窗傳入（null = 未分類）
+  //  · 自動加 #AI助手 標籤（來源註記），方便日後喺筆記度篩選
+  //  · 成功後彈出帶「檢視」捷徑嘅 toast，撳一下跳去筆記頁
+  const saveAsNote = useCallback(
+    (content: string, notebookId: string | null) => {
+      const text = content.trim()
+      if (!text) return
+      const now = new Date().toISOString()
+      richNotesCol.add({
+        title: '',
+        content: `${text}\n\n#AI助手`,
+        notebookId,
+        pinned: false,
+        favorite: false,
+        archived: false,
+        trashed: false,
+        color: 'none',
+        createdAt: now,
+        updatedAt: now,
+      })
+      toast.success('已加入筆記', { label: '檢視', onClick: () => goToFeature('learning-notes') })
+    },
+    [toast, goToFeature],
   )
 
   // 手機（<sm）揀完／開新對話後收埋抽屜，避免遮住對話內容
@@ -886,6 +918,7 @@ export default function AIAssistant() {
                   onRegen={() => void regenerate()}
                   onEdit={(text) => void editAndResend(m, text)}
                   onDelete={() => deleteFromHere(m)}
+                  onSaveNote={() => setNoteFor(m.content)}
                 />
               ))}
               {streaming !== null && (
@@ -899,6 +932,7 @@ export default function AIAssistant() {
                     onRegen={() => {}}
                     onEdit={() => {}}
                     onDelete={() => {}}
+                    onSaveNote={() => {}}
                   />
                 </div>
               )}
@@ -972,6 +1006,16 @@ export default function AIAssistant() {
         toast={toast}
       />
       <StatsModal open={statsOpen} onClose={() => setStatsOpen(false)} stats={stats} mode={mode} />
+      <SaveNoteModal
+        open={noteFor !== null}
+        content={noteFor ?? ''}
+        notebooks={notebooks}
+        onClose={() => setNoteFor(null)}
+        onSave={(notebookId) => {
+          if (noteFor !== null) saveAsNote(noteFor, notebookId)
+          setNoteFor(null)
+        }}
+      />
       <RenameModal
         threadId={renameTarget}
         currentTitle={
@@ -1324,6 +1368,7 @@ function MessageBubble({
   onRegen,
   onEdit,
   onDelete,
+  onSaveNote,
 }: {
   msg: AiMessage
   streaming?: boolean
@@ -1333,6 +1378,7 @@ function MessageBubble({
   onRegen: () => void
   onEdit: (text: string) => void
   onDelete: () => void
+  onSaveNote: () => void
 }) {
   const isUser = msg.role === 'user'
   const [editing, setEditing] = useState(false)
@@ -1423,6 +1469,13 @@ function MessageBubble({
               {copied ? <Check size={13} /> : <Copy size={13} />}
             </IconButton>
           </Tooltip>
+          {!isUser && (
+            <Tooltip label="加入筆記">
+              <IconButton label="加入筆記" size="sm" onClick={onSaveNote}>
+                <StickyNote size={13} />
+              </IconButton>
+            </Tooltip>
+          )}
           {isUser && (
             <Tooltip label="編輯重發">
               <IconButton label="編輯" size="sm" onClick={() => { setDraft(msg.content); setEditing(true) }}>
@@ -1462,6 +1515,88 @@ function TypingDots() {
         />
       ))}
     </span>
+  )
+}
+
+// ───────── 加入筆記 Modal（揀筆記本後存做個人筆記）─────────
+function SaveNoteModal({
+  open,
+  content,
+  notebooks,
+  onClose,
+  onSave,
+}: {
+  open: boolean
+  content: string
+  notebooks: Notebook[]
+  onClose: () => void
+  onSave: (notebookId: string | null) => void
+}) {
+  // 預設揀「未分類」；每次開彈窗都重設
+  const [nbId, setNbId] = useState<string | null>(null)
+  useEffect(() => {
+    if (open) setNbId(null)
+  }, [open])
+
+  const options: { id: string | null; name: string; color: string }[] = [
+    { id: null, name: '未分類', color: 'slate' },
+    ...notebooks.map((n) => ({ id: n.id, name: n.name, color: n.color })),
+  ]
+
+  return (
+    <Modal
+      open={open}
+      onClose={onClose}
+      size="md"
+      title="加入筆記"
+      footer={
+        <>
+          <Button variant="ghost" onClick={onClose}>
+            取消
+          </Button>
+          <Button icon={StickyNote} onClick={() => onSave(nbId)}>
+            存入筆記
+          </Button>
+        </>
+      }
+    >
+      <div className="space-y-4">
+        <div>
+          <p className="mb-1.5 text-xs font-medium text-slate-500 dark:text-slate-400">存入邊本筆記</p>
+          <div className="flex flex-wrap gap-1.5">
+            {options.map((o) => {
+              const on = nbId === o.id
+              const c = folderColorOf(o.color)
+              return (
+                <button
+                  key={o.id ?? '__none'}
+                  type="button"
+                  aria-pressed={on}
+                  onClick={() => setNbId(o.id)}
+                  className={cx(
+                    'inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
+                    on
+                      ? 'border-accent bg-accent-soft text-accent-strong dark:border-accent/50 dark:bg-accent/15 dark:text-accent'
+                      : 'border-slate-200 text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800',
+                  )}
+                >
+                  <span aria-hidden="true" className={cx('h-2 w-2 rounded-full', c.dot)} />
+                  {o.name}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+        <div>
+          <p className="mb-1 text-xs font-medium text-slate-500 dark:text-slate-400">
+            內容預覽 · 會自動加上 <span className="font-semibold text-accent">#AI助手</span> 標籤
+          </p>
+          <div className="max-h-40 overflow-y-auto whitespace-pre-wrap break-words rounded-lg border border-slate-200 bg-slate-50/60 p-3 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-300">
+            {content}
+          </div>
+        </div>
+      </div>
+    </Modal>
   )
 }
 
