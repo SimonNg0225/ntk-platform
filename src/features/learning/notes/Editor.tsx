@@ -62,6 +62,44 @@ function insertAtCursor(
   return current.slice(0, start) + insert + current.slice(end)
 }
 
+// ───────── / 斜線指令（插入區塊）─────────
+function todayStr(): string {
+  return new Date().toLocaleDateString('zh-HK', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  })
+}
+interface SlashCommand {
+  id: string
+  label: string
+  hint: string
+  keywords: string[]
+  /** 插入文字（可為函式，apply 時先計，例如日期） */
+  insert: string | (() => string)
+  /** 插入後游標相對插入起點嘅位置（預設 = 插入文字長度，即末尾） */
+  caret?: number
+}
+const SLASH_COMMANDS: SlashCommand[] = [
+  { id: 'h2', label: '標題', hint: '## 大標題', keywords: ['heading', 'h2', 'title'], insert: '## ' },
+  { id: 'h3', label: '小標題', hint: '### 小標題', keywords: ['heading', 'h3'], insert: '### ' },
+  { id: 'todo', label: '待辦', hint: '- [ ] 任務', keywords: ['todo', 'task', 'check'], insert: '- [ ] ' },
+  { id: 'bullet', label: '項目符號', hint: '- 清單', keywords: ['list', 'bullet', 'ul'], insert: '- ' },
+  { id: 'quote', label: '引言', hint: '> 引述', keywords: ['quote', 'blockquote'], insert: '> ' },
+  { id: 'divider', label: '分隔線', hint: '———', keywords: ['divider', 'hr', 'line'], insert: '---\n' },
+  {
+    id: 'table',
+    label: '表格',
+    hint: '兩欄表格',
+    keywords: ['table', 'grid'],
+    insert: '| 欄位 | 欄位 |\n| --- | --- |\n|  |  |\n',
+  },
+  { id: 'code', label: '程式碼', hint: '``` 區塊', keywords: ['code', 'pre'], insert: '```\n\n```\n', caret: 4 },
+  { id: 'date', label: '日期', hint: todayStr(), keywords: ['date', 'today'], insert: () => todayStr() + ' ' },
+  { id: 'link', label: '連結', hint: '[[筆記]]', keywords: ['link', 'wiki'], insert: '[[]]', caret: 2 },
+  { id: 'tag', label: '標籤', hint: '#標籤', keywords: ['tag', 'hashtag'], insert: '#' },
+]
+
 export default function Editor({
   note,
   notebooks,
@@ -87,6 +125,9 @@ export default function Editor({
   const [title, setTitle] = useState(note.title)
   const [content, setContent] = useState(note.content)
   const [mode, setMode] = useState<'edit' | 'preview'>('edit')
+  // / 斜線指令選單（at = '/' 喺內文嘅 index；top = 相對編輯區嘅大約 px）
+  const [slash, setSlash] = useState<{ query: string; at: number; top: number } | null>(null)
+  const [slashIdx, setSlashIdx] = useState(0)
 
   // 持有「目前 title/content 屬於邊一則筆記」+ 已寫入快照。
   // 用嚟喺切走 / 卸載時即時 flush 未存內容（避免遺失），同時
@@ -148,6 +189,47 @@ export default function Editor({
     richNotesCol.update(note.id, { ...p, updatedAt: new Date().toISOString() })
   }
 
+  // 偵測游標前係咪 `(行首/空白)/查詢`，係就開斜線選單
+  function detectSlash() {
+    const ta = taRef.current
+    if (!ta) {
+      setSlash(null)
+      return
+    }
+    const caret = ta.selectionStart ?? 0
+    const before = ta.value.slice(0, caret)
+    const m = before.match(/(^|\s)\/([^\s/]*)$/)
+    if (!m) {
+      setSlash(null)
+      return
+    }
+    const query = m[2]
+    const at = caret - query.length - 1
+    const lineIndex = before.split('\n').length - 1
+    const top = Math.max(0, (lineIndex + 1) * 28 - ta.scrollTop)
+    setSlash((prev) => (prev && prev.at === at ? { ...prev, query, top } : { query, at, top }))
+    setSlashIdx(0)
+  }
+
+  // 套用斜線指令：用插入內容取代 `/查詢`，並擺好游標
+  function applySlash(cmd: SlashCommand) {
+    if (!slash) return
+    const ta = taRef.current
+    const caret = ta?.selectionStart ?? content.length
+    const text = typeof cmd.insert === 'function' ? cmd.insert() : cmd.insert
+    const next = content.slice(0, slash.at) + text + content.slice(caret)
+    const pos = slash.at + (cmd.caret ?? text.length)
+    setContent(next)
+    setSlash(null)
+    requestAnimationFrame(() => {
+      const el = taRef.current
+      if (el) {
+        el.focus()
+        el.setSelectionRange(pos, pos)
+      }
+    })
+  }
+
   function applyTemplate(body: string) {
     if (content.trim() && content !== body) {
       setContent((c) => c.trimEnd() + '\n\n' + body)
@@ -199,6 +281,14 @@ export default function Editor({
     () => backlinksOf(allNotes.filter((n) => !n.trashed), { ...note, title, content }),
     [allNotes, note, title, content],
   )
+  const slashItems = useMemo(() => {
+    if (!slash) return [] as SlashCommand[]
+    const q = slash.query.toLowerCase()
+    if (!q) return SLASH_COMMANDS
+    return SLASH_COMMANDS.filter(
+      (c) => c.label.toLowerCase().includes(q) || c.keywords.some((k) => k.includes(q)),
+    )
+  }, [slash])
 
   return (
     <div className="flex h-full flex-col">
@@ -395,11 +485,69 @@ export default function Editor({
             <Textarea
               ref={taRef}
               value={content}
-              onChange={(e) => setContent(e.target.value)}
+              onChange={(e) => {
+                setContent(e.target.value)
+                detectSlash()
+              }}
+              onKeyDown={(e) => {
+                if (!slash || slashItems.length === 0) return
+                if (e.key === 'ArrowDown') {
+                  e.preventDefault()
+                  setSlashIdx((i) => Math.min(i + 1, slashItems.length - 1))
+                } else if (e.key === 'ArrowUp') {
+                  e.preventDefault()
+                  setSlashIdx((i) => Math.max(i - 1, 0))
+                } else if (e.key === 'Enter' || e.key === 'Tab') {
+                  e.preventDefault()
+                  applySlash(slashItems[slashIdx] ?? slashItems[0])
+                } else if (e.key === 'Escape') {
+                  e.preventDefault()
+                  setSlash(null)
+                } else if (['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(e.key)) {
+                  setSlash(null)
+                }
+              }}
+              onBlur={() => setTimeout(() => setSlash(null), 150)}
               rows={Math.max(12, Math.min(28, content.split('\n').length + 2))}
-              placeholder="由呢度落筆……　可以用 #標籤 歸類、- [ ] 整待辦。"
+              placeholder="由呢度落筆……　可以用 #標籤 歸類、- [ ] 整待辦，打 / 插入區塊。"
               className="border-0 bg-transparent px-0 text-[15px] leading-7 shadow-none focus:ring-0 dark:bg-transparent"
             />
+            {slash && slashItems.length > 0 && (
+              <div
+                role="listbox"
+                aria-label="插入區塊"
+                className="absolute z-30 w-56 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg dark:border-slate-700 dark:bg-slate-800"
+                style={{ top: slash.top + 44, left: 0 }}
+              >
+                <div className="border-b border-slate-100 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:border-slate-700 dark:text-slate-500">
+                  插入區塊
+                </div>
+                {slashItems.map((c, i) => (
+                  <button
+                    key={c.id}
+                    type="button"
+                    role="option"
+                    aria-selected={i === slashIdx}
+                    onMouseDown={(e) => {
+                      e.preventDefault()
+                      applySlash(c)
+                    }}
+                    onMouseEnter={() => setSlashIdx(i)}
+                    className={cx(
+                      'flex w-full items-center justify-between gap-3 px-2.5 py-1.5 text-left text-sm transition',
+                      i === slashIdx
+                        ? 'bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent'
+                        : 'text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-700',
+                    )}
+                  >
+                    <span className="font-medium">{c.label}</span>
+                    <span className="truncate text-[11px] text-slate-400 dark:text-slate-500">
+                      {c.hint}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         ) : (
           <div className="relative">
