@@ -146,7 +146,20 @@ async function driveFetch(q: string): Promise<DriveFile[]> {
     signOutDrive()
     throw new Error('授權過期，請重新連接 Google Drive')
   }
-  if (!res.ok) throw new Error(`Drive API 錯誤（${res.status}）`)
+  if (!res.ok) {
+    // 抽返 Google 嘅真正錯誤訊息（例如「Drive API 未啟用」），方便排查
+    let detail = ''
+    try {
+      const body = (await res.json()) as { error?: { message?: string } }
+      detail = body.error?.message ? `：${body.error.message}` : ''
+    } catch {
+      /* 非 JSON body，略過 */
+    }
+    if (res.status === 403 && /not been used|disabled|accessNotConfigured/i.test(detail)) {
+      throw new Error('Google Drive API 未喺你個 Google Cloud project 啟用 —— 去 console 啟用咗、等一兩分鐘再試（見 docs/SETUP.md）')
+    }
+    throw new Error(`Drive API 錯誤（${res.status}）${detail}`)
+  }
   const data = (await res.json()) as { files?: DriveFile[] }
   return (data.files ?? []).map((f) => ({
     ...f,
