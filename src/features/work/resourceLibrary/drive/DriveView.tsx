@@ -14,10 +14,14 @@ import {
   Image as ImageIcon,
   FileType,
   Loader2,
+  BookmarkPlus,
+  BookmarkCheck,
 } from 'lucide-react'
-import { Button, Input, EmptyState, cx } from '../../../../ui'
+import { Button, Input, EmptyState, IconButton, Tooltip, cx } from '../../../../ui'
 import { useToast } from '../../../../context/ToastContext'
 import { useCollection } from '../../../../lib/store'
+import { resourcesCol } from '../../../../data/collections'
+import type { ResourceType } from '../../../../data/types'
 import { driveConfigCol } from './store'
 import {
   isDriveConfigured,
@@ -43,6 +47,18 @@ const KIND_ICON: Record<DriveKind, typeof Folder> = {
   file: FileText,
 }
 
+// Drive 類型 → 我的庫資源類型（綁定時用）
+const KIND_TO_RES: Record<DriveKind, ResourceType> = {
+  folder: 'link',
+  pdf: 'paper',
+  doc: 'handout',
+  slides: 'slides',
+  sheet: 'handout',
+  video: 'video',
+  image: 'link',
+  file: 'link',
+}
+
 // ───────── 教學資源庫 · Google Drive 模式（唯讀、live 瀏覽/搜尋/開檔）─────────
 export default function DriveView() {
   const toast = useToast()
@@ -58,6 +74,25 @@ export default function DriveView() {
   const [err, setErr] = useState<string | null>(null)
 
   const cur = path[path.length - 1]
+
+  // 已綁定到我的庫嘅 url（用嚟標示「已加入」+ 防重複）
+  const resources = useCollection(resourcesCol)
+  const addedUrls = new Set(resources.map((r) => r.url).filter((u): u is string => !!u))
+
+  function addToLib(f: DriveFile) {
+    if (!f.webViewLink) {
+      toast.error('呢個檔冇開啟連結，加唔到')
+      return
+    }
+    if (addedUrls.has(f.webViewLink)) return
+    resourcesCol.add({
+      title: f.name,
+      type: KIND_TO_RES[mimeKind(f.mimeType)],
+      url: f.webViewLink,
+      createdAt: new Date().toISOString(),
+    })
+    toast.success(`已加入我的庫：${f.name}`)
+  }
 
   const load = useCallback(async (folderId: string) => {
     setLoading(true)
@@ -208,38 +243,63 @@ export default function DriveView() {
             const kind = mimeKind(f.mimeType)
             const I = KIND_ICON[kind]
             const folder = isFolder(f.mimeType)
+            const added = !!f.webViewLink && addedUrls.has(f.webViewLink)
             return (
-              <button
+              <div
                 key={f.id}
-                onClick={() => openItem(f)}
-                className="flex w-full items-center gap-3 border-b border-slate-100 px-3 py-2.5 text-left transition last:border-0 hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800/60"
+                className="flex w-full items-center gap-1 border-b border-slate-100 px-1.5 transition last:border-0 hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800/60"
               >
-                <span
-                  className={cx(
-                    'flex h-8 w-8 shrink-0 items-center justify-center rounded-lg',
-                    folder
-                      ? 'bg-amber-50 text-amber-600 dark:bg-amber-500/15 dark:text-amber-300'
-                      : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400',
-                  )}
+                <button
+                  onClick={() => openItem(f)}
+                  className="flex min-w-0 flex-1 items-center gap-3 py-2.5 pl-1.5 text-left"
                 >
-                  <I size={16} />
-                </span>
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate text-sm font-medium text-slate-700 dark:text-slate-200">
-                    {f.name}
+                  <span
+                    className={cx(
+                      'flex h-8 w-8 shrink-0 items-center justify-center rounded-lg',
+                      folder
+                        ? 'bg-amber-50 text-amber-600 dark:bg-amber-500/15 dark:text-amber-300'
+                        : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400',
+                    )}
+                  >
+                    <I size={16} />
                   </span>
-                  <span className="block truncate text-[11px] text-slate-400">
-                    {folder
-                      ? '資料夾'
-                      : [kind.toUpperCase(), formatBytes(f.size)].filter(Boolean).join(' · ')}
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-sm font-medium text-slate-700 dark:text-slate-200">
+                      {f.name}
+                    </span>
+                    <span className="block truncate text-[11px] text-slate-400">
+                      {folder
+                        ? '資料夾'
+                        : [kind.toUpperCase(), formatBytes(f.size)].filter(Boolean).join(' · ')}
+                    </span>
                   </span>
-                </span>
+                </button>
                 {folder ? (
-                  <ChevronRight size={15} className="shrink-0 text-slate-300 dark:text-slate-600" />
+                  <ChevronRight size={15} className="mr-1.5 shrink-0 text-slate-300 dark:text-slate-600" />
                 ) : (
-                  <ExternalLink size={14} className="shrink-0 text-slate-300 dark:text-slate-600" />
+                  <div className="flex shrink-0 items-center">
+                    <Tooltip label={added ? '已喺我的庫' : '加入我的庫'}>
+                      <IconButton
+                        label={added ? '已喺我的庫' : '加入我的庫'}
+                        size="sm"
+                        active={added}
+                        onClick={() => addToLib(f)}
+                      >
+                        {added ? (
+                          <BookmarkCheck size={15} className="text-emerald-500" />
+                        ) : (
+                          <BookmarkPlus size={15} />
+                        )}
+                      </IconButton>
+                    </Tooltip>
+                    <Tooltip label="喺 Drive 開啟">
+                      <IconButton label="開啟" size="sm" onClick={() => openItem(f)}>
+                        <ExternalLink size={14} />
+                      </IconButton>
+                    </Tooltip>
+                  </div>
                 )}
-              </button>
+              </div>
             )
           })}
         </div>
