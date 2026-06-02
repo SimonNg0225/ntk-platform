@@ -4,8 +4,10 @@ import {
   ArchiveRestore,
   CheckSquare,
   Copy,
+  CornerUpLeft,
   Download,
   Eye,
+  Link2,
   ListChecks,
   Pencil,
   Pin,
@@ -32,13 +34,17 @@ import {
   type RichNote,
 } from './store'
 import {
+  backlinksOf,
   checklistStat,
+  deriveTitle,
   download,
   fullDateTime,
   noteToMarkdown,
   parseLines,
   parseTags,
+  parseWikiLinks,
   readingMinutes,
+  resolveNoteByTitle,
   toggleTodoLine,
   wordCount,
 } from './util'
@@ -59,10 +65,19 @@ function insertAtCursor(
 export default function Editor({
   note,
   notebooks,
+  allNotes,
+  onOpenLink,
+  onOpenNote,
   onClose,
 }: {
   note: RichNote
   notebooks: Notebook[]
+  /** 全部筆記（解析 [[連結]] / 反向連結用） */
+  allNotes: RichNote[]
+  /** 撳 [[標題]]：解析現有筆記就開，冇就建立 */
+  onOpenLink: (title: string) => void
+  /** 撳反向連結：直接以 id 開該筆記 */
+  onOpenNote: (id: string) => void
   onClose?: () => void
 }) {
   const toast = useToast()
@@ -178,6 +193,12 @@ export default function Editor({
   }
 
   const preview = useMemo(() => parseLines(content), [content])
+  // [[雙向連結]]：本篇射出去嘅連結 + 反向連結（用 live title/content 配對）
+  const outgoing = useMemo(() => parseWikiLinks(content), [content])
+  const backlinks = useMemo(
+    () => backlinksOf(allNotes.filter((n) => !n.trashed), { ...note, title, content }),
+    [allNotes, note, title, content],
+  )
 
   return (
     <div className="flex h-full flex-col">
@@ -385,6 +406,7 @@ export default function Editor({
             <PreviewBody
               lines={preview}
               onToggle={(idx) => setContent((c) => toggleTodoLine(c, idx))}
+              onOpenLink={onOpenLink}
             />
           </div>
         )}
@@ -415,6 +437,58 @@ export default function Editor({
             ))}
           </div>
         )}
+
+        {/* [[雙向連結]]：射出 + 反向連結 */}
+        {(outgoing.length > 0 || backlinks.length > 0) && (
+          <div className="space-y-1.5 border-t border-slate-200/60 pt-2 dark:border-slate-700/50">
+            {outgoing.length > 0 && (
+              <div className="flex flex-wrap items-center gap-1.5">
+                <span className="inline-flex items-center gap-1 text-[11px] font-medium text-slate-400 dark:text-slate-500">
+                  <Link2 size={12} /> 連結到
+                </span>
+                {outgoing.map((t) => {
+                  const exists = Boolean(resolveNoteByTitle(allNotes, t))
+                  return (
+                    <button
+                      key={t}
+                      type="button"
+                      onClick={() => onOpenLink(t)}
+                      title={exists ? `開「${t}」` : `建立並連結「${t}」`}
+                      className={cx(
+                        'inline-flex items-center gap-0.5 rounded-md px-1.5 py-0.5 text-[11px] font-medium transition',
+                        exists
+                          ? 'bg-accent-soft text-accent-strong hover:brightness-95 dark:bg-accent/15 dark:text-accent'
+                          : 'border border-dashed border-slate-300 text-slate-400 hover:border-accent hover:text-accent dark:border-slate-600',
+                      )}
+                    >
+                      {t}
+                      {!exists && <span aria-hidden="true"> ＋</span>}
+                    </button>
+                  )
+                })}
+              </div>
+            )}
+            {backlinks.length > 0 && (
+              <div className="flex flex-wrap items-center gap-1.5">
+                <span className="inline-flex items-center gap-1 text-[11px] font-medium text-slate-400 dark:text-slate-500">
+                  <CornerUpLeft size={12} /> 被連結（{backlinks.length}）
+                </span>
+                {backlinks.map((n) => (
+                  <button
+                    key={n.id}
+                    type="button"
+                    onClick={() => onOpenNote(n.id)}
+                    title={`開「${deriveTitle(n)}」`}
+                    className="inline-flex max-w-[12rem] items-center truncate rounded-md bg-slate-100 px-1.5 py-0.5 text-[11px] font-medium text-slate-600 transition hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+                  >
+                    {deriveTitle(n)}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
         <div className="flex items-center justify-between text-[11px] text-slate-400 dark:text-slate-500">
           <span className="tabular-nums">
             {words} 字 · {chars} 字元 · 約 {readingMinutes(words)} 分鐘
@@ -436,9 +510,11 @@ export default function Editor({
 function PreviewBody({
   lines,
   onToggle,
+  onOpenLink,
 }: {
   lines: ReturnType<typeof parseLines>
   onToggle: (lineIndex: number) => void
+  onOpenLink: (title: string) => void
 }) {
   return (
     <div className="space-y-0.5 text-sm leading-relaxed text-slate-700 dark:text-slate-200">
@@ -470,7 +546,7 @@ function PreviewBody({
                   l.done && 'text-slate-400 line-through dark:text-slate-500',
                 )}
               >
-                {renderInline(l.text)}
+                {renderInline(l.text, onOpenLink)}
               </span>
             </button>
           )
@@ -478,7 +554,7 @@ function PreviewBody({
         if (!l.text.trim()) return <div key={i} className="h-3" />
         return (
           <p key={i} className="whitespace-pre-wrap break-words px-1">
-            {renderInline(l.text)}
+            {renderInline(l.text, onOpenLink)}
           </p>
         )
       })}
@@ -486,16 +562,42 @@ function PreviewBody({
   )
 }
 
-// 簡易 inline 渲染：高亮 #標籤
-function renderInline(text: string) {
-  const parts = text.split(/(#[\p{L}\p{N}_-]+)/gu)
-  return parts.map((p, i) =>
-    p.startsWith('#') && p.length > 1 ? (
-      <span key={i} className="font-medium text-accent-strong dark:text-accent">
-        {p}
-      </span>
-    ) : (
-      <span key={i}>{p}</span>
-    ),
-  )
+// 簡易 inline 渲染：高亮 #標籤 + 可點 [[雙向連結]]
+// 註：用 <span role="link"> 而非 <button>，因為呢個可能渲染喺待辦行嘅 <button> 入面（避免巢狀 button）。
+function renderInline(text: string, onLink?: (title: string) => void) {
+  const parts = text.split(/(\[\[[^[\]]+\]\]|#[\p{L}\p{N}_-]+)/gu)
+  return parts.map((p, i) => {
+    if (p.startsWith('[[') && p.endsWith(']]') && p.length > 4) {
+      const title = p.slice(2, -2).trim()
+      return (
+        <span
+          key={i}
+          role="link"
+          tabIndex={0}
+          onClick={(e) => {
+            e.stopPropagation()
+            onLink?.(title)
+          }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault()
+              e.stopPropagation()
+              onLink?.(title)
+            }
+          }}
+          className="cursor-pointer rounded px-0.5 font-medium text-accent-strong underline decoration-accent/40 underline-offset-2 transition hover:bg-accent-soft hover:decoration-accent dark:text-accent dark:hover:bg-accent/15"
+        >
+          {title}
+        </span>
+      )
+    }
+    if (p.startsWith('#') && p.length > 1) {
+      return (
+        <span key={i} className="font-medium text-accent-strong dark:text-accent">
+          {p}
+        </span>
+      )
+    }
+    return <span key={i}>{p}</span>
+  })
 }

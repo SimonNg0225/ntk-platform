@@ -73,6 +73,7 @@ import {
   parseNotesImport,
   parseTags,
   relativeTime,
+  resolveNoteByTitle,
   snippet,
   tagCounts,
   wordCount,
@@ -228,6 +229,45 @@ export default function NotesWidget() {
   function openNote(id: string) {
     setSelectedId(id)
     setMobilePane('detail')
+  }
+
+  // 跳去任何一則筆記（自動切到能見到佢嘅範圍 + 清走篩選），反向連結用
+  function revealNote(id: string) {
+    const n = notes.find((x) => x.id === id)
+    if (!n) return
+    setActiveTag(null)
+    setQuery('')
+    setScope(n.trashed ? { kind: 'trash' } : n.archived ? { kind: 'archived' } : { kind: 'all' })
+    setSelectedId(id)
+    setMobilePane('detail')
+  }
+
+  // 撳 [[標題]]：解析現有（非垃圾桶）筆記就跳去；冇就以該標題建立並連結
+  function openLink(title: string) {
+    const found = resolveNoteByTitle(notes.filter((n) => !n.trashed), title)
+    if (found) {
+      revealNote(found.id)
+      return
+    }
+    const now = new Date().toISOString()
+    const created = richNotesCol.add({
+      title,
+      content: '',
+      notebookId: scope.kind === 'notebook' ? scope.id : null,
+      pinned: false,
+      favorite: false,
+      archived: false,
+      trashed: false,
+      color: 'none',
+      createdAt: now,
+      updatedAt: now,
+    })
+    setActiveTag(null)
+    setQuery('')
+    setScope((s) => (s.kind === 'notebook' ? s : { kind: 'all' }))
+    setSelectedId(created.id)
+    setMobilePane('detail')
+    toast.success(`已建立並連結「${title}」`)
   }
 
   function toggleCheck(id: string) {
@@ -786,6 +826,9 @@ export default function NotesWidget() {
               <Editor
                 note={selected}
                 notebooks={notebooks}
+                allNotes={notes}
+                onOpenLink={openLink}
+                onOpenNote={revealNote}
                 onClose={() => setMobilePane('list')}
               />
             </Card>
