@@ -612,6 +612,15 @@ export function Modal({
   const panelRef = useRef<HTMLDivElement>(null)
   const titleId = useId()
 
+  // onClose 經 ref 取最新值。⚠️ 千祈唔好將 onClose 放入下面 effect 嘅 deps：
+  // 好多 caller 傳 inline arrow（onClose={() => {…}}），每次父組件 render 都係新
+  // ref。若入 deps，喺 modal 入面打字（每個 keystroke setState → 父 re-render →
+  // 新 onClose）就會令 effect 重跑：cleanup 嘅 prevActive.focus() 同 effect 嘅
+  // panel.focus() 會喺每一下打字搶走輸入框焦點 → 用戶見到「每打一字跳一跳／
+  // 打唔到字」。改用 ref 後，focus 管理 effect 只喺 open 真正切換先跑一次。
+  const onCloseRef = useRef(onClose)
+  onCloseRef.current = onClose
+
   // 開啟時：鎖 body 捲動、初始焦點入面板、Esc 關閉、Tab focus-trap；
   // 關閉/卸載時還原焦點同捲動（無障礙對話框標準行為）。
   useEffect(() => {
@@ -624,7 +633,7 @@ export function Modal({
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         e.stopPropagation()
-        onClose()
+        onCloseRef.current()
         return
       }
       if (e.key !== 'Tab') return
@@ -651,7 +660,9 @@ export function Modal({
       document.body.style.overflow = prevOverflow
       prevActive?.focus?.()
     }
-  }, [open, onClose])
+    // 只跟 open；onClose 走 ref（見上）。唔好加返 onClose 入 deps。
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open])
 
   if (!open) return null
   const maxW =
