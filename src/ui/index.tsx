@@ -603,6 +603,7 @@ export function Modal({
   size = 'md',
   footer,
   closeOnBackdrop = true,
+  ariaLabel,
 }: {
   open: boolean
   onClose: () => void
@@ -611,6 +612,8 @@ export function Modal({
   size?: 'sm' | 'md' | 'lg' | 'xl'
   footer?: ReactNode
   closeOnBackdrop?: boolean
+  /** 無障礙名稱：當唔傳 title（自管 masthead）時用。唔傳就自動由面板第一個標題推導。 */
+  ariaLabel?: string
 }) {
   const panelRef = useRef<HTMLDivElement>(null)
   const titleId = useId()
@@ -631,7 +634,34 @@ export function Modal({
     const prevActive = document.activeElement as HTMLElement | null
     const prevOverflow = document.body.style.overflow
     document.body.style.overflow = 'hidden'
-    panelRef.current?.focus()
+
+    // 無障礙名稱（dialog accessible name）：完全由呢個 effect 以 DOM 管理，
+    // JSX 唔再宣告 aria-labelledby/aria-label，咁 parent re-render（例如喺 modal
+    // 入面打字）就唔會 reconcile 清走佢。title 模式 → 指返個預設 h3；自管 masthead
+    // （無 title）模式 → 指面板第一個標題（h1/h2/h3 或 [data-modal-title]），
+    // 冇標題就用 ariaLabel prop / 通用 fallback。喺 focus 前 set，focus 入嚟即讀到。
+    const panel = panelRef.current
+    if (panel) {
+      let labelId: string | null = null
+      if (title) {
+        labelId = titleId
+      } else {
+        const heading = panel.querySelector<HTMLElement>('h1, h2, h3, [data-modal-title]')
+        if (heading) {
+          if (!heading.id) heading.id = titleId
+          labelId = heading.id
+        }
+      }
+      if (labelId) {
+        panel.setAttribute('aria-labelledby', labelId)
+        panel.removeAttribute('aria-label')
+      } else {
+        panel.removeAttribute('aria-labelledby')
+        panel.setAttribute('aria-label', ariaLabel ?? '對話框')
+      }
+    }
+
+    panel?.focus()
 
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -686,7 +716,6 @@ export function Modal({
         ref={panelRef}
         role="dialog"
         aria-modal="true"
-        aria-labelledby={title ? titleId : undefined}
         tabIndex={-1}
         className={cx(
           'relative z-10 max-h-[85vh] w-full animate-scale-in overflow-y-auto rounded-t-2xl border border-slate-200 bg-white p-5 shadow-overlay focus:outline-none dark:border-slate-700 dark:bg-slate-800 sm:rounded-2xl sm:p-6',
