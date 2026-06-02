@@ -74,6 +74,15 @@ export const notebooksCol = createCollection<Notebook>('notes_notebooks_v2', [
 
 export const richNotesCol = createCollection<RichNote>('notes_rich_v2', seedNotes())
 
+// ───────── 儲存篩選（智能檢視）─────────
+export interface SavedFilter extends Entity {
+  name: string // 顯示名（預設由標籤／關鍵字推導）
+  query: string // 關鍵字
+  tag: string | null // 標籤篩選
+  createdAt: string
+}
+export const savedFiltersCol = createCollection<SavedFilter>('notes_saved_filters_v1', [])
+
 function seedNotes(): RichNote[] {
   const t = Date.now()
   const mk = (
