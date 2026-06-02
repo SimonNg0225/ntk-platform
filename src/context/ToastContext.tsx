@@ -14,16 +14,23 @@ import {
 
 type ToastType = 'success' | 'error' | 'info'
 
+/** 可選行動按鈕（例如「檢視」），撳咗會執行 onClick 並關閉該 toast */
+export interface ToastAction {
+  label: string
+  onClick: () => void
+}
+
 interface Toast {
   id: number
   type: ToastType
   message: string
+  action?: ToastAction
 }
 
 interface ToastApi {
-  success: (msg: string) => void
-  error: (msg: string) => void
-  info: (msg: string) => void
+  success: (msg: string, action?: ToastAction) => void
+  error: (msg: string, action?: ToastAction) => void
+  info: (msg: string, action?: ToastAction) => void
 }
 
 const ToastContext = createContext<ToastApi | null>(null)
@@ -47,19 +54,26 @@ const ICON_BG: Record<ToastType, string> = {
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([])
 
-  const push = useCallback((type: ToastType, message: string) => {
-    const id = Date.now() + Math.random()
-    setToasts((t) => [...t, { id, type, message }])
-    setTimeout(() => {
-      setToasts((t) => t.filter((x) => x.id !== id))
-    }, 3000)
-  }, [])
+  const push = useCallback(
+    (type: ToastType, message: string, action?: ToastAction) => {
+      const id = Date.now() + Math.random()
+      setToasts((t) => [...t, { id, type, message, action }])
+      setTimeout(
+        () => {
+          setToasts((t) => t.filter((x) => x.id !== id))
+        },
+        // 有行動掣時畀耐少少時間畀用戶撳
+        action ? 6000 : 3000,
+      )
+    },
+    [],
+  )
 
   const api = useMemo<ToastApi>(
     () => ({
-      success: (m) => push('success', m),
-      error: (m) => push('error', m),
-      info: (m) => push('info', m),
+      success: (m, a) => push('success', m, a),
+      error: (m, a) => push('error', m, a),
+      info: (m, a) => push('info', m, a),
     }),
     [push],
   )
@@ -80,6 +94,18 @@ export function ToastProvider({ children }: { children: ReactNode }) {
               {ICON[t.type]}
             </span>
             <span className="text-sm font-medium">{t.message}</span>
+            {t.action && (
+              <button
+                type="button"
+                onClick={() => {
+                  t.action!.onClick()
+                  setToasts((x) => x.filter((y) => y.id !== t.id))
+                }}
+                className="ml-auto shrink-0 rounded-md px-2 py-1 text-xs font-semibold underline underline-offset-2 transition hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-current"
+              >
+                {t.action.label}
+              </button>
+            )}
           </div>
         ))}
       </div>
