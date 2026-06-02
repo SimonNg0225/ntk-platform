@@ -166,11 +166,11 @@ export default function TimeGridView({
   )
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-xs dark:border-slate-700/60 dark:bg-slate-800 dark:shadow-none">
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-xs dark:border-slate-700/60 dark:bg-slate-800 dark:shadow-none">
       {/* 日子標頭 */}
-      <div className="flex border-b border-slate-200/70 dark:border-slate-700/60">
+      <div className="flex border-b border-slate-100 dark:border-slate-700/50">
         <div className="w-16 shrink-0" />
-        {days.map((dk) => {
+        {days.map((dk, i) => {
           const d = fromKey(dk)
           const isToday = dk === tKey
           const isWeekend = d.getDay() === 0 || d.getDay() === 6
@@ -180,26 +180,26 @@ export default function TimeGridView({
               type="button"
               onClick={() => onPickDay(dk)}
               className={cx(
-                'flex flex-1 flex-col items-center gap-1 py-2 transition-colors first:border-l-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent/40',
-                'border-l border-slate-100 dark:border-slate-800/70',
-                isToday ? 'bg-accent-soft/50 dark:bg-accent/10' : 'hover:bg-slate-50 dark:hover:bg-slate-800/50',
+                'flex flex-1 flex-col items-center gap-1 py-2.5 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent/40',
+                i > 0 && 'border-l border-slate-100/70 dark:border-slate-800/50',
+                isToday ? 'bg-accent-soft/40 dark:bg-accent/10' : 'hover:bg-slate-50 dark:hover:bg-slate-800/50',
               )}
             >
               <span
                 className={cx(
-                  'text-[11px] font-medium',
+                  'text-[11px] font-medium uppercase tracking-wide',
                   isToday
                     ? 'text-accent-strong dark:text-accent'
                     : isWeekend
-                      ? 'text-slate-400 dark:text-slate-500'
-                      : 'text-slate-500 dark:text-slate-400',
+                      ? 'text-slate-300 dark:text-slate-600'
+                      : 'text-slate-400 dark:text-slate-500',
                 )}
               >
                 星期{WEEKDAYS[d.getDay()]}
               </span>
               <span
                 className={cx(
-                  'flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold tabular-nums transition',
+                  'flex h-8 w-8 items-center justify-center rounded-full font-serif text-base font-semibold tabular-nums transition',
                   isToday
                     ? 'bg-accent text-white shadow-sm shadow-accent/30'
                     : 'text-slate-700 dark:text-slate-200',
@@ -214,14 +214,17 @@ export default function TimeGridView({
 
       {/* 全日列 */}
       {hasAllDay && (
-        <div className="flex border-b border-slate-200/70 bg-slate-50/50 dark:border-slate-700/60 dark:bg-slate-800/40">
-          <div className="flex w-16 shrink-0 items-center justify-end pr-2 text-[10px] font-medium text-slate-400 dark:text-slate-500">
+        <div className="flex border-b border-slate-100 bg-slate-50/40 dark:border-slate-700/50 dark:bg-slate-800/30">
+          <div className="flex w-16 shrink-0 items-center justify-end pr-2 text-[10px] font-medium uppercase tracking-wide text-slate-400 dark:text-slate-500">
             全日
           </div>
-          {days.map((dk) => (
+          {days.map((dk, i) => (
             <div
               key={dk}
-              className="min-w-0 flex-1 space-y-1 border-l border-slate-100 p-1.5 first:border-l-0 dark:border-slate-800/70"
+              className={cx(
+                'min-w-0 flex-1 space-y-1 p-1.5',
+                i > 0 && 'border-l border-slate-100/70 dark:border-slate-800/50',
+              )}
             >
               {(occByDate.get(dk) ?? [])
                 .filter((o) => isAllDay(o.event))
@@ -231,11 +234,12 @@ export default function TimeGridView({
                     type="button"
                     onClick={() => onOpenEvent(occ.event, occ.dateKey)}
                     className={cx(
-                      'block w-full truncate rounded-lg px-2 py-1 text-left text-[11px] font-medium transition duration-200 hover:brightness-95 active:brightness-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:hover:brightness-110',
+                      'flex w-full items-center gap-1.5 truncate rounded-md py-1 pl-1.5 pr-2 text-left text-[11px] font-medium transition duration-200 hover:brightness-95 active:brightness-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:hover:brightness-110',
                       colorOf(occ.category?.color).chip,
                     )}
                   >
-                    {occ.event.title}
+                    <span className={cx('h-1.5 w-1.5 shrink-0 rounded-full', colorOf(occ.category?.color).dot)} />
+                    <span className="truncate">{occ.event.title}</span>
                   </button>
                 ))}
             </div>
@@ -260,7 +264,7 @@ export default function TimeGridView({
           </div>
 
           {/* 每日欄 */}
-          {days.map((dk) => {
+          {days.map((dk, di) => {
             const laid = layouts.get(dk) ?? []
             const isToday = dk === tKey
             const d = fromKey(dk)
@@ -269,10 +273,11 @@ export default function TimeGridView({
               <div
                 key={dk}
                 className={cx(
-                  'relative min-w-0 flex-1 border-l border-slate-100 first:border-l-0 dark:border-slate-800/70',
+                  'relative min-w-0 flex-1',
+                  di > 0 && 'border-l border-slate-100/70 dark:border-slate-800/50',
                   isToday
-                    ? 'bg-accent-soft/30 dark:bg-accent/[0.07]'
-                    : isWeekend && 'bg-slate-50/40 dark:bg-slate-900/20',
+                    ? 'bg-accent-soft/20 dark:bg-accent/[0.06]'
+                    : isWeekend && 'bg-slate-50/30 dark:bg-slate-900/20',
                 )}
               >
                 {/* 小時格（可撳新增） */}
@@ -284,10 +289,10 @@ export default function TimeGridView({
                     onClick={() => onCreateAt(dk, `${String(h).padStart(2, '0')}:00`)}
                     style={{ height: HOUR_PX }}
                     className={cx(
-                      'block w-full border-b transition-colors hover:bg-accent-soft/50 dark:hover:bg-accent/10',
+                      'block w-full border-b transition-colors hover:bg-accent-soft/40 dark:hover:bg-accent/10',
                       h === 23
                         ? 'border-transparent'
-                        : 'border-slate-100/80 dark:border-slate-800/50',
+                        : 'border-slate-100/60 dark:border-slate-800/40',
                     )}
                   />
                 ))}
@@ -343,7 +348,7 @@ export default function TimeGridView({
                         width: `calc(${widthPct}% - 6px)`,
                       }}
                       className={cx(
-                        'group absolute z-10 cursor-pointer touch-none select-none overflow-hidden rounded-lg px-2 py-1 text-left text-[11px] leading-tight shadow-sm transition duration-200 hover:shadow-md hover:brightness-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 dark:hover:brightness-110',
+                        'group absolute z-10 cursor-pointer touch-none select-none overflow-hidden rounded-xl px-2 py-1 text-left text-[11px] leading-tight shadow-xs ring-1 ring-black/[0.03] transition duration-200 hover:shadow-md hover:brightness-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 dark:ring-white/[0.04] dark:hover:brightness-110',
                         dragging && 'z-30 cursor-grabbing opacity-95 shadow-md ring-2 ring-accent/50',
                         c.block,
                       )}

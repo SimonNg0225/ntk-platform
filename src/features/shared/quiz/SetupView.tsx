@@ -173,10 +173,14 @@ export function SetupView({
         />
       ) : (
         <section className="space-y-5">
-          {/* 主行動入口：模式選擇（最大、最搶眼） */}
+          {/* 主行動入口：揀賽制（最大、最搶眼，似遊戲大堂揀玩法） */}
           <div>
-            <p className="mb-3 text-sm font-semibold text-slate-800 dark:text-slate-100">
-              想點樣練習？
+            <p className="mb-1 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-accent/70 dark:text-accent/80">
+              <Sparkles size={12} className="shrink-0" />
+              揀賽制
+            </p>
+            <p className="mb-3 font-serif text-xl font-semibold tracking-tight text-slate-800 dark:text-slate-100">
+              今次想點挑戰？
             </p>
             <div className="grid grid-cols-3 gap-2.5">
               {MODE_CARDS.map((m) => {
@@ -188,17 +192,24 @@ export function SetupView({
                     onClick={() => set('mode', m.id)}
                     aria-pressed={on}
                     className={cx(
-                      'group flex flex-col items-center gap-2 rounded-2xl border p-4 text-center transition duration-200',
+                      'group relative flex flex-col items-center gap-2 overflow-hidden rounded-2xl border p-4 text-center transition duration-200',
                       on
                         ? 'border-accent bg-accent-soft text-accent-strong shadow-sm dark:border-accent/60 dark:bg-accent/15 dark:text-accent'
                         : 'border-slate-200/80 bg-white text-slate-600 hover:-translate-y-0.5 hover:border-accent/40 hover:shadow-md dark:border-slate-700/60 dark:bg-slate-800 dark:text-slate-300 dark:hover:border-accent/40',
                     )}
                   >
+                    {/* 選中：頂部 accent 燈條 */}
+                    {on && (
+                      <span
+                        aria-hidden="true"
+                        className="absolute inset-x-0 top-0 h-0.5 bg-accent"
+                      />
+                    )}
                     <span
                       className={cx(
                         'flex h-11 w-11 items-center justify-center rounded-2xl transition duration-200',
                         on
-                          ? 'bg-accent text-white'
+                          ? 'bg-accent text-white shadow-sm shadow-accent/30'
                           : 'bg-slate-100 text-slate-500 group-hover:bg-accent-soft group-hover:text-accent-strong dark:bg-slate-700 dark:text-slate-300 dark:group-hover:bg-accent/15 dark:group-hover:text-accent',
                       )}
                     >
@@ -294,25 +305,37 @@ export function SetupView({
             </div>
           </Card>
 
-          {/* ── 出卷概要 + 開始 CTA（一個沉穩的行動區）── */}
-          <div className="rounded-3xl border border-accent/30 bg-accent-soft/60 p-4 dark:border-accent/30 dark:bg-accent/10 sm:p-5">
-            <div className="flex flex-wrap items-center gap-2">
-              <Badge tone="accent">{scopeLabel}</Badge>
-              <Badge tone="slate">{DIFF_FILTER_LABEL[settings.difficulty]}</Badge>
-              <Badge tone={takeCount > 0 ? 'accent' : 'rose'} className="tabular-nums">
-                {takeCount} 題
-              </Badge>
-              {settings.mode === 'timed' && (
-                <Badge tone="amber" icon={Timer} className="tabular-nums">
-                  {settings.timeLimit} 秒／題
-                </Badge>
-              )}
-              <span className="ml-auto text-xs text-slate-500 dark:text-slate-400" aria-live="polite">
-                符合條件 <span className="font-semibold tabular-nums text-accent-strong dark:text-accent">{matched.length}</span> 題
-              </span>
+          {/* ── 出卷概要 + 開始 CTA（賽前準備就緒區：大題數 + 顯眼開始掣）── */}
+          <div className="relative overflow-hidden rounded-3xl border border-accent/30 bg-accent-soft/60 p-4 dark:border-accent/30 dark:bg-accent/10 sm:p-5">
+            <span
+              aria-hidden="true"
+              className="pointer-events-none absolute -right-10 -top-12 h-36 w-36 rounded-full bg-accent/10 blur-2xl dark:bg-accent/15"
+            />
+            <div className="relative flex items-center gap-3">
+              {/* 大題數（賽前焦點：serif 數字 + 「題」） */}
+              <div className="shrink-0 leading-none">
+                <span className="font-serif text-4xl font-bold tabular-nums text-accent-strong dark:text-accent">
+                  {takeCount}
+                </span>
+                <span className="ml-1 text-sm font-medium text-accent/70 dark:text-accent/70">題</span>
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <Badge tone="accent">{scopeLabel}</Badge>
+                  <Badge tone="slate">{DIFF_FILTER_LABEL[settings.difficulty]}</Badge>
+                  {settings.mode === 'timed' && (
+                    <Badge tone="amber" icon={Timer} className="tabular-nums">
+                      {settings.timeLimit} 秒／題
+                    </Badge>
+                  )}
+                </div>
+                <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400" aria-live="polite">
+                  符合條件 <span className="font-semibold tabular-nums text-accent-strong dark:text-accent">{matched.length}</span> 題，準備好就開賽。
+                </p>
+              </div>
             </div>
             {cappedByPool && (
-              <p className="mt-2 text-xs text-amber-600 dark:text-amber-400">
+              <p className="relative mt-2 text-xs text-amber-600 dark:text-amber-400">
                 呢個範圍題目唔夠 {wantCount} 題，實際出 {takeCount} 題。
               </p>
             )}
@@ -322,19 +345,20 @@ export function SetupView({
               icon={Play}
               disabled={takeCount === 0}
               onClick={start}
-              className="mt-3"
+              className="relative mt-3"
             >
-              {takeCount === 0 ? '冇符合條件嘅題目' : `開始測驗 · ${takeCount} 題`}
+              {takeCount === 0 ? '冇符合條件嘅題目' : `開始挑戰 · ${takeCount} 題`}
             </Button>
           </div>
         </section>
       )}
 
-      {/* ── 歷史紀錄 ── */}
+      {/* ── 歷史紀錄（戰績榜）── */}
       <section>
         <div className="mb-3 flex items-center gap-2">
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-            歷史紀錄
+          <h2 className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+            <Trophy size={14} />
+            戰績紀錄
           </h2>
           {historyDesc.length > 0 && (
             <Badge tone="slate" className="tabular-nums">{historyDesc.length}</Badge>

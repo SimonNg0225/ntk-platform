@@ -1,9 +1,8 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { useCollection } from '../../lib/store'
 import { useToast } from '../../context/ToastContext'
 import { useConfirm } from '../../context/ConfirmContext'
 import {
-  PageHeader,
   Button,
   Card,
   Tabs,
@@ -15,7 +14,6 @@ import {
   cx,
 } from '../../ui'
 import {
-  Target,
   Plus,
   Search,
   Flame,
@@ -29,6 +27,7 @@ import {
   BarChart3,
   CalendarDays,
   AlertTriangle,
+  CalendarCheck,
 } from 'lucide-react'
 import {
   habitV2Col,
@@ -44,6 +43,8 @@ import {
   currentStreak,
   streakAtRisk,
   todayKey,
+  recentDays,
+  weekdayOf,
   type AtRiskHabit,
 } from './habits/util'
 import HabitRow from './habits/HabitRow'
@@ -163,6 +164,22 @@ export default function HabitTracker() {
   )
   const allDone = stats.dueToday > 0 && stats.doneToday === stats.dueToday
 
+  // 近 14 日整體節奏（鏈條 hero 用）：每日 = 當日全部排程習慣嘅完成比例（0-1）。
+  // 由舊到新，最後一格 = 今日。純衍生自 activeHabits + byHabit。
+  const rhythm14 = useMemo(() => {
+    return recentDays(14).map((k) => {
+      const wd = weekdayOf(k)
+      let due = 0
+      let done = 0
+      for (const h of activeHabits) {
+        if (h.frequency.kind === 'weekdays' && !h.frequency.days.includes(wd)) continue
+        due += 1
+        if ((byHabit.get(h.id) ?? new Set()).has(k)) done += 1
+      }
+      return { key: k, ratio: due > 0 ? done / due : 0, due }
+    })
+  }, [activeHabits, byHabit])
+
   const detailHabit = detailId ? habits.find((h) => h.id === detailId) ?? null : null
 
   // ───────── 動作 ─────────
@@ -248,42 +265,54 @@ export default function HabitTracker() {
 
   return (
     <div className="mx-auto w-full max-w-3xl space-y-5 p-4">
-      <PageHeader
-        title="習慣追蹤"
-        description="養成每日習慣，保持連續記錄，用數據睇住自己進步。"
-        icon={Target}
-        actions={
-          <Button icon={Plus} onClick={openCreate}>
-            新增習慣
-          </Button>
-        }
-      />
+      {/* ───────── 老黃曆 masthead：今日做主角（serif 日期 + 連續綬帶） ───────── */}
+      <header className="flex flex-wrap items-end justify-between gap-x-4 gap-y-3">
+        <div className="min-w-0">
+          <p className="text-[11px] font-medium uppercase tracking-[0.3em] text-accent/70">
+            習慣 · 老黃曆
+          </p>
+          <h1 className="mt-1 font-serif text-2xl font-semibold leading-tight tracking-tight text-slate-800 dark:text-slate-100 sm:text-[28px]">
+            {longTodayLabel(today)}
+          </h1>
+          <p className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-slate-500 dark:text-slate-400">
+            <span className="tabular-nums">在養成 {activeHabits.length} 個習慣</span>
+            {stats.bestCurrentStreak > 0 && (
+              <>
+                <span aria-hidden="true" className="text-slate-300 dark:text-slate-600">·</span>
+                <span className="inline-flex items-center gap-1 font-medium text-amber-600 dark:text-amber-400">
+                  <Flame size={12} /> 最旺 {stats.bestCurrentStreak} 日連續
+                </span>
+              </>
+            )}
+          </p>
+        </div>
+        <Button icon={Plus} onClick={openCreate}>
+          新增習慣
+        </Button>
+      </header>
 
-      {/* 頂部統計 */}
-      <section className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-        <MiniStat
+      {/* ───────── 曆書帶：細口統計（hairline grid · serif 大數字） ───────── */}
+      <section className="grid grid-cols-3 gap-px overflow-hidden rounded-2xl bg-slate-200/70 ring-1 ring-slate-200/80 dark:bg-slate-700/50 dark:ring-slate-700/60">
+        <AlmanacStat
           label="今日完成"
           value={`${stats.doneToday}/${stats.dueToday}`}
-          hint={`完成率 ${stats.todayRate}%`}
           icon={ListChecks}
-          tone="accent"
-          highlight={allDone}
+          hint={`完成率 ${stats.todayRate}%`}
+          hot={allDone}
         />
-        <MiniStat
+        <AlmanacStat
           label="最長連續"
           value={stats.bestCurrentStreak}
           unit="日"
           icon={Flame}
-          tone="amber"
+          hint={stats.bestCurrentStreak > 0 ? '保持落去！' : '由今日開始'}
         />
-        <MiniStat
+        <AlmanacStat
           label="近 7 日完美"
           value={stats.perfectDays7}
           unit="日"
-          hint="全部達標"
           icon={Sparkles}
-          tone="emerald"
-          className="col-span-2 sm:col-span-1"
+          hint="全部達標"
         />
       </section>
 
@@ -316,6 +345,7 @@ export default function HabitTracker() {
                 total={stats.dueToday}
                 rate={stats.todayRate}
                 allDone={allDone}
+                rhythm={rhythm14}
               />
 
               {atRisk.length > 0 && (
@@ -324,31 +354,34 @@ export default function HabitTracker() {
 
               {todayBuckets.due.length > 0 && (
                 <div className="space-y-2">
-                  <p className="px-1 text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                  <SectionLabel icon={CalendarCheck}>
                     今日排程 · {todayBuckets.due.length}
-                  </p>
-                  {todayBuckets.due.map((h) => (
-                    <Card
+                  </SectionLabel>
+                  {todayBuckets.due.map((h, i) => (
+                    <div
                       key={h.id}
-                      hover
-                      className="rounded-2xl border-slate-200/80 dark:border-slate-700/60"
+                      className="animate-fade-in-up"
+                      style={{ animationDelay: `${Math.min(i, 8) * 45}ms` }}
                     >
-                      <HabitRow
-                        habit={h}
-                        done={byHabit.get(h.id) ?? new Set()}
-                        onToggle={toggleLog}
-                        onOpen={(hh) => setDetailId(hh.id)}
-                      />
-                    </Card>
+                      <Card
+                        hover
+                        className="rounded-2xl border-slate-200/80 dark:border-slate-700/60"
+                      >
+                        <HabitRow
+                          habit={h}
+                          done={byHabit.get(h.id) ?? new Set()}
+                          onToggle={toggleLog}
+                          onOpen={(hh) => setDetailId(hh.id)}
+                        />
+                      </Card>
+                    </div>
                   ))}
                 </div>
               )}
 
               {todayBuckets.notDue.length > 0 && (
                 <div className="space-y-2">
-                  <p className="px-1 text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-                    今日休息日
-                  </p>
+                  <SectionLabel icon={Sprout}>今日休息日</SectionLabel>
                   {todayBuckets.notDue.map((h) => (
                     <Card
                       key={h.id}
@@ -455,7 +488,7 @@ export default function HabitTracker() {
                 <span className="ml-auto normal-case">{showArchived ? '收起' : '展開'}</span>
               </button>
               {showArchived && (
-                <Card className="divide-y divide-slate-100 dark:divide-slate-700/60">
+                <Card className="mt-1 rounded-2xl divide-y divide-slate-100 dark:divide-slate-700/60">
                   {archivedHabits.map((h) => {
                     const spec = colorOf(h.color)
                     return (
@@ -500,7 +533,7 @@ export default function HabitTracker() {
       {/* 全部達標慶祝（今日視圖外也提示一次） */}
       <div aria-live="polite">
         {view === 'today' && allDone && (
-          <div className="flex items-center justify-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 py-3 text-sm font-medium text-emerald-700 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-300">
+          <div className="flex items-center justify-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 py-3 text-sm font-medium text-emerald-700 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-300">
             <PartyPopper size={18} />
             今日全部習慣完成，keep it up！
           </div>
@@ -535,57 +568,74 @@ export default function HabitTracker() {
   )
 }
 
-// ───────── 小統計磚（頂部三格；溫暖 chip + 大數字）─────────
-type StatTone = 'accent' | 'amber' | 'emerald'
-const STAT_TONE: Record<StatTone, { chip: string; val: string }> = {
-  accent: { chip: 'bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent', val: 'text-accent-strong dark:text-accent' },
-  amber: { chip: 'bg-amber-50 text-amber-600 dark:bg-amber-500/15 dark:text-amber-300', val: 'text-amber-600 dark:text-amber-400' },
-  emerald: { chip: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-300', val: 'text-emerald-600 dark:text-emerald-400' },
+// ───────── 老黃曆日期（serif masthead 用：YYYY年M月D日 星期X）─────────
+const WD_FULL = ['日', '一', '二', '三', '四', '五', '六']
+function longTodayLabel(key: string): string {
+  const [y, m, d] = key.split('-').map(Number)
+  const dow = new Date(y, (m || 1) - 1, d || 1).getDay()
+  return `${y}年${m}月${d}日 · 星期${WD_FULL[dow] ?? ''}`
 }
 
-function MiniStat({
+// ───────── 區段標籤（小帽 + icon；取代散落嘅 <p>，統一節奏）─────────
+function SectionLabel({
+  icon: Icon,
+  children,
+}: {
+  icon: typeof Flame
+  children: ReactNode
+}) {
+  return (
+    <p className="flex items-center gap-1.5 px-1 text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+      <Icon size={13} className="shrink-0" />
+      {children}
+    </p>
+  )
+}
+
+// ───────── 曆書帶統計格（hairline grid · serif 大數字；達標時 hot 高亮）─────────
+function AlmanacStat({
   label,
   value,
   unit,
   hint,
   icon: Icon,
-  tone,
-  highlight,
-  className,
+  hot,
 }: {
   label: string
   value: number | string
   unit?: string
   hint?: string
   icon: typeof Flame
-  tone: StatTone
-  highlight?: boolean
-  className?: string
+  hot?: boolean
 }) {
-  const t = STAT_TONE[tone]
   return (
     <div
       className={cx(
-        'flex flex-col justify-between gap-3 rounded-3xl border p-4 transition duration-200',
-        highlight
-          ? 'border-emerald-300/60 bg-emerald-50/70 dark:border-emerald-500/30 dark:bg-emerald-500/10'
-          : 'border-slate-200/80 bg-white dark:border-slate-700/60 dark:bg-slate-800',
-        className,
+        'px-3.5 py-3.5 transition-colors sm:px-4',
+        hot
+          ? 'bg-emerald-50 dark:bg-emerald-500/10'
+          : 'bg-white dark:bg-slate-800',
       )}
     >
-      <div className="flex items-center justify-between">
-        <span className="text-xs font-medium text-slate-400 dark:text-slate-500">{label}</span>
-        <span className={cx('flex h-8 w-8 items-center justify-center rounded-xl', highlight ? STAT_TONE.emerald.chip : t.chip)}>
-          <Icon size={16} />
-        </span>
-      </div>
-      <div>
-        <p className="flex items-baseline gap-1">
-          <span className={cx('text-2xl font-bold tabular-nums', highlight ? STAT_TONE.emerald.val : t.val)}>{value}</span>
-          {unit && <span className="text-sm font-medium text-slate-400">{unit}</span>}
-        </p>
-        {hint && <p className="mt-0.5 truncate text-[11px] text-slate-400 dark:text-slate-500">{hint}</p>}
-      </div>
+      <p
+        className={cx(
+          'flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide',
+          hot ? 'text-emerald-600/80 dark:text-emerald-400/80' : 'text-slate-400 dark:text-slate-500',
+        )}
+      >
+        <Icon size={12} className="shrink-0" />
+        <span className="truncate">{label}</span>
+      </p>
+      <p
+        className={cx(
+          'mt-1 font-serif text-[26px] font-semibold leading-none tabular-nums slashed-zero',
+          hot ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-800 dark:text-slate-100',
+        )}
+      >
+        {value}
+        {unit && <span className="ml-1 font-sans text-sm font-normal text-slate-400">{unit}</span>}
+      </p>
+      {hint && <p className="mt-1 truncate text-[11px] text-slate-400 dark:text-slate-500">{hint}</p>}
     </div>
   )
 }
@@ -642,17 +692,20 @@ function AtRiskBanner({
   )
 }
 
-// ───────── 今日完成環（自製 SVG 圓環）─────────
+// ───────── 今日完成環（自製 SVG 圓環）+ 近 14 日節奏鏈條 ─────────
+type RhythmDay = { key: string; ratio: number; due: number }
 function TodayRing({
   done,
   total,
   rate,
   allDone,
+  rhythm,
 }: {
   done: number
   total: number
   rate: number
   allDone: boolean
+  rhythm: RhythmDay[]
 }) {
   const R = 52
   const C = 2 * Math.PI * R
@@ -704,7 +757,7 @@ function TodayRing({
           </span>
         </div>
       </div>
-      <div className="relative min-w-0">
+      <div className="relative min-w-0 flex-1">
         <h3 className="text-base font-bold text-slate-800 dark:text-slate-100">
           {allDone ? '今日全部完成 🎉' : '今日進度'}
         </h3>
@@ -715,8 +768,61 @@ function TodayRing({
               ? `仲差 ${total - done} 個就完成今日全部排程習慣。`
               : '今日冇排程習慣，放鬆下。'}
         </p>
+        <RhythmChain rhythm={rhythm} allDone={allDone} />
       </div>
     </Card>
+  )
+}
+
+// ───────── 近 14 日節奏鏈條（hero 內；整體完成密度 → 鏈節深淺）─────────
+//  每節 = 一日；色深 = 當日完成比例（0-1）。連續兩日都「全達標」先以連桿駁起，
+//  令一段全達標期讀成一條完整嘅鏈，呼應「連續鏈條」主題。今日節加外框。
+function RhythmChain({ rhythm, allDone }: { rhythm: RhythmDay[]; allDone: boolean }) {
+  if (rhythm.length === 0) return null
+  const tone = allDone ? 'emerald' : 'accent'
+  // 比例 → 不透明度 class（0 用淡底；愈高愈實）。
+  const fillClass = (r: number) => {
+    if (r <= 0) return 'bg-slate-200/80 dark:bg-slate-600/50'
+    if (tone === 'emerald') {
+      if (r >= 1) return 'bg-emerald-500'
+      if (r >= 0.5) return 'bg-emerald-500/60'
+      return 'bg-emerald-500/30'
+    }
+    if (r >= 1) return 'bg-accent'
+    if (r >= 0.5) return 'bg-accent/60'
+    return 'bg-accent/30'
+  }
+  const linkClass = tone === 'emerald' ? 'bg-emerald-500' : 'bg-accent'
+  return (
+    <div className="mt-3.5">
+      <p className="mb-1.5 text-[10px] font-medium uppercase tracking-wider text-slate-400 dark:text-slate-500">
+        近 14 日節奏
+      </p>
+      <div className="flex items-center gap-0">
+        {rhythm.map((d, i) => {
+          const isToday = i === rhythm.length - 1
+          const linked = i > 0 && d.ratio >= 1 && rhythm[i - 1].ratio >= 1
+          return (
+            <div key={d.key} className="flex items-center">
+              {i > 0 && (
+                <span
+                  aria-hidden="true"
+                  className={cx('h-[3px] w-1.5 shrink-0 transition-colors', linked ? linkClass : 'bg-transparent')}
+                />
+              )}
+              <span
+                title={`${d.key.slice(5)}：${d.due > 0 ? `${Math.round(d.ratio * 100)}% 完成` : '冇排程'}`}
+                className={cx(
+                  'h-2.5 w-2.5 shrink-0 rounded-full transition-colors',
+                  fillClass(d.ratio),
+                  isToday && 'ring-2 ring-offset-1 ring-offset-white ring-slate-300 dark:ring-offset-slate-800 dark:ring-slate-500',
+                )}
+              />
+            </div>
+          )
+        })}
+      </div>
+    </div>
   )
 }
 

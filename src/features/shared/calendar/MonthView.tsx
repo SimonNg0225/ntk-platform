@@ -35,25 +35,33 @@ export default function MonthView({
   const dragRef = useRef<{ ev: CalendarEvent; from: string } | null>(null)
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700/60">
-      {/* 星期標頭 */}
-      <div className="grid grid-cols-7 border-b border-slate-200 bg-slate-50/80 text-center text-xs font-semibold text-slate-500 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-400">
-        {WEEKDAYS.map((w) => (
-          <div key={w} className="py-2">
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-xs dark:border-slate-700/60 dark:bg-slate-800 dark:shadow-none">
+      {/* 星期標頭 —— 週末用淡色，去掉硬底線改幼分隔 */}
+      <div className="grid grid-cols-7 px-1 pb-1 pt-2.5 text-center">
+        {WEEKDAYS.map((w, i) => (
+          <div
+            key={w}
+            className={cx(
+              'text-[11px] font-semibold uppercase tracking-wide',
+              i === 0 || i === 6
+                ? 'text-slate-300 dark:text-slate-600'
+                : 'text-slate-400 dark:text-slate-500',
+            )}
+          >
             {w}
           </div>
         ))}
       </div>
 
-      {/* 6 行格仔 */}
-      <div className="grid flex-1 grid-cols-7 grid-rows-6">
+      {/* 6 行格仔 —— 用內襯幼線分隔（gap + ring）取代逐格硬框 */}
+      <div className="grid flex-1 grid-cols-7 grid-rows-6 gap-px bg-slate-100/70 dark:bg-slate-700/40">
         {cells.map((cell, i) => {
           const key = toKey(cell)
           const inMonth = cell.getMonth() === month
           const isToday = key === tKey
           const isSelected = key === selectedKey
           const list = occByDate.get(key) ?? []
-          const isSun = i % 7 === 0
+          const isWeekend = i % 7 === 0 || i % 7 === 6
 
           return (
             <button
@@ -72,23 +80,32 @@ export default function MonthView({
                 if (d && d.from !== key) onMoveToDay(d.ev, key)
               }}
               className={cx(
-                'group flex min-h-0 flex-col items-stretch border-b border-r border-slate-100 p-1 text-left transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent/40 dark:border-slate-800',
-                isSun && '',
-                isSelected
-                  ? 'bg-accent-soft/60 dark:bg-accent/10'
-                  : 'hover:bg-slate-50 dark:hover:bg-slate-800/50',
-                !inMonth && 'bg-slate-50/40 dark:bg-slate-900/30',
+                'group relative flex min-h-0 flex-col items-stretch p-1 text-left transition-colors duration-200 focus:outline-none focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent/40',
+                // 底色層次：今日柔和 accent 暈染 > 選中淡 accent > 平日白 / 週末微灰 / 鄰月更淡
+                isToday
+                  ? 'bg-accent-soft/70 dark:bg-accent/15'
+                  : isSelected
+                    ? 'bg-accent-soft/40 dark:bg-accent/10'
+                    : !inMonth
+                      ? 'bg-slate-50/70 hover:bg-slate-100/70 dark:bg-slate-900/40 dark:hover:bg-slate-800/60'
+                      : isWeekend
+                        ? 'bg-slate-50/40 hover:bg-slate-100/60 dark:bg-slate-800/40 dark:hover:bg-slate-800/70'
+                        : 'bg-white hover:bg-slate-50 dark:bg-slate-800 dark:hover:bg-slate-800/60',
+                // 選中態：內襯 accent 細框，輕巧唔搶
+                isSelected && !isToday && 'ring-1 ring-inset ring-accent/30',
               )}
             >
-              {/* 日期數字 */}
+              {/* 日期數字 —— 今日填實 accent 圓點，其餘淨數字 */}
               <div className="flex items-center justify-center sm:justify-start">
                 <span
                   className={cx(
-                    'flex h-6 w-6 items-center justify-center rounded-full text-xs font-semibold tabular-nums sm:text-[13px]',
+                    'flex h-6 min-w-6 items-center justify-center rounded-full px-1 text-xs font-semibold tabular-nums transition sm:text-[13px]',
                     isToday
-                      ? 'bg-accent text-white'
+                      ? 'bg-accent text-white shadow-sm shadow-accent/30'
                       : inMonth
-                        ? 'text-slate-700 dark:text-slate-200'
+                        ? isWeekend
+                          ? 'text-slate-400 dark:text-slate-500'
+                          : 'text-slate-700 dark:text-slate-200'
                         : 'text-slate-300 dark:text-slate-600',
                   )}
                 >
@@ -96,10 +113,11 @@ export default function MonthView({
                 </span>
               </div>
 
-              {/* 桌面：彩色 chip（最多 3）+ N */}
-              <div className="mt-0.5 hidden min-h-0 flex-1 flex-col gap-0.5 overflow-hidden sm:flex">
+              {/* 桌面：柔和事件 chip（前置色點 + 標題，最多 3）+ N */}
+              <div className="mt-1 hidden min-h-0 flex-1 flex-col gap-1 overflow-hidden sm:flex">
                 {list.slice(0, 3).map((occ) => {
                   const c = colorOf(occ.category?.color)
+                  const timed = !isAllDay(occ.event)
                   return (
                     <button
                       key={`${occ.event.id}-${occ.dateKey}`}
@@ -116,12 +134,20 @@ export default function MonthView({
                         onOpenEvent(occ.event, occ.dateKey)
                       }}
                       className={cx(
-                        'flex cursor-grab items-center gap-1 truncate rounded px-1 py-0.5 text-left text-[11px] leading-tight active:cursor-grabbing',
-                        c.chip,
+                        'flex cursor-grab items-center gap-1.5 truncate rounded-md py-0.5 pl-1.5 pr-1 text-left text-[11px] font-medium leading-tight transition duration-200 hover:brightness-95 active:cursor-grabbing dark:hover:brightness-110',
+                        timed
+                          ? 'text-slate-600 hover:bg-slate-100/80 dark:text-slate-300 dark:hover:bg-slate-700/50'
+                          : c.chip,
                       )}
                     >
-                      {!isAllDay(occ.event) && (
-                        <span className="shrink-0 tabular-nums opacity-70">
+                      <span
+                        className={cx(
+                          'h-1.5 w-1.5 shrink-0 rounded-full',
+                          colorOf(occ.category?.color).dot,
+                        )}
+                      />
+                      {timed && (
+                        <span className="shrink-0 tabular-nums text-slate-400 dark:text-slate-500">
                           {occ.event.time}
                         </span>
                       )}
@@ -136,15 +162,15 @@ export default function MonthView({
                       e.stopPropagation()
                       onMoreDay(key)
                     }}
-                    className="px-1 text-left text-[11px] font-medium tabular-nums text-slate-400 hover:text-accent dark:text-slate-500"
+                    className="px-1.5 text-left text-[11px] font-medium tabular-nums text-slate-400 transition hover:text-accent dark:text-slate-500"
                   >
-                    +{list.length - 3} 項
+                    還有 {list.length - 3} 項
                   </button>
                 )}
               </div>
 
               {/* 手機：彩色小圓點 */}
-              <div className="mt-auto flex items-center justify-center gap-0.5 pb-0.5 sm:hidden">
+              <div className="mt-auto flex items-center justify-center gap-1 pb-0.5 sm:hidden">
                 {list.slice(0, 4).map((occ) => (
                   <span
                     key={`${occ.event.id}-${occ.dateKey}`}

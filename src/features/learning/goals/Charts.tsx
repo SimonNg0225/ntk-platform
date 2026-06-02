@@ -1,11 +1,14 @@
 // ============================================================
 //  學習目標 — 自製 SVG / div 圖表（零 npm 依賴）
+//  登山母題：進度 = 海拔，里程碑 = 沿途路標。
 //  ① ProgressRing   單目標環形進度
 //  ② StatusDonut    狀態分佈甜甜圈 + 中心總數
 //  ③ MomentumChart  動量折線 / 面積圖（含 hover tooltip）
-//  ④ CategoryBars   分類橫向長條（平均進度）
+//  ④ CategoryBars   分類橫向長條（平均海拔）
+//  ⑤ AscentMeter    Hero 用：整體平均海拔半圓儀錶（攀升軌跡 + 山頂旗）
 // ============================================================
 import { useState } from 'react'
+import { Flag } from 'lucide-react'
 import { cx } from '../../../ui'
 import type { MomentumPoint } from './util'
 
@@ -230,7 +233,7 @@ export function MomentumChart({
   )
 }
 
-// ───────── ④ 分類橫向長條 ─────────
+// ───────── ④ 分類橫向長條（各路線平均海拔；終點山頂旗標）─────────
 export function CategoryBars({
   rows,
 }: {
@@ -239,24 +242,114 @@ export function CategoryBars({
   if (rows.length === 0)
     return <p className="py-4 text-center text-xs text-slate-400">未有資料</p>
   return (
-    <ul className="space-y-2.5">
-      {rows.map((r) => (
-        <li key={r.id} className="flex items-center gap-3">
-          <div className="flex w-20 shrink-0 items-center gap-1.5">
-            <span className={cx('h-2 w-2 rounded-full', r.dot)} />
-            <span className="truncate text-xs text-slate-600 dark:text-slate-300">{r.label}</span>
-          </div>
-          <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-700">
-            <div
-              className="h-full rounded-full bg-accent transition-all duration-500"
-              style={{ width: `${r.avg}%` }}
-            />
-          </div>
-          <span className="w-14 shrink-0 text-right text-xs tabular-nums text-slate-500 dark:text-slate-400">
-            {r.avg}% · {r.count}
-          </span>
-        </li>
-      ))}
+    <ul className="space-y-3">
+      {rows.map((r) => {
+        const w = Math.max(0, Math.min(100, r.avg))
+        const summit = w >= 100
+        return (
+          <li key={r.id} className="flex items-center gap-3">
+            <div className="flex w-20 shrink-0 items-center gap-1.5">
+              <span className={cx('h-2 w-2 rounded-full', r.dot)} />
+              <span className="truncate text-xs text-slate-600 dark:text-slate-300">{r.label}</span>
+            </div>
+            {/* 海拔軌：底軌 + 已攀升段 + 沿途攀升者點 */}
+            <div className="relative h-2.5 flex-1">
+              <span aria-hidden="true" className="absolute inset-0 rounded-full bg-slate-100 dark:bg-slate-700" />
+              <span
+                aria-hidden="true"
+                className={cx('absolute inset-y-0 left-0 rounded-full transition-all duration-500', summit ? 'bg-emerald-500' : 'bg-accent')}
+                style={{ width: `${w}%` }}
+              />
+              {w > 0 && w < 100 && (
+                <span
+                  aria-hidden="true"
+                  className="absolute top-1/2 h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-accent ring-2 ring-white dark:ring-slate-800"
+                  style={{ left: `${w}%` }}
+                />
+              )}
+              {/* 終點山頂旗 */}
+              <span
+                aria-hidden="true"
+                className={cx(
+                  'absolute right-0 top-1/2 flex h-4 w-4 -translate-y-1/2 translate-x-1.5 items-center justify-center rounded-full ring-2 transition-colors',
+                  summit ? 'bg-emerald-500 text-white ring-white dark:ring-slate-800' : 'bg-white text-slate-300 ring-slate-200 dark:bg-slate-800 dark:text-slate-500 dark:ring-slate-600',
+                )}
+              >
+                <Flag size={9} className={summit ? 'fill-current' : ''} />
+              </span>
+            </div>
+            <span className="flex w-16 shrink-0 items-baseline justify-end gap-1 text-right tabular-nums">
+              <span className={cx('font-serif text-sm font-semibold', summit ? 'text-emerald-500' : 'text-slate-700 dark:text-slate-200')}>{r.avg}%</span>
+              <span className="text-[11px] text-slate-400">·{r.count}</span>
+            </span>
+          </li>
+        )
+      })}
     </ul>
+  )
+}
+
+// ───────── ⑤ 海拔儀錶（Hero 用，鋪喺 accent 漸變底 → 純白色系）─────────
+// 半圓「攀升軌跡」：底軌虛、已攀升段實白、山頂位放面旗。中央 serif 大海拔數字。
+export function AscentMeter({ value }: { value: number }) {
+  const v = Math.max(0, Math.min(100, Math.round(value)))
+  const size = 132
+  const stroke = 9
+  const r = (size - stroke) / 2 - 2
+  const cx0 = size / 2
+  const cy0 = size / 2
+  // 半圓：180°(左) → 0°(右)，掃過頂部。用 path 描下半圈軌跡。
+  const semi = Math.PI * r // 半圓弧長
+  const off = semi - (v / 100) * semi
+  // 山頂旗位置（沿半圓，由左 180° 行到右 0°）
+  const ang = Math.PI - (v / 100) * Math.PI
+  const fx = cx0 + r * Math.cos(ang)
+  const fy = cy0 - r * Math.sin(ang)
+  return (
+    <div className="relative shrink-0" style={{ width: size, height: size / 2 + 28 }}>
+      <svg width={size} height={size / 2 + 8} viewBox={`0 0 ${size} ${size / 2 + 8}`} aria-hidden="true" className="overflow-visible">
+        {/* 底軌（虛白，代表整段山路）*/}
+        <path
+          d={`M ${cx0 - r} ${cy0} A ${r} ${r} 0 0 1 ${cx0 + r} ${cy0}`}
+          fill="none"
+          stroke="white"
+          strokeOpacity="0.25"
+          strokeWidth={stroke}
+          strokeLinecap="round"
+          strokeDasharray="2 7"
+        />
+        {/* 已攀升段（實白）*/}
+        <path
+          d={`M ${cx0 - r} ${cy0} A ${r} ${r} 0 0 1 ${cx0 + r} ${cy0}`}
+          fill="none"
+          stroke="white"
+          strokeWidth={stroke}
+          strokeLinecap="round"
+          strokeDasharray={semi}
+          strokeDashoffset={off}
+          className="transition-all duration-700 ease-out"
+        />
+        {/* 攀升者位置點 */}
+        {v > 0 && v < 100 && (
+          <circle cx={fx} cy={fy} r={4} fill="white" className="drop-shadow" />
+        )}
+      </svg>
+      {/* 山頂旗（去到 100% 先點亮）*/}
+      <span
+        className={cx(
+          'absolute right-1 top-0 flex h-6 w-6 items-center justify-center rounded-full transition-colors',
+          v >= 100 ? 'bg-white text-accent-strong' : 'bg-white/20 text-white/70',
+        )}
+      >
+        <Flag size={13} className={v >= 100 ? 'fill-current' : ''} />
+      </span>
+      {/* 中央：serif 大海拔數字 */}
+      <div className="absolute inset-x-0 bottom-0 flex flex-col items-center">
+        <span className="font-serif text-3xl font-semibold leading-none tabular-nums text-white">
+          {v}<span className="ml-0.5 align-top font-sans text-base font-medium text-white/70">%</span>
+        </span>
+        <span className="mt-1 text-[10px] font-medium uppercase tracking-[0.2em] text-white/65">平均海拔</span>
+      </div>
+    </div>
   )
 }

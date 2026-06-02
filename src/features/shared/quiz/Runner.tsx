@@ -333,27 +333,44 @@ export function QuizRunner({
 
   const shortCorrect = current.kind === 'short' && shortMatches(shortVal, current.explanation)
 
+  const modeTag = isTimed ? '搶分' : settings.mode === 'practice' ? '練習' : '測驗'
+
   return (
     <div className="animate-fade-in mx-auto max-w-2xl space-y-4">
-      {/* 頂部列 */}
+      {/* ── 競賽計分板：結束 / 大題號（舞台焦點）/ 即時分數 / 導航 ── */}
       <div className="flex items-center justify-between gap-2">
         <Button variant="ghost" size="sm" icon={ArrowLeft} onClick={abort}>
           結束
         </Button>
-        <div className="flex items-center gap-2">
-          {isTimed && (
-            <Badge tone="accent" icon={Trophy} className="tabular-nums" aria-live="polite">
-              {earned} 分
-            </Badge>
-          )}
+
+        {/* 大題號（serif 巨字 + 模式徽，做中央焦點） */}
+        <div className="flex flex-1 items-baseline justify-center gap-2">
+          <Badge tone={isTimed ? 'amber' : 'accent'} icon={isTimed ? Zap : undefined}>
+            {modeTag}
+          </Badge>
           <span
-            className="text-sm font-semibold tabular-nums text-slate-700 dark:text-slate-200"
+            className="leading-none"
             aria-live="polite"
             aria-label={`第 ${currentIdx + 1} 題，共 ${total} 題`}
           >
-            {currentIdx + 1}
-            <span className="text-xs font-medium text-slate-400 dark:text-slate-500"> / {total}</span>
+            <span className="font-serif text-2xl font-bold tabular-nums text-slate-800 dark:text-slate-100">
+              {currentIdx + 1}
+            </span>
+            <span className="text-sm font-medium text-slate-400 dark:text-slate-500"> / {total}</span>
           </span>
+        </div>
+
+        <div className="flex items-center gap-1.5">
+          {isTimed && (
+            <span
+              className="inline-flex items-center gap-1 rounded-full bg-accent px-2.5 py-1 text-xs font-bold tabular-nums text-white shadow-sm dark:shadow-none"
+              aria-live="polite"
+              aria-label={`目前得分 ${earned} 分`}
+            >
+              <Trophy size={12} />
+              {earned}
+            </span>
+          )}
           <Button
             variant="ghost"
             size="sm"
@@ -368,13 +385,52 @@ export function QuizRunner({
         </div>
       </div>
 
-      {/* 柔和進度：已答 / 總數（細身、accent 填充） */}
-      <div className="flex items-center gap-3">
-        <ProgressBar value={(answeredCount / total) * 100} size="sm" className="flex-1" />
-        <span className="shrink-0 text-[11px] font-medium tabular-nums text-slate-400 dark:text-slate-500">
-          已答 {answeredCount}/{total}
-        </span>
-      </div>
+      {/* 賽道進度：逐題作答 pip（current ＝ accent + 環，done ＝ 淡 accent，未答 ＝ 灰）；
+          題多（>24）退回幼條進度，免手機擠迫 */}
+      {total <= 24 ? (
+        <div className="flex items-center gap-3">
+          <div
+            className="flex flex-1 items-center gap-1"
+            role="progressbar"
+            aria-valuemin={0}
+            aria-valuemax={total}
+            aria-valuenow={answeredCount}
+            aria-label={`已答 ${answeredCount} / ${total} 題`}
+          >
+            {quizItems.map((q, i) => {
+              const done =
+                q.kind === 'mc'
+                  ? answers[q.questionId] !== undefined && answers[q.questionId] !== null
+                  : revealed[q.questionId]
+              const isCur = i === currentIdx
+              return (
+                <span
+                  key={q.questionId}
+                  aria-hidden="true"
+                  className={cx(
+                    'h-1.5 flex-1 rounded-full transition-all duration-300',
+                    isCur
+                      ? 'bg-accent ring-2 ring-accent/30'
+                      : done
+                        ? 'bg-accent/60'
+                        : 'bg-slate-200 dark:bg-slate-700',
+                  )}
+                />
+              )
+            })}
+          </div>
+          <span className="shrink-0 text-[11px] font-medium tabular-nums text-slate-400 dark:text-slate-500">
+            已答 {answeredCount}/{total}
+          </span>
+        </div>
+      ) : (
+        <div className="flex items-center gap-3">
+          <ProgressBar value={(answeredCount / total) * 100} size="sm" className="flex-1" />
+          <span className="shrink-0 text-[11px] font-medium tabular-nums text-slate-400 dark:text-slate-500">
+            已答 {answeredCount}/{total}
+          </span>
+        </div>
+      )}
 
       {/* 題目導航格（Kahoot / 試卷風） */}
       {showNav && (
@@ -415,39 +471,56 @@ export function QuizRunner({
         </Card>
       )}
 
-      {/* 題目卡 */}
-      <Card key={current.questionId} className="animate-fade-in space-y-5 p-5 sm:p-6">
-        <div className="flex flex-wrap items-center gap-1.5">
-          <Badge tone="accent">{topicName(current.topicId)}</Badge>
-          <Badge tone={DIFF_TONE[current.difficulty]}>{DIFF_LABEL[current.difficulty]}</Badge>
-          <Badge tone={current.kind === 'mc' ? 'blue' : 'slate'}>
-            {current.kind === 'mc' ? '選擇題' : '短答題'}
-          </Badge>
-          <div className="ml-auto flex items-center gap-1.5">
-            {isTimed && !isAnswered && (
-              <CountdownRing remaining={remaining} total={settings.timeLimit} />
-            )}
-            <button
-              type="button"
-              onClick={toggleFlag}
-              className={cx(
-                'rounded-lg p-1.5 transition',
-                flags[current.questionId]
-                  ? 'bg-amber-50 text-amber-500 dark:bg-amber-500/10'
-                  : 'text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-700',
-              )}
-              aria-label="標記呢題"
-              aria-pressed={!!flags[current.questionId]}
-              title="標記（F）"
-            >
-              <Flag size={16} className={cx(flags[current.questionId] && 'fill-current')} />
-            </button>
-          </div>
-        </div>
+      {/* 題目卡（賽台卡：頂部 accent 細線 + 角落大題號水印，逐題重新入場） */}
+      <Card
+        key={current.questionId}
+        className="animate-fade-in-up relative overflow-hidden p-5 sm:p-6"
+      >
+        {/* 頂部 accent 細線（舞台燈條） */}
+        <span
+          aria-hidden="true"
+          className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-accent/70 via-accent to-accent/70"
+        />
+        {/* 角落大題號（serif 水印，純裝飾） */}
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute -right-2 -top-3 select-none font-serif text-7xl font-black leading-none text-slate-100/90 dark:text-slate-700/40"
+        >
+          {currentIdx + 1}
+        </span>
 
-        <p className="text-lg font-medium leading-relaxed text-slate-800 dark:text-slate-100 break-words [overflow-wrap:anywhere]">
-          {current.stem}
-        </p>
+        <div className="relative space-y-5">
+          <div className="flex flex-wrap items-center gap-1.5">
+            <Badge tone="accent">{topicName(current.topicId)}</Badge>
+            <Badge tone={DIFF_TONE[current.difficulty]}>{DIFF_LABEL[current.difficulty]}</Badge>
+            <Badge tone={current.kind === 'mc' ? 'blue' : 'slate'}>
+              {current.kind === 'mc' ? '選擇題' : '短答題'}
+            </Badge>
+            <div className="ml-auto flex items-center gap-1.5">
+              {isTimed && !isAnswered && (
+                <CountdownRing remaining={remaining} total={settings.timeLimit} />
+              )}
+              <button
+                type="button"
+                onClick={toggleFlag}
+                className={cx(
+                  'rounded-lg p-1.5 transition',
+                  flags[current.questionId]
+                    ? 'bg-amber-50 text-amber-500 dark:bg-amber-500/10'
+                    : 'text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-700',
+                )}
+                aria-label="標記呢題"
+                aria-pressed={!!flags[current.questionId]}
+                title="標記（F）"
+              >
+                <Flag size={16} className={cx(flags[current.questionId] && 'fill-current')} />
+              </button>
+            </div>
+          </div>
+
+          <p className="text-xl font-semibold leading-relaxed text-slate-800 dark:text-slate-100 break-words [overflow-wrap:anywhere]">
+            {current.stem}
+          </p>
 
         {/* MC：選項 */}
         {current.kind === 'mc' ? (
@@ -515,19 +588,28 @@ export function QuizRunner({
           </div>
         )}
 
-        {/* timed：呢題得分回饋 */}
-        {isTimed && isAnswered && (
-          <div
-            aria-live="polite"
-            className="flex items-center gap-1.5 border-t border-slate-100 pt-3 text-sm dark:border-slate-700"
-          >
-            <Zap size={15} className="text-accent" />
-            <span className="text-slate-600 dark:text-slate-300">本題得分</span>
-            <span className="ml-auto text-lg font-bold tabular-nums text-accent-strong dark:text-accent">
-              +{points[current.questionId] ?? 0}
-            </span>
-          </div>
-        )}
+          {/* timed：呢題得分回饋（答中 ＝ accent 喜悅帶，答唔中 ＝ 收斂灰帶） */}
+          {isTimed && isAnswered && (
+            <div
+              aria-live="polite"
+              className={cx(
+                'flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm',
+                (points[current.questionId] ?? 0) > 0
+                  ? 'bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent'
+                  : 'bg-slate-50 text-slate-500 dark:bg-slate-800/60 dark:text-slate-400',
+              )}
+            >
+              <Zap
+                size={15}
+                className={(points[current.questionId] ?? 0) > 0 ? '' : 'text-slate-400'}
+              />
+              <span>{(points[current.questionId] ?? 0) > 0 ? '答中，速度加成！' : '本題得分'}</span>
+              <span className="ml-auto text-lg font-bold tabular-nums">
+                +{points[current.questionId] ?? 0}
+              </span>
+            </div>
+          )}
+        </div>
       </Card>
 
       {/* 底部導航 */}

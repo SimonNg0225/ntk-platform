@@ -12,7 +12,6 @@ import {
   Badge,
   EmptyState,
   ProgressBar,
-  StatCard,
   Modal,
   IconButton,
   Menu,
@@ -192,17 +191,67 @@ function DeckHome({
   }
 
   return (
-    <div className="space-y-4">
-      {/* 總覽 */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <StatCard label="牌組" value={decks.length} unit="組" icon={BookMarked} />
-        <StatCard label="今日到期" value={totalDue} unit="張" icon={Flame} highlight />
-        <StatCard label="今日已複習" value={reviewedToday} unit="次" icon={Zap} />
-        <StatCard label="總卡數" value={cards.length} unit="張" icon={FolderOpen} />
-      </div>
+    <div className="space-y-5">
+      {/* ───────── 卡盒封面：今日複習做主角（serif 大數字 + 細口統計帶） ───────── */}
+      <header className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-xs dark:border-slate-700/60 dark:bg-slate-800 dark:shadow-none">
+        {/* 索引卡紅margin線 */}
+        <div className="h-1 w-full bg-gradient-to-r from-rose-300/80 via-rose-400/70 to-rose-300/40 dark:from-rose-500/40 dark:via-rose-500/50 dark:to-rose-500/20" />
+        <div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-3 px-5 pb-4 pt-4 sm:px-6">
+          <div className="min-w-0">
+            <p className="text-[11px] font-medium uppercase tracking-[0.3em] text-accent/70">
+              今日複習
+            </p>
+            <p className="mt-1.5 flex items-baseline gap-2">
+              <span className="font-serif text-[40px] font-semibold leading-none tabular-nums slashed-zero text-slate-800 dark:text-slate-100 sm:text-[44px]">
+                {totalDue}
+              </span>
+              <span className="text-sm font-normal text-slate-400 dark:text-slate-500">
+                張卡到期
+              </span>
+            </p>
+            <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">
+              {totalDue > 0
+                ? '揀一疊，逐張翻開，溫故知新。'
+                : reviewedToday > 0
+                  ? '今日已清晒到期卡，做得好 ✨'
+                  : '暫時無到期卡，可以衝刺或者開新牌組。'}
+            </p>
+          </div>
+          <span
+            aria-hidden="true"
+            className="hidden h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent sm:flex"
+          >
+            <Layers size={26} strokeWidth={1.75} />
+          </span>
+        </div>
+        {/* 細口統計帶（hairline grid） */}
+        <div className="grid grid-cols-3 gap-px border-t border-slate-200/70 bg-slate-200/60 dark:border-slate-700/60 dark:bg-slate-700/40">
+          {[
+            { label: '牌組', value: decks.length, unit: '組', icon: BookMarked },
+            { label: '今日已複習', value: reviewedToday, unit: '次', icon: Zap },
+            { label: '總卡數', value: cards.length, unit: '張', icon: FolderOpen },
+          ].map((s) => {
+            const I = s.icon
+            return (
+              <div key={s.label} className="bg-white px-4 py-3 dark:bg-slate-800">
+                <p className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                  <I size={12} />
+                  {s.label}
+                </p>
+                <p className="mt-1 font-serif text-xl font-semibold leading-none tabular-nums slashed-zero text-slate-800 dark:text-slate-100">
+                  {s.value}
+                  <span className="ml-1 font-sans text-xs font-normal text-slate-400">
+                    {s.unit}
+                  </span>
+                </p>
+              </div>
+            )
+          })}
+        </div>
+      </header>
 
       {/* 新增 + 匯入匯出 */}
-      <div className="rounded-2xl border border-slate-200/80 bg-slate-50/60 p-3 dark:border-slate-700/60 dark:bg-slate-800/40">
+      <div className="rounded-2xl border border-dashed border-slate-300/80 bg-slate-50/60 p-3 dark:border-slate-700/70 dark:bg-slate-800/40">
         <div className="flex flex-wrap items-center gap-2">
           <Input
             value={name}
@@ -221,7 +270,7 @@ function DeckHome({
       </div>
 
       {/* 牌組卡 */}
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className="grid gap-4 sm:grid-cols-2">
         {decks.map((d) => {
           const deckCards = cardsByDeck.get(d.id) ?? []
           const active = deckCards.filter((c) => !metaById.get(c.id)?.suspended)
@@ -232,122 +281,156 @@ function DeckHome({
             deckCards.length > 0 ? (matureCount / deckCards.length) * 100 : 0
           const pref = prefOf(prefs, d.id)
           const newToday = Math.min(newCount, pref.newPerDay)
+          // 卡疊厚度：卡越多，背後紙邊越多（最多 2 層），呈現實體牌組層次
+          const stackDepth = deckCards.length >= 12 ? 2 : deckCards.length >= 3 ? 1 : 0
 
           return (
-            <div
-              key={d.id}
-              className="group flex flex-col rounded-3xl border border-slate-200/80 bg-white p-4 shadow-xs transition duration-200 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md dark:border-slate-700/60 dark:bg-slate-800 dark:shadow-none dark:hover:border-slate-600"
-            >
-              <div className="flex items-start justify-between gap-2">
-                <button
-                  onClick={() => onOpen(d.id)}
-                  className="flex min-w-0 flex-1 items-center gap-3 text-left"
-                >
-                  <span
-                    className={cx(
-                      'flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl transition group-hover:scale-105',
-                      due > 0
-                        ? 'bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent'
-                        : 'bg-slate-100 text-slate-400 dark:bg-slate-700/60 dark:text-slate-400',
-                    )}
-                  >
-                    <Layers size={20} />
-                  </span>
-                  <span className="min-w-0">
-                    <p className="truncate text-base font-semibold text-slate-800 group-hover:text-accent dark:text-slate-100">
-                      {d.name}
-                    </p>
-                    <p className="text-xs text-slate-400 dark:text-slate-500">
-                      <span className="tabular-nums">{deckCards.length}</span> 張卡
-                    </p>
-                  </span>
-                </button>
-                <Menu
-                  align="end"
-                  trigger={
-                    <span className="rounded-lg p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-500 dark:hover:bg-slate-700">
-                      <MoreVertical size={16} />
-                      <span className="sr-only">{d.name} 更多操作</span>
-                    </span>
-                  }
-                  items={[
-                    { id: 'manage', label: '管理卡片', icon: Pencil, onSelect: () => onOpen(d.id) },
-                    {
-                      id: 'cram',
-                      label: '衝刺（全部卡）',
-                      icon: Zap,
-                      onSelect: () => onReview(d.id, 'cram'),
-                      disabled: deckCards.length === 0,
-                    },
-                    {
-                      id: 'del',
-                      label: '刪除牌組',
-                      icon: Trash2,
-                      tone: 'danger',
-                      onSelect: async () => {
-                        if (
-                          !(await confirm({
-                            title: '刪除牌組？',
-                            message: `「${d.name}」連同 ${deckCards.length} 張卡會一併刪除，無法復原。`,
-                            confirmText: '刪除',
-                            tone: 'danger',
-                          }))
-                        )
-                          return
-                        decksCol.remove(d.id)
-                        deckCards.forEach((c) => {
-                          cardsCol.remove(c.id)
-                          cardMetaCol.remove(c.id)
-                        })
-                        deckPrefCol.remove(d.id)
-                        toast.success('已刪除牌組')
-                      },
-                    },
-                  ]}
+            <div key={d.id} className="group relative">
+              {/* 背後紙疊邊（實體層次；DOM 在主卡之前 → 主卡自然蓋過，唔使 z-index） */}
+              {stackDepth >= 2 && (
+                <div
+                  aria-hidden="true"
+                  className="absolute inset-x-2.5 -bottom-2 top-2 rounded-3xl border border-slate-200/70 bg-white dark:border-slate-700/50 dark:bg-slate-800/80"
                 />
-              </div>
-
-              {/* 狀態小計 */}
-              {(due > 0 || newToday > 0) && (
-                <div className="mt-2.5 flex flex-wrap items-center gap-1.5 text-xs">
-                  {due > 0 && (
-                    <Badge tone="accent" dot>
-                      到期 {due}
-                    </Badge>
-                  )}
-                  {newToday > 0 && (
-                    <Badge tone="blue" dot>
-                      新卡 {newToday}
-                    </Badge>
-                  )}
-                </div>
+              )}
+              {stackDepth >= 1 && (
+                <div
+                  aria-hidden="true"
+                  className="absolute inset-x-1.5 -bottom-1 top-1 rounded-3xl border border-slate-200/80 bg-white dark:border-slate-700/60 dark:bg-slate-800/90"
+                />
               )}
 
-              {/* 熟悉度進度 */}
-              <div className="mt-3 flex-1">
-                <div className="mb-1 flex items-center justify-between text-[11px] text-slate-400 dark:text-slate-500">
-                  <span>熟悉度</span>
-                  <span className="tabular-nums">{Math.round(matPct)}%</span>
-                </div>
-                <ProgressBar value={matPct} tone="green" size="sm" />
-              </div>
+              <div
+                className={cx(
+                  'relative flex flex-col overflow-hidden rounded-3xl border bg-white shadow-xs transition duration-200 hover:-translate-y-0.5 hover:shadow-md dark:bg-slate-800 dark:shadow-none',
+                  due > 0
+                    ? 'border-accent/30 hover:border-accent/50 dark:border-accent/30 dark:hover:border-accent/50'
+                    : 'border-slate-200/80 hover:border-slate-300 dark:border-slate-700/60 dark:hover:border-slate-600',
+                )}
+              >
+                {/* 索引卡紅margin線（到期＝accent 醒目，否則淡rose） */}
+                <span
+                  aria-hidden="true"
+                  className={cx(
+                    'h-1 w-full',
+                    due > 0
+                      ? 'bg-accent'
+                      : 'bg-rose-200/70 dark:bg-rose-500/25',
+                  )}
+                />
+                <div className="flex flex-col p-4">
+                  <div className="flex items-start justify-between gap-2">
+                    <button
+                      onClick={() => onOpen(d.id)}
+                      className="flex min-w-0 flex-1 items-center gap-3 text-left"
+                    >
+                      <span
+                        className={cx(
+                          'flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl transition group-hover:scale-105',
+                          due > 0
+                            ? 'bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent'
+                            : 'bg-slate-100 text-slate-400 dark:bg-slate-700/60 dark:text-slate-400',
+                        )}
+                      >
+                        <Layers size={20} />
+                      </span>
+                      <span className="min-w-0">
+                        <p className="truncate text-base font-semibold text-slate-800 group-hover:text-accent dark:text-slate-100">
+                          {d.name}
+                        </p>
+                        <p className="text-xs text-slate-400 dark:text-slate-500">
+                          <span className="tabular-nums">{deckCards.length}</span> 張卡
+                        </p>
+                      </span>
+                    </button>
+                    <Menu
+                      align="end"
+                      trigger={
+                        <span className="rounded-lg p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-500 dark:hover:bg-slate-700">
+                          <MoreVertical size={16} />
+                          <span className="sr-only">{d.name} 更多操作</span>
+                        </span>
+                      }
+                      items={[
+                        { id: 'manage', label: '管理卡片', icon: Pencil, onSelect: () => onOpen(d.id) },
+                        {
+                          id: 'cram',
+                          label: '衝刺（全部卡）',
+                          icon: Zap,
+                          onSelect: () => onReview(d.id, 'cram'),
+                          disabled: deckCards.length === 0,
+                        },
+                        {
+                          id: 'del',
+                          label: '刪除牌組',
+                          icon: Trash2,
+                          tone: 'danger',
+                          onSelect: async () => {
+                            if (
+                              !(await confirm({
+                                title: '刪除牌組？',
+                                message: `「${d.name}」連同 ${deckCards.length} 張卡會一併刪除，無法復原。`,
+                                confirmText: '刪除',
+                                tone: 'danger',
+                              }))
+                            )
+                              return
+                            decksCol.remove(d.id)
+                            deckCards.forEach((c) => {
+                              cardsCol.remove(c.id)
+                              cardMetaCol.remove(c.id)
+                            })
+                            deckPrefCol.remove(d.id)
+                            toast.success('已刪除牌組')
+                          },
+                        },
+                      ]}
+                    />
+                  </div>
 
-              {/* 操作 */}
-              <div className="mt-3 flex gap-2">
-                <Button
-                  onClick={() =>
-                    due > 0 ? onReview(d.id, 'srs') : setStudyFor(d.id)
-                  }
-                  disabled={deckCards.length === 0}
-                  size="sm"
-                  icon={Play}
-                  className="flex-1"
-                >
-                  {due > 0 ? `複習 (${due})` : '開始學習'}
-                </Button>
-                <Button variant="secondary" size="sm" icon={Layers} onClick={() => setStudyFor(d.id)}>
-                  模式
-                </Button>
+                  {/* 狀態小計 */}
+                  {(due > 0 || newToday > 0) && (
+                    <div className="mt-2.5 flex flex-wrap items-center gap-1.5 text-xs">
+                      {due > 0 && (
+                        <Badge tone="accent" dot>
+                          到期 {due}
+                        </Badge>
+                      )}
+                      {newToday > 0 && (
+                        <Badge tone="blue" dot>
+                          新卡 {newToday}
+                        </Badge>
+                      )}
+                    </div>
+                  )}
+
+                  {/* 熟悉度進度 */}
+                  <div className="mt-3 flex-1">
+                    <div className="mb-1 flex items-center justify-between text-[11px] text-slate-400 dark:text-slate-500">
+                      <span>熟悉度</span>
+                      <span className="tabular-nums">{Math.round(matPct)}%</span>
+                    </div>
+                    <ProgressBar value={matPct} tone="green" size="sm" />
+                  </div>
+
+                  {/* 操作 */}
+                  <div className="mt-4 flex gap-2">
+                    <Button
+                      onClick={() =>
+                        due > 0 ? onReview(d.id, 'srs') : setStudyFor(d.id)
+                      }
+                      disabled={deckCards.length === 0}
+                      size="sm"
+                      icon={Play}
+                      className="flex-1"
+                    >
+                      {due > 0 ? `複習 (${due})` : '開始學習'}
+                    </Button>
+                    <Button variant="secondary" size="sm" icon={Layers} onClick={() => setStudyFor(d.id)}>
+                      模式
+                    </Button>
+                  </div>
+                </div>
               </div>
             </div>
           )
@@ -409,7 +492,9 @@ function StudyModeModal({
     title: string
     desc: string
     count?: number
+    unit?: string
     disabled?: boolean
+    recommended?: boolean
   }[] = [
     {
       mode: 'srs',
@@ -417,6 +502,8 @@ function StudyModeModal({
       title: '間隔重複',
       desc: '標準複習，會更新排程',
       count: due,
+      unit: '張到期',
+      recommended: due > 0,
     },
     {
       mode: 'typed',
@@ -424,6 +511,7 @@ function StudyModeModal({
       title: '打字作答',
       desc: '打出答案，自動對比',
       count: due,
+      unit: '張到期',
     },
     {
       mode: 'cram',
@@ -431,6 +519,7 @@ function StudyModeModal({
       title: '衝刺',
       desc: '全部卡，唔影響排程',
       count: cards.length,
+      unit: '張全部',
     },
     {
       mode: 'starred',
@@ -438,32 +527,47 @@ function StudyModeModal({
       title: '只溫已標記',
       desc: '集中攻克紅旗卡',
       count: flagged,
+      unit: '張紅旗',
       disabled: flagged === 0,
     },
   ]
 
   return (
     <Modal open onClose={onClose} title="揀練習模式" size="sm">
+      <p className="-mt-1 mb-3 text-xs text-slate-500 dark:text-slate-400">
+        想點樣翻呢疊卡？揀一個模式就開始。
+      </p>
       <div className="grid gap-2">
         {modes.map((m) => (
           <button
             key={m.mode}
             disabled={m.disabled}
             onClick={() => onPick(m.mode)}
-            className="flex items-center gap-3 rounded-xl border border-slate-200 p-3 text-left transition hover:border-accent hover:bg-accent-soft disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-700 dark:hover:bg-accent/10"
+            className={cx(
+              'group flex items-center gap-3 rounded-xl border p-3 text-left transition hover:-translate-y-0.5 hover:border-accent hover:shadow-sm disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-y-0 disabled:hover:shadow-none dark:hover:bg-accent/10',
+              m.recommended
+                ? 'border-accent/40 bg-accent-soft/50 dark:border-accent/40 dark:bg-accent/10'
+                : 'border-slate-200 dark:border-slate-700',
+            )}
           >
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent-soft text-accent-strong transition group-hover:scale-105 dark:bg-accent/15 dark:text-accent">
               <m.icon size={18} />
             </span>
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+              <p className="flex items-center gap-1.5 text-sm font-semibold text-slate-800 dark:text-slate-100">
                 {m.title}
+                {m.recommended && <Badge tone="accent">建議</Badge>}
               </p>
               <p className="text-xs text-slate-400 dark:text-slate-500">{m.desc}</p>
             </div>
             {typeof m.count === 'number' && (
-              <span className="shrink-0 text-sm font-semibold tabular-nums text-accent">
-                {m.count}
+              <span className="flex shrink-0 flex-col items-end leading-none">
+                <span className="text-base font-semibold tabular-nums text-accent">
+                  {m.count}
+                </span>
+                <span className="mt-0.5 text-[10px] text-slate-400 dark:text-slate-500">
+                  {m.unit}
+                </span>
               </span>
             )}
           </button>
@@ -537,8 +641,8 @@ function DeckDetail({
       </Button>
 
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="flex items-center gap-1.5">
-          <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">
+        <div className="flex min-w-0 items-center gap-1.5">
+          <h3 className="truncate font-serif text-2xl font-semibold tracking-tight text-slate-800 dark:text-slate-100">
             {deck?.name}
           </h3>
           <IconButton
@@ -574,39 +678,53 @@ function DeckDetail({
           </Button>
         </div>
       </div>
+      <p className="-mt-2 text-xs text-slate-400 dark:text-slate-500">
+        <span className="tabular-nums">{cards.length}</span> 張卡
+        {due > 0 && (
+          <>
+            {' · '}
+            <span className="font-medium text-accent-strong dark:text-accent">
+              {due} 張到期
+            </span>
+          </>
+        )}
+      </p>
 
-      {/* 新增卡（支援連續輸入） */}
-      <div className="space-y-2 rounded-2xl border border-accent/30 bg-accent-soft/40 p-4 dark:border-accent/40 dark:bg-accent/10">
-        <div className="flex items-center gap-1.5 text-xs font-medium text-accent-strong dark:text-accent">
-          <Plus size={14} /> 加新卡
-        </div>
-        <Input
-          id="card-front"
-          value={front}
-          onChange={(e) => setFront(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') document.getElementById('card-back')?.focus()
-          }}
-          placeholder="正面（問題）"
-        />
-        <Textarea
-          id="card-back"
-          value={back}
-          onChange={(e) => setBack(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) add()
-          }}
-          placeholder="背面（答案）"
-          rows={2}
-        />
-        <div className="flex items-center justify-between gap-2">
-          <span className="flex items-center gap-1 text-[11px] text-slate-400 dark:text-slate-500">
-            <Kbd>⌘</Kbd>
-            <Kbd>↵</Kbd> 快速加
-          </span>
-          <Button onClick={add} icon={Plus} size="sm">
-            加入卡片
-          </Button>
+      {/* 新增卡：一張等住寫嘅空白索引卡（支援連續輸入） */}
+      <div className="overflow-hidden rounded-2xl border border-accent/30 bg-white shadow-xs dark:border-accent/40 dark:bg-slate-800 dark:shadow-none">
+        <span aria-hidden="true" className="block h-1 w-full bg-rose-300/70 dark:bg-rose-500/30" />
+        <div className="space-y-2 bg-accent-soft/40 p-4 dark:bg-accent/10">
+          <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-accent-strong dark:text-accent">
+            <Plus size={14} /> 寫一張新卡
+          </div>
+          <Input
+            id="card-front"
+            value={front}
+            onChange={(e) => setFront(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') document.getElementById('card-back')?.focus()
+            }}
+            placeholder="正面（問題）"
+          />
+          <Textarea
+            id="card-back"
+            value={back}
+            onChange={(e) => setBack(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) add()
+            }}
+            placeholder="背面（答案）"
+            rows={2}
+          />
+          <div className="flex items-center justify-between gap-2">
+            <span className="flex items-center gap-1 text-[11px] text-slate-400 dark:text-slate-500">
+              <Kbd>⌘</Kbd>
+              <Kbd>↵</Kbd> 快速加
+            </span>
+            <Button onClick={add} icon={Plus} size="sm">
+              加入卡片
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -619,21 +737,46 @@ function DeckDetail({
           return (
             <li key={c.id} className="group">
               <UICard
+                hover
                 className={cx(
-                  'p-3',
+                  'overflow-hidden rounded-2xl p-0',
                   meta.suspended && 'opacity-60',
                 )}
               >
+                <div className="flex items-stretch">
+                  {/* 卡spine：跟狀態色，呈現卡片身份 */}
+                  <span
+                    aria-hidden="true"
+                    className={cx(
+                      'w-1 shrink-0',
+                      st === 'mature'
+                        ? 'bg-emerald-400 dark:bg-emerald-500/60'
+                        : st === 'young'
+                          ? 'bg-accent/70'
+                          : st === 'learning'
+                            ? 'bg-amber-400 dark:bg-amber-500/60'
+                            : st === 'suspended'
+                              ? 'bg-slate-300 dark:bg-slate-600'
+                              : 'bg-blue-400 dark:bg-blue-500/60',
+                    )}
+                  />
+                  <div className="min-w-0 flex-1 p-3">
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0 flex-1">
-                    <p className="break-words font-medium text-slate-800 dark:text-slate-100">
+                    <p className="flex items-start gap-1.5 break-words font-medium text-slate-800 dark:text-slate-100">
+                      <span className="mt-px shrink-0 text-[10px] font-bold uppercase tracking-wide text-slate-300 dark:text-slate-600">
+                        Q
+                      </span>
                       {c.front}
                     </p>
-                    <p className="mt-0.5 break-words text-sm text-slate-500 dark:text-slate-400">
+                    <p className="mt-1 flex items-start gap-1.5 break-words text-sm text-slate-500 dark:text-slate-400">
+                      <span className="mt-px shrink-0 text-[10px] font-bold uppercase tracking-wide text-slate-300 dark:text-slate-600">
+                        A
+                      </span>
                       {c.back}
                     </p>
                     {meta.tags.length > 0 && (
-                      <div className="mt-1.5 flex flex-wrap gap-1">
+                      <div className="mt-1.5 flex flex-wrap gap-1 pl-4">
                         {meta.tags.map((t) => (
                           <span
                             key={t}
@@ -677,7 +820,7 @@ function DeckDetail({
                     </IconButton>
                   </div>
                 </div>
-                <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                <div className="mt-2 flex flex-wrap items-center gap-1.5 pl-4">
                   <Badge tone={STATE_TONE[st]}>{STATE_LABEL[st]}</Badge>
                   {c.repetitions > 0 && st !== 'suspended' && (
                     <span className="text-[11px] tabular-nums text-slate-400 dark:text-slate-500">
@@ -688,6 +831,8 @@ function DeckDetail({
                     <Badge tone="rose">Leech · 答錯 {meta.lapses} 次</Badge>
                   )}
                 </div>
+                  </div>
+                </div>
               </UICard>
             </li>
           )
@@ -696,8 +841,8 @@ function DeckDetail({
           <li>
             <EmptyState
               icon={Sparkles}
-              title="呢個牌組仲未有卡"
-              hint="上面加你第一張卡，或者試下「AI 生成知識卡」幫你自動整一批。"
+              title="呢疊卡仲係空白"
+              hint="喺上面寫低正面同背面，撳「加入卡片」就有第一張。可以連續加，唔使逐張開。"
             />
           </li>
         )}

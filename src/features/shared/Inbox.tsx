@@ -27,6 +27,8 @@ import {
   ChevronDown,
   Clock,
   ArrowDownWideNarrow,
+  PenLine,
+  Sparkle,
 } from 'lucide-react'
 import { useCollection } from '../../lib/store'
 import {
@@ -49,7 +51,6 @@ import {
   Badge,
   EmptyState,
   SectionTitle,
-  StatCard,
   Tabs,
   Pills,
   Menu,
@@ -135,6 +136,18 @@ const KIND_CHIP: Record<InboxKind, string> = {
   question: 'bg-amber-50 text-amber-600 dark:bg-amber-500/15 dark:text-amber-300',
   countdown: 'bg-rose-50 text-rose-600 dark:bg-rose-500/15 dark:text-rose-300',
   reference: 'bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-300',
+}
+
+// 便條「色脊」：分類實色（便條紙物理邊／索引標籤感）。
+// 用喺擷取框左脊同每張便條卡左緣，令一堆卡有「已分類色標」嘅秩序而非均勻 grid。
+// ⚠️ 寫足整串 class（Tailwind 靠掃源碼字面值）。
+const CHIP_SPINE: Record<InboxKind, string> = {
+  task: 'bg-blue-400 dark:bg-blue-500/70',
+  note: 'bg-accent',
+  event: 'bg-emerald-400 dark:bg-emerald-500/70',
+  question: 'bg-amber-400 dark:bg-amber-500/70',
+  countdown: 'bg-rose-400 dark:bg-rose-500/70',
+  reference: 'bg-slate-300 dark:bg-slate-600',
 }
 
 export default function Inbox() {
@@ -518,20 +531,27 @@ export default function Inbox() {
   // ──────────────────────────────────────────────────────────
   return (
     <div className="mx-auto w-full max-w-3xl p-4 sm:p-6">
-      {/* 標題 */}
-      <header className="mb-4 flex items-start justify-between gap-3">
-        <div className="flex items-start gap-3">
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
-            <InboxIcon size={20} />
-          </span>
-          <div>
-            <h1 className="text-xl font-bold tracking-tight text-slate-800 dark:text-slate-100">
-              快速擷取
-            </h1>
-            <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
-              一秒掉低諗法，之後慢慢整理成待辦或筆記。
-            </p>
-          </div>
+      {/* 標題 — 便條桌面：serif 邀請語 + 待清數字 */}
+      <header className="mb-5 flex items-end justify-between gap-3">
+        <div className="min-w-0">
+          <p className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.28em] text-accent/70">
+            <InboxIcon size={12} strokeWidth={2.5} />
+            Inbox
+          </p>
+          <h1 className="mt-1.5 font-serif text-[26px] font-semibold leading-tight tracking-tight text-slate-800 dark:text-slate-100 sm:text-3xl">
+            掉低個諗法
+          </h1>
+          <p className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-sm text-slate-500 dark:text-slate-400">
+            <span>一秒記低，得閒先慢慢分類。</span>
+            {stats.inboxCount > 0 && (
+              <>
+                <span aria-hidden="true" className="text-slate-300 dark:text-slate-600">·</span>
+                <span className="tabular-nums">
+                  仲有 <span className="font-medium text-slate-600 dark:text-slate-300">{stats.inboxCount}</span> 件待清
+                </span>
+              </>
+            )}
+          </p>
         </div>
         <Tooltip label={showStats ? '收起統計' : '展開統計'}>
           <IconButton
@@ -544,18 +564,26 @@ export default function Inbox() {
         </Tooltip>
       </header>
 
-      {/* 擷取框 — 全頁主行動，溫暖、貼手、focus 有 accent 環 */}
+      {/* 擷取框 — 全頁主角「便條紙」：左側分類色脊 + serif 邀請、focus 有 accent 環 */}
       <div
         className={cx(
-          'group rounded-3xl border bg-white shadow-xs transition duration-200 dark:bg-slate-800 dark:shadow-none',
+          'group relative overflow-hidden rounded-[26px] border bg-white shadow-sm transition duration-200 dark:bg-slate-800 dark:shadow-none',
           text.trim()
-            ? 'border-accent/50 shadow-md ring-4 ring-accent/10'
+            ? 'border-accent/50 shadow-lg shadow-accent/10 ring-4 ring-accent/10'
             : 'border-slate-200/80 hover:border-slate-300 dark:border-slate-700/60 dark:hover:border-slate-600',
         )}
       >
-        <div className="flex items-start gap-3 p-4 sm:p-5">
-          <span className="mt-1 hidden h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-accent-soft text-accent-strong transition group-focus-within:scale-105 dark:bg-accent/15 dark:text-accent sm:flex">
-            <Sparkles size={16} />
+        {/* 便條左脊：未打字溫和 accent，打字時跟「睇似」分類色 */}
+        <span
+          aria-hidden="true"
+          className={cx(
+            'absolute inset-y-0 left-0 w-1.5 transition-colors duration-300',
+            livePreviewKind ? CHIP_SPINE[livePreviewKind] : 'bg-accent/30',
+          )}
+        />
+        <div className="flex items-start gap-3 py-4 pl-5 pr-4 sm:py-5 sm:pl-6 sm:pr-5">
+          <span className="mt-0.5 hidden h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-accent-soft text-accent-strong transition duration-200 group-focus-within:rotate-3 group-focus-within:scale-105 dark:bg-accent/15 dark:text-accent sm:flex">
+            <PenLine size={17} />
           </span>
           <div className="min-w-0 flex-1">
             <Textarea
@@ -570,12 +598,12 @@ export default function Inbox() {
                   capture()
                 }
               }}
-              placeholder="一秒掉低諗法…　例如「記得交 IES 初稿 #功課」"
-              className="min-h-0 resize-none border-0 bg-transparent px-0 text-[15px] leading-relaxed shadow-none placeholder:text-slate-400 focus:ring-0 dark:bg-transparent dark:placeholder:text-slate-500"
+              placeholder="諗到啲咩，就喺度寫低…　例如「記得交 IES 初稿 #功課」"
+              className="min-h-0 resize-none border-0 bg-transparent px-0 text-base leading-relaxed shadow-none placeholder:text-slate-400 focus:ring-0 dark:bg-transparent dark:placeholder:text-slate-500"
             />
           </div>
         </div>
-        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 px-4 py-2.5 dark:border-slate-700/60 sm:px-5">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-dashed border-slate-200/80 py-2.5 pl-5 pr-4 dark:border-slate-700/60 sm:pl-6 sm:pr-5">
           <div className="flex min-w-0 flex-wrap items-center gap-1.5">
             {livePreviewKind && (
               <Badge tone={KIND_TONE[livePreviewKind]} icon={KIND_ICON[livePreviewKind]}>
@@ -589,7 +617,7 @@ export default function Inbox() {
             ))}
             {!text.trim() && (
               <span className="text-xs text-slate-400 dark:text-slate-500">
-                加 <Kbd>#</Kbd> 標籤 · 按 <Kbd>c</Kbd> 快速擷取 · <Kbd>/</Kbd> 搜尋
+                加 <Kbd>#</Kbd> 標籤 · 按 <Kbd>c</Kbd> 落筆 · <Kbd>/</Kbd> 搜尋
               </span>
             )}
           </div>
@@ -601,7 +629,7 @@ export default function Inbox() {
             disabled={!text.trim()}
             className="shrink-0"
           >
-            擷取
+            掉低
           </Button>
         </div>
       </div>
@@ -648,13 +676,40 @@ export default function Inbox() {
         </div>
       )}
 
-      {/* 統計面板 */}
+      {/* 統計面板 — 細口 almanac 統計帶（hairline grid · serif 數字） */}
       {showStats && (
-        <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <StatCard label="待處理" value={stats.inboxCount} icon={InboxIcon} highlight />
-          <StatCard label="今日擷取" value={stats.todayCaptured} icon={Plus} />
-          <StatCard label="近 7 日" value={stats.weekCaptured} icon={BarChart3} />
-          <StatCard label="已歸檔" value={stats.archivedCount} icon={Archive} />
+        <div className="mt-4 grid grid-cols-2 gap-px overflow-hidden rounded-2xl bg-slate-200/70 ring-1 ring-slate-200/80 dark:bg-slate-700/50 dark:ring-slate-700/60 sm:grid-cols-4">
+          {[
+            { label: '待處理', icon: InboxIcon, value: stats.inboxCount, hint: stats.inboxCount > 0 ? '抽時間清吓佢' : '清空晒，舒服', hot: stats.inboxCount > 0 },
+            { label: '今日掉低', icon: Plus, value: stats.todayCaptured, hint: '今日記低嘅諗法', hot: false },
+            { label: '近 7 日', icon: BarChart3, value: stats.weekCaptured, hint: '一週擷取量', hot: false },
+            { label: '已歸檔', icon: Archive, value: stats.archivedCount, hint: '整理好嘅都喺度', hot: false },
+          ].map((s) => {
+            const I = s.icon
+            return (
+              <div
+                key={s.label}
+                className={cx(
+                  'px-4 py-3.5 transition-colors',
+                  s.hot ? 'bg-accent-soft dark:bg-accent/15' : 'bg-white dark:bg-slate-800',
+                )}
+              >
+                <p className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                  <I size={12} className={s.hot ? 'text-accent' : ''} />
+                  {s.label}
+                </p>
+                <p
+                  className={cx(
+                    'mt-1 font-serif text-[26px] font-semibold leading-none tabular-nums slashed-zero',
+                    s.hot ? 'text-accent-strong dark:text-accent' : 'text-slate-800 dark:text-slate-100',
+                  )}
+                >
+                  {s.value}
+                </p>
+                <p className="mt-1 truncate text-[11px] text-slate-400 dark:text-slate-500">{s.hint}</p>
+              </div>
+            )
+          })}
         </div>
       )}
       {showStats && (
@@ -870,25 +925,41 @@ export default function Inbox() {
       {visible.length === 0 ? (
         <div className="mt-4">
           {tab === 'inbox' && !search && kindFilter === 'all' && !tagFilter ? (
-            // 全新 / 已清空：友善大圖 + 例子 + 明確下一步
-            <div className="flex flex-col items-center rounded-3xl border border-dashed border-slate-200 bg-slate-50/60 px-6 py-12 text-center dark:border-slate-700 dark:bg-slate-800/40">
-              <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
-                <Sparkles size={30} strokeWidth={1.75} />
-              </span>
-              <p className="mt-4 text-base font-semibold text-slate-700 dark:text-slate-200">
-                一秒掉低諗法…
+            // 全新 / 已清空：層疊便條插圖 + serif 邀請 + 例子 + 明確下一步
+            <div className="flex flex-col items-center rounded-3xl border border-dashed border-slate-200 bg-slate-50/60 px-6 py-14 text-center dark:border-slate-700 dark:bg-slate-800/40">
+              {/* 層疊便條紙（純 div 砌；扇形微傾，輕鬆「乾淨桌面」感） */}
+              <div className="relative mb-6 h-16 w-16">
+                <span
+                  aria-hidden="true"
+                  className="absolute inset-0 -rotate-[10deg] rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800"
+                />
+                <span
+                  aria-hidden="true"
+                  className="absolute inset-0 rotate-[7deg] rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800"
+                />
+                <span className="absolute inset-0 flex items-center justify-center rounded-2xl bg-accent text-white shadow-md shadow-accent/25">
+                  <PenLine size={28} strokeWidth={1.75} />
+                </span>
+                <Sparkle
+                  size={16}
+                  className="absolute -right-2 -top-1 text-accent/60 dark:text-accent/70"
+                  fill="currentColor"
+                />
+              </div>
+              <p className="font-serif text-xl font-semibold text-slate-700 dark:text-slate-200">
+                張枱好乾淨
               </p>
-              <p className="mt-1.5 max-w-sm text-sm leading-relaxed text-slate-500 dark:text-slate-400">
-                諗到啲咩就即刻記低，唔使諗點分類。得閒先逐項轉做待辦、筆記或行事曆。
+              <p className="mt-2 max-w-sm text-sm leading-relaxed text-slate-500 dark:text-slate-400">
+                諗到啲咩就即刻記低，唔使諗點分類。得閒先逐張便條揀去做待辦、筆記定行事曆。
               </p>
-              <div className="mt-4 flex flex-wrap items-center justify-center gap-1.5">
-                <span className="text-xs text-slate-400 dark:text-slate-500">例如：</span>
+              <div className="mt-5 flex flex-wrap items-center justify-center gap-1.5">
+                <span className="text-xs text-slate-400 dark:text-slate-500">譬如：</span>
                 <Badge tone="blue" icon={KIND_ICON.task}>記得交 IES 初稿</Badge>
                 <Badge tone="rose" icon={KIND_ICON.countdown}>BAFS 卷一 5月8日</Badge>
                 <Badge tone="accent" icon={KIND_ICON.note}>一個 app 嘅靈感 #idea</Badge>
               </div>
               <Button
-                className="mt-5"
+                className="mt-6"
                 icon={Plus}
                 onClick={() => captureRef.current?.focus()}
               >
@@ -915,13 +986,13 @@ export default function Inbox() {
         <div ref={listRef} className="mt-3 space-y-4">
           {groups.map((g) => (
             <div key={g.key}>
-              <div className="mb-1.5 flex items-center gap-2">
-                <span className="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+              <div className="mb-2 flex items-baseline gap-3">
+                <span className="font-serif text-base font-semibold tracking-tight text-slate-600 dark:text-slate-300">
                   {g.label}
                 </span>
-                <span className="h-px flex-1 bg-slate-100 dark:bg-slate-800" />
-                <span className="text-xs tabular-nums text-slate-400 dark:text-slate-500">
-                  {g.rows.length}
+                <span className="h-px flex-1 bg-gradient-to-r from-slate-200 to-transparent dark:from-slate-700/70" />
+                <span className="font-serif text-xs italic tabular-nums text-slate-400 dark:text-slate-500">
+                  {g.rows.length} 件
                 </span>
               </div>
               <div className="space-y-2">
@@ -1029,17 +1100,28 @@ function InboxRowCard({
   const KindIcon = row.kind ? KIND_ICON[row.kind] : InboxIcon
   const aiKind = row.meta?.aiKind
   const showAi = !row.archived && row.guessed && aiKind && aiKind !== row.kind
+  const spineKind = row.kind ?? 'reference'
 
   return (
     <Card
       onClick={selectMode ? onToggleSelect : onFocus}
       className={cx(
-        'group cursor-pointer rounded-2xl p-3.5 transition duration-200 hover:border-slate-300 hover:shadow-md dark:hover:border-slate-600',
+        'group relative cursor-pointer overflow-hidden rounded-2xl py-3.5 pl-4 pr-3.5 transition duration-200 hover:border-slate-300 hover:shadow-md dark:hover:border-slate-600',
         focused && !selectMode && 'border-accent/40 ring-2 ring-accent/30',
         selected && 'border-accent ring-2 ring-accent',
         row.pinned && !focused && !selected && 'border-accent/30 dark:border-accent/30',
       )}
     >
+      {/* 便條左脊：已分類 → 實色索引邊；未分類（估）→ 柔和虛線，示意「仲未歸位」 */}
+      <span
+        aria-hidden="true"
+        className={cx(
+          'absolute inset-y-0 left-0 w-1 transition-colors duration-200',
+          row.guessed
+            ? 'bg-slate-200 dark:bg-slate-700'
+            : CHIP_SPINE[spineKind],
+        )}
+      />
       <div className="flex items-start gap-3">
         {/* 選擇框 / 分類圖示 chip */}
         {selectMode ? (
@@ -1056,10 +1138,10 @@ function InboxRowCard({
         ) : (
           <span
             className={cx(
-              'mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl transition duration-200 group-hover:scale-105',
+              'mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl transition duration-200 group-hover:-rotate-3 group-hover:scale-105',
               row.guessed
                 ? 'bg-slate-100 text-slate-400 dark:bg-slate-700/60 dark:text-slate-500'
-                : KIND_CHIP[row.kind ?? 'reference'],
+                : KIND_CHIP[spineKind],
             )}
           >
             <KindIcon size={16} />
@@ -1190,14 +1272,15 @@ function InboxRowCard({
         )}
       </div>
 
-      {/* 分類選擇器（focused 且待處理時展開，快速 triage） */}
+      {/* 分類選擇器（focused 且待處理時展開）— triage 核心：每類帶自己色，撳一下即歸位 */}
       {focused && !selectMode && !row.archived && (
         <div
-          className="mt-3 flex flex-wrap items-center gap-1.5 border-t border-slate-100 pt-3 dark:border-slate-700/60"
+          className="mt-3 flex flex-wrap items-center gap-1.5 border-t border-dashed border-slate-200/80 pt-3 dark:border-slate-700/60"
           onClick={(e) => e.stopPropagation()}
         >
-          <span className="mr-0.5 text-xs font-medium text-slate-400 dark:text-slate-500">
-            轉做：
+          <span className="mr-0.5 inline-flex items-center gap-1 text-xs font-medium text-slate-400 dark:text-slate-500">
+            <ArrowRight size={12} />
+            歸去：
           </span>
           {KINDS.map((k, i) => {
             const Icon = KIND_ICON[k.id]
@@ -1214,7 +1297,7 @@ function InboxRowCard({
                     'inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
                     on
                       ? 'bg-accent text-white shadow-sm'
-                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700',
+                      : cx(KIND_CHIP[k.id], 'hover:brightness-95 dark:hover:brightness-110'),
                   )}
                 >
                   <Icon size={13} />
@@ -1222,7 +1305,7 @@ function InboxRowCard({
                   <span
                     className={cx(
                       'ml-0.5 tabular-nums',
-                      on ? 'text-white/70' : 'text-slate-400',
+                      on ? 'text-white/70' : 'opacity-50',
                     )}
                   >
                     {i + 1}

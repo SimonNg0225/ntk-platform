@@ -320,27 +320,15 @@ export default function TimerView({
       p.long === settings.longBreakMin,
   )
 
-  return (
-    <div className="mx-auto max-w-md space-y-4">
-      {/* ── 計時主卡（沉穩 premium 焦點面）── */}
-      <section
-        className={cx(
-          'relative overflow-hidden rounded-3xl border bg-white px-5 pb-6 pt-5 shadow-xs transition-colors duration-500 dark:bg-slate-800',
-          running && phase === 'focus'
-            ? 'border-accent/30 dark:border-accent/30'
-            : 'border-slate-200/80 dark:border-slate-700/60',
-        )}
-      >
-        {/* 運行時的柔和光暈 */}
-        {running && (
-          <div
-            className="pointer-events-none absolute left-1/2 top-24 h-56 w-56 -translate-x-1/2 rounded-full opacity-30 blur-3xl transition-opacity duration-700"
-            style={{ backgroundColor: ringColor }}
-          />
-        )}
+  const phaseLong = phase === 'long_break'
+  const breakLabel = phaseLong ? '長休息' : '短休息'
 
-        {/* 階段切換（手動 focus / short / long） */}
-        <div className="relative flex justify-center gap-1 rounded-xl bg-slate-100 p-1 dark:bg-slate-900/50">
+  return (
+    <div className="mx-auto max-w-sm">
+      {/* ── 呼吸盤：單一焦點，大量留白，唔包卡邊 ── */}
+      <section className="relative flex flex-col items-center">
+        {/* 階段切換：低調三選一，似一條安靜的呼吸節律索引 */}
+        <div className="inline-flex items-center gap-1 rounded-full bg-slate-100/80 p-1 dark:bg-slate-800/70">
           {(['focus', 'short_break', 'long_break'] as Phase[]).map((k) => {
             const m = KIND_META[k]
             const on = phase === k
@@ -356,81 +344,107 @@ export default function TimerView({
                   setSecondsLeft(minutesFor(k) * 60)
                 }}
                 className={cx(
-                  'flex flex-1 items-center justify-center gap-1.5 rounded-lg px-2 py-1.5 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 disabled:cursor-not-allowed disabled:opacity-50',
+                  'inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[13px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 disabled:cursor-not-allowed disabled:opacity-60',
                   on
-                    ? 'bg-white text-slate-800 shadow-xs dark:bg-slate-700 dark:text-slate-100'
-                    : 'text-slate-500 hover:text-slate-700 dark:text-slate-400',
+                    ? 'bg-white text-slate-700 shadow-xs dark:bg-slate-700 dark:text-slate-100'
+                    : 'text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300',
                 )}
               >
-                <m.icon size={15} />
+                <m.icon size={14} className="shrink-0" />
                 {m.label}
               </button>
             )
           })}
         </div>
 
-        {/* 計時圈 */}
-        <div className="relative mx-auto mt-6 flex h-64 w-64 items-center justify-center">
+        {/* 呼吸盤本體：track + 進度環 + 隨運行緩緩呼吸嘅光暈 */}
+        <div className="relative mt-10 flex h-72 w-72 items-center justify-center sm:h-80 sm:w-80">
+          {/* 呼吸光暈：運行時慢脈動（prefers-reduced-motion 會自動停） */}
+          {running && (
+            <div
+              className="pointer-events-none absolute h-[78%] w-[78%] animate-pulse rounded-full opacity-25 blur-3xl [animation-duration:4s] motion-reduce:animate-none motion-reduce:opacity-20"
+              style={{ backgroundColor: ringColor }}
+            />
+          )}
+          {/* 內凹靜謐底盤 */}
+          <div className="absolute h-[82%] w-[82%] rounded-full bg-white shadow-[inset_0_1px_3px_rgba(15,23,42,0.05)] ring-1 ring-slate-100 dark:bg-slate-800/70 dark:shadow-none dark:ring-slate-700/50" />
+
           <svg className="absolute inset-0 -rotate-90" viewBox="0 0 100 100">
-            <circle cx="50" cy="50" r="45" fill="none" className="stroke-slate-100 dark:stroke-slate-700/70" strokeWidth="6" />
+            <circle
+              cx="50"
+              cy="50"
+              r="45"
+              fill="none"
+              className="stroke-slate-100 dark:stroke-slate-700/60"
+              strokeWidth="4"
+            />
             <circle
               cx="50"
               cy="50"
               r="45"
               fill="none"
               stroke={ringColor}
-              strokeWidth="6"
+              strokeWidth="4"
               strokeLinecap="round"
               strokeDasharray={2 * Math.PI * 45}
               strokeDashoffset={2 * Math.PI * 45 * (1 - pct / 100)}
               style={{ transition: 'stroke-dashoffset 1s linear' }}
             />
           </svg>
-          <div className="text-center">
-            <p className={cx('flex items-center justify-center gap-1.5 text-xs font-semibold uppercase tracking-wider', meta.tone)}>
-              <PhaseIcon size={13} />
+
+          <div className="relative flex flex-col items-center text-center">
+            <p className={cx('flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.22em]', meta.tone)}>
+              <PhaseIcon size={12} className="shrink-0" />
               {meta.label}
-              {running && <span className="ml-0.5 h-1.5 w-1.5 animate-pulse rounded-full bg-current" />}
+              {running && (
+                <span className="ml-0.5 h-1.5 w-1.5 animate-pulse rounded-full bg-current [animation-duration:2s]" />
+              )}
             </p>
             <p
               role="timer"
               aria-label={`${meta.label}剩餘 ${fmtClock(secondsLeft)}`}
-              className="mt-1.5 text-[3.75rem] font-bold leading-none tabular-nums slashed-zero text-slate-800 dark:text-slate-100"
+              className="mt-3 font-serif text-[4.25rem] font-semibold leading-none tracking-tight tabular-nums slashed-zero text-slate-800 dark:text-slate-50 sm:text-[4.75rem]"
             >
               {fmtClock(secondsLeft)}
             </p>
-            {phase === 'focus' && (
-              <p className="mt-2 text-xs tabular-nums text-slate-400">
-                第 {completedFocus + 1} 節 · 距長休息還有{' '}
-                {settings.longBreakEvery - (completedFocus % settings.longBreakEvery)} 節
-              </p>
-            )}
+            <p className="mt-3 h-4 text-[11px] tabular-nums text-slate-400 dark:text-slate-500">
+              {phase === 'focus'
+                ? `第 ${completedFocus + 1} 節 · 距長休息 ${settings.longBreakEvery - (completedFocus % settings.longBreakEvery)} 節`
+                : `${breakLabel} · 喘口氣再繼續`}
+            </p>
           </div>
         </div>
 
-        {/* 主控制 */}
-        <div className="relative mt-6 flex items-center justify-center gap-4">
+        {/* 主控制：一個明確 CTA，重設／跳過靜靜陪襯兩側 */}
+        <div className="mt-10 flex items-center justify-center gap-5">
           <Tooltip label="重設（R）">
             <IconButton label="重設" onClick={reset}>
-              <RotateCcw size={20} />
+              <RotateCcw size={19} />
             </IconButton>
           </Tooltip>
 
-          <Button size="lg" onClick={toggle} icon={running ? Pause : Play} className="min-w-[8.5rem] rounded-full shadow-md shadow-accent/25">
+          <Button
+            size="lg"
+            onClick={toggle}
+            icon={running ? Pause : Play}
+            className="min-w-[9rem] rounded-full px-7 py-3 text-base shadow-md shadow-accent/25"
+          >
             {running ? '暫停' : startRef.current !== null ? '繼續' : '開始'}
           </Button>
 
           <Tooltip label="跳過（S）">
             <IconButton label="跳過" onClick={() => finishPhase(false)}>
-              <SkipForward size={20} />
+              <SkipForward size={19} />
             </IconButton>
           </Tooltip>
         </div>
 
         {/* 預設長度（停止時可調，運行時隱藏以保持沉穩） */}
         {!running && (
-          <div className="relative mt-5 flex flex-wrap items-center justify-center gap-2">
-            <span className="text-[11px] font-medium uppercase tracking-wide text-slate-400 dark:text-slate-500">時長</span>
+          <div className="mt-7 flex flex-wrap items-center justify-center gap-2">
+            <span className="text-[11px] font-medium uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+              時長
+            </span>
             {PRESETS.map((p) => {
               const on = presetMatch?.id === p.id
               return (
@@ -441,10 +455,10 @@ export default function TimerView({
                   aria-label={`預設 ${p.focus} 分專注／${p.short} 分短休息／${p.long} 分長休息`}
                   onClick={() => applyPreset(p)}
                   className={cx(
-                    'rounded-full px-3 py-1 text-xs font-medium tabular-nums transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
+                    'rounded-full px-3 py-1 text-xs font-medium tabular-nums transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
                     on
                       ? 'bg-accent text-white shadow-sm dark:shadow-none'
-                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-700/60 dark:text-slate-300 dark:hover:bg-slate-600',
+                      : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200',
                   )}
                 >
                   {p.focus}/{p.short}
@@ -455,20 +469,23 @@ export default function TimerView({
         )}
       </section>
 
-      {/* 專注時：任務 + 專案 + 標籤（似溫和的「依家做緊咩」卡，唔似死表單） */}
+      {/* 專注時：「現在做緊」——一條安靜捕捉欄，唔似死表單 */}
       {phase === 'focus' && (
-        <div className="space-y-2.5 rounded-2xl border border-slate-200/80 bg-white p-3.5 dark:border-slate-700/60 dark:bg-slate-800">
+        <div className="mt-12 space-y-3">
+          <p className="text-center text-[11px] font-medium uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">
+            現在做緊
+          </p>
           <div className="flex gap-2">
             <Input
               value={label}
               onChange={(e) => setLabel(e.target.value)}
-              placeholder="而家專注緊咩？（選填）"
-              className="flex-1"
+              placeholder="想專注喺邊件事？（選填）"
+              className="flex-1 rounded-xl border-slate-200/80 bg-slate-50/60 text-center shadow-none focus:bg-white dark:border-slate-700/60 dark:bg-slate-800/50 dark:focus:bg-slate-800"
             />
             <Select
               value={projectId ?? ''}
               onChange={(e) => setProjectId(e.target.value || undefined)}
-              className="w-28 shrink-0"
+              className="w-28 shrink-0 rounded-xl border-slate-200/80 bg-slate-50/60 shadow-none dark:border-slate-700/60 dark:bg-slate-800/50"
               aria-label="專案"
             >
               <option value="">無專案</option>
@@ -482,49 +499,80 @@ export default function TimerView({
           </div>
 
           {/* 標籤 */}
-          <div className="flex flex-wrap items-center gap-1.5">
+          <div className="flex flex-wrap items-center justify-center gap-1.5">
             {tags.map((t) => (
               <button
                 key={t}
                 type="button"
                 aria-label={`移除標籤 #${t}`}
                 onClick={() => setTags(tags.filter((x) => x !== t))}
-                className="inline-flex items-center gap-1 rounded-md bg-accent-soft px-2 py-0.5 text-[11px] font-medium text-accent-strong transition hover:bg-accent/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:bg-accent/15 dark:text-accent"
+                className="inline-flex items-center gap-1 rounded-full bg-accent-soft px-2.5 py-0.5 text-[11px] font-medium text-accent-strong transition hover:bg-accent/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:bg-accent/15 dark:text-accent"
               >
                 #{t}
                 <span aria-hidden="true" className="text-accent/60">×</span>
               </button>
             ))}
-            <div className="relative">
-              <Input
-                value={tagDraft}
-                onChange={(e) => setTagDraft(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault()
-                    addTag()
-                  }
-                }}
-                icon={Hash}
-                placeholder="加標籤"
-                className="h-7 w-28 py-0 text-xs"
-              />
-            </div>
+            <Input
+              value={tagDraft}
+              onChange={(e) => setTagDraft(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault()
+                  addTag()
+                }
+              }}
+              icon={Hash}
+              placeholder="加標籤"
+              className="h-7 w-28 rounded-full border-transparent bg-transparent py-0 text-xs shadow-none hover:bg-slate-50 focus:border-slate-200 focus:bg-white dark:hover:bg-slate-800/60 dark:focus:border-slate-700 dark:focus:bg-slate-800"
+            />
           </div>
         </div>
       )}
 
-      {/* 專注時：分心打點 + 提示音切換 + 捷徑 */}
-      <div className="flex flex-wrap items-center justify-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+      {/* 今日目標進度條：一條纖細安靜嘅律動 */}
+      {goal > 0 && (
+        <div className="mt-10">
+          <div className="mb-2 flex items-center justify-between text-[11px]">
+            <span className="flex items-center gap-1.5 font-medium uppercase tracking-[0.14em] text-slate-400 dark:text-slate-500">
+              <Target
+                size={13}
+                className={todayDone >= goal ? 'text-emerald-500' : 'text-accent'}
+              />
+              今日目標
+            </span>
+            <span
+              className={cx(
+                'tabular-nums',
+                todayDone >= goal
+                  ? 'font-medium text-emerald-600 dark:text-emerald-400'
+                  : 'text-slate-500 dark:text-slate-400',
+              )}
+            >
+              {todayDone} / {goal} 節{todayDone >= goal && ' · 達標 🎉'}
+            </span>
+          </div>
+          <ProgressBar
+            value={(todayDone / goal) * 100}
+            size="sm"
+            tone={todayDone >= goal ? 'green' : 'accent'}
+          />
+        </div>
+      )}
+
+      {/* 安靜頁腳：分心打點 · 鈴聲 · 鍵盤捷徑（弱化，唔搶焦點） */}
+      <div className="mt-8 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-[11px] text-slate-400 dark:text-slate-500">
         {phase === 'focus' && (
           <button
             type="button"
             onClick={addInterruption}
             aria-label={`記錄分心，目前 ${interruptions} 次`}
-            className="inline-flex items-center gap-1.5 rounded-full border border-slate-200/80 bg-white px-3 py-1.5 transition hover:border-slate-300 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:border-slate-700/60 dark:bg-slate-800 dark:hover:border-slate-600 dark:hover:text-slate-200"
+            className="inline-flex items-center gap-1.5 rounded-full px-2 py-1 transition-colors hover:text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:hover:text-slate-300"
           >
-            <AlertCircle size={14} />
-            分心 <span className="font-semibold tabular-nums text-slate-700 dark:text-slate-200">{interruptions}</span>
+            <AlertCircle size={13} />
+            分心{' '}
+            <span className="font-semibold tabular-nums text-slate-600 dark:text-slate-300">
+              {interruptions}
+            </span>
           </button>
         )}
         <button
@@ -532,47 +580,21 @@ export default function TimerView({
           aria-pressed={settings.chimeSound}
           aria-label={settings.chimeSound ? '完成鈴聲：開（點擊關閉）' : '完成鈴聲：關（點擊開啟）'}
           onClick={() => patchSettings({ chimeSound: !settings.chimeSound })}
-          className="inline-flex items-center gap-1.5 rounded-full border border-slate-200/80 bg-white px-3 py-1.5 transition hover:border-slate-300 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:border-slate-700/60 dark:bg-slate-800 dark:hover:border-slate-600 dark:hover:text-slate-200"
+          className="inline-flex items-center gap-1.5 rounded-full px-2 py-1 transition-colors hover:text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:hover:text-slate-300"
         >
-          {settings.chimeSound ? <Volume2 size={14} /> : <VolumeX size={14} />}
+          {settings.chimeSound ? <Volume2 size={13} /> : <VolumeX size={13} />}
           鈴聲{settings.chimeSound ? '開' : '關'}
         </button>
-        <span className="hidden w-full items-center justify-center gap-1 pt-1 sm:inline-flex sm:w-auto sm:pt-0">
+        <span className="hidden items-center gap-1 sm:inline-flex">
           <Kbd>Space</Kbd> 開始/暫停 · <Kbd>R</Kbd> 重設 · <Kbd>S</Kbd> 跳過
         </span>
       </div>
-
-      {/* 今日目標進度條 */}
-      {goal > 0 && (
-        <div
-          className={cx(
-            'rounded-2xl border p-4 transition-colors',
-            todayDone >= goal
-              ? 'border-emerald-300/60 bg-emerald-50/70 dark:border-emerald-500/30 dark:bg-emerald-500/10'
-              : 'border-slate-200/80 bg-white dark:border-slate-700/60 dark:bg-slate-800',
-          )}
-        >
-          <div className="mb-2 flex items-center justify-between text-xs">
-            <span className="flex items-center gap-1.5 font-medium text-slate-600 dark:text-slate-300">
-              <Target size={14} className={todayDone >= goal ? 'text-emerald-500' : 'text-accent'} />
-              今日目標
-            </span>
-            <span className="tabular-nums text-slate-500 dark:text-slate-400">
-              {todayDone} / {goal} 節{todayDone >= goal && ' 🎉'}
-            </span>
-          </div>
-          <ProgressBar
-            value={(todayDone / goal) * 100}
-            tone={todayDone >= goal ? 'green' : 'accent'}
-          />
-        </div>
-      )}
 
       {/* 完成評分 modal */}
       <Modal
         open={!!review}
         onClose={() => setReview(null)}
-        title="呢節點啊？"
+        title="呢一節，感覺點？"
         size="sm"
         footer={
           <>

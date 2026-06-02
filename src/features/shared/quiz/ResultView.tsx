@@ -3,11 +3,15 @@ import { useCollection } from '../../../lib/store'
 import { quizAttemptsCol, topicsCol, questionsCol } from '../../../data/collections'
 import {
   ArrowLeft,
+  Clock3,
   Flag,
+  Gauge,
   HelpCircle,
+  ListChecks,
   PartyPopper,
   RefreshCw,
   RotateCcw,
+  Sparkles,
 } from 'lucide-react'
 import { Badge, Button, Card, ProgressBar, SectionTitle, cx } from '../../../ui'
 import {
@@ -87,70 +91,123 @@ export function ResultView({
   // 短答題：display helper（options 為空陣列）
   const isShort = (it: { options: string[] }) => it.options.length === 0
 
+  // 成績色調 → 揭曉卡光暈 / 章框（戲劇感，全部跟 scoreTone）
+  const tone = scoreTone(p)
+  const REVEAL: Record<typeof tone, { glow: string; medal: string; ring: string }> = {
+    green: {
+      glow: 'from-emerald-100/80 dark:from-emerald-500/15',
+      medal:
+        'border-emerald-300 bg-emerald-50 dark:border-emerald-400/50 dark:bg-emerald-500/15',
+      ring: 'ring-emerald-200/70 dark:ring-emerald-500/25',
+    },
+    amber: {
+      glow: 'from-amber-100/80 dark:from-amber-500/15',
+      medal: 'border-amber-300 bg-amber-50 dark:border-amber-400/50 dark:bg-amber-500/15',
+      ring: 'ring-amber-200/70 dark:ring-amber-500/25',
+    },
+    rose: {
+      glow: 'from-rose-100/80 dark:from-rose-500/15',
+      medal: 'border-rose-300 bg-rose-50 dark:border-rose-400/50 dark:bg-rose-500/15',
+      ring: 'ring-rose-200/70 dark:ring-rose-500/25',
+    },
+  }
+  const rv = REVEAL[tone]
+
   return (
     <div className="animate-fade-in space-y-5">
       <Button variant="ghost" size="sm" icon={ArrowLeft} onClick={onBackToSetup}>
         返回
       </Button>
 
-      {/* 大字成績卡 + 等第章 */}
-      <Card className="overflow-hidden">
-        <div className="flex flex-col items-center gap-3 p-6 text-center">
-          <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-            {attempt.title}
+      {/* ── 成績揭曉（戲劇高潮：頂光暈 + serif 大字 + 等第章 + 逐段入場）── */}
+      <Card className={cx('overflow-hidden ring-1', rv.ring)}>
+        <div
+          className={cx(
+            'relative flex flex-col items-center gap-3 px-6 py-7 text-center',
+            'bg-gradient-to-b to-transparent',
+            rv.glow,
+          )}
+        >
+          {/* 柔光斑（純裝飾） */}
+          <span
+            aria-hidden="true"
+            className="pointer-events-none absolute -top-12 left-1/2 h-32 w-44 -translate-x-1/2 rounded-full bg-white/50 blur-3xl dark:bg-white/5"
+          />
+          <p className="animate-fade-in-up text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">
+            成績揭曉
           </p>
-          <div className="flex items-center gap-4">
-            <div
+
+          {/* 等第章（serif 大字，輕微脈動光環暗示「叮叮」） */}
+          <div
+            className="animate-scale-in relative grid place-items-center"
+            style={{ animationDelay: '60ms' }}
+          >
+            <span
+              aria-hidden="true"
+              className={cx('absolute h-24 w-24 rounded-full ring-8', rv.ring)}
+            />
+            <span
               className={cx(
-                'flex h-20 w-20 shrink-0 flex-col items-center justify-center rounded-2xl border-2',
-                scoreTone(p) === 'green'
-                  ? 'border-emerald-300 bg-emerald-50 dark:border-emerald-500/40 dark:bg-emerald-500/10'
-                  : scoreTone(p) === 'amber'
-                    ? 'border-amber-300 bg-amber-50 dark:border-amber-500/40 dark:bg-amber-500/10'
-                    : 'border-rose-300 bg-rose-50 dark:border-rose-500/40 dark:bg-rose-500/10',
+                'relative grid h-20 w-20 place-items-center rounded-full border-2 shadow-sm',
+                rv.medal,
               )}
             >
-              <span className={cx('text-3xl font-black tabular-nums', scoreColor(p))}>{grade(p)}</span>
-            </div>
-            <div className="text-left">
-              <p className={cx('text-4xl font-bold tabular-nums', scoreColor(p))}>{p}%</p>
-              <p className="mt-0.5 text-sm text-slate-600 dark:text-slate-300">
-                <span className="tabular-nums">
-                  {attempt.correctCount} / {attempt.total}
-                </span>{' '}
-                答啱
-              </p>
-            </div>
+              <span className={cx('font-serif text-4xl font-black tabular-nums leading-none', scoreColor(p))}>
+                {grade(p)}
+              </span>
+            </span>
           </div>
-          <p className="text-sm text-slate-500 dark:text-slate-400">{verdict(p)}</p>
-          <ProgressBar value={p} tone={scoreTone(p)} />
+
+          {/* 命中率（serif 巨字，全頁最大的數字） */}
+          <p
+            className="animate-fade-in-up mt-0.5 flex items-baseline justify-center gap-1"
+            style={{ animationDelay: '140ms' }}
+          >
+            <span className={cx('font-serif text-6xl font-bold tabular-nums slashed-zero leading-none', scoreColor(p))}>
+              {p}
+            </span>
+            <span className={cx('text-2xl font-semibold', scoreColor(p))}>%</span>
+          </p>
+          <p
+            className="animate-fade-in-up text-sm text-slate-600 dark:text-slate-300"
+            style={{ animationDelay: '180ms' }}
+          >
+            答啱 <span className="font-semibold tabular-nums text-slate-700 dark:text-slate-200">{attempt.correctCount}</span> / {attempt.total} 題
+          </p>
+
+          {/* 評語橫幅 */}
+          <p
+            className="animate-fade-in-up inline-flex items-center gap-1.5 rounded-full bg-white/70 px-3.5 py-1.5 text-sm font-medium text-slate-700 shadow-xs ring-1 ring-slate-900/5 dark:bg-slate-900/40 dark:text-slate-200 dark:ring-white/10"
+            style={{ animationDelay: '240ms' }}
+          >
+            <Sparkles size={14} className="shrink-0 text-accent" />
+            {verdict(p)}
+          </p>
+
+          <div className="animate-fade-in-up mt-1 w-full max-w-xs" style={{ animationDelay: '300ms' }}>
+            <ProgressBar value={p} tone={tone} />
+          </div>
+          <p className="mt-0.5 max-w-md truncate text-[11px] text-slate-400 dark:text-slate-500">
+            {attempt.title}
+          </p>
         </div>
-        {/* 小統計列 */}
-        <div className="grid grid-cols-3 divide-x divide-slate-100 border-t border-slate-100 dark:divide-slate-700 dark:border-slate-700">
-          <div className="p-3 text-center">
-            <p className="text-lg font-bold tabular-nums text-slate-800 dark:text-slate-100">
-              {fmtDuration(attempt.durationSec)}
-            </p>
-            <p className="text-xs text-slate-400 dark:text-slate-500">總用時</p>
-          </div>
-          <div className="p-3 text-center">
-            <p className="text-lg font-bold tabular-nums text-slate-800 dark:text-slate-100">
-              {avgSec.toFixed(1)}s
-            </p>
-            <p className="text-xs text-slate-400 dark:text-slate-500">每題平均</p>
-          </div>
-          <div className="p-3 text-center">
-            <p className="text-lg font-bold tabular-nums text-rose-600 dark:text-rose-400">
-              {wrongIds.length}
-            </p>
-            <p className="text-xs text-slate-400 dark:text-slate-500">入錯題本</p>
-          </div>
+
+        {/* 小統計列（圖示帶領，三格節奏） */}
+        <div className="grid grid-cols-3 divide-x divide-slate-100 border-t border-slate-100 dark:divide-slate-700/60 dark:border-slate-700/60">
+          <RevealStat icon={Clock3} value={fmtDuration(attempt.durationSec)} label="總用時" />
+          <RevealStat icon={Gauge} value={`${avgSec.toFixed(1)}s`} label="每題平均" />
+          <RevealStat
+            icon={Flag}
+            value={wrongIds.length}
+            label="入錯題本"
+            tone={wrongIds.length > 0 ? 'rose' : undefined}
+          />
         </div>
       </Card>
 
       {/* 弱項分析 */}
       <section>
-        <SectionTitle>弱項分析</SectionTitle>
+        <SectionTitle icon={Gauge}>弱項分析</SectionTitle>
         <Card className="space-y-4 p-4">
           <div className="space-y-3">
             <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">按課題</p>
@@ -198,7 +255,10 @@ export function ResultView({
 
       {/* 逐題檢視 */}
       <section>
-        <SectionTitle right={<span className="text-xs normal-case text-slate-400">共 {attempt.items.length} 題</span>}>
+        <SectionTitle
+          icon={ListChecks}
+          right={<span className="text-xs normal-case text-slate-400">共 {attempt.items.length} 題</span>}
+        >
           逐題檢視
         </SectionTitle>
         <ul className="space-y-3">
@@ -269,12 +329,27 @@ export function ResultView({
       </section>
 
       {/* 底部行動 */}
-      <div className="flex flex-wrap gap-2">
-        {allCorrect ? (
-          <Button disabled icon={PartyPopper} className="flex-1">
-            全部答啱
+      {allCorrect ? (
+        <div className="flex flex-col gap-3 rounded-2xl border border-emerald-200 bg-emerald-50/70 p-4 text-center dark:border-emerald-500/30 dark:bg-emerald-500/10 sm:flex-row sm:items-center sm:text-left">
+          <span className="mx-auto flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-emerald-500 text-white shadow-sm sm:mx-0">
+            <PartyPopper size={20} />
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-semibold text-emerald-700 dark:text-emerald-300">全部答啱，零失誤！</p>
+            <p className="mt-0.5 text-xs text-emerald-600/80 dark:text-emerald-300/70">呢份冇錯題，換個範圍再挑戰下？</p>
+          </div>
+          <Button
+            variant="secondary"
+            icon={RefreshCw}
+            disabled={sameIds.length === 0}
+            onClick={() => onRetrySame(sameIds)}
+            className="shrink-0"
+          >
+            重做呢份
           </Button>
-        ) : (
+        </div>
+      ) : (
+        <div className="flex flex-wrap gap-2">
           <Button
             className="flex-1"
             icon={RotateCcw}
@@ -283,14 +358,42 @@ export function ResultView({
           >
             <span className="tabular-nums">重做錯題（{wrongIds.length}）</span>
           </Button>
+          <Button variant="secondary" icon={RefreshCw} disabled={sameIds.length === 0} onClick={() => onRetrySame(sameIds)}>
+            重做呢份
+          </Button>
+          <Button variant="ghost" onClick={onBackToSetup}>
+            返回
+          </Button>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ── 揭曉卡底部統計格（圖示帶領） ──
+function RevealStat({
+  icon: Icon,
+  value,
+  label,
+  tone,
+}: {
+  icon: typeof Clock3
+  value: React.ReactNode
+  label: string
+  tone?: 'rose'
+}) {
+  return (
+    <div className="flex flex-col items-center gap-0.5 px-2 py-3.5">
+      <Icon size={15} className={tone === 'rose' ? 'text-rose-400' : 'text-slate-400'} />
+      <p
+        className={cx(
+          'text-lg font-bold tabular-nums',
+          tone === 'rose' ? 'text-rose-600 dark:text-rose-400' : 'text-slate-800 dark:text-slate-100',
         )}
-        <Button variant="secondary" icon={RefreshCw} disabled={sameIds.length === 0} onClick={() => onRetrySame(sameIds)}>
-          重做呢份
-        </Button>
-        <Button variant="ghost" onClick={onBackToSetup}>
-          返回
-        </Button>
-      </div>
+      >
+        {value}
+      </p>
+      <p className="text-[11px] text-slate-400 dark:text-slate-500">{label}</p>
     </div>
   )
 }

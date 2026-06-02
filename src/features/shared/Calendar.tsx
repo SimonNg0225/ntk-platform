@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { CalendarArrowDown, ChevronLeft, ChevronRight, Plus, SlidersHorizontal } from 'lucide-react'
+import { CalendarArrowDown, ChevronLeft, ChevronRight, Dot, Plus, SlidersHorizontal } from 'lucide-react'
 import { useCollection } from '../../lib/store'
 import { eventsCol, calendarsCol, countdownsCol } from '../../data/collections'
 import type { CalendarEvent } from '../../data/types'
@@ -30,6 +30,14 @@ const VIEWS: { id: View; label: string }[] = [
   { id: 'month', label: '月' },
   { id: 'year', label: '年' },
 ]
+
+// 標題上方嘅小字眉題（按視圖換口吻，呼應「精緻週記」氣質）
+const VIEW_EYEBROW: Record<View, string> = {
+  day: 'Today',
+  week: 'This Week',
+  month: 'This Month',
+  year: 'This Year',
+}
 
 function addMonths(d: Date, n: number): Date {
   return new Date(d.getFullYear(), d.getMonth() + n, d.getDate(), 12)
@@ -71,6 +79,7 @@ export default function Calendar() {
   const [view, setView] = useState<View>('month')
   const [cursor, setCursor] = useState(() => new Date())
   const cursorKey = toKey(cursor)
+  const isOnToday = cursorKey === toKey(new Date())
 
   const [editorOpen, setEditorOpen] = useState(false)
   const [editing, setEditing] = useState<CalendarEvent | null>(null)
@@ -147,12 +156,17 @@ export default function Calendar() {
   return (
     <div className="flex h-[78vh] flex-col gap-4">
       {/* 工具列 — 月份標題 + 前後／今日導覽，右邊放檢視切換同新增 */}
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-2.5">
-        <h2 className="text-lg font-bold tracking-tight text-slate-800 dark:text-slate-100 sm:text-xl">
-          {title}
-        </h2>
-        <div className="flex items-center gap-1">
-          <div className="flex items-center rounded-xl border border-slate-200/80 bg-white p-0.5 shadow-xs dark:border-slate-700/60 dark:bg-slate-800 dark:shadow-none">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
+        <div className="min-w-0">
+          <p className="text-[11px] font-medium uppercase tracking-[0.3em] text-accent/70">
+            {VIEW_EYEBROW[view]}
+          </p>
+          <h2 className="mt-0.5 font-serif text-2xl font-semibold leading-none tracking-tight text-slate-800 dark:text-slate-100 sm:text-[28px]">
+            {title}
+          </h2>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <div className="flex items-center rounded-full border border-slate-200/80 bg-white p-0.5 shadow-xs dark:border-slate-700/60 dark:bg-slate-800 dark:shadow-none">
             <IconButton label="上一個" onClick={() => nav(-1)}>
               <ChevronLeft size={18} />
             </IconButton>
@@ -160,9 +174,16 @@ export default function Calendar() {
               <ChevronRight size={18} />
             </IconButton>
           </div>
-          <Button variant="secondary" size="sm" onClick={() => setCursor(new Date())}>
-            今日
-          </Button>
+          {!isOnToday && (
+            <button
+              type="button"
+              onClick={() => setCursor(new Date())}
+              className="inline-flex items-center gap-1 rounded-full border border-slate-200/80 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 shadow-xs transition duration-200 hover:border-accent/40 hover:text-accent dark:border-slate-700/60 dark:bg-slate-800 dark:text-slate-300 dark:shadow-none dark:hover:text-accent"
+            >
+              <Dot size={16} className="-mx-1 text-accent" />
+              今日
+            </button>
+          )}
         </div>
         <div className="flex-1" />
         <SegmentedControl options={VIEWS} value={view} onChange={setView} />
@@ -171,7 +192,7 @@ export default function Calendar() {
         </Button>
       </div>
 
-      {/* 行事曆開關 — 圓潤彩色 pill，撳一下顯示／隱藏 */}
+      {/* 行事曆開關 — 顯示中嘅戴返自己嘅柔和色衣；隱藏嘅退做灰底刪線 */}
       <div className="flex flex-wrap items-center gap-2">
         {cals.map((c) => (
           <button
@@ -181,21 +202,22 @@ export default function Calendar() {
             aria-label={`${c.name}（${c.visible ? '顯示中，按一下隱藏' : '已隱藏，按一下顯示'}）`}
             onClick={() => toggleCal(c.id, c.visible)}
             className={cx(
-              'inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
+              'inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
               c.visible
-                ? 'border-slate-200/80 bg-white text-slate-600 shadow-xs hover:border-slate-300 hover:text-slate-800 dark:border-slate-700/60 dark:bg-slate-800 dark:text-slate-300 dark:shadow-none dark:hover:text-slate-100'
-                : 'border-transparent bg-slate-100/80 text-slate-400 line-through hover:text-slate-500 dark:bg-slate-800/60 dark:text-slate-500',
+                ? cx('ring-1 ring-inset ring-black/5 hover:brightness-95 dark:ring-white/10 dark:hover:brightness-110', colorOf(c.color).chip)
+                : 'bg-slate-100/80 text-slate-400 line-through hover:text-slate-500 dark:bg-slate-800/60 dark:text-slate-500',
             )}
           >
             <span
               className={cx(
-                'h-2.5 w-2.5 rounded-full transition',
+                'h-2 w-2 rounded-full transition',
                 c.visible ? colorOf(c.color).dot : 'bg-slate-300 dark:bg-slate-600',
               )}
             />
             {c.name}
           </button>
         ))}
+        <span aria-hidden="true" className="mx-0.5 h-4 w-px bg-slate-200 dark:bg-slate-700/70" />
         <button
           type="button"
           onClick={() => setManagerOpen(true)}

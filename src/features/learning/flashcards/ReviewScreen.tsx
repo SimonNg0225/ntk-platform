@@ -354,8 +354,22 @@ export default function ReviewScreen({
         />
       </div>
 
-      {/* 卡片（centrepiece：柔和升起、accent 微光、翻面有觸感） */}
+      {/* 卡片（centrepiece：實體索引卡 — 背後卡疊呈隊列深度、翻面有觸感） */}
       <div className="relative">
+        {/* 背後卡疊：剩越多、疊越厚（最多 2 層），呈現「有序隊列」嘅實體感 */}
+        {remaining > 2 && (
+          <div
+            aria-hidden="true"
+            className="absolute inset-x-4 -bottom-2.5 top-2.5 rounded-3xl border border-slate-200/70 bg-white dark:border-slate-700/50 dark:bg-slate-800/80"
+          />
+        )}
+        {remaining > 1 && (
+          <div
+            aria-hidden="true"
+            className="absolute inset-x-2 -bottom-1.5 top-1.5 rounded-3xl border border-slate-200/80 bg-white dark:border-slate-700/60 dark:bg-slate-800/90"
+          />
+        )}
+
         {/* 角落：標記 / 暫停 / 撤銷 */}
         <div className="absolute right-2.5 top-2.5 z-10 flex gap-0.5">
           <IconButton
@@ -384,12 +398,20 @@ export default function ReviewScreen({
           onClick={() => !flipped && setFlipped(true)}
           aria-label={flipped ? '已翻面' : '撳一下翻面睇答案'}
           className={cx(
-            'flex min-h-[300px] w-full flex-col items-center justify-center gap-4 rounded-3xl border bg-white p-8 text-center transition duration-200 dark:bg-slate-800',
+            'group relative flex min-h-[300px] w-full flex-col items-center justify-center gap-4 overflow-hidden rounded-3xl border bg-white px-8 pb-12 pt-9 text-center transition duration-200 dark:bg-slate-800',
             flipped
               ? 'border-accent/30 shadow-lg shadow-accent/10 dark:border-accent/30'
-              : 'border-slate-200/80 shadow-sm hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md dark:border-slate-700/60 dark:shadow-none dark:hover:border-slate-600',
+              : 'cursor-pointer border-slate-200/80 shadow-sm hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md dark:border-slate-700/60 dark:shadow-none dark:hover:border-slate-600',
           )}
         >
+          {/* 索引卡頂margin線 */}
+          <span
+            aria-hidden="true"
+            className={cx(
+              'absolute inset-x-0 top-0 h-1',
+              flipped ? 'bg-accent' : 'bg-rose-200/70 dark:bg-rose-500/25',
+            )}
+          />
           {meta && meta.tags.length > 0 && (
             <div className="flex flex-wrap justify-center gap-1">
               {meta.tags.map((t) => (
@@ -409,7 +431,7 @@ export default function ReviewScreen({
             {card.front}
           </p>
 
-          {flipped && (
+          {flipped ? (
             <div className="flex w-full animate-fade-in-up flex-col items-center gap-3">
               <div className="my-1 h-px w-12 bg-slate-200 dark:bg-slate-700" />
               <span className="inline-flex items-center gap-1.5 rounded-full bg-accent-soft px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-accent-strong dark:bg-accent/15 dark:text-accent">
@@ -424,6 +446,12 @@ export default function ReviewScreen({
                 </p>
               )}
             </div>
+          ) : (
+            // 翻面 affordance：貼底細提示，撳卡任何位都翻得
+            <span className="pointer-events-none absolute inset-x-0 bottom-3.5 flex items-center justify-center gap-1.5 text-[11px] font-medium text-slate-400 transition group-hover:text-accent dark:text-slate-500">
+              <RotateCcw size={12} />
+              撳一下翻開背面
+            </span>
           )}
         </button>
       </div>

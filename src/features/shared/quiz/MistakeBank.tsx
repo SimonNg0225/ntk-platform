@@ -127,13 +127,18 @@ export function MistakeBank({ onPractice }: { onPractice: (questionIds: string[]
         />
       </div>
 
-      {/* 一鍵練錯題 */}
-      <Card className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">集中操練錯題</p>
-          <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-            抽起所有「待克服」題目即場再做，連續答啱兩次自動標記掌握。
-          </p>
+      {/* 一鍵練錯題（雪恥區：accent-soft 強調，呼應開賽 CTA） */}
+      <div className="flex flex-col gap-3 rounded-3xl border border-accent/30 bg-accent-soft/60 p-4 dark:border-accent/30 dark:bg-accent/10 sm:flex-row sm:items-center sm:justify-between sm:p-5">
+        <div className="flex items-start gap-3">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-accent text-white shadow-sm shadow-accent/30">
+            <Target size={18} />
+          </span>
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">集中操練錯題</p>
+            <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+              抽起所有「待克服」題目即場再做，連續答啱兩次就自動標記掌握。
+            </p>
+          </div>
         </div>
         <Button
           icon={Play}
@@ -143,7 +148,7 @@ export function MistakeBank({ onPractice }: { onPractice: (questionIds: string[]
         >
           <span className="tabular-nums">練錯題（{practiceableIds.length}）</span>
         </Button>
-      </Card>
+      </div>
 
       {/* 篩選 + 搜尋 */}
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">

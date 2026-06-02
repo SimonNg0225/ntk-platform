@@ -134,17 +134,17 @@ function MetricTile({
         <p className="flex items-baseline gap-1">
           <span
             className={cx(
-              'text-2xl font-bold tabular-nums slashed-zero',
+              'font-serif text-4xl font-black leading-none tabular-nums slashed-zero',
               highlight ? 'text-accent-strong dark:text-accent' : 'text-slate-800 dark:text-slate-100',
             )}
           >
             {value}
           </span>
-          {unit && <span className="text-sm font-medium text-slate-400">{unit}</span>}
+          {unit && <span className="text-sm font-semibold text-slate-400">{unit}</span>}
           {delta && delta.dir !== 'flat' && (
             <span
               className={cx(
-                'ml-auto text-xs font-semibold tabular-nums',
+                'ml-auto inline-flex items-center text-xs font-bold tabular-nums',
                 delta.dir === 'up' ? 'text-emerald-500' : 'text-rose-500',
               )}
             >
@@ -152,7 +152,7 @@ function MetricTile({
             </span>
           )}
         </p>
-        {hint && <p className="mt-0.5 truncate text-[11px] text-slate-400 dark:text-slate-500">{hint}</p>}
+        {hint && <p className="mt-1 truncate text-[11px] text-slate-400 dark:text-slate-500">{hint}</p>}
       </div>
     </Tag>
   )
@@ -311,8 +311,11 @@ export default function TrainingView() {
       {/* ── 標題列 ── */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-base font-semibold tracking-tight text-slate-800 dark:text-slate-100">
-            訓練記錄 · 週期化
+          <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-accent">
+            <Dumbbell size={13} /> 訓練計分板
+          </p>
+          <h2 className="mt-1 text-xl font-bold tracking-tight text-slate-800 dark:text-slate-100">
+            記錄 · 週期化
           </h2>
           <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
             記低每組重量次數，睇訓練量同疲勞趨勢，追每個動作 PR。
@@ -860,8 +863,17 @@ function WorkoutRow({
               {workout.date}（{dow}）
             </span>
           </div>
-          <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-            <Badge tone="accent">{fmtVol(vol)} kg</Badge>
+          <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5">
+            {/* 總訓練量＝呢場「分數」 */}
+            <span className="inline-flex items-baseline gap-1">
+              <span className="font-serif text-2xl font-black leading-none tabular-nums text-accent-strong dark:text-accent">
+                {fmtVol(vol)}
+              </span>
+              <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                kg 訓練量
+              </span>
+            </span>
+            <span className="h-4 w-px bg-slate-200 dark:bg-slate-700" aria-hidden="true" />
             <Badge tone="slate">
               {workout.exercises.length} 動作 · {setCount} 組
             </Badge>
@@ -903,16 +915,27 @@ function WorkoutRow({
                     kg
                   </span>
                 </div>
-                <div className="mt-1 flex flex-wrap gap-1.5">
+                <div className="mt-1.5 flex flex-wrap gap-1.5">
                   {ex.sets.map((st, j) => (
                     <span
                       key={j}
-                      className="inline-flex items-center gap-1 rounded-md bg-white px-2 py-0.5 text-xs tabular-nums text-slate-600 ring-1 ring-inset ring-slate-200 dark:bg-slate-900 dark:text-slate-300 dark:ring-slate-700"
+                      className="inline-flex items-stretch overflow-hidden rounded-lg bg-white ring-1 ring-inset ring-slate-200 dark:bg-slate-900 dark:ring-slate-700"
                     >
-                      {st.reps}×{st.weightKg}kg
-                      {typeof st.rpe === 'number' && (
-                        <span className="text-amber-500">@{st.rpe}</span>
-                      )}
+                      {/* 組號（記分牌格仔） */}
+                      <span className="flex items-center bg-slate-100 px-1.5 font-serif text-[11px] font-semibold tabular-nums text-slate-400 dark:bg-slate-800 dark:text-slate-500">
+                        {j + 1}
+                      </span>
+                      <span className="inline-flex items-baseline gap-0.5 px-2 py-0.5 text-xs tabular-nums text-slate-700 dark:text-slate-200">
+                        <span className="text-sm font-bold text-slate-800 dark:text-slate-100">
+                          {st.reps}
+                        </span>
+                        <span className="text-slate-400">×</span>
+                        <span className="font-semibold">{st.weightKg}</span>
+                        <span className="text-[10px] text-slate-400">kg</span>
+                        {typeof st.rpe === 'number' && (
+                          <span className="ml-0.5 font-semibold text-amber-500">@{st.rpe}</span>
+                        )}
+                      </span>
                     </span>
                   ))}
                   {ex.sets.length === 0 && (

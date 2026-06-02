@@ -4,12 +4,15 @@ import {
   BarChart3,
   BookMarked,
   BookOpen,
+  Bookmark,
   CheckSquare,
   Download,
   Flame,
+  Library,
   LayoutGrid,
-  List,
+  Rows3,
   Plus,
+  Search,
   Star,
   Target,
   Trash2,
@@ -23,7 +26,6 @@ import { readingCol } from '../../data/collections'
 import {
   Badge,
   Button,
-  Card,
   EmptyState,
   Field,
   IconButton,
@@ -31,17 +33,8 @@ import {
   Menu,
   Modal,
   Pills,
-  ProgressBar,
-  SectionTitle,
   SegmentedControl,
   Select,
-  StatCard,
-  Table,
-  Tbody,
-  Td,
-  Th,
-  Thead,
-  Tr,
   cx,
 } from '../../ui'
 import {
@@ -304,28 +297,83 @@ export default function ReadingList() {
 
   return (
     <div className="space-y-5">
-      {/* ── 頂部統計 ── */}
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <StatCard label="總藏書" value={stats.total} unit="本" icon={BookMarked} highlight />
-        <StatCard
-          label="在讀"
-          value={stats.byStatus.reading}
-          unit="本"
-          icon={BookOpen}
-          hint={stats.byStatus.to_read ? `${stats.byStatus.to_read} 本待讀` : undefined}
-        />
-        <StatCard
-          label="今年讀完"
-          value={finishedThisYearCount}
-          unit="本"
-          icon={CheckSquare}
-        />
-        <StatCard
-          label="平均評分"
-          value={stats.avgRating ? stats.avgRating.toFixed(1) : '—'}
-          icon={Star}
-          hint={stats.rated ? `${stats.rated} 本已評` : undefined}
-        />
+      {/* ── 書房 masthead：私人藏書館口吻（頁面標題「閱讀清單」已由外層提供） ── */}
+      <header className="flex flex-wrap items-end justify-between gap-x-4 gap-y-1">
+        <div className="min-w-0">
+          <p className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.3em] text-accent/70">
+            <Library size={13} /> My Library
+          </p>
+          <h2 className="mt-1.5 font-serif text-2xl font-semibold leading-tight tracking-tight text-slate-800 dark:text-slate-100 sm:text-[28px]">
+            我的書架
+          </h2>
+          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+            {stats.total > 0 ? (
+              <span className="tabular-nums">
+                書脊上一共 {stats.total} 本
+                {stats.byStatus.reading > 0 && <> · 正翻開 {stats.byStatus.reading} 本</>}
+              </span>
+            ) : (
+              <>由第一本書開始，砌一個屬於你嘅書架。</>
+            )}
+          </p>
+        </div>
+      </header>
+
+      {/* ── 書房卡片帶：四格藏書統計（hairline grid · serif 數字，似圖書館借閱卡）── */}
+      <div className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl bg-slate-200/70 ring-1 ring-slate-200/80 dark:bg-slate-700/50 dark:ring-slate-700/60 sm:grid-cols-4">
+        {[
+          { label: '總藏書', icon: BookMarked, value: stats.total, unit: '本', hint: '書架上全部', hot: true },
+          {
+            label: '正翻開',
+            icon: BookOpen,
+            value: stats.byStatus.reading,
+            unit: '本',
+            hint: stats.byStatus.to_read ? `${stats.byStatus.to_read} 本排隊等讀` : '揀本書翻開吧',
+            hot: false,
+          },
+          {
+            label: `${year} 讀完`,
+            icon: CheckSquare,
+            value: finishedThisYearCount,
+            unit: '本',
+            hint: '今年完成',
+            hot: false,
+          },
+          {
+            label: '平均評分',
+            icon: Star,
+            value: stats.avgRating ? stats.avgRating.toFixed(1) : '—',
+            unit: '',
+            hint: stats.rated ? `${stats.rated} 本已評` : '未評分',
+            hot: false,
+          },
+        ].map((s) => {
+          const I = s.icon
+          return (
+            <div
+              key={s.label}
+              className={cx(
+                'px-4 py-3.5 transition-colors',
+                s.hot ? 'bg-accent-soft dark:bg-accent/15' : 'bg-white dark:bg-slate-800',
+              )}
+            >
+              <p className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                <I size={12} className={s.hot ? 'text-accent' : ''} />
+                {s.label}
+              </p>
+              <p
+                className={cx(
+                  'mt-1 font-serif text-[26px] font-semibold leading-none tabular-nums slashed-zero',
+                  s.hot ? 'text-accent-strong dark:text-accent' : 'text-slate-800 dark:text-slate-100',
+                )}
+              >
+                {s.value}
+                {s.unit && <span className="ml-1 font-sans text-sm font-normal text-slate-400">{s.unit}</span>}
+              </p>
+              <p className="mt-1 truncate text-[11px] text-slate-400 dark:text-slate-500">{s.hint}</p>
+            </div>
+          )
+        })}
       </div>
 
       {/* ── 閱讀挑戰 ── */}
@@ -340,8 +388,8 @@ export default function ReadingList() {
       <div className="flex flex-wrap items-center gap-2">
         <SegmentedControl<MainView>
           options={[
-            { id: 'library', label: '書庫', icon: LayoutGrid },
-            { id: 'list', label: '清單', icon: List },
+            { id: 'library', label: '封面', icon: LayoutGrid },
+            { id: 'list', label: '書脊', icon: Rows3 },
             { id: 'stats', label: '統計', icon: BarChart3 },
           ]}
           value={view}
@@ -459,10 +507,12 @@ export default function ReadingList() {
 
             <div className="flex flex-wrap items-center gap-2">
               <Input
+                icon={Search}
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="搜尋書名、作者、書架…"
+                placeholder="搵書名、作者、書架…"
                 className="min-w-[12rem] flex-1"
+                aria-label="搜尋書本"
               />
               <Select value={sortKey} onChange={(e) => setSortKey(e.target.value as SortKey)} className="w-auto">
                 {SORT_OPTS.map((o) => (
@@ -491,17 +541,17 @@ export default function ReadingList() {
           {/* 清單 / 書庫 */}
           {filtered.length === 0 ? (
             <EmptyState
-              icon={BookOpen}
-              title={query.trim() || shelfFilter ? '搵唔到符合嘅書' : '書庫仲未有書'}
+              icon={query.trim() || shelfFilter ? Search : Library}
+              title={query.trim() || shelfFilter ? '書架上搵唔到呢本' : '書架仲空空如也'}
               hint={
                 query.trim() || shelfFilter
-                  ? '試吓換個關鍵字或清除篩選。'
-                  : '撳「加書」開始建立你嘅閱讀庫。'
+                  ? '換個關鍵字，或者清除篩選再睇睇。'
+                  : '加入第一本書，慢慢砌一個屬於你嘅小書房。'
               }
               action={
                 !query.trim() && !shelfFilter ? (
                   <Button size="sm" icon={Plus} onClick={() => setAddOpen(true)}>
-                    加第一本書
+                    上架第一本書
                   </Button>
                 ) : undefined
               }
@@ -523,6 +573,7 @@ export default function ReadingList() {
               selected={selected}
               onToggleSelect={toggleSelect}
               onOpen={(id) => setOpenId(id)}
+              grouped={statusFilter === 'all' && !shelfFilter && !query.trim()}
             />
           )}
         </>
@@ -570,8 +621,8 @@ function ReadingChallenge({
           <Target size={19} />
         </span>
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">定個 {year} 年閱讀挑戰</p>
-          <p className="text-xs text-slate-500 dark:text-slate-400">立個小目標，睇住自己今年讀完幾多本。</p>
+          <p className="font-serif text-[15px] font-semibold text-slate-800 dark:text-slate-100">定個 {year} 年閱讀挑戰</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400">立個小目標，睇住自己今年砌厚幾多本書。</p>
         </div>
         <Button size="sm" onClick={() => setEditing(true)}>
           設定目標
@@ -606,7 +657,7 @@ function ReadingChallenge({
         </div>
       </div>
       <div className="min-w-0 flex-1">
-        <p className="flex items-center gap-1.5 text-sm font-semibold text-slate-800 dark:text-slate-100">
+        <p className="flex items-center gap-1.5 font-serif text-[15px] font-semibold text-slate-800 dark:text-slate-100">
           <Target size={15} className="text-accent" /> {year} 年閱讀挑戰
         </p>
         {editing ? (
@@ -686,7 +737,7 @@ function BookCoverCard({
         sel && 'ring-2 ring-accent',
       )}
     >
-      {/* 封面 */}
+      {/* 封面（書脊邊 + 在讀書籤緞帶） */}
       <div className="relative aspect-[2/3] overflow-hidden bg-gradient-to-br from-accent-soft to-slate-100 dark:from-accent/15 dark:to-slate-800">
         {b.cover ? (
           <img src={b.cover} alt={b.title} className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]" />
@@ -698,10 +749,19 @@ function BookCoverCard({
             </span>
           </div>
         )}
+        {/* 左側書脊高光：營造立體書本邊 */}
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-y-0 left-0 w-2 bg-gradient-to-r from-black/15 via-black/5 to-transparent dark:from-black/35"
+        />
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-y-0 left-1.5 w-px bg-white/30 dark:bg-white/10"
+        />
         {/* 狀態圓點 */}
         <span
           className={cx(
-            'absolute left-2 top-2 h-2.5 w-2.5 rounded-full ring-2 ring-white dark:ring-slate-900',
+            'absolute left-3 top-2 h-2.5 w-2.5 rounded-full ring-2 ring-white dark:ring-slate-900',
             STATUS_DOT[b.status],
           )}
           title={STATUS_LABEL[b.status]}
@@ -710,6 +770,14 @@ function BookCoverCard({
           <span className="absolute right-2 top-2 text-amber-400 drop-shadow">
             <Star size={15} fill="currentColor" />
           </span>
+        )}
+        {/* 在讀書籤緞帶：由頂部垂落，長度＝進度（書脊式語彙的核心） */}
+        {b.status === 'reading' && pct > 0 && (
+          <span
+            aria-hidden="true"
+            className="pointer-events-none absolute top-0 right-3 w-2.5 bg-accent shadow-sm transition-[height] duration-500 ease-out after:absolute after:inset-x-0 after:top-full after:border-x-[5px] after:border-t-[5px] after:border-x-transparent after:border-t-accent"
+            style={{ height: `${20 + pct * 0.5}%` }}
+          />
         )}
         {selectMode && (
           <span
@@ -723,11 +791,13 @@ function BookCoverCard({
             <CheckSquare size={12} />
           </span>
         )}
-        {/* 在讀進度條 */}
-        {b.status === 'reading' && pct > 0 && (
-          <div className="absolute inset-x-0 bottom-0">
-            <ProgressBar value={pct} size="sm" className="rounded-none" />
-          </div>
+        {/* 已讀完角標：絲帶角 */}
+        {b.status === 'done' && (
+          <span
+            aria-hidden="true"
+            title={STATUS_LABEL.done}
+            className="absolute -right-px -top-px h-0 w-0 border-b-[24px] border-l-[24px] border-b-emerald-500 border-l-transparent drop-shadow-sm"
+          />
         )}
       </div>
 
@@ -850,113 +920,223 @@ function LibraryGrid({
 }
 
 // ============================================================
-//  清單視圖（table）
+//  書脊視圖（spine shelf）—— 把每本書當一條立喺木架上嘅書脊
+//  ------------------------------------------------------------
+//  · 書脊高度依頁數微調（有節奏，唔似一行行一模一樣）
+//  · 顏色跟狀態；在讀書本有書籤緞帶（長度＝進度）
+//  · 書名直排寫喺脊上，作者喺脊腳，評分以小金點表示
+//  · 撳一下＝開書 / 選取模式下＝選取（功能同原表格一致）
 // ============================================================
+
+// 由 id 派生穩定 0–1 抖動（同一本書每次 render 都一樣），用嚟做書脊高度節奏
+function spineSeed(id: string): number {
+  let h = 0
+  for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) >>> 0
+  return (h % 1000) / 1000
+}
+
+// 書脊在木架上嘅顏色（淺底 + 深字，深色 /15；與分類色語彙一致）
+const SPINE_SKIN: Record<BookStatus, string> = {
+  reading:
+    'bg-accent-soft text-accent-strong ring-accent/25 dark:bg-accent/20 dark:text-accent dark:ring-accent/30',
+  to_read:
+    'bg-slate-100 text-slate-600 ring-slate-300/70 dark:bg-slate-700/60 dark:text-slate-200 dark:ring-slate-600/60',
+  done:
+    'bg-emerald-50 text-emerald-700 ring-emerald-300/60 dark:bg-emerald-500/15 dark:text-emerald-200 dark:ring-emerald-500/25',
+  dnf: 'bg-amber-50 text-amber-700 ring-amber-300/60 dark:bg-amber-500/15 dark:text-amber-200 dark:ring-amber-500/25',
+}
+
+function BookSpine({
+  b,
+  selectMode,
+  selected,
+  onToggleSelect,
+  onOpen,
+}: {
+  b: Book
+  selectMode: boolean
+  selected: Set<string>
+  onToggleSelect: (id: string) => void
+  onOpen: (id: string) => void
+}) {
+  const pct = progressPct(b)
+  const sel = selected.has(b.id)
+  // 高度：基準 + 頁數貢獻 + id 抖動，夾喺 168–236px（手機略矮）
+  const pageBoost = b.totalPages ? Math.min(40, b.totalPages / 28) : 14
+  const height = Math.round(176 + pageBoost + spineSeed(b.id) * 26)
+
+  return (
+    <button
+      type="button"
+      onClick={() => (selectMode ? onToggleSelect(b.id) : onOpen(b.id))}
+      title={`${b.title}${b.author ? ` · ${b.author}` : ''}`}
+      style={{ height }}
+      className={cx(
+        'group relative flex w-[2.85rem] shrink-0 origin-bottom flex-col items-center overflow-hidden rounded-t-[5px] rounded-b-sm shadow-sm ring-1 ring-inset transition-transform duration-200 hover:-translate-y-1.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 sm:w-12',
+        SPINE_SKIN[b.status],
+        sel && 'ring-2 ring-accent ring-offset-1 ring-offset-amber-50 dark:ring-offset-slate-900',
+      )}
+    >
+      {/* 脊頂燙金雙線 + 脊面高光 */}
+      <span aria-hidden="true" className="absolute inset-x-1 top-2 h-px bg-current opacity-30" />
+      <span aria-hidden="true" className="absolute inset-x-1 top-2.5 h-px bg-current opacity-20" />
+      <span aria-hidden="true" className="pointer-events-none absolute inset-y-0 left-1 w-px bg-white/40 dark:bg-white/10" />
+
+      {/* 在讀書籤緞帶：由脊頂垂落，長度＝進度 */}
+      {b.status === 'reading' && pct > 0 && (
+        <span
+          aria-hidden="true"
+          className="absolute top-0 right-2 w-1.5 bg-accent shadow-sm transition-[height] duration-500 ease-out after:absolute after:inset-x-0 after:top-full after:border-x-[3px] after:border-t-[3px] after:border-x-transparent after:border-t-accent"
+          style={{ height: `${24 + pct * 0.45}%` }}
+        />
+      )}
+
+      {/* 直排書名 */}
+      <span
+        className="mt-5 flex-1 truncate text-[12px] font-semibold leading-tight tracking-tight [writing-mode:vertical-rl]"
+        style={{ maxHeight: height - 64 }}
+      >
+        {b.favorite && (
+          <Star size={10} className="mb-1 inline-block text-amber-400" fill="currentColor" />
+        )}
+        {b.title}
+      </span>
+
+      {/* 脊腳：作者起首字 + 評分金點 / 進度 */}
+      <span className="mb-2 mt-1 flex flex-col items-center gap-1">
+        {b.rating ? (
+          <span className="inline-flex items-center gap-0.5 text-[9px] font-bold tabular-nums text-amber-500">
+            {b.rating.toFixed(1)}
+            <Star size={8} fill="currentColor" />
+          </span>
+        ) : b.status === 'reading' && pct > 0 ? (
+          <span className="text-[9px] font-semibold tabular-nums opacity-80">{pct}%</span>
+        ) : null}
+        {b.author && (
+          <span className="text-[9px] font-medium uppercase opacity-60">{b.author.charAt(0)}</span>
+        )}
+      </span>
+
+      {/* 選取勾 */}
+      {selectMode && (
+        <span
+          className={cx(
+            'absolute bottom-1 right-1 flex h-4 w-4 items-center justify-center rounded border transition-colors',
+            sel ? 'border-accent bg-accent text-white' : 'border-slate-400/50 bg-white/80 text-transparent dark:border-slate-500/60 dark:bg-slate-900/50',
+          )}
+        >
+          <CheckSquare size={10} />
+        </span>
+      )}
+    </button>
+  )
+}
+
 function ListView({
   books,
   selectMode,
   selected,
   onToggleSelect,
   onOpen,
+  grouped,
 }: {
   books: Book[]
   selectMode: boolean
   selected: Set<string>
   onToggleSelect: (id: string) => void
   onOpen: (id: string) => void
+  grouped: boolean
 }) {
+  const spineProps = { selectMode, selected, onToggleSelect, onOpen }
+
+  // 一層木架：書脊立喺架上，底下一條木紋層板（含投影）
+  function Shelf({ items }: { items: Book[] }) {
+    return (
+      <div className="relative">
+        <div className="flex flex-wrap items-end gap-x-1.5 gap-y-6 px-1 pb-1">
+          {items.map((b) => (
+            <BookSpine key={b.id} b={b} {...spineProps} />
+          ))}
+        </div>
+        {/* 木層板 */}
+        <div className="relative">
+          <div className="h-2.5 rounded-sm bg-gradient-to-b from-amber-200/80 to-amber-300/70 shadow-[0_2px_5px_rgba(120,80,30,0.18)] dark:from-slate-700 dark:to-slate-800 dark:shadow-none" />
+          <div className="h-1 rounded-b-sm bg-amber-300/50 dark:bg-slate-800" />
+        </div>
+      </div>
+    )
+  }
+
+  if (!grouped) {
+    return (
+      <div className="rounded-2xl border border-slate-200/80 bg-gradient-to-b from-amber-50/40 to-white p-4 dark:border-slate-700/60 dark:from-slate-800/40 dark:to-slate-800 sm:p-5">
+        <Shelf items={books} />
+      </div>
+    )
+  }
+
   return (
-    <Table>
-      <Thead>
-        <Tr>
-          {selectMode && <Th className="w-10" />}
-          <Th>書名 / 作者</Th>
-          <Th>狀態</Th>
-          <Th align="center">評分</Th>
-          <Th align="right">進度</Th>
-          <Th>書架</Th>
-        </Tr>
-      </Thead>
-      <Tbody>
-        {books.map((b) => {
-          const pct = progressPct(b)
-          const sel = selected.has(b.id)
-          return (
-            <Tr key={b.id} onClick={() => (selectMode ? onToggleSelect(b.id) : onOpen(b.id))}>
-              {selectMode && (
-                <Td>
-                  <span
-                    className={cx(
-                      'flex h-5 w-5 items-center justify-center rounded-md border-2 transition-colors',
-                      sel ? 'border-accent bg-accent text-white' : 'border-slate-300 text-transparent dark:border-slate-600',
-                    )}
-                  >
-                    <CheckSquare size={12} />
-                  </span>
-                </Td>
-              )}
-              <Td>
-                <div className="flex items-center gap-2">
-                  <span className={cx('h-2 w-2 shrink-0 rounded-full', STATUS_DOT[b.status])} />
-                  <div className="min-w-0">
-                    <p className="flex items-center gap-1.5 truncate font-medium text-slate-800 dark:text-slate-100">
-                      {b.favorite && <Star size={12} className="shrink-0 text-amber-400" fill="currentColor" />}
-                      {b.title}
-                    </p>
-                    {b.author && <p className="truncate text-xs text-slate-400">{b.author}</p>}
-                  </div>
-                </div>
-              </Td>
-              <Td>
-                <Badge tone={STATUS_TONE[b.status]}>{STATUS_LABEL[b.status]}</Badge>
-              </Td>
-              <Td align="center">
-                {b.rating ? (
-                  <span className="inline-flex items-center gap-0.5 tabular-nums text-amber-500">
-                    {b.rating.toFixed(1)} <Star size={12} fill="currentColor" />
-                  </span>
-                ) : (
-                  <span className="text-slate-300 dark:text-slate-600">—</span>
-                )}
-              </Td>
-              <Td numeric>
-                {b.totalPages || b.status !== 'to_read' ? (
-                  <div className="flex items-center justify-end gap-2">
-                    <span className="text-xs tabular-nums text-slate-500">{pct}%</span>
-                    <div className="w-16">
-                      <ProgressBar value={pct} size="sm" tone={b.status === 'done' ? 'green' : 'accent'} />
-                    </div>
-                  </div>
-                ) : (
-                  <span className="text-slate-300 dark:text-slate-600">—</span>
-                )}
-              </Td>
-              <Td>
-                <div className="flex flex-wrap gap-1">
-                  {b.shelves.slice(0, 2).map((s) => (
-                    <span
-                      key={s}
-                      className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] text-slate-500 dark:bg-slate-800 dark:text-slate-400"
-                    >
-                      {s}
-                    </span>
-                  ))}
-                  {b.shelves.length > 2 && (
-                    <span className="text-[10px] text-slate-400">+{b.shelves.length - 2}</span>
-                  )}
-                </div>
-              </Td>
-            </Tr>
-          )
-        })}
-      </Tbody>
-    </Table>
+    <div className="space-y-7 rounded-2xl border border-slate-200/80 bg-gradient-to-b from-amber-50/40 to-white p-4 dark:border-slate-700/60 dark:from-slate-800/40 dark:to-slate-800 sm:p-5">
+      {STATUS_ORDER.map((st) => {
+        const group = books.filter((b) => b.status === st)
+        if (group.length === 0) return null
+        return (
+          <section key={st}>
+            <div className="mb-2.5 flex items-center gap-2">
+              <Badge tone={STATUS_TONE[st]} dot>
+                {STATUS_LABEL[st]}
+              </Badge>
+              <span className="text-xs font-medium tabular-nums text-slate-400">{group.length} 本</span>
+              <span className="h-px flex-1 bg-gradient-to-r from-slate-200 to-transparent dark:from-slate-700/70" />
+            </div>
+            <Shelf items={group} />
+          </section>
+        )
+      })}
+    </div>
   )
 }
 
 // ============================================================
-//  統計儀表板（自製圖表）
+//  統計儀表板（自製圖表）—— 圖書館閱覽卡風格
 // ============================================================
+
+// 閱覽卡：細圓角、淺木紋頂邊、serif 小標題（與全頁書房語彙呼應）
+function CatalogueCard({
+  title,
+  icon: I,
+  description,
+  right,
+  children,
+}: {
+  title: string
+  icon?: import('lucide-react').LucideIcon
+  description?: string
+  right?: React.ReactNode
+  children: React.ReactNode
+}) {
+  return (
+    <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-xs dark:border-slate-700/60 dark:bg-slate-800 dark:shadow-none">
+      <div className="h-1 bg-gradient-to-r from-amber-200/70 via-accent/30 to-transparent dark:from-slate-700 dark:via-slate-700/60" />
+      <div className="p-4 sm:p-5">
+        <div className="mb-3 flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <h3 className="flex items-center gap-1.5 font-serif text-[15px] font-semibold tracking-tight text-slate-800 dark:text-slate-100">
+              {I && <I size={15} className="text-accent" />}
+              {title}
+            </h3>
+            {description && (
+              <p className="mt-0.5 text-[11px] text-slate-400 dark:text-slate-500">{description}</p>
+            )}
+          </div>
+          {right}
+        </div>
+        {children}
+      </div>
+    </div>
+  )
+}
+
 function StatsView({ books, stats }: { books: Book[]; stats: ReturnType<typeof computeStats> }) {
   const monthly = useMemo(() => monthlyFinished(books, 12), [books])
   const heat = useMemo(() => activityHeatmap(books, 18), [books])
@@ -980,68 +1160,79 @@ function StatsView({ books, stats }: { books: Book[]; stats: ReturnType<typeof c
     return (
       <EmptyState
         icon={BarChart3}
-        title="未有統計資料"
-        hint="加幾本書、記錄閱讀，就會見到圖表同趨勢。"
+        title="仲未有閱讀紀錄"
+        hint="加幾本書、記低閱讀時段，呢度就會長出你嘅閱讀軌跡同趨勢。"
       />
     )
   }
 
+  const completionRate = stats.total ? Math.round((stats.byStatus.done / stats.total) * 100) : 0
+
   return (
     <div className="space-y-4">
-      {/* KPI 列 */}
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <StatCard label="累計頁數" value={stats.totalPagesAll.toLocaleString()} unit="頁" icon={BookOpen} highlight />
-        <StatCard label="閱讀時數" value={totalHours} unit="小時" icon={BarChart3} hint={`${stats.totalMinutes} 分鐘`} />
-        <StatCard
-          label="最長連續"
-          value={stats.longestStreak}
-          unit="日"
-          icon={Flame}
-          hint={stats.currentStreak ? `目前 ${stats.currentStreak} 日` : undefined}
-        />
-        <StatCard label="完成率" value={stats.total ? Math.round((stats.byStatus.done / stats.total) * 100) : 0} unit="%" icon={CheckSquare} />
+      {/* KPI 列：借閱卡式 hairline grid（serif 數字，與書房 masthead 一致） */}
+      <div className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl bg-slate-200/70 ring-1 ring-slate-200/80 dark:bg-slate-700/50 dark:ring-slate-700/60 lg:grid-cols-4">
+        {[
+          { label: '累計頁數', icon: BookOpen, value: stats.totalPagesAll.toLocaleString(), unit: '頁', hint: '讀過嘅總頁數', hot: true },
+          { label: '閱讀時數', icon: BarChart3, value: totalHours, unit: '小時', hint: `${stats.totalMinutes} 分鐘`, hot: false },
+          { label: '最長連續', icon: Flame, value: stats.longestStreak, unit: '日', hint: stats.currentStreak ? `目前 ${stats.currentStreak} 日` : '未連續', hot: false },
+          { label: '完成率', icon: CheckSquare, value: completionRate, unit: '%', hint: `讀完 ${stats.byStatus.done} 本`, hot: false },
+        ].map((s) => {
+          const I = s.icon
+          return (
+            <div
+              key={s.label}
+              className={cx('px-4 py-3.5 transition-colors', s.hot ? 'bg-accent-soft dark:bg-accent/15' : 'bg-white dark:bg-slate-800')}
+            >
+              <p className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                <I size={12} className={s.hot ? 'text-accent' : ''} />
+                {s.label}
+              </p>
+              <p
+                className={cx(
+                  'mt-1 font-serif text-[26px] font-semibold leading-none tabular-nums slashed-zero',
+                  s.hot ? 'text-accent-strong dark:text-accent' : 'text-slate-800 dark:text-slate-100',
+                )}
+              >
+                {s.value}
+                {s.unit && <span className="ml-1 font-sans text-sm font-normal text-slate-400">{s.unit}</span>}
+              </p>
+              <p className="mt-1 truncate text-[11px] text-slate-400 dark:text-slate-500">{s.hint}</p>
+            </div>
+          )
+        })}
       </div>
 
       {/* 每月讀完 */}
-      <Card className="p-4 sm:p-5">
-        <SectionTitle icon={BarChart3} description="過去 12 個月讀完本數（hover 睇頁數）">
-          每月完成
-        </SectionTitle>
+      <CatalogueCard title="每月完成" icon={BarChart3} description="過去 12 個月讀完本數（hover 睇頁數）">
         <BarChart data={monthly} />
-      </Card>
+      </CatalogueCard>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         {/* 狀態佔比 */}
-        <Card className="p-4 sm:p-5">
-          <SectionTitle>狀態分佈</SectionTitle>
-          <DonutChart
-            slices={statusSlices}
-            centerTop={String(stats.total)}
-            centerBottom="本"
-          />
-        </Card>
+        <CatalogueCard title="狀態分佈" icon={Library}>
+          <DonutChart slices={statusSlices} centerTop={String(stats.total)} centerBottom="本" />
+        </CatalogueCard>
 
         {/* 評分分佈 */}
-        <Card className="p-4 sm:p-5">
-          <SectionTitle
-            right={
-              <span className="text-xs tabular-nums text-slate-400">
-                平均 <span className="font-semibold text-amber-500">{stats.avgRating.toFixed(1)}</span>
-              </span>
-            }
-          >
-            評分分佈
-          </SectionTitle>
+        <CatalogueCard
+          title="評分分佈"
+          icon={Star}
+          right={
+            <span className="text-xs tabular-nums text-slate-400">
+              平均 <span className="font-semibold text-amber-500">{stats.avgRating.toFixed(1)}</span>
+            </span>
+          }
+        >
           {stats.rated > 0 ? (
             <RatingBars dist={stats.ratingDist} />
           ) : (
             <p className="py-6 text-center text-sm text-slate-400">仲未有評分</p>
           )}
-        </Card>
+        </CatalogueCard>
 
         {/* 格式佔比 */}
-        <Card className="p-4 sm:p-5">
-          <SectionTitle>閱讀格式</SectionTitle>
+        <CatalogueCard title="閱讀格式" icon={BookOpen}>
           {formatSlices.some((s) => s.value > 0) ? (
             <DonutChart
               slices={formatSlices}
@@ -1051,11 +1242,10 @@ function StatsView({ books, stats }: { books: Book[]; stats: ReturnType<typeof c
           ) : (
             <p className="py-6 text-center text-sm text-slate-400">仲未標格式</p>
           )}
-        </Card>
+        </CatalogueCard>
 
         {/* 熱門書架 */}
-        <Card className="p-4 sm:p-5">
-          <SectionTitle>熱門書架</SectionTitle>
+        <CatalogueCard title="熱門書架" icon={Bookmark}>
           {stats.topShelves.length > 0 ? (
             <div className="space-y-2">
               {stats.topShelves.map((s) => {
@@ -1077,16 +1267,13 @@ function StatsView({ books, stats }: { books: Book[]; stats: ReturnType<typeof c
           ) : (
             <p className="py-6 text-center text-sm text-slate-400">仲未有書架標籤</p>
           )}
-        </Card>
+        </CatalogueCard>
       </div>
 
       {/* 活動熱圖 */}
-      <Card className="p-4 sm:p-5">
-        <SectionTitle icon={Flame} description="每日閱讀活動（過去約 4 個月）">
-          閱讀活動
-        </SectionTitle>
+      <CatalogueCard title="閱讀活動" icon={Flame} description="每日閱讀活動（過去約 4 個月）">
         <Heatmap cols={heat} />
-      </Card>
+      </CatalogueCard>
     </div>
   )
 }
@@ -1122,7 +1309,7 @@ function AddBookModal({
       finishedOn: status === 'done' ? todayKey() : undefined,
       createdAt: new Date().toISOString(),
     })
-    toast.success('已加入書庫')
+    toast.success('已上架')
     onAdded(created.id)
   }
 
@@ -1130,7 +1317,7 @@ function AddBookModal({
     <Modal
       open
       onClose={onClose}
-      title="加入新書"
+      title="上架一本書"
       size="md"
       footer={
         <>
@@ -1187,7 +1374,7 @@ function AddBookModal({
           </div>
         </Field>
         <p className="text-xs text-slate-400">
-          加入後可以喺詳情頁設定封面、評分、書架、記錄閱讀進度。
+          上架後可以喺詳情頁加封面、評分、書架標籤，仲可以記低每次閱讀進度。
         </p>
       </div>
     </Modal>
