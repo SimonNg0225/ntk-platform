@@ -566,16 +566,24 @@ export default function Countdown() {
         />
 
         <div className="relative px-5 py-6 sm:px-7 sm:py-7">
-          <div className="flex flex-wrap items-end justify-between gap-5">
+          {/* 頁面身份：kicker + serif 功能名（離境時刻表概念，功能名做主標題） */}
+          <div className="flex flex-wrap items-start justify-between gap-x-5 gap-y-4">
             <div className="min-w-0">
-              <p className="font-mono text-[11px] uppercase tracking-[0.25em] text-slate-400">
+              <p className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.3em] text-slate-400">
+                <PlaneTakeoff size={13} className="shrink-0" /> Departures · 離境時刻表
+              </p>
+              <h1 className="mt-1.5 font-serif text-[28px] font-semibold leading-none tracking-tight text-white sm:text-[34px]">
+                重要日子倒數
+              </h1>
+
+              {/* 最近一班「航班」：翻牌大數字（live 狀態，承接功能名做副資訊） */}
+              <p className="mt-5 font-mono text-[11px] uppercase tracking-[0.25em] text-slate-400">
                 {nearestDays === null
                   ? 'No scheduled departures'
                   : nearestDays === 0
                     ? 'Now boarding'
                     : 'Next departure in'}
               </p>
-              {/* 最近一項：翻牌大數字 */}
               <div className="mt-3 flex items-end gap-3">
                 {nearestDays === null ? (
                   <FlapDisplay value="—" ariaLabel="未有倒數" />

@@ -531,15 +531,19 @@ export default function Inbox() {
   // ──────────────────────────────────────────────────────────
   return (
     <div className="mx-auto w-full max-w-3xl p-4 sm:p-6">
-      {/* 標題 — 便條桌面：serif 邀請語 + 待清數字 */}
+      {/* 便條桌面 masthead：功能名做頁面身份（kicker Inbox + serif「快速擷取」+ 概念副題）。
+          host 已收起標題（selfManagedHeader），呢個係呢頁唯一頂部標題。 */}
       <header className="mb-5 flex items-end justify-between gap-3">
         <div className="min-w-0">
           <p className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.28em] text-accent/70">
             <InboxIcon size={12} strokeWidth={2.5} />
-            Inbox
+            Inbox · 便條桌面
           </p>
-          <h1 className="mt-1.5 font-serif text-[26px] font-semibold leading-tight tracking-tight text-slate-800 dark:text-slate-100 sm:text-3xl">
-            掉低個諗法
+          <h1 className="mt-1.5 flex flex-wrap items-baseline gap-x-2.5 gap-y-0.5 font-serif text-[26px] font-semibold leading-tight tracking-tight text-slate-800 dark:text-slate-100 sm:text-3xl">
+            快速擷取
+            <span className="font-serif text-base font-normal italic text-slate-400 dark:text-slate-500">
+              掉低個諗法
+            </span>
           </h1>
           <p className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-sm text-slate-500 dark:text-slate-400">
             <span>一秒記低，得閒先慢慢分類。</span>

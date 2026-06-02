@@ -117,7 +117,35 @@ export default function Flashcards() {
     )
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
+      {/* ───────── 卡盒檔案 masthead：頁面身份（kicker + serif 功能名 + 索引卡紅margin線）───────── */}
+      <header className="relative overflow-hidden rounded-3xl border border-slate-200/80 bg-white px-5 py-5 shadow-xs dark:border-slate-700/60 dark:bg-slate-800 dark:shadow-none sm:px-7 sm:py-6">
+        {/* 索引卡紅margin線（呼應全頁卡盒概念） */}
+        <span
+          aria-hidden="true"
+          className="absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-rose-300/80 via-rose-400/70 to-rose-300/40 dark:from-rose-500/40 dark:via-rose-500/50 dark:to-rose-500/20"
+        />
+        {/* 封面右上「卡盒戳印」裝飾（純裝飾，唔搶主次） */}
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute -right-5 top-3 hidden -rotate-6 select-none rounded-xl border-2 border-dashed border-accent/20 px-4 py-2 font-serif text-xs font-semibold uppercase tracking-[0.25em] text-accent/25 dark:border-accent/25 dark:text-accent/25 sm:block"
+        >
+          SRS · 間隔重複
+        </span>
+        <div className="pl-2">
+          <p className="flex items-center gap-2 text-[11px] font-medium uppercase tracking-[0.3em] text-accent/70">
+            <BookMarked size={13} />
+            知識卡盒 · Flashcards
+          </p>
+          <h1 className="mt-1.5 font-serif text-[28px] font-semibold leading-none tracking-tight text-slate-800 dark:text-slate-100 sm:text-[34px]">
+            知識卡 + 複習
+          </h1>
+          <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+            一張張寫，間隔重複幫你記得牢；到期先彈出嚟溫故知新。
+          </p>
+        </div>
+      </header>
+
       <Tabs<TopView>
         tabs={[
           { id: 'decks', label: '牌組' },

@@ -103,6 +103,7 @@ export const FEATURES: Feature[] = [
   },
   {
     id: 'learning-flashcards',
+    selfManagedHeader: true,
     modes: ['learning'],
     name: '知識卡 + 複習',
     description: '間隔重複（SRS），到期先彈出嚟複習。',
@@ -113,6 +114,7 @@ export const FEATURES: Feature[] = [
   },
   {
     id: 'learning-reading',
+    selfManagedHeader: true,
     modes: ['learning'],
     name: '閱讀清單',
     description: '收藏想睇嘅書同文章，分狀態追蹤。',
@@ -129,10 +131,12 @@ export const FEATURES: Feature[] = [
     icon: '🎯',
     group: '目標與習慣',
     component: GoalsWidget,
+    selfManagedHeader: true,
     status: 'ready',
   },
   {
     id: 'learning-habits',
+    selfManagedHeader: true,
     modes: ['learning'],
     name: '習慣追蹤',
     description: '每日打卡，建立個人好習慣。',
@@ -143,6 +147,7 @@ export const FEATURES: Feature[] = [
   },
   {
     id: 'learning-focus',
+    selfManagedHeader: true,
     modes: ['learning'],
     name: '專注計時器',
     description: '番茄鐘專注 / 休息循環 + 統計。',
@@ -153,6 +158,7 @@ export const FEATURES: Feature[] = [
   },
   {
     id: 'learning-journal',
+    selfManagedHeader: true,
     modes: ['learning'],
     name: '個人日誌',
     description: '每日反思，連續記低成長軌跡。',
@@ -174,6 +180,7 @@ export const FEATURES: Feature[] = [
   },
   {
     id: 'learning-fitness',
+    selfManagedHeader: true,
     modes: ['learning'],
     name: '健身中心',
     description: '體態數據、訓練記錄、AI 飲食營養、AI 教練、動作庫。',
@@ -351,6 +358,7 @@ export const FEATURES: Feature[] = [
   },
   {
     id: 'calendar',
+    selfManagedHeader: true,
     modes: ['learning', 'work'],
     name: '行事曆',
     description: '統一管理個人與工作日程。',
@@ -379,9 +387,11 @@ export const FEATURES: Feature[] = [
     group: '工具',
     component: Inbox,
     status: 'ready',
+    selfManagedHeader: true,
   },
   {
     id: 'countdown',
+    selfManagedHeader: true,
     modes: ['learning', 'work'],
     name: '重要日子倒數',
     description: '考試、死線、評估倒數，大數字一眼睇晒仲有幾多日。',
@@ -392,6 +402,7 @@ export const FEATURES: Feature[] = [
   },
   {
     id: 'quiz',
+    selfManagedHeader: true,
     modes: ['learning', 'work'],
     name: '自我測驗',
     description: '由 BAFS 題庫抽 MC 即時做題、自動批改、出分同弱項分析。',

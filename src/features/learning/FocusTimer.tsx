@@ -60,10 +60,11 @@ export default function FocusTimer() {
 
   return (
     <div className="space-y-8">
-      {/* ── 靜謐 masthead：置中、留白、似一頁禪修扉頁 ── */}
+      {/* ── 靜謐 masthead：置中、留白、似一頁禪修扉頁；功能名「專注計時器」做頁面身份 ── */}
       <header className="flex flex-col items-center pt-1 text-center">
-        <p className="text-[11px] font-medium uppercase tracking-[0.28em] text-slate-400 dark:text-slate-500">
-          專注時刻
+        <p className="flex items-center justify-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.28em] text-accent/70">
+          <Timer size={13} className="shrink-0" />
+          專注計時器 · Focus Timer
         </p>
         <h1 className="mt-2.5 font-serif text-[28px] font-semibold leading-none tracking-tight text-slate-800 dark:text-slate-100 sm:text-[34px]">
           靜下來，做一件事

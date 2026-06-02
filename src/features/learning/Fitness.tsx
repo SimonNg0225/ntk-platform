@@ -148,7 +148,7 @@ function Scoreboard({
           </span>
           <span className="inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.28em] text-white/60">
             <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400" />
-            健身中心 · LIVE
+            訓練記分牌 · LIVE
           </span>
         </div>
 

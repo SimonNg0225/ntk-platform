@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { CalendarArrowDown, ChevronLeft, ChevronRight, Dot, Plus, SlidersHorizontal } from 'lucide-react'
+import { CalendarArrowDown, CalendarRange, ChevronLeft, ChevronRight, Dot, Plus, SlidersHorizontal } from 'lucide-react'
 import { useCollection } from '../../lib/store'
 import { eventsCol, calendarsCol, countdownsCol } from '../../data/collections'
 import type { CalendarEvent } from '../../data/types'
@@ -155,13 +155,24 @@ export default function Calendar() {
 
   return (
     <div className="flex h-[78vh] flex-col gap-4">
-      {/* 工具列 — 月份標題 + 前後／今日導覽，右邊放檢視切換同新增 */}
+      {/* ───────── 週記 masthead：功能名「行事曆」做頁面身份（kicker + serif 大標題）───────── */}
+      <header className="min-w-0">
+        <p className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.3em] text-accent/70">
+          <CalendarRange size={13} className="shrink-0" />
+          日程週記 · Calendar
+        </p>
+        <h1 className="mt-1 font-serif text-[26px] font-semibold leading-none tracking-tight text-slate-800 dark:text-slate-100 sm:text-[30px]">
+          行事曆
+        </h1>
+      </header>
+
+      {/* 工具列 — 當前日期 + 前後／今日導覽，右邊放檢視切換同新增 */}
       <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
         <div className="min-w-0">
           <p className="text-[11px] font-medium uppercase tracking-[0.3em] text-accent/70">
             {VIEW_EYEBROW[view]}
           </p>
-          <h2 className="mt-0.5 font-serif text-2xl font-semibold leading-none tracking-tight text-slate-800 dark:text-slate-100 sm:text-[28px]">
+          <h2 className="mt-0.5 font-serif text-xl font-semibold leading-none tracking-tight text-slate-700 dark:text-slate-200 sm:text-2xl">
             {title}
           </h2>
         </div>

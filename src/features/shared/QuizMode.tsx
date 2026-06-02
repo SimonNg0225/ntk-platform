@@ -1,14 +1,14 @@
 import { useMemo, useState } from 'react'
 import { useCollection } from '../../lib/store'
 import { quizAttemptsCol } from '../../data/collections'
-import { ClipboardList, History, Notebook, TrendingUp } from 'lucide-react'
-import { PageHeader, Tabs } from '../../ui'
+import { ClipboardList, Flame, History, Notebook, Swords, TrendingUp } from 'lucide-react'
+import { Tabs } from '../../ui'
 import { SetupView } from './quiz/SetupView'
 import { QuizRunner } from './quiz/Runner'
 import { ResultView } from './quiz/ResultView'
 import { StatsView } from './quiz/StatsView'
 import { MistakeBank } from './quiz/MistakeBank'
-import { DEFAULT_SETTINGS, mistakesCol, type QuizSettings } from './quiz/util'
+import { DEFAULT_SETTINGS, mistakesCol, pct, type QuizSettings } from './quiz/util'
 
 // ============================================================
 //  自我測驗（QuizMode）— Quizlet / Kahoot 級
@@ -37,6 +37,11 @@ export default function QuizMode() {
   const attempts = useCollection(quizAttemptsCol)
   const mistakes = useCollection(mistakesCol)
   const activeMistakes = useMemo(() => mistakes.filter((m) => !m.mastered).length, [mistakes])
+  // 競技場狀態（純衍生，masthead status 行用）：歷來最佳命中率
+  const bestScore = useMemo(
+    () => attempts.reduce((m, a) => Math.max(m, pct(a.correctCount, a.total)), 0),
+    [attempts],
+  )
 
   // 由任何地方開始做一份題（切返「測驗」tab）
   const startWith = (questionIds: string[], settings: QuizSettings) => {
@@ -74,11 +79,38 @@ export default function QuizMode() {
 
   return (
     <div className="space-y-5">
-      <PageHeader
-        title="自我測驗"
-        description="揀個賽制即刻開戰：自動批改、即睇成績同掌握度，錯題再逐題操熟。"
-        icon={ClipboardList}
-      />
+      {/* ───────── 競技場 masthead：功能名做頁面身份（kicker 競技場 + serif「自我測驗」+ 賽季戰況行）───────── */}
+      <header className="flex flex-wrap items-end justify-between gap-x-4 gap-y-2">
+        <div className="min-w-0">
+          <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.3em] text-accent/70 dark:text-accent/80">
+            <Swords size={13} className="shrink-0" />
+            競技場 · Quiz Arena
+          </p>
+          <h1 className="mt-1 font-serif text-[28px] font-semibold leading-none tracking-tight text-slate-800 dark:text-slate-100 sm:text-[32px]">
+            自我測驗
+          </h1>
+          <p className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-slate-500 dark:text-slate-400">
+            <span className="inline-flex items-center gap-1">
+              <ClipboardList size={12} className="shrink-0 opacity-70" />
+              揀個賽制即刻開戰，自動批改、即睇掌握度
+            </span>
+            {attempts.length > 0 && (
+              <>
+                <span aria-hidden="true" className="text-slate-300 dark:text-slate-600">·</span>
+                <span className="tabular-nums">已戰 {attempts.length} 次</span>
+                {bestScore > 0 && (
+                  <>
+                    <span aria-hidden="true" className="text-slate-300 dark:text-slate-600">·</span>
+                    <span className="inline-flex items-center gap-1 font-medium text-amber-600 dark:text-amber-400">
+                      <Flame size={12} className="shrink-0" /> 最佳 {bestScore}%
+                    </span>
+                  </>
+                )}
+              </>
+            )}
+          </p>
+        </div>
+      </header>
 
       <Tabs<Tab>
         tabs={[

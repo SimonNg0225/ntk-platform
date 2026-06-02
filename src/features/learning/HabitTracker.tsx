@@ -265,16 +265,19 @@ export default function HabitTracker() {
 
   return (
     <div className="mx-auto w-full max-w-3xl space-y-5 p-4">
-      {/* ───────── 老黃曆 masthead：今日做主角（serif 日期 + 連續綬帶） ───────── */}
+      {/* ───────── 老黃曆 masthead：功能名做頁面身份（kicker 老黃曆 + serif「習慣追蹤」+ 今日曆書行） ───────── */}
       <header className="flex flex-wrap items-end justify-between gap-x-4 gap-y-3">
         <div className="min-w-0">
-          <p className="text-[11px] font-medium uppercase tracking-[0.3em] text-accent/70">
-            習慣 · 老黃曆
+          <p className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.3em] text-accent/70">
+            <CalendarDays size={13} className="shrink-0" />
+            老黃曆 · Daily Almanac
           </p>
           <h1 className="mt-1 font-serif text-2xl font-semibold leading-tight tracking-tight text-slate-800 dark:text-slate-100 sm:text-[28px]">
-            {longTodayLabel(today)}
+            習慣追蹤
           </h1>
           <p className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-slate-500 dark:text-slate-400">
+            <span className="tabular-nums">{longTodayLabel(today)}</span>
+            <span aria-hidden="true" className="text-slate-300 dark:text-slate-600">·</span>
             <span className="tabular-nums">在養成 {activeHabits.length} 個習慣</span>
             {stats.bestCurrentStreak > 0 && (
               <>

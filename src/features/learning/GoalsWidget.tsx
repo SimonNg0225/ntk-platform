@@ -263,6 +263,27 @@ export default function GoalsWidget() {
 
   return (
     <div className="space-y-6">
+      {/* ───────── 攀登誌 masthead：頁面身份（kicker + serif 功能名「個人目標」）───────── */}
+      <header className="flex flex-wrap items-end justify-between gap-x-4 gap-y-3">
+        <div className="min-w-0">
+          <p className="inline-flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.3em] text-accent/70">
+            <Mountain size={13} className="shrink-0" />
+            攀登誌 · Summit Log
+          </p>
+          <h1 className="mt-1 font-serif text-2xl font-semibold leading-tight tracking-tight text-slate-800 dark:text-slate-100 sm:text-[28px]">
+            個人目標
+          </h1>
+          <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">
+            揀座山頭、拆里程碑，一步步攀上去。
+          </p>
+        </div>
+        {!hasGoals && (
+          <Button icon={Plus} onClick={openNew} className="shrink-0">
+            新目標
+          </Button>
+        )}
+      </header>
+
       {/* ───────── 大本營：攀升主視覺（整體海拔 / 動量）───────── */}
       {hasGoals && (
         <BaseCamp

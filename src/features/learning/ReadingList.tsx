@@ -297,15 +297,15 @@ export default function ReadingList() {
 
   return (
     <div className="space-y-5">
-      {/* ── 書房 masthead：私人藏書館口吻（頁面標題「閱讀清單」已由外層提供） ── */}
+      {/* ── 書房 masthead：私人藏書館口吻（自管頁面標題，功能名「閱讀清單」做身份） ── */}
       <header className="flex flex-wrap items-end justify-between gap-x-4 gap-y-1">
         <div className="min-w-0">
           <p className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.3em] text-accent/70">
-            <Library size={13} /> My Library
+            <Library size={13} /> My Library · 我的書架
           </p>
-          <h2 className="mt-1.5 font-serif text-2xl font-semibold leading-tight tracking-tight text-slate-800 dark:text-slate-100 sm:text-[28px]">
-            我的書架
-          </h2>
+          <h1 className="mt-1.5 font-serif text-2xl font-semibold leading-tight tracking-tight text-slate-800 dark:text-slate-100 sm:text-[28px]">
+            閱讀清單
+          </h1>
           <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
             {stats.total > 0 ? (
               <span className="tabular-nums">

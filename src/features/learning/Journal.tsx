@@ -350,16 +350,20 @@ export default function Journal() {
 
   return (
     <div className="space-y-5">
-      {/* ───────── 日記 dateline：今日做主角（頁面標題「個人日誌」已由外層提供，唔重複） ───────── */}
+      {/* ───────── 日誌扉頁 masthead：功能名做頁面身份（kicker 日記扉頁 + serif「個人日誌」+ 今日 dateline）
+           host 已收起標題（selfManagedHeader），呢個係呢頁唯一頂部標題。 ───────── */}
       <header className="flex flex-wrap items-end justify-between gap-x-4 gap-y-3">
         <div className="min-w-0">
-          <p className="text-[11px] font-medium uppercase tracking-[0.3em] text-accent/70">
-            Today
+          <p className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.3em] text-accent/70">
+            <BookText size={13} className="shrink-0" />
+            日記扉頁 · Daily Journal
           </p>
-          <h2 className="mt-1 font-serif text-2xl font-semibold leading-tight tracking-tight text-slate-800 dark:text-slate-100 sm:text-[28px]">
-            {longDate(today)}
-          </h2>
+          <h1 className="mt-1 font-serif text-2xl font-semibold leading-tight tracking-tight text-slate-800 dark:text-slate-100 sm:text-[28px]">
+            個人日誌
+          </h1>
           <p className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-slate-500 dark:text-slate-400">
+            <span className="tabular-nums">{longDate(today)}</span>
+            <span aria-hidden="true" className="text-slate-300 dark:text-slate-600">·</span>
             <span className="tabular-nums">共 {stats.total} 篇反思</span>
             {stats.streak > 0 && (
               <>
