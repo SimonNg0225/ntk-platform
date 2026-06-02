@@ -494,15 +494,18 @@ export default function Timetable() {
         onClose={() => setShowSettings(false)}
         bells={bells}
         days={days}
-        onSave={(nextBells, nextDays) => {
-          timetableConfigCol.update('config', { bells: nextBells, days: nextDays })
+        cycle={cycle}
+        onSave={(nextBells, nextDays, nextCycle) => {
+          timetableConfigCol.update('config', { bells: nextBells, days: nextDays, cycle: nextCycle })
           toast.success('已更新時段設定')
           setShowSettings(false)
         }}
         onReset={() => {
+          // 還原鐘聲 + 顯示日子，但保留目前嘅循環／星期模式（唔再跌返星期）。
           timetableConfigCol.update('config', {
             bells: DEFAULT_BELLS,
-            days: [1, 2, 3, 4, 5],
+            days: [1, 2, 3, 4, 5, 6],
+            cycle,
           })
           toast.success('已還原預設時段')
           setShowSettings(false)
@@ -692,6 +695,7 @@ function SettingsModal({
   onClose,
   bells,
   days,
+  cycle,
   onSave,
   onReset,
 }: {
@@ -699,18 +703,21 @@ function SettingsModal({
   onClose: () => void
   bells: BellRow[]
   days: number[]
-  onSave: (bells: BellRow[], days: number[]) => void
+  cycle: boolean
+  onSave: (bells: BellRow[], days: number[], cycle: boolean) => void
   onReset: () => void
 }) {
   const [rows, setRows] = useState<BellRow[]>(bells)
   const [selDays, setSelDays] = useState<number[]>(days)
+  const [cycleOn, setCycleOn] = useState<boolean>(cycle)
 
   useEffect(() => {
     if (open) {
       setRows(bells)
       setSelDays(days)
+      setCycleOn(cycle)
     }
-  }, [open, bells, days])
+  }, [open, bells, days, cycle])
 
   function patchRow(i: number, p: Partial<BellRow>) {
     setRows((prev) => prev.map((r, idx) => (idx === i ? { ...r, ...p } : r)))
@@ -745,7 +752,7 @@ function SettingsModal({
             <Button variant="secondary" onClick={onClose}>
               取消
             </Button>
-            <Button onClick={() => onSave(rows, selDays.length ? selDays : [1])}>
+            <Button onClick={() => onSave(rows, selDays.length ? selDays : [1], cycleOn)}>
               儲存
             </Button>
           </div>
@@ -753,8 +760,44 @@ function SettingsModal({
       }
     >
       <div className="space-y-4">
-        {/* 顯示日子 */}
-        <Field label="顯示星期">
+        {/* 六日循環模式開關（Day A–F ↔ 星期一～六） */}
+        <button
+          type="button"
+          onClick={() => setCycleOn((v) => !v)}
+          aria-pressed={cycleOn}
+          className="flex w-full items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50/60 p-3 text-left transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800/60 dark:hover:bg-slate-800"
+        >
+          <span className="min-w-0">
+            <span className="block text-sm font-medium text-slate-700 dark:text-slate-200">
+              六日循環（Day A–F）
+            </span>
+            <span className="mt-0.5 block text-xs text-slate-500 dark:text-slate-400">
+              {cycleOn
+                ? '欄頭用 Day A–F，「今日」跟校曆循環日'
+                : '欄頭用星期一～六（固定每週）'}
+            </span>
+          </span>
+          <span
+            aria-hidden="true"
+            className={cx(
+              'relative h-6 w-11 shrink-0 rounded-full transition-colors',
+              cycleOn ? 'bg-accent' : 'bg-slate-300 dark:bg-slate-600',
+            )}
+          >
+            <span
+              className={cx(
+                'absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all',
+                cycleOn ? 'left-[22px]' : 'left-0.5',
+              )}
+            />
+          </span>
+        </button>
+
+        {/* 顯示日子（cycle 模式 = Day A–F；否則星期） */}
+        <Field
+          label={cycleOn ? '顯示循環日' : '顯示星期'}
+          hint={cycleOn ? '揀邊幾個 cycle day 出現喺課表（通常 A–F 全部）' : undefined}
+        >
           <div className="flex flex-wrap gap-1.5">
             {DAY_DEFS.map((d) => {
               const on = selDays.includes(d.day)
@@ -770,7 +813,7 @@ function SettingsModal({
                       : 'bg-slate-100 text-slate-500 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700',
                   )}
                 >
-                  {d.short}
+                  {cycleOn ? `Day ${cycleShort(d.day)}` : d.short}
                 </button>
               )
             })}
