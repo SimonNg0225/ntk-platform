@@ -2,6 +2,7 @@ import {
   memo,
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -197,6 +198,8 @@ export default function AIAssistant() {
 
   // modal flags
   const [templateOpen, setTemplateOpen] = useState(false)
+  // Welcome chip 帶變數時：開範本庫即直接跳去「填寫」表單（唔使再揀多次）
+  const [tplInitialFill, setTplInitialFill] = useState<{ title: string; body: string } | null>(null)
   const [contextOpen, setContextOpen] = useState(false)
   const [statsOpen, setStatsOpen] = useState(false)
   const [paletteOpen, setPaletteOpen] = useState(false)
@@ -649,7 +652,7 @@ export default function AIAssistant() {
             </Button>
             <Input
               icon={Search}
-              className="py-1.5 text-xs"
+              className="py-1.5 text-base sm:text-xs"
               placeholder="搜尋對話…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -857,9 +860,14 @@ export default function AIAssistant() {
               tagline={cfg.tagline}
               templates={builtinTemplates(mode).slice(0, 6)}
               onPick={(t) => {
-                // 有變數就行範本庫表單流程；冇就直接填入
-                if (t.body.includes('{{')) setTemplateOpen(true)
-                else applyText(t.body)
+                // 帶變數：直接開「填寫」表單（之前係開成個範本庫，要喺度再揀多次先填到）。
+                // 冇變數：直接填入 Composer。
+                if (t.body.includes('{{')) {
+                  setTplInitialFill({ title: t.title, body: t.body })
+                  setTemplateOpen(true)
+                } else {
+                  applyText(t.body)
+                }
               }}
               onOpenLibrary={() => setTemplateOpen(true)}
             />
@@ -940,12 +948,17 @@ export default function AIAssistant() {
       {/* ───────── Modals ───────── */}
       <TemplateLibrary
         open={templateOpen}
-        onClose={() => setTemplateOpen(false)}
+        initialFill={tplInitialFill}
+        onClose={() => {
+          setTemplateOpen(false)
+          setTplInitialFill(null)
+        }}
         mode={mode}
         custom={customTemplates}
         onUse={(text) => {
           applyText(text)
           setTemplateOpen(false)
+          setTplInitialFill(null)
         }}
         toast={toast}
         confirm={confirm}
@@ -1456,6 +1469,7 @@ function TypingDots() {
 function TemplateLibrary({
   open,
   onClose,
+  initialFill,
   mode,
   custom,
   onUse,
@@ -1464,6 +1478,8 @@ function TemplateLibrary({
 }: {
   open: boolean
   onClose: () => void
+  /** 開庫時若帶此範本（且含變數），直接跳去「填寫」表單，唔使再喺 grid 揀多次。 */
+  initialFill?: { title: string; body: string } | null
   mode: ModeId
   custom: import('./aiAssistant/types').PromptTemplate[]
   onUse: (text: string) => void
@@ -1474,6 +1490,17 @@ function TemplateLibrary({
   const [q, setQ] = useState('')
   const [varFor, setVarFor] = useState<{ title: string; body: string } | null>(null)
   const [varValues, setVarValues] = useState<Record<string, string>>({})
+
+  // 外部要求直接填寫某範本（Welcome chip 帶變數）：開庫即跳「填寫」子畫面。
+  // 用 useLayoutEffect 喺 paint 前 set 好 varFor，避免閃一閃 grid。
+  useLayoutEffect(() => {
+    if (!open || !initialFill) return
+    const vars = extractVars(initialFill.body)
+    if (vars.length === 0) return
+    setVarFor({ title: initialFill.title, body: initialFill.body })
+    setVarValues(Object.fromEntries(vars.map((v) => [v, ''])))
+    // initialFill 由父組件以 state 持有（穩定 ref），open 切換時先觸發。
+  }, [open, initialFill])
 
   // 新增自訂範本
   const [creating, setCreating] = useState(false)
@@ -1603,7 +1630,7 @@ function TemplateLibrary({
           />
           <Input
             icon={Search}
-            className="flex-1 py-1.5 text-xs"
+            className="flex-1 py-1.5 text-base sm:text-xs"
             placeholder="搜尋範本…"
             value={q}
             onChange={(e) => setQ(e.target.value)}
@@ -1764,7 +1791,7 @@ function ContextPicker({
           ]}
         />
         {tab !== 'text' && (
-          <Input icon={Search} className="flex-1 py-1.5 text-xs" placeholder="搜尋…" value={q} onChange={(e) => setQ(e.target.value)} />
+          <Input icon={Search} className="flex-1 py-1.5 text-base sm:text-xs" placeholder="搜尋…" value={q} onChange={(e) => setQ(e.target.value)} />
         )}
       </div>
 
@@ -2060,7 +2087,7 @@ function CommandPalette({
               else if (e.key === 'Escape') onClose()
             }}
             placeholder="搵指令或對話…"
-            className="flex-1 bg-transparent py-3 text-sm text-slate-700 outline-none placeholder:text-slate-400 dark:text-slate-200"
+            className="flex-1 bg-transparent py-3 text-base sm:text-sm text-slate-700 outline-none placeholder:text-slate-400 dark:text-slate-200"
           />
           <Kbd>esc</Kbd>
         </div>
