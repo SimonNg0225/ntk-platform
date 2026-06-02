@@ -158,7 +158,7 @@ export default function CommandPalette({ open, onClose, onNavigate }: Props) {
               }
             }}
             placeholder="搜尋功能、切換模式…"
-            className="flex-1 bg-transparent py-3.5 text-sm text-slate-800 outline-none placeholder:text-slate-400 dark:text-slate-100"
+            className="flex-1 bg-transparent py-3.5 text-base sm:text-sm text-slate-800 outline-none placeholder:text-slate-400 dark:text-slate-100"
           />
           <Kbd className="hidden sm:inline-flex">ESC</Kbd>
         </div>

@@ -646,7 +646,7 @@ export default function GlobalSearch() {
             onChange={(e) => setRaw(e.target.value)}
             placeholder="搜尋筆記、題庫、資源、班別、學生、行事曆…"
             aria-label="全域搜尋"
-            className="min-w-0 flex-1 bg-transparent text-[15px] text-slate-800 outline-none placeholder:text-slate-400 dark:text-slate-100 dark:placeholder:text-slate-500"
+            className="min-w-0 flex-1 bg-transparent text-base sm:text-[15px] text-slate-800 outline-none placeholder:text-slate-400 dark:text-slate-100 dark:placeholder:text-slate-500"
           />
           {raw ? (
             <button

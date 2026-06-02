@@ -334,7 +334,7 @@ export default function NoteEditor({
               }}
               onBlur={() => addAttendees(attendeeInput)}
               placeholder={draft.attendees.length ? '繼續加…' : '輸入姓名，Enter 加入'}
-              className="min-w-[8rem] flex-1 bg-transparent py-1 text-sm text-slate-800 outline-none placeholder:text-slate-400 dark:text-slate-100 dark:placeholder:text-slate-500"
+              className="min-w-[8rem] flex-1 bg-transparent py-1 text-base sm:text-sm text-slate-800 outline-none placeholder:text-slate-400 dark:text-slate-100 dark:placeholder:text-slate-500"
             />
           </div>
         </div>
@@ -474,7 +474,7 @@ export default function NoteEditor({
                     onChange={(e) => updateAction(a.id, { text: e.target.value })}
                     placeholder="跟進事項…"
                     className={cx(
-                      'min-w-[8rem] flex-1 bg-transparent text-sm outline-none placeholder:text-slate-400 dark:placeholder:text-slate-500',
+                      'min-w-[8rem] flex-1 bg-transparent text-base sm:text-sm outline-none placeholder:text-slate-400 dark:placeholder:text-slate-500',
                       a.done
                         ? 'text-slate-400 line-through dark:text-slate-500'
                         : 'text-slate-800 dark:text-slate-100',
@@ -491,7 +491,7 @@ export default function NoteEditor({
                           })
                         }
                         placeholder="負責人"
-                        className="w-20 bg-transparent py-1 pr-2 text-xs text-slate-700 outline-none placeholder:text-slate-400 dark:text-slate-200"
+                        className="w-20 bg-transparent py-1 pr-2 text-base sm:text-xs text-slate-700 outline-none placeholder:text-slate-400 dark:text-slate-200"
                       />
                     </span>
                     <span className="inline-flex items-center gap-1 rounded-md bg-slate-50 px-2 py-1 dark:bg-slate-800/60">
@@ -502,7 +502,7 @@ export default function NoteEditor({
                         onChange={(e) =>
                           updateAction(a.id, { due: e.target.value || undefined })
                         }
-                        className="bg-transparent text-xs text-slate-700 outline-none dark:text-slate-200 [color-scheme:light] dark:[color-scheme:dark]"
+                        className="bg-transparent text-base sm:text-xs text-slate-700 outline-none dark:text-slate-200 [color-scheme:light] dark:[color-scheme:dark]"
                       />
                     </span>
                     <IconButton

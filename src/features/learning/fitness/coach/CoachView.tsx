@@ -68,7 +68,7 @@ export default function CoachView() {
           options={TOOLS.map((t) => ({ id: t.id, label: t.label, icon: t.icon }))}
         />
         <Select
-          className="w-auto py-1.5 text-xs"
+          className="w-auto py-1.5 text-base sm:text-xs"
           value={model}
           onChange={(e) => setModel(e.target.value as AIModel)}
           aria-label="選擇 AI 模型"

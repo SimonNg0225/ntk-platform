@@ -164,7 +164,7 @@ export function TagEditor({
             }
           }}
           placeholder={value.length ? '' : '輸入標籤後按 Enter…'}
-          className="min-w-[6rem] flex-1 bg-transparent text-sm text-slate-800 outline-none placeholder:text-slate-400 dark:text-slate-100 dark:placeholder:text-slate-500"
+          className="min-w-[6rem] flex-1 bg-transparent text-base sm:text-sm text-slate-800 outline-none placeholder:text-slate-400 dark:text-slate-100 dark:placeholder:text-slate-500"
         />
       </div>
       {pool.length > 0 && (

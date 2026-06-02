@@ -530,7 +530,7 @@ function DateNav({
         value={date}
         onChange={(e) => e.target.value && setDate(e.target.value)}
         aria-label="選擇點名日期"
-        className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/25 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+        className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-base sm:text-sm text-slate-800 outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/25 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
       />
       {!isToday && (
         <Button size="sm" variant="ghost" onClick={() => setDate(todayKey())}>

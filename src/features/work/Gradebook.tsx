@@ -1326,7 +1326,7 @@ function StudentsTab({ classId }: { classId: string }) {
               value={bulk}
               onChange={(e) => setBulk(e.target.value)}
               placeholder={'1\t陳大文\n2\t李小明\n王美玲'}
-              className="min-h-[120px] w-full resize-y rounded-lg border border-slate-300 bg-white px-3 py-2 font-mono text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-accent focus:ring-2 focus:ring-accent/30 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+              className="min-h-[120px] w-full resize-y rounded-lg border border-slate-300 bg-white px-3 py-2 font-mono text-base sm:text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-accent focus:ring-2 focus:ring-accent/30 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
             />
           </Field>
           <div className="flex justify-end gap-2">
@@ -1572,7 +1572,7 @@ function AssessmentsTab({ classId }: { classId: string }) {
                       value={a.topicId ?? ''}
                       onChange={(e) => setField(a.id, { topicId: e.target.value })}
                       aria-label={`${a.name} — 連結課題`}
-                      className="max-w-[200px] cursor-pointer rounded-md border border-slate-200 bg-white px-2 py-1 text-xs text-slate-600 outline-none focus:border-accent dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+                      className="max-w-[200px] cursor-pointer rounded-md border border-slate-200 bg-white px-2 py-1 text-base sm:text-xs text-slate-600 outline-none focus:border-accent dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
                     >
                       <option value="">— 未連 —</option>
                       {topicGroups.map(([area, list]) => (
@@ -1590,7 +1590,7 @@ function AssessmentsTab({ classId }: { classId: string }) {
                       value={a.date ?? ''}
                       onChange={(e) => setField(a.id, { date: e.target.value })}
                       aria-label={`${a.name} — 評估日期`}
-                      className="cursor-pointer rounded-md border border-slate-200 bg-white px-2 py-1 text-xs text-slate-600 outline-none focus:border-accent dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+                      className="cursor-pointer rounded-md border border-slate-200 bg-white px-2 py-1 text-base sm:text-xs text-slate-600 outline-none focus:border-accent dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
                     />
                   </div>
                 </li>

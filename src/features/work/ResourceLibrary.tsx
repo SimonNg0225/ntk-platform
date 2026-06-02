@@ -385,7 +385,7 @@ export default function ResourceLibrary() {
                 value={filter.search}
                 onChange={(e) => patch({ search: e.target.value })}
                 placeholder="搜尋標題 / 備註 / 網域 / 標籤…"
-                className="w-full rounded-xl border border-slate-300 bg-white py-2 pl-9 pr-16 text-sm text-slate-800 shadow-xs outline-none transition placeholder:text-slate-400 focus:border-accent focus:ring-2 focus:ring-accent/30 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-500 dark:shadow-none"
+                className="w-full rounded-xl border border-slate-300 bg-white py-2 pl-9 pr-16 text-base sm:text-sm text-slate-800 shadow-xs outline-none transition placeholder:text-slate-400 focus:border-accent focus:ring-2 focus:ring-accent/30 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-500 dark:shadow-none"
               />
               {filter.search ? (
                 <button
@@ -1435,7 +1435,7 @@ function FolderManager({
                     }}
                     onBlur={() => saveEdit(f.id)}
                     autoFocus
-                    className="flex-1 rounded-md border border-accent bg-white px-2 py-1 text-sm outline-none dark:bg-slate-800 dark:text-slate-100"
+                    className="flex-1 rounded-md border border-accent bg-white px-2 py-1 text-base sm:text-sm outline-none dark:bg-slate-800 dark:text-slate-100"
                   />
                 ) : (
                   <span className="flex-1 text-sm text-slate-700 dark:text-slate-200">
