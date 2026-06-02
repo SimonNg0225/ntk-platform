@@ -141,15 +141,18 @@ function AppShell() {
                   >
                     ← 返回{modeDef.name}概覽
                   </button>
-                  <div>
-                    <h1 className="flex items-center gap-2 text-2xl font-bold text-slate-800 dark:text-slate-100">
-                      <FeatureIcon icon={feature.icon} size={24} className="text-accent" />
-                      {feature.name}
-                    </h1>
-                    <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                      {feature.description}
-                    </p>
-                  </div>
+                  {/* 標準 header；selfManagedHeader 嘅功能自管 masthead，host 唔重複出標題 */}
+                  {!feature.selfManagedHeader && (
+                    <div>
+                      <h1 className="flex items-center gap-2 text-2xl font-bold text-slate-800 dark:text-slate-100">
+                        <FeatureIcon icon={feature.icon} size={24} className="text-accent" />
+                        {feature.name}
+                      </h1>
+                      <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                        {feature.description}
+                      </p>
+                    </div>
+                  )}
                   <div>
                     {feature.status === 'ready' && feature.component ? (
                       <ErrorBoundary key={feature.id} onReset={() => navigate(null)}>

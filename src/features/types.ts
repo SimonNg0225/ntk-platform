@@ -25,4 +25,10 @@ export interface Feature {
   component?: ComponentType | LazyExoticComponent<ComponentType>
   /** 'ready' = 可用；'soon' = 預留位（即將推出） */
   status: 'ready' | 'soon'
+  /**
+   * 自管 header：true 時 App host 唔再 render 預設嘅 feature 名 + 描述 h1，
+   * 由功能組件自己嘅 bespoke masthead 全權負責頂部（避免「header 疊 header」）。
+   * 返回掣仍然由 host 提供。預設 false / undefined = host render 標準 header。
+   */
+  selfManagedHeader?: boolean
 }
