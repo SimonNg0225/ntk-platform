@@ -1,6 +1,18 @@
+import type { ReactNode } from 'react'
 import type { Assessment } from '../../../data/types'
-import { Badge, Button, Modal } from '../../../ui'
-import { Printer } from 'lucide-react'
+import { Badge, Button, IconButton, Modal, cx } from '../../../ui'
+import {
+  BookMarked,
+  Calculator,
+  GraduationCap,
+  ListChecks,
+  NotebookPen,
+  Printer,
+  Target,
+  Trophy,
+  Users,
+  X,
+} from 'lucide-react'
 import { MiniSpark } from './Charts'
 import {
   TONE_TEXT,
@@ -108,12 +120,13 @@ export default function StudentReport({
     setTimeout(() => win.print(), 250)
   }
 
+  const studentNo = result.student.studentNo
+
   return (
     <Modal
       open={open}
       onClose={onClose}
       size="lg"
-      title={`成績單 — ${result.student.name}`}
       footer={
         <>
           <Button variant="secondary" onClick={onClose}>
@@ -125,138 +138,267 @@ export default function StudentReport({
         </>
       }
     >
-      <div className="space-y-4">
-        {/* 總覽 —— 成績單封面：serif 巨型總分 + 等第章 + 名次/百分位/已交清算 */}
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-accent/25 bg-accent-soft/50 p-5 dark:border-accent/30 dark:bg-accent/10">
-          <div>
-            <p className="text-[11px] font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
-              總成績
+      {/* ───────── 成績單封面抬頭：呼應 Gradebook masthead（kicker + serif + 鋼印 + 帳簿雙線）───────── */}
+      <header className="relative -mx-5 -mt-5 mb-4 overflow-hidden border-b border-slate-200/80 bg-accent-soft/40 px-5 pb-4 pt-5 dark:border-slate-700/60 dark:bg-accent/10 sm:-mx-6 sm:-mt-6 sm:px-6 sm:pt-6">
+        {/* 右上鋼印（純裝飾，同 masthead 一致）*/}
+        <span
+          aria-hidden
+          className="pointer-events-none absolute -right-4 top-2 hidden -rotate-6 select-none rounded-lg border-2 border-dashed border-accent/20 px-3 py-1.5 font-serif text-[10px] font-semibold uppercase tracking-[0.25em] text-accent/25 dark:border-accent/25 dark:text-accent/25 sm:block"
+        >
+          成績冊 · Ledger
+        </span>
+        <div className="flex items-start gap-3 pr-9 sm:pr-28">
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white/70 text-accent-strong dark:bg-white/10 dark:text-accent">
+            <GraduationCap size={22} strokeWidth={1.9} />
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.28em] text-accent/70">
+              <BookMarked size={12} className="shrink-0" />
+              成績單 · Report Card
             </p>
-            <p className="mt-0.5 flex items-baseline gap-2">
-              <span
-                className={`font-serif text-[42px] font-semibold leading-none tabular-nums slashed-zero ${
-                  band ? TONE_TEXT[band.tone] : 'text-slate-400'
-                }`}
-              >
-                {total == null ? '—' : `${Math.round(total)}%`}
-              </span>
-              {band && <Badge tone={band.tone}>{band.label}</Badge>}
+            <h2 className="mt-1 flex flex-wrap items-baseline gap-x-2 font-serif text-[24px] font-semibold leading-none tracking-tight text-slate-800 dark:text-slate-100 sm:text-[28px]">
+              {result.student.name}
+              {studentNo && (
+                <span className="font-sans text-sm font-normal tabular-nums text-slate-400 dark:text-slate-500">
+                  學號 {studentNo}
+                </span>
+              )}
+            </h2>
+            <p className="mt-1.5 truncate text-sm text-slate-500 dark:text-slate-400">
+              {className} · {scheme.weighted ? '加權計分' : '等權平均'}
             </p>
           </div>
-          <div className="flex gap-5 text-center">
+        </div>
+        <IconButton
+          label="關閉"
+          onClick={onClose}
+          className="absolute right-3 top-3 sm:right-4 sm:top-4"
+        >
+          <X size={18} />
+        </IconButton>
+        {/* 帳簿雙線（封面分隔感，同 masthead）*/}
+        <div className="mt-4 space-y-1" aria-hidden>
+          <span className="block h-px bg-slate-300/70 dark:bg-slate-600/50" />
+          <span className="block h-px bg-slate-300/40 dark:bg-slate-600/30" />
+        </div>
+      </header>
+
+      <div className="space-y-4">
+        {/* 總覽 —— 成績單封面清算：serif 巨型總分 + 等第章 + 名次/百分位/已交（帳簿清點欄）*/}
+        <section className="overflow-hidden rounded-2xl border border-accent/25 dark:border-accent/30">
+          {/* 主格：總成績 — accent 底、serif 巨數、等第章 */}
+          <div className="flex flex-wrap items-center justify-between gap-3 bg-accent-soft/50 px-5 py-4 dark:bg-accent/10">
             <div>
-              <p className="text-xs text-slate-500 dark:text-slate-400">班內名次</p>
-              <p className="mt-0.5 font-serif text-xl font-semibold tabular-nums slashed-zero text-slate-700 dark:text-slate-200">
-                {rank == null ? '—' : `${rank}`}
+              <p className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide text-accent-strong/80 dark:text-accent/80">
+                <Target size={12} className="shrink-0" />
+                {scheme.weighted ? '加權總成績' : '總成績'}
+              </p>
+              <p className="mt-0.5 flex items-baseline gap-2">
+                <span
+                  className={cx(
+                    'font-serif text-[42px] font-semibold leading-none tabular-nums slashed-zero',
+                    band ? TONE_TEXT[band.tone] : 'text-slate-400',
+                  )}
+                >
+                  {total == null ? '—' : `${Math.round(total)}`}
+                  {total != null && (
+                    <span className="ml-0.5 font-sans text-lg font-normal text-slate-400">
+                      %
+                    </span>
+                  )}
+                </span>
+                {band && <Badge tone={band.tone}>{band.label}</Badge>}
+              </p>
+            </div>
+            <div className="flex h-10 items-center" title="逐評估走勢">
+              <MiniSpark values={trend} scale={scale} />
+            </div>
+          </div>
+          {/* 清點欄：名次 / 百分位 / 已交 —— hairline grid、serif 數字 */}
+          <div className="grid grid-cols-3 gap-px border-t border-accent/20 bg-slate-200/70 dark:border-accent/25 dark:bg-slate-700/50">
+            <LedgerCell label="班內名次" icon={Trophy}>
+              {rank == null ? '—' : `${rank}`}
+              {rank != null && (
                 <span className="font-sans text-sm font-normal text-slate-400">
                   {' '}
                   / {classSize}
                 </span>
-              </p>
-            </div>
-            <div>
-              <p className="text-xs text-slate-500 dark:text-slate-400">百分位</p>
-              <p className="mt-0.5 font-serif text-xl font-semibold tabular-nums slashed-zero text-slate-700 dark:text-slate-200">
-                {percentile == null ? (
-                  '—'
-                ) : (
-                  <>
-                    {percentile}
-                    <span className="font-sans text-sm font-normal text-slate-400">
-                      {' '}
-                      th
-                    </span>
-                  </>
-                )}
-              </p>
-            </div>
-            <div>
-              <p className="text-xs text-slate-500 dark:text-slate-400">已交</p>
-              <p className="mt-0.5 font-serif text-xl font-semibold tabular-nums slashed-zero text-slate-700 dark:text-slate-200">
-                {result.submitted}
+              )}
+            </LedgerCell>
+            <LedgerCell label="百分位" icon={Target}>
+              {percentile == null ? '—' : `${percentile}`}
+              {percentile != null && (
                 <span className="font-sans text-sm font-normal text-slate-400">
                   {' '}
-                  / {result.expected}
+                  th
                 </span>
-              </p>
-            </div>
-            <div>
-              <p className="text-xs text-slate-500 dark:text-slate-400">走勢</p>
-              <div className="flex h-9 items-center justify-center">
-                <MiniSpark values={trend} scale={scale} />
-              </div>
-            </div>
+              )}
+            </LedgerCell>
+            <LedgerCell label="已交評估" icon={ListChecks}>
+              {result.submitted}
+              <span className="font-sans text-sm font-normal text-slate-400">
+                {' '}
+                / {result.expected}
+              </span>
+            </LedgerCell>
+          </div>
+        </section>
+
+        {/* 逐評估明細 —— 改卷簿明細頁：ruled 帳格 · serif 題號／得分 · 結算行 */}
+        <div className="overflow-hidden rounded-2xl border border-slate-200/80 dark:border-slate-700/60">
+          {/* 明細卷頭（呼應主畫面「成績矩陣」題頭帶）*/}
+          <div className="flex items-center gap-1.5 border-b border-slate-200/80 px-4 py-2.5 dark:border-slate-700/60">
+            <NotebookPen size={13} className="shrink-0 text-slate-400 dark:text-slate-500" />
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+              成績明細 · Score Sheet
+            </span>
+            <span className="ml-auto text-[11px] tabular-nums text-slate-400 dark:text-slate-500">
+              {sorted.length} 項
+            </span>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="border-b border-slate-200/80 bg-slate-50/80 text-xs uppercase tracking-wide text-slate-500 dark:border-slate-700/60 dark:bg-slate-800/60 dark:text-slate-400">
+                <tr>
+                  <th className="px-3 py-2.5 text-left font-semibold">評估</th>
+                  <th className="px-3 py-2.5 text-center font-semibold">類型</th>
+                  <th className="px-3 py-2.5 text-right font-semibold">得分</th>
+                  <th className="px-3 py-2.5 text-right font-semibold">vs 班平均</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                {sorted.map((a, i) => {
+                  const p = result.perAssessment[a.id]
+                  const av = assessmentAvg.get(a.id) ?? null
+                  const diff = p != null && av != null ? p - av : null
+                  const t = p != null ? gradeOf(p, scale, bands).tone : 'slate'
+                  return (
+                    <tr
+                      key={a.id}
+                      className="transition-colors hover:bg-accent-soft/20 dark:hover:bg-slate-800/40"
+                    >
+                      <td className="px-3 py-2 text-slate-700 dark:text-slate-200">
+                        <span className="flex items-baseline gap-2">
+                          <span className="font-serif text-[11px] tabular-nums slashed-zero text-slate-300 dark:text-slate-600">
+                            {String(i + 1).padStart(2, '0')}
+                          </span>
+                          <span className="min-w-0">
+                            {a.name}
+                            {a.date && (
+                              <span className="ml-1.5 text-xs text-slate-400">
+                                {shortDate(a.date)}
+                              </span>
+                            )}
+                          </span>
+                        </span>
+                      </td>
+                      <td className="px-3 py-2 text-center">
+                        <Badge tone="slate">{a.type}</Badge>
+                      </td>
+                      <td
+                        className={cx(
+                          'px-3 py-2 text-right font-serif text-[15px] font-semibold tabular-nums slashed-zero',
+                          TONE_TEXT[t],
+                        )}
+                      >
+                        {p == null ? (
+                          <span className="font-sans text-sm font-normal text-slate-300 dark:text-slate-600">
+                            未交
+                          </span>
+                        ) : (
+                          `${Math.round(p)}%`
+                        )}
+                      </td>
+                      <td className="px-3 py-2 text-right font-serif tabular-nums slashed-zero">
+                        {diff == null ? (
+                          <span className="font-sans text-slate-300 dark:text-slate-600">—</span>
+                        ) : (
+                          <span
+                            className={
+                              diff >= 0
+                                ? 'text-emerald-600 dark:text-emerald-400'
+                                : 'text-rose-600 dark:text-rose-400'
+                            }
+                          >
+                            {diff >= 0 ? '+' : ''}
+                            {Math.round(diff)}
+                          </span>
+                        )}
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+              {/* 結算行（同主畫面成績矩陣 tfoot 一致）*/}
+              <tfoot>
+                <tr className="border-t-2 border-slate-200/80 bg-slate-50/80 dark:border-slate-700/60 dark:bg-slate-800/60">
+                  <td
+                    colSpan={2}
+                    className="px-3 py-2.5 text-left"
+                  >
+                    <span className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                      <Calculator size={12} className="shrink-0" />
+                      {scheme.weighted ? '加權總分' : '總分'}
+                    </span>
+                  </td>
+                  <td
+                    className={cx(
+                      'px-3 py-2.5 text-right font-serif text-[15px] font-bold tabular-nums slashed-zero',
+                      band ? TONE_TEXT[band.tone] : 'text-slate-300 dark:text-slate-600',
+                    )}
+                  >
+                    {total == null ? '—' : `${Math.round(total)}%`}
+                  </td>
+                  <td className="px-3 py-2.5 text-right">
+                    {classAvg == null ? (
+                      <span className="font-serif text-[13px] tabular-nums text-slate-300 dark:text-slate-600">
+                        —
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 text-[11px] tabular-nums text-slate-400 dark:text-slate-500">
+                        <Users size={11} className="shrink-0" />
+                        班 {Math.round(classAvg)}%
+                      </span>
+                    )}
+                  </td>
+                </tr>
+              </tfoot>
+            </table>
           </div>
         </div>
 
-        {/* 逐評估明細 */}
-        <div className="overflow-hidden rounded-2xl border border-slate-200/80 dark:border-slate-700/60">
-          <table className="w-full text-sm">
-            <thead className="border-b border-slate-200/80 bg-slate-50/80 text-xs uppercase tracking-wide text-slate-500 dark:border-slate-700/60 dark:bg-slate-800/60 dark:text-slate-400">
-              <tr>
-                <th className="px-3 py-2.5 text-left font-semibold">評估</th>
-                <th className="px-3 py-2.5 text-center font-semibold">類型</th>
-                <th className="px-3 py-2.5 text-right font-semibold">得分</th>
-                <th className="px-3 py-2.5 text-right font-semibold">vs 班平均</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-              {sorted.map((a) => {
-                const p = result.perAssessment[a.id]
-                const av = assessmentAvg.get(a.id) ?? null
-                const diff = p != null && av != null ? p - av : null
-                const t = p != null ? gradeOf(p, scale, bands).tone : 'slate'
-                return (
-                  <tr key={a.id} className="transition-colors hover:bg-slate-50/60 dark:hover:bg-slate-800/40">
-                    <td className="px-3 py-2 text-slate-700 dark:text-slate-200">
-                      {a.name}
-                      {a.date && (
-                        <span className="ml-1.5 text-xs text-slate-400">
-                          {shortDate(a.date)}
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-3 py-2 text-center">
-                      <Badge tone="slate">{a.type}</Badge>
-                    </td>
-                    <td
-                      className={`px-3 py-2 text-right font-serif text-[15px] font-semibold tabular-nums slashed-zero ${TONE_TEXT[t]}`}
-                    >
-                      {p == null ? (
-                        <span className="font-sans text-sm font-normal text-slate-300 dark:text-slate-600">
-                          未交
-                        </span>
-                      ) : (
-                        `${Math.round(p)}%`
-                      )}
-                    </td>
-                    <td className="px-3 py-2 text-right font-serif tabular-nums slashed-zero">
-                      {diff == null ? (
-                        <span className="font-sans text-slate-300 dark:text-slate-600">—</span>
-                      ) : (
-                        <span
-                          className={
-                            diff >= 0
-                              ? 'text-emerald-600 dark:text-emerald-400'
-                              : 'text-rose-600 dark:text-rose-400'
-                          }
-                        >
-                          {diff >= 0 ? '+' : ''}
-                          {Math.round(diff)}
-                        </span>
-                      )}
-                    </td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
-        </div>
-        <p className="text-xs text-slate-400 dark:text-slate-500">
-          「vs 班平均」顯示該生喺每項評估與全班平均嘅差距（百分點）。
+        {/* 帳簿頁腳註（同主畫面成績矩陣底部說明小字風格）*/}
+        <p className="flex flex-wrap items-center gap-x-1.5 gap-y-1 px-0.5 text-xs text-slate-400 dark:text-slate-500">
+          <span>「vs 班平均」為該生喺每項評估與全班平均嘅差距（百分點）。</span>
+          <span aria-hidden className="text-slate-300 dark:text-slate-600">·</span>
+          <span>由 NTK Platform 自動結算。</span>
         </p>
       </div>
     </Modal>
+  )
+}
+
+// ───────── 帳簿清點格（封面清算欄；serif 大數字、hairline 分隔）─────────
+//  同 Gradebook masthead 嘅 LedgerStat 同一套視覺：一格一個關鍵數。
+function LedgerCell({
+  label,
+  icon: Icon,
+  children,
+}: {
+  label: string
+  icon: typeof Target
+  children: ReactNode
+}) {
+  return (
+    <div className="bg-accent-soft/30 px-4 py-3 dark:bg-accent/5">
+      <p className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide text-slate-400 dark:text-slate-500">
+        <Icon size={12} className="shrink-0" />
+        <span className="truncate">{label}</span>
+      </p>
+      <p className="mt-1 font-serif text-xl font-semibold leading-none tabular-nums slashed-zero text-slate-700 dark:text-slate-200">
+        {children}
+      </p>
+    </div>
   )
 }
 

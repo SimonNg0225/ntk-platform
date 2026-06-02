@@ -10,6 +10,7 @@ import {
   Modal,
   Select,
   Textarea,
+  cx,
 } from '../../../ui'
 import {
   CATEGORY_LABEL,
@@ -20,11 +21,15 @@ import {
   type Channel,
   type CommTemplate,
 } from './util'
-import { FileText, Pencil, Plus, Trash2 } from 'lucide-react'
+import { FileText, Library, Pencil, Plus, Trash2, X } from 'lucide-react'
 
 // ============================================================
-//  訊息範本管理（CRM「片語 / snippets」）
-//  範本存喺本功能自己嘅 parent_comm_templates 集合。
+//  信件範本管理 — 通訊錄裡嘅「常用信箋」
+//  ------------------------------------------------------------
+//  呼應主畫面通訊錄信箋語言：封面 masthead（kicker + serif 標題）、
+//  範本似一疊歸檔信箋（分類色脊 + serif 標題）。
+//  純表現層 —— 範本存喺本功能 parent_comm_templates 集合，
+//  onAdd / onUpdate / onRemove / onClose 簽名一律不變。
 // ============================================================
 
 interface TemplateDraft {
@@ -93,11 +98,45 @@ export default function TemplateManager({
   }
 
   return (
-    <Modal open={open} onClose={onClose} size="lg" title="信件範本">
+    <Modal open={open} onClose={onClose} size="lg">
+      {/* ───────── 信箋封面：kicker + serif 標題 + 收納裝飾 ───────── */}
+      <header className="relative -mx-5 -mt-5 overflow-hidden px-5 pb-4 pt-5 sm:-mx-6 sm:-mt-6 sm:px-6 sm:pt-6">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.3em] text-accent/70">
+              <Library size={12} />
+              通訊錄 · Stationery
+            </p>
+            <h2 className="mt-1.5 font-serif text-[24px] font-semibold leading-none tracking-tight text-slate-800 dark:text-slate-100 sm:text-[26px]">
+              信件範本
+            </h2>
+            <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+              收藏常用信箋句式，撰寫信件時一鍵取用。
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="關閉"
+            className="-mr-1.5 -mt-1 shrink-0 rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:hover:bg-slate-700">
+            <X size={18} />
+          </button>
+        </div>
+        {/* 信箋雙線 */}
+        <div className="mt-4 space-y-1" aria-hidden>
+          <span className="block h-px bg-slate-200/90 dark:bg-slate-700/70" />
+          <span className="block h-px bg-slate-200/60 dark:bg-slate-700/40" />
+        </div>
+      </header>
+
       <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <p className="text-sm text-slate-500 dark:text-slate-400">
-            常用信件句式，撰寫信件時一鍵套用。
+        <div className="flex items-center justify-between gap-2">
+          <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">
+            <FileText size={13} className="shrink-0" />
+            常用信箋
+            <span className="tabular-nums text-slate-300 dark:text-slate-600">
+              · {templates.length}
+            </span>
           </p>
           <Button size="sm" icon={Plus} onClick={startNew}>
             新範本
@@ -111,37 +150,41 @@ export default function TemplateManager({
             {templates.map((t) => {
               const style = CATEGORY_STYLE[t.category]
               return (
-                <Card key={t.id} className="p-3">
-                  <div className="flex items-start gap-2">
-                    <div className="min-w-0 flex-1">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="text-sm font-semibold text-slate-800 dark:text-slate-100">
-                          {t.title}
-                        </span>
-                        <Badge tone={style.badge}>{CATEGORY_LABEL[t.category]}</Badge>
-                        <Badge tone="slate">{t.channel}</Badge>
-                        {t.builtIn && (
-                          <span className="text-[10px] text-slate-400 dark:text-slate-500">
-                            內建
+                <Card key={t.id} hover className="overflow-hidden p-0">
+                  <div className="flex items-stretch">
+                    {/* 分類色脊 —— 一眼分到範本主題 */}
+                    <span aria-hidden className={cx('w-1 shrink-0', style.bar)} />
+                    <div className="flex min-w-0 flex-1 items-start gap-2 p-3">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="font-serif text-[15px] font-semibold tracking-tight text-slate-800 dark:text-slate-100">
+                            {t.title}
                           </span>
-                        )}
+                          <Badge tone={style.badge}>{CATEGORY_LABEL[t.category]}</Badge>
+                          <Badge tone="slate">{t.channel}</Badge>
+                          {t.builtIn && (
+                            <span className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                              內建
+                            </span>
+                          )}
+                        </div>
+                        <p className="mt-1.5 line-clamp-2 whitespace-pre-wrap text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+                          {t.body}
+                        </p>
                       </div>
-                      <p className="mt-1 line-clamp-2 whitespace-pre-wrap text-xs text-slate-500 dark:text-slate-400">
-                        {t.body}
-                      </p>
-                    </div>
-                    <div className="flex shrink-0 gap-1">
-                      <IconButton label="編輯範本" size="sm" onClick={() => startEdit(t)}>
-                        <Pencil size={15} />
-                      </IconButton>
-                      <IconButton
-                        label="刪除範本"
-                        tone="danger"
-                        size="sm"
-                        onClick={() => onRemove(t)}
-                      >
-                        <Trash2 size={15} />
-                      </IconButton>
+                      <div className="flex shrink-0 gap-1">
+                        <IconButton label="編輯範本" size="sm" onClick={() => startEdit(t)}>
+                          <Pencil size={15} />
+                        </IconButton>
+                        <IconButton
+                          label="刪除範本"
+                          tone="danger"
+                          size="sm"
+                          onClick={() => onRemove(t)}
+                        >
+                          <Trash2 size={15} />
+                        </IconButton>
+                      </div>
                     </div>
                   </div>
                 </Card>
@@ -196,12 +239,12 @@ export default function TemplateManager({
               </Select>
             </Field>
           </div>
-          <Field label="內容" required hint="可用 [學生] / [科目] / [日期] 等佔位字眼，套用後自行替換。">
+          <Field label="信箋內容" required hint="可用 [學生] / [科目] / [日期] 等佔位字眼，套用後自行替換。">
             <Textarea
-              className="min-h-[120px]"
+              className="min-h-[120px] leading-relaxed"
               value={draft.body}
               onChange={(e) => setDraft((p) => ({ ...p, body: e.target.value }))}
-              placeholder="範本內容…"
+              placeholder="敬啟者…&#10;常用句式內容。"
             />
           </Field>
           <div className="flex justify-end gap-2">

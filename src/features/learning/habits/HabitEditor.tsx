@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import {
   Modal,
   Button,
@@ -8,12 +8,24 @@ import {
   SegmentedControl,
   cx,
 } from '../../../ui'
-import { Trash2, Target, Bell } from 'lucide-react'
+import {
+  Trash2,
+  Target,
+  Bell,
+  X,
+  CalendarDays,
+  Repeat,
+  Palette,
+  Tag,
+  StickyNote,
+  Stamp,
+} from 'lucide-react'
 import {
   HABIT_COLOR_KEYS,
   HABIT_CATEGORIES,
   ICON_CHOICES,
   colorOf,
+  freqLabel,
   type Habit,
   type HabitColor,
   type HabitFrequency,
@@ -22,7 +34,11 @@ import {
 import { WEEKDAY_LABELS } from './util'
 
 // ============================================================
-//  習慣編輯器（新增 / 編輯共用）— 完整設定，似真實 app
+//  習慣編輯器（新增 / 編輯共用）
+//  ------------------------------------------------------------
+//  美學：呼應主畫面「老黃曆 + 連續鏈條」——
+//  整張表編成一頁待落印嘅曆書：serif 抬頭、hairline 分節、
+//  即時預覽做曆書條目首行、戳印式圖示。功能/驗證/鍵盤一律不變。
 // ============================================================
 
 type FreqKind = 'daily' | 'weekly' | 'weekdays'
@@ -117,6 +133,10 @@ export default function HabitEditor({
   }
 
   const canSave = d.name.trim().length > 0
+  const spec = colorOf(d.color)
+
+  // 預覽用頻率字串（純衍生，唔影響儲存）
+  const previewFreq = freqLabel(buildFrequency())
 
   function handleSave() {
     if (!canSave) return
@@ -137,7 +157,6 @@ export default function HabitEditor({
     <Modal
       open={open}
       onClose={onClose}
-      title={habit ? '編輯習慣' : '新增習慣'}
       size="lg"
       footer={
         <>
@@ -154,34 +173,77 @@ export default function HabitEditor({
           <Button variant="secondary" onClick={onClose}>
             取消
           </Button>
-          <Button onClick={handleSave} disabled={!canSave}>
-            {habit ? '儲存' : '新增'}
+          <Button icon={Stamp} onClick={handleSave} disabled={!canSave}>
+            {habit ? '落印保存' : '新增習慣'}
           </Button>
         </>
       }
     >
+      {/* ───────── 老黃曆抬頭：kicker + serif 標題 + 自家關閉鈕 ───────── */}
+      <div className="mb-5 flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.3em] text-accent/70">
+            <CalendarDays size={13} className="shrink-0" />
+            {habit ? '修訂宜忌 · Almanac Entry' : '新立宜忌 · Almanac Entry'}
+          </p>
+          <h2 className="mt-1 font-serif text-2xl font-semibold leading-tight tracking-tight text-slate-800 dark:text-slate-100">
+            {habit ? '編輯習慣' : '新增習慣'}
+          </h2>
+        </div>
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="關閉"
+          className="-mr-1 -mt-1 shrink-0 rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:hover:bg-slate-700"
+        >
+          <X size={18} />
+        </button>
+      </div>
+
       <div className="space-y-5">
-        {/* 名稱 + 即時預覽（柔和預覽面板） */}
-        <div className="flex items-center gap-3.5 rounded-2xl border border-slate-200/80 bg-slate-50/60 p-3.5 dark:border-slate-700/60 dark:bg-slate-800/40">
+        {/* ───────── 曆書條目首行：戳印圖示 + serif 名稱（即時預覽） ───────── */}
+        <div className="relative overflow-hidden rounded-2xl border border-slate-200/80 bg-[#fcfbf7] p-4 dark:border-slate-700/60 dark:bg-slate-800/50">
+          {/* 左色脊：呼應主畫面卡片色脊 */}
           <span
-            className={cx(
-              'flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl text-3xl shadow-xs transition-colors',
-              colorOf(d.color).soft,
-            )}
-          >
-            {d.icon}
-          </span>
-          <Input
-            value={d.name}
-            onChange={(e) => patch('name', e.target.value)}
-            placeholder="習慣名稱，例如：每日跑步"
-            className="flex-1 border-transparent bg-white text-base font-medium shadow-xs dark:bg-slate-800"
-            autoFocus
+            aria-hidden="true"
+            className={cx('absolute inset-y-0 left-0 w-1', spec.solid.split(' ')[0])}
           />
+          <div className="flex items-center gap-3.5 pl-2">
+            <span
+              className={cx(
+                'flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl text-3xl shadow-xs ring-1 ring-inset ring-black/5 transition-colors dark:ring-white/5',
+                spec.soft,
+              )}
+            >
+              {d.icon}
+            </span>
+            <div className="min-w-0 flex-1">
+              <Input
+                value={d.name}
+                onChange={(e) => patch('name', e.target.value)}
+                placeholder="習慣名稱，例如：每日跑步"
+                aria-label="習慣名稱"
+                className="border-transparent bg-white font-serif text-base font-semibold shadow-xs dark:bg-slate-800"
+                autoFocus
+              />
+              {/* 條目摘要：跟住設定即時更新，似曆書一行小註 */}
+              <p className="mt-1.5 truncate pl-0.5 text-xs text-slate-500 dark:text-slate-400">
+                <span className="tabular-nums">{previewFreq}</span>
+                <span aria-hidden="true" className="mx-1.5 text-slate-300 dark:text-slate-600">·</span>
+                {d.goalKind === 'quit' ? '戒除' : '養成'}
+                {d.category.trim() && (
+                  <>
+                    <span aria-hidden="true" className="mx-1.5 text-slate-300 dark:text-slate-600">·</span>
+                    {d.category.trim()}
+                  </>
+                )}
+              </p>
+            </div>
+          </div>
         </div>
 
-        {/* 目標類型 */}
-        <Field label="目標類型">
+        {/* ───────── 目標類型 ───────── */}
+        <Almanac label="目標類型" icon={Target}>
           <SegmentedControl<HabitGoalKind>
             value={d.goalKind}
             onChange={(v) => patch('goalKind', v)}
@@ -190,59 +252,62 @@ export default function HabitEditor({
               { id: 'quit', label: '戒除（要避免）' },
             ]}
           />
-        </Field>
+        </Almanac>
 
-        {/* 外觀（圖示 + 顏色） */}
-        <div className="space-y-4 rounded-2xl border border-slate-200/80 p-4 dark:border-slate-700/60">
-          <Field label="圖示">
-            <div className="flex flex-wrap gap-2">
-              {ICON_CHOICES.map((c) => {
-                const on = c === d.icon
-                return (
-                  <button
-                    key={c}
-                    type="button"
-                    onClick={() => patch('icon', c)}
-                    aria-pressed={on}
-                    className={cx(
-                      'flex h-9 w-9 items-center justify-center rounded-xl border text-lg transition focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
-                      on
-                        ? 'border-accent bg-accent-soft shadow-xs'
-                        : 'border-slate-200 bg-white hover:-translate-y-0.5 hover:border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-slate-600',
-                    )}
-                  >
-                    {c}
-                  </button>
-                )
-              })}
-            </div>
-          </Field>
+        {/* ───────── 外觀（圖示 + 顏色） ───────── */}
+        <div className="rounded-2xl border border-slate-200/80 p-4 dark:border-slate-700/60">
+          <AlmanacHeading icon={Palette}>外觀</AlmanacHeading>
+          <div className="mt-3.5 space-y-4">
+            <Field label="圖示">
+              <div className="flex flex-wrap gap-2">
+                {ICON_CHOICES.map((c) => {
+                  const on = c === d.icon
+                  return (
+                    <button
+                      key={c}
+                      type="button"
+                      onClick={() => patch('icon', c)}
+                      aria-pressed={on}
+                      className={cx(
+                        'flex h-9 w-9 items-center justify-center rounded-xl border text-lg transition focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
+                        on
+                          ? 'border-accent bg-accent-soft shadow-xs'
+                          : 'border-slate-200 bg-white hover:-translate-y-0.5 hover:border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-slate-600',
+                      )}
+                    >
+                      {c}
+                    </button>
+                  )
+                })}
+              </div>
+            </Field>
 
-          <Field label="顏色">
-            <div className="flex flex-wrap gap-2.5">
-              {HABIT_COLOR_KEYS.map((c) => {
-                const on = c === d.color
-                return (
-                  <button
-                    key={c}
-                    type="button"
-                    onClick={() => patch('color', c)}
-                    aria-label={colorOf(c).label}
-                    aria-pressed={on}
-                    className={cx(
-                      'h-8 w-8 rounded-full ring-2 ring-offset-2 transition hover:scale-110 dark:ring-offset-slate-800',
-                      colorOf(c).dot,
-                      on ? 'ring-slate-400 dark:ring-slate-300' : 'ring-transparent',
-                    )}
-                  />
-                )
-              })}
-            </div>
-          </Field>
+            <Field label="顏色">
+              <div className="flex flex-wrap gap-2.5">
+                {HABIT_COLOR_KEYS.map((c) => {
+                  const on = c === d.color
+                  return (
+                    <button
+                      key={c}
+                      type="button"
+                      onClick={() => patch('color', c)}
+                      aria-label={colorOf(c).label}
+                      aria-pressed={on}
+                      className={cx(
+                        'h-8 w-8 rounded-full ring-2 ring-offset-2 transition hover:scale-110 dark:ring-offset-slate-800',
+                        colorOf(c).dot,
+                        on ? 'ring-slate-400 dark:ring-slate-300' : 'ring-transparent',
+                      )}
+                    />
+                  )
+                })}
+              </div>
+            </Field>
+          </div>
         </div>
 
-        {/* 頻率 */}
-        <Field label="頻率">
+        {/* ───────── 頻率（落印節律） ───────── */}
+        <Almanac label="頻率" icon={Repeat}>
           <SegmentedControl<FreqKind>
             value={d.freqKind}
             onChange={(v) => patch('freqKind', v)}
@@ -298,14 +363,19 @@ export default function HabitEditor({
               })}
             </div>
           )}
-        </Field>
+        </Almanac>
 
-        {/* 分類 */}
-        <Field label="分類" hint="自由填，或揀下面常用分類">
+        {/* ───────── 分類 ───────── */}
+        <Almanac
+          label="分類"
+          icon={Tag}
+          hint="自由填，或揀下面常用分類"
+        >
           <Input
             value={d.category}
             onChange={(e) => patch('category', e.target.value)}
             placeholder="例如：健康"
+            aria-label="分類"
           />
           <div className="mt-2 flex flex-wrap gap-1.5">
             {HABIT_CATEGORIES.map((c) => (
@@ -324,9 +394,9 @@ export default function HabitEditor({
               </button>
             ))}
           </div>
-        </Field>
+        </Almanac>
 
-        {/* 目標連續 + 提醒 */}
+        {/* ───────── 目標連續 + 提醒 ───────── */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Field label="目標連續日數">
             <Input
@@ -348,16 +418,61 @@ export default function HabitEditor({
           </Field>
         </div>
 
-        {/* 備註 */}
-        <Field label="備註">
+        {/* ───────── 備註（曆書旁註） ───────── */}
+        <Almanac label="備註" icon={StickyNote}>
           <Textarea
             value={d.notes}
             onChange={(e) => patch('notes', e.target.value)}
             placeholder="為何想養成 / 戒除呢個習慣？寫低提醒自己。"
             rows={2}
           />
-        </Field>
+        </Almanac>
       </div>
     </Modal>
+  )
+}
+
+// ───────── 曆書分節抬頭（小帽 + icon + hairline 收尾；呼應主畫面 SectionLabel）─────────
+function AlmanacHeading({
+  icon: Icon,
+  children,
+}: {
+  icon: typeof Target
+  children: ReactNode
+}) {
+  return (
+    <div className="flex items-center gap-2">
+      <p className="flex shrink-0 items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">
+        <Icon size={12} className="shrink-0" />
+        {children}
+      </p>
+      <span aria-hidden="true" className="h-px flex-1 bg-slate-200/80 dark:bg-slate-700/60" />
+    </div>
+  )
+}
+
+// ───────── 曆書分節（抬頭 + 內容 + 可選小註）─────────
+//  以 fieldset/legend 保留語意分組；視覺承接老黃曆 hairline 分節節奏。
+function Almanac({
+  label,
+  icon,
+  hint,
+  children,
+}: {
+  label: string
+  icon: typeof Target
+  hint?: string
+  children: ReactNode
+}) {
+  return (
+    <fieldset className="min-w-0 space-y-3">
+      <legend className="mb-3 w-full p-0">
+        <AlmanacHeading icon={icon}>{label}</AlmanacHeading>
+      </legend>
+      {children}
+      {hint && (
+        <p className="text-xs text-slate-400 dark:text-slate-500">{hint}</p>
+      )}
+    </fieldset>
   )
 }

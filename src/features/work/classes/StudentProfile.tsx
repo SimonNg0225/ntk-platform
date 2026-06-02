@@ -1,7 +1,9 @@
 import { useMemo, useState } from 'react'
 import {
+  BookUser,
   CalendarCheck,
   GraduationCap,
+  IdCard,
   Mail,
   MessageSquare,
   Phone,
@@ -9,6 +11,9 @@ import {
   Tag,
   Trash2,
   User,
+  UserRound,
+  X,
+  type LucideIcon,
 } from 'lucide-react'
 import type { ParentComm, Score, Student } from '../../../data/types'
 import {
@@ -19,15 +24,14 @@ import {
   studentsCol,
 } from '../../../data/collections'
 import {
-  Avatar,
   Badge,
   Button,
   Field,
+  IconButton,
   Input,
   Modal,
   ProgressBar,
   SegmentedControl,
-  Separator,
   Textarea,
   cx,
 } from '../../../ui'
@@ -42,7 +46,7 @@ import {
   type StudentMeta,
   type StudentStatus,
 } from './types'
-import { metaFor } from './util'
+import { initials, metaFor } from './util'
 
 // ============================================================
 //  學生檔案抽屜（Modal）
@@ -177,11 +181,14 @@ export default function StudentProfile({
     }
   }, [scores, assessments, attendance, comms, student.id])
 
+  const displayName = name.trim() || student.name
+
   return (
+    // 唔傳 title → 唔用 Modal 通用粗體頁眉；改喺內文自管「學籍卡」頁眉，
+    // 令彈窗用返主畫面花名冊嘅 serif + kicker + 雙線 + 學籍卡視覺語言。
     <Modal
       open
       onClose={onClose}
-      title={`${student.name} · ${className}`}
       size="lg"
       footer={
         tab === 'info' ? (
@@ -204,88 +211,117 @@ export default function StudentProfile({
         )
       }
     >
-      {/* 檔案頭：頭像 + 主要身分 chips */}
-      <div className="mb-4 flex items-center gap-3 rounded-2xl border border-slate-200/80 bg-slate-50/60 p-3.5 dark:border-slate-700/60 dark:bg-slate-800/40">
-        <Avatar name={name || student.name} size="lg" />
-        <div className="min-w-0 flex-1">
-          <p className="flex items-center gap-2 truncate text-base font-bold text-slate-800 dark:text-slate-100">
-            {name || student.name}
-            {studentNo.trim() && (
-              <span className="text-xs font-medium tabular-nums text-slate-400">
-                #{studentNo.trim()}
-              </span>
-            )}
+      {/* ───────── 學籍卡頁眉：kicker + serif 姓名 + 學籍卡封面（醒目章 + 雙線）───────── */}
+      <header className="-mx-5 -mt-5 mb-4 px-5 pt-5 sm:-mx-6 sm:-mt-6 sm:px-6 sm:pt-6">
+        <div className="flex items-start justify-between gap-3">
+          <p className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.25em] text-accent/70">
+            <BookUser size={12} />
+            學籍卡 · Student Record
           </p>
-          <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-            <Badge tone={STATUS_META[status].tone} dot>
-              {STATUS_META[status].label}
-            </Badge>
-            {gender && (
-              <Badge tone={GENDER_META[gender].tone}>{GENDER_META[gender].label}</Badge>
-            )}
-            {house.trim() && <Badge tone="slate">{house.trim()}</Badge>}
-            {role.trim() && <Badge tone="accent">{role.trim()}</Badge>}
+          <IconButton label="關閉" onClick={onClose} className="-mr-1 -mt-1 shrink-0">
+            <X size={18} />
+          </IconButton>
+        </div>
+
+        {/* 學籍卡卡面：serif 姓名章 + 主要身分 chips（呼應花名冊頭像格）*/}
+        <div className="mt-3 flex items-center gap-3.5">
+          <span
+            aria-hidden
+            className="flex h-14 w-14 shrink-0 flex-col items-center justify-center rounded-2xl bg-accent-soft leading-none text-accent-strong dark:bg-accent/15 dark:text-accent"
+          >
+            <span className="text-[8px] font-semibold uppercase tracking-[0.15em] opacity-60">
+              No.
+            </span>
+            <span className="font-serif text-lg font-bold leading-none tabular-nums slashed-zero">
+              {studentNo.trim() || initials(displayName)}
+            </span>
+          </span>
+          <div className="min-w-0 flex-1">
+            <h2 className="truncate font-serif text-[24px] font-semibold leading-none tracking-tight text-slate-800 dark:text-slate-100 sm:text-[28px]">
+              {displayName}
+            </h2>
+            <p className="mt-1.5 flex flex-wrap items-center gap-1.5">
+              <span className="text-xs text-slate-400 dark:text-slate-500">{className}</span>
+              <Badge tone={STATUS_META[status].tone} dot>
+                {STATUS_META[status].label}
+              </Badge>
+              {gender && (
+                <Badge tone={GENDER_META[gender].tone}>{GENDER_META[gender].label}</Badge>
+              )}
+              {house.trim() && <Badge tone="slate">{house.trim()}</Badge>}
+              {role.trim() && <Badge tone="accent">{role.trim()}</Badge>}
+            </p>
           </div>
         </div>
-      </div>
+
+        {/* 學籍冊雙線（封面分隔感，對齊主畫面冊面）*/}
+        <div className="mt-4 space-y-1" aria-hidden>
+          <span className="block h-px bg-slate-200/90 dark:bg-slate-700/70" />
+          <span className="block h-px bg-slate-200/60 dark:bg-slate-700/40" />
+        </div>
+      </header>
 
       <div className="mb-4">
         <SegmentedControl
           value={tab}
           onChange={setTab}
           options={[
-            { id: 'info', label: '資料', icon: User },
-            { id: 'overview', label: '概覽', icon: GraduationCap },
+            { id: 'info', label: '學籍資料', icon: IdCard },
+            { id: 'overview', label: '跨頁概覽', icon: GraduationCap },
           ]}
         />
       </div>
 
       {tab === 'info' ? (
-        <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-3">
-            <Field label="姓名" required>
-              <Input value={name} onChange={(e) => setName(e.target.value)} />
-            </Field>
-            <Field label="學號">
-              <Input
-                value={studentNo}
-                onChange={(e) => setStudentNo(e.target.value)}
-                placeholder="例如 12"
-                className="tabular-nums"
-              />
-            </Field>
-          </div>
-
-          <Field label="性別">
-            <div className="flex gap-2">
-              {(['M', 'F', 'X'] as Gender[]).map((g) => (
-                <button
-                  key={g}
-                  type="button"
-                  onClick={() => setGender(gender === g ? '' : g)}
-                  className={cx(
-                    'flex-1 rounded-lg border px-3 py-1.5 text-sm font-medium transition',
-                    gender === g
-                      ? 'border-accent bg-accent text-white'
-                      : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700',
-                  )}
-                >
-                  {GENDER_META[g].label}
-                </button>
-              ))}
+        <div className="space-y-5">
+          <section className="space-y-3.5">
+            <CardSection icon={IdCard}>基本資料 · Profile</CardSection>
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="姓名" required>
+                <Input value={name} onChange={(e) => setName(e.target.value)} />
+              </Field>
+              <Field label="學號">
+                <Input
+                  value={studentNo}
+                  onChange={(e) => setStudentNo(e.target.value)}
+                  placeholder="例如 12"
+                  className="tabular-nums"
+                />
+              </Field>
             </div>
-          </Field>
 
-          <div className="grid grid-cols-2 gap-3">
-            <Field label="班社 / House" hint="例如 紅社、藍社">
-              <Input value={house} onChange={(e) => setHouse(e.target.value)} />
+            <Field label="性別">
+              <div className="flex gap-2">
+                {(['M', 'F', 'X'] as Gender[]).map((g) => (
+                  <button
+                    key={g}
+                    type="button"
+                    onClick={() => setGender(gender === g ? '' : g)}
+                    className={cx(
+                      'flex-1 rounded-lg border px-3 py-1.5 text-sm font-medium transition',
+                      gender === g
+                        ? 'border-accent bg-accent text-white shadow-sm shadow-accent/20'
+                        : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700',
+                    )}
+                  >
+                    {GENDER_META[g].label}
+                  </button>
+                ))}
+              </div>
             </Field>
-            <Field label="職務" hint="例如 班長、風紀">
-              <Input value={role} onChange={(e) => setRole(e.target.value)} />
-            </Field>
-          </div>
 
-          <Separator label="監護人 / 聯絡" />
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="班社 / House" hint="例如 紅社、藍社">
+                <Input value={house} onChange={(e) => setHouse(e.target.value)} />
+              </Field>
+              <Field label="職務" hint="例如 班長、風紀">
+                <Input value={role} onChange={(e) => setRole(e.target.value)} />
+              </Field>
+            </div>
+          </section>
+
+          <section className="space-y-3.5">
+            <CardSection icon={UserRound}>監護人 / 聯絡 · Guardian</CardSection>
 
           <div className="grid grid-cols-2 gap-3">
             <Field label="監護人姓名">
@@ -312,7 +348,10 @@ export default function StudentProfile({
               onChange={(e) => setEmail(e.target.value)}
             />
           </Field>
+          </section>
 
+          <section className="space-y-3.5">
+          <CardSection icon={CalendarCheck}>學籍狀態 / 備註 · Status</CardSection>
           <Field label="就讀狀態">
             <div className="flex gap-2">
               {(['active', 'transferred', 'withdrawn'] as StudentStatus[]).map(
@@ -324,7 +363,7 @@ export default function StudentProfile({
                     className={cx(
                       'flex-1 rounded-lg border px-3 py-1.5 text-sm font-medium transition',
                       status === st
-                        ? 'border-accent bg-accent text-white'
+                        ? 'border-accent bg-accent text-white shadow-sm shadow-accent/20'
                         : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700',
                     )}
                   >
@@ -380,11 +419,33 @@ export default function StudentProfile({
               placeholder="個別學習計劃、家庭背景、注意事項…"
             />
           </Field>
+          </section>
         </div>
       ) : (
         <Overview overview={overview} />
       )}
     </Modal>
+  )
+}
+
+// ───────── 學籍卡分段標頭（serif label + accent icon chip + 拖尾幼線；呼應花名冊冊頁頭）─────────
+function CardSection({
+  icon: I,
+  children,
+}: {
+  icon: LucideIcon
+  children: React.ReactNode
+}) {
+  return (
+    <div className="flex items-center gap-2.5">
+      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
+        <I size={13} />
+      </span>
+      <span className="shrink-0 font-serif text-sm font-semibold tracking-tight text-slate-700 dark:text-slate-200">
+        {children}
+      </span>
+      <span className="h-px flex-1 bg-slate-200/80 dark:bg-slate-700/60" aria-hidden />
+    </div>
   )
 }
 
@@ -440,10 +501,15 @@ function Overview({
       )}
 
       <div>
-        <div className="mb-2.5 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-          <MessageSquare size={13} />
-          家長 / 學生溝通
-          <span className="ml-auto rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium tabular-nums normal-case tracking-normal text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+        <div className="mb-2.5 flex items-center gap-2.5">
+          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
+            <MessageSquare size={13} />
+          </span>
+          <span className="shrink-0 font-serif text-sm font-semibold tracking-tight text-slate-700 dark:text-slate-200">
+            家長 / 學生溝通
+          </span>
+          <span className="h-px flex-1 bg-slate-200/80 dark:bg-slate-700/60" aria-hidden />
+          <span className="shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium tabular-nums text-slate-500 dark:bg-slate-800 dark:text-slate-400">
             {overview.comms.length}
           </span>
         </div>
@@ -516,10 +582,10 @@ function MiniStat({
           <I size={14} />
         </span>
       </div>
-      <p className="mt-1.5 text-2xl font-bold tabular-nums text-slate-800 dark:text-slate-100">
+      <p className="mt-1.5 font-serif text-[26px] font-semibold leading-none tabular-nums slashed-zero text-slate-800 dark:text-slate-100">
         {value}
       </p>
-      <p className="mt-0.5 text-[11px] text-slate-400 dark:text-slate-500">{hint}</p>
+      <p className="mt-1 text-[11px] text-slate-400 dark:text-slate-500">{hint}</p>
     </div>
   )
 }

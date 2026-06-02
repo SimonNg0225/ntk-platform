@@ -1,9 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
+import type { ReactNode } from 'react'
 import {
   CalendarClock,
   Check,
+  ClipboardCheck,
   Flag,
   GripVertical,
+  Highlighter,
   ListChecks,
   Plus,
   StickyNote,
@@ -12,6 +15,7 @@ import {
   Tag,
   Trash2,
   X,
+  type LucideIcon,
 } from 'lucide-react'
 import {
   Badge,
@@ -39,10 +43,25 @@ import {
 } from './util'
 
 // ============================================================
-//  任務詳情編輯器（Things 嘅「打開卡」體驗）
-//  改 tasksCol（text / done）+ upsertMeta（優先級 / 到期 / 專案 /
-//  標籤 / 備註）+ subtasksCol（子任務清單）。
+//  任務詳情 — 改簿檯抽出嘅「批改卷宗」
+//  ------------------------------------------------------------
+//  訂造概念：呼應主畫面（TodoWidget）嘅改簿檯——checklist + 批改紅筆。
+//  彈窗似老師由簿堆裡抽出一張卷宗攤開逐項處理：頁眉用 serif 標題 +
+//  uppercase kicker + 雙線封面分隔；屬「批改」嘅任務披返同一套紅筆
+//  accent（紅 margin 邊欄 + 紅「批改」章 + 方剔格），同主畫面卡片一眼
+//  對得返。每個分區用 icon chip + 向右散開 hairline 做冊頁分段。
+//
+//  邏輯完全沿用：改 tasksCol（text / done）+ upsertMeta（優先級 / 到期 /
+//  專案 / 標籤 / 備註）+ subtasksCol（子任務）。淨係動外觀 / 排版 / 文案。
 // ============================================================
+
+// 「批改任務」純表現層偵測（與 TodoWidget 同一套語意：標籤 / 任務文字
+// 命中即披紅筆 accent）。本檔自帶一份，唔跨檔 import 主畫面內部 helper。
+const MARK_RE = /(批改|批卷|改卷|改簿|派卷|評卷|marking|mark\b)/i
+function isMarkingTask(t: FullTask): boolean {
+  if (t.meta.tags.some((tag) => MARK_RE.test(tag))) return true
+  return MARK_RE.test(t.text)
+}
 
 const PR_OPTIONS = [
   { id: '1' as const, label: 'P1' },
@@ -50,6 +69,45 @@ const PR_OPTIONS = [
   { id: '3' as const, label: 'P3' },
   { id: '4' as const, label: 'P4' },
 ]
+
+// ───────── 冊頁分區頁眉（icon chip + 向右散開 hairline）─────────
+//  改簿檯概念：每個分區（屬性 / 子任務 / 標籤 / 備註）似簿冊上一段
+//  分節——左邊一個方形 icon 牌，右邊一條淡到透明嘅尺線，數字計點。
+//  同主畫面 Group / 任務冊頁眉同一套視覺語言。
+function CardSection({
+  icon: Icon,
+  title,
+  count,
+  children,
+}: {
+  icon: LucideIcon
+  title: string
+  count?: ReactNode
+  children: ReactNode
+}) {
+  return (
+    <section className="space-y-2.5">
+      <div className="flex items-center gap-2 px-0.5">
+        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-slate-100 text-slate-500 dark:bg-slate-700/60 dark:text-slate-300">
+          <Icon size={14} />
+        </span>
+        <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+          {title}
+        </h3>
+        {count !== undefined && count !== null && (
+          <span className="tabular-nums text-[11px] font-semibold text-slate-400 dark:text-slate-500">
+            {count}
+          </span>
+        )}
+        <span
+          aria-hidden
+          className="ml-1 h-px flex-1 bg-gradient-to-r from-slate-200 to-transparent dark:from-slate-700/70"
+        />
+      </div>
+      {children}
+    </section>
+  )
+}
 
 export function TaskEditor({
   task,
@@ -144,47 +202,112 @@ export function TaskEditor({
   const dueDiff = due ? daysBetween(todayISO(), due) : null
   const pm = PRIORITY_META[task.meta.priority]
   const project = projects.find((p) => p.id === task.meta.projectId)
+  const marking = isMarkingTask(task)
   const tagSuggest = allTags
     .filter((t) => !task.meta.tags.includes(t))
     .filter((t) => (tagDraft.trim() ? t.includes(tagDraft.trim().replace(/^[#@]/, '')) : true))
     .slice(0, 6)
 
+  // 頁眉狀態副題（似卷宗封面下嘅一行批註）
+  const stateLine = task.done
+    ? '已剔 · 完成'
+    : marking
+      ? '待批改'
+      : due
+        ? `到期 ${dueLabel(due)}`
+        : '未剔'
+
   return (
-    <Modal open onClose={onClose} size="lg" title="任務詳情">
+    // 唔傳 title → 唔用 Modal 通用粗體頁眉；改喺內文自管「批改卷宗」頁眉，
+    // 令彈窗用返主畫面改簿檯嘅 serif + kicker + 雙線視覺語言。
+    <Modal open onClose={onClose} size="lg">
       <div className="space-y-5">
-        {/* 標題 + 完成（柔和底框，似 Things 打開卡）*/}
+        {/* ───────── 卷宗頁眉：kicker + serif 標題狀態 + 雙線封面分隔 ───────── */}
+        <header className="-mx-5 -mt-5 mb-1 px-5 pt-5 sm:-mx-6 sm:-mt-6 sm:px-6 sm:pt-6">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p
+                className={cx(
+                  'flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.25em]',
+                  marking ? 'text-rose-500/80 dark:text-rose-400/80' : 'text-accent/70',
+                )}
+              >
+                {marking ? <Highlighter size={12} /> : <ClipboardCheck size={12} />}
+                {marking ? '批改卷宗 · Marking' : '任務卡 · Task Card'}
+              </p>
+              <h2 className="mt-1 font-serif text-[22px] font-semibold leading-tight tracking-tight text-slate-800 dark:text-slate-100 sm:text-[26px]">
+                任務詳情
+              </h2>
+              <p className="mt-1 truncate text-xs text-slate-400 dark:text-slate-500">
+                {stateLine}
+              </p>
+            </div>
+            <IconButton label="關閉" onClick={onClose} className="-mr-1 shrink-0">
+              <X size={18} />
+            </IconButton>
+          </div>
+          {/* 改簿檯雙線（封面分隔感）*/}
+          <div className="mt-4 space-y-1" aria-hidden>
+            <span className="block h-px bg-slate-200/90 dark:bg-slate-700/70" />
+            <span className="block h-px bg-slate-200/60 dark:bg-slate-700/40" />
+          </div>
+        </header>
+
+        {/* ───────── 卷面：標題 + 完成。批改任務披紅筆 accent（紅 margin + 方剔格 + 批改章）───────── */}
         <div
           className={cx(
-            'flex items-start gap-3 rounded-2xl border p-3.5 transition',
+            'relative flex items-start gap-3 overflow-hidden rounded-2xl border p-3.5 pl-4 transition',
             task.done
               ? 'border-emerald-200/70 bg-emerald-50/50 dark:border-emerald-500/20 dark:bg-emerald-500/5'
-              : 'border-slate-200/80 bg-slate-50/60 dark:border-slate-700/60 dark:bg-slate-800/40',
+              : marking
+                ? 'border-rose-200/70 bg-rose-50/50 dark:border-rose-500/25 dark:bg-rose-500/[0.06]'
+                : 'border-slate-200/80 bg-slate-50/60 dark:border-slate-700/60 dark:bg-slate-800/40',
           )}
         >
+          {/* 批改任務：紅筆雙邊欄（似改簿嘅紅 margin）。未完成先顯示。*/}
+          {marking && !task.done && (
+            <span aria-hidden className="absolute inset-y-0 left-0 flex gap-[3px] pl-1">
+              <span className="w-[3px] rounded-full bg-rose-400 dark:bg-rose-500/70" />
+              <span className="w-px rounded-full bg-rose-300/70 dark:bg-rose-500/40" />
+            </span>
+          )}
           <button
             type="button"
             onClick={() => onToggleTask(task)}
-            aria-label={task.done ? '標記未完成' : '標記完成'}
+            aria-label={task.done ? '標記未完成' : marking ? '打剔（已批改）' : '標記完成'}
             className={cx(
-              'mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 transition duration-200 active:scale-90',
+              // 批改任務用方剔格（似簿上方格）；其餘用圓剔格，呼應主畫面 TaskRow
+              'mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center border-2 transition duration-200 active:scale-90',
+              marking && !task.done ? 'rounded-md' : 'rounded-full',
               task.done
                 ? 'border-emerald-500 bg-emerald-500 text-white shadow-sm shadow-emerald-500/30'
-                : 'border-slate-300 hover:border-accent hover:bg-accent-soft/40 dark:border-slate-600',
+                : marking
+                  ? 'border-rose-300 text-rose-500 hover:border-rose-500 hover:bg-rose-50 dark:border-rose-500/50 dark:hover:bg-rose-500/10'
+                  : 'border-slate-300 hover:border-accent hover:bg-accent-soft/40 dark:border-slate-600',
             )}
           >
             {task.done && <Check size={14} strokeWidth={3} />}
           </button>
-          <Textarea
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            onBlur={commitText}
-            rows={1}
-            className={cx(
-              'min-h-0 resize-none border-0 bg-transparent px-0 py-0.5 text-base font-semibold shadow-none focus:ring-0',
-              task.done && 'text-slate-400 line-through dark:text-slate-500',
+          <div className="min-w-0 flex-1">
+            {/* 批改章（呼應主畫面 MarkPen）：未完成嘅批改任務先掛 */}
+            {marking && !task.done && (
+              <span className="mb-1 inline-flex shrink-0 items-center gap-1 rounded-md border border-rose-300/70 bg-rose-50/80 px-1.5 py-0.5 text-[10px] font-semibold text-rose-600 dark:border-rose-500/40 dark:bg-rose-500/10 dark:text-rose-300">
+                <Highlighter size={10} className="opacity-80" />
+                <span className="font-serif leading-none">批改</span>
+              </span>
             )}
-            placeholder="任務標題"
-          />
+            <Textarea
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              onBlur={commitText}
+              rows={1}
+              className={cx(
+                'min-h-0 w-full resize-none border-0 bg-transparent px-0 py-0.5 font-serif text-base font-semibold shadow-none focus:ring-0 sm:text-lg',
+                task.done && 'text-slate-400 line-through dark:text-slate-500',
+              )}
+              placeholder="任務標題"
+            />
+          </div>
         </div>
 
         {/* 屬性：優先級 / 專案 / 到期（一組柔和卡，唔似散開嘅表單）*/}
@@ -258,18 +381,12 @@ export function TaskEditor({
           </div>
         </div>
 
-        {/* 子任務 */}
-        <div className="space-y-2.5">
-          <div className="flex items-center justify-between">
-            <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              <ListChecks size={14} /> 子任務
-            </span>
-            {subtasks.length > 0 && (
-              <span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold tabular-nums text-slate-500 dark:bg-slate-700/60 dark:text-slate-400">
-                {subDone}/{subtasks.length}
-              </span>
-            )}
-          </div>
+        {/* 子任務（拆卷項；方剔格呼應改簿格）*/}
+        <CardSection
+          icon={ListChecks}
+          title="子任務"
+          count={subtasks.length > 0 ? `${subDone}/${subtasks.length}` : undefined}
+        >
           {subtasks.length > 0 && (
             <ul className="space-y-0.5">
               {subtasks.map((s) => (
@@ -286,7 +403,13 @@ export function TaskEditor({
                     checked={s.done}
                     onChange={() => toggleSub(s)}
                     aria-label={`${s.done ? '取消完成' : '完成'}子任務：${s.text}`}
-                    className="h-4 w-4 rounded accent-[color:var(--accent)]"
+                    className={cx(
+                      'h-4 w-4',
+                      // 批改卷宗內：未剔子任務用紅墨剔（呼應紅筆 accent）；
+                      // 一剔變綠（完成）。其餘任務沿用 mode accent。
+                      marking ? 'rounded-sm accent-rose-500' : 'rounded accent-[color:var(--accent)]',
+                      s.done && 'accent-emerald-500',
+                    )}
                   />
                   <span
                     className={cx(
@@ -325,13 +448,14 @@ export function TaskEditor({
               加入
             </Button>
           </div>
-        </div>
+        </CardSection>
 
-        {/* 標籤 */}
-        <div className="space-y-2.5">
-          <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-            <Tag size={14} /> 標籤
-          </span>
+        {/* 標籤（卷宗側標）*/}
+        <CardSection
+          icon={Tag}
+          title="標籤"
+          count={task.meta.tags.length > 0 ? task.meta.tags.length : undefined}
+        >
           {task.meta.tags.length > 0 && (
             <div className="flex flex-wrap gap-1.5">
               {task.meta.tags.map((t) => (
@@ -375,37 +499,47 @@ export function TaskEditor({
               ))}
             </div>
           )}
-        </div>
+        </CardSection>
 
-        {/* 備註 */}
-        <div className="space-y-2.5">
-          <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-            <StickyNote size={14} /> 備註
-          </span>
+        {/* 備註（卷宗批註欄）*/}
+        <CardSection icon={StickyNote} title="備註">
           <Textarea
             value={note}
             onChange={(e) => setNote(e.target.value)}
             onBlur={commitNote}
-            placeholder="補充資料、連結、上下文…"
+            placeholder={marking ? '批改重點、常見錯處、跟進…' : '補充資料、連結、上下文…'}
             className="min-h-[90px]"
           />
-        </div>
+        </CardSection>
 
-        <div className="flex items-center justify-between border-t border-slate-200 pt-4 dark:border-slate-700">
-          <Button variant="ghost" icon={Trash2} onClick={askDelete} className="text-rose-500 hover:text-rose-600">
-            刪除任務
-          </Button>
-          <Button
-            onClick={() => {
-              commitText()
-              commitNote()
-              toast.success('已儲存')
-              onClose()
-            }}
-          >
-            完成
-          </Button>
-        </div>
+        {/* 收卷：刪除（紅筆語意）+ 完成。雙線封底呼應頁眉。*/}
+        <footer className="-mx-5 -mb-5 mt-1 px-5 pb-5 sm:-mx-6 sm:-mb-6 sm:px-6 sm:pb-6">
+          <div className="mb-4 space-y-1" aria-hidden>
+            <span className="block h-px bg-slate-200/60 dark:bg-slate-700/40" />
+            <span className="block h-px bg-slate-200/90 dark:bg-slate-700/70" />
+          </div>
+          <div className="flex items-center justify-between gap-3">
+            <Button
+              variant="ghost"
+              icon={Trash2}
+              onClick={askDelete}
+              className="text-rose-500 hover:text-rose-600"
+            >
+              刪除任務
+            </Button>
+            <Button
+              icon={Check}
+              onClick={() => {
+                commitText()
+                commitNote()
+                toast.success('已儲存')
+                onClose()
+              }}
+            >
+              完成
+            </Button>
+          </div>
+        </footer>
       </div>
     </Modal>
   )

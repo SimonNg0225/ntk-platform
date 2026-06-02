@@ -3,9 +3,11 @@ import {
   Activity,
   Archive,
   ArchiveRestore,
+  BookMarked,
   ExternalLink,
   FolderInput,
   History,
+  Library,
   Link as LinkIcon,
   Link2Off,
   NotebookPen,
@@ -15,6 +17,7 @@ import {
   StickyNote,
   Tag as TagIcon,
   Trash2,
+  X,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { useCollection } from '../../../lib/store'
@@ -35,6 +38,7 @@ import {
 } from '../../../ui'
 import { useToast } from '../../../context/ToastContext'
 import {
+  TYPE_COLOR,
   TYPE_LABEL,
   TYPE_ORDER,
   domainOf,
@@ -128,13 +132,13 @@ export function DetailModal({
   const setMeta = (patch: Partial<Omit<ResourceMeta, 'id'>>) =>
     upsertMeta(res.id, patch)
 
-  // ── 編輯模式 ──
+  // ── 編輯模式：著錄卡（catalogue accession card）──
   if (editing) {
+    const editDomain = domainOf(url)
     return (
       <Modal
         open
         onClose={() => setEditing(false)}
-        title="編輯資源"
         size="lg"
         footer={
           <>
@@ -142,17 +146,30 @@ export function DetailModal({
               取消
             </Button>
             <Button icon={Save} onClick={saveEdit}>
-              儲存
+              入冊歸檔
             </Button>
           </>
         }
       >
-        <div className="space-y-3">
-          <Field label="標題" required>
-            <Input value={title} onChange={(e) => setTitle(e.target.value)} />
+        <CatalogueHeader
+          kicker="著錄 · Cataloguing"
+          icon={Pencil}
+          title="修訂館藏條目"
+          type={type}
+          onClose={() => setEditing(false)}
+        />
+
+        {/* 著錄卡：hairline grid 表單，呼應典藏簿格仔 */}
+        <div className="space-y-3.5">
+          <Field label="條目標題" required>
+            <Input
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              autoFocus
+            />
           </Field>
-          <div className="grid grid-cols-2 gap-3">
-            <Field label="類型">
+          <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
+            <Field label="館藏類別">
               <Select
                 value={type}
                 onChange={(e) => setType(e.target.value as ResourceType)}
@@ -164,7 +181,7 @@ export function DetailModal({
                 ))}
               </Select>
             </Field>
-            <Field label="課題">
+            <Field label="所屬課題">
               <Select value={topicId} onChange={(e) => setTopicId(e.target.value)}>
                 <option value="">未連結</option>
                 {topics.map((t) => (
@@ -175,17 +192,21 @@ export function DetailModal({
               </Select>
             </Field>
           </div>
-          <Field label="連結 URL" hint={domainOf(url) ? `網域：${domainOf(url)}` : undefined}>
+          <Field
+            label="索書連結 URL"
+            hint={editDomain ? `網域：${editDomain}` : undefined}
+          >
             <Input
               value={url}
               onChange={(e) => setUrl(e.target.value)}
               placeholder="https://…"
+              icon={LinkIcon}
             />
           </Field>
-          <Field label="標籤">
+          <Field label="標籤主題詞">
             <TagEditor value={tags} onChange={setTags} suggestions={allTags} />
           </Field>
-          <Field label="備註">
+          <Field label="館員附註">
             <Textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
@@ -198,17 +219,45 @@ export function DetailModal({
     )
   }
 
-  // ── 詳情模式 ──
+  // ── 詳情模式：典藏卡片（catalogue record）──
   return (
-    <Modal open onClose={onClose} title="資源詳情" size="lg">
-      <div className="space-y-5">
-        {/* 標頭 */}
-        <div className="flex items-start gap-3.5">
+    <Modal open onClose={onClose} size="lg">
+      {/* 典藏卡頭：類型書脊 + serif 條目名 + 著錄牌 */}
+      <div className="relative -mx-5 -mt-5 mb-5 overflow-hidden rounded-t-2xl border-b border-slate-200/80 bg-slate-50/70 px-5 pb-4 pt-5 dark:border-slate-700/60 dark:bg-slate-800/40 sm:-mx-6 sm:-mt-6 sm:px-6 sm:pt-6">
+        {/* 類型書脊（左緣彩條，呼應卡片視圖） */}
+        <span
+          aria-hidden="true"
+          className={cx('absolute inset-y-0 left-0 w-1', TYPE_COLOR[res.type].dot)}
+        />
+        <div className="flex items-start justify-between gap-3">
+          <p className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.28em] text-accent/70">
+            <Library size={12} strokeWidth={2} />
+            典藏條目 · Record
+          </p>
+          <div className="flex shrink-0 items-center gap-0.5">
+            <Tooltip label={meta.favorite ? '取消收藏' : '收藏'}>
+              <IconButton
+                label="收藏"
+                active={meta.favorite}
+                onClick={() => setMeta({ favorite: !meta.favorite })}
+              >
+                <Star
+                  size={18}
+                  className={cx(meta.favorite && 'fill-amber-400 text-amber-400')}
+                />
+              </IconButton>
+            </Tooltip>
+            <IconButton label="關閉" onClick={onClose}>
+              <X size={18} />
+            </IconButton>
+          </div>
+        </div>
+        <div className="mt-2.5 flex items-start gap-3.5">
           <TypeIconBox type={res.type} />
           <div className="min-w-0 flex-1">
-            <p className="break-words text-lg font-semibold leading-snug text-slate-800 dark:text-slate-100">
+            <h2 className="break-words font-serif text-xl font-semibold leading-snug tracking-tight text-slate-800 dark:text-slate-100">
               {res.title}
-            </p>
+            </h2>
             <div className="mt-2 flex flex-wrap items-center gap-1.5">
               <Badge tone="accent">{TYPE_LABEL[res.type]}</Badge>
               {topicName && <Badge tone="slate">{topicName}</Badge>}
@@ -227,32 +276,22 @@ export function DetailModal({
               {meta.archived && <Badge tone="slate" icon={Archive}>已封存</Badge>}
             </div>
           </div>
-          <Tooltip label={meta.favorite ? '取消收藏' : '收藏'}>
-            <IconButton
-              label="收藏"
-              active={meta.favorite}
-              onClick={() => setMeta({ favorite: !meta.favorite })}
-            >
-              <Star
-                size={18}
-                className={cx(meta.favorite && 'fill-amber-400 text-amber-400')}
-              />
-            </IconButton>
-          </Tooltip>
         </div>
+      </div>
 
-        {/* 連結 + 開啟（主行動）*/}
+      <div className="space-y-5">
+        {/* 出納票：索書連結 + 借閱（主行動），戳印虛線票根 */}
         {res.url ? (
-          <div className="flex items-center justify-between gap-2 rounded-2xl border border-accent/20 bg-accent-soft/40 px-3.5 py-3 dark:border-accent/25 dark:bg-accent/10">
+          <div className="flex items-center justify-between gap-2 rounded-2xl border border-dashed border-accent/30 bg-accent-soft/40 px-3.5 py-3 dark:border-accent/30 dark:bg-accent/10">
             <FaviconChip domain={domain} />
             <Button size="sm" icon={ExternalLink} onClick={open}>
-              開啟連結
+              借閱開啟
             </Button>
           </div>
         ) : (
           <p className="flex items-center gap-2 rounded-2xl border border-dashed border-slate-200 px-3.5 py-3 text-xs text-slate-500 dark:border-slate-700 dark:text-slate-400">
             <StickyNote size={14} className="shrink-0 text-slate-400" />
-            純筆記 / 實體教材，未有連結。
+            純筆記 / 實體教材，未有索書連結。
           </p>
         )}
 
@@ -271,21 +310,21 @@ export function DetailModal({
           </div>
         )}
 
-        {/* 備註 */}
+        {/* 館員附註 */}
         {res.notes && (
           <div>
-            <SectionLabel icon={NotebookPen}>備註</SectionLabel>
-            <p className="whitespace-pre-wrap break-words rounded-2xl bg-slate-50 px-3.5 py-3 text-sm leading-relaxed text-slate-600 dark:bg-slate-800/50 dark:text-slate-300">
+            <SectionLabel icon={NotebookPen}>館員附註</SectionLabel>
+            <p className="whitespace-pre-wrap break-words rounded-2xl border border-slate-200/70 bg-slate-50 px-3.5 py-3 text-sm leading-relaxed text-slate-600 dark:border-slate-700/60 dark:bg-slate-800/50 dark:text-slate-300">
               {res.notes}
             </p>
           </div>
         )}
 
-        {/* 評分 + 收藏夾 */}
+        {/* 館藏評等 + 歸架抽屜 */}
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <div className="rounded-2xl border border-slate-200/80 px-3.5 py-3 dark:border-slate-700/60">
-            <p className="mb-1.5 flex items-center gap-1.5 text-[11px] font-medium text-slate-500 dark:text-slate-400">
-              <Star size={12} className="text-slate-400" /> 評分
+            <p className="mb-1.5 flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
+              <Star size={12} className="text-slate-400" /> 館藏評等
             </p>
             <StarRating
               value={meta.rating ?? 0}
@@ -294,8 +333,8 @@ export function DetailModal({
             />
           </div>
           <div className="rounded-2xl border border-slate-200/80 px-3.5 py-3 dark:border-slate-700/60">
-            <p className="mb-1.5 flex items-center gap-1.5 text-[11px] font-medium text-slate-500 dark:text-slate-400">
-              <FolderInput size={12} className="text-slate-400" /> 收藏夾
+            <p className="mb-1.5 flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
+              <FolderInput size={12} className="text-slate-400" /> 歸架抽屜
             </p>
             <Select
               value={meta.folderId ?? ''}
@@ -312,20 +351,20 @@ export function DetailModal({
           </div>
         </div>
 
-        {/* 使用統計 */}
+        {/* 出納記錄：借閱次數 / 最後借閱 / 入冊（hairline grid，serif 數字呼應典藏簿） */}
         <div>
-          <SectionLabel icon={Activity}>使用情況</SectionLabel>
-          <div className="grid grid-cols-3 gap-2 text-center">
-            <Stat label="開啟次數" value={meta.opens} />
-            <Stat label="最後開啟" value={relativeDate(meta.lastOpened)} small />
-            <Stat label="加入於" value={relativeDate(res.createdAt)} small />
+          <SectionLabel icon={Activity}>出納記錄</SectionLabel>
+          <div className="grid grid-cols-3 gap-px overflow-hidden rounded-2xl bg-slate-200/70 ring-1 ring-slate-200/80 text-center dark:bg-slate-700/50 dark:ring-slate-700/60">
+            <Stat label="借閱次數" value={meta.opens} />
+            <Stat label="最後借閱" value={relativeDate(meta.lastOpened)} small />
+            <Stat label="入冊於" value={relativeDate(res.createdAt)} small />
           </div>
         </div>
 
-        {/* 開啟歷史 */}
+        {/* 借閱往來（出納票背面） */}
         {history.length > 0 && (
           <div>
-            <SectionLabel icon={History}>最近開啟</SectionLabel>
+            <SectionLabel icon={History}>借閱往來</SectionLabel>
             <ul className="space-y-1.5 rounded-2xl bg-slate-50 px-3.5 py-3 dark:bg-slate-800/50">
               {history.map((h) => (
                 <li
@@ -407,6 +446,45 @@ function SectionLabel({
   )
 }
 
+// 著錄卡頭（編輯 / 新增共用）：類型書脊 + 雙語 kicker + serif 標題 + 自家關閉鍵。
+// Modal 已不畫 header（無 title prop）；Esc / focus-trap 仍由 Modal 處理。
+function CatalogueHeader({
+  kicker,
+  icon: I,
+  title,
+  type,
+  onClose,
+}: {
+  kicker: string
+  icon: LucideIcon
+  title: string
+  type: ResourceType
+  onClose: () => void
+}) {
+  return (
+    <div className="relative -mx-5 -mt-5 mb-5 overflow-hidden rounded-t-2xl border-b border-slate-200/80 bg-slate-50/70 px-5 pb-4 pt-5 dark:border-slate-700/60 dark:bg-slate-800/40 sm:-mx-6 sm:-mt-6 sm:px-6 sm:pt-6">
+      <span
+        aria-hidden="true"
+        className={cx('absolute inset-y-0 left-0 w-1', TYPE_COLOR[type].dot)}
+      />
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.28em] text-accent/70">
+            <I size={12} strokeWidth={2} />
+            {kicker}
+          </p>
+          <h2 className="mt-1.5 break-words font-serif text-xl font-semibold leading-tight tracking-tight text-slate-800 dark:text-slate-100">
+            {title}
+          </h2>
+        </div>
+        <IconButton label="關閉" onClick={onClose}>
+          <X size={18} />
+        </IconButton>
+      </div>
+    </div>
+  )
+}
+
 function Stat({
   label,
   value,
@@ -417,16 +495,18 @@ function Stat({
   small?: boolean
 }) {
   return (
-    <div className="rounded-2xl bg-slate-50 px-2 py-2.5 dark:bg-slate-800/50">
+    <div className="bg-white px-2 py-2.5 dark:bg-slate-800">
       <p
         className={cx(
-          'font-bold tabular-nums text-slate-800 dark:text-slate-100',
-          small ? 'text-sm' : 'text-xl',
+          'font-serif font-semibold tabular-nums slashed-zero leading-none text-slate-800 dark:text-slate-100',
+          small ? 'text-[15px]' : 'text-2xl',
         )}
       >
         {value}
       </p>
-      <p className="mt-0.5 text-[10px] text-slate-400 dark:text-slate-500">{label}</p>
+      <p className="mt-1 text-[10px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
+        {label}
+      </p>
     </div>
   )
 }
@@ -520,26 +600,36 @@ export function AddResourceModal({
         reset()
         onClose()
       }}
-      title="新增資源"
       size="lg"
       footer={
         <>
           <Button variant="secondary" onClick={() => save(true)}>
-            儲存並再新增
+            入冊並續登
           </Button>
-          <Button onClick={() => save(false)}>儲存</Button>
+          <Button onClick={() => save(false)}>入冊歸檔</Button>
         </>
       }
     >
+      <CatalogueHeader
+        kicker="入冊 · Accession"
+        icon={BookMarked}
+        title="登錄新館藏"
+        type={type}
+        onClose={() => {
+          reset()
+          onClose()
+        }}
+      />
+
       <div className="space-y-3.5">
-        {/* URL 智能入口 — 貼連結即自動猜類型 */}
-        <div className="rounded-2xl border border-slate-200/80 bg-slate-50/60 p-3.5 dark:border-slate-700/60 dark:bg-slate-800/40">
+        {/* 索書入口 — 貼連結即自動著錄類型（虛線票根呼應出納票） */}
+        <div className="rounded-2xl border border-dashed border-accent/30 bg-accent-soft/40 p-3.5 dark:border-accent/30 dark:bg-accent/10">
           <Field
-            label="連結 URL"
+            label="索書連結 URL"
             hint={
               domain
-                ? `偵測到網域：${domain}，已幫你猜咗類型`
-                : '貼上連結（如 YouTube、PDF、Google Docs），會自動猜類型。'
+                ? `偵測到網域：${domain}，已幫你著錄咗類別`
+                : '貼上連結（如 YouTube、PDF、Google Docs），會自動著錄類別。'
             }
           >
             <Input
@@ -550,7 +640,7 @@ export function AddResourceModal({
             />
           </Field>
         </div>
-        <Field label="標題" required>
+        <Field label="條目標題" required>
           <Input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
@@ -558,8 +648,8 @@ export function AddResourceModal({
             autoFocus
           />
         </Field>
-        <div className="grid grid-cols-2 gap-3">
-          <Field label="類型">
+        <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
+          <Field label="館藏類別">
             <Select
               value={type}
               onChange={(e) => {
@@ -574,7 +664,7 @@ export function AddResourceModal({
               ))}
             </Select>
           </Field>
-          <Field label="收藏夾">
+          <Field label="歸架抽屜">
             <Select value={folderId} onChange={(e) => setFolderId(e.target.value)}>
               <option value="">未分類</option>
               {folders.map((f) => (
@@ -585,7 +675,7 @@ export function AddResourceModal({
             </Select>
           </Field>
         </div>
-        <Field label="課題（選填）">
+        <Field label="所屬課題（選填）">
           <Select value={topicId} onChange={(e) => setTopicId(e.target.value)}>
             <option value="">未連結</option>
             {topics.map((t) => (
@@ -595,10 +685,10 @@ export function AddResourceModal({
             ))}
           </Select>
         </Field>
-        <Field label="標籤（選填）">
+        <Field label="標籤主題詞（選填）">
           <TagEditor value={tags} onChange={setTags} suggestions={allTags} />
         </Field>
-        <Field label="備註（選填）">
+        <Field label="館員附註（選填）">
           <Textarea
             value={notes}
             onChange={(e) => setNotes(e.target.value)}

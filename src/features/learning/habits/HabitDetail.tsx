@@ -1,10 +1,8 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, type ReactNode } from 'react'
 import {
   Modal,
   Button,
   Badge,
-  StatCard,
-  SectionTitle,
   IconButton,
   cx,
 } from '../../../ui'
@@ -17,6 +15,10 @@ import {
   ChevronLeft,
   ChevronRight,
   Target,
+  X,
+  CalendarDays,
+  Grid3x3,
+  CalendarRange,
 } from 'lucide-react'
 import Heatmap from './Heatmap'
 import { colorOf, freqLabel, type Habit } from './types'
@@ -33,6 +35,10 @@ import {
 
 // ============================================================
 //  習慣詳情（per-habit）— 年度 heatmap + 統計 + 可點月曆
+//  ------------------------------------------------------------
+//  美學：呼應主畫面「老黃曆 + 連續鏈條」——
+//  單一習慣嘅一頁曆書：serif 抬頭、戳印圖示、hairline 分節、
+//  連續日數做主角（鏈條意象）。可點月曆 / heatmap 功能一律不變。
 // ============================================================
 
 export default function HabitDetail({
@@ -96,21 +102,25 @@ export default function HabitDetail({
         </>
       }
     >
-      {/* 標題列 */}
-      <div className="mb-5 flex items-start gap-3">
+      {/* ───────── 老黃曆抬頭：kicker + 戳印圖示 + serif 名稱 + 自家關閉鈕 ───────── */}
+      <div className="mb-5 flex items-start gap-3.5">
         <span
           className={cx(
-            'flex h-12 w-12 shrink-0 items-center justify-center rounded-xl text-2xl',
+            'relative flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl text-3xl shadow-xs ring-1 ring-inset ring-black/5 dark:ring-white/5',
             spec.soft,
           )}
         >
           {habit.icon ?? '⭐'}
         </span>
         <div className="min-w-0 flex-1">
-          <h3 className="truncate text-lg font-bold text-slate-900 dark:text-slate-100">
+          <p className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.3em] text-accent/70">
+            <CalendarDays size={13} className="shrink-0" />
+            習慣冊 · Habit Almanac
+          </p>
+          <h2 className="mt-0.5 truncate font-serif text-2xl font-semibold leading-tight tracking-tight text-slate-900 dark:text-slate-100">
             {habit.name}
-          </h3>
-          <div className="mt-1 flex flex-wrap items-center gap-1.5">
+          </h2>
+          <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
             <Badge tone="slate">{freqLabel(habit.frequency)}</Badge>
             {habit.category && <Badge tone="accent">{habit.category}</Badge>}
             <Badge tone={habit.goalKind === 'quit' ? 'rose' : 'green'}>
@@ -123,63 +133,75 @@ export default function HabitDetail({
             )}
           </div>
         </div>
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="關閉"
+          className="-mr-1 -mt-1 shrink-0 rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:hover:bg-slate-700"
+        >
+          <X size={18} />
+        </button>
       </div>
 
       {habit.notes && (
-        <p className="mb-5 rounded-xl border border-slate-200/70 bg-slate-50 px-3.5 py-2.5 text-sm leading-relaxed text-slate-600 dark:border-slate-700/50 dark:bg-slate-700/40 dark:text-slate-300">
+        <p className="mb-5 rounded-xl border-l-2 border-slate-300 bg-slate-50 px-3.5 py-2.5 font-serif text-sm italic leading-relaxed text-slate-600 dark:border-slate-600 dark:bg-slate-700/40 dark:text-slate-300">
           {habit.notes}
         </p>
       )}
 
-      {/* 四大統計 */}
-      <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <StatCard label="目前連續" value={stats.cur} unit="日" icon={Flame} highlight={stats.cur > 0} />
-        <StatCard label="史上最長" value={stats.best} unit="日" icon={Trophy} />
-        <StatCard label="30 日完成" value={`${stats.rate30}%`} icon={Percent} />
-        <StatCard label="累計打卡" value={stats.total} unit="次" icon={CalendarCheck} />
+      {/* ───────── 連續紀錄：曆書帶（hairline grid · serif 大數字；呼應主畫面 AlmanacStat） ───────── */}
+      <div className="mb-5 grid grid-cols-2 gap-px overflow-hidden rounded-2xl bg-slate-200/70 ring-1 ring-slate-200/80 dark:bg-slate-700/50 dark:ring-slate-700/60 sm:grid-cols-4">
+        <LeafStat label="目前連續" value={stats.cur} unit="日" icon={Flame} hot={stats.cur > 0} />
+        <LeafStat label="史上最長" value={stats.best} unit="日" icon={Trophy} />
+        <LeafStat label="30 日完成" value={`${stats.rate30}%`} icon={Percent} />
+        <LeafStat label="累計打卡" value={stats.total} unit="次" icon={CalendarCheck} />
       </div>
 
-      {/* 目標連續進度 */}
+      {/* ───────── 目標連續進度（鏈條意象：節節相扣行向目標） ───────── */}
       {habit.targetStreak > 0 && (
-        <div className="mb-5 rounded-xl border border-slate-200 p-4 dark:border-slate-700">
-          <div className="mb-2 flex items-center justify-between">
+        <div className="mb-5 rounded-2xl border border-slate-200/80 p-4 dark:border-slate-700/60">
+          <div className="mb-2.5 flex items-center justify-between">
             <span className="flex items-center gap-1.5 text-sm font-semibold text-slate-700 dark:text-slate-200">
               <Target size={15} className={spec.text} />
               目標連續 {habit.targetStreak} 日
             </span>
-            <span className={cx('text-sm font-semibold tabular-nums', spec.text)}>
+            <span className={cx('font-serif text-sm font-semibold tabular-nums slashed-zero', spec.text)}>
               {stats.cur}/{habit.targetStreak}
             </span>
           </div>
           <div className="h-2.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-700">
             <div
-              className={cx('h-full rounded-full transition-all duration-500', spec.solid)}
+              className={cx('h-full rounded-full transition-all duration-500', spec.solid.split(' ')[0])}
               style={{ width: `${targetPct}%` }}
             />
           </div>
           {stats.cur >= habit.targetStreak && (
-            <p className="mt-2 text-xs font-medium text-emerald-600 dark:text-emerald-400">
-              🎉 已達成目標！繼續保持。
+            <p className="mt-2 flex items-center gap-1 text-xs font-medium text-emerald-600 dark:text-emerald-400">
+              <Trophy size={13} className="shrink-0" />
+              已達成目標！繼續保持。
             </p>
           )}
         </div>
       )}
 
-      {/* 年度 heatmap */}
+      {/* ───────── 年度打卡熱圖 ───────── */}
       <div className="mb-6">
-        <SectionTitle>年度打卡熱圖</SectionTitle>
-        <Heatmap done={done} color={habit.color} weeks={27} />
+        <LeafHeading icon={Grid3x3}>年度打卡熱圖</LeafHeading>
+        <div className="mt-3">
+          <Heatmap done={done} color={habit.color} weeks={27} />
+        </div>
       </div>
 
-      {/* 可點月曆 */}
+      {/* ───────── 可點月曆（補打卡） ───────── */}
       <div>
-        <SectionTitle
+        <LeafHeading
+          icon={CalendarRange}
           right={
             <div className="flex items-center gap-1">
               <IconButton label="上個月" size="sm" onClick={() => shiftMonth(-1)}>
                 <ChevronLeft size={16} />
               </IconButton>
-              <span className="min-w-[5.5rem] text-center text-sm font-semibold tabular-nums text-slate-700 dark:text-slate-200">
+              <span className="min-w-[5.5rem] text-center font-serif text-sm font-semibold tabular-nums text-slate-700 dark:text-slate-200">
                 {ym.y}年{MONTH_LABELS[ym.m]}
               </span>
               <IconButton label="下個月" size="sm" onClick={() => shiftMonth(1)}>
@@ -188,9 +210,9 @@ export default function HabitDetail({
             </div>
           }
         >
-          月曆檢視（點格補打卡）
-        </SectionTitle>
-        <div className="grid grid-cols-7 gap-1 rounded-2xl border border-slate-200/70 bg-slate-50/50 p-2.5 dark:border-slate-700/50 dark:bg-slate-800/40">
+          月曆檢視
+        </LeafHeading>
+        <div className="mt-3 grid grid-cols-7 gap-1 rounded-2xl border border-slate-200/70 bg-[#fcfbf7] p-2.5 dark:border-slate-700/50 dark:bg-slate-800/40">
           {WEEKDAY_LABELS.map((w) => (
             <div key={w} className="py-1 text-center text-[11px] font-medium text-slate-400 dark:text-slate-500">
               {w}
@@ -234,5 +256,70 @@ export default function HabitDetail({
         </p>
       </div>
     </Modal>
+  )
+}
+
+// ───────── 曆書分節抬頭（小帽 + icon + hairline 收尾；呼應主畫面 SectionLabel / 編輯器 AlmanacHeading）─────────
+function LeafHeading({
+  icon: Icon,
+  children,
+  right,
+}: {
+  icon: typeof Flame
+  children: ReactNode
+  right?: ReactNode
+}) {
+  return (
+    <div className="flex items-center gap-2">
+      <p className="flex shrink-0 items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">
+        <Icon size={12} className="shrink-0" />
+        {children}
+      </p>
+      <span aria-hidden="true" className="h-px flex-1 bg-slate-200/80 dark:bg-slate-700/60" />
+      {right && <div className="shrink-0">{right}</div>}
+    </div>
+  )
+}
+
+// ───────── 曆書帶統計格（hairline grid · serif 大數字；目前連續 hot 高亮，呼應主畫面 AlmanacStat）─────────
+function LeafStat({
+  label,
+  value,
+  unit,
+  icon: Icon,
+  hot,
+}: {
+  label: string
+  value: number | string
+  unit?: string
+  icon: typeof Flame
+  hot?: boolean
+}) {
+  return (
+    <div
+      className={cx(
+        'px-3.5 py-3 transition-colors',
+        hot ? 'bg-amber-50 dark:bg-amber-500/10' : 'bg-white dark:bg-slate-800',
+      )}
+    >
+      <p
+        className={cx(
+          'flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide',
+          hot ? 'text-amber-600/80 dark:text-amber-400/80' : 'text-slate-400 dark:text-slate-500',
+        )}
+      >
+        <Icon size={12} className="shrink-0" />
+        <span className="truncate">{label}</span>
+      </p>
+      <p
+        className={cx(
+          'mt-1 font-serif text-[26px] font-semibold leading-none tabular-nums slashed-zero',
+          hot ? 'text-amber-600 dark:text-amber-400' : 'text-slate-800 dark:text-slate-100',
+        )}
+      >
+        {value}
+        {unit && <span className="ml-1 font-sans text-sm font-normal text-slate-400">{unit}</span>}
+      </p>
+    </div>
   )
 }

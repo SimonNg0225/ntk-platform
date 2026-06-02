@@ -11,6 +11,10 @@ import {
   Plus,
   TrendingUp,
   Trash2,
+  Mountain,
+  MountainSnow,
+  Footprints,
+  Route,
 } from 'lucide-react'
 import {
   Modal,
@@ -68,6 +72,15 @@ function badgeTone(tone: string): BadgeTone {
     default:
       return 'slate'
   }
+}
+
+// 登山語境：進度區間 → 攀升狀態（同主畫面 GoalsWidget altitudeLabel 一致）
+function altitudeLabel(progress: number, isDone: boolean): string {
+  if (isDone) return '已登頂'
+  if (progress >= 75) return '逼近山頂'
+  if (progress >= 40) return '穩步上山'
+  if (progress > 0) return '剛起步'
+  return '喺山腳'
 }
 
 export default function GoalDetail({
@@ -200,47 +213,71 @@ export default function GoalDetail({
   return (
     <Modal open onClose={onClose} size="xl">
       <div className="space-y-5">
-        {/* 標題列 */}
-        <div className="flex items-start gap-3">
-          <ProgressRing value={progress} size={52} stroke={6} tone={progress >= 100 ? 'green' : 'accent'} />
-          <div className="min-w-0 flex-1">
-            <h3 className="text-lg font-bold leading-tight text-slate-800 dark:text-slate-100">{goal.title}</h3>
-            <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-              <Badge tone={badgeTone(cat.tone)} icon={CatIcon}>
-                {cat.label}
-              </Badge>
-              <Badge tone={badgeTone(pr.tone)} icon={Flag}>
-                {pr.label}優先
-              </Badge>
-              <Badge tone={badgeTone(st.tone)} dot>
-                {st.label}
-              </Badge>
-              {due && (
-                <Badge tone={badgeTone(due.tone)} icon={CalendarClock}>
-                  {due.text}
-                </Badge>
-              )}
+        {/* ───────── 攀登誌 masthead ───────── */}
+        <header>
+          <div className="flex items-start justify-between gap-3">
+            <p className="inline-flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.3em] text-accent/70">
+              <Mountain size={13} className="shrink-0" />
+              攀登誌 · Summit Log
+            </p>
+            <div className="-mt-1 flex shrink-0 items-center gap-1">
+              <IconButton label="編輯目標" onClick={() => onEdit(goalId)}>
+                <Pencil size={16} />
+              </IconButton>
+              <IconButton label="刪除目標" tone="danger" onClick={handleDelete}>
+                <Trash2 size={16} />
+              </IconButton>
             </div>
           </div>
-          <div className="flex shrink-0 items-center gap-1">
-            <IconButton label="編輯目標" onClick={() => onEdit(goalId)}>
-              <Pencil size={16} />
-            </IconButton>
-            <IconButton label="刪除目標" tone="danger" onClick={handleDelete}>
-              <Trash2 size={16} />
-            </IconButton>
+          <div className="mt-1.5 flex items-start gap-3.5">
+            <div className="relative shrink-0">
+              <ProgressRing value={progress} size={56} stroke={6} tone={progress >= 100 ? 'green' : 'accent'} />
+              <span className="absolute inset-0 flex items-center justify-center">
+                {progress >= 100 ? (
+                  <MountainSnow size={18} className="text-emerald-500" />
+                ) : (
+                  <Mountain size={16} className="text-accent" />
+                )}
+              </span>
+            </div>
+            <div className="min-w-0 flex-1">
+              <h3 className="font-serif text-xl font-semibold leading-tight tracking-tight text-slate-800 dark:text-slate-100">
+                {goal.title}
+              </h3>
+              <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                <Badge tone={badgeTone(cat.tone)} icon={CatIcon}>
+                  {cat.label}
+                </Badge>
+                <Badge tone={badgeTone(pr.tone)} icon={Flag}>
+                  {pr.label}優先
+                </Badge>
+                <Badge tone={badgeTone(st.tone)} dot>
+                  {st.label}
+                </Badge>
+                {due && (
+                  <Badge tone={badgeTone(due.tone)} icon={CalendarClock}>
+                    {due.text}
+                  </Badge>
+                )}
+              </div>
+            </div>
           </div>
-        </div>
+        </header>
 
-        {/* 進度條 + 手動調整（無里程碑時）*/}
+        {/* 海拔：整體進度 + 手動調整（無里程碑時）*/}
         <div className="rounded-2xl border border-slate-200/80 bg-slate-50/50 p-4 dark:border-slate-700/60 dark:bg-slate-800/40">
           <div className="mb-2 flex items-baseline justify-between">
-            <span className="text-xs font-medium text-slate-500 dark:text-slate-400">整體進度</span>
-            <span className={cx('text-lg font-bold tabular-nums', progress >= 100 ? 'text-emerald-500' : 'text-accent')}>{progress}%</span>
+            <span className="inline-flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide text-slate-400 dark:text-slate-500">
+              <Footprints size={13} className="text-slate-400" />
+              海拔 · {altitudeLabel(progress, progress >= 100)}
+            </span>
+            <span className={cx('font-serif text-2xl font-semibold leading-none tabular-nums', progress >= 100 ? 'text-emerald-500' : 'text-accent')}>
+              {progress}<span className="ml-0.5 align-top font-sans text-sm font-medium text-slate-400">%</span>
+            </span>
           </div>
           <ProgressBar value={progress} tone={progress >= 100 ? 'green' : 'accent'} />
           {hasMilestones ? (
-            <p className="mt-2 text-xs text-slate-400 dark:text-slate-500">由里程碑加權自動計算</p>
+            <p className="mt-2 text-xs text-slate-400 dark:text-slate-500">海拔由沿途里程碑加權自動計算。</p>
           ) : (
             <div className="mt-3 flex items-center gap-1.5">
               {[-25, -10, +10, +25].map((d) => (
@@ -271,22 +308,22 @@ export default function GoalDetail({
 
         <Separator />
 
-        {/* 里程碑 */}
+        {/* 沿途路標（里程碑）*/}
         <section>
           <div className="mb-2 flex items-center justify-between">
             <h4 className="flex items-center gap-1.5 text-sm font-semibold text-slate-700 dark:text-slate-200">
-              <Flag size={15} className="text-accent" />
-              里程碑
+              <Route size={15} className="text-accent" />
+              沿途路標
             </h4>
             {hasMilestones && (
               <span className="text-xs tabular-nums text-slate-400">
-                {doneMs}/{milestones.length} 完成
+                已踏 {doneMs}/{milestones.length}
               </span>
             )}
           </div>
           {hasMilestones ? (
             <ul className="space-y-1.5">
-              {milestones.map((m) => (
+              {milestones.map((m, i) => (
                 <li
                   key={m.id}
                   className={cx(
@@ -296,11 +333,23 @@ export default function GoalDetail({
                       : 'border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800',
                   )}
                 >
+                  {/* 路標序號（呼應卡片 AscentTrail 節點）*/}
+                  <span
+                    aria-hidden="true"
+                    className={cx(
+                      'inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full font-serif text-[11px] font-semibold tabular-nums',
+                      m.done
+                        ? 'bg-emerald-500 text-white'
+                        : 'bg-slate-100 text-slate-400 dark:bg-slate-700 dark:text-slate-500',
+                    )}
+                  >
+                    {i + 1}
+                  </span>
                   <button
                     type="button"
                     onClick={() => toggleMilestone(m.id, m.done)}
                     aria-pressed={m.done}
-                    aria-label={m.done ? `標記「${m.title}」為未完成` : `標記「${m.title}」為完成`}
+                    aria-label={m.done ? `將路標「${m.title}」標記為未踏` : `踏過路標「${m.title}」`}
                     className={cx(
                       'flex h-5 w-5 shrink-0 items-center justify-center rounded-md border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-1',
                       m.done
@@ -328,9 +377,9 @@ export default function GoalDetail({
             </ul>
           ) : (
             <div className="rounded-xl border border-dashed border-slate-200/80 bg-slate-50/50 px-4 py-5 text-center dark:border-slate-700/60 dark:bg-slate-800/30">
-              <p className="text-sm text-slate-500 dark:text-slate-400">仲未拆細步驟</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400">仲未標下沿途路標</p>
               <p className="mt-0.5 text-xs text-slate-400 dark:text-slate-500">
-                撳右上「編輯」加入里程碑，進度就會自動計算。
+                撳右上「編輯」拆幾個路標，海拔就會自動跟住行。
               </p>
             </div>
           )}
@@ -338,7 +387,7 @@ export default function GoalDetail({
 
         {meta?.notes && (
           <section>
-            <h4 className="mb-1.5 text-sm font-semibold text-slate-700 dark:text-slate-200">備註</h4>
+            <h4 className="mb-1.5 text-sm font-semibold text-slate-700 dark:text-slate-200">登山筆記</h4>
             <p className="whitespace-pre-wrap rounded-lg bg-slate-50 px-3 py-2.5 text-sm text-slate-600 dark:bg-slate-800/60 dark:text-slate-300">
               {meta.notes}
             </p>
@@ -347,52 +396,54 @@ export default function GoalDetail({
 
         <Separator />
 
-        {/* 動量曲線 */}
+        {/* 攀升動量曲線 */}
         <section>
           <h4 className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-slate-700 dark:text-slate-200">
             <TrendingUp size={15} className="text-accent" />
-            進度動量（近 30 日）
+            攀升動量（近 30 日）
           </h4>
           <Card className="p-3">
             <MomentumChart data={momentum} />
           </Card>
         </section>
 
-        {/* 簽到 */}
+        {/* 攀登日誌（簽到）*/}
         <section>
           <h4 className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-slate-700 dark:text-slate-200">
             <History size={15} className="text-accent" />
-            進度簽到
+            攀登日誌
           </h4>
           <div className="flex gap-2">
             <Input
               value={checkinNote}
               onChange={(e) => setCheckinNote(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && logCheckin()}
-              placeholder={`記錄今日進度（現時 ${progress}%）…`}
+              placeholder={`今日行到邊？（現時海拔 ${progress}%）…`}
+              icon={Footprints}
               className="flex-1"
             />
             <Button icon={Plus} onClick={logCheckin} className="shrink-0">
-              簽到
+              記一筆
             </Button>
           </div>
           {checkins.length === 0 ? (
             <div className="mt-3">
-              <EmptyState icon={History} title="未有簽到記錄" hint="每次有進展就簽到一次，砌出你嘅動量曲線。" />
+              <EmptyState icon={History} title="攀登日誌仲係白紙" hint="每次行多幾步就記一筆，砌出你嘅攀升動量。" />
             </div>
           ) : (
             <ul className="mt-3 space-y-2">
               {[...checkins].reverse().map((c) => (
                 <li key={c.id} className="group flex items-start gap-3 rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-700">
-                  <span className="mt-0.5 flex h-7 w-11 shrink-0 items-center justify-center rounded-md bg-accent-soft text-xs font-semibold tabular-nums text-accent-strong dark:bg-accent/15 dark:text-accent">
-                    {c.progress}%
+                  <span className="mt-0.5 flex h-8 w-12 shrink-0 flex-col items-center justify-center rounded-md bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
+                    <span className="font-serif text-sm font-semibold leading-none tabular-nums">{c.progress}%</span>
+                    <span className="mt-0.5 text-[8px] font-medium uppercase tracking-wide opacity-70">海拔</span>
                   </span>
                   <div className="min-w-0 flex-1">
                     {c.note && <p className="whitespace-pre-wrap break-words text-sm text-slate-700 dark:text-slate-200">{c.note}</p>}
                     <p className="text-xs text-slate-400">{relTime(c.createdAt)}</p>
                   </div>
                   <IconButton
-                    label="刪除簽到"
+                    label="刪除日誌"
                     tone="danger"
                     onClick={() => removeCheckin(c.id)}
                     className="min-h-[36px] min-w-[36px] opacity-100 transition focus-within:opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100"
