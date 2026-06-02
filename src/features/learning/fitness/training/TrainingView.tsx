@@ -844,7 +844,7 @@ function WorkoutRow({
   const dow = WEEKDAY_LABELS[fromKey(workout.date).getDay()]
 
   return (
-    <Card className="overflow-hidden">
+    <Card clip>
       <div className="flex items-start gap-3 p-4">
         <button
           onClick={() => setOpen((v) => !v)}

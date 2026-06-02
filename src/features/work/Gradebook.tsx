@@ -1686,7 +1686,7 @@ function AssessmentsTab({ classId }: { classId: string }) {
           hint="喺上面加測驗、考試或功課；連埋課題仲可以做課題弱項分析。"
         />
       ) : (
-        <Card className="overflow-hidden rounded-2xl">
+        <Card clip className="rounded-2xl">
           <div className="flex items-center gap-1.5 border-b border-slate-100 px-4 py-2.5 dark:border-slate-700/60">
             <FolderOpen size={13} className="shrink-0 text-slate-400 dark:text-slate-500" />
             <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">

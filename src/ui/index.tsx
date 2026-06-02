@@ -216,6 +216,7 @@ export function Card({
   hover,
   as = 'div',
   padded = false,
+  clip = false,
 }: {
   className?: string
   children: ReactNode
@@ -223,6 +224,7 @@ export function Card({
   hover?: boolean
   as?: 'div' | 'section' | 'article'
   padded?: boolean
+  clip?: boolean
 }) {
   return createElement(
     as,
@@ -234,6 +236,7 @@ export function Card({
           'transition duration-150 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md dark:hover:border-slate-600',
         onClick && 'cursor-pointer',
         padded && 'p-4 sm:p-5',
+        clip && 'overflow-hidden',
         className,
       ),
     },
@@ -1144,6 +1147,47 @@ export function SegmentedControl<T extends string>({
             )}
           >
             {o.icon && <o.icon size={15} />}
+            {o.label}
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
+// ───────── OptionButtons（滿寬描邊選項；揀一個；generic）─────────
+// 同 SegmentedControl 唔同：呢個係 flex-1 平分嘅描邊大按鈕，選中用 accent 實色填充，
+// 適合放入 Field 做表單揀選（性別、就讀狀態…）。
+// clearable=true：再撳返已選嗰個會清空（onChange 收 ''），用喺可有可無嘅欄位（如性別）；
+// clearable=false（預設）：淨係切換，唔會取消，用喺必填欄位（如就讀狀態）。
+export function OptionButtons<T extends string>({
+  options,
+  value,
+  onChange,
+  clearable = false,
+}: {
+  options: { id: T; label: string }[]
+  value: T | ''
+  onChange: (value: T | '') => void
+  clearable?: boolean
+}) {
+  return (
+    <div className="flex gap-2">
+      {options.map((o) => {
+        const on = value === o.id
+        return (
+          <button
+            key={o.id}
+            type="button"
+            aria-pressed={on}
+            onClick={() => onChange(clearable && on ? '' : o.id)}
+            className={cx(
+              'flex-1 rounded-lg border px-3 py-1.5 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-900',
+              on
+                ? 'border-accent bg-accent text-white shadow-sm shadow-accent/20'
+                : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700',
+            )}
+          >
             {o.label}
           </button>
         )

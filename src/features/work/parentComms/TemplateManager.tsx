@@ -150,7 +150,7 @@ export default function TemplateManager({
             {templates.map((t) => {
               const style = CATEGORY_STYLE[t.category]
               return (
-                <Card key={t.id} hover className="overflow-hidden p-0">
+                <Card key={t.id} hover clip className="p-0">
                   <div className="flex items-stretch">
                     {/* 分類色脊 —— 一眼分到範本主題 */}
                     <span aria-hidden className={cx('w-1 shrink-0', style.bar)} />

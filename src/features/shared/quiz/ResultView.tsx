@@ -120,7 +120,7 @@ export function ResultView({
       </Button>
 
       {/* ── 成績揭曉（戲劇高潮：頂光暈 + serif 大字 + 等第章 + 逐段入場）── */}
-      <Card className={cx('overflow-hidden ring-1', rv.ring)}>
+      <Card clip className={cx('ring-1', rv.ring)}>
         <div
           className={cx(
             'relative flex flex-col items-center gap-3 px-6 py-7 text-center',

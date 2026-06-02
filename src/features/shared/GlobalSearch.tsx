@@ -857,7 +857,7 @@ export default function GlobalSearch() {
           {/* 結果清單 */}
           <div className="space-y-3">
             {view !== 'grouped' ? (
-              <UICard className="overflow-hidden p-1.5">
+              <UICard clip className="p-1.5">
                 {filtered.map((h, i) => (
                   <ResultRow
                     key={h.id}
@@ -882,7 +882,7 @@ export default function GlobalSearch() {
                   const GIcon = g.icon
                   const gTone = KIND_META[g.kindId].tone
                   return (
-                    <UICard key={g.kindId} className="overflow-hidden">
+                    <UICard key={g.kindId} clip>
                       <div className="flex items-center gap-2.5 border-b border-slate-100 bg-slate-50/50 px-3 py-2.5 dark:border-slate-700/60 dark:bg-slate-900/30">
                         <span className={cx('flex h-6 w-6 shrink-0 items-center justify-center rounded-lg', TONE_CHIP[gTone])}>
                           <GIcon size={14} />
@@ -1109,7 +1109,7 @@ function PreviewPanel({
     ? highlightSegments(hit.body.slice(0, 600), query ? (fuzzyMatch(hit.body.slice(0, 600), query)?.indices ?? []) : [])
     : null
   return (
-    <UICard className="overflow-hidden">
+    <UICard clip>
       <div className="border-b border-slate-100 bg-slate-50/40 p-4 dark:border-slate-700/60 dark:bg-slate-900/30">
         <p className="mb-2 flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-[0.22em] text-slate-400 dark:text-slate-500">
           <Radar size={11} className="text-accent/70" />
@@ -1200,7 +1200,7 @@ function StartScreen({
     <div className="space-y-4">
       {/* 首次／空白：command-center 歡迎面板（暖文案 + 例子做明確下一步） */}
       {isFresh && (
-        <UICard className="relative overflow-hidden p-6 text-center sm:p-8">
+        <UICard clip className="relative p-6 text-center sm:p-8">
           <div
             aria-hidden="true"
             className="pointer-events-none absolute left-1/2 top-0 h-40 w-40 -translate-x-1/2 -translate-y-1/2 rounded-full bg-accent/10 blur-3xl dark:bg-accent/15"

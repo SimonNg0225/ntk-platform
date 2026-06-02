@@ -180,7 +180,7 @@ const EXAMPLE_MEALS = [
   '雞肉沙律加少少油醋汁',
 ] as const
 
-// 三大營養素達標小磚（暖色 bento）
+// 三大營養素達標小磚（記分牌讀數：色脊 + serif 大字 + 達標進度底線）
 function MiniStat({
   label,
   value,
@@ -192,10 +192,19 @@ function MiniStat({
   icon: typeof Beef
   color: string
 }) {
+  const hit = value >= 100
   return (
-    <div className="flex flex-col justify-between rounded-3xl border border-slate-200/80 bg-white p-4 transition duration-200 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md dark:border-slate-700/60 dark:bg-slate-800 dark:hover:border-slate-600">
-      <div className="flex items-center justify-between">
-        <span className="text-xs font-medium text-slate-400 dark:text-slate-500">{label}</span>
+    <div className="group relative flex flex-col justify-between overflow-hidden rounded-3xl border border-slate-200/80 bg-white p-4 transition duration-200 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md dark:border-slate-700/60 dark:bg-slate-800 dark:hover:border-slate-600">
+      {/* 左色脊（分類色） */}
+      <span
+        className="absolute inset-y-0 left-0 w-1"
+        style={{ backgroundColor: color }}
+        aria-hidden="true"
+      />
+      <div className="flex items-center justify-between pl-1">
+        <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400 dark:text-slate-500">
+          {label}
+        </span>
         <span
           className="flex h-8 w-8 items-center justify-center rounded-xl"
           style={{ backgroundColor: `${color}1f`, color }}
@@ -203,12 +212,29 @@ function MiniStat({
           <I size={16} />
         </span>
       </div>
-      <p className="mt-3 flex items-baseline gap-1">
-        <span className="text-2xl font-bold tabular-nums slashed-zero text-slate-800 dark:text-slate-100">
+      <p className="mt-3 flex items-baseline gap-1 pl-1">
+        <span className="font-serif text-3xl font-black leading-none tabular-nums slashed-zero text-slate-800 dark:text-slate-100">
           {value}
         </span>
-        <span className="text-sm font-medium text-slate-400">%</span>
+        <span className="text-sm font-semibold text-slate-400">%</span>
+        {hit && (
+          <Check
+            size={14}
+            className="ml-auto self-center text-emerald-500"
+            aria-label="已達標"
+          />
+        )}
       </p>
+      {/* 達標進度細線（記分牌底脊） */}
+      <div
+        className="mt-2 ml-1 h-1 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-700/70"
+        aria-hidden="true"
+      >
+        <div
+          className="h-full rounded-full transition-all duration-500"
+          style={{ width: `${Math.min(100, value)}%`, backgroundColor: color }}
+        />
+      </div>
     </div>
   )
 }
@@ -270,16 +296,18 @@ function CalorieRing({
         aria-live="polite"
         aria-label={`已攝取 ${Math.round(consumed)} kcal，目標 ${Math.round(goal)} kcal，${over ? `超標 ${Math.round(consumed - goal)} kcal` : `仲剩 ${left} kcal`}`}
       >
-        <span className="text-2xl font-bold tabular-nums slashed-zero text-slate-800 dark:text-slate-100">
+        <span className="font-serif text-[2.1rem] font-black leading-none tabular-nums slashed-zero text-slate-800 dark:text-slate-100">
           {Math.round(consumed)}
         </span>
-        <span className="text-[11px] text-slate-400 dark:text-slate-500">
+        <span className="mt-0.5 text-[10px] font-medium uppercase tracking-[0.1em] text-slate-400 dark:text-slate-500">
           / {Math.round(goal)} kcal
         </span>
         <span
           className={cx(
-            'mt-0.5 text-[11px] font-medium tabular-nums',
-            over ? 'text-rose-500' : 'text-emerald-600 dark:text-emerald-400',
+            'mt-1 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold tabular-nums',
+            over
+              ? 'bg-rose-50 text-rose-600 dark:bg-rose-500/15 dark:text-rose-400'
+              : 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-400',
           )}
         >
           {over ? `超 ${Math.round(consumed - goal)}` : `剩 ${left}`}
@@ -369,15 +397,15 @@ function WeeklyBars({
     .join('、')}（kcal）；平均 ${avg}，目標 ${Math.round(goalCal)}`
   return (
     <div>
-      <div className="mb-2 flex items-center justify-between">
+      <div className="mb-2 flex items-baseline justify-between">
         <span className="text-xs text-slate-500 dark:text-slate-400">
           近 7 日平均{' '}
-          <span className="font-semibold tabular-nums text-slate-700 dark:text-slate-200">
+          <span className="font-serif text-base font-bold tabular-nums slashed-zero text-slate-700 dark:text-slate-200">
             {avg}
           </span>{' '}
           kcal/日
         </span>
-        <span className="text-[11px] text-slate-400 dark:text-slate-500">
+        <span className="text-[11px] tabular-nums text-slate-400 dark:text-slate-500">
           目標 {Math.round(goalCal)}
         </span>
       </div>
@@ -660,40 +688,45 @@ export default function NutritionView() {
 
   return (
     <div className="space-y-4">
-      {/* ── 頂部：日期導航 + 目標掣 ── */}
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="flex items-center gap-1">
-          <IconButton
-            label="前一日"
-            onClick={() => setDateKey(addDaysKey(dateKey, -1))}
-          >
-            <ChevronLeft size={18} />
-          </IconButton>
-          <div className="min-w-[7.5rem] text-center">
-            <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">
-              {dateLabel}
-            </p>
-            <p className="text-[11px] tabular-nums text-slate-400 dark:text-slate-500">
-              {dateKey}
-            </p>
-          </div>
-          <IconButton
-            label="後一日"
-            onClick={() => setDateKey(addDaysKey(dateKey, 1))}
-            disabled={isToday}
-          >
-            <ChevronRight size={18} />
-          </IconButton>
-          {!isToday && (
-            <Button
-              variant="ghost"
-              size="sm"
-              icon={CalendarDays}
-              onClick={() => setDateKey(todayKey())}
+      {/* ── 標題列：燃料日誌 kicker + 日期導航 + 目標掣 ── */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-accent">
+            <Apple size={13} /> 燃料計分板 · FUEL
+          </p>
+          <div className="mt-1 flex items-center gap-1">
+            <IconButton
+              label="前一日"
+              onClick={() => setDateKey(addDaysKey(dateKey, -1))}
             >
-              今日
-            </Button>
-          )}
+              <ChevronLeft size={18} />
+            </IconButton>
+            <div className="min-w-[8rem] text-center leading-tight">
+              <p className="text-base font-bold text-slate-800 dark:text-slate-100">
+                {dateLabel}
+              </p>
+              <p className="font-serif text-[11px] tabular-nums slashed-zero tracking-wide text-slate-400 dark:text-slate-500">
+                {dateKey}
+              </p>
+            </div>
+            <IconButton
+              label="後一日"
+              onClick={() => setDateKey(addDaysKey(dateKey, 1))}
+              disabled={isToday}
+            >
+              <ChevronRight size={18} />
+            </IconButton>
+            {!isToday && (
+              <Button
+                variant="ghost"
+                size="sm"
+                icon={CalendarDays}
+                onClick={() => setDateKey(todayKey())}
+              >
+                今日
+              </Button>
+            )}
+          </div>
         </div>
         <Tooltip label="設定每日營養目標">
           <Button
@@ -709,9 +742,14 @@ export default function NutritionView() {
 
       {/* ── 當日總計 vs 目標 ── */}
       <Card className="p-4 sm:p-5">
-        <div className="mb-4 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-          <Flame size={14} aria-hidden="true" />
-          當日攝取 vs 目標
+        <div className="mb-4 flex items-center justify-between">
+          <span className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+            <Flame size={14} className="text-accent" aria-hidden="true" />
+            當日攝取 vs 目標
+          </span>
+          <span className="font-serif text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-300 dark:text-slate-600">
+            SCORE
+          </span>
         </div>
         <div className="flex flex-col items-center gap-5 sm:flex-row sm:items-center sm:gap-6">
           <CalorieRing consumed={totals.calories} goal={goals.calories} />
@@ -749,21 +787,16 @@ export default function NutritionView() {
 
       {/* ── 主輸入：AI 自然語言 ── */}
       <Card className="space-y-3 p-4">
-        <div className="flex items-center gap-1.5">
-          <span
-            className="flex h-7 w-7 items-center justify-center rounded-lg bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent"
-            aria-hidden="true"
-          >
-            <Wand2 size={15} />
-          </span>
-          <div className="min-w-0">
-            <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100">
-              講你食咗咩，AI 幫你計營養
-            </h3>
-            <p className="text-[11px] text-slate-400 dark:text-slate-500">
-              例如「今日午餐食咗半碗飯、一塊雞胸、一隻蛋」
-            </p>
-          </div>
+        <div>
+          <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-accent">
+            <Wand2 size={13} /> 入帳 · LOG
+          </p>
+          <h3 className="mt-1 text-base font-bold tracking-tight text-slate-800 dark:text-slate-100">
+            講你食咗咩，AI 幫你計營養
+          </h3>
+          <p className="mt-0.5 text-[11px] text-slate-400 dark:text-slate-500">
+            例如「今日午餐食咗半碗飯、一塊雞胸、一隻蛋」
+          </p>
         </div>
 
         {/* 揀餐段：AI / 手動 / 常食 加入時都歸入呢一餐 */}
@@ -891,13 +924,13 @@ export default function NutritionView() {
             aria-live="polite"
           >
             <div className="flex items-center justify-between">
-              <span className="flex items-center gap-1.5 text-xs font-semibold text-accent-strong dark:text-accent">
+              <span className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-accent-strong dark:text-accent">
                 <Sparkles size={14} aria-hidden="true" />
-                AI 解析結果（可微調）
+                AI 解析結果 · 可微調
               </span>
               <Badge tone="accent">
-                <span className="tabular-nums">{drafts.length}</span> 項 ·{' '}
-                <span className="tabular-nums">
+                <span className="font-serif tabular-nums slashed-zero">{drafts.length}</span> 項 ·{' '}
+                <span className="font-serif tabular-nums slashed-zero">
                   {Math.round(draftTotals.calories)}
                 </span>{' '}
                 kcal
@@ -978,13 +1011,13 @@ export default function NutritionView() {
       {/* ── 飲食日誌（當日列表，可刪）── */}
       <Card className="space-y-3 p-4">
         <div className="flex items-center justify-between">
-          <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-            <Utensils size={14} aria-hidden="true" />
+          <span className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+            <Utensils size={14} className="text-accent" aria-hidden="true" />
             {isToday ? '今日' : dateLabel} 飲食日誌
           </span>
           {dayEntries.length > 0 && (
             <Badge tone="slate">
-              <span className="tabular-nums">{dayEntries.length}</span> 項
+              <span className="font-serif tabular-nums slashed-zero">{dayEntries.length}</span> 項
             </Badge>
           )}
         </div>
@@ -1002,17 +1035,23 @@ export default function NutritionView() {
               const MI = m.icon
               return (
                 <div key={g.meal}>
-                  {/* 餐段標題 + 小計 */}
+                  {/* 餐段標題 + 小計（左色脊呼應餐段分類色） */}
                   <div className="mb-1 flex items-center justify-between border-b border-slate-100 pb-1 dark:border-slate-800">
-                    <span className="flex items-center gap-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300">
-                      <MI size={14} style={{ color: m.color }} aria-hidden="true" />
+                    <span className="flex items-center gap-2 text-xs font-semibold text-slate-600 dark:text-slate-300">
+                      <span
+                        className="flex h-6 w-6 items-center justify-center rounded-lg"
+                        style={{ backgroundColor: `${m.color}1f`, color: m.color }}
+                        aria-hidden="true"
+                      >
+                        <MI size={13} />
+                      </span>
                       {m.label}
-                      <span className="tabular-nums text-slate-400 dark:text-slate-500">
+                      <span className="font-serif tabular-nums slashed-zero text-slate-400 dark:text-slate-500">
                         · {g.entries.length}
                       </span>
                     </span>
                     <span className="text-[11px] tabular-nums text-slate-500 dark:text-slate-400">
-                      <span className="font-semibold text-slate-700 dark:text-slate-200">
+                      <span className="font-serif text-sm font-bold slashed-zero text-slate-700 dark:text-slate-200">
                         {Math.round(g.subtotal.calories)}
                       </span>{' '}
                       kcal
@@ -1036,7 +1075,8 @@ export default function NutritionView() {
                         className="group flex items-center gap-3 py-2.5"
                       >
                         <div
-                          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400"
+                          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg"
+                          style={{ backgroundColor: `${m.color}1a`, color: m.color }}
                           aria-hidden="true"
                         >
                           <Flame size={16} />
@@ -1057,9 +1097,9 @@ export default function NutritionView() {
                             </span>
                           </p>
                         </div>
-                        <span className="shrink-0 text-sm font-semibold tabular-nums text-slate-700 dark:text-slate-200">
+                        <span className="shrink-0 font-serif text-base font-bold tabular-nums slashed-zero text-slate-700 dark:text-slate-200">
                           {Math.round(e.calories)}
-                          <span className="ml-0.5 text-[10px] font-normal text-slate-400">
+                          <span className="ml-0.5 font-sans text-[10px] font-normal text-slate-400">
                             kcal
                           </span>
                         </span>
@@ -1083,10 +1123,13 @@ export default function NutritionView() {
 
       {/* ── 近 7 日卡路里柱狀 ── */}
       <Card className="p-4">
-        <div className="mb-3 flex items-center gap-1.5">
-          <BarChart3 size={14} className="text-slate-400" aria-hidden="true" />
-          <span className="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+        <div className="mb-3 flex items-center justify-between">
+          <span className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+            <BarChart3 size={14} className="text-accent" aria-hidden="true" />
             近 7 日卡路里
+          </span>
+          <span className="font-serif text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-300 dark:text-slate-600">
+            TREND
           </span>
         </div>
         <WeeklyBars
@@ -1134,7 +1177,7 @@ export default function NutritionView() {
           </>
         }
       >
-        <div className="space-y-3">
+        <div className="space-y-4">
           <Field label="食物名" required>
             <Input
               autoFocus
@@ -1151,7 +1194,13 @@ export default function NutritionView() {
               size="sm"
             />
           </Field>
-          <div className="grid grid-cols-2 gap-3">
+          {/* 營養讀數分組（hairline + kicker，呼應記分牌） */}
+          <div className="border-t border-slate-100 pt-3 dark:border-slate-800">
+            <p className="mb-2 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+              <Flame size={12} className="text-accent" aria-hidden="true" />
+              營養讀數
+            </p>
+            <div className="grid grid-cols-2 gap-3">
             <Field label="卡路里 (kcal)">
               <Input
                 type="number"
@@ -1202,6 +1251,7 @@ export default function NutritionView() {
                 className="tabular-nums"
               />
             </Field>
+            </div>
           </div>
         </div>
       </Modal>
@@ -1226,12 +1276,32 @@ export default function NutritionView() {
           </>
         }
       >
-        <div className="space-y-3">
-          <p className="text-xs text-slate-400 dark:text-slate-500">
-            預設參考值：卡路里 2000 · 蛋白 120g · 脂肪 60g · 碳水 220g。可按自己需要調整。
+        <div className="space-y-4">
+          <p className="flex items-start gap-2 rounded-xl border border-dashed border-slate-200 bg-slate-50/60 px-3 py-2.5 text-xs text-slate-500 dark:border-slate-700 dark:bg-slate-800/40 dark:text-slate-400">
+            <Sparkles size={13} className="mt-0.5 shrink-0 text-accent" aria-hidden="true" />
+            <span>
+              預設參考值：卡路里{' '}
+              <span className="font-serif font-semibold tabular-nums slashed-zero text-slate-600 dark:text-slate-300">2000</span>
+              {' · '}蛋白{' '}
+              <span className="font-serif font-semibold tabular-nums slashed-zero text-slate-600 dark:text-slate-300">120g</span>
+              {' · '}脂肪{' '}
+              <span className="font-serif font-semibold tabular-nums slashed-zero text-slate-600 dark:text-slate-300">60g</span>
+              {' · '}碳水{' '}
+              <span className="font-serif font-semibold tabular-nums slashed-zero text-slate-600 dark:text-slate-300">220g</span>
+              。可按自己需要調整。
+            </span>
           </p>
-          <Field label="每日卡路里 (kcal)">
+          {/* 主目標：每日卡路里（記分牌主讀數） */}
+          <div className="rounded-2xl border border-accent/30 bg-accent-soft/50 p-3 dark:border-accent/40 dark:bg-accent/10">
+            <label
+              htmlFor="goal-cal"
+              className="mb-1.5 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-accent-strong dark:text-accent"
+            >
+              <Flame size={12} aria-hidden="true" />
+              每日卡路里 · TARGET
+            </label>
             <Input
+              id="goal-cal"
               type="number"
               inputMode="decimal"
               min={0}
@@ -1239,46 +1309,63 @@ export default function NutritionView() {
               onChange={(e) =>
                 setGoalForm({ ...goalForm, calories: e.target.value })
               }
-              className="tabular-nums"
+              className="font-serif text-lg font-bold tabular-nums slashed-zero"
             />
-          </Field>
-          <div className="grid grid-cols-3 gap-3">
-            <Field label="蛋白 (g)">
-              <Input
-                type="number"
-                inputMode="decimal"
-                min={0}
-                value={goalForm.proteinG}
-                onChange={(e) =>
-                  setGoalForm({ ...goalForm, proteinG: e.target.value })
-                }
-                className="tabular-nums"
-              />
-            </Field>
-            <Field label="脂肪 (g)">
-              <Input
-                type="number"
-                inputMode="decimal"
-                min={0}
-                value={goalForm.fatG}
-                onChange={(e) =>
-                  setGoalForm({ ...goalForm, fatG: e.target.value })
-                }
-                className="tabular-nums"
-              />
-            </Field>
-            <Field label="碳水 (g)">
-              <Input
-                type="number"
-                inputMode="decimal"
-                min={0}
-                value={goalForm.carbG}
-                onChange={(e) =>
-                  setGoalForm({ ...goalForm, carbG: e.target.value })
-                }
-                className="tabular-nums"
-              />
-            </Field>
+          </div>
+          {/* 三大營養素分配（hairline + 色點呼應進度條配色） */}
+          <div className="border-t border-slate-100 pt-3 dark:border-slate-800">
+            <div className="mb-2 flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400 dark:text-slate-500">
+              <span>三大營養素分配 (g)</span>
+              <span className="ml-auto flex items-center gap-2 normal-case tracking-normal">
+                <span className="flex items-center gap-1">
+                  <span className="h-2 w-2 rounded-full" style={{ backgroundColor: FIT_TONE.rose }} aria-hidden="true" />P
+                </span>
+                <span className="flex items-center gap-1">
+                  <span className="h-2 w-2 rounded-full" style={{ backgroundColor: FIT_TONE.amber }} aria-hidden="true" />F
+                </span>
+                <span className="flex items-center gap-1">
+                  <span className="h-2 w-2 rounded-full" style={{ backgroundColor: FIT_TONE.sky }} aria-hidden="true" />C
+                </span>
+              </span>
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+              <Field label="蛋白">
+                <Input
+                  type="number"
+                  inputMode="decimal"
+                  min={0}
+                  value={goalForm.proteinG}
+                  onChange={(e) =>
+                    setGoalForm({ ...goalForm, proteinG: e.target.value })
+                  }
+                  className="tabular-nums"
+                />
+              </Field>
+              <Field label="脂肪">
+                <Input
+                  type="number"
+                  inputMode="decimal"
+                  min={0}
+                  value={goalForm.fatG}
+                  onChange={(e) =>
+                    setGoalForm({ ...goalForm, fatG: e.target.value })
+                  }
+                  className="tabular-nums"
+                />
+              </Field>
+              <Field label="碳水">
+                <Input
+                  type="number"
+                  inputMode="decimal"
+                  min={0}
+                  value={goalForm.carbG}
+                  onChange={(e) =>
+                    setGoalForm({ ...goalForm, carbG: e.target.value })
+                  }
+                  className="tabular-nums"
+                />
+              </Field>
+            </div>
           </div>
         </div>
       </Modal>

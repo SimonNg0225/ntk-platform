@@ -1054,7 +1054,7 @@ function Group({
         </span>
         <span aria-hidden className="ml-1 h-px flex-1 bg-gradient-to-r from-slate-200 to-transparent dark:from-slate-700/70" />
       </div>
-      <Card className="divide-y divide-slate-100 overflow-hidden dark:divide-slate-700/60">
+      <Card clip className="divide-y divide-slate-100 dark:divide-slate-700/60">
         {children}
       </Card>
     </div>
@@ -1332,7 +1332,7 @@ function AllView(props: {
             hint="喺上面快速輸入加一項，或者揀返第個專案睇睇。"
           />
         ) : (
-          <Card className="divide-y divide-slate-100 overflow-hidden dark:divide-slate-700/60">
+          <Card clip className="divide-y divide-slate-100 dark:divide-slate-700/60">
             {visible.map((t) => (
               <TaskRow
                 key={t.id}

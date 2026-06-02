@@ -1,15 +1,20 @@
+import type { ReactNode } from 'react'
 import { useState } from 'react'
 import {
   AlignLeft,
   Bell,
   CalendarDays,
+  CalendarPlus,
   Check,
   Clock,
   Link2,
   MapPin,
+  PenLine,
   Repeat,
   Trash2,
+  X,
 } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 import { eventsCol } from '../../../data/collections'
 import type {
   CalendarCategory,
@@ -18,7 +23,7 @@ import type {
 } from '../../../data/types'
 import { useToast } from '../../../context/ToastContext'
 import { useConfirm } from '../../../context/ConfirmContext'
-import { Button, Field, Input, Modal, Select, Textarea, cx } from '../../../ui'
+import { Button, Field, IconButton, Input, Modal, Select, Textarea, cx } from '../../../ui'
 import { WEEKDAYS, addDays, colorOf, fromKey, toKey } from './util'
 
 const FREQ_OPTIONS: { v: RecurrenceFreq; l: string }[] = [
@@ -68,6 +73,35 @@ export function applyFullEdit(
     if (merged[k] === undefined) delete merged[k]
   }
   return merged as unknown as CalendarEvent
+}
+
+// ───────── 週記分區頁眉（方形 icon 牌 + uppercase 小題 + 向右散開 hairline）─────────
+//  呼應主畫面行事曆嘅冊頁分段語言：每個分區（時間 / 重複 / 提醒…）似週記
+//  上一段分節——左邊一個方形 icon 牌，右邊一條淡到透明嘅尺線。
+function Section({
+  icon: Icon,
+  title,
+  children,
+}: {
+  icon: LucideIcon
+  title: string
+  children?: ReactNode
+}) {
+  return (
+    <div className="flex items-center gap-2 px-0.5">
+      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-slate-100 text-slate-500 dark:bg-slate-700/60 dark:text-slate-300">
+        <Icon size={13} />
+      </span>
+      <h3 className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+        {title}
+      </h3>
+      <span
+        aria-hidden
+        className="ml-1 h-px flex-1 bg-gradient-to-r from-slate-200 to-transparent dark:from-slate-700/70"
+      />
+      {children}
+    </div>
+  )
 }
 
 function Toggle({
@@ -281,7 +315,6 @@ export default function EventEditor({
       <Modal
       open
       onClose={onClose}
-      title={editing ? '編輯活動' : '新增活動'}
       size="lg"
       footer={
         <>
@@ -305,14 +338,41 @@ export default function EventEditor({
       }
     >
       <div className="space-y-5">
-        {/* 標題 — 放大，作為主焦點 */}
-        <div>
+        {/* ───────── 週記頁眉：kicker + serif 標題 + 雙線封面分隔（呼應主畫面）───────── */}
+        <header className="-mx-5 -mt-5 mb-1 px-5 pt-5 sm:-mx-6 sm:-mt-6 sm:px-6 sm:pt-6">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.3em] text-accent/70">
+                {editing ? <PenLine size={12} className="shrink-0" /> : <CalendarPlus size={12} className="shrink-0" />}
+                {editing ? '日程一則 · Entry' : '新一則 · New Entry'}
+              </p>
+              <h2 className="mt-1 font-serif text-[22px] font-semibold leading-tight tracking-tight text-slate-800 dark:text-slate-100 sm:text-[26px]">
+                {editing ? '編輯活動' : '新增活動'}
+              </h2>
+            </div>
+            <IconButton label="關閉" onClick={onClose} className="-mr-1 shrink-0">
+              <X size={18} />
+            </IconButton>
+          </div>
+          {/* 週記雙線（封面分隔感）*/}
+          <div className="mt-4 space-y-1" aria-hidden>
+            <span className="block h-px bg-slate-200/90 dark:bg-slate-700/70" />
+            <span className="block h-px bg-slate-200/60 dark:bg-slate-700/40" />
+          </div>
+        </header>
+
+        {/* 標題 — 放大作主焦點，左邊披返所選行事曆嘅柔和色脊（呼應事件 chip）*/}
+        <div className="flex items-stretch gap-3">
+          <span
+            aria-hidden
+            className={cx('mt-0.5 w-1 shrink-0 rounded-full transition-colors', colorOf(cat?.color).dot)}
+          />
           <input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="想安排啲咩？"
             autoFocus
-            className="w-full border-0 border-b border-slate-200 bg-transparent pb-2 text-lg font-semibold text-slate-800 outline-none transition-colors placeholder:font-normal placeholder:text-slate-400 focus:border-accent dark:border-slate-700 dark:text-slate-100 dark:placeholder:text-slate-500"
+            className="w-full border-0 border-b border-slate-200 bg-transparent pb-2 font-serif text-lg font-semibold text-slate-800 outline-none transition-colors placeholder:font-normal placeholder:text-slate-400 focus:border-accent dark:border-slate-700 dark:text-slate-100 dark:placeholder:text-slate-500 sm:text-xl"
           />
         </div>
 
@@ -325,8 +385,10 @@ export default function EventEditor({
           />
         </Field>
 
-        {/* 時間 — 分組卡片，留多啲呼吸位 */}
-        <div className="space-y-3 rounded-2xl border border-slate-200/80 bg-slate-50/50 p-4 dark:border-slate-700/60 dark:bg-slate-800/40">
+        {/* 時間 — 分區頁眉 + 分組卡片，留多啲呼吸位 */}
+        <div className="space-y-3">
+          <Section icon={Clock} title="時間" />
+          <div className="space-y-3 rounded-2xl border border-slate-200/80 bg-slate-50/50 p-4 dark:border-slate-700/60 dark:bg-slate-800/40">
           <Toggle checked={allDay} onChange={setAllDay} label="全日活動" />
           <div className="grid gap-3 sm:grid-cols-2">
             <Field label="開始">
@@ -370,6 +432,7 @@ export default function EventEditor({
               </div>
             </Field>
           </div>
+          </div>
         </div>
 
         <Field label="行事曆">
@@ -388,15 +451,17 @@ export default function EventEditor({
           </div>
         </Field>
 
-        {/* 重複 — 分組卡片，揀咗先展開細節 */}
-        <div
-          className={cx(
-            'space-y-3 rounded-2xl border p-4 transition-colors',
-            freq !== 'none'
-              ? 'border-slate-200/80 bg-slate-50/50 dark:border-slate-700/60 dark:bg-slate-800/40'
-              : 'border-slate-200/80 dark:border-slate-700/60',
-          )}
-        >
+        {/* 重複 — 分區頁眉 + 分組卡片，揀咗先展開細節 */}
+        <div className="space-y-3">
+          <Section icon={Repeat} title="重複" />
+          <div
+            className={cx(
+              'space-y-3 rounded-2xl border p-4 transition-colors',
+              freq !== 'none'
+                ? 'border-slate-200/80 bg-slate-50/50 dark:border-slate-700/60 dark:bg-slate-800/40'
+                : 'border-slate-200/80 dark:border-slate-700/60',
+            )}
+          >
           <div className="grid gap-3 sm:grid-cols-2">
             <Field label="重複">
               <Select
@@ -478,29 +543,34 @@ export default function EventEditor({
               />
             </Field>
           )}
+          </div>
         </div>
 
-        <div className="grid gap-3 sm:grid-cols-2">
-          <Field label="提醒">
-            <Select
-              value={String(alert)}
-              onChange={(e) => setAlert(Number(e.target.value))}
-            >
-              {ALERT_OPTIONS.map((o) => (
-                <option key={o.v} value={o.v}>
-                  {o.l}
-                </option>
-              ))}
-            </Select>
-          </Field>
-          <Field label="網址">
-            <Input
-              icon={Link2}
-              value={url}
-              onChange={(e) => setUrl(e.target.value)}
-              placeholder="https://（選填）"
-            />
-          </Field>
+        {/* 提醒 + 連結 — 分區頁眉 */}
+        <div className="space-y-3">
+          <Section icon={Bell} title="提醒與連結" />
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Field label="提醒">
+              <Select
+                value={String(alert)}
+                onChange={(e) => setAlert(Number(e.target.value))}
+              >
+                {ALERT_OPTIONS.map((o) => (
+                  <option key={o.v} value={o.v}>
+                    {o.l}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+            <Field label="網址">
+              <Input
+                icon={Link2}
+                value={url}
+                onChange={(e) => setUrl(e.target.value)}
+                placeholder="https://（選填）"
+              />
+            </Field>
+          </div>
         </div>
 
         <Field label="備註">
@@ -512,40 +582,70 @@ export default function EventEditor({
           />
         </Field>
 
-        {/* 摘要列 — 一眼睇晒已填嘅重點 */}
-        <div className="flex flex-wrap items-center gap-2 border-t border-slate-200/70 pt-4 text-xs text-slate-500 dark:border-slate-700/60 dark:text-slate-400">
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-1 font-medium tabular-nums dark:bg-slate-800">
-            <CalendarDays size={13} className="text-slate-400" /> {startDate}
-          </span>
-          {!allDay && (
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-1 font-medium tabular-nums dark:bg-slate-800">
-              <Clock size={13} className="text-slate-400" /> {startTime}–{endTime}
-            </span>
-          )}
-          {alert >= 0 && (
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-1 font-medium dark:bg-slate-800">
-              <Bell size={13} className="text-slate-400" /> {ALERT_OPTIONS.find((a) => a.v === alert)?.l}
-            </span>
-          )}
-          {notes.trim() && (
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-1 font-medium dark:bg-slate-800">
-              <AlignLeft size={13} className="text-slate-400" /> 有備註
-            </span>
-          )}
+        {/* ───────── 週記事件預覽：此刻會點樣落喺日程上嘅一枚柔和 chip ───────── */}
+        <div className="space-y-2.5 border-t border-slate-200/70 pt-4 dark:border-slate-700/60">
+          <p className="flex items-center gap-1.5 px-0.5 text-[11px] font-medium uppercase tracking-[0.18em] text-accent/70">
+            <CalendarDays size={12} className="shrink-0" />
+            落在日程上
+          </p>
+          {/* 一枚事件 chip：戴返所選行事曆嘅柔和色衣 + 色脊（同主畫面月／週視圖一致）*/}
+          <div
+            className={cx(
+              'relative overflow-hidden rounded-xl py-2 pl-3.5 pr-3 ring-1 ring-inset ring-black/5 dark:ring-white/10',
+              colorOf(cat?.color).chip,
+            )}
+          >
+            <span aria-hidden className={cx('absolute inset-y-1.5 left-0 w-1 rounded-full', colorOf(cat?.color).dot)} />
+            <p className="truncate font-serif text-sm font-semibold">
+              {title.trim() || '未命名活動'}
+            </p>
+            <div className="mt-1 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[11px] font-medium opacity-80">
+              <span className="inline-flex items-center gap-1 tabular-nums">
+                <CalendarDays size={11} /> {startDate}
+              </span>
+              <span className="inline-flex items-center gap-1 tabular-nums">
+                <Clock size={11} /> {allDay ? '全日' : `${startTime}–${endTime}`}
+              </span>
+              {freq !== 'none' && (
+                <span className="inline-flex items-center gap-1">
+                  <Repeat size={11} /> {FREQ_OPTIONS.find((f) => f.v === freq)?.l}
+                </span>
+              )}
+              {alert >= 0 && (
+                <span className="inline-flex items-center gap-1">
+                  <Bell size={11} /> {ALERT_OPTIONS.find((a) => a.v === alert)?.l}
+                </span>
+              )}
+              {notes.trim() && (
+                <span className="inline-flex items-center gap-1">
+                  <AlignLeft size={11} /> 有備註
+                </span>
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </Modal>
 
       {scopeAction && editing && (
-        <Modal
-          open
-          onClose={() => setScopeAction(null)}
-          title={scopeAction === 'delete' ? '刪除重複活動' : '更新重複活動'}
-          size="sm"
-        >
-          <p className="mb-4 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
-            「{editing.title}」係重複活動，你想{scopeAction === 'delete' ? '刪除' : '更新'}邊一啲？
-          </p>
+        <Modal open onClose={() => setScopeAction(null)} size="sm">
+          <div className="mb-4">
+            <p
+              className={cx(
+                'flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.3em]',
+                scopeAction === 'delete' ? 'text-rose-500/80 dark:text-rose-400/80' : 'text-accent/70',
+              )}
+            >
+              <Repeat size={12} className="shrink-0" />
+              重複系列 · Series
+            </p>
+            <h3 className="mt-1 font-serif text-lg font-semibold leading-tight text-slate-800 dark:text-slate-100">
+              {scopeAction === 'delete' ? '刪除重複活動' : '更新重複活動'}
+            </h3>
+            <p className="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+              「{editing.title}」係重複活動，你想{scopeAction === 'delete' ? '刪除' : '更新'}邊一啲？
+            </p>
+          </div>
           <div className="flex flex-col gap-2">
             {occurrenceKey && (
               <Button

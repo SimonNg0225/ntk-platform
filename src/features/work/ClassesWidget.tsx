@@ -51,6 +51,7 @@ import {
   Input,
   Menu,
   Modal,
+  OptionButtons,
   Pills,
   ProgressBar,
   SegmentedControl,
@@ -1122,23 +1123,15 @@ function AddStudent({
           </div>
         </div>
         <Field label="性別">
-          <div className="flex gap-2">
-            {(['M', 'F', 'X'] as Gender[]).map((g) => (
-              <button
-                key={g}
-                type="button"
-                onClick={() => setGender(gender === g ? '' : g)}
-                className={cx(
-                  'flex-1 rounded-lg border px-3 py-1.5 text-sm font-medium transition',
-                  gender === g
-                    ? 'border-accent bg-accent text-white'
-                    : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700',
-                )}
-              >
-                {GENDER_META[g].label}
-              </button>
-            ))}
-          </div>
+          <OptionButtons
+            options={(['M', 'F', 'X'] as Gender[]).map((g) => ({
+              id: g,
+              label: GENDER_META[g].label,
+            }))}
+            value={gender}
+            onChange={setGender}
+            clearable
+          />
         </Field>
         <label className="flex cursor-pointer items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
           <input

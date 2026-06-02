@@ -29,6 +29,9 @@ import {
   ArrowDownWideNarrow,
   PenLine,
   Sparkle,
+  CalendarPlus,
+  CalendarClock,
+  Sun,
 } from 'lucide-react'
 import { useCollection } from '../../lib/store'
 import {
@@ -1355,49 +1358,112 @@ function EventDraftModal({
 
   if (!draft) return null
   const title = stripTags(draft.row.item.text) || draft.row.item.text
+  const tags = draft.row.tags
 
   return (
+    // 唔傳 title → 唔用 Modal 通用粗體頁眉；改喺內文自管「便條歸去行事曆」頁眉
+    // （kicker + serif），呼應主畫面便條桌面語言。close X 自管（見 header）。
     <Modal
       open={!!draft}
       onClose={onClose}
-      title="加入行事曆"
       size="sm"
       footer={
         <>
           <Button variant="secondary" onClick={onClose}>
-            取消
+            留喺收件匣
           </Button>
           <Button
-            icon={CheckSquare}
+            icon={CalendarPlus}
             disabled={!date}
             onClick={() => onConfirm(date, time, allDay)}
           >
-            加入
+            歸去行事曆
           </Button>
         </>
       }
     >
-      <p className="mb-3 truncate rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-700 dark:bg-slate-900/50 dark:text-slate-200">
-        {title}
-      </p>
-      <div className="space-y-3">
-        <Field label="日期" required>
-          <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
-        </Field>
-        <label className="flex cursor-pointer items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
-          <input
-            type="checkbox"
-            checked={allDay}
-            onChange={(e) => setAllDay(e.target.checked)}
-            className="h-4 w-4 rounded border-slate-300 text-accent focus:ring-accent/40"
+      <div className="space-y-5">
+        {/* ───────── 便條頁眉：kicker（呼應 inbox masthead）+ serif 標題 + 虛線分隔 ───────── */}
+        <header className="-mx-5 -mt-5 mb-1 px-5 pt-5 sm:-mx-6 sm:-mt-6 sm:px-6 sm:pt-6">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.28em] text-accent/70">
+                <InboxIcon size={12} strokeWidth={2.5} className="shrink-0" />
+                Inbox · 歸去行事曆
+              </p>
+              <h2 className="mt-1 flex flex-wrap items-baseline gap-x-2 font-serif text-[22px] font-semibold leading-tight tracking-tight text-slate-800 dark:text-slate-100 sm:text-[26px]">
+                揀個日子
+                <span className="font-serif text-sm font-normal italic text-slate-400 dark:text-slate-500">
+                  畀張便條落腳
+                </span>
+              </h2>
+            </div>
+            <IconButton label="關閉" onClick={onClose} className="-mr-1 shrink-0">
+              <X size={18} />
+            </IconButton>
+          </div>
+          {/* 便條撕邊：實線 + 半透虛影（同主畫面 hairline 語言）*/}
+          <div className="mt-4 space-y-1" aria-hidden>
+            <span className="block h-px bg-slate-200/90 dark:bg-slate-700/70" />
+            <span className="block h-px bg-slate-200/60 dark:bg-slate-700/40" />
+          </div>
+        </header>
+
+        {/* 便條預覽 — 真係披返一張「便條紙」：事件色脊（emerald）+ 圖示 chip + 標籤，
+            呼應主畫面擷取框 / 卡片。令用戶睇得到「我正喺度歸呢張便條」。*/}
+        <div className="relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-xs dark:border-slate-700/60 dark:bg-slate-800/60">
+          <span
+            aria-hidden="true"
+            className={cx('absolute inset-y-0 left-0 w-1.5', CHIP_SPINE.event)}
           />
-          全日事件
-        </label>
-        {!allDay && (
-          <Field label="時間">
-            <Input type="time" value={time} onChange={(e) => setTime(e.target.value)} />
+          <div className="flex items-start gap-3 py-3 pl-5 pr-3.5">
+            <span className={cx('mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl', KIND_CHIP.event)}>
+              <KIND_ICON.event size={16} />
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="whitespace-pre-wrap break-words font-serif text-[15px] leading-relaxed text-slate-800 dark:text-slate-100">
+                {title}
+              </p>
+              {tags.length > 0 && (
+                <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                  {tags.map((t) => (
+                    <Badge key={t} tone="slate" icon={Hash}>
+                      {t}
+                    </Badge>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* 時間 — 分區小題（kicker + hairline，呼應 Wave 編輯器 Section）*/}
+        <div className="space-y-3">
+          <p className="flex items-center gap-2 text-[11px] font-medium uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">
+            <CalendarClock size={13} className="shrink-0 text-accent/70" />
+            幾時
+            <span className="ml-1 h-px flex-1 bg-gradient-to-r from-slate-200 to-transparent dark:from-slate-700/70" />
+          </p>
+          <Field label="日期" required>
+            <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
           </Field>
-        )}
+          <label className="flex cursor-pointer items-center gap-2.5 rounded-xl border border-slate-200/80 bg-slate-50/60 px-3.5 py-2.5 text-sm text-slate-600 transition hover:border-slate-300 dark:border-slate-700/60 dark:bg-slate-800/40 dark:text-slate-300 dark:hover:border-slate-600">
+            <input
+              type="checkbox"
+              checked={allDay}
+              onChange={(e) => setAllDay(e.target.checked)}
+              className="h-4 w-4 rounded border-slate-300 text-accent focus:ring-accent/40 dark:border-slate-600"
+            />
+            <Sun size={15} className="shrink-0 text-amber-500 dark:text-amber-400" />
+            <span className="flex-1">成日嘅事</span>
+            <span className="text-xs text-slate-400 dark:text-slate-500">唔使定時間</span>
+          </label>
+          {!allDay && (
+            <Field label="時間">
+              <Input type="time" value={time} onChange={(e) => setTime(e.target.value)} />
+            </Field>
+          )}
+        </div>
       </div>
     </Modal>
   )

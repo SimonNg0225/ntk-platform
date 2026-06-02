@@ -1177,7 +1177,7 @@ function FocusWidget({ ctx }: { ctx: WidgetCtx }) {
   ]
 
   return (
-    <Card className="overflow-hidden p-0">
+    <Card clip className="p-0">
       <div className="bg-gradient-to-br from-accent to-accent-strong px-5 py-4 text-white">
         <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-white/80">
           <Sparkles size={14} />

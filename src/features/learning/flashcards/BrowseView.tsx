@@ -9,6 +9,7 @@ import {
   Badge,
   Button,
   EmptyState,
+  Field,
   IconButton,
   Input,
   Menu,
@@ -29,6 +30,7 @@ import {
   CheckSquare,
   Flag,
   FolderInput,
+  Library,
   Pencil,
   RotateCcw,
   Search,
@@ -46,7 +48,7 @@ import {
   STATE_LABEL,
   STATE_TONE,
 } from './srs'
-import type { BrowseSort, BrowseStateFilter, CardMeta } from './types'
+import type { BrowseSort, BrowseStateFilter, CardMeta, CardState } from './types'
 
 // ============================================================
 //  Browse（Anki Browser 級）
@@ -85,6 +87,16 @@ const STATE_FILTERS: { id: BrowseStateFilter; label: string }[] = [
   { id: 'leech', label: 'Leech' },
   { id: 'suspended', label: '已暫停' },
 ]
+
+// 卡spine 色：同主畫面卡片身份脊一致（mature 熟＝綠、young 生＝accent、
+// learning 學習＝琥珀、suspended 暫停＝灰、new 新＝藍），喺表列左緣呈現
+const SPINE: Record<CardState, string> = {
+  mature: 'border-emerald-400 dark:border-emerald-500/60',
+  young: 'border-accent/70',
+  learning: 'border-amber-400 dark:border-amber-500/60',
+  suspended: 'border-slate-300 dark:border-slate-600',
+  new: 'border-blue-400 dark:border-blue-500/60',
+}
 
 export default function BrowseView() {
   const decks = useCollection(decksCol)
@@ -235,77 +247,97 @@ export default function BrowseView() {
 
   return (
     <div className="space-y-3">
-      {/* 工具列 */}
-      <div className="flex flex-wrap items-center gap-2">
-        <Input
-          icon={Search}
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          placeholder="搜尋正面 / 背面 / 標籤…"
-          className="min-w-[180px] flex-1"
+      {/* ───────── 卡盒索引台：全卡檢索 / 篩選（紅margin線 + kicker，呼應實體卡盒） ───────── */}
+      <section className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-xs dark:border-slate-700/60 dark:bg-slate-800 dark:shadow-none">
+        {/* 索引卡紅margin線 */}
+        <span
+          aria-hidden="true"
+          className="block h-1 w-full bg-gradient-to-r from-rose-300/80 via-rose-400/70 to-rose-300/40 dark:from-rose-500/40 dark:via-rose-500/50 dark:to-rose-500/20"
         />
-        <Select
-          value={deckId}
-          onChange={(e) => setDeckId(e.target.value)}
-          className="w-auto"
-          aria-label="牌組"
-        >
-          <option value="all">全部牌組</option>
-          {decks.map((d) => (
-            <option key={d.id} value={d.id}>
-              {d.name}
-            </option>
-          ))}
-        </Select>
-        <Menu
-          align="end"
-          trigger={
-            <span className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700">
-              <ArrowDownUp size={15} />
-              排序
-            </span>
-          }
-          items={SORT_OPTIONS.map((o) => ({
-            id: o.id,
-            label: o.label + (sort === o.id ? '  ✓' : ''),
-            onSelect: () => setSort(o.id),
-          }))}
-        />
-      </div>
+        <div className="space-y-3 p-3 sm:p-4">
+          <div className="flex items-center justify-between gap-2">
+            <p className="flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-[0.28em] text-accent/70">
+              <Library size={12} />
+              卡盒索引
+            </p>
+            <p className="text-[11px] text-slate-400 dark:text-slate-500">
+              共 <span className="font-serif text-sm font-semibold tabular-nums slashed-zero text-slate-600 dark:text-slate-300">{allCards.length}</span> 張卡
+            </p>
+          </div>
 
-      {/* 狀態 Pills */}
-      <Pills<BrowseStateFilter>
-        size="sm"
-        options={STATE_FILTERS}
-        active={stateFilter}
-        onChange={setStateFilter}
-      />
-
-      {/* 標籤篩選 */}
-      {allTags.length > 0 && (
-        <div className="flex flex-wrap items-center gap-1.5">
-          <TagIcon size={13} className="text-slate-400" />
-          {allTags.map((t) => (
-            <button
-              key={t}
-              onClick={() => setTagFilter((prev) => (prev === t ? '' : t))}
-              className={cx(
-                'rounded-full px-2.5 py-0.5 text-[11px] font-medium transition',
-                tagFilter === t
-                  ? 'bg-accent text-white shadow-sm dark:shadow-none'
-                  : 'bg-slate-100 text-slate-500 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700',
-              )}
+          {/* 檢索工具列 */}
+          <div className="flex flex-wrap items-center gap-2">
+            <Input
+              icon={Search}
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="搜尋正面 / 背面 / 標籤…"
+              className="min-w-[180px] flex-1"
+            />
+            <Select
+              value={deckId}
+              onChange={(e) => setDeckId(e.target.value)}
+              className="w-auto"
+              aria-label="牌組"
             >
-              #{t}
-            </button>
-          ))}
-          {tagFilter && (
-            <IconButton label="清除標籤篩選" size="sm" onClick={() => setTagFilter('')}>
-              <X size={13} />
-            </IconButton>
+              <option value="all">全部牌組</option>
+              {decks.map((d) => (
+                <option key={d.id} value={d.id}>
+                  {d.name}
+                </option>
+              ))}
+            </Select>
+            <Menu
+              align="end"
+              trigger={
+                <span className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-base text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 sm:text-sm">
+                  <ArrowDownUp size={15} />
+                  排序
+                </span>
+              }
+              items={SORT_OPTIONS.map((o) => ({
+                id: o.id,
+                label: o.label + (sort === o.id ? '  ✓' : ''),
+                onSelect: () => setSort(o.id),
+              }))}
+            />
+          </div>
+
+          {/* 狀態 Pills */}
+          <Pills<BrowseStateFilter>
+            size="sm"
+            options={STATE_FILTERS}
+            active={stateFilter}
+            onChange={setStateFilter}
+          />
+
+          {/* 標籤篩選（虛線分隔，呼應卡盒分隔卡 divider） */}
+          {allTags.length > 0 && (
+            <div className="flex flex-wrap items-center gap-1.5 border-t border-dashed border-slate-200/80 pt-3 dark:border-slate-700/60">
+              <TagIcon size={13} className="text-slate-400" />
+              {allTags.map((t) => (
+                <button
+                  key={t}
+                  onClick={() => setTagFilter((prev) => (prev === t ? '' : t))}
+                  className={cx(
+                    'rounded-full px-2.5 py-0.5 text-[11px] font-medium transition',
+                    tagFilter === t
+                      ? 'bg-accent text-white shadow-sm dark:shadow-none'
+                      : 'bg-slate-100 text-slate-500 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700',
+                  )}
+                >
+                  #{t}
+                </button>
+              ))}
+              {tagFilter && (
+                <IconButton label="清除標籤篩選" size="sm" onClick={() => setTagFilter('')}>
+                  <X size={13} />
+                </IconButton>
+              )}
+            </div>
           )}
         </div>
-      )}
+      </section>
 
       {/* 批量操作列 */}
       {selected.size > 0 && (
@@ -365,8 +397,12 @@ export default function BrowseView() {
               {allSelected ? <CheckSquare size={14} /> : <Square size={14} />}
               {allSelected ? '取消全選' : '全選'}
             </button>
-            <span className="tabular-nums" aria-live="polite">
-              {sorted.length} 張
+            <span aria-live="polite">
+              抽出{' '}
+              <span className="font-serif text-sm font-semibold tabular-nums slashed-zero text-slate-600 dark:text-slate-300">
+                {sorted.length}
+              </span>{' '}
+              張
             </span>
           </div>
           <Table>
@@ -390,7 +426,8 @@ export default function BrowseView() {
                 const checked = selected.has(c.id)
                 return (
                   <Tr key={c.id}>
-                    <Td>
+                    {/* 卡spine：跟狀態色（呼應主畫面卡片身份脊）；放喺勾選格左緣 */}
+                    <Td className={cx('border-l-2', SPINE[st])}>
                       <input
                         type="checkbox"
                         checked={checked}
@@ -402,14 +439,20 @@ export default function BrowseView() {
                     <Td>
                       <div className="flex items-start gap-1.5">
                         <div className="min-w-0">
-                          <p className="truncate font-medium text-slate-800 dark:text-slate-100">
-                            {c.front}
+                          <p className="flex items-start gap-1.5 truncate font-medium text-slate-800 dark:text-slate-100">
+                            <span className="mt-px shrink-0 font-serif text-[10px] font-bold uppercase tracking-wide text-slate-300 dark:text-slate-600">
+                              Q
+                            </span>
+                            <span className="truncate">{c.front}</span>
                           </p>
-                          <p className="truncate text-xs text-slate-400 dark:text-slate-500">
-                            {c.back}
+                          <p className="flex items-start gap-1.5 truncate text-xs text-slate-400 dark:text-slate-500">
+                            <span className="mt-px shrink-0 font-serif text-[10px] font-bold uppercase tracking-wide text-slate-300 dark:text-slate-600">
+                              A
+                            </span>
+                            <span className="truncate">{c.back}</span>
                           </p>
                           {meta.tags.length > 0 && (
-                            <div className="mt-1 flex flex-wrap gap-1">
+                            <div className="mt-1 flex flex-wrap gap-1 pl-4">
                               {meta.tags.map((t) => (
                                 <span
                                   key={t}
@@ -518,10 +561,15 @@ export default function BrowseView() {
                 setMoveModalOpen(false)
                 setSelected(new Set())
               }}
-              className="flex w-full items-center justify-between rounded-lg border border-slate-200 px-3 py-2 text-left text-sm transition hover:border-accent hover:bg-accent-soft dark:border-slate-700 dark:hover:bg-accent/10"
+              className="group flex w-full items-center gap-3 rounded-xl border border-slate-200 px-3 py-2.5 text-left transition hover:-translate-y-px hover:border-accent hover:shadow-sm dark:border-slate-700 dark:hover:bg-accent/10"
             >
-              <span className="font-medium text-slate-700 dark:text-slate-200">{d.name}</span>
-              <FolderInput size={15} className="text-slate-400" />
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-400 transition group-hover:bg-accent-soft group-hover:text-accent-strong dark:bg-slate-700/60 dark:text-slate-400 dark:group-hover:bg-accent/15 dark:group-hover:text-accent">
+                <Library size={17} />
+              </span>
+              <span className="min-w-0 flex-1 truncate text-sm font-medium text-slate-700 group-hover:text-accent dark:text-slate-200">
+                {d.name}
+              </span>
+              <FolderInput size={15} className="shrink-0 text-slate-300 transition group-hover:text-accent dark:text-slate-600" />
             </button>
           ))}
         </div>
@@ -579,32 +627,45 @@ function EditCardModal({
         </>
       }
     >
-      <div className="space-y-3">
-        <div>
-          <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-300">
-            正面（問題）
-          </label>
-          <Input
-            value={front}
-            onChange={(e) => setFront(e.target.value)}
-            autoFocus
-            aria-label="正面（問題）"
-          />
+      <div className="space-y-4">
+        {/* 這張卡：正/背一體呈現（紅margin線 + Q/A 行頭，呼應實體索引卡） */}
+        <div className="overflow-hidden rounded-xl border border-slate-200/80 bg-white dark:border-slate-700/60 dark:bg-slate-800">
+          <span aria-hidden="true" className="block h-1 w-full bg-rose-300/70 dark:bg-rose-500/30" />
+          <div className="space-y-2.5 p-3 sm:p-4">
+            <label className="block">
+              <span className="mb-1 flex items-center gap-1.5 text-xs font-medium text-slate-600 dark:text-slate-300">
+                <span className="font-serif text-[11px] font-bold text-accent-strong dark:text-accent">Q</span>
+                正面（問題）
+              </span>
+              <Input
+                value={front}
+                onChange={(e) => setFront(e.target.value)}
+                autoFocus
+                aria-label="正面（問題）"
+              />
+            </label>
+            <div className="flex items-center gap-2" aria-hidden="true">
+              <span className="h-px flex-1 bg-slate-200/80 dark:bg-slate-700/60" />
+              <span className="text-[9px] font-semibold uppercase tracking-[0.2em] text-slate-300 dark:text-slate-600">
+                翻轉
+              </span>
+              <span className="h-px flex-1 bg-slate-200/80 dark:bg-slate-700/60" />
+            </div>
+            <label className="block">
+              <span className="mb-1 flex items-center gap-1.5 text-xs font-medium text-slate-600 dark:text-slate-300">
+                <span className="font-serif text-[11px] font-bold text-accent-strong dark:text-accent">A</span>
+                背面（答案）
+              </span>
+              <Input
+                value={back}
+                onChange={(e) => setBack(e.target.value)}
+                aria-label="背面（答案）"
+              />
+            </label>
+          </div>
         </div>
-        <div>
-          <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-300">
-            背面（答案）
-          </label>
-          <Input
-            value={back}
-            onChange={(e) => setBack(e.target.value)}
-            aria-label="背面（答案）"
-          />
-        </div>
-        <div>
-          <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-300">
-            標籤
-          </label>
+
+        <Field label="標籤">
           <div className="mb-1.5 flex flex-wrap gap-1.5">
             {tagList.map((t) => (
               <span
@@ -635,18 +696,15 @@ function EditCardModal({
             placeholder="輸入標籤，Enter 加入"
             aria-label="新增標籤"
           />
-        </div>
-        <div>
-          <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-300">
-            私人備註（選填）
-          </label>
+        </Field>
+        <Field label="私人備註（選填）">
           <Input
             value={noteVal}
             onChange={(e) => setNoteVal(e.target.value)}
             placeholder="額外提示 / 記憶法"
             aria-label="私人備註（選填）"
           />
-        </div>
+        </Field>
       </div>
     </Modal>
   )

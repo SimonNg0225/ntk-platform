@@ -8,13 +8,14 @@ import {
   Target,
   Timer,
   FolderOpen,
+  FolderKanban,
+  Check,
 } from 'lucide-react'
 import {
   Button,
   Input,
   Field,
   Modal,
-  Badge,
   EmptyState,
   IconButton,
   Tooltip,
@@ -78,10 +79,25 @@ export default function ProjectsView({
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <p className="text-sm text-slate-500 dark:text-slate-400">
+    <div className="mx-auto max-w-2xl space-y-6">
+      {/* ── 安靜引：kicker + serif 標題，呼應主畫面扉頁 ── */}
+      <header className="text-center">
+        <p className="flex items-center justify-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.22em] text-accent/70">
+          <FolderKanban size={12} className="shrink-0" />
+          專注專案 · Projects
+        </p>
+        <h2 className="mt-2 font-serif text-[22px] font-semibold leading-none tracking-tight text-slate-800 dark:text-slate-100 sm:text-[26px]">
+          一件事，慢慢累積
+        </h2>
+        <p className="mx-auto mt-2.5 max-w-sm text-[13px] leading-relaxed text-slate-500 dark:text-slate-400">
           以專案組織專注時間，逐個追蹤累積成果同每日目標。
+        </p>
+      </header>
+
+      {/* 動作列：纖細 hairline，唔搶卡片風頭 */}
+      <div className="flex items-center justify-between border-b border-slate-200/70 pb-3 dark:border-slate-700/50">
+        <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-slate-400 dark:text-slate-500">
+          進行中 <span className="font-serif text-sm tabular-nums text-slate-600 dark:text-slate-300">{active.length}</span>
         </p>
         <Button size="sm" icon={Plus} onClick={() => setEditing('new')}>
           新專案
@@ -116,9 +132,16 @@ export default function ProjectsView({
 
       {archived.length > 0 && (
         <div className="pt-2">
-          <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-400">
-            已封存（{archived.length}）
-          </h3>
+          <div className="mb-3 flex items-baseline gap-3">
+            <h3 className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+              <Archive size={12} className="shrink-0" />
+              已封存
+            </h3>
+            <span className="h-px flex-1 translate-y-[-3px] bg-slate-200/70 dark:bg-slate-700/50" />
+            <span className="font-serif text-sm italic tabular-nums text-slate-400 dark:text-slate-500">
+              {archived.length}
+            </span>
+          </div>
           <div className="grid gap-3 sm:grid-cols-2">
             {archived.map((p) => (
               <ProjectCard
@@ -160,22 +183,27 @@ function ProjectCard({
   const pal = paletteOf(project.color)
   const goal = project.dailyGoal ?? 0
   const today = stat?.today ?? 0
+  const met = goal > 0 && today >= goal
   return (
-    <div className={cx('group rounded-3xl border border-slate-200/80 bg-white p-4 transition duration-200 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md dark:border-slate-700/60 dark:bg-slate-800 dark:hover:border-slate-600', project.archived && 'opacity-60')}>
+    <div className={cx('group relative overflow-hidden rounded-3xl border border-slate-200/80 bg-white p-4 pl-5 transition duration-200 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md dark:border-slate-700/60 dark:bg-slate-800 dark:hover:border-slate-600', project.archived && 'opacity-60')}>
+      {/* 色脊：專案調色盤，靜靜標示身份 */}
+      <span aria-hidden="true" className={cx('absolute inset-y-0 left-0 w-1', pal.dot)} />
       <div className="flex items-start gap-3">
         <span className={cx('flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-lg', pal.soft)}>
           {project.icon || <Target size={18} className={pal.text} />}
         </span>
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-1.5">
-            <span className={cx('h-2 w-2 rounded-full', pal.dot)} />
-            <h3 className="truncate font-semibold text-slate-800 dark:text-slate-100">{project.name}</h3>
-          </div>
-          <div className="mt-0.5 flex items-center gap-3 text-xs text-slate-400">
+          <h3 className="truncate font-serif text-[17px] font-semibold tracking-tight text-slate-800 dark:text-slate-100">
+            {project.name}
+          </h3>
+          <div className="mt-0.5 flex items-center gap-2.5 text-[11px] text-slate-400">
             <span className="inline-flex items-center gap-1 tabular-nums">
               <Timer size={12} />
-              {fmtDuration(stat?.min ?? 0)}
+              <span className="font-serif text-xs tabular-nums text-slate-500 dark:text-slate-400">
+                {fmtDuration(stat?.min ?? 0)}
+              </span>
             </span>
+            <span aria-hidden="true" className="text-slate-300 dark:text-slate-600">·</span>
             <span className="tabular-nums">{stat?.sessions ?? 0} 節</span>
           </div>
         </div>
@@ -199,14 +227,22 @@ function ProjectCard({
       </div>
 
       {goal > 0 && (
-        <div className="mt-3">
-          <div className="mb-1 flex items-center justify-between text-[11px]">
-            <span className="text-slate-500 dark:text-slate-400">今日目標</span>
-            <span className="tabular-nums text-slate-500 dark:text-slate-400">
-              {today}/{goal} 節{today >= goal && ' ✅'}
+        <div className="mt-3.5">
+          <div className="mb-1.5 flex items-center justify-between text-[11px]">
+            <span className="font-medium uppercase tracking-[0.14em] text-slate-400 dark:text-slate-500">
+              今日目標
+            </span>
+            <span
+              className={cx(
+                'inline-flex items-center gap-1 tabular-nums',
+                met ? 'font-medium text-emerald-600 dark:text-emerald-400' : 'text-slate-500 dark:text-slate-400',
+              )}
+            >
+              {today}/{goal} 節
+              {met && <Check size={12} className="shrink-0" />}
             </span>
           </div>
-          <ProgressBar value={(today / goal) * 100} size="sm" tone={today >= goal ? 'green' : 'accent'} />
+          <ProgressBar value={(today / goal) * 100} size="sm" tone={met ? 'green' : 'accent'} />
         </div>
       )}
     </div>
@@ -266,67 +302,84 @@ function ProjectModal({
         </>
       }
     >
-      <div className="space-y-4">
+      <div className="space-y-5">
         <Field label="名稱" required>
           <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="例如：BAFS 溫習" autoFocus />
         </Field>
 
-        <div>
-          <p className="mb-1.5 text-xs font-medium text-slate-600 dark:text-slate-300">圖示</p>
-          <div className="flex flex-wrap gap-1.5">
-            {EMOJIS.map((e) => (
-              <button
-                key={e}
-                type="button"
-                aria-label={`圖示 ${e}`}
-                aria-pressed={icon === e}
-                onClick={() => setIcon(e)}
-                className={cx(
-                  'flex h-9 w-9 items-center justify-center rounded-lg text-lg transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
-                  icon === e
-                    ? 'bg-accent-soft ring-2 ring-accent dark:bg-accent/15'
-                    : 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600',
-                )}
-              >
-                {e}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div>
-          <p className="mb-1.5 text-xs font-medium text-slate-600 dark:text-slate-300">顏色</p>
-          <div className="flex flex-wrap gap-2">
-            {PALETTE_KEYS.map((c) => {
-              const pal = paletteOf(c)
-              return (
+        {/* 外觀：圖示 + 顏色一組，hairline 分隔 */}
+        <div className="space-y-4 border-t border-slate-200/70 pt-4 dark:border-slate-700/50">
+          <div>
+            <p className="mb-2 text-[11px] font-medium uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+              圖示
+            </p>
+            <div className="flex flex-wrap gap-1.5">
+              {EMOJIS.map((e) => (
                 <button
-                  key={c}
+                  key={e}
                   type="button"
-                  onClick={() => setColor(c)}
+                  aria-label={`圖示 ${e}`}
+                  aria-pressed={icon === e}
+                  onClick={() => setIcon(e)}
                   className={cx(
-                    'h-8 w-8 rounded-full transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-800',
-                    pal.dot,
-                    color === c ? 'ring-2 ring-offset-2 ring-slate-400 dark:ring-offset-slate-800' : 'hover:scale-110',
+                    'flex h-9 w-9 items-center justify-center rounded-xl text-lg transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
+                    icon === e
+                      ? 'bg-accent-soft ring-2 ring-accent dark:bg-accent/15'
+                      : 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600',
                   )}
-                  aria-label={`顏色 ${c}`}
-                  aria-pressed={color === c}
-                />
-              )
-            })}
+                >
+                  {e}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <p className="mb-2 text-[11px] font-medium uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+              顏色
+            </p>
+            <div className="flex flex-wrap gap-2.5">
+              {PALETTE_KEYS.map((c) => {
+                const pal = paletteOf(c)
+                const on = color === c
+                return (
+                  <button
+                    key={c}
+                    type="button"
+                    onClick={() => setColor(c)}
+                    className={cx(
+                      'flex h-8 w-8 items-center justify-center rounded-full text-white transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-800',
+                      pal.dot,
+                      on ? 'ring-2 ring-offset-2 ring-slate-400 dark:ring-offset-slate-800' : 'hover:scale-110',
+                    )}
+                    aria-label={`顏色 ${c}`}
+                    aria-pressed={on}
+                  >
+                    {on && <Check size={14} strokeWidth={3} className="drop-shadow-sm" />}
+                  </button>
+                )
+              })}
+            </div>
           </div>
         </div>
 
-        <Field label="每日目標番茄數（0 = 不設）" hint="達標後卡片會顯示綠色完成">
-          <Input
-            type="number"
-            min={0}
-            value={goal}
-            onChange={(e) => setGoal(Math.max(0, Number(e.target.value) || 0))}
-          />
-        </Field>
+        {/* 節律：每日目標 */}
+        <div className="border-t border-slate-200/70 pt-4 dark:border-slate-700/50">
+          <Field label="每日目標番茄數（0 = 不設）" hint="達標後卡片會顯示綠色完成">
+            <Input
+              type="number"
+              min={0}
+              value={goal}
+              onChange={(e) => setGoal(Math.max(0, Number(e.target.value) || 0))}
+            />
+          </Field>
+        </div>
 
-        {project && <Badge tone="slate">建立於 {keyOf(project.createdAt)}</Badge>}
+        {project && (
+          <p className="text-[11px] italic text-slate-400 dark:text-slate-500">
+            建立於 {keyOf(project.createdAt)}
+          </p>
+        )}
       </div>
     </Modal>
   )

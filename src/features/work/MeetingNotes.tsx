@@ -971,7 +971,7 @@ function NoteRow({
   const railCls = TYPE_RAIL[tm.tone] ?? TYPE_RAIL.slate
 
   return (
-    <Card hover className="group/note relative overflow-hidden p-4 sm:p-5">
+    <Card hover clip className="group/note relative p-4 sm:p-5">
       <span aria-hidden="true" className={cx('absolute inset-y-0 left-0 w-1', railCls)} />
       <div className="flex items-start gap-3 sm:gap-3.5">
         {/* 議程條目號牌（serif Item NN，類型色底光） */}
@@ -1203,7 +1203,7 @@ function OwnerGroupCard({
 }) {
   const name = group.unassigned ? '未指派' : group.owner
   return (
-    <Card className="overflow-hidden p-0">
+    <Card clip className="p-0">
       {/* 負責人標頭 */}
       <div className="flex items-center gap-2.5 border-b border-slate-100 bg-slate-50/60 px-4 py-2.5 dark:border-slate-700/60 dark:bg-slate-800/40">
         <span

@@ -9,6 +9,9 @@ import {
   Target,
   PersonStanding,
   Layers,
+  Library,
+  ListFilter,
+  X,
   type LucideIcon,
 } from 'lucide-react'
 import {
@@ -71,6 +74,17 @@ const CAT_CHIP: Record<ExerciseCategory, string> = {
   全身: 'bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent',
 }
 
+// 動作卡左側色脊（依分類；寫足整串畀 Tailwind 掃到）
+const CAT_SPINE: Record<ExerciseCategory, string> = {
+  胸: 'bg-rose-400 dark:bg-rose-500/70',
+  背: 'bg-blue-400 dark:bg-blue-500/70',
+  腿: 'bg-emerald-400 dark:bg-emerald-500/70',
+  肩: 'bg-amber-400 dark:bg-amber-500/70',
+  手臂: 'bg-accent dark:bg-accent',
+  核心: 'bg-amber-400 dark:bg-amber-500/70',
+  全身: 'bg-accent dark:bg-accent',
+}
+
 // ───────── 概覽小磚（暖色 bento）─────────
 type StatTone = 'accent' | 'sky' | 'violet'
 const STAT_TONE: Record<StatTone, string> = {
@@ -85,6 +99,7 @@ function MiniStat({
   icon: Icon,
   tone,
   highlight,
+  channel,
 }: {
   label: string
   value: number | string
@@ -92,31 +107,47 @@ function MiniStat({
   icon: LucideIcon
   tone: StatTone
   highlight?: boolean
+  /** 記分牌頻道號（純裝飾戳印） */
+  channel?: number
 }) {
   return (
     <div
       className={cx(
-        'flex flex-col justify-between rounded-3xl border p-4 transition duration-200 hover:-translate-y-0.5 hover:shadow-md',
+        'group relative flex flex-col justify-between overflow-hidden rounded-3xl border p-4 transition duration-200 hover:-translate-y-0.5 hover:shadow-md',
         highlight
           ? 'border-accent/30 bg-accent-soft dark:border-accent/40 dark:bg-accent/15'
           : 'border-slate-200/80 bg-white hover:border-slate-300 dark:border-slate-700/60 dark:bg-slate-800 dark:hover:border-slate-600',
       )}
     >
-      <div className="flex items-center justify-between">
-        <span className="text-xs font-medium text-slate-400 dark:text-slate-500">{label}</span>
+      {/* 角落頻道戳印（記分牌讀數感，純裝飾） */}
+      {channel != null && (
+        <span
+          aria-hidden="true"
+          className={cx(
+            'pointer-events-none absolute -right-1 top-1 select-none font-serif text-4xl font-black leading-none tabular-nums slashed-zero',
+            highlight ? 'text-accent/15 dark:text-accent/20' : 'text-slate-900/[0.04] dark:text-white/[0.05]',
+          )}
+        >
+          {channel}
+        </span>
+      )}
+      <div className="relative flex items-center justify-between">
+        <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400 dark:text-slate-500">
+          {label}
+        </span>
         <span
           className={cx(
-            'flex h-8 w-8 items-center justify-center rounded-xl',
+            'flex h-8 w-8 items-center justify-center rounded-xl transition group-hover:scale-105',
             highlight ? 'bg-accent text-white' : STAT_TONE[tone],
           )}
         >
           <Icon size={16} />
         </span>
       </div>
-      <p className="mt-3 flex items-baseline gap-1">
+      <p className="relative mt-3 flex items-baseline gap-1">
         <span
           className={cx(
-            'text-2xl font-bold tabular-nums slashed-zero',
+            'font-serif text-3xl font-black leading-none tabular-nums slashed-zero',
             highlight ? 'text-accent-strong dark:text-accent' : 'text-slate-800 dark:text-slate-100',
           )}
         >
@@ -160,22 +191,54 @@ export default function LibraryView() {
 
   return (
     <div className="space-y-5">
-      {/* 概覽（暖色 bento）*/}
+      {/* ── 標題列（呼應記分牌：kicker + 大字 + LIVE 計數）── */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div className="min-w-0">
+          <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-accent">
+            <Library size={13} /> 動作資料庫 · INDEX
+          </p>
+          <h2 className="mt-1 font-serif text-2xl font-black leading-none tracking-tight text-slate-800 dark:text-slate-100">
+            招式名冊
+          </h2>
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+            按部位揀招、睇主／協同肌群同姿勢重點，收藏入你嘅出場名單。
+          </p>
+        </div>
+        {/* 收錄計數面板（似記分牌讀數） */}
+        <div className="shrink-0 self-start rounded-2xl border border-slate-200/80 bg-white px-3.5 py-2 dark:border-slate-700/60 dark:bg-slate-800 sm:self-auto">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+            全庫收錄
+          </p>
+          <div className="mt-0.5 flex items-baseline gap-1">
+            <span className="font-serif text-2xl font-black leading-none tabular-nums slashed-zero text-slate-800 dark:text-slate-100">
+              {EXERCISES.length}
+            </span>
+            <span className="text-xs font-medium text-slate-400">招</span>
+          </div>
+        </div>
+      </div>
+
+      {/* 概覽（記分牌讀數 bento）*/}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <MiniStat label="動作總數" value={EXERCISES.length} icon={Dumbbell} tone="accent" />
-        <MiniStat label="分類" value={CATEGORIES.length} unit="類" icon={Layers} tone="sky" />
-        <MiniStat label="涵蓋肌群" value={muscleCount} icon={PersonStanding} tone="violet" />
+        <MiniStat label="動作總數" value={EXERCISES.length} icon={Dumbbell} tone="accent" channel={1} />
+        <MiniStat label="分類" value={CATEGORIES.length} unit="類" icon={Layers} tone="sky" channel={2} />
+        <MiniStat label="涵蓋肌群" value={muscleCount} icon={PersonStanding} tone="violet" channel={3} />
         <MiniStat
           label="我的收藏"
           value={favs.length}
           icon={Star}
           tone="accent"
           highlight={favs.length > 0}
+          channel={4}
         />
       </div>
 
-      {/* 搜尋 + 分類 */}
-      <div className="space-y-3">
+      {/* 篩選台（控制面板感）*/}
+      <div className="space-y-3 rounded-3xl border border-slate-200/80 bg-white p-4 dark:border-slate-700/60 dark:bg-slate-800">
+        <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+          <ListFilter size={13} /> 篩選台 · FILTER
+        </p>
+
         <Input
           icon={Search}
           placeholder="搜尋動作名（中／英）…"
@@ -200,20 +263,25 @@ export default function LibraryView() {
         </div>
 
         {/* 器材 chips */}
-        <div className="flex flex-wrap gap-2">
-          <EquipChip
-            label="全部器材"
-            active={equip === '全部'}
-            onClick={() => setEquip('全部')}
-          />
-          {equipOptions.map((eq) => (
+        <div>
+          <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-300 dark:text-slate-600">
+            器材
+          </p>
+          <div className="flex flex-wrap gap-2">
             <EquipChip
-              key={eq}
-              label={eq}
-              active={equip === eq}
-              onClick={() => setEquip((prev) => (prev === eq ? '全部' : eq))}
+              label="全部器材"
+              active={equip === '全部'}
+              onClick={() => setEquip('全部')}
             />
-          ))}
+            {equipOptions.map((eq) => (
+              <EquipChip
+                key={eq}
+                label={eq}
+                active={equip === eq}
+                onClick={() => setEquip((prev) => (prev === eq ? '全部' : eq))}
+              />
+            ))}
+          </div>
         </div>
       </div>
 
@@ -240,10 +308,13 @@ export default function LibraryView() {
       ) : (
         <>
           <p
-            className="text-xs text-slate-500 dark:text-slate-400"
+            className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400"
             aria-live="polite"
           >
-            顯示 {filtered.length} / {EXERCISES.length} 個動作
+            <span className="font-serif text-sm font-bold tabular-nums slashed-zero text-slate-700 dark:text-slate-200">
+              {filtered.length}
+            </span>
+            <span className="text-slate-400 dark:text-slate-500">/ {EXERCISES.length} 個動作上場</span>
           </p>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {filtered.map((ex) => (
@@ -312,8 +383,21 @@ function ExerciseCard({
   onOpen: () => void
 }) {
   return (
-    <Card hover className="flex h-full flex-col p-4">
-      <div className="flex items-start justify-between gap-2">
+    <Card hover clip className="relative flex h-full flex-col p-4 pl-5">
+      {/* 分類色脊（lineup 卡識別） */}
+      <span
+        aria-hidden="true"
+        className={cx('absolute inset-y-0 left-0 w-1', CAT_SPINE[exercise.category])}
+      />
+      {/* 部位大字戳印（記分牌讀數感，純裝飾） */}
+      <span
+        aria-hidden="true"
+        className="pointer-events-none absolute -bottom-3 right-1 select-none font-serif text-6xl font-black leading-none text-slate-900/[0.03] dark:text-white/[0.04]"
+      >
+        {exercise.category}
+      </span>
+
+      <div className="relative flex items-start justify-between gap-2">
         <button
           type="button"
           onClick={onOpen}
@@ -345,7 +429,7 @@ function ExerciseCard({
       <button
         type="button"
         onClick={onOpen}
-        className="mt-3 flex flex-1 flex-col items-start gap-2 text-left focus-visible:outline-none"
+        className="relative mt-3 flex flex-1 flex-col items-start gap-2 text-left focus-visible:outline-none"
         tabIndex={-1}
       >
         <div className="flex flex-wrap items-center gap-1.5">
@@ -420,34 +504,98 @@ function DetailModal({
   }
 
   return (
-    <Modal open onClose={onClose} title={exercise.name} size="lg">
+    <Modal open onClose={onClose} size="lg">
       <div className="space-y-5">
-        {/* 標籤 + 收藏 */}
-        <div className="flex flex-wrap items-center gap-2">
-          <Badge tone={TONE_BY_CAT[exercise.category]}>{exercise.category}</Badge>
-          {exercise.equipment.map((eq) => (
-            <Badge key={eq} tone="slate" icon={Dumbbell}>
-              {eq}
-            </Badge>
-          ))}
-          <div className="ml-auto">
-            <Button
-              variant={fav ? 'secondary' : 'ghost'}
-              size="sm"
-              icon={Star}
-              onClick={onToggleFav}
+        {/* ── 招式名牌（深色記分牌 masthead）── */}
+        <header className="relative -mx-5 -mt-5 overflow-hidden rounded-t-2xl bg-slate-950 px-5 pb-4 pt-5 text-white sm:-mx-6 sm:-mt-6 sm:px-6">
+          {/* accent 發光 + LED 點陣（呼應 hero） */}
+          <div className="hero-gradient pointer-events-none absolute -right-12 -top-16 h-40 w-40 rounded-full opacity-40 blur-3xl" />
+          <div
+            className="pointer-events-none absolute inset-0 opacity-[0.07]"
+            style={{
+              backgroundImage: 'radial-gradient(currentColor 1px, transparent 1.4px)',
+              backgroundSize: '14px 14px',
+              color: 'var(--accent-grad-from)',
+            }}
+            aria-hidden="true"
+          />
+          {/* 部位大字戳印（純裝飾） */}
+          <span
+            aria-hidden="true"
+            className="pointer-events-none absolute -bottom-5 right-2 select-none font-serif text-7xl font-black leading-none text-white/[0.06]"
+          >
+            {exercise.category}
+          </span>
+
+          <div className="relative flex items-start justify-between gap-3">
+            <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.2em] text-white/55">
+              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400" />
+              招式名牌 · MOVE
+            </p>
+            <button
+              onClick={onClose}
+              className="-mr-1 -mt-0.5 rounded-lg p-1 text-white/60 transition hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
+              aria-label="關閉"
             >
-              {fav ? '已收藏' : '收藏'}
-            </Button>
+              <X size={18} />
+            </button>
           </div>
-        </div>
+
+          <div className="relative mt-2 flex items-start gap-3">
+            <span
+              className={cx(
+                'mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl',
+                CAT_CHIP[exercise.category],
+              )}
+            >
+              <Dumbbell size={18} />
+            </span>
+            <h3 className="min-w-0 font-serif text-xl font-black leading-tight tracking-tight sm:text-2xl">
+              {exercise.name}
+            </h3>
+          </div>
+
+          <div className="relative mt-3 flex flex-wrap items-center gap-2">
+            <Badge tone={TONE_BY_CAT[exercise.category]}>{exercise.category}</Badge>
+            {exercise.equipment.map((eq) => (
+              <span
+                key={eq}
+                className="inline-flex items-center gap-1 rounded-md bg-white/10 px-2 py-0.5 text-[11px] font-medium text-white/80 ring-1 ring-inset ring-white/10"
+              >
+                <Dumbbell size={11} />
+                {eq}
+              </span>
+            ))}
+            <div className="ml-auto">
+              <button
+                type="button"
+                onClick={onToggleFav}
+                aria-pressed={fav}
+                className={cx(
+                  'inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40',
+                  fav
+                    ? 'bg-white text-slate-900'
+                    : 'bg-white/10 text-white/80 hover:bg-white/20 hover:text-white',
+                )}
+              >
+                <Star size={14} className={fav ? 'fill-current text-accent-strong' : undefined} />
+                {fav ? '已收藏' : '收藏'}
+              </button>
+            </div>
+          </div>
+        </header>
 
         {/* 2D 肌群圖 */}
-        <MuscleMap
-          primaryMuscles={exercise.primaryMuscles}
-          secondaryMuscles={exercise.secondaryMuscles}
-          className="rounded-xl border border-slate-200 bg-slate-50/50 py-3 dark:border-slate-700 dark:bg-slate-800/40"
-        />
+        <section>
+          <h4 className="mb-2 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+            <PersonStanding size={14} aria-hidden="true" /> 靶位圖 · TARGET
+          </h4>
+          <MuscleMap
+            primaryMuscles={exercise.primaryMuscles}
+            secondaryMuscles={exercise.secondaryMuscles}
+            className="rounded-xl border border-slate-200 bg-slate-50/50 py-3 dark:border-slate-700 dark:bg-slate-800/40"
+          />
+        </section>
 
         {/* 肌群 */}
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -463,30 +611,37 @@ function DetailModal({
           />
         </div>
 
-        {/* form cues */}
+        {/* form cues（出招步序）*/}
         <section>
-          <h4 className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-            <Target size={14} aria-hidden="true" /> 動作重點
+          <h4 className="mb-2.5 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+            <Target size={14} aria-hidden="true" /> 出招步序 · FORM
           </h4>
-          <ul className="space-y-1.5">
+          <ol className="space-y-2.5">
             {exercise.formCues.map((cue, i) => (
               <li
                 key={i}
-                className="flex gap-2 text-sm text-slate-700 dark:text-slate-200"
+                className="relative flex gap-3 text-sm text-slate-700 dark:text-slate-200"
               >
-                <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent-soft text-[11px] font-semibold text-accent-strong dark:bg-accent/15 dark:text-accent">
+                {/* 步序連接線（最後一步唔畫）*/}
+                {i < exercise.formCues.length - 1 && (
+                  <span
+                    aria-hidden="true"
+                    className="absolute left-[0.6875rem] top-7 h-[calc(100%-0.5rem)] w-px bg-slate-200 dark:bg-slate-700"
+                  />
+                )}
+                <span className="z-10 flex h-[1.375rem] w-[1.375rem] shrink-0 items-center justify-center rounded-lg bg-accent-soft font-serif text-xs font-black tabular-nums text-accent-strong dark:bg-accent/15 dark:text-accent">
                   {i + 1}
                 </span>
-                <span>{cue}</span>
+                <span className="pt-0.5">{cue}</span>
               </li>
             ))}
-          </ul>
+          </ol>
         </section>
 
         {/* safety */}
-        <section className="rounded-lg border border-amber-200 bg-amber-50/70 p-3 dark:border-amber-500/20 dark:bg-amber-500/10">
-          <h4 className="mb-1 flex items-center gap-1.5 text-xs font-semibold text-amber-700 dark:text-amber-300">
-            <ShieldAlert size={14} aria-hidden="true" /> 安全提示
+        <section className="rounded-xl border border-amber-200 bg-amber-50/70 p-3 dark:border-amber-500/20 dark:bg-amber-500/10">
+          <h4 className="mb-1 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-amber-700 dark:text-amber-300">
+            <ShieldAlert size={14} aria-hidden="true" /> 安全提示 · SAFE
           </h4>
           <p className="text-sm text-amber-800 dark:text-amber-200">
             {exercise.safety}
@@ -495,12 +650,12 @@ function DetailModal({
 
         {/* AI 解釋（gate：未設定就靜態提示，唔 call） */}
         <section
-          className="rounded-lg border border-slate-200 bg-slate-50/70 p-3 dark:border-slate-700 dark:bg-slate-800/50"
+          className="rounded-xl border border-slate-200 bg-slate-50/70 p-3 dark:border-slate-700 dark:bg-slate-800/50"
           aria-live="polite"
           aria-busy={aiBusy}
         >
-          <h4 className="mb-2 flex items-center gap-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400">
-            <Sparkles size={14} aria-hidden="true" /> AI 教練解釋
+          <h4 className="mb-2 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+            <Sparkles size={14} aria-hidden="true" /> AI 教練解說 · COACH
           </h4>
           {!isAIConfigured ? (
             <p className="flex items-start gap-1.5 text-xs text-slate-500 dark:text-slate-400">
@@ -548,8 +703,15 @@ function MuscleBlock({
   tone: 'accent' | 'slate'
 }) {
   return (
-    <div className="rounded-lg border border-slate-200 p-3 dark:border-slate-700">
-      <p className="mb-1.5 text-xs font-medium text-slate-500 dark:text-slate-400">
+    <div className="rounded-xl border border-slate-200 p-3 dark:border-slate-700">
+      <p className="mb-1.5 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400 dark:text-slate-500">
+        <span
+          aria-hidden="true"
+          className={cx(
+            'inline-block h-2 w-2 rounded-full',
+            tone === 'accent' ? 'bg-accent' : 'bg-slate-300 dark:bg-slate-600',
+          )}
+        />
         {label}
       </p>
       {muscles.length === 0 ? (

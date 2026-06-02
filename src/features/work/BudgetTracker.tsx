@@ -1255,7 +1255,6 @@ function BudgetEditModal({
     <Modal
       open
       onClose={onClose}
-      title={`${cat.icon ?? ''} ${cat.name} 預算`}
       size="sm"
       footer={
         <>
@@ -1268,24 +1267,50 @@ function BudgetEditModal({
             取消
           </Button>
           <Button onClick={save} disabled={!valid}>
-            儲存
+            {existing ? '更新上限' : '立此預算'}
           </Button>
         </>
       }
     >
-      <div className="space-y-3">
+      {/* 信封抬頭：kicker + 分類 emoji + serif 名（呼應帳本 / 預算信封語言） */}
+      <header className="-mx-5 -mt-5 mb-4 flex items-center gap-3 border-b border-dashed border-slate-200/90 px-5 pb-3.5 dark:border-slate-700/70 sm:-mx-6 sm:-mt-6 sm:px-6">
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-accent-soft text-lg dark:bg-accent/15">
+          {cat.icon ?? '🏷️'}
+        </span>
+        <div className="min-w-0">
+          <p className="text-[10px] font-medium uppercase tracking-[0.3em] text-accent/70">
+            Envelope · 預算信封
+          </p>
+          <h3 className="mt-0.5 truncate font-serif text-lg font-semibold leading-tight text-slate-800 dark:text-slate-100">
+            {cat.name}
+          </h3>
+        </div>
+      </header>
+
+      <div className="space-y-3.5">
         <Field label="每月上限（HK$）">
-          <Input
-            value={limit}
-            onChange={(e) =>
-              setLimit(e.target.value.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1'))
-            }
-            placeholder="例如：3000"
-            inputMode="decimal"
-            autoFocus
-          />
+          {/* 帳本式上限輸入：固定 HK$ 前綴 + 大 serif 數字 */}
+          <div className="flex items-baseline gap-2 rounded-xl border border-slate-200 bg-slate-50/70 px-3.5 py-2.5 transition focus-within:border-accent focus-within:ring-2 focus-within:ring-accent/30 dark:border-slate-700 dark:bg-slate-900/40">
+            <span
+              className="font-serif text-base font-semibold text-slate-400 dark:text-slate-500"
+              aria-hidden="true"
+            >
+              HK$
+            </span>
+            <input
+              value={limit}
+              onChange={(e) =>
+                setLimit(e.target.value.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1'))
+              }
+              placeholder="3,000"
+              inputMode="decimal"
+              autoFocus
+              aria-label="每月上限"
+              className="w-full bg-transparent font-serif text-2xl font-semibold leading-none tabular-nums slashed-zero text-slate-800 outline-none placeholder:text-slate-300 dark:text-slate-100 dark:placeholder:text-slate-600"
+            />
+          </div>
         </Field>
-        <label className="flex cursor-pointer items-start gap-2.5 rounded-lg border border-slate-200 p-3 dark:border-slate-700">
+        <label className="flex cursor-pointer items-start gap-2.5 rounded-xl border border-slate-200 bg-white p-3 transition hover:border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-slate-600">
           <input
             type="checkbox"
             checked={rollover}
@@ -1773,11 +1798,12 @@ function RecurringFormModal({
     onClose()
   }
 
+  const income = kind === 'income'
+
   return (
     <Modal
       open
       onClose={onClose}
-      title={editing ? '編輯定期項目' : '新增定期項目'}
       footer={
         <>
           <Button variant="secondary" onClick={onClose}>
@@ -1789,17 +1815,51 @@ function RecurringFormModal({
         </>
       }
     >
+      {/* 定期收支抬頭：kicker + serif 標題（呼應帳本語言，標示自動入帳範本） */}
+      <header className="-mx-5 -mt-5 mb-4 border-b border-dashed border-slate-200/90 px-5 pb-3.5 dark:border-slate-700/70 sm:-mx-6 sm:-mt-6 sm:px-6">
+        <p className="text-[10px] font-medium uppercase tracking-[0.3em] text-accent/70">
+          Standing order · 定期
+        </p>
+        <h3 className="mt-1 flex items-center gap-2 font-serif text-lg font-semibold leading-tight text-slate-800 dark:text-slate-100">
+          <Repeat size={17} className="text-accent" aria-hidden="true" />
+          {editing ? '編輯定期項目' : '新增定期項目'}
+        </h3>
+      </header>
+
       <div className="space-y-3">
         <Pills options={KIND_PILLS} active={kind} onChange={switchKind} />
         <Field label="金額（HK$）">
-          <Input
-            value={amount}
-            onChange={(e) =>
-              setAmount(e.target.value.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1'))
-            }
-            placeholder="0.00"
-            inputMode="decimal"
-          />
+          <div
+            className={cx(
+              'flex items-baseline gap-2 rounded-xl border bg-slate-50/70 px-3.5 py-2.5 transition focus-within:ring-2 focus-within:ring-accent/30 dark:bg-slate-900/40',
+              income
+                ? 'border-emerald-200/80 focus-within:border-emerald-400 dark:border-emerald-500/30'
+                : 'border-rose-200/80 focus-within:border-rose-400 dark:border-rose-500/30',
+            )}
+          >
+            <span
+              className={cx(
+                'font-serif text-2xl font-semibold leading-none tabular-nums',
+                income ? 'text-emerald-500 dark:text-emerald-400' : 'text-rose-500 dark:text-rose-400',
+              )}
+              aria-hidden="true"
+            >
+              {income ? '+' : '−'}
+            </span>
+            <input
+              value={amount}
+              onChange={(e) =>
+                setAmount(e.target.value.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1'))
+              }
+              placeholder="0.00"
+              inputMode="decimal"
+              aria-label="金額"
+              className={cx(
+                'w-full bg-transparent font-serif text-2xl font-semibold leading-none tabular-nums slashed-zero outline-none placeholder:text-slate-300 dark:placeholder:text-slate-600',
+                income ? 'text-emerald-700 dark:text-emerald-300' : 'text-rose-700 dark:text-rose-300',
+              )}
+            />
+          </div>
         </Field>
         <Field label="分類">
           {kindCats.length === 0 ? (
@@ -1880,6 +1940,8 @@ function TxFormModal({
   // 快速金額（常用面額）
   const QUICK = [20, 50, 100, 200, 500]
 
+  const income = kind === 'income'
+
   const save = () => {
     if (!valid) return
     const payload = {
@@ -1900,29 +1962,73 @@ function TxFormModal({
   }
 
   return (
-    <Modal open onClose={onClose} title={editing ? '編輯記錄' : '記一筆'}>
-      <div className="space-y-3">
+    <Modal open onClose={onClose}>
+      {/* 收據抬頭：kicker + serif 標題 + 自家關閉鍵（呼應主畫面帳本語言） */}
+      <header className="-mx-5 -mt-5 mb-4 flex items-start justify-between gap-3 border-b border-dashed border-slate-200/90 px-5 pb-3.5 dark:border-slate-700/70 sm:-mx-6 sm:-mt-6 sm:px-6">
+        <div className="min-w-0">
+          <p className="text-[10px] font-medium uppercase tracking-[0.3em] text-accent/70">
+            Ledger · {income ? '收入' : '支出'}
+          </p>
+          <h3 className="mt-1 flex items-center gap-2 font-serif text-xl font-semibold leading-tight text-slate-800 dark:text-slate-100">
+            <Receipt size={18} className="text-accent" aria-hidden="true" />
+            {editing ? '編輯記錄' : '記一筆'}
+          </h3>
+        </div>
+        <button
+          onClick={onClose}
+          className="-mr-1 mt-0.5 shrink-0 rounded-lg p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:hover:bg-slate-700"
+          aria-label="關閉"
+        >
+          <X size={18} />
+        </button>
+      </header>
+
+      <div className="space-y-4">
         <Pills options={KIND_PILLS} active={kind} onChange={switchKind} />
 
+        {/* 收據「合計」行：大 serif 金額 + 收支正負色，帶 ruled 底線質感 */}
         <Field label="金額（HK$）">
-          <Input
-            value={amount}
-            onChange={(e) =>
-              setAmount(e.target.value.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1'))
-            }
-            placeholder="0.00"
-            inputMode="decimal"
-            autoFocus={!editing}
-          />
+          <div
+            className={cx(
+              'flex items-baseline gap-2 rounded-xl border bg-slate-50/70 px-3.5 py-2.5 transition focus-within:ring-2 focus-within:ring-accent/30 dark:bg-slate-900/40',
+              income
+                ? 'border-emerald-200/80 focus-within:border-emerald-400 dark:border-emerald-500/30'
+                : 'border-rose-200/80 focus-within:border-rose-400 dark:border-rose-500/30',
+            )}
+          >
+            <span
+              className={cx(
+                'font-serif text-2xl font-semibold leading-none tabular-nums',
+                income ? 'text-emerald-500 dark:text-emerald-400' : 'text-rose-500 dark:text-rose-400',
+              )}
+              aria-hidden="true"
+            >
+              {income ? '+' : '−'}
+            </span>
+            <input
+              value={amount}
+              onChange={(e) =>
+                setAmount(e.target.value.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1'))
+              }
+              placeholder="0.00"
+              inputMode="decimal"
+              autoFocus={!editing}
+              aria-label="金額"
+              className={cx(
+                'w-full bg-transparent font-serif text-2xl font-semibold leading-none tabular-nums slashed-zero outline-none placeholder:text-slate-300 dark:placeholder:text-slate-600',
+                income ? 'text-emerald-700 dark:text-emerald-300' : 'text-rose-700 dark:text-rose-300',
+              )}
+            />
+          </div>
         </Field>
         {!editing && (
-          <div className="flex flex-wrap gap-1.5">
+          <div className="-mt-1.5 flex flex-wrap gap-1.5">
             {QUICK.map((q) => (
               <button
                 key={q}
                 type="button"
                 onClick={() => setAmount(String(q))}
-                className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium tabular-nums text-slate-600 transition hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600"
+                className="rounded-full border border-slate-200/80 bg-white px-3 py-1 text-xs font-medium tabular-nums text-slate-600 shadow-xs transition hover:border-accent/40 hover:bg-accent-soft hover:text-accent-strong dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:shadow-none dark:hover:bg-accent/15 dark:hover:text-accent"
               >
                 {q}
               </button>
@@ -1947,7 +2053,7 @@ function TxFormModal({
                     className={cx(
                       'flex flex-col items-center gap-1 rounded-xl border px-1 py-2 text-center transition focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
                       on
-                        ? 'border-accent bg-accent-soft dark:bg-accent/15'
+                        ? 'border-accent bg-accent-soft shadow-xs dark:bg-accent/15 dark:shadow-none'
                         : 'border-slate-200 hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-700/50',
                     )}
                   >
@@ -1969,24 +2075,26 @@ function TxFormModal({
           )}
         </Field>
 
-        <Field label="日期">
-          <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
-        </Field>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-[minmax(0,9rem)_1fr]">
+          <Field label="日期">
+            <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+          </Field>
+          <Field label="備註（可選）">
+            <Input
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              placeholder="例如：午餐、出糧…"
+            />
+          </Field>
+        </div>
 
-        <Field label="備註（可選）">
-          <Input
-            value={note}
-            onChange={(e) => setNote(e.target.value)}
-            placeholder="例如：午餐、出糧…"
-          />
-        </Field>
-
-        <div className="flex justify-end gap-2 pt-2">
+        {/* 結算線：帳簿雙底線收結，呼應 LedgerStatement 嘅 ruled 行 */}
+        <div className="-mx-5 mt-1 flex items-center justify-end gap-2 border-t-2 border-double border-slate-200 px-5 pt-4 dark:border-slate-700 sm:-mx-6 sm:px-6">
           <Button variant="secondary" onClick={onClose}>
             取消
           </Button>
-          <Button onClick={save} disabled={!valid}>
-            {editing ? '儲存修改' : '新增記錄'}
+          <Button icon={editing ? undefined : Plus} onClick={save} disabled={!valid}>
+            {editing ? '儲存修改' : '記低'}
           </Button>
         </div>
       </div>
@@ -2051,7 +2159,27 @@ function ImportTxModal({
   }
 
   return (
-    <Modal open onClose={onClose} title="匯入交易（CSV）" size="lg">
+    <Modal open onClose={onClose} size="lg">
+      {/* 匯入抬頭：kicker + serif 標題 + 自家關閉鍵（呼應帳本語言） */}
+      <header className="-mx-5 -mt-5 mb-4 flex items-start justify-between gap-3 border-b border-dashed border-slate-200/90 px-5 pb-3.5 dark:border-slate-700/70 sm:-mx-6 sm:-mt-6 sm:px-6">
+        <div className="min-w-0">
+          <p className="text-[10px] font-medium uppercase tracking-[0.3em] text-accent/70">
+            Ledger · 匯入
+          </p>
+          <h3 className="mt-1 flex items-center gap-2 font-serif text-xl font-semibold leading-tight text-slate-800 dark:text-slate-100">
+            <Upload size={18} className="text-accent" aria-hidden="true" />
+            匯入交易（CSV）
+          </h3>
+        </div>
+        <button
+          onClick={onClose}
+          className="-mr-1 mt-0.5 shrink-0 rounded-lg p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:hover:bg-slate-700"
+          aria-label="關閉"
+        >
+          <X size={18} />
+        </button>
+      </header>
+
       <div className="space-y-4">
         <div className="flex items-start gap-3 rounded-2xl border border-accent/20 bg-accent-soft/50 p-3.5 dark:border-accent/25 dark:bg-accent/10">
           <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-accent text-white">

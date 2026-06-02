@@ -498,7 +498,7 @@ function SavedPlanRow({
 }) {
   const [open, setOpen] = useState(false)
   return (
-    <Card className="overflow-hidden">
+    <Card clip>
       <div className="flex items-center gap-3 p-3">
         <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent" aria-hidden="true">
           <Dumbbell size={16} />

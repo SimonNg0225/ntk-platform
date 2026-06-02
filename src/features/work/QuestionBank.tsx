@@ -1803,14 +1803,48 @@ function QuestionFormModal({
   }
 
   return (
-    <Modal open onClose={onClose} title={editing ? '編輯題目' : '新增題目'}>
+    <Modal open onClose={onClose} size="lg">
+      {/* ───────── 試卷封面：kicker + serif 標題 + 擬題戳（呼應主畫面 masthead）───────── */}
+      <header className="relative -mx-5 -mt-5 overflow-hidden px-5 pb-4 pt-5 sm:-mx-6 sm:-mt-6 sm:px-6 sm:pt-6">
+        {/* 右上擬題戳裝飾（純裝飾，唔搶主次；手機收起） */}
+        <span
+          aria-hidden
+          className="pointer-events-none absolute -right-5 top-3 hidden -rotate-6 select-none flex-col items-center rounded-xl border-2 border-dashed border-accent/20 px-4 py-2 font-serif text-[9px] font-semibold uppercase tracking-[0.28em] text-accent/25 dark:border-accent/25 dark:text-accent/25 sm:flex"
+        >
+          <PenLine size={13} className="mb-0.5" />
+          {editing ? '修題' : '擬題'}
+        </span>
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.3em] text-accent/70">
+              <ScrollText size={12} />
+              考評檔案 · Item
+            </p>
+            <h2 className="mt-1.5 font-serif text-[24px] font-semibold leading-none tracking-tight text-slate-800 dark:text-slate-100 sm:text-[26px]">
+              {editing ? '修訂題目' : '擬定新題'}
+            </h2>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="關閉"
+            className="-mr-1.5 -mt-1 shrink-0 rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:hover:bg-slate-700"
+          >
+            <X size={18} />
+          </button>
+        </div>
+        {/* 卷面雙線（封面分隔感） */}
+        <div className="mt-4 space-y-1" aria-hidden>
+          <span className="block h-px bg-slate-200/90 dark:bg-slate-700/70" />
+          <span className="block h-px bg-slate-200/60 dark:bg-slate-700/40" />
+        </div>
+      </header>
+
       <div className="space-y-5">
-        {/* 分類 — 收喺柔和子面板，同題目內容分區 */}
+        {/* 試題檔頭 — 課題／題型／難度，收喺柔和子面板（同題幹分區） */}
         <section className="rounded-2xl border border-slate-200/80 bg-slate-50/60 p-4 dark:border-slate-700/60 dark:bg-slate-900/40">
-          <p className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-            分類
-          </p>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <SectionLabel icon={Layers}>試題檔頭 · Classification</SectionLabel>
+          <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
             <Field label="課題">
               <Select
                 value={form.topicId}
@@ -1848,9 +1882,22 @@ function QuestionFormModal({
               </Select>
             </Field>
           </div>
+          {/* 卷面標籤即時預覽 — 同列表卡一模一樣嘅題型膠囊／難度／分章語言 */}
+          <div className="mt-3 flex flex-wrap items-center gap-1.5 border-t border-dashed border-slate-200/80 pt-3 dark:border-slate-700/50">
+            <TypeChip type={form.type} />
+            <Badge tone={DIFF_TONE[form.difficulty]} dot>
+              {DIFF_LABEL[form.difficulty]}
+            </Badge>
+            {topics.find((t) => t.id === form.topicId) && (
+              <Badge tone="accent">
+                {topics.find((t) => t.id === form.topicId)?.topic}
+              </Badge>
+            )}
+            <MarksStamp marks={form.marks ? Number(form.marks) : undefined} />
+          </div>
         </section>
 
-        <Field label="題目內容" required>
+        <Field label="題幹 · Stem" required>
           <Textarea
             value={form.stem}
             onChange={(e) => set('stem', e.target.value)}
@@ -1861,8 +1908,8 @@ function QuestionFormModal({
 
         {form.type === 'mc' ? (
           <Field
-            label="選項"
-            hint="撳左邊字母圈設定正確答案。"
+            label="選項與正確答案 · Options"
+            hint="撳左邊 serif 字母圈，揀邊個係正確答案。"
           >
             <div className="space-y-2">
               {form.options.map((o, i) => {
@@ -1885,11 +1932,12 @@ function QuestionFormModal({
                         onChange={() => set('answerIndex', i)}
                         className="peer sr-only"
                       />
+                      {/* serif 答案圈 — 對齊評卷參考嘅卷面字母牌 */}
                       <span
                         className={cx(
-                          'flex h-7 w-7 cursor-pointer items-center justify-center rounded-full text-xs font-bold transition peer-focus-visible:ring-2 peer-focus-visible:ring-accent/40',
+                          'flex h-7 w-7 cursor-pointer items-center justify-center rounded-full font-serif text-[13px] font-bold transition peer-focus-visible:ring-2 peer-focus-visible:ring-accent/40',
                           on
-                            ? 'bg-emerald-500 text-white'
+                            ? 'bg-emerald-500 text-white shadow-sm'
                             : 'bg-slate-100 text-slate-500 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600',
                         )}
                       >
@@ -1906,43 +1954,70 @@ function QuestionFormModal({
                       }
                       placeholder={`選項 ${String.fromCharCode(65 + i)}`}
                     />
+                    {/* 正確答案戳（呼應評卷參考綠章；常駐佔位免跳位） */}
+                    <span
+                      className={cx(
+                        'inline-flex shrink-0 items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide transition',
+                        on
+                          ? 'text-emerald-600 opacity-100 dark:text-emerald-400'
+                          : 'opacity-0',
+                      )}
+                      aria-hidden={!on}
+                    >
+                      <Check size={12} />
+                      正確
+                    </span>
                   </label>
                 )
               })}
             </div>
           </Field>
         ) : (
-          <Field label="參考答案">
+          <Field
+            label="評卷參考 · Marking Scheme"
+            hint="改卷員對照嘅標準答案／給分要點。"
+          >
             <Textarea
               value={form.answer}
               onChange={(e) => set('answer', e.target.value)}
-              placeholder="輸入參考答案…"
+              placeholder="輸入評卷參考…"
               rows={3}
             />
           </Field>
         )}
 
-        <Field label="分數" hint="留空 = 唔計分。">
-          <Input
-            value={form.marks}
-            onChange={(e) => set('marks', e.target.value.replace(/\D/g, ''))}
-            placeholder="例如 5"
-            className="w-28"
-            inputMode="numeric"
-          />
+        {/* 配分 — 對齊卷面「分章」語言（Scale icon · serif tabular） */}
+        <Field label="配分 · Marks" hint="留空 = 此題唔計分。">
+          <div className="relative w-28">
+            <Scale
+              size={14}
+              className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-amber-500/70 dark:text-amber-400/70"
+              aria-hidden
+            />
+            <Input
+              value={form.marks}
+              onChange={(e) => set('marks', e.target.value.replace(/\D/g, ''))}
+              placeholder="5"
+              className="pl-8 font-serif tabular-nums slashed-zero"
+              inputMode="numeric"
+            />
+          </div>
         </Field>
 
-        <div className="flex justify-end gap-2 border-t border-slate-100 pt-4 dark:border-slate-700/60">
-          <Button variant="secondary" onClick={onClose}>
-            取消
-          </Button>
-          <Button
-            icon={editing ? Save : Plus}
-            onClick={save}
-            disabled={!form.stem.trim() || !form.topicId}
-          >
-            {editing ? '儲存修改' : '新增題目'}
-          </Button>
+        {/* 卷務頁腳 — 雙線收束（呼應封面），primary action 帶印章感 */}
+        <div className="-mx-5 mt-1 border-t border-slate-200 px-5 pt-4 dark:border-slate-700 sm:-mx-6 sm:px-6">
+          <div className="flex items-center justify-end gap-2">
+            <Button variant="secondary" onClick={onClose}>
+              取消
+            </Button>
+            <Button
+              icon={editing ? Save : Plus}
+              onClick={save}
+              disabled={!form.stem.trim() || !form.topicId}
+            >
+              {editing ? '存檔修訂' : '入卷存題'}
+            </Button>
+          </div>
         </div>
       </div>
     </Modal>

@@ -1112,7 +1112,7 @@ function FollowUpPanel({
   const total = order.reduce((s, k) => s + buckets[k].length, 0)
 
   return (
-    <Card className="overflow-hidden">
+    <Card clip>
       <button
         type="button"
         onClick={() => setCollapsed((v) => !v)}
@@ -1642,7 +1642,7 @@ function ContactGapPanel({
   ]
 
   return (
-    <Card className="overflow-hidden border-amber-200/70 dark:border-amber-500/25">
+    <Card clip className="border-amber-200/70 dark:border-amber-500/25">
       <button
         type="button"
         onClick={() => setCollapsed((v) => !v)}

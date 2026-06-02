@@ -75,6 +75,7 @@ import {
   Stamp,
   TriangleAlert,
   Users,
+  X,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
@@ -842,83 +843,142 @@ function DetailModal({
     onClose()
   }
 
+  const tone = status ? STAMP_TONE[status] : null
+  // 缺席 / 遲到先有對應細項可填；其餘只得早退 + 備註。
+  const hasStatusField = status === 'absent' || status === 'late'
+
   return (
     <Modal
       open={open}
       onClose={onClose}
-      title={`出席細項 — ${studentName}`}
       size="sm"
       footer={
         <>
           <Button variant="secondary" onClick={onClose}>
             取消
           </Button>
-          <Button onClick={handleSave}>儲存</Button>
+          <Button icon={Stamp} onClick={handleSave}>
+            記入簿
+          </Button>
         </>
       }
     >
-      <div className="space-y-4">
-        <div className="flex items-center gap-2 rounded-xl bg-slate-50/70 px-3 py-2 text-sm dark:bg-slate-900/40">
-          <span className="text-slate-500 dark:text-slate-400">今日蓋章</span>
+      {/* 出席登記卡（簿冊封套語言）：kicker + serif 姓名 + 蓋章狀態，右上斜貼裝飾章 */}
+      <header className="relative -mx-5 -mt-5 mb-4 overflow-hidden border-b border-slate-200/80 px-5 pb-4 pt-5 dark:border-slate-700/60 sm:-mx-6 sm:-mt-6 sm:px-6">
+        {/* 右上斜貼狀態章（純裝飾，呼應 masthead 戳印；手機收起） */}
+        {status && tone && (
+          <span
+            aria-hidden
+            className={cx(
+              'pointer-events-none absolute right-12 top-4 hidden -rotate-[8deg] select-none items-center gap-1 rounded-lg border-2 border-dashed px-2.5 py-1 font-serif text-[11px] font-bold uppercase tracking-[0.18em] ring-inset sm:inline-flex',
+              tone.soft,
+              tone.ring,
+            )}
+          >
+            <Check size={11} strokeWidth={3} />
+            {STATUS_LABEL[status]}
+          </span>
+        )}
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.28em] text-accent/70">
+              <ClipboardList size={12} />
+              出席登記卡 · Entry
+            </p>
+            <h3 className="mt-1 truncate font-serif text-[22px] font-semibold leading-tight tracking-tight text-slate-800 dark:text-slate-100">
+              {studentName || '出席細項'}
+            </h3>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="關閉"
+            className="-mr-1.5 -mt-1 shrink-0 rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:hover:bg-slate-700"
+          >
+            <X size={18} />
+          </button>
+        </div>
+        {/* 今日蓋章狀態（與簿頁同一套 StampMark） */}
+        <p className="mt-2 flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+          <span className="uppercase tracking-wide">今日蓋章</span>
           {status ? (
             <span className="inline-flex items-center gap-1.5">
               <StampMark status={status} />
-              <span className={cx('font-medium', STAMP_TONE[status].ink)}>
+              <span className={cx('font-semibold', tone?.ink)}>
                 {STATUS_LABEL[status]}
               </span>
             </span>
           ) : (
             <Badge tone="slate">未標記</Badge>
           )}
-        </div>
+        </p>
+      </header>
 
+      <div className="space-y-4">
         {status === 'absent' && (
-          <Field label="缺席類別" hint="病假 / 事假 / 公假視為准假，唔計入無故缺席">
-            <Select
-              value={absenceKind ?? ''}
-              onChange={(e) =>
-                setAbsenceKind((e.target.value || undefined) as AttendanceNote['absenceKind'])
-              }
-            >
-              <option value="">— 未分類 —</option>
-              {ABSENCE_KIND_OPTIONS.map((o) => (
-                <option key={o.value} value={o.value}>
-                  {o.label}
-                </option>
-              ))}
-            </Select>
-          </Field>
+          <section className="space-y-2">
+            <SectionCap icon={Ban}>缺席登記</SectionCap>
+            <Field label="缺席類別" hint="病假 / 事假 / 公假視為准假，唔計入無故缺席">
+              <Select
+                value={absenceKind ?? ''}
+                onChange={(e) =>
+                  setAbsenceKind((e.target.value || undefined) as AttendanceNote['absenceKind'])
+                }
+              >
+                <option value="">— 未分類 —</option>
+                {ABSENCE_KIND_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+          </section>
         )}
 
         {status === 'late' && (
-          <Field label="遲到分鐘" hint="選填，用嚟統計遲到嚴重程度">
-            <Input
-              type="number"
-              min={0}
-              value={lateMinutes}
-              onChange={(e) => setLateMinutes(e.target.value.replace(/\D/g, ''))}
-              placeholder="例如 10"
-            />
-          </Field>
+          <section className="space-y-2">
+            <SectionCap icon={AlarmClock}>遲到登記</SectionCap>
+            <Field label="遲到分鐘" hint="選填，用嚟統計遲到嚴重程度">
+              <Input
+                type="number"
+                min={0}
+                value={lateMinutes}
+                onChange={(e) => setLateMinutes(e.target.value.replace(/\D/g, ''))}
+                placeholder="例如 10"
+                className="tabular-nums"
+              />
+            </Field>
+          </section>
         )}
 
-        <label className="flex cursor-pointer items-center gap-2 text-sm text-slate-700 dark:text-slate-200">
-          <input
-            type="checkbox"
-            checked={earlyLeave}
-            onChange={(e) => setEarlyLeave(e.target.checked)}
-            className="h-4 w-4 rounded border-slate-300 text-accent focus:ring-accent/40 dark:border-slate-600 dark:bg-slate-700"
-          />
-          當日提早離校（早退）
-        </label>
+        {/* 通用細項：早退 + 備註，用虛線同上面狀態分區隔開（簿冊分隔感） */}
+        <section
+          className={cx(
+            'space-y-3',
+            hasStatusField &&
+              'border-t border-dashed border-slate-200/80 pt-4 dark:border-slate-700/60',
+          )}
+        >
+          <SectionCap icon={NotebookPen}>簿記備註</SectionCap>
+          <label className="flex cursor-pointer items-center gap-2.5 rounded-xl border border-slate-200/80 bg-slate-50/60 px-3 py-2.5 text-sm text-slate-700 transition hover:border-slate-300 dark:border-slate-700/60 dark:bg-slate-900/30 dark:text-slate-200 dark:hover:border-slate-600">
+            <input
+              type="checkbox"
+              checked={earlyLeave}
+              onChange={(e) => setEarlyLeave(e.target.checked)}
+              className="h-4 w-4 rounded border-slate-300 text-accent focus:ring-accent/40 dark:border-slate-600 dark:bg-slate-700"
+            />
+            當日提早離校（早退）
+          </label>
 
-        <Field label="備註 / 原因">
-          <Textarea
-            value={reason}
-            onChange={(e) => setReason(e.target.value)}
-            placeholder="例如：家長已致電請假、覆診、遲交假紙…"
-          />
-        </Field>
+          <Field label="備註 / 原因">
+            <Textarea
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              placeholder="例如：家長已致電請假、覆診、遲交假紙…"
+            />
+          </Field>
+        </section>
       </div>
     </Modal>
   )
@@ -1536,34 +1596,75 @@ function StudentSummaryModal({
     : []
 
   return (
-    <Modal open={open} onClose={onClose} title={`出席摘要 — ${studentName}`} size="md">
+    <Modal open={open} onClose={onClose} size="md">
+      {/* 學生簿頁封面：kicker + serif 姓名 + 出席率印章；右上斜貼裝飾戳 */}
+      <header className="relative -mx-5 -mt-5 mb-5 overflow-hidden border-b border-slate-200/80 px-5 pb-4 pt-5 dark:border-slate-700/60 sm:-mx-6 sm:-mt-6 sm:px-6">
+        {/* 右上「個人簿頁」斜戳（純裝飾，呼應 masthead；手機收起） */}
+        <span
+          aria-hidden
+          className="pointer-events-none absolute right-12 top-4 hidden -rotate-[8deg] select-none items-center gap-1 rounded-lg border-2 border-dashed border-accent/20 px-2.5 py-1 font-serif text-[11px] font-bold uppercase tracking-[0.18em] text-accent/25 dark:border-accent/25 dark:text-accent/25 sm:inline-flex"
+        >
+          <Stamp size={11} />
+          簿頁
+        </span>
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.28em] text-accent/70">
+              <NotebookPen size={12} />
+              出席摘要 · Summary
+            </p>
+            <h3 className="mt-1 truncate font-serif text-[22px] font-semibold leading-tight tracking-tight text-slate-800 dark:text-slate-100">
+              {studentName || '出席摘要'}
+            </h3>
+            <p className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-slate-400 dark:text-slate-500">
+              {studentNo && <span>學號 {studentNo}</span>}
+              {hasMarks && t && (
+                <>
+                  {studentNo && (
+                    <span aria-hidden className="text-slate-300 dark:text-slate-600">
+                      ·
+                    </span>
+                  )}
+                  <Badge tone={rateTone(t.rate)} className="tabular-nums">
+                    出席率 {t.rate}%
+                  </Badge>
+                  <span className="tabular-nums">
+                    近 {rangeDays} 日 · 已點 {t.marked} 堂
+                  </span>
+                </>
+              )}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="關閉"
+            className="-mr-1.5 -mt-1 shrink-0 rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:hover:bg-slate-700"
+          >
+            <X size={18} />
+          </button>
+        </div>
+      </header>
+
       {!hasMarks || !t || !ns || !data ? (
-        <p className="py-4 text-center text-sm text-slate-400 dark:text-slate-500">
-          呢位學生喺近 {rangeDays} 日內未有點名記錄。
-        </p>
+        <div className="flex flex-col items-center gap-2 py-6 text-center">
+          <span className="flex h-11 w-11 items-center justify-center rounded-full bg-slate-100 text-slate-400 dark:bg-slate-700/60 dark:text-slate-500">
+            <NotebookPen size={20} strokeWidth={1.75} />
+          </span>
+          <p className="text-sm text-slate-400 dark:text-slate-500">
+            呢位學生喺近 {rangeDays} 日內未有點名記錄。
+          </p>
+        </div>
       ) : (
         <div className="space-y-5">
-          {/* 概要 */}
-          <div className="flex flex-wrap items-center gap-2 text-sm">
-            {studentNo && (
-              <span className="text-xs text-slate-400">學號 {studentNo}</span>
-            )}
-            <Badge tone={rateTone(t.rate)} className="tabular-nums">
-              出席率 {t.rate}%
-            </Badge>
-            <span className="text-xs text-slate-400">
-              近 {rangeDays} 日 · 已點 {t.marked} 堂
-            </span>
-          </div>
-
-          {/* 三態 + 出席率進度 */}
+          {/* 三態結算（hairline grid · serif 大數字，呼應簿冊封面）+ 出席率進度 */}
           <div>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-3 gap-px overflow-hidden rounded-2xl bg-slate-200/70 ring-1 ring-slate-200/80 dark:bg-slate-700/50 dark:ring-slate-700/60">
               <MiniStat label="出席" value={t.present} tone="present" />
               <MiniStat label="遲到" value={t.late} tone="late" />
               <MiniStat label="缺席" value={t.absent} tone="absent" />
             </div>
-            <div className="mt-2">
+            <div className="mt-2.5">
               <ProgressBar value={t.rate ?? 0} tone={rateBarTone(t.rate)} size="sm" />
             </div>
           </div>
@@ -1638,18 +1739,18 @@ function StudentSummaryModal({
             </div>
           )}
 
-          {/* 逐堂時間軸 */}
+          {/* 逐堂時間軸（點名簿橫條：逐格蓋章 glyph，serif 對齊簿冊語言） */}
           <div>
             <SectionTitle icon={CalendarDays} description="由舊到新，逐個有點名日">
               出席時間軸
             </SectionTitle>
-            <div className="flex flex-wrap gap-1">
+            <div className="flex flex-wrap gap-1 rounded-2xl border border-slate-200/80 bg-slate-50/50 p-2.5 dark:border-slate-700/60 dark:bg-slate-900/30">
               {data.timeline.map((d) => (
                 <span
                   key={d.dateKey}
                   title={`${longDateLabel(d.dateKey)}：${STATUS_LABEL[d.status]}`}
                   className={cx(
-                    'flex h-7 w-7 items-center justify-center rounded-md text-[11px] font-semibold',
+                    'flex h-7 w-7 items-center justify-center rounded-md font-serif text-[13px] font-bold leading-none',
                     STATUS_STYLE[d.status].cell,
                   )}
                 >
@@ -1673,15 +1774,16 @@ function MiniStat({
   value: number
   tone: AttendanceStatus
 }) {
+  // 蓋章戳印格：扁平填色填滿 hairline 格縫，serif 大數字呼應點名簿封面結算帶。
   return (
-    <div
-      className={cx(
-        'rounded-lg px-3 py-2 text-center',
-        STATUS_STYLE[tone].cell,
-      )}
-    >
-      <div className="text-lg font-bold tabular-nums">{value}</div>
-      <div className="text-[11px] font-medium opacity-80">{label}</div>
+    <div className={cx('px-3 py-2.5 text-center', STATUS_STYLE[tone].cell)}>
+      <div className="inline-flex items-center justify-center gap-1.5">
+        <StampMark status={tone} className="h-5 w-5 text-[11px]" />
+        <span className="font-serif text-[22px] font-semibold leading-none tabular-nums slashed-zero">
+          {value}
+        </span>
+      </div>
+      <div className="mt-1 text-[11px] font-medium opacity-80">{label}</div>
     </div>
   )
 }
@@ -1695,15 +1797,28 @@ function FactCell({
   value: string
   tone: 'slate' | 'rose'
 }) {
+  // 簿記摘要格：uppercase kicker 標籤 + serif 數值；rose 時左脊提色（呼應簿頁狀態軌）。
   return (
-    <div className="rounded-lg border border-slate-200 bg-white px-3 py-2 dark:border-slate-700 dark:bg-slate-800">
-      <div className="text-[11px] text-slate-400">{label}</div>
+    <div
+      className={cx(
+        'relative overflow-hidden rounded-xl border bg-white px-3 py-2.5 dark:bg-slate-800',
+        tone === 'rose'
+          ? 'border-rose-200/70 dark:border-rose-500/25'
+          : 'border-slate-200/80 dark:border-slate-700/60',
+      )}
+    >
+      {tone === 'rose' && (
+        <span aria-hidden className="absolute inset-y-0 left-0 w-1 bg-rose-400/80 dark:bg-rose-500/60" />
+      )}
+      <div className="text-[11px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
+        {label}
+      </div>
       <div
         className={cx(
-          'mt-0.5 text-sm font-semibold tabular-nums',
+          'mt-0.5 font-serif text-base font-semibold tabular-nums slashed-zero',
           tone === 'rose'
             ? 'text-rose-600 dark:text-rose-300'
-            : 'text-slate-700 dark:text-slate-200',
+            : 'text-slate-800 dark:text-slate-100',
         )}
       >
         {value}

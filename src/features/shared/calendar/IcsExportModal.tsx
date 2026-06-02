@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
-import { CalendarHeart, Download, Hourglass } from 'lucide-react'
+import { CalendarArrowDown, CalendarHeart, Download, Hourglass, X } from 'lucide-react'
 import type { CalendarEvent, CalendarCategory, Countdown } from '../../../data/types'
-import { Button, Modal, cx } from '../../../ui'
+import { Button, IconButton, Modal, cx } from '../../../ui'
 import { useToast } from '../../../context/ToastContext'
 import { downloadText } from '../../learning/journal/util'
 import { buildICS, exportStamp, eventsToVevents, countdownsToVevents } from './ics'
@@ -57,10 +57,10 @@ function CheckRow({
         <Icon size={18} />
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block text-sm font-semibold text-slate-800 dark:text-slate-100">
+        <span className="block font-serif text-sm font-semibold text-slate-800 dark:text-slate-100">
           {title}
         </span>
-        <span className="block text-xs text-slate-500 dark:text-slate-400">
+        <span className="block text-xs tabular-nums text-slate-500 dark:text-slate-400">
           {count} 項
         </span>
       </span>
@@ -146,10 +146,33 @@ export default function IcsExportModal({
   }
 
   return (
-    <Modal open onClose={onClose} title="匯出行事曆（.ics）" size="md">
+    // 唔傳 title → 自管「週記」頁眉，令彈窗用返主畫面 serif + kicker + 雙線語言
+    <Modal open onClose={onClose} size="md">
+      {/* ───────── 週記頁眉：kicker + serif 標題 + 雙線封面分隔 ───────── */}
+      <header className="-mx-5 -mt-5 mb-5 px-5 pt-5 sm:-mx-6 sm:-mt-6 sm:px-6 sm:pt-6">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.3em] text-accent/70">
+              <CalendarArrowDown size={12} className="shrink-0" />
+              帶走一份 · Export
+            </p>
+            <h2 className="mt-1 font-serif text-[22px] font-semibold leading-tight tracking-tight text-slate-800 dark:text-slate-100 sm:text-[26px]">
+              匯出行事曆
+            </h2>
+          </div>
+          <IconButton label="關閉" onClick={onClose} className="-mr-1 shrink-0">
+            <X size={18} />
+          </IconButton>
+        </div>
+        <div className="mt-4 space-y-1" aria-hidden>
+          <span className="block h-px bg-slate-200/90 dark:bg-slate-700/70" />
+          <span className="block h-px bg-slate-200/60 dark:bg-slate-700/40" />
+        </div>
+      </header>
+
       <div className="space-y-4">
-        <p className="text-sm text-slate-500 dark:text-slate-400">
-          下載標準 iCalendar 檔，匯入 Apple / Google / Outlook
+        <p className="text-sm leading-relaxed text-slate-500 dark:text-slate-400">
+          下載標準 iCalendar（.ics）檔，匯入 Apple / Google / Outlook
           行事曆。只匯出顯示中嘅行事曆，重複事件會展開成逐次（涵蓋過去半年至未來兩年）。
         </p>
 
@@ -170,11 +193,20 @@ export default function IcsExportModal({
           />
         </div>
 
-        <div className="flex items-center justify-between gap-2 pt-1">
-          <span className="text-xs text-slate-500 dark:text-slate-400">
-            合共 {total} 項
-          </span>
-          <div className="flex gap-2">
+        {/* 匯出張單頁尾：總數 + 涵蓋範圍 + 下載 */}
+        <div className="space-y-3 border-t border-slate-200/70 pt-4 dark:border-slate-700/60">
+          <div className="flex items-baseline justify-between gap-2">
+            <span className="text-[11px] font-medium uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">
+              將匯出
+            </span>
+            <span className="font-serif text-sm text-slate-600 dark:text-slate-300">
+              <span className="text-lg font-semibold tabular-nums text-slate-800 dark:text-slate-100">{total}</span> 項
+            </span>
+          </div>
+          <p className="text-[11px] tabular-nums text-slate-400 dark:text-slate-500">
+            涵蓋 {rangeStart} → {rangeEnd}
+          </p>
+          <div className="flex justify-end gap-2">
             <Button type="button" variant="ghost" onClick={onClose}>
               取消
             </Button>

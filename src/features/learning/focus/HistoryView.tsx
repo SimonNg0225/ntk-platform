@@ -9,6 +9,7 @@ import {
   Coffee,
   Filter,
   Calendar,
+  History,
 } from 'lucide-react'
 import {
   Input,
@@ -142,17 +143,37 @@ export default function HistoryView({
   const dayTotal = (arr: FocusLog[]) =>
     arr.filter((l) => l.kind === 'focus' && l.completed).reduce((s, l) => s + l.actualMin, 0)
 
+  const sortLabel: Record<SortKey, string> = {
+    'time-desc': '最新優先',
+    'time-asc': '最舊優先',
+    'dur-desc': '時長最長',
+    'rating-desc': '評分最高',
+  }
+
   return (
-    <div className="space-y-4">
-      {/* 工具列 */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-        <Input
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          icon={Search}
-          placeholder="搜尋任務、標籤、筆記…"
-          className="flex-1"
-        />
+    <div className="mx-auto max-w-2xl space-y-6">
+      {/* ── 安靜引：kicker + serif 標題，呼應主畫面扉頁 ── */}
+      <header className="text-center">
+        <p className="flex items-center justify-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.22em] text-accent/70">
+          <History size={12} className="shrink-0" />
+          專注日誌 · Log
+        </p>
+        <h2 className="mt-2 font-serif text-[22px] font-semibold leading-none tracking-tight text-slate-800 dark:text-slate-100 sm:text-[26px]">
+          每一節，都記低咗
+        </h2>
+      </header>
+
+      {/* ── 搜尋欄：似計時頁嘅安靜捕捉欄（中性底、無重邊） ── */}
+      <Input
+        value={q}
+        onChange={(e) => setQ(e.target.value)}
+        icon={Search}
+        placeholder="搜尋任務、標籤、筆記…"
+        className="rounded-xl border-slate-200/80 bg-slate-50/60 shadow-none focus:bg-white dark:border-slate-700/60 dark:bg-slate-800/50 dark:focus:bg-slate-800"
+      />
+
+      {/* ── 篩選 / 排序：低調一行，唔搶日誌風頭 ── */}
+      <div className="flex flex-wrap items-center justify-between gap-2.5">
         <div className="flex flex-wrap items-center gap-2">
           <SegmentedControl<KindFilter>
             size="sm"
@@ -167,7 +188,7 @@ export default function HistoryView({
           <Select
             value={projectFilter}
             onChange={(e) => setProjectFilter(e.target.value)}
-            className="w-32"
+            className="w-32 rounded-xl border-slate-200/80 bg-slate-50/60 shadow-none dark:border-slate-700/60 dark:bg-slate-800/50"
             aria-label="專案篩選"
           >
             <option value="all">全部專案</option>
@@ -178,27 +199,28 @@ export default function HistoryView({
               </option>
             ))}
           </Select>
-          <Menu
-            align="end"
-            trigger={
-              <span className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
-                <Filter size={14} />
-                排序
-              </span>
-            }
-            items={[
-              { id: 'time-desc', label: '最新優先', onSelect: () => setSort('time-desc') },
-              { id: 'time-asc', label: '最舊優先', onSelect: () => setSort('time-asc') },
-              { id: 'dur-desc', label: '時長最長', onSelect: () => setSort('dur-desc') },
-              { id: 'rating-desc', label: '評分最高', onSelect: () => setSort('rating-desc') },
-            ]}
-          />
         </div>
+        <Menu
+          align="end"
+          trigger={
+            <span className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200">
+              <Filter size={13} />
+              {sortLabel[sort]}
+            </span>
+          }
+          items={[
+            { id: 'time-desc', label: '最新優先', onSelect: () => setSort('time-desc') },
+            { id: 'time-asc', label: '最舊優先', onSelect: () => setSort('time-asc') },
+            { id: 'dur-desc', label: '時長最長', onSelect: () => setSort('dur-desc') },
+            { id: 'rating-desc', label: '評分最高', onSelect: () => setSort('rating-desc') },
+          ]}
+        />
       </div>
 
-      <div className="flex items-center justify-between">
-        <p aria-live="polite" className="text-xs text-slate-400">
-          共 <span className="font-medium tabular-nums text-slate-600 dark:text-slate-300">{filtered.length}</span> 筆紀錄
+      {/* ── 計數 + 動作：纖細 hairline 分隔，似日誌頁眉 ── */}
+      <div className="flex items-center justify-between border-b border-slate-200/70 pb-3 dark:border-slate-700/50">
+        <p aria-live="polite" className="text-[11px] font-medium uppercase tracking-[0.14em] text-slate-400 dark:text-slate-500">
+          共 <span className="font-serif text-sm tabular-nums text-slate-600 dark:text-slate-300">{filtered.length}</span> 節
         </p>
         <div className="flex gap-2">
           <Button size="sm" variant="secondary" icon={Download} onClick={exportCsv} disabled={!filtered.length}>
@@ -218,16 +240,18 @@ export default function HistoryView({
           hint="調整篩選，或喺計時器完成一節專注。"
         />
       ) : grouped ? (
-        <div className="space-y-5">
+        <div className="space-y-6">
           {grouped.map(([key, arr]) => (
             <div key={key}>
-              <div className="mb-2.5 flex items-center gap-2.5">
-                <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+              <div className="mb-3 flex items-baseline gap-3">
+                <h3 className="font-serif text-lg font-semibold tracking-tight text-slate-700 dark:text-slate-200">
                   {relativeDay(key)}
                 </h3>
-                <span className="h-px flex-1 bg-slate-200/70 dark:bg-slate-700/50" />
+                <span className="h-px flex-1 translate-y-[-3px] bg-slate-200/70 dark:bg-slate-700/50" />
                 {dayTotal(arr) > 0 && (
-                  <Badge tone="accent">{fmtDuration(dayTotal(arr))}</Badge>
+                  <span className="font-serif text-sm italic tabular-nums text-slate-400 dark:text-slate-500">
+                    {fmtDuration(dayTotal(arr))}
+                  </span>
                 )}
               </div>
               <div className="space-y-2">
@@ -284,15 +308,25 @@ function LogRow({
 }) {
   const meta = KIND_BADGE[log.kind]
   const pal = paletteOf(projColor)
+  const isFocus = log.kind === 'focus'
   return (
     <div
       className={cx(
-        'group flex items-start gap-3 rounded-2xl border border-slate-200/80 bg-white p-3.5 transition duration-200 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md dark:border-slate-700/60 dark:bg-slate-800 dark:hover:border-slate-600',
+        'group relative flex items-start gap-3 overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-3.5 pl-4 transition duration-200 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md dark:border-slate-700/60 dark:bg-slate-800 dark:hover:border-slate-600',
         !log.completed && 'opacity-70',
       )}
     >
-      <span className={cx('mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl', log.kind === 'focus' ? pal.soft : 'bg-slate-100 dark:bg-slate-700')}>
-        <meta.icon size={16} className={log.kind === 'focus' ? pal.text : 'text-slate-400'} />
+      {/* 色脊：focus 用專案色，休息用中性，靜靜標示節別 */}
+      <span
+        aria-hidden="true"
+        className={cx(
+          'absolute inset-y-0 left-0 w-1',
+          isFocus ? pal.dot : 'bg-slate-200 dark:bg-slate-600',
+          !log.completed && 'opacity-40',
+        )}
+      />
+      <span className={cx('mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl', isFocus ? pal.soft : 'bg-slate-100 dark:bg-slate-700')}>
+        <meta.icon size={16} className={isFocus ? pal.text : 'text-slate-400'} />
       </span>
 
       <div className="min-w-0 flex-1">
@@ -312,15 +346,17 @@ function LogRow({
           <span className="tabular-nums">
             {fmtTime(log.startedAt)}–{fmtTime(log.endedAt)}
           </span>
-          <span>·</span>
-          <span className="tabular-nums font-medium text-slate-500 dark:text-slate-400">
+          <span aria-hidden="true">·</span>
+          <span className="font-serif text-xs tabular-nums font-medium text-slate-500 dark:text-slate-400">
             {fmtDuration(log.actualMin)}
           </span>
           {log.actualMin !== log.plannedMin && (
             <span className="tabular-nums">（計劃 {log.plannedMin}分）</span>
           )}
           {typeof log.rating === 'number' && (
-            <span className="text-amber-500">{'★'.repeat(log.rating)}</span>
+            <span className="text-amber-500" aria-label={`評分 ${log.rating} 分`}>
+              {'★'.repeat(log.rating)}
+            </span>
           )}
           {typeof log.interruptions === 'number' && log.interruptions > 0 && (
             <span>· 分心 {log.interruptions}</span>
@@ -391,7 +427,7 @@ function EditModal({
     <Modal
       open
       onClose={onClose}
-      title="編輯紀錄"
+      title="修訂呢一節"
       footer={
         <>
           <Button variant="ghost" onClick={onClose}>
@@ -401,7 +437,7 @@ function EditModal({
         </>
       }
     >
-      <div className="space-y-3">
+      <div className="space-y-4">
         <Field label="任務">
           <Input value={label} onChange={(e) => setLabel(e.target.value)} placeholder="專注內容" />
         </Field>
@@ -418,7 +454,10 @@ function EditModal({
         <Field label="標籤（空格分隔）">
           <Input value={tags} onChange={(e) => setTags(e.target.value)} placeholder="閱讀 數學" />
         </Field>
-        <Field label="專注度">
+        <div>
+          <p className="mb-1.5 text-[11px] font-medium uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+            專注度
+          </p>
           <div className="flex gap-1.5">
             {[1, 2, 3, 4, 5].map((n) => (
               <button
@@ -428,17 +467,19 @@ function EditModal({
                 aria-pressed={rating === n}
                 onClick={() => setRating(rating === n ? 0 : n)}
                 className={cx(
-                  'flex h-9 flex-1 items-center justify-center rounded-lg text-base transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
-                  rating >= n ? 'bg-accent text-white' : 'bg-slate-100 text-slate-400 dark:bg-slate-700',
+                  'flex h-10 flex-1 items-center justify-center rounded-lg text-lg transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
+                  rating >= n
+                    ? 'bg-accent text-white shadow-sm'
+                    : 'bg-slate-100 text-slate-400 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600',
                 )}
               >
                 <span aria-hidden="true">{rating >= n ? '★' : '☆'}</span>
               </button>
             ))}
           </div>
-        </Field>
-        <Field label="筆記">
-          <Textarea value={note} onChange={(e) => setNote(e.target.value)} rows={2} />
+        </div>
+        <Field label="反思筆記">
+          <Textarea value={note} onChange={(e) => setNote(e.target.value)} rows={2} placeholder="完成咗啲咩？有咩可以改善？" />
         </Field>
       </div>
     </Modal>
@@ -490,36 +531,49 @@ function AddModal({ projects, onClose }: { projects: FocusProject[]; onClose: ()
         </>
       }
     >
-      <div className="space-y-3">
-        <div className="grid grid-cols-2 gap-3">
-          <Field label="日期">
-            <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
-          </Field>
-          <Field label="開始時間">
-            <Input type="time" value={time} onChange={(e) => setTime(e.target.value)} />
+      <div className="space-y-5">
+        {/* 何時 · 幾耐：時間相關集中一組 */}
+        <div className="space-y-3">
+          <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+            何時 · 幾耐
+          </p>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="日期">
+              <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+            </Field>
+            <Field label="開始時間">
+              <Input type="time" value={time} onChange={(e) => setTime(e.target.value)} />
+            </Field>
+          </div>
+          <Field label="時長（分鐘）">
+            <Input
+              type="number"
+              min={1}
+              value={minutes}
+              onChange={(e) => setMinutes(Math.max(1, Number(e.target.value) || 0))}
+            />
           </Field>
         </div>
-        <Field label="時長（分鐘）">
-          <Input
-            type="number"
-            min={1}
-            value={minutes}
-            onChange={(e) => setMinutes(Math.max(1, Number(e.target.value) || 0))}
-          />
-        </Field>
-        <Field label="任務（選填）">
-          <Input value={label} onChange={(e) => setLabel(e.target.value)} placeholder="專注內容" />
-        </Field>
-        <Field label="專案（選填）">
-          <Select value={projectId} onChange={(e) => setProjectId(e.target.value)}>
-            <option value="">無專案</option>
-            {projects.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name}
-              </option>
-            ))}
-          </Select>
-        </Field>
+
+        {/* 做緊咩：歸類資訊另成一組，hairline 分隔 */}
+        <div className="space-y-3 border-t border-slate-200/70 pt-4 dark:border-slate-700/50">
+          <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+            做緊咩
+          </p>
+          <Field label="任務（選填）">
+            <Input value={label} onChange={(e) => setLabel(e.target.value)} placeholder="專注內容" />
+          </Field>
+          <Field label="專案（選填）">
+            <Select value={projectId} onChange={(e) => setProjectId(e.target.value)}>
+              <option value="">無專案</option>
+              {projects.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                </option>
+              ))}
+            </Select>
+          </Field>
+        </div>
       </div>
     </Modal>
   )

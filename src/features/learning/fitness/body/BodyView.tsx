@@ -85,7 +85,7 @@ const TREND_METRICS = [
 
 type TrendMetricId = (typeof TREND_METRICS)[number]['id']
 
-// ───────── 體態 KPI 磚配色（暖色 bento，配合儀表板語言）─────────
+// ───────── 體態 KPI 磚配色（記分牌讀數，配合 Fitness 能量語言）─────────
 type MetricTone = 'sky' | 'amber' | 'emerald' | 'accent'
 const METRIC_TONE: Record<MetricTone, string> = {
   sky: 'bg-sky-50 text-sky-600 dark:bg-sky-500/15 dark:text-sky-300',
@@ -94,9 +94,11 @@ const METRIC_TONE: Record<MetricTone, string> = {
   accent: 'bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent',
 }
 
-// 暖色 bento KPI 磚：tone-coloured icon chip + 大數字 + 趨勢
+// 記分牌 KPI 磚：頻道 EN 微標 + tone-coloured icon chip + 粗大 LED 讀數 + 趨勢。
+// 數字用 serif black tabular（同主畫面記分牌、訓練計分板同一套字）。
 function MetricTile({
   label,
+  en,
   value,
   unit,
   hint,
@@ -105,6 +107,7 @@ function MetricTile({
   delta,
 }: {
   label: string
+  en: string
   value: number | string
   unit?: string
   hint?: string
@@ -113,23 +116,29 @@ function MetricTile({
   delta?: { value: string; dir: 'up' | 'down' | 'flat' }
 }) {
   return (
-    <div className="flex flex-col justify-between rounded-3xl border border-slate-200/80 bg-white p-4 transition duration-200 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md dark:border-slate-700/60 dark:bg-slate-800 dark:hover:border-slate-600">
+    <div className="group relative flex flex-col justify-between overflow-hidden rounded-3xl border border-slate-200/80 bg-white p-4 transition duration-200 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md dark:border-slate-700/60 dark:bg-slate-800 dark:hover:border-slate-600">
+      {/* 頻道 EN 微標 + tone icon chip */}
       <div className="flex items-center justify-between">
-        <span className="text-xs font-medium text-slate-400 dark:text-slate-500">{label}</span>
+        <span className="flex flex-col">
+          <span className="text-xs font-medium text-slate-500 dark:text-slate-400">{label}</span>
+          <span className="font-serif text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-300 dark:text-slate-600">
+            {en}
+          </span>
+        </span>
         <span className={cx('flex h-8 w-8 items-center justify-center rounded-xl', METRIC_TONE[tone])}>
           <Icon size={16} />
         </span>
       </div>
       <div className="mt-3">
         <p className="flex items-baseline gap-1">
-          <span className="text-2xl font-bold tabular-nums slashed-zero text-slate-800 dark:text-slate-100">
+          <span className="font-serif text-[2.1rem] font-black leading-none tabular-nums slashed-zero text-slate-800 dark:text-slate-100">
             {value}
           </span>
-          {unit && <span className="text-sm font-medium text-slate-400">{unit}</span>}
+          {unit && <span className="text-sm font-semibold text-slate-400">{unit}</span>}
           {delta && delta.dir !== 'flat' && (
             <span
               className={cx(
-                'ml-auto text-xs font-semibold tabular-nums',
+                'ml-auto inline-flex items-center text-xs font-bold tabular-nums',
                 delta.dir === 'up' ? 'text-emerald-500' : 'text-rose-500',
               )}
             >
@@ -143,25 +152,66 @@ function MetricTile({
   )
 }
 
-// 暖色區塊標題：tone-coloured icon chip + 標題（取代生硬細標）
+// 記分牌區塊標題：tone-coloured icon chip + 標題 +（可選）EN kicker 細描述。
+// 同訓練計分板一套語言：細 uppercase tracking kicker 帶出概念質感。
 function SectionHead({
   icon: Icon,
   children,
+  en,
   right,
 }: {
   icon: LucideIcon
   children: ReactNode
+  en?: string
   right?: ReactNode
 }) {
   return (
     <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-      <h2 className="flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-200">
-        <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
+      <div className="flex items-start gap-2">
+        <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
           <Icon size={15} />
         </span>
-        {children}
-      </h2>
+        <div className="min-w-0">
+          {en && (
+            <p className="font-serif text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-300 dark:text-slate-600">
+              {en}
+            </p>
+          )}
+          <h2 className="flex items-center gap-1.5 text-sm font-semibold text-slate-700 dark:text-slate-200">
+            {children}
+          </h2>
+        </div>
+      </div>
       {right}
+    </div>
+  )
+}
+
+// ───────── 彈窗概念帶：記分牌 kicker + 用途描述 ─────────
+// 喺彈窗 body 頂部加一條呼應概念嘅 banner（唔重複 Modal title，保留 a11y
+// 嘅 aria-labelledby）。icon chip + serif uppercase kicker + 一句用途，
+// 同主畫面「現正出場」面板 / 訓練計分板同一套能量語言。
+function ModalHead({
+  icon: Icon,
+  kicker,
+  desc,
+}: {
+  icon: LucideIcon
+  kicker: string
+  desc: string
+}) {
+  return (
+    <div className="mb-4 flex items-center gap-3 rounded-2xl border border-accent/15 bg-accent-soft/60 px-3.5 py-3 dark:border-accent/25 dark:bg-accent/10">
+      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent text-white shadow-sm shadow-accent/30">
+        <Icon size={18} />
+      </span>
+      <div className="min-w-0">
+        <p className="flex items-center gap-1.5 font-serif text-[10px] font-semibold uppercase tracking-[0.2em] text-accent-strong dark:text-accent">
+          <span className="h-1 w-1 rounded-full bg-accent" aria-hidden="true" />
+          {kicker}
+        </p>
+        <p className="mt-0.5 text-xs text-slate-600 dark:text-slate-300">{desc}</p>
+      </div>
     </div>
   )
 }
@@ -244,11 +294,14 @@ export default function BodyView() {
 
   return (
     <div className="space-y-5">
-      {/* ── 標題列 ── */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      {/* ── 標題列（記分牌 kicker，呼應訓練計分板）── */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h2 className="text-base font-semibold tracking-tight text-slate-800 dark:text-slate-100">
-            體態數據
+          <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-accent">
+            <Activity size={13} /> 體態計分板
+          </p>
+          <h2 className="mt-1 text-xl font-bold tracking-tight text-slate-800 dark:text-slate-100">
+            身體組成 · 趨勢
           </h2>
           <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
             記低 InBody 式身體組成，睇增肌減脂趨勢。
@@ -302,6 +355,7 @@ export default function BodyView() {
           <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
             <MetricTile
               label="體重"
+              en="WEIGHT"
               icon={Scale}
               tone="sky"
               value={weight ? round(weight.latest, 1) : '—'}
@@ -315,6 +369,7 @@ export default function BodyView() {
             />
             <MetricTile
               label="體脂率"
+              en="BODY FAT"
               icon={Percent}
               tone="amber"
               value={fat ? round(fat.latest, 1) : '—'}
@@ -328,6 +383,7 @@ export default function BodyView() {
             />
             <MetricTile
               label="骨骼肌"
+              en="MUSCLE"
               icon={Dumbbell}
               tone="emerald"
               value={muscle ? round(muscle.latest, 1) : '—'}
@@ -341,6 +397,7 @@ export default function BodyView() {
             />
             <MetricTile
               label="BMI"
+              en="INDEX"
               icon={Gauge}
               tone="accent"
               value={bmiNow ?? '—'}
@@ -385,6 +442,7 @@ export default function BodyView() {
           <Card padded>
             <SectionHead
               icon={Activity}
+              en="TREND"
               right={
                 <SegmentedControl<`${RangeDays}`>
                   size="sm"
@@ -441,6 +499,7 @@ export default function BodyView() {
           <Card padded>
             <SectionHead
               icon={Flame}
+              en="RECOMP"
               right={
                 <Badge tone={compBadge.tone}>
                   {compBadge.emoji} 近 {range} 日
@@ -498,7 +557,7 @@ export default function BodyView() {
 
           {/* ── 歷史列表 ── */}
           <Card padded>
-            <SectionHead icon={PencilLine}>
+            <SectionHead icon={PencilLine} en="LOG">
               歷史記錄
               <span className="text-xs font-normal text-slate-400">（{history.length}）</span>
             </SectionHead>
@@ -628,6 +687,7 @@ function GoalCard({
     <Card padded>
       <SectionHead
         icon={Target}
+        en="GOAL"
         right={
           reached ? (
             <Badge tone="green">
@@ -642,16 +702,28 @@ function GoalCard({
         目標體重進度
       </SectionHead>
 
-      {/* 起點 → 現在 → 目標 */}
-      <div className="mb-2 flex items-end justify-between gap-2 text-xs">
-        <span className="text-slate-500 dark:text-slate-400">
-          起點 {isNum(startKg) ? `${round(startKg, 1)}kg` : '—'}
+      {/* 起點 → 現在 → 目標（記分牌讀數：現在 = 粗大 serif LED 大字）*/}
+      <div className="mb-3 flex items-end justify-between gap-2">
+        <span className="flex flex-col text-xs leading-tight text-slate-500 dark:text-slate-400">
+          <span className="font-serif text-[9px] font-semibold uppercase tracking-[0.18em] text-slate-300 dark:text-slate-600">
+            起點
+          </span>
+          <span className="tabular-nums">{isNum(startKg) ? `${round(startKg, 1)}kg` : '—'}</span>
         </span>
-        <span className="text-base font-bold tabular-nums text-slate-800 dark:text-slate-100">
-          {isNum(currentKg) ? `${round(currentKg, 1)}kg` : '—'}
+        <span className="flex flex-col items-center leading-none">
+          <span className="font-serif text-[9px] font-semibold uppercase tracking-[0.18em] text-accent">
+            NOW
+          </span>
+          <span className="mt-0.5 font-serif text-2xl font-black tabular-nums slashed-zero text-slate-800 dark:text-slate-100">
+            {isNum(currentKg) ? round(currentKg, 1) : '—'}
+            {isNum(currentKg) && <span className="ml-0.5 text-sm font-semibold text-slate-400">kg</span>}
+          </span>
         </span>
-        <span className="text-slate-500 dark:text-slate-400">
-          目標 {round(targetKg, 1)}kg
+        <span className="flex flex-col items-end text-xs leading-tight text-slate-500 dark:text-slate-400">
+          <span className="font-serif text-[9px] font-semibold uppercase tracking-[0.18em] text-slate-300 dark:text-slate-600">
+            目標
+          </span>
+          <span className="tabular-nums">{round(targetKg, 1)}kg</span>
         </span>
       </div>
 
@@ -720,7 +792,7 @@ function DeltaTile({
         <I size={13} className="text-slate-400" />
         {label}
       </p>
-      <p className={cx('mt-1 text-xl font-bold tabular-nums', color)}>
+      <p className={cx('mt-1 font-serif text-2xl font-black tabular-nums slashed-zero', color)}>
         {fmtDelta(delta, ' kg')}
       </p>
     </div>
@@ -740,39 +812,56 @@ function HistoryRow({
 }) {
   const b = bmi(row.weightKg, heightCm)
   const fat = fatMassKg(row.weightKg, row.bodyFatPct)
-  const cells: { v: string; muted?: boolean }[] = [
-    { v: isNum(row.weightKg) ? `${round(row.weightKg, 1)} kg` : '—', muted: !isNum(row.weightKg) },
-    { v: isNum(row.bodyFatPct) ? `${round(row.bodyFatPct, 1)}%` : '—', muted: !isNum(row.bodyFatPct) },
+  // 各指標跟返 KPI 頻道色（體重 sky／體脂 amber／肌 emerald），令 log 行呼應記分牌。
+  const cells: { v: string; tone: string; muted?: boolean }[] = [
+    {
+      v: isNum(row.weightKg) ? `${round(row.weightKg, 1)} kg` : '—',
+      tone: 'text-sky-600 dark:text-sky-300',
+      muted: !isNum(row.weightKg),
+    },
+    {
+      v: isNum(row.bodyFatPct) ? `${round(row.bodyFatPct, 1)}%` : '—',
+      tone: 'text-amber-600 dark:text-amber-300',
+      muted: !isNum(row.bodyFatPct),
+    },
     {
       v: isNum(row.skeletalMuscleKg) ? `肌 ${round(row.skeletalMuscleKg, 1)}` : '—',
+      tone: 'text-emerald-600 dark:text-emerald-300',
       muted: !isNum(row.skeletalMuscleKg),
     },
   ]
+  // 日期拆「月/日」做記分牌 lineup token（serif tabular）。
+  const [, mm, dd] = row.date.split('-')
   return (
     <li className="group -mx-2 flex items-center justify-between gap-3 rounded-xl px-2 py-2.5 transition hover:bg-slate-50 dark:hover:bg-slate-800/50">
-      <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-slate-700 dark:text-slate-200">
-            {fmtDate(row.date)}
+      <div className="flex min-w-0 flex-1 items-center gap-3">
+        {/* 記分牌日期 token */}
+        <span className="flex h-10 w-10 shrink-0 flex-col items-center justify-center rounded-xl border border-slate-200/80 bg-slate-50 font-serif leading-none tabular-nums dark:border-slate-700/60 dark:bg-slate-800/60">
+          <span className="text-sm font-black text-slate-700 dark:text-slate-200">{dd}</span>
+          <span className="mt-0.5 text-[9px] font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
+            /{mm}
           </span>
-          {b !== null && (
-            <Badge tone="slate">BMI {b}</Badge>
-          )}
-        </div>
-        <div className="mt-0.5 flex flex-wrap gap-x-3 gap-y-0.5 text-xs tabular-nums">
-          {cells.map((c, i) => (
-            <span
-              key={i}
-              className={cx(
-                c.muted ? 'text-slate-400 dark:text-slate-500' : 'text-slate-500 dark:text-slate-400',
-              )}
-            >
-              {c.v}
+        </span>
+        <div className="min-w-0">
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium text-slate-700 dark:text-slate-200">
+              {fmtDate(row.date)}
             </span>
-          ))}
-          {fat !== null && (
-            <span className="text-slate-400 dark:text-slate-500">脂 {fat} kg</span>
-          )}
+            {b !== null && <Badge tone="slate">BMI {b}</Badge>}
+          </div>
+          <div className="mt-0.5 flex flex-wrap gap-x-2.5 gap-y-0.5 text-xs font-medium tabular-nums">
+            {cells.map((c, i) => (
+              <span
+                key={i}
+                className={cx(c.muted ? 'text-slate-300 dark:text-slate-600' : c.tone)}
+              >
+                {c.v}
+              </span>
+            ))}
+            {fat !== null && (
+              <span className="text-slate-400 dark:text-slate-500">脂 {fat} kg</span>
+            )}
+          </div>
         </div>
       </div>
       <div className="flex shrink-0 items-center">
@@ -885,14 +974,16 @@ function RecordModal({
       }
     >
       <div className="space-y-3">
+        <ModalHead
+          icon={isEdit ? PencilLine : Plus}
+          kicker={isEdit ? `EDIT · ${fmtDate(date)}` : 'LOG TODAY'}
+          desc="各欄可留空，淨記你今日有量度嘅指標 —— 一日一條。"
+        />
         {dupeToday && (
           <p className="rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-700 dark:bg-amber-500/10 dark:text-amber-300">
             今日已有記錄，再記會覆寫（一日一條）。
           </p>
         )}
-        <p className="text-xs text-slate-400 dark:text-slate-500">
-          日期：{fmtDate(date)} · 各欄可留空（淨記你今日有量度嘅指標）。
-        </p>
         <div className="grid grid-cols-2 gap-3">
           <Field label="體重 (kg)">
             <Input
@@ -996,23 +1087,30 @@ function HeightModal({
         </>
       }
     >
-      <Field label="身高 (cm)" hint="用嚟計 BMI">
-        <Input
-          type="number"
-          inputMode="decimal"
-          step="0.1"
-          min="0"
-          placeholder="例如 175"
-          value={val}
+      <div className="space-y-4">
+        <ModalHead
           icon={Ruler}
-          invalid={val.trim() !== '' && !valid}
-          autoFocus
-          onChange={(e) => setVal(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') submit()
-          }}
+          kicker="HEIGHT"
+          desc="身高用嚟計 BMI —— 設一次即可，之後每筆記錄自動套用。"
         />
-      </Field>
+        <Field label="身高 (cm)" hint="用嚟計 BMI">
+          <Input
+            type="number"
+            inputMode="decimal"
+            step="0.1"
+            min="0"
+            placeholder="例如 175"
+            value={val}
+            icon={Ruler}
+            invalid={val.trim() !== '' && !valid}
+            autoFocus
+            onChange={(e) => setVal(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') submit()
+            }}
+          />
+        </Field>
+      </div>
     </Modal>
   )
 }
@@ -1085,6 +1183,11 @@ function GoalModal({
       }
     >
       <div className="space-y-3">
+        <ModalHead
+          icon={Target}
+          kicker="GOAL"
+          desc="定低目標體重，記分牌即見進度條同達標預計日。"
+        />
         <Field label="目標體重 (kg)" hint="想去到嘅體重">
           <Input
             type="number"

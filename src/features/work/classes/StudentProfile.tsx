@@ -30,6 +30,7 @@ import {
   IconButton,
   Input,
   Modal,
+  OptionButtons,
   ProgressBar,
   SegmentedControl,
   Textarea,
@@ -291,23 +292,15 @@ export default function StudentProfile({
             </div>
 
             <Field label="性別">
-              <div className="flex gap-2">
-                {(['M', 'F', 'X'] as Gender[]).map((g) => (
-                  <button
-                    key={g}
-                    type="button"
-                    onClick={() => setGender(gender === g ? '' : g)}
-                    className={cx(
-                      'flex-1 rounded-lg border px-3 py-1.5 text-sm font-medium transition',
-                      gender === g
-                        ? 'border-accent bg-accent text-white shadow-sm shadow-accent/20'
-                        : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700',
-                    )}
-                  >
-                    {GENDER_META[g].label}
-                  </button>
-                ))}
-              </div>
+              <OptionButtons
+                options={(['M', 'F', 'X'] as Gender[]).map((g) => ({
+                  id: g,
+                  label: GENDER_META[g].label,
+                }))}
+                value={gender}
+                onChange={setGender}
+                clearable
+              />
             </Field>
 
             <div className="grid grid-cols-2 gap-3">
@@ -353,25 +346,15 @@ export default function StudentProfile({
           <section className="space-y-3.5">
           <CardSection icon={CalendarCheck}>學籍狀態 / 備註 · Status</CardSection>
           <Field label="就讀狀態">
-            <div className="flex gap-2">
-              {(['active', 'transferred', 'withdrawn'] as StudentStatus[]).map(
-                (st) => (
-                  <button
-                    key={st}
-                    type="button"
-                    onClick={() => setStatus(st)}
-                    className={cx(
-                      'flex-1 rounded-lg border px-3 py-1.5 text-sm font-medium transition',
-                      status === st
-                        ? 'border-accent bg-accent text-white shadow-sm shadow-accent/20'
-                        : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700',
-                    )}
-                  >
-                    {STATUS_META[st].label}
-                  </button>
-                ),
+            <OptionButtons
+              options={(['active', 'transferred', 'withdrawn'] as StudentStatus[]).map(
+                (st) => ({ id: st, label: STATUS_META[st].label }),
               )}
-            </div>
+              value={status}
+              onChange={(v) => {
+                if (v) setStatus(v)
+              }}
+            />
           </Field>
 
           <Field label="標籤" hint="例如 SEN、需關注、英文輔導">

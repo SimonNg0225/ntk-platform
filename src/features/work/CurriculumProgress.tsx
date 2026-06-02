@@ -579,7 +579,7 @@ function ListView({
                       const ac = countStatuses(progress, classId, area.items.map((t) => t.id))
                       const areaCleared = ac.total > 0 && ac.done === ac.total
                       return (
-                        <Card key={area.area} className="overflow-hidden rounded-2xl">
+                        <Card key={area.area} clip className="rounded-2xl">
                           <div
                             className={cx(
                               'flex items-center justify-between gap-3 px-4 py-2.5',

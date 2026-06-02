@@ -2,8 +2,8 @@ import { useRef, useState } from 'react'
 import { decksCol, cardsCol } from '../../../data/collections'
 import { useToast } from '../../../context/ToastContext'
 import { todayStr } from '../../../lib/srs'
-import { Button, Modal, Select, Textarea } from '../../../ui'
-import { Download, Upload } from 'lucide-react'
+import { Button, Field, Modal, Select, Textarea, cx } from '../../../ui'
+import { Archive, Download, FileText, FolderInput, Inbox, Layers } from 'lucide-react'
 import { cardMetaCol, upsertMeta } from './store'
 import type { Card, Deck } from '../../../data/types'
 import type { CardMeta } from './types'
@@ -232,25 +232,82 @@ export default function ImportExport({
     else importCsvText(t)
   }
 
+  const exportCount = cardsCol.get().filter((c) => c.deckId === exportDeckId).length
+
   return (
     <Modal open={open} onClose={onClose} title="匯入 / 匯出" size="lg">
-      <div className="mb-4 flex w-full gap-1 rounded-lg bg-slate-100 p-1 dark:bg-slate-800/80">
-        <button
-          type="button"
-          aria-pressed={tab === 'export'}
-          onClick={() => setTab('export')}
-          className={tabCls(tab === 'export')}
-        >
-          <Download size={15} /> 匯出
-        </button>
-        <button
-          type="button"
-          aria-pressed={tab === 'import'}
-          onClick={() => setTab('import')}
-          className={tabCls(tab === 'import')}
-        >
-          <Upload size={15} /> 匯入
-        </button>
+      {/* 卡盒檔案標題區：kicker + serif，呼應實體卡盒「歸檔 / 入盒」 */}
+      <div className="-mt-1 mb-4 border-l-2 border-rose-300/70 pl-3 dark:border-rose-500/40">
+        <p className="flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-[0.28em] text-accent/70">
+          <Archive size={12} />
+          卡盒檔案室
+        </p>
+        <p className="mt-1 font-serif text-lg font-semibold leading-tight tracking-tight text-slate-800 dark:text-slate-100">
+          備份卡盒，或者入一批新卡
+        </p>
+      </div>
+
+      {/* 抽屜分頁：兩格索引卡標籤（active 帶紅脊 + 紙面） */}
+      <div className="mb-4 grid grid-cols-2 gap-2">
+        {(
+          [
+            { id: 'export', label: '備份匯出', sub: '整疊存落本機', icon: Download },
+            { id: 'import', label: '匯入入盒', sub: '貼或揀檔加入', icon: Inbox },
+          ] as const
+        ).map((t) => {
+          const active = tab === t.id
+          const I = t.icon
+          return (
+            <button
+              key={t.id}
+              type="button"
+              aria-pressed={active}
+              onClick={() => setTab(t.id)}
+              className={cx(
+                'group relative overflow-hidden rounded-xl border bg-white px-3 py-2.5 text-left transition dark:bg-slate-800',
+                active
+                  ? 'border-accent/40 shadow-xs dark:border-accent/40'
+                  : 'border-slate-200 hover:border-slate-300 dark:border-slate-700 dark:hover:border-slate-600',
+              )}
+            >
+              {/* 索引卡紅margin線（active 變 accent） */}
+              <span
+                aria-hidden="true"
+                className={cx(
+                  'absolute inset-y-0 left-0 w-1',
+                  active ? 'bg-accent' : 'bg-rose-200/70 dark:bg-rose-500/25',
+                )}
+              />
+              <span className="flex items-center gap-2 pl-1.5">
+                <span
+                  className={cx(
+                    'flex h-7 w-7 shrink-0 items-center justify-center rounded-lg transition',
+                    active
+                      ? 'bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent'
+                      : 'bg-slate-100 text-slate-400 group-hover:text-slate-500 dark:bg-slate-700/60 dark:text-slate-400',
+                  )}
+                >
+                  <I size={15} />
+                </span>
+                <span className="min-w-0">
+                  <span
+                    className={cx(
+                      'block text-sm font-semibold',
+                      active
+                        ? 'text-accent-strong dark:text-accent'
+                        : 'text-slate-700 dark:text-slate-200',
+                    )}
+                  >
+                    {t.label}
+                  </span>
+                  <span className="block text-[11px] text-slate-400 dark:text-slate-500">
+                    {t.sub}
+                  </span>
+                </span>
+              </span>
+            </button>
+          )
+        })}
       </div>
 
       {tab === 'export' ? (
@@ -258,10 +315,7 @@ export default function ImportExport({
           <p className="text-sm text-slate-500 dark:text-slate-400">
             揀個牌組備份落本機——CSV 方便用 Excel 開，JSON 連埋排程進度。
           </p>
-          <div>
-            <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-300">
-              牌組
-            </label>
+          <Field label="牌組">
             <Select
               value={exportDeckId}
               onChange={(e) => setExportDeckId(e.target.value)}
@@ -273,11 +327,8 @@ export default function ImportExport({
                 </option>
               ))}
             </Select>
-          </div>
-          <div>
-            <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-300">
-              格式
-            </label>
+          </Field>
+          <Field label="格式">
             <Select
               value={exportFmt}
               onChange={(e) => setExportFmt(e.target.value as 'csv' | 'json')}
@@ -286,9 +337,33 @@ export default function ImportExport({
               <option value="csv">CSV（正面, 背面, 標籤）— Excel 開得</option>
               <option value="json">JSON（連排程進度 + 中繼，可完整還原）</option>
             </Select>
+          </Field>
+
+          {/* 出貨單：將要備份嘅一疊卡（serif 大數字 + 紅脊） */}
+          <div className="overflow-hidden rounded-xl border border-slate-200/80 bg-white dark:border-slate-700/60 dark:bg-slate-800">
+            <span aria-hidden="true" className="block h-1 w-full bg-rose-300/70 dark:bg-rose-500/30" />
+            <div className="flex items-center gap-3 px-4 py-3">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
+                <Layers size={20} strokeWidth={1.75} />
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="text-[11px] font-medium uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                  即將備份
+                </p>
+                <p className="flex items-baseline gap-1.5 leading-none">
+                  <span className="font-serif text-2xl font-semibold tabular-nums slashed-zero text-slate-800 dark:text-slate-100">
+                    {exportCount}
+                  </span>
+                  <span className="text-xs text-slate-400 dark:text-slate-500">
+                    張卡 · {exportFmt.toUpperCase()}
+                  </span>
+                </p>
+              </div>
+            </div>
           </div>
-          <Button onClick={doExport} icon={Download} fullWidth disabled={!exportDeckId}>
-            下載
+
+          <Button onClick={doExport} icon={Download} fullWidth disabled={!exportDeckId || exportCount === 0}>
+            下載這疊卡
           </Button>
         </div>
       ) : (
@@ -296,10 +371,7 @@ export default function ImportExport({
           <p className="text-sm text-slate-500 dark:text-slate-400">
             貼上 CSV / TSV 或 JSON，亦可以揀檔——一次過入一批卡。
           </p>
-          <div>
-            <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-300">
-              匯入去
-            </label>
+          <Field label="匯入去">
             <Select
               value={importDeckId}
               onChange={(e) => setImportDeckId(e.target.value)}
@@ -312,27 +384,36 @@ export default function ImportExport({
                 </option>
               ))}
             </Select>
-          </div>
+          </Field>
 
-          <div>
-            <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-300">
-              貼上內容（CSV / TSV：每行「正面,背面,標籤」；或 JSON）
-            </label>
-            <Textarea
-              rows={6}
-              value={importText}
-              onChange={(e) => setImportText(e.target.value)}
-              placeholder={'光合作用係咩?,植物用光造養分,生物;DSE\n需求定律,價跌量升,經濟'}
-              className="font-mono text-xs"
-              aria-label="貼上匯入內容（CSV / TSV 或 JSON）"
-            />
-          </div>
+          <Field label="貼上內容（CSV / TSV：每行「正面,背面,標籤」；或 JSON）">
+            {/* 貼卡台：紅margin線 + Q/A 行頭提示，呼應一張張索引卡 */}
+            <div className="overflow-hidden rounded-lg border border-slate-300 dark:border-slate-700">
+              <div className="flex items-center gap-2 border-b border-slate-200/80 bg-slate-50/80 px-3 py-1.5 dark:border-slate-700/60 dark:bg-slate-800/60">
+                <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                  <FileText size={11} /> 每行一張
+                </span>
+                <span className="font-mono text-[10px] text-slate-400 dark:text-slate-500">
+                  <span className="text-accent/70">正面</span>,
+                  <span className="text-accent/70">背面</span>,標籤
+                </span>
+              </div>
+              <Textarea
+                rows={6}
+                value={importText}
+                onChange={(e) => setImportText(e.target.value)}
+                placeholder={'光合作用係咩?,植物用光造養分,生物;DSE\n需求定律,價跌量升,經濟'}
+                className="rounded-none border-0 font-mono text-base shadow-none focus:ring-0 sm:text-xs"
+                aria-label="貼上匯入內容（CSV / TSV 或 JSON）"
+              />
+            </div>
+          </Field>
 
           <div className="flex flex-wrap items-center gap-2">
-            <Button onClick={doImportText} icon={Upload} disabled={!importText.trim()}>
-              匯入文字
+            <Button onClick={doImportText} icon={Inbox} disabled={!importText.trim()}>
+              入盒
             </Button>
-            <Button variant="secondary" onClick={() => fileRef.current?.click()}>
+            <Button variant="secondary" icon={FolderInput} onClick={() => fileRef.current?.click()}>
               選 .csv / .json 檔
             </Button>
             <input
@@ -352,13 +433,4 @@ export default function ImportExport({
       )}
     </Modal>
   )
-}
-
-function tabCls(active: boolean): string {
-  return [
-    'flex flex-1 items-center justify-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium transition',
-    active
-      ? 'bg-white text-accent-strong shadow-xs dark:bg-slate-700 dark:text-accent'
-      : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200',
-  ].join(' ')
 }

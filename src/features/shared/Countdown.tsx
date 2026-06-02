@@ -3,16 +3,21 @@ import type { LucideIcon } from 'lucide-react'
 import {
   AlarmClock,
   BarChart3,
+  CalendarDays,
   CalendarHeart,
+  Clock,
   Hourglass,
   NotebookPen,
   PartyPopper,
+  PenLine,
   PlaneLanding,
   PlaneTakeoff,
   Pin,
   Plus,
+  Tag,
   Ticket,
   Trash2,
+  X,
 } from 'lucide-react'
 import { useCollection } from '../../lib/store'
 import { countdownsCol } from '../../data/collections'
@@ -741,69 +746,201 @@ export default function Countdown() {
         )}
       </section>
 
-      {/* 新增 Modal（登機 check-in 表） */}
-      <Modal open={modalOpen} onClose={() => setModalOpen(false)} title="登記新航班">
-        <form onSubmit={handleAdd} className="space-y-4">
-          <Field label="航班名稱（想倒數啲咩？）">
-            <Input
-              type="text"
-              value={fTitle}
-              onChange={(e) => setFTitle(e.target.value)}
-              placeholder="例如：BAFS 卷一、交 IES、去日本"
-              autoFocus
-            />
-          </Field>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <Field label="離境日期">
-              <Input type="date" value={fDate} onChange={(e) => setFDate(e.target.value)} />
-            </Field>
-            <Field label="時間（選填）">
-              <Input type="time" value={fTime} onChange={(e) => setFTime(e.target.value)} />
-            </Field>
-          </div>
-          <Field label="閘口 / 分類（選填）">
-            <div className="flex flex-wrap gap-2">
-              {CATEGORY_OPTIONS.map((c) => {
-                const m = CATEGORY_META[c]
-                const Icon = m.icon
-                const on = fCategory === c
-                return (
+      {/* 新增 Modal（登機 check-in 牌）— 內容自帶離境牌語彙：深色頭聯 + 翻牌預覽存根 */}
+      <Modal open={modalOpen} onClose={() => setModalOpen(false)} size="md">
+        {(() => {
+          // 純表現用：由表單日期即時推算倒數，餵返同卡片一致嘅翻牌預覽。
+          // 唔加 state / handler，只係讀現有 state + 共用 helper（toneOf / URGENCY / FlapDisplay）。
+          const draftDays = fDate ? daysUntil(fDate, todayKey) : null
+          const draftTone = draftDays === null ? 'slate' : toneOf(draftDays)
+          const draftU = URGENCY[draftTone]
+          const draftGate = (fCategory ? fCategory.slice(0, 2) : 'NT').toUpperCase()
+          return (
+            <form onSubmit={handleAdd}>
+              {/* 頭聯：深色離境牌標頭（呼應 hero 顯示板）+ 自設關閉掣 */}
+              <div className="relative -m-5 mb-5 overflow-hidden rounded-t-2xl bg-slate-900 text-white ring-1 ring-white/5 dark:bg-slate-950 sm:-m-6 sm:mb-6 sm:rounded-t-2xl">
+                <div className="relative z-10 hero-gradient flex items-center justify-between gap-3 px-5 py-2 sm:px-6">
+                  <span className="inline-flex items-center gap-2 font-mono text-[11px] font-semibold uppercase tracking-[0.3em] text-white">
+                    <Ticket size={13} /> Boarding Pass
+                  </span>
                   <button
-                    key={c}
                     type="button"
-                    aria-pressed={on}
-                    onClick={() => setFCategory(on ? '' : c)}
-                    className={cx(
-                      'inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
-                      on
-                        ? 'border-accent bg-accent text-white shadow-sm'
-                        : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700',
-                    )}
+                    onClick={() => setModalOpen(false)}
+                    aria-label="關閉"
+                    className="rounded-lg p-1 text-white/70 transition hover:bg-white/15 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
                   >
-                    <Icon size={14} />
-                    {m.label}
+                    <X size={18} />
                   </button>
-                )
-              })}
-            </div>
-          </Field>
-          <Field label="備註（選填）">
-            <Textarea
-              value={fNotes}
-              onChange={(e) => setFNotes(e.target.value)}
-              rows={2}
-              placeholder="想記低嘅細節，例如地點、範圍⋯⋯"
-            />
-          </Field>
-          <div className="flex justify-end gap-2 pt-1">
-            <Button type="button" variant="ghost" onClick={() => setModalOpen(false)}>
-              取消
-            </Button>
-            <Button type="submit" icon={Plus} disabled={!fTitle.trim()}>
-              登記航班
-            </Button>
-          </div>
-        </form>
+                </div>
+                <div
+                  aria-hidden="true"
+                  className="pointer-events-none absolute inset-0 bg-[repeating-linear-gradient(0deg,transparent,transparent_3px,rgba(255,255,255,0.02)_3px,rgba(255,255,255,0.02)_4px)]"
+                />
+                <div className="relative flex items-end justify-between gap-4 px-5 py-4 sm:px-6">
+                  <div className="min-w-0">
+                    <p className="flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-[0.3em] text-slate-400">
+                      <PlaneTakeoff size={13} className="shrink-0" /> Check-in · 登記航班
+                    </p>
+                    <h3
+                      id="countdown-modal-title"
+                      className="mt-1 font-serif text-2xl font-semibold leading-none tracking-tight text-white"
+                    >
+                      登記新航班
+                    </h3>
+                  </div>
+                  {/* 翻牌預覽存根：跟日期即時更新（似填飛時嗰張小副聯） */}
+                  <div className="shrink-0 text-right">
+                    <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-slate-400">
+                      {draftDays === null
+                        ? 'No date'
+                        : draftDays === 0
+                          ? 'Departs today'
+                          : draftDays > 0
+                            ? `T-${draftDays}`
+                            : `+${-draftDays}d`}
+                    </p>
+                    <div className="mt-1.5 flex items-end justify-end gap-1.5">
+                      {draftDays === null ? (
+                        <FlapDisplay value="—" size="sm" ariaLabel="未揀日期" />
+                      ) : draftDays === 0 ? (
+                        <div className="flex items-baseline gap-1">
+                          <FlapDisplay value="今" size="sm" ariaLabel="今日出發" />
+                          <FlapDisplay value="日" size="sm" />
+                        </div>
+                      ) : (
+                        <FlapDisplay
+                          value={Math.abs(draftDays)}
+                          size="sm"
+                          ariaLabel={`${Math.abs(draftDays)} 日${draftDays > 0 ? '後' : '前'}`}
+                        />
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* 主聯：表單欄位，分區排版（航班 → 班次 → 閘口 → 備註） */}
+              <div className="space-y-5">
+                <Field label="航班名稱（想倒數啲咩？）">
+                  <Input
+                    type="text"
+                    icon={PenLine}
+                    value={fTitle}
+                    onChange={(e) => setFTitle(e.target.value)}
+                    placeholder="例如：BAFS 卷一、交 IES、去日本"
+                    autoFocus
+                  />
+                </Field>
+
+                {/* 班次：日期 + 時間（一組「departure」資料） */}
+                <div className="space-y-3">
+                  <p className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.25em] text-slate-400 dark:text-slate-500">
+                    <CalendarDays size={12} /> Departure · 起飛班次
+                  </p>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <Field label="離境日期">
+                      <Input
+                        type="date"
+                        icon={CalendarDays}
+                        value={fDate}
+                        onChange={(e) => setFDate(e.target.value)}
+                      />
+                    </Field>
+                    <Field label="時間（選填）">
+                      <Input
+                        type="time"
+                        icon={Clock}
+                        value={fTime}
+                        onChange={(e) => setFTime(e.target.value)}
+                      />
+                    </Field>
+                  </div>
+                </div>
+
+                {/* 閘口：分類選擇（選中嗰個喺存根顯示閘口代碼） */}
+                <div className="space-y-2.5">
+                  <p className="flex items-center justify-between gap-2 font-mono text-[10px] uppercase tracking-[0.25em] text-slate-400 dark:text-slate-500">
+                    <span className="inline-flex items-center gap-1.5">
+                      <Tag size={12} /> Gate · 閘口分類（選填）
+                    </span>
+                    <span className="tabular-nums text-slate-400 dark:text-slate-500">
+                      {draftGate}
+                    </span>
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {CATEGORY_OPTIONS.map((c) => {
+                      const m = CATEGORY_META[c]
+                      const Icon = m.icon
+                      const on = fCategory === c
+                      return (
+                        <button
+                          key={c}
+                          type="button"
+                          aria-pressed={on}
+                          onClick={() => setFCategory(on ? '' : c)}
+                          className={cx(
+                            'inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
+                            on
+                              ? 'border-accent bg-accent text-white shadow-sm'
+                              : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700',
+                          )}
+                        >
+                          <Icon size={14} />
+                          {m.label}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+
+                <Field label="備註（選填）">
+                  <Textarea
+                    value={fNotes}
+                    onChange={(e) => setFNotes(e.target.value)}
+                    rows={2}
+                    placeholder="想記低嘅細節，例如地點、範圍⋯⋯"
+                  />
+                </Field>
+              </div>
+
+              {/* 撕口：一條虛線打孔縫分隔主聯同操作（呼應卡片撕口） */}
+              <div className="relative mt-6">
+                <span
+                  aria-hidden="true"
+                  className="absolute left-0 top-1/2 h-3 w-3 -translate-x-[7px] -translate-y-1/2 rounded-full bg-slate-100 dark:bg-slate-900"
+                />
+                <span
+                  aria-hidden="true"
+                  className="absolute right-0 top-1/2 h-3 w-3 translate-x-[7px] -translate-y-1/2 rounded-full bg-slate-100 dark:bg-slate-900"
+                />
+                <span
+                  aria-hidden="true"
+                  className="block h-px w-full border-t border-dashed border-slate-300/80 dark:border-slate-600/70"
+                />
+              </div>
+
+              {/* 操作列：登記提示語（跟存根狀態色）+ 主／次按鈕 */}
+              <div className="mt-4 flex items-center justify-between gap-3">
+                <span className="inline-flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                  <span className={cx('h-1.5 w-1.5 rounded-full', draftU.dot)} />
+                  {draftDays === null
+                    ? '揀返日期'
+                    : draftDays === 0
+                      ? 'Now boarding'
+                      : draftU.status}
+                </span>
+                <div className="flex gap-2">
+                  <Button type="button" variant="ghost" onClick={() => setModalOpen(false)}>
+                    取消
+                  </Button>
+                  <Button type="submit" icon={Plus} disabled={!fTitle.trim()}>
+                    登記航班
+                  </Button>
+                </div>
+              </div>
+            </form>
+          )
+        })()}
       </Modal>
     </div>
   )

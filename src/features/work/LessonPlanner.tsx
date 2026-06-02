@@ -1184,7 +1184,8 @@ function PlanCard({
   return (
     <Card
       hover
-      className="group/card relative flex h-full flex-col overflow-hidden p-3.5 pl-5"
+      clip
+      className="group/card relative flex h-full flex-col p-3.5 pl-5"
     >
       {/* 粉筆書脊（狀態色軌 + 實色棒） */}
       <span aria-hidden className={cx('absolute inset-y-0 left-0 w-1.5', spineTrack)} />

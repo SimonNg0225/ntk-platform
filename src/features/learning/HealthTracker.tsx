@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useId, useMemo, useState } from 'react'
 import {
   Plus,
   Minus,
@@ -346,7 +346,7 @@ export default function HealthTracker() {
       </header>
 
       {/* ───────── 生命徵象面板（vitals monitor：hairline 分隔 + sparkline 讀數） ───────── */}
-      <Card className="animate-fade-in overflow-hidden">
+      <Card clip className="animate-fade-in">
         <div className="flex items-center justify-between gap-3 border-b border-slate-200/70 bg-slate-50/60 px-4 py-3 dark:border-slate-700/60 dark:bg-slate-800/40 sm:px-5">
           <div className="flex items-center gap-2">
             <Activity size={15} className="text-accent" aria-hidden="true" />
@@ -703,7 +703,55 @@ function TrendBlock({
   )
 }
 
-// ───────── 目標設定 Modal ─────────
+// ───────── 校準通道行（calibration channel：左色脊 + tone chip + serif 欄名 + 帶單位輸入）─────────
+//  呼應主畫面 VitalRow 嘅生命徵象語言：每個目標係一條色脊識別嘅通道，
+//  右側用「單位戳印」收尾，輸入沿用共用 <Input>（≥16px 防 iOS zoom）。
+function GoalChannel({
+  icon: Icon,
+  tone,
+  label,
+  unit,
+  optional,
+  children,
+}: {
+  icon: LucideIcon
+  tone: Exclude<Tone, 'rose'>
+  label: string
+  unit: string
+  optional?: boolean
+  /** render-prop：收一個唯一 id 綁 label↔input（無障礙），回 input 內容 */
+  children: (id: string) => React.ReactNode
+}) {
+  const id = useId()
+  return (
+    <div className="group relative rounded-2xl border border-slate-200/70 bg-slate-50/50 py-3 pl-4 pr-3.5 dark:border-slate-700/50 dark:bg-slate-800/40">
+      {/* 左色脊（通道識別，對齊 VitalRow） */}
+      <span aria-hidden="true" className="absolute inset-y-3 left-0 w-1 rounded-full" style={{ background: TONE_COLOR[tone], opacity: 0.9 }} />
+      <div className="mb-2 flex items-center gap-2.5">
+        <span className={cx('flex h-8 w-8 shrink-0 items-center justify-center rounded-xl', TONE_CHIP[tone])}>
+          <Icon size={15} aria-hidden="true" />
+        </span>
+        <label htmlFor={id} className="flex min-w-0 flex-1 items-center gap-1.5">
+          <span className="truncate font-serif text-sm font-semibold text-slate-700 dark:text-slate-200">{label}</span>
+          {optional && (
+            <span className="shrink-0 rounded-full bg-slate-100 px-1.5 py-px text-[10px] font-medium uppercase tracking-wide text-slate-400 dark:bg-slate-700/60 dark:text-slate-400">
+              可選
+            </span>
+          )}
+        </label>
+        <span
+          aria-hidden="true"
+          className="shrink-0 rounded-full bg-white px-2 py-0.5 text-[11px] font-medium tabular-nums text-slate-500 ring-1 ring-inset ring-slate-200/70 dark:bg-slate-800 dark:text-slate-400 dark:ring-slate-700/60"
+        >
+          {unit}
+        </span>
+      </div>
+      {children(id)}
+    </div>
+  )
+}
+
+// ───────── 目標設定 Modal（生命徵象校準台 / vitals calibration） ─────────
 function GoalsModal({
   open,
   onClose,
@@ -740,7 +788,6 @@ function GoalsModal({
     <Modal
       open={open}
       onClose={onClose}
-      title="健康目標"
       size="sm"
       footer={
         <>
@@ -758,24 +805,53 @@ function GoalsModal({
               })
             }
           >
-            儲存
+            儲存校準
           </Button>
         </>
       }
     >
-      <div className="space-y-3">
-        <Field label="每晚睡眠目標（小時）">
-          <Input type="number" inputMode="decimal" icon={Moon} value={form.sleep} onChange={(e) => setForm((f) => ({ ...f, sleep: e.target.value }))} />
-        </Field>
-        <Field label="每週運動目標（分鐘）" hint="WHO 建議成人每週至少 150 分鐘中等強度運動">
-          <Input type="number" inputMode="numeric" icon={Dumbbell} value={form.exercise} onChange={(e) => setForm((f) => ({ ...f, exercise: e.target.value }))} />
-        </Field>
-        <Field label="每日飲水目標（ml）">
-          <Input type="number" inputMode="numeric" icon={Droplet} value={form.water} onChange={(e) => setForm((f) => ({ ...f, water: e.target.value }))} />
-        </Field>
-        <Field label="目標體重（kg，可留空）">
-          <Input type="number" inputMode="decimal" icon={TrendingDown} placeholder="可選" value={form.weight} onChange={(e) => setForm((f) => ({ ...f, weight: e.target.value }))} />
-        </Field>
+      {/* 標題區（kicker + serif 標題，對齊 masthead 語言；取代 Modal 預設 title 列） */}
+      <div className="mb-4">
+        <p className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.28em] text-accent/70">
+          <Target size={13} aria-hidden="true" />
+          目標校準 · Targets
+        </p>
+        <h3 className="mt-1.5 font-serif text-xl font-semibold leading-tight tracking-tight text-slate-800 dark:text-slate-100">
+          健康目標
+        </h3>
+        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+          設定每個生命徵象嘅基準值，達標判斷同進度環都會跟住校準。
+        </p>
+      </div>
+
+      {/* 校準通道（逐個指標對應主畫面色脊） */}
+      <div className="space-y-2.5">
+        <GoalChannel icon={Moon} tone="indigo" label="每晚睡眠" unit="小時">
+          {(id) => (
+            <Input id={id} type="number" inputMode="decimal" value={form.sleep} onChange={(e) => setForm((f) => ({ ...f, sleep: e.target.value }))} />
+          )}
+        </GoalChannel>
+        <GoalChannel icon={Dumbbell} tone="emerald" label="每週運動" unit="分鐘">
+          {(id) => (
+            <>
+              <Input id={id} type="number" inputMode="numeric" value={form.exercise} onChange={(e) => setForm((f) => ({ ...f, exercise: e.target.value }))} />
+              <p className="mt-1.5 flex items-start gap-1 text-[11px] leading-snug text-slate-400 dark:text-slate-500">
+                <Activity size={12} className="mt-px shrink-0" aria-hidden="true" />
+                <span>WHO 建議成人每週至少 150 分鐘中等強度運動</span>
+              </p>
+            </>
+          )}
+        </GoalChannel>
+        <GoalChannel icon={Droplet} tone="sky" label="每日飲水" unit="ml">
+          {(id) => (
+            <Input id={id} type="number" inputMode="numeric" value={form.water} onChange={(e) => setForm((f) => ({ ...f, water: e.target.value }))} />
+          )}
+        </GoalChannel>
+        <GoalChannel icon={TrendingDown} tone="accent" label="目標體重" unit="kg" optional>
+          {(id) => (
+            <Input id={id} type="number" inputMode="decimal" placeholder="可留空" value={form.weight} onChange={(e) => setForm((f) => ({ ...f, weight: e.target.value }))} />
+          )}
+        </GoalChannel>
       </div>
     </Modal>
   )
