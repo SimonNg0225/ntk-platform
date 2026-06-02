@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import {
   Archive,
   BarChart3,
@@ -13,6 +13,7 @@ import {
   ListChecks,
   Notebook as NotebookIcon,
   Pencil,
+  PenLine,
   Pin,
   Plus,
   Rows3,
@@ -37,6 +38,7 @@ import {
   EmptyState,
   IconButton,
   Input,
+  Menu,
   Modal,
   Pills,
   Select,
@@ -355,58 +357,89 @@ export default function NotesWidget() {
       : sidebarItems.find((i) => i.scope.kind === scope.kind)?.label ?? '筆記'
 
   return (
-    <div className="space-y-4">
-      {/* 頂部列 */}
-      <div className="flex items-center gap-3">
-        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
-          <NotebookIcon size={20} />
-        </span>
-        <div className="min-w-0 flex-1">
-          <h2 className="truncate text-lg font-semibold tracking-tight text-slate-800 dark:text-slate-100">
-            個人筆記
-          </h2>
-          <p className="text-xs text-slate-500 dark:text-slate-400">
-            <span className="tabular-nums">{counts.all}</span> 則筆記 · 已寫{' '}
-            <span className="tabular-nums">{stats.totalWords.toLocaleString()}</span> 字
-          </p>
-        </div>
-        <Button
-          size="sm"
-          variant="ghost"
-          icon={Download}
-          onClick={exportJson}
-          title="匯出 JSON 備份（含筆記本／釘選／色標／時間，可完整還原）"
-        >
-          <span className="hidden md:inline">匯出</span>
-        </Button>
-        <Button
-          size="sm"
-          variant="ghost"
-          icon={Upload}
-          onClick={() => fileRef.current?.click()}
-          title="匯入 JSON 備份（按 id 去重，略過已有）"
-        >
-          <span className="hidden md:inline">匯入</span>
-        </Button>
-        <input
-          ref={fileRef}
-          type="file"
-          accept="application/json,.json"
-          className="hidden"
-          onChange={onPickFile}
+    <div className="space-y-5">
+      {/* ───────── 手稿封面 masthead：稿紙橫線 + serif 題名 + 版權頁式統計 ───────── */}
+      <header className="relative overflow-hidden rounded-3xl border border-amber-200/70 bg-gradient-to-br from-amber-50/80 via-white to-white px-5 py-5 dark:border-amber-500/20 dark:from-amber-500/[0.07] dark:via-slate-800 dark:to-slate-800 sm:px-6 sm:py-6">
+        {/* 稿紙橫線（極淡，純裝飾） */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 opacity-[0.5] dark:opacity-[0.35]"
+          style={{
+            backgroundImage:
+              'repeating-linear-gradient(to bottom, transparent 0, transparent 33px, rgb(180 150 100 / 0.18) 33px, rgb(180 150 100 / 0.18) 34px)',
+          }}
         />
-        <Button
-          size="sm"
-          variant={showStats ? 'primary' : 'secondary'}
-          icon={BarChart3}
-          onClick={() => setShowStats((v) => !v)}
-        >
-          <span className="hidden sm:inline">統計</span>
-        </Button>
-        <Button size="sm" icon={Plus} onClick={createNote}>
-          <span className="hidden sm:inline">新筆記</span>
-        </Button>
-      </div>
+        {/* 左側裝訂紅線（手稿頁邊欄） */}
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-y-0 left-9 hidden w-px bg-rose-300/50 dark:bg-rose-400/25 sm:block"
+        />
+        <div className="relative flex flex-wrap items-end justify-between gap-x-4 gap-y-4">
+          <div className="min-w-0">
+            <p className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.3em] text-accent/80 dark:text-accent">
+              <NotebookIcon size={12} />
+              手稿 · Manuscript
+            </p>
+            <h1 className="mt-1.5 font-serif text-[30px] font-semibold leading-none tracking-tight text-slate-800 dark:text-slate-100 sm:text-4xl">
+              個人筆記
+            </h1>
+            {/* 版權頁式 colophon */}
+            <p className="mt-2.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 font-serif text-sm italic text-slate-500 dark:text-slate-400">
+              <span className="tabular-nums">{counts.all} 則手記</span>
+              <span aria-hidden="true" className="not-italic text-amber-400/70 dark:text-amber-500/50">·</span>
+              <span className="tabular-nums">親手寫落 {stats.totalWords.toLocaleString()} 字</span>
+              {counts.pinned > 0 && (
+                <>
+                  <span aria-hidden="true" className="not-italic text-amber-400/70 dark:text-amber-500/50">·</span>
+                  <span className="inline-flex items-center gap-1 not-italic font-sans text-xs font-medium text-accent-strong dark:text-accent">
+                    <Pin size={11} className="fill-current" /> {counts.pinned} 則釘住
+                  </span>
+                </>
+              )}
+            </p>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <Menu
+              align="end"
+              label="備份"
+              trigger={
+                <span className="inline-flex h-9 items-center gap-1.5 rounded-full border border-amber-200/80 bg-white/70 px-3 text-sm font-medium text-slate-600 backdrop-blur transition hover:bg-white dark:border-amber-500/20 dark:bg-slate-800/60 dark:text-slate-300 dark:hover:bg-slate-800">
+                  <Archive size={15} />
+                  <span className="hidden sm:inline">備份</span>
+                </span>
+              }
+              items={[
+                { id: 'export', label: '匯出 JSON 備份', icon: Download, onSelect: exportJson },
+                { id: 'import', label: '匯入 JSON 備份', icon: Upload, onSelect: () => fileRef.current?.click() },
+              ]}
+            />
+            <input
+              ref={fileRef}
+              type="file"
+              accept="application/json,.json"
+              className="hidden"
+              onChange={onPickFile}
+            />
+            <Button
+              size="sm"
+              variant={showStats ? 'primary' : 'secondary'}
+              icon={BarChart3}
+              onClick={() => setShowStats((v) => !v)}
+              className="h-9 rounded-full"
+            >
+              <span className="hidden sm:inline">統計</span>
+            </Button>
+            <Button
+              size="sm"
+              icon={Plus}
+              onClick={createNote}
+              className="h-9 rounded-full shadow-sm shadow-accent/25"
+            >
+              寫一頁
+            </Button>
+          </div>
+        </div>
+      </header>
 
       {showStats && <StatsPanel stats={stats} notebooks={notebooks} onPickTag={(t) => {
         setShowStats(false)
@@ -415,14 +448,16 @@ export default function NotesWidget() {
       }} />}
 
       <div className="grid grid-cols-1 gap-3 lg:grid-cols-[200px_minmax(0,1fr)_minmax(0,1.1fr)]">
-        {/* ───────── 側欄 ───────── */}
+        {/* ───────── 索引欄（目錄頁式：標籤分隔 + 章節列） ───────── */}
         <aside
           className={cx(
-            'space-y-3 lg:block',
+            'space-y-4 lg:block',
             mobilePane === 'detail' ? 'hidden' : 'block',
           )}
         >
-          <Card className="rounded-2xl p-2">
+          {/* 速覽 / scopes */}
+          <div>
+            <IndexLabel>速覽</IndexLabel>
             <nav className="space-y-0.5">
               {sidebarItems.map((it) => {
                 const on = isActiveScope(it.scope)
@@ -437,16 +472,24 @@ export default function NotesWidget() {
                     }}
                     aria-current={on ? 'page' : undefined}
                     className={cx(
-                      'flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-sm transition',
+                      'group flex w-full items-center gap-2.5 rounded-xl py-1.5 pl-3 pr-2.5 text-sm transition',
                       on
-                        ? 'bg-accent-soft font-medium text-accent-strong dark:bg-accent/15 dark:text-accent'
-                        : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700/50',
+                        ? 'bg-accent-soft font-medium text-accent-strong shadow-xs dark:bg-accent/15 dark:text-accent'
+                        : 'text-slate-600 hover:bg-amber-50/70 dark:text-slate-300 dark:hover:bg-slate-700/50',
                     )}
                   >
-                    <it.icon size={16} className="shrink-0" />
+                    {/* 章節記號（活躍時實心 accent 條） */}
+                    <span
+                      aria-hidden="true"
+                      className={cx(
+                        'h-4 w-[3px] shrink-0 rounded-full transition',
+                        on ? 'bg-accent' : 'bg-transparent group-hover:bg-amber-300/70',
+                      )}
+                    />
+                    <it.icon size={15} className="shrink-0" />
                     <span className="flex-1 text-left">{it.label}</span>
                     {it.count > 0 && (
-                      <span className="tabular-nums text-xs text-slate-400 dark:text-slate-500">
+                      <span className="font-serif text-xs tabular-nums text-slate-400 dark:text-slate-500">
                         {it.count}
                       </span>
                     )}
@@ -454,22 +497,20 @@ export default function NotesWidget() {
                 )
               })}
             </nav>
-          </Card>
+          </div>
 
-          {/* 筆記本 */}
-          <Card className="rounded-2xl p-2">
-            <div className="flex items-center justify-between px-1.5 pb-1">
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-                筆記本
-              </span>
+          {/* 筆記本（卷冊） */}
+          <div>
+            <div className="flex items-center justify-between">
+              <IndexLabel>卷冊</IndexLabel>
               <IconButton label="管理筆記本" size="sm" onClick={() => setNbModal(true)}>
                 <FolderPlus size={15} />
               </IconButton>
             </div>
             <nav className="space-y-0.5">
               {notebooks.length === 0 && (
-                <p className="px-2 py-1.5 text-xs text-slate-400 dark:text-slate-500">
-                  撳右上角 ＋ 開個筆記本歸類
+                <p className="px-3 py-1.5 font-serif text-xs italic text-slate-400 dark:text-slate-500">
+                  撳上面 ＋，開一卷收納相關手記。
                 </p>
               )}
               {notebooks.map((nb) => {
@@ -486,22 +527,22 @@ export default function NotesWidget() {
                     }}
                     aria-current={on ? 'page' : undefined}
                     className={cx(
-                      'flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-sm transition',
+                      'group flex w-full items-center gap-2.5 rounded-xl py-1.5 pl-3 pr-2.5 text-sm transition',
                       on
-                        ? 'bg-slate-100 font-medium text-slate-800 dark:bg-slate-700/60 dark:text-slate-100'
-                        : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700/50',
+                        ? 'bg-amber-100/60 font-medium text-slate-800 shadow-xs dark:bg-slate-700/60 dark:text-slate-100'
+                        : 'text-slate-600 hover:bg-amber-50/70 dark:text-slate-300 dark:hover:bg-slate-700/50',
                     )}
                   >
-                    <span className={cx('h-2.5 w-2.5 shrink-0 rounded-full', c.dot)} />
+                    <span className={cx('h-2.5 w-2.5 shrink-0 rounded-full ring-2 ring-white dark:ring-slate-800', c.dot)} />
                     <span className="flex-1 truncate text-left">{nb.name}</span>
-                    <span className="tabular-nums text-xs text-slate-400 dark:text-slate-500">
+                    <span className="font-serif text-xs tabular-nums text-slate-400 dark:text-slate-500">
                       {notebookCounts.get(nb.id) ?? 0}
                     </span>
                   </button>
                 )
               })}
             </nav>
-          </Card>
+          </div>
         </aside>
 
         {/* ───────── 列表欄 ───────── */}
@@ -652,24 +693,24 @@ export default function NotesWidget() {
               }
               title={
                 hasFilter
-                  ? '搵唔到相符嘅筆記'
+                  ? '揭唔到相符嘅一頁'
                   : scope.kind === 'trash'
-                    ? '垃圾桶乾乾淨淨'
+                    ? '廢紙簍乾乾淨淨'
                     : scope.kind === 'archived'
-                      ? '未有封存嘅筆記'
-                      : '由一則筆記開始'
+                      ? '未有收起嘅手記'
+                      : '由空白一頁開始'
               }
               hint={
                 hasFilter
                   ? '試下換個關鍵字，或者清除標籤篩選。'
                   : scope.kind === 'all' || scope.kind === 'notebook'
-                    ? '記低靈感、課堂重點或者待辦——用 #標籤 分類、- [ ] 整待辦，慢慢儲成你嘅知識庫。'
+                    ? '記低靈感、課堂重點或者待辦——用 #標籤 歸類、- [ ] 整待辦，一頁一頁儲成你自己嘅手稿。'
                     : undefined
               }
               action={
                 !hasFilter && (scope.kind === 'all' || scope.kind === 'notebook') ? (
-                  <Button size="sm" icon={Plus} onClick={createNote}>
-                    寫第一則筆記
+                  <Button size="sm" icon={Pencil} onClick={createNote}>
+                    落筆寫第一頁
                   </Button>
                 ) : undefined
               }
@@ -689,17 +730,22 @@ export default function NotesWidget() {
                   : 'space-y-2',
               )}
             >
-              {visible.map((n) => (
-                <NoteRow
+              {visible.map((n, i) => (
+                <div
                   key={n.id}
-                  note={n}
-                  grid={view === 'grid'}
-                  active={n.id === selectedId && !selectMode}
-                  selectMode={selectMode}
-                  checked={checked.has(n.id)}
-                  onToggleCheck={() => toggleCheck(n.id)}
-                  onOpen={() => openNote(n.id)}
-                />
+                  className="animate-fade-in-up"
+                  style={{ animationDelay: `${Math.min(i, 10) * 35}ms` }}
+                >
+                  <NoteRow
+                    note={n}
+                    grid={view === 'grid'}
+                    active={n.id === selectedId && !selectMode}
+                    selectMode={selectMode}
+                    checked={checked.has(n.id)}
+                    onToggleCheck={() => toggleCheck(n.id)}
+                    onOpen={() => openNote(n.id)}
+                  />
+                </div>
               ))}
             </div>
           )}
@@ -713,12 +759,12 @@ export default function NotesWidget() {
           )}
         >
           {selected ? (
-            <Card className="flex h-full min-h-[28rem] flex-col rounded-2xl p-3 sm:p-4">
+            <Card className="flex h-full min-h-[28rem] flex-col rounded-3xl border-amber-200/60 p-3 dark:border-amber-500/15 sm:p-4">
               <button
                 onClick={() => setMobilePane('list')}
                 className="mb-2 inline-flex items-center gap-1 self-start text-xs font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 lg:hidden"
               >
-                <ChevronLeft size={14} /> 返回列表
+                <ChevronLeft size={14} /> 返回目錄
               </button>
               <Editor
                 note={selected}
@@ -727,24 +773,33 @@ export default function NotesWidget() {
               />
             </Card>
           ) : (
-            <Card className="hidden h-full min-h-[28rem] items-center justify-center rounded-2xl p-6 lg:flex">
-              <div className="max-w-xs text-center">
-                <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
-                  <Pencil size={24} />
+            <div className="relative hidden h-full min-h-[28rem] items-center justify-center overflow-hidden rounded-3xl border border-amber-200/60 bg-gradient-to-br from-amber-50/60 via-white to-white p-6 dark:border-amber-500/15 dark:from-amber-500/[0.05] dark:via-slate-800 dark:to-slate-800 lg:flex">
+              {/* 稿紙橫線（極淡） */}
+              <div
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-0 opacity-[0.45] dark:opacity-30"
+                style={{
+                  backgroundImage:
+                    'repeating-linear-gradient(to bottom, transparent 0, transparent 33px, rgb(180 150 100 / 0.16) 33px, rgb(180 150 100 / 0.16) 34px)',
+                }}
+              />
+              <div className="relative max-w-xs text-center">
+                <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-accent-soft text-accent-strong shadow-sm dark:bg-accent/15 dark:text-accent">
+                  <PenLine size={24} />
                 </span>
-                <p className="mt-4 text-sm font-semibold text-slate-700 dark:text-slate-200">
-                  揀一則筆記，喺呢度書寫
+                <p className="mt-4 font-serif text-lg font-semibold text-slate-700 dark:text-slate-200">
+                  攤開一頁，由呢度書寫
                 </p>
-                <p className="mt-1 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
-                  撳左邊任何一則打開，或者開一則全新嘅。
+                <p className="mt-1.5 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+                  揀左邊任何一頁手記翻開，或者開一張全新稿紙。
                 </p>
                 <div className="mt-4">
-                  <Button size="sm" icon={Plus} onClick={createNote}>
-                    新筆記
+                  <Button size="sm" icon={Pencil} onClick={createNote}>
+                    寫一頁
                   </Button>
                 </div>
               </div>
-            </Card>
+            </div>
           )}
         </section>
       </div>
@@ -752,6 +807,21 @@ export default function NotesWidget() {
       {nbModal && (
         <NotebookManager notebooks={notebooks} onClose={() => setNbModal(false)} />
       )}
+    </div>
+  )
+}
+
+// ───────── 索引欄章節標題（目錄頁式：小帽 + 漸隱橫線） ─────────
+function IndexLabel({ children }: { children: ReactNode }) {
+  return (
+    <div className="mb-1.5 flex items-center gap-2 px-1">
+      <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">
+        {children}
+      </span>
+      <span
+        aria-hidden="true"
+        className="h-px flex-1 bg-gradient-to-r from-amber-300/50 to-transparent dark:from-amber-500/25"
+      />
     </div>
   )
 }
@@ -817,15 +887,25 @@ function NoteRow({
       aria-pressed={selectMode ? checked : undefined}
       aria-current={!selectMode && active ? 'true' : undefined}
       className={cx(
-        'group relative block w-full overflow-hidden rounded-2xl border p-3.5 text-left transition duration-200',
+        'group relative block w-full overflow-hidden rounded-2xl border pl-5 pr-4 py-3.5 text-left transition duration-200',
         color.card ||
           'border-slate-200/80 bg-white dark:border-slate-700/60 dark:bg-slate-800',
         active
           ? 'border-accent/50 shadow-sm ring-1 ring-accent/40 dark:border-accent/50'
-          : 'hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md dark:hover:border-slate-600',
+          : 'hover:-translate-y-0.5 hover:border-amber-300/70 hover:shadow-md dark:hover:border-slate-600',
         grid && 'h-full',
       )}
     >
+      {/* 手稿頁邊裝訂線（活躍 = accent，平時淡琥珀） */}
+      <span
+        aria-hidden="true"
+        className={cx(
+          'pointer-events-none absolute inset-y-3 left-2 w-px transition-colors',
+          active
+            ? 'bg-accent/50'
+            : 'bg-amber-300/40 group-hover:bg-amber-400/60 dark:bg-amber-500/25',
+        )}
+      />
       <div className="flex items-start gap-2.5">
         {selectMode && (
           <span
@@ -848,7 +928,7 @@ function NoteRow({
             {note.favorite && (
               <Star size={12} className="shrink-0 fill-current text-amber-500" />
             )}
-            <span className="truncate text-[15px] font-semibold leading-snug text-slate-800 dark:text-slate-100">
+            <span className="truncate font-serif text-[16px] font-semibold leading-snug text-slate-800 dark:text-slate-100">
               {title}
             </span>
           </div>
@@ -885,7 +965,7 @@ function NoteRow({
         {tags.length > (grid ? 4 : 2) && (
           <span className="text-[10px] text-slate-400">+{tags.length - (grid ? 4 : 2)}</span>
         )}
-        <span className="ml-auto text-[11px] tabular-nums text-slate-400 dark:text-slate-500">
+        <span className="ml-auto font-serif text-[11px] italic tabular-nums text-slate-400 dark:text-slate-500">
           {relativeTime(note.updatedAt)}
         </span>
       </div>
@@ -1008,7 +1088,7 @@ function StatsPanel({
     : 0
 
   return (
-    <Card className="space-y-4 rounded-2xl p-3 sm:p-4">
+    <Card className="space-y-5 rounded-3xl border-amber-200/60 p-3 dark:border-amber-500/15 sm:p-4">
       {/* KPI */}
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
         <StatCard
@@ -1042,10 +1122,8 @@ function StatsPanel({
 
       {/* 活躍折線圖 */}
       <div>
-        <div className="mb-1 flex items-center justify-between">
-          <span className="text-xs font-semibold text-slate-600 dark:text-slate-300">
-            過去 30 日新增
-          </span>
+        <div className="mb-1.5 flex items-center justify-between">
+          <StatsHeading>過去 30 日新增</StatsHeading>
           <Badge tone="slate">
             共 <span className="tabular-nums">{stats.daily.reduce((s, d) => s + d.count, 0)}</span> 則
           </Badge>
@@ -1054,21 +1132,38 @@ function StatsPanel({
       </div>
 
       {/* 標籤 + 筆記本分佈 */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
         <div>
-          <span className="mb-2 block text-xs font-semibold text-slate-600 dark:text-slate-300">
-            熱門標籤
-          </span>
+          <StatsHeading className="mb-2">熱門標籤</StatsHeading>
           <TagBars tags={stats.topTags} onPick={onPickTag} />
         </div>
         <div>
-          <span className="mb-2 block text-xs font-semibold text-slate-600 dark:text-slate-300">
-            筆記本分佈
-          </span>
+          <StatsHeading className="mb-2">卷冊分佈</StatsHeading>
           <DonutChart slices={donut} />
         </div>
       </div>
     </Card>
+  )
+}
+
+// ───────── 統計小標（稿紙風：serif + 短紅尺） ─────────
+function StatsHeading({
+  children,
+  className,
+}: {
+  children: ReactNode
+  className?: string
+}) {
+  return (
+    <span
+      className={cx(
+        'flex items-center gap-2 font-serif text-sm font-semibold text-slate-700 dark:text-slate-200',
+        className,
+      )}
+    >
+      <span aria-hidden="true" className="h-3.5 w-[3px] rounded-full bg-accent/60" />
+      {children}
+    </span>
   )
 }
 

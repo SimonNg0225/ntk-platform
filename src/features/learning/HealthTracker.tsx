@@ -12,6 +12,10 @@ import {
   Smile,
   TrendingDown,
   TrendingUp,
+  Activity,
+  HeartPulse,
+  CheckCircle2,
+  CircleDashed,
   ArrowDownRight,
   ArrowUpRight,
   type LucideIcon,
@@ -22,11 +26,14 @@ import { useHealthLogs, useHealthGoals, logDay, saveGoals } from './health/store
 import { MOOD_EMOJI } from './health/types'
 import type { HealthGoals } from './health/types'
 import { byDate, todayKey, seriesOf, summarize, recentDays, WEEKDAY_LABELS, fromKey, logsToCsv } from './health/util'
-import { LineTrend, WeekBars, GoalRing } from './health/Charts'
+import { LineTrend, WeekBars, GoalRing, TONE_COLOR } from './health/Charts'
 
 type Range = '14' | '30'
 
-// 指標磚色調（淺底深字 + 深色 /15，跟設計系統分類色）
+// 心情 1–5 對應嘅友善廣東話描述（配 MOOD_EMOJI 同序）
+const MOOD_LABELS = ['好攰', '麻麻', '一般', '幾好', '好正'] as const
+
+// 指標色調（淺底深字 + 深色 /15，跟設計系統分類色）
 type Tone = 'accent' | 'indigo' | 'emerald' | 'amber' | 'sky' | 'rose'
 const TONE_CHIP: Record<Tone, string> = {
   accent: 'bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent',
@@ -37,76 +44,172 @@ const TONE_CHIP: Record<Tone, string> = {
   rose: 'bg-rose-50 text-rose-600 dark:bg-rose-500/15 dark:text-rose-300',
 }
 
-// ───────── 指標磚（bento 風：tone icon chip + 大數字 + 趨勢 / 達標）─────────
-function MetricTile({
+// ───────── 微縮趨勢線（sparkline，純裝飾；接 seriesOf 出嘅逐日值）─────────
+//  跳過 null 斷成段，最新點加實心端子；無資料留一條柔和基線（生命徵象空讀）。
+function Sparkline({
+  points,
+  tone,
+  width = 96,
+  height = 30,
+  className,
+}: {
+  points: (number | null)[]
+  tone: Exclude<Tone, 'rose'>
+  width?: number
+  height?: number
+  className?: string
+}) {
+  const color = TONE_COLOR[tone]
+  const vals = points.filter((v): v is number => v != null)
+  const pad = 3
+  const baseY = height - pad
+
+  if (vals.length === 0) {
+    return (
+      <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} className={cx('overflow-visible', className)} aria-hidden="true" focusable="false">
+        <line x1={pad} y1={height / 2} x2={width - pad} y2={height / 2} className="stroke-slate-200 dark:stroke-slate-700" strokeWidth={1.5} strokeDasharray="3 4" strokeLinecap="round" />
+      </svg>
+    )
+  }
+
+  const min = Math.min(...vals)
+  const max = Math.max(...vals)
+  const span = max - min || 1
+  const innerW = width - pad * 2
+  const innerH = height - pad * 2
+  const xAt = (i: number) => (points.length > 1 ? pad + (i / (points.length - 1)) * innerW : width / 2)
+  const yAt = (v: number) => pad + innerH * (1 - (v - min) / span)
+
+  // 連續段（跳過 null）
+  const segs: { i: number; v: number }[][] = []
+  let cur: { i: number; v: number }[] = []
+  points.forEach((v, i) => {
+    if (v == null) {
+      if (cur.length) segs.push(cur)
+      cur = []
+    } else cur.push({ i, v })
+  })
+  if (cur.length) segs.push(cur)
+
+  let lastI = -1
+  for (let i = points.length - 1; i >= 0; i -= 1) if (points[i] != null) { lastI = i; break }
+
+  return (
+    <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} className={cx('overflow-visible', className)} aria-hidden="true" focusable="false">
+      <line x1={pad} y1={baseY} x2={width - pad} y2={baseY} className="stroke-slate-100 dark:stroke-slate-700/50" strokeWidth={1} />
+      {segs.map((seg, si) =>
+        seg.length === 1 ? (
+          <circle key={si} cx={xAt(seg[0].i)} cy={yAt(seg[0].v)} r={1.8} fill={color} />
+        ) : (
+          <path
+            key={si}
+            d={seg.map((p, k) => `${k === 0 ? 'M' : 'L'}${xAt(p.i).toFixed(1)},${yAt(p.v).toFixed(1)}`).join(' ')}
+            fill="none"
+            stroke={color}
+            strokeWidth={1.75}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        ),
+      )}
+      {lastI >= 0 && points[lastI] != null && (
+        <circle cx={xAt(lastI)} cy={yAt(points[lastI] as number)} r={2.4} fill={color} className="stroke-white dark:stroke-slate-800" strokeWidth={1.5} />
+      )}
+    </svg>
+  )
+}
+
+// ───────── 生命徵象讀數列（vitals monitor row：標籤 + 大讀數 + sparkline + 狀態）─────────
+//  柔和臨床風：hairline 分隔、左色脊、tabular 數字清晰、右側微縮趨勢。
+function VitalRow({
   icon: Icon,
   tone,
   label,
   value,
   unit,
-  hint,
-  highlight,
+  spark,
   trend,
   progress,
+  status,
 }: {
   icon: LucideIcon
-  tone: Tone
+  tone: Exclude<Tone, 'rose'>
   label: string
   value: string | number
   unit?: string
-  hint?: string
-  highlight?: boolean
+  spark: (number | null)[]
   trend?: { dir: 'up' | 'down' | 'flat'; value: string }
   progress?: number
+  status?: { label: string; ok: boolean }
 }) {
+  const hasReading = value !== '—'
   return (
-    <div
-      className={cx(
-        'flex flex-col justify-between rounded-3xl border p-4 transition duration-200',
-        highlight
-          ? 'border-accent/30 bg-accent-soft/60 dark:border-accent/40 dark:bg-accent/10'
-          : 'border-slate-200/80 bg-white shadow-xs hover:border-slate-300 hover:shadow-md dark:border-slate-700/60 dark:bg-slate-800 dark:shadow-none dark:hover:border-slate-600',
-      )}
-    >
-      <div className="flex items-center justify-between">
-        <span className="text-xs font-medium text-slate-400 dark:text-slate-500">{label}</span>
-        <span className={cx('flex h-8 w-8 items-center justify-center rounded-xl', TONE_CHIP[tone])}>
-          <Icon size={16} aria-hidden="true" />
-        </span>
-      </div>
-      <div className="mt-2">
-        <p className="flex items-baseline gap-1">
-          <span className="text-2xl font-bold tabular-nums text-slate-800 dark:text-slate-100">
+    <div className="group relative flex items-center gap-3 px-4 py-3.5 transition-colors hover:bg-slate-50/70 dark:hover:bg-slate-800/40 sm:gap-4 sm:px-5">
+      {/* 左色脊（生命徵象通道識別） */}
+      <span aria-hidden="true" className="absolute inset-y-3 left-0 w-1 rounded-full" style={{ background: TONE_COLOR[tone], opacity: hasReading ? 0.9 : 0.3 }} />
+      <span className={cx('flex h-9 w-9 shrink-0 items-center justify-center rounded-xl', TONE_CHIP[tone])}>
+        <Icon size={16} aria-hidden="true" />
+      </span>
+
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-1.5">
+          <span className="text-[11px] font-medium uppercase tracking-wide text-slate-400 dark:text-slate-500">{label}</span>
+          {status && (
+            <span
+              className={cx(
+                'inline-flex items-center gap-0.5 rounded-full px-1.5 py-px text-[10px] font-semibold',
+                status.ok
+                  ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-300'
+                  : 'bg-slate-100 text-slate-400 dark:bg-slate-700/60 dark:text-slate-400',
+              )}
+            >
+              {status.ok ? <CheckCircle2 size={10} /> : <CircleDashed size={10} />}
+              {status.label}
+            </span>
+          )}
+        </div>
+        <p className="mt-0.5 flex items-baseline gap-1">
+          <span className={cx('font-serif text-[26px] font-semibold leading-none tabular-nums slashed-zero', hasReading ? 'text-slate-800 dark:text-slate-100' : 'text-slate-300 dark:text-slate-600')}>
             {value}
           </span>
-          {unit && <span className="text-sm font-medium text-slate-400">{unit}</span>}
+          {unit && hasReading && <span className="text-xs font-medium text-slate-400 dark:text-slate-500">{unit}</span>}
           {trend && trend.dir !== 'flat' && (
             <span
               className={cx(
-                'ml-auto inline-flex items-center gap-0.5 text-xs font-semibold tabular-nums',
+                'inline-flex items-center gap-0.5 text-[11px] font-semibold tabular-nums',
                 trend.dir === 'up' ? 'text-emerald-500' : 'text-rose-500',
               )}
             >
-              {trend.dir === 'up' ? <ArrowUpRight size={13} /> : <ArrowDownRight size={13} />}
+              {trend.dir === 'up' ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}
               {trend.value}
             </span>
           )}
         </p>
         {progress != null && (
-          <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-700/60">
+          <div className="mt-2 h-1 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-700/60">
             <div
-              className={cx(
-                'h-full rounded-full transition-all duration-500',
-                progress >= 100 ? 'bg-emerald-500' : 'bg-accent',
-              )}
+              className={cx('h-full rounded-full transition-all duration-500', progress >= 100 ? 'bg-emerald-500' : 'bg-accent')}
               style={{ width: `${Math.min(100, Math.max(0, progress))}%` }}
             />
           </div>
         )}
-        {hint && <p className="mt-1 truncate text-[11px] text-slate-400 dark:text-slate-500">{hint}</p>}
+      </div>
+
+      {/* 微縮趨勢（窄屏收窄寬度，避免擠迫 / 溢出） */}
+      <div className="shrink-0 self-center">
+        <Sparkline points={spark} tone={tone} width={72} height={28} className="sm:hidden" />
+        <Sparkline points={spark} tone={tone} width={104} height={30} className="hidden sm:block" />
       </div>
     </div>
   )
+}
+
+// ───────── 臨床 masthead 日期（YYYY 年 M 月 D 日 · 星期X）─────────
+const WD_FULL = ['日', '一', '二', '三', '四', '五', '六']
+function longDateLabel(key: string): string {
+  const [y, m, d] = key.split('-').map(Number)
+  const dow = new Date(y, (m || 1) - 1, d || 1).getDay()
+  return `${y} 年 ${m} 月 ${d} 日 · 星期${WD_FULL[dow] ?? ''}`
 }
 
 export default function HealthTracker() {
@@ -185,40 +288,146 @@ export default function HealthTracker() {
 
   const hasAny = logs.length > 0
 
+  // 生命徵象 sparkline 序列（近 14 日逐日；運動用 7 日柱列嘅值）。純衍生。
+  const spark = useMemo(
+    () => ({
+      weight: seriesOf(logs, 'weightKg', 14).map((p) => p.value),
+      sleep: seriesOf(logs, 'sleepHrs', 14).map((p) => p.value),
+      mood: seriesOf(logs, 'mood', 14).map((p) => p.value),
+      exercise: exerciseWeek.map((d) => d.value),
+    }),
+    [logs, exerciseWeek],
+  )
+
   return (
-    <div className="space-y-5">
-      {/* ── 今日記錄 ── */}
+    <div className="space-y-6">
+      {/* ───────── 生命徵象 masthead（自管 header：kicker + serif 標題 + 今日狀態） ───────── */}
+      <header className="flex flex-wrap items-end justify-between gap-x-5 gap-y-4">
+        <div className="min-w-0">
+          <p className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.28em] text-accent/70">
+            <HeartPulse size={13} aria-hidden="true" />
+            生命徵象 · Vitals
+          </p>
+          <h1 className="mt-1.5 font-serif text-[28px] font-semibold leading-tight tracking-tight text-slate-800 dark:text-slate-100 sm:text-[32px]">
+            健康追蹤
+          </h1>
+          <p className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-slate-500 dark:text-slate-400">
+            <span className="tabular-nums">{longDateLabel(today)}</span>
+            {summary.streak > 0 && (
+              <>
+                <span aria-hidden="true" className="text-slate-300 dark:text-slate-600">·</span>
+                <span className="inline-flex items-center gap-1 font-medium text-amber-600 dark:text-amber-400">
+                  <Flame size={12} aria-hidden="true" /> 連續記錄 {summary.streak} 日
+                </span>
+              </>
+            )}
+          </p>
+        </div>
+        <div className="flex shrink-0 items-center gap-2">
+          {/* 今日狀態指示（臨床監測燈號） */}
+          <span
+            className={cx(
+              'inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium',
+              summary.loggedToday
+                ? 'bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-200 dark:bg-emerald-500/15 dark:text-emerald-300 dark:ring-emerald-500/20'
+                : 'bg-slate-100 text-slate-500 ring-1 ring-inset ring-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:ring-slate-700',
+            )}
+          >
+            <span aria-hidden="true" className={cx('relative flex h-2 w-2', summary.loggedToday && 'text-emerald-500')}>
+              <span className={cx('absolute inline-flex h-full w-full rounded-full', summary.loggedToday ? 'animate-ping bg-emerald-400/60' : 'bg-slate-300 dark:bg-slate-600')} />
+              <span className={cx('relative inline-flex h-2 w-2 rounded-full', summary.loggedToday ? 'bg-emerald-500' : 'bg-slate-400 dark:bg-slate-500')} />
+            </span>
+            {summary.loggedToday ? '今日已記錄' : '今日待記錄'}
+          </span>
+          <Button variant="secondary" size="sm" icon={Target} onClick={() => setGoalsOpen(true)}>
+            目標
+          </Button>
+        </div>
+      </header>
+
+      {/* ───────── 生命徵象面板（vitals monitor：hairline 分隔 + sparkline 讀數） ───────── */}
+      <Card className="animate-fade-in overflow-hidden">
+        <div className="flex items-center justify-between gap-3 border-b border-slate-200/70 bg-slate-50/60 px-4 py-3 dark:border-slate-700/60 dark:bg-slate-800/40 sm:px-5">
+          <div className="flex items-center gap-2">
+            <Activity size={15} className="text-accent" aria-hidden="true" />
+            <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">今日讀數</h2>
+            <span className="text-[11px] text-slate-400 dark:text-slate-500">近 14 日趨勢</span>
+          </div>
+          <span className="hidden text-[11px] text-slate-400 dark:text-slate-500 sm:inline">即時更新</span>
+        </div>
+        <div className="divide-y divide-slate-100 dark:divide-slate-700/50">
+          <VitalRow
+            icon={Scale}
+            tone="accent"
+            label="體重"
+            value={summary.weightKg != null ? summary.weightKg.toFixed(1) : '—'}
+            unit="kg"
+            spark={spark.weight}
+            trend={
+              summary.weightDelta7 != null
+                ? {
+                    value: `${summary.weightDelta7 > 0 ? '+' : ''}${summary.weightDelta7.toFixed(1)}kg`,
+                    dir: summary.weightDelta7 < 0 ? 'down' : summary.weightDelta7 > 0 ? 'up' : 'flat',
+                  }
+                : undefined
+            }
+          />
+          <VitalRow
+            icon={Moon}
+            tone="indigo"
+            label="睡眠 · 7 日均"
+            value={summary.sleepAvg7 != null ? summary.sleepAvg7.toFixed(1) : '—'}
+            unit="小時"
+            spark={spark.sleep}
+            status={
+              summary.sleepAvg7 != null
+                ? { label: `目標 ${goals.sleepTargetHrs}h`, ok: summary.sleepAvg7 >= goals.sleepTargetHrs }
+                : undefined
+            }
+          />
+          <VitalRow
+            icon={Dumbbell}
+            tone="emerald"
+            label="本週運動"
+            value={summary.exerciseWeek}
+            unit="分鐘"
+            spark={spark.exercise}
+            progress={summary.exercisePct}
+            status={{ label: `目標 ${goals.exerciseTargetMin} 分鐘`, ok: summary.exercisePct >= 100 }}
+          />
+          <VitalRow
+            icon={Smile}
+            tone="amber"
+            label="心情 · 7 日均"
+            value={summary.moodAvg7 != null ? summary.moodAvg7.toFixed(1) : '—'}
+            unit="/5"
+            spark={spark.mood}
+          />
+        </div>
+      </Card>
+
+      {/* ───────── 今日記錄（臨床入錄表） ───────── */}
       <Card className="p-4 sm:p-5">
         <div className="mb-4 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2.5">
             <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
-              <Flame size={18} aria-hidden="true" />
+              <HeartPulse size={18} aria-hidden="true" />
             </span>
             <div>
-              <h2 className="text-base font-bold text-slate-800 dark:text-slate-100">今日記錄</h2>
+              <h2 className="text-base font-bold text-slate-800 dark:text-slate-100">今日入錄</h2>
               <p className="text-xs text-slate-500 dark:text-slate-400">記低今日身體狀態</p>
             </div>
-            {summary.streak > 0 && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-1 text-xs font-semibold tabular-nums text-amber-700 ring-1 ring-inset ring-amber-200 dark:bg-amber-500/15 dark:text-amber-300 dark:ring-amber-500/20">
-                <Flame size={12} aria-hidden="true" /> 連續 {summary.streak} 日
-              </span>
-            )}
           </div>
-          <div className="flex shrink-0 items-center gap-1.5">
-            <Button
-              variant="ghost"
-              size="sm"
-              icon={Download}
-              onClick={exportCsv}
-              disabled={!hasAny}
-              title="匯出全部每日記錄做 CSV"
-            >
-              匯出
-            </Button>
-            <Button variant="ghost" size="sm" icon={Target} onClick={() => setGoalsOpen(true)}>
-              目標
-            </Button>
-          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            icon={Download}
+            onClick={exportCsv}
+            disabled={!hasAny}
+            title="匯出全部每日記錄做 CSV"
+          >
+            匯出
+          </Button>
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
@@ -306,8 +515,13 @@ export default function HealthTracker() {
 
         {/* 心情 */}
         <div className="mt-4">
-          <div className="mb-1.5 flex items-center gap-1.5 text-sm font-medium text-slate-600 dark:text-slate-300">
-            <Smile size={15} className="text-amber-500" aria-hidden="true" /> 今日心情
+          <div className="mb-1.5 flex items-center justify-between gap-2">
+            <div className="flex items-center gap-1.5 text-sm font-medium text-slate-600 dark:text-slate-300">
+              <Smile size={15} className="text-amber-500" aria-hidden="true" /> 今日心情
+            </div>
+            <span className="text-xs text-amber-600 dark:text-amber-400" aria-live="polite">
+              {todayLog?.mood ? MOOD_LABELS[todayLog.mood - 1] : '撳一個面色記低'}
+            </span>
           </div>
           <div className="flex gap-2">
             {MOOD_EMOJI.map((emoji, i) => {
@@ -317,14 +531,14 @@ export default function HealthTracker() {
                 <button
                   key={v}
                   type="button"
-                  aria-label={`心情 ${v} / 5`}
+                  aria-label={`心情 ${MOOD_LABELS[i]}（${v} / 5）`}
                   aria-pressed={on}
                   onClick={() => set({ mood: v })}
                   className={cx(
                     'flex h-11 flex-1 items-center justify-center rounded-xl border text-xl transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
                     on
                       ? 'border-amber-300 bg-amber-50 shadow-sm dark:border-amber-500/40 dark:bg-amber-500/15'
-                      : 'border-slate-200 hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800',
+                      : 'border-slate-200 opacity-80 hover:bg-slate-50 hover:opacity-100 dark:border-slate-700 dark:hover:bg-slate-800',
                   )}
                 >
                   {emoji}
@@ -346,53 +560,6 @@ export default function HealthTracker() {
         </div>
       </Card>
 
-      {/* ── KPI 概覽（bento 指標磚）── */}
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <MetricTile
-          icon={Scale}
-          tone="accent"
-          label="體重"
-          value={summary.weightKg != null ? summary.weightKg.toFixed(1) : '—'}
-          unit={summary.weightKg != null ? 'kg' : undefined}
-          hint={summary.weightKg == null ? '記低今日體重' : '近 7 日變化'}
-          trend={
-            summary.weightDelta7 != null
-              ? {
-                  value: `${summary.weightDelta7 > 0 ? '+' : ''}${summary.weightDelta7.toFixed(1)}kg`,
-                  dir: summary.weightDelta7 < 0 ? 'down' : summary.weightDelta7 > 0 ? 'up' : 'flat',
-                }
-              : undefined
-          }
-        />
-        <MetricTile
-          icon={Moon}
-          tone="indigo"
-          label="睡眠 · 7 日均"
-          value={summary.sleepAvg7 != null ? summary.sleepAvg7.toFixed(1) : '—'}
-          unit={summary.sleepAvg7 != null ? '小時' : undefined}
-          hint={`目標 ${goals.sleepTargetHrs} 小時`}
-          highlight={summary.sleepAvg7 != null && summary.sleepAvg7 >= goals.sleepTargetHrs}
-        />
-        <MetricTile
-          icon={Dumbbell}
-          tone="emerald"
-          label="本週運動"
-          value={summary.exerciseWeek}
-          unit="分鐘"
-          hint={`目標 ${goals.exerciseTargetMin} 分鐘`}
-          progress={summary.exercisePct}
-          highlight={summary.exercisePct >= 100}
-        />
-        <MetricTile
-          icon={Smile}
-          tone="amber"
-          label="心情 · 7 日均"
-          value={summary.moodAvg7 != null ? summary.moodAvg7.toFixed(1) : '—'}
-          unit={summary.moodAvg7 != null ? '/5' : undefined}
-          hint={summary.moodAvg7 == null ? '今日心情如何？' : '近 7 日平均'}
-        />
-      </div>
-
       {/* ── 趨勢 ── */}
       {hasAny ? (
         <Card className="p-4 sm:p-5">
@@ -402,7 +569,7 @@ export default function HealthTracker() {
                 <TrendingUp size={18} aria-hidden="true" />
               </span>
               <div>
-                <h2 className="text-base font-bold text-slate-800 dark:text-slate-100">趨勢</h2>
+                <h2 className="text-base font-bold text-slate-800 dark:text-slate-100">趨勢圖譜</h2>
                 <p className="text-xs text-slate-500 dark:text-slate-400">睇吓近期變化</p>
               </div>
             </div>
@@ -510,20 +677,22 @@ function Stepper({
 
 function TrendBlock({
   title,
+  tone,
   unit,
   children,
 }: {
   title: string
-  tone: string
+  tone: Exclude<Tone, 'rose'>
   unit: string
   decimals?: number
   children: React.ReactNode
 }) {
   return (
-    <div className="rounded-2xl bg-slate-50/60 p-3 dark:bg-slate-800/40">
-      <div className="mb-2 flex items-center justify-between">
-        <span className="min-w-0 break-words text-sm font-semibold text-slate-700 dark:text-slate-200">
-          {title}
+    <div className="rounded-2xl border border-slate-200/70 bg-slate-50/50 p-3.5 dark:border-slate-700/50 dark:bg-slate-800/40">
+      <div className="mb-2.5 flex items-center justify-between">
+        <span className="flex min-w-0 items-center gap-1.5 text-sm font-semibold text-slate-700 dark:text-slate-200">
+          <span aria-hidden="true" className="h-2 w-2 shrink-0 rounded-full" style={{ background: TONE_COLOR[tone] }} />
+          <span className="min-w-0 break-words">{title}</span>
         </span>
         <span className="ml-2 shrink-0 rounded-full bg-white px-2 py-0.5 text-[11px] font-medium text-slate-500 ring-1 ring-inset ring-slate-200/70 dark:bg-slate-800 dark:text-slate-400 dark:ring-slate-700/60">
           {unit}

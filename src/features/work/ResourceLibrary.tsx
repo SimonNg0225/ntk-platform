@@ -8,6 +8,7 @@ import {
   ExternalLink,
   FolderPlus,
   Inbox,
+  Layers,
   LayoutGrid,
   Library,
   Link2Off,
@@ -19,6 +20,7 @@ import {
   Sparkles,
   SquareKanban,
   Star,
+  TrendingUp,
   Trash2,
   X,
 } from 'lucide-react'
@@ -29,7 +31,6 @@ import type { Resource, ResourceType } from '../../data/types'
 import {
   Badge,
   Button,
-  Card,
   EmptyState,
   Field,
   IconButton,
@@ -166,6 +167,124 @@ function ViewSwitcher({
   )
 }
 
+// 典藏簿統計帶：館藏 / 收藏 / 借閱 / 連結健康（hairline grid，serif 大數字；
+// 借閱用 accent 高亮做主指標，連結有失效時轉暖色提醒）
+function CensusStrip({
+  census,
+}: {
+  census: {
+    total: number
+    opens: number
+    favorites: number
+    withLink: number
+    broken: number
+  }
+}) {
+  const cells: {
+    label: string
+    value: number | string
+    unit?: string
+    icon: LucideIcon
+    hint: string
+    tone: 'accent' | 'amber' | 'rose' | 'plain'
+  }[] = [
+    {
+      label: '館藏總數',
+      value: census.total,
+      unit: '項',
+      icon: Layers,
+      hint: census.total > 0 ? '已分門別類收好' : '由第一項開始',
+      tone: 'accent',
+    },
+    {
+      label: '累計借閱',
+      value: census.opens,
+      unit: '次',
+      icon: TrendingUp,
+      hint: `${census.withLink} 項可開啟`,
+      tone: 'plain',
+    },
+    {
+      label: '收藏',
+      value: census.favorites,
+      unit: '項',
+      icon: Star,
+      hint: census.favorites > 0 ? '加星嘅常用教材' : '撳星收藏常用',
+      tone: 'amber',
+    },
+    {
+      label: '連結健康',
+      value: census.broken > 0 ? census.broken : '良好',
+      unit: census.broken > 0 ? '失效' : undefined,
+      icon: Link2Off,
+      hint: census.broken > 0 ? '撳「失效連結」抽屜整理' : '未見失效連結',
+      tone: census.broken > 0 ? 'rose' : 'plain',
+    },
+  ]
+  return (
+    <section
+      aria-label="典藏總覽"
+      className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl bg-slate-200/70 ring-1 ring-slate-200/80 dark:bg-slate-700/50 dark:ring-slate-700/60 sm:grid-cols-4"
+    >
+      {cells.map((c) => {
+        const I = c.icon
+        const hot = c.tone !== 'plain'
+        const labelTone =
+          c.tone === 'amber'
+            ? 'text-amber-600/80 dark:text-amber-400/80'
+            : c.tone === 'rose'
+              ? 'text-rose-600/80 dark:text-rose-400/80'
+              : c.tone === 'accent'
+                ? 'text-accent/80'
+                : 'text-slate-400 dark:text-slate-500'
+        const valueTone =
+          c.tone === 'amber'
+            ? 'text-amber-600 dark:text-amber-400'
+            : c.tone === 'rose'
+              ? 'text-rose-600 dark:text-rose-400'
+              : c.tone === 'accent'
+                ? 'text-accent-strong dark:text-accent'
+                : 'text-slate-800 dark:text-slate-100'
+        const bg =
+          c.tone === 'rose'
+            ? 'bg-rose-50 dark:bg-rose-500/10'
+            : c.tone === 'accent'
+              ? 'bg-accent-soft dark:bg-accent/15'
+              : 'bg-white dark:bg-slate-800'
+        return (
+          <div key={c.label} className={cx('px-4 py-3.5 transition-colors', bg)}>
+            <p
+              className={cx(
+                'flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide',
+                labelTone,
+              )}
+            >
+              <I size={12} className={cx('shrink-0', hot ? '' : 'opacity-80')} />
+              <span className="truncate">{c.label}</span>
+            </p>
+            <p
+              className={cx(
+                'mt-1 font-serif text-[26px] font-semibold leading-none tabular-nums slashed-zero',
+                valueTone,
+              )}
+            >
+              {c.value}
+              {c.unit && (
+                <span className="ml-1 font-sans text-sm font-normal text-slate-400">
+                  {c.unit}
+                </span>
+              )}
+            </p>
+            <p className="mt-1 truncate text-[11px] text-slate-400 dark:text-slate-500">
+              {c.hint}
+            </p>
+          </div>
+        )
+      })}
+    </section>
+  )
+}
+
 export default function ResourceLibrary() {
   const resources = useCollection(resourcesCol)
   const topics = useCollection(topicsCol)
@@ -217,6 +336,21 @@ export default function ResourceLibrary() {
       if (!r.meta.archived && r.meta.folderId)
         m.set(r.meta.folderId, (m.get(r.meta.folderId) ?? 0) + 1)
     return m
+  }, [allRows])
+
+  // 典藏總覽（masthead census 帶）：館藏總數、累計借閱（開啟）、收藏、連結健康度
+  const census = useMemo(() => {
+    const live = allRows.filter((r) => !r.meta.archived)
+    const opens = live.reduce((s, r) => s + r.meta.opens, 0)
+    const withLink = live.filter((r) => !!r.res.url).length
+    const broken = live.filter((r) => r.meta.broken).length
+    return {
+      total: live.length,
+      opens,
+      favorites: live.filter((r) => r.meta.favorite).length,
+      withLink,
+      broken,
+    }
   }, [allRows])
 
   // 鍵盤：/ 聚焦搜尋、n 新增
@@ -329,20 +463,20 @@ export default function ResourceLibrary() {
     : undefined
 
   return (
-    <div className="space-y-4">
-      <header className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div className="flex items-start gap-3">
-          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
-            <Library size={22} strokeWidth={1.9} />
-          </span>
-          <div className="space-y-1">
-            <h1 className="text-xl font-semibold tracking-tight text-slate-800 dark:text-slate-100">
-              教學資源庫
-            </h1>
-            <p className="max-w-xl text-sm leading-relaxed text-slate-500 dark:text-slate-400">
-              用收藏夾整理講義、簡報、試題、連結同筆記，追蹤使用情況，一搜即搵返常用教材。
-            </p>
-          </div>
+    <div className="space-y-5">
+      {/* ───────── 典藏 masthead：館名牌（serif 大標題 + 借閱卡概念） ───────── */}
+      <header className="flex flex-wrap items-end justify-between gap-x-4 gap-y-3">
+        <div className="min-w-0">
+          <p className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.3em] text-accent/70">
+            <Library size={13} strokeWidth={2} />
+            典藏目錄 · Archive
+          </p>
+          <h1 className="mt-1 font-serif text-2xl font-semibold leading-tight tracking-tight text-slate-800 dark:text-slate-100 sm:text-[28px]">
+            教學資源庫
+          </h1>
+          <p className="mt-1.5 max-w-xl text-sm leading-relaxed text-slate-500 dark:text-slate-400">
+            講義、簡報、試題、連結同筆記，分門別類收入抽屜；貼條連結就自動建檔，幾時想用一搜即返。
+          </p>
         </div>
         <div className="flex shrink-0 items-center gap-2">
           <Tooltip label="管理收藏夾">
@@ -359,6 +493,9 @@ export default function ResourceLibrary() {
           </Button>
         </div>
       </header>
+
+      {/* ───────── 典藏簿：細口統計帶（hairline grid · serif 大數字） ───────── */}
+      <CensusStrip census={census} />
 
       <div className="flex flex-col gap-4 lg:flex-row">
         {/* ─── 側欄：智能視圖 + 收藏夾 ─── */}
@@ -517,8 +654,8 @@ export default function ResourceLibrary() {
               <EmptyState
                 icon={BookMarked}
                 art="empty-resources"
-                title="未有符合嘅資源"
-                hint="撳「新增資源」開始建立你嘅教材庫，貼條連結就會自動幫你猜類型；或者調整下篩選條件。"
+                title="呢格抽屜暫時係空嘅"
+                hint="撳「新增資源」開始建檔，貼條連結就會自動幫你猜類型歸類；又或者調整下篩選，睇返其他抽屜。"
                 action={
                   <Button icon={Plus} onClick={() => setShowAdd(true)}>
                     新增資源
@@ -616,57 +753,68 @@ function Sidebar({
 }) {
   const ordered = [...folders].sort((a, b) => a.order - b.order)
   return (
-    <aside className="shrink-0 space-y-4 lg:w-56">
-      {/* 智能視圖 */}
-      <nav
-        aria-label="智能視圖"
-        className="flex gap-1.5 overflow-x-auto lg:flex-col lg:gap-0.5 lg:overflow-visible"
-      >
-        {SMART_VIEWS.map((v) => {
-          const on = filter.smart === v.id && filter.folderId === 'all'
-          const count = smartCounts[v.id]
-          return (
-            <button
-              key={v.id}
-              type="button"
-              onClick={() => patch({ smart: v.id, folderId: 'all' })}
-              aria-current={on ? 'page' : undefined}
-              className={cx(
-                'inline-flex shrink-0 items-center gap-2 rounded-xl px-2.5 py-2 text-sm font-medium transition lg:w-full',
-                on
-                  ? 'bg-accent-soft text-accent-strong shadow-xs dark:bg-accent/15 dark:text-accent dark:shadow-none'
-                  : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800',
-              )}
-            >
-              <v.icon size={16} strokeWidth={1.9} />
-              <span className="flex-1 text-left">{v.label}</span>
-              <span
+    <aside className="shrink-0 space-y-5 lg:w-56">
+      {/* 快速抽屜（智能視圖） */}
+      <div>
+        <p className="mb-1.5 hidden items-center gap-1.5 px-2.5 text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 lg:flex">
+          <Inbox size={12} />
+          快速抽屜
+        </p>
+        <nav
+          aria-label="智能視圖"
+          className="flex gap-1.5 overflow-x-auto pb-0.5 lg:flex-col lg:gap-0.5 lg:overflow-visible lg:pb-0"
+        >
+          {SMART_VIEWS.map((v) => {
+            const on = filter.smart === v.id && filter.folderId === 'all'
+            const count = smartCounts[v.id]
+            return (
+              <button
+                key={v.id}
+                type="button"
+                onClick={() => patch({ smart: v.id, folderId: 'all' })}
+                aria-current={on ? 'page' : undefined}
                 className={cx(
-                  'tabular-nums text-xs',
-                  on ? 'text-accent-strong/70 dark:text-accent/70' : 'text-slate-400',
+                  'group inline-flex shrink-0 items-center gap-2 rounded-xl px-2.5 py-2 text-sm font-medium transition lg:w-full lg:border-l-2 lg:pl-3',
+                  on
+                    ? 'bg-accent-soft text-accent-strong shadow-xs dark:bg-accent/15 dark:text-accent dark:shadow-none lg:border-accent'
+                    : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 lg:border-transparent',
                 )}
               >
-                {count}
-              </span>
-            </button>
-          )
-        })}
-      </nav>
+                <v.icon size={16} strokeWidth={1.9} className="shrink-0" />
+                <span className="flex-1 text-left">{v.label}</span>
+                <span
+                  className={cx(
+                    'tabular-nums text-xs',
+                    on
+                      ? 'text-accent-strong/70 dark:text-accent/70'
+                      : 'text-slate-400',
+                  )}
+                >
+                  {count}
+                </span>
+              </button>
+            )
+          })}
+        </nav>
+      </div>
 
-      {/* 收藏夾 */}
+      {/* 收藏抽屜（folders） */}
       <div className="hidden lg:block">
         <div className="mb-1.5 flex items-center justify-between px-2.5">
-          <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-            收藏夾
+          <span className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+            <BookMarked size={12} />
+            收藏抽屜
           </span>
-          <button
-            type="button"
-            onClick={onManageFolders}
-            className="rounded p-0.5 text-slate-400 transition hover:text-slate-600 dark:hover:text-slate-300"
-            aria-label="管理收藏夾"
-          >
-            <FolderPlus size={14} />
-          </button>
+          <Tooltip label="管理收藏夾" side="left">
+            <button
+              type="button"
+              onClick={onManageFolders}
+              className="rounded p-0.5 text-slate-400 transition hover:text-slate-600 dark:hover:text-slate-300"
+              aria-label="管理收藏夾"
+            >
+              <FolderPlus size={14} />
+            </button>
+          </Tooltip>
         </div>
         <div className="space-y-0.5">
           <FolderRow
@@ -794,133 +942,143 @@ function GridView({
 }) {
   return (
     <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-      {rows.map(({ res, meta, domain }) => {
+      {rows.map(({ res, meta, domain }, i) => {
         const isSel = selected.has(res.id)
+        const tc = TYPE_COLOR[res.type]
         return (
-          <Card
+          <article
             key={res.id}
             className={cx(
-              'group relative flex flex-col rounded-3xl p-4 transition duration-200',
+              'group relative flex animate-fade-in-up flex-col overflow-hidden rounded-3xl border bg-white shadow-xs transition duration-200 dark:bg-slate-800 dark:shadow-none',
               isSel
                 ? 'border-accent/50 ring-2 ring-accent ring-offset-1 ring-offset-white dark:ring-offset-slate-900'
-                : 'hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md dark:hover:border-slate-600',
+                : 'border-slate-200/80 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md dark:border-slate-700/60 dark:hover:border-slate-600',
               meta.broken && 'opacity-80',
             )}
+            style={{ animationDelay: `${Math.min(i, 11) * 35}ms` }}
           >
-            {/* 選取角 */}
-            <button
-              type="button"
-              onClick={() => onToggleSelect(res.id)}
-              className={cx(
-                'absolute left-3 top-3 z-10 rounded-md transition focus-visible:opacity-100',
-                isSel
-                  ? 'text-accent opacity-100'
-                  : 'text-slate-300 opacity-0 hover:text-slate-500 group-hover:opacity-100 dark:text-slate-600',
-              )}
-              aria-pressed={isSel}
-              aria-label={isSel ? `取消選取「${res.title}」` : `選取「${res.title}」`}
-            >
-              <CheckSquare size={18} className={cx(isSel && 'fill-accent/15')} />
-            </button>
+            {/* 類型書脊（左緣彩條，一眼分到館藏類別） */}
+            <span
+              aria-hidden="true"
+              className={cx('absolute inset-y-0 left-0 w-1', tc.dot)}
+            />
 
-            <div className="flex items-start justify-between pl-7">
-              <span className="transition duration-200 group-hover:scale-105">
-                <TypeIconBox type={res.type} />
-              </span>
-              <div className="flex items-center gap-0.5">
-                <Tooltip label={meta.favorite ? '取消收藏' : '收藏'}>
-                  <IconButton
-                    label="收藏"
-                    size="sm"
-                    active={meta.favorite}
-                    onClick={() => onToggleFav(res.id, !meta.favorite)}
-                  >
-                    <Star
-                      size={15}
-                      className={cx(meta.favorite && 'fill-amber-400 text-amber-400')}
-                    />
-                  </IconButton>
-                </Tooltip>
-                <Tooltip label="詳情">
-                  <IconButton label="詳情" size="sm" onClick={() => onDetail(res.id)}>
-                    <MoreVertical size={15} />
-                  </IconButton>
-                </Tooltip>
-              </div>
-            </div>
+            <div className="flex flex-1 flex-col p-4 pl-5">
+              {/* 選取角 */}
+              <button
+                type="button"
+                onClick={() => onToggleSelect(res.id)}
+                className={cx(
+                  'absolute left-3 top-3 z-10 rounded-md transition focus-visible:opacity-100',
+                  isSel
+                    ? 'text-accent opacity-100'
+                    : 'text-slate-300 opacity-0 hover:text-slate-500 group-hover:opacity-100 dark:text-slate-600',
+                )}
+                aria-pressed={isSel}
+                aria-label={isSel ? `取消選取「${res.title}」` : `選取「${res.title}」`}
+              >
+                <CheckSquare size={18} className={cx(isSel && 'fill-accent/15')} />
+              </button>
 
-            <button
-              type="button"
-              onClick={() => onDetail(res.id)}
-              className="mt-3 w-full break-words rounded text-left text-[15px] font-semibold leading-snug text-slate-800 transition-colors hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:text-slate-100 dark:hover:text-accent"
-            >
-              {res.title}
-            </button>
-
-            <div className="mt-2 flex flex-wrap items-center gap-1.5">
-              <TypeChip type={res.type} />
-              {res.topicId && (
-                <span className="inline-flex items-center rounded-md bg-slate-100 px-2 py-0.5 text-[11px] text-slate-500 dark:bg-slate-700/60 dark:text-slate-400">
-                  {topicName(res.topicId)}
+              <div className="flex items-start justify-between pl-7">
+                <span className="transition duration-200 group-hover:scale-105">
+                  <TypeIconBox type={res.type} />
                 </span>
-              )}
-              {meta.broken && (
-                <Badge tone="rose" icon={Link2Off}>
-                  失效
-                </Badge>
-              )}
-            </div>
-
-            {(meta.rating ?? 0) > 0 && (
-              <div className="mt-2">
-                <StarRating value={meta.rating ?? 0} />
+                <div className="flex items-center gap-0.5">
+                  <Tooltip label={meta.favorite ? '取消收藏' : '收藏'}>
+                    <IconButton
+                      label="收藏"
+                      size="sm"
+                      active={meta.favorite}
+                      onClick={() => onToggleFav(res.id, !meta.favorite)}
+                    >
+                      <Star
+                        size={15}
+                        className={cx(meta.favorite && 'fill-amber-400 text-amber-400')}
+                      />
+                    </IconButton>
+                  </Tooltip>
+                  <Tooltip label="詳情">
+                    <IconButton label="詳情" size="sm" onClick={() => onDetail(res.id)}>
+                      <MoreVertical size={15} />
+                    </IconButton>
+                  </Tooltip>
+                </div>
               </div>
-            )}
 
-            {res.notes && (
-              <p className="mt-2 line-clamp-2 break-words text-xs leading-relaxed text-slate-500 dark:text-slate-400">
-                {res.notes}
-              </p>
-            )}
+              <button
+                type="button"
+                onClick={() => onDetail(res.id)}
+                className="mt-3 w-full break-words rounded text-left text-[15px] font-semibold leading-snug text-slate-800 transition-colors hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:text-slate-100 dark:hover:text-accent"
+              >
+                {res.title}
+              </button>
 
-            {res.tags && res.tags.length > 0 && (
-              <div className="mt-2.5 flex flex-wrap gap-1">
-                {res.tags.slice(0, 3).map((t) => (
-                  <span
-                    key={t}
-                    className="rounded-md bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-500 dark:bg-slate-800 dark:text-slate-400"
-                  >
-                    #{t}
+              <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                <TypeChip type={res.type} />
+                {res.topicId && (
+                  <span className="inline-flex items-center rounded-md bg-slate-100 px-2 py-0.5 text-[11px] text-slate-500 dark:bg-slate-700/60 dark:text-slate-400">
+                    {topicName(res.topicId)}
                   </span>
-                ))}
-                {res.tags.length > 3 && (
-                  <span className="self-center text-[10px] text-slate-400">
-                    +{res.tags.length - 3}
+                )}
+                {meta.broken && (
+                  <Badge tone="rose" icon={Link2Off}>
+                    失效
+                  </Badge>
+                )}
+              </div>
+
+              {(meta.rating ?? 0) > 0 && (
+                <div className="mt-2">
+                  <StarRating value={meta.rating ?? 0} />
+                </div>
+              )}
+
+              {res.notes && (
+                <p className="mt-2 line-clamp-2 break-words text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+                  {res.notes}
+                </p>
+              )}
+
+              {res.tags && res.tags.length > 0 && (
+                <div className="mt-2.5 flex flex-wrap gap-1">
+                  {res.tags.slice(0, 3).map((t) => (
+                    <span
+                      key={t}
+                      className="rounded-md bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-500 dark:bg-slate-800 dark:text-slate-400"
+                    >
+                      #{t}
+                    </span>
+                  ))}
+                  {res.tags.length > 3 && (
+                    <span className="self-center text-[10px] text-slate-400">
+                      +{res.tags.length - 3}
+                    </span>
+                  )}
+                </div>
+              )}
+
+              {/* 借閱卡 footer：貼底對齊，網域 + 借閱次數做檔案註腳 */}
+              <div className="mt-auto flex items-center justify-between gap-2 border-t border-dashed border-slate-200/90 pt-3 dark:border-slate-700/60">
+                <FaviconChip domain={domain} />
+                {res.url ? (
+                  <button
+                    type="button"
+                    onClick={() => onOpen(res)}
+                    aria-label={`開啟「${res.title}」（新分頁）`}
+                    className="inline-flex shrink-0 items-center gap-1 rounded-lg bg-accent-soft px-2.5 py-1 text-xs font-semibold text-accent-strong transition hover:bg-accent hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:bg-accent/15 dark:text-accent dark:hover:bg-accent dark:hover:text-white"
+                  >
+                    開啟
+                    <ExternalLink size={12} aria-hidden="true" />
+                  </button>
+                ) : (
+                  <span className="shrink-0 text-[11px] text-slate-400">
+                    {meta.opens > 0 ? `借閱 ${meta.opens} 次` : '純筆記'}
                   </span>
                 )}
               </div>
-            )}
-
-            {/* footer 貼底，令唔同高度嘅卡對齊 */}
-            <div className="mt-auto flex items-center justify-between gap-2 border-t border-slate-100 pt-3 dark:border-slate-700/60">
-              <FaviconChip domain={domain} />
-              {res.url ? (
-                <button
-                  type="button"
-                  onClick={() => onOpen(res)}
-                  aria-label={`開啟「${res.title}」（新分頁）`}
-                  className="inline-flex shrink-0 items-center gap-1 rounded-lg bg-accent-soft px-2.5 py-1 text-xs font-semibold text-accent-strong transition hover:bg-accent hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:bg-accent/15 dark:text-accent dark:hover:bg-accent dark:hover:text-white"
-                >
-                  開啟
-                  <ExternalLink size={12} aria-hidden="true" />
-                </button>
-              ) : (
-                <span className="shrink-0 text-[11px] text-slate-400">
-                  {meta.opens > 0 ? `開過 ${meta.opens} 次` : '純筆記'}
-                </span>
-              )}
             </div>
-          </Card>
+          </article>
         )
       })}
     </div>
@@ -1133,8 +1291,13 @@ function BoardView({
         return (
           <div
             key={col.id}
-            className="flex w-72 shrink-0 flex-col rounded-2xl border border-slate-200/80 bg-slate-50/60 dark:border-slate-700/60 dark:bg-slate-800/40"
+            className="flex w-72 shrink-0 flex-col overflow-hidden rounded-2xl border border-slate-200/80 bg-slate-50/60 dark:border-slate-700/60 dark:bg-slate-800/40"
           >
+            {/* 抽屜頂緣：收藏夾色條 + 名牌 */}
+            <span
+              aria-hidden="true"
+              className={cx('h-1 w-full', folderColor(col.color).dot)}
+            />
             <div className="flex items-center justify-between gap-2 border-b border-slate-200/80 px-3 py-2.5 dark:border-slate-700/60">
               <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-700 dark:text-slate-200">
                 <span className={cx('h-2.5 w-2.5 rounded-full', folderColor(col.color).dot)} />
@@ -1146,8 +1309,8 @@ function BoardView({
             </div>
             <div className="flex-1 space-y-2 overflow-y-auto p-2" style={{ maxHeight: '60vh' }}>
               {items.length === 0 ? (
-                <p className="px-2 py-8 text-center text-xs text-slate-400 dark:text-slate-500">
-                  用卡片選單將資源移到呢個收藏夾
+                <p className="px-3 py-8 text-center text-xs leading-relaxed text-slate-400 dark:text-slate-500">
+                  呢個抽屜仲空，喺其他卡片嘅選單揀「移到呢度」歸檔。
                 </p>
               ) : (
                 items.map(({ res, meta, domain }) => (
@@ -1399,7 +1562,7 @@ function FolderManager({
         {/* 列表 */}
         {ordered.length === 0 ? (
           <p className="py-6 text-center text-sm text-slate-400 dark:text-slate-500">
-            仲未有收藏夾，喺上面開一個開始整理。
+            仲未有收藏抽屜，喺上面開一個開始歸類。
           </p>
         ) : (
           <ul className="space-y-1.5">

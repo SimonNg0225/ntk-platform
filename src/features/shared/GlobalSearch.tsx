@@ -89,7 +89,9 @@ import {
   Copy,
   PlusCircle,
   Hash,
-  Sparkles,
+  Radar,
+  SlidersHorizontal,
+  Command,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import {
@@ -627,44 +629,70 @@ export default function GlobalSearch() {
 
   return (
     <div className="space-y-4">
-      {/* 搜尋列 — 命令面板風：大圓角、accent focus 環、貼身清除掣 */}
-      <UICard className="overflow-hidden p-3 sm:p-4">
+      {/* ───────── 指揮中心 masthead：搜尋框即係主角（自管 header；功能名「全域搜尋」做身份） ─────────
+          探照燈隱喻：聚焦時打開 accent 光暈，輸入框升高、邊框點亮。 */}
+      <section className="group/cmd relative overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-xs transition-colors duration-300 focus-within:border-accent/40 dark:border-slate-700/60 dark:bg-slate-800 dark:shadow-none dark:focus-within:border-accent/40">
+        {/* 探照燈光暈（靜態，reduced-motion 無礙）：右上柔光 + 聚焦時加亮 */}
         <div
-          ref={searchBoxRef}
-          onKeyDown={onKeyDown}
-          className="group flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3 transition focus-within:border-accent focus-within:bg-white focus-within:ring-2 focus-within:ring-accent/25 dark:border-slate-700 dark:bg-slate-900/40 dark:focus-within:bg-slate-800"
-        >
-          <Search
-            size={20}
-            className="shrink-0 text-slate-400 transition-colors group-focus-within:text-accent"
-          />
-          <input
-            id="global-search"
-            autoFocus
-            type="text"
-            value={raw}
-            onChange={(e) => setRaw(e.target.value)}
-            placeholder="搜尋筆記、題庫、資源、班別、學生、行事曆…"
-            aria-label="全域搜尋"
-            className="min-w-0 flex-1 bg-transparent text-base sm:text-[15px] text-slate-800 outline-none placeholder:text-slate-400 dark:text-slate-100 dark:placeholder:text-slate-500"
-          />
-          {raw ? (
-            <button
-              type="button"
-              onClick={() => {
-                setRaw('')
-                setKindFilter('all')
-                focusInput()
-              }}
-              aria-label="清除搜尋"
-              className="shrink-0 rounded-full p-1 text-slate-400 transition hover:bg-slate-200/70 hover:text-slate-600 dark:hover:bg-slate-700 dark:hover:text-slate-200"
-            >
-              <X size={16} />
-            </button>
-          ) : (
-            <Kbd className="hidden shrink-0 sm:inline-flex">type:note</Kbd>
-          )}
-        </div>
+          aria-hidden="true"
+          className="pointer-events-none absolute -right-16 -top-24 h-64 w-64 rounded-full bg-accent/10 opacity-60 blur-3xl transition-opacity duration-500 group-focus-within/cmd:opacity-100 dark:bg-accent/20"
+        />
+        <div className="relative p-4 sm:p-5">
+          {/* 身份條：kicker + 功能名（取代 host 預設 header） */}
+          <div className="mb-3 flex items-center gap-2.5">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-accent text-white shadow-sm shadow-accent/30">
+              <Radar size={18} />
+            </span>
+            <div className="min-w-0">
+              <p className="text-[11px] font-medium uppercase tracking-[0.28em] text-accent/70">
+                指揮中心 · COMMAND
+              </p>
+              <h1 className="-mt-0.5 font-serif text-[22px] font-semibold leading-tight tracking-tight text-slate-800 dark:text-slate-100">
+                全域搜尋
+              </h1>
+            </div>
+            <Kbd className="ml-auto hidden shrink-0 items-center gap-1 sm:inline-flex">
+              <Command size={11} /> K
+            </Kbd>
+          </div>
+
+          {/* 探照燈輸入框 — 大、圓潤、聚焦點亮 */}
+          <div
+            ref={searchBoxRef}
+            onKeyDown={onKeyDown}
+            className="group/cmd flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3.5 transition duration-200 focus-within:-translate-y-0.5 focus-within:border-accent focus-within:bg-white focus-within:shadow-md focus-within:shadow-accent/10 focus-within:ring-2 focus-within:ring-accent/25 dark:border-slate-700 dark:bg-slate-900/40 dark:focus-within:bg-slate-800"
+          >
+            <Search
+              size={20}
+              className="shrink-0 text-slate-400 transition-colors group-focus-within/cmd:text-accent"
+            />
+            <input
+              id="global-search"
+              autoFocus
+              type="text"
+              value={raw}
+              onChange={(e) => setRaw(e.target.value)}
+              placeholder="搵筆記、題庫、資源、班別、學生、行事曆…"
+              aria-label="全域搜尋"
+              className="min-w-0 flex-1 bg-transparent text-base text-slate-800 outline-none placeholder:text-slate-400 dark:text-slate-100 dark:placeholder:text-slate-500 sm:text-[15px]"
+            />
+            {raw ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setRaw('')
+                  setKindFilter('all')
+                  focusInput()
+                }}
+                aria-label="清除搜尋"
+                className="shrink-0 rounded-full p-1 text-slate-400 transition hover:bg-slate-200/70 hover:text-slate-600 dark:hover:bg-slate-700 dark:hover:text-slate-200"
+              >
+                <X size={16} />
+              </button>
+            ) : (
+              <Kbd className="hidden shrink-0 sm:inline-flex">type:note</Kbd>
+            )}
+          </div>
 
         {/* type: 自動完成 — 打緊 type: 即喺輸入框下彈輕量建議列，撳即補全 */}
         {typeSugs.length > 0 && (
@@ -706,80 +734,82 @@ export default function GlobalSearch() {
           </div>
         )}
 
-        {/* 控制列 */}
-        <div className="mt-3 flex flex-wrap items-center gap-2">
-          <SegmentedControl
-            size="sm"
-            options={[
-              { id: 'grouped' as const, label: '分類' },
-              { id: 'ranked' as const, label: '最相關' },
-              { id: 'recent' as const, label: '最近' },
-            ]}
-            value={view}
-            onChange={setView}
-          />
-          <button
-            type="button"
-            onClick={() => setScopeMode((v) => !v)}
-            aria-pressed={scopeMode}
-            className={cx(
-              'inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-medium transition',
-              scopeMode
-                ? 'border-accent/30 bg-accent-soft text-accent-strong dark:border-accent/40 dark:bg-accent/15 dark:text-accent'
-                : 'border-slate-200 bg-white text-slate-500 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700',
-            )}
-          >
-            {scopeMode ? `只搜${mode === 'learning' ? '個人' : '工作'}模式` : '搜全部模式'}
-          </button>
-          <div className="flex-1" />
-          {hasQuery && (
-            <span
-              className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400"
-              aria-live="polite"
-              aria-atomic="true"
-            >
-              <Badge tone="accent" className="tabular-nums">
-                {total}
-              </Badge>
-              項命中
-              {raw.trim() && (
-                <Tooltip label={isPinned(query || raw, pins) ? '取消釘選' : '釘選此搜尋'}>
-                  <button
-                    type="button"
-                    onClick={() => togglePin(query || raw)}
-                    aria-label={isPinned(query || raw, pins) ? '取消釘選此搜尋' : '釘選此搜尋'}
-                    aria-pressed={isPinned(query || raw, pins)}
-                    className={cx(
-                      'rounded-md p-1 transition',
-                      isPinned(query || raw, pins)
-                        ? 'text-amber-500'
-                        : 'text-slate-300 hover:text-amber-500 dark:text-slate-600',
-                    )}
-                  >
-                    <Star size={14} className={isPinned(query || raw, pins) ? 'fill-amber-400' : ''} />
-                  </button>
-                </Tooltip>
+          {/* 控制台工具列：視圖切換 / 模式範圍 / 即時命中數（細線分隔，似儀錶帶） */}
+          <div className="mt-3.5 flex flex-wrap items-center gap-2 border-t border-slate-100 pt-3 dark:border-slate-700/60">
+            <SlidersHorizontal size={14} className="hidden text-slate-300 dark:text-slate-600 sm:block" />
+            <SegmentedControl
+              size="sm"
+              options={[
+                { id: 'grouped' as const, label: '分類' },
+                { id: 'ranked' as const, label: '最相關' },
+                { id: 'recent' as const, label: '最近' },
+              ]}
+              value={view}
+              onChange={setView}
+            />
+            <button
+              type="button"
+              onClick={() => setScopeMode((v) => !v)}
+              aria-pressed={scopeMode}
+              className={cx(
+                'inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-medium transition',
+                scopeMode
+                  ? 'border-accent/30 bg-accent-soft text-accent-strong dark:border-accent/40 dark:bg-accent/15 dark:text-accent'
+                  : 'border-slate-200 bg-white text-slate-500 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700',
               )}
-            </span>
+            >
+              {scopeMode ? `只搜${mode === 'learning' ? '個人' : '工作'}模式` : '搜全部模式'}
+            </button>
+            <div className="flex-1" />
+            {hasQuery && (
+              <span
+                className="flex items-center gap-1.5 text-xs font-medium text-slate-500 dark:text-slate-400"
+                aria-live="polite"
+                aria-atomic="true"
+              >
+                <span className="tabular-nums text-base font-semibold text-accent-strong dark:text-accent">
+                  {total}
+                </span>
+                項命中
+                {raw.trim() && (
+                  <Tooltip label={isPinned(query || raw, pins) ? '取消釘選' : '釘選此搜尋'}>
+                    <button
+                      type="button"
+                      onClick={() => togglePin(query || raw)}
+                      aria-label={isPinned(query || raw, pins) ? '取消釘選此搜尋' : '釘選此搜尋'}
+                      aria-pressed={isPinned(query || raw, pins)}
+                      className={cx(
+                        'rounded-md p-1 transition',
+                        isPinned(query || raw, pins)
+                          ? 'text-amber-500'
+                          : 'text-slate-300 hover:text-amber-500 dark:text-slate-600',
+                      )}
+                    >
+                      <Star size={14} className={isPinned(query || raw, pins) ? 'fill-amber-400' : ''} />
+                    </button>
+                  </Tooltip>
+                )}
+              </span>
+            )}
+          </div>
+
+          {/* 類別過濾 pills（有命中先顯示） */}
+          {hasQuery && pillOrder.length > 1 && (
+            <div className="mt-3">
+              <Pills
+                size="sm"
+                options={pillOrder.map((id) => ({
+                  id,
+                  label: id === 'all' ? '全部' : KIND_META[id].label,
+                }))}
+                counts={kindCounts}
+                active={kindFilter}
+                onChange={setKindFilter}
+              />
+            </div>
           )}
         </div>
-
-        {/* 類別過濾 pills（有命中先顯示） */}
-        {hasQuery && pillOrder.length > 1 && (
-          <div className="mt-3">
-            <Pills
-              size="sm"
-              options={pillOrder.map((id) => ({
-                id,
-                label: id === 'all' ? '全部' : KIND_META[id].label,
-              }))}
-              counts={kindCounts}
-              active={kindFilter}
-              onChange={setKindFilter}
-            />
-          </div>
-        )}
-      </UICard>
+      </section>
 
       {/* 主體：未輸入 → 最近 / 釘選；有輸入 → 結果 + 預覽 */}
       {!hasQuery ? (
@@ -796,12 +826,12 @@ export default function GlobalSearch() {
         />
       ) : total === 0 ? (
         <EmptyState
-          icon={HelpCircle}
-          title={`搵唔到「${query || raw}」`}
+          icon={Radar}
+          title={`掃唔到「${query || raw}」`}
           hint={
             scopeMode
-              ? '換個關鍵字、清除類別過濾，或者撳「搜全部模式」擴大範圍。又或者用呢句字快速建立：'
-              : '換個關鍵字、清除類別過濾。又或者用呢句字快速建立：'
+              ? '換個關鍵字、清除類別過濾，或者撳「搜全部模式」擴大探照範圍。又或者就用呢句字，即刻開一筆：'
+              : '換個關鍵字、清除類別過濾。又或者就用呢句字，即刻開一筆：'
           }
           action={
             <div className="flex flex-wrap items-center justify-center gap-2">
@@ -853,12 +883,15 @@ export default function GlobalSearch() {
                   const gTone = KIND_META[g.kindId].tone
                   return (
                     <UICard key={g.kindId} className="overflow-hidden">
-                      <div className="flex items-center gap-2 border-b border-slate-100 px-3 py-2.5 dark:border-slate-700/60">
-                        <Badge tone={gTone} icon={GIcon}>
+                      <div className="flex items-center gap-2.5 border-b border-slate-100 bg-slate-50/50 px-3 py-2.5 dark:border-slate-700/60 dark:bg-slate-900/30">
+                        <span className={cx('flex h-6 w-6 shrink-0 items-center justify-center rounded-lg', TONE_CHIP[gTone])}>
+                          <GIcon size={14} />
+                        </span>
+                        <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">
                           {g.label}
-                        </Badge>
-                        <span className="text-xs tabular-nums text-slate-400 dark:text-slate-500">
-                          {g.hits.length} 項
+                        </span>
+                        <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium tabular-nums text-slate-400 dark:bg-slate-700/60 dark:text-slate-500">
+                          {g.hits.length}
                         </span>
                       </div>
                       <div className="p-1.5">
@@ -971,17 +1004,25 @@ function ResultRow({
       onMouseEnter={onHover}
       onClick={onOpen}
       className={cx(
-        'group flex w-full items-start gap-3 rounded-lg px-2.5 py-2 text-left transition-colors',
+        'group relative flex w-full items-start gap-3 rounded-lg py-2 pl-3 pr-2.5 text-left transition-colors',
         active
           ? 'bg-accent-soft dark:bg-accent/15'
           : 'hover:bg-slate-50 dark:hover:bg-slate-700/40',
       )}
     >
+      {/* 聚焦光束：active 時左側 accent 軌條 */}
+      <span
+        aria-hidden="true"
+        className={cx(
+          'absolute inset-y-1.5 left-0 w-0.5 rounded-full bg-accent transition-opacity',
+          active ? 'opacity-100' : 'opacity-0',
+        )}
+      />
       <span
         className={cx(
-          'mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg',
+          'mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg transition-colors',
           active
-            ? 'bg-accent text-white'
+            ? 'bg-accent text-white shadow-sm shadow-accent/30'
             : 'bg-slate-100 text-slate-400 dark:bg-slate-700 dark:text-slate-400',
         )}
       >
@@ -1006,7 +1047,14 @@ function ResultRow({
             )}
           </span>
           {index < 9 && (
-            <Kbd className="ml-auto hidden shrink-0 sm:inline-flex">⌘{index + 1}</Kbd>
+            <Kbd
+              className={cx(
+                'ml-auto hidden shrink-0 transition-opacity sm:inline-flex',
+                active ? 'opacity-100' : 'opacity-40 group-hover:opacity-100',
+              )}
+            >
+              ⌘{index + 1}
+            </Kbd>
           )}
         </span>
         {snipSegs && (
@@ -1062,15 +1110,21 @@ function PreviewPanel({
     : null
   return (
     <UICard className="overflow-hidden">
-      <div className="flex items-start gap-3 border-b border-slate-100 p-4 dark:border-slate-700/60">
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
-          <Icon size={18} />
-        </span>
-        <div className="min-w-0 flex-1">
-          <Badge tone={hit.badgeTone}>{hit.kindLabel}</Badge>
-          <h3 className="mt-1.5 break-words text-sm font-semibold text-slate-800 dark:text-slate-100">
-            {hit.title}
-          </h3>
+      <div className="border-b border-slate-100 bg-slate-50/40 p-4 dark:border-slate-700/60 dark:bg-slate-900/30">
+        <p className="mb-2 flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-[0.22em] text-slate-400 dark:text-slate-500">
+          <Radar size={11} className="text-accent/70" />
+          鎖定 · PREVIEW
+        </p>
+        <div className="flex items-start gap-3">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
+            <Icon size={18} />
+          </span>
+          <div className="min-w-0 flex-1">
+            <Badge tone={hit.badgeTone}>{hit.kindLabel}</Badge>
+            <h3 className="mt-1.5 break-words text-sm font-semibold text-slate-800 dark:text-slate-100">
+              {hit.title}
+            </h3>
+          </div>
         </div>
       </div>
 
@@ -1141,8 +1195,42 @@ function StartScreen({
   onUnpin: (q: string) => void
 }) {
   const examples = ['市場營銷', '5A', '會議', '死線', '目標']
+  const isFresh = pins.length === 0 && recents.length === 0
   return (
     <div className="space-y-4">
+      {/* 首次／空白：command-center 歡迎面板（暖文案 + 例子做明確下一步） */}
+      {isFresh && (
+        <UICard className="relative overflow-hidden p-6 text-center sm:p-8">
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute left-1/2 top-0 h-40 w-40 -translate-x-1/2 -translate-y-1/2 rounded-full bg-accent/10 blur-3xl dark:bg-accent/15"
+          />
+          <span className="relative mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
+            <Radar size={26} />
+          </span>
+          <h2 className="relative mt-4 font-serif text-xl font-semibold tracking-tight text-slate-800 dark:text-slate-100">
+            一格搜尋，掃晒成個平台
+          </h2>
+          <p className="relative mx-auto mt-2 max-w-md text-sm leading-relaxed text-slate-500 dark:text-slate-400">
+            筆記、題庫、資源、教案、會議、班別、學生、行事曆、待辦、記帳…
+            即時模糊比對，鍵盤一路操控。打幾個字就見到。
+          </p>
+          <div className="relative mt-5 flex flex-wrap items-center justify-center gap-2">
+            {examples.map((ex) => (
+              <button
+                key={ex}
+                type="button"
+                onClick={() => onPick(ex)}
+                className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-600 shadow-xs transition hover:border-accent/40 hover:bg-accent-soft hover:text-accent-strong dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:border-accent/40 dark:hover:bg-accent/15 dark:hover:text-accent"
+              >
+                <Search size={13} className="opacity-60" />
+                {ex}
+              </button>
+            ))}
+          </div>
+        </UICard>
+      )}
+
       {pins.length > 0 && (
         <UICard className="p-4">
           <div className="mb-2.5 flex items-center gap-1.5">
@@ -1175,7 +1263,7 @@ function StartScreen({
         </UICard>
       )}
 
-      {recents.length > 0 ? (
+      {recents.length > 0 && (
         <UICard className="p-4">
           <div className="mb-1 flex items-center justify-between">
             <div className="flex items-center gap-1.5">
@@ -1218,28 +1306,24 @@ function StartScreen({
             ))}
           </ul>
         </UICard>
-      ) : (
-        <EmptyState
-          icon={Sparkles}
-          title="一個搜尋框，搵晒全平台"
-          hint="筆記、題庫、資源、教案、會議、班別、學生、行事曆、待辦、記帳… 即時模糊比對，鍵盤一路操控。"
-        />
       )}
 
-      {/* 試下搵 */}
-      <div className="flex flex-wrap items-center gap-2 px-1 text-xs text-slate-400 dark:text-slate-500">
-        <span>試下搵：</span>
-        {examples.map((ex) => (
-          <button
-            key={ex}
-            type="button"
-            onClick={() => onPick(ex)}
-            className="rounded-full bg-slate-100 px-2.5 py-1 font-medium text-slate-500 transition hover:bg-accent hover:text-white dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-accent dark:hover:text-white"
-          >
-            {ex}
-          </button>
-        ))}
-      </div>
+      {/* 試下搵（fresh 時 hero 已示範，呢度只喺有歷史時補充） */}
+      {!isFresh && (
+        <div className="flex flex-wrap items-center gap-2 px-1 text-xs text-slate-400 dark:text-slate-500">
+          <span>試下搵：</span>
+          {examples.map((ex) => (
+            <button
+              key={ex}
+              type="button"
+              onClick={() => onPick(ex)}
+              className="rounded-full bg-slate-100 px-2.5 py-1 font-medium text-slate-500 transition hover:bg-accent hover:text-white dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-accent dark:hover:text-white"
+            >
+              {ex}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* 運算子（Raycast 風 power-user 提示）— 撳一下即套入搜尋框 */}
       <div className="flex flex-wrap items-center gap-2 px-1 text-xs text-slate-400 dark:text-slate-500">
@@ -1267,6 +1351,17 @@ const OPERATOR_HINTS: { token: string; fill: string; desc: string }[] = [
   { token: 'in:recent', fill: 'in:recent ', desc: `淨係喺最近 ${RECENT_DAYS} 日更新／建立嘅嘢搵` },
   { token: 'sort:recent', fill: 'sort:recent ', desc: '改用「最近」排序而唔係相關度' },
 ]
+
+// 分組標頭嘅 icon chip 軟色（沿用既有 6 個 tone，畀每個類別一個鮮明身份，
+// 避免「一排一模一樣 slate chip」嘅 spreadsheet 感）。
+const TONE_CHIP: Record<Hit['badgeTone'], string> = {
+  slate: 'bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-300',
+  accent: 'bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent',
+  green: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-300',
+  amber: 'bg-amber-50 text-amber-600 dark:bg-amber-500/15 dark:text-amber-300',
+  rose: 'bg-rose-50 text-rose-600 dark:bg-rose-500/15 dark:text-rose-300',
+  blue: 'bg-blue-50 text-blue-600 dark:bg-blue-500/15 dark:text-blue-300',
+}
 
 // ───────── 小工具 ─────────
 function registerRow(

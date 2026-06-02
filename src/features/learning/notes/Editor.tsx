@@ -325,26 +325,40 @@ export default function Editor({
         </div>
       </div>
 
-      {/* 內容區 */}
+      {/* 內容區（稿紙：橫線 + 左側裝訂紅線） */}
       <div
         className={cx(
-          'min-h-0 flex-1 overflow-y-auto rounded-2xl border p-4 sm:p-5',
+          'relative min-h-0 flex-1 overflow-y-auto rounded-2xl border p-4 pl-6 sm:p-5 sm:pl-8',
           color.card ||
-            'border-slate-200/80 bg-slate-50/40 dark:border-slate-700/60 dark:bg-slate-800/40',
+            'border-amber-200/60 bg-amber-50/30 dark:border-slate-700/60 dark:bg-slate-800/40',
         )}
       >
+        {/* 稿紙橫線（極淡，純裝飾） */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 opacity-[0.4] dark:opacity-25"
+          style={{
+            backgroundImage:
+              'repeating-linear-gradient(to bottom, transparent 0, transparent 27px, rgb(180 150 100 / 0.16) 27px, rgb(180 150 100 / 0.16) 28px)',
+          }}
+        />
+        {/* 左側裝訂紅線 */}
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-y-0 left-3 w-px bg-rose-300/40 dark:bg-rose-400/20 sm:left-4"
+        />
         <input
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder="畀個標題…"
-          className="w-full bg-transparent text-xl font-semibold tracking-tight text-slate-800 outline-none placeholder:text-slate-300 dark:text-slate-100 dark:placeholder:text-slate-600"
+          className="relative w-full bg-transparent font-serif text-2xl font-semibold tracking-tight text-slate-800 outline-none placeholder:text-slate-300 dark:text-slate-100 dark:placeholder:text-slate-600"
         />
-        <div className="mb-3 mt-1 text-[11px] tabular-nums text-slate-400 dark:text-slate-500">
-          建立於 {fullDateTime(note.createdAt)}
+        <div className="relative mb-3 mt-1 font-serif text-[11px] italic tabular-nums text-slate-400 dark:text-slate-500">
+          起稿於 {fullDateTime(note.createdAt)}
         </div>
 
         {mode === 'edit' ? (
-          <>
+          <div className="relative">
             <div className="mb-2 flex flex-wrap items-center gap-1.5">
               <Button
                 size="sm"
@@ -379,15 +393,17 @@ export default function Editor({
               value={content}
               onChange={(e) => setContent(e.target.value)}
               rows={Math.max(12, Math.min(28, content.split('\n').length + 2))}
-              placeholder="由呢度開始書寫……　可以用 #標籤 分類、- [ ] 整待辦。"
+              placeholder="由呢度落筆……　可以用 #標籤 歸類、- [ ] 整待辦。"
               className="border-0 bg-transparent px-0 text-[15px] leading-7 shadow-none focus:ring-0 dark:bg-transparent"
             />
-          </>
+          </div>
         ) : (
-          <PreviewBody
-            lines={preview}
-            onToggle={(idx) => setContent((c) => toggleTodoLine(c, idx))}
-          />
+          <div className="relative">
+            <PreviewBody
+              lines={preview}
+              onToggle={(idx) => setContent((c) => toggleTodoLine(c, idx))}
+            />
+          </div>
         )}
       </div>
 

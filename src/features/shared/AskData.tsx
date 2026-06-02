@@ -1,17 +1,19 @@
-import { useRef, useState, type KeyboardEvent } from 'react'
+import { useMemo, useRef, useState, type KeyboardEvent } from 'react'
 import {
   Bot,
   Lock,
+  Search,
   Send,
   Sparkles,
   Square,
   CornerDownLeft,
-  User,
+  FileSearch,
   AlertTriangle,
   NotebookPen,
   ListTodo,
   Target,
   CalendarDays,
+  Quote,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { streamChat, isAIConfigured, type AIMessage } from '../../lib/aiClient'
@@ -31,13 +33,16 @@ import { workoutCol } from '../learning/fitness/training/store'
 import { Button, EmptyState, Textarea, cx } from '../../ui'
 
 // ============================================================
-//  「問我嘅資料」AI — 全域個人助理
+//  「問我嘅資料 AI」— 資料偵探 / 查詢台（Inquiry Desk）
 //  ------------------------------------------------------------
-//  收集用戶跨功能資料（筆記 / 待辦 / 目標 / 日程 / 日誌）做 context，
-//  經 Supabase Edge Function 問 Gemini，扼要回答。未啟用 / 未登入優雅守門。
+//  概念：呢個唔係一般 chat，而係一個「data-grounded 查詢台」——
+//  AI 淨係根據你嘅卷宗（筆記 / 待辦 / 目標 / 日程 / 日誌）查案、引證作答。
+//  落手前先攤開「證據在案」清單（即時數你有幾多份卷宗），令查詢有根有據。
+//  收集跨功能資料做 context，經 Supabase Edge Function 問 Gemini。
+//  未啟用 / 未登入優雅守門。
 // ============================================================
 
-// 範例提問：撳一下即時帶入並發問。配一隻 lucide icon 暗示資料來源。
+// 範例查詢：撳一下即時立案發問。配一隻 lucide icon 暗示引用邊類卷宗。
 const SUGGESTIONS: { text: string; icon: LucideIcon }[] = [
   { text: '我今個星期有咩重要事？', icon: CalendarDays },
   { text: '總結我最近嘅筆記重點', icon: NotebookPen },
@@ -47,6 +52,16 @@ const SUGGESTIONS: { text: string; icon: LucideIcon }[] = [
 
 const SYSTEM =
   '你係用戶「NTK 平台」嘅私人 AI 助理。下面係佢嘅個人資料摘要，請主要根據呢啲資料（配合常識）用繁體中文（可書面廣東話）扼要、有條理咁回答。如果資料唔夠就照答並提一句。唔好捏造唔存在嘅具體資料。'
+
+// 「證據在案」卷宗類別（配分類色；用嚟向用戶顯示 AI 手上有幾多份資料可查）。
+// 純展示用，數法對齊 buildContext() 嘅篩選，令清單係真實 context 預覽。
+type EvidenceKind = {
+  key: string
+  label: string
+  icon: LucideIcon
+  tint: string
+  count: number
+}
 
 /** 本地時區 YYYY-MM-DD（避開 toISOString 當 UTC 嘅時差） */
 function todayKey(): string {
@@ -150,8 +165,8 @@ function buildContext(): string {
 export default function AskData() {
   const { user } = useAuth()
   // 訂閱令資料更新時 context 反映最新（亦確保 collection 已建立 / 登記）
-  useCollection(richNotesCol)
-  useCollection(tasksCol)
+  const notes = useCollection(richNotesCol)
+  const tasks = useCollection(tasksCol)
 
   const [q, setQ] = useState('')
   const [answer, setAnswer] = useState<string | null>(null)
@@ -160,6 +175,45 @@ export default function AskData() {
   const [busy, setBusy] = useState(false)
   const abortRef = useRef<AbortController | null>(null)
   const inputRef = useRef<HTMLTextAreaElement | null>(null)
+
+  // ── 證據在案：即時統計手頭可查嘅卷宗份數（純展示，數法對齊 buildContext）──
+  //    依賴 notes / tasks（已訂閱）令新增資料即時反映；其餘 collection 即取即數。
+  const evidence = useMemo<EvidenceKind[]>(() => {
+    const today = todayKey()
+    return [
+      {
+        key: 'notes',
+        label: '筆記',
+        icon: NotebookPen,
+        tint: 'violet',
+        count: notes.filter((n) => !n.trashed).length,
+      },
+      {
+        key: 'tasks',
+        label: '待辦',
+        icon: ListTodo,
+        tint: 'amber',
+        count: tasks.filter((t) => !t.done).length,
+      },
+      {
+        key: 'goals',
+        label: '目標',
+        icon: Target,
+        tint: 'rose',
+        count: goalsCol.get().length,
+      },
+      {
+        key: 'events',
+        label: '日程',
+        icon: CalendarDays,
+        tint: 'blue',
+        count: eventsCol.get().filter((e) => (e.endDate ?? e.date) >= today).length,
+      },
+    ]
+    // notes / tasks 變動時重算；其餘 collection 隨之即取即數。
+  }, [notes, tasks])
+
+  const totalFiles = evidence.reduce((s, e) => s + e.count, 0)
 
   if (!isAIConfigured) {
     return (
@@ -229,43 +283,74 @@ export default function AskData() {
   const showCaret = busy && !isError
 
   return (
-    <div className="mx-auto max-w-3xl space-y-5">
-      {/* ── 歡迎區：柔和漸變，介紹助手做咩 ── */}
+    <div className="mx-auto max-w-3xl space-y-6">
+      {/* ───────── 查詢台 masthead：serif 大標題 + 偵探語氣（自管 header） ───────── */}
+      <header className="animate-fade-in-up">
+        <p className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.3em] text-accent/70">
+          <FileSearch size={13} className="shrink-0" />
+          查詢台 · Inquiry Desk
+        </p>
+        <h1 className="mt-1.5 font-serif text-[27px] font-semibold leading-[1.15] tracking-tight text-slate-800 dark:text-slate-100 sm:text-[32px]">
+          問我嘅資料 AI
+        </h1>
+        <p className="mt-2 max-w-lg text-sm leading-relaxed text-slate-500 dark:text-slate-400">
+          開案查問。我淨係根據你<span className="font-medium text-slate-600 dark:text-slate-300">親手記低嘅卷宗</span>
+          ——筆記、待辦、目標同日程——引證作答，唔靠估。
+        </p>
+      </header>
+
+      {/* ───────── 證據在案：手頭卷宗清單（data-grounded 嘅靈魂；落案前先攤開） ───────── */}
       {!started && (
-        <section className="hero-gradient relative animate-fade-in-up overflow-hidden rounded-3xl px-6 py-8 text-white shadow-lg shadow-accent/25 sm:px-8 sm:py-9">
-          <div className="pointer-events-none absolute -right-10 -top-12 h-44 w-44 rounded-full bg-white/10 blur-2xl" />
-          <div className="pointer-events-none absolute -bottom-16 right-24 h-36 w-36 rounded-full bg-white/10 blur-2xl" />
-          <div className="relative">
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-xs font-medium backdrop-blur">
-              <Sparkles size={13} /> 私人 AI 助理
-            </span>
-            <h1 className="mt-4 text-2xl font-bold tracking-tight">
-              問我關於你嘅一切
-            </h1>
-            <p className="mt-2 max-w-md text-sm leading-relaxed text-white/80">
-              我會睇返你嘅筆記、待辦、目標、日程同日誌，幫你扼要解答 ——
-              想知有咩重要事、想總結重點，問我就得。
+        <section
+          aria-label="證據在案"
+          className="animate-fade-in-up overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-xs dark:border-slate-700/60 dark:bg-slate-800 dark:shadow-none"
+          style={{ animationDelay: '60ms' }}
+        >
+          <div className="flex items-center justify-between gap-3 border-b border-dashed border-slate-200/80 px-5 py-3 dark:border-slate-700/60">
+            <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+              <FileSearch size={13} className="shrink-0" />
+              證據在案
             </p>
+            <span className="inline-flex items-center gap-1 rounded-full bg-accent-soft px-2.5 py-0.5 text-[11px] font-medium text-accent-strong dark:bg-accent/15 dark:text-accent">
+              <span className="tabular-nums slashed-zero">{totalFiles}</span> 份可查
+            </span>
           </div>
+
+          {/* 卷宗類別：唔做一排死板等分卡，用 hairline grid + 大數字營造「歸檔」感 */}
+          <div className="grid grid-cols-2 gap-px bg-slate-200/60 dark:bg-slate-700/50 sm:grid-cols-4">
+            {evidence.map((e) => (
+              <EvidenceTile key={e.key} item={e} />
+            ))}
+          </div>
+
+          {totalFiles === 0 && (
+            // 空狀態：有溫度，唔係冷冰冰「無資料」
+            <p className="px-5 py-3.5 text-xs leading-relaxed text-slate-400 dark:text-slate-500">
+              卷宗仲係空白嘅。去記低幾條筆記、待辦或者目標，我就有嘢可以幫你查。
+            </p>
+          )}
         </section>
       )}
 
-      {/* ── 對話區：你 / AI 兩格分明，柔和氣泡 ── */}
+      {/* ───────── 查問記錄：你（委託人）/ 案頭（AI 查卷作答），柔和氣泡 ───────── */}
       {started && (
         <div className="space-y-4">
-          {/* 你 */}
+          {/* 你（委託人） */}
           {askedQuestion && (
             <div className="flex animate-fade-in-up justify-end gap-2.5">
-              <div className="max-w-[85%] rounded-2xl rounded-br-md bg-accent px-4 py-2.5 text-sm leading-relaxed text-white shadow-sm">
-                {askedQuestion}
+              <div className="max-w-[85%]">
+                <p className="mb-1 pr-1 text-right text-[10px] font-medium uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                  你嘅查問
+                </p>
+                <div className="flex items-start gap-2 rounded-2xl rounded-br-md bg-accent px-4 py-2.5 text-sm leading-relaxed text-white shadow-sm">
+                  <Quote size={14} className="mt-0.5 shrink-0 text-white/50" aria-hidden="true" />
+                  <span>{askedQuestion}</span>
+                </div>
               </div>
-              <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-200 text-slate-500 dark:bg-slate-700 dark:text-slate-300">
-                <User size={16} />
-              </span>
             </div>
           )}
 
-          {/* AI */}
+          {/* 案頭（AI） */}
           <div className="flex animate-fade-in-up gap-2.5">
             <span
               className={cx(
@@ -275,67 +360,73 @@ export default function AskData() {
                   : 'bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent',
               )}
             >
-              {isError ? <AlertTriangle size={16} /> : <Sparkles size={16} />}
+              {isError ? <AlertTriangle size={16} /> : <FileSearch size={16} />}
             </span>
 
-            {isError ? (
-              <div className="max-w-[85%] rounded-2xl rounded-tl-md border border-rose-200/70 bg-rose-50/70 px-4 py-3 dark:border-rose-500/30 dark:bg-rose-500/10">
-                <p className="text-sm font-medium text-rose-700 dark:text-rose-300">
-                  唔好意思，啱啱有啲問題
-                </p>
-                <p className="mt-1 break-words text-xs leading-relaxed text-rose-600/90 dark:text-rose-300/80">
-                  {errorText}
-                </p>
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  className="mt-3"
-                  onClick={() => void ask(askedQuestion)}
+            <div className="min-w-0 flex-1">
+              <p className="mb-1 pl-1 text-[10px] font-medium uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                {isError ? '查詢台' : '案頭調卷'}
+              </p>
+
+              {isError ? (
+                <div className="max-w-[85%] rounded-2xl rounded-tl-md border border-rose-200/70 bg-rose-50/70 px-4 py-3 dark:border-rose-500/30 dark:bg-rose-500/10">
+                  <p className="text-sm font-medium text-rose-700 dark:text-rose-300">
+                    唔好意思，啱啱有啲問題
+                  </p>
+                  <p className="mt-1 break-words text-xs leading-relaxed text-rose-600/90 dark:text-rose-300/80">
+                    {errorText}
+                  </p>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    className="mt-3"
+                    onClick={() => void ask(askedQuestion)}
+                  >
+                    再查一次
+                  </Button>
+                </div>
+              ) : answer === '' && busy ? (
+                // 載入：柔和點動 + 偵探語氣（翻緊你嘅卷宗）
+                <div
+                  role="status"
+                  aria-live="polite"
+                  aria-busy="true"
+                  className="inline-flex items-center gap-1.5 rounded-2xl rounded-tl-md border border-slate-200/80 bg-white px-4 py-3.5 dark:border-slate-700/60 dark:bg-slate-800"
                 >
-                  再試一次
-                </Button>
-              </div>
-            ) : answer === '' && busy ? (
-              // 載入：柔和點動
-              <div
-                role="status"
-                aria-live="polite"
-                aria-busy="true"
-                className="flex items-center gap-1.5 rounded-2xl rounded-tl-md border border-slate-200/80 bg-white px-4 py-3.5 dark:border-slate-700/60 dark:bg-slate-800"
-              >
-                <span className="h-2 w-2 animate-bounce rounded-full bg-accent [animation-delay:-0.3s]" />
-                <span className="h-2 w-2 animate-bounce rounded-full bg-accent [animation-delay:-0.15s]" />
-                <span className="h-2 w-2 animate-bounce rounded-full bg-accent" />
-                <span className="ml-1.5 text-xs text-slate-400 dark:text-slate-500">
-                  睇緊你嘅資料…
-                </span>
-              </div>
-            ) : (
-              <div
-                role="status"
-                aria-live="polite"
-                aria-busy={busy}
-                className="max-w-[85%] whitespace-pre-wrap break-words rounded-2xl rounded-tl-md border border-slate-200/80 bg-white px-4 py-3 text-sm leading-relaxed text-slate-700 shadow-xs dark:border-slate-700/60 dark:bg-slate-800 dark:text-slate-200 dark:shadow-none"
-              >
-                {answer}
-                {showCaret && (
-                  <span
-                    aria-hidden="true"
-                    className="ml-0.5 inline-block h-4 w-1.5 animate-pulse rounded-sm bg-accent align-middle"
-                  />
-                )}
-              </div>
-            )}
+                  <span className="h-2 w-2 animate-bounce rounded-full bg-accent [animation-delay:-0.3s]" />
+                  <span className="h-2 w-2 animate-bounce rounded-full bg-accent [animation-delay:-0.15s]" />
+                  <span className="h-2 w-2 animate-bounce rounded-full bg-accent" />
+                  <span className="ml-1.5 text-xs text-slate-400 dark:text-slate-500">
+                    翻緊你嘅卷宗…
+                  </span>
+                </div>
+              ) : (
+                <div
+                  role="status"
+                  aria-live="polite"
+                  aria-busy={busy}
+                  className="max-w-[85%] whitespace-pre-wrap break-words rounded-2xl rounded-tl-md border border-slate-200/80 bg-white px-4 py-3 text-sm leading-relaxed text-slate-700 shadow-xs dark:border-slate-700/60 dark:bg-slate-800 dark:text-slate-200 dark:shadow-none"
+                >
+                  {answer}
+                  {showCaret && (
+                    <span
+                      aria-hidden="true"
+                      className="ml-0.5 inline-block h-4 w-1.5 animate-pulse rounded-sm bg-accent align-middle"
+                    />
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
 
-      {/* ── 範例提問 chips（撳一下即發問）── */}
+      {/* ───────── 立案查詢 chips（撳一下即發問）───────── */}
       {(!started || (!busy && !isError)) && (
         <div className={cx(started && 'border-t border-slate-200/70 pt-4 dark:border-slate-700/60')}>
-          <p className="mb-2 flex items-center gap-1.5 text-xs font-medium text-slate-400 dark:text-slate-500">
-            <Sparkles size={12} />
-            {started ? '繼續問下去' : '試下問'}
+          <p className="mb-2.5 flex items-center gap-1.5 text-xs font-medium text-slate-400 dark:text-slate-500">
+            <Search size={12} className="shrink-0" />
+            {started ? '繼續追查' : '由呢度開案查問'}
           </p>
           <div className="flex flex-wrap gap-2">
             {SUGGESTIONS.map((s) => (
@@ -354,15 +445,20 @@ export default function AskData() {
         </div>
       )}
 
-      {/* ── 輸入區：圓潤、focus 有 accent 環、送出掣明顯 ── */}
+      {/* ───────── 查詢單：圓潤、貼底、focus 有 accent 環、送出掣明顯 ───────── */}
       <div className="sticky bottom-3 z-10">
-        <div className="flex items-end gap-2 rounded-2xl border border-slate-200/80 bg-white/95 p-2 shadow-md backdrop-blur transition focus-within:border-accent focus-within:ring-2 focus-within:ring-accent/30 dark:border-slate-700/60 dark:bg-slate-800/95 dark:shadow-none">
+        <div className="flex items-end gap-2 rounded-2xl border border-slate-200/80 bg-white/95 p-2 pl-3.5 shadow-md backdrop-blur transition focus-within:border-accent focus-within:ring-2 focus-within:ring-accent/30 dark:border-slate-700/60 dark:bg-slate-800/95 dark:shadow-none">
+          <Search
+            size={17}
+            aria-hidden="true"
+            className="mb-2.5 shrink-0 text-slate-400 dark:text-slate-500"
+          />
           <Textarea
             ref={inputRef}
             rows={1}
-            className="max-h-40 min-h-[40px] flex-1 resize-none border-0 bg-transparent px-2 py-2 shadow-none focus:border-0 focus:ring-0 dark:bg-transparent"
-            aria-label="問關於你資料嘅問題"
-            placeholder="問我啲咩呢？例如：我今個星期最緊要做咩？"
+            className="max-h-40 min-h-[40px] flex-1 resize-none border-0 bg-transparent px-0 py-2 shadow-none focus:border-0 focus:ring-0 dark:bg-transparent"
+            aria-label="向你嘅資料查問"
+            placeholder="想查啲咩？例如：我今個星期最緊要做咩？"
             value={q}
             onChange={(e) => setQ(e.target.value)}
             onKeyDown={onKeyDown}
@@ -378,12 +474,70 @@ export default function AskData() {
             </Button>
           ) : (
             <Button icon={Send} onClick={() => void ask(q)} disabled={!q.trim()}>
-              問
+              查問
             </Button>
           )}
         </div>
-        <p className="mt-1.5 hidden items-center justify-center gap-1 text-center text-[11px] text-slate-400 dark:text-slate-500 sm:flex">
-          <CornerDownLeft size={11} /> Enter 送出 · Shift + Enter 換行
+        <p className="mt-1.5 hidden items-center justify-center gap-1.5 text-center text-[11px] text-slate-400 dark:text-slate-500 sm:flex">
+          <span className="inline-flex items-center gap-1">
+            <CornerDownLeft size={11} /> Enter 送出 · Shift + Enter 換行
+          </span>
+          <span aria-hidden="true" className="text-slate-300 dark:text-slate-600">·</span>
+          <span className="inline-flex items-center gap-1">
+            <Sparkles size={11} /> 只引用你自己嘅資料
+          </span>
+        </p>
+      </div>
+    </div>
+  )
+}
+
+// ───────── 證據卷宗格（hairline grid · 分類色 icon chip · serif 大數字）─────────
+//  分類色（violet/amber/rose/blue）淺底 + 深字 + 深色 /15，全部帶 dark:。
+const TILE_TINT: Record<string, { chip: string; num: string }> = {
+  violet: {
+    chip: 'bg-violet-50 text-violet-600 dark:bg-violet-500/15 dark:text-violet-300',
+    num: 'text-violet-700 dark:text-violet-300',
+  },
+  amber: {
+    chip: 'bg-amber-50 text-amber-600 dark:bg-amber-500/15 dark:text-amber-300',
+    num: 'text-amber-700 dark:text-amber-300',
+  },
+  rose: {
+    chip: 'bg-rose-50 text-rose-600 dark:bg-rose-500/15 dark:text-rose-300',
+    num: 'text-rose-700 dark:text-rose-300',
+  },
+  blue: {
+    chip: 'bg-blue-50 text-blue-600 dark:bg-blue-500/15 dark:text-blue-300',
+    num: 'text-blue-700 dark:text-blue-300',
+  },
+}
+
+function EvidenceTile({ item }: { item: EvidenceKind }) {
+  const tint = TILE_TINT[item.tint] ?? TILE_TINT.blue
+  const I = item.icon
+  const empty = item.count === 0
+  return (
+    <div className="flex items-center gap-3 bg-white px-4 py-3.5 dark:bg-slate-800">
+      <span
+        className={cx(
+          'flex h-9 w-9 shrink-0 items-center justify-center rounded-xl',
+          empty ? 'bg-slate-100 text-slate-400 dark:bg-slate-700/60 dark:text-slate-500' : tint.chip,
+        )}
+      >
+        <I size={17} />
+      </span>
+      <div className="min-w-0">
+        <p
+          className={cx(
+            'font-serif text-[22px] font-semibold leading-none tabular-nums slashed-zero',
+            empty ? 'text-slate-300 dark:text-slate-600' : tint.num,
+          )}
+        >
+          {item.count}
+        </p>
+        <p className="mt-0.5 truncate text-xs text-slate-500 dark:text-slate-400">
+          {item.label}
         </p>
       </div>
     </div>

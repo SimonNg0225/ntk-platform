@@ -81,6 +81,7 @@ export const FEATURES: Feature[] = [
   },
   {
     id: 'learning-card-generator',
+    selfManagedHeader: true,
     modes: ['learning'],
     name: 'AI 生成知識卡',
     description: '貼上主題或筆記，AI 一鍵生成知識卡，直接存入牌組複習。',
@@ -91,6 +92,7 @@ export const FEATURES: Feature[] = [
   },
   {
     id: 'learning-notes',
+    selfManagedHeader: true,
     modes: ['learning'],
     name: '個人筆記',
     description: '隨手記低學到嘅重點，自動儲存。',
@@ -161,6 +163,7 @@ export const FEATURES: Feature[] = [
   },
   {
     id: 'learning-health',
+    selfManagedHeader: true,
     modes: ['learning'],
     name: '健康追蹤',
     description: '記錄體重、睡眠、運動、飲水、心情，睇趨勢同達標進度。',
@@ -203,6 +206,7 @@ export const FEATURES: Feature[] = [
   },
   {
     id: 'work-curriculum',
+    selfManagedHeader: true,
     modes: ['work'],
     name: '課程進度',
     description: '對住 BAFS 課程大綱追蹤每班進度。',
@@ -213,6 +217,7 @@ export const FEATURES: Feature[] = [
   },
   {
     id: 'work-lesson-plan',
+    selfManagedHeader: true,
     modes: ['work'],
     name: '備課 / 教案',
     description: '撰寫同整理 BAFS 教學計劃。',
@@ -223,6 +228,7 @@ export const FEATURES: Feature[] = [
   },
   {
     id: 'work-timetable',
+    selfManagedHeader: true,
     modes: ['work'],
     name: '時間表',
     description: '每週教學時間表一覽。',
@@ -233,6 +239,7 @@ export const FEATURES: Feature[] = [
   },
   {
     id: 'work-questions',
+    selfManagedHeader: true,
     modes: ['work'],
     name: 'BAFS 題庫',
     description: '按課題／題型／難度儲存題目。',
@@ -243,6 +250,7 @@ export const FEATURES: Feature[] = [
   },
   {
     id: 'work-resources',
+    selfManagedHeader: true,
     modes: ['work'],
     name: '教學資源庫',
     description: '收藏講義、試題、教材連結。',
@@ -313,6 +321,7 @@ export const FEATURES: Feature[] = [
   },
   {
     id: 'work-budget',
+    selfManagedHeader: true,
     modes: ['learning', 'work'],
     name: '收支記帳',
     description: '記錄每日收入支出，睇本月結餘同分類佔比。',
@@ -325,6 +334,7 @@ export const FEATURES: Feature[] = [
   // ═══════════ 兩個模式共用 ═══════════
   {
     id: 'ask-data',
+    selfManagedHeader: true,
     modes: ['learning', 'work'],
     name: '問我嘅資料 AI',
     description: 'AI 根據你嘅筆記 / 待辦 / 目標 / 日程回答你嘅問題。',
@@ -345,6 +355,7 @@ export const FEATURES: Feature[] = [
   },
   {
     id: 'search',
+    selfManagedHeader: true,
     modes: ['learning', 'work'],
     name: '全域搜尋',
     description: '一次過搵晒筆記、題目、資源、教案…',

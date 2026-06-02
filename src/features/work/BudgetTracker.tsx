@@ -183,79 +183,59 @@ export default function BudgetTracker() {
   }, [stats.expense, prevStats.expense])
 
   return (
-    <div className="space-y-4">
-      {/* 月份選擇 + 記一筆 */}
-      <div className="flex flex-wrap items-center gap-2">
-        <div className="flex items-center gap-1 rounded-full border border-slate-200/80 bg-white p-1 shadow-xs dark:border-slate-700/60 dark:bg-slate-800 dark:shadow-none">
-          <IconButton label="上個月" onClick={() => setMonth((m) => shiftMonth(m, -1))}>
-            <ChevronLeft size={18} />
-          </IconButton>
-          <button
-            onClick={() => setMonth(monthKey(new Date()))}
-            className="min-w-[7rem] rounded-full px-3 py-1 text-center text-sm font-semibold tabular-nums text-slate-800 transition hover:bg-slate-100 dark:text-slate-100 dark:hover:bg-slate-700"
-            title="返回本月"
-          >
-            {monthLabel(month)}
-          </button>
-          <IconButton label="下個月" onClick={() => setMonth((m) => shiftMonth(m, 1))}>
-            <ChevronRight size={18} />
-          </IconButton>
-        </div>
-        {due.length > 0 && tab !== 'recurring' && (
-          <button
-            onClick={() => setTab('recurring')}
-            className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1.5 text-xs font-medium text-amber-700 ring-1 ring-inset ring-amber-200 transition hover:bg-amber-100 dark:bg-amber-500/10 dark:text-amber-300 dark:ring-amber-500/20"
-          >
-            <CalendarClock size={14} />
-            {due.length} 筆定期待入帳
-          </button>
-        )}
-        <Button className="ml-auto" icon={Plus} onClick={() => openAdd('expense')}>
-          記一筆
-        </Button>
-      </div>
-
-      {/* 結餘 hero + 收支 / 儲蓄率支援磚 */}
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        {/* 結餘 hero（主視覺，跨 2 格）*/}
-        <section className="hero-gradient relative col-span-2 flex flex-col justify-between overflow-hidden rounded-3xl p-5 text-white shadow-lg shadow-accent/25">
-          <div className="pointer-events-none absolute -right-8 -top-10 h-36 w-36 rounded-full bg-white/10 blur-2xl" />
-          <div className="relative flex items-center justify-between">
-            <span className="text-xs font-medium text-white/80">{monthLabel(month)} · 本月結餘</span>
-            <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-white/15 backdrop-blur">
-              <Wallet size={16} />
+    <div className="space-y-5">
+      {/* ───────── 帳本 masthead：serif 標題 + 月份翻揭 + 記一筆 ───────── */}
+      <header className="flex flex-wrap items-end justify-between gap-x-4 gap-y-3">
+        <div className="min-w-0">
+          <p className="text-[11px] font-medium uppercase tracking-[0.3em] text-accent/70">
+            Ledger · 流水帳
+          </p>
+          <h1 className="mt-1 font-serif text-2xl font-semibold leading-tight tracking-tight text-slate-800 dark:text-slate-100 sm:text-[28px]">
+            收支記帳
+          </h1>
+          <p className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-slate-500 dark:text-slate-400">
+            <span className="tabular-nums">{monthLabel(month)}</span>
+            <span aria-hidden="true" className="text-slate-300 dark:text-slate-600">·</span>
+            <span className="tabular-nums">
+              本月 {stats.count} 筆過帳
             </span>
+            {due.length > 0 && tab !== 'recurring' && (
+              <>
+                <span aria-hidden="true" className="text-slate-300 dark:text-slate-600">·</span>
+                <button
+                  onClick={() => setTab('recurring')}
+                  className="inline-flex items-center gap-1 font-medium text-amber-600 transition hover:text-amber-700 dark:text-amber-400 dark:hover:text-amber-300"
+                >
+                  <CalendarClock size={12} /> {due.length} 筆定期待入帳
+                </button>
+              </>
+            )}
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-0.5 rounded-full border border-slate-200/80 bg-white p-0.5 shadow-xs dark:border-slate-700/60 dark:bg-slate-800 dark:shadow-none">
+            <IconButton label="上個月" onClick={() => setMonth((m) => shiftMonth(m, -1))}>
+              <ChevronLeft size={18} />
+            </IconButton>
+            <button
+              onClick={() => setMonth(monthKey(new Date()))}
+              className="min-w-[6.5rem] rounded-full px-2.5 py-1 text-center text-sm font-semibold tabular-nums text-slate-800 transition hover:bg-slate-100 dark:text-slate-100 dark:hover:bg-slate-700"
+              title="返回本月"
+            >
+              {monthLabel(month)}
+            </button>
+            <IconButton label="下個月" onClick={() => setMonth((m) => shiftMonth(m, 1))}>
+              <ChevronRight size={18} />
+            </IconButton>
           </div>
-          <div className="relative mt-3">
-            <p className="text-3xl font-bold tabular-nums sm:text-4xl">{fmtMoney(stats.balance)}</p>
-            <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-white/80">
-              <span className="inline-flex items-center gap-1 tabular-nums">
-                <ArrowUpRight size={13} /> 收入 {fmtMoney(stats.income)}
-              </span>
-              <span className="inline-flex items-center gap-1 tabular-nums">
-                <ArrowDownRight size={13} /> 支出 {fmtMoney(stats.expense)}
-              </span>
-            </div>
-          </div>
-        </section>
+          <Button icon={Plus} onClick={() => openAdd('expense')}>
+            記一筆
+          </Button>
+        </div>
+      </header>
 
-        <BudgetStatTile
-          icon={TrendingDown}
-          tone="rose"
-          label="支出"
-          value={fmtMoney(stats.expense)}
-          trend={expenseTrend}
-          hint={stats.count > 0 ? `共 ${stats.count} 筆` : undefined}
-        />
-        <BudgetStatTile
-          icon={Sparkles}
-          tone="emerald"
-          label="儲蓄率"
-          value={stats.savingsRate == null ? '—' : String(stats.savingsRate)}
-          unit={stats.savingsRate == null ? undefined : '%'}
-          hint={stats.savingsRate == null ? '記低收支即計' : '收入用剩比率'}
-        />
-      </div>
+      {/* ───────── 結餘對帳單（單張帳本身分；ledger 行 + 帳簿側欄） ───────── */}
+      <LedgerStatement stats={stats} expenseTrend={expenseTrend} />
 
       {/* Tabs */}
       <Tabs
@@ -348,59 +328,143 @@ export default function BudgetTracker() {
   )
 }
 
-// ───────── 支援統計磚（bento 風：tone icon chip + 數字 + 趨勢）─────────
-type TileTone = 'rose' | 'emerald' | 'accent' | 'amber'
-const TILE_CHIP: Record<TileTone, string> = {
+// ───────── 結餘對帳單（單張帳本：左頁帳本側欄結餘 + 右頁 ledger 過帳行）─────────
+//  概念：一張會計對帳單。左欄係 accent「帳本封皮」印住淨結餘大數；右欄係
+//  收入 / 支出 / 儲蓄率三條 ledger 行（leader dots + 右對齊 tabular-nums 金額），
+//  最後一條雙底線收結，呼應傳統手寫帳簿嘅「結算」儀式。
+function LedgerStatement({
+  stats,
+  expenseTrend,
+}: {
+  stats: ReturnType<typeof computeMonthStats>
+  expenseTrend?: { value: string; dir: 'up' | 'down' | 'flat' }
+}) {
+  const positive = stats.balance >= 0
+  return (
+    <section className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-sm dark:border-slate-700/60 dark:bg-slate-800 dark:shadow-none">
+      <div className="grid grid-cols-1 sm:grid-cols-[minmax(0,11rem)_1fr]">
+        {/* 左頁：帳本封皮 — 淨結餘 */}
+        <div className="hero-gradient relative flex flex-col justify-between overflow-hidden p-5 text-white">
+          <div className="pointer-events-none absolute -right-10 -top-12 h-36 w-36 rounded-full bg-white/10 blur-2xl" />
+          {/* 帳簿裝訂孔 */}
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute right-0 top-0 hidden h-full w-px bg-white/20 sm:block"
+          />
+          <div className="relative flex items-center justify-between">
+            <span className="text-[11px] font-medium uppercase tracking-wider text-white/75">
+              本月結餘
+            </span>
+            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-white/15 backdrop-blur">
+              <Wallet size={15} />
+            </span>
+          </div>
+          <div className="relative mt-6 sm:mt-4">
+            <p className="font-serif text-[34px] font-semibold leading-none tabular-nums slashed-zero">
+              {fmtMoney(stats.balance)}
+            </p>
+            <p className="mt-2 inline-flex items-center gap-1 rounded-full bg-white/15 px-2 py-0.5 text-[11px] font-medium text-white/90 backdrop-blur">
+              {positive ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
+              {positive ? '收大於支' : '入不敷支'}
+            </p>
+          </div>
+        </div>
+
+        {/* 右頁：ledger 過帳行 */}
+        <dl className="flex flex-col justify-center gap-0.5 p-4 sm:p-5">
+          <LedgerLine
+            icon={ArrowUpRight}
+            tone="emerald"
+            label="收入"
+            amount={`+${fmtMoney(stats.income)}`}
+          />
+          <LedgerLine
+            icon={ArrowDownRight}
+            tone="rose"
+            label="支出"
+            amount={`−${fmtMoney(stats.expense)}`}
+            trend={expenseTrend}
+            note={stats.count > 0 ? `${stats.count} 筆` : undefined}
+          />
+          <LedgerLine
+            icon={Sparkles}
+            tone="accent"
+            label="儲蓄率"
+            amount={stats.savingsRate == null ? '—' : `${stats.savingsRate}%`}
+            note={stats.savingsRate == null ? '記低收支即計' : '收入用剩'}
+            ruled
+          />
+        </dl>
+      </div>
+    </section>
+  )
+}
+
+type LineTone = 'rose' | 'emerald' | 'accent'
+const LINE_CHIP: Record<LineTone, string> = {
   rose: 'bg-rose-50 text-rose-600 dark:bg-rose-500/15 dark:text-rose-300',
   emerald: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-300',
   accent: 'bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent',
-  amber: 'bg-amber-50 text-amber-600 dark:bg-amber-500/15 dark:text-amber-300',
 }
-function BudgetStatTile({
+const LINE_AMOUNT: Record<LineTone, string> = {
+  rose: 'text-rose-600 dark:text-rose-400',
+  emerald: 'text-emerald-600 dark:text-emerald-400',
+  accent: 'text-slate-800 dark:text-slate-100',
+}
+// 單條 ledger 行：icon chip · 標籤 · leader dots（撐開）· 右對齊金額。
+// ruled=true 時上方加雙底線（帳簿結算線），標示「最後一行」。
+function LedgerLine({
   icon: Icon,
   tone,
   label,
-  value,
-  unit,
-  hint,
+  amount,
+  note,
   trend,
+  ruled = false,
 }: {
   icon: LucideIcon
-  tone: TileTone
+  tone: LineTone
   label: string
-  value: string
-  unit?: string
-  hint?: string
+  amount: string
+  note?: string
   trend?: { value: string; dir: 'up' | 'down' | 'flat' }
+  ruled?: boolean
 }) {
   return (
-    <div className="flex flex-col justify-between rounded-3xl border border-slate-200/80 bg-white p-4 shadow-xs transition duration-200 hover:border-slate-300 hover:shadow-md dark:border-slate-700/60 dark:bg-slate-800 dark:shadow-none dark:hover:border-slate-600">
-      <div className="flex items-center justify-between">
-        <span className="text-xs font-medium text-slate-400 dark:text-slate-500">{label}</span>
-        <span className={cx('flex h-8 w-8 items-center justify-center rounded-xl', TILE_CHIP[tone])}>
-          <Icon size={16} aria-hidden="true" />
-        </span>
-      </div>
-      <div className="mt-2">
-        <p className="flex items-baseline gap-1">
-          <span className="text-2xl font-bold tabular-nums text-slate-800 dark:text-slate-100">
-            {value}
+    <div
+      className={cx(
+        'flex items-center gap-3 py-2.5',
+        ruled && 'mt-0.5 border-t-2 border-double border-slate-200 pt-3 dark:border-slate-700',
+      )}
+    >
+      <span className={cx('flex h-8 w-8 shrink-0 items-center justify-center rounded-lg', LINE_CHIP[tone])}>
+        <Icon size={15} aria-hidden="true" />
+      </span>
+      <dt className="shrink-0 text-sm font-medium text-slate-600 dark:text-slate-300">
+        {label}
+        {note && <span className="ml-1.5 text-xs font-normal text-slate-400">· {note}</span>}
+      </dt>
+      {/* leader dots：手寫帳本嗰種「……」對齊線 */}
+      <span
+        aria-hidden="true"
+        className="mt-2 min-w-[1.5rem] flex-1 self-end border-b border-dotted border-slate-200 dark:border-slate-700"
+      />
+      <dd className="flex shrink-0 items-baseline gap-1.5">
+        {trend && trend.dir !== 'flat' && (
+          <span
+            className={cx(
+              'inline-flex items-center gap-0.5 text-[11px] font-semibold tabular-nums',
+              trend.dir === 'up' ? 'text-rose-500' : 'text-emerald-500',
+            )}
+          >
+            {trend.dir === 'up' ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}
+            {trend.value}
           </span>
-          {unit && <span className="text-sm font-medium text-slate-400">{unit}</span>}
-          {trend && trend.dir !== 'flat' && (
-            <span
-              className={cx(
-                'ml-auto inline-flex items-center gap-0.5 text-xs font-semibold tabular-nums',
-                trend.dir === 'up' ? 'text-rose-500' : 'text-emerald-500',
-              )}
-            >
-              {trend.dir === 'up' ? <ArrowUpRight size={13} /> : <ArrowDownRight size={13} />}
-              {trend.value}
-            </span>
-          )}
-        </p>
-        {hint && <p className="mt-1 truncate text-[11px] text-slate-400 dark:text-slate-500">{hint}</p>}
-      </div>
+        )}
+        <span className={cx('font-serif text-lg font-semibold tabular-nums slashed-zero', LINE_AMOUNT[tone])}>
+          {amount}
+        </span>
+      </dd>
     </div>
   )
 }
@@ -599,17 +663,17 @@ function OverviewTab({
         )}
       </Card>
 
-      {/* 最近交易 */}
+      {/* 最近交易（收據樣式：serif 抬頭 + leader 行 + 鋸齒底邊） */}
       <Card className="rounded-2xl p-4">
         <SectionTitle icon={Receipt}>最近交易</SectionTitle>
-        <ul className="space-y-0.5">
+        <ul className="divide-y divide-dashed divide-slate-200/80 dark:divide-slate-700/60">
           {recent.map((t) => {
             const cat = catOf(t.categoryId)
             const income = t.kind === 'income'
             return (
               <li
                 key={t.id}
-                className="flex items-center gap-3 rounded-xl px-2 py-2 text-sm transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/60"
+                className="flex items-center gap-3 py-2 text-sm"
               >
                 <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-base dark:bg-slate-700/60">
                   {cat?.icon ?? '🏷️'}
@@ -623,7 +687,7 @@ function OverviewTab({
                 </span>
                 <span
                   className={cx(
-                    'shrink-0 font-semibold tabular-nums',
+                    'shrink-0 font-serif text-[15px] font-semibold tabular-nums slashed-zero',
                     income
                       ? 'text-emerald-600 dark:text-emerald-400'
                       : 'text-rose-600 dark:text-rose-400',
@@ -636,6 +700,11 @@ function OverviewTab({
             )
           })}
         </ul>
+        {/* 鋸齒收據底邊 */}
+        <div
+          aria-hidden="true"
+          className="-mx-4 -mb-4 mt-2 h-2.5 bg-[radial-gradient(circle_at_6px_-2px,transparent_5px,white_5px)] bg-[length:12px_10px] bg-repeat-x dark:bg-[radial-gradient(circle_at_6px_-2px,transparent_5px,theme(colors.slate.800)_5px)]"
+        />
       </Card>
     </div>
   )
@@ -888,70 +957,77 @@ function RecordsTab({
           />
         )
       ) : (
-        <ul className="space-y-2">
-          {visible.map((t) => {
+        <ul className="space-y-1.5">
+          {visible.map((t, i) => {
             const cat = catOf(t.categoryId)
             const income = t.kind === 'income'
             const checked = selected.has(t.id)
             return (
-              <Card
+              <li
                 key={t.id}
                 className={cx(
-                  'group rounded-2xl p-3 transition duration-200 hover:border-slate-300 hover:shadow-md dark:hover:border-slate-600',
-                  checked && 'ring-2 ring-accent/40',
+                  'group relative flex items-center gap-3 overflow-hidden rounded-2xl border border-slate-200/80 bg-white py-2.5 pl-3 pr-3.5 transition duration-200 animate-fade-in-up hover:border-slate-300 hover:shadow-md dark:border-slate-700/60 dark:bg-slate-800 dark:hover:border-slate-600',
+                  checked && 'border-accent/40 ring-1 ring-accent/30',
                 )}
+                style={{ animationDelay: `${Math.min(i, 10) * 25}ms` }}
               >
-                <div className="flex items-center gap-3">
-                  <input
-                    type="checkbox"
-                    checked={checked}
-                    onChange={() => toggle(t.id)}
-                    className="h-4 w-4 shrink-0 cursor-pointer rounded border-slate-300 text-accent focus:ring-accent/40 dark:border-slate-600 dark:bg-slate-700"
-                    aria-label="揀選記錄"
-                  />
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-slate-100 text-lg dark:bg-slate-700/60">
-                    {cat?.icon ?? '🏷️'}
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-1.5">
-                      <span className="text-sm font-medium text-slate-800 dark:text-slate-100">
-                        {cat?.name ?? '未分類'}
-                      </span>
-                      {!cat && <Badge tone="slate">未分類</Badge>}
-                    </div>
-                    <div className="mt-0.5 flex flex-wrap items-center gap-2 text-xs">
-                      {t.note && (
-                        <span className="truncate text-slate-500 dark:text-slate-400">{t.note}</span>
-                      )}
-                      <span className="tabular-nums text-slate-400">{fmtDate(t.date)}</span>
-                    </div>
+                {/* 收支色帶（收據左緣） */}
+                <span
+                  aria-hidden="true"
+                  className={cx(
+                    'absolute inset-y-0 left-0 w-1',
+                    income ? 'bg-emerald-400/80 dark:bg-emerald-500/70' : 'bg-rose-400/80 dark:bg-rose-500/70',
+                  )}
+                />
+                <input
+                  type="checkbox"
+                  checked={checked}
+                  onChange={() => toggle(t.id)}
+                  className="ml-0.5 h-4 w-4 shrink-0 cursor-pointer rounded border-slate-300 text-accent focus:ring-accent/40 dark:border-slate-600 dark:bg-slate-700"
+                  aria-label="揀選記錄"
+                />
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-lg dark:bg-slate-700/60">
+                  {cat?.icon ?? '🏷️'}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <span className="text-sm font-medium text-slate-800 dark:text-slate-100">
+                      {cat?.name ?? '未分類'}
+                    </span>
+                    {!cat && <Badge tone="slate">未分類</Badge>}
                   </div>
-                  <span
-                    className={cx(
-                      'ml-auto shrink-0 text-sm font-semibold tabular-nums',
-                      income
-                        ? 'text-emerald-600 dark:text-emerald-400'
-                        : 'text-rose-600 dark:text-rose-400',
+                  <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs">
+                    {t.note && (
+                      <span className="truncate text-slate-500 dark:text-slate-400">{t.note}</span>
                     )}
-                  >
-                    {income ? '+' : '−'}
-                    {fmtMoney(t.amount)}
-                  </span>
-                  <div className="flex shrink-0 items-center gap-0.5">
-                    <IconButton label="編輯記錄" onClick={() => onEdit(t)}>
-                      <Pencil size={16} />
-                    </IconButton>
-                    <IconButton
-                      label="刪除記錄"
-                      tone="danger"
-                      onClick={() => removeOne(t)}
-                      className="sm:opacity-0 sm:transition sm:group-hover:opacity-100"
-                    >
-                      <Trash2 size={16} />
-                    </IconButton>
+                    <span className="tabular-nums text-slate-400">{fmtDate(t.date)}</span>
                   </div>
                 </div>
-              </Card>
+                <span
+                  className={cx(
+                    'ml-auto shrink-0 font-serif text-[15px] font-semibold tabular-nums slashed-zero',
+                    income
+                      ? 'text-emerald-600 dark:text-emerald-400'
+                      : 'text-rose-600 dark:text-rose-400',
+                  )}
+                >
+                  {income ? '+' : '−'}
+                  {fmtMoney(t.amount)}
+                </span>
+                <div className="flex shrink-0 items-center gap-0.5">
+                  <IconButton label="編輯記錄" onClick={() => onEdit(t)}>
+                    <Pencil size={16} />
+                  </IconButton>
+                  <IconButton
+                    label="刪除記錄"
+                    tone="danger"
+                    onClick={() => removeOne(t)}
+                    className="sm:opacity-0 sm:transition sm:group-hover:opacity-100"
+                  >
+                    <Trash2 size={16} />
+                  </IconButton>
+                </div>
+              </li>
             )
           })}
         </ul>

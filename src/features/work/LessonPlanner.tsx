@@ -15,7 +15,6 @@ import {
   IconButton,
   Modal,
   Tooltip,
-  StatCard,
   SegmentedControl,
   ProgressBar,
   Menu,
@@ -43,6 +42,7 @@ import {
   ChevronLeft,
   ChevronRight,
   CalendarCheck,
+  GraduationCap,
 } from 'lucide-react'
 import PlanEditor, {
   emptyDraft,
@@ -477,60 +477,101 @@ export default function LessonPlanner() {
 
   return (
     <div className="space-y-5">
-      {/* 標題列 — 主視覺 + 主行動 */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-start gap-3">
-          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
-            <NotebookPen size={22} />
-          </span>
-          <div>
-            <h1 className="text-xl font-bold tracking-tight text-slate-800 dark:text-slate-100">
-              備課 / 教案
-            </h1>
-            <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
-              結構化備課：教學環節、教材清單、課程覆蓋，仲可以列印。
-            </p>
+      {/* ───────── 黑板 masthead：教師備課桌（白堊 serif 標題 + 粉筆刻度） ───────── */}
+      <header className="relative overflow-hidden rounded-3xl border border-slate-700/70 bg-slate-800 px-5 py-5 text-slate-100 shadow-md dark:border-slate-700/60 dark:bg-slate-900 sm:px-7 sm:py-6">
+        {/* 暖光暈（粉筆灰調，呼應「黑板暖感」） */}
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute -right-16 -top-20 h-56 w-56 rounded-full bg-accent/20 blur-3xl"
+        />
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute -bottom-24 -left-10 h-48 w-48 rounded-full bg-amber-400/10 blur-3xl"
+        />
+        {/* 黑板底部白堊刻度線 */}
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-x-5 bottom-0 h-px bg-gradient-to-r from-transparent via-white/15 to-transparent sm:inset-x-7"
+        />
+        <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-start gap-3.5">
+            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/10 text-white shadow-inner ring-1 ring-inset ring-white/15 backdrop-blur-sm">
+              <GraduationCap size={24} strokeWidth={1.75} />
+            </span>
+            <div className="min-w-0">
+              <p className="text-[11px] font-medium uppercase tracking-[0.32em] text-accent-soft/90">
+                教師備課桌
+              </p>
+              <h1 className="mt-1 font-serif text-[26px] font-semibold leading-tight tracking-tight text-white sm:text-3xl">
+                備課 / 教案
+              </h1>
+              <p className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-slate-300/90">
+                <span className="tabular-nums">
+                  在備 {stats.total} 份教案
+                </span>
+                {stats.thisWeek > 0 && (
+                  <>
+                    <span aria-hidden="true" className="text-slate-500">
+                      ·
+                    </span>
+                    <span className="inline-flex items-center gap-1 font-medium text-accent-soft">
+                      <CalendarRange size={12} /> 本週 {stats.thisWeek} 堂
+                    </span>
+                  </>
+                )}
+              </p>
+            </div>
+          </div>
+          <div className="flex shrink-0 items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setTemplatesOpen(true)}
+              className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-white/15 bg-white/5 px-3 text-sm font-medium text-slate-100 backdrop-blur-sm transition hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
+            >
+              <Sparkles size={15} />
+              範本
+            </button>
+            <button
+              type="button"
+              onClick={() => openCreate()}
+              className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-white px-3.5 text-sm font-semibold text-slate-800 shadow-sm transition hover:bg-accent-soft hover:text-accent-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
+            >
+              <Plus size={16} />
+              新增教案
+            </button>
           </div>
         </div>
-        <div className="flex shrink-0 items-center gap-2">
-          <Button
-            size="sm"
-            variant="secondary"
-            icon={Sparkles}
-            onClick={() => setTemplatesOpen(true)}
-          >
-            範本
-          </Button>
-          <Button size="sm" icon={Plus} onClick={() => openCreate()}>
-            新增教案
-          </Button>
-        </div>
-      </div>
+      </header>
 
-      {/* 統計卡 */}
-      <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
-        <StatCard label="教案總數" value={stats.total} icon={NotebookPen} />
-        <StatCard
+      {/* ───────── 備課曆書帶：細口統計（hairline grid · serif 大數字） ───────── */}
+      <section className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl bg-slate-200/70 ring-1 ring-slate-200/80 dark:bg-slate-700/50 dark:ring-slate-700/60 sm:grid-cols-4">
+        <AlmanacStat
+          label="教案總數"
+          value={stats.total}
+          icon={NotebookPen}
+          hint={stats.total > 0 ? '持續累積中' : '由第一份開始'}
+        />
+        <AlmanacStat
           label="本週課堂"
           value={stats.thisWeek}
           icon={CalendarRange}
           hint="星期一至五"
         />
-        <StatCard
+        <AlmanacStat
           label="已授課"
           value={stats.taught}
           icon={CheckCircle2}
           hint={stats.ready ? `另有 ${stats.ready} 個已就緒` : '完成授課嘅教案'}
         />
-        <StatCard
+        <AlmanacStat
           label="課程覆蓋"
           value={stats.coverPct}
           unit="%"
           icon={PieChart}
-          highlight
+          hot={stats.coverPct > 0}
           hint={`已備 ${stats.plannedCount}/${topics.length} 課題`}
         />
-      </div>
+      </section>
 
       {/* 視圖切換 */}
       <div className="flex items-center justify-between gap-2">
@@ -652,25 +693,30 @@ export default function LessonPlanner() {
             />
           ) : (
             <ul className="grid grid-cols-1 gap-2.5 lg:grid-cols-2">
-              {visible.map((p) => (
-                <PlanCard
+              {visible.map((p, i) => (
+                <li
                   key={p.id}
-                  plan={p}
-                  meta={metaById.get(p.id)}
-                  className={className(p.classId)}
-                  topicName={topicName(p.topicId)}
-                  area={topicArea(p.topicId)}
-                  objective={firstObjective(p.objectives)}
-                  onEdit={() => openEdit(p)}
-                  onDuplicate={() => duplicate(p)}
-                  onDupToDate={() => {
-                    setDupTarget(p)
-                    setDupDate(p.date || todayKey())
-                  }}
-                  onCycleStatus={() => cycleStatus(p)}
-                  onPrint={() => doPrint(p)}
-                  onRemove={() => remove(p)}
-                />
+                  className="animate-fade-in-up"
+                  style={{ animationDelay: `${Math.min(i, 10) * 40}ms` }}
+                >
+                  <PlanCard
+                    plan={p}
+                    meta={metaById.get(p.id)}
+                    className={className(p.classId)}
+                    topicName={topicName(p.topicId)}
+                    area={topicArea(p.topicId)}
+                    objective={firstObjective(p.objectives)}
+                    onEdit={() => openEdit(p)}
+                    onDuplicate={() => duplicate(p)}
+                    onDupToDate={() => {
+                      setDupTarget(p)
+                      setDupDate(p.date || todayKey())
+                    }}
+                    onCycleStatus={() => cycleStatus(p)}
+                    onPrint={() => doPrint(p)}
+                    onRemove={() => remove(p)}
+                  />
+                </li>
               ))}
             </ul>
           )}
@@ -730,16 +776,28 @@ export default function LessonPlanner() {
                       : 'border-slate-200/80 bg-white dark:border-slate-700/60 dark:bg-slate-800/60',
                   )}
                 >
-                  <div className="mb-1.5 flex items-center justify-between px-0.5">
+                  <div
+                    className={cx(
+                      'mb-2 flex items-center justify-between border-b border-dashed px-0.5 pb-1.5',
+                      isToday
+                        ? 'border-accent/30 dark:border-accent/30'
+                        : 'border-slate-200/80 dark:border-slate-700/60',
+                    )}
+                  >
                     <span
                       className={cx(
-                        'text-xs font-semibold',
+                        'inline-flex items-center gap-1.5 text-xs font-semibold',
                         isToday
                           ? 'text-accent-strong dark:text-accent'
                           : 'text-slate-600 dark:text-slate-300',
                       )}
                     >
                       星期{WEEKDAY_SHORT[i]}
+                      {isToday && (
+                        <span className="rounded-full bg-accent px-1.5 py-px text-[9px] font-semibold uppercase tracking-wide text-white">
+                          今日
+                        </span>
+                      )}
                     </span>
                     <span className="text-[11px] tabular-nums text-slate-400">
                       {shortDateLabel(key)}
@@ -807,12 +865,12 @@ export default function LessonPlanner() {
       {view === 'coverage' && (
         <div className="space-y-4">
           <Card className="p-4">
-            <div className="mb-3 flex items-center justify-between">
-              <div>
-                <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+            <div className="mb-3 flex items-center justify-between gap-2">
+              <div className="min-w-0">
+                <h3 className="font-serif text-lg font-semibold tracking-tight text-slate-800 dark:text-slate-100">
                   BAFS 課程覆蓋率
                 </h3>
-                <p className="text-xs text-slate-400 dark:text-slate-500">
+                <p className="mt-0.5 text-xs text-slate-400 dark:text-slate-500">
                   按課題範疇統計：已授課 / 已備課 / 全部課題
                 </p>
               </div>
@@ -832,39 +890,61 @@ export default function LessonPlanner() {
 
           {/* 未備課題清單 */}
           <Card className="p-4">
-            <h3 className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-slate-800 dark:text-slate-100">
-              <Circle size={14} className="text-slate-400" />
-              未備課嘅課題
-            </h3>
             {(() => {
               const missing = sortedTopics.filter(
                 (t) => !stats.plannedTopicIds.has(t.id),
               )
-              if (missing.length === 0)
-                return (
-                  <p className="py-4 text-center text-sm text-emerald-600 dark:text-emerald-400">
-                    所有課題都已備課 🎉
-                  </p>
-                )
               return (
-                <div className="flex flex-wrap gap-1.5">
-                  {missing.map((t) => (
-                    <button
-                      key={t.id}
-                      type="button"
-                      onClick={() => {
-                        setEditorMode('create')
-                        setEditorInitial({ ...emptyDraft, topicId: t.id })
-                        setEditingId(null)
-                        setEditorOpen(true)
-                      }}
-                      className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2 py-1 text-xs text-slate-600 transition hover:bg-accent-soft hover:text-accent-strong dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-accent/15 dark:hover:text-accent"
-                    >
-                      <Plus size={11} />
-                      {t.topic}
-                    </button>
-                  ))}
-                </div>
+                <>
+                  <h3 className="mb-2.5 flex items-center gap-1.5 font-serif text-lg font-semibold tracking-tight text-slate-800 dark:text-slate-100">
+                    <Circle size={15} className="text-slate-400" />
+                    未備課嘅課題
+                    {missing.length > 0 && (
+                      <Badge tone="slate" className="ml-0.5">
+                        <span className="tabular-nums">{missing.length}</span>
+                      </Badge>
+                    )}
+                  </h3>
+                  {missing.length === 0 ? (
+                    <div className="flex flex-col items-center gap-1 py-5 text-center">
+                      <CheckCircle2
+                        size={26}
+                        className="text-emerald-500 dark:text-emerald-400"
+                        strokeWidth={1.75}
+                      />
+                      <p className="text-sm font-medium text-emerald-600 dark:text-emerald-400">
+                        全部課題都已備課，好齊整！
+                      </p>
+                      <p className="text-xs text-slate-400 dark:text-slate-500">
+                        整個 BAFS 課程都有對應教案了。
+                      </p>
+                    </div>
+                  ) : (
+                    <>
+                      <p className="mb-2.5 text-xs text-slate-400 dark:text-slate-500">
+                        撳一下即建立呢個課題嘅教案。
+                      </p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {missing.map((t) => (
+                          <button
+                            key={t.id}
+                            type="button"
+                            onClick={() => {
+                              setEditorMode('create')
+                              setEditorInitial({ ...emptyDraft, topicId: t.id })
+                              setEditingId(null)
+                              setEditorOpen(true)
+                            }}
+                            className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2 py-1 text-xs text-slate-600 transition hover:bg-accent-soft hover:text-accent-strong dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-accent/15 dark:hover:text-accent"
+                          >
+                            <Plus size={11} />
+                            {t.topic}
+                          </button>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </>
               )
             })()}
           </Card>
@@ -991,6 +1071,64 @@ export default function LessonPlanner() {
   )
 }
 
+// ───────── 備課曆書帶統計格（hairline grid · serif 大數字；覆蓋達標時 hot 高亮）─────────
+function AlmanacStat({
+  label,
+  value,
+  unit,
+  hint,
+  icon: I,
+  hot,
+}: {
+  label: string
+  value: number | string
+  unit?: string
+  hint?: string
+  icon: typeof NotebookPen
+  hot?: boolean
+}) {
+  return (
+    <div
+      className={cx(
+        'px-3.5 py-3.5 transition-colors sm:px-4',
+        hot ? 'bg-accent-soft dark:bg-accent/15' : 'bg-white dark:bg-slate-800',
+      )}
+    >
+      <p
+        className={cx(
+          'flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide',
+          hot
+            ? 'text-accent-strong/80 dark:text-accent/80'
+            : 'text-slate-400 dark:text-slate-500',
+        )}
+      >
+        <I size={12} className="shrink-0" />
+        <span className="truncate">{label}</span>
+      </p>
+      <p
+        className={cx(
+          'mt-1 font-serif text-[26px] font-semibold leading-none tabular-nums slashed-zero',
+          hot
+            ? 'text-accent-strong dark:text-accent'
+            : 'text-slate-800 dark:text-slate-100',
+        )}
+      >
+        {value}
+        {unit && (
+          <span className="ml-1 font-sans text-sm font-normal text-slate-400">
+            {unit}
+          </span>
+        )}
+      </p>
+      {hint && (
+        <p className="mt-1 truncate text-[11px] text-slate-400 dark:text-slate-500">
+          {hint}
+        </p>
+      )}
+    </div>
+  )
+}
+
 // ============================================================
 //  教案卡（列表用）
 // ============================================================
@@ -1028,33 +1166,46 @@ function PlanCard({
   const phaseCount = meta?.phases?.length ?? 0
   const mat = materialsDone(meta?.materials ?? [])
   const matPct = mat.total ? Math.round((mat.done / mat.total) * 100) : 0
-  // 左側狀態色條 — 令卡片一眼睇到備課進度，唔再千篇一律
-  const accentBar =
+  const period = meta?.period
+  // 左側「粉筆書脊」狀態色條 — 實色棒 + 淡色軌道，令卡片似一張歸檔嘅教案
+  const spineTrack =
+    status === 'taught'
+      ? 'bg-emerald-100/70 dark:bg-emerald-500/10'
+      : status === 'ready'
+        ? 'bg-amber-100/70 dark:bg-amber-500/10'
+        : 'bg-slate-100 dark:bg-slate-700/40'
+  const spineBar =
     status === 'taught'
       ? 'bg-emerald-400 dark:bg-emerald-500/70'
       : status === 'ready'
         ? 'bg-amber-400 dark:bg-amber-500/70'
-        : 'bg-slate-200 dark:bg-slate-700'
+        : 'bg-slate-300 dark:bg-slate-600'
 
   return (
     <Card
       hover
-      className="group/card relative flex flex-col overflow-hidden p-3.5 pl-4"
+      className="group/card relative flex h-full flex-col overflow-hidden p-3.5 pl-5"
     >
-      {/* 狀態色條 */}
-      <span
-        aria-hidden
-        className={cx('absolute inset-y-0 left-0 w-1', accentBar)}
-      />
+      {/* 粉筆書脊（狀態色軌 + 實色棒） */}
+      <span aria-hidden className={cx('absolute inset-y-0 left-0 w-1.5', spineTrack)} />
+      <span aria-hidden className={cx('absolute inset-y-2 left-0 w-1 rounded-r-full', spineBar)} />
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0 flex-1">
-          <button
-            type="button"
-            onClick={onEdit}
-            className="block text-left text-[15px] font-semibold leading-snug text-slate-800 transition-colors hover:text-accent dark:text-slate-100 dark:hover:text-accent"
-          >
-            {plan.title}
-          </button>
+          {/* 標題行：節數白堊標籤 + serif 教案題目 */}
+          <div className="flex items-baseline gap-2">
+            {period != null && (
+              <span className="shrink-0 rounded-md bg-slate-100 px-1.5 py-0.5 text-[11px] font-semibold tabular-nums text-slate-500 ring-1 ring-inset ring-slate-200/80 dark:bg-slate-700/70 dark:text-slate-300 dark:ring-slate-600/60">
+                第{period}節
+              </span>
+            )}
+            <button
+              type="button"
+              onClick={onEdit}
+              className="block min-w-0 text-left font-serif text-[17px] font-semibold leading-snug text-slate-800 transition-colors hover:text-accent dark:text-slate-100 dark:hover:text-accent"
+            >
+              {plan.title}
+            </button>
+          </div>
           <div className="mt-2 flex flex-wrap items-center gap-1.5">
             <Tooltip label="撳一下切換狀態">
               <button
@@ -1124,19 +1275,24 @@ function PlanCard({
 
       {topicName && (
         <p className="mt-2.5 truncate text-xs text-slate-500 dark:text-slate-400">
-          <span className="font-medium text-slate-400 dark:text-slate-500">課題 · </span>
+          <span className="font-medium uppercase tracking-wide text-slate-400 dark:text-slate-500">
+            課題
+          </span>
+          <span aria-hidden="true" className="mx-1.5 text-slate-300 dark:text-slate-600">
+            ·
+          </span>
           {topicName}
         </p>
       )}
       {objective && (
-        <p className="mt-1 line-clamp-2 text-[13px] leading-relaxed text-slate-600 dark:text-slate-300">
+        <p className="mt-1.5 line-clamp-2 text-[13px] leading-relaxed text-slate-600 dark:text-slate-300">
           {objective}
         </p>
       )}
 
-      {/* 底部 meta 條 */}
+      {/* 底部 meta 條（粉筆刻度分隔線）*/}
       {(phaseCount > 0 || dur > 0 || mat.total > 0) && (
-        <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1.5 border-t border-slate-100 pt-2.5 dark:border-slate-700/60">
+        <div className="mt-auto flex flex-wrap items-center gap-x-3 gap-y-1.5 border-t border-dashed border-slate-200/80 pt-2.5 dark:border-slate-700/60">
           {phaseCount > 0 && (
             <span className="inline-flex items-center gap-1 text-[11px] text-slate-500 dark:text-slate-400">
               <ListChecks size={13} className="text-accent/70" />

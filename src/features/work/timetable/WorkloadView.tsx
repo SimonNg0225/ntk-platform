@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { CalendarDays, Clock, Layers, Coffee, CupSoda } from 'lucide-react'
+import { CalendarDays, Clock, Layers, Coffee, CupSoda, PieChart } from 'lucide-react'
 import { Badge, Card, EmptyState, SectionTitle, StatCard, cx } from '../../../ui'
 import {
   colorOf,
@@ -37,9 +37,9 @@ export default function WorkloadView({
   if (workload.total === 0) {
     return (
       <EmptyState
-        icon={CalendarDays}
-        title="未有課堂資料"
-        hint="去「週課表」撳格仔加堂，呢度就會出現工作量統計同圖表。"
+        icon={PieChart}
+        title="仲未有課堂可以分析"
+        hint="返去「週課表」撳吓格仔加堂，呢度就會幫你算好每日節數、最忙一日同空堂時段。"
       />
     )
   }

@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
 import {
-  CalendarRange,
   Download,
   LayoutGrid,
   Printer,
@@ -11,6 +10,8 @@ import {
   Clock,
   AlertTriangle,
   ChevronRight,
+  MapPin,
+  Sparkles,
 } from 'lucide-react'
 import { createCollection, useCollection } from '../../lib/store'
 import { timetableCol, classesCol, cycleCalendarCol } from '../../data/collections'
@@ -24,7 +25,6 @@ import {
   IconButton,
   Input,
   Modal,
-  PageHeader,
   SegmentedControl,
   Select,
   cx,
@@ -36,6 +36,7 @@ import WorkloadView from './timetable/WorkloadView'
 import PrintView from './timetable/PrintView'
 import SlotEditor, { type EditorDraft } from './timetable/SlotEditor'
 import {
+  CYCLE_LABELS,
   DAY_DEFS,
   DEFAULT_BELLS,
   autoColorFor,
@@ -326,33 +327,43 @@ export default function Timetable() {
   const editorPeriod = draft ? bellMap.get(draft.period) : undefined
 
   return (
-    <div className="space-y-4 print:space-y-0">
-      <div className="print:hidden">
-        <PageHeader
-          icon={CalendarRange}
-          title="時間表"
-          description="每週教學時間表 — 鐘聲時間、循環週、撞堂偵測同工作量分析。"
-          actions={
-            <div className="flex items-center gap-1.5">
-              <IconButton label="設定鐘聲時間" onClick={() => setShowSettings(true)}>
-                <Settings2 size={18} />
-              </IconButton>
-              <IconButton label="匯出 CSV" onClick={handleExport}>
-                <Download size={18} />
-              </IconButton>
-              {view === 'print' && (
-                <Button
-                  size="sm"
-                  icon={Printer}
-                  onClick={() => window.print()}
-                >
-                  列印
-                </Button>
-              )}
-            </div>
-          }
-        />
-      </div>
+    <div className="space-y-5 print:space-y-0">
+      {/* ───────── 週記 masthead：六日循環做頁面身份（serif「時間表」+ cycle 緞帶） ───────── */}
+      <header className="print:hidden">
+        <div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-3">
+          <div className="min-w-0">
+            <p className="text-[11px] font-medium uppercase tracking-[0.3em] text-accent/70">
+              {cycle ? '六日循環 · 週記網格' : '每週課表'}
+            </p>
+            <h1 className="mt-1 font-serif text-2xl font-semibold leading-tight tracking-tight text-slate-800 dark:text-slate-100 sm:text-[28px]">
+              時間表
+            </h1>
+            <p className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-slate-500 dark:text-slate-400">
+              <span className="tabular-nums">每週 {visibleSlots.length} 節課堂</span>
+              <span aria-hidden="true" className="text-slate-300 dark:text-slate-600">·</span>
+              <span>鐘聲時間 · 撞堂偵測 · 工作量分析</span>
+            </p>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <IconButton label="設定鐘聲時間" onClick={() => setShowSettings(true)}>
+              <Settings2 size={18} />
+            </IconButton>
+            <IconButton label="匯出 CSV" onClick={handleExport}>
+              <Download size={18} />
+            </IconButton>
+            {view === 'print' && (
+              <Button size="sm" icon={Printer} onClick={() => window.print()}>
+                列印
+              </Button>
+            )}
+          </div>
+        </div>
+
+        {/* cycle 緞帶：Day A–F，今日嗰格高亮（去 Excel，循環概念視覺化） */}
+        {cycle && (
+          <CycleRibbon todayDay={todayDay} days={days} className="mt-4" />
+        )}
+      </header>
 
       {/* 今日 / 下一堂 面板 */}
       <div className="print:hidden">
@@ -372,12 +383,16 @@ export default function Timetable() {
         <div
           role="alert"
           aria-live="assertive"
-          className="flex items-start gap-2 rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-300 print:hidden"
+          className="flex items-start gap-2.5 rounded-2xl border border-rose-200/80 bg-rose-50/70 p-3.5 dark:border-rose-500/25 dark:bg-rose-500/10 print:hidden"
         >
-          <AlertTriangle size={16} className="mt-0.5 shrink-0" />
-          <div>
-            <p className="font-medium">偵測到 {conflicts.length} 個撞堂</p>
-            <p className="text-xs opacity-80">
+          <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-rose-100 text-rose-600 dark:bg-rose-500/20 dark:text-rose-300">
+            <AlertTriangle size={16} />
+          </span>
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-rose-700 dark:text-rose-300">
+              偵測到 {conflicts.length} 個撞堂
+            </p>
+            <p className="mt-0.5 text-xs text-rose-600/80 dark:text-rose-300/70">
               {conflicts
                 .slice(0, 3)
                 .map((c) =>
@@ -517,39 +532,57 @@ function TodayPanel({
 }) {
   // cycle 模式：todayDay 0 = 今日唔喺校曆（週末/假期/未排）→ 當休息日。
   const isWeekend = cycle ? todayDay < 1 : todayDay === 0
+  const upColor = upNext
+    ? colorOf(autoColorFor(upNext.slot.subject || upNext.slot.classId || 'x'))
+    : null
   return (
-    <Card padded className="bg-gradient-to-br from-accent-soft/60 to-transparent dark:from-accent/10">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-3">
-          <span className="flex h-11 w-11 shrink-0 flex-col items-center justify-center rounded-xl bg-accent text-white">
-            <Clock size={18} />
+    <Card
+      padded
+      className="relative overflow-hidden border-accent/25 bg-gradient-to-br from-accent-soft/70 via-accent-soft/20 to-transparent dark:border-accent/20 dark:from-accent/12 dark:via-accent/5"
+    >
+      {/* 柔光點綴（高影響時刻先用，純裝飾） */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute -right-10 -top-14 h-36 w-36 rounded-full bg-accent/10 blur-3xl dark:bg-accent/15"
+      />
+      <div className="relative flex flex-col gap-3.5 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-3.5">
+          {/* serif 大字「今日」身份磚（cycle 模式直接顯示 Day 字母） */}
+          <span className="flex h-14 w-14 shrink-0 flex-col items-center justify-center rounded-2xl bg-accent text-white shadow-sm shadow-accent/30">
+            {isWeekend ? (
+              <Clock size={22} strokeWidth={2} />
+            ) : (
+              <>
+                <span className="font-serif text-2xl font-semibold leading-none">
+                  {cycle ? cycleShort(todayDay) : dayLabel(todayDay).slice(-1)}
+                </span>
+                <span className="mt-0.5 text-[9px] font-medium uppercase tracking-widest text-white/70">
+                  {cycle ? 'Day' : '星期'}
+                </span>
+              </>
+            )}
           </span>
-          <div>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
+          <div className="min-w-0">
+            <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-accent/70">
               {isWeekend
-                ? cycle ? '今日唔使返學 / 未排堂' : '今日係假日'
-                : `今日 ${cycle ? `Day ${cycleShort(todayDay)}` : dayLabel(todayDay)}`}
+                ? cycle ? '今日唔使返學' : '今日休息'
+                : `今日 · ${cycle ? `Day ${cycleShort(todayDay)}` : dayLabel(todayDay)}`}
             </p>
-            <p className="text-lg font-semibold text-slate-800 dark:text-slate-100">
-              {isWeekend ? '好好休息' : `共 ${todayCount} 節`}
+            <p className="mt-0.5 font-serif text-xl font-semibold leading-tight text-slate-800 dark:text-slate-100">
+              {isWeekend ? '好好抖一抖 ☕' : `今日有 ${todayCount} 節`}
             </p>
           </div>
         </div>
 
-        {upNext ? (
+        {upNext && upColor ? (
           <div
             aria-live="polite"
-            className="flex items-center gap-3 rounded-lg border border-slate-200/70 bg-white/70 px-3 py-2 dark:border-slate-700 dark:bg-slate-800/70"
+            className="flex items-center gap-3 rounded-2xl border border-slate-200/70 bg-white/80 px-3.5 py-2.5 shadow-xs backdrop-blur-sm dark:border-slate-700/70 dark:bg-slate-800/70"
           >
-            <div
-              className={cx(
-                'h-9 w-1 rounded-full',
-                colorOf(autoColorFor(upNext.slot.subject || upNext.slot.classId || 'x')).bar,
-              )}
-            />
+            <div className={cx('h-10 w-1.5 shrink-0 rounded-full', upColor.bar)} />
             <div className="min-w-0">
               <div className="flex items-center gap-1.5">
-                <Badge tone={upNext.status === 'now' ? 'green' : 'accent'}>
+                <Badge tone={upNext.status === 'now' ? 'green' : 'accent'} dot>
                   {upNext.status === 'now'
                     ? '進行中'
                     : upNext.status === 'soon'
@@ -560,19 +593,20 @@ function TodayPanel({
                   {upNext.bell.start}–{upNext.bell.end}
                 </span>
               </div>
-              <p className="mt-0.5 truncate text-sm font-medium text-slate-700 dark:text-slate-200">
+              <p className="mt-1 truncate text-sm font-semibold text-slate-700 dark:text-slate-200">
                 {upNext.slot.subject ||
                   (upNext.slot.classId
                     ? classNameById.get(upNext.slot.classId)
                     : '課堂')}
                 {upNext.slot.classId && upNext.slot.subject && (
-                  <span className="ml-1 text-xs text-slate-400">
+                  <span className="ml-1.5 text-xs font-normal text-slate-400">
                     {classNameById.get(upNext.slot.classId)}
                   </span>
                 )}
                 {upNext.slot.room && (
-                  <span className="ml-1 text-xs text-slate-400">
-                    @ {upNext.slot.room}
+                  <span className="ml-1.5 inline-flex items-center gap-0.5 text-xs font-normal text-slate-400">
+                    <MapPin size={11} />
+                    {upNext.slot.room}
                   </span>
                 )}
               </p>
@@ -580,13 +614,75 @@ function TodayPanel({
           </div>
         ) : (
           !isWeekend && (
-            <p className="text-sm text-slate-500 dark:text-slate-400">
-              {nowMin >= lastEndMin ? '今日課堂已完' : '今日未有更多課堂'}
+            <p className="flex items-center gap-1.5 rounded-2xl bg-white/50 px-3.5 py-2.5 text-sm text-slate-500 dark:bg-slate-800/40 dark:text-slate-400">
+              <Sparkles size={14} className="text-accent/60" />
+              {nowMin >= lastEndMin ? '今日課堂已完，辛苦晒！' : '今日未有更多課堂'}
             </p>
           )
         )}
       </div>
     </Card>
+  )
+}
+
+// ───────── Cycle 緞帶（六日循環導航：Day A–F，今日嗰節高亮）─────────
+//  將「循環週」概念由抽象變視覺：一排圓潤 Day token，今日填實 accent，
+//  其餘柔底；非顯示範圍（被設定收窄）嘅日子淡化。純導覽 / 概念展示，唔改資料。
+function CycleRibbon({
+  todayDay,
+  days,
+  className,
+}: {
+  todayDay: number
+  days: number[]
+  className?: string
+}) {
+  const visible = new Set(days)
+  return (
+    <div
+      className={cx(
+        'flex items-center gap-1.5 overflow-x-auto rounded-2xl border border-slate-200/70 bg-slate-50/70 p-1.5 dark:border-slate-700/60 dark:bg-slate-800/50',
+        className,
+      )}
+      role="list"
+      aria-label="六日循環"
+    >
+      {CYCLE_LABELS.map((letter, i) => {
+        const day = i + 1
+        const isToday = day === todayDay
+        const inRange = visible.has(day)
+        return (
+          <div
+            key={letter}
+            role="listitem"
+            className={cx(
+              'flex flex-1 shrink-0 items-center justify-center gap-1.5 rounded-xl px-3 py-1.5 text-sm font-medium transition-colors',
+              isToday
+                ? 'bg-accent text-white shadow-sm shadow-accent/25'
+                : inRange
+                  ? 'text-slate-500 hover:bg-white dark:text-slate-300 dark:hover:bg-slate-700/60'
+                  : 'text-slate-300 dark:text-slate-600',
+            )}
+          >
+            <span
+              className={cx(
+                'flex h-6 w-6 items-center justify-center rounded-lg font-serif text-[15px] font-semibold leading-none',
+                isToday
+                  ? 'bg-white/20'
+                  : inRange
+                    ? 'bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent'
+                    : 'bg-slate-100 dark:bg-slate-700/50',
+              )}
+            >
+              {letter}
+            </span>
+            <span className="hidden sm:inline">
+              {isToday ? '今日' : `Day ${letter}`}
+            </span>
+          </div>
+        )
+      })}
+    </div>
   )
 }
 

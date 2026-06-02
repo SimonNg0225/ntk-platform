@@ -6,20 +6,24 @@ import {
   BookMarked,
   Bot,
   Check,
+  CheckCheck,
   CheckSquare,
   ChevronRight,
+  ClipboardList,
   Copy,
   Download,
   FileText,
   FolderOpen,
   Layers,
   Lock,
-  NotebookPen,
   Pencil,
+  PenLine,
   Plus,
   Printer,
   RotateCcw,
   Save,
+  Scale,
+  ScrollText,
   Search,
   Sparkles,
   Square,
@@ -52,8 +56,6 @@ import {
   Pills,
   SegmentedControl,
   Select,
-  StatCard,
-  Tabs,
   Textarea,
 } from '../../ui'
 import {
@@ -164,6 +166,132 @@ function TypeChip({ type }: { type: QuestionType }) {
       <span className={cx('h-1.5 w-1.5 rounded-full', TYPE_DOT[type])} />
       {TYPE_LABEL[type]}
     </span>
+  )
+}
+
+// ───────── 分數印章（marking-scheme 右欄語氣：[ N 分 ]）─────────
+//  考評檔案概念：分數似改卷員喺題旁打嘅 marks 章。無分（唔計分）時退成低調灰章。
+function MarksStamp({ marks }: { marks?: number }) {
+  if (marks)
+    return (
+      <span className="inline-flex items-center gap-1 rounded-md border border-dashed border-amber-300/80 bg-amber-50/70 px-2 py-0.5 font-serif text-[11px] font-semibold tabular-nums text-amber-700 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-300">
+        <Scale size={11} className="opacity-70" />
+        {marks} 分
+      </span>
+    )
+  return (
+    <span className="inline-flex items-center rounded-md border border-dashed border-slate-200 px-2 py-0.5 text-[11px] font-medium text-slate-400 dark:border-slate-700 dark:text-slate-500">
+      未配分
+    </span>
+  )
+}
+
+// ───────── 卷面題號牌（serif Q01）──────────
+//  畀每條題目一個「卷面編號感」——細牌、serif、tabular，題型色做底光。
+function QuestionPlate({
+  index,
+  type,
+  className,
+}: {
+  index: number
+  type: QuestionType
+  className?: string
+}) {
+  return (
+    <span
+      className={cx(
+        'inline-flex shrink-0 flex-col items-center justify-center rounded-lg px-2 py-1 leading-none',
+        TYPE_CHIP[type],
+        className,
+      )}
+      aria-hidden
+    >
+      <span className="text-[8px] font-semibold uppercase tracking-[0.15em] opacity-60">
+        Q
+      </span>
+      <span className="font-serif text-[15px] font-bold tabular-nums slashed-zero">
+        {String(index).padStart(2, '0')}
+      </span>
+    </span>
+  )
+}
+
+// ───────── 區段小帽（uppercase + icon；統一頁內節奏）─────────
+function SectionLabel({
+  icon: Icon,
+  children,
+  right,
+}: {
+  icon: LucideIcon
+  children: ReactNode
+  right?: ReactNode
+}) {
+  return (
+    <div className="flex items-center justify-between gap-2 px-0.5">
+      <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+        <Icon size={13} className="shrink-0" />
+        {children}
+      </p>
+      {right}
+    </div>
+  )
+}
+
+// ───────── 清點帶統計格（hairline grid · serif 大數字；達標 hot 高亮）─────────
+function TallyStat({
+  label,
+  value,
+  unit,
+  hint,
+  icon: Icon,
+  hot,
+}: {
+  label: string
+  value: number | string
+  unit?: string
+  hint?: string
+  icon: LucideIcon
+  hot?: boolean
+}) {
+  return (
+    <div
+      className={cx(
+        'px-3.5 py-3.5 transition-colors sm:px-4',
+        hot ? 'bg-emerald-50 dark:bg-emerald-500/10' : 'bg-white dark:bg-slate-800',
+      )}
+    >
+      <p
+        className={cx(
+          'flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide',
+          hot
+            ? 'text-emerald-600/80 dark:text-emerald-400/80'
+            : 'text-slate-400 dark:text-slate-500',
+        )}
+      >
+        <Icon size={12} className="shrink-0" />
+        <span className="truncate">{label}</span>
+      </p>
+      <p
+        className={cx(
+          'mt-1 font-serif text-[26px] font-semibold leading-none tabular-nums slashed-zero',
+          hot
+            ? 'text-emerald-600 dark:text-emerald-400'
+            : 'text-slate-800 dark:text-slate-100',
+        )}
+      >
+        {value}
+        {unit && (
+          <span className="ml-1 font-sans text-sm font-normal text-slate-400">
+            {unit}
+          </span>
+        )}
+      </p>
+      {hint && (
+        <p className="mt-1 truncate text-[11px] text-slate-400 dark:text-slate-500">
+          {hint}
+        </p>
+      )}
+    </div>
   )
 }
 
@@ -333,40 +461,90 @@ export default function QuestionBank() {
   }
 
   return (
-    <div className="space-y-4">
-      {/* 視圖切換 */}
-      <Tabs<ViewId>
-        tabs={[
-          { id: 'bank', label: '題庫' },
-          { id: 'analytics', label: '統計分析' },
-          { id: 'paper', label: '組卷工作室' },
-        ]}
-        active={view}
-        onChange={setView}
-        icons={{ bank: BookMarked, analytics: BarChart3, paper: FileText }}
-      />
+    <div className="space-y-5">
+      {/* ───────── 考評檔案 masthead：卷面封面感（kicker + serif 標題 + 卷務行）───────── */}
+      <header className="relative overflow-hidden rounded-3xl border border-slate-200/80 bg-white px-5 py-5 shadow-xs dark:border-slate-700/60 dark:bg-slate-800 dark:shadow-none sm:px-7 sm:py-6">
+        {/* 封面右上「卷務戳印」裝飾（純裝飾，唔搶主次） */}
+        <span
+          aria-hidden
+          className="pointer-events-none absolute -right-6 top-3 hidden -rotate-6 select-none rounded-xl border-2 border-dashed border-accent/20 px-4 py-2 font-serif text-xs font-semibold uppercase tracking-[0.25em] text-accent/25 dark:border-accent/25 dark:text-accent/25 sm:block"
+        >
+          BAFS · 校本評核
+        </span>
+        <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-4">
+          <div className="min-w-0">
+            <p className="flex items-center gap-2 text-[11px] font-medium uppercase tracking-[0.3em] text-accent/70">
+              <ScrollText size={13} />
+              考評檔案 · Assessment Bank
+            </p>
+            <h1 className="mt-1.5 font-serif text-[28px] font-semibold leading-none tracking-tight text-slate-800 dark:text-slate-100 sm:text-[34px]">
+              BAFS 題庫
+            </h1>
+            <p className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-slate-500 dark:text-slate-400">
+              <span className="tabular-nums">
+                存題 {stats.total} 條 · 覆蓋 {stats.topicsCovered}/{topics.length} 個課題
+              </span>
+              {stats.total > 0 && (
+                <>
+                  <span aria-hidden className="text-slate-300 dark:text-slate-600">·</span>
+                  <span className="inline-flex items-center gap-1 font-medium text-accent-strong dark:text-accent">
+                    <Scale size={12} /> 卷面難度 {difficultyIndexLabel(stats.difficultyIndex)}
+                  </span>
+                </>
+              )}
+            </p>
+          </div>
+          {/* 視圖切換：似試卷檔案的分頁標籤 */}
+          <div className="shrink-0">
+            <SegmentedControl<ViewId>
+              value={view}
+              onChange={setView}
+              options={[
+                { id: 'bank', label: '題庫', icon: BookMarked },
+                { id: 'analytics', label: '統計', icon: BarChart3 },
+                { id: 'paper', label: '組卷', icon: FileText },
+              ]}
+            />
+          </div>
+        </div>
+        {/* 卷面雙線（封面分隔感） */}
+        <div className="mt-5 space-y-1" aria-hidden>
+          <span className="block h-px bg-slate-200/90 dark:bg-slate-700/70" />
+          <span className="block h-px bg-slate-200/60 dark:bg-slate-700/40" />
+        </div>
+      </header>
 
-      {/* 統計卡（全視圖共用） */}
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
-        <StatCard label="題目總數" value={stats.total} icon={BookMarked} highlight />
-        <StatCard
-          label="可即用"
+      {/* ───────── 改卷員清點帶：hairline grid · serif 大數字 ───────── */}
+      <section className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl bg-slate-200/70 ring-1 ring-slate-200/80 dark:bg-slate-700/50 dark:ring-slate-700/60 sm:grid-cols-4">
+        <TallyStat
+          label="題目總數"
+          value={stats.total}
+          unit="條"
+          icon={BookMarked}
+          hint="入卷的題庫存量"
+        />
+        <TallyStat
+          label="即用題"
           value={stats.withAnswer}
-          unit="題"
-          hint="有答案 / 完整選項"
+          unit="條"
+          icon={CheckCheck}
+          hint="已附答案／完整選項"
+          hot={stats.total > 0 && stats.withAnswer === stats.total}
         />
-        <StatCard label="總分值" value={stats.totalMarks} unit="分" />
-        <StatCard
-          label="課題覆蓋"
-          value={`${stats.topicsCovered}/${topics.length}`}
-          hint="有題目嘅課題"
+        <TallyStat
+          label="總分值"
+          value={stats.totalMarks}
+          unit="分"
+          icon={Scale}
+          hint="全題庫合計分數"
         />
-        <StatCard
+        <TallyStat
           label="難度指數"
           value={stats.difficultyIndex}
+          icon={Target}
           hint={difficultyIndexLabel(stats.difficultyIndex)}
         />
-      </div>
+      </section>
 
       {view === 'bank' && (
         <BankView
@@ -716,20 +894,30 @@ function BankView(props: {
         </Card>
       )}
 
-      {/* 列表 */}
-      <p
-        className="px-0.5 text-xs text-slate-400 dark:text-slate-500"
-        aria-live="polite"
+      {/* 卷面題目列表 — 改卷卡：serif 題號牌 + marks 印章 + marking-scheme 展開 */}
+      <SectionLabel
+        icon={ClipboardList}
+        right={
+          <span
+            className="text-xs tabular-nums text-slate-400 dark:text-slate-500"
+            aria-live="polite"
+          >
+            共 {filtered.length} 條
+          </span>
+        }
       >
-        顯示 <span className="nums font-medium text-slate-500 dark:text-slate-400">{filtered.length}</span> 條題目
-      </p>
+        卷面題目
+      </SectionLabel>
       <ul className="space-y-2.5">
-        {filtered.map((q) => {
+        {filtered.map((q, idx) => {
           const isOpen = expanded === q.id
           return (
           <Card
             key={q.id}
-            className="group/q overflow-hidden p-0 transition duration-200 hover:border-slate-300 hover:shadow-md dark:hover:border-slate-600"
+            className={cx(
+              'group/q overflow-hidden p-0 transition duration-200 hover:border-slate-300 hover:shadow-md dark:hover:border-slate-600',
+              isOpen && 'border-accent/40 shadow-md ring-1 ring-accent/15 dark:border-accent/40',
+            )}
           >
             <div className="flex items-stretch">
               {/* 題型色軌 — 一眼分到題型 */}
@@ -741,15 +929,18 @@ function BankView(props: {
                       type="checkbox"
                       checked={selected.has(q.id)}
                       onChange={() => toggleSelect(q.id)}
-                      className="mt-0.5 h-4 w-4 shrink-0 accent-[color:var(--accent)]"
+                      className="mt-1 h-4 w-4 shrink-0 accent-[color:var(--accent)]"
                       aria-label="選取題目"
                     />
                   )}
+                  {/* 卷面題號牌 */}
+                  <QuestionPlate index={idx + 1} type={q.type} className="mt-0.5" />
                   <button
                     onClick={() => setExpanded(isOpen ? null : q.id)}
                     aria-expanded={isOpen}
                     className="flex min-w-0 flex-1 items-start gap-2 break-words text-left text-[15px] font-medium leading-relaxed text-slate-800 dark:text-slate-100"
                   >
+                    <span className="min-w-0">{q.stem}</span>
                     <ChevronRight
                       size={16}
                       className={cx(
@@ -757,9 +948,8 @@ function BankView(props: {
                         isOpen && 'rotate-90 text-accent dark:text-accent',
                       )}
                     />
-                    <span className="min-w-0">{q.stem}</span>
                   </button>
-                  <div className="flex shrink-0 items-center gap-0.5 opacity-70 transition group-hover/q:opacity-100">
+                  <div className="flex shrink-0 items-center gap-0.5 opacity-100 transition sm:opacity-60 sm:group-hover/q:opacity-100">
                     <IconButton label="複製題目" onClick={() => duplicateQuestion(q)}>
                       <Copy size={16} />
                     </IconButton>
@@ -775,15 +965,11 @@ function BankView(props: {
                     </IconButton>
                   </div>
                 </div>
-                <div className="mt-2.5 flex flex-wrap items-center gap-1.5 pl-6">
+                <div className="mt-2.5 flex flex-wrap items-center gap-1.5 pl-[3.25rem]">
                   <TypeChip type={q.type} />
                   <Badge tone={DIFF_TONE[q.difficulty]} dot>{DIFF_LABEL[q.difficulty]}</Badge>
                   <Badge tone="accent">{topicName(q.topicId)}</Badge>
-                  {q.marks ? (
-                    <span className="inline-flex items-center rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-medium tabular-nums text-slate-500 dark:bg-slate-700/60 dark:text-slate-400">
-                      {q.marks} 分
-                    </span>
-                  ) : null}
+                  <MarksStamp marks={q.marks} />
                   {q.source?.includes('AI') && (
                     <Badge tone="slate" icon={Bot}>
                       AI
@@ -791,39 +977,53 @@ function BankView(props: {
                   )}
                 </div>
             {isOpen && (
-              <div className="ml-6 mt-3 space-y-1.5 border-t border-slate-100 pt-3 text-sm dark:border-slate-700/60">
+              <div className="ml-[3.25rem] mt-3.5 rounded-2xl border border-slate-200/70 bg-slate-50/70 p-3.5 text-sm dark:border-slate-700/50 dark:bg-slate-900/30">
+                <p className="mb-2.5 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">
+                  <Check size={12} className="text-emerald-500" />
+                  評卷參考 · Marking Scheme
+                </p>
                 {q.type === 'mc' && q.options && (
                   <ul className="space-y-1">
-                    {q.options.map((o, i) => (
-                      <li
-                        key={i}
-                        className={
-                          i === q.answerIndex
-                            ? 'flex min-w-0 items-center gap-1 font-semibold text-emerald-700 dark:text-emerald-400'
-                            : 'min-w-0 text-slate-600 dark:text-slate-300'
-                        }
-                      >
-                        <span className="min-w-0 break-words">
-                          {String.fromCharCode(65 + i)}. {o}
-                        </span>
-                        {i === q.answerIndex && (
-                          <Check size={14} className="shrink-0" aria-label="正確答案" />
-                        )}
-                      </li>
-                    ))}
+                    {q.options.map((o, i) => {
+                      const correct = i === q.answerIndex
+                      return (
+                        <li
+                          key={i}
+                          className={cx(
+                            'flex min-w-0 items-center gap-2',
+                            correct
+                              ? 'font-semibold text-emerald-700 dark:text-emerald-400'
+                              : 'text-slate-600 dark:text-slate-300',
+                          )}
+                        >
+                          <span
+                            className={cx(
+                              'flex h-5 w-5 shrink-0 items-center justify-center rounded-full font-serif text-[11px] font-bold',
+                              correct
+                                ? 'bg-emerald-500 text-white'
+                                : 'bg-slate-200 text-slate-500 dark:bg-slate-700 dark:text-slate-400',
+                            )}
+                          >
+                            {String.fromCharCode(65 + i)}
+                          </span>
+                          <span className="min-w-0 break-words">{o}</span>
+                          {correct && (
+                            <Check size={14} className="shrink-0" aria-label="正確答案" />
+                          )}
+                        </li>
+                      )
+                    })}
                   </ul>
                 )}
                 {q.type !== 'mc' && q.answer && (
-                  <p className="break-words text-slate-600 dark:text-slate-300">
-                    <span className="font-semibold text-slate-700 dark:text-slate-200">
-                      參考答案：
-                    </span>
+                  <p className="break-words leading-relaxed text-slate-600 dark:text-slate-300">
                     {q.answer}
                   </p>
                 )}
                 {q.type !== 'mc' && !q.answer && (
-                  <p className="text-xs text-slate-400 dark:text-slate-500">
-                    未有參考答案
+                  <p className="flex items-center gap-1.5 text-xs italic text-slate-400 dark:text-slate-500">
+                    <PenLine size={13} />
+                    仲未擬好評卷參考——撳編輯補上。
                   </p>
                 )}
               </div>
@@ -836,21 +1036,29 @@ function BankView(props: {
       </ul>
       {filtered.length === 0 && (
         <EmptyState
-          icon={NotebookPen}
-          title={filterActive ? '未有符合條件嘅題目' : '題庫仲未有題目'}
+          icon={filterActive ? Search : ScrollText}
+          title={filterActive ? '篩唔到相符嘅題目' : '題庫仲係一張白卷'}
           hint={
             filterActive
-              ? '試吓清除篩選，或者用 AI 出題 / 匯入 CSV 補充。'
-              : '撳「新增題目」、用「AI 出題」或者「匯入」CSV 開始建立你嘅 BAFS 題庫。'
+              ? '試吓放寬篩選條件，或者用 AI 出題 / 匯入 CSV 補充題量。'
+              : '由零開始入第一條題：手動擬卷、叫 AI 幫你草擬，或者匯入現成 CSV。'
           }
           action={
-            <div className="flex gap-2">
-              <Button icon={Plus} onClick={openAdd}>
-                新增題目
-              </Button>
-              <Button variant="secondary" icon={Sparkles} onClick={onShowAI}>
-                AI 出題
-              </Button>
+            <div className="flex flex-wrap justify-center gap-2">
+              {filterActive ? (
+                <Button variant="secondary" icon={X} onClick={clearFilters}>
+                  清除篩選
+                </Button>
+              ) : (
+                <>
+                  <Button icon={Plus} onClick={openAdd}>
+                    擬第一條題
+                  </Button>
+                  <Button variant="secondary" icon={Sparkles} onClick={onShowAI}>
+                    AI 出題
+                  </Button>
+                </>
+              )}
             </div>
           }
         />
@@ -925,8 +1133,8 @@ function AnalyticsView({
     return (
       <EmptyState
         icon={BarChart3}
-        title="未有資料可分析"
-        hint="加入題目後，呢度會顯示題型佔比、難度分佈同課題覆蓋熱圖。"
+        title="未有題目，畫唔到卷面分析"
+        hint="入幾條題之後，呢度會出現題型佔比、難度分佈同課題覆蓋熱圖，幫你睇住份卷夠唔夠均衡。"
       />
     )
 
@@ -1380,11 +1588,7 @@ function PaperStudio({
                         <Badge tone={DIFF_TONE[q.difficulty]} dot>
                           {DIFF_LABEL[q.difficulty]}
                         </Badge>
-                        {q.marks ? (
-                          <span className="inline-flex items-center rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-medium tabular-nums text-slate-500 dark:bg-slate-700/60 dark:text-slate-400">
-                            {q.marks} 分
-                          </span>
-                        ) : null}
+                        <MarksStamp marks={q.marks} />
                       </div>
                     </div>
                     <IconButton
@@ -1406,14 +1610,18 @@ function PaperStudio({
           </Card>
         )}
 
-        {/* 右：試卷內容 */}
+        {/* 右：試卷內容（卷面預覽感） */}
         <Card className={mode === 'manual' ? 'p-4' : 'p-4 lg:col-span-2'}>
-          <div className="mb-3 flex items-center justify-between">
-            <h3 className="flex items-center gap-1.5 text-sm font-semibold text-slate-700 dark:text-slate-200">
-              <FileText size={15} className="text-slate-400" />
-              試卷內容
-            </h3>
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+          <div className="mb-3 flex items-center justify-between gap-2 border-b border-dashed border-slate-200 pb-3 dark:border-slate-700/60">
+            <div className="min-w-0">
+              <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-accent/70">
+                卷面預覽
+              </p>
+              <h3 className="truncate font-serif text-base font-semibold text-slate-800 dark:text-slate-100">
+                {meta.title.trim() || 'BAFS 自擬試卷'}
+              </h3>
+            </div>
+            <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-500 dark:bg-slate-800 dark:text-slate-400">
               <span className="nums font-semibold text-slate-700 dark:text-slate-200">{pickedQuestions.length}</span> 題 ·{' '}
               <span className="nums font-semibold text-slate-700 dark:text-slate-200">{totalMarks}</span> 分
             </span>
@@ -1422,11 +1630,11 @@ function PaperStudio({
           {pickedQuestions.length === 0 ? (
             <EmptyState
               icon={FileText}
-              title="試卷仲未有題目"
+              title="試卷仲係空白卷"
               hint={
                 mode === 'manual'
-                  ? '由左邊題池揀題加入，或切去「藍圖自動組卷」。'
-                  : '設定藍圖後撳「自動組卷」。'
+                  ? '由左邊題池揀題入卷，或者切去「藍圖自動組卷」一鍵抽題。'
+                  : '設定每個難度想出幾題，撳「自動組卷」就幫你抽好。'
               }
             />
           ) : (
@@ -1436,7 +1644,7 @@ function PaperStudio({
                   key={q.id}
                   className="flex items-start gap-2.5 rounded-xl border border-slate-200/80 p-2.5 transition hover:border-slate-300 dark:border-slate-700/60 dark:hover:border-slate-600"
                 >
-                  <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-accent-soft text-xs font-bold tabular-nums text-accent-strong dark:bg-accent/15 dark:text-accent">
+                  <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-accent-soft font-serif text-sm font-bold tabular-nums slashed-zero text-accent-strong dark:bg-accent/15 dark:text-accent">
                     {idx + 1}
                   </span>
                   <div className="min-w-0 flex-1">
@@ -1448,11 +1656,7 @@ function PaperStudio({
                       <Badge tone={DIFF_TONE[q.difficulty]} dot>
                         {DIFF_LABEL[q.difficulty]}
                       </Badge>
-                      {q.marks ? (
-                        <span className="inline-flex items-center rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-medium tabular-nums text-slate-500 dark:bg-slate-700/60 dark:text-slate-400">
-                          {q.marks} 分
-                        </span>
-                      ) : null}
+                      <MarksStamp marks={q.marks} />
                     </div>
                   </div>
                   <div className="flex shrink-0 flex-col">
