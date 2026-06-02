@@ -7,6 +7,7 @@ import {
   CheckSquare,
   ExternalLink,
   FolderPlus,
+  HardDrive,
   Inbox,
   Layers,
   LayoutGrid,
@@ -51,6 +52,7 @@ import {
 } from '../../ui'
 import { useToast } from '../../context/ToastContext'
 import { useConfirm } from '../../context/ConfirmContext'
+import DriveView from './resourceLibrary/drive/DriveView'
 import {
   DEFAULT_FILTER,
   FOLDER_COLORS,
@@ -295,6 +297,7 @@ export default function ResourceLibrary() {
   const confirm = useConfirm()
 
   const [view, setView] = useState<TopView>('grid')
+  const [source, setSource] = useState<'lib' | 'drive'>('lib')
   const [filter, setFilter] = useState<FilterState>(DEFAULT_FILTER)
   const [showAdd, setShowAdd] = useState(false)
   const [detailId, setDetailId] = useState<string | null>(null)
@@ -494,6 +497,38 @@ export default function ResourceLibrary() {
         </div>
       </header>
 
+      {/* ───────── 來源切換：我的庫（本機收藏）↔ Google Drive（live 唯讀） ───────── */}
+      <div className="inline-flex rounded-xl border border-slate-200 bg-slate-50 p-0.5 dark:border-slate-700 dark:bg-slate-800/60">
+        {([
+          { id: 'lib', label: '我的庫', icon: Library },
+          { id: 'drive', label: 'Google Drive', icon: HardDrive },
+        ] as const).map((o) => {
+          const on = source === o.id
+          const I = o.icon
+          return (
+            <button
+              key={o.id}
+              type="button"
+              aria-pressed={on}
+              onClick={() => setSource(o.id)}
+              className={cx(
+                'inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors',
+                on
+                  ? 'bg-white text-slate-800 shadow-xs dark:bg-slate-700 dark:text-slate-100'
+                  : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200',
+              )}
+            >
+              <I size={15} />
+              {o.label}
+            </button>
+          )
+        })}
+      </div>
+
+      {source === 'drive' ? (
+        <DriveView />
+      ) : (
+      <>
       {/* ───────── 典藏簿：細口統計帶（hairline grid · serif 大數字） ───────── */}
       <CensusStrip census={census} />
 
@@ -699,6 +734,8 @@ export default function ResourceLibrary() {
           )}
         </div>
       </div>
+      </>
+      )}
 
       {/* 批量操作條 */}
       {selected.size > 0 && (

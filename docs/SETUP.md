@@ -149,3 +149,40 @@ VITE_SUPABASE_ANON_KEY=...
 | function CORS error | 確認用緊本 repo 版本嘅 function（已加 CORS header），重新 deploy |
 
 > 睇 function log 除錯：`supabase functions logs gemini`
+
+---
+
+## 📂 Google Drive 整合（教學資源庫 · 選用）
+
+令「教學資源庫」可以直接連你 Google Drive 一個資料夾，**live 瀏覽 / 搜尋 / 開檔**（唯讀，跨裝置）。未設定都唔影響其他功能（會顯示降級提示）。
+
+### 你喺 Google Cloud 要做（一次過）
+
+1. 去 [console.cloud.google.com](https://console.cloud.google.com) → 建（或揀）一個 project。
+2. **API 和服務 → 程式庫** → 搵「Google Drive API」→ **啟用**。
+3. **API 和服務 → OAuth 同意畫面**：
+   - User Type 揀 **外部** → 建立。
+   - 填 App 名 / 你嘅支援 email。
+   - **發布狀態保持「測試中」**（唔使 Google 審核）。
+   - **測試使用者** 加你自己（同想用嘅同事）email，上限 100 個。
+4. **API 和服務 → 憑證 → 建立憑證 → OAuth 用戶端 ID**：
+   - 應用程式類型：**網頁應用程式**。
+   - **已授權的 JavaScript 來源** 加：
+     - `https://<你嘅 Vercel 網域>`（例如 `https://ntk-platform.vercel.app`）
+     - `http://localhost:5173`（本機開發用）
+   - 建立後 **抄低「用戶端 ID」**（樣式：`xxxx.apps.googleusercontent.com`）。
+5. 設定環境變數 `VITE_GOOGLE_CLIENT_ID`：
+   - **Vercel**：Project → Settings → Environment Variables → 加 `VITE_GOOGLE_CLIENT_ID` = 你個用戶端 ID → **Redeploy**。
+   - **本機（選用）**：`.env.local` 加 `VITE_GOOGLE_CLIENT_ID=...`。
+
+### 用法
+
+- 教學資源庫頂部切去 **「Google Drive」** → 撳 **連接 Google Drive** → Google 授權彈窗（你自己登入，app 攞唔到你密碼）。
+- 之後可以入資料夾、用檔名搜尋、一撳喺新分頁開檔。電腦／手機（含 Safari / iPhone）用同一個 Google 帳號授權都見到。
+
+### 注意
+
+- **唯讀**：app 唔會改 / 刪 / 上載你 Drive 嘅嘢。
+- **scope** 用 `drive.readonly`（敏感）→ 所以保持 OAuth「測試中」模式（你 + 測試使用者用得）。
+- token 約 1 小時，過期撳返「連接」即可。
+- client ID 係**可以公開**嘅，放前端無問題（OAuth token flow 唔涉及 secret）。
