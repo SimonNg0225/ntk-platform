@@ -253,3 +253,24 @@ html.density-compact .app-content {
     padding-right: 1.25rem;
   }
 }
+
+/* ============================================================
+   iOS Safari 防自動 zoom（全域安全網）
+   ------------------------------------------------------------
+   iOS Safari 撞到 font-size < 16px 嘅文字輸入控件，focus 嗰刻會自動
+   放大 viewport → 用戶見到「每 focus／每打一字跳一跳」。我哋個 viewport
+   係 user-scalable 開放（保留無障礙縮放），所以唔可以靠 maximum-scale 封
+   zoom，只能保證輸入字級 ≥16px。
+   手機 (<640px) 全域強制 16px；sm: (≥640px) 完全唔影響，桌面維持原設計
+   字級。用 !important 係要蓋過 Tailwind 嘅 text-xs / text-sm / text-[15px]
+   等 utility（element 選擇器特異度低過 class）。
+   排除 checkbox / radio / range / color / file —— 嗰啲唔係文字輸入，
+   font-size 對佢哋無意義，亦唔觸發 iOS zoom。
+   ============================================================ */
+@media (max-width: 639px) {
+  input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='color']):not([type='file']),
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
+}

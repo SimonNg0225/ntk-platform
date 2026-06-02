@@ -114,8 +114,12 @@ export function Button({
 }
 
 // ───────── Input / Textarea / Select（共用 FIELD）─────────
+// ⚠️ 字級：手機強制 16px（text-base），sm: 以上先收返 14px（text-sm）。
+//    原因：iOS Safari 撞到 font-size < 16px 嘅 input/textarea/select，focus
+//    嗰刻會自動放大 viewport → 用戶見到「每 focus 跳一跳」。≥16px 就唔會 zoom。
+//    全 app 表單共用呢個 FIELD，所以喺源頭修一次就全部受惠。
 const FIELD =
-  'w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 shadow-xs outline-none transition placeholder:text-slate-400 focus:border-accent focus:ring-2 focus:ring-accent/30 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-500 dark:shadow-none dark:disabled:bg-slate-900'
+  'w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-base sm:text-sm text-slate-800 shadow-xs outline-none transition placeholder:text-slate-400 focus:border-accent focus:ring-2 focus:ring-accent/30 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-500 dark:shadow-none dark:disabled:bg-slate-900'
 
 const INVALID = 'border-rose-400 focus:border-rose-400 focus:ring-rose-500/30'
 
