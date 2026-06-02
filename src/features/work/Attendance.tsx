@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import type { ReactNode } from 'react'
 import { createCollection, useCollection } from '../../lib/store'
 import { attendanceCol, classesCol, studentsCol } from '../../data/collections'
 import type { AttendanceRecord, AttendanceStatus } from '../../data/types'
@@ -15,7 +16,6 @@ import {
   ProgressBar,
   SectionTitle,
   Select,
-  StatCard,
   Tabs,
   Textarea,
   cx,
@@ -35,6 +35,7 @@ import {
   classifyAttendance,
   countDay,
   downloadCsv,
+  fromKey,
   isExcused,
   lastPresentKey,
   longDateLabel,
@@ -55,8 +56,10 @@ import TrendChart, { type TrendPoint } from './attendance/TrendChart'
 import {
   AlarmClock,
   Ban,
+  BookCheck,
   CalendarCheck,
   CalendarDays,
+  Check,
   ChevronLeft,
   ChevronRight,
   ClipboardList,
@@ -64,13 +67,16 @@ import {
   Download,
   GraduationCap,
   LineChart,
+  NotebookPen,
   Pencil,
   Printer,
   RotateCcw,
   School,
+  Stamp,
   TriangleAlert,
   Users,
 } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 
 // 本功能專屬：出席細項（病假 / 事假 / 遲到分鐘 / 早退 / 原因）
 // 共用 attendanceCol 維持三態，呢度疊加 metadata，唔改 data/collections。
@@ -78,18 +84,165 @@ const notesCol = createCollection<AttendanceNote>('attendance_notes', [])
 
 type Tab = 'rollcall' | 'register' | 'analytics'
 const TABS: { id: Tab; label: string }[] = [
-  { id: 'rollcall', label: '點名' },
+  { id: 'rollcall', label: '今日點名' },
   { id: 'register', label: '點名冊' },
   { id: 'analytics', label: '統計分析' },
 ]
 const TAB_ICONS = {
-  rollcall: ClipboardList,
-  register: CalendarDays,
+  rollcall: Stamp,
+  register: NotebookPen,
   analytics: LineChart,
 } as const
 
 function metaKey(classId: string, studentId: string, date: string): string {
   return `${classId}|${studentId}|${date}`
+}
+
+const WEEKDAY_FULL = ['日', '一', '二', '三', '四', '五', '六'] as const
+
+// ════════════════════════════════════════════════════════════
+//  出席簿語言（bespoke）：蓋章感、簿冊封面、橫間紙紋
+//  ------------------------------------------------------------
+//  「點名 / 出席」重塑成老師日常嘅出席簿——揭日、逐個蓋「到 / 遲 / 缺」章。
+//  純表現層；所有資料流、collection、handler、export 簽名一概不動。
+// ════════════════════════════════════════════════════════════
+
+// 三態蓋章嘅墨色（淺底深字 + ring，似印章圈；全部帶 dark:）
+const STAMP_TONE: Record<
+  AttendanceStatus,
+  { ring: string; soft: string; ink: string; dot: string }
+> = {
+  present: {
+    ring: 'ring-accent/35 dark:ring-accent/40',
+    soft: 'bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent',
+    ink: 'text-accent-strong dark:text-accent',
+    dot: 'bg-accent',
+  },
+  late: {
+    ring: 'ring-amber-400/40 dark:ring-amber-400/40',
+    soft: 'bg-amber-50 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300',
+    ink: 'text-amber-600 dark:text-amber-300',
+    dot: 'bg-amber-500',
+  },
+  absent: {
+    ring: 'ring-rose-400/40 dark:ring-rose-400/40',
+    soft: 'bg-rose-50 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300',
+    ink: 'text-rose-600 dark:text-rose-300',
+    dot: 'bg-rose-500',
+  },
+}
+
+// 蓋章字符牌：橡皮印章感——圓圈內一個狀態字符，active 帶輕微傾側「按落去」。
+function StampMark({
+  status,
+  stamped,
+  className,
+}: {
+  status: AttendanceStatus
+  stamped?: boolean
+  className?: string
+}) {
+  const t = STAMP_TONE[status]
+  return (
+    <span
+      aria-hidden
+      className={cx(
+        'inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full font-serif text-[13px] font-bold leading-none ring-1 ring-inset transition-transform duration-200',
+        t.soft,
+        t.ring,
+        stamped && '-rotate-6',
+        className,
+      )}
+    >
+      {STATUS_GLYPH[status]}
+    </span>
+  )
+}
+
+// 區段小帽：uppercase kicker + icon（統一頁內節奏，對齊工作模式其他 bespoke 頁）
+function SectionCap({
+  icon: Icon,
+  children,
+  right,
+}: {
+  icon: LucideIcon
+  children: ReactNode
+  right?: ReactNode
+}) {
+  return (
+    <div className="flex items-center justify-between gap-2 px-0.5">
+      <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+        <Icon size={13} className="shrink-0" />
+        {children}
+      </p>
+      {right}
+    </div>
+  )
+}
+
+// 點名簿封面戳印帶嘅統計格（hairline grid · serif 大數字；達標 hot 高亮）
+function RegisterTally({
+  label,
+  value,
+  unit,
+  hint,
+  icon: Icon,
+  tone = 'slate',
+}: {
+  label: string
+  value: number | string
+  unit?: string
+  hint?: string
+  icon: LucideIcon
+  tone?: 'slate' | 'present' | 'late' | 'absent'
+}) {
+  const ink =
+    tone === 'present'
+      ? 'text-accent-strong dark:text-accent'
+      : tone === 'late'
+        ? 'text-amber-600 dark:text-amber-300'
+        : tone === 'absent'
+          ? 'text-rose-600 dark:text-rose-300'
+          : 'text-slate-800 dark:text-slate-100'
+  const labelInk =
+    tone === 'present'
+      ? 'text-accent/80 dark:text-accent/80'
+      : tone === 'late'
+        ? 'text-amber-600/80 dark:text-amber-400/80'
+        : tone === 'absent'
+          ? 'text-rose-500/80 dark:text-rose-400/80'
+          : 'text-slate-400 dark:text-slate-500'
+  return (
+    <div className="bg-white px-3.5 py-3.5 transition-colors dark:bg-slate-800 sm:px-4">
+      <p
+        className={cx(
+          'flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide',
+          labelInk,
+        )}
+      >
+        <Icon size={12} className="shrink-0" />
+        <span className="truncate">{label}</span>
+      </p>
+      <p
+        className={cx(
+          'mt-1 font-serif text-[26px] font-semibold leading-none tabular-nums slashed-zero',
+          ink,
+        )}
+      >
+        {value}
+        {unit && (
+          <span className="ml-1 font-sans text-sm font-normal text-slate-400">
+            {unit}
+          </span>
+        )}
+      </p>
+      {hint && (
+        <p className="mt-1 truncate text-[11px] text-slate-400 dark:text-slate-500">
+          {hint}
+        </p>
+      )}
+    </div>
+  )
 }
 
 export default function Attendance() {
@@ -105,57 +258,103 @@ export default function Attendance() {
 
   if (classes.length === 0) {
     return (
-      <div className="mx-auto max-w-5xl space-y-6 p-4 sm:p-6">
-        <Header />
+      <div className="space-y-5">
+        <Masthead />
         <EmptyState
           icon={School}
           title="由第一班開始"
-          hint="先去「班別管理」開好班別，呢度就可以逐日點名同睇出席趨勢。"
+          hint="先去「班別管理」開好班別，呢度就可以逐日揭簿點名、逐個蓋章記出席。"
         />
       </div>
     )
   }
 
   return (
-    <div className="mx-auto max-w-5xl space-y-5 p-4 sm:p-6">
-      <Header />
+    <div className="space-y-5">
+      <Masthead
+        subtitle={
+          activeClass
+            ? activeClass.subject
+              ? `${activeClass.name}・${activeClass.subject}`
+              : activeClass.name
+            : undefined
+        }
+      />
 
-      <div className="space-y-3 rounded-3xl border border-slate-200/80 bg-white p-3 shadow-xs dark:border-slate-700/60 dark:bg-slate-800 dark:shadow-none">
-        <Pills
-          options={classes.map((c) => ({
-            id: c.id,
-            label: c.subject ? `${c.name}・${c.subject}` : c.name,
-          }))}
-          active={activeClassId}
-          onChange={setClassId}
-        />
-        <Tabs tabs={TABS} active={tab} onChange={setTab} icons={TAB_ICONS} />
+      {/* 簿冊封面：揀班（書脊標籤）+ 三本分頁（點名 / 簿 / 統計） */}
+      <div className="space-y-3 rounded-3xl border border-slate-200/80 bg-white p-3 shadow-xs dark:border-slate-700/60 dark:bg-slate-800 dark:shadow-none sm:p-3.5">
+        <div className="flex items-center gap-2">
+          <span className="hidden shrink-0 items-center gap-1 text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 sm:inline-flex">
+            <BookCheck size={13} /> 班別
+          </span>
+          <div className="min-w-0 flex-1">
+            <Pills
+              options={classes.map((c) => ({
+                id: c.id,
+                label: c.subject ? `${c.name}・${c.subject}` : c.name,
+              }))}
+              active={activeClassId}
+              onChange={setClassId}
+            />
+          </div>
+        </div>
+        <div className="border-t border-dashed border-slate-200/80 pt-3 dark:border-slate-700/60">
+          <Tabs tabs={TABS} active={tab} onChange={setTab} icons={TAB_ICONS} />
+        </div>
       </div>
 
-      {activeClass && tab === 'rollcall' && <RollCall classId={activeClass.id} />}
-      {activeClass && tab === 'register' && (
-        <Register classId={activeClass.id} className={activeClass.name} />
-      )}
-      {activeClass && tab === 'analytics' && (
-        <Analytics classId={activeClass.id} className={activeClass.name} />
-      )}
+      <div className="animate-fade-in">
+        {activeClass && tab === 'rollcall' && <RollCall classId={activeClass.id} />}
+        {activeClass && tab === 'register' && (
+          <Register classId={activeClass.id} className={activeClass.name} />
+        )}
+        {activeClass && tab === 'analytics' && (
+          <Analytics classId={activeClass.id} className={activeClass.name} />
+        )}
+      </div>
     </div>
   )
 }
 
-function Header() {
+// ───────── 出席簿封面 masthead（自管頁面身份：kicker + serif 標題 + 簿務行）─────────
+//  右上「點名戳印」純裝飾；底部雙線似簿冊封面分隔。功能名「點名 / 出席」做頁面身份。
+function Masthead({ subtitle }: { subtitle?: string }) {
   return (
-    <header className="flex items-start gap-3">
-      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
-        <CalendarCheck size={22} />
+    <header className="relative overflow-hidden rounded-3xl border border-slate-200/80 bg-white px-5 py-5 shadow-xs dark:border-slate-700/60 dark:bg-slate-800 dark:shadow-none sm:px-7 sm:py-6">
+      {/* 封面右上「出席到」戳印（純裝飾，唔搶主次） */}
+      <span
+        aria-hidden
+        className="pointer-events-none absolute -right-5 top-4 hidden -rotate-[10deg] select-none items-center gap-1.5 rounded-xl border-2 border-dashed border-accent/20 px-4 py-2 font-serif text-xs font-semibold uppercase tracking-[0.22em] text-accent/25 dark:border-accent/25 dark:text-accent/25 sm:inline-flex"
+      >
+        <Check size={13} strokeWidth={3} />
+        出席 · Present
       </span>
-      <div>
-        <h1 className="text-xl font-semibold tracking-tight text-slate-800 dark:text-slate-100 sm:text-2xl">
+      <div className="min-w-0">
+        <p className="flex items-center gap-2 text-[11px] font-medium uppercase tracking-[0.3em] text-accent/70">
+          <Stamp size={13} />
+          出席簿 · Attendance Register
+        </p>
+        <h1 className="mt-1.5 font-serif text-[28px] font-semibold leading-none tracking-tight text-slate-800 dark:text-slate-100 sm:text-[34px]">
           點名 / 出席
         </h1>
-        <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
-          逐日點名、月度點名冊、出席率趨勢同連續缺席提示——對齊學校考勤系統。
+        <p className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-slate-500 dark:text-slate-400">
+          <span>逐日揭簿、逐個蓋章，月結點名冊同出席率趨勢一手掌握。</span>
+          {subtitle && (
+            <>
+              <span aria-hidden className="text-slate-300 dark:text-slate-600">
+                ·
+              </span>
+              <span className="inline-flex items-center gap-1 font-medium text-accent-strong dark:text-accent">
+                <BookCheck size={12} /> {subtitle}
+              </span>
+            </>
+          )}
         </p>
+      </div>
+      {/* 簿冊雙線（封面分隔感） */}
+      <div className="mt-5 space-y-1" aria-hidden>
+        <span className="block h-px bg-slate-200/90 dark:bg-slate-700/70" />
+        <span className="block h-px bg-slate-200/60 dark:bg-slate-700/40" />
       </div>
     </header>
   )
@@ -322,14 +521,14 @@ function RollCall({ classId }: { classId: string }) {
 
   if (classStudents.length === 0) {
     return (
-      <>
+      <div className="space-y-4">
         <DateNav date={date} setDate={setDate} />
         <EmptyState
           icon={GraduationCap}
-          title="呢班仲未有學生"
-          hint="去「班別管理 / 成績管理」加入名單，返嚟就可以開始點名。"
+          title="呢本簿仲未有名單"
+          hint="去「班別管理 / 成績管理」加入學生，返嚟就可以逐個蓋章點名。"
         />
-      </>
+      </div>
     )
   }
 
@@ -337,33 +536,35 @@ function RollCall({ classId }: { classId: string }) {
     <div className="space-y-4">
       <DateNav date={date} setDate={setDate} />
 
-      {/* 統計 + 進度 */}
+      {/* 今日結算戳印帶：hairline grid · serif 大數字 */}
       <section className="space-y-3">
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <StatCard
-            label="出席"
+        <div className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl bg-slate-200/70 ring-1 ring-slate-200/80 dark:bg-slate-700/50 dark:ring-slate-700/60 sm:grid-cols-4">
+          <RegisterTally
+            label="到"
             value={day.present}
             unit="人"
             icon={CalendarCheck}
-            highlight
+            tone="present"
           />
-          <StatCard label="遲到" value={day.late} unit="人" icon={AlarmClock} />
-          <StatCard label="缺席" value={day.absent} unit="人" icon={Ban} />
-          <StatCard
+          <RegisterTally label="遲" value={day.late} unit="人" icon={AlarmClock} tone="late" />
+          <RegisterTally label="缺" value={day.absent} unit="人" icon={Ban} tone="absent" />
+          <RegisterTally
             label="出席率"
             value={day.rate == null ? '—' : day.rate}
             unit={day.rate == null ? undefined : '%'}
             icon={Users}
-            hint={`已點 ${markedCount}/${classStudents.length}`}
+            hint={`已點 ${markedCount}／${classStudents.length}`}
           />
         </div>
-        <Card className="rounded-2xl p-3.5">
+        {/* 點名進度條（封面薄帶感） */}
+        <div className="rounded-2xl border border-slate-200/80 bg-white p-3.5 shadow-xs dark:border-slate-700/60 dark:bg-slate-800 dark:shadow-none">
           <div className="mb-1.5 flex items-center justify-between text-xs">
-            <span className="font-medium text-slate-600 dark:text-slate-300">
+            <span className="inline-flex items-center gap-1.5 font-medium text-slate-600 dark:text-slate-300">
+              <Stamp size={13} className="text-slate-400" />
               點名進度
             </span>
             <span className="tabular-nums text-slate-400" aria-live="polite">
-              {markedCount}/{classStudents.length}
+              已蓋 {markedCount}／{classStudents.length}
             </span>
           </div>
           <ProgressBar
@@ -374,13 +575,13 @@ function RollCall({ classId }: { classId: string }) {
             }
             tone={markedCount === classStudents.length ? 'green' : 'accent'}
           />
-        </Card>
+        </div>
       </section>
 
-      {/* 批量操作 */}
+      {/* 快手操作（似簿頂嘅一排快捷蓋章） */}
       <div className="flex flex-wrap gap-2">
-        <Button size="sm" icon={CalendarCheck} onClick={() => markAll('present')}>
-          全部出席
+        <Button size="sm" icon={Stamp} onClick={() => markAll('present')}>
+          全班蓋「到」
         </Button>
         <Button
           size="sm"
@@ -388,10 +589,10 @@ function RollCall({ classId }: { classId: string }) {
           onClick={fillUnmarkedPresent}
           disabled={markedCount === classStudents.length}
         >
-          未點名者補出席
+          未點者補「到」
         </Button>
         <Button size="sm" variant="secondary" icon={Copy} onClick={copyPrevious}>
-          複製上次點名
+          複製上次
         </Button>
         <Button
           size="sm"
@@ -400,15 +601,24 @@ function RollCall({ classId }: { classId: string }) {
           onClick={clearDay}
           disabled={markedCount === 0}
         >
-          清除當日
+          清空今頁
         </Button>
       </div>
 
-      {/* 學生名單 */}
-      <section className="space-y-2">
-        <SectionTitle icon={Users}>學生名單</SectionTitle>
-        <ul className="space-y-2">
-          {classStudents.map((s) => {
+      {/* 點名簿頁：橫間紙紋 · 逐行蓋章 */}
+      <section className="space-y-2.5">
+        <SectionCap
+          icon={NotebookPen}
+          right={
+            <span className="text-xs tabular-nums text-slate-400 dark:text-slate-500">
+              全班 {classStudents.length} 人
+            </span>
+          }
+        >
+          點名簿頁
+        </SectionCap>
+        <ul className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-xs dark:border-slate-700/60 dark:bg-slate-800 dark:shadow-none">
+          {classStudents.map((s, idx) => {
             const current = recordByStudent.get(s.id)?.status
             const note = noteByKey.get(metaKey(classId, s.id, date))
             const hasDetail = !!(
@@ -418,74 +628,98 @@ function RollCall({ classId }: { classId: string }) {
                 note.earlyLeave ||
                 note.reason?.trim())
             )
+            const tone = current ? STAMP_TONE[current] : null
             return (
-              <Card key={s.id} hover className="rounded-2xl p-3.5">
-                <li className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <div className="flex min-w-0 items-center gap-3">
-                    <div className="min-w-0">
-                      <div className="truncate font-medium text-slate-900 dark:text-slate-100">
+              <li
+                key={s.id}
+                className={cx(
+                  'group relative flex flex-col gap-3 px-3 py-3 transition-colors sm:flex-row sm:items-center sm:justify-between sm:px-4',
+                  idx !== 0 && 'border-t border-slate-100 dark:border-slate-700/50',
+                  current
+                    ? 'bg-slate-50/40 dark:bg-slate-800/40'
+                    : 'hover:bg-slate-50/70 dark:hover:bg-slate-800/60',
+                )}
+              >
+                {/* 左側狀態色軌（蓋咗章先見） */}
+                <span
+                  aria-hidden
+                  className={cx(
+                    'absolute inset-y-0 left-0 w-1 transition-colors',
+                    tone ? tone.dot : 'bg-transparent',
+                  )}
+                />
+                <div className="flex min-w-0 items-center gap-3 pl-1.5">
+                  {/* 行號（簿冊座號感，serif tabular） */}
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-slate-100 font-serif text-xs font-bold tabular-nums text-slate-400 dark:bg-slate-700/60 dark:text-slate-500">
+                    {String(idx + 1).padStart(2, '0')}
+                  </span>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <span className="truncate font-medium text-slate-900 dark:text-slate-100">
                         {s.name}
-                      </div>
-                      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-slate-400 dark:text-slate-500">
-                        <span>{s.studentNo ? `學號 ${s.studentNo}` : '未有學號'}</span>
-                        {hasDetail && note && (
-                          <span className="inline-flex flex-wrap items-center gap-1">
-                            {note.absenceKind && current === 'absent' && (
-                              <Badge tone={isExcused(note.absenceKind) ? 'blue' : 'rose'}>
-                                {ABSENCE_KIND_LABEL[note.absenceKind]}
-                              </Badge>
-                            )}
-                            {note.lateMinutes && current === 'late' ? (
-                              <Badge tone="amber" className="tabular-nums">
-                                遲 {note.lateMinutes} 分
-                              </Badge>
-                            ) : null}
-                            {note.earlyLeave && <Badge tone="slate">早退</Badge>}
-                            {note.reason && note.reason.trim() && (
-                              <span className="max-w-[12rem] truncate italic">
-                                「{note.reason.trim()}」
-                              </span>
-                            )}
-                          </span>
-                        )}
-                      </div>
+                      </span>
+                      {current && <StampMark status={current} stamped />}
+                    </div>
+                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-slate-400 dark:text-slate-500">
+                      <span>{s.studentNo ? `學號 ${s.studentNo}` : '未有學號'}</span>
+                      {hasDetail && note && (
+                        <span className="inline-flex flex-wrap items-center gap-1">
+                          {note.absenceKind && current === 'absent' && (
+                            <Badge tone={isExcused(note.absenceKind) ? 'blue' : 'rose'}>
+                              {ABSENCE_KIND_LABEL[note.absenceKind]}
+                            </Badge>
+                          )}
+                          {note.lateMinutes && current === 'late' ? (
+                            <Badge tone="amber" className="tabular-nums">
+                              遲 {note.lateMinutes} 分
+                            </Badge>
+                          ) : null}
+                          {note.earlyLeave && <Badge tone="slate">早退</Badge>}
+                          {note.reason && note.reason.trim() && (
+                            <span className="max-w-[12rem] truncate italic">
+                              「{note.reason.trim()}」
+                            </span>
+                          )}
+                        </span>
+                      )}
                     </div>
                   </div>
-                  <div
-                    className="flex flex-wrap items-center gap-2"
-                    role="group"
-                    aria-label={`${s.name} 出席狀態`}
+                </div>
+                <div
+                  className="flex flex-wrap items-center gap-1.5 pl-1.5 sm:pl-0"
+                  role="group"
+                  aria-label={`${s.name} 出席狀態`}
+                >
+                  {STATUS_ORDER.map((st) => {
+                    const active = current === st
+                    const style = STATUS_STYLE[st]
+                    return (
+                      <button
+                        key={st}
+                        type="button"
+                        onClick={() => mark(s.id, st)}
+                        aria-pressed={active}
+                        aria-label={`為${s.name}蓋「${STATUS_LABEL[st]}」章`}
+                        className={cx(
+                          'inline-flex items-center gap-1 rounded-xl px-3 py-1.5 text-sm font-medium transition active:scale-95 focus:outline-none focus-visible:ring-2',
+                          active ? cx(style.solid, 'shadow-sm') : style.soft,
+                        )}
+                      >
+                        {active && <Check size={13} strokeWidth={3} className="shrink-0" />}
+                        {STATUS_LABEL[st]}
+                      </button>
+                    )
+                  })}
+                  <IconButton
+                    label="出席細項"
+                    onClick={() => setEditing(s.id)}
+                    active={hasDetail}
+                    disabled={!current}
                   >
-                    {STATUS_ORDER.map((st) => {
-                      const active = current === st
-                      const style = STATUS_STYLE[st]
-                      return (
-                        <button
-                          key={st}
-                          type="button"
-                          onClick={() => mark(s.id, st)}
-                          aria-pressed={active}
-                          aria-label={`標記${s.name}為${STATUS_LABEL[st]}`}
-                          className={cx(
-                            'rounded-xl px-3 py-1.5 text-sm font-medium transition focus:outline-none focus-visible:ring-2',
-                            active ? style.solid : style.soft,
-                          )}
-                        >
-                          {STATUS_LABEL[st]}
-                        </button>
-                      )
-                    })}
-                    <IconButton
-                      label="出席細項"
-                      onClick={() => setEditing(s.id)}
-                      active={hasDetail}
-                      disabled={!current}
-                    >
-                      <Pencil size={16} strokeWidth={1.8} />
-                    </IconButton>
-                  </div>
-                </li>
-              </Card>
+                    <Pencil size={16} strokeWidth={1.8} />
+                  </IconButton>
+                </div>
+              </li>
             )
           })}
         </ul>
@@ -504,6 +738,7 @@ function RollCall({ classId }: { classId: string }) {
   )
 }
 
+// 簿冊揭頁：日期做主角嘅「翻頁」標籤——大日字（serif）+ 星期，左右似揭簿。
 function DateNav({
   date,
   setDate,
@@ -512,29 +747,55 @@ function DateNav({
   setDate: (k: string) => void
 }) {
   const isToday = date === todayKey()
+  const d = fromKey(date)
+  const dayNum = d.getDate()
+  const wd = WEEKDAY_FULL[d.getDay()]
+  const monthTxt = `${d.getFullYear()}年${d.getMonth() + 1}月`
   return (
-    <div className="flex flex-wrap items-center gap-2">
-      <div className="inline-flex items-center gap-1 rounded-2xl border border-slate-200/80 bg-white p-1 shadow-xs dark:border-slate-700/60 dark:bg-slate-800 dark:shadow-none">
-        <IconButton label="前一日" onClick={() => setDate(shiftKey(date, -1))}>
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+      <div className="inline-flex items-center gap-1 rounded-2xl border border-slate-200/80 bg-white p-1.5 shadow-xs dark:border-slate-700/60 dark:bg-slate-800 dark:shadow-none">
+        <IconButton label="揭去前一日" onClick={() => setDate(shiftKey(date, -1))}>
           <ChevronLeft size={18} />
         </IconButton>
-        <span className="min-w-[8.5rem] px-1 text-center text-sm font-medium tabular-nums text-slate-700 dark:text-slate-200">
-          {longDateLabel(date)}
-        </span>
-        <IconButton label="後一日" onClick={() => setDate(shiftKey(date, 1))}>
+        {/* 簿頁日期牌：serif 日字 + 月／星期 */}
+        <div className="flex min-w-[9.5rem] items-center justify-center gap-2.5 px-2">
+          <span className="font-serif text-[28px] font-semibold leading-none tabular-nums slashed-zero text-slate-800 dark:text-slate-100">
+            {dayNum}
+          </span>
+          <span className="flex flex-col leading-tight">
+            <span className="text-xs font-medium tabular-nums text-slate-500 dark:text-slate-400">
+              {monthTxt}
+            </span>
+            <span
+              className={cx(
+                'text-[11px] font-medium',
+                isToday
+                  ? 'text-accent-strong dark:text-accent'
+                  : 'text-slate-400 dark:text-slate-500',
+              )}
+            >
+              星期{wd}
+              {isToday && ' · 今日'}
+            </span>
+          </span>
+        </div>
+        <IconButton label="揭去後一日" onClick={() => setDate(shiftKey(date, 1))}>
           <ChevronRight size={18} />
         </IconButton>
       </div>
-      <input
-        type="date"
-        value={date}
-        onChange={(e) => e.target.value && setDate(e.target.value)}
-        aria-label="選擇點名日期"
-        className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-base sm:text-sm text-slate-800 outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/25 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
-      />
+      <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-3 py-2 text-slate-500 transition hover:border-accent/50 hover:text-accent-strong focus-within:border-accent focus-within:ring-2 focus-within:ring-accent/25 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 dark:hover:text-accent">
+        <CalendarDays size={15} className="shrink-0" />
+        <input
+          type="date"
+          value={date}
+          onChange={(e) => e.target.value && setDate(e.target.value)}
+          aria-label="跳去指定日期"
+          className="bg-transparent text-base outline-none sm:text-sm"
+        />
+      </label>
       {!isToday && (
-        <Button size="sm" variant="ghost" onClick={() => setDate(todayKey())}>
-          今日
+        <Button size="sm" variant="ghost" icon={CalendarCheck} onClick={() => setDate(todayKey())}>
+          返今日
         </Button>
       )}
     </div>
@@ -597,16 +858,15 @@ function DetailModal({
       }
     >
       <div className="space-y-4">
-        <div className="flex items-center gap-2 text-sm">
-          <span className="text-slate-500 dark:text-slate-400">目前狀態</span>
+        <div className="flex items-center gap-2 rounded-xl bg-slate-50/70 px-3 py-2 text-sm dark:bg-slate-900/40">
+          <span className="text-slate-500 dark:text-slate-400">今日蓋章</span>
           {status ? (
-            <Badge
-              tone={
-                status === 'present' ? 'accent' : status === 'late' ? 'amber' : 'rose'
-              }
-            >
-              {STATUS_LABEL[status]}
-            </Badge>
+            <span className="inline-flex items-center gap-1.5">
+              <StampMark status={status} />
+              <span className={cx('font-medium', STAMP_TONE[status].ink)}>
+                {STATUS_LABEL[status]}
+              </span>
+            </span>
           ) : (
             <Badge tone="slate">未標記</Badge>
           )}
@@ -746,8 +1006,8 @@ function Register({ classId, className }: { classId: string; className: string }
     return (
       <EmptyState
         icon={GraduationCap}
-        title="呢班仲未有學生"
-        hint="去「班別管理 / 成績管理」加入名單，呢度就會郁起嚟。"
+        title="呢本簿仲未有名單"
+        hint="去「班別管理 / 成績管理」加入學生，月結點名冊就會填滿。"
       />
     )
   }
@@ -756,16 +1016,16 @@ function Register({ classId, className }: { classId: string; className: string }
 
   return (
     <div className="space-y-4">
-      {/* 月份導航 + 操作 */}
+      {/* 月份導航 + 簿務操作 */}
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="inline-flex items-center gap-1 rounded-2xl border border-slate-200/80 bg-white p-1 shadow-xs dark:border-slate-700/60 dark:bg-slate-800 dark:shadow-none">
-          <IconButton label="上個月" onClick={() => shiftMonth(-1)}>
+        <div className="inline-flex items-center gap-1 rounded-2xl border border-slate-200/80 bg-white p-1.5 shadow-xs dark:border-slate-700/60 dark:bg-slate-800 dark:shadow-none">
+          <IconButton label="揭去上個月" onClick={() => shiftMonth(-1)}>
             <ChevronLeft size={18} />
           </IconButton>
-          <span className="min-w-[6.5rem] px-1 text-center text-sm font-medium tabular-nums text-slate-700 dark:text-slate-200">
+          <span className="min-w-[6.5rem] px-1 text-center font-serif text-base font-semibold tabular-nums text-slate-800 dark:text-slate-100">
             {monthLabel(ym.y, ym.m)}
           </span>
-          <IconButton label="下個月" onClick={() => shiftMonth(1)}>
+          <IconButton label="揭去下個月" onClick={() => shiftMonth(1)}>
             <ChevronRight size={18} />
           </IconButton>
           {!isThisMonth && (
@@ -798,27 +1058,20 @@ function Register({ classId, className }: { classId: string; className: string }
         </div>
       </div>
 
-      {/* 圖例 */}
-      <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-50 px-2.5 py-1 dark:bg-slate-800/60">
-          <span className={cx('flex h-5 w-5 items-center justify-center rounded-md text-[11px] font-semibold', STATUS_STYLE.present.cell)}>
-            {STATUS_GLYPH.present}
+      {/* 簿冊圖例（三態蓋章對照） */}
+      <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 text-xs text-slate-500 dark:text-slate-400">
+        {STATUS_ORDER.map((st) => (
+          <span
+            key={st}
+            className="inline-flex items-center gap-1.5 rounded-full bg-slate-50 px-2.5 py-1 dark:bg-slate-800/60"
+          >
+            <StampMark status={st} className="h-5 w-5 text-[11px]" />
+            {STATUS_LABEL[st]}
           </span>
-          出席
+        ))}
+        <span className="inline-flex items-center gap-1 text-slate-400 dark:text-slate-500">
+          <Stamp size={12} /> 撳格循環蓋章
         </span>
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-50 px-2.5 py-1 dark:bg-slate-800/60">
-          <span className={cx('flex h-5 w-5 items-center justify-center rounded-md text-[11px] font-semibold', STATUS_STYLE.late.cell)}>
-            {STATUS_GLYPH.late}
-          </span>
-          遲到
-        </span>
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-50 px-2.5 py-1 dark:bg-slate-800/60">
-          <span className={cx('flex h-5 w-5 items-center justify-center rounded-md text-[11px] font-semibold', STATUS_STYLE.absent.cell)}>
-            {STATUS_GLYPH.absent}
-          </span>
-          缺席
-        </span>
-        <span className="text-slate-400 dark:text-slate-500">· 撳格循環切換狀態</span>
       </div>
 
       <RegisterGrid
@@ -976,8 +1229,8 @@ function Analytics({ classId, className }: { classId: string; className: string 
     return (
       <EmptyState
         icon={GraduationCap}
-        title="呢班仲未有學生"
-        hint="去「班別管理 / 成績管理」加入名單，呢度就會郁起嚟。"
+        title="呢本簿仲未有名單"
+        hint="去「班別管理 / 成績管理」加入學生，統計同趨勢就會出現。"
       />
     )
   }
@@ -1008,29 +1261,29 @@ function Analytics({ classId, className }: { classId: string; className: string 
         <EmptyState
           art="empty-attendance"
           icon={LineChart}
-          title="呢排未有點名記錄"
-          hint="去「點名」分頁開始點名，呢度就會自動畫出出席率趨勢、預警同排行。"
+          title="呢排本簿仲係白頁"
+          hint="去「今日點名」分頁開始蓋章，呢度就會自動畫出出席率趨勢、預警同排行。"
         />
       ) : (
         <>
-          {/* 概覽 */}
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <StatCard
+          {/* 期內結算戳印帶：hairline grid · serif 大數字 */}
+          <div className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl bg-slate-200/70 ring-1 ring-slate-200/80 dark:bg-slate-700/50 dark:ring-slate-700/60 sm:grid-cols-4">
+            <RegisterTally
               label="整體出席率"
               value={overall.rate ?? '—'}
               unit={overall.rate == null ? undefined : '%'}
               icon={Users}
-              highlight
+              tone="present"
               hint={`${overall.sessionDays} 個上堂日`}
             />
-            <StatCard
-              label="出席次數"
+            <RegisterTally
+              label="到"
               value={overall.present}
               unit="次"
               icon={CalendarCheck}
             />
-            <StatCard label="遲到次數" value={overall.late} unit="次" icon={AlarmClock} />
-            <StatCard label="缺席次數" value={overall.absent} unit="次" icon={Ban} />
+            <RegisterTally label="遲" value={overall.late} unit="次" icon={AlarmClock} tone="late" />
+            <RegisterTally label="缺" value={overall.absent} unit="次" icon={Ban} tone="absent" />
           </div>
 
           {/* 趨勢圖 */}

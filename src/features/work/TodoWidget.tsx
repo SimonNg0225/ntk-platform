@@ -4,14 +4,18 @@ import {
   BarChart3,
   CalendarDays,
   Check,
+  CheckCheck,
   CheckCircle2,
   ChevronRight,
   CircleDashed,
+  ClipboardCheck,
   Flag,
   FolderPlus,
+  Highlighter,
   Inbox as InboxIcon,
   LayoutList,
   ListChecks,
+  ListTodo,
   Pencil,
   Plus,
   Search,
@@ -74,15 +78,28 @@ import {
 } from './todo/util'
 
 // ============================================================
-//  待辦 / 批改 — Things 3 / Todoist 級任務管理
+//  待辦 / 批改 — 老師嘅「改簿檯」任務清單
 //  ------------------------------------------------------------
-//  參考真實 app：Things 3 / Todoist。
-//  共用 tasksCol（Task）做真相來源；優先級 / 到期 / 專案 / 標籤 /
-//  備註 / 子任務存喺 feature 自己嘅 collection（見 todo/store.ts）。
-//  視圖：今日 · 之後 · 所有（按專案）· 統計。
-//  Power：智能快速輸入、優先級、到期分組、子任務、標籤、專案、
-//  搜尋、批量、範本、生產力圖表。
+//  訂造概念：checklist + 批改紅筆。成頁似一本攤開嘅改簿——
+//  勾選格 = 老師喺簿上打剔；屬「批改」嘅任務披上紅筆 accent
+//  （紅邊欄線 + 紅「批」筆章），同其餘待辦一眼分得開。
+//  模式主色（青藍 teal）做頁面身份；紅筆只係批改任務嘅 accent。
+//
+//  邏輯完全沿用 Things / Todoist 級實作：共用 tasksCol（Task）做
+//  真相來源；優先級 / 到期 / 專案 / 標籤 / 備註 / 子任務存喺 feature
+//  自己嘅 collection（見 todo/store.ts）。視圖：今日 · 之後 ·
+//  所有（按專案）· 統計。Power：智能快速輸入、優先級、到期分組、
+//  子任務、標籤、專案、搜尋、批量、範本、生產力圖表。
 // ============================================================
+
+// 「批改任務」純表現層偵測：由現有資料（標籤 / 任務文字）推斷，
+// 唔改任何資料流。命中即披紅筆 accent（紅邊欄 + 紅「批」章）。
+// 關鍵字覆蓋老師日常用語：批改 / 改卷 / 改簿 / 批卷 / 派卷 / marking。
+const MARK_RE = /(批改|批卷|改卷|改簿|派卷|評卷|marking|mark\b)/i
+function isMarkingTask(t: FullTask): boolean {
+  if (t.meta.tags.some((tag) => MARK_RE.test(tag))) return true
+  return MARK_RE.test(t.text)
+}
 
 type ViewId = 'today' | 'upcoming' | 'all' | 'stats'
 type SortMode = 'smart' | 'priority' | 'due' | 'created'
@@ -94,66 +111,109 @@ const SORT_LABEL: Record<SortMode, string> = {
   created: '建立',
 }
 
-// 統計磚分類色（淺底 + 深字 + 深色 /15；同設計系統一致）
-type StatTone = 'accent' | 'rose' | 'amber' | 'emerald' | 'slate'
-const STAT_CHIP: Record<StatTone, string> = {
-  accent: 'bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent',
-  rose: 'bg-rose-50 text-rose-600 dark:bg-rose-500/15 dark:text-rose-300',
-  amber: 'bg-amber-50 text-amber-600 dark:bg-amber-500/15 dark:text-amber-300',
-  emerald: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-300',
-  slate: 'bg-slate-100 text-slate-500 dark:bg-slate-700/60 dark:text-slate-300',
-}
-const STAT_VAL: Record<StatTone, string> = {
-  accent: 'text-accent-strong dark:text-accent',
-  rose: 'text-rose-600 dark:text-rose-400',
-  amber: 'text-slate-800 dark:text-slate-100',
-  emerald: 'text-slate-800 dark:text-slate-100',
-  slate: 'text-slate-800 dark:text-slate-100',
-}
+// 清點格色調（hot 高亮：rose=要跟進 / accent=今日焦點 / emerald=做完）
+type TallyTone = 'plain' | 'accent' | 'rose' | 'emerald'
 
-// 統計磚：圓角、分類色圖示 chip、可選 hover 微升（取代 generic StatCard）
-function MiniStat({
-  label, value, unit, hint, icon: Icon, tone, highlight, onClick,
+// ───────── 改簿清點帶（hairline grid · serif 大數字）─────────
+//  改簿檯概念：頁頂一條「清點帶」似老師埋班簿前嘅點算——逾期幾本、
+//  今日要改幾本、未剔幾項、已剔幾項。可撳嗰格直接跳對應視圖。
+function TallyStat({
+  label,
+  value,
+  unit,
+  hint,
+  icon: Icon,
+  tone = 'plain',
+  hot,
+  onClick,
 }: {
   label: string
   value: number | string
   unit?: string
   hint?: string
   icon: LucideIcon
-  tone: StatTone
-  highlight?: boolean
+  tone?: TallyTone
+  hot?: boolean
   onClick?: () => void
 }) {
+  // hot 底色 + 數字色（紅=逾期 / 青=今日焦點 / 綠=完成）
+  const hotBg =
+    tone === 'rose'
+      ? 'bg-rose-50 dark:bg-rose-500/10'
+      : tone === 'emerald'
+        ? 'bg-emerald-50 dark:bg-emerald-500/10'
+        : 'bg-accent-soft dark:bg-accent/12'
+  const hotLabel =
+    tone === 'rose'
+      ? 'text-rose-600/80 dark:text-rose-400/80'
+      : tone === 'emerald'
+        ? 'text-emerald-600/80 dark:text-emerald-400/80'
+        : 'text-accent/80 dark:text-accent/80'
+  const hotNum =
+    tone === 'rose'
+      ? 'text-rose-600 dark:text-rose-400'
+      : tone === 'emerald'
+        ? 'text-emerald-600 dark:text-emerald-400'
+        : 'text-accent-strong dark:text-accent'
   const interactive = !!onClick
   return (
     <button
       type="button"
       onClick={onClick}
       disabled={!interactive}
+      aria-label={interactive ? `${label}：${value}${unit ?? ''}` : undefined}
       className={cx(
-        'group flex flex-col gap-2 rounded-2xl border p-3.5 text-left transition duration-200 sm:p-4',
-        highlight
-          ? 'border-accent/30 bg-accent-soft/60 dark:border-accent/40 dark:bg-accent/10'
-          : 'border-slate-200/80 bg-white shadow-xs dark:border-slate-700/60 dark:bg-slate-800 dark:shadow-none',
+        'group/tally px-3.5 py-3.5 text-left transition-colors sm:px-4',
+        hot ? hotBg : 'bg-white dark:bg-slate-800',
         interactive
-          ? 'cursor-pointer hover:-translate-y-0.5 hover:shadow-md dark:hover:border-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40'
+          ? 'cursor-pointer hover:bg-slate-50 focus-visible:relative focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent/40 dark:hover:bg-slate-700/60'
           : 'cursor-default',
+        hot && interactive && 'hover:brightness-[0.98]',
       )}
     >
-      <span className="flex items-center justify-between">
-        <span className="text-xs font-medium text-slate-500 dark:text-slate-400">{label}</span>
-        <span className={cx('flex h-7 w-7 items-center justify-center rounded-lg transition group-hover:scale-105', STAT_CHIP[tone])}>
-          <Icon size={15} />
-        </span>
+      <span
+        className={cx(
+          'flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide',
+          hot ? hotLabel : 'text-slate-400 dark:text-slate-500',
+        )}
+      >
+        <Icon size={12} className="shrink-0" />
+        <span className="truncate">{label}</span>
       </span>
-      <span>
-        <span className="flex items-baseline gap-1">
-          <span className={cx('text-2xl font-bold tabular-nums slashed-zero', STAT_VAL[tone])}>{value}</span>
-          {unit && <span className="text-sm font-normal text-slate-400">{unit}</span>}
-        </span>
-        {hint && <span className="mt-0.5 block truncate text-[11px] text-slate-400 dark:text-slate-500">{hint}</span>}
+      <span
+        className={cx(
+          'mt-1 block font-serif text-[26px] font-semibold leading-none tabular-nums slashed-zero',
+          hot ? hotNum : 'text-slate-800 dark:text-slate-100',
+        )}
+      >
+        {value}
+        {unit && (
+          <span className="ml-1 font-sans text-sm font-normal text-slate-400">{unit}</span>
+        )}
       </span>
+      {hint && (
+        <span className="mt-1 block truncate text-[11px] text-slate-400 dark:text-slate-500">
+          {hint}
+        </span>
+      )}
     </button>
+  )
+}
+
+// ───────── 紅筆「批」章（批改任務專屬 accent）─────────
+//  改簿檯概念：批改任務似老師喺簿邊用紅筆寫個「批」字。細牌、紅墨、
+//  手寫感（serif）。純標示，唔搶剔格主次。
+function MarkPen({ className }: { className?: string }) {
+  return (
+    <span
+      className={cx(
+        'inline-flex shrink-0 items-center gap-1 rounded-md border border-rose-300/70 bg-rose-50/80 px-1.5 py-0.5 text-[10px] font-semibold text-rose-600 dark:border-rose-500/40 dark:bg-rose-500/10 dark:text-rose-300',
+        className,
+      )}
+    >
+      <Highlighter size={10} className="opacity-80" />
+      <span className="font-serif leading-none">批改</span>
+    </span>
   )
 }
 
@@ -265,17 +325,19 @@ export default function TodoWidget() {
     let todayDue = 0
     let active = 0
     let done = 0
+    let marking = 0 // 未完成嘅批改任務（紅筆 accent；masthead surfacing）
     for (const t of full) {
       if (t.done) {
         done++
         continue
       }
       active++
+      if (isMarkingTask(t)) marking++
       const b = dueBucket(t.meta.due, today)
       if (b === 'overdue') overdue++
       else if (b === 'today') todayDue++
     }
-    return { overdue, todayDue, active, done, total: full.length }
+    return { overdue, todayDue, active, done, marking, total: full.length }
   }, [full, today])
 
   // ───────── 篩選器（搜尋 / 專案 / 標籤）─────────
@@ -446,77 +508,132 @@ export default function TodoWidget() {
 
   return (
     <div className="space-y-5">
-      {/* 工具列（標題由 App 外殼提供，呢度只放動作）*/}
-      <div className="flex items-center justify-end gap-2">
-        <Button
-          variant="secondary"
-          size="sm"
-          icon={Sparkles}
-          onClick={() => setTmplModal(true)}
+      {/* ───────── 改簿檯 masthead：本頁自管標題（含功能名「待辦 / 批改」）───────── */}
+      <header className="relative overflow-hidden rounded-3xl border border-slate-200/80 bg-white px-5 py-5 shadow-xs dark:border-slate-700/60 dark:bg-slate-800 dark:shadow-none sm:px-7 sm:py-6">
+        {/* 右側紅墨裝飾：似改簿時隨手剔嘅一筆（純裝飾，唔搶主次）*/}
+        <span
+          aria-hidden
+          className="pointer-events-none absolute -right-5 top-4 hidden -rotate-6 select-none font-serif text-[3.5rem] font-bold leading-none text-rose-500/10 dark:text-rose-500/15 sm:block"
         >
-          範本
-        </Button>
-        <Menu
-          align="end"
-          trigger={
-            <span className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-slate-200/80 bg-white px-3 text-sm font-medium text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700/60 dark:bg-slate-800 dark:text-slate-200 dark:hover:border-slate-600">
-              更多
-              <ChevronRight size={14} className="rotate-90" />
-            </span>
-          }
-          items={[
-            {
-              id: 'select',
-              label: '批量選取',
-              icon: CheckCircle2,
-              onSelect: () => setSelecting(true),
-            },
-            {
-              id: 'projects',
-              label: '管理專案',
-              icon: FolderPlus,
-              onSelect: () => setProjModal(true),
-            },
-            {
-              id: 'clear',
-              label: '清除已完成',
-              icon: Trash2,
-              tone: 'danger',
-              onSelect: clearCompleted,
-            },
-          ]}
-        />
-      </div>
+          ✓
+        </span>
+        <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-4">
+          <div className="min-w-0">
+            <p className="flex items-center gap-2 text-[11px] font-medium uppercase tracking-[0.3em] text-accent/70">
+              <ClipboardCheck size={13} />
+              改簿檯 · Marking Desk
+            </p>
+            <h1 className="mt-1.5 font-serif text-[28px] font-semibold leading-none tracking-tight text-slate-800 dark:text-slate-100 sm:text-[34px]">
+              待辦 / 批改
+            </h1>
+            <p className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-slate-500 dark:text-slate-400">
+              <span className="tabular-nums">
+                未剔 {counts.active} 項 · 今日到期 {counts.todayDue} 項
+              </span>
+              {counts.marking > 0 && (
+                <>
+                  <span aria-hidden className="text-slate-300 dark:text-slate-600">·</span>
+                  <span className="inline-flex items-center gap-1 font-medium text-rose-600 dark:text-rose-400">
+                    <Highlighter size={12} /> {counts.marking} 項待批改
+                  </span>
+                </>
+              )}
+            </p>
+          </div>
+          {/* 卷務操作：範本 + 更多（似改簿檯上嘅工具）*/}
+          <div className="flex shrink-0 items-center gap-2">
+            <Button
+              variant="secondary"
+              size="sm"
+              icon={Sparkles}
+              onClick={() => setTmplModal(true)}
+            >
+              範本
+            </Button>
+            <Menu
+              align="end"
+              trigger={
+                <span className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-slate-200/80 bg-white px-3 text-sm font-medium text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700/60 dark:bg-slate-800 dark:text-slate-200 dark:hover:border-slate-600">
+                  更多
+                  <ChevronRight size={14} className="rotate-90" />
+                </span>
+              }
+              items={[
+                {
+                  id: 'select',
+                  label: '批量選取',
+                  icon: CheckCircle2,
+                  onSelect: () => setSelecting(true),
+                },
+                {
+                  id: 'projects',
+                  label: '管理專案',
+                  icon: FolderPlus,
+                  onSelect: () => setProjModal(true),
+                },
+                {
+                  id: 'clear',
+                  label: '清除已完成',
+                  icon: Trash2,
+                  tone: 'danger',
+                  onSelect: clearCompleted,
+                },
+              ]}
+            />
+          </div>
+        </div>
+        {/* 改簿檯雙線（封面分隔感）*/}
+        <div className="mt-5 space-y-1" aria-hidden>
+          <span className="block h-px bg-slate-200/90 dark:bg-slate-700/70" />
+          <span className="block h-px bg-slate-200/60 dark:bg-slate-700/40" />
+        </div>
+      </header>
 
-      {/* 統計磚（呼吸感 · 分類色 chip · 可撳跳視圖）*/}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <MiniStat
+      {/* ───────── 清點帶：hairline grid · serif 大數字（可撳跳視圖）───────── */}
+      <section className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl bg-slate-200/70 ring-1 ring-slate-200/80 dark:bg-slate-700/50 dark:ring-slate-700/60 sm:grid-cols-4">
+        <TallyStat
           label="逾期"
           value={counts.overdue}
           unit="項"
           icon={Flag}
-          tone={counts.overdue > 0 ? 'rose' : 'slate'}
+          tone="rose"
+          hot={counts.overdue > 0}
           hint={counts.overdue > 0 ? '需要跟進' : '一切如常'}
           onClick={() => {
             setView('upcoming')
             setSearch('')
           }}
         />
-        <MiniStat
+        <TallyStat
           label="今日到期"
           value={counts.todayDue}
           unit="項"
           icon={Sun}
           tone="accent"
-          highlight
+          hot={counts.todayDue > 0}
           hint={counts.todayDue > 0 ? '今日搞掂佢' : '今日好輕鬆'}
           onClick={() => setView('today')}
         />
-        <MiniStat label="未完成" value={counts.active} unit="項" icon={CircleDashed} tone="amber" />
-        <MiniStat label="已完成" value={counts.done} unit="項" icon={CheckCircle2} tone="emerald" />
-      </div>
+        <TallyStat
+          label="未剔"
+          value={counts.active}
+          unit="項"
+          icon={ListTodo}
+          hint={counts.marking > 0 ? `含 ${counts.marking} 項批改` : '清單仲有嘢做'}
+          onClick={() => setView('all')}
+        />
+        <TallyStat
+          label="已剔"
+          value={counts.done}
+          unit="項"
+          icon={CheckCheck}
+          tone="emerald"
+          hot={counts.done > 0 && counts.active === 0}
+          hint="累計打剔"
+        />
+      </section>
 
-      {/* 快速輸入（圓潤、貼合、accent focus 環）*/}
+      {/* ───────── 新一筆：似喺改簿邊用紅筆寫低待辦（accent focus 環）───────── */}
       <div className="space-y-2 rounded-2xl border border-slate-200/80 bg-slate-50/60 p-3 transition focus-within:border-accent/40 focus-within:bg-white dark:border-slate-700/60 dark:bg-slate-800/40 dark:focus-within:bg-slate-800">
         <div className="flex gap-2">
           <Input
@@ -525,11 +642,11 @@ export default function TodoWidget() {
             value={quick}
             onChange={(e) => setQuick(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && addQuick()}
-            placeholder="新增待辦… 試吓「批改 5A 練習 !! #教學 @批改 +2」"
+            placeholder="記低一筆… 試吓「批改 5A 練習 !! #教學 @批改 +2」"
             className="flex-1 border-transparent bg-white shadow-none dark:bg-slate-900/40"
           />
           <Button onClick={addQuick} icon={Plus}>
-            加入
+            記低
           </Button>
         </div>
         <p className="flex flex-wrap items-center gap-x-2 gap-y-1 px-1 text-[11px] text-slate-400 dark:text-slate-500">
@@ -746,21 +863,33 @@ function TaskRow({
         : 'bg-slate-100 text-slate-500 dark:bg-slate-700/50 dark:text-slate-400'
   const subDone = task.subtasks.filter((s) => s.done).length
   const hot = task.meta.priority <= 2 && !task.done
+  // 批改任務：披紅筆 accent（紅邊欄 + 紅「批」章 + 紅墨剔格）
+  const marking = isMarkingTask(task)
 
   return (
     <div
       className={cx(
-        'group relative flex items-start gap-3 py-2.5 pl-4 pr-3 transition-colors sm:pl-5',
+        'group relative flex items-start gap-3 py-2.5 pr-3 transition-colors',
+        // 批改任務向左讓位畀紅邊欄（似改簿嘅紅 margin）
+        marking ? 'pl-5 sm:pl-6' : 'pl-4 sm:pl-5',
         selected && 'bg-accent-soft/60 dark:bg-accent/10',
+        marking && !selected && 'bg-rose-50/40 dark:bg-rose-500/[0.06]',
         !selecting && 'hover:bg-slate-50 dark:hover:bg-slate-800/50',
       )}
     >
-      {/* 高優先級任務：左側色條（柔和提示緊要度，唔搶眼）*/}
-      {hot && (
-        <span
-          aria-hidden="true"
-          className={cx('absolute inset-y-1.5 left-0 w-1 rounded-full', pm.dot)}
-        />
+      {/* 批改任務：紅筆雙邊欄（改簿 margin）。否則高優先級用柔和優先色條。*/}
+      {marking ? (
+        <span aria-hidden="true" className="absolute inset-y-0 left-2 flex gap-[3px] sm:left-2.5">
+          <span className="w-[3px] rounded-full bg-rose-400 dark:bg-rose-500/70" />
+          <span className="w-px rounded-full bg-rose-300/70 dark:bg-rose-500/40" />
+        </span>
+      ) : (
+        hot && (
+          <span
+            aria-hidden="true"
+            className={cx('absolute inset-y-1.5 left-0 w-1 rounded-full', pm.dot)}
+          />
+        )
       )}
 
       {selecting ? (
@@ -782,17 +911,32 @@ function TaskRow({
         <button
           type="button"
           onClick={() => onToggle(task)}
-          aria-label={task.done ? '標記未完成' : '標記完成'}
+          aria-label={task.done ? '標記未完成' : marking ? '打剔（已批改）' : '打剔（完成）'}
           className={cx(
-            'mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition duration-200 active:scale-90',
+            'mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center border-2 transition duration-200 active:scale-90',
+            // 批改任務用方剔格（似簿上方格）；其餘用圓剔格
+            marking ? 'rounded-md' : 'rounded-full',
             task.done
               ? 'border-emerald-500 bg-emerald-500 text-white shadow-sm shadow-emerald-500/30'
-              : task.meta.priority <= 2
-                ? cx('hover:bg-slate-50 dark:hover:bg-slate-700', pm.flag.replace('text-', 'border-'))
-                : 'border-slate-300 hover:border-accent hover:bg-accent-soft/40 dark:border-slate-600',
+              : marking
+                ? 'border-rose-300 text-rose-500 hover:border-rose-500 hover:bg-rose-50 dark:border-rose-500/50 dark:hover:bg-rose-500/10'
+                : task.meta.priority <= 2
+                  ? cx('hover:bg-slate-50 dark:hover:bg-slate-700', pm.flag.replace('text-', 'border-'))
+                  : 'border-slate-300 hover:border-accent hover:bg-accent-soft/40 dark:border-slate-600',
           )}
         >
-          {task.done && <Check size={12} strokeWidth={3} />}
+          {task.done ? (
+            <Check size={12} strokeWidth={3} />
+          ) : (
+            // 批改任務未剔：淡淡紅剔做「等批」提示（hover 先明顯）
+            marking && (
+              <Check
+                size={12}
+                strokeWidth={3}
+                className="opacity-0 transition-opacity group-hover:opacity-40"
+              />
+            )
+          )}
         </button>
       )}
 
@@ -802,7 +946,8 @@ function TaskRow({
         className="min-w-0 flex-1 text-left"
       >
         <div className="flex items-center gap-1.5">
-          {hot && <Flag size={12} className={cx('shrink-0', pm.flag)} />}
+          {marking && <MarkPen />}
+          {hot && !marking && <Flag size={12} className={cx('shrink-0', pm.flag)} />}
           <span
             className={cx(
               'truncate text-sm transition-colors',
@@ -861,7 +1006,8 @@ function TaskRow({
   )
 }
 
-// 一組（標題 + 任務）—— 溫和 tone 圓點標頭 + 計數膠囊 + 卡片裝載
+// 一組（改簿冊頁眉 + 任務冊）—— icon chip 標頭 + 計數 + 向右延伸 hairline；
+// 卡片帶柔和 tone 左緣，似簿冊嘅分段。
 function Group({
   title,
   tone = 'slate',
@@ -883,29 +1029,30 @@ function Group({
         : tone === 'accent'
           ? 'text-accent-strong dark:text-accent'
           : 'text-slate-500 dark:text-slate-400'
-  const dotCls =
+  const chipCls =
     tone === 'rose'
-      ? 'bg-rose-500'
+      ? 'bg-rose-50 text-rose-600 dark:bg-rose-500/15 dark:text-rose-300'
       : tone === 'amber'
-        ? 'bg-amber-500'
+        ? 'bg-amber-50 text-amber-600 dark:bg-amber-500/15 dark:text-amber-300'
         : tone === 'accent'
-          ? 'bg-accent'
-          : 'bg-slate-300 dark:bg-slate-600'
+          ? 'bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent'
+          : 'bg-slate-100 text-slate-500 dark:bg-slate-700/60 dark:text-slate-300'
   if (count === 0) return null
   return (
     <div className="space-y-2">
-      <div className="flex items-center gap-2 px-1">
-        {Icon ? (
-          <Icon size={14} className={toneCls} />
-        ) : (
-          <span className={cx('h-2 w-2 rounded-full', dotCls)} />
+      <div className="flex items-center gap-2 px-0.5">
+        {Icon && (
+          <span className={cx('flex h-6 w-6 shrink-0 items-center justify-center rounded-md', chipCls)}>
+            <Icon size={14} />
+          </span>
         )}
         <h3 className={cx('text-xs font-semibold uppercase tracking-wider', toneCls)}>
           {title}
         </h3>
-        <span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold tabular-nums text-slate-500 dark:bg-slate-700/60 dark:text-slate-400">
+        <span className="tabular-nums text-[11px] font-semibold text-slate-400 dark:text-slate-500">
           {count}
         </span>
+        <span aria-hidden className="ml-1 h-px flex-1 bg-gradient-to-r from-slate-200 to-transparent dark:from-slate-700/70" />
       </div>
       <Card className="divide-y divide-slate-100 overflow-hidden dark:divide-slate-700/60">
         {children}
@@ -963,7 +1110,7 @@ function TodayView(props: {
           <TaskRow key={t.id} task={t} project={projOf(t)} {...rowProps(props, t.id)} />
         ))}
       </Group>
-      <Group title="今日完成" icon={CheckCircle2} count={doneToday.length}>
+      <Group title="今日打剔" icon={CheckCheck} count={doneToday.length}>
         {doneToday.map((t) => (
           <TaskRow key={t.id} task={t} project={projOf(t)} {...rowProps(props, t.id)} />
         ))}
@@ -1157,15 +1304,25 @@ function AllView(props: {
       </aside>
 
       {/* 任務 */}
-      <div className="min-w-0 space-y-3">
-        <div className="flex items-center justify-between px-1">
+      <div className="min-w-0 space-y-2">
+        <div className="flex items-center gap-2 px-0.5">
+          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-slate-100 text-slate-500 dark:bg-slate-700/60 dark:text-slate-300">
+            <ClipboardCheck size={14} />
+          </span>
+          <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+            任務冊
+          </h3>
+          <span className="tabular-nums text-[11px] font-semibold text-slate-400 dark:text-slate-500">
+            {visible.length}
+          </span>
+          <span aria-hidden className="ml-1 h-px flex-1 bg-gradient-to-r from-slate-200 to-transparent dark:from-slate-700/70" />
           <button
             type="button"
             onClick={() => setShowDone(!showDone)}
-            className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+            className="inline-flex shrink-0 items-center gap-1.5 text-[11px] font-medium text-slate-400 transition hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300"
           >
-            <CheckCircle2 size={13} />
-            {showDone ? '隱藏已完成' : `顯示已完成（${doneCount}）`}
+            <CheckCheck size={13} />
+            {showDone ? '隱藏已剔' : `已剔 ${doneCount}`}
           </button>
         </div>
         {visible.length === 0 ? (
@@ -1343,27 +1500,28 @@ function StatsView({ tasks, projects }: { tasks: FullTask[]; projects: Project[]
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <MiniStat
+      <section className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl bg-slate-200/70 ring-1 ring-slate-200/80 dark:bg-slate-700/50 dark:ring-slate-700/60 sm:grid-cols-4">
+        <TallyStat
           label="連續完成"
           value={streak}
           unit="日"
           icon={Sparkles}
           tone="accent"
-          highlight
+          hot={streak > 0}
           hint={streak > 0 ? '繼續保持！' : '今日完成一項就開始'}
         />
-        <MiniStat
+        <TallyStat
           label="完成率"
           value={completionRate}
           unit="%"
           icon={CheckCircle2}
           tone="emerald"
+          hot={completionRate >= 80}
           hint={`近 ${range} 日完成 ${completedInRange}`}
         />
-        <MiniStat label="進行中" value={active.length} unit="項" icon={CircleDashed} tone="amber" />
-        <MiniStat label="累計完成" value={completed.length} unit="項" icon={ListChecks} tone="slate" />
-      </div>
+        <TallyStat label="進行中" value={active.length} unit="項" icon={CircleDashed} />
+        <TallyStat label="累計完成" value={completed.length} unit="項" icon={ListChecks} />
+      </section>
 
       <Card padded>
         <SectionTitle
@@ -1669,7 +1827,7 @@ function TemplatePicker({
   return (
     <Modal open onClose={onClose} title="由範本快速建立" size="md">
       <p className="mb-3 text-sm text-slate-500 dark:text-slate-400">
-        揀一個範本，一鍵建立一組相關任務（含優先級、相對到期、子任務）。
+        揀個常用流程，一鍵鋪好成組任務（含優先級、相對到期、子任務）—— 例如批改一份練習嘅完整步驟。
       </p>
       <div className="space-y-2">
         {templates.map((t) => (
@@ -1677,20 +1835,26 @@ function TemplatePicker({
             key={t.id}
             type="button"
             onClick={() => apply(t.id)}
-            className="flex w-full items-center gap-3 rounded-xl border border-slate-200 p-3 text-left transition hover:-translate-y-0.5 hover:border-accent hover:shadow-md dark:border-slate-700 dark:hover:border-accent/60"
+            className="group flex w-full items-center gap-3 rounded-2xl border border-slate-200 p-3 text-left transition duration-200 hover:-translate-y-0.5 hover:border-accent hover:shadow-md dark:border-slate-700 dark:hover:border-accent/60"
           >
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-accent-soft text-xl dark:bg-accent/15">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent-soft text-xl dark:bg-accent/15">
               {t.emoji ?? '📋'}
             </span>
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">
-                {t.name}
-              </p>
-              <p className="truncate text-xs text-slate-400 dark:text-slate-500">
-                {t.items.length} 項 · {t.items.map((i) => i.text).join(' · ')}
+              <div className="flex items-center gap-2">
+                <p className="truncate text-sm font-semibold text-slate-800 dark:text-slate-100">
+                  {t.name}
+                </p>
+                <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold tabular-nums text-slate-500 dark:bg-slate-700/60 dark:text-slate-300">
+                  <ListChecks size={10} />
+                  {t.items.length} 項
+                </span>
+              </div>
+              <p className="mt-0.5 truncate text-xs text-slate-400 dark:text-slate-500">
+                {t.items.map((i) => i.text).join(' · ')}
               </p>
             </div>
-            <Plus size={16} className="shrink-0 text-accent" />
+            <Plus size={16} className="shrink-0 text-accent transition group-hover:translate-x-0.5" />
           </button>
         ))}
       </div>

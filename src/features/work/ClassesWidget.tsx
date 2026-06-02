@@ -3,8 +3,11 @@ import {
   Activity,
   AlertTriangle,
   ArrowLeft,
+  BookUser,
   CalendarCheck,
+  ChevronRight,
   ClipboardList,
+  DoorOpen,
   Download,
   GraduationCap,
   Home,
@@ -20,6 +23,7 @@ import {
   Upload,
   UserPlus,
   Users,
+  UserRound,
   type LucideIcon,
 } from 'lucide-react'
 import { useCollection } from '../../lib/store'
@@ -47,13 +51,11 @@ import {
   Input,
   Menu,
   Modal,
-  PageHeader,
   Pills,
   ProgressBar,
+  SegmentedControl,
   Select,
-  StatCard,
   Table,
-  Tabs,
   Tbody,
   Td,
   Th,
@@ -187,84 +189,95 @@ export default function ClassesWidget() {
     )
   }
 
+  const termLabel = classMetas.find((m) => m.term)?.term ?? defaultTerm()
+  const avgClassSize = classes.length
+    ? Math.round(students.length / classes.length)
+    : 0
+
   return (
     <div className="space-y-5">
-      <PageHeader
-        title="班別管理"
-        description="你任教嘅班別同學生名冊 — 班情、座位、檔案一覽。"
-        icon={School}
-        actions={
-          <Button icon={Plus} onClick={() => setShowAddClass(true)}>
-            新增班別
-          </Button>
-        }
-      />
+      {/* ───────── 班務冊 masthead：點名冊封面（kicker + serif 冊名 + 簽到行）───────── */}
+      <header className="relative overflow-hidden rounded-3xl border border-slate-200/80 bg-white px-5 py-5 shadow-xs dark:border-slate-700/60 dark:bg-slate-800 dark:shadow-none sm:px-7 sm:py-6">
+        {/* 封面右上「班務處戳印」（純裝飾，唔搶主次）*/}
+        <span
+          aria-hidden
+          className="pointer-events-none absolute -right-7 top-3 hidden -rotate-6 select-none rounded-xl border-2 border-dashed border-accent/20 px-4 py-2 font-serif text-xs font-semibold uppercase tracking-[0.25em] text-accent/25 dark:border-accent/25 dark:text-accent/25 sm:block"
+        >
+          點名冊 · Roll Call
+        </span>
+        <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-4">
+          <div className="min-w-0">
+            <p className="flex items-center gap-2 text-[11px] font-medium uppercase tracking-[0.3em] text-accent/70">
+              <BookUser size={13} />
+              班務冊 · Class Register
+            </p>
+            <h1 className="mt-1.5 font-serif text-[28px] font-semibold leading-none tracking-tight text-slate-800 dark:text-slate-100 sm:text-[34px]">
+              班別管理
+            </h1>
+            <p className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-slate-500 dark:text-slate-400">
+              <span className="tabular-nums">
+                掌管 {classes.length} 班 · 點名 {students.length} 位學生
+              </span>
+              <span aria-hidden className="text-slate-300 dark:text-slate-600">·</span>
+              <span className="inline-flex items-center gap-1 font-medium text-accent-strong dark:text-accent">
+                <CalendarCheck size={12} /> {termLabel} 學年
+              </span>
+            </p>
+          </div>
+          {/* 視圖切換 + 主行動：似冊面的索引標 */}
+          <div className="flex shrink-0 items-center gap-2">
+            <SegmentedControl<View>
+              value={view}
+              onChange={setView}
+              options={[
+                { id: 'overview', label: '總覽', icon: LayoutGrid },
+                { id: 'classes', label: '班別', icon: Users },
+              ]}
+            />
+            <Button icon={Plus} onClick={() => setShowAddClass(true)}>
+              新增班別
+            </Button>
+          </div>
+        </div>
+        {/* 冊面雙線（封面分隔感）*/}
+        <div className="mt-5 space-y-1" aria-hidden>
+          <span className="block h-px bg-slate-200/90 dark:bg-slate-700/70" />
+          <span className="block h-px bg-slate-200/60 dark:bg-slate-700/40" />
+        </div>
+      </header>
 
-      <Tabs
-        tabs={[
-          { id: 'overview', label: '總覽' },
-          { id: 'classes', label: '班別' },
-        ]}
-        active={view}
-        onChange={setView}
-        icons={{ overview: LayoutGrid, classes: Users }}
-      />
+      {/* ───────── 點名冊清點帶：hairline grid · serif 大數字 ───────── */}
+      <section className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl bg-slate-200/70 ring-1 ring-slate-200/80 dark:bg-slate-700/50 dark:ring-slate-700/60 sm:grid-cols-4">
+        <RegisterStat label="在冊班別" value={classes.length} unit="班" icon={School} hot={classes.length > 0} hint="任教班級" />
+        <RegisterStat label="學生人數" value={students.length} unit="位" icon={Users} hint="全部名冊合計" />
+        <RegisterStat
+          label="在學人數"
+          value={activeCount}
+          unit="位"
+          icon={GraduationCap}
+          hint={students.length ? `${students.length - activeCount} 位已轉班／離校` : '尚無學生'}
+        />
+        <RegisterStat label="平均班額" value={avgClassSize} unit="人" icon={ListChecks} hint="每班學生數" />
+      </section>
 
       {view === 'overview' ? (
         <div className="space-y-5">
-          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-            <StatCard
-              label="班別總數"
-              value={classes.length}
-              unit="班"
-              icon={School}
-              highlight
-            />
-            <StatCard
-              label="學生總數"
-              value={students.length}
-              unit="位"
-              icon={Users}
-            />
-            <StatCard
-              label="在學學生"
-              value={activeCount}
-              unit="位"
-              icon={GraduationCap}
-              hint={
-                students.length
-                  ? `${students.length - activeCount} 位已轉班／離校`
-                  : undefined
-              }
-            />
-            <StatCard
-              label="平均班額"
-              value={
-                classes.length
-                  ? Math.round(students.length / classes.length)
-                  : 0
-              }
-              unit="人"
-              icon={ListChecks}
-            />
-          </div>
-
           {classes.length === 0 ? (
             <EmptyState
-              icon={School}
+              icon={BookUser}
               art="empty-classes"
-              title="仲未有班別"
-              hint="新增第一個班別，成績、出席、進度等功能都會用到同一批班別。"
+              title="班務冊仲係空白一頁"
+              hint="開立第一班，成績、出席、進度等功能就會共用呢批班別名冊。"
               action={
                 <Button icon={Plus} onClick={() => setShowAddClass(true)}>
-                  新增班別
+                  開立第一班
                 </Button>
               }
             />
           ) : (
             <div className="grid gap-4 lg:grid-cols-2">
               <Card padded>
-                <ChartHead icon={Users}>各班人數</ChartHead>
+                <ChartHead icon={Users}>各班點名人數</ChartHead>
                 <ClassSizeChart
                   data={sizes.map(({ klass, count }) => ({
                     id: klass.id,
@@ -342,6 +355,56 @@ export default function ClassesWidget() {
   )
 }
 
+// ───────── 點名冊清點格（hairline grid · serif 大數字；在冊 hot 高亮）─────────
+function RegisterStat({
+  label,
+  value,
+  unit,
+  hint,
+  icon: Icon,
+  hot,
+}: {
+  label: string
+  value: number | string
+  unit?: string
+  hint?: string
+  icon: LucideIcon
+  hot?: boolean
+}) {
+  return (
+    <div
+      className={cx(
+        'px-3.5 py-3.5 transition-colors sm:px-4',
+        hot ? 'bg-accent-soft dark:bg-accent/15' : 'bg-white dark:bg-slate-800',
+      )}
+    >
+      <p
+        className={cx(
+          'flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide',
+          hot ? 'text-accent/80 dark:text-accent/80' : 'text-slate-400 dark:text-slate-500',
+        )}
+      >
+        <Icon size={12} className="shrink-0" />
+        <span className="truncate">{label}</span>
+      </p>
+      <p
+        className={cx(
+          'mt-1 font-serif text-[26px] font-semibold leading-none tabular-nums slashed-zero',
+          hot ? 'text-accent-strong dark:text-accent' : 'text-slate-800 dark:text-slate-100',
+        )}
+      >
+        {value}
+        {unit && (
+          <span className="ml-1 font-sans text-sm font-normal text-slate-400">{unit}</span>
+        )}
+      </p>
+      {hint && (
+        <p className="mt-1 truncate text-[11px] text-slate-400 dark:text-slate-500">{hint}</p>
+      )}
+    </div>
+  )
+}
+
 // ───────── 性別環形 segments ─────────
 function genderSegments(demo: {
   gender: Record<Gender, number>
@@ -380,20 +443,20 @@ function ClassGrid({
   if (classes.length === 0)
     return (
       <EmptyState
-        icon={School}
+        icon={BookUser}
         art="empty-classes"
-        title="仲未有班別"
-        hint="新增一個班別開始建立名冊。"
+        title="班務冊仲係空白一頁"
+        hint="開立一班，就可以喺度建立佢嘅花名冊、座位表同班情分析。"
         action={
           <Button icon={Plus} onClick={onAdd}>
-            新增班別
+            開立第一班
           </Button>
         }
       />
     )
 
   return (
-    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+    <div className="grid gap-3.5 sm:grid-cols-2 xl:grid-cols-3">
       {classes.map((c) => {
         const roster = students.filter((s) => s.classId === c.id)
         const cm = classMetaFor(c.id, classMetas)
@@ -403,84 +466,119 @@ function ClassGrid({
           <Card
             key={c.id}
             hover
-            className="group relative overflow-hidden rounded-3xl p-5"
+            className="group relative flex overflow-hidden rounded-3xl p-0"
             onClick={() => onOpen(c.id)}
           >
-            {/* 班別色：頂部柔和色帶 */}
-            <span className={cx('absolute inset-x-0 top-0 h-1', TONE_BG[cm.color])} />
-            <div className="flex items-start justify-between gap-2">
-              <div className="flex min-w-0 items-center gap-3">
-                <span
-                  className={cx(
-                    'flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl transition duration-200 group-hover:scale-105',
-                    TONE_CHIP[cm.color],
-                  )}
-                >
-                  <School size={20} />
-                </span>
-                <div className="min-w-0">
-                  <p className="truncate text-lg font-bold leading-tight text-slate-800 dark:text-slate-100">
-                    {c.name}
-                  </p>
-                  <p className="truncate text-xs text-slate-500 dark:text-slate-400">
-                    {c.subject}
-                  </p>
+            {/* 班別色：左側裝訂書脊（班牌色帶）*/}
+            <span
+              className={cx('w-1.5 shrink-0 transition-all duration-200 group-hover:w-2', TONE_BAR[cm.color])}
+              aria-hidden
+            />
+            <div className="min-w-0 flex-1 p-5">
+              {/* 班牌頭：色標 chip + serif 班名 + 科目 */}
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex min-w-0 items-center gap-3">
+                  <span
+                    className={cx(
+                      'flex h-12 w-12 shrink-0 flex-col items-center justify-center rounded-2xl leading-none transition duration-200',
+                      TONE_CHIP[cm.color],
+                    )}
+                    aria-hidden
+                  >
+                    <span className="text-[8px] font-semibold uppercase tracking-[0.15em] opacity-60">
+                      Class
+                    </span>
+                    <span className="font-serif text-base font-bold leading-none">
+                      {classBadge(c.name)}
+                    </span>
+                  </span>
+                  <div className="min-w-0">
+                    <p className="truncate font-serif text-xl font-bold leading-tight text-slate-800 dark:text-slate-100">
+                      {c.name}
+                    </p>
+                    <p className="truncate text-xs text-slate-500 dark:text-slate-400">
+                      {c.subject}
+                    </p>
+                  </div>
+                </div>
+                <div onClick={(e) => e.stopPropagation()}>
+                  <Menu
+                    align="end"
+                    trigger={
+                      <IconButton label="班別選項" size="sm">
+                        <Settings2 size={16} />
+                      </IconButton>
+                    }
+                    items={[
+                      {
+                        id: 'open',
+                        label: '翻開名冊',
+                        icon: BookUser,
+                        onSelect: () => onOpen(c.id),
+                      },
+                      {
+                        id: 'del',
+                        label: '刪除班別',
+                        icon: Trash2,
+                        tone: 'danger',
+                        onSelect: () => onDelete(c),
+                      },
+                    ]}
+                  />
                 </div>
               </div>
-              <div onClick={(e) => e.stopPropagation()}>
-                <Menu
-                  align="end"
-                  trigger={
-                    <IconButton label="班別選項" size="sm">
-                      <Settings2 size={16} />
-                    </IconButton>
-                  }
-                  items={[
-                    {
-                      id: 'open',
-                      label: '開啟名冊',
-                      icon: Users,
-                      onSelect: () => onOpen(c.id),
-                    },
-                    {
-                      id: 'del',
-                      label: '刪除班別',
-                      icon: Trash2,
-                      tone: 'danger',
-                      onSelect: () => onDelete(c),
-                    },
-                  ]}
-                />
-              </div>
-            </div>
 
-            {cm.formTeacher || cm.room || cm.term ? (
-              <div className="mt-3 flex flex-wrap gap-1.5">
-                {cm.formTeacher && <Badge tone="slate">班主任 {cm.formTeacher}</Badge>}
-                {cm.room && <Badge tone="slate">{cm.room}</Badge>}
-                {cm.term && <Badge tone="slate">{cm.term}</Badge>}
-              </div>
-            ) : null}
+              {cm.formTeacher || cm.room ? (
+                <div className="mt-3 flex flex-wrap gap-1.5">
+                  {cm.formTeacher && (
+                    <Badge tone="slate" icon={UserRound}>
+                      {cm.formTeacher}
+                    </Badge>
+                  )}
+                  {cm.room && (
+                    <Badge tone="slate" icon={DoorOpen}>
+                      {cm.room}
+                    </Badge>
+                  )}
+                </div>
+              ) : null}
 
-            <div className="mt-4 flex items-baseline justify-between">
-              <span className="font-semibold tabular-nums text-slate-700 dark:text-slate-200">
-                <span className="text-2xl font-bold text-slate-800 dark:text-slate-100">
-                  {roster.length}
+              {/* 點名人數：serif 大數字（班牌主數字）*/}
+              <div className="mt-4 flex items-end justify-between">
+                <span className="flex items-baseline gap-1.5">
+                  <span className="font-serif text-3xl font-bold tabular-nums slashed-zero text-slate-800 dark:text-slate-100">
+                    {roster.length}
+                  </span>
+                  <span className="text-xs font-normal text-slate-400">位學生</span>
                 </span>
-                <span className="ml-1 text-xs font-normal text-slate-400">
-                  位學生
+                {roster.length > 0 && (
+                  <span className="text-[11px] tabular-nums text-slate-400">
+                    男 {d.gender.M} · 女 {d.gender.F}
+                    {d.gender.X + d.genderUnknown > 0 && ` · 其他 ${d.gender.X + d.genderUnknown}`}
+                  </span>
+                )}
+              </div>
+              <div className="mt-2">
+                <GenderStrip m={d.gender.M} f={d.gender.F} x={d.gender.X + d.genderUnknown} />
+              </div>
+
+              {/* 冊頁底線 + 翻開提示 */}
+              <div className="mt-3.5 flex items-center justify-between border-t border-dashed border-slate-200/80 pt-3 text-[11px] dark:border-slate-700/60">
+                <span className="inline-flex items-center gap-1.5 text-slate-400 dark:text-slate-500">
+                  <ListChecks size={12} />
+                  名冊完整度
+                  <span className={cx('font-semibold tabular-nums', compTextTone(comp.pct))}>
+                    {comp.pct}%
+                  </span>
                 </span>
-              </span>
-              <span className="text-xs tabular-nums text-slate-400">
-                男 {d.gender.M} · 女 {d.gender.F}
-              </span>
-            </div>
-            <div className="mt-2">
-              <GenderStrip m={d.gender.M} f={d.gender.F} x={d.gender.X + d.genderUnknown} />
-            </div>
-            <div className="mt-3 flex items-center justify-between text-[11px] text-slate-400 dark:text-slate-500">
-              <span>資料完整度</span>
-              <span className="font-medium tabular-nums">{comp.pct}%</span>
+                <span className="inline-flex items-center gap-0.5 font-medium text-slate-400 transition-colors group-hover:text-accent dark:text-slate-500">
+                  翻開名冊
+                  <ChevronRight
+                    size={13}
+                    className="transition-transform duration-200 group-hover:translate-x-0.5"
+                  />
+                </span>
+              </div>
             </div>
           </Card>
         )
@@ -489,7 +587,8 @@ function ClassGrid({
   )
 }
 
-const TONE_BG: Record<ClassTone, string> = {
+// 班牌書脊色帶（左側裝訂條）
+const TONE_BAR: Record<ClassTone, string> = {
   accent: 'bg-accent',
   blue: 'bg-blue-500',
   green: 'bg-emerald-500',
@@ -498,7 +597,7 @@ const TONE_BG: Record<ClassTone, string> = {
   slate: 'bg-slate-400',
 }
 
-// 班別色 icon chip（淺底深字，深色 /15）
+// 班別色 班牌 chip（淺底深字，深色 /15）
 const TONE_CHIP: Record<ClassTone, string> = {
   accent: 'bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent',
   blue: 'bg-blue-50 text-blue-600 dark:bg-blue-500/15 dark:text-blue-300',
@@ -506,6 +605,23 @@ const TONE_CHIP: Record<ClassTone, string> = {
   amber: 'bg-amber-50 text-amber-600 dark:bg-amber-500/15 dark:text-amber-300',
   rose: 'bg-rose-50 text-rose-600 dark:bg-rose-500/15 dark:text-rose-300',
   slate: 'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300',
+}
+
+// 班牌 chip 內嘅短代號（取班名首 1–2 個字母/數字，例如「5A」「中」）
+function classBadge(name: string): string {
+  const t = name.trim()
+  if (!t) return '—'
+  const m = t.match(/^[A-Za-z0-9]{1,3}/)
+  if (m) return m[0].toUpperCase()
+  return t.slice(0, 2)
+}
+
+// 完整度文字色（沿用 pctTone 語意，但取文字版）
+function compTextTone(pct: number): string {
+  if (pct >= 80) return 'text-emerald-600 dark:text-emerald-400'
+  if (pct >= 50) return 'text-accent-strong dark:text-accent'
+  if (pct >= 25) return 'text-amber-600 dark:text-amber-400'
+  return 'text-rose-600 dark:text-rose-400'
 }
 
 // ============================================================
@@ -550,48 +666,87 @@ function ClassDetail({
 
   return (
     <div className="space-y-5">
-      <PageHeader
-        title={klass.name}
-        description={klass.subject}
-        icon={School}
-        breadcrumb={
-          <button
-            type="button"
-            onClick={onBack}
-            className="inline-flex items-center gap-1 hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-1 rounded"
-          >
-            <ArrowLeft size={13} /> 全部班別
-          </button>
-        }
-        actions={
-          <div className="flex items-center gap-2">
+      {/* ───────── 班牌 masthead：翻開咗嘅點名冊頁面（色脊 + serif 班名 + 卷務行）───────── */}
+      <header className="relative flex overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-xs dark:border-slate-700/60 dark:bg-slate-800 dark:shadow-none">
+        {/* 班別色脊（同班牌卡呼應）*/}
+        <span className={cx('w-1.5 shrink-0', TONE_BAR[cm.color])} aria-hidden />
+        <div className="min-w-0 flex-1 px-5 py-5 sm:px-6">
+          <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-3">
+            <div className="min-w-0">
+              <button
+                type="button"
+                onClick={onBack}
+                className="inline-flex items-center gap-1 rounded text-xs font-medium text-slate-400 transition hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-1 dark:text-slate-500"
+              >
+                <ArrowLeft size={13} /> 班務冊 · 全部班別
+              </button>
+              <div className="mt-1.5 flex items-center gap-3">
+                <span
+                  className={cx(
+                    'flex h-12 w-12 shrink-0 flex-col items-center justify-center rounded-2xl leading-none',
+                    TONE_CHIP[cm.color],
+                  )}
+                  aria-hidden
+                >
+                  <span className="text-[8px] font-semibold uppercase tracking-[0.15em] opacity-60">
+                    Class
+                  </span>
+                  <span className="font-serif text-base font-bold leading-none">
+                    {classBadge(klass.name)}
+                  </span>
+                </span>
+                <div className="min-w-0">
+                  <h1 className="truncate font-serif text-[26px] font-semibold leading-none tracking-tight text-slate-800 dark:text-slate-100 sm:text-[30px]">
+                    {klass.name}
+                  </h1>
+                  <p className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-slate-500 dark:text-slate-400">
+                    <span className="truncate">{klass.subject}</span>
+                    <span aria-hidden className="text-slate-300 dark:text-slate-600">·</span>
+                    <span className="inline-flex items-center gap-1 tabular-nums">
+                      <Users size={12} /> {roster.length} 位學生
+                    </span>
+                  </p>
+                </div>
+              </div>
+            </div>
             <Button variant="secondary" icon={Pencil} onClick={() => setShowEdit(true)}>
               班別設定
             </Button>
           </div>
-        }
-      />
 
-      {(cm.formTeacher || cm.room || cm.term) && (
-        <div className="flex flex-wrap gap-2">
-          {cm.formTeacher && <Badge tone="accent">班主任 {cm.formTeacher}</Badge>}
-          {cm.room && <Badge tone="slate">課室 {cm.room}</Badge>}
-          {cm.term && <Badge tone="slate">學年 {cm.term}</Badge>}
-          <Badge tone={cm.color} dot>
-            {CLASS_TONES.find((t) => t.id === cm.color)?.label ?? cm.color}
-          </Badge>
+          {(cm.formTeacher || cm.room || cm.term) && (
+            <div className="mt-4 flex flex-wrap gap-1.5">
+              {cm.formTeacher && (
+                <Badge tone="accent" icon={UserRound}>
+                  班主任 {cm.formTeacher}
+                </Badge>
+              )}
+              {cm.room && (
+                <Badge tone="slate" icon={DoorOpen}>
+                  課室 {cm.room}
+                </Badge>
+              )}
+              {cm.term && (
+                <Badge tone="slate" icon={CalendarCheck}>
+                  {cm.term} 學年
+                </Badge>
+              )}
+              <Badge tone={cm.color} dot>
+                {CLASS_TONES.find((t) => t.id === cm.color)?.label ?? cm.color}牌
+              </Badge>
+            </div>
+          )}
         </div>
-      )}
+      </header>
 
-      <Tabs
-        tabs={[
-          { id: 'roster', label: '名冊' },
-          { id: 'seating', label: '座位 / 工具' },
-          { id: 'analytics', label: '班情分析' },
-        ]}
-        active={tab}
+      <SegmentedControl<DetailTab>
+        value={tab}
         onChange={setTab}
-        icons={{ roster: Users, seating: LayoutGrid, analytics: ClipboardList }}
+        options={[
+          { id: 'roster', label: '花名冊', icon: BookUser },
+          { id: 'seating', label: '座位 / 工具', icon: LayoutGrid },
+          { id: 'analytics', label: '班情分析', icon: ClipboardList },
+        ]}
       />
 
       {tab === 'roster' && <Roster klass={klass} roster={roster} metas={studentMetas} />}
@@ -753,9 +908,9 @@ function Roster({
 
       {roster.length === 0 ? (
         <EmptyState
-          icon={Users}
-          title="班入面仲未有學生"
-          hint="逐個加，或者用「批量貼上」一次過貼一整班名單。"
+          icon={BookUser}
+          title="花名冊仲係吉嘅"
+          hint="逐位點名加入，或者用「批量貼上」一次過貼一整班名單入冊。"
           action={
             <div className="flex gap-2">
               <Button icon={UserPlus} onClick={() => setShowAdd(true)}>
@@ -768,9 +923,20 @@ function Roster({
           }
         />
       ) : filtered.length === 0 ? (
-        <EmptyState icon={Search} title="冇符合條件嘅學生" hint="試下清除搜尋或篩選。" />
+        <EmptyState icon={Search} title="花名冊搵唔到呢位" hint="試下清除搜尋或篩選，再翻查名冊。" />
       ) : (
-        <Table>
+        <div className="overflow-hidden rounded-2xl border border-slate-200/80 dark:border-slate-700/60">
+          {/* 花名冊冊頁標頭 */}
+          <div className="flex items-center justify-between gap-2 border-b border-slate-200/80 bg-slate-50/80 px-3.5 py-2 dark:border-slate-700/60 dark:bg-slate-800/60">
+            <span className="inline-flex items-center gap-1.5 font-serif text-sm font-semibold text-slate-700 dark:text-slate-200">
+              <BookUser size={14} className="text-accent" />
+              花名冊 · Roster
+            </span>
+            <span className="text-[11px] tabular-nums text-slate-400 dark:text-slate-500">
+              撳一行睇學生檔案
+            </span>
+          </div>
+          <Table className="rounded-none border-0">
           <Thead>
             <Tr>
               <Th className="w-16">學號</Th>
@@ -786,12 +952,12 @@ function Roster({
               const m = metaFor(s.id, metas)
               return (
                 <Tr key={s.id} onClick={() => setProfileId(s.id)}>
-                  <Td numeric className="text-slate-400">
+                  <Td numeric className="font-serif text-slate-400">
                     {s.studentNo || '—'}
                   </Td>
                   <Td>
-                    <div className="flex items-center gap-2">
-                      <span className="flex h-7 w-7 items-center justify-center rounded-full bg-accent-soft text-xs font-semibold text-accent-strong dark:bg-accent/15 dark:text-accent">
+                    <div className="flex items-center gap-2.5">
+                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent-soft font-serif text-sm font-bold text-accent-strong dark:bg-accent/15 dark:text-accent">
                         {initials(s.name)}
                       </span>
                       <div className="min-w-0">
@@ -847,6 +1013,7 @@ function Roster({
             })}
           </Tbody>
         </Table>
+        </div>
       )}
 
       {filtered.length > 0 && (
@@ -1096,8 +1263,8 @@ function Analytics({
     return (
       <EmptyState
         icon={ClipboardList}
-        title="未有學生資料"
-        hint="加入學生並填寫性別 / 班社後，呢度會即時生成班情圖表。"
+        title="未有學生，畫唔到班情"
+        hint="喺花名冊加入學生並填寫性別 / 班社後，呢度會即時生成班情圖表。"
       />
     )
 

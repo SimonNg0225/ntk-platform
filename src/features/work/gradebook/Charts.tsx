@@ -42,7 +42,7 @@ export function Histogram({
           >
             <span
               className={cx(
-                'text-[10px] font-semibold tabular-nums transition-opacity',
+                'font-serif text-[11px] font-semibold tabular-nums slashed-zero transition-opacity',
                 b.count ? 'text-slate-500 dark:text-slate-400' : 'opacity-0',
               )}
             >

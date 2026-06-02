@@ -12,7 +12,6 @@ import {
   SectionTitle,
   SegmentedControl,
   Select,
-  StatCard,
   Table,
   Tabs,
   Tbody,
@@ -44,18 +43,19 @@ import {
   Filter,
   Handshake,
   Hourglass,
+  Inbox,
   LayoutList,
   Mail,
-  MessageCircle,
+  MailCheck,
   MessageSquare,
   Pencil,
   Phone,
   Plus,
   Search,
+  Send,
   Smartphone,
   Trash2,
   TrendingUp,
-  UserPlus,
   Users,
   UserX,
   X,
@@ -141,19 +141,106 @@ const CHANNEL_ICON: Record<string, LucideIcon> = {
 
 type ViewTab = 'timeline' | 'table' | 'students' | 'analytics'
 const TABS: { id: ViewTab; label: string }[] = [
-  { id: 'timeline', label: '時間線' },
-  { id: 'table', label: '表格' },
-  { id: 'students', label: '學生' },
+  { id: 'timeline', label: '往來書信' },
+  { id: 'table', label: '通訊錄' },
+  { id: 'students', label: '聯絡人' },
   { id: 'analytics', label: '統計' },
 ]
 const TAB_ICONS: Record<ViewTab, LucideIcon> = {
-  timeline: LayoutList,
+  timeline: Mail,
   table: LayoutList,
   students: Contact,
   analytics: BarChart3,
 }
 
 type FollowFilter = 'all' | 'open' | 'overdue' | 'done'
+
+// ============================================================
+//  通訊錄概念語言（書信 / 往來信箋）
+//  ------------------------------------------------------------
+//  將「溝通記錄」重塑成老師同家長嘅往來書信：發函（主動）/ 來函
+//  （家長來訊），時間線似一疊有日子印戳嘅信件，統計帶似信封背面
+//  嘅摘要。純表現層 —— 全部資料 / handler / export 不變。
+// ============================================================
+
+// 區段小帽（uppercase kicker + icon）—— 統一頁內節奏（對齊 bespoke 參考）
+function SectionLabel({
+  icon: I,
+  children,
+  right,
+}: {
+  icon: LucideIcon
+  children: React.ReactNode
+  right?: React.ReactNode
+}) {
+  return (
+    <div className="flex items-center justify-between gap-2 px-0.5">
+      <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">
+        <I size={13} className="shrink-0" />
+        {children}
+      </p>
+      {right}
+    </div>
+  )
+}
+
+// 信摘格（hairline grid · serif 大數字；要點達標時 hot 高亮）
+function LedgerStat({
+  label,
+  value,
+  unit,
+  hint,
+  icon: I,
+  hot,
+}: {
+  label: string
+  value: number | string
+  unit?: string
+  hint?: string
+  icon: LucideIcon
+  hot?: boolean
+}) {
+  return (
+    <div
+      className={cx(
+        'px-3.5 py-3.5 transition-colors sm:px-4',
+        hot ? 'bg-accent-soft dark:bg-accent/15' : 'bg-white dark:bg-slate-800',
+      )}
+    >
+      <p
+        className={cx(
+          'flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide',
+          hot
+            ? 'text-accent-strong/80 dark:text-accent/80'
+            : 'text-slate-400 dark:text-slate-500',
+        )}
+      >
+        <I size={12} className="shrink-0" />
+        <span className="truncate">{label}</span>
+      </p>
+      <p
+        className={cx(
+          'mt-1 font-serif text-[26px] font-semibold leading-none tabular-nums slashed-zero',
+          hot
+            ? 'text-accent-strong dark:text-accent'
+            : 'text-slate-800 dark:text-slate-100',
+        )}
+      >
+        {value}
+        {unit && (
+          <span className="ml-1 font-sans text-sm font-normal text-slate-400">
+            {unit}
+          </span>
+        )}
+      </p>
+      {hint && (
+        <p className="mt-1 truncate text-[11px] text-slate-400 dark:text-slate-500">
+          {hint}
+        </p>
+      )}
+    </div>
+  )
+}
 
 export default function ParentComms() {
   const comms = useCollection(parentCommsCol)
@@ -288,11 +375,11 @@ export default function ParentComms() {
     if (editingId) {
       parentCommsCol.update(editingId, result.comm)
       writeMeta(editingId, result.meta)
-      toast.success('已更新溝通記錄')
+      toast.success('已更新信件')
     } else {
       const created = parentCommsCol.add(result.comm)
       writeMeta(created.id, result.meta)
-      toast.success('已新增溝通記錄')
+      toast.success('已記低呢封信件')
     }
     setEditorOpen(false)
     setEditing(null)
@@ -320,8 +407,8 @@ export default function ParentComms() {
 
   const removeComm = async (r: CommRow) => {
     const ok = await confirm({
-      title: '刪除溝通記錄？',
-      message: `${nameOf(r)}（${r.comm.date}）嘅記錄將會永久刪除，無法復原。`,
+      title: '刪除呢封信件？',
+      message: `${nameOf(r)}（${r.comm.date}）嘅往來記錄將會永久刪除，無法復原。`,
       confirmText: '刪除',
       tone: 'danger',
     })
@@ -333,14 +420,14 @@ export default function ParentComms() {
       next.delete(r.comm.id)
       return next
     })
-    toast.success('已刪除溝通記錄')
+    toast.success('已刪除信件')
   }
 
   const toggleFollowUp = (r: CommRow) => {
     const next = !r.comm.followUp
     parentCommsCol.update(r.comm.id, { followUp: next })
-    if (next) toast.info('已重新標記為待跟進')
-    else toast.success('已標記為已完成')
+    if (next) toast.info('已重新標記為待回覆')
+    else toast.success('已標記為已回覆')
   }
 
   // ───────── 範本 ─────────
@@ -398,12 +485,12 @@ export default function ParentComms() {
         n += 1
       }
     setSelected(new Set())
-    toast.success(n > 0 ? `已完成 ${n} 項跟進` : '所選記錄冇待跟進')
+    toast.success(n > 0 ? `已標記 ${n} 封為已回覆` : '所選信件冇待回覆')
   }
   const batchReschedule = (targetDate: string | undefined) => {
     const plan = planFollowUpReschedule(selectedRows, targetDate)
     if (plan.changes.length === 0) {
-      toast.info('所選記錄已經係呢個跟進狀態')
+      toast.info('所選信件已經係呢個回覆狀態')
       return
     }
     const updatedAt = new Date().toISOString()
@@ -414,17 +501,17 @@ export default function ParentComms() {
       else metaCol.add({ commId: ch.commId, followUpDate: ch.followUpDate, updatedAt })
     }
     setSelected(new Set())
-    if (targetDate === undefined) toast.success(`已清除 ${plan.changes.length} 項跟進到期日`)
+    if (targetDate === undefined) toast.success(`已清除 ${plan.changes.length} 封嘅回覆到期日`)
     else {
       const parts: string[] = []
-      if (plan.scheduled > 0) parts.push(`排期 ${plan.scheduled} 項`)
-      if (plan.reopened > 0) parts.push(`重開 ${plan.reopened} 項`)
-      toast.success(`跟進到期日 ${shortDateLabel(targetDate)}：${parts.join('、') || '已更新'}`)
+      if (plan.scheduled > 0) parts.push(`排期 ${plan.scheduled} 封`)
+      if (plan.reopened > 0) parts.push(`重開 ${plan.reopened} 封`)
+      toast.success(`回覆到期日 ${shortDateLabel(targetDate)}：${parts.join('、') || '已更新'}`)
     }
   }
   const batchDelete = async () => {
     const ok = await confirm({
-      title: `刪除 ${selectedRows.length} 條記錄？`,
+      title: `刪除 ${selectedRows.length} 封信件？`,
       message: '呢個動作無法復原。',
       confirmText: '刪除',
       tone: 'danger',
@@ -435,13 +522,13 @@ export default function ParentComms() {
       if (r.meta) metaCol.remove(r.meta.id)
     }
     setSelected(new Set())
-    toast.success('已刪除所選記錄')
+    toast.success('已刪除所選信件')
   }
 
   // ───────── CSV 匯出 ─────────
   const exportCsv = (rows: CommRow[]) => {
     if (rows.length === 0) {
-      toast.error('冇可匯出嘅記錄')
+      toast.error('冇可匯出嘅信件')
       return
     }
     const header = [
@@ -473,7 +560,7 @@ export default function ParentComms() {
       meta?.followUpNote ?? '',
     ])
     downloadCsv(`家長溝通記錄_${today}.csv`, [header, ...body])
-    toast.success(`已匯出 ${rows.length} 條記錄`)
+    toast.success(`已匯出 ${rows.length} 封信件`)
   }
 
   const clearFilters = () => {
@@ -492,83 +579,117 @@ export default function ParentComms() {
 
   return (
     <div className="mx-auto max-w-5xl space-y-5 p-4 sm:p-6">
-      {/* 標題 */}
-      <header className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div className="flex items-start gap-3">
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
-            <MessageCircle size={20} />
-          </span>
-          <div>
-            <h1 className="text-xl font-semibold tracking-tight text-slate-900 dark:text-slate-100 sm:text-2xl">
-              家長 / 學生溝通
+      {/* ───────── 通訊錄 masthead：信箋封面感（kicker + serif 標題 + 郵戳裝飾）───────── */}
+      <header className="relative animate-fade-in-up overflow-hidden rounded-3xl border border-slate-200/80 bg-white px-5 py-5 shadow-xs dark:border-slate-700/60 dark:bg-slate-800 dark:shadow-none sm:px-7 sm:py-6">
+        {/* 右上「郵戳」裝飾（純裝飾，唔搶主次） */}
+        <span
+          aria-hidden
+          className="pointer-events-none absolute -right-7 top-4 hidden -rotate-[8deg] select-none flex-col items-center rounded-full border-2 border-dashed border-accent/20 px-5 py-3 font-serif text-[10px] font-semibold uppercase tracking-[0.3em] text-accent/25 dark:border-accent/25 dark:text-accent/25 sm:flex"
+        >
+          <Send size={16} className="mb-0.5" />
+          家校通訊
+        </span>
+        <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-4">
+          <div className="min-w-0">
+            <p className="flex items-center gap-2 text-[11px] font-medium uppercase tracking-[0.3em] text-accent/70">
+              <Mail size={13} />
+              通訊錄 · Correspondence
+            </p>
+            <h1 className="mt-1.5 font-serif text-[28px] font-semibold leading-none tracking-tight text-slate-800 dark:text-slate-100 sm:text-[34px]">
+              家長溝通
             </h1>
-            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-              記錄每次聯絡、追蹤跟進事項，掌握每位學生嘅溝通脈絡。
+            <p className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-slate-500 dark:text-slate-400">
+              <span className="tabular-nums">
+                往來 {overview.total} 封 · 已聯絡 {overview.contactedStudents} 位家長
+              </span>
+              {overview.openFollowUps > 0 && (
+                <>
+                  <span aria-hidden className="text-slate-300 dark:text-slate-600">·</span>
+                  <span className="inline-flex items-center gap-1 font-medium text-accent-strong dark:text-accent">
+                    <Hourglass size={12} /> {overview.openFollowUps} 封待回覆
+                  </span>
+                </>
+              )}
             </p>
           </div>
+          <div className="flex shrink-0 items-center gap-2">
+            <Menu
+              align="end"
+              trigger={
+                <span className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700">
+                  更多
+                  <ChevronDown size={15} />
+                </span>
+              }
+              items={[
+                {
+                  id: 'templates',
+                  label: '信件範本',
+                  icon: FileText,
+                  onSelect: () => setTemplatesOpen(true),
+                },
+                {
+                  id: 'export-filtered',
+                  label: '匯出目前列表（CSV）',
+                  icon: Download,
+                  onSelect: () => exportCsv(filteredRows),
+                },
+                {
+                  id: 'export-all',
+                  label: '匯出全部（CSV）',
+                  icon: Download,
+                  onSelect: () => exportCsv(allRows),
+                },
+              ]}
+            />
+            <Button onClick={openNew} icon={Plus}>
+              寫一封
+            </Button>
+          </div>
         </div>
-        <div className="flex shrink-0 items-center gap-2">
-          <Menu
-            align="end"
-            trigger={
-              <span className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700">
-                更多
-                <ChevronDown size={15} />
-              </span>
-            }
-            items={[
-              {
-                id: 'templates',
-                label: '訊息範本',
-                icon: FileText,
-                onSelect: () => setTemplatesOpen(true),
-              },
-              {
-                id: 'export-filtered',
-                label: '匯出目前列表（CSV）',
-                icon: Download,
-                onSelect: () => exportCsv(filteredRows),
-              },
-              {
-                id: 'export-all',
-                label: '匯出全部（CSV）',
-                icon: Download,
-                onSelect: () => exportCsv(allRows),
-              },
-            ]}
-          />
-          <Button onClick={openNew} icon={Plus}>
-            新增記錄
-          </Button>
+        {/* 信箋雙線（封面分隔感） */}
+        <div className="mt-5 space-y-1" aria-hidden>
+          <span className="block h-px bg-slate-200/90 dark:bg-slate-700/70" />
+          <span className="block h-px bg-slate-200/60 dark:bg-slate-700/40" />
         </div>
       </header>
 
-      {/* 統計卡 */}
-      <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <StatCard label="總記錄" value={overview.total} unit="條" icon={MessageSquare} />
-        <StatCard
-          label="本月溝通"
+      {/* ───────── 通訊摘要：hairline grid · serif 大數字 ───────── */}
+      <section className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl bg-slate-200/70 ring-1 ring-slate-200/80 dark:bg-slate-700/50 dark:ring-slate-700/60 lg:grid-cols-4">
+        <LedgerStat
+          label="往來總數"
+          value={overview.total}
+          unit="封"
+          icon={Mail}
+          hint="累積溝通信件"
+        />
+        <LedgerStat
+          label="本月往來"
           value={overview.thisMonth}
-          unit="條"
+          unit="封"
           icon={TrendingUp}
-          trend={{
-            value: `上月 ${overview.lastMonth}`,
-            dir: monthTrendUp ? 'up' : overview.thisMonth < overview.lastMonth ? 'down' : 'flat',
-          }}
+          hint={
+            monthTrendUp
+              ? `較上月 ${overview.lastMonth} 封持平／上升`
+              : `上月 ${overview.lastMonth} 封`
+          }
         />
-        <StatCard
-          label="待跟進"
+        <LedgerStat
+          label="待回覆"
           value={overview.openFollowUps}
-          unit="項"
+          unit="封"
           icon={Hourglass}
-          highlight={overview.openFollowUps > 0}
-          hint={overview.overdue > 0 ? `${overview.overdue} 項逾期` : '無逾期'}
+          hint={overview.overdue > 0 ? `${overview.overdue} 封逾期未覆` : '暫無逾期'}
+          hot={overview.openFollowUps > 0}
         />
-        <StatCard
-          label="正面比例"
+        <LedgerStat
+          label="正面回響"
           value={overview.positiveRate == null ? '—' : `${overview.positiveRate}%`}
+          unit={overview.positiveRate == null ? undefined : ''}
           icon={CheckCheck}
-          hint={`已聯絡 ${overview.contactedStudents} 名學生`}
+          hint={
+            overview.positiveRate == null ? '仲未標記觀感' : '佔有觀感記錄'
+          }
         />
       </section>
 
@@ -593,7 +714,7 @@ export default function ParentComms() {
                 icon={Search}
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="搜尋內容、學生、聯絡人…"
+                placeholder="搜尋信件內容、學生、聯絡人…"
               />
             </div>
             <button
@@ -677,7 +798,7 @@ export default function ParentComms() {
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
-                    跟進
+                    回覆
                   </span>
                   <SegmentedControl<FollowFilter>
                     size="sm"
@@ -685,9 +806,9 @@ export default function ParentComms() {
                     onChange={setFollowFilter}
                     options={[
                       { id: 'all', label: '全部' },
-                      { id: 'open', label: '待跟進' },
+                      { id: 'open', label: '待回覆' },
                       { id: 'overdue', label: '逾期' },
-                      { id: 'done', label: '已完成' },
+                      { id: 'done', label: '已回覆' },
                     ]}
                   />
                 </div>
@@ -706,7 +827,7 @@ export default function ParentComms() {
           )}
 
           <p className="text-xs text-slate-400 dark:text-slate-500" aria-live="polite">
-            顯示 <span className="tabular-nums">{filteredRows.length}</span> / {allRows.length} 條記錄
+            顯示 <span className="tabular-nums">{filteredRows.length}</span> / {allRows.length} 封信件
           </p>
         </div>
       )}
@@ -717,7 +838,6 @@ export default function ParentComms() {
           rows={filteredRows}
           totalAll={allRows.length}
           nameOf={nameOf}
-          studentMap={studentMap}
           today={today}
           onEdit={openEdit}
           onRemove={removeComm}
@@ -868,7 +988,7 @@ function FollowUpChip({ meta, today }: { meta?: CommMeta; today: string }) {
     <Badge tone={tone} icon={bucket === 'overdue' ? AlertTriangle : Hourglass}>
       {meta?.followUpDate
         ? `${BUCKET_LABEL[bucket]}・${shortDateLabel(meta.followUpDate)}`
-        : '待跟進'}
+        : '待回覆'}
     </Badge>
   )
 }
@@ -909,24 +1029,24 @@ function RescheduleControl({
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
       >
-        排跟進期
+        排回覆期
       </Button>
       {open && (
         <>
           {/* 點外面收起（透明遮罩） */}
           <button
             type="button"
-            aria-label="關閉跟進排期"
+            aria-label="關閉回覆排期"
             className="fixed inset-0 z-20 cursor-default"
             onClick={() => setOpen(false)}
           />
           <div
             role="dialog"
-            aria-label="設定所選記錄嘅跟進到期日"
+            aria-label="設定所選信件嘅回覆到期日"
             className="absolute right-0 z-30 mt-2 w-60 space-y-3 rounded-xl border border-slate-200 bg-white p-3 shadow-lg dark:border-slate-700 dark:bg-slate-800"
           >
             <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
-              將所選記錄設為待跟進，到期日：
+              將所選信件設為待回覆，到期日：
             </p>
             <div className="flex flex-wrap gap-1.5">
               {presets.map((p) => (
@@ -962,7 +1082,7 @@ function RescheduleControl({
               className="flex w-full items-center justify-center gap-1 rounded-md border border-slate-200 py-1.5 text-xs font-medium text-slate-500 transition hover:bg-slate-50 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:border-slate-700 dark:text-slate-400 dark:hover:bg-slate-700/50 dark:hover:text-slate-200"
             >
               <X size={13} />
-              清除到期日（保留待跟進）
+              清除到期日（保留待回覆）
             </button>
           </div>
         </>
@@ -999,15 +1119,15 @@ function FollowUpPanel({
         aria-expanded={!collapsed}
         className="flex w-full items-center justify-between gap-2 px-4 py-3 text-left transition hover:bg-slate-50 dark:hover:bg-slate-800/50"
       >
-        <span className="flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-200">
+        <span className="flex flex-wrap items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-200">
           <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
-            <Bell size={15} />
+            <Inbox size={15} />
           </span>
-          跟進管道
+          待回覆信件
           <span className="tabular-nums text-slate-400">（{total}）</span>
           {buckets.overdue.length > 0 && (
             <Badge tone="rose" icon={AlertTriangle}>
-              {buckets.overdue.length} 逾期
+              {buckets.overdue.length} 逾期未覆
             </Badge>
           )}
         </span>
@@ -1037,9 +1157,9 @@ function FollowUpPanel({
                       key={r.comm.id}
                       className="flex items-center gap-2 rounded-lg border border-slate-100 bg-slate-50/60 px-2.5 py-1.5 dark:border-slate-700/50 dark:bg-slate-800/40"
                     >
-                      <Tooltip label="標記為已完成">
-                        <IconButton label="完成跟進" size="sm" onClick={() => onToggle(r)}>
-                          <Check size={15} />
+                      <Tooltip label="標記為已回覆">
+                        <IconButton label="標記已回覆" size="sm" onClick={() => onToggle(r)}>
+                          <MailCheck size={15} />
                         </IconButton>
                       </Tooltip>
                       <button
@@ -1080,7 +1200,6 @@ function TimelineView({
   rows,
   totalAll,
   nameOf,
-  studentMap,
   today,
   onEdit,
   onRemove,
@@ -1090,7 +1209,6 @@ function TimelineView({
   rows: CommRow[]
   totalAll: number
   nameOf: (r: CommRow) => string
-  studentMap: Map<string, { id: string; name: string }>
   today: string
   onEdit: (r: CommRow) => void
   onRemove: (r: CommRow) => void
@@ -1109,46 +1227,57 @@ function TimelineView({
   }, [rows, nameOf])
 
   if (rows.length === 0) {
-    return (
+    return totalAll === 0 ? (
       <EmptyState
-        icon={MessageCircle}
-        title={totalAll === 0 ? '暫無溝通記錄' : '無符合條件嘅記錄'}
-        hint={
-          totalAll === 0
-            ? '撳「新增記錄」開始記低同家長或學生嘅聯絡。'
-            : '試吓調整搜尋或篩選條件。'
+        icon={Send}
+        title="仲未寄出第一封"
+        hint="撳「寫一封」開始記低同家長或學生嘅每次往來，慢慢儲成一本通訊錄。"
+        action={
+          <Button icon={Plus} onClick={onNew}>
+            寫一封
+          </Button>
         }
-        action={totalAll === 0 ? <Button icon={Plus} onClick={onNew}>新增記錄</Button> : undefined}
+      />
+    ) : (
+      <EmptyState
+        icon={Search}
+        title="揀唔到相符嘅信件"
+        hint="試吓放寬搜尋或篩選條件，再睇返其他往來。"
       />
     )
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       {groups.map(([date, list]) => (
-        <div key={date}>
-          <div className="mb-2.5 flex items-center gap-2">
+        <section key={date}>
+          {/* 日子分隔：serif 日期 + 郵戳點 + 信數（往來書信封面分隔感） */}
+          <div className="mb-3 flex items-baseline gap-3">
             <span
+              aria-hidden
               className={cx(
-                'h-2 w-2 shrink-0 rounded-full',
-                date === today ? 'bg-accent ring-4 ring-accent/15' : 'bg-slate-300 dark:bg-slate-600',
+                'translate-y-[-2px] h-2 w-2 shrink-0 rounded-full',
+                date === today
+                  ? 'bg-accent ring-4 ring-accent/15'
+                  : 'bg-slate-300 dark:bg-slate-600',
               )}
             />
-            <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+            <h3 className="font-serif text-base font-semibold tracking-tight text-slate-700 dark:text-slate-200">
               {longDateLabel(date)}
             </h3>
-            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] tabular-nums text-slate-500 dark:bg-slate-800 dark:text-slate-400">
-              {list.length}
-            </span>
             {date === today && <Badge tone="accent">今日</Badge>}
+            <span className="h-px flex-1 translate-y-[-3px] bg-gradient-to-r from-slate-200 to-transparent dark:from-slate-700/70" />
+            <span className="translate-y-[-3px] font-serif text-xs italic tabular-nums text-slate-400">
+              {list.length} 封
+            </span>
           </div>
+          {/* 信件束：逐封信，方向色封邊 + 火漆封印 */}
           <div className="space-y-2.5">
             {list.map((r) => (
               <TimelineCard
                 key={r.comm.id}
                 row={r}
                 name={nameOf(r)}
-                hasStudent={!!(r.comm.studentId && studentMap.get(r.comm.studentId))}
                 today={today}
                 onEdit={() => onEdit(r)}
                 onRemove={() => onRemove(r)}
@@ -1156,7 +1285,7 @@ function TimelineView({
               />
             ))}
           </div>
-        </div>
+        </section>
       ))}
     </div>
   )
@@ -1165,7 +1294,6 @@ function TimelineView({
 function TimelineCard({
   row,
   name,
-  hasStudent,
   today,
   onEdit,
   onRemove,
@@ -1173,7 +1301,6 @@ function TimelineCard({
 }: {
   row: CommRow
   name: string
-  hasStudent: boolean
   today: string
   onEdit: () => void
   onRemove: () => void
@@ -1181,67 +1308,98 @@ function TimelineCard({
 }) {
   const { comm, meta } = row
   const ChannelIco = CHANNEL_ICON[comm.channel] ?? MessageSquare
+  const incoming = meta?.direction === 'incoming'
   return (
-    <Card hover className="p-4">
-      <div className="flex items-start gap-3">
+    <Card
+      hover
+      className="group/letter overflow-hidden p-0 transition duration-200 hover:border-slate-300 hover:shadow-md dark:hover:border-slate-600"
+    >
+      <div className="flex items-stretch">
+        {/* 方向色封邊 —— 一眼分到發函（teal）/ 來函（blue） */}
         <span
-          className={cx(
-            'flex h-9 w-9 shrink-0 items-center justify-center rounded-lg',
-            meta?.direction === 'incoming'
-              ? 'bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-300'
-              : 'bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent',
-          )}
-        >
-          <ChannelIco size={17} />
-        </span>
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-1.5">
-            <DirectionIcon meta={meta} />
-            <span className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-              {hasStudent ? name : <span className="text-slate-700 dark:text-slate-200">{name}</span>}
+          aria-hidden
+          className={cx('w-1 shrink-0', incoming ? 'bg-blue-400 dark:bg-blue-500' : 'bg-accent')}
+        />
+        <div className="min-w-0 flex-1 p-4">
+          <div className="flex items-start gap-3">
+            {/* 火漆封印：聯絡方式做封口 */}
+            <span
+              className={cx(
+                'flex h-9 w-9 shrink-0 items-center justify-center rounded-full ring-1 ring-inset',
+                incoming
+                  ? 'bg-blue-50 text-blue-600 ring-blue-200/70 dark:bg-blue-500/10 dark:text-blue-300 dark:ring-blue-500/25'
+                  : 'bg-accent-soft text-accent-strong ring-accent/20 dark:bg-accent/15 dark:text-accent dark:ring-accent/25',
+              )}
+            >
+              <ChannelIco size={16} />
             </span>
-            {meta?.contactName && (
-              <span className="text-xs text-slate-400 dark:text-slate-500">· {meta.contactName}</span>
-            )}
-            <Badge tone="slate" icon={ChannelIco}>
-              {comm.channel}
-            </Badge>
-            <MetaBadges meta={meta} />
+            <div className="min-w-0 flex-1">
+              {/* 發函 / 來函 信頭 */}
+              <span
+                className={cx(
+                  'inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-[0.15em]',
+                  incoming ? 'text-blue-500 dark:text-blue-400' : 'text-accent',
+                )}
+              >
+                {incoming ? <ArrowDownLeft size={11} /> : <Send size={11} />}
+                {incoming ? '來函' : '發函'}
+                <span className="font-sans font-normal normal-case tracking-normal text-slate-400 dark:text-slate-500">
+                  · {comm.channel}
+                </span>
+              </span>
+              <div className="mt-0.5 flex flex-wrap items-center gap-x-1.5 gap-y-1">
+                <span className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                  {name}
+                </span>
+                {meta?.contactName && (
+                  <span className="text-xs text-slate-400 dark:text-slate-500">
+                    · {meta.contactName}
+                  </span>
+                )}
+                <MetaBadges meta={meta} />
+              </div>
+            </div>
+            <div className="flex shrink-0 items-center gap-0.5 opacity-100 transition sm:opacity-60 sm:group-hover/letter:opacity-100">
+              <Tooltip label={comm.followUp ? '標記為已回覆' : '重新標記待回覆'}>
+                <IconButton
+                  label="切換回覆狀態"
+                  className="min-h-[36px] min-w-[36px]"
+                  active={comm.followUp}
+                  onClick={onToggle}
+                >
+                  {comm.followUp ? <MailCheck size={15} /> : <Hourglass size={15} />}
+                </IconButton>
+              </Tooltip>
+              <IconButton label="編輯信件" className="min-h-[36px] min-w-[36px]" onClick={onEdit}>
+                <Pencil size={15} />
+              </IconButton>
+              <IconButton
+                label="刪除信件"
+                className="min-h-[36px] min-w-[36px]"
+                tone="danger"
+                onClick={onRemove}
+              >
+                <Trash2 size={15} />
+              </IconButton>
+            </div>
           </div>
-          <p className="mt-1.5 whitespace-pre-wrap text-sm leading-relaxed text-slate-700 dark:text-slate-200">
+          {/* 信文 */}
+          <p className="mt-2 whitespace-pre-wrap pl-12 text-sm leading-relaxed text-slate-700 dark:text-slate-200">
             {comm.summary}
           </p>
           {comm.followUp && (
-            <div className="mt-2.5 flex flex-wrap items-center gap-2 rounded-xl border border-amber-200/60 bg-amber-50/60 px-3 py-2 dark:border-amber-500/20 dark:bg-amber-500/10">
+            <div className="ml-12 mt-2.5 flex flex-wrap items-center gap-2 rounded-xl border border-amber-200/60 bg-amber-50/60 px-3 py-2 dark:border-amber-500/20 dark:bg-amber-500/10">
               <FollowUpChip meta={meta} today={today} />
               {meta?.followUpNote && (
                 <span className="text-xs text-amber-700 dark:text-amber-300">
                   {meta.followUpNote}
                 </span>
               )}
-              {meta?.remindMinutes != null && <Bell size={13} className="text-amber-500" />}
+              {meta?.remindMinutes != null && (
+                <Bell size={13} className="text-amber-500" />
+              )}
             </div>
           )}
-        </div>
-        <div className="flex shrink-0 flex-col items-end gap-1">
-          <div className="flex gap-1.5">
-            <Tooltip label={comm.followUp ? '標記為已完成' : '重新標記待跟進'}>
-              <IconButton
-                label="切換跟進狀態"
-                className="min-h-[36px] min-w-[36px]"
-                active={comm.followUp}
-                onClick={onToggle}
-              >
-                {comm.followUp ? <Check size={15} /> : <Hourglass size={15} />}
-              </IconButton>
-            </Tooltip>
-            <IconButton label="編輯記錄" className="min-h-[36px] min-w-[36px]" onClick={onEdit}>
-              <Pencil size={15} />
-            </IconButton>
-            <IconButton label="刪除記錄" className="min-h-[36px] min-w-[36px]" tone="danger" onClick={onRemove}>
-              <Trash2 size={15} />
-            </IconButton>
-          </div>
         </div>
       </div>
     </Card>
@@ -1289,7 +1447,13 @@ function TableView({
   onEdit: (r: CommRow) => void
 }) {
   if (rows.length === 0) {
-    return <EmptyState icon={LayoutList} title="無記錄" hint="調整篩選或新增記錄。" />
+    return (
+      <EmptyState
+        icon={Search}
+        title="通訊錄暫時係空"
+        hint="調整篩選條件，或者寫一封新信件補上往來。"
+      />
+    )
   }
 
   const SortHead = ({ k, label, align }: { k: SortKey; label: string; align?: 'left' | 'center' }) => {
@@ -1319,14 +1483,24 @@ function TableView({
 
   return (
     <div className="space-y-3">
+      <SectionLabel
+        icon={LayoutList}
+        right={
+          <span className="text-xs tabular-nums text-slate-400 dark:text-slate-500">
+            共 {rows.length} 封
+          </span>
+        }
+      >
+        通訊錄 · Ledger
+      </SectionLabel>
       {selectedCount > 0 && (
         <div className="flex flex-wrap items-center gap-2 rounded-lg border border-accent/30 bg-accent-soft px-3 py-2 text-sm dark:border-accent/40 dark:bg-accent/15">
           <span className="font-medium text-accent-strong dark:text-accent">
-            已選 <span className="tabular-nums">{selectedCount}</span> 項
+            已選 <span className="tabular-nums">{selectedCount}</span> 封
           </span>
           <div className="ml-auto flex flex-wrap gap-2">
-            <Button size="sm" variant="secondary" icon={CheckCheck} onClick={onBatchDone}>
-              完成跟進
+            <Button size="sm" variant="secondary" icon={MailCheck} onClick={onBatchDone}>
+              標記已回覆
             </Button>
             <RescheduleControl today={today} onApply={onBatchReschedule} />
             <Button size="sm" variant="secondary" icon={Download} onClick={onBatchExport}>
@@ -1355,11 +1529,11 @@ function TableView({
               />
             </Th>
             <SortHead k="date" label="日期" />
-            <Th>對象</Th>
+            <Th>往來對象</Th>
             <SortHead k="channel" label="方式" align="center" />
             <SortHead k="category" label="主題" align="center" />
-            <Th>摘要</Th>
-            <SortHead k="followUp" label="跟進" align="center" />
+            <Th>信件摘要</Th>
+            <SortHead k="followUp" label="回覆" align="center" />
             <Th align="center">操作</Th>
           </Tr>
         </Thead>
@@ -1414,13 +1588,13 @@ function TableView({
                   {comm.followUp ? (
                     <FollowUpChip meta={meta} today={today} />
                   ) : (
-                    <Badge tone="green" icon={Check}>
-                      完成
+                    <Badge tone="green" icon={MailCheck}>
+                      已覆
                     </Badge>
                   )}
                 </Td>
                 <Td align="center">
-                  <IconButton label="編輯" size="sm" onClick={() => onEdit(r)}>
+                  <IconButton label="編輯信件" size="sm" onClick={() => onEdit(r)}>
                     <Pencil size={15} />
                   </IconButton>
                 </Td>
@@ -1542,13 +1716,13 @@ function ContactGapPanel({
                               : '—'}
                         </span>
                         {stu && (
-                          <Tooltip label={`起草聯絡 ${name}`}>
+                          <Tooltip label={`寫信畀 ${name}`}>
                             <IconButton
-                              label="起草聯絡"
+                              label="寫信"
                               size="sm"
                               onClick={() => onDraft(classId, g.studentId)}
                             >
-                              <UserPlus size={15} />
+                              <Send size={15} />
                             </IconButton>
                           </Tooltip>
                         )}
@@ -1601,7 +1775,7 @@ function StudentsView({
 
   return (
     <div className="space-y-4">
-      {/* 需聯絡名單（從未聯絡 / 太耐冇聯絡） */}
+      {/* 待聯絡名單（從未聯絡 / 太耐冇聯絡） */}
       <ContactGapPanel
         gaps={gaps}
         studentMap={studentMap}
@@ -1613,12 +1787,23 @@ function StudentsView({
 
       {list.length === 0 ? (
         <EmptyState
-          icon={Users}
-          title="未有指定學生嘅記錄"
-          hint="喺新增記錄時揀埋學生，就會喺呢度睇到每位學生嘅溝通脈絡。"
+          icon={Contact}
+          title="仲未有指定學生嘅信件"
+          hint="寫信時揀埋學生，呢度就會逐位列出佢哋嘅往來脈絡，似一本通訊錄。"
         />
       ) : (
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <>
+          <SectionLabel
+            icon={Contact}
+            right={
+              <span className="text-xs tabular-nums text-slate-400 dark:text-slate-500">
+                {list.length} 位
+              </span>
+            }
+          >
+            聯絡人 · Contacts
+          </SectionLabel>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
       {list.map((s) => {
         const sentimentTotal = s.positive + s.neutral + s.concern
         const clickable = !!s.classId
@@ -1628,36 +1813,41 @@ function StudentsView({
               <button
                 type="button"
                 onClick={() => onFilterStudent(s.classId, s.studentId)}
-                aria-label={`篩選 ${s.name} 嘅溝通記錄`}
+                aria-label={`查看 ${s.name} 嘅往來信件`}
                 className="absolute inset-0 z-10 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-900"
               />
             )}
             <div className="flex items-start justify-between gap-2">
-              <div className="min-w-0">
-                <p className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
-                  {s.name}
-                </p>
-                <p className="text-xs text-slate-400 dark:text-slate-500">
-                  {classMap.get(s.classId)?.name ?? '—'} · {s.count} 次溝通
-                </p>
+              <div className="flex min-w-0 items-center gap-2.5">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-100 font-serif text-sm font-semibold text-slate-500 dark:bg-slate-700/60 dark:text-slate-300">
+                  {s.name.trim().charAt(0) || '?'}
+                </span>
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
+                    {s.name}
+                  </p>
+                  <p className="text-xs text-slate-400 dark:text-slate-500">
+                    {classMap.get(s.classId)?.name ?? '—'} · {s.count} 封往來
+                  </p>
+                </div>
               </div>
               {s.openFollowUps > 0 ? (
                 <Badge
                   tone={s.nextFollowUp && followUpBucket(s.nextFollowUp, today) === 'overdue' ? 'rose' : 'amber'}
                   icon={Hourglass}
                 >
-                  {s.openFollowUps} 待跟進
+                  {s.openFollowUps} 待回覆
                 </Badge>
               ) : (
-                <Badge tone="green" icon={Check}>
-                  無待辦
+                <Badge tone="green" icon={MailCheck}>
+                  已回覆
                 </Badge>
               )}
             </div>
 
             <div className="mt-3 flex items-center justify-between text-xs">
               <span className="text-slate-500 dark:text-slate-400">
-                最近：
+                最近往來：
                 <span className="ml-1 font-medium text-slate-700 dark:text-slate-200">
                   {s.lastDate ? relativeDayLabel(s.lastDate, today) : '—'}
                 </span>
@@ -1665,7 +1855,7 @@ function StudentsView({
               {s.nextFollowUp && (
                 <span className="flex items-center gap-1 text-slate-500 dark:text-slate-400">
                   <Clock size={12} />
-                  跟進 {shortDateLabel(s.nextFollowUp)}
+                  回覆 {shortDateLabel(s.nextFollowUp)}
                 </span>
               )}
             </div>
@@ -1696,7 +1886,8 @@ function StudentsView({
           </Card>
         )
       })}
-        </div>
+          </div>
+        </>
       )}
     </div>
   )
@@ -1733,53 +1924,56 @@ function AnalyticsView({
     return (
       <EmptyState
         icon={BarChart3}
-        title="未有足夠資料"
-        hint="新增溝通記錄後，呢度會自動產生圖表分析。"
+        title="仲未有信件可分析"
+        hint="開始往來通訊之後，呢度會自動整理出每月信量、聯絡方式同觀感分佈。"
       />
     )
   }
 
   return (
-    <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-      <Card className="p-4 lg:col-span-2">
-        <SectionTitle
-          icon={TrendingUp}
-          right={
-            <SegmentedControl<string>
-              size="sm"
-              value={String(months)}
-              onChange={(v) => setMonths(Number(v))}
-              options={[
-                { id: '6', label: '6 個月' },
-                { id: '12', label: '12 個月' },
-              ]}
-            />
-          }
-        >
-          每月溝通量
-        </SectionTitle>
-        <MonthlyTrendChart points={trend} />
-      </Card>
+    <div className="space-y-4">
+      <SectionLabel icon={BarChart3}>信件分析 · Insights</SectionLabel>
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <Card className="p-4 lg:col-span-2">
+          <SectionTitle
+            icon={TrendingUp}
+            right={
+              <SegmentedControl<string>
+                size="sm"
+                value={String(months)}
+                onChange={(v) => setMonths(Number(v))}
+                options={[
+                  { id: '6', label: '6 個月' },
+                  { id: '12', label: '12 個月' },
+                ]}
+              />
+            }
+          >
+            每月往來信量
+          </SectionTitle>
+          <MonthlyTrendChart points={trend} />
+        </Card>
 
-      <Card className="p-4">
-        <SectionTitle icon={MessageSquare}>聯絡方式占比</SectionTitle>
-        <ChannelDonut slices={channels} />
-      </Card>
+        <Card className="p-4">
+          <SectionTitle icon={MessageSquare}>聯絡方式占比</SectionTitle>
+          <ChannelDonut slices={channels} />
+        </Card>
 
-      <Card className="p-4">
-        <SectionTitle icon={FileText}>主題分類分布</SectionTitle>
-        <CategoryBars data={categories} />
-      </Card>
+        <Card className="p-4">
+          <SectionTitle icon={FileText}>信件主題分佈</SectionTitle>
+          <CategoryBars data={categories} />
+        </Card>
 
-      <Card className="p-4">
-        <SectionTitle icon={CheckCheck}>溝通結果觀感</SectionTitle>
-        <OutcomeBars data={outcomes} />
-      </Card>
+        <Card className="p-4">
+          <SectionTitle icon={CheckCheck}>往來觀感</SectionTitle>
+          <OutcomeBars data={outcomes} />
+        </Card>
 
-      <Card className="p-4">
-        <SectionTitle icon={Users}>最常聯絡學生</SectionTitle>
-        <TopStudentsBars data={topStudents} />
-      </Card>
+        <Card className="p-4">
+          <SectionTitle icon={Users}>最常往來學生</SectionTitle>
+          <TopStudentsBars data={topStudents} />
+        </Card>
+      </div>
     </div>
   )
 }

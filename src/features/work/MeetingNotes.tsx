@@ -45,6 +45,11 @@ import {
   UserX,
   type LucideIcon,
 } from 'lucide-react'
+// 速記簿概念：頁面以「會議記事簿（Minute Book）」為母題——
+//   · masthead = 記事簿封面（kicker + serif 簿名 + 記事橫線 + 左側裝訂線）
+//   · 統計帶 = 速記清點（hairline grid · serif 大數字）
+//   · 筆記列 = 議程條目（serif 條目號牌 Item NN + 類型色脊 + ruled feel）
+//   · 議決 / 行動 = 議程編號 + 改卷式勾號
 import { useToast } from '../../context/ToastContext'
 import { useConfirm } from '../../context/ConfirmContext'
 import NoteEditor, {
@@ -119,7 +124,7 @@ function dueBadgeTone(due: string | undefined, done: boolean) {
   return { tone: 'slate' as const, label: '' }
 }
 
-// 筆記卡左側類型色條（對應 MEETING_TYPE_META 嘅 BadgeTone）
+// 筆記卡左側類型色脊（對應 MEETING_TYPE_META 嘅 BadgeTone）
 const TYPE_RAIL: Record<string, string> = {
   accent: 'bg-accent',
   blue: 'bg-blue-500',
@@ -129,56 +134,109 @@ const TYPE_RAIL: Record<string, string> = {
   slate: 'bg-slate-300 dark:bg-slate-600',
 }
 
-// 統計磚分類色（同設計系統一致：淺底 + 深字 + 深色 /15）
-type StatTone = 'accent' | 'rose' | 'amber' | 'slate'
-const STAT_CHIP: Record<StatTone, string> = {
+// 議程條目號牌底色（淺底 + 深字 + 深色 /15，對齊類型 tone）——
+// 用喺筆記卡左側「Item NN」serif 牌，令每行似一條議程項。
+const ITEM_PLATE: Record<string, string> = {
   accent: 'bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent',
-  rose: 'bg-rose-50 text-rose-600 dark:bg-rose-500/15 dark:text-rose-300',
+  blue: 'bg-blue-50 text-blue-600 dark:bg-blue-500/15 dark:text-blue-300',
+  green: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-300',
   amber: 'bg-amber-50 text-amber-600 dark:bg-amber-500/15 dark:text-amber-300',
+  rose: 'bg-rose-50 text-rose-600 dark:bg-rose-500/15 dark:text-rose-300',
   slate: 'bg-slate-100 text-slate-500 dark:bg-slate-700/60 dark:text-slate-300',
 }
 
-// 統計磚：圓角 + 分類色圖示 chip（取代 generic StatCard，視覺更有溫度）
-function MiniStat({
-  label, value, unit, hint, icon: Icon, tone, highlight,
+// ───────── 議程條目號牌（serif Item NN）─────────
+//  記事簿語言：每場會議當一條「議程項」，左側貼一個 serif 編號牌（類型色做底光）。
+function AgendaPlate({
+  index,
+  tone,
+  pinned,
+  className,
+}: {
+  index: number
+  tone: string
+  pinned?: boolean
+  className?: string
+}) {
+  return (
+    <span
+      className={cx(
+        'relative inline-flex shrink-0 flex-col items-center justify-center rounded-xl px-2 py-1.5 leading-none',
+        ITEM_PLATE[tone] ?? ITEM_PLATE.slate,
+        className,
+      )}
+      aria-hidden
+    >
+      <span className="text-[8px] font-semibold uppercase tracking-[0.18em] opacity-60">
+        Item
+      </span>
+      <span className="font-serif text-[17px] font-bold tabular-nums slashed-zero">
+        {String(index).padStart(2, '0')}
+      </span>
+      {pinned && (
+        <Pin
+          size={11}
+          className="absolute -right-1 -top-1 rotate-12 text-accent"
+          fill="currentColor"
+        />
+      )}
+    </span>
+  )
+}
+
+// ───────── 速記清點格（hairline grid · serif 大數字；hot 高亮）─────────
+//  記事簿摘要帶：同 Journal「Almanac」/ QuestionBank「清點帶」一致嘅編輯體節奏。
+function TallyCell({
+  label,
+  value,
+  unit,
+  hint,
+  icon: Icon,
+  hot,
 }: {
   label: string
   value: number | string
   unit?: string
   hint?: string
   icon: LucideIcon
-  tone: StatTone
-  highlight?: boolean
+  hot?: boolean
 }) {
   return (
     <div
       className={cx(
-        'flex flex-col gap-2 rounded-2xl border p-3.5 sm:p-4',
-        highlight
-          ? 'border-accent/30 bg-accent-soft/60 dark:border-accent/40 dark:bg-accent/10'
-          : 'border-slate-200/80 bg-white shadow-xs dark:border-slate-700/60 dark:bg-slate-800 dark:shadow-none',
+        'px-3.5 py-3.5 transition-colors sm:px-4',
+        hot ? 'bg-accent-soft dark:bg-accent/15' : 'bg-white dark:bg-slate-800',
       )}
     >
-      <div className="flex items-center justify-between">
-        <span className="text-xs font-medium text-slate-500 dark:text-slate-400">{label}</span>
-        <span className={cx('flex h-7 w-7 items-center justify-center rounded-lg', STAT_CHIP[tone])}>
-          <Icon size={15} />
-        </span>
-      </div>
-      <div>
-        <p className="flex items-baseline gap-1">
-          <span
-            className={cx(
-              'text-2xl font-bold tabular-nums slashed-zero',
-              highlight ? 'text-accent-strong dark:text-accent' : 'text-slate-800 dark:text-slate-100',
-            )}
-          >
-            {value}
+      <p
+        className={cx(
+          'flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide',
+          hot ? 'text-accent/80' : 'text-slate-400 dark:text-slate-500',
+        )}
+      >
+        <Icon size={12} className="shrink-0" />
+        <span className="truncate">{label}</span>
+      </p>
+      <p
+        className={cx(
+          'mt-1 font-serif text-[26px] font-semibold leading-none tabular-nums slashed-zero',
+          hot
+            ? 'text-accent-strong dark:text-accent'
+            : 'text-slate-800 dark:text-slate-100',
+        )}
+      >
+        {value}
+        {unit && (
+          <span className="ml-1 font-sans text-sm font-normal text-slate-400">
+            {unit}
           </span>
-          {unit && <span className="text-sm font-normal text-slate-400">{unit}</span>}
+        )}
+      </p>
+      {hint && (
+        <p className="mt-1 truncate text-[11px] text-slate-400 dark:text-slate-500">
+          {hint}
         </p>
-        {hint && <p className="mt-0.5 truncate text-[11px] text-slate-400 dark:text-slate-500">{hint}</p>}
-      </div>
+      )}
     </div>
   )
 }
@@ -458,60 +516,93 @@ export default function MeetingNotes() {
   // ============================================================
   return (
     <div className="mx-auto w-full max-w-4xl space-y-5 p-4 sm:p-6">
-      {/* Header */}
-      <header className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div className="flex items-start gap-3">
-          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
-            <NotebookPen size={22} />
-          </span>
-          <div>
-            <h1 className="text-xl font-semibold tracking-tight text-slate-900 dark:text-slate-100 sm:text-2xl">
-              會議 / 行政筆記
+      {/* ───────── 記事簿 masthead：簿面封面感（kicker + serif 簿名 + 記事橫線 + 左裝訂線）───────── */}
+      <header className="relative overflow-hidden rounded-3xl border border-slate-200/80 bg-white pl-7 pr-5 py-5 shadow-xs dark:border-slate-700/60 dark:bg-slate-800 dark:shadow-none sm:pl-9 sm:pr-7 sm:py-6">
+        {/* 左側裝訂線（速記簿螺旋孔感，純裝飾） */}
+        <span
+          aria-hidden
+          className="pointer-events-none absolute inset-y-4 left-3 flex w-1 flex-col items-center justify-between sm:left-4"
+        >
+          {Array.from({ length: 7 }).map((_, i) => (
+            <span
+              key={i}
+              className="h-1 w-1 rounded-full bg-accent/25 dark:bg-accent/30"
+            />
+          ))}
+        </span>
+        <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-4">
+          <div className="min-w-0">
+            <p className="flex items-center gap-2 text-[11px] font-medium uppercase tracking-[0.3em] text-accent/70">
+              <NotebookPen size={13} />
+              Minutes · 會議記事簿
+            </p>
+            <h1 className="mt-1.5 font-serif text-[28px] font-semibold leading-none tracking-tight text-slate-800 dark:text-slate-100 sm:text-[34px]">
+              會議筆記
             </h1>
-            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-              記錄會議、決議同跟進事項，所有後續一目了然。
+            <p className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-slate-500 dark:text-slate-400">
+              <span className="tabular-nums">
+                記事 {notes.length} 則 · 跟進 {stats.total} 項
+              </span>
+              {stats.open > 0 ? (
+                <>
+                  <span aria-hidden className="text-slate-300 dark:text-slate-600">·</span>
+                  <span className="inline-flex items-center gap-1 font-medium text-accent-strong dark:text-accent">
+                    <ListChecks size={12} /> 待辦 {stats.open} 項
+                  </span>
+                </>
+              ) : stats.total > 0 ? (
+                <>
+                  <span aria-hidden className="text-slate-300 dark:text-slate-600">·</span>
+                  <span className="inline-flex items-center gap-1 font-medium text-emerald-600 dark:text-emerald-400">
+                    <CheckSquare size={12} /> 跟進已清
+                  </span>
+                </>
+              ) : null}
             </p>
           </div>
+          <Button onClick={openAdd} icon={Plus} className="shrink-0">
+            新增筆記
+          </Button>
         </div>
-        <Button onClick={openAdd} icon={Plus} className="shrink-0">
-          新增筆記
-        </Button>
+        {/* 記事橫線（封面分隔感：一實一虛，似簿頁開頭嘅留白線） */}
+        <div className="mt-5 space-y-1.5" aria-hidden>
+          <span className="block h-px bg-slate-200/90 dark:bg-slate-700/70" />
+          <span className="block h-px bg-slate-200/50 dark:bg-slate-700/40" />
+        </div>
       </header>
 
-      {/* Stat 概覽 */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <MiniStat
-          label="會議筆記"
+      {/* ───────── 速記清點帶：hairline grid · serif 大數字 ───────── */}
+      <section className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl bg-slate-200/70 ring-1 ring-slate-200/80 dark:bg-slate-700/50 dark:ring-slate-700/60 sm:grid-cols-4">
+        <TallyCell
+          label="會議記事"
           value={notes.length}
           unit="則"
           icon={NotebookPen}
-          tone="slate"
+          hint="累積會議紀錄"
         />
-        <MiniStat
+        <TallyCell
           label="待跟進"
           value={stats.open}
           unit="項"
           icon={ListChecks}
-          tone="accent"
-          highlight={stats.open > 0}
+          hot={stats.open > 0}
           hint={`共 ${stats.total} 項 · 完成 ${stats.completionPct}%`}
         />
-        <MiniStat
+        <TallyCell
           label="逾期"
           value={stats.overdue}
           unit="項"
           icon={AlarmClock}
-          tone={stats.overdue > 0 ? 'rose' : 'slate'}
           hint={stats.overdue > 0 ? '需即時處理' : '一切順利'}
         />
-        <MiniStat
+        <TallyCell
           label="7 日內到期"
           value={stats.dueSoon}
           unit="項"
           icon={CalendarClock}
-          tone="amber"
+          hint={stats.dueSoon > 0 ? '排定時間跟進' : '近期無到期'}
         />
-      </div>
+      </section>
 
       {/* 視圖切換 */}
       <Tabs<View>
@@ -602,16 +693,16 @@ export default function MeetingNotes() {
             <EmptyState
               icon={NotebookPen}
               art={notes.length === 0 ? 'empty-meeting' : undefined}
-              title={notes.length === 0 ? '未有筆記' : '無符合條件嘅筆記'}
+              title={notes.length === 0 ? '記事簿仲係新嘅一頁' : '揭唔到相符嘅記事'}
               hint={
                 notes.length === 0
-                  ? '撳「新增筆記」記低第一場會議，或先套用一個議程範本。'
-                  : '試吓清除搜尋字眼、類型或標籤篩選。'
+                  ? '由第一條議程開始——撳「新增筆記」記低今場會議，或先套用一個議程範本。'
+                  : '試吓清除搜尋字眼、類型或標籤篩選，再揭一次。'
               }
               action={
                 notes.length === 0 ? (
                   <Button onClick={openAdd} icon={Plus}>
-                    新增筆記
+                    記低第一場會議
                   </Button>
                 ) : undefined
               }
@@ -620,11 +711,12 @@ export default function MeetingNotes() {
             <div className="space-y-4">
               {pinned.length > 0 && (
                 <div className="space-y-2.5">
-                  <SectionTitle icon={Pin}>置頂</SectionTitle>
-                  {pinned.map((m) => (
+                  <SectionTitle icon={Pin}>置頂議程</SectionTitle>
+                  {pinned.map((m, i) => (
                     <NoteRow
                       key={m.note.id}
                       m={m}
+                      index={i + 1}
                       onOpen={() => setDetailId(m.note.id)}
                       onEdit={() => openEdit(m.note.id)}
                       onPin={() => togglePin(m.note.id)}
@@ -642,12 +734,13 @@ export default function MeetingNotes() {
               )}
               <div className="space-y-2.5">
                 {pinned.length > 0 && unpinned.length > 0 && (
-                  <SectionTitle icon={NotebookPen}>所有筆記</SectionTitle>
+                  <SectionTitle icon={NotebookPen}>所有記事</SectionTitle>
                 )}
-                {unpinned.map((m) => (
+                {unpinned.map((m, i) => (
                   <NoteRow
                     key={m.note.id}
                     m={m}
+                    index={pinned.length + i + 1}
                     onOpen={() => setDetailId(m.note.id)}
                     onEdit={() => openEdit(m.note.id)}
                     onPin={() => togglePin(m.note.id)}
@@ -700,14 +793,14 @@ export default function MeetingNotes() {
                   icon={ListChecks}
                   title={
                     stats.total === 0
-                      ? '仲未有跟進行動'
+                      ? '行動清單仲係空白'
                       : actionFilter === 'open'
-                        ? '全部跟進都完成咗 🎉'
+                        ? '所有跟進都剔晒，乾淨企理！'
                         : '冇符合條件嘅項目'
                   }
                   hint={
                     stats.total === 0
-                      ? '喺筆記內容用 - [ ] 寫低行動項目，或者喺編輯器逐項加入。'
+                      ? '喺記事內容用 - [ ] 寫低行動項目，或者喺編輯器逐項加入，呢度就會幫你追住。'
                       : undefined
                   }
                 />
@@ -730,7 +823,7 @@ export default function MeetingNotes() {
           ) : ownerGroups.length === 0 ? (
             <EmptyState
               icon={UserRound}
-              title="人人都清咗待辦 🎉"
+              title="人人都清咗待辦，good job！"
               hint="所有行動都跟進完成，或者仲未分派任何跟進事項。"
             />
           ) : (
@@ -760,7 +853,7 @@ export default function MeetingNotes() {
           {notes.length === 0 ? (
             <EmptyState
               icon={PieChart}
-              title="統計仲係空白一片"
+              title="統計頁仲未開簿"
               hint="記低幾場會議之後，呢度會慢慢長出趨勢同分布圖表。"
             />
           ) : (
@@ -843,6 +936,7 @@ export default function MeetingNotes() {
 // ============================================================
 function NoteRow({
   m,
+  index,
   onOpen,
   onEdit,
   onPin,
@@ -854,6 +948,7 @@ function NoteRow({
   activeTag,
 }: {
   m: MergedNote
+  index: number
   onOpen: () => void
   onEdit: () => void
   onPin: () => void
@@ -872,13 +967,20 @@ function NoteRow({
   ).length
   // 內容摘要（去走 markdown 符號，取頭 2 行非空）
   const preview = useMemoPreview(note.content)
-  // 左側類型色條（柔和呼應會議類型 tone）
+  // 左側類型色脊（柔和呼應會議類型 tone）
   const railCls = TYPE_RAIL[tm.tone] ?? TYPE_RAIL.slate
 
   return (
-    <Card hover className="relative overflow-hidden p-4 sm:p-5">
+    <Card hover className="group/note relative overflow-hidden p-4 sm:p-5">
       <span aria-hidden="true" className={cx('absolute inset-y-0 left-0 w-1', railCls)} />
-      <div className="flex items-start gap-3">
+      <div className="flex items-start gap-3 sm:gap-3.5">
+        {/* 議程條目號牌（serif Item NN，類型色底光） */}
+        <AgendaPlate
+          index={index}
+          tone={tm.tone}
+          pinned={meta.pinned}
+          className="mt-0.5"
+        />
         <div
           className="min-w-0 flex-1 cursor-pointer rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
           role="button"
@@ -895,9 +997,6 @@ function NoteRow({
           }}
         >
           <div className="flex flex-wrap items-center gap-2">
-            {meta.pinned && (
-              <Pin size={13} className="shrink-0 text-accent" fill="currentColor" />
-            )}
             <h3 className="text-base font-semibold text-slate-800 dark:text-slate-100">
               {note.title}
             </h3>
@@ -1211,10 +1310,14 @@ function NoteDetail({
         </div>
       )}
 
-      {/* 內容（Markdown-ish 渲染） */}
+      {/* 內容（Markdown-ish 渲染）——速記頁：左側朱紅起始線 + 淡格線底 */}
       <div>
-        <SectionTitle icon={FileText}>內容</SectionTitle>
-        <div className="space-y-1 rounded-xl border border-slate-100 bg-slate-50/50 p-3.5 dark:border-slate-700/60 dark:bg-slate-800/30">
+        <SectionTitle icon={FileText}>記事內容</SectionTitle>
+        <div className="relative space-y-1 overflow-hidden rounded-xl border border-slate-100 bg-slate-50/50 py-3.5 pl-5 pr-3.5 dark:border-slate-700/60 dark:bg-slate-800/30">
+          <span
+            aria-hidden
+            className="pointer-events-none absolute inset-y-2 left-2.5 w-px bg-rose-300/50 dark:bg-rose-500/30"
+          />
           {segments.map((s, i) => {
             switch (s.kind) {
               case 'heading':
@@ -1286,7 +1389,7 @@ function NoteDetail({
         </div>
       </div>
 
-      {/* 議決事項 */}
+      {/* 議決事項（議程編號：serif R-NN 決議章） */}
       {hasStructuredDecisions && (
         <div>
           <SectionTitle icon={Gavel}>議決事項（{meta.decisions.length}）</SectionTitle>
@@ -1294,12 +1397,12 @@ function NoteDetail({
             {meta.decisions.map((d, i) => (
               <li
                 key={i}
-                className="flex items-start gap-2 rounded-lg bg-accent-soft/50 px-3 py-2 text-sm text-slate-700 dark:bg-accent/10 dark:text-slate-200"
+                className="flex items-start gap-2.5 rounded-lg bg-accent-soft/50 px-3 py-2 text-sm text-slate-700 dark:bg-accent/10 dark:text-slate-200"
               >
-                <span className="shrink-0 font-semibold tabular-nums text-accent-strong dark:text-accent">
-                  {i + 1}.
+                <span className="mt-px shrink-0 font-serif text-[13px] font-bold tabular-nums slashed-zero text-accent-strong dark:text-accent">
+                  R{String(i + 1).padStart(2, '0')}
                 </span>
-                {d}
+                <span className="min-w-0">{d}</span>
               </li>
             ))}
           </ol>

@@ -28,9 +28,11 @@ import {
   todayKey,
 } from './util'
 import {
+  ArrowDownLeft,
   CalendarClock,
   FileText,
   MessageSquareText,
+  Send,
   Smile,
   Sparkles,
   Users,
@@ -230,7 +232,7 @@ export default function CommEditor({
       open={open}
       onClose={onClose}
       size="lg"
-      title={editing ? '編輯溝通記錄' : '新增溝通記錄'}
+      title={editing ? '編輯信件' : '撰寫信件'}
     >
       <form onSubmit={submit} className="space-y-5">
         {/* 對象 */}
@@ -277,21 +279,25 @@ export default function CommEditor({
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Field label="方向">
               <div className="grid grid-cols-2 gap-2">
-                {DIRECTIONS.map((dir) => (
-                  <button
-                    key={dir}
-                    type="button"
-                    onClick={() => set('direction', dir)}
-                    className={cx(
-                      'rounded-lg border px-3 py-2 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
-                      d.direction === dir
-                        ? 'border-accent bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent'
-                        : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700',
-                    )}
-                  >
-                    {DIRECTION_LABEL[dir]}
-                  </button>
-                ))}
+                {DIRECTIONS.map((dir) => {
+                  const DirIco = dir === 'incoming' ? ArrowDownLeft : Send
+                  return (
+                    <button
+                      key={dir}
+                      type="button"
+                      onClick={() => set('direction', dir)}
+                      className={cx(
+                        'inline-flex items-center justify-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
+                        d.direction === dir
+                          ? 'border-accent bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent'
+                          : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700',
+                      )}
+                    >
+                      <DirIco size={14} />
+                      {DIRECTION_LABEL[dir]}
+                    </button>
+                  )
+                })}
               </div>
             </Field>
 
@@ -333,15 +339,15 @@ export default function CommEditor({
           </div>
         </Section>
 
-        {/* 內容 + 範本 */}
+        {/* 信文 + 範本 */}
         <Field
-          label="內容摘要"
+          label="信文內容"
           required
         >
           <div className="mb-1.5 flex items-center justify-between">
             <span className="flex items-center gap-1.5 text-xs text-slate-400 dark:text-slate-500">
               <MessageSquareText size={13} />
-              記錄溝通重點
+              記低溝通重點
             </span>
             {templates.length > 0 && (
               <Menu
@@ -349,7 +355,7 @@ export default function CommEditor({
                 trigger={
                   <span className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-2 py-1 text-xs font-medium text-slate-600 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700">
                     <Sparkles size={13} />
-                    套用範本
+                    套用信件範本
                   </span>
                 }
                 items={templates.map((t) => ({
@@ -420,7 +426,7 @@ export default function CommEditor({
               onChange={(e) => set('followUp', e.target.checked)}
             />
             <CalendarClock size={15} className="text-accent" />
-            需要跟進
+            需要回覆跟進
           </label>
           {d.followUp && (
             <div className="mt-3 space-y-3">
@@ -449,7 +455,7 @@ export default function CommEditor({
                   </Select>
                 </Field>
               </div>
-              <Field label="跟進待辦（選填）">
+              <Field label="回覆待辦（選填）">
                 <Input
                   value={d.followUpNote}
                   onChange={(e) => set('followUpNote', e.target.value)}
@@ -481,8 +487,8 @@ export default function CommEditor({
           <Button type="button" variant="secondary" onClick={onClose}>
             取消
           </Button>
-          <Button type="submit" disabled={!canSubmit}>
-            {editing ? '儲存變更' : '新增記錄'}
+          <Button type="submit" disabled={!canSubmit} icon={editing ? undefined : Send}>
+            {editing ? '儲存變更' : '記低信件'}
           </Button>
         </div>
       </form>

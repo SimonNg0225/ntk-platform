@@ -126,13 +126,15 @@ export default function StudentReport({
       }
     >
       <div className="space-y-4">
-        {/* 總覽 */}
+        {/* 總覽 —— 成績單封面：serif 巨型總分 + 等第章 + 名次/百分位/已交清算 */}
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-accent/25 bg-accent-soft/50 p-5 dark:border-accent/30 dark:bg-accent/10">
           <div>
-            <p className="text-xs font-medium text-slate-500 dark:text-slate-400">總成績</p>
+            <p className="text-[11px] font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
+              總成績
+            </p>
             <p className="mt-0.5 flex items-baseline gap-2">
               <span
-                className={`text-4xl font-bold tabular-nums ${
+                className={`font-serif text-[42px] font-semibold leading-none tabular-nums slashed-zero ${
                   band ? TONE_TEXT[band.tone] : 'text-slate-400'
                 }`}
               >
@@ -144,9 +146,9 @@ export default function StudentReport({
           <div className="flex gap-5 text-center">
             <div>
               <p className="text-xs text-slate-500 dark:text-slate-400">班內名次</p>
-              <p className="mt-0.5 text-lg font-semibold tabular-nums text-slate-700 dark:text-slate-200">
+              <p className="mt-0.5 font-serif text-xl font-semibold tabular-nums slashed-zero text-slate-700 dark:text-slate-200">
                 {rank == null ? '—' : `${rank}`}
-                <span className="text-sm font-normal text-slate-400">
+                <span className="font-sans text-sm font-normal text-slate-400">
                   {' '}
                   / {classSize}
                 </span>
@@ -154,13 +156,13 @@ export default function StudentReport({
             </div>
             <div>
               <p className="text-xs text-slate-500 dark:text-slate-400">百分位</p>
-              <p className="mt-0.5 text-lg font-semibold tabular-nums text-slate-700 dark:text-slate-200">
+              <p className="mt-0.5 font-serif text-xl font-semibold tabular-nums slashed-zero text-slate-700 dark:text-slate-200">
                 {percentile == null ? (
                   '—'
                 ) : (
                   <>
                     {percentile}
-                    <span className="text-sm font-normal text-slate-400">
+                    <span className="font-sans text-sm font-normal text-slate-400">
                       {' '}
                       th
                     </span>
@@ -170,9 +172,9 @@ export default function StudentReport({
             </div>
             <div>
               <p className="text-xs text-slate-500 dark:text-slate-400">已交</p>
-              <p className="mt-0.5 text-lg font-semibold tabular-nums text-slate-700 dark:text-slate-200">
+              <p className="mt-0.5 font-serif text-xl font-semibold tabular-nums slashed-zero text-slate-700 dark:text-slate-200">
                 {result.submitted}
-                <span className="text-sm font-normal text-slate-400">
+                <span className="font-sans text-sm font-normal text-slate-400">
                   {' '}
                   / {result.expected}
                 </span>
@@ -218,17 +220,19 @@ export default function StudentReport({
                       <Badge tone="slate">{a.type}</Badge>
                     </td>
                     <td
-                      className={`px-3 py-2 text-right font-semibold tabular-nums ${TONE_TEXT[t]}`}
+                      className={`px-3 py-2 text-right font-serif text-[15px] font-semibold tabular-nums slashed-zero ${TONE_TEXT[t]}`}
                     >
                       {p == null ? (
-                        <span className="text-slate-300">未交</span>
+                        <span className="font-sans text-sm font-normal text-slate-300 dark:text-slate-600">
+                          未交
+                        </span>
                       ) : (
                         `${Math.round(p)}%`
                       )}
                     </td>
-                    <td className="px-3 py-2 text-right tabular-nums">
+                    <td className="px-3 py-2 text-right font-serif tabular-nums slashed-zero">
                       {diff == null ? (
-                        <span className="text-slate-300">—</span>
+                        <span className="font-sans text-slate-300 dark:text-slate-600">—</span>
                       ) : (
                         <span
                           className={

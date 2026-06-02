@@ -261,6 +261,7 @@ export const FEATURES: Feature[] = [
   },
   {
     id: 'work-classes',
+    selfManagedHeader: true,
     modes: ['work'],
     name: '班別管理',
     description: '記錄你任教嘅班別同學生。',
@@ -271,6 +272,7 @@ export const FEATURES: Feature[] = [
   },
   {
     id: 'work-gradebook',
+    selfManagedHeader: true,
     modes: ['work'],
     name: '成績管理',
     description: '記錄評估分數、計平均、睇弱項。',
@@ -281,6 +283,7 @@ export const FEATURES: Feature[] = [
   },
   {
     id: 'work-attendance',
+    selfManagedHeader: true,
     modes: ['work'],
     name: '點名 / 出席',
     description: '每堂記錄學生出席狀況。',
@@ -291,6 +294,7 @@ export const FEATURES: Feature[] = [
   },
   {
     id: 'work-parent-comms',
+    selfManagedHeader: true,
     modes: ['work'],
     name: '家長溝通',
     description: '記錄與家長／學生嘅聯絡同跟進。',
@@ -301,6 +305,7 @@ export const FEATURES: Feature[] = [
   },
   {
     id: 'work-tasks',
+    selfManagedHeader: true,
     modes: ['work'],
     name: '待辦 / 批改',
     description: '備課、批改、行政事項一覽。',
@@ -311,6 +316,7 @@ export const FEATURES: Feature[] = [
   },
   {
     id: 'work-meeting-notes',
+    selfManagedHeader: true,
     modes: ['work'],
     name: '會議筆記',
     description: '會議與行政事項筆記。',

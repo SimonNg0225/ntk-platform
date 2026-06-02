@@ -93,11 +93,11 @@ export default function TemplateManager({
   }
 
   return (
-    <Modal open={open} onClose={onClose} size="lg" title="訊息範本">
+    <Modal open={open} onClose={onClose} size="lg" title="信件範本">
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <p className="text-sm text-slate-500 dark:text-slate-400">
-            常用句式，新增記錄時一鍵套用。
+            常用信件句式，撰寫信件時一鍵套用。
           </p>
           <Button size="sm" icon={Plus} onClick={startNew}>
             新範本
@@ -105,7 +105,7 @@ export default function TemplateManager({
         </div>
 
         {templates.length === 0 ? (
-          <EmptyState icon={FileText} title="未有範本" hint="撳「新範本」加入常用句式。" />
+          <EmptyState icon={FileText} title="未有信件範本" hint="撳「新範本」加入常用句式，慳返寫信時間。" />
         ) : (
           <div className="max-h-[48vh] space-y-2 overflow-y-auto pr-1">
             {templates.map((t) => {
