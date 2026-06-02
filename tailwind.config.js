@@ -33,6 +33,8 @@ export default {
           'sans-serif',
         ],
         mono: ['ui-monospace', '"SF Mono"', 'Menlo', 'monospace'],
+        // Fraunces：文學感 serif，目前只有個人日誌用（masthead / 日期 / 標題 / 大數字）。
+        serif: ['Fraunces', 'Georgia', '"Times New Roman"', 'serif'],
       },
       fontSize: {
         '2xs': ['var(--fs-2xs)', { lineHeight: 'var(--lh-2xs)' }],

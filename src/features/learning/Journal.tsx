@@ -39,7 +39,6 @@ import {
   Menu,
   SectionTitle,
   SegmentedControl,
-  StatCard,
   Tooltip,
   cx,
 } from '../../ui'
@@ -130,6 +129,14 @@ function migrateLegacy() {
 
 type ViewId = 'timeline' | 'heatmap' | 'stats'
 type SortId = 'new' | 'old' | 'words'
+
+// 安全拆日期（避免 new Date('YYYY-MM-DD') 嘅 UTC 偏移）→ 日／星期，timeline 用
+const WD_SHORT = ['日', '一', '二', '三', '四', '五', '六']
+function dayParts(dateKey: string): { day: string; weekday: string } {
+  const [y, m, d] = dateKey.split('-').map(Number)
+  const dow = new Date(y, (m || 1) - 1, d || 1).getDay()
+  return { day: String(d ?? '').padStart(2, '0'), weekday: WD_SHORT[dow] ?? '' }
+}
 
 const SORTS: { id: SortId; label: string }[] = [
   { id: 'new', label: '最新' },
@@ -343,33 +350,27 @@ export default function Journal() {
 
   return (
     <div className="space-y-5">
-      {/* ───────── 標題 ───────── */}
-      <div className="flex items-center gap-3">
-        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
-          <BookText size={20} />
-        </span>
-        <div className="min-w-0 flex-1">
-          <h2 className="truncate text-lg font-semibold tracking-tight text-slate-800 dark:text-slate-100">
-            個人日誌
+      {/* ───────── 日記 dateline：今日做主角（頁面標題「個人日誌」已由外層提供，唔重複） ───────── */}
+      <header className="flex flex-wrap items-end justify-between gap-x-4 gap-y-3">
+        <div className="min-w-0">
+          <p className="text-[11px] font-medium uppercase tracking-[0.3em] text-accent/70">
+            Today
+          </p>
+          <h2 className="mt-1 font-serif text-2xl font-semibold leading-tight tracking-tight text-slate-800 dark:text-slate-100 sm:text-[28px]">
+            {longDate(today)}
           </h2>
-          <p className="text-xs text-slate-500 dark:text-slate-400">
-            記低每日嘅反思同心情 · 共{' '}
-            <span className="tabular-nums">{stats.total}</span> 篇
+          <p className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-slate-500 dark:text-slate-400">
+            <span className="tabular-nums">共 {stats.total} 篇反思</span>
+            {stats.streak > 0 && (
+              <>
+                <span aria-hidden="true" className="text-slate-300 dark:text-slate-600">·</span>
+                <span className="inline-flex items-center gap-1 font-medium text-accent-strong dark:text-accent">
+                  <Flame size={12} /> 連續 {stats.streak} 日
+                </span>
+              </>
+            )}
           </p>
         </div>
-      </div>
-
-      {/* ───────── 頂部：操作列 ───────── */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <SegmentedControl<ViewId>
-          value={view}
-          onChange={setView}
-          options={[
-            { id: 'timeline', label: '時間軸', icon: Rows3 },
-            { id: 'heatmap', label: '熱力圖', icon: CalendarDays },
-            { id: 'stats', label: '統計', icon: BarChart3 },
-          ]}
-        />
         <div className="flex items-center gap-2">
           <Menu
             align="end"
@@ -384,31 +385,60 @@ export default function Journal() {
               { id: 'json', label: '匯出 JSON（備份）', icon: Download, onSelect: exportJson },
             ]}
           />
-          <Button icon={Plus} onClick={() => openNew()}>
+          <Button icon={PenLine} onClick={() => openNew()}>
             寫日誌
           </Button>
         </div>
+      </header>
+
+      {/* ───────── Almanac：細口統計帶（hairline grid · serif 數字） ───────── */}
+      <div className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl bg-slate-200/70 ring-1 ring-slate-200/80 dark:bg-slate-700/50 dark:ring-slate-700/60 sm:grid-cols-4">
+        {[
+          { label: '連續天數', icon: Flame, value: stats.streak, unit: '日', hint: stats.streak > 0 ? '今日記得寫低！' : '由今日開始', hot: stats.streak > 0 },
+          { label: '日誌總數', icon: BookText, value: stats.total, unit: '篇', hint: `活躍 ${stats.activeDays} 日`, hot: false },
+          { label: '累積字數', icon: Sparkles, value: stats.totalWords.toLocaleString(), unit: '', hint: `平均 ${stats.avgWords} 字／篇`, hot: false },
+          { label: '最長連續', icon: History, value: stats.longest, unit: '日', hint: `精選 ${stats.favorites} 篇`, hot: false },
+        ].map((s) => {
+          const I = s.icon
+          return (
+            <div
+              key={s.label}
+              className={cx(
+                'px-4 py-3.5 transition-colors',
+                s.hot
+                  ? 'bg-accent-soft dark:bg-accent/15'
+                  : 'bg-white dark:bg-slate-800',
+              )}
+            >
+              <p className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                <I size={12} className={s.hot ? 'text-accent' : ''} />
+                {s.label}
+              </p>
+              <p
+                className={cx(
+                  'mt-1 font-serif text-[26px] font-semibold leading-none tabular-nums slashed-zero',
+                  s.hot ? 'text-accent-strong dark:text-accent' : 'text-slate-800 dark:text-slate-100',
+                )}
+              >
+                {s.value}
+                {s.unit && <span className="ml-1 font-sans text-sm font-normal text-slate-400">{s.unit}</span>}
+              </p>
+              <p className="mt-1 truncate text-[11px] text-slate-400 dark:text-slate-500">{s.hint}</p>
+            </div>
+          )
+        })}
       </div>
 
-      {/* ───────── 統計卡 ───────── */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <StatCard
-          label="連續天數"
-          value={stats.streak}
-          unit="日"
-          icon={Flame}
-          highlight={stats.streak > 0}
-          hint={stats.streak > 0 ? '今日記得寫低！' : '由今日開始'}
-        />
-        <StatCard label="日誌總數" value={stats.total} unit="篇" icon={BookText} hint={`活躍 ${stats.activeDays} 日`} />
-        <StatCard
-          label="累積字數"
-          value={stats.totalWords.toLocaleString()}
-          icon={Sparkles}
-          hint={`平均 ${stats.avgWords} 字／篇`}
-        />
-        <StatCard label="最長連續" value={stats.longest} unit="日" icon={History} hint={`精選 ${stats.favorites} 篇`} />
-      </div>
+      {/* ───────── 視圖切換 ───────── */}
+      <SegmentedControl<ViewId>
+        value={view}
+        onChange={setView}
+        options={[
+          { id: 'timeline', label: '時間軸', icon: Rows3 },
+          { id: 'heatmap', label: '熱力圖', icon: CalendarDays },
+          { id: 'stats', label: '統計', icon: BarChart3 },
+        ]}
+      />
 
       {/* ───────── 歷年今日 ───────── */}
       {onThisDay.length > 0 && view === 'timeline' && (
@@ -430,8 +460,9 @@ export default function Journal() {
                   </span>
                 )}
                 <div className="min-w-0">
-                  <p className="text-xs font-medium tabular-nums text-accent-strong dark:text-accent">
-                    {yearsAgo} 年前 · {d.date.slice(0, 4)} 年
+                  <p className="flex items-baseline gap-1.5 text-accent-strong dark:text-accent">
+                    <span className="font-serif text-sm font-semibold tabular-nums">{d.date.slice(0, 4)}</span>
+                    <span className="text-[11px] font-medium text-accent/80 dark:text-accent/80">· {yearsAgo} 年前嘅今日</span>
                   </p>
                   <p className="truncate text-sm text-slate-600 dark:text-slate-300">
                     {d.title?.trim() || excerpt(d.content, 60)}
@@ -447,20 +478,20 @@ export default function Journal() {
       {view === 'timeline' && docs.length > 0 && !existingDates.has(today) && (
         <button
           onClick={() => openNew()}
-          className="group flex w-full items-center gap-3 rounded-2xl border border-accent/30 bg-accent-soft/50 p-4 text-left transition duration-200 hover:-translate-y-0.5 hover:border-accent/50 hover:shadow-md dark:border-accent/30 dark:bg-accent/10"
+          className="group flex w-full items-center gap-4 overflow-hidden rounded-2xl border border-accent/25 bg-gradient-to-br from-accent-soft/70 to-accent-soft/20 p-4 text-left transition duration-200 hover:-translate-y-0.5 hover:border-accent/45 hover:shadow-md dark:border-accent/30 dark:from-accent/15 dark:to-accent/5"
         >
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent text-white transition group-hover:scale-105">
-            <PenLine size={18} />
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-accent text-white shadow-sm shadow-accent/30 transition group-hover:scale-105">
+            <PenLine size={19} />
           </span>
           <div className="min-w-0 flex-1">
             <p className="text-sm font-semibold text-accent-strong dark:text-accent">
               今日仲未寫，記低一筆？
             </p>
-            <p className="mt-0.5 truncate text-xs text-slate-500 dark:text-slate-400">
-              {promptOfDay(today)}
+            <p className="mt-0.5 truncate font-serif text-[15px] italic text-slate-600 dark:text-slate-300">
+              「{promptOfDay(today)}」
             </p>
           </div>
-          <ChevronRight size={18} className="shrink-0 text-accent" />
+          <ChevronRight size={18} className="shrink-0 text-accent transition group-hover:translate-x-0.5" />
         </button>
       )}
 
@@ -607,30 +638,54 @@ export default function Journal() {
               }
             />
           ) : (
-            <div className="space-y-5">
+            <div className="space-y-6">
               {grouped.map((g) => (
                 <div key={g.ym}>
-                  <div className="mb-2 flex items-center gap-2">
-                    <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-400">{g.label}</h3>
-                    <span className="h-px flex-1 bg-slate-100 dark:bg-slate-800" />
-                    <span className="text-xs tabular-nums text-slate-400">{g.items.length} 篇</span>
+                  {/* 月份分隔（serif） */}
+                  <div className="mb-3 flex items-baseline gap-3">
+                    <h3 className="font-serif text-lg font-semibold tracking-tight text-slate-700 dark:text-slate-200">
+                      {g.label}
+                    </h3>
+                    <span className="h-px flex-1 bg-gradient-to-r from-slate-200 to-transparent dark:from-slate-700/70" />
+                    <span className="font-serif text-xs italic tabular-nums text-slate-400">{g.items.length} 篇</span>
                   </div>
-                  <div className="space-y-2">
-                    {g.items.map((d) => (
-                      <EntryCard
-                        key={d.id}
-                        doc={d}
-                        isToday={d.date === today}
-                        expanded={expanded.has(d.id)}
-                        activeTag={tagFilter}
-                        onToggleExpand={() => toggleExpand(d.id)}
-                        onEdit={() => openEdit(d)}
-                        onRemove={() => remove(d)}
-                        onToggleFav={() => toggleFav(d)}
-                        onCopy={() => copyOne(d)}
-                        onPickTag={(t) => setTagFilter(t)}
-                      />
-                    ))}
+                  {/* 日記書脊：連續細線 + 逐篇心情色節點 */}
+                  <div className="relative">
+                    <span
+                      aria-hidden="true"
+                      className="absolute bottom-2 left-[6px] top-2 w-px bg-gradient-to-b from-slate-200 via-slate-200 to-transparent dark:from-slate-700/80 dark:via-slate-700/80"
+                    />
+                    <div className="space-y-3">
+                      {g.items.map((d) => {
+                        const nodeColor = moodDef(d.mood)?.hex
+                        return (
+                          <div key={d.id} className="relative flex gap-3 sm:gap-4">
+                            {/* 書脊節點欄 */}
+                            <div className="relative w-3 shrink-0">
+                              <span
+                                aria-hidden="true"
+                                className="absolute left-1/2 top-5 h-3 w-3 -translate-x-1/2 rounded-full ring-2 ring-white transition-transform dark:ring-slate-900"
+                                style={{ background: nodeColor ?? 'var(--accent)' }}
+                              />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <EntryCard
+                                doc={d}
+                                isToday={d.date === today}
+                                expanded={expanded.has(d.id)}
+                                activeTag={tagFilter}
+                                onToggleExpand={() => toggleExpand(d.id)}
+                                onEdit={() => openEdit(d)}
+                                onRemove={() => remove(d)}
+                                onToggleFav={() => toggleFav(d)}
+                                onCopy={() => copyOne(d)}
+                                onPickTag={(t) => setTagFilter(t)}
+                              />
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
                   </div>
                 </div>
               ))}
@@ -685,6 +740,7 @@ function EntryCard({
   const tags = useMemo(() => parseTags(doc.content), [doc.content])
   const words = useMemo(() => countWords(doc.content), [doc.content])
   const md = moodDef(doc.mood)
+  const dp = dayParts(doc.date)
   const isLong = doc.content.length > TRUNCATE
   const shown = isLong && !expanded ? doc.content.slice(0, TRUNCATE).trimEnd() + '…' : doc.content
 
@@ -697,32 +753,21 @@ function EntryCard({
       )}
     >
       <div className="flex items-start justify-between gap-3">
-        <div className="flex min-w-0 items-center gap-2.5">
-          {doc.mood ? (
-            <Tooltip label={md?.label ?? '心情'}>
-              <span
-                role="img"
-                aria-label={md?.label ?? '心情'}
-                className={cx(
-                  'flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-lg leading-none',
-                  md?.chip ?? 'bg-slate-100 dark:bg-slate-800',
-                )}
-              >
-                {doc.mood}
-              </span>
-            </Tooltip>
-          ) : (
-            <span
-              aria-hidden="true"
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500"
-            >
-              <NotebookPen size={17} />
+        <div className="flex min-w-0 items-start gap-3">
+          {/* serif 日期塊（書脊節點已帶心情色，呢度主打「邊一日」） */}
+          <div className="flex w-10 shrink-0 flex-col items-center pt-0.5">
+            <span className="font-serif text-[26px] font-semibold leading-none tabular-nums text-slate-700 dark:text-slate-200">
+              {dp.day}
             </span>
-          )}
+            <span className="mt-1 text-[10px] font-medium uppercase tracking-wider text-slate-400">
+              週{dp.weekday}
+            </span>
+          </div>
+          <span aria-hidden="true" className="mt-0.5 h-10 w-px shrink-0 bg-slate-100 dark:bg-slate-700/60" />
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-1.5">
               {doc.title?.trim() && (
-                <span className="truncate text-sm font-semibold text-slate-800 dark:text-slate-100">
+                <span className="truncate font-serif text-[17px] font-semibold leading-snug text-slate-800 dark:text-slate-100">
                   {doc.title}
                 </span>
               )}
@@ -731,10 +776,21 @@ function EntryCard({
                 <Star size={13} className="fill-amber-400 text-amber-400" />
               )}
             </div>
-            <p className="flex items-center gap-1.5 text-xs text-slate-400">
-              <span className="tabular-nums">{longDate(doc.date)}</span>
-              {doc.weather && <span>{doc.weather}</span>}
-            </p>
+            {(doc.mood || doc.weather) && (
+              <p className="mt-0.5 flex items-center gap-1.5 text-xs text-slate-400">
+                {doc.mood && (
+                  <Tooltip label={md?.label ?? '心情'}>
+                    <span role="img" aria-label={md?.label ?? '心情'} className="text-sm leading-none">
+                      {doc.mood}
+                    </span>
+                  </Tooltip>
+                )}
+                {md?.label && <span>{md.label}</span>}
+                {doc.weather && (
+                  <span aria-hidden="true" className="text-sm leading-none">{doc.weather}</span>
+                )}
+              </p>
+            )}
           </div>
         </div>
         <div className="flex shrink-0 items-center gap-0.5 opacity-100 transition [&_button]:p-2 sm:opacity-0 sm:[&_button]:p-1 sm:group-hover:opacity-100 group-focus-within:opacity-100">
