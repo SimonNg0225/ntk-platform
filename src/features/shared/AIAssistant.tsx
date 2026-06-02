@@ -201,6 +201,9 @@ export default function AIAssistant() {
   const [statsOpen, setStatsOpen] = useState(false)
   const [paletteOpen, setPaletteOpen] = useState(false)
   const [renameTarget, setRenameTarget] = useState<string | null>(null)
+  // Dev-only：跳過 Supabase / 登入 gate 嚟測試 UI（尤其打字 bug）。
+  // import.meta.env.DEV 喺 vite build 時為 false → 生產環境永遠睇唔到，亦觸發唔到。
+  const [devBypass, setDevBypass] = useState(false)
 
   const abortRef = useRef<AbortController | null>(null)
   const scrollRef = useRef<HTMLDivElement | null>(null)
@@ -574,22 +577,46 @@ export default function AIAssistant() {
     [threadsForMode, allMessages],
   )
 
-  // ── 守門 ──
-  if (!isAIConfigured) {
+  // ── Composer handlers：包成 stable refs，畀 React.memo 真正生效 ──
+  // 之前係 inline arrow（onSend={(t)=>send(t)}…），每次父組件 render 都產生新 fn ref
+  // → memo 失效 → Composer 無謂 re-render（雖然唔影響打字，但 IME / iOS 嗰啲 edge case
+  // 可能間接踫上）。而家用 useCallback 鎖住 ref，父組件就算 re-render，Composer props
+  // 全部 same-by-shallow，memo 真正擋到。
+  const onSendStable = useCallback((t: string) => void send(t), [send])
+  const onStopStable = useCallback(() => abortRef.current?.abort(), [])
+  const onOpenTemplateStable = useCallback(() => setTemplateOpen(true), [])
+  const onOpenContextStable = useCallback(() => setContextOpen(true), [])
+
+  // ── 守門（dev 可一鍵 bypass 嚟測試 UI）──
+  if (!isAIConfigured && !devBypass) {
     return (
       <EmptyState
         icon={Bot}
         title="AI 助手未啟用"
         hint="要設定好 Supabase 並部署 gemini Edge Function 先用到。步驟見 docs/SETUP.md。"
+        action={
+          import.meta.env.DEV ? (
+            <Button variant="secondary" size="sm" onClick={() => setDevBypass(true)}>
+              🧪 測試模式（dev only · 跳過 Supabase）
+            </Button>
+          ) : null
+        }
       />
     )
   }
-  if (!user) {
+  if (!user && !devBypass) {
     return (
       <EmptyState
         icon={Lock}
         title="請先登入先可以用 AI 助手"
         hint="喺左下角用 Google 登入後就用得。"
+        action={
+          import.meta.env.DEV ? (
+            <Button variant="secondary" size="sm" onClick={() => setDevBypass(true)}>
+              🧪 測試模式（dev only · 跳過登入）
+            </Button>
+          ) : null
+        }
       />
     )
   }
@@ -898,14 +925,15 @@ export default function AIAssistant() {
         )}
 
         {/* 輸入區（貼底）— 獨立 Composer：自管輸入 state，打字完全唔會 re-render 父組件 */}
+        {/* 註：handlers 走 stable refs（onSendStable / onStopStable …），令 memo 真正生效。 */}
         <Composer
           seed={seed}
           busy={busy}
           contextCount={activeContexts.length}
-          onSend={(t) => void send(t)}
-          onStop={() => abortRef.current?.abort()}
-          onOpenTemplate={() => setTemplateOpen(true)}
-          onOpenContext={() => setContextOpen(true)}
+          onSend={onSendStable}
+          onStop={onStopStable}
+          onOpenTemplate={onOpenTemplateStable}
+          onOpenContext={onOpenContextStable}
         />
       </div>
 
@@ -1053,10 +1081,13 @@ const Composer = memo(function Composer({
 
   return (
     <div className="sticky bottom-0 rounded-3xl border border-slate-200/80 bg-white p-2 shadow-sm transition focus-within:border-accent/50 focus-within:ring-2 focus-within:ring-accent/20 dark:border-slate-700/70 dark:bg-slate-800 dark:shadow-none">
+      {/* ⚠️ iOS Safari：input/textarea font-size < 16px 會喺 focus 自動放大頁面，
+         每次 focus 都引起 viewport zoom → 用戶見到「跳一跳」。所以手機強制 ≥16px。
+         desktop (sm:) 先回到原本嘅 13.5px 設計尺寸。 */}
       <Textarea
         ref={ref}
         rows={2}
-        className="resize-none border-0 bg-transparent px-2.5 py-1.5 text-[13.5px] leading-relaxed shadow-none focus:ring-0 dark:bg-transparent"
+        className="resize-none border-0 bg-transparent px-2.5 py-1.5 text-[16px] leading-relaxed shadow-none focus:ring-0 sm:text-[13.5px] dark:bg-transparent"
         placeholder={`打你想問嘅嘢…（Enter 送出 · Shift+Enter 換行 · ${MOD}/ 範本）`}
         defaultValue={seed.text}
         onInput={syncUi}
