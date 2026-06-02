@@ -80,6 +80,7 @@ import {
 } from './notes/util'
 import { ActivityChart, DonutChart, TagBars, type DonutSlice } from './notes/Charts'
 import Editor from './notes/Editor'
+import { NOTE_TEMPLATES } from './notes/templates'
 
 // ============================================================
 //  學習筆記（Apple Notes / Notion 級）
@@ -200,13 +201,13 @@ export default function NotesWidget() {
   const hasFilter = Boolean(query.trim() || activeTag)
 
   // ───────── 操作 ─────────
-  function createNote() {
+  function createNote(body = '') {
     const now = new Date().toISOString()
     const nb =
       scope.kind === 'notebook' ? scope.id : null
     const created = richNotesCol.add({
       title: '',
-      content: '',
+      content: body,
       notebookId: nb,
       pinned: false,
       favorite: false,
@@ -221,6 +222,7 @@ export default function NotesWidget() {
     setQuery('')
     setSelectedId(created.id)
     setMobilePane('detail')
+    if (body) toast.info('已用範本開新一頁')
   }
 
   function openNote(id: string) {
@@ -420,6 +422,21 @@ export default function NotesWidget() {
               className="hidden"
               onChange={onPickFile}
             />
+            <Menu
+              align="end"
+              label="用範本開新筆記"
+              trigger={
+                <span className="inline-flex h-9 items-center gap-1.5 rounded-full border border-amber-200/80 bg-white/70 px-3 text-sm font-medium text-slate-600 backdrop-blur transition hover:bg-white dark:border-amber-500/20 dark:bg-slate-800/60 dark:text-slate-300 dark:hover:bg-slate-800">
+                  <FileText size={15} />
+                  <span className="hidden sm:inline">範本</span>
+                </span>
+              }
+              items={NOTE_TEMPLATES.map((t) => ({
+                id: t.id,
+                label: t.label,
+                onSelect: () => createNote(t.body),
+              }))}
+            />
             <Button
               size="sm"
               variant={showStats ? 'primary' : 'secondary'}
@@ -432,7 +449,7 @@ export default function NotesWidget() {
             <Button
               size="sm"
               icon={Plus}
-              onClick={createNote}
+              onClick={() => createNote()}
               className="h-9 rounded-full shadow-sm shadow-accent/25"
             >
               寫一頁
@@ -709,7 +726,7 @@ export default function NotesWidget() {
               }
               action={
                 !hasFilter && (scope.kind === 'all' || scope.kind === 'notebook') ? (
-                  <Button size="sm" icon={Pencil} onClick={createNote}>
+                  <Button size="sm" icon={Pencil} onClick={() => createNote()}>
                     落筆寫第一頁
                   </Button>
                 ) : undefined
@@ -794,7 +811,7 @@ export default function NotesWidget() {
                   揀左邊任何一頁手記翻開，或者開一張全新稿紙。
                 </p>
                 <div className="mt-4">
-                  <Button size="sm" icon={Pencil} onClick={createNote}>
+                  <Button size="sm" icon={Pencil} onClick={() => createNote()}>
                     寫一頁
                   </Button>
                 </div>

@@ -42,25 +42,7 @@ import {
   toggleTodoLine,
   wordCount,
 } from './util'
-
-const TEMPLATES: { label: string; body: string }[] = [
-  {
-    label: '會議筆記',
-    body: '會議主題 #meeting\n\n日期：\n出席：\n\n討論重點：\n- \n\n待辦：\n- [ ] \n- [ ] ',
-  },
-  {
-    label: '康乃爾筆記',
-    body: '主題 #study\n\n## 重點 / 線索\n- \n\n## 筆記\n\n\n## 總結\n',
-  },
-  {
-    label: '待辦清單',
-    body: '清單 #todo\n\n- [ ] \n- [ ] \n- [ ] ',
-  },
-  {
-    label: 'SWOT',
-    body: 'SWOT 分析 #strategy\n\n優勢 S：\n劣勢 W：\n機會 O：\n威脅 T：',
-  },
-]
+import { NOTE_TEMPLATES } from './templates'
 
 // 在 textarea 游標位置插入文字
 function insertAtCursor(
@@ -312,10 +294,11 @@ export default function Editor({
           套範本
         </span>
         <div className="flex flex-wrap items-center gap-1">
-          {TEMPLATES.map((t) => (
+          {NOTE_TEMPLATES.map((t) => (
             <button
-              key={t.label}
+              key={t.id}
               type="button"
+              title={t.hint}
               onClick={() => applyTemplate(t.body)}
               className="rounded-lg bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-500 transition hover:bg-accent-soft hover:text-accent-strong dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-accent/15 dark:hover:text-accent"
             >
