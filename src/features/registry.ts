@@ -33,6 +33,7 @@ const TodoWidget = lazyFeature(() => import('./work/TodoWidget'))
 const ClassesWidget = lazyFeature(() => import('./work/ClassesWidget'))
 const CurriculumProgress = lazyFeature(() => import('./work/CurriculumProgress'))
 const QuestionBank = lazyFeature(() => import('./work/QuestionBank'))
+const MaterialGen = lazyFeature(() => import('./work/MaterialGen'))
 const ResourceLibrary = lazyFeature(() => import('./work/ResourceLibrary'))
 const Gradebook = lazyFeature(() => import('./work/Gradebook'))
 const LessonPlanner = lazyFeature(() => import('./work/LessonPlanner'))
@@ -253,6 +254,17 @@ export const FEATURES: Feature[] = [
     icon: '🧩',
     group: '教學',
     component: QuestionBank,
+    status: 'ready',
+  },
+  {
+    id: 'work-generate',
+    selfManagedHeader: true,
+    modes: ['work'],
+    name: '教材生成',
+    description: 'AI 生成 MC／短答／個案／長題、教學練習同試卷，直接入題庫。',
+    icon: '🏭',
+    group: '教學',
+    component: MaterialGen,
     status: 'ready',
   },
   {

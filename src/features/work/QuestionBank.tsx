@@ -38,7 +38,7 @@ import { createCollection, uid, useCollection } from '../../lib/store'
 import { useToast } from '../../context/ToastContext'
 import { useConfirm } from '../../context/ConfirmContext'
 import { useAuth } from '../../context/AuthContext'
-import { complete, isAIConfigured, type AIModel } from '../../lib/aiClient'
+import { complete, isAIConfigured } from '../../lib/aiClient'
 import { extractJsonArray } from '../../lib/aiJson'
 import { questionsCol, topicsCol } from '../../data/collections'
 import type { Difficulty, Question, QuestionType } from '../../data/types'
@@ -86,6 +86,12 @@ import {
   type SortKey,
 } from './questionbank/util'
 import { CoverageMatrix, DifficultyBars, TypeDonut } from './questionbank/Charts'
+import {
+  buildPrompt as buildGenPrompt,
+  parseDrafts,
+  type GenDraft,
+  type GenKind,
+} from './materialGen/engine'
 
 // ───────── 已儲存試卷（本檔自管 collection；唔掂 data/collections）─────────
 interface SavedPaper extends Entity {
@@ -2291,13 +2297,15 @@ function DuplicatesModal({
 // ═══════════════════════════════════════════════════════════
 //  AI 出題 Modal（保留原有流程）
 // ═══════════════════════════════════════════════════════════
-type AIType = 'mc' | 'short'
+// AI 出題支援 4 種題型（mc/short/long/case）；引擎喺 materialGen/engine。
+type AIType = GenKind
 const AI_TYPE_OPTIONS: { id: AIType; label: string }[] = [
   { id: 'mc', label: TYPE_LABEL.mc },
   { id: 'short', label: TYPE_LABEL.short },
+  { id: 'long', label: TYPE_LABEL.long },
+  { id: 'case', label: TYPE_LABEL.case },
 ]
 const COUNT_OPTIONS = [3, 5, 8, 10]
-const AI_MODEL: AIModel = 'gemini-2.5-flash'
 
 // 範例提問 chips — 撳一下即填入「補充指示」，令出題流程更親切。
 const AI_PROMPT_EXAMPLES = [
@@ -2307,63 +2315,10 @@ const AI_PROMPT_EXAMPLES = [
   '連埋常見錯誤分析',
 ]
 
-type Draft = {
+// 草稿 = 引擎 GenDraft + 本地 UI 欄位（_key / _selected）。
+type Draft = GenDraft & {
   _key: string
-  stem: string
-  options?: string[]
-  answerIndex?: number
-  answer?: string
-  marks?: number
   _selected: boolean
-}
-
-function toDraft(raw: unknown, type: AIType): Draft | null {
-  if (typeof raw !== 'object' || raw === null) return null
-  const o = raw as Record<string, unknown>
-  const stem = typeof o.stem === 'string' ? o.stem.trim() : ''
-  if (!stem) return null
-
-  const marks = typeof o.marks === 'number' && o.marks > 0 ? o.marks : undefined
-
-  if (type === 'mc') {
-    if (!Array.isArray(o.options)) return null
-    const options = o.options
-      .filter((x): x is string => typeof x === 'string')
-      .map((x) => x.trim())
-      .filter(Boolean)
-    if (options.length < 2) return null
-    const idx = typeof o.answerIndex === 'number' ? o.answerIndex : 0
-    const answerIndex = idx >= 0 && idx < options.length ? idx : 0
-    return { _key: uid(), stem, options, answerIndex, marks, _selected: true }
-  }
-
-  const answer = typeof o.answer === 'string' ? o.answer.trim() : ''
-  if (!answer) return null
-  return { _key: uid(), stem, answer, marks, _selected: true }
-}
-
-function buildPrompt(
-  topicName: string,
-  type: AIType,
-  difficulty: Difficulty,
-  count: number,
-  extra: string,
-): string {
-  const diffWord = DIFF_LABEL[difficulty]
-  const shape =
-    type === 'mc'
-      ? '{ "stem": "題幹", "options": ["選項A", "選項B", "選項C", "選項D"], "answerIndex": 0, "marks": 1 }（answerIndex 由 0 起，指向正確選項；至少 3 個選項）'
-      : '{ "stem": "題幹", "answer": "參考答案", "marks": 3 }'
-  return [
-    `你係香港高中 BAFS（企業、會計與財務概論）科老師。請就課題「${topicName}」出 ${count} 條${TYPE_LABEL[type]}，難度為「${diffWord}」。`,
-    '內容要貼合香港高中 BAFS 課程，用繁體中文。',
-    extra.trim() ? `額外要求：${extra.trim()}` : '',
-    '',
-    `只回一個 JSON 陣列（唔好有任何解釋文字、唔好 markdown），每個元素格式：${shape}`,
-    '陣列以外唔好有任何文字。',
-  ]
-    .filter(Boolean)
-    .join('\n')
 }
 
 function AIGenerateModal({
@@ -2394,18 +2349,19 @@ function AIGenerateModal({
     setBusy(true)
     try {
       const out = await complete({
-        model: AI_MODEL,
         messages: [
           {
             role: 'user',
-            content: buildPrompt(topicName, type, difficulty, count, extra),
+            content: buildGenPrompt(type, topicName, { difficulty, count, extra }),
           },
         ],
       })
       const rows = extractJsonArray<unknown>(out)
-      const parsed = rows
-        .map((r) => toDraft(r, type))
-        .filter((d): d is Draft => d !== null)
+      const parsed: Draft[] = parseDrafts(type, rows).map((d) => ({
+        ...d,
+        _key: uid(),
+        _selected: true,
+      }))
       if (parsed.length === 0) {
         toast.error('AI 出嘅題目格式唔啱，請再試一次。')
         return
@@ -2623,8 +2579,8 @@ function AIGenerateModal({
                     <Textarea
                       value={d.stem}
                       onChange={(e) => editStem(idx, e.target.value)}
-                      rows={2}
-                      className="text-sm"
+                      rows={type === 'long' || type === 'case' ? 5 : 2}
+                      className="whitespace-pre-wrap text-sm"
                     />
                     {type === 'mc' && d.options && (
                       <ul className="space-y-0.5 pl-1 text-sm">
@@ -2647,10 +2603,10 @@ function AIGenerateModal({
                         ))}
                       </ul>
                     )}
-                    {type === 'short' && d.answer && (
-                      <p className="text-sm text-slate-600 dark:text-slate-300">
+                    {type !== 'mc' && d.answer && (
+                      <p className="whitespace-pre-wrap text-sm text-slate-600 dark:text-slate-300">
                         <span className="font-semibold text-slate-700 dark:text-slate-200">
-                          參考答案：
+                          {type === 'short' ? '參考答案：' : '評分準則：'}
                         </span>
                         {d.answer}
                       </p>
