@@ -23,13 +23,14 @@ const CONFIG = {
   USER_ID: 'YOUR_USER_UID', // ← 填你嘅 Supabase 用戶 UID（UUID，唔係用戶名）
 }
 
-// 主題色（同 app 一致）
-const ACCENT = new Color('#2f6cb3')
-const BG_TOP = new Color('#0f172a')
-const BG_BOT = new Color('#1e293b')
-const FG = new Color('#e2e8f0')
-const MUTED = new Color('#94a3b8')
-const CARD = new Color('#243349')
+// 主題色（工作模式 = 青綠 teal；精緻深色 + 通透 accent）
+const ACCENT = new Color('#2dd4bf') // teal-300，醒目（標題點 / 日期 / 上緊標記）
+const ACCENT_DEEP = new Color('#0f766e') // teal-700，「上緊」格底色（襯白字）
+const BG_TOP = new Color('#0c1f24') // 左上：teal 調深色
+const BG_BOT = new Color('#0a0e17') // 右下：近黑海軍藍 → 對角漸層有深度
+const FG = new Color('#f1f5f9')
+const MUTED = new Color('#8aa0b0')
+const CARD = new Color('#16242e') // 柔和卡底
 
 const CYCLE_LABELS = ['A', 'B', 'C', 'D', 'E', 'F']
 const WD = ['日', '一', '二', '三', '四', '五', '六']
@@ -116,19 +117,19 @@ function lessonRow(w, l) {
   const row = w.addStack()
   row.centerAlignContent()
   row.setPadding(5, 8, 5, 8)
-  row.cornerRadius = 8
-  if (l.isNow) row.backgroundColor = ACCENT
+  row.cornerRadius = 9
+  if (l.isNow) row.backgroundColor = ACCENT_DEEP
   else if (!l.isPast) row.backgroundColor = CARD
 
   const time = row.addStack()
   time.layoutVertically()
   const t1 = time.addText(l.start || `第${l.period}節`)
-  t1.font = Font.mediumSystemFont(11)
-  t1.textColor = l.isNow ? Color.white() : MUTED
+  t1.font = Font.semiboldSystemFont(11)
+  t1.textColor = l.isNow ? Color.white() : ACCENT
   if (l.end) {
     const t2 = time.addText(l.end)
     t2.font = Font.systemFont(9)
-    t2.textColor = l.isNow ? new Color('#dbeafe') : MUTED
+    t2.textColor = l.isNow ? new Color('#ccfbf1') : MUTED
   }
   time.size = new Size(42, 0)
 
@@ -157,6 +158,8 @@ function buildWidget(data) {
   const g = new LinearGradient()
   g.colors = [BG_TOP, BG_BOT]
   g.locations = [0, 1]
+  g.startPoint = new Point(0, 0) // 對角漸層（左上 → 右下），有深度
+  g.endPoint = new Point(1, 1)
   w.backgroundGradient = g
   w.setPadding(13, 14, 13, 14)
 

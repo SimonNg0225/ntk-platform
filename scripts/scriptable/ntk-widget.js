@@ -29,12 +29,12 @@ const CONFIG = {
   USER_ID: 'YOUR_USER_UID', // ← 填你嘅 Supabase 用戶 UID
 }
 
-// 主題色（同 app 一致：海軍藍 accent）
-const ACCENT = new Color('#2f6cb3')
-const BG_TOP = new Color('#0f172a')
-const BG_BOT = new Color('#1e293b')
-const FG = new Color('#e2e8f0')
-const MUTED = new Color('#94a3b8')
+// 主題色（個人模式 = 靛藍 indigo；精緻深色 + 通透 accent）
+const ACCENT = new Color('#818cf8') // indigo-400，醒目
+const BG_TOP = new Color('#181734') // 左上：indigo 調深色
+const BG_BOT = new Color('#0a0e17') // 右下：近黑海軍藍 → 對角漸層有深度
+const FG = new Color('#f1f5f9')
+const MUTED = new Color('#9aa0b8')
 
 // ───────── 日期工具（本地時區，對齊 app 嘅 YYYY-MM-DD 語意）─────────
 function dayKey(d) {
@@ -110,6 +110,8 @@ function buildWidget(data) {
   const g = new LinearGradient()
   g.colors = [BG_TOP, BG_BOT]
   g.locations = [0, 1]
+  g.startPoint = new Point(0, 0) // 對角漸層，有深度
+  g.endPoint = new Point(1, 1)
   w.backgroundGradient = g
   w.setPadding(14, 16, 14, 16)
 
