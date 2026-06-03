@@ -1460,7 +1460,8 @@ function MessageBubble({
       {!streaming && (
         <div
           className={cx(
-            'flex items-center gap-0.5 opacity-0 transition group-hover:opacity-100',
+            // 一直可見（觸控裝置冇 hover）：靜止時於桌面淡淡地，hover / 鍵盤聚焦變實
+            'flex items-center gap-0.5 opacity-100 transition focus-within:opacity-100 [@media(hover:hover)]:opacity-50 [@media(hover:hover)]:group-hover:opacity-100',
             isUser ? 'pr-1' : 'pl-[42px]',
           )}
         >
