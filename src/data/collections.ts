@@ -1,4 +1,4 @@
-import { createCollection, collectionRegistry } from '../lib/store'
+import { createCollection, collectionRegistry, type Entity } from '../lib/store'
 import { localDateStr } from '../lib/srs'
 import { BAFS_TOPICS } from './bafs'
 import { NTK_SLOTS, NTK_CYCLE_CALENDAR } from './ntk-seed'
@@ -55,6 +55,15 @@ export const studentsCol = createCollection<Student>('students', [])
 // 工作模式
 export const progressCol = createCollection<ClassProgress>('class_progress', [])
 export const questionsCol = createCollection<Question>('questions', [])
+// 已儲存試卷（題庫組卷工作室 + 教材生成「試卷生成」共用同一 instance，跨組件實時同步）
+export interface SavedPaper extends Entity {
+  title: string
+  className: string
+  durationMin: string
+  questionIds: string[]
+  createdAt: string
+}
+export const papersCol = createCollection<SavedPaper>('questionbank.papers', [])
 export const resourcesCol = createCollection<Resource>('resources', [])
 export const assessmentsCol = createCollection<Assessment>('assessments', [])
 export const scoresCol = createCollection<Score>('scores', [])

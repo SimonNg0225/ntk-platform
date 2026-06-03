@@ -15,12 +15,10 @@ import {
   FileText,
   FolderOpen,
   Layers,
-  Lock,
   Pencil,
   PenLine,
   Plus,
   Printer,
-  RotateCcw,
   Save,
   Scale,
   ScrollText,
@@ -34,15 +32,12 @@ import {
   X,
   type LucideIcon,
 } from 'lucide-react'
-import { createCollection, uid, useCollection } from '../../lib/store'
+import { useCollection } from '../../lib/store'
 import { useToast } from '../../context/ToastContext'
 import { useConfirm } from '../../context/ConfirmContext'
-import { useAuth } from '../../context/AuthContext'
-import { complete, isAIConfigured } from '../../lib/aiClient'
-import { extractJsonArray } from '../../lib/aiJson'
-import { questionsCol, topicsCol } from '../../data/collections'
+import { useNav } from '../../context/NavContext'
+import { questionsCol, topicsCol, papersCol, type SavedPaper } from '../../data/collections'
 import type { Difficulty, Question, QuestionType } from '../../data/types'
-import type { Entity } from '../../lib/store'
 import {
   Badge,
   Button,
@@ -86,22 +81,6 @@ import {
   type SortKey,
 } from './questionbank/util'
 import { CoverageMatrix, DifficultyBars, TypeDonut } from './questionbank/Charts'
-import {
-  buildPrompt as buildGenPrompt,
-  parseDrafts,
-  type GenDraft,
-  type GenKind,
-} from './materialGen/engine'
-
-// ───────── 已儲存試卷（本檔自管 collection；唔掂 data/collections）─────────
-interface SavedPaper extends Entity {
-  title: string
-  className: string
-  durationMin: string
-  questionIds: string[]
-  createdAt: string
-}
-const papersCol = createCollection<SavedPaper>('questionbank.papers', [])
 
 // ───────── 表單狀態 ─────────
 type FormState = {
@@ -304,6 +283,7 @@ function TallyStat({
 export default function QuestionBank() {
   const toast = useToast()
   const confirm = useConfirm()
+  const nav = useNav()
   const questions = useCollection(questionsCol)
   const topics = useCollection(topicsCol)
 
@@ -320,7 +300,6 @@ export default function QuestionBank() {
   // 新增 / 編輯 / AI / 匯入 / 重複
   const [editing, setEditing] = useState<Question | null>(null)
   const [showForm, setShowForm] = useState(false)
-  const [showAI, setShowAI] = useState(false)
   const [showImport, setShowImport] = useState(false)
   const [showDup, setShowDup] = useState(false)
 
@@ -588,7 +567,7 @@ export default function QuestionBank() {
           openAdd={openAdd}
           openEdit={openEdit}
           removeQuestion={removeQuestion}
-          onShowAI={() => setShowAI(true)}
+          onShowAI={() => nav.open('work-generate')}
           onShowImport={() => setShowImport(true)}
           onShowDup={() => setShowDup(true)}
           dupCount={dupCount}
@@ -616,9 +595,6 @@ export default function QuestionBank() {
           topics={topics}
           onClose={() => setShowForm(false)}
         />
-      )}
-      {showAI && (
-        <AIGenerateModal topics={topics} onClose={() => setShowAI(false)} />
       )}
       {showImport && (
         <ImportModal topics={topics} onClose={() => setShowImport(false)} />
@@ -2290,364 +2266,6 @@ function DuplicatesModal({
           </Button>
         </div>
       </div>
-    </Modal>
-  )
-}
-
-// ═══════════════════════════════════════════════════════════
-//  AI 出題 Modal（保留原有流程）
-// ═══════════════════════════════════════════════════════════
-// AI 出題支援 4 種題型（mc/short/long/case）；引擎喺 materialGen/engine。
-type AIType = GenKind
-const AI_TYPE_OPTIONS: { id: AIType; label: string }[] = [
-  { id: 'mc', label: TYPE_LABEL.mc },
-  { id: 'short', label: TYPE_LABEL.short },
-  { id: 'long', label: TYPE_LABEL.long },
-  { id: 'case', label: TYPE_LABEL.case },
-]
-const COUNT_OPTIONS = [3, 5, 8, 10]
-
-// 範例提問 chips — 撳一下即填入「補充指示」，令出題流程更親切。
-const AI_PROMPT_EXAMPLES = [
-  '貼香港中小企情境',
-  '集中考定義同例子',
-  '加入計算題',
-  '連埋常見錯誤分析',
-]
-
-// 草稿 = 引擎 GenDraft + 本地 UI 欄位（_key / _selected）。
-type Draft = GenDraft & {
-  _key: string
-  _selected: boolean
-}
-
-function AIGenerateModal({
-  topics,
-  onClose,
-}: {
-  topics: { id: string; topic: string }[]
-  onClose: () => void
-}) {
-  const toast = useToast()
-  const { user } = useAuth()
-
-  const [topicId, setTopicId] = useState(topics[0]?.id ?? '')
-  const [type, setType] = useState<AIType>('mc')
-  const [difficulty, setDifficulty] = useState<Difficulty>('medium')
-  const [count, setCount] = useState(5)
-  const [extra, setExtra] = useState('')
-
-  const [step, setStep] = useState<'setup' | 'review'>('setup')
-  const [busy, setBusy] = useState(false)
-  const [drafts, setDrafts] = useState<Draft[]>([])
-
-  const topicName = topics.find((t) => t.id === topicId)?.topic ?? ''
-  const selectedCount = drafts.filter((d) => d._selected).length
-
-  const generate = async () => {
-    if (!topicId || busy) return
-    setBusy(true)
-    try {
-      const out = await complete({
-        messages: [
-          {
-            role: 'user',
-            content: buildGenPrompt(type, topicName, { difficulty, count, extra }),
-          },
-        ],
-      })
-      const rows = extractJsonArray<unknown>(out)
-      const parsed: Draft[] = parseDrafts(type, rows).map((d) => ({
-        ...d,
-        _key: uid(),
-        _selected: true,
-      }))
-      if (parsed.length === 0) {
-        toast.error('AI 出嘅題目格式唔啱，請再試一次。')
-        return
-      }
-      setDrafts(parsed)
-      setStep('review')
-    } catch (e) {
-      toast.error((e as Error).message || 'AI 出題失敗，請再試一次。')
-    } finally {
-      setBusy(false)
-    }
-  }
-
-  const toggleDraft = (idx: number) =>
-    setDrafts((prev) =>
-      prev.map((d, i) => (i === idx ? { ...d, _selected: !d._selected } : d)),
-    )
-
-  const editStem = (idx: number, stem: string) =>
-    setDrafts((prev) => prev.map((d, i) => (i === idx ? { ...d, stem } : d)))
-
-  const setAll = (value: boolean) =>
-    setDrafts((prev) => prev.map((d) => ({ ...d, _selected: value })))
-
-  const commit = () => {
-    const chosen = drafts.filter((d) => d._selected && d.stem.trim())
-    if (chosen.length === 0) return
-    for (const d of chosen) {
-      // 同 QuestionFormModal：去空白選項後 remap answerIndex，避免正確答案錯位
-      const mc =
-        type === 'mc'
-          ? compactMcOptions(d.options ?? [], d.answerIndex ?? 0)
-          : null
-      questionsCol.add({
-        topicId,
-        type,
-        difficulty,
-        stem: d.stem.trim(),
-        options: mc ? mc.options : undefined,
-        answerIndex: mc ? mc.answerIndex : undefined,
-        answer: type !== 'mc' ? d.answer?.trim() : undefined,
-        marks: d.marks ?? undefined,
-        source: 'AI 生成',
-        createdAt: new Date().toISOString(),
-      })
-    }
-    toast.success(`已加入 ${chosen.length} 條題目到題庫`)
-    onClose()
-  }
-
-  if (!isAIConfigured || !user) {
-    return (
-      <Modal open onClose={onClose} title="AI 出題">
-        <div className="space-y-4">
-          {!isAIConfigured ? (
-            <EmptyState
-              icon={Bot}
-              title="AI 助手未啟用"
-              hint="要設定好 Supabase 並部署 gemini Edge Function 先用到。步驟見 docs/SETUP.md。"
-            />
-          ) : (
-            <EmptyState
-              icon={Lock}
-              title="請先登入先可以用 AI 出題"
-              hint="喺左下角用 Google 登入後就用得。"
-            />
-          )}
-          <div className="flex justify-end">
-            <Button variant="secondary" onClick={onClose}>
-              關閉
-            </Button>
-          </div>
-        </div>
-      </Modal>
-    )
-  }
-
-  return (
-    <Modal open onClose={onClose} title="AI 出題">
-      {step === 'setup' ? (
-        <div className="space-y-5">
-          <div className="flex items-start gap-3 rounded-2xl border border-accent/20 bg-accent-soft/50 p-3.5 dark:border-accent/25 dark:bg-accent/10">
-            <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-accent text-white">
-              <Sparkles size={16} />
-            </span>
-            <p className="text-xs leading-relaxed text-slate-600 dark:text-slate-300">
-              揀好課題、題型同難度，AI 會幫你草擬一批貼合香港 BAFS 課程嘅題目。生成後可以逐條揀返要邊條先加入題庫。
-            </p>
-          </div>
-
-          <section className="space-y-3 rounded-2xl border border-slate-200/80 bg-slate-50/60 p-4 dark:border-slate-700/60 dark:bg-slate-900/40">
-            <Field label="課題">
-              <Select value={topicId} onChange={(e) => setTopicId(e.target.value)}>
-                {topics.map((t) => (
-                  <option key={t.id} value={t.id}>
-                    {t.topic}
-                  </option>
-                ))}
-              </Select>
-            </Field>
-
-            <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
-              <Field label="題型">
-                <Pills options={AI_TYPE_OPTIONS} active={type} onChange={setType} />
-              </Field>
-              <Field label="條數">
-                <Select
-                  value={String(count)}
-                  onChange={(e) => setCount(Number(e.target.value))}
-                  className="w-28"
-                >
-                  {COUNT_OPTIONS.map((n) => (
-                    <option key={n} value={n}>
-                      {n} 條
-                    </option>
-                  ))}
-                </Select>
-              </Field>
-            </div>
-
-            <Field label="難度">
-              <Pills
-                options={DIFF_ORDER.map((d) => ({ id: d, label: DIFF_LABEL[d] }))}
-                active={difficulty}
-                onChange={setDifficulty}
-              />
-            </Field>
-          </section>
-
-          <Field label="補充指示（可留空）">
-            <Textarea
-              value={extra}
-              onChange={(e) => setExtra(e.target.value)}
-              placeholder="例如：集中考定義同例子、題目要貼香港情境…"
-              rows={2}
-              disabled={busy}
-            />
-          </Field>
-          <div className="-mt-2.5 flex flex-wrap gap-1.5">
-            {AI_PROMPT_EXAMPLES.map((ex) => (
-              <button
-                key={ex}
-                type="button"
-                disabled={busy}
-                onClick={() => setExtra((prev) => (prev.trim() ? `${prev}；${ex}` : ex))}
-                className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-600 transition hover:border-accent/40 hover:bg-accent-soft hover:text-accent-strong disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:border-accent/40 dark:hover:bg-accent/10 dark:hover:text-accent"
-              >
-                <Plus size={12} />
-                {ex}
-              </button>
-            ))}
-          </div>
-
-          {busy && (
-            <div
-              className="space-y-2 rounded-2xl border border-slate-200/80 bg-slate-50/60 p-4 dark:border-slate-700/80 dark:bg-slate-900/40"
-              aria-live="polite"
-            >
-              <p className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
-                <Sparkles size={15} className="animate-pulse text-accent" />
-                AI 諗緊題目，請等一等…
-              </p>
-              <div className="h-2.5 w-full animate-pulse rounded-full bg-slate-200 dark:bg-slate-700" />
-              <div className="h-2.5 w-4/5 animate-pulse rounded-full bg-slate-200 dark:bg-slate-700" />
-              <div className="h-2.5 w-3/5 animate-pulse rounded-full bg-slate-200 dark:bg-slate-700" />
-            </div>
-          )}
-
-          <div className="flex justify-end gap-2 border-t border-slate-100 pt-4 dark:border-slate-700/60">
-            <Button variant="secondary" onClick={onClose}>
-              取消
-            </Button>
-            <Button
-              icon={Sparkles}
-              loading={busy}
-              onClick={generate}
-              disabled={busy || !topicId}
-            >
-              {busy ? '生成中…' : '生成'}
-            </Button>
-          </div>
-        </div>
-      ) : (
-        <div className="space-y-3">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <Badge tone="accent">
-              {topicName} · {TYPE_LABEL[type]} · {DIFF_LABEL[difficulty]} · 共{' '}
-              <span className="nums">{drafts.length}</span> 條
-            </Badge>
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-slate-400 dark:text-slate-500">
-                已選 <span className="nums">{selectedCount}／{drafts.length}</span>
-              </span>
-              <Button variant="ghost" size="sm" onClick={() => setAll(true)}>
-                全選
-              </Button>
-              <Button variant="ghost" size="sm" onClick={() => setAll(false)}>
-                取消全選
-              </Button>
-            </div>
-          </div>
-
-          <ul className="space-y-2">
-            {drafts.map((d, idx) => (
-              <Card key={d._key} className="p-3">
-                <div className="flex items-start gap-3">
-                  <input
-                    type="checkbox"
-                    checked={d._selected}
-                    onChange={() => toggleDraft(idx)}
-                    className="mt-1 h-4 w-4 shrink-0 accent-[color:var(--accent)]"
-                    aria-label="加入題庫"
-                  />
-                  <div className="flex-1 space-y-1.5">
-                    <Textarea
-                      value={d.stem}
-                      onChange={(e) => editStem(idx, e.target.value)}
-                      rows={type === 'long' || type === 'case' ? 5 : 2}
-                      className="whitespace-pre-wrap text-sm"
-                    />
-                    {type === 'mc' && d.options && (
-                      <ul className="space-y-0.5 pl-1 text-sm">
-                        {d.options.map((o, i) => (
-                          <li
-                            key={i}
-                            className={
-                              i === d.answerIndex
-                                ? 'flex items-center gap-1 font-semibold text-emerald-700 dark:text-emerald-400'
-                                : 'text-slate-600 dark:text-slate-300'
-                            }
-                          >
-                            <span>
-                              {String.fromCharCode(65 + i)}. {o}
-                            </span>
-                            {i === d.answerIndex && (
-                              <Check size={14} className="shrink-0" aria-label="正確答案" />
-                            )}
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                    {type !== 'mc' && d.answer && (
-                      <p className="whitespace-pre-wrap text-sm text-slate-600 dark:text-slate-300">
-                        <span className="font-semibold text-slate-700 dark:text-slate-200">
-                          {type === 'short' ? '參考答案：' : '評分準則：'}
-                        </span>
-                        {d.answer}
-                      </p>
-                    )}
-                    <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
-                      <TypeChip type={type} />
-                      <Badge tone={DIFF_TONE[difficulty]} dot>
-                        {DIFF_LABEL[difficulty]}
-                      </Badge>
-                      <Badge tone="accent">{topicName}</Badge>
-                      {d.marks ? (
-                        <span className="inline-flex items-center rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-medium tabular-nums text-slate-500 dark:bg-slate-700/60 dark:text-slate-400">
-                          {d.marks} 分
-                        </span>
-                      ) : null}
-                    </div>
-                  </div>
-                </div>
-              </Card>
-            ))}
-          </ul>
-
-          <div className="flex flex-wrap justify-end gap-2 pt-2">
-            <Button variant="ghost" icon={ArrowLeft} onClick={() => setStep('setup')}>
-              重新設定
-            </Button>
-            <Button
-              variant="secondary"
-              icon={RotateCcw}
-              loading={busy}
-              onClick={generate}
-              disabled={busy}
-            >
-              {busy ? '生成中…' : '再生成'}
-            </Button>
-            <Button onClick={commit} disabled={selectedCount === 0}>
-              加入題庫（<span className="nums">{selectedCount}</span>）
-            </Button>
-          </div>
-        </div>
-      )}
     </Modal>
   )
 }

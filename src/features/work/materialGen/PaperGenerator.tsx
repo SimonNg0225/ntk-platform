@@ -10,12 +10,11 @@ import {
   Sparkles,
   Wand2,
 } from 'lucide-react'
-import { createCollection, useCollection } from '../../../lib/store'
-import type { Entity } from '../../../lib/store'
+import { useCollection } from '../../../lib/store'
 import { useToast } from '../../../context/ToastContext'
 import { useAuth } from '../../../context/AuthContext'
 import { isAIConfigured } from '../../../lib/aiClient'
-import { questionsCol } from '../../../data/collections'
+import { questionsCol, papersCol } from '../../../data/collections'
 import type { Difficulty, Question, QuestionType } from '../../../data/types'
 import {
   Badge,
@@ -60,19 +59,8 @@ import { generate } from './engine'
 //  · mode 色用 --accent（工作模式 = teal），深色 / 375px OK。
 // ============================================================
 
-// ⚠️ shape / storage key 同 QuestionBank.tsx 嘅 SavedPaper 完全一致，
-//    令本 generator 存嘅卷可以喺「組卷工作室」直接載入。QuestionBank
-//    個 papersCol 係 module-private，所以呢度自開一個指住同一 key 嘅
-//    handle（兩邊都持久化落同一 localStorage，reload 後一致）。
-interface SavedPaper extends Entity {
-  title: string
-  className: string
-  durationMin: string
-  questionIds: string[]
-  createdAt: string
-}
-const papersCol = createCollection<SavedPaper>('questionbank.papers', [])
-
+// SavedPaper / papersCol 由 data/collections 共用 export（同題庫組卷工作室
+// 同一 instance）→ 喺度存卷，組卷工作室會實時更新，唔使 reload。
 type TopicLite = { id: string; topic: string }
 
 export interface PaperGeneratorProps {
