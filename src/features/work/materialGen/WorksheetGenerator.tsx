@@ -153,26 +153,17 @@ export function WorksheetGenerator({
     }
     setBusy(true)
     try {
-      const collected: GenDraft[] = []
-      // 各題型分開 generate（prompt shape 唔同），有要求先跑
-      if (split.mc > 0) {
-        const mc = await generate('mc', {
-          topicName,
-          difficulty,
-          count: split.mc,
-          extra: extra.trim(),
-        })
-        collected.push(...mc)
-      }
-      if (split.short > 0) {
-        const sh = await generate('short', {
-          topicName,
-          difficulty,
-          count: split.short,
-          extra: extra.trim(),
-        })
-        collected.push(...sh)
-      }
+      // 各題型 prompt shape 唔同，分開 generate；但兩個請求並行（Promise.all）
+      // → 總延遲 = max(mc, short) 而非相加，慳時間又唔使改共用引擎 / 撈一個混合 prompt。
+      const [mcRes, shRes] = await Promise.all([
+        split.mc > 0
+          ? generate('mc', { topicName, difficulty, count: split.mc, extra: extra.trim() })
+          : Promise.resolve([] as GenDraft[]),
+        split.short > 0
+          ? generate('short', { topicName, difficulty, count: split.short, extra: extra.trim() })
+          : Promise.resolve([] as GenDraft[]),
+      ])
+      const collected: GenDraft[] = [...mcRes, ...shRes]
       if (collected.length === 0) {
         toast.error('AI 出嘅練習格式唔啱，請再試一次。')
         return
