@@ -223,7 +223,7 @@ export function WorksheetGenerator({
   }
 
   // ── 列印（開新視窗；重用題庫列印格式，留白作答區）──
-  const print = () => {
+  const print = (withAnswers: boolean) => {
     if (previewQuestions.length === 0) {
       toast.error('未有題目可列印')
       return
@@ -234,7 +234,7 @@ export function WorksheetGenerator({
       durationMin: '',
       totalMarks: selectedMarks,
     }
-    const html = buildPrintHtml(meta, previewQuestions, () => topicName, false)
+    const html = buildPrintHtml(meta, previewQuestions, () => topicName, withAnswers)
     const ok = openPrintWindow(html)
     if (!ok) toast.error('瀏覽器擋咗彈出視窗，請允許後再試。')
   }
@@ -511,8 +511,11 @@ export function WorksheetGenerator({
             <Button variant="secondary" icon={RotateCcw} loading={busy} onClick={run} disabled={busy}>
               {busy ? '生成中…' : '再生成'}
             </Button>
-            <Button variant="secondary" icon={Printer} onClick={print} disabled={busy || selectedCount === 0}>
-              列印
+            <Button variant="secondary" icon={Printer} onClick={() => print(false)} disabled={busy || selectedCount === 0}>
+              列印（學生）
+            </Button>
+            <Button variant="secondary" icon={Printer} onClick={() => print(true)} disabled={busy || selectedCount === 0}>
+              列印（含答案）
             </Button>
             <Button icon={Save} onClick={commit} disabled={busy || selectedCount === 0}>
               存入題庫（<span className="nums">{selectedCount}</span>）

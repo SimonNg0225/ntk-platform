@@ -312,7 +312,7 @@ export function PaperGenerator({ topics, onClose, onSaved }: PaperGeneratorProps
     onSaved?.({ title: paper.title, count: outcome.questionIds.length })
   }
 
-  const print = () => {
+  const print = (withAnswers: boolean) => {
     if (previewQuestions.length === 0) {
       toast.error('未有題目可列印')
       return
@@ -323,7 +323,7 @@ export function PaperGenerator({ topics, onClose, onSaved }: PaperGeneratorProps
       durationMin: durationMin.trim(),
       totalMarks: previewMarks,
     }
-    const html = buildPrintHtml(meta, previewQuestions, topicName, false)
+    const html = buildPrintHtml(meta, previewQuestions, topicName, withAnswers)
     const ok = openPrintWindow(html)
     if (!ok) toast.error('瀏覽器擋咗彈出視窗，請允許後再試。')
   }
@@ -684,7 +684,7 @@ function PreviewView({
   onBack: () => void
   onRebuild: () => void
   onSave: () => void
-  onPrint: () => void
+  onPrint: (withAnswers: boolean) => void
 }) {
   if (!outcome || questions.length === 0) {
     return (
@@ -796,8 +796,11 @@ function PreviewView({
         >
           {busy ? '組卷中…' : '再組卷'}
         </Button>
-        <Button variant="secondary" icon={Printer} onClick={onPrint} disabled={busy}>
-          列印
+        <Button variant="secondary" icon={Printer} onClick={() => onPrint(false)} disabled={busy}>
+          列印（學生）
+        </Button>
+        <Button variant="secondary" icon={Printer} onClick={() => onPrint(true)} disabled={busy}>
+          列印（含答案）
         </Button>
         <Button icon={Save} onClick={onSave} disabled={busy}>
           儲存試卷
