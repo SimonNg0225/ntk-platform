@@ -32,6 +32,7 @@ export const SHORTCUT_SECTIONS: ShortcutSection[] = [
     title: '全域',
     items: [
       { keys: ['⌘', 'K'], desc: '開／關指令面板（Windows 用 Ctrl + K）' },
+      { keys: ['⌘', 'J'], desc: '開／關快速加入（自然語言 → 待辦／提醒／行事曆）' },
       { keys: ['?'], desc: '彈出呢個快捷鍵速查（Shift + /）' },
       { keys: ['Esc'], desc: '關閉彈窗 / 面板' },
     ],

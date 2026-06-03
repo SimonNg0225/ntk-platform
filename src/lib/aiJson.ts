@@ -75,3 +75,43 @@ export function extractJsonArray<T = unknown>(raw: string): T[] {
   }
   return result
 }
+
+/**
+ * 嘗試由 AI 回應抽取**單一 JSON 物件** `{ … }`（object 版，對應
+ * parseJsonArray 嘅 array 版）。步驟與 array 版對稱：
+ *   1) stripJsonFence → JSON.parse；結果係「非陣列嘅 object」先收。
+ *   2) 後備：抽第一個 '{' 至最後一個 '}' 之間嘅子字串再 parse。
+ * 注意：JSON 陣列同 `null` 喺 JS 都係 typeof 'object'，故特別排除
+ * （Array.isArray / === null），只接受真正嘅 plain object。
+ * 失敗一律回 null，永不 throw —— 由呼叫端決定點出友善提示。
+ */
+export function extractJsonObject<T = unknown>(raw: string): T | null {
+  if (!raw) return null
+
+  const tryParse = (text: string): T | null => {
+    try {
+      const parsed = JSON.parse(text)
+      return parsed !== null && typeof parsed === 'object' && !Array.isArray(parsed)
+        ? (parsed as T)
+        : null
+    } catch {
+      return null
+    }
+  }
+
+  // 1) 去 fence 後直接 parse
+  const cleaned = stripJsonFence(raw)
+  const direct = tryParse(cleaned)
+  if (direct) return direct
+
+  // 2) 後備：抽第一個 '{' 至最後一個 '}' 之間嘅子字串
+  const start = cleaned.indexOf('{')
+  const end = cleaned.lastIndexOf('}')
+  if (start !== -1 && end !== -1 && end > start) {
+    const slice = cleaned.slice(start, end + 1)
+    const sliced = tryParse(slice)
+    if (sliced) return sliced
+  }
+
+  return null
+}

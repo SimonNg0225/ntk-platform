@@ -1,15 +1,17 @@
-import { Menu as MenuIcon, Search } from 'lucide-react'
+import { Menu as MenuIcon, Search, Sparkles } from 'lucide-react'
 import { useMode } from '../context/ModeContext'
 import { IconButton } from '../ui'
 import ModeSwitcher from './ModeSwitcher'
 
-// 手機頂欄（只喺細螢幕顯示）：漢堡選單 + 品牌 + 搜尋 + 緊湊模式切換
+// 手機頂欄（只喺細螢幕顯示）：漢堡選單 + 品牌 + 快速加入 + 搜尋 + 緊湊模式切換
 export default function MobileTopBar({
   onMenu,
   onSearch,
+  onQuickAdd,
 }: {
   onMenu: () => void
   onSearch?: () => void
+  onQuickAdd?: () => void
 }) {
   const { modeDef } = useMode()
 
@@ -32,6 +34,11 @@ export default function MobileTopBar({
       </div>
 
       <div className="ml-auto flex items-center gap-1">
+        {onQuickAdd && (
+          <IconButton label="快速加入" onClick={onQuickAdd}>
+            <Sparkles size={20} strokeWidth={1.75} />
+          </IconButton>
+        )}
         {onSearch && (
           <IconButton label="搜尋" onClick={onSearch}>
             <Search size={20} strokeWidth={1.75} />

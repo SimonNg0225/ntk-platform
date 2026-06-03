@@ -21,6 +21,8 @@ interface Props {
   open: boolean
   onClose: () => void
   onNavigate: (featureId: string | null) => void
+  /** 開「快速加入」modal（自然語言 → 待辦／提醒／行事曆）；唔記入最近 */
+  onQuickAdd?: () => void
 }
 
 // 一個可跳轉項目（功能 / 首頁 / 模式切換）。id 對齊 resolveRecentItems 嘅 featureId。
@@ -33,7 +35,12 @@ interface Item {
   action: () => void
 }
 
-export default function CommandPalette({ open, onClose, onNavigate }: Props) {
+export default function CommandPalette({
+  open,
+  onClose,
+  onNavigate,
+  onQuickAdd,
+}: Props) {
   const { mode, setMode } = useMode()
   const recentFeatures = useCollection(recentFeaturesCol)
   const [query, setQuery] = useState('')
@@ -62,6 +69,18 @@ export default function CommandPalette({ open, onClose, onNavigate }: Props) {
       action: () => onNavigate(null),
     })
 
+    // 快速加入（自然語言 → 待辦／提醒／行事曆）；非導航目的地，唔記入最近
+    if (onQuickAdd) {
+      list.push({
+        id: 'quick-add',
+        label: '快速加入',
+        icon: '✨',
+        hint: '動作',
+        recordable: false,
+        action: () => onQuickAdd(),
+      })
+    }
+
     FEATURES.filter((f) => f.modes.includes(mode)).forEach((f) =>
       list.push({
         id: f.id,
@@ -88,7 +107,7 @@ export default function CommandPalette({ open, onClose, onNavigate }: Props) {
     )
 
     return list
-  }, [mode, onNavigate, setMode])
+  }, [mode, onNavigate, setMode, onQuickAdd])
 
   // 未輸入關鍵字時，喺最頂顯示「最近使用」（按開啟次序解析返目前有效項，
   // 隔走已唔屬目前模式 / 已移除嘅）。有輸入則照舊純搜尋、唔分區。

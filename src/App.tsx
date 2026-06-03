@@ -9,6 +9,8 @@ import Sidebar from './components/Sidebar'
 import MobileTopBar from './components/MobileTopBar'
 import CommandPalette from './components/CommandPalette'
 import ShortcutsModal from './features/shared/shortcuts/ShortcutsModal'
+import QuickAddButton from './features/shared/quickAdd/QuickAddButton'
+import QuickAddModal from './features/shared/quickAdd/QuickAddModal'
 import { OnboardingModal } from './components/OnboardingModal'
 import { useToast } from './context/ToastContext'
 import { seedAllDemo, hasOnboarded, markOnboarded } from './lib/demoData'
@@ -28,6 +30,7 @@ function AppShell() {
   const [activeId, setActiveId] = useState<string | null>(null)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [paletteOpen, setPaletteOpen] = useState(false)
+  const [quickAddOpen, setQuickAddOpen] = useState(false)
   const [shortcutsOpen, setShortcutsOpen] = useState(false)
   const [onboardOpen, setOnboardOpen] = useState(() => !hasOnboarded())
   const toast = useToast()
@@ -49,6 +52,18 @@ function AppShell() {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault()
         setPaletteOpen((v) => !v)
+      }
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [])
+
+  // ⌘J / Ctrl+J 開「快速加入」（自然語言 → 待辦／提醒／行事曆）
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'j') {
+        e.preventDefault()
+        setQuickAddOpen((v) => !v)
       }
     }
     window.addEventListener('keydown', handler)
@@ -109,10 +124,19 @@ function AppShell() {
         )}
 
         {/* 主內容區 */}
-        <main className="flex flex-1 flex-col overflow-hidden">
+        <main className="relative flex flex-1 flex-col overflow-hidden">
           <MobileTopBar
             onMenu={() => setDrawerOpen(true)}
             onSearch={() => setPaletteOpen(true)}
+            onQuickAdd={() => setQuickAddOpen(true)}
+          />
+
+          {/* 桌面右上角固定「快速加入」浮掣（手機改用頂欄 icon）。
+              絕對定位喺 <main> 右上，z-30 浮喺內容之上；位於右邊內距區，
+              唔會撞到內容區左上嘅「← 返回概覽」同標題。 */}
+          <QuickAddButton
+            onClick={() => setQuickAddOpen(true)}
+            className="absolute right-5 top-5 z-30 hidden md:inline-flex lg:right-8"
           />
 
           {/* overflow-x-hidden：杜絕任何過寬子元素令整頁可左右捲（iOS 尤甚）；寬表格各自有 overflow-x-auto 內捲，唔受影響 */}
@@ -180,11 +204,17 @@ function AppShell() {
           open={paletteOpen}
           onClose={() => setPaletteOpen(false)}
           onNavigate={navigate}
+          onQuickAdd={() => setQuickAddOpen(true)}
         />
 
         <ShortcutsModal
           open={shortcutsOpen}
           onClose={() => setShortcutsOpen(false)}
+        />
+
+        <QuickAddModal
+          open={quickAddOpen}
+          onClose={() => setQuickAddOpen(false)}
         />
 
         <OnboardingModal

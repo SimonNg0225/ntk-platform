@@ -1,5 +1,10 @@
 import { describe, it, expect } from 'vitest'
-import { stripJsonFence, parseJsonArray, extractJsonArray } from './aiJson'
+import {
+  stripJsonFence,
+  parseJsonArray,
+  extractJsonArray,
+  extractJsonObject,
+} from './aiJson'
 
 // ============================================================
 //  aiJson 純函式測試
@@ -197,5 +202,106 @@ describe('extractJsonArray — 成功回陣列、失敗 throw', () => {
 
   it('完全唔係 JSON throw', () => {
     expect(() => extractJsonArray('garbage')).toThrow()
+  })
+})
+
+describe('extractJsonObject — 正常路徑', () => {
+  it('純物件', () => {
+    expect(extractJsonObject('{"a":1,"b":"x"}')).toEqual({ a: 1, b: 'x' })
+  })
+
+  it('fence 包住嘅物件', () => {
+    expect(extractJsonObject('```json\n{"a":1}\n```')).toEqual({ a: 1 })
+  })
+
+  it('無語言標籤 fence 包住嘅物件', () => {
+    expect(extractJsonObject('```\n{"a":1}\n```')).toEqual({ a: 1 })
+  })
+
+  it('多行 pretty-print 物件', () => {
+    const raw = '```json\n{\n  "kind": "event",\n  "title": "開會"\n}\n```'
+    expect(extractJsonObject(raw)).toEqual({ kind: 'event', title: '開會' })
+  })
+
+  it('巢狀物件', () => {
+    expect(extractJsonObject('{"a":{"b":2}}')).toEqual({ a: { b: 2 } })
+  })
+
+  it('物件內含陣列欄位（頂層仍係 object，照收）', () => {
+    expect(extractJsonObject('{"items":[1,2,3]}')).toEqual({ items: [1, 2, 3] })
+  })
+
+  it('Unicode 值', () => {
+    expect(extractJsonObject('{"科":"數學"}')).toEqual({ 科: '數學' })
+  })
+
+  it('空物件 {} 回 {}（唔可以當 falsy 漏掉）', () => {
+    expect(extractJsonObject('{}')).toEqual({})
+  })
+})
+
+describe('extractJsonObject — fallback（抽第一個 { 至最後一個 }）', () => {
+  it('前面有解說文字 + fenced 物件', () => {
+    const raw = '當然！結果係：\n```json\n{"kind":"task","title":"影印筆記"}\n```'
+    expect(extractJsonObject(raw)).toEqual({
+      kind: 'task',
+      title: '影印筆記',
+    })
+  })
+
+  it('物件前後皆有解說文字（無 fence）', () => {
+    expect(extractJsonObject('Here:\n{"a":1}\nDone')).toEqual({ a: 1 })
+  })
+
+  it('前解說 + fence + 後解說（結尾 fence 唔喺末，靠 fallback 救）', () => {
+    const raw =
+      'Here is the JSON:\n```json\n{"a":1}\n```\nLet me know if you need more!'
+    expect(extractJsonObject(raw)).toEqual({ a: 1 })
+  })
+
+  it('只有開頭 fence、無結尾 fence（截斷輸出）：剝開頭後仍 parse 到', () => {
+    expect(extractJsonObject('```json\n{"a":1}')).toEqual({ a: 1 })
+  })
+})
+
+describe('extractJsonObject — edge / 回 null', () => {
+  it('空字串回 null', () => {
+    expect(extractJsonObject('')).toBeNull()
+  })
+
+  it('純空白回 null', () => {
+    expect(extractJsonObject('   ')).toBeNull()
+  })
+
+  it('頂層係陣列（非物件）：回 null', () => {
+    expect(extractJsonObject('[1,2,3]')).toBeNull()
+  })
+
+  it('fence 包住嘅陣列：回 null（要 object，唔要 array）', () => {
+    expect(extractJsonObject('```json\n[1,2,3]\n```')).toBeNull()
+  })
+
+  it('頂層係數字：回 null', () => {
+    expect(extractJsonObject('42')).toBeNull()
+  })
+
+  it('頂層係字串字面值：回 null', () => {
+    expect(extractJsonObject('"hello"')).toBeNull()
+  })
+
+  it('JSON null 字面值：回 null（typeof null === object 要特別擋）', () => {
+    expect(extractJsonObject('null')).toBeNull()
+  })
+
+  it('完全唔係 JSON：回 null', () => {
+    expect(extractJsonObject('not json at all')).toBeNull()
+  })
+
+  it('截斷物件（冇收 "}"）：回 null', () => {
+    expect(extractJsonObject('{"a":1')).toBeNull()
+  })
+
+  it('非法 JSON（trailing comma）：回 null', () => {
+    expect(extractJsonObject('{"a":1,}')).toBeNull()
   })
 })
