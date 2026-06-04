@@ -18,14 +18,14 @@
  * orange/indigo 系，方便逐欄分辨。
  */
 export const TAG_COLORS: string[] = [
-  'rgba(245, 158, 11, 0.28)', // amber
-  'rgba(56, 189, 248, 0.28)', // sky
-  'rgba(16, 185, 129, 0.28)', // emerald
-  'rgba(139, 92, 246, 0.28)', // violet
-  'rgba(244, 63, 94, 0.26)', // rose
-  'rgba(20, 184, 166, 0.30)', // teal（工作模式主色系）
-  'rgba(249, 115, 22, 0.28)', // orange
-  'rgba(99, 102, 241, 0.28)', // indigo
+  'rgba(245, 158, 11, 0.5)', // amber
+  'rgba(56, 189, 248, 0.5)', // sky
+  'rgba(16, 185, 129, 0.5)', // emerald
+  'rgba(139, 92, 246, 0.45)', // violet
+  'rgba(244, 63, 94, 0.45)', // rose
+  'rgba(20, 184, 166, 0.5)', // teal（工作模式主色系）
+  'rgba(249, 115, 22, 0.5)', // orange
+  'rgba(99, 102, 241, 0.45)', // indigo
 ]
 
 /**
@@ -130,7 +130,8 @@ function buildHighlightedFragment(
     mark.setAttribute('data-tag', tag)
     mark.setAttribute(
       'style',
-      `background:${color};border-radius:3px;padding:0 1px`,
+      // 加粗 + 細邊框令彩色喺密集黑字／表格上都清楚睇到。
+      `background:${color};border-radius:3px;padding:0 2px;font-weight:600;box-shadow:0 0 0 1px rgba(0,0,0,0.10)`,
     )
     mark.textContent = m[0] // 連大括號原文（例如「{name}」）
     frag.appendChild(mark)
