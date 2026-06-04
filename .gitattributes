@@ -1,0 +1,12 @@
+# 強制 source / 文字檔當 text 處理。
+# 部分 CJK 密度高嘅 .tsx 曾被 git binary heuristic 誤判成 binary（diff 顯示 Bin），
+# 明確標 text 後 diff / merge 正常。
+*.ts    text
+*.tsx   text
+*.js    text
+*.jsx   text
+*.css   text
+*.html  text
+*.json  text
+*.md    text
+*.svg   text
