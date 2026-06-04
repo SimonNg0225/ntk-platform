@@ -41,6 +41,7 @@ const Timetable = lazyFeature(() => import('./work/Timetable'))
 const Attendance = lazyFeature(() => import('./work/Attendance'))
 const ParentComms = lazyFeature(() => import('./work/ParentComms'))
 const MeetingNotes = lazyFeature(() => import('./work/MeetingNotes'))
+const AdminDocs = lazyFeature(() => import('./work/adminDocs/AdminDocs'))
 const BudgetTracker = lazyFeature(() => import('./work/BudgetTracker'))
 const WorkDashboard = lazyFeature(() => import('./work/WorkDashboard'))
 
@@ -342,6 +343,17 @@ export const FEATURES: Feature[] = [
     icon: '🗒️',
     group: '行政',
     component: MeetingNotes,
+    status: 'ready',
+  },
+  {
+    id: 'work-admin-docs',
+    selfManagedHeader: true,
+    modes: ['work'],
+    name: '行政文件',
+    description: '上載 Word 範本，認出 {標籤} 逐欄填寫，原格式生成 .docx 下載去印。',
+    icon: '📄',
+    group: '行政',
+    component: AdminDocs,
     status: 'ready',
   },
   {
