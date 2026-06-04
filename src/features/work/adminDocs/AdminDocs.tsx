@@ -1,9 +1,10 @@
 import { useMemo, useState } from 'react'
-import { Button, Card, EmptyState, IconButton, Modal } from '../../../ui'
+import { Badge, Button, Card, EmptyState, IconButton, Modal } from '../../../ui'
 import { useToast } from '../../../context/ToastContext'
 import { useConfirm } from '../../../context/ConfirmContext'
 import {
   removeTemplate,
+  templateKind,
   useAdminDocTemplates,
   type AdminDocTemplate,
 } from './adminDocStore'
@@ -12,6 +13,8 @@ import FillForm from './FillForm'
 import {
   FileText,
   FileStack,
+  FileType,
+  FileBadge,
   Plus,
   Pencil,
   Trash2,
@@ -25,7 +28,8 @@ import {
 //  · masthead：公文卷宗封面感（kicker + serif 標題 + 左裝訂線 + 分隔線）
 //  · 範本庫：useAdminDocTemplates 出卡，每張「填寫」/「刪除」
 //  · 「＋ 新範本」開 TemplateUpload；空狀態引導
-//  老師上載 Word 範本 → 認 {標籤} → 逐欄填 → 100% 格式生成 .docx 下載去印。
+//  老師上載 Word（{標籤}）或 PDF（填寫欄位）範本 → 逐欄填 →
+//  100% 保留格式生成 .docx / .pdf 下載去印。
 // ============================================================
 
 function fmtDate(iso: string): string {
@@ -91,7 +95,7 @@ export default function AdminDocs() {
               行政文件
             </h1>
             <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-              上載 Word 範本，認出 {'{標籤}'} 逐欄填寫，原格式生成 .docx 下載去印。
+              上載 Word（{'{標籤}'}）或 PDF（填寫欄位）範本，逐欄填寫，原格式生成下載去印。
             </p>
           </div>
           <Button
@@ -114,7 +118,7 @@ export default function AdminDocs() {
         <EmptyState
           icon={FileText}
           title="未有任何範本"
-          hint="上載一份含 {標籤} 的 Word 範本（例如家長通知書、申請表），之後逐欄填寫即可一鍵生成。"
+          hint="上載一份 Word 範本（含 {標籤}）或有填寫欄位的 PDF（例如家長通知書、申請表），之後逐欄填寫即可一鍵生成。"
           action={
             <Button onClick={() => setUploadOpen(true)} icon={Plus}>
               上載第一份範本
@@ -123,7 +127,9 @@ export default function AdminDocs() {
         />
       ) : (
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          {templates.map((t) => (
+          {templates.map((t) => {
+            const isPdf = templateKind(t) === 'pdf'
+            return (
             <Card
               key={t.id}
               padded
@@ -135,9 +141,19 @@ export default function AdminDocs() {
                     <FileText size={18} />
                   </span>
                   <div className="min-w-0">
-                    <h3 className="truncate font-medium text-slate-800 dark:text-slate-100">
-                      {t.name}
-                    </h3>
+                    <div className="flex items-center gap-2">
+                      <h3 className="truncate font-medium text-slate-800 dark:text-slate-100">
+                        {t.name}
+                      </h3>
+                      {/* Word / PDF 來源 badge */}
+                      <Badge
+                        tone={isPdf ? 'rose' : 'blue'}
+                        icon={isPdf ? FileBadge : FileType}
+                        className="shrink-0"
+                      >
+                        {isPdf ? 'PDF' : 'Word'}
+                      </Badge>
+                    </div>
                     <p className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-slate-400 dark:text-slate-500">
                       <span className="inline-flex items-center gap-1">
                         <Tag size={11} />
@@ -171,7 +187,8 @@ export default function AdminDocs() {
                 填寫
               </Button>
             </Card>
-          ))}
+            )
+          })}
         </div>
       )}
 

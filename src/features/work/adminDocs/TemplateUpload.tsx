@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { lazy, Suspense, useRef, useState } from 'react'
 import { Button } from '../../../ui'
 import { useToast } from '../../../context/ToastContext'
 import { useAuth } from '../../../context/AuthContext'
@@ -12,10 +12,18 @@ import {
 import { suggestFields, type SuggestedField } from './docxAi'
 import { autoTagFields, detectTemplateFields } from './docxTableInject'
 import TemplatePreview, { type PreviewField } from './TemplatePreview'
+import type { PdfPreviewField } from './PdfTemplatePreview'
+import { extractPdfFields } from './pdfEngine'
+
+// 動態載入：PdfTemplatePreview 會 import pdfPreview（pdfjs-dist，依賴瀏覽器
+// DOMMatrix / canvas）。lazy 令 pdfjs 唔入 feature 模組圖（preloadAllFeatures /
+// SSR 安全），到真正要顯示 PDF 預覽先載。
+const PdfTemplatePreview = lazy(() => import('./PdfTemplatePreview'))
 import {
   FileUp,
   FilePlus2,
   CircleAlert,
+  Loader2,
   Sparkles,
   Trash2,
   Wand2,
@@ -33,9 +41,11 @@ import {
 // ============================================================
 
 // 單個範本大小 guard（base64 後 ~1.33×；localStorage 通常 ~5MB / origin）。
-const MAX_DOCX_BYTES = 1_000_000 // ~1MB 原始檔
+const MAX_DOCX_BYTES = 1_000_000 // ~1MB 原始檔（Word）
+// PDF 體積通常較大（含字型 / 圖），畀鬆啲；仍要顧 localStorage 配額。
+const MAX_PDF_BYTES = 3_000_000 // ~3MB 原始檔（PDF）
 
-type Step = 'upload' | 'preview'
+type Step = 'upload' | 'preview' | 'pdf-preview'
 
 export default function TemplateUpload({
   onSaved,
@@ -55,6 +65,11 @@ export default function TemplateUpload({
   const [docx, setDocx] = useState<{ base64: string; fileName: string } | null>(
     null,
   )
+  // 上載到嘅 PDF（base64 + 抽出嘅欄位），未揀 = null；走獨立 pdf-preview step。
+  const [pdf, setPdf] = useState<{
+    base64: string
+    fields: PdfPreviewField[]
+  } | null>(null)
   // 預填範本名（去 .docx 副檔名）。
   const [name, setName] = useState('')
   // 既有標籤（extractTags 認到）；用嚟「已有標籤 → 直接預覽」。
@@ -66,16 +81,82 @@ export default function TemplateUpload({
 
   const aiReady = isAIConfigured && !!user
 
+  // 上載分流：按副檔名 / MIME 判 .pdf vs .docx，各走獨立管線。
   async function handleFile(file: File) {
-    // 副檔名 / MIME 友善檢查（accept 已限，仍防手動拖入）。
+    const lowerName = file.name.toLowerCase()
+    const isPdf =
+      lowerName.endsWith('.pdf') || file.type === 'application/pdf'
     const isDocx =
-      file.name.toLowerCase().endsWith('.docx') ||
+      lowerName.endsWith('.docx') ||
       file.type ===
         'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-    if (!isDocx) {
-      toast.error('請揀 .docx 檔（Word 文件）。舊 .doc / PDF 暫不支援。')
+
+    if (isPdf) {
+      await handlePdf(file)
       return
     }
+    if (isDocx) {
+      await handleDocx(file)
+      return
+    }
+    toast.error('請揀 Word（.docx）或 PDF（.pdf）檔。舊 .doc 暫不支援。')
+  }
+
+  // ── PDF 管線：讀 AcroForm 欄位 → 0 欄位友善提示；否則入 PdfTemplatePreview ──
+  async function handlePdf(file: File) {
+    if (file.size > MAX_PDF_BYTES) {
+      toast.error(
+        `PDF 太大（${(file.size / 1024 / 1024).toFixed(1)}MB），請用 3MB 以內嘅範本。`,
+      )
+      return
+    }
+    setBusy(true)
+    try {
+      const buf = await file.arrayBuffer()
+      let pdfFields
+      try {
+        // extractPdfFields 會 detach buffer（pdf-lib load）→ 故先取 base64 再抽。
+        // 為穩陣，base64 用獨立 copy（toBase64 內部唔 detach）。
+        pdfFields = await extractPdfFields(buf.slice(0))
+      } catch (e) {
+        // 壞檔 / 加密 PDF → extractPdfFields 拋友善中文 Error。
+        toast.error(
+          e instanceof Error
+            ? e.message
+            : '無法讀取此 PDF，請確認係有效檔案。',
+        )
+        return
+      }
+
+      if (pdfFields.length === 0) {
+        toast.error(
+          '此 PDF 冇填寫欄位（需 fillable PDF 或改用 Word 範本）。',
+        )
+        return
+      }
+
+      const base64 = arrayBufferToBase64(buf)
+      const baseName = file.name.replace(/\.pdf$/i, '')
+      // PdfField → PdfPreviewField（tag=name、label 預設=name、帶 type/options/rects）。
+      const previewFields: PdfPreviewField[] = pdfFields.map((f) => ({
+        tag: f.name,
+        label: f.name,
+        type: f.type,
+        ...(f.options ? { options: f.options } : {}),
+        rects: f.rects,
+      }))
+      setPdf({ base64, fields: previewFields })
+      setName((prev) => prev || baseName)
+      setStep('pdf-preview')
+    } catch {
+      toast.error('讀取 PDF 失敗，請再試一次。')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  // ── Word 管線（原邏輯，完全不變）──
+  async function handleDocx(file: File) {
     if (file.size > MAX_DOCX_BYTES) {
       toast.error(
         `檔案太大（${(file.size / 1024 / 1024).toFixed(1)}MB），請用 1MB 以內嘅範本。`,
@@ -128,6 +209,7 @@ export default function TemplateUpload({
 
   function reset() {
     setDocx(null)
+    setPdf(null)
     setName('')
     setExistingTags([])
     setPreviewFields([])
@@ -220,7 +302,29 @@ export default function TemplateUpload({
     }
   }
 
-  // ───────── step='preview'：交畀 TemplatePreview ─────────
+  // ───────── step='pdf-preview'：交畀 PdfTemplatePreview（PDF 路徑，lazy）─────────
+  if (step === 'pdf-preview' && pdf) {
+    return (
+      <Suspense
+        fallback={
+          <div className="flex items-center justify-center gap-2 py-16 text-sm text-slate-500 dark:text-slate-400">
+            <Loader2 size={16} className="animate-spin" />
+            載入 PDF 預覽中…
+          </div>
+        }
+      >
+        <PdfTemplatePreview
+          originalBase64={pdf.base64}
+          initialFields={pdf.fields}
+          initialName={name}
+          onBack={reset}
+          onSaved={onSaved}
+        />
+      </Suspense>
+    )
+  }
+
+  // ───────── step='preview'：交畀 TemplatePreview（docx 路徑）─────────
   if (step === 'preview' && docx) {
     return (
       <TemplatePreview
@@ -243,7 +347,7 @@ export default function TemplateUpload({
         <input
           ref={fileInputRef}
           type="file"
-          accept=".docx"
+          accept=".docx,.pdf"
           className="sr-only"
           onChange={(e) => {
             const f = e.target.files?.[0]
@@ -261,10 +365,10 @@ export default function TemplateUpload({
               <FileUp size={22} />
             </span>
             <span className="text-sm font-medium text-slate-700 dark:text-slate-200">
-              {busy ? '讀取中…' : '揀 Word 範本（.docx）'}
+              {busy ? '讀取中…' : '揀範本（Word .docx 或 PDF .pdf）'}
             </span>
             <span className="max-w-xs text-xs text-slate-400 dark:text-slate-500">
-              系統會自動認出範本入面嘅 {'{標籤}'} 做填寫欄位；認唔到可用 AI 識別
+              Word：自動認出 {'{標籤}'} 做欄位（認唔到可用 AI 識別）；PDF：直接讀出填寫欄位
             </span>
           </button>
         ) : (

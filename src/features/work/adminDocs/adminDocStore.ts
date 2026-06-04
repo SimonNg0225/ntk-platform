@@ -11,21 +11,44 @@
 import { useSyncExternalStore } from 'react'
 import { uid } from '../../../lib/store'
 
-export type AdminDocFieldType = 'text' | 'multiline' | 'date'
+// text / multiline / date：docx + pdf 共用。
+// checkbox / dropdown：只 PDF（AcroForm）會出現；docx 範本永遠唔會用到。
+export type AdminDocFieldType =
+  | 'text'
+  | 'multiline'
+  | 'date'
+  | 'checkbox'
+  | 'dropdown'
 
 export interface AdminDocField {
+  /** 填值 key：docx = {標籤}；pdf = AcroForm field name。 */
   tag: string
   label: string
   type: AdminDocFieldType
+  /** dropdown 選項（PDF 下拉用；其餘類型 / docx 範本 undefined）。 */
+  options?: string[]
 }
+
+/** 範本來源類型；舊範本無此欄 → 一律當 'docx'（向後相容）。 */
+export type AdminDocKind = 'docx' | 'pdf'
 
 export interface AdminDocTemplate {
   id: string
   name: string
-  /** 原 .docx 檔內容（base64）；填充時轉返 ArrayBuffer。 */
+  /**
+   * 範本來源：'docx'（Word，{標籤}）或 'pdf'（AcroForm 填寫欄位）。
+   * ⚠️ 選填以向後相容舊範本——讀取時用 `templateKind(t)` 取得實際類型（缺省 = docx）。
+   */
+  kind?: AdminDocKind
+  /** 原檔內容（base64）：docx = .docx；pdf = 原 PDF。填充時轉返 ArrayBuffer。 */
   base64: string
   fields: AdminDocField[]
   createdAt: string
+}
+
+/** 取得範本實際來源類型；舊範本（無 kind）一律當 'docx'。 */
+export function templateKind(t: AdminDocTemplate): AdminDocKind {
+  return t.kind ?? 'docx'
 }
 
 const STORAGE_KEY = 'ntk.admin_doc_templates'
@@ -87,6 +110,8 @@ export function addTemplate(
   const item: AdminDocTemplate = {
     id: data.id ?? uid(),
     name: data.name,
+    // 缺省 kind 一律當 docx（向後相容）；PDF 路徑會明確傳 'pdf'。
+    kind: data.kind ?? 'docx',
     base64: data.base64,
     fields: data.fields,
     createdAt: data.createdAt ?? new Date().toISOString(),
