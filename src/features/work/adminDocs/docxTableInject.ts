@@ -473,3 +473,80 @@ export function autoTagFields(
     failed: res2.failed,
   }
 }
+
+// ───────── 結構偵測（免 AI）：由表格列出候選欄位 ───────── //
+
+/** 由 label 字眼推斷欄位類型。 */
+function inferFieldType(label: string): SuggestedField['type'] {
+  if (/日\s*期|date|\d+\s*年.*月.*日/iu.test(label)) return 'date'
+  if (/內容|備註|事由|地址|原因|詳情|其他|說明|備考/u.test(label)) return 'multiline'
+  return 'text'
+}
+
+/** 格文字似唔似「填寫欄位 label」（短、非區段標題、非純數字／列號）。 */
+function isLikelyFieldLabel(text: string): boolean {
+  const t = text.trim()
+  if (t.length < 1 || t.length > 30) return false
+  if (/[【】]/.test(t)) return false // 區段標題如【家長通知書】
+  if (/^\d+[.、)）·]?$/u.test(t)) return false // 純數字／列號（如名冊 1. 2.）
+  return true
+}
+
+/**
+ * 免 AI 結構偵測：掃表格，搵「非空 label 格 → 右鄰／正下方空格」對，
+ * 列出候選欄位（label = 格文字、tag = sanitize、type 由字眼推斷、
+ * anchor = 原 label）。對港式表格表單最準、即時、唔靠 AI、唔會截斷。
+ *
+ * 同 injectTagsIntoCells 用同一套表格解析 / 目標格規則，故偵測到嘅
+ * 欄位之後交畀 autoTagFields 亦會成功落標籤（一致）。
+ */
+export function detectTemplateFields(buf: ArrayBuffer): SuggestedField[] {
+  let xml: string | undefined
+  try {
+    xml = new PizZip(buf).file('word/document.xml')?.asText()
+  } catch {
+    return []
+  }
+  if (!xml) return []
+
+  const rows: Cell[][] = []
+  const trRe = /<w:tr\b[^>]*>([\s\S]*?)<\/w:tr>/g
+  let trm: RegExpExecArray | null
+  while ((trm = trRe.exec(xml)) !== null) rows.push(parseCells(trm[1]))
+
+  const out: SuggestedField[] = []
+  const seen = new Set<string>()
+  for (let ri = 0; ri < rows.length; ri++) {
+    const row = rows[ri]
+    for (let ci = 0; ci < row.length; ci++) {
+      const cell = row[ci]
+      if (cell.empty) continue
+      const label = cell.text.trim()
+      if (!isLikelyFieldLabel(label)) continue
+
+      // 目標格：右鄰空格 → 否則正下方同列空格（保守：同寬、無 gridSpan）。
+      const right = row[ci + 1]
+      let hasTarget = !!(right && right.empty)
+      if (!hasTarget) {
+        const below = rows[ri + 1]
+        if (below && below.length === row.length && cell.gridSpan === 1) {
+          const b = below[ci]
+          if (b && b.gridSpan === 1 && b.empty) hasTarget = true
+        }
+      }
+      if (!hasTarget) continue
+
+      const labelClean = stripTrailingColon(label)
+      const tag = sanitizeTag(labelClean)
+      if (!tag || seen.has(tag)) continue
+      seen.add(tag)
+      out.push({
+        tag,
+        label: labelClean || label,
+        type: inferFieldType(label),
+        anchor: label,
+      })
+    }
+  }
+  return out
+}

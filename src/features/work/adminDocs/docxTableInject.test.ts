@@ -1,6 +1,10 @@
 import { describe, it, expect } from 'vitest'
 import PizZip from 'pizzip'
-import { autoTagFields, injectTagsIntoCells } from './docxTableInject'
+import {
+  autoTagFields,
+  detectTemplateFields,
+  injectTagsIntoCells,
+} from './docxTableInject'
 import type { SuggestedField } from './docxAi'
 import { extractTags, extractText } from './docxEngine'
 
@@ -381,5 +385,68 @@ describe('docxTableInject · autoTagFields（inline + 表格格 合併）', () =
     expect(res.failed).toEqual([])
     // 仍可重開
     expect(extractText(base64ToBuf(res.base64))).toContain('姓名')
+  })
+})
+
+describe('docxTableInject · detectTemplateFields（免 AI 結構偵測）', () => {
+  it('2 欄 [label]|[空] → 偵測到該欄位', () => {
+    const buf = makeDocxRaw(tbl([tr([tc('姓名'), tc('')])]))
+    const fields = detectTemplateFields(buf)
+    expect(fields.map((f) => f.label)).toEqual(['姓名'])
+    expect(fields[0].tag).toBeTruthy()
+  })
+
+  it('4 欄 [a]|[空]|[b]|[空] → 偵測到 a/b 兩欄', () => {
+    const buf = makeDocxRaw(
+      tbl([tr([tc('活動名稱'), tc(''), tc('帶隊老師'), tc('')])]),
+    )
+    expect(detectTemplateFields(buf).map((f) => f.label).sort()).toEqual(
+      ['帶隊老師', '活動名稱'].sort(),
+    )
+  })
+
+  it('下方格：[label] 上、空格喺正下方 → 偵測到', () => {
+    const buf = makeDocxRaw(tbl([tr([tc('日期')]), tr([tc('')])]))
+    expect(detectTemplateFields(buf).map((f) => f.label)).toContain('日期')
+  })
+
+  it('目標格非空（label|有內容）→ 唔當欄位', () => {
+    const buf = makeDocxRaw(tbl([tr([tc('地點'), tc('已填')])]))
+    expect(detectTemplateFields(buf)).toEqual([])
+  })
+
+  it('純數字／列號（名冊 1.）→ 唔當欄位', () => {
+    const buf = makeDocxRaw(tbl([tr([tc('1.'), tc('')])]))
+    expect(detectTemplateFields(buf)).toEqual([])
+  })
+
+  it('區段標題【…】→ 唔當欄位', () => {
+    const buf = makeDocxRaw(tbl([tr([tc('【家長通知書】'), tc('')])]))
+    expect(detectTemplateFields(buf)).toEqual([])
+  })
+
+  it('type 推斷：日期→date、備註→multiline、其餘→text', () => {
+    const buf = makeDocxRaw(
+      tbl([
+        tr([tc('日期'), tc('')]),
+        tr([tc('備註'), tc('')]),
+        tr([tc('姓名'), tc('')]),
+      ]),
+    )
+    const byLabel = Object.fromEntries(
+      detectTemplateFields(buf).map((f) => [f.label, f.type]),
+    )
+    expect(byLabel['日期']).toBe('date')
+    expect(byLabel['備註']).toBe('multiline')
+    expect(byLabel['姓名']).toBe('text')
+  })
+
+  it('偵測 → autoTagFields 端到端落標籤', () => {
+    const buf = makeDocxRaw(
+      tbl([tr([tc('姓名'), tc('')]), tr([tc('班別'), tc('')])]),
+    )
+    const fields = detectTemplateFields(buf)
+    const placed = extractTags(base64ToBuf(autoTagFields(buf, fields).base64)).sort()
+    expect(placed).toEqual(['姓名', '班別'].sort())
   })
 })

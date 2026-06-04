@@ -9,8 +9,8 @@ import {
   extractTags,
   extractText,
 } from './docxEngine'
-import { suggestFields } from './docxAi'
-import { autoTagFields } from './docxTableInject'
+import { suggestFields, type SuggestedField } from './docxAi'
+import { autoTagFields, detectTemplateFields } from './docxTableInject'
 import TemplatePreview, { type PreviewField } from './TemplatePreview'
 import {
   FileUp,
@@ -137,20 +137,39 @@ export default function TemplateUpload({
 
   // ── 撳「AI 識別欄位」→ 餵範本純文字畀 AI → autoTagFields 落原檔 → 入 TemplatePreview ──
   async function handleSuggest() {
-    if (!docx || !aiReady) return
+    if (!docx) return
     setAiBusy(true)
     try {
       const buf = base64ToArrayBuffer(docx.base64)
-      const text = extractText(buf)
-      const result = await suggestFields(text)
-      if (result.length === 0) {
-        toast.error('AI 暫時建議唔到欄位，可手動喺 Word 加 {標籤} 後重新上載。')
+
+      // 1. 結構偵測（免 AI、即時、對表格表單最準）。
+      const fields: SuggestedField[] = detectTemplateFields(buf)
+      const have = new Set(fields.map((f) => f.tag))
+
+      // 2. AI 補充（best-effort）：接咗 AI 先試，補非表格 / inline 欄位；
+      //    AI 失敗或截斷都唔阻 —— 已有結構偵測結果兜底。
+      if (aiReady) {
+        try {
+          const ai = await suggestFields(extractText(buf))
+          for (const s of ai) {
+            if (!have.has(s.tag)) {
+              have.add(s.tag)
+              fields.push(s)
+            }
+          }
+        } catch {
+          /* AI 失敗唔阻流程 */
+        }
+      }
+
+      if (fields.length === 0) {
+        toast.error('偵測唔到欄位 —— 可喺 Word 將要填嘅位置改成 {標籤} 後重新上載。')
         return
       }
 
-      // AI 建議去重（同既有標籤合併，既有優先）。
+      // 同既有標籤去重（既有優先）。
       const seen = new Set(existingTags)
-      const suggested = result.filter((s) => {
+      const suggested = fields.filter((s) => {
         if (seen.has(s.tag)) return false
         seen.add(s.tag)
         return true
@@ -191,7 +210,7 @@ export default function TemplateUpload({
       setDocx({ base64: taggedBase64, fileName: docx.fileName })
       setPreviewFields(merged)
       setStep('preview')
-      toast.success(`AI 識別咗 ${result.length} 個欄位，請喺預覽核對。`)
+      toast.success(`偵測咗 ${suggested.length} 個欄位，請喺預覽核對。`)
     } catch (e) {
       toast.error(
         e instanceof Error ? e.message : 'AI 識別欄位失敗，請再試一次。',
@@ -286,7 +305,7 @@ export default function TemplateUpload({
             <div className="space-y-1">
               <p className="font-medium">範本未見 {'{標籤}'}</p>
               <p className="text-xs leading-relaxed text-amber-700 dark:text-amber-300/90">
-                你可以撳下面「AI 識別欄位」自動分析範本、視覺化標出填寫位置；或喺 Word
+                你可以撳下面「自動偵測欄位」由表格結構自動標出填寫位置（免 AI）；或喺 Word
                 入面將要填嘅位置改成大括號標籤（例如{' '}
                 <code className="rounded bg-amber-100 px-1 py-0.5 font-mono dark:bg-amber-500/20">
                   {'{學生姓名}'}
@@ -303,30 +322,29 @@ export default function TemplateUpload({
               </span>
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
-                  AI 識別欄位
+                  自動偵測欄位
                 </p>
                 <p className="mt-0.5 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
-                  由 AI 分析範本內容、自動標出要填嘅欄位，再喺視覺化預覽核對與調整。
+                  由表格結構自動標出要填欄位（免 AI、即時）；接咗 AI 仲會補充非表格欄位。再喺視覺化預覽核對與調整。
                 </p>
               </div>
             </div>
 
-            {aiReady ? (
-              <Button
-                variant="secondary"
-                size="sm"
-                icon={Wand2}
-                loading={aiBusy}
-                onClick={handleSuggest}
-                disabled={aiBusy}
-              >
-                {aiBusy ? 'AI 分析中…' : 'AI 識別欄位'}
-              </Button>
-            ) : (
-              <p className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400">
+            <Button
+              variant="secondary"
+              size="sm"
+              icon={Wand2}
+              loading={aiBusy}
+              onClick={handleSuggest}
+              disabled={aiBusy}
+            >
+              {aiBusy ? '偵測中…' : '自動偵測欄位'}
+            </Button>
+            {!aiReady && (
+              <p className="text-xs leading-relaxed text-slate-400 dark:text-slate-500">
                 {!isAIConfigured
-                  ? 'AI 助手未啟用（需設定 Supabase + 部署 gemini Edge Function，見 docs/SETUP.md）。你仍可喺 Word 手動加 {標籤} 後重新上載。'
-                  : '請先喺左下角用 Google 登入，先可以用 AI 識別欄位。手動加 {標籤} 亦可。'}
+                  ? '（未接 AI：表格結構偵測照用；AI 補充非表格欄位則需設定 Supabase + gemini）'
+                  : '（未登入：表格結構偵測照用；登入後 AI 會補充非表格欄位）'}
               </p>
             )}
           </div>
