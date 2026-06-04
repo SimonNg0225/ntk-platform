@@ -186,6 +186,29 @@ body {
   }
 }
 
+/* 行政文件範本預覽：撳側欄一行 → 對應標籤 highlight 閃一閃。
+   用 outline（唔影響 layout）+ 短暫放大，柔和提示位置。 */
+@keyframes adocTagFlash {
+  0% {
+    outline-color: rgba(20, 184, 166, 0);
+    box-shadow: 0 0 0 0 rgba(20, 184, 166, 0);
+  }
+  30% {
+    outline-color: rgba(20, 184, 166, 0.9);
+    box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.25);
+  }
+  100% {
+    outline-color: rgba(20, 184, 166, 0);
+    box-shadow: 0 0 0 0 rgba(20, 184, 166, 0);
+  }
+}
+.adoc-tag-flash {
+  outline: 2px solid rgba(20, 184, 166, 0);
+  outline-offset: 1px;
+  border-radius: 3px;
+  animation: adocTagFlash 1.1s ease-out;
+}
+
 /* 漸變主視覺（Hero）共用 class */
 .hero-gradient {
   background-image: linear-gradient(

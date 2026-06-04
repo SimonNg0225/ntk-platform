@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react'
-import { Button, Field, Input, Select } from '../../../ui'
+import { Button } from '../../../ui'
 import { useToast } from '../../../context/ToastContext'
 import { useAuth } from '../../../context/AuthContext'
 import { isAIConfigured } from '../../../lib/aiClient'
@@ -9,49 +9,32 @@ import {
   extractTags,
   extractText,
 } from './docxEngine'
-import {
-  injectTags,
-  suggestFields,
-  type SuggestedField,
-} from './docxAi'
-import { addTemplate, type AdminDocFieldType } from './adminDocStore'
+import { suggestFields } from './docxAi'
+import TemplatePreview, { type PreviewField } from './TemplatePreview'
 import {
   FileUp,
   FilePlus2,
-  Tag,
-  Trash2,
   CircleAlert,
   Sparkles,
-  Check,
-  X,
+  Trash2,
   Wand2,
 } from 'lucide-react'
 
 // ============================================================
-//  行政文件 — 上載 .docx 範本（Phase 1 + Phase 2 AI 輔助）
+//  行政文件 — 上載 .docx 範本（兩步：upload → preview）
 //  ------------------------------------------------------------
-//  流程：揀 .docx → file.arrayBuffer() → extractTags 認 {標籤}
-//  → 逐個標籤確認（tag 唯讀 / label 可改 / type 揀）+ 範本名
-//  → addTemplate（base64 + fields）。
-//  Phase 2：認到標籤少／冇 → 可撳「AI 建議欄位」→ suggestFields →
-//  逐項接受／改／棄；接受時 best-effort injectTags 自動加 {標籤}（保守、
-//  做唔到就提示手動加）。⚠️ 手動 {標籤} 永遠係可靠後路。
+//  step='upload'：揀 .docx → file.arrayBuffer() → extractTags：
+//    · 已有標籤 → 直接入 TemplatePreview（fields = 既有 tags，anchor=''）。
+//    · 冇／少標籤 → 顯示「AI 識別欄位」掣（gate isAIConfigured + 登入）→
+//      suggestFields(extractText) → fields = 建議（帶 anchor）→ 入 preview。
+//  step='preview'：交畀 TemplatePreview（兩欄視覺化編輯 + 儲存）。
+//  ⚠️ 手動 {標籤} 永遠係可靠後路：上載已含標籤嘅檔即直接見彩色預覽。
 // ============================================================
 
 // 單個範本大小 guard（base64 後 ~1.33×；localStorage 通常 ~5MB / origin）。
 const MAX_DOCX_BYTES = 1_000_000 // ~1MB 原始檔
 
-const FIELD_TYPE_OPTIONS: { value: AdminDocFieldType; label: string }[] = [
-  { value: 'text', label: '單行文字' },
-  { value: 'multiline', label: '多行文字' },
-  { value: 'date', label: '日期' },
-]
-
-interface DraftField {
-  tag: string
-  label: string
-  type: AdminDocFieldType
-}
+type Step = 'upload' | 'preview'
 
 export default function TemplateUpload({
   onSaved,
@@ -65,22 +48,20 @@ export default function TemplateUpload({
   const { user } = useAuth()
   const fileInputRef = useRef<HTMLInputElement>(null)
 
+  const [step, setStep] = useState<Step>('upload')
+
   // 上載到嘅檔（base64 + 原檔名），未揀 = null。
   const [docx, setDocx] = useState<{ base64: string; fileName: string } | null>(
     null,
   )
+  // 預填範本名（去 .docx 副檔名）。
   const [name, setName] = useState('')
-  const [fields, setFields] = useState<DraftField[]>([])
-  // 已解析但「認唔到標籤」→ true（顯示引導文案）。
-  const [parsedNoTags, setParsedNoTags] = useState(false)
+  // 既有標籤（extractTags 認到）；用嚟「已有標籤 → 直接預覽」。
+  const [existingTags, setExistingTags] = useState<string[]>([])
+  // 入 TemplatePreview 嘅初始欄位（既有 / AI 建議）。
+  const [previewFields, setPreviewFields] = useState<PreviewField[]>([])
   const [busy, setBusy] = useState(false)
-
-  // ── Phase 2 AI 建議欄位狀態 ──
   const [aiBusy, setAiBusy] = useState(false)
-  // AI 建議（未接受）：逐項可改／接受／棄。
-  const [suggestions, setSuggestions] = useState<SuggestedField[]>([])
-  // 已試過 AI 建議（用嚟調文案：第二次撳係「重新建議」）。
-  const [suggested, setSuggested] = useState(false)
 
   const aiReady = isAIConfigured && !!user
 
@@ -119,17 +100,24 @@ export default function TemplateUpload({
       }
 
       const base64 = arrayBufferToBase64(buf)
-      // 預填範本名 = 去 .docx 副檔名嘅檔名。
       const baseName = file.name.replace(/\.docx$/i, '')
       setDocx({ base64, fileName: file.name })
       setName((prev) => prev || baseName)
-      setFields(
-        tags.map((tag) => ({ tag, label: tag, type: 'text' as const })),
-      )
-      setParsedNoTags(tags.length === 0)
-      // 換檔 → 清走上一份嘅 AI 建議狀態。
-      setSuggestions([])
-      setSuggested(false)
+      setExistingTags(tags)
+
+      if (tags.length > 0) {
+        // 已有標籤 → 直接入 TemplatePreview（既有 tag，anchor=''，全部 placed）。
+        setPreviewFields(
+          tags.map((tag) => ({
+            tag,
+            label: tag,
+            type: 'text' as const,
+            anchor: '',
+          })),
+        )
+        setStep('preview')
+      }
+      // 冇標籤 → 留喺 upload step，顯示 AI 入口 / 手動引導。
     } catch {
       toast.error('讀取檔案失敗，請再試一次。')
     } finally {
@@ -137,27 +125,16 @@ export default function TemplateUpload({
     }
   }
 
-  function updateField(tag: string, patch: Partial<DraftField>) {
-    setFields((prev) =>
-      prev.map((f) => (f.tag === tag ? { ...f, ...patch } : f)),
-    )
-  }
-
-  function removeField(tag: string) {
-    setFields((prev) => prev.filter((f) => f.tag !== tag))
-  }
-
   function reset() {
     setDocx(null)
     setName('')
-    setFields([])
-    setParsedNoTags(false)
-    setSuggestions([])
-    setSuggested(false)
+    setExistingTags([])
+    setPreviewFields([])
+    setStep('upload')
     if (fileInputRef.current) fileInputRef.current.value = ''
   }
 
-  // ── Phase 2：撳「AI 建議欄位」→ 餵範本純文字畀 AI ──
+  // ── 撳「AI 識別欄位」→ 餵範本純文字畀 AI → 入 TemplatePreview ──
   async function handleSuggest() {
     if (!docx || !aiReady) return
     setAiBusy(true)
@@ -167,171 +144,57 @@ export default function TemplateUpload({
       const result = await suggestFields(text)
       if (result.length === 0) {
         toast.error('AI 暫時建議唔到欄位，可手動喺 Word 加 {標籤} 後重新上載。')
-        setSuggested(true)
         return
       }
-      // 已存在（已認到 / 已接受）嘅 tag 唔再重複建議。
-      const existing = new Set(fields.map((f) => f.tag))
-      const fresh = result.filter((s) => !existing.has(s.tag))
-      if (fresh.length === 0) {
-        toast.info('AI 建議嘅欄位都已經喺清單入面喇。')
-      } else {
-        setSuggestions(fresh)
-        toast.success(`AI 建議咗 ${fresh.length} 個欄位，請逐項確認。`)
+      // 既有標籤（極少數情況同時有）＋ AI 建議，去重（既有優先）。
+      const seen = new Set(existingTags)
+      const merged: PreviewField[] = existingTags.map((tag) => ({
+        tag,
+        label: tag,
+        type: 'text' as const,
+        anchor: '',
+      }))
+      for (const s of result) {
+        if (seen.has(s.tag)) continue
+        seen.add(s.tag)
+        merged.push({
+          tag: s.tag,
+          label: s.label || s.tag,
+          type: s.type,
+          anchor: s.anchor,
+        })
       }
-      setSuggested(true)
+      setPreviewFields(merged)
+      setStep('preview')
+      toast.success(`AI 識別咗 ${result.length} 個欄位，請喺預覽核對。`)
     } catch (e) {
       toast.error(
-        e instanceof Error ? e.message : 'AI 建議欄位失敗，請再試一次。',
+        e instanceof Error ? e.message : 'AI 識別欄位失敗，請再試一次。',
       )
     } finally {
       setAiBusy(false)
     }
   }
 
-  function updateSuggestion(tag: string, patch: Partial<SuggestedField>) {
-    setSuggestions((prev) =>
-      prev.map((s) => (s.tag === tag ? { ...s, ...patch } : s)),
+  // ───────── step='preview'：交畀 TemplatePreview ─────────
+  if (step === 'preview' && docx) {
+    return (
+      <TemplatePreview
+        originalBase64={docx.base64}
+        initialFields={previewFields}
+        initialName={name}
+        onBack={reset}
+        onSaved={onSaved}
+      />
     )
   }
 
-  function dismissSuggestion(tag: string) {
-    setSuggestions((prev) => prev.filter((s) => s.tag !== tag))
-  }
-
-  // 接受一個建議欄位：加入 fields，並 best-effort 試喺 docx 自動加 {tag}。
-  function acceptSuggestion(s: SuggestedField) {
-    if (!docx) return
-    const tag = s.tag.trim()
-    if (!tag) return
-    if (fields.some((f) => f.tag === tag)) {
-      toast.info('呢個標籤已經喺清單。')
-      dismissSuggestion(s.tag)
-      return
-    }
-
-    // best-effort 自動加標籤（保守；做唔到就提示手動加）。
-    let injectedOk = false
-    if (s.anchor) {
-      try {
-        const buf = base64ToArrayBuffer(docx.base64)
-        const res = injectTags(buf, [{ tag, anchor: s.anchor }])
-        if (res.injected.includes(tag)) {
-          setDocx({ ...docx, base64: res.base64 })
-          injectedOk = true
-        }
-      } catch {
-        injectedOk = false
-      }
-    }
-
-    setFields((prev) => [
-      ...prev,
-      { tag, label: s.label.trim() || tag, type: s.type },
-    ])
-    setParsedNoTags(false)
-    dismissSuggestion(s.tag)
-
-    if (injectedOk) {
-      toast.success(`已加入「${s.label || tag}」並自動寫入範本 {${tag}}。`)
-    } else {
-      toast.info(
-        `已加入欄位「${s.label || tag}」。請喺 Word 範本對應位置加上 {${tag}}（自動加唔到，手動最可靠）。`,
-      )
-    }
-  }
-
-  // 全部接受（逐個行 acceptSuggestion 嘅邏輯，但合併寫檔減少重砌）。
-  function acceptAll() {
-    if (!docx || suggestions.length === 0) return
-    const existing = new Set(fields.map((f) => f.tag))
-    const toAdd = suggestions.filter(
-      (s) => s.tag.trim() && !existing.has(s.tag.trim()),
-    )
-    if (toAdd.length === 0) {
-      setSuggestions([])
-      return
-    }
-
-    // 一次過 inject（保守、合併寫檔）。
-    let injectedSet = new Set<string>()
-    let nextBase64 = docx.base64
-    try {
-      const buf = base64ToArrayBuffer(docx.base64)
-      const res = injectTags(
-        buf,
-        toAdd
-          .filter((s) => s.anchor)
-          .map((s) => ({ tag: s.tag.trim(), anchor: s.anchor })),
-      )
-      injectedSet = new Set(res.injected)
-      if (res.injected.length > 0) nextBase64 = res.base64
-    } catch {
-      injectedSet = new Set()
-    }
-
-    setDocx({ ...docx, base64: nextBase64 })
-    setFields((prev) => [
-      ...prev,
-      ...toAdd.map((s) => ({
-        tag: s.tag.trim(),
-        label: s.label.trim() || s.tag.trim(),
-        type: s.type,
-      })),
-    ])
-    setParsedNoTags(false)
-    setSuggestions([])
-
-    const manual = toAdd.filter((s) => !injectedSet.has(s.tag.trim())).length
-    if (manual === 0) {
-      toast.success(`已接受 ${toAdd.length} 個欄位並自動寫入範本標籤。`)
-    } else {
-      toast.info(
-        `已接受 ${toAdd.length} 個欄位；其中 ${manual} 個未能自動加標籤，請喺 Word 對應位置手動加 {標籤}。`,
-      )
-    }
-  }
-
-  function handleSave() {
-    if (!docx) return
-    const trimmedName = name.trim()
-    if (!trimmedName) {
-      toast.error('請輸入範本名稱。')
-      return
-    }
-    if (fields.length === 0) {
-      toast.error('此範本未見任何 {標籤}，請喺 Word 加標籤後重新上載。')
-      return
-    }
-    setBusy(true)
-    try {
-      addTemplate({
-        name: trimmedName,
-        base64: docx.base64,
-        fields: fields.map((f) => ({
-          tag: f.tag,
-          label: f.label.trim() || f.tag,
-          type: f.type,
-        })),
-      })
-      toast.success(`範本「${trimmedName}」已儲存 🎉`)
-      onSaved()
-    } catch (e) {
-      // adminDocStore.persist 滿配額會拋友善 Error。
-      toast.error(
-        e instanceof Error ? e.message : '儲存失敗，請刪除舊範本後再試。',
-      )
-    } finally {
-      setBusy(false)
-    }
-  }
-
-  // 標籤少／冇 → 顯示 AI 建議入口（少：≤2 個亦可補；冇：主推）。
-  const showAiEntry = !!docx && fields.length <= 2
+  // ───────── step='upload' ─────────
+  const showAiEntry = !!docx && existingTags.length === 0
 
   return (
     <div className="space-y-5">
-      {/* ───────── 上載區（未揀檔 / 已揀檔都顯示，方便換檔）───────── */}
+      {/* ───────── 上載區 ───────── */}
       <div>
         <input
           ref={fileInputRef}
@@ -357,7 +220,7 @@ export default function TemplateUpload({
               {busy ? '讀取中…' : '揀 Word 範本（.docx）'}
             </span>
             <span className="max-w-xs text-xs text-slate-400 dark:text-slate-500">
-              系統會自動認出範本入面嘅 {'{標籤}'} 做填寫欄位
+              系統會自動認出範本入面嘅 {'{標籤}'} 做填寫欄位；認唔到可用 AI 識別
             </span>
           </button>
         ) : (
@@ -371,8 +234,8 @@ export default function TemplateUpload({
                   {docx.fileName}
                 </p>
                 <p className="text-xs text-slate-400 dark:text-slate-500">
-                  {fields.length > 0
-                    ? `認到 ${fields.length} 個欄位`
+                  {existingTags.length > 0
+                    ? `認到 ${existingTags.length} 個欄位`
                     : '未認到標籤'}
                 </p>
               </div>
@@ -390,257 +253,65 @@ export default function TemplateUpload({
         )}
       </div>
 
-      {/* ───────── 認唔到標籤：引導去 Word 加 + AI 建議入口 ───────── */}
-      {docx && parsedNoTags && (
-        <div className="flex gap-2.5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">
-          <CircleAlert size={18} className="mt-0.5 shrink-0" />
-          <div className="space-y-1">
-            <p className="font-medium">範本未見 {'{標籤}'}</p>
-            <p className="text-xs leading-relaxed text-amber-700 dark:text-amber-300/90">
-              你可以撳下面「AI 建議欄位」自動分析範本，或喺 Word 入面將要填嘅位置改成大括號標籤（例如{' '}
-              <code className="rounded bg-amber-100 px-1 py-0.5 font-mono dark:bg-amber-500/20">
-                {'{學生姓名}'}
-              </code>
-              、
-              <code className="rounded bg-amber-100 px-1 py-0.5 font-mono dark:bg-amber-500/20">
-                {'{日期}'}
-              </code>
-              ）後重新上載。手動 {'{標籤}'} 永遠最可靠。
-            </p>
-          </div>
-        </div>
-      )}
-
-      {/* ───────── Phase 2：AI 建議欄位入口 ───────── */}
+      {/* ───────── 認唔到標籤：引導 + AI 識別入口 ───────── */}
       {showAiEntry && (
-        <div className="space-y-3 rounded-xl border border-accent/20 bg-accent-soft/40 p-3.5 dark:border-accent/25 dark:bg-accent/10">
-          <div className="flex items-start gap-2.5">
-            <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-accent text-white">
-              <Sparkles size={16} />
-            </span>
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
-                AI 建議欄位
-              </p>
-              <p className="mt-0.5 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
-                {fields.length === 0
-                  ? '範本未認到標籤，可由 AI 分析內容、建議要填嘅欄位，並嘗試自動加 {標籤}。'
-                  : '認到嘅標籤較少，可由 AI 幫手補建議其他欄位。'}
+        <>
+          <div className="flex gap-2.5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">
+            <CircleAlert size={18} className="mt-0.5 shrink-0" />
+            <div className="space-y-1">
+              <p className="font-medium">範本未見 {'{標籤}'}</p>
+              <p className="text-xs leading-relaxed text-amber-700 dark:text-amber-300/90">
+                你可以撳下面「AI 識別欄位」自動分析範本、視覺化標出填寫位置；或喺 Word
+                入面將要填嘅位置改成大括號標籤（例如{' '}
+                <code className="rounded bg-amber-100 px-1 py-0.5 font-mono dark:bg-amber-500/20">
+                  {'{學生姓名}'}
+                </code>
+                ）後重新上載。手動 {'{標籤}'} 永遠最可靠。
               </p>
             </div>
           </div>
 
-          {aiReady ? (
-            <Button
-              variant="secondary"
-              size="sm"
-              icon={Wand2}
-              loading={aiBusy}
-              onClick={handleSuggest}
-              disabled={aiBusy}
-            >
-              {aiBusy
-                ? 'AI 分析中…'
-                : suggested
-                  ? '重新建議欄位'
-                  : 'AI 建議欄位'}
-            </Button>
-          ) : (
-            <p className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400">
-              {!isAIConfigured
-                ? 'AI 助手未啟用（需設定 Supabase + 部署 gemini Edge Function，見 docs/SETUP.md）。你仍可喺 Word 手動加 {標籤} 後重新上載。'
-                : '請先喺左下角用 Google 登入，先可以用 AI 建議欄位。手動加 {標籤} 亦可。'}
-            </p>
-          )}
-
-          {/* AI 建議清單（逐項接受／改／棄） */}
-          {suggestions.length > 0 && (
-            <div className="space-y-2">
-              <div className="flex items-center justify-between gap-2">
-                <p className="text-xs font-medium text-slate-600 dark:text-slate-300">
-                  AI 建議（共 {suggestions.length} 個，請確認）
+          <div className="space-y-3 rounded-xl border border-accent/20 bg-accent-soft/40 p-3.5 dark:border-accent/25 dark:bg-accent/10">
+            <div className="flex items-start gap-2.5">
+              <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-accent text-white">
+                <Sparkles size={16} />
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                  AI 識別欄位
                 </p>
-                <div className="flex items-center gap-1">
-                  <Button variant="ghost" size="sm" onClick={acceptAll}>
-                    全部接受
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setSuggestions([])}
-                  >
-                    全部略過
-                  </Button>
-                </div>
+                <p className="mt-0.5 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+                  由 AI 分析範本內容、自動標出要填嘅欄位，再喺視覺化預覽核對與調整。
+                </p>
               </div>
-              <div className="space-y-2">
-                {suggestions.map((s) => (
-                  <div
-                    key={s.tag}
-                    className="rounded-lg border border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-800"
-                  >
-                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_110px] sm:items-end">
-                      <Field label="標籤">
-                        <Input
-                          value={s.tag}
-                          onChange={(e) =>
-                            updateSuggestion(s.tag, { tag: e.target.value })
-                          }
-                          className="font-mono"
-                          maxLength={40}
-                        />
-                      </Field>
-                      <Field label="顯示名稱">
-                        <Input
-                          value={s.label}
-                          onChange={(e) =>
-                            updateSuggestion(s.tag, { label: e.target.value })
-                          }
-                          placeholder={s.tag}
-                          maxLength={40}
-                        />
-                      </Field>
-                      <Field label="類型">
-                        <Select
-                          value={s.type}
-                          onChange={(e) =>
-                            updateSuggestion(s.tag, {
-                              type: e.target.value as AdminDocFieldType,
-                            })
-                          }
-                        >
-                          {FIELD_TYPE_OPTIONS.map((o) => (
-                            <option key={o.value} value={o.value}>
-                              {o.label}
-                            </option>
-                          ))}
-                        </Select>
-                      </Field>
-                    </div>
-                    {s.anchor && (
-                      <p className="mt-1.5 truncate text-[11px] text-slate-400 dark:text-slate-500">
-                        錨點：{s.anchor}
-                      </p>
-                    )}
-                    <div className="mt-2 flex justify-end gap-1.5">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        icon={X}
-                        onClick={() => dismissSuggestion(s.tag)}
-                      >
-                        略過
-                      </Button>
-                      <Button
-                        size="sm"
-                        icon={Check}
-                        onClick={() => acceptSuggestion(s)}
-                      >
-                        接受
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <p className="text-[11px] leading-relaxed text-slate-400 dark:text-slate-500">
-                接受時會嘗試自動喺範本加 {'{標籤}'}（保守處理）；自動加唔到嘅，請依提示喺
-                Word 對應位置手動加，最可靠。
+            </div>
+
+            {aiReady ? (
+              <Button
+                variant="secondary"
+                size="sm"
+                icon={Wand2}
+                loading={aiBusy}
+                onClick={handleSuggest}
+                disabled={aiBusy}
+              >
+                {aiBusy ? 'AI 分析中…' : 'AI 識別欄位'}
+              </Button>
+            ) : (
+              <p className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400">
+                {!isAIConfigured
+                  ? 'AI 助手未啟用（需設定 Supabase + 部署 gemini Edge Function，見 docs/SETUP.md）。你仍可喺 Word 手動加 {標籤} 後重新上載。'
+                  : '請先喺左下角用 Google 登入，先可以用 AI 識別欄位。手動加 {標籤} 亦可。'}
               </p>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* ───────── 範本名 + 欄位清單 ───────── */}
-      {docx && fields.length > 0 && (
-        <div className="space-y-4">
-          <Field label="範本名稱" required>
-            <Input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="例如：家長通知書"
-              maxLength={60}
-            />
-          </Field>
-
-          <div className="space-y-2">
-            <p className="flex items-center gap-1.5 text-xs font-medium text-slate-600 dark:text-slate-300">
-              <Tag size={13} className="text-accent" />
-              欄位清單（共 {fields.length} 個）
-            </p>
-            <p className="text-xs text-slate-400 dark:text-slate-500">
-              標籤對應範本內 {'{ }'} 的位置；你可改顯示名稱同類型。
-            </p>
-            <div className="space-y-2">
-              {fields.map((f) => (
-                <div
-                  key={f.tag}
-                  className="grid grid-cols-1 gap-2 rounded-lg border border-slate-200 bg-slate-50/60 p-3 dark:border-slate-700 dark:bg-slate-800/40 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_120px_auto] sm:items-end"
-                >
-                  <Field label="標籤">
-                    <Input
-                      value={`{${f.tag}}`}
-                      readOnly
-                      disabled
-                      className="font-mono"
-                    />
-                  </Field>
-                  <Field label="顯示名稱">
-                    <Input
-                      value={f.label}
-                      onChange={(e) =>
-                        updateField(f.tag, { label: e.target.value })
-                      }
-                      placeholder={f.tag}
-                      maxLength={40}
-                    />
-                  </Field>
-                  <Field label="類型">
-                    <Select
-                      value={f.type}
-                      onChange={(e) =>
-                        updateField(f.tag, {
-                          type: e.target.value as AdminDocFieldType,
-                        })
-                      }
-                    >
-                      {FIELD_TYPE_OPTIONS.map((o) => (
-                        <option key={o.value} value={o.value}>
-                          {o.label}
-                        </option>
-                      ))}
-                    </Select>
-                  </Field>
-                  <div className="flex justify-end sm:pb-0.5">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      icon={Trash2}
-                      onClick={() => removeField(f.tag)}
-                      aria-label={`移除欄位 ${f.label || f.tag}`}
-                    >
-                      移除
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
+            )}
           </div>
-        </div>
+        </>
       )}
 
-      {/* ───────── 動作列 ───────── */}
-      <div className="flex justify-end gap-2 border-t border-slate-200 pt-4 dark:border-slate-700">
+      {/* ───────── 動作列（upload step 只有取消；預覽／儲存在 TemplatePreview）───────── */}
+      <div className="flex justify-end border-t border-slate-200 pt-4 dark:border-slate-700">
         <Button variant="secondary" onClick={onCancel} disabled={busy}>
           取消
-        </Button>
-        <Button
-          onClick={handleSave}
-          disabled={!docx || fields.length === 0 || busy}
-          loading={busy && !!docx}
-          icon={FilePlus2}
-        >
-          儲存範本
         </Button>
       </div>
     </div>
