@@ -12,6 +12,7 @@ import ShortcutsModal from './features/shared/shortcuts/ShortcutsModal'
 import QuickAddButton from './features/shared/quickAdd/QuickAddButton'
 import QuickAddModal from './features/shared/quickAdd/QuickAddModal'
 import { OnboardingModal } from './components/OnboardingModal'
+import PwaUpdater from './components/PwaUpdater'
 import { useToast } from './context/ToastContext'
 import { seedAllDemo, hasOnboarded, markOnboarded } from './lib/demoData'
 import Home from './pages/Home'
@@ -230,6 +231,8 @@ function AppShell() {
             toast.success(n > 0 ? `已載入 ${n} 筆示範資料 🎉` : '已有資料，毋須載入')
           }}
         />
+
+        <PwaUpdater />
       </div>
     </NavProvider>
   )

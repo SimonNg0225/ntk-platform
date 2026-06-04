@@ -7,7 +7,10 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      registerType: 'autoUpdate',
+      // 'prompt'：偵測到新版唔靜靜換，而係彈「更新」banner 由用戶撳（避免打字途中突然 reload）。
+      // 配合 vercel.json sw.js no-cache + PwaUpdater 定期檢查 → Safari 都即刻認到新部署。
+      registerType: 'prompt',
+      injectRegister: false, // 改由 src/components/PwaUpdater.tsx 自行 registerSW（要 periodic update）
       includeAssets: ['favicon.svg'],
       manifest: {
         name: 'NTK Platform · 個人學習與工作平台',
