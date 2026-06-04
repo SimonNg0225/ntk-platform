@@ -31,6 +31,7 @@ export default function Settings() {
   const confirm = useConfirm()
   const fileRef = useRef<HTMLInputElement>(null)
   const [overview, setOverview] = useState<DataOverview | null>(null)
+  const [checking, setChecking] = useState(false)
 
   // 我的資料一覽：先 preload 全部 feature collection 登記齊（同匯出/匯入同源），
   // 再枚舉 collectionRegistry 數每個集合筆數。之後訂閱所有 collection，資料一
@@ -122,6 +123,58 @@ export default function Settings() {
     await preloadAllFeatures()
     for (const col of collectionRegistry.values()) col.set([] as never[])
     toast.success('已清除所有資料')
+  }
+
+  // 手動檢查 SW 更新（PwaUpdater 平時自動檢查；呢度做手動後備）。
+  const checkUpdate = async () => {
+    if (!('serviceWorker' in navigator)) {
+      toast.error('此瀏覽器唔支援離線快取')
+      return
+    }
+    setChecking(true)
+    try {
+      const reg = await navigator.serviceWorker.getRegistration()
+      if (!reg) {
+        toast.success('開發模式：暫未註冊 service worker')
+        return
+      }
+      await reg.update()
+      toast.success(
+        reg.waiting
+          ? '搵到新版本！睇下方「更新」提示'
+          : '已檢查 — 有新版會自動彈「更新」提示',
+      )
+    } catch {
+      toast.error('檢查更新失敗，請再試')
+    } finally {
+      setChecking(false)
+    }
+  }
+
+  // 強制清除快取 + service worker 後重載（Safari 卡住舊版嘅終極後備）。
+  // 只清程式快取／SW，唔掂 localStorage 嘅用戶資料。
+  const hardReset = async () => {
+    if (
+      !(await confirm({
+        title: '清除快取並重新載入？',
+        message:
+          '會清除程式快取同 service worker，強制載入最新版本。你嘅資料（筆記、班別、成績等）儲喺本機，唔受影響。',
+        confirmText: '清除並重載',
+      }))
+    )
+      return
+    try {
+      if ('serviceWorker' in navigator) {
+        const regs = await navigator.serviceWorker.getRegistrations()
+        await Promise.all(regs.map((r) => r.unregister()))
+      }
+      if ('caches' in window) {
+        const keys = await caches.keys()
+        await Promise.all(keys.map((k) => caches.delete(k)))
+      }
+    } finally {
+      location.reload()
+    }
   }
 
   const themes: { id: 'light' | 'dark' | 'system'; label: string; icon: string }[] =
@@ -270,6 +323,22 @@ export default function Settings() {
           </Button>
           <Button variant="danger" onClick={clearAll}>
             🗑 清除所有資料
+          </Button>
+        </div>
+      </Card>
+
+      {/* 應用程式更新（PWA 手動後備） */}
+      <Card className="p-5">
+        <SectionTitle>應用程式更新</SectionTitle>
+        <p className="mb-3 text-sm text-slate-500 dark:text-slate-400">
+          部署咗新版但見唔到更新？可手動檢查；或清除快取強制載入最新版（你嘅資料唔受影響）。
+        </p>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="secondary" onClick={checkUpdate} disabled={checking}>
+            🔄 {checking ? '檢查中…' : '檢查更新'}
+          </Button>
+          <Button variant="secondary" onClick={hardReset}>
+            🧹 清除快取並重新載入
           </Button>
         </div>
       </Card>
