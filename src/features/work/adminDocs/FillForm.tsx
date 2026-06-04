@@ -44,6 +44,8 @@ export default function FillForm({
   const [values, setValues] = useState<Record<string, string>>(() =>
     Object.fromEntries(template.fields.map((f) => [f.tag, ''])),
   )
+  // 輸出文件標題（= 下載檔名）；預設 = 範本名，可逐次自訂。
+  const [docTitle, setDocTitle] = useState(template.name)
   // 已生成嘅 Blob（畀下載用）。
   const [blob, setBlob] = useState<Blob | null>(null)
   const [generating, setGenerating] = useState(false)
@@ -60,6 +62,7 @@ export default function FillForm({
   // 換範本（理論上 host 會 remount，但保險）→ 清空狀態。
   useEffect(() => {
     setValues(Object.fromEntries(template.fields.map((f) => [f.tag, ''])))
+    setDocTitle(template.name)
     setBlob(null)
     setPreviewFailed(false)
     setAiOpen(false)
@@ -165,7 +168,8 @@ export default function FillForm({
 
   function handleDownload() {
     if (!blob) return
-    const safeName = sanitizeFileName(template.name) || '文件'
+    const safeName =
+      sanitizeFileName(docTitle) || sanitizeFileName(template.name) || '文件'
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
@@ -242,6 +246,16 @@ export default function FillForm({
 
       {/* ───────── 表單：逐欄輸入 ───────── */}
       <div className="space-y-4">
+        <Field
+          label="文件標題"
+          hint="即下載檔名；預設用範本名，可自訂（例：家長通知書_5A_6月20日）"
+        >
+          <Input
+            value={docTitle}
+            onChange={(e) => setDocTitle(e.target.value)}
+            placeholder={template.name}
+          />
+        </Field>
         {template.fields.map((f) => (
           <Field key={f.tag} label={f.label || f.tag}>
             {f.type === 'multiline' ? (
