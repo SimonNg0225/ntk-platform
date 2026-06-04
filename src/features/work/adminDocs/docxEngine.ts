@@ -69,6 +69,7 @@ export function fillDocx(buf: ArrayBuffer, data: Record<string, string>): Blob {
   return doc.getZip().generate({
     type: 'blob',
     mimeType: DOCX_MIME,
+    compression: 'DEFLATE', // 壓縮輸出；否則預設 STORE 會令生成檔脹大約 7x
   }) as unknown as Blob
 }
 

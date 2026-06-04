@@ -99,7 +99,16 @@ export default function FillForm({
       return
     }
     setBlob(outBlob)
-    toast.success('文件已生成，可預覽核對或下載。')
+    // 必填提示：漏填欄位 docxtemplater 會靜默留空白，故喺度主動提醒（唔阻生成）。
+    const empties = template.fields.filter((f) => !(values[f.tag] ?? '').trim())
+    if (empties.length > 0) {
+      const names = empties.map((f) => f.label || f.tag).slice(0, 5).join('、')
+      toast.info(
+        `文件已生成 — ⚠ 有 ${empties.length} 個欄位未填，會留空白：${names}${empties.length > 5 ? ' …' : ''}`,
+      )
+    } else {
+      toast.success('文件已生成，可預覽核對或下載。')
+    }
     setGenerating(false)
 
     // 預覽係輔助：render 失敗只警告、唔阻下載。

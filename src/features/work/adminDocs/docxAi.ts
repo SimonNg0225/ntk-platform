@@ -185,7 +185,8 @@ function buildAnchorReplacer(
   // 偵測 anchor 屬於邊種形態（睇原 anchor 結尾）。
   const hasUnderscore = /[_＿]{2,}\s*$/u.test(anchor)
   const hasParen = /[（(][\s　]*[)）]\s*$/u.test(anchor)
-  const hasColon = /[：:]\s*$/u.test(label) || /[：:]/u.test(anchor)
+  // 冒號：含全形（U+FF1A）、ASCII（:）、presentation-form ︰（U+FE30）、﹕（U+FE55）、︓（U+FE13）
+  const hasColon = /[：:︰﹕︓]\s*$/u.test(label) || /[：:︰﹕︓]/u.test(anchor)
 
   // 喺 <w:t> 文字內容上做替換嘅 helper：只動文字節點，唔動 tag。
   const onTextNodes = (
@@ -318,7 +319,10 @@ export function injectTags(
   // 寫返 + sanity：重砌 zip、重新讀文字。任何問題 → 放棄全部改動。
   try {
     zip.file('word/document.xml', working)
-    const outBuf = zip.generate({ type: 'arraybuffer' }) as unknown as ArrayBuffer
+    const outBuf = zip.generate({
+      type: 'arraybuffer',
+      compression: 'DEFLATE', // 壓縮；否則加完標籤嘅範本 base64 會脹大、谷大 localStorage
+    }) as unknown as ArrayBuffer
     // sanity：重新開能讀返文字（即 zip / xml 結構未爛）。
     const check = new PizZip(outBuf)
     const reread = check.file('word/document.xml')?.asText()
