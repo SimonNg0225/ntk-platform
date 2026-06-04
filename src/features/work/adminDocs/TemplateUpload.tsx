@@ -10,6 +10,7 @@ import {
   extractText,
 } from './docxEngine'
 import { suggestFields } from './docxAi'
+import { autoTagFields } from './docxTableInject'
 import TemplatePreview, { type PreviewField } from './TemplatePreview'
 import {
   FileUp,
@@ -134,7 +135,7 @@ export default function TemplateUpload({
     if (fileInputRef.current) fileInputRef.current.value = ''
   }
 
-  // ── 撳「AI 識別欄位」→ 餵範本純文字畀 AI → 入 TemplatePreview ──
+  // ── 撳「AI 識別欄位」→ 餵範本純文字畀 AI → autoTagFields 落原檔 → 入 TemplatePreview ──
   async function handleSuggest() {
     if (!docx || !aiReady) return
     setAiBusy(true)
@@ -146,24 +147,48 @@ export default function TemplateUpload({
         toast.error('AI 暫時建議唔到欄位，可手動喺 Word 加 {標籤} 後重新上載。')
         return
       }
-      // 既有標籤（極少數情況同時有）＋ AI 建議，去重（既有優先）。
+
+      // AI 建議去重（同既有標籤合併，既有優先）。
       const seen = new Set(existingTags)
-      const merged: PreviewField[] = existingTags.map((tag) => ({
-        tag,
-        label: tag,
-        type: 'text' as const,
-        anchor: '',
-      }))
-      for (const s of result) {
-        if (seen.has(s.tag)) continue
+      const suggested = result.filter((s) => {
+        if (seen.has(s.tag)) return false
         seen.add(s.tag)
-        merged.push({
+        return true
+      })
+
+      // ── 自動落標籤：inline（底線／空括號／冒號）＋ 表格格（label 格右鄰／
+      //    下方空格）兩段式合併。安全：autoTagFields 內部各步重砌＋sanity，
+      //    任何失敗只係「冇加到」、唔會整爛 docx。 ──
+      let taggedBase64 = docx.base64
+      try {
+        const injected = autoTagFields(buf, suggested)
+        taggedBase64 = injected.base64
+      } catch {
+        // 理論上 autoTagFields 唔會拋（內部保守）；萬一拋就退回原檔，
+        // 仍可入 preview（已落標籤 = 0，全部靠 TemplatePreview 手動補）。
+        taggedBase64 = docx.base64
+      }
+
+      // 已把標籤實際寫入 docx；故所有欄位 anchor 留空（TemplatePreview
+      // 唔再重跑 inject，直接以 extractTags 判斷 placed / 未對應）。
+      // 既有標籤（罕有同時有）放前。
+      const merged: PreviewField[] = [
+        ...existingTags.map((tag) => ({
+          tag,
+          label: tag,
+          type: 'text' as const,
+          anchor: '',
+        })),
+        ...suggested.map((s) => ({
           tag: s.tag,
           label: s.label || s.tag,
           type: s.type,
-          anchor: s.anchor,
-        })
-      }
+          anchor: '',
+        })),
+      ]
+
+      // 用已落標籤嘅檔做 preview 來源（與儲存內容一致）。
+      setDocx({ base64: taggedBase64, fileName: docx.fileName })
       setPreviewFields(merged)
       setStep('preview')
       toast.success(`AI 識別咗 ${result.length} 個欄位，請喺預覽核對。`)
