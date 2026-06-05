@@ -1,5 +1,5 @@
 import { complete } from '../../../lib/aiClient'
-import { extractJsonObject } from '../../../lib/aiJson'
+import { parseJsonArray } from '../../../lib/aiJson'
 import { todayStr } from '../../../lib/srs'
 import type { CountdownCategory } from '../../../data/types'
 
@@ -79,7 +79,8 @@ export function buildQuickAddPrompt(
     '· date 格式必須係 "YYYY-MM-DD"；time / endTime 格式必須係 24 小時制 "HH:mm"（例如下午3點 = "15:00"）。',
     '· 解唔到嘅欄位一律填 null（唔好亂估）。title 用繁體中文、精煉，唔好包含日期 / 時間字眼。',
     '',
-    '只回一個 JSON 物件（唔好有任何解說文字，唔好用 markdown，唔好加 ``` 圍欄），格式如下：',
+    '若輸入包含多件事（多個時間／多項任務／用逗號、頓號、換行分隔），請逐件拆成獨立項目，每件一個物件、各自獨立分類同抽日期時間。',
+    '只回一個 JSON 陣列（唔好有任何解說文字，唔好用 markdown，唔好加 ``` 圍欄）；只有一件事就回單元素陣列。每個元素格式如下：',
     '{"kind":"task|countdown|event","title":"...","date":"YYYY-MM-DD|null","time":"HH:mm|null","endTime":"HH:mm|null","category":"exam|deadline|assessment|event|other|null","notes":"...|null"}',
     '',
     `用戶輸入：\n${text}`,
@@ -181,15 +182,15 @@ export function toDraft(
 }
 
 /**
- * 端到端解析：自然語言 → ParsedDraft。
- * 包 complete()（gemini-2.5-flash）→ extractJsonObject → toDraft。
- * AI 出錯 / 解唔到合法物件 / title 空 → 回 null，由呼叫端決定點處理
- * （spec：退做手動預覽，唔靜靜存錯）。
+ * 端到端解析：自然語言 →（可多項）ParsedDraft[]。
+ * 包 complete()（gemini-2.5-flash）→ parseJsonArray → 逐項 toDraft。
+ * 一段文字含多件事（多個時間 / 多項任務）會拆成多個 draft；
+ * AI 出錯 / 解唔到合法陣列 / 全部 title 空 → 回 []（呼叫端退手動預覽）。
  */
 export async function parseQuickAdd(
   text: string,
   mode: 'learning' | 'work',
-): Promise<ParsedDraft | null> {
+): Promise<ParsedDraft[]> {
   const today = todayStr()
   const weekday = weekdayOf(new Date())
   const content = buildQuickAddPrompt(text, today, weekday, mode)
@@ -197,7 +198,9 @@ export async function parseQuickAdd(
     model: 'gemini-2.5-flash',
     messages: [{ role: 'user', content }],
   })
-  const obj = extractJsonObject(out)
-  if (obj === null) return null
-  return toDraft(obj, mode, today)
+  const arr = parseJsonArray<unknown>(out)
+  if (!arr) return []
+  return arr
+    .map((o) => toDraft(o, mode, today))
+    .filter((d): d is ParsedDraft => d !== null)
 }

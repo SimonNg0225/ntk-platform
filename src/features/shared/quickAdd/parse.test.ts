@@ -336,8 +336,9 @@ describe('buildQuickAddPrompt — 內容包含關鍵指示', () => {
     expect(prompt).toContain('event')
   })
 
-  it('要求只回 JSON 物件 / 唔好 markdown 圍欄', () => {
-    expect(prompt).toContain('JSON 物件')
+  it('要求只回 JSON 陣列（可多項）/ 唔好 markdown 圍欄', () => {
+    expect(prompt).toContain('JSON 陣列')
+    expect(prompt).toContain('拆成獨立項目')
     expect(prompt).toContain('```')
   })
 

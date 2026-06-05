@@ -7,6 +7,7 @@ import {
   ListTodo,
   Plus,
   Sparkles,
+  X,
 } from 'lucide-react'
 import { useToast } from '../../../context/ToastContext'
 import { useMode } from '../../../context/ModeContext'
@@ -18,6 +19,7 @@ import {
   Button,
   EmptyState,
   Field,
+  IconButton,
   Input,
   Modal,
   SegmentedControl,
@@ -91,14 +93,15 @@ export function QuickAddModal({ open, onClose }: QuickAddModalProps) {
   const [step, setStep] = useState<'input' | 'preview'>('input')
   const [text, setText] = useState('')
   const [busy, setBusy] = useState(false)
-  const [draft, setDraft] = useState<ParsedDraft | null>(null)
+  // 一段文字可拆出多項 → 多張預覽卡。
+  const [drafts, setDrafts] = useState<ParsedDraft[]>([])
 
   // 關閉時重設，下次開返乾淨一張（用喺 onClose 同成功加入後）
   const reset = () => {
     setStep('input')
     setText('')
     setBusy(false)
-    setDraft(null)
+    setDrafts([])
   }
   const close = () => {
     reset()
@@ -113,11 +116,11 @@ export function QuickAddModal({ open, onClose }: QuickAddModalProps) {
     setBusy(true)
     try {
       const parsed = await parseQuickAdd(input, mode)
-      if (parsed) {
-        setDraft(parsed)
+      if (parsed.length > 0) {
+        setDrafts(parsed)
       } else {
         toast.info('AI 分析唔到，已轉做手動填寫')
-        setDraft({ kind: 'task', title: input, mode })
+        setDrafts([{ kind: 'task', title: input, mode }])
       }
       setStep('preview')
     } catch (e) {
@@ -127,54 +130,58 @@ export function QuickAddModal({ open, onClose }: QuickAddModalProps) {
     }
   }
 
-  // 預覽卡欄位更新 helper（部分更新 draft）
-  const patch = (p: Partial<ParsedDraft>) =>
-    setDraft((d) => (d ? { ...d, ...p } : d))
+  // 預覽卡欄位更新（逐張，by index）
+  const patch = (i: number, p: Partial<ParsedDraft>) =>
+    setDrafts((ds) => ds.map((d, idx) => (idx === i ? { ...d, ...p } : d)))
 
-  // 步驟二：確認 → 按 kind 寫入對應 collection → toast +「檢視」→ 關閉
+  const removeDraft = (i: number) =>
+    setDrafts((ds) => ds.filter((_, idx) => idx !== i))
+
+  // 步驟二：全部加入 → 逐項按 kind 寫入對應 collection → toast → 關閉
   const commit = () => {
-    if (!draft) return
-    const title = draft.title.trim()
-    if (!title) {
+    const valid = drafts.filter((d) => d.title.trim())
+    if (valid.length === 0) {
       toast.error('請先填寫標題')
       return
     }
     const createdAt = new Date().toISOString()
-
-    if (draft.kind === 'task') {
-      tasksCol.add({ text: title, done: false, createdAt })
-    } else if (draft.kind === 'countdown') {
-      countdownsCol.add({
-        title,
-        date: draft.date ?? '',
-        time: draft.time || undefined,
-        category: draft.category,
-        mode: draft.mode,
-        notes: draft.notes,
-        createdAt,
+    for (const d of valid) {
+      const title = d.title.trim()
+      if (d.kind === 'task') {
+        tasksCol.add({ text: title, done: false, createdAt })
+      } else if (d.kind === 'countdown') {
+        countdownsCol.add({
+          title,
+          date: d.date ?? '',
+          time: d.time || undefined,
+          category: d.category,
+          mode: d.mode,
+          notes: d.notes,
+          createdAt,
+        })
+      } else {
+        eventsCol.add({
+          title,
+          date: d.date ?? '',
+          time: d.time || undefined,
+          endTime: d.endTime || undefined,
+          allDay: !d.time,
+          mode: d.mode,
+          notes: d.notes,
+        })
+      }
+    }
+    if (valid.length === 1) {
+      const meta = KIND_META[valid[0].kind]
+      toast.success(meta.toast, {
+        label: '檢視',
+        onClick: () => nav.open(meta.navId),
       })
     } else {
-      eventsCol.add({
-        title,
-        date: draft.date ?? '',
-        time: draft.time || undefined,
-        endTime: draft.endTime || undefined,
-        allDay: !draft.time,
-        mode: draft.mode,
-        notes: draft.notes,
-      })
+      toast.success(`已加入 ${valid.length} 項`)
     }
-
-    const meta = KIND_META[draft.kind]
-    toast.success(meta.toast, {
-      label: '檢視',
-      onClick: () => nav.open(meta.navId),
-    })
     close()
   }
-
-  // 提醒 / 行事曆冇日子時提示（仍可加，由用戶補；倒數頁會用空字串）
-  const needsDate = draft && draft.kind !== 'task' && !draft.date
 
   // ───────── 未接 AI：友善 gate（同題庫 AI 出題一致）─────────
   if (!isAIConfigured) {
@@ -274,91 +281,122 @@ export function QuickAddModal({ open, onClose }: QuickAddModalProps) {
             </Button>
           </div>
         </div>
-      ) : draft ? (
+      ) : (
         <div className="space-y-4">
-          {/* 類型切換 */}
-          <Field label="類型">
-            <SegmentedControl
-              options={KIND_OPTIONS}
-              value={draft.kind}
-              onChange={(kind) => patch({ kind })}
-            />
-          </Field>
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            AI 拆咗{' '}
+            <span className="font-semibold text-accent-strong dark:text-accent">
+              {drafts.length}
+            </span>{' '}
+            項，逐張可改類型／日期／時間、或剔走唔要嘅，確認後一次過加入。
+          </p>
 
-          <Field label="標題" required>
-            <Input
-              value={draft.title}
-              onChange={(e) => patch({ title: e.target.value })}
-              placeholder="例如：同 5A 家長開會"
-            />
-          </Field>
+          <div className="space-y-3">
+            {drafts.map((d, i) => {
+              const needsDate = d.kind !== 'task' && !d.date
+              return (
+                <div
+                  key={i}
+                  className="space-y-3 rounded-2xl border border-slate-200/80 bg-slate-50/50 p-3.5 dark:border-slate-700/70 dark:bg-slate-900/30"
+                >
+                  {/* 序號 + 類型切換 + 移除 */}
+                  <div className="flex items-center gap-2">
+                    <span className="nums flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent/15 text-[11px] font-bold text-accent-strong dark:text-accent">
+                      {i + 1}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <SegmentedControl
+                        options={KIND_OPTIONS}
+                        value={d.kind}
+                        onChange={(kind) => patch(i, { kind })}
+                      />
+                    </div>
+                    {drafts.length > 1 && (
+                      <IconButton
+                        label="移除呢項"
+                        size="sm"
+                        onClick={() => removeDraft(i)}
+                      >
+                        <X size={15} />
+                      </IconButton>
+                    )}
+                  </div>
 
-          {/* 待辦冇日期欄位；提醒 / 行事曆顯示日期 + 時間 */}
-          {draft.kind !== 'task' && (
-            <div className="grid gap-3 sm:grid-cols-2">
-              <Field
-                label="日期"
-                error={needsDate ? '請揀一個日子' : undefined}
-              >
-                <Input
-                  type="date"
-                  value={draft.date ?? ''}
-                  onChange={(e) => patch({ date: e.target.value || undefined })}
-                  invalid={!!needsDate}
-                />
-              </Field>
-              <Field label={draft.kind === 'event' ? '開始時間' : '時間（選填）'}>
-                <Input
-                  type="time"
-                  value={draft.time ?? ''}
-                  onChange={(e) => patch({ time: e.target.value || undefined })}
-                />
-              </Field>
-            </div>
-          )}
+                  <Field label="標題" required>
+                    <Input
+                      value={d.title}
+                      onChange={(e) => patch(i, { title: e.target.value })}
+                      placeholder="例如：同 5A 家長開會"
+                    />
+                  </Field>
 
-          {/* 行事曆：結束時間 */}
-          {draft.kind === 'event' && (
-            <Field label="結束時間（選填）">
-              <Input
-                type="time"
-                value={draft.endTime ?? ''}
-                onChange={(e) => patch({ endTime: e.target.value || undefined })}
-              />
-            </Field>
-          )}
+                  {/* 提醒 / 行事曆：日期 + 時間 */}
+                  {d.kind !== 'task' && (
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <Field
+                        label="日期"
+                        error={needsDate ? '請揀一個日子' : undefined}
+                      >
+                        <Input
+                          type="date"
+                          value={d.date ?? ''}
+                          onChange={(e) =>
+                            patch(i, { date: e.target.value || undefined })
+                          }
+                          invalid={needsDate}
+                        />
+                      </Field>
+                      <Field
+                        label={d.kind === 'event' ? '開始時間' : '時間（選填）'}
+                      >
+                        <Input
+                          type="time"
+                          value={d.time ?? ''}
+                          onChange={(e) =>
+                            patch(i, { time: e.target.value || undefined })
+                          }
+                        />
+                      </Field>
+                    </div>
+                  )}
 
-          {/* 提醒：分類 */}
-          {draft.kind === 'countdown' && (
-            <Field label="分類">
-              <Select
-                value={draft.category ?? ''}
-                onChange={(e) =>
-                  patch({
-                    category: (e.target.value || undefined) as
-                      | CountdownCategory
-                      | undefined,
-                  })
-                }
-              >
-                <option value="">未分類</option>
-                {CATEGORY_OPTIONS.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.label}
-                  </option>
-                ))}
-              </Select>
-            </Field>
-          )}
+                  {d.kind === 'event' && (
+                    <Field label="結束時間（選填）">
+                      <Input
+                        type="time"
+                        value={d.endTime ?? ''}
+                        onChange={(e) =>
+                          patch(i, { endTime: e.target.value || undefined })
+                        }
+                      />
+                    </Field>
+                  )}
 
-          <Field label="備註（選填）">
-            <Textarea
-              value={draft.notes ?? ''}
-              onChange={(e) => patch({ notes: e.target.value || undefined })}
-              placeholder="補充細節…"
-              rows={2}
-            />
-          </Field>
+                  {d.kind === 'countdown' && (
+                    <Field label="分類">
+                      <Select
+                        value={d.category ?? ''}
+                        onChange={(e) =>
+                          patch(i, {
+                            category: (e.target.value || undefined) as
+                              | CountdownCategory
+                              | undefined,
+                          })
+                        }
+                      >
+                        <option value="">未分類</option>
+                        {CATEGORY_OPTIONS.map((c) => (
+                          <option key={c.id} value={c.id}>
+                            {c.label}
+                          </option>
+                        ))}
+                      </Select>
+                    </Field>
+                  )}
+                </div>
+              )
+            })}
+          </div>
 
           <div className="flex flex-wrap justify-end gap-2 border-t border-slate-100 pt-4 dark:border-slate-700/60">
             <Button
@@ -371,12 +409,16 @@ export function QuickAddModal({ open, onClose }: QuickAddModalProps) {
             <Button variant="secondary" onClick={close}>
               取消
             </Button>
-            <Button icon={Plus} onClick={commit} disabled={!draft.title.trim()}>
-              加入{KIND_META[draft.kind].label}
+            <Button
+              icon={Plus}
+              onClick={commit}
+              disabled={!drafts.some((d) => d.title.trim())}
+            >
+              全部加入{drafts.length > 1 ? `（${drafts.length}）` : ''}
             </Button>
           </div>
         </div>
-      ) : null}
+      )}
     </Modal>
   )
 }
