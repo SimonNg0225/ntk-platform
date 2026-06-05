@@ -14,6 +14,7 @@ import {
   PlaneTakeoff,
   Pin,
   Plus,
+  Smartphone,
   Tag,
   Ticket,
   Trash2,
@@ -42,6 +43,7 @@ import {
   Textarea,
   cx,
 } from '../../ui'
+import CalendarSubscribe from './calendar/CalendarSubscribe'
 
 const WEEKDAYS = ['日', '一', '二', '三', '四', '五', '六'] as const
 
@@ -291,6 +293,8 @@ export default function Countdown() {
 
   // 新增 Modal 狀態
   const [modalOpen, setModalOpen] = useState(false)
+  // 訂閱到手機日曆 Modal
+  const [subscribeOpen, setSubscribeOpen] = useState(false)
   const [fTitle, setFTitle] = useState('')
   const [fDate, setFDate] = useState(todayKey)
   const [fTime, setFTime] = useState('')
@@ -614,14 +618,23 @@ export default function Countdown() {
                     : `${upcoming.length} 班「航班」候機中 · ${urgencyHint(nearestDays)}`}
               </p>
             </div>
-            <Button
-              variant="secondary"
-              icon={Plus}
-              onClick={openAddModal}
-              className="shrink-0 border-white/15 bg-white/10 text-white backdrop-blur hover:bg-white/20 dark:border-white/15 dark:bg-white/10 dark:text-white dark:hover:bg-white/20"
-            >
-              登記新航班
-            </Button>
+            <div className="flex shrink-0 flex-col items-stretch gap-2 sm:items-end">
+              <Button
+                variant="secondary"
+                icon={Plus}
+                onClick={openAddModal}
+                className="border-white/15 bg-white/10 text-white backdrop-blur hover:bg-white/20 dark:border-white/15 dark:bg-white/10 dark:text-white dark:hover:bg-white/20"
+              >
+                登記新航班
+              </Button>
+              <button
+                type="button"
+                onClick={() => setSubscribeOpen(true)}
+                className="inline-flex items-center justify-center gap-1.5 rounded-full border border-white/10 bg-white/[0.06] px-3 py-1.5 text-xs font-medium text-slate-300 backdrop-blur transition hover:bg-white/15 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
+              >
+                <Smartphone size={13} /> 訂閱到手機日曆
+              </button>
+            </div>
           </div>
 
           {/* 板底指標列（即將 / 最近 / 已抵達）— 翻牌字 + 標籤，取代三張一式 StatCard */}
@@ -942,6 +955,11 @@ export default function Countdown() {
           )
         })()}
       </Modal>
+
+      {/* 訂閱到手機日曆（webcal feed） */}
+      {subscribeOpen && (
+        <CalendarSubscribe onClose={() => setSubscribeOpen(false)} />
+      )}
     </div>
   )
 }

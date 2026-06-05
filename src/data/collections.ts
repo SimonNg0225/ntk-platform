@@ -98,6 +98,17 @@ export const tasksCol = createCollection<Task>('work_tasks', [
 // ───── 新一批功能 ─────
 export const eventsCol = createCollection<CalendarEvent>('events', [])
 
+// 訂閱式 .ics 日曆 feed 嘅 token（一行：{ id:'token', token }）。
+// 會 sync 上 Supabase（app_rows，collection='calendar_feed'），畀 Edge Function
+// calendar-feed 反查 user_id。token 由 crypto 隨機生成、可重新產生即失效舊連結。
+// 詳見 src/features/shared/calendar/calendarFeed.ts。
+export interface CalendarFeedToken extends Entity {
+  /** 永遠係 'token'（單行）。 */
+  id: string
+  token: string
+}
+export const calendarFeedCol = createCollection<CalendarFeedToken>('calendar_feed', [])
+
 // 行事曆分類（多個有色行事曆，可開關）
 export const calendarsCol = createCollection<CalendarCategory>('calendars', [
   { id: 'cal-personal', name: '個人', color: 'accent', visible: true, createdAt: new Date().toISOString() },

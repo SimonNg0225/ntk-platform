@@ -10,8 +10,14 @@ import {
   wrapCalendar,
   buildICS,
   exportStamp,
+  recurrenceToRRule,
 } from './ics'
-import type { CalendarEvent, CalendarCategory, Countdown } from '../../../data/types'
+import type {
+  CalendarEvent,
+  CalendarCategory,
+  Countdown,
+  RecurrenceRule,
+} from '../../../data/types'
 
 // ────────────────────────────────────────────────────────────
 //  匯出 .ics 純函式測試。
@@ -173,7 +179,7 @@ describe('eventsToVevents（可見事件 → VEVENT，重複展開）', () => {
     expect(text).not.toContain('SUMMARY:唔出')
   })
 
-  it('每日重複展開：範圍內每日一個 VEVENT', () => {
+  it('每日重複：出單一 master VEVENT + RRULE（唔展開逐日，交畀行事曆 app）', () => {
     const out = eventsToVevents(
       [
         ev({
@@ -186,14 +192,60 @@ describe('eventsToVevents（可見事件 → VEVENT，重複展開）', () => {
       ],
       cats,
       '2026-05-01',
-      '2026-05-05', // 含頭含尾 5 日
+      '2026-05-05', // 範圍唔再框重複事件（RRULE 由 app 無限展開）
       dtstamp,
     )
     const begins = out.filter((l) => l === 'BEGIN:VEVENT').length
-    expect(begins).toBe(5)
+    expect(begins).toBe(1) // 一條 master，唔再展開做 5 個
     const text = out.join('\n')
-    expect(text).toContain('DTSTART;VALUE=DATE:20260501')
-    expect(text).toContain('DTSTART;VALUE=DATE:20260505')
+    expect(text).toContain('DTSTART;VALUE=DATE:20260501') // 錨定 series 開始日
+    expect(text).toContain('RRULE:FREQ=DAILY')
+    expect(text).not.toContain('DTSTART;VALUE=DATE:20260505') // 唔再有逐日 occurrence
+  })
+
+  it('重複事件 master 錨定 ev.date，唔受 startKey 影響（RRULE 模式無視範圍）', () => {
+    // 範圍由 5/10 起，但 series 開始日 5/01 → master 仍錨 5/01。
+    const out = eventsToVevents(
+      [
+        ev({
+          id: 'wk',
+          title: '週會',
+          date: '2026-05-01',
+          time: '09:00',
+          endTime: '10:00',
+          recurrence: { freq: 'weekly', interval: 1, byWeekday: [1, 3, 5] },
+        }),
+      ],
+      cats,
+      '2026-05-10',
+      '2026-05-31',
+      dtstamp,
+    )
+    const text = out.join('\n')
+    expect(out.filter((l) => l === 'BEGIN:VEVENT').length).toBe(1)
+    expect(text).toContain('DTSTART:20260501T090000')
+    expect(text).toContain('RRULE:FREQ=WEEKLY;BYDAY=MO,WE,FR')
+  })
+
+  it('重複事件 exDates → EXDATE（全日用 VALUE=DATE）', () => {
+    const out = eventsToVevents(
+      [
+        ev({
+          id: 'rx',
+          title: '晨會',
+          date: '2026-05-01',
+          allDay: true,
+          recurrence: { freq: 'daily', interval: 1 },
+          exDates: ['2026-05-03', '2026-05-04'],
+        }),
+      ],
+      cats,
+      '2026-05-01',
+      '2026-05-31',
+      dtstamp,
+    )
+    const text = out.join('\n')
+    expect(text).toContain('EXDATE;VALUE=DATE:20260503,20260504')
   })
 
   it('排序穩定：日期升序（先 1 號後 3 號）', () => {
@@ -418,5 +470,101 @@ describe('buildICS（主入口整合）', () => {
 describe('exportStamp（檔名日期戳，本地）', () => {
   it('回本地 YYYY-MM-DD', () => {
     expect(exportStamp(new Date(2026, 4, 4, 23, 59, 0))).toBe('2026-05-04')
+  })
+})
+
+describe('recurrenceToRRule（RecurrenceRule → RFC 5545 RRULE 值）', () => {
+  const rec = (p: Partial<RecurrenceRule>): RecurrenceRule =>
+    ({ freq: 'none', ...p }) as RecurrenceRule
+
+  it('無 recurrence → 空字串（呼叫端唔出 RRULE 行）', () => {
+    expect(recurrenceToRRule(undefined)).toBe('')
+  })
+
+  it('freq = none → 空字串', () => {
+    expect(recurrenceToRRule(rec({ freq: 'none' }))).toBe('')
+  })
+
+  it('每日（daily）→ FREQ=DAILY，interval=1 唔出 INTERVAL', () => {
+    expect(recurrenceToRRule(rec({ freq: 'daily', interval: 1 }))).toBe('FREQ=DAILY')
+  })
+
+  it('每日無 interval → 預設 1（仍唔出 INTERVAL）', () => {
+    expect(recurrenceToRRule(rec({ freq: 'daily' }))).toBe('FREQ=DAILY')
+  })
+
+  it('interval > 1 → 出 INTERVAL（每 3 日）', () => {
+    expect(recurrenceToRRule(rec({ freq: 'daily', interval: 3 }))).toBe(
+      'FREQ=DAILY;INTERVAL=3',
+    )
+  })
+
+  it('每週 + byWeekday → BYDAY（0=SU..6=SA），跟 0..6 升序', () => {
+    // [5,1,3] = 五一三 → 升序 1,3,5 → MO,WE,FR
+    expect(recurrenceToRRule(rec({ freq: 'weekly', interval: 1, byWeekday: [5, 1, 3] }))).toBe(
+      'FREQ=WEEKLY;BYDAY=MO,WE,FR',
+    )
+  })
+
+  it('每週逢日（0）→ BYDAY=SU；逢六（6）→ BYDAY=SA', () => {
+    expect(recurrenceToRRule(rec({ freq: 'weekly', byWeekday: [0] }))).toBe(
+      'FREQ=WEEKLY;BYDAY=SU',
+    )
+    expect(recurrenceToRRule(rec({ freq: 'weekly', byWeekday: [6] }))).toBe(
+      'FREQ=WEEKLY;BYDAY=SA',
+    )
+  })
+
+  it('每 2 週 + byWeekday → INTERVAL 同 BYDAY 都出', () => {
+    expect(recurrenceToRRule(rec({ freq: 'weekly', interval: 2, byWeekday: [1] }))).toBe(
+      'FREQ=WEEKLY;INTERVAL=2;BYDAY=MO',
+    )
+  })
+
+  it('weekly 無 byWeekday → 淨 FREQ=WEEKLY（無 BYDAY）', () => {
+    expect(recurrenceToRRule(rec({ freq: 'weekly', interval: 1 }))).toBe('FREQ=WEEKLY')
+  })
+
+  it('byWeekday 去重 + 過濾越界（-1 / 7 唔計）', () => {
+    expect(
+      recurrenceToRRule(rec({ freq: 'weekly', byWeekday: [1, 1, 7, -1, 3] })),
+    ).toBe('FREQ=WEEKLY;BYDAY=MO,WE')
+  })
+
+  it('byWeekday 全部越界 → 唔出 BYDAY（淨 FREQ）', () => {
+    expect(recurrenceToRRule(rec({ freq: 'weekly', byWeekday: [9, -2] }))).toBe('FREQ=WEEKLY')
+  })
+
+  it('until（YYYY-MM-DD）→ UNTIL=YYYYMMDD', () => {
+    expect(recurrenceToRRule(rec({ freq: 'daily', until: '2026-12-31' }))).toBe(
+      'FREQ=DAILY;UNTIL=20261231',
+    )
+  })
+
+  it('until 畸形 → 唔出 UNTIL', () => {
+    expect(recurrenceToRRule(rec({ freq: 'daily', until: '2026-13-40' }))).toBe('FREQ=DAILY')
+  })
+
+  it('count > 0 → COUNT=n', () => {
+    expect(recurrenceToRRule(rec({ freq: 'weekly', count: 10 }))).toBe('FREQ=WEEKLY;COUNT=10')
+  })
+
+  it('count = 0 → 唔出 COUNT', () => {
+    expect(recurrenceToRRule(rec({ freq: 'weekly', count: 0 }))).toBe('FREQ=WEEKLY')
+  })
+
+  it('monthly / yearly：FREQ 正確映射', () => {
+    expect(recurrenceToRRule(rec({ freq: 'monthly', interval: 2 }))).toBe(
+      'FREQ=MONTHLY;INTERVAL=2',
+    )
+    expect(recurrenceToRRule(rec({ freq: 'yearly' }))).toBe('FREQ=YEARLY')
+  })
+
+  it('順序固定：FREQ;INTERVAL;BYDAY;UNTIL;COUNT（可重現）', () => {
+    expect(
+      recurrenceToRRule(
+        rec({ freq: 'weekly', interval: 2, byWeekday: [1, 5], until: '2026-12-31', count: 8 }),
+      ),
+    ).toBe('FREQ=WEEKLY;INTERVAL=2;BYDAY=MO,FR;UNTIL=20261231;COUNT=8')
   })
 })

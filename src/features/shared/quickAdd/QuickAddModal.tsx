@@ -6,6 +6,7 @@ import {
   CalendarDays,
   ListTodo,
   Plus,
+  Repeat,
   Sparkles,
   X,
 } from 'lucide-react'
@@ -26,7 +27,12 @@ import {
   Select,
   Textarea,
 } from '../../../ui'
-import { parseQuickAdd, type ParsedDraft, type QuickAddKind } from './parse'
+import {
+  parseQuickAdd,
+  type ParsedDraft,
+  type QuickAddKind,
+  type RecurrenceDraft,
+} from './parse'
 
 // ============================================================
 //  QuickAddModal — 全域「快速加入」（AI 一鍵自然語言 → 三類）
@@ -78,6 +84,32 @@ const CATEGORY_OPTIONS: { id: CountdownCategory; label: string }[] = [
   { id: 'event', label: '活動' },
   { id: 'other', label: '其他' },
 ]
+
+// 重複（只限 event 卡）：none / 每日 / 每週。'' = 不重複。
+type RecFreqOption = '' | 'daily' | 'weekly'
+const RECURRENCE_OPTIONS: { id: RecFreqOption; label: string }[] = [
+  { id: '', label: '不重複' },
+  { id: 'daily', label: '每日' },
+  { id: 'weekly', label: '每週' },
+]
+
+const WEEKDAY_LABELS = ['日', '一', '二', '三', '四', '五', '六'] as const
+
+/** 把 RecurrenceDraft 講成中文一句（卡上 Badge 用）。 */
+function recurrenceDraftLabel(rec: RecurrenceDraft): string {
+  const n = Math.max(1, rec.interval ?? 1)
+  if (rec.freq === 'daily') return n === 1 ? '每日' : `每 ${n} 日`
+  // weekly
+  const base = n === 1 ? '每週' : `每 ${n} 週`
+  if (rec.byWeekday && rec.byWeekday.length) {
+    const names = [...rec.byWeekday]
+      .sort((a, b) => a - b)
+      .map((d) => WEEKDAY_LABELS[d])
+      .join('')
+    return `${base} ${names}`
+  }
+  return base
+}
 
 const EXAMPLES = [
   '下星期三 3pm 同 5A 家長開會',
@@ -168,6 +200,18 @@ export function QuickAddModal({ open, onClose }: QuickAddModalProps) {
           allDay: !d.time,
           mode: d.mode,
           notes: d.notes,
+          // 重複偵測：RecurrenceDraft → RecurrenceRule（只填 freq/interval/byWeekday，其餘留空）
+          ...(d.recurrence
+            ? {
+                recurrence: {
+                  freq: d.recurrence.freq,
+                  interval: d.recurrence.interval ?? 1,
+                  ...(d.recurrence.freq === 'weekly' && d.recurrence.byWeekday?.length
+                    ? { byWeekday: d.recurrence.byWeekday }
+                    : {}),
+                },
+              }
+            : {}),
         })
       }
     }
@@ -369,6 +413,38 @@ export function QuickAddModal({ open, onClose }: QuickAddModalProps) {
                           patch(i, { endTime: e.target.value || undefined })
                         }
                       />
+                    </Field>
+                  )}
+
+                  {/* 行事曆：重複（AI 偵測「每日 / 逢週X」等；可改 不重複/每日/每週）*/}
+                  {d.kind === 'event' && (
+                    <Field label="重複">
+                      <SegmentedControl
+                        options={RECURRENCE_OPTIONS}
+                        value={(d.recurrence?.freq ?? '') as RecFreqOption}
+                        onChange={(freq) => {
+                          if (!freq) {
+                            patch(i, { recurrence: undefined })
+                            return
+                          }
+                          const prev = d.recurrence
+                          const next: RecurrenceDraft = {
+                            freq,
+                            interval: prev?.interval ?? 1,
+                            // 由每週切走再切返時，保留 AI 偵測到嘅星期幾
+                            ...(freq === 'weekly' && prev?.byWeekday?.length
+                              ? { byWeekday: prev.byWeekday }
+                              : {}),
+                          }
+                          patch(i, { recurrence: next })
+                        }}
+                      />
+                      {d.recurrence && (
+                        <span className="mt-2 inline-flex items-center gap-1 rounded-full bg-accent/15 px-2.5 py-1 text-[11px] font-semibold text-accent-strong dark:text-accent">
+                          <Repeat size={12} />
+                          {recurrenceDraftLabel(d.recurrence)}
+                        </span>
+                      )}
                     </Field>
                   )}
 

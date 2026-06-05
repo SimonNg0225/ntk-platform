@@ -24,6 +24,20 @@ import type { CountdownCategory } from '../../../data/types'
 
 export type QuickAddKind = 'task' | 'countdown' | 'event'
 
+/**
+ * quick-add 簡化版重複規則（只限 event）。
+ * 對應 data/types 的 RecurrenceRule，但只暴露最常見嘅 daily / weekly：
+ *  · freq      —— 'daily' | 'weekly'
+ *  · interval  —— 每 N 日/週（正整數，預設 1）
+ *  · byWeekday —— 每週重複時指定星期幾（0=日…6=六）；daily 唔需要
+ * commit 寫入時會補成完整 RecurrenceRule（其餘欄位留空）。
+ */
+export interface RecurrenceDraft {
+  freq: 'daily' | 'weekly'
+  interval?: number
+  byWeekday?: number[]
+}
+
 export interface ParsedDraft {
   kind: QuickAddKind
   title: string
@@ -31,6 +45,7 @@ export interface ParsedDraft {
   time?: string // HH:mm
   endTime?: string // HH:mm
   category?: CountdownCategory
+  recurrence?: RecurrenceDraft // 只限 event；無重複講法時 undefined
   notes?: string
   mode: 'learning' | 'work'
 }
@@ -79,9 +94,17 @@ export function buildQuickAddPrompt(
     '· date 格式必須係 "YYYY-MM-DD"；time / endTime 格式必須係 24 小時制 "HH:mm"（例如下午3點 = "15:00"）。',
     '· 解唔到嘅欄位一律填 null（唔好亂估）。title 用繁體中文、精煉，唔好包含日期 / 時間字眼。',
     '',
+    '重複規則（recurrence，只限 kind = "event"；其他類一律 null）：',
+    '· 偵測到重複講法先填，否則一律 null（唔好亂估）。',
+    '· 「每日 / 每朝 / 每晚 / 日日」→ {"freq":"daily","interval":1}。',
+    '· 「每兩日 / 隔日」→ {"freq":"daily","interval":2}。',
+    '· 「每週 / 每星期 / 每個禮拜」（無指明星期幾）→ {"freq":"weekly","interval":1}。',
+    '· 「每週一 / 逢星期五 / 逢一三五」→ {"freq":"weekly","interval":1,"byWeekday":[...]}，byWeekday 用數字（0=日,1=一,2=二,3=三,4=四,5=五,6=六）。',
+    '· interval 係正整數（每 N 日/週，預設 1）；byWeekday 只喺 weekly 用，daily 唔好填。',
+    '',
     '若輸入包含多件事（多個時間／多項任務／用逗號、頓號、換行分隔），請逐件拆成獨立項目，每件一個物件、各自獨立分類同抽日期時間。',
     '只回一個 JSON 陣列（唔好有任何解說文字，唔好用 markdown，唔好加 ``` 圍欄）；只有一件事就回單元素陣列。每個元素格式如下：',
-    '{"kind":"task|countdown|event","title":"...","date":"YYYY-MM-DD|null","time":"HH:mm|null","endTime":"HH:mm|null","category":"exam|deadline|assessment|event|other|null","notes":"...|null"}',
+    '{"kind":"task|countdown|event","title":"...","date":"YYYY-MM-DD|null","time":"HH:mm|null","endTime":"HH:mm|null","category":"exam|deadline|assessment|event|other|null","recurrence":{"freq":"daily|weekly","interval":1,"byWeekday":[1,3]}|null,"notes":"...|null"}',
     '',
     `用戶輸入：\n${text}`,
   ].join('\n')
@@ -133,6 +156,46 @@ function normCategory(v: unknown): CountdownCategory | undefined {
     : undefined
 }
 
+const REC_FREQS = ['daily', 'weekly'] as const
+
+/**
+ * 正規化 AI 回嘅 recurrence raw（**唔信格式**；唔合法整體 drop → undefined）：
+ *  · 必須係物件；null / 非物件 / 陣列 → undefined。
+ *  · freq 限白名單 {daily, weekly}（大細階不敏感）；唔啱 → undefined（整體 drop）。
+ *  · interval 正規化成正整數，預設 1（非數字 / ≤0 / 非整數 → 1）。
+ *  · byWeekday 只喺 weekly 保留：限 0..6 整數、去重、升序；過濾後全空 → 唔帶呢欄。
+ *    daily 一律唔帶 byWeekday。
+ */
+function normRecurrence(v: unknown): RecurrenceDraft | undefined {
+  if (v === null || typeof v !== 'object' || Array.isArray(v)) return undefined
+  const o = v as Record<string, unknown>
+
+  const freq = asStr(o.freq).toLowerCase()
+  if (!(REC_FREQS as readonly string[]).includes(freq)) return undefined
+
+  const out: RecurrenceDraft = { freq: freq as RecurrenceDraft['freq'] }
+
+  const rawInterval = o.interval
+  const interval =
+    typeof rawInterval === 'number' && Number.isFinite(rawInterval)
+      ? Math.floor(rawInterval)
+      : 1
+  out.interval = interval >= 1 ? interval : 1
+
+  if (out.freq === 'weekly' && Array.isArray(o.byWeekday)) {
+    const days = [
+      ...new Set(
+        (o.byWeekday as unknown[])
+          .map((d) => (typeof d === 'number' ? Math.floor(d) : NaN))
+          .filter((d) => Number.isInteger(d) && d >= 0 && d <= 6),
+      ),
+    ].sort((a, b) => a - b)
+    if (days.length) out.byWeekday = days
+  }
+
+  return out
+}
+
 /**
  * 將 AI 回嘅 raw 物件容錯解析成 ParsedDraft（**純函數，唔 call AI**）。
  *  · raw 唔係物件 → null
@@ -141,6 +204,7 @@ function normCategory(v: unknown): CountdownCategory | undefined {
  *  · date 正規化成 YYYY-MM-DD（唔啱 → undefined）
  *  · time / endTime 正規化成 HH:mm（唔啱 → undefined）
  *  · category 只接受合法值（唔啱 → undefined）
+ *  · recurrence 只喺 kind=event 正規化（normRecurrence；唔合法 → 唔帶）
  *  · event 缺 time 仍可（allDay 由寫入層按 !time 決定，唔喺呢度）
  * date / mode 由呼叫端傳入（today 暫時無用到，預留將來「相對日期
  * 後備正規化」需要，故保留簽名一致）。
@@ -174,6 +238,12 @@ export function toDraft(
 
   const category = normCategory(o.category)
   if (category) draft.category = category
+
+  // recurrence 只限 event（重複只對行事曆事件有意義）
+  if (kind === 'event') {
+    const recurrence = normRecurrence(o.recurrence)
+    if (recurrence) draft.recurrence = recurrence
+  }
 
   const notes = asStr(o.notes)
   if (notes) draft.notes = notes

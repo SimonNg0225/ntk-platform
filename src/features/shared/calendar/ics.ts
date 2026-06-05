@@ -2,6 +2,7 @@ import type {
   CalendarEvent,
   CalendarCategory,
   Countdown,
+  RecurrenceRule,
 } from '../../../data/types'
 import { fromKey, getOccurrences, isAllDay, minutesOf, toKey } from './util'
 
@@ -42,6 +43,73 @@ export function toICSDateTime(key: string, time: string): string {
   const hh = String(Number(h) || 0).padStart(2, '0')
   const mm = String(Number(mi) || 0).padStart(2, '0')
   return `${d}T${hh}${mm}00`
+}
+
+// ───────── RRULE（重複規則 → RFC 5545 行）─────────
+
+/** 0=日…6=六 → iCal BYDAY 代碼（SU,MO,TU,WE,TH,FR,SA）。 */
+const RRULE_FREQ: Record<RecurrenceRule['freq'], string> = {
+  none: '',
+  daily: 'DAILY',
+  weekly: 'WEEKLY',
+  monthly: 'MONTHLY',
+  yearly: 'YEARLY',
+}
+const BYDAY_CODES = ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'] as const
+
+/**
+ * 把 RecurrenceRule.until（YYYY-MM-DD）轉做 RRULE UNTIL 值（YYYYMMDD）；
+ * 畸形或唔係真實日子（如 2026-13-40）→ ''（呼叫端唔出 UNTIL）。
+ * toICSDate 只校驗形狀，故呢度額外用 Date 確認月/日真實，免污染 feed。
+ */
+function rruleUntil(until: string): string {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(until)
+  if (!m) return ''
+  const y = Number(m[1])
+  const mo = Number(m[2])
+  const d = Number(m[3])
+  if (mo < 1 || mo > 12 || d < 1 || d > 31) return ''
+  const dt = new Date(y, mo - 1, d)
+  if (dt.getFullYear() !== y || dt.getMonth() !== mo - 1 || dt.getDate() !== d) return ''
+  return `${m[1]}${m[2]}${m[3]}`
+}
+
+/**
+ * 由 CalendarEvent.recurrence 砌一條 RRULE 值（唔含 "RRULE:" 前綴）。
+ *  · freq = none / 無 recurrence → 回 ''（呼叫端唔出 RRULE 行）。
+ *  · 永遠輸出 FREQ；interval > 1 先輸出 INTERVAL（=1 係預設，慳行）。
+ *  · weekly + byWeekday → BYDAY=SU,MO,…（去重、跟 0..6 升序，過濾越界）。
+ *  · until（YYYY-MM-DD）→ UNTIL=YYYYMMDD；同時有 count 時兩者都會出（RFC 5545
+ *    建議二擇一，但呢度尊重資料；UI 一般只設其一）。
+ *  · count > 0 → COUNT=n。
+ * 順序固定 FREQ;INTERVAL;BYDAY;UNTIL;COUNT，令輸出可重現（方便測試 / diff）。
+ */
+export function recurrenceToRRule(rec?: RecurrenceRule): string {
+  if (!rec || rec.freq === 'none') return ''
+  const freq = RRULE_FREQ[rec.freq]
+  if (!freq) return ''
+  const parts: string[] = [`FREQ=${freq}`]
+
+  const interval = Math.floor(rec.interval ?? 1)
+  if (Number.isFinite(interval) && interval > 1) parts.push(`INTERVAL=${interval}`)
+
+  if (rec.freq === 'weekly' && rec.byWeekday && rec.byWeekday.length) {
+    const codes = [...new Set(rec.byWeekday)]
+      .filter((d) => Number.isInteger(d) && d >= 0 && d <= 6)
+      .sort((a, b) => a - b)
+      .map((d) => BYDAY_CODES[d])
+    if (codes.length) parts.push(`BYDAY=${codes.join(',')}`)
+  }
+
+  if (rec.until) {
+    const u = rruleUntil(rec.until)
+    if (u) parts.push(`UNTIL=${u}`)
+  }
+  if (typeof rec.count === 'number' && Number.isFinite(rec.count) && rec.count > 0) {
+    parts.push(`COUNT=${Math.floor(rec.count)}`)
+  }
+
+  return parts.join(';')
 }
 
 /** 由 DATE key 推下一日（給 all-day VEVENT 嘅 DTEND，iCal 用 exclusive end）。 */
@@ -100,6 +168,10 @@ function veventLines(opts: {
   location?: string
   url?: string
   alertMinutes?: number
+  /** 重複規則值（已由 recurrenceToRRule 砌好，唔含 "RRULE:" 前綴）；空 = 唔出。 */
+  rrule?: string
+  /** 被刪 / 改走嘅 occurrence（YYYY-MM-DD）；只喺 master VEVENT 出 EXDATE。 */
+  exDates?: string[]
 }): string[] {
   const lines: string[] = ['BEGIN:VEVENT', `UID:${opts.uid}`, `DTSTAMP:${opts.dtstamp}`]
   if (opts.allDay) {
@@ -108,6 +180,23 @@ function veventLines(opts: {
   } else {
     lines.push(`DTSTART:${opts.dtstart}`)
     lines.push(`DTEND:${opts.dtend}`)
+  }
+  if (opts.rrule) lines.push(`RRULE:${opts.rrule}`)
+  if (opts.exDates && opts.exDates.length) {
+    // EXDATE 對齊 DTSTART 嘅 VALUE 類型：全日用 DATE、有時間用 DATE-TIME。
+    const ds = [...new Set(opts.exDates)]
+      .map((k) => toICSDate(k))
+      .filter(Boolean)
+      .sort()
+    if (ds.length) {
+      if (opts.allDay) {
+        lines.push(`EXDATE;VALUE=DATE:${ds.join(',')}`)
+      } else {
+        // 用 master 嘅時分（由 dtstart 尾段 THHMMSS 取）。
+        const t = opts.dtstart.includes('T') ? opts.dtstart.slice(opts.dtstart.indexOf('T')) : ''
+        lines.push(`EXDATE:${ds.map((d) => `${d}${t}`).join(',')}`)
+      }
+    }
   }
   lines.push(`SUMMARY:${escapeICSText(opts.summary)}`)
   if (opts.location?.trim()) lines.push(`LOCATION:${escapeICSText(opts.location.trim())}`)
@@ -127,10 +216,63 @@ function veventLines(opts: {
   return lines
 }
 
+/** 事件有冇「真正」嘅重複（recurrence 存在且 freq 唔係 none）。 */
+function hasRecurrence(ev: CalendarEvent): boolean {
+  return !!ev.recurrence && ev.recurrence.freq !== 'none'
+}
+
 /**
- * 把可見事件（展開所有 occurrence）轉成 VEVENT 行。
- * 尊重行事曆開關（隱藏行事曆嘅事件唔出）—— 直接借用 getOccurrences 嘅過濾邏輯。
- * 範圍由 [startKey, endKey]（YYYY-MM-DD）框住，避免無限重複爆檔。
+ * 砌「重複事件」嘅單一 master VEVENT（帶 RRULE）。錨定喺事件本身嘅
+ * ev.date（= series 真正開始日），唔展開逐個 occurrence —— 交畀行事曆
+ * app 按 RRULE 自行展開（Apple/Google 訂閱式 feed 需要係樣，先會永續彈提醒）。
+ * exDates → EXDATE。range 喺呢條路徑唔適用（RRULE 由 app 無限展開）。
+ */
+function recurringMasterLines(
+  ev: CalendarEvent,
+  catName: string | undefined,
+  dtstamp: string,
+): string[] {
+  const allDay = isAllDay(ev)
+  const descParts = [ev.notes?.trim(), catName ? `行事曆：${catName}` : '']
+    .filter(Boolean)
+    .join('\n')
+  const rrule = recurrenceToRRule(ev.recurrence)
+  const common = {
+    uid: uidFor('ev', ev.id, ev.date),
+    dtstamp,
+    summary: ev.title,
+    description: descParts || undefined,
+    location: ev.location,
+    url: ev.url,
+    alertMinutes: ev.alertMinutes,
+    rrule,
+    exDates: ev.exDates,
+  }
+  if (allDay) {
+    return veventLines({
+      ...common,
+      dtstart: toICSDate(ev.date),
+      dtend: toICSDate(nextDayKey(ev.date)),
+      allDay: true,
+    })
+  }
+  const time = ev.time as string
+  return veventLines({
+    ...common,
+    dtstart: toICSDateTime(ev.date, time),
+    dtend: endDateTime(ev.date, time, durationMinutes(ev)),
+    allDay: false,
+  })
+}
+
+/**
+ * 把可見事件轉成 VEVENT 行。
+ * 兩條路徑：
+ *  · 重複事件（recurrence.freq !== 'none'）→ 單一 master VEVENT + RRULE
+ *    （錨定 series 開始日，交畀行事曆 app 按 RRULE 無限展開；EXDATE 帶被刪日）。
+ *  · 非重複事件 → 沿用範圍展開（getOccurrences 逐個 occurrence 出一個 VEVENT）。
+ * 兩者都尊重行事曆開關（隱藏行事曆嘅事件唔出）。
+ * 範圍 [startKey, endKey]（YYYY-MM-DD）只框住非重複路徑，避免無限爆檔。
  */
 export function eventsToVevents(
   events: CalendarEvent[],
@@ -139,8 +281,34 @@ export function eventsToVevents(
   endKey: string,
   dtstamp: string,
 ): string[] {
+  const catById = new Map(cats.map((c) => [c.id, c]))
+  const isVisible = (ev: CalendarEvent): boolean => {
+    const cat = ev.calendarId ? catById.get(ev.calendarId) : undefined
+    return !(cat && !cat.visible)
+  }
+  const catNameOf = (ev: CalendarEvent): string | undefined =>
+    ev.calendarId ? catById.get(ev.calendarId)?.name : undefined
+
   const out: string[] = []
-  const occ = getOccurrences(events, cats, startKey, endKey)
+
+  // ── 路徑一：重複事件 → master + RRULE（每事件一條，唔展開）──
+  const recurring = events
+    .filter((ev) => hasRecurrence(ev) && isVisible(ev))
+    .slice()
+    .sort((a, b) => {
+      if (a.date !== b.date) return a.date < b.date ? -1 : 1
+      const ta = a.time ?? ''
+      const tb = b.time ?? ''
+      if (ta !== tb) return ta < tb ? -1 : 1
+      return a.title.localeCompare(b.title)
+    })
+  for (const ev of recurring) {
+    out.push(...recurringMasterLines(ev, catNameOf(ev), dtstamp))
+  }
+
+  // ── 路徑二：非重複事件 → 範圍展開（沿用 getOccurrences 邏輯）──
+  const single = events.filter((ev) => !hasRecurrence(ev))
+  const occ = getOccurrences(single, cats, startKey, endKey)
   // 穩定排序：日期 → 時間 → 標題，令匯出檔可重現（方便 diff / 重匯）。
   occ.sort((a, b) => {
     if (a.dateKey !== b.dateKey) return a.dateKey < b.dateKey ? -1 : 1

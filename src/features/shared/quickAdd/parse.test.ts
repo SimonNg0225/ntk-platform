@@ -315,6 +315,201 @@ describe('toDraft — 亂格式 / 非物件 → null', () => {
   })
 })
 
+describe('toDraft — recurrence 正規化（只限 event）', () => {
+  it('event + 每日：{freq:daily,interval:1} 保留', () => {
+    const d = toDraft(
+      {
+        kind: 'event',
+        title: '晨會',
+        date: '2026-06-10',
+        time: '09:00',
+        recurrence: { freq: 'daily', interval: 1 },
+      },
+      'work',
+      TODAY,
+    )
+    expect(d?.recurrence).toEqual({ freq: 'daily', interval: 1 })
+  })
+
+  it('event + 每週逢一三五：byWeekday 去重 + 升序保留', () => {
+    const d = toDraft(
+      {
+        kind: 'event',
+        title: '週會',
+        date: '2026-06-10',
+        time: '09:00',
+        recurrence: { freq: 'weekly', interval: 1, byWeekday: [5, 1, 3, 1] },
+      },
+      'work',
+      TODAY,
+    )
+    expect(d?.recurrence).toEqual({ freq: 'weekly', interval: 1, byWeekday: [1, 3, 5] })
+  })
+
+  it('interval 缺 → 預設 1', () => {
+    const d = toDraft(
+      { kind: 'event', title: 'x', date: '2026-06-10', recurrence: { freq: 'daily' } },
+      'work',
+      TODAY,
+    )
+    expect(d?.recurrence).toEqual({ freq: 'daily', interval: 1 })
+  })
+
+  it('interval 非正 / 非整數 → 夾返 1（0 → 1、2.9 → 2）', () => {
+    const zero = toDraft(
+      { kind: 'event', title: 'x', date: '2026-06-10', recurrence: { freq: 'daily', interval: 0 } },
+      'work',
+      TODAY,
+    )
+    expect(zero?.recurrence?.interval).toBe(1)
+    const frac = toDraft(
+      {
+        kind: 'event',
+        title: 'x',
+        date: '2026-06-10',
+        recurrence: { freq: 'daily', interval: 2.9 },
+      },
+      'work',
+      TODAY,
+    )
+    expect(frac?.recurrence?.interval).toBe(2)
+  })
+
+  it('非法 freq（monthly / 亂字串）→ 整體 drop（undefined）', () => {
+    const monthly = toDraft(
+      {
+        kind: 'event',
+        title: 'x',
+        date: '2026-06-10',
+        recurrence: { freq: 'monthly', interval: 1 },
+      },
+      'work',
+      TODAY,
+    )
+    expect(monthly?.recurrence).toBeUndefined()
+    const junk = toDraft(
+      { kind: 'event', title: 'x', date: '2026-06-10', recurrence: { freq: '每日' } },
+      'work',
+      TODAY,
+    )
+    expect(junk?.recurrence).toBeUndefined()
+  })
+
+  it('byWeekday 全部越界 / 非數字 → 唔帶 byWeekday', () => {
+    // 7、-1 越界；'1'（字串）非 number；NaN → 全部過濾走
+    const d = toDraft(
+      {
+        kind: 'event',
+        title: 'x',
+        date: '2026-06-10',
+        recurrence: { freq: 'weekly', byWeekday: [7, -1, '1', NaN] },
+      },
+      'work',
+      TODAY,
+    )
+    expect(d?.recurrence).toEqual({ freq: 'weekly', interval: 1 })
+    expect(d?.recurrence?.byWeekday).toBeUndefined()
+  })
+
+  it('byWeekday 小數會 floor（2.7 → 2，仍合法保留）', () => {
+    const d = toDraft(
+      {
+        kind: 'event',
+        title: 'x',
+        date: '2026-06-10',
+        recurrence: { freq: 'weekly', byWeekday: [2.7] },
+      },
+      'work',
+      TODAY,
+    )
+    expect(d?.recurrence?.byWeekday).toEqual([2])
+  })
+
+  it('byWeekday 部分越界 → 只保留合法（[1,7,5] → [1,5]）', () => {
+    const d = toDraft(
+      {
+        kind: 'event',
+        title: 'x',
+        date: '2026-06-10',
+        recurrence: { freq: 'weekly', byWeekday: [1, 7, 5] },
+      },
+      'work',
+      TODAY,
+    )
+    expect(d?.recurrence?.byWeekday).toEqual([1, 5])
+  })
+
+  it('daily 帶 byWeekday → 一律唔保留 byWeekday（只 weekly 用）', () => {
+    const d = toDraft(
+      {
+        kind: 'event',
+        title: 'x',
+        date: '2026-06-10',
+        recurrence: { freq: 'daily', byWeekday: [1, 3] },
+      },
+      'work',
+      TODAY,
+    )
+    expect(d?.recurrence).toEqual({ freq: 'daily', interval: 1 })
+    expect(d?.recurrence?.byWeekday).toBeUndefined()
+  })
+
+  it('無 recurrence 欄位 → undefined（無重複就唔加）', () => {
+    const d = toDraft(
+      { kind: 'event', title: 'x', date: '2026-06-10', time: '09:00' },
+      'work',
+      TODAY,
+    )
+    expect(d?.recurrence).toBeUndefined()
+  })
+
+  it('recurrence = null（JSON null）→ undefined', () => {
+    const d = toDraft(
+      { kind: 'event', title: 'x', date: '2026-06-10', recurrence: null },
+      'work',
+      TODAY,
+    )
+    expect(d?.recurrence).toBeUndefined()
+  })
+
+  it('recurrence 非物件（字串 / 陣列）→ undefined', () => {
+    expect(
+      toDraft(
+        { kind: 'event', title: 'x', date: '2026-06-10', recurrence: 'daily' },
+        'work',
+        TODAY,
+      )?.recurrence,
+    ).toBeUndefined()
+    expect(
+      toDraft(
+        { kind: 'event', title: 'x', date: '2026-06-10', recurrence: [{ freq: 'daily' }] },
+        'work',
+        TODAY,
+      )?.recurrence,
+    ).toBeUndefined()
+  })
+
+  it('非 event（task / countdown）→ recurrence 一律唔解（drop）', () => {
+    const task = toDraft(
+      { kind: 'task', title: 'x', recurrence: { freq: 'daily', interval: 1 } },
+      'work',
+      TODAY,
+    )
+    expect(task?.recurrence).toBeUndefined()
+    const cd = toDraft(
+      {
+        kind: 'countdown',
+        title: 'x',
+        date: '2026-06-10',
+        recurrence: { freq: 'weekly', interval: 1 },
+      },
+      'work',
+      TODAY,
+    )
+    expect(cd?.recurrence).toBeUndefined()
+  })
+})
+
 describe('buildQuickAddPrompt — 內容包含關鍵指示', () => {
   const prompt = buildQuickAddPrompt('下星期三 3pm 同 5A 家長開會', TODAY, '星期三', 'work')
 
@@ -340,6 +535,15 @@ describe('buildQuickAddPrompt — 內容包含關鍵指示', () => {
     expect(prompt).toContain('JSON 陣列')
     expect(prompt).toContain('拆成獨立項目')
     expect(prompt).toContain('```')
+  })
+
+  it('含重複偵測指示（recurrence + freq daily/weekly + byWeekday）', () => {
+    expect(prompt).toContain('重複規則')
+    expect(prompt).toContain('recurrence')
+    expect(prompt).toContain('每朝')
+    expect(prompt).toContain('逢星期五')
+    // schema 行示範 byWeekday 數字編碼
+    expect(prompt).toContain('byWeekday')
   })
 
   it('work 模式 label = 工作', () => {

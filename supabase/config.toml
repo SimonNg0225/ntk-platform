@@ -6,3 +6,8 @@ project_id = "ntk-platform"
 [functions.gemini]
 # 由 Supabase 閘道先驗證 JWT，再加 function 內部 getUser，雙重保險。
 verify_jwt = true
+
+[functions.calendar-feed]
+# 訂閱式 .ics feed：Apple/Google 日曆抓取時唔會帶 Supabase JWT，
+# 所以閘道唔可以強制驗 JWT。改用 URL ?token=... 反查 user 做 gate（唯讀）。
+verify_jwt = false

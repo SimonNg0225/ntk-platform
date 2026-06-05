@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { CalendarArrowDown, CalendarRange, ChevronLeft, ChevronRight, Dot, Plus, SlidersHorizontal } from 'lucide-react'
+import { CalendarArrowDown, CalendarRange, ChevronLeft, ChevronRight, Dot, Plus, SlidersHorizontal, Smartphone } from 'lucide-react'
 import { useCollection } from '../../lib/store'
 import { eventsCol, calendarsCol, countdownsCol } from '../../data/collections'
 import type { CalendarEvent } from '../../data/types'
@@ -11,6 +11,7 @@ import TimeGridView from './calendar/TimeGridView'
 import YearView from './calendar/YearView'
 import CalendarManager from './calendar/CalendarManager'
 import IcsExportModal from './calendar/IcsExportModal'
+import CalendarSubscribe from './calendar/CalendarSubscribe'
 import {
   colorOf,
   fromKey,
@@ -87,6 +88,7 @@ export default function Calendar() {
   const [createTime, setCreateTime] = useState<string | undefined>(undefined)
   const [managerOpen, setManagerOpen] = useState(false)
   const [exportOpen, setExportOpen] = useState(false)
+  const [subscribeOpen, setSubscribeOpen] = useState(false)
 
   // 視圖範圍
   const { rangeStart, rangeEnd } = useMemo(() => {
@@ -243,6 +245,13 @@ export default function Calendar() {
         >
           <CalendarArrowDown size={13} /> 匯出 .ics
         </button>
+        <button
+          type="button"
+          onClick={() => setSubscribeOpen(true)}
+          className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium text-slate-400 transition hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+        >
+          <Smartphone size={13} /> 訂閱到手機日曆
+        </button>
       </div>
 
       {/* 視圖主體 */}
@@ -319,6 +328,10 @@ export default function Calendar() {
           countdowns={countdowns}
           onClose={() => setExportOpen(false)}
         />
+      )}
+
+      {subscribeOpen && (
+        <CalendarSubscribe onClose={() => setSubscribeOpen(false)} />
       )}
     </div>
   )
