@@ -10,7 +10,7 @@
 
 const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY') ?? ''
 const RESEND_FROM =
-  Deno.env.get('RESEND_FROM') ?? 'NTK Platform <noreply@ntk-platform.example>'
+  Deno.env.get('RESEND_FROM') ?? 'EziTeach <noreply@eziteach.example>'
 const ADMIN_ALERT_EMAIL = Deno.env.get('ADMIN_ALERT_EMAIL') ?? ''
 
 export const isEmailConfigured = Boolean(RESEND_API_KEY)
@@ -69,19 +69,19 @@ const BRAND = '#0d9488'
 function shell(title: string, bodyHtml: string): string {
   return `<div style="font-family:ui-sans-serif,system-ui,'Noto Sans HK',sans-serif;max-width:480px;margin:0 auto;color:#1e293b">
   <div style="background:${BRAND};color:#fff;padding:20px 24px;border-radius:12px 12px 0 0">
-    <h1 style="margin:0;font-size:18px">NTK Platform</h1>
+    <h1 style="margin:0;font-size:18px">EziTeach</h1>
   </div>
   <div style="border:1px solid #e2e8f0;border-top:0;border-radius:0 0 12px 12px;padding:24px">
     <h2 style="margin:0 0 12px;font-size:16px">${title}</h2>
     ${bodyHtml}
-    <p style="margin:24px 0 0;font-size:12px;color:#94a3b8">NTK Platform · 香港教師工作台</p>
+    <p style="margin:24px 0 0;font-size:12px;color:#94a3b8">EziTeach · 香港教師工作台</p>
   </div>
 </div>`
 }
 
 export function welcomeProEmail(): { subject: string; html: string } {
   return {
-    subject: '歡迎升級 NTK Platform Pro 🎉',
+    subject: '歡迎升級 EziTeach Pro 🎉',
     html: shell(
       '訂閱已生效',
       `<p style="margin:0 0 8px;font-size:14px;line-height:1.6">多謝你升級 <strong>Pro</strong>！你而家可以無限使用教學 AI、多裝置即時同步同進階成績統計。</p>
@@ -92,7 +92,7 @@ export function welcomeProEmail(): { subject: string; html: string } {
 
 export function canceledEmail(): { subject: string; html: string } {
   return {
-    subject: 'NTK Platform 訂閱已取消',
+    subject: 'EziTeach 訂閱已取消',
     html: shell(
       '訂閱已取消',
       `<p style="margin:0 0 8px;font-size:14px;line-height:1.6">你嘅 Pro 訂閱已取消，服務會維持到目前結算週期結束。</p>

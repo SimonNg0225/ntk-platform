@@ -18,7 +18,7 @@ export default function LegalLayout({
   return (
     <div className="min-h-screen bg-[color:var(--app-bg)] px-6 py-12 text-slate-900 dark:text-slate-100">
       <Helmet>
-        <title>{title} · NTK Platform</title>
+        <title>{title} · EziTeach 教學易</title>
         <meta name="robots" content="all" />
       </Helmet>
       <article className="mx-auto max-w-3xl">

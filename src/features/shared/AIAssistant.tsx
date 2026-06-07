@@ -8,6 +8,9 @@ import {
   useState,
   type KeyboardEvent,
 } from 'react'
+import { useTranslation } from 'react-i18next'
+import type { TFunction } from 'i18next'
+import './aiAssistant/i18n'
 import { useMode } from '../../context/ModeContext'
 import { useAuth } from '../../context/AuthContext'
 import { useToast } from '../../context/ToastContext'
@@ -104,6 +107,7 @@ import {
   conversationToMarkdown,
   downloadText,
   safeFilename,
+  type TimeBucket,
 } from './aiAssistant/util'
 import { Markdown } from './aiAssistant/markdown'
 import { ActivityBars, RatioBar } from './aiAssistant/charts'
@@ -130,28 +134,47 @@ const MODE_AI: Record<
 > = {
   learning: {
     system:
-      '你係「NTK 個人平台」嘅 AI 個人助手，協助一位用家。請用繁體中文回答（可以用書面廣東話）。風格：精簡、有條理、有重點，適當用列點同例子。如果問題太模糊，先簡短澄清再答。可以用 Markdown（標題、列點、表格、程式碼區塊）令答案更清楚。',
+      '你係「教學易」嘅 AI 個人助手，協助一位用家。請用繁體中文回答（可以用書面廣東話）。風格：精簡、有條理、有重點，適當用列點同例子。如果問題太模糊，先簡短澄清再答。可以用 Markdown（標題、列點、表格、程式碼區塊）令答案更清楚。',
     greeting: '我係你嘅個人助手',
     tagline: '解釋概念 · 總結筆記 · 出練習 · 規劃溫習',
   },
   work: {
     system:
-      '你係「NTK 平台」嘅教學助手，協助一位香港中學老師（任教科目不限）。可以幫手出題（連參考答案同評分指引）、寫教案大綱、擬批改評語、設計課堂活動。請用繁體中文，內容貼合香港中學課程，專業、實用、有條理。如老師有指明科目或課題，請按其科目作答。可以用 Markdown（標題、列點、表格）令內容更清楚。',
+      '你係「教學易」嘅教學助手，協助一位香港中學老師（任教科目不限）。可以幫手出題（連參考答案同評分指引）、寫教案大綱、擬批改評語、設計課堂活動。請用繁體中文，內容貼合香港中學課程，專業、實用、有條理。如老師有指明科目或課題，請按其科目作答。可以用 Markdown（標題、列點、表格）令內容更清楚。',
     greeting: '我係你嘅教學助手',
     tagline: '出題 · 寫教案 · 擬評語 · 設計活動',
   },
 }
 
-const MODELS: { id: AIModel; label: string; short: string }[] = [
-  { id: 'gemini-2.5-flash', label: '⚡ Flash（快）', short: 'Flash' },
-  { id: 'gemini-2.5-pro', label: '🧠 Pro（強）', short: 'Pro' },
-]
-
 const isMac =
   typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform)
 const MOD = isMac ? '⌘' : 'Ctrl'
 
+// 人格標籤經 i18n（zh-HK 用 store 原文做 defaultValue；唔郁 store 數據層）
+const PERSONA_LABEL_KEY: Record<PersonaId, string> = {
+  default: 'personaDefault',
+  concise: 'personaConcise',
+  detailed: 'personaDetailed',
+  socratic: 'personaSocratic',
+  exam: 'personaExam',
+}
+function personaLabelOf(id: PersonaId, t: TFunction): string {
+  return t(`aiasst.${PERSONA_LABEL_KEY[id]}`, { defaultValue: personaById(id).label })
+}
+
+// 時間分組標籤經 i18n（zh-HK 用 util 原文 TimeBucket 做 defaultValue）
+const BUCKET_LABEL_KEY: Record<TimeBucket, string> = {
+  今日: 'bucketToday',
+  昨日: 'bucketYesterday',
+  '過去 7 日': 'bucketLast7',
+  更早: 'bucketEarlier',
+}
+function bucketLabel(b: TimeBucket, t: TFunction): string {
+  return t(`aiasst.${BUCKET_LABEL_KEY[b]}`, { defaultValue: b })
+}
+
 export default function AIAssistant() {
+  const { t } = useTranslation()
   const { mode } = useMode()
   const { user } = useAuth()
   const toast = useToast()
@@ -160,6 +183,21 @@ export default function AIAssistant() {
   const { subjectPackId } = useSettings()
 
   const cfg = MODE_AI[mode]
+  // 問候 / 標語經 i18n（zh-HK 用原文做 defaultValue）。system prompt 留返 LLM 指令唔譯。
+  const greeting = t(`aiasst.greeting${mode === 'work' ? 'Work' : 'Learning'}`, {
+    defaultValue: cfg.greeting,
+  })
+  const tagline = t(`aiasst.tagline${mode === 'work' ? 'Work' : 'Learning'}`, {
+    defaultValue: cfg.tagline,
+  })
+  // 模型標籤（segmented control + 標題列短標）
+  const models = useMemo(
+    () => [
+      { id: 'gemini-2.5-flash' as AIModel, label: t('aiasst.modelFlash', { defaultValue: '⚡ Flash（快）' }), short: 'Flash' },
+      { id: 'gemini-2.5-pro' as AIModel, label: t('aiasst.modelPro', { defaultValue: '🧠 Pro（強）' }), short: 'Pro' },
+    ],
+    [t],
+  )
   // 工作模式：把老師任教科目注入語境（'custom' / 找唔到包就唔注入）。
   const subjectName =
     mode === 'work' && subjectPackId !== 'custom'
@@ -275,9 +313,9 @@ export default function AIAssistant() {
 
   const threadTitle = currentThreadId
     ? (currentMeta?.customTitle ??
-      allThreads.find((t) => t.id === currentThreadId)?.title ??
-      '對話')
-    : '新對話'
+      allThreads.find((th) => th.id === currentThreadId)?.title ??
+      t('aiasst.defaultThreadTitle', { defaultValue: '對話' }))
+    : t('aiasst.newConversationTitle', { defaultValue: '新對話' })
 
   // 切模式 → 重設
   useEffect(() => {
@@ -357,7 +395,7 @@ export default function AIAssistant() {
       } catch (e) {
         const err = e as Error
         if (err.name === 'AbortError') aborted = true
-        else toast.error(err.message || 'AI 出錯')
+        else toast.error(err.message || t('aiasst.toastError', { defaultValue: 'AI 出錯' }))
       } finally {
         // 串流被 abort（切對話／開新對話／封存／停止掣）時丟棄半截回覆，
         // 唔好把截斷訊息持久化落 thread（避免殘留半截 AI 訊息 / 資料不一致）。
@@ -374,7 +412,7 @@ export default function AIAssistant() {
         abortRef.current = null
       }
     },
-    [buildSystem, toast],
+    [buildSystem, toast, t],
   )
 
   const send = useCallback(
@@ -509,9 +547,12 @@ export default function AIAssistant() {
         createdAt: now,
         updatedAt: now,
       })
-      toast.success('已加入筆記', { label: '檢視', onClick: () => goToFeature('learning-notes') })
+      toast.success(t('aiasst.toastSavedNote', { defaultValue: '已加入筆記' }), {
+        label: t('aiasst.toastSavedNoteView', { defaultValue: '檢視' }),
+        onClick: () => goToFeature('learning-notes'),
+      })
     },
-    [toast, goToFeature],
+    [toast, goToFeature, t],
   )
 
   // 手機（<sm）揀完／開新對話後收埋抽屜，避免遮住對話內容
@@ -537,17 +578,17 @@ export default function AIAssistant() {
 
   async function deleteThread(id: string) {
     const ok = await confirm({
-      title: '刪除呢個對話？',
-      message: '對話同所有訊息會永久刪除。',
+      title: t('aiasst.toastDeleteThreadTitle', { defaultValue: '刪除呢個對話？' }),
+      message: t('aiasst.toastDeleteThreadMsg', { defaultValue: '對話同所有訊息會永久刪除。' }),
       tone: 'danger',
-      confirmText: '刪除',
+      confirmText: t('aiasst.toastDeleteThreadConfirm', { defaultValue: '刪除' }),
     })
     if (!ok) return
     aiMessagesCol.get().filter((m) => m.threadId === id).forEach((m) => aiMessagesCol.remove(m.id))
     aiThreadsCol.remove(id)
     threadMetaCol.remove(id)
     if (currentThreadId === id) newConversation()
-    toast.success('已刪除對話')
+    toast.success(t('aiasst.toastThreadDeleted', { defaultValue: '已刪除對話' }))
   }
 
   function togglePin(id: string) {
@@ -586,12 +627,12 @@ export default function AIAssistant() {
 
   function exportConversation() {
     if (messages.length === 0) {
-      toast.info('呢個對話仲未有內容')
+      toast.info(t('aiasst.toastEmptyConversation', { defaultValue: '呢個對話仲未有內容' }))
       return
     }
     const md = conversationToMarkdown(threadTitle, messages)
     downloadText(`${safeFilename(threadTitle)}.md`, md)
-    toast.success('已匯出 Markdown')
+    toast.success(t('aiasst.toastExportedMarkdown', { defaultValue: '已匯出 Markdown' }))
   }
 
   // ── 全域鍵盤 ──
@@ -637,12 +678,14 @@ export default function AIAssistant() {
     return (
       <EmptyState
         icon={Bot}
-        title="AI 助手未啟用"
-        hint="要設定好 Supabase 並部署 gemini Edge Function 先用到。步驟見 docs/SETUP.md。"
+        title={t('aiasst.gateNotEnabledTitle', { defaultValue: 'AI 助手未啟用' })}
+        hint={t('aiasst.gateNotEnabledHint', {
+          defaultValue: '要設定好 Supabase 並部署 gemini Edge Function 先用到。步驟見 docs/SETUP.md。',
+        })}
         action={
           import.meta.env.DEV ? (
             <Button variant="secondary" size="sm" onClick={() => setDevBypass(true)}>
-              🧪 測試模式（dev only · 跳過 Supabase）
+              {t('aiasst.gateTestMode', { defaultValue: '🧪 測試模式（dev only · 跳過 Supabase）' })}
             </Button>
           ) : null
         }
@@ -653,12 +696,12 @@ export default function AIAssistant() {
     return (
       <EmptyState
         icon={Lock}
-        title="請先登入先可以用 AI 助手"
-        hint="喺左下角用 Google 登入後就用得。"
+        title={t('aiasst.gateLoginTitle', { defaultValue: '請先登入先可以用 AI 助手' })}
+        hint={t('aiasst.gateLoginHint', { defaultValue: '喺左下角用 Google 登入後就用得。' })}
         action={
           import.meta.env.DEV ? (
             <Button variant="secondary" size="sm" onClick={() => setDevBypass(true)}>
-              🧪 測試模式（dev only · 跳過登入）
+              {t('aiasst.gateTestModeLogin', { defaultValue: '🧪 測試模式（dev only · 跳過登入）' })}
             </Button>
           ) : null
         }
@@ -666,8 +709,8 @@ export default function AIAssistant() {
     )
   }
 
-  const personaLabel = personaById(activePersona).label
-  const modelShort = MODELS.find((m) => m.id === activeModel)?.short ?? activeModel
+  const personaLabel = personaLabelOf(activePersona, t)
+  const modelShort = models.find((m) => m.id === activeModel)?.short ?? activeModel
 
   return (
     <div className="flex h-[78vh] gap-3">
@@ -675,7 +718,7 @@ export default function AIAssistant() {
       {sidebarOpen && (
         <button
           type="button"
-          aria-label="關閉側欄"
+          aria-label={t('aiasst.closeSidebar', { defaultValue: '關閉側欄' })}
           onClick={() => setSidebarOpen(false)}
           className="fixed inset-0 z-30 animate-fade-in bg-slate-900/40 backdrop-blur-sm sm:hidden"
         />
@@ -684,18 +727,18 @@ export default function AIAssistant() {
         <aside className="fixed inset-y-0 left-0 z-40 flex w-64 max-w-[82vw] shrink-0 flex-col border-r border-slate-200/80 bg-white shadow-overlay dark:border-slate-700/70 dark:bg-slate-800 sm:static sm:z-auto sm:max-w-none sm:rounded-2xl sm:border sm:shadow-none sm:dark:bg-slate-800/60">
           <div className="space-y-2 border-b border-slate-200/70 p-2.5 dark:border-slate-700/60">
             <div className="flex items-center justify-between sm:hidden">
-              <span className="px-0.5 text-xs font-semibold text-slate-500 dark:text-slate-400">對話</span>
-              <IconButton label="關閉側欄" size="sm" onClick={() => setSidebarOpen(false)}>
+              <span className="px-0.5 text-xs font-semibold text-slate-500 dark:text-slate-400">{t('aiasst.sidebarConversations', { defaultValue: '對話' })}</span>
+              <IconButton label={t('aiasst.closeSidebar', { defaultValue: '關閉側欄' })} size="sm" onClick={() => setSidebarOpen(false)}>
                 <X size={16} />
               </IconButton>
             </div>
             <Button fullWidth size="sm" icon={MessageSquarePlus} onClick={newConversation}>
-              新對話
+              {t('aiasst.newConversation', { defaultValue: '新對話' })}
             </Button>
             <Input
               icon={Search}
               className="py-1.5 text-base sm:text-xs"
-              placeholder="搜尋對話…"
+              placeholder={t('aiasst.searchConversations', { defaultValue: '搜尋對話…' })}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
@@ -704,12 +747,16 @@ export default function AIAssistant() {
           <div className="flex-1 space-y-3 overflow-y-auto p-2">
             {visibleThreads.length === 0 ? (
               <p className="px-2 py-6 text-center text-xs text-slate-400">
-                {showArchived ? '冇封存對話' : search ? '搵唔到對話' : '仲未有對話，開始傾啦'}
+                {showArchived
+                  ? t('aiasst.emptyArchived', { defaultValue: '冇封存對話' })
+                  : search
+                    ? t('aiasst.emptyNoMatch', { defaultValue: '搵唔到對話' })
+                    : t('aiasst.emptyNoThreads', { defaultValue: '仲未有對話，開始傾啦' })}
               </p>
             ) : (
               <>
                 {pinned.length > 0 && (
-                  <ThreadGroup label="📌 置頂">
+                  <ThreadGroup label={t('aiasst.groupPinned', { defaultValue: '📌 置頂' })}>
                     {pinned.map((t) => (
                       <ThreadRow
                         key={t.id}
@@ -728,7 +775,7 @@ export default function AIAssistant() {
                   </ThreadGroup>
                 )}
                 {unpinnedGroups.map((g) => (
-                  <ThreadGroup key={g.bucket} label={g.bucket}>
+                  <ThreadGroup key={g.bucket} label={bucketLabel(g.bucket, t)}>
                     {g.items.map((t) => (
                       <ThreadRow
                         key={t.id}
@@ -762,14 +809,14 @@ export default function AIAssistant() {
                   : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300',
               )}
             >
-              <Archive size={13} /> {showArchived ? '返對話' : '封存'}
+              <Archive size={13} /> {showArchived ? t('aiasst.backToConversations', { defaultValue: '返對話' }) : t('aiasst.archive', { defaultValue: '封存' })}
             </button>
             <button
               type="button"
               onClick={() => setStatsOpen(true)}
               className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs text-slate-400 transition hover:text-slate-600 dark:hover:text-slate-300"
             >
-              <BarChart3 size={13} /> 統計
+              <BarChart3 size={13} /> {t('aiasst.stats', { defaultValue: '統計' })}
             </button>
           </div>
         </aside>
@@ -779,8 +826,8 @@ export default function AIAssistant() {
       <div className="flex min-w-0 flex-1 flex-col gap-3">
         {/* 工具列 */}
         <div className="flex flex-wrap items-center gap-2">
-          <Tooltip label={`側欄（${MOD}+B）`}>
-            <IconButton label="切換側欄" onClick={() => setSidebarOpen((v) => !v)} active={sidebarOpen}>
+          <Tooltip label={t('aiasst.sidebarTooltip', { defaultValue: `側欄（${MOD}+B）`, mod: MOD })}>
+            <IconButton label={t('aiasst.toggleSidebar', { defaultValue: '切換側欄' })} onClick={() => setSidebarOpen((v) => !v)} active={sidebarOpen}>
               <PanelLeft size={18} />
             </IconButton>
           </Tooltip>
@@ -790,7 +837,7 @@ export default function AIAssistant() {
             size="sm"
             value={activeModel}
             onChange={(id) => setModel(id as AIModel)}
-            options={MODELS.map((m) => ({ id: m.id, label: m.label }))}
+            options={models.map((m) => ({ id: m.id, label: m.label }))}
           />
 
           {/* 人格 */}
@@ -804,14 +851,14 @@ export default function AIAssistant() {
             }
             items={PERSONAS.map((p) => ({
               id: p.id,
-              label: p.label,
+              label: personaLabelOf(p.id, t),
               icon: activePersona === p.id ? Check : undefined,
               onSelect: () => setPersona(p.id),
             }))}
           />
 
           {/* 溫度 */}
-          <Tooltip label="創意度（temperature）">
+          <Tooltip label={t('aiasst.temperatureTooltip', { defaultValue: '創意度（temperature）' })}>
             <span className="inline-flex items-center gap-2 rounded-full border border-slate-200/80 bg-white px-3 py-1.5 dark:border-slate-700 dark:bg-slate-800">
               <Thermometer size={13} className="text-slate-400" />
               <input
@@ -822,7 +869,7 @@ export default function AIAssistant() {
                 value={activeTemp}
                 onChange={(e) => setTemp(Number(e.target.value))}
                 className="h-1 w-16 cursor-pointer accent-accent"
-                aria-label="溫度"
+                aria-label={t('aiasst.temperature', { defaultValue: '溫度' })}
               />
               <span className="w-6 tabular-nums text-[11px] font-medium text-slate-500 dark:text-slate-400">{activeTemp.toFixed(1)}</span>
             </span>
@@ -831,14 +878,14 @@ export default function AIAssistant() {
           <div className="flex-1" />
 
           {/* 上下文 */}
-          <Tooltip label="連結資料做上下文">
+          <Tooltip label={t('aiasst.contextTooltip', { defaultValue: '連結資料做上下文' })}>
             <Button
               variant="secondary"
               size="sm"
               icon={Paperclip}
               onClick={() => setContextOpen(true)}
             >
-              上下文
+              {t('aiasst.context', { defaultValue: '上下文' })}
               {activeContexts.length > 0 && (
                 <span className="ml-1 rounded-full bg-accent px-1.5 text-[10px] font-semibold text-white tabular-nums">
                   {activeContexts.length}
@@ -850,17 +897,17 @@ export default function AIAssistant() {
           <Menu
             trigger={
               <span
-                aria-label="更多操作"
+                aria-label={t('aiasst.moreActions', { defaultValue: '更多操作' })}
                 className="inline-flex items-center rounded-lg border border-slate-200 bg-white p-1.5 text-slate-500 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700"
               >
                 <Command size={16} />
               </span>
             }
             items={[
-              { id: 'palette', label: `命令面板  ${MOD}K`, icon: Command, onSelect: () => setPaletteOpen(true) },
-              { id: 'tpl', label: `範本庫  ${MOD}/`, icon: Library, onSelect: () => setTemplateOpen(true) },
-              { id: 'export', label: '匯出對話 (.md)', icon: Download, onSelect: exportConversation, disabled: !currentThreadId },
-              { id: 'stats', label: '用量統計', icon: BarChart3, onSelect: () => setStatsOpen(true) },
+              { id: 'palette', label: t('aiasst.menuPalette', { defaultValue: `命令面板  ${MOD}K`, mod: MOD }), icon: Command, onSelect: () => setPaletteOpen(true) },
+              { id: 'tpl', label: t('aiasst.menuTemplates', { defaultValue: `範本庫  ${MOD}/`, mod: MOD }), icon: Library, onSelect: () => setTemplateOpen(true) },
+              { id: 'export', label: t('aiasst.menuExport', { defaultValue: '匯出對話 (.md)' }), icon: Download, onSelect: exportConversation, disabled: !currentThreadId },
+              { id: 'stats', label: t('aiasst.menuStats', { defaultValue: '用量統計' }), icon: BarChart3, onSelect: () => setStatsOpen(true) },
             ]}
           />
         </div>
@@ -874,17 +921,17 @@ export default function AIAssistant() {
             <Badge tone="slate">{modelShort}</Badge>
             {activeContexts.length > 0 && (
               <Badge tone="accent" icon={Paperclip}>
-                {activeContexts.length} 份資料
+                {t('aiasst.filesCount', { defaultValue: `${activeContexts.length} 份資料`, count: activeContexts.length })}
               </Badge>
             )}
             <div className="flex-1" />
-            <Tooltip label="重新命名">
-              <IconButton label="重新命名" size="sm" onClick={() => setRenameTarget(currentThreadId)}>
+            <Tooltip label={t('aiasst.rename', { defaultValue: '重新命名' })}>
+              <IconButton label={t('aiasst.rename', { defaultValue: '重新命名' })} size="sm" onClick={() => setRenameTarget(currentThreadId)}>
                 <Pencil size={14} />
               </IconButton>
             </Tooltip>
-            <Tooltip label="匯出 Markdown">
-              <IconButton label="匯出" size="sm" onClick={exportConversation}>
+            <Tooltip label={t('aiasst.exportMarkdown', { defaultValue: '匯出 Markdown' })}>
+              <IconButton label={t('aiasst.export', { defaultValue: '匯出' })} size="sm" onClick={exportConversation}>
                 <Download size={14} />
               </IconButton>
             </Tooltip>
@@ -898,8 +945,8 @@ export default function AIAssistant() {
         >
           {messages.length === 0 && streaming === null ? (
             <Welcome
-              greeting={cfg.greeting}
-              tagline={cfg.tagline}
+              greeting={greeting}
+              tagline={tagline}
               templates={builtinTemplates(mode).slice(0, 6)}
               onPick={(t) => {
                 // 帶變數：直接開「填寫」表單（之前係開成個範本庫，要喺度再揀多次先填到）。
@@ -923,7 +970,7 @@ export default function AIAssistant() {
                   canRegen={!busy && m.role === 'model' && i === messages.length - 1}
                   onCopy={() => {
                     void navigator.clipboard?.writeText(m.content)
-                    toast.success('已複製')
+                    toast.success(t('aiasst.toastCopied', { defaultValue: '已複製' }))
                   }}
                   onRegen={() => void regenerate()}
                   onEdit={(text) => void editAndResend(m, text)}
@@ -954,7 +1001,7 @@ export default function AIAssistant() {
         {activeContexts.length > 0 && (
           <div className="flex flex-wrap items-center gap-1.5 px-1">
             <span className="inline-flex items-center gap-1 text-[11px] font-medium text-slate-400 dark:text-slate-500">
-              <Paperclip size={11} /> 上下文
+              <Paperclip size={11} /> {t('aiasst.context', { defaultValue: '上下文' })}
             </span>
             {activeContexts.map((c) => (
               <span
@@ -967,7 +1014,7 @@ export default function AIAssistant() {
                   type="button"
                   onClick={() => setContexts(activeContexts.filter((x) => x.id !== c.id))}
                   className="flex h-4 w-4 items-center justify-center rounded-full text-accent-strong/70 transition hover:bg-accent/15 hover:text-accent-strong focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent/50 dark:text-accent/70 dark:hover:bg-accent/20 dark:hover:text-accent"
-                  aria-label={`移除上下文：${c.title}`}
+                  aria-label={t('aiasst.ctxRemoveChip', { defaultValue: `移除上下文：${c.title}`, title: c.title })}
                 >
                   <X size={11} />
                 </button>
@@ -1049,12 +1096,12 @@ export default function AIAssistant() {
           title: metaMap.get(t.id)?.customTitle ?? t.title,
         }))}
         actions={[
-          { id: 'new', label: '開新對話', icon: MessageSquarePlus, run: newConversation },
-          { id: 'tpl', label: '開範本庫', icon: Library, run: () => setTemplateOpen(true) },
-          { id: 'ctx', label: '連結上下文', icon: Paperclip, run: () => setContextOpen(true) },
-          { id: 'stats', label: '用量統計', icon: BarChart3, run: () => setStatsOpen(true) },
-          { id: 'export', label: '匯出對話', icon: Download, run: exportConversation },
-          { id: 'sidebar', label: '切換側欄', icon: PanelLeft, run: () => setSidebarOpen((v) => !v) },
+          { id: 'new', label: t('aiasst.paletteActionNew', { defaultValue: '開新對話' }), icon: MessageSquarePlus, run: newConversation },
+          { id: 'tpl', label: t('aiasst.paletteActionTpl', { defaultValue: '開範本庫' }), icon: Library, run: () => setTemplateOpen(true) },
+          { id: 'ctx', label: t('aiasst.paletteActionCtx', { defaultValue: '連結上下文' }), icon: Paperclip, run: () => setContextOpen(true) },
+          { id: 'stats', label: t('aiasst.paletteActionStats', { defaultValue: '用量統計' }), icon: BarChart3, run: () => setStatsOpen(true) },
+          { id: 'export', label: t('aiasst.paletteActionExport', { defaultValue: '匯出對話' }), icon: Download, run: exportConversation },
+          { id: 'sidebar', label: t('aiasst.paletteActionSidebar', { defaultValue: '切換側欄' }), icon: PanelLeft, run: () => setSidebarOpen((v) => !v) },
         ]}
         onSelectThread={(id) => {
           selectThread(id)
@@ -1090,6 +1137,7 @@ const Composer = memo(function Composer({
   onOpenTemplate: () => void
   onOpenContext: () => void
 }) {
+  const { t } = useTranslation()
   // 「完全非受控」輸入區：打字唔會引起任何 React state 改變／re-render。
   // 之前就算抽咗去 Composer，每打一字都仲 setText → Composer subtree（連個 textarea）
   // 重新 render；iOS Safari／中文 IME 喺呢個 subtree 重 render 嗰刻會中斷組字、
@@ -1106,7 +1154,11 @@ const Composer = memo(function Composer({
     const has = v.trim().length > 0
     if (countRef.current) {
       countRef.current.textContent = has
-        ? `${approxWords(v)} 字 · ~${approxTokens(v)} tokens`
+        ? t('aiasst.composerCount', {
+            defaultValue: `${approxWords(v)} 字 · ~${approxTokens(v)} tokens`,
+            words: approxWords(v),
+            tokens: approxTokens(v),
+          })
         : ''
     }
     if (sendRef.current) {
@@ -1155,20 +1207,23 @@ const Composer = memo(function Composer({
         ref={ref}
         rows={2}
         className="resize-none border-0 bg-transparent px-2.5 py-1.5 text-[16px] leading-relaxed shadow-none focus:ring-0 sm:text-[13.5px] dark:bg-transparent"
-        placeholder={`打你想問嘅嘢…（Enter 送出 · Shift+Enter 換行 · ${MOD}/ 範本）`}
+        placeholder={t('aiasst.composerPlaceholder', {
+          defaultValue: `打你想問嘅嘢…（Enter 送出 · Shift+Enter 換行 · ${MOD}/ 範本）`,
+          mod: MOD,
+        })}
         defaultValue={seed.text}
         onInput={syncUi}
         onKeyDown={onKeyDown}
         disabled={busy}
       />
       <div className="flex items-center gap-1 px-0.5 pt-1">
-        <Tooltip label={`範本庫（${MOD}/）`}>
-          <IconButton label="範本庫" size="sm" onClick={onOpenTemplate}>
+        <Tooltip label={t('aiasst.templateLibraryTooltip', { defaultValue: `範本庫（${MOD}/）`, mod: MOD })}>
+          <IconButton label={t('aiasst.templateLibrary', { defaultValue: '範本庫' })} size="sm" onClick={onOpenTemplate}>
             <Library size={16} />
           </IconButton>
         </Tooltip>
-        <Tooltip label="連結上下文">
-          <IconButton label="上下文" size="sm" active={contextCount > 0} onClick={onOpenContext}>
+        <Tooltip label={t('aiasst.linkContext', { defaultValue: '連結上下文' })}>
+          <IconButton label={t('aiasst.context', { defaultValue: '上下文' })} size="sm" active={contextCount > 0} onClick={onOpenContext}>
             <Paperclip size={16} />
           </IconButton>
         </Tooltip>
@@ -1179,12 +1234,12 @@ const Composer = memo(function Composer({
         <div className="flex-1" />
         {busy ? (
           <Button variant="secondary" size="sm" icon={Square} onClick={onStop}>
-            停止
+            {t('aiasst.stop', { defaultValue: '停止' })}
           </Button>
         ) : (
           <span ref={sendRef} style={{ opacity: 0.4, pointerEvents: 'none' }}>
             <Button size="sm" iconRight={Send} onClick={submit}>
-              送出
+              {t('aiasst.send', { defaultValue: '送出' })}
             </Button>
           </span>
         )}
@@ -1227,6 +1282,7 @@ function ThreadRow({
   onRename: () => void
   onDelete: () => void
 }) {
+  const { t } = useTranslation()
   return (
     <div
       role="button"
@@ -1259,17 +1315,17 @@ function ThreadRow({
         <Menu
           trigger={
             <span
-              aria-label="對話選項"
+              aria-label={t('aiasst.threadOptions', { defaultValue: '對話選項' })}
               className="rounded p-0.5 text-slate-400 hover:bg-black/5 hover:text-slate-600 dark:hover:bg-white/10"
             >
               <ChevronDown size={13} />
             </span>
           }
           items={[
-            { id: 'pin', label: pinned ? '取消置頂' : '置頂', icon: pinned ? PinOff : Pin, onSelect: onPin },
-            { id: 'rename', label: '重新命名', icon: Pencil, onSelect: onRename },
-            { id: 'archive', label: archived ? '取消封存' : '封存', icon: archived ? ArchiveRestore : Archive, onSelect: onArchive },
-            { id: 'delete', label: '刪除', icon: Trash2, onSelect: onDelete, tone: 'danger' },
+            { id: 'pin', label: pinned ? t('aiasst.unpin', { defaultValue: '取消置頂' }) : t('aiasst.pin', { defaultValue: '置頂' }), icon: pinned ? PinOff : Pin, onSelect: onPin },
+            { id: 'rename', label: t('aiasst.rename', { defaultValue: '重新命名' }), icon: Pencil, onSelect: onRename },
+            { id: 'archive', label: archived ? t('aiasst.unarchive', { defaultValue: '取消封存' }) : t('aiasst.archive', { defaultValue: '封存' }), icon: archived ? ArchiveRestore : Archive, onSelect: onArchive },
+            { id: 'delete', label: t('aiasst.delete', { defaultValue: '刪除' }), icon: Trash2, onSelect: onDelete, tone: 'danger' },
           ]}
         />
       </div>
@@ -1290,6 +1346,7 @@ function Welcome({
   onPick: (t: BuiltinTemplate) => void
   onOpenLibrary: () => void
 }) {
+  const { t } = useTranslation()
   return (
     <div className="mx-auto flex h-full max-w-2xl flex-col items-center justify-center gap-6 px-2 py-6 text-center sm:py-8">
       <div className="flex flex-col items-center gap-4">
@@ -1301,10 +1358,10 @@ function Welcome({
         </span>
         <div className="space-y-2">
           <p className="text-xl font-semibold tracking-tight text-slate-800 dark:text-slate-100">
-            你好，{greeting}
+            {t('aiasst.welcomeGreeting', { defaultValue: `你好，${greeting}`, greeting })}
           </p>
           <p className="text-sm leading-relaxed text-slate-500 dark:text-slate-400">
-            想由邊度開始？揀一個落手位，或者直接打你想問嘅嘢。
+            {t('aiasst.welcomeSub', { defaultValue: '想由邊度開始？揀一個落手位，或者直接打你想問嘅嘢。' })}
           </p>
           <div className="flex flex-wrap items-center justify-center gap-1.5 pt-0.5">
             {tagline.split(/\s*·\s*/).map((part) => (
@@ -1322,7 +1379,7 @@ function Welcome({
       <div className="w-full">
         <div className="mb-2.5 flex items-center gap-2 px-0.5 text-left">
           <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-            試吓問我
+            {t('aiasst.welcomeTryAsking', { defaultValue: '試吓問我' })}
           </span>
           <span className="h-px flex-1 bg-slate-200/70 dark:bg-slate-700/60" />
         </div>
@@ -1353,7 +1410,7 @@ function Welcome({
         onClick={onOpenLibrary}
         className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium text-slate-500 transition hover:bg-slate-100 hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-accent"
       >
-        <Library size={14} /> 睇晒全部範本
+        <Library size={14} /> {t('aiasst.welcomeSeeAllTemplates', { defaultValue: '睇晒全部範本' })}
       </button>
     </div>
   )
@@ -1390,6 +1447,7 @@ function MessageBubble({
   onDelete: () => void
   onSaveNote: () => void
 }) {
+  const { t } = useTranslation()
   const isUser = msg.role === 'user'
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(msg.content)
@@ -1408,10 +1466,10 @@ function MessageBubble({
           <Textarea rows={3} value={draft} onChange={(e) => setDraft(e.target.value)} autoFocus className="text-sm" />
           <div className="flex justify-end gap-2">
             <Button variant="ghost" size="sm" onClick={() => { setDraft(msg.content); setEditing(false) }}>
-              取消
+              {t('aiasst.cancel', { defaultValue: '取消' })}
             </Button>
             <Button size="sm" icon={Send} onClick={() => { setEditing(false); onEdit(draft) }}>
-              重發
+              {t('aiasst.resend', { defaultValue: '重發' })}
             </Button>
           </div>
         </div>
@@ -1432,7 +1490,7 @@ function MessageBubble({
               : 'bg-accent-soft text-accent-strong ring-1 ring-accent/15 dark:bg-accent/15 dark:text-accent dark:ring-accent/20',
           )}
         >
-          {isUser ? '你' : <Bot size={16} />}
+          {isUser ? t('aiasst.you', { defaultValue: '你' }) : <Bot size={16} />}
         </span>
         <div className="min-w-0">
           <span
@@ -1441,7 +1499,7 @@ function MessageBubble({
               isUser ? 'text-right' : 'text-left',
             )}
           >
-            {isUser ? '你' : 'AI 助手'}
+            {isUser ? t('aiasst.you', { defaultValue: '你' }) : t('aiasst.aiAssistant', { defaultValue: 'AI 助手' })}
           </span>
           <div
             className={
@@ -1475,35 +1533,35 @@ function MessageBubble({
             isUser ? 'pr-1' : 'pl-[42px]',
           )}
         >
-          <Tooltip label={copied ? '已複製' : '複製'}>
-            <IconButton label="複製" size="sm" onClick={doCopy}>
+          <Tooltip label={copied ? t('aiasst.copied', { defaultValue: '已複製' }) : t('aiasst.copy', { defaultValue: '複製' })}>
+            <IconButton label={t('aiasst.copy', { defaultValue: '複製' })} size="sm" onClick={doCopy}>
               {copied ? <Check size={13} /> : <Copy size={13} />}
             </IconButton>
           </Tooltip>
           {!isUser && (
-            <Tooltip label="加入筆記">
-              <IconButton label="加入筆記" size="sm" onClick={onSaveNote}>
+            <Tooltip label={t('aiasst.saveToNote', { defaultValue: '加入筆記' })}>
+              <IconButton label={t('aiasst.saveToNote', { defaultValue: '加入筆記' })} size="sm" onClick={onSaveNote}>
                 <StickyNote size={13} />
               </IconButton>
             </Tooltip>
           )}
           {isUser && (
-            <Tooltip label="編輯重發">
-              <IconButton label="編輯" size="sm" onClick={() => { setDraft(msg.content); setEditing(true) }}>
+            <Tooltip label={t('aiasst.editResend', { defaultValue: '編輯重發' })}>
+              <IconButton label={t('aiasst.edit', { defaultValue: '編輯' })} size="sm" onClick={() => { setDraft(msg.content); setEditing(true) }}>
                 <Pencil size={13} />
               </IconButton>
             </Tooltip>
           )}
           {canRegen && (
-            <Tooltip label="重新生成">
-              <IconButton label="重新生成" size="sm" onClick={onRegen}>
+            <Tooltip label={t('aiasst.regenerate', { defaultValue: '重新生成' })}>
+              <IconButton label={t('aiasst.regenerate', { defaultValue: '重新生成' })} size="sm" onClick={onRegen}>
                 <RefreshCw size={13} />
               </IconButton>
             </Tooltip>
           )}
           {isLast && (
-            <Tooltip label="由此刪除">
-              <IconButton label="刪除" size="sm" tone="danger" onClick={onDelete}>
+            <Tooltip label={t('aiasst.deleteFromHere', { defaultValue: '由此刪除' })}>
+              <IconButton label={t('aiasst.delete', { defaultValue: '刪除' })} size="sm" tone="danger" onClick={onDelete}>
                 <Trash2 size={13} />
               </IconButton>
             </Tooltip>
@@ -1516,8 +1574,9 @@ function MessageBubble({
 
 // 等 AI 開始回覆時的柔和「打緊字」點動
 function TypingDots() {
+  const { t } = useTranslation()
   return (
-    <span className="flex items-center gap-1.5 py-0.5" aria-label="AI 正在輸入">
+    <span className="flex items-center gap-1.5 py-0.5" aria-label={t('aiasst.aiTyping', { defaultValue: 'AI 正在輸入' })}>
       {[0, 1, 2].map((i) => (
         <span
           key={i}
@@ -1543,6 +1602,7 @@ function SaveNoteModal({
   onClose: () => void
   onSave: (notebookId: string | null) => void
 }) {
+  const { t } = useTranslation()
   // 預設揀「未分類」；每次開彈窗都重設
   const [nbId, setNbId] = useState<string | null>(null)
   useEffect(() => {
@@ -1550,7 +1610,7 @@ function SaveNoteModal({
   }, [open])
 
   const options: { id: string | null; name: string; color: string }[] = [
-    { id: null, name: '未分類', color: 'slate' },
+    { id: null, name: t('aiasst.saveNoteUncategorised', { defaultValue: '未分類' }), color: 'slate' },
     ...notebooks.map((n) => ({ id: n.id, name: n.name, color: n.color })),
   ]
 
@@ -1559,21 +1619,21 @@ function SaveNoteModal({
       open={open}
       onClose={onClose}
       size="md"
-      title="加入筆記"
+      title={t('aiasst.saveNote', { defaultValue: '加入筆記' })}
       footer={
         <>
           <Button variant="ghost" onClick={onClose}>
-            取消
+            {t('aiasst.cancel', { defaultValue: '取消' })}
           </Button>
           <Button icon={StickyNote} onClick={() => onSave(nbId)}>
-            存入筆記
+            {t('aiasst.saveNoteStore', { defaultValue: '存入筆記' })}
           </Button>
         </>
       }
     >
       <div className="space-y-4">
         <div>
-          <p className="mb-1.5 text-xs font-medium text-slate-500 dark:text-slate-400">存入邊本筆記</p>
+          <p className="mb-1.5 text-xs font-medium text-slate-500 dark:text-slate-400">{t('aiasst.saveNoteWhich', { defaultValue: '存入邊本筆記' })}</p>
           <div className="flex flex-wrap gap-1.5">
             {options.map((o) => {
               const on = nbId === o.id
@@ -1600,7 +1660,7 @@ function SaveNoteModal({
         </div>
         <div>
           <p className="mb-1 text-xs font-medium text-slate-500 dark:text-slate-400">
-            內容預覽 · 會自動加上 <span className="font-semibold text-accent">#AI助手</span> 標籤
+            {t('aiasst.saveNotePreviewPre', { defaultValue: '內容預覽 · 會自動加上' })} <span className="font-semibold text-accent">#AI助手</span> {t('aiasst.saveNotePreviewPost', { defaultValue: '標籤' })}
           </p>
           <div className="max-h-40 overflow-y-auto whitespace-pre-wrap break-words rounded-lg border border-slate-200 bg-slate-50/60 p-3 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-300">
             {content}
@@ -1632,6 +1692,7 @@ function TemplateLibrary({
   toast: ReturnType<typeof useToast>
   confirm: ReturnType<typeof useConfirm>
 }) {
+  const { t } = useTranslation()
   const [tab, setTab] = useState<'builtin' | 'custom'>('builtin')
   const [q, setQ] = useState('')
   const [varFor, setVarFor] = useState<{ title: string; body: string } | null>(null)
@@ -1682,16 +1743,16 @@ function TemplateLibrary({
   }
 
   function saveNew() {
-    const t = newTitle.trim()
-    const b = newBody.trim()
-    if (!t || !b) {
-      toast.error('標題同內容都要填')
+    const title = newTitle.trim()
+    const body = newBody.trim()
+    if (!title || !body) {
+      toast.error(t('aiasst.tplToastNeedBoth', { defaultValue: '標題同內容都要填' }))
       return
     }
     promptTemplatesCol.add({
       mode,
-      title: t,
-      body: b,
+      title,
+      body,
       category: '自訂',
       createdAt: new Date().toISOString(),
       uses: 0,
@@ -1699,14 +1760,14 @@ function TemplateLibrary({
     setNewTitle('')
     setNewBody('')
     setCreating(false)
-    toast.success('已加範本')
+    toast.success(t('aiasst.tplToastAdded', { defaultValue: '已加範本' }))
   }
 
   async function delTpl(id: string) {
-    const ok = await confirm({ title: '刪除呢個範本？', tone: 'danger', confirmText: '刪除' })
+    const ok = await confirm({ title: t('aiasst.tplDeleteConfirmTitle', { defaultValue: '刪除呢個範本？' }), tone: 'danger', confirmText: t('aiasst.tplDeleteConfirm', { defaultValue: '刪除' }) })
     if (ok) {
       promptTemplatesCol.remove(id)
-      toast.success('已刪除')
+      toast.success(t('aiasst.tplToastDeleted', { defaultValue: '已刪除' }))
     }
   }
 
@@ -1717,11 +1778,11 @@ function TemplateLibrary({
       <Modal
         open={open}
         onClose={() => { setVarFor(null); onClose() }}
-        title={`填寫：${varFor.title}`}
+        title={t('aiasst.tplFill', { defaultValue: `填寫：${varFor.title}`, title: varFor.title })}
         size="md"
         footer={
           <>
-            <Button variant="ghost" onClick={() => setVarFor(null)}>返範本</Button>
+            <Button variant="ghost" onClick={() => setVarFor(null)}>{t('aiasst.tplBackToTemplates', { defaultValue: '返範本' })}</Button>
             <Button
               icon={Check}
               onClick={() => {
@@ -1729,7 +1790,7 @@ function TemplateLibrary({
                 setVarFor(null)
               }}
             >
-              插入
+              {t('aiasst.tplInsert', { defaultValue: '插入' })}
             </Button>
           </>
         }
@@ -1752,9 +1813,9 @@ function TemplateLibrary({
             </Field>
           ))}
           <div className="rounded-lg bg-slate-50 p-2.5 text-xs text-slate-500 dark:bg-slate-900/50 dark:text-slate-400">
-            <span className="font-medium">預覽：</span>
+            <span className="font-medium">{t('aiasst.tplPreview', { defaultValue: '預覽：' })}</span>
             <p className="mt-1 whitespace-pre-wrap break-words">
-              {fillTemplate(varFor.body, varValues) || '（填寫上面欄位）'}
+              {fillTemplate(varFor.body, varValues) || t('aiasst.tplPreviewEmpty', { defaultValue: '（填寫上面欄位）' })}
             </p>
           </div>
         </div>
@@ -1763,21 +1824,21 @@ function TemplateLibrary({
   }
 
   return (
-    <Modal open={open} onClose={onClose} title="Prompt 範本庫" size="lg">
+    <Modal open={open} onClose={onClose} title={t('aiasst.tplPromptLibrary', { defaultValue: 'Prompt 範本庫' })} size="lg">
       <div className="space-y-3">
         <div className="flex items-center gap-2">
           <SegmentedControl
             value={tab}
             onChange={setTab}
             options={[
-              { id: 'builtin', label: '內建' },
-              { id: 'custom', label: `我的 (${mine.length})` },
+              { id: 'builtin', label: t('aiasst.tplTabBuiltin', { defaultValue: '內建' }) },
+              { id: 'custom', label: t('aiasst.tplTabMine', { defaultValue: `我的 (${mine.length})`, count: mine.length }) },
             ]}
           />
           <Input
             icon={Search}
             className="flex-1 py-1.5 text-base sm:text-xs"
-            placeholder="搜尋範本…"
+            placeholder={t('aiasst.tplSearch', { defaultValue: '搜尋範本…' })}
             value={q}
             onChange={(e) => setQ(e.target.value)}
           />
@@ -1785,44 +1846,44 @@ function TemplateLibrary({
 
         {tab === 'builtin' ? (
           <div className="grid max-h-[50vh] grid-cols-1 gap-2 overflow-y-auto sm:grid-cols-2">
-            {builtins.map((t) => (
-              <TemplateCard key={t.id} title={t.title} body={t.body} category={t.category} onUse={() => pick(t.title, t.body)} />
+            {builtins.map((tpl) => (
+              <TemplateCard key={tpl.id} title={tpl.title} body={tpl.body} category={tpl.category} onUse={() => pick(tpl.title, tpl.body)} />
             ))}
           </div>
         ) : (
           <div className="space-y-2">
             {creating ? (
               <div className="space-y-2 rounded-xl border border-accent/30 bg-accent-soft/40 p-3 dark:bg-accent/10">
-                <Input placeholder="範本標題" value={newTitle} onChange={(e) => setNewTitle(e.target.value)} />
+                <Input placeholder={t('aiasst.tplNewTitle', { defaultValue: '範本標題' })} value={newTitle} onChange={(e) => setNewTitle(e.target.value)} />
                 <Textarea
                   rows={3}
-                  placeholder="範本內容（可用 {{變數}} 做佔位，例如：解釋 {{概念}}）"
+                  placeholder={t('aiasst.tplNewBody', { defaultValue: '範本內容（可用 {{變數}} 做佔位，例如：解釋 {{概念}}）', interpolation: { skipOnVariables: true } })}
                   value={newBody}
                   onChange={(e) => setNewBody(e.target.value)}
                 />
                 <div className="flex justify-end gap-2">
-                  <Button variant="ghost" size="sm" onClick={() => setCreating(false)}>取消</Button>
-                  <Button size="sm" icon={Check} onClick={saveNew}>儲存</Button>
+                  <Button variant="ghost" size="sm" onClick={() => setCreating(false)}>{t('aiasst.cancel', { defaultValue: '取消' })}</Button>
+                  <Button size="sm" icon={Check} onClick={saveNew}>{t('aiasst.tplSave', { defaultValue: '儲存' })}</Button>
                 </div>
               </div>
             ) : (
               <Button variant="secondary" size="sm" icon={Plus} onClick={() => setCreating(true)}>
-                新增自訂範本
+                {t('aiasst.tplAddCustom', { defaultValue: '新增自訂範本' })}
               </Button>
             )}
 
             {mine.length === 0 && !creating ? (
-              <EmptyState icon={Library} title="仲未有自訂範本" hint="將你常用嘅 prompt 存起，下次一 click 即用。" />
+              <EmptyState icon={Library} title={t('aiasst.tplEmptyMineTitle', { defaultValue: '仲未有自訂範本' })} hint={t('aiasst.tplEmptyMineHint', { defaultValue: '將你常用嘅 prompt 存起，下次一 click 即用。' })} />
             ) : (
               <div className="grid max-h-[42vh] grid-cols-1 gap-2 overflow-y-auto sm:grid-cols-2">
-                {mine.map((t) => (
+                {mine.map((tpl) => (
                   <TemplateCard
-                    key={t.id}
-                    title={t.title}
-                    body={t.body}
-                    category={t.uses ? `用過 ${t.uses} 次` : '自訂'}
-                    onUse={() => pick(t.title, t.body, t.id)}
-                    onDelete={() => void delTpl(t.id)}
+                    key={tpl.id}
+                    title={tpl.title}
+                    body={tpl.body}
+                    category={tpl.uses ? t('aiasst.tplUsedTimes', { defaultValue: `用過 ${tpl.uses} 次`, count: tpl.uses }) : t('aiasst.tplCustom', { defaultValue: '自訂' })}
+                    onUse={() => pick(tpl.title, tpl.body, tpl.id)}
+                    onDelete={() => void delTpl(tpl.id)}
                   />
                 ))}
               </div>
@@ -1847,13 +1908,14 @@ function TemplateCard({
   onUse: () => void
   onDelete?: () => void
 }) {
+  const { t } = useTranslation()
   const hasVars = body.includes('{{')
   return (
     <Card className="group flex flex-col p-3" hover>
       <div className="flex items-start justify-between gap-2">
         <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">{title}</p>
         {onDelete && (
-          <IconButton label="刪除" size="sm" tone="danger" onClick={onDelete}>
+          <IconButton label={t('aiasst.delete', { defaultValue: '刪除' })} size="sm" tone="danger" onClick={onDelete}>
             <Trash2 size={13} />
           </IconButton>
         )}
@@ -1861,10 +1923,10 @@ function TemplateCard({
       <p className="mt-1 line-clamp-2 flex-1 text-xs text-slate-400">{body.replace(/\{\{|\}\}/g, '')}</p>
       <div className="mt-2 flex items-center justify-between">
         <span className="inline-flex items-center gap-1 text-[10px] text-slate-400">
-          {hasVars && <Badge tone="blue">含變數</Badge>}
+          {hasVars && <Badge tone="blue">{t('aiasst.tplHasVars', { defaultValue: '含變數' })}</Badge>}
           <span>{category}</span>
         </span>
-        <Button size="sm" variant="secondary" onClick={onUse}>插入</Button>
+        <Button size="sm" variant="secondary" onClick={onUse}>{t('aiasst.tplInsert', { defaultValue: '插入' })}</Button>
       </div>
     </Card>
   )
@@ -1886,6 +1948,7 @@ function ContextPicker({
   mode: ModeId
   toast: ReturnType<typeof useToast>
 }) {
+  const { t } = useTranslation()
   const notes = useCollection(richNotesCol)
   const meetings = useCollection(meetingNotesCol)
   const journals = useCollection(journalDocsCol)

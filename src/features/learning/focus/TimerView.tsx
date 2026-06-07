@@ -155,9 +155,9 @@ export default function TimerView({
   // 文件標題顯示倒數（似真 app）
   useEffect(() => {
     const meta = KIND_META[phase]
-    document.title = running ? `${fmtClock(secondsLeft)} · ${meta.label}` : 'NTK Platform'
+    document.title = running ? `${fmtClock(secondsLeft)} · ${meta.label}` : 'EziTeach 教學易'
     return () => {
-      document.title = 'NTK Platform'
+      document.title = 'EziTeach 教學易'
     }
   }, [secondsLeft, running, phase])
 

@@ -346,7 +346,7 @@ export function buildPlanPrintHtml(input: PrintPlanInput): string {
   <h2>教材 / 工作紙</h2>
   ${materialList}
   ${meta?.reflection ? `<h2>課後反思</h2><div class="block">${nl2br(meta.reflection)}</div>` : ''}
-  <div class="foot">NTK Platform · BAFS 教案 · 列印於 ${new Date().toLocaleString('zh-HK')}</div>
+  <div class="foot">EziTeach 教學易 · 教案 · 列印於 ${new Date().toLocaleString('zh-HK')}</div>
   <script>window.onload=function(){setTimeout(function(){window.print()},200)}</script>
 </body></html>`
 }

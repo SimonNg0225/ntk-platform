@@ -59,11 +59,11 @@ export function OnboardingModal({
   onLoadDemo: () => void
 }) {
   return (
-    <Modal open={open} onClose={onClose} title="歡迎使用 NTK Platform" size="lg">
+    <Modal open={open} onClose={onClose} title="歡迎使用 教學易 EziTeach" size="lg">
       <div className="space-y-5">
         <div className="flex items-start gap-3">
           <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-accent text-lg font-bold text-white shadow-sm">
-            N
+            E
           </span>
           <p className="text-sm leading-relaxed text-slate-600 dark:text-slate-300">
             為香港老師而設嘅

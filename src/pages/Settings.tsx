@@ -451,7 +451,7 @@ export default function Settings() {
       </Card>
 
       <p className="text-center text-xs text-slate-400">
-        NTK Platform · 個人與工作平台
+        EziTeach 教學易 · 教師工作台
       </p>
     </div>
   )

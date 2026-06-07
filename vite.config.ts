@@ -13,8 +13,8 @@ export default defineConfig({
       injectRegister: false, // 改由 src/components/PwaUpdater.tsx 自行 registerSW（要 periodic update）
       includeAssets: ['favicon.svg'],
       manifest: {
-        name: 'NTK Platform · 個人學習與工作平台',
-        short_name: 'NTK',
+        name: 'EziTeach 教學易 · 香港教師工作台',
+        short_name: 'EziTeach',
         description: '個人學習與工作平台 — 學習 / 工作雙模式，雲端同步 + AI 助手',
         lang: 'zh-HK',
         theme_color: '#2f6cb3',

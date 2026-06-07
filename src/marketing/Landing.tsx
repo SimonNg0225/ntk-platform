@@ -80,12 +80,12 @@ export default function Landing() {
   return (
     <div className="min-h-screen bg-[color:var(--app-bg)] text-slate-900 dark:text-slate-100">
       <Helmet>
-        <title>NTK Platform · 香港教師一站式工作台</title>
+        <title>EziTeach 教學易 · 香港教師一站式工作台</title>
         <meta
           name="description"
           content="為香港老師而設的一站式工作台：備課、AI 出題、成績與弱項分析、點名、家長溝通、行政文件。資料在地、雲端同步、適用任何科目。"
         />
-        <meta property="og:title" content="NTK Platform · 香港教師工作台" />
+        <meta property="og:title" content="EziTeach 教學易 · 香港教師工作台" />
         <meta
           property="og:description"
           content="備課 · AI 出題 · 成績分析 · 點名 · 家長溝通 —— 老師的日常工作，一個平台搞掂。"
@@ -97,9 +97,11 @@ export default function Landing() {
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
           <div className="flex items-center gap-2.5">
             <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-accent text-sm font-bold text-white">
-              N
+              E
             </span>
-            <span className="text-[15px] font-bold tracking-tight">NTK Platform</span>
+            <span className="text-[15px] font-bold tracking-tight">
+              {t('shell.brandName', { defaultValue: '教學易' })}
+            </span>
           </div>
           <nav className="flex items-center gap-5 text-sm">
             <Link
@@ -226,7 +228,7 @@ export default function Landing() {
           <span aria-hidden>·</span>
           <Link to="/pricing" className="transition hover:text-accent">{t('footer.pricing')}</Link>
         </div>
-        <p className="mt-3">© {new Date().getFullYear()} NTK Platform · {t('footer.copy')}</p>
+        <p className="mt-3">© {new Date().getFullYear()} {t('shell.brandName', { defaultValue: '教學易' })} · {t('footer.copy')}</p>
       </footer>
     </div>
   )

@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "NTK Platform — 為香港老師而設嘅一站式工作台（備課 / 出題 / 成績 / 點名 / 家長溝通），另設個人成長模式",
+  "description": "EziTeach 教學易 — 為香港老師而設嘅一站式工作台（備課 / 出題 / 成績 / 點名 / 家長溝通），另設個人成長模式",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",

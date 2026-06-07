@@ -70,8 +70,8 @@ const resources = {
       common: { backHome: '返回首頁' },
 
       pricing: {
-        metaTitle: '定價 · NTK Platform',
-        metaDesc: 'NTK Platform 方案與定價：免費版永久免費，Pro 解鎖無限 AI 同多裝置同步。',
+        metaTitle: '定價 · 教學易 EziTeach',
+        metaDesc: '教學易（EziTeach）方案與定價：免費版永久免費，Pro 解鎖無限 AI 同多裝置同步。',
         title: '簡單透明嘅定價',
         subtitle: '老師免費用齊教學功能，需要時先升級。',
         monthly: '月繳',
@@ -104,7 +104,7 @@ const resources = {
         title: '私隱政策',
         updated: '2026 年 6 月 7 日',
         intro:
-          'NTK Platform（「本平台」）尊重並保障你的個人資料私隱。本政策說明我哋會收集咩資料、點樣使用同保護，以及你擁有嘅權利。本平台主要為香港教育工作者而設，會按香港《個人資料（私隱）條例》（第 486 章）行事。',
+          '教學易 EziTeach（「本平台」）尊重並保障你的個人資料私隱。本政策說明我哋會收集咩資料、點樣使用同保護，以及你擁有嘅權利。本平台主要為香港教育工作者而設，會按香港《個人資料（私隱）條例》（第 486 章）行事。',
         s1Title: '我哋收集嘅資料',
         s1AccountLabel: '帳戶資料',
         s1Account: '：你用 Google 登入時提供嘅名稱同電郵地址。',
@@ -148,7 +148,7 @@ const resources = {
         title: '服務條款',
         updated: '2026 年 6 月 7 日',
         intro:
-          '歡迎使用 NTK Platform（「本平台」）。當你使用本平台，即表示你同意以下條款。如不同意，請停止使用。',
+          '歡迎使用 教學易 EziTeach（「本平台」）。當你使用本平台，即表示你同意以下條款。如不同意，請停止使用。',
         s1Title: '服務說明',
         s1Body:
           '本平台為香港教師提供備課、出題、成績管理、點名、家長溝通、行政文件及 AI 教學助手等工具。我哋可能不時更新、增刪功能。',
@@ -246,9 +246,9 @@ const resources = {
       common: { backHome: 'Back to home' },
 
       pricing: {
-        metaTitle: 'Pricing · NTK Platform',
+        metaTitle: 'Pricing · EziTeach',
         metaDesc:
-          'NTK Platform plans and pricing: the free plan is free forever, Pro unlocks unlimited AI and multi-device sync.',
+          'EziTeach plans and pricing: the free plan is free forever, Pro unlocks unlimited AI and multi-device sync.',
         title: 'Simple, transparent pricing',
         subtitle: 'Teachers get every teaching feature free; upgrade only when you need to.',
         monthly: 'Monthly',
@@ -281,7 +281,7 @@ const resources = {
         title: 'Privacy Policy',
         updated: '7 June 2026',
         intro:
-          'NTK Platform ("the Platform") respects and protects the privacy of your personal data. This policy explains what data we collect, how we use and protect it, and the rights you have. The Platform is primarily designed for Hong Kong educators and operates in accordance with the Hong Kong Personal Data (Privacy) Ordinance (Cap. 486).',
+          'EziTeach ("the Platform") respects and protects the privacy of your personal data. This policy explains what data we collect, how we use and protect it, and the rights you have. The Platform is primarily designed for Hong Kong educators and operates in accordance with the Hong Kong Personal Data (Privacy) Ordinance (Cap. 486).',
         s1Title: 'Data we collect',
         s1AccountLabel: 'Account data',
         s1Account: ': the name and email address you provide when signing in with Google.',
@@ -328,7 +328,7 @@ const resources = {
         title: 'Terms of Service',
         updated: '7 June 2026',
         intro:
-          'Welcome to NTK Platform ("the Platform"). By using the Platform, you agree to the following terms. If you do not agree, please stop using it.',
+          'Welcome to EziTeach ("the Platform"). By using the Platform, you agree to the following terms. If you do not agree, please stop using it.',
         s1Title: 'Description of service',
         s1Body:
           'The Platform provides Hong Kong teachers with tools for lesson prep, question generation, grade management, attendance, parent communication, admin documents and an AI teaching assistant. We may update, add or remove features from time to time.',

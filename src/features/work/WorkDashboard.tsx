@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import './dashboard/i18n'
 import { useCollection } from '../../lib/store'
 import {
   tasksCol,
@@ -123,6 +125,26 @@ const WIDGET_META: Record<WidgetId, { label: string; icon: LucideIcon }> = {
   quickActions: { label: '快速動作', icon: LayoutGrid },
 }
 
+// WidgetId → wdash i18n key（畀 t() 翻譯 widget 標題；defaultValue 用返 WIDGET_META.label）
+const WIDGET_META_I18N: Record<WidgetId, string> = {
+  kpi: 'metaKpi',
+  focus: 'metaFocus',
+  agenda: 'metaAgenda',
+  taskTrend: 'metaTaskTrend',
+  curriculum: 'metaCurriculum',
+  attendance: 'metaAttendance',
+  grades: 'metaGrades',
+  parentFollowUp: 'metaParentFollowUp',
+  countdown: 'metaCountdown',
+  classLoad: 'metaClassLoad',
+  quickActions: 'metaQuickActions',
+}
+
+// 翻譯 widget 標題（hook 內呼叫；keep WIDGET_META 做 zh-HK source）
+function widgetLabel(t: (k: string, o: { defaultValue: string }) => string, id: WidgetId): string {
+  return t(`wdash.${WIDGET_META_I18N[id]}`, { defaultValue: WIDGET_META[id].label })
+}
+
 const KPI_ICON: Record<Kpi['icon'], LucideIcon> = {
   tasks: NotebookPen,
   class: BookMarked,
@@ -205,9 +227,20 @@ const SHORTCUTS: { key: string; nav: string; label: string }[] = [
   { key: '6', nav: 'work-ai', label: 'AI' },
 ]
 
+// 捷徑 key → wdash i18n key（畀提示列用 t() 翻譯）
+const SHORTCUT_I18N: Record<string, string> = {
+  '1': 'scTasks',
+  '2': 'scTimetable',
+  '3': 'scAttendance',
+  '4': 'scGradebook',
+  '5': 'scCalendar',
+  '6': 'scAi',
+}
+
 export default function WorkDashboard() {
   const { open } = useNav()
   const toast = useToast()
+  const { t } = useTranslation()
 
   // ── 共用資料（跨功能彙整來源）──
   const tasks = useCollection(tasksCol)
@@ -262,7 +295,7 @@ export default function WorkDashboard() {
   const ttDay = isCycle ? cycleDayForDate(todayKey, cycleCalendar) ?? 0 : jsDay
   const dateLabel = `${now.getMonth() + 1}月${now.getDate()}日 星期${WEEKDAY_LABELS[jsDay]}`
   const hello = greeting(now.getHours())
-  const who = layout.greetingName.trim() || '老師'
+  const who = layout.greetingName.trim() || t('wdash.defaultName', { defaultValue: '老師' })
 
   const classNameById = useMemo(() => {
     const map = new Map<string, string>()
@@ -373,45 +406,45 @@ export default function WorkDashboard() {
     return [
       {
         key: 'tasks',
-        label: '未完成待辦',
+        label: t('wdash.openTasks', { defaultValue: '未完成待辦' }),
         value: openTasks.length,
         icon: 'tasks',
         navTo: 'work-tasks',
         highlight: overdueTasks > 0,
         delta:
           overdueTasks > 0
-            ? { dir: 'down', text: `${overdueTasks} 逾期` }
+            ? { dir: 'down', text: t('wdash.overdueN', { n: overdueTasks, defaultValue: `${overdueTasks} 逾期` }) }
             : undefined,
       },
       {
         key: 'done',
-        label: '本週完成',
+        label: t('wdash.doneThisWeek', { defaultValue: '本週完成' }),
         value: thisWeek,
-        unit: '件',
+        unit: t('wdash.unitItems', { defaultValue: '件' }),
         icon: 'class',
         navTo: 'work-tasks',
         delta,
       },
       {
         key: 'class',
-        label: '今日課堂',
+        label: t('wdash.todayClasses', { defaultValue: '今日課堂' }),
         value: todaySlotCount,
-        unit: '節',
+        unit: t('wdash.unitPeriods', { defaultValue: '節' }),
         icon: 'event',
         navTo: 'work-timetable',
       },
       {
         key: 'follow',
-        label: '待跟進家長',
+        label: t('wdash.followUpParents', { defaultValue: '待跟進家長' }),
         value: followUpCount,
         icon: 'parent',
         navTo: 'work-parent-comms',
         highlight: followUpCount > 0,
         delta:
-          upcoming7 > 0 ? { dir: 'flat', text: `未來 7 日 ${upcoming7} 事件` } : undefined,
+          upcoming7 > 0 ? { dir: 'flat', text: t('wdash.upcoming7N', { n: upcoming7, defaultValue: `未來 7 日 ${upcoming7} 事件` }) } : undefined,
       },
     ]
-  }, [timetable, jsDay, merged, todayKey, parentComms, events, openTasks, overdueTasks])
+  }, [t, timetable, jsDay, merged, todayKey, parentComms, events, openTasks, overdueTasks])
 
   // ── 快速擷取（掉入 Inbox）──
   function submitCapture() {
@@ -419,7 +452,7 @@ export default function WorkDashboard() {
     if (!text) return
     inboxCol.add({ text, mode: 'work', createdAt: new Date().toISOString() })
     setCapture('')
-    toast.success('已掉入快速擷取')
+    toast.success(t('wdash.capturedToast', { defaultValue: '已掉入快速擷取' }))
   }
 
   // ── 完成待辦 ──
@@ -438,7 +471,7 @@ export default function WorkDashboard() {
         completedAt: stamp,
         updatedAt: stamp,
       })
-    toast.success('已完成待辦')
+    toast.success(t('wdash.taskDoneToast', { defaultValue: '已完成待辦' }))
   }
 
   // 顯示緊嘅 widget（依次序、去除收起）
@@ -453,19 +486,19 @@ export default function WorkDashboard() {
           value={String(layout.rangeDays)}
           onChange={(v) => setRange(Number(v))}
           options={[
-            { id: '7', label: '7 日' },
-            { id: '14', label: '14 日' },
-            { id: '30', label: '30 日' },
+            { id: '7', label: t('wdash.days7', { defaultValue: '7 日' }) },
+            { id: '14', label: t('wdash.days14', { defaultValue: '14 日' }) },
+            { id: '30', label: t('wdash.days30', { defaultValue: '30 日' }) },
           ]}
         />
-        <Tooltip label="自訂版面 (E)">
+        <Tooltip label={t('wdash.customizeLayoutE', { defaultValue: '自訂版面 (E)' })}>
           <Button
             size="sm"
             variant={editMode ? 'primary' : 'secondary'}
             icon={Settings2}
             onClick={() => setEditMode((v) => !v)}
           >
-            {editMode ? '完成' : '自訂'}
+            {editMode ? t('wdash.done', { defaultValue: '完成' }) : t('wdash.customize', { defaultValue: '自訂' })}
           </Button>
         </Tooltip>
       </div>
@@ -498,7 +531,7 @@ export default function WorkDashboard() {
           <Input
             icon={InboxIcon}
             value={capture}
-            placeholder="快速記低一個諗法 / 待辦…（Enter 掉入收件匣）"
+            placeholder={t('wdash.capturePlaceholder', { defaultValue: '快速記低一個諗法 / 待辦…（Enter 掉入收件匣）' })}
             onChange={(e) => setCapture(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === 'Enter') submitCapture()
@@ -511,7 +544,7 @@ export default function WorkDashboard() {
           onClick={submitCapture}
           disabled={!capture.trim()}
         >
-          擷取
+          {t('wdash.capture', { defaultValue: '擷取' })}
         </Button>
       </div>
 
@@ -524,11 +557,11 @@ export default function WorkDashboard() {
       {visibleWidgets.length === 0 ? (
         <EmptyState
           icon={LayoutGrid}
-          title="未有顯示任何區塊"
-          hint="喺「自訂」面板開返你想睇嘅儀表板區塊。"
+          title={t('wdash.noWidgetsTitle', { defaultValue: '未有顯示任何區塊' })}
+          hint={t('wdash.noWidgetsHint', { defaultValue: '喺「自訂」面板開返你想睇嘅儀表板區塊。' })}
           action={
             <Button size="sm" variant="secondary" onClick={() => setEditMode(true)}>
-              開啟自訂
+              {t('wdash.openCustomize', { defaultValue: '開啟自訂' })}
             </Button>
           }
         />
@@ -562,16 +595,16 @@ export default function WorkDashboard() {
 
       {/* ───────── 鍵盤捷徑提示 ───────── */}
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 border-t border-slate-200 pt-4 text-xs text-slate-400 dark:border-slate-700 dark:text-slate-500">
-        <span className="font-medium">捷徑</span>
+        <span className="font-medium">{t('wdash.shortcuts', { defaultValue: '捷徑' })}</span>
         {SHORTCUTS.map((s) => (
           <span key={s.key} className="inline-flex items-center gap-1">
             <Kbd>{s.key}</Kbd>
-            {s.label}
+            {t(`wdash.${SHORTCUT_I18N[s.key]}`, { defaultValue: s.label })}
           </span>
         ))}
         <span className="inline-flex items-center gap-1">
           <Kbd>E</Kbd>
-          自訂版面
+          {t('wdash.customizeLayout', { defaultValue: '自訂版面' })}
         </span>
       </div>
     </div>
@@ -623,6 +656,7 @@ function WorkBento({
   completeTask: (id: string) => void
   open: (id: string) => void
 }) {
+  const { t } = useTranslation()
   // 今日課堂（時間軸）：已過 vs 全部 → hero 進度
   const classItems = agenda.filter((a) => a.kind === 'class')
   const todayClassCount = classItems.length
@@ -643,12 +677,12 @@ function WorkBento({
   const doneKpi = kpis.find((k) => k.key === 'done')
 
   // hero 一句話：按今日最重要嗰樣
-  let heroLine = '今日未有課堂安排，把握時間備課或抖一抖。'
-  if (overdueToday > 0) heroLine = `有 ${overdueToday} 件待辦逾期，建議優先清理。`
+  let heroLine = t('wdash.heroIdle', { defaultValue: '今日未有課堂安排，把握時間備課或抖一抖。' })
+  if (overdueToday > 0) heroLine = t('wdash.heroOverdue', { n: overdueToday, defaultValue: `有 ${overdueToday} 件待辦逾期，建議優先清理。` })
   else if (todayClassCount > 0 && taskItems.length > 0)
-    heroLine = `今日 ${todayClassCount} 堂課、${taskItems.length} 件待辦到期，逐樣搞掂。`
-  else if (todayClassCount > 0) heroLine = `今日有 ${todayClassCount} 堂課，記得預備教材。`
-  else if (taskItems.length > 0) heroLine = `今日有 ${taskItems.length} 件待辦到期，趁早完成。`
+    heroLine = t('wdash.heroClassAndTask', { c: todayClassCount, t: taskItems.length, defaultValue: `今日 ${todayClassCount} 堂課、${taskItems.length} 件待辦到期，逐樣搞掂。` })
+  else if (todayClassCount > 0) heroLine = t('wdash.heroClassOnly', { c: todayClassCount, defaultValue: `今日有 ${todayClassCount} 堂課，記得預備教材。` })
+  else if (taskItems.length > 0) heroLine = t('wdash.heroTaskOnly', { t: taskItems.length, defaultValue: `今日有 ${taskItems.length} 件待辦到期，趁早完成。` })
 
   return (
     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:auto-rows-[132px] lg:grid-cols-4">
@@ -661,16 +695,16 @@ function WorkBento({
           </h1>
           {streak >= 2 && (
             <span className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-xs font-semibold backdrop-blur">
-              <Flame size={13} /> 待辦連續 {streak} 日
+              <Flame size={13} /> {t('wdash.streakDaysN', { n: streak, defaultValue: `待辦連續 ${streak} 日` })}
             </span>
           )}
           <p className="mt-3 max-w-md text-sm text-white/80" aria-live="polite">{heroLine}</p>
         </div>
         <div className="relative">
-          <p className="text-xs text-white/70">今日課堂進度</p>
+          <p className="text-xs text-white/70">{t('wdash.todayClassProgress', { defaultValue: '今日課堂進度' })}</p>
           <p className="mt-0.5 text-4xl font-bold tabular-nums">
             {classesPassed}
-            <span className="ml-2 text-sm font-medium text-white/60">/ {todayClassCount} 堂</span>
+            <span className="ml-2 text-sm font-medium text-white/60">{t('wdash.ofNClasses', { n: todayClassCount, defaultValue: `/ ${todayClassCount} 堂` })}</span>
           </p>
           <div className="mt-2.5 h-2 w-full overflow-hidden rounded-full bg-white/20">
             <div className="h-full rounded-full bg-white transition-all duration-700" style={{ width: `${classPct}%` }} />
@@ -680,10 +714,10 @@ function WorkBento({
 
       {/* ── 未完成待辦 1×1 ── */}
       <StatTile
-        label="未完成待辦" value={openTasks} unit="件" icon={NotebookPen}
+        label={t('wdash.openTasks', { defaultValue: '未完成待辦' })} value={openTasks} unit={t('wdash.unitItems', { defaultValue: '件' })} icon={NotebookPen}
         tone={overdueTasks > 0 ? 'rose' : 'accent'}
-        hint={overdueTasks > 0 ? `${overdueTasks} 件逾期` : openTasks === 0 ? '全部搞掂 🎉' : '保持清爽'}
-        delta={overdueTasks > 0 ? { dir: 'down', text: `${overdueTasks} 逾期` } : undefined}
+        hint={overdueTasks > 0 ? t('wdash.overdueCountN', { n: overdueTasks, defaultValue: `${overdueTasks} 件逾期` }) : openTasks === 0 ? t('wdash.allCleared', { defaultValue: '全部搞掂 🎉' }) : t('wdash.stayClear', { defaultValue: '保持清爽' })}
+        delta={overdueTasks > 0 ? { dir: 'down', text: t('wdash.overdueN', { n: overdueTasks, defaultValue: `${overdueTasks} 逾期` }) } : undefined}
         onClick={() => open('work-tasks')}
       />
 
@@ -697,26 +731,26 @@ function WorkBento({
           <span className="text-[11px] font-bold tabular-nums text-slate-700 dark:text-slate-200">{overallProgress}%</span>
         </MiniRing>
         <div className="min-w-0">
-          <p className="text-xs font-medium text-slate-400 dark:text-slate-500">課程進度</p>
+          <p className="text-xs font-medium text-slate-400 dark:text-slate-500">{t('wdash.curriculumProgress', { defaultValue: '課程進度' })}</p>
           <p className="mt-0.5 text-lg font-bold tabular-nums text-slate-800 dark:text-slate-100">
-            {classProgress.length}<span className="text-sm text-slate-400"> 班</span>
+            {classProgress.length}<span className="text-sm text-slate-400"> {t('wdash.unitClasses', { defaultValue: '班' })}</span>
           </p>
-          <p className="truncate text-[11px] text-slate-400">{classProgress.length > 0 ? '整體完成度' : '未有班別'}</p>
+          <p className="truncate text-[11px] text-slate-400">{classProgress.length > 0 ? t('wdash.overallCompletion', { defaultValue: '整體完成度' }) : t('wdash.noClasses', { defaultValue: '未有班別' })}</p>
         </div>
       </button>
 
       {/* ── 本週完成 1×1 ── */}
       <StatTile
-        label="本週完成" value={doneKpi?.value ?? 0} unit="件" icon={CheckSquare} tone="sky"
+        label={t('wdash.doneThisWeek', { defaultValue: '本週完成' })} value={doneKpi?.value ?? 0} unit={t('wdash.unitItems', { defaultValue: '件' })} icon={CheckSquare} tone="sky"
         delta={doneKpi?.delta}
-        hint="近 7 日待辦"
+        hint={t('wdash.last7Tasks', { defaultValue: '近 7 日待辦' })}
         onClick={() => open('work-tasks')}
       />
       {/* ── 待跟進家長 1×1 ── */}
       <StatTile
-        label="待跟進家長" value={followUps.length} unit="位" icon={Phone}
+        label={t('wdash.followUpParents', { defaultValue: '待跟進家長' })} value={followUps.length} unit={t('wdash.unitPeople', { defaultValue: '位' })} icon={Phone}
         tone={followUps.length > 0 ? 'rose' : 'emerald'}
-        hint={followUps.length > 0 ? '記得覆返家長' : '全部跟進完'}
+        hint={followUps.length > 0 ? t('wdash.remindParents', { defaultValue: '記得覆返家長' }) : t('wdash.allFollowedUp', { defaultValue: '全部跟進完' })}
         onClick={() => open('work-parent-comms')}
       />
 
@@ -724,27 +758,27 @@ function WorkBento({
       <section className="flex min-h-0 flex-col rounded-2xl border border-slate-200/80 bg-white p-4 dark:border-slate-700/60 dark:bg-slate-800 sm:col-span-2">
         <div className="mb-1.5 flex items-center justify-between">
           <span className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 dark:text-slate-300">
-            <Clock size={13} /> 今日議程
+            <Clock size={13} /> {t('wdash.agendaTitle', { defaultValue: '今日議程' })}
           </span>
           <button
             type="button"
             onClick={() => open('calendar')}
             className="inline-flex items-center gap-0.5 text-xs font-medium text-accent transition hover:text-accent-strong"
           >
-            行事曆 <ChevronRight size={13} />
+            {t('wdash.calendar', { defaultValue: '行事曆' })} <ChevronRight size={13} />
           </button>
         </div>
         {agenda.length === 0 ? (
           <div className="flex flex-1 items-center gap-2.5 text-sm text-slate-400">
             <Palmtree size={16} className="text-emerald-400" />
-            今日一片清靜，未有課堂、到期待辦或行程。
+            {t('wdash.agendaQuietBento', { defaultValue: '今日一片清靜，未有課堂、到期待辦或行程。' })}
           </div>
         ) : (
           <ul className="min-h-0 flex-1 space-y-0.5 overflow-hidden">
             {agenda.slice(0, 4).map((it) => (
               <li key={it.id} className="flex items-center gap-2.5 rounded-xl px-1.5 py-1.5">
                 <span className="w-10 shrink-0 text-right text-[11px] font-semibold tabular-nums text-slate-500 dark:text-slate-400">
-                  {it.time ?? (it.badge === '全日' ? '全日' : '—')}
+                  {it.time ?? (it.badge === '全日' ? t('wdash.allDay', { defaultValue: '全日' }) : '—')}
                 </span>
                 <span className={cx('h-2 w-2 shrink-0 rounded-full', it.colorClass)} />
                 <button
@@ -757,14 +791,14 @@ function WorkBento({
                   </span>
                 </button>
                 {it.kind === 'task' && it.taskId ? (
-                  <span className="text-[11px] font-medium text-accent">完成</span>
+                  <span className="text-[11px] font-medium text-accent">{t('wdash.complete', { defaultValue: '完成' })}</span>
                 ) : it.badge && it.badge !== '全日' ? (
                   <span className="truncate text-[11px] text-slate-400">{it.badge}</span>
                 ) : null}
               </li>
             ))}
             {agenda.length > 4 && (
-              <li className="px-1.5 pt-0.5 text-[11px] text-slate-400">仲有 {agenda.length - 4} 項…</li>
+              <li className="px-1.5 pt-0.5 text-[11px] text-slate-400">{t('wdash.moreItemsN', { n: agenda.length - 4, defaultValue: `仲有 ${agenda.length - 4} 項…` })}</li>
             )}
           </ul>
         )}
@@ -772,14 +806,14 @@ function WorkBento({
 
       {/* ── 今日課堂 1×1 ── */}
       <StatTile
-        label="今日課堂" value={todayClassCount} unit="節" icon={BookMarked} tone="violet"
-        hint={todayClassCount > 0 ? `已上 ${classesPassed} 節` : '今日無課'}
+        label={t('wdash.todayClasses', { defaultValue: '今日課堂' })} value={todayClassCount} unit={t('wdash.unitPeriods', { defaultValue: '節' })} icon={BookMarked} tone="violet"
+        hint={todayClassCount > 0 ? t('wdash.donePeriodsN', { n: classesPassed, defaultValue: `已上 ${classesPassed} 節` }) : t('wdash.noClassToday', { defaultValue: '今日無課' })}
         onClick={() => open('work-timetable')}
       />
       {/* ── 出席率 1×1 ── */}
       <StatTile
-        label="出席率" value={attSummary.total > 0 ? attSummary.rate : '—'} unit={attSummary.total > 0 ? '%' : undefined}
-        icon={Users} tone="emerald" hint={attSummary.total > 0 ? `近 30 日 · ${attSummary.total} 次` : '未有點名'}
+        label={t('wdash.attendanceRate', { defaultValue: '出席率' })} value={attSummary.total > 0 ? attSummary.rate : '—'} unit={attSummary.total > 0 ? '%' : undefined}
+        icon={Users} tone="emerald" hint={attSummary.total > 0 ? t('wdash.classes30N', { n: attSummary.total, defaultValue: `近 30 日 · ${attSummary.total} 次` }) : t('wdash.noAttendanceYet', { defaultValue: '未有點名' })}
         onClick={() => open('work-attendance')}
       />
 
@@ -787,12 +821,12 @@ function WorkBento({
       <section className="flex flex-col rounded-2xl border border-slate-200/80 bg-white p-4 dark:border-slate-700/60 dark:bg-slate-800 sm:col-span-2 lg:row-span-2">
         <div className="mb-2 flex items-center justify-between">
           <span className="flex items-center gap-1.5 text-sm font-semibold text-slate-700 dark:text-slate-200">
-            <CheckSquare size={15} /> 今日待辦
+            <CheckSquare size={15} /> {t('wdash.todayTodos', { defaultValue: '今日待辦' })}
           </span>
           {overdueToday > 0 ? (
-            <Badge tone="rose" dot>{overdueToday} 逾期</Badge>
+            <Badge tone="rose" dot>{t('wdash.overdueN', { n: overdueToday, defaultValue: `${overdueToday} 逾期` })}</Badge>
           ) : (
-            <span className="text-xs font-medium tabular-nums text-slate-400">{taskItems.length} 件</span>
+            <span className="text-xs font-medium tabular-nums text-slate-400">{t('wdash.itemsN', { n: taskItems.length, defaultValue: `${taskItems.length} 件` })}</span>
           )}
         </div>
         {taskItems.length === 0 ? (
@@ -800,13 +834,13 @@ function WorkBento({
             <span className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-50 text-emerald-500 dark:bg-emerald-500/15">
               <PartyPopper size={22} />
             </span>
-            <p className="text-sm font-medium text-slate-600 dark:text-slate-300">今日無到期待辦</p>
+            <p className="text-sm font-medium text-slate-600 dark:text-slate-300">{t('wdash.noTodayTodos', { defaultValue: '今日無到期待辦' })}</p>
             <button
               type="button"
               onClick={() => open('work-tasks')}
               className="text-xs font-medium text-accent transition hover:text-accent-strong"
             >
-              去待辦規劃 →
+              {t('wdash.goPlanTodos', { defaultValue: '去待辦規劃 →' })}
             </button>
           </div>
         ) : (
@@ -817,7 +851,7 @@ function WorkBento({
                   <button
                     type="button"
                     onClick={() => it.taskId && completeTask(it.taskId)}
-                    aria-label="完成待辦"
+                    aria-label={t('wdash.completeTask', { defaultValue: '完成待辦' })}
                     className="flex h-5 w-5 flex-none items-center justify-center rounded-full border border-slate-300 text-transparent transition hover:border-emerald-400 hover:bg-emerald-400 hover:text-white dark:border-slate-600"
                   >
                     <Check size={12} strokeWidth={3} />
@@ -838,7 +872,7 @@ function WorkBento({
               </li>
             ))}
             {taskItems.length > 6 && (
-              <li className="px-2 pt-0.5 text-[11px] text-slate-400">仲有 {taskItems.length - 6} 件…</li>
+              <li className="px-2 pt-0.5 text-[11px] text-slate-400">{t('wdash.moreTasksN', { n: taskItems.length - 6, defaultValue: `仲有 ${taskItems.length - 6} 件…` })}</li>
             )}
           </ul>
         )}
@@ -846,22 +880,22 @@ function WorkBento({
 
       {/* ── 本週課擔 1×1 ── */}
       <StatTile
-        label="本週課擔" value={weekPeriods} unit="節" icon={CalendarDays} tone="amber"
-        hint="一至六總節數"
+        label={t('wdash.weekLoad', { defaultValue: '本週課擔' })} value={weekPeriods} unit={t('wdash.unitPeriods', { defaultValue: '節' })} icon={CalendarDays} tone="amber"
+        hint={t('wdash.totalPeriodsMonToSat', { defaultValue: '一至六總節數' })}
         onClick={() => open('work-timetable')}
       />
       {/* ── 重要倒數 1×1 ── */}
       <StatTile
-        label="最近倒數" value={nextCd ? nextCd.daysLeft : '—'} unit={nextCd ? '日' : undefined}
+        label={t('wdash.nearestCountdown', { defaultValue: '最近倒數' })} value={nextCd ? nextCd.daysLeft : '—'} unit={nextCd ? t('wdash.unitDays', { defaultValue: '日' }) : undefined}
         icon={Clock} tone="rose"
-        hint={nextCd ? nextCd.cd.title : '未有倒數'}
+        hint={nextCd ? nextCd.cd.title : t('wdash.noCountdown', { defaultValue: '未有倒數' })}
         onClick={() => open('countdown')}
       />
       {/* ── 成績平均 1×1 ── */}
       <StatTile
-        label="最近平均" value={gradeSummary.graded > 0 ? gradeSummary.average : '—'} unit={gradeSummary.graded > 0 ? '%' : undefined}
+        label={t('wdash.recentAverage', { defaultValue: '最近平均' })} value={gradeSummary.graded > 0 ? gradeSummary.average : '—'} unit={gradeSummary.graded > 0 ? '%' : undefined}
         icon={GraduationCap} tone="sky"
-        hint={gradeSummary.graded > 0 ? `${gradeSummary.graded} 人評分` : '未有評分'}
+        hint={gradeSummary.graded > 0 ? t('wdash.gradedPeopleN', { n: gradeSummary.graded, defaultValue: `${gradeSummary.graded} 人評分` }) : t('wdash.noGradesYet', { defaultValue: '未有評分' })}
         onClick={() => open('work-gradebook')}
       />
       {/* ── 問 AI CTA 1×1 ── */}
@@ -874,8 +908,8 @@ function WorkBento({
           <Zap size={16} />
         </span>
         <div>
-          <p className="text-sm font-semibold text-accent-strong dark:text-accent">問教學 AI</p>
-          <p className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">備課 · 出題 · 批改</p>
+          <p className="text-sm font-semibold text-accent-strong dark:text-accent">{t('wdash.askTeachingAi', { defaultValue: '問教學 AI' })}</p>
+          <p className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">{t('wdash.aiSubtitle', { defaultValue: '備課 · 出題 · 批改' })}</p>
         </div>
       </button>
     </div>
@@ -896,6 +930,7 @@ function LayoutEditor({
   name: string
   setName: (v: string) => void
 }) {
+  const { t } = useTranslation()
   return (
     <Card className="space-y-4 border-accent/30 bg-accent-soft/40 p-4 dark:border-accent/30 dark:bg-accent/10">
       <div className="flex items-start gap-3">
@@ -903,9 +938,9 @@ function LayoutEditor({
           <Settings2 size={16} />
         </span>
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">自訂儀表板</p>
+          <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">{t('wdash.customizeDashboard', { defaultValue: '自訂儀表板' })}</p>
           <p className="text-xs text-slate-500 dark:text-slate-400">
-            開關區塊、調整次序，或設定你想被點名嘅稱呼。
+            {t('wdash.customizeDashboardHint', { defaultValue: '開關區塊、調整次序，或設定你想被點名嘅稱呼。' })}
           </p>
         </div>
         <Button
@@ -916,7 +951,7 @@ function LayoutEditor({
             resetLayout()
           }}
         >
-          重設
+          {t('wdash.reset', { defaultValue: '重設' })}
         </Button>
       </div>
 
@@ -924,11 +959,11 @@ function LayoutEditor({
       <div className="flex items-center gap-2">
         <span className="flex items-center gap-1.5 text-xs font-medium text-slate-600 dark:text-slate-300">
           <Pencil size={13} />
-          稱呼
+          {t('wdash.nickname', { defaultValue: '稱呼' })}
         </span>
         <Input
           value={name}
-          placeholder="例如：陳 sir / Miss Wong"
+          placeholder={t('wdash.nicknamePlaceholder', { defaultValue: '例如：陳 sir / Miss Wong' })}
           onChange={(e) => setName(e.target.value)}
           onBlur={() => setGreetingName(name)}
           onKeyDown={(e) => {
@@ -954,11 +989,11 @@ function LayoutEditor({
             >
               <Icon size={16} className="shrink-0 text-slate-400" />
               <span className="flex-1 truncate text-sm font-medium text-slate-700 dark:text-slate-200">
-                {meta.label}
+                {widgetLabel(t, id)}
               </span>
               <div className="flex items-center gap-0.5">
                 <IconButton
-                  label="上移"
+                  label={t('wdash.moveUp', { defaultValue: '上移' })}
                   size="sm"
                   disabled={i === 0}
                   onClick={() => moveWidget(id, -1)}
@@ -966,7 +1001,7 @@ function LayoutEditor({
                   <ArrowUp size={15} />
                 </IconButton>
                 <IconButton
-                  label="下移"
+                  label={t('wdash.moveDown', { defaultValue: '下移' })}
                   size="sm"
                   disabled={i === order.length - 1}
                   onClick={() => moveWidget(id, 1)}
@@ -974,7 +1009,7 @@ function LayoutEditor({
                   <ArrowDown size={15} />
                 </IconButton>
                 <IconButton
-                  label={isHidden ? '顯示' : '隱藏'}
+                  label={isHidden ? t('wdash.show', { defaultValue: '顯示' }) : t('wdash.hide', { defaultValue: '隱藏' })}
                   size="sm"
                   active={!isHidden}
                   onClick={() => toggleWidget(id)}
@@ -1006,36 +1041,38 @@ function WidgetFrame({
   hidden: WidgetId[]
   children: React.ReactNode
 }) {
+  const { t } = useTranslation()
   if (!editMode) return <section>{children}</section>
   const i = order.indexOf(id)
   const meta = WIDGET_META[id]
+  const label = widgetLabel(t, id)
   return (
     <section className="relative rounded-xl border border-dashed border-accent/40 p-2">
       <div className="mb-1.5 flex items-center justify-between px-1">
         <span className="inline-flex items-center gap-1.5 text-xs font-medium text-accent-strong dark:text-accent">
           <meta.icon size={13} />
-          {meta.label}
+          {label}
         </span>
         <Menu
           align="end"
           trigger={
             <span className="rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-700">
               <Settings2 size={15} />
-              <span className="sr-only">{meta.label} 區塊設定</span>
+              <span className="sr-only">{t('wdash.sectionSettings', { label, defaultValue: `${meta.label} 區塊設定` })}</span>
             </span>
           }
           items={[
-            { id: 'up', label: '上移', icon: ArrowUp, onSelect: () => moveWidget(id, -1), disabled: i === 0 },
+            { id: 'up', label: t('wdash.moveUp', { defaultValue: '上移' }), icon: ArrowUp, onSelect: () => moveWidget(id, -1), disabled: i === 0 },
             {
               id: 'down',
-              label: '下移',
+              label: t('wdash.moveDown', { defaultValue: '下移' }),
               icon: ArrowDown,
               onSelect: () => moveWidget(id, 1),
               disabled: i === order.length - 1,
             },
             {
               id: 'hide',
-              label: hidden.includes(id) ? '顯示' : '隱藏',
+              label: hidden.includes(id) ? t('wdash.show', { defaultValue: '顯示' }) : t('wdash.hide', { defaultValue: '隱藏' }),
               icon: hidden.includes(id) ? Eye : EyeOff,
               onSelect: () => toggleWidget(id),
             },
@@ -1155,24 +1192,25 @@ function KpiWidget({ kpis, open }: { kpis: Kpi[]; open: (id: string) => void }) 
 
 // ───────── 今日聚焦 ─────────
 function FocusWidget({ ctx }: { ctx: WidgetCtx }) {
+  const { t } = useTranslation()
   const classCount = ctx.agenda.filter((a) => a.kind === 'class').length
   const dueCount = ctx.agenda.filter((a) => a.kind === 'task').length
   const eventCount = ctx.agenda.filter((a) => a.kind === 'event').length
   const overdue = ctx.agenda.filter((a) => a.kind === 'task' && a.overdue).length
 
   // 一句話聚焦語（按情況選最重要嗰樣）
-  let line = '今日無特別安排，把握時間備課或抖一抖。'
-  if (overdue > 0) line = `有 ${overdue} 件待辦逾期，建議優先清理。`
+  let line = t('wdash.focusIdle', { defaultValue: '今日無特別安排，把握時間備課或抖一抖。' })
+  if (overdue > 0) line = t('wdash.focusOverdue', { n: overdue, defaultValue: `有 ${overdue} 件待辦逾期，建議優先清理。` })
   else if (classCount > 0 && dueCount > 0)
-    line = `今日 ${classCount} 堂課、${dueCount} 件待辦到期，逐樣搞掂。`
-  else if (classCount > 0) line = `今日有 ${classCount} 堂課，記得預備教材。`
-  else if (dueCount > 0) line = `今日有 ${dueCount} 件待辦到期，趁早完成。`
-  else if (eventCount > 0) line = `今日有 ${eventCount} 個行程，留意時間。`
+    line = t('wdash.focusClassAndTask', { c: classCount, t: dueCount, defaultValue: `今日 ${classCount} 堂課、${dueCount} 件待辦到期，逐樣搞掂。` })
+  else if (classCount > 0) line = t('wdash.focusClassOnly', { c: classCount, defaultValue: `今日有 ${classCount} 堂課，記得預備教材。` })
+  else if (dueCount > 0) line = t('wdash.focusTaskOnly', { t: dueCount, defaultValue: `今日有 ${dueCount} 件待辦到期，趁早完成。` })
+  else if (eventCount > 0) line = t('wdash.focusEventOnly', { e: eventCount, defaultValue: `今日有 ${eventCount} 個行程，留意時間。` })
 
   const chips = [
-    { label: '課堂', value: classCount, icon: BookMarked, tone: 'accent' as const },
-    { label: '到期待辦', value: dueCount, icon: CheckSquare, tone: overdue > 0 ? ('rose' as const) : ('amber' as const) },
-    { label: '行程', value: eventCount, icon: Calendar, tone: 'blue' as const },
+    { label: t('wdash.chipClass', { defaultValue: '課堂' }), value: classCount, icon: BookMarked, tone: 'accent' as const },
+    { label: t('wdash.chipDueTask', { defaultValue: '到期待辦' }), value: dueCount, icon: CheckSquare, tone: overdue > 0 ? ('rose' as const) : ('amber' as const) },
+    { label: t('wdash.chipEvent', { defaultValue: '行程' }), value: eventCount, icon: Calendar, tone: 'blue' as const },
   ]
 
   return (
@@ -1180,7 +1218,7 @@ function FocusWidget({ ctx }: { ctx: WidgetCtx }) {
       <div className="bg-accent px-5 py-4 text-white">
         <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-white/80">
           <Sparkles size={14} />
-          今日聚焦
+          {t('wdash.focusTitle', { defaultValue: '今日聚焦' })}
         </div>
         <p className="mt-1.5 text-base font-semibold leading-snug" aria-live="polite">{line}</p>
       </div>
@@ -1206,6 +1244,13 @@ const AGENDA_KIND_LABEL: Record<AgendaItem['kind'], string> = {
   countdown: '日子',
 }
 
+const AGENDA_KIND_I18N: Record<AgendaItem['kind'], string> = {
+  class: 'kindClass',
+  event: 'kindEvent',
+  task: 'kindTask',
+  countdown: 'kindCountdown',
+}
+
 function AgendaWidget({
   items,
   jsDay,
@@ -1217,23 +1262,24 @@ function AgendaWidget({
   completeTask: (id: string) => void
   open: (id: string) => void
 }) {
+  const { t } = useTranslation()
   return (
     <section>
       <SectionTitle
         icon={Clock}
         right={
           <Button size="sm" variant="ghost" iconRight={ChevronRight} onClick={() => open('calendar')}>
-            行事曆
+            {t('wdash.calendar', { defaultValue: '行事曆' })}
           </Button>
         }
       >
-        今日議程
+        {t('wdash.agendaTitle', { defaultValue: '今日議程' })}
       </SectionTitle>
       {items.length === 0 ? (
         jsDay === 0 ? (
-          <EmptyState icon={Palmtree} title="星期日休息" hint="今日無課堂亦無到期事項，好好抖一抖。" />
+          <EmptyState icon={Palmtree} title={t('wdash.sundayRestTitle', { defaultValue: '星期日休息' })} hint={t('wdash.sundayRestHint', { defaultValue: '今日無課堂亦無到期事項，好好抖一抖。' })} />
         ) : (
-          <EmptyState icon={PartyPopper} title="今日一片清靜" hint="未有課堂、到期待辦或行程。" />
+          <EmptyState icon={PartyPopper} title={t('wdash.quietTitle', { defaultValue: '今日一片清靜' })} hint={t('wdash.quietHint', { defaultValue: '未有課堂、到期待辦或行程。' })} />
         )
       ) : (
         <Card className="divide-y divide-slate-100 p-0 dark:divide-slate-800">
@@ -1246,7 +1292,7 @@ function AgendaWidget({
                     {it.time}
                   </span>
                 ) : (
-                  <span className="text-[10px] text-slate-400">{it.badge === '全日' ? '全日' : '—'}</span>
+                  <span className="text-[10px] text-slate-400">{it.badge === '全日' ? t('wdash.allDay', { defaultValue: '全日' }) : '—'}</span>
                 )}
               </div>
               {/* 色點 */}
@@ -1278,7 +1324,7 @@ function AgendaWidget({
               {/* 右側：類別 / 課室 / 完成掣 */}
               {it.kind === 'task' && it.taskId ? (
                 <IconButton
-                  label="完成待辦"
+                  label={t('wdash.completeTask', { defaultValue: '完成待辦' })}
                   size="sm"
                   className="min-h-[40px] min-w-[40px]"
                   onClick={() => completeTask(it.taskId!)}
@@ -1289,7 +1335,7 @@ function AgendaWidget({
                 <Badge tone="slate">{it.badge}</Badge>
               ) : (
                 <Badge tone={it.kind === 'class' ? 'accent' : it.kind === 'countdown' ? 'rose' : 'blue'}>
-                  {AGENDA_KIND_LABEL[it.kind]}
+                  {t(`wdash.${AGENDA_KIND_I18N[it.kind]}`, { defaultValue: AGENDA_KIND_LABEL[it.kind] })}
                 </Badge>
               )}
             </div>
@@ -1302,6 +1348,7 @@ function AgendaWidget({
 
 // ───────── 待辦完成趨勢 ─────────
 function TaskTrendWidget({ ctx }: { ctx: WidgetCtx }) {
+  const { t } = useTranslation()
   const totalDone = ctx.trend.reduce((s, d) => s + d.completed, 0)
   const totalNew = ctx.trend.reduce((s, d) => s + d.created, 0)
   return (
@@ -1310,21 +1357,21 @@ function TaskTrendWidget({ ctx }: { ctx: WidgetCtx }) {
         icon={CheckSquare}
         right={
           <Badge tone={ctx.streak >= 2 ? 'amber' : 'slate'} icon={ctx.streak >= 2 ? Flame : undefined}>
-            連續 {ctx.streak} 日
+            {t('wdash.streakNDays', { n: ctx.streak, defaultValue: `連續 ${ctx.streak} 日` })}
           </Badge>
         }
       >
-        待辦完成趨勢
+        {t('wdash.taskTrendTitle', { defaultValue: '待辦完成趨勢' })}
       </SectionTitle>
       <Card className="space-y-4 p-4">
         <div className="grid grid-cols-3 gap-2 text-center">
-          <Stat label="期內完成" value={totalDone} tone="accent" />
-          <Stat label="期內新增" value={totalNew} tone="slate" />
-          <Stat label="未完成" value={ctx.openTasks} tone={ctx.openTasks > 0 ? 'amber' : 'slate'} />
+          <Stat label={t('wdash.doneInPeriod', { defaultValue: '期內完成' })} value={totalDone} tone="accent" />
+          <Stat label={t('wdash.newInPeriod', { defaultValue: '期內新增' })} value={totalNew} tone="slate" />
+          <Stat label={t('wdash.unfinished', { defaultValue: '未完成' })} value={ctx.openTasks} tone={ctx.openTasks > 0 ? 'amber' : 'slate'} />
         </div>
         <TaskTrendChart data={ctx.trend} />
         <div>
-          <p className="mb-1.5 text-xs font-medium text-slate-500 dark:text-slate-400">近 {ctx.heat.length} 日完成熱力</p>
+          <p className="mb-1.5 text-xs font-medium text-slate-500 dark:text-slate-400">{t('wdash.heatLastNDays', { n: ctx.heat.length, defaultValue: `近 ${ctx.heat.length} 日完成熱力` })}</p>
           <HeatStrip cells={ctx.heat} />
         </div>
       </Card>
@@ -1370,24 +1417,25 @@ function CurriculumWidget({
   overall: number
   open: (id: string) => void
 }) {
+  const { t } = useTranslation()
   return (
     <section>
       <SectionTitle
         icon={School}
         right={
           <Button size="sm" variant="ghost" iconRight={ChevronRight} onClick={() => open('work-curriculum')}>
-            詳情
+            {t('wdash.details', { defaultValue: '詳情' })}
           </Button>
         }
       >
-        各班課程進度
+        {t('wdash.curriculumTitle', { defaultValue: '各班課程進度' })}
       </SectionTitle>
       {rows.length === 0 ? (
-        <EmptyState icon={School} title="未有班別資料" hint="加入班別後即可追蹤進度。" />
+        <EmptyState icon={School} title={t('wdash.noClassesTitle', { defaultValue: '未有班別資料' })} hint={t('wdash.noClassesHint', { defaultValue: '加入班別後即可追蹤進度。' })} />
       ) : (
         <Card className="space-y-4 p-4">
           <div className="flex items-center justify-between rounded-lg bg-accent-soft px-3 py-2 dark:bg-accent/10">
-            <span className="text-sm font-medium text-slate-700 dark:text-slate-200">整體完成度</span>
+            <span className="text-sm font-medium text-slate-700 dark:text-slate-200">{t('wdash.overallCompletionLabel', { defaultValue: '整體完成度' })}</span>
             <span className="text-lg font-bold tabular-nums text-accent-strong dark:text-accent">{overall}%</span>
           </div>
           {rows.map((cp) => (
@@ -1396,7 +1444,7 @@ function CurriculumWidget({
                 <span className="font-medium text-slate-800 dark:text-slate-100">{cp.name}</span>
                 <span className="flex items-center gap-2 tabular-nums text-slate-500 dark:text-slate-400">
                   {cp.inProgress > 0 && (
-                    <span className="text-[11px] text-amber-600 dark:text-amber-400">{cp.inProgress} 進行中</span>
+                    <span className="text-[11px] text-amber-600 dark:text-amber-400">{t('wdash.inProgressN', { n: cp.inProgress, defaultValue: `${cp.inProgress} 進行中` })}</span>
                   )}
                   {cp.done}/{cp.total}（{cp.percent}%）
                 </span>
@@ -1418,34 +1466,35 @@ function AttendanceWidget({
   s: ReturnType<typeof buildAttendance>
   open: (id: string) => void
 }) {
+  const { t } = useTranslation()
   return (
     <section>
       <SectionTitle
         icon={Users}
         right={
           <Button size="sm" variant="ghost" iconRight={ChevronRight} onClick={() => open('work-attendance')}>
-            點名
+            {t('wdash.takeAttendance', { defaultValue: '點名' })}
           </Button>
         }
-        description="近 30 日整體"
+        description={t('wdash.last30Overall', { defaultValue: '近 30 日整體' })}
       >
-        出席率
+        {t('wdash.attendanceTitle', { defaultValue: '出席率' })}
       </SectionTitle>
       {s.total === 0 ? (
-        <EmptyState icon={Users} title="未有點名紀錄" hint="去點名／出席記錄學生出席狀況。" />
+        <EmptyState icon={Users} title={t('wdash.noAttendanceTitle', { defaultValue: '未有點名紀錄' })} hint={t('wdash.noAttendanceHint', { defaultValue: '去點名／出席記錄學生出席狀況。' })} />
       ) : (
         <Card className="p-4">
           <Donut
             centerValue={`${s.rate}%`}
-            centerLabel="出席率"
+            centerLabel={t('wdash.attendanceTitle', { defaultValue: '出席率' })}
             segments={[
-              { label: '出席', value: s.present, color: '#34d399' },
-              { label: '遲到', value: s.late, color: '#fbbf24' },
-              { label: '缺席', value: s.absent, color: '#fb7185' },
+              { label: t('wdash.attPresent', { defaultValue: '出席' }), value: s.present, color: '#34d399' },
+              { label: t('wdash.attLate', { defaultValue: '遲到' }), value: s.late, color: '#fbbf24' },
+              { label: t('wdash.attAbsent', { defaultValue: '缺席' }), value: s.absent, color: '#fb7185' },
             ]}
           />
           <p className="mt-3 text-center text-xs tabular-nums text-slate-400 dark:text-slate-500">
-            共 {s.total} 次記錄
+            {t('wdash.attRecordsN', { n: s.total, defaultValue: `共 ${s.total} 次記錄` })}
           </p>
         </Card>
       )}
@@ -1461,34 +1510,35 @@ function GradesWidget({
   s: ReturnType<typeof buildGradeSummary>
   open: (id: string) => void
 }) {
+  const { t } = useTranslation()
   return (
     <section>
       <SectionTitle
         icon={GraduationCap}
         right={
           <Button size="sm" variant="ghost" iconRight={ChevronRight} onClick={() => open('work-gradebook')}>
-            成績冊
+            {t('wdash.gradebook', { defaultValue: '成績冊' })}
           </Button>
         }
       >
-        成績分布
+        {t('wdash.gradesTitle', { defaultValue: '成績分布' })}
       </SectionTitle>
       {s.graded === 0 ? (
-        <EmptyState icon={GraduationCap} title="未有評分紀錄" hint="喺成績管理輸入分數後即見分布。" />
+        <EmptyState icon={GraduationCap} title={t('wdash.noGradesTitle', { defaultValue: '未有評分紀錄' })} hint={t('wdash.noGradesHint', { defaultValue: '喺成績管理輸入分數後即見分布。' })} />
       ) : (
         <Card className="space-y-3 p-4">
           <div className="flex items-center justify-between">
             <div className="min-w-0">
               <p className="truncate text-sm font-medium text-slate-800 dark:text-slate-100">
-                {s.assessment?.name ?? '最近評估'}
+                {s.assessment?.name ?? t('wdash.recentAssessment', { defaultValue: '最近評估' })}
               </p>
               <p className="text-xs text-slate-400">
-                {s.graded} 人 · 滿分 {s.max}
+                {t('wdash.gradedMaxN', { graded: s.graded, max: s.max, defaultValue: `${s.graded} 人 · 滿分 ${s.max}` })}
               </p>
             </div>
             <div className="text-right">
               <p className="text-2xl font-bold tabular-nums text-accent-strong dark:text-accent">{s.average}%</p>
-              <p className="text-[11px] text-slate-400">平均</p>
+              <p className="text-[11px] text-slate-400">{t('wdash.averageLabel', { defaultValue: '平均' })}</p>
             </div>
           </div>
           <GradeHistogram bins={s.bins} />
@@ -1506,20 +1556,21 @@ function FollowUpWidget({
   rows: ReturnType<typeof buildFollowUps>
   open: (id: string) => void
 }) {
+  const { t } = useTranslation()
   return (
     <section>
       <SectionTitle
         icon={Phone}
         right={
           <Button size="sm" variant="ghost" iconRight={ChevronRight} onClick={() => open('work-parent-comms')}>
-            家長溝通
+            {t('wdash.parentComms', { defaultValue: '家長溝通' })}
           </Button>
         }
       >
-        待跟進家長
+        {t('wdash.followUpTitle', { defaultValue: '待跟進家長' })}
       </SectionTitle>
       {rows.length === 0 ? (
-        <EmptyState icon={PartyPopper} title="無待跟進事項" hint="所有家長聯絡都跟進完了。" />
+        <EmptyState icon={PartyPopper} title={t('wdash.noFollowUpTitle', { defaultValue: '無待跟進事項' })} hint={t('wdash.noFollowUpHint', { defaultValue: '所有家長聯絡都跟進完了。' })} />
       ) : (
         <Card className="divide-y divide-slate-100 p-0 dark:divide-slate-800">
           {rows.slice(0, 5).map(({ comm, className }) => (
@@ -1538,12 +1589,12 @@ function FollowUpWidget({
                 </p>
               </div>
               <Badge tone="rose" dot>
-                待跟進
+                {t('wdash.followUpBadge', { defaultValue: '待跟進' })}
               </Badge>
             </button>
           ))}
           {rows.length > 5 && (
-            <div className="px-3 py-2 text-center text-xs text-slate-400">仲有 {rows.length - 5} 項…</div>
+            <div className="px-3 py-2 text-center text-xs text-slate-400">{t('wdash.moreItemsN', { n: rows.length - 5, defaultValue: `仲有 ${rows.length - 5} 項…` })}</div>
           )}
         </Card>
       )}
@@ -1559,20 +1610,21 @@ function CountdownWidget({
   rows: ReturnType<typeof buildCountdowns>
   open: (id: string) => void
 }) {
+  const { t } = useTranslation()
   return (
     <section>
       <SectionTitle
         icon={Clock}
         right={
           <Button size="sm" variant="ghost" iconRight={ChevronRight} onClick={() => open('countdown')}>
-            全部
+            {t('wdash.all', { defaultValue: '全部' })}
           </Button>
         }
       >
-        重要日子倒數
+        {t('wdash.countdownTitle', { defaultValue: '重要日子倒數' })}
       </SectionTitle>
       {rows.length === 0 ? (
-        <EmptyState icon={Clock} title="未有倒數" hint="加入考試、死線、評估等重要日子。" />
+        <EmptyState icon={Clock} title={t('wdash.noCountdownTitle', { defaultValue: '未有倒數' })} hint={t('wdash.noCountdownHint', { defaultValue: '加入考試、死線、評估等重要日子。' })} />
       ) : (
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {rows.slice(0, 4).map(({ cd, daysLeft }) => {
@@ -1603,7 +1655,7 @@ function CountdownWidget({
                   >
                     {daysLeft}
                   </p>
-                  <p className="text-[11px] text-slate-400">{daysLeft === 0 ? '今日' : '日後'}</p>
+                  <p className="text-[11px] text-slate-400">{daysLeft === 0 ? t('wdash.cdToday', { defaultValue: '今日' }) : t('wdash.cdDaysLeft', { defaultValue: '日後' })}</p>
                 </div>
               </button>
             )
@@ -1616,10 +1668,11 @@ function CountdownWidget({
 
 // ───────── 本週課擔 ─────────
 function ClassLoadWidget({ data }: { data: ReturnType<typeof buildWeekLoad> }) {
+  const { t } = useTranslation()
   return (
     <section>
-      <SectionTitle icon={BookMarked} description="每日上課節數">
-        本週課擔
+      <SectionTitle icon={BookMarked} description={t('wdash.dailyPeriods', { defaultValue: '每日上課節數' })}>
+        {t('wdash.classLoadTitle', { defaultValue: '本週課擔' })}
       </SectionTitle>
       <Card className="p-4">
         <WeekLoadBars data={data} />
@@ -1629,28 +1682,29 @@ function ClassLoadWidget({ data }: { data: ReturnType<typeof buildWeekLoad> }) {
 }
 
 // ───────── 快速動作 ─────────
-const QUICK_ACTIONS: { key: string; label: string; icon: LucideIcon }[] = [
-  { key: 'work-tasks', label: '待辦事項', icon: NotebookPen },
-  { key: 'work-attendance', label: '點名考勤', icon: CheckSquare },
-  { key: 'work-gradebook', label: '成績管理', icon: GraduationCap },
-  { key: 'work-lesson-plan', label: '備課教案', icon: ClipboardList },
-  { key: 'work-timetable', label: '時間表', icon: CalendarDays },
-  { key: 'calendar', label: '行事曆', icon: Calendar },
-  { key: 'work-ai', label: '教學 AI', icon: Sparkles },
-  { key: 'work-parent-comms', label: '家長溝通', icon: Phone },
+const QUICK_ACTIONS: { key: string; label: string; i18n: string; icon: LucideIcon }[] = [
+  { key: 'work-tasks', label: '待辦事項', i18n: 'qaTasks', icon: NotebookPen },
+  { key: 'work-attendance', label: '點名考勤', i18n: 'qaAttendance', icon: CheckSquare },
+  { key: 'work-gradebook', label: '成績管理', i18n: 'qaGradebook', icon: GraduationCap },
+  { key: 'work-lesson-plan', label: '備課教案', i18n: 'qaLessonPlan', icon: ClipboardList },
+  { key: 'work-timetable', label: '時間表', i18n: 'qaTimetable', icon: CalendarDays },
+  { key: 'calendar', label: '行事曆', i18n: 'qaCalendar', icon: Calendar },
+  { key: 'work-ai', label: '教學 AI', i18n: 'qaAi', icon: Sparkles },
+  { key: 'work-parent-comms', label: '家長溝通', i18n: 'qaParentComms', icon: Phone },
 ]
 
 function QuickActionsWidget({ open }: { open: (id: string) => void }) {
+  const { t } = useTranslation()
   return (
     <section>
-      <SectionTitle icon={LayoutGrid}>快速動作</SectionTitle>
+      <SectionTitle icon={LayoutGrid}>{t('wdash.quickActionsTitle', { defaultValue: '快速動作' })}</SectionTitle>
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {QUICK_ACTIONS.map((a) => (
           <Card key={a.key} hover onClick={() => open(a.key)} className="flex flex-col items-center gap-2 p-4 text-center">
             <span className="flex h-10 w-10 items-center justify-center rounded-full bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
               <a.icon size={20} strokeWidth={2} />
             </span>
-            <span className="text-sm font-medium text-slate-700 dark:text-slate-200">{a.label}</span>
+            <span className="text-sm font-medium text-slate-700 dark:text-slate-200">{t(`wdash.${a.i18n}`, { defaultValue: a.label })}</span>
           </Card>
         ))}
       </div>

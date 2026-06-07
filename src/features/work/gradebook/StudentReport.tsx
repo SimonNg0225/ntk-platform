@@ -113,7 +113,7 @@ export default function StudentReport({
       </div>
       <table><thead><tr><th>評估</th><th style="text-align:center">類型</th><th style="text-align:right">得分</th><th style="text-align:right">班平均</th></tr></thead>
       <tbody>${rows}</tbody></table>
-      <div class="foot">由 NTK Platform 自動產生 · 加權方案：${scheme.weighted ? '已啟用' : '等權平均'}</div>
+      <div class="foot">由 EziTeach 教學易 自動產生 · 加權方案：${scheme.weighted ? '已啟用' : '等權平均'}</div>
       </body></html>`)
     win.document.close()
     win.focus()
@@ -371,7 +371,7 @@ export default function StudentReport({
         <p className="flex flex-wrap items-center gap-x-1.5 gap-y-1 px-0.5 text-xs text-slate-400 dark:text-slate-500">
           <span>「vs 班平均」為該生喺每項評估與全班平均嘅差距（百分點）。</span>
           <span aria-hidden className="text-slate-300 dark:text-slate-600">·</span>
-          <span>由 NTK Platform 自動結算。</span>
+          <span>由 EziTeach 教學易 自動結算。</span>
         </p>
       </div>
     </Modal>

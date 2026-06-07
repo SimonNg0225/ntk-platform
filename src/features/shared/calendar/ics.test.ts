@@ -352,7 +352,7 @@ describe('wrapCalendar（VCALENDAR 外殼 + CRLF）', () => {
     const out = wrapCalendar([])
     expect(out.startsWith('BEGIN:VCALENDAR\r\n')).toBe(true)
     expect(out).toContain('VERSION:2.0')
-    expect(out).toContain('PRODID:-//NTK Platform//Calendar Export//ZH')
+    expect(out).toContain('PRODID:-//EziTeach//Calendar Export//ZH')
     expect(out.trimEnd().endsWith('END:VCALENDAR')).toBe(true)
   })
 

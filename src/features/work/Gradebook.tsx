@@ -1,4 +1,6 @@
 import { useMemo, useState, type ReactNode } from 'react'
+import { useTranslation } from 'react-i18next'
+import './gradebook/i18n'
 import { useCollection } from '../../lib/store'
 import { useToast } from '../../context/ToastContext'
 import { useConfirm } from '../../context/ConfirmContext'
@@ -85,12 +87,12 @@ import {
 
 type Tab = 'grid' | 'analysis' | 'students' | 'assessments' | 'scheme'
 
-const TABS: { id: Tab; label: string }[] = [
-  { id: 'grid', label: '成績表' },
-  { id: 'analysis', label: '分析' },
-  { id: 'students', label: '學生' },
-  { id: 'assessments', label: '評估' },
-  { id: 'scheme', label: '評分方案' },
+const TABS: { id: Tab; key: string; zh: string }[] = [
+  { id: 'grid', key: 'gradebook.tabGrid', zh: '成績表' },
+  { id: 'analysis', key: 'gradebook.tabAnalysis', zh: '分析' },
+  { id: 'students', key: 'gradebook.tabStudents', zh: '學生' },
+  { id: 'assessments', key: 'gradebook.tabAssessments', zh: '評估' },
+  { id: 'scheme', key: 'gradebook.tabScheme', zh: '評分方案' },
 ]
 
 const TAB_ICONS: Partial<Record<Tab, typeof BarChart3>> = {
@@ -104,6 +106,7 @@ const TAB_ICONS: Partial<Record<Tab, typeof BarChart3>> = {
 // ───────── 成績冊 masthead：改卷簿封面（kicker + serif 標題 + 卷務行 + 戳印）─────────
 //  訂造概念 = 教師成績冊 / 分數矩陣：封面似一本帳簿，右上一個淡淡「成績冊」鋼印。
 function GradebookHeader({ subtitle }: { subtitle?: ReactNode }) {
+  const { t } = useTranslation()
   return (
     <header className="relative overflow-hidden rounded-3xl border border-slate-200/80 bg-white px-5 py-5 shadow-xs dark:border-slate-700/60 dark:bg-slate-800 dark:shadow-none sm:px-7 sm:py-6">
       {/* 封面右上鋼印（純裝飾，唔搶主次）*/}
@@ -111,7 +114,7 @@ function GradebookHeader({ subtitle }: { subtitle?: ReactNode }) {
         aria-hidden
         className="pointer-events-none absolute -right-5 top-3 hidden -rotate-6 select-none rounded-xl border-2 border-dashed border-accent/20 px-4 py-2 font-serif text-xs font-semibold uppercase tracking-[0.25em] text-accent/25 dark:border-accent/25 dark:text-accent/25 sm:block"
       >
-        成績冊 · Ledger
+        {t('gradebook.stampLedger', { defaultValue: '成績冊 · Ledger' })}
       </span>
       <div className="flex items-start gap-3.5">
         <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
@@ -120,13 +123,16 @@ function GradebookHeader({ subtitle }: { subtitle?: ReactNode }) {
         <div className="min-w-0">
           <p className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.3em] text-accent/70">
             <BookMarked size={13} />
-            分數矩陣 · Gradebook
+            {t('gradebook.kicker', { defaultValue: '分數矩陣 · Gradebook' })}
           </p>
           <h1 className="mt-1 font-serif text-[28px] font-semibold leading-none tracking-tight text-slate-800 dark:text-slate-100 sm:text-[34px]">
-            成績管理
+            {t('gradebook.title', { defaultValue: '成績管理' })}
           </h1>
           <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-            {subtitle ?? '加權計分、等級分佈、課題弱項同個人成績單——對齊學校評核標準。'}
+            {subtitle ??
+              t('gradebook.subtitleDefault', {
+                defaultValue: '加權計分、等級分佈、課題弱項同個人成績單——對齊學校評核標準。',
+              })}
           </p>
         </div>
       </div>
@@ -192,11 +198,17 @@ function LedgerStat({
 }
 
 export default function Gradebook() {
+  const { t } = useTranslation()
   const classes = useCollection(classesCol)
   const [classId, setClassId] = useState(classes[0]?.id ?? '')
   const [tab, setTab] = useState<Tab>('grid')
 
   const activeClass = classes.find((c) => c.id === classId) ?? classes[0]
+
+  const tabs = TABS.map((tb) => ({
+    id: tb.id,
+    label: t(tb.key, { defaultValue: tb.zh }),
+  }))
 
   if (classes.length === 0) {
     return (
@@ -205,8 +217,11 @@ export default function Gradebook() {
         <EmptyState
           icon={School}
           art="empty-gradebook"
-          title="由第一班開始"
-          hint="先去「班別管理」開好班別，呢度就可以記錄成績、睇分析同打印成績單。"
+          title={t('gradebook.emptyNoClassTitle', { defaultValue: '由第一班開始' })}
+          hint={t('gradebook.emptyNoClassHint', {
+            defaultValue:
+              '先去「班別管理」開好班別，呢度就可以記錄成績、睇分析同打印成績單。',
+          })}
         />
       </div>
     )
@@ -217,10 +232,15 @@ export default function Gradebook() {
       <GradebookHeader
         subtitle={
           <>
-            加權計分、等級分佈、課題弱項同個人成績單。
+            {t('gradebook.subtitleLead', {
+              defaultValue: '加權計分、等級分佈、課題弱項同個人成績單。',
+            })}
             {classes.length > 1 && (
               <span className="ml-1 tabular-nums text-slate-400 dark:text-slate-500">
-                · 本冊收錄 {classes.length} 班
+                {t('gradebook.booksCount', {
+                  count: classes.length,
+                  defaultValue: '· 本冊收錄 {{count}} 班',
+                })}
               </span>
             )}
           </>
@@ -232,7 +252,7 @@ export default function Gradebook() {
         <div className="flex items-center gap-2 px-0.5">
           <span className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
             <BookMarked size={13} className="shrink-0" />
-            班別
+            {t('gradebook.classLabel', { defaultValue: '班別' })}
           </span>
           <span className="h-4 w-px bg-slate-200 dark:bg-slate-700/60" />
           <div className="min-w-0 flex-1">
@@ -243,7 +263,7 @@ export default function Gradebook() {
             />
           </div>
         </div>
-        <Tabs tabs={TABS} active={tab} onChange={setTab} icons={TAB_ICONS} />
+        <Tabs tabs={tabs} active={tab} onChange={setTab} icons={TAB_ICONS} />
       </div>
 
       {activeClass && tab === 'grid' && (
@@ -293,6 +313,7 @@ function useClassData(classId: string) {
 type SortMode = 'name' | 'total-desc' | 'total-asc'
 
 function ScoreGrid({ classId, className }: { classId: string; className: string }) {
+  const { t } = useTranslation()
   const toast = useToast()
   const { students, assessments, scores, scheme, bands } = useClassData(classId)
   const [sortMode, setSortMode] = useState<SortMode>('name')
@@ -383,12 +404,12 @@ function ScoreGrid({ classId, className }: { classId: string; className: string 
 
   const exportCsv = () => {
     const header = [
-      '學號',
-      '學生',
+      t('gradebook.csvStudentNo', { defaultValue: '學號' }),
+      t('gradebook.csvStudent', { defaultValue: '學生' }),
       ...assessments.map((a) => `${a.name}（/${a.maxScore}）`),
-      '加權總分(%)',
-      '等級',
-      '名次',
+      t('gradebook.csvWeightedTotal', { defaultValue: '加權總分(%)' }),
+      t('gradebook.csvGrade', { defaultValue: '等級' }),
+      t('gradebook.csvRank', { defaultValue: '名次' }),
     ]
     const rows = orderedResults.map((r) => {
       const cells: (string | number)[] = [
@@ -406,8 +427,16 @@ function ScoreGrid({ classId, className }: { classId: string; className: string 
       cells.push(rankById.get(r.student.id) ?? '')
       return cells
     })
-    downloadCsv(`${className}_成績.csv`, [header, ...rows])
-    toast.success(`已匯出 ${className} 成績 CSV`)
+    downloadCsv(
+      `${className}_${t('gradebook.csvFileSuffix', { defaultValue: '成績' })}.csv`,
+      [header, ...rows],
+    )
+    toast.success(
+      t('gradebook.toastExported', {
+        className,
+        defaultValue: '已匯出 {{className}} 成績 CSV',
+      }),
+    )
   }
 
   if (students.length === 0 || assessments.length === 0) {
@@ -415,8 +444,11 @@ function ScoreGrid({ classId, className }: { classId: string; className: string 
       <EmptyState
         icon={NotebookPen}
         art="empty-gradebook"
-        title="準備好就可以入分"
-        hint="先去「學生」同「評估」分頁加入名單同測考，呢張成績表就會即刻郁起嚟。"
+        title={t('gradebook.emptyGridTitle', { defaultValue: '準備好就可以入分' })}
+        hint={t('gradebook.emptyGridHint', {
+          defaultValue:
+            '先去「學生」同「評估」分頁加入名單同測考，呢張成績表就會即刻郁起嚟。',
+        })}
       />
     )
   }
@@ -438,7 +470,9 @@ function ScoreGrid({ classId, className }: { classId: string; className: string 
           <div className="min-w-0">
             <p className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide text-accent-strong/80 dark:text-accent/80">
               <Target size={12} className="shrink-0" />
-              {scheme.weighted ? '班級加權平均' : '班級平均'}
+              {scheme.weighted
+                ? t('gradebook.classWeightedAvg', { defaultValue: '班級加權平均' })
+                : t('gradebook.classAvg', { defaultValue: '班級平均' })}
             </p>
             <p className="mt-1 flex items-baseline gap-2">
               <span className="font-serif text-[34px] font-semibold leading-none tabular-nums slashed-zero text-accent-strong dark:text-accent">
@@ -456,9 +490,14 @@ function ScoreGrid({ classId, className }: { classId: string; className: string 
             <BookMarked size={22} strokeWidth={1.8} />
           </span>
         </div>
-        <LedgerStat label="學生在冊" value={students.length} unit="人" icon={Users} />
         <LedgerStat
-          label="已入分評估"
+          label={t('gradebook.studentsOnRoll', { defaultValue: '學生在冊' })}
+          value={students.length}
+          unit={t('gradebook.unitPeople', { defaultValue: '人' })}
+          icon={Users}
+        />
+        <LedgerStat
+          label={t('gradebook.gradedAssessments', { defaultValue: '已入分評估' })}
           value={gradedAssessments}
           unit={`/${assessments.length}`}
           icon={ClipboardList}
@@ -474,20 +513,26 @@ function ScoreGrid({ classId, className }: { classId: string; className: string 
             value={sortMode}
             onChange={setSortMode}
             options={[
-              { id: 'name', label: '學號', icon: ArrowDownAZ },
-              { id: 'total-desc', label: '高→低', icon: ArrowUpDown },
+              { id: 'name', label: t('gradebook.sortByNo', { defaultValue: '學號' }), icon: ArrowDownAZ },
+              { id: 'total-desc', label: t('gradebook.sortHighToLow', { defaultValue: '高→低' }), icon: ArrowUpDown },
             ]}
           />
           {scheme.weighted && (
             <Badge tone="accent" icon={Calculator}>
-              加權計分
+              {t('gradebook.weightedScoring', { defaultValue: '加權計分' })}
             </Badge>
           )}
         </div>
         <div className="flex items-center gap-2">
-          <Tooltip label={heatmap ? '關閉等第底色' : '開啟等第底色'}>
+          <Tooltip
+            label={
+              heatmap
+                ? t('gradebook.heatmapOff', { defaultValue: '關閉等第底色' })
+                : t('gradebook.heatmapOn', { defaultValue: '開啟等第底色' })
+            }
+          >
             <IconButton
-              label="切換等第底色"
+              label={t('gradebook.toggleHeatmap', { defaultValue: '切換等第底色' })}
               active={heatmap}
               onClick={() => setHeatmap((v) => !v)}
             >
@@ -495,7 +540,7 @@ function ScoreGrid({ classId, className }: { classId: string; className: string 
             </IconButton>
           </Tooltip>
           <Button variant="secondary" size="sm" icon={Download} onClick={exportCsv}>
-            匯出 CSV
+            {t('gradebook.exportCsv', { defaultValue: '匯出 CSV' })}
           </Button>
         </div>
       </div>
@@ -505,10 +550,14 @@ function ScoreGrid({ classId, className }: { classId: string; className: string 
         <div className="flex items-center gap-1.5 border-b border-slate-200/80 px-4 py-2.5 dark:border-slate-700/60">
           <NotebookPen size={13} className="shrink-0 text-slate-400 dark:text-slate-500" />
           <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-            成績矩陣 · Score Matrix
+            {t('gradebook.scoreMatrix', { defaultValue: '成績矩陣 · Score Matrix' })}
           </span>
           <span className="ml-auto text-[11px] tabular-nums text-slate-400 dark:text-slate-500">
-            {students.length} 行 × {assessments.length} 項
+            {t('gradebook.matrixDims', {
+              rows: students.length,
+              cols: assessments.length,
+              defaultValue: '{{rows}} 行 × {{cols}} 項',
+            })}
           </span>
         </div>
         <div className="overflow-x-auto">
@@ -516,7 +565,7 @@ function ScoreGrid({ classId, className }: { classId: string; className: string 
             <thead>
               <tr className="bg-slate-50/80 dark:bg-slate-800/60">
                 <th className="sticky left-0 z-10 border-b border-r border-slate-200/80 bg-slate-50/95 px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-500 backdrop-blur dark:border-slate-700/60 dark:bg-slate-800/95 dark:text-slate-400">
-                  學生
+                  {t('gradebook.colStudent', { defaultValue: '學生' })}
                 </th>
                 {assessments.map((a, i) => (
                   <th
@@ -538,10 +587,12 @@ function ScoreGrid({ classId, className }: { classId: string; className: string 
                   </th>
                 ))}
                 <th className="border-b border-l border-slate-200/80 px-3 py-2.5 text-center text-xs font-semibold text-slate-600 dark:border-slate-700/60 dark:text-slate-300">
-                  {scheme.weighted ? '加權總分' : '平均'}
+                  {scheme.weighted
+                    ? t('gradebook.colWeightedTotal', { defaultValue: '加權總分' })
+                    : t('gradebook.colAverage', { defaultValue: '平均' })}
                 </th>
                 <th className="border-b border-slate-200/80 px-2 py-2.5 text-center text-xs font-semibold text-slate-600 dark:border-slate-700/60 dark:text-slate-300">
-                  名次
+                  {t('gradebook.colRank', { defaultValue: '名次' })}
                 </th>
                 <th className="border-b border-slate-200/80 px-2 py-2.5 dark:border-slate-700/60" />
               </tr>
@@ -589,7 +640,12 @@ function ScoreGrid({ classId, className }: { classId: string; className: string 
                           <input
                             type="number"
                             inputMode="numeric"
-                            aria-label={`${s.name}・${a.name} 分數（滿分 ${a.maxScore}）`}
+                            aria-label={t('gradebook.scoreAriaLabel', {
+                              student: s.name,
+                              assessment: a.name,
+                              max: a.maxScore,
+                              defaultValue: '{{student}}・{{assessment}} 分數（滿分 {{max}}）',
+                            })}
                             value={sc ?? ''}
                             onChange={(e) =>
                               setScore(a.id, s.id, e.target.value, a.maxScore)
@@ -645,7 +701,7 @@ function ScoreGrid({ classId, className }: { classId: string; className: string 
                     </td>
                     <td className="px-2 py-2 text-center">
                       <IconButton
-                        label="查看成績單"
+                        label={t('gradebook.viewReport', { defaultValue: '查看成績單' })}
                         onClick={() => setReportFor(s.id)}
                       >
                         <FileText size={15} strokeWidth={1.8} />
@@ -660,7 +716,7 @@ function ScoreGrid({ classId, className }: { classId: string; className: string 
                 <td className="sticky left-0 z-10 border-r border-slate-200/80 bg-slate-50/95 px-3 py-2.5 backdrop-blur dark:border-slate-700/60 dark:bg-slate-800/95">
                   <span className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
                     <Calculator size={12} className="shrink-0" />
-                    結算 · 全班平均
+                    {t('gradebook.footerSettle', { defaultValue: '結算 · 全班平均' })}
                   </span>
                 </td>
                 {assessments.map((a) => {
@@ -695,13 +751,17 @@ function ScoreGrid({ classId, className }: { classId: string; className: string 
       <p className="flex flex-wrap items-center gap-x-1.5 gap-y-1 px-0.5 text-xs text-slate-400 dark:text-slate-500">
         <span className="inline-flex items-center gap-1">
           <span className="h-2.5 w-2.5 rounded-[3px] border border-rose-300 bg-rose-50 dark:border-rose-800 dark:bg-rose-950/40" />
-          低於 50% 以紅色等第標示。
+          {t('gradebook.footBelow50', { defaultValue: '低於 50% 以紅色等第標示。' })}
         </span>
         <span aria-hidden className="text-slate-300 dark:text-slate-600">·</span>
         <span>
           {scheme.weighted
-            ? '總分按「評分方案」嘅類別權重計算。'
-            : '總分為各評估等權平均（可去「評分方案」開啟加權）。'}
+            ? t('gradebook.footWeighted', {
+                defaultValue: '總分按「評分方案」嘅類別權重計算。',
+              })
+            : t('gradebook.footUnweighted', {
+                defaultValue: '總分為各評估等權平均（可去「評分方案」開啟加權）。',
+              })}
         </span>
       </p>
 
@@ -775,14 +835,15 @@ const HEAT_BG: Record<'green' | 'accent' | 'blue' | 'amber' | 'rose' | 'slate', 
 // ============================================================
 type AnalysisView = 'overview' | 'assessments' | 'topics' | 'ranking'
 
-const ANALYSIS_VIEWS: { id: AnalysisView; label: string }[] = [
-  { id: 'overview', label: '總覽' },
-  { id: 'assessments', label: '逐項評估' },
-  { id: 'topics', label: '課題弱項' },
-  { id: 'ranking', label: '排名榜' },
+const ANALYSIS_VIEWS: { id: AnalysisView; key: string; zh: string }[] = [
+  { id: 'overview', key: 'gradebook.viewOverview', zh: '總覽' },
+  { id: 'assessments', key: 'gradebook.viewAssessments', zh: '逐項評估' },
+  { id: 'topics', key: 'gradebook.viewTopics', zh: '課題弱項' },
+  { id: 'ranking', key: 'gradebook.viewRanking', zh: '排名榜' },
 ]
 
 function AnalysisTab({ classId, className }: { classId: string; className: string }) {
+  const { t } = useTranslation()
   const { students, assessments, scores, scheme, bands } = useClassData(classId)
   const topics = useCollection(topicsCol)
   const [view, setView] = useState<AnalysisView>('overview')
@@ -916,13 +977,15 @@ function AnalysisTab({ classId, className }: { classId: string; className: strin
     return [...byTopic.entries()]
       .map(([tid, arr]) => ({
         id: tid,
-        topic: topics.find((t) => t.id === tid)?.topic ?? '未分類',
-        area: topics.find((t) => t.id === tid)?.area ?? '',
+        topic:
+          topics.find((tp) => tp.id === tid)?.topic ??
+          t('gradebook.topicUncategorized', { defaultValue: '未分類' }),
+        area: topics.find((tp) => tp.id === tid)?.area ?? '',
         avg: round1(mean(arr) ?? 0),
         n: arr.length,
       }))
       .sort((a, b) => a.avg - b.avg)
-  }, [assessments, results, topics])
+  }, [assessments, results, topics, t])
 
   // 趨勢
   const trendPoints = useMemo(
@@ -956,7 +1019,15 @@ function AnalysisTab({ classId, className }: { classId: string; className: strin
   }, [results, assessments])
 
   const exportSummary = () => {
-    const header = ['評估', '類型', '已交', '平均(%)', '中位數(%)', '標準差', '及格率(%)']
+    const header = [
+      t('gradebook.statsCsvAssessment', { defaultValue: '評估' }),
+      t('gradebook.statsCsvType', { defaultValue: '類型' }),
+      t('gradebook.statsCsvSubmitted', { defaultValue: '已交' }),
+      t('gradebook.statsCsvAvg', { defaultValue: '平均(%)' }),
+      t('gradebook.statsCsvMedian', { defaultValue: '中位數(%)' }),
+      t('gradebook.statsCsvStdev', { defaultValue: '標準差' }),
+      t('gradebook.statsCsvPassRate', { defaultValue: '及格率(%)' }),
+    ]
     const rows = perAssessment.map((x) => [
       x.a.name,
       x.a.type,
@@ -966,18 +1037,29 @@ function AnalysisTab({ classId, className }: { classId: string; className: strin
       x.sd == null ? '' : round1(x.sd),
       x.passRate == null ? '' : x.passRate,
     ])
-    downloadCsv(`${className}_評估統計.csv`, [header, ...rows])
+    downloadCsv(
+      `${className}_${t('gradebook.statsCsvFileSuffix', { defaultValue: '評估統計' })}.csv`,
+      [header, ...rows],
+    )
   }
 
   if (students.length === 0 || assessments.length === 0) {
     return (
       <EmptyState
         icon={BarChart3}
-        title="分析住緊等你"
-        hint="加入學生同評估、入埋分數，呢度就會自動畫出分佈、等級佔比同課題強弱。"
+        title={t('gradebook.emptyAnalysisTitle', { defaultValue: '分析住緊等你' })}
+        hint={t('gradebook.emptyAnalysisHint', {
+          defaultValue:
+            '加入學生同評估、入埋分數，呢度就會自動畫出分佈、等級佔比同課題強弱。',
+        })}
       />
     )
   }
+
+  const analysisViews = ANALYSIS_VIEWS.map((v) => ({
+    id: v.id,
+    label: t(v.key, { defaultValue: v.zh }),
+  }))
 
   return (
     <div className="space-y-4">
@@ -986,11 +1068,11 @@ function AnalysisTab({ classId, className }: { classId: string; className: strin
           size="sm"
           value={view}
           onChange={setView}
-          options={ANALYSIS_VIEWS}
+          options={analysisViews}
         />
         {view === 'assessments' && (
           <Button variant="secondary" size="sm" icon={Download} onClick={exportSummary}>
-            匯出統計
+            {t('gradebook.exportStats', { defaultValue: '匯出統計' })}
           </Button>
         )}
       </div>
@@ -999,64 +1081,96 @@ function AnalysisTab({ classId, className }: { classId: string; className: strin
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             <StatCard
-              label="班級平均"
+              label={t('gradebook.statClassAvg', { defaultValue: '班級平均' })}
               value={stats.classAvg == null ? '—' : Math.round(stats.classAvg)}
               unit={stats.classAvg == null ? undefined : '%'}
               icon={Target}
               highlight
-              hint={stats.med == null ? undefined : `中位數 ${Math.round(stats.med)}%`}
+              hint={
+                stats.med == null
+                  ? undefined
+                  : t('gradebook.statMedian', {
+                      value: Math.round(stats.med),
+                      defaultValue: '中位數 {{value}}%',
+                    })
+              }
             />
             <StatCard
-              label="及格率"
+              label={t('gradebook.statPassRate', { defaultValue: '及格率' })}
               value={stats.passRate == null ? '—' : stats.passRate}
               unit={stats.passRate == null ? undefined : '%'}
               icon={UserCheck}
-              hint={`及格線 ${stats.passMark}%`}
+              hint={t('gradebook.statPassLine', {
+                value: stats.passMark,
+                defaultValue: '及格線 {{value}}%',
+              })}
             />
             <StatCard
-              label="成績離散度"
+              label={t('gradebook.statDispersion', { defaultValue: '成績離散度' })}
               value={stats.sd == null ? '—' : round1(stats.sd)}
               icon={ArrowUpDown}
-              hint="標準差（越細越平均）"
+              hint={t('gradebook.statDispersionHint', {
+                defaultValue: '標準差（越細越平均）',
+              })}
             />
             <StatCard
-              label="填分完成度"
+              label={t('gradebook.statCompletion', { defaultValue: '填分完成度' })}
               value={stats.completion}
               unit="%"
               icon={ListChecks}
-              hint={`${stats.gradedCount}/${assessments.length} 評估已入分`}
+              hint={t('gradebook.statCompletionHint', {
+                graded: stats.gradedCount,
+                total: assessments.length,
+                defaultValue: '{{graded}}/{{total}} 評估已入分',
+              })}
             />
           </div>
 
           <div className="grid gap-4 lg:grid-cols-2">
             <Card className="rounded-3xl p-5">
-              <ChartHead icon={BarChart3} tone="accent">分數分佈（全班總分）</ChartHead>
+              <ChartHead icon={BarChart3} tone="accent">
+                {t('gradebook.chartDistribution', {
+                  defaultValue: '分數分佈（全班總分）',
+                })}
+              </ChartHead>
               <Histogram bins={stats.hist} passMark={stats.passMark} />
               <p className="mt-2 text-xs text-slate-400 dark:text-slate-500">
-                每條代表落入該分數區間嘅學生人數；紅色為不及格區間。
+                {t('gradebook.chartDistributionHint', {
+                  defaultValue: '每條代表落入該分數區間嘅學生人數；紅色為不及格區間。',
+                })}
               </p>
             </Card>
 
             <Card className="rounded-3xl p-5">
               <ChartHead icon={Trophy} tone="violet">
-                等級佔比（{SCALE_LABEL[scheme.scale]}）
+                {t('gradebook.chartGradeShare', {
+                  scale: SCALE_LABEL[scheme.scale],
+                  defaultValue: '等級佔比（{{scale}}）',
+                })}
               </ChartHead>
               <GradeDonut counts={stats.gradeCounts} scale={scheme.scale} bands={bands} />
             </Card>
 
             <Card className="rounded-3xl p-5">
-              <ChartHead icon={ArrowUpDown} tone="sky">全班成績離散（箱形圖）</ChartHead>
+              <ChartHead icon={ArrowUpDown} tone="sky">
+                {t('gradebook.chartBoxplot', { defaultValue: '全班成績離散（箱形圖）' })}
+              </ChartHead>
               <BoxPlot stats={stats.box} passMark={stats.passMark} />
             </Card>
 
             <Card className="rounded-3xl p-5">
               <ChartHead icon={UserCheck} tone="rose">
-                需關注學生（總分低於 {stats.passMark}%）
+                {t('gradebook.chartWeakStudents', {
+                  value: stats.passMark,
+                  defaultValue: '需關注學生（總分低於 {{value}}%）',
+                })}
               </ChartHead>
               {stats.weak.length === 0 ? (
                 <div className="flex items-center gap-2 rounded-2xl bg-emerald-50/60 px-3 py-2.5 text-sm text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300">
                   <Check size={16} strokeWidth={2.5} />
-                  暫時冇人跌穿及格線，全班企穩。
+                  {t('gradebook.weakNoneTitle', {
+                    defaultValue: '暫時冇人跌穿及格線，全班企穩。',
+                  })}
                 </div>
               ) : (
                 <ul className="space-y-1.5">
@@ -1070,7 +1184,11 @@ function AnalysisTab({ classId, className }: { classId: string; className: strin
                       </span>
                       <span className="flex items-center gap-2">
                         <span className="text-xs text-slate-400">
-                          已交 {r.submitted}/{r.expected}
+                          {t('gradebook.weakSubmitted', {
+                            submitted: r.submitted,
+                            expected: r.expected,
+                            defaultValue: '已交 {{submitted}}/{{expected}}',
+                          })}
                         </span>
                         <Badge tone="rose" className="tabular-nums">
                           {r.weighted}%
@@ -1087,9 +1205,11 @@ function AnalysisTab({ classId, className }: { classId: string; className: strin
             <ChartHead
               icon={Sparkles}
               tone="emerald"
-              hint="按評估日期排序，睇班級表現走勢。"
+              hint={t('gradebook.chartTrendHint', {
+                defaultValue: '按評估日期排序，睇班級表現走勢。',
+              })}
             >
-              評估趨勢（全班平均）
+              {t('gradebook.chartTrend', { defaultValue: '評估趨勢（全班平均）' })}
             </ChartHead>
             <TrendLine points={trendPoints} passMark={stats.passMark} />
           </Card>
@@ -1115,10 +1235,31 @@ function AnalysisTab({ classId, className }: { classId: string; className: strin
                     )}
                   </div>
                   <div className="flex items-center gap-3 text-xs tabular-nums text-slate-500 dark:text-slate-400">
-                    <span>已交 {x.n}/{students.length}</span>
-                    <span>中位 {x.med == null ? '—' : Math.round(x.med)}</span>
-                    <span>σ {x.sd == null ? '—' : round1(x.sd)}</span>
-                    <span>及格 {x.passRate == null ? '—' : `${x.passRate}%`}</span>
+                    <span>
+                      {t('gradebook.assSubmitted', {
+                        n: x.n,
+                        total: students.length,
+                        defaultValue: '已交 {{n}}/{{total}}',
+                      })}
+                    </span>
+                    <span>
+                      {t('gradebook.assMedian', {
+                        value: x.med == null ? '—' : Math.round(x.med),
+                        defaultValue: '中位 {{value}}',
+                      })}
+                    </span>
+                    <span>
+                      {t('gradebook.assStdev', {
+                        value: x.sd == null ? '—' : round1(x.sd),
+                        defaultValue: 'σ {{value}}',
+                      })}
+                    </span>
+                    <span>
+                      {t('gradebook.assPass', {
+                        value: x.passRate == null ? '—' : `${x.passRate}%`,
+                        defaultValue: '及格 {{value}}',
+                      })}
+                    </span>
                     <span className="flex items-center gap-1">
                       <span
                         className={cx(
@@ -1144,15 +1285,21 @@ function AnalysisTab({ classId, className }: { classId: string; className: strin
           <ChartHead
             icon={Target}
             tone="amber"
-            hint="把評估連住 BAFS 課題（評估分頁設定），就會喺呢度睇到課題層面嘅強弱。"
+            hint={t('gradebook.topicsHint', {
+              defaultValue:
+                '把評估連住 BAFS 課題（評估分頁設定），就會喺呢度睇到課題層面嘅強弱。',
+            })}
           >
-            各課題表現（由弱到強）
+            {t('gradebook.topicsHeading', { defaultValue: '各課題表現（由弱到強）' })}
           </ChartHead>
           {topicStats.length === 0 ? (
             <EmptyState
               icon={Target}
-              title="未連起課題"
-              hint="去「評估」分頁，為測驗／考試揀返對應 BAFS 課題，就會睇到弱項。"
+              title={t('gradebook.emptyTopicsTitle', { defaultValue: '未連起課題' })}
+              hint={t('gradebook.emptyTopicsHint', {
+                defaultValue:
+                  '去「評估」分頁，為測驗／考試揀返對應 BAFS 課題，就會睇到弱項。',
+              })}
             />
           ) : (
             <ul className="space-y-3">
@@ -1201,21 +1348,26 @@ function AnalysisTab({ classId, className }: { classId: string; className: strin
           .slice(-3)
           .reverse()
         const fmtSlope = (s: number) =>
-          `${s >= 0 ? '+' : ''}${round1(s)} 分/評估`
+          t('gradebook.slopePerAssessment', {
+            value: `${s >= 0 ? '+' : ''}${round1(s)}`,
+            defaultValue: '{{value}} 分/評估',
+          })
         return (
       <>
         {(improved.length > 0 || declined.length > 0) && (
           <div className="grid gap-3 sm:grid-cols-2">
             <Card className="rounded-3xl p-4">
               <ChartHead icon={TrendingUp} tone="emerald">
-                進步最大
+                {t('gradebook.mostImproved', { defaultValue: '進步最大' })}
                 <span className="ml-1 font-normal text-slate-400">
-                  逐評估走勢向上
+                  {t('gradebook.mostImprovedSub', { defaultValue: '逐評估走勢向上' })}
                 </span>
               </ChartHead>
               {improved.length === 0 ? (
                 <p className="mt-3 text-sm text-slate-400 dark:text-slate-500">
-                  暫時未有明顯上升嘅同學。
+                  {t('gradebook.noClearImproved', {
+                    defaultValue: '暫時未有明顯上升嘅同學。',
+                  })}
                 </p>
               ) : (
                 <ul className="mt-2 space-y-1">
@@ -1242,14 +1394,16 @@ function AnalysisTab({ classId, className }: { classId: string; className: strin
             </Card>
             <Card className="rounded-3xl p-4">
               <ChartHead icon={TrendingDown} tone="rose">
-                需要關注
+                {t('gradebook.needsAttention', { defaultValue: '需要關注' })}
                 <span className="ml-1 font-normal text-slate-400">
-                  逐評估走勢向下
+                  {t('gradebook.needsAttentionSub', { defaultValue: '逐評估走勢向下' })}
                 </span>
               </ChartHead>
               {declined.length === 0 ? (
                 <p className="mt-3 text-sm text-slate-400 dark:text-slate-500">
-                  暫時未有明顯下跌嘅同學，繼續保持。
+                  {t('gradebook.noClearDeclined', {
+                    defaultValue: '暫時未有明顯下跌嘅同學，繼續保持。',
+                  })}
                 </p>
               ) : (
                 <ul className="mt-2 space-y-1">
@@ -1278,7 +1432,13 @@ function AnalysisTab({ classId, className }: { classId: string; className: strin
         )}
         <Card className="rounded-3xl p-2">
           {ranking.length === 0 ? (
-            <EmptyState icon={Trophy} title="排名榜未開賽" hint="入分之後，班內名次就會即刻排好。" />
+            <EmptyState
+              icon={Trophy}
+              title={t('gradebook.emptyRankingTitle', { defaultValue: '排名榜未開賽' })}
+              hint={t('gradebook.emptyRankingHint', {
+                defaultValue: '入分之後，班內名次就會即刻排好。',
+              })}
+            />
           ) : (
             <ul className="divide-y divide-slate-100 dark:divide-slate-800">
               {ranking.map((r, i) => {
@@ -1349,6 +1509,7 @@ function AnalysisTab({ classId, className }: { classId: string; className: strin
 //  學生分頁 —— 批量加入 + 編輯
 // ============================================================
 function StudentsTab({ classId }: { classId: string }) {
+  const { t } = useTranslation()
   const toast = useToast()
   const confirm = useConfirm()
   const students = useCollection(studentsCol).filter((s) => s.classId === classId)
@@ -1367,7 +1528,12 @@ function StudentsTab({ classId }: { classId: string }) {
       name: name.trim(),
       studentNo: no.trim() || undefined,
     })
-    toast.success(`已新增學生「${name.trim()}」`)
+    toast.success(
+      t('gradebook.toastStudentAdded', {
+        name: name.trim(),
+        defaultValue: '已新增學生「{{name}}」',
+      }),
+    )
     setName('')
     setNo('')
   }
@@ -1394,7 +1560,12 @@ function StudentsTab({ classId }: { classId: string }) {
       studentsCol.add({ classId, name: sName, studentNo: sNo })
       count++
     }
-    toast.success(`已批量加入 ${count} 位學生`)
+    toast.success(
+      t('gradebook.toastBulkAdded', {
+        count,
+        defaultValue: '已批量加入 {{count}} 位學生',
+      }),
+    )
     setBulk('')
     setShowBulk(false)
   }
@@ -1410,61 +1581,67 @@ function StudentsTab({ classId }: { classId: string }) {
       name: editName.trim(),
       studentNo: editNo.trim() || undefined,
     })
-    toast.success('已更新學生')
+    toast.success(t('gradebook.toastStudentUpdated', { defaultValue: '已更新學生' }))
     setEditId(null)
   }
 
   const remove = async (id: string, sName: string) => {
     const ok = await confirm({
-      title: '刪除學生？',
-      message: `將會移除「${sName}」及其所有成績記錄，此操作無法復原。`,
-      confirmText: '刪除',
+      title: t('gradebook.confirmDeleteStudentTitle', { defaultValue: '刪除學生？' }),
+      message: t('gradebook.confirmDeleteStudentMsg', {
+        name: sName,
+        defaultValue: '將會移除「{{name}}」及其所有成績記錄，此操作無法復原。',
+      }),
+      confirmText: t('gradebook.confirmDelete', { defaultValue: '刪除' }),
       tone: 'danger',
     })
     if (!ok) return
     studentsCol.remove(id)
     // 同步移除該生分數
     scoresCol.set(scoresCol.get().filter((x) => x.studentId !== id))
-    toast.success('已刪除學生')
+    toast.success(t('gradebook.toastStudentDeleted', { defaultValue: '已刪除學生' }))
   }
 
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-end gap-2">
         <div className="w-24">
-          <Field label="學號">
+          <Field label={t('gradebook.fieldStudentNo', { defaultValue: '學號' })}>
             <Input
               value={no}
               onChange={(e) => setNo(e.target.value)}
-              placeholder="選填"
+              placeholder={t('gradebook.placeholderOptional', { defaultValue: '選填' })}
             />
           </Field>
         </div>
         <div className="min-w-[160px] flex-1">
-          <Field label="學生姓名">
+          <Field label={t('gradebook.fieldStudentName', { defaultValue: '學生姓名' })}>
             <Input
               value={name}
               onChange={(e) => setName(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && add()}
-              placeholder="輸入姓名"
+              placeholder={t('gradebook.placeholderEnterName', { defaultValue: '輸入姓名' })}
             />
           </Field>
         </div>
-        <Button onClick={add}>加入</Button>
+        <Button onClick={add}>{t('gradebook.btnAdd', { defaultValue: '加入' })}</Button>
         <Button
           variant="secondary"
           icon={Users}
           onClick={() => setShowBulk((v) => !v)}
         >
-          批量
+          {t('gradebook.btnBulk', { defaultValue: '批量' })}
         </Button>
       </div>
 
       {showBulk && (
         <Card className="space-y-2 rounded-2xl border-accent/30 bg-accent-soft/30 p-4">
           <Field
-            label="批量加入（每行一位）"
-            hint="格式：「學號 姓名」或淨係「姓名」。可由 Excel 直接複製貼上。"
+            label={t('gradebook.bulkLabel', { defaultValue: '批量加入（每行一位）' })}
+            hint={t('gradebook.bulkHint', {
+              defaultValue:
+                '格式：「學號 姓名」或淨係「姓名」。可由 Excel 直接複製貼上。',
+            })}
           >
             <textarea
               value={bulk}
@@ -1475,10 +1652,13 @@ function StudentsTab({ classId }: { classId: string }) {
           </Field>
           <div className="flex justify-end gap-2">
             <Button variant="ghost" size="sm" onClick={() => setShowBulk(false)}>
-              取消
+              {t('gradebook.btnCancel', { defaultValue: '取消' })}
             </Button>
             <Button size="sm" onClick={addBulk}>
-              加入 {bulk.split('\n').filter((l) => l.trim()).length} 位
+              {t('gradebook.btnAddN', {
+                count: bulk.split('\n').filter((l) => l.trim()).length,
+                defaultValue: '加入 {{count}} 位',
+              })}
             </Button>
           </div>
         </Card>
@@ -1487,13 +1667,21 @@ function StudentsTab({ classId }: { classId: string }) {
       {students.length === 0 ? (
         <EmptyState
           icon={GraduationCap}
-          title="加入第一位學生"
-          hint="喺上面打個名就得，或者撳「批量」由 Excel 一次過貼晒成班入嚟。"
+          title={t('gradebook.emptyStudentsTitle', { defaultValue: '加入第一位學生' })}
+          hint={t('gradebook.emptyStudentsHint', {
+            defaultValue:
+              '喺上面打個名就得，或者撳「批量」由 Excel 一次過貼晒成班入嚟。',
+          })}
         />
       ) : (
         <Card className="rounded-2xl">
           <div className="flex items-center justify-between px-4 py-2.5 text-xs font-medium text-slate-400">
-            <span>共 {students.length} 位學生</span>
+            <span>
+              {t('gradebook.studentsCount', {
+                count: students.length,
+                defaultValue: '共 {{count}} 位學生',
+              })}
+            </span>
           </div>
           <ul className="divide-y divide-slate-100 dark:divide-slate-700">
             {students.map((s) => (
@@ -1503,7 +1691,7 @@ function StudentsTab({ classId }: { classId: string }) {
                     <Input
                       value={editNo}
                       onChange={(e) => setEditNo(e.target.value)}
-                      placeholder="學號"
+                      placeholder={t('gradebook.placeholderNo', { defaultValue: '學號' })}
                       className="w-20"
                     />
                     <Input
@@ -1512,7 +1700,10 @@ function StudentsTab({ classId }: { classId: string }) {
                       onKeyDown={(e) => e.key === 'Enter' && saveEdit()}
                       className="flex-1"
                     />
-                    <IconButton label="儲存" onClick={saveEdit}>
+                    <IconButton
+                      label={t('gradebook.btnSave', { defaultValue: '儲存' })}
+                      onClick={saveEdit}
+                    >
                       <Check size={16} strokeWidth={2} />
                     </IconButton>
                   </>
@@ -1523,14 +1714,14 @@ function StudentsTab({ classId }: { classId: string }) {
                       {s.name}
                     </span>
                     <IconButton
-                      label="編輯學生"
+                      label={t('gradebook.editStudent', { defaultValue: '編輯學生' })}
                       onClick={() => startEdit(s.id, s.name, s.studentNo)}
                       className="opacity-100 transition focus-visible:opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
                     >
                       <Pencil size={15} strokeWidth={1.8} />
                     </IconButton>
                     <IconButton
-                      label="刪除學生"
+                      label={t('gradebook.deleteStudent', { defaultValue: '刪除學生' })}
                       tone="danger"
                       onClick={() => remove(s.id, s.name)}
                       className="opacity-100 transition focus-visible:opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
@@ -1552,6 +1743,7 @@ function StudentsTab({ classId }: { classId: string }) {
 //  評估分頁 —— 連課題 + 日期 + 編輯
 // ============================================================
 function AssessmentsTab({ classId }: { classId: string }) {
+  const { t } = useTranslation()
   const toast = useToast()
   const confirm = useConfirm()
   const assessmentsRaw = useCollection(assessmentsCol).filter(
@@ -1567,6 +1759,19 @@ function AssessmentsTab({ classId }: { classId: string }) {
   const [date, setDate] = useState('')
   const [topicId, setTopicId] = useState('')
 
+  // 評估類型：值保持中文（DB 鍵、權重鍵），只翻譯顯示標籤。
+  const TYPE_OPTIONS: { value: string; key: string }[] = [
+    { value: '測驗', key: 'gradebook.typeTest' },
+    { value: '考試', key: 'gradebook.typeExam' },
+    { value: '功課', key: 'gradebook.typeHomework' },
+    { value: '專題', key: 'gradebook.typeProject' },
+    { value: '課堂表現', key: 'gradebook.typeClasswork' },
+  ]
+  const typeLabel = (v: string) => {
+    const found = TYPE_OPTIONS.find((o) => o.value === v)
+    return found ? t(found.key, { defaultValue: found.value }) : v
+  }
+
   const add = () => {
     if (!name.trim()) return
     assessmentsCol.add({
@@ -1578,7 +1783,12 @@ function AssessmentsTab({ classId }: { classId: string }) {
       topicId: topicId || undefined,
       createdAt: new Date().toISOString(),
     })
-    toast.success(`已新增評估「${name.trim()}」`)
+    toast.success(
+      t('gradebook.toastAssessmentAdded', {
+        name: name.trim(),
+        defaultValue: '已新增評估「{{name}}」',
+      }),
+    )
     setName('')
     setMaxScore('100')
     setDate('')
@@ -1587,15 +1797,18 @@ function AssessmentsTab({ classId }: { classId: string }) {
 
   const remove = async (id: string, aName: string) => {
     const ok = await confirm({
-      title: '刪除評估？',
-      message: `將會移除「${aName}」及其所有成績記錄，此操作無法復原。`,
-      confirmText: '刪除',
+      title: t('gradebook.confirmDeleteAssessmentTitle', { defaultValue: '刪除評估？' }),
+      message: t('gradebook.confirmDeleteAssessmentMsg', {
+        name: aName,
+        defaultValue: '將會移除「{{name}}」及其所有成績記錄，此操作無法復原。',
+      }),
+      confirmText: t('gradebook.confirmDelete', { defaultValue: '刪除' }),
       tone: 'danger',
     })
     if (!ok) return
     assessmentsCol.remove(id)
     scoresCol.set(scoresCol.get().filter((x) => x.assessmentId !== id))
-    toast.success('已刪除評估')
+    toast.success(t('gradebook.toastAssessmentDeleted', { defaultValue: '已刪除評估' }))
   }
 
   const setField = (id: string, patch: Partial<{ topicId: string; date: string }>) => {
@@ -1621,26 +1834,30 @@ function AssessmentsTab({ classId }: { classId: string }) {
       <Card className="space-y-3 rounded-2xl border-accent/30 bg-accent-soft/40 p-4">
         <div className="flex flex-wrap gap-2">
           <div className="min-w-[160px] flex-1">
-            <Field label="評估名稱">
+            <Field label={t('gradebook.fieldAssessmentName', { defaultValue: '評估名稱' })}>
               <Input
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && add()}
-                placeholder="例如 第一次測驗"
+                placeholder={t('gradebook.placeholderAssessmentEg', {
+                  defaultValue: '例如 第一次測驗',
+                })}
               />
             </Field>
           </div>
           <div className="w-28">
-            <Field label="類型">
+            <Field label={t('gradebook.fieldType', { defaultValue: '類型' })}>
               <Select value={type} onChange={(e) => setType(e.target.value)}>
-                {['測驗', '考試', '功課', '專題', '課堂表現'].map((t) => (
-                  <option key={t}>{t}</option>
+                {TYPE_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {typeLabel(o.value)}
+                  </option>
                 ))}
               </Select>
             </Field>
           </div>
           <div className="w-20">
-            <Field label="滿分">
+            <Field label={t('gradebook.fieldMaxScore', { defaultValue: '滿分' })}>
               <Input
                 value={maxScore}
                 onChange={(e) => setMaxScore(e.target.value.replace(/\D/g, ''))}
@@ -1649,7 +1866,7 @@ function AssessmentsTab({ classId }: { classId: string }) {
             </Field>
           </div>
           <div className="w-36">
-            <Field label="日期（選填）">
+            <Field label={t('gradebook.fieldDateOptional', { defaultValue: '日期（選填）' })}>
               <Input
                 type="date"
                 value={date}
@@ -1660,9 +1877,16 @@ function AssessmentsTab({ classId }: { classId: string }) {
         </div>
         <div className="flex items-end gap-2">
           <div className="flex-1">
-            <Field label="課題（選填）" hint="連住課題之後可做課題弱項分析">
+            <Field
+              label={t('gradebook.fieldTopicOptional', { defaultValue: '課題（選填）' })}
+              hint={t('gradebook.fieldTopicHint', {
+                defaultValue: '連住課題之後可做課題弱項分析',
+              })}
+            >
               <Select value={topicId} onChange={(e) => setTopicId(e.target.value)}>
-                <option value="">— 唔連課題 —</option>
+                <option value="">
+                  {t('gradebook.topicNone', { defaultValue: '— 唔連課題 —' })}
+                </option>
                 {topicGroups.map(([area, list]) => (
                   <optgroup key={area} label={area}>
                     {list.map((t) => (
@@ -1675,25 +1899,30 @@ function AssessmentsTab({ classId }: { classId: string }) {
               </Select>
             </Field>
           </div>
-          <Button onClick={add}>新增</Button>
+          <Button onClick={add}>{t('gradebook.btnCreate', { defaultValue: '新增' })}</Button>
         </div>
       </Card>
 
       {assessments.length === 0 ? (
         <EmptyState
           icon={FolderOpen}
-          title="開一份評估先"
-          hint="喺上面加測驗、考試或功課；連埋課題仲可以做課題弱項分析。"
+          title={t('gradebook.emptyAssessmentsTitle', { defaultValue: '開一份評估先' })}
+          hint={t('gradebook.emptyAssessmentsHint', {
+            defaultValue: '喺上面加測驗、考試或功課；連埋課題仲可以做課題弱項分析。',
+          })}
         />
       ) : (
         <Card clip className="rounded-2xl">
           <div className="flex items-center gap-1.5 border-b border-slate-100 px-4 py-2.5 dark:border-slate-700/60">
             <FolderOpen size={13} className="shrink-0 text-slate-400 dark:text-slate-500" />
             <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-              評估清單
+              {t('gradebook.assessmentList', { defaultValue: '評估清單' })}
             </span>
             <span className="ml-auto text-[11px] tabular-nums text-slate-400 dark:text-slate-500">
-              共 {assessments.length} 項
+              {t('gradebook.assessmentCount', {
+                count: assessments.length,
+                defaultValue: '共 {{count}} 項',
+              })}
             </span>
           </div>
           <ul className="divide-y divide-slate-100 dark:divide-slate-700">
@@ -1708,13 +1937,18 @@ function AssessmentsTab({ classId }: { classId: string }) {
                     <span className="flex-1 text-sm font-medium text-slate-700 dark:text-slate-200">
                       {a.name}
                       <span className="ml-2 inline-flex flex-wrap items-center gap-1.5 align-middle">
-                        <Badge tone="slate">{a.type}</Badge>
-                        <Badge tone="accent">滿分 {a.maxScore}</Badge>
+                        <Badge tone="slate">{typeLabel(a.type)}</Badge>
+                        <Badge tone="accent">
+                          {t('gradebook.maxBadge', {
+                            value: a.maxScore,
+                            defaultValue: '滿分 {{value}}',
+                          })}
+                        </Badge>
                         {a.date && <Badge tone="blue">{shortDate(a.date)}</Badge>}
                       </span>
                     </span>
                     <IconButton
-                      label="刪除評估"
+                      label={t('gradebook.deleteAssessment', { defaultValue: '刪除評估' })}
                       tone="danger"
                       onClick={() => remove(a.id, a.name)}
                       className="opacity-100 transition focus-visible:opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
@@ -1724,14 +1958,21 @@ function AssessmentsTab({ classId }: { classId: string }) {
                   </div>
                   {/* 行內快速設定課題 + 日期 */}
                   <div className="mt-2 flex flex-wrap items-center gap-2 pl-10">
-                    <span className="text-xs text-slate-400">課題</span>
+                    <span className="text-xs text-slate-400">
+                      {t('gradebook.labelTopic', { defaultValue: '課題' })}
+                    </span>
                     <select
                       value={a.topicId ?? ''}
                       onChange={(e) => setField(a.id, { topicId: e.target.value })}
-                      aria-label={`${a.name} — 連結課題`}
+                      aria-label={t('gradebook.ariaLinkTopic', {
+                        name: a.name,
+                        defaultValue: '{{name}} — 連結課題',
+                      })}
                       className="max-w-[200px] cursor-pointer rounded-md border border-slate-200 bg-white px-2 py-1 text-base sm:text-xs text-slate-600 outline-none focus:border-accent dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
                     >
-                      <option value="">— 未連 —</option>
+                      <option value="">
+                        {t('gradebook.topicUnlinked', { defaultValue: '— 未連 —' })}
+                      </option>
                       {topicGroups.map(([area, list]) => (
                         <optgroup key={area} label={area}>
                           {list.map((t) => (
@@ -1746,7 +1987,10 @@ function AssessmentsTab({ classId }: { classId: string }) {
                       type="date"
                       value={a.date ?? ''}
                       onChange={(e) => setField(a.id, { date: e.target.value })}
-                      aria-label={`${a.name} — 評估日期`}
+                      aria-label={t('gradebook.ariaAssessmentDate', {
+                        name: a.name,
+                        defaultValue: '{{name}} — 評估日期',
+                      })}
                       className="cursor-pointer rounded-md border border-slate-200 bg-white px-2 py-1 text-base sm:text-xs text-slate-600 outline-none focus:border-accent dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
                     />
                   </div>
@@ -1764,6 +2008,7 @@ function AssessmentsTab({ classId }: { classId: string }) {
 //  評分方案分頁 —— 類別加權、等級制、drop lowest
 // ============================================================
 function SchemeTab({ classId }: { classId: string }) {
+  const { t } = useTranslation()
   const toast = useToast()
   const schemes = useCollection(gradingSchemesCol)
   const assessmentsRaw = useCollection(assessmentsCol).filter(
@@ -1816,7 +2061,9 @@ function SchemeTab({ classId }: { classId: string }) {
       next[t] = Math.round(((scheme.weights[t] ?? 0) / totalWeight) * 100)
     })
     persist({ weights: next })
-    toast.success('已把權重正規化為合計 100%')
+    toast.success(
+      t('gradebook.toastNormalized', { defaultValue: '已把權重正規化為合計 100%' }),
+    )
   }
 
   // ── 自訂等級分界 ──
@@ -1850,7 +2097,7 @@ function SchemeTab({ classId }: { classId: string }) {
     const rest = { ...(scheme.bandCuts ?? {}) }
     delete rest[scheme.scale]
     persist({ bandCuts: rest })
-    toast.success('已還原為預設分界')
+    toast.success(t('gradebook.toastBandReset', { defaultValue: '已還原為預設分界' }))
   }
 
   return (
@@ -1858,18 +2105,20 @@ function SchemeTab({ classId }: { classId: string }) {
       <Card className="space-y-4 rounded-2xl p-5">
         <div>
           <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
-            等級制
+            {t('gradebook.gradeSystem', { defaultValue: '等級制' })}
           </p>
           <p className="mb-2 text-xs text-slate-400 dark:text-slate-500">
-            影響成績表 / 分析顯示嘅等級標籤（5**–U、優良、A–F）。
+            {t('gradebook.gradeSystemHint', {
+              defaultValue: '影響成績表 / 分析顯示嘅等級標籤（5**–U、優良、A–F）。',
+            })}
           </p>
           <SegmentedControl<GradeScaleKey>
             value={scheme.scale}
             onChange={(v) => persist({ scale: v })}
             options={[
-              { id: 'hkdse', label: 'DSE 5**–U' },
-              { id: 'percent', label: '優／良／及格' },
-              { id: 'simple', label: 'A–F' },
+              { id: 'hkdse', label: t('gradebook.scaleDse', { defaultValue: 'DSE 5**–U' }) },
+              { id: 'percent', label: t('gradebook.scalePercent', { defaultValue: '優／良／及格' }) },
+              { id: 'simple', label: t('gradebook.scaleSimple', { defaultValue: 'A–F' }) },
             ]}
           />
         </div>
@@ -1882,7 +2131,7 @@ function SchemeTab({ classId }: { classId: string }) {
               onChange={(e) => persist({ weighted: e.target.checked })}
               className="h-4 w-4 rounded border-slate-300 text-accent focus:ring-accent dark:border-slate-600 dark:bg-slate-700"
             />
-            啟用類別加權計分
+            {t('gradebook.enableWeighting', { defaultValue: '啟用類別加權計分' })}
           </label>
           <label className="flex cursor-pointer items-center gap-2 text-sm text-slate-700 dark:text-slate-200">
             <input
@@ -1891,7 +2140,7 @@ function SchemeTab({ classId }: { classId: string }) {
               onChange={(e) => persist({ dropLowest: e.target.checked })}
               className="h-4 w-4 rounded border-slate-300 text-accent focus:ring-accent dark:border-slate-600 dark:bg-slate-700"
             />
-            每類剔除最低分一次
+            {t('gradebook.dropLowest', { defaultValue: '每類剔除最低分一次' })}
           </label>
         </div>
       </Card>
@@ -1900,11 +2149,14 @@ function SchemeTab({ classId }: { classId: string }) {
         <div className="flex items-start justify-between gap-2">
           <div>
             <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
-              等級分界（自訂）
+              {t('gradebook.bandCutsTitle', { defaultValue: '等級分界（自訂）' })}
             </p>
             <p className="text-xs text-slate-400 dark:text-slate-500">
-              調整「{SCALE_LABEL[scheme.scale]}」每級嘅百分比下限，配合你校本標準。
-              最低一級固定由 0 起。未改 = 用預設。
+              {t('gradebook.bandCutsHint', {
+                scale: SCALE_LABEL[scheme.scale],
+                defaultValue:
+                  '調整「{{scale}}」每級嘅百分比下限，配合你校本標準。 最低一級固定由 0 起。未改 = 用預設。',
+              })}
             </p>
           </div>
           <Button
@@ -1914,7 +2166,7 @@ function SchemeTab({ classId }: { classId: string }) {
             onClick={resetBandCuts}
             disabled={!customized}
           >
-            還原預設
+            {t('gradebook.resetDefault', { defaultValue: '還原預設' })}
           </Button>
         </div>
 
@@ -1949,7 +2201,10 @@ function SchemeTab({ classId }: { classId: string }) {
                           Number(e.target.value.replace(/\D/g, '')) || 0,
                         )
                       }
-                      aria-label={`「${b.label}」等級嘅百分比下限`}
+                      aria-label={t('gradebook.bandCutAria', {
+                        label: b.label,
+                        defaultValue: '「{{label}}」等級嘅百分比下限',
+                      })}
                       aria-invalid={bad || undefined}
                       className="text-center font-serif font-semibold tabular-nums slashed-zero"
                     />
@@ -1957,10 +2212,22 @@ function SchemeTab({ classId }: { classId: string }) {
                   <span className="ml-1 text-sm text-slate-400">%</span>
                 </div>
                 <span className="flex-1 text-xs tabular-nums text-slate-400 dark:text-slate-500">
-                  {i === 0 ? `${cur} 分以上` : `${cur}–${currentCuts[editableBands[i - 1].label]} 分`}
+                  {i === 0
+                    ? t('gradebook.bandAbove', {
+                        value: cur,
+                        defaultValue: '{{value}} 分以上',
+                      })
+                    : t('gradebook.bandRange', {
+                        from: cur,
+                        to: currentCuts[editableBands[i - 1].label],
+                        defaultValue: '{{from}}–{{to}} 分',
+                      })}
                   {!isDefault && (
                     <span className="ml-1.5 text-accent">
-                      （預設 {defaultCuts[b.label]}）
+                      {t('gradebook.bandDefault', {
+                        value: defaultCuts[b.label],
+                        defaultValue: '（預設 {{value}}）',
+                      })}
                     </span>
                   )}
                 </span>
@@ -1971,7 +2238,10 @@ function SchemeTab({ classId }: { classId: string }) {
 
         {!cutsValid && (
           <p className="rounded-lg bg-rose-50/70 px-3 py-2 text-xs text-rose-600 dark:bg-rose-950/30 dark:text-rose-300">
-            分界要由高到低嚴格遞減（高等級嘅下限要大過低等級），否則部分等級會無人落到。請調整紅框數值。
+            {t('gradebook.bandCutsInvalid', {
+              defaultValue:
+                '分界要由高到低嚴格遞減（高等級嘅下限要大過低等級），否則部分等級會無人落到。請調整紅框數值。',
+            })}
           </p>
         )}
       </Card>
@@ -1980,10 +2250,12 @@ function SchemeTab({ classId }: { classId: string }) {
         <div className="flex items-center justify-between">
           <div>
             <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
-              類別權重
+              {t('gradebook.categoryWeights', { defaultValue: '類別權重' })}
             </p>
             <p className="text-xs text-slate-400 dark:text-slate-500">
-              各類別佔總成績嘅百分比。只計算實際有分嘅類別（自動正規化）。
+              {t('gradebook.categoryWeightsHint', {
+                defaultValue: '各類別佔總成績嘅百分比。只計算實際有分嘅類別（自動正規化）。',
+              })}
             </p>
           </div>
           <Button
@@ -1993,7 +2265,7 @@ function SchemeTab({ classId }: { classId: string }) {
             onClick={normalize}
             disabled={!scheme.weighted}
           >
-            正規化 100%
+            {t('gradebook.normalize100', { defaultValue: '正規化 100%' })}
           </Button>
         </div>
 

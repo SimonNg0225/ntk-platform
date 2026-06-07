@@ -24,6 +24,7 @@ export const groupLabel = (t: TFn, g: string): string =>
 
 export const appEn = {
   shell: {
+    brandName: 'EziTeach',
     home: 'Overview',
     settings: 'Settings',
     backOverview: 'Back to overview',

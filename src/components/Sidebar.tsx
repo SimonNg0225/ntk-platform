@@ -45,11 +45,11 @@ export default function Sidebar({
       <div className="flex items-center justify-between px-4 py-4">
         <div className="flex items-center gap-2.5">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent text-base font-bold text-white shadow-sm ring-1 ring-inset ring-white/10">
-            N
+            E
           </div>
           <div>
             <p className="text-sm font-bold leading-none text-slate-800 dark:text-slate-100">
-              NTK Platform
+              {t('shell.brandName', { defaultValue: '教學易' })}
             </p>
             <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
               {t('shell.brandSub', { defaultValue: '教師工作台 · 個人成長' })}

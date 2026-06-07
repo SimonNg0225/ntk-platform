@@ -650,7 +650,7 @@ export function buildPrintHtml(input: PrintInput): string {
   ${decisions}
   ${actions}
   ${tags}
-  <div class="foot">NTK Platform · 會議 / 行政筆記 · 列印於 ${new Date().toLocaleString('zh-HK')}</div>
+  <div class="foot">EziTeach 教學易 · 會議 / 行政筆記 · 列印於 ${new Date().toLocaleString('zh-HK')}</div>
   <script>window.onload=function(){setTimeout(function(){window.print()},200)}</script>
 </body></html>`
 }
