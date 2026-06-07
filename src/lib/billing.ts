@@ -1,4 +1,5 @@
 import { supabase, isSupabaseConfigured } from './supabase'
+import { track } from './observability'
 
 // ============================================================
 //  商業化 · 收費（Stripe 訂閱）
@@ -13,13 +14,21 @@ import { supabase, isSupabaseConfigured } from './supabase'
 
 export type PlanId = 'free' | 'pro'
 
+export type BillingCycle = 'monthly' | 'annual'
+
 export interface Plan {
   id: PlanId
   name: string
   priceLabel: string
   tagline: string
-  /** Stripe Price ID（喺 .env 設定，對應 Stripe Dashboard 嘅 price）。免費版冇。 */
+  /** Stripe Price ID（月繳；喺 .env 設定）。免費版冇。 */
   priceId?: string
+  /** Stripe Price ID（年繳，選用）。 */
+  annualPriceId?: string
+  /** 年繳價格顯示（例：HK$480 / 年）。 */
+  annualPriceLabel?: string
+  /** 年繳賣點（例：慳兩個月）。 */
+  annualNote?: string
   features: string[]
   highlighted?: boolean
 }
@@ -27,6 +36,19 @@ export interface Plan {
 const PRO_PRICE_ID = import.meta.env.VITE_STRIPE_PRO_PRICE_ID as
   | string
   | undefined
+const PRO_ANNUAL_PRICE_ID = import.meta.env
+  .VITE_STRIPE_PRO_ANNUAL_PRICE_ID as string | undefined
+
+/** 按結算週期攞 plan 嘅 priceId / 顯示價（年繳未設就 fallback 月繳）。 */
+export function priceForCycle(
+  plan: Plan,
+  cycle: BillingCycle,
+): { priceId?: string; label: string } {
+  if (cycle === 'annual' && plan.annualPriceId) {
+    return { priceId: plan.annualPriceId, label: plan.annualPriceLabel ?? plan.priceLabel }
+  }
+  return { priceId: plan.priceId, label: plan.priceLabel }
+}
 
 export const PLANS: Plan[] = [
   {
@@ -47,6 +69,9 @@ export const PLANS: Plan[] = [
     priceLabel: 'HK$48 / 月',
     tagline: '重度備課 / 全職教師',
     priceId: PRO_PRICE_ID,
+    annualPriceId: PRO_ANNUAL_PRICE_ID,
+    annualPriceLabel: 'HK$480 / 年',
+    annualNote: '年繳慳兩個月',
     highlighted: true,
     features: [
       '免費版全部功能',
@@ -97,6 +122,7 @@ async function callBilling(
 
 /** 開 Stripe Checkout 升級訂閱，成功後跳轉去付款頁。 */
 export async function startCheckout(priceId: string): Promise<void> {
+  track('checkout_started', { priceId })
   const url = await callBilling('checkout', {
     priceId,
     successUrl: `${window.location.origin}/app?upgraded=1`,

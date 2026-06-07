@@ -8,7 +8,9 @@ import Pricing from './marketing/Pricing.tsx'
 import Privacy from './marketing/Privacy.tsx'
 import Terms from './marketing/Terms.tsx'
 import CookieConsent from './components/CookieConsent.tsx'
+import SupportWidget from './components/SupportWidget.tsx'
 import { initObservability } from './lib/observability.ts'
+import './i18n'
 import './index.css'
 
 // 商業化：啟動可觀測性（未設 env → no-op）
@@ -32,6 +34,7 @@ createRoot(document.getElementById('root')!).render(
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
           <CookieConsent />
+          <SupportWidget />
         </Providers>
       </BrowserRouter>
     </HelmetProvider>

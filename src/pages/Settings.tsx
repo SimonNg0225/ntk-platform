@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Sun, Moon, Monitor, type LucideIcon } from 'lucide-react'
+import { LANGUAGES, setLanguage } from '../i18n'
 import { useSettings } from '../context/SettingsContext'
 import { useToast } from '../context/ToastContext'
 import { useConfirm } from '../context/ConfirmContext'
@@ -35,6 +37,7 @@ export default function Settings() {
     subjectPackId,
     setSubjectPackId,
   } = useSettings()
+  const { i18n } = useTranslation()
   const toast = useToast()
   const confirm = useConfirm()
   const fileRef = useRef<HTMLInputElement>(null)
@@ -269,6 +272,29 @@ export default function Settings() {
             checked={compactDensity}
             onChange={setCompactDensity}
           />
+        </div>
+      </Card>
+
+      {/* 語言 / Language */}
+      <Card className="p-5">
+        <SectionTitle>語言 · Language</SectionTitle>
+        <p className="mb-3 text-sm text-slate-500 dark:text-slate-400">
+          介面語言（行銷頁面已支援；產品功能逐步加入）。
+        </p>
+        <div className="grid grid-cols-2 gap-2">
+          {LANGUAGES.map((l) => (
+            <button
+              key={l.id}
+              onClick={() => setLanguage(l.id)}
+              className={`rounded-xl border p-3 text-sm font-medium transition ${
+                i18n.language === l.id
+                  ? 'border-accent bg-accent-soft text-accent-strong dark:bg-accent/20 dark:text-accent'
+                  : 'border-slate-200 text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800'
+              }`}
+            >
+              {l.label}
+            </button>
+          ))}
         </div>
       </Card>
 

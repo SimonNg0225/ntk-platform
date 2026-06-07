@@ -84,6 +84,23 @@ export function track(event: string, props?: Record<string, unknown>): void {
   posthog?.capture(event, props)
 }
 
+// ── Feature flags（PostHog；未同意 / 未配置 → 一律回 fallback）─────
+export function isFeatureEnabled(key: string, fallback = false): boolean {
+  const v = posthog?.isFeatureEnabled(key)
+  return typeof v === 'boolean' ? v : fallback
+}
+
+/** 註冊 flags 載入 / 變更回呼；回傳取消訂閱函數。 */
+export function onFeatureFlags(cb: () => void): () => void {
+  if (!posthog) return () => {}
+  try {
+    const unsub = posthog.onFeatureFlags(() => cb())
+    return typeof unsub === 'function' ? unsub : () => {}
+  } catch {
+    return () => {}
+  }
+}
+
 /** 登入後關聯用戶身份（轉化漏斗、留存分析用）。 */
 export function identifyUser(
   userId: string,

@@ -7,6 +7,7 @@ import {
   acceptAnalytics,
   rejectAnalytics,
 } from '../lib/observability'
+import { isSupportConfigured, loadCrisp } from '../lib/support'
 
 // ============================================================
 //  Cookie 同意橫額（私隱合規）
@@ -19,7 +20,8 @@ import {
 export default function CookieConsent() {
   const [decided, setDecided] = useState(() => getConsent() !== null)
 
-  if (!isAnalyticsConfigured || decided) return null
+  // 有分析或客服（兩者都設 cookie）需要同意時先出橫額。
+  if ((!isAnalyticsConfigured && !isSupportConfigured) || decided) return null
 
   return (
     <div
@@ -51,6 +53,7 @@ export default function CookieConsent() {
           <button
             onClick={() => {
               void acceptAnalytics()
+              loadCrisp()
               setDecided(true)
             }}
             className="rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-white transition hover:bg-accent-strong"

@@ -10,9 +10,13 @@ import {
   isBillingConfigured,
   startCheckout,
   openBillingPortal,
+  priceForCycle,
   type Plan,
+  type BillingCycle,
 } from '../lib/billing'
 import { track } from '../lib/observability'
+
+const HAS_ANNUAL = PLANS.some((p) => p.annualPriceId)
 
 // ============================================================
 //  商業化 · 定價頁（/pricing）
@@ -26,9 +30,10 @@ export default function Pricing() {
   const sub = useSubscription()
   const toast = useToast()
   const [busy, setBusy] = useState<string | null>(null)
+  const [cycle, setCycle] = useState<BillingCycle>('monthly')
 
   async function onPick(plan: Plan) {
-    track('pricing_cta_click', { plan: plan.id })
+    track('pricing_cta_click', { plan: plan.id, cycle })
     if (plan.id === 'free') {
       window.location.href = '/app'
       return
@@ -45,10 +50,11 @@ export default function Pricing() {
       await signInWithGoogle()
       return
     }
-    if (!plan.priceId) return
+    const { priceId } = priceForCycle(plan, cycle)
+    if (!priceId) return
     try {
       setBusy(plan.id)
-      await startCheckout(plan.priceId)
+      await startCheckout(priceId)
     } catch (e) {
       toast.error(e instanceof Error ? e.message : '開啟付款頁失敗。')
       setBusy(null)
@@ -86,6 +92,31 @@ export default function Pricing() {
           <p className="mt-3 text-slate-500 dark:text-slate-400">
             老師免費用齊教學功能，需要時先升級。
           </p>
+
+          {HAS_ANNUAL && (
+            <div className="mt-6 inline-flex rounded-xl border border-[color:var(--border)] bg-[color:var(--surface)] p-1 text-sm">
+              {(['monthly', 'annual'] as const).map((c) => (
+                <button
+                  key={c}
+                  onClick={() => setCycle(c)}
+                  className={`rounded-lg px-4 py-1.5 font-medium transition ${
+                    cycle === c
+                      ? 'bg-accent text-white'
+                      : 'text-slate-500 hover:text-accent dark:text-slate-400'
+                  }`}
+                >
+                  {c === 'monthly' ? '月繳' : '年繳'}
+                  {c === 'annual' && (
+                    <span
+                      className={`ml-1.5 text-xs ${cycle === c ? 'text-white/80' : 'text-accent'}`}
+                    >
+                      慳 2 個月
+                    </span>
+                  )}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="mt-10 grid gap-6 sm:grid-cols-2">
@@ -111,7 +142,14 @@ export default function Pricing() {
                 <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                   {plan.tagline}
                 </p>
-                <div className="mt-4 text-3xl font-bold">{plan.priceLabel}</div>
+                <div className="mt-4 text-3xl font-bold">
+                  {priceForCycle(plan, cycle).label}
+                </div>
+                {cycle === 'annual' && plan.annualNote && (
+                  <p className="mt-1 text-xs font-medium text-accent">
+                    {plan.annualNote}
+                  </p>
+                )}
 
                 <ul className="mt-5 flex-1 space-y-2.5 text-sm">
                   {plan.features.map((f) => (

@@ -138,14 +138,18 @@ if (!isPro) return <UpgradePrompt />   // 例如 AI 無限額度、進階統計
 ### P2 — 營運
 - [x] 交易 email（收據 / 取消）→ Resend
 - [x] E2E 測試覆蓋付費流程 → Playwright
-- [ ] 客服 widget → Crisp / Intercom
-- [ ] 多語言 i18n（現為廣東話 UI）→ react-i18next
-- [ ] PostHog 漏斗：landing → signup → checkout
+- [x] 客服 widget → Crisp（`VITE_CRISP_WEBSITE_ID`，同意 Cookie 後載入）
+- [x] PostHog 漏斗：`landing_cta_click` → `signup_started` → `checkout_started`（+ `app_opened`）
+- [~] 多語言 i18n（react-i18next）：基建 + 語言切換 + **Landing 已雙語**；
+  定價 / 法律 / 30+ 功能逐字翻譯為漸進工作（t() 模式已建立）
 
 ### P3 — 規模化
-- [ ] Feature flags / 灰度發佈（PostHog）
-- [ ] 團隊 / 多座位方案（seats）
-- [ ] 年費方案 + 折扣碼（已開 `allow_promotion_codes`）
+- [x] Feature flags / 灰度發佈（PostHog）：`useFeatureFlag(key)`（未同意/未配置 → fallback）
+- [x] 年費方案 + 折扣碼（`VITE_STRIPE_PRO_ANNUAL_PRICE_ID` + 定價切換；Checkout 已開 `allow_promotion_codes`）
+- [~] 團隊 / 多座位方案（seats）：`0004_orgs.sql` 資料模型基礎（orgs / org_members + RLS）；
+  座位計費（Stripe quantity）/ 邀請流程 / 團隊 UI 為後續工作
+
+> 圖例：[x] 完成 · [~] 基礎已落地、餘下漸進工作 · [ ] 未做
 
 ---
 

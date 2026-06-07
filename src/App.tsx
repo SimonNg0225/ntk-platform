@@ -21,6 +21,7 @@ import ComingSoon from './components/ComingSoon'
 import ErrorBoundary from './components/ErrorBoundary'
 import { getFeature, preloadAllFeatures } from './features/registry'
 import { FeatureIcon } from './features/featureIcons'
+import { track } from './lib/observability'
 
 // 主框架：側邊欄 + 主內容區。
 // - 桌面（md 以上）：側邊欄固定喺左
@@ -45,6 +46,11 @@ export function AppShell() {
   useEffect(() => {
     const id = setTimeout(() => preloadAllFeatures(), 1200)
     return () => clearTimeout(id)
+  }, [])
+
+  // 漏斗：進入產品（一次）
+  useEffect(() => {
+    track('app_opened')
   }, [])
 
   // ⌘K / Ctrl+K 開指令面板

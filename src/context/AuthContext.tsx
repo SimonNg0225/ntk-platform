@@ -9,7 +9,7 @@ import {
 import type { Session, User } from '@supabase/supabase-js'
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
 import { attachSync, detachSync } from '../lib/sync'
-import { identifyUser, resetIdentity } from '../lib/observability'
+import { identifyUser, resetIdentity, track } from '../lib/observability'
 
 // ============================================================
 //  AuthContext
@@ -71,6 +71,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       configured: isSupabaseConfigured,
       signInWithGoogle: async () => {
         if (!supabase) return
+        track('signup_started', { provider: 'google' })
         await supabase.auth.signInWithOAuth({
           provider: 'google',
           // 回流去根目錄（= Supabase 預設 Site URL，最穩陣，唔使逐個 path 加 allowlist）。
