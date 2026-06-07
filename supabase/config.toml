@@ -11,3 +11,12 @@ verify_jwt = true
 # 訂閱式 .ics feed：Apple/Google 日曆抓取時唔會帶 Supabase JWT，
 # 所以閘道唔可以強制驗 JWT。改用 URL ?token=... 反查 user 做 gate（唯讀）。
 verify_jwt = false
+
+[functions.stripe-billing]
+# 開 Checkout / 客戶中心：需要登入用戶，閘道先驗 JWT。
+verify_jwt = true
+
+[functions.stripe-webhook]
+# Stripe 回呼唔會帶 Supabase JWT，改用 Stripe 簽名驗證。
+# 部署記得加 --no-verify-jwt。
+verify_jwt = false

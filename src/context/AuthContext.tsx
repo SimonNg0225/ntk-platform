@@ -9,6 +9,7 @@ import {
 import type { Session, User } from '@supabase/supabase-js'
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
 import { attachSync, detachSync } from '../lib/sync'
+import { identifyUser, resetIdentity } from '../lib/observability'
 
 // ============================================================
 //  AuthContext
@@ -52,10 +53,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!isSupabaseConfigured) return
     // attachSync 內部會先 await 確保所有 lazy feature collection 登記齊先 hydrate。
-    if (userId) void attachSync(userId)
-    else detachSync()
+    if (userId) {
+      void attachSync(userId)
+      identifyUser(userId, { email: session?.user?.email ?? undefined })
+    } else {
+      detachSync()
+      resetIdentity()
+    }
     return () => detachSync()
-  }, [userId])
+  }, [userId, session?.user?.email])
 
   const value = useMemo<AuthContextValue>(
     () => ({
@@ -67,7 +73,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (!supabase) return
         await supabase.auth.signInWithOAuth({
           provider: 'google',
-          options: { redirectTo: window.location.origin },
+          // 登入後返去產品（'/' 已改為行銷首頁）
+          options: { redirectTo: `${window.location.origin}/app` },
         })
       },
       signOut: async () => {

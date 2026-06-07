@@ -20,7 +20,7 @@ export default defineConfig({
         theme_color: '#2f6cb3',
         background_color: '#f4f7fb',
         display: 'standalone',
-        start_url: '/',
+        start_url: '/app',
         icons: [
           {
             src: 'favicon.svg',
@@ -40,9 +40,12 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: {
-          react: ['react', 'react-dom'],
+          react: ['react', 'react-dom', 'react-router-dom'],
           supabase: ['@supabase/supabase-js'],
           lucide: ['lucide-react'],
+          // 商業化 vendor：各自獨立 chunk，唔拖慢首屏 + 可長期快取
+          sentry: ['@sentry/react'],
+          analytics: ['posthog-js'],
         },
       },
     },

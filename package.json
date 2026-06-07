@@ -12,6 +12,8 @@
     "test:watch": "vitest"
   },
   "dependencies": {
+    "@sentry/react": "^10.56.0",
+    "@stripe/stripe-js": "^9.7.0",
     "@supabase/supabase-js": "^2.106.2",
     "docx-preview": "^0.3.7",
     "docxtemplater": "^3.68.7",
@@ -19,8 +21,13 @@
     "pdf-lib": "^1.17.1",
     "pdfjs-dist": "^6.0.227",
     "pizzip": "^3.2.0",
+    "posthog-js": "^1.382.0",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react-dom": "^18.3.1",
+    "react-helmet-async": "^3.0.0",
+    "react-hook-form": "^7.77.0",
+    "react-router-dom": "^7.17.0",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@types/react": "^18.3.12",

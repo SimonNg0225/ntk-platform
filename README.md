@@ -62,6 +62,10 @@
 - **PWA**：可安裝、離線可用（vite-plugin-pwa + Workbox）。
 - **深色模式**：navy-tinted slate，全功能支援。
 
+## 💼 商業化
+
+要由「個人自用」行去「多用戶 · 收費 · 可營運」？已接入 **Stripe 訂閱、Sentry 監控、PostHog 分析、行銷 / 定價頁**，全部**未設 env 就降級**，唔影響訪客模式。設定步驟 + Roadmap 見 **[`docs/COMMERCIALIZATION.md`](docs/COMMERCIALIZATION.md)**。
+
 ## 🚀 點樣行起
 
 需要 Node.js 18 以上。

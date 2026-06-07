@@ -1,0 +1,120 @@
+# 商業化指南（Commercialization）
+
+呢份文件係 NTK Platform 由「個人自用」行去「商業化（多用戶 · 收費 · 可營運）」嘅
+**設定步驟 + Roadmap**。
+
+> TL;DR：所有商業化功能**未設 env 就降級**，唔影響現有訪客模式。
+> 設好下面嘅 key 就逐項啟用。
+
+---
+
+## 1. 今次已經落地咗咩
+
+| 範疇 | 內容 | 檔案 |
+| --- | --- | --- |
+| **套件** | Stripe / Sentry / PostHog / react-router / react-hook-form / zod / react-helmet-async | `package.json` |
+| **路由** | `/` 行銷首頁、`/pricing` 定價、`/app/*` 產品 | `src/main.tsx`、`src/marketing/` |
+| **錯誤監控 + 分析** | Sentry + PostHog，**動態 import**，未設 key 零 bytes | `src/lib/observability.ts` |
+| **收費（前端）** | 方案定義、Checkout / 客戶中心、訂閱 hook | `src/lib/billing.ts`、`src/hooks/useSubscription.ts` |
+| **多租戶（後端）** | `subscriptions` + `billing_events`，RLS 只讀自己 | `supabase/migrations/0002_commercialization.sql` |
+| **收費（後端）** | Checkout / Portal + Webhook（Stripe 真相來源） | `supabase/functions/stripe-billing`、`stripe-webhook` |
+
+設計原則：**前端只讀訂閱、永遠改唔到**；訂閱狀態只可以由 Stripe Webhook（service_role）寫入。
+
+---
+
+## 2. 一次性設定
+
+### 2.1 跑 migration（多租戶訂閱表）
+
+```bash
+supabase db push        # 或喺 SQL editor 跑 supabase/migrations/0002_commercialization.sql
+```
+
+### 2.2 Stripe 收費
+
+1. Stripe Dashboard → 建立 **Product + 月費 Price**（記低 `price_...`）。
+2. 前端 env（`.env.local` + Vercel）：
+   ```
+   VITE_STRIPE_PUBLISHABLE_KEY=pk_live_...
+   VITE_STRIPE_PRO_PRICE_ID=price_...
+   ```
+3. Edge Function secret（**唔好入前端**）：
+   ```bash
+   supabase secrets set STRIPE_SECRET_KEY=sk_live_...
+   supabase secrets set STRIPE_WEBHOOK_SECRET=whsec_...
+   supabase functions deploy stripe-billing
+   supabase functions deploy stripe-webhook --no-verify-jwt
+   ```
+4. Stripe Dashboard → Webhooks → 加 endpoint：
+   `https://<project-ref>.functions.supabase.co/stripe-webhook`
+   訂閱事件：`checkout.session.completed`、`customer.subscription.updated`、
+   `customer.subscription.deleted`。把 signing secret 填返上面 `STRIPE_WEBHOOK_SECRET`。
+
+> `SUPABASE_SERVICE_ROLE_KEY` 喺 Supabase 部署 function 時自動注入，唔使手動設。
+
+### 2.3 Sentry（錯誤監控，選用）
+
+```
+VITE_SENTRY_DSN=https://...ingest.sentry.io/...
+```
+
+### 2.4 PostHog（產品分析，選用）
+
+```
+VITE_POSTHOG_KEY=phc_...
+VITE_POSTHOG_HOST=https://us.i.posthog.com
+```
+
+---
+
+## 3. 功能 Gating（點樣鎖 Pro 功能）
+
+`useSubscription()` 回 `{ isPro, plan, status }`，喺任何功能元件用：
+
+```tsx
+const { isPro } = useSubscription()
+if (!isPro) return <UpgradePrompt />   // 例如 AI 無限額度、進階統計
+```
+
+> ⚠️ 前端 gating 只係 UX；**真正額度 / 權限要喺 Edge Function 側驗**
+> （例如 gemini function 入面 check 訂閱），否則用戶可以繞過。見 Roadmap P1。
+
+---
+
+## 4. Roadmap
+
+### P0 — 已完成（本次）
+- [x] 路由 + 行銷 / 定價頁
+- [x] Stripe 訂閱（Checkout / Portal / Webhook）
+- [x] 多租戶訂閱表 + RLS（前端只讀）
+- [x] Sentry + PostHog（零成本降級）
+
+### P1 — 收費前必做
+- [ ] **Gemini Edge Function 加訂閱 / 額度檢查**（防 AI 成本被刷爆）
+- [ ] 免費版每日 AI 額度（用 `app_rows` 或新表計數）
+- [ ] Webhook 失敗告警（Sentry / email）
+- [ ] 私隱政策 + 服務條款頁（收費市場法律要求）
+- [ ] Cookie / 分析同意（GDPR）→ 建議 `vanilla-cookieconsent`
+
+### P2 — 營運
+- [ ] 交易 email（收據 / 取消）→ Resend
+- [ ] 客服 widget → Crisp / Intercom
+- [ ] 多語言 i18n（現為廣東話 UI）→ react-i18next
+- [ ] E2E 測試覆蓋付費流程 → Playwright
+- [ ] PostHog 漏斗：landing → signup → checkout
+
+### P3 — 規模化
+- [ ] Feature flags / 灰度發佈（PostHog）
+- [ ] 團隊 / 多座位方案（seats）
+- [ ] 年費方案 + 折扣碼（已開 `allow_promotion_codes`）
+
+---
+
+## 5. 安全備註
+
+- **訂閱真相只信 Stripe Webhook**：前端 / 客戶端永遠改唔到 `subscriptions`
+  （RLS 只開 select；寫入要 service_role）。
+- **唔好喺前端放** `service_role` / `STRIPE_SECRET_KEY` / `STRIPE_WEBHOOK_SECRET`。
+- Webhook 用簽名驗證 + `billing_events` 冪等去重，防偽造 / 重送。
+- 收費前一定要做 **P1 嘅 AI 額度檢查**，否則 Gemini API 費用係主要蝕錢風險。

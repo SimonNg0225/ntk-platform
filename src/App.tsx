@@ -1,4 +1,4 @@
-import { Suspense, useEffect, useState } from 'react'
+import { Suspense, useEffect, useState, type ReactNode } from 'react'
 import { ModeProvider, useMode } from './context/ModeContext'
 import { AuthProvider } from './context/AuthContext'
 import { NavProvider } from './context/NavContext'
@@ -26,7 +26,7 @@ import { FeatureIcon } from './features/featureIcons'
 // - 桌面（md 以上）：側邊欄固定喺左
 // - 手機：側邊欄收埋，改用頂欄漢堡掣 + 滑出式抽屜
 // - ⌘K / Ctrl+K：指令面板
-function AppShell() {
+export function AppShell() {
   const { mode, modeDef } = useMode()
   const [activeId, setActiveId] = useState<string | null>(null)
   const [drawerOpen, setDrawerOpen] = useState(false)
@@ -238,18 +238,26 @@ function AppShell() {
   )
 }
 
-export default function App() {
+// 共用 Provider 樹：行銷頁（Landing / Pricing）同產品（AppShell）一齊用，
+// 令主題、登入狀態、Toast 喺成個 App（包括路由）一致。
+export function Providers({ children }: { children: ReactNode }) {
   return (
     <SettingsProvider>
       <ToastProvider>
         <ConfirmProvider>
           <AuthProvider>
-            <ModeProvider>
-              <AppShell />
-            </ModeProvider>
+            <ModeProvider>{children}</ModeProvider>
           </AuthProvider>
         </ConfirmProvider>
       </ToastProvider>
     </SettingsProvider>
+  )
+}
+
+export default function App() {
+  return (
+    <Providers>
+      <AppShell />
+    </Providers>
   )
 }

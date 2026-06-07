@@ -1,10 +1,33 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import App from './App.tsx'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { HelmetProvider } from 'react-helmet-async'
+import { Providers, AppShell } from './App.tsx'
+import Landing from './marketing/Landing.tsx'
+import Pricing from './marketing/Pricing.tsx'
+import { initObservability } from './lib/observability.ts'
 import './index.css'
 
+// 商業化：啟動可觀測性（未設 env → no-op）
+initObservability()
+
+// 路由：
+//   /         → 行銷首頁（公開、SEO）
+//   /pricing  → 定價頁
+//   /app/*    → 產品（原有 30+ 功能，內部用 state 導航）
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <App />
+    <HelmetProvider>
+      <BrowserRouter>
+        <Providers>
+          <Routes>
+            <Route path="/" element={<Landing />} />
+            <Route path="/pricing" element={<Pricing />} />
+            <Route path="/app/*" element={<AppShell />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </Providers>
+      </BrowserRouter>
+    </HelmetProvider>
   </StrictMode>,
 )
