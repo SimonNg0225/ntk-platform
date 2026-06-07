@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import './i18n'
 import { Eye, EyeOff, Layers, Plus, Trash2, X } from 'lucide-react'
 import { calendarsCol } from '../../../data/collections'
 import type { CalendarCategory } from '../../../data/types'
@@ -43,6 +45,7 @@ export default function CalendarManager({
   calendars: CalendarCategory[]
   onClose: () => void
 }) {
+  const { t } = useTranslation()
   const toast = useToast()
   const confirm = useConfirm()
   const [newName, setNewName] = useState('')
@@ -58,19 +61,22 @@ export default function CalendarManager({
       createdAt: new Date().toISOString(),
     })
     setNewName('')
-    toast.success('已新增行事曆')
+    toast.success(t('cal.addedCalendar', { defaultValue: '已新增行事曆' }))
   }
 
   async function delCal(c: CalendarCategory) {
     const ok = await confirm({
-      title: '刪除行事曆？',
-      message: `「${c.name}」會被刪除。原有活動會變成未分類（仍保留）。`,
-      confirmText: '刪除',
+      title: t('cal.deleteCalendarTitle', { defaultValue: '刪除行事曆？' }),
+      message: t('cal.deleteCalendarMessage', {
+        name: c.name,
+        defaultValue: `「${c.name}」會被刪除。原有活動會變成未分類（仍保留）。`,
+      }),
+      confirmText: t('cal.deleteConfirm', { defaultValue: '刪除' }),
       tone: 'danger',
     })
     if (!ok) return
     calendarsCol.remove(c.id)
-    toast.success('已刪除行事曆')
+    toast.success(t('cal.deletedCalendar', { defaultValue: '已刪除行事曆' }))
   }
 
   return (
@@ -82,13 +88,13 @@ export default function CalendarManager({
           <div className="min-w-0">
             <p className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.3em] text-accent/70">
               <Layers size={12} className="shrink-0" />
-              色冊 · Calendars
+              {t('cal.managerEyebrow', { defaultValue: '色冊 · Calendars' })}
             </p>
             <h2 className="mt-1 font-serif text-[22px] font-semibold leading-tight tracking-tight text-slate-800 dark:text-slate-100 sm:text-[26px]">
-              管理行事曆
+              {t('cal.manageCalendars', { defaultValue: '管理行事曆' })}
             </h2>
           </div>
-          <IconButton label="關閉" onClick={onClose} className="-mr-1 shrink-0">
+          <IconButton label={t('cal.close', { defaultValue: '關閉' })} onClick={onClose} className="-mr-1 shrink-0">
             <X size={18} />
           </IconButton>
         </div>
@@ -122,18 +128,18 @@ export default function CalendarManager({
               <div className="flex items-center gap-2">
                 <Input
                   value={c.name}
-                  aria-label="行事曆名稱"
+                  aria-label={t('cal.calendarName', { defaultValue: '行事曆名稱' })}
                   onChange={(e) => calendarsCol.update(c.id, { name: e.target.value })}
                   className={cx('flex-1', !c.visible && 'text-slate-400 line-through dark:text-slate-500')}
                 />
                 <IconButton
-                  label={c.visible ? '隱藏' : '顯示'}
+                  label={c.visible ? t('cal.hide', { defaultValue: '隱藏' }) : t('cal.show', { defaultValue: '顯示' })}
                   active={c.visible}
                   onClick={() => calendarsCol.update(c.id, { visible: !c.visible })}
                 >
                   {c.visible ? <Eye size={18} /> : <EyeOff size={18} />}
                 </IconButton>
-                <IconButton label="刪除行事曆" tone="danger" onClick={() => delCal(c)}>
+                <IconButton label={t('cal.deleteCalendar', { defaultValue: '刪除行事曆' })} tone="danger" onClick={() => delCal(c)}>
                   <Trash2 size={18} />
                 </IconButton>
               </div>
@@ -156,14 +162,14 @@ export default function CalendarManager({
           <div className="flex items-center gap-2">
             <Input
               value={newName}
-              aria-label="新行事曆名稱"
+              aria-label={t('cal.newCalendarName', { defaultValue: '新行事曆名稱' })}
               onChange={(e) => setNewName(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && addCal()}
-              placeholder="新行事曆名稱"
+              placeholder={t('cal.newCalendarName', { defaultValue: '新行事曆名稱' })}
               className="flex-1"
             />
             <Button size="sm" icon={Plus} onClick={addCal} disabled={!newName.trim()}>
-              新增
+              {t('cal.add', { defaultValue: '新增' })}
             </Button>
           </div>
           <div className="mt-2.5 pl-0.5">

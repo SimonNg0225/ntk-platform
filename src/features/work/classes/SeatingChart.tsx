@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import './i18n'
 import {
   Dices,
   Eraser,
@@ -43,14 +45,15 @@ export default function SeatingChart({
   onColsChange: (n: number) => void
 }) {
   const toast = useToast()
+  const { t } = useTranslation()
   const [tool, setTool] = useState<Tool>('seat')
 
   if (students.length === 0)
     return (
       <EmptyState
         icon={Users}
-        title="未有學生，未能排位"
-        hint="先去「名冊」分頁加幾位學生入嚟，就可以喺度砌座位、隨機分組同抽點名。"
+        title={t('classes.seatEmptyTitle', { defaultValue: '未有學生，未能排位' })}
+        hint={t('classes.seatEmptyHint', { defaultValue: '先去「名冊」分頁加幾位學生入嚟，就可以喺度砌座位、隨機分組同抽點名。' })}
       />
     )
 
@@ -61,9 +64,9 @@ export default function SeatingChart({
           value={tool}
           onChange={setTool}
           options={[
-            { id: 'seat', label: '座位表', icon: Users },
-            { id: 'group', label: '隨機分組', icon: Shuffle },
-            { id: 'pick', label: '抽點名', icon: Dices },
+            { id: 'seat', label: t('classes.toolSeat', { defaultValue: '座位表' }), icon: Users },
+            { id: 'group', label: t('classes.toolGroup', { defaultValue: '隨機分組' }), icon: Shuffle },
+            { id: 'pick', label: t('classes.toolPick', { defaultValue: '抽點名' }), icon: Dices },
           ]}
         />
         {tool === 'seat' && (
@@ -93,11 +96,12 @@ function ColsStepper({
   value: number
   onChange: (n: number) => void
 }) {
+  const { t } = useTranslation()
   return (
     <div className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-800">
-      <span className="text-xs text-slate-500 dark:text-slate-400">每行</span>
+      <span className="text-xs text-slate-500 dark:text-slate-400">{t('classes.perRow', { defaultValue: '每行' })}</span>
       <IconButton
-        label="減少欄數"
+        label={t('classes.decCols', { defaultValue: '減少欄數' })}
         size="sm"
         disabled={value <= 2}
         onClick={() => onChange(Math.max(2, value - 1))}
@@ -108,7 +112,7 @@ function ColsStepper({
         {value}
       </span>
       <IconButton
-        label="增加欄數"
+        label={t('classes.incCols', { defaultValue: '增加欄數' })}
         size="sm"
         disabled={value >= 10}
         onClick={() => onChange(Math.min(10, value + 1))}
@@ -131,6 +135,7 @@ function SeatGrid({
   cols: number
   onToast: (msg: string) => void
 }) {
+  const { t } = useTranslation()
   const [picked, setPicked] = useState<string | null>(null)
   const grid = useMemo(
     () => buildSeatGrid(students, metas, cols),
@@ -163,7 +168,7 @@ function SeatGrid({
       if (picked) {
         persist(picked, idx)
         setPicked(null)
-        onToast('已移動座位')
+        onToast(t('classes.seatMoved', { defaultValue: '已移動座位' }))
       }
       return
     }
@@ -181,7 +186,7 @@ function SeatGrid({
     persist(picked, b)
     persist(sid, a)
     setPicked(null)
-    onToast('已交換座位')
+    onToast(t('classes.seatSwapped', { defaultValue: '已交換座位' }))
   }
 
   const reset = () => {
@@ -191,7 +196,7 @@ function SeatGrid({
         studentMetaCol.update(m.id, { seat: -1, updatedAt: new Date().toISOString() })
     })
     setPicked(null)
-    onToast('已清除座位安排')
+    onToast(t('classes.seatsCleared', { defaultValue: '已清除座位安排' }))
   }
 
   return (
@@ -199,7 +204,7 @@ function SeatGrid({
       {/* 黑板 / 講台 */}
       <div className="mx-auto flex w-full max-w-md items-center justify-center gap-2 rounded-2xl bg-gradient-to-b from-slate-700 to-slate-800 py-2.5 text-xs font-medium tracking-wide text-slate-200 shadow-sm dark:from-slate-700/80 dark:to-slate-900">
         <Presentation size={14} className="text-slate-400" />
-        黑板 / 講台
+        {t('classes.board', { defaultValue: '黑板 / 講台' })}
       </div>
       <div
         className="grid gap-2"
@@ -275,10 +280,12 @@ function SeatGrid({
           )}
         >
           <Hand size={13} />
-          {picked ? '揀另一個座位即可交換 / 移動' : '點一位學生開始排位'}
+          {picked
+            ? t('classes.seatHintPicked', { defaultValue: '揀另一個座位即可交換 / 移動' })
+            : t('classes.seatHintIdle', { defaultValue: '點一位學生開始排位' })}
         </span>
         <Button variant="ghost" size="sm" icon={Eraser} onClick={reset}>
-          清除座位
+          {t('classes.clearSeats', { defaultValue: '清除座位' })}
         </Button>
       </div>
     </div>
@@ -287,17 +294,18 @@ function SeatGrid({
 
 // ───────── 隨機分組 ─────────
 function GroupMaker({ students }: { students: Student[] }) {
+  const { t } = useTranslation()
   const [n, setN] = useState(4)
   const [groups, setGroups] = useState<Student[][]>([])
   const make = () => setGroups(splitGroups(students, n))
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-center gap-2">
-        <span className="text-sm text-slate-600 dark:text-slate-300">分成</span>
+        <span className="text-sm text-slate-600 dark:text-slate-300">{t('classes.splitInto', { defaultValue: '分成' })}</span>
         <ColsStepper value={n} onChange={setN} />
-        <span className="text-sm text-slate-600 dark:text-slate-300">組</span>
+        <span className="text-sm text-slate-600 dark:text-slate-300">{t('classes.groupsUnit', { defaultValue: '組' })}</span>
         <Button size="sm" icon={Shuffle} onClick={make}>
-          隨機分組
+          {t('classes.makeGroups', { defaultValue: '隨機分組' })}
         </Button>
       </div>
       {groups.length === 0 ? (
@@ -306,11 +314,11 @@ function GroupMaker({ students }: { students: Student[] }) {
             <Shuffle size={20} />
           </span>
           <p className="mt-3 text-sm text-slate-500 dark:text-slate-400">
-            撳「隨機分組」即時將
+            {t('classes.groupHintPre', { defaultValue: '撳「隨機分組」即時將' })}
             <span className="mx-1 font-semibold tabular-nums text-slate-700 dark:text-slate-200">
               {students.length}
             </span>
-            位學生平均分組
+            {t('classes.groupHintPost', { defaultValue: '位學生平均分組' })}
           </p>
         </div>
       ) : (
@@ -325,9 +333,17 @@ function GroupMaker({ students }: { students: Student[] }) {
                   <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-accent-soft text-xs font-bold tabular-nums text-accent-strong dark:bg-accent/15 dark:text-accent">
                     {i + 1}
                   </span>
-                  第 {i + 1} 組
+                  {t('classes.groupN', {
+                    n: i + 1,
+                    defaultValue: `第 ${i + 1} 組`,
+                  })}
                 </span>
-                <Badge tone="accent">{g.length} 人</Badge>
+                <Badge tone="accent">
+                  {t('classes.groupSize', {
+                    count: g.length,
+                    defaultValue: `${g.length} 人`,
+                  })}
+                </Badge>
               </div>
               <div className="flex flex-wrap gap-1.5">
                 {g.map((s) => (
@@ -352,6 +368,7 @@ function GroupMaker({ students }: { students: Student[] }) {
 
 // ───────── 隨機抽點名 ─────────
 function RandomPicker({ students }: { students: Student[] }) {
+  const { t } = useTranslation()
   const [picked, setPicked] = useState<Student | null>(null)
   const [history, setHistory] = useState<string[]>([])
   const [noRepeat, setNoRepeat] = useState(true)
@@ -409,7 +426,10 @@ function RandomPicker({ students }: { students: Student[] }) {
               </p>
               {picked.studentNo && (
                 <p className="text-xs tabular-nums text-slate-400">
-                  學號 {picked.studentNo}
+                  {t('classes.drawStudentNo', {
+                    no: picked.studentNo,
+                    defaultValue: `學號 ${picked.studentNo}`,
+                  })}
                 </p>
               )}
             </div>
@@ -420,12 +440,14 @@ function RandomPicker({ students }: { students: Student[] }) {
               <Sparkles size={24} />
             </span>
             <p className="text-sm text-slate-500 dark:text-slate-400">
-              撳下面個掣，隨機抽一位同學
+              {t('classes.drawIdleHint', { defaultValue: '撳下面個掣，隨機抽一位同學' })}
             </p>
           </div>
         )}
         <Button className="relative" icon={Dices} onClick={draw} loading={rolling}>
-          {pool.length === 0 ? '重新開始一輪' : '抽一位'}
+          {pool.length === 0
+            ? t('classes.drawNewRound', { defaultValue: '重新開始一輪' })
+            : t('classes.drawOne', { defaultValue: '抽一位' })}
         </Button>
       </div>
       <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-400 dark:text-slate-500">
@@ -436,7 +458,11 @@ function RandomPicker({ students }: { students: Student[] }) {
             onChange={(e) => setNoRepeat(e.target.checked)}
             className="h-3.5 w-3.5 rounded border-slate-300 text-accent focus:ring-accent/40 dark:border-slate-600 dark:bg-slate-700"
           />
-          一輪內唔重複（已抽 {history.length}/{students.length}）
+          {t('classes.noRepeat', {
+            drawn: history.length,
+            total: students.length,
+            defaultValue: `一輪內唔重複（已抽 ${history.length}/${students.length}）`,
+          })}
         </label>
         {history.length > 0 && (
           <button
@@ -447,7 +473,7 @@ function RandomPicker({ students }: { students: Student[] }) {
             }}
             className="font-medium text-accent hover:underline"
           >
-            重設
+            {t('classes.reset', { defaultValue: '重設' })}
           </button>
         )}
       </div>

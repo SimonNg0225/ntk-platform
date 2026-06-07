@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
+import { useTranslation } from 'react-i18next'
+import './i18n'
 import {
   CalendarClock,
   Check,
@@ -126,6 +128,7 @@ export function TaskEditor({
   onDeleteTask: (task: FullTask) => void
   onToggleTask: (task: FullTask) => void
 }) {
+  const { t: tt } = useTranslation()
   const toast = useToast()
   const confirm = useConfirm()
 
@@ -188,9 +191,13 @@ export function TaskEditor({
 
   const askDelete = async () => {
     const ok = await confirm({
-      title: '刪除呢項待辦？',
-      message: `「${task.text}」連同 ${subtasks.length} 個子任務會被刪除，無法復原。`,
-      confirmText: '刪除',
+      title: tt('todo.confirmDeleteTaskTitle', { defaultValue: '刪除呢項待辦？' }),
+      message: tt('todo.confirmDeleteTaskMsg', {
+        text: task.text,
+        count: subtasks.length,
+        defaultValue: `「${task.text}」連同 ${subtasks.length} 個子任務會被刪除，無法復原。`,
+      }),
+      confirmText: tt('todo.confirmText', { defaultValue: '刪除' }),
       tone: 'danger',
     })
     if (!ok) return
@@ -210,12 +217,12 @@ export function TaskEditor({
 
   // 頁眉狀態副題（似卷宗封面下嘅一行批註）
   const stateLine = task.done
-    ? '已剔 · 完成'
+    ? tt('todo.stateDone', { defaultValue: '已剔 · 完成' })
     : marking
-      ? '待批改'
+      ? tt('todo.stateMarking', { defaultValue: '待批改' })
       : due
-        ? `到期 ${dueLabel(due)}`
-        : '未剔'
+        ? tt('todo.stateDue', { label: dueLabel(due), defaultValue: `到期 ${dueLabel(due)}` })
+        : tt('todo.stateUnticked', { defaultValue: '未剔' })
 
   return (
     // 唔傳 title → 唔用 Modal 通用粗體頁眉；改喺內文自管「批改卷宗」頁眉，
@@ -233,16 +240,22 @@ export function TaskEditor({
                 )}
               >
                 {marking ? <Highlighter size={12} /> : <ClipboardCheck size={12} />}
-                {marking ? '批改卷宗 · Marking' : '任務卡 · Task Card'}
+                {marking
+                  ? tt('todo.headerMarking', { defaultValue: '批改卷宗 · Marking' })
+                  : tt('todo.headerTask', { defaultValue: '任務卡 · Task Card' })}
               </p>
               <h2 className="mt-1 font-serif text-[22px] font-semibold leading-tight tracking-tight text-slate-800 dark:text-slate-100 sm:text-[26px]">
-                任務詳情
+                {tt('todo.taskDetail', { defaultValue: '任務詳情' })}
               </h2>
               <p className="mt-1 truncate text-xs text-slate-400 dark:text-slate-500">
                 {stateLine}
               </p>
             </div>
-            <IconButton label="關閉" onClick={onClose} className="-mr-1 shrink-0">
+            <IconButton
+              label={tt('todo.close', { defaultValue: '關閉' })}
+              onClick={onClose}
+              className="-mr-1 shrink-0"
+            >
               <X size={18} />
             </IconButton>
           </div>
@@ -274,7 +287,13 @@ export function TaskEditor({
           <button
             type="button"
             onClick={() => onToggleTask(task)}
-            aria-label={task.done ? '標記未完成' : marking ? '打剔（已批改）' : '標記完成'}
+            aria-label={
+              task.done
+                ? tt('todo.ariaMarkUndone', { defaultValue: '標記未完成' })
+                : marking
+                  ? tt('todo.ariaTickMarked', { defaultValue: '打剔（已批改）' })
+                  : tt('todo.ariaTickDone', { defaultValue: '標記完成' })
+            }
             className={cx(
               // 批改任務用方剔格（似簿上方格）；其餘用圓剔格，呼應主畫面 TaskRow
               'mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center border-2 transition duration-200 active:scale-90',
@@ -293,7 +312,9 @@ export function TaskEditor({
             {marking && !task.done && (
               <span className="mb-1 inline-flex shrink-0 items-center gap-1 rounded-md border border-rose-300/70 bg-rose-50/80 px-1.5 py-0.5 text-[10px] font-semibold text-rose-600 dark:border-rose-500/40 dark:bg-rose-500/10 dark:text-rose-300">
                 <Highlighter size={10} className="opacity-80" />
-                <span className="font-serif leading-none">批改</span>
+                <span className="font-serif leading-none">
+                  {tt('todo.markStamp', { defaultValue: '批改' })}
+                </span>
               </span>
             )}
             <Textarea
@@ -305,7 +326,7 @@ export function TaskEditor({
                 'min-h-0 w-full resize-none border-0 bg-transparent px-0 py-0.5 font-serif text-base font-semibold shadow-none focus:ring-0 sm:text-lg',
                 task.done && 'text-slate-400 line-through dark:text-slate-500',
               )}
-              placeholder="任務標題"
+              placeholder={tt('todo.taskTitlePlaceholder', { defaultValue: '任務標題' })}
             />
           </div>
         </div>
@@ -313,7 +334,7 @@ export function TaskEditor({
         {/* 屬性：優先級 / 專案 / 到期（一組柔和卡，唔似散開嘅表單）*/}
         <div className="space-y-3 rounded-2xl border border-slate-200/80 p-4 dark:border-slate-700/60">
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-            <Field label="優先級">
+            <Field label={tt('todo.fieldPriority', { defaultValue: '優先級' })}>
               <div className="flex items-center gap-2">
                 <Flag size={15} className={pm.flag} />
                 <SegmentedControl<'1' | '2' | '3' | '4'>
@@ -325,12 +346,12 @@ export function TaskEditor({
               </div>
             </Field>
 
-            <Field label="專案">
+            <Field label={tt('todo.fieldProject', { defaultValue: '專案' })}>
               <Select
                 value={task.meta.projectId ?? ''}
                 onChange={(e) => setProject(e.target.value || undefined)}
               >
-                <option value="">收件匣</option>
+                <option value="">{tt('todo.optionInbox', { defaultValue: '收件匣' })}</option>
                 {projects.map((p) => (
                   <option key={p.id} value={p.id}>
                     {p.emoji ? `${p.emoji} ` : ''}
@@ -340,7 +361,7 @@ export function TaskEditor({
               </Select>
             </Field>
 
-            <Field label="到期">
+            <Field label={tt('todo.fieldDue', { defaultValue: '到期' })}>
               <Input
                 type="date"
                 value={due ?? ''}
@@ -351,10 +372,18 @@ export function TaskEditor({
 
           {/* 到期快捷 + 狀態 */}
           <div className="flex flex-wrap items-center gap-2 border-t border-slate-100 pt-3 dark:border-slate-700/60">
-            <QuickDue label="今日" icon={Sun} onClick={() => setDue(offsetFromToday(0))} />
-            <QuickDue label="聽日" icon={Sunrise} onClick={() => setDue(offsetFromToday(1))} />
             <QuickDue
-              label="3 日後"
+              label={tt('todo.quickToday', { defaultValue: '今日' })}
+              icon={Sun}
+              onClick={() => setDue(offsetFromToday(0))}
+            />
+            <QuickDue
+              label={tt('todo.quickTomorrow', { defaultValue: '聽日' })}
+              icon={Sunrise}
+              onClick={() => setDue(offsetFromToday(1))}
+            />
+            <QuickDue
+              label={tt('todo.quick3Days', { defaultValue: '3 日後' })}
               icon={CalendarClock}
               onClick={() => setDue(offsetFromToday(3))}
             />
@@ -364,7 +393,7 @@ export function TaskEditor({
                 onClick={() => setDue(undefined)}
                 className="inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs text-slate-400 transition hover:text-rose-500"
               >
-                <X size={12} /> 清除到期
+                <X size={12} /> {tt('todo.clearDue', { defaultValue: '清除到期' })}
               </button>
             )}
             {due && (
@@ -384,7 +413,7 @@ export function TaskEditor({
         {/* 子任務（拆卷項；方剔格呼應改簿格）*/}
         <CardSection
           icon={ListChecks}
-          title="子任務"
+          title={tt('todo.sectionSubtasks', { defaultValue: '子任務' })}
           count={subtasks.length > 0 ? `${subDone}/${subtasks.length}` : undefined}
         >
           {subtasks.length > 0 && (
@@ -402,7 +431,7 @@ export function TaskEditor({
                     type="checkbox"
                     checked={s.done}
                     onChange={() => toggleSub(s)}
-                    aria-label={`${s.done ? '取消完成' : '完成'}子任務：${s.text}`}
+                    aria-label={`${s.done ? tt('todo.ariaSubUndone', { defaultValue: '取消完成' }) : tt('todo.ariaSubDone', { defaultValue: '完成' })}子任務：${s.text}`}
                     className={cx(
                       'h-4 w-4',
                       // 批改卷宗內：未剔子任務用紅墨剔（呼應紅筆 accent）；
@@ -422,7 +451,7 @@ export function TaskEditor({
                     {s.text}
                   </span>
                   <IconButton
-                    label="刪除子任務"
+                    label={tt('todo.ariaDeleteSubtask', { defaultValue: '刪除子任務' })}
                     size="sm"
                     tone="danger"
                     onClick={() => removeSub(s)}
@@ -441,11 +470,11 @@ export function TaskEditor({
               value={subDraft}
               onChange={(e) => setSubDraft(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && addSub()}
-              placeholder="拆解成更細嘅步驟…"
+              placeholder={tt('todo.subtaskPlaceholder', { defaultValue: '拆解成更細嘅步驟…' })}
               className="flex-1"
             />
             <Button variant="secondary" icon={Plus} onClick={addSub}>
-              加入
+              {tt('todo.subtaskAdd', { defaultValue: '加入' })}
             </Button>
           </div>
         </CardSection>
@@ -453,7 +482,7 @@ export function TaskEditor({
         {/* 標籤（卷宗側標）*/}
         <CardSection
           icon={Tag}
-          title="標籤"
+          title={tt('todo.sectionTags', { defaultValue: '標籤' })}
           count={task.meta.tags.length > 0 ? task.meta.tags.length : undefined}
         >
           {task.meta.tags.length > 0 && (
@@ -469,7 +498,7 @@ export function TaskEditor({
                     type="button"
                     onClick={() => removeTag(t)}
                     className="transition hover:text-rose-500"
-                    aria-label={`移除標籤 ${t}`}
+                    aria-label={tt('todo.ariaRemoveTag', { tag: t, defaultValue: `移除標籤 ${t}` })}
                   >
                     <X size={11} />
                   </button>
@@ -486,7 +515,7 @@ export function TaskEditor({
                 addTag(tagDraft)
               }
             }}
-            placeholder="輸入標籤後按 Enter…"
+            placeholder={tt('todo.tagPlaceholder', { defaultValue: '輸入標籤後按 Enter…' })}
           />
           {tagSuggest.length > 0 && (
             <div className="flex flex-wrap gap-1.5">
@@ -502,12 +531,16 @@ export function TaskEditor({
         </CardSection>
 
         {/* 備註（卷宗批註欄）*/}
-        <CardSection icon={StickyNote} title="備註">
+        <CardSection icon={StickyNote} title={tt('todo.sectionNote', { defaultValue: '備註' })}>
           <Textarea
             value={note}
             onChange={(e) => setNote(e.target.value)}
             onBlur={commitNote}
-            placeholder={marking ? '批改重點、常見錯處、跟進…' : '補充資料、連結、上下文…'}
+            placeholder={
+              marking
+                ? tt('todo.notePlaceholderMarking', { defaultValue: '批改重點、常見錯處、跟進…' })
+                : tt('todo.notePlaceholderDefault', { defaultValue: '補充資料、連結、上下文…' })
+            }
             className="min-h-[90px]"
           />
         </CardSection>
@@ -525,18 +558,18 @@ export function TaskEditor({
               onClick={askDelete}
               className="text-rose-500 hover:text-rose-600"
             >
-              刪除任務
+              {tt('todo.deleteTask', { defaultValue: '刪除任務' })}
             </Button>
             <Button
               icon={Check}
               onClick={() => {
                 commitText()
                 commitNote()
-                toast.success('已儲存')
+                toast.success(tt('todo.toastSaved', { defaultValue: '已儲存' }))
                 onClose()
               }}
             >
-              完成
+              {tt('todo.done', { defaultValue: '完成' })}
             </Button>
           </div>
         </footer>

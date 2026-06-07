@@ -1,5 +1,7 @@
 import type { ReactNode } from 'react'
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import './i18n'
 import {
   AlignLeft,
   Bell,
@@ -26,22 +28,23 @@ import { useConfirm } from '../../../context/ConfirmContext'
 import { Button, Field, IconButton, Input, Modal, Select, Textarea, cx } from '../../../ui'
 import { WEEKDAYS, addDays, colorOf, fromKey, toKey } from './util'
 
-const FREQ_OPTIONS: { v: RecurrenceFreq; l: string }[] = [
-  { v: 'none', l: '不重複' },
-  { v: 'daily', l: '每日' },
-  { v: 'weekly', l: '每週' },
-  { v: 'monthly', l: '每月' },
-  { v: 'yearly', l: '每年' },
+// labels 經 t() 翻譯（保留 zh-HK 原文做 defaultValue）；v 係儲存／邏輯值，唔變。
+const FREQ_OPTIONS: { v: RecurrenceFreq; k: string; zh: string }[] = [
+  { v: 'none', k: 'cal.freqNone', zh: '不重複' },
+  { v: 'daily', k: 'cal.freqDaily', zh: '每日' },
+  { v: 'weekly', k: 'cal.freqWeekly', zh: '每週' },
+  { v: 'monthly', k: 'cal.freqMonthly', zh: '每月' },
+  { v: 'yearly', k: 'cal.freqYearly', zh: '每年' },
 ]
 
-const ALERT_OPTIONS: { v: number; l: string }[] = [
-  { v: -1, l: '無提醒' },
-  { v: 0, l: '事件發生時' },
-  { v: 5, l: '5 分鐘前' },
-  { v: 15, l: '15 分鐘前' },
-  { v: 30, l: '30 分鐘前' },
-  { v: 60, l: '1 小時前' },
-  { v: 1440, l: '1 日前' },
+const ALERT_OPTIONS: { v: number; k: string; zh: string }[] = [
+  { v: -1, k: 'cal.alertNone', zh: '無提醒' },
+  { v: 0, k: 'cal.alertAtTime', zh: '事件發生時' },
+  { v: 5, k: 'cal.alert5', zh: '5 分鐘前' },
+  { v: 15, k: 'cal.alert15', zh: '15 分鐘前' },
+  { v: 30, k: 'cal.alert30', zh: '30 分鐘前' },
+  { v: 60, k: 'cal.alert60', zh: '1 小時前' },
+  { v: 1440, k: 'cal.alert1440', zh: '1 日前' },
 ]
 
 export function plusHour(t: string): string {
@@ -156,6 +159,7 @@ export default function EventEditor({
   onClose: () => void
   onSaved?: (dateKey: string) => void
 }) {
+  const { t } = useTranslation()
   const toast = useToast()
   const confirm = useConfirm()
 
@@ -231,10 +235,10 @@ export default function EventEditor({
       // 整體取代（剔走清空欄位），唔可以用 merge update —— 見 applyFullEdit
       const next = applyFullEdit(editing, payload)
       eventsCol.set(eventsCol.get().map((e) => (e.id === editing.id ? next : e)))
-      toast.success('已儲存活動')
+      toast.success(t('cal.savedEvent', { defaultValue: '已儲存活動' }))
     } else {
       eventsCol.add(payload)
-      toast.success('已新增活動')
+      toast.success(t('cal.addedEvent', { defaultValue: '已新增活動' }))
     }
     onSaved?.(startDate)
     onClose()
@@ -246,7 +250,7 @@ export default function EventEditor({
     // 整體取代（剔走清空欄位）—— 見 applyFullEdit；唔可以用 merge update
     const next = applyFullEdit(editing, payload)
     eventsCol.set(eventsCol.get().map((e) => (e.id === editing.id ? next : e)))
-    toast.success('已更新所有活動')
+    toast.success(t('cal.updatedAllEvents', { defaultValue: '已更新所有活動' }))
     onSaved?.(startDate)
     onClose()
   }
@@ -272,7 +276,7 @@ export default function EventEditor({
       payload.endDate = toKey(addDays(fromKey(payload.endDate), dayDelta))
     }
     eventsCol.add(payload)
-    toast.success('已更新此活動')
+    toast.success(t('cal.updatedThisEvent', { defaultValue: '已更新此活動' }))
     onSaved?.(payload.date)
     onClose()
   }
@@ -284,14 +288,17 @@ export default function EventEditor({
       return
     }
     const ok = await confirm({
-      title: '刪除活動？',
-      message: `確定要刪除「${editing.title}」？此動作無法復原。`,
-      confirmText: '刪除',
+      title: t('cal.deleteEventTitle', { defaultValue: '刪除活動？' }),
+      message: t('cal.deleteEventMessage', {
+        title: editing.title,
+        defaultValue: `確定要刪除「${editing.title}」？此動作無法復原。`,
+      }),
+      confirmText: t('cal.deleteConfirm', { defaultValue: '刪除' }),
       tone: 'danger',
     })
     if (!ok) return
     eventsCol.remove(editing.id)
-    toast.success('已刪除活動')
+    toast.success(t('cal.deletedEvent', { defaultValue: '已刪除活動' }))
     onClose()
   }
 
@@ -299,14 +306,14 @@ export default function EventEditor({
     if (!editing || !occurrenceKey) return
     const ex = Array.from(new Set([...(editing.exDates ?? []), occurrenceKey]))
     eventsCol.update(editing.id, { exDates: ex })
-    toast.success('已刪除此活動')
+    toast.success(t('cal.deletedThisEvent', { defaultValue: '已刪除此活動' }))
     onClose()
   }
 
   function deleteAll() {
     if (!editing) return
     eventsCol.remove(editing.id)
-    toast.success('已刪除所有活動')
+    toast.success(t('cal.deletedAllEvents', { defaultValue: '已刪除所有活動' }))
     onClose()
   }
 
@@ -325,14 +332,16 @@ export default function EventEditor({
               className="mr-auto text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-500/10"
               onClick={remove}
             >
-              刪除
+              {t('cal.delete', { defaultValue: '刪除' })}
             </Button>
           )}
           <Button variant="secondary" onClick={onClose}>
-            取消
+            {t('cal.cancel', { defaultValue: '取消' })}
           </Button>
           <Button icon={Check} onClick={save} disabled={!valid}>
-            {editing ? '儲存' : '加入行事曆'}
+            {editing
+              ? t('cal.save', { defaultValue: '儲存' })
+              : t('cal.addToCalendar', { defaultValue: '加入行事曆' })}
           </Button>
         </>
       }
@@ -344,13 +353,17 @@ export default function EventEditor({
             <div className="min-w-0">
               <p className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.3em] text-accent/70">
                 {editing ? <PenLine size={12} className="shrink-0" /> : <CalendarPlus size={12} className="shrink-0" />}
-                {editing ? '日程一則 · Entry' : '新一則 · New Entry'}
+                {editing
+                  ? t('cal.entryEyebrowEdit', { defaultValue: '日程一則 · Entry' })
+                  : t('cal.entryEyebrowNew', { defaultValue: '新一則 · New Entry' })}
               </p>
               <h2 className="mt-1 font-serif text-[22px] font-semibold leading-tight tracking-tight text-slate-800 dark:text-slate-100 sm:text-[26px]">
-                {editing ? '編輯活動' : '新增活動'}
+                {editing
+                  ? t('cal.editEvent', { defaultValue: '編輯活動' })
+                  : t('cal.newEvent', { defaultValue: '新增活動' })}
               </h2>
             </div>
-            <IconButton label="關閉" onClick={onClose} className="-mr-1 shrink-0">
+            <IconButton label={t('cal.close', { defaultValue: '關閉' })} onClick={onClose} className="-mr-1 shrink-0">
               <X size={18} />
             </IconButton>
           </div>
@@ -370,28 +383,28 @@ export default function EventEditor({
           <input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="想安排啲咩？"
+            placeholder={t('cal.titlePlaceholder', { defaultValue: '想安排啲咩？' })}
             autoFocus
             className="w-full border-0 border-b border-slate-200 bg-transparent pb-2 font-serif text-lg font-semibold text-slate-800 outline-none transition-colors placeholder:font-normal placeholder:text-slate-400 focus:border-accent dark:border-slate-700 dark:text-slate-100 dark:placeholder:text-slate-500 sm:text-xl"
           />
         </div>
 
-        <Field label="地點">
+        <Field label={t('cal.location', { defaultValue: '地點' })}>
           <Input
             icon={MapPin}
             value={location}
             onChange={(e) => setLocation(e.target.value)}
-            placeholder="喺邊度？（選填）"
+            placeholder={t('cal.locationPlaceholder', { defaultValue: '喺邊度？（選填）' })}
           />
         </Field>
 
         {/* 時間 — 分區頁眉 + 分組卡片，留多啲呼吸位 */}
         <div className="space-y-3">
-          <Section icon={Clock} title="時間" />
+          <Section icon={Clock} title={t('cal.timeSection', { defaultValue: '時間' })} />
           <div className="space-y-3 rounded-2xl border border-slate-200/80 bg-slate-50/50 p-4 dark:border-slate-700/60 dark:bg-slate-800/40">
-          <Toggle checked={allDay} onChange={setAllDay} label="全日活動" />
+          <Toggle checked={allDay} onChange={setAllDay} label={t('cal.allDayEvent', { defaultValue: '全日活動' })} />
           <div className="grid gap-3 sm:grid-cols-2">
-            <Field label="開始">
+            <Field label={t('cal.start', { defaultValue: '開始' })}>
               <div className="flex flex-col gap-2 sm:flex-row">
                 <Input
                   type="date"
@@ -412,7 +425,7 @@ export default function EventEditor({
                 )}
               </div>
             </Field>
-            <Field label="結束">
+            <Field label={t('cal.end', { defaultValue: '結束' })}>
               <div className="flex flex-col gap-2 sm:flex-row">
                 <Input
                   type="date"
@@ -435,13 +448,13 @@ export default function EventEditor({
           </div>
         </div>
 
-        <Field label="行事曆">
+        <Field label={t('cal.calendar', { defaultValue: '行事曆' })}>
           <div className="flex items-center gap-2">
             <span
               className={cx('h-3 w-3 shrink-0 rounded-full', colorOf(cat?.color).dot)}
             />
             <Select value={calendarId} onChange={(e) => setCalendarId(e.target.value)}>
-              {calendars.length === 0 && <option value="">（未有行事曆）</option>}
+              {calendars.length === 0 && <option value="">{t('cal.noCalendars', { defaultValue: '（未有行事曆）' })}</option>}
               {calendars.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.name}
@@ -453,7 +466,7 @@ export default function EventEditor({
 
         {/* 重複 — 分區頁眉 + 分組卡片，揀咗先展開細節 */}
         <div className="space-y-3">
-          <Section icon={Repeat} title="重複" />
+          <Section icon={Repeat} title={t('cal.repeatSection', { defaultValue: '重複' })} />
           <div
             className={cx(
               'space-y-3 rounded-2xl border p-4 transition-colors',
@@ -463,20 +476,20 @@ export default function EventEditor({
             )}
           >
           <div className="grid gap-3 sm:grid-cols-2">
-            <Field label="重複">
+            <Field label={t('cal.repeat', { defaultValue: '重複' })}>
               <Select
                 value={freq}
                 onChange={(e) => setFreq(e.target.value as RecurrenceFreq)}
               >
                 {FREQ_OPTIONS.map((o) => (
                   <option key={o.v} value={o.v}>
-                    {o.l}
+                    {t(o.k, { defaultValue: o.zh })}
                   </option>
                 ))}
               </Select>
             </Field>
             {freq !== 'none' && (
-              <Field label="每隔">
+              <Field label={t('cal.every', { defaultValue: '每隔' })}>
                 <div className="flex items-center gap-2">
                   <Input
                     type="number"
@@ -487,12 +500,12 @@ export default function EventEditor({
                   />
                   <span className="text-sm text-slate-500 dark:text-slate-400">
                     {freq === 'daily'
-                      ? '日'
+                      ? t('cal.unitDay', { defaultValue: '日' })
                       : freq === 'weekly'
-                        ? '週'
+                        ? t('cal.unitWeek', { defaultValue: '週' })
                         : freq === 'monthly'
-                          ? '個月'
-                          : '年'}
+                          ? t('cal.unitMonth', { defaultValue: '個月' })
+                          : t('cal.unitYear', { defaultValue: '年' })}
                   </span>
                 </div>
               </Field>
@@ -500,7 +513,7 @@ export default function EventEditor({
           </div>
 
           {freq === 'weekly' && (
-            <Field label="揀邊幾日重複（留空就跟開始日）">
+            <Field label={t('cal.pickWeekdays', { defaultValue: '揀邊幾日重複（留空就跟開始日）' })}>
               <div className="flex flex-wrap gap-1.5">
                 {WEEKDAYS.map((w, i) => {
                   const on = byWeekday.includes(i)
@@ -509,7 +522,7 @@ export default function EventEditor({
                       key={i}
                       type="button"
                       aria-pressed={on}
-                      aria-label={`星期${w}`}
+                      aria-label={t(`cal.weekdayLong_${i}`, { defaultValue: `星期${w}` })}
                       onClick={() =>
                         setByWeekday((prev) =>
                           prev.includes(i)
@@ -533,7 +546,7 @@ export default function EventEditor({
           )}
 
           {freq !== 'none' && (
-            <Field label="重複到幾時（選填，留空就一直重複）">
+            <Field label={t('cal.until', { defaultValue: '重複到幾時（選填，留空就一直重複）' })}>
               <Input
                 type="date"
                 icon={Repeat}
@@ -548,37 +561,37 @@ export default function EventEditor({
 
         {/* 提醒 + 連結 — 分區頁眉 */}
         <div className="space-y-3">
-          <Section icon={Bell} title="提醒與連結" />
+          <Section icon={Bell} title={t('cal.alertSection', { defaultValue: '提醒與連結' })} />
           <div className="grid gap-3 sm:grid-cols-2">
-            <Field label="提醒">
+            <Field label={t('cal.alert', { defaultValue: '提醒' })}>
               <Select
                 value={String(alert)}
                 onChange={(e) => setAlert(Number(e.target.value))}
               >
                 {ALERT_OPTIONS.map((o) => (
                   <option key={o.v} value={o.v}>
-                    {o.l}
+                    {t(o.k, { defaultValue: o.zh })}
                   </option>
                 ))}
               </Select>
             </Field>
-            <Field label="網址">
+            <Field label={t('cal.url', { defaultValue: '網址' })}>
               <Input
                 icon={Link2}
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
-                placeholder="https://（選填）"
+                placeholder={t('cal.urlPlaceholder', { defaultValue: 'https://（選填）' })}
               />
             </Field>
           </div>
         </div>
 
-        <Field label="備註">
+        <Field label={t('cal.notes', { defaultValue: '備註' })}>
           <Textarea
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             rows={2}
-            placeholder="想補充啲咩？（選填）"
+            placeholder={t('cal.notesPlaceholder', { defaultValue: '想補充啲咩？（選填）' })}
           />
         </Field>
 
@@ -586,7 +599,7 @@ export default function EventEditor({
         <div className="space-y-2.5 border-t border-slate-200/70 pt-4 dark:border-slate-700/60">
           <p className="flex items-center gap-1.5 px-0.5 text-[11px] font-medium uppercase tracking-[0.18em] text-accent/70">
             <CalendarDays size={12} className="shrink-0" />
-            落在日程上
+            {t('cal.onSchedule', { defaultValue: '落在日程上' })}
           </p>
           {/* 一枚事件 chip：戴返所選行事曆嘅柔和色衣 + 色脊（同主畫面月／週視圖一致）*/}
           <div
@@ -597,28 +610,34 @@ export default function EventEditor({
           >
             <span aria-hidden className={cx('absolute inset-y-1.5 left-0 w-1 rounded-full', colorOf(cat?.color).dot)} />
             <p className="truncate font-serif text-sm font-semibold">
-              {title.trim() || '未命名活動'}
+              {title.trim() || t('cal.untitledEvent', { defaultValue: '未命名活動' })}
             </p>
             <div className="mt-1 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[11px] font-medium opacity-80">
               <span className="inline-flex items-center gap-1 tabular-nums">
                 <CalendarDays size={11} /> {startDate}
               </span>
               <span className="inline-flex items-center gap-1 tabular-nums">
-                <Clock size={11} /> {allDay ? '全日' : `${startTime}–${endTime}`}
+                <Clock size={11} /> {allDay ? t('cal.allDay', { defaultValue: '全日' }) : `${startTime}–${endTime}`}
               </span>
               {freq !== 'none' && (
                 <span className="inline-flex items-center gap-1">
-                  <Repeat size={11} /> {FREQ_OPTIONS.find((f) => f.v === freq)?.l}
+                  <Repeat size={11} /> {(() => {
+                    const o = FREQ_OPTIONS.find((f) => f.v === freq)
+                    return o ? t(o.k, { defaultValue: o.zh }) : ''
+                  })()}
                 </span>
               )}
               {alert >= 0 && (
                 <span className="inline-flex items-center gap-1">
-                  <Bell size={11} /> {ALERT_OPTIONS.find((a) => a.v === alert)?.l}
+                  <Bell size={11} /> {(() => {
+                    const o = ALERT_OPTIONS.find((a) => a.v === alert)
+                    return o ? t(o.k, { defaultValue: o.zh }) : ''
+                  })()}
                 </span>
               )}
               {notes.trim() && (
                 <span className="inline-flex items-center gap-1">
-                  <AlignLeft size={11} /> 有備註
+                  <AlignLeft size={11} /> {t('cal.hasNotes', { defaultValue: '有備註' })}
                 </span>
               )}
             </div>
@@ -637,13 +656,23 @@ export default function EventEditor({
               )}
             >
               <Repeat size={12} className="shrink-0" />
-              重複系列 · Series
+              {t('cal.seriesEyebrow', { defaultValue: '重複系列 · Series' })}
             </p>
             <h3 className="mt-1 font-serif text-lg font-semibold leading-tight text-slate-800 dark:text-slate-100">
-              {scopeAction === 'delete' ? '刪除重複活動' : '更新重複活動'}
+              {scopeAction === 'delete'
+                ? t('cal.deleteSeriesTitle', { defaultValue: '刪除重複活動' })
+                : t('cal.updateSeriesTitle', { defaultValue: '更新重複活動' })}
             </h3>
             <p className="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
-              「{editing.title}」係重複活動，你想{scopeAction === 'delete' ? '刪除' : '更新'}邊一啲？
+              {scopeAction === 'delete'
+                ? t('cal.seriesPromptDelete', {
+                    title: editing.title,
+                    defaultValue: `「${editing.title}」係重複活動，你想刪除邊一啲？`,
+                  })
+                : t('cal.seriesPromptUpdate', {
+                    title: editing.title,
+                    defaultValue: `「${editing.title}」係重複活動，你想更新邊一啲？`,
+                  })}
             </p>
           </div>
           <div className="flex flex-col gap-2">
@@ -653,7 +682,9 @@ export default function EventEditor({
                 fullWidth
                 onClick={scopeAction === 'delete' ? deleteThis : saveThis}
               >
-                只{scopeAction === 'delete' ? '刪除' : '更新'}呢一日（{occurrenceKey}）
+                {scopeAction === 'delete'
+                  ? t('cal.deleteThisDay', { date: occurrenceKey, defaultValue: `只刪除呢一日（${occurrenceKey}）` })
+                  : t('cal.updateThisDay', { date: occurrenceKey, defaultValue: `只更新呢一日（${occurrenceKey}）` })}
               </Button>
             )}
             <Button
@@ -661,10 +692,12 @@ export default function EventEditor({
               fullWidth
               onClick={scopeAction === 'delete' ? deleteAll : saveAll}
             >
-              {scopeAction === 'delete' ? '刪除' : '更新'}成個系列
+              {scopeAction === 'delete'
+                ? t('cal.deleteWholeSeries', { defaultValue: '刪除成個系列' })
+                : t('cal.updateWholeSeries', { defaultValue: '更新成個系列' })}
             </Button>
             <Button variant="ghost" fullWidth onClick={() => setScopeAction(null)}>
-              取消
+              {t('cal.cancel', { defaultValue: '取消' })}
             </Button>
           </div>
         </Modal>

@@ -1,4 +1,6 @@
 import { useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import './i18n'
 import { CalendarArrowDown, CalendarHeart, Download, Hourglass, X } from 'lucide-react'
 import type { CalendarEvent, CalendarCategory, Countdown } from '../../../data/types'
 import { Button, IconButton, Modal, cx } from '../../../ui'
@@ -33,6 +35,7 @@ function CheckRow({
   title: string
   count: number
 }) {
+  const { t } = useTranslation()
   return (
     <button
       type="button"
@@ -61,7 +64,7 @@ function CheckRow({
           {title}
         </span>
         <span className="block text-xs tabular-nums text-slate-500 dark:text-slate-400">
-          {count} 項
+          {t('cal.countSuffix', { count, defaultValue: `${count} 項` })}
         </span>
       </span>
       <span
@@ -100,6 +103,7 @@ export default function IcsExportModal({
   countdowns: Countdown[]
   onClose: () => void
 }) {
+  const { t } = useTranslation()
   const toast = useToast()
   const [withEvents, setWithEvents] = useState(true)
   const [withCountdowns, setWithCountdowns] = useState(true)
@@ -126,7 +130,7 @@ export default function IcsExportModal({
 
   function doExport() {
     if (!withEvents && !withCountdowns) {
-      toast.error('揀返要匯出邊類先')
+      toast.error(t('cal.pickTypeFirst', { defaultValue: '揀返要匯出邊類先' }))
       return
     }
     const ics = buildICS({
@@ -138,10 +142,14 @@ export default function IcsExportModal({
       includeEvents: withEvents,
       includeCountdowns: withCountdowns,
       now,
-      calName: '教學易 行事曆匯出',
+      calName: t('cal.exportName', { defaultValue: '教學易 行事曆匯出' }),
     })
     downloadText(`eziteach-calendar-${exportStamp(now)}.ics`, ics, 'text/calendar')
-    toast.success(total > 0 ? `已匯出 ${total} 項到 .ics` : '已匯出（暫時無內容）')
+    toast.success(
+      total > 0
+        ? t('cal.exportedCount', { count: total, defaultValue: `已匯出 ${total} 項到 .ics` })
+        : t('cal.exportedEmpty', { defaultValue: '已匯出（暫時無內容）' }),
+    )
     onClose()
   }
 
@@ -154,13 +162,13 @@ export default function IcsExportModal({
           <div className="min-w-0">
             <p className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.3em] text-accent/70">
               <CalendarArrowDown size={12} className="shrink-0" />
-              帶走一份 · Export
+              {t('cal.exportEyebrow', { defaultValue: '帶走一份 · Export' })}
             </p>
             <h2 className="mt-1 font-serif text-[22px] font-semibold leading-tight tracking-tight text-slate-800 dark:text-slate-100 sm:text-[26px]">
-              匯出行事曆
+              {t('cal.exportCalendar', { defaultValue: '匯出行事曆' })}
             </h2>
           </div>
-          <IconButton label="關閉" onClick={onClose} className="-mr-1 shrink-0">
+          <IconButton label={t('cal.close', { defaultValue: '關閉' })} onClick={onClose} className="-mr-1 shrink-0">
             <X size={18} />
           </IconButton>
         </div>
@@ -172,8 +180,10 @@ export default function IcsExportModal({
 
       <div className="space-y-4">
         <p className="text-sm leading-relaxed text-slate-500 dark:text-slate-400">
-          下載標準 iCalendar（.ics）檔，匯入 Apple / Google / Outlook
-          行事曆。只匯出顯示中嘅行事曆，重複事件會展開成逐次（涵蓋過去半年至未來兩年）。
+          {t('cal.exportIntro', {
+            defaultValue:
+              '下載標準 iCalendar（.ics）檔，匯入 Apple / Google / Outlook 行事曆。只匯出顯示中嘅行事曆，重複事件會展開成逐次（涵蓋過去半年至未來兩年）。',
+          })}
         </p>
 
         <div className="space-y-2.5">
@@ -181,14 +191,14 @@ export default function IcsExportModal({
             checked={withEvents}
             onToggle={() => setWithEvents((v) => !v)}
             icon={CalendarHeart}
-            title="行事曆事件（顯示中）"
+            title={t('cal.exportEventsTitle', { defaultValue: '行事曆事件（顯示中）' })}
             count={eventCount}
           />
           <CheckRow
             checked={withCountdowns}
             onToggle={() => setWithCountdowns((v) => !v)}
             icon={Hourglass}
-            title="倒數（全部）"
+            title={t('cal.exportCountdownsTitle', { defaultValue: '倒數（全部）' })}
             count={countdownCount}
           />
         </div>
@@ -197,25 +207,25 @@ export default function IcsExportModal({
         <div className="space-y-3 border-t border-slate-200/70 pt-4 dark:border-slate-700/60">
           <div className="flex items-baseline justify-between gap-2">
             <span className="text-[11px] font-medium uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">
-              將匯出
+              {t('cal.willExport', { defaultValue: '將匯出' })}
             </span>
             <span className="font-serif text-sm text-slate-600 dark:text-slate-300">
-              <span className="text-lg font-semibold tabular-nums text-slate-800 dark:text-slate-100">{total}</span> 項
+              <span className="text-lg font-semibold tabular-nums text-slate-800 dark:text-slate-100">{total}</span> {t('cal.itemUnit', { defaultValue: '項' })}
             </span>
           </div>
           <p className="text-[11px] tabular-nums text-slate-400 dark:text-slate-500">
-            涵蓋 {rangeStart} → {rangeEnd}
+            {t('cal.coverage', { start: rangeStart, end: rangeEnd, defaultValue: `涵蓋 ${rangeStart} → ${rangeEnd}` })}
           </p>
           <div className="flex justify-end gap-2">
             <Button type="button" variant="ghost" onClick={onClose}>
-              取消
+              {t('cal.cancel', { defaultValue: '取消' })}
             </Button>
             <Button
               icon={Download}
               onClick={doExport}
               disabled={!withEvents && !withCountdowns}
             >
-              下載 .ics
+              {t('cal.downloadIcs', { defaultValue: '下載 .ics' })}
             </Button>
           </div>
         </div>

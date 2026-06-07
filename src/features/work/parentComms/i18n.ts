@@ -1,0 +1,295 @@
+import i18n from "../../../i18n";
+
+// ============================================================
+//  家長溝通（Parent communication）—— 功能本地 i18n 包
+//  ------------------------------------------------------------
+//  解耦：只喺呢度 addResourceBundle('en', …)，唔改 i18n core。
+//  zh-HK 由各組件嘅 t(key, { defaultValue: '<原文>' }) 提供，
+//  故此唔需要 zh-HK 包（保持逐字 byte-identical）。
+//  deepMerge + overwrite = true。namespace 用 'parent'。
+// ============================================================
+
+i18n.addResourceBundle(
+  "en",
+  "translation",
+  {
+    parent: {
+      // ── masthead / header ──
+      kicker: "Correspondence",
+      title: "Parent communication",
+      mastheadStamp: "Home–school comms",
+      summaryLine: "{{total}} exchanges · {{contacted}} parents contacted",
+      openFollowUps: "{{count}} awaiting reply",
+      menuMore: "More",
+      menuTemplates: "Letter templates",
+      menuExportFiltered: "Export current list (CSV)",
+      menuExportAll: "Export all (CSV)",
+      compose: "Write a letter",
+
+      // ── ledger stats ──
+      statTotalLabel: "Total exchanges",
+      statTotalHint: "Accumulated letters",
+      statMonthLabel: "This month",
+      statMonthHintUp: "Level / up vs {{last}} last month",
+      statMonthHintDown: "{{last}} last month",
+      statOpenLabel: "Awaiting reply",
+      statOpenHintOverdue: "{{count}} overdue",
+      statOpenHintNone: "None overdue",
+      statPositiveLabel: "Positive response",
+      statPositiveHintNone: "No sentiment tagged yet",
+      statPositiveHintSome: "Of tagged sentiment",
+      unitLetters: "",
+
+      // ── tabs ──
+      tabTimeline: "Letters",
+      tabTable: "Ledger",
+      tabStudents: "Contacts",
+      tabAnalytics: "Stats",
+
+      // ── search / filters ──
+      searchPlaceholder: "Search letter content, student, contact…",
+      filters: "Filter",
+      filterClass: "Class",
+      filterAllClasses: "All classes",
+      filterStudent: "Student",
+      filterAllStudents: "All students",
+      filterPickClassFirst: "Pick a class first",
+      filterChannel: "Contact method",
+      filterAllChannels: "All methods",
+      filterCategory: "Topic",
+      filterAllCategories: "All topics",
+      replyLabel: "Reply",
+      replyAll: "All",
+      replyOpen: "Awaiting reply",
+      replyOverdue: "Overdue",
+      replyDone: "Replied",
+      clearFilters: "Clear all filters",
+      showingCount: "Showing {{shown}} / {{total}} letters",
+
+      // ── follow-up panel ──
+      followPanelTitle: "Letters awaiting reply",
+      followPanelCount: "（{{count}}）",
+      followOverdueBadge: "{{count}} overdue",
+      noDate: "No date",
+      markReplied: "Mark as replied",
+      markRepliedShort: "Mark replied",
+      remindSet: "Reminder set",
+
+      // ── reschedule control ──
+      rescheduleButton: "Set reply date",
+      rescheduleCloseAria: "Close reply scheduling",
+      rescheduleDialogAria: "Set the reply due date for selected letters",
+      rescheduleHint: "Set selected letters to awaiting reply, due:",
+      presetTomorrow: "Tomorrow",
+      preset3days: "In 3 days",
+      preset1week: "In 1 week",
+      preset2weeks: "In 2 weeks",
+      customDueAria: "Custom follow-up due date",
+      applyCustom: "Apply custom date",
+      clearDueKeepOpen: "Clear due date (keep awaiting reply)",
+
+      // ── timeline ──
+      todayBadge: "Today",
+      groupCount: "{{count}} letters",
+      emptyFirstTitle: "No letters sent yet",
+      emptyFirstHint:
+        "Tap “Write a letter” to log every exchange with parents or students, building up your own correspondence ledger.",
+      emptyNoMatchTitle: "No matching letters",
+      emptyNoMatchHint:
+        "Try loosening the search or filters to see other exchanges.",
+      letterIncoming: "Incoming",
+      letterOutgoing: "Outgoing",
+      toggleReplyTooltipDone: "Mark as replied",
+      toggleReplyTooltipReopen: "Reopen as awaiting reply",
+      toggleReplyAria: "Toggle reply status",
+      editLetter: "Edit letter",
+      deleteLetter: "Delete letter",
+      followChipReply: "Awaiting reply",
+
+      // ── table view ──
+      tableEmptyTitle: "The ledger is empty",
+      tableEmptyHint:
+        "Adjust the filters, or write a new letter to fill in the exchanges.",
+      ledgerKicker: "Ledger",
+      ledgerCount: "{{count}} letters total",
+      selectedCount: "{{count}} selected",
+      batchMarkReplied: "Mark replied",
+      batchExport: "Export",
+      batchDelete: "Delete",
+      batchCancel: "Cancel",
+      selectAll: "Select all",
+      selectRow: "Select",
+      colDate: "Date",
+      colRecipient: "Recipient",
+      colMethod: "Method",
+      colTopic: "Topic",
+      colSummary: "Letter summary",
+      colReply: "Reply",
+      colActions: "Actions",
+      sortAria: "Sort by {{label}}",
+      sortToggleAria: "{{label}} (currently {{dir}}, click to toggle)",
+      sortAsc: "ascending",
+      sortDesc: "descending",
+      repliedShort: "Replied",
+
+      // ── contact-gap panel ──
+      contactGapTitle: "To contact",
+      contactGapNeverBadge: "{{count}} never contacted",
+      contactGapStaleBadge: "{{count}} overdue for contact",
+      sectionNever: "Never contacted",
+      sectionStale: "No contact for a while (≥ {{days}} days)",
+      removedStudent: "(student removed)",
+      notContacted: "Not contacted",
+      writeTo: "Write to {{name}}",
+      writeLetterShort: "Write",
+
+      // ── students view ──
+      studentsEmptyTitle: "No student-specific letters yet",
+      studentsEmptyHint:
+        "Pick a student when writing a letter, and each one’s exchange history will be listed here like a ledger.",
+      contactsKicker: "Contacts",
+      contactsCount: "{{count}} contacts",
+      viewLettersAria: "View letters for {{name}}",
+      cardExchanges: "{{count}} letters",
+      cardAwaiting: "{{count}} awaiting reply",
+      cardReplied: "Replied",
+      lastExchange: "Last exchange:",
+      replyOn: "Reply {{date}}",
+      sentimentPositive: "Positive {{count}}",
+      sentimentNeutral: "Neutral {{count}}",
+      sentimentConcern: "Needs attention {{count}}",
+
+      // ── analytics ──
+      analyticsEmptyTitle: "No letters to analyse yet",
+      analyticsEmptyHint:
+        "Once you start exchanging letters, monthly volume, contact methods and sentiment distribution appear here automatically.",
+      insightsKicker: "Insights",
+      insightsTitle: "Letter analysis",
+      removedShort: "(removed)",
+      months6: "6 months",
+      months12: "12 months",
+      chartMonthlyVolume: "Monthly letter volume",
+      chartChannelShare: "Contact-method share",
+      chartCategoryDist: "Letter topic distribution",
+      chartOutcome: "Exchange sentiment",
+      chartTopStudents: "Most-contacted students",
+
+      // ── toasts ──
+      toastUpdated: "Letter updated",
+      toastSaved: "Letter logged",
+      toastDeleted: "Letter deleted",
+      toastReopened: "Re-marked as awaiting reply",
+      toastMarkedReplied: "Marked as replied",
+      toastTemplateAdded: "Template added",
+      toastTemplateUpdated: "Template updated",
+      toastTemplateDeleted: "Template deleted",
+      toastBatchDone: "{{count}} marked as replied",
+      toastBatchNoneOpen: "None of the selected letters are awaiting reply",
+      toastRescheduleSame: "Selected letters are already in this reply state",
+      toastClearedDue: "Cleared reply due date on {{count}} letters",
+      toastReschedulePart: "Reply due {{date}}: {{parts}}",
+      rescheduleScheduled: "scheduled {{count}}",
+      rescheduleReopened: "reopened {{count}}",
+      rescheduleUpdated: "updated",
+      toastBatchDeleted: "Selected letters deleted",
+      toastNoExport: "No letters to export",
+      toastExported: "{{count}} letters exported",
+
+      // ── CSV header ──
+      csvDate: "Date",
+      csvClass: "Class",
+      csvStudent: "Student",
+      csvDirection: "Direction",
+      csvChannel: "Contact method",
+      csvTopic: "Topic",
+      csvOutcome: "Sentiment",
+      csvContact: "Contact",
+      csvSummary: "Summary",
+      csvNeedFollow: "Follow-up needed",
+      csvFollowDue: "Follow-up due",
+      csvFollowTodo: "Follow-up to-do",
+
+      // ── confirm dialogs ──
+      confirmDeleteTitle: "Delete this letter?",
+      confirmDeleteMsg:
+        "The exchange record for {{name}} ({{date}}) will be permanently deleted and cannot be recovered.",
+      confirmDeleteTemplateTitle: "Delete template?",
+      confirmDeleteTemplateMsg: "“{{title}}” will be deleted.",
+      confirmBatchDeleteTitle: "Delete {{count}} letters?",
+      confirmBatchDeleteMsg: "This action cannot be undone.",
+      confirmDelete: "Delete",
+
+      // ── enum labels (display only — never change stored enums) ──
+      direction: { outgoing: "Outgoing", incoming: "Incoming" },
+      directionTooltip: {
+        outgoing: "Outgoing contact",
+        incoming: "Parent message",
+      },
+      category: {
+        academic: "Academic",
+        behaviour: "Behaviour",
+        attendance: "Attendance",
+        praise: "Praise",
+        admin: "Admin",
+        wellbeing: "Wellbeing",
+        other: "Other",
+      },
+      outcome: {
+        positive: "Positive",
+        neutral: "Neutral",
+        concern: "Needs attention",
+      },
+      bucket: {
+        overdue: "Overdue",
+        today: "Due today",
+        soon: "Next 7 days",
+        later: "Later",
+        nodate: "No date set",
+      },
+
+      // ── editor (CommEditor) ──
+      editorStampEdit: "Amend",
+      editorStampNew: "Draft",
+      editorTitleEdit: "Edit letter",
+      editorTitleNew: "Write a letter",
+      close: "Close",
+      recipientSection: "Recipient",
+      classRequired: "Class",
+      pickClass: "Choose a class",
+      studentOptional: "Student (optional)",
+      wholeClass: "Whole class / unspecified",
+      pickClassFirst: "Choose a class first",
+      dispatchSection: "Dispatch",
+      letterDirection: "Letter direction",
+      contactNameLabel: "Recipient name (optional)",
+      contactNameHint: "e.g. Mrs Chan, father",
+      contactNamePlaceholder: "Parent / guardian name",
+      dateLabel: "Date",
+      channelLabel: "Contact method",
+      categoryLabel: "Topic",
+      categoryUnset: "Uncategorised",
+      letterBody: "Letter body",
+      useTemplate: "Use template",
+      bodyPlaceholder:
+        "Dear parent…\nNote the discussion, parent response, consensus reached.",
+      bodyHint:
+        "Jot down the key points of this exchange so you can find them later in the ledger.",
+      outcomeSection: "Parent response (optional)",
+      followToggle: "Awaiting-reply follow-up (note the reply due date)",
+      followDueLabel: "Follow-up due date",
+      remindLabel: "Reminder",
+      remindNone: "No reminder",
+      remindSameDay: "Same day",
+      remind1day: "1 day before",
+      remind2days: "2 days before",
+      remind1week: "1 week before",
+      followNoteLabel: "Reply to-do (optional)",
+      followNotePlaceholder: "e.g. call again to check test preparation",
+      cancel: "Cancel",
+      saveChanges: "Save changes",
+      saveNew: "Save to ledger",
+    },
+  },
+  true,
+  true,
+);

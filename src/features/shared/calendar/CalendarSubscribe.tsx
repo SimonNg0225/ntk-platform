@@ -1,4 +1,6 @@
 import { useCallback, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
+import './i18n'
 import {
   CalendarCheck2,
   CloudOff,
@@ -36,19 +38,20 @@ const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string | undefined
 
 // ───────── 自管「週記」頁眉（teal kicker + serif 標題 + 雙線分隔）─────────
 function Masthead({ onClose }: { onClose: () => void }) {
+  const { t } = useTranslation()
   return (
     <header className="-mx-5 -mt-5 mb-5 px-5 pt-5 sm:-mx-6 sm:-mt-6 sm:px-6 sm:pt-6">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.3em] text-accent/70">
             <Smartphone size={12} className="shrink-0" />
-            隨身提醒 · Subscribe
+            {t('cal.subscribeEyebrow', { defaultValue: '隨身提醒 · Subscribe' })}
           </p>
           <h2 className="mt-1 font-serif text-[22px] font-semibold leading-tight tracking-tight text-slate-800 dark:text-slate-100 sm:text-[26px]">
-            訂閱到手機日曆
+            {t('cal.subscribeTitle', { defaultValue: '訂閱到手機日曆' })}
           </h2>
         </div>
-        <IconButton label="關閉" onClick={onClose} className="-mr-1 shrink-0">
+        <IconButton label={t('cal.close', { defaultValue: '關閉' })} onClick={onClose} className="-mr-1 shrink-0">
           <X size={18} />
         </IconButton>
       </div>
@@ -104,6 +107,7 @@ function GuardCard({
 }
 
 export default function CalendarSubscribe({ onClose }: { onClose: () => void }) {
+  const { t } = useTranslation()
   const toast = useToast()
   const confirm = useConfirm()
   const { user, configured, signInWithGoogle } = useAuth()
@@ -133,30 +137,32 @@ export default function CalendarSubscribe({ onClose }: { onClose: () => void }) 
         // 要顯式接住 rejection，先唔會誤報「已複製」。
         if (p) {
           p.then(
-            () => toast.success('已複製連結'),
-            () => toast.error('複製失敗，請長按連結手動複製'),
+            () => toast.success(t('cal.copied', { defaultValue: '已複製連結' })),
+            () => toast.error(t('cal.copyFailed', { defaultValue: '複製失敗，請長按連結手動複製' })),
           )
         } else {
-          toast.error('複製失敗，請長按連結手動複製')
+          toast.error(t('cal.copyFailed', { defaultValue: '複製失敗，請長按連結手動複製' }))
         }
       } catch {
-        toast.error('複製失敗，請長按連結手動複製')
+        toast.error(t('cal.copyFailed', { defaultValue: '複製失敗，請長按連結手動複製' }))
       }
     },
-    [toast],
+    [toast, t],
   )
 
   async function handleRotate() {
     const ok = await confirm({
-      title: '重新產生連結？',
-      message:
-        '舊連結會即時失效。已經喺手機／iPad 訂閱咗嘅，要刪除舊訂閱再用新連結重新訂閱。',
-      confirmText: '重新產生',
+      title: t('cal.rotateTitle', { defaultValue: '重新產生連結？' }),
+      message: t('cal.rotateMessage', {
+        defaultValue:
+          '舊連結會即時失效。已經喺手機／iPad 訂閱咗嘅，要刪除舊訂閱再用新連結重新訂閱。',
+      }),
+      confirmText: t('cal.rotateConfirm', { defaultValue: '重新產生' }),
       tone: 'danger',
     })
     if (!ok) return
     rotateToken()
-    toast.success('已產生新連結，舊連結已失效')
+    toast.success(t('cal.rotated', { defaultValue: '已產生新連結，舊連結已失效' }))
   }
 
   return (
@@ -166,40 +172,49 @@ export default function CalendarSubscribe({ onClose }: { onClose: () => void }) 
 
       {/* ───────── 狀態 1：未接 Supabase ───────── */}
       {!configured ? (
-        <GuardCard icon={CloudOff} title="需要連接雲端先可以訂閱">
-          訂閱式日曆要靠雲端 feed，手機／iPad 先可以定時同步同原生彈提醒。
-          呢部裝置暫時未接雲端，可以先用行事曆頁嘅「匯出 .ics」一次過匯入。
+        <GuardCard icon={CloudOff} title={t('cal.needCloudTitle', { defaultValue: '需要連接雲端先可以訂閱' })}>
+          {t('cal.needCloudBody', {
+            defaultValue:
+              '訂閱式日曆要靠雲端 feed，手機／iPad 先可以定時同步同原生彈提醒。 呢部裝置暫時未接雲端，可以先用行事曆頁嘅「匯出 .ics」一次過匯入。',
+          })}
         </GuardCard>
       ) : !user ? (
         /* ───────── 狀態 2：已接雲端但未登入 ───────── */
-        <GuardCard icon={LogIn} title="登入後就可以訂閱">
+        <GuardCard icon={LogIn} title={t('cal.needLoginTitle', { defaultValue: '登入後就可以訂閱' })}>
           <p>
-            登入之後會有一條專屬連結，手機／iPad 訂閱一次，
-            行事曆同重要日子就會自動同步、到時間原生提你。
+            {t('cal.needLoginBody', {
+              defaultValue:
+                '登入之後會有一條專屬連結，手機／iPad 訂閱一次， 行事曆同重要日子就會自動同步、到時間原生提你。',
+            })}
           </p>
           <div className="mt-4 flex justify-center">
             <Button icon={LogIn} onClick={() => void signInWithGoogle()}>
-              用 Google 登入
+              {t('cal.signInWithGoogle', { defaultValue: '用 Google 登入' })}
             </Button>
           </div>
         </GuardCard>
       ) : !webcalUrl ? (
         /* ───────── 狀態 3：已登入但 URL 拆唔到（理論上罕見）───────── */
-        <GuardCard icon={CloudOff} title="連結暫時組唔到">
-          讀唔到雲端網址設定（VITE_SUPABASE_URL）。請確認部署設定後再試。
+        <GuardCard icon={CloudOff} title={t('cal.linkUnavailableTitle', { defaultValue: '連結暫時組唔到' })}>
+          {t('cal.linkUnavailableBody', {
+            defaultValue: '讀唔到雲端網址設定（VITE_SUPABASE_URL）。請確認部署設定後再試。',
+          })}
         </GuardCard>
       ) : (
         /* ───────── 狀態 4：可訂閱 —— 顯示連結 + 步驟 + 重新產生 ───────── */
         <div className="space-y-5">
           <p className="text-sm leading-relaxed text-slate-500 dark:text-slate-400">
-            喺 iPhone／iPad 點一下下面嘅連結就可以訂閱。之後行事曆事件同重要日子
-            會自動同步入 Apple 日曆，到時間用<span className="font-medium text-slate-600 dark:text-slate-300">原生提醒</span>通知你。
+            {t('cal.subscribeIntroPre', {
+              defaultValue: '喺 iPhone／iPad 點一下下面嘅連結就可以訂閱。之後行事曆事件同重要日子 會自動同步入 Apple 日曆，到時間用',
+            })}
+            <span className="font-medium text-slate-600 dark:text-slate-300">{t('cal.subscribeIntroNative', { defaultValue: '原生提醒' })}</span>
+            {t('cal.subscribeIntroPost', { defaultValue: '通知你。' })}
           </p>
 
           {/* 連結卡：可點（webcal://）+ 複製 */}
           <div className="rounded-2xl border border-accent/30 bg-accent-soft/50 p-4 dark:border-accent/30 dark:bg-accent/10">
             <p className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.18em] text-accent-strong/80 dark:text-accent">
-              <CalendarCheck2 size={13} /> 你的訂閱連結
+              <CalendarCheck2 size={13} /> {t('cal.yourSubscribeLink', { defaultValue: '你的訂閱連結' })}
             </p>
             <a
               href={webcalUrl}
@@ -213,13 +228,13 @@ export default function CalendarSubscribe({ onClose }: { onClose: () => void }) 
                 icon={Copy}
                 onClick={() => copyLink(httpsUrl ?? webcalUrl)}
               >
-                複製連結
+                {t('cal.copyLink', { defaultValue: '複製連結' })}
               </Button>
               <a
                 href={webcalUrl}
                 className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 shadow-xs transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-2 focus-visible:ring-offset-white active:scale-[0.98] dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:shadow-none dark:hover:bg-slate-700 dark:focus-visible:ring-offset-slate-900"
               >
-                在 Apple 裝置開啟
+                {t('cal.openOnApple', { defaultValue: '在 Apple 裝置開啟' })}
                 <ExternalLink size={16} strokeWidth={2} />
               </a>
             </div>
@@ -228,15 +243,15 @@ export default function CalendarSubscribe({ onClose }: { onClose: () => void }) 
           {/* 步驟 */}
           <div className="space-y-3 rounded-2xl border border-slate-200/80 bg-white p-4 dark:border-slate-700/60 dark:bg-slate-800/40">
             <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">
-              喺 iPhone／iPad 訂閱
+              {t('cal.subscribeOnDevice', { defaultValue: '喺 iPhone／iPad 訂閱' })}
             </p>
             <Steps
               items={[
-                <>喺 iPhone／iPad 上<span className="font-medium text-slate-700 dark:text-slate-200">點一下上面個連結</span> → 跳出「訂閱日曆」→ 撳「訂閱」。</>,
+                <>{t('cal.stepTapPre', { defaultValue: '喺 iPhone／iPad 上' })}<span className="font-medium text-slate-700 dark:text-slate-200">{t('cal.stepTapBold', { defaultValue: '點一下上面個連結' })}</span>{t('cal.stepTapPost', { defaultValue: ' → 跳出「訂閱日曆」→ 撳「訂閱」。' })}</>,
                 <>
-                  或手動：開<span className="font-medium text-slate-700 dark:text-slate-200">「設定」→「日曆」→「帳戶」→「加入帳戶」→「加入已訂閱的日曆」</span>，貼上連結。
+                  {t('cal.stepManualPre', { defaultValue: '或手動：開' })}<span className="font-medium text-slate-700 dark:text-slate-200">{t('cal.stepManualBold', { defaultValue: '「設定」→「日曆」→「帳戶」→「加入帳戶」→「加入已訂閱的日曆」' })}</span>{t('cal.stepManualPost', { defaultValue: '，貼上連結。' })}
                 </>,
-                <>訂閱完，到時間 Apple 日曆就會自動彈原生提醒（提前幾耐跟你喺事件設定嘅提醒）。</>,
+                <>{t('cal.stepDone', { defaultValue: '訂閱完，到時間 Apple 日曆就會自動彈原生提醒（提前幾耐跟你喺事件設定嘅提醒）。' })}</>,
               ]}
             />
           </div>
@@ -244,12 +259,13 @@ export default function CalendarSubscribe({ onClose }: { onClose: () => void }) 
           {/* 重新產生 + 安全提示 */}
           <div className="space-y-3 border-t border-slate-200/70 pt-4 dark:border-slate-700/60">
             <p className="text-xs leading-relaxed text-slate-400 dark:text-slate-500">
-              連結唯讀、只曝露你自己嘅事件標題同時間。覺得連結外洩咗，
-              可以隨時重新產生 —— 舊連結會即時失效。
+              {t('cal.securityNote', {
+                defaultValue: '連結唯讀、只曝露你自己嘅事件標題同時間。覺得連結外洩咗， 可以隨時重新產生 —— 舊連結會即時失效。',
+              })}
             </p>
             <div className="flex justify-end">
               <Button variant="ghost" icon={RefreshCw} onClick={handleRotate}>
-                重新產生連結
+                {t('cal.regenerateLink', { defaultValue: '重新產生連結' })}
               </Button>
             </div>
           </div>

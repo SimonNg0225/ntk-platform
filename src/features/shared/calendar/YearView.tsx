@@ -1,3 +1,5 @@
+import { useTranslation } from 'react-i18next'
+import './i18n'
 import { cx } from '../../../ui'
 import { WEEKDAYS, monthMatrix, toKey, todayKey, type Occurrence } from './util'
 
@@ -12,6 +14,7 @@ export default function YearView({
   onPickMonth: (month: number) => void
   onPickDay: (dateKey: string) => void
 }) {
+  const { t } = useTranslation()
   const tKey = todayKey()
 
   return (
@@ -30,7 +33,7 @@ export default function YearView({
                 className="mb-1.5 inline-flex items-baseline gap-1 font-serif text-base font-semibold text-slate-700 transition-colors hover:text-accent dark:text-slate-200"
               >
                 {month + 1}
-                <span className="text-[11px] font-sans font-medium text-slate-400 dark:text-slate-500">月</span>
+                <span className="text-[11px] font-sans font-medium text-slate-400 dark:text-slate-500">{t('cal.monthUnit', { defaultValue: '月' })}</span>
               </button>
               <div className="grid grid-cols-7 gap-px text-center text-[9px] text-slate-300 dark:text-slate-600">
                 {WEEKDAYS.map((w) => (
@@ -50,7 +53,19 @@ export default function YearView({
                     <button
                       key={key}
                       type="button"
-                      aria-label={`${month + 1}月${cell.getDate()}日${has ? '，有活動' : ''}`}
+                      aria-label={
+                        has
+                          ? t('cal.yearDayAriaHas', {
+                              month: month + 1,
+                              day: cell.getDate(),
+                              defaultValue: `${month + 1}月${cell.getDate()}日，有活動`,
+                            })
+                          : t('cal.yearDayAria', {
+                              month: month + 1,
+                              day: cell.getDate(),
+                              defaultValue: `${month + 1}月${cell.getDate()}日`,
+                            })
+                      }
                       aria-current={isToday ? 'date' : undefined}
                       onClick={() => onPickDay(key)}
                       className={cx(

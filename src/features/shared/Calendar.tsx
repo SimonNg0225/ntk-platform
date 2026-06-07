@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { CalendarArrowDown, CalendarRange, ChevronLeft, ChevronRight, Dot, Plus, SlidersHorizontal, Smartphone } from 'lucide-react'
+import './calendar/i18n'
 import { useCollection } from '../../lib/store'
 import { eventsCol, calendarsCol, countdownsCol } from '../../data/collections'
 import type { CalendarEvent } from '../../data/types'
@@ -25,20 +27,6 @@ import {
 } from './calendar/util'
 
 type View = 'day' | 'week' | 'month' | 'year'
-const VIEWS: { id: View; label: string }[] = [
-  { id: 'day', label: '日' },
-  { id: 'week', label: '週' },
-  { id: 'month', label: '月' },
-  { id: 'year', label: '年' },
-]
-
-// 標題上方嘅小字眉題（按視圖換口吻，呼應「精緻週記」氣質）
-const VIEW_EYEBROW: Record<View, string> = {
-  day: 'Today',
-  week: 'This Week',
-  month: 'This Month',
-  year: 'This Year',
-}
 
 function addMonths(d: Date, n: number): Date {
   return new Date(d.getFullYear(), d.getMonth() + n, d.getDate(), 12)
@@ -61,16 +49,36 @@ function useIsWide(): boolean {
 }
 
 export default function Calendar() {
+  const { t } = useTranslation()
   const events = useCollection(eventsCol)
   const cals = useCollection(calendarsCol)
   const countdowns = useCollection(countdownsCol)
   const toast = useToast()
 
+  const VIEWS: { id: View; label: string }[] = [
+    { id: 'day', label: t('cal.viewDay', { defaultValue: '日' }) },
+    { id: 'week', label: t('cal.viewWeek', { defaultValue: '週' }) },
+    { id: 'month', label: t('cal.viewMonth', { defaultValue: '月' }) },
+    { id: 'year', label: t('cal.viewYear', { defaultValue: '年' }) },
+  ]
+
+  // 標題上方嘅小字眉題（按視圖換口吻，呼應「精緻週記」氣質）
+  const VIEW_EYEBROW: Record<View, string> = {
+    day: t('cal.eyebrowDay', { defaultValue: 'Today' }),
+    week: t('cal.eyebrowWeek', { defaultValue: 'This Week' }),
+    month: t('cal.eyebrowMonth', { defaultValue: 'This Month' }),
+    year: t('cal.eyebrowYear', { defaultValue: 'This Year' }),
+  }
+
   // 拖拉移動：重複事件唔好盲改 master（會搬郁／重錨成個系列，繞過「僅此次/全部」）。
   // 暫擋住 + 引導去編輯器處理，避免破壞重複規則。
   const blockRecurringDrag = (ev: CalendarEvent): boolean => {
     if (ev.recurrence) {
-      toast.info('重複事件請開編輯器調整（可揀「僅此次」或「全部」）')
+      toast.info(
+        t('cal.recurringDragBlocked', {
+          defaultValue: '重複事件請開編輯器調整（可揀「僅此次」或「全部」）',
+        }),
+      )
       return true
     }
     return false
@@ -117,14 +125,14 @@ export default function Calendar() {
   const title = useMemo(() => {
     if (view === 'month') return monthLabel(cursor.getFullYear(), cursor.getMonth())
     if (view === 'day') return longDateLabel(cursorKey)
-    if (view === 'year') return `${cursor.getFullYear()}年`
+    if (view === 'year') return t('cal.yearTitle', { year: cursor.getFullYear(), defaultValue: `${cursor.getFullYear()}年` })
     // 週視圖喺手機收成單日，標題跟住顯示嗰一日。
     if (!isWide) return longDateLabel(cursorKey)
     const wk = weekKeys(cursor)
     const a = fromKey(wk[0])
     const b = fromKey(wk[6])
     return `${a.getMonth() + 1}月${a.getDate()}日 – ${b.getMonth() + 1}月${b.getDate()}日`
-  }, [view, cursor, cursorKey, isWide])
+  }, [view, cursor, cursorKey, isWide, t])
 
   function nav(dir: number) {
     // 手機週視圖收窄成單日，逐日翻；闊屏先逐週翻。
@@ -161,10 +169,10 @@ export default function Calendar() {
       <header className="min-w-0">
         <p className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.3em] text-accent/70">
           <CalendarRange size={13} className="shrink-0" />
-          日程週記 · Calendar
+          {t('cal.kicker', { defaultValue: '日程週記 · Calendar' })}
         </p>
         <h1 className="mt-1 font-serif text-[26px] font-semibold leading-none tracking-tight text-slate-800 dark:text-slate-100 sm:text-[30px]">
-          行事曆
+          {t('cal.title', { defaultValue: '行事曆' })}
         </h1>
       </header>
 
@@ -180,10 +188,10 @@ export default function Calendar() {
         </div>
         <div className="flex items-center gap-1.5">
           <div className="flex items-center rounded-full border border-slate-200/80 bg-white p-0.5 shadow-xs dark:border-slate-700/60 dark:bg-slate-800 dark:shadow-none">
-            <IconButton label="上一個" onClick={() => nav(-1)}>
+            <IconButton label={t('cal.prev', { defaultValue: '上一個' })} onClick={() => nav(-1)}>
               <ChevronLeft size={18} />
             </IconButton>
-            <IconButton label="下一個" onClick={() => nav(1)}>
+            <IconButton label={t('cal.next', { defaultValue: '下一個' })} onClick={() => nav(1)}>
               <ChevronRight size={18} />
             </IconButton>
           </div>
@@ -194,14 +202,14 @@ export default function Calendar() {
               className="inline-flex items-center gap-1 rounded-full border border-slate-200/80 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 shadow-xs transition duration-200 hover:border-accent/40 hover:text-accent dark:border-slate-700/60 dark:bg-slate-800 dark:text-slate-300 dark:shadow-none dark:hover:text-accent"
             >
               <Dot size={16} className="-mx-1 text-accent" />
-              今日
+              {t('cal.today', { defaultValue: '今日' })}
             </button>
           )}
         </div>
         <div className="flex-1" />
         <SegmentedControl options={VIEWS} value={view} onChange={setView} />
         <Button size="sm" icon={Plus} onClick={openCreate}>
-          新增
+          {t('cal.add', { defaultValue: '新增' })}
         </Button>
       </div>
 
@@ -212,7 +220,11 @@ export default function Calendar() {
             key={c.id}
             type="button"
             aria-pressed={c.visible}
-            aria-label={`${c.name}（${c.visible ? '顯示中，按一下隱藏' : '已隱藏，按一下顯示'}）`}
+            aria-label={
+              c.visible
+                ? t('cal.calVisibleShow', { name: c.name, defaultValue: `${c.name}（顯示中，按一下隱藏）` })
+                : t('cal.calVisibleHide', { name: c.name, defaultValue: `${c.name}（已隱藏，按一下顯示）` })
+            }
             onClick={() => toggleCal(c.id, c.visible)}
             className={cx(
               'inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
@@ -236,21 +248,21 @@ export default function Calendar() {
           onClick={() => setManagerOpen(true)}
           className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium text-slate-400 transition hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
         >
-          <SlidersHorizontal size={13} /> 管理
+          <SlidersHorizontal size={13} /> {t('cal.manage', { defaultValue: '管理' })}
         </button>
         <button
           type="button"
           onClick={() => setExportOpen(true)}
           className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium text-slate-400 transition hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
         >
-          <CalendarArrowDown size={13} /> 匯出 .ics
+          <CalendarArrowDown size={13} /> {t('cal.exportIcs', { defaultValue: '匯出 .ics' })}
         </button>
         <button
           type="button"
           onClick={() => setSubscribeOpen(true)}
           className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium text-slate-400 transition hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
         >
-          <Smartphone size={13} /> 訂閱到手機日曆
+          <Smartphone size={13} /> {t('cal.subscribe', { defaultValue: '訂閱到手機日曆' })}
         </button>
       </div>
 

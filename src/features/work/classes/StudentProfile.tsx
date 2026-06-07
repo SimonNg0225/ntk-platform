@@ -1,4 +1,6 @@
 import { useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import './i18n'
 import {
   BookUser,
   CalendarCheck,
@@ -67,6 +69,7 @@ export default function StudentProfile({
 }) {
   const toast = useToast()
   const confirm = useConfirm()
+  const { t } = useTranslation()
   const metas = useCollection(studentMetaCol)
   const scores = useCollection(scoresCol)
   const assessments = useCollection(assessmentsCol)
@@ -92,7 +95,7 @@ export default function StudentProfile({
 
   const save = () => {
     if (!name.trim()) {
-      toast.error('學生姓名唔可以空白')
+      toast.error(t('classes.errStudentNameEmpty', { defaultValue: '學生姓名唔可以空白' }))
       return
     }
     // 共用 Student（只改 name / studentNo 兩個既有欄位）
@@ -117,21 +120,24 @@ export default function StudentProfile({
     }
     if (existing.id) studentMetaCol.update(existing.id, patch)
     else studentMetaCol.add(patch)
-    toast.success('已儲存學生檔案')
+    toast.success(t('classes.profileSaved', { defaultValue: '已儲存學生檔案' }))
     onClose()
   }
 
   const remove = async () => {
     const ok = await confirm({
-      title: '刪除學生？',
-      message: `「${student.name}」將會由名冊移除。佢喺成績 / 出席等紀錄可能仍然殘留歷史資料。`,
-      confirmText: '刪除',
+      title: t('classes.confirmDeleteStudentTitle', { defaultValue: '刪除學生？' }),
+      message: t('classes.confirmDeleteStudentMsg', {
+        name: student.name,
+        defaultValue: `「${student.name}」將會由名冊移除。佢喺成績 / 出席等紀錄可能仍然殘留歷史資料。`,
+      }),
+      confirmText: t('classes.confirmDeleteBtn', { defaultValue: '刪除' }),
       tone: 'danger',
     })
     if (!ok) return
     if (existing.id) studentMetaCol.remove(existing.id)
     studentsCol.remove(student.id)
-    toast.success('已刪除學生')
+    toast.success(t('classes.studentDeleted', { defaultValue: '已刪除學生' }))
     onClose()
   }
 
@@ -195,19 +201,19 @@ export default function StudentProfile({
         tab === 'info' ? (
           <>
             <Button variant="danger" icon={Trash2} onClick={remove}>
-              刪除
+              {t('classes.delete', { defaultValue: '刪除' })}
             </Button>
             <div className="flex-1" />
             <Button variant="secondary" onClick={onClose}>
-              取消
+              {t('classes.cancel', { defaultValue: '取消' })}
             </Button>
             <Button icon={Save} onClick={save}>
-              儲存
+              {t('classes.save', { defaultValue: '儲存' })}
             </Button>
           </>
         ) : (
           <Button variant="secondary" onClick={onClose}>
-            關閉
+            {t('classes.close', { defaultValue: '關閉' })}
           </Button>
         )
       }
@@ -217,9 +223,9 @@ export default function StudentProfile({
         <div className="flex items-start justify-between gap-3">
           <p className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.25em] text-accent/70">
             <BookUser size={12} />
-            學籍卡 · Student Record
+            學籍卡 · {t('classes.studentRecord', { defaultValue: 'Student Record' })}
           </p>
-          <IconButton label="關閉" onClick={onClose} className="-mr-1 -mt-1 shrink-0">
+          <IconButton label={t('classes.close', { defaultValue: '關閉' })} onClick={onClose} className="-mr-1 -mt-1 shrink-0">
             <X size={18} />
           </IconButton>
         </div>
@@ -267,8 +273,8 @@ export default function StudentProfile({
           value={tab}
           onChange={setTab}
           options={[
-            { id: 'info', label: '學籍資料', icon: IdCard },
-            { id: 'overview', label: '跨頁概覽', icon: GraduationCap },
+            { id: 'info', label: t('classes.tabInfo', { defaultValue: '學籍資料' }), icon: IdCard },
+            { id: 'overview', label: t('classes.tabProfileOverview', { defaultValue: '跨頁概覽' }), icon: GraduationCap },
           ]}
         />
       </div>
@@ -276,22 +282,22 @@ export default function StudentProfile({
       {tab === 'info' ? (
         <div className="space-y-5">
           <section className="space-y-3.5">
-            <CardSection icon={IdCard}>基本資料 · Profile</CardSection>
+            <CardSection icon={IdCard}>{t('classes.sectionProfile', { defaultValue: '基本資料 · Profile' })}</CardSection>
             <div className="grid grid-cols-2 gap-3">
-              <Field label="姓名" required>
+              <Field label={t('classes.profileName', { defaultValue: '姓名' })} required>
                 <Input value={name} onChange={(e) => setName(e.target.value)} />
               </Field>
-              <Field label="學號">
+              <Field label={t('classes.profileStudentNo', { defaultValue: '學號' })}>
                 <Input
                   value={studentNo}
                   onChange={(e) => setStudentNo(e.target.value)}
-                  placeholder="例如 12"
+                  placeholder={t('classes.profileStudentNoPlaceholder', { defaultValue: '例如 12' })}
                   className="tabular-nums"
                 />
               </Field>
             </div>
 
-            <Field label="性別">
+            <Field label={t('classes.profileGender', { defaultValue: '性別' })}>
               <OptionButtons
                 options={(['M', 'F', 'X'] as Gender[]).map((g) => ({
                   id: g,
@@ -304,27 +310,27 @@ export default function StudentProfile({
             </Field>
 
             <div className="grid grid-cols-2 gap-3">
-              <Field label="班社 / House" hint="例如 紅社、藍社">
+              <Field label={t('classes.profileHouse', { defaultValue: '班社 / House' })} hint={t('classes.profileHouseHint', { defaultValue: '例如 紅社、藍社' })}>
                 <Input value={house} onChange={(e) => setHouse(e.target.value)} />
               </Field>
-              <Field label="職務" hint="例如 班長、風紀">
+              <Field label={t('classes.profileRole', { defaultValue: '職務' })} hint={t('classes.profileRoleHint', { defaultValue: '例如 班長、風紀' })}>
                 <Input value={role} onChange={(e) => setRole(e.target.value)} />
               </Field>
             </div>
           </section>
 
           <section className="space-y-3.5">
-            <CardSection icon={UserRound}>監護人 / 聯絡 · Guardian</CardSection>
+            <CardSection icon={UserRound}>{t('classes.sectionGuardian', { defaultValue: '監護人 / 聯絡 · Guardian' })}</CardSection>
 
           <div className="grid grid-cols-2 gap-3">
-            <Field label="監護人姓名">
+            <Field label={t('classes.profileGuardianName', { defaultValue: '監護人姓名' })}>
               <Input
                 icon={User}
                 value={guardianName}
                 onChange={(e) => setGuardianName(e.target.value)}
               />
             </Field>
-            <Field label="聯絡電話">
+            <Field label={t('classes.profilePhone', { defaultValue: '聯絡電話' })}>
               <Input
                 icon={Phone}
                 value={guardianPhone}
@@ -333,7 +339,7 @@ export default function StudentProfile({
               />
             </Field>
           </div>
-          <Field label="電郵">
+          <Field label={t('classes.profileEmail', { defaultValue: '電郵' })}>
             <Input
               icon={Mail}
               type="email"
@@ -344,8 +350,8 @@ export default function StudentProfile({
           </section>
 
           <section className="space-y-3.5">
-          <CardSection icon={CalendarCheck}>學籍狀態 / 備註 · Status</CardSection>
-          <Field label="就讀狀態">
+          <CardSection icon={CalendarCheck}>{t('classes.sectionStatus', { defaultValue: '學籍狀態 / 備註 · Status' })}</CardSection>
+          <Field label={t('classes.profileEnrolStatus', { defaultValue: '就讀狀態' })}>
             <OptionButtons
               options={(['active', 'transferred', 'withdrawn'] as StudentStatus[]).map(
                 (st) => ({ id: st, label: STATUS_META[st].label }),
@@ -357,18 +363,21 @@ export default function StudentProfile({
             />
           </Field>
 
-          <Field label="標籤" hint="例如 SEN、需關注、英文輔導">
+          <Field label={t('classes.profileTags', { defaultValue: '標籤' })} hint={t('classes.profileTagsHint', { defaultValue: '例如 SEN、需關注、英文輔導' })}>
             <div className="flex flex-wrap gap-1.5">
-              {tags.map((t) => (
+              {tags.map((tag) => (
                 <span
-                  key={t}
+                  key={tag}
                   className="inline-flex items-center gap-1 rounded-md bg-accent-soft px-2 py-0.5 text-xs font-medium text-accent-strong dark:bg-accent/15 dark:text-accent"
                 >
-                  {t}
+                  {tag}
                   <button
                     type="button"
-                    aria-label={`移除標籤 ${t}`}
-                    onClick={() => setTags(tags.filter((x) => x !== t))}
+                    aria-label={t('classes.removeTag', {
+                      tag,
+                      defaultValue: `移除標籤 ${tag}`,
+                    })}
+                    onClick={() => setTags(tags.filter((x) => x !== tag))}
                     className="rounded hover:text-rose-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
                   >
                     <span aria-hidden="true">×</span>
@@ -387,19 +396,19 @@ export default function StudentProfile({
                     addTag()
                   }
                 }}
-                placeholder="輸入後 Enter 加入"
+                placeholder={t('classes.tagPlaceholder', { defaultValue: '輸入後 Enter 加入' })}
               />
               <Button variant="secondary" size="sm" onClick={addTag}>
-                加入
+                {t('classes.add', { defaultValue: '加入' })}
               </Button>
             </div>
           </Field>
 
-          <Field label="備註">
+          <Field label={t('classes.profileNotes', { defaultValue: '備註' })}>
             <Textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              placeholder="個別學習計劃、家庭背景、注意事項…"
+              placeholder={t('classes.notesPlaceholder', { defaultValue: '個別學習計劃、家庭背景、注意事項…' })}
             />
           </Field>
           </section>
@@ -446,6 +455,7 @@ function Overview({
     comms: ParentComm[]
   }
 }) {
+  const { t } = useTranslation()
   const attTone =
     (overview.attRate ?? 0) >= 90
       ? 'green'
@@ -458,25 +468,35 @@ function Overview({
         <MiniStat
           icon={GraduationCap}
           tone="accent"
-          label="平均分"
+          label={t('classes.avgScore', { defaultValue: '平均分' })}
           value={overview.avg == null ? '—' : `${overview.avg}%`}
-          hint={`${overview.gradedCount} 個已評分`}
+          hint={t('classes.gradedHint', {
+            count: overview.gradedCount,
+            defaultValue: `${overview.gradedCount} 個已評分`,
+          })}
         />
         <MiniStat
           icon={CalendarCheck}
           tone="emerald"
-          label="出席率"
+          label={t('classes.attRate', { defaultValue: '出席率' })}
           value={overview.attRate == null ? '—' : `${overview.attRate}%`}
-          hint={`共 ${overview.attTotal} 日紀錄`}
+          hint={t('classes.attDaysHint', {
+            count: overview.attTotal,
+            defaultValue: `共 ${overview.attTotal} 日紀錄`,
+          })}
         />
       </div>
 
       {overview.attTotal > 0 && (
         <div className="rounded-2xl border border-slate-200/80 bg-slate-50/60 p-3.5 dark:border-slate-700/60 dark:bg-slate-800/40">
           <div className="mb-2 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
-            <span className="font-medium">出席表現</span>
+            <span className="font-medium">{t('classes.attPerformance', { defaultValue: '出席表現' })}</span>
             <span className="tabular-nums">
-              遲到 {overview.lateCount} · 缺席 {overview.absentCount}
+              {t('classes.lateAbsent', {
+                late: overview.lateCount,
+                absent: overview.absentCount,
+                defaultValue: `遲到 ${overview.lateCount} · 缺席 ${overview.absentCount}`,
+              })}
             </span>
           </div>
           <ProgressBar value={overview.attRate ?? 0} tone={attTone} showValue />
@@ -489,7 +509,7 @@ function Overview({
             <MessageSquare size={13} />
           </span>
           <span className="shrink-0 font-serif text-sm font-semibold tracking-tight text-slate-700 dark:text-slate-200">
-            家長 / 學生溝通
+            {t('classes.parentComm', { defaultValue: '家長 / 學生溝通' })}
           </span>
           <span className="h-px flex-1 bg-slate-200/80 dark:bg-slate-700/60" aria-hidden />
           <span className="shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium tabular-nums text-slate-500 dark:bg-slate-800 dark:text-slate-400">
@@ -502,7 +522,7 @@ function Overview({
               <MessageSquare size={18} />
             </span>
             <p className="mt-2 text-xs text-slate-400 dark:text-slate-500">
-              仲未有同呢位學生 / 家長嘅溝通紀錄
+              {t('classes.commEmpty', { defaultValue: '仲未有同呢位學生 / 家長嘅溝通紀錄' })}
             </p>
           </div>
         ) : (
@@ -515,7 +535,7 @@ function Overview({
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex flex-wrap items-center gap-1.5">
                     <Badge tone="blue">{c.channel}</Badge>
-                    {c.followUp && <Badge tone="amber" dot>待跟進</Badge>}
+                    {c.followUp && <Badge tone="amber" dot>{t('classes.followUp', { defaultValue: '待跟進' })}</Badge>}
                   </div>
                   <span className="shrink-0 text-xs tabular-nums text-slate-400">
                     {c.date}
@@ -529,7 +549,7 @@ function Overview({
           </ul>
         )}
         <p className="mt-2.5 text-center text-[11px] text-slate-400 dark:text-slate-500">
-          成績、出席、溝通詳情請到對應功能查閱
+          {t('classes.commFooter', { defaultValue: '成績、出席、溝通詳情請到對應功能查閱' })}
         </p>
       </div>
     </div>

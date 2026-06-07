@@ -1,4 +1,6 @@
 import { useRef } from 'react'
+import { useTranslation } from 'react-i18next'
+import './i18n'
 import type { CalendarEvent } from '../../../data/types'
 import { cx } from '../../../ui'
 import {
@@ -30,6 +32,7 @@ export default function MonthView({
   onMoreDay: (key: string) => void
   onMoveToDay: (ev: CalendarEvent, dateKey: string) => void
 }) {
+  const { t } = useTranslation()
   const cells = monthMatrix(year, month)
   const tKey = todayKey()
   const dragRef = useRef<{ ev: CalendarEvent; from: string } | null>(null)
@@ -67,7 +70,12 @@ export default function MonthView({
             <button
               key={key}
               type="button"
-              aria-label={`${cell.getMonth() + 1}月${cell.getDate()}日，${list.length} 項活動`}
+              aria-label={t('cal.dayAria', {
+                month: cell.getMonth() + 1,
+                day: cell.getDate(),
+                count: list.length,
+                defaultValue: `${cell.getMonth() + 1}月${cell.getDate()}日，${list.length} 項活動`,
+              })}
               aria-current={isToday ? 'date' : undefined}
               aria-pressed={isSelected}
               onClick={() => onSelectDay(key)}
@@ -164,7 +172,7 @@ export default function MonthView({
                     }}
                     className="px-1.5 text-left text-[11px] font-medium tabular-nums text-slate-400 transition hover:text-accent dark:text-slate-500"
                   >
-                    還有 {list.length - 3} 項
+                    {t('cal.moreCount', { count: list.length - 3, defaultValue: `還有 ${list.length - 3} 項` })}
                   </button>
                 )}
               </div>

@@ -5,6 +5,8 @@ import {
   useState,
   type PointerEvent as ReactPointerEvent,
 } from 'react'
+import { useTranslation } from 'react-i18next'
+import './i18n'
 import type { CalendarEvent } from '../../../data/types'
 import { cx } from '../../../ui'
 import {
@@ -97,6 +99,7 @@ export default function TimeGridView({
   onPickDay: (dateKey: string) => void
   onMoveEvent: (ev: CalendarEvent, time: string, endTime: string) => void
 }) {
+  const { t } = useTranslation()
   const tKey = todayKey()
   const [nowMin, setNowMin] = useState(() => {
     const d = new Date()
@@ -195,7 +198,7 @@ export default function TimeGridView({
                       : 'text-slate-400 dark:text-slate-500',
                 )}
               >
-                星期{WEEKDAYS[d.getDay()]}
+                {t(`cal.weekdayLong_${d.getDay()}`, { defaultValue: `星期${WEEKDAYS[d.getDay()]}` })}
               </span>
               <span
                 className={cx(
@@ -216,7 +219,7 @@ export default function TimeGridView({
       {hasAllDay && (
         <div className="flex border-b border-slate-100 bg-slate-50/40 dark:border-slate-700/50 dark:bg-slate-800/30">
           <div className="flex w-16 shrink-0 items-center justify-end pr-2 text-[10px] font-medium uppercase tracking-wide text-slate-400 dark:text-slate-500">
-            全日
+            {t('cal.allDay', { defaultValue: '全日' })}
           </div>
           {days.map((dk, i) => (
             <div
@@ -285,7 +288,7 @@ export default function TimeGridView({
                   <button
                     key={h}
                     type="button"
-                    aria-label={`新增 ${hourLabel(h)}:00`}
+                    aria-label={t('cal.createAtAria', { time: `${hourLabel(h)}:00`, defaultValue: `新增 ${hourLabel(h)}:00` })}
                     onClick={() => onCreateAt(dk, `${String(h).padStart(2, '0')}:00`)}
                     style={{ height: HOUR_PX }}
                     className={cx(

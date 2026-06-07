@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
+import { useTranslation } from 'react-i18next'
+import './todo/i18n'
 import {
   BarChart3,
   CalendarDays,
@@ -104,11 +106,22 @@ function isMarkingTask(t: FullTask): boolean {
 type ViewId = 'today' | 'upcoming' | 'all' | 'stats'
 type SortMode = 'smart' | 'priority' | 'due' | 'created'
 
+// 原文做 defaultValue；t 缺 en（或仲喺 zh-HK）時 fallback 返廣東話
+type TFn = ReturnType<typeof useTranslation>['t']
 const SORT_LABEL: Record<SortMode, string> = {
   smart: '智能',
   priority: '優先級',
   due: '到期',
   created: '建立',
+}
+function sortLabel(t: TFn, s: SortMode): string {
+  const key = { smart: 'sortSmart', priority: 'sortPriority', due: 'sortDue', created: 'sortCreated' }[s]
+  return t(`todo.${key}`, { defaultValue: SORT_LABEL[s] })
+}
+
+// 優先級顯示名（display only；唔改 util.ts PRIORITY_META，純喺渲染層譯）
+function prioLabel(t: TFn, p: Priority): string {
+  return t(`todo.prio${p}`, { defaultValue: PRIORITY_META[p].label })
 }
 
 // 清點格色調（hot 高亮：rose=要跟進 / accent=今日焦點 / emerald=做完）
@@ -204,6 +217,7 @@ function TallyStat({
 //  改簿檯概念：批改任務似老師喺簿邊用紅筆寫個「批」字。細牌、紅墨、
 //  手寫感（serif）。純標示，唔搶剔格主次。
 function MarkPen({ className }: { className?: string }) {
+  const { t } = useTranslation()
   return (
     <span
       className={cx(
@@ -212,7 +226,7 @@ function MarkPen({ className }: { className?: string }) {
       )}
     >
       <Highlighter size={10} className="opacity-80" />
-      <span className="font-serif leading-none">批改</span>
+      <span className="font-serif leading-none">{t('todo.markStamp', { defaultValue: '批改' })}</span>
     </span>
   )
 }
@@ -230,6 +244,7 @@ function SyntaxHint({ sym, label }: { sym: string; label: string }) {
 }
 
 export default function TodoWidget() {
+  const { t } = useTranslation()
   const tasks = useCollection(tasksCol)
   const metas = useCollection(taskMetaCol)
   const subs = useCollection(subtasksCol)
@@ -383,7 +398,7 @@ export default function TodoWidget() {
     if (!raw) return
     const p = parseQuickAdd(raw, projects)
     if (!p.text) {
-      toast.error('請輸入任務內容')
+      toast.error(t('todo.toastNeedText', { defaultValue: '請輸入任務內容' }))
       return
     }
     // 視圖／篩選預設值
@@ -405,7 +420,7 @@ export default function TodoWidget() {
       order: maxOrder - 1,
     })
     setQuick('')
-    toast.success('已新增待辦')
+    toast.success(t('todo.toastAdded', { defaultValue: '已新增待辦' }))
   }
 
   const toggle = (t: FullTask) => {
@@ -420,23 +435,26 @@ export default function TodoWidget() {
       upsertMeta(id, { completedAt: patch.done ? new Date().toISOString() : undefined })
   }
 
-  const removeTask = async (t: FullTask) => {
+  const removeTask = async (tk: FullTask) => {
     const ok = await confirm({
-      title: '刪除待辦？',
-      message: `「${t.text}」將會被刪除，呢個動作無法復原。`,
-      confirmText: '刪除',
+      title: t('todo.confirmDeleteTitle', { defaultValue: '刪除待辦？' }),
+      message: t('todo.confirmDeleteMsg', {
+        text: tk.text,
+        defaultValue: `「${tk.text}」將會被刪除，呢個動作無法復原。`,
+      }),
+      confirmText: t('todo.confirmText', { defaultValue: '刪除' }),
       tone: 'danger',
     })
     if (!ok) return
-    tasksCol.remove(t.id)
-    cascadeDeleteTask(t.id)
-    toast.success('已刪除待辦')
+    tasksCol.remove(tk.id)
+    cascadeDeleteTask(tk.id)
+    toast.success(t('todo.toastDeleted', { defaultValue: '已刪除待辦' }))
   }
   // 編輯器內已自行確認，直接刪
-  const removeTaskDirect = (t: FullTask) => {
-    tasksCol.remove(t.id)
-    cascadeDeleteTask(t.id)
-    toast.success('已刪除待辦')
+  const removeTaskDirect = (tk: FullTask) => {
+    tasksCol.remove(tk.id)
+    cascadeDeleteTask(tk.id)
+    toast.success(t('todo.toastDeleted', { defaultValue: '已刪除待辦' }))
   }
 
   // ───────── 批量 ─────────
@@ -455,30 +473,30 @@ export default function TodoWidget() {
       tasksCol.update(id, { done: true })
       upsertMeta(id, { completedAt: new Date().toISOString() })
     })
-    toast.success(`已完成 ${selected.size} 項`)
+    toast.success(t('todo.toastCompletedN', { count: selected.size, defaultValue: `已完成 ${selected.size} 項` }))
     exitSelect()
   }
   const bulkDue = (days: number) => {
     const d = offsetFromToday(days)
     selected.forEach((id) => upsertMeta(id, { due: d }))
-    toast.success(`已設到期：${dueLabel(d)}`)
+    toast.success(t('todo.toastDueSet', { label: dueLabel(d), defaultValue: `已設到期：${dueLabel(d)}` }))
     exitSelect()
   }
   const bulkPriority = (p: Priority) => {
     selected.forEach((id) => upsertMeta(id, { priority: p }))
-    toast.success(`已設優先級 P${p}`)
+    toast.success(t('todo.toastPrioSet', { p, defaultValue: `已設優先級 P${p}` }))
     exitSelect()
   }
   const bulkProject = (projectId: string | undefined) => {
     selected.forEach((id) => upsertMeta(id, { projectId }))
-    toast.success('已移動')
+    toast.success(t('todo.toastMoved', { defaultValue: '已移動' }))
     exitSelect()
   }
   const bulkDelete = async () => {
     const ok = await confirm({
-      title: `刪除 ${selected.size} 項待辦？`,
-      message: '呢個動作無法復原。',
-      confirmText: '刪除',
+      title: t('todo.confirmBulkDeleteTitle', { count: selected.size, defaultValue: `刪除 ${selected.size} 項待辦？` }),
+      message: t('todo.confirmBulkDeleteMsg', { defaultValue: '呢個動作無法復原。' }),
+      confirmText: t('todo.confirmText', { defaultValue: '刪除' }),
       tone: 'danger',
     })
     if (!ok) return
@@ -486,24 +504,24 @@ export default function TodoWidget() {
       tasksCol.remove(id)
       cascadeDeleteTask(id)
     })
-    toast.success(`已刪除 ${selected.size} 項`)
+    toast.success(t('todo.toastBulkDeleted', { count: selected.size, defaultValue: `已刪除 ${selected.size} 項` }))
     exitSelect()
   }
   const clearCompleted = async () => {
     const doneTasks = full.filter((t) => t.done)
     if (doneTasks.length === 0) return
     const ok = await confirm({
-      title: `清除 ${doneTasks.length} 項已完成？`,
-      message: '所有已完成嘅待辦會被刪除，呢個動作無法復原。',
-      confirmText: '清除',
+      title: t('todo.confirmClearTitle', { count: doneTasks.length, defaultValue: `清除 ${doneTasks.length} 項已完成？` }),
+      message: t('todo.confirmClearMsg', { defaultValue: '所有已完成嘅待辦會被刪除，呢個動作無法復原。' }),
+      confirmText: t('todo.clearText', { defaultValue: '清除' }),
       tone: 'danger',
     })
     if (!ok) return
-    doneTasks.forEach((t) => {
-      tasksCol.remove(t.id)
-      cascadeDeleteTask(t.id)
+    doneTasks.forEach((dt) => {
+      tasksCol.remove(dt.id)
+      cascadeDeleteTask(dt.id)
     })
-    toast.success('已清除已完成項目')
+    toast.success(t('todo.toastCleared', { defaultValue: '已清除已完成項目' }))
   }
 
   return (
@@ -521,20 +539,25 @@ export default function TodoWidget() {
           <div className="min-w-0">
             <p className="flex items-center gap-2 text-[11px] font-medium uppercase tracking-[0.3em] text-accent/70">
               <ClipboardCheck size={13} />
-              改簿檯 · Marking Desk
+              {t('todo.kicker', { defaultValue: '改簿檯 · Marking Desk' })}
             </p>
             <h1 className="mt-1.5 font-serif text-[28px] font-semibold leading-none tracking-tight text-slate-800 dark:text-slate-100 sm:text-[34px]">
-              待辦 / 批改
+              {t('todo.title', { defaultValue: '待辦 / 批改' })}
             </h1>
             <p className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-slate-500 dark:text-slate-400">
               <span className="tabular-nums">
-                未剔 {counts.active} 項 · 今日到期 {counts.todayDue} 項
+                {t('todo.summary', {
+                  active: counts.active,
+                  todayDue: counts.todayDue,
+                  defaultValue: `未剔 ${counts.active} 項 · 今日到期 ${counts.todayDue} 項`,
+                })}
               </span>
               {counts.marking > 0 && (
                 <>
                   <span aria-hidden className="text-slate-300 dark:text-slate-600">·</span>
                   <span className="inline-flex items-center gap-1 font-medium text-rose-600 dark:text-rose-400">
-                    <Highlighter size={12} /> {counts.marking} 項待批改
+                    <Highlighter size={12} />{' '}
+                    {t('todo.markingPending', { count: counts.marking, defaultValue: `${counts.marking} 項待批改` })}
                   </span>
                 </>
               )}
@@ -548,32 +571,32 @@ export default function TodoWidget() {
               icon={Sparkles}
               onClick={() => setTmplModal(true)}
             >
-              範本
+              {t('todo.templates', { defaultValue: '範本' })}
             </Button>
             <Menu
               align="end"
               trigger={
                 <span className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-slate-200/80 bg-white px-3 text-sm font-medium text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700/60 dark:bg-slate-800 dark:text-slate-200 dark:hover:border-slate-600">
-                  更多
+                  {t('todo.more', { defaultValue: '更多' })}
                   <ChevronRight size={14} className="rotate-90" />
                 </span>
               }
               items={[
                 {
                   id: 'select',
-                  label: '批量選取',
+                  label: t('todo.menuSelect', { defaultValue: '批量選取' }),
                   icon: CheckCircle2,
                   onSelect: () => setSelecting(true),
                 },
                 {
                   id: 'projects',
-                  label: '管理專案',
+                  label: t('todo.menuProjects', { defaultValue: '管理專案' }),
                   icon: FolderPlus,
                   onSelect: () => setProjModal(true),
                 },
                 {
                   id: 'clear',
-                  label: '清除已完成',
+                  label: t('todo.menuClear', { defaultValue: '清除已完成' }),
                   icon: Trash2,
                   tone: 'danger',
                   onSelect: clearCompleted,
@@ -592,44 +615,56 @@ export default function TodoWidget() {
       {/* ───────── 清點帶：hairline grid · serif 大數字（可撳跳視圖）───────── */}
       <section className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl bg-slate-200/70 ring-1 ring-slate-200/80 dark:bg-slate-700/50 dark:ring-slate-700/60 sm:grid-cols-4">
         <TallyStat
-          label="逾期"
+          label={t('todo.tallyOverdue', { defaultValue: '逾期' })}
           value={counts.overdue}
-          unit="項"
+          unit={t('todo.unitItems', { defaultValue: '項' })}
           icon={Flag}
           tone="rose"
           hot={counts.overdue > 0}
-          hint={counts.overdue > 0 ? '需要跟進' : '一切如常'}
+          hint={
+            counts.overdue > 0
+              ? t('todo.hintOverdueHot', { defaultValue: '需要跟進' })
+              : t('todo.hintOverdueCalm', { defaultValue: '一切如常' })
+          }
           onClick={() => {
             setView('upcoming')
             setSearch('')
           }}
         />
         <TallyStat
-          label="今日到期"
+          label={t('todo.tallyTodayDue', { defaultValue: '今日到期' })}
           value={counts.todayDue}
-          unit="項"
+          unit={t('todo.unitItems', { defaultValue: '項' })}
           icon={Sun}
           tone="accent"
           hot={counts.todayDue > 0}
-          hint={counts.todayDue > 0 ? '今日搞掂佢' : '今日好輕鬆'}
+          hint={
+            counts.todayDue > 0
+              ? t('todo.hintTodayHot', { defaultValue: '今日搞掂佢' })
+              : t('todo.hintTodayCalm', { defaultValue: '今日好輕鬆' })
+          }
           onClick={() => setView('today')}
         />
         <TallyStat
-          label="未剔"
+          label={t('todo.tallyActive', { defaultValue: '未剔' })}
           value={counts.active}
-          unit="項"
+          unit={t('todo.unitItems', { defaultValue: '項' })}
           icon={ListTodo}
-          hint={counts.marking > 0 ? `含 ${counts.marking} 項批改` : '清單仲有嘢做'}
+          hint={
+            counts.marking > 0
+              ? t('todo.hintActiveMarking', { count: counts.marking, defaultValue: `含 ${counts.marking} 項批改` })
+              : t('todo.hintActiveCalm', { defaultValue: '清單仲有嘢做' })
+          }
           onClick={() => setView('all')}
         />
         <TallyStat
-          label="已剔"
+          label={t('todo.tallyDone', { defaultValue: '已剔' })}
           value={counts.done}
-          unit="項"
+          unit={t('todo.unitItems', { defaultValue: '項' })}
           icon={CheckCheck}
           tone="emerald"
           hot={counts.done > 0 && counts.active === 0}
-          hint="累計打剔"
+          hint={t('todo.hintDone', { defaultValue: '累計打剔' })}
         />
       </section>
 
@@ -642,28 +677,31 @@ export default function TodoWidget() {
             value={quick}
             onChange={(e) => setQuick(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && addQuick()}
-            placeholder="記低一筆… 試吓「批改 5A 練習 !! #教學 @批改 +2」"
+            placeholder={t('todo.quickPlaceholder', { defaultValue: '記低一筆… 試吓「批改 5A 練習 !! #教學 @批改 +2」' })}
             className="flex-1 border-transparent bg-white shadow-none dark:bg-slate-900/40"
           />
           <Button onClick={addQuick} icon={Plus}>
-            記低
+            {t('todo.quickAdd', { defaultValue: '記低' })}
           </Button>
         </div>
         <p className="flex flex-wrap items-center gap-x-2 gap-y-1 px-1 text-[11px] text-slate-400 dark:text-slate-500">
-          <SyntaxHint sym="!" label="優先級" />
-          <SyntaxHint sym="#" label="專案" />
-          <SyntaxHint sym="@" label="標籤" />
-          <SyntaxHint sym="今日 / 聽日 / +N" label="到期" />
+          <SyntaxHint sym="!" label={t('todo.synPriority', { defaultValue: '優先級' })} />
+          <SyntaxHint sym="#" label={t('todo.synProject', { defaultValue: '專案' })} />
+          <SyntaxHint sym="@" label={t('todo.synTag', { defaultValue: '標籤' })} />
+          <SyntaxHint
+            sym={t('todo.synDueKeys', { defaultValue: '今日 / 聽日 / +N' })}
+            label={t('todo.synDueLabel', { defaultValue: '到期' })}
+          />
         </p>
       </div>
 
       {/* 視圖切換 */}
       <Tabs<ViewId>
         tabs={[
-          { id: 'today', label: '今日' },
-          { id: 'upcoming', label: '之後' },
-          { id: 'all', label: '所有' },
-          { id: 'stats', label: '統計' },
+          { id: 'today', label: t('todo.tabToday', { defaultValue: '今日' }) },
+          { id: 'upcoming', label: t('todo.tabUpcoming', { defaultValue: '之後' }) },
+          { id: 'all', label: t('todo.tabAll', { defaultValue: '所有' }) },
+          { id: 'stats', label: t('todo.tabStats', { defaultValue: '統計' }) },
         ]}
         active={view}
         onChange={(v) => {
@@ -685,7 +723,7 @@ export default function TodoWidget() {
             icon={Search}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="搜尋任務、子任務、備註…"
+            placeholder={t('todo.searchPlaceholder', { defaultValue: '搜尋任務、子任務、備註…' })}
             className="flex-1"
           />
           <div className="flex items-center gap-2">
@@ -693,7 +731,7 @@ export default function TodoWidget() {
               size="sm"
               options={(Object.keys(SORT_LABEL) as SortMode[]).map((s) => ({
                 id: s,
-                label: SORT_LABEL[s],
+                label: sortLabel(t, s),
               }))}
               value={sort}
               onChange={setSort}
@@ -705,7 +743,11 @@ export default function TodoWidget() {
       {/* 搜尋結果計數（螢幕閱讀器即時播報）*/}
       {view !== 'stats' && search.trim() && (
         <p className="sr-only" role="status" aria-live="polite">
-          搜尋「{search.trim()}」找到 {filtered.length} 項
+          {t('todo.searchResult', {
+            kw: search.trim(),
+            count: filtered.length,
+            defaultValue: `搜尋「${search.trim()}」找到 ${filtered.length} 項`,
+          })}
         </p>
       )}
 
@@ -730,7 +772,7 @@ export default function TodoWidget() {
               onClick={() => setActiveTag(null)}
               className="text-xs text-slate-400 hover:text-rose-500"
             >
-              清除
+              {t('todo.clear', { defaultValue: '清除' })}
             </button>
           )}
         </div>
@@ -820,7 +862,7 @@ export default function TodoWidget() {
           templates={templates}
           onClose={() => setTmplModal(false)}
           onApply={(ids) => {
-            toast.success(`已由範本建立 ${ids} 項待辦`)
+            toast.success(t('todo.toastFromTemplate', { count: ids, defaultValue: `已由範本建立 ${ids} 項待辦` }))
             setTmplModal(false)
           }}
         />
@@ -851,6 +893,7 @@ function TaskRow({
   onSelect: (id: string) => void
   onRemove: (t: FullTask) => void
 }) {
+  const { t } = useTranslation()
   const pm = PRIORITY_META[task.meta.priority]
   const due = task.meta.due
   const diff = due ? daysBetween(todayISO(), due) : null
@@ -896,7 +939,7 @@ function TaskRow({
         <button
           type="button"
           onClick={() => onSelect(task.id)}
-          aria-label={selected ? '取消選取' : '選取'}
+          aria-label={selected ? t('todo.ariaUnselect', { defaultValue: '取消選取' }) : t('todo.ariaSelect', { defaultValue: '選取' })}
           aria-pressed={selected}
           className={cx(
             'mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md border-2 transition',
@@ -911,7 +954,13 @@ function TaskRow({
         <button
           type="button"
           onClick={() => onToggle(task)}
-          aria-label={task.done ? '標記未完成' : marking ? '打剔（已批改）' : '打剔（完成）'}
+          aria-label={
+            task.done
+              ? t('todo.ariaMarkUndone', { defaultValue: '標記未完成' })
+              : marking
+                ? t('todo.ariaTickMarked', { defaultValue: '打剔（已批改）' })
+                : t('todo.ariaTickDone', { defaultValue: '打剔（完成）' })
+          }
           className={cx(
             'mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center border-2 transition duration-200 active:scale-90',
             // 批改任務用方剔格（似簿上方格）；其餘用圓剔格
@@ -994,10 +1043,10 @@ function TaskRow({
 
       {!selecting && (
         <div className="flex shrink-0 items-center gap-0.5 opacity-100 transition sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100">
-          <IconButton label="編輯" size="sm" onClick={() => onOpen(task.id)}>
+          <IconButton label={t('todo.edit', { defaultValue: '編輯' })} size="sm" onClick={() => onOpen(task.id)}>
             <Pencil size={14} />
           </IconButton>
-          <IconButton label="刪除" size="sm" tone="danger" onClick={() => onRemove(task)}>
+          <IconButton label={t('todo.delete', { defaultValue: '刪除' })} size="sm" tone="danger" onClick={() => onRemove(task)}>
             <Trash2 size={14} />
           </IconButton>
         </div>
@@ -1075,9 +1124,10 @@ function TodayView(props: {
   onSelect: (id: string) => void
   onRemove: (t: FullTask) => void
 }) {
+  const { t } = useTranslation()
   const { tasks, sorter, projects } = props
   const today = todayISO()
-  const projOf = (t: FullTask) => projects.find((p) => p.id === t.meta.projectId)
+  const projOf = (tk: FullTask) => projects.find((p) => p.id === tk.meta.projectId)
 
   // 共用分桶（未完成）→ 今日視圖只取逾期 + 今日。
   const grouped = groupByDue(tasks, today, { sorter })
@@ -1093,26 +1143,28 @@ function TodayView(props: {
     return (
       <EmptyState
         icon={Sun}
-        title="今日好清爽 ☀️"
-        hint="冇逾期或今日到期嘅任務。喺上面快速輸入加一項，或者去「之後」睇將來嘅安排。"
+        title={t('todo.emptyTodayTitle', { defaultValue: '今日好清爽 ☀️' })}
+        hint={t('todo.emptyTodayHint', {
+          defaultValue: '冇逾期或今日到期嘅任務。喺上面快速輸入加一項，或者去「之後」睇將來嘅安排。',
+        })}
       />
     )
 
   return (
     <div className="space-y-5">
-      <Group title="逾期" tone="rose" icon={Flag} count={overdue.length}>
-        {overdue.map((t) => (
-          <TaskRow key={t.id} task={t} project={projOf(t)} {...rowProps(props, t.id)} />
+      <Group title={t('todo.groupOverdue', { defaultValue: '逾期' })} tone="rose" icon={Flag} count={overdue.length}>
+        {overdue.map((tk) => (
+          <TaskRow key={tk.id} task={tk} project={projOf(tk)} {...rowProps(props, tk.id)} />
         ))}
       </Group>
-      <Group title="今日" tone="amber" icon={Sun} count={todayList.length}>
-        {todayList.map((t) => (
-          <TaskRow key={t.id} task={t} project={projOf(t)} {...rowProps(props, t.id)} />
+      <Group title={t('todo.groupToday', { defaultValue: '今日' })} tone="amber" icon={Sun} count={todayList.length}>
+        {todayList.map((tk) => (
+          <TaskRow key={tk.id} task={tk} project={projOf(tk)} {...rowProps(props, tk.id)} />
         ))}
       </Group>
-      <Group title="今日打剔" icon={CheckCheck} count={doneToday.length}>
-        {doneToday.map((t) => (
-          <TaskRow key={t.id} task={t} project={projOf(t)} {...rowProps(props, t.id)} />
+      <Group title={t('todo.groupTodayDone', { defaultValue: '今日打剔' })} icon={CheckCheck} count={doneToday.length}>
+        {doneToday.map((tk) => (
+          <TaskRow key={tk.id} task={tk} project={projOf(tk)} {...rowProps(props, tk.id)} />
         ))}
       </Group>
     </div>
@@ -1133,9 +1185,10 @@ function UpcomingView(props: {
   onSelect: (id: string) => void
   onRemove: (t: FullTask) => void
 }) {
+  const { t } = useTranslation()
   const { tasks, sorter, projects } = props
   const today = todayISO()
-  const projOf = (t: FullTask) => projects.find((p) => p.id === t.meta.projectId)
+  const projOf = (tk: FullTask) => projects.find((p) => p.id === tk.meta.projectId)
 
   // 單次分桶（未完成）→ 每桶內按目前排序。
   const buckets = groupByDue(tasks, today, { sorter })
@@ -1151,41 +1204,41 @@ function UpcomingView(props: {
     return (
       <EmptyState
         icon={CalendarDays}
-        title="日程一片空白"
-        hint="所有任務都搞掂咗，或者試吓喺上面加一項。"
+        title={t('todo.emptyUpcomingTitle', { defaultValue: '日程一片空白' })}
+        hint={t('todo.emptyUpcomingHint', { defaultValue: '所有任務都搞掂咗，或者試吓喺上面加一項。' })}
       />
     )
 
   return (
     <div className="space-y-5">
-      <Group title="逾期" tone="rose" icon={Flag} count={buckets.overdue.length}>
-        {buckets.overdue.map((t) => (
-          <TaskRow key={t.id} task={t} project={projOf(t)} {...rowProps(props, t.id)} />
+      <Group title={t('todo.groupOverdue', { defaultValue: '逾期' })} tone="rose" icon={Flag} count={buckets.overdue.length}>
+        {buckets.overdue.map((tk) => (
+          <TaskRow key={tk.id} task={tk} project={projOf(tk)} {...rowProps(props, tk.id)} />
         ))}
       </Group>
-      <Group title="今日" tone="amber" icon={Sun} count={buckets.today.length}>
-        {buckets.today.map((t) => (
-          <TaskRow key={t.id} task={t} project={projOf(t)} {...rowProps(props, t.id)} />
+      <Group title={t('todo.groupToday', { defaultValue: '今日' })} tone="amber" icon={Sun} count={buckets.today.length}>
+        {buckets.today.map((tk) => (
+          <TaskRow key={tk.id} task={tk} project={projOf(tk)} {...rowProps(props, tk.id)} />
         ))}
       </Group>
-      <Group title="聽日" tone="accent" icon={CalendarDays} count={buckets.tomorrow.length}>
-        {buckets.tomorrow.map((t) => (
-          <TaskRow key={t.id} task={t} project={projOf(t)} {...rowProps(props, t.id)} />
+      <Group title={t('todo.groupTomorrow', { defaultValue: '聽日' })} tone="accent" icon={CalendarDays} count={buckets.tomorrow.length}>
+        {buckets.tomorrow.map((tk) => (
+          <TaskRow key={tk.id} task={tk} project={projOf(tk)} {...rowProps(props, tk.id)} />
         ))}
       </Group>
-      <Group title="未來 7 日" icon={CalendarDays} count={buckets.soon.length}>
-        {buckets.soon.map((t) => (
-          <TaskRow key={t.id} task={t} project={projOf(t)} {...rowProps(props, t.id)} />
+      <Group title={t('todo.groupSoon', { defaultValue: '未來 7 日' })} icon={CalendarDays} count={buckets.soon.length}>
+        {buckets.soon.map((tk) => (
+          <TaskRow key={tk.id} task={tk} project={projOf(tk)} {...rowProps(props, tk.id)} />
         ))}
       </Group>
-      <Group title="之後" icon={CalendarDays} count={buckets.later.length}>
-        {buckets.later.map((t) => (
-          <TaskRow key={t.id} task={t} project={projOf(t)} {...rowProps(props, t.id)} />
+      <Group title={t('todo.groupLater', { defaultValue: '之後' })} icon={CalendarDays} count={buckets.later.length}>
+        {buckets.later.map((tk) => (
+          <TaskRow key={tk.id} task={tk} project={projOf(tk)} {...rowProps(props, tk.id)} />
         ))}
       </Group>
-      <Group title="無到期" icon={InboxIcon} count={buckets.none.length}>
-        {buckets.none.map((t) => (
-          <TaskRow key={t.id} task={t} project={projOf(t)} {...rowProps(props, t.id)} />
+      <Group title={t('todo.groupNoDue', { defaultValue: '無到期' })} icon={InboxIcon} count={buckets.none.length}>
+        {buckets.none.map((tk) => (
+          <TaskRow key={tk.id} task={tk} project={projOf(tk)} {...rowProps(props, tk.id)} />
         ))}
       </Group>
     </div>
@@ -1211,6 +1264,7 @@ function AllView(props: {
   onRemove: (t: FullTask) => void
   onManageProjects: () => void
 }) {
+  const { t } = useTranslation()
   const {
     tasks,
     sorter,
@@ -1244,12 +1298,12 @@ function AllView(props: {
         {/* 手機：橫向滾動 chip（含所有專案）*/}
         <div className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1 sm:hidden">
           <ScopeChip
-            label="全部"
+            label={t('todo.scopeAll', { defaultValue: '全部' })}
             active={activeProject === 'all'}
             onClick={() => setActiveProject('all')}
           />
           <ScopeChip
-            label="收件匣"
+            label={t('todo.scopeInbox', { defaultValue: '收件匣' })}
             count={inboxCount}
             active={activeProject === 'inbox'}
             onClick={() => setActiveProject('inbox')}
@@ -1268,13 +1322,13 @@ function AllView(props: {
         {/* 桌面：垂直側欄 */}
         <div className="hidden flex-col gap-0.5 pt-1 sm:flex">
           <SidebarItem
-            label="全部"
+            label={t('todo.scopeAll', { defaultValue: '全部' })}
             icon={<LayoutList size={15} />}
             active={activeProject === 'all'}
             onClick={() => setActiveProject('all')}
           />
           <SidebarItem
-            label="收件匣"
+            label={t('todo.scopeInbox', { defaultValue: '收件匣' })}
             icon={<InboxIcon size={15} />}
             count={inboxCount}
             active={activeProject === 'inbox'}
@@ -1298,7 +1352,7 @@ function AllView(props: {
             onClick={onManageProjects}
             className="mt-1 inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300"
           >
-            <FolderPlus size={14} /> 管理專案
+            <FolderPlus size={14} /> {t('todo.manageProjects', { defaultValue: '管理專案' })}
           </button>
         </div>
       </aside>
@@ -1310,7 +1364,7 @@ function AllView(props: {
             <ClipboardCheck size={14} />
           </span>
           <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-            任務冊
+            {t('todo.taskBook', { defaultValue: '任務冊' })}
           </h3>
           <span className="tabular-nums text-[11px] font-semibold text-slate-400 dark:text-slate-500">
             {visible.length}
@@ -1322,14 +1376,20 @@ function AllView(props: {
             className="inline-flex shrink-0 items-center gap-1.5 text-[11px] font-medium text-slate-400 transition hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300"
           >
             <CheckCheck size={13} />
-            {showDone ? '隱藏已剔' : `已剔 ${doneCount}`}
+            {showDone
+              ? t('todo.hideDone', { defaultValue: '隱藏已剔' })
+              : t('todo.doneCount', { count: doneCount, defaultValue: `已剔 ${doneCount}` })}
           </button>
         </div>
         {visible.length === 0 ? (
           <EmptyState
             icon={InboxIcon}
-            title={activeProject === 'inbox' ? '收件匣空空如也' : '呢個專案仲未有任務'}
-            hint="喺上面快速輸入加一項，或者揀返第個專案睇睇。"
+            title={
+              activeProject === 'inbox'
+                ? t('todo.emptyInboxTitle', { defaultValue: '收件匣空空如也' })
+                : t('todo.emptyProjectTitle', { defaultValue: '呢個專案仲未有任務' })
+            }
+            hint={t('todo.emptyAllHint', { defaultValue: '喺上面快速輸入加一項，或者揀返第個專案睇睇。' })}
           />
         ) : (
           <Card clip className="divide-y divide-slate-100 dark:divide-slate-700/60">
@@ -1445,6 +1505,7 @@ function rowProps(p: RowHandlers, taskId: string) {
 //  統計視圖（自製圖表）
 // ============================================================
 function StatsView({ tasks, projects }: { tasks: FullTask[]; projects: Project[] }) {
+  const { t } = useTranslation()
   const [range, setRange] = useState<14 | 30 | 90>(30)
   const trend = useMemo(() => buildTrend(tasks, range), [tasks, range])
   const heat = useMemo(() => buildHeat(tasks, 119), [tasks]) // 17 週
@@ -1471,7 +1532,7 @@ function StatsView({ tasks, projects }: { tasks: FullTask[]; projects: Project[]
             : p === 3
               ? 'stroke-blue-500'
               : 'stroke-slate-300 dark:stroke-slate-600',
-      label: `${PRIORITY_META[p].short} ${PRIORITY_META[p].label}`,
+      label: `${PRIORITY_META[p].short} ${prioLabel(t, p)}`,
     }))
     .filter((s) => s.value > 0)
 
@@ -1483,8 +1544,8 @@ function StatsView({ tasks, projects }: { tasks: FullTask[]; projects: Project[]
       bar: projColorCls(p.color).bar,
     })),
     {
-      label: '收件匣',
-      value: active.filter((t) => !t.meta.projectId).length,
+      label: t('todo.scopeInbox', { defaultValue: '收件匣' }),
+      value: active.filter((tk) => !tk.meta.projectId).length,
       bar: 'bg-slate-400',
     },
   ].filter((b) => b.value > 0)
@@ -1493,8 +1554,10 @@ function StatsView({ tasks, projects }: { tasks: FullTask[]; projects: Project[]
     return (
       <EmptyState
         icon={BarChart3}
-        title="統計仲係一張白紙"
-        hint="加幾項待辦、逐一完成，呢度就會慢慢長出你嘅生產力走勢同熱力圖。"
+        title={t('todo.emptyStatsTitle', { defaultValue: '統計仲係一張白紙' })}
+        hint={t('todo.emptyStatsHint', {
+          defaultValue: '加幾項待辦、逐一完成，呢度就會慢慢長出你嘅生產力走勢同熱力圖。',
+        })}
       />
     )
 
@@ -1502,25 +1565,43 @@ function StatsView({ tasks, projects }: { tasks: FullTask[]; projects: Project[]
     <div className="space-y-4">
       <section className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl bg-slate-200/70 ring-1 ring-slate-200/80 dark:bg-slate-700/50 dark:ring-slate-700/60 sm:grid-cols-4">
         <TallyStat
-          label="連續完成"
+          label={t('todo.statStreak', { defaultValue: '連續完成' })}
           value={streak}
-          unit="日"
+          unit={t('todo.unitDays', { defaultValue: '日' })}
           icon={Sparkles}
           tone="accent"
           hot={streak > 0}
-          hint={streak > 0 ? '繼續保持！' : '今日完成一項就開始'}
+          hint={
+            streak > 0
+              ? t('todo.hintStreakHot', { defaultValue: '繼續保持！' })
+              : t('todo.hintStreakCalm', { defaultValue: '今日完成一項就開始' })
+          }
         />
         <TallyStat
-          label="完成率"
+          label={t('todo.statCompletionRate', { defaultValue: '完成率' })}
           value={completionRate}
           unit="%"
           icon={CheckCircle2}
           tone="emerald"
           hot={completionRate >= 80}
-          hint={`近 ${range} 日完成 ${completedInRange}`}
+          hint={t('todo.hintCompletedInRange', {
+            count: completedInRange,
+            range,
+            defaultValue: `近 ${range} 日完成 ${completedInRange}`,
+          })}
         />
-        <TallyStat label="進行中" value={active.length} unit="項" icon={CircleDashed} />
-        <TallyStat label="累計完成" value={completed.length} unit="項" icon={ListChecks} />
+        <TallyStat
+          label={t('todo.statInProgress', { defaultValue: '進行中' })}
+          value={active.length}
+          unit={t('todo.unitItems', { defaultValue: '項' })}
+          icon={CircleDashed}
+        />
+        <TallyStat
+          label={t('todo.statTotalDone', { defaultValue: '累計完成' })}
+          value={completed.length}
+          unit={t('todo.unitItems', { defaultValue: '項' })}
+          icon={ListChecks}
+        />
       </section>
 
       <Card padded>
@@ -1530,43 +1611,43 @@ function StatsView({ tasks, projects }: { tasks: FullTask[]; projects: Project[]
             <SegmentedControl<'14' | '30' | '90'>
               size="sm"
               options={[
-                { id: '14', label: '14 日' },
-                { id: '30', label: '30 日' },
-                { id: '90', label: '90 日' },
+                { id: '14', label: t('todo.range14', { defaultValue: '14 日' }) },
+                { id: '30', label: t('todo.range30', { defaultValue: '30 日' }) },
+                { id: '90', label: t('todo.range90', { defaultValue: '90 日' }) },
               ]}
               value={String(range) as '14' | '30' | '90'}
               onChange={(v) => setRange(Number(v) as 14 | 30 | 90)}
             />
           }
         >
-          完成 / 新增趨勢
+          {t('todo.sectionTrend', { defaultValue: '完成 / 新增趨勢' })}
         </SectionTitle>
         <TrendChart data={trend} />
       </Card>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <Card padded>
-          <SectionTitle icon={Flag}>未完成 · 按優先級</SectionTitle>
+          <SectionTitle icon={Flag}>{t('todo.sectionByPriority', { defaultValue: '未完成 · 按優先級' })}</SectionTitle>
           {prioSegments.length > 0 ? (
             <Donut
               segments={prioSegments}
               centerValue={String(active.length)}
-              centerLabel="未完成"
+              centerLabel={t('todo.centerOpen', { defaultValue: '未完成' })}
             />
           ) : (
             <p className="py-8 text-center text-sm text-slate-400 dark:text-slate-500">
-              冇未完成任務 🎉
+              {t('todo.noOpen', { defaultValue: '冇未完成任務 🎉' })}
             </p>
           )}
         </Card>
         <Card padded>
-          <SectionTitle icon={LayoutList}>未完成 · 按專案</SectionTitle>
+          <SectionTitle icon={LayoutList}>{t('todo.sectionByProject', { defaultValue: '未完成 · 按專案' })}</SectionTitle>
           <HBars data={projBars} />
         </Card>
       </div>
 
       <Card padded>
-        <SectionTitle icon={CalendarDays}>完成熱力圖（近 17 週）</SectionTitle>
+        <SectionTitle icon={CalendarDays}>{t('todo.sectionHeatmap', { defaultValue: '完成熱力圖（近 17 週）' })}</SectionTitle>
         <CompletionHeatmap cells={heat} />
       </Card>
     </div>
@@ -1595,38 +1676,40 @@ function BulkBar({
   onDelete: () => void
   onCancel: () => void
 }) {
+  const { t } = useTranslation()
   return (
     <div className="sticky top-2 z-10 flex flex-wrap items-center gap-2 rounded-xl border border-accent/30 bg-accent-soft px-3 py-2 shadow-sm dark:border-accent/40 dark:bg-accent/15">
       <span className="text-sm font-medium text-accent-strong dark:text-accent">
-        已選 <span className="tabular-nums">{count}</span> 項
+        {t('todo.bulkSelected', { defaultValue: '已選' })}{' '}
+        <span className="tabular-nums">{count}</span> {t('todo.unitItems', { defaultValue: '項' })}
       </span>
       <div className="h-4 w-px bg-accent/30" />
       <Button size="sm" variant="secondary" icon={Check} onClick={onComplete} disabled={count === 0}>
-        完成
+        {t('todo.bulkComplete', { defaultValue: '完成' })}
       </Button>
       <Menu
         align="start"
         trigger={
           <span className="inline-flex h-7 items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 text-xs font-medium text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200">
-            <CalendarDays size={13} /> 到期
+            <CalendarDays size={13} /> {t('todo.bulkDue', { defaultValue: '到期' })}
           </span>
         }
         items={[
-          { id: 'd0', label: '今日', icon: Sun, onSelect: () => onDue(0) },
-          { id: 'd1', label: '聽日', icon: CalendarDays, onSelect: () => onDue(1) },
-          { id: 'd7', label: '一週後', icon: CalendarDays, onSelect: () => onDue(7) },
+          { id: 'd0', label: t('todo.bulkToday', { defaultValue: '今日' }), icon: Sun, onSelect: () => onDue(0) },
+          { id: 'd1', label: t('todo.bulkTomorrow', { defaultValue: '聽日' }), icon: CalendarDays, onSelect: () => onDue(1) },
+          { id: 'd7', label: t('todo.bulkInAWeek', { defaultValue: '一週後' }), icon: CalendarDays, onSelect: () => onDue(7) },
         ]}
       />
       <Menu
         align="start"
         trigger={
           <span className="inline-flex h-7 items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 text-xs font-medium text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200">
-            <Flag size={13} /> 優先級
+            <Flag size={13} /> {t('todo.bulkPriority', { defaultValue: '優先級' })}
           </span>
         }
         items={([1, 2, 3, 4] as Priority[]).map((p) => ({
           id: `p${p}`,
-          label: `${PRIORITY_META[p].short} · ${PRIORITY_META[p].label}`,
+          label: `${PRIORITY_META[p].short} · ${prioLabel(t, p)}`,
           icon: Flag,
           onSelect: () => onPriority(p),
         }))}
@@ -1635,11 +1718,11 @@ function BulkBar({
         align="start"
         trigger={
           <span className="inline-flex h-7 items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 text-xs font-medium text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200">
-            <InboxIcon size={13} /> 移到
+            <InboxIcon size={13} /> {t('todo.bulkMoveTo', { defaultValue: '移到' })}
           </span>
         }
         items={[
-          { id: 'inbox', label: '收件匣', icon: InboxIcon, onSelect: () => onProject(undefined) },
+          { id: 'inbox', label: t('todo.scopeInbox', { defaultValue: '收件匣' }), icon: InboxIcon, onSelect: () => onProject(undefined) },
           ...projects.map((p) => ({
             id: p.id,
             label: `${p.emoji ? p.emoji + ' ' : ''}${p.name}`,
@@ -1648,10 +1731,10 @@ function BulkBar({
         ]}
       />
       <Button size="sm" variant="ghost" icon={Trash2} onClick={onDelete} disabled={count === 0} className="text-rose-500 hover:text-rose-600">
-        刪除
+        {t('todo.bulkDelete', { defaultValue: '刪除' })}
       </Button>
       <div className="ml-auto">
-        <IconButton label="取消批量" onClick={onCancel}>
+        <IconButton label={t('todo.bulkCancel', { defaultValue: '取消批量' })} onClick={onCancel}>
           <X size={16} />
         </IconButton>
       </div>
@@ -1669,6 +1752,7 @@ function ProjectManager({
   projects: Project[]
   onClose: () => void
 }) {
+  const { t } = useTranslation()
   const toast = useToast()
   const confirm = useConfirm()
   const [name, setName] = useState('')
@@ -1690,19 +1774,22 @@ function ProjectManager({
     })
     setName('')
     setEmoji('')
-    toast.success('已新增專案')
+    toast.success(t('todo.toastProjectAdded', { defaultValue: '已新增專案' }))
   }
 
   const removeProject = async (p: Project) => {
     // 該專案下任務數（讀 taskMetaCol，唔改 tasksCol）
     const cnt = taskMetaCol.get().filter((m) => m.projectId === p.id).length
     const ok = await confirm({
-      title: `刪除專案「${p.name}」？`,
+      title: t('todo.confirmDeleteProjectTitle', { name: p.name, defaultValue: `刪除專案「${p.name}」？` }),
       message:
         cnt > 0
-          ? `專案內 ${cnt} 項任務唔會被刪，會移返去收件匣。`
-          : '呢個動作無法復原。',
-      confirmText: '刪除',
+          ? t('todo.confirmDeleteProjectMsgWithTasks', {
+              count: cnt,
+              defaultValue: `專案內 ${cnt} 項任務唔會被刪，會移返去收件匣。`,
+            })
+          : t('todo.confirmDeleteProjectMsgEmpty', { defaultValue: '呢個動作無法復原。' }),
+      confirmText: t('todo.confirmText', { defaultValue: '刪除' }),
       tone: 'danger',
     })
     if (!ok) return
@@ -1711,16 +1798,16 @@ function ProjectManager({
       upsertMeta(m.id, { projectId: undefined })
     }
     projectsCol.remove(p.id)
-    toast.success('已刪除專案')
+    toast.success(t('todo.toastProjectDeleted', { defaultValue: '已刪除專案' }))
   }
 
   return (
-    <Modal open onClose={onClose} title="管理專案" size="md">
+    <Modal open onClose={onClose} title={t('todo.projManagerTitle', { defaultValue: '管理專案' })} size="md">
       <div className="space-y-4">
         <div className="space-y-2">
           {ordered.length === 0 && (
             <p className="rounded-lg bg-slate-50 px-3 py-4 text-center text-sm text-slate-400 dark:bg-slate-800/60 dark:text-slate-500">
-              仲未有專案，喺下面加一個。
+              {t('todo.projEmpty', { defaultValue: '仲未有專案，喺下面加一個。' })}
             </p>
           )}
           {ordered.map((p) => (
@@ -1736,7 +1823,7 @@ function ProjectManager({
               <span className="tabular-nums text-xs text-slate-400">
                 {taskMetaCol.get().filter((m) => m.projectId === p.id).length}
               </span>
-              <IconButton label="刪除專案" size="sm" tone="danger" onClick={() => removeProject(p)}>
+              <IconButton label={t('todo.ariaDeleteProject', { defaultValue: '刪除專案' })} size="sm" tone="danger" onClick={() => removeProject(p)}>
                 <Trash2 size={14} />
               </IconButton>
             </div>
@@ -1745,7 +1832,7 @@ function ProjectManager({
 
         <div className="space-y-3 rounded-xl border border-slate-200 p-3 dark:border-slate-700">
           <div className="grid grid-cols-[auto_1fr] gap-2">
-            <Field label="圖示">
+            <Field label={t('todo.fieldEmoji', { defaultValue: '圖示' })}>
               <Input
                 value={emoji}
                 onChange={(e) => setEmoji(e.target.value.slice(0, 2))}
@@ -1753,16 +1840,16 @@ function ProjectManager({
                 className="w-16 text-center"
               />
             </Field>
-            <Field label="名稱">
+            <Field label={t('todo.fieldName', { defaultValue: '名稱' })}>
               <Input
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && add()}
-                placeholder="例如：考試準備"
+                placeholder={t('todo.projNamePlaceholder', { defaultValue: '例如：考試準備' })}
               />
             </Field>
           </div>
-          <Field label="顏色">
+          <Field label={t('todo.fieldColor', { defaultValue: '顏色' })}>
             <div className="flex flex-wrap gap-2">
               {PROJ_COLORS.map((c) => (
                 <button
@@ -1780,7 +1867,7 @@ function ProjectManager({
             </div>
           </Field>
           <Button onClick={add} icon={Plus} disabled={!name.trim()} fullWidth>
-            新增專案
+            {t('todo.addProject', { defaultValue: '新增專案' })}
           </Button>
         </div>
       </div>
@@ -1800,6 +1887,7 @@ function TemplatePicker({
   onClose: () => void
   onApply: (createdCount: number) => void
 }) {
+  const { t: tt } = useTranslation()
   const apply = (tmplId: string) => {
     const tmpl = templatesCol.get().find((t) => t.id === tmplId)
     if (!tmpl) return
@@ -1825,9 +1913,12 @@ function TemplatePicker({
   }
 
   return (
-    <Modal open onClose={onClose} title="由範本快速建立" size="md">
+    <Modal open onClose={onClose} title={tt('todo.tmplPickerTitle', { defaultValue: '由範本快速建立' })} size="md">
       <p className="mb-3 text-sm text-slate-500 dark:text-slate-400">
-        揀個常用流程，一鍵鋪好成組任務（含優先級、相對到期、子任務）—— 例如批改一份練習嘅完整步驟。
+        {tt('todo.tmplPickerIntro', {
+          defaultValue:
+            '揀個常用流程，一鍵鋪好成組任務（含優先級、相對到期、子任務）—— 例如批改一份練習嘅完整步驟。',
+        })}
       </p>
       <div className="space-y-2">
         {templates.map((t) => (
@@ -1847,7 +1938,7 @@ function TemplatePicker({
                 </p>
                 <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold tabular-nums text-slate-500 dark:bg-slate-700/60 dark:text-slate-300">
                   <ListChecks size={10} />
-                  {t.items.length} 項
+                  {tt('todo.tmplItemCount', { count: t.items.length, defaultValue: `${t.items.length} 項` })}
                 </span>
               </div>
               <p className="mt-0.5 truncate text-xs text-slate-400 dark:text-slate-500">

@@ -1,4 +1,6 @@
 import { useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
+import './i18n'
 import { cx } from '../../../ui'
 import type { HeatCell, TrendPoint } from './util'
 
@@ -11,6 +13,7 @@ const WEEKDAYS = ['日', '一', '二', '三', '四', '五', '六']
 
 // ───────── 1. 完成 / 新增雙線趨勢（迷你長條 + 折線）─────────
 export function TrendChart({ data }: { data: TrendPoint[] }) {
+  const { t } = useTranslation()
   const max = useMemo(
     () => Math.max(1, ...data.map((d) => Math.max(d.created, d.completed))),
     [data],
@@ -39,7 +42,7 @@ export function TrendChart({ data }: { data: TrendPoint[] }) {
               <div
                 key={d.key}
                 className="group flex min-w-[4px] flex-1 flex-col items-center justify-end"
-                title={`${d.key}：新增 ${d.created} · 完成 ${d.completed}`}
+                title={`${d.key}：${t('todo.legendAdded', { count: d.created, defaultValue: `新增 ${d.created}` })} · ${t('todo.legendCompleted', { count: d.completed, defaultValue: `完成 ${d.completed}` })}`}
               >
                 <div
                   className="w-full rounded-md bg-slate-100 transition-all duration-300 group-hover:bg-slate-200 dark:bg-slate-800 dark:group-hover:bg-slate-700"
@@ -94,8 +97,14 @@ export function TrendChart({ data }: { data: TrendPoint[] }) {
       </div>
       <Legend
         items={[
-          { color: 'bg-accent', label: `完成 ${totalDone}` },
-          { color: 'bg-slate-200 dark:bg-slate-700', label: `新增 ${totalNew}` },
+          {
+            color: 'bg-accent',
+            label: t('todo.legendCompleted', { count: totalDone, defaultValue: `完成 ${totalDone}` }),
+          },
+          {
+            color: 'bg-slate-200 dark:bg-slate-700',
+            label: t('todo.legendAdded', { count: totalNew, defaultValue: `新增 ${totalNew}` }),
+          },
         ]}
       />
     </div>
@@ -104,6 +113,7 @@ export function TrendChart({ data }: { data: TrendPoint[] }) {
 
 // ───────── 2. 完成熱力圖（GitHub 草地風）─────────
 export function CompletionHeatmap({ cells }: { cells: HeatCell[] }) {
+  const { t } = useTranslation()
   const max = useMemo(() => Math.max(1, ...cells.map((c) => c.count)), [cells])
   const weeks: (HeatCell | null)[][] = useMemo(() => {
     if (cells.length === 0) return []
@@ -152,7 +162,7 @@ export function CompletionHeatmap({ cells }: { cells: HeatCell[] }) {
               return (
                 <span
                   key={di}
-                  title={`${cell.key}：完成 ${cell.count} 項`}
+                  title={`${cell.key}：${t('todo.heatCellTip', { count: cell.count, defaultValue: `完成 ${cell.count} 項` })}`}
                   className={cx(
                     'h-[11px] w-[11px] rounded-[3px] ring-1 ring-inset ring-slate-900/5 transition hover:ring-slate-900/15 dark:ring-white/5 dark:hover:ring-white/15',
                     LEVEL_CLS[level(cell.count)],
@@ -165,18 +175,18 @@ export function CompletionHeatmap({ cells }: { cells: HeatCell[] }) {
       </div>
       <div className="mt-2 flex items-center justify-between text-[11px] text-slate-400 dark:text-slate-500">
         <span className="tabular-nums">
-          近 {cells.length} 日 · 完成{' '}
+          {t('todo.heatSummary', { days: cells.length, defaultValue: `近 ${cells.length} 日 · 完成` })}{' '}
           <span className="font-semibold text-slate-600 dark:text-slate-300">
             {total}
           </span>{' '}
-          項 · 活躍 {activeDays} 日
+          {t('todo.heatSummaryItems', { active: activeDays, defaultValue: `項 · 活躍 ${activeDays} 日` })}
         </span>
         <span className="flex items-center gap-1">
-          少
+          {t('todo.heatLess', { defaultValue: '少' })}
           {LEVEL_CLS.map((c, i) => (
             <span key={i} className={cx('h-[10px] w-[10px] rounded-[2px]', c)} />
           ))}
-          多
+          {t('todo.heatMore', { defaultValue: '多' })}
         </span>
       </div>
     </div>
@@ -280,11 +290,12 @@ export function HBars({
 }: {
   data: { label: string; value: number; bar: string }[]
 }) {
+  const { t } = useTranslation()
   const total = data.reduce((s, d) => s + d.value, 0)
   if (total === 0)
     return (
       <p className="py-6 text-center text-sm text-slate-400 dark:text-slate-500">
-        全部專案都清空咗 🎉
+        {t('todo.hbarsAllClear', { defaultValue: '全部專案都清空咗 🎉' })}
       </p>
     )
   const max = Math.max(1, ...data.map((d) => d.value))
