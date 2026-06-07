@@ -4,7 +4,7 @@
 //  - sendEmail()：寄一封 HTML email（未設 RESEND_API_KEY → no-op 回 false）。
 //  - alertAdmin()：寄系統告警去 ADMIN_ALERT_EMAIL（webhook 失敗等）。
 //  secret（用 `supabase secrets set`）：
-//    RESEND_API_KEY、RESEND_FROM（例：'NTK <noreply@yourdomain>'）、
+//    RESEND_API_KEY、RESEND_FROM（例：'EziTeach <noreply@yourdomain>'）、
 //    ADMIN_ALERT_EMAIL。
 // ============================================================
 

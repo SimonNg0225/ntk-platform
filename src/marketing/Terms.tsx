@@ -58,7 +58,7 @@ export default function Terms() {
 
       <LegalSection no={12} title={t('terms.s12Title')}>
         <p>
-          {t('terms.s12Pre')} <strong>support@ntk-platform.example</strong>
+          {t('terms.s12Pre')} <strong>support@eziteach.example</strong>
           {t('terms.s12Post')}
         </p>
       </LegalSection>

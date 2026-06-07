@@ -66,7 +66,7 @@ export default function Privacy() {
 
       <LegalSection no={8} title={t('privacy.s8Title')}>
         <p>
-          {t('privacy.s8Pre')} <strong>privacy@ntk-platform.example</strong>
+          {t('privacy.s8Pre')} <strong>privacy@eziteach.example</strong>
           {t('privacy.s8Post')}
         </p>
       </LegalSection>
