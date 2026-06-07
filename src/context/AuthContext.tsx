@@ -73,8 +73,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (!supabase) return
         await supabase.auth.signInWithOAuth({
           provider: 'google',
-          // 登入後返去產品（'/' 已改為行銷首頁）
-          options: { redirectTo: `${window.location.origin}/app` },
+          // 回流去根目錄（= Supabase 預設 Site URL，最穩陣，唔使逐個 path 加 allowlist）。
+          // 落到 '/' 後，Landing 偵測到 OAuth 回流會自動轉去 /app。
+          options: { redirectTo: window.location.origin },
         })
       },
       signOut: async () => {

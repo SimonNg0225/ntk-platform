@@ -1,4 +1,5 @@
-import { Link } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import { Helmet } from 'react-helmet-async'
 import {
   ClipboardList,
@@ -10,6 +11,7 @@ import {
   ShieldCheck,
   Cloud,
   ArrowRight,
+  Loader2,
   type LucideIcon,
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
@@ -62,6 +64,39 @@ const TRUST: { icon: LucideIcon; label: string }[] = [
 
 export default function Landing() {
   const { user } = useAuth()
+  const navigate = useNavigate()
+
+  // OAuth 回流偵測：Google 登入後 Supabase 會帶住 #access_token 落到根目錄。
+  // 喺首次 render（supabase-js 清走 hash 之前）capture 住，之後 session 一好
+  // 就自動轉去產品 /app。逾時 fallback：避免設定有誤時永遠卡住過場。
+  const [oauthReturn] = useState(
+    () =>
+      typeof window !== 'undefined' &&
+      /[#&]access_token=/.test(window.location.hash),
+  )
+  const [timedOut, setTimedOut] = useState(false)
+
+  useEffect(() => {
+    // 只喺 OAuth 回流時自動轉去產品；正常已登入訪問首頁唔強制彈走。
+    if (oauthReturn && user) navigate('/app', { replace: true })
+  }, [oauthReturn, user, navigate])
+
+  useEffect(() => {
+    if (!oauthReturn) return
+    const id = window.setTimeout(() => setTimedOut(true), 8000)
+    return () => window.clearTimeout(id)
+  }, [oauthReturn])
+
+  // 登入處理中：顯示過場，唔閃住行銷內容（逾時就照常顯示 Landing）。
+  if (oauthReturn && !user && !timedOut) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-[color:var(--app-bg)] text-slate-600 dark:text-slate-300">
+        <Loader2 size={28} strokeWidth={1.75} className="animate-spin text-accent" />
+        <p className="text-sm font-medium">登入中…</p>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-[color:var(--app-bg)] text-slate-900 dark:text-slate-100">
       <Helmet>
