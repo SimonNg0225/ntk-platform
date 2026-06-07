@@ -2,23 +2,23 @@ import { useMode } from '../context/ModeContext'
 import { useSettings } from '../context/SettingsContext'
 import { groupedFeatures } from '../features/registry'
 import FeatureCard, { type ToneKey } from '../components/FeatureCard'
-import { FeatureIcon } from '../features/featureIcons'
 
 interface Props {
   onOpen: (id: string) => void
 }
 
-// 每個功能分組對應一隻色調（令 Bento 網格有層次，但唔會嘈）。
+// 機構級 SaaS：克制配色 —— 內容群組用主題 accent，工具群組用中性 slate。
+// 刻意唔再每個分組一隻彩色（嗰種「demo」感），改為單一專業色軸 + 中性。
 const GROUP_TONE: Record<string, ToneKey> = {
   概覽: 'accent',
-  AI: 'violet',
-  知識管理: 'blue',
-  目標與習慣: 'amber',
-  健康: 'rose',
-  教學: 'blue',
-  學生: 'emerald',
-  行政: 'sky',
-  理財: 'emerald',
+  AI: 'accent',
+  教學: 'accent',
+  學生: 'accent',
+  行政: 'slate',
+  理財: 'slate',
+  知識管理: 'accent',
+  目標與習慣: 'accent',
+  健康: 'accent',
   工具: 'slate',
 }
 
@@ -32,7 +32,7 @@ function timeGreeting(): string {
   return '晚安'
 }
 
-// 首頁概覽 — Bento 風：漸變 hero + 按分組分色嘅功能磚。
+// 首頁概覽 — 機構級 masthead（無漸變光暈）+ 分組功能網格。
 export default function Home({ onOpen }: Props) {
   const { modeDef } = useMode()
   const { displayName } = useSettings()
@@ -40,27 +40,35 @@ export default function Home({ onOpen }: Props) {
   const total = groups.reduce((n, g) => n + g.items.length, 0)
 
   const name = displayName.trim()
-  const greeting = name ? `${timeGreeting()}，${name}` : modeDef.tagline
+  const greeting = name ? `${timeGreeting()}，${name}` : timeGreeting()
   const now = new Date()
-  const dateLabel = `星期${WEEKDAYS[now.getDay()]} · ${now.getMonth() + 1}月${now.getDate()}日`
+  const dateLabel = `${now.getFullYear()} 年 ${now.getMonth() + 1} 月 ${now.getDate()} 日 · 星期${WEEKDAYS[now.getDay()]}`
 
   return (
     <div className="space-y-8">
-      {/* Hero — 漸變主視覺，跟模式主色（學習靛藍 / 工作青藍） */}
-      <header className="hero-gradient relative overflow-hidden rounded-3xl px-6 py-8 text-white shadow-lg shadow-accent/25 sm:px-9 sm:py-10">
-        <div className="pointer-events-none absolute -right-10 -top-12 h-48 w-48 rounded-full bg-white/10 blur-2xl" />
-        <div className="pointer-events-none absolute -bottom-16 right-28 h-40 w-40 rounded-full bg-white/10 blur-2xl" />
-        <div className="relative">
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-xs font-medium backdrop-blur">
-            <FeatureIcon icon={modeDef.icon} size={14} />
-            {modeDef.name}
-          </span>
-          <h1 className="mt-4 text-2xl font-bold tracking-tight sm:text-3xl">
-            {greeting}
-          </h1>
-          <p className="mt-2 text-sm text-white/80">
-            {dateLabel} · 呢個模式有 {total} 個功能，隨時喺左上角切換。
-          </p>
+      {/* Masthead — 乾淨 surface，左側主題色標尺；無漸變、無光暈 blob */}
+      <header className="overflow-hidden rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface)] shadow-xs">
+        <div className="flex items-stretch">
+          <div className="w-1 shrink-0 bg-accent" aria-hidden />
+          <div className="flex min-w-0 flex-1 flex-wrap items-end justify-between gap-3 px-5 py-5 sm:px-7 sm:py-6">
+            <div className="min-w-0">
+              <p className="text-xs font-medium uppercase tracking-[0.12em] text-slate-400 dark:text-slate-500">
+                {modeDef.name} · {dateLabel}
+              </p>
+              <h1 className="mt-1.5 text-2xl font-bold tracking-tight text-slate-800 dark:text-slate-100 sm:text-[28px]">
+                {greeting}
+              </h1>
+              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                {modeDef.tagline}
+              </p>
+            </div>
+            <div className="flex items-baseline gap-1.5 text-slate-400 dark:text-slate-500">
+              <span className="nums text-2xl font-semibold text-slate-700 dark:text-slate-200">
+                {total}
+              </span>
+              <span className="text-xs">項功能</span>
+            </div>
+          </div>
         </div>
       </header>
 

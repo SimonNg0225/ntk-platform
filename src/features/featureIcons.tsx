@@ -108,13 +108,18 @@ export function FeatureIcon({
   icon,
   size = 18,
   className,
+  strokeWidth = 1.75, // 機構級：幼線（lucide 預設 2 偏粗），全 app 統一精煉外觀
 }: {
   icon: string
   size?: number
   className?: string
+  strokeWidth?: number
 }) {
   const Cmp = iconForFeature(icon)
-  if (Cmp) return <Cmp size={size} className={className} aria-hidden />
+  if (Cmp)
+    return (
+      <Cmp size={size} strokeWidth={strokeWidth} className={className} aria-hidden />
+    )
   return (
     <span className={className} aria-hidden>
       {icon}

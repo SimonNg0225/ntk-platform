@@ -118,7 +118,7 @@ describe('fillTemplate — 代入 {{變數}}（trim、缺值留空）', () => {
 })
 
 describe('builtinTemplates — 範本庫 + 與抽 / 填一致性', () => {
-  it("mode 'work' 回 WORK 範本（含 BAFS MC 題）", () => {
+  it("mode 'work' 回 WORK 範本（含 MC 題）", () => {
     const work = builtinTemplates('work')
     expect(work.some((t) => t.id === 'w-mc')).toBe(true)
     // work 集唔應含 learning 專屬範本

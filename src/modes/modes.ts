@@ -53,7 +53,7 @@ export const MODES: Record<ModeId, ModeDef> = {
     id: 'work',
     name: '工作模式',
     short: '工作',
-    tagline: 'BAFS 教學．工作效能',
+    tagline: '備課、批改、成績、家長溝通　一站搞掂',
     icon: '💼',
     accent: '#0d9488', // teal-600
     accentSoft: '#f0fdfa', // teal-50
@@ -63,8 +63,8 @@ export const MODES: Record<ModeId, ModeDef> = {
   },
 }
 
-/** 模式排列次序（用喺切換掣） */
-export const MODE_ORDER: ModeId[] = ['learning', 'work']
+/** 模式排列次序（用喺切換掣）。工作行先 → 對應商業化主打教師市場。 */
+export const MODE_ORDER: ModeId[] = ['work', 'learning']
 
-/** 預設模式 */
-export const DEFAULT_MODE: ModeId = 'learning'
+/** 預設模式 —— 商業化對象係全港老師，預設入「工作模式」。 */
+export const DEFAULT_MODE: ModeId = 'work'

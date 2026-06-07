@@ -169,7 +169,7 @@ export function SetupView({
         <EmptyState
           icon={BookMarked}
           title="題庫仲未有可以測嘅題目"
-          hint="去『BAFS 題庫』加幾條有正確答案嘅選擇題（或者有參考答案嘅短答題），返嚟就可以即刻開始自測。"
+          hint="去『題庫』加幾條有正確答案嘅選擇題（或者有參考答案嘅短答題），返嚟就可以即刻開始自測。"
         />
       ) : (
         <section className="space-y-5">

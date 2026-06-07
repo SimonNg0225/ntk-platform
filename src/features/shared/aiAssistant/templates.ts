@@ -82,20 +82,20 @@ const WORK_TEMPLATES: BuiltinTemplate[] = [
   {
     id: 'w-mc',
     category: '出題',
-    title: 'BAFS MC 題',
-    body: '就 BAFS 課題「{{課題}}」出 {{題數}} 條 MC 題（4 選項），每題附正確答案同每個選項嘅解釋（為何啱／錯）。',
+    title: 'MC 題',
+    body: '就課題「{{課題}}」出 {{題數}} 條 MC 題（4 選項），每題附正確答案同每個選項嘅解釋（為何啱／錯）。',
   },
   {
     id: 'w-structured',
     category: '出題',
-    title: 'BAFS 結構式問題',
+    title: '結構式問題',
     body: '就「{{課題}}」設計一條 {{分數}} 分結構式問題（分 a/b/c 小題），連參考答案同 marking scheme。',
   },
   {
     id: 'w-lessonplan',
     category: '教學',
     title: '教案大綱',
-    body: '幫我寫一份 BAFS 教案大綱：課題「{{課題}}」，共 {{節數}} 節（每節 40 分鐘）。列明學習目標、教學流程、活動同評估方式。',
+    body: '幫我寫一份教案大綱：課題「{{課題}}」，共 {{節數}} 節（每節 40 分鐘）。列明學習目標、教學流程、活動同評估方式。',
   },
   {
     id: 'w-activity',

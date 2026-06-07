@@ -160,7 +160,7 @@ const KIND_META: Record<string, Omit<SourceKind, 'id'>> = {
   reading: { label: '閱讀清單', featureId: 'learning-reading', icon: BookOpen, tone: 'blue', modes: ['learning'] },
   deck: { label: '知識卡牌組', featureId: 'learning-flashcards', icon: Layers, tone: 'accent', modes: ['learning'] },
   card: { label: '知識卡', featureId: 'learning-flashcards', icon: Layers, tone: 'accent', modes: ['learning'] },
-  question: { label: 'BAFS 題庫', featureId: 'work-questions', icon: HelpCircle, tone: 'amber', modes: ['work'] },
+  question: { label: '題庫', featureId: 'work-questions', icon: HelpCircle, tone: 'amber', modes: ['work'] },
   resource: { label: '教學資源', featureId: 'work-resources', icon: FolderOpen, tone: 'blue', modes: ['work'] },
   lesson: { label: '備課教案', featureId: 'work-lesson-plan', icon: ClipboardList, tone: 'accent', modes: ['work'] },
   meeting: { label: '會議筆記', featureId: 'work-meeting-notes', icon: ListTree, tone: 'slate', modes: ['work'] },

@@ -152,7 +152,7 @@ export function AppShell() {
                     ← 返回概覽
                   </button>
                   <h1 className="flex items-center gap-2 text-2xl font-bold text-slate-800 dark:text-slate-100">
-                    <span>⚙️</span> 設定
+                    <FeatureIcon icon="⚙️" size={24} className="text-accent" /> 設定
                   </h1>
                   <Settings />
                 </div>

@@ -961,8 +961,8 @@ export default function Inbox() {
               </p>
               <div className="mt-5 flex flex-wrap items-center justify-center gap-1.5">
                 <span className="text-xs text-slate-400 dark:text-slate-500">譬如：</span>
-                <Badge tone="blue" icon={KIND_ICON.task}>記得交 IES 初稿</Badge>
-                <Badge tone="rose" icon={KIND_ICON.countdown}>BAFS 卷一 5月8日</Badge>
+                <Badge tone="blue" icon={KIND_ICON.task}>記得收測驗卷</Badge>
+                <Badge tone="rose" icon={KIND_ICON.countdown}>期末考試 5月8日</Badge>
                 <Badge tone="accent" icon={KIND_ICON.note}>一個 app 嘅靈感 #idea</Badge>
               </div>
               <Button

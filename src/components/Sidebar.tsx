@@ -49,7 +49,7 @@ export default function Sidebar({
               NTK Platform
             </p>
             <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
-              個人與工作平台
+              教師工作台 · 個人成長
             </p>
           </div>
         </div>

@@ -30,12 +30,12 @@ export default function FeatureCard({ feature, tone = 'accent', onOpen }: Props)
   return (
     <button
       onClick={() => onOpen(feature.id)}
-      className="group flex cursor-pointer flex-col items-start rounded-3xl border border-slate-200/80 bg-white p-5 text-left shadow-xs transition duration-200 hover:-translate-y-1 hover:border-slate-300 hover:shadow-md dark:border-slate-700/60 dark:bg-slate-800 dark:shadow-none dark:hover:border-slate-600"
+      className="group flex cursor-pointer flex-col items-start rounded-xl border border-[color:var(--border)] bg-white p-5 text-left shadow-xs transition duration-150 hover:border-accent/40 hover:shadow-sm dark:bg-slate-800 dark:hover:border-accent/40"
     >
       <div
-        className={`flex h-12 w-12 items-center justify-center rounded-2xl transition duration-200 group-hover:scale-105 ${chip}`}
+        className={`flex h-10 w-10 items-center justify-center rounded-lg ${chip}`}
       >
-        <FeatureIcon icon={feature.icon} size={22} />
+        <FeatureIcon icon={feature.icon} size={20} strokeWidth={1.75} />
       </div>
       <div className="mt-4 flex flex-wrap items-center gap-2">
         <span className="text-[15px] font-semibold text-slate-800 dark:text-slate-100">

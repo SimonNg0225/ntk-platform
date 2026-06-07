@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Helmet } from 'react-helmet-async'
+import { Check, ArrowLeft } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useToast } from '../context/ToastContext'
 import { useSubscription } from '../hooks/useSubscription'
@@ -73,12 +74,17 @@ export default function Pricing() {
 
       <div className="mx-auto max-w-4xl">
         <div className="text-center">
-          <Link to="/" className="text-sm text-slate-400 hover:text-accent">
-            ← 返回首頁
+          <Link
+            to="/"
+            className="inline-flex items-center gap-1 text-sm text-slate-400 transition hover:text-accent"
+          >
+            <ArrowLeft size={14} strokeWidth={1.75} /> 返回首頁
           </Link>
-          <h1 className="mt-3 text-3xl font-bold sm:text-4xl">簡單透明嘅定價</h1>
+          <h1 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">
+            簡單透明嘅定價
+          </h1>
           <p className="mt-3 text-slate-500 dark:text-slate-400">
-            由免費版開始，需要時先升級。
+            老師免費用齊教學功能，需要時先升級。
           </p>
         </div>
 
@@ -107,10 +113,14 @@ export default function Pricing() {
                 </p>
                 <div className="mt-4 text-3xl font-bold">{plan.priceLabel}</div>
 
-                <ul className="mt-5 flex-1 space-y-2 text-sm">
+                <ul className="mt-5 flex-1 space-y-2.5 text-sm">
                   {plan.features.map((f) => (
                     <li key={f} className="flex items-start gap-2">
-                      <span className="mt-0.5 text-accent">✓</span>
+                      <Check
+                        size={16}
+                        strokeWidth={2}
+                        className="mt-0.5 shrink-0 text-accent"
+                      />
                       <span className="text-slate-600 dark:text-slate-300">
                         {f}
                       </span>

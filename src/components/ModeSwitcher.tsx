@@ -1,5 +1,6 @@
 import { useMode } from '../context/ModeContext'
 import { MODES, MODE_ORDER } from '../modes/modes'
+import { FeatureIcon } from '../features/featureIcons'
 
 // 模式切換掣 — 平台核心互動：一撳就喺個人 / 工作之間切換
 // size: 'full' = 側邊欄用 / 'compact' = 手機頂欄用
@@ -36,7 +37,11 @@ export default function ModeSwitcher({
             ].join(' ')}
             aria-pressed={active}
           >
-            <span>{def.icon}</span>
+            <FeatureIcon
+              icon={def.icon}
+              size={compact ? 14 : 16}
+              className={active ? 'text-accent' : undefined}
+            />
             <span>{def.short}</span>
           </button>
         )

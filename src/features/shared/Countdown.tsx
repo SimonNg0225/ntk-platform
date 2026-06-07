@@ -840,7 +840,7 @@ export default function Countdown() {
                     icon={PenLine}
                     value={fTitle}
                     onChange={(e) => setFTitle(e.target.value)}
-                    placeholder="例如：BAFS 卷一、交 IES、去日本"
+                    placeholder="例如：期末考試、交報告、去旅行"
                     autoFocus
                   />
                 </Field>
