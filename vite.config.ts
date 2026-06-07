@@ -43,9 +43,8 @@ export default defineConfig({
           react: ['react', 'react-dom', 'react-router-dom'],
           supabase: ['@supabase/supabase-js'],
           lucide: ['lucide-react'],
-          // 商業化 vendor：各自獨立 chunk，唔拖慢首屏 + 可長期快取
-          sentry: ['@sentry/react'],
-          analytics: ['posthog-js'],
+          // 註：@sentry/react、posthog-js 由 observability.ts 動態 import（consent-gated），
+          // Rollup 已自動 code-split；唔再喺度列 manualChunks，免整出空 chunk（build 警告）。
         },
       },
     },

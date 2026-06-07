@@ -146,6 +146,13 @@ export function AppShell() {
   return (
     <NavProvider open={navigate}>
       <div className="flex h-screen overflow-hidden bg-[color:var(--app-bg)] text-slate-900 dark:text-slate-100">
+        {/* 無障礙：跳到主內容（鍵盤 Tab 第一下先現身，滑鼠用戶睇唔到） */}
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[120] focus:rounded-lg focus:bg-accent focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-white focus:shadow-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
+        >
+          {t('shell.skipToContent', { defaultValue: '跳到主內容' })}
+        </a>
         {/* 桌面側邊欄 */}
         <Sidebar
           activeId={activeId}
@@ -165,7 +172,7 @@ export function AppShell() {
               ref={drawerRef}
               role="dialog"
               aria-modal="true"
-              aria-label="導覽選單"
+              aria-label={t('shell.navDrawer', { defaultValue: '導覽選單' })}
               tabIndex={-1}
               className="absolute left-0 top-0 h-full animate-[slideIn_0.2s_ease-out] shadow-2xl focus:outline-none"
             >
@@ -181,7 +188,11 @@ export function AppShell() {
         )}
 
         {/* 主內容區 */}
-        <main className="relative flex flex-1 flex-col overflow-hidden">
+        <main
+          id="main-content"
+          tabIndex={-1}
+          className="relative flex flex-1 flex-col overflow-hidden focus:outline-none"
+        >
           <MobileTopBar
             onMenu={() => setDrawerOpen(true)}
             onSearch={() => setPaletteOpen(true)}
