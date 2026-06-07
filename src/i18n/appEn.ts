@@ -44,6 +44,7 @@ export const appEn = {
     planFree: 'Free',
     planPro: 'Pro',
     planProTrial: 'Pro · Trial',
+    planProTest: 'Pro · Test',
     quickAdd: 'Quick add',
     navHint: 'Navigate',
     actionHint: 'Action',
