@@ -34,6 +34,7 @@ const ClassesWidget = lazyFeature(() => import('./work/ClassesWidget'))
 const CurriculumProgress = lazyFeature(() => import('./work/CurriculumProgress'))
 const QuestionBank = lazyFeature(() => import('./work/QuestionBank'))
 const MaterialGen = lazyFeature(() => import('./work/MaterialGen'))
+const Grading = lazyFeature(() => import('./work/Grading'))
 const ResourceLibrary = lazyFeature(() => import('./work/ResourceLibrary'))
 const Gradebook = lazyFeature(() => import('./work/Gradebook'))
 const LessonPlanner = lazyFeature(() => import('./work/LessonPlanner'))
@@ -212,6 +213,16 @@ export const FEATURES: Feature[] = [
     icon: '🤖',
     group: 'AI',
     component: AIAssistant,
+    status: 'ready',
+  },
+  {
+    id: 'work-grading',
+    modes: ['work'],
+    name: 'AI 批改',
+    description: '批改學生答案（文字 / 相片）+ 生成成績表評語。',
+    icon: '🖍️',
+    group: 'AI',
+    component: Grading,
     status: 'ready',
   },
   {

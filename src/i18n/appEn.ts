@@ -85,6 +85,7 @@ export const appEn = {
     'learning-fitness': { name: 'Fitness centre', desc: 'Body metrics, training log, AI nutrition, AI coach, exercise library.' },
     'work-dashboard': { name: 'Work dashboard', desc: "Today's lessons, tasks, follow-ups and class progress at a glance." },
     'work-ai': { name: 'Teaching AI', desc: 'Questions, lesson outlines, marking comments, class activities.' },
+    'work-grading': { name: 'AI marking', desc: 'Mark student answers (text / photo) + generate report-card comments.' },
     'work-curriculum': { name: 'Curriculum progress', desc: 'Track each class against the syllabus.' },
     'work-lesson-plan': { name: 'Lesson planning', desc: 'Write and organise teaching plans.' },
     'work-timetable': { name: 'Timetable', desc: 'Your weekly teaching timetable.' },
