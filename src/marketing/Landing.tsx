@@ -46,13 +46,16 @@ export default function Landing() {
   const { t } = useTranslation()
   const navigate = useNavigate()
 
-  // OAuth 回流偵測：Google 登入後 Supabase 會帶住 #access_token 落到根目錄。
-  // 喺首次 render（supabase-js 清走 hash 之前）capture 住，之後 session 一好
-  // 就自動轉去產品 /app。逾時 fallback：避免設定有誤時永遠卡住過場。
+  // OAuth 回流偵測：Google 登入後 Supabase 會帶住 token 落到根目錄。
+  //   · PKCE flow → ?code=…（query string）
+  //   · 舊 implicit flow → #access_token=…（hash）
+  // 兩種都認，喺首次 render（supabase-js 清走之前）capture 住，session 一好就
+  // 自動轉去產品 /app。逾時 fallback：避免設定有誤時永遠卡住過場。
   const [oauthReturn] = useState(
     () =>
       typeof window !== 'undefined' &&
-      /[#&]access_token=/.test(window.location.hash),
+      (/[?&]code=/.test(window.location.search) ||
+        /[#&]access_token=/.test(window.location.hash)),
   )
   const [timedOut, setTimedOut] = useState(false)
 
