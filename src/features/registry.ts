@@ -44,6 +44,7 @@ const MeetingNotes = lazyFeature(() => import('./work/MeetingNotes'))
 const AdminDocs = lazyFeature(() => import('./work/adminDocs/AdminDocs'))
 const BudgetTracker = lazyFeature(() => import('./work/BudgetTracker'))
 const WorkDashboard = lazyFeature(() => import('./work/WorkDashboard'))
+const Team = lazyFeature(() => import('./work/Team'))
 
 // 共用功能
 const Calendar = lazyFeature(() => import('./shared/Calendar'))
@@ -343,6 +344,16 @@ export const FEATURES: Feature[] = [
     icon: '🗒️',
     group: '行政',
     component: MeetingNotes,
+    status: 'ready',
+  },
+  {
+    id: 'work-team',
+    modes: ['work'],
+    name: '團隊 / 座位',
+    description: '建立學校 / 科組團隊，邀請同事、管理座位。',
+    icon: '👥',
+    group: '行政',
+    component: Team,
     status: 'ready',
   },
   {

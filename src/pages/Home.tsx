@@ -2,6 +2,7 @@ import { useMode } from '../context/ModeContext'
 import { useSettings } from '../context/SettingsContext'
 import { groupedFeatures } from '../features/registry'
 import FeatureCard, { type ToneKey } from '../components/FeatureCard'
+import PlanBadge from '../components/PlanBadge'
 
 interface Props {
   onOpen: (id: string) => void
@@ -62,11 +63,14 @@ export default function Home({ onOpen }: Props) {
                 {modeDef.tagline}
               </p>
             </div>
-            <div className="flex items-baseline gap-1.5 text-slate-400 dark:text-slate-500">
-              <span className="nums text-2xl font-semibold text-slate-700 dark:text-slate-200">
-                {total}
-              </span>
-              <span className="text-xs">項功能</span>
+            <div className="flex flex-col items-end gap-2">
+              <PlanBadge />
+              <div className="flex items-baseline gap-1.5 text-slate-400 dark:text-slate-500">
+                <span className="nums text-2xl font-semibold text-slate-700 dark:text-slate-200">
+                  {total}
+                </span>
+                <span className="text-xs">項功能</span>
+              </div>
             </div>
           </div>
         </div>

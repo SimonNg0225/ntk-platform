@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Helmet } from 'react-helmet-async'
+import { useTranslation } from 'react-i18next'
 import { Check, ArrowLeft } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useToast } from '../context/ToastContext'
@@ -27,6 +28,7 @@ const HAS_ANNUAL = PLANS.some((p) => p.annualPriceId)
 
 export default function Pricing() {
   const { user, configured, signInWithGoogle } = useAuth()
+  const { t } = useTranslation()
   const sub = useSubscription()
   const toast = useToast()
   const [busy, setBusy] = useState<string | null>(null)
@@ -39,12 +41,12 @@ export default function Pricing() {
       return
     }
     if (!isBillingConfigured) {
-      toast.info('收費功能即將推出，敬請期待 🙏')
+      toast.info(t('pricing.comingSoon'))
       return
     }
     if (!user) {
       if (!configured) {
-        toast.error('未接 Supabase，暫時無法登入升級。')
+        toast.error(t('pricing.noAuth'))
         return
       }
       await signInWithGoogle()
@@ -56,7 +58,7 @@ export default function Pricing() {
       setBusy(plan.id)
       await startCheckout(priceId)
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : '開啟付款頁失敗。')
+      toast.error(e instanceof Error ? e.message : t('pricing.checkoutFailed'))
       setBusy(null)
     }
   }
@@ -66,7 +68,7 @@ export default function Pricing() {
       setBusy('portal')
       await openBillingPortal()
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : '開啟客戶中心失敗。')
+      toast.error(e instanceof Error ? e.message : t('pricing.portalFailed'))
       setBusy(null)
     }
   }
@@ -74,8 +76,8 @@ export default function Pricing() {
   return (
     <div className="min-h-screen bg-[color:var(--app-bg)] px-6 py-12 text-slate-900 dark:text-slate-100">
       <Helmet>
-        <title>定價 · NTK Platform</title>
-        <meta name="description" content="NTK Platform 方案與定價：免費版永久免費，Pro 解鎖無限 AI 同多裝置同步。" />
+        <title>{t('pricing.metaTitle')}</title>
+        <meta name="description" content={t('pricing.metaDesc')} />
       </Helmet>
 
       <div className="mx-auto max-w-4xl">
@@ -84,13 +86,13 @@ export default function Pricing() {
             to="/"
             className="inline-flex items-center gap-1 text-sm text-slate-400 transition hover:text-accent"
           >
-            <ArrowLeft size={14} strokeWidth={1.75} /> 返回首頁
+            <ArrowLeft size={14} strokeWidth={1.75} /> {t('common.backHome')}
           </Link>
           <h1 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">
-            簡單透明嘅定價
+            {t('pricing.title')}
           </h1>
           <p className="mt-3 text-slate-500 dark:text-slate-400">
-            老師免費用齊教學功能，需要時先升級。
+            {t('pricing.subtitle')}
           </p>
 
           {HAS_ANNUAL && (
@@ -105,12 +107,12 @@ export default function Pricing() {
                       : 'text-slate-500 hover:text-accent dark:text-slate-400'
                   }`}
                 >
-                  {c === 'monthly' ? '月繳' : '年繳'}
+                  {c === 'monthly' ? t('pricing.monthly') : t('pricing.annual')}
                   {c === 'annual' && (
                     <span
                       className={`ml-1.5 text-xs ${cycle === c ? 'text-white/80' : 'text-accent'}`}
                     >
-                      慳 2 個月
+                      {t('pricing.annualSave')}
                     </span>
                   )}
                 </button>
@@ -135,7 +137,7 @@ export default function Pricing() {
               >
                 {plan.highlighted && (
                   <span className="absolute -top-3 right-6 rounded-full bg-accent px-3 py-1 text-xs font-semibold text-white">
-                    最受歡迎
+                    {t('pricing.mostPopular')}
                   </span>
                 )}
                 <h2 className="text-xl font-bold">{plan.name}</h2>
@@ -174,11 +176,11 @@ export default function Pricing() {
                         disabled={busy === 'portal'}
                         className="w-full rounded-xl border border-slate-300 py-3 font-semibold text-slate-700 transition hover:border-accent hover:text-accent disabled:opacity-50 dark:border-slate-700 dark:text-slate-200"
                       >
-                        {busy === 'portal' ? '開啟中…' : '管理訂閱'}
+                        {busy === 'portal' ? t('pricing.opening') : t('pricing.manage')}
                       </button>
                     ) : (
                       <div className="w-full rounded-xl bg-slate-100 py-3 text-center font-semibold text-slate-400 dark:bg-slate-800">
-                        目前方案
+                        {t('pricing.current')}
                       </div>
                     )
                   ) : (
@@ -192,10 +194,10 @@ export default function Pricing() {
                       }`}
                     >
                       {busy === plan.id
-                        ? '處理中…'
+                        ? t('pricing.processing')
                         : plan.id === 'pro'
-                          ? '升級 Pro'
-                          : '免費開始'}
+                          ? t('pricing.upgradePro')
+                          : t('pricing.startFree')}
                     </button>
                   )}
                 </div>
@@ -206,7 +208,7 @@ export default function Pricing() {
 
         {!isBillingConfigured && (
           <p className="mt-8 text-center text-xs text-slate-400">
-            ⓘ 收費功能尚未啟用（未設定 Stripe）。設定步驟見{' '}
+            {t('pricing.notConfiguredPre')}{' '}
             <code className="rounded bg-slate-100 px-1 dark:bg-slate-800">
               docs/COMMERCIALIZATION.md
             </code>

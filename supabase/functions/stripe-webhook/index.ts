@@ -98,6 +98,17 @@ Deno.serve(async (req: Request) => {
         const subscriptionId = session.subscription
           ? String(session.subscription)
           : null
+        // 團隊座位 checkout：更新 orgs.seats（quantity）+ stripe_subscription_id
+        const orgId = session.metadata?.org_id
+        if (orgId && subscriptionId) {
+          const sub = await stripe.subscriptions.retrieve(subscriptionId)
+          const qty = sub.items.data[0]?.quantity ?? 1
+          await admin
+            .from('orgs')
+            .update({ seats: qty, stripe_subscription_id: subscriptionId })
+            .eq('id', orgId)
+          break
+        }
         let periodEnd: string | null = null
         let status = 'active'
         if (subscriptionId) {
@@ -127,6 +138,19 @@ Deno.serve(async (req: Request) => {
         const subscription = event.data.object as Stripe.Subscription
         const customerId = String(subscription.customer)
         const deleted = event.type === 'customer.subscription.deleted'
+        // 團隊訂閱：同步座位數（取消 → 回 1 座位）
+        const orgId = subscription.metadata?.org_id
+        if (orgId) {
+          const qty = deleted ? 1 : subscription.items.data[0]?.quantity ?? 1
+          await admin
+            .from('orgs')
+            .update({
+              seats: qty,
+              stripe_subscription_id: deleted ? null : subscription.id,
+            })
+            .eq('id', orgId)
+          break
+        }
         const status = deleted ? 'canceled' : subscription.status
         await upsertByCustomer(customerId, {
           stripe_subscription_id: subscription.id,

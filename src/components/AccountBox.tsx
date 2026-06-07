@@ -1,25 +1,39 @@
+import { Link } from 'react-router-dom'
+import { ArrowUpRight } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
+import { useSubscription } from '../hooks/useSubscription'
+import PlanBadge from './PlanBadge'
 
-// 帳戶區（側邊欄底）：未登入顯示 Google 登入掣；登入後顯示用戶 + 登出
+// 帳戶區（側邊欄底）：方案徽章 + 升級 / 管理 + 帳戶。
+// 企業級訂閱慣例：永遠睇到自己係「免費版」定「Pro」，免費版有升級入口。
 export default function AccountBox() {
   const { user, configured, signInWithGoogle, signOut, loading } = useAuth()
 
-  // 未接 Supabase：顯示訪客模式提示
+  // 未接 Supabase：訪客模式（等同免費版，本機運作）
   if (!configured) {
     return (
-      <div className="px-5 py-3 text-xs text-slate-400 dark:text-slate-500">
-        👤 訪客模式 · 資料暫存本機
+      <div className="px-4 py-3">
+        <div className="flex items-center justify-between gap-2">
+          <span className="truncate text-xs text-slate-400 dark:text-slate-500">
+            👤 訪客模式 · 本機
+          </span>
+          <PlanBadge />
+        </div>
       </div>
     )
   }
 
   if (loading) {
-    return <div className="px-5 py-3 text-xs text-slate-400 dark:text-slate-500">載入中…</div>
+    return (
+      <div className="px-5 py-3 text-xs text-slate-400 dark:text-slate-500">
+        載入中…
+      </div>
+    )
   }
 
   if (!user) {
     return (
-      <div className="px-4 py-3">
+      <div className="space-y-2 px-4 py-3">
         <button
           onClick={signInWithGoogle}
           className="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
@@ -27,6 +41,15 @@ export default function AccountBox() {
           <GoogleIcon />
           用 Google 登入
         </button>
+        <div className="flex items-center justify-between px-0.5">
+          <PlanBadge />
+          <Link
+            to="/pricing"
+            className="text-[11px] font-medium text-slate-400 transition hover:text-accent"
+          >
+            睇 Pro 方案
+          </Link>
+        </div>
       </div>
     )
   }
@@ -39,29 +62,70 @@ export default function AccountBox() {
   const avatar = user.user_metadata?.avatar_url as string | undefined
 
   return (
-    <div className="flex items-center gap-2.5 px-4 py-3">
-      {avatar ? (
-        <img
-          src={avatar}
-          alt=""
-          className="h-8 w-8 rounded-full object-cover"
-        />
-      ) : (
-        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-accent-soft text-sm font-bold text-accent-strong">
-          {name.charAt(0).toUpperCase()}
-        </div>
-      )}
-      <div className="min-w-0 flex-1">
-        <p className="truncate text-xs font-medium text-slate-700 dark:text-slate-200">{name}</p>
+    <div className="space-y-2 px-4 py-3">
+      {/* 帳戶 */}
+      <div className="flex items-center gap-2.5">
+        {avatar ? (
+          <img src={avatar} alt="" className="h-8 w-8 rounded-full object-cover" />
+        ) : (
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-accent-soft text-sm font-bold text-accent-strong">
+            {name.charAt(0).toUpperCase()}
+          </div>
+        )}
+        <p className="min-w-0 flex-1 truncate text-xs font-medium text-slate-700 dark:text-slate-200">
+          {name}
+        </p>
+        <button
+          onClick={signOut}
+          className="text-xs text-slate-400 transition hover:text-red-500 dark:text-slate-500"
+        >
+          登出
+        </button>
       </div>
-      <button
-        onClick={signOut}
-        className="text-xs text-slate-400 transition hover:text-red-500 dark:text-slate-500"
-      >
-        登出
-      </button>
+
+      {/* 方案行 */}
+      <PlanRow />
     </div>
   )
+}
+
+function PlanRow() {
+  const { isPro, currentPeriodEnd } = useSubscription()
+
+  return (
+    <div className="rounded-lg bg-slate-50 px-2.5 py-1.5 dark:bg-slate-800/50">
+      <div className="flex items-center justify-between gap-2">
+        <PlanBadge />
+        {isPro ? (
+          <Link
+            to="/pricing"
+            className="text-[11px] font-medium text-slate-400 transition hover:text-accent"
+          >
+            管理
+          </Link>
+        ) : (
+          <Link
+            to="/pricing"
+            className="inline-flex items-center gap-0.5 rounded-md bg-accent px-2 py-1 text-[11px] font-semibold text-white transition hover:bg-accent-strong"
+          >
+            升級 Pro
+            <ArrowUpRight size={12} strokeWidth={2.25} />
+          </Link>
+        )}
+      </div>
+      {isPro && currentPeriodEnd && (
+        <p className="mt-1 text-[10px] text-slate-400 dark:text-slate-500">
+          續訂 {fmtDate(currentPeriodEnd)}
+        </p>
+      )}
+    </div>
+  )
+}
+
+function fmtDate(iso: string): string {
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return ''
+  return `${d.getFullYear()} 年 ${d.getMonth() + 1} 月 ${d.getDate()} 日`
 }
 
 function GoogleIcon() {

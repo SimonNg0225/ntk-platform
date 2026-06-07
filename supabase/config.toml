@@ -20,3 +20,7 @@ verify_jwt = true
 # Stripe 回呼唔會帶 Supabase JWT，改用 Stripe 簽名驗證。
 # 部署記得加 --no-verify-jwt。
 verify_jwt = false
+
+[functions.team-billing]
+# 團隊座位 checkout：需要登入用戶（owner / admin），閘道先驗 JWT。
+verify_jwt = true
