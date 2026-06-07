@@ -164,13 +164,13 @@ function StatTile({
       type="button"
       onClick={onClick}
       className={cx(
-        'group flex cursor-pointer flex-col justify-between rounded-3xl border border-slate-200/80 bg-white p-4 text-left transition duration-200 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:border-slate-700/60 dark:bg-slate-800 dark:hover:border-slate-600',
+        'group flex cursor-pointer flex-col justify-between rounded-2xl border border-slate-200/80 bg-white p-4 text-left transition duration-200 hover:border-slate-300 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:border-slate-700/60 dark:bg-slate-800 dark:hover:border-slate-600',
         span,
       )}
     >
       <div className="flex items-center justify-between">
         <span className="text-xs font-medium text-slate-400 dark:text-slate-500">{label}</span>
-        <span className={cx('flex h-8 w-8 items-center justify-center rounded-xl transition group-hover:scale-105', t.chip)}>
+        <span className={cx('flex h-8 w-8 items-center justify-center rounded-xl transition', t.chip)}>
           <Icon size={16} />
         </span>
       </div>
@@ -653,8 +653,7 @@ function WorkBento({
   return (
     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:auto-rows-[132px] lg:grid-cols-4">
       {/* ── HERO 2×2 ── */}
-      <section className="hero-gradient relative flex flex-col justify-between overflow-hidden rounded-3xl p-5 text-white shadow-lg shadow-accent/25 sm:col-span-2 lg:row-span-2">
-        <div className="pointer-events-none absolute -right-8 -top-10 h-40 w-40 rounded-full bg-white/10 blur-2xl" />
+      <section className="relative flex flex-col justify-between overflow-hidden rounded-2xl bg-accent p-5 text-white shadow-sm sm:col-span-2 lg:row-span-2">
         <div className="relative">
           <p className="text-xs font-medium text-white/70">{dateLabel}</p>
           <h1 className="mt-2 text-2xl font-bold tracking-tight">
@@ -692,7 +691,7 @@ function WorkBento({
       <button
         type="button"
         onClick={() => open('work-curriculum')}
-        className="group flex cursor-pointer items-center gap-3 rounded-3xl border border-slate-200/80 bg-white p-4 text-left transition duration-200 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:border-slate-700/60 dark:bg-slate-800 dark:hover:border-slate-600"
+        className="group flex cursor-pointer items-center gap-3 rounded-2xl border border-slate-200/80 bg-white p-4 text-left transition duration-200 hover:border-slate-300 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:border-slate-700/60 dark:bg-slate-800 dark:hover:border-slate-600"
       >
         <MiniRing value={overallProgress} size={56} stroke={6} tone={overallProgress >= 80 ? 'green' : 'accent'}>
           <span className="text-[11px] font-bold tabular-nums text-slate-700 dark:text-slate-200">{overallProgress}%</span>
@@ -722,7 +721,7 @@ function WorkBento({
       />
 
       {/* ── 今日議程 2×1 ── */}
-      <section className="flex min-h-0 flex-col rounded-3xl border border-slate-200/80 bg-white p-4 dark:border-slate-700/60 dark:bg-slate-800 sm:col-span-2">
+      <section className="flex min-h-0 flex-col rounded-2xl border border-slate-200/80 bg-white p-4 dark:border-slate-700/60 dark:bg-slate-800 sm:col-span-2">
         <div className="mb-1.5 flex items-center justify-between">
           <span className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 dark:text-slate-300">
             <Clock size={13} /> 今日議程
@@ -785,7 +784,7 @@ function WorkBento({
       />
 
       {/* ── 今日待辦 2×2 ── */}
-      <section className="flex flex-col rounded-3xl border border-slate-200/80 bg-white p-4 dark:border-slate-700/60 dark:bg-slate-800 sm:col-span-2 lg:row-span-2">
+      <section className="flex flex-col rounded-2xl border border-slate-200/80 bg-white p-4 dark:border-slate-700/60 dark:bg-slate-800 sm:col-span-2 lg:row-span-2">
         <div className="mb-2 flex items-center justify-between">
           <span className="flex items-center gap-1.5 text-sm font-semibold text-slate-700 dark:text-slate-200">
             <CheckSquare size={15} /> 今日待辦
@@ -869,9 +868,9 @@ function WorkBento({
       <button
         type="button"
         onClick={() => open('work-ai')}
-        className="group flex cursor-pointer flex-col justify-between rounded-3xl border border-dashed border-accent/40 bg-accent-soft/50 p-4 text-left transition duration-200 hover:-translate-y-0.5 hover:border-accent hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:bg-accent/10"
+        className="group flex cursor-pointer flex-col justify-between rounded-2xl border border-dashed border-accent/40 bg-accent-soft/50 p-4 text-left transition duration-200 hover:border-accent hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:bg-accent/10"
       >
-        <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-accent text-white transition group-hover:scale-105">
+        <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-accent text-white transition">
           <Zap size={16} />
         </span>
         <div>
@@ -1118,11 +1117,11 @@ function KpiWidget({ kpis, open }: { kpis: Kpi[]; open: (id: string) => void }) 
             type="button"
             onClick={() => open(k.navTo)}
             aria-label={`${k.label}：${k.value}${k.unit ?? ''}${k.delta ? `，${k.delta.text}` : ''}`}
-            className="group flex cursor-pointer flex-col justify-between rounded-3xl border border-slate-200/80 bg-white p-4 text-left transition duration-200 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:border-slate-700/60 dark:bg-slate-800 dark:hover:border-slate-600 dark:focus-visible:ring-offset-slate-900"
+            className="group flex cursor-pointer flex-col justify-between rounded-2xl border border-slate-200/80 bg-white p-4 text-left transition duration-200 hover:border-slate-300 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:border-slate-700/60 dark:bg-slate-800 dark:hover:border-slate-600 dark:focus-visible:ring-offset-slate-900"
           >
             <div className="flex items-center justify-between">
               <span className="text-xs font-medium text-slate-400 dark:text-slate-500">{k.label}</span>
-              <span className={cx('flex h-8 w-8 items-center justify-center rounded-xl transition group-hover:scale-105', t.chip)}>
+              <span className={cx('flex h-8 w-8 items-center justify-center rounded-xl transition', t.chip)}>
                 <Icon size={16} strokeWidth={2} />
               </span>
             </div>
@@ -1178,7 +1177,7 @@ function FocusWidget({ ctx }: { ctx: WidgetCtx }) {
 
   return (
     <Card clip className="p-0">
-      <div className="bg-gradient-to-br from-accent to-accent-strong px-5 py-4 text-white">
+      <div className="bg-accent px-5 py-4 text-white">
         <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-white/80">
           <Sparkles size={14} />
           今日聚焦
@@ -1584,7 +1583,7 @@ function CountdownWidget({
                 key={cd.id}
                 onClick={() => open('countdown')}
                 className={cx(
-                  'flex items-center justify-between gap-3 rounded-xl border p-4 text-left transition hover:-translate-y-0.5 hover:shadow-md',
+                  'flex items-center justify-between gap-3 rounded-xl border p-4 text-left transition hover:shadow-md',
                   urgent
                     ? 'border-rose-200 bg-rose-50/60 dark:border-rose-500/30 dark:bg-rose-500/10'
                     : 'border-slate-200 bg-white shadow-xs dark:border-slate-700 dark:bg-slate-800 dark:shadow-none',

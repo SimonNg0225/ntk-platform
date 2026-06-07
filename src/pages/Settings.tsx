@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { Sun, Moon, Monitor, type LucideIcon } from 'lucide-react'
 import { useSettings } from '../context/SettingsContext'
 import { useToast } from '../context/ToastContext'
 import { useConfirm } from '../context/ConfirmContext'
@@ -219,11 +220,11 @@ export default function Settings() {
     }
   }
 
-  const themes: { id: 'light' | 'dark' | 'system'; label: string; icon: string }[] =
+  const themes: { id: 'light' | 'dark' | 'system'; label: string; icon: LucideIcon }[] =
     [
-      { id: 'light', label: '淺色', icon: '☀️' },
-      { id: 'dark', label: '深色', icon: '🌙' },
-      { id: 'system', label: '跟隨系統', icon: '💻' },
+      { id: 'light', label: '淺色', icon: Sun },
+      { id: 'dark', label: '深色', icon: Moon },
+      { id: 'system', label: '跟隨系統', icon: Monitor },
     ]
 
   return (
@@ -245,7 +246,7 @@ export default function Settings() {
                   : 'border-slate-200 text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800'
               }`}
             >
-              <span className="text-2xl">{t.icon}</span>
+              <t.icon size={22} strokeWidth={1.75} />
               {t.label}
             </button>
           ))}
