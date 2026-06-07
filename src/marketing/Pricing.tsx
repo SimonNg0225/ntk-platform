@@ -2,10 +2,11 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Helmet } from 'react-helmet-async'
 import { useTranslation } from 'react-i18next'
-import { Check, ArrowLeft } from 'lucide-react'
+import { Check, ArrowLeft, Ticket } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useToast } from '../context/ToastContext'
 import { useSubscription } from '../hooks/useSubscription'
+import { redeemTestCode, clearTestPro } from '../lib/testPro'
 import {
   PLANS,
   isBillingConfigured,
@@ -33,6 +34,16 @@ export default function Pricing() {
   const toast = useToast()
   const [busy, setBusy] = useState<string | null>(null)
   const [cycle, setCycle] = useState<BillingCycle>('monthly')
+  const [promo, setPromo] = useState('')
+
+  function applyPromo() {
+    if (redeemTestCode(promo)) {
+      toast.success('已啟用測試 Pro 🎉')
+      setPromo('')
+    } else {
+      toast.error('推廣代碼無效')
+    }
+  }
 
   async function onPick(plan: Plan) {
     track('pricing_cta_click', { plan: plan.id, cycle })
@@ -204,6 +215,48 @@ export default function Pricing() {
               </div>
             )
           })}
+        </div>
+
+        {/* 推廣代碼（測試：輸入「NTK」即解鎖 Pro 體驗，未接付款前用） */}
+        <div className="mx-auto mt-8 max-w-sm">
+          {sub.isTest ? (
+            <div className="flex items-center justify-between gap-2 rounded-xl border border-accent/40 bg-accent-soft px-4 py-3 dark:bg-accent/10">
+              <span className="inline-flex items-center gap-1.5 text-sm font-medium text-accent-strong dark:text-accent">
+                <Ticket size={15} /> 已啟用測試 Pro
+              </span>
+              <button
+                onClick={() => {
+                  clearTestPro()
+                  toast.info('已取消測試 Pro')
+                }}
+                className="text-xs font-medium text-slate-500 transition hover:text-accent"
+              >
+                取消
+              </button>
+            </div>
+          ) : (
+            <div>
+              <label className="mb-1.5 block text-xs font-medium text-slate-500 dark:text-slate-400">
+                有推廣代碼？
+              </label>
+              <div className="flex gap-2">
+                <input
+                  value={promo}
+                  onChange={(e) => setPromo(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && applyPromo()}
+                  placeholder="輸入代碼"
+                  className="flex-1 rounded-lg border border-[color:var(--border)] bg-[color:var(--surface)] px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/30 dark:text-slate-100"
+                />
+                <button
+                  onClick={applyPromo}
+                  disabled={!promo.trim()}
+                  className="rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-white transition hover:bg-accent-strong disabled:opacity-50"
+                >
+                  套用
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
         {!isBillingConfigured && (

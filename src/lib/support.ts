@@ -53,6 +53,71 @@ export function supportMailto(subject: string, message: string): string {
   return `mailto:${SUPPORT_MAILTO}?${q}`
 }
 
+export interface SupportTicket {
+  id: string
+  subject: string
+  message: string
+  status: string
+  email: string | null
+  created_at: string
+}
+
+/** 我的查詢（RLS 只回自己提交嘅 ticket）。 */
+export async function listMyTickets(): Promise<SupportTicket[]> {
+  if (!supabase) return []
+  const { data, error } = await supabase
+    .from('support_tickets')
+    .select('id, subject, message, status, email, created_at')
+    .order('created_at', { ascending: false })
+    .limit(50)
+  if (error) throw new Error(error.message)
+  return (data ?? []) as SupportTicket[]
+}
+
+// ── Admin 收件箱 ──────────────────────────────────────────────
+const ADMIN_EMAILS = ((import.meta.env.VITE_ADMIN_EMAILS as string | undefined) ?? '')
+  .split(',')
+  .map((s) => s.trim().toLowerCase())
+  .filter(Boolean)
+
+/** 前端顯示 gate（真正權限由 support-admin Edge Function 用 ADMIN_EMAILS 驗）。 */
+export function isAdminEmail(email: string | null | undefined): boolean {
+  return !!email && ADMIN_EMAILS.includes(email.toLowerCase())
+}
+
+async function callAdmin<T>(action: string, body: Record<string, unknown> = {}): Promise<T> {
+  if (!supabase) throw new Error('未接 Supabase。')
+  const {
+    data: { session },
+  } = await supabase.auth.getSession()
+  if (!session) throw new Error('請先登入。')
+  const base = (import.meta.env.VITE_SUPABASE_URL as string).replace(/\/$/, '')
+  const res = await fetch(`${base}/functions/v1/support-admin`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${session.access_token}`,
+      apikey: import.meta.env.VITE_SUPABASE_ANON_KEY as string,
+    },
+    body: JSON.stringify({ action, ...body }),
+  })
+  const data = (await res.json().catch(() => null)) as
+    | { data?: T; error?: string }
+    | null
+  if (!res.ok || !data) throw new Error(data?.error ?? '操作失敗。')
+  return data.data as T
+}
+
+/** Admin：列出全部 ticket（service_role；Edge Function 驗 admin）。 */
+export function adminListTickets(): Promise<SupportTicket[]> {
+  return callAdmin<SupportTicket[]>('list')
+}
+
+/** Admin：標記 ticket 為已處理 / 重開。 */
+export function adminSetTicketStatus(id: string, status: 'open' | 'closed'): Promise<{ ok: true }> {
+  return callAdmin<{ ok: true }>('set-status', { id, status })
+}
+
 export const isSupportConfigured = Boolean(CRISP_ID)
 
 let loaded = false

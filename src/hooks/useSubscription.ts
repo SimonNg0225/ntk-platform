@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
+import { hasTestPro, onTestProChange } from '../lib/testPro'
 
 // ============================================================
 //  商業化 · 訂閱狀態 hook
@@ -17,6 +18,8 @@ export interface SubscriptionState {
   isPro: boolean
   currentPeriodEnd: string | null
   loading: boolean
+  /** 係咪測試 Pro（推廣代碼「NTK」本機解鎖，非真實付費）。 */
+  isTest: boolean
 }
 
 const FREE: SubscriptionState = {
@@ -25,6 +28,16 @@ const FREE: SubscriptionState = {
   isPro: false,
   currentPeriodEnd: null,
   loading: false,
+  isTest: false,
+}
+
+const TEST_PRO: SubscriptionState = {
+  plan: 'pro',
+  status: 'test',
+  isPro: true,
+  currentPeriodEnd: null,
+  loading: false,
+  isTest: true,
 }
 
 export function useSubscription(): SubscriptionState {
@@ -33,6 +46,9 @@ export function useSubscription(): SubscriptionState {
     ...FREE,
     loading: Boolean(user),
   }))
+  // 測試 Pro（推廣代碼）：本機即時生效，蓋過真實訂閱狀態
+  const [testPro, setTestPro] = useState(hasTestPro)
+  useEffect(() => onTestProChange(() => setTestPro(hasTestPro())), [])
 
   useEffect(() => {
     let cancelled = false
@@ -57,6 +73,7 @@ export function useSubscription(): SubscriptionState {
           currentPeriodEnd:
             (data?.current_period_end as string | undefined) ?? null,
           loading: false,
+          isTest: false,
         })
       })
     return () => {
@@ -64,5 +81,7 @@ export function useSubscription(): SubscriptionState {
     }
   }, [user])
 
+  // 測試 Pro 蓋過（除非真實已經係 Pro）
+  if (testPro && !state.isPro) return TEST_PRO
   return state
 }

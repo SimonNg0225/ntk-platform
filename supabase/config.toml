@@ -28,3 +28,7 @@ verify_jwt = true
 [functions.support]
 # 客服表單：需要登入用戶，閘道先驗 JWT。
 verify_jwt = true
+
+[functions.support-admin]
+# 客服收件箱（管理員）：閘道驗 JWT，function 內再驗 ADMIN_EMAILS 白名單。
+verify_jwt = true
