@@ -7,7 +7,7 @@ import {
   PartyPopper, Trophy, TrendingDown, Users, Palmtree, AlarmClock, Pin, Ban, Mail,
   Handshake, MessageSquare, FileText, Link, Clapperboard, BookMarked, Bookmark,
   Dumbbell, Zap, RotateCcw, Printer, Download, Lock, HelpCircle, Sprout, Star,
-  Receipt, Tag, HeartPulse,
+  Receipt, Tag, HeartPulse, ClipboardCheck,
 } from 'lucide-react'
 
 // ============================================================
@@ -93,6 +93,8 @@ const EMOJI_TO_ICON: Record<string, LucideIcon> = {
   '🧾': Receipt,
   '🏷️': Tag,
   '🏷': Tag,
+  '🖍️': ClipboardCheck,
+  '🖍': ClipboardCheck,
 }
 
 /** emoji → lucide 圖示元件；冇對應就回 null（呼叫方 fallback 顯示 emoji）。 */
