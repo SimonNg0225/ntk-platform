@@ -85,9 +85,17 @@ export default function Landing() {
           name="description"
           content="為香港老師而設的一站式工作台：備課、AI 出題、成績與弱項分析、點名、家長溝通、行政文件。資料在地、雲端同步、適用任何科目。"
         />
+        <meta property="og:type" content="website" />
+        <meta property="og:site_name" content="EziTeach 教學易" />
         <meta property="og:title" content="EziTeach 教學易 · 香港教師工作台" />
         <meta
           property="og:description"
+          content="備課 · AI 出題 · 成績分析 · 點名 · 家長溝通 —— 老師的日常工作，一個平台搞掂。"
+        />
+        <meta name="twitter:card" content="summary" />
+        <meta name="twitter:title" content="EziTeach 教學易 · 香港教師工作台" />
+        <meta
+          name="twitter:description"
           content="備課 · AI 出題 · 成績分析 · 點名 · 家長溝通 —— 老師的日常工作，一個平台搞掂。"
         />
       </Helmet>

@@ -89,6 +89,10 @@ export default function Pricing() {
       <Helmet>
         <title>{t('pricing.metaTitle')}</title>
         <meta name="description" content={t('pricing.metaDesc')} />
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content={t('pricing.metaTitle')} />
+        <meta property="og:description" content={t('pricing.metaDesc')} />
+        <meta name="twitter:card" content="summary" />
       </Helmet>
 
       <div className="mx-auto max-w-4xl">
