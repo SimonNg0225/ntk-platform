@@ -20,6 +20,12 @@
 
 import Stripe from 'https://esm.sh/stripe@17.5.0?target=deno'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import {
+  sendEmail,
+  alertAdmin,
+  welcomeProEmail,
+  canceledEmail,
+} from '../_shared/email.ts'
 
 const STRIPE_SECRET_KEY = Deno.env.get('STRIPE_SECRET_KEY') ?? ''
 const STRIPE_WEBHOOK_SECRET = Deno.env.get('STRIPE_WEBHOOK_SECRET') ?? ''
@@ -83,53 +89,79 @@ Deno.serve(async (req: Request) => {
     })
   }
 
-  // ── 處理事件 ──────────────────────────────────────────────
-  switch (event.type) {
-    case 'checkout.session.completed': {
-      const session = event.data.object as Stripe.Checkout.Session
-      const customerId = String(session.customer)
-      const subscriptionId = session.subscription
-        ? String(session.subscription)
-        : null
-      let periodEnd: string | null = null
-      let status = 'active'
-      if (subscriptionId) {
-        const subscription =
-          await stripe.subscriptions.retrieve(subscriptionId)
-        status = subscription.status
-        periodEnd = new Date(
-          subscription.current_period_end * 1000,
-        ).toISOString()
+  // ── 處理事件（失敗 → 回滾冪等記錄 + 告警 + 500 等 Stripe 重送）──
+  try {
+    switch (event.type) {
+      case 'checkout.session.completed': {
+        const session = event.data.object as Stripe.Checkout.Session
+        const customerId = String(session.customer)
+        const subscriptionId = session.subscription
+          ? String(session.subscription)
+          : null
+        let periodEnd: string | null = null
+        let status = 'active'
+        if (subscriptionId) {
+          const subscription =
+            await stripe.subscriptions.retrieve(subscriptionId)
+          status = subscription.status
+          periodEnd = new Date(
+            subscription.current_period_end * 1000,
+          ).toISOString()
+        }
+        await upsertByCustomer(customerId, {
+          stripe_subscription_id: subscriptionId,
+          status,
+          plan: planFromStatus(status),
+          current_period_end: periodEnd,
+        })
+        // 交易 email：歡迎升級（收件人 = checkout 填嘅 email）
+        const email = session.customer_details?.email
+        if (email && planFromStatus(status) === 'pro') {
+          const m = welcomeProEmail()
+          await sendEmail({ to: email, subject: m.subject, html: m.html })
+        }
+        break
       }
-      await upsertByCustomer(customerId, {
-        stripe_subscription_id: subscriptionId,
-        status,
-        plan: planFromStatus(status),
-        current_period_end: periodEnd,
-      })
-      break
+      case 'customer.subscription.updated':
+      case 'customer.subscription.deleted': {
+        const subscription = event.data.object as Stripe.Subscription
+        const customerId = String(subscription.customer)
+        const deleted = event.type === 'customer.subscription.deleted'
+        const status = deleted ? 'canceled' : subscription.status
+        await upsertByCustomer(customerId, {
+          stripe_subscription_id: subscription.id,
+          status,
+          plan: planFromStatus(status),
+          current_period_end: new Date(
+            subscription.current_period_end * 1000,
+          ).toISOString(),
+        })
+        // 交易 email：取消通知
+        if (deleted) {
+          const customer = await stripe.customers.retrieve(customerId)
+          const email =
+            !('deleted' in customer) && customer.email ? customer.email : null
+          if (email) {
+            const m = canceledEmail()
+            await sendEmail({ to: email, subject: m.subject, html: m.html })
+          }
+        }
+        break
+      }
+      default:
+        // 其他事件唔處理
+        break
     }
-    case 'customer.subscription.updated':
-    case 'customer.subscription.deleted': {
-      const subscription = event.data.object as Stripe.Subscription
-      const customerId = String(subscription.customer)
-      const status =
-        event.type === 'customer.subscription.deleted'
-          ? 'canceled'
-          : subscription.status
-      await upsertByCustomer(customerId, {
-        stripe_subscription_id: subscription.id,
-        status,
-        plan: planFromStatus(status),
-        current_period_end: new Date(
-          subscription.current_period_end * 1000,
-        ).toISOString(),
-      })
-      break
-    }
-    default:
-      // 其他事件唔處理
-      break
+  } catch (e) {
+    // 刪走冪等記錄令 Stripe 重送時可重試；同時告警 admin。
+    await admin.from('billing_events').delete().eq('id', event.id)
+    await alertAdmin(
+      'Stripe webhook 處理失敗',
+      `event.type=${event.type}\nevent.id=${event.id}\n${String(e)}`,
+    )
+    return new Response(JSON.stringify({ error: 'handler_failed' }), {
+      status: 500,
+    })
   }
 
   return new Response(JSON.stringify({ received: true }), { status: 200 })

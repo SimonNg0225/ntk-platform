@@ -46,8 +46,12 @@
 ## 步驟 2 — 跑 SQL migration（建資料表 + RLS）
 
 1. 喺 Supabase 左邊揀 **SQL Editor → New query**。
-2. 打開本 repo 嘅 [`supabase/migrations/0001_init.sql`](../supabase/migrations/0001_init.sql)，**全選貼上**，撳 **Run**。
-3. 入 **Table Editor**，應該見到一張 `app_rows` 表，而且 **RLS 係 enabled**。
+2. 逐個打開並執行本 repo `supabase/migrations/` 入面嘅檔案（由細到大）：
+   - [`0001_init.sql`](../supabase/migrations/0001_init.sql) — `app_rows`（通用資料表）+ RLS
+   - [`0002_commercialization.sql`](../supabase/migrations/0002_commercialization.sql) — `subscriptions` + `billing_events`（收費，選用）
+   - [`0003_ai_usage.sql`](../supabase/migrations/0003_ai_usage.sql) — `ai_usage` + 每日 AI 額度（選用）
+   每個檔案**全選貼上 → Run**。（裝咗 Supabase CLI 嘅話，一句 `supabase db push` 可全部跑晒。）
+3. 入 **Table Editor**，應該見到 `app_rows` 表，而且 **RLS 係 enabled**。
 
 > 呢張表用一個通用結構存晒所有功能嘅資料（筆記、目標、待辦、AI 對話…）。RLS policy 保證每個 user 只掂到自己嘅資料。
 
@@ -74,9 +78,18 @@
 
 ### 3c. 填返入 Supabase
 1. 返 Supabase → **Authentication → Providers → Google**，貼入 Client ID + Client secret，**Enable** + Save。
-2. **Authentication → URL Configuration**：
-   - **Site URL**：開發用 `http://localhost:5173`（上線改成 Vercel 網域）
-   - **Redirect URLs**：加 `http://localhost:5173` 同你嘅 Vercel 網域
+2. **Authentication → URL Configuration**（⚠️ 最易撞板，睇清楚）：
+   - **Site URL**：登入後嘅「預設」回流地址。開發用 `http://localhost:5173`，
+     上線**必須**改成你嘅正式網域（例如 `https://ntk-platform.vercel.app`）。
+     > 唔改嘅話，真實用戶喺正式網站登入完會被掟返去 `localhost`。
+   - **Redirect URLs**：用萬用字元加齊各環境（一行一個）：
+     ```
+     http://localhost:5173/**
+     https://你的正式網域/**
+     ```
+     > Supabase 只接受喺呢個白名單入面嘅 `redirectTo`；唔喺名單就會
+     > **fallback 去 Site URL**。本 App 嘅 `redirectTo` 用根目錄（最穩陣），
+     > 落到 `/` 之後會**自動轉去 `/app`**，所以即使你只加咗根網域都 work。
 3. 返 App 撳「用 Google 登入」測試。登入後資料會自動由本機 seed 上雲、之後改動自動同步。
 
 ---
@@ -110,7 +123,9 @@ supabase secrets set GEMINI_API_KEY=AIza...你的key
 
 > 改完 secret 之後，function 會自動用新值，唔使重新部署。
 
-完成後，登入狀態下入「🤖 學習夥伴 AI」/「🤖 BAFS 教學 AI」就傾到偈（streaming 打字效果）。
+完成後，登入狀態下入「🤖 個人 AI 助手」/「🤖 教學 AI」就傾到偈（streaming 打字效果）。
+
+> 收費 / AI 每日額度 / Resend 交易 email 等商業化設定，見 [`docs/COMMERCIALIZATION.md`](./COMMERCIALIZATION.md)。
 
 ---
 
@@ -141,6 +156,8 @@ VITE_SUPABASE_ANON_KEY=...
 | 症狀 | 多數原因 / 解決 |
 | --- | --- |
 | 撳登入無反應 / redirect 錯 | Google 嘅 redirect URI 同 Supabase Callback URL 對唔上；Supabase 嘅 Redirect URLs 未加你個網域 |
+| 登入後跳去 `localhost/#access_token=…` 卡住 | 正常！App 會自動處理 token 並轉去 `/app`。若真係卡住：① Site URL 仲係 `localhost`（上線要改成正式網域）；② Redirect URLs 未用 `/**` 加齊；③ 用咗舊版前端（`git pull` 取最新版） |
+| 上線後登入掟返 localhost | Supabase **Site URL** 仲係 `http://localhost:5173`，改成正式網域 |
 | 登入後資料無同步 | SQL migration 未跑；或 RLS policy 唔啱（用步驟 2 個 SQL 重跑一次） |
 | AI 回 401「請先登入」 | 未登入，或 session 過期 → 重新登入 |
 | AI 回 404 / 搵唔到服務 | `gemini` function 未部署（`supabase functions deploy gemini`） |

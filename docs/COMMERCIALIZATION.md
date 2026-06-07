@@ -105,7 +105,7 @@ if (!isPro) return <UpgradePrompt />   // 例如 AI 無限額度、進階統計
 ### P1 — 收費前必做
 - [x] **Gemini Edge Function 加訂閱 / 額度檢查**（防 AI 成本被刷爆）
 - [x] 免費版每日 AI 額度（`ai_usage` 表 + `consume_ai_quota` 原子函數）
-- [ ] Webhook 失敗告警（Sentry / email）
+- [x] Webhook 失敗告警（Resend email + 冪等回滾 → Stripe 重送）
 - [x] 私隱政策 + 服務條款頁
 - [x] Cookie / 分析同意
 
@@ -117,11 +117,29 @@ if (!isPro) return <UpgradePrompt />   // 例如 AI 無限額度、進階統計
   `supabase secrets set AI_DAILY_FREE_LIMIT=20` 後 `supabase functions deploy gemini`。
 - 跑 migration：`supabase db push`（含 0003）。
 
+#### 交易 Email + Webhook 告警（Resend）
+- 共用 helper `supabase/functions/_shared/email.ts`（`sendEmail` / `alertAdmin` + 範本）。
+- `stripe-webhook`：升級 → 寄「歡迎 Pro」；取消 → 寄取消通知；
+  **處理失敗 → 刪冪等記錄 + email 告警 admin + 回 500（Stripe 自動重送）**。
+- secret（未設 → email 靜靜 no-op，唔影響收費邏輯）：
+  ```bash
+  supabase secrets set RESEND_API_KEY=re_...
+  supabase secrets set RESEND_FROM='NTK Platform <noreply@你的網域>'
+  supabase secrets set ADMIN_ALERT_EMAIL=you@example.com
+  supabase functions deploy stripe-webhook --no-verify-jwt
+  ```
+
+#### E2E 測試（Playwright）
+- `playwright.config.ts` + `e2e/*.spec.ts`：行銷 → 定價 → **付費入口**
+  （未設 Stripe 時撳「升級 Pro」彈「即將推出」）→ 私隱/條款 → 進入 App。
+- 本地 / CI：`npm run test:e2e`（首次要 `npx playwright install chromium`）。
+- CI：`.github/workflows/e2e.yml`（PR + 手動觸發，與單元測試分開）。
+
 ### P2 — 營運
-- [ ] 交易 email（收據 / 取消）→ Resend
+- [x] 交易 email（收據 / 取消）→ Resend
+- [x] E2E 測試覆蓋付費流程 → Playwright
 - [ ] 客服 widget → Crisp / Intercom
 - [ ] 多語言 i18n（現為廣東話 UI）→ react-i18next
-- [ ] E2E 測試覆蓋付費流程 → Playwright
 - [ ] PostHog 漏斗：landing → signup → checkout
 
 ### P3 — 規模化
