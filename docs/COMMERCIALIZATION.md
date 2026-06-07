@@ -140,14 +140,29 @@ if (!isPro) return <UpgradePrompt />   // 例如 AI 無限額度、進階統計
 - [x] E2E 測試覆蓋付費流程 → Playwright
 - [x] 客服 widget → Crisp（`VITE_CRISP_WEBSITE_ID`，同意 Cookie 後載入）
 - [x] PostHog 漏斗：`landing_cta_click` → `signup_started` → `checkout_started`（+ `app_opened`）
-- [~] 多語言 i18n（react-i18next）：基建 + 語言切換 + **Landing 已雙語**；
-  定價 / 法律 / 30+ 功能逐字翻譯為漸進工作（t() 模式已建立）
+- [x] 多語言 i18n（react-i18next）：基建 + 語言切換 + **Landing / 定價 / 私隱 / 條款 / Cookie / 設定 已雙語**；
+  30+ 功能逐字翻譯按 `src/i18n` namespace 漸進擴充（t() 模式已建立）
 
 ### P3 — 規模化
 - [x] Feature flags / 灰度發佈（PostHog）：`useFeatureFlag(key)`（未同意/未配置 → fallback）
 - [x] 年費方案 + 折扣碼（`VITE_STRIPE_PRO_ANNUAL_PRICE_ID` + 定價切換；Checkout 已開 `allow_promotion_codes`）
-- [~] 團隊 / 多座位方案（seats）：`0004_orgs.sql` 資料模型基礎（orgs / org_members + RLS）；
-  座位計費（Stripe quantity）/ 邀請流程 / 團隊 UI 為後續工作
+- [x] 團隊 / 多座位方案（seats）：建團隊 / 邀請 / 成員管理 / 座位 checkout 完整流程
+
+#### 團隊 / 多座位（seats）
+- 資料：`0004_orgs.sql`（orgs / org_members）+ `0005_org_invites.sql`
+  （org_invites + RPC：`create_org` / `list_org_members` / `create_org_invite`
+  / `accept_org_invite` / `remove_org_member`，全 SECURITY DEFINER + 座位上限）。
+- UI：工作模式「團隊 / 座位」功能（`src/features/work/Team.tsx`）—— 建團隊、
+  邀請連結（`/app?invite=token`）、成員管理、座位用量。
+- 計費：`team-billing` Edge Function（Stripe quantity = 座位數，metadata 帶 org_id）；
+  `stripe-webhook` 收到帶 `org_id` 嘅 subscription 事件 → 更新 `orgs.seats`。
+- 部署：
+  ```bash
+  supabase db push                       # 含 0004 / 0005
+  supabase functions deploy team-billing
+  supabase secrets set STRIPE_TEAM_PRICE_ID=price_...（按座位計費嘅 price）
+  ```
+  前端 `VITE_STRIPE_TEAM_PRICE_ID` 設咗，「增加座位」先會開 Stripe；未設 → 提示「即將推出」。
 
 > 圖例：[x] 完成 · [~] 基礎已落地、餘下漸進工作 · [ ] 未做
 

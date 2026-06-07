@@ -37,7 +37,7 @@ export default function Settings() {
     subjectPackId,
     setSubjectPackId,
   } = useSettings()
-  const { i18n } = useTranslation()
+  const { t, i18n } = useTranslation()
   const toast = useToast()
   const confirm = useConfirm()
   const fileRef = useRef<HTMLInputElement>(null)
@@ -234,9 +234,9 @@ export default function Settings() {
     <div className="space-y-6">
       {/* 外觀 */}
       <Card className="p-5">
-        <SectionTitle>外觀</SectionTitle>
+        <SectionTitle>{t('settings.appearance')}</SectionTitle>
         <p className="mb-3 text-sm text-slate-500 dark:text-slate-400">
-          選擇介面主題
+          {t('settings.appearanceHint')}
         </p>
         <div className="grid grid-cols-3 gap-2">
           {themes.map((t) => (
@@ -277,9 +277,9 @@ export default function Settings() {
 
       {/* 語言 / Language */}
       <Card className="p-5">
-        <SectionTitle>語言 · Language</SectionTitle>
+        <SectionTitle>{t('settings.language')}</SectionTitle>
         <p className="mb-3 text-sm text-slate-500 dark:text-slate-400">
-          介面語言（行銷頁面已支援；產品功能逐步加入）。
+          {t('settings.languageHint')}
         </p>
         <div className="grid grid-cols-2 gap-2">
           {LANGUAGES.map((l) => (
@@ -300,7 +300,7 @@ export default function Settings() {
 
       {/* 個人資料 */}
       <Card className="p-5">
-        <SectionTitle>個人資料</SectionTitle>
+        <SectionTitle>{t('settings.profile')}</SectionTitle>
         <Field label="顯示名稱" hint="會喺歡迎訊息顯示">
           <Input
             value={displayName}
@@ -319,10 +319,10 @@ export default function Settings() {
             </span>
           }
         >
-          任教科目
+          {t('settings.subjects')}
         </SectionTitle>
         <p className="mb-3 text-sm text-slate-500 dark:text-slate-400">
-          揀你嘅任教科目，載入起始課題大綱；教學 AI 亦會以此科為語境。課題之後可喺「課程進度」自行增刪改。
+          {t('settings.subjectsHint')}
         </p>
         <Field label="科目">
           <select
@@ -357,10 +357,10 @@ export default function Settings() {
             </span>
           ) : undefined
         }>
-          我的資料一覽
+          {t('settings.dataOverview')}
         </SectionTitle>
         <p className="mb-3 text-sm text-slate-500 dark:text-slate-400">
-          睇清楚本機儲存咗幾多嘢，匯出備份前心裡有數。
+          {t('settings.dataOverviewHint')}
         </p>
         {!overview ? (
           <p className="text-sm text-slate-400">計緊…</p>
@@ -394,9 +394,9 @@ export default function Settings() {
 
       {/* 資料管理 */}
       <Card className="p-5">
-        <SectionTitle>資料管理</SectionTitle>
+        <SectionTitle>{t('settings.dataManagement')}</SectionTitle>
         <p className="mb-3 text-sm text-slate-500 dark:text-slate-400">
-          你嘅資料目前儲存喺呢部裝置嘅瀏覽器。定期匯出備份，或者喺換機時匯入。
+          {t('settings.dataManagementHint')}
         </p>
         <div
           className={`mb-3 flex items-center gap-2 rounded-lg px-3 py-2 text-sm ${
@@ -436,9 +436,9 @@ export default function Settings() {
 
       {/* 應用程式更新（PWA 手動後備） */}
       <Card className="p-5">
-        <SectionTitle>應用程式更新</SectionTitle>
+        <SectionTitle>{t('settings.appUpdate')}</SectionTitle>
         <p className="mb-3 text-sm text-slate-500 dark:text-slate-400">
-          部署咗新版但見唔到更新？可手動檢查；或清除快取強制載入最新版（你嘅資料唔受影響）。
+          {t('settings.appUpdateHint')}
         </p>
         <div className="flex flex-wrap gap-2">
           <Button variant="secondary" onClick={checkUpdate} disabled={checking}>
