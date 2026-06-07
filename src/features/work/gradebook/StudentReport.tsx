@@ -332,7 +332,7 @@ export default function StudentReport({
                   const p = result.perAssessment[a.id]
                   const av = assessmentAvg.get(a.id) ?? null
                   const diff = p != null && av != null ? p - av : null
-                  const t = p != null ? gradeOf(p, scale, bands).tone : 'slate'
+                  const tone = p != null ? gradeOf(p, scale, bands).tone : 'slate'
                   return (
                     <tr
                       key={a.id}
@@ -359,7 +359,7 @@ export default function StudentReport({
                       <td
                         className={cx(
                           'px-3 py-2 text-right font-serif text-[15px] font-semibold tabular-nums slashed-zero',
-                          TONE_TEXT[t],
+                          TONE_TEXT[tone],
                         )}
                       >
                         {p == null ? (

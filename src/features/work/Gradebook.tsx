@@ -1646,7 +1646,9 @@ function StudentsTab({ classId }: { classId: string }) {
             <textarea
               value={bulk}
               onChange={(e) => setBulk(e.target.value)}
-              placeholder={'1\t陳大文\n2\t李小明\n王美玲'}
+              placeholder={t('gradebook.bulkPlaceholder', {
+                defaultValue: '1\t陳大文\n2\t李小明\n王美玲',
+              })}
               className="min-h-[120px] w-full resize-y rounded-lg border border-slate-300 bg-white px-3 py-2 font-mono text-base sm:text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-accent focus:ring-2 focus:ring-accent/30 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
             />
           </Field>

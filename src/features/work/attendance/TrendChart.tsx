@@ -1,5 +1,7 @@
 import { useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { cx } from '../../../ui'
+import './i18n'
 import { shortDateLabel, weekdayOf } from './util'
 
 // ============================================================
@@ -26,6 +28,7 @@ const PAD_T = 14
 const PAD_B = 26
 
 export default function TrendChart({ points }: { points: TrendPoint[] }) {
+  const { t } = useTranslation()
   const [hover, setHover] = useState<number | null>(null)
 
   const marked = useMemo(() => points.filter((p) => p.rate != null), [points])
@@ -86,7 +89,7 @@ export default function TrendChart({ points }: { points: TrendPoint[] }) {
         viewBox={`0 0 ${W} ${H}`}
         className="w-full"
         role="img"
-        aria-label="出席率趨勢圖"
+        aria-label={t('attend.chartAria', { defaultValue: '出席率趨勢圖' })}
         preserveAspectRatio="none"
       >
         <defs>
@@ -134,7 +137,7 @@ export default function TrendChart({ points }: { points: TrendPoint[] }) {
           textAnchor="end"
           className="fill-amber-500 text-[9px] font-medium"
         >
-          關注線 90%
+          {t('attend.refLine', { defaultValue: '關注線 90%' })}
         </text>
 
         {/* 面積 */}
@@ -218,24 +221,49 @@ export default function TrendChart({ points }: { points: TrendPoint[] }) {
       {/* 平均線說明 */}
       <div className="mt-1 flex items-center justify-between text-[11px] text-slate-400 dark:text-slate-500">
         <span>
-          期內平均出席率{' '}
+          {t('attend.avgRate', { defaultValue: '期內平均出席率' })}{' '}
           <span className="font-semibold tabular-nums text-slate-600 dark:text-slate-300">
             {avg}%
           </span>
         </span>
-        <span className="tabular-nums">{marked.length} 個有點名日</span>
+        <span className="tabular-nums">
+          {t('attend.markedDaysCount', {
+            count: marked.length,
+            defaultValue: `${marked.length} 個有點名日`,
+          })}
+        </span>
       </div>
 
       {/* Tooltip */}
       {hp && hp.rate != null && (
         <div className="pointer-events-none absolute left-1/2 top-0 -translate-x-1/2 rounded-xl border border-slate-200/80 bg-white px-3 py-2 text-xs shadow-md dark:border-slate-700/60 dark:bg-slate-800">
           <div className="font-semibold text-slate-700 dark:text-slate-200">
-            {shortDateLabel(hp.dateKey)}（{weekdayOf(hp.dateKey)}）· {hp.rate}%
+            {t('attend.trendTooltipHead', {
+              date: shortDateLabel(hp.dateKey),
+              weekday: weekdayOf(hp.dateKey),
+              rate: hp.rate,
+              defaultValue: `${shortDateLabel(hp.dateKey)}（${weekdayOf(hp.dateKey)}）· ${hp.rate}%`,
+            })}
           </div>
           <div className="mt-0.5 flex gap-2 tabular-nums text-slate-500 dark:text-slate-400">
-            <span className="text-accent-strong dark:text-accent">出 {hp.present}</span>
-            <span className="text-amber-600 dark:text-amber-300">遲 {hp.late}</span>
-            <span className="text-rose-600 dark:text-rose-300">缺 {hp.absent}</span>
+            <span className="text-accent-strong dark:text-accent">
+              {t('attend.trendTooltipPresent', {
+                count: hp.present,
+                defaultValue: `出 ${hp.present}`,
+              })}
+            </span>
+            <span className="text-amber-600 dark:text-amber-300">
+              {t('attend.trendTooltipLate', {
+                count: hp.late,
+                defaultValue: `遲 ${hp.late}`,
+              })}
+            </span>
+            <span className="text-rose-600 dark:text-rose-300">
+              {t('attend.trendTooltipAbsent', {
+                count: hp.absent,
+                defaultValue: `缺 ${hp.absent}`,
+              })}
+            </span>
           </div>
         </div>
       )}

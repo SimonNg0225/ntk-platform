@@ -167,6 +167,7 @@ i18n.addResourceBundle(
       btnBulk: 'Bulk',
       bulkLabel: 'Bulk add (one per line)',
       bulkHint: 'Format: "no. name" or just "name". You can paste straight from Excel.',
+      bulkPlaceholder: '1\tChan Tai Man\n2\tLee Siu Ming\nWong Mei Ling',
       btnCancel: 'Cancel',
       btnAddN: 'Add {{count}}',
       studentsCount: '{{count}} students in total',
@@ -225,8 +226,8 @@ i18n.addResourceBundle(
       bandCutsHint:
         'Adjust the percentage lower bound for each grade of "{{scale}}" to match your school standard. The lowest grade always starts from 0. Unchanged = default.',
       resetDefault: 'Reset to default',
-      bandAbove: '{{value}} and above',
-      bandRange: '{{from}}–{{to}}',
+      bandAbove: '{{value}} pts and above',
+      bandRange: '{{from}}–{{to}} pts',
       bandDefault: '(default {{value}})',
       bandCutsInvalid:
         'Cut-offs must strictly decrease from high to low (a higher grade’s lower bound must exceed a lower grade’s), otherwise some grades end up unreachable. Please adjust the values in red.',

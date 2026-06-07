@@ -186,6 +186,7 @@ i18n.addResourceBundle(
       refLine: 'Watch line 90%',
       avgRate: 'Average attendance rate in period',
       markedDaysCount: '{{count}} roll-called days',
+      trendTooltipHead: '{{date}} · {{rate}}%',
       trendTooltipPresent: 'In {{count}}',
       trendTooltipLate: 'Late {{count}}',
       trendTooltipAbsent: 'Out {{count}}',

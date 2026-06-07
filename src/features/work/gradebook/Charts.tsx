@@ -145,7 +145,12 @@ export function GradeDonut({
               strokeLinecap="butt"
             >
               <title>
-                {band.label}：{n} 人（{Math.round(frac * 100)}%）
+                {t('gradebook.chartGradeCount', {
+                  label: band.label,
+                  count: n,
+                  pct: Math.round(frac * 100),
+                  defaultValue: '{{label}}：{{count}} 人（{{pct}}%）',
+                })}
               </title>
             </circle>
           )
@@ -197,11 +202,12 @@ export function TrendLine({
   passMark?: number
   height?: number
 }) {
+  const { t } = useTranslation()
   const gid = useId().replace(/[:]/g, '')
   if (points.length === 0) {
     return (
       <div className="flex items-center justify-center rounded-2xl border border-dashed border-slate-200 text-xs text-slate-400 dark:border-slate-700 dark:text-slate-500" style={{ height }}>
-        入分後即見走勢
+        {t('gradebook.chartTrendEmpty', { defaultValue: '入分後即見走勢' })}
       </div>
     )
   }
@@ -277,7 +283,18 @@ export function TrendLine({
               vectorEffect="non-scaling-stroke"
             >
               <title>
-                {p.label}{p.sub ? ` · ${p.sub}` : ''}：{Math.round(p.value)}%
+                {p.sub
+                  ? t('gradebook.chartTrendPointSub', {
+                      label: p.label,
+                      sub: p.sub,
+                      value: Math.round(p.value),
+                      defaultValue: '{{label}} · {{sub}}：{{value}}%',
+                    })
+                  : t('gradebook.chartTrendPoint', {
+                      label: p.label,
+                      value: Math.round(p.value),
+                      defaultValue: '{{label}}：{{value}}%',
+                    })}
               </title>
             </circle>
           ))}
@@ -307,9 +324,12 @@ export function BoxPlot({
   stats: { min: number; q1: number; med: number; q3: number; max: number; mean: number } | null
   passMark?: number
 }) {
+  const { t } = useTranslation()
   if (!stats) {
     return (
-      <div className="flex h-12 items-center text-xs text-slate-400 dark:text-slate-500">未夠資料畫箱形圖</div>
+      <div className="flex h-12 items-center text-xs text-slate-400 dark:text-slate-500">
+        {t('gradebook.chartBoxEmpty', { defaultValue: '未夠資料畫箱形圖' })}
+      </div>
     )
   }
   const pos = (v: number) => `${Math.max(0, Math.min(100, v))}%`
@@ -342,15 +362,33 @@ export function BoxPlot({
         <div
           className="absolute top-1/2 h-2 w-2 -translate-x-1/2 -translate-y-1/2 rotate-45 bg-slate-700 dark:bg-slate-200"
           style={{ left: pos(stats.mean) }}
-          title={`平均 ${Math.round(stats.mean)}%`}
+          title={t('gradebook.chartMean', {
+            value: Math.round(stats.mean),
+            defaultValue: '平均 {{value}}%',
+          })}
         />
       </div>
       <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] tabular-nums text-slate-400 dark:text-slate-500">
-        <span>最低 {Math.round(stats.min)}</span>
+        <span>
+          {t('gradebook.chartMin', {
+            value: Math.round(stats.min),
+            defaultValue: '最低 {{value}}',
+          })}
+        </span>
         <span>Q1 {Math.round(stats.q1)}</span>
-        <span className="font-semibold text-accent">中位 {Math.round(stats.med)}</span>
+        <span className="font-semibold text-accent">
+          {t('gradebook.chartMedian', {
+            value: Math.round(stats.med),
+            defaultValue: '中位 {{value}}',
+          })}
+        </span>
         <span>Q3 {Math.round(stats.q3)}</span>
-        <span>最高 {Math.round(stats.max)}</span>
+        <span>
+          {t('gradebook.chartMax', {
+            value: Math.round(stats.max),
+            defaultValue: '最高 {{value}}',
+          })}
+        </span>
       </div>
     </div>
   )

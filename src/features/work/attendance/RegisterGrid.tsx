@@ -1,6 +1,8 @@
 import { useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import type { AttendanceRecord, AttendanceStatus, Student } from '../../../data/types'
 import { Badge, cx } from '../../../ui'
+import './i18n'
 import {
   STATUS_GLYPH,
   STATUS_LABEL,
@@ -10,6 +12,12 @@ import {
   tallyByStudent,
   todayKey,
 } from './util'
+
+const STATUS_T_KEY: Record<AttendanceStatus, string> = {
+  present: 'attend.statusPresent',
+  late: 'attend.statusLate',
+  absent: 'attend.statusAbsent',
+}
 
 // ============================================================
 //  月度點名冊（學生 × 日子矩陣）
@@ -37,6 +45,7 @@ export default function RegisterGrid({
   dayKeys: string[] // 該月每一日（由 1 號到月尾）
   onCycle: (studentId: string, date: string, next: AttendanceStatus | null) => void
 }) {
+  const { t } = useTranslation()
   // studentId -> date -> status
   const idx = useMemo(() => {
     const m = new Map<string, Map<string, AttendanceStatus>>()
@@ -64,7 +73,7 @@ export default function RegisterGrid({
         <thead>
           <tr className="bg-slate-50/80 dark:bg-slate-800/60">
             <th className="sticky left-0 z-20 min-w-[120px] border-b border-r border-slate-200/80 bg-slate-50/95 px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 backdrop-blur dark:border-slate-700/60 dark:bg-slate-800/95 dark:text-slate-400">
-              學生
+              {t('attend.colStudent', { defaultValue: '學生' })}
             </th>
             {dayKeys.map((k) => {
               const day = Number(k.slice(8, 10))
@@ -94,7 +103,7 @@ export default function RegisterGrid({
               )
             })}
             <th className="sticky right-0 z-20 min-w-[64px] border-b border-l border-slate-200/80 bg-slate-50/95 px-2 py-2.5 text-center text-xs font-semibold uppercase tracking-wide text-slate-500 backdrop-blur dark:border-slate-700/60 dark:bg-slate-800/95 dark:text-slate-400">
-              出席率
+              {t('attend.colRate', { defaultValue: '出席率' })}
             </th>
           </tr>
         </thead>
@@ -129,7 +138,14 @@ export default function RegisterGrid({
                         type="button"
                         onClick={() => onCycle(s.id, k, nextStatus(st))}
                         title={`${s.name}・${k}`}
-                        aria-label={`${s.name}・${k}：${st ? STATUS_LABEL[st] : '未標記'}`}
+                        aria-label={t('attend.cellAria', {
+                          name: s.name,
+                          date: k,
+                          status: st
+                            ? t(STATUS_T_KEY[st], { defaultValue: STATUS_LABEL[st] })
+                            : t('attend.unmarked', { defaultValue: '未標記' }),
+                          defaultValue: `${s.name}・${k}：${st ? STATUS_LABEL[st] : '未標記'}`,
+                        })}
                         className={cx(
                           'flex h-8 w-full items-center justify-center text-xs font-semibold tabular-nums transition focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent/40',
                           st
