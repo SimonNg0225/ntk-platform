@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-label="EziTeach logo — graduation cap">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#2563eb"/>
+      <stop offset="1" stop-color="#0d9488"/>
+    </linearGradient>
+  </defs>
+  <rect x="0" y="0" width="512" height="512" rx="112" fill="url(#g)"/>
+  <g fill="#ffffff">
+    <!-- mortarboard -->
+    <polygon points="256,150 408,212 256,274 104,212"/>
+    <!-- cap base -->
+    <path d="M168 238 L168 300 C168 332 210 352 256 352 C302 352 344 332 344 300 L344 238 L256 274 Z"/>
+    <!-- tassel -->
+    <path d="M408 212 L408 300" stroke="#ffffff" stroke-width="10" stroke-linecap="round" fill="none"/>
+    <circle cx="408" cy="312" r="16" fill="#facc15"/>
+  </g>
+</svg>
