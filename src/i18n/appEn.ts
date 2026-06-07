@@ -50,6 +50,15 @@ export const appEn = {
     actionHint: 'Action',
     modeHint: 'Mode',
     switchTo: 'Switch to {{mode}}',
+    bnHome: 'Home',
+    bnMore: 'Menu',
+    bnMark: 'Mark',
+    bnGrades: 'Grades',
+    bnCal: 'Calendar',
+    bnAI: 'AI',
+    bnCards: 'Cards',
+    recent: 'Recent',
+    allFeatures: 'All features',
   },
 
   mode: {

@@ -1,10 +1,15 @@
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { ChevronDown } from 'lucide-react'
 import { useMode } from '../context/ModeContext'
 import { useSettings } from '../context/SettingsContext'
-import { groupedFeatures } from '../features/registry'
+import { groupedFeatures, getFeature } from '../features/registry'
+import { useCollection } from '../lib/store'
+import { recentFeaturesCol } from '../components/commandPalette/util'
 import FeatureCard, { type ToneKey } from '../components/FeatureCard'
 import PlanBadge from '../components/PlanBadge'
 import { groupLabel } from '../i18n/appEn'
+import { cx } from '../ui'
 
 interface Props {
   onOpen: (id: string) => void
@@ -43,6 +48,17 @@ export default function Home({ onOpen }: Props) {
   const groups = groupedFeatures(modeDef.id)
   const total = groups.reduce((n, g) => n + g.items.length, 0)
 
+  // 最近使用（常用優先）；有最近時預設收起「全部功能」，新用戶則展開。
+  const recents = useCollection(recentFeaturesCol)
+  const recentFeatures = recents
+    .map((r) => getFeature(r.featureId))
+    .filter(
+      (f): f is NonNullable<typeof f> =>
+        !!f && f.modes.includes(modeDef.id) && f.status === 'ready',
+    )
+    .slice(0, 3)
+  const [showAll, setShowAll] = useState(recentFeatures.length === 0)
+
   const name = displayName.trim()
   const greeting = name ? `${timeGreeting()}，${name}` : timeGreeting()
   const now = new Date()
@@ -79,23 +95,56 @@ export default function Home({ onOpen }: Props) {
         </div>
       </header>
 
-      {groups.map((g) => (
-        <section key={g.group}>
+      {/* 最近使用 */}
+      {recentFeatures.length > 0 && (
+        <section>
           <h2 className="mb-3.5 text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-            {groupLabel(t, g.group)}
+            {t('shell.recent', { defaultValue: '最近使用' })}
           </h2>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {g.items.map((f) => (
-              <FeatureCard
-                key={f.id}
-                feature={f}
-                tone={GROUP_TONE[g.group] ?? 'accent'}
-                onOpen={onOpen}
-              />
+            {recentFeatures.map((f) => (
+              <FeatureCard key={`r-${f.id}`} feature={f} tone="accent" onOpen={onOpen} />
             ))}
           </div>
         </section>
-      ))}
+      )}
+
+      {/* 全部功能（可摺疊） */}
+      <div>
+        <button
+          onClick={() => setShowAll((v) => !v)}
+          aria-expanded={showAll}
+          className="flex w-full items-center justify-between border-b border-[color:var(--border)] pb-2 text-sm font-semibold text-slate-600 transition-colors hover:text-accent dark:text-slate-300"
+        >
+          <span>
+            {t('shell.allFeatures', { defaultValue: '全部功能' })} ·{' '}
+            <span className="tabular-nums">{total}</span>
+          </span>
+          <ChevronDown
+            size={16}
+            className={cx('transition-transform', !showAll && '-rotate-90')}
+          />
+        </button>
+      </div>
+
+      {showAll &&
+        groups.map((g) => (
+          <section key={g.group}>
+            <h2 className="mb-3.5 text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+              {groupLabel(t, g.group)}
+            </h2>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {g.items.map((f) => (
+                <FeatureCard
+                  key={f.id}
+                  feature={f}
+                  tone={GROUP_TONE[g.group] ?? 'accent'}
+                  onOpen={onOpen}
+                />
+              ))}
+            </div>
+          </section>
+        ))}
     </div>
   )
 }
