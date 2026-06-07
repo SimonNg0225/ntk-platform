@@ -84,11 +84,23 @@ if (!isPro) return <UpgradePrompt />   // 例如 AI 無限額度、進階統計
 
 ## 4. Roadmap
 
-### P0 — 已完成（本次）
+### P0 — 已完成
 - [x] 路由 + 行銷 / 定價頁
 - [x] Stripe 訂閱（Checkout / Portal / Webhook）
 - [x] 多租戶訂閱表 + RLS（前端只讀）
 - [x] Sentry + PostHog（零成本降級）
+- [x] 機構級 SaaS 介面重設計 + 工作模式設預設（教師導向）
+- [x] **多科課程包**：科目設定 + 各科起始課題大綱（見下）
+
+#### 多科課程包（教師通用化）
+- 科目包 registry：`src/data/subjects.ts`（`SubjectPack` + `SUBJECT_PACKS`）。
+  BAFS 重用 `data/bafs.ts`，故預設 topics 種子同舊版一致（測試不變）。
+- 任教科目設定：`SettingsContext.subjectPackId`（預設 `bafs`）。
+- 設定頁「任教科目」：揀科目 → **附加** 或 **取代** 課題到 `topicsCol`。
+- 教學 AI 自動以所選科目為語境（`AIAssistant` 注入 system prompt）。
+- **加新科目包**：喺 `SUBJECT_PACKS` 加一項（`buildTopics(id, outline)`）即可，
+  其餘功能（課程進度 / 題庫 / 自測）自動沿用。
+- 起始大綱係精簡模板，未必涵蓋官方課程全部細項，老師可自行調整。
 
 ### P1 — 收費前必做
 - [ ] **Gemini Edge Function 加訂閱 / 額度檢查**（防 AI 成本被刷爆）

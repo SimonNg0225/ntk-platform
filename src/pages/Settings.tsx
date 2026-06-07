@@ -2,8 +2,13 @@ import { useEffect, useRef, useState } from 'react'
 import { useSettings } from '../context/SettingsContext'
 import { useToast } from '../context/ToastContext'
 import { useConfirm } from '../context/ConfirmContext'
-import { exportAllData, importAllData } from '../data/collections'
-import { collectionRegistry } from '../lib/store'
+import { exportAllData, importAllData, topicsCol } from '../data/collections'
+import { collectionRegistry, useCollection } from '../lib/store'
+import {
+  SUBJECT_PACKS,
+  getSubjectPack,
+  packTopics,
+} from '../data/subjects'
 import { preloadAllFeatures } from '../features/registry'
 import { Card, Button, Field, Input, SectionTitle } from '../ui'
 import { seedAllDemo } from '../lib/demoData'
@@ -26,12 +31,15 @@ export default function Settings() {
     setReduceMotion,
     compactDensity,
     setCompactDensity,
+    subjectPackId,
+    setSubjectPackId,
   } = useSettings()
   const toast = useToast()
   const confirm = useConfirm()
   const fileRef = useRef<HTMLInputElement>(null)
   const [overview, setOverview] = useState<DataOverview | null>(null)
   const [checking, setChecking] = useState(false)
+  const topics = useCollection(topicsCol)
 
   // 我的資料一覽：先 preload 全部 feature collection 登記齊（同匯出/匯入同源），
   // 再枚舉 collectionRegistry 數每個集合筆數。之後訂閱所有 collection，資料一
@@ -83,6 +91,40 @@ export default function Settings() {
   const loadDemo = async () => {
     const n = await seedAllDemo()
     toast.success(n > 0 ? `已載入 ${n} 筆示範資料` : '已有資料，毋須再載入')
+  }
+
+  // 載入選定科目嘅課題大綱到 topics 集合。
+  // 'replace'：清走現有課題換成新科（會影響已連住課題嘅進度 / 題目，故先確認）。
+  // 'append' ：只加未存在（按 id）嘅課題，保留現有。
+  const applySubject = async (mode: 'replace' | 'append') => {
+    const pack = getSubjectPack(subjectPackId)
+    if (!pack) return
+    const incoming = packTopics(pack)
+    if (incoming.length === 0) {
+      toast.info('「自訂」科目冇預設課題，可喺「課程進度」自行新增。')
+      return
+    }
+    if (mode === 'replace') {
+      const ok = await confirm({
+        title: `以「${pack.name}」課題取代現有？`,
+        message:
+          '會清走目前課題清單換成此科。已連住舊課題嘅教學進度 / 題目可能對唔返號，呢個動作無法復原。建議先匯出備份。',
+        confirmText: '取代課題',
+        tone: 'danger',
+      })
+      if (!ok) return
+      topicsCol.set(incoming)
+      toast.success(`已載入「${pack.name}」共 ${incoming.length} 個課題`)
+    } else {
+      const existing = new Set(topics.map((t) => t.id))
+      const added = incoming.filter((t) => !existing.has(t.id))
+      topicsCol.set([...topics, ...added])
+      toast.success(
+        added.length > 0
+          ? `已附加 ${added.length} 個課題`
+          : '呢個科目嘅課題已經喺清單入面',
+      )
+    }
   }
 
   const onFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -239,6 +281,44 @@ export default function Settings() {
             placeholder="例如：陳老師"
           />
         </Field>
+      </Card>
+
+      {/* 任教科目（多科課程包） */}
+      <Card className="p-5">
+        <SectionTitle
+          right={
+            <span className="text-xs font-semibold tabular-nums text-slate-400 dark:text-slate-500">
+              現有 {topics.length} 課題
+            </span>
+          }
+        >
+          任教科目
+        </SectionTitle>
+        <p className="mb-3 text-sm text-slate-500 dark:text-slate-400">
+          揀你嘅任教科目，載入起始課題大綱；教學 AI 亦會以此科為語境。課題之後可喺「課程進度」自行增刪改。
+        </p>
+        <Field label="科目">
+          <select
+            value={subjectPackId}
+            onChange={(e) => setSubjectPackId(e.target.value)}
+            className="w-full rounded-lg border border-[color:var(--border)] bg-[color:var(--surface)] px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/30 dark:text-slate-100"
+          >
+            {SUBJECT_PACKS.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.name}
+              </option>
+            ))}
+          </select>
+        </Field>
+        <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+          <Button variant="ghost" onClick={() => applySubject('append')}>
+            附加此科課題
+          </Button>
+          <Button onClick={() => applySubject('replace')}>以此科取代課題</Button>
+        </div>
+        <p className="mt-2 text-xs text-slate-400 dark:text-slate-500">
+          起始大綱為精簡模板，未必涵蓋官方課程全部細項，可自行調整。
+        </p>
       </Card>
 
       {/* 我的資料一覽 */}

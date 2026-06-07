@@ -14,6 +14,7 @@ import {
   COMPACT_DENSITY_CLASS,
   type AppearancePrefs,
 } from '../features/settings/appearancePrefs'
+import { DEFAULT_SUBJECT_PACK_ID } from '../data/subjects'
 
 // ============================================================
 //  設定系統（深色模式、密度、預設模式…）
@@ -31,6 +32,8 @@ interface Settings {
   reduceMotion: boolean
   /** 緊湊密度（可達性偏好；預設關＝行為不變，套 .density-compact） */
   compactDensity: boolean
+  /** 任教科目包 id（驅動課題大綱 / 教學 AI 語境）；預設 BAFS */
+  subjectPackId: string
 }
 
 interface SettingsApi extends Settings {
@@ -42,6 +45,8 @@ interface SettingsApi extends Settings {
   setReduceMotion: (v: boolean) => void
   /** 開關「緊湊密度」 */
   setCompactDensity: (v: boolean) => void
+  /** 設定任教科目包 */
+  setSubjectPackId: (id: string) => void
   /** 目前實際生效嘅深淺（system 會解析做 light/dark） */
   resolvedDark: boolean
 }
@@ -51,6 +56,7 @@ const DEFAULTS: Settings = {
   theme: 'system',
   displayName: '',
   lastBackupAt: null,
+  subjectPackId: DEFAULT_SUBJECT_PACK_ID,
   ...APPEARANCE_DEFAULTS,
 }
 
@@ -131,6 +137,8 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
         setSettings((s) => ({ ...s, reduceMotion })),
       setCompactDensity: (compactDensity) =>
         setSettings((s) => ({ ...s, compactDensity })),
+      setSubjectPackId: (subjectPackId) =>
+        setSettings((s) => ({ ...s, subjectPackId })),
     }),
     [settings, resolvedDark],
   )

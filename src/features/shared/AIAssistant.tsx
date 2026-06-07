@@ -13,6 +13,8 @@ import { useAuth } from '../../context/AuthContext'
 import { useToast } from '../../context/ToastContext'
 import { useConfirm } from '../../context/ConfirmContext'
 import { useNav } from '../../context/NavContext'
+import { useSettings } from '../../context/SettingsContext'
+import { getSubjectPack } from '../../data/subjects'
 import {
   streamChat,
   isAIConfigured,
@@ -155,8 +157,14 @@ export default function AIAssistant() {
   const toast = useToast()
   const confirm = useConfirm()
   const { open: goToFeature } = useNav()
+  const { subjectPackId } = useSettings()
 
   const cfg = MODE_AI[mode]
+  // 工作模式：把老師任教科目注入語境（'custom' / 找唔到包就唔注入）。
+  const subjectName =
+    mode === 'work' && subjectPackId !== 'custom'
+      ? getSubjectPack(subjectPackId)?.name
+      : undefined
 
   // ── 共用 source of truth ──
   const allThreads = useCollection(aiThreadsCol)
@@ -304,6 +312,8 @@ export default function AIAssistant() {
   const buildSystem = useCallback(
     (contexts: ContextRef[], persona: PersonaId): string => {
       let sys = cfg.system
+      if (subjectName)
+        sys += `\n\n【任教科目】老師任教科目係「${subjectName}」，出題、教案、課題請以此科為主，貼合香港中學課程。`
       const dir = personaById(persona).directive
       if (dir) sys += `\n\n【語氣要求】${dir}`
       if (contexts.length > 0) {
@@ -314,7 +324,7 @@ export default function AIAssistant() {
       }
       return sys
     },
-    [cfg.system],
+    [cfg.system, subjectName],
   )
 
   // ── 核心：送出 / 串流 ──
