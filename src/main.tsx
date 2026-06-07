@@ -5,6 +5,9 @@ import { HelmetProvider } from 'react-helmet-async'
 import { Providers, AppShell } from './App.tsx'
 import Landing from './marketing/Landing.tsx'
 import Pricing from './marketing/Pricing.tsx'
+import Privacy from './marketing/Privacy.tsx'
+import Terms from './marketing/Terms.tsx'
+import CookieConsent from './components/CookieConsent.tsx'
 import { initObservability } from './lib/observability.ts'
 import './index.css'
 
@@ -23,9 +26,12 @@ createRoot(document.getElementById('root')!).render(
           <Routes>
             <Route path="/" element={<Landing />} />
             <Route path="/pricing" element={<Pricing />} />
+            <Route path="/privacy" element={<Privacy />} />
+            <Route path="/terms" element={<Terms />} />
             <Route path="/app/*" element={<AppShell />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
+          <CookieConsent />
         </Providers>
       </BrowserRouter>
     </HelmetProvider>

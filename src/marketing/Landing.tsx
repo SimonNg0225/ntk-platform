@@ -208,7 +208,14 @@ export default function Landing() {
       </section>
 
       <footer className="border-t border-[color:var(--border)] py-8 text-center text-xs text-slate-400">
-        © {new Date().getFullYear()} NTK Platform · 為香港教育工作者而設
+        <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1">
+          <Link to="/privacy" className="transition hover:text-accent">私隱政策</Link>
+          <span aria-hidden>·</span>
+          <Link to="/terms" className="transition hover:text-accent">服務條款</Link>
+          <span aria-hidden>·</span>
+          <Link to="/pricing" className="transition hover:text-accent">定價</Link>
+        </div>
+        <p className="mt-3">© {new Date().getFullYear()} NTK Platform · 為香港教育工作者而設</p>
       </footer>
     </div>
   )

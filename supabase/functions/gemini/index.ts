@@ -17,6 +17,10 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY')
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? ''
 const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY') ?? ''
+const SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+
+// 商業化 P1：免費版每日 AI 額度（防成本被刷爆）。Pro 用戶不限。
+const DAILY_FREE_LIMIT = Number(Deno.env.get('AI_DAILY_FREE_LIMIT') ?? '20')
 
 // 只容許呢幾個 model，避免被亂叫貴 model
 const ALLOWED_MODELS = new Set(['gemini-2.5-flash', 'gemini-2.5-pro'])
@@ -83,6 +87,38 @@ Deno.serve(async (req: Request) => {
   } = await supabase.auth.getUser()
   if (authError || !user) {
     return json({ error: '請先登入先可以用 AI 功能。' }, 401)
+  }
+
+  // ── 訂閱 / 每日額度檢查 ───────────────────────────────────
+  // Pro（active / trialing）不限；免費版每日上限，超額回 429。
+  // 用 service_role 繞過 RLS 讀訂閱 + 原子遞增用量。
+  if (SERVICE_ROLE_KEY) {
+    const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY)
+    const { data: sub } = await admin
+      .from('subscriptions')
+      .select('plan, status')
+      .eq('user_id', user.id)
+      .maybeSingle()
+    const isPro =
+      sub?.plan === 'pro' &&
+      (sub?.status === 'active' || sub?.status === 'trialing')
+
+    if (!isPro) {
+      const { data: quota, error: quotaErr } = await admin.rpc(
+        'consume_ai_quota',
+        { p_user: user.id, p_limit: DAILY_FREE_LIMIT },
+      )
+      const row = Array.isArray(quota) ? quota[0] : quota
+      if (!quotaErr && row && row.allowed === false) {
+        return json(
+          {
+            error: `已用完今日免費 AI 額度（每日 ${DAILY_FREE_LIMIT} 次）。升級 Pro 即可無限使用，或聽日再試。`,
+            code: 'quota_exceeded',
+          },
+          429,
+        )
+      }
+    }
   }
 
   // ── 解析 request ─────────────────────────────────────────

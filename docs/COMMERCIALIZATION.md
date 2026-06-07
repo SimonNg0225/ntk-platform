@@ -103,11 +103,19 @@ if (!isPro) return <UpgradePrompt />   // 例如 AI 無限額度、進階統計
 - 起始大綱係精簡模板，未必涵蓋官方課程全部細項，老師可自行調整。
 
 ### P1 — 收費前必做
-- [ ] **Gemini Edge Function 加訂閱 / 額度檢查**（防 AI 成本被刷爆）
-- [ ] 免費版每日 AI 額度（用 `app_rows` 或新表計數）
+- [x] **Gemini Edge Function 加訂閱 / 額度檢查**（防 AI 成本被刷爆）
+- [x] 免費版每日 AI 額度（`ai_usage` 表 + `consume_ai_quota` 原子函數）
 - [ ] Webhook 失敗告警（Sentry / email）
-- [ ] 私隱政策 + 服務條款頁（收費市場法律要求）
-- [ ] Cookie / 分析同意（GDPR）→ 建議 `vanilla-cookieconsent`
+- [x] 私隱政策 + 服務條款頁
+- [x] Cookie / 分析同意
+
+#### AI 額度（防成本爆）
+- migration `0003_ai_usage.sql`：`ai_usage` + `consume_ai_quota(p_user, p_limit)`。
+- `gemini` Edge Function：先用 service_role 查 `subscriptions`，Pro 不限；
+  免費版每次呼叫原子遞增當日用量，超額回 **429**（前端顯示「升級 Pro」訊息）。
+- 上限由 env `AI_DAILY_FREE_LIMIT`（預設 20）控制：
+  `supabase secrets set AI_DAILY_FREE_LIMIT=20` 後 `supabase functions deploy gemini`。
+- 跑 migration：`supabase db push`（含 0003）。
 
 ### P2 — 營運
 - [ ] 交易 email（收據 / 取消）→ Resend
