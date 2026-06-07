@@ -74,7 +74,7 @@ export default function SupportButton() {
       <button
         onClick={() => setOpen(true)}
         aria-label="聯絡客服"
-        className="fixed bottom-5 right-5 z-40 flex h-12 w-12 items-center justify-center rounded-full bg-accent text-white shadow-lg transition hover:bg-accent-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+        className="fixed bottom-20 right-5 z-40 flex h-12 w-12 items-center justify-center rounded-full bg-accent text-white shadow-lg transition hover:bg-accent-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 md:bottom-5"
       >
         <LifeBuoy size={22} strokeWidth={1.75} />
       </button>

@@ -8,6 +8,8 @@ import { ConfirmProvider } from './context/ConfirmContext'
 import Sidebar from './components/Sidebar'
 import MobileTopBar from './components/MobileTopBar'
 import CommandPalette from './components/CommandPalette'
+import BottomNav from './components/BottomNav'
+import { pushRecentFeature } from './components/commandPalette/util'
 import ShortcutsModal from './features/shared/shortcuts/ShortcutsModal'
 import QuickAddButton from './features/shared/quickAdd/QuickAddButton'
 import QuickAddModal from './features/shared/quickAdd/QuickAddModal'
@@ -99,6 +101,7 @@ export function AppShell() {
   const navigate = (id: string | null) => {
     setActiveId(id)
     setDrawerOpen(false)
+    if (id && id !== '__settings__') pushRecentFeature(id)
   }
 
   const isSettings = activeId === '__settings__'
@@ -213,6 +216,13 @@ export function AppShell() {
               )}
             </div>
           </div>
+
+          {/* 手機底部導航（桌面用側邊欄） */}
+          <BottomNav
+            activeId={activeId}
+            onSelect={navigate}
+            onMore={() => setDrawerOpen(true)}
+          />
         </main>
 
         <CommandPalette
