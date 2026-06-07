@@ -1,8 +1,10 @@
 import { X } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { useMode } from '../context/ModeContext'
 import { groupedFeatures } from '../features/registry'
 import { FeatureIcon } from '../features/featureIcons'
 import { cx, IconButton } from '../ui'
+import { featName, groupLabel } from '../i18n/appEn'
 import ModeSwitcher from './ModeSwitcher'
 import AccountBox from './AccountBox'
 
@@ -23,6 +25,7 @@ export default function Sidebar({
   onClose,
   className = '',
 }: Props) {
+  const { t } = useTranslation()
   const { modeDef } = useMode()
   const groups = groupedFeatures(modeDef.id)
 
@@ -49,7 +52,7 @@ export default function Sidebar({
               NTK Platform
             </p>
             <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
-              教師工作台 · 個人成長
+              {t('shell.brandSub', { defaultValue: '教師工作台 · 個人成長' })}
             </p>
           </div>
         </div>
@@ -72,13 +75,13 @@ export default function Sidebar({
           className={navClass(activeId === null)}
         >
           <FeatureIcon icon="🏠" size={18} className={iconColor(activeId === null)} />
-          <span>首頁概覽</span>
+          <span>{t('shell.home', { defaultValue: '首頁概覽' })}</span>
         </button>
 
         {groups.map((g) => (
           <div key={g.group}>
             <p className="px-3 pb-1.5 pt-5 text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-400 first:pt-1 dark:text-slate-500">
-              {g.group}
+              {groupLabel(t, g.group)}
             </p>
             {g.items.map((f) => {
               const on = activeId === f.id
@@ -89,10 +92,10 @@ export default function Sidebar({
                   className={navClass(on)}
                 >
                   <FeatureIcon icon={f.icon} size={18} className={iconColor(on)} />
-                  <span className="flex-1 text-left">{f.name}</span>
+                  <span className="flex-1 text-left">{featName(t, f)}</span>
                   {f.status === 'soon' && (
                     <span className="rounded-md bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-400 dark:bg-slate-800 dark:text-slate-500">
-                      即將
+                      {t('shell.soon', { defaultValue: '即將' })}
                     </span>
                   )}
                 </button>
@@ -116,7 +119,7 @@ export default function Sidebar({
             size={18}
             className={iconColor(activeId === '__settings__')}
           />
-          <span>設定</span>
+          <span>{t('shell.settings', { defaultValue: '設定' })}</span>
         </button>
         <AccountBox />
         <div className="px-5 pb-3 text-xs text-slate-300 dark:text-slate-600">

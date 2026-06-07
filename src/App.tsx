@@ -22,12 +22,15 @@ import ErrorBoundary from './components/ErrorBoundary'
 import { getFeature, preloadAllFeatures } from './features/registry'
 import { FeatureIcon } from './features/featureIcons'
 import { track } from './lib/observability'
+import { useTranslation } from 'react-i18next'
+import { featName, featDesc } from './i18n/appEn'
 
 // 主框架：側邊欄 + 主內容區。
 // - 桌面（md 以上）：側邊欄固定喺左
 // - 手機：側邊欄收埋，改用頂欄漢堡掣 + 滑出式抽屜
 // - ⌘K / Ctrl+K：指令面板
 export function AppShell() {
+  const { t } = useTranslation()
   const { mode, modeDef } = useMode()
   const [activeId, setActiveId] = useState<string | null>(null)
   const [drawerOpen, setDrawerOpen] = useState(false)
@@ -155,10 +158,11 @@ export function AppShell() {
                     onClick={() => navigate(null)}
                     className="text-sm text-slate-400 transition hover:text-accent"
                   >
-                    ← 返回概覽
+                    ← {t('shell.backOverview', { defaultValue: '返回概覽' })}
                   </button>
                   <h1 className="flex items-center gap-2 text-2xl font-bold text-slate-800 dark:text-slate-100">
-                    <FeatureIcon icon="⚙️" size={24} className="text-accent" /> 設定
+                    <FeatureIcon icon="⚙️" size={24} className="text-accent" />{' '}
+                    {t('shell.settings', { defaultValue: '設定' })}
                   </h1>
                   <Settings />
                 </div>
@@ -170,17 +174,20 @@ export function AppShell() {
                     onClick={() => navigate(null)}
                     className="text-sm text-slate-400 transition hover:text-accent"
                   >
-                    ← 返回{modeDef.name}概覽
+                    ← {t('shell.backToMode', {
+                      mode: t(`mode.${modeDef.id}.name`, { defaultValue: modeDef.name }),
+                      defaultValue: `返回${modeDef.name}概覽`,
+                    })}
                   </button>
                   {/* 標準 header；selfManagedHeader 嘅功能自管 masthead，host 唔重複出標題 */}
                   {!feature.selfManagedHeader && (
                     <div>
                       <h1 className="flex items-center gap-2 text-2xl font-bold text-slate-800 dark:text-slate-100">
                         <FeatureIcon icon={feature.icon} size={24} className="text-accent" />
-                        {feature.name}
+                        {featName(t, feature)}
                       </h1>
                       <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                        {feature.description}
+                        {featDesc(t, feature)}
                       </p>
                     </div>
                   )}
@@ -190,7 +197,7 @@ export function AppShell() {
                         <Suspense
                           fallback={
                             <div className="py-20 text-center text-sm text-slate-400">
-                              載入中…
+                              {t('shell.loading', { defaultValue: '載入中…' })}
                             </div>
                           }
                         >
@@ -198,7 +205,7 @@ export function AppShell() {
                         </Suspense>
                       </ErrorBoundary>
                     ) : (
-                      <ComingSoon name={feature.name} />
+                      <ComingSoon name={featName(t, feature)} />
                     )}
                   </div>
                 </div>

@@ -1,5 +1,7 @@
+import { useTranslation } from 'react-i18next'
 import type { Feature } from '../features/types'
 import { FeatureIcon } from '../features/featureIcons'
+import { featName, featDesc } from '../i18n/appEn'
 
 interface Props {
   feature: Feature
@@ -26,6 +28,7 @@ const TONE_CHIP: Record<ToneKey, string> = {
 
 // 功能磚 — Bento 風：圓角、分類色圖示 chip、hover 微升。喺首頁概覽用網格顯示。
 export default function FeatureCard({ feature, tone = 'accent', onOpen }: Props) {
+  const { t } = useTranslation()
   const chip = TONE_CHIP[tone] ?? TONE_CHIP.accent
   return (
     <button
@@ -39,16 +42,16 @@ export default function FeatureCard({ feature, tone = 'accent', onOpen }: Props)
       </div>
       <div className="mt-4 flex flex-wrap items-center gap-2">
         <span className="text-[15px] font-semibold text-slate-800 dark:text-slate-100">
-          {feature.name}
+          {featName(t, feature)}
         </span>
         {feature.status === 'soon' && (
           <span className="rounded-md bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-400 dark:bg-slate-700 dark:text-slate-400">
-            即將推出
+            {t('shell.comingSoon', { defaultValue: '即將推出' })}
           </span>
         )}
       </div>
       <p className="mt-1 text-sm leading-relaxed text-slate-500 dark:text-slate-400">
-        {feature.description}
+        {featDesc(t, feature)}
       </p>
     </button>
   )

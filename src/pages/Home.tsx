@@ -1,8 +1,10 @@
+import { useTranslation } from 'react-i18next'
 import { useMode } from '../context/ModeContext'
 import { useSettings } from '../context/SettingsContext'
 import { groupedFeatures } from '../features/registry'
 import FeatureCard, { type ToneKey } from '../components/FeatureCard'
 import PlanBadge from '../components/PlanBadge'
+import { groupLabel } from '../i18n/appEn'
 
 interface Props {
   onOpen: (id: string) => void
@@ -35,6 +37,7 @@ function timeGreeting(): string {
 
 // 首頁概覽 — 機構級 masthead（無漸變光暈）+ 分組功能網格。
 export default function Home({ onOpen }: Props) {
+  const { t } = useTranslation()
   const { modeDef } = useMode()
   const { displayName } = useSettings()
   const groups = groupedFeatures(modeDef.id)
@@ -54,13 +57,13 @@ export default function Home({ onOpen }: Props) {
           <div className="flex min-w-0 flex-1 flex-wrap items-end justify-between gap-3 px-5 py-5 sm:px-7 sm:py-6">
             <div className="min-w-0">
               <p className="text-xs font-medium uppercase tracking-[0.12em] text-slate-400 dark:text-slate-500">
-                {modeDef.name} · {dateLabel}
+                {t(`mode.${modeDef.id}.name`, { defaultValue: modeDef.name })} · {dateLabel}
               </p>
               <h1 className="mt-1.5 text-2xl font-bold tracking-tight text-slate-800 dark:text-slate-100 sm:text-[28px]">
                 {greeting}
               </h1>
               <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                {modeDef.tagline}
+                {t(`mode.${modeDef.id}.tagline`, { defaultValue: modeDef.tagline })}
               </p>
             </div>
             <div className="flex flex-col items-end gap-2">
@@ -69,7 +72,7 @@ export default function Home({ onOpen }: Props) {
                 <span className="nums text-2xl font-semibold text-slate-700 dark:text-slate-200">
                   {total}
                 </span>
-                <span className="text-xs">項功能</span>
+                <span className="text-xs">{t('shell.featuresCount', { defaultValue: '項功能' })}</span>
               </div>
             </div>
           </div>
@@ -79,7 +82,7 @@ export default function Home({ onOpen }: Props) {
       {groups.map((g) => (
         <section key={g.group}>
           <h2 className="mb-3.5 text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-            {g.group}
+            {groupLabel(t, g.group)}
           </h2>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {g.items.map((f) => (

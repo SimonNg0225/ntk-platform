@@ -1,4 +1,5 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Search, Clock } from 'lucide-react'
 import { FEATURES } from '../features/registry'
 import { FeatureIcon } from '../features/featureIcons'
@@ -6,6 +7,7 @@ import { useMode } from '../context/ModeContext'
 import { useCollection } from '../lib/store'
 import { MODES, MODE_ORDER } from '../modes/modes'
 import { Kbd, cx } from '../ui'
+import { featName, groupLabel } from '../i18n/appEn'
 import {
   recentFeaturesCol,
   pushRecentFeature,
@@ -41,6 +43,7 @@ export default function CommandPalette({
   onNavigate,
   onQuickAdd,
 }: Props) {
+  const { t } = useTranslation()
   const { mode, setMode } = useMode()
   const recentFeatures = useCollection(recentFeaturesCol)
   const [query, setQuery] = useState('')
@@ -62,9 +65,9 @@ export default function CommandPalette({
 
     list.push({
       id: 'home',
-      label: '首頁概覽',
+      label: t('shell.home', { defaultValue: '首頁概覽' }),
       icon: '🏠',
-      hint: '導航',
+      hint: t('shell.navHint', { defaultValue: '導航' }),
       recordable: true,
       action: () => onNavigate(null),
     })
@@ -73,9 +76,9 @@ export default function CommandPalette({
     if (onQuickAdd) {
       list.push({
         id: 'quick-add',
-        label: '快速加入',
+        label: t('shell.quickAdd', { defaultValue: '快速加入' }),
         icon: '✨',
-        hint: '動作',
+        hint: t('shell.actionHint', { defaultValue: '動作' }),
         recordable: false,
         action: () => onQuickAdd(),
       })
@@ -84,9 +87,9 @@ export default function CommandPalette({
     FEATURES.filter((f) => f.modes.includes(mode)).forEach((f) =>
       list.push({
         id: f.id,
-        label: f.name,
+        label: featName(t, f),
         icon: f.icon,
-        hint: f.group,
+        hint: groupLabel(t, f.group),
         recordable: true,
         action: () => onNavigate(f.id),
       }),
@@ -95,9 +98,12 @@ export default function CommandPalette({
     MODE_ORDER.filter((m) => m !== mode).forEach((m) =>
       list.push({
         id: `mode-${m}`,
-        label: `切換到${MODES[m].name}`,
+        label: t('shell.switchTo', {
+          mode: t(`mode.${m}.name`, { defaultValue: MODES[m].name }),
+          defaultValue: `切換到${MODES[m].name}`,
+        }),
         icon: MODES[m].icon,
-        hint: '模式',
+        hint: t('shell.modeHint', { defaultValue: '模式' }),
         recordable: false,
         action: () => {
           setMode(m)
@@ -107,7 +113,7 @@ export default function CommandPalette({
     )
 
     return list
-  }, [mode, onNavigate, setMode, onQuickAdd])
+  }, [mode, onNavigate, setMode, onQuickAdd, t])
 
   // 未輸入關鍵字時，喺最頂顯示「最近使用」（按開啟次序解析返目前有效項，
   // 隔走已唔屬目前模式 / 已移除嘅）。有輸入則照舊純搜尋、唔分區。

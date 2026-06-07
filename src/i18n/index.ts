@@ -1,5 +1,6 @@
 import i18n from 'i18next'
 import { initReactI18next } from 'react-i18next'
+import { appEn } from './appEn'
 
 // ============================================================
 //  i18n（多語言）
@@ -205,6 +206,7 @@ const resources = {
   },
   en: {
     translation: {
+      ...appEn,
       signingIn: 'Signing in…',
       nav: { pricing: 'Pricing', start: 'Get started', enterApp: 'Open workspace' },
       hero: {

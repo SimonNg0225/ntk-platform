@@ -140,8 +140,10 @@ if (!isPro) return <UpgradePrompt />   // 例如 AI 無限額度、進階統計
 - [x] E2E 測試覆蓋付費流程 → Playwright
 - [x] 客服 widget → Crisp（`VITE_CRISP_WEBSITE_ID`，同意 Cookie 後載入）
 - [x] PostHog 漏斗：`landing_cta_click` → `signup_started` → `checkout_started`（+ `app_opened`）
-- [x] 多語言 i18n（react-i18next）：基建 + 語言切換 + **Landing / 定價 / 私隱 / 條款 / Cookie / 設定 已雙語**；
-  30+ 功能逐字翻譯按 `src/i18n` namespace 漸進擴充（t() 模式已建立）
+- [x] 多語言 i18n（react-i18next）：行銷 + **全導航層雙語**
+  （Landing / 定價 / 私隱 / 條款 / Cookie / 設定 + 側欄 / 首頁 / ⌘K / 功能名稱·描述·分組·模式 / 帳戶·方案）。
+  資源：`src/i18n/appEn.ts`（en 用 feature id 做 key，zh-HK 靠 `defaultValue` 回退 → E2E 不變）。
+  各功能**內部** UI 逐字翻譯為漸進工作（t() 模式已建立，照 namespace 加 key 即可）
 
 ### P3 — 規模化
 - [x] Feature flags / 灰度發佈（PostHog）：`useFeatureFlag(key)`（未同意/未配置 → fallback）

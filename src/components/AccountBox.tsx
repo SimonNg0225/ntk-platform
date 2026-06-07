@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { ArrowUpRight } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useSubscription } from '../hooks/useSubscription'
@@ -7,6 +8,7 @@ import PlanBadge from './PlanBadge'
 // 帳戶區（側邊欄底）：方案徽章 + 升級 / 管理 + 帳戶。
 // 企業級訂閱慣例：永遠睇到自己係「免費版」定「Pro」，免費版有升級入口。
 export default function AccountBox() {
+  const { t } = useTranslation()
   const { user, configured, signInWithGoogle, signOut, loading } = useAuth()
 
   // 未接 Supabase：訪客模式（等同免費版，本機運作）
@@ -15,7 +17,7 @@ export default function AccountBox() {
       <div className="px-4 py-3">
         <div className="flex items-center justify-between gap-2">
           <span className="truncate text-xs text-slate-400 dark:text-slate-500">
-            👤 訪客模式 · 本機
+            {t('shell.guestMode', { defaultValue: '👤 訪客模式 · 本機' })}
           </span>
           <PlanBadge />
         </div>
@@ -26,7 +28,7 @@ export default function AccountBox() {
   if (loading) {
     return (
       <div className="px-5 py-3 text-xs text-slate-400 dark:text-slate-500">
-        載入中…
+        {t('shell.loading', { defaultValue: '載入中…' })}
       </div>
     )
   }
@@ -39,7 +41,7 @@ export default function AccountBox() {
           className="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
         >
           <GoogleIcon />
-          用 Google 登入
+          {t('shell.loginGoogle', { defaultValue: '用 Google 登入' })}
         </button>
         <div className="flex items-center justify-between px-0.5">
           <PlanBadge />
@@ -47,7 +49,7 @@ export default function AccountBox() {
             to="/pricing"
             className="text-[11px] font-medium text-slate-400 transition hover:text-accent"
           >
-            睇 Pro 方案
+            {t('shell.seePro', { defaultValue: '睇 Pro 方案' })}
           </Link>
         </div>
       </div>
@@ -79,7 +81,7 @@ export default function AccountBox() {
           onClick={signOut}
           className="text-xs text-slate-400 transition hover:text-red-500 dark:text-slate-500"
         >
-          登出
+          {t('shell.signOut', { defaultValue: '登出' })}
         </button>
       </div>
 
@@ -90,7 +92,10 @@ export default function AccountBox() {
 }
 
 function PlanRow() {
+  const { t, i18n } = useTranslation()
   const { isPro, currentPeriodEnd } = useSubscription()
+
+  const dateStr = currentPeriodEnd ? fmtDate(currentPeriodEnd, i18n.language) : ''
 
   return (
     <div className="rounded-lg bg-slate-50 px-2.5 py-1.5 dark:bg-slate-800/50">
@@ -101,31 +106,35 @@ function PlanRow() {
             to="/pricing"
             className="text-[11px] font-medium text-slate-400 transition hover:text-accent"
           >
-            管理
+            {t('shell.manage', { defaultValue: '管理' })}
           </Link>
         ) : (
           <Link
             to="/pricing"
             className="inline-flex items-center gap-0.5 rounded-md bg-accent px-2 py-1 text-[11px] font-semibold text-white transition hover:bg-accent-strong"
           >
-            升級 Pro
+            {t('shell.upgradePro', { defaultValue: '升級 Pro' })}
             <ArrowUpRight size={12} strokeWidth={2.25} />
           </Link>
         )}
       </div>
-      {isPro && currentPeriodEnd && (
+      {isPro && dateStr && (
         <p className="mt-1 text-[10px] text-slate-400 dark:text-slate-500">
-          續訂 {fmtDate(currentPeriodEnd)}
+          {t('shell.renews', { date: dateStr, defaultValue: `續訂 ${dateStr}` })}
         </p>
       )}
     </div>
   )
 }
 
-function fmtDate(iso: string): string {
+function fmtDate(iso: string, lang: string): string {
   const d = new Date(iso)
   if (Number.isNaN(d.getTime())) return ''
-  return `${d.getFullYear()} 年 ${d.getMonth() + 1} 月 ${d.getDate()} 日`
+  return d.toLocaleDateString(lang === 'en' ? 'en-GB' : 'zh-HK', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  })
 }
 
 function GoogleIcon() {

@@ -1,4 +1,5 @@
 import { Crown } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { useSubscription } from '../hooks/useSubscription'
 
 // ============================================================
@@ -11,6 +12,7 @@ import { useSubscription } from '../hooks/useSubscription'
 // ============================================================
 
 export default function PlanBadge({ className = '' }: { className?: string }) {
+  const { t } = useTranslation()
   const { isPro, status, loading } = useSubscription()
 
   if (loading) {
@@ -29,7 +31,9 @@ export default function PlanBadge({ className = '' }: { className?: string }) {
         className={`inline-flex items-center gap-1 rounded-md bg-accent px-2 py-0.5 text-[11px] font-bold text-white ${className}`}
       >
         <Crown size={11} strokeWidth={2.25} />
-        {trial ? 'Pro · 試用' : 'Pro'}
+        {trial
+          ? t('shell.planProTrial', { defaultValue: 'Pro · 試用' })
+          : t('shell.planPro', { defaultValue: 'Pro' })}
       </span>
     )
   }
@@ -38,7 +42,7 @@ export default function PlanBadge({ className = '' }: { className?: string }) {
     <span
       className={`inline-flex items-center rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-500 dark:bg-slate-800 dark:text-slate-400 ${className}`}
     >
-      免費版
+      {t('shell.planFree', { defaultValue: '免費版' })}
     </span>
   )
 }
