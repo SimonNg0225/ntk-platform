@@ -43,6 +43,19 @@ function planFromStatus(status: string): 'free' | 'pro' {
   return status === 'active' || status === 'trialing' ? 'pro' : 'free'
 }
 
+// 安全攞訂閱週期結束時間：新版 API（2025+/dahlia）將 current_period_end
+// 由 subscription 頂層移去 items；舊版喺頂層。兩邊都試，攞唔到回 null
+// （避免 new Date(undefined) → Invalid Date → toISOString() 拋錯令 webhook 500）。
+function periodEndIso(sub: Stripe.Subscription): string | null {
+  const anySub = sub as unknown as {
+    current_period_end?: number
+    items?: { data?: Array<{ current_period_end?: number }> }
+  }
+  const ts =
+    anySub.current_period_end ?? anySub.items?.data?.[0]?.current_period_end
+  return ts ? new Date(ts * 1000).toISOString() : null
+}
+
 async function upsertByCustomer(
   customerId: string,
   fields: Record<string, unknown>,
@@ -115,9 +128,7 @@ Deno.serve(async (req: Request) => {
           const subscription =
             await stripe.subscriptions.retrieve(subscriptionId)
           status = subscription.status
-          periodEnd = new Date(
-            subscription.current_period_end * 1000,
-          ).toISOString()
+          periodEnd = periodEndIso(subscription)
         }
         await upsertByCustomer(customerId, {
           stripe_subscription_id: subscriptionId,
@@ -156,9 +167,7 @@ Deno.serve(async (req: Request) => {
           stripe_subscription_id: subscription.id,
           status,
           plan: planFromStatus(status),
-          current_period_end: new Date(
-            subscription.current_period_end * 1000,
-          ).toISOString(),
+          current_period_end: periodEndIso(subscription),
         })
         // 交易 email：取消通知
         if (deleted) {
