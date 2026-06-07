@@ -138,9 +138,9 @@ export default function IcsExportModal({
       includeEvents: withEvents,
       includeCountdowns: withCountdowns,
       now,
-      calName: 'NTK 行事曆匯出',
+      calName: '教學易 行事曆匯出',
     })
-    downloadText(`ntk-calendar-${exportStamp(now)}.ics`, ics, 'text/calendar')
+    downloadText(`eziteach-calendar-${exportStamp(now)}.ics`, ics, 'text/calendar')
     toast.success(total > 0 ? `已匯出 ${total} 項到 .ics` : '已匯出（暫時無內容）')
     onClose()
   }

@@ -1,4 +1,5 @@
 import { Menu as MenuIcon, Search, Sparkles } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { useMode } from '../context/ModeContext'
 import { IconButton } from '../ui'
 import ModeSwitcher from './ModeSwitcher'
@@ -14,6 +15,7 @@ export default function MobileTopBar({
   onQuickAdd?: () => void
 }) {
   const { modeDef } = useMode()
+  const { t } = useTranslation()
 
   return (
     <header className="sticky top-0 z-20 flex items-center gap-3 border-b border-slate-200 bg-white/90 px-4 py-2.5 backdrop-blur-md dark:border-slate-800 dark:bg-slate-900/90 md:hidden">
@@ -23,12 +25,12 @@ export default function MobileTopBar({
 
       <div className="flex items-center gap-2">
         <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-accent text-sm font-bold text-white shadow-sm ring-1 ring-inset ring-white/10">
-          N
+          E
         </div>
         <span className="text-sm font-bold text-slate-800 dark:text-slate-100">
-          NTK
+          {t('shell.brandName', { defaultValue: '教學易' })}
           <span className="ml-1 font-medium text-slate-400 dark:text-slate-500">
-            · {modeDef.short}
+            · {t(`mode.${modeDef.id}.short`, { defaultValue: modeDef.short })}
           </span>
         </span>
       </div>

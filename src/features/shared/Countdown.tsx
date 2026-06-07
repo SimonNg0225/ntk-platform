@@ -564,7 +564,7 @@ export default function Countdown() {
             <PlaneTakeoff size={14} /> Departures · 重要日子
           </span>
           <span className="hidden font-mono text-[11px] uppercase tracking-[0.3em] text-white/70 sm:inline">
-            NTK Terminal
+            EziTeach Terminal
           </span>
         </div>
 
