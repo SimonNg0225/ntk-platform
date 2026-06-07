@@ -13,6 +13,7 @@ import QuickAddButton from './features/shared/quickAdd/QuickAddButton'
 import QuickAddModal from './features/shared/quickAdd/QuickAddModal'
 import { OnboardingModal } from './components/OnboardingModal'
 import PwaUpdater from './components/PwaUpdater'
+import SupportButton from './components/SupportButton'
 import { useToast } from './context/ToastContext'
 import { seedAllDemo, hasOnboarded, markOnboarded } from './lib/demoData'
 import Home from './pages/Home'
@@ -246,6 +247,7 @@ export function AppShell() {
         />
 
         <PwaUpdater />
+        <SupportButton />
       </div>
     </NavProvider>
   )

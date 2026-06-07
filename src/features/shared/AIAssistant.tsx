@@ -1968,24 +1968,24 @@ function ContextPicker({
   function addFree() {
     const b = freeBody.trim()
     if (!b) {
-      toast.error('內容唔可以空白')
+      toast.error(t('aiasst.ctxToastEmpty', { defaultValue: '內容唔可以空白' }))
       return
     }
     onChange([
       ...current,
-      { id: `text-${Date.now()}`, kind: 'text', title: freeTitle.trim() || '自由文字', content: b },
+      { id: `text-${Date.now()}`, kind: 'text', title: freeTitle.trim() || t('aiasst.ctxFreeDefaultTitle', { defaultValue: '自由文字' }), content: b },
     ])
     setFreeTitle('')
     setFreeBody('')
-    toast.success('已加上下文')
+    toast.success(t('aiasst.ctxToastAdded', { defaultValue: '已加上下文' }))
   }
 
   const filt = (s: string) => !q.trim() || s.toLowerCase().includes(q.trim().toLowerCase())
 
   return (
-    <Modal open={open} onClose={onClose} title="連結上下文資料" size="lg">
+    <Modal open={open} onClose={onClose} title={t('aiasst.ctxLinkTitle', { defaultValue: '連結上下文資料' })} size="lg">
       <p className="mb-3 text-xs text-slate-400">
-        揀啲筆記 / 紀錄做參考，AI 回答時會優先扣連呢啲內容。已揀 {current.length} 份。
+        {t('aiasst.ctxIntro', { defaultValue: `揀啲筆記 / 紀錄做參考，AI 回答時會優先扣連呢啲內容。已揀 ${current.length} 份。`, count: current.length })}
       </p>
       <div className="mb-3 flex flex-wrap items-center gap-2">
         <SegmentedControl
@@ -1993,14 +1993,14 @@ function ContextPicker({
           onChange={setTab}
           size="sm"
           options={[
-            { id: 'note', label: '筆記', icon: StickyNote },
-            { id: 'meeting', label: '會議', icon: Users },
-            { id: 'journal', label: '日誌', icon: BookOpen },
-            { id: 'text', label: '自由文字', icon: Pencil },
+            { id: 'note', label: t('aiasst.ctxTabNote', { defaultValue: '筆記' }), icon: StickyNote },
+            { id: 'meeting', label: t('aiasst.ctxTabMeeting', { defaultValue: '會議' }), icon: Users },
+            { id: 'journal', label: t('aiasst.ctxTabJournal', { defaultValue: '日誌' }), icon: BookOpen },
+            { id: 'text', label: t('aiasst.ctxTabText', { defaultValue: '自由文字' }), icon: Pencil },
           ]}
         />
         {tab !== 'text' && (
-          <Input icon={Search} className="flex-1 py-1.5 text-base sm:text-xs" placeholder="搜尋…" value={q} onChange={(e) => setQ(e.target.value)} />
+          <Input icon={Search} className="flex-1 py-1.5 text-base sm:text-xs" placeholder={t('aiasst.ctxSearch', { defaultValue: '搜尋…' })} value={q} onChange={(e) => setQ(e.target.value)} />
         )}
       </div>
 
@@ -2009,7 +2009,7 @@ function ContextPicker({
           (() => {
             const activeNotes = notes.filter((n) => !n.archived && !n.trashed)
             return activeNotes.length === 0 ? (
-              <EmptyState icon={StickyNote} title="未有筆記" />
+              <EmptyState icon={StickyNote} title={t('aiasst.ctxEmptyNote', { defaultValue: '未有筆記' })} />
             ) : (
               activeNotes
                 .filter((n) => filt(deriveTitle(n) + n.content))
@@ -2030,7 +2030,7 @@ function ContextPicker({
 
         {tab === 'meeting' &&
           (meetings.length === 0 ? (
-            <EmptyState icon={Users} title="未有會議紀錄" />
+            <EmptyState icon={Users} title={t('aiasst.ctxEmptyMeeting', { defaultValue: '未有會議紀錄' })} />
           ) : (
             meetings
               .filter((m) => filt(m.title + m.content))
@@ -2047,7 +2047,7 @@ function ContextPicker({
 
         {tab === 'journal' &&
           (journals.length === 0 ? (
-            <EmptyState icon={BookOpen} title="未有日誌" />
+            <EmptyState icon={BookOpen} title={t('aiasst.ctxEmptyJournal', { defaultValue: '未有日誌' })} />
           ) : (
             journals
               .filter((j) => filt(`${j.date} ${j.title ?? ''} ${j.content}`))
@@ -2057,28 +2057,28 @@ function ContextPicker({
                   selected={has(j.id)}
                   title={`${j.date}${j.mood ? ` · ${j.mood}` : ''}`}
                   preview={j.content}
-                  onToggle={() => toggle({ id: j.id, kind: 'journal', title: `日誌 ${j.date}`, content: j.content })}
+                  onToggle={() => toggle({ id: j.id, kind: 'journal', title: t('aiasst.ctxJournalTitle', { defaultValue: `日誌 ${j.date}`, date: j.date }), content: j.content })}
                 />
               ))
           ))}
 
         {tab === 'text' && (
           <div className="space-y-2">
-            <Input placeholder="標題（選填）" value={freeTitle} onChange={(e) => setFreeTitle(e.target.value)} />
-            <Textarea rows={5} placeholder="貼上你想 AI 參考嘅文字…" value={freeBody} onChange={(e) => setFreeBody(e.target.value)} />
-            <Button size="sm" icon={Plus} onClick={addFree}>加入上下文</Button>
+            <Input placeholder={t('aiasst.ctxFreeTitlePlaceholder', { defaultValue: '標題（選填）' })} value={freeTitle} onChange={(e) => setFreeTitle(e.target.value)} />
+            <Textarea rows={5} placeholder={t('aiasst.ctxFreeBodyPlaceholder', { defaultValue: '貼上你想 AI 參考嘅文字…' })} value={freeBody} onChange={(e) => setFreeBody(e.target.value)} />
+            <Button size="sm" icon={Plus} onClick={addFree}>{t('aiasst.ctxAddContext', { defaultValue: '加入上下文' })}</Button>
           </div>
         )}
       </div>
 
       {current.length > 0 && (
         <div className="mt-3 border-t border-slate-200 pt-3 dark:border-slate-700">
-          <p className="mb-1.5 text-[11px] font-medium text-slate-400">已選：</p>
+          <p className="mb-1.5 text-[11px] font-medium text-slate-400">{t('aiasst.ctxSelected', { defaultValue: '已選：' })}</p>
           <div className="flex flex-wrap gap-1.5">
             {current.map((c) => (
               <span key={c.id} className="inline-flex items-center gap-1 rounded-full bg-accent-soft px-2 py-0.5 text-[11px] text-accent-strong dark:bg-accent/15 dark:text-accent">
                 {c.title}
-                <button type="button" onClick={() => onChange(current.filter((x) => x.id !== c.id))} aria-label={`移除：${c.title}`}>
+                <button type="button" onClick={() => onChange(current.filter((x) => x.id !== c.id))} aria-label={t('aiasst.ctxRemove', { defaultValue: `移除：${c.title}`, title: c.title })}>
                   <X size={11} />
                 </button>
               </span>
@@ -2141,38 +2141,40 @@ function StatsModal({
   stats: ReturnType<typeof computeStats>
   mode: ModeId
 }) {
+  const { t } = useTranslation()
+  const modeLabel = mode === 'work' ? t('aiasst.modeWork', { defaultValue: '工作' }) : t('aiasst.modePersonal', { defaultValue: '個人' })
   return (
-    <Modal open={open} onClose={onClose} title={`用量統計 · ${mode === 'work' ? '工作' : '個人'}模式`} size="lg">
+    <Modal open={open} onClose={onClose} title={t('aiasst.statsTitle', { defaultValue: `用量統計 · ${mode === 'work' ? '工作' : '個人'}模式`, mode: modeLabel })} size="lg">
       <div className="space-y-4">
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <StatCard label="對話數" value={stats.threads} icon={Bot} />
-          <StatCard label="我問" value={stats.userMsgs} hint="條訊息" />
-          <StatCard label="AI 答" value={stats.modelMsgs} hint="條訊息" highlight />
+          <StatCard label={t('aiasst.statThreads', { defaultValue: '對話數' })} value={stats.threads} icon={Bot} />
+          <StatCard label={t('aiasst.statUserMsgs', { defaultValue: '我問' })} value={stats.userMsgs} hint={t('aiasst.statMessagesUnit', { defaultValue: '條訊息' })} />
+          <StatCard label={t('aiasst.statModelMsgs', { defaultValue: 'AI 答' })} value={stats.modelMsgs} hint={t('aiasst.statMessagesUnit', { defaultValue: '條訊息' })} highlight />
           <StatCard
-            label="連續活躍"
+            label={t('aiasst.statStreak', { defaultValue: '連續活躍' })}
             value={stats.streak}
-            unit="日"
+            unit={t('aiasst.statStreakUnit', { defaultValue: '日' })}
             trend={stats.streak > 0 ? { value: '🔥', dir: 'up' } : undefined}
           />
         </div>
 
         <Card padded>
-          <SectionTitle icon={BarChart3} right={stats.busiestDay ? <span className="text-[11px] text-slate-400">最忙 {stats.busiestDay.label}（{stats.busiestDay.count}）</span> : undefined}>
-            近 14 日活躍
+          <SectionTitle icon={BarChart3} right={stats.busiestDay ? <span className="text-[11px] text-slate-400">{t('aiasst.statBusiest', { defaultValue: `最忙 ${stats.busiestDay.label}（${stats.busiestDay.count}）`, label: stats.busiestDay.label, count: stats.busiestDay.count })}</span> : undefined}>
+            {t('aiasst.statRecent14', { defaultValue: '近 14 日活躍' })}
           </SectionTitle>
           <ActivityBars data={stats.daily} />
         </Card>
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <Card padded>
-            <SectionTitle>我 / AI 訊息比例</SectionTitle>
+            <SectionTitle>{t('aiasst.statRatioTitle', { defaultValue: '我 / AI 訊息比例' })}</SectionTitle>
             <RatioBar user={stats.userMsgs} model={stats.modelMsgs} />
           </Card>
           <Card padded>
-            <SectionTitle>其他</SectionTitle>
+            <SectionTitle>{t('aiasst.statOther', { defaultValue: '其他' })}</SectionTitle>
             <div className="space-y-2 text-sm">
-              <Row label="總字數（約）" value={stats.totalWords.toLocaleString()} />
-              <Row label="每對話平均訊息" value={String(stats.avgPerThread)} />
+              <Row label={t('aiasst.statTotalWords', { defaultValue: '總字數（約）' })} value={stats.totalWords.toLocaleString()} />
+              <Row label={t('aiasst.statAvgPerThread', { defaultValue: '每對話平均訊息' })} value={String(stats.avgPerThread)} />
             </div>
           </Card>
         </div>
@@ -2202,19 +2204,20 @@ function RenameModal({
   onClose: () => void
   onSave: (title: string) => void
 }) {
+  const { t } = useTranslation()
   const [val, setVal] = useState(currentTitle)
   useEffect(() => setVal(currentTitle), [currentTitle, threadId])
   return (
     <Modal
       open={!!threadId}
       onClose={onClose}
-      title="重新命名對話"
+      title={t('aiasst.renameTitle', { defaultValue: '重新命名對話' })}
       size="sm"
       footer={
         <>
-          <Button variant="ghost" onClick={onClose}>取消</Button>
+          <Button variant="ghost" onClick={onClose}>{t('aiasst.cancel', { defaultValue: '取消' })}</Button>
           <Button icon={Check} onClick={() => onSave(val.trim() || currentTitle)} disabled={!val.trim()}>
-            儲存
+            {t('aiasst.renameSave', { defaultValue: '儲存' })}
           </Button>
         </>
       }
@@ -2224,7 +2227,7 @@ function RenameModal({
         value={val}
         onChange={(e) => setVal(e.target.value)}
         onKeyDown={(e) => { if (e.key === 'Enter') onSave(val.trim() || currentTitle) }}
-        placeholder="對話名稱"
+        placeholder={t('aiasst.renamePlaceholder', { defaultValue: '對話名稱' })}
       />
     </Modal>
   )
@@ -2244,6 +2247,7 @@ function CommandPalette({
   actions: { id: string; label: string; icon: import('lucide-react').LucideIcon; run: () => void }[]
   onSelectThread: (id: string) => void
 }) {
+  const { t } = useTranslation()
   const [q, setQ] = useState('')
   const [hi, setHi] = useState(0)
   const inputRef = useRef<HTMLInputElement | null>(null)
@@ -2261,9 +2265,9 @@ function CommandPalette({
     .filter((a) => !k || a.label.toLowerCase().includes(k))
     .map((a) => ({ type: 'action' as const, ...a }))
   const threadItems = threads
-    .filter((t) => !k || t.title.toLowerCase().includes(k))
+    .filter((th) => !k || th.title.toLowerCase().includes(k))
     .slice(0, 8)
-    .map((t) => ({ type: 'thread' as const, id: t.id, label: t.title }))
+    .map((th) => ({ type: 'thread' as const, id: th.id, label: th.title }))
   const flat = [...actItems, ...threadItems]
   const clampedHi = Math.min(hi, Math.max(0, flat.length - 1))
 
@@ -2295,33 +2299,33 @@ function CommandPalette({
               else if (e.key === 'Enter') { e.preventDefault(); run(clampedHi) }
               else if (e.key === 'Escape') onClose()
             }}
-            placeholder="搵指令或對話…"
+            placeholder={t('aiasst.palettePlaceholder', { defaultValue: '搵指令或對話…' })}
             className="flex-1 bg-transparent py-3 text-base sm:text-sm text-slate-700 outline-none placeholder:text-slate-400 dark:text-slate-200"
           />
           <Kbd>esc</Kbd>
         </div>
         <div className="max-h-[50vh] overflow-y-auto p-1.5">
           {flat.length === 0 ? (
-            <p className="py-6 text-center text-sm text-slate-400">搵唔到嘢</p>
+            <p className="py-6 text-center text-sm text-slate-400">{t('aiasst.paletteEmpty', { defaultValue: '搵唔到嘢' })}</p>
           ) : (
             <>
-              {actItems.length > 0 && <PaletteLabel>指令</PaletteLabel>}
+              {actItems.length > 0 && <PaletteLabel>{t('aiasst.paletteSectionCommands', { defaultValue: '指令' })}</PaletteLabel>}
               {actItems.map((a, i) => (
                 <PaletteRow key={a.id} active={i === clampedHi} icon={a.icon} label={a.label} onClick={() => run(i)} onHover={() => setHi(i)} />
               ))}
-              {threadItems.length > 0 && <PaletteLabel>對話</PaletteLabel>}
-              {threadItems.map((t, i) => {
+              {threadItems.length > 0 && <PaletteLabel>{t('aiasst.paletteSectionThreads', { defaultValue: '對話' })}</PaletteLabel>}
+              {threadItems.map((th, i) => {
                 const idx = actItems.length + i
                 return (
-                  <PaletteRow key={t.id} active={idx === clampedHi} icon={MessageSquarePlus} label={t.label} onClick={() => run(idx)} onHover={() => setHi(idx)} />
+                  <PaletteRow key={th.id} active={idx === clampedHi} icon={MessageSquarePlus} label={th.label} onClick={() => run(idx)} onHover={() => setHi(idx)} />
                 )
               })}
             </>
           )}
         </div>
         <div className="flex items-center gap-3 border-t border-slate-200 px-3 py-1.5 text-[11px] text-slate-400 dark:border-slate-700">
-          <span className="inline-flex items-center gap-1"><Kbd>↑</Kbd><Kbd>↓</Kbd> 移動</span>
-          <span className="inline-flex items-center gap-1"><Kbd>↵</Kbd> 選擇</span>
+          <span className="inline-flex items-center gap-1"><Kbd>↑</Kbd><Kbd>↓</Kbd> {t('aiasst.paletteMove', { defaultValue: '移動' })}</span>
+          <span className="inline-flex items-center gap-1"><Kbd>↵</Kbd> {t('aiasst.paletteSelect', { defaultValue: '選擇' })}</span>
         </div>
       </div>
     </div>

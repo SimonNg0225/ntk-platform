@@ -1,4 +1,6 @@
 import { useId } from 'react'
+import { useTranslation } from 'react-i18next'
+import './i18n'
 import { cx } from '../../../ui'
 import {
   TONE_FILL,
@@ -29,6 +31,7 @@ export function Histogram({
   bins: HistBin[]
   passMark?: number
 }) {
+  const { t } = useTranslation()
   const maxCount = Math.max(1, ...bins.map((b) => b.count))
   return (
     <div className="flex items-end gap-1.5" style={{ height: 160 }}>
@@ -57,7 +60,11 @@ export function Histogram({
                 b.count === 0 && 'bg-slate-100 dark:bg-slate-800',
               )}
               style={{ height: `${Math.max(h, b.count ? 4 : 2)}%` }}
-              title={`${b.label} 分：${b.count} 人`}
+              title={t('gradebook.chartCountPeople', {
+                label: `${b.label} 分`,
+                count: b.count,
+                defaultValue: '{{label}}：{{count}} 人',
+              })}
             />
             <span className="text-[9px] tabular-nums text-slate-400 dark:text-slate-500">
               {b.from}
@@ -82,6 +89,7 @@ export function GradeDonut({
   bands?: GradeBand[]
   size?: number
 }) {
+  const { t } = useTranslation()
   const total = counts.reduce((a, b) => a + b.n, 0)
   const r = size / 2 - 10
   const c = 2 * Math.PI * r
@@ -103,7 +111,7 @@ export function GradeDonut({
         className="flex items-center justify-center rounded-full border border-dashed border-slate-200 text-xs text-slate-400 dark:border-slate-700 dark:text-slate-500"
         style={{ width: size, height: size }}
       >
-        未有等級
+        {t('gradebook.chartNoGrade', { defaultValue: '未有等級' })}
       </div>
     )
   }

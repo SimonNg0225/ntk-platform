@@ -2016,6 +2016,17 @@ function SchemeTab({ classId }: { classId: string }) {
   )
   const scheme = ensureScheme(classId, schemes)
 
+  // 評估類型顯示標籤（值保持中文資料鍵，只翻譯顯示）
+  const SCHEME_TYPE_KEYS: Record<string, string> = {
+    測驗: 'gradebook.typeTest',
+    考試: 'gradebook.typeExam',
+    功課: 'gradebook.typeHomework',
+    專題: 'gradebook.typeProject',
+    課堂表現: 'gradebook.typeClasswork',
+  }
+  const schemeTypeLabel = (v: string) =>
+    SCHEME_TYPE_KEYS[v] ? t(SCHEME_TYPE_KEYS[v], { defaultValue: v }) : v
+
   // 班內實際出現過嘅類別（+ 預設常見類別）
   const usedTypes = useMemo(() => {
     const set = new Set<string>(Object.keys(DEFAULT_WEIGHTS))
@@ -2275,13 +2286,14 @@ function SchemeTab({ classId }: { classId: string }) {
             scheme.weighted ? '' : 'pointer-events-none opacity-40',
           )}
         >
-          {usedTypes.map((t) => {
-            const v = scheme.weights[t] ?? 0
-            const count = assessmentsRaw.filter((a) => a.type === t).length
+          {usedTypes.map((ty) => {
+            const v = scheme.weights[ty] ?? 0
+            const count = assessmentsRaw.filter((a) => a.type === ty).length
+            const label = schemeTypeLabel(ty)
             return (
-              <div key={t} className="flex items-center gap-3">
+              <div key={ty} className="flex items-center gap-3">
                 <span className="w-24 shrink-0 text-sm text-slate-600 dark:text-slate-300">
-                  {t}
+                  {label}
                   <span className="ml-1 text-xs text-slate-400">
                     ({count})
                   </span>
@@ -2292,17 +2304,23 @@ function SchemeTab({ classId }: { classId: string }) {
                   max={100}
                   step={5}
                   value={v}
-                  onChange={(e) => setWeight(t, Number(e.target.value))}
-                  aria-label={`「${t}」類別權重（%）`}
+                  onChange={(e) => setWeight(ty, Number(e.target.value))}
+                  aria-label={t('gradebook.weightAria', {
+                    type: label,
+                    defaultValue: '「{{type}}」類別權重（%）',
+                  })}
                   className="h-1.5 flex-1 cursor-pointer appearance-none rounded-full bg-slate-200 accent-accent dark:bg-slate-700"
                 />
                 <div className="flex w-16 items-center">
                   <Input
                     value={String(v)}
                     onChange={(e) =>
-                      setWeight(t, Number(e.target.value.replace(/\D/g, '')) || 0)
+                      setWeight(ty, Number(e.target.value.replace(/\D/g, '')) || 0)
                     }
-                    aria-label={`「${t}」類別權重百分比`}
+                    aria-label={t('gradebook.weightPctAria', {
+                      type: label,
+                      defaultValue: '「{{type}}」類別權重百分比',
+                    })}
                     className="text-center tabular-nums"
                   />
                   <span className="ml-1 text-sm text-slate-400">%</span>
@@ -2313,7 +2331,9 @@ function SchemeTab({ classId }: { classId: string }) {
         </div>
 
         <div className="flex items-center justify-between border-t border-slate-100 pt-3 dark:border-slate-700">
-          <span className="text-xs text-slate-400">合計權重</span>
+          <span className="text-xs text-slate-400">
+            {t('gradebook.totalWeight', { defaultValue: '合計權重' })}
+          </span>
           <span className="flex items-baseline gap-1.5">
             <span
               className={cx(
@@ -2327,7 +2347,9 @@ function SchemeTab({ classId }: { classId: string }) {
             </span>
             {totalWeight !== 100 && (
               <span className="text-xs font-normal text-slate-400">
-                （唔等於 100% 都會自動按比例計算）
+                {t('gradebook.notEqual100', {
+                  defaultValue: '（唔等於 100% 都會自動按比例計算）',
+                })}
               </span>
             )}
           </span>
@@ -2340,11 +2362,12 @@ function SchemeTab({ classId }: { classId: string }) {
         </span>
         <div className="text-xs leading-relaxed text-slate-500 dark:text-slate-400">
           <p className="mb-1 font-semibold text-slate-600 dark:text-slate-300">
-            計分原理
+            {t('gradebook.scoringPrinciple', { defaultValue: '計分原理' })}
           </p>
-          先把同類評估（如所有「測驗」）取平均，再按上面權重做加權總和。
-          某類別若完全未有分數，其權重會剔出、其餘類別按比例補上，所以期初未齊卷都計到合理總分。
-          關閉加權則所有評估等權平均。
+          {t('gradebook.scoringPrincipleBody', {
+            defaultValue:
+              '先把同類評估（如所有「測驗」）取平均，再按上面權重做加權總和。 某類別若完全未有分數，其權重會剔出、其餘類別按比例補上，所以期初未齊卷都計到合理總分。 關閉加權則所有評估等權平均。',
+          })}
         </div>
       </Card>
     </div>

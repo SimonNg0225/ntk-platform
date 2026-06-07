@@ -178,6 +178,7 @@ i18n.addResourceBundle(
       weekdayTitle: 'Weekday breakdown',
       weekdayDesc: 'See which day has the most lateness / absence',
       weekdayLabels: 'Sun_Mon_Tue_Wed_Thu_Fri_Sat',
+      weekdayShort: '{{wdEn}}',
       weekdayBarTooltip: '{{weekday}}: In {{present}} / Late {{late}} / Out {{absent}}',
 
       // ── 趨勢圖 ──

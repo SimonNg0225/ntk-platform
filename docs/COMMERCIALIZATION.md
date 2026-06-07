@@ -138,7 +138,21 @@ if (!isPro) return <UpgradePrompt />   // 例如 AI 無限額度、進階統計
 ### P2 — 營運
 - [x] 交易 email（收據 / 取消）→ Resend
 - [x] E2E 測試覆蓋付費流程 → Playwright
-- [x] 客服 widget → Crisp（`VITE_CRISP_WEBSITE_ID`，同意 Cookie 後載入）
+- [x] 客服系統：自家 in-app 聯絡表單（即裝即用）+ Crisp 即時聊天（選用）
+
+#### 客服系統
+- **自家表單**（預設）：app 右下角浮動掣 → 聯絡表單。登入用戶提交 →
+  `support` Edge Function 存 `support_tickets`（`0006_support.sql`）+ email 客服
+  （Resend，reply-to = 用戶）；未登入 / 未接 Supabase → mailto fallback。
+- **Crisp 即時聊天**（選用）：設 `VITE_CRISP_WEBSITE_ID` → 同意 Cookie 後載入，
+  取代自家浮動掣。
+- 部署：
+  ```bash
+  supabase db push                       # 含 0006
+  supabase functions deploy support
+  supabase secrets set SUPPORT_EMAIL=help@你的網域   # 未設則用 ADMIN_ALERT_EMAIL
+  ```
+  （email 通知要 `RESEND_API_KEY`；未設 → ticket 照存，唔出 email。）
 - [x] PostHog 漏斗：`landing_cta_click` → `signup_started` → `checkout_started`（+ `app_opened`）
 - [x] 多語言 i18n（react-i18next）：行銷 + **全導航層雙語**
   （Landing / 定價 / 私隱 / 條款 / Cookie / 設定 + 側欄 / 首頁 / ⌘K / 功能名稱·描述·分組·模式 / 帳戶·方案）。

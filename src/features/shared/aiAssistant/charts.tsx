@@ -1,5 +1,7 @@
 import { useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { cx } from '../../../ui'
+import './i18n'
 
 // ============================================================
 //  AI 助手 — 自製迷你圖表（純 SVG / div，零依賴）
@@ -13,6 +15,7 @@ export function ActivityBars({
   data: { label: string; count: number }[]
   className?: string
 }) {
+  const { t } = useTranslation()
   const max = useMemo(() => Math.max(1, ...data.map((d) => d.count)), [data])
   return (
     <div className={className}>
@@ -23,7 +26,7 @@ export function ActivityBars({
             <div
               key={i}
               className="group relative flex flex-1 flex-col items-center justify-end"
-              title={`${d.label}：${d.count} 則`}
+              title={t('aiasst.chartBarTooltip', { defaultValue: `${d.label}：${d.count} 則`, label: d.label, count: d.count })}
             >
               <div
                 className={cx(
@@ -58,6 +61,7 @@ export function RatioBar({
   user: number
   model: number
 }) {
+  const { t } = useTranslation()
   const total = Math.max(1, user + model)
   return (
     <div>
@@ -67,10 +71,10 @@ export function RatioBar({
       </div>
       <div className="mt-1.5 flex items-center justify-between text-[11px] text-slate-400">
         <span className="inline-flex items-center gap-1">
-          <span className="h-2 w-2 rounded-full bg-accent" /> 我 {user}
+          <span className="h-2 w-2 rounded-full bg-accent" /> {t('aiasst.ratioMe', { defaultValue: `我 ${user}`, count: user })}
         </span>
         <span className="inline-flex items-center gap-1">
-          AI {model} <span className="h-2 w-2 rounded-full bg-emerald-500" />
+          {t('aiasst.ratioAi', { defaultValue: `AI ${model}`, count: model })} <span className="h-2 w-2 rounded-full bg-emerald-500" />
         </span>
       </div>
     </div>

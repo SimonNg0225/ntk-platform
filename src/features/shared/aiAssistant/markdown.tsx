@@ -1,6 +1,8 @@
 import { memo, useState, type ReactNode } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Check, Copy } from 'lucide-react'
 import { cx } from '../../../ui'
+import './i18n'
 
 // ============================================================
 //  輕量 Markdown 渲染器（零依賴，純自製）
@@ -72,6 +74,7 @@ function renderInline(text: string, keyBase: string): ReactNode[] {
 
 // ───────── 程式碼區塊（連複製掣）─────────
 function CodeBlock({ code, lang }: { code: string; lang?: string }) {
+  const { t } = useTranslation()
   const [copied, setCopied] = useState(false)
   const copy = () => {
     void navigator.clipboard?.writeText(code).then(() => {
@@ -91,7 +94,7 @@ function CodeBlock({ code, lang }: { code: string; lang?: string }) {
           className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] text-slate-400 opacity-0 transition hover:bg-slate-200/70 hover:text-slate-600 focus-visible:opacity-100 group-hover:opacity-100 dark:hover:bg-slate-700/70 dark:hover:text-slate-200"
         >
           {copied ? <Check size={12} className="text-emerald-500" /> : <Copy size={12} />}
-          {copied ? '已複製' : '複製'}
+          {copied ? t('aiasst.codeCopied', { defaultValue: '已複製' }) : t('aiasst.codeCopy', { defaultValue: '複製' })}
         </button>
       </div>
       <pre className="overflow-x-auto p-3.5 text-[12.5px] leading-relaxed">

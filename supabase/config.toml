@@ -24,3 +24,7 @@ verify_jwt = false
 [functions.team-billing]
 # 團隊座位 checkout：需要登入用戶（owner / admin），閘道先驗 JWT。
 verify_jwt = true
+
+[functions.support]
+# 客服表單：需要登入用戶，閘道先驗 JWT。
+verify_jwt = true

@@ -1866,31 +1866,45 @@ function StudentSummaryModal({
           className="pointer-events-none absolute right-12 top-4 hidden -rotate-[8deg] select-none items-center gap-1 rounded-lg border-2 border-dashed border-accent/20 px-2.5 py-1 font-serif text-[11px] font-bold uppercase tracking-[0.18em] text-accent/25 dark:border-accent/25 dark:text-accent/25 sm:inline-flex"
         >
           <Stamp size={11} />
-          簿頁
+          {t('attend.pageStamp', { defaultValue: '簿頁' })}
         </span>
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <p className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.28em] text-accent/70">
               <NotebookPen size={12} />
-              出席摘要 · Summary
+              {t('attend.summaryKicker', { defaultValue: '出席摘要 · Summary' })}
             </p>
             <h3 className="mt-1 truncate font-serif text-[22px] font-semibold leading-tight tracking-tight text-slate-800 dark:text-slate-100">
-              {studentName || '出席摘要'}
+              {studentName || t('attend.summaryFallbackTitle', { defaultValue: '出席摘要' })}
             </h3>
             <p className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-slate-400 dark:text-slate-500">
-              {studentNo && <span>學號 {studentNo}</span>}
-              {hasMarks && t && (
+              {studentNo && (
+                <span>
+                  {t('attend.studentNo', {
+                    no: studentNo,
+                    defaultValue: `學號 ${studentNo}`,
+                  })}
+                </span>
+              )}
+              {hasMarks && tally && (
                 <>
                   {studentNo && (
                     <span aria-hidden className="text-slate-300 dark:text-slate-600">
                       ·
                     </span>
                   )}
-                  <Badge tone={rateTone(t.rate)} className="tabular-nums">
-                    出席率 {t.rate}%
+                  <Badge tone={rateTone(tally.rate)} className="tabular-nums">
+                    {t('attend.rateBadge', {
+                      rate: tally.rate,
+                      defaultValue: `出席率 ${tally.rate}%`,
+                    })}
                   </Badge>
                   <span className="tabular-nums">
-                    近 {rangeDays} 日 · 已點 {t.marked} 堂
+                    {t('attend.summaryMarkedHint', {
+                      days: rangeDays,
+                      marked: tally.marked,
+                      defaultValue: `近 ${rangeDays} 日 · 已點 ${tally.marked} 堂`,
+                    })}
                   </span>
                 </>
               )}
@@ -1899,7 +1913,7 @@ function StudentSummaryModal({
           <button
             type="button"
             onClick={onClose}
-            aria-label="關閉"
+            aria-label={t('attend.close', { defaultValue: '關閉' })}
             className="-mr-1.5 -mt-1 shrink-0 rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:hover:bg-slate-700"
           >
             <X size={18} />
@@ -1907,13 +1921,16 @@ function StudentSummaryModal({
         </div>
       </header>
 
-      {!hasMarks || !t || !ns || !data ? (
+      {!hasMarks || !tally || !ns || !data ? (
         <div className="flex flex-col items-center gap-2 py-6 text-center">
           <span className="flex h-11 w-11 items-center justify-center rounded-full bg-slate-100 text-slate-400 dark:bg-slate-700/60 dark:text-slate-500">
             <NotebookPen size={20} strokeWidth={1.75} />
           </span>
           <p className="text-sm text-slate-400 dark:text-slate-500">
-            呢位學生喺近 {rangeDays} 日內未有點名記錄。
+            {t('attend.noRecordInRange', {
+              days: rangeDays,
+              defaultValue: `呢位學生喺近 ${rangeDays} 日內未有點名記錄。`,
+            })}
           </p>
         </div>
       ) : (
@@ -1921,30 +1938,60 @@ function StudentSummaryModal({
           {/* 三態結算（hairline grid · serif 大數字，呼應簿冊封面）+ 出席率進度 */}
           <div>
             <div className="grid grid-cols-3 gap-px overflow-hidden rounded-2xl bg-slate-200/70 ring-1 ring-slate-200/80 dark:bg-slate-700/50 dark:ring-slate-700/60">
-              <MiniStat label="出席" value={t.present} tone="present" />
-              <MiniStat label="遲到" value={t.late} tone="late" />
-              <MiniStat label="缺席" value={t.absent} tone="absent" />
+              <MiniStat
+                label={t('attend.miniPresent', { defaultValue: '出席' })}
+                value={tally.present}
+                tone="present"
+              />
+              <MiniStat
+                label={t('attend.miniLate', { defaultValue: '遲到' })}
+                value={tally.late}
+                tone="late"
+              />
+              <MiniStat
+                label={t('attend.miniAbsent', { defaultValue: '缺席' })}
+                value={tally.absent}
+                tone="absent"
+              />
             </div>
             <div className="mt-2.5">
-              <ProgressBar value={t.rate ?? 0} tone={rateBarTone(t.rate)} size="sm" />
+              <ProgressBar value={tally.rate ?? 0} tone={rateBarTone(tally.rate)} size="sm" />
             </div>
           </div>
 
           {/* 關鍵指標 */}
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             <FactCell
-              label="目前連續缺席"
-              value={t.currentAbsentStreak > 0 ? `${t.currentAbsentStreak} 日` : '—'}
-              tone={t.currentAbsentStreak >= 2 ? 'rose' : 'slate'}
+              label={t('attend.currentStreak', { defaultValue: '目前連續缺席' })}
+              value={
+                tally.currentAbsentStreak > 0
+                  ? t('attend.daysUnit', {
+                      count: tally.currentAbsentStreak,
+                      defaultValue: `${tally.currentAbsentStreak} 日`,
+                    })
+                  : '—'
+              }
+              tone={tally.currentAbsentStreak >= 2 ? 'rose' : 'slate'}
             />
             <FactCell
-              label="期內最長連續缺席"
-              value={data.longestStreak > 0 ? `${data.longestStreak} 日` : '—'}
+              label={t('attend.longestStreak', { defaultValue: '期內最長連續缺席' })}
+              value={
+                data.longestStreak > 0
+                  ? t('attend.daysUnit', {
+                      count: data.longestStreak,
+                      defaultValue: `${data.longestStreak} 日`,
+                    })
+                  : '—'
+              }
               tone={data.longestStreak >= 3 ? 'rose' : 'slate'}
             />
             <FactCell
-              label="最後一次出席"
-              value={data.lastPresent ? shortDateLabel(data.lastPresent) : '從未'}
+              label={t('attend.lastPresent', { defaultValue: '最後一次出席' })}
+              value={
+                data.lastPresent
+                  ? shortDateLabel(data.lastPresent)
+                  : t('attend.neverPresent', { defaultValue: '從未' })
+              }
               tone={data.lastPresent ? 'slate' : 'rose'}
             />
           </div>
@@ -1954,45 +2001,70 @@ function StudentSummaryModal({
             ns.lateLoggedCount > 0 ||
             ns.earlyLeaveCount > 0) && (
             <div>
-              <SectionTitle icon={ClipboardList}>細項統計</SectionTitle>
+              <SectionTitle icon={ClipboardList}>
+                {t('attend.detailStats', { defaultValue: '細項統計' })}
+              </SectionTitle>
               <div className="space-y-2 text-sm">
                 {kindRows.length > 0 && (
                   <div className="flex flex-wrap items-center gap-1.5">
-                    <span className="text-xs text-slate-400">缺席原因</span>
+                    <span className="text-xs text-slate-400">
+                      {t('attend.absenceReason', { defaultValue: '缺席原因' })}
+                    </span>
                     {kindRows.map((o) => (
                       <Badge
                         key={o.value}
                         tone={isExcused(o.value) ? 'blue' : 'rose'}
                         className="tabular-nums"
                       >
-                        {ABSENCE_KIND_LABEL[o.value]} {ns.byKind[o.value]}
+                        {t('attend.kindCount', {
+                          label: absenceKindLabel(t, o.value),
+                          count: ns.byKind[o.value],
+                          defaultValue: `${ABSENCE_KIND_LABEL[o.value]} ${ns.byKind[o.value]}`,
+                        })}
                       </Badge>
                     ))}
                     {ns.unexcusedCount > 0 && (
                       <span className="text-[11px] text-rose-500 dark:text-rose-400">
-                        無故 {ns.unexcusedCount} 次
+                        {t('attend.unexcusedCount', {
+                          count: ns.unexcusedCount,
+                          defaultValue: `無故 ${ns.unexcusedCount} 次`,
+                        })}
                       </span>
                     )}
                   </div>
                 )}
                 {ns.lateLoggedCount > 0 && (
                   <div className="flex flex-wrap items-center gap-1.5">
-                    <span className="text-xs text-slate-400">遲到分鐘</span>
+                    <span className="text-xs text-slate-400">
+                      {t('attend.lateMinutes', { defaultValue: '遲到分鐘' })}
+                    </span>
                     <Badge tone="amber" className="tabular-nums">
-                      共 {ns.lateMinutesTotal} 分（{ns.lateLoggedCount} 次）
+                      {t('attend.lateMinutesTotal', {
+                        total: ns.lateMinutesTotal,
+                        count: ns.lateLoggedCount,
+                        defaultValue: `共 ${ns.lateMinutesTotal} 分（${ns.lateLoggedCount} 次）`,
+                      })}
                     </Badge>
                     {ns.lateMinutesAvg != null && (
                       <span className="text-[11px] tabular-nums text-slate-400">
-                        平均 {ns.lateMinutesAvg} 分 / 次
+                        {t('attend.lateMinutesAvg', {
+                          avg: ns.lateMinutesAvg,
+                          defaultValue: `平均 ${ns.lateMinutesAvg} 分 / 次`,
+                        })}
                       </span>
                     )}
                   </div>
                 )}
                 {ns.earlyLeaveCount > 0 && (
                   <div className="flex flex-wrap items-center gap-1.5">
-                    <span className="text-xs text-slate-400">早退</span>
+                    <span className="text-xs text-slate-400">
+                      {t('attend.earlyLeaveStat', { defaultValue: '早退' })}
+                    </span>
                     <Badge tone="slate" className="tabular-nums">
-                      {ns.earlyLeaveCount} 次
+                      {t('attend.earlyLeaveTimes', {
+                        count: ns.earlyLeaveCount,
+                        defaultValue: `${ns.earlyLeaveCount} 次`,
+                      })}
                     </Badge>
                   </div>
                 )}
@@ -2002,14 +2074,21 @@ function StudentSummaryModal({
 
           {/* 逐堂時間軸（點名簿橫條：逐格蓋章 glyph，serif 對齊簿冊語言） */}
           <div>
-            <SectionTitle icon={CalendarDays} description="由舊到新，逐個有點名日">
-              出席時間軸
+            <SectionTitle
+              icon={CalendarDays}
+              description={t('attend.timelineDesc', { defaultValue: '由舊到新，逐個有點名日' })}
+            >
+              {t('attend.timelineTitle', { defaultValue: '出席時間軸' })}
             </SectionTitle>
             <div className="flex flex-wrap gap-1 rounded-2xl border border-slate-200/80 bg-slate-50/50 p-2.5 dark:border-slate-700/60 dark:bg-slate-900/30">
               {data.timeline.map((d) => (
                 <span
                   key={d.dateKey}
-                  title={`${longDateLabel(d.dateKey)}：${STATUS_LABEL[d.status]}`}
+                  title={t('attend.timelineTooltip', {
+                    date: longDateLabel(d.dateKey),
+                    status: statusLabel(t, d.status),
+                    defaultValue: `${longDateLabel(d.dateKey)}：${STATUS_LABEL[d.status]}`,
+                  })}
                   className={cx(
                     'flex h-7 w-7 items-center justify-center rounded-md font-serif text-[13px] font-bold leading-none',
                     STATUS_STYLE[d.status].cell,
@@ -2090,6 +2169,7 @@ function FactCell({
 
 // 按星期統計缺席分佈（睇邊日最多人唔嚟）
 function WeekdayBreakdown({ records }: { records: AttendanceRecord[] }) {
+  const { t } = useTranslation()
   const data = useMemo(() => {
     const idxByWd = Array.from({ length: 7 }, () => ({
       present: 0,
@@ -2113,6 +2193,9 @@ function WeekdayBreakdown({ records }: { records: AttendanceRecord[] }) {
   }, [records])
 
   const labels = ['日', '一', '二', '三', '四', '五', '六']
+  const labelsEn = t('attend.weekdayLabels', { defaultValue: '' }).split('_')
+  const wdLabel = (i: number) =>
+    t('attend.weekdayShort', { wd: labels[i], wdEn: labelsEn[i] ?? '', defaultValue: labels[i] })
   // 只顯示有上堂嘅星期（多數係一至五 / 六）
   const visible = data
     .map((d, i) => ({ ...d, i }))
@@ -2123,8 +2206,11 @@ function WeekdayBreakdown({ records }: { records: AttendanceRecord[] }) {
 
   return (
     <Card className="rounded-3xl p-5">
-      <SectionTitle icon={CalendarDays} description="睇吓邊日最多遲到 / 缺席">
-        星期分佈
+      <SectionTitle
+        icon={CalendarDays}
+        description={t('attend.weekdayDesc', { defaultValue: '睇吓邊日最多遲到 / 缺席' })}
+      >
+        {t('attend.weekdayTitle', { defaultValue: '星期分佈' })}
       </SectionTitle>
       <div className="flex items-end justify-around gap-2 pt-2">
         {visible.map((d) => {
@@ -2143,7 +2229,13 @@ function WeekdayBreakdown({ records }: { records: AttendanceRecord[] }) {
               <div
                 className="flex w-full max-w-[2.5rem] flex-col-reverse overflow-hidden rounded-md"
                 style={{ height: Math.max(8, h) }}
-                title={`星期${labels[d.i]}：出 ${d.present} / 遲 ${d.late} / 缺 ${d.absent}`}
+                title={t('attend.weekdayBarTooltip', {
+                  weekday: wdLabel(d.i),
+                  present: d.present,
+                  late: d.late,
+                  absent: d.absent,
+                  defaultValue: `星期${labels[d.i]}：出 ${d.present} / 遲 ${d.late} / 缺 ${d.absent}`,
+                })}
               >
                 {segs.map((s, si) =>
                   s.n === 0 ? null : (
@@ -2156,7 +2248,7 @@ function WeekdayBreakdown({ records }: { records: AttendanceRecord[] }) {
                 )}
               </div>
               <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
-                {labels[d.i]}
+                {wdLabel(d.i)}
               </span>
               <span className="text-[10px] tabular-nums text-slate-400">
                 {rate == null ? '—' : `${rate}%`}

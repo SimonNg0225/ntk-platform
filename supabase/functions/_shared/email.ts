@@ -12,6 +12,8 @@ const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY') ?? ''
 const RESEND_FROM =
   Deno.env.get('RESEND_FROM') ?? 'EziTeach <noreply@eziteach.example>'
 const ADMIN_ALERT_EMAIL = Deno.env.get('ADMIN_ALERT_EMAIL') ?? ''
+/** 客服收件箱（未設則退回 ADMIN_ALERT_EMAIL）。 */
+export const SUPPORT_EMAIL = Deno.env.get('SUPPORT_EMAIL') ?? ADMIN_ALERT_EMAIL
 
 export const isEmailConfigured = Boolean(RESEND_API_KEY)
 
@@ -19,21 +21,24 @@ export async function sendEmail(opts: {
   to: string
   subject: string
   html: string
+  replyTo?: string
 }): Promise<boolean> {
   if (!RESEND_API_KEY || !opts.to) return false
   try {
+    const payload: Record<string, unknown> = {
+      from: RESEND_FROM,
+      to: opts.to,
+      subject: opts.subject,
+      html: opts.html,
+    }
+    if (opts.replyTo) payload.reply_to = opts.replyTo
     const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${RESEND_API_KEY}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        from: RESEND_FROM,
-        to: opts.to,
-        subject: opts.subject,
-        html: opts.html,
-      }),
+      body: JSON.stringify(payload),
     })
     return res.ok
   } catch {
@@ -86,6 +91,23 @@ export function welcomeProEmail(): { subject: string; html: string } {
       '訂閱已生效',
       `<p style="margin:0 0 8px;font-size:14px;line-height:1.6">多謝你升級 <strong>Pro</strong>！你而家可以無限使用教學 AI、多裝置即時同步同進階成績統計。</p>
        <p style="margin:0;font-size:14px;line-height:1.6">隨時喺「定價 → 管理訂閱」查看或調整你嘅訂閱。</p>`,
+    ),
+  }
+}
+
+export function supportTicketEmail(opts: {
+  subject: string
+  message: string
+  fromEmail: string
+  userId?: string
+}): { subject: string; html: string } {
+  return {
+    subject: `【客服】${opts.subject}`,
+    html: shell(
+      '收到新客服查詢',
+      `<p style="margin:0 0 6px;font-size:13px;color:#475569">來自：<strong>${escapeHtml(opts.fromEmail || '（未提供）')}</strong>${opts.userId ? `（user ${escapeHtml(opts.userId)}）` : ''}</p>
+       <p style="margin:0 0 4px;font-size:13px;color:#475569">主題：<strong>${escapeHtml(opts.subject)}</strong></p>
+       <div style="margin-top:10px;padding:12px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;line-height:1.6;white-space:pre-wrap">${escapeHtml(opts.message)}</div>`,
     ),
   }
 }

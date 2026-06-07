@@ -1,4 +1,6 @@
 import type { ReactNode } from 'react'
+import { useTranslation } from 'react-i18next'
+import './i18n'
 import type { Assessment } from '../../../data/types'
 import { Badge, Button, IconButton, Modal, cx } from '../../../ui'
 import {
@@ -61,6 +63,7 @@ export default function StudentReport({
   bands?: GradeBand[]
   className: string
 }) {
+  const { t, i18n } = useTranslation()
   if (!result) return null
   const scale: GradeScaleKey = scheme.scale
   const sorted = [...assessments].sort((a, b) =>
@@ -87,8 +90,28 @@ export default function StudentReport({
         </tr>`
       })
       .join('')
+    const printTitle = t('gradebook.reportPrintTitle', {
+      name: result.student.name,
+      defaultValue: '成績單 — {{name}}',
+    })
+    const reportHeading = t('gradebook.reportTitle', {
+      className,
+      defaultValue: '{{className}} 成績單',
+    })
+    const studentLine = t('gradebook.reportPrintStudent', {
+      name:
+        result.student.name +
+        (result.student.studentNo ? `（${result.student.studentNo}）` : ''),
+      defaultValue: '學生：{{name}}',
+    })
+    const printDateLine = t('gradebook.reportPrintDate', {
+      date: new Date().toLocaleDateString(
+        i18n.language === 'en' ? 'en-GB' : 'zh-HK',
+      ),
+      defaultValue: '列印日期：{{date}}',
+    })
     win.document.write(`<!doctype html><html><head><meta charset="utf-8">
-      <title>成績單 — ${esc(result.student.name)}</title>
+      <title>${esc(printTitle)}</title>
       <style>
         body{font-family:-apple-system,'PingFang HK','Microsoft JhengHei',sans-serif;padding:32px;color:#1e293b}
         h1{font-size:20px;margin:0 0 4px}
@@ -102,18 +125,25 @@ export default function StudentReport({
         .meta div b{font-size:18px}
         .foot{margin-top:28px;color:#94a3b8;font-size:11px}
       </style></head><body>
-      <h1>${esc(className)} 成績單</h1>
-      <div class="sub">學生：${esc(result.student.name)}${result.student.studentNo ? '（' + esc(result.student.studentNo) + '）' : ''}　·　列印日期：${new Date().toLocaleDateString('zh-HK')}</div>
+      <h1>${esc(reportHeading)}</h1>
+      <div class="sub">${esc(studentLine)}　·　${esc(printDateLine)}</div>
       <div class="big">${total == null ? '—' : Math.round(total) + '%'}　<span style="font-size:20px;color:#64748b">${band ? band.label : ''}</span></div>
       <div class="meta">
-        <div><span>班內名次</span><b>${rank == null ? '—' : rank + ' / ' + classSize}</b></div>
-        <div><span>班內百分位</span><b>${percentile == null ? '—' : percentile + 'th'}</b></div>
-        <div><span>已交評估</span><b>${result.submitted} / ${result.expected}</b></div>
-        <div><span>班級平均</span><b>${classAvg == null ? '—' : Math.round(classAvg) + '%'}</b></div>
+        <div><span>${esc(t('gradebook.reportPrintRank', { defaultValue: '班內名次' }))}</span><b>${rank == null ? '—' : rank + ' / ' + classSize}</b></div>
+        <div><span>${esc(t('gradebook.reportPrintPercentile', { defaultValue: '班內百分位' }))}</span><b>${percentile == null ? '—' : percentile + 'th'}</b></div>
+        <div><span>${esc(t('gradebook.reportPrintSubmitted', { defaultValue: '已交評估' }))}</span><b>${result.submitted} / ${result.expected}</b></div>
+        <div><span>${esc(t('gradebook.reportPrintClassAvg', { defaultValue: '班級平均' }))}</span><b>${classAvg == null ? '—' : Math.round(classAvg) + '%'}</b></div>
       </div>
-      <table><thead><tr><th>評估</th><th style="text-align:center">類型</th><th style="text-align:right">得分</th><th style="text-align:right">班平均</th></tr></thead>
+      <table><thead><tr><th>${esc(t('gradebook.reportPrintColAssessment', { defaultValue: '評估' }))}</th><th style="text-align:center">${esc(t('gradebook.reportPrintColType', { defaultValue: '類型' }))}</th><th style="text-align:right">${esc(t('gradebook.reportPrintColScore', { defaultValue: '得分' }))}</th><th style="text-align:right">${esc(t('gradebook.reportPrintColClassAvg', { defaultValue: '班平均' }))}</th></tr></thead>
       <tbody>${rows}</tbody></table>
-      <div class="foot">由 EziTeach 教學易 自動產生 · 加權方案：${scheme.weighted ? '已啟用' : '等權平均'}</div>
+      <div class="foot">${esc(
+        t('gradebook.reportPrintFoot', {
+          scheme: scheme.weighted
+            ? t('gradebook.reportSchemeEnabled', { defaultValue: '已啟用' })
+            : t('gradebook.reportSchemeEqual', { defaultValue: '等權平均' }),
+          defaultValue: '由 教學易 自動產生 · 加權方案：{{scheme}}',
+        }),
+      )}</div>
       </body></html>`)
     win.document.close()
     win.focus()
@@ -130,10 +160,10 @@ export default function StudentReport({
       footer={
         <>
           <Button variant="secondary" onClick={onClose}>
-            關閉
+            {t('gradebook.reportClose', { defaultValue: '關閉' })}
           </Button>
           <Button icon={Printer} onClick={handlePrint}>
-            列印 / 存 PDF
+            {t('gradebook.reportPrint', { defaultValue: '列印 / 存 PDF' })}
           </Button>
         </>
       }
@@ -145,7 +175,7 @@ export default function StudentReport({
           aria-hidden
           className="pointer-events-none absolute -right-4 top-2 hidden -rotate-6 select-none rounded-lg border-2 border-dashed border-accent/20 px-3 py-1.5 font-serif text-[10px] font-semibold uppercase tracking-[0.25em] text-accent/25 dark:border-accent/25 dark:text-accent/25 sm:block"
         >
-          成績冊 · Ledger
+          {t('gradebook.reportStampLedger', { defaultValue: '成績冊 · Ledger' })}
         </span>
         <div className="flex items-start gap-3 pr-9 sm:pr-28">
           <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white/70 text-accent-strong dark:bg-white/10 dark:text-accent">
@@ -154,23 +184,29 @@ export default function StudentReport({
           <div className="min-w-0 flex-1">
             <p className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.28em] text-accent/70">
               <BookMarked size={12} className="shrink-0" />
-              成績單 · Report Card
+              {t('gradebook.reportKicker', { defaultValue: '成績單 · Report Card' })}
             </p>
             <h2 className="mt-1 flex flex-wrap items-baseline gap-x-2 font-serif text-[24px] font-semibold leading-none tracking-tight text-slate-800 dark:text-slate-100 sm:text-[28px]">
               {result.student.name}
               {studentNo && (
                 <span className="font-sans text-sm font-normal tabular-nums text-slate-400 dark:text-slate-500">
-                  學號 {studentNo}
+                  {t('gradebook.reportStudentNo', {
+                    no: studentNo,
+                    defaultValue: '學號 {{no}}',
+                  })}
                 </span>
               )}
             </h2>
             <p className="mt-1.5 truncate text-sm text-slate-500 dark:text-slate-400">
-              {className} · {scheme.weighted ? '加權計分' : '等權平均'}
+              {className} ·{' '}
+              {scheme.weighted
+                ? t('gradebook.reportWeighted', { defaultValue: '加權計分' })
+                : t('gradebook.reportUnweighted', { defaultValue: '等權平均' })}
             </p>
           </div>
         </div>
         <IconButton
-          label="關閉"
+          label={t('gradebook.reportClose', { defaultValue: '關閉' })}
           onClick={onClose}
           className="absolute right-3 top-3 sm:right-4 sm:top-4"
         >
@@ -191,7 +227,9 @@ export default function StudentReport({
             <div>
               <p className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide text-accent-strong/80 dark:text-accent/80">
                 <Target size={12} className="shrink-0" />
-                {scheme.weighted ? '加權總成績' : '總成績'}
+                {scheme.weighted
+                  ? t('gradebook.reportWeightedTotalGrade', { defaultValue: '加權總成績' })
+                  : t('gradebook.reportTotalGrade', { defaultValue: '總成績' })}
               </p>
               <p className="mt-0.5 flex items-baseline gap-2">
                 <span
@@ -210,13 +248,19 @@ export default function StudentReport({
                 {band && <Badge tone={band.tone}>{band.label}</Badge>}
               </p>
             </div>
-            <div className="flex h-10 items-center" title="逐評估走勢">
+            <div
+              className="flex h-10 items-center"
+              title={t('gradebook.reportTrendTitle', { defaultValue: '逐評估走勢' })}
+            >
               <MiniSpark values={trend} scale={scale} />
             </div>
           </div>
           {/* 清點欄：名次 / 百分位 / 已交 —— hairline grid、serif 數字 */}
           <div className="grid grid-cols-3 gap-px border-t border-accent/20 bg-slate-200/70 dark:border-accent/25 dark:bg-slate-700/50">
-            <LedgerCell label="班內名次" icon={Trophy}>
+            <LedgerCell
+              label={t('gradebook.reportRankInClass', { defaultValue: '班內名次' })}
+              icon={Trophy}
+            >
               {rank == null ? '—' : `${rank}`}
               {rank != null && (
                 <span className="font-sans text-sm font-normal text-slate-400">
@@ -225,7 +269,10 @@ export default function StudentReport({
                 </span>
               )}
             </LedgerCell>
-            <LedgerCell label="百分位" icon={Target}>
+            <LedgerCell
+              label={t('gradebook.reportPercentile', { defaultValue: '百分位' })}
+              icon={Target}
+            >
               {percentile == null ? '—' : `${percentile}`}
               {percentile != null && (
                 <span className="font-sans text-sm font-normal text-slate-400">
@@ -234,7 +281,10 @@ export default function StudentReport({
                 </span>
               )}
             </LedgerCell>
-            <LedgerCell label="已交評估" icon={ListChecks}>
+            <LedgerCell
+              label={t('gradebook.reportSubmitted', { defaultValue: '已交評估' })}
+              icon={ListChecks}
+            >
               {result.submitted}
               <span className="font-sans text-sm font-normal text-slate-400">
                 {' '}
@@ -250,20 +300,31 @@ export default function StudentReport({
           <div className="flex items-center gap-1.5 border-b border-slate-200/80 px-4 py-2.5 dark:border-slate-700/60">
             <NotebookPen size={13} className="shrink-0 text-slate-400 dark:text-slate-500" />
             <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-              成績明細 · Score Sheet
+              {t('gradebook.reportScoreSheet', { defaultValue: '成績明細 · Score Sheet' })}
             </span>
             <span className="ml-auto text-[11px] tabular-nums text-slate-400 dark:text-slate-500">
-              {sorted.length} 項
+              {t('gradebook.reportItemsCount', {
+                count: sorted.length,
+                defaultValue: '{{count}} 項',
+              })}
             </span>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="border-b border-slate-200/80 bg-slate-50/80 text-xs uppercase tracking-wide text-slate-500 dark:border-slate-700/60 dark:bg-slate-800/60 dark:text-slate-400">
                 <tr>
-                  <th className="px-3 py-2.5 text-left font-semibold">評估</th>
-                  <th className="px-3 py-2.5 text-center font-semibold">類型</th>
-                  <th className="px-3 py-2.5 text-right font-semibold">得分</th>
-                  <th className="px-3 py-2.5 text-right font-semibold">vs 班平均</th>
+                  <th className="px-3 py-2.5 text-left font-semibold">
+                    {t('gradebook.reportColAssessment', { defaultValue: '評估' })}
+                  </th>
+                  <th className="px-3 py-2.5 text-center font-semibold">
+                    {t('gradebook.reportColType', { defaultValue: '類型' })}
+                  </th>
+                  <th className="px-3 py-2.5 text-right font-semibold">
+                    {t('gradebook.reportColScore', { defaultValue: '得分' })}
+                  </th>
+                  <th className="px-3 py-2.5 text-right font-semibold">
+                    {t('gradebook.reportColVsAvg', { defaultValue: 'vs 班平均' })}
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -303,7 +364,7 @@ export default function StudentReport({
                       >
                         {p == null ? (
                           <span className="font-sans text-sm font-normal text-slate-300 dark:text-slate-600">
-                            未交
+                            {t('gradebook.reportNotSubmitted', { defaultValue: '未交' })}
                           </span>
                         ) : (
                           `${Math.round(p)}%`
@@ -338,7 +399,9 @@ export default function StudentReport({
                   >
                     <span className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
                       <Calculator size={12} className="shrink-0" />
-                      {scheme.weighted ? '加權總分' : '總分'}
+                      {scheme.weighted
+                        ? t('gradebook.reportWeightedTotal', { defaultValue: '加權總分' })
+                        : t('gradebook.reportTotal', { defaultValue: '總分' })}
                     </span>
                   </td>
                   <td
@@ -357,7 +420,10 @@ export default function StudentReport({
                     ) : (
                       <span className="inline-flex items-center gap-1 text-[11px] tabular-nums text-slate-400 dark:text-slate-500">
                         <Users size={11} className="shrink-0" />
-                        班 {Math.round(classAvg)}%
+                        {t('gradebook.reportClassShort', {
+                          value: Math.round(classAvg),
+                          defaultValue: '班 {{value}}%',
+                        })}
                       </span>
                     )}
                   </td>
@@ -369,9 +435,15 @@ export default function StudentReport({
 
         {/* 帳簿頁腳註（同主畫面成績矩陣底部說明小字風格）*/}
         <p className="flex flex-wrap items-center gap-x-1.5 gap-y-1 px-0.5 text-xs text-slate-400 dark:text-slate-500">
-          <span>「vs 班平均」為該生喺每項評估與全班平均嘅差距（百分點）。</span>
+          <span>
+            {t('gradebook.reportFootVsAvg', {
+              defaultValue: '「vs 班平均」為該生喺每項評估與全班平均嘅差距（百分點）。',
+            })}
+          </span>
           <span aria-hidden className="text-slate-300 dark:text-slate-600">·</span>
-          <span>由 EziTeach 教學易 自動結算。</span>
+          <span>
+            {t('gradebook.reportFootBy', { defaultValue: '由 教學易 自動結算。' })}
+          </span>
         </p>
       </div>
     </Modal>
