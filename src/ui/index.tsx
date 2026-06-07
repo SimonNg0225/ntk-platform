@@ -422,6 +422,7 @@ export function StatCard({
   onClick,
   trend,
   hint,
+  ariaLabel,
 }: {
   label: string
   value: ReactNode
@@ -431,11 +432,13 @@ export function StatCard({
   onClick?: () => void
   trend?: { value: string; dir: 'up' | 'down' | 'flat' }
   hint?: string
+  ariaLabel?: string
 }) {
   return (
     <div
       onClick={onClick}
       role={onClick ? 'button' : undefined}
+      aria-label={onClick ? ariaLabel : undefined}
       tabIndex={onClick ? 0 : undefined}
       onKeyDown={
         onClick
@@ -777,7 +780,7 @@ export function IconButton({
       disabled={disabled}
       className={cx(
         'inline-flex items-center justify-center rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-1 focus-visible:ring-offset-white disabled:cursor-not-allowed disabled:opacity-40 dark:focus-visible:ring-offset-slate-900',
-        size === 'sm' ? 'p-1' : 'p-1.5',
+        size === 'sm' ? 'p-1 min-h-8 min-w-8' : 'p-1.5 min-h-9 min-w-9',
         active
           ? 'bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent'
           : tone === 'danger'
@@ -1083,6 +1086,7 @@ export function Menu({
 }) {
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement | null>(null)
+  const menuRef = useRef<HTMLDivElement | null>(null)
   useEffect(() => {
     if (!open) return
     const onDown = (e: MouseEvent) => {
@@ -1093,6 +1097,10 @@ export function Menu({
     }
     document.addEventListener('mousedown', onDown)
     document.addEventListener('keydown', onEsc)
+    // 開啟時將焦點移入第一個選項，方便純鍵盤操作（ARIA menu 模式）
+    menuRef.current
+      ?.querySelector<HTMLElement>('[role="menuitem"]:not([disabled])')
+      ?.focus()
     return () => {
       document.removeEventListener('mousedown', onDown)
       document.removeEventListener('keydown', onEsc)
@@ -1112,6 +1120,33 @@ export function Menu({
       </button>
       {open && (
         <div
+          ref={menuRef}
+          role="menu"
+          aria-orientation="vertical"
+          onKeyDown={(e) => {
+            const nodes = menuRef.current
+              ? Array.from(
+                  menuRef.current.querySelectorAll<HTMLElement>(
+                    '[role="menuitem"]:not([disabled])',
+                  ),
+                )
+              : []
+            if (nodes.length === 0) return
+            const i = nodes.indexOf(document.activeElement as HTMLElement)
+            if (e.key === 'ArrowDown') {
+              e.preventDefault()
+              nodes[(i + 1) % nodes.length]?.focus()
+            } else if (e.key === 'ArrowUp') {
+              e.preventDefault()
+              nodes[(i - 1 + nodes.length) % nodes.length]?.focus()
+            } else if (e.key === 'Home') {
+              e.preventDefault()
+              nodes[0]?.focus()
+            } else if (e.key === 'End') {
+              e.preventDefault()
+              nodes[nodes.length - 1]?.focus()
+            }
+          }}
           className={cx(
             'absolute top-full z-50 mt-1 min-w-[10rem] animate-scale-in rounded-lg border border-slate-200 bg-white p-1 shadow-lg dark:border-slate-700 dark:bg-slate-800',
             align === 'end' ? 'right-0' : 'left-0',
@@ -1121,13 +1156,14 @@ export function Menu({
             <button
               key={it.id}
               type="button"
+              role="menuitem"
               disabled={it.disabled}
               onClick={() => {
                 it.onSelect()
                 setOpen(false)
               }}
               className={cx(
-                'flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-sm transition-colors disabled:opacity-40',
+                'flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent/40 disabled:opacity-40',
                 it.tone === 'danger'
                   ? 'text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-500/10'
                   : 'text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-700',

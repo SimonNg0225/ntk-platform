@@ -23,11 +23,11 @@ export default function MobileTopBar({
         <MenuIcon size={22} strokeWidth={1.75} />
       </IconButton>
 
-      <div className="flex items-center gap-2">
-        <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-accent text-sm font-bold text-white shadow-sm ring-1 ring-inset ring-white/10">
+      <div className="flex min-w-0 items-center gap-2">
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-accent text-sm font-bold text-white shadow-sm ring-1 ring-inset ring-white/10">
           E
         </div>
-        <span className="text-sm font-bold text-slate-800 dark:text-slate-100">
+        <span className="truncate text-sm font-bold text-slate-800 dark:text-slate-100">
           {t('shell.brandName', { defaultValue: '教學易' })}
           <span className="ml-1 font-medium text-slate-400 dark:text-slate-500">
             · {t(`mode.${modeDef.id}.short`, { defaultValue: modeDef.short })}

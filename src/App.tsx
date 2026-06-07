@@ -1,4 +1,4 @@
-import { Suspense, useEffect, useState, type ReactNode } from 'react'
+import { Suspense, useEffect, useRef, useState, type ReactNode } from 'react'
 import { ModeProvider, useMode } from './context/ModeContext'
 import { AuthProvider } from './context/AuthContext'
 import { NavProvider } from './context/NavContext'
@@ -42,11 +42,47 @@ export function AppShell() {
   const [shortcutsOpen, setShortcutsOpen] = useState(false)
   const [onboardOpen, setOnboardOpen] = useState(() => !hasOnboarded())
   const toast = useToast()
+  const drawerRef = useRef<HTMLDivElement>(null)
 
   // 切換模式時，返返去首頁（因為功能會唔同）
   useEffect(() => {
     setActiveId(null)
   }, [mode])
+
+  // 手機抽屜開啟時：初始焦點入抽屜、Esc 關閉、Tab focus-trap、關閉還原焦點（無障礙對話框）
+  useEffect(() => {
+    if (!drawerOpen) return
+    const prevActive = document.activeElement as HTMLElement | null
+    const panel = drawerRef.current
+    panel?.focus()
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.stopPropagation()
+        setDrawerOpen(false)
+        return
+      }
+      if (e.key !== 'Tab' || !panel) return
+      const nodes = panel.querySelectorAll<HTMLElement>(
+        'a[href],button:not([disabled]),textarea:not([disabled]),input:not([disabled]),select:not([disabled]),[tabindex]:not([tabindex="-1"])',
+      )
+      if (nodes.length === 0) return
+      const first = nodes[0]
+      const last = nodes[nodes.length - 1]
+      const active = document.activeElement
+      if (e.shiftKey && (active === first || active === panel)) {
+        e.preventDefault()
+        last.focus()
+      } else if (!e.shiftKey && active === last) {
+        e.preventDefault()
+        first.focus()
+      }
+    }
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('keydown', onKey)
+      prevActive?.focus?.()
+    }
+  }, [drawerOpen])
 
   // 背景預載全部功能 chunk（idle）→ 導航即時 + 所有 collection 登記齊（同步/匯出完整）
   useEffect(() => {
@@ -125,7 +161,14 @@ export function AppShell() {
               className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
               onClick={() => setDrawerOpen(false)}
             />
-            <div className="absolute left-0 top-0 h-full animate-[slideIn_0.2s_ease-out] shadow-2xl">
+            <div
+              ref={drawerRef}
+              role="dialog"
+              aria-modal="true"
+              aria-label="導覽選單"
+              tabIndex={-1}
+              className="absolute left-0 top-0 h-full animate-[slideIn_0.2s_ease-out] shadow-2xl focus:outline-none"
+            >
               <Sidebar
                 activeId={activeId}
                 onSelect={navigate}

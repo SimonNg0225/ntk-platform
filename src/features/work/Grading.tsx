@@ -264,7 +264,7 @@ export default function Grading() {
                       setPreview(null)
                     }}
                     aria-label="移除相片"
-                    className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-slate-700 text-white"
+                    className="absolute -right-2 -top-2 flex h-8 w-8 items-center justify-center rounded-full bg-slate-700 text-white"
                   >
                     <X size={13} />
                   </button>

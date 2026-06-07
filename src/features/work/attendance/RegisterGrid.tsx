@@ -72,7 +72,7 @@ export default function RegisterGrid({
       <table className="border-collapse text-sm">
         <thead>
           <tr className="bg-slate-50/80 dark:bg-slate-800/60">
-            <th className="sticky left-0 z-20 min-w-[120px] border-b border-r border-slate-200/80 bg-slate-50/95 px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 backdrop-blur dark:border-slate-700/60 dark:bg-slate-800/95 dark:text-slate-400">
+            <th className="sticky left-0 z-20 min-w-[96px] border-b border-r border-slate-200/80 bg-slate-50/95 px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 backdrop-blur dark:border-slate-700/60 dark:bg-slate-800/95 dark:text-slate-400">
               {t('attend.colStudent', { defaultValue: '學生' })}
             </th>
             {dayKeys.map((k) => {
@@ -113,7 +113,7 @@ export default function RegisterGrid({
             const tally = tallies.get(s.id)
             return (
               <tr key={s.id} className="group border-t border-slate-100 transition-colors hover:bg-slate-50/50 dark:border-slate-800 dark:hover:bg-slate-800/30">
-                <td className="sticky left-0 z-10 min-w-[120px] border-r border-slate-200/80 bg-white px-3 py-1.5 transition-colors group-hover:bg-slate-50/95 dark:border-slate-700/60 dark:bg-slate-800 dark:group-hover:bg-slate-800/95">
+                <td className="sticky left-0 z-10 min-w-[96px] border-r border-slate-200/80 bg-white px-3 py-1.5 transition-colors group-hover:bg-slate-50/95 dark:border-slate-700/60 dark:bg-slate-800 dark:group-hover:bg-slate-800/95">
                   <div className="truncate font-medium text-slate-700 dark:text-slate-200">
                     {s.name}
                   </div>
@@ -147,7 +147,7 @@ export default function RegisterGrid({
                           defaultValue: `${s.name}・${k}：${st ? STATUS_LABEL[st] : '未標記'}`,
                         })}
                         className={cx(
-                          'flex h-8 w-full items-center justify-center text-xs font-semibold tabular-nums transition focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent/40',
+                          'flex h-9 w-full items-center justify-center text-xs font-semibold tabular-nums transition focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent/40',
                           st
                             ? STATUS_STYLE[st].cell
                             : 'text-slate-300 hover:bg-slate-100 dark:text-slate-600 dark:hover:bg-slate-700/50',

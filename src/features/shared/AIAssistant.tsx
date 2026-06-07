@@ -2286,7 +2286,7 @@ function CommandPalette({
   return (
     <div className="fixed inset-0 z-[120] flex items-start justify-center pt-[12vh]">
       <div className="absolute inset-0 animate-fade-in bg-slate-900/50 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative z-10 w-full max-w-lg animate-scale-in overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-overlay dark:border-slate-700 dark:bg-slate-800">
+      <div role="dialog" aria-modal="true" aria-label={t('aiasst.paletteAriaLabel', { defaultValue: '指令面板' })} className="relative z-10 w-full max-w-lg animate-scale-in overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-overlay dark:border-slate-700 dark:bg-slate-800">
         <div className="flex items-center gap-2 border-b border-slate-200 px-3 dark:border-slate-700">
           <Command size={16} className="text-slate-400" />
           <input

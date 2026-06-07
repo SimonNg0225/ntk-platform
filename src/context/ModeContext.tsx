@@ -52,7 +52,11 @@ export function ModeProvider({ children }: { children: ReactNode }) {
     root.style.setProperty('--accent-grad-from', def.gradFrom)
     root.style.setProperty('--accent-grad-to', def.gradTo)
     root.dataset.mode = mode
-    localStorage.setItem(STORAGE_KEY, mode)
+    try {
+      localStorage.setItem(STORAGE_KEY, mode)
+    } catch {
+      // 忽略寫入錯誤 (storage 滿 / 私密瀏覽模式)
+    }
   }, [mode])
 
   const value = useMemo<ModeContextValue>(() => {

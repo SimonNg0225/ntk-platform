@@ -140,7 +140,7 @@ export default function Sidebar({
               <button
                 onClick={() => toggleGroup(g.group)}
                 aria-expanded={!isCol}
-                className="flex w-full items-center justify-between rounded-md px-3 pb-1.5 pt-5 text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-400 transition-colors hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300"
+                className="flex w-full items-center justify-between rounded-md px-3 pb-1.5 pt-5 text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-400 transition-colors hover:text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:text-slate-500 dark:hover:text-slate-300"
               >
                 <span>{groupLabel(t, g.group)}</span>
                 <ChevronDown

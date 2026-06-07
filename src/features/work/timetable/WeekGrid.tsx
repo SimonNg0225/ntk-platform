@@ -44,7 +44,7 @@ export default function WeekGrid({
 }) {
   return (
     <div className="overflow-x-auto rounded-3xl border border-slate-200/70 bg-white p-2.5 shadow-xs dark:border-slate-700/60 dark:bg-slate-800 dark:shadow-none sm:p-4">
-      <table className="w-full min-w-[680px] border-separate border-spacing-x-1.5 border-spacing-y-1.5 text-sm">
+      <table className="w-full min-w-[600px] border-separate border-spacing-x-1.5 border-spacing-y-1.5 text-sm">
         <thead>
           <tr>
             <th className="sticky left-0 z-10 w-20 bg-white pb-2 pl-1 text-left align-bottom text-[10px] font-medium uppercase tracking-[0.15em] text-slate-400 dark:bg-slate-800 dark:text-slate-500">

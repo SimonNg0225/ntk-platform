@@ -833,10 +833,17 @@ function BookCoverCard({
             {b.status !== 'reading' && (
               <span
                 role="button"
-                tabIndex={-1}
+                tabIndex={0}
                 onClick={(e) => {
                   e.stopPropagation()
                   onQuickStatus(b, 'reading')
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault()
+                    e.stopPropagation()
+                    onQuickStatus(b, 'reading')
+                  }
                 }}
                 className="rounded-lg bg-accent-soft px-1.5 py-1 text-center text-[11px] font-medium text-accent-strong transition-colors hover:bg-accent hover:text-white dark:bg-accent/15 dark:text-accent"
               >
@@ -846,10 +853,17 @@ function BookCoverCard({
             {b.status !== 'done' && (
               <span
                 role="button"
-                tabIndex={-1}
+                tabIndex={0}
                 onClick={(e) => {
                   e.stopPropagation()
                   onQuickStatus(b, 'done')
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault()
+                    e.stopPropagation()
+                    onQuickStatus(b, 'done')
+                  }
                 }}
                 className="rounded-lg bg-emerald-50 px-1.5 py-1 text-center text-[11px] font-medium text-emerald-700 transition-colors hover:bg-emerald-500 hover:text-white dark:bg-emerald-500/10 dark:text-emerald-300"
               >

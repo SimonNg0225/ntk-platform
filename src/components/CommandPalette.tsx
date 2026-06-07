@@ -161,12 +161,23 @@ export default function CommandPalette({
         className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
         onClick={onClose}
       />
-      <div className="relative z-10 w-full max-w-lg overflow-hidden rounded-xl bg-white shadow-overlay ring-1 ring-slate-900/5 dark:bg-slate-800 dark:ring-white/10">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label="指令面板"
+        className="relative z-10 w-full max-w-lg overflow-hidden rounded-xl bg-white shadow-overlay ring-1 ring-slate-900/5 dark:bg-slate-800 dark:ring-white/10"
+      >
         <div className="flex items-center gap-2.5 border-b border-slate-100 px-4 dark:border-slate-700">
           <Search size={18} strokeWidth={1.75} className="text-slate-400" />
           <input
             ref={inputRef}
             value={query}
+            role="combobox"
+            aria-expanded={items.length > 0}
+            aria-controls="command-palette-listbox"
+            aria-activedescendant={
+              items[active] ? `command-palette-option-${items[active].id}` : undefined
+            }
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === 'ArrowDown') {
@@ -187,7 +198,11 @@ export default function CommandPalette({
           />
           <Kbd className="hidden sm:inline-flex">ESC</Kbd>
         </div>
-        <ul className="max-h-80 overflow-y-auto p-2">
+        <ul
+          id="command-palette-listbox"
+          role="listbox"
+          className="max-h-80 overflow-y-auto p-2"
+        >
           {items.length === 0 && (
             <li className="px-3 py-6 text-center text-sm text-slate-400">
               搵唔到「{query}」
@@ -214,7 +229,11 @@ export default function CommandPalette({
                     {header}
                   </li>
                 )}
-                <li aria-selected={on} role="option">
+                <li
+                  id={`command-palette-option-${item.id}`}
+                  aria-selected={on}
+                  role="option"
+                >
                 <button
                   onMouseEnter={() => setActive(idx)}
                   onClick={() => run(idx)}

@@ -332,7 +332,7 @@ export default function Settings() {
           <select
             value={subjectPackId}
             onChange={(e) => setSubjectPackId(e.target.value)}
-            className="w-full rounded-lg border border-[color:var(--border)] bg-[color:var(--surface)] px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/30 dark:text-slate-100"
+            className="w-full rounded-lg border border-[color:var(--border)] bg-[color:var(--surface)] px-3 py-2 text-base sm:text-sm text-slate-800 outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/30 dark:text-slate-100"
           >
             {SUBJECT_PACKS.map((p) => (
               <option key={p.id} value={p.id}>

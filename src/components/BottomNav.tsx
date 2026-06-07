@@ -73,7 +73,7 @@ export default function BottomNav({
             onClick={() => (it.id === '__more__' ? onMore() : onSelect(it.id))}
             aria-current={active ? 'page' : undefined}
             className={cx(
-              'flex flex-1 flex-col items-center justify-center gap-0.5 py-2 text-[10px] font-medium transition-colors',
+              'flex min-h-[52px] flex-1 flex-col items-center justify-center gap-0.5 py-2 text-[10px] font-medium transition-colors',
               active
                 ? 'text-accent'
                 : 'text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300',

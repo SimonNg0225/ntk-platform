@@ -852,9 +852,11 @@ function WorkBento({
                     type="button"
                     onClick={() => it.taskId && completeTask(it.taskId)}
                     aria-label={t('wdash.completeTask', { defaultValue: '完成待辦' })}
-                    className="flex h-5 w-5 flex-none items-center justify-center rounded-full border border-slate-300 text-transparent transition hover:border-emerald-400 hover:bg-emerald-400 hover:text-white dark:border-slate-600"
+                    className="group flex h-9 w-9 flex-none items-center justify-center"
                   >
-                    <Check size={12} strokeWidth={3} />
+                    <span className="flex h-5 w-5 items-center justify-center rounded-full border border-slate-300 text-transparent transition group-hover:border-emerald-400 group-hover:bg-emerald-400 group-hover:text-white dark:border-slate-600">
+                      <Check size={12} strokeWidth={3} />
+                    </span>
                   </button>
                   <button
                     type="button"

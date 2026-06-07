@@ -121,7 +121,11 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   }, [settings.reduceMotion, settings.compactDensity])
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(settings))
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(settings))
+    } catch {
+      /* ignore */
+    }
   }, [settings])
 
   const api = useMemo<SettingsApi>(

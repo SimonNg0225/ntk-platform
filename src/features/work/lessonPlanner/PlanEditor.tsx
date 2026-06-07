@@ -727,6 +727,7 @@ export default function PlanEditor({
                       type="button"
                       role="checkbox"
                       aria-checked={m.done}
+                      aria-label={m.text}
                       onClick={() => updMaterial(m.id, { done: !m.done })}
                       className={cx(
                         'flex h-5 w-5 shrink-0 items-center justify-center rounded border transition-colors',
@@ -744,6 +745,7 @@ export default function PlanEditor({
                     <Input
                       value={m.text}
                       onChange={(e) => updMaterial(m.id, { text: e.target.value })}
+                      aria-label="教材名稱"
                       placeholder="如：第 3 章工作紙"
                       className={cx(
                         'flex-1',

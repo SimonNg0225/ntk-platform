@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Inbox, RefreshCw, Check, RotateCcw } from 'lucide-react'
-import { Card, SectionTitle, Badge, Button, cx } from '../ui'
+import { Card, SectionTitle, Badge, Button, EmptyState, cx } from '../ui'
 import { useAuth } from '../context/AuthContext'
 import { useToast } from '../context/ToastContext'
 import {
@@ -79,7 +79,7 @@ export default function AdminSupportCard() {
       {loading && tickets.length === 0 ? (
         <p className="py-6 text-center text-sm text-slate-400">載入中…</p>
       ) : tickets.length === 0 ? (
-        <p className="py-6 text-center text-sm text-slate-400">暫時未有查詢。</p>
+        <EmptyState icon="📭" title="暫時未有查詢。" />
       ) : (
         <ul className="space-y-2">
           {tickets.map((t) => (

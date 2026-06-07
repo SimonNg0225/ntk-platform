@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { LifeBuoy, Send } from 'lucide-react'
-import { Modal, Button, Field, Input, Textarea, Badge, cx } from '../ui'
+import { Modal, Button, Field, Input, Textarea, Badge, EmptyState, cx } from '../ui'
 import { useAuth } from '../context/AuthContext'
 import { useToast } from '../context/ToastContext'
 import {
@@ -134,9 +134,7 @@ export default function SupportButton() {
             {loadingTickets ? (
               <p className="py-6 text-center text-sm text-slate-400">載入中…</p>
             ) : tickets.length === 0 ? (
-              <p className="py-6 text-center text-sm text-slate-400">
-                仲未有查詢記錄。
-              </p>
+              <EmptyState icon="📭" title="仲未有查詢記錄。" />
             ) : (
               <ul className="max-h-80 space-y-2 overflow-y-auto">
                 {tickets.map((t) => (

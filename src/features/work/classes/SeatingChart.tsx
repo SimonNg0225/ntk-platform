@@ -201,9 +201,10 @@ function SeatGrid({
         <Presentation size={14} className="text-slate-400" />
         黑板 / 講台
       </div>
+      <div className="overflow-x-auto">
       <div
         className="grid gap-2"
-        style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}
+        style={{ gridTemplateColumns: `repeat(${cols}, minmax(56px, 1fr))` }}
       >
         {grid.flatMap((row, r) =>
           row.map((stu, c) => {
@@ -264,6 +265,7 @@ function SeatGrid({
             )
           }),
         )}
+      </div>
       </div>
       <div className="flex items-center justify-between gap-2">
         <span
