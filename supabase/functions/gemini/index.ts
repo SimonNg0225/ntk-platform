@@ -22,6 +22,17 @@ const SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
 // 商業化 P1：免費版每日 AI 額度（防成本被刷爆）。Pro 用戶不限。
 const DAILY_FREE_LIMIT = Number(Deno.env.get('AI_DAILY_FREE_LIMIT') ?? '20')
 
+// 測試白名單：呢啲 email 跳過每日額度（等同 Pro 無限），方便未接付款前測試。
+// 取 AI_UNLIMITED_EMAILS，未設就退回 ADMIN_EMAILS（同 support-admin 共用一張名單）。
+const UNLIMITED_EMAILS = (
+  Deno.env.get('AI_UNLIMITED_EMAILS') ??
+  Deno.env.get('ADMIN_EMAILS') ??
+  ''
+)
+  .split(',')
+  .map((s) => s.trim().toLowerCase())
+  .filter(Boolean)
+
 // 只容許呢幾個 model，避免被亂叫貴 model
 const ALLOWED_MODELS = new Set(['gemini-2.5-flash', 'gemini-2.5-pro'])
 const DEFAULT_MODEL = 'gemini-2.5-flash'
@@ -90,9 +101,11 @@ Deno.serve(async (req: Request) => {
   }
 
   // ── 訂閱 / 每日額度檢查 ───────────────────────────────────
-  // Pro（active / trialing）不限；免費版每日上限，超額回 429。
+  // Pro（active / trialing）或測試白名單不限；免費版每日上限，超額回 429。
   // 用 service_role 繞過 RLS 讀訂閱 + 原子遞增用量。
-  if (SERVICE_ROLE_KEY) {
+  const callerEmail = (user.email ?? '').toLowerCase()
+  const whitelisted = !!callerEmail && UNLIMITED_EMAILS.includes(callerEmail)
+  if (SERVICE_ROLE_KEY && !whitelisted) {
     const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY)
     const { data: sub } = await admin
       .from('subscriptions')

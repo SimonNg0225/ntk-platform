@@ -115,6 +115,9 @@ if (!isPro) return <UpgradePrompt />   // 例如 AI 無限額度、進階統計
   免費版每次呼叫原子遞增當日用量，超額回 **429**（前端顯示「升級 Pro」訊息）。
 - 上限由 env `AI_DAILY_FREE_LIMIT`（預設 20）控制：
   `supabase secrets set AI_DAILY_FREE_LIMIT=20` 後 `supabase functions deploy gemini`。
+- **測試白名單**：`AI_UNLIMITED_EMAILS`（逗號分隔）內嘅 email 跳過每日額度
+  （等同 Pro 無限）；未設就退回 `ADMIN_EMAILS`。方便未接付款前測試。
+  `supabase secrets set AI_UNLIMITED_EMAILS=you@example.com` 後重新部署 gemini。
 - 跑 migration：`supabase db push`（含 0003）。
 
 #### 交易 Email + Webhook 告警（Resend）
