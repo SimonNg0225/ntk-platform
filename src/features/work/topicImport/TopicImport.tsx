@@ -10,7 +10,6 @@ import {
   Tooltip,
 } from '../../../ui'
 import { useToast } from '../../../context/ToastContext'
-import { useConfirm } from '../../../context/ConfirmContext'
 import { useSettings } from '../../../context/SettingsContext'
 import { useCollection } from '../../../lib/store'
 import { complete, isAIConfigured, type AIMessage, type AIModel } from '../../../lib/aiClient'
@@ -18,6 +17,7 @@ import { extractFromFile } from '../docDigest/extract'
 import { topicsCol } from '../../../data/collections'
 import { getSubjectPack } from '../../../data/subjects'
 import { buildImportSystem, parseTopics, type ImportedTopic } from './importPrompts'
+import { smartApplyTopics } from './applyTopics'
 
 type Mode = 'file' | 'text' | 'photo'
 const MODE_OPTS: { id: Mode; label: string }[] = [
@@ -32,7 +32,6 @@ const MODEL_OPTS: { id: AIModel; label: string }[] = [
 
 export default function TopicImport() {
   const toast = useToast()
-  const confirm = useConfirm()
   const { subjectPackId } = useSettings()
   const subjectName = subjectPackId !== 'custom' ? getSubjectPack(subjectPackId)?.name : undefined
   const existing = useCollection(topicsCol)
@@ -100,20 +99,14 @@ export default function TopicImport() {
     setFile(null)
   }
 
-  async function loadReplace() {
+  function loadSmart() {
     if (!imported) return
-    const ok = await confirm({
-      title: '取代現有課題？',
-      message: `會刪除現有 ${existing.length} 個課題，換成匯入嘅 ${imported.length} 個。相關進度／題目可能失去連繫。`,
-      tone: 'danger',
-      confirmText: '取代',
-    })
-    if (!ok) return
-    topicsCol.get().forEach((t) => topicsCol.remove(t.id))
-    imported.forEach((it, i) =>
-      topicsCol.add({ part: it.part, area: it.area, topic: it.topic, order: i + 1 }),
+    const r = smartApplyTopics(imported)
+    toast.success(
+      `智能切換完成：保留 ${r.matched} · 新增 ${r.added}` +
+        (r.kept ? ` · 留存 ${r.kept}` : '') +
+        (r.removed ? ` · 清走 ${r.removed}` : ''),
     )
-    toast.success(`已換成 ${imported.length} 個課題`)
     setImported(null)
     setText('')
     setFile(null)
@@ -199,8 +192,8 @@ export default function TopicImport() {
             <Button variant="secondary" size="sm" icon={ListPlus} onClick={loadAppend}>
               附加
             </Button>
-            <Button size="sm" icon={Replace} onClick={() => void loadReplace()}>
-              取代現有
+            <Button size="sm" icon={Replace} onClick={loadSmart}>
+              智能切換
             </Button>
           </div>
           <div className="space-y-3">
@@ -222,7 +215,9 @@ export default function TopicImport() {
         </Card>
       )}
 
-      <p className="text-[11px] text-slate-400">現時課題：{existing.length} 個。「附加」會加喺後面；「取代」會清走再換。</p>
+      <p className="text-[11px] text-slate-400">
+        現時課題：{existing.length} 個。「附加」會加喺後面；「智能切換」會按課題名保留連繫（題庫/進度唔甩號），冇用嘅先清走。
+      </p>
     </div>
   )
 }
