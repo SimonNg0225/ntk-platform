@@ -646,7 +646,7 @@ export default function Inbox() {
         <button
           type="button"
           onClick={reviewStale}
-          className="group mt-4 flex w-full items-center gap-2.5 rounded-2xl border border-amber-200 bg-amber-50 px-3.5 py-2.5 text-left text-amber-800 transition hover:border-amber-300 hover:bg-amber-100/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/50 dark:border-amber-500/25 dark:bg-amber-500/10 dark:text-amber-200 dark:hover:bg-amber-500/15"
+          className="group mt-4 flex w-full items-center gap-2.5 rounded-2xl border border-amber-200 bg-amber-50 px-3.5 py-2.5 text-left text-amber-800 transition active:scale-[0.98] hover:border-amber-300 hover:bg-amber-100/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/50 dark:border-amber-500/25 dark:bg-amber-500/10 dark:text-amber-200 dark:hover:bg-amber-500/15"
         >
           <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-600 dark:bg-amber-500/20 dark:text-amber-300">
             <Clock size={16} />
@@ -1201,7 +1201,7 @@ function InboxRowCard({
                 e.stopPropagation()
                 onAcceptAi()
               }}
-              className="group/ai mt-2 inline-flex max-w-full items-center gap-1.5 rounded-lg bg-accent-soft px-2.5 py-1.5 text-[11px] font-medium text-accent-strong transition hover:bg-accent/15 dark:bg-accent/10 dark:text-accent"
+              className="group/ai mt-2 inline-flex max-w-full items-center gap-1.5 rounded-lg bg-accent-soft px-2.5 py-1.5 text-[11px] font-medium text-accent-strong transition active:scale-[0.98] hover:bg-accent/15 dark:bg-accent/10 dark:text-accent"
             >
               <Sparkles size={12} className="shrink-0" />
               <span className="truncate">
@@ -1301,7 +1301,7 @@ function InboxRowCard({
                     onConvert(k.id)
                   }}
                   className={cx(
-                    'inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
+                    'inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-medium transition active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
                     on
                       ? 'bg-accent text-white shadow-sm'
                       : cx(KIND_CHIP[k.id], 'hover:brightness-95 dark:hover:brightness-110'),

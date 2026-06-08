@@ -557,7 +557,7 @@ export default function NotesWidget() {
                     }}
                     aria-current={on ? 'page' : undefined}
                     className={cx(
-                      'group flex w-full items-center gap-2.5 rounded-xl py-1.5 pl-3 pr-2.5 text-sm transition',
+                      'group flex w-full items-center gap-2.5 rounded-xl py-1.5 pl-3 pr-2.5 text-sm transition active:scale-[0.98]',
                       on
                         ? 'bg-accent-soft font-medium text-accent-strong shadow-xs dark:bg-accent/15 dark:text-accent'
                         : 'text-slate-600 hover:bg-amber-50/70 dark:text-slate-300 dark:hover:bg-slate-700/50',
@@ -593,7 +593,7 @@ export default function NotesWidget() {
                   <div key={f.id} className="group/sf flex items-center">
                     <button
                       onClick={() => applySavedFilter(f)}
-                      className="flex min-w-0 flex-1 items-center gap-2.5 rounded-xl py-1.5 pl-3 pr-2 text-sm text-slate-600 transition hover:bg-amber-50/70 dark:text-slate-300 dark:hover:bg-slate-700/50"
+                      className="flex min-w-0 flex-1 items-center gap-2.5 rounded-xl py-1.5 pl-3 pr-2 text-sm text-slate-600 transition hover:bg-amber-50/70 active:scale-[0.98] dark:text-slate-300 dark:hover:bg-slate-700/50"
                     >
                       <Bookmark size={14} className="shrink-0 text-accent/70" />
                       <span className="flex-1 truncate text-left">{f.name}</span>
@@ -601,7 +601,7 @@ export default function NotesWidget() {
                     <button
                       onClick={() => savedFiltersCol.remove(f.id)}
                       aria-label={`刪除智能檢視「${f.name}」`}
-                      className="ml-0.5 hidden shrink-0 rounded p-1 text-slate-300 transition hover:text-rose-500 group-hover/sf:block dark:text-slate-600"
+                      className="ml-0.5 hidden shrink-0 rounded p-1 text-slate-300 transition hover:text-rose-500 active:scale-[0.98] group-hover/sf:block dark:text-slate-600"
                     >
                       <X size={13} />
                     </button>
@@ -639,7 +639,7 @@ export default function NotesWidget() {
                     }}
                     aria-current={on ? 'page' : undefined}
                     className={cx(
-                      'group flex w-full items-center gap-2.5 rounded-xl py-1.5 pl-3 pr-2.5 text-sm transition',
+                      'group flex w-full items-center gap-2.5 rounded-xl py-1.5 pl-3 pr-2.5 text-sm transition active:scale-[0.98]',
                       on
                         ? 'bg-amber-100/60 font-medium text-slate-800 shadow-xs dark:bg-slate-700/60 dark:text-slate-100'
                         : 'text-slate-600 hover:bg-amber-50/70 dark:text-slate-300 dark:hover:bg-slate-700/50',
@@ -735,7 +735,7 @@ export default function NotesWidget() {
                       aria-pressed={on}
                       aria-label={`標籤 ${tag}（${count}）${on ? '，已篩選' : ''}`}
                       className={cx(
-                        'inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-medium transition',
+                        'inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-medium transition active:scale-[0.98]',
                         on
                           ? 'bg-accent text-white'
                           : 'bg-accent-soft text-accent-strong hover:brightness-95 dark:bg-accent/15 dark:text-accent',
@@ -752,7 +752,7 @@ export default function NotesWidget() {
                       setQuery('')
                       setActiveTag(null)
                     }}
-                    className="inline-flex items-center gap-0.5 rounded-md px-1.5 py-0.5 text-[11px] font-medium text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                    className="inline-flex items-center gap-0.5 rounded-md px-1.5 py-0.5 text-[11px] font-medium text-slate-400 transition hover:text-slate-600 active:scale-[0.98] dark:hover:text-slate-200"
                   >
                     <X size={12} /> 清除
                   </button>
@@ -973,7 +973,7 @@ function BulkBtn({
       onClick={onClick}
       disabled={disabled}
       className={cx(
-        'inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium transition disabled:cursor-not-allowed disabled:opacity-40',
+        'inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40',
         tone === 'danger'
           ? 'text-rose-600 hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-500/10'
           : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700',
@@ -1015,7 +1015,7 @@ function NoteRow({
       aria-pressed={selectMode ? checked : undefined}
       aria-current={!selectMode && active ? 'true' : undefined}
       className={cx(
-        'group relative block w-full overflow-hidden rounded-2xl border pl-5 pr-4 py-3.5 text-left transition duration-200',
+        'group relative block w-full overflow-hidden rounded-2xl border pl-5 pr-4 py-3.5 text-left transition duration-200 active:scale-[0.98]',
         color.card ||
           'border-slate-200/80 bg-white dark:border-slate-700/60 dark:bg-slate-800',
         active

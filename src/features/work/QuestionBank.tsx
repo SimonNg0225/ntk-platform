@@ -822,7 +822,7 @@ function BankView(props: {
           <button
             onClick={selectAllFiltered}
             aria-pressed={allFilteredSelected}
-            className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-sm font-medium text-accent-strong transition hover:bg-accent/10 dark:text-accent"
+            className="inline-flex items-center gap-1.5 rounded-xl px-2 py-1 text-sm font-medium text-accent-strong transition hover:bg-accent/10 active:scale-[0.98] dark:text-accent"
           >
             {allFilteredSelected ? <CheckSquare size={16} /> : <Square size={16} />}
             全選（<span className="tabular-nums">{filtered.length}</span>）
@@ -1465,7 +1465,7 @@ function PaperStudio({
                       onClick={() => toggleBpTopic(t.id)}
                       aria-pressed={on}
                       className={cx(
-                        'rounded-full border px-2.5 py-1 text-xs font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
+                        'rounded-full border px-2.5 py-1 text-xs font-medium transition active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
                         on
                           ? 'border-accent bg-accent text-white shadow-sm dark:shadow-none'
                           : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700',
@@ -1810,7 +1810,7 @@ function QuestionFormModal({
             type="button"
             onClick={onClose}
             aria-label="關閉"
-            className="-mr-1.5 -mt-1 shrink-0 rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:hover:bg-slate-700"
+            className="-mr-1.5 -mt-1 shrink-0 rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:hover:bg-slate-700"
           >
             <X size={18} />
           </button>

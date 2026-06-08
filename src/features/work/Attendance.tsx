@@ -1018,7 +1018,7 @@ function DetailModal({
             type="button"
             onClick={onClose}
             aria-label={t('attend.close', { defaultValue: '關閉' })}
-            className="-mr-1.5 -mt-1 shrink-0 rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:hover:bg-slate-700"
+            className="-mr-1.5 -mt-1 shrink-0 rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:hover:bg-slate-700"
           >
             <X size={18} />
           </button>
@@ -1744,7 +1744,7 @@ function Analytics({ classId, className }: { classId: string; className: string 
                       name: student.name,
                       defaultValue: `查看 ${student.name} 出席摘要`,
                     })}
-                    className="group w-full rounded-lg px-2 py-1.5 text-left transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:hover:bg-slate-700/40"
+                    className="group w-full rounded-xl px-2 py-1.5 text-left transition hover:bg-slate-50 active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:hover:bg-slate-700/40"
                   >
                     <div className="mb-1 flex items-center justify-between gap-2 text-sm">
                       <span className="flex min-w-0 items-center gap-2">
@@ -1914,7 +1914,7 @@ function StudentSummaryModal({
             type="button"
             onClick={onClose}
             aria-label={t('attend.close', { defaultValue: '關閉' })}
-            className="-mr-1.5 -mt-1 shrink-0 rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:hover:bg-slate-700"
+            className="-mr-1.5 -mt-1 shrink-0 rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:hover:bg-slate-700"
           >
             <X size={18} />
           </button>

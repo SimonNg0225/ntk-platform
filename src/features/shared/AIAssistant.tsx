@@ -803,7 +803,7 @@ export default function AIAssistant() {
               aria-pressed={showArchived}
               onClick={() => setShowArchived((v) => !v)}
               className={cx(
-                'inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs transition',
+                'inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs transition active:scale-[0.98]',
                 showArchived
                   ? 'bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent'
                   : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300',
@@ -814,7 +814,7 @@ export default function AIAssistant() {
             <button
               type="button"
               onClick={() => setStatsOpen(true)}
-              className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs text-slate-400 transition hover:text-slate-600 dark:hover:text-slate-300"
+              className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs text-slate-400 transition hover:text-slate-600 active:scale-[0.98] dark:hover:text-slate-300"
             >
               <BarChart3 size={13} /> {t('aiasst.stats', { defaultValue: '統計' })}
             </button>
@@ -1013,7 +1013,7 @@ export default function AIAssistant() {
                 <button
                   type="button"
                   onClick={() => setContexts(activeContexts.filter((x) => x.id !== c.id))}
-                  className="flex h-4 w-4 items-center justify-center rounded-full text-accent-strong/70 transition hover:bg-accent/15 hover:text-accent-strong focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent/50 dark:text-accent/70 dark:hover:bg-accent/20 dark:hover:text-accent"
+                  className="flex h-4 w-4 items-center justify-center rounded-full text-accent-strong/70 transition hover:bg-accent/15 hover:text-accent-strong active:scale-[0.98] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent/50 dark:text-accent/70 dark:hover:bg-accent/20 dark:hover:text-accent"
                   aria-label={t('aiasst.ctxRemoveChip', { defaultValue: `移除上下文：${c.title}`, title: c.title })}
                 >
                   <X size={11} />
@@ -1390,7 +1390,7 @@ function Welcome({
               <button
                 key={t.id}
                 onClick={() => onPick(t)}
-                className="group flex items-center gap-3 rounded-2xl border border-slate-200/80 bg-white p-3 text-left shadow-xs transition duration-200 hover:-translate-y-0.5 hover:border-accent/40 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:border-slate-700/60 dark:bg-slate-800 dark:shadow-none dark:hover:border-accent/50"
+                className="group flex items-center gap-3 rounded-2xl border border-slate-200/80 bg-white p-3 text-left shadow-xs transition duration-200 hover:-translate-y-0.5 hover:border-accent/40 hover:shadow-md active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:border-slate-700/60 dark:bg-slate-800 dark:shadow-none dark:hover:border-accent/50"
               >
                 <span className={cx('flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition duration-200 group-hover:scale-105', tone)}>
                   <Sparkles size={16} />
@@ -1408,7 +1408,7 @@ function Welcome({
 
       <button
         onClick={onOpenLibrary}
-        className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium text-slate-500 transition hover:bg-slate-100 hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-accent"
+        className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium text-slate-500 transition hover:bg-slate-100 hover:text-accent active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-accent"
       >
         <Library size={14} /> {t('aiasst.welcomeSeeAllTemplates', { defaultValue: '睇晒全部範本' })}
       </button>
@@ -1645,7 +1645,7 @@ function SaveNoteModal({
                   aria-pressed={on}
                   onClick={() => setNbId(o.id)}
                   className={cx(
-                    'inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
+                    'inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-medium transition active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
                     on
                       ? 'border-accent bg-accent-soft text-accent-strong dark:border-accent/50 dark:bg-accent/15 dark:text-accent'
                       : 'border-slate-200 text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800',
@@ -2107,7 +2107,7 @@ function ContextItem({
       aria-pressed={selected}
       onClick={onToggle}
       className={cx(
-        'flex w-full items-start gap-2 rounded-lg border p-2.5 text-left transition',
+        'flex w-full items-start gap-2 rounded-xl border p-2.5 text-left transition active:scale-[0.98]',
         selected
           ? 'border-accent bg-accent-soft dark:border-accent/50 dark:bg-accent/15'
           : 'border-slate-200 bg-white hover:border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-slate-600',
@@ -2354,7 +2354,7 @@ function PaletteRow({
       onClick={onClick}
       onMouseEnter={onHover}
       className={cx(
-        'flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm transition',
+        'flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-left text-sm transition active:scale-[0.98]',
         active ? 'bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent' : 'text-slate-600 dark:text-slate-300',
       )}
     >

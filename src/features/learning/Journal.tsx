@@ -454,7 +454,7 @@ export default function Journal() {
                 key={d.id}
                 onClick={() => openEdit(d)}
                 aria-label={`${yearsAgo} 年前嘅今日：${d.title?.trim() || excerpt(d.content, 40)}`}
-                className="flex w-full items-center gap-3 rounded-xl bg-white/70 p-2.5 text-left transition hover:bg-white dark:bg-slate-800/60 dark:hover:bg-slate-800"
+                className="flex w-full items-center gap-3 rounded-xl bg-white/70 p-2.5 text-left transition hover:bg-white active:scale-[0.98] dark:bg-slate-800/60 dark:hover:bg-slate-800"
               >
                 {d.mood ? (
                   <span aria-hidden="true" className="shrink-0 text-lg leading-none">{d.mood}</span>
@@ -482,7 +482,7 @@ export default function Journal() {
       {view === 'timeline' && docs.length > 0 && !existingDates.has(today) && (
         <button
           onClick={() => openNew()}
-          className="group flex w-full items-center gap-4 overflow-hidden rounded-2xl border border-accent/25 bg-gradient-to-br from-accent-soft/70 to-accent-soft/20 p-4 text-left transition duration-200 hover:-translate-y-0.5 hover:border-accent/45 hover:shadow-md dark:border-accent/30 dark:from-accent/15 dark:to-accent/5"
+          className="group flex w-full items-center gap-4 overflow-hidden rounded-2xl border border-accent/25 bg-gradient-to-br from-accent-soft/70 to-accent-soft/20 p-4 text-left transition duration-200 hover:-translate-y-0.5 hover:border-accent/45 hover:shadow-md active:scale-[0.98] dark:border-accent/30 dark:from-accent/15 dark:to-accent/5"
         >
           <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-accent text-white shadow-sm shadow-accent/30 transition group-hover:scale-105">
             <PenLine size={19} />
@@ -543,7 +543,7 @@ export default function Journal() {
               onClick={() => setFavOnly((v) => !v)}
               aria-pressed={favOnly}
               className={cx(
-                'inline-flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-medium transition',
+                'inline-flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-medium transition active:scale-[0.98]',
                 favOnly
                   ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300'
                   : 'bg-slate-100 text-slate-500 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700',
@@ -563,7 +563,7 @@ export default function Journal() {
                   aria-pressed={on}
                   onClick={() => setMoodFilter(on ? null : m.emoji)}
                   className={cx(
-                    'rounded-lg px-2 py-1 text-base leading-none transition',
+                    'rounded-lg px-2 py-1 text-base leading-none transition active:scale-[0.98]',
                     on
                       ? 'bg-white shadow-xs ring-1 ring-accent/40 dark:bg-slate-700'
                       : 'opacity-60 hover:bg-slate-100 hover:opacity-100 dark:hover:bg-slate-800',
@@ -587,7 +587,7 @@ export default function Journal() {
                     aria-pressed={on}
                     aria-label={`標籤 ${tag}，${count} 篇`}
                     className={cx(
-                      'inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-medium transition',
+                      'inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-medium transition active:scale-[0.98]',
                       on
                         ? 'bg-accent text-white'
                         : 'bg-accent-soft text-accent-strong hover:brightness-95 dark:bg-accent/15 dark:text-accent',
@@ -609,7 +609,7 @@ export default function Journal() {
               </span>
               <button
                 onClick={clearFilters}
-                className="inline-flex items-center gap-1 font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+                className="inline-flex items-center gap-1 font-medium text-slate-500 transition hover:text-slate-700 active:scale-[0.98] dark:text-slate-400 dark:hover:text-slate-200"
               >
                 <X size={12} />
                 清除篩選
@@ -827,7 +827,7 @@ function EntryCard({
       {isLong && (
         <button
           onClick={onToggleExpand}
-          className="mt-1 text-xs font-medium text-accent hover:text-accent-strong"
+          className="mt-1 text-xs font-medium text-accent transition hover:text-accent-strong active:scale-[0.98]"
         >
           {expanded ? '收起' : '展開全文'}
         </button>
@@ -850,7 +850,7 @@ function EntryCard({
               aria-pressed={on}
               aria-label={`以標籤 ${t} 篩選`}
               className={cx(
-                'rounded-md px-1.5 py-0.5 text-[11px] font-medium transition',
+                'rounded-md px-1.5 py-0.5 text-[11px] font-medium transition active:scale-[0.98]',
                 on
                   ? 'bg-accent text-white'
                   : 'bg-accent-soft text-accent-strong hover:brightness-95 dark:bg-accent/15 dark:text-accent',

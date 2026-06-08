@@ -582,7 +582,7 @@ function ListView({ items, onOpen }: { items: EnrichedGoal[]; onOpen: (id: strin
             <button
               type="button"
               onClick={() => onOpen(e.goal.id)}
-              className="group flex w-full items-stretch gap-0 overflow-hidden rounded-2xl border border-slate-200/80 bg-white text-left shadow-xs transition duration-200 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:border-slate-700/60 dark:bg-slate-800 dark:shadow-none dark:hover:border-slate-600"
+              className="group flex w-full items-stretch gap-0 overflow-hidden rounded-2xl border border-slate-200/80 bg-white text-left shadow-xs transition duration-200 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98] dark:border-slate-700/60 dark:bg-slate-800 dark:shadow-none dark:hover:border-slate-600"
             >
               {/* 左側垂直海拔軌：填到對應高度 */}
               <span aria-hidden="true" className="relative w-1.5 shrink-0 bg-slate-100 dark:bg-slate-700/70">
@@ -646,7 +646,7 @@ function GoalCard({ e, onOpen, index }: { e: EnrichedGoal; onOpen: (id: string) 
       type="button"
       onClick={() => onOpen(e.goal.id)}
       style={{ animationDelay: `${Math.min(index, 12) * 32}ms` }}
-      className="group flex w-full animate-fade-in-up flex-col rounded-3xl border border-slate-200/80 bg-white p-4 text-left shadow-xs transition duration-200 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:border-slate-700/60 dark:bg-slate-800 dark:shadow-none dark:hover:border-slate-600"
+      className="group flex w-full animate-fade-in-up flex-col rounded-3xl border border-slate-200/80 bg-white p-4 text-left shadow-xs transition duration-200 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98] dark:border-slate-700/60 dark:bg-slate-800 dark:shadow-none dark:hover:border-slate-600"
     >
       <div className="flex items-start gap-2.5">
         <span className={cx('flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl ring-1 ring-inset transition duration-200 group-hover:scale-105', cat.ring, cat.text)}>

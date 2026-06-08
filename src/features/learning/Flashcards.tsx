@@ -350,7 +350,7 @@ function DeckHome({
                   <div className="flex items-start justify-between gap-2">
                     <button
                       onClick={() => onOpen(d.id)}
-                      className="flex min-w-0 flex-1 items-center gap-3 text-left"
+                      className="flex min-w-0 flex-1 items-center gap-3 text-left transition active:scale-[0.98]"
                     >
                       <span
                         className={cx(
@@ -572,7 +572,7 @@ function StudyModeModal({
             disabled={m.disabled}
             onClick={() => onPick(m.mode)}
             className={cx(
-              'group flex items-center gap-3 rounded-xl border p-3 text-left transition hover:-translate-y-0.5 hover:border-accent hover:shadow-sm disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-y-0 disabled:hover:shadow-none dark:hover:bg-accent/10',
+              'group flex items-center gap-3 rounded-xl border p-3 text-left transition hover:-translate-y-0.5 hover:border-accent hover:shadow-sm active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-y-0 disabled:hover:shadow-none dark:hover:bg-accent/10',
               m.recommended
                 ? 'border-accent/40 bg-accent-soft/50 dark:border-accent/40 dark:bg-accent/10'
                 : 'border-slate-200 dark:border-slate-700',

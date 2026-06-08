@@ -664,6 +664,7 @@ export default function MeetingNotes() {
                 type="button"
                 onClick={() => setActiveTag(null)}
                 aria-pressed={activeTag === null}
+                className="transition active:scale-[0.98]"
               >
                 <Badge tone={activeTag === null ? 'accent' : 'slate'}>全部</Badge>
               </button>
@@ -674,6 +675,7 @@ export default function MeetingNotes() {
                   onClick={() => setActiveTag((c) => (c === tag ? null : tag))}
                   aria-pressed={activeTag === tag}
                   aria-label={`篩選標籤 ${tag}`}
+                  className="transition active:scale-[0.98]"
                 >
                   <Badge tone={activeTag === tag ? 'accent' : 'slate'}>#{tag}</Badge>
                 </button>
@@ -1055,6 +1057,7 @@ function NoteRow({
                 }}
                 aria-pressed={activeTag === t}
                 aria-label={`篩選標籤 ${t}`}
+                className="transition active:scale-[0.98]"
               >
                 <Badge tone={activeTag === t ? 'accent' : 'slate'}>#{t}</Badge>
               </button>
@@ -1138,7 +1141,7 @@ function ActionRow({
         type="button"
         onClick={onToggle}
         className={cx(
-          'mt-0.5 shrink-0 transition',
+          'mt-0.5 shrink-0 transition active:scale-[0.98]',
           action.done
             ? 'text-emerald-500'
             : 'text-slate-300 hover:text-accent dark:text-slate-600',
@@ -1173,7 +1176,7 @@ function ActionRow({
           <button
             type="button"
             onClick={onOpenNote}
-            className="inline-flex items-center gap-1 hover:text-accent"
+            className="inline-flex items-center gap-1 transition hover:text-accent active:scale-[0.98]"
           >
             <CornerDownRight size={12} />
             {action.noteTitle}
@@ -1428,7 +1431,7 @@ function NoteDetail({
                     type="button"
                     onClick={() => onToggleAction(a.id)}
                     className={cx(
-                      'mt-0.5 shrink-0 transition',
+                      'mt-0.5 shrink-0 transition active:scale-[0.98]',
                       a.done
                         ? 'text-emerald-500'
                         : 'text-slate-300 hover:text-accent dark:text-slate-600',

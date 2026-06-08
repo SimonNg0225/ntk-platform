@@ -765,7 +765,7 @@ function SettingsModal({
           type="button"
           onClick={() => setCycleOn((v) => !v)}
           aria-pressed={cycleOn}
-          className="flex w-full items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50/60 p-3 text-left transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800/60 dark:hover:bg-slate-800"
+          className="flex w-full items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50/60 p-3 text-left transition hover:bg-slate-100 active:scale-[0.98] dark:border-slate-700 dark:bg-slate-800/60 dark:hover:bg-slate-800"
         >
           <span className="min-w-0">
             <span className="block text-sm font-medium text-slate-700 dark:text-slate-200">
@@ -807,7 +807,7 @@ function SettingsModal({
                   type="button"
                   onClick={() => toggleDay(d.day)}
                   className={cx(
-                    'rounded-full px-3.5 py-1.5 text-sm font-medium transition',
+                    'rounded-full px-3.5 py-1.5 text-sm font-medium transition active:scale-[0.98]',
                     on
                       ? 'bg-accent text-white shadow-sm dark:shadow-none'
                       : 'bg-slate-100 text-slate-500 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700',

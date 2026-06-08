@@ -526,7 +526,7 @@ export default function LessonPlanner() {
             <button
               type="button"
               onClick={() => setTemplatesOpen(true)}
-              className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-white/15 bg-white/5 px-3 text-sm font-medium text-slate-100 backdrop-blur-sm transition hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
+              className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-white/15 bg-white/5 px-3 text-sm font-medium text-slate-100 backdrop-blur-sm transition active:scale-[0.98] hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
             >
               <Sparkles size={15} />
               範本
@@ -534,7 +534,7 @@ export default function LessonPlanner() {
             <button
               type="button"
               onClick={() => openCreate()}
-              className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-white px-3.5 text-sm font-semibold text-slate-800 shadow-sm transition hover:bg-accent-soft hover:text-accent-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
+              className="inline-flex h-9 items-center gap-1.5 rounded-xl bg-white px-3.5 text-sm font-semibold text-slate-800 shadow-sm transition active:scale-[0.98] hover:bg-accent-soft hover:text-accent-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
             >
               <Plus size={16} />
               新增教案
@@ -815,7 +815,7 @@ export default function LessonPlanner() {
                           type="button"
                           onClick={() => openEdit(p)}
                           className={cx(
-                            'rounded-xl border-l-[3px] bg-slate-50 px-2 py-1.5 text-left transition hover:-translate-y-0.5 hover:shadow-sm dark:bg-slate-900/40 dark:hover:bg-slate-900/70',
+                            'rounded-xl border-l-[3px] bg-slate-50 px-2 py-1.5 text-left transition active:scale-[0.98] hover:-translate-y-0.5 hover:shadow-sm dark:bg-slate-900/40 dark:hover:bg-slate-900/70',
                             st === 'taught'
                               ? 'border-emerald-400 hover:bg-emerald-50/70 dark:border-emerald-500/70'
                               : st === 'ready'
@@ -848,7 +848,7 @@ export default function LessonPlanner() {
                     <button
                       type="button"
                       onClick={() => openCreate(key)}
-                      className="mt-auto flex items-center justify-center gap-1 rounded-lg border border-dashed border-slate-200 py-1 text-[11px] text-slate-400 transition hover:border-accent/40 hover:text-accent dark:border-slate-700"
+                      className="mt-auto flex items-center justify-center gap-1 rounded-xl border border-dashed border-slate-200 py-1 text-[11px] text-slate-400 transition active:scale-[0.98] hover:border-accent/40 hover:text-accent dark:border-slate-700"
                     >
                       <Plus size={12} />
                       加課
@@ -935,7 +935,7 @@ export default function LessonPlanner() {
                               setEditingId(null)
                               setEditorOpen(true)
                             }}
-                            className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2 py-1 text-xs text-slate-600 transition hover:bg-accent-soft hover:text-accent-strong dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-accent/15 dark:hover:text-accent"
+                            className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2 py-1 text-xs text-slate-600 transition active:scale-[0.98] hover:bg-accent-soft hover:text-accent-strong dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-accent/15 dark:hover:text-accent"
                           >
                             <Plus size={11} />
                             {t.topic}

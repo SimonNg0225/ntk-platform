@@ -191,7 +191,7 @@ export default function Calendar() {
             <button
               type="button"
               onClick={() => setCursor(new Date())}
-              className="inline-flex items-center gap-1 rounded-full border border-slate-200/80 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 shadow-xs transition duration-200 hover:border-accent/40 hover:text-accent dark:border-slate-700/60 dark:bg-slate-800 dark:text-slate-300 dark:shadow-none dark:hover:text-accent"
+              className="inline-flex items-center gap-1 rounded-full border border-slate-200/80 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 shadow-xs transition duration-200 hover:border-accent/40 hover:text-accent active:scale-[0.98] dark:border-slate-700/60 dark:bg-slate-800 dark:text-slate-300 dark:shadow-none dark:hover:text-accent"
             >
               <Dot size={16} className="-mx-1 text-accent" />
               今日
@@ -215,7 +215,7 @@ export default function Calendar() {
             aria-label={`${c.name}（${c.visible ? '顯示中，按一下隱藏' : '已隱藏，按一下顯示'}）`}
             onClick={() => toggleCal(c.id, c.visible)}
             className={cx(
-              'inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
+              'inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition duration-200 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
               c.visible
                 ? cx('ring-1 ring-inset ring-black/5 hover:brightness-95 dark:ring-white/10 dark:hover:brightness-110', colorOf(c.color).chip)
                 : 'bg-slate-100/80 text-slate-400 line-through hover:text-slate-500 dark:bg-slate-800/60 dark:text-slate-500',
@@ -234,21 +234,21 @@ export default function Calendar() {
         <button
           type="button"
           onClick={() => setManagerOpen(true)}
-          className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium text-slate-400 transition hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+          className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium text-slate-400 transition hover:text-accent active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
         >
           <SlidersHorizontal size={13} /> 管理
         </button>
         <button
           type="button"
           onClick={() => setExportOpen(true)}
-          className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium text-slate-400 transition hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+          className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium text-slate-400 transition hover:text-accent active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
         >
           <CalendarArrowDown size={13} /> 匯出 .ics
         </button>
         <button
           type="button"
           onClick={() => setSubscribeOpen(true)}
-          className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium text-slate-400 transition hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+          className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium text-slate-400 transition hover:text-accent active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
         >
           <Smartphone size={13} /> 訂閱到手機日曆
         </button>
@@ -283,7 +283,7 @@ export default function Calendar() {
             <button
               type="button"
               onClick={openCreate}
-              className="inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium text-accent transition active:opacity-70"
+              className="inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium text-accent transition active:scale-[0.98] active:opacity-70"
             >
               <Plus size={14} /> 新增
             </button>
@@ -298,7 +298,7 @@ export default function Calendar() {
                 key={`${occ.event.id}-${occ.dateKey}`}
                 type="button"
                 onClick={() => openEdit(occ.event, occ.dateKey)}
-                className="flex w-full items-center gap-2.5 rounded-xl border border-slate-200/70 bg-white px-3 py-2.5 text-left shadow-xs transition active:bg-slate-50 dark:border-slate-700/60 dark:bg-slate-800 dark:active:bg-slate-700/60"
+                className="flex w-full items-center gap-2.5 rounded-xl border border-slate-200/70 bg-white px-3 py-2.5 text-left shadow-xs transition active:scale-[0.98] active:bg-slate-50 dark:border-slate-700/60 dark:bg-slate-800 dark:active:bg-slate-700/60"
               >
                 <span
                   className={cx(

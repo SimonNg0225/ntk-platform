@@ -163,7 +163,7 @@ function TallyStat({
       disabled={!interactive}
       aria-label={interactive ? `${label}：${value}${unit ?? ''}` : undefined}
       className={cx(
-        'group/tally px-3.5 py-3.5 text-left transition-colors sm:px-4',
+        'group/tally px-3.5 py-3.5 text-left transition active:scale-[0.98] sm:px-4',
         hot ? hotBg : 'bg-white dark:bg-slate-800',
         interactive
           ? 'cursor-pointer hover:bg-slate-50 focus-visible:relative focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent/40 dark:hover:bg-slate-700/60'
@@ -728,7 +728,7 @@ export default function TodoWidget() {
             <button
               type="button"
               onClick={() => setActiveTag(null)}
-              className="text-xs text-slate-400 hover:text-rose-500"
+              className="text-xs text-slate-400 transition hover:text-rose-500 active:scale-[0.98]"
             >
               清除
             </button>
@@ -899,7 +899,7 @@ function TaskRow({
           aria-label={selected ? '取消選取' : '選取'}
           aria-pressed={selected}
           className={cx(
-            'mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md border-2 transition',
+            'mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md border-2 transition active:scale-[0.98]',
             selected
               ? 'border-accent bg-accent text-white'
               : 'border-slate-300 dark:border-slate-600',
@@ -1296,7 +1296,7 @@ function AllView(props: {
           <button
             type="button"
             onClick={onManageProjects}
-            className="mt-1 inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300"
+            className="mt-1 inline-flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 text-xs font-medium text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 active:scale-[0.98] dark:hover:bg-slate-800 dark:hover:text-slate-300"
           >
             <FolderPlus size={14} /> 管理專案
           </button>
@@ -1319,7 +1319,7 @@ function AllView(props: {
           <button
             type="button"
             onClick={() => setShowDone(!showDone)}
-            className="inline-flex shrink-0 items-center gap-1.5 text-[11px] font-medium text-slate-400 transition hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300"
+            className="inline-flex shrink-0 items-center gap-1.5 text-[11px] font-medium text-slate-400 transition hover:text-slate-600 active:scale-[0.98] dark:text-slate-500 dark:hover:text-slate-300"
           >
             <CheckCheck size={13} />
             {showDone ? '隱藏已剔' : `已剔 ${doneCount}`}
@@ -1367,7 +1367,7 @@ function SidebarItem({
       onClick={onClick}
       aria-current={active ? 'true' : undefined}
       className={cx(
-        'flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-sm transition',
+        'flex w-full items-center gap-2 rounded-xl px-2.5 py-1.5 text-sm transition active:scale-[0.98]',
         active
           ? 'bg-accent-soft font-medium text-accent-strong dark:bg-accent/15 dark:text-accent'
           : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800',
@@ -1402,7 +1402,7 @@ function ScopeChip({
       onClick={onClick}
       aria-current={active ? 'true' : undefined}
       className={cx(
-        'inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-1.5 text-sm font-medium transition',
+        'inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-1.5 text-sm font-medium transition active:scale-[0.98]',
         active
           ? 'bg-accent text-white shadow-sm dark:shadow-none'
           : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300',
@@ -1771,7 +1771,7 @@ function ProjectManager({
                   onClick={() => setColor(c)}
                   aria-label={c}
                   className={cx(
-                    'h-7 w-7 rounded-full ring-2 ring-offset-2 ring-offset-white transition dark:ring-offset-slate-800',
+                    'h-7 w-7 rounded-full ring-2 ring-offset-2 ring-offset-white transition active:scale-[0.98] dark:ring-offset-slate-800',
                     projColorCls(c).dot,
                     color === c ? 'ring-slate-400 dark:ring-slate-300' : 'ring-transparent',
                   )}
@@ -1835,7 +1835,7 @@ function TemplatePicker({
             key={t.id}
             type="button"
             onClick={() => apply(t.id)}
-            className="group flex w-full items-center gap-3 rounded-2xl border border-slate-200 p-3 text-left transition duration-200 hover:-translate-y-0.5 hover:border-accent hover:shadow-md dark:border-slate-700 dark:hover:border-accent/60"
+            className="group flex w-full items-center gap-3 rounded-2xl border border-slate-200 p-3 text-left transition duration-200 hover:-translate-y-0.5 hover:border-accent hover:shadow-md active:scale-[0.98] dark:border-slate-700 dark:hover:border-accent/60"
           >
             <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent-soft text-xl dark:bg-accent/15">
               {t.emoji ?? '📋'}

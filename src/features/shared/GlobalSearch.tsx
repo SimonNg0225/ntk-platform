@@ -685,7 +685,7 @@ export default function GlobalSearch() {
                   focusInput()
                 }}
                 aria-label="清除搜尋"
-                className="shrink-0 rounded-full p-1 text-slate-400 transition hover:bg-slate-200/70 hover:text-slate-600 dark:hover:bg-slate-700 dark:hover:text-slate-200"
+                className="shrink-0 rounded-full p-1 text-slate-400 transition active:scale-[0.98] hover:bg-slate-200/70 hover:text-slate-600 dark:hover:bg-slate-700 dark:hover:text-slate-200"
               >
                 <X size={16} />
               </button>
@@ -718,7 +718,7 @@ export default function GlobalSearch() {
                       setRaw(s.fill)
                       focusInput()
                     }}
-                    className="group flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left transition-colors hover:bg-slate-50 dark:hover:bg-slate-700/40"
+                    className="group flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left transition active:scale-[0.98] hover:bg-slate-50 dark:hover:bg-slate-700/40"
                   >
                     <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-slate-100 text-slate-400 transition-colors group-hover:bg-accent group-hover:text-white dark:bg-slate-700 dark:text-slate-400">
                       <SIcon size={13} />
@@ -752,7 +752,7 @@ export default function GlobalSearch() {
               onClick={() => setScopeMode((v) => !v)}
               aria-pressed={scopeMode}
               className={cx(
-                'inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-medium transition',
+                'inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-medium transition active:scale-[0.98]',
                 scopeMode
                   ? 'border-accent/30 bg-accent-soft text-accent-strong dark:border-accent/40 dark:bg-accent/15 dark:text-accent'
                   : 'border-slate-200 bg-white text-slate-500 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700',
@@ -779,7 +779,7 @@ export default function GlobalSearch() {
                       aria-label={isPinned(query || raw, pins) ? '取消釘選此搜尋' : '釘選此搜尋'}
                       aria-pressed={isPinned(query || raw, pins)}
                       className={cx(
-                        'rounded-md p-1 transition',
+                        'rounded-md p-1 transition active:scale-[0.98]',
                         isPinned(query || raw, pins)
                           ? 'text-amber-500'
                           : 'text-slate-300 hover:text-amber-500 dark:text-slate-600',
@@ -1004,7 +1004,7 @@ function ResultRow({
       onMouseEnter={onHover}
       onClick={onOpen}
       className={cx(
-        'group relative flex w-full items-start gap-3 rounded-lg py-2 pl-3 pr-2.5 text-left transition-colors',
+        'group relative flex w-full items-start gap-3 rounded-lg py-2 pl-3 pr-2.5 text-left transition active:scale-[0.98]',
         active
           ? 'bg-accent-soft dark:bg-accent/15'
           : 'hover:bg-slate-50 dark:hover:bg-slate-700/40',
@@ -1221,7 +1221,7 @@ function StartScreen({
                 key={ex}
                 type="button"
                 onClick={() => onPick(ex)}
-                className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-600 shadow-xs transition hover:border-accent/40 hover:bg-accent-soft hover:text-accent-strong dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:border-accent/40 dark:hover:bg-accent/15 dark:hover:text-accent"
+                className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-600 shadow-xs transition active:scale-[0.98] hover:border-accent/40 hover:bg-accent-soft hover:text-accent-strong dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:border-accent/40 dark:hover:bg-accent/15 dark:hover:text-accent"
               >
                 <Search size={13} className="opacity-60" />
                 {ex}
@@ -1245,7 +1245,7 @@ function StartScreen({
                 <button
                   type="button"
                   onClick={() => onPick(p.q)}
-                  className="py-1 pl-3 pr-1.5 font-medium text-amber-700 transition hover:bg-amber-100 dark:text-amber-300 dark:hover:bg-amber-500/15"
+                  className="py-1 pl-3 pr-1.5 font-medium text-amber-700 transition active:scale-[0.98] hover:bg-amber-100 dark:text-amber-300 dark:hover:bg-amber-500/15"
                 >
                   {p.q}
                 </button>
@@ -1253,7 +1253,7 @@ function StartScreen({
                   type="button"
                   onClick={() => onUnpin(p.q)}
                   aria-label="取消釘選"
-                  className="px-1.5 py-1 text-amber-400 transition hover:text-amber-600 dark:hover:text-amber-200"
+                  className="px-1.5 py-1 text-amber-400 transition active:scale-[0.98] hover:text-amber-600 dark:hover:text-amber-200"
                 >
                   <X size={12} />
                 </button>
@@ -1275,7 +1275,7 @@ function StartScreen({
             <button
               type="button"
               onClick={onClearRecents}
-              className="text-xs text-slate-400 transition hover:text-rose-500"
+              className="text-xs text-slate-400 transition active:scale-[0.98] hover:text-rose-500"
             >
               清除
             </button>
@@ -1286,7 +1286,7 @@ function StartScreen({
                 <button
                   type="button"
                   onClick={() => onPick(r.q)}
-                  className="flex flex-1 items-center gap-2.5 rounded-md px-2 py-2 text-left text-sm text-slate-600 transition hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-700/40"
+                  className="flex flex-1 items-center gap-2.5 rounded-md px-2 py-2 text-left text-sm text-slate-600 transition active:scale-[0.98] hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-700/40"
                 >
                   <Search size={14} className="shrink-0 text-slate-300 dark:text-slate-600" />
                   <span className="truncate">{r.q}</span>
@@ -1298,7 +1298,7 @@ function StartScreen({
                   type="button"
                   onClick={() => onRemoveRecent(r.id)}
                   aria-label="移除"
-                  className="mr-1 rounded-md p-2 text-slate-300 opacity-0 transition hover:text-rose-500 focus-visible:opacity-100 group-hover:opacity-100 max-sm:opacity-100 dark:text-slate-600"
+                  className="mr-1 rounded-md p-2 text-slate-300 opacity-0 transition active:scale-[0.98] hover:text-rose-500 focus-visible:opacity-100 group-hover:opacity-100 max-sm:opacity-100 dark:text-slate-600"
                 >
                   <X size={14} />
                 </button>
@@ -1317,7 +1317,7 @@ function StartScreen({
               key={ex}
               type="button"
               onClick={() => onPick(ex)}
-              className="rounded-full bg-slate-100 px-2.5 py-1 font-medium text-slate-500 transition hover:bg-accent hover:text-white dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-accent dark:hover:text-white"
+              className="rounded-full bg-slate-100 px-2.5 py-1 font-medium text-slate-500 transition active:scale-[0.98] hover:bg-accent hover:text-white dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-accent dark:hover:text-white"
             >
               {ex}
             </button>
@@ -1333,7 +1333,7 @@ function StartScreen({
             <button
               type="button"
               onClick={() => onPick(op.fill)}
-              className="rounded-full border border-slate-200 bg-white px-2.5 py-1 font-mono font-medium text-slate-500 transition hover:border-accent hover:text-accent dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 dark:hover:border-accent dark:hover:text-accent"
+              className="rounded-full border border-slate-200 bg-white px-2.5 py-1 font-mono font-medium text-slate-500 transition active:scale-[0.98] hover:border-accent hover:text-accent dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 dark:hover:border-accent dark:hover:text-accent"
             >
               {op.token}
             </button>

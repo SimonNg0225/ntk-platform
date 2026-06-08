@@ -185,7 +185,7 @@ export default function MaterialGen() {
           <button
             type="button"
             onClick={() => nav.open('work-ai')}
-            className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold text-accent-strong transition hover:bg-accent-soft dark:text-accent dark:hover:bg-accent/15"
+            className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold text-accent-strong transition active:scale-[0.98] hover:bg-accent-soft dark:text-accent dark:hover:bg-accent/15"
           >
             喺 AI 助手繼續傾
             <ArrowUpRight size={14} />
@@ -202,7 +202,7 @@ export default function MaterialGen() {
               key={t.id}
               type="button"
               onClick={() => setActive(t.open)}
-              className="group flex h-full flex-col rounded-2xl border border-slate-200/80 bg-white p-4 text-left shadow-xs transition duration-150 hover:-translate-y-0.5 hover:border-accent/40 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:border-slate-700/60 dark:bg-slate-800 dark:shadow-none dark:hover:border-accent/40"
+              className="group flex h-full flex-col rounded-2xl border border-slate-200/80 bg-white p-4 text-left shadow-xs transition duration-150 active:scale-[0.98] hover:-translate-y-0.5 hover:border-accent/40 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:border-slate-700/60 dark:bg-slate-800 dark:shadow-none dark:hover:border-accent/40"
             >
               <div className="flex items-start justify-between gap-2">
                 <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-accent-soft text-accent-strong transition group-hover:bg-accent group-hover:text-white dark:bg-accent/15 dark:text-accent dark:group-hover:bg-accent dark:group-hover:text-white">
@@ -244,7 +244,7 @@ export default function MaterialGen() {
         <button
           type="button"
           onClick={() => nav.open('work-questions')}
-          className="inline-flex items-center gap-0.5 font-medium text-slate-400 transition hover:text-accent dark:text-slate-500 dark:hover:text-accent"
+          className="inline-flex items-center gap-0.5 font-medium text-slate-400 transition active:scale-[0.98] hover:text-accent dark:text-slate-500 dark:hover:text-accent"
         >
           去 BAFS 題庫
           <ChevronRight size={13} />

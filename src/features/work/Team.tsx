@@ -244,7 +244,7 @@ export default function Team() {
               <button
                 key={o.id}
                 onClick={() => setOrgId(o.id)}
-                className={`rounded-lg border px-3 py-1.5 text-sm font-medium transition ${
+                className={`rounded-lg border px-3 py-1.5 text-sm font-medium transition active:scale-[0.98] ${
                   o.id === orgId
                     ? 'border-accent bg-accent-soft text-accent-strong dark:bg-accent/20 dark:text-accent'
                     : 'border-slate-200 text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300'

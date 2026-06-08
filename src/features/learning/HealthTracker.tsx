@@ -535,7 +535,7 @@ export default function HealthTracker() {
                   aria-pressed={on}
                   onClick={() => set({ mood: v })}
                   className={cx(
-                    'flex h-11 flex-1 items-center justify-center rounded-xl border text-xl transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
+                    'flex h-11 flex-1 items-center justify-center rounded-xl border text-xl transition active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
                     on
                       ? 'border-amber-300 bg-amber-50 shadow-sm dark:border-amber-500/40 dark:bg-amber-500/15'
                       : 'border-slate-200 opacity-80 hover:bg-slate-50 hover:opacity-100 dark:border-slate-700 dark:hover:bg-slate-800',

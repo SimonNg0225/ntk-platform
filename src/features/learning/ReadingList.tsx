@@ -478,7 +478,7 @@ export default function ReadingList() {
                   onClick={() => setShelfFilter(null)}
                   aria-pressed={!shelfFilter}
                   className={cx(
-                    'rounded-full px-2.5 py-0.5 text-xs font-medium transition-colors',
+                    'rounded-full px-2.5 py-0.5 text-xs font-medium transition active:scale-[0.98]',
                     !shelfFilter
                       ? 'bg-accent text-white'
                       : 'bg-slate-100 text-slate-500 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400',
@@ -493,7 +493,7 @@ export default function ReadingList() {
                     onClick={() => setShelfFilter(shelfFilter === s ? null : s)}
                     aria-pressed={shelfFilter === s}
                     className={cx(
-                      'rounded-full px-2.5 py-0.5 text-xs font-medium transition-colors',
+                      'rounded-full px-2.5 py-0.5 text-xs font-medium transition active:scale-[0.98]',
                       shelfFilter === s
                         ? 'bg-accent text-white'
                         : 'bg-slate-100 text-slate-500 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400',
@@ -696,7 +696,7 @@ function ReadingChallenge({
                 setDraft(String(target))
                 setEditing(true)
               }}
-              className="mt-0.5 text-xs text-accent hover:text-accent-strong"
+              className="mt-0.5 text-xs text-accent transition hover:text-accent-strong active:scale-[0.98]"
             >
               調整目標
             </button>
@@ -733,7 +733,7 @@ function BookCoverCard({
       type="button"
       onClick={() => (selectMode ? onToggleSelect(b.id) : onOpen(b.id))}
       className={cx(
-        'group flex flex-col overflow-hidden rounded-3xl border border-slate-200/80 bg-white text-left shadow-xs transition duration-200 hover:-translate-y-1 hover:border-slate-300 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:border-slate-700/60 dark:bg-slate-800 dark:shadow-none dark:hover:border-slate-600',
+        'group flex flex-col overflow-hidden rounded-3xl border border-slate-200/80 bg-white text-left shadow-xs transition duration-200 hover:-translate-y-1 hover:border-slate-300 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98] dark:border-slate-700/60 dark:bg-slate-800 dark:shadow-none dark:hover:border-slate-600',
         sel && 'ring-2 ring-accent',
       )}
     >
@@ -1376,7 +1376,7 @@ function AddBookModal({
                 type="button"
                 onClick={() => setStatus(s)}
                 className={cx(
-                  'rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors',
+                  'rounded-lg border px-3 py-1.5 text-sm font-medium transition active:scale-[0.98]',
                   status === s
                     ? 'border-accent bg-accent text-white'
                     : 'border-slate-200 text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800',

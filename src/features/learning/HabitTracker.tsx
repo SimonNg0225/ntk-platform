@@ -484,7 +484,7 @@ export default function HabitTracker() {
               <button
                 type="button"
                 onClick={() => setShowArchived((v) => !v)}
-                className="flex w-full items-center gap-2 px-1 py-2 text-xs font-medium uppercase tracking-wide text-slate-400 transition hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300"
+                className="flex w-full items-center gap-2 px-1 py-2 text-xs font-medium uppercase tracking-wide text-slate-400 transition active:scale-[0.98] hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300"
               >
                 <Archive size={14} />
                 已封存（{archivedHabits.length}）
@@ -674,7 +674,7 @@ function AtRiskBanner({
                 key={it.id}
                 type="button"
                 onClick={() => onPick(it.id)}
-                className="inline-flex items-center gap-1 rounded-full bg-white/80 px-2.5 py-1 text-xs font-medium text-rose-700 shadow-xs ring-1 ring-inset ring-rose-200 transition hover:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-400/50 dark:bg-rose-500/15 dark:text-rose-200 dark:ring-rose-500/30 dark:hover:bg-rose-500/25"
+                className="inline-flex items-center gap-1 rounded-full bg-white/80 px-2.5 py-1 text-xs font-medium text-rose-700 shadow-xs ring-1 ring-inset ring-rose-200 transition active:scale-[0.98] hover:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-400/50 dark:bg-rose-500/15 dark:text-rose-200 dark:ring-rose-500/30 dark:hover:bg-rose-500/25"
               >
                 <span className="max-w-[7rem] truncate">{it.name}</span>
                 <span className="inline-flex items-center gap-0.5 tabular-nums text-rose-500 dark:text-rose-300/90">
@@ -859,7 +859,7 @@ function HabitDetailWithArchive({
       <button
         type="button"
         onClick={() => onArchive(habit)}
-        className="fixed bottom-6 left-1/2 z-[60] inline-flex -translate-x-1/2 items-center gap-1.5 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 shadow-lg transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 sm:left-auto sm:right-8 sm:translate-x-0"
+        className="fixed bottom-6 left-1/2 z-[60] inline-flex -translate-x-1/2 items-center gap-1.5 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 shadow-lg transition active:scale-[0.98] hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 sm:left-auto sm:right-8 sm:translate-x-0"
       >
         <Archive size={16} />
         封存呢個習慣

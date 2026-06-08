@@ -55,7 +55,7 @@ export default function Fitness() {
                 aria-selected={on}
                 onClick={() => setTab(t.id)}
                 className={cx(
-                  'group relative flex flex-1 items-center gap-2.5 overflow-hidden rounded-xl px-3 py-2.5 text-left transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
+                  'group relative flex flex-1 items-center gap-2.5 overflow-hidden rounded-xl px-3 py-2.5 text-left transition duration-200 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
                   on
                     ? 'bg-accent text-white shadow-sm shadow-accent/25'
                     : 'text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-700/50',
@@ -193,7 +193,7 @@ function Scoreboard({
                   onClick={() => onPick(t.id)}
                   aria-label={`切換到${t.label}`}
                   className={cx(
-                    'flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40',
+                    'flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold transition active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40',
                     on
                       ? 'bg-white text-slate-900'
                       : 'bg-white/10 text-white/70 hover:bg-white/20 hover:text-white',

@@ -677,7 +677,7 @@ function ClassDetail({
               <button
                 type="button"
                 onClick={onBack}
-                className="inline-flex items-center gap-1 rounded text-xs font-medium text-slate-400 transition hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-1 dark:text-slate-500"
+                className="inline-flex items-center gap-1 rounded text-xs font-medium text-slate-400 transition active:scale-[0.98] hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-1 dark:text-slate-500"
               >
                 <ArrowLeft size={13} /> 班務冊 · 全部班別
               </button>
@@ -1583,7 +1583,7 @@ function ClassEditor({
                 type="button"
                 onClick={() => setColor(t.id)}
                 className={cx(
-                  'inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm transition',
+                  'inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm transition active:scale-[0.98]',
                   color === t.id
                     ? 'border-accent bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent'
                     : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700',

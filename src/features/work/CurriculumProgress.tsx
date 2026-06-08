@@ -554,7 +554,7 @@ function ListView({
                     setCollapsed((prev) => ({ ...prev, [part.part]: !prev[part.part] }))
                   }
                   aria-expanded={!isCollapsed}
-                  className="group flex w-full items-center justify-between gap-2 rounded-lg py-1 text-left"
+                  className="group flex w-full items-center justify-between gap-2 rounded-xl py-1 text-left transition active:scale-[0.98]"
                 >
                   <span className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
                     <span className="font-serif text-base font-semibold tracking-tight text-slate-700 dark:text-slate-200">
@@ -782,7 +782,7 @@ function TopicRow({
       <button
         type="button"
         onClick={onCycle}
-        className="shrink-0 sm:hidden"
+        className="shrink-0 transition active:scale-[0.98] sm:hidden"
         aria-label={`切換狀態：${cfg.label}`}
       >
         <Badge tone={cfg.tone}>{cfg.label}</Badge>

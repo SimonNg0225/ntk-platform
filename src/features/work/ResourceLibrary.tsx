@@ -154,7 +154,7 @@ function ViewSwitcher({
               aria-label={o.label}
               aria-current={on ? 'true' : undefined}
               className={cx(
-                'inline-flex items-center justify-center rounded-lg px-3 py-1.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
+                'inline-flex items-center justify-center rounded-lg px-3 py-1.5 text-sm font-medium transition active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
                 on
                   ? 'bg-white text-accent-strong shadow-xs dark:bg-slate-700 dark:text-accent'
                   : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200',
@@ -512,7 +512,7 @@ export default function ResourceLibrary() {
               aria-pressed={on}
               onClick={() => setSource(o.id)}
               className={cx(
-                'inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors',
+                'inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition active:scale-[0.98]',
                 on
                   ? 'bg-white text-slate-800 shadow-xs dark:bg-slate-700 dark:text-slate-100'
                   : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200',
@@ -563,7 +563,7 @@ export default function ResourceLibrary() {
                 <button
                   type="button"
                   onClick={() => patch({ search: '' })}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-700"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 active:scale-[0.98] dark:hover:bg-slate-700"
                   aria-label="清除搜尋"
                 >
                   <X size={14} />
@@ -631,7 +631,7 @@ export default function ResourceLibrary() {
                     type="button"
                     onClick={() => toggleTag(t)}
                     aria-label={`移除標籤篩選 #${t}`}
-                    className="inline-flex items-center gap-1 rounded-md bg-accent px-2 py-0.5 text-[11px] font-medium text-white"
+                    className="inline-flex items-center gap-1 rounded-md bg-accent px-2 py-0.5 text-[11px] font-medium text-white transition active:scale-[0.98]"
                   >
                     #{t}
                     <X size={11} aria-hidden="true" />
@@ -811,7 +811,7 @@ function Sidebar({
                 onClick={() => patch({ smart: v.id, folderId: 'all' })}
                 aria-current={on ? 'page' : undefined}
                 className={cx(
-                  'group inline-flex shrink-0 items-center gap-2 rounded-xl px-2.5 py-2 text-sm font-medium transition lg:w-full lg:border-l-2 lg:pl-3',
+                  'group inline-flex shrink-0 items-center gap-2 rounded-xl px-2.5 py-2 text-sm font-medium transition active:scale-[0.98] lg:w-full lg:border-l-2 lg:pl-3',
                   on
                     ? 'bg-accent-soft text-accent-strong shadow-xs dark:bg-accent/15 dark:text-accent dark:shadow-none lg:border-accent'
                     : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 lg:border-transparent',
@@ -846,7 +846,7 @@ function Sidebar({
             <button
               type="button"
               onClick={onManageFolders}
-              className="rounded p-0.5 text-slate-400 transition hover:text-slate-600 dark:hover:text-slate-300"
+              className="rounded p-0.5 text-slate-400 transition hover:text-slate-600 active:scale-[0.98] dark:hover:text-slate-300"
               aria-label="管理收藏夾"
             >
               <FolderPlus size={14} />
@@ -899,7 +899,7 @@ function FolderRow({
       onClick={onClick}
       aria-current={active ? 'true' : undefined}
       className={cx(
-        'flex w-full items-center gap-2 rounded-xl px-2.5 py-2 text-sm transition',
+        'flex w-full items-center gap-2 rounded-xl px-2.5 py-2 text-sm transition active:scale-[0.98]',
         active
           ? 'bg-slate-100 font-medium text-slate-800 dark:bg-slate-800 dark:text-slate-100'
           : 'text-slate-600 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800/60',
@@ -940,7 +940,7 @@ function TagFilterBar({
             aria-pressed={on}
             aria-label={`標籤篩選 #${t.tag}（${t.count}）`}
             className={cx(
-              'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium transition',
+              'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium transition active:scale-[0.98]',
               on
                 ? 'bg-accent text-white'
                 : 'bg-slate-100 text-slate-500 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700',
@@ -1006,7 +1006,7 @@ function GridView({
                 type="button"
                 onClick={() => onToggleSelect(res.id)}
                 className={cx(
-                  'absolute left-3 top-3 z-10 rounded-md transition focus-visible:opacity-100',
+                  'absolute left-3 top-3 z-10 rounded-md transition active:scale-[0.98] focus-visible:opacity-100',
                   isSel
                     ? 'text-accent opacity-100'
                     : 'text-slate-300 opacity-0 hover:text-slate-500 group-hover:opacity-100 dark:text-slate-600',
@@ -1046,7 +1046,7 @@ function GridView({
               <button
                 type="button"
                 onClick={() => onDetail(res.id)}
-                className="mt-3 w-full break-words rounded text-left text-[15px] font-semibold leading-snug text-slate-800 transition-colors hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:text-slate-100 dark:hover:text-accent"
+                className="mt-3 w-full break-words rounded text-left text-[15px] font-semibold leading-snug text-slate-800 transition hover:text-accent active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:text-slate-100 dark:hover:text-accent"
               >
                 {res.title}
               </button>
@@ -1103,7 +1103,7 @@ function GridView({
                     type="button"
                     onClick={() => onOpen(res)}
                     aria-label={`開啟「${res.title}」（新分頁）`}
-                    className="inline-flex shrink-0 items-center gap-1 rounded-lg bg-accent-soft px-2.5 py-1 text-xs font-semibold text-accent-strong transition hover:bg-accent hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:bg-accent/15 dark:text-accent dark:hover:bg-accent dark:hover:text-white"
+                    className="inline-flex shrink-0 items-center gap-1 rounded-xl bg-accent-soft px-2.5 py-1 text-xs font-semibold text-accent-strong transition hover:bg-accent hover:text-white active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:bg-accent/15 dark:text-accent dark:hover:bg-accent dark:hover:text-white"
                   >
                     開啟
                     <ExternalLink size={12} aria-hidden="true" />
@@ -1158,7 +1158,7 @@ function ListView({
               type="button"
               onClick={() => onToggleAll(!allSelected)}
               className={cx(
-                'inline-flex rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
+                'inline-flex rounded transition active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
                 allSelected ? 'text-accent' : 'text-slate-300 dark:text-slate-600',
               )}
               aria-pressed={allSelected}
@@ -1186,7 +1186,7 @@ function ListView({
                   type="button"
                   onClick={() => onToggleSelect(res.id)}
                   className={cx(
-                    'inline-flex rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
+                    'inline-flex rounded transition active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
                     isSel ? 'text-accent' : 'text-slate-300 dark:text-slate-600',
                   )}
                   aria-pressed={isSel}
@@ -1202,7 +1202,7 @@ function ListView({
                     <button
                       type="button"
                       onClick={() => onDetail(res.id)}
-                      className="block max-w-[14rem] truncate rounded text-left font-medium text-slate-800 hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:text-slate-100"
+                      className="block max-w-[14rem] truncate rounded text-left font-medium text-slate-800 transition hover:text-accent active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:text-slate-100"
                     >
                       {res.title}
                       {meta.favorite && (
@@ -1361,7 +1361,7 @@ function BoardView({
                         <button
                           type="button"
                           onClick={() => onDetail(res.id)}
-                          className="block w-full truncate rounded text-left text-xs font-semibold text-slate-800 hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:text-slate-100"
+                          className="block w-full truncate rounded text-left text-xs font-semibold text-slate-800 transition hover:text-accent active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:text-slate-100"
                         >
                           {res.title}
                         </button>
@@ -1381,7 +1381,7 @@ function BoardView({
                           type="button"
                           onClick={() => onOpen(res)}
                           aria-label={`開啟「${res.title}」（新分頁）`}
-                          className="inline-flex items-center gap-1 rounded text-[11px] font-medium text-accent hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+                          className="inline-flex items-center gap-1 rounded text-[11px] font-medium text-accent transition hover:underline active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
                         >
                           開啟 <ExternalLink size={10} aria-hidden="true" />
                         </button>
@@ -1583,7 +1583,7 @@ function FolderManager({
                 type="button"
                 onClick={() => setColor(c)}
                 className={cx(
-                  'h-5 w-5 rounded-full ring-2 ring-offset-1 transition focus-visible:outline-none focus-visible:ring-accent dark:ring-offset-slate-800',
+                  'h-5 w-5 rounded-full ring-2 ring-offset-1 transition active:scale-[0.98] focus-visible:outline-none focus-visible:ring-accent dark:ring-offset-slate-800',
                   FOLDER_COLORS[c].dot,
                   color === c
                     ? 'ring-slate-400 dark:ring-slate-300'

@@ -219,7 +219,7 @@ export default function BudgetTracker() {
             </IconButton>
             <button
               onClick={() => setMonth(monthKey(new Date()))}
-              className="min-w-[6.5rem] rounded-full px-2.5 py-1 text-center text-sm font-semibold tabular-nums text-slate-800 transition hover:bg-slate-100 dark:text-slate-100 dark:hover:bg-slate-700"
+              className="min-w-[6.5rem] rounded-full px-2.5 py-1 text-center text-sm font-semibold tabular-nums text-slate-800 transition hover:bg-slate-100 active:scale-[0.98] dark:text-slate-100 dark:hover:bg-slate-700"
               title="返回本月"
             >
               {monthLabel(month)}
@@ -1133,7 +1133,7 @@ function BudgetsTab({
                   type="button"
                   onClick={() => cat && setEditCat(cat)}
                   aria-label={`編輯 ${cat?.name ?? '未分類'} 預算`}
-                  className="flex w-full items-center gap-3 rounded-lg text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+                  className="flex w-full items-center gap-3 rounded-xl text-left transition active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
                 >
                   <BudgetRing pct={r.pct} over={r.status === 'over'} />
                   <div className="min-w-0 flex-1">
@@ -1976,7 +1976,7 @@ function TxFormModal({
         </div>
         <button
           onClick={onClose}
-          className="-mr-1 mt-0.5 shrink-0 rounded-lg p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:hover:bg-slate-700"
+          className="-mr-1 mt-0.5 shrink-0 rounded-lg p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:hover:bg-slate-700"
           aria-label="關閉"
         >
           <X size={18} />
@@ -2028,7 +2028,7 @@ function TxFormModal({
                 key={q}
                 type="button"
                 onClick={() => setAmount(String(q))}
-                className="rounded-full border border-slate-200/80 bg-white px-3 py-1 text-xs font-medium tabular-nums text-slate-600 shadow-xs transition hover:border-accent/40 hover:bg-accent-soft hover:text-accent-strong dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:shadow-none dark:hover:bg-accent/15 dark:hover:text-accent"
+                className="rounded-full border border-slate-200/80 bg-white px-3 py-1 text-xs font-medium tabular-nums text-slate-600 shadow-xs transition hover:border-accent/40 hover:bg-accent-soft hover:text-accent-strong active:scale-[0.98] dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:shadow-none dark:hover:bg-accent/15 dark:hover:text-accent"
               >
                 {q}
               </button>
@@ -2051,7 +2051,7 @@ function TxFormModal({
                     type="button"
                     onClick={() => setCategoryId(c.id)}
                     className={cx(
-                      'flex flex-col items-center gap-1 rounded-xl border px-1 py-2 text-center transition focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
+                      'flex flex-col items-center gap-1 rounded-xl border px-1 py-2 text-center transition active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
                       on
                         ? 'border-accent bg-accent-soft shadow-xs dark:bg-accent/15 dark:shadow-none'
                         : 'border-slate-200 hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-700/50',
@@ -2173,7 +2173,7 @@ function ImportTxModal({
         </div>
         <button
           onClick={onClose}
-          className="-mr-1 mt-0.5 shrink-0 rounded-lg p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:hover:bg-slate-700"
+          className="-mr-1 mt-0.5 shrink-0 rounded-lg p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:hover:bg-slate-700"
           aria-label="關閉"
         >
           <X size={18} />
@@ -2426,7 +2426,7 @@ function CategoryManager({
               aria-pressed={choice === icon}
               aria-label={`揀 emoji ${choice}`}
               className={cx(
-                'flex h-9 w-9 items-center justify-center rounded-xl border text-lg transition focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
+                'flex h-9 w-9 items-center justify-center rounded-xl border text-lg transition active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
                 choice === icon
                   ? 'border-accent bg-accent-soft text-accent-strong'
                   : 'border-slate-200 bg-white hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700',

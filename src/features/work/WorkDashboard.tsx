@@ -186,7 +186,7 @@ function StatTile({
       type="button"
       onClick={onClick}
       className={cx(
-        'group flex cursor-pointer flex-col justify-between rounded-2xl border border-slate-200/80 bg-white p-4 text-left transition duration-200 hover:border-slate-300 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:border-slate-700/60 dark:bg-slate-800 dark:hover:border-slate-600',
+        'group flex cursor-pointer flex-col justify-between rounded-2xl border border-slate-200/80 bg-white p-4 text-left transition duration-200 hover:border-slate-300 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98] dark:border-slate-700/60 dark:bg-slate-800 dark:hover:border-slate-600',
         span,
       )}
     >
@@ -725,7 +725,7 @@ function WorkBento({
       <button
         type="button"
         onClick={() => open('work-curriculum')}
-        className="group flex cursor-pointer items-center gap-3 rounded-2xl border border-slate-200/80 bg-white p-4 text-left transition duration-200 hover:border-slate-300 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:border-slate-700/60 dark:bg-slate-800 dark:hover:border-slate-600"
+        className="group flex cursor-pointer items-center gap-3 rounded-2xl border border-slate-200/80 bg-white p-4 text-left transition duration-200 hover:border-slate-300 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98] dark:border-slate-700/60 dark:bg-slate-800 dark:hover:border-slate-600"
       >
         <MiniRing value={overallProgress} size={56} stroke={6} tone={overallProgress >= 80 ? 'green' : 'accent'}>
           <span className="text-[11px] font-semibold tabular-nums text-slate-700 dark:text-slate-200">{overallProgress}%</span>
@@ -763,7 +763,7 @@ function WorkBento({
           <button
             type="button"
             onClick={() => open('calendar')}
-            className="inline-flex items-center gap-0.5 text-xs font-medium text-accent transition hover:text-accent-strong"
+            className="inline-flex items-center gap-0.5 text-xs font-medium text-accent transition hover:text-accent-strong active:scale-[0.98]"
           >
             {t('wdash.calendar', { defaultValue: '行事曆' })} <ChevronRight size={13} />
           </button>
@@ -838,7 +838,7 @@ function WorkBento({
             <button
               type="button"
               onClick={() => open('work-tasks')}
-              className="text-xs font-medium text-accent transition hover:text-accent-strong"
+              className="text-xs font-medium text-accent transition hover:text-accent-strong active:scale-[0.98]"
             >
               {t('wdash.goPlanTodos', { defaultValue: '去待辦規劃 →' })}
             </button>
@@ -852,7 +852,7 @@ function WorkBento({
                     type="button"
                     onClick={() => it.taskId && completeTask(it.taskId)}
                     aria-label={t('wdash.completeTask', { defaultValue: '完成待辦' })}
-                    className="group flex h-9 w-9 flex-none items-center justify-center"
+                    className="group flex h-9 w-9 flex-none items-center justify-center transition active:scale-[0.98]"
                   >
                     <span className="flex h-5 w-5 items-center justify-center rounded-full border border-slate-300 text-transparent transition group-hover:border-emerald-400 group-hover:bg-emerald-400 group-hover:text-white dark:border-slate-600">
                       <Check size={12} strokeWidth={3} />
@@ -904,7 +904,7 @@ function WorkBento({
       <button
         type="button"
         onClick={() => open('work-ai')}
-        className="group flex cursor-pointer flex-col justify-between rounded-2xl border border-dashed border-accent/40 bg-accent-soft/50 p-4 text-left transition duration-200 hover:border-accent hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:bg-accent/10"
+        className="group flex cursor-pointer flex-col justify-between rounded-2xl border border-dashed border-accent/40 bg-accent-soft/50 p-4 text-left transition duration-200 hover:border-accent hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98] dark:bg-accent/10"
       >
         <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-accent text-white transition">
           <Zap size={16} />
@@ -1156,7 +1156,7 @@ function KpiWidget({ kpis, open }: { kpis: Kpi[]; open: (id: string) => void }) 
             type="button"
             onClick={() => open(k.navTo)}
             aria-label={`${k.label}：${k.value}${k.unit ?? ''}${k.delta ? `，${k.delta.text}` : ''}`}
-            className="group flex cursor-pointer flex-col justify-between rounded-2xl border border-slate-200/80 bg-white p-4 text-left transition duration-200 hover:border-slate-300 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:border-slate-700/60 dark:bg-slate-800 dark:hover:border-slate-600 dark:focus-visible:ring-offset-slate-900"
+            className="group flex cursor-pointer flex-col justify-between rounded-2xl border border-slate-200/80 bg-white p-4 text-left transition duration-200 hover:border-slate-300 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-2 focus-visible:ring-offset-white active:scale-[0.98] dark:border-slate-700/60 dark:bg-slate-800 dark:hover:border-slate-600 dark:focus-visible:ring-offset-slate-900"
           >
             <div className="flex items-center justify-between">
               <span className="text-xs font-medium text-slate-400 dark:text-slate-500">{k.label}</span>
@@ -1579,7 +1579,7 @@ function FollowUpWidget({
             <button
               key={comm.id}
               onClick={() => open('work-parent-comms')}
-              className="flex w-full items-center gap-3 px-3 py-2.5 text-left transition hover:bg-slate-50 dark:hover:bg-slate-800/50"
+              className="flex w-full items-center gap-3 px-3 py-2.5 text-left transition hover:bg-slate-50 active:scale-[0.98] dark:hover:bg-slate-800/50"
             >
               <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-rose-50 text-rose-500 dark:bg-rose-500/10">
                 <Phone size={15} />
@@ -1637,7 +1637,7 @@ function CountdownWidget({
                 key={cd.id}
                 onClick={() => open('countdown')}
                 className={cx(
-                  'flex items-center justify-between gap-3 rounded-xl border p-4 text-left transition hover:shadow-md',
+                  'flex items-center justify-between gap-3 rounded-xl border p-4 text-left transition hover:shadow-md active:scale-[0.98]',
                   urgent
                     ? 'border-rose-200 bg-rose-50/60 dark:border-rose-500/30 dark:bg-rose-500/10'
                     : 'border-slate-200 bg-white shadow-xs dark:border-slate-700 dark:bg-slate-800 dark:shadow-none',
