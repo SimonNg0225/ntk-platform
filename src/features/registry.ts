@@ -43,6 +43,7 @@ const EssayMark = lazyFeature(() => import('./work/essayMark/EssayMark'))
 const RubricGen = lazyFeature(() => import('./work/rubric/RubricGen'))
 const DseDrill = lazyFeature(() => import('./work/dse/DseDrill'))
 const Transcribe = lazyFeature(() => import('./work/transcribe/Transcribe'))
+const TopicImport = lazyFeature(() => import('./work/topicImport/TopicImport'))
 const LessonPlanner = lazyFeature(() => import('./work/LessonPlanner'))
 const TeachGuide = lazyFeature(() => import('./work/teachGuide/TeachGuide'))
 const SlideGen = lazyFeature(() => import('./work/slides/SlideGen'))
@@ -331,6 +332,17 @@ export const FEATURES: Feature[] = [
     icon: '🎓',
     group: '教學',
     component: DseDrill,
+    status: 'ready',
+  },
+  {
+    id: 'work-topic-import',
+    selfManagedHeader: true,
+    modes: ['work'],
+    name: '課題匯入',
+    description: '上載官方課程指引／syllabus，AI 抽出課題，一鍵載入做你科嘅課題（對齊真實 DSE）。',
+    icon: '📥',
+    group: '教學',
+    component: TopicImport,
     status: 'ready',
   },
   {
