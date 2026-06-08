@@ -10,12 +10,12 @@
    ============================================================ */
 :root {
   /* ① 動態主題色（工作模式 fallback；切模式時 ModeContext 覆寫呢 5 個）。
-     預設模式 = 工作（商業化主打教師），故首屏 fallback 用工作 teal，避免閃色。 */
-  --accent: #0d9488; /* teal-600 / 工作 */
-  --accent-soft: #f0fdfa; /* teal-50 */
-  --accent-strong: #0f766e; /* teal-700 */
-  --accent-grad-from: #14b8a6; /* teal-500 */
-  --accent-grad-to: #0f766e; /* teal-700 */
+     預設模式 = 工作（商業化主打教師），故首屏 fallback 用工作 indigo，避免閃色。 */
+  --accent: #4f46e5; /* indigo-600 / 工作 */
+  --accent-soft: #eef2ff; /* indigo-50 */
+  --accent-strong: #4338ca; /* indigo-700 */
+  --accent-grad-from: #6366f1; /* indigo-500 */
+  --accent-grad-to: #4338ca; /* indigo-700 */
 
   /* ② 靜態結構色 — 淺色（深色喺 html.dark 覆寫；ModeContext 唔掂） */
   --app-bg: #f4f7fb;

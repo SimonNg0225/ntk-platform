@@ -75,21 +75,23 @@ export default function Sidebar({
   return (
     <aside
       className={cx(
-        'flex w-72 shrink-0 flex-col bg-white dark:bg-slate-900',
+        'flex w-72 shrink-0 flex-col border-r border-black/[0.06] bg-white/80 backdrop-blur-xl dark:border-white/[0.06] dark:bg-slate-900/70',
         className,
       )}
     >
       {/* 品牌 */}
       <div className="flex items-center justify-between px-4 py-4">
         <div className="flex items-center gap-2.5">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent text-base font-bold text-white shadow-sm ring-1 ring-inset ring-white/10">
-            E
-          </div>
+          <img
+            src="/favicon.svg"
+            alt="EziTeach 教學易"
+            className="h-10 w-10 rounded-xl shadow-sm"
+          />
           <div>
-            <p className="text-sm font-bold leading-none text-slate-800 dark:text-slate-100">
+            <p className="text-[15px] font-semibold leading-none tracking-tight text-slate-800 dark:text-slate-100">
               {t('shell.brandName', { defaultValue: '教學易' })}
             </p>
-            <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
+            <p className="mt-1.5 text-[11px] tracking-tight text-slate-400 dark:text-slate-500">
               {t('shell.brandSub', { defaultValue: '教師工作台 · 個人成長' })}
             </p>
           </div>
@@ -118,7 +120,7 @@ export default function Sidebar({
 
         {recentFeatures.length > 0 && (
           <div>
-            <p className="px-3 pb-1.5 pt-5 text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-400 dark:text-slate-500">
+            <p className="px-3 pb-1 pt-5 text-[11px] font-semibold text-slate-400/90 dark:text-slate-500">
               {t('shell.recent', { defaultValue: '最近' })}
             </p>
             {recentFeatures.map((f) => {
@@ -140,7 +142,7 @@ export default function Sidebar({
               <button
                 onClick={() => toggleGroup(g.group)}
                 aria-expanded={!isCol}
-                className="flex w-full items-center justify-between rounded-md px-3 pb-1.5 pt-5 text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-400 transition-colors hover:text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:text-slate-500 dark:hover:text-slate-300"
+                className="flex w-full items-center justify-between rounded-md px-3 pb-1 pt-5 text-[11px] font-semibold text-slate-400/90 transition-colors hover:text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:text-slate-500 dark:hover:text-slate-300"
               >
                 <span>{groupLabel(t, g.group)}</span>
                 <ChevronDown
@@ -148,32 +150,41 @@ export default function Sidebar({
                   className={cx('transition-transform', isCol && '-rotate-90')}
                 />
               </button>
-              {!isCol &&
-                g.items.map((f) => {
-                  const on = activeId === f.id
-                  return (
-                    <button
-                      key={f.id}
-                      onClick={() => choose(f.id)}
-                      className={navClass(on)}
-                    >
-                      <FeatureIcon icon={f.icon} size={18} className={iconColor(on)} />
-                      <span className="flex-1 text-left">{featName(t, f)}</span>
-                      {f.status === 'soon' && (
-                        <span className="rounded-md bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-400 dark:bg-slate-800 dark:text-slate-500">
-                          {t('shell.soon', { defaultValue: '即將' })}
-                        </span>
-                      )}
-                    </button>
-                  )
-                })}
+              <div
+                className={cx(
+                  'grid transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]',
+                  isCol ? 'grid-rows-[0fr] opacity-0' : 'grid-rows-[1fr] opacity-100',
+                )}
+              >
+                <div className="space-y-0.5 overflow-hidden">
+                  {g.items.map((f) => {
+                    const on = activeId === f.id
+                    return (
+                      <button
+                        key={f.id}
+                        onClick={() => choose(f.id)}
+                        tabIndex={isCol ? -1 : 0}
+                        className={navClass(on)}
+                      >
+                        <FeatureIcon icon={f.icon} size={18} className={iconColor(on)} />
+                        <span className="flex-1 text-left">{featName(t, f)}</span>
+                        {f.status === 'soon' && (
+                          <span className="rounded-md bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-400 dark:bg-slate-800 dark:text-slate-500">
+                            {t('shell.soon', { defaultValue: '即將' })}
+                          </span>
+                        )}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
             </div>
           )
         })}
       </nav>
 
       {/* 頁腳：設定 + 帳戶區 + 版本 */}
-      <div className="border-t border-slate-100 dark:border-slate-800">
+      <div className="border-t border-black/[0.06] dark:border-white/[0.06]">
         <button
           onClick={() => {
             onOpenSettings?.()
@@ -202,14 +213,16 @@ function countLabel(groups: { items: unknown[] }[]) {
 }
 
 function iconColor(active: boolean) {
-  return active ? 'text-accent' : 'text-slate-400 group-hover:text-slate-500'
+  return active
+    ? 'text-accent'
+    : 'text-slate-400 group-hover:text-slate-600 dark:text-slate-500 dark:group-hover:text-slate-300'
 }
 
 function navClass(active: boolean) {
   return cx(
-    'group relative flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
+    'group flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-[13px] transition duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.985]',
     active
-      ? 'bg-accent-soft font-semibold text-accent-strong dark:bg-accent/15 dark:text-accent before:absolute before:left-0 before:top-1/2 before:h-5 before:w-[3px] before:-translate-y-1/2 before:rounded-r-full before:bg-accent before:content-[""]'
-      : 'font-medium text-slate-600 hover:bg-slate-100/70 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-slate-100',
+      ? 'bg-accent/10 font-semibold text-accent-strong dark:bg-accent/20 dark:text-accent'
+      : 'font-medium text-slate-600 hover:bg-black/[0.04] hover:text-slate-900 dark:text-slate-300 dark:hover:bg-white/[0.06] dark:hover:text-white',
   )
 }

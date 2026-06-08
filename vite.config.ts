@@ -11,7 +11,7 @@ export default defineConfig({
       // 配合 vercel.json sw.js no-cache + PwaUpdater 定期檢查 → Safari 都即刻認到新部署。
       registerType: 'prompt',
       injectRegister: false, // 改由 src/components/PwaUpdater.tsx 自行 registerSW（要 periodic update）
-      includeAssets: ['favicon.svg'],
+      includeAssets: ['favicon.svg', 'apple-touch-icon.png'],
       manifest: {
         name: 'EziTeach 教學易 · 香港教師工作台',
         short_name: 'EziTeach',
@@ -22,12 +22,10 @@ export default defineConfig({
         display: 'standalone',
         start_url: '/app',
         icons: [
-          {
-            src: 'favicon.svg',
-            sizes: 'any',
-            type: 'image/svg+xml',
-            purpose: 'any maskable',
-          },
+          { src: 'favicon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' },
+          { src: 'icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+          { src: 'icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
+          { src: 'icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
         ],
       },
     }),

@@ -12,6 +12,8 @@ import {
   Pencil,
   Pin,
   Sparkles,
+  SpellCheck,
+  FileQuestion,
   Star,
   Tag as TagIcon,
   Trash2,
@@ -30,6 +32,8 @@ import {
 import { useToast } from '../../../context/ToastContext'
 import { useConfirm } from '../../../context/ConfirmContext'
 import { complete, isAIConfigured } from '../../../lib/aiClient'
+import ProofreadModal from './ProofreadModal'
+import PracticeGenModal from './PracticeGenModal'
 import {
   NOTE_COLOR_KEYS,
   noteColorOf,
@@ -172,6 +176,9 @@ export default function Editor({
   const [slashIdx, setSlashIdx] = useState(0)
   // AI × 筆記：開緊邊個任務（null = 冇）
   const [aiKind, setAiKind] = useState<AiKind | null>(null)
+  // 校對 / 出練習 modal
+  const [proofOpen, setProofOpen] = useState(false)
+  const [practiceOpen, setPracticeOpen] = useState(false)
 
   // 持有「目前 title/content 屬於邊一則筆記」+ 已寫入快照。
   // 用嚟喺切走 / 卸載時即時 flush 未存內容（避免遺失），同時
@@ -291,6 +298,20 @@ export default function Editor({
     else setContent((c) => (c.trim() ? c.trimEnd() + '\n\n' : '') + text)
     setAiKind(null)
     toast.success('已套用')
+  }
+
+  // 校對 / 出練習：共用守門（要有內容 + AI 已啟用）
+  function openTool(tool: 'proof' | 'practice') {
+    if (!content.trim()) {
+      toast.info('未有內容可以畀 AI 處理')
+      return
+    }
+    if (!isAIConfigured) {
+      toast.info('AI 未啟用 — 要設定好 Supabase + Gemini（見 docs/SETUP.md）')
+      return
+    }
+    if (tool === 'proof') setProofOpen(true)
+    else setPracticeOpen(true)
   }
 
   function applyTemplate(body: string) {
@@ -413,19 +434,33 @@ export default function Editor({
                 <Sparkles size={17} />
               </span>
             }
-            items={(Object.keys(AI_NOTE_TASKS) as AiKind[]).map((k) => ({
-              id: k,
-              label: AI_NOTE_TASKS[k].label,
-              icon:
-                k === 'points'
-                  ? ListChecks
-                  : k === 'tags'
-                    ? TagIcon
-                    : k === 'polish'
-                      ? Pencil
-                      : Sparkles,
-              onSelect: () => runAi(k),
-            }))}
+            items={[
+              ...(Object.keys(AI_NOTE_TASKS) as AiKind[]).map((k) => ({
+                id: k,
+                label: AI_NOTE_TASKS[k].label,
+                icon:
+                  k === 'points'
+                    ? ListChecks
+                    : k === 'tags'
+                      ? TagIcon
+                      : k === 'polish'
+                        ? Pencil
+                        : Sparkles,
+                onSelect: () => runAi(k),
+              })),
+              {
+                id: 'proofread',
+                label: '校對（錯字 / 知識）',
+                icon: SpellCheck,
+                onSelect: () => openTool('proof'),
+              },
+              {
+                id: 'practice',
+                label: '出練習',
+                icon: FileQuestion,
+                onSelect: () => openTool('practice'),
+              },
+            ]}
           />
           <IconButton
             label={mode === 'edit' ? '預覽' : '編輯'}
@@ -746,6 +781,18 @@ export default function Editor({
           onClose={() => setAiKind(null)}
           onApply={applyAi}
         />
+      )}
+
+      {proofOpen && (
+        <ProofreadModal
+          content={content}
+          onApply={(next) => setContent(next)}
+          onClose={() => setProofOpen(false)}
+        />
+      )}
+
+      {practiceOpen && (
+        <PracticeGenModal note={{ title, content }} onClose={() => setPracticeOpen(false)} />
       )}
     </div>
   )

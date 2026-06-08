@@ -52,14 +52,14 @@ type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger'
 type ButtonSize = 'sm' | 'md' | 'lg'
 
 const BTN_BASE =
-  'inline-flex items-center justify-center gap-1.5 rounded-lg font-medium transition-colors duration-150 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-900'
+  'inline-flex items-center justify-center gap-1.5 rounded-xl font-medium transition duration-150 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-900'
 const BTN_VARIANT: Record<ButtonVariant, string> = {
   primary:
     'bg-accent text-white hover:bg-accent-strong shadow-sm dark:shadow-none',
   secondary:
-    'border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700',
+    'border border-black/[0.08] bg-white text-slate-700 hover:bg-black/[0.03] dark:border-white/10 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-white/[0.06]',
   ghost:
-    'text-slate-600 hover:bg-slate-100 hover:text-slate-800 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-slate-100',
+    'text-slate-600 hover:bg-black/[0.04] hover:text-slate-900 dark:text-slate-300 dark:hover:bg-white/[0.06] dark:hover:text-slate-100',
   danger:
     'bg-rose-600 text-white hover:bg-rose-700 dark:bg-rose-600 dark:hover:bg-rose-500',
 }
@@ -119,7 +119,7 @@ export function Button({
 //    嗰刻會自動放大 viewport → 用戶見到「每 focus 跳一跳」。≥16px 就唔會 zoom。
 //    全 app 表單共用呢個 FIELD，所以喺源頭修一次就全部受惠。
 const FIELD =
-  'w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-base sm:text-sm text-slate-800 shadow-xs outline-none transition placeholder:text-slate-400 focus:border-accent focus:ring-2 focus:ring-accent/30 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-500 dark:shadow-none dark:disabled:bg-slate-900'
+  'w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-base sm:text-sm text-slate-800 shadow-xs outline-none transition placeholder:text-slate-400 focus:border-accent focus:ring-2 focus:ring-accent/30 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-500 dark:shadow-none dark:disabled:bg-slate-900'
 
 const INVALID = 'border-rose-400 focus:border-rose-400 focus:ring-rose-500/30'
 
@@ -231,9 +231,9 @@ export function Card({
     {
       onClick,
       className: cx(
-        'rounded-xl border border-slate-200/80 bg-white shadow-xs dark:border-slate-700/60 dark:bg-slate-800 dark:shadow-none',
+        'rounded-2xl border border-black/[0.06] bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-white/[0.08] dark:bg-slate-800 dark:shadow-none',
         hover &&
-          'transition duration-150 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md dark:hover:border-slate-600',
+          'transition duration-200 hover:border-black/[0.1] hover:shadow-[0_8px_24px_rgba(15,23,42,0.08)] dark:hover:border-white/15',
         onClick && 'cursor-pointer',
         padded && 'p-4 sm:p-5',
         clip && 'overflow-hidden',
@@ -341,7 +341,7 @@ export function EmptyState({
   art?: string
 }) {
   return (
-    <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-slate-200 bg-slate-50/60 px-6 py-12 text-center dark:border-slate-700 dark:bg-slate-800/40">
+    <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-black/[0.1] bg-slate-50/60 px-6 py-12 text-center dark:border-white/[0.12] dark:bg-slate-800/40">
       {art ? (
         <Illustration name={art} className="mb-1 h-28 w-28 object-contain" />
       ) : typeof icon === 'string' ? (
@@ -451,12 +451,12 @@ export function StatCard({
           : undefined
       }
       className={cx(
-        'relative rounded-xl border p-4 transition',
+        'relative rounded-2xl border p-4 transition duration-200',
         highlight
           ? 'border-accent/30 bg-accent-soft dark:border-accent/40 dark:bg-accent/15'
-          : 'border-slate-200 bg-white shadow-xs dark:border-slate-700 dark:bg-slate-800 dark:shadow-none',
+          : 'border-black/[0.06] bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-white/[0.08] dark:bg-slate-800 dark:shadow-none',
         onClick &&
-          'cursor-pointer hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
+          'cursor-pointer hover:shadow-[0_8px_24px_rgba(15,23,42,0.08)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
       )}
     >
       <div className="flex items-center gap-1.5">
@@ -522,7 +522,7 @@ export function Tabs<T extends string>({
 }) {
   const pad = size === 'sm' ? 'px-2.5 py-1 text-xs' : 'px-3 py-1.5 text-sm'
   return (
-    <div className="flex w-full gap-1 rounded-lg bg-slate-100 p-1 dark:bg-slate-800/80">
+    <div className="flex w-full gap-1 rounded-xl bg-black/[0.05] p-1 dark:bg-white/[0.07]">
       {tabs.map((t) => {
         const I: LucideIcon | undefined = icons?.[t.id]
         const on = active === t.id
@@ -531,10 +531,10 @@ export function Tabs<T extends string>({
             key={t.id}
             onClick={() => onChange(t.id)}
             className={cx(
-              'flex flex-1 items-center justify-center gap-1.5 rounded-md font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-1',
+              'flex flex-1 items-center justify-center gap-1.5 rounded-lg font-medium transition duration-200 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-1',
               pad,
               on
-                ? 'bg-white text-slate-800 shadow-xs dark:bg-slate-700 dark:text-slate-100'
+                ? 'bg-white text-slate-800 shadow-[0_1px_2px_rgba(0,0,0,0.08)] ring-1 ring-black/[0.04] dark:bg-slate-700 dark:text-slate-100 dark:ring-white/10'
                 : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200',
             )}
           >
@@ -721,7 +721,7 @@ export function Modal({
         aria-modal="true"
         tabIndex={-1}
         className={cx(
-          'relative z-10 max-h-[85vh] w-full animate-scale-in overflow-y-auto rounded-t-2xl border border-slate-200 bg-white p-5 shadow-overlay focus:outline-none dark:border-slate-700 dark:bg-slate-800 sm:rounded-2xl sm:p-6',
+          'relative z-10 max-h-[85vh] w-full animate-scale-in overflow-y-auto rounded-t-3xl border border-black/[0.06] bg-white p-5 shadow-overlay focus:outline-none dark:border-white/[0.08] dark:bg-slate-800 sm:rounded-3xl sm:p-6',
           maxW,
         )}
       >
@@ -729,7 +729,7 @@ export function Modal({
           <div className="mb-4 flex items-center justify-between">
             <h3
               id={titleId}
-              className="text-base font-bold text-slate-800 dark:text-slate-100"
+              className="text-[17px] font-semibold tracking-tight text-slate-800 dark:text-slate-100"
             >
               {title}
             </h3>
@@ -779,13 +779,13 @@ export function IconButton({
       aria-label={label}
       disabled={disabled}
       className={cx(
-        'inline-flex items-center justify-center rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-1 focus-visible:ring-offset-white disabled:cursor-not-allowed disabled:opacity-40 dark:focus-visible:ring-offset-slate-900',
+        'inline-flex items-center justify-center rounded-xl transition duration-150 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-1 focus-visible:ring-offset-white disabled:cursor-not-allowed disabled:opacity-40 dark:focus-visible:ring-offset-slate-900',
         size === 'sm' ? 'p-1 min-h-8 min-w-8' : 'p-1.5 min-h-9 min-w-9',
         active
           ? 'bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent'
           : tone === 'danger'
             ? 'text-slate-400 hover:bg-rose-50 hover:text-rose-600 dark:text-slate-500 dark:hover:bg-rose-500/10'
-            : 'text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:text-slate-500 dark:hover:bg-slate-800 dark:hover:text-slate-300',
+            : 'text-slate-400 hover:bg-black/[0.05] hover:text-slate-600 dark:text-slate-500 dark:hover:bg-white/[0.06] dark:hover:text-slate-300',
         className,
       )}
     >
@@ -969,7 +969,7 @@ export function Table({
   return (
     <div
       className={cx(
-        'overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700/60',
+        'overflow-x-auto rounded-2xl border border-black/[0.06] dark:border-white/[0.08]',
         className,
       )}
     >
@@ -1148,7 +1148,7 @@ export function Menu({
             }
           }}
           className={cx(
-            'absolute top-full z-50 mt-1 min-w-[10rem] animate-scale-in rounded-lg border border-slate-200 bg-white p-1 shadow-lg dark:border-slate-700 dark:bg-slate-800',
+            'absolute top-full z-50 mt-1 min-w-[10rem] animate-scale-in rounded-xl border border-black/[0.08] bg-white p-1 shadow-lg dark:border-white/10 dark:bg-slate-800',
             align === 'end' ? 'right-0' : 'left-0',
           )}
         >
@@ -1163,10 +1163,10 @@ export function Menu({
                 setOpen(false)
               }}
               className={cx(
-                'flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent/40 disabled:opacity-40',
+                'flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent/40 disabled:opacity-40',
                 it.tone === 'danger'
                   ? 'text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-500/10'
-                  : 'text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-700',
+                  : 'text-slate-700 hover:bg-black/[0.04] dark:text-slate-200 dark:hover:bg-white/[0.06]',
               )}
             >
               {it.icon && <it.icon size={15} />}
@@ -1191,9 +1191,9 @@ export function SegmentedControl<T extends string>({
   onChange: (id: T) => void
   size?: 'sm' | 'md'
 }) {
-  const pad = size === 'sm' ? 'px-2.5 py-0.5 text-xs' : 'px-3 py-1 text-sm'
+  const pad = size === 'sm' ? 'px-2.5 py-1 text-xs' : 'px-3.5 py-1.5 text-sm'
   return (
-    <div className="inline-flex rounded-lg border border-slate-200 bg-slate-50 p-0.5 dark:border-slate-700 dark:bg-slate-800/60">
+    <div className="inline-flex rounded-full bg-black/[0.05] p-0.5 dark:bg-white/[0.07]">
       {options.map((o) => {
         const on = value === o.id
         return (
@@ -1204,10 +1204,10 @@ export function SegmentedControl<T extends string>({
             aria-pressed={on}
             onClick={() => onChange(o.id)}
             className={cx(
-              'inline-flex items-center gap-1.5 rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
+              'inline-flex items-center gap-1.5 rounded-full font-medium transition duration-200 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
               pad,
               on
-                ? 'bg-white text-slate-800 shadow-xs dark:bg-slate-700 dark:text-slate-100'
+                ? 'bg-white text-slate-800 shadow-[0_1px_2px_rgba(0,0,0,0.08)] ring-1 ring-black/[0.04] dark:bg-slate-700 dark:text-slate-100 dark:ring-white/10'
                 : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200',
             )}
           >
@@ -1247,10 +1247,10 @@ export function OptionButtons<T extends string>({
             aria-pressed={on}
             onClick={() => onChange(clearable && on ? '' : o.id)}
             className={cx(
-              'flex-1 rounded-lg border px-3 py-1.5 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-900',
+              'flex-1 rounded-xl border px-3 py-2 text-sm font-medium transition duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-900',
               on
                 ? 'border-accent bg-accent text-white shadow-sm shadow-accent/20'
-                : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700',
+                : 'border-black/[0.08] bg-white text-slate-600 hover:bg-black/[0.03] dark:border-white/10 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-white/[0.06]',
             )}
           >
             {o.label}

@@ -38,11 +38,13 @@ const Grading = lazyFeature(() => import('./work/Grading'))
 const ResourceLibrary = lazyFeature(() => import('./work/ResourceLibrary'))
 const Gradebook = lazyFeature(() => import('./work/Gradebook'))
 const LessonPlanner = lazyFeature(() => import('./work/LessonPlanner'))
+const TeachGuide = lazyFeature(() => import('./work/teachGuide/TeachGuide'))
 const Timetable = lazyFeature(() => import('./work/Timetable'))
 const Attendance = lazyFeature(() => import('./work/Attendance'))
 const ParentComms = lazyFeature(() => import('./work/ParentComms'))
 const MeetingNotes = lazyFeature(() => import('./work/MeetingNotes'))
 const AdminDocs = lazyFeature(() => import('./work/adminDocs/AdminDocs'))
+const DocDigest = lazyFeature(() => import('./work/docDigest/DocDigest'))
 const BudgetTracker = lazyFeature(() => import('./work/BudgetTracker'))
 const WorkDashboard = lazyFeature(() => import('./work/WorkDashboard'))
 const Team = lazyFeature(() => import('./work/Team'))
@@ -281,6 +283,17 @@ export const FEATURES: Feature[] = [
     status: 'ready',
   },
   {
+    id: 'work-teach-guide',
+    selfManagedHeader: true,
+    modes: ['work'],
+    name: '教學指引',
+    description: '揀課題，AI 教你點教：重點、學生常見誤解、教學步驟、活動、差異化、評估。',
+    icon: '🧭',
+    group: '教學',
+    component: TeachGuide,
+    status: 'ready',
+  },
+  {
     id: 'work-resources',
     selfManagedHeader: true,
     modes: ['work'],
@@ -376,6 +389,17 @@ export const FEATURES: Feature[] = [
     icon: '📄',
     group: '行政',
     component: AdminDocs,
+    status: 'ready',
+  },
+  {
+    id: 'work-doc-digest',
+    selfManagedHeader: true,
+    modes: ['work'],
+    name: '文件速讀',
+    description: '貼上 / 上載 / 影低行政文件，AI 即刻歸類、抽重點、列出要跟進事項。',
+    icon: '📑',
+    group: '行政',
+    component: DocDigest,
     status: 'ready',
   },
   {
