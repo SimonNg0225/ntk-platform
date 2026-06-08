@@ -276,9 +276,18 @@ export default function Calendar() {
       {/* 手機：月view 下方列出「揀中嗰日」嘅事件（月格太細淨見點點，喺度補返內容）*/}
       {view === 'month' && (
         <div className="max-h-[40%] shrink-0 space-y-1.5 overflow-y-auto sm:hidden">
-          <p className="px-1 pt-0.5 text-xs font-semibold text-slate-500 dark:text-slate-400">
-            {longDateLabel(cursorKey)}
-          </p>
+          <div className="flex items-center justify-between px-1 pt-0.5">
+            <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+              {longDateLabel(cursorKey)}
+            </p>
+            <button
+              type="button"
+              onClick={openCreate}
+              className="inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium text-accent transition active:opacity-70"
+            >
+              <Plus size={14} /> 新增
+            </button>
+          </div>
           {(occByDate.get(cursorKey) ?? []).length === 0 ? (
             <p className="px-1 py-4 text-center text-sm text-slate-400 dark:text-slate-500">
               呢日冇活動
