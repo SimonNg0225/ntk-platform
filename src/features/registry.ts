@@ -39,6 +39,7 @@ const ResourceLibrary = lazyFeature(() => import('./work/ResourceLibrary'))
 const Gradebook = lazyFeature(() => import('./work/Gradebook'))
 const LessonPlanner = lazyFeature(() => import('./work/LessonPlanner'))
 const TeachGuide = lazyFeature(() => import('./work/teachGuide/TeachGuide'))
+const SlideGen = lazyFeature(() => import('./work/slides/SlideGen'))
 const Timetable = lazyFeature(() => import('./work/Timetable'))
 const Attendance = lazyFeature(() => import('./work/Attendance'))
 const ParentComms = lazyFeature(() => import('./work/ParentComms'))
@@ -291,6 +292,17 @@ export const FEATURES: Feature[] = [
     icon: '🧭',
     group: '教學',
     component: TeachGuide,
+    status: 'ready',
+  },
+  {
+    id: 'work-slides',
+    selfManagedHeader: true,
+    modes: ['work'],
+    name: '教學簡報',
+    description: '揀課題或貼內容，AI 生成 PowerPoint 大綱，一鍵下載 .pptx。',
+    icon: '📽️',
+    group: '教學',
+    component: SlideGen,
     status: 'ready',
   },
   {

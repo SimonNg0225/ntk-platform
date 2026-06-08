@@ -12,6 +12,8 @@ import {
   Clock,
   NotebookPen,
   GraduationCap,
+  FileText,
+  Printer,
   type LucideIcon,
 } from 'lucide-react'
 import {
@@ -36,6 +38,7 @@ import { useCollection } from '../../../lib/store'
 import { complete, isAIConfigured, type AIModel } from '../../../lib/aiClient'
 import { topicsCol } from '../../../data/collections'
 import { getSubjectPack } from '../../../data/subjects'
+import { downloadDocx, printDoc, type ExportBlock, type ExportDoc } from '../../../lib/export'
 import { teachGuideCol, type GuideRecord } from './guideStore'
 import { buildGuideSystem, parseGuide, isEmptyGuide, type GuideResult } from './prompts'
 
@@ -263,16 +266,49 @@ export default function TeachGuide() {
   )
 }
 
+function guideToDoc(rec: GuideRecord): ExportDoc {
+  const blocks: ExportBlock[] = []
+  for (const sec of SECTIONS) {
+    const items = rec[sec.key]
+    if (!items || items.length === 0) continue
+    blocks.push({ kind: 'heading', text: sec.label, level: 1 })
+    blocks.push(sec.ordered ? { kind: 'numbered', items } : { kind: 'bullets', items })
+  }
+  return { title: `${rec.topicName} — 教學指引`, blocks }
+}
+
 function GuideView({ rec }: { rec: GuideRecord }) {
+  const toast = useToast()
+  const dlWord = async () => {
+    try {
+      await downloadDocx(guideToDoc(rec))
+      toast.success('已下載 Word')
+    } catch (e) {
+      toast.error((e as Error).message || '下載失敗')
+    }
+  }
+  const dlPdf = () => {
+    try {
+      printDoc(guideToDoc(rec))
+    } catch (e) {
+      toast.error((e as Error).message || '列印失敗')
+    }
+  }
   return (
     <Card padded className="space-y-5 ring-1 ring-accent/20">
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         <Badge tone="accent" icon={Compass}>
           教學指引
         </Badge>
         <h2 className="min-w-0 flex-1 text-base font-semibold tracking-tight text-slate-800 dark:text-slate-100">
           {rec.topicName}
         </h2>
+        <Button variant="secondary" size="sm" icon={FileText} onClick={dlWord}>
+          Word
+        </Button>
+        <Button variant="secondary" size="sm" icon={Printer} onClick={dlPdf}>
+          PDF
+        </Button>
       </div>
 
       {SECTIONS.map((sec) => {
