@@ -24,9 +24,11 @@ export default function MobileTopBar({
       </IconButton>
 
       <div className="flex items-center gap-2">
-        <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-accent text-sm font-bold text-white shadow-sm ring-1 ring-inset ring-white/10">
-          E
-        </div>
+        <img
+          src="/favicon.svg"
+          alt="EziTeach 教學易"
+          className="h-8 w-8 rounded-xl shadow-sm"
+        />
         <span className="text-sm font-bold text-slate-800 dark:text-slate-100">
           {t('shell.brandName', { defaultValue: '教學易' })}
           <span className="ml-1 font-medium text-slate-400 dark:text-slate-500">

@@ -82,9 +82,11 @@ export default function Sidebar({
       {/* 品牌 */}
       <div className="flex items-center justify-between px-4 py-4">
         <div className="flex items-center gap-2.5">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent text-base font-bold text-white shadow-sm ring-1 ring-inset ring-white/10">
-            E
-          </div>
+          <img
+            src="/favicon.svg"
+            alt="EziTeach 教學易"
+            className="h-10 w-10 rounded-xl shadow-sm"
+          />
           <div>
             <p className="text-sm font-bold leading-none text-slate-800 dark:text-slate-100">
               {t('shell.brandName', { defaultValue: '教學易' })}

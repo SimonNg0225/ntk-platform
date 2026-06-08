@@ -273,6 +273,47 @@ export default function Calendar() {
         />
       )}
 
+      {/* 手機：月view 下方列出「揀中嗰日」嘅事件（月格太細淨見點點，喺度補返內容）*/}
+      {view === 'month' && (
+        <div className="max-h-[40%] shrink-0 space-y-1.5 overflow-y-auto sm:hidden">
+          <p className="px-1 pt-0.5 text-xs font-semibold text-slate-500 dark:text-slate-400">
+            {longDateLabel(cursorKey)}
+          </p>
+          {(occByDate.get(cursorKey) ?? []).length === 0 ? (
+            <p className="px-1 py-4 text-center text-sm text-slate-400 dark:text-slate-500">
+              呢日冇活動
+            </p>
+          ) : (
+            (occByDate.get(cursorKey) ?? []).map((occ) => (
+              <button
+                key={`${occ.event.id}-${occ.dateKey}`}
+                type="button"
+                onClick={() => openEdit(occ.event, occ.dateKey)}
+                className="flex w-full items-center gap-2.5 rounded-xl border border-slate-200/70 bg-white px-3 py-2.5 text-left shadow-xs transition active:bg-slate-50 dark:border-slate-700/60 dark:bg-slate-800 dark:active:bg-slate-700/60"
+              >
+                <span
+                  className={cx(
+                    'h-2.5 w-2.5 shrink-0 rounded-full',
+                    colorOf(occ.category?.color).dot,
+                  )}
+                />
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-sm font-medium text-slate-700 dark:text-slate-200">
+                    {occ.event.title}
+                  </span>
+                  {occ.event.time && (
+                    <span className="text-xs tabular-nums text-slate-400 dark:text-slate-500">
+                      {occ.event.time}
+                      {occ.event.endTime ? `–${occ.event.endTime}` : ''}
+                    </span>
+                  )}
+                </span>
+              </button>
+            ))
+          )}
+        </div>
+      )}
+
       {(view === 'week' || view === 'day') && (
         <TimeGridView
           days={view === 'week' && isWide ? weekKeys(cursor) : [cursorKey]}
