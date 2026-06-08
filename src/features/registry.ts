@@ -39,6 +39,7 @@ const ResourceLibrary = lazyFeature(() => import('./work/ResourceLibrary'))
 const Gradebook = lazyFeature(() => import('./work/Gradebook'))
 const ReportComments = lazyFeature(() => import('./work/reportComments/ReportComments'))
 const ClassTools = lazyFeature(() => import('./work/classTools/ClassTools'))
+const EssayMark = lazyFeature(() => import('./work/essayMark/EssayMark'))
 const LessonPlanner = lazyFeature(() => import('./work/LessonPlanner'))
 const TeachGuide = lazyFeature(() => import('./work/teachGuide/TeachGuide'))
 const SlideGen = lazyFeature(() => import('./work/slides/SlideGen'))
@@ -360,6 +361,17 @@ export const FEATURES: Feature[] = [
     icon: '🎲',
     group: '學生',
     component: ClassTools,
+    status: 'ready',
+  },
+  {
+    id: 'work-essay-mark',
+    selfManagedHeader: true,
+    modes: ['work'],
+    name: '作文批改',
+    description: '貼或影低作文，AI 按準則打分、標病句、寫總評（中／英），可匯出 Word。',
+    icon: '✍️',
+    group: '學生',
+    component: EssayMark,
     status: 'ready',
   },
   {
