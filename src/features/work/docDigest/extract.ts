@@ -1,5 +1,3 @@
-import * as pdfjsLib from 'pdfjs-dist'
-import workerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url'
 import { extractText as extractDocxText } from '../adminDocs/docxEngine'
 import type { AIImage } from '../../../lib/aiClient'
 import type { DigestSource } from './digestStore'
@@ -7,11 +5,11 @@ import type { DigestSource } from './digestStore'
 // ============================================================
 //  文件速讀 — 由檔案抽出文字／圖片
 //  · .docx → 用行政文件已有嘅 extractText
-//  · .pdf  → pdf.js 逐頁 getTextContent（掃描件抽唔到字 → 回空，由上層提示影相）
+//  · .pdf  → pdf.js 逐頁 getTextContent（lazy import；掃描件抽唔到字 → 回空）
 //  · 圖片  → base64 AIImage，交畀 Gemini Vision
+//  ⚠️ pdfjs 改為「用到先 import」：避免喺模組載入時 touch DOMMatrix
+//     （測試 / SSR 環境冇 DOMMatrix），亦慳首屏 bundle。
 // ============================================================
-
-pdfjsLib.GlobalWorkerOptions.workerSrc = workerUrl
 
 export interface ExtractResult {
   text: string
@@ -55,6 +53,9 @@ function fileToBase64(file: File): Promise<string> {
 }
 
 async function extractPdfText(buf: ArrayBuffer): Promise<string> {
+  const pdfjsLib = await import('pdfjs-dist')
+  const workerUrl = (await import('pdfjs-dist/build/pdf.worker.min.mjs?url')).default
+  pdfjsLib.GlobalWorkerOptions.workerSrc = workerUrl
   const pdf = await pdfjsLib.getDocument({ data: buf }).promise
   const parts: string[] = []
   for (let i = 1; i <= pdf.numPages; i++) {
