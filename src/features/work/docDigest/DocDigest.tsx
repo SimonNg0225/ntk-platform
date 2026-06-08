@@ -9,6 +9,7 @@ import {
   Trash2,
   Clock,
   FileText,
+  Printer,
 } from 'lucide-react'
 import {
   Badge,
@@ -27,6 +28,7 @@ import { useConfirm } from '../../../context/ConfirmContext'
 import { useCollection } from '../../../lib/store'
 import { complete, isAIConfigured, type AIMessage, type AIModel } from '../../../lib/aiClient'
 import { tasksCol, eventsCol } from '../../../data/collections'
+import { downloadDocx, printDoc, type ExportBlock, type ExportDoc } from '../../../lib/export'
 import { docDigestCol, type DigestAction, type DigestRecord } from './digestStore'
 import { buildDigestSystem, parseDigest } from './prompts'
 import { extractFromFile } from './extract'
@@ -292,6 +294,22 @@ export default function DocDigest() {
   )
 }
 
+function digestToDoc(rec: DigestRecord): ExportDoc {
+  const blocks: ExportBlock[] = []
+  if (rec.summary.length > 0) {
+    blocks.push({ kind: 'heading', text: '重點', level: 1 })
+    blocks.push({ kind: 'bullets', items: rec.summary })
+  }
+  if (rec.actions.length > 0) {
+    blocks.push({ kind: 'heading', text: '要跟進', level: 1 })
+    blocks.push({
+      kind: 'bullets',
+      items: rec.actions.map((a) => (a.date ? `${a.text}（${a.date}）` : a.text)),
+    })
+  }
+  return { title: rec.title, subtitle: rec.category, blocks }
+}
+
 function ResultCard({
   rec,
   onAddTodo,
@@ -301,13 +319,35 @@ function ResultCard({
   onAddTodo: (a: DigestAction) => void
   onAddEvent: (a: DigestAction) => void
 }) {
+  const toast = useToast()
+  const dlWord = async () => {
+    try {
+      await downloadDocx(digestToDoc(rec))
+      toast.success('已下載 Word')
+    } catch (e) {
+      toast.error((e as Error).message || '下載失敗')
+    }
+  }
+  const dlPdf = () => {
+    try {
+      printDoc(digestToDoc(rec))
+    } catch (e) {
+      toast.error((e as Error).message || '列印失敗')
+    }
+  }
   return (
     <Card padded className="space-y-4 ring-1 ring-accent/20">
-      <div className="flex items-start gap-2.5">
+      <div className="flex flex-wrap items-center gap-2">
         <Badge tone={CAT_TONE[rec.category] ?? 'slate'}>{rec.category}</Badge>
         <h2 className="min-w-0 flex-1 text-base font-semibold tracking-tight text-slate-800 dark:text-slate-100">
           {rec.title}
         </h2>
+        <Button variant="secondary" size="sm" icon={FileText} onClick={dlWord}>
+          Word
+        </Button>
+        <Button variant="secondary" size="sm" icon={Printer} onClick={dlPdf}>
+          PDF
+        </Button>
       </div>
 
       {rec.summary.length > 0 && (

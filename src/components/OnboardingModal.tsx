@@ -1,12 +1,14 @@
 import {
   Sparkles,
-  Command,
   Cloud,
   Database,
   ClipboardList,
   FileText,
   TrendingUp,
-  MessagesSquare,
+  Presentation,
+  PenLine,
+  Dices,
+  FileSearch,
 } from 'lucide-react'
 import { Modal, Button } from '../ui'
 
@@ -19,33 +21,43 @@ import { Modal, Button } from '../ui'
 const HIGHLIGHTS: { icon: typeof Sparkles; title: string; desc: string }[] = [
   {
     icon: ClipboardList,
-    title: '備課 · 教案 · 課程進度',
-    desc: '撰寫教案、對住課程大綱追蹤每班進度，唔使再揭 Excel。',
+    title: '備課 · 教學指引 · 課程進度',
+    desc: '教案 + 課程進度，再加 AI「點教」指引：重點、學生常見誤解、活動、評估。',
   },
   {
     icon: FileText,
     title: '題庫 · AI 出題 · 試卷',
-    desc: '輸入課題，AI 即出 MC／短答／長題，一鍵入題庫、砌成試卷。',
+    desc: '輸入課題，AI 出 MC／短答／長題，入題庫、砌試卷、印工作紙。',
+  },
+  {
+    icon: Presentation,
+    title: 'AI 教學簡報（PPT）',
+    desc: '揀課題或貼內容，AI 生成 PowerPoint 大綱，一鍵下載 .pptx。',
+  },
+  {
+    icon: PenLine,
+    title: 'AI 批改 · 作文批改 · 評語',
+    desc: '貼／影答案或作文 → AI 按準則打分、標病句；一鍵出全班成績表評語。',
   },
   {
     icon: TrendingUp,
     title: '成績 · 點名 · 弱項分析',
-    desc: '記分自動計平均、標出弱項；逐堂點名統計出席率。',
+    desc: '記分自動計平均、標弱項；逐堂點名統計出席率。',
   },
   {
-    icon: MessagesSquare,
-    title: '家長溝通 · 會議 · 行政文件',
-    desc: '聯絡記錄＋範本、會議筆記，Word 範本逐欄填好即印。',
+    icon: Dices,
+    title: '課堂工具',
+    desc: '隨機抽人、即時分組、計時、計分 —— 上堂即用。',
   },
   {
-    icon: Command,
-    title: '⌘K 指令面板',
-    desc: '隨時撳 ⌘K（或 Ctrl+K）秒速跳去任何功能、切換模式。',
+    icon: FileSearch,
+    title: '文件速讀 · 行政文件',
+    desc: '貼／影行政文件 → AI 歸類、抽重點、列跟進；Word 範本逐欄填即印。',
   },
   {
     icon: Cloud,
-    title: '雲端同步 · AI 助手',
-    desc: '登入後多裝置同步；教學 AI 接 Gemini，未登入照用（本機）。',
+    title: '雲端同步 · AI 助手 · ⌘K',
+    desc: '多裝置同步；教學 AI 接 Gemini；隨時 ⌘K 秒跳任何功能。',
   },
 ]
 

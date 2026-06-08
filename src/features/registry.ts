@@ -37,8 +37,12 @@ const MaterialGen = lazyFeature(() => import('./work/MaterialGen'))
 const Grading = lazyFeature(() => import('./work/Grading'))
 const ResourceLibrary = lazyFeature(() => import('./work/ResourceLibrary'))
 const Gradebook = lazyFeature(() => import('./work/Gradebook'))
+const ReportComments = lazyFeature(() => import('./work/reportComments/ReportComments'))
+const ClassTools = lazyFeature(() => import('./work/classTools/ClassTools'))
+const EssayMark = lazyFeature(() => import('./work/essayMark/EssayMark'))
 const LessonPlanner = lazyFeature(() => import('./work/LessonPlanner'))
 const TeachGuide = lazyFeature(() => import('./work/teachGuide/TeachGuide'))
+const SlideGen = lazyFeature(() => import('./work/slides/SlideGen'))
 const Timetable = lazyFeature(() => import('./work/Timetable'))
 const Attendance = lazyFeature(() => import('./work/Attendance'))
 const ParentComms = lazyFeature(() => import('./work/ParentComms'))
@@ -294,6 +298,17 @@ export const FEATURES: Feature[] = [
     status: 'ready',
   },
   {
+    id: 'work-slides',
+    selfManagedHeader: true,
+    modes: ['work'],
+    name: '教學簡報',
+    description: '揀課題或貼內容，AI 生成 PowerPoint 大綱，一鍵下載 .pptx。',
+    icon: '📽️',
+    group: '教學',
+    component: SlideGen,
+    status: 'ready',
+  },
+  {
     id: 'work-resources',
     selfManagedHeader: true,
     modes: ['work'],
@@ -324,6 +339,39 @@ export const FEATURES: Feature[] = [
     icon: '📈',
     group: '學生',
     component: Gradebook,
+    status: 'ready',
+  },
+  {
+    id: 'work-report-comments',
+    selfManagedHeader: true,
+    modes: ['work'],
+    name: '成績表評語',
+    description: '揀班，AI 按每個學生成績一次過寫全班評語，可微調、重生、匯出 Word。',
+    icon: '💬',
+    group: '學生',
+    component: ReportComments,
+    status: 'ready',
+  },
+  {
+    id: 'work-class-tools',
+    selfManagedHeader: true,
+    modes: ['work'],
+    name: '課堂工具',
+    description: '隨機抽人、即時分組、計時、計分 —— 上堂即用。',
+    icon: '🎲',
+    group: '學生',
+    component: ClassTools,
+    status: 'ready',
+  },
+  {
+    id: 'work-essay-mark',
+    selfManagedHeader: true,
+    modes: ['work'],
+    name: '作文批改',
+    description: '貼或影低作文，AI 按準則打分、標病句、寫總評（中／英），可匯出 Word。',
+    icon: '✍️',
+    group: '學生',
+    component: EssayMark,
     status: 'ready',
   },
   {
