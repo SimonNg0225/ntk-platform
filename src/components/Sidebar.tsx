@@ -88,10 +88,10 @@ export default function Sidebar({
             className="h-10 w-10 rounded-xl shadow-sm"
           />
           <div>
-            <p className="text-sm font-bold leading-none text-slate-800 dark:text-slate-100">
+            <p className="text-[15px] font-semibold leading-none tracking-tight text-slate-800 dark:text-slate-100">
               {t('shell.brandName', { defaultValue: '教學易' })}
             </p>
-            <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
+            <p className="mt-1.5 text-[11px] tracking-tight text-slate-400 dark:text-slate-500">
               {t('shell.brandSub', { defaultValue: '教師工作台 · 個人成長' })}
             </p>
           </div>
@@ -150,32 +150,41 @@ export default function Sidebar({
                   className={cx('transition-transform', isCol && '-rotate-90')}
                 />
               </button>
-              {!isCol &&
-                g.items.map((f) => {
-                  const on = activeId === f.id
-                  return (
-                    <button
-                      key={f.id}
-                      onClick={() => choose(f.id)}
-                      className={navClass(on)}
-                    >
-                      <FeatureIcon icon={f.icon} size={18} className={iconColor(on)} />
-                      <span className="flex-1 text-left">{featName(t, f)}</span>
-                      {f.status === 'soon' && (
-                        <span className="rounded-md bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-400 dark:bg-slate-800 dark:text-slate-500">
-                          {t('shell.soon', { defaultValue: '即將' })}
-                        </span>
-                      )}
-                    </button>
-                  )
-                })}
+              <div
+                className={cx(
+                  'grid transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]',
+                  isCol ? 'grid-rows-[0fr] opacity-0' : 'grid-rows-[1fr] opacity-100',
+                )}
+              >
+                <div className="space-y-0.5 overflow-hidden">
+                  {g.items.map((f) => {
+                    const on = activeId === f.id
+                    return (
+                      <button
+                        key={f.id}
+                        onClick={() => choose(f.id)}
+                        tabIndex={isCol ? -1 : 0}
+                        className={navClass(on)}
+                      >
+                        <FeatureIcon icon={f.icon} size={18} className={iconColor(on)} />
+                        <span className="flex-1 text-left">{featName(t, f)}</span>
+                        {f.status === 'soon' && (
+                          <span className="rounded-md bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-400 dark:bg-slate-800 dark:text-slate-500">
+                            {t('shell.soon', { defaultValue: '即將' })}
+                          </span>
+                        )}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
             </div>
           )
         })}
       </nav>
 
       {/* 頁腳：設定 + 帳戶區 + 版本 */}
-      <div className="border-t border-slate-100 dark:border-slate-800">
+      <div className="border-t border-black/[0.06] dark:border-white/[0.06]">
         <button
           onClick={() => {
             onOpenSettings?.()

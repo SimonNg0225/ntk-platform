@@ -38,7 +38,7 @@ export default function AccountBox() {
       <div className="space-y-2 px-4 py-3">
         <button
           onClick={signInWithGoogle}
-          className="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+          className="flex w-full items-center justify-center gap-2 rounded-xl border border-black/[0.08] bg-white px-3 py-2.5 text-[13px] font-medium text-slate-700 transition hover:bg-black/[0.03] dark:border-white/10 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-white/[0.06]"
         >
           <GoogleIcon />
           {t('shell.loginGoogle', { defaultValue: '用 Google 登入' })}
@@ -98,7 +98,7 @@ function PlanRow() {
   const dateStr = currentPeriodEnd ? fmtDate(currentPeriodEnd, i18n.language) : ''
 
   return (
-    <div className="rounded-lg bg-slate-50 px-2.5 py-1.5 dark:bg-slate-800/50">
+    <div className="rounded-xl bg-black/[0.03] px-2.5 py-2 dark:bg-white/[0.04]">
       <div className="flex items-center justify-between gap-2">
         <PlanBadge />
         {isPro ? (

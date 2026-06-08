@@ -16,24 +16,25 @@ export default function ModeSwitcher({
     <div
       className={
         compact
-          ? 'flex gap-0.5 rounded-full bg-slate-100 p-0.5'
-          : 'flex gap-1 rounded-2xl bg-slate-100 p-1'
+          ? 'flex gap-0.5 rounded-full bg-black/[0.05] p-0.5 dark:bg-white/[0.07]'
+          : 'flex gap-1 rounded-xl bg-black/[0.05] p-1 dark:bg-white/[0.07]'
       }
     >
       {MODE_ORDER.map((id) => {
         const def = MODES[id]
         const active = id === mode
-        const activeCls = compact
-          ? 'bg-white text-slate-800 shadow-sm'
-          : 'bg-white text-slate-800 shadow-sm'
+        const activeCls =
+          'bg-white text-slate-800 shadow-[0_1px_2px_rgba(0,0,0,0.08)] ring-1 ring-black/[0.04] dark:bg-slate-700 dark:text-white dark:ring-white/10'
         return (
           <button
             key={id}
             onClick={() => setMode(id)}
             className={[
-              'flex flex-1 items-center justify-center gap-1.5 rounded-full font-semibold transition',
-              compact ? 'px-3 py-1.5 text-xs' : 'rounded-xl px-3 py-2 text-sm',
-              active ? activeCls : 'text-slate-500 hover:text-slate-700',
+              'flex flex-1 items-center justify-center gap-1.5 font-semibold transition duration-200 active:scale-[0.97]',
+              compact ? 'rounded-full px-3 py-1.5 text-xs' : 'rounded-lg px-3 py-2 text-[13px]',
+              active
+                ? activeCls
+                : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200',
             ].join(' ')}
             aria-pressed={active}
           >

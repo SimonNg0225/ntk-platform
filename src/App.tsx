@@ -116,7 +116,7 @@ export function AppShell() {
           activeId={activeId}
           onSelect={navigate}
           onOpenSettings={() => navigate('__settings__')}
-          className="hidden border-r border-slate-200 dark:border-slate-800 md:flex"
+          className="hidden border-r border-black/[0.06] dark:border-white/[0.06] md:flex"
         />
 
         {/* 手機抽屜 */}
@@ -161,11 +161,11 @@ export function AppShell() {
                 <div className="space-y-5">
                   <button
                     onClick={() => navigate(null)}
-                    className="text-sm text-slate-400 transition hover:text-accent"
+                    className="text-[13px] text-slate-400 transition hover:text-accent"
                   >
                     ← {t('shell.backOverview', { defaultValue: '返回概覽' })}
                   </button>
-                  <h1 className="flex items-center gap-2 text-2xl font-bold text-slate-800 dark:text-slate-100">
+                  <h1 className="flex items-center gap-2.5 text-[26px] font-semibold tracking-tight text-slate-800 dark:text-slate-100">
                     <FeatureIcon icon="⚙️" size={24} className="text-accent" />{' '}
                     {t('shell.settings', { defaultValue: '設定' })}
                   </h1>
@@ -177,7 +177,7 @@ export function AppShell() {
                 <div className="space-y-5">
                   <button
                     onClick={() => navigate(null)}
-                    className="text-sm text-slate-400 transition hover:text-accent"
+                    className="text-[13px] text-slate-400 transition hover:text-accent"
                   >
                     ← {t('shell.backToMode', {
                       mode: t(`mode.${modeDef.id}.name`, { defaultValue: modeDef.name }),
@@ -187,11 +187,11 @@ export function AppShell() {
                   {/* 標準 header；selfManagedHeader 嘅功能自管 masthead，host 唔重複出標題 */}
                   {!feature.selfManagedHeader && (
                     <div>
-                      <h1 className="flex items-center gap-2 text-2xl font-bold text-slate-800 dark:text-slate-100">
+                      <h1 className="flex items-center gap-2.5 text-[26px] font-semibold tracking-tight text-slate-800 dark:text-slate-100">
                         <FeatureIcon icon={feature.icon} size={24} className="text-accent" />
                         {featName(t, feature)}
                       </h1>
-                      <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                      <p className="mt-1.5 text-[13px] text-slate-500 dark:text-slate-400">
                         {featDesc(t, feature)}
                       </p>
                     </div>
