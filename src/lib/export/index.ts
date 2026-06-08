@@ -1,5 +1,5 @@
-export type { ExportBlock, ExportDoc, Slide, Deck } from './types'
+export type { ExportBlock, ExportDoc, Slide, Deck, SlideChart } from './types'
 export { downloadBlob, safeFilename } from './file'
 export { downloadDocx } from './docx'
 export { printDoc } from './print'
-export { downloadPptx } from './pptx'
+export { downloadPptx, SLIDE_THEMES, type SlideThemeId } from './pptx'

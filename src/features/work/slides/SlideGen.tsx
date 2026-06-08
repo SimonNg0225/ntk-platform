@@ -7,6 +7,7 @@ import {
   Clock,
   Loader2,
   StickyNote,
+  BarChart3,
 } from 'lucide-react'
 import {
   Badge,
@@ -29,7 +30,7 @@ import { useCollection } from '../../../lib/store'
 import { complete, isAIConfigured, type AIModel } from '../../../lib/aiClient'
 import { topicsCol } from '../../../data/collections'
 import { getSubjectPack } from '../../../data/subjects'
-import { downloadPptx } from '../../../lib/export'
+import { downloadPptx, SLIDE_THEMES, type SlideThemeId } from '../../../lib/export'
 import { slideDecksCol, type DeckRecord } from './slideStore'
 import { buildSlideSystem, parseDeck } from './slidePrompts'
 
@@ -74,6 +75,7 @@ export default function SlideGen() {
   const [busy, setBusy] = useState(false)
   const [current, setCurrent] = useState<DeckRecord | null>(null)
   const [downloading, setDownloading] = useState(false)
+  const [theme, setTheme] = useState<SlideThemeId>('navy')
 
   const hasInput = mode === 'topic' ? topics.length > 0 : text.trim().length > 0
 
@@ -111,7 +113,7 @@ export default function SlideGen() {
   async function download(rec: DeckRecord) {
     setDownloading(true)
     try {
-      await downloadPptx({ title: rec.title, subtitle: rec.subtitle, slides: rec.slides }, rec.title)
+      await downloadPptx({ title: rec.title, subtitle: rec.subtitle, slides: rec.slides }, rec.title, theme)
       toast.success('已下載 PowerPoint')
     } catch (e) {
       toast.error((e as Error).message || '下載失敗')
@@ -206,7 +208,7 @@ export default function SlideGen() {
 
       {/* 結果 */}
       {current && (
-        <DeckView rec={current} onDownload={() => download(current)} downloading={downloading} />
+        <DeckView rec={current} onDownload={() => download(current)} downloading={downloading} theme={theme} onTheme={setTheme} />
       )}
 
       {/* 歷史 */}
@@ -261,10 +263,14 @@ function DeckView({
   rec,
   onDownload,
   downloading,
+  theme,
+  onTheme,
 }: {
   rec: DeckRecord
   onDownload: () => void
   downloading: boolean
+  theme: SlideThemeId
+  onTheme: (t: SlideThemeId) => void
 }) {
   return (
     <Card padded className="space-y-4 ring-1 ring-accent/20">
@@ -281,6 +287,28 @@ function DeckView({
       </div>
       {rec.subtitle && <p className="text-[13px] text-slate-500 dark:text-slate-400">{rec.subtitle}</p>}
 
+      {/* 模板主題揀選（下載 .pptx 時套用） */}
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-[11px] font-medium uppercase tracking-wider text-slate-400">模板主題</span>
+        {SLIDE_THEMES.map((th) => (
+          <button
+            key={th.id}
+            type="button"
+            onClick={() => onTheme(th.id)}
+            aria-pressed={theme === th.id}
+            className={cx(
+              'inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-medium transition active:scale-[0.97]',
+              theme === th.id
+                ? 'border-accent bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent'
+                : 'border-black/[0.08] text-slate-600 hover:bg-black/[0.03] dark:border-white/10 dark:text-slate-300',
+            )}
+          >
+            <span className="h-3 w-3 rounded-full" style={{ background: th.swatch }} />
+            {th.name}
+          </button>
+        ))}
+      </div>
+
       <div className="space-y-2">
         {rec.slides.map((s, i) => (
           <div
@@ -294,6 +322,11 @@ function DeckView({
               <p className="min-w-0 flex-1 text-sm font-semibold text-slate-700 dark:text-slate-200">
                 {s.title}
               </p>
+              {s.chart && (
+                <span className="inline-flex shrink-0 items-center gap-1 rounded-md bg-blue-50 px-1.5 py-0.5 text-[10px] font-medium text-blue-600 dark:bg-blue-500/15 dark:text-blue-300">
+                  <BarChart3 size={11} /> 圖表
+                </span>
+              )}
             </div>
             {s.bullets.length > 0 && (
               <ul className="mt-1.5 space-y-0.5 pl-7">
