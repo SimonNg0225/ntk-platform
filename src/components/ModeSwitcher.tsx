@@ -17,7 +17,7 @@ export default function ModeSwitcher({
       className={
         compact
           ? 'flex gap-0.5 rounded-full bg-black/[0.05] p-0.5 dark:bg-white/[0.07]'
-          : 'flex gap-1 rounded-xl bg-black/[0.05] p-1 dark:bg-white/[0.07]'
+          : 'flex gap-1 rounded-full bg-black/[0.05] p-1 dark:bg-white/[0.07]'
       }
     >
       {MODE_ORDER.map((id) => {
@@ -31,7 +31,7 @@ export default function ModeSwitcher({
             onClick={() => setMode(id)}
             className={[
               'flex flex-1 items-center justify-center gap-1.5 font-semibold transition duration-200 active:scale-[0.97]',
-              compact ? 'rounded-full px-3 py-1.5 text-xs' : 'rounded-lg px-3 py-2 text-[13px]',
+              compact ? 'rounded-full px-3 py-1.5 text-xs' : 'rounded-full px-3 py-2 text-[13px]',
               active
                 ? activeCls
                 : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200',

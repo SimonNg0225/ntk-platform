@@ -165,7 +165,7 @@ export function AppShell() {
                   >
                     ← {t('shell.backOverview', { defaultValue: '返回概覽' })}
                   </button>
-                  <h1 className="flex items-center gap-2.5 text-[26px] font-semibold tracking-tight text-slate-800 dark:text-slate-100">
+                  <h1 className="flex items-center gap-2.5 text-[28px] font-semibold tracking-tight text-slate-800 dark:text-slate-100 sm:text-[32px]">
                     <FeatureIcon icon="⚙️" size={24} className="text-accent" />{' '}
                     {t('shell.settings', { defaultValue: '設定' })}
                   </h1>
@@ -187,7 +187,7 @@ export function AppShell() {
                   {/* 標準 header；selfManagedHeader 嘅功能自管 masthead，host 唔重複出標題 */}
                   {!feature.selfManagedHeader && (
                     <div>
-                      <h1 className="flex items-center gap-2.5 text-[26px] font-semibold tracking-tight text-slate-800 dark:text-slate-100">
+                      <h1 className="flex items-center gap-2.5 text-[28px] font-semibold tracking-tight text-slate-800 dark:text-slate-100 sm:text-[32px]">
                         <FeatureIcon icon={feature.icon} size={24} className="text-accent" />
                         {featName(t, feature)}
                       </h1>
