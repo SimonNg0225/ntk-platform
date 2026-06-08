@@ -42,6 +42,7 @@ const ClassTools = lazyFeature(() => import('./work/classTools/ClassTools'))
 const EssayMark = lazyFeature(() => import('./work/essayMark/EssayMark'))
 const RubricGen = lazyFeature(() => import('./work/rubric/RubricGen'))
 const DseDrill = lazyFeature(() => import('./work/dse/DseDrill'))
+const Transcribe = lazyFeature(() => import('./work/transcribe/Transcribe'))
 const LessonPlanner = lazyFeature(() => import('./work/LessonPlanner'))
 const TeachGuide = lazyFeature(() => import('./work/teachGuide/TeachGuide'))
 const SlideGen = lazyFeature(() => import('./work/slides/SlideGen'))
@@ -472,6 +473,17 @@ export const FEATURES: Feature[] = [
     icon: '📑',
     group: '行政',
     component: DocDigest,
+    status: 'ready',
+  },
+  {
+    id: 'work-transcribe',
+    selfManagedHeader: true,
+    modes: ['work'],
+    name: '錄音轉文字',
+    description: '上載會議／觀課錄音，AI 轉文字、抽重點、列決議同待跟進，可存入會議筆記。',
+    icon: '🎙️',
+    group: '行政',
+    component: Transcribe,
     status: 'ready',
   },
   {
