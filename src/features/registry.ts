@@ -38,6 +38,7 @@ const Grading = lazyFeature(() => import('./work/Grading'))
 const ResourceLibrary = lazyFeature(() => import('./work/ResourceLibrary'))
 const Gradebook = lazyFeature(() => import('./work/Gradebook'))
 const ReportComments = lazyFeature(() => import('./work/reportComments/ReportComments'))
+const ClassTools = lazyFeature(() => import('./work/classTools/ClassTools'))
 const LessonPlanner = lazyFeature(() => import('./work/LessonPlanner'))
 const TeachGuide = lazyFeature(() => import('./work/teachGuide/TeachGuide'))
 const SlideGen = lazyFeature(() => import('./work/slides/SlideGen'))
@@ -348,6 +349,17 @@ export const FEATURES: Feature[] = [
     icon: '💬',
     group: '學生',
     component: ReportComments,
+    status: 'ready',
+  },
+  {
+    id: 'work-class-tools',
+    selfManagedHeader: true,
+    modes: ['work'],
+    name: '課堂工具',
+    description: '隨機抽人、即時分組、計時、計分 —— 上堂即用。',
+    icon: '🎲',
+    group: '學生',
+    component: ClassTools,
     status: 'ready',
   },
   {
