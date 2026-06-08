@@ -38,6 +38,7 @@ const Grading = lazyFeature(() => import('./work/Grading'))
 const ResourceLibrary = lazyFeature(() => import('./work/ResourceLibrary'))
 const Gradebook = lazyFeature(() => import('./work/Gradebook'))
 const LessonPlanner = lazyFeature(() => import('./work/LessonPlanner'))
+const TeachGuide = lazyFeature(() => import('./work/teachGuide/TeachGuide'))
 const Timetable = lazyFeature(() => import('./work/Timetable'))
 const Attendance = lazyFeature(() => import('./work/Attendance'))
 const ParentComms = lazyFeature(() => import('./work/ParentComms'))
@@ -279,6 +280,17 @@ export const FEATURES: Feature[] = [
     icon: '🏭',
     group: '教學',
     component: MaterialGen,
+    status: 'ready',
+  },
+  {
+    id: 'work-teach-guide',
+    selfManagedHeader: true,
+    modes: ['work'],
+    name: '教學指引',
+    description: '揀課題，AI 教你點教：重點、學生常見誤解、教學步驟、活動、差異化、評估。',
+    icon: '🧭',
+    group: '教學',
+    component: TeachGuide,
     status: 'ready',
   },
   {
