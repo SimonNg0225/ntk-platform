@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="zh-HK">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>貨櫃 PO 匯入工具</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/fflate@0.8.2/umd/index.js"></script>
+<style>
+  :root{ --accent:#4f46e5; --accent-d:#3730a3; --bg:#f4f7fb; --ink:#1e293b; --muted:#64748b; --border:#e2e8f0; --ok:#047857; --okbg:#ecfdf5; --warn:#b45309; --warnbg:#fffbeb; --err:#be123c; --errbg:#fff1f2; }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Inter','Noto Sans HK',system-ui,-apple-system,'PingFang HK','Microsoft JhengHei','Segoe UI',sans-serif;background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased;line-height:1.5;padding:28px 16px;}
+  .wrap{max-width:760px;margin:0 auto;}
+  h1{font-size:24px;font-weight:600;letter-spacing:-0.02em;display:flex;align-items:center;gap:10px;}
+  h1 .ic{width:38px;height:38px;border-radius:11px;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;}
+  .sub{color:var(--muted);font-size:14px;margin:6px 0 22px;}
+  .card{background:#fff;border:1px solid var(--border);border-radius:16px;box-shadow:0 1px 2px rgba(15,23,42,.04);padding:18px 18px;margin-bottom:14px;}
+  .step{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);margin-bottom:8px;}
+  label.file{display:block;border:1.5px dashed var(--border);border-radius:12px;padding:16px;text-align:center;cursor:pointer;transition:.15s;background:#fafbfd;}
+  label.file:hover{border-color:var(--accent);background:#f5f7ff;}
+  label.file.has{border-style:solid;border-color:var(--accent);background:#f5f7ff;}
+  label.file .big{font-weight:600;font-size:14px;}
+  label.file .hint{font-size:12px;color:var(--muted);margin-top:3px;}
+  input[type=file]{display:none;}
+  .go{width:100%;border:none;background:var(--accent);color:#fff;font:inherit;font-weight:600;font-size:15px;padding:13px;border-radius:12px;cursor:pointer;transition:.15s;display:flex;align-items:center;justify-content:center;gap:8px;}
+  .go:hover:not(:disabled){background:var(--accent-d);}
+  .go:active:not(:disabled){transform:scale(.99);}
+  .go:disabled{opacity:.45;cursor:not-allowed;}
+  .log{font-size:13px;white-space:pre-wrap;color:var(--muted);margin-top:10px;font-family:ui-monospace,Menlo,monospace;}
+  table{width:100%;border-collapse:collapse;margin-top:8px;font-size:13px;}
+  th,td{text-align:left;padding:7px 9px;border-bottom:1px solid var(--border);}
+  th{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);}
+  .badge{display:inline-block;padding:2px 8px;border-radius:7px;font-size:11px;font-weight:600;}
+  .b-ok{background:var(--okbg);color:var(--ok);} .b-warn{background:var(--warnbg);color:var(--warn);} .b-err{background:var(--errbg);color:var(--err);}
+  .note{font-size:12px;color:var(--muted);background:#f8fafc;border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-top:6px;}
+  .spin{width:15px;height:15px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:sp .7s linear infinite;}
+  @keyframes sp{to{transform:rotate(360deg);}}
+  a.dl{display:inline-flex;align-items:center;gap:6px;margin-top:10px;background:var(--okbg);color:var(--ok);font-weight:600;padding:10px 14px;border-radius:10px;text-decoration:none;font-size:14px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1><span class="ic">📦</span> 貨櫃 PO 匯入工具</h1>
+  <p class="sub">由貨櫃資料夾各份 PO 嘅「X PO Masterlist」抽資料 → 按資料夾名搵對應工作表 → append 落主檔。全程喺你部瀏覽器，<b>唔會上載任何嘢</b>，原主檔唔變（會下載新檔）。</p>
+
+  <div class="card">
+    <div class="step">① 主 Excel</div>
+    <label class="file" id="lblMaster">
+      <input type="file" id="master" accept=".xlsx,.xlsm" />
+      <div class="big" id="masterTxt">揀主檔 ContainerPOMasterList…</div>
+      <div class="hint">.xlsx — 入面 141 個貨櫃工作表嗰個</div>
+    </label>
+  </div>
+
+  <div class="card">
+    <div class="step">② 貨櫃資料夾</div>
+    <label class="file" id="lblFolder">
+      <input type="file" id="folder" webkitdirectory directory multiple />
+      <div class="big" id="folderTxt">揀貨櫃資料夾 或 母資料夾…</div>
+      <div class="hint">揀單一貨櫃夾（如 UK 40ft DG - BMOU5344675）<b>或</b>母夾（如 2026-23，一次過多個貨櫃）都得</div>
+    </label>
+  </div>
+
+  <div class="card">
+    <button class="go" id="run" disabled>開始處理並下載更新主檔</button>
+    <div class="note">配對規則：<b>資料夾名 = 工作表名</b>（自動去空格、不分大小寫）。欄位<b>按表頭名</b>對應，有就入、冇就留空，新行繼承格式。寫入係 append 落該表現有資料之後。</div>
+    <div class="log" id="log"></div>
+    <div id="result"></div>
+  </div>
+</div>
+
+<script>
+const $ = (id) => document.getElementById(id)
+const log = (m) => { $('log').textContent += m + '\n' }
+const VALID_OP = new Set(['equal','notBetween','endsWith','notEqual','between','notContains','lessThan','beginsWith','containsText','greaterThan','greaterThanOrEqual','lessThanOrEqual'])
+
+// ── 表頭正規化：只取英文字母，去中文/符號/換行 ──
+const norm = (v) => String(cellText(v) ?? '').replace(/[^A-Za-z]/g, '').toLowerCase()
+// 工作表名正規化：trim + 收空格 + 大寫
+const normSheet = (s) => String(s || '').trim().replace(/\s+/g, ' ').toUpperCase()
+
+function cellText(v) {
+  if (v == null) return ''
+  if (typeof v === 'object') {
+    if (v.richText) return v.richText.map((r) => r.text).join('')
+    if (v.text != null) return String(v.text)
+    if (v.result != null) return String(v.result)
+    if (v instanceof Date) return v
+    return ''
+  }
+  return v
+}
+// 抽「安全結果值」：只放行 字串/有限數字/有效日期/布林；公式取 result，error/NaN/無效日期/控制字元 → 當空
+function literalValue(cell) {
+  const v = cell.value; let r
+  if (v != null && typeof v === 'object' && !(v instanceof Date)) {
+    if ('result' in v) r = v.result
+    else if (v.richText) r = v.richText.map((t) => t.text).join('')
+    else if ('text' in v) r = v.text
+    else return null
+  } else r = v
+  if (r != null && typeof r === 'object' && !(r instanceof Date)) {
+    if (r.richText) r = r.richText.map((t) => t.text).join('')
+    else if (r.text != null) r = r.text
+    else return null
+  }
+  if (r == null) return null
+  if (typeof r === 'number') return Number.isFinite(r) ? r : null
+  if (r instanceof Date) return isNaN(r.getTime()) ? null : r
+  if (typeof r === 'boolean') return r
+  return String(r).replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, '')
+}
+function isEmpty(v) { const t = cellText(v); return t === '' || t == null }
+
+// 修正 ExcelJS 寫出時整壞嘅 conditional formatting（已驗證）
+function fixCF(xml) {
+  xml = xml.replace(/ operator="([^"]*)"/g, (m, op) => (VALID_OP.has(op) ? m : ''))
+  xml = xml.replace(/(<cfRule\b(?:(?!operator=)[^>])*?type="containsText")((?:(?!operator=)[^>])*?>)/g, '$1 operator="containsText"$2')
+  return xml
+}
+
+let masterFile = null
+let folderFiles = [] // {container, name, file}
+
+$('master').addEventListener('change', (e) => {
+  masterFile = e.target.files[0] || null
+  $('masterTxt').textContent = masterFile ? '✓ ' + masterFile.name : '揀主檔 ContainerPOMasterList…'
+  $('lblMaster').classList.toggle('has', !!masterFile)
+  refresh()
+})
+$('folder').addEventListener('change', (e) => {
+  const files = [...e.target.files].filter((f) => /\.(xlsx|xlsm)$/i.test(f.name) && !f.name.startsWith('~$'))
+  folderFiles = files.map((f) => {
+    const segs = (f.webkitRelativePath || f.name).split('/')
+    return { container: segs.length >= 2 ? segs[segs.length - 2] : '', name: f.name, file: f }
+  }).filter((x) => x.container)
+  const containers = [...new Set(folderFiles.map((x) => x.container))]
+  $('folderTxt').textContent = folderFiles.length ? `✓ ${containers.length} 個貨櫃、${folderFiles.length} 份 PO` : '揀貨櫃資料夾 或 母資料夾…'
+  $('lblFolder').classList.toggle('has', !!folderFiles.length)
+  refresh()
+})
+function refresh() { $('run').disabled = !(masterFile && folderFiles.length) }
+
+$('run').addEventListener('click', async () => {
+  $('run').disabled = true
+  $('run').innerHTML = '<span class="spin"></span> 處理緊…'
+  $('log').textContent = ''; $('result').innerHTML = ''
+  try { await process() }
+  catch (err) { log('✗ 出錯：' + (err && err.message ? err.message : err)); console.error(err) }
+  $('run').disabled = false
+  $('run').textContent = '開始處理並下載更新主檔'
+})
+
+// 讀一份來源 PO 的 X PO Masterlist → {headers:{normKey:col}, rows:[{normKey:value}]}
+async function readSource(file) {
+  const wb = new ExcelJS.Workbook()
+  await wb.xlsx.load(await file.arrayBuffer())
+  let ws = wb.getWorksheet('X PO Masterlist')
+  if (!ws) ws = wb.worksheets.find((w) => norm(w.name).includes('pomasterlist'))
+  if (!ws) return { rows: [] }
+  const map = {}
+  ws.getRow(1).eachCell({ includeEmpty: false }, (c, col) => { const k = norm(c.value); if (k && !(k in map)) map[k] = col })
+  const rows = []
+  for (let r = 2; r <= ws.rowCount; r++) {
+    const obj = {}; let any = false
+    for (const [k, col] of Object.entries(map)) { const v = literalValue(ws.getCell(r, col)); if (!isEmpty(v)) any = true; obj[k] = v }
+    if (any) rows.push(obj)
+  }
+  return { rows }
+}
+
+async function process() {
+  log('讀緊主檔…（8MB 大檔，約 5-10 秒）')
+  const mwb = new ExcelJS.Workbook()
+  await mwb.xlsx.load(await masterFile.arrayBuffer())
+  log(`主檔 OK：${mwb.worksheets.length} 個工作表`)
+
+  // 正規化 sheet 名 → worksheet
+  const sheetByNorm = {}
+  mwb.worksheets.forEach((ws) => { sheetByNorm[normSheet(ws.name)] = ws })
+
+  // 按貨櫃 group
+  const byContainer = {}
+  folderFiles.forEach((x) => { (byContainer[x.container] ||= []).push(x) })
+
+  const results = []
+  for (const [container, items] of Object.entries(byContainer)) {
+    const ws = sheetByNorm[normSheet(container)]
+    if (!ws) { results.push({ container, sheet: '—', rows: 0, status: 'err', msg: '主檔搵唔到對應工作表' }); log(`⚠ ${container}：搵唔到對應工作表，跳過`); continue }
+
+    // 主檔表頭（第 2 行）→ {normKey:col}
+    const mMap = {}
+    ws.getRow(2).eachCell({ includeEmpty: false }, (c, col) => { const k = norm(c.value); if (k && !(k in mMap)) mMap[k] = col })
+    const supCol = mMap.supplier || 2
+
+    // 揾最後一行有資料（睇供應商欄）
+    let lastRow = 2
+    for (let r = 3; r <= ws.rowCount; r++) {
+      if (!isEmpty(literalValue(ws.getCell(r, supCol)))) lastRow = r
+    }
+
+    let added = 0, wr = lastRow + 1
+    for (const it of items.sort((a, b) => a.name.localeCompare(b.name))) {
+      const { rows } = await readSource(it.file)
+      for (const sr of rows) {
+        // 只填資料欄；序號欄(Auto 公式)同預鋪格式都唔郁
+        for (const [k, col] of Object.entries(mMap)) {
+          if (k === 'sequenceauto') continue
+          if (k in sr && !isEmpty(sr[k])) ws.getCell(wr, col).value = sr[k]
+        }
+        wr++; added++
+      }
+    }
+    results.push({ container, sheet: ws.name, rows: added, status: 'ok', msg: `${items.length} 份 PO` })
+    log(`✓ ${container} → 工作表「${ws.name}」：+${added} 行`)
+  }
+
+  // 寫出 + 修 CF
+  log('寫緊更新主檔 + 修正格式…')
+  const buf = await mwb.xlsx.writeBuffer()
+  const zip = fflate.unzipSync(new Uint8Array(buf))
+  for (const name of Object.keys(zip)) {
+    if (/^xl\/worksheets\/sheet\d+\.xml$/.test(name)) {
+      const xml = fflate.strFromU8(zip[name]); zip[name] = fflate.strToU8(fixCF(xml))
+    }
+  }
+  const out = fflate.zipSync(zip, { level: 6 })
+  const blob = new Blob([out], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+  const url = URL.createObjectURL(blob)
+  const fname = masterFile.name.replace(/\.xlsx$/i, '') + '_更新_' + new Date().toISOString().slice(0, 10) + '.xlsx'
+  const a = document.createElement('a'); a.href = url; a.download = fname; document.body.appendChild(a); a.click(); a.remove()
+
+  // 結果表
+  const totalRows = results.reduce((s, r) => s + r.rows, 0)
+  let html = `<a class="dl" href="${url}" download="${fname}">⬇ 下載 ${fname}</a>`
+  html += '<table><thead><tr><th>貨櫃資料夾</th><th>對應工作表</th><th>加咗</th><th>狀態</th></tr></thead><tbody>'
+  for (const r of results) {
+    const b = r.status === 'ok' ? 'b-ok' : 'b-err'
+    html += `<tr><td>${esc(r.container)}</td><td>${esc(r.sheet)}</td><td>${r.rows}</td><td><span class="badge ${b}">${esc(r.msg)}</span></td></tr>`
+  }
+  html += '</tbody></table>'
+  $('result').innerHTML = html
+  log(`完成 ✓ 總共 append ${totalRows} 行；已下載更新主檔。`)
+}
+function esc(s){return String(s).replace(/[&<>"]/g,(c)=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+</script>
+</body>
+</html>
