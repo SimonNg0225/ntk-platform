@@ -74,6 +74,7 @@ export async function downloadPptx(
   deck: Deck,
   name?: string,
   themeId: SlideThemeId = 'navy',
+  coverPhoto?: { dataUri: string; credit: string },
 ): Promise<void> {
   const PptxGenJS = (await import('pptxgenjs')).default
   const pptx = new PptxGenJS()
@@ -94,6 +95,11 @@ export async function downloadPptx(
   // ── 封面 ──
   const cover = pptx.addSlide()
   cover.background = { color: t.coverBg }
+  if (coverPhoto?.dataUri) {
+    // 全幅相片 + 深色 scrim（保白字可讀）
+    cover.addImage({ data: coverPhoto.dataUri, x: 0, y: 0, w: 13.33, h: 7.5, sizing: { type: 'cover', w: 13.33, h: 7.5 } })
+    cover.addShape(pptx.ShapeType.rect, { x: 0, y: 0, w: 13.33, h: 7.5, fill: { color: t.coverBg, transparency: 42 } })
+  }
   cover.addShape(pptx.ShapeType.rect, { x: 0, y: 0, w: 0.28, h: 7.5, fill: { color: t.accent } })
   cover.addShape(pptx.ShapeType.rect, { x: 1.0, y: 2.55, w: 1.1, h: 0.13, fill: { color: t.accent } })
   cover.addText('教學簡報', { x: 1.0, y: 1.7, w: 11, h: 0.5, fontSize: 14, color: t.accent, charSpacing: 3, bold: true })
@@ -102,6 +108,9 @@ export async function downloadPptx(
     cover.addText(deck.subtitle, { x: 1.0, y: 4.7, w: 11, h: 0.8, fontSize: 20, color: 'CBD5E1' })
   }
   cover.addText(BRAND, { x: 1.0, y: 6.7, w: 8, h: 0.4, fontSize: 11, color: '94A3B8' })
+  if (coverPhoto?.credit) {
+    cover.addText(coverPhoto.credit, { x: 7.0, y: 7.04, w: 6.0, h: 0.3, fontSize: 8, color: 'CBD5E1', align: 'right' })
+  }
 
   // ── 內容 / 章節 ──
   deck.slides.forEach((s: Slide, i: number) => {

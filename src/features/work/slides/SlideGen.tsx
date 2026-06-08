@@ -8,6 +8,7 @@ import {
   Loader2,
   StickyNote,
   BarChart3,
+  Image as ImageIcon,
 } from 'lucide-react'
 import {
   Badge,
@@ -30,7 +31,13 @@ import { useCollection } from '../../../lib/store'
 import { complete, isAIConfigured, type AIModel } from '../../../lib/aiClient'
 import { topicsCol } from '../../../data/collections'
 import { getSubjectPack } from '../../../data/subjects'
-import { downloadPptx, SLIDE_THEMES, type SlideThemeId } from '../../../lib/export'
+import {
+  downloadPptx,
+  SLIDE_THEMES,
+  type SlideThemeId,
+  fetchCoverPhoto,
+  isStockConfigured,
+} from '../../../lib/export'
 import { slideDecksCol, type DeckRecord } from './slideStore'
 import { buildSlideSystem, parseDeck } from './slidePrompts'
 
@@ -76,6 +83,7 @@ export default function SlideGen() {
   const [current, setCurrent] = useState<DeckRecord | null>(null)
   const [downloading, setDownloading] = useState(false)
   const [theme, setTheme] = useState<SlideThemeId>('navy')
+  const [usePhoto, setUsePhoto] = useState(false)
 
   const hasInput = mode === 'topic' ? topics.length > 0 : text.trim().length > 0
 
@@ -113,7 +121,12 @@ export default function SlideGen() {
   async function download(rec: DeckRecord) {
     setDownloading(true)
     try {
-      await downloadPptx({ title: rec.title, subtitle: rec.subtitle, slides: rec.slides }, rec.title, theme)
+      let coverPhoto: { dataUri: string; credit: string } | undefined
+      if (usePhoto && isStockConfigured) {
+        const photo = await fetchCoverPhoto(`${rec.subtitle || subjectName || rec.title} 教學`)
+        if (photo) coverPhoto = { dataUri: photo.dataUri, credit: photo.credit }
+      }
+      await downloadPptx({ title: rec.title, subtitle: rec.subtitle, slides: rec.slides }, rec.title, theme, coverPhoto)
       toast.success('已下載 PowerPoint')
     } catch (e) {
       toast.error((e as Error).message || '下載失敗')
@@ -208,7 +221,15 @@ export default function SlideGen() {
 
       {/* 結果 */}
       {current && (
-        <DeckView rec={current} onDownload={() => download(current)} downloading={downloading} theme={theme} onTheme={setTheme} />
+        <DeckView
+          rec={current}
+          onDownload={() => download(current)}
+          downloading={downloading}
+          theme={theme}
+          onTheme={setTheme}
+          usePhoto={usePhoto}
+          onUsePhoto={setUsePhoto}
+        />
       )}
 
       {/* 歷史 */}
@@ -265,12 +286,16 @@ function DeckView({
   downloading,
   theme,
   onTheme,
+  usePhoto,
+  onUsePhoto,
 }: {
   rec: DeckRecord
   onDownload: () => void
   downloading: boolean
   theme: SlideThemeId
   onTheme: (t: SlideThemeId) => void
+  usePhoto: boolean
+  onUsePhoto: (v: boolean) => void
 }) {
   return (
     <Card padded className="space-y-4 ring-1 ring-accent/20">
@@ -307,6 +332,22 @@ function DeckView({
             {th.name}
           </button>
         ))}
+        <span className="mx-1 h-4 w-px bg-black/[0.08] dark:bg-white/10" />
+        <button
+          type="button"
+          onClick={() => onUsePhoto(!usePhoto)}
+          disabled={!isStockConfigured}
+          aria-pressed={usePhoto && isStockConfigured}
+          title={isStockConfigured ? '封面用 Pexels 免費相片' : '需先設定 VITE_PEXELS_KEY 環境變數'}
+          className={cx(
+            'inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-medium transition active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-50',
+            usePhoto && isStockConfigured
+              ? 'border-accent bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent'
+              : 'border-black/[0.08] text-slate-600 hover:bg-black/[0.03] dark:border-white/10 dark:text-slate-300',
+          )}
+        >
+          <ImageIcon size={13} /> 封面相片
+        </button>
       </div>
 
       <div className="space-y-2">
