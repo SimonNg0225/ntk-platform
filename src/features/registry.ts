@@ -41,6 +41,7 @@ const ReportComments = lazyFeature(() => import('./work/reportComments/ReportCom
 const ClassTools = lazyFeature(() => import('./work/classTools/ClassTools'))
 const EssayMark = lazyFeature(() => import('./work/essayMark/EssayMark'))
 const RubricGen = lazyFeature(() => import('./work/rubric/RubricGen'))
+const DseDrill = lazyFeature(() => import('./work/dse/DseDrill'))
 const LessonPlanner = lazyFeature(() => import('./work/LessonPlanner'))
 const TeachGuide = lazyFeature(() => import('./work/teachGuide/TeachGuide'))
 const SlideGen = lazyFeature(() => import('./work/slides/SlideGen'))
@@ -318,6 +319,17 @@ export const FEATURES: Feature[] = [
     icon: '⚖️',
     group: '教學',
     component: RubricGen,
+    status: 'ready',
+  },
+  {
+    id: 'work-dse',
+    selfManagedHeader: true,
+    modes: ['work'],
+    name: 'DSE 操練',
+    description: '按課題出 DSE 公開試風格題目（連評分要點、達標提示），加 DSE 倒數。',
+    icon: '🎓',
+    group: '教學',
+    component: DseDrill,
     status: 'ready',
   },
   {

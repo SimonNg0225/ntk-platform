@@ -80,6 +80,7 @@ const EMOJI_TO_ICON: Record<string, LucideIcon> = {
   '✍️': PenLine,
   '✍': PenLine,
   '⚖️': Scale,
+  '🎓': GraduationCap,
   '⚖': Scale,
   '🔗': Link,
   '🎬': Clapperboard,
