@@ -37,6 +37,7 @@ const MaterialGen = lazyFeature(() => import('./work/MaterialGen'))
 const Grading = lazyFeature(() => import('./work/Grading'))
 const ResourceLibrary = lazyFeature(() => import('./work/ResourceLibrary'))
 const Gradebook = lazyFeature(() => import('./work/Gradebook'))
+const ReportComments = lazyFeature(() => import('./work/reportComments/ReportComments'))
 const LessonPlanner = lazyFeature(() => import('./work/LessonPlanner'))
 const TeachGuide = lazyFeature(() => import('./work/teachGuide/TeachGuide'))
 const SlideGen = lazyFeature(() => import('./work/slides/SlideGen'))
@@ -336,6 +337,17 @@ export const FEATURES: Feature[] = [
     icon: '📈',
     group: '學生',
     component: Gradebook,
+    status: 'ready',
+  },
+  {
+    id: 'work-report-comments',
+    selfManagedHeader: true,
+    modes: ['work'],
+    name: '成績表評語',
+    description: '揀班，AI 按每個學生成績一次過寫全班評語，可微調、重生、匯出 Word。',
+    icon: '💬',
+    group: '學生',
+    component: ReportComments,
     status: 'ready',
   },
   {
