@@ -406,7 +406,7 @@ export default function StudentReport({
                   </td>
                   <td
                     className={cx(
-                      'px-3 py-2.5 text-right font-serif text-[15px] font-bold tabular-nums slashed-zero',
+                      'px-3 py-2.5 text-right font-serif text-[15px] font-semibold tabular-nums slashed-zero',
                       band ? TONE_TEXT[band.tone] : 'text-slate-300 dark:text-slate-600',
                     )}
                   >

@@ -35,7 +35,7 @@ export default function PrintView({
   return (
     <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-slate-700/60 dark:bg-slate-800 dark:shadow-none print:rounded-none print:border-0 print:p-0 print:shadow-none">
       <div className="mb-4 text-center">
-        <h2 className="text-lg font-bold tracking-tight text-slate-800 dark:text-slate-100">
+        <h2 className="text-lg font-semibold tracking-tight text-slate-800 dark:text-slate-100">
           {title}
         </h2>
         <p className="mt-0.5 text-xs text-slate-400 dark:text-slate-500">

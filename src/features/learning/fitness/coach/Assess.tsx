@@ -222,14 +222,14 @@ export default function Assess({ model }: { model: AIModel }) {
         <div className="space-y-3" aria-live="polite">
           {advice.bullets.length > 0 && (
             <Card padded>
-              <h3 className="mb-3 flex items-center gap-2 text-sm font-bold text-slate-800 dark:text-slate-100">
+              <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-800 dark:text-slate-100">
                 <Sparkles size={16} className="text-accent-strong dark:text-accent" aria-hidden="true" />
                 訓練重點
               </h3>
               <ul className="space-y-2">
                 {advice.bullets.map((b, i) => (
                   <li key={i} className="flex items-start gap-2.5 text-sm">
-                    <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent-soft text-[11px] font-bold text-accent-strong dark:bg-accent/15 dark:text-accent" aria-hidden="true">
+                    <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent-soft text-[11px] font-semibold text-accent-strong dark:bg-accent/15 dark:text-accent" aria-hidden="true">
                       {i + 1}
                     </span>
                     <span className="min-w-0 break-words leading-relaxed text-slate-700 dark:text-slate-200">
@@ -246,7 +246,7 @@ export default function Assess({ model }: { model: AIModel }) {
               padded
               className="border-amber-200 bg-amber-50/60 dark:border-amber-500/30 dark:bg-amber-500/10"
             >
-              <h3 className="mb-3 flex items-center gap-2 text-sm font-bold text-amber-700 dark:text-amber-300">
+              <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-amber-700 dark:text-amber-300">
                 <AlertTriangle size={16} aria-hidden="true" />
                 注意事項
               </h3>

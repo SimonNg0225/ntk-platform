@@ -341,7 +341,7 @@ function Mini({ label, value, sub }: { label: string; value: string; sub: string
   return (
     <div className="rounded-xl border border-slate-200/70 bg-slate-50/70 p-3 dark:border-slate-700/50 dark:bg-slate-900/40">
       <p className="text-xs text-slate-500 dark:text-slate-400">{label}</p>
-      <p className="mt-0.5 text-xl font-bold tabular-nums text-slate-800 dark:text-slate-100">{value}</p>
+      <p className="mt-0.5 text-xl font-semibold tabular-nums text-slate-800 dark:text-slate-100">{value}</p>
       <p className="text-[11px] text-slate-400">{sub}</p>
     </div>
   )

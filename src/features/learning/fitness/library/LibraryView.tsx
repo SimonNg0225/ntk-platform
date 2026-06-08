@@ -311,7 +311,7 @@ export default function LibraryView() {
             className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400"
             aria-live="polite"
           >
-            <span className="font-serif text-sm font-bold tabular-nums slashed-zero text-slate-700 dark:text-slate-200">
+            <span className="font-serif text-sm font-semibold tabular-nums slashed-zero text-slate-700 dark:text-slate-200">
               {filtered.length}
             </span>
             <span className="text-slate-400 dark:text-slate-500">/ {EXERCISES.length} 個動作上場</span>

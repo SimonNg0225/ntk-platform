@@ -390,7 +390,7 @@ export default function ImportExport({
             {/* 貼卡台：紅margin線 + Q/A 行頭提示，呼應一張張索引卡 */}
             <div className="overflow-hidden rounded-lg border border-slate-300 dark:border-slate-700">
               <div className="flex items-center gap-2 border-b border-slate-200/80 bg-slate-50/80 px-3 py-1.5 dark:border-slate-700/60 dark:bg-slate-800/60">
-                <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                <span className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
                   <FileText size={11} /> 每行一張
                 </span>
                 <span className="font-mono text-[10px] text-slate-400 dark:text-slate-500">

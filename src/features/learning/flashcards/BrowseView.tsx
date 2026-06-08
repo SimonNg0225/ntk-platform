@@ -440,13 +440,13 @@ export default function BrowseView() {
                       <div className="flex items-start gap-1.5">
                         <div className="min-w-0">
                           <p className="flex items-start gap-1.5 truncate font-medium text-slate-800 dark:text-slate-100">
-                            <span className="mt-px shrink-0 font-serif text-[10px] font-bold uppercase tracking-wide text-slate-300 dark:text-slate-600">
+                            <span className="mt-px shrink-0 font-serif text-[10px] font-semibold uppercase tracking-wide text-slate-300 dark:text-slate-600">
                               Q
                             </span>
                             <span className="truncate">{c.front}</span>
                           </p>
                           <p className="flex items-start gap-1.5 truncate text-xs text-slate-400 dark:text-slate-500">
-                            <span className="mt-px shrink-0 font-serif text-[10px] font-bold uppercase tracking-wide text-slate-300 dark:text-slate-600">
+                            <span className="mt-px shrink-0 font-serif text-[10px] font-semibold uppercase tracking-wide text-slate-300 dark:text-slate-600">
                               A
                             </span>
                             <span className="truncate">{c.back}</span>
@@ -634,7 +634,7 @@ function EditCardModal({
           <div className="space-y-2.5 p-3 sm:p-4">
             <label className="block">
               <span className="mb-1 flex items-center gap-1.5 text-xs font-medium text-slate-600 dark:text-slate-300">
-                <span className="font-serif text-[11px] font-bold text-accent-strong dark:text-accent">Q</span>
+                <span className="font-serif text-[11px] font-semibold text-accent-strong dark:text-accent">Q</span>
                 正面（問題）
               </span>
               <Input
@@ -653,7 +653,7 @@ function EditCardModal({
             </div>
             <label className="block">
               <span className="mb-1 flex items-center gap-1.5 text-xs font-medium text-slate-600 dark:text-slate-300">
-                <span className="font-serif text-[11px] font-bold text-accent-strong dark:text-accent">A</span>
+                <span className="font-serif text-[11px] font-semibold text-accent-strong dark:text-accent">A</span>
                 背面（答案）
               </span>
               <Input

@@ -414,7 +414,7 @@ export default function HealthTracker() {
               <HeartPulse size={18} aria-hidden="true" />
             </span>
             <div>
-              <h2 className="text-base font-bold text-slate-800 dark:text-slate-100">今日入錄</h2>
+              <h2 className="text-base font-semibold text-slate-800 dark:text-slate-100">今日入錄</h2>
               <p className="text-xs text-slate-500 dark:text-slate-400">記低今日身體狀態</p>
             </div>
           </div>
@@ -474,7 +474,7 @@ export default function HealthTracker() {
           />
           <div className="flex items-center gap-3 rounded-xl border border-slate-200 p-3 dark:border-slate-700">
             <GoalRing pct={summary.waterPct} tone="sky" size={58} stroke={7}>
-              <span className="text-sm font-bold tabular-nums text-slate-700 dark:text-slate-200">
+              <span className="text-sm font-semibold tabular-nums text-slate-700 dark:text-slate-200">
                 {summary.waterPct}%
               </span>
             </GoalRing>
@@ -569,7 +569,7 @@ export default function HealthTracker() {
                 <TrendingUp size={18} aria-hidden="true" />
               </span>
               <div>
-                <h2 className="text-base font-bold text-slate-800 dark:text-slate-100">趨勢圖譜</h2>
+                <h2 className="text-base font-semibold text-slate-800 dark:text-slate-100">趨勢圖譜</h2>
                 <p className="text-xs text-slate-500 dark:text-slate-400">睇吓近期變化</p>
               </div>
             </div>
@@ -656,7 +656,7 @@ function Stepper({
           onClick={() => onSet(Math.max(0, value - step))}
         />
         <span
-          className="min-w-[3.5rem] text-center text-lg font-bold tabular-nums text-slate-800 dark:text-slate-100"
+          className="min-w-[3.5rem] text-center text-lg font-semibold tabular-nums text-slate-800 dark:text-slate-100"
           aria-live="polite"
           aria-label={`${label} ${value} ${unit}`}
         >

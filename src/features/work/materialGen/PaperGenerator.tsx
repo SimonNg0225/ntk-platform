@@ -741,7 +741,7 @@ function PreviewView({
         {questions.map((q, i) => (
           <Card key={q.id} className="p-3">
             <div className="flex items-start gap-3">
-              <span className="nums mt-0.5 shrink-0 text-sm font-bold text-slate-400 dark:text-slate-500">
+              <span className="nums mt-0.5 shrink-0 text-sm font-semibold text-slate-400 dark:text-slate-500">
                 {i + 1}.
               </span>
               <div className="flex-1 space-y-1.5">

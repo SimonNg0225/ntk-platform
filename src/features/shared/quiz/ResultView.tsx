@@ -163,7 +163,7 @@ export function ResultView({
             className="animate-fade-in-up mt-0.5 flex items-baseline justify-center gap-1"
             style={{ animationDelay: '140ms' }}
           >
-            <span className={cx('font-serif text-6xl font-bold tabular-nums slashed-zero leading-none', scoreColor(p))}>
+            <span className={cx('font-serif text-6xl font-semibold tabular-nums slashed-zero leading-none', scoreColor(p))}>
               {p}
             </span>
             <span className={cx('text-2xl font-semibold', scoreColor(p))}>%</span>
@@ -387,7 +387,7 @@ function RevealStat({
       <Icon size={15} className={tone === 'rose' ? 'text-rose-400' : 'text-slate-400'} />
       <p
         className={cx(
-          'text-lg font-bold tabular-nums',
+          'text-lg font-semibold tabular-nums',
           tone === 'rose' ? 'text-rose-600 dark:text-rose-400' : 'text-slate-800 dark:text-slate-100',
         )}
       >

@@ -254,7 +254,7 @@ export function DonutChart({ slices }: { slices: DonutSlice[] }) {
         <text
           x="50"
           y="50"
-          className="rotate-90 fill-slate-700 text-[16px] font-bold tabular-nums dark:fill-slate-100"
+          className="rotate-90 fill-slate-700 text-[16px] font-semibold tabular-nums dark:fill-slate-100"
           textAnchor="middle"
           dominantBaseline="central"
           transform="rotate(90 50 50)"

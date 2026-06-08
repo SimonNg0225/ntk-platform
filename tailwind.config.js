@@ -37,14 +37,16 @@ export default {
         serif: ['Fraunces', 'Georgia', '"Times New Roman"', 'serif'],
       },
       fontSize: {
+        // Apple / SF Pro 風字距：字越大、負字距越多（招牌 tight tracking）。
+        // 細字（2xs/xs/sm）保持 0，太細加負字距反而難讀。
         '2xs': ['var(--fs-2xs)', { lineHeight: 'var(--lh-2xs)' }],
         xs: ['var(--fs-xs)', { lineHeight: 'var(--lh-xs)' }],
         sm: ['var(--fs-sm)', { lineHeight: 'var(--lh-sm)' }],
-        base: ['var(--fs-base)', { lineHeight: 'var(--lh-base)' }],
-        lg: ['var(--fs-lg)', { lineHeight: 'var(--lh-lg)' }],
-        xl: ['var(--fs-xl)', { lineHeight: 'var(--lh-xl)' }],
-        '2xl': ['var(--fs-2xl)', { lineHeight: 'var(--lh-2xl)' }],
-        '3xl': ['var(--fs-3xl)', { lineHeight: 'var(--lh-3xl)' }],
+        base: ['var(--fs-base)', { lineHeight: 'var(--lh-base)', letterSpacing: '-0.006em' }],
+        lg: ['var(--fs-lg)', { lineHeight: 'var(--lh-lg)', letterSpacing: '-0.011em' }],
+        xl: ['var(--fs-xl)', { lineHeight: 'var(--lh-xl)', letterSpacing: '-0.015em' }],
+        '2xl': ['var(--fs-2xl)', { lineHeight: 'var(--lh-2xl)', letterSpacing: '-0.019em' }],
+        '3xl': ['var(--fs-3xl)', { lineHeight: 'var(--lh-3xl)', letterSpacing: '-0.022em' }],
       },
       borderRadius: {
         // 收細：殘留嘅舊 rounded-2xl/3xl 自動專業化

@@ -138,7 +138,7 @@ function MetricTile({
           {delta && delta.dir !== 'flat' && (
             <span
               className={cx(
-                'ml-auto inline-flex items-center text-xs font-bold tabular-nums',
+                'ml-auto inline-flex items-center text-xs font-semibold tabular-nums',
                 delta.dir === 'up' ? 'text-emerald-500' : 'text-rose-500',
               )}
             >
@@ -300,7 +300,7 @@ export default function BodyView() {
           <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-accent">
             <Activity size={13} /> 體態計分板
           </p>
-          <h2 className="mt-1 text-xl font-bold tracking-tight text-slate-800 dark:text-slate-100">
+          <h2 className="mt-1 text-xl font-semibold tracking-tight text-slate-800 dark:text-slate-100">
             身體組成 · 趨勢
           </h2>
           <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">

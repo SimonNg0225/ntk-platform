@@ -269,7 +269,7 @@ export function Donut({
             x={cc}
             y={cc - 2}
             textAnchor="middle"
-            className="fill-slate-800 text-[20px] font-bold tabular-nums dark:fill-slate-100"
+            className="fill-slate-800 text-[20px] font-semibold tabular-nums dark:fill-slate-100"
           >
             {centerValue}
           </text>

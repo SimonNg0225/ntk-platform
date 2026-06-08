@@ -66,7 +66,7 @@ export function ActivityRings({ rings, size = 132 }: { rings: RingSpec[]; size?:
                   {pct}%
                 </span>
               </div>
-              <span className="text-sm font-bold tabular-nums text-slate-700 dark:text-slate-200">
+              <span className="text-sm font-semibold tabular-nums text-slate-700 dark:text-slate-200">
                 {Math.round(r.value)}
                 <span className="text-xs font-normal text-slate-400">
                   {' '}

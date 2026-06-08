@@ -279,7 +279,7 @@ export default function ReviewScreen({
               <PartyPopper size={28} strokeWidth={1.75} />
             </span>
             <div className="relative">
-              <p className="text-xl font-bold tracking-tight">
+              <p className="text-xl font-semibold tracking-tight">
                 {isCram ? '衝刺完成！' : '複習完成！'}
               </p>
               <p className="mt-1 text-sm text-white/80">{cheer}</p>
@@ -288,11 +288,11 @@ export default function ReviewScreen({
           <div className="space-y-5 p-6">
             <div className="grid grid-cols-2 gap-3">
               <div className="rounded-2xl bg-slate-50 p-4 text-center dark:bg-slate-800/60">
-                <p className="text-3xl font-bold tabular-nums text-accent">{done}</p>
+                <p className="text-3xl font-semibold tabular-nums text-accent">{done}</p>
                 <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">今次過卡</p>
               </div>
               <div className="rounded-2xl bg-slate-50 p-4 text-center dark:bg-slate-800/60">
-                <p className="text-3xl font-bold tabular-nums text-emerald-600 dark:text-emerald-400">
+                <p className="text-3xl font-semibold tabular-nums text-emerald-600 dark:text-emerald-400">
                   {sessionRatings.length > 0 ? `${acc}%` : '—'}
                 </p>
                 <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">答對率</p>

@@ -128,7 +128,7 @@ export function TypeDonut({
             x={cx0}
             y={cx0 - 4}
             textAnchor="middle"
-            className="fill-slate-800 text-[22px] font-bold tabular-nums dark:fill-slate-100"
+            className="fill-slate-800 text-[22px] font-semibold tabular-nums dark:fill-slate-100"
           >
             {total}
           </text>
@@ -203,7 +203,7 @@ export function CompletionRing({
             x={cx0}
             y={cx0 - 2}
             textAnchor="middle"
-            className="fill-slate-800 text-[20px] font-bold tabular-nums dark:fill-slate-100"
+            className="fill-slate-800 text-[20px] font-semibold tabular-nums dark:fill-slate-100"
           >
             {Math.round(pct * 100)}%
           </text>

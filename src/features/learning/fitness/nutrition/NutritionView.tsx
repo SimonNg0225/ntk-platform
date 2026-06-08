@@ -400,7 +400,7 @@ function WeeklyBars({
       <div className="mb-2 flex items-baseline justify-between">
         <span className="text-xs text-slate-500 dark:text-slate-400">
           近 7 日平均{' '}
-          <span className="font-serif text-base font-bold tabular-nums slashed-zero text-slate-700 dark:text-slate-200">
+          <span className="font-serif text-base font-semibold tabular-nums slashed-zero text-slate-700 dark:text-slate-200">
             {avg}
           </span>{' '}
           kcal/日
@@ -445,7 +445,7 @@ function WeeklyBars({
                 className={cx(
                   'mt-1 text-[10px]',
                   isAnchor
-                    ? 'font-bold text-slate-700 dark:text-slate-200'
+                    ? 'font-semibold text-slate-700 dark:text-slate-200'
                     : 'text-slate-400 dark:text-slate-500',
                 )}
               >
@@ -702,7 +702,7 @@ export default function NutritionView() {
               <ChevronLeft size={18} />
             </IconButton>
             <div className="min-w-[8rem] text-center leading-tight">
-              <p className="text-base font-bold text-slate-800 dark:text-slate-100">
+              <p className="text-base font-semibold text-slate-800 dark:text-slate-100">
                 {dateLabel}
               </p>
               <p className="font-serif text-[11px] tabular-nums slashed-zero tracking-wide text-slate-400 dark:text-slate-500">
@@ -791,7 +791,7 @@ export default function NutritionView() {
           <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-accent">
             <Wand2 size={13} /> 入帳 · LOG
           </p>
-          <h3 className="mt-1 text-base font-bold tracking-tight text-slate-800 dark:text-slate-100">
+          <h3 className="mt-1 text-base font-semibold tracking-tight text-slate-800 dark:text-slate-100">
             講你食咗咩，AI 幫你計營養
           </h3>
           <p className="mt-0.5 text-[11px] text-slate-400 dark:text-slate-500">
@@ -1051,7 +1051,7 @@ export default function NutritionView() {
                       </span>
                     </span>
                     <span className="text-[11px] tabular-nums text-slate-500 dark:text-slate-400">
-                      <span className="font-serif text-sm font-bold slashed-zero text-slate-700 dark:text-slate-200">
+                      <span className="font-serif text-sm font-semibold slashed-zero text-slate-700 dark:text-slate-200">
                         {Math.round(g.subtotal.calories)}
                       </span>{' '}
                       kcal
@@ -1097,7 +1097,7 @@ export default function NutritionView() {
                             </span>
                           </p>
                         </div>
-                        <span className="shrink-0 font-serif text-base font-bold tabular-nums slashed-zero text-slate-700 dark:text-slate-200">
+                        <span className="shrink-0 font-serif text-base font-semibold tabular-nums slashed-zero text-slate-700 dark:text-slate-200">
                           {Math.round(e.calories)}
                           <span className="ml-0.5 font-sans text-[10px] font-normal text-slate-400">
                             kcal
@@ -1309,7 +1309,7 @@ export default function NutritionView() {
               onChange={(e) =>
                 setGoalForm({ ...goalForm, calories: e.target.value })
               }
-              className="font-serif text-lg font-bold tabular-nums slashed-zero"
+              className="font-serif text-lg font-semibold tabular-nums slashed-zero"
             />
           </div>
           {/* 三大營養素分配（hairline + 色點呼應進度條配色） */}

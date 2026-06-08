@@ -82,7 +82,7 @@ export default function Fitness() {
                   <Icon size={16} />
                 </span>
                 <span className="min-w-0">
-                  <span className="block text-sm font-bold leading-tight">{t.label}</span>
+                  <span className="block text-sm font-semibold leading-tight">{t.label}</span>
                   <span
                     className={cx(
                       'block truncate text-[10px] font-medium uppercase tracking-[0.12em]',
@@ -173,7 +173,7 @@ function Scoreboard({
                 <CurrentIcon size={18} />
               </span>
               <div>
-                <p className="text-lg font-bold leading-none">{current.label}</p>
+                <p className="text-lg font-semibold leading-none">{current.label}</p>
                 <p className="mt-1 font-serif text-xs font-semibold uppercase tracking-[0.18em] text-white/55">
                   {current.en}
                 </p>

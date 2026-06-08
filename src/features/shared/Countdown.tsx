@@ -119,7 +119,7 @@ function FlapSlot({
   return (
     <span
       className={cx(
-        'relative inline-flex items-center justify-center rounded-md bg-slate-900 font-mono font-bold leading-none tabular-nums slashed-zero text-slate-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_1px_2px_rgba(15,23,42,0.4)] ring-1 ring-inset ring-white/5 dark:bg-slate-950',
+        'relative inline-flex items-center justify-center rounded-md bg-slate-900 font-mono font-semibold leading-none tabular-nums slashed-zero text-slate-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_1px_2px_rgba(15,23,42,0.4)] ring-1 ring-inset ring-white/5 dark:bg-slate-950',
         // 中央翻牌縫（一條穿過中線嘅暗痕）
         'after:pointer-events-none after:absolute after:inset-x-0 after:top-1/2 after:h-px after:-translate-y-1/2 after:bg-black/45',
         dim,
@@ -655,7 +655,7 @@ export default function Countdown() {
                   <p className="flex items-center justify-center gap-1 font-mono text-[10px] uppercase tracking-[0.2em] text-slate-400">
                     <I size={11} /> {s.sub}
                   </p>
-                  <p className="mt-1 font-mono text-2xl font-bold tabular-nums slashed-zero text-white sm:text-3xl">
+                  <p className="mt-1 font-mono text-2xl font-semibold tabular-nums slashed-zero text-white sm:text-3xl">
                     {s.value}
                   </p>
                   <p className="mt-0.5 text-[11px] text-slate-400">{s.label}</p>

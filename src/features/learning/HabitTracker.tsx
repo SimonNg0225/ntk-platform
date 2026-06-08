@@ -749,7 +749,7 @@ function TodayRing({
         <div className="absolute inset-0 flex flex-col items-center justify-center">
           <span
             className={cx(
-              'text-3xl font-bold tabular-nums',
+              'text-3xl font-semibold tabular-nums',
               allDone ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-800 dark:text-slate-100',
             )}
           >
@@ -761,7 +761,7 @@ function TodayRing({
         </div>
       </div>
       <div className="relative min-w-0 flex-1">
-        <h3 className="text-base font-bold text-slate-800 dark:text-slate-100">
+        <h3 className="text-base font-semibold text-slate-800 dark:text-slate-100">
           {allDone ? '今日全部完成 🎉' : '今日進度'}
         </h3>
         <p className="mt-1 text-sm leading-relaxed text-slate-500 dark:text-slate-400">

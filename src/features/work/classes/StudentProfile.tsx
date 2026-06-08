@@ -233,7 +233,7 @@ export default function StudentProfile({
             <span className="text-[8px] font-semibold uppercase tracking-[0.15em] opacity-60">
               No.
             </span>
-            <span className="font-serif text-lg font-bold leading-none tabular-nums slashed-zero">
+            <span className="font-serif text-lg font-semibold leading-none tabular-nums slashed-zero">
               {studentNo.trim() || initials(displayName)}
             </span>
           </span>

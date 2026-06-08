@@ -77,7 +77,7 @@ export function ChannelDonut({
             x={cc}
             y={cc - 4}
             textAnchor="middle"
-            className="fill-slate-800 text-[22px] font-bold tabular-nums dark:fill-slate-100"
+            className="fill-slate-800 text-[22px] font-semibold tabular-nums dark:fill-slate-100"
           >
             {total}
           </text>

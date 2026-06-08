@@ -1073,7 +1073,7 @@ function BudgetsTab({
               </span>
               <div>
                 <p className="text-xs text-slate-500 dark:text-slate-400">本月總預算</p>
-                <p className="mt-0.5 text-2xl font-bold tabular-nums text-slate-800 dark:text-slate-100">
+                <p className="mt-0.5 text-2xl font-semibold tabular-nums text-slate-800 dark:text-slate-100">
                   {fmtMoney(bSummary.totalSpent)}
                   <span className="ml-1 text-sm font-normal text-slate-400">
                     / {fmtMoney(bSummary.totalLimit)}
@@ -1084,7 +1084,7 @@ function BudgetsTab({
             <div className="text-right">
               <p
                 className={cx(
-                  'text-lg font-bold tabular-nums',
+                  'text-lg font-semibold tabular-nums',
                   bSummary.remaining < 0
                     ? 'text-rose-600 dark:text-rose-400'
                     : 'text-emerald-600 dark:text-emerald-400',
@@ -1473,7 +1473,7 @@ function Stat({ label, value, hint }: { label: string; value: string; hint?: str
   return (
     <div>
       <p className="text-xs text-slate-500 dark:text-slate-400">{label}</p>
-      <p className="mt-0.5 text-lg font-bold tabular-nums text-slate-800 dark:text-slate-100">
+      <p className="mt-0.5 text-lg font-semibold tabular-nums text-slate-800 dark:text-slate-100">
         {value}
       </p>
       {hint && <p className="text-[10px] text-slate-400">{hint}</p>}

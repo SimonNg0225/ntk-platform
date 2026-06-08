@@ -166,7 +166,7 @@ function StampMark({
     <span
       aria-hidden
       className={cx(
-        'inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full font-serif text-[13px] font-bold leading-none ring-1 ring-inset transition-transform duration-200',
+        'inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full font-serif text-[13px] font-semibold leading-none ring-1 ring-inset transition-transform duration-200',
         t.soft,
         t.ring,
         stamped && '-rotate-6',
@@ -738,7 +738,7 @@ function RollCall({ classId }: { classId: string }) {
                 />
                 <div className="flex min-w-0 items-center gap-3 pl-1.5">
                   {/* 行號（簿冊座號感，serif tabular） */}
-                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-slate-100 font-serif text-xs font-bold tabular-nums text-slate-400 dark:bg-slate-700/60 dark:text-slate-500">
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-slate-100 font-serif text-xs font-semibold tabular-nums text-slate-400 dark:bg-slate-700/60 dark:text-slate-500">
                     {String(idx + 1).padStart(2, '0')}
                   </span>
                   <div className="min-w-0">
@@ -995,7 +995,7 @@ function DetailModal({
           <span
             aria-hidden
             className={cx(
-              'pointer-events-none absolute right-12 top-4 hidden -rotate-[8deg] select-none items-center gap-1 rounded-lg border-2 border-dashed px-2.5 py-1 font-serif text-[11px] font-bold uppercase tracking-[0.18em] ring-inset sm:inline-flex',
+              'pointer-events-none absolute right-12 top-4 hidden -rotate-[8deg] select-none items-center gap-1 rounded-lg border-2 border-dashed px-2.5 py-1 font-serif text-[11px] font-semibold uppercase tracking-[0.18em] ring-inset sm:inline-flex',
               tone.soft,
               tone.ring,
             )}
@@ -1750,7 +1750,7 @@ function Analytics({ classId, className }: { classId: string; className: string 
                       <span className="flex min-w-0 items-center gap-2">
                         <span
                           className={cx(
-                            'flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[11px] font-bold tabular-nums',
+                            'flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold tabular-nums',
                             i === 0
                               ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300'
                               : i === 1
@@ -1863,7 +1863,7 @@ function StudentSummaryModal({
         {/* 右上「個人簿頁」斜戳（純裝飾，呼應 masthead；手機收起） */}
         <span
           aria-hidden
-          className="pointer-events-none absolute right-12 top-4 hidden -rotate-[8deg] select-none items-center gap-1 rounded-lg border-2 border-dashed border-accent/20 px-2.5 py-1 font-serif text-[11px] font-bold uppercase tracking-[0.18em] text-accent/25 dark:border-accent/25 dark:text-accent/25 sm:inline-flex"
+          className="pointer-events-none absolute right-12 top-4 hidden -rotate-[8deg] select-none items-center gap-1 rounded-lg border-2 border-dashed border-accent/20 px-2.5 py-1 font-serif text-[11px] font-semibold uppercase tracking-[0.18em] text-accent/25 dark:border-accent/25 dark:text-accent/25 sm:inline-flex"
         >
           <Stamp size={11} />
           {t('attend.pageStamp', { defaultValue: '簿頁' })}
@@ -2090,7 +2090,7 @@ function StudentSummaryModal({
                     defaultValue: `${longDateLabel(d.dateKey)}：${STATUS_LABEL[d.status]}`,
                   })}
                   className={cx(
-                    'flex h-7 w-7 items-center justify-center rounded-md font-serif text-[13px] font-bold leading-none',
+                    'flex h-7 w-7 items-center justify-center rounded-md font-serif text-[13px] font-semibold leading-none',
                     STATUS_STYLE[d.status].cell,
                   )}
                 >

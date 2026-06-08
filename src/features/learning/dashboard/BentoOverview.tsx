@@ -67,7 +67,7 @@ function StatTile({
       </div>
       <div>
         <p className="flex items-baseline gap-1">
-          <span className={cx('text-3xl font-bold tabular-nums', t.val)}>{value}</span>
+          <span className={cx('text-3xl font-semibold tabular-nums', t.val)}>{value}</span>
           {unit && <span className="text-sm font-medium text-slate-400">{unit}</span>}
           {trend && trend.dir !== 'flat' && (
             <span
@@ -109,7 +109,7 @@ export default function BentoOverview({
         <div className="pointer-events-none absolute -right-8 -top-10 h-40 w-40 rounded-full bg-white/10 blur-2xl" />
         <div className="relative">
           <p className="text-xs font-medium text-white/70">{longToday()}</p>
-          <h1 className="mt-2 text-2xl font-bold tracking-tight">
+          <h1 className="mt-2 text-2xl font-semibold tracking-tight">
             {greeting()}{name ? `，${name}` : ''}
           </h1>
           {kpis.streak > 0 && (
@@ -123,7 +123,7 @@ export default function BentoOverview({
         </div>
         <div className="relative">
           <p className="text-xs text-white/70">今日專注</p>
-          <p className="mt-0.5 text-4xl font-bold tabular-nums">
+          <p className="mt-0.5 text-4xl font-semibold tabular-nums">
             {fmtMin(todayFocus)}
             <span className="ml-2 text-sm font-medium text-white/60">/ {fmtMin(focusGoalMin)}</span>
           </p>
@@ -145,11 +145,11 @@ export default function BentoOverview({
         className="group flex cursor-pointer items-center gap-3 rounded-3xl border border-slate-200/80 bg-white p-4 text-left transition duration-200 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md dark:border-slate-700/60 dark:bg-slate-800 dark:hover:border-slate-600"
       >
         <MiniRing value={kpis.habitRate} size={56} stroke={6} tone={kpis.habitRate >= 100 ? 'green' : 'accent'}>
-          <span className="text-[11px] font-bold tabular-nums text-slate-700 dark:text-slate-200">{kpis.habitRate}%</span>
+          <span className="text-[11px] font-semibold tabular-nums text-slate-700 dark:text-slate-200">{kpis.habitRate}%</span>
         </MiniRing>
         <div className="min-w-0">
           <p className="text-xs font-medium text-slate-400 dark:text-slate-500">今日習慣</p>
-          <p className="mt-0.5 text-lg font-bold tabular-nums text-slate-800 dark:text-slate-100">
+          <p className="mt-0.5 text-lg font-semibold tabular-nums text-slate-800 dark:text-slate-100">
             {kpis.habitDoneToday}<span className="text-sm text-slate-400">/{kpis.habitDueToday || 0}</span>
           </p>
           <p className="text-[11px] text-slate-400">{kpis.habitDueToday > 0 ? '已完成' : '未設習慣'}</p>

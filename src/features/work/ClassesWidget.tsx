@@ -489,12 +489,12 @@ function ClassGrid({
                     <span className="text-[8px] font-semibold uppercase tracking-[0.15em] opacity-60">
                       Class
                     </span>
-                    <span className="font-serif text-base font-bold leading-none">
+                    <span className="font-serif text-base font-semibold leading-none">
                       {classBadge(c.name)}
                     </span>
                   </span>
                   <div className="min-w-0">
-                    <p className="truncate font-serif text-xl font-bold leading-tight text-slate-800 dark:text-slate-100">
+                    <p className="truncate font-serif text-xl font-semibold leading-tight text-slate-800 dark:text-slate-100">
                       {c.name}
                     </p>
                     <p className="truncate text-xs text-slate-500 dark:text-slate-400">
@@ -547,7 +547,7 @@ function ClassGrid({
               {/* 點名人數：serif 大數字（班牌主數字）*/}
               <div className="mt-4 flex items-end justify-between">
                 <span className="flex items-baseline gap-1.5">
-                  <span className="font-serif text-3xl font-bold tabular-nums slashed-zero text-slate-800 dark:text-slate-100">
+                  <span className="font-serif text-3xl font-semibold tabular-nums slashed-zero text-slate-800 dark:text-slate-100">
                     {roster.length}
                   </span>
                   <span className="text-xs font-normal text-slate-400">位學生</span>
@@ -692,7 +692,7 @@ function ClassDetail({
                   <span className="text-[8px] font-semibold uppercase tracking-[0.15em] opacity-60">
                     Class
                   </span>
-                  <span className="font-serif text-base font-bold leading-none">
+                  <span className="font-serif text-base font-semibold leading-none">
                     {classBadge(klass.name)}
                   </span>
                 </span>
@@ -958,7 +958,7 @@ function Roster({
                   </Td>
                   <Td>
                     <div className="flex items-center gap-2.5">
-                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent-soft font-serif text-sm font-bold text-accent-strong dark:bg-accent/15 dark:text-accent">
+                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent-soft font-serif text-sm font-semibold text-accent-strong dark:bg-accent/15 dark:text-accent">
                         {initials(s.name)}
                       </span>
                       <div className="min-w-0">
@@ -1386,7 +1386,7 @@ function ClassHealthCard({ health }: { health: ClassAcademicSummary }) {
               班平均分
             </div>
             <p className="mt-1 flex items-baseline gap-1.5">
-              <span className="text-2xl font-bold tabular-nums text-slate-800 dark:text-slate-100">
+              <span className="text-2xl font-semibold tabular-nums text-slate-800 dark:text-slate-100">
                 {health.avgGradePct == null ? '—' : `${health.avgGradePct}%`}
               </span>
               {health.avgGradePct != null && (
@@ -1406,7 +1406,7 @@ function ClassHealthCard({ health }: { health: ClassAcademicSummary }) {
               <CalendarCheck size={13} className="text-slate-400" />
               班出席率
             </div>
-            <p className="mt-1 text-2xl font-bold tabular-nums text-slate-800 dark:text-slate-100">
+            <p className="mt-1 text-2xl font-semibold tabular-nums text-slate-800 dark:text-slate-100">
               {health.attendanceRate == null ? '—' : `${health.attendanceRate}%`}
             </p>
             {health.attendanceRate != null ? (
@@ -1436,7 +1436,7 @@ function ClassHealthCard({ health }: { health: ClassAcademicSummary }) {
               />
               需關注
             </div>
-            <p className="mt-1 text-2xl font-bold tabular-nums text-slate-800 dark:text-slate-100">
+            <p className="mt-1 text-2xl font-semibold tabular-nums text-slate-800 dark:text-slate-100">
               {health.atRiskCount}
               <span className="ml-1 text-xs font-normal text-slate-400">位</span>
             </p>

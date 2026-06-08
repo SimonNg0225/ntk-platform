@@ -255,7 +255,7 @@ export function DonutChart({
       <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
         {hover !== null ? (
           <>
-            <span className="text-lg font-bold tabular-nums text-slate-800 dark:text-slate-100">
+            <span className="text-lg font-semibold tabular-nums text-slate-800 dark:text-slate-100">
               {Math.round((segments[hover].value / total) * 100)}%
             </span>
             <span className="max-w-[80%] truncate text-[10px] text-slate-400">
@@ -264,7 +264,7 @@ export function DonutChart({
           </>
         ) : (
           <>
-            <span className="text-lg font-bold tabular-nums text-slate-800 dark:text-slate-100">
+            <span className="text-lg font-semibold tabular-nums text-slate-800 dark:text-slate-100">
               {centerLabel}
             </span>
             {centerSub && <span className="text-[10px] text-slate-400">{centerSub}</span>}
@@ -402,7 +402,7 @@ export function HourRadial({ hours }: { hours: number[] }) {
       <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
         {hover !== null ? (
           <>
-            <span className="text-sm font-bold tabular-nums text-slate-800 dark:text-slate-100">
+            <span className="text-sm font-semibold tabular-nums text-slate-800 dark:text-slate-100">
               {hover}:00
             </span>
             <span className="text-[10px] text-slate-400 tabular-nums">{hours[hover]} 分</span>
@@ -410,7 +410,7 @@ export function HourRadial({ hours }: { hours: number[] }) {
         ) : max > 1 ? (
           <>
             <span className="text-[10px] text-slate-400">黃金時段</span>
-            <span className="text-sm font-bold tabular-nums text-accent-strong dark:text-accent">
+            <span className="text-sm font-semibold tabular-nums text-accent-strong dark:text-accent">
               {peak}:00
             </span>
           </>

@@ -87,7 +87,7 @@ export function DonutWithLegend({
             })}
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-2xl font-bold tabular-nums text-slate-800 dark:text-slate-100">
+          <span className="text-2xl font-semibold tabular-nums text-slate-800 dark:text-slate-100">
             {centerLabel}
           </span>
           {centerSub && (

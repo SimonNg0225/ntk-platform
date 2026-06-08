@@ -513,7 +513,7 @@ export default function TodoWidget() {
         {/* 右側紅墨裝飾：似改簿時隨手剔嘅一筆（純裝飾，唔搶主次）*/}
         <span
           aria-hidden
-          className="pointer-events-none absolute -right-5 top-4 hidden -rotate-6 select-none font-serif text-[3.5rem] font-bold leading-none text-rose-500/10 dark:text-rose-500/15 sm:block"
+          className="pointer-events-none absolute -right-5 top-4 hidden -rotate-6 select-none font-serif text-[3.5rem] font-semibold leading-none text-rose-500/10 dark:text-rose-500/15 sm:block"
         >
           ✓
         </span>

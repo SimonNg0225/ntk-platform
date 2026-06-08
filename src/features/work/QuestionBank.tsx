@@ -194,7 +194,7 @@ function QuestionPlate({
       <span className="text-[8px] font-semibold uppercase tracking-[0.15em] opacity-60">
         Q
       </span>
-      <span className="font-serif text-[15px] font-bold tabular-nums slashed-zero">
+      <span className="font-serif text-[15px] font-semibold tabular-nums slashed-zero">
         {String(index).padStart(2, '0')}
       </span>
     </span>
@@ -729,7 +729,7 @@ function BankView(props: {
           >
             查重
             {dupCount > 0 && (
-              <span className="ml-1 inline-flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-bold tabular-nums text-white">
+              <span className="ml-1 inline-flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-semibold tabular-nums text-white">
                 {dupCount}
               </span>
             )}
@@ -828,7 +828,7 @@ function BankView(props: {
             全選（<span className="tabular-nums">{filtered.length}</span>）
           </button>
           <span className="text-sm text-slate-600 dark:text-slate-300">
-            已選 <span className="nums font-bold text-accent-strong dark:text-accent">{selected.size}</span> 條 · <span className="nums">{selectedMarks}</span> 分
+            已選 <span className="nums font-semibold text-accent-strong dark:text-accent">{selected.size}</span> 條 · <span className="nums">{selectedMarks}</span> 分
           </span>
           <div className="ml-auto flex flex-wrap items-center gap-2">
             <Select
@@ -980,7 +980,7 @@ function BankView(props: {
                         >
                           <span
                             className={cx(
-                              'flex h-5 w-5 shrink-0 items-center justify-center rounded-full font-serif text-[11px] font-bold',
+                              'flex h-5 w-5 shrink-0 items-center justify-center rounded-full font-serif text-[11px] font-semibold',
                               correct
                                 ? 'bg-emerald-500 text-white'
                                 : 'bg-slate-200 text-slate-500 dark:bg-slate-700 dark:text-slate-400',
@@ -1167,7 +1167,7 @@ function AnalyticsView({
                   <li key={r.topicId} className="flex items-center gap-2.5">
                     <span
                       className={cx(
-                        'flex h-6 w-6 shrink-0 items-center justify-center rounded-lg text-xs font-bold tabular-nums',
+                        'flex h-6 w-6 shrink-0 items-center justify-center rounded-lg text-xs font-semibold tabular-nums',
                         i === 0
                           ? 'bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent'
                           : 'bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500',
@@ -1626,7 +1626,7 @@ function PaperStudio({
                   key={q.id}
                   className="flex items-start gap-2.5 rounded-xl border border-slate-200/80 p-2.5 transition hover:border-slate-300 dark:border-slate-700/60 dark:hover:border-slate-600"
                 >
-                  <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-accent-soft font-serif text-sm font-bold tabular-nums slashed-zero text-accent-strong dark:bg-accent/15 dark:text-accent">
+                  <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-accent-soft font-serif text-sm font-semibold tabular-nums slashed-zero text-accent-strong dark:bg-accent/15 dark:text-accent">
                     {idx + 1}
                   </span>
                   <div className="min-w-0 flex-1">
@@ -1917,7 +1917,7 @@ function QuestionFormModal({
                       {/* serif 答案圈 — 對齊評卷參考嘅卷面字母牌 */}
                       <span
                         className={cx(
-                          'flex h-7 w-7 cursor-pointer items-center justify-center rounded-full font-serif text-[13px] font-bold transition peer-focus-visible:ring-2 peer-focus-visible:ring-accent/40',
+                          'flex h-7 w-7 cursor-pointer items-center justify-center rounded-full font-serif text-[13px] font-semibold transition peer-focus-visible:ring-2 peer-focus-visible:ring-accent/40',
                           on
                             ? 'bg-emerald-500 text-white shadow-sm'
                             : 'bg-slate-100 text-slate-500 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600',

@@ -76,7 +76,7 @@ export function Donut({
             x={cx0}
             y={cx0 - 3}
             textAnchor="middle"
-            className="fill-slate-800 text-[21px] font-bold tabular-nums dark:fill-slate-100"
+            className="fill-slate-800 text-[21px] font-semibold tabular-nums dark:fill-slate-100"
           >
             {centerValue}
           </text>
@@ -153,7 +153,7 @@ export function ProgressRing({
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-lg font-bold tabular-nums text-slate-800 dark:text-slate-100">
+        <span className="text-lg font-semibold tabular-nums text-slate-800 dark:text-slate-100">
           {Math.round(v)}%
         </span>
         {label && (

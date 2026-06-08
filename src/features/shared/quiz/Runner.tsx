@@ -353,7 +353,7 @@ export function QuizRunner({
             aria-live="polite"
             aria-label={`第 ${currentIdx + 1} 題，共 ${total} 題`}
           >
-            <span className="font-serif text-2xl font-bold tabular-nums text-slate-800 dark:text-slate-100">
+            <span className="font-serif text-2xl font-semibold tabular-nums text-slate-800 dark:text-slate-100">
               {currentIdx + 1}
             </span>
             <span className="text-sm font-medium text-slate-400 dark:text-slate-500"> / {total}</span>
@@ -363,7 +363,7 @@ export function QuizRunner({
         <div className="flex items-center gap-1.5">
           {isTimed && (
             <span
-              className="inline-flex items-center gap-1 rounded-full bg-accent px-2.5 py-1 text-xs font-bold tabular-nums text-white shadow-sm dark:shadow-none"
+              className="inline-flex items-center gap-1 rounded-full bg-accent px-2.5 py-1 text-xs font-semibold tabular-nums text-white shadow-sm dark:shadow-none"
               aria-live="polite"
               aria-label={`目前得分 ${earned} 分`}
             >
@@ -604,7 +604,7 @@ export function QuizRunner({
                 className={(points[current.questionId] ?? 0) > 0 ? '' : 'text-slate-400'}
               />
               <span>{(points[current.questionId] ?? 0) > 0 ? '答中，速度加成！' : '本題得分'}</span>
-              <span className="ml-auto text-lg font-bold tabular-nums">
+              <span className="ml-auto text-lg font-semibold tabular-nums">
                 +{points[current.questionId] ?? 0}
               </span>
             </div>

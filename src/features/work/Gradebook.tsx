@@ -683,7 +683,7 @@ function ScoreGrid({ classId, className }: { classId: string; className: string 
                       ) : rank <= 3 ? (
                         <span
                           className={cx(
-                            'inline-flex h-6 w-6 items-center justify-center rounded-full font-serif text-xs font-bold tabular-nums',
+                            'inline-flex h-6 w-6 items-center justify-center rounded-full font-serif text-xs font-semibold tabular-nums',
                             rank === 1
                               ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300'
                               : rank === 2
@@ -737,7 +737,7 @@ function ScoreGrid({ classId, className }: { classId: string; className: string 
                     </td>
                   )
                 })}
-                <td className="border-l border-slate-200/80 px-3 py-2 text-center font-serif text-[15px] font-bold tabular-nums slashed-zero text-accent dark:border-slate-700/60">
+                <td className="border-l border-slate-200/80 px-3 py-2 text-center font-serif text-[15px] font-semibold tabular-nums slashed-zero text-accent dark:border-slate-700/60">
                   {classAvg == null ? '—' : `${Math.round(classAvg)}%`}
                 </td>
                 <td className="px-2 py-2" colSpan={2} />
@@ -1263,7 +1263,7 @@ function AnalysisTab({ classId, className }: { classId: string; className: strin
                     <span className="flex items-center gap-1">
                       <span
                         className={cx(
-                          'font-bold',
+                          'font-semibold',
                           band ? TONE_TEXT[band.tone] : 'text-slate-400',
                         )}
                       >
@@ -1452,7 +1452,7 @@ function AnalysisTab({ classId, className }: { classId: string; className: strin
                     {rank <= 3 ? (
                       <span
                         className={cx(
-                          'flex h-7 w-7 shrink-0 items-center justify-center rounded-full font-serif text-sm font-bold tabular-nums slashed-zero',
+                          'flex h-7 w-7 shrink-0 items-center justify-center rounded-full font-serif text-sm font-semibold tabular-nums slashed-zero',
                           rank === 1
                             ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300'
                             : rank === 2
@@ -1463,7 +1463,7 @@ function AnalysisTab({ classId, className }: { classId: string; className: strin
                         {rank}
                       </span>
                     ) : (
-                      <span className="w-7 text-center font-serif text-sm font-bold tabular-nums slashed-zero text-slate-400">
+                      <span className="w-7 text-center font-serif text-sm font-semibold tabular-nums slashed-zero text-slate-400">
                         {rank}
                       </span>
                     )}
@@ -1933,7 +1933,7 @@ function AssessmentsTab({ classId }: { classId: string }) {
                 <li key={a.id} className="group px-4 py-3">
                   <div className="flex items-center gap-3">
                     {/* 卷面序號（同成績矩陣欄號呼應）*/}
-                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-slate-100 font-serif text-xs font-bold tabular-nums slashed-zero text-slate-400 dark:bg-slate-700/60 dark:text-slate-500">
+                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-slate-100 font-serif text-xs font-semibold tabular-nums slashed-zero text-slate-400 dark:bg-slate-700/60 dark:text-slate-500">
                       {String(i + 1).padStart(2, '0')}
                     </span>
                     <span className="flex-1 text-sm font-medium text-slate-700 dark:text-slate-200">
@@ -2339,7 +2339,7 @@ function SchemeTab({ classId }: { classId: string }) {
           <span className="flex items-baseline gap-1.5">
             <span
               className={cx(
-                'font-serif text-lg font-bold tabular-nums slashed-zero',
+                'font-serif text-lg font-semibold tabular-nums slashed-zero',
                 totalWeight === 100
                   ? 'text-emerald-600 dark:text-emerald-400'
                   : 'text-amber-600 dark:text-amber-400',

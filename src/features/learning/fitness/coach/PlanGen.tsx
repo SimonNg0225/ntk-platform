@@ -451,7 +451,7 @@ function DayCard({ day }: { day: CoachDay }) {
   return (
     <Card padded hover className="space-y-3">
       <div className="flex items-center justify-between gap-2">
-        <h3 className="flex min-w-0 items-center gap-2 text-sm font-bold text-slate-800 dark:text-slate-100">
+        <h3 className="flex min-w-0 items-center gap-2 text-sm font-semibold text-slate-800 dark:text-slate-100">
           <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
             <CalendarDays size={14} />
           </span>

@@ -448,7 +448,7 @@ export function WorksheetGenerator({
                     className="mt-1 h-4 w-4 shrink-0 accent-[color:var(--accent)]"
                     aria-label="加入題庫"
                   />
-                  <span className="nums mt-0.5 shrink-0 text-sm font-bold text-slate-400 dark:text-slate-500">
+                  <span className="nums mt-0.5 shrink-0 text-sm font-semibold text-slate-400 dark:text-slate-500">
                     {i + 1}.
                   </span>
                   <div className="flex-1 space-y-1.5">

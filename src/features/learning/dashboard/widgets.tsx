@@ -96,7 +96,7 @@ export function HealthWidget({ open }: { open: Open }) {
       ) : (
         <div className="flex items-center gap-4">
           <MiniRing value={s.waterPct} size={68} stroke={7}>
-            <span className="text-sm font-bold tabular-nums text-slate-700 dark:text-slate-200">
+            <span className="text-sm font-semibold tabular-nums text-slate-700 dark:text-slate-200">
               {s.waterPct}%
             </span>
             <span className="text-[10px] text-slate-400">飲水</span>
@@ -174,7 +174,7 @@ export function FocusWeekWidget({ kpis, signals }: { kpis: KpiData; signals: Day
     <Card className="p-4">
       <SectionTitle icon={Timer}>本週專注</SectionTitle>
       <div className="mb-3 flex items-baseline gap-3">
-        <span className="text-2xl font-bold tabular-nums text-slate-800 dark:text-slate-100">
+        <span className="text-2xl font-semibold tabular-nums text-slate-800 dark:text-slate-100">
           {fmtMin(kpis.focusMinWeek)}
         </span>
         <span className="text-xs text-slate-400">
@@ -205,7 +205,7 @@ export function FlashcardsWidget({ input, kpis, open }: { input: DashInput; kpis
         <div className="flex items-center gap-4">
           <MiniRing value={total ? ((total - kpis.dueCards) / total) * 100 : 0} size={68} stroke={7}>
             <div className="text-center leading-none">
-              <div className="text-base font-bold tabular-nums text-accent-strong dark:text-accent">
+              <div className="text-base font-semibold tabular-nums text-accent-strong dark:text-accent">
                 {kpis.dueCards}
               </div>
               <div className="text-[9px] text-slate-400">到期</div>
@@ -396,7 +396,7 @@ export function GoalsWidget({
                       {d < 0 ? `逾期${Math.abs(d)}日` : d === 0 ? '今日' : `${d}日`}
                     </Badge>
                   )}
-                  <span className={cx('flex-none text-xs font-bold tabular-nums', d == null ? 'ml-auto' : '', cat.text)}>
+                  <span className={cx('flex-none text-xs font-semibold tabular-nums', d == null ? 'ml-auto' : '', cat.text)}>
                     {r.progress}%
                   </span>
                 </div>
@@ -631,7 +631,7 @@ export function QuizWidget({ attempts, open }: { attempts: QuizAttempt[]; open: 
         <div className="flex items-center gap-4">
           <MiniRing value={stats.acc} size={68} stroke={7} tone={stats.acc >= 70 ? 'green' : stats.acc >= 50 ? 'amber' : 'rose'}>
             <div className="text-center leading-none">
-              <div className="text-base font-bold tabular-nums text-slate-700 dark:text-slate-200">{stats.acc}%</div>
+              <div className="text-base font-semibold tabular-nums text-slate-700 dark:text-slate-200">{stats.acc}%</div>
               <div className="text-[9px] text-slate-400">準確率</div>
             </div>
           </MiniRing>

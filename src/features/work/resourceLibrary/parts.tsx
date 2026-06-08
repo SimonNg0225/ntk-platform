@@ -55,7 +55,7 @@ export function FaviconChip({ domain }: { domain?: string }) {
   if (!domain) return null
   return (
     <span className="inline-flex items-center gap-1 text-[11px] text-slate-400 dark:text-slate-500">
-      <span className="flex h-4 w-4 items-center justify-center rounded-[4px] bg-slate-200 text-[9px] font-bold text-slate-500 dark:bg-slate-700 dark:text-slate-300">
+      <span className="flex h-4 w-4 items-center justify-center rounded-[4px] bg-slate-200 text-[9px] font-semibold text-slate-500 dark:bg-slate-700 dark:text-slate-300">
         {faviconLetter(domain)}
       </span>
       <span className="max-w-[12rem] truncate">{domain}</span>

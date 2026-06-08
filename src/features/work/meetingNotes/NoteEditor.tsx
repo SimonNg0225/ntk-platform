@@ -128,7 +128,7 @@ function ClauseTitle({
       <div className="flex min-w-0 items-center gap-2">
         <span
           aria-hidden
-          className="inline-flex h-6 min-w-[1.6rem] shrink-0 items-center justify-center rounded-md bg-slate-100 px-1 font-serif text-[13px] font-bold tabular-nums slashed-zero text-slate-500 dark:bg-slate-700/60 dark:text-slate-300"
+          className="inline-flex h-6 min-w-[1.6rem] shrink-0 items-center justify-center rounded-md bg-slate-100 px-1 font-serif text-[13px] font-semibold tabular-nums slashed-zero text-slate-500 dark:bg-slate-700/60 dark:text-slate-300"
         >
           {mark}
         </span>
@@ -557,7 +557,7 @@ export default function NoteEditor({
               >
                 <span
                   aria-hidden
-                  className="mt-px shrink-0 font-serif text-[13px] font-bold tabular-nums slashed-zero text-accent-strong dark:text-accent"
+                  className="mt-px shrink-0 font-serif text-[13px] font-semibold tabular-nums slashed-zero text-accent-strong dark:text-accent"
                 >
                   R{String(i + 1).padStart(2, '0')}
                 </span>
@@ -577,7 +577,7 @@ export default function NoteEditor({
             <div className="flex items-center gap-2 pl-0.5">
               <span
                 aria-hidden
-                className="shrink-0 font-serif text-[13px] font-bold tabular-nums slashed-zero text-slate-300 dark:text-slate-600"
+                className="shrink-0 font-serif text-[13px] font-semibold tabular-nums slashed-zero text-slate-300 dark:text-slate-600"
               >
                 R{String(draft.decisions.length + 1).padStart(2, '0')}
               </span>

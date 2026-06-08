@@ -58,7 +58,7 @@ export function OptionRow({
     >
       <span
         className={cx(
-          'flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-xs font-bold',
+          'flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-xs font-semibold',
           selected && !graded
             ? 'bg-accent text-white'
             : graded && isAnswer
@@ -133,7 +133,7 @@ export function CountdownRing({
         textAnchor="middle"
         dominantBaseline="central"
         transform={`rotate(90 ${size / 2} ${size / 2})`}
-        className={cx('text-sm font-bold tabular-nums', textCls)}
+        className={cx('text-sm font-semibold tabular-nums', textCls)}
       >
         {Math.ceil(remaining)}
       </text>

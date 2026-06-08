@@ -314,7 +314,7 @@ export function SetupView({
             <div className="relative flex items-center gap-3">
               {/* 大題數（賽前焦點：serif 數字 + 「題」） */}
               <div className="shrink-0 leading-none">
-                <span className="font-serif text-4xl font-bold tabular-nums text-accent-strong dark:text-accent">
+                <span className="font-serif text-4xl font-semibold tabular-nums text-accent-strong dark:text-accent">
                   {takeCount}
                 </span>
                 <span className="ml-1 text-sm font-medium text-accent/70 dark:text-accent/70">題</span>
@@ -381,7 +381,7 @@ export function SetupView({
                     {/* 命中率環形數字（左側錨點，建立節奏） */}
                     <div
                       className={cx(
-                        'flex h-12 w-12 shrink-0 flex-col items-center justify-center rounded-2xl text-base font-bold tabular-nums',
+                        'flex h-12 w-12 shrink-0 flex-col items-center justify-center rounded-2xl text-base font-semibold tabular-nums',
                         p >= 80
                           ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-300'
                           : p >= 50
@@ -464,7 +464,7 @@ function MiniStat({
       </span>
       <div>
         <p className="flex items-baseline gap-0.5">
-          <span className="text-2xl font-bold tabular-nums text-slate-800 dark:text-slate-100">{value}</span>
+          <span className="text-2xl font-semibold tabular-nums text-slate-800 dark:text-slate-100">{value}</span>
           {unit && <span className="text-sm font-medium text-slate-400">{unit}</span>}
         </p>
         <p className="text-[11px] text-slate-400 dark:text-slate-500">{label}</p>

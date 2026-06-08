@@ -112,7 +112,7 @@ export function CategoryDonut({
             x={cx0}
             y={cx0 - 3}
             textAnchor="middle"
-            className="fill-slate-800 text-[19px] font-bold tabular-nums dark:fill-slate-100"
+            className="fill-slate-800 text-[19px] font-semibold tabular-nums dark:fill-slate-100"
           >
             {centerValue}
           </text>

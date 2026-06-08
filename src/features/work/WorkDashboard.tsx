@@ -198,7 +198,7 @@ function StatTile({
       </div>
       <div>
         <p className="flex items-baseline gap-1">
-          <span className={cx('text-3xl font-bold tabular-nums slashed-zero', t.val)}>{value}</span>
+          <span className={cx('text-3xl font-semibold tabular-nums slashed-zero', t.val)}>{value}</span>
           {unit && <span className="text-sm font-medium text-slate-400">{unit}</span>}
           {delta && delta.dir !== 'flat' && (
             <span
@@ -690,7 +690,7 @@ function WorkBento({
       <section className="relative flex flex-col justify-between overflow-hidden rounded-2xl bg-accent p-5 text-white shadow-sm sm:col-span-2 lg:row-span-2">
         <div className="relative">
           <p className="text-xs font-medium text-white/70">{dateLabel}</p>
-          <h1 className="mt-2 text-2xl font-bold tracking-tight">
+          <h1 className="mt-2 text-2xl font-semibold tracking-tight">
             {hello}，{who}
           </h1>
           {streak >= 2 && (
@@ -702,7 +702,7 @@ function WorkBento({
         </div>
         <div className="relative">
           <p className="text-xs text-white/70">{t('wdash.todayClassProgress', { defaultValue: '今日課堂進度' })}</p>
-          <p className="mt-0.5 text-4xl font-bold tabular-nums">
+          <p className="mt-0.5 text-4xl font-semibold tabular-nums">
             {classesPassed}
             <span className="ml-2 text-sm font-medium text-white/60">{t('wdash.ofNClasses', { n: todayClassCount, defaultValue: `/ ${todayClassCount} 堂` })}</span>
           </p>
@@ -728,11 +728,11 @@ function WorkBento({
         className="group flex cursor-pointer items-center gap-3 rounded-2xl border border-slate-200/80 bg-white p-4 text-left transition duration-200 hover:border-slate-300 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:border-slate-700/60 dark:bg-slate-800 dark:hover:border-slate-600"
       >
         <MiniRing value={overallProgress} size={56} stroke={6} tone={overallProgress >= 80 ? 'green' : 'accent'}>
-          <span className="text-[11px] font-bold tabular-nums text-slate-700 dark:text-slate-200">{overallProgress}%</span>
+          <span className="text-[11px] font-semibold tabular-nums text-slate-700 dark:text-slate-200">{overallProgress}%</span>
         </MiniRing>
         <div className="min-w-0">
           <p className="text-xs font-medium text-slate-400 dark:text-slate-500">{t('wdash.curriculumProgress', { defaultValue: '課程進度' })}</p>
-          <p className="mt-0.5 text-lg font-bold tabular-nums text-slate-800 dark:text-slate-100">
+          <p className="mt-0.5 text-lg font-semibold tabular-nums text-slate-800 dark:text-slate-100">
             {classProgress.length}<span className="text-sm text-slate-400"> {t('wdash.unitClasses', { defaultValue: '班' })}</span>
           </p>
           <p className="truncate text-[11px] text-slate-400">{classProgress.length > 0 ? t('wdash.overallCompletion', { defaultValue: '整體完成度' }) : t('wdash.noClasses', { defaultValue: '未有班別' })}</p>
@@ -1166,7 +1166,7 @@ function KpiWidget({ kpis, open }: { kpis: Kpi[]; open: (id: string) => void }) 
             </div>
             <div className="mt-3">
               <p className="flex items-baseline gap-1">
-                <span className={cx('text-3xl font-bold tabular-nums slashed-zero', t.val)}>{k.value}</span>
+                <span className={cx('text-3xl font-semibold tabular-nums slashed-zero', t.val)}>{k.value}</span>
                 {k.unit && <span className="text-sm font-medium text-slate-400">{k.unit}</span>}
               </p>
               {k.delta && (
@@ -1228,7 +1228,7 @@ function FocusWidget({ ctx }: { ctx: WidgetCtx }) {
         {chips.map((c) => (
           <div key={c.label} className="px-3 py-3 text-center">
             <p className="text-[11px] text-slate-500 dark:text-slate-400">{c.label}</p>
-            <p className="mt-0.5 text-xl font-bold tabular-nums text-slate-800 dark:text-slate-100">
+            <p className="mt-0.5 text-xl font-semibold tabular-nums text-slate-800 dark:text-slate-100">
               {c.value}
             </p>
           </div>
@@ -1394,7 +1394,7 @@ function Stat({
     <div className="rounded-lg bg-slate-50 py-2 dark:bg-slate-800/60">
       <p
         className={cx(
-          'text-xl font-bold tabular-nums',
+          'text-xl font-semibold tabular-nums',
           tone === 'accent'
             ? 'text-accent-strong dark:text-accent'
             : tone === 'amber'
@@ -1438,7 +1438,7 @@ function CurriculumWidget({
         <Card className="space-y-4 p-4">
           <div className="flex items-center justify-between rounded-lg bg-accent-soft px-3 py-2 dark:bg-accent/10">
             <span className="text-sm font-medium text-slate-700 dark:text-slate-200">{t('wdash.overallCompletionLabel', { defaultValue: '整體完成度' })}</span>
-            <span className="text-lg font-bold tabular-nums text-accent-strong dark:text-accent">{overall}%</span>
+            <span className="text-lg font-semibold tabular-nums text-accent-strong dark:text-accent">{overall}%</span>
           </div>
           {rows.map((cp) => (
             <div key={cp.id}>
@@ -1539,7 +1539,7 @@ function GradesWidget({
               </p>
             </div>
             <div className="text-right">
-              <p className="text-2xl font-bold tabular-nums text-accent-strong dark:text-accent">{s.average}%</p>
+              <p className="text-2xl font-semibold tabular-nums text-accent-strong dark:text-accent">{s.average}%</p>
               <p className="text-[11px] text-slate-400">{t('wdash.averageLabel', { defaultValue: '平均' })}</p>
             </div>
           </div>
@@ -1651,7 +1651,7 @@ function CountdownWidget({
                 <div className="shrink-0 text-right">
                   <p
                     className={cx(
-                      'text-3xl font-bold tabular-nums leading-none',
+                      'text-3xl font-semibold tabular-nums leading-none',
                       urgent ? 'text-rose-500' : 'text-accent-strong dark:text-accent',
                     )}
                   >

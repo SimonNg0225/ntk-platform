@@ -545,7 +545,7 @@ function ListView({
                         : 'border-2 border-slate-300 bg-white text-slate-400 dark:border-slate-600 dark:bg-slate-800',
                   )}
                 >
-                  {cleared ? <Check size={13} strokeWidth={3} /> : <span className="font-serif text-xs font-bold tabular-nums">{pi + 1}</span>}
+                  {cleared ? <Check size={13} strokeWidth={3} /> : <span className="font-serif text-xs font-semibold tabular-nums">{pi + 1}</span>}
                 </span>
 
                 <button
@@ -1011,7 +1011,7 @@ function ScheduleView({
                 <Tr key={r.topic.id}>
                   <Td align="center">
                     {r.plan?.plannedWeek != null ? (
-                      <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-accent-soft text-xs font-bold tabular-nums text-accent-strong dark:bg-accent/15 dark:text-accent">
+                      <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-accent-soft text-xs font-semibold tabular-nums text-accent-strong dark:bg-accent/15 dark:text-accent">
                         {r.plan.plannedWeek}
                       </span>
                     ) : (
@@ -1173,7 +1173,7 @@ function MatrixView({
                   <td key={c.id} className="px-2 py-2 text-center">
                     <span
                       className={cx(
-                        'text-xs font-bold tabular-nums',
+                        'text-xs font-semibold tabular-nums',
                         pct >= 75
                           ? 'text-emerald-600 dark:text-emerald-400'
                           : pct >= 40
@@ -1219,7 +1219,7 @@ function RowGroup({
         <tr className="bg-slate-100/60 dark:bg-slate-800/40">
           <td
             colSpan={classes.length + 1}
-            className="sticky left-0 px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500"
+            className="sticky left-0 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500"
           >
             {showPart}
           </td>
@@ -1245,7 +1245,7 @@ function RowGroup({
                 <Tooltip label={`${c.name} · ${m.label}`}>
                   <span
                     className={cx(
-                      'inline-flex h-7 w-7 items-center justify-center rounded-md text-xs font-bold',
+                      'inline-flex h-7 w-7 items-center justify-center rounded-md text-xs font-semibold',
                       m.cls,
                     )}
                   >

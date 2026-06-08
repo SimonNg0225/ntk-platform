@@ -75,7 +75,7 @@ export default function Home({ onOpen }: Props) {
               <p className="text-xs font-medium uppercase tracking-[0.12em] text-slate-400 dark:text-slate-500">
                 {t(`mode.${modeDef.id}.name`, { defaultValue: modeDef.name })} · {dateLabel}
               </p>
-              <h1 className="mt-1.5 text-2xl font-bold tracking-tight text-slate-800 dark:text-slate-100 sm:text-[28px]">
+              <h1 className="mt-1.5 text-2xl font-semibold tracking-tight text-slate-800 dark:text-slate-100 sm:text-[28px]">
                 {greeting}
               </h1>
               <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">

@@ -144,7 +144,7 @@ function MetricTile({
           {delta && delta.dir !== 'flat' && (
             <span
               className={cx(
-                'ml-auto inline-flex items-center text-xs font-bold tabular-nums',
+                'ml-auto inline-flex items-center text-xs font-semibold tabular-nums',
                 delta.dir === 'up' ? 'text-emerald-500' : 'text-rose-500',
               )}
             >
@@ -314,7 +314,7 @@ export default function TrainingView() {
           <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-accent">
             <Dumbbell size={13} /> 訓練計分板
           </p>
-          <h2 className="mt-1 text-xl font-bold tracking-tight text-slate-800 dark:text-slate-100">
+          <h2 className="mt-1 text-xl font-semibold tracking-tight text-slate-800 dark:text-slate-100">
             記錄 · 週期化
           </h2>
           <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
@@ -654,7 +654,7 @@ function RestTimer({
             className={finished ? 'text-emerald-600 dark:text-emerald-400' : 'text-accent'}
           />
           <span
-            className="text-xl font-bold tabular-nums text-slate-800 dark:text-slate-100"
+            className="text-xl font-semibold tabular-nums text-slate-800 dark:text-slate-100"
             aria-live="polite"
           >
             {formatClock(remaining)}
@@ -926,7 +926,7 @@ function WorkoutRow({
                         {j + 1}
                       </span>
                       <span className="inline-flex items-baseline gap-0.5 px-2 py-0.5 text-xs tabular-nums text-slate-700 dark:text-slate-200">
-                        <span className="text-sm font-bold text-slate-800 dark:text-slate-100">
+                        <span className="text-sm font-semibold text-slate-800 dark:text-slate-100">
                           {st.reps}
                         </span>
                         <span className="text-slate-400">×</span>

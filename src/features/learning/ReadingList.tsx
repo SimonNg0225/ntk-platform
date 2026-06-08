@@ -652,7 +652,7 @@ function ReadingChallenge({
             strokeDashoffset={C * (1 - pct / 100)}
           />
         </svg>
-        <div className={cx('absolute inset-0 flex items-center justify-center text-sm font-bold tabular-nums', reached ? 'text-emerald-500' : 'text-accent')}>
+        <div className={cx('absolute inset-0 flex items-center justify-center text-sm font-semibold tabular-nums', reached ? 'text-emerald-500' : 'text-accent')}>
           {pct}%
         </div>
       </div>
@@ -1019,7 +1019,7 @@ function BookSpine({
       {/* 脊腳：作者起首字 + 評分金點 / 進度 */}
       <span className="mb-2 mt-1 flex flex-col items-center gap-1">
         {b.rating ? (
-          <span className="inline-flex items-center gap-0.5 text-[9px] font-bold tabular-nums text-amber-500">
+          <span className="inline-flex items-center gap-0.5 text-[9px] font-semibold tabular-nums text-amber-500">
             {b.rating.toFixed(1)}
             <Star size={8} fill="currentColor" />
           </span>

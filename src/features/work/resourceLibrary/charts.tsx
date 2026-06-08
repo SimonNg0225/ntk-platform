@@ -103,7 +103,7 @@ export function TypeDonut({ stats, total }: { stats: TypeStat[]; total: number }
             })}
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-2xl font-bold tabular-nums text-slate-800 dark:text-slate-100">
+          <span className="text-2xl font-semibold tabular-nums text-slate-800 dark:text-slate-100">
             {total}
           </span>
           <span className="text-[11px] text-slate-400 dark:text-slate-500">
@@ -378,7 +378,7 @@ export function OpenLeaderboard({
         <li key={r.id} className="flex items-center gap-2.5">
           <span
             className={cx(
-              'flex h-6 w-6 shrink-0 items-center justify-center rounded-lg text-xs font-bold tabular-nums',
+              'flex h-6 w-6 shrink-0 items-center justify-center rounded-lg text-xs font-semibold tabular-nums',
               i === 0
                 ? 'bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent'
                 : 'bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500',

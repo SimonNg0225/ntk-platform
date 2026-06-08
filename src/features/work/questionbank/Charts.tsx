@@ -81,7 +81,7 @@ export function TypeDonut({
             })}
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-2xl font-bold tabular-nums text-slate-800 dark:text-slate-100">
+          <span className="text-2xl font-semibold tabular-nums text-slate-800 dark:text-slate-100">
             {total}
           </span>
           <span className="text-[11px] text-slate-400 dark:text-slate-500">
@@ -159,7 +159,7 @@ export function DifficultyBars({
                 style={{ width: `${Math.max(pct, v > 0 ? 10 : 0)}%` }}
               >
                 {v > 0 && (
-                  <span className="text-[11px] font-bold tabular-nums text-white">
+                  <span className="text-[11px] font-semibold tabular-nums text-white">
                     {v}
                   </span>
                 )}
@@ -253,7 +253,7 @@ export function CoverageMatrix({ rows }: { rows: TopicRow[] }) {
                 <td className="px-1 text-center">
                   <span
                     className={cx(
-                      'text-[12px] font-bold tabular-nums',
+                      'text-[12px] font-semibold tabular-nums',
                       r.total === 0
                         ? 'text-rose-400'
                         : 'text-slate-700 dark:text-slate-200',

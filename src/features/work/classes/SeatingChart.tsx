@@ -324,7 +324,7 @@ function GroupMaker({ students }: { students: Student[] }) {
             >
               <div className="mb-2.5 flex items-center justify-between">
                 <span className="flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-200">
-                  <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-accent-soft text-xs font-bold tabular-nums text-accent-strong dark:bg-accent/15 dark:text-accent">
+                  <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-accent-soft text-xs font-semibold tabular-nums text-accent-strong dark:bg-accent/15 dark:text-accent">
                     {i + 1}
                   </span>
                   第 {i + 1} 組
@@ -399,14 +399,14 @@ function RandomPicker({ students }: { students: Student[] }) {
           <>
             <span
               className={cx(
-                'relative flex h-20 w-20 items-center justify-center rounded-full bg-accent-soft text-2xl font-bold text-accent-strong ring-4 ring-accent/10 transition dark:bg-accent/15 dark:text-accent dark:ring-accent/20',
+                'relative flex h-20 w-20 items-center justify-center rounded-full bg-accent-soft text-2xl font-semibold text-accent-strong ring-4 ring-accent/10 transition dark:bg-accent/15 dark:text-accent dark:ring-accent/20',
                 rolling && 'animate-pulse',
               )}
             >
               {initials(picked.name)}
             </span>
             <div className="relative text-center">
-              <p className="text-xl font-bold text-slate-800 dark:text-slate-100">
+              <p className="text-xl font-semibold text-slate-800 dark:text-slate-100">
                 {picked.name}
               </p>
               {picked.studentNo && (

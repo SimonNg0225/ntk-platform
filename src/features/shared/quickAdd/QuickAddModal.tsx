@@ -345,7 +345,7 @@ export function QuickAddModal({ open, onClose }: QuickAddModalProps) {
                 >
                   {/* 序號 + 類型切換 + 移除 */}
                   <div className="flex items-center gap-2">
-                    <span className="nums flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent/15 text-[11px] font-bold text-accent-strong dark:text-accent">
+                    <span className="nums flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent/15 text-[11px] font-semibold text-accent-strong dark:text-accent">
                       {i + 1}
                     </span>
                     <div className="min-w-0 flex-1">

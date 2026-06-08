@@ -170,7 +170,7 @@ function AgendaPlate({
       <span className="text-[8px] font-semibold uppercase tracking-[0.18em] opacity-60">
         Item
       </span>
-      <span className="font-serif text-[17px] font-bold tabular-nums slashed-zero">
+      <span className="font-serif text-[17px] font-semibold tabular-nums slashed-zero">
         {String(index).padStart(2, '0')}
       </span>
       {pinned && (
@@ -1399,7 +1399,7 @@ function NoteDetail({
                 key={i}
                 className="flex items-start gap-2.5 rounded-lg bg-accent-soft/50 px-3 py-2 text-sm text-slate-700 dark:bg-accent/10 dark:text-slate-200"
               >
-                <span className="mt-px shrink-0 font-serif text-[13px] font-bold tabular-nums slashed-zero text-accent-strong dark:text-accent">
+                <span className="mt-px shrink-0 font-serif text-[13px] font-semibold tabular-nums slashed-zero text-accent-strong dark:text-accent">
                   R{String(i + 1).padStart(2, '0')}
                 </span>
                 <span className="min-w-0">{d}</span>
