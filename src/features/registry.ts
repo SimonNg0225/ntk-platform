@@ -40,6 +40,7 @@ const Gradebook = lazyFeature(() => import('./work/Gradebook'))
 const ReportComments = lazyFeature(() => import('./work/reportComments/ReportComments'))
 const ClassTools = lazyFeature(() => import('./work/classTools/ClassTools'))
 const EssayMark = lazyFeature(() => import('./work/essayMark/EssayMark'))
+const RubricGen = lazyFeature(() => import('./work/rubric/RubricGen'))
 const LessonPlanner = lazyFeature(() => import('./work/LessonPlanner'))
 const TeachGuide = lazyFeature(() => import('./work/teachGuide/TeachGuide'))
 const SlideGen = lazyFeature(() => import('./work/slides/SlideGen'))
@@ -306,6 +307,17 @@ export const FEATURES: Feature[] = [
     icon: '📽️',
     group: '教學',
     component: SlideGen,
+    status: 'ready',
+  },
+  {
+    id: 'work-rubric',
+    selfManagedHeader: true,
+    modes: ['work'],
+    name: '評分準則',
+    description: '貼題目，AI 出評分指引（參考答案＋評分點）或評分量表（準則×等級），可匯出 Word。',
+    icon: '⚖️',
+    group: '教學',
+    component: RubricGen,
     status: 'ready',
   },
   {
