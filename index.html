@@ -183,7 +183,12 @@ async function readSource(file) {
     const obj = {}; let any = false
     for (const [k, col] of Object.entries(map)) {
       let v = literalValue(ews.getCell(r, col))
-      if (v == null && sws) { const cell = sws[XLSX.utils.encode_cell({ r: r - 1, c: col - 1 })]; v = cleanVal(cell ? cell.v : null) }
+      if (v == null && sws) {
+        const cell = sws[XLSX.utils.encode_cell({ r: r - 1, c: col - 1 })]
+        let sv = null
+        if (cell) sv = (cell.t === 'd' || cell.v instanceof Date) ? (cell.w != null ? cell.w : cell.v) : cell.v
+        v = cleanVal(sv)
+      }
       if (!isEmpty(v)) any = true
       obj[k] = v
     }
