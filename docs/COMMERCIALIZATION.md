@@ -104,21 +104,25 @@ if (!isPro) return <UpgradePrompt />   // 例如 AI 無限額度、進階統計
 
 ### P1 — 收費前必做
 - [x] **Gemini Edge Function 加訂閱 / 額度檢查**（防 AI 成本被刷爆）
-- [x] 免費版每日 AI 額度（`ai_usage` 表 + `consume_ai_quota` 原子函數）
+- [x] AI 額度按功能分流（一般 AI 每日 / 錄音轉文字每月；`ai_usage` 表 + `consume_ai_quota` 原子函數）
 - [x] Webhook 失敗告警（Resend email + 冪等回滾 → Stripe 重送）
 - [x] 私隱政策 + 服務條款頁
 - [x] Cookie / 分析同意
 
-#### AI 額度（防成本爆）
-- migration `0003_ai_usage.sql`：`ai_usage` + `consume_ai_quota(p_user, p_limit)`。
-- `gemini` Edge Function：先用 service_role 查 `subscriptions`，Pro 不限；
-  免費版每次呼叫原子遞增當日用量，超額回 **429**（前端顯示「升級 Pro」訊息）。
-- 上限由 env `AI_DAILY_FREE_LIMIT`（預設 20）控制：
-  `supabase secrets set AI_DAILY_FREE_LIMIT=20` 後 `supabase functions deploy gemini`。
-- **測試白名單**：`AI_UNLIMITED_EMAILS`（逗號分隔）內嘅 email 跳過每日額度
-  （等同 Pro 無限）；未設就退回 `ADMIN_EMAILS`。方便未接付款前測試。
+#### AI 額度（防成本爆）— 按功能分流
+- migration `0003_ai_usage.sql` + `0004_ai_usage_monthly.sql`：`ai_usage(user_id, bucket, count)`（bucket = `"<feature>:<period>"`，例 `general:2026-06-08` / `transcribe:2026-06`）+ `consume_ai_quota(p_user, p_bucket, p_limit)`（原子 check+increment）。
+- `gemini` Edge Function 按請求帶嘅 `feature` + plan 分流：
+  - **一般 AI**（出題 / 批改 / 教案 / AI 助手…）：免費**每日**上限、**Pro 無限**（同舊）。
+  - **錄音轉文字**（音訊成本高）：免費 / Pro **各有每月上限**（兩者都計）。
+  - 超額回 **429**（前端顯示對應訊息）。
+- 上限由 env 控制（改完 `supabase functions deploy gemini`）：
+  - `AI_DAILY_FREE_LIMIT`（預設 **20**）— 一般 AI 免費每日
+  - `AI_TRANSCRIBE_FREE_MONTHLY`（預設 **1**）— 錄音轉文字 免費每月
+  - `AI_TRANSCRIBE_PRO_MONTHLY`（預設 **20**）— 錄音轉文字 Pro 每月
+  - `supabase secrets set AI_DAILY_FREE_LIMIT=20 AI_TRANSCRIBE_FREE_MONTHLY=1 AI_TRANSCRIBE_PRO_MONTHLY=20`
+- **測試白名單**：`AI_UNLIMITED_EMAILS`（逗號分隔）內嘅 email 跳過所有額度（無限）；未設就退回 `ADMIN_EMAILS`。方便未接付款前測試。
   `supabase secrets set AI_UNLIMITED_EMAILS=you@example.com` 後重新部署 gemini。
-- 跑 migration：`supabase db push`（含 0003）。
+- 跑 migration：`supabase db push`（含 0003 + 0004）。
 
 #### 交易 Email + Webhook 告警（Resend）
 - 共用 helper `supabase/functions/_shared/email.ts`（`sendEmail` / `alertAdmin` + 範本）。

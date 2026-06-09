@@ -29,6 +29,8 @@ export interface AIChatOptions {
   model?: AIModel
   temperature?: number
   signal?: AbortSignal
+  /** 額度分流標記（後端按此計額度）：'transcribe' = 錄音轉文字（每月）；預設一般 AI（每日）。 */
+  feature?: string
 }
 
 /** 本地 dev 繞道：.env.local 設 VITE_DEV_AI=1 → AI 改打本地 /dev-ai/gemini（免 Supabase / 免登入），方便 test。prod 唔受影響。 */
@@ -68,6 +70,7 @@ export async function* streamChat(
       system: opts.system,
       model: opts.model,
       temperature: opts.temperature,
+      feature: opts.feature,
       stream: true,
     }),
     signal: opts.signal,

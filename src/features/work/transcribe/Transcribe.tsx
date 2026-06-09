@@ -78,6 +78,7 @@ export default function Transcribe() {
         ],
         model,
         temperature: 0.2,
+        feature: 'transcribe', // 走「每月」額度桶（同一般 AI 分開計）
       })
       const result = parseTranscript(raw)
       const rec = transcribeCol.add({
