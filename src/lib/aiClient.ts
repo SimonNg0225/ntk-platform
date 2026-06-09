@@ -31,8 +31,11 @@ export interface AIChatOptions {
   signal?: AbortSignal
 }
 
-/** 有冇接好 Supabase（AI 都係經 Supabase function，所以同一個條件） */
-export const isAIConfigured = isSupabaseConfigured
+/** 本地 dev 繞道：.env.local 設 VITE_DEV_AI=1 → AI 改打本地 /dev-ai/gemini（免 Supabase / 免登入），方便 test。prod 唔受影響。 */
+const DEV_AI = import.meta.env.VITE_DEV_AI === '1'
+
+/** 有冇接好 Supabase（AI 經 Supabase function）；或開咗本地 dev 繞道 */
+export const isAIConfigured = isSupabaseConfigured || DEV_AI
 
 function functionsUrl(): string {
   const base = (import.meta.env.VITE_SUPABASE_URL as string).replace(/\/$/, '')
@@ -56,8 +59,8 @@ async function authedHeaders(): Promise<Record<string, string>> {
 export async function* streamChat(
   opts: AIChatOptions,
 ): AsyncGenerator<string, void, unknown> {
-  const headers = await authedHeaders()
-  const res = await fetch(functionsUrl(), {
+  const headers = DEV_AI ? { 'Content-Type': 'application/json' } : await authedHeaders()
+  const res = await fetch(DEV_AI ? '/dev-ai/gemini' : functionsUrl(), {
     method: 'POST',
     headers,
     body: JSON.stringify({
