@@ -49,7 +49,7 @@
 2. 逐個打開並執行本 repo `supabase/migrations/` 入面嘅檔案（由細到大）：
    - [`0001_init.sql`](../supabase/migrations/0001_init.sql) — `app_rows`（通用資料表）+ RLS
    - [`0002_commercialization.sql`](../supabase/migrations/0002_commercialization.sql) — `subscriptions` + `billing_events`（收費，選用）
-   - [`0003_ai_usage.sql`](../supabase/migrations/0003_ai_usage.sql) + [`0004_ai_usage_monthly.sql`](../supabase/migrations/0004_ai_usage_monthly.sql) — `ai_usage` + AI 額度（一般每日 / 錄音轉文字每月，選用）
+   - [`0003_ai_usage.sql`](../supabase/migrations/0003_ai_usage.sql) + [`0007_ai_usage_per_feature.sql`](../supabase/migrations/0007_ai_usage_per_feature.sql) — `ai_usage` + AI 額度（一般每日 / 錄音轉文字每月，選用）
    每個檔案**全選貼上 → Run**。（裝咗 Supabase CLI 嘅話，一句 `supabase db push` 可全部跑晒。）
 3. 入 **Table Editor**，應該見到 `app_rows` 表，而且 **RLS 係 enabled**。
 

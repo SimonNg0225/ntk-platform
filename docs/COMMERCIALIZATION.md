@@ -110,7 +110,7 @@ if (!isPro) return <UpgradePrompt />   // 例如 AI 無限額度、進階統計
 - [x] Cookie / 分析同意
 
 #### AI 額度（防成本爆）— 按功能分流
-- migration `0003_ai_usage.sql` + `0004_ai_usage_monthly.sql`：`ai_usage(user_id, bucket, count)`（bucket = `"<feature>:<period>"`，例 `general:2026-06-08` / `transcribe:2026-06`）+ `consume_ai_quota(p_user, p_bucket, p_limit)`（原子 check+increment）。
+- migration `0003_ai_usage.sql` + `0007_ai_usage_per_feature.sql`：`ai_usage(user_id, bucket, count)`（bucket = `"<feature>:<period>"`，例 `general:2026-06-08` / `transcribe:2026-06`）+ `consume_ai_quota(p_user, p_bucket, p_limit)`（原子 check+increment）。
 - `gemini` Edge Function 按請求帶嘅 `feature` + plan 分流：
   - **一般 AI**（出題 / 批改 / 教案 / AI 助手…）：免費**每日**上限、**Pro 無限**（同舊）。
   - **錄音轉文字**（音訊成本高）：免費 / Pro **各有每月上限**（兩者都計）。
@@ -122,7 +122,7 @@ if (!isPro) return <UpgradePrompt />   // 例如 AI 無限額度、進階統計
   - `supabase secrets set AI_DAILY_FREE_LIMIT=20 AI_TRANSCRIBE_FREE_MONTHLY=1 AI_TRANSCRIBE_PRO_MONTHLY=20`
 - **測試白名單**：`AI_UNLIMITED_EMAILS`（逗號分隔）內嘅 email 跳過所有額度（無限）；未設就退回 `ADMIN_EMAILS`。方便未接付款前測試。
   `supabase secrets set AI_UNLIMITED_EMAILS=you@example.com` 後重新部署 gemini。
-- 跑 migration：`supabase db push`（含 0003 + 0004）。
+- 跑 migration：`supabase db push`（含 0003 + 0007）。
 
 #### 交易 Email + Webhook 告警（Resend）
 - 共用 helper `supabase/functions/_shared/email.ts`（`sendEmail` / `alertAdmin` + 範本）。
