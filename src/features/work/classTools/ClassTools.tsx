@@ -71,7 +71,7 @@ export default function ClassTools() {
           <Wand2 size={13} className="shrink-0" />
           課堂 · Class Tools
         </p>
-        <h1 className="mt-1 font-serif text-[26px] font-semibold leading-none tracking-tight text-slate-800 dark:text-slate-100 sm:text-[30px]">
+        <h1 className="mt-1 text-[26px] font-semibold leading-none tracking-tight text-slate-800 dark:text-slate-100 sm:text-[30px]">
           課堂工具
         </h1>
         <p className="mt-2 text-[13px] text-slate-500 dark:text-slate-400">
@@ -227,7 +227,7 @@ function ClassTimer() {
     <Card padded className="space-y-4 text-center">
       <p
         className={cx(
-          'font-serif text-6xl font-bold tabular-nums tracking-tight sm:text-7xl',
+          'text-6xl font-bold tabular-nums tracking-tight sm:text-7xl',
           done ? 'animate-pulse text-rose-500' : 'text-slate-800 dark:text-slate-100',
         )}
       >

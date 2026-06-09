@@ -134,7 +134,7 @@ function MetricTile({
         <p className="flex items-baseline gap-1">
           <span
             className={cx(
-              'font-serif text-4xl font-black leading-none tabular-nums slashed-zero',
+              'text-4xl font-black leading-none tabular-nums slashed-zero',
               highlight ? 'text-accent-strong dark:text-accent' : 'text-slate-800 dark:text-slate-100',
             )}
           >
@@ -866,7 +866,7 @@ function WorkoutRow({
           <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5">
             {/* 總訓練量＝呢場「分數」 */}
             <span className="inline-flex items-baseline gap-1">
-              <span className="font-serif text-2xl font-black leading-none tabular-nums text-accent-strong dark:text-accent">
+              <span className="text-2xl font-black leading-none tabular-nums text-accent-strong dark:text-accent">
                 {fmtVol(vol)}
               </span>
               <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
@@ -922,7 +922,7 @@ function WorkoutRow({
                       className="inline-flex items-stretch overflow-hidden rounded-lg bg-white ring-1 ring-inset ring-slate-200 dark:bg-slate-900 dark:ring-slate-700"
                     >
                       {/* 組號（記分牌格仔） */}
-                      <span className="flex items-center bg-slate-100 px-1.5 font-serif text-[11px] font-semibold tabular-nums text-slate-400 dark:bg-slate-800 dark:text-slate-500">
+                      <span className="flex items-center bg-slate-100 px-1.5 text-[11px] font-semibold tabular-nums text-slate-400 dark:bg-slate-800 dark:text-slate-500">
                         {j + 1}
                       </span>
                       <span className="inline-flex items-baseline gap-0.5 px-2 py-0.5 text-xs tabular-nums text-slate-700 dark:text-slate-200">

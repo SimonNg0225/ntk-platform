@@ -128,7 +128,7 @@ function ClauseTitle({
       <div className="flex min-w-0 items-center gap-2">
         <span
           aria-hidden
-          className="inline-flex h-6 min-w-[1.6rem] shrink-0 items-center justify-center rounded-md bg-slate-100 px-1 font-serif text-[13px] font-semibold tabular-nums slashed-zero text-slate-500 dark:bg-slate-700/60 dark:text-slate-300"
+          className="inline-flex h-6 min-w-[1.6rem] shrink-0 items-center justify-center rounded-md bg-slate-100 px-1 text-[13px] font-bold tabular-nums slashed-zero text-slate-500 dark:bg-slate-700/60 dark:text-slate-300"
         >
           {mark}
         </span>
@@ -136,7 +136,7 @@ function ClauseTitle({
           <p className="text-[10px] font-medium uppercase tracking-[0.22em] text-slate-400 dark:text-slate-500">
             {kicker}
           </p>
-          <h2 className="font-serif text-[15px] font-semibold leading-tight text-slate-700 dark:text-slate-200">
+          <h2 className="text-[15px] font-semibold leading-tight text-slate-700 dark:text-slate-200">
             {children}
           </h2>
         </div>
@@ -311,7 +311,7 @@ export default function NoteEditor({
                 <NotebookPen size={12} />
                 Minutes · {mode === 'edit' ? '修訂記事' : '記事擬稿'}
               </p>
-              <h2 className="mt-1 font-serif text-[23px] font-semibold leading-tight tracking-tight text-slate-800 dark:text-slate-100 sm:text-[27px]">
+              <h2 className="mt-1 text-[23px] font-semibold leading-tight tracking-tight text-slate-800 dark:text-slate-100 sm:text-[27px]">
                 {mode === 'edit' ? '修訂議程' : '草擬新議程'}
               </h2>
               <p className="mt-1 truncate text-xs text-slate-400 dark:text-slate-500">
@@ -349,7 +349,7 @@ export default function NoteEditor({
                 onChange={(e) => patch({ title: e.target.value })}
                 placeholder="例如：科組會議 — 第二次"
                 autoFocus
-                className="mt-0.5 w-full border-0 bg-transparent p-0 font-serif text-lg font-semibold text-slate-800 outline-none placeholder:font-sans placeholder:text-base placeholder:font-normal placeholder:text-slate-400 focus:ring-0 dark:text-slate-100 dark:placeholder:text-slate-500 sm:text-xl"
+                className="mt-0.5 w-full border-0 bg-transparent p-0 text-lg font-semibold text-slate-800 outline-none placeholder:font-sans placeholder:text-base placeholder:font-normal placeholder:text-slate-400 focus:ring-0 dark:text-slate-100 dark:placeholder:text-slate-500 sm:text-xl"
               />
             </label>
             <label className="block sm:w-44">
@@ -430,7 +430,7 @@ export default function NoteEditor({
             kicker="Present"
             right={
               draft.attendees.length > 0 ? (
-                <span className="font-serif text-[13px] font-semibold tabular-nums text-slate-400 dark:text-slate-500">
+                <span className="text-[13px] font-semibold tabular-nums text-slate-400 dark:text-slate-500">
                   {draft.attendees.length} 人
                 </span>
               ) : undefined
@@ -557,7 +557,7 @@ export default function NoteEditor({
               >
                 <span
                   aria-hidden
-                  className="mt-px shrink-0 font-serif text-[13px] font-semibold tabular-nums slashed-zero text-accent-strong dark:text-accent"
+                  className="mt-px shrink-0 text-[13px] font-bold tabular-nums slashed-zero text-accent-strong dark:text-accent"
                 >
                   R{String(i + 1).padStart(2, '0')}
                 </span>
@@ -577,7 +577,7 @@ export default function NoteEditor({
             <div className="flex items-center gap-2 pl-0.5">
               <span
                 aria-hidden
-                className="shrink-0 font-serif text-[13px] font-semibold tabular-nums slashed-zero text-slate-300 dark:text-slate-600"
+                className="shrink-0 text-[13px] font-bold tabular-nums slashed-zero text-slate-300 dark:text-slate-600"
               >
                 R{String(draft.decisions.length + 1).padStart(2, '0')}
               </span>
@@ -604,7 +604,7 @@ export default function NoteEditor({
             right={
               <div className="flex items-center gap-2">
                 {draft.actions.length > 0 && (
-                  <span className="font-serif text-[13px] font-semibold tabular-nums text-slate-400 dark:text-slate-500">
+                  <span className="text-[13px] font-semibold tabular-nums text-slate-400 dark:text-slate-500">
                     {doneActions}/{draft.actions.length}
                   </span>
                 )}

@@ -202,7 +202,7 @@ export default function ClassesWidget() {
         {/* 封面右上「班務處戳印」（純裝飾，唔搶主次）*/}
         <span
           aria-hidden
-          className="pointer-events-none absolute -right-7 top-3 hidden -rotate-6 select-none rounded-xl border-2 border-dashed border-accent/20 px-4 py-2 font-serif text-xs font-semibold uppercase tracking-[0.25em] text-accent/25 dark:border-accent/25 dark:text-accent/25 sm:block"
+          className="pointer-events-none absolute -right-7 top-3 hidden -rotate-6 select-none rounded-xl border-2 border-dashed border-accent/20 px-4 py-2 text-xs font-semibold uppercase tracking-[0.25em] text-accent/25 dark:border-accent/25 dark:text-accent/25 sm:block"
         >
           點名冊 · Roll Call
         </span>
@@ -212,7 +212,7 @@ export default function ClassesWidget() {
               <BookUser size={13} />
               班務冊 · Class Register
             </p>
-            <h1 className="mt-1.5 font-serif text-[28px] font-semibold leading-none tracking-tight text-slate-800 dark:text-slate-100 sm:text-[34px]">
+            <h1 className="mt-1.5 text-[28px] font-semibold leading-none tracking-tight text-slate-800 dark:text-slate-100 sm:text-[34px]">
               班別管理
             </h1>
             <p className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-slate-500 dark:text-slate-400">
@@ -390,7 +390,7 @@ function RegisterStat({
       </p>
       <p
         className={cx(
-          'mt-1 font-serif text-[26px] font-semibold leading-none tabular-nums slashed-zero',
+          'mt-1 text-[26px] font-semibold leading-none tabular-nums slashed-zero',
           hot ? 'text-accent-strong dark:text-accent' : 'text-slate-800 dark:text-slate-100',
         )}
       >
@@ -489,12 +489,12 @@ function ClassGrid({
                     <span className="text-[8px] font-semibold uppercase tracking-[0.15em] opacity-60">
                       Class
                     </span>
-                    <span className="font-serif text-base font-semibold leading-none">
+                    <span className="text-base font-bold leading-none">
                       {classBadge(c.name)}
                     </span>
                   </span>
                   <div className="min-w-0">
-                    <p className="truncate font-serif text-xl font-semibold leading-tight text-slate-800 dark:text-slate-100">
+                    <p className="truncate text-xl font-bold leading-tight text-slate-800 dark:text-slate-100">
                       {c.name}
                     </p>
                     <p className="truncate text-xs text-slate-500 dark:text-slate-400">
@@ -547,7 +547,7 @@ function ClassGrid({
               {/* 點名人數：serif 大數字（班牌主數字）*/}
               <div className="mt-4 flex items-end justify-between">
                 <span className="flex items-baseline gap-1.5">
-                  <span className="font-serif text-3xl font-semibold tabular-nums slashed-zero text-slate-800 dark:text-slate-100">
+                  <span className="text-3xl font-bold tabular-nums slashed-zero text-slate-800 dark:text-slate-100">
                     {roster.length}
                   </span>
                   <span className="text-xs font-normal text-slate-400">位學生</span>
@@ -692,12 +692,12 @@ function ClassDetail({
                   <span className="text-[8px] font-semibold uppercase tracking-[0.15em] opacity-60">
                     Class
                   </span>
-                  <span className="font-serif text-base font-semibold leading-none">
+                  <span className="text-base font-bold leading-none">
                     {classBadge(klass.name)}
                   </span>
                 </span>
                 <div className="min-w-0">
-                  <h1 className="truncate font-serif text-[26px] font-semibold leading-none tracking-tight text-slate-800 dark:text-slate-100 sm:text-[30px]">
+                  <h1 className="truncate text-[26px] font-semibold leading-none tracking-tight text-slate-800 dark:text-slate-100 sm:text-[30px]">
                     {klass.name}
                   </h1>
                   <p className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-slate-500 dark:text-slate-400">
@@ -929,7 +929,7 @@ function Roster({
         <div className="overflow-hidden rounded-2xl border border-slate-200/80 dark:border-slate-700/60">
           {/* 花名冊冊頁標頭 */}
           <div className="flex items-center justify-between gap-2 border-b border-slate-200/80 bg-slate-50/80 px-3.5 py-2 dark:border-slate-700/60 dark:bg-slate-800/60">
-            <span className="inline-flex items-center gap-1.5 font-serif text-sm font-semibold text-slate-700 dark:text-slate-200">
+            <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-700 dark:text-slate-200">
               <BookUser size={14} className="text-accent" />
               花名冊 · Roster
             </span>
@@ -953,12 +953,12 @@ function Roster({
               const m = metaFor(s.id, metas)
               return (
                 <Tr key={s.id} onClick={() => setProfileId(s.id)}>
-                  <Td numeric className="font-serif text-slate-400">
+                  <Td numeric className="text-slate-400">
                     {s.studentNo || '—'}
                   </Td>
                   <Td>
                     <div className="flex items-center gap-2.5">
-                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent-soft font-serif text-sm font-semibold text-accent-strong dark:bg-accent/15 dark:text-accent">
+                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent-soft text-sm font-bold text-accent-strong dark:bg-accent/15 dark:text-accent">
                         {initials(s.name)}
                       </span>
                       <div className="min-w-0">

@@ -272,7 +272,7 @@ export default function HabitTracker() {
             <CalendarDays size={13} className="shrink-0" />
             老黃曆 · Daily Almanac
           </p>
-          <h1 className="mt-1 font-serif text-2xl font-semibold leading-tight tracking-tight text-slate-800 dark:text-slate-100 sm:text-[28px]">
+          <h1 className="mt-1 text-2xl font-semibold leading-tight tracking-tight text-slate-800 dark:text-slate-100 sm:text-[28px]">
             習慣追蹤
           </h1>
           <p className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-slate-500 dark:text-slate-400">
@@ -631,7 +631,7 @@ function AlmanacStat({
       </p>
       <p
         className={cx(
-          'mt-1 font-serif text-[26px] font-semibold leading-none tabular-nums slashed-zero',
+          'mt-1 text-[26px] font-semibold leading-none tabular-nums slashed-zero',
           hot ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-800 dark:text-slate-100',
         )}
       >

@@ -186,7 +186,7 @@ export default function HabitEditor({
             <CalendarDays size={13} className="shrink-0" />
             {habit ? '修訂宜忌 · Almanac Entry' : '新立宜忌 · Almanac Entry'}
           </p>
-          <h2 className="mt-1 font-serif text-2xl font-semibold leading-tight tracking-tight text-slate-800 dark:text-slate-100">
+          <h2 className="mt-1 text-2xl font-semibold leading-tight tracking-tight text-slate-800 dark:text-slate-100">
             {habit ? '編輯習慣' : '新增習慣'}
           </h2>
         </div>
@@ -223,7 +223,7 @@ export default function HabitEditor({
                 onChange={(e) => patch('name', e.target.value)}
                 placeholder="習慣名稱，例如：每日跑步"
                 aria-label="習慣名稱"
-                className="border-transparent bg-white font-serif text-base font-semibold shadow-xs dark:bg-slate-800"
+                className="border-transparent bg-white text-base font-semibold shadow-xs dark:bg-slate-800"
                 autoFocus
               />
               {/* 條目摘要：跟住設定即時更新，似曆書一行小註 */}

@@ -190,7 +190,7 @@ export default function BudgetTracker() {
           <p className="text-[11px] font-medium uppercase tracking-[0.3em] text-accent/70">
             Ledger · 流水帳
           </p>
-          <h1 className="mt-1 font-serif text-2xl font-semibold leading-tight tracking-tight text-slate-800 dark:text-slate-100 sm:text-[28px]">
+          <h1 className="mt-1 text-2xl font-semibold leading-tight tracking-tight text-slate-800 dark:text-slate-100 sm:text-[28px]">
             收支記帳
           </h1>
           <p className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-slate-500 dark:text-slate-400">
@@ -360,7 +360,7 @@ function LedgerStatement({
             </span>
           </div>
           <div className="relative mt-6 sm:mt-4">
-            <p className="font-serif text-[34px] font-semibold leading-none tabular-nums slashed-zero">
+            <p className="text-[34px] font-semibold leading-none tabular-nums slashed-zero">
               {fmtMoney(stats.balance)}
             </p>
             <p className="mt-2 inline-flex items-center gap-1 rounded-full bg-white/15 px-2 py-0.5 text-[11px] font-medium text-white/90 backdrop-blur">
@@ -461,7 +461,7 @@ function LedgerLine({
             {trend.value}
           </span>
         )}
-        <span className={cx('font-serif text-lg font-semibold tabular-nums slashed-zero', LINE_AMOUNT[tone])}>
+        <span className={cx('text-lg font-semibold tabular-nums slashed-zero', LINE_AMOUNT[tone])}>
           {amount}
         </span>
       </dd>
@@ -687,7 +687,7 @@ function OverviewTab({
                 </span>
                 <span
                   className={cx(
-                    'shrink-0 font-serif text-[15px] font-semibold tabular-nums slashed-zero',
+                    'shrink-0 text-[15px] font-semibold tabular-nums slashed-zero',
                     income
                       ? 'text-emerald-600 dark:text-emerald-400'
                       : 'text-rose-600 dark:text-rose-400',
@@ -1005,7 +1005,7 @@ function RecordsTab({
                 </div>
                 <span
                   className={cx(
-                    'ml-auto shrink-0 font-serif text-[15px] font-semibold tabular-nums slashed-zero',
+                    'ml-auto shrink-0 text-[15px] font-semibold tabular-nums slashed-zero',
                     income
                       ? 'text-emerald-600 dark:text-emerald-400'
                       : 'text-rose-600 dark:text-rose-400',
@@ -1281,7 +1281,7 @@ function BudgetEditModal({
           <p className="text-[10px] font-medium uppercase tracking-[0.3em] text-accent/70">
             Envelope · 預算信封
           </p>
-          <h3 className="mt-0.5 truncate font-serif text-lg font-semibold leading-tight text-slate-800 dark:text-slate-100">
+          <h3 className="mt-0.5 truncate text-lg font-semibold leading-tight text-slate-800 dark:text-slate-100">
             {cat.name}
           </h3>
         </div>
@@ -1292,7 +1292,7 @@ function BudgetEditModal({
           {/* 帳本式上限輸入：固定 HK$ 前綴 + 大 serif 數字 */}
           <div className="flex items-baseline gap-2 rounded-xl border border-slate-200 bg-slate-50/70 px-3.5 py-2.5 transition focus-within:border-accent focus-within:ring-2 focus-within:ring-accent/30 dark:border-slate-700 dark:bg-slate-900/40">
             <span
-              className="font-serif text-base font-semibold text-slate-400 dark:text-slate-500"
+              className="text-base font-semibold text-slate-400 dark:text-slate-500"
               aria-hidden="true"
             >
               HK$
@@ -1306,7 +1306,7 @@ function BudgetEditModal({
               inputMode="decimal"
               autoFocus
               aria-label="每月上限"
-              className="w-full bg-transparent font-serif text-2xl font-semibold leading-none tabular-nums slashed-zero text-slate-800 outline-none placeholder:text-slate-300 dark:text-slate-100 dark:placeholder:text-slate-600"
+              className="w-full bg-transparent text-2xl font-semibold leading-none tabular-nums slashed-zero text-slate-800 outline-none placeholder:text-slate-300 dark:text-slate-100 dark:placeholder:text-slate-600"
             />
           </div>
         </Field>
@@ -1820,7 +1820,7 @@ function RecurringFormModal({
         <p className="text-[10px] font-medium uppercase tracking-[0.3em] text-accent/70">
           Standing order · 定期
         </p>
-        <h3 className="mt-1 flex items-center gap-2 font-serif text-lg font-semibold leading-tight text-slate-800 dark:text-slate-100">
+        <h3 className="mt-1 flex items-center gap-2 text-lg font-semibold leading-tight text-slate-800 dark:text-slate-100">
           <Repeat size={17} className="text-accent" aria-hidden="true" />
           {editing ? '編輯定期項目' : '新增定期項目'}
         </h3>
@@ -1839,7 +1839,7 @@ function RecurringFormModal({
           >
             <span
               className={cx(
-                'font-serif text-2xl font-semibold leading-none tabular-nums',
+                'text-2xl font-semibold leading-none tabular-nums',
                 income ? 'text-emerald-500 dark:text-emerald-400' : 'text-rose-500 dark:text-rose-400',
               )}
               aria-hidden="true"
@@ -1855,7 +1855,7 @@ function RecurringFormModal({
               inputMode="decimal"
               aria-label="金額"
               className={cx(
-                'w-full bg-transparent font-serif text-2xl font-semibold leading-none tabular-nums slashed-zero outline-none placeholder:text-slate-300 dark:placeholder:text-slate-600',
+                'w-full bg-transparent text-2xl font-semibold leading-none tabular-nums slashed-zero outline-none placeholder:text-slate-300 dark:placeholder:text-slate-600',
                 income ? 'text-emerald-700 dark:text-emerald-300' : 'text-rose-700 dark:text-rose-300',
               )}
             />
@@ -1969,7 +1969,7 @@ function TxFormModal({
           <p className="text-[10px] font-medium uppercase tracking-[0.3em] text-accent/70">
             Ledger · {income ? '收入' : '支出'}
           </p>
-          <h3 className="mt-1 flex items-center gap-2 font-serif text-xl font-semibold leading-tight text-slate-800 dark:text-slate-100">
+          <h3 className="mt-1 flex items-center gap-2 text-xl font-semibold leading-tight text-slate-800 dark:text-slate-100">
             <Receipt size={18} className="text-accent" aria-hidden="true" />
             {editing ? '編輯記錄' : '記一筆'}
           </h3>
@@ -1998,7 +1998,7 @@ function TxFormModal({
           >
             <span
               className={cx(
-                'font-serif text-2xl font-semibold leading-none tabular-nums',
+                'text-2xl font-semibold leading-none tabular-nums',
                 income ? 'text-emerald-500 dark:text-emerald-400' : 'text-rose-500 dark:text-rose-400',
               )}
               aria-hidden="true"
@@ -2015,7 +2015,7 @@ function TxFormModal({
               autoFocus={!editing}
               aria-label="金額"
               className={cx(
-                'w-full bg-transparent font-serif text-2xl font-semibold leading-none tabular-nums slashed-zero outline-none placeholder:text-slate-300 dark:placeholder:text-slate-600',
+                'w-full bg-transparent text-2xl font-semibold leading-none tabular-nums slashed-zero outline-none placeholder:text-slate-300 dark:placeholder:text-slate-600',
                 income ? 'text-emerald-700 dark:text-emerald-300' : 'text-rose-700 dark:text-rose-300',
               )}
             />
@@ -2166,7 +2166,7 @@ function ImportTxModal({
           <p className="text-[10px] font-medium uppercase tracking-[0.3em] text-accent/70">
             Ledger · 匯入
           </p>
-          <h3 className="mt-1 flex items-center gap-2 font-serif text-xl font-semibold leading-tight text-slate-800 dark:text-slate-100">
+          <h3 className="mt-1 flex items-center gap-2 text-xl font-semibold leading-tight text-slate-800 dark:text-slate-100">
             <Upload size={18} className="text-accent" aria-hidden="true" />
             匯入交易（CSV）
           </h3>

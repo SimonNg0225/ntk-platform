@@ -335,7 +335,7 @@ export default function Timetable() {
             <p className="text-[11px] font-medium uppercase tracking-[0.3em] text-accent/70">
               {cycle ? '六日循環 · 週記網格' : '每週課表'}
             </p>
-            <h1 className="mt-1 font-serif text-2xl font-semibold leading-tight tracking-tight text-slate-800 dark:text-slate-100 sm:text-[28px]">
+            <h1 className="mt-1 text-2xl font-semibold leading-tight tracking-tight text-slate-800 dark:text-slate-100 sm:text-[28px]">
               時間表
             </h1>
             <p className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-slate-500 dark:text-slate-400">
@@ -556,7 +556,7 @@ function TodayPanel({
               <Clock size={22} strokeWidth={2} />
             ) : (
               <>
-                <span className="font-serif text-2xl font-semibold leading-none">
+                <span className="text-2xl font-semibold leading-none">
                   {cycle ? cycleShort(todayDay) : dayLabel(todayDay).slice(-1)}
                 </span>
                 <span className="mt-0.5 text-[9px] font-medium uppercase tracking-widest text-white/70">
@@ -571,7 +571,7 @@ function TodayPanel({
                 ? cycle ? '今日唔使返學' : '今日休息'
                 : `今日 · ${cycle ? `Day ${cycleShort(todayDay)}` : dayLabel(todayDay)}`}
             </p>
-            <p className="mt-0.5 font-serif text-xl font-semibold leading-tight text-slate-800 dark:text-slate-100">
+            <p className="mt-0.5 text-xl font-semibold leading-tight text-slate-800 dark:text-slate-100">
               {isWeekend ? '好好抖一抖 ☕' : `今日有 ${todayCount} 節`}
             </p>
           </div>
@@ -669,7 +669,7 @@ function CycleRibbon({
           >
             <span
               className={cx(
-                'flex h-6 w-6 items-center justify-center rounded-lg font-serif text-[15px] font-semibold leading-none',
+                'flex h-6 w-6 items-center justify-center rounded-lg text-[15px] font-semibold leading-none',
                 isToday
                   ? 'bg-white/20'
                   : inRange

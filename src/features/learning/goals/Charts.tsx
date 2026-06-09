@@ -279,7 +279,7 @@ export function CategoryBars({
               </span>
             </div>
             <span className="flex w-16 shrink-0 items-baseline justify-end gap-1 text-right tabular-nums">
-              <span className={cx('font-serif text-sm font-semibold', summit ? 'text-emerald-500' : 'text-slate-700 dark:text-slate-200')}>{r.avg}%</span>
+              <span className={cx('text-sm font-semibold', summit ? 'text-emerald-500' : 'text-slate-700 dark:text-slate-200')}>{r.avg}%</span>
               <span className="text-[11px] text-slate-400">·{r.count}</span>
             </span>
           </li>
@@ -345,7 +345,7 @@ export function AscentMeter({ value }: { value: number }) {
       </span>
       {/* 中央：serif 大海拔數字 */}
       <div className="absolute inset-x-0 bottom-0 flex flex-col items-center">
-        <span className="font-serif text-3xl font-semibold leading-none tabular-nums text-white">
+        <span className="text-3xl font-semibold leading-none tabular-nums text-white">
           {v}<span className="ml-0.5 align-top font-sans text-base font-medium text-white/70">%</span>
         </span>
         <span className="mt-1 text-[10px] font-medium uppercase tracking-[0.2em] text-white/65">平均海拔</span>

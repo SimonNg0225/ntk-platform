@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { CalendarArrowDown, CalendarRange, ChevronLeft, ChevronRight, Dot, Plus, SlidersHorizontal, Smartphone } from 'lucide-react'
 import { useCollection } from '../../lib/store'
 import { eventsCol, calendarsCol, countdownsCol } from '../../data/collections'
@@ -61,6 +62,7 @@ function useIsWide(): boolean {
 }
 
 export default function Calendar() {
+  const { t } = useTranslation()
   const events = useCollection(eventsCol)
   const cals = useCollection(calendarsCol)
   const countdowns = useCollection(countdownsCol)
@@ -163,7 +165,7 @@ export default function Calendar() {
           <CalendarRange size={13} className="shrink-0" />
           日程週記 · Calendar
         </p>
-        <h1 className="mt-1 font-serif text-[26px] font-semibold leading-none tracking-tight text-slate-800 dark:text-slate-100 sm:text-[30px]">
+        <h1 className="mt-1 text-[26px] font-semibold leading-none tracking-tight text-slate-800 dark:text-slate-100 sm:text-[30px]">
           行事曆
         </h1>
       </header>
@@ -174,7 +176,7 @@ export default function Calendar() {
           <p className="text-[11px] font-medium uppercase tracking-[0.3em] text-accent/70">
             {VIEW_EYEBROW[view]}
           </p>
-          <h2 className="mt-0.5 font-serif text-xl font-semibold leading-none tracking-tight text-slate-700 dark:text-slate-200 sm:text-2xl">
+          <h2 className="mt-0.5 text-xl font-semibold leading-none tracking-tight text-slate-700 dark:text-slate-200 sm:text-2xl">
             {title}
           </h2>
         </div>
@@ -250,7 +252,7 @@ export default function Calendar() {
           onClick={() => setSubscribeOpen(true)}
           className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium text-slate-400 transition hover:text-accent active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
         >
-          <Smartphone size={13} /> 訂閱到手機日曆
+          <Smartphone size={13} /> {t('cal.subscribeMobile', { defaultValue: '訂閱到手機日曆' })}
         </button>
       </div>
 

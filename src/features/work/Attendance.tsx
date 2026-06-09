@@ -166,7 +166,7 @@ function StampMark({
     <span
       aria-hidden
       className={cx(
-        'inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full font-serif text-[13px] font-semibold leading-none ring-1 ring-inset transition-transform duration-200',
+        'inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[13px] font-bold leading-none ring-1 ring-inset transition-transform duration-200',
         t.soft,
         t.ring,
         stamped && '-rotate-6',
@@ -244,7 +244,7 @@ function RegisterTally({
       </p>
       <p
         className={cx(
-          'mt-1 font-serif text-[26px] font-semibold leading-none tabular-nums slashed-zero',
+          'mt-1 text-[26px] font-semibold leading-none tabular-nums slashed-zero',
           ink,
         )}
       >
@@ -357,7 +357,7 @@ function Masthead({ subtitle }: { subtitle?: string }) {
       {/* 封面右上「出席到」戳印（純裝飾，唔搶主次） */}
       <span
         aria-hidden
-        className="pointer-events-none absolute -right-5 top-4 hidden -rotate-[10deg] select-none items-center gap-1.5 rounded-xl border-2 border-dashed border-accent/20 px-4 py-2 font-serif text-xs font-semibold uppercase tracking-[0.22em] text-accent/25 dark:border-accent/25 dark:text-accent/25 sm:inline-flex"
+        className="pointer-events-none absolute -right-5 top-4 hidden -rotate-[10deg] select-none items-center gap-1.5 rounded-xl border-2 border-dashed border-accent/20 px-4 py-2 text-xs font-semibold uppercase tracking-[0.22em] text-accent/25 dark:border-accent/25 dark:text-accent/25 sm:inline-flex"
       >
         <Check size={13} strokeWidth={3} />
         {t('attend.stampPresent', { defaultValue: '出席 · Present' })}
@@ -367,7 +367,7 @@ function Masthead({ subtitle }: { subtitle?: string }) {
           <Stamp size={13} />
           {t('attend.registerKicker', { defaultValue: '出席簿 · Attendance Register' })}
         </p>
-        <h1 className="mt-1.5 font-serif text-[28px] font-semibold leading-none tracking-tight text-slate-800 dark:text-slate-100 sm:text-[34px]">
+        <h1 className="mt-1.5 text-[28px] font-semibold leading-none tracking-tight text-slate-800 dark:text-slate-100 sm:text-[34px]">
           {t('attend.title', { defaultValue: '點名 / 出席' })}
         </h1>
         <p className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-slate-500 dark:text-slate-400">
@@ -738,7 +738,7 @@ function RollCall({ classId }: { classId: string }) {
                 />
                 <div className="flex min-w-0 items-center gap-3 pl-1.5">
                   {/* 行號（簿冊座號感，serif tabular） */}
-                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-slate-100 font-serif text-xs font-semibold tabular-nums text-slate-400 dark:bg-slate-700/60 dark:text-slate-500">
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-xs font-bold tabular-nums text-slate-400 dark:bg-slate-700/60 dark:text-slate-500">
                     {String(idx + 1).padStart(2, '0')}
                   </span>
                   <div className="min-w-0">
@@ -877,7 +877,7 @@ function DateNav({
         </IconButton>
         {/* 簿頁日期牌：serif 日字 + 月／星期 */}
         <div className="flex min-w-[9.5rem] items-center justify-center gap-2.5 px-2">
-          <span className="font-serif text-[28px] font-semibold leading-none tabular-nums slashed-zero text-slate-800 dark:text-slate-100">
+          <span className="text-[28px] font-semibold leading-none tabular-nums slashed-zero text-slate-800 dark:text-slate-100">
             {dayNum}
           </span>
           <span className="flex flex-col leading-tight">
@@ -995,7 +995,7 @@ function DetailModal({
           <span
             aria-hidden
             className={cx(
-              'pointer-events-none absolute right-12 top-4 hidden -rotate-[8deg] select-none items-center gap-1 rounded-lg border-2 border-dashed px-2.5 py-1 font-serif text-[11px] font-semibold uppercase tracking-[0.18em] ring-inset sm:inline-flex',
+              'pointer-events-none absolute right-12 top-4 hidden -rotate-[8deg] select-none items-center gap-1 rounded-lg border-2 border-dashed px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.18em] ring-inset sm:inline-flex',
               tone.soft,
               tone.ring,
             )}
@@ -1010,7 +1010,7 @@ function DetailModal({
               <ClipboardList size={12} />
               {t('attend.entryKicker', { defaultValue: '出席登記卡 · Entry' })}
             </p>
-            <h3 className="mt-1 truncate font-serif text-[22px] font-semibold leading-tight tracking-tight text-slate-800 dark:text-slate-100">
+            <h3 className="mt-1 truncate text-[22px] font-semibold leading-tight tracking-tight text-slate-800 dark:text-slate-100">
               {studentName || t('attend.detailFallbackTitle', { defaultValue: '出席細項' })}
             </h3>
           </div>
@@ -1249,7 +1249,7 @@ function Register({ classId, className }: { classId: string; className: string }
           >
             <ChevronLeft size={18} />
           </IconButton>
-          <span className="min-w-[6.5rem] px-1 text-center font-serif text-base font-semibold tabular-nums text-slate-800 dark:text-slate-100">
+          <span className="min-w-[6.5rem] px-1 text-center text-base font-semibold tabular-nums text-slate-800 dark:text-slate-100">
             {t('attend.monthYear', {
               year: ym.y,
               month: ym.m + 1,
@@ -1863,7 +1863,7 @@ function StudentSummaryModal({
         {/* 右上「個人簿頁」斜戳（純裝飾，呼應 masthead；手機收起） */}
         <span
           aria-hidden
-          className="pointer-events-none absolute right-12 top-4 hidden -rotate-[8deg] select-none items-center gap-1 rounded-lg border-2 border-dashed border-accent/20 px-2.5 py-1 font-serif text-[11px] font-semibold uppercase tracking-[0.18em] text-accent/25 dark:border-accent/25 dark:text-accent/25 sm:inline-flex"
+          className="pointer-events-none absolute right-12 top-4 hidden -rotate-[8deg] select-none items-center gap-1 rounded-lg border-2 border-dashed border-accent/20 px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-accent/25 dark:border-accent/25 dark:text-accent/25 sm:inline-flex"
         >
           <Stamp size={11} />
           {t('attend.pageStamp', { defaultValue: '簿頁' })}
@@ -1874,7 +1874,7 @@ function StudentSummaryModal({
               <NotebookPen size={12} />
               {t('attend.summaryKicker', { defaultValue: '出席摘要 · Summary' })}
             </p>
-            <h3 className="mt-1 truncate font-serif text-[22px] font-semibold leading-tight tracking-tight text-slate-800 dark:text-slate-100">
+            <h3 className="mt-1 truncate text-[22px] font-semibold leading-tight tracking-tight text-slate-800 dark:text-slate-100">
               {studentName || t('attend.summaryFallbackTitle', { defaultValue: '出席摘要' })}
             </h3>
             <p className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-slate-400 dark:text-slate-500">
@@ -2090,7 +2090,7 @@ function StudentSummaryModal({
                     defaultValue: `${longDateLabel(d.dateKey)}：${STATUS_LABEL[d.status]}`,
                   })}
                   className={cx(
-                    'flex h-7 w-7 items-center justify-center rounded-md font-serif text-[13px] font-semibold leading-none',
+                    'flex h-7 w-7 items-center justify-center rounded-md text-[13px] font-bold leading-none',
                     STATUS_STYLE[d.status].cell,
                   )}
                 >
@@ -2119,7 +2119,7 @@ function MiniStat({
     <div className={cx('px-3 py-2.5 text-center', STATUS_STYLE[tone].cell)}>
       <div className="inline-flex items-center justify-center gap-1.5">
         <StampMark status={tone} className="h-5 w-5 text-[11px]" />
-        <span className="font-serif text-[22px] font-semibold leading-none tabular-nums slashed-zero">
+        <span className="text-[22px] font-semibold leading-none tabular-nums slashed-zero">
           {value}
         </span>
       </div>
@@ -2155,7 +2155,7 @@ function FactCell({
       </div>
       <div
         className={cx(
-          'mt-0.5 font-serif text-base font-semibold tabular-nums slashed-zero',
+          'mt-0.5 text-base font-semibold tabular-nums slashed-zero',
           tone === 'rose'
             ? 'text-rose-600 dark:text-rose-300'
             : 'text-slate-800 dark:text-slate-100',

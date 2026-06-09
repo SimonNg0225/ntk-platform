@@ -353,7 +353,7 @@ export function QuizRunner({
             aria-live="polite"
             aria-label={`第 ${currentIdx + 1} 題，共 ${total} 題`}
           >
-            <span className="font-serif text-2xl font-semibold tabular-nums text-slate-800 dark:text-slate-100">
+            <span className="text-2xl font-bold tabular-nums text-slate-800 dark:text-slate-100">
               {currentIdx + 1}
             </span>
             <span className="text-sm font-medium text-slate-400 dark:text-slate-500"> / {total}</span>
@@ -484,7 +484,7 @@ export function QuizRunner({
         {/* 角落大題號（serif 水印，純裝飾） */}
         <span
           aria-hidden="true"
-          className="pointer-events-none absolute -right-2 -top-3 select-none font-serif text-7xl font-black leading-none text-slate-100/90 dark:text-slate-700/40"
+          className="pointer-events-none absolute -right-2 -top-3 select-none text-7xl font-black leading-none text-slate-100/90 dark:text-slate-700/40"
         >
           {currentIdx + 1}
         </span>

@@ -179,7 +179,7 @@ export function SetupView({
               <Sparkles size={12} className="shrink-0" />
               揀賽制
             </p>
-            <p className="mb-3 font-serif text-xl font-semibold tracking-tight text-slate-800 dark:text-slate-100">
+            <p className="mb-3 text-xl font-semibold tracking-tight text-slate-800 dark:text-slate-100">
               今次想點挑戰？
             </p>
             <div className="grid grid-cols-3 gap-2.5">
@@ -314,7 +314,7 @@ export function SetupView({
             <div className="relative flex items-center gap-3">
               {/* 大題數（賽前焦點：serif 數字 + 「題」） */}
               <div className="shrink-0 leading-none">
-                <span className="font-serif text-4xl font-semibold tabular-nums text-accent-strong dark:text-accent">
+                <span className="text-4xl font-bold tabular-nums text-accent-strong dark:text-accent">
                   {takeCount}
                 </span>
                 <span className="ml-1 text-sm font-medium text-accent/70 dark:text-accent/70">題</span>

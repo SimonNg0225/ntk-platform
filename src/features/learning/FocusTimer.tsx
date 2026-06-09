@@ -66,7 +66,7 @@ export default function FocusTimer() {
           <Timer size={13} className="shrink-0" />
           專注計時器 · Focus Timer
         </p>
-        <h1 className="mt-2.5 font-serif text-[28px] font-semibold leading-none tracking-tight text-slate-800 dark:text-slate-100 sm:text-[34px]">
+        <h1 className="mt-2.5 text-[28px] font-semibold leading-none tracking-tight text-slate-800 dark:text-slate-100 sm:text-[34px]">
           靜下來，做一件事
         </h1>
         {/* 今日節奏：一句溫和摘要，唔用搶眼 badge */}

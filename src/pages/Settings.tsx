@@ -13,6 +13,7 @@ import {
   packTopics,
 } from '../data/subjects'
 import { preloadAllFeatures } from '../features/registry'
+import { smartApplyTopics } from '../features/work/topicImport/applyTopics'
 import { Card, Button, Field, Input, SectionTitle } from '../ui'
 import AdminSupportCard from '../components/AdminSupportCard'
 import { seedAllDemo } from '../lib/demoData'
@@ -111,15 +112,18 @@ export default function Settings() {
     }
     if (mode === 'replace') {
       const ok = await confirm({
-        title: `以「${pack.name}」課題取代現有？`,
+        title: `切換做「${pack.name}」課題？`,
         message:
-          '會清走目前課題清單換成此科。已連住舊課題嘅教學進度 / 題目可能對唔返號，呢個動作無法復原。建議先匯出備份。',
-        confirmText: '取代課題',
-        tone: 'danger',
+          '智能切換：同名課題自動保留連繫（題庫／進度／評估／備課唔甩號）；舊有但仲有資料連住嘅會保留，冇用嘅先清走。安全、唔會失資料。',
+        confirmText: '智能切換',
       })
       if (!ok) return
-      topicsCol.set(incoming)
-      toast.success(`已載入「${pack.name}」共 ${incoming.length} 個課題`)
+      const r = smartApplyTopics(incoming)
+      toast.success(
+        `已切換做「${pack.name}」：保留 ${r.matched} · 新增 ${r.added}` +
+          (r.kept ? ` · 留存 ${r.kept}` : '') +
+          (r.removed ? ` · 清走 ${r.removed}` : ''),
+      )
     } else {
       const existing = new Set(topics.map((t) => t.id))
       const added = incoming.filter((t) => !existing.has(t.id))
@@ -345,7 +349,7 @@ export default function Settings() {
           <Button variant="ghost" onClick={() => applySubject('append')}>
             附加此科課題
           </Button>
-          <Button onClick={() => applySubject('replace')}>以此科取代課題</Button>
+          <Button onClick={() => applySubject('replace')}>智能切換做此科</Button>
         </div>
         <p className="mt-2 text-xs text-slate-400 dark:text-slate-500">
           起始大綱為精簡模板，未必涵蓋官方課程全部細項，可自行調整。

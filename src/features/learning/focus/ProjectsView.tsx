@@ -86,7 +86,7 @@ export default function ProjectsView({
           <FolderKanban size={12} className="shrink-0" />
           專注專案 · Projects
         </p>
-        <h2 className="mt-2 font-serif text-[22px] font-semibold leading-none tracking-tight text-slate-800 dark:text-slate-100 sm:text-[26px]">
+        <h2 className="mt-2 text-[22px] font-semibold leading-none tracking-tight text-slate-800 dark:text-slate-100 sm:text-[26px]">
           一件事，慢慢累積
         </h2>
         <p className="mx-auto mt-2.5 max-w-sm text-[13px] leading-relaxed text-slate-500 dark:text-slate-400">
@@ -97,7 +97,7 @@ export default function ProjectsView({
       {/* 動作列：纖細 hairline，唔搶卡片風頭 */}
       <div className="flex items-center justify-between border-b border-slate-200/70 pb-3 dark:border-slate-700/50">
         <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-slate-400 dark:text-slate-500">
-          進行中 <span className="font-serif text-sm tabular-nums text-slate-600 dark:text-slate-300">{active.length}</span>
+          進行中 <span className="text-sm tabular-nums text-slate-600 dark:text-slate-300">{active.length}</span>
         </p>
         <Button size="sm" icon={Plus} onClick={() => setEditing('new')}>
           新專案
@@ -138,7 +138,7 @@ export default function ProjectsView({
               已封存
             </h3>
             <span className="h-px flex-1 translate-y-[-3px] bg-slate-200/70 dark:bg-slate-700/50" />
-            <span className="font-serif text-sm italic tabular-nums text-slate-400 dark:text-slate-500">
+            <span className="text-sm italic tabular-nums text-slate-400 dark:text-slate-500">
               {archived.length}
             </span>
           </div>
@@ -193,13 +193,13 @@ function ProjectCard({
           {project.icon || <Target size={18} className={pal.text} />}
         </span>
         <div className="min-w-0 flex-1">
-          <h3 className="truncate font-serif text-[17px] font-semibold tracking-tight text-slate-800 dark:text-slate-100">
+          <h3 className="truncate text-[17px] font-semibold tracking-tight text-slate-800 dark:text-slate-100">
             {project.name}
           </h3>
           <div className="mt-0.5 flex items-center gap-2.5 text-[11px] text-slate-400">
             <span className="inline-flex items-center gap-1 tabular-nums">
               <Timer size={12} />
-              <span className="font-serif text-xs tabular-nums text-slate-500 dark:text-slate-400">
+              <span className="text-xs tabular-nums text-slate-500 dark:text-slate-400">
                 {fmtDuration(stat?.min ?? 0)}
               </span>
             </span>

@@ -122,7 +122,7 @@ export function EntryEditor({
               <BookText size={13} className="shrink-0" />
               {editing ? '日記 · Journal' : '新一頁 · New Entry'}
             </p>
-            <p className="mt-1 font-serif text-xl font-semibold leading-tight tracking-tight text-slate-800 dark:text-slate-100 sm:text-[22px]">
+            <p className="mt-1 text-xl font-semibold leading-tight tracking-tight text-slate-800 dark:text-slate-100 sm:text-[22px]">
               {longDate(draft.date)}
             </p>
           </div>
@@ -164,7 +164,7 @@ export function EntryEditor({
           </p>
         )}
 
-        {/* 標題：日誌嘅標頭，serif 寫出書頁標題感。只加 font-serif/字重（唔掂字級，
+        {/* 標題：日誌嘅標頭，serif 寫出書頁標題感。只加/字重（唔掂字級，
              保留共用 FIELD 嘅手機 16px → 唔觸發 iOS zoom） */}
         <Field label="標題（選填）">
           <Input
@@ -172,7 +172,7 @@ export function EntryEditor({
             onChange={(e) => set('title', e.target.value)}
             placeholder="例如：終於搞清楚供求曲線"
             maxLength={80}
-            className="font-serif font-semibold tracking-tight placeholder:font-sans placeholder:font-normal"
+            className="font-semibold tracking-tight placeholder:font-sans placeholder:font-normal"
           />
         </Field>
 
@@ -235,10 +235,10 @@ export function EntryEditor({
              textarea 加舒適行距；底部 colophon 行（serif italic 字數）+ 標籤戳 ───────── */}
         <div>
           <div className="mb-2 flex items-baseline justify-between gap-3">
-            <span className="font-serif text-base font-semibold tracking-tight text-slate-700 dark:text-slate-200">
+            <span className="text-base font-semibold tracking-tight text-slate-700 dark:text-slate-200">
               今日反思
             </span>
-            <span className="font-serif text-[11px] italic text-slate-400 dark:text-slate-500">
+            <span className="text-[11px] italic text-slate-400 dark:text-slate-500">
               用 #標籤 分類
             </span>
           </div>
@@ -246,7 +246,7 @@ export function EntryEditor({
           {/* 每日提示：serif 引文（呼應主畫面邀請卡） */}
           <p className="mb-2.5 flex items-start gap-1.5 text-[13px] leading-relaxed text-slate-500 dark:text-slate-400">
             <Quote size={13} className="mt-0.5 shrink-0 text-accent/60" aria-hidden="true" />
-            <span className="font-serif italic">「{promptOfDay(draft.date)}」</span>
+            <span className="italic">「{promptOfDay(draft.date)}」</span>
           </p>
 
           <Textarea
@@ -263,7 +263,7 @@ export function EntryEditor({
 
           {/* colophon：字數（serif）+ 即時標籤戳 */}
           <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5">
-            <span className="inline-flex items-center gap-1 font-serif text-xs tabular-nums text-slate-400 dark:text-slate-500">
+            <span className="inline-flex items-center gap-1 text-xs tabular-nums text-slate-400 dark:text-slate-500">
               <Sparkles size={12} aria-hidden="true" />
               {words} 字
             </span>

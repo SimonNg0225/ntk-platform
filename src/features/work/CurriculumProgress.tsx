@@ -133,7 +133,7 @@ export default function CurriculumProgress() {
             <p className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.28em] text-accent/80">
               <Route size={13} /> 教學路線圖
             </p>
-            <h1 className="mt-1.5 font-serif text-[28px] font-semibold leading-tight tracking-tight text-slate-800 dark:text-slate-100 sm:text-[34px]">
+            <h1 className="mt-1.5 text-[28px] font-semibold leading-tight tracking-tight text-slate-800 dark:text-slate-100 sm:text-[34px]">
               課程進度
             </h1>
             <p className="mt-1.5 max-w-md text-sm leading-relaxed text-slate-600 dark:text-slate-300">
@@ -149,7 +149,7 @@ export default function CurriculumProgress() {
           {journey.total > 0 && (
             <div className="shrink-0">
               <div className="flex items-baseline gap-1.5">
-                <span className="font-serif text-3xl font-semibold leading-none tabular-nums text-accent-strong dark:text-accent sm:text-4xl">
+                <span className="text-3xl font-semibold leading-none tabular-nums text-accent-strong dark:text-accent sm:text-4xl">
                   {journey.pct}
                 </span>
                 <span className="text-base font-semibold text-accent-strong/70 dark:text-accent/70">
@@ -262,7 +262,7 @@ function LedgerStat({
         <I size={12} className="shrink-0" />
         <span className="truncate">{label}</span>
       </p>
-      <p className={cx('mt-1 font-serif text-[26px] font-semibold leading-none tabular-nums slashed-zero', accentText)}>
+      <p className={cx('mt-1 text-[26px] font-semibold leading-none tabular-nums slashed-zero', accentText)}>
         {value}
         {unit && <span className="ml-1 font-sans text-sm font-normal text-slate-400">{unit}</span>}
       </p>
@@ -435,7 +435,7 @@ function ListView({
               已抵達 {overall.done} / {topics.length} 個里程碑
             </p>
           </div>
-          <span className="nums font-serif text-2xl font-semibold leading-none text-accent-strong dark:text-accent">
+          <span className="nums text-2xl font-semibold leading-none text-accent-strong dark:text-accent">
             {overall.pct}%
           </span>
         </div>
@@ -545,7 +545,7 @@ function ListView({
                         : 'border-2 border-slate-300 bg-white text-slate-400 dark:border-slate-600 dark:bg-slate-800',
                   )}
                 >
-                  {cleared ? <Check size={13} strokeWidth={3} /> : <span className="font-serif text-xs font-semibold tabular-nums">{pi + 1}</span>}
+                  {cleared ? <Check size={13} strokeWidth={3} /> : <span className="text-xs font-bold tabular-nums">{pi + 1}</span>}
                 </span>
 
                 <button
@@ -557,7 +557,7 @@ function ListView({
                   className="group flex w-full items-center justify-between gap-2 rounded-xl py-1 text-left transition active:scale-[0.98]"
                 >
                   <span className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
-                    <span className="font-serif text-base font-semibold tracking-tight text-slate-700 dark:text-slate-200">
+                    <span className="text-base font-semibold tracking-tight text-slate-700 dark:text-slate-200">
                       {part.part}
                     </span>
                     <Badge tone={cleared ? 'green' : 'slate'} className="nums">

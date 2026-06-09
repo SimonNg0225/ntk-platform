@@ -255,7 +255,7 @@ export function DetailModal({
         <div className="mt-2.5 flex items-start gap-3.5">
           <TypeIconBox type={res.type} />
           <div className="min-w-0 flex-1">
-            <h2 className="break-words font-serif text-xl font-semibold leading-snug tracking-tight text-slate-800 dark:text-slate-100">
+            <h2 className="break-words text-xl font-semibold leading-snug tracking-tight text-slate-800 dark:text-slate-100">
               {res.title}
             </h2>
             <div className="mt-2 flex flex-wrap items-center gap-1.5">
@@ -473,7 +473,7 @@ function CatalogueHeader({
             <I size={12} strokeWidth={2} />
             {kicker}
           </p>
-          <h2 className="mt-1.5 break-words font-serif text-xl font-semibold leading-tight tracking-tight text-slate-800 dark:text-slate-100">
+          <h2 className="mt-1.5 break-words text-xl font-semibold leading-tight tracking-tight text-slate-800 dark:text-slate-100">
             {title}
           </h2>
         </div>
@@ -498,7 +498,7 @@ function Stat({
     <div className="bg-white px-2 py-2.5 dark:bg-slate-800">
       <p
         className={cx(
-          'font-serif font-semibold tabular-nums slashed-zero leading-none text-slate-800 dark:text-slate-100',
+          'font-semibold tabular-nums slashed-zero leading-none text-slate-800 dark:text-slate-100',
           small ? 'text-[15px]' : 'text-2xl',
         )}
       >

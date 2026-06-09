@@ -239,7 +239,7 @@ export default function CommEditor({
         {/* 右上郵戳裝飾（純裝飾，唔搶主次；手機收起） */}
         <span
           aria-hidden
-          className="pointer-events-none absolute -right-5 top-3 hidden -rotate-[8deg] select-none flex-col items-center rounded-full border-2 border-dashed border-accent/20 px-4 py-2.5 font-serif text-[9px] font-semibold uppercase tracking-[0.28em] text-accent/25 dark:border-accent/25 dark:text-accent/25 sm:flex">
+          className="pointer-events-none absolute -right-5 top-3 hidden -rotate-[8deg] select-none flex-col items-center rounded-full border-2 border-dashed border-accent/20 px-4 py-2.5 text-[9px] font-semibold uppercase tracking-[0.28em] text-accent/25 dark:border-accent/25 dark:text-accent/25 sm:flex">
           <Mail size={14} className="mb-0.5" />
           {editing ? '修函' : '草擬'}
         </span>
@@ -249,7 +249,7 @@ export default function CommEditor({
               <PenLine size={12} />
               通訊錄 · Correspondence
             </p>
-            <h2 className="mt-1.5 font-serif text-[24px] font-semibold leading-none tracking-tight text-slate-800 dark:text-slate-100 sm:text-[26px]">
+            <h2 className="mt-1.5 text-[24px] font-semibold leading-none tracking-tight text-slate-800 dark:text-slate-100 sm:text-[26px]">
               {editing ? '編輯信件' : '撰寫信件'}
             </h2>
           </div>

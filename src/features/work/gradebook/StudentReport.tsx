@@ -173,7 +173,7 @@ export default function StudentReport({
         {/* 右上鋼印（純裝飾，同 masthead 一致）*/}
         <span
           aria-hidden
-          className="pointer-events-none absolute -right-4 top-2 hidden -rotate-6 select-none rounded-lg border-2 border-dashed border-accent/20 px-3 py-1.5 font-serif text-[10px] font-semibold uppercase tracking-[0.25em] text-accent/25 dark:border-accent/25 dark:text-accent/25 sm:block"
+          className="pointer-events-none absolute -right-4 top-2 hidden -rotate-6 select-none rounded-lg border-2 border-dashed border-accent/20 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.25em] text-accent/25 dark:border-accent/25 dark:text-accent/25 sm:block"
         >
           {t('gradebook.reportStampLedger', { defaultValue: '成績冊 · Ledger' })}
         </span>
@@ -186,7 +186,7 @@ export default function StudentReport({
               <BookMarked size={12} className="shrink-0" />
               {t('gradebook.reportKicker', { defaultValue: '成績單 · Report Card' })}
             </p>
-            <h2 className="mt-1 flex flex-wrap items-baseline gap-x-2 font-serif text-[24px] font-semibold leading-none tracking-tight text-slate-800 dark:text-slate-100 sm:text-[28px]">
+            <h2 className="mt-1 flex flex-wrap items-baseline gap-x-2 text-[24px] font-semibold leading-none tracking-tight text-slate-800 dark:text-slate-100 sm:text-[28px]">
               {result.student.name}
               {studentNo && (
                 <span className="font-sans text-sm font-normal tabular-nums text-slate-400 dark:text-slate-500">
@@ -234,7 +234,7 @@ export default function StudentReport({
               <p className="mt-0.5 flex items-baseline gap-2">
                 <span
                   className={cx(
-                    'font-serif text-[42px] font-semibold leading-none tabular-nums slashed-zero',
+                    'text-[42px] font-semibold leading-none tabular-nums slashed-zero',
                     band ? TONE_TEXT[band.tone] : 'text-slate-400',
                   )}
                 >
@@ -340,7 +340,7 @@ export default function StudentReport({
                     >
                       <td className="px-3 py-2 text-slate-700 dark:text-slate-200">
                         <span className="flex items-baseline gap-2">
-                          <span className="font-serif text-[11px] tabular-nums slashed-zero text-slate-300 dark:text-slate-600">
+                          <span className="text-[11px] tabular-nums slashed-zero text-slate-300 dark:text-slate-600">
                             {String(i + 1).padStart(2, '0')}
                           </span>
                           <span className="min-w-0">
@@ -358,7 +358,7 @@ export default function StudentReport({
                       </td>
                       <td
                         className={cx(
-                          'px-3 py-2 text-right font-serif text-[15px] font-semibold tabular-nums slashed-zero',
+                          'px-3 py-2 text-right text-[15px] font-semibold tabular-nums slashed-zero',
                           TONE_TEXT[tone],
                         )}
                       >
@@ -370,7 +370,7 @@ export default function StudentReport({
                           `${Math.round(p)}%`
                         )}
                       </td>
-                      <td className="px-3 py-2 text-right font-serif tabular-nums slashed-zero">
+                      <td className="px-3 py-2 text-right tabular-nums slashed-zero">
                         {diff == null ? (
                           <span className="font-sans text-slate-300 dark:text-slate-600">—</span>
                         ) : (
@@ -406,7 +406,7 @@ export default function StudentReport({
                   </td>
                   <td
                     className={cx(
-                      'px-3 py-2.5 text-right font-serif text-[15px] font-semibold tabular-nums slashed-zero',
+                      'px-3 py-2.5 text-right text-[15px] font-bold tabular-nums slashed-zero',
                       band ? TONE_TEXT[band.tone] : 'text-slate-300 dark:text-slate-600',
                     )}
                   >
@@ -414,7 +414,7 @@ export default function StudentReport({
                   </td>
                   <td className="px-3 py-2.5 text-right">
                     {classAvg == null ? (
-                      <span className="font-serif text-[13px] tabular-nums text-slate-300 dark:text-slate-600">
+                      <span className="text-[13px] tabular-nums text-slate-300 dark:text-slate-600">
                         —
                       </span>
                     ) : (
@@ -467,7 +467,7 @@ function LedgerCell({
         <Icon size={12} className="shrink-0" />
         <span className="truncate">{label}</span>
       </p>
-      <p className="mt-1 font-serif text-xl font-semibold leading-none tabular-nums slashed-zero text-slate-700 dark:text-slate-200">
+      <p className="mt-1 text-xl font-semibold leading-none tabular-nums slashed-zero text-slate-700 dark:text-slate-200">
         {children}
       </p>
     </div>

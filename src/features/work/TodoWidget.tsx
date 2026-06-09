@@ -182,7 +182,7 @@ function TallyStat({
       </span>
       <span
         className={cx(
-          'mt-1 block font-serif text-[26px] font-semibold leading-none tabular-nums slashed-zero',
+          'mt-1 block text-[26px] font-semibold leading-none tabular-nums slashed-zero',
           hot ? hotNum : 'text-slate-800 dark:text-slate-100',
         )}
       >
@@ -212,7 +212,7 @@ function MarkPen({ className }: { className?: string }) {
       )}
     >
       <Highlighter size={10} className="opacity-80" />
-      <span className="font-serif leading-none">批改</span>
+      <span className="leading-none">批改</span>
     </span>
   )
 }
@@ -513,7 +513,7 @@ export default function TodoWidget() {
         {/* 右側紅墨裝飾：似改簿時隨手剔嘅一筆（純裝飾，唔搶主次）*/}
         <span
           aria-hidden
-          className="pointer-events-none absolute -right-5 top-4 hidden -rotate-6 select-none font-serif text-[3.5rem] font-semibold leading-none text-rose-500/10 dark:text-rose-500/15 sm:block"
+          className="pointer-events-none absolute -right-5 top-4 hidden -rotate-6 select-none text-[3.5rem] font-bold leading-none text-rose-500/10 dark:text-rose-500/15 sm:block"
         >
           ✓
         </span>
@@ -523,7 +523,7 @@ export default function TodoWidget() {
               <ClipboardCheck size={13} />
               改簿檯 · Marking Desk
             </p>
-            <h1 className="mt-1.5 font-serif text-[28px] font-semibold leading-none tracking-tight text-slate-800 dark:text-slate-100 sm:text-[34px]">
+            <h1 className="mt-1.5 text-[28px] font-semibold leading-none tracking-tight text-slate-800 dark:text-slate-100 sm:text-[34px]">
               待辦 / 批改
             </h1>
             <p className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-slate-500 dark:text-slate-400">

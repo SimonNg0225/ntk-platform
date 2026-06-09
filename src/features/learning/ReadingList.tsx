@@ -303,7 +303,7 @@ export default function ReadingList() {
           <p className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.3em] text-accent/70">
             <Library size={13} /> My Library · 我的書架
           </p>
-          <h1 className="mt-1.5 font-serif text-2xl font-semibold leading-tight tracking-tight text-slate-800 dark:text-slate-100 sm:text-[28px]">
+          <h1 className="mt-1.5 text-2xl font-semibold leading-tight tracking-tight text-slate-800 dark:text-slate-100 sm:text-[28px]">
             閱讀清單
           </h1>
           <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
@@ -363,7 +363,7 @@ export default function ReadingList() {
               </p>
               <p
                 className={cx(
-                  'mt-1 font-serif text-[26px] font-semibold leading-none tabular-nums slashed-zero',
+                  'mt-1 text-[26px] font-semibold leading-none tabular-nums slashed-zero',
                   s.hot ? 'text-accent-strong dark:text-accent' : 'text-slate-800 dark:text-slate-100',
                 )}
               >
@@ -621,7 +621,7 @@ function ReadingChallenge({
           <Target size={19} />
         </span>
         <div className="min-w-0 flex-1">
-          <p className="font-serif text-[15px] font-semibold text-slate-800 dark:text-slate-100">定個 {year} 年閱讀挑戰</p>
+          <p className="text-[15px] font-semibold text-slate-800 dark:text-slate-100">定個 {year} 年閱讀挑戰</p>
           <p className="text-xs text-slate-500 dark:text-slate-400">立個小目標，睇住自己今年砌厚幾多本書。</p>
         </div>
         <Button size="sm" onClick={() => setEditing(true)}>
@@ -657,7 +657,7 @@ function ReadingChallenge({
         </div>
       </div>
       <div className="min-w-0 flex-1">
-        <p className="flex items-center gap-1.5 font-serif text-[15px] font-semibold text-slate-800 dark:text-slate-100">
+        <p className="flex items-center gap-1.5 text-[15px] font-semibold text-slate-800 dark:text-slate-100">
           <Target size={15} className="text-accent" /> {year} 年閱讀挑戰
         </p>
         {editing ? (
@@ -1135,7 +1135,7 @@ function CatalogueCard({
       <div className="p-4 sm:p-5">
         <div className="mb-3 flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <h3 className="flex items-center gap-1.5 font-serif text-[15px] font-semibold tracking-tight text-slate-800 dark:text-slate-100">
+            <h3 className="flex items-center gap-1.5 text-[15px] font-semibold tracking-tight text-slate-800 dark:text-slate-100">
               {I && <I size={15} className="text-accent" />}
               {title}
             </h3>
@@ -1204,7 +1204,7 @@ function StatsView({ books, stats }: { books: Book[]; stats: ReturnType<typeof c
               </p>
               <p
                 className={cx(
-                  'mt-1 font-serif text-[26px] font-semibold leading-none tabular-nums slashed-zero',
+                  'mt-1 text-[26px] font-semibold leading-none tabular-nums slashed-zero',
                   s.hot ? 'text-accent-strong dark:text-accent' : 'text-slate-800 dark:text-slate-100',
                 )}
               >

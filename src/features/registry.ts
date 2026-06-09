@@ -40,6 +40,10 @@ const Gradebook = lazyFeature(() => import('./work/Gradebook'))
 const ReportComments = lazyFeature(() => import('./work/reportComments/ReportComments'))
 const ClassTools = lazyFeature(() => import('./work/classTools/ClassTools'))
 const EssayMark = lazyFeature(() => import('./work/essayMark/EssayMark'))
+const RubricGen = lazyFeature(() => import('./work/rubric/RubricGen'))
+const DseDrill = lazyFeature(() => import('./work/dse/DseDrill'))
+const Transcribe = lazyFeature(() => import('./work/transcribe/Transcribe'))
+const TopicImport = lazyFeature(() => import('./work/topicImport/TopicImport'))
 const LessonPlanner = lazyFeature(() => import('./work/LessonPlanner'))
 const TeachGuide = lazyFeature(() => import('./work/teachGuide/TeachGuide'))
 const SlideGen = lazyFeature(() => import('./work/slides/SlideGen'))
@@ -309,6 +313,39 @@ export const FEATURES: Feature[] = [
     status: 'ready',
   },
   {
+    id: 'work-rubric',
+    selfManagedHeader: true,
+    modes: ['work'],
+    name: '評分準則',
+    description: '貼題目，AI 出評分指引（參考答案＋評分點）或評分量表（準則×等級），可匯出 Word。',
+    icon: '⚖️',
+    group: '教學',
+    component: RubricGen,
+    status: 'ready',
+  },
+  {
+    id: 'work-dse',
+    selfManagedHeader: true,
+    modes: ['work'],
+    name: 'DSE 操練',
+    description: '按課題出 DSE 公開試風格題目（連評分要點、達標提示），加 DSE 倒數。',
+    icon: '🎓',
+    group: '教學',
+    component: DseDrill,
+    status: 'ready',
+  },
+  {
+    id: 'work-topic-import',
+    selfManagedHeader: true,
+    modes: ['work'],
+    name: '課題匯入',
+    description: '上載官方課程指引／syllabus，AI 抽出課題，一鍵載入做你科嘅課題（對齊真實 DSE）。',
+    icon: '📥',
+    group: '教學',
+    component: TopicImport,
+    status: 'ready',
+  },
+  {
     id: 'work-resources',
     selfManagedHeader: true,
     modes: ['work'],
@@ -448,6 +485,17 @@ export const FEATURES: Feature[] = [
     icon: '📑',
     group: '行政',
     component: DocDigest,
+    status: 'ready',
+  },
+  {
+    id: 'work-transcribe',
+    selfManagedHeader: true,
+    modes: ['work'],
+    name: '錄音轉文字',
+    description: '上載會議／觀課錄音，AI 轉文字、抽重點、列決議同待跟進，可存入會議筆記。',
+    icon: '🎙️',
+    group: '行政',
+    component: Transcribe,
     status: 'ready',
   },
   {

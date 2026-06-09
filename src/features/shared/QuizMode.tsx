@@ -86,7 +86,7 @@ export default function QuizMode() {
             <Swords size={13} className="shrink-0" />
             競技場 · Quiz Arena
           </p>
-          <h1 className="mt-1 font-serif text-[28px] font-semibold leading-none tracking-tight text-slate-800 dark:text-slate-100 sm:text-[32px]">
+          <h1 className="mt-1 text-[28px] font-semibold leading-none tracking-tight text-slate-800 dark:text-slate-100 sm:text-[32px]">
             自我測驗
           </h1>
           <p className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-slate-500 dark:text-slate-400">

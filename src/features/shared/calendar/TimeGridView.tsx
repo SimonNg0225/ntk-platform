@@ -199,7 +199,7 @@ export default function TimeGridView({
               </span>
               <span
                 className={cx(
-                  'flex h-8 w-8 items-center justify-center rounded-full font-serif text-base font-semibold tabular-nums transition',
+                  'flex h-8 w-8 items-center justify-center rounded-full text-base font-semibold tabular-nums transition',
                   isToday
                     ? 'bg-accent text-white shadow-sm shadow-accent/30'
                     : 'text-slate-700 dark:text-slate-200',

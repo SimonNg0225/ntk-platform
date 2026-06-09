@@ -290,7 +290,7 @@ export default function AskData() {
           <FileSearch size={13} className="shrink-0" />
           查詢台 · Inquiry Desk
         </p>
-        <h1 className="mt-1.5 font-serif text-[27px] font-semibold leading-[1.15] tracking-tight text-slate-800 dark:text-slate-100 sm:text-[32px]">
+        <h1 className="mt-1.5 text-[27px] font-semibold leading-[1.15] tracking-tight text-slate-800 dark:text-slate-100 sm:text-[32px]">
           問我嘅資料 AI
         </h1>
         <p className="mt-2 max-w-lg text-sm leading-relaxed text-slate-500 dark:text-slate-400">
@@ -530,7 +530,7 @@ function EvidenceTile({ item }: { item: EvidenceKind }) {
       <div className="min-w-0">
         <p
           className={cx(
-            'font-serif text-[22px] font-semibold leading-none tabular-nums slashed-zero',
+            'text-[22px] font-semibold leading-none tabular-nums slashed-zero',
             empty ? 'text-slate-300 dark:text-slate-600' : tint.num,
           )}
         >

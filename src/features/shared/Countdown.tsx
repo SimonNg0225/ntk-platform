@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import type { LucideIcon } from 'lucide-react'
 import {
   AlarmClock,
@@ -280,6 +281,7 @@ function FilterPill({
 }
 
 export default function Countdown() {
+  const { t } = useTranslation()
   const items = useCollection(countdownsCol)
   const { mode } = useMode()
   const toast = useToast()
@@ -581,7 +583,7 @@ export default function Countdown() {
               <p className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.3em] text-slate-400">
                 <PlaneTakeoff size={13} className="shrink-0" /> Departures · 離境時刻表
               </p>
-              <h1 className="mt-1.5 font-serif text-[28px] font-semibold leading-none tracking-tight text-white sm:text-[34px]">
+              <h1 className="mt-1.5 text-[28px] font-semibold leading-none tracking-tight text-white sm:text-[34px]">
                 重要日子倒數
               </h1>
 
@@ -632,7 +634,7 @@ export default function Countdown() {
                 onClick={() => setSubscribeOpen(true)}
                 className="inline-flex items-center justify-center gap-1.5 rounded-full border border-white/10 bg-white/[0.06] px-3 py-1.5 text-xs font-medium text-slate-300 backdrop-blur transition active:scale-[0.98] hover:bg-white/15 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
               >
-                <Smartphone size={13} /> 訂閱到手機日曆
+                <Smartphone size={13} /> {t('cal.subscribeMobile', { defaultValue: '訂閱到手機日曆' })}
               </button>
             </div>
           </div>
@@ -796,7 +798,7 @@ export default function Countdown() {
                     </p>
                     <h3
                       id="countdown-modal-title"
-                      className="mt-1 font-serif text-2xl font-semibold leading-none tracking-tight text-white"
+                      className="mt-1 text-2xl font-semibold leading-none tracking-tight text-white"
                     >
                       登記新航班
                     </h3>

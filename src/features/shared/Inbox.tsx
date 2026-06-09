@@ -542,9 +542,9 @@ export default function Inbox() {
             <InboxIcon size={12} strokeWidth={2.5} />
             Inbox · 便條桌面
           </p>
-          <h1 className="mt-1.5 flex flex-wrap items-baseline gap-x-2.5 gap-y-0.5 font-serif text-[26px] font-semibold leading-tight tracking-tight text-slate-800 dark:text-slate-100 sm:text-3xl">
+          <h1 className="mt-1.5 flex flex-wrap items-baseline gap-x-2.5 gap-y-0.5 text-[26px] font-semibold leading-tight tracking-tight text-slate-800 dark:text-slate-100 sm:text-3xl">
             快速擷取
-            <span className="font-serif text-base font-normal italic text-slate-400 dark:text-slate-500">
+            <span className="text-base font-normal italic text-slate-400 dark:text-slate-500">
               掉低個諗法
             </span>
           </h1>
@@ -707,7 +707,7 @@ export default function Inbox() {
                 </p>
                 <p
                   className={cx(
-                    'mt-1 font-serif text-[26px] font-semibold leading-none tabular-nums slashed-zero',
+                    'mt-1 text-[26px] font-semibold leading-none tabular-nums slashed-zero',
                     s.hot ? 'text-accent-strong dark:text-accent' : 'text-slate-800 dark:text-slate-100',
                   )}
                 >
@@ -953,7 +953,7 @@ export default function Inbox() {
                   fill="currentColor"
                 />
               </div>
-              <p className="font-serif text-xl font-semibold text-slate-700 dark:text-slate-200">
+              <p className="text-xl font-semibold text-slate-700 dark:text-slate-200">
                 張枱好乾淨
               </p>
               <p className="mt-2 max-w-sm text-sm leading-relaxed text-slate-500 dark:text-slate-400">
@@ -994,11 +994,11 @@ export default function Inbox() {
           {groups.map((g) => (
             <div key={g.key}>
               <div className="mb-2 flex items-baseline gap-3">
-                <span className="font-serif text-base font-semibold tracking-tight text-slate-600 dark:text-slate-300">
+                <span className="text-base font-semibold tracking-tight text-slate-600 dark:text-slate-300">
                   {g.label}
                 </span>
                 <span className="h-px flex-1 bg-gradient-to-r from-slate-200 to-transparent dark:from-slate-700/70" />
-                <span className="font-serif text-xs italic tabular-nums text-slate-400 dark:text-slate-500">
+                <span className="text-xs italic tabular-nums text-slate-400 dark:text-slate-500">
                   {g.rows.length} 件
                 </span>
               </div>
@@ -1391,9 +1391,9 @@ function EventDraftModal({
                 <InboxIcon size={12} strokeWidth={2.5} className="shrink-0" />
                 Inbox · 歸去行事曆
               </p>
-              <h2 className="mt-1 flex flex-wrap items-baseline gap-x-2 font-serif text-[22px] font-semibold leading-tight tracking-tight text-slate-800 dark:text-slate-100 sm:text-[26px]">
+              <h2 className="mt-1 flex flex-wrap items-baseline gap-x-2 text-[22px] font-semibold leading-tight tracking-tight text-slate-800 dark:text-slate-100 sm:text-[26px]">
                 揀個日子
-                <span className="font-serif text-sm font-normal italic text-slate-400 dark:text-slate-500">
+                <span className="text-sm font-normal italic text-slate-400 dark:text-slate-500">
                   畀張便條落腳
                 </span>
               </h2>
@@ -1421,7 +1421,7 @@ function EventDraftModal({
               <KIND_ICON.event size={16} />
             </span>
             <div className="min-w-0 flex-1">
-              <p className="whitespace-pre-wrap break-words font-serif text-[15px] leading-relaxed text-slate-800 dark:text-slate-100">
+              <p className="whitespace-pre-wrap break-words text-[15px] leading-relaxed text-slate-800 dark:text-slate-100">
                 {title}
               </p>
               {tags.length > 0 && (

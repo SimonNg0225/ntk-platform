@@ -568,9 +568,9 @@ export default function Editor({
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder="畀個標題…"
-          className="relative w-full bg-transparent font-serif text-2xl font-semibold tracking-tight text-slate-800 outline-none placeholder:text-slate-300 dark:text-slate-100 dark:placeholder:text-slate-600"
+          className="relative w-full bg-transparent text-2xl font-semibold tracking-tight text-slate-800 outline-none placeholder:text-slate-300 dark:text-slate-100 dark:placeholder:text-slate-600"
         />
-        <div className="relative mb-3 mt-1 font-serif text-[11px] italic tabular-nums text-slate-400 dark:text-slate-500">
+        <div className="relative mb-3 mt-1 text-[11px] italic tabular-nums text-slate-400 dark:text-slate-500">
           起稿於 {fullDateTime(note.createdAt)}
         </div>
 

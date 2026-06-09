@@ -220,7 +220,7 @@ function LedgerStat({
       </p>
       <p
         className={cx(
-          'mt-1 font-serif text-[26px] font-semibold leading-none tabular-nums slashed-zero',
+          'mt-1 text-[26px] font-semibold leading-none tabular-nums slashed-zero',
           hot
             ? 'text-accent-strong dark:text-accent'
             : 'text-slate-800 dark:text-slate-100',
@@ -584,7 +584,7 @@ export default function ParentComms() {
         {/* 右上「郵戳」裝飾（純裝飾，唔搶主次） */}
         <span
           aria-hidden
-          className="pointer-events-none absolute -right-7 top-4 hidden -rotate-[8deg] select-none flex-col items-center rounded-full border-2 border-dashed border-accent/20 px-5 py-3 font-serif text-[10px] font-semibold uppercase tracking-[0.3em] text-accent/25 dark:border-accent/25 dark:text-accent/25 sm:flex"
+          className="pointer-events-none absolute -right-7 top-4 hidden -rotate-[8deg] select-none flex-col items-center rounded-full border-2 border-dashed border-accent/20 px-5 py-3 text-[10px] font-semibold uppercase tracking-[0.3em] text-accent/25 dark:border-accent/25 dark:text-accent/25 sm:flex"
         >
           <Send size={16} className="mb-0.5" />
           家校通訊
@@ -595,7 +595,7 @@ export default function ParentComms() {
               <Mail size={13} />
               通訊錄 · Correspondence
             </p>
-            <h1 className="mt-1.5 font-serif text-[28px] font-semibold leading-none tracking-tight text-slate-800 dark:text-slate-100 sm:text-[34px]">
+            <h1 className="mt-1.5 text-[28px] font-semibold leading-none tracking-tight text-slate-800 dark:text-slate-100 sm:text-[34px]">
               家長溝通
             </h1>
             <p className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-slate-500 dark:text-slate-400">
@@ -1262,12 +1262,12 @@ function TimelineView({
                   : 'bg-slate-300 dark:bg-slate-600',
               )}
             />
-            <h3 className="font-serif text-base font-semibold tracking-tight text-slate-700 dark:text-slate-200">
+            <h3 className="text-base font-semibold tracking-tight text-slate-700 dark:text-slate-200">
               {longDateLabel(date)}
             </h3>
             {date === today && <Badge tone="accent">今日</Badge>}
             <span className="h-px flex-1 translate-y-[-3px] bg-gradient-to-r from-slate-200 to-transparent dark:from-slate-700/70" />
-            <span className="translate-y-[-3px] font-serif text-xs italic tabular-nums text-slate-400">
+            <span className="translate-y-[-3px] text-xs italic tabular-nums text-slate-400">
               {list.length} 封
             </span>
           </div>
@@ -1819,7 +1819,7 @@ function StudentsView({
             )}
             <div className="flex items-start justify-between gap-2">
               <div className="flex min-w-0 items-center gap-2.5">
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-100 font-serif text-sm font-semibold text-slate-500 dark:bg-slate-700/60 dark:text-slate-300">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-100 text-sm font-semibold text-slate-500 dark:bg-slate-700/60 dark:text-slate-300">
                   {s.name.trim().charAt(0) || '?'}
                 </span>
                 <div className="min-w-0">

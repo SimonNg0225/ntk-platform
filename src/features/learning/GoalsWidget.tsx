@@ -270,7 +270,7 @@ export default function GoalsWidget() {
             <Mountain size={13} className="shrink-0" />
             攀登誌 · Summit Log
           </p>
-          <h1 className="mt-1 font-serif text-2xl font-semibold leading-tight tracking-tight text-slate-800 dark:text-slate-100 sm:text-[28px]">
+          <h1 className="mt-1 text-2xl font-semibold leading-tight tracking-tight text-slate-800 dark:text-slate-100 sm:text-[28px]">
             個人目標
           </h1>
           <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">
@@ -463,7 +463,7 @@ function BaseCamp({
             <Mountain size={13} />
             攀登中
           </p>
-          <h2 className="mt-2 font-serif text-2xl font-semibold leading-tight tracking-tight sm:text-[28px]">
+          <h2 className="mt-2 text-2xl font-semibold leading-tight tracking-tight sm:text-[28px]">
             {done === total && total > 0 ? '全員登頂' : `攀緊 ${active} 座山`}
           </h2>
           <p className="mt-1.5 max-w-md text-sm leading-relaxed text-white/75">{summitLine}</p>
@@ -472,17 +472,17 @@ function BaseCamp({
           <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-white/80">
             <span className="inline-flex items-center gap-1.5">
               <Flag size={13} className="text-white/60" />
-              <span className="font-serif text-base font-semibold tabular-nums">{total}</span> 個山頭
+              <span className="text-base font-semibold tabular-nums">{total}</span> 個山頭
             </span>
             <span aria-hidden="true" className="h-3 w-px bg-white/20" />
             <span className="inline-flex items-center gap-1.5">
               <CheckCircle2 size={13} className="text-white/60" />
-              <span className="font-serif text-base font-semibold tabular-nums">{done}</span> 已登頂
+              <span className="text-base font-semibold tabular-nums">{done}</span> 已登頂
             </span>
             <span aria-hidden="true" className="h-3 w-px bg-white/20" />
             <span className="inline-flex items-center gap-1.5">
               <Footprints size={13} className="text-white/60" />
-              本週行咗 <span className="font-serif text-base font-semibold tabular-nums">{checkinDays}</span> 日
+              本週行咗 <span className="text-base font-semibold tabular-nums">{checkinDays}</span> 日
             </span>
           </div>
         </div>
@@ -620,7 +620,7 @@ function ListView({ items, onOpen }: { items: EnrichedGoal[]; onOpen: (id: strin
                     )}
                   </div>
                 </div>
-                <span className={cx('shrink-0 font-serif text-lg font-semibold tabular-nums', isDone ? 'text-emerald-500' : 'text-accent')}>{e.progress}%</span>
+                <span className={cx('shrink-0 text-lg font-semibold tabular-nums', isDone ? 'text-emerald-500' : 'text-accent')}>{e.progress}%</span>
                 <ChevronRight size={16} className="shrink-0 text-slate-300 transition-transform duration-200 group-hover:translate-x-0.5 dark:text-slate-600" />
               </div>
             </button>
@@ -677,7 +677,7 @@ function GoalCard({ e, onOpen, index }: { e: EnrichedGoal; onOpen: (id: string) 
         <AscentTrail progress={e.progress} milestones={e.milestones} isDone={isDone} />
         <div className="mt-2 flex items-baseline justify-between">
           <span className="text-[11px] font-medium uppercase tracking-wide text-slate-400 dark:text-slate-500">海拔</span>
-          <span className={cx('font-serif text-xl font-semibold leading-none tabular-nums', isDone ? 'text-emerald-500' : 'text-accent')}>
+          <span className={cx('text-xl font-semibold leading-none tabular-nums', isDone ? 'text-emerald-500' : 'text-accent')}>
             {e.progress}<span className="ml-0.5 text-xs font-sans font-medium text-slate-400">%</span>
           </span>
         </div>
@@ -791,7 +791,7 @@ function InsightsView({
 
       <Card className="rounded-3xl p-4 sm:p-5">
         <SectionTitle icon={TrendingUp}>各路線平均海拔</SectionTitle>
-        <p className="mb-3 text-xs text-slate-400">整體平均海拔 <span className="font-serif text-sm font-semibold tabular-nums text-accent">{avg}%</span></p>
+        <p className="mb-3 text-xs text-slate-400">整體平均海拔 <span className="text-sm font-semibold tabular-nums text-accent">{avg}%</span></p>
         <CategoryBars rows={categoryRows} />
       </Card>
     </div>

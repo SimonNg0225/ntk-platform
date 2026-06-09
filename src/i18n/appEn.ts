@@ -30,6 +30,9 @@ export const appEn = {
     backOverview: 'Back to overview',
     backToMode: 'Back to {{mode}} overview',
     loading: 'Loading…',
+    collapseSidebar: 'Collapse sidebar (⌘B)',
+    hideSidebar: 'Hide sidebar (⌘B)',
+    expandSidebar: 'Expand sidebar (⌘B)',
     soon: 'Soon',
     comingSoon: 'Coming soon',
     brandSub: 'Teacher workspace · growth',
@@ -116,5 +119,69 @@ export const appEn = {
     inbox: { name: 'Quick capture', desc: 'Drop a thought in a second; turn it into a task or note later.' },
     countdown: { name: 'Countdowns', desc: 'Big-number countdowns to exams, deadlines and assessments.' },
     quiz: { name: 'Self-quiz', desc: 'Pull MC from the bank, auto-mark, score and weakness analysis.' },
+  },
+
+  // ── 訂閱到手機日曆（CalendarSubscribe）──
+  calSub: {
+    kicker: 'On the go · Subscribe',
+    title: 'Subscribe on your phone',
+    close: 'Close',
+    needCloudTitle: 'Connect the cloud to subscribe',
+    needCloudBody:
+      'A subscribed calendar needs a cloud feed so your phone / iPad can sync on a schedule and fire native reminders. This device isn’t connected to the cloud yet — for now, use “Export .ics” on the calendar page to import once.',
+    signInTitle: 'Sign in to subscribe',
+    signInBody:
+      'Once you sign in you get a personal link. Subscribe once on your phone / iPad and your calendar and countdowns sync automatically and remind you natively, right on time.',
+    signInGoogle: 'Sign in with Google',
+    noUrlTitle: 'Can’t build the link right now',
+    noUrlBody:
+      'Couldn’t read the cloud URL setting (VITE_SUPABASE_URL). Please check the deployment settings and try again.',
+    intro:
+      'On iPhone / iPad, tap the link below to subscribe. Your calendar events and countdowns then sync into Apple Calendar and notify you with native reminders on time.',
+    yourLink: 'Your subscription link',
+    copy: 'Copy link',
+    openApple: 'Open on Apple device',
+    stepsHeader: 'Subscribe on iPhone / iPad',
+    step1:
+      'On your iPhone / iPad, tap the link above → a “Subscribe to Calendar” prompt appears → tap “Subscribe”.',
+    step2:
+      'Or manually: open Settings → Calendar → Accounts → Add Account → Add Subscribed Calendar, then paste the link.',
+    step3:
+      'Once subscribed, Apple Calendar fires native reminders on time (how early follows the alert you set on each event).',
+    securityNote:
+      'The link is read-only and only exposes your own event titles and times. If you think it has leaked, regenerate it any time — the old link stops working immediately.',
+    regenerate: 'Regenerate link',
+    copied: 'Link copied',
+    copyFailed: 'Copy failed — long-press the link to copy manually',
+    regenTitle: 'Regenerate the link?',
+    regenMsg:
+      'The old link stops working immediately. If you already subscribed on your phone / iPad, remove the old subscription and re-subscribe with the new link.',
+    regenConfirm: 'Regenerate',
+    regenDone: 'New link created; the old link no longer works',
+  },
+
+  // ── 行事曆 / 倒數頁入口掣 ──
+  cal: {
+    subscribeMobile: 'Subscribe on phone',
+  },
+
+  // ── 快速加入：重複偵測（QuickAddModal）──
+  qadd: {
+    repeat: 'Repeat',
+    recurNone: 'No repeat',
+    recurDaily: 'Daily',
+    recurWeekly: 'Weekly',
+    daily: 'Daily',
+    everyNDays: 'Every {{n}} days',
+    weekly: 'Weekly',
+    everyNWeeks: 'Every {{n}} weeks',
+    wdSep: ', ',
+    wd0: 'Sun',
+    wd1: 'Mon',
+    wd2: 'Tue',
+    wd3: 'Wed',
+    wd4: 'Thu',
+    wd5: 'Fri',
+    wd6: 'Sat',
   },
 }

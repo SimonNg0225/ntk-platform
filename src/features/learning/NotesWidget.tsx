@@ -450,11 +450,11 @@ export default function NotesWidget() {
               <NotebookIcon size={12} />
               手稿 · Manuscript
             </p>
-            <h1 className="mt-1.5 font-serif text-[30px] font-semibold leading-none tracking-tight text-slate-800 dark:text-slate-100 sm:text-4xl">
+            <h1 className="mt-1.5 text-[30px] font-semibold leading-none tracking-tight text-slate-800 dark:text-slate-100 sm:text-4xl">
               個人筆記
             </h1>
             {/* 版權頁式 colophon */}
-            <p className="mt-2.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 font-serif text-sm italic text-slate-500 dark:text-slate-400">
+            <p className="mt-2.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-sm italic text-slate-500 dark:text-slate-400">
               <span className="tabular-nums">{counts.all} 則手記</span>
               <span aria-hidden="true" className="not-italic text-amber-400/70 dark:text-amber-500/50">·</span>
               <span className="tabular-nums">親手寫落 {stats.totalWords.toLocaleString()} 字</span>
@@ -574,7 +574,7 @@ export default function NotesWidget() {
                     <it.icon size={15} className="shrink-0" />
                     <span className="flex-1 text-left">{it.label}</span>
                     {it.count > 0 && (
-                      <span className="font-serif text-xs tabular-nums text-slate-400 dark:text-slate-500">
+                      <span className="text-xs tabular-nums text-slate-400 dark:text-slate-500">
                         {it.count}
                       </span>
                     )}
@@ -621,7 +621,7 @@ export default function NotesWidget() {
             </div>
             <nav className="space-y-0.5">
               {notebooks.length === 0 && (
-                <p className="px-3 py-1.5 font-serif text-xs italic text-slate-400 dark:text-slate-500">
+                <p className="px-3 py-1.5 text-xs italic text-slate-400 dark:text-slate-500">
                   撳上面 ＋，開一卷收納相關手記。
                 </p>
               )}
@@ -647,7 +647,7 @@ export default function NotesWidget() {
                   >
                     <span className={cx('h-2.5 w-2.5 shrink-0 rounded-full ring-2 ring-white dark:ring-slate-800', c.dot)} />
                     <span className="flex-1 truncate text-left">{nb.name}</span>
-                    <span className="font-serif text-xs tabular-nums text-slate-400 dark:text-slate-500">
+                    <span className="text-xs tabular-nums text-slate-400 dark:text-slate-500">
                       {notebookCounts.get(nb.id) ?? 0}
                     </span>
                   </button>
@@ -915,7 +915,7 @@ export default function NotesWidget() {
                 <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-accent-soft text-accent-strong shadow-sm dark:bg-accent/15 dark:text-accent">
                   <PenLine size={24} />
                 </span>
-                <p className="mt-4 font-serif text-lg font-semibold text-slate-700 dark:text-slate-200">
+                <p className="mt-4 text-lg font-semibold text-slate-700 dark:text-slate-200">
                   攤開一頁，由呢度書寫
                 </p>
                 <p className="mt-1.5 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
@@ -1056,7 +1056,7 @@ function NoteRow({
             {note.favorite && (
               <Star size={12} className="shrink-0 fill-current text-amber-500" />
             )}
-            <span className="truncate font-serif text-[16px] font-semibold leading-snug text-slate-800 dark:text-slate-100">
+            <span className="truncate text-[16px] font-semibold leading-snug text-slate-800 dark:text-slate-100">
               {title}
             </span>
           </div>
@@ -1093,7 +1093,7 @@ function NoteRow({
         {tags.length > (grid ? 4 : 2) && (
           <span className="text-[10px] text-slate-400">+{tags.length - (grid ? 4 : 2)}</span>
         )}
-        <span className="ml-auto font-serif text-[11px] italic tabular-nums text-slate-400 dark:text-slate-500">
+        <span className="ml-auto text-[11px] italic tabular-nums text-slate-400 dark:text-slate-500">
           {relativeTime(note.updatedAt)}
         </span>
       </div>
@@ -1209,7 +1209,7 @@ function NoteBoard({
               <span className="flex-1 truncate text-sm font-semibold text-slate-700 dark:text-slate-200">
                 {col.name}
               </span>
-              <span className="font-serif text-xs tabular-nums text-slate-400 dark:text-slate-500">
+              <span className="text-xs tabular-nums text-slate-400 dark:text-slate-500">
                 {items.length}
               </span>
             </div>
@@ -1346,7 +1346,7 @@ function StatsHeading({
   return (
     <span
       className={cx(
-        'flex items-center gap-2 font-serif text-sm font-semibold text-slate-700 dark:text-slate-200',
+        'flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-200',
         className,
       )}
     >

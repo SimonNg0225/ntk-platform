@@ -64,7 +64,7 @@ export default function Fitness() {
                 {/* 頻道號碼（記分牌頻道感） */}
                 <span
                   className={cx(
-                    'font-serif text-base font-semibold leading-none tabular-nums slashed-zero transition',
+                    'text-base font-semibold leading-none tabular-nums slashed-zero transition',
                     on ? 'text-white/80' : 'text-slate-300 group-hover:text-slate-400 dark:text-slate-600',
                   )}
                   aria-hidden="true"
@@ -155,7 +155,7 @@ function Scoreboard({
         <div className="mt-4 flex flex-wrap items-end justify-between gap-x-6 gap-y-4">
           {/* 主顯示：粗大記分牌字 */}
           <div className="min-w-0">
-            <p className="font-serif text-[2.75rem] font-black leading-[0.92] tracking-tight sm:text-6xl">
+            <p className="text-[2.75rem] font-black leading-[0.92] tracking-tight sm:text-6xl">
               健身中心
             </p>
             <p className="mt-2 max-w-md text-sm text-white/70">
@@ -173,8 +173,8 @@ function Scoreboard({
                 <CurrentIcon size={18} />
               </span>
               <div>
-                <p className="text-lg font-semibold leading-none">{current.label}</p>
-                <p className="mt-1 font-serif text-xs font-semibold uppercase tracking-[0.18em] text-white/55">
+                <p className="text-lg font-bold leading-none">{current.label}</p>
+                <p className="mt-1 text-xs font-semibold uppercase tracking-[0.18em] text-white/55">
                   {current.en}
                 </p>
               </div>
@@ -201,7 +201,7 @@ function Scoreboard({
                 >
                   <span
                     className={cx(
-                      'font-serif tabular-nums slashed-zero',
+                      'tabular-nums slashed-zero',
                       on ? 'text-accent-strong' : 'text-white/45',
                     )}
                   >

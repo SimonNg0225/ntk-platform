@@ -233,12 +233,12 @@ export default function StudentProfile({
             <span className="text-[8px] font-semibold uppercase tracking-[0.15em] opacity-60">
               No.
             </span>
-            <span className="font-serif text-lg font-semibold leading-none tabular-nums slashed-zero">
+            <span className="text-lg font-bold leading-none tabular-nums slashed-zero">
               {studentNo.trim() || initials(displayName)}
             </span>
           </span>
           <div className="min-w-0 flex-1">
-            <h2 className="truncate font-serif text-[24px] font-semibold leading-none tracking-tight text-slate-800 dark:text-slate-100 sm:text-[28px]">
+            <h2 className="truncate text-[24px] font-semibold leading-none tracking-tight text-slate-800 dark:text-slate-100 sm:text-[28px]">
               {displayName}
             </h2>
             <p className="mt-1.5 flex flex-wrap items-center gap-1.5">
@@ -424,7 +424,7 @@ function CardSection({
       <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
         <I size={13} />
       </span>
-      <span className="shrink-0 font-serif text-sm font-semibold tracking-tight text-slate-700 dark:text-slate-200">
+      <span className="shrink-0 text-sm font-semibold tracking-tight text-slate-700 dark:text-slate-200">
         {children}
       </span>
       <span className="h-px flex-1 bg-slate-200/80 dark:bg-slate-700/60" aria-hidden />
@@ -488,7 +488,7 @@ function Overview({
           <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
             <MessageSquare size={13} />
           </span>
-          <span className="shrink-0 font-serif text-sm font-semibold tracking-tight text-slate-700 dark:text-slate-200">
+          <span className="shrink-0 text-sm font-semibold tracking-tight text-slate-700 dark:text-slate-200">
             家長 / 學生溝通
           </span>
           <span className="h-px flex-1 bg-slate-200/80 dark:bg-slate-700/60" aria-hidden />
@@ -565,7 +565,7 @@ function MiniStat({
           <I size={14} />
         </span>
       </div>
-      <p className="mt-1.5 font-serif text-[26px] font-semibold leading-none tabular-nums slashed-zero text-slate-800 dark:text-slate-100">
+      <p className="mt-1.5 text-[26px] font-semibold leading-none tabular-nums slashed-zero text-slate-800 dark:text-slate-100">
         {value}
       </p>
       <p className="mt-1 text-[11px] text-slate-400 dark:text-slate-500">{hint}</p>

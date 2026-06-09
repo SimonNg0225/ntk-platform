@@ -346,7 +346,7 @@ export default function EventEditor({
                 {editing ? <PenLine size={12} className="shrink-0" /> : <CalendarPlus size={12} className="shrink-0" />}
                 {editing ? '日程一則 · Entry' : '新一則 · New Entry'}
               </p>
-              <h2 className="mt-1 font-serif text-[22px] font-semibold leading-tight tracking-tight text-slate-800 dark:text-slate-100 sm:text-[26px]">
+              <h2 className="mt-1 text-[22px] font-semibold leading-tight tracking-tight text-slate-800 dark:text-slate-100 sm:text-[26px]">
                 {editing ? '編輯活動' : '新增活動'}
               </h2>
             </div>
@@ -372,7 +372,7 @@ export default function EventEditor({
             onChange={(e) => setTitle(e.target.value)}
             placeholder="想安排啲咩？"
             autoFocus
-            className="w-full border-0 border-b border-slate-200 bg-transparent pb-2 font-serif text-lg font-semibold text-slate-800 outline-none transition-colors placeholder:font-normal placeholder:text-slate-400 focus:border-accent dark:border-slate-700 dark:text-slate-100 dark:placeholder:text-slate-500 sm:text-xl"
+            className="w-full border-0 border-b border-slate-200 bg-transparent pb-2 text-lg font-semibold text-slate-800 outline-none transition-colors placeholder:font-normal placeholder:text-slate-400 focus:border-accent dark:border-slate-700 dark:text-slate-100 dark:placeholder:text-slate-500 sm:text-xl"
           />
         </div>
 
@@ -596,7 +596,7 @@ export default function EventEditor({
             )}
           >
             <span aria-hidden className={cx('absolute inset-y-1.5 left-0 w-1 rounded-full', colorOf(cat?.color).dot)} />
-            <p className="truncate font-serif text-sm font-semibold">
+            <p className="truncate text-sm font-semibold">
               {title.trim() || '未命名活動'}
             </p>
             <div className="mt-1 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[11px] font-medium opacity-80">
@@ -639,7 +639,7 @@ export default function EventEditor({
               <Repeat size={12} className="shrink-0" />
               重複系列 · Series
             </p>
-            <h3 className="mt-1 font-serif text-lg font-semibold leading-tight text-slate-800 dark:text-slate-100">
+            <h3 className="mt-1 text-lg font-semibold leading-tight text-slate-800 dark:text-slate-100">
               {scopeAction === 'delete' ? '刪除重複活動' : '更新重複活動'}
             </h3>
             <p className="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-300">

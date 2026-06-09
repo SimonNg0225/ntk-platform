@@ -48,21 +48,68 @@ export function packTopics(pack: SubjectPack): Topic[] {
 // ── 各科起始大綱 ──────────────────────────────────────────────
 const CORE = '必修'
 
+// 經濟 — 對齊官方課程及評估指引（必修主題 A–J + 選修單元一/二），中英對照
+const ECON_E1 = '選修（單元一）'
+const ECON_E2 = '選修（單元二）'
 const ECON: OutlineRow[] = [
-  [CORE, '基本經濟概念', '稀少性、選擇與機會成本'],
-  [CORE, '基本經濟概念', '生產可能性曲線'],
-  [CORE, '廠商與生產', '生產要素與分工'],
-  [CORE, '廠商與生產', '成本、收益與利潤'],
-  [CORE, '市場與價格', '需求、供給與市場均衡'],
-  [CORE, '市場與價格', '彈性'],
-  [CORE, '市場與價格', '價格管制與稅項'],
-  [CORE, '市場結構', '完全競爭與壟斷'],
-  [CORE, '國民收入與經濟表現', '國民收入計算（GDP）'],
-  [CORE, '國民收入與經濟表現', '通脹、失業與經濟增長'],
-  [CORE, '貨幣與銀行', '貨幣功能與銀行體系'],
-  [CORE, '政府與經濟', '財政政策與貨幣政策'],
-  [CORE, '國際貿易與金融', '比較優勢與貿易'],
-  [CORE, '國際貿易與金融', '匯率與國際收支'],
+  // ── 必修部分 ──
+  [CORE, 'A 基本經濟概念 Basic Economic Concepts', '稀少性、選擇與機會成本 Scarcity, choice & opportunity cost'],
+  [CORE, 'A 基本經濟概念 Basic Economic Concepts', '三個基本經濟問題 The three basic economic problems'],
+  [CORE, 'A 基本經濟概念 Basic Economic Concepts', '專業化與交換 Specialization & exchange'],
+  [CORE, 'A 基本經濟概念 Basic Economic Concepts', '經濟活動的循環流轉 Circular flow of economic activities'],
+  [CORE, 'A 基本經濟概念 Basic Economic Concepts', '實證與規範表述 Positive & normative statements'],
+
+  [CORE, 'B 廠商與生產 Firms and Production', '企業擁有權 Ownership of firms'],
+  [CORE, 'B 廠商與生產 Firms and Production', '生產的類型與階段 Types/stages of production'],
+  [CORE, 'B 廠商與生產 Firms and Production', '分工 Division of labour'],
+  [CORE, 'B 廠商與生產 Firms and Production', '生產要素 Factors of production'],
+  [CORE, 'B 廠商與生產 Firms and Production', '短期與長期的生產與成本 Production & costs (short/long run)'],
+  [CORE, 'B 廠商與生產 Firms and Production', '廠商的目標 The objectives of firms'],
+
+  [CORE, 'C 市場與價格 Market and Price', '需求 Demand'],
+  [CORE, 'C 市場與價格 Market and Price', '供給 Supply'],
+  [CORE, 'C 市場與價格 Market and Price', '需求、供給與價格的互動 Interaction of demand, supply & price'],
+  [CORE, 'C 市場與價格 Market and Price', '消費者及生產者盈餘 Consumer & producer surplus'],
+  [CORE, 'C 市場與價格 Market and Price', '價格的功能 Functions of prices'],
+  [CORE, 'C 市場與價格 Market and Price', '需求與供給彈性 Price elasticity of demand & supply'],
+  [CORE, 'C 市場與價格 Market and Price', '市場干預 Market intervention'],
+
+  [CORE, 'D 市場結構 Market Structure', '市場結構（完全競爭、壟斷等）Market structures (perfect competition, monopoly…)'],
+
+  [CORE, 'E 效率、公平與政府角色 Efficiency, Equity & Role of Government', '效率 Efficiency'],
+  [CORE, 'E 效率、公平與政府角色 Efficiency, Equity & Role of Government', '公平 Equity'],
+  [CORE, 'E 效率、公平與政府角色 Efficiency, Equity & Role of Government', '政府的角色與政策關注 Role of government & policy concerns'],
+
+  [CORE, 'F 經濟表現的量度 Measurement of Economic Performance', '國民收入（GDP、GNI）National income (GDP & GNI)'],
+  [CORE, 'F 經濟表現的量度 Measurement of Economic Performance', '物價指數 Price indices'],
+
+  [CORE, 'G 國民收入決定與物價水平 National Income Determination & Price Level', '總需求 Aggregate demand (AD)'],
+  [CORE, 'G 國民收入決定與物價水平 National Income Determination & Price Level', '總供給 Aggregate supply (AS)'],
+  [CORE, 'G 國民收入決定與物價水平 National Income Determination & Price Level', '產出與物價水平的決定 Determination of output & price level'],
+
+  [CORE, 'H 貨幣與銀行 Money and Banking', '貨幣 Money'],
+  [CORE, 'H 貨幣與銀行 Money and Banking', '銀行：功能與服務 Banks: functions & services'],
+  [CORE, 'H 貨幣與銀行 Money and Banking', '貨幣供應 Money supply'],
+  [CORE, 'H 貨幣與銀行 Money and Banking', '利率的決定 Determination of interest rate'],
+  [CORE, 'H 貨幣與銀行 Money and Banking', '香港作為金融中心 Hong Kong as a financial centre'],
+
+  [CORE, 'I 宏觀經濟問題與政策 Macroeconomic Problems & Policies', '經濟波動 Business fluctuations'],
+  [CORE, 'I 宏觀經濟問題與政策 Macroeconomic Problems & Policies', '通脹與通縮 Inflation & deflation'],
+  [CORE, 'I 宏觀經濟問題與政策 Macroeconomic Problems & Policies', '失業 Unemployment'],
+  [CORE, 'I 宏觀經濟問題與政策 Macroeconomic Problems & Policies', '財政政策 Fiscal policy'],
+  [CORE, 'I 宏觀經濟問題與政策 Macroeconomic Problems & Policies', '貨幣政策 Monetary policy'],
+
+  [CORE, 'J 國際貿易與金融 International Trade and Finance', '自由貿易與貿易壁壘 Free trade & trade barriers'],
+  [CORE, 'J 國際貿易與金融 International Trade and Finance', '國際收支平衡帳 Balance of payments account'],
+  [CORE, 'J 國際貿易與金融 International Trade and Finance', '匯率 Exchange rate'],
+
+  // ── 選修單元（二選一）──
+  [ECON_E1, '單元一 壟斷定價、反競爭行為及競爭政策 Monopoly Pricing, Anti-competitive Behaviours & Competition Policy', '壟斷定價 Monopoly pricing'],
+  [ECON_E1, '單元一 壟斷定價、反競爭行為及競爭政策 Monopoly Pricing, Anti-competitive Behaviours & Competition Policy', '反競爭行為 Anti-competitive behaviours'],
+  [ECON_E1, '單元一 壟斷定價、反競爭行為及競爭政策 Monopoly Pricing, Anti-competitive Behaviours & Competition Policy', '競爭政策 Competition policy'],
+
+  [ECON_E2, '單元二 貿易理論之延伸、經濟增長與發展 Extension of Trade Theory, Economic Growth & Development', '貿易理論之延伸 Extension of trade theory'],
+  [ECON_E2, '單元二 貿易理論之延伸、經濟增長與發展 Extension of Trade Theory, Economic Growth & Development', '經濟增長與發展 Economic growth & development'],
 ]
 
 const CHIN: OutlineRow[] = [

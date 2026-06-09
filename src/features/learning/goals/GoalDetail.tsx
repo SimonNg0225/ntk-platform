@@ -241,7 +241,7 @@ export default function GoalDetail({
               </span>
             </div>
             <div className="min-w-0 flex-1">
-              <h3 className="font-serif text-xl font-semibold leading-tight tracking-tight text-slate-800 dark:text-slate-100">
+              <h3 className="text-xl font-semibold leading-tight tracking-tight text-slate-800 dark:text-slate-100">
                 {goal.title}
               </h3>
               <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
@@ -271,7 +271,7 @@ export default function GoalDetail({
               <Footprints size={13} className="text-slate-400" />
               海拔 · {altitudeLabel(progress, progress >= 100)}
             </span>
-            <span className={cx('font-serif text-2xl font-semibold leading-none tabular-nums', progress >= 100 ? 'text-emerald-500' : 'text-accent')}>
+            <span className={cx('text-2xl font-semibold leading-none tabular-nums', progress >= 100 ? 'text-emerald-500' : 'text-accent')}>
               {progress}<span className="ml-0.5 align-top font-sans text-sm font-medium text-slate-400">%</span>
             </span>
           </div>
@@ -337,7 +337,7 @@ export default function GoalDetail({
                   <span
                     aria-hidden="true"
                     className={cx(
-                      'inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full font-serif text-[11px] font-semibold tabular-nums',
+                      'inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold tabular-nums',
                       m.done
                         ? 'bg-emerald-500 text-white'
                         : 'bg-slate-100 text-slate-400 dark:bg-slate-700 dark:text-slate-500',
@@ -435,7 +435,7 @@ export default function GoalDetail({
               {[...checkins].reverse().map((c) => (
                 <li key={c.id} className="group flex items-start gap-3 rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-700">
                   <span className="mt-0.5 flex h-8 w-12 shrink-0 flex-col items-center justify-center rounded-md bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
-                    <span className="font-serif text-sm font-semibold leading-none tabular-nums">{c.progress}%</span>
+                    <span className="text-sm font-semibold leading-none tabular-nums">{c.progress}%</span>
                     <span className="mt-0.5 text-[8px] font-medium uppercase tracking-wide opacity-70">海拔</span>
                   </span>
                   <div className="min-w-0 flex-1">

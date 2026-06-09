@@ -296,7 +296,7 @@ export default function PlanEditor({
               <p className="text-[11px] font-medium uppercase tracking-[0.3em] text-accent-soft/90">
                 {mode === 'edit' ? '修訂備課' : '課堂備課表'}
               </p>
-              <h2 className="mt-0.5 truncate font-serif text-[22px] font-semibold leading-tight tracking-tight text-white sm:text-2xl">
+              <h2 className="mt-0.5 truncate text-[22px] font-semibold leading-tight tracking-tight text-white sm:text-2xl">
                 {d.title.trim() || (mode === 'edit' ? '編輯教案' : '新增教案')}
               </h2>
               {/* 粉筆情境行：班別 · 課題 · 日期 · 時長 */}
@@ -594,7 +594,7 @@ export default function PlanEditor({
                       <div className="flex items-start gap-2">
                         {/* 環節序號 + 排序握把（白堊節數）*/}
                         <div className="flex flex-col items-center gap-1 pt-0.5">
-                          <span className="flex h-6 w-6 items-center justify-center rounded-md bg-slate-100 font-serif text-xs font-semibold tabular-nums text-slate-500 ring-1 ring-inset ring-slate-200/80 dark:bg-slate-700/70 dark:text-slate-300 dark:ring-slate-600/60">
+                          <span className="flex h-6 w-6 items-center justify-center rounded-md bg-slate-100 text-xs font-semibold tabular-nums text-slate-500 ring-1 ring-inset ring-slate-200/80 dark:bg-slate-700/70 dark:text-slate-300 dark:ring-slate-600/60">
                             {i + 1}
                           </span>
                           <button
@@ -825,7 +825,7 @@ function SectionHeading({
           <I size={12} className="text-accent/70" />
           {kicker}
         </p>
-        <h3 className="mt-0.5 font-serif text-[15px] font-semibold tracking-tight text-slate-800 dark:text-slate-100">
+        <h3 className="mt-0.5 text-[15px] font-semibold tracking-tight text-slate-800 dark:text-slate-100">
           {title}
         </h3>
       </div>

@@ -33,8 +33,6 @@ export default {
           'sans-serif',
         ],
         mono: ['ui-monospace', '"SF Mono"', 'Menlo', 'monospace'],
-        // Fraunces：文學感 serif，目前只有個人日誌用（masthead / 日期 / 標題 / 大數字）。
-        serif: ['Fraunces', 'Georgia', '"Times New Roman"', 'serif'],
       },
       fontSize: {
         // Apple / SF Pro 風字距：字越大、負字距越多（招牌 tight tracking）。
