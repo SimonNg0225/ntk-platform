@@ -1,4 +1,4 @@
-import { Suspense, useEffect, useState, type ReactNode } from 'react'
+import { Suspense, useEffect, useRef, useState, type ReactNode } from 'react'
 import { PanelLeft } from 'lucide-react'
 import { ModeProvider, useMode } from './context/ModeContext'
 import { AuthProvider } from './context/AuthContext'
