@@ -6,6 +6,7 @@
 <title>貨櫃 PO 匯入工具</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/fflate@0.8.2/umd/index.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
   :root{ --accent:#4f46e5; --accent-d:#3730a3; --bg:#f4f7fb; --ink:#1e293b; --muted:#64748b; --border:#e2e8f0; --ok:#047857; --okbg:#ecfdf5; --warn:#b45309; --warnbg:#fffbeb; --err:#be123c; --errbg:#fff1f2; }
   *{box-sizing:border-box;margin:0;padding:0;}
@@ -97,20 +98,30 @@ function literalValue(cell) {
     if ('result' in v) r = v.result
     else if (v.richText) r = v.richText.map((t) => t.text).join('')
     else if ('text' in v) r = v.text
-    else return null
+    else r = undefined
   } else r = v
-  if (r != null && typeof r === 'object' && !(r instanceof Date)) {
-    if (r.richText) r = r.richText.map((t) => t.text).join('')
-    else if (r.text != null) r = r.text
-    else return null
+  // 公式無 result / error 物件 / null → 用 ExcelJS 計到嘅顯示文字補返（日期/數字唔受影響）
+  if (r == null || (typeof r === 'object' && !(r instanceof Date))) {
+    let t = ''; try { t = cell.text == null ? '' : String(cell.text) } catch (e) {}
+    r = t
   }
-  if (r == null) return null
   if (typeof r === 'number') return Number.isFinite(r) ? r : null
   if (r instanceof Date) return isNaN(r.getTime()) ? null : r
   if (typeof r === 'boolean') return r
-  return String(r).replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, '')
+  if (r == null) return null
+  const s = String(r).replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, '')
+  return s === '' ? null : s
 }
 function isEmpty(v) { const t = cellText(v); return t === '' || t == null }
+// 清理值（補 SheetJS 來嘅）：NaN/無效日期/控制字元/空 → null
+function cleanVal(v) {
+  if (v == null) return null
+  if (typeof v === 'number') return Number.isFinite(v) ? v : null
+  if (v instanceof Date) return isNaN(v.getTime()) ? null : v
+  if (typeof v === 'boolean') return v
+  const s = String(v).replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, '')
+  return s === '' ? null : s
+}
 
 // 修正 ExcelJS 寫出時整壞嘅 conditional formatting（已驗證）
 function fixCF(xml) {
@@ -152,18 +163,30 @@ $('run').addEventListener('click', async () => {
 })
 
 // 讀一份來源 PO 的 X PO Masterlist → {headers:{normKey:col}, rows:[{normKey:value}]}
+// Hybrid 讀來源：ExcelJS 做主（日期/數字準）；ExcelJS 攞唔到值先用 SheetJS 補（救公式文字如 indefinite）
 async function readSource(file) {
-  const wb = new ExcelJS.Workbook()
-  await wb.xlsx.load(await file.arrayBuffer())
-  let ws = wb.getWorksheet('X PO Masterlist')
-  if (!ws) ws = wb.worksheets.find((w) => norm(w.name).includes('pomasterlist'))
-  if (!ws) return { rows: [] }
+  const buf = await file.arrayBuffer()
+  const ewb = new ExcelJS.Workbook()
+  await ewb.xlsx.load(buf)
+  let ews = ewb.getWorksheet('X PO Masterlist') || ewb.worksheets.find((w) => norm(w.name).includes('pomasterlist'))
+  if (!ews) return { rows: [] }
+  let sws = null
+  try {
+    const swb = XLSX.read(buf, { type: 'array', cellDates: true })
+    const sname = swb.SheetNames.find((n) => n === 'X PO Masterlist') || swb.SheetNames.find((n) => norm(n).includes('pomasterlist'))
+    sws = sname ? swb.Sheets[sname] : null
+  } catch (e) {}
   const map = {}
-  ws.getRow(1).eachCell({ includeEmpty: false }, (c, col) => { const k = norm(c.value); if (k && !(k in map)) map[k] = col })
+  ews.getRow(1).eachCell({ includeEmpty: false }, (c, col) => { const k = norm(c.value); if (k && !(k in map)) map[k] = col })
   const rows = []
-  for (let r = 2; r <= ws.rowCount; r++) {
+  for (let r = 2; r <= ews.rowCount; r++) {
     const obj = {}; let any = false
-    for (const [k, col] of Object.entries(map)) { const v = literalValue(ws.getCell(r, col)); if (!isEmpty(v)) any = true; obj[k] = v }
+    for (const [k, col] of Object.entries(map)) {
+      let v = literalValue(ews.getCell(r, col))
+      if (v == null && sws) { const cell = sws[XLSX.utils.encode_cell({ r: r - 1, c: col - 1 })]; v = cleanVal(cell ? cell.v : null) }
+      if (!isEmpty(v)) any = true
+      obj[k] = v
+    }
     if (any) rows.push(obj)
   }
   return { rows }
