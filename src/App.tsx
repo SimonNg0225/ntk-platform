@@ -259,7 +259,7 @@ export function AppShell() {
               sidebarMode === 'hidden' ? 'md:pl-12' : ''
             }`}
           >
-            <div className="app-content mx-auto w-full max-w-[1800px] px-4 py-6 sm:px-8 sm:py-8">
+            <div className="app-content mx-auto w-full max-w-[2400px] px-4 py-6 sm:px-8 sm:py-8">
               {isSettings ? (
                 <div className="space-y-5">
                   <button

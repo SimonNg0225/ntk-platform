@@ -5,7 +5,7 @@ import {
   TrendingUp, Hand, Phone, CheckSquare, StickyNote, Wallet, Calendar, Search,
   Inbox, Hourglass, GraduationCap, Briefcase, Home, Settings, User, Construction,
   PartyPopper, Trophy, TrendingDown, Users, Palmtree, AlarmClock, Pin, Ban, Mail,
-  Handshake, MessageSquare, FileText, FileSearch, Presentation, Dices, PenLine, Scale, Mic, Link, Clapperboard, BookMarked, Bookmark,
+  Handshake, MessageSquare, FileText, FileSearch, Presentation, Dices, PenLine, Scale, Mic, Link, Clapperboard, BookMarked, Bookmark, WandSparkles,
   Dumbbell, Zap, RotateCcw, Printer, Download, Lock, HelpCircle, Sprout, Star,
   Receipt, Tag, HeartPulse, ClipboardCheck,
 } from 'lucide-react'
@@ -107,6 +107,7 @@ const EMOJI_TO_ICON: Record<string, LucideIcon> = {
   '🏷': Tag,
   '🖍️': ClipboardCheck,
   '🖍': ClipboardCheck,
+  '🪄': WandSparkles, // 教材生成（AI 出題）
 }
 
 /** emoji → lucide 圖示元件；冇對應就回 null（呼叫方 fallback 顯示 emoji）。 */

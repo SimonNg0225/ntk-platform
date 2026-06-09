@@ -285,7 +285,7 @@ export const FEATURES: Feature[] = [
     modes: ['work'],
     name: '教材生成',
     description: 'AI 生成 MC／短答／個案／長題、教學練習同試卷，直接入題庫。',
-    icon: '🏭',
+    icon: '🪄',
     group: '教學',
     component: MaterialGen,
     status: 'ready',
