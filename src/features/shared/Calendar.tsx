@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { CalendarArrowDown, CalendarRange, ChevronLeft, ChevronRight, Dot, Plus, SlidersHorizontal, Smartphone } from 'lucide-react'
 import { useCollection } from '../../lib/store'
 import { eventsCol, calendarsCol, countdownsCol } from '../../data/collections'
@@ -61,6 +62,7 @@ function useIsWide(): boolean {
 }
 
 export default function Calendar() {
+  const { t } = useTranslation()
   const events = useCollection(eventsCol)
   const cals = useCollection(calendarsCol)
   const countdowns = useCollection(countdownsCol)
@@ -250,7 +252,7 @@ export default function Calendar() {
           onClick={() => setSubscribeOpen(true)}
           className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium text-slate-400 transition hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
         >
-          <Smartphone size={13} /> 訂閱到手機日曆
+          <Smartphone size={13} /> {t('cal.subscribeMobile', { defaultValue: '訂閱到手機日曆' })}
         </button>
       </div>
 
