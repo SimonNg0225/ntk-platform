@@ -54,7 +54,6 @@ import {
   cx,
 } from '../../ui'
 import {
-  Bot,
   Lock,
   Plus,
   Square,
@@ -683,7 +682,7 @@ export default function AIAssistant() {
   if (!isAIConfigured && !devBypass) {
     return (
       <EmptyState
-        icon={Bot}
+        icon={NotebookPen}
         title={t('aiasst.gateNotEnabledTitle', { defaultValue: 'AI 助手未啟用' })}
         hint={t('aiasst.gateNotEnabledHint', {
           defaultValue: '要設定好 Supabase 並部署 gemini Edge Function 先用到。步驟見 docs/SETUP.md。',
@@ -1505,7 +1504,7 @@ function MessageBubble({
               : 'bg-accent-soft text-accent-strong ring-1 ring-accent/15 dark:bg-accent/15 dark:text-accent dark:ring-accent/20',
           )}
         >
-          {isUser ? t('aiasst.you', { defaultValue: '你' }) : <Bot size={16} />}
+          {isUser ? t('aiasst.you', { defaultValue: '你' }) : <NotebookPen size={15} />}
         </span>
         <div className="min-w-0">
           <span
@@ -2162,7 +2161,7 @@ function StatsModal({
     <Modal open={open} onClose={onClose} title={t('aiasst.statsTitle', { defaultValue: `用量統計 · ${mode === 'work' ? '工作' : '個人'}模式`, mode: modeLabel })} size="lg">
       <div className="space-y-4">
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <StatCard label={t('aiasst.statThreads', { defaultValue: '對話數' })} value={stats.threads} icon={Bot} />
+          <StatCard label={t('aiasst.statThreads', { defaultValue: '對話數' })} value={stats.threads} icon={MessageCircle} />
           <StatCard label={t('aiasst.statUserMsgs', { defaultValue: '我問' })} value={stats.userMsgs} hint={t('aiasst.statMessagesUnit', { defaultValue: '條訊息' })} />
           <StatCard label={t('aiasst.statModelMsgs', { defaultValue: 'AI 答' })} value={stats.modelMsgs} hint={t('aiasst.statMessagesUnit', { defaultValue: '條訊息' })} highlight />
           <StatCard
