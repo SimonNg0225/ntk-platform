@@ -9,6 +9,7 @@ import {
   ClipboardList,
   DoorOpen,
   Download,
+  FileSpreadsheet,
   GraduationCap,
   Home,
   LayoutGrid,
@@ -101,18 +102,19 @@ import {
   ProgressRing,
   type DonutSeg,
 } from './classes/charts'
+import StudentImport from './classes/StudentImport'
 import SeatingChart, { seatLabel } from './classes/SeatingChart'
 import StudentProfile from './classes/StudentProfile'
 
 // ============================================================
-//  班別管理（班級花名冊 / SIS）
+//  班別管理（班級學生名單 / SIS）
 //  ------------------------------------------------------------
-//  Canonical 參考：PowerSchool / SEEMIS / Google Classroom 花名冊。
+//  Canonical 參考：PowerSchool / SEEMIS / Google Classroom 學生名單。
 //  共用 classesCol / studentsCol（唔改），擴充屬性放自家
 //  studentMetaCol / classMetaCol。深度功能：
 //   · 總覽儀表（班級規模圖 + 全校統計）
-//   · 班別卡（色標、班主任、課室、性別比例條、名冊完整度）
-//   · 班別詳情多分頁：名冊（搜尋/篩選/排序/批量貼上/CSV）、
+//   · 班別卡（色標、班主任、課室、性別比例條、名單完整度）
+//   · 班別詳情多分頁：名單（搜尋/篩選/排序/批量貼上/CSV）、
 //     座位表 + 隨機分組 + 抽點名、班情分析（性別/班社/狀態圖表）
 //   · 學生檔案抽屜：完整 metadata + 跨功能 360° 概覽（唯讀）
 // ============================================================
@@ -197,14 +199,14 @@ export default function ClassesWidget() {
 
   return (
     <div className="space-y-5">
-      {/* ───────── 班務冊 masthead：點名冊封面（kicker + serif 冊名 + 簽到行）───────── */}
+      {/* ───────── 班務冊 masthead：點名單封面（kicker + serif 冊名 + 簽到行）───────── */}
       <header className="relative overflow-hidden rounded-3xl border border-slate-200/80 bg-white px-5 py-5 shadow-xs dark:border-slate-700/60 dark:bg-slate-800 dark:shadow-none sm:px-7 sm:py-6">
         {/* 封面右上「班務處戳印」（純裝飾，唔搶主次）*/}
         <span
           aria-hidden
           className="pointer-events-none absolute -right-7 top-3 hidden -rotate-6 select-none rounded-xl border-2 border-dashed border-accent/20 px-4 py-2 text-xs font-semibold uppercase tracking-[0.25em] text-accent/25 dark:border-accent/25 dark:text-accent/25 sm:block"
         >
-          點名冊 · Roll Call
+          點名單 · Roll Call
         </span>
         <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-4">
           <div className="min-w-0">
@@ -247,10 +249,10 @@ export default function ClassesWidget() {
         </div>
       </header>
 
-      {/* ───────── 點名冊清點帶：hairline grid · serif 大數字 ───────── */}
+      {/* ───────── 點名單清點帶：hairline grid · serif 大數字 ───────── */}
       <section className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl bg-slate-200/70 ring-1 ring-slate-200/80 dark:bg-slate-700/50 dark:ring-slate-700/60 sm:grid-cols-4">
         <RegisterStat label="在冊班別" value={classes.length} unit="班" icon={School} hot={classes.length > 0} hint="任教班級" />
-        <RegisterStat label="學生人數" value={students.length} unit="位" icon={Users} hint="全部名冊合計" />
+        <RegisterStat label="學生人數" value={students.length} unit="位" icon={Users} hint="全部名單合計" />
         <RegisterStat
           label="在學人數"
           value={activeCount}
@@ -268,7 +270,7 @@ export default function ClassesWidget() {
               icon={BookUser}
               art="empty-classes"
               title="班務冊仲係空白一頁"
-              hint="開立第一班，成績、出席、進度等功能就會共用呢批班別名冊。"
+              hint="開立第一班，成績、出席、進度等功能就會共用呢批班別名單。"
               action={
                 <Button icon={Plus} onClick={() => setShowAddClass(true)}>
                   開立第一班
@@ -311,7 +313,7 @@ export default function ClassesWidget() {
                       />
                       <div className="text-xs text-slate-500 dark:text-slate-400">
                         <p className="font-medium text-slate-600 dark:text-slate-300">
-                          名冊完整度
+                          名單完整度
                         </p>
                         <p className="mt-0.5 tabular-nums">
                           缺學號 {overallCompleteness.missing.studentNo}
@@ -356,7 +358,7 @@ export default function ClassesWidget() {
   )
 }
 
-// ───────── 點名冊清點格（hairline grid · serif 大數字；在冊 hot 高亮）─────────
+// ───────── 點名單清點格（hairline grid · serif 大數字；在冊 hot 高亮）─────────
 function RegisterStat({
   label,
   value,
@@ -447,7 +449,7 @@ function ClassGrid({
         icon={BookUser}
         art="empty-classes"
         title="班務冊仲係空白一頁"
-        hint="開立一班，就可以喺度建立佢嘅花名冊、座位表同班情分析。"
+        hint="開立一班，就可以喺度建立佢嘅學生名單、座位表同班情分析。"
         action={
           <Button icon={Plus} onClick={onAdd}>
             開立第一班
@@ -513,7 +515,7 @@ function ClassGrid({
                     items={[
                       {
                         id: 'open',
-                        label: '翻開名冊',
+                        label: '翻開名單',
                         icon: BookUser,
                         onSelect: () => onOpen(c.id),
                       },
@@ -567,13 +569,13 @@ function ClassGrid({
               <div className="mt-3.5 flex items-center justify-between border-t border-dashed border-slate-200/80 pt-3 text-[11px] dark:border-slate-700/60">
                 <span className="inline-flex items-center gap-1.5 text-slate-400 dark:text-slate-500">
                   <ListChecks size={12} />
-                  名冊完整度
+                  名單完整度
                   <span className={cx('font-semibold tabular-nums', compTextTone(comp.pct))}>
                     {comp.pct}%
                   </span>
                 </span>
                 <span className="inline-flex items-center gap-0.5 font-medium text-slate-400 transition-colors group-hover:text-accent dark:text-slate-500">
-                  翻開名冊
+                  翻開名單
                   <ChevronRight
                     size={13}
                     className="transition-transform duration-200 group-hover:translate-x-0.5"
@@ -667,7 +669,7 @@ function ClassDetail({
 
   return (
     <div className="space-y-5">
-      {/* ───────── 班牌 masthead：翻開咗嘅點名冊頁面（色脊 + serif 班名 + 卷務行）───────── */}
+      {/* ───────── 班牌 masthead：翻開咗嘅點名單頁面（色脊 + serif 班名 + 卷務行）───────── */}
       <header className="relative flex overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-xs dark:border-slate-700/60 dark:bg-slate-800 dark:shadow-none">
         {/* 班別色脊（同班牌卡呼應）*/}
         <span className={cx('w-1.5 shrink-0', TONE_BAR[cm.color])} aria-hidden />
@@ -744,7 +746,7 @@ function ClassDetail({
         value={tab}
         onChange={setTab}
         options={[
-          { id: 'roster', label: '花名冊', icon: BookUser },
+          { id: 'roster', label: '學生名單', icon: BookUser },
           { id: 'seating', label: '座位 / 工具', icon: LayoutGrid },
           { id: 'analytics', label: '班情分析', icon: ClipboardList },
         ]}
@@ -784,7 +786,7 @@ function ClassDetail({
   )
 }
 
-// ───────── 名冊（搜尋 / 篩選 / 排序 / 批量 / CSV）─────────
+// ───────── 名單（搜尋 / 篩選 / 排序 / 批量 / CSV）─────────
 type StatusFilter = StudentStatus | 'all'
 
 function Roster({
@@ -801,6 +803,7 @@ function Roster({
   const [statusF, setStatusF] = useState<StatusFilter>('all')
   const [showAdd, setShowAdd] = useState(false)
   const [showBulk, setShowBulk] = useState(false)
+  const [showExcel, setShowExcel] = useState(false)
   const [profileId, setProfileId] = useState<string | null>(null)
 
   const filtered = useMemo(() => {
@@ -850,7 +853,7 @@ function Roster({
         (m.tags ?? []).join(' / '),
       ])
     }
-    downloadCsv(`${klass.name}_名冊.csv`, rows)
+    downloadCsv(`${klass.name}_名單.csv`, rows)
     toast.success('已匯出 CSV')
   }
 
@@ -884,6 +887,12 @@ function Roster({
               onSelect: () => setShowBulk(true),
             },
             {
+              id: 'excel',
+              label: 'Excel 範本 / 匯入',
+              icon: FileSpreadsheet,
+              onSelect: () => setShowExcel(true),
+            },
+            {
               id: 'csv',
               label: '匯出 CSV',
               icon: Download,
@@ -910,7 +919,7 @@ function Roster({
       {roster.length === 0 ? (
         <EmptyState
           icon={BookUser}
-          title="花名冊仲係吉嘅"
+          title="學生名單仲係吉嘅"
           hint="逐位點名加入，或者用「批量貼上」一次過貼一整班名單入冊。"
           action={
             <div className="flex gap-2">
@@ -920,18 +929,21 @@ function Roster({
               <Button variant="secondary" icon={Upload} onClick={() => setShowBulk(true)}>
                 批量貼上
               </Button>
+              <Button variant="secondary" icon={FileSpreadsheet} onClick={() => setShowExcel(true)}>
+                Excel 匯入
+              </Button>
             </div>
           }
         />
       ) : filtered.length === 0 ? (
-        <EmptyState icon={Search} title="花名冊搵唔到呢位" hint="試下清除搜尋或篩選，再翻查名冊。" />
+        <EmptyState icon={Search} title="學生名單搵唔到呢位" hint="試下清除搜尋或篩選，再翻查名單。" />
       ) : (
         <div className="overflow-hidden rounded-2xl border border-slate-200/80 dark:border-slate-700/60">
-          {/* 花名冊冊頁標頭 */}
+          {/* 學生名單冊頁標頭 */}
           <div className="flex items-center justify-between gap-2 border-b border-slate-200/80 bg-slate-50/80 px-3.5 py-2 dark:border-slate-700/60 dark:bg-slate-800/60">
             <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-700 dark:text-slate-200">
               <BookUser size={14} className="text-accent" />
-              花名冊 · Roster
+              學生名單 · Roster
             </span>
             <span className="text-[11px] tabular-nums text-slate-400 dark:text-slate-500">
               撳一行睇學生檔案
@@ -1034,6 +1046,13 @@ function Roster({
       )}
       {showBulk && (
         <BulkAdd classId={klass.id} onClose={() => setShowBulk(false)} />
+      )}
+      {showExcel && (
+        <StudentImport
+          classId={klass.id}
+          className={klass.name}
+          onClose={() => setShowExcel(false)}
+        />
       )}
       {profileStudent && (
         <StudentProfile
@@ -1257,7 +1276,7 @@ function Analytics({
       <EmptyState
         icon={ClipboardList}
         title="未有學生，畫唔到班情"
-        hint="喺花名冊加入學生並填寫性別 / 班社後，呢度會即時生成班情圖表。"
+        hint="喺學生名單加入學生並填寫性別 / 班社後，呢度會即時生成班情圖表。"
       />
     )
 
@@ -1296,7 +1315,7 @@ function Analytics({
       </Card>
 
       <Card padded>
-        <ChartHead icon={ListChecks}>名冊資料完整度</ChartHead>
+        <ChartHead icon={ListChecks}>名單資料完整度</ChartHead>
         <div className="flex items-center gap-5">
           <ProgressRing pct={comp.pct} tone="accent" label="整體" />
           <BarList
@@ -1575,7 +1594,7 @@ function ClassEditor({
             ))}
           </Select>
         </Field>
-        <Field label="班別顏色" hint="用喺名冊色標、各班人數圖。">
+        <Field label="班別顏色" hint="用喺名單色標、各班人數圖。">
           <div className="flex flex-wrap gap-2">
             {CLASS_TONES.map((t) => (
               <button

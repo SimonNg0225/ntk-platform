@@ -18,6 +18,10 @@ export interface StudentMeta extends Entity {
   /** = Student.id（一對一）*/
   studentId: string
   gender?: Gender
+  /** 英文名（匯入用；中文名存喺共用 Student.name）*/
+  nameEn?: string
+  /** 學生編號 / 學校註冊編號（可空；同 Student.studentNo「學號」分開）*/
+  regNo?: string
   /** 班社 / House（紅黃藍綠…自由填）*/
   house?: string
   guardianName?: string
