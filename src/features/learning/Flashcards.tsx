@@ -128,7 +128,7 @@ export default function Flashcards() {
         {/* 封面右上「卡盒戳印」裝飾（純裝飾，唔搶主次） */}
         <span
           aria-hidden="true"
-          className="pointer-events-none absolute -right-5 top-3 hidden -rotate-6 select-none rounded-xl border-2 border-dashed border-accent/20 px-4 py-2 font-serif text-xs font-semibold uppercase tracking-[0.25em] text-accent/25 dark:border-accent/25 dark:text-accent/25 sm:block"
+          className="pointer-events-none absolute -right-5 top-3 hidden -rotate-6 select-none rounded-xl border-2 border-dashed border-accent/20 px-4 py-2 text-xs font-semibold uppercase tracking-[0.25em] text-accent/25 dark:border-accent/25 dark:text-accent/25 sm:block"
         >
           SRS · 間隔重複
         </span>
@@ -137,7 +137,7 @@ export default function Flashcards() {
             <BookMarked size={13} />
             知識卡盒 · Flashcards
           </p>
-          <h1 className="mt-1.5 font-serif text-[28px] font-semibold leading-none tracking-tight text-slate-800 dark:text-slate-100 sm:text-[34px]">
+          <h1 className="mt-1.5 text-[28px] font-semibold leading-none tracking-tight text-slate-800 dark:text-slate-100 sm:text-[34px]">
             知識卡 + 複習
           </h1>
           <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
@@ -230,7 +230,7 @@ function DeckHome({
               今日複習
             </p>
             <p className="mt-1.5 flex items-baseline gap-2">
-              <span className="font-serif text-[40px] font-semibold leading-none tabular-nums slashed-zero text-slate-800 dark:text-slate-100 sm:text-[44px]">
+              <span className="text-[40px] font-semibold leading-none tabular-nums slashed-zero text-slate-800 dark:text-slate-100 sm:text-[44px]">
                 {totalDue}
               </span>
               <span className="text-sm font-normal text-slate-400 dark:text-slate-500">
@@ -266,7 +266,7 @@ function DeckHome({
                   <I size={12} />
                   {s.label}
                 </p>
-                <p className="mt-1 font-serif text-xl font-semibold leading-none tabular-nums slashed-zero text-slate-800 dark:text-slate-100">
+                <p className="mt-1 text-xl font-semibold leading-none tabular-nums slashed-zero text-slate-800 dark:text-slate-100">
                   {s.value}
                   <span className="ml-1 font-sans text-xs font-normal text-slate-400">
                     {s.unit}
@@ -670,7 +670,7 @@ function DeckDetail({
 
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex min-w-0 items-center gap-1.5">
-          <h3 className="truncate font-serif text-2xl font-semibold tracking-tight text-slate-800 dark:text-slate-100">
+          <h3 className="truncate text-2xl font-semibold tracking-tight text-slate-800 dark:text-slate-100">
             {deck?.name}
           </h3>
           <IconButton

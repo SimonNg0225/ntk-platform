@@ -266,7 +266,7 @@ function CensusStrip({
             </p>
             <p
               className={cx(
-                'mt-1 font-serif text-[26px] font-semibold leading-none tabular-nums slashed-zero',
+                'mt-1 text-[26px] font-semibold leading-none tabular-nums slashed-zero',
                 valueTone,
               )}
             >
@@ -474,7 +474,7 @@ export default function ResourceLibrary() {
             <Library size={13} strokeWidth={2} />
             典藏目錄 · Archive
           </p>
-          <h1 className="mt-1 font-serif text-2xl font-semibold leading-tight tracking-tight text-slate-800 dark:text-slate-100 sm:text-[28px]">
+          <h1 className="mt-1 text-2xl font-semibold leading-tight tracking-tight text-slate-800 dark:text-slate-100 sm:text-[28px]">
             教學資源庫
           </h1>
           <p className="mt-1.5 max-w-xl text-sm leading-relaxed text-slate-500 dark:text-slate-400">

@@ -121,7 +121,7 @@ function MetricTile({
       <div className="flex items-center justify-between">
         <span className="flex flex-col">
           <span className="text-xs font-medium text-slate-500 dark:text-slate-400">{label}</span>
-          <span className="font-serif text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-300 dark:text-slate-600">
+          <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-300 dark:text-slate-600">
             {en}
           </span>
         </span>
@@ -131,7 +131,7 @@ function MetricTile({
       </div>
       <div className="mt-3">
         <p className="flex items-baseline gap-1">
-          <span className="font-serif text-[2.1rem] font-black leading-none tabular-nums slashed-zero text-slate-800 dark:text-slate-100">
+          <span className="text-[2.1rem] font-black leading-none tabular-nums slashed-zero text-slate-800 dark:text-slate-100">
             {value}
           </span>
           {unit && <span className="text-sm font-semibold text-slate-400">{unit}</span>}
@@ -173,7 +173,7 @@ function SectionHead({
         </span>
         <div className="min-w-0">
           {en && (
-            <p className="font-serif text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-300 dark:text-slate-600">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-300 dark:text-slate-600">
               {en}
             </p>
           )}
@@ -206,7 +206,7 @@ function ModalHead({
         <Icon size={18} />
       </span>
       <div className="min-w-0">
-        <p className="flex items-center gap-1.5 font-serif text-[10px] font-semibold uppercase tracking-[0.2em] text-accent-strong dark:text-accent">
+        <p className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-accent-strong dark:text-accent">
           <span className="h-1 w-1 rounded-full bg-accent" aria-hidden="true" />
           {kicker}
         </p>
@@ -705,22 +705,22 @@ function GoalCard({
       {/* 起點 → 現在 → 目標（記分牌讀數：現在 = 粗大 serif LED 大字）*/}
       <div className="mb-3 flex items-end justify-between gap-2">
         <span className="flex flex-col text-xs leading-tight text-slate-500 dark:text-slate-400">
-          <span className="font-serif text-[9px] font-semibold uppercase tracking-[0.18em] text-slate-300 dark:text-slate-600">
+          <span className="text-[9px] font-semibold uppercase tracking-[0.18em] text-slate-300 dark:text-slate-600">
             起點
           </span>
           <span className="tabular-nums">{isNum(startKg) ? `${round(startKg, 1)}kg` : '—'}</span>
         </span>
         <span className="flex flex-col items-center leading-none">
-          <span className="font-serif text-[9px] font-semibold uppercase tracking-[0.18em] text-accent">
+          <span className="text-[9px] font-semibold uppercase tracking-[0.18em] text-accent">
             NOW
           </span>
-          <span className="mt-0.5 font-serif text-2xl font-black tabular-nums slashed-zero text-slate-800 dark:text-slate-100">
+          <span className="mt-0.5 text-2xl font-black tabular-nums slashed-zero text-slate-800 dark:text-slate-100">
             {isNum(currentKg) ? round(currentKg, 1) : '—'}
             {isNum(currentKg) && <span className="ml-0.5 text-sm font-semibold text-slate-400">kg</span>}
           </span>
         </span>
         <span className="flex flex-col items-end text-xs leading-tight text-slate-500 dark:text-slate-400">
-          <span className="font-serif text-[9px] font-semibold uppercase tracking-[0.18em] text-slate-300 dark:text-slate-600">
+          <span className="text-[9px] font-semibold uppercase tracking-[0.18em] text-slate-300 dark:text-slate-600">
             目標
           </span>
           <span className="tabular-nums">{round(targetKg, 1)}kg</span>
@@ -792,7 +792,7 @@ function DeltaTile({
         <I size={13} className="text-slate-400" />
         {label}
       </p>
-      <p className={cx('mt-1 font-serif text-2xl font-black tabular-nums slashed-zero', color)}>
+      <p className={cx('mt-1 text-2xl font-black tabular-nums slashed-zero', color)}>
         {fmtDelta(delta, ' kg')}
       </p>
     </div>
@@ -836,7 +836,7 @@ function HistoryRow({
     <li className="group -mx-2 flex items-center justify-between gap-3 rounded-xl px-2 py-2.5 transition hover:bg-slate-50 dark:hover:bg-slate-800/50">
       <div className="flex min-w-0 flex-1 items-center gap-3">
         {/* 記分牌日期 token */}
-        <span className="flex h-10 w-10 shrink-0 flex-col items-center justify-center rounded-xl border border-slate-200/80 bg-slate-50 font-serif leading-none tabular-nums dark:border-slate-700/60 dark:bg-slate-800/60">
+        <span className="flex h-10 w-10 shrink-0 flex-col items-center justify-center rounded-xl border border-slate-200/80 bg-slate-50 leading-none tabular-nums dark:border-slate-700/60 dark:bg-slate-800/60">
           <span className="text-sm font-black text-slate-700 dark:text-slate-200">{dd}</span>
           <span className="mt-0.5 text-[9px] font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
             /{mm}

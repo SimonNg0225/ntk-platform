@@ -140,7 +140,7 @@ export default function MaterialGen() {
         {/* 右上「製作工房」戳印（純裝飾） */}
         <span
           aria-hidden
-          className="pointer-events-none absolute -right-6 top-3 hidden -rotate-6 select-none items-center gap-1 rounded-xl border-2 border-dashed border-accent/20 px-4 py-2 font-serif text-xs font-semibold uppercase tracking-[0.25em] text-accent/25 dark:border-accent/25 dark:text-accent/25 sm:flex"
+          className="pointer-events-none absolute -right-6 top-3 hidden -rotate-6 select-none items-center gap-1 rounded-xl border-2 border-dashed border-accent/20 px-4 py-2 text-xs font-semibold uppercase tracking-[0.25em] text-accent/25 dark:border-accent/25 dark:text-accent/25 sm:flex"
         >
           <Stamp size={13} /> BAFS · 製作工房
         </span>
@@ -149,7 +149,7 @@ export default function MaterialGen() {
             <Hammer size={13} />
             教材工作枱 · Material Studio
           </p>
-          <h1 className="mt-1.5 font-serif text-[28px] font-semibold leading-none tracking-tight text-slate-800 dark:text-slate-100 sm:text-[34px]">
+          <h1 className="mt-1.5 text-[28px] font-semibold leading-none tracking-tight text-slate-800 dark:text-slate-100 sm:text-[34px]">
             教材生成
           </h1>
           <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">

@@ -192,7 +192,7 @@ export default function GoalEditor({
           <Mountain size={13} className="shrink-0" />
           攀登誌 · Summit Log
         </p>
-        <h3 className="mt-1 font-serif text-2xl font-semibold leading-tight tracking-tight text-slate-800 dark:text-slate-100">
+        <h3 className="mt-1 text-2xl font-semibold leading-tight tracking-tight text-slate-800 dark:text-slate-100">
           {editing ? '修整路線' : '立一個山頭'}
         </h3>
         <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
@@ -253,7 +253,7 @@ export default function GoalEditor({
                 <span className="text-[10px] font-medium uppercase tracking-wide text-slate-400 dark:text-slate-500">
                   海拔
                 </span>
-                <span className="font-serif text-base font-semibold tabular-nums text-accent">
+                <span className="text-base font-semibold tabular-nums text-accent">
                   {previewProgress}%
                 </span>
               </span>
@@ -300,7 +300,7 @@ export default function GoalEditor({
                   <span
                     aria-hidden="true"
                     className={cx(
-                      'inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full font-serif text-[11px] font-semibold tabular-nums',
+                      'inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold tabular-nums',
                       m.done
                         ? 'bg-emerald-500 text-white'
                         : 'bg-slate-100 text-slate-400 dark:bg-slate-700 dark:text-slate-500',

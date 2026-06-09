@@ -159,7 +159,7 @@ function TypeChip({ type }: { type: QuestionType }) {
 function MarksStamp({ marks }: { marks?: number }) {
   if (marks)
     return (
-      <span className="inline-flex items-center gap-1 rounded-md border border-dashed border-amber-300/80 bg-amber-50/70 px-2 py-0.5 font-serif text-[11px] font-semibold tabular-nums text-amber-700 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-300">
+      <span className="inline-flex items-center gap-1 rounded-md border border-dashed border-amber-300/80 bg-amber-50/70 px-2 py-0.5 text-[11px] font-semibold tabular-nums text-amber-700 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-300">
         <Scale size={11} className="opacity-70" />
         {marks} 分
       </span>
@@ -194,7 +194,7 @@ function QuestionPlate({
       <span className="text-[8px] font-semibold uppercase tracking-[0.15em] opacity-60">
         Q
       </span>
-      <span className="font-serif text-[15px] font-bold tabular-nums slashed-zero">
+      <span className="text-[15px] font-bold tabular-nums slashed-zero">
         {String(index).padStart(2, '0')}
       </span>
     </span>
@@ -258,7 +258,7 @@ function TallyStat({
       </p>
       <p
         className={cx(
-          'mt-1 font-serif text-[26px] font-semibold leading-none tabular-nums slashed-zero',
+          'mt-1 text-[26px] font-semibold leading-none tabular-nums slashed-zero',
           hot
             ? 'text-emerald-600 dark:text-emerald-400'
             : 'text-slate-800 dark:text-slate-100',
@@ -452,7 +452,7 @@ export default function QuestionBank() {
         {/* 封面右上「卷務戳印」裝飾（純裝飾，唔搶主次） */}
         <span
           aria-hidden
-          className="pointer-events-none absolute -right-6 top-3 hidden -rotate-6 select-none rounded-xl border-2 border-dashed border-accent/20 px-4 py-2 font-serif text-xs font-semibold uppercase tracking-[0.25em] text-accent/25 dark:border-accent/25 dark:text-accent/25 sm:block"
+          className="pointer-events-none absolute -right-6 top-3 hidden -rotate-6 select-none rounded-xl border-2 border-dashed border-accent/20 px-4 py-2 text-xs font-semibold uppercase tracking-[0.25em] text-accent/25 dark:border-accent/25 dark:text-accent/25 sm:block"
         >
           BAFS · 校本評核
         </span>
@@ -462,7 +462,7 @@ export default function QuestionBank() {
               <ScrollText size={13} />
               考評檔案 · Assessment Bank
             </p>
-            <h1 className="mt-1.5 font-serif text-[28px] font-semibold leading-none tracking-tight text-slate-800 dark:text-slate-100 sm:text-[34px]">
+            <h1 className="mt-1.5 text-[28px] font-semibold leading-none tracking-tight text-slate-800 dark:text-slate-100 sm:text-[34px]">
               BAFS 題庫
             </h1>
             <p className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-slate-500 dark:text-slate-400">
@@ -980,7 +980,7 @@ function BankView(props: {
                         >
                           <span
                             className={cx(
-                              'flex h-5 w-5 shrink-0 items-center justify-center rounded-full font-serif text-[11px] font-bold',
+                              'flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[11px] font-bold',
                               correct
                                 ? 'bg-emerald-500 text-white'
                                 : 'bg-slate-200 text-slate-500 dark:bg-slate-700 dark:text-slate-400',
@@ -1599,7 +1599,7 @@ function PaperStudio({
               <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-accent/70">
                 卷面預覽
               </p>
-              <h3 className="truncate font-serif text-base font-semibold text-slate-800 dark:text-slate-100">
+              <h3 className="truncate text-base font-semibold text-slate-800 dark:text-slate-100">
                 {meta.title.trim() || 'BAFS 自擬試卷'}
               </h3>
             </div>
@@ -1626,7 +1626,7 @@ function PaperStudio({
                   key={q.id}
                   className="flex items-start gap-2.5 rounded-xl border border-slate-200/80 p-2.5 transition hover:border-slate-300 dark:border-slate-700/60 dark:hover:border-slate-600"
                 >
-                  <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-accent-soft font-serif text-sm font-bold tabular-nums slashed-zero text-accent-strong dark:bg-accent/15 dark:text-accent">
+                  <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-accent-soft text-sm font-bold tabular-nums slashed-zero text-accent-strong dark:bg-accent/15 dark:text-accent">
                     {idx + 1}
                   </span>
                   <div className="min-w-0 flex-1">
@@ -1791,7 +1791,7 @@ function QuestionFormModal({
         {/* 右上擬題戳裝飾（純裝飾，唔搶主次；手機收起） */}
         <span
           aria-hidden
-          className="pointer-events-none absolute -right-5 top-3 hidden -rotate-6 select-none flex-col items-center rounded-xl border-2 border-dashed border-accent/20 px-4 py-2 font-serif text-[9px] font-semibold uppercase tracking-[0.28em] text-accent/25 dark:border-accent/25 dark:text-accent/25 sm:flex"
+          className="pointer-events-none absolute -right-5 top-3 hidden -rotate-6 select-none flex-col items-center rounded-xl border-2 border-dashed border-accent/20 px-4 py-2 text-[9px] font-semibold uppercase tracking-[0.28em] text-accent/25 dark:border-accent/25 dark:text-accent/25 sm:flex"
         >
           <PenLine size={13} className="mb-0.5" />
           {editing ? '修題' : '擬題'}
@@ -1802,7 +1802,7 @@ function QuestionFormModal({
               <ScrollText size={12} />
               考評檔案 · Item
             </p>
-            <h2 className="mt-1.5 font-serif text-[24px] font-semibold leading-none tracking-tight text-slate-800 dark:text-slate-100 sm:text-[26px]">
+            <h2 className="mt-1.5 text-[24px] font-semibold leading-none tracking-tight text-slate-800 dark:text-slate-100 sm:text-[26px]">
               {editing ? '修訂題目' : '擬定新題'}
             </h2>
           </div>
@@ -1917,7 +1917,7 @@ function QuestionFormModal({
                       {/* serif 答案圈 — 對齊評卷參考嘅卷面字母牌 */}
                       <span
                         className={cx(
-                          'flex h-7 w-7 cursor-pointer items-center justify-center rounded-full font-serif text-[13px] font-bold transition peer-focus-visible:ring-2 peer-focus-visible:ring-accent/40',
+                          'flex h-7 w-7 cursor-pointer items-center justify-center rounded-full text-[13px] font-bold transition peer-focus-visible:ring-2 peer-focus-visible:ring-accent/40',
                           on
                             ? 'bg-emerald-500 text-white shadow-sm'
                             : 'bg-slate-100 text-slate-500 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600',
@@ -1980,7 +1980,7 @@ function QuestionFormModal({
               value={form.marks}
               onChange={(e) => set('marks', e.target.value.replace(/\D/g, ''))}
               placeholder="5"
-              className="pl-8 font-serif tabular-nums slashed-zero"
+              className="pl-8 tabular-nums slashed-zero"
               inputMode="numeric"
             />
           </div>

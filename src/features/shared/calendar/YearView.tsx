@@ -27,7 +27,7 @@ export default function YearView({
               <button
                 type="button"
                 onClick={() => onPickMonth(month)}
-                className="mb-1.5 inline-flex items-baseline gap-1 font-serif text-base font-semibold text-slate-700 transition-colors hover:text-accent dark:text-slate-200"
+                className="mb-1.5 inline-flex items-baseline gap-1 text-base font-semibold text-slate-700 transition-colors hover:text-accent dark:text-slate-200"
               >
                 {month + 1}
                 <span className="text-[11px] font-sans font-medium text-slate-400 dark:text-slate-500">月</span>

@@ -117,7 +117,7 @@ export default function HabitDetail({
             <CalendarDays size={13} className="shrink-0" />
             習慣冊 · Habit Almanac
           </p>
-          <h2 className="mt-0.5 truncate font-serif text-2xl font-semibold leading-tight tracking-tight text-slate-900 dark:text-slate-100">
+          <h2 className="mt-0.5 truncate text-2xl font-semibold leading-tight tracking-tight text-slate-900 dark:text-slate-100">
             {habit.name}
           </h2>
           <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
@@ -144,7 +144,7 @@ export default function HabitDetail({
       </div>
 
       {habit.notes && (
-        <p className="mb-5 rounded-xl border-l-2 border-slate-300 bg-slate-50 px-3.5 py-2.5 font-serif text-sm italic leading-relaxed text-slate-600 dark:border-slate-600 dark:bg-slate-700/40 dark:text-slate-300">
+        <p className="mb-5 rounded-xl border-l-2 border-slate-300 bg-slate-50 px-3.5 py-2.5 text-sm italic leading-relaxed text-slate-600 dark:border-slate-600 dark:bg-slate-700/40 dark:text-slate-300">
           {habit.notes}
         </p>
       )}
@@ -165,7 +165,7 @@ export default function HabitDetail({
               <Target size={15} className={spec.text} />
               目標連續 {habit.targetStreak} 日
             </span>
-            <span className={cx('font-serif text-sm font-semibold tabular-nums slashed-zero', spec.text)}>
+            <span className={cx('text-sm font-semibold tabular-nums slashed-zero', spec.text)}>
               {stats.cur}/{habit.targetStreak}
             </span>
           </div>
@@ -201,7 +201,7 @@ export default function HabitDetail({
               <IconButton label="上個月" size="sm" onClick={() => shiftMonth(-1)}>
                 <ChevronLeft size={16} />
               </IconButton>
-              <span className="min-w-[5.5rem] text-center font-serif text-sm font-semibold tabular-nums text-slate-700 dark:text-slate-200">
+              <span className="min-w-[5.5rem] text-center text-sm font-semibold tabular-nums text-slate-700 dark:text-slate-200">
                 {ym.y}年{MONTH_LABELS[ym.m]}
               </span>
               <IconButton label="下個月" size="sm" onClick={() => shiftMonth(1)}>
@@ -313,7 +313,7 @@ function LeafStat({
       </p>
       <p
         className={cx(
-          'mt-1 font-serif text-[26px] font-semibold leading-none tabular-nums slashed-zero',
+          'mt-1 text-[26px] font-semibold leading-none tabular-nums slashed-zero',
           hot ? 'text-amber-600 dark:text-amber-400' : 'text-slate-800 dark:text-slate-100',
         )}
       >

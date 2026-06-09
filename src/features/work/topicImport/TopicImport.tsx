@@ -129,7 +129,7 @@ export default function TopicImport() {
           <Inbox size={13} className="shrink-0" />
           課程設定 · Topics
         </p>
-        <h1 className="mt-1 font-serif text-[26px] font-semibold leading-none tracking-tight text-slate-800 dark:text-slate-100 sm:text-[30px]">
+        <h1 className="mt-1 text-[26px] font-semibold leading-none tracking-tight text-slate-800 dark:text-slate-100 sm:text-[30px]">
           課題匯入
         </h1>
         <p className="mt-2 text-[13px] text-slate-500 dark:text-slate-400">

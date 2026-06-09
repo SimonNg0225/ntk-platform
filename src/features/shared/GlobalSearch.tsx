@@ -647,7 +647,7 @@ export default function GlobalSearch() {
               <p className="text-[11px] font-medium uppercase tracking-[0.28em] text-accent/70">
                 指揮中心 · COMMAND
               </p>
-              <h1 className="-mt-0.5 font-serif text-[22px] font-semibold leading-tight tracking-tight text-slate-800 dark:text-slate-100">
+              <h1 className="-mt-0.5 text-[22px] font-semibold leading-tight tracking-tight text-slate-800 dark:text-slate-100">
                 全域搜尋
               </h1>
             </div>
@@ -1208,7 +1208,7 @@ function StartScreen({
           <span className="relative mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
             <Radar size={26} />
           </span>
-          <h2 className="relative mt-4 font-serif text-xl font-semibold tracking-tight text-slate-800 dark:text-slate-100">
+          <h2 className="relative mt-4 text-xl font-semibold tracking-tight text-slate-800 dark:text-slate-100">
             一格搜尋，掃晒成個平台
           </h2>
           <p className="relative mx-auto mt-2 max-w-md text-sm leading-relaxed text-slate-500 dark:text-slate-400">

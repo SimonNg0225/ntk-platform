@@ -112,7 +112,7 @@ function GradebookHeader({ subtitle }: { subtitle?: ReactNode }) {
       {/* 封面右上鋼印（純裝飾，唔搶主次）*/}
       <span
         aria-hidden
-        className="pointer-events-none absolute -right-5 top-3 hidden -rotate-6 select-none rounded-xl border-2 border-dashed border-accent/20 px-4 py-2 font-serif text-xs font-semibold uppercase tracking-[0.25em] text-accent/25 dark:border-accent/25 dark:text-accent/25 sm:block"
+        className="pointer-events-none absolute -right-5 top-3 hidden -rotate-6 select-none rounded-xl border-2 border-dashed border-accent/20 px-4 py-2 text-xs font-semibold uppercase tracking-[0.25em] text-accent/25 dark:border-accent/25 dark:text-accent/25 sm:block"
       >
         {t('gradebook.stampLedger', { defaultValue: '成績冊 · Ledger' })}
       </span>
@@ -125,7 +125,7 @@ function GradebookHeader({ subtitle }: { subtitle?: ReactNode }) {
             <BookMarked size={13} />
             {t('gradebook.kicker', { defaultValue: '分數矩陣 · Gradebook' })}
           </p>
-          <h1 className="mt-1 font-serif text-[28px] font-semibold leading-none tracking-tight text-slate-800 dark:text-slate-100 sm:text-[34px]">
+          <h1 className="mt-1 text-[28px] font-semibold leading-none tracking-tight text-slate-800 dark:text-slate-100 sm:text-[34px]">
             {t('gradebook.title', { defaultValue: '成績管理' })}
           </h1>
           <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
@@ -180,7 +180,7 @@ function LedgerStat({
       </p>
       <p
         className={cx(
-          'mt-1 font-serif text-[26px] font-semibold leading-none tabular-nums slashed-zero',
+          'mt-1 text-[26px] font-semibold leading-none tabular-nums slashed-zero',
           hot
             ? 'text-emerald-600 dark:text-emerald-400'
             : 'text-slate-800 dark:text-slate-100',
@@ -475,7 +475,7 @@ function ScoreGrid({ classId, className }: { classId: string; className: string 
                 : t('gradebook.classAvg', { defaultValue: '班級平均' })}
             </p>
             <p className="mt-1 flex items-baseline gap-2">
-              <span className="font-serif text-[34px] font-semibold leading-none tabular-nums slashed-zero text-accent-strong dark:text-accent">
+              <span className="text-[34px] font-semibold leading-none tabular-nums slashed-zero text-accent-strong dark:text-accent">
                 {classAvg == null ? '—' : `${Math.round(classAvg)}`}
                 {classAvg != null && (
                   <span className="ml-0.5 font-sans text-lg font-normal text-accent-strong/60 dark:text-accent/60">
@@ -572,7 +572,7 @@ function ScoreGrid({ classId, className }: { classId: string; className: string 
                     key={a.id}
                     className="whitespace-nowrap border-b border-slate-200/80 px-3 py-2 align-bottom dark:border-slate-700/60"
                   >
-                    <span className="block font-serif text-[11px] font-semibold tabular-nums slashed-zero text-slate-300 dark:text-slate-600">
+                    <span className="block text-[11px] font-semibold tabular-nums slashed-zero text-slate-300 dark:text-slate-600">
                       {String(i + 1).padStart(2, '0')}
                     </span>
                     <span className="block font-semibold text-slate-600 dark:text-slate-300">
@@ -611,7 +611,7 @@ function ScoreGrid({ classId, className }: { classId: string; className: string 
                     {/* ledger spine（帳簿書脊）：serif 行號 + 姓名，右邊分隔線 */}
                     <td className="sticky left-0 z-10 border-r border-slate-200/80 bg-white px-3 py-2 transition-colors group-hover:bg-accent-soft/30 dark:border-slate-700/60 dark:bg-slate-800 dark:group-hover:bg-slate-800/95">
                       <div className="flex items-center gap-2">
-                        <span className="w-5 shrink-0 text-right font-serif text-[11px] tabular-nums text-slate-300 dark:text-slate-600">
+                        <span className="w-5 shrink-0 text-right text-[11px] tabular-nums text-slate-300 dark:text-slate-600">
                           {rowIdx + 1}
                         </span>
                         <span className="min-w-0">
@@ -651,7 +651,7 @@ function ScoreGrid({ classId, className }: { classId: string; className: string 
                               setScore(a.id, s.id, e.target.value, a.maxScore)
                             }
                             className={cx(
-                              'w-14 rounded-lg border px-1.5 py-1 text-center font-serif text-[15px] font-semibold tabular-nums slashed-zero outline-none transition focus:border-accent focus:bg-white focus:ring-2 focus:ring-accent/25 dark:focus:bg-slate-800',
+                              'w-14 rounded-lg border px-1.5 py-1 text-center text-[15px] font-semibold tabular-nums slashed-zero outline-none transition focus:border-accent focus:bg-white focus:ring-2 focus:ring-accent/25 dark:focus:bg-slate-800',
                               empty && !heatmap && 'border-dashed',
                               cellBg,
                             )}
@@ -667,7 +667,7 @@ function ScoreGrid({ classId, className }: { classId: string; className: string 
                         <div className="flex items-center justify-center gap-1.5">
                           <span
                             className={cx(
-                              'font-serif text-[15px] font-semibold tabular-nums slashed-zero',
+                              'text-[15px] font-semibold tabular-nums slashed-zero',
                               band ? TONE_TEXT[band.tone] : '',
                             )}
                           >
@@ -683,7 +683,7 @@ function ScoreGrid({ classId, className }: { classId: string; className: string 
                       ) : rank <= 3 ? (
                         <span
                           className={cx(
-                            'inline-flex h-6 w-6 items-center justify-center rounded-full font-serif text-xs font-bold tabular-nums',
+                            'inline-flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold tabular-nums',
                             rank === 1
                               ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300'
                               : rank === 2
@@ -694,7 +694,7 @@ function ScoreGrid({ classId, className }: { classId: string; className: string 
                           {rank}
                         </span>
                       ) : (
-                        <span className="font-serif text-xs font-semibold tabular-nums text-slate-500 dark:text-slate-400">
+                        <span className="text-xs font-semibold tabular-nums text-slate-500 dark:text-slate-400">
                           {rank}
                         </span>
                       )}
@@ -725,7 +725,7 @@ function ScoreGrid({ classId, className }: { classId: string; className: string 
                     <td
                       key={a.id}
                       className={cx(
-                        'px-3 py-2 text-center font-serif text-[13px] font-semibold tabular-nums slashed-zero',
+                        'px-3 py-2 text-center text-[13px] font-semibold tabular-nums slashed-zero',
                         av == null
                           ? 'text-slate-300 dark:text-slate-600'
                           : av < 50
@@ -737,7 +737,7 @@ function ScoreGrid({ classId, className }: { classId: string; className: string 
                     </td>
                   )
                 })}
-                <td className="border-l border-slate-200/80 px-3 py-2 text-center font-serif text-[15px] font-bold tabular-nums slashed-zero text-accent dark:border-slate-700/60">
+                <td className="border-l border-slate-200/80 px-3 py-2 text-center text-[15px] font-bold tabular-nums slashed-zero text-accent dark:border-slate-700/60">
                   {classAvg == null ? '—' : `${Math.round(classAvg)}%`}
                 </td>
                 <td className="px-2 py-2" colSpan={2} />
@@ -1452,7 +1452,7 @@ function AnalysisTab({ classId, className }: { classId: string; className: strin
                     {rank <= 3 ? (
                       <span
                         className={cx(
-                          'flex h-7 w-7 shrink-0 items-center justify-center rounded-full font-serif text-sm font-bold tabular-nums slashed-zero',
+                          'flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm font-bold tabular-nums slashed-zero',
                           rank === 1
                             ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300'
                             : rank === 2
@@ -1463,7 +1463,7 @@ function AnalysisTab({ classId, className }: { classId: string; className: strin
                         {rank}
                       </span>
                     ) : (
-                      <span className="w-7 text-center font-serif text-sm font-bold tabular-nums slashed-zero text-slate-400">
+                      <span className="w-7 text-center text-sm font-bold tabular-nums slashed-zero text-slate-400">
                         {rank}
                       </span>
                     )}
@@ -1485,7 +1485,7 @@ function AnalysisTab({ classId, className }: { classId: string; className: strin
                     </div>
                     <span
                       className={cx(
-                        'w-12 text-right font-serif text-[15px] font-semibold tabular-nums slashed-zero',
+                        'w-12 text-right text-[15px] font-semibold tabular-nums slashed-zero',
                         TONE_TEXT[band.tone],
                       )}
                     >
@@ -1933,7 +1933,7 @@ function AssessmentsTab({ classId }: { classId: string }) {
                 <li key={a.id} className="group px-4 py-3">
                   <div className="flex items-center gap-3">
                     {/* 卷面序號（同成績矩陣欄號呼應）*/}
-                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-slate-100 font-serif text-xs font-bold tabular-nums slashed-zero text-slate-400 dark:bg-slate-700/60 dark:text-slate-500">
+                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-xs font-bold tabular-nums slashed-zero text-slate-400 dark:bg-slate-700/60 dark:text-slate-500">
                       {String(i + 1).padStart(2, '0')}
                     </span>
                     <span className="flex-1 text-sm font-medium text-slate-700 dark:text-slate-200">
@@ -2219,7 +2219,7 @@ function SchemeTab({ classId }: { classId: string }) {
                         defaultValue: '「{{label}}」等級嘅百分比下限',
                       })}
                       aria-invalid={bad || undefined}
-                      className="text-center font-serif font-semibold tabular-nums slashed-zero"
+                      className="text-center font-semibold tabular-nums slashed-zero"
                     />
                   </span>
                   <span className="ml-1 text-sm text-slate-400">%</span>
@@ -2339,7 +2339,7 @@ function SchemeTab({ classId }: { classId: string }) {
           <span className="flex items-baseline gap-1.5">
             <span
               className={cx(
-                'font-serif text-lg font-bold tabular-nums slashed-zero',
+                'text-lg font-bold tabular-nums slashed-zero',
                 totalWeight === 100
                   ? 'text-emerald-600 dark:text-emerald-400'
                   : 'text-amber-600 dark:text-amber-400',

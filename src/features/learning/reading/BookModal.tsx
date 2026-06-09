@@ -186,7 +186,7 @@ export default function BookModal({
             <p className="flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-[0.28em] text-accent/70">
               <Library size={12} /> Catalogue Card · 借閱卡
             </p>
-            <h3 className="mt-1 truncate font-serif text-lg font-semibold leading-tight tracking-tight text-slate-800 dark:text-slate-100">
+            <h3 className="mt-1 truncate text-lg font-semibold leading-tight tracking-tight text-slate-800 dark:text-slate-100">
               {book.title || '未命名書本'}
             </h3>
           </div>
@@ -211,7 +211,7 @@ export default function BookModal({
             ) : (
               <div className="flex h-full w-full flex-col items-center justify-center p-2 text-center">
                 <BookOpen size={26} className="text-accent" />
-                <span className="mt-1.5 line-clamp-3 font-serif text-[12px] font-semibold leading-tight text-slate-600 dark:text-slate-300">
+                <span className="mt-1.5 line-clamp-3 text-[12px] font-semibold leading-tight text-slate-600 dark:text-slate-300">
                   {book.title}
                 </span>
               </div>
@@ -287,7 +287,7 @@ export default function BookModal({
                 value={book.title}
                 onChange={(e) => patch({ title: e.target.value })}
                 placeholder="書名"
-                className="font-serif"
+                className=""
               />
             </div>
             <div>
@@ -321,7 +321,7 @@ export default function BookModal({
             <div className="h-0.5 bg-gradient-to-r from-amber-200/70 via-accent/30 to-transparent dark:from-slate-700 dark:via-slate-700/60" />
             <div className="p-3.5">
             <div className="mb-2 flex items-center justify-between">
-              <p className="flex items-center gap-1.5 font-serif text-[13px] font-semibold tracking-tight text-slate-700 dark:text-slate-200">
+              <p className="flex items-center gap-1.5 text-[13px] font-semibold tracking-tight text-slate-700 dark:text-slate-200">
                 <Bookmark size={13} className="text-accent" /> 閱讀進度
               </p>
               <Badge tone={STATUS_TONE[book.status]} dot>
@@ -347,7 +347,7 @@ export default function BookModal({
                 className="w-24 text-center tabular-nums"
               />
               <span className="text-xs text-slate-400">頁</span>
-              <span className={cx('ml-auto font-serif text-xl font-semibold tabular-nums slashed-zero leading-none', book.status === 'done' ? 'text-emerald-500' : 'text-accent')}>{pct}%</span>
+              <span className={cx('ml-auto text-xl font-semibold tabular-nums slashed-zero leading-none', book.status === 'done' ? 'text-emerald-500' : 'text-accent')}>{pct}%</span>
             </div>
             <ProgressBar
               value={pct}
@@ -369,7 +369,7 @@ export default function BookModal({
 
           {/* 借閱日誌：記錄一次閱讀（撕條式借書登記）*/}
           <div className="rounded-2xl border border-dashed border-slate-300/80 p-3.5 dark:border-slate-600/80">
-            <p className="mb-2.5 flex items-center gap-1.5 font-serif text-[13px] font-semibold tracking-tight text-slate-700 dark:text-slate-200">
+            <p className="mb-2.5 flex items-center gap-1.5 text-[13px] font-semibold tracking-tight text-slate-700 dark:text-slate-200">
               <CalendarDays size={14} className="text-accent" /> 借閱日誌 · 記一次閱讀
             </p>
             <div className="flex flex-wrap items-end gap-2">
@@ -477,7 +477,7 @@ export default function BookModal({
 
           {/* 卡背札記分隔：細線 + serif 小題（似卡片翻面）*/}
           <div className="flex items-center gap-2 pt-1">
-            <span className="font-serif text-[11px] font-medium uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">
+            <span className="text-[11px] font-medium uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">
               卡背 · 札記
             </span>
             <span className="h-px flex-1 bg-gradient-to-r from-slate-200 to-transparent dark:from-slate-700/70" />
@@ -529,12 +529,12 @@ export default function BookModal({
             <p className="border-t border-dashed border-slate-200 pt-2.5 text-[11px] text-slate-400 dark:border-slate-700/70 dark:text-slate-500">
               {pagesRead > 0 && (
                 <>
-                  累計已讀 <span className="font-serif font-semibold tabular-nums slashed-zero text-slate-500 dark:text-slate-400">{pagesRead.toLocaleString()}</span> 頁
+                  累計已讀 <span className="font-semibold tabular-nums slashed-zero text-slate-500 dark:text-slate-400">{pagesRead.toLocaleString()}</span> 頁
                 </>
               )}
               {span && (
                 <>
-                  {pagesRead > 0 && ' · '}歷時 <span className="font-serif font-semibold tabular-nums slashed-zero text-slate-500 dark:text-slate-400">{span}</span> 日讀完
+                  {pagesRead > 0 && ' · '}歷時 <span className="font-semibold tabular-nums slashed-zero text-slate-500 dark:text-slate-400">{span}</span> 日讀完
                 </>
               )}
             </p>

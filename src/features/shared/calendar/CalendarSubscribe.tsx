@@ -47,7 +47,7 @@ function Masthead({ onClose }: { onClose: () => void }) {
             <Smartphone size={12} className="shrink-0" />
             {t('calSub.kicker', { defaultValue: '隨身提醒 · Subscribe' })}
           </p>
-          <h2 className="mt-1 font-serif text-[22px] font-semibold leading-tight tracking-tight text-slate-800 dark:text-slate-100 sm:text-[26px]">
+          <h2 className="mt-1 text-[22px] font-semibold leading-tight tracking-tight text-slate-800 dark:text-slate-100 sm:text-[26px]">
             {t('calSub.title', { defaultValue: '訂閱到手機日曆' })}
           </h2>
         </div>

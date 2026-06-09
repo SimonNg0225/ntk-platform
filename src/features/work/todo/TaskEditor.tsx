@@ -235,7 +235,7 @@ export function TaskEditor({
                 {marking ? <Highlighter size={12} /> : <ClipboardCheck size={12} />}
                 {marking ? '批改卷宗 · Marking' : '任務卡 · Task Card'}
               </p>
-              <h2 className="mt-1 font-serif text-[22px] font-semibold leading-tight tracking-tight text-slate-800 dark:text-slate-100 sm:text-[26px]">
+              <h2 className="mt-1 text-[22px] font-semibold leading-tight tracking-tight text-slate-800 dark:text-slate-100 sm:text-[26px]">
                 任務詳情
               </h2>
               <p className="mt-1 truncate text-xs text-slate-400 dark:text-slate-500">
@@ -293,7 +293,7 @@ export function TaskEditor({
             {marking && !task.done && (
               <span className="mb-1 inline-flex shrink-0 items-center gap-1 rounded-md border border-rose-300/70 bg-rose-50/80 px-1.5 py-0.5 text-[10px] font-semibold text-rose-600 dark:border-rose-500/40 dark:bg-rose-500/10 dark:text-rose-300">
                 <Highlighter size={10} className="opacity-80" />
-                <span className="font-serif leading-none">批改</span>
+                <span className="leading-none">批改</span>
               </span>
             )}
             <Textarea
@@ -302,7 +302,7 @@ export function TaskEditor({
               onBlur={commitText}
               rows={1}
               className={cx(
-                'min-h-0 w-full resize-none border-0 bg-transparent px-0 py-0.5 font-serif text-base font-semibold shadow-none focus:ring-0 sm:text-lg',
+                'min-h-0 w-full resize-none border-0 bg-transparent px-0 py-0.5 text-base font-semibold shadow-none focus:ring-0 sm:text-lg',
                 task.done && 'text-slate-400 line-through dark:text-slate-500',
               )}
               placeholder="任務標題"

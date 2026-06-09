@@ -403,7 +403,7 @@ export default function TimerView({
             <p
               role="timer"
               aria-label={`${meta.label}剩餘 ${fmtClock(secondsLeft)}`}
-              className="mt-3 font-serif text-[4.25rem] font-semibold leading-none tracking-tight tabular-nums slashed-zero text-slate-800 dark:text-slate-50 sm:text-[4.75rem]"
+              className="mt-3 text-[4.25rem] font-semibold leading-none tracking-tight tabular-nums slashed-zero text-slate-800 dark:text-slate-50 sm:text-[4.75rem]"
             >
               {fmtClock(secondsLeft)}
             </p>

@@ -91,7 +91,7 @@ export default function AdminDocs() {
               <FileStack size={13} />
               Documents · 公文範本
             </p>
-            <h1 className="mt-1.5 font-serif text-[28px] font-semibold leading-none tracking-tight text-slate-800 dark:text-slate-100 sm:text-[34px]">
+            <h1 className="mt-1.5 text-[28px] font-semibold leading-none tracking-tight text-slate-800 dark:text-slate-100 sm:text-[34px]">
               行政文件
             </h1>
             <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">

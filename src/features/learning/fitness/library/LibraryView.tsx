@@ -124,7 +124,7 @@ function MiniStat({
         <span
           aria-hidden="true"
           className={cx(
-            'pointer-events-none absolute -right-1 top-1 select-none font-serif text-4xl font-black leading-none tabular-nums slashed-zero',
+            'pointer-events-none absolute -right-1 top-1 select-none text-4xl font-black leading-none tabular-nums slashed-zero',
             highlight ? 'text-accent/15 dark:text-accent/20' : 'text-slate-900/[0.04] dark:text-white/[0.05]',
           )}
         >
@@ -147,7 +147,7 @@ function MiniStat({
       <p className="relative mt-3 flex items-baseline gap-1">
         <span
           className={cx(
-            'font-serif text-3xl font-black leading-none tabular-nums slashed-zero',
+            'text-3xl font-black leading-none tabular-nums slashed-zero',
             highlight ? 'text-accent-strong dark:text-accent' : 'text-slate-800 dark:text-slate-100',
           )}
         >
@@ -197,7 +197,7 @@ export default function LibraryView() {
           <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-accent">
             <Library size={13} /> 動作資料庫 · INDEX
           </p>
-          <h2 className="mt-1 font-serif text-2xl font-black leading-none tracking-tight text-slate-800 dark:text-slate-100">
+          <h2 className="mt-1 text-2xl font-black leading-none tracking-tight text-slate-800 dark:text-slate-100">
             招式名冊
           </h2>
           <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
@@ -210,7 +210,7 @@ export default function LibraryView() {
             全庫收錄
           </p>
           <div className="mt-0.5 flex items-baseline gap-1">
-            <span className="font-serif text-2xl font-black leading-none tabular-nums slashed-zero text-slate-800 dark:text-slate-100">
+            <span className="text-2xl font-black leading-none tabular-nums slashed-zero text-slate-800 dark:text-slate-100">
               {EXERCISES.length}
             </span>
             <span className="text-xs font-medium text-slate-400">招</span>
@@ -311,7 +311,7 @@ export default function LibraryView() {
             className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400"
             aria-live="polite"
           >
-            <span className="font-serif text-sm font-bold tabular-nums slashed-zero text-slate-700 dark:text-slate-200">
+            <span className="text-sm font-bold tabular-nums slashed-zero text-slate-700 dark:text-slate-200">
               {filtered.length}
             </span>
             <span className="text-slate-400 dark:text-slate-500">/ {EXERCISES.length} 個動作上場</span>
@@ -392,7 +392,7 @@ function ExerciseCard({
       {/* 部位大字戳印（記分牌讀數感，純裝飾） */}
       <span
         aria-hidden="true"
-        className="pointer-events-none absolute -bottom-3 right-1 select-none font-serif text-6xl font-black leading-none text-slate-900/[0.03] dark:text-white/[0.04]"
+        className="pointer-events-none absolute -bottom-3 right-1 select-none text-6xl font-black leading-none text-slate-900/[0.03] dark:text-white/[0.04]"
       >
         {exercise.category}
       </span>
@@ -522,7 +522,7 @@ function DetailModal({
           {/* 部位大字戳印（純裝飾） */}
           <span
             aria-hidden="true"
-            className="pointer-events-none absolute -bottom-5 right-2 select-none font-serif text-7xl font-black leading-none text-white/[0.06]"
+            className="pointer-events-none absolute -bottom-5 right-2 select-none text-7xl font-black leading-none text-white/[0.06]"
           >
             {exercise.category}
           </span>
@@ -550,7 +550,7 @@ function DetailModal({
             >
               <Dumbbell size={18} />
             </span>
-            <h3 className="min-w-0 font-serif text-xl font-black leading-tight tracking-tight sm:text-2xl">
+            <h3 className="min-w-0 text-xl font-black leading-tight tracking-tight sm:text-2xl">
               {exercise.name}
             </h3>
           </div>
@@ -629,7 +629,7 @@ function DetailModal({
                     className="absolute left-[0.6875rem] top-7 h-[calc(100%-0.5rem)] w-px bg-slate-200 dark:bg-slate-700"
                   />
                 )}
-                <span className="z-10 flex h-[1.375rem] w-[1.375rem] shrink-0 items-center justify-center rounded-lg bg-accent-soft font-serif text-xs font-black tabular-nums text-accent-strong dark:bg-accent/15 dark:text-accent">
+                <span className="z-10 flex h-[1.375rem] w-[1.375rem] shrink-0 items-center justify-center rounded-lg bg-accent-soft text-xs font-black tabular-nums text-accent-strong dark:bg-accent/15 dark:text-accent">
                   {i + 1}
                 </span>
                 <span className="pt-0.5">{cue}</span>

@@ -170,7 +170,7 @@ function AgendaPlate({
       <span className="text-[8px] font-semibold uppercase tracking-[0.18em] opacity-60">
         Item
       </span>
-      <span className="font-serif text-[17px] font-bold tabular-nums slashed-zero">
+      <span className="text-[17px] font-bold tabular-nums slashed-zero">
         {String(index).padStart(2, '0')}
       </span>
       {pinned && (
@@ -219,7 +219,7 @@ function TallyCell({
       </p>
       <p
         className={cx(
-          'mt-1 font-serif text-[26px] font-semibold leading-none tabular-nums slashed-zero',
+          'mt-1 text-[26px] font-semibold leading-none tabular-nums slashed-zero',
           hot
             ? 'text-accent-strong dark:text-accent'
             : 'text-slate-800 dark:text-slate-100',
@@ -536,7 +536,7 @@ export default function MeetingNotes() {
               <NotebookPen size={13} />
               Minutes · 會議記事簿
             </p>
-            <h1 className="mt-1.5 font-serif text-[28px] font-semibold leading-none tracking-tight text-slate-800 dark:text-slate-100 sm:text-[34px]">
+            <h1 className="mt-1.5 text-[28px] font-semibold leading-none tracking-tight text-slate-800 dark:text-slate-100 sm:text-[34px]">
               會議筆記
             </h1>
             <p className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-slate-500 dark:text-slate-400">
@@ -1399,7 +1399,7 @@ function NoteDetail({
                 key={i}
                 className="flex items-start gap-2.5 rounded-lg bg-accent-soft/50 px-3 py-2 text-sm text-slate-700 dark:bg-accent/10 dark:text-slate-200"
               >
-                <span className="mt-px shrink-0 font-serif text-[13px] font-bold tabular-nums slashed-zero text-accent-strong dark:text-accent">
+                <span className="mt-px shrink-0 text-[13px] font-bold tabular-nums slashed-zero text-accent-strong dark:text-accent">
                   R{String(i + 1).padStart(2, '0')}
                 </span>
                 <span className="min-w-0">{d}</span>

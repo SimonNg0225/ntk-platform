@@ -242,7 +242,7 @@ export default function ImportExport({
           <Archive size={12} />
           卡盒檔案室
         </p>
-        <p className="mt-1 font-serif text-lg font-semibold leading-tight tracking-tight text-slate-800 dark:text-slate-100">
+        <p className="mt-1 text-lg font-semibold leading-tight tracking-tight text-slate-800 dark:text-slate-100">
           備份卡盒，或者入一批新卡
         </p>
       </div>
@@ -351,7 +351,7 @@ export default function ImportExport({
                   即將備份
                 </p>
                 <p className="flex items-baseline gap-1.5 leading-none">
-                  <span className="font-serif text-2xl font-semibold tabular-nums slashed-zero text-slate-800 dark:text-slate-100">
+                  <span className="text-2xl font-semibold tabular-nums slashed-zero text-slate-800 dark:text-slate-100">
                     {exportCount}
                   </span>
                   <span className="text-xs text-slate-400 dark:text-slate-500">

@@ -169,7 +169,7 @@ function VitalRow({
           )}
         </div>
         <p className="mt-0.5 flex items-baseline gap-1">
-          <span className={cx('font-serif text-[26px] font-semibold leading-none tabular-nums slashed-zero', hasReading ? 'text-slate-800 dark:text-slate-100' : 'text-slate-300 dark:text-slate-600')}>
+          <span className={cx('text-[26px] font-semibold leading-none tabular-nums slashed-zero', hasReading ? 'text-slate-800 dark:text-slate-100' : 'text-slate-300 dark:text-slate-600')}>
             {value}
           </span>
           {unit && hasReading && <span className="text-xs font-medium text-slate-400 dark:text-slate-500">{unit}</span>}
@@ -308,7 +308,7 @@ export default function HealthTracker() {
             <HeartPulse size={13} aria-hidden="true" />
             生命徵象 · Vitals
           </p>
-          <h1 className="mt-1.5 font-serif text-[28px] font-semibold leading-tight tracking-tight text-slate-800 dark:text-slate-100 sm:text-[32px]">
+          <h1 className="mt-1.5 text-[28px] font-semibold leading-tight tracking-tight text-slate-800 dark:text-slate-100 sm:text-[32px]">
             健康追蹤
           </h1>
           <p className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-slate-500 dark:text-slate-400">
@@ -732,7 +732,7 @@ function GoalChannel({
           <Icon size={15} aria-hidden="true" />
         </span>
         <label htmlFor={id} className="flex min-w-0 flex-1 items-center gap-1.5">
-          <span className="truncate font-serif text-sm font-semibold text-slate-700 dark:text-slate-200">{label}</span>
+          <span className="truncate text-sm font-semibold text-slate-700 dark:text-slate-200">{label}</span>
           {optional && (
             <span className="shrink-0 rounded-full bg-slate-100 px-1.5 py-px text-[10px] font-medium uppercase tracking-wide text-slate-400 dark:bg-slate-700/60 dark:text-slate-400">
               可選
@@ -816,7 +816,7 @@ function GoalsModal({
           <Target size={13} aria-hidden="true" />
           目標校準 · Targets
         </p>
-        <h3 className="mt-1.5 font-serif text-xl font-semibold leading-tight tracking-tight text-slate-800 dark:text-slate-100">
+        <h3 className="mt-1.5 text-xl font-semibold leading-tight tracking-tight text-slate-800 dark:text-slate-100">
           健康目標
         </h3>
         <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">

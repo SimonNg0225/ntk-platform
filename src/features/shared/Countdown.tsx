@@ -583,7 +583,7 @@ export default function Countdown() {
               <p className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.3em] text-slate-400">
                 <PlaneTakeoff size={13} className="shrink-0" /> Departures · 離境時刻表
               </p>
-              <h1 className="mt-1.5 font-serif text-[28px] font-semibold leading-none tracking-tight text-white sm:text-[34px]">
+              <h1 className="mt-1.5 text-[28px] font-semibold leading-none tracking-tight text-white sm:text-[34px]">
                 重要日子倒數
               </h1>
 
@@ -798,7 +798,7 @@ export default function Countdown() {
                     </p>
                     <h3
                       id="countdown-modal-title"
-                      className="mt-1 font-serif text-2xl font-semibold leading-none tracking-tight text-white"
+                      className="mt-1 text-2xl font-semibold leading-none tracking-tight text-white"
                     >
                       登記新航班
                     </h3>

@@ -107,7 +107,7 @@ export default function TemplateManager({
               <Library size={12} />
               通訊錄 · Stationery
             </p>
-            <h2 className="mt-1.5 font-serif text-[24px] font-semibold leading-none tracking-tight text-slate-800 dark:text-slate-100 sm:text-[26px]">
+            <h2 className="mt-1.5 text-[24px] font-semibold leading-none tracking-tight text-slate-800 dark:text-slate-100 sm:text-[26px]">
               信件範本
             </h2>
             <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
@@ -157,7 +157,7 @@ export default function TemplateManager({
                     <div className="flex min-w-0 flex-1 items-start gap-2 p-3">
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-2">
-                          <span className="font-serif text-[15px] font-semibold tracking-tight text-slate-800 dark:text-slate-100">
+                          <span className="text-[15px] font-semibold tracking-tight text-slate-800 dark:text-slate-100">
                             {t.title}
                           </span>
                           <Badge tone={style.badge}>{CATEGORY_LABEL[t.category]}</Badge>

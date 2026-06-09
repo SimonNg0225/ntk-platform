@@ -152,7 +152,7 @@ export function ResultView({
                 rv.medal,
               )}
             >
-              <span className={cx('font-serif text-4xl font-black tabular-nums leading-none', scoreColor(p))}>
+              <span className={cx('text-4xl font-black tabular-nums leading-none', scoreColor(p))}>
                 {grade(p)}
               </span>
             </span>
@@ -163,7 +163,7 @@ export function ResultView({
             className="animate-fade-in-up mt-0.5 flex items-baseline justify-center gap-1"
             style={{ animationDelay: '140ms' }}
           >
-            <span className={cx('font-serif text-6xl font-bold tabular-nums slashed-zero leading-none', scoreColor(p))}>
+            <span className={cx('text-6xl font-bold tabular-nums slashed-zero leading-none', scoreColor(p))}>
               {p}
             </span>
             <span className={cx('text-2xl font-semibold', scoreColor(p))}>%</span>

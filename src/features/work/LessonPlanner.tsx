@@ -502,7 +502,7 @@ export default function LessonPlanner() {
               <p className="text-[11px] font-medium uppercase tracking-[0.32em] text-accent-soft/90">
                 教師備課桌
               </p>
-              <h1 className="mt-1 font-serif text-[26px] font-semibold leading-tight tracking-tight text-white sm:text-3xl">
+              <h1 className="mt-1 text-[26px] font-semibold leading-tight tracking-tight text-white sm:text-3xl">
                 備課 / 教案
               </h1>
               <p className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-slate-300/90">
@@ -867,7 +867,7 @@ export default function LessonPlanner() {
           <Card className="p-4">
             <div className="mb-3 flex items-center justify-between gap-2">
               <div className="min-w-0">
-                <h3 className="font-serif text-lg font-semibold tracking-tight text-slate-800 dark:text-slate-100">
+                <h3 className="text-lg font-semibold tracking-tight text-slate-800 dark:text-slate-100">
                   BAFS 課程覆蓋率
                 </h3>
                 <p className="mt-0.5 text-xs text-slate-400 dark:text-slate-500">
@@ -896,7 +896,7 @@ export default function LessonPlanner() {
               )
               return (
                 <>
-                  <h3 className="mb-2.5 flex items-center gap-1.5 font-serif text-lg font-semibold tracking-tight text-slate-800 dark:text-slate-100">
+                  <h3 className="mb-2.5 flex items-center gap-1.5 text-lg font-semibold tracking-tight text-slate-800 dark:text-slate-100">
                     <Circle size={15} className="text-slate-400" />
                     未備課嘅課題
                     {missing.length > 0 && (
@@ -1107,7 +1107,7 @@ function AlmanacStat({
       </p>
       <p
         className={cx(
-          'mt-1 font-serif text-[26px] font-semibold leading-none tabular-nums slashed-zero',
+          'mt-1 text-[26px] font-semibold leading-none tabular-nums slashed-zero',
           hot
             ? 'text-accent-strong dark:text-accent'
             : 'text-slate-800 dark:text-slate-100',
@@ -1202,7 +1202,7 @@ function PlanCard({
             <button
               type="button"
               onClick={onEdit}
-              className="block min-w-0 text-left font-serif text-[17px] font-semibold leading-snug text-slate-800 transition-colors hover:text-accent dark:text-slate-100 dark:hover:text-accent"
+              className="block min-w-0 text-left text-[17px] font-semibold leading-snug text-slate-800 transition-colors hover:text-accent dark:text-slate-100 dark:hover:text-accent"
             >
               {plan.title}
             </button>

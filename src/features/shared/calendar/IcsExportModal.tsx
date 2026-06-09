@@ -57,7 +57,7 @@ function CheckRow({
         <Icon size={18} />
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block font-serif text-sm font-semibold text-slate-800 dark:text-slate-100">
+        <span className="block text-sm font-semibold text-slate-800 dark:text-slate-100">
           {title}
         </span>
         <span className="block text-xs tabular-nums text-slate-500 dark:text-slate-400">
@@ -156,7 +156,7 @@ export default function IcsExportModal({
               <CalendarArrowDown size={12} className="shrink-0" />
               帶走一份 · Export
             </p>
-            <h2 className="mt-1 font-serif text-[22px] font-semibold leading-tight tracking-tight text-slate-800 dark:text-slate-100 sm:text-[26px]">
+            <h2 className="mt-1 text-[22px] font-semibold leading-tight tracking-tight text-slate-800 dark:text-slate-100 sm:text-[26px]">
               匯出行事曆
             </h2>
           </div>
@@ -199,7 +199,7 @@ export default function IcsExportModal({
             <span className="text-[11px] font-medium uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">
               將匯出
             </span>
-            <span className="font-serif text-sm text-slate-600 dark:text-slate-300">
+            <span className="text-sm text-slate-600 dark:text-slate-300">
               <span className="text-lg font-semibold tabular-nums text-slate-800 dark:text-slate-100">{total}</span> 項
             </span>
           </div>

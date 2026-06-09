@@ -84,7 +84,7 @@ export default function CalendarManager({
               <Layers size={12} className="shrink-0" />
               色冊 · Calendars
             </p>
-            <h2 className="mt-1 font-serif text-[22px] font-semibold leading-tight tracking-tight text-slate-800 dark:text-slate-100 sm:text-[26px]">
+            <h2 className="mt-1 text-[22px] font-semibold leading-tight tracking-tight text-slate-800 dark:text-slate-100 sm:text-[26px]">
               管理行事曆
             </h2>
           </div>

@@ -65,7 +65,7 @@ export default function WeekGrid({
                   >
                     <span
                       className={cx(
-                        'flex h-8 w-8 items-center justify-center rounded-xl font-serif text-base font-semibold leading-none',
+                        'flex h-8 w-8 items-center justify-center rounded-xl text-base font-semibold leading-none',
                         isToday
                           ? 'bg-white/20 text-white'
                           : 'bg-slate-100 text-slate-600 dark:bg-slate-700/60 dark:text-slate-200',
@@ -108,7 +108,7 @@ export default function WeekGrid({
             return (
               <tr key={bell.period} className="group/row">
                 <th className="sticky left-0 z-10 bg-white pl-1 pr-2 text-left align-middle dark:bg-slate-800">
-                  <div className="font-serif text-lg font-semibold leading-none text-slate-700 tabular-nums dark:text-slate-200">
+                  <div className="text-lg font-semibold leading-none text-slate-700 tabular-nums dark:text-slate-200">
                     {bell.period}
                   </div>
                   <div className="mt-1 tabular-nums text-[10px] leading-tight text-slate-400 dark:text-slate-500">

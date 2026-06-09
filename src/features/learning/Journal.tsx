@@ -358,7 +358,7 @@ export default function Journal() {
             <BookText size={13} className="shrink-0" />
             日記扉頁 · Daily Journal
           </p>
-          <h1 className="mt-1 font-serif text-2xl font-semibold leading-tight tracking-tight text-slate-800 dark:text-slate-100 sm:text-[28px]">
+          <h1 className="mt-1 text-2xl font-semibold leading-tight tracking-tight text-slate-800 dark:text-slate-100 sm:text-[28px]">
             個人日誌
           </h1>
           <p className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-slate-500 dark:text-slate-400">
@@ -420,7 +420,7 @@ export default function Journal() {
               </p>
               <p
                 className={cx(
-                  'mt-1 font-serif text-[26px] font-semibold leading-none tabular-nums slashed-zero',
+                  'mt-1 text-[26px] font-semibold leading-none tabular-nums slashed-zero',
                   s.hot ? 'text-accent-strong dark:text-accent' : 'text-slate-800 dark:text-slate-100',
                 )}
               >
@@ -465,7 +465,7 @@ export default function Journal() {
                 )}
                 <div className="min-w-0">
                   <p className="flex items-baseline gap-1.5 text-accent-strong dark:text-accent">
-                    <span className="font-serif text-sm font-semibold tabular-nums">{d.date.slice(0, 4)}</span>
+                    <span className="text-sm font-semibold tabular-nums">{d.date.slice(0, 4)}</span>
                     <span className="text-[11px] font-medium text-accent/80 dark:text-accent/80">· {yearsAgo} 年前嘅今日</span>
                   </p>
                   <p className="truncate text-sm text-slate-600 dark:text-slate-300">
@@ -491,7 +491,7 @@ export default function Journal() {
             <p className="text-sm font-semibold text-accent-strong dark:text-accent">
               今日仲未寫，記低一筆？
             </p>
-            <p className="mt-0.5 truncate font-serif text-[15px] italic text-slate-600 dark:text-slate-300">
+            <p className="mt-0.5 truncate text-[15px] italic text-slate-600 dark:text-slate-300">
               「{promptOfDay(today)}」
             </p>
           </div>
@@ -647,11 +647,11 @@ export default function Journal() {
                 <div key={g.ym}>
                   {/* 月份分隔（serif） */}
                   <div className="mb-3 flex items-baseline gap-3">
-                    <h3 className="font-serif text-lg font-semibold tracking-tight text-slate-700 dark:text-slate-200">
+                    <h3 className="text-lg font-semibold tracking-tight text-slate-700 dark:text-slate-200">
                       {g.label}
                     </h3>
                     <span className="h-px flex-1 bg-gradient-to-r from-slate-200 to-transparent dark:from-slate-700/70" />
-                    <span className="font-serif text-xs italic tabular-nums text-slate-400">{g.items.length} 篇</span>
+                    <span className="text-xs italic tabular-nums text-slate-400">{g.items.length} 篇</span>
                   </div>
                   {/* 日記書脊：連續細線 + 逐篇心情色節點 */}
                   <div className="relative">
@@ -760,7 +760,7 @@ function EntryCard({
         <div className="flex min-w-0 items-start gap-3">
           {/* serif 日期塊（書脊節點已帶心情色，呢度主打「邊一日」） */}
           <div className="flex w-10 shrink-0 flex-col items-center pt-0.5">
-            <span className="font-serif text-[26px] font-semibold leading-none tabular-nums text-slate-700 dark:text-slate-200">
+            <span className="text-[26px] font-semibold leading-none tabular-nums text-slate-700 dark:text-slate-200">
               {dp.day}
             </span>
             <span className="mt-1 text-[10px] font-medium uppercase tracking-wider text-slate-400">
@@ -771,7 +771,7 @@ function EntryCard({
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-1.5">
               {doc.title?.trim() && (
-                <span className="truncate font-serif text-[17px] font-semibold leading-snug text-slate-800 dark:text-slate-100">
+                <span className="truncate text-[17px] font-semibold leading-snug text-slate-800 dark:text-slate-100">
                   {doc.title}
                 </span>
               )}

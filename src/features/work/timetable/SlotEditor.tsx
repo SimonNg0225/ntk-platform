@@ -141,7 +141,7 @@ export default function SlotEditor({
         <div className="flex items-center gap-3.5 rounded-2xl border border-slate-200/70 bg-slate-50/70 p-3 dark:border-slate-700/60 dark:bg-slate-800/50">
           {/* Day token（呼應 WeekGrid 欄頭嗰粒 serif 字母）*/}
           <span className="flex h-12 w-12 shrink-0 flex-col items-center justify-center rounded-2xl bg-accent text-white shadow-sm shadow-accent/25">
-            <span className="font-serif text-xl font-semibold leading-none">
+            <span className="text-xl font-semibold leading-none">
               {dayToken}
             </span>
             <span className="mt-0.5 text-[8px] font-semibold uppercase tracking-widest text-white/70">
@@ -153,7 +153,7 @@ export default function SlotEditor({
               {dayLabel(d.day)}
             </p>
             <p className="mt-0.5 flex items-baseline gap-2 leading-none">
-              <span className="font-serif text-lg font-semibold text-slate-800 dark:text-slate-100">
+              <span className="text-lg font-semibold text-slate-800 dark:text-slate-100">
                 {periodLabel}
               </span>
               {timeLabel && (
@@ -342,7 +342,7 @@ export default function SlotEditor({
                     >
                       <span
                         className={cx(
-                          'flex h-5 w-5 items-center justify-center rounded-md font-serif text-[13px] font-semibold leading-none',
+                          'flex h-5 w-5 items-center justify-center rounded-md text-[13px] font-semibold leading-none',
                           on
                             ? 'bg-white/20'
                             : 'bg-slate-100 text-slate-500 dark:bg-slate-700/60 dark:text-slate-300',

@@ -158,7 +158,7 @@ export default function HistoryView({
           <History size={12} className="shrink-0" />
           專注日誌 · Log
         </p>
-        <h2 className="mt-2 font-serif text-[22px] font-semibold leading-none tracking-tight text-slate-800 dark:text-slate-100 sm:text-[26px]">
+        <h2 className="mt-2 text-[22px] font-semibold leading-none tracking-tight text-slate-800 dark:text-slate-100 sm:text-[26px]">
           每一節，都記低咗
         </h2>
       </header>
@@ -220,7 +220,7 @@ export default function HistoryView({
       {/* ── 計數 + 動作：纖細 hairline 分隔，似日誌頁眉 ── */}
       <div className="flex items-center justify-between border-b border-slate-200/70 pb-3 dark:border-slate-700/50">
         <p aria-live="polite" className="text-[11px] font-medium uppercase tracking-[0.14em] text-slate-400 dark:text-slate-500">
-          共 <span className="font-serif text-sm tabular-nums text-slate-600 dark:text-slate-300">{filtered.length}</span> 節
+          共 <span className="text-sm tabular-nums text-slate-600 dark:text-slate-300">{filtered.length}</span> 節
         </p>
         <div className="flex gap-2">
           <Button size="sm" variant="secondary" icon={Download} onClick={exportCsv} disabled={!filtered.length}>
@@ -244,12 +244,12 @@ export default function HistoryView({
           {grouped.map(([key, arr]) => (
             <div key={key}>
               <div className="mb-3 flex items-baseline gap-3">
-                <h3 className="font-serif text-lg font-semibold tracking-tight text-slate-700 dark:text-slate-200">
+                <h3 className="text-lg font-semibold tracking-tight text-slate-700 dark:text-slate-200">
                   {relativeDay(key)}
                 </h3>
                 <span className="h-px flex-1 translate-y-[-3px] bg-slate-200/70 dark:bg-slate-700/50" />
                 {dayTotal(arr) > 0 && (
-                  <span className="font-serif text-sm italic tabular-nums text-slate-400 dark:text-slate-500">
+                  <span className="text-sm italic tabular-nums text-slate-400 dark:text-slate-500">
                     {fmtDuration(dayTotal(arr))}
                   </span>
                 )}
@@ -347,7 +347,7 @@ function LogRow({
             {fmtTime(log.startedAt)}–{fmtTime(log.endedAt)}
           </span>
           <span aria-hidden="true">·</span>
-          <span className="font-serif text-xs tabular-nums font-medium text-slate-500 dark:text-slate-400">
+          <span className="text-xs tabular-nums font-medium text-slate-500 dark:text-slate-400">
             {fmtDuration(log.actualMin)}
           </span>
           {log.actualMin !== log.plannedMin && (
