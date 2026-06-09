@@ -23,6 +23,9 @@
   label.file .big{font-weight:600;font-size:14px;}
   label.file .hint{font-size:12px;color:var(--muted);margin-top:3px;}
   input[type=file]{display:none;}
+  .or{text-align:center;font-size:12px;font-weight:600;color:var(--muted);margin:11px 0;}
+  #container{width:100%;margin-top:10px;border:1px solid var(--border);border-radius:10px;padding:10px 12px;font:inherit;font-size:13px;}
+  #container:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(79,70,229,.15);}
   .go{width:100%;border:none;background:var(--accent);color:#fff;font:inherit;font-weight:600;font-size:15px;padding:13px;border-radius:12px;cursor:pointer;transition:.15s;display:flex;align-items:center;justify-content:center;gap:8px;}
   .go:hover:not(:disabled){background:var(--accent-d);}
   .go:active:not(:disabled){transform:scale(.99);}
@@ -54,12 +57,20 @@
   </div>
 
   <div class="card">
-    <div class="step">② 貨櫃資料夾</div>
+    <div class="step">② 貨櫃 PO — 揀資料夾 或 單檔</div>
     <label class="file" id="lblFolder">
       <input type="file" id="folder" webkitdirectory directory multiple />
-      <div class="big" id="folderTxt">揀貨櫃資料夾 或 母資料夾…</div>
-      <div class="hint">揀單一貨櫃夾（如 UK 40ft DG - BMOU5344675）<b>或</b>母夾（如 2026-23，一次過多個貨櫃）都得</div>
+      <div class="big" id="folderTxt">📁 揀貨櫃資料夾 或 母資料夾…</div>
+      <div class="hint">資料夾名 = 工作表名,自動對應(單一貨櫃夾或母夾都得)</div>
     </label>
+    <div class="or">— 或 —</div>
+    <label class="file" id="lblFiles">
+      <input type="file" id="files" accept=".xlsx,.xlsm" multiple />
+      <div class="big" id="filesTxt">📄 直接揀一個或多個 PO 檔案…</div>
+      <div class="hint">冇放喺資料夾嘅 PO;揀檔後喺下面填目標貨櫃</div>
+    </label>
+    <input type="text" id="container" list="sheetList" placeholder="目標貨櫃工作表名（揀檔模式先要填,例 UK 40ft DG - BMOU5344675）" autocomplete="off" />
+    <datalist id="sheetList"></datalist>
   </div>
 
   <div class="card">
@@ -122,6 +133,9 @@ function cleanVal(v) {
   const s = String(v).replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, '')
   return s === '' ? null : s
 }
+// 欄位中文名（處理報告用）
+const FIELD_LABEL = { sequenceauto: '序號', supplier: '供應商', buyer: '採購', invoice: '發票#', brandproduct: '品牌及產品', bestbeforedate: '此日期前最佳', qty: '數量', unit: '單位', barcode: '條碼', packingdescriptionoptional: '包裝描述' }
+function csvCell(v) { const s = v == null ? '' : String(v); return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s }
 
 // 修正 ExcelJS 寫出時整壞嘅 conditional formatting（已驗證）
 function fixCF(xml) {
@@ -132,12 +146,17 @@ function fixCF(xml) {
 
 let masterFile = null
 let folderFiles = [] // {container, name, file}
+let singleFiles = [] // File[]（單檔模式）
 
-$('master').addEventListener('change', (e) => {
+$('master').addEventListener('change', async (e) => {
   masterFile = e.target.files[0] || null
   $('masterTxt').textContent = masterFile ? '✓ ' + masterFile.name : '揀主檔 ContainerPOMasterList…'
   $('lblMaster').classList.toggle('has', !!masterFile)
   refresh()
+  if (masterFile) {
+    const names = await readSheetNames(masterFile)
+    $('sheetList').innerHTML = names.map((n) => `<option value="${esc(n)}"></option>`).join('')
+  }
 })
 $('folder').addEventListener('change', (e) => {
   const files = [...e.target.files].filter((f) => /\.(xlsx|xlsm)$/i.test(f.name) && !f.name.startsWith('~$'))
@@ -146,11 +165,34 @@ $('folder').addEventListener('change', (e) => {
     return { container: segs.length >= 2 ? segs[segs.length - 2] : '', name: f.name, file: f }
   }).filter((x) => x.container)
   const containers = [...new Set(folderFiles.map((x) => x.container))]
-  $('folderTxt').textContent = folderFiles.length ? `✓ ${containers.length} 個貨櫃、${folderFiles.length} 份 PO` : '揀貨櫃資料夾 或 母資料夾…'
+  $('folderTxt').textContent = folderFiles.length ? `✓ ${containers.length} 個貨櫃、${folderFiles.length} 份 PO` : '📁 揀貨櫃資料夾 或 母資料夾…'
   $('lblFolder').classList.toggle('has', !!folderFiles.length)
   refresh()
 })
-function refresh() { $('run').disabled = !(masterFile && folderFiles.length) }
+$('files').addEventListener('change', (e) => {
+  singleFiles = [...e.target.files].filter((f) => /\.(xlsx|xlsm)$/i.test(f.name) && !f.name.startsWith('~$'))
+  $('filesTxt').textContent = singleFiles.length ? `✓ ${singleFiles.length} 份 PO` : '📄 直接揀一個或多個 PO 檔案…'
+  $('lblFiles').classList.toggle('has', !!singleFiles.length)
+  refresh()
+})
+$('container').addEventListener('input', refresh)
+
+// 只解壓 workbook.xml 攞 sheet 名（畀單檔模式自動完成；唔使 load 成個 8MB）
+async function readSheetNames(file) {
+  try {
+    const u8 = new Uint8Array(await file.arrayBuffer())
+    const zip = fflate.unzipSync(u8, { filter: (f) => f.name === 'xl/workbook.xml' })
+    const xml = fflate.strFromU8(zip['xl/workbook.xml'])
+    return [...xml.matchAll(/<sheet[^>]*name="([^"]*)"/g)].map((m) =>
+      m[1].replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"'),
+    )
+  } catch (e) { return [] }
+}
+function refresh() {
+  const hasFolder = folderFiles.length > 0
+  const hasSingle = singleFiles.length > 0 && $('container').value.trim()
+  $('run').disabled = !(masterFile && (hasFolder || hasSingle))
+}
 
 $('run').addEventListener('click', async () => {
   $('run').disabled = true
@@ -179,6 +221,7 @@ async function readSource(file) {
   const map = {}
   ews.getRow(1).eachCell({ includeEmpty: false }, (c, col) => { const k = norm(c.value); if (k && !(k in map)) map[k] = col })
   const rows = []
+  const recovered = [] // {row, field, value}：ExcelJS 讀唔到、靠 SheetJS 補返
   for (let r = 2; r <= ews.rowCount; r++) {
     const obj = {}; let any = false
     for (const [k, col] of Object.entries(map)) {
@@ -188,13 +231,14 @@ async function readSource(file) {
         let sv = null
         if (cell) sv = (cell.t === 'd' || cell.v instanceof Date) ? (cell.w != null ? cell.w : cell.v) : cell.v
         v = cleanVal(sv)
+        if (v != null) recovered.push({ row: r, field: k, value: v })
       }
       if (!isEmpty(v)) any = true
       obj[k] = v
     }
     if (any) rows.push(obj)
   }
-  return { rows }
+  return { rows, recovered }
 }
 
 async function process() {
@@ -207,14 +251,19 @@ async function process() {
   const sheetByNorm = {}
   mwb.worksheets.forEach((ws) => { sheetByNorm[normSheet(ws.name)] = ws })
 
-  // 按貨櫃 group
+  // 按貨櫃 group：① 資料夾（自動讀夾名）② 單檔（用下面填嘅貨櫃名）
   const byContainer = {}
   folderFiles.forEach((x) => { (byContainer[x.container] ||= []).push(x) })
+  const cName = $('container').value.trim()
+  if (singleFiles.length && cName) {
+    singleFiles.forEach((f) => { (byContainer[cName] ||= []).push({ container: cName, name: f.name, file: f }) })
+  }
 
   const results = []
+  const allRecovered = [] // {container, file, row, field, value}
   for (const [container, items] of Object.entries(byContainer)) {
     const ws = sheetByNorm[normSheet(container)]
-    if (!ws) { results.push({ container, sheet: '—', rows: 0, status: 'err', msg: '主檔搵唔到對應工作表' }); log(`⚠ ${container}：搵唔到對應工作表，跳過`); continue }
+    if (!ws) { results.push({ container, sheet: '—', rows: 0, po: items.length, recov: 0, status: 'err', msg: '搵唔到對應工作表' }); log(`⚠ ${container}：搵唔到對應工作表，跳過`); continue }
 
     // 主檔表頭（第 2 行）→ {normKey:col}
     const mMap = {}
@@ -227,9 +276,9 @@ async function process() {
       if (!isEmpty(literalValue(ws.getCell(r, supCol)))) lastRow = r
     }
 
-    let added = 0, wr = lastRow + 1
+    let added = 0, recov = 0, wr = lastRow + 1
     for (const it of items.sort((a, b) => a.name.localeCompare(b.name))) {
-      const { rows } = await readSource(it.file)
+      const { rows, recovered } = await readSource(it.file)
       for (const sr of rows) {
         // 只填資料欄；序號欄(Auto 公式)同預鋪格式都唔郁
         for (const [k, col] of Object.entries(mMap)) {
@@ -238,9 +287,10 @@ async function process() {
         }
         wr++; added++
       }
+      for (const rc of (recovered || [])) { allRecovered.push({ container, file: it.name, row: rc.row, field: rc.field, value: rc.value }); recov++ }
     }
-    results.push({ container, sheet: ws.name, rows: added, status: 'ok', msg: `${items.length} 份 PO` })
-    log(`✓ ${container} → 工作表「${ws.name}」：+${added} 行`)
+    results.push({ container, sheet: ws.name, rows: added, po: items.length, recov, status: 'ok', msg: `${items.length} 份 PO` })
+    log(`✓ ${container} → 「${ws.name}」：+${added} 行${recov ? `，後備救返 ${recov} 格` : ''}`)
   }
 
   // 寫出 + 修 CF
@@ -255,20 +305,39 @@ async function process() {
   const out = fflate.zipSync(zip, { level: 6 })
   const blob = new Blob([out], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
   const url = URL.createObjectURL(blob)
-  const fname = masterFile.name.replace(/\.xlsx$/i, '') + '_更新_' + new Date().toISOString().slice(0, 10) + '.xlsx'
+  const stamp = new Date().toISOString().slice(0, 10)
+  const fname = masterFile.name.replace(/\.xlsx$/i, '') + '_更新_' + stamp + '.xlsx'
   const a = document.createElement('a'); a.href = url; a.download = fname; document.body.appendChild(a); a.click(); a.remove()
 
-  // 結果表
+  // ── 處理報告（畫面 + CSV）──
   const totalRows = results.reduce((s, r) => s + r.rows, 0)
-  let html = `<a class="dl" href="${url}" download="${fname}">⬇ 下載 ${fname}</a>`
-  html += '<table><thead><tr><th>貨櫃資料夾</th><th>對應工作表</th><th>加咗</th><th>狀態</th></tr></thead><tbody>'
+  let csv = '﻿貨櫃,對應工作表,加咗行數,PO數,後備救返,狀態\n'
+  results.forEach((r) => { csv += [r.container, r.sheet, r.rows, r.po, r.recov, r.msg].map(csvCell).join(',') + '\n' })
+  if (allRecovered.length) {
+    csv += '\n後備救返明細（ExcelJS 讀唔到、靠 SheetJS 補返，例如公式型 Indefinite）\n貨櫃,PO檔,來源行,欄位,值\n'
+    allRecovered.forEach((x) => { csv += [x.container, x.file, x.row, FIELD_LABEL[x.field] || x.field, x.value].map(csvCell).join(',') + '\n' })
+  }
+  const csvUrl = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }))
+  const csvName = '處理報告_' + stamp + '.csv'
+
+  let html = `<a class="dl" href="${url}" download="${fname}">⬇ 下載更新主檔</a> <a class="dl" href="${csvUrl}" download="${csvName}">⬇ 下載處理報告 CSV</a>`
+  html += '<table><thead><tr><th>貨櫃</th><th>對應工作表</th><th>加咗</th><th>PO</th><th>救返</th><th>狀態</th></tr></thead><tbody>'
   for (const r of results) {
     const b = r.status === 'ok' ? 'b-ok' : 'b-err'
-    html += `<tr><td>${esc(r.container)}</td><td>${esc(r.sheet)}</td><td>${r.rows}</td><td><span class="badge ${b}">${esc(r.msg)}</span></td></tr>`
+    html += `<tr><td>${esc(r.container)}</td><td>${esc(r.sheet)}</td><td>${r.rows}</td><td>${r.po}</td><td>${r.recov || ''}</td><td><span class="badge ${b}">${esc(r.msg)}</span></td></tr>`
   }
   html += '</tbody></table>'
+  if (allRecovered.length) {
+    html += `<div class="note"><b>🛟 後備救返 ${allRecovered.length} 格</b> —— ExcelJS 讀唔到、靠 SheetJS 補返（例如公式型「Indefinite」）：</div>`
+    html += '<table><thead><tr><th>貨櫃</th><th>PO 檔</th><th>行</th><th>欄位</th><th>值</th></tr></thead><tbody>'
+    for (const x of allRecovered.slice(0, 50)) {
+      html += `<tr><td>${esc(x.container)}</td><td>${esc(x.file)}</td><td>${x.row}</td><td>${esc(FIELD_LABEL[x.field] || x.field)}</td><td>${esc(x.value)}</td></tr>`
+    }
+    html += '</tbody></table>'
+    if (allRecovered.length > 50) html += `<div class="note">（畫面只列前 50 格，完整見 CSV 報告）</div>`
+  }
   $('result').innerHTML = html
-  log(`完成 ✓ 總共 append ${totalRows} 行；已下載更新主檔。`)
+  log(`完成 ✓ 總共 append ${totalRows} 行${allRecovered.length ? `，後備救返 ${allRecovered.length} 格` : ''}；已下載更新主檔 + 報告。`)
 }
 function esc(s){return String(s).replace(/[&<>"]/g,(c)=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
 </script>
