@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { X, ChevronDown } from 'lucide-react'
+import { useState, type ReactNode } from 'react'
+import { X, ChevronDown, PanelLeftClose } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useMode } from '../context/ModeContext'
 import { groupedFeatures, getFeature } from '../features/registry'
@@ -29,6 +29,12 @@ interface Props {
   /** 喺手機抽屜入面用：揀完一項就關抽屜 */
   onClose?: () => void
   className?: string
+  /** 桌面幼條（icon-only）模式 */
+  rail?: boolean
+  /** 收合一步（展開→幼條→收起）；只桌面傳入 */
+  onCollapse?: () => void
+  /** 由幼條一鍵展開返 */
+  onExpand?: () => void
 }
 
 // 側邊欄 — 品牌 / 模式切換 / 該模式嘅功能導覽（分組）
@@ -38,6 +44,9 @@ export default function Sidebar({
   onOpenSettings,
   onClose,
   className = '',
+  rail = false,
+  onCollapse,
+  onExpand,
 }: Props) {
   const { t } = useTranslation()
   const { modeDef } = useMode()
@@ -72,6 +81,93 @@ export default function Sidebar({
     onClose?.()
   }
 
+  // ───────── 幼條（icon-only）模式 ─────────
+  if (rail) {
+    return (
+      <aside
+        className={cx(
+          'flex w-[68px] shrink-0 flex-col border-r border-black/[0.06] bg-white/80 backdrop-blur-xl dark:border-white/[0.06] dark:bg-slate-900/70',
+          className,
+        )}
+      >
+        {/* 品牌：撳 logo 展開 */}
+        <div className="flex justify-center px-2 py-3">
+          <button
+            onClick={onExpand}
+            title={t('shell.expandSidebar', { defaultValue: '展開側欄' })}
+            aria-label={t('shell.expandSidebar', { defaultValue: '展開側欄' })}
+            className="rounded-xl transition active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+          >
+            <img
+              src="/favicon.svg"
+              alt="EziTeach 教學易"
+              className="h-10 w-10 rounded-xl shadow-sm"
+            />
+          </button>
+        </div>
+
+        {/* 功能 icon 列 */}
+        <nav className="flex-1 space-y-0.5 overflow-y-auto px-2 py-1">
+          <RailButton
+            active={activeId === null}
+            title={t('shell.home', { defaultValue: '首頁概覽' })}
+            onClick={() => choose(null)}
+          >
+            <FeatureIcon icon="🏠" size={18} className={iconColor(activeId === null)} />
+          </RailButton>
+          {groups.map((g, gi) => (
+            <div key={g.group} className="space-y-0.5">
+              {gi > 0 && (
+                <div className="mx-auto my-1.5 h-px w-6 bg-black/[0.06] dark:bg-white/[0.08]" />
+              )}
+              {g.items.map((f) => {
+                const on = activeId === f.id
+                return (
+                  <RailButton
+                    key={f.id}
+                    active={on}
+                    title={featName(t, f)}
+                    onClick={() => choose(f.id)}
+                  >
+                    <FeatureIcon icon={f.icon} size={18} className={iconColor(on)} />
+                  </RailButton>
+                )
+              })}
+            </div>
+          ))}
+        </nav>
+
+        {/* 頁腳：設定 + 完全收起 */}
+        <div className="flex flex-col items-center gap-1 border-t border-black/[0.06] py-2 dark:border-white/[0.06]">
+          <RailButton
+            active={activeId === '__settings__'}
+            title={t('shell.settings', { defaultValue: '設定' })}
+            onClick={() => {
+              onOpenSettings?.()
+              onClose?.()
+            }}
+          >
+            <FeatureIcon
+              icon="⚙️"
+              size={18}
+              className={iconColor(activeId === '__settings__')}
+            />
+          </RailButton>
+          {onCollapse && (
+            <button
+              onClick={onCollapse}
+              title={t('shell.hideSidebar', { defaultValue: '完全收起（⌘B）' })}
+              aria-label={t('shell.hideSidebar', { defaultValue: '完全收起' })}
+              className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-400 transition hover:bg-black/[0.04] hover:text-slate-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:text-slate-500 dark:hover:bg-white/[0.06] dark:hover:text-slate-200"
+            >
+              <PanelLeftClose size={17} strokeWidth={1.75} />
+            </button>
+          )}
+        </div>
+      </aside>
+    )
+  }
+
   return (
     <aside
       className={cx(
@@ -96,11 +192,22 @@ export default function Sidebar({
             </p>
           </div>
         </div>
-        {onClose && (
-          <IconButton label="關閉選單" onClick={onClose} className="md:hidden">
-            <X size={18} strokeWidth={1.75} />
-          </IconButton>
-        )}
+        <div className="flex items-center gap-0.5">
+          {onCollapse && (
+            <IconButton
+              label={t('shell.collapseSidebar', { defaultValue: '收合側欄（⌘B）' })}
+              onClick={onCollapse}
+              className="hidden md:inline-flex"
+            >
+              <PanelLeftClose size={18} strokeWidth={1.75} />
+            </IconButton>
+          )}
+          {onClose && (
+            <IconButton label="關閉選單" onClick={onClose} className="md:hidden">
+              <X size={18} strokeWidth={1.75} />
+            </IconButton>
+          )}
+        </div>
       </div>
 
       {/* 模式切換 */}
@@ -224,5 +331,34 @@ function navClass(active: boolean) {
     active
       ? 'bg-accent/10 font-semibold text-accent-strong dark:bg-accent/20 dark:text-accent'
       : 'font-medium text-slate-600 hover:bg-black/[0.04] hover:text-slate-900 dark:text-slate-300 dark:hover:bg-white/[0.06] dark:hover:text-white',
+  )
+}
+
+// 幼條模式嘅單個 icon 掣（置中、native title tooltip、active 有 ring）
+function RailButton({
+  active,
+  title,
+  onClick,
+  children,
+}: {
+  active: boolean
+  title: string
+  onClick: () => void
+  children: ReactNode
+}) {
+  return (
+    <button
+      onClick={onClick}
+      title={title}
+      aria-label={title}
+      className={cx(
+        'group mx-auto flex h-10 w-10 items-center justify-center rounded-lg transition duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.97]',
+        active
+          ? 'bg-accent/10 ring-1 ring-accent/25 dark:bg-accent/20'
+          : 'hover:bg-black/[0.04] dark:hover:bg-white/[0.06]',
+      )}
+    >
+      {children}
+    </button>
   )
 }

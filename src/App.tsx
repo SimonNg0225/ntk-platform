@@ -1,4 +1,5 @@
 import { Suspense, useEffect, useState, type ReactNode } from 'react'
+import { PanelLeft } from 'lucide-react'
 import { ModeProvider, useMode } from './context/ModeContext'
 import { AuthProvider } from './context/AuthContext'
 import { NavProvider } from './context/NavContext'
@@ -42,7 +43,29 @@ export function AppShell() {
   const [quickAddOpen, setQuickAddOpen] = useState(false)
   const [shortcutsOpen, setShortcutsOpen] = useState(false)
   const [onboardOpen, setOnboardOpen] = useState(() => !hasOnboarded())
+  // 桌面側欄三態：展開（w-72）→ 幼條（icon rail）→ 完全收起。記喺 localStorage。
+  const [sidebarMode, setSidebarMode] = useState<'expanded' | 'rail' | 'hidden'>(() => {
+    try {
+      const v = localStorage.getItem('ntk.sidebarMode')
+      if (v === 'expanded' || v === 'rail' || v === 'hidden') return v
+    } catch {
+      /* ignore */
+    }
+    return 'expanded'
+  })
   const toast = useToast()
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('ntk.sidebarMode', sidebarMode)
+    } catch {
+      /* ignore */
+    }
+  }, [sidebarMode])
+
+  // 連續切換：展開 → 幼條 → 收起 →（回）展開
+  const cycleSidebar = () =>
+    setSidebarMode((m) => (m === 'expanded' ? 'rail' : m === 'rail' ? 'hidden' : 'expanded'))
 
   // 切換模式時，返返去首頁（因為功能會唔同）
   useEffect(() => {
@@ -84,6 +107,18 @@ export function AppShell() {
     return () => window.removeEventListener('keydown', handler)
   }, [])
 
+  // ⌘B / Ctrl+B 切換側欄（展開 → 幼條 → 收起 → 展開）
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'b') {
+        e.preventDefault()
+        setSidebarMode((m) => (m === 'expanded' ? 'rail' : m === 'rail' ? 'hidden' : 'expanded'))
+      }
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [])
+
   // ? (Shift+/) 彈出鍵盤快捷鍵速查；喺輸入框 / 可編輯區聚焦時唔觸發
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -111,13 +146,18 @@ export function AppShell() {
   return (
     <NavProvider open={navigate}>
       <div className="flex h-screen overflow-hidden bg-[color:var(--app-bg)] text-slate-900 dark:text-slate-100">
-        {/* 桌面側邊欄 */}
-        <Sidebar
-          activeId={activeId}
-          onSelect={navigate}
-          onOpenSettings={() => navigate('__settings__')}
-          className="hidden border-r border-black/[0.06] dark:border-white/[0.06] md:flex"
-        />
+        {/* 桌面側邊欄（展開 / 幼條 rail；收起時唔 render，改用浮掣展開）*/}
+        {sidebarMode !== 'hidden' && (
+          <Sidebar
+            activeId={activeId}
+            onSelect={navigate}
+            onOpenSettings={() => navigate('__settings__')}
+            rail={sidebarMode === 'rail'}
+            onCollapse={cycleSidebar}
+            onExpand={() => setSidebarMode('expanded')}
+            className="hidden border-r border-black/[0.06] dark:border-white/[0.06] md:flex"
+          />
+        )}
 
         {/* 手機抽屜 */}
         {drawerOpen && (
@@ -154,9 +194,25 @@ export function AppShell() {
             className="absolute right-5 top-5 z-30 hidden md:inline-flex lg:right-8"
           />
 
+          {/* 側欄收起時：桌面左上角浮出「展開側欄」掣 */}
+          {sidebarMode === 'hidden' && (
+            <button
+              onClick={() => setSidebarMode('expanded')}
+              title={t('shell.expandSidebar', { defaultValue: '展開側欄（⌘B）' })}
+              aria-label={t('shell.expandSidebar', { defaultValue: '展開側欄' })}
+              className="absolute left-3 top-4 z-30 hidden h-9 w-9 items-center justify-center rounded-lg border border-black/[0.06] bg-white/85 text-slate-500 shadow-sm backdrop-blur-xl transition hover:text-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 md:inline-flex dark:border-white/10 dark:bg-slate-800/80 dark:text-slate-300 dark:hover:text-accent"
+            >
+              <PanelLeft size={18} strokeWidth={1.75} />
+            </button>
+          )}
+
           {/* overflow-x-hidden：杜絕任何過寬子元素令整頁可左右捲（iOS 尤甚）；寬表格各自有 overflow-x-auto 內捲，唔受影響 */}
-          <div className="min-w-0 flex-1 overflow-x-hidden overflow-y-auto">
-            <div className="app-content mx-auto max-w-5xl px-4 py-6 sm:px-8 sm:py-8">
+          <div
+            className={`min-w-0 flex-1 overflow-x-hidden overflow-y-auto ${
+              sidebarMode === 'hidden' ? 'md:pl-12' : ''
+            }`}
+          >
+            <div className="app-content mx-auto w-full max-w-[1800px] px-4 py-6 sm:px-8 sm:py-8">
               {isSettings ? (
                 <div className="space-y-5">
                   <button

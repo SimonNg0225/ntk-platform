@@ -78,7 +78,13 @@ import {
   MessageSquarePlus,
   Archive,
   ArchiveRestore,
-  Thermometer,
+  ListChecks,
+  NotebookPen,
+  PenLine,
+  Lightbulb,
+  Target,
+  CalendarRange,
+  MessageCircle,
   ChevronDown,
   CornerDownLeft,
   StickyNote,
@@ -135,13 +141,13 @@ const MODE_AI: Record<
   learning: {
     system:
       '你係「教學易」嘅 AI 個人助手，協助一位用家。請用繁體中文回答（可以用書面廣東話）。風格：精簡、有條理、有重點，適當用列點同例子。如果問題太模糊，先簡短澄清再答。可以用 Markdown（標題、列點、表格、程式碼區塊）令答案更清楚。',
-    greeting: '我係你嘅個人助手',
+    greeting: '今日想學啲咩？',
     tagline: '解釋概念 · 總結筆記 · 出練習 · 規劃溫習',
   },
   work: {
     system:
       '你係「教學易」嘅教學助手，協助一位香港中學老師（任教科目不限）。可以幫手出題（連參考答案同評分指引）、寫教案大綱、擬批改評語、設計課堂活動。請用繁體中文，內容貼合香港中學課程，專業、實用、有條理。如老師有指明科目或課題，請按其科目作答。可以用 Markdown（標題、列點、表格）令內容更清楚。',
-    greeting: '我係你嘅教學助手',
+    greeting: '今日想備啲咩？',
     tagline: '出題 · 寫教案 · 擬評語 · 設計活動',
   },
 }
@@ -193,8 +199,8 @@ export default function AIAssistant() {
   // 模型標籤（segmented control + 標題列短標）
   const models = useMemo(
     () => [
-      { id: 'gemini-2.5-flash' as AIModel, label: t('aiasst.modelFlash', { defaultValue: '⚡ Flash（快）' }), short: 'Flash' },
-      { id: 'gemini-2.5-pro' as AIModel, label: t('aiasst.modelPro', { defaultValue: '🧠 Pro（強）' }), short: 'Pro' },
+      { id: 'gemini-2.5-flash' as AIModel, label: t('aiasst.modelFlash', { defaultValue: '快速' }), short: '快速' },
+      { id: 'gemini-2.5-pro' as AIModel, label: t('aiasst.modelPro', { defaultValue: '深入' }), short: '深入' },
     ],
     [t],
   )
@@ -845,7 +851,7 @@ export default function AIAssistant() {
             align="start"
             trigger={
               <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200/80 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 transition hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700">
-                <Sparkles size={13} className="text-accent" /> {personaLabel}
+                <MessageCircle size={13} className="text-slate-400" /> {personaLabel}
                 <ChevronDown size={12} className="text-slate-400" />
               </span>
             }
@@ -857,23 +863,17 @@ export default function AIAssistant() {
             }))}
           />
 
-          {/* 溫度 */}
-          <Tooltip label={t('aiasst.temperatureTooltip', { defaultValue: '創意度（temperature）' })}>
-            <span className="inline-flex items-center gap-2 rounded-full border border-slate-200/80 bg-white px-3 py-1.5 dark:border-slate-700 dark:bg-slate-800">
-              <Thermometer size={13} className="text-slate-400" />
-              <input
-                type="range"
-                min={0}
-                max={1}
-                step={0.1}
-                value={activeTemp}
-                onChange={(e) => setTemp(Number(e.target.value))}
-                className="h-1 w-16 cursor-pointer accent-accent"
-                aria-label={t('aiasst.temperature', { defaultValue: '溫度' })}
-              />
-              <span className="w-6 tabular-nums text-[11px] font-medium text-slate-500 dark:text-slate-400">{activeTemp.toFixed(1)}</span>
-            </span>
-          </Tooltip>
+          {/* 回應風格（取代 temperature 數字滑桿；用老師語言、無 0–1 jargon） */}
+          <SegmentedControl
+            size="sm"
+            value={tempToStyle(activeTemp)}
+            onChange={(s) => setTemp(STYLE_TEMP[s as AiStyle])}
+            options={[
+              { id: 'precise', label: t('aiasst.stylePrecise', { defaultValue: '精準' }) },
+              { id: 'balanced', label: t('aiasst.styleBalanced', { defaultValue: '平衡' }) },
+              { id: 'creative', label: t('aiasst.styleCreative', { defaultValue: '創意' }) },
+            ]}
+          />
 
           <div className="flex-1" />
 
@@ -1350,54 +1350,45 @@ function Welcome({
   return (
     <div className="mx-auto flex h-full max-w-2xl flex-col items-center justify-center gap-6 px-2 py-6 text-center sm:py-8">
       <div className="flex flex-col items-center gap-4">
-        <span className="relative flex h-16 w-16 items-center justify-center rounded-2xl bg-accent-soft text-accent-strong shadow-sm shadow-accent/20 dark:bg-accent/15 dark:text-accent dark:shadow-none">
-          <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-white text-accent ring-1 ring-accent/20 dark:bg-slate-800 dark:ring-accent/30">
-            <Sparkles size={11} className="fill-current" />
-          </span>
-          <Bot size={30} strokeWidth={1.75} />
+        <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-accent-soft text-accent-strong ring-1 ring-accent/15 dark:bg-accent/15 dark:text-accent dark:ring-accent/25">
+          <NotebookPen size={22} strokeWidth={1.75} />
         </span>
         <div className="space-y-2">
-          <p className="text-xl font-semibold tracking-tight text-slate-800 dark:text-slate-100">
-            {t('aiasst.welcomeGreeting', { defaultValue: `你好，${greeting}`, greeting })}
+          <h2 className="text-2xl font-semibold tracking-tight text-slate-800 dark:text-slate-100 sm:text-[28px]">
+            {t('aiasst.welcomeGreeting', { defaultValue: greeting, greeting })}
+          </h2>
+          <p className="mx-auto max-w-md text-sm leading-relaxed text-slate-500 dark:text-slate-400">
+            {t('aiasst.welcomeSub', { defaultValue: '想由邊度開始？揀一個落手位，或者直接打低你想備嘅課、想出嘅題。' })}
           </p>
-          <p className="text-sm leading-relaxed text-slate-500 dark:text-slate-400">
-            {t('aiasst.welcomeSub', { defaultValue: '想由邊度開始？揀一個落手位，或者直接打你想問嘅嘢。' })}
+          <p className="pt-0.5 text-[11px] font-medium uppercase tracking-[0.18em] text-slate-400/80 dark:text-slate-500">
+            {tagline}
           </p>
-          <div className="flex flex-wrap items-center justify-center gap-1.5 pt-0.5">
-            {tagline.split(/\s*·\s*/).map((part) => (
-              <span
-                key={part}
-                className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-medium text-slate-500 dark:bg-slate-800 dark:text-slate-400"
-              >
-                {part}
-              </span>
-            ))}
-          </div>
         </div>
       </div>
 
       <div className="w-full">
-        <div className="mb-2.5 flex items-center gap-2 px-0.5 text-left">
-          <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-            {t('aiasst.welcomeTryAsking', { defaultValue: '試吓問我' })}
+        <div className="mb-3 flex items-center gap-3 px-0.5 text-left">
+          <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">
+            {t('aiasst.welcomeTryAsking', { defaultValue: '由呢度開始' })}
           </span>
           <span className="h-px flex-1 bg-slate-200/70 dark:bg-slate-700/60" />
         </div>
-        <div className="grid w-full grid-cols-1 gap-2 sm:grid-cols-2">
-          {templates.map((t, idx) => {
+        <div className="grid w-full grid-cols-1 gap-2.5 sm:grid-cols-2">
+          {templates.map((tpl, idx) => {
             const tone = WELCOME_TONES[idx % WELCOME_TONES.length]
+            const Icon = categoryIcon(tpl.category)
             return (
               <button
-                key={t.id}
-                onClick={() => onPick(t)}
-                className="group flex items-center gap-3 rounded-2xl border border-slate-200/80 bg-white p-3 text-left shadow-xs transition duration-200 hover:-translate-y-0.5 hover:border-accent/40 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:border-slate-700/60 dark:bg-slate-800 dark:shadow-none dark:hover:border-accent/50"
+                key={tpl.id}
+                onClick={() => onPick(tpl)}
+                className="group flex items-center gap-3 rounded-2xl border border-slate-200/80 bg-white p-3.5 text-left shadow-xs transition duration-200 hover:-translate-y-0.5 hover:border-accent/40 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:border-slate-700/60 dark:bg-slate-800 dark:shadow-none dark:hover:border-accent/50"
               >
-                <span className={cx('flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition duration-200 group-hover:scale-105', tone)}>
-                  <Sparkles size={16} />
+                <span className={cx('flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition duration-200 group-hover:scale-105', tone)}>
+                  <Icon size={18} strokeWidth={1.9} />
                 </span>
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate text-sm font-medium text-slate-700 dark:text-slate-200">{t.title}</span>
-                  <span className="mt-0.5 block truncate text-[11px] text-slate-400 dark:text-slate-500">{t.category}</span>
+                  <span className="block truncate text-sm font-medium text-slate-700 dark:text-slate-200">{tpl.title}</span>
+                  <span className="mt-0.5 block truncate text-[11px] text-slate-400 dark:text-slate-500">{tpl.category}</span>
                 </span>
                 <CornerDownLeft size={14} className="shrink-0 text-slate-300 opacity-0 transition group-hover:opacity-100 dark:text-slate-600" />
               </button>
@@ -1425,6 +1416,30 @@ const WELCOME_TONES = [
   'bg-sky-50 text-sky-600 dark:bg-sky-500/15 dark:text-sky-300',
   'bg-rose-50 text-rose-600 dark:bg-rose-500/15 dark:text-rose-300',
 ]
+
+// temperature → 老師語言嘅「回應風格」（去 LLM jargon；唔再見 0–1 數字）
+type AiStyle = 'precise' | 'balanced' | 'creative'
+const STYLE_TEMP: Record<AiStyle, number> = { precise: 0.3, balanced: 0.6, creative: 0.9 }
+function tempToStyle(temp: number): AiStyle {
+  if (temp <= 0.4) return 'precise'
+  if (temp >= 0.75) return 'creative'
+  return 'balanced'
+}
+
+// 落手位卡：按分類俾專屬 icon（取代一式一樣嘅 Sparkles 火花）
+const CATEGORY_ICON: Record<string, typeof Sparkles> = {
+  出題: ListChecks,
+  教學: NotebookPen,
+  批改: PenLine,
+  理解: Lightbulb,
+  總結: BookOpen,
+  練習: Target,
+  規劃: CalendarRange,
+  溝通: MessageCircle,
+}
+function categoryIcon(category: string): typeof Sparkles {
+  return CATEGORY_ICON[category] ?? Sparkles
+}
 
 function MessageBubble({
   msg,
