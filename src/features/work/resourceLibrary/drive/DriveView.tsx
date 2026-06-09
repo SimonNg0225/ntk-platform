@@ -16,6 +16,8 @@ import {
   Loader2,
   BookmarkPlus,
   BookmarkCheck,
+  FolderInput,
+  Check,
 } from 'lucide-react'
 import { Button, Input, EmptyState, IconButton, Tooltip, cx } from '../../../../ui'
 import { useToast } from '../../../../context/ToastContext'
@@ -29,6 +31,8 @@ import {
   isDriveConnected,
   listFolder,
   searchByName,
+  parseDriveFolderId,
+  getFileMeta,
   mimeKind,
   formatBytes,
   isFolder,
@@ -72,6 +76,10 @@ export default function DriveView() {
   const [loading, setLoading] = useState(false)
   const [term, setTerm] = useState('')
   const [err, setErr] = useState<string | null>(null)
+  // 自訂起點資料夾（畀「電腦 / Computers」備份等 My Drive 根以外嘅資料夾用）
+  const [showRoot, setShowRoot] = useState(false)
+  const [folderInput, setFolderInput] = useState('')
+  const [settingRoot, setSettingRoot] = useState(false)
 
   const cur = path[path.length - 1]
 
@@ -150,6 +158,42 @@ export default function DriveView() {
     setPath((p) => p.slice(0, i + 1))
   }
 
+  // 把貼上嘅 Drive 資料夾連結 / ID 設做起點（支援 My Drive 以外，如 Computers 備份）
+  async function applyRoot() {
+    const id = parseDriveFolderId(folderInput)
+    if (!id) {
+      toast.error('貼唔到資料夾 ID —— 請貼 Drive 資料夾連結（含 /folders/…）或資料夾 ID')
+      return
+    }
+    setSettingRoot(true)
+    try {
+      const meta = await getFileMeta(id)
+      if (!isFolder(meta.mimeType)) {
+        toast.error('呢個連結唔係資料夾')
+        return
+      }
+      if (cfg) driveConfigCol.update(cfg.id, { rootFolderId: meta.id, rootFolderName: meta.name })
+      else driveConfigCol.add({ rootFolderId: meta.id, rootFolderName: meta.name })
+      setPath([{ id: meta.id, name: meta.name }])
+      setTerm('')
+      setFolderInput('')
+      setShowRoot(false)
+      toast.success(`起點已設為：${meta.name}`)
+    } catch (e) {
+      toast.error((e as Error).message)
+    } finally {
+      setSettingRoot(false)
+    }
+  }
+
+  function resetRoot() {
+    if (cfg) driveConfigCol.update(cfg.id, { rootFolderId: undefined, rootFolderName: undefined })
+    setPath([{ id: 'root', name: '我的雲端硬碟' }])
+    setTerm('')
+    setShowRoot(false)
+    toast.success('已回到我的雲端硬碟')
+  }
+
   // 降級：未設定 client ID
   if (!isDriveConfigured) {
     return (
@@ -218,8 +262,48 @@ export default function DriveView() {
           >
             重新整理
           </Button>
+          <Tooltip label="設定起點資料夾（連 電腦 / Computers 備份）">
+            <IconButton
+              label="設定起點資料夾"
+              size="sm"
+              active={showRoot}
+              onClick={() => setShowRoot((v) => !v)}
+            >
+              <FolderInput size={15} />
+            </IconButton>
+          </Tooltip>
         </div>
       </div>
+
+      {showRoot && (
+        <div className="flex flex-col gap-2 rounded-xl border border-slate-200/80 bg-slate-50/60 p-3 dark:border-slate-700/60 dark:bg-slate-800/40 sm:flex-row sm:items-start">
+          <div className="min-w-0 flex-1">
+            <Input
+              value={folderInput}
+              onChange={(e) => setFolderInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') void applyRoot()
+              }}
+              placeholder="貼上 Drive 資料夾連結（含 /folders/…）或資料夾 ID…"
+              aria-label="Drive 資料夾連結"
+              className="h-9 w-full"
+            />
+            <p className="mt-1.5 text-[11px] leading-relaxed text-slate-400">
+              想睇「電腦 / 其他電腦」嘅備份？喺 Google Drive 網頁開嗰個資料夾 → 複製網址 → 貼上面。
+            </p>
+          </div>
+          <div className="flex shrink-0 items-center gap-1.5">
+            <Button size="sm" icon={Check} onClick={() => void applyRoot()} disabled={settingRoot}>
+              {settingRoot ? '設定中…' : '設為起點'}
+            </Button>
+            {cfg?.rootFolderId && (
+              <Button size="sm" variant="secondary" icon={Home} onClick={resetRoot}>
+                回我的雲端硬碟
+              </Button>
+            )}
+          </div>
+        </div>
+      )}
 
       {err && (
         <p className="rounded-lg bg-rose-50 px-3 py-2 text-xs text-rose-600 dark:bg-rose-500/10 dark:text-rose-300">

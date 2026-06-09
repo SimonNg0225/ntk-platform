@@ -171,7 +171,33 @@ async function driveFetch(q: string): Promise<DriveFile[]> {
 export function listFolder(folderId: string): Promise<DriveFile[]> {
   return driveFetch(folderListQuery(folderId))
 }
-/** 用檔名搜尋（drive.readonly 範圍內）。 */
+/** 用檔名搜尋（drive.readonly 範圍內，含「電腦 / Computers」備份）。 */
 export function searchByName(term: string): Promise<DriveFile[]> {
   return driveFetch(nameSearchQuery(term))
+}
+
+/** 由 Drive 連結或 ID 抽出資料夾 ID（支援 /folders/<id>、open?id=<id>、純 ID）。 */
+export function parseDriveFolderId(input: string): string | null {
+  const s = input.trim()
+  if (!s) return null
+  const m = s.match(/\/folders\/([a-zA-Z0-9_-]+)/) || s.match(/[?&]id=([a-zA-Z0-9_-]+)/)
+  if (m) return m[1]
+  if (/^[a-zA-Z0-9_-]{12,}$/.test(s)) return s // 純 ID
+  return null
+}
+
+/** 攞單一資料夾 / 檔案 meta（驗證 ID + 攞名稱）。Computers 備份資料夾都讀得到。 */
+export async function getFileMeta(id: string): Promise<DriveFile> {
+  const token = await getAccessToken()
+  const url =
+    `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(id)}?` +
+    new URLSearchParams({ fields: 'id,name,mimeType,webViewLink', supportsAllDrives: 'true' }).toString()
+  const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } })
+  if (res.status === 401) {
+    signOutDrive()
+    throw new Error('授權過期，請重新連接 Google Drive')
+  }
+  if (res.status === 404) throw new Error('搵唔到呢個資料夾（檢查連結啱唔啱、你個帳戶有冇權限）')
+  if (!res.ok) throw new Error(`攞唔到資料夾資料（${res.status}）`)
+  return (await res.json()) as DriveFile
 }
