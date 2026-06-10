@@ -1,4 +1,6 @@
 import { useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import './curriculum/i18n'
 import {
   CalendarClock,
   Check,
@@ -76,12 +78,6 @@ import {
 const planCol = createCollection<CurriculumPlan>('curriculum_plan', [])
 
 type ViewTab = 'list' | 'schedule' | 'matrix' | 'analysis'
-const VIEW_TABS: { id: ViewTab; label: string }[] = [
-  { id: 'list', label: '進度清單' },
-  { id: 'schedule', label: '教學進度表' },
-  { id: 'matrix', label: '全校對照' },
-  { id: 'analysis', label: '分析' },
-]
 const VIEW_ICONS: Partial<Record<ViewTab, typeof LayoutList>> = {
   list: LayoutList,
   schedule: CalendarClock,
@@ -92,6 +88,7 @@ const VIEW_ICONS: Partial<Record<ViewTab, typeof LayoutList>> = {
 type StatusFilter = 'all' | ProgressStatus
 
 export default function CurriculumProgress() {
+  const { t } = useTranslation()
   const classes = useCollection(classesCol)
   const topics = useCollection(topicsCol)
   const progress = useCollection(progressCol)
@@ -109,12 +106,19 @@ export default function CurriculumProgress() {
     [progress, activeClass, topics],
   )
 
+  const VIEW_TABS: { id: ViewTab; label: string }[] = [
+    { id: 'list', label: t('curr.tabList', { defaultValue: '進度清單' }) },
+    { id: 'schedule', label: t('curr.tabSchedule', { defaultValue: '教學進度表' }) },
+    { id: 'matrix', label: t('curr.tabMatrix', { defaultValue: '全校對照' }) },
+    { id: 'analysis', label: t('curr.tabAnalysis', { defaultValue: '分析' }) },
+  ]
+
   if (classes.length === 0) {
     return (
       <EmptyState
         icon={School}
-        title="仲未鋪到路軌"
-        hint="先去「班別管理」開一班，就可以喺呢度沿住 BAFS 課程大綱鋪設教學路線。"
+        title={t('curr.noClassTitle', { defaultValue: '仲未鋪到路軌' })}
+        hint={t('curr.noClassHint', { defaultValue: '先去「班別管理」開一班，就可以喺呢度沿住 BAFS 課程大綱鋪設教學路線。' })}
       />
     )
   }
@@ -131,17 +135,13 @@ export default function CurriculumProgress() {
         <div className="relative flex flex-wrap items-start justify-between gap-x-5 gap-y-4">
           <div className="min-w-0">
             <p className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.28em] text-accent/80">
-              <Route size={13} /> 教學路線圖
+              <Route size={13} /> {t('curr.routeLabel', { defaultValue: '教學路線圖' })}
             </p>
             <h1 className="mt-1.5 font-serif text-[28px] font-semibold leading-tight tracking-tight text-slate-800 dark:text-slate-100 sm:text-[34px]">
-              課程進度
+              {t('curr.pageTitle', { defaultValue: '課程進度' })}
             </h1>
             <p className="mt-1.5 max-w-md text-sm leading-relaxed text-slate-600 dark:text-slate-300">
-              沿住 BAFS 課程大綱鋪一條教學路軌，逐站標記里程碑，一眼睇到{' '}
-              <span className="font-medium text-slate-700 dark:text-slate-200">
-                {activeClass?.name}
-              </span>{' '}
-              行到邊。
+              {t('curr.pageDesc', { defaultValue: '沿住 BAFS 課程大綱鋪一條教學路軌，逐站標記里程碑，一眼睇到 {{className}} 行到邊。', className: activeClass?.name })}
             </p>
           </div>
 
@@ -157,7 +157,7 @@ export default function CurriculumProgress() {
                 </span>
               </div>
               <p className="mt-1 text-right text-xs tabular-nums text-slate-500 dark:text-slate-400">
-                已抵 {journey.done} / {journey.total} 站
+                {t('curr.arrivedCount', { defaultValue: '已抵 {{done}} / {{total}} 站', done: journey.done, total: journey.total })}
               </p>
               <JourneyRail done={journey.done} total={journey.total} />
             </div>
@@ -167,7 +167,7 @@ export default function CurriculumProgress() {
         {/* 班別 = 路線選擇 */}
         <div className="relative mt-5 flex flex-wrap items-center gap-x-2 gap-y-2">
           <span className="inline-flex items-center gap-1 text-[11px] font-medium uppercase tracking-wide text-slate-400 dark:text-slate-500">
-            <MapPin size={12} /> 路線
+            <MapPin size={12} /> {t('curr.routePickerLabel', { defaultValue: '路線' })}
           </span>
           <Pills
             size="sm"
@@ -283,6 +283,7 @@ function ListView({
   className: string
   topics: Topic[]
 }) {
+  const { t } = useTranslation()
   const toast = useToast()
   const confirm = useConfirm()
   const progress = useCollection(progressCol)
@@ -343,7 +344,7 @@ function ListView({
       })
     }
     if (next === 'done' && topics.length > 0 && overall.done + 1 === topics.length) {
-      toast.success(`${className} 已完成全部課題 🎉`)
+      toast.success(t('curr.toastAllDone', { defaultValue: '{{className}} 已完成全部課題 🎉', className }))
     }
   }
 
@@ -361,17 +362,17 @@ function ListView({
   const bulkArea = async (items: Topic[], to: ProgressStatus, areaName: string) => {
     if (to === 'not_started') {
       const ok = await confirm({
-        title: '重設範疇進度？',
-        message: `將「${areaName}」全部 ${items.length} 個課題設為未開始。`,
-        confirmText: '重設',
+        title: t('curr.confirmResetTitle', { defaultValue: '重設範疇進度？' }),
+        message: t('curr.confirmResetMsg', { defaultValue: '將「{{area}}」全部 {{count}} 個課題設為未開始。', area: areaName, count: items.length }),
+        confirmText: t('curr.confirmResetBtn', { defaultValue: '重設' }),
       })
       if (!ok) return
     }
-    items.forEach((t) => setStatus(t.id, to))
+    items.forEach((tp) => setStatus(tp.id, to))
     toast.success(
       to === 'done'
-        ? `已標記「${areaName}」全部完成`
-        : `已重設「${areaName}」進度`,
+        ? t('curr.toastAreaDone', { defaultValue: '已標記「{{area}}」全部完成', area: areaName })
+        : t('curr.toastAreaReset', { defaultValue: '已重設「{{area}}」進度', area: areaName }),
     )
   }
 
@@ -387,39 +388,47 @@ function ListView({
 
   const exportCsv = () => {
     const rows: (string | number)[][] = [
-      ['部分', '範疇', '課題', '狀態', '完成日期', '目標完成日', '進度'],
+      [
+        t('curr.csvColPart', { defaultValue: '部分' }),
+        t('curr.csvColArea', { defaultValue: '範疇' }),
+        t('curr.csvColTopic', { defaultValue: '課題' }),
+        t('curr.csvColStatus', { defaultValue: '狀態' }),
+        t('curr.csvColDateDone', { defaultValue: '完成日期' }),
+        t('curr.csvColTargetDate', { defaultValue: '目標完成日' }),
+        t('curr.csvColPace', { defaultValue: '進度' }),
+      ],
     ]
-    for (const t of [...topics].sort((a, b) => a.order - b.order)) {
-      const rec = recordOf(progress, classId, t.id)
+    for (const tp of [...topics].sort((a, b) => a.order - b.order)) {
+      const rec = recordOf(progress, classId, tp.id)
       const st = rec?.status ?? 'not_started'
-      const p = planOf(plans, classId, t.id)
+      const p = planOf(plans, classId, tp.id)
       rows.push([
-        t.part,
-        t.area,
-        t.topic,
+        tp.part,
+        tp.area,
+        tp.topic,
         STATUS_META[st].label,
         st === 'done' ? fmtDate(rec?.dateDone) : '',
         p?.targetDate ?? '',
         PACE_META[paceOf(st, p?.targetDate, today)].label,
       ])
     }
-    downloadCsv(`${className}_課程進度.csv`, rows)
-    toast.success(`已匯出 ${className} 課程進度 CSV`)
+    downloadCsv(t('curr.csvFilenameCurr', { defaultValue: '{{className}}_課程進度.csv', className }), rows)
+    toast.success(t('curr.toastExportCurr', { defaultValue: '已匯出 {{className}} 課程進度 CSV', className }))
   }
 
   return (
     <div className="space-y-4">
       {/* 路程結算帶：里程碑統計（hairline grid · serif 大數字） */}
       <section className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl bg-slate-200/70 ring-1 ring-slate-200/80 dark:bg-slate-700/50 dark:ring-slate-700/60 sm:grid-cols-4">
-        <LedgerStat label="全程站數" value={topics.length} unit="站" icon={Milestone} />
-        <LedgerStat label="已抵達" value={overall.done} unit="站" icon={Flag} hint={`完成度 ${overall.pct}%`} hot={overall.total > 0 && overall.done === overall.total} />
-        <LedgerStat label="途中" value={overall.inProgress} unit="站" icon={TrainTrack} />
+        <LedgerStat label={t('curr.statTotalStops', { defaultValue: '全程站數' })} value={topics.length} unit={t('curr.statUnit', { defaultValue: '站' })} icon={Milestone} />
+        <LedgerStat label={t('curr.statArrived', { defaultValue: '已抵達' })} value={overall.done} unit={t('curr.statUnit', { defaultValue: '站' })} icon={Flag} hint={t('curr.hintCompletionPct', { defaultValue: '完成度 {{pct}}%', pct: overall.pct })} hot={overall.total > 0 && overall.done === overall.total} />
+        <LedgerStat label={t('curr.statInTransit', { defaultValue: '途中' })} value={overall.inProgress} unit={t('curr.statUnit', { defaultValue: '站' })} icon={TrainTrack} />
         <LedgerStat
-          label="脫班"
+          label={t('curr.statBehind', { defaultValue: '脫班' })}
           value={behindCount}
-          unit="站"
+          unit={t('curr.statUnit', { defaultValue: '站' })}
           icon={CalendarClock}
-          hint={behindCount > 0 ? '已過目標完成日' : '全程準時'}
+          hint={behindCount > 0 ? t('curr.hintPastTarget', { defaultValue: '已過目標完成日' }) : t('curr.hintOnTime', { defaultValue: '全程準時' })}
           alert={behindCount > 0}
         />
       </section>
@@ -429,10 +438,10 @@ function ListView({
         <div className="flex items-end justify-between gap-3">
           <div>
             <span className="text-sm font-medium text-slate-700 dark:text-slate-200">
-              {className} 教學路程
+              {t('curr.journeyLabel', { defaultValue: '{{className}} 教學路程', className })}
             </span>
             <p className="nums mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-              已抵達 {overall.done} / {topics.length} 個里程碑
+              {t('curr.journeyMilestones', { defaultValue: '已抵達 {{done}} / {{total}} 個里程碑', done: overall.done, total: topics.length })}
             </p>
           </div>
           <span className="nums font-serif text-2xl font-semibold leading-none text-accent-strong dark:text-accent">
@@ -450,12 +459,12 @@ function ListView({
               icon={Search}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="搜尋課題或範疇…"
+              placeholder={t('curr.searchPlaceholder', { defaultValue: '搜尋課題或範疇…' })}
             />
           </div>
           <div className="flex items-center gap-2 sm:ml-auto">
             <Button variant="secondary" size="sm" icon={Download} onClick={exportCsv}>
-              匯出 CSV
+              {t('curr.exportCsv', { defaultValue: '匯出 CSV' })}
             </Button>
             <Button
               variant="secondary"
@@ -463,23 +472,23 @@ function ListView({
               icon={Printer}
               onClick={() => window.print()}
             >
-              列印
+              {t('curr.print', { defaultValue: '列印' })}
             </Button>
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <span className="inline-flex items-center gap-1 text-xs font-medium text-slate-400 dark:text-slate-500">
-            <SlidersHorizontal size={13} /> 狀態
+            <SlidersHorizontal size={13} /> {t('curr.filterStatusLabel', { defaultValue: '狀態' })}
           </span>
           <SegmentedControl<StatusFilter>
             size="sm"
             value={statusFilter}
             onChange={setStatusFilter}
             options={[
-              { id: 'all', label: '全部' },
-              { id: 'not_started', label: '未開始' },
-              { id: 'in_progress', label: '進行中' },
-              { id: 'done', label: '完成' },
+              { id: 'all', label: t('curr.filterAll', { defaultValue: '全部' }) },
+              { id: 'not_started', label: t('curr.filterNotStarted', { defaultValue: '未開始' }) },
+              { id: 'in_progress', label: t('curr.filterInProgress', { defaultValue: '進行中' }) },
+              { id: 'done', label: t('curr.filterDone', { defaultValue: '完成' }) },
             ]}
           />
           {parts.length > 1 && (
@@ -488,7 +497,7 @@ function ListView({
               onChange={(e) => setPartFilter(e.target.value)}
               className="h-8 w-auto py-1 text-xs"
             >
-              <option value="all">全部部分</option>
+              <option value="all">{t('curr.filterAllParts', { defaultValue: '全部部分' })}</option>
               {parts.map((p) => (
                 <option key={p} value={p}>
                   {p}
@@ -502,7 +511,7 @@ function ListView({
               onClick={toggleAll}
               className="ml-auto text-xs font-medium text-accent-strong hover:underline dark:text-accent"
             >
-              {allCollapsed ? '全部展開' : '全部收起'}
+              {allCollapsed ? t('curr.expandAll', { defaultValue: '全部展開' }) : t('curr.collapseAll', { defaultValue: '全部收起' })}
             </button>
           )}
         </div>
@@ -513,11 +522,11 @@ function ListView({
       {grouped.length === 0 ? (
         <EmptyState
           icon={query || statusFilter !== 'all' || partFilter !== 'all' ? Search : Route}
-          title={query || statusFilter !== 'all' || partFilter !== 'all' ? '呢段路冇符合嘅站' : '路軌仲未鋪好'}
+          title={query || statusFilter !== 'all' || partFilter !== 'all' ? t('curr.emptyFilterTitle', { defaultValue: '呢段路冇符合嘅站' }) : t('curr.emptyListTitle', { defaultValue: '路軌仲未鋪好' })}
           hint={
             query || statusFilter !== 'all' || partFilter !== 'all'
-              ? '清除搜尋或篩選，就會見返成條路線。'
-              : '課題資料載入後，BAFS 課程路線就會喺度逐站展開。'
+              ? t('curr.emptyFilterHint', { defaultValue: '清除搜尋或篩選，就會見返成條路線。' })
+              : t('curr.emptyListHint', { defaultValue: '課題資料載入後，BAFS 課程路線就會喺度逐站展開。' })
           }
         />
       ) : (
@@ -561,7 +570,7 @@ function ListView({
                       {part.part}
                     </span>
                     <Badge tone={cleared ? 'green' : 'slate'} className="nums">
-                      {c.done}/{c.total} 站
+                      {t('curr.partBadge', { defaultValue: '{{done}}/{{total}} 站', done: c.done, total: c.total })}
                     </Badge>
                   </span>
                   <ChevronDown
@@ -610,9 +619,9 @@ function ListView({
                                 className="mt-2 h-1.5"
                               />
                             </div>
-                            <Tooltip label="整段標記抵達">
+                            <Tooltip label={t('curr.tooltipMarkAllDone', { defaultValue: '整段標記抵達' })}>
                               <IconButton
-                                label="整段標記抵達"
+                                label={t('curr.labelMarkAllDone', { defaultValue: '整段標記抵達' })}
                                 size="sm"
                                 onClick={() => bulkArea(area.items, 'done', area.area)}
                               >
@@ -683,6 +692,7 @@ function TopicRow({
   onSetStatus: (s: ProgressStatus) => void
   onEditPlan: () => void
 }) {
+  const { t } = useTranslation()
   const cfg = STATUS_META[status]
   const pace = paceOf(status, plan?.targetDate, today)
   const paceCfg = PACE_META[pace]
@@ -738,8 +748,8 @@ function TopicRow({
         </div>
         {(plan?.targetDate || plan?.plannedWeek || plan?.periods) && (
           <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-slate-400 dark:text-slate-500">
-            {plan?.plannedWeek != null && <span className="tabular-nums">第 {plan.plannedWeek} 週</span>}
-            {plan?.periods != null && <span className="tabular-nums">{plan.periods} 節</span>}
+            {plan?.plannedWeek != null && <span className="tabular-nums">{t('curr.plannedWeek', { defaultValue: '第 {{week}} 週', week: plan.plannedWeek })}</span>}
+            {plan?.periods != null && <span className="tabular-nums">{t('curr.periods', { defaultValue: '{{n}} 節', n: plan.periods })}</span>}
             {plan?.targetDate && (
               <span className={cx('inline-flex items-center gap-0.5 tabular-nums', paceCfg.text)}>
                 <CalendarClock size={11} /> {fmtDate(plan.targetDate)}
@@ -751,7 +761,7 @@ function TopicRow({
       </div>
 
       <IconButton
-        label="排期 / 計劃"
+        label={t('curr.ariaEditPlan', { defaultValue: '排期 / 計劃' })}
         size="sm"
         onClick={onEditPlan}
         active={!!plan?.targetDate}
@@ -767,7 +777,7 @@ function TopicRow({
             <button
               type="button"
               onClick={() => onSetStatus(s)}
-              aria-label={`設為${STATUS_META[s].label}`}
+              aria-label={t('curr.ariaSetStatus', { defaultValue: '設為{{label}}', label: STATUS_META[s].label })}
               aria-pressed={status === s}
               className={cx(
                 'h-5 w-5 rounded-full ring-1 ring-inset transition',
@@ -783,7 +793,7 @@ function TopicRow({
         type="button"
         onClick={onCycle}
         className="shrink-0 sm:hidden"
-        aria-label={`切換狀態：${cfg.label}`}
+        aria-label={t('curr.ariaCycleStatus', { defaultValue: '切換狀態：{{label}}', label: cfg.label })}
       >
         <Badge tone={cfg.tone}>{cfg.label}</Badge>
       </button>
@@ -803,6 +813,7 @@ function PlanEditor({
   existing?: CurriculumPlan
   onClose: () => void
 }) {
+  const { t } = useTranslation()
   const toast = useToast()
   const [week, setWeek] = useState(existing?.plannedWeek?.toString() ?? '')
   const [periods, setPeriods] = useState(existing?.periods?.toString() ?? '')
@@ -818,13 +829,13 @@ function PlanEditor({
     }
     if (existing) planCol.update(existing.id, patch)
     else planCol.add({ id: uid(), classId, topicId: topic.id, ...patch })
-    toast.success('已儲存教學計劃')
+    toast.success(t('curr.toastPlanSaved', { defaultValue: '已儲存教學計劃' }))
     onClose()
   }
 
   const clear = () => {
     if (existing) planCol.remove(existing.id)
-    toast.success('已清除排期')
+    toast.success(t('curr.toastPlanCleared', { defaultValue: '已清除排期' }))
     onClose()
   }
 
@@ -832,19 +843,19 @@ function PlanEditor({
     <Modal
       open
       onClose={onClose}
-      title="教學計劃"
+      title={t('curr.planModalTitle', { defaultValue: '教學計劃' })}
       size="sm"
       footer={
         <>
           {existing && (
             <Button variant="ghost" onClick={clear} className="mr-auto text-rose-600">
-              清除
+              {t('curr.planClearBtn', { defaultValue: '清除' })}
             </Button>
           )}
           <Button variant="secondary" onClick={onClose}>
-            取消
+            {t('curr.planCancelBtn', { defaultValue: '取消' })}
           </Button>
-          <Button onClick={save}>儲存</Button>
+          <Button onClick={save}>{t('curr.planSaveBtn', { defaultValue: '儲存' })}</Button>
         </>
       }
     >
@@ -853,27 +864,27 @@ function PlanEditor({
         {topic.part} · {topic.area}
       </p>
       <div className="grid grid-cols-2 gap-3">
-        <Field label="教學週" hint="第幾週教">
+        <Field label={t('curr.planFieldWeek', { defaultValue: '教學週' })} hint={t('curr.planFieldWeekHint', { defaultValue: '第幾週教' })}>
           <Input
             type="number"
             min={1}
             value={week}
             onChange={(e) => setWeek(e.target.value.replace(/\D/g, ''))}
-            placeholder="例如 3"
+            placeholder={t('curr.planPlaceholderWeek', { defaultValue: '例如 3' })}
           />
         </Field>
-        <Field label="預計節數">
+        <Field label={t('curr.planFieldPeriods', { defaultValue: '預計節數' })}>
           <Input
             type="number"
             min={0}
             value={periods}
             onChange={(e) => setPeriods(e.target.value.replace(/\D/g, ''))}
-            placeholder="例如 4"
+            placeholder={t('curr.planPlaceholderPeriods', { defaultValue: '例如 4' })}
           />
         </Field>
       </div>
       <div className="mt-3">
-        <Field label="目標完成日" hint="用嚟判斷進度落後 / 準時">
+        <Field label={t('curr.planFieldTargetDate', { defaultValue: '目標完成日' })} hint={t('curr.planFieldTargetHint', { defaultValue: '用嚟判斷進度落後 / 準時' })}>
           <Input
             type="date"
             value={targetDate}
@@ -882,8 +893,8 @@ function PlanEditor({
         </Field>
       </div>
       <div className="mt-3">
-        <Field label="備註（選填）">
-          <Input value={note} onChange={(e) => setNote(e.target.value)} placeholder="例如 配合中期考" />
+        <Field label={t('curr.planFieldNote', { defaultValue: '備註（選填）' })}>
+          <Input value={note} onChange={(e) => setNote(e.target.value)} placeholder={t('curr.planPlaceholderNote', { defaultValue: '例如 配合中期考' })} />
         </Field>
       </div>
     </Modal>
@@ -903,6 +914,7 @@ function ScheduleView({
   className: string
   topics: Topic[]
 }) {
+  const { t } = useTranslation()
   const toast = useToast()
   const progress = useCollection(progressCol)
   const plans = useCollection(planCol)
@@ -935,7 +947,15 @@ function ScheduleView({
   const behindCount = rows.filter((r) => r.pace === 'behind').length
 
   const exportCsv = () => {
-    const out: (string | number)[][] = [['教學週', '課題', '範疇', '節數', '目標完成日', '狀態', '進度']]
+    const out: (string | number)[][] = [[
+      t('curr.csvColWeek', { defaultValue: '教學週' }),
+      t('curr.csvColTopic', { defaultValue: '課題' }),
+      t('curr.csvColArea', { defaultValue: '範疇' }),
+      t('curr.thPeriods', { defaultValue: '節數' }),
+      t('curr.csvColTargetDate', { defaultValue: '目標完成日' }),
+      t('curr.csvColStatus', { defaultValue: '狀態' }),
+      t('curr.csvColPace', { defaultValue: '進度' }),
+    ]]
     for (const r of rows) {
       out.push([
         r.plan?.plannedWeek ?? '',
@@ -947,23 +967,23 @@ function ScheduleView({
         PACE_META[r.pace].label,
       ])
     }
-    downloadCsv(`${className}_教學進度表.csv`, out)
-    toast.success('已匯出教學進度表 CSV')
+    downloadCsv(t('curr.csvFilenameSchedule', { defaultValue: '{{className}}_教學進度表.csv', className }), out)
+    toast.success(t('curr.toastExportSchedule', { defaultValue: '已匯出教學進度表 CSV' }))
   }
 
   if (topics.length === 0) {
-    return <EmptyState icon={ClipboardList} title="時刻表仲未編到" hint="課題資料載入後，呢度就會列出成條路線嘅時刻表。" />
+    return <EmptyState icon={ClipboardList} title={t('curr.emptyScheduleTitle', { defaultValue: '時刻表仲未編到' })} hint={t('curr.emptyScheduleHint', { defaultValue: '課題資料載入後，呢度就會列出成條路線嘅時刻表。' })} />
   }
 
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-        <StatCard label="已編入時刻表" value={scheduledCount} unit={`/ ${topics.length}`} icon={CalendarClock} />
-        <StatCard label="行車總節數" value={totalPeriods} unit="節" icon={Gauge} />
+        <StatCard label={t('curr.statScheduled', { defaultValue: '已編入時刻表' })} value={scheduledCount} unit={`/ ${topics.length}`} icon={CalendarClock} />
+        <StatCard label={t('curr.statTotalPeriods', { defaultValue: '行車總節數' })} value={totalPeriods} unit={t('curr.thPeriods', { defaultValue: '節數' })} icon={Gauge} />
         <StatCard
-          label="脫班站數"
+          label={t('curr.statBehindStops', { defaultValue: '脫班站數' })}
           value={behindCount}
-          unit="站"
+          unit={t('curr.statUnit', { defaultValue: '站' })}
           icon={Hourglass}
           highlight={behindCount > 0}
         />
@@ -971,36 +991,36 @@ function ScheduleView({
 
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="text-xs font-medium text-slate-400 dark:text-slate-500">進度狀態</span>
+          <span className="text-xs font-medium text-slate-400 dark:text-slate-500">{t('curr.paceFilterLabel', { defaultValue: '進度狀態' })}</span>
           <SegmentedControl<'all' | PaceState>
             size="sm"
             value={paceFilter}
             onChange={setPaceFilter}
             options={[
-              { id: 'all', label: '全部' },
-              { id: 'behind', label: '落後' },
-              { id: 'due_soon', label: '臨近' },
-              { id: 'ahead', label: '超前' },
-              { id: 'none', label: '未排期' },
+              { id: 'all', label: t('curr.filterAll', { defaultValue: '全部' }) },
+              { id: 'behind', label: t('curr.paceBehind', { defaultValue: '落後' }) },
+              { id: 'due_soon', label: t('curr.paceDueSoon', { defaultValue: '臨近' }) },
+              { id: 'ahead', label: t('curr.paceAhead', { defaultValue: '超前' }) },
+              { id: 'none', label: t('curr.paceNone', { defaultValue: '未排期' }) },
             ]}
           />
         </div>
         <Button variant="secondary" size="sm" icon={Download} onClick={exportCsv}>
-          匯出 CSV
+          {t('curr.exportCsv', { defaultValue: '匯出 CSV' })}
         </Button>
       </div>
 
       {filtered.length === 0 ? (
-        <EmptyState icon={CalendarClock} title="呢班車冇站" hint="試吓切換上面嘅進度狀態篩選。" />
+        <EmptyState icon={CalendarClock} title={t('curr.emptyPaceTitle', { defaultValue: '呢班車冇站' })} hint={t('curr.emptyPaceHint', { defaultValue: '試吓切換上面嘅進度狀態篩選。' })} />
       ) : (
         <Table>
           <Thead>
             <Tr>
-              <Th align="center">週</Th>
-              <Th>站（課題）</Th>
-              <Th align="center">節數</Th>
-              <Th align="center">目標日</Th>
-              <Th align="center">進度</Th>
+              <Th align="center">{t('curr.thWeek', { defaultValue: '週' })}</Th>
+              <Th>{t('curr.thStop', { defaultValue: '站（課題）' })}</Th>
+              <Th align="center">{t('curr.thPeriods', { defaultValue: '節數' })}</Th>
+              <Th align="center">{t('curr.thTargetDate', { defaultValue: '目標日' })}</Th>
+              <Th align="center">{t('curr.thPace', { defaultValue: '進度' })}</Th>
             </Tr>
           </Thead>
           <Tbody>
@@ -1043,7 +1063,7 @@ function ScheduleView({
                   </Td>
                   <Td align="center">
                     <Badge tone={paceCfg.tone}>
-                      {r.status === 'done' ? '完成' : paceCfg.label}
+                      {r.status === 'done' ? t('curr.statusDone', { defaultValue: '完成' }) : paceCfg.label}
                     </Badge>
                   </Td>
                 </Tr>
@@ -1053,7 +1073,7 @@ function ScheduleView({
         </Table>
       )}
       <p className="text-xs text-slate-400 dark:text-slate-500">
-        想編入時刻表？喺「進度清單」每個站撳 <CalendarClock size={12} className="inline" /> 設定教學週、節數同目標完成日。
+        {t('curr.scheduleFootnoteA', { defaultValue: '想編入時刻表？喺「進度清單」每個站撳' })} <CalendarClock size={12} className="inline" /> {t('curr.scheduleFootnoteB', { defaultValue: '設定教學週、節數同目標完成日。' })}
       </p>
     </div>
   )
@@ -1069,22 +1089,23 @@ function MatrixView({
   classes: { id: string; name: string }[]
   topics: Topic[]
 }) {
+  const { t } = useTranslation()
   const toast = useToast()
   const progress = useCollection(progressCol)
   const grouped = useMemo(() => groupTopics(topics), [topics])
 
   const cellMeta = (status: ProgressStatus) => {
     if (status === 'done')
-      return { cls: 'bg-emerald-500 text-white', label: '完成', mark: '✓' }
+      return { cls: 'bg-emerald-500 text-white', label: t('curr.cellDone', { defaultValue: '完成' }), mark: '✓' }
     if (status === 'in_progress')
       return {
         cls: 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300',
-        label: '進行中',
+        label: t('curr.cellInProgress', { defaultValue: '進行中' }),
         mark: '◐',
       }
     return {
       cls: 'bg-slate-50 text-slate-300 dark:bg-slate-800/60 dark:text-slate-600',
-      label: '未開始',
+      label: t('curr.cellNotStarted', { defaultValue: '未開始' }),
       mark: '·',
     }
   }
@@ -1094,21 +1115,21 @@ function MatrixView({
     countStatuses(progress, cid, topics.map((t) => t.id)).pct
 
   const exportCsv = () => {
-    const head = ['範疇', '課題', ...classes.map((c) => c.name)]
+    const head = [t('curr.csvColArea', { defaultValue: '範疇' }), t('curr.matrixThTopic', { defaultValue: '課題' }), ...classes.map((c) => c.name)]
     const out: (string | number)[][] = [head]
-    for (const t of [...topics].sort((a, b) => a.order - b.order)) {
+    for (const tp of [...topics].sort((a, b) => a.order - b.order)) {
       out.push([
-        t.area,
-        t.topic,
-        ...classes.map((c) => STATUS_META[statusOf(progress, c.id, t.id)].label),
+        tp.area,
+        tp.topic,
+        ...classes.map((c) => STATUS_META[statusOf(progress, c.id, tp.id)].label),
       ])
     }
-    downloadCsv('全校課程對照.csv', out)
-    toast.success('已匯出全校對照 CSV')
+    downloadCsv(t('curr.csvFilenameMatrix', { defaultValue: '全校課程對照.csv' }), out)
+    toast.success(t('curr.toastExportMatrix', { defaultValue: '已匯出全校對照 CSV' }))
   }
 
   if (topics.length === 0) {
-    return <EmptyState icon={Columns3} title="仲未有課題" hint="課題資料載入後會喺度顯示。" />
+    return <EmptyState icon={Columns3} title={t('curr.emptyMatrixTitle', { defaultValue: '仲未有課題' })} hint={t('curr.emptyMatrixHint', { defaultValue: '課題資料載入後會喺度顯示。' })} />
   }
 
   return (
@@ -1116,17 +1137,17 @@ function MatrixView({
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
           <span className="inline-flex items-center gap-1.5">
-            <span className="h-3 w-3 rounded-sm bg-emerald-500" /> 完成
+            <span className="h-3 w-3 rounded-sm bg-emerald-500" /> {t('curr.legendDone', { defaultValue: '完成' })}
           </span>
           <span className="inline-flex items-center gap-1.5">
-            <span className="h-3 w-3 rounded-sm bg-amber-100 dark:bg-amber-500/20" /> 進行中
+            <span className="h-3 w-3 rounded-sm bg-amber-100 dark:bg-amber-500/20" /> {t('curr.legendInProgress', { defaultValue: '進行中' })}
           </span>
           <span className="inline-flex items-center gap-1.5">
-            <span className="h-3 w-3 rounded-sm bg-slate-100 dark:bg-slate-800" /> 未開始
+            <span className="h-3 w-3 rounded-sm bg-slate-100 dark:bg-slate-800" /> {t('curr.legendNotStarted', { defaultValue: '未開始' })}
           </span>
         </div>
         <Button variant="secondary" size="sm" icon={Download} onClick={exportCsv}>
-          匯出 CSV
+          {t('curr.exportCsv', { defaultValue: '匯出 CSV' })}
         </Button>
       </div>
 
@@ -1135,7 +1156,7 @@ function MatrixView({
           <thead>
             <tr className="bg-slate-50/80 dark:bg-slate-800/60">
               <th className="sticky left-0 z-10 bg-slate-50/80 px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 backdrop-blur dark:bg-slate-800/90 dark:text-slate-400">
-                課題
+                {t('curr.matrixThTopic', { defaultValue: '課題' })}
               </th>
               {classes.map((c) => (
                 <th
@@ -1165,7 +1186,7 @@ function MatrixView({
           <tfoot>
             <tr className="border-t-2 border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-800/50">
               <td className="sticky left-0 z-10 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-500 dark:bg-slate-800 dark:text-slate-400">
-                完成度
+                {t('curr.matrixTfootCompletion', { defaultValue: '完成度' })}
               </td>
               {classes.map((c) => {
                 const pct = classPct(c.id)
@@ -1191,7 +1212,7 @@ function MatrixView({
         </table>
       </div>
       <p className="text-xs text-slate-400 dark:text-slate-500">
-        一眼睇晒所有班別嘅課程覆蓋差異 — 邊班落後、邊個課題未開，立即見到。
+        {t('curr.matrixFootnote', { defaultValue: '一眼睇晒所有班別嘅課程覆蓋差異 — 邊班落後、邊個課題未開，立即見到。' })}
       </p>
     </div>
   )
@@ -1273,6 +1294,7 @@ function AnalysisView({
   className: string
   topics: Topic[]
 }) {
+  const { t } = useTranslation()
   const progress = useCollection(progressCol)
   const plans = useCollection(planCol)
   const today = todayKey()
@@ -1326,7 +1348,7 @@ function AnalysisView({
       cumDone += done.filter((x) => x === m).length
       const [, mm] = m.split('-')
       return {
-        label: `${Number(mm)}月`,
+        label: t('curr.monthLabel', { defaultValue: '{{n}}月', n: Number(mm) }),
         planned: cumPlan,
         actual: m <= nowMonth ? cumDone : null,
       }
@@ -1346,13 +1368,13 @@ function AnalysisView({
   }, [topics, progress, plans, classId, today])
 
   if (topics.length === 0) {
-    return <EmptyState icon={TrendingUp} title="仲未有課題" hint="課題資料載入後會喺度顯示。" />
+    return <EmptyState icon={TrendingUp} title={t('curr.emptyAnalysisTitle', { defaultValue: '仲未有課題' })} hint={t('curr.emptyAnalysisHint', { defaultValue: '課題資料載入後會喺度顯示。' })} />
   }
 
   const donutSegments = [
-    { value: overall.done, color: 'green' as const, label: '完成' },
-    { value: overall.inProgress, color: 'amber' as const, label: '進行中' },
-    { value: overall.notStarted, color: 'slate' as const, label: '未開始' },
+    { value: overall.done, color: 'green' as const, label: t('curr.filterDone', { defaultValue: '完成' }) },
+    { value: overall.inProgress, color: 'amber' as const, label: t('curr.filterInProgress', { defaultValue: '進行中' }) },
+    { value: overall.notStarted, color: 'slate' as const, label: t('curr.filterNotStarted', { defaultValue: '未開始' }) },
   ]
 
   return (
@@ -1360,19 +1382,19 @@ function AnalysisView({
       <div className="grid gap-4 lg:grid-cols-2">
         {/* 完成度 donut */}
         <Card className="p-4">
-          <SectionTitle icon={Route}>全程到站比例</SectionTitle>
+          <SectionTitle icon={Route}>{t('curr.sectionDonut', { defaultValue: '全程到站比例' })}</SectionTitle>
           <DonutWithLegend
             segments={donutSegments}
             centerLabel={`${overall.pct}%`}
-            centerSub={`${overall.done}/${overall.total} 站`}
+            centerSub={t('curr.centerSub', { defaultValue: '{{done}}/{{total}} 站', done: overall.done, total: overall.total })}
           />
         </Card>
 
         {/* 範疇橫條 */}
         <Card className="p-4">
-          <SectionTitle icon={LayoutList}>各路段進度（由慢到快）</SectionTitle>
+          <SectionTitle icon={LayoutList}>{t('curr.sectionAreaBars', { defaultValue: '各路段進度（由慢到快）' })}</SectionTitle>
           {areaRows.length === 0 ? (
-            <p className="text-sm text-slate-500 dark:text-slate-400">未有資料。</p>
+            <p className="text-sm text-slate-500 dark:text-slate-400">{t('curr.noAreaData', { defaultValue: '未有資料。' })}</p>
           ) : (
             <AreaBars rows={areaRows} />
           )}
@@ -1386,19 +1408,19 @@ function AnalysisView({
           right={
             <span className="flex items-center gap-3 text-[11px] text-slate-400 dark:text-slate-500">
               <span className="inline-flex items-center gap-1">
-                <span className="inline-block h-0.5 w-4 border-t-2 border-dashed border-slate-400" /> 時刻表
+                <span className="inline-block h-0.5 w-4 border-t-2 border-dashed border-slate-400" /> {t('curr.legendSchedule', { defaultValue: '時刻表' })}
               </span>
               <span className="inline-flex items-center gap-1">
-                <span className="inline-block h-0.5 w-4 bg-emerald-500" /> 實際
+                <span className="inline-block h-0.5 w-4 bg-emerald-500" /> {t('curr.legendActual', { defaultValue: '實際' })}
               </span>
             </span>
           }
         >
-          {className} 行車進度（累積到站）
+          {t('curr.sectionPacing', { defaultValue: '{{className}} 行車進度（累積到站）', className })}
         </SectionTitle>
         {pacing.length === 0 ? (
           <p className="py-6 text-center text-sm text-slate-500 dark:text-slate-400">
-            喺「進度清單」為每個站設定目標完成日，呢度就會畫出時刻表對實際嘅行車線。
+            {t('curr.emptyPacingNote', { defaultValue: '喺「進度清單」為每個站設定目標完成日，呢度就會畫出時刻表對實際嘅行車線。' })}
           </p>
         ) : (
           <PacingChart points={pacing} total={overall.total} />
@@ -1407,10 +1429,10 @@ function AnalysisView({
 
       {/* 需關注課題 */}
       <Card className="p-4">
-        <SectionTitle icon={CalendarClock}>需要催車嘅站（脫班 / 臨近死線）</SectionTitle>
+        <SectionTitle icon={CalendarClock}>{t('curr.sectionAttention', { defaultValue: '需要催車嘅站（脫班 / 臨近死線）' })}</SectionTitle>
         {attention.length === 0 ? (
           <p className="flex items-center gap-1.5 text-sm text-slate-500 dark:text-slate-400">
-            <Check size={15} className="text-emerald-500" /> 全程準時，暫時冇脫班或臨近死線嘅站。
+            <Check size={15} className="text-emerald-500" /> {t('curr.allOnTime', { defaultValue: '全程準時，暫時冇脫班或臨近死線嘅站。' })}
           </p>
         ) : (
           <ul className="space-y-2">

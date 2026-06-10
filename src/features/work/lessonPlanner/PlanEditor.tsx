@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   Button,
   Field,
@@ -122,6 +123,7 @@ export default function PlanEditor({
   onSubmit: (draft: PlanDraft) => void
   onSaveAsTemplate: (draft: PlanDraft) => void
 }) {
+  const { t } = useTranslation()
   const toast = useToast()
   const [d, setD] = useState<PlanDraft>(initial)
   const [tab, setTab] = useState<'basic' | 'flow' | 'materials'>('basic')
@@ -164,7 +166,7 @@ export default function PlanEditor({
       'phases',
       PHASE_PRESETS.map((p) => makePhase(p.label, p.minutes)),
     )
-    toast.success('已套用三段式範本')
+    toast.success(t('lesson.toastPresetApplied', { defaultValue: '已套用三段式範本' }))
   }
 
   // ── 教材操作 ──
@@ -191,7 +193,7 @@ export default function PlanEditor({
       phases: tpl.phases.map((p) => makePhase(p.label, p.minutes)),
       materials: tpl.materials.map((m) => makeMaterial(m.text)),
     }))
-    toast.success(`已套用範本「${tpl.name}」`)
+    toast.success(t('lesson.toastTemplateApplied', { defaultValue: '已套用範本「{{name}}」', name: tpl.name }))
     setTab('flow')
   }
 
@@ -218,18 +220,18 @@ export default function PlanEditor({
     icon: typeof NotebookPen
     count?: number
   }[] = [
-    { id: 'basic', label: '課堂概要', hint: '標題 · 班別 · 目標', icon: NotebookPen },
+    { id: 'basic', label: t('lesson.tabBasic', { defaultValue: '課堂概要' }), hint: t('lesson.tabBasicHint', { defaultValue: '標題 · 班別 · 目標' }), icon: NotebookPen },
     {
       id: 'flow',
-      label: '課堂節奏',
-      hint: '教學環節時間軸',
+      label: t('lesson.tabFlow', { defaultValue: '課堂節奏' }),
+      hint: t('lesson.tabFlowHint', { defaultValue: '教學環節時間軸' }),
       icon: ListChecks,
       count: d.phases.length || undefined,
     },
     {
       id: 'materials',
-      label: '備課清單',
-      hint: '教材 · 課後反思',
+      label: t('lesson.tabMaterials', { defaultValue: '備課清單' }),
+      hint: t('lesson.tabMaterialsHint', { defaultValue: '教材 · 課後反思' }),
       icon: PackageOpen,
       count: d.materials.length || undefined,
     },
@@ -244,7 +246,7 @@ export default function PlanEditor({
         <>
           <div className="mr-auto flex items-center gap-2">
             {mode === 'edit' && (
-              <Tooltip label="將呢個教案嘅環節 / 教材存成可重用範本">
+              <Tooltip label={t('lesson.editorSaveAsTemplateTooltip', { defaultValue: '將呢個教案嘅環節 / 教材存成可重用範本' })}>
                 <Button
                   variant="ghost"
                   size="sm"
@@ -252,16 +254,16 @@ export default function PlanEditor({
                   onClick={() => onSaveAsTemplate(d)}
                   disabled={!d.phases.length && !d.materials.length}
                 >
-                  存為範本
+                  {t('lesson.editorSaveAsTemplateBtn', { defaultValue: '存為範本' })}
                 </Button>
               </Tooltip>
             )}
           </div>
           <Button variant="ghost" onClick={onClose}>
-            取消
+            {t('lesson.editorCancelBtn', { defaultValue: '取消' })}
           </Button>
           <Button icon={Save} onClick={() => onSubmit(d)} disabled={!canSubmit}>
-            {mode === 'edit' ? '儲存' : '加入'}
+            {mode === 'edit' ? t('lesson.editorSaveBtn', { defaultValue: '儲存' }) : t('lesson.editorAddBtn', { defaultValue: '加入' })}
           </Button>
         </>
       }
@@ -282,7 +284,7 @@ export default function PlanEditor({
           <button
             type="button"
             onClick={onClose}
-            aria-label="關閉"
+            aria-label={t('lesson.editorCloseAriaLabel', { defaultValue: '關閉' })}
             className="absolute right-3 top-3 rounded-lg p-1.5 text-slate-400 transition hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
           >
             <X size={18} />
@@ -294,10 +296,10 @@ export default function PlanEditor({
             </span>
             <div className="min-w-0 flex-1">
               <p className="text-[11px] font-medium uppercase tracking-[0.3em] text-accent-soft/90">
-                {mode === 'edit' ? '修訂備課' : '課堂備課表'}
+                {mode === 'edit' ? t('lesson.editorKickerEdit', { defaultValue: '修訂備課' }) : t('lesson.editorKickerCreate', { defaultValue: '課堂備課表' })}
               </p>
               <h2 className="mt-0.5 truncate font-serif text-[22px] font-semibold leading-tight tracking-tight text-white sm:text-2xl">
-                {d.title.trim() || (mode === 'edit' ? '編輯教案' : '新增教案')}
+                {d.title.trim() || (mode === 'edit' ? t('lesson.editorTitlePlaceholderEdit', { defaultValue: '編輯教案' }) : t('lesson.editorTitlePlaceholderCreate', { defaultValue: '新增教案' }))}
               </h2>
               {/* 粉筆情境行：班別 · 課題 · 日期 · 時長 */}
               <div className="mt-1.5 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs text-slate-300/90">
@@ -352,7 +354,7 @@ export default function PlanEditor({
           {/* 黑板分欄：粉筆 section-tabs（白堊底線標示當前欄）*/}
           <div
             role="tablist"
-            aria-label="教案編輯分欄"
+            aria-label={t('lesson.editorTablistAriaLabel', { defaultValue: '教案編輯分欄' })}
             className="relative mt-4 flex gap-1 border-t border-white/10 pt-2"
           >
             {SECTIONS.map((s) => {
@@ -411,22 +413,22 @@ export default function PlanEditor({
         {/* ─────── 課堂概要 ─────── */}
         {tab === 'basic' && (
           <div className="space-y-4">
-            <Field label="教案標題" required>
+            <Field label={t('lesson.fieldTitle', { defaultValue: '教案標題' })} required>
               <Input
                 value={d.title}
                 onChange={(e) => set('title', e.target.value)}
-                placeholder="如：香港營商環境導論"
+                placeholder={t('lesson.fieldTitlePlaceholder', { defaultValue: '如：香港營商環境導論' })}
                 autoFocus
               />
             </Field>
 
             {templates.length > 0 && mode === 'create' && (
               <Field
-                label="由範本開始（選填）"
-                hint="套用後可再修改；唔會覆蓋已填嘅標題"
+                label={t('lesson.fieldTemplateLabel', { defaultValue: '由範本開始（選填）' })}
+                hint={t('lesson.fieldTemplateHint', { defaultValue: '套用後可再修改；唔會覆蓋已填嘅標題' })}
               >
                 <Select defaultValue="" onChange={(e) => applyTemplate(e.target.value)}>
-                  <option value="">不使用範本</option>
+                  <option value="">{t('lesson.fieldTemplateNone', { defaultValue: '不使用範本' })}</option>
                   {templates.map((t) => (
                     <option key={t.id} value={t.id}>
                       {t.name}
@@ -439,17 +441,17 @@ export default function PlanEditor({
             {/* 歸檔資料卡（hairline · 紙質，呼應教案卡）*/}
             <section className="space-y-3 rounded-2xl border border-slate-200/80 bg-slate-50/50 p-3.5 dark:border-slate-700/60 dark:bg-slate-800/40">
               <SectionHeading
-                kicker="Filing"
-                title="歸檔與排程"
+                kicker={t('lesson.sectionFilingKicker', { defaultValue: 'Filing' })}
+                title={t('lesson.sectionFilingTitle', { defaultValue: '歸檔與排程' })}
                 icon={CalendarDays}
               />
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                <Field label="班別">
+                <Field label={t('lesson.fieldClass', { defaultValue: '班別' })}>
                   <Select
                     value={d.classId}
                     onChange={(e) => set('classId', e.target.value)}
                   >
-                    <option value="">未指定</option>
+                    <option value="">{t('lesson.fieldClassUnset', { defaultValue: '未指定' })}</option>
                     {classes.map((c) => (
                       <option key={c.id} value={c.id}>
                         {c.name}
@@ -457,12 +459,12 @@ export default function PlanEditor({
                     ))}
                   </Select>
                 </Field>
-                <Field label="課題">
+                <Field label={t('lesson.fieldTopic', { defaultValue: '課題' })}>
                   <Select
                     value={d.topicId}
                     onChange={(e) => set('topicId', e.target.value)}
                   >
-                    <option value="">未指定</option>
+                    <option value="">{t('lesson.fieldTopicUnset', { defaultValue: '未指定' })}</option>
                     {topics.map((t) => (
                       <option key={t.id} value={t.id}>
                         {t.topic}
@@ -470,7 +472,7 @@ export default function PlanEditor({
                     ))}
                   </Select>
                 </Field>
-                <Field label="授課日期">
+                <Field label={t('lesson.fieldDate', { defaultValue: '授課日期' })}>
                   <Input
                     type="date"
                     value={d.date}
@@ -480,7 +482,7 @@ export default function PlanEditor({
               </div>
 
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <Field label="狀態">
+                <Field label={t('lesson.fieldStatus', { defaultValue: '狀態' })}>
                   <Select
                     value={d.status}
                     onChange={(e) => set('status', e.target.value as PlanStatus)}
@@ -492,20 +494,20 @@ export default function PlanEditor({
                     ))}
                   </Select>
                 </Field>
-                <Field label="第幾節（配合時間表）">
+                <Field label={t('lesson.fieldPeriod', { defaultValue: '第幾節（配合時間表）' })}>
                   <Input
                     type="number"
                     min={1}
                     max={12}
                     value={d.period}
                     onChange={(e) => set('period', e.target.value)}
-                    placeholder="如 3"
+                    placeholder={t('lesson.fieldPeriodPlaceholder', { defaultValue: '如 3' })}
                   />
                 </Field>
               </div>
 
               {d.status === 'taught' && (
-                <Field label="實際授課日">
+                <Field label={t('lesson.fieldTaughtDate', { defaultValue: '實際授課日' })}>
                   <Input
                     type="date"
                     value={d.taughtDate}
@@ -518,15 +520,15 @@ export default function PlanEditor({
             {/* 教學目標（serif 引導）*/}
             <div className="space-y-2.5">
               <SectionHeading
-                kicker="Objectives"
-                title="教學目標"
+                kicker={t('lesson.sectionObjectivesKicker', { defaultValue: 'Objectives' })}
+                title={t('lesson.sectionObjectivesTitle', { defaultValue: '教學目標' })}
                 icon={NotebookPen}
               />
-              <Field hint="逐行寫，列印時會原樣保留換行">
+              <Field hint={t('lesson.fieldObjectivesHint', { defaultValue: '逐行寫，列印時會原樣保留換行' })}>
                 <Textarea
                   value={d.objectives}
                   onChange={(e) => set('objectives', e.target.value)}
-                  placeholder={'1. 學生能…\n2. 學生能…'}
+                  placeholder={t('lesson.fieldObjectivesPlaceholder', { defaultValue: '1. 學生能…\n2. 學生能…' })}
                   rows={4}
                 />
               </Field>
@@ -538,8 +540,8 @@ export default function PlanEditor({
         {tab === 'flow' && (
           <div className="space-y-3">
             <SectionHeading
-              kicker="Lesson flow"
-              title="課堂節奏"
+              kicker={t('lesson.sectionFlowKicker', { defaultValue: 'Lesson flow' })}
+              title={t('lesson.sectionFlowTitle', { defaultValue: '課堂節奏' })}
               icon={ListChecks}
               trailing={
                 <span
@@ -562,10 +564,10 @@ export default function PlanEditor({
                   <Clock size={20} strokeWidth={1.75} />
                 </span>
                 <p className="mt-3 text-sm font-medium text-slate-600 dark:text-slate-300">
-                  鋪排返堂課嘅節奏
+                  {t('lesson.phaseEmptyTitle', { defaultValue: '鋪排返堂課嘅節奏' })}
                 </p>
                 <p className="mt-1 max-w-xs text-xs text-slate-400 dark:text-slate-500">
-                  撳「套用三段式」即刻有引入、講解、活動框架，或自行逐個環節加。
+                  {t('lesson.phaseEmptyHint', { defaultValue: '撳「套用三段式」即刻有引入、講解、活動框架，或自行逐個環節加。' })}
                 </p>
                 <Button
                   size="sm"
@@ -574,7 +576,7 @@ export default function PlanEditor({
                   onClick={fillPreset}
                   className="mt-4"
                 >
-                  套用三段式
+                  {t('lesson.phasePresetBtn', { defaultValue: '套用三段式' })}
                 </Button>
               </div>
             ) : (
@@ -599,7 +601,7 @@ export default function PlanEditor({
                           </span>
                           <button
                             type="button"
-                            aria-label="上移環節"
+                            aria-label={t('lesson.phaseMoveUpLabel', { defaultValue: '上移環節' })}
                             onClick={() => movePhase(p.id, -1)}
                             disabled={i === 0}
                             className="text-slate-300 transition hover:text-accent disabled:opacity-25 dark:text-slate-600"
@@ -614,7 +616,7 @@ export default function PlanEditor({
                               onChange={(e) =>
                                 updPhase(p.id, { label: e.target.value })
                               }
-                              placeholder="環節名稱（如：引入）"
+                              placeholder={t('lesson.phaseLabelPlaceholder', { defaultValue: '環節名稱（如：引入）' })}
                               className="min-w-0 flex-1"
                             />
                             <div className="relative w-16 shrink-0">
@@ -634,11 +636,11 @@ export default function PlanEditor({
                                 className="pr-7 text-right"
                               />
                               <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-xs text-slate-400">
-                                分
+                                {t('lesson.phaseMinSuffix', { defaultValue: '分' })}
                               </span>
                             </div>
                             <IconButton
-                              label="刪除環節"
+                              label={t('lesson.phaseDeleteLabel', { defaultValue: '刪除環節' })}
                               tone="danger"
                               onClick={() => delPhase(p.id)}
                             >
@@ -650,7 +652,7 @@ export default function PlanEditor({
                             onChange={(e) =>
                               updPhase(p.id, { detail: e.target.value })
                             }
-                            placeholder="活動內容、提問、分組安排…"
+                            placeholder={t('lesson.phaseDetailPlaceholder', { defaultValue: '活動內容、提問、分組安排…' })}
                             rows={2}
                             className="min-h-[44px] text-xs"
                           />
@@ -676,7 +678,7 @@ export default function PlanEditor({
               onClick={addPhase}
               fullWidth
             >
-              新增環節
+              {t('lesson.addPhaseBtn', { defaultValue: '新增環節' })}
             </Button>
           </div>
         )}
@@ -685,13 +687,13 @@ export default function PlanEditor({
         {tab === 'materials' && (
           <div className="space-y-3">
             <SectionHeading
-              kicker="Prep checklist"
-              title="備課清單"
+              kicker={t('lesson.sectionPrepKicker', { defaultValue: 'Prep checklist' })}
+              title={t('lesson.sectionPrepTitle', { defaultValue: '備課清單' })}
               icon={PackageOpen}
               trailing={
                 d.materials.length > 0 ? (
                   <span className="text-xs tabular-nums text-slate-400 dark:text-slate-500">
-                    {matDone}/{d.materials.length} 已備妥
+                    {t('lesson.matDoneCount', { defaultValue: '{{done}}/{{total}} 已備妥', done: matDone, total: d.materials.length })}
                   </span>
                 ) : undefined
               }
@@ -713,10 +715,10 @@ export default function PlanEditor({
                   <PackageOpen size={20} strokeWidth={1.75} />
                 </span>
                 <p className="mt-3 text-sm font-medium text-slate-600 dark:text-slate-300">
-                  列齊上堂要用嘅嘢
+                  {t('lesson.matEmptyTitle', { defaultValue: '列齊上堂要用嘅嘢' })}
                 </p>
                 <p className="mt-1 max-w-xs text-xs text-slate-400 dark:text-slate-500">
-                  簡報、工作紙、影片連結都寫低；準備好就剔一剔，一眼睇晒進度。
+                  {t('lesson.matEmptyHint', { defaultValue: '簡報、工作紙、影片連結都寫低；準備好就剔一剔，一眼睇晒進度。' })}
                 </p>
               </div>
             ) : (
@@ -744,14 +746,14 @@ export default function PlanEditor({
                     <Input
                       value={m.text}
                       onChange={(e) => updMaterial(m.id, { text: e.target.value })}
-                      placeholder="如：第 3 章工作紙"
+                      placeholder={t('lesson.matItemPlaceholder', { defaultValue: '如：第 3 章工作紙' })}
                       className={cx(
                         'flex-1',
                         m.done && 'text-slate-400 line-through dark:text-slate-500',
                       )}
                     />
                     <IconButton
-                      label="刪除教材"
+                      label={t('lesson.matDeleteLabel', { defaultValue: '刪除教材' })}
                       tone="danger"
                       onClick={() => delMaterial(m.id)}
                     >
@@ -769,21 +771,21 @@ export default function PlanEditor({
               onClick={addMaterial}
               fullWidth
             >
-              新增教材
+              {t('lesson.addMaterialBtn', { defaultValue: '新增教材' })}
             </Button>
 
             {/* 課後反思（serif 引導，呼應反思隨筆）*/}
             <div className="space-y-2.5 pt-1">
               <SectionHeading
-                kicker="Reflection"
-                title="課後反思"
+                kicker={t('lesson.sectionReflectionKicker', { defaultValue: 'Reflection' })}
+                title={t('lesson.sectionReflectionTitle', { defaultValue: '課後反思' })}
                 icon={NotebookPen}
               />
-              <Field hint="教完後記低成效、學生反應、可改善處（選填）">
+              <Field hint={t('lesson.fieldReflectionHint', { defaultValue: '教完後記低成效、學生反應、可改善處（選填）' })}>
                 <Textarea
                   value={d.reflection}
                   onChange={(e) => set('reflection', e.target.value)}
-                  placeholder="今堂…"
+                  placeholder={t('lesson.fieldReflectionPlaceholder', { defaultValue: '今堂…' })}
                   rows={3}
                 />
               </Field>

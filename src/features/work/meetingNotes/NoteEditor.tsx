@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   Badge,
   Button,
@@ -161,6 +162,7 @@ export default function NoteEditor({
   onClose: () => void
   onSave: (draft: EditorDraft) => void
 }) {
+  const { t } = useTranslation()
   const [draft, setDraft] = useState<EditorDraft>(initial)
   const [attendeeInput, setAttendeeInput] = useState('')
   const [decisionInput, setDecisionInput] = useState('')
@@ -282,10 +284,10 @@ export default function NoteEditor({
       footer={
         <>
           <Button variant="secondary" onClick={onClose}>
-            取消
+            {t('meet.editor_cancel', { defaultValue: '取消' })}
           </Button>
           <Button onClick={() => onSave(draft)} disabled={!canSave} icon={CheckSquare}>
-            {mode === 'edit' ? '存入記事簿' : '記低議程'}
+            {mode === 'edit' ? t('meet.editor_save_edit', { defaultValue: '存入記事簿' }) : t('meet.editor_save_create', { defaultValue: '記低議程' })}
           </Button>
         </>
       }
@@ -309,17 +311,17 @@ export default function NoteEditor({
             <div className="min-w-0">
               <p className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.28em] text-accent/70">
                 <NotebookPen size={12} />
-                Minutes · {mode === 'edit' ? '修訂記事' : '記事擬稿'}
+                {mode === 'edit' ? t('meet.editor_kicker_edit', { defaultValue: 'Minutes · 修訂記事' }) : t('meet.editor_kicker_create', { defaultValue: 'Minutes · 記事擬稿' })}
               </p>
               <h2 className="mt-1 font-serif text-[23px] font-semibold leading-tight tracking-tight text-slate-800 dark:text-slate-100 sm:text-[27px]">
-                {mode === 'edit' ? '修訂議程' : '草擬新議程'}
+                {mode === 'edit' ? t('meet.editor_heading_edit', { defaultValue: '修訂議程' }) : t('meet.editor_heading_create', { defaultValue: '草擬新議程' })}
               </h2>
               <p className="mt-1 truncate text-xs text-slate-400 dark:text-slate-500">
                 {tm.label}
-                {draft.title.trim() ? ` · ${draft.title.trim()}` : ' · 未命名記事'}
+                {draft.title.trim() ? ` · ${draft.title.trim()}` : t('meet.editor_unnamed', { defaultValue: ' · 未命名記事' })}
               </p>
             </div>
-            <IconButton label="關閉" onClick={onClose} className="-mr-1 shrink-0">
+            <IconButton label={t('meet.editor_close', { defaultValue: '關閉' })} onClick={onClose} className="-mr-1 shrink-0">
               <X size={18} />
             </IconButton>
           </div>
@@ -342,19 +344,19 @@ export default function NoteEditor({
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_auto] sm:items-start">
             <label className="block min-w-0">
               <span className="text-[10px] font-medium uppercase tracking-[0.22em] text-slate-400 dark:text-slate-500">
-                議程名稱
+                {t('meet.agenda_name_label', { defaultValue: '議程名稱' })}
               </span>
               <input
                 value={draft.title}
                 onChange={(e) => patch({ title: e.target.value })}
-                placeholder="例如：科組會議 — 第二次"
+                placeholder={t('meet.agenda_name_placeholder', { defaultValue: '例如：科組會議 — 第二次' })}
                 autoFocus
                 className="mt-0.5 w-full border-0 bg-transparent p-0 font-serif text-lg font-semibold text-slate-800 outline-none placeholder:font-sans placeholder:text-base placeholder:font-normal placeholder:text-slate-400 focus:ring-0 dark:text-slate-100 dark:placeholder:text-slate-500 sm:text-xl"
               />
             </label>
             <label className="block sm:w-44">
               <span className="text-[10px] font-medium uppercase tracking-[0.22em] text-slate-400 dark:text-slate-500">
-                會議類型
+                {t('meet.meeting_type_label', { defaultValue: '會議類型' })}
               </span>
               <Select
                 value={draft.type}
@@ -373,13 +375,13 @@ export default function NoteEditor({
 
         {/* ───────── §1 開會詳情：日期 / 時間 / 時長 / 地點 ───────── */}
         <section>
-          <ClauseTitle mark="§1" kicker="Convening">
-            開會詳情
+          <ClauseTitle mark="§1" kicker={t('meet.s1_kicker', { defaultValue: 'Convening' })}>
+            {t('meet.s1_title', { defaultValue: '開會詳情' })}
           </ClauseTitle>
           <div className="grid grid-cols-2 gap-3 rounded-2xl border border-slate-200/80 p-4 dark:border-slate-700/60 sm:grid-cols-4">
             <label className="block space-y-1">
               <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
-                日期
+                {t('meet.s1_date', { defaultValue: '日期' })}
               </span>
               <Input
                 type="date"
@@ -389,7 +391,7 @@ export default function NoteEditor({
             </label>
             <label className="block space-y-1">
               <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
-                時間
+                {t('meet.s1_time', { defaultValue: '時間' })}
               </span>
               <Input
                 type="time"
@@ -399,7 +401,7 @@ export default function NoteEditor({
             </label>
             <label className="block space-y-1">
               <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
-                時長（分鐘）
+                {t('meet.s1_duration', { defaultValue: '時長（分鐘）' })}
               </span>
               <Input
                 type="number"
@@ -411,13 +413,13 @@ export default function NoteEditor({
             </label>
             <label className="block space-y-1">
               <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
-                地點
+                {t('meet.s1_location', { defaultValue: '地點' })}
               </span>
               <Input
                 icon={MapPin}
                 value={draft.location}
                 onChange={(e) => patch({ location: e.target.value })}
-                placeholder="會議室"
+                placeholder={t('meet.s1_location_placeholder', { defaultValue: '會議室' })}
               />
             </label>
           </div>
@@ -427,16 +429,16 @@ export default function NoteEditor({
         <section>
           <ClauseTitle
             mark="§2"
-            kicker="Present"
+            kicker={t('meet.s2_kicker', { defaultValue: 'Present' })}
             right={
               draft.attendees.length > 0 ? (
                 <span className="font-serif text-[13px] font-semibold tabular-nums text-slate-400 dark:text-slate-500">
-                  {draft.attendees.length} 人
+                  {t('meet.s2_attendees_count', { defaultValue: `${draft.attendees.length} 人`, count: draft.attendees.length })}
                 </span>
               ) : undefined
             }
           >
-            出席者
+            {t('meet.s2_title', { defaultValue: '出席者' })}
           </ClauseTitle>
           <div className="flex flex-wrap items-center gap-1.5 rounded-xl border border-slate-200/80 bg-slate-50/60 p-2 transition focus-within:border-accent/40 focus-within:bg-white dark:border-slate-700/60 dark:bg-slate-800/40 dark:focus-within:bg-slate-800">
             {draft.attendees.map((a) => (
@@ -449,7 +451,7 @@ export default function NoteEditor({
                   type="button"
                   onClick={() => removeAttendee(a)}
                   className="rounded p-0.5 text-slate-400 transition hover:bg-slate-200 hover:text-rose-500 dark:hover:bg-slate-700"
-                  aria-label={`移除 ${a}`}
+                  aria-label={t('meet.s2_remove_aria', { defaultValue: `移除 ${a}`, name: a })}
                 >
                   <X size={11} />
                 </button>
@@ -471,7 +473,7 @@ export default function NoteEditor({
                 }
               }}
               onBlur={() => addAttendees(attendeeInput)}
-              placeholder={draft.attendees.length ? '繼續加…' : '輸入姓名，Enter 加入'}
+              placeholder={draft.attendees.length ? t('meet.s2_placeholder_more', { defaultValue: '繼續加…' }) : t('meet.s2_placeholder_empty', { defaultValue: '輸入姓名，Enter 加入' })}
               className="min-w-[8rem] flex-1 bg-transparent py-1 text-base sm:text-sm text-slate-800 outline-none placeholder:text-slate-400 dark:text-slate-100 dark:placeholder:text-slate-500"
             />
           </div>
@@ -481,7 +483,7 @@ export default function NoteEditor({
         <section>
           <ClauseTitle
             mark="§3"
-            kicker="Minutes"
+            kicker={t('meet.s3_kicker', { defaultValue: 'Minutes' })}
             right={
               <div className="flex items-center gap-1.5">
                 <Menu
@@ -489,12 +491,12 @@ export default function NoteEditor({
                   trigger={
                     <span className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-accent transition hover:bg-accent-soft dark:hover:bg-accent/15">
                       <FileText size={13} />
-                      套用範本
+                      {t('meet.s3_apply_template', { defaultValue: '套用範本' })}
                     </span>
                   }
                   items={tpItems}
                 />
-                <Tooltip label="由內容嘅 - [ ] / &gt; 自動抽出行動同決議">
+                <Tooltip label={t('meet.s3_extract_tooltip', { defaultValue: '由內容嘅 - [ ] / > 自動抽出行動同決議' })}>
                   <button
                     type="button"
                     onClick={extractFromContent}
@@ -505,13 +507,13 @@ export default function NoteEditor({
                     )}
                   >
                     <Sparkles size={13} />
-                    抽取 {extractCount > 0 ? `(${extractCount})` : ''}
+                    {t('meet.s3_extract_btn', { defaultValue: '抽取' })} {extractCount > 0 ? `(${extractCount})` : ''}
                   </button>
                 </Tooltip>
               </div>
             }
           >
-            記事內容
+            {t('meet.s3_title', { defaultValue: '記事內容' })}
           </ClauseTitle>
           {/* 稿紙面：左側朱紅起始線（同詳情「記事內容」一致）*/}
           <div className="relative overflow-hidden rounded-xl border border-slate-200/80 bg-slate-50/40 transition focus-within:border-accent/40 focus-within:bg-white dark:border-slate-700/60 dark:bg-slate-800/30 dark:focus-within:bg-slate-800">
@@ -524,13 +526,13 @@ export default function NoteEditor({
               className="min-h-[180px] resize-y border-0 bg-transparent py-3.5 pl-6 pr-3.5 font-[450] leading-relaxed shadow-none focus:ring-0"
               value={draft.content}
               onChange={(e) => patch({ content: e.target.value })}
-              placeholder={'會議重點…\n\n小貼士：\n- [ ] 行動項目（可加 @負責人 !2026-06-01）\n> 決議事項'}
+              placeholder={t('meet.s3_content_placeholder', { defaultValue: '會議重點…\n\n小貼士：\n- [ ] 行動項目（可加 @負責人 !2026-06-01）\n> 決議事項' })}
             />
           </div>
           <p className="mt-1.5 text-[11px] leading-relaxed text-slate-400 dark:text-slate-500">
-            支援 <code className="rounded bg-slate-100 px-1 dark:bg-slate-800">- [ ]</code>{' '}
-            行動項目（<code className="rounded bg-slate-100 px-1 dark:bg-slate-800">@人 !日期</code>）同{' '}
-            <code className="rounded bg-slate-100 px-1 dark:bg-slate-800">&gt;</code> 決議；撳「抽取」轉成下面結構化清單。
+            {t('meet.s3_hint_pre', { defaultValue: '支援' })} <code className="rounded bg-slate-100 px-1 dark:bg-slate-800">{t('meet.s3_hint_action', { defaultValue: '- [ ]' })}</code>{' '}
+            {t('meet.s3_hint_at', { defaultValue: '行動項目（@人 !日期）' })}{' '}{t('meet.s3_hint_mid', { defaultValue: '同' })}{' '}
+            <code className="rounded bg-slate-100 px-1 dark:bg-slate-800">{t('meet.s3_hint_decision', { defaultValue: '>' })}</code> {t('meet.s3_hint_post', { defaultValue: '決議；撳「抽取」轉成下面結構化清單。' })}
           </p>
         </section>
 
@@ -538,7 +540,7 @@ export default function NoteEditor({
         <section>
           <ClauseTitle
             mark="§4"
-            kicker="Resolutions"
+            kicker={t('meet.s4_kicker', { defaultValue: 'Resolutions' })}
             right={
               draft.decisions.length > 0 ? (
                 <Badge tone="accent" icon={Gavel}>
@@ -547,7 +549,7 @@ export default function NoteEditor({
               ) : undefined
             }
           >
-            議決事項
+            {t('meet.s4_title', { defaultValue: '議決事項' })}
           </ClauseTitle>
           <div className="space-y-1.5">
             {draft.decisions.map((d, i) => (
@@ -565,7 +567,7 @@ export default function NoteEditor({
                   {d}
                 </span>
                 <IconButton
-                  label="刪除決議"
+                  label={t('meet.s4_delete_aria', { defaultValue: '刪除決議' })}
                   tone="danger"
                   size="sm"
                   onClick={() => removeDecision(i)}
@@ -590,7 +592,7 @@ export default function NoteEditor({
                     addDecision(decisionInput)
                   }
                 }}
-                placeholder="新增議決事項，Enter 加入…"
+                placeholder={t('meet.s4_placeholder', { defaultValue: '新增議決事項，Enter 加入…' })}
               />
             </div>
           </div>
@@ -600,7 +602,7 @@ export default function NoteEditor({
         <section>
           <ClauseTitle
             mark="§5"
-            kicker="Action items"
+            kicker={t('meet.s5_kicker', { defaultValue: 'Action items' })}
             right={
               <div className="flex items-center gap-2">
                 {draft.actions.length > 0 && (
@@ -609,20 +611,20 @@ export default function NoteEditor({
                   </span>
                 )}
                 <Button size="sm" variant="ghost" icon={Plus} onClick={addAction}>
-                  加項目
+                  {t('meet.s5_add_btn', { defaultValue: '加項目' })}
                 </Button>
               </div>
             }
           >
-            跟進行動
+            {t('meet.s5_title', { defaultValue: '跟進行動' })}
           </ClauseTitle>
           {draft.actions.length === 0 ? (
             <div className="flex flex-col items-center gap-1 rounded-xl border border-dashed border-slate-200 bg-slate-50/50 px-3 py-5 text-center dark:border-slate-700 dark:bg-slate-800/30">
               <ListChecks size={20} className="text-slate-300 dark:text-slate-600" />
               <p className="text-xs text-slate-400 dark:text-slate-500">
-                仲未有跟進項目。可手動加，或喺內容用{' '}
-                <code className="rounded bg-slate-100 px-1 dark:bg-slate-800">- [ ]</code>{' '}
-                寫好再撳「抽取」。
+                {t('meet.s5_empty_hint_pre', { defaultValue: '仲未有跟進項目。可手動加，或喺內容用' })}{' '}
+                <code className="rounded bg-slate-100 px-1 dark:bg-slate-800">{t('meet.s5_empty_hint_code', { defaultValue: '- [ ]' })}</code>{' '}
+                {t('meet.s5_empty_hint_post', { defaultValue: '寫好再撳「抽取」。' })}
               </p>
             </div>
           ) : (
@@ -641,14 +643,14 @@ export default function NoteEditor({
                         ? 'text-emerald-500'
                         : 'text-slate-300 hover:text-accent dark:text-slate-600',
                     )}
-                    aria-label={a.done ? '標記未完成' : '標記完成'}
+                    aria-label={a.done ? t('meet.s5_mark_undone_aria', { defaultValue: '標記未完成' }) : t('meet.s5_mark_done_aria', { defaultValue: '標記完成' })}
                   >
                     {a.done ? <CheckSquare size={18} /> : <Square size={18} />}
                   </button>
                   <input
                     value={a.text}
                     onChange={(e) => updateAction(a.id, { text: e.target.value })}
-                    placeholder="跟進事項…"
+                    placeholder={t('meet.s5_item_placeholder', { defaultValue: '跟進事項…' })}
                     className={cx(
                       'min-w-[8rem] flex-1 bg-transparent text-base sm:text-sm outline-none placeholder:text-slate-400 dark:placeholder:text-slate-500',
                       a.done
@@ -666,7 +668,7 @@ export default function NoteEditor({
                             owner: e.target.value || undefined,
                           })
                         }
-                        placeholder="負責人"
+                        placeholder={t('meet.s5_owner_placeholder', { defaultValue: '負責人' })}
                         className="w-20 bg-transparent py-1 pr-2 text-base sm:text-xs text-slate-700 outline-none placeholder:text-slate-400 dark:text-slate-200"
                       />
                     </span>
@@ -682,7 +684,7 @@ export default function NoteEditor({
                       />
                     </span>
                     <IconButton
-                      label="刪除項目"
+                      label={t('meet.s5_delete_item_aria', { defaultValue: '刪除項目' })}
                       tone="danger"
                       size="sm"
                       onClick={() => removeAction(a.id)}
@@ -698,13 +700,13 @@ export default function NoteEditor({
 
         {/* ───────── §6 索引標籤 ───────── */}
         <section>
-          <ClauseTitle mark="§6" kicker="Index tags">
-            標籤
+          <ClauseTitle mark="§6" kicker={t('meet.s6_kicker', { defaultValue: 'Index tags' })}>
+            {t('meet.s6_title', { defaultValue: '標籤' })}
           </ClauseTitle>
           <Input
             value={draft.tagsInput}
             onChange={(e) => patch({ tagsInput: e.target.value })}
-            placeholder="用逗號或空格分隔，例如：人事 財務 課程"
+            placeholder={t('meet.s6_placeholder', { defaultValue: '用逗號或空格分隔，例如：人事 財務 課程' })}
           />
           {draft.tagsInput.trim() && (
             <div className="mt-2 flex flex-wrap gap-1.5">

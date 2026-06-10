@@ -1,4 +1,6 @@
 import { useMemo, useRef, useState, type KeyboardEvent } from 'react'
+import { useTranslation } from 'react-i18next'
+import './askData/i18n'
 import {
   Bot,
   Lock,
@@ -43,12 +45,8 @@ import { Button, EmptyState, Textarea, cx } from '../../ui'
 // ============================================================
 
 // 範例查詢：撳一下即時立案發問。配一隻 lucide icon 暗示引用邊類卷宗。
-const SUGGESTIONS: { text: string; icon: LucideIcon }[] = [
-  { text: '我今個星期有咩重要事？', icon: CalendarDays },
-  { text: '總結我最近嘅筆記重點', icon: NotebookPen },
-  { text: '我仲有咩未完成待辦？', icon: ListTodo },
-  { text: '根據我嘅目標，建議下一步點做', icon: Target },
-]
+// 原文廣東話保留喺組件內用 t() + defaultValue 取出，支援 i18n。
+const SUGGESTION_ICONS: LucideIcon[] = [CalendarDays, NotebookPen, ListTodo, Target]
 
 const SYSTEM =
   '你係用戶「教學易」嘅私人 AI 助理。下面係佢嘅個人資料摘要，請主要根據呢啲資料（配合常識）用繁體中文（可書面廣東話）扼要、有條理咁回答。如果資料唔夠就照答並提一句。唔好捏造唔存在嘅具體資料。'
@@ -163,10 +161,19 @@ function buildContext(): string {
 }
 
 export default function AskData() {
+  const { t } = useTranslation()
   const { user } = useAuth()
   // 訂閱令資料更新時 context 反映最新（亦確保 collection 已建立 / 登記）
   const notes = useCollection(richNotesCol)
   const tasks = useCollection(tasksCol)
+
+  // 範例查詢文字（i18n）
+  const SUGGESTIONS: { text: string; icon: LucideIcon }[] = [
+    { text: t('askd.suggestion0', { defaultValue: '我今個星期有咩重要事？' }), icon: SUGGESTION_ICONS[0] },
+    { text: t('askd.suggestion1', { defaultValue: '總結我最近嘅筆記重點' }), icon: SUGGESTION_ICONS[1] },
+    { text: t('askd.suggestion2', { defaultValue: '我仲有咩未完成待辦？' }), icon: SUGGESTION_ICONS[2] },
+    { text: t('askd.suggestion3', { defaultValue: '根據我嘅目標，建議下一步點做' }), icon: SUGGESTION_ICONS[3] },
+  ]
 
   const [q, setQ] = useState('')
   const [answer, setAnswer] = useState<string | null>(null)
@@ -183,35 +190,35 @@ export default function AskData() {
     return [
       {
         key: 'notes',
-        label: '筆記',
+        label: t('askd.evidenceLabelNotes', { defaultValue: '筆記' }),
         icon: NotebookPen,
         tint: 'violet',
         count: notes.filter((n) => !n.trashed).length,
       },
       {
         key: 'tasks',
-        label: '待辦',
+        label: t('askd.evidenceLabelTasks', { defaultValue: '待辦' }),
         icon: ListTodo,
         tint: 'amber',
         count: tasks.filter((t) => !t.done).length,
       },
       {
         key: 'goals',
-        label: '目標',
+        label: t('askd.evidenceLabelGoals', { defaultValue: '目標' }),
         icon: Target,
         tint: 'rose',
         count: goalsCol.get().length,
       },
       {
         key: 'events',
-        label: '日程',
+        label: t('askd.evidenceLabelEvents', { defaultValue: '日程' }),
         icon: CalendarDays,
         tint: 'blue',
         count: eventsCol.get().filter((e) => (e.endDate ?? e.date) >= today).length,
       },
     ]
     // notes / tasks 變動時重算；其餘 collection 隨之即取即數。
-  }, [notes, tasks])
+  }, [notes, tasks, t])
 
   const totalFiles = evidence.reduce((s, e) => s + e.count, 0)
 
@@ -219,8 +226,8 @@ export default function AskData() {
     return (
       <EmptyState
         icon={Bot}
-        title="AI 未啟用"
-        hint="要設定好 Supabase 並部署 gemini Edge Function 先用到。步驟見 docs/SETUP.md。"
+        title={t('askd.gateNotEnabledTitle', { defaultValue: 'AI 未啟用' })}
+        hint={t('askd.gateNotEnabledHint', { defaultValue: '要設定好 Supabase 並部署 gemini Edge Function 先用到。步驟見 docs/SETUP.md。' })}
       />
     )
   }
@@ -228,8 +235,8 @@ export default function AskData() {
     return (
       <EmptyState
         icon={Lock}
-        title="請先登入先可以用 AI"
-        hint="喺左下角用 Google 登入後就用得。"
+        title={t('askd.gateLoginTitle', { defaultValue: '請先登入先可以用 AI' })}
+        hint={t('askd.gateLoginHint', { defaultValue: '喺左下角用 Google 登入後就用得。' })}
       />
     )
   }
@@ -288,31 +295,31 @@ export default function AskData() {
       <header className="animate-fade-in-up">
         <p className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.3em] text-accent/70">
           <FileSearch size={13} className="shrink-0" />
-          查詢台 · Inquiry Desk
+          {t('askd.headerLabel', { defaultValue: '查詢台 · Inquiry Desk' })}
         </p>
         <h1 className="mt-1.5 font-serif text-[27px] font-semibold leading-[1.15] tracking-tight text-slate-800 dark:text-slate-100 sm:text-[32px]">
-          問我嘅資料 AI
+          {t('askd.headerTitle', { defaultValue: '問我嘅資料 AI' })}
         </h1>
         <p className="mt-2 max-w-lg text-sm leading-relaxed text-slate-500 dark:text-slate-400">
-          開案查問。我淨係根據你<span className="font-medium text-slate-600 dark:text-slate-300">親手記低嘅卷宗</span>
-          ——筆記、待辦、目標同日程——引證作答，唔靠估。
+          {t('askd.headerDesc', { defaultValue: '開案查問。我淨係根據你' })}<span className="font-medium text-slate-600 dark:text-slate-300">{t('askd.headerDescStrong', { defaultValue: '親手記低嘅卷宗' })}</span>
+          {t('askd.headerDescSuffix', { defaultValue: '——筆記、待辦、目標同日程——引證作答，唔靠估。' })}
         </p>
       </header>
 
       {/* ───────── 證據在案：手頭卷宗清單（data-grounded 嘅靈魂；落案前先攤開） ───────── */}
       {!started && (
         <section
-          aria-label="證據在案"
+          aria-label={t('askd.evidenceSectionLabel', { defaultValue: '證據在案' })}
           className="animate-fade-in-up overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-xs dark:border-slate-700/60 dark:bg-slate-800 dark:shadow-none"
           style={{ animationDelay: '60ms' }}
         >
           <div className="flex items-center justify-between gap-3 border-b border-dashed border-slate-200/80 px-5 py-3 dark:border-slate-700/60">
             <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
               <FileSearch size={13} className="shrink-0" />
-              證據在案
+              {t('askd.evidenceSectionHeading', { defaultValue: '證據在案' })}
             </p>
             <span className="inline-flex items-center gap-1 rounded-full bg-accent-soft px-2.5 py-0.5 text-[11px] font-medium text-accent-strong dark:bg-accent/15 dark:text-accent">
-              <span className="tabular-nums slashed-zero">{totalFiles}</span> 份可查
+              {t('askd.evidenceFilesCount', { count: totalFiles, defaultValue: '{{count}} 份可查' })}
             </span>
           </div>
 
@@ -326,7 +333,7 @@ export default function AskData() {
           {totalFiles === 0 && (
             // 空狀態：有溫度，唔係冷冰冰「無資料」
             <p className="px-5 py-3.5 text-xs leading-relaxed text-slate-400 dark:text-slate-500">
-              卷宗仲係空白嘅。去記低幾條筆記、待辦或者目標，我就有嘢可以幫你查。
+              {t('askd.evidenceEmpty', { defaultValue: '卷宗仲係空白嘅。去記低幾條筆記、待辦或者目標，我就有嘢可以幫你查。' })}
             </p>
           )}
         </section>
@@ -340,7 +347,7 @@ export default function AskData() {
             <div className="flex animate-fade-in-up justify-end gap-2.5">
               <div className="max-w-[85%]">
                 <p className="mb-1 pr-1 text-right text-[10px] font-medium uppercase tracking-wider text-slate-400 dark:text-slate-500">
-                  你嘅查問
+                  {t('askd.bubbleYouLabel', { defaultValue: '你嘅查問' })}
                 </p>
                 <div className="flex items-start gap-2 rounded-2xl rounded-br-md bg-accent px-4 py-2.5 text-sm leading-relaxed text-white shadow-sm">
                   <Quote size={14} className="mt-0.5 shrink-0 text-white/50" aria-hidden="true" />
@@ -365,13 +372,13 @@ export default function AskData() {
 
             <div className="min-w-0 flex-1">
               <p className="mb-1 pl-1 text-[10px] font-medium uppercase tracking-wider text-slate-400 dark:text-slate-500">
-                {isError ? '查詢台' : '案頭調卷'}
+                {isError ? t('askd.bubbleAiLabelError', { defaultValue: '查詢台' }) : t('askd.bubbleAiLabelAnswer', { defaultValue: '案頭調卷' })}
               </p>
 
               {isError ? (
                 <div className="max-w-[85%] rounded-2xl rounded-tl-md border border-rose-200/70 bg-rose-50/70 px-4 py-3 dark:border-rose-500/30 dark:bg-rose-500/10">
                   <p className="text-sm font-medium text-rose-700 dark:text-rose-300">
-                    唔好意思，啱啱有啲問題
+                    {t('askd.errorTitle', { defaultValue: '唔好意思，啱啱有啲問題' })}
                   </p>
                   <p className="mt-1 break-words text-xs leading-relaxed text-rose-600/90 dark:text-rose-300/80">
                     {errorText}
@@ -382,7 +389,7 @@ export default function AskData() {
                     className="mt-3"
                     onClick={() => void ask(askedQuestion)}
                   >
-                    再查一次
+                    {t('askd.errorRetry', { defaultValue: '再查一次' })}
                   </Button>
                 </div>
               ) : answer === '' && busy ? (
@@ -397,7 +404,7 @@ export default function AskData() {
                   <span className="h-2 w-2 animate-bounce rounded-full bg-accent [animation-delay:-0.15s]" />
                   <span className="h-2 w-2 animate-bounce rounded-full bg-accent" />
                   <span className="ml-1.5 text-xs text-slate-400 dark:text-slate-500">
-                    翻緊你嘅卷宗…
+                    {t('askd.loadingText', { defaultValue: '翻緊你嘅卷宗…' })}
                   </span>
                 </div>
               ) : (
@@ -426,7 +433,7 @@ export default function AskData() {
         <div className={cx(started && 'border-t border-slate-200/70 pt-4 dark:border-slate-700/60')}>
           <p className="mb-2.5 flex items-center gap-1.5 text-xs font-medium text-slate-400 dark:text-slate-500">
             <Search size={12} className="shrink-0" />
-            {started ? '繼續追查' : '由呢度開案查問'}
+            {started ? t('askd.suggestionsLabelContinue', { defaultValue: '繼續追查' }) : t('askd.suggestionsLabel', { defaultValue: '由呢度開案查問' })}
           </p>
           <div className="flex flex-wrap gap-2">
             {SUGGESTIONS.map((s) => (
@@ -457,8 +464,8 @@ export default function AskData() {
             ref={inputRef}
             rows={1}
             className="max-h-40 min-h-[40px] flex-1 resize-none border-0 bg-transparent px-0 py-2 shadow-none focus:border-0 focus:ring-0 dark:bg-transparent"
-            aria-label="向你嘅資料查問"
-            placeholder="想查啲咩？例如：我今個星期最緊要做咩？"
+            aria-label={t('askd.inputAriaLabel', { defaultValue: '向你嘅資料查問' })}
+            placeholder={t('askd.inputPlaceholder', { defaultValue: '想查啲咩？例如：我今個星期最緊要做咩？' })}
             value={q}
             onChange={(e) => setQ(e.target.value)}
             onKeyDown={onKeyDown}
@@ -470,21 +477,21 @@ export default function AskData() {
               icon={Square}
               onClick={() => abortRef.current?.abort()}
             >
-              停止
+              {t('askd.stopButton', { defaultValue: '停止' })}
             </Button>
           ) : (
             <Button icon={Send} onClick={() => void ask(q)} disabled={!q.trim()}>
-              查問
+              {t('askd.sendButton', { defaultValue: '查問' })}
             </Button>
           )}
         </div>
         <p className="mt-1.5 hidden items-center justify-center gap-1.5 text-center text-[11px] text-slate-400 dark:text-slate-500 sm:flex">
           <span className="inline-flex items-center gap-1">
-            <CornerDownLeft size={11} /> Enter 送出 · Shift + Enter 換行
+            <CornerDownLeft size={11} /> {t('askd.keyboardHint', { defaultValue: 'Enter 送出 · Shift + Enter 換行' })}
           </span>
           <span aria-hidden="true" className="text-slate-300 dark:text-slate-600">·</span>
           <span className="inline-flex items-center gap-1">
-            <Sparkles size={11} /> 只引用你自己嘅資料
+            <Sparkles size={11} /> {t('askd.dataHint', { defaultValue: '只引用你自己嘅資料' })}
           </span>
         </p>
       </div>

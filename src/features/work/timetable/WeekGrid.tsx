@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { Coffee, Plus, Utensils, AlertTriangle, MapPin } from 'lucide-react'
 import type { TimetableSlot } from '../../../data/types'
 import { cx } from '../../../ui'
@@ -42,13 +43,14 @@ export default function WeekGrid({
   dimClassId: string // '' = 全部；否則非此班別嘅格淡化
   onOpenCell: (day: number, period: number) => void
 }) {
+  const { t } = useTranslation()
   return (
     <div className="overflow-x-auto rounded-3xl border border-slate-200/70 bg-white p-2.5 shadow-xs dark:border-slate-700/60 dark:bg-slate-800 dark:shadow-none sm:p-4">
       <table className="w-full min-w-[680px] border-separate border-spacing-x-1.5 border-spacing-y-1.5 text-sm">
         <thead>
           <tr>
             <th className="sticky left-0 z-10 w-20 bg-white pb-2 pl-1 text-left align-bottom text-[10px] font-medium uppercase tracking-[0.15em] text-slate-400 dark:bg-slate-800 dark:text-slate-500">
-              節 / 時間
+              {t('tt.gridPeriodCol', { defaultValue: '節 / 時間' })}
             </th>
             {days.map((day) => {
               const isToday = day === todayDay
@@ -74,7 +76,7 @@ export default function WeekGrid({
                       {letter}
                     </span>
                     <span className="text-[10px] font-semibold uppercase tracking-wide">
-                      {isToday ? '今日' : cycle ? 'Day' : '星期'}
+                      {isToday ? t('tt.cellTodayLabel', { defaultValue: '今日' }) : cycle ? t('tt.cellDayLabel', { defaultValue: 'Day' }) : t('tt.cellWeekdayLabel', { defaultValue: '星期' })}
                     </span>
                   </div>
                 </th>
@@ -132,10 +134,13 @@ export default function WeekGrid({
                   const hasConflict = conflictKeys.has(key)
                   const dimmed =
                     !!dimClassId && !!slot && slot.classId !== dimClassId
-                  const cellPos = `${cycle ? `Day ${cycleShort(day)}` : `星期${dayShort(day)}`} 第 ${bell.period} 節`
+                  const translatedDay = t(`tt.day${['', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][day] ?? 'Mon'}`, { defaultValue: `星期${dayShort(day)}` })
+                  const cellPos = cycle
+                    ? t('tt.cellCyclePos', { defaultValue: `Day ${cycleShort(day)} 第 ${bell.period} 節`, letter: cycleShort(day), period: bell.period })
+                    : t('tt.cellWeekPos', { defaultValue: `星期${dayShort(day)} 第 ${bell.period} 節`, day: translatedDay, period: bell.period })
                   const cellLabel = slot
-                    ? `編輯 ${cellPos}：${title || className || '課堂'}${hasConflict ? '（撞堂）' : ''}`
-                    : `新增課堂 — ${cellPos}`
+                    ? t('tt.cellEditLabel', { defaultValue: `編輯 ${cellPos}：${title || className || '課堂'}${hasConflict ? '（撞堂）' : ''}`, pos: cellPos, title: `${title || className || t('tt.fallbackLesson', { defaultValue: '課堂' })}${hasConflict ? t('tt.cellConflict', { defaultValue: '（撞堂）' }) : ''}` })
+                    : t('tt.cellAddLabel', { defaultValue: `新增課堂 — ${cellPos}`, pos: cellPos })
                   return (
                     <td
                       key={day}
@@ -164,7 +169,7 @@ export default function WeekGrid({
                             {hasConflict && (
                               <span
                                 className="absolute right-1.5 top-1.5 text-rose-500"
-                                title="撞堂"
+                                title={t('tt.cellConflict', { defaultValue: '（撞堂）' })}
                               >
                                 <AlertTriangle size={13} />
                               </span>

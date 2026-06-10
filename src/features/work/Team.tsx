@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   Users,
   UserPlus,
@@ -11,6 +12,7 @@ import {
 import { useAuth } from '../../context/AuthContext'
 import { useToast } from '../../context/ToastContext'
 import { useConfirm } from '../../context/ConfirmContext'
+import './team/i18n'
 import {
   Button,
   Card,
@@ -43,6 +45,7 @@ import {
 // ============================================================
 
 export default function Team() {
+  const { t } = useTranslation()
   const { user, configured, signInWithGoogle } = useAuth()
   const toast = useToast()
   const confirm = useConfirm()
@@ -70,7 +73,7 @@ export default function Team() {
       setOrgs(list)
       setOrgId((cur) => cur ?? list[0]?.id ?? null)
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : '載入團隊失敗')
+      toast.error(e instanceof Error ? e.message : t('team.loadFailed', { defaultValue: '載入團隊失敗' }))
     } finally {
       setLoading(false)
     }
@@ -96,7 +99,7 @@ export default function Team() {
     if (token) {
       acceptInvite(token)
         .then((joinedId) => {
-          toast.success('已加入團隊 🎉')
+          toast.success(t('team.joinedTeam', { defaultValue: '已加入團隊 🎉' }))
           setOrgId(joinedId)
           // 清走 URL 上嘅 token
           const u = new URL(window.location.href)
@@ -104,7 +107,7 @@ export default function Team() {
           window.history.replaceState({}, '', u.toString())
         })
         .catch((e) =>
-          toast.error(e instanceof Error ? e.message : '接受邀請失敗'),
+          toast.error(e instanceof Error ? e.message : t('team.acceptFailed', { defaultValue: '接受邀請失敗' })),
         )
         .finally(() => void reloadOrgs())
     } else {
@@ -121,8 +124,8 @@ export default function Team() {
     return (
       <EmptyState
         icon={Building2}
-        title="團隊功能需要接好 Supabase"
-        hint="團隊 / 多座位靠雲端帳戶運作。設定見 docs/SETUP.md。"
+        title={t('team.notConfiguredTitle', { defaultValue: '團隊功能需要接好 Supabase' })}
+        hint={t('team.notConfiguredHint', { defaultValue: '團隊 / 多座位靠雲端帳戶運作。設定見 docs/SETUP.md。' })}
       />
     )
   }
@@ -130,10 +133,10 @@ export default function Team() {
     return (
       <EmptyState
         icon={Users}
-        title="登入先可以用團隊功能"
-        hint="建立學校 / 科組團隊、邀請同事、共用座位。"
+        title={t('team.signInTitle', { defaultValue: '登入先可以用團隊功能' })}
+        hint={t('team.signInHint', { defaultValue: '建立學校 / 科組團隊、邀請同事、共用座位。' })}
         action={
-          <Button onClick={() => void signInWithGoogle()}>用 Google 登入</Button>
+          <Button onClick={() => void signInWithGoogle()}>{t('team.signInButton', { defaultValue: '用 Google 登入' })}</Button>
         }
       />
     )
@@ -148,9 +151,9 @@ export default function Team() {
       setNewOrgName('')
       await reloadOrgs()
       setOrgId(id)
-      toast.success('已建立團隊')
+      toast.success(t('team.createdTeam', { defaultValue: '已建立團隊' }))
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : '建立失敗')
+      toast.error(e instanceof Error ? e.message : t('team.createFailed', { defaultValue: '建立失敗' }))
     } finally {
       setBusy(false)
     }
@@ -161,7 +164,7 @@ export default function Team() {
     const email = inviteEmail.trim()
     if (!email) return
     if (members.length >= org.seats) {
-      toast.error(`座位已滿（${org.seats}）。請先增加座位。`)
+      toast.error(t('team.seatsFull', { defaultValue: `座位已滿（${org.seats}）。請先增加座位。`, count: org.seats }))
       return
     }
     try {
@@ -170,9 +173,9 @@ export default function Team() {
       setInviteEmail('')
       await reloadOrgDetail(org.id)
       await navigator.clipboard.writeText(link).catch(() => {})
-      toast.success('已建立邀請連結，並複製到剪貼簿')
+      toast.success(t('team.inviteCreated', { defaultValue: '已建立邀請連結，並複製到剪貼簿' }))
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : '邀請失敗')
+      toast.error(e instanceof Error ? e.message : t('team.inviteFailed', { defaultValue: '邀請失敗' }))
     } finally {
       setBusy(false)
     }
@@ -182,9 +185,9 @@ export default function Team() {
     if (!org) return
     if (
       !(await confirm({
-        title: `移除 ${m.email}？`,
-        message: '佢將會失去此團隊嘅存取權。',
-        confirmText: '移除',
+        title: t('team.confirmRemoveTitle', { defaultValue: `移除 ${m.email}？`, email: m.email }),
+        message: t('team.confirmRemoveMessage', { defaultValue: '佢將會失去此團隊嘅存取權。' }),
+        confirmText: t('team.confirmRemoveButton', { defaultValue: '移除' }),
         tone: 'danger',
       }))
     )
@@ -192,23 +195,23 @@ export default function Team() {
     try {
       await removeMember(org.id, m.user_id)
       await reloadOrgDetail(org.id)
-      toast.success('已移除成員')
+      toast.success(t('team.removedMember', { defaultValue: '已移除成員' }))
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : '移除失敗')
+      toast.error(e instanceof Error ? e.message : t('team.removeFailed', { defaultValue: '移除失敗' }))
     }
   }
 
   async function onAddSeats() {
     if (!org) return
     if (!isSeatBillingConfigured) {
-      toast.info('座位收費即將推出（未設定團隊 price）。')
+      toast.info(t('team.seatsBillingComingSoon', { defaultValue: '座位收費即將推出（未設定團隊 price）。' }))
       return
     }
     try {
       setBusy(true)
       await startSeatCheckout(org.id, org.seats + 1)
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : '開啟付款頁失敗')
+      toast.error(e instanceof Error ? e.message : t('team.checkoutFailed', { defaultValue: '開啟付款頁失敗' }))
       setBusy(false)
     }
   }
@@ -217,24 +220,24 @@ export default function Team() {
     <div className="space-y-6">
       {/* 團隊揀選 + 建立 */}
       <Card className="p-5">
-        <SectionTitle>我的團隊</SectionTitle>
+        <SectionTitle>{t('team.myTeams', { defaultValue: '我的團隊' })}</SectionTitle>
         {loading && orgs.length === 0 ? (
-          <p className="text-sm text-slate-400">載入中…</p>
+          <p className="text-sm text-slate-400">{t('team.loading', { defaultValue: '載入中…' })}</p>
         ) : orgs.length === 0 ? (
           <div className="space-y-3">
             <p className="text-sm text-slate-500 dark:text-slate-400">
-              仲未有團隊。建立一個學校 / 科組團隊，邀請同事共用。
+              {t('team.noTeamsHint', { defaultValue: '仲未有團隊。建立一個學校 / 科組團隊，邀請同事共用。' })}
             </p>
             <div className="flex gap-2">
               <Input
                 icon={Building2}
                 value={newOrgName}
-                placeholder="團隊名稱（例如：聖保羅 商業科）"
+                placeholder={t('team.teamNamePlaceholder', { defaultValue: '團隊名稱（例如：聖保羅 商業科）' })}
                 onChange={(e) => setNewOrgName(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && onCreateOrg()}
               />
               <Button onClick={onCreateOrg} disabled={busy || !newOrgName.trim()}>
-                建立
+                {t('team.create', { defaultValue: '建立' })}
               </Button>
             </div>
           </div>
@@ -256,7 +259,7 @@ export default function Team() {
             <div className="ml-auto flex gap-2">
               <Input
                 value={newOrgName}
-                placeholder="新團隊名稱"
+                placeholder={t('team.newTeamPlaceholder', { defaultValue: '新團隊名稱' })}
                 onChange={(e) => setNewOrgName(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && onCreateOrg()}
                 className="max-w-[12rem]"
@@ -266,7 +269,7 @@ export default function Team() {
                 onClick={onCreateOrg}
                 disabled={busy || !newOrgName.trim()}
               >
-                新增
+                {t('team.addNew', { defaultValue: '新增' })}
               </Button>
             </div>
           </div>
@@ -278,18 +281,18 @@ export default function Team() {
           {/* 座位 */}
           <Card className="flex flex-wrap items-center justify-between gap-3 p-5">
             <div>
-              <SectionTitle>座位</SectionTitle>
+              <SectionTitle>{t('team.seats', { defaultValue: '座位' })}</SectionTitle>
               <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                已用{' '}
+                {t('team.seatsUsed', { defaultValue: '已用' })}{' '}
                 <span className="font-semibold tabular-nums text-slate-800 dark:text-slate-100">
                   {members.length}
                 </span>{' '}
-                / {org.seats} 個座位
+                {t('team.seatsOf', { defaultValue: '/ {{seats}} 個座位', seats: org.seats })}
               </p>
             </div>
             {isOwnerAdmin && (
               <Button variant="secondary" icon={Ticket} onClick={onAddSeats} disabled={busy}>
-                增加座位
+                {t('team.addSeats', { defaultValue: '增加座位' })}
               </Button>
             )}
           </Card>
@@ -297,9 +300,9 @@ export default function Team() {
           {/* 邀請 */}
           {isOwnerAdmin && (
             <Card className="p-5">
-              <SectionTitle>邀請成員</SectionTitle>
+              <SectionTitle>{t('team.inviteMembers', { defaultValue: '邀請成員' })}</SectionTitle>
               <p className="mb-3 text-sm text-slate-500 dark:text-slate-400">
-                輸入同事電郵，產生加入連結（自動複製），傳俾佢開啟即加入。
+                {t('team.inviteHint', { defaultValue: '輸入同事電郵，產生加入連結（自動複製），傳俾佢開啟即加入。' })}
               </p>
               <div className="flex gap-2">
                 <div className="flex-1">
@@ -313,7 +316,7 @@ export default function Team() {
                   />
                 </div>
                 <Button onClick={onInvite} disabled={busy || !inviteEmail.trim()}>
-                  產生邀請
+                  {t('team.generateInvite', { defaultValue: '產生邀請' })}
                 </Button>
               </div>
 
@@ -324,18 +327,18 @@ export default function Team() {
                       key={inv.id}
                       className="flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700"
                     >
-                      <Badge tone="amber">待接受</Badge>
+                      <Badge tone="amber">{t('team.pendingInvite', { defaultValue: '待接受' })}</Badge>
                       <span className="flex-1 truncate text-slate-600 dark:text-slate-300">
                         {inv.email}
                       </span>
                       <IconButton
-                        label="複製邀請連結"
+                        label={t('team.copyInviteLink', { defaultValue: '複製邀請連結' })}
                         size="sm"
                         onClick={() => {
                           void navigator.clipboard.writeText(
                             `${window.location.origin}/app?invite=${inv.token}`,
                           )
-                          toast.success('已複製邀請連結')
+                          toast.success(t('team.copiedInviteLink', { defaultValue: '已複製邀請連結' }))
                         }}
                       >
                         <Copy size={15} />
@@ -349,7 +352,7 @@ export default function Team() {
 
           {/* 成員 */}
           <Card className="p-5">
-            <SectionTitle>成員（{members.length}）</SectionTitle>
+            <SectionTitle>{t('team.membersCount', { defaultValue: '成員（{{count}}）', count: members.length })}</SectionTitle>
             <ul className="mt-2 divide-y divide-slate-100 dark:divide-slate-800">
               {members.map((m) => (
                 <li key={m.user_id} className="flex items-center gap-3 py-2.5">
@@ -360,10 +363,10 @@ export default function Team() {
                     {m.email}
                   </span>
                   <Badge tone={m.role === 'owner' ? 'accent' : 'slate'}>
-                    {m.role === 'owner' ? '擁有者' : m.role === 'admin' ? '管理員' : '成員'}
+                    {m.role === 'owner' ? t('team.roleOwner', { defaultValue: '擁有者' }) : m.role === 'admin' ? t('team.roleAdmin', { defaultValue: '管理員' }) : t('team.roleMember', { defaultValue: '成員' })}
                   </Badge>
                   {isOwnerAdmin && m.role !== 'owner' && m.user_id !== user.id && (
-                    <IconButton label="移除成員" size="sm" onClick={() => onRemove(m)}>
+                    <IconButton label={t('team.removeMember', { defaultValue: '移除成員' })} size="sm" onClick={() => onRemove(m)}>
                       <Trash2 size={15} />
                     </IconButton>
                   )}

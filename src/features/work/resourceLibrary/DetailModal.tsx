@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   Activity,
   Archive,
@@ -76,6 +77,7 @@ export function DetailModal({
   const folders = useCollection(resourceFoldersCol)
   const openLog = useCollection(resourceOpenLogCol)
   const toast = useToast()
+  const { t } = useTranslation()
 
   const res = resources.find((r) => r.id === resourceId)
 
@@ -114,7 +116,7 @@ export function DetailModal({
 
   const saveEdit = () => {
     if (!title.trim()) {
-      toast.error('標題唔可以空白')
+      toast.error(t('res.detail_edit_title_blank', { defaultValue: '標題唔可以空白' }))
       return
     }
     resourcesCol.update(res.id, {
@@ -125,7 +127,7 @@ export function DetailModal({
       notes: notes.trim() || undefined,
       tags: tags.length ? tags : undefined,
     })
-    toast.success('已更新資源')
+    toast.success(t('res.detail_toast_updated', { defaultValue: '已更新資源' }))
     setEditing(false)
   }
 
@@ -143,25 +145,25 @@ export function DetailModal({
         footer={
           <>
             <Button variant="secondary" onClick={() => setEditing(false)}>
-              取消
+              {t('res.edit_cancel_btn', { defaultValue: '取消' })}
             </Button>
             <Button icon={Save} onClick={saveEdit}>
-              入冊歸檔
+              {t('res.edit_save_btn', { defaultValue: '入冊歸檔' })}
             </Button>
           </>
         }
       >
         <CatalogueHeader
-          kicker="著錄 · Cataloguing"
+          kicker={t('res.edit_kicker', { defaultValue: '著錄 · Cataloguing' })}
           icon={Pencil}
-          title="修訂館藏條目"
+          title={t('res.edit_modal_title', { defaultValue: '修訂館藏條目' })}
           type={type}
           onClose={() => setEditing(false)}
         />
 
         {/* 著錄卡：hairline grid 表單，呼應典藏簿格仔 */}
         <div className="space-y-3.5">
-          <Field label="條目標題" required>
+          <Field label={t('res.edit_field_title', { defaultValue: '條目標題' })} required>
             <Input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
@@ -169,7 +171,7 @@ export function DetailModal({
             />
           </Field>
           <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
-            <Field label="館藏類別">
+            <Field label={t('res.edit_field_type', { defaultValue: '館藏類別' })}>
               <Select
                 value={type}
                 onChange={(e) => setType(e.target.value as ResourceType)}
@@ -181,9 +183,9 @@ export function DetailModal({
                 ))}
               </Select>
             </Field>
-            <Field label="所屬課題">
+            <Field label={t('res.edit_field_topic', { defaultValue: '所屬課題' })}>
               <Select value={topicId} onChange={(e) => setTopicId(e.target.value)}>
-                <option value="">未連結</option>
+                <option value="">{t('res.edit_topic_none', { defaultValue: '未連結' })}</option>
                 {topics.map((t) => (
                   <option key={t.id} value={t.id}>
                     {t.topic}
@@ -193,8 +195,8 @@ export function DetailModal({
             </Field>
           </div>
           <Field
-            label="索書連結 URL"
-            hint={editDomain ? `網域：${editDomain}` : undefined}
+            label={t('res.edit_field_url', { defaultValue: '索書連結 URL' })}
+            hint={editDomain ? t('res.edit_url_domain_hint', { defaultValue: `網域：${editDomain}`, domain: editDomain }) : undefined}
           >
             <Input
               value={url}
@@ -203,15 +205,15 @@ export function DetailModal({
               icon={LinkIcon}
             />
           </Field>
-          <Field label="標籤主題詞">
+          <Field label={t('res.edit_field_tags', { defaultValue: '標籤主題詞' })}>
             <TagEditor value={tags} onChange={setTags} suggestions={allTags} />
           </Field>
-          <Field label="館員附註">
+          <Field label={t('res.edit_field_notes', { defaultValue: '館員附註' })}>
             <Textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               rows={3}
-              placeholder="用途、重點、提醒…"
+              placeholder={t('res.edit_notes_placeholder', { defaultValue: '用途、重點、提醒…' })}
             />
           </Field>
         </div>
@@ -232,12 +234,14 @@ export function DetailModal({
         <div className="flex items-start justify-between gap-3">
           <p className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.28em] text-accent/70">
             <Library size={12} strokeWidth={2} />
-            典藏條目 · Record
+            {t('res.detail_kicker', { defaultValue: '典藏條目 · Record' })}
           </p>
           <div className="flex shrink-0 items-center gap-0.5">
-            <Tooltip label={meta.favorite ? '取消收藏' : '收藏'}>
+            <Tooltip label={meta.favorite
+              ? t('res.detail_unfav_tooltip', { defaultValue: '取消收藏' })
+              : t('res.detail_fav_tooltip', { defaultValue: '收藏' })}>
               <IconButton
-                label="收藏"
+                label={t('res.detail_fav_label', { defaultValue: '收藏' })}
                 active={meta.favorite}
                 onClick={() => setMeta({ favorite: !meta.favorite })}
               >
@@ -247,7 +251,7 @@ export function DetailModal({
                 />
               </IconButton>
             </Tooltip>
-            <IconButton label="關閉" onClick={onClose}>
+            <IconButton label={t('res.detail_close_label', { defaultValue: '關閉' })} onClick={onClose}>
               <X size={18} />
             </IconButton>
           </div>
@@ -272,8 +276,8 @@ export function DetailModal({
                   {folder.name}
                 </span>
               )}
-              {meta.broken && <Badge tone="rose" icon={Link2Off}>連結失效</Badge>}
-              {meta.archived && <Badge tone="slate" icon={Archive}>已封存</Badge>}
+              {meta.broken && <Badge tone="rose" icon={Link2Off}>{t('res.detail_broken_badge', { defaultValue: '連結失效' })}</Badge>}
+              {meta.archived && <Badge tone="slate" icon={Archive}>{t('res.detail_archived_badge', { defaultValue: '已封存' })}</Badge>}
             </div>
           </div>
         </div>
@@ -285,13 +289,13 @@ export function DetailModal({
           <div className="flex items-center justify-between gap-2 rounded-2xl border border-dashed border-accent/30 bg-accent-soft/40 px-3.5 py-3 dark:border-accent/30 dark:bg-accent/10">
             <FaviconChip domain={domain} />
             <Button size="sm" icon={ExternalLink} onClick={open}>
-              借閱開啟
+              {t('res.detail_checkout_btn', { defaultValue: '借閱開啟' })}
             </Button>
           </div>
         ) : (
           <p className="flex items-center gap-2 rounded-2xl border border-dashed border-slate-200 px-3.5 py-3 text-xs text-slate-500 dark:border-slate-700 dark:text-slate-400">
             <StickyNote size={14} className="shrink-0 text-slate-400" />
-            純筆記 / 實體教材，未有索書連結。
+            {t('res.detail_note_only', { defaultValue: '純筆記 / 實體教材，未有索書連結。' })}
           </p>
         )}
 
@@ -299,12 +303,12 @@ export function DetailModal({
         {res.tags && res.tags.length > 0 && (
           <div className="flex flex-wrap items-center gap-1.5">
             <TagIcon size={13} className="text-slate-400" />
-            {res.tags.map((t) => (
+            {res.tags.map((tag) => (
               <span
-                key={t}
+                key={tag}
                 className="rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300"
               >
-                #{t}
+                #{tag}
               </span>
             ))}
           </div>
@@ -313,7 +317,7 @@ export function DetailModal({
         {/* 館員附註 */}
         {res.notes && (
           <div>
-            <SectionLabel icon={NotebookPen}>館員附註</SectionLabel>
+            <SectionLabel icon={NotebookPen}>{t('res.detail_section_notes', { defaultValue: '館員附註' })}</SectionLabel>
             <p className="whitespace-pre-wrap break-words rounded-2xl border border-slate-200/70 bg-slate-50 px-3.5 py-3 text-sm leading-relaxed text-slate-600 dark:border-slate-700/60 dark:bg-slate-800/50 dark:text-slate-300">
               {res.notes}
             </p>
@@ -324,7 +328,7 @@ export function DetailModal({
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <div className="rounded-2xl border border-slate-200/80 px-3.5 py-3 dark:border-slate-700/60">
             <p className="mb-1.5 flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
-              <Star size={12} className="text-slate-400" /> 館藏評等
+              <Star size={12} className="text-slate-400" /> {t('res.detail_section_rating', { defaultValue: '館藏評等' })}
             </p>
             <StarRating
               value={meta.rating ?? 0}
@@ -334,14 +338,14 @@ export function DetailModal({
           </div>
           <div className="rounded-2xl border border-slate-200/80 px-3.5 py-3 dark:border-slate-700/60">
             <p className="mb-1.5 flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
-              <FolderInput size={12} className="text-slate-400" /> 歸架抽屜
+              <FolderInput size={12} className="text-slate-400" /> {t('res.detail_section_folder', { defaultValue: '歸架抽屜' })}
             </p>
             <Select
               value={meta.folderId ?? ''}
               onChange={(e) => setMeta({ folderId: e.target.value || undefined })}
               className="py-1.5 text-xs"
             >
-              <option value="">未分類</option>
+              <option value="">{t('res.detail_folder_none', { defaultValue: '未分類' })}</option>
               {folders.map((f) => (
                 <option key={f.id} value={f.id}>
                   {f.name}
@@ -353,18 +357,18 @@ export function DetailModal({
 
         {/* 出納記錄：借閱次數 / 最後借閱 / 入冊（hairline grid，serif 數字呼應典藏簿） */}
         <div>
-          <SectionLabel icon={Activity}>出納記錄</SectionLabel>
+          <SectionLabel icon={Activity}>{t('res.detail_section_circulation', { defaultValue: '出納記錄' })}</SectionLabel>
           <div className="grid grid-cols-3 gap-px overflow-hidden rounded-2xl bg-slate-200/70 ring-1 ring-slate-200/80 text-center dark:bg-slate-700/50 dark:ring-slate-700/60">
-            <Stat label="借閱次數" value={meta.opens} />
-            <Stat label="最後借閱" value={relativeDate(meta.lastOpened)} small />
-            <Stat label="入冊於" value={relativeDate(res.createdAt)} small />
+            <Stat label={t('res.detail_stat_opens', { defaultValue: '借閱次數' })} value={meta.opens} />
+            <Stat label={t('res.detail_stat_last', { defaultValue: '最後借閱' })} value={relativeDate(meta.lastOpened)} small />
+            <Stat label={t('res.detail_stat_added', { defaultValue: '入冊於' })} value={relativeDate(res.createdAt)} small />
           </div>
         </div>
 
         {/* 借閱往來（出納票背面） */}
         {history.length > 0 && (
           <div>
-            <SectionLabel icon={History}>借閱往來</SectionLabel>
+            <SectionLabel icon={History}>{t('res.detail_section_history', { defaultValue: '借閱往來' })}</SectionLabel>
             <ul className="space-y-1.5 rounded-2xl bg-slate-50 px-3.5 py-3 dark:bg-slate-800/50">
               {history.map((h) => (
                 <li
@@ -392,7 +396,7 @@ export function DetailModal({
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex flex-wrap gap-2">
             <Button variant="secondary" size="sm" icon={Pencil} onClick={() => setEditing(true)}>
-              編輯
+              {t('res.detail_edit_btn', { defaultValue: '編輯' })}
             </Button>
             <Button
               variant="secondary"
@@ -400,7 +404,9 @@ export function DetailModal({
               icon={meta.broken ? ExternalLink : Link2Off}
               onClick={() => setMeta({ broken: !meta.broken })}
             >
-              {meta.broken ? '標記為正常' : '標記失效'}
+              {meta.broken
+                ? t('res.detail_mark_normal_btn', { defaultValue: '標記為正常' })
+                : t('res.detail_mark_broken_btn', { defaultValue: '標記失效' })}
             </Button>
             <Button
               variant="secondary"
@@ -408,10 +414,14 @@ export function DetailModal({
               icon={meta.archived ? ArchiveRestore : Archive}
               onClick={() => {
                 setMeta({ archived: !meta.archived })
-                toast.success(meta.archived ? '已還原' : '已封存')
+                toast.success(meta.archived
+                  ? t('res.detail_toast_restored', { defaultValue: '已還原' })
+                  : t('res.detail_toast_archived', { defaultValue: '已封存' }))
               }}
             >
-              {meta.archived ? '還原' : '封存'}
+              {meta.archived
+                ? t('res.detail_restore_btn', { defaultValue: '還原' })
+                : t('res.detail_archive_btn', { defaultValue: '封存' })}
             </Button>
           </div>
           <Button
@@ -420,7 +430,7 @@ export function DetailModal({
             icon={Trash2}
             onClick={() => onDeleted(res.id, res.title)}
           >
-            刪除
+            {t('res.detail_delete_btn', { defaultValue: '刪除' })}
           </Button>
         </div>
       </div>
@@ -461,6 +471,7 @@ function CatalogueHeader({
   type: ResourceType
   onClose: () => void
 }) {
+  const { t } = useTranslation()
   return (
     <div className="relative -mx-5 -mt-5 mb-5 overflow-hidden rounded-t-2xl border-b border-slate-200/80 bg-slate-50/70 px-5 pb-4 pt-5 dark:border-slate-700/60 dark:bg-slate-800/40 sm:-mx-6 sm:-mt-6 sm:px-6 sm:pt-6">
       <span
@@ -477,7 +488,7 @@ function CatalogueHeader({
             {title}
           </h2>
         </div>
-        <IconButton label="關閉" onClick={onClose}>
+        <IconButton label={t('res.detail_close_label', { defaultValue: '關閉' })} onClick={onClose}>
           <X size={18} />
         </IconButton>
       </div>
@@ -529,6 +540,7 @@ export function AddResourceModal({
   const folders = useCollection(resourceFoldersCol)
   const allResources = useCollection(resourcesCol)
   const toast = useToast()
+  const { t } = useTranslation()
 
   const [title, setTitle] = useState('')
   const [type, setType] = useState<ResourceType>('link')
@@ -567,7 +579,7 @@ export function AddResourceModal({
 
   const save = (addAnother: boolean) => {
     if (!title.trim()) {
-      toast.error('請輸入標題')
+      toast.error(t('res.add_title_blank', { defaultValue: '請輸入標題' }))
       return
     }
     const created = resourcesCol.add({
@@ -580,7 +592,7 @@ export function AddResourceModal({
       createdAt: new Date().toISOString(),
     })
     if (folderId) upsertMeta(created.id, { folderId })
-    toast.success('已新增資源')
+    toast.success(t('res.add_toast_saved', { defaultValue: '已新增資源' }))
     if (addAnother) {
       setTitle('')
       setUrl('')
@@ -604,16 +616,16 @@ export function AddResourceModal({
       footer={
         <>
           <Button variant="secondary" onClick={() => save(true)}>
-            入冊並續登
+            {t('res.add_save_another_btn', { defaultValue: '入冊並續登' })}
           </Button>
-          <Button onClick={() => save(false)}>入冊歸檔</Button>
+          <Button onClick={() => save(false)}>{t('res.add_save_btn', { defaultValue: '入冊歸檔' })}</Button>
         </>
       }
     >
       <CatalogueHeader
-        kicker="入冊 · Accession"
+        kicker={t('res.add_kicker', { defaultValue: '入冊 · Accession' })}
         icon={BookMarked}
-        title="登錄新館藏"
+        title={t('res.add_modal_title', { defaultValue: '登錄新館藏' })}
         type={type}
         onClose={() => {
           reset()
@@ -625,31 +637,31 @@ export function AddResourceModal({
         {/* 索書入口 — 貼連結即自動著錄類型（虛線票根呼應出納票） */}
         <div className="rounded-2xl border border-dashed border-accent/30 bg-accent-soft/40 p-3.5 dark:border-accent/30 dark:bg-accent/10">
           <Field
-            label="索書連結 URL"
+            label={t('res.add_field_url', { defaultValue: '索書連結 URL' })}
             hint={
               domain
-                ? `偵測到網域：${domain}，已幫你著錄咗類別`
-                : '貼上連結（如 YouTube、PDF、Google Docs），會自動著錄類別。'
+                ? t('res.add_url_hint_domain', { defaultValue: `偵測到網域：${domain}，已幫你著錄咗類別`, domain })
+                : t('res.add_url_hint_empty', { defaultValue: '貼上連結（如 YouTube、PDF、Google Docs），會自動著錄類別。' })
             }
           >
             <Input
               value={url}
               onChange={(e) => onUrlChange(e.target.value)}
-              placeholder="https://…（選填）"
+              placeholder={t('res.add_url_placeholder', { defaultValue: 'https://…（選填）' })}
               icon={LinkIcon}
             />
           </Field>
         </div>
-        <Field label="條目標題" required>
+        <Field label={t('res.add_field_title', { defaultValue: '條目標題' })} required>
           <Input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="例如：第3章 市場推廣 工作紙"
+            placeholder={t('res.add_title_placeholder', { defaultValue: '例如：第3章 市場推廣 工作紙' })}
             autoFocus
           />
         </Field>
         <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
-          <Field label="館藏類別">
+          <Field label={t('res.add_field_type', { defaultValue: '館藏類別' })}>
             <Select
               value={type}
               onChange={(e) => {
@@ -664,9 +676,9 @@ export function AddResourceModal({
               ))}
             </Select>
           </Field>
-          <Field label="歸架抽屜">
+          <Field label={t('res.add_field_folder', { defaultValue: '歸架抽屜' })}>
             <Select value={folderId} onChange={(e) => setFolderId(e.target.value)}>
-              <option value="">未分類</option>
+              <option value="">{t('res.add_folder_none', { defaultValue: '未分類' })}</option>
               {folders.map((f) => (
                 <option key={f.id} value={f.id}>
                   {f.name}
@@ -675,9 +687,9 @@ export function AddResourceModal({
             </Select>
           </Field>
         </div>
-        <Field label="所屬課題（選填）">
+        <Field label={t('res.add_field_topic', { defaultValue: '所屬課題（選填）' })}>
           <Select value={topicId} onChange={(e) => setTopicId(e.target.value)}>
-            <option value="">未連結</option>
+            <option value="">{t('res.add_topic_none', { defaultValue: '未連結' })}</option>
             {topics.map((t) => (
               <option key={t.id} value={t.id}>
                 {t.topic}
@@ -685,15 +697,15 @@ export function AddResourceModal({
             ))}
           </Select>
         </Field>
-        <Field label="標籤主題詞（選填）">
+        <Field label={t('res.add_field_tags', { defaultValue: '標籤主題詞（選填）' })}>
           <TagEditor value={tags} onChange={setTags} suggestions={allTags} />
         </Field>
-        <Field label="館員附註（選填）">
+        <Field label={t('res.add_field_notes', { defaultValue: '館員附註（選填）' })}>
           <Textarea
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             rows={2}
-            placeholder="用途、重點…"
+            placeholder={t('res.add_notes_placeholder', { defaultValue: '用途、重點…' })}
           />
         </Field>
       </div>

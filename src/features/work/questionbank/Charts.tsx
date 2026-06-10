@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import type { Difficulty, QuestionType } from '../../../data/types'
 import { cx, SegmentedControl } from '../../../ui'
 import {
@@ -38,6 +39,7 @@ export function TypeDonut({
   byType: Record<QuestionType, number>
   size?: number
 }) {
+  const { t } = useTranslation()
   const total = TYPE_ORDER.reduce((s, t) => s + byType[t], 0)
   const thickness = 16
   const r = (size - thickness) / 2
@@ -85,7 +87,7 @@ export function TypeDonut({
             {total}
           </span>
           <span className="text-[11px] text-slate-400 dark:text-slate-500">
-            題
+            {t('qbank.tallyTotalUnit', { defaultValue: '題' })}
           </span>
         </div>
       </div>
@@ -133,11 +135,12 @@ export function DifficultyBars({
 }: {
   byDiff: Record<Difficulty, number>
 }) {
+  const { t } = useTranslation()
   const total = DIFF_ORDER.reduce((s, d) => s + byDiff[d], 0)
   if (total === 0)
     return (
       <p className="py-8 text-center text-sm text-slate-400 dark:text-slate-500">
-        加入題目後，呢度會顯示易 / 中 / 難分佈。
+        {t('qbank.chartDiffEmpty', { defaultValue: '加入題目後，呢度會顯示易 / 中 / 難分佈。' })}
       </p>
     )
   return (
@@ -187,6 +190,7 @@ function heatClass(v: number, max: number): string {
 }
 
 export function CoverageMatrix({ rows }: { rows: TopicRow[] }) {
+  const { t } = useTranslation()
   const [sort, setSort] = useState<'topic' | 'total'>('topic')
   const visible = rows.filter((r) => r.topic !== '未分類')
   const max = Math.max(
@@ -201,7 +205,7 @@ export function CoverageMatrix({ rows }: { rows: TopicRow[] }) {
   if (visible.length === 0)
     return (
       <p className="py-8 text-center text-sm text-slate-400 dark:text-slate-500">
-        建立課題並出題後，呢度會顯示覆蓋熱圖。
+        {t('qbank.chartMatrixEmpty', { defaultValue: '建立課題並出題後，呢度會顯示覆蓋熱圖。' })}
       </p>
     )
 
@@ -211,8 +215,8 @@ export function CoverageMatrix({ rows }: { rows: TopicRow[] }) {
         <SegmentedControl<'topic' | 'total'>
           size="sm"
           options={[
-            { id: 'topic', label: '按課題序' },
-            { id: 'total', label: '按題數' },
+            { id: 'topic', label: t('qbank.chartMatrixSortTopic', { defaultValue: '按課題序' }) },
+            { id: 'total', label: t('qbank.chartMatrixSortTotal', { defaultValue: '按題數' }) },
           ]}
           value={sort}
           onChange={setSort}
@@ -222,13 +226,13 @@ export function CoverageMatrix({ rows }: { rows: TopicRow[] }) {
         <table className="w-full border-separate border-spacing-y-1 text-xs">
           <thead>
             <tr className="text-slate-400 dark:text-slate-500">
-              <th className="px-2 py-1 text-left text-[11px] font-semibold uppercase tracking-wide">課題</th>
+              <th className="px-2 py-1 text-left text-[11px] font-semibold uppercase tracking-wide">{t('qbank.chartMatrixColTopic', { defaultValue: '課題' })}</th>
               {DIFF_ORDER.map((d) => (
                 <th key={d} className="w-12 px-1 py-1 text-center text-[11px] font-semibold uppercase tracking-wide">
                   {DIFF_LABEL[d]}
                 </th>
               ))}
-              <th className="w-12 px-1 py-1 text-center text-[11px] font-semibold uppercase tracking-wide">合計</th>
+              <th className="w-12 px-1 py-1 text-center text-[11px] font-semibold uppercase tracking-wide">{t('qbank.chartMatrixColTotal', { defaultValue: '合計' })}</th>
             </tr>
           </thead>
           <tbody>
@@ -244,7 +248,7 @@ export function CoverageMatrix({ rows }: { rows: TopicRow[] }) {
                         'mx-auto flex h-7 w-9 items-center justify-center rounded-md text-[11px] font-semibold tabular-nums transition-colors',
                         heatClass(r.byDiff[d], max),
                       )}
-                      title={`${r.topic} · ${DIFF_LABEL[d]}：${r.byDiff[d]} 題`}
+                      title={t('qbank.chartMatrixCellTitle', { defaultValue: `${r.topic} · ${DIFF_LABEL[d]}：${r.byDiff[d]} 題`, topic: r.topic, diff: DIFF_LABEL[d], count: r.byDiff[d] })}
                     >
                       {r.byDiff[d] || ''}
                     </div>
@@ -269,17 +273,17 @@ export function CoverageMatrix({ rows }: { rows: TopicRow[] }) {
       </div>
       <div className="mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[11px] text-slate-400 dark:text-slate-500">
         <span className="inline-flex items-center gap-1.5">
-          <span className="text-slate-500 dark:text-slate-400">少</span>
+          <span className="text-slate-500 dark:text-slate-400">{t('qbank.chartMatrixLegendLow', { defaultValue: '少' })}</span>
           <span className="flex overflow-hidden rounded-md">
             <span className="h-3 w-4 bg-accent/15" />
             <span className="h-3 w-4 bg-accent/35" />
             <span className="h-3 w-4 bg-accent/55" />
             <span className="h-3 w-4 bg-accent" />
           </span>
-          <span className="text-slate-500 dark:text-slate-400">多</span>
+          <span className="text-slate-500 dark:text-slate-400">{t('qbank.chartMatrixLegendHigh', { defaultValue: '多' })}</span>
         </span>
         <span className="inline-flex items-center gap-1">
-          <span className="font-semibold text-rose-400">紅色合計 0</span> = 仲未出題嘅課題
+          {t('qbank.chartMatrixZeroHint', { defaultValue: '紅色合計 0 = 仲未出題嘅課題' })}
         </span>
       </div>
     </div>

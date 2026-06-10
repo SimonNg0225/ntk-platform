@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   Download,
   LayoutGrid,
@@ -35,6 +36,7 @@ import WeekGrid from './timetable/WeekGrid'
 import WorkloadView from './timetable/WorkloadView'
 import PrintView from './timetable/PrintView'
 import SlotEditor, { type EditorDraft } from './timetable/SlotEditor'
+import './timetable/i18n'
 import {
   CYCLE_LABELS,
   DAY_DEFS,
@@ -94,6 +96,7 @@ const timetableConfigCol = createCollection<TimetableConfig>('timetable_config',
 type ViewId = 'grid' | 'workload' | 'print'
 
 export default function Timetable() {
+  const { t } = useTranslation()
   const slots = useCollection(timetableCol)
   const classes = useCollection(classesCol)
   const metas = useCollection(timetableMetaCol)
@@ -289,10 +292,10 @@ export default function Timetable() {
 
     toast.success(
       targetDays.length > 1
-        ? `已套用到 ${targetDays.length} 日`
+        ? t('tt.appliedMultiple', { defaultValue: `已套用到 ${targetDays.length} 日`, count: targetDays.length })
         : d.slotId
-          ? '已更新課堂'
-          : '已新增課堂',
+          ? t('tt.updated', { defaultValue: '已更新課堂' })
+          : t('tt.added', { defaultValue: '已新增課堂' }),
     )
     setDraft(null)
   }
@@ -300,28 +303,28 @@ export default function Timetable() {
   async function removeDraft() {
     if (!draft?.slotId) return
     const ok = await confirm({
-      title: '刪除課堂？',
-      message: '呢節課堂將會喺時間表移除，呢個動作無法復原。',
-      confirmText: '刪除',
+      title: t('tt.deleteTitle', { defaultValue: '刪除課堂？' }),
+      message: t('tt.deleteMessage', { defaultValue: '呢節課堂將會喺時間表移除，呢個動作無法復原。' }),
+      confirmText: t('tt.deleteConfirm', { defaultValue: '刪除' }),
       tone: 'danger',
     })
     if (!ok) return
     timetableCol.remove(draft.slotId)
     const key = slotKey(draft.day, draft.period)
     if (metaByKey.has(key)) timetableMetaCol.remove(key)
-    toast.success('已刪除課堂')
+    toast.success(t('tt.deleted', { defaultValue: '已刪除課堂' }))
     setDraft(null)
   }
 
   // ── 匯出 ──
   function handleExport() {
     if (slots.length === 0) {
-      toast.error('未有課堂可匯出')
+      toast.error(t('tt.noLessonsToExport', { defaultValue: '未有課堂可匯出' }))
       return
     }
     const csv = buildCsv(visibleSlots, bells, days, classNameById, metaByKey)
     downloadText('時間表.csv', csv, 'text/csv')
-    toast.success('已匯出 CSV')
+    toast.success(t('tt.exportedCsv', { defaultValue: '已匯出 CSV' }))
   }
 
   const editorPeriod = draft ? bellMap.get(draft.period) : undefined
@@ -333,27 +336,27 @@ export default function Timetable() {
         <div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-3">
           <div className="min-w-0">
             <p className="text-[11px] font-medium uppercase tracking-[0.3em] text-accent/70">
-              {cycle ? '六日循環 · 週記網格' : '每週課表'}
+              {cycle ? t('tt.cycleTagline', { defaultValue: '六日循環 · 週記網格' }) : t('tt.weeklyTagline', { defaultValue: '每週課表' })}
             </p>
             <h1 className="mt-1 font-serif text-2xl font-semibold leading-tight tracking-tight text-slate-800 dark:text-slate-100 sm:text-[28px]">
-              時間表
+              {t('tt.title', { defaultValue: '時間表' })}
             </h1>
             <p className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-slate-500 dark:text-slate-400">
-              <span className="tabular-nums">每週 {visibleSlots.length} 節課堂</span>
+              <span className="tabular-nums">{t('tt.lessonCount', { defaultValue: `每週 ${visibleSlots.length} 節課堂`, count: visibleSlots.length })}</span>
               <span aria-hidden="true" className="text-slate-300 dark:text-slate-600">·</span>
-              <span>鐘聲時間 · 撞堂偵測 · 工作量分析</span>
+              <span>{t('tt.featureDesc', { defaultValue: '鐘聲時間 · 撞堂偵測 · 工作量分析' })}</span>
             </p>
           </div>
           <div className="flex items-center gap-1.5">
-            <IconButton label="設定鐘聲時間" onClick={() => setShowSettings(true)}>
+            <IconButton label={t('tt.settingsBells', { defaultValue: '設定鐘聲時間' })} onClick={() => setShowSettings(true)}>
               <Settings2 size={18} />
             </IconButton>
-            <IconButton label="匯出 CSV" onClick={handleExport}>
+            <IconButton label={t('tt.exportCsv', { defaultValue: '匯出 CSV' })} onClick={handleExport}>
               <Download size={18} />
             </IconButton>
             {view === 'print' && (
               <Button size="sm" icon={Printer} onClick={() => window.print()}>
-                列印
+                {t('tt.print', { defaultValue: '列印' })}
               </Button>
             )}
           </div>
@@ -390,15 +393,15 @@ export default function Timetable() {
           </span>
           <div className="min-w-0">
             <p className="text-sm font-semibold text-rose-700 dark:text-rose-300">
-              偵測到 {conflicts.length} 個撞堂
+              {t('tt.conflictsDetected', { defaultValue: `偵測到 ${conflicts.length} 個撞堂`, count: conflicts.length })}
             </p>
             <p className="mt-0.5 text-xs text-rose-600/80 dark:text-rose-300/70">
               {conflicts
                 .slice(0, 3)
                 .map((c) =>
                   c.kind === 'class'
-                    ? `${dayLabel(c.day)} 第 ${c.period} 節：${classNameById.get(c.value) ?? '班別'} 重複`
-                    : `${dayLabel(c.day)} 第 ${c.period} 節：課室 ${c.value} 重複`,
+                    ? t('tt.conflictClass', { defaultValue: `${dayLabel(c.day)} 第 ${c.period} 節：${classNameById.get(c.value) ?? '班別'} 重複`, day: dayLabel(c.day), period: c.period, name: classNameById.get(c.value) ?? '班別' })
+                    : t('tt.conflictRoom', { defaultValue: `${dayLabel(c.day)} 第 ${c.period} 節：課室 ${c.value} 重複`, day: dayLabel(c.day), period: c.period, name: c.value }),
                 )
                 .join('；')}
               {conflicts.length > 3 && ' …'}
@@ -413,9 +416,9 @@ export default function Timetable() {
           value={view}
           onChange={setView}
           options={[
-            { id: 'grid', label: '週課表', icon: LayoutGrid },
-            { id: 'workload', label: '工作量', icon: PieChart },
-            { id: 'print', label: '列印', icon: Printer },
+            { id: 'grid', label: t('tt.viewGrid', { defaultValue: '週課表' }), icon: LayoutGrid },
+            { id: 'workload', label: t('tt.viewWorkload', { defaultValue: '工作量' }), icon: PieChart },
+            { id: 'print', label: t('tt.viewPrint', { defaultValue: '列印' }), icon: Printer },
           ]}
         />
         {view === 'grid' && classes.length > 0 && (
@@ -426,10 +429,10 @@ export default function Timetable() {
               onChange={(e) => setFilterClass(e.target.value)}
               className="w-40"
             >
-              <option value="">全部班別</option>
+              <option value="">{t('tt.allClasses', { defaultValue: '全部班別' })}</option>
               {classes.map((c) => (
                 <option key={c.id} value={c.id}>
-                  聚焦 {c.name}
+                  {t('tt.focusClass', { defaultValue: `聚焦 ${c.name}`, name: c.name })}
                 </option>
               ))}
             </Select>
@@ -464,7 +467,7 @@ export default function Timetable() {
 
       {view === 'print' && (
         <PrintView
-          title="教學時間表"
+          title={t('tt.title', { defaultValue: '時間表' })}
           cycle={cycle}
           bells={bells}
           days={days}
@@ -478,7 +481,7 @@ export default function Timetable() {
       <SlotEditor
         draft={draft}
         classes={classes}
-        periodLabel={`第 ${draft?.period ?? 0} 節`}
+        periodLabel={t('tt.periodLabel', { defaultValue: `第 ${draft?.period ?? 0} 節`, n: draft?.period ?? 0 })}
         timeLabel={
           editorPeriod ? `${editorPeriod.start}–${editorPeriod.end}` : undefined
         }
@@ -497,7 +500,7 @@ export default function Timetable() {
         cycle={cycle}
         onSave={(nextBells, nextDays, nextCycle) => {
           timetableConfigCol.update('config', { bells: nextBells, days: nextDays, cycle: nextCycle })
-          toast.success('已更新時段設定')
+          toast.success(t('tt.settingsSaved', { defaultValue: '已更新時段設定' }))
           setShowSettings(false)
         }}
         onReset={() => {
@@ -507,7 +510,7 @@ export default function Timetable() {
             days: [1, 2, 3, 4, 5, 6],
             cycle,
           })
-          toast.success('已還原預設時段')
+          toast.success(t('tt.settingsReset', { defaultValue: '已還原預設時段' }))
           setShowSettings(false)
         }}
       />
@@ -533,6 +536,7 @@ function TodayPanel({
   lastEndMin: number
   classNameById: Map<string, string>
 }) {
+  const { t } = useTranslation()
   // cycle 模式：todayDay 0 = 今日唔喺校曆（週末/假期/未排）→ 當休息日。
   const isWeekend = cycle ? todayDay < 1 : todayDay === 0
   const upColor = upNext
@@ -560,7 +564,7 @@ function TodayPanel({
                   {cycle ? cycleShort(todayDay) : dayLabel(todayDay).slice(-1)}
                 </span>
                 <span className="mt-0.5 text-[9px] font-medium uppercase tracking-widest text-white/70">
-                  {cycle ? 'Day' : '星期'}
+                  {cycle ? t('tt.dayLabel', { defaultValue: 'Day' }) : t('tt.weekdayLabel', { defaultValue: '星期' })}
                 </span>
               </>
             )}
@@ -568,11 +572,13 @@ function TodayPanel({
           <div className="min-w-0">
             <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-accent/70">
               {isWeekend
-                ? cycle ? '今日唔使返學' : '今日休息'
-                : `今日 · ${cycle ? `Day ${cycleShort(todayDay)}` : dayLabel(todayDay)}`}
+                ? cycle ? t('tt.noSchoolToday', { defaultValue: '今日唔使返學' }) : t('tt.restToday', { defaultValue: '今日休息' })
+                : cycle
+                  ? t('tt.todayWithCycle', { defaultValue: `今日 · Day ${cycleShort(todayDay)}`, letter: cycleShort(todayDay) })
+                  : t('tt.todayWithDay', { defaultValue: `今日 · ${dayLabel(todayDay)}`, day: dayLabel(todayDay) })}
             </p>
             <p className="mt-0.5 font-serif text-xl font-semibold leading-tight text-slate-800 dark:text-slate-100">
-              {isWeekend ? '好好抖一抖 ☕' : `今日有 ${todayCount} 節`}
+              {isWeekend ? t('tt.restMessage', { defaultValue: '好好抖一抖 ☕' }) : t('tt.todayLessons', { defaultValue: `今日有 ${todayCount} 節`, count: todayCount })}
             </p>
           </div>
         </div>
@@ -587,10 +593,10 @@ function TodayPanel({
               <div className="flex items-center gap-1.5">
                 <Badge tone={upNext.status === 'now' ? 'green' : 'accent'} dot>
                   {upNext.status === 'now'
-                    ? '進行中'
+                    ? t('tt.statusNow', { defaultValue: '進行中' })
                     : upNext.status === 'soon'
-                      ? `${upNext.startsInMin} 分鐘後`
-                      : '下一堂'}
+                      ? t('tt.statusSoon', { defaultValue: `${upNext.startsInMin} 分鐘後`, min: upNext.startsInMin })
+                      : t('tt.statusNext', { defaultValue: '下一堂' })}
                 </Badge>
                 <span className="text-xs tabular-nums text-slate-400">
                   {upNext.bell.start}–{upNext.bell.end}
@@ -600,7 +606,7 @@ function TodayPanel({
                 {upNext.slot.subject ||
                   (upNext.slot.classId
                     ? classNameById.get(upNext.slot.classId)
-                    : '課堂')}
+                    : t('tt.fallbackLesson', { defaultValue: '課堂' }))}
                 {upNext.slot.classId && upNext.slot.subject && (
                   <span className="ml-1.5 text-xs font-normal text-slate-400">
                     {classNameById.get(upNext.slot.classId)}
@@ -619,7 +625,7 @@ function TodayPanel({
           !isWeekend && (
             <p className="flex items-center gap-1.5 rounded-2xl bg-white/50 px-3.5 py-2.5 text-sm text-slate-500 dark:bg-slate-800/40 dark:text-slate-400">
               <Sparkles size={14} className="text-accent/60" />
-              {nowMin >= lastEndMin ? '今日課堂已完，辛苦晒！' : '今日未有更多課堂'}
+              {nowMin >= lastEndMin ? t('tt.doneForDay', { defaultValue: '今日課堂已完，辛苦晒！' }) : t('tt.noMoreLessons', { defaultValue: '今日未有更多課堂' })}
             </p>
           )
         )}
@@ -640,6 +646,7 @@ function CycleRibbon({
   days: number[]
   className?: string
 }) {
+  const { t } = useTranslation()
   const visible = new Set(days)
   return (
     <div
@@ -648,7 +655,7 @@ function CycleRibbon({
         className,
       )}
       role="list"
-      aria-label="六日循環"
+      aria-label={t('tt.cycleRibbonLabel', { defaultValue: '六日循環' })}
     >
       {CYCLE_LABELS.map((letter, i) => {
         const day = i + 1
@@ -680,7 +687,7 @@ function CycleRibbon({
               {letter}
             </span>
             <span className="hidden sm:inline">
-              {isToday ? '今日' : `Day ${letter}`}
+              {isToday ? t('tt.today', { defaultValue: '今日' }) : `Day ${letter}`}
             </span>
           </div>
         )
@@ -707,6 +714,7 @@ function SettingsModal({
   onSave: (bells: BellRow[], days: number[], cycle: boolean) => void
   onReset: () => void
 }) {
+  const { t } = useTranslation()
   const [rows, setRows] = useState<BellRow[]>(bells)
   const [selDays, setSelDays] = useState<number[]>(days)
   const [cycleOn, setCycleOn] = useState<boolean>(cycle)
@@ -741,19 +749,19 @@ function SettingsModal({
     <Modal
       open={open}
       onClose={onClose}
-      title="時段設定"
+      title={t('tt.settingsTitle', { defaultValue: '時段設定' })}
       size="lg"
       footer={
         <div className="flex w-full items-center justify-between gap-2">
           <Button variant="ghost" size="sm" icon={RotateCcw} onClick={onReset}>
-            還原預設
+            {t('tt.resetDefaults', { defaultValue: '還原預設' })}
           </Button>
           <div className="flex gap-2">
             <Button variant="secondary" onClick={onClose}>
-              取消
+              {t('tt.cancel', { defaultValue: '取消' })}
             </Button>
             <Button onClick={() => onSave(rows, selDays.length ? selDays : [1], cycleOn)}>
-              儲存
+              {t('tt.save', { defaultValue: '儲存' })}
             </Button>
           </div>
         </div>
@@ -769,12 +777,12 @@ function SettingsModal({
         >
           <span className="min-w-0">
             <span className="block text-sm font-medium text-slate-700 dark:text-slate-200">
-              六日循環（Day A–F）
+              {t('tt.cycleToggleLabel', { defaultValue: '六日循環（Day A–F）' })}
             </span>
             <span className="mt-0.5 block text-xs text-slate-500 dark:text-slate-400">
               {cycleOn
-                ? '欄頭用 Day A–F，「今日」跟校曆循環日'
-                : '欄頭用星期一～六（固定每週）'}
+                ? t('tt.cycleOnDesc', { defaultValue: '欄頭用 Day A–F，「今日」跟校曆循環日' })
+                : t('tt.cycleOffDesc', { defaultValue: '欄頭用星期一～六（固定每週）' })}
             </span>
           </span>
           <span
@@ -795,8 +803,8 @@ function SettingsModal({
 
         {/* 顯示日子（cycle 模式 = Day A–F；否則星期） */}
         <Field
-          label={cycleOn ? '顯示循環日' : '顯示星期'}
-          hint={cycleOn ? '揀邊幾個 cycle day 出現喺課表（通常 A–F 全部）' : undefined}
+          label={cycleOn ? t('tt.showCycleDays', { defaultValue: '顯示循環日' }) : t('tt.showWeekdays', { defaultValue: '顯示星期' })}
+          hint={cycleOn ? t('tt.cycleDaysHint', { defaultValue: '揀邊幾個 cycle day 出現喺課表（通常 A–F 全部）' }) : undefined}
         >
           <div className="flex flex-wrap gap-1.5">
             {DAY_DEFS.map((d) => {
@@ -824,10 +832,10 @@ function SettingsModal({
         <div>
           <div className="mb-2 flex items-center justify-between">
             <span className="text-xs font-medium text-slate-600 dark:text-slate-300">
-              鐘聲時間（每節 / 小息 / 午膳）
+              {t('tt.bellsTitle', { defaultValue: '鐘聲時間（每節 / 小息 / 午膳）' })}
             </span>
             <span className="text-[11px] tabular-nums text-slate-400">
-              {lessonCount} 節教學 · {fmtDuration(totalMin)}
+              {t('tt.bellsSummary', { defaultValue: `${lessonCount} 節教學 · ${fmtDuration(totalMin)}`, count: lessonCount, duration: fmtDuration(totalMin) })}
             </span>
           </div>
           <div className="max-h-72 space-y-1.5 overflow-y-auto pr-1">
@@ -849,7 +857,7 @@ function SettingsModal({
                       : 'text-slate-400',
                   )}
                 >
-                  {r.kind === 'lesson' ? `第 ${r.period} 節` : r.label}
+                  {r.kind === 'lesson' ? t('tt.bellsLessonRow', { defaultValue: `第 ${r.period} 節`, n: r.period }) : r.label}
                 </span>
                 <div className="flex flex-1 min-w-0 items-center gap-1">
                   <Input
@@ -867,14 +875,14 @@ function SettingsModal({
                   />
                 </div>
                 <span className="ml-auto shrink-0 text-[11px] tabular-nums text-slate-400">
-                  {Math.max(0, minutesOf(r.end) - minutesOf(r.start))} 分
+                  {t('tt.bellsMinutes', { defaultValue: `${Math.max(0, minutesOf(r.end) - minutesOf(r.start))} 分`, min: Math.max(0, minutesOf(r.end) - minutesOf(r.start)) })}
                 </span>
               </div>
             ))}
           </div>
           <p className="mt-2 flex items-center gap-1 text-[11px] text-slate-400">
             <ChevronRight size={12} />
-            改時間即時反映喺週課表同列印視圖。
+            {t('tt.bellsFootnote', { defaultValue: '改時間即時反映喺週課表同列印視圖。' })}
           </p>
         </div>
       </div>

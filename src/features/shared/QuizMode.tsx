@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useCollection } from '../../lib/store'
 import { quizAttemptsCol } from '../../data/collections'
 import { ClipboardList, Flame, History, Notebook, Swords, TrendingUp } from 'lucide-react'
@@ -9,6 +10,7 @@ import { ResultView } from './quiz/ResultView'
 import { StatsView } from './quiz/StatsView'
 import { MistakeBank } from './quiz/MistakeBank'
 import { DEFAULT_SETTINGS, mistakesCol, pct, type QuizSettings } from './quiz/util'
+import './quizMode/i18n'
 
 // ============================================================
 //  自我測驗（QuizMode）— Quizlet / Kahoot 級
@@ -31,6 +33,7 @@ type View =
   | { name: 'result'; attemptId: string; settings: QuizSettings }
 
 export default function QuizMode() {
+  const { t } = useTranslation()
   const [tab, setTab] = useState<Tab>('quiz')
   const [view, setView] = useState<View>({ name: 'setup' })
 
@@ -84,25 +87,25 @@ export default function QuizMode() {
         <div className="min-w-0">
           <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.3em] text-accent/70 dark:text-accent/80">
             <Swords size={13} className="shrink-0" />
-            競技場 · Quiz Arena
+            {t('quiz.kicker', { defaultValue: '競技場 · Quiz Arena' })}
           </p>
           <h1 className="mt-1 font-serif text-[28px] font-semibold leading-none tracking-tight text-slate-800 dark:text-slate-100 sm:text-[32px]">
-            自我測驗
+            {t('quiz.title', { defaultValue: '自我測驗' })}
           </h1>
           <p className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-slate-500 dark:text-slate-400">
             <span className="inline-flex items-center gap-1">
               <ClipboardList size={12} className="shrink-0 opacity-70" />
-              揀個賽制即刻開戰，自動批改、即睇掌握度
+              {t('quiz.subtitle', { defaultValue: '揀個賽制即刻開戰，自動批改、即睇掌握度' })}
             </span>
             {attempts.length > 0 && (
               <>
                 <span aria-hidden="true" className="text-slate-300 dark:text-slate-600">·</span>
-                <span className="tabular-nums">已戰 {attempts.length} 次</span>
+                <span className="tabular-nums">{t('quiz.battleCount', { count: attempts.length, defaultValue: '已戰 {{count}} 次' })}</span>
                 {bestScore > 0 && (
                   <>
                     <span aria-hidden="true" className="text-slate-300 dark:text-slate-600">·</span>
                     <span className="inline-flex items-center gap-1 font-medium text-amber-600 dark:text-amber-400">
-                      <Flame size={12} className="shrink-0" /> 最佳 {bestScore}%
+                      <Flame size={12} className="shrink-0" /> {t('quiz.bestScore', { score: bestScore, defaultValue: '最佳 {{score}}%' })}
                     </span>
                   </>
                 )}
@@ -114,9 +117,9 @@ export default function QuizMode() {
 
       <Tabs<Tab>
         tabs={[
-          { id: 'quiz', label: `測驗${attempts.length ? ` · ${attempts.length}` : ''}` },
-          { id: 'stats', label: '統計' },
-          { id: 'mistakes', label: `錯題本${activeMistakes ? ` · ${activeMistakes}` : ''}` },
+          { id: 'quiz', label: `${t('quiz.tabQuiz', { defaultValue: '測驗' })}${attempts.length ? ` · ${attempts.length}` : ''}` },
+          { id: 'stats', label: t('quiz.tabStats', { defaultValue: '統計' }) },
+          { id: 'mistakes', label: `${t('quiz.tabMistakes', { defaultValue: '錯題本' })}${activeMistakes ? ` · ${activeMistakes}` : ''}` },
         ]}
         active={tab}
         onChange={setTab}

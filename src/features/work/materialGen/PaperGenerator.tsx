@@ -10,6 +10,7 @@ import {
   Sparkles,
   Wand2,
 } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { useCollection } from '../../../lib/store'
 import { useToast } from '../../../context/ToastContext'
 import { useAuth } from '../../../context/AuthContext'
@@ -103,6 +104,7 @@ interface BuildOutcome {
 }
 
 export function PaperGenerator({ topics, onClose, onSaved }: PaperGeneratorProps) {
+  const { t } = useTranslation()
   const toast = useToast()
   const { user } = useAuth()
   const papers = useCollection(papersCol)
@@ -125,9 +127,9 @@ export function PaperGenerator({ topics, onClose, onSaved }: PaperGeneratorProps
   const [outcome, setOutcome] = useState<BuildOutcome | null>(null)
 
   const topicName = useMemo(() => {
-    const map = new Map(topics.map((t) => [t.id, t.topic]))
-    return (id: string) => map.get(id) ?? '未分類'
-  }, [topics])
+    const map = new Map(topics.map((tp) => [tp.id, tp.topic]))
+    return (id: string) => map.get(id) ?? t('mat.uncategorised', { defaultValue: '未分類' })
+  }, [topics, t])
 
   // 預覽題目（按 outcome.questionIds 由最新題庫解析，保留次序）
   const previewQuestions = useMemo<Question[]>(() => {
@@ -198,15 +200,15 @@ export function PaperGenerator({ topics, onClose, onSaved }: PaperGeneratorProps
   const build = async () => {
     if (busy) return
     if (plan.length === 0) {
-      toast.error('請最少為一個題型設定題數')
+      toast.error(t('mat.toastNoPlan', { defaultValue: '請最少為一個題型設定題數' }))
       return
     }
     // 若要生成但未接 AI / 未登入 → 友善阻擋（純抽題唔會行到呢度）
     if (needsAI && (!isAIConfigured || !user)) {
       toast.error(
         !isAIConfigured
-          ? '題庫現有題目唔夠，需要 AI 補足，但 AI 未啟用（見 docs/SETUP.md）。可減少題數或先補題。'
-          : '題庫現有題目唔夠，需要 AI 補足，請先登入。',
+          ? t('mat.toastAiNeededNoAI', { defaultValue: '題庫現有題目唔夠，需要 AI 補足，但 AI 未啟用（見 docs/SETUP.md）。可減少題數或先補題。' })
+          : t('mat.toastAiNeededNoUser', { defaultValue: '題庫現有題目唔夠，需要 AI 補足，請先登入。' }),
       )
       return
     }
@@ -265,7 +267,7 @@ export function PaperGenerator({ topics, onClose, onSaved }: PaperGeneratorProps
             }
           } catch (e) {
             toast.error(
-              `${TYPE_LABEL[type]}生成失敗：${(e as Error).message || '請再試一次'}`,
+              t('mat.toastGenFailed', { defaultValue: `${TYPE_LABEL[type]}生成失敗：${(e as Error).message || '請再試一次'}`, type: TYPE_LABEL[type], msg: (e as Error).message || t('mat.tryAgain', { defaultValue: '請再試一次' }) }),
             )
           }
         }
@@ -273,7 +275,7 @@ export function PaperGenerator({ topics, onClose, onSaved }: PaperGeneratorProps
       }
 
       if (pickedIds.length === 0) {
-        toast.error('組唔到題目，請調整範圍 / 題數，或先補題。')
+        toast.error(t('mat.toastNoQs', { defaultValue: '組唔到題目，請調整範圍 / 題數，或先補題。' }))
         return
       }
 
@@ -282,15 +284,15 @@ export function PaperGenerator({ topics, onClose, onSaved }: PaperGeneratorProps
 
       if (shortfall > 0) {
         toast.error(
-          `已組 ${pickedIds.length} 題（抽 ${pulled} · 生成 ${generated}），仍欠 ${shortfall} 題。`,
+          t('mat.toastShortfall', { defaultValue: `已組 ${pickedIds.length} 題（抽 ${pulled} · 生成 ${generated}），仍欠 ${shortfall} 題。`, total: pickedIds.length, pulled, generated, shortfall }),
         )
       } else {
         toast.success(
-          `已組成 ${pickedIds.length} 題（抽 ${pulled} · 生成 ${generated}）`,
+          t('mat.toastAssembled', { defaultValue: `已組成 ${pickedIds.length} 題（抽 ${pulled} · 生成 ${generated}）`, total: pickedIds.length, pulled, generated }),
         )
       }
     } catch (e) {
-      toast.error((e as Error).message || '組卷失敗，請再試一次。')
+      toast.error((e as Error).message || t('mat.toastBuildFailed', { defaultValue: '組卷失敗，請再試一次。' }))
     } finally {
       setBusy(false)
     }
@@ -298,7 +300,7 @@ export function PaperGenerator({ topics, onClose, onSaved }: PaperGeneratorProps
 
   const savePaper = () => {
     if (!outcome || outcome.questionIds.length === 0) {
-      toast.error('未有題目，組卷後先可儲存')
+      toast.error(t('mat.toastNoSave', { defaultValue: '未有題目，組卷後先可儲存' }))
       return
     }
     const paper = papersCol.add({
@@ -308,13 +310,13 @@ export function PaperGenerator({ topics, onClose, onSaved }: PaperGeneratorProps
       questionIds: outcome.questionIds,
       createdAt: new Date().toISOString(), // runtime ISO 時間，永不留空
     })
-    toast.success('已儲存試卷（可喺組卷工作室載入）')
+    toast.success(t('mat.toastSaved', { defaultValue: '已儲存試卷（可喺組卷工作室載入）' }))
     onSaved?.({ title: paper.title, count: outcome.questionIds.length })
   }
 
   const print = (withAnswers: boolean) => {
     if (previewQuestions.length === 0) {
-      toast.error('未有題目可列印')
+      toast.error(t('mat.toastNoPrint', { defaultValue: '未有題目可列印' }))
       return
     }
     const meta: PaperMeta = {
@@ -325,7 +327,7 @@ export function PaperGenerator({ topics, onClose, onSaved }: PaperGeneratorProps
     }
     const html = buildPrintHtml(meta, previewQuestions, topicName, withAnswers)
     const ok = openPrintWindow(html)
-    if (!ok) toast.error('瀏覽器擋咗彈出視窗，請允許後再試。')
+    if (!ok) toast.error(t('mat.toastPopupBlocked', { defaultValue: '瀏覽器擋咗彈出視窗，請允許後再試。' }))
   }
 
   const reset = () => {
@@ -335,7 +337,7 @@ export function PaperGenerator({ topics, onClose, onSaved }: PaperGeneratorProps
 
   // ───────── render ─────────
   return (
-    <Modal open onClose={onClose} title="生成試卷" size="lg">
+    <Modal open onClose={onClose} title={t('mat.paperModalTitle', { defaultValue: '生成試卷' })} size="lg">
       {step === 'setup' ? (
         <SetupView
           topics={topics}
@@ -412,6 +414,7 @@ function SetupView(props: {
   onBuild: () => void
   onClose: () => void
 }) {
+  const { t } = useTranslation()
   const {
     topics,
     title,
@@ -444,38 +447,38 @@ function SetupView(props: {
           <FileText size={16} />
         </span>
         <p className="text-xs leading-relaxed text-slate-600 dark:text-slate-300">
-          設定課題範圍同各題型題數，系統會
+          {t('mat.paperSetupHint', { defaultValue: '設定課題範圍同各題型題數，系統會' })}
           <span className="font-semibold text-accent-strong dark:text-accent">
-            先由題庫抽現有題
+            {t('mat.paperSetupHintStrong', { defaultValue: '先由題庫抽現有題' })}
           </span>
-          ，唔夠先用 AI 生成補足（生成嘅題會一齊入庫）。組好可預覽同列印。
+          {t('mat.paperSetupHintEnd', { defaultValue: '，唔夠先用 AI 生成補足（生成嘅題會一齊入庫）。組好可預覽同列印。' })}
         </p>
       </div>
 
       {/* 試卷基本 */}
       <section className="space-y-3 rounded-2xl border border-slate-200/80 bg-slate-50/60 p-4 dark:border-slate-700/60 dark:bg-slate-900/40">
-        <Field label="試卷名稱">
+        <Field label={t('mat.paperFieldTitle', { defaultValue: '試卷名稱' })}>
           <Input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="例如：BAFS 第一次測驗"
+            placeholder={t('mat.paperTitlePlaceholder', { defaultValue: '例如：BAFS 第一次測驗' })}
             disabled={busy}
           />
         </Field>
         <div className="grid gap-3 sm:grid-cols-2">
-          <Field label="班別（可留空）">
+          <Field label={t('mat.paperFieldClass', { defaultValue: '班別（可留空）' })}>
             <Input
               value={className}
               onChange={(e) => setClassName(e.target.value)}
-              placeholder="例如 5A"
+              placeholder={t('mat.paperClassPlaceholder', { defaultValue: '例如 5A' })}
               disabled={busy}
             />
           </Field>
-          <Field label="時限（分鐘，可留空）">
+          <Field label={t('mat.paperFieldDuration', { defaultValue: '時限（分鐘，可留空）' })}>
             <Input
               value={durationMin}
               onChange={(e) => setDurationMin(e.target.value.replace(/\D/g, ''))}
-              placeholder="例如 60"
+              placeholder={t('mat.paperDurationPlaceholder', { defaultValue: '例如 60' })}
               inputMode="numeric"
               disabled={busy}
             />
@@ -487,10 +490,10 @@ function SetupView(props: {
       <section className="space-y-2.5">
         <div className="flex items-center justify-between">
           <span className="text-xs font-medium text-slate-600 dark:text-slate-300">
-            課題範圍
+            {t('mat.paperScopeLabel', { defaultValue: '課題範圍' })}
           </span>
           <span className="text-xs text-slate-400 dark:text-slate-500">
-            {scope.length === 0 ? '全部課題' : `已揀 ${scope.length} 個`}
+            {scope.length === 0 ? t('mat.paperScopeAll', { defaultValue: '全部課題' }) : `${t('mat.paperScopeSelectedPre', { defaultValue: '已揀' })} ${scope.length} ${t('mat.paperScopeSelectedPost', { defaultValue: '個' })}`}
           </span>
         </div>
         <div className="flex max-h-44 flex-wrap gap-1.5 overflow-y-auto rounded-2xl border border-slate-200/80 bg-white p-3 dark:border-slate-700/60 dark:bg-slate-800/40">
@@ -515,7 +518,7 @@ function SetupView(props: {
           })}
         </div>
         <p className="text-xs text-slate-400 dark:text-slate-500">
-          唔揀 = 全部課題。
+          {t('mat.paperScopeHint', { defaultValue: '唔揀 = 全部課題。' })}
         </p>
       </section>
 
@@ -523,15 +526,15 @@ function SetupView(props: {
       <section className="space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <span className="text-xs font-medium text-slate-600 dark:text-slate-300">
-            難度
+            {t('mat.paperDiffLabel', { defaultValue: '難度' })}
           </span>
           <SegmentedControl<'overall' | 'perType'>
             size="sm"
             value={diffMode}
             onChange={setDiffMode}
             options={[
-              { id: 'overall', label: '整體' },
-              { id: 'perType', label: '逐型' },
+              { id: 'overall', label: t('mat.paperDiffOverall', { defaultValue: '整體' }) },
+              { id: 'perType', label: t('mat.paperDiffPerType', { defaultValue: '逐型' }) },
             ]}
           />
         </div>
@@ -547,7 +550,7 @@ function SetupView(props: {
       {/* 各題型題數（＋逐型難度） */}
       <section className="space-y-2.5">
         <span className="text-xs font-medium text-slate-600 dark:text-slate-300">
-          各題型題數
+          {t('mat.paperCountsLabel', { defaultValue: '各題型題數' })}
         </span>
         <div className="space-y-2.5">
           {TYPE_ORDER.map((type) => (
@@ -566,10 +569,10 @@ function SetupView(props: {
                   list="paper-count-presets"
                   disabled={busy}
                   className="w-20 text-center"
-                  aria-label={`${TYPE_LABEL[type]}題數`}
+                  aria-label={`${TYPE_LABEL[type]}${t('mat.paperCountsLabel', { defaultValue: '各題型題數' })}`}
                 />
                 <span className="text-xs text-slate-400 dark:text-slate-500">
-                  題
+                  {t('mat.paperCountUnit', { defaultValue: '題' })}
                 </span>
               </div>
               {diffMode === 'perType' && Number(counts[type] || 0) > 0 ? (
@@ -594,16 +597,16 @@ function SetupView(props: {
           ))}
         </datalist>
         <p className="text-xs text-slate-400 dark:text-slate-500">
-          合共 <span className="nums font-semibold">{totalNeeded}</span> 題
+          {t('mat.paperCountTotalPre', { defaultValue: '合共' })} <span className="nums font-semibold">{totalNeeded}</span> {t('mat.paperCountUnit', { defaultValue: '題' })}
         </p>
       </section>
 
       {/* 補充指示 */}
-      <Field label="補充指示（生成補足時用，可留空）">
+      <Field label={t('mat.paperExtraLabel', { defaultValue: '補充指示（生成補足時用，可留空）' })}>
         <Textarea
           value={extra}
           onChange={(e) => setExtra(e.target.value)}
-          placeholder="例如：題目貼香港中小企情境、計算題寫清步驟…"
+          placeholder={t('mat.paperExtraPlaceholder', { defaultValue: '例如：題目貼香港中小企情境、計算題寫清步驟…' })}
           rows={2}
           disabled={busy}
         />
@@ -614,18 +617,18 @@ function SetupView(props: {
         aiReady ? (
           <p className="flex items-start gap-2 rounded-xl border border-accent/20 bg-accent-soft/40 px-3 py-2 text-xs text-slate-600 dark:border-accent/25 dark:bg-accent/10 dark:text-slate-300">
             <Sparkles size={14} className="mt-0.5 shrink-0 text-accent" />
-            題庫現有題目唔夠，組卷時會用 AI 自動生成補足並一齊入庫。
+            {t('mat.paperAiWillFill', { defaultValue: '題庫現有題目唔夠，組卷時會用 AI 自動生成補足並一齊入庫。' })}
           </p>
         ) : (
           <p className="flex items-start gap-2 rounded-xl border border-amber-300/50 bg-amber-50 px-3 py-2 text-xs text-amber-700 dark:border-amber-500/25 dark:bg-amber-500/10 dark:text-amber-300">
             <Lock size={14} className="mt-0.5 shrink-0" />
-            題庫現有題目唔夠，需要 AI 補足，但 AI 未啟用 / 未登入。可減少題數，或先到題庫補題後再組卷。
+            {t('mat.paperAiLocked', { defaultValue: '題庫現有題目唔夠，需要 AI 補足，但 AI 未啟用 / 未登入。可減少題數，或先到題庫補題後再組卷。' })}
           </p>
         )
       ) : totalNeeded > 0 ? (
         <p className="flex items-start gap-2 rounded-xl border border-emerald-300/50 bg-emerald-50 px-3 py-2 text-xs text-emerald-700 dark:border-emerald-500/25 dark:bg-emerald-500/10 dark:text-emerald-300">
           <CheckCircle2 size={14} className="mt-0.5 shrink-0" />
-          題庫現有題目已足夠，直接抽題組卷（唔需要 AI）。
+          {t('mat.paperBankSufficient', { defaultValue: '題庫現有題目已足夠，直接抽題組卷（唔需要 AI）。' })}
         </p>
       ) : null}
 
@@ -636,7 +639,7 @@ function SetupView(props: {
         >
           <p className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
             <Wand2 size={15} className="animate-pulse text-accent" />
-            組卷中（抽題 / 生成補足），請等一等…
+            {t('mat.paperBusyMsg', { defaultValue: '組卷中（抽題 / 生成補足），請等一等…' })}
           </p>
           <div className="h-2.5 w-full animate-pulse rounded-full bg-slate-200 dark:bg-slate-700" />
           <div className="h-2.5 w-3/5 animate-pulse rounded-full bg-slate-200 dark:bg-slate-700" />
@@ -645,7 +648,7 @@ function SetupView(props: {
 
       <div className="flex justify-end gap-2 border-t border-slate-100 pt-4 dark:border-slate-700/60">
         <Button variant="secondary" onClick={props.onClose} disabled={busy}>
-          取消
+          {t('mat.paperCancelBtn', { defaultValue: '取消' })}
         </Button>
         <Button
           icon={Wand2}
@@ -653,7 +656,7 @@ function SetupView(props: {
           onClick={props.onBuild}
           disabled={busy || totalNeeded === 0}
         >
-          {busy ? '組卷中…' : '組卷'}
+          {busy ? t('mat.paperBuildBtnBusy', { defaultValue: '組卷中…' }) : t('mat.paperBuildBtn', { defaultValue: '組卷' })}
         </Button>
       </div>
     </div>
@@ -686,17 +689,18 @@ function PreviewView({
   onSave: () => void
   onPrint: (withAnswers: boolean) => void
 }) {
+  const { t } = useTranslation()
   if (!outcome || questions.length === 0) {
     return (
       <div className="space-y-4">
         <EmptyState
           icon={FileText}
-          title="未有組好嘅題目"
-          hint="返回設定，揀課題範圍同題數再組卷。"
+          title={t('mat.paperEmptyTitle', { defaultValue: '未有組好嘅題目' })}
+          hint={t('mat.paperEmptyHint', { defaultValue: '返回設定，揀課題範圍同題數再組卷。' })}
         />
         <div className="flex justify-end">
           <Button variant="secondary" icon={ArrowLeft} onClick={onBack}>
-            返回設定
+            {t('mat.paperBackBtn', { defaultValue: '返回設定' })}
           </Button>
         </div>
       </div>
@@ -709,30 +713,30 @@ function PreviewView({
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex flex-wrap items-center gap-1.5">
           <Badge tone="accent">
-            共 <span className="nums">{questions.length}</span> 題
+            {t('mat.paperPreviewTotalPre', { defaultValue: '共' })} <span className="nums">{questions.length}</span> {t('mat.paperCountUnit', { defaultValue: '題' })}
           </Badge>
           <Badge tone="slate">
-            總分 <span className="nums">{totalMarks}</span> 分
+            {t('mat.paperPreviewMarksPre', { defaultValue: '總分' })} <span className="nums">{totalMarks}</span> {t('mat.paperPreviewMarksPost', { defaultValue: '分' })}
           </Badge>
           <span className="text-xs text-slate-400 dark:text-slate-500">
-            抽題 <span className="nums">{outcome.pulled}</span> · 生成{' '}
+            {t('mat.paperPreviewPulledPre', { defaultValue: '抽題' })} <span className="nums">{outcome.pulled}</span> · {t('mat.paperPreviewGeneratedPre', { defaultValue: '生成' })}{' '}
             <span className="nums">{outcome.generated}</span>
             {outcome.shortfall > 0 ? (
               <>
                 {' '}
-                · 仍欠 <span className="nums">{outcome.shortfall}</span>
+                · {t('mat.paperPreviewShortfallPre', { defaultValue: '仍欠' })} <span className="nums">{outcome.shortfall}</span>
               </>
             ) : null}
           </span>
         </div>
         <span className="text-xs text-slate-400 dark:text-slate-500">
-          已儲存 <span className="nums">{savedCount}</span> 份
+          {t('mat.paperPreviewSavedPre', { defaultValue: '已儲存' })} <span className="nums">{savedCount}</span> {t('mat.paperPreviewSavedPost', { defaultValue: '份' })}
         </span>
       </div>
 
       {outcome.shortfall > 0 && (
         <p className="rounded-xl border border-amber-300/50 bg-amber-50 px-3 py-2 text-xs text-amber-700 dark:border-amber-500/25 dark:bg-amber-500/10 dark:text-amber-300">
-          題庫加生成仍欠 {outcome.shortfall} 題（題池不足或部分生成失敗）。可「再組卷」或返回減少題數。
+          {t('mat.paperShortfallWarningPre', { defaultValue: '題庫加生成仍欠' })} {outcome.shortfall} {t('mat.paperShortfallWarningPost', { defaultValue: '題（題池不足或部分生成失敗）。可「再組卷」或返回減少題數。' })}
         </p>
       )}
 
@@ -749,7 +753,7 @@ function PreviewView({
                   {q.stem}
                   {q.marks ? (
                     <span className="ml-1.5 text-xs text-slate-400 dark:text-slate-500">
-                      （{q.marks} 分）
+                      （{q.marks} {t('mat.paperPreviewMarksPost', { defaultValue: '分' })}）
                     </span>
                   ) : null}
                 </p>
@@ -785,7 +789,7 @@ function PreviewView({
       {/* 動作 */}
       <div className="flex flex-wrap justify-end gap-2 border-t border-slate-100 pt-4 dark:border-slate-700/60">
         <Button variant="ghost" icon={ArrowLeft} onClick={onBack} disabled={busy}>
-          返回設定
+          {t('mat.paperBackBtn', { defaultValue: '返回設定' })}
         </Button>
         <Button
           variant="secondary"
@@ -794,16 +798,16 @@ function PreviewView({
           onClick={onRebuild}
           disabled={busy}
         >
-          {busy ? '組卷中…' : '再組卷'}
+          {busy ? t('mat.paperRebuildBtnBusy', { defaultValue: '組卷中…' }) : t('mat.paperRebuildBtn', { defaultValue: '再組卷' })}
         </Button>
         <Button variant="secondary" icon={Printer} onClick={() => onPrint(false)} disabled={busy}>
-          列印（學生）
+          {t('mat.paperPrintStudent', { defaultValue: '列印（學生）' })}
         </Button>
         <Button variant="secondary" icon={Printer} onClick={() => onPrint(true)} disabled={busy}>
-          列印（含答案）
+          {t('mat.paperPrintAnswers', { defaultValue: '列印（含答案）' })}
         </Button>
         <Button icon={Save} onClick={onSave} disabled={busy}>
-          儲存試卷
+          {t('mat.paperSaveBtn', { defaultValue: '儲存試卷' })}
         </Button>
       </div>
     </div>

@@ -1,4 +1,6 @@
 import { useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import './meetingNotes/i18n'
 import { useCollection } from '../../lib/store'
 import { meetingNotesCol } from '../../data/collections'
 import {
@@ -100,28 +102,48 @@ type View = 'notes' | 'actions' | 'stats'
 type SortKey = 'date_desc' | 'date_asc' | 'title' | 'updated' | 'actions'
 type ActionFilter = 'open' | 'overdue' | 'soon' | 'done' | 'all'
 
-const SORT_LABEL: Record<SortKey, string> = {
-  date_desc: '日期（新→舊）',
-  date_asc: '日期（舊→新）',
-  title: '標題',
-  updated: '最近更新',
-  actions: '未完成行動',
+function useSortLabels() {
+  const { t } = useTranslation()
+  const labels: Record<SortKey, string> = {
+    date_desc: t('meet.sort_date_desc', { defaultValue: '日期（新→舊）' }),
+    date_asc: t('meet.sort_date_asc', { defaultValue: '日期（舊→新）' }),
+    title: t('meet.sort_title', { defaultValue: '標題' }),
+    updated: t('meet.sort_updated', { defaultValue: '最近更新' }),
+    actions: t('meet.sort_actions', { defaultValue: '未完成行動' }),
+  }
+  return labels
 }
 
-function longDateLabel(key: string): string {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function longDateLabel(key: string, t: (k: string, opts: any) => any): string {
   if (!key) return ''
   const d = fromKey(key)
-  const w = ['日', '一', '二', '三', '四', '五', '六'][d.getDay()]
-  return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日 · 週${w}`
+  const weekdays = [
+    t('meet.weekday_sun', { defaultValue: '日' }),
+    t('meet.weekday_mon', { defaultValue: '一' }),
+    t('meet.weekday_tue', { defaultValue: '二' }),
+    t('meet.weekday_wed', { defaultValue: '三' }),
+    t('meet.weekday_thu', { defaultValue: '四' }),
+    t('meet.weekday_fri', { defaultValue: '五' }),
+    t('meet.weekday_sat', { defaultValue: '六' }),
+  ]
+  const w = weekdays[d.getDay()]
+  return t('meet.long_date_format', {
+    defaultValue: `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日 · 週${w}`,
+    year: d.getFullYear(),
+    month: d.getMonth() + 1,
+    day: d.getDate(),
+    weekday: w,
+  })
 }
 
 function dueBadgeTone(due: string | undefined, done: boolean) {
   if (done || !due) return null
   const today = todayKey()
   const soon = keyOf(new Date(Date.now() + 7 * 864e5))
-  if (due < today) return { tone: 'rose' as const, label: '逾期' }
-  if (due <= soon) return { tone: 'amber' as const, label: '快到期' }
-  return { tone: 'slate' as const, label: '' }
+  if (due < today) return { tone: 'rose' as const, labelKey: 'meet.due_overdue' as const, labelDefault: '逾期' }
+  if (due <= soon) return { tone: 'amber' as const, labelKey: 'meet.due_soon' as const, labelDefault: '快到期' }
+  return { tone: 'slate' as const, labelKey: '' as const, labelDefault: '' }
 }
 
 // 筆記卡左側類型色脊（對應 MEETING_TYPE_META 嘅 BadgeTone）
@@ -242,6 +264,8 @@ function TallyCell({
 }
 
 export default function MeetingNotes() {
+  const { t } = useTranslation()
+  const SORT_LABEL = useSortLabels()
   const notes = useCollection(meetingNotesCol)
   const metas = useCollection(noteMetaCol)
   const templates = useCollection(noteTemplatesCol)
@@ -416,14 +440,14 @@ export default function MeetingNotes() {
     if (editorMode === 'edit' && editingId) {
       meetingNotesCol.update(editingId, notePayload)
       upsertMeta(editingId, metaPatch)
-      toast.success('已儲存筆記')
+      toast.success(t('meet.toast_saved', { defaultValue: '已儲存筆記' }))
     } else {
       const created = meetingNotesCol.add({
         ...notePayload,
         createdAt: new Date().toISOString(),
       })
       upsertMeta(created.id, { ...metaPatch, pinned: false })
-      toast.success('已新增筆記')
+      toast.success(t('meet.toast_added', { defaultValue: '已新增筆記' }))
     }
     setEditorOpen(false)
     setEditingId(null)
@@ -439,7 +463,7 @@ export default function MeetingNotes() {
     const m = mergedById.get(id)
     if (!m) return
     const created = meetingNotesCol.add({
-      title: `${m.note.title}（副本）`,
+      title: t('meet.duplicate_title_suffix', { defaultValue: `${m.note.title}（副本）`, title: m.note.title }),
       date: todayKey(),
       content: m.note.content,
       tags: m.note.tags,
@@ -458,16 +482,16 @@ export default function MeetingNotes() {
       })),
       pinned: false,
     })
-    toast.success('已複製筆記')
+    toast.success(t('meet.toast_copied_note', { defaultValue: '已複製筆記' }))
   }
 
   async function removeNote(id: string) {
     const m = mergedById.get(id)
     if (!m) return
     const ok = await confirm({
-      title: '刪除筆記？',
-      message: `「${m.note.title}」連同跟進項目將會永久刪除，無法復原。`,
-      confirmText: '刪除',
+      title: t('meet.confirm_delete_title', { defaultValue: '刪除筆記？' }),
+      message: t('meet.confirm_delete_message', { defaultValue: `「${m.note.title}」連同跟進項目將會永久刪除，無法復原。`, title: m.note.title }),
+      confirmText: t('meet.confirm_delete_btn', { defaultValue: '刪除' }),
       tone: 'danger',
     })
     if (!ok) return
@@ -476,14 +500,14 @@ export default function MeetingNotes() {
     // 順手清孤兒 meta
     pruneMeta(new Set(meetingNotesCol.get().map((n) => n.id)))
     if (detailId === id) setDetailId(null)
-    toast.success('已刪除筆記')
+    toast.success(t('meet.toast_deleted', { defaultValue: '已刪除筆記' }))
   }
 
   function handlePrint(id: string) {
     const m = mergedById.get(id)
     if (!m) return
     const ok = printNote({ note: m.note, meta: m.meta })
-    if (!ok) toast.error('無法開啟列印視窗，請檢查瀏覽器彈窗設定')
+    if (!ok) toast.error(t('meet.toast_print_fail', { defaultValue: '無法開啟列印視窗，請檢查瀏覽器彈窗設定' }))
   }
 
   async function handleCopy(id: string) {
@@ -492,9 +516,9 @@ export default function MeetingNotes() {
     const text = noteToPlainText(m.note, m.meta)
     try {
       await navigator.clipboard.writeText(text)
-      toast.success('已複製到剪貼簿')
+      toast.success(t('meet.toast_copy_ok', { defaultValue: '已複製到剪貼簿' }))
     } catch {
-      toast.error('複製失敗')
+      toast.error(t('meet.toast_copy_fail', { defaultValue: '複製失敗' }))
     }
   }
 
@@ -534,34 +558,34 @@ export default function MeetingNotes() {
           <div className="min-w-0">
             <p className="flex items-center gap-2 text-[11px] font-medium uppercase tracking-[0.3em] text-accent/70">
               <NotebookPen size={13} />
-              Minutes · 會議記事簿
+              {t('meet.kicker', { defaultValue: 'Minutes · 會議記事簿' })}
             </p>
             <h1 className="mt-1.5 font-serif text-[28px] font-semibold leading-none tracking-tight text-slate-800 dark:text-slate-100 sm:text-[34px]">
-              會議筆記
+              {t('meet.title', { defaultValue: '會議筆記' })}
             </h1>
             <p className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-slate-500 dark:text-slate-400">
               <span className="tabular-nums">
-                記事 {notes.length} 則 · 跟進 {stats.total} 項
+                {t('meet.subtitle_notes', { defaultValue: '記事 {{count}} 則 · 跟進 {{total}} 項', count: notes.length, total: stats.total })}
               </span>
               {stats.open > 0 ? (
                 <>
                   <span aria-hidden className="text-slate-300 dark:text-slate-600">·</span>
                   <span className="inline-flex items-center gap-1 font-medium text-accent-strong dark:text-accent">
-                    <ListChecks size={12} /> 待辦 {stats.open} 項
+                    <ListChecks size={12} /> {t('meet.subtitle_open', { defaultValue: '待辦 {{count}} 項', count: stats.open })}
                   </span>
                 </>
               ) : stats.total > 0 ? (
                 <>
                   <span aria-hidden className="text-slate-300 dark:text-slate-600">·</span>
                   <span className="inline-flex items-center gap-1 font-medium text-emerald-600 dark:text-emerald-400">
-                    <CheckSquare size={12} /> 跟進已清
+                    <CheckSquare size={12} /> {t('meet.subtitle_clear', { defaultValue: '跟進已清' })}
                   </span>
                 </>
               ) : null}
             </p>
           </div>
           <Button onClick={openAdd} icon={Plus} className="shrink-0">
-            新增筆記
+            {t('meet.addNote', { defaultValue: '新增筆記' })}
           </Button>
         </div>
         {/* 記事橫線（封面分隔感：一實一虛，似簿頁開頭嘅留白線） */}
@@ -574,42 +598,42 @@ export default function MeetingNotes() {
       {/* ───────── 速記清點帶：hairline grid · serif 大數字 ───────── */}
       <section className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl bg-slate-200/70 ring-1 ring-slate-200/80 dark:bg-slate-700/50 dark:ring-slate-700/60 sm:grid-cols-4">
         <TallyCell
-          label="會議記事"
+          label={t('meet.tally_notes_label', { defaultValue: '會議記事' })}
           value={notes.length}
-          unit="則"
+          unit={t('meet.tally_notes_unit', { defaultValue: '則' }) || undefined}
           icon={NotebookPen}
-          hint="累積會議紀錄"
+          hint={t('meet.tally_notes_hint', { defaultValue: '累積會議紀錄' })}
         />
         <TallyCell
-          label="待跟進"
+          label={t('meet.tally_open_label', { defaultValue: '待跟進' })}
           value={stats.open}
-          unit="項"
+          unit={t('meet.tally_open_unit', { defaultValue: '項' }) || undefined}
           icon={ListChecks}
           hot={stats.open > 0}
-          hint={`共 ${stats.total} 項 · 完成 ${stats.completionPct}%`}
+          hint={t('meet.tally_open_hint', { defaultValue: `共 ${stats.total} 項 · 完成 ${stats.completionPct}%`, total: stats.total, pct: stats.completionPct })}
         />
         <TallyCell
-          label="逾期"
+          label={t('meet.tally_overdue_label', { defaultValue: '逾期' })}
           value={stats.overdue}
-          unit="項"
+          unit={t('meet.tally_overdue_unit', { defaultValue: '項' }) || undefined}
           icon={AlarmClock}
-          hint={stats.overdue > 0 ? '需即時處理' : '一切順利'}
+          hint={stats.overdue > 0 ? t('meet.tally_overdue_hint_urgent', { defaultValue: '需即時處理' }) : t('meet.tally_overdue_hint_ok', { defaultValue: '一切順利' })}
         />
         <TallyCell
-          label="7 日內到期"
+          label={t('meet.tally_soon_label', { defaultValue: '7 日內到期' })}
           value={stats.dueSoon}
-          unit="項"
+          unit={t('meet.tally_soon_unit', { defaultValue: '項' }) || undefined}
           icon={CalendarClock}
-          hint={stats.dueSoon > 0 ? '排定時間跟進' : '近期無到期'}
+          hint={stats.dueSoon > 0 ? t('meet.tally_soon_hint_action', { defaultValue: '排定時間跟進' }) : t('meet.tally_soon_hint_ok', { defaultValue: '近期無到期' })}
         />
       </section>
 
       {/* 視圖切換 */}
       <Tabs<View>
         tabs={[
-          { id: 'notes', label: '筆記' },
-          { id: 'actions', label: '行動中心' },
-          { id: 'stats', label: '統計分析' },
+          { id: 'notes', label: t('meet.tab_notes', { defaultValue: '筆記' }) },
+          { id: 'actions', label: t('meet.tab_actions', { defaultValue: '行動中心' }) },
+          { id: 'stats', label: t('meet.tab_stats', { defaultValue: '統計分析' }) },
         ]}
         active={view}
         onChange={setView}
@@ -626,7 +650,7 @@ export default function MeetingNotes() {
                 icon={Search}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="搜尋標題、內容、出席者、決議、行動…"
+                placeholder={t('meet.search_placeholder', { defaultValue: '搜尋標題、內容、出席者、決議、行動…' })}
               />
             </div>
             <Select
@@ -648,7 +672,7 @@ export default function MeetingNotes() {
             active={typeFilter}
             onChange={setTypeFilter}
             options={[
-              { id: 'all', label: '全部' },
+              { id: 'all', label: t('meet.filter_all', { defaultValue: '全部' }) },
               ...MEETING_TYPE_ORDER.filter(
                 (t) => (typeCounts[t] ?? 0) > 0 || t === 'other',
               ).map((t) => ({ id: t, label: MEETING_TYPE_META[t].short })),
@@ -659,13 +683,13 @@ export default function MeetingNotes() {
           {/* 標籤篩選 */}
           {allTags.length > 0 && (
             <div className="flex flex-wrap items-center gap-1.5">
-              <span className="text-xs text-slate-400 dark:text-slate-500">標籤：</span>
+              <span className="text-xs text-slate-400 dark:text-slate-500">{t('meet.tag_label', { defaultValue: '標籤：' })}</span>
               <button
                 type="button"
                 onClick={() => setActiveTag(null)}
                 aria-pressed={activeTag === null}
               >
-                <Badge tone={activeTag === null ? 'accent' : 'slate'}>全部</Badge>
+                <Badge tone={activeTag === null ? 'accent' : 'slate'}>{t('meet.tag_filter_all', { defaultValue: '全部' })}</Badge>
               </button>
               {allTags.map((tag) => (
                 <button
@@ -673,7 +697,7 @@ export default function MeetingNotes() {
                   type="button"
                   onClick={() => setActiveTag((c) => (c === tag ? null : tag))}
                   aria-pressed={activeTag === tag}
-                  aria-label={`篩選標籤 ${tag}`}
+                  aria-label={t('meet.tag_aria', { defaultValue: `篩選標籤 ${tag}`, tag })}
                 >
                   <Badge tone={activeTag === tag ? 'accent' : 'slate'}>#{tag}</Badge>
                 </button>
@@ -684,8 +708,8 @@ export default function MeetingNotes() {
           {/* 篩選結果數（螢幕閱讀器即時播報） */}
           <p role="status" aria-live="polite" className="sr-only">
             {search.trim() || typeFilter !== 'all' || activeTag !== null
-              ? `${visibleNotes.length} 則符合篩選`
-              : `共 ${visibleNotes.length} 則筆記`}
+              ? t('meet.sr_filtered', { defaultValue: `${visibleNotes.length} 則符合篩選`, count: visibleNotes.length })
+              : t('meet.sr_total', { defaultValue: `共 ${visibleNotes.length} 則筆記`, count: visibleNotes.length })}
           </p>
 
           {/* 列表 */}
@@ -693,16 +717,16 @@ export default function MeetingNotes() {
             <EmptyState
               icon={NotebookPen}
               art={notes.length === 0 ? 'empty-meeting' : undefined}
-              title={notes.length === 0 ? '記事簿仲係新嘅一頁' : '揭唔到相符嘅記事'}
+              title={notes.length === 0 ? t('meet.empty_new_title', { defaultValue: '記事簿仲係新嘅一頁' }) : t('meet.empty_search_title', { defaultValue: '揭唔到相符嘅記事' })}
               hint={
                 notes.length === 0
-                  ? '由第一條議程開始——撳「新增筆記」記低今場會議，或先套用一個議程範本。'
-                  : '試吓清除搜尋字眼、類型或標籤篩選，再揭一次。'
+                  ? t('meet.empty_new_hint', { defaultValue: '由第一條議程開始——撳「新增筆記」記低今場會議，或先套用一個議程範本。' })
+                  : t('meet.empty_search_hint', { defaultValue: '試吓清除搜尋字眼、類型或標籤篩選，再揭一次。' })
               }
               action={
                 notes.length === 0 ? (
                   <Button onClick={openAdd} icon={Plus}>
-                    記低第一場會議
+                    {t('meet.empty_new_cta', { defaultValue: '記低第一場會議' })}
                   </Button>
                 ) : undefined
               }
@@ -711,7 +735,7 @@ export default function MeetingNotes() {
             <div className="space-y-4">
               {pinned.length > 0 && (
                 <div className="space-y-2.5">
-                  <SectionTitle icon={Pin}>置頂議程</SectionTitle>
+                  <SectionTitle icon={Pin}>{t('meet.section_pinned', { defaultValue: '置頂議程' })}</SectionTitle>
                   {pinned.map((m, i) => (
                     <NoteRow
                       key={m.note.id}
@@ -734,7 +758,7 @@ export default function MeetingNotes() {
               )}
               <div className="space-y-2.5">
                 {pinned.length > 0 && unpinned.length > 0 && (
-                  <SectionTitle icon={NotebookPen}>所有記事</SectionTitle>
+                  <SectionTitle icon={NotebookPen}>{t('meet.section_all', { defaultValue: '所有記事' })}</SectionTitle>
                 )}
                 {unpinned.map((m, i) => (
                   <NoteRow
@@ -768,8 +792,8 @@ export default function MeetingNotes() {
               value={actionGroupBy}
               onChange={setActionGroupBy}
               options={[
-                { id: 'list', label: '清單' },
-                { id: 'owner', label: '按負責人' },
+                { id: 'list', label: t('meet.actiongroup_list', { defaultValue: '清單' }) },
+                { id: 'owner', label: t('meet.actiongroup_owner', { defaultValue: '按負責人' }) },
               ]}
             />
           </div>
@@ -780,11 +804,11 @@ export default function MeetingNotes() {
                 value={actionFilter}
                 onChange={setActionFilter}
                 options={[
-                  { id: 'open', label: `待跟進 (${stats.open})` },
-                  { id: 'overdue', label: `逾期 (${stats.overdue})` },
-                  { id: 'soon', label: `快到期 (${stats.dueSoon})` },
-                  { id: 'done', label: `已完成 (${stats.done})` },
-                  { id: 'all', label: `全部 (${stats.total})` },
+                  { id: 'open', label: t('meet.seg_open', { defaultValue: `待跟進 (${stats.open})`, count: stats.open }) },
+                  { id: 'overdue', label: t('meet.seg_overdue', { defaultValue: `逾期 (${stats.overdue})`, count: stats.overdue }) },
+                  { id: 'soon', label: t('meet.seg_soon', { defaultValue: `快到期 (${stats.dueSoon})`, count: stats.dueSoon }) },
+                  { id: 'done', label: t('meet.seg_done', { defaultValue: `已完成 (${stats.done})`, count: stats.done }) },
+                  { id: 'all', label: t('meet.seg_all', { defaultValue: `全部 (${stats.total})`, count: stats.total }) },
                 ]}
               />
 
@@ -793,14 +817,14 @@ export default function MeetingNotes() {
                   icon={ListChecks}
                   title={
                     stats.total === 0
-                      ? '行動清單仲係空白'
+                      ? t('meet.actions_empty_blank', { defaultValue: '行動清單仲係空白' })
                       : actionFilter === 'open'
-                        ? '所有跟進都剔晒，乾淨企理！'
-                        : '冇符合條件嘅項目'
+                        ? t('meet.actions_empty_done', { defaultValue: '所有跟進都剔晒，乾淨企理！' })
+                        : t('meet.actions_empty_filter', { defaultValue: '冇符合條件嘅項目' })
                   }
                   hint={
                     stats.total === 0
-                      ? '喺記事內容用 - [ ] 寫低行動項目，或者喺編輯器逐項加入，呢度就會幫你追住。'
+                      ? t('meet.actions_empty_blank_hint', { defaultValue: '喺記事內容用 - [ ] 寫低行動項目，或者喺編輯器逐項加入，呢度就會幫你追住。' })
                       : undefined
                   }
                 />
@@ -823,13 +847,13 @@ export default function MeetingNotes() {
           ) : ownerGroups.length === 0 ? (
             <EmptyState
               icon={UserRound}
-              title="人人都清咗待辦，good job！"
-              hint="所有行動都跟進完成，或者仲未分派任何跟進事項。"
+              title={t('meet.owner_empty_title', { defaultValue: '人人都清咗待辦，good job！' })}
+              hint={t('meet.owner_empty_hint', { defaultValue: '所有行動都跟進完成，或者仲未分派任何跟進事項。' })}
             />
           ) : (
             <div className="space-y-3">
               <p role="status" aria-live="polite" className="sr-only">
-                {`${ownerGroups.length} 位負責人有待跟進項目`}
+                {t('meet.sr_owner_groups', { defaultValue: `${ownerGroups.length} 位負責人有待跟進項目`, count: ownerGroups.length })}
               </p>
               {ownerGroups.map((g) => (
                 <OwnerGroupCard
@@ -853,42 +877,42 @@ export default function MeetingNotes() {
           {notes.length === 0 ? (
             <EmptyState
               icon={PieChart}
-              title="統計頁仲未開簿"
-              hint="記低幾場會議之後，呢度會慢慢長出趨勢同分布圖表。"
+              title={t('meet.stats_empty_title', { defaultValue: '統計頁仲未開簿' })}
+              hint={t('meet.stats_empty_hint', { defaultValue: '記低幾場會議之後，呢度會慢慢長出趨勢同分布圖表。' })}
             />
           ) : (
             <>
               <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
                 <Card padded>
-                  <SectionTitle icon={CalendarDays}>近 6 個月會議數</SectionTitle>
+                  <SectionTitle icon={CalendarDays}>{t('meet.stats_monthly_title', { defaultValue: '近 6 個月會議數' })}</SectionTitle>
                   <MonthlyBars bars={monthBars} />
                 </Card>
                 <Card padded>
-                  <SectionTitle icon={PieChart}>會議類型分布</SectionTitle>
+                  <SectionTitle icon={PieChart}>{t('meet.stats_type_title', { defaultValue: '會議類型分布' })}</SectionTitle>
                   <TypeDonut slices={typeSlices} />
                 </Card>
               </div>
               <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
                 <Card padded>
-                  <SectionTitle icon={ListChecks}>行動項目完成率</SectionTitle>
+                  <SectionTitle icon={ListChecks}>{t('meet.stats_completion_title', { defaultValue: '行動項目完成率' })}</SectionTitle>
                   <CompletionRing done={stats.done} total={stats.total} />
                   {(stats.overdue > 0 || stats.dueSoon > 0) && (
                     <div className="mt-3 flex flex-wrap gap-2 border-t border-slate-100 pt-3 dark:border-slate-700/60">
                       {stats.overdue > 0 && (
                         <Badge tone="rose" dot>
-                          逾期 {stats.overdue}
+                          {t('meet.stats_overdue_badge', { defaultValue: `逾期 ${stats.overdue}`, count: stats.overdue })}
                         </Badge>
                       )}
                       {stats.dueSoon > 0 && (
                         <Badge tone="amber" dot>
-                          7 日內 {stats.dueSoon}
+                          {t('meet.stats_soon_badge', { defaultValue: `7 日內 ${stats.dueSoon}`, count: stats.dueSoon })}
                         </Badge>
                       )}
                     </div>
                   )}
                 </Card>
                 <Card padded>
-                  <SectionTitle icon={Users}>常見出席者</SectionTitle>
+                  <SectionTitle icon={Users}>{t('meet.stats_attendees_title', { defaultValue: '常見出席者' })}</SectionTitle>
                   <TopAttendees merged={merged} />
                 </Card>
               </div>
@@ -959,6 +983,7 @@ function NoteRow({
   onTag: (t: string) => void
   activeTag: string | null
 }) {
+  const { t } = useTranslation()
   const { note, meta } = m
   const tm = MEETING_TYPE_META[meta.type]
   const openActions = meta.actions.filter((a) => !a.done).length
@@ -985,7 +1010,7 @@ function NoteRow({
           className="min-w-0 flex-1 cursor-pointer rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
           role="button"
           tabIndex={0}
-          aria-label={`開啟筆記：${note.title}`}
+          aria-label={t('meet.row_open_aria', { defaultValue: `開啟筆記：${note.title}`, title: note.title })}
           onClick={onOpen}
           onKeyDown={(e) => {
             // 只當焦點喺呢個容器本身先觸發（避免內嵌標籤按鈕嘅 Enter/Space 冒泡）
@@ -1018,7 +1043,7 @@ function NoteRow({
             {meta.attendees.length > 0 && (
               <span className="inline-flex items-center gap-1">
                 <Users size={12} />
-                <span className="tabular-nums">{meta.attendees.length}</span> 人
+                <span className="tabular-nums">{meta.attendees.length}</span> {t('meet.row_attendees_unit', { defaultValue: '人' })}
               </span>
             )}
           </div>
@@ -1033,30 +1058,30 @@ function NoteRow({
           <div className="mt-2 flex flex-wrap items-center gap-1.5">
             {meta.decisions.length > 0 && (
               <Badge tone="accent" icon={Gavel}>
-                決議 {meta.decisions.length}
+                {t('meet.badge_decisions', { defaultValue: `決議 ${meta.decisions.length}`, count: meta.decisions.length })}
               </Badge>
             )}
             {meta.actions.length > 0 && (
               <Badge tone={overdue > 0 ? 'rose' : openActions > 0 ? 'amber' : 'green'}>
                 <ListChecks size={11} className="mr-0.5" />
                 {openActions > 0
-                  ? `${openActions} 待跟進`
-                  : `${meta.actions.length} 全部完成`}
-                {overdue > 0 && ` · ${overdue} 逾期`}
+                  ? t('meet.badge_open_actions', { defaultValue: `${openActions} 待跟進`, count: openActions })
+                  : t('meet.badge_all_done', { defaultValue: `${meta.actions.length} 全部完成`, count: meta.actions.length })}
+                {overdue > 0 && t('meet.badge_overdue', { defaultValue: ` · ${overdue} 逾期`, count: overdue })}
               </Badge>
             )}
-            {note.tags?.map((t) => (
+            {note.tags?.map((tag) => (
               <button
-                key={t}
+                key={tag}
                 type="button"
                 onClick={(e) => {
                   e.stopPropagation()
-                  onTag(t)
+                  onTag(tag)
                 }}
-                aria-pressed={activeTag === t}
-                aria-label={`篩選標籤 ${t}`}
+                aria-pressed={activeTag === tag}
+                aria-label={t('meet.tag_aria', { defaultValue: `篩選標籤 ${tag}`, tag })}
               >
-                <Badge tone={activeTag === t ? 'accent' : 'slate'}>#{t}</Badge>
+                <Badge tone={activeTag === tag ? 'accent' : 'slate'}>#{tag}</Badge>
               </button>
             ))}
           </div>
@@ -1064,9 +1089,9 @@ function NoteRow({
 
         {/* 動作 */}
         <div className="flex shrink-0 items-center gap-0.5">
-          <Tooltip label={meta.pinned ? '取消置頂' : '置頂'}>
+          <Tooltip label={meta.pinned ? t('meet.unpin_tooltip', { defaultValue: '取消置頂' }) : t('meet.pin_tooltip', { defaultValue: '置頂' })}>
             <IconButton
-              label={meta.pinned ? '取消置頂' : '置頂'}
+              label={meta.pinned ? t('meet.unpin_aria', { defaultValue: '取消置頂' }) : t('meet.pin_aria', { defaultValue: '置頂' })}
               active={meta.pinned}
               onClick={onPin}
             >
@@ -1078,17 +1103,17 @@ function NoteRow({
             trigger={
               <span className="inline-flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300">
                 <MoreVertical size={16} />
-                <span className="sr-only">{note.title} 更多操作</span>
+                <span className="sr-only">{t('meet.menu_more_aria', { defaultValue: `${note.title} 更多操作`, title: note.title })}</span>
               </span>
             }
             items={[
-              { id: 'edit', label: '編輯', icon: NotebookPen, onSelect: onEdit },
-              { id: 'dup', label: '複製為新筆記', icon: Copy, onSelect: onDuplicate },
-              { id: 'copy', label: '複製文字', icon: ClipboardList, onSelect: onCopy },
-              { id: 'print', label: '列印 / PDF', icon: Printer, onSelect: onPrint },
+              { id: 'edit', label: t('meet.menu_edit', { defaultValue: '編輯' }), icon: NotebookPen, onSelect: onEdit },
+              { id: 'dup', label: t('meet.menu_duplicate', { defaultValue: '複製為新筆記' }), icon: Copy, onSelect: onDuplicate },
+              { id: 'copy', label: t('meet.menu_copy', { defaultValue: '複製文字' }), icon: ClipboardList, onSelect: onCopy },
+              { id: 'print', label: t('meet.menu_print', { defaultValue: '列印 / PDF' }), icon: Printer, onSelect: onPrint },
               {
                 id: 'del',
-                label: '刪除',
+                label: t('meet.menu_delete', { defaultValue: '刪除' }),
                 icon: Trash2,
                 tone: 'danger',
                 onSelect: onDelete,
@@ -1124,6 +1149,7 @@ function ActionRow({
   onToggle: () => void
   onOpenNote: () => void
 }) {
+  const { t } = useTranslation()
   const dueInfo = dueBadgeTone(action.due, action.done)
   return (
     <div
@@ -1143,7 +1169,7 @@ function ActionRow({
             ? 'text-emerald-500'
             : 'text-slate-300 hover:text-accent dark:text-slate-600',
         )}
-        aria-label={action.done ? '標記未完成' : '標記完成'}
+        aria-label={action.done ? t('meet.action_mark_undone', { defaultValue: '標記未完成' }) : t('meet.action_mark_done', { defaultValue: '標記完成' })}
       >
         {action.done ? <CheckSquare size={20} /> : <Square size={20} />}
       </button>
@@ -1180,9 +1206,9 @@ function ActionRow({
           </button>
         </div>
       </div>
-      {dueInfo && dueInfo.label && (
+      {dueInfo && dueInfo.labelDefault && (
         <Badge tone={dueInfo.tone} dot>
-          {dueInfo.label}
+          {dueInfo.labelKey ? t(dueInfo.labelKey, { defaultValue: dueInfo.labelDefault }) : dueInfo.labelDefault}
         </Badge>
       )}
     </div>
@@ -1201,7 +1227,8 @@ function OwnerGroupCard({
   onToggle: (noteId: string, actionId: string) => void
   onOpenNote: (noteId: string) => void
 }) {
-  const name = group.unassigned ? '未指派' : group.owner
+  const { t } = useTranslation()
+  const name = group.unassigned ? t('meet.owner_unassigned', { defaultValue: '未指派' }) : group.owner
   return (
     <Card clip className="p-0">
       {/* 負責人標頭 */}
@@ -1225,15 +1252,15 @@ function OwnerGroupCard({
               : 'text-slate-800 dark:text-slate-100',
           )}
         >
-          {group.unassigned ? '未指派' : `@${name}`}
+          {group.unassigned ? t('meet.owner_unassigned', { defaultValue: '未指派' }) : `@${name}`}
         </span>
         <div className="flex shrink-0 items-center gap-1.5">
           {group.overdue > 0 && (
             <Badge tone="rose" dot>
-              逾期 {group.overdue}
+              {t('meet.owner_overdue', { defaultValue: `逾期 ${group.overdue}`, count: group.overdue })}
             </Badge>
           )}
-          <Badge tone="amber">{group.open} 待跟進</Badge>
+          <Badge tone="amber">{t('meet.owner_pending', { defaultValue: `${group.open} 待跟進`, count: group.open })}</Badge>
         </div>
       </div>
       {/* 該負責人嘅未完成項目 */}
@@ -1267,6 +1294,7 @@ function NoteDetail({
   onPrint: () => void
   onCopy: () => void
 }) {
+  const { t } = useTranslation()
   const { note, meta } = m
   const tm = MEETING_TYPE_META[meta.type]
   const segments = useMemo(() => renderSegments(note.content), [note.content])
@@ -1282,10 +1310,10 @@ function NoteDetail({
         <Badge tone={tm.tone}>{tm.label}</Badge>
         <span className="inline-flex items-center gap-1">
           <CalendarDays size={13} />
-          {longDateLabel(note.date)}
+          {longDateLabel(note.date, t)}
           {meta.time && <span className="tabular-nums">· {meta.time}</span>}
           {meta.durationMin ? (
-            <span className="tabular-nums">· {meta.durationMin} 分鐘</span>
+            <span className="tabular-nums">{t('meet.detail_duration', { defaultValue: `· ${meta.durationMin} 分鐘`, min: meta.durationMin })}</span>
           ) : null}
         </span>
         {meta.location && (
@@ -1299,7 +1327,7 @@ function NoteDetail({
       {/* 出席者 */}
       {meta.attendees.length > 0 && (
         <div>
-          <SectionTitle icon={Users}>出席者（{meta.attendees.length}）</SectionTitle>
+          <SectionTitle icon={Users}>{t('meet.detail_attendees', { defaultValue: `出席者（${meta.attendees.length}）`, count: meta.attendees.length })}</SectionTitle>
           <div className="flex flex-wrap gap-1.5">
             {meta.attendees.map((a) => (
               <Badge key={a} tone="slate">
@@ -1312,7 +1340,7 @@ function NoteDetail({
 
       {/* 內容（Markdown-ish 渲染）——速記頁：左側朱紅起始線 + 淡格線底 */}
       <div>
-        <SectionTitle icon={FileText}>記事內容</SectionTitle>
+        <SectionTitle icon={FileText}>{t('meet.detail_content', { defaultValue: '記事內容' })}</SectionTitle>
         <div className="relative space-y-1 overflow-hidden rounded-xl border border-slate-100 bg-slate-50/50 py-3.5 pl-5 pr-3.5 dark:border-slate-700/60 dark:bg-slate-800/30">
           <span
             aria-hidden
@@ -1392,7 +1420,7 @@ function NoteDetail({
       {/* 議決事項（議程編號：serif R-NN 決議章） */}
       {hasStructuredDecisions && (
         <div>
-          <SectionTitle icon={Gavel}>議決事項（{meta.decisions.length}）</SectionTitle>
+          <SectionTitle icon={Gavel}>{t('meet.detail_decisions', { defaultValue: `議決事項（${meta.decisions.length}）`, count: meta.decisions.length })}</SectionTitle>
           <ol className="space-y-1.5">
             {meta.decisions.map((d, i) => (
               <li
@@ -1413,8 +1441,7 @@ function NoteDetail({
       {hasStructuredActions && (
         <div>
           <SectionTitle icon={ListChecks}>
-            跟進行動（
-            {meta.actions.filter((a) => a.done).length}/{meta.actions.length}）
+            {t('meet.detail_actions', { defaultValue: `跟進行動（${meta.actions.filter((a) => a.done).length}/${meta.actions.length}）`, done: meta.actions.filter((a) => a.done).length, total: meta.actions.length })}
           </SectionTitle>
           <div className="space-y-1.5">
             {meta.actions.map((a) => {
@@ -1433,7 +1460,7 @@ function NoteDetail({
                         ? 'text-emerald-500'
                         : 'text-slate-300 hover:text-accent dark:text-slate-600',
                     )}
-                    aria-label={a.done ? '標記未完成' : '標記完成'}
+                    aria-label={a.done ? t('meet.action_mark_undone', { defaultValue: '標記未完成' }) : t('meet.action_mark_done', { defaultValue: '標記完成' })}
                   >
                     {a.done ? <CheckSquare size={18} /> : <Square size={18} />}
                   </button>
@@ -1459,9 +1486,9 @@ function NoteDetail({
                       </span>
                     )}
                   </div>
-                  {dueInfo && dueInfo.label && (
+                  {dueInfo && dueInfo.labelDefault && (
                     <Badge tone={dueInfo.tone} dot>
-                      {dueInfo.label}
+                      {dueInfo.labelKey ? t(dueInfo.labelKey, { defaultValue: dueInfo.labelDefault }) : dueInfo.labelDefault}
                     </Badge>
                   )}
                 </div>
@@ -1474,7 +1501,7 @@ function NoteDetail({
       {/* 若未結構化但內容有，提示 */}
       {!hasStructuredActions && inlineParsed.actions.length > 0 && (
         <p className="rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-700 dark:bg-amber-500/10 dark:text-amber-300">
-          內容偵測到 {inlineParsed.actions.length} 個行動項目。編輯時撳「抽取」可轉成可勾選清單，並進入行動中心追蹤。
+          {t('meet.detail_inline_hint', { defaultValue: `內容偵測到 ${inlineParsed.actions.length} 個行動項目。編輯時撳「抽取」可轉成可勾選清單，並進入行動中心追蹤。`, count: inlineParsed.actions.length })}
         </p>
       )}
 
@@ -1492,13 +1519,13 @@ function NoteDetail({
       {/* 動作列 */}
       <div className="flex flex-wrap justify-end gap-2 border-t border-slate-200 pt-3 dark:border-slate-700">
         <Button variant="secondary" size="sm" icon={ClipboardList} onClick={onCopy}>
-          複製文字
+          {t('meet.detail_copy', { defaultValue: '複製文字' })}
         </Button>
         <Button variant="secondary" size="sm" icon={Printer} onClick={onPrint}>
-          列印 / PDF
+          {t('meet.detail_print', { defaultValue: '列印 / PDF' })}
         </Button>
         <Button size="sm" icon={NotebookPen} onClick={onEdit}>
-          編輯
+          {t('meet.detail_edit', { defaultValue: '編輯' })}
         </Button>
       </div>
     </div>
@@ -1509,6 +1536,7 @@ function NoteDetail({
 //  統計：常見出席者（橫向條）
 // ============================================================
 function TopAttendees({ merged }: { merged: MergedNote[] }) {
+  const { t } = useTranslation()
   const rows = useMemo(() => {
     const counts = new Map<string, number>()
     for (const { meta } of merged) {
@@ -1522,7 +1550,7 @@ function TopAttendees({ merged }: { merged: MergedNote[] }) {
   if (rows.length === 0)
     return (
       <p className="py-6 text-center text-sm text-slate-400 dark:text-slate-500">
-        筆記未有記錄出席者
+        {t('meet.stats_attendees_empty', { defaultValue: '筆記未有記錄出席者' })}
       </p>
     )
 

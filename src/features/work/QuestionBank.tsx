@@ -1,5 +1,7 @@
 import { useMemo, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
+import { useTranslation } from 'react-i18next'
+import './questionbank/i18n'
 import {
   ArrowLeft,
   BarChart3,
@@ -157,16 +159,17 @@ function TypeChip({ type }: { type: QuestionType }) {
 // ───────── 分數印章（marking-scheme 右欄語氣：[ N 分 ]）─────────
 //  考評檔案概念：分數似改卷員喺題旁打嘅 marks 章。無分（唔計分）時退成低調灰章。
 function MarksStamp({ marks }: { marks?: number }) {
+  const { t } = useTranslation()
   if (marks)
     return (
       <span className="inline-flex items-center gap-1 rounded-md border border-dashed border-amber-300/80 bg-amber-50/70 px-2 py-0.5 font-serif text-[11px] font-semibold tabular-nums text-amber-700 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-300">
         <Scale size={11} className="opacity-70" />
-        {marks} 分
+        {marks} {t('qbank.marksUnit', { defaultValue: '分' })}
       </span>
     )
   return (
     <span className="inline-flex items-center rounded-md border border-dashed border-slate-200 px-2 py-0.5 text-[11px] font-medium text-slate-400 dark:border-slate-700 dark:text-slate-500">
-      未配分
+      {t('qbank.marksNone', { defaultValue: '未配分' })}
     </span>
   )
 }
@@ -281,6 +284,7 @@ function TallyStat({
 }
 
 export default function QuestionBank() {
+  const { t } = useTranslation()
   const toast = useToast()
   const confirm = useConfirm()
   const nav = useNav()
@@ -308,7 +312,7 @@ export default function QuestionBank() {
   const [selected, setSelected] = useState<Set<string>>(new Set())
 
   const topicName = (id: string) =>
-    topics.find((t) => t.id === id)?.topic ?? '未分類'
+    topics.find((tp) => tp.id === id)?.topic ?? t('qbank.unclassified', { defaultValue: '未分類' })
 
   const stats = useMemo(
     () => computeStats(questions, topics.length),
@@ -379,9 +383,9 @@ export default function QuestionBank() {
 
   const removeQuestion = async (q: Question) => {
     const ok = await confirm({
-      title: '刪除題目？',
-      message: '此題目將會由題庫永久移除，無法復原。',
-      confirmText: '刪除',
+      title: t('qbank.confirmDeleteQTitle', { defaultValue: '刪除題目？' }),
+      message: t('qbank.confirmDeleteQMsg', { defaultValue: '此題目將會由題庫永久移除，無法復原。' }),
+      confirmText: t('qbank.confirmDeleteQBtn', { defaultValue: '刪除' }),
       tone: 'danger',
     })
     if (!ok) return
@@ -392,32 +396,32 @@ export default function QuestionBank() {
       next.delete(q.id)
       return next
     })
-    toast.success('已刪除題目')
+    toast.success(t('qbank.toastQuestionDeleted', { defaultValue: '已刪除題目' }))
   }
 
   const bulkDelete = async () => {
     if (selected.size === 0) return
     const ok = await confirm({
-      title: `刪除 ${selected.size} 條題目？`,
-      message: '已選題目將會永久移除，無法復原。',
-      confirmText: '全部刪除',
+      title: t('qbank.confirmBulkDeleteTitle', { defaultValue: `刪除 ${selected.size} 條題目？`, count: selected.size }),
+      message: t('qbank.confirmBulkDeleteMsg', { defaultValue: '已選題目將會永久移除，無法復原。' }),
+      confirmText: t('qbank.confirmBulkDeleteBtn', { defaultValue: '全部刪除' }),
       tone: 'danger',
     })
     if (!ok) return
     selected.forEach((id) => questionsCol.remove(id))
-    toast.success(`已刪除 ${selected.size} 條題目`)
+    toast.success(t('qbank.toastBulkDeleted', { defaultValue: `已刪除 ${selected.size} 條題目`, count: selected.size }))
     clearSelection()
   }
 
   const bulkMoveTopic = (topicId: string) => {
     if (!topicId || selected.size === 0) return
     selected.forEach((id) => questionsCol.update(id, { topicId }))
-    toast.success(`已將 ${selected.size} 條題目改到「${topicName(topicId)}」`)
+    toast.success(t('qbank.toastTopicMoved', { defaultValue: `已將 ${selected.size} 條題目改到「${topicName(topicId)}」`, count: selected.size, topic: topicName(topicId) }))
   }
   const bulkSetDifficulty = (difficulty: Difficulty) => {
     if (selected.size === 0) return
     selected.forEach((id) => questionsCol.update(id, { difficulty }))
-    toast.success(`已將 ${selected.size} 條題目改為「${DIFF_LABEL[difficulty]}」`)
+    toast.success(t('qbank.toastDiffChanged', { defaultValue: `已將 ${selected.size} 條題目改為「${DIFF_LABEL[difficulty]}」`, count: selected.size, diff: DIFF_LABEL[difficulty] }))
   }
 
   const duplicateQuestion = (q: Question) => {
@@ -426,23 +430,23 @@ export default function QuestionBank() {
     void _omit2
     questionsCol.add({
       ...rest,
-      stem: `${q.stem}（複本）`,
+      stem: `${q.stem}${t('qbank.dupStemSuffix', { defaultValue: '（複本）' })}`,
       createdAt: new Date().toISOString(),
     })
-    toast.success('已複製題目')
+    toast.success(t('qbank.toastDuplicated', { defaultValue: '已複製題目' }))
   }
 
   const exportSelected = () => {
     const list = selected.size > 0 ? selectedQuestions : filtered
     if (list.length === 0) {
-      toast.error('未有題目可匯出')
+      toast.error(t('qbank.toastExportNone', { defaultValue: '未有題目可匯出' }))
       return
     }
     downloadText(
       `bafs-題庫-${new Date().toISOString().slice(0, 10)}.csv`,
       questionsToCsv(list, topicName),
     )
-    toast.success(`已匯出 ${list.length} 條題目（CSV）`)
+    toast.success(t('qbank.toastExported', { defaultValue: `已匯出 ${list.length} 條題目（CSV）`, count: list.length }))
   }
 
   return (
@@ -460,20 +464,20 @@ export default function QuestionBank() {
           <div className="min-w-0">
             <p className="flex items-center gap-2 text-[11px] font-medium uppercase tracking-[0.3em] text-accent/70">
               <ScrollText size={13} />
-              考評檔案 · Assessment Bank
+              {t('qbank.kickerLabel', { defaultValue: '考評檔案 · Assessment Bank' })}
             </p>
             <h1 className="mt-1.5 font-serif text-[28px] font-semibold leading-none tracking-tight text-slate-800 dark:text-slate-100 sm:text-[34px]">
-              BAFS 題庫
+              {t('qbank.title', { defaultValue: 'BAFS 題庫' })}
             </h1>
             <p className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-slate-500 dark:text-slate-400">
               <span className="tabular-nums">
-                存題 {stats.total} 條 · 覆蓋 {stats.topicsCovered}/{topics.length} 個課題
+                {t('qbank.subtitleCount', { defaultValue: `存題 ${stats.total} 條 · 覆蓋 ${stats.topicsCovered}/${topics.length} 個課題`, total: stats.total, covered: stats.topicsCovered, topicsLen: topics.length })}
               </span>
               {stats.total > 0 && (
                 <>
                   <span aria-hidden className="text-slate-300 dark:text-slate-600">·</span>
                   <span className="inline-flex items-center gap-1 font-medium text-accent-strong dark:text-accent">
-                    <Scale size={12} /> 卷面難度 {difficultyIndexLabel(stats.difficultyIndex)}
+                    <Scale size={12} /> {t('qbank.subtitleDifficulty', { defaultValue: `卷面難度 ${difficultyIndexLabel(stats.difficultyIndex)}`, label: difficultyIndexLabel(stats.difficultyIndex) })}
                   </span>
                 </>
               )}
@@ -485,9 +489,9 @@ export default function QuestionBank() {
               value={view}
               onChange={setView}
               options={[
-                { id: 'bank', label: '題庫', icon: BookMarked },
-                { id: 'analytics', label: '統計', icon: BarChart3 },
-                { id: 'paper', label: '組卷', icon: FileText },
+                { id: 'bank', label: t('qbank.tabBank', { defaultValue: '題庫' }), icon: BookMarked },
+                { id: 'analytics', label: t('qbank.tabAnalytics', { defaultValue: '統計' }), icon: BarChart3 },
+                { id: 'paper', label: t('qbank.tabPaper', { defaultValue: '組卷' }), icon: FileText },
               ]}
             />
           </div>
@@ -502,32 +506,32 @@ export default function QuestionBank() {
       {/* ───────── 改卷員清點帶：hairline grid · serif 大數字 ───────── */}
       <section className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl bg-slate-200/70 ring-1 ring-slate-200/80 dark:bg-slate-700/50 dark:ring-slate-700/60 sm:grid-cols-4">
         <TallyStat
-          label="題目總數"
+          label={t('qbank.tallyTotal', { defaultValue: '題目總數' })}
           value={stats.total}
-          unit="條"
+          unit={t('qbank.tallyTotalUnit', { defaultValue: '條' })}
           icon={BookMarked}
-          hint="入卷的題庫存量"
+          hint={t('qbank.tallyTotalHint', { defaultValue: '入卷的題庫存量' })}
         />
         <TallyStat
-          label="即用題"
+          label={t('qbank.tallyReady', { defaultValue: '即用題' })}
           value={stats.withAnswer}
-          unit="條"
+          unit={t('qbank.tallyReadyUnit', { defaultValue: '條' })}
           icon={CheckCheck}
-          hint="已附答案／完整選項"
+          hint={t('qbank.tallyReadyHint', { defaultValue: '已附答案／完整選項' })}
           hot={stats.total > 0 && stats.withAnswer === stats.total}
         />
         <TallyStat
-          label="總分值"
+          label={t('qbank.tallyMarks', { defaultValue: '總分值' })}
           value={stats.totalMarks}
-          unit="分"
+          unit={t('qbank.tallyMarksUnit', { defaultValue: '分' })}
           icon={Scale}
-          hint="全題庫合計分數"
+          hint={t('qbank.tallyMarksHint', { defaultValue: '全題庫合計分數' })}
         />
         <TallyStat
-          label="難度指數"
+          label={t('qbank.tallyDiff', { defaultValue: '難度指數' })}
           value={stats.difficultyIndex}
           icon={Target}
-          hint={difficultyIndexLabel(stats.difficultyIndex)}
+          hint={t('qbank.tallyDiffHint', { defaultValue: difficultyIndexLabel(stats.difficultyIndex), label: difficultyIndexLabel(stats.difficultyIndex) })}
         />
       </section>
 
@@ -694,6 +698,7 @@ function BankView(props: {
     exportSelected,
   } = props
 
+  const { t } = useTranslation()
   const allFilteredSelected =
     filtered.length > 0 && filtered.every((q) => selected.has(q.id))
 
@@ -704,7 +709,7 @@ function BankView(props: {
         <Input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="搜尋題幹／選項／答案…"
+          placeholder={t('qbank.searchPlaceholder', { defaultValue: '搜尋題幹／選項／答案…' })}
           icon={Search}
           className="min-w-[160px] flex-1"
         />
@@ -718,7 +723,7 @@ function BankView(props: {
               if (selectMode) clearSelection()
             }}
           >
-            {selectMode ? '退出選取' : '選取'}
+            {selectMode ? t('qbank.btnExitSelect', { defaultValue: '退出選取' }) : t('qbank.btnSelect', { defaultValue: '選取' })}
           </Button>
           <Button
             variant="ghost"
@@ -727,7 +732,7 @@ function BankView(props: {
             onClick={onShowDup}
             className="relative"
           >
-            查重
+            {t('qbank.btnDupCheck', { defaultValue: '查重' })}
             {dupCount > 0 && (
               <span className="ml-1 inline-flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-bold tabular-nums text-white">
                 {dupCount}
@@ -735,17 +740,17 @@ function BankView(props: {
             )}
           </Button>
           <Button variant="ghost" size="sm" icon={Upload} onClick={onShowImport}>
-            匯入
+            {t('qbank.btnImport', { defaultValue: '匯入' })}
           </Button>
           <Button variant="ghost" size="sm" icon={Download} onClick={exportSelected}>
-            匯出
+            {t('qbank.btnExport', { defaultValue: '匯出' })}
           </Button>
           <span className="mx-0.5 hidden h-5 w-px bg-slate-200 dark:bg-slate-700/60 sm:block" />
           <Button variant="secondary" size="sm" icon={Sparkles} onClick={onShowAI}>
-            AI 出題
+            {t('qbank.btnAI', { defaultValue: 'AI 出題' })}
           </Button>
           <Button size="sm" icon={Plus} onClick={openAdd}>
-            新增題目
+            {t('qbank.btnAddQuestion', { defaultValue: '新增題目' })}
           </Button>
         </div>
       </div>
@@ -758,10 +763,10 @@ function BankView(props: {
             onChange={(e) => setFTopic(e.target.value)}
             className="max-w-[220px] flex-1"
           >
-            <option value="">全部課題</option>
-            {topics.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.topic}
+            <option value="">{t('qbank.filterAllTopics', { defaultValue: '全部課題' })}</option>
+            {topics.map((tp) => (
+              <option key={tp.id} value={tp.id}>
+                {tp.topic}
               </option>
             ))}
           </Select>
@@ -778,19 +783,19 @@ function BankView(props: {
           </Select>
           {filterActive && (
             <Button variant="ghost" size="sm" icon={X} onClick={clearFilters}>
-              清除篩選
+              {t('qbank.btnClearFilters', { defaultValue: '清除篩選' })}
             </Button>
           )}
         </div>
         <div className="flex flex-col gap-2.5 border-t border-slate-100 pt-3 dark:border-slate-700/60">
           <div className="flex flex-wrap items-center gap-2">
             <span className="w-9 shrink-0 text-xs font-medium text-slate-400 dark:text-slate-500">
-              題型
+              {t('qbank.filterTypeLbl', { defaultValue: '題型' })}
             </span>
             <Pills
               options={[
-                { id: '', label: '全部' },
-                ...TYPE_ORDER.map((t) => ({ id: t, label: TYPE_LABEL[t] })),
+                { id: '', label: t('qbank.filterAll', { defaultValue: '全部' }) },
+                ...TYPE_ORDER.map((tp) => ({ id: tp, label: TYPE_LABEL[tp] })),
               ]}
               active={fType}
               onChange={(v) => setFType(v as '' | QuestionType)}
@@ -800,11 +805,11 @@ function BankView(props: {
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <span className="w-9 shrink-0 text-xs font-medium text-slate-400 dark:text-slate-500">
-              難度
+              {t('qbank.filterDiffLbl', { defaultValue: '難度' })}
             </span>
             <Pills
               options={[
-                { id: '', label: '全部' },
+                { id: '', label: t('qbank.filterAll', { defaultValue: '全部' }) },
                 ...DIFF_ORDER.map((d) => ({ id: d, label: DIFF_LABEL[d] })),
               ]}
               active={fDiff}
@@ -825,10 +830,10 @@ function BankView(props: {
             className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-sm font-medium text-accent-strong transition hover:bg-accent/10 dark:text-accent"
           >
             {allFilteredSelected ? <CheckSquare size={16} /> : <Square size={16} />}
-            全選（<span className="tabular-nums">{filtered.length}</span>）
+            {t('qbank.bulkSelectAll', { defaultValue: `全選（${filtered.length}）`, count: filtered.length })}
           </button>
           <span className="text-sm text-slate-600 dark:text-slate-300">
-            已選 <span className="nums font-bold text-accent-strong dark:text-accent">{selected.size}</span> 條 · <span className="nums">{selectedMarks}</span> 分
+            {t('qbank.bulkSelected', { defaultValue: `已選 ${selected.size} 條 · ${selectedMarks} 分`, count: selected.size, marks: selectedMarks })}
           </span>
           <div className="ml-auto flex flex-wrap items-center gap-2">
             <Select
@@ -840,10 +845,10 @@ function BankView(props: {
               className="w-32 text-xs"
               disabled={selected.size === 0}
             >
-              <option value="">改課題…</option>
-              {topics.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.topic}
+              <option value="">{t('qbank.bulkChangeTopic', { defaultValue: '改課題…' })}</option>
+              {topics.map((tp) => (
+                <option key={tp.id} value={tp.id}>
+                  {tp.topic}
                 </option>
               ))}
             </Select>
@@ -856,7 +861,7 @@ function BankView(props: {
               className="w-24 text-xs"
               disabled={selected.size === 0}
             >
-              <option value="">改難度…</option>
+              <option value="">{t('qbank.bulkChangeDiff', { defaultValue: '改難度…' })}</option>
               {DIFF_ORDER.map((d) => (
                 <option key={d} value={d}>
                   {DIFF_LABEL[d]}
@@ -870,7 +875,7 @@ function BankView(props: {
               onClick={bulkDelete}
               disabled={selected.size === 0}
             >
-              刪除
+              {t('qbank.btnBulkDelete', { defaultValue: '刪除' })}
             </Button>
           </div>
         </Card>
@@ -884,11 +889,11 @@ function BankView(props: {
             className="text-xs tabular-nums text-slate-400 dark:text-slate-500"
             aria-live="polite"
           >
-            共 {filtered.length} 條
+            {t('qbank.sectionCount', { defaultValue: `共 ${filtered.length} 條`, count: filtered.length })}
           </span>
         }
       >
-        卷面題目
+        {t('qbank.sectionQuestions', { defaultValue: '卷面題目' })}
       </SectionLabel>
       <ul className="space-y-2.5">
         {filtered.map((q, idx) => {
@@ -912,7 +917,7 @@ function BankView(props: {
                       checked={selected.has(q.id)}
                       onChange={() => toggleSelect(q.id)}
                       className="mt-1 h-4 w-4 shrink-0 accent-[color:var(--accent)]"
-                      aria-label="選取題目"
+                      aria-label={t('qbank.ariaSelectQuestion', { defaultValue: '選取題目' })}
                     />
                   )}
                   {/* 卷面題號牌 */}
@@ -932,14 +937,14 @@ function BankView(props: {
                     />
                   </button>
                   <div className="flex shrink-0 items-center gap-0.5 opacity-100 transition sm:opacity-60 sm:group-hover/q:opacity-100">
-                    <IconButton label="複製題目" onClick={() => duplicateQuestion(q)}>
+                    <IconButton label={t('qbank.ariaCopyQuestion', { defaultValue: '複製題目' })} onClick={() => duplicateQuestion(q)}>
                       <Copy size={16} />
                     </IconButton>
-                    <IconButton label="編輯題目" onClick={() => openEdit(q)}>
+                    <IconButton label={t('qbank.ariaEditQuestion', { defaultValue: '編輯題目' })} onClick={() => openEdit(q)}>
                       <Pencil size={16} />
                     </IconButton>
                     <IconButton
-                      label="刪除題目"
+                      label={t('qbank.ariaDeleteQuestion', { defaultValue: '刪除題目' })}
                       tone="danger"
                       onClick={() => removeQuestion(q)}
                     >
@@ -962,7 +967,7 @@ function BankView(props: {
               <div className="ml-[3.25rem] mt-3.5 rounded-2xl border border-slate-200/70 bg-slate-50/70 p-3.5 text-sm dark:border-slate-700/50 dark:bg-slate-900/30">
                 <p className="mb-2.5 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">
                   <Check size={12} className="text-emerald-500" />
-                  評卷參考 · Marking Scheme
+                  {t('qbank.markingSchemeLabel', { defaultValue: '評卷參考 · Marking Scheme' })}
                 </p>
                 {q.type === 'mc' && q.options && (
                   <ul className="space-y-1">
@@ -990,7 +995,7 @@ function BankView(props: {
                           </span>
                           <span className="min-w-0 break-words">{o}</span>
                           {correct && (
-                            <Check size={14} className="shrink-0" aria-label="正確答案" />
+                            <Check size={14} className="shrink-0" aria-label={t('qbank.ariaCorrectAnswer', { defaultValue: '正確答案' })} />
                           )}
                         </li>
                       )
@@ -1005,7 +1010,7 @@ function BankView(props: {
                 {q.type !== 'mc' && !q.answer && (
                   <p className="flex items-center gap-1.5 text-xs italic text-slate-400 dark:text-slate-500">
                     <PenLine size={13} />
-                    仲未擬好評卷參考——撳編輯補上。
+                    {t('qbank.noMarkingScheme', { defaultValue: '仲未擬好評卷參考——撳編輯補上。' })}
                   </p>
                 )}
               </div>
@@ -1019,25 +1024,25 @@ function BankView(props: {
       {filtered.length === 0 && (
         <EmptyState
           icon={filterActive ? Search : ScrollText}
-          title={filterActive ? '篩唔到相符嘅題目' : '題庫仲係一張白卷'}
+          title={filterActive ? t('qbank.emptyFilterTitle', { defaultValue: '篩唔到相符嘅題目' }) : t('qbank.emptyBankTitle', { defaultValue: '題庫仲係一張白卷' })}
           hint={
             filterActive
-              ? '試吓放寬篩選條件，或者用 AI 出題 / 匯入 CSV 補充題量。'
-              : '由零開始入第一條題：手動擬卷、叫 AI 幫你草擬，或者匯入現成 CSV。'
+              ? t('qbank.emptyFilterHint', { defaultValue: '試吓放寬篩選條件，或者用 AI 出題 / 匯入 CSV 補充題量。' })
+              : t('qbank.emptyBankHint', { defaultValue: '由零開始入第一條題：手動擬卷、叫 AI 幫你草擬，或者匯入現成 CSV。' })
           }
           action={
             <div className="flex flex-wrap justify-center gap-2">
               {filterActive ? (
                 <Button variant="secondary" icon={X} onClick={clearFilters}>
-                  清除篩選
+                  {t('qbank.btnEmptyClear', { defaultValue: '清除篩選' })}
                 </Button>
               ) : (
                 <>
                   <Button icon={Plus} onClick={openAdd}>
-                    擬第一條題
+                    {t('qbank.btnEmptyAdd', { defaultValue: '擬第一條題' })}
                   </Button>
                   <Button variant="secondary" icon={Sparkles} onClick={onShowAI}>
-                    AI 出題
+                    {t('qbank.btnEmptyAI', { defaultValue: 'AI 出題' })}
                   </Button>
                 </>
               )}
@@ -1101,6 +1106,7 @@ function AnalyticsView({
   topics: { id: string; topic: string; area?: string }[]
   stats: ReturnType<typeof computeStats>
 }) {
+  const { t } = useTranslation()
   const rows = useMemo(
     () => buildTopicRows(questions, topics),
     [questions, topics],
@@ -1115,8 +1121,8 @@ function AnalyticsView({
     return (
       <EmptyState
         icon={BarChart3}
-        title="未有題目，畫唔到卷面分析"
-        hint="入幾條題之後，呢度會出現題型佔比、難度分佈同課題覆蓋熱圖，幫你睇住份卷夠唔夠均衡。"
+        title={t('qbank.analyticsEmptyTitle', { defaultValue: '未有題目，畫唔到卷面分析' })}
+        hint={t('qbank.analyticsEmptyHint', { defaultValue: '入幾條題之後，呢度會出現題型佔比、難度分佈同課題覆蓋熱圖，幫你睇住份卷夠唔夠均衡。' })}
       />
     )
 
@@ -1124,15 +1130,15 @@ function AnalyticsView({
     <div className="space-y-4">
       <div className="grid gap-4 lg:grid-cols-2">
         <Card className="p-4 sm:p-5">
-          <ChartHead icon={Layers} tone="blue">題型佔比</ChartHead>
+          <ChartHead icon={Layers} tone="blue">{t('qbank.chartTypeTitle', { defaultValue: '題型佔比' })}</ChartHead>
           <TypeDonut byType={stats.byType} />
         </Card>
         <Card className="p-4 sm:p-5">
-          <ChartHead icon={BarChart3} tone="amber">難度分佈</ChartHead>
+          <ChartHead icon={BarChart3} tone="amber">{t('qbank.chartDiffTitle', { defaultValue: '難度分佈' })}</ChartHead>
           <DifficultyBars byDiff={stats.byDiff} />
           <div className="mt-4 rounded-xl bg-slate-50 p-3 dark:bg-slate-900/40">
             <div className="flex items-center justify-between text-xs">
-              <span className="text-slate-500 dark:text-slate-400">卷面難度指數</span>
+              <span className="text-slate-500 dark:text-slate-400">{t('qbank.chartDiffIndex', { defaultValue: '卷面難度指數' })}</span>
               <span className="font-semibold tabular-nums text-slate-700 dark:text-slate-200">
                 {stats.difficultyIndex} · {difficultyIndexLabel(stats.difficultyIndex)}
               </span>
@@ -1148,16 +1154,16 @@ function AnalyticsView({
       </div>
 
       <Card className="p-4 sm:p-5">
-        <ChartHead icon={BookMarked} tone="accent">課題覆蓋矩陣</ChartHead>
+        <ChartHead icon={BookMarked} tone="accent">{t('qbank.chartTopicsTitle', { defaultValue: '課題覆蓋矩陣' })}</ChartHead>
         <CoverageMatrix rows={rows} />
       </Card>
 
       <div className="grid gap-4 lg:grid-cols-2">
         <Card className="p-4 sm:p-5">
-          <ChartHead icon={Sparkles} tone="violet">題目最多嘅課題</ChartHead>
+          <ChartHead icon={Sparkles} tone="violet">{t('qbank.chartTopRankTitle', { defaultValue: '題目最多嘅課題' })}</ChartHead>
           {topTopics.length === 0 ? (
             <p className="py-4 text-center text-sm text-slate-400 dark:text-slate-500">
-              未有資料
+              {t('qbank.chartTopRankEmpty', { defaultValue: '未有資料' })}
             </p>
           ) : (
             <ul className="space-y-2.5">
@@ -1204,7 +1210,7 @@ function AnalyticsView({
             tone="rose"
             right={gaps.length > 0 ? <Badge tone="rose">{gaps.length}</Badge> : undefined}
           >
-            覆蓋缺口
+            {t('qbank.chartGapsTitle', { defaultValue: '覆蓋缺口' })}
           </ChartHead>
           {gaps.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-6 text-center">
@@ -1212,13 +1218,13 @@ function AnalyticsView({
                 <Check size={26} />
               </span>
               <p className="mt-3 text-sm font-medium text-slate-600 dark:text-slate-300">
-                所有課題都有題目，覆蓋完整！
+                {t('qbank.gapsAllCovered', { defaultValue: '所有課題都有題目，覆蓋完整！' })}
               </p>
             </div>
           ) : (
             <>
               <p className="mb-2.5 text-xs text-slate-400 dark:text-slate-500">
-                以下課題仲未有任何題目，建議補題：
+                {t('qbank.gapsHint', { defaultValue: '以下課題仲未有任何題目，建議補題：' })}
               </p>
               <ul className="flex flex-wrap gap-1.5">
                 {gaps.map((g) => (
@@ -1247,6 +1253,7 @@ function PaperStudio({
   topics: { id: string; topic: string }[]
   topicName: (id: string) => string
 }) {
+  const { t } = useTranslation()
   const toast = useToast()
   const confirm = useConfirm()
   const papers = useCollection(papersCol)
@@ -1299,7 +1306,7 @@ function PaperStudio({
   const runAuto = () => {
     const { picked: chosen, shortfall } = assemblePaper(questions, bp)
     if (chosen.length === 0) {
-      toast.error('題池唔夠，抽唔到題目。試吓放寬範圍或補題。')
+      toast.error(t('qbank.toastAutoEmpty', { defaultValue: '題池唔夠，抽唔到題目。試吓放寬範圍或補題。' }))
       return
     }
     setPicked(chosen.map((q) => q.id))
@@ -1307,18 +1314,20 @@ function PaperStudio({
     const miss = DIFF_ORDER.filter((d) => shortfall[d] > 0)
     if (miss.length > 0) {
       toast.error(
-        `已抽 ${chosen.length} 題，但${miss
-          .map((d) => `${DIFF_LABEL[d]}欠 ${shortfall[d]}`)
-          .join('、')}（題池不足）`,
+        t('qbank.toastAutoShortfall', {
+          defaultValue: `已抽 ${chosen.length} 題，但${miss.map((d) => `${DIFF_LABEL[d]}欠 ${shortfall[d]}`).join('、')}（題池不足）`,
+          count: chosen.length,
+          shortfalls: miss.map((d) => `${DIFF_LABEL[d]}欠 ${shortfall[d]}`).join('、'),
+        }),
       )
     } else {
-      toast.success(`已自動組成 ${chosen.length} 題試卷`)
+      toast.success(t('qbank.toastAutoAssembled', { defaultValue: `已自動組成 ${chosen.length} 題試卷`, count: chosen.length }))
     }
   }
 
   const savePaper = () => {
     if (picked.length === 0) {
-      toast.error('未有題目，組卷後先可儲存')
+      toast.error(t('qbank.toastSavePaperEmpty', { defaultValue: '未有題目，組卷後先可儲存' }))
       return
     }
     papersCol.add({
@@ -1328,31 +1337,31 @@ function PaperStudio({
       questionIds: picked,
       createdAt: new Date().toISOString(),
     })
-    toast.success('已儲存試卷')
+    toast.success(t('qbank.toastSavedPaper', { defaultValue: '已儲存試卷' }))
   }
 
   const loadPaper = (p: SavedPaper) => {
     setPicked(p.questionIds.filter((id) => questions.some((q) => q.id === id)))
     setMeta({ title: p.title, className: p.className, durationMin: p.durationMin })
     setMode('manual')
-    toast.success(`已載入「${p.title}」`)
+    toast.success(t('qbank.toastLoadedPaper', { defaultValue: `已載入「${p.title}」`, title: p.title }))
   }
 
   const deletePaper = async (p: SavedPaper) => {
     const ok = await confirm({
-      title: '刪除試卷？',
-      message: `將會刪除「${p.title}」（唔影響題庫題目）。`,
-      confirmText: '刪除',
+      title: t('qbank.confirmDeletePaperTitle', { defaultValue: '刪除試卷？' }),
+      message: t('qbank.confirmDeletePaperMsg', { defaultValue: `將會刪除「${p.title}」（唔影響題庫題目）。`, title: p.title }),
+      confirmText: t('qbank.confirmDeletePaperBtn', { defaultValue: '刪除' }),
       tone: 'danger',
     })
     if (!ok) return
     papersCol.remove(p.id)
-    toast.success('已刪除試卷')
+    toast.success(t('qbank.toastPaperDeleted', { defaultValue: '已刪除試卷' }))
   }
 
   const print = (withAnswers: boolean) => {
     if (pickedQuestions.length === 0) {
-      toast.error('未有題目可列印')
+      toast.error(t('qbank.toastPrintEmpty', { defaultValue: '未有題目可列印' }))
       return
     }
     const html = buildPrintHtml(
@@ -1362,7 +1371,7 @@ function PaperStudio({
       withAnswers,
     )
     const ok = openPrintWindow(html)
-    if (!ok) toast.error('瀏覽器擋咗彈出視窗，請允許後再試。')
+    if (!ok) toast.error(t('qbank.toastPrintBlocked', { defaultValue: '瀏覽器擋咗彈出視窗，請允許後再試。' }))
   }
 
   const setCount = (d: Difficulty, v: string) =>
@@ -1384,23 +1393,23 @@ function PaperStudio({
       {/* 試卷設定 */}
       <Card className="space-y-3 p-4">
         <div className="grid gap-3 sm:grid-cols-3">
-          <Field label="試卷標題">
+          <Field label={t('qbank.fieldPaperTitle', { defaultValue: '試卷標題' })}>
             <Input
               value={meta.title}
               onChange={(e) => setMeta((m) => ({ ...m, title: e.target.value }))}
-              placeholder="BAFS 自擬試卷"
+              placeholder={t('qbank.fieldPaperTitlePlaceholder', { defaultValue: 'BAFS 自擬試卷' })}
             />
           </Field>
-          <Field label="班別">
+          <Field label={t('qbank.fieldClassName', { defaultValue: '班別' })}>
             <Input
               value={meta.className}
               onChange={(e) =>
                 setMeta((m) => ({ ...m, className: e.target.value }))
               }
-              placeholder="例如 5A"
+              placeholder={t('qbank.fieldClassNamePlaceholder', { defaultValue: '例如 5A' })}
             />
           </Field>
-          <Field label="時限（分鐘）">
+          <Field label={t('qbank.fieldDuration', { defaultValue: '時限（分鐘）' })}>
             <Input
               value={meta.durationMin}
               onChange={(e) =>
@@ -1409,7 +1418,7 @@ function PaperStudio({
                   durationMin: e.target.value.replace(/\D/g, ''),
                 }))
               }
-              placeholder="例如 60"
+              placeholder={t('qbank.fieldDurationPlaceholder', { defaultValue: '例如 60' })}
               inputMode="numeric"
               className="w-28"
             />
@@ -1418,8 +1427,8 @@ function PaperStudio({
 
         <SegmentedControl<'manual' | 'auto'>
           options={[
-            { id: 'manual', label: '手動揀題', icon: FolderOpen },
-            { id: 'auto', label: '藍圖自動組卷', icon: Wand2 },
+            { id: 'manual', label: t('qbank.modeManual', { defaultValue: '手動揀題' }), icon: FolderOpen },
+            { id: 'auto', label: t('qbank.modeAuto', { defaultValue: '藍圖自動組卷' }), icon: Wand2 },
           ]}
           value={mode}
           onChange={setMode}
@@ -1428,11 +1437,11 @@ function PaperStudio({
         {mode === 'auto' && (
           <div className="space-y-3.5 rounded-2xl border border-slate-200/80 bg-slate-50/60 p-4 dark:border-slate-700/60 dark:bg-slate-900/40">
             <p className="text-xs leading-relaxed text-slate-500 dark:text-slate-400">
-              設定每個難度想出幾題，系統會喺範圍內隨機抽題並盡量平均覆蓋課題。
+              {t('qbank.bpHint', { defaultValue: '設定每個難度想出幾題，系統會喺範圍內隨機抽題並盡量平均覆蓋課題。' })}
             </p>
             <div className="grid grid-cols-3 gap-2">
               {DIFF_ORDER.map((d) => (
-                <Field key={d} label={`${DIFF_LABEL[d]}（題）`}>
+                <Field key={d} label={t('qbank.bpDiffLabel', { defaultValue: `${DIFF_LABEL[d]}（題）`, diff: DIFF_LABEL[d] })}>
                   <Input
                     value={String(bp.counts[d])}
                     onChange={(e) => setCount(d, e.target.value)}
@@ -1441,11 +1450,11 @@ function PaperStudio({
                 </Field>
               ))}
             </div>
-            <Field label="限定題型（可不限）">
+            <Field label={t('qbank.bpTypeLabel', { defaultValue: '限定題型（可不限）' })}>
               <Pills
                 options={[
-                  { id: '', label: '不限' },
-                  ...TYPE_ORDER.map((t) => ({ id: t, label: TYPE_LABEL[t] })),
+                  { id: '', label: t('qbank.bpTypeAll', { defaultValue: '不限' }) },
+                  ...TYPE_ORDER.map((tp) => ({ id: tp, label: TYPE_LABEL[tp] })),
                 ]}
                 active={bp.type}
                 onChange={(v) => setBp((p) => ({ ...p, type: v as '' | QuestionType }))}
@@ -1454,7 +1463,7 @@ function PaperStudio({
             </Field>
             <div>
               <p className="mb-1.5 text-xs font-medium text-slate-600 dark:text-slate-300">
-                限定課題（唔揀 = 全部 {topics.length} 個）
+                {t('qbank.bpTopicLabel', { defaultValue: `限定課題（唔揀 = 全部 ${topics.length} 個）`, count: topics.length })}
               </p>
               <div className="flex max-h-32 flex-wrap gap-1.5 overflow-y-auto">
                 {topics.map((t) => {
@@ -1479,10 +1488,10 @@ function PaperStudio({
             </div>
             <div className="flex items-center justify-between">
               <span className="text-xs text-slate-500 dark:text-slate-400">
-                合共抽 <span className="nums font-semibold">{bpTotal}</span> 題
+                {t('qbank.bpTotalDraw', { defaultValue: `合共抽 ${bpTotal} 題`, total: bpTotal })}
               </span>
               <Button icon={Wand2} onClick={runAuto} disabled={bpTotal === 0}>
-                自動組卷
+                {t('qbank.btnAutoAssemble', { defaultValue: '自動組卷' })}
               </Button>
             </div>
           </div>
@@ -1496,17 +1505,17 @@ function PaperStudio({
             <div className="mb-3 flex items-center justify-between">
               <h3 className="flex items-center gap-1.5 text-sm font-semibold text-slate-700 dark:text-slate-200">
                 <FolderOpen size={15} className="text-slate-400" />
-                題池
+                {t('qbank.poolTitle', { defaultValue: '題池' })}
               </h3>
               <span className="text-xs tabular-nums text-slate-400 dark:text-slate-500">
-                {candidatePool.length} 條可揀
+                {t('qbank.poolCount', { defaultValue: `${candidatePool.length} 條可揀`, count: candidatePool.length })}
               </span>
             </div>
             <div className="space-y-2">
               <Input
                 value={mSearch}
                 onChange={(e) => setMSearch(e.target.value)}
-                placeholder="搜尋題幹…"
+                placeholder={t('qbank.poolSearchPlaceholder', { defaultValue: '搜尋題幹…' })}
                 icon={Search}
               />
               <div className="flex gap-2">
@@ -1515,10 +1524,10 @@ function PaperStudio({
                   onChange={(e) => setMTopic(e.target.value)}
                   className="flex-1 text-xs"
                 >
-                  <option value="">全部課題</option>
-                  {topics.map((t) => (
-                    <option key={t.id} value={t.id}>
-                      {t.topic}
+                  <option value="">{t('qbank.poolFilterAllTopics', { defaultValue: '全部課題' })}</option>
+                  {topics.map((tp) => (
+                    <option key={tp.id} value={tp.id}>
+                      {tp.topic}
                     </option>
                   ))}
                 </Select>
@@ -1527,10 +1536,10 @@ function PaperStudio({
                   onChange={(e) => setMType(e.target.value as '' | QuestionType)}
                   className="w-24 text-xs"
                 >
-                  <option value="">題型</option>
-                  {TYPE_ORDER.map((t) => (
-                    <option key={t} value={t}>
-                      {TYPE_LABEL[t]}
+                  <option value="">{t('qbank.poolFilterType', { defaultValue: '題型' })}</option>
+                  {TYPE_ORDER.map((tp) => (
+                    <option key={tp} value={tp}>
+                      {TYPE_LABEL[tp]}
                     </option>
                   ))}
                 </Select>
@@ -1539,7 +1548,7 @@ function PaperStudio({
                   onChange={(e) => setMDiff(e.target.value as '' | Difficulty)}
                   className="w-20 text-xs"
                 >
-                  <option value="">難度</option>
+                  <option value="">{t('qbank.poolFilterDiff', { defaultValue: '難度' })}</option>
                   {DIFF_ORDER.map((d) => (
                     <option key={d} value={d}>
                       {DIFF_LABEL[d]}
@@ -1574,7 +1583,7 @@ function PaperStudio({
                       </div>
                     </div>
                     <IconButton
-                      label={on ? '已加入' : '加入試卷'}
+                      label={on ? t('qbank.ariaAddedToPaper', { defaultValue: '已加入' }) : t('qbank.ariaAddToPaper', { defaultValue: '加入試卷' })}
                       onClick={() => (on ? removeFromPaper(q.id) : addToPaper(q.id))}
                       active={on}
                     >
@@ -1585,7 +1594,7 @@ function PaperStudio({
               })}
               {candidatePool.length === 0 && (
                 <li className="py-6 text-center text-xs text-slate-400 dark:text-slate-500">
-                  未有符合條件嘅題目
+                  {t('qbank.poolEmpty', { defaultValue: '未有符合條件嘅題目' })}
                 </li>
               )}
             </ul>
@@ -1597,26 +1606,25 @@ function PaperStudio({
           <div className="mb-3 flex items-center justify-between gap-2 border-b border-dashed border-slate-200 pb-3 dark:border-slate-700/60">
             <div className="min-w-0">
               <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-accent/70">
-                卷面預覽
+                {t('qbank.previewKicker', { defaultValue: '卷面預覽' })}
               </p>
               <h3 className="truncate font-serif text-base font-semibold text-slate-800 dark:text-slate-100">
                 {meta.title.trim() || 'BAFS 自擬試卷'}
               </h3>
             </div>
             <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-500 dark:bg-slate-800 dark:text-slate-400">
-              <span className="nums font-semibold text-slate-700 dark:text-slate-200">{pickedQuestions.length}</span> 題 ·{' '}
-              <span className="nums font-semibold text-slate-700 dark:text-slate-200">{totalMarks}</span> 分
+              {t('qbank.previewCountMarks', { defaultValue: `${pickedQuestions.length} 題 · ${totalMarks} 分`, count: pickedQuestions.length, marks: totalMarks })}
             </span>
           </div>
 
           {pickedQuestions.length === 0 ? (
             <EmptyState
               icon={FileText}
-              title="試卷仲係空白卷"
+              title={t('qbank.paperEmptyTitle', { defaultValue: '試卷仲係空白卷' })}
               hint={
                 mode === 'manual'
-                  ? '由左邊題池揀題入卷，或者切去「藍圖自動組卷」一鍵抽題。'
-                  : '設定每個難度想出幾題，撳「自動組卷」就幫你抽好。'
+                  ? t('qbank.paperEmptyHintManual', { defaultValue: '由左邊題池揀題入卷，或者切去「藍圖自動組卷」一鍵抽題。' })
+                  : t('qbank.paperEmptyHintAuto', { defaultValue: '設定每個難度想出幾題，撳「自動組卷」就幫你抽好。' })
               }
             />
           ) : (
@@ -1643,7 +1651,7 @@ function PaperStudio({
                   </div>
                   <div className="flex shrink-0 flex-col">
                     <IconButton
-                      label="上移"
+                      label={t('qbank.ariaUp', { defaultValue: '上移' })}
                       size="sm"
                       onClick={() => moveQuestion(idx, -1)}
                       disabled={idx === 0}
@@ -1651,7 +1659,7 @@ function PaperStudio({
                       <ArrowLeft size={14} className="rotate-90" />
                     </IconButton>
                     <IconButton
-                      label="下移"
+                      label={t('qbank.ariaDown', { defaultValue: '下移' })}
                       size="sm"
                       onClick={() => moveQuestion(idx, 1)}
                       disabled={idx === pickedQuestions.length - 1}
@@ -1660,7 +1668,7 @@ function PaperStudio({
                     </IconButton>
                   </div>
                   <IconButton
-                    label="移除"
+                    label={t('qbank.ariaRemove', { defaultValue: '移除' })}
                     tone="danger"
                     onClick={() => removeFromPaper(q.id)}
                   >
@@ -1674,16 +1682,16 @@ function PaperStudio({
           {pickedQuestions.length > 0 && (
             <div className="mt-4 flex flex-wrap gap-2 border-t border-slate-100 pt-4 dark:border-slate-700">
               <Button variant="secondary" icon={Printer} onClick={() => print(false)}>
-                列印試卷
+                {t('qbank.btnPrint', { defaultValue: '列印試卷' })}
               </Button>
               <Button variant="secondary" icon={Printer} onClick={() => print(true)}>
-                列印（連答案）
+                {t('qbank.btnPrintAnswers', { defaultValue: '列印（連答案）' })}
               </Button>
               <Button icon={Save} onClick={savePaper}>
-                儲存試卷
+                {t('qbank.btnSavePaper', { defaultValue: '儲存試卷' })}
               </Button>
               <Button variant="ghost" icon={X} onClick={() => setPicked([])}>
-                清空
+                {t('qbank.btnClearPaper', { defaultValue: '清空' })}
               </Button>
             </div>
           )}
@@ -1695,7 +1703,7 @@ function PaperStudio({
         <Card className="p-4">
           <h3 className="mb-3 flex items-center gap-1.5 text-sm font-semibold text-slate-700 dark:text-slate-200">
             <Layers size={15} />
-            已儲存試卷
+            {t('qbank.savedPapersTitle', { defaultValue: '已儲存試卷' })}
             <Badge tone="slate">{papers.length}</Badge>
           </h3>
           <ul className="space-y-2">
@@ -1715,15 +1723,14 @@ function PaperStudio({
                     </p>
                     <p className="text-xs text-slate-400 dark:text-slate-500">
                       {p.className ? `${p.className} · ` : ''}
-                      <span className="nums">{p.questionIds.length}</span> 題 ·{' '}
-                      {new Date(p.createdAt).toLocaleDateString('zh-HK')}
+                      {t('qbank.savedPaperMeta', { defaultValue: `${p.questionIds.length} 題 · ${new Date(p.createdAt).toLocaleDateString('zh-HK')}`, count: p.questionIds.length, date: new Date(p.createdAt).toLocaleDateString('zh-HK') })}
                     </p>
                   </div>
                   <Button size="sm" variant="secondary" onClick={() => loadPaper(p)}>
-                    載入
+                    {t('qbank.btnLoadPaper', { defaultValue: '載入' })}
                   </Button>
                   <IconButton
-                    label="刪除試卷"
+                    label={t('qbank.ariaDeletePaper', { defaultValue: '刪除試卷' })}
                     tone="danger"
                     onClick={() => deletePaper(p)}
                   >
@@ -1750,6 +1757,7 @@ function QuestionFormModal({
   topics: { id: string; topic: string }[]
   onClose: () => void
 }) {
+  const { t } = useTranslation()
   const toast = useToast()
   const [form, setForm] = useState<FormState>(() =>
     editing ? formFromQuestion(editing) : emptyForm(topics[0]?.id ?? ''),
@@ -1776,10 +1784,10 @@ function QuestionFormModal({
     }
     if (editing) {
       questionsCol.update(editing.id, payload)
-      toast.success('已儲存題目修改')
+      toast.success(t('qbank.toastQuestionSaved', { defaultValue: '已儲存題目修改' }))
     } else {
       questionsCol.add({ ...payload, createdAt: new Date().toISOString() })
-      toast.success('已新增題目')
+      toast.success(t('qbank.toastQuestionAdded', { defaultValue: '已新增題目' }))
     }
     onClose()
   }
@@ -1794,22 +1802,22 @@ function QuestionFormModal({
           className="pointer-events-none absolute -right-5 top-3 hidden -rotate-6 select-none flex-col items-center rounded-xl border-2 border-dashed border-accent/20 px-4 py-2 font-serif text-[9px] font-semibold uppercase tracking-[0.28em] text-accent/25 dark:border-accent/25 dark:text-accent/25 sm:flex"
         >
           <PenLine size={13} className="mb-0.5" />
-          {editing ? '修題' : '擬題'}
+          {editing ? t('qbank.formDecalEdit', { defaultValue: '修題' }) : t('qbank.formDecalAdd', { defaultValue: '擬題' })}
         </span>
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <p className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.3em] text-accent/70">
               <ScrollText size={12} />
-              考評檔案 · Item
+              {t('qbank.formStampDecal', { defaultValue: '考評檔案 · Item' })}
             </p>
             <h2 className="mt-1.5 font-serif text-[24px] font-semibold leading-none tracking-tight text-slate-800 dark:text-slate-100 sm:text-[26px]">
-              {editing ? '修訂題目' : '擬定新題'}
+              {editing ? t('qbank.formTitleEdit', { defaultValue: '修訂題目' }) : t('qbank.formTitleAdd', { defaultValue: '擬定新題' })}
             </h2>
           </div>
           <button
             type="button"
             onClick={onClose}
-            aria-label="關閉"
+            aria-label={t('qbank.ariaClose', { defaultValue: '關閉' })}
             className="-mr-1.5 -mt-1 shrink-0 rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:hover:bg-slate-700"
           >
             <X size={18} />
@@ -1825,21 +1833,21 @@ function QuestionFormModal({
       <div className="space-y-5">
         {/* 試題檔頭 — 課題／題型／難度，收喺柔和子面板（同題幹分區） */}
         <section className="rounded-2xl border border-slate-200/80 bg-slate-50/60 p-4 dark:border-slate-700/60 dark:bg-slate-900/40">
-          <SectionLabel icon={Layers}>試題檔頭 · Classification</SectionLabel>
+          <SectionLabel icon={Layers}>{t('qbank.sectionClassification', { defaultValue: '試題檔頭 · Classification' })}</SectionLabel>
           <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
-            <Field label="課題">
+            <Field label={t('qbank.fieldTopic', { defaultValue: '課題' })}>
               <Select
                 value={form.topicId}
                 onChange={(e) => set('topicId', e.target.value)}
               >
-                {topics.map((t) => (
-                  <option key={t.id} value={t.id}>
-                    {t.topic}
+                {topics.map((tp) => (
+                  <option key={tp.id} value={tp.id}>
+                    {tp.topic}
                   </option>
                 ))}
               </Select>
             </Field>
-            <Field label="題型">
+            <Field label={t('qbank.fieldType', { defaultValue: '題型' })}>
               <Select
                 value={form.type}
                 onChange={(e) => set('type', e.target.value as QuestionType)}
@@ -1851,7 +1859,7 @@ function QuestionFormModal({
                 ))}
               </Select>
             </Field>
-            <Field label="難度">
+            <Field label={t('qbank.fieldDifficulty', { defaultValue: '難度' })}>
               <Select
                 value={form.difficulty}
                 onChange={(e) => set('difficulty', e.target.value as Difficulty)}
@@ -1879,19 +1887,19 @@ function QuestionFormModal({
           </div>
         </section>
 
-        <Field label="題幹 · Stem" required>
+        <Field label={t('qbank.fieldStem', { defaultValue: '題幹 · Stem' })} required>
           <Textarea
             value={form.stem}
             onChange={(e) => set('stem', e.target.value)}
-            placeholder="輸入題幹內容…"
+            placeholder={t('qbank.stemPlaceholder', { defaultValue: '輸入題幹內容…' })}
             rows={3}
           />
         </Field>
 
         {form.type === 'mc' ? (
           <Field
-            label="選項與正確答案 · Options"
-            hint="撳左邊 serif 字母圈，揀邊個係正確答案。"
+            label={t('qbank.fieldOptions', { defaultValue: '選項與正確答案 · Options' })}
+            hint={t('qbank.optionsHint', { defaultValue: '撳左邊 serif 字母圈，揀邊個係正確答案。' })}
           >
             <div className="space-y-2">
               {form.options.map((o, i) => {
@@ -1934,7 +1942,7 @@ function QuestionFormModal({
                           form.options.map((x, k) => (k === i ? e.target.value : x)),
                         )
                       }
-                      placeholder={`選項 ${String.fromCharCode(65 + i)}`}
+                      placeholder={t('qbank.optionPlaceholder', { defaultValue: `選項 ${String.fromCharCode(65 + i)}`, letter: String.fromCharCode(65 + i) })}
                     />
                     {/* 正確答案戳（呼應評卷參考綠章；常駐佔位免跳位） */}
                     <span
@@ -1947,7 +1955,7 @@ function QuestionFormModal({
                       aria-hidden={!on}
                     >
                       <Check size={12} />
-                      正確
+                      {t('qbank.correctLabel', { defaultValue: '正確' })}
                     </span>
                   </label>
                 )
@@ -1956,20 +1964,20 @@ function QuestionFormModal({
           </Field>
         ) : (
           <Field
-            label="評卷參考 · Marking Scheme"
-            hint="改卷員對照嘅標準答案／給分要點。"
+            label={t('qbank.fieldMarkingScheme', { defaultValue: '評卷參考 · Marking Scheme' })}
+            hint={t('qbank.markingSchemeHint', { defaultValue: '改卷員對照嘅標準答案／給分要點。' })}
           >
             <Textarea
               value={form.answer}
               onChange={(e) => set('answer', e.target.value)}
-              placeholder="輸入評卷參考…"
+              placeholder={t('qbank.markingSchemePlaceholder', { defaultValue: '輸入評卷參考…' })}
               rows={3}
             />
           </Field>
         )}
 
         {/* 配分 — 對齊卷面「分章」語言（Scale icon · serif tabular） */}
-        <Field label="配分 · Marks" hint="留空 = 此題唔計分。">
+        <Field label={t('qbank.fieldMarks', { defaultValue: '配分 · Marks' })} hint={t('qbank.marksHint', { defaultValue: '留空 = 此題唔計分。' })}>
           <div className="relative w-28">
             <Scale
               size={14}
@@ -1990,14 +1998,14 @@ function QuestionFormModal({
         <div className="-mx-5 mt-1 border-t border-slate-200 px-5 pt-4 dark:border-slate-700 sm:-mx-6 sm:px-6">
           <div className="flex items-center justify-end gap-2">
             <Button variant="secondary" onClick={onClose}>
-              取消
+              {t('qbank.btnCancel', { defaultValue: '取消' })}
             </Button>
             <Button
               icon={editing ? Save : Plus}
               onClick={save}
               disabled={!form.stem.trim() || !form.topicId}
             >
-              {editing ? '存檔修訂' : '入卷存題'}
+              {editing ? t('qbank.btnSaveEdit', { defaultValue: '存檔修訂' }) : t('qbank.btnSaveAdd', { defaultValue: '入卷存題' })}
             </Button>
           </div>
         </div>
@@ -2016,6 +2024,7 @@ function ImportModal({
   topics: { id: string; topic: string }[]
   onClose: () => void
 }) {
+  const { t } = useTranslation()
   const toast = useToast()
   const fileRef = useRef<HTMLInputElement>(null)
   const [text, setText] = useState('')
@@ -2033,7 +2042,7 @@ function ImportModal({
 
   const commit = () => {
     if (preview.parsed.length === 0) {
-      toast.error('未有可匯入嘅題目')
+      toast.error(t('qbank.toastImportNone', { defaultValue: '未有可匯入嘅題目' }))
       return
     }
     for (const r of preview.parsed) {
@@ -2050,20 +2059,19 @@ function ImportModal({
         createdAt: new Date().toISOString(),
       })
     }
-    toast.success(`已匯入 ${preview.parsed.length} 條題目`)
+    toast.success(t('qbank.toastImported', { defaultValue: `已匯入 ${preview.parsed.length} 條題目`, count: preview.parsed.length }))
     onClose()
   }
 
   return (
-    <Modal open onClose={onClose} title="匯入題目（CSV）" size="lg">
+    <Modal open onClose={onClose} title={t('qbank.importTitle', { defaultValue: '匯入題目（CSV）' })} size="lg">
       <div className="space-y-4">
         <div className="flex items-start gap-3 rounded-2xl border border-accent/20 bg-accent-soft/50 p-3.5 dark:border-accent/25 dark:bg-accent/10">
           <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-accent text-white">
             <Upload size={16} />
           </span>
           <p className="text-xs leading-relaxed text-slate-600 dark:text-slate-300">
-            CSV 欄位：課題、題型、難度、題幹、選項 A–D、答案、分數。題型 / 難度可用中英；MC
-            答案用 A/B/C/D；課題名稱會自動對應到最相近嘅課題。第一次用建議先下載範本。
+            {t('qbank.importInfoText', { defaultValue: 'CSV 欄位：課題、題型、難度、題幹、選項 A–D、答案、分數。題型 / 難度可用中英；MC 答案用 A/B/C/D；課題名稱會自動對應到最相近嘅課題。第一次用建議先下載範本。' })}
           </p>
         </div>
 
@@ -2083,18 +2091,18 @@ function ImportModal({
             icon={Upload}
             onClick={() => fileRef.current?.click()}
           >
-            選擇 CSV 檔
+            {t('qbank.btnChooseCsv', { defaultValue: '選擇 CSV 檔' })}
           </Button>
           <Button
             variant="ghost"
             icon={Download}
             onClick={() => downloadText('bafs-題庫範本.csv', csvTemplate())}
           >
-            下載範本
+            {t('qbank.btnDownloadTemplate', { defaultValue: '下載範本' })}
           </Button>
         </div>
 
-        <Field label="或直接貼上 CSV 內容">
+        <Field label={t('qbank.fieldPasteCsv', { defaultValue: '或直接貼上 CSV 內容' })}>
           <Textarea
             value={text}
             onChange={(e) => setText(e.target.value)}
@@ -2110,9 +2118,9 @@ function ImportModal({
               className="mb-2.5 flex items-center gap-2 text-xs"
               aria-live="polite"
             >
-              <Badge tone="green" dot>可匯入 {preview.parsed.length}</Badge>
+              <Badge tone="green" dot>{t('qbank.badgeCanImport', { defaultValue: `可匯入 ${preview.parsed.length}`, count: preview.parsed.length })}</Badge>
               {preview.skipped > 0 && (
-                <Badge tone="amber" dot>略過 {preview.skipped}</Badge>
+                <Badge tone="amber" dot>{t('qbank.badgeSkipped', { defaultValue: `略過 ${preview.skipped}`, count: preview.skipped })}</Badge>
               )}
             </div>
             <ul className="max-h-44 space-y-1.5 overflow-y-auto">
@@ -2130,7 +2138,7 @@ function ImportModal({
               ))}
               {preview.parsed.length > 8 && (
                 <li className="text-xs text-slate-400 dark:text-slate-500">
-                  …仲有 {preview.parsed.length - 8} 條
+                  {t('qbank.moreRows', { defaultValue: `…仲有 ${preview.parsed.length - 8} 條`, count: preview.parsed.length - 8 })}
                 </li>
               )}
             </ul>
@@ -2139,10 +2147,10 @@ function ImportModal({
 
         <div className="flex justify-end gap-2 pt-2">
           <Button variant="secondary" onClick={onClose}>
-            取消
+            {t('qbank.btnCancelImport', { defaultValue: '取消' })}
           </Button>
           <Button onClick={commit} disabled={preview.parsed.length === 0}>
-            匯入（{preview.parsed.length}）
+            {t('qbank.btnCommitImport', { defaultValue: `匯入（${preview.parsed.length}）`, count: preview.parsed.length })}
           </Button>
         </div>
       </div>
@@ -2162,6 +2170,7 @@ function DuplicatesModal({
   topicName: (id: string) => string
   onClose: () => void
 }) {
+  const { t } = useTranslation()
   const toast = useToast()
   const confirm = useConfirm()
 
@@ -2183,39 +2192,39 @@ function DuplicatesModal({
     const toRemove = g.questions.filter((q) => q.id !== keepId)
     if (toRemove.length === 0) return
     const ok = await confirm({
-      title: '合併重複題？',
-      message: `將會刪除 ${toRemove.length} 條重複題，只保留你揀嘅一條。`,
-      confirmText: '合併',
+      title: t('qbank.confirmMergeTitle', { defaultValue: '合併重複題？' }),
+      message: t('qbank.confirmMergeMsg', { defaultValue: `將會刪除 ${toRemove.length} 條重複題，只保留你揀嘅一條。`, count: toRemove.length }),
+      confirmText: t('qbank.confirmMergeBtn', { defaultValue: '合併' }),
       tone: 'danger',
     })
     if (!ok) return
     toRemove.forEach((q) => questionsCol.remove(q.id))
-    toast.success(`已移除 ${toRemove.length} 條重複題`)
+    toast.success(t('qbank.toastDupMerged', { defaultValue: `已移除 ${toRemove.length} 條重複題`, count: toRemove.length }))
   }
 
   return (
-    <Modal open onClose={onClose} title="重複題偵測" size="lg">
+    <Modal open onClose={onClose} title={t('qbank.dupTitle', { defaultValue: '重複題偵測' })} size="lg">
       <div className="space-y-3">
         {groups.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-8 text-center">
             <Check size={32} className="text-emerald-500" />
             <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
-              冇發現重複或高度相似嘅題目！
+              {t('qbank.dupNoneFound', { defaultValue: '冇發現重複或高度相似嘅題目！' })}
             </p>
           </div>
         ) : (
           <>
             <p className="text-xs text-slate-500 dark:text-slate-400">
-              發現 {groups.length} 組可能重複嘅題目。每組揀返一條保留，其餘可一鍵移除。
+              {t('qbank.dupFoundHint', { defaultValue: `發現 ${groups.length} 組可能重複嘅題目。每組揀返一條保留，其餘可一鍵移除。`, count: groups.length })}
             </p>
             {groups.map((g, gi) => (
               <Card key={gi} className="p-3">
                 <div className="mb-2 flex items-center justify-between">
                   <Badge tone={g.reason === 'exact' ? 'rose' : 'amber'}>
                     {g.reason === 'exact'
-                      ? '完全相同'
-                      : `相似 ${Math.round(g.score * 100)}%`}
-                    （{g.questions.length} 條）
+                      ? t('qbank.dupExact', { defaultValue: '完全相同' })
+                      : t('qbank.dupSimilar', { defaultValue: `相似 ${Math.round(g.score * 100)}%`, pct: Math.round(g.score * 100) })}
+                    {t('qbank.dupGroupCount', { defaultValue: `（${g.questions.length} 條）`, count: g.questions.length })}
                   </Badge>
                   <Button
                     size="sm"
@@ -2223,7 +2232,7 @@ function DuplicatesModal({
                     icon={Trash2}
                     onClick={() => resolveGroup(gi)}
                   >
-                    合併
+                    {t('qbank.btnMerge', { defaultValue: '合併' })}
                   </Button>
                 </div>
                 <ul className="space-y-1.5">
@@ -2237,7 +2246,7 @@ function DuplicatesModal({
                           setKeep((prev) => ({ ...prev, [gi]: q.id }))
                         }
                         className="mt-1 h-4 w-4 shrink-0 accent-[color:var(--accent)]"
-                        aria-label="保留呢條"
+                        aria-label={t('qbank.ariaKeepThis', { defaultValue: '保留呢條' })}
                       />
                       <div className="min-w-0 flex-1">
                         <p className="text-xs text-slate-700 dark:text-slate-200">
@@ -2249,7 +2258,7 @@ function DuplicatesModal({
                             {DIFF_LABEL[q.difficulty]}
                           </Badge>
                           {q.marks ? (
-                            <Badge className="nums">{q.marks} 分</Badge>
+                            <Badge className="nums">{q.marks} {t('qbank.marksUnit', { defaultValue: '分' })}</Badge>
                           ) : null}
                         </div>
                       </div>
@@ -2262,7 +2271,7 @@ function DuplicatesModal({
         )}
         <div className="flex justify-end pt-2">
           <Button variant="secondary" onClick={onClose}>
-            關閉
+            {t('qbank.btnCloseDup', { defaultValue: '關閉' })}
           </Button>
         </div>
       </div>

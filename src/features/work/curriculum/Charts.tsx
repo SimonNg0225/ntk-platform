@@ -1,4 +1,5 @@
 import { useId } from 'react'
+import { useTranslation } from 'react-i18next'
 import { cx } from '../../../ui'
 
 // ============================================================
@@ -28,6 +29,7 @@ export function DonutWithLegend({
   centerLabel: string
   centerSub?: string
 }) {
+  const { t } = useTranslation()
   const size = 132
   const stroke = 14
   const r = (size - stroke) / 2
@@ -52,7 +54,7 @@ export function DonutWithLegend({
           viewBox={`0 0 ${size} ${size}`}
           className="-rotate-90"
           role="img"
-          aria-label={`完成度 ${centerLabel}`}
+          aria-label={t('curr.ariaDonut', { defaultValue: `完成度 ${centerLabel}`, label: centerLabel })}
         >
           <circle
             cx={c}
@@ -126,6 +128,7 @@ export function PacingChart({
   points: PacingPoint[]
   total: number
 }) {
+  const { t } = useTranslation()
   const gradId = useId()
   const W = 520
   const H = 180
@@ -175,7 +178,7 @@ export function PacingChart({
       className="w-full"
       preserveAspectRatio="none"
       role="img"
-      aria-label="計劃對實際進度折線圖"
+      aria-label={t('curr.ariaPacing', { defaultValue: '計劃對實際進度折線圖' })}
     >
       <defs>
         <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">

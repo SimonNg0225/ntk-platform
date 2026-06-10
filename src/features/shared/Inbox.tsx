@@ -103,8 +103,10 @@ import {
   type InboxRow,
 } from './inbox/util'
 import type { InboxKind } from './inbox/types'
+import { useTranslation } from 'react-i18next'
 import { aiTriage } from './inbox/ai'
 import { CaptureTrend, KindBars } from './inbox/Charts'
+import './inbox/i18n'
 
 // ============================================================
 //  快速擷取 Inbox（GTD triage）— Things 3 / Todoist Inbox 級
@@ -115,11 +117,8 @@ import { CaptureTrend, KindBars } from './inbox/Charts'
 //  只讀寫共用 col（公開 API）；GTD meta 存自家 inbox_meta_v2。
 // ============================================================
 
-const FILTER_TABS = [
-  { id: 'inbox' as const, label: '待處理' },
-  { id: 'archived' as const, label: '已歸檔' },
-]
-type FilterTab = (typeof FILTER_TABS)[number]['id']
+const FILTER_TAB_IDS = ['inbox', 'archived'] as const
+type FilterTab = (typeof FILTER_TAB_IDS)[number]
 
 const COUNTDOWN_CAT: Record<InboxKind, CountdownCategory> = {
   task: 'other',
@@ -154,6 +153,7 @@ const CHIP_SPINE: Record<InboxKind, string> = {
 }
 
 export default function Inbox() {
+  const { t } = useTranslation()
   const items = useCollection(inboxCol)
   const metas = useCollection(inboxMetaCol)
   const toast = useToast()
@@ -161,6 +161,11 @@ export default function Inbox() {
   const { mode } = useMode()
   const nav = useNav()
   const { user } = useAuth()
+
+  const filterTabs = [
+    { id: 'inbox' as const, label: t('inbox.tabInbox', { defaultValue: '待處理' }) },
+    { id: 'archived' as const, label: t('inbox.tabArchived', { defaultValue: '已歸檔' }) },
+  ]
 
   const [text, setText] = useState('')
   const [tab, setTab] = useState<FilterTab>('inbox')
@@ -310,7 +315,9 @@ export default function Inbox() {
     archive(row.item.id, kind)
     const def = kindDef(kind)
     toast.success(
-      kind === 'reference' ? '已歸檔為參考' : `已${def.short}`,
+      kind === 'reference'
+        ? t('inbox.toastArchivedAsRef', { defaultValue: '已歸檔為參考' })
+        : t('inbox.toastKindShort', { defaultValue: `已${def.short}` }),
     )
     setSelected((s) => {
       const n = new Set(s)
@@ -333,7 +340,7 @@ export default function Inbox() {
       notes: row.tags.length ? row.tags.map((t) => '#' + t).join(' ') : undefined,
     })
     archive(row.item.id, 'event')
-    toast.success('已加入行事曆')
+    toast.success(t('inbox.toastAddedToCalendar', { defaultValue: '已加入行事曆' }))
     setEventDraft(null)
     setSelected((s) => {
       const n = new Set(s)
@@ -346,9 +353,9 @@ export default function Inbox() {
   const remove = useCallback(
     async (id: string) => {
       const ok = await confirm({
-        title: '永久刪除？',
-        message: '此項目會直接刪走，無法復原。如果只係想清走 inbox，建議用「歸檔」。',
-        confirmText: '刪除',
+        title: t('inbox.confirmDeleteTitle', { defaultValue: '永久刪除？' }),
+        message: t('inbox.confirmDeleteMessage', { defaultValue: '此項目會直接刪走，無法復原。如果只係想清走 inbox，建議用「歸檔」。' }),
+        confirmText: t('inbox.confirmDeleteConfirm', { defaultValue: '刪除' }),
         tone: 'danger',
       })
       if (!ok) return
@@ -359,9 +366,9 @@ export default function Inbox() {
         n.delete(id)
         return n
       })
-      toast.success('已刪除')
+      toast.success(t('inbox.toastDeleted', { defaultValue: '已刪除' }))
     },
-    [confirm, toast],
+    [confirm, toast, t],
   )
 
   function toggleSelect(id: string) {
@@ -381,20 +388,20 @@ export default function Inbox() {
 
   function bulkConvert(kind: InboxKind) {
     if (kind === 'event') {
-      toast.info('行事曆需要逐項填日期，請喺項目度逐個轉。')
+      toast.info(t('inbox.toastCalendarNeedsDate', { defaultValue: '行事曆需要逐項填日期，請喺項目度逐個轉。' }))
       return
     }
     const rows = selectedRows
     rows.forEach((r) => convert(r, kind))
     if (rows.length)
-      toast.success(`已將 ${rows.length} 項${kindDef(kind).short}`)
+      toast.success(t('inbox.toastBulkConverted', { count: rows.length, defaultValue: `已將 ${rows.length} 項${kindDef(kind).short}` }))
     setSelected(new Set())
     setSelectMode(false)
   }
 
   function bulkArchive() {
     selectedRows.forEach((r) => archive(r.item.id))
-    toast.success(`已歸檔 ${selectedRows.length} 項`)
+    toast.success(t('inbox.toastBulkArchived', { count: selectedRows.length, defaultValue: `已歸檔 ${selectedRows.length} 項` }))
     setSelected(new Set())
     setSelectMode(false)
   }
@@ -403,9 +410,9 @@ export default function Inbox() {
     const n = selectedRows.length
     if (!n) return
     const ok = await confirm({
-      title: `永久刪除 ${n} 項？`,
-      message: '此動作無法復原。',
-      confirmText: '刪除',
+      title: t('inbox.confirmBulkDeleteTitle', { count: n, defaultValue: `永久刪除 ${n} 項？` }),
+      message: t('inbox.confirmBulkDeleteMessage', { defaultValue: '此動作無法復原。' }),
+      confirmText: t('inbox.confirmDeleteConfirm', { defaultValue: '刪除' }),
       tone: 'danger',
     })
     if (!ok) return
@@ -413,7 +420,7 @@ export default function Inbox() {
       inboxCol.remove(r.item.id)
       dropMeta(r.item.id)
     })
-    toast.success(`已刪除 ${n} 項`)
+    toast.success(t('inbox.toastBulkDeleted', { count: n, defaultValue: `已刪除 ${n} 項` }))
     setSelected(new Set())
     setSelectMode(false)
   }
@@ -426,7 +433,7 @@ export default function Inbox() {
   async function runAiTriage() {
     const pending = allRows.filter((r) => !r.archived).slice(0, 40)
     if (!pending.length) {
-      toast.info('冇待處理項目可以分類。')
+      toast.info(t('inbox.toastNoPending', { defaultValue: '冇待處理項目可以分類。' }))
       return
     }
     setAiBusy(true)
@@ -440,9 +447,9 @@ export default function Inbox() {
           n++
         }
       })
-      toast.success(n ? `AI 已為 ${n} 項建議分類` : 'AI 未能分類，請再試。')
+      toast.success(n ? t('inbox.toastAiDone', { count: n, defaultValue: `AI 已為 ${n} 項建議分類` }) : t('inbox.toastAiNoResult', { defaultValue: 'AI 未能分類，請再試。' }))
     } catch (e) {
-      toast.error((e as Error).message || 'AI 分類失敗')
+      toast.error((e as Error).message || t('inbox.toastAiError', { defaultValue: 'AI 分類失敗' }))
     } finally {
       setAiBusy(false)
     }
@@ -460,7 +467,7 @@ export default function Inbox() {
         n++
       }
     }
-    toast.success(n ? `已套用 ${n} 項 AI 建議` : '冇可套用嘅建議')
+    toast.success(n ? t('inbox.toastAiApplied', { count: n, defaultValue: `已套用 ${n} 項 AI 建議` }) : t('inbox.toastAiNoneToApply', { defaultValue: '冇可套用嘅建議' }))
   }
 
   // ── 全域鍵盤導航 ────────────────────────────────────────
@@ -499,7 +506,7 @@ export default function Inbox() {
       } else if ((e.key === 'e' || e.key === 'Backspace') && row && !row.archived) {
         e.preventDefault()
         archive(row.item.id)
-        toast.success('已歸檔')
+        toast.success(t('inbox.toastArchived', { defaultValue: '已歸檔' }))
       } else if (e.key === 'p' && row) {
         e.preventDefault()
         togglePinned(row.item.id, row.pinned)
@@ -510,7 +517,7 @@ export default function Inbox() {
       } else if (e.key === 'u' && row && row.archived) {
         e.preventDefault()
         restore(row.item.id)
-        toast.success('已還原')
+        toast.success(t('inbox.toastRestored', { defaultValue: '已還原' }))
       }
     }
     window.addEventListener('keydown', onKey)
@@ -540,29 +547,29 @@ export default function Inbox() {
         <div className="min-w-0">
           <p className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.28em] text-accent/70">
             <InboxIcon size={12} strokeWidth={2.5} />
-            Inbox · 便條桌面
+            {t('inbox.mastheadKicker', { defaultValue: 'Inbox · 便條桌面' })}
           </p>
           <h1 className="mt-1.5 flex flex-wrap items-baseline gap-x-2.5 gap-y-0.5 font-serif text-[26px] font-semibold leading-tight tracking-tight text-slate-800 dark:text-slate-100 sm:text-3xl">
-            快速擷取
+            {t('inbox.mastheadTitle', { defaultValue: '快速擷取' })}
             <span className="font-serif text-base font-normal italic text-slate-400 dark:text-slate-500">
-              掉低個諗法
+              {t('inbox.mastheadSub', { defaultValue: '掉低個諗法' })}
             </span>
           </h1>
           <p className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-sm text-slate-500 dark:text-slate-400">
-            <span>一秒記低，得閒先慢慢分類。</span>
+            <span>{t('inbox.mastheadHint', { defaultValue: '一秒記低，得閒先慢慢分類。' })}</span>
             {stats.inboxCount > 0 && (
               <>
                 <span aria-hidden="true" className="text-slate-300 dark:text-slate-600">·</span>
                 <span className="tabular-nums">
-                  仲有 <span className="font-medium text-slate-600 dark:text-slate-300">{stats.inboxCount}</span> 件待清
+                  {t('inbox.mastheadPending', { count: stats.inboxCount, defaultValue: `仲有 ${stats.inboxCount} 件待清` })}
                 </span>
               </>
             )}
           </p>
         </div>
-        <Tooltip label={showStats ? '收起統計' : '展開統計'}>
+        <Tooltip label={showStats ? t('inbox.statsCollapse', { defaultValue: '收起統計' }) : t('inbox.statsExpand', { defaultValue: '展開統計' })}>
           <IconButton
-            label="統計"
+            label={t('inbox.statsLabel', { defaultValue: '統計' })}
             active={showStats}
             onClick={() => setShowStats((v) => !v)}
           >
@@ -605,7 +612,7 @@ export default function Inbox() {
                   capture()
                 }
               }}
-              placeholder="諗到啲咩，就喺度寫低…　例如「記得交 IES 初稿 #功課」"
+              placeholder={t('inbox.capturePlaceholder', { defaultValue: '諗到啲咩，就喺度寫低…　例如「記得交 IES 初稿 #功課」' })}
               className="min-h-0 resize-none border-0 bg-transparent px-0 text-base leading-relaxed shadow-none placeholder:text-slate-400 focus:ring-0 dark:bg-transparent dark:placeholder:text-slate-500"
             />
           </div>
@@ -614,7 +621,7 @@ export default function Inbox() {
           <div className="flex min-w-0 flex-wrap items-center gap-1.5">
             {livePreviewKind && (
               <Badge tone={KIND_TONE[livePreviewKind]} icon={KIND_ICON[livePreviewKind]}>
-                睇似{kindLabel(livePreviewKind)}
+                {t('inbox.captureKindBadge', { kind: kindLabel(livePreviewKind), defaultValue: `睇似${kindLabel(livePreviewKind)}` })}
               </Badge>
             )}
             {livePreviewTags.map((t) => (
@@ -624,7 +631,13 @@ export default function Inbox() {
             ))}
             {!text.trim() && (
               <span className="text-xs text-slate-400 dark:text-slate-500">
-                加 <Kbd>#</Kbd> 標籤 · 按 <Kbd>c</Kbd> 落筆 · <Kbd>/</Kbd> 搜尋
+                {t('inbox.capHintAdd', { defaultValue: '加 ' })}
+                <Kbd>#</Kbd>
+                {t('inbox.capHintTags', { defaultValue: ' 標籤 · 按 ' })}
+                <Kbd>c</Kbd>
+                {t('inbox.capHintFocus', { defaultValue: ' 落筆 · ' })}
+                <Kbd>/</Kbd>
+                {t('inbox.capHintSearch', { defaultValue: ' 搜尋' })}
               </span>
             )}
           </div>
@@ -636,7 +649,7 @@ export default function Inbox() {
             disabled={!text.trim()}
             className="shrink-0"
           >
-            掉低
+            {t('inbox.captureSubmit', { defaultValue: '掉低' })}
           </Button>
         </div>
       </div>
@@ -652,15 +665,11 @@ export default function Inbox() {
             <Clock size={16} />
           </span>
           <span className="min-w-0 flex-1 text-sm leading-snug">
-            有{' '}
-            <span className="font-semibold tabular-nums">{staleRows.length}</span>{' '}
-            件擱咗超過{' '}
-            <span className="font-semibold tabular-nums">{STALE_DAYS}</span>{' '}
-            日仲未處理，唔好等佢哋沉底。
+            {t('inbox.staleBanner', { count: staleRows.length, days: STALE_DAYS, plural: staleRows.length !== 1 ? 's' : '', defaultValue: `有 ${staleRows.length} 件擱咗超過 ${STALE_DAYS} 日仲未處理，唔好等佢哋沉底。` })}
           </span>
           <span className="flex shrink-0 items-center gap-1 text-xs font-medium text-amber-700 dark:text-amber-300">
             <ArrowDownWideNarrow size={14} />
-            按最舊排
+            {t('inbox.staleSortOldest', { defaultValue: '按最舊排' })}
           </span>
         </button>
       )}
@@ -670,7 +679,7 @@ export default function Inbox() {
         <div className="mt-4 flex items-center justify-between gap-2 rounded-2xl border border-amber-200 bg-amber-50 px-3.5 py-2 text-sm text-amber-800 dark:border-amber-500/25 dark:bg-amber-500/10 dark:text-amber-200">
           <span className="flex items-center gap-1.5">
             <ArrowDownWideNarrow size={14} className="shrink-0" />
-            正按最舊排，由擱得最耐嗰件做起。
+            {t('inbox.sortOldestActive', { defaultValue: '正按最舊排，由擱得最耐嗰件做起。' })}
           </span>
           <Button
             type="button"
@@ -678,7 +687,7 @@ export default function Inbox() {
             variant="ghost"
             onClick={() => setSortOldest(false)}
           >
-            還原排序
+            {t('inbox.sortOldestReset', { defaultValue: '還原排序' })}
           </Button>
         </div>
       )}
@@ -687,10 +696,10 @@ export default function Inbox() {
       {showStats && (
         <div className="mt-4 grid grid-cols-2 gap-px overflow-hidden rounded-2xl bg-slate-200/70 ring-1 ring-slate-200/80 dark:bg-slate-700/50 dark:ring-slate-700/60 sm:grid-cols-4">
           {[
-            { label: '待處理', icon: InboxIcon, value: stats.inboxCount, hint: stats.inboxCount > 0 ? '抽時間清吓佢' : '清空晒，舒服', hot: stats.inboxCount > 0 },
-            { label: '今日掉低', icon: Plus, value: stats.todayCaptured, hint: '今日記低嘅諗法', hot: false },
-            { label: '近 7 日', icon: BarChart3, value: stats.weekCaptured, hint: '一週擷取量', hot: false },
-            { label: '已歸檔', icon: Archive, value: stats.archivedCount, hint: '整理好嘅都喺度', hot: false },
+            { label: t('inbox.statPending', { defaultValue: '待處理' }), icon: InboxIcon, value: stats.inboxCount, hint: stats.inboxCount > 0 ? t('inbox.statPendingHintSome', { defaultValue: '抽時間清吓佢' }) : t('inbox.statPendingHintNone', { defaultValue: '清空晒，舒服' }), hot: stats.inboxCount > 0 },
+            { label: t('inbox.statToday', { defaultValue: '今日掉低' }), icon: Plus, value: stats.todayCaptured, hint: t('inbox.statTodayHint', { defaultValue: '今日記低嘅諗法' }), hot: false },
+            { label: t('inbox.statWeek', { defaultValue: '近 7 日' }), icon: BarChart3, value: stats.weekCaptured, hint: t('inbox.statWeekHint', { defaultValue: '一週擷取量' }), hot: false },
+            { label: t('inbox.statArchived', { defaultValue: '已歸檔' }), icon: Archive, value: stats.archivedCount, hint: t('inbox.statArchivedHint', { defaultValue: '整理好嘅都喺度' }), hot: false },
           ].map((s) => {
             const I = s.icon
             return (
@@ -722,11 +731,11 @@ export default function Inbox() {
       {showStats && (
         <div className="mt-3 grid gap-3 lg:grid-cols-2">
           <Card className="p-4">
-            <SectionTitle icon={BarChart3}>擷取趨勢</SectionTitle>
+            <SectionTitle icon={BarChart3}>{t('inbox.chartCaptureTrend', { defaultValue: '擷取趨勢' })}</SectionTitle>
             <CaptureTrend data={stats.perDay} />
           </Card>
           <Card className="p-4">
-            <SectionTitle icon={Layers}>分類分布</SectionTitle>
+            <SectionTitle icon={Layers}>{t('inbox.chartKindDistribution', { defaultValue: '分類分布' })}</SectionTitle>
             <KindBars
               byKind={stats.byKind}
               onPick={(k) => {
@@ -741,11 +750,7 @@ export default function Inbox() {
         <div className="mt-3 flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-300">
           <AlertTriangle size={14} className="shrink-0" />
           <span>
-            最舊一項已喺 inbox 放咗{' '}
-            <span className="font-semibold tabular-nums">
-              {relativeTime(stats.oldestInboxIso)}
-            </span>
-            ，記得抽時間清空 inbox。
+            {t('inbox.oldestWarning', { time: relativeTime(stats.oldestInboxIso!), defaultValue: `最舊一項已喺 inbox 放咗 ${relativeTime(stats.oldestInboxIso!)} ，記得抽時間清空 inbox。` })}
           </span>
         </div>
       )}
@@ -753,7 +758,7 @@ export default function Inbox() {
       {/* 工具列：tabs + 搜尋 + AI */}
       <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center">
         <div className="sm:w-48">
-          <Tabs tabs={FILTER_TABS} active={tab} onChange={setTab} size="sm" />
+          <Tabs tabs={filterTabs} active={tab} onChange={setTab} size="sm" />
         </div>
         <div className="flex-1">
           <Input
@@ -761,7 +766,7 @@ export default function Inbox() {
             icon={Search}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="搜尋擷取內容或 #標籤…"
+            placeholder={t('inbox.searchPlaceholder', { defaultValue: '搜尋擷取內容或 #標籤…' })}
           />
         </div>
         {isAIConfigured && user && tab === 'inbox' && (
@@ -774,7 +779,7 @@ export default function Inbox() {
             disabled={aiBusy}
             className="shrink-0"
           >
-            {aiBusy ? 'AI 分類中' : 'AI 建議分類'}
+            {aiBusy ? t('inbox.aiBusy', { defaultValue: 'AI 分類中' }) : t('inbox.aiSuggest', { defaultValue: 'AI 建議分類' })}
           </Button>
         )}
       </div>
@@ -784,7 +789,7 @@ export default function Inbox() {
         <div className="mt-3 flex flex-wrap items-center gap-2">
           <Pills
             options={[
-              { id: 'all', label: '全部' },
+              { id: 'all', label: t('inbox.filterAll', { defaultValue: '全部' }) },
               ...KINDS.map((k) => ({ id: k.id, label: kindLabel(k.id) })),
             ]}
             active={kindFilter}
@@ -809,7 +814,7 @@ export default function Inbox() {
                     )}
                   >
                     <Hash size={12} />
-                    {tagFilter ?? '標籤'}
+                    {tagFilter ?? t('inbox.filterTagLabel', { defaultValue: '標籤' })}
                   </span>
                 }
                 items={tagOptions.map((t) => ({
@@ -821,7 +826,7 @@ export default function Inbox() {
               />
               {tagFilter && (
                 <IconButton
-                  label={`清除標籤過濾「${tagFilter}」`}
+                  label={t('inbox.clearTagFilter', { tag: tagFilter, defaultValue: `清除標籤過濾「${tagFilter}」` })}
                   size="sm"
                   onClick={() => setTagFilter(null)}
                 >
@@ -838,10 +843,10 @@ export default function Inbox() {
         <div className="mt-3 flex items-center justify-between gap-2 rounded-lg border border-accent/20 bg-accent-soft px-3 py-2 dark:border-accent/25 dark:bg-accent/10">
           <span className="flex items-center gap-1.5 text-xs text-accent-strong dark:text-accent">
             <Lightbulb size={14} className="shrink-0" />
-            AI 已為部分項目建議分類，可逐項接納或一次過套用。
+            {t('inbox.aiBannerText', { defaultValue: 'AI 已為部分項目建議分類，可逐項接納或一次過套用。' })}
           </span>
           <Button type="button" size="sm" onClick={acceptAllAi} className="shrink-0">
-            全部套用
+            {t('inbox.aiApplyAll', { defaultValue: '全部套用' })}
           </Button>
         </div>
       )}
@@ -850,10 +855,12 @@ export default function Inbox() {
       <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2" aria-live="polite">
           <Badge tone="accent">
-            {tab === 'inbox' ? '待處理' : '已歸檔'} {visible.length} 項
+            {tab === 'inbox'
+              ? t('inbox.batchCount_inbox', { count: visible.length, plural: visible.length !== 1 ? 's' : '', defaultValue: `待處理 ${visible.length} 項` })
+              : t('inbox.batchCount_archived', { count: visible.length, plural: visible.length !== 1 ? 's' : '', defaultValue: `已歸檔 ${visible.length} 項` })}
           </Badge>
           {selectMode && selected.size > 0 && (
-            <Badge tone="blue">已選 {selected.size}</Badge>
+            <Badge tone="blue">{t('inbox.batchSelected', { count: selected.size, defaultValue: `已選 ${selected.size}` })}</Badge>
           )}
         </div>
         <div className="flex items-center gap-2">
@@ -865,7 +872,7 @@ export default function Inbox() {
                 variant="ghost"
                 onClick={selectAllVisible}
               >
-                全選
+                {t('inbox.batchSelectAll', { defaultValue: '全選' })}
               </Button>
               <Button
                 type="button"
@@ -876,7 +883,7 @@ export default function Inbox() {
                   setSelected(new Set())
                 }}
               >
-                取消
+                {t('inbox.batchCancel', { defaultValue: '取消' })}
               </Button>
             </>
           ) : (
@@ -888,7 +895,7 @@ export default function Inbox() {
                 icon={CheckSquare}
                 onClick={() => setSelectMode(true)}
               >
-                批量
+                {t('inbox.batchSelect', { defaultValue: '批量' })}
               </Button>
             )
           )}
@@ -899,7 +906,7 @@ export default function Inbox() {
       {selectMode && selected.size > 0 && (
         <Card className="mt-2 flex flex-wrap items-center gap-2 p-2.5">
           <span className="px-1 text-xs text-slate-500 dark:text-slate-400">
-            轉做：
+            {t('inbox.batchConvertPrefix', { defaultValue: '轉做：' })}
           </span>
           {KINDS.filter((k) => k.id !== 'event').map((k) => {
             const Icon = KIND_ICON[k.id]
@@ -919,11 +926,11 @@ export default function Inbox() {
           <Separator orientation="vertical" className="mx-1 h-6" />
           {tab === 'inbox' && (
             <Button type="button" size="sm" variant="secondary" icon={Archive} onClick={bulkArchive}>
-              歸檔
+              {t('inbox.batchArchive', { defaultValue: '歸檔' })}
             </Button>
           )}
           <Button type="button" size="sm" variant="danger" icon={Trash2} onClick={bulkDelete}>
-            刪除
+            {t('inbox.batchDelete', { defaultValue: '刪除' })}
           </Button>
         </Card>
       )}
@@ -954,23 +961,23 @@ export default function Inbox() {
                 />
               </div>
               <p className="font-serif text-xl font-semibold text-slate-700 dark:text-slate-200">
-                張枱好乾淨
+                {t('inbox.emptyDeskTitle', { defaultValue: '張枱好乾淨' })}
               </p>
               <p className="mt-2 max-w-sm text-sm leading-relaxed text-slate-500 dark:text-slate-400">
-                諗到啲咩就即刻記低，唔使諗點分類。得閒先逐張便條揀去做待辦、筆記定行事曆。
+                {t('inbox.emptyDeskBody', { defaultValue: '諗到啲咩就即刻記低，唔使諗點分類。得閒先逐張便條揀去做待辦、筆記定行事曆。' })}
               </p>
               <div className="mt-5 flex flex-wrap items-center justify-center gap-1.5">
-                <span className="text-xs text-slate-400 dark:text-slate-500">譬如：</span>
-                <Badge tone="blue" icon={KIND_ICON.task}>記得收測驗卷</Badge>
-                <Badge tone="rose" icon={KIND_ICON.countdown}>期末考試 5月8日</Badge>
-                <Badge tone="accent" icon={KIND_ICON.note}>一個 app 嘅靈感 #idea</Badge>
+                <span className="text-xs text-slate-400 dark:text-slate-500">{t('inbox.emptyDeskExamples', { defaultValue: '譬如：' })}</span>
+                <Badge tone="blue" icon={KIND_ICON.task}>{t('inbox.emptyDeskEx1', { defaultValue: '記得收測驗卷' })}</Badge>
+                <Badge tone="rose" icon={KIND_ICON.countdown}>{t('inbox.emptyDeskEx2', { defaultValue: '期末考試 5月8日' })}</Badge>
+                <Badge tone="accent" icon={KIND_ICON.note}>{t('inbox.emptyDeskEx3', { defaultValue: '一個 app 嘅靈感 #idea' })}</Badge>
               </div>
               <Button
                 className="mt-6"
                 icon={Plus}
                 onClick={() => captureRef.current?.focus()}
               >
-                掉低第一個諗法
+                {t('inbox.emptyDeskCta', { defaultValue: '掉低第一個諗法' })}
               </Button>
             </div>
           ) : (
@@ -978,13 +985,13 @@ export default function Inbox() {
               icon={tab === 'archived' ? Archive : Search}
               title={
                 tab === 'archived'
-                  ? '仲未有歸檔嘅項目'
-                  : '搵唔到符合嘅項目'
+                  ? t('inbox.emptyArchivedTitle', { defaultValue: '仲未有歸檔嘅項目' })
+                  : t('inbox.emptyFilteredTitle', { defaultValue: '搵唔到符合嘅項目' })
               }
               hint={
                 tab === 'archived'
-                  ? '整理好嘅項目會收喺呢度，隨時可以還原。'
-                  : '試下清除搜尋或過濾條件，再睇多次。'
+                  ? t('inbox.emptyArchivedHint', { defaultValue: '整理好嘅項目會收喺呢度，隨時可以還原。' })
+                  : t('inbox.emptyFilteredHint', { defaultValue: '試下清除搜尋或過濾條件，再睇多次。' })
               }
             />
           )}
@@ -999,7 +1006,7 @@ export default function Inbox() {
                 </span>
                 <span className="h-px flex-1 bg-gradient-to-r from-slate-200 to-transparent dark:from-slate-700/70" />
                 <span className="font-serif text-xs italic tabular-nums text-slate-400 dark:text-slate-500">
-                  {g.rows.length} 件
+                  {t('inbox.groupItemCount', { count: g.rows.length, plural: g.rows.length !== 1 ? 's' : '', defaultValue: `${g.rows.length} 件` })}
                 </span>
               </div>
               <div className="space-y-2">
@@ -1019,11 +1026,11 @@ export default function Inbox() {
                       onPin={() => togglePinned(row.item.id, row.pinned)}
                       onArchive={() => {
                         archive(row.item.id)
-                        toast.success('已歸檔')
+                        toast.success(t('inbox.toastArchived', { defaultValue: '已歸檔' }))
                       }}
                       onRestore={() => {
                         restore(row.item.id)
-                        toast.success('已還原')
+                        toast.success(t('inbox.toastRestored', { defaultValue: '已還原' }))
                       }}
                       onDelete={() => remove(row.item.id)}
                       onAcceptAi={() => acceptAi(row)}
@@ -1043,19 +1050,19 @@ export default function Inbox() {
         <div className="mt-5 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[11px] text-slate-400 dark:text-slate-500">
           <span className="flex items-center gap-1">
             <Kbd>j</Kbd>
-            <Kbd>k</Kbd> 導航
+            <Kbd>k</Kbd> {t('inbox.kbNavHint', { defaultValue: '導航' })}
           </span>
           <span className="flex items-center gap-1">
-            <Kbd>1</Kbd>–<Kbd>6</Kbd> 分類並轉換
+            <Kbd>1</Kbd>–<Kbd>6</Kbd> {t('inbox.kbKindHint', { defaultValue: '分類並轉換' })}
           </span>
           <span className="flex items-center gap-1">
-            <Kbd>e</Kbd> 歸檔
+            <Kbd>e</Kbd> {t('inbox.kbArchiveHint', { defaultValue: '歸檔' })}
           </span>
           <span className="flex items-center gap-1">
-            <Kbd>p</Kbd> 置頂
+            <Kbd>p</Kbd> {t('inbox.kbPinHint', { defaultValue: '置頂' })}
           </span>
           <span className="flex items-center gap-1">
-            <Kbd>x</Kbd> 多選
+            <Kbd>x</Kbd> {t('inbox.kbSelectHint', { defaultValue: '多選' })}
           </span>
         </div>
       )}
@@ -1104,6 +1111,7 @@ function InboxRowCard({
   onAcceptAi: () => void
   onOpenFeature: (f: string) => void
 }) {
+  const { t } = useTranslation()
   const KindIcon = row.kind ? KIND_ICON[row.kind] : InboxIcon
   const aiKind = row.meta?.aiKind
   const showAi = !row.archived && row.guessed && aiKind && aiKind !== row.kind
@@ -1164,7 +1172,7 @@ function InboxRowCard({
           <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
             {row.pinned && (
               <Badge tone="accent" icon={Pin}>
-                置頂
+                {t('inbox.pinLabel', { defaultValue: '置頂' })}
               </Badge>
             )}
             {row.kind && (
@@ -1173,7 +1181,7 @@ function InboxRowCard({
                 icon={KIND_ICON[row.kind]}
               >
                 {kindLabel(row.kind)}
-                {row.guessed && '（估）'}
+                {row.guessed && t('inbox.kindGuessed', { defaultValue: '（估）' })}
               </Badge>
             )}
             {row.tags.map((t) => (
@@ -1183,7 +1191,7 @@ function InboxRowCard({
             ))}
             {row.archived && row.meta?.convertedTo && (
               <Badge tone="green">
-                已轉做{kindLabel(row.meta.convertedTo)}
+                {t('inbox.convertedTo', { kind: kindLabel(row.meta.convertedTo), defaultValue: `已轉做${kindLabel(row.meta.convertedTo)}` })}
               </Badge>
             )}
             <Tooltip label={fullTime(row.item.createdAt)}>
@@ -1205,10 +1213,10 @@ function InboxRowCard({
             >
               <Sparkles size={12} className="shrink-0" />
               <span className="truncate">
-                AI 覺得似{kindLabel(aiKind!)}
-                {row.meta?.aiReason ? `：${row.meta.aiReason}` : ''}
+                {t('inbox.aiSuggestionPrefix', { kind: kindLabel(aiKind!), defaultValue: `AI 覺得似${kindLabel(aiKind!)}` })}
+                {row.meta?.aiReason ? t('inbox.aiSuggestionReason', { reason: row.meta.aiReason, defaultValue: `：${row.meta.aiReason}` }) : ''}
               </span>
-              <span className="shrink-0 opacity-70">· 接納</span>
+              <span className="shrink-0 opacity-70">{t('inbox.aiAccept', { defaultValue: '· 接納' })}</span>
               <ArrowRight size={12} className="shrink-0 transition group-hover/ai:translate-x-0.5" />
             </button>
           )}
@@ -1217,9 +1225,9 @@ function InboxRowCard({
         {/* 右側動作（hover 顯示） */}
         {!selectMode && (
           <div className="flex shrink-0 items-center gap-0.5 opacity-60 transition group-hover:opacity-100">
-            <Tooltip label={row.pinned ? '取消置頂' : '置頂'}>
+            <Tooltip label={row.pinned ? t('inbox.pinTooltipOn', { defaultValue: '取消置頂' }) : t('inbox.pinTooltipOff', { defaultValue: '置頂' })}>
               <IconButton
-                label="置頂"
+                label={t('inbox.pinTooltipOff', { defaultValue: '置頂' })}
                 size="sm"
                 active={row.pinned}
                 onClick={() => onPin()}
@@ -1228,14 +1236,14 @@ function InboxRowCard({
               </IconButton>
             </Tooltip>
             {row.archived ? (
-              <Tooltip label="還原">
-                <IconButton label="還原" size="sm" onClick={() => onRestore()}>
+              <Tooltip label={t('inbox.restoreTooltip', { defaultValue: '還原' })}>
+                <IconButton label={t('inbox.restoreTooltip', { defaultValue: '還原' })} size="sm" onClick={() => onRestore()}>
                   <ArchiveRestore size={15} />
                 </IconButton>
               </Tooltip>
             ) : (
-              <Tooltip label="歸檔">
-                <IconButton label="歸檔" size="sm" onClick={() => onArchive()}>
+              <Tooltip label={t('inbox.archiveTooltip', { defaultValue: '歸檔' })}>
+                <IconButton label={t('inbox.archiveTooltip', { defaultValue: '歸檔' })} size="sm" onClick={() => onArchive()}>
                   <Archive size={15} />
                 </IconButton>
               </Tooltip>
@@ -1244,7 +1252,7 @@ function InboxRowCard({
               align="end"
               trigger={
                 <span className="inline-flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800">
-                  <span className="sr-only">更多動作</span>
+                  <span className="sr-only">{t('inbox.moreActions', { defaultValue: '更多動作' })}</span>
                   <ChevronDownIcon />
                 </span>
               }
@@ -1259,7 +1267,7 @@ function InboxRowCard({
                   ? [
                       {
                         id: 'open',
-                        label: `開啟${kindLabel(row.meta.convertedTo)}功能`,
+                        label: t('inbox.openFeature', { kind: kindLabel(row.meta.convertedTo), defaultValue: `開啟${kindLabel(row.meta.convertedTo)}功能` }),
                         icon: ArrowRight,
                         onSelect: () =>
                           onOpenFeature(kindDef(row.meta!.convertedTo!).feature!),
@@ -1268,7 +1276,7 @@ function InboxRowCard({
                   : []),
                 {
                   id: 'del',
-                  label: '永久刪除',
+                  label: t('inbox.deletePermanent', { defaultValue: '永久刪除' }),
                   icon: Trash2,
                   tone: 'danger' as const,
                   onSelect: () => onDelete(),
@@ -1287,13 +1295,13 @@ function InboxRowCard({
         >
           <span className="mr-0.5 inline-flex items-center gap-1 text-xs font-medium text-slate-400 dark:text-slate-500">
             <ArrowRight size={12} />
-            歸去：
+            {t('inbox.triageLabel', { defaultValue: '歸去：' })}
           </span>
           {KINDS.map((k, i) => {
             const Icon = KIND_ICON[k.id]
             const on = row.kind === k.id && !row.guessed
             return (
-              <Tooltip key={k.id} label={`${k.short}（按 ${i + 1}）`}>
+              <Tooltip key={k.id} label={t('inbox.triageKindTooltip', { short: k.short, num: i + 1, defaultValue: `${k.short}（按 ${i + 1}）` })}>
                 <button
                   type="button"
                   onClick={() => {
@@ -1344,6 +1352,7 @@ function EventDraftModal({
   onClose: () => void
   onConfirm: (date: string, time: string, allDay: boolean) => void
 }) {
+  const { t } = useTranslation()
   const [date, setDate] = useState('')
   const [time, setTime] = useState('')
   const [allDay, setAllDay] = useState(false)
@@ -1370,14 +1379,14 @@ function EventDraftModal({
       footer={
         <>
           <Button variant="secondary" onClick={onClose}>
-            留喺收件匣
+            {t('inbox.eventModalCancel', { defaultValue: '留喺收件匣' })}
           </Button>
           <Button
             icon={CalendarPlus}
             disabled={!date}
             onClick={() => onConfirm(date, time, allDay)}
           >
-            歸去行事曆
+            {t('inbox.eventModalConfirm', { defaultValue: '歸去行事曆' })}
           </Button>
         </>
       }
@@ -1389,16 +1398,16 @@ function EventDraftModal({
             <div className="min-w-0">
               <p className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.28em] text-accent/70">
                 <InboxIcon size={12} strokeWidth={2.5} className="shrink-0" />
-                Inbox · 歸去行事曆
+                {t('inbox.eventModalKicker', { defaultValue: 'Inbox · 歸去行事曆' })}
               </p>
               <h2 className="mt-1 flex flex-wrap items-baseline gap-x-2 font-serif text-[22px] font-semibold leading-tight tracking-tight text-slate-800 dark:text-slate-100 sm:text-[26px]">
-                揀個日子
+                {t('inbox.eventModalTitle', { defaultValue: '揀個日子' })}
                 <span className="font-serif text-sm font-normal italic text-slate-400 dark:text-slate-500">
-                  畀張便條落腳
+                  {t('inbox.eventModalSub', { defaultValue: '畀張便條落腳' })}
                 </span>
               </h2>
             </div>
-            <IconButton label="關閉" onClick={onClose} className="-mr-1 shrink-0">
+            <IconButton label={t('inbox.eventModalClose', { defaultValue: '關閉' })} onClick={onClose} className="-mr-1 shrink-0">
               <X size={18} />
             </IconButton>
           </div>
@@ -1441,10 +1450,10 @@ function EventDraftModal({
         <div className="space-y-3">
           <p className="flex items-center gap-2 text-[11px] font-medium uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">
             <CalendarClock size={13} className="shrink-0 text-accent/70" />
-            幾時
+            {t('inbox.eventModalTimeSection', { defaultValue: '幾時' })}
             <span className="ml-1 h-px flex-1 bg-gradient-to-r from-slate-200 to-transparent dark:from-slate-700/70" />
           </p>
-          <Field label="日期" required>
+          <Field label={t('inbox.eventModalDateLabel', { defaultValue: '日期' })} required>
             <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
           </Field>
           <label className="flex cursor-pointer items-center gap-2.5 rounded-xl border border-slate-200/80 bg-slate-50/60 px-3.5 py-2.5 text-sm text-slate-600 transition hover:border-slate-300 dark:border-slate-700/60 dark:bg-slate-800/40 dark:text-slate-300 dark:hover:border-slate-600">
@@ -1455,11 +1464,11 @@ function EventDraftModal({
               className="h-4 w-4 rounded border-slate-300 text-accent focus:ring-accent/40 dark:border-slate-600"
             />
             <Sun size={15} className="shrink-0 text-amber-500 dark:text-amber-400" />
-            <span className="flex-1">成日嘅事</span>
-            <span className="text-xs text-slate-400 dark:text-slate-500">唔使定時間</span>
+            <span className="flex-1">{t('inbox.eventModalAllDay', { defaultValue: '成日嘅事' })}</span>
+            <span className="text-xs text-slate-400 dark:text-slate-500">{t('inbox.eventModalAllDayHint', { defaultValue: '唔使定時間' })}</span>
           </label>
           {!allDay && (
-            <Field label="時間">
+            <Field label={t('inbox.eventModalTimeLabel', { defaultValue: '時間' })}>
               <Input type="time" value={time} onChange={(e) => setTime(e.target.value)} />
             </Field>
           )}

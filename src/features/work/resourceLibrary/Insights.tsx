@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   BarChart3,
   FolderTree,
@@ -44,6 +45,7 @@ export function Insights({
   openLog: OpenLog[]
   topicName: (id: string) => string
 }) {
+  const { t } = useTranslation()
   const total = rows.length
   const types = useMemo(() => typeBreakdown(rows), [rows])
   const folderStats = useMemo(
@@ -97,72 +99,72 @@ export function Insights({
     return (
       <EmptyState
         icon={BarChart3}
-        title="仲未有資料做統計"
-        hint="新增啲資源、開幾條連結，呢度就會出類型占比、活動趨勢同開啟排行。"
+        title={t('res.insights_empty_title', { defaultValue: '仲未有資料做統計' })}
+        hint={t('res.insights_empty_hint', { defaultValue: '新增啲資源、開幾條連結，呢度就會出類型占比、活動趨勢同開啟排行。' })}
       />
     )
 
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <StatCard label="總資源" value={total} icon={Layers} highlight />
+        <StatCard label={t('res.insights_kpi_total', { defaultValue: '總資源' })} value={total} icon={Layers} highlight />
         <StatCard
-          label="累計開啟"
+          label={t('res.insights_kpi_opens', { defaultValue: '累計開啟' })}
           value={totalOpens}
-          unit="次"
+          unit={t('res.insights_kpi_opens_unit', { defaultValue: '次' })}
           icon={TrendingUp}
-          hint={`${withLink} 個有連結`}
+          hint={t('res.insights_kpi_opens_hint', { defaultValue: `${withLink} 個有連結`, count: withLink })}
         />
-        <StatCard label="收藏" value={favCount} unit="個" icon={Star} />
+        <StatCard label={t('res.insights_kpi_favs', { defaultValue: '收藏' })} value={favCount} unit={t('res.insights_kpi_favs_unit', { defaultValue: '個' })} icon={Star} />
         <StatCard
-          label="平均評分"
+          label={t('res.insights_kpi_rating', { defaultValue: '平均評分' })}
           value={avgRating || '—'}
           icon={Star}
-          hint="已評分資源"
+          hint={t('res.insights_kpi_rating_hint', { defaultValue: '已評分資源' })}
         />
       </div>
 
       {/* 30 日活動 */}
       <Card className="p-4">
-        <SectionTitle icon={LineChart} description="新增（虛線）對開啟（藍線）">
-          近 30 日活動
+        <SectionTitle icon={LineChart} description={t('res.insights_activity_desc', { defaultValue: '新增（虛線）對開啟（藍線）' })}>
+          {t('res.insights_activity_title', { defaultValue: '近 30 日活動' })}
         </SectionTitle>
         <ActivityChart added={added} opened={opened} />
       </Card>
 
       <div className="grid gap-4 lg:grid-cols-2">
         <Card className="p-4">
-          <SectionTitle icon={Layers} description="按資源類型分佈">
-            類型占比
+          <SectionTitle icon={Layers} description={t('res.insights_type_desc', { defaultValue: '按資源類型分佈' })}>
+            {t('res.insights_type_title', { defaultValue: '類型占比' })}
           </SectionTitle>
           <TypeDonut stats={types} total={total} />
         </Card>
 
         <Card className="p-4">
-          <SectionTitle icon={FolderTree} description="每個收藏夾嘅資源數">
-            收藏夾分佈
+          <SectionTitle icon={FolderTree} description={t('res.insights_folder_desc', { defaultValue: '每個收藏夾嘅資源數' })}>
+            {t('res.insights_folder_title', { defaultValue: '收藏夾分佈' })}
           </SectionTitle>
           <FolderBars stats={folderStats} />
         </Card>
 
         <Card className="p-4">
-          <SectionTitle icon={TrendingUp} description="最常開啟嘅教材">
-            開啟排行榜
+          <SectionTitle icon={TrendingUp} description={t('res.insights_leaderboard_desc', { defaultValue: '最常開啟嘅教材' })}>
+            {t('res.insights_leaderboard_title', { defaultValue: '開啟排行榜' })}
           </SectionTitle>
           <OpenLeaderboard rows={leaders} />
         </Card>
 
         <Card className="p-4">
-          <SectionTitle icon={BarChart3} description="各課題下嘅資源數量">
-            課題覆蓋
+          <SectionTitle icon={BarChart3} description={t('res.insights_coverage_desc', { defaultValue: '各課題下嘅資源數量' })}>
+            {t('res.insights_coverage_title', { defaultValue: '課題覆蓋' })}
           </SectionTitle>
           <CoverageBars rows={coverage} />
         </Card>
       </div>
 
       <Card className="p-4">
-        <SectionTitle icon={Hash} description="字級越大代表用得越多">
-          標籤雲
+        <SectionTitle icon={Hash} description={t('res.insights_tags_desc', { defaultValue: '字級越大代表用得越多' })}>
+          {t('res.insights_tags_title', { defaultValue: '標籤雲' })}
         </SectionTitle>
         <TagCloud tags={tags} active={[]} onToggle={() => {}} />
       </Card>

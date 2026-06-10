@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import type { TimetableSlot } from '../../../data/types'
 import { cx } from '../../../ui'
 import {
@@ -32,6 +33,7 @@ export default function PrintView({
   metaByKey: Map<string, SlotMeta>
   classNameById: Map<string, string>
 }) {
+  const { t } = useTranslation()
   return (
     <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-slate-700/60 dark:bg-slate-800 dark:shadow-none print:rounded-none print:border-0 print:p-0 print:shadow-none">
       <div className="mb-4 text-center">
@@ -39,7 +41,7 @@ export default function PrintView({
           {title}
         </h2>
         <p className="mt-0.5 text-xs text-slate-400 dark:text-slate-500">
-          每週教學時間表 · 共 <span className="tabular-nums">{slotByKey.size}</span> 節
+          {t('tt.printSubtitle', { defaultValue: `每週教學時間表 · 共 ${slotByKey.size} 節`, count: slotByKey.size })}
         </p>
       </div>
 
@@ -47,14 +49,14 @@ export default function PrintView({
         <thead>
           <tr>
             <th className="w-16 border border-slate-300 bg-slate-50 p-1 text-slate-600 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-300">
-              節 / 時間
+              {t('tt.printPeriodCol', { defaultValue: '節 / 時間' })}
             </th>
             {days.map((day) => (
               <th
                 key={day}
                 className="border border-slate-300 bg-slate-50 p-1 text-slate-600 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-300"
               >
-                {cycle ? `Day ${cycleShort(day)}` : `星期${dayShort(day)}`}
+                {cycle ? `Day ${cycleShort(day)}` : t(`tt.day${['', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][day] ?? 'Mon'}`, { defaultValue: `星期${dayShort(day)}` })}
               </th>
             ))}
           </tr>

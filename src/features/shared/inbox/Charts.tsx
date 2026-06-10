@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { cx } from '../../../ui'
 import { KIND_ICON, KINDS, kindLabel } from './util'
 import type { InboxKind } from './types'
@@ -14,6 +15,7 @@ export function CaptureTrend({
 }: {
   data: { key: string; label: string; count: number }[]
 }) {
+  const { t } = useTranslation()
   const max = useMemo(() => Math.max(1, ...data.map((d) => d.count)), [data])
   const total = data.reduce((s, d) => s + d.count, 0)
   return (
@@ -23,7 +25,7 @@ export function CaptureTrend({
           <div
             key={d.key}
             className="group relative flex flex-1 flex-col items-center justify-end"
-            title={`${d.key}：擷取 ${d.count} 項`}
+            title={t('inbox.chartBarTooltip', { key: d.key, count: d.count, defaultValue: `${d.key}：擷取 ${d.count} 項` })}
           >
             <span className="mb-1 text-[10px] font-medium tabular-nums text-slate-500 opacity-0 transition group-hover:opacity-100 dark:text-slate-400">
               {d.count || ''}
@@ -53,11 +55,7 @@ export function CaptureTrend({
         ))}
       </div>
       <p className="mt-2 text-center text-[11px] tabular-nums text-slate-400 dark:text-slate-500">
-        近 14 日共擷取{' '}
-        <span className="font-semibold text-slate-600 dark:text-slate-300">
-          {total}
-        </span>{' '}
-        項
+        {t('inbox.chartTrendTotal', { count: total, defaultValue: `近 14 日共擷取 ${total} 項` })}
       </p>
     </div>
   )
@@ -80,11 +78,12 @@ export function KindBars({
   byKind: Record<InboxKind, number>
   onPick?: (kind: InboxKind) => void
 }) {
+  const { t } = useTranslation()
   const total = KINDS.reduce((s, k) => s + byKind[k.id], 0)
   if (total === 0)
     return (
       <p className="py-6 text-center text-sm text-slate-400 dark:text-slate-500">
-        未有待處理項目
+        {t('inbox.chartNoPending', { defaultValue: '未有待處理項目' })}
       </p>
     )
   return (

@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { cx } from '../../../ui'
 import type { BadgeTone, MonthBar, TypeSlice } from './util'
 
@@ -28,12 +29,13 @@ const TONE_STROKE: Record<BadgeTone, string> = {
 
 // ───────── 1. 月度會議數（垂直長條）─────────
 export function MonthlyBars({ bars }: { bars: MonthBar[] }) {
+  const { t } = useTranslation()
   const max = useMemo(() => Math.max(1, ...bars.map((b) => b.count)), [bars])
   const total = bars.reduce((s, b) => s + b.count, 0)
   if (total === 0)
     return (
       <p className="py-8 text-center text-sm text-slate-400 dark:text-slate-500">
-        呢段期間未有會議紀錄
+        {t('meet.stats_monthly_empty', { defaultValue: '呢段期間未有會議紀錄' })}
       </p>
     )
   return (
@@ -43,7 +45,7 @@ export function MonthlyBars({ bars }: { bars: MonthBar[] }) {
           <div
             key={b.key}
             className="group flex flex-1 flex-col items-center justify-end"
-            title={`${b.label}：${b.count} 場`}
+            title={`${b.label}：${b.count}${t('meet.stats_monthly_bar_unit', { defaultValue: ' 場' })}`}
           >
             <span className="mb-1 text-[10px] font-medium tabular-nums text-slate-500 dark:text-slate-400">
               {b.count || ''}
@@ -79,6 +81,7 @@ export function TypeDonut({
   slices: TypeSlice[]
   size?: number
 }) {
+  const { t } = useTranslation()
   const total = slices.reduce((s, x) => s + x.count, 0)
   const r = (size - 18) / 2
   const c = 2 * Math.PI * r
@@ -88,7 +91,7 @@ export function TypeDonut({
   if (total === 0)
     return (
       <p className="py-8 text-center text-sm text-slate-400 dark:text-slate-500">
-        未有分類資料
+        {t('meet.stats_type_empty', { defaultValue: '未有分類資料' })}
       </p>
     )
 
@@ -138,7 +141,7 @@ export function TypeDonut({
             textAnchor="middle"
             className="fill-slate-400 text-[10px] dark:fill-slate-500"
           >
-            場會議
+            {t('meet.stats_donut_label', { defaultValue: '場會議' })}
           </text>
         </g>
       </svg>
@@ -172,6 +175,7 @@ export function CompletionRing({
   total: number
   size?: number
 }) {
+  const { t } = useTranslation()
   const pct = total > 0 ? done / total : 0
   const r = (size - 16) / 2
   const c = 2 * Math.PI * r
@@ -213,7 +217,7 @@ export function CompletionRing({
             textAnchor="middle"
             className="fill-slate-400 text-[10px] dark:fill-slate-500"
           >
-            已完成
+            {t('meet.stats_ring_done', { defaultValue: '已完成' })}
           </text>
         </g>
       </svg>
@@ -221,7 +225,7 @@ export function CompletionRing({
         <li className="flex items-center justify-between gap-2">
           <span className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
             <span className="h-2.5 w-2.5 rounded-sm bg-emerald-500" />
-            已完成
+            {t('meet.stats_ring_done', { defaultValue: '已完成' })}
           </span>
           <span className="font-semibold tabular-nums text-slate-700 dark:text-slate-200">
             {done}
@@ -230,7 +234,7 @@ export function CompletionRing({
         <li className="flex items-center justify-between gap-2">
           <span className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
             <span className="h-2.5 w-2.5 rounded-sm bg-slate-300 dark:bg-slate-600" />
-            待跟進
+            {t('meet.stats_ring_pending', { defaultValue: '待跟進' })}
           </span>
           <span className="font-semibold tabular-nums text-slate-700 dark:text-slate-200">
             {Math.max(0, total - done)}

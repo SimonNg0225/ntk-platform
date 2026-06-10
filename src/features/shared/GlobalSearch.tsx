@@ -1,3 +1,4 @@
+import './globalSearch/i18n'
 import {
   useCallback,
   useDeferredValue,
@@ -6,6 +7,7 @@ import {
   useRef,
   useState,
 } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useCollection } from '../../lib/store'
 import {
   questionsCol,
@@ -153,6 +155,10 @@ interface SourceKind {
   modes: ('learning' | 'work')[]
 }
 
+// KIND_META labels are resolved lazily via t() at render time; static fallback = zh-HK original.
+// The label field here is kept for non-React contexts (e.g. type-suggestion util).
+// In JSX, kindLabel on Hit is set from KIND_META[kindId].label at buildHit time (before t()),
+// so we keep the zh-HK originals here and replace display uses with t() in JSX.
 const KIND_META: Record<string, Omit<SourceKind, 'id'>> = {
   note: { label: '個人筆記', featureId: 'learning-notes', icon: FileText, tone: 'accent', modes: ['learning'] },
   journal: { label: '個人日誌', featureId: 'learning-journal', icon: NotebookPen, tone: 'accent', modes: ['learning'] },
@@ -174,6 +180,28 @@ const KIND_META: Record<string, Omit<SourceKind, 'id'>> = {
   inbox: { label: '快速擷取', featureId: 'inbox', icon: InboxIcon, tone: 'slate', modes: ['learning', 'work'] },
 }
 
+// Map kindId → t() key for translated labels in JSX
+const KIND_LABEL_KEY: Record<string, string> = {
+  note: 'gsearch.kindNote',
+  journal: 'gsearch.kindJournal',
+  goal: 'gsearch.kindGoal',
+  reading: 'gsearch.kindReading',
+  deck: 'gsearch.kindDeck',
+  card: 'gsearch.kindCard',
+  question: 'gsearch.kindQuestion',
+  resource: 'gsearch.kindResource',
+  lesson: 'gsearch.kindLesson',
+  meeting: 'gsearch.kindMeeting',
+  klass: 'gsearch.kindKlass',
+  student: 'gsearch.kindStudent',
+  task: 'gsearch.kindTask',
+  topic: 'gsearch.kindTopic',
+  tx: 'gsearch.kindTx',
+  event: 'gsearch.kindEvent',
+  countdown: 'gsearch.kindCountdown',
+  inbox: 'gsearch.kindInbox',
+}
+
 const ALL_KIND_IDS = Object.keys(KIND_META)
 
 // 給某 kind 整一條 Hit（先做 fuzzy；唔匹配回 null）
@@ -185,6 +213,7 @@ function buildHit(
   meta: { label: string; value: string }[],
   query: string,
   opts?: { ts?: number; pinned?: boolean },
+  unnamedLabel = '（未命名）',
 ): Hit | null {
   const m = KIND_META[kindId]
   // 對每個欄位做 fuzzy，攞最高分嗰個做命中欄位
@@ -212,7 +241,7 @@ function buildHit(
     featureId: m.featureId,
     icon: m.icon,
     badgeTone: m.tone,
-    title: titleField || '（未命名）',
+    title: titleField || unnamedLabel,
     matchedField,
     indices: best?.indices ?? [],
     score: best?.score ?? 0,
@@ -235,6 +264,7 @@ function toMs(s?: string): number | undefined {
 type ViewMode = 'grouped' | 'ranked' | 'recent'
 
 export default function GlobalSearch() {
+  const { t } = useTranslation()
   const { open } = useNav()
   const { mode } = useMode()
   const toast = useToast()
@@ -295,124 +325,153 @@ export default function GlobalSearch() {
   // 把所有實體整成 Hit 候選（未過濾 query）
   const allHits = useMemo<Hit[]>(() => {
     const out: Hit[] = []
+    const unnamed = t('gsearch.unnamed', { defaultValue: '（未命名）' })
+    const bh = (
+      kindId: string,
+      entityId: string,
+      fields: { title: string; body?: string; extra?: string }[],
+      subtitle: string | undefined,
+      meta: { label: string; value: string }[],
+      q: string,
+      opts?: { ts?: number; pinned?: boolean },
+    ) => buildHit(kindId, entityId, fields, subtitle, meta, q, opts, unnamed)
     const push = (h: Hit | null) => h && out.push(h)
     const q = deferredQuery
+    const tQtype: Record<string, string> = {
+      mc: t('gsearch.qtypeMc', { defaultValue: '選擇題' }),
+      short: t('gsearch.qtypeShort', { defaultValue: '短答' }),
+      long: t('gsearch.qtypeLong', { defaultValue: '長答' }),
+      case: t('gsearch.qtypeCase', { defaultValue: '個案' }),
+    }
+    const tDiff: Record<string, string> = {
+      easy: t('gsearch.diffEasy', { defaultValue: '易' }),
+      medium: t('gsearch.diffMedium', { defaultValue: '中' }),
+      hard: t('gsearch.diffHard', { defaultValue: '難' }),
+    }
+    const tResType: Record<string, string> = {
+      handout: t('gsearch.resHandout', { defaultValue: '講義' }),
+      slides: t('gsearch.resSlides', { defaultValue: '簡報' }),
+      paper: t('gsearch.resPaper', { defaultValue: '試題' }),
+      link: t('gsearch.resLink', { defaultValue: '連結' }),
+      video: t('gsearch.resVideo', { defaultValue: '影片' }),
+      note: t('gsearch.resNote', { defaultValue: '筆記' }),
+    }
 
     notes
       .filter((n: RichNote) => !n.trashed)
       .forEach((n: RichNote) =>
-        push(buildHit('note', n.id, [{ title: n.title || firstLine(n.content), body: n.content }], relativeTime(n.updatedAt) ?? undefined, [
-          { label: '更新', value: fmtDate(n.updatedAt) },
-          { label: '字數', value: String(n.content.length) },
+        push(bh('note', n.id, [{ title: n.title || firstLine(n.content), body: n.content }], relativeTime(n.updatedAt) ?? undefined, [
+          { label: t('gsearch.metaUpdated', { defaultValue: '更新' }), value: fmtDate(n.updatedAt) },
+          { label: t('gsearch.metaChars', { defaultValue: '字數' }), value: String(n.content.length) },
         ], q, { ts: toMs(n.updatedAt), pinned: n.pinned })),
       )
     journal.forEach((j: JournalDoc) =>
-      push(buildHit('journal', j.id, [{ title: (j.title || j.date) + (j.mood ? ` · ${j.mood}` : ''), body: [j.content, j.gratitude].filter(Boolean).join('\n') }], j.date, [
-        { label: '日期', value: j.date },
-        ...(j.mood ? [{ label: '心情', value: j.mood }] : []),
+      push(bh('journal', j.id, [{ title: (j.title || j.date) + (j.mood ? ` · ${j.mood}` : ''), body: [j.content, j.gratitude].filter(Boolean).join('\n') }], j.date, [
+        { label: t('gsearch.metaDate', { defaultValue: '日期' }), value: j.date },
+        ...(j.mood ? [{ label: t('gsearch.metaMood', { defaultValue: '心情' }), value: j.mood }] : []),
       ], q, { ts: toMs(j.updatedAt) ?? toMs(j.date) })),
     )
     goals.forEach((g: Goal) =>
-      push(buildHit('goal', g.id, [{ title: g.title }], `進度 ${g.progress}%`, [
-        { label: '進度', value: `${g.progress}%` },
-        { label: '建立', value: fmtDate(g.createdAt) },
+      push(bh('goal', g.id, [{ title: g.title }], t('gsearch.subtitleProgress', { defaultValue: '進度 {{pct}}%' }).replace('{{pct}}', String(g.progress)), [
+        { label: t('gsearch.metaProgress', { defaultValue: '進度' }), value: `${g.progress}%` },
+        { label: t('gsearch.metaCreated', { defaultValue: '建立' }), value: fmtDate(g.createdAt) },
       ], q, { ts: toMs(g.createdAt) })),
     )
     reading.forEach((b: Book) =>
-      push(buildHit('reading', b.id, [{ title: b.title, body: [b.notes, b.review].filter(Boolean).join('\n') }, { title: '', extra: [b.author, ...(b.shelves ?? [])].filter(Boolean).join(' ') }], b.author ? `作者：${b.author}` : STATUS_LABEL[b.status], [
-        { label: '狀態', value: STATUS_LABEL[b.status] },
-        ...(b.author ? [{ label: '作者', value: b.author }] : []),
+      push(bh('reading', b.id, [{ title: b.title, body: [b.notes, b.review].filter(Boolean).join('\n') }, { title: '', extra: [b.author, ...(b.shelves ?? [])].filter(Boolean).join(' ') }], b.author ? `作者：${b.author}` : STATUS_LABEL[b.status], [
+        { label: t('gsearch.metaStatus', { defaultValue: '狀態' }), value: STATUS_LABEL[b.status] },
+        ...(b.author ? [{ label: t('gsearch.metaAuthor', { defaultValue: '作者' }), value: b.author }] : []),
       ], q, { ts: toMs(b.createdAt) })),
     )
     decks.forEach((d: Deck) =>
-      push(buildHit('deck', d.id, [{ title: d.name, body: d.description }], d.description, [
-        { label: '建立', value: fmtDate(d.createdAt) },
-        { label: '卡數', value: String(cards.filter((c) => c.deckId === d.id).length) },
+      push(bh('deck', d.id, [{ title: d.name, body: d.description }], d.description, [
+        { label: t('gsearch.metaCreated', { defaultValue: '建立' }), value: fmtDate(d.createdAt) },
+        { label: t('gsearch.metaCount', { defaultValue: '卡數' }), value: String(cards.filter((c) => c.deckId === d.id).length) },
       ], q, { ts: toMs(d.createdAt) })),
     )
     cards.forEach((c: Card) =>
-      push(buildHit('card', c.id, [{ title: c.front, body: c.back }], deckById.get(c.deckId), [
-        { label: '牌組', value: deckById.get(c.deckId) ?? '—' },
-        { label: '答案', value: c.back.slice(0, 80) },
+      push(bh('card', c.id, [{ title: c.front, body: c.back }], deckById.get(c.deckId), [
+        { label: t('gsearch.metaDeck', { defaultValue: '牌組' }), value: deckById.get(c.deckId) ?? '—' },
+        { label: t('gsearch.metaAnswer', { defaultValue: '答案' }), value: c.back.slice(0, 80) },
       ], q, { ts: toMs(c.createdAt) })),
     )
     questions.forEach((qn: Question) =>
-      push(buildHit('question', qn.id, [{ title: qn.stem, body: qn.answer ?? (qn.options ?? []).join(' / ') }, { title: '', extra: (qn.tags ?? []).join(' ') }], `${QTYPE[qn.type]} · ${DIFF[qn.difficulty]}`, [
-        { label: '題型', value: QTYPE[qn.type] },
-        { label: '難度', value: DIFF[qn.difficulty] },
-        { label: '課題', value: topicById.get(qn.topicId) ?? '—' },
-        ...(qn.marks ? [{ label: '分數', value: String(qn.marks) }] : []),
+      push(bh('question', qn.id, [{ title: qn.stem, body: qn.answer ?? (qn.options ?? []).join(' / ') }, { title: '', extra: (qn.tags ?? []).join(' ') }], `${tQtype[qn.type] ?? QTYPE[qn.type]} · ${tDiff[qn.difficulty] ?? DIFF[qn.difficulty]}`, [
+        { label: t('gsearch.metaQtype', { defaultValue: '題型' }), value: tQtype[qn.type] ?? QTYPE[qn.type] },
+        { label: t('gsearch.metaDifficulty', { defaultValue: '難度' }), value: tDiff[qn.difficulty] ?? DIFF[qn.difficulty] },
+        { label: t('gsearch.metaTopic', { defaultValue: '課題' }), value: topicById.get(qn.topicId) ?? '—' },
+        ...(qn.marks ? [{ label: t('gsearch.metaScore', { defaultValue: '分數' }), value: String(qn.marks) }] : []),
       ], q, { ts: toMs(qn.createdAt) })),
     )
     resources.forEach((r: Resource) =>
-      push(buildHit('resource', r.id, [{ title: r.title, body: r.notes }, { title: '', extra: (r.tags ?? []).join(' ') }], RES_TYPE[r.type] ?? r.type, [
-        { label: '類型', value: RES_TYPE[r.type] ?? r.type },
-        ...(r.url ? [{ label: '連結', value: r.url }] : []),
-        ...(r.tags?.length ? [{ label: '標籤', value: r.tags.join('、') }] : []),
+      push(bh('resource', r.id, [{ title: r.title, body: r.notes }, { title: '', extra: (r.tags ?? []).join(' ') }], tResType[r.type] ?? RES_TYPE[r.type] ?? r.type, [
+        { label: t('gsearch.metaResType', { defaultValue: '類型' }), value: tResType[r.type] ?? RES_TYPE[r.type] ?? r.type },
+        ...(r.url ? [{ label: t('gsearch.metaLink', { defaultValue: '連結' }), value: r.url }] : []),
+        ...(r.tags?.length ? [{ label: t('gsearch.metaTags', { defaultValue: '標籤' }), value: r.tags.join('、') }] : []),
       ], q, { ts: toMs(r.createdAt) })),
     )
     lessonPlans.forEach((l: LessonPlan) =>
-      push(buildHit('lesson', l.id, [{ title: l.title, body: [l.objectives, l.activities].filter(Boolean).join('\n\n') }], l.classId ? classById.get(l.classId) : l.date, [
-        ...(l.date ? [{ label: '日期', value: l.date }] : []),
-        ...(l.classId ? [{ label: '班別', value: classById.get(l.classId) ?? '—' }] : []),
-        ...(l.topicId ? [{ label: '課題', value: topicById.get(l.topicId) ?? '—' }] : []),
+      push(bh('lesson', l.id, [{ title: l.title, body: [l.objectives, l.activities].filter(Boolean).join('\n\n') }], l.classId ? classById.get(l.classId) : l.date, [
+        ...(l.date ? [{ label: t('gsearch.metaDate', { defaultValue: '日期' }), value: l.date }] : []),
+        ...(l.classId ? [{ label: t('gsearch.metaClass', { defaultValue: '班別' }), value: classById.get(l.classId) ?? '—' }] : []),
+        ...(l.topicId ? [{ label: t('gsearch.metaTopic', { defaultValue: '課題' }), value: topicById.get(l.topicId) ?? '—' }] : []),
       ], q, { ts: toMs(l.createdAt) ?? toMs(l.date) })),
     )
     meetingNotes.forEach((mn: MeetingNote) =>
-      push(buildHit('meeting', mn.id, [{ title: mn.title, body: mn.content }, { title: '', extra: (mn.tags ?? []).join(' ') }], mn.date, [
-        { label: '日期', value: mn.date },
-        ...(mn.tags?.length ? [{ label: '標籤', value: mn.tags.join('、') }] : []),
+      push(bh('meeting', mn.id, [{ title: mn.title, body: mn.content }, { title: '', extra: (mn.tags ?? []).join(' ') }], mn.date, [
+        { label: t('gsearch.metaDate', { defaultValue: '日期' }), value: mn.date },
+        ...(mn.tags?.length ? [{ label: t('gsearch.metaTags', { defaultValue: '標籤' }), value: mn.tags.join('、') }] : []),
       ], q, { ts: toMs(mn.createdAt) ?? toMs(mn.date) })),
     )
     classes.forEach((c: Klass) =>
-      push(buildHit('klass', c.id, [{ title: c.name, extra: c.subject }], c.subject, [
-        { label: '科目', value: c.subject },
-        { label: '人數', value: String(students.filter((s) => s.classId === c.id).length) },
+      push(bh('klass', c.id, [{ title: c.name, extra: c.subject }], c.subject, [
+        { label: t('gsearch.metaSubject', { defaultValue: '科目' }), value: c.subject },
+        { label: t('gsearch.metaCount', { defaultValue: '人數' }), value: String(students.filter((s) => s.classId === c.id).length) },
       ], q)),
     )
     students.forEach((s: Student) =>
-      push(buildHit('student', s.id, [{ title: s.name, extra: s.studentNo }], classById.get(s.classId), [
-        { label: '班別', value: classById.get(s.classId) ?? '—' },
-        ...(s.studentNo ? [{ label: '學號', value: s.studentNo }] : []),
+      push(bh('student', s.id, [{ title: s.name, extra: s.studentNo }], classById.get(s.classId), [
+        { label: t('gsearch.metaClass', { defaultValue: '班別' }), value: classById.get(s.classId) ?? '—' },
+        ...(s.studentNo ? [{ label: t('gsearch.metaStudentNo', { defaultValue: '學號' }), value: s.studentNo }] : []),
       ], q)),
     )
-    tasks.forEach((t: Task) =>
-      push(buildHit('task', t.id, [{ title: t.text }], t.done ? '已完成' : '待辦', [
-        { label: '狀態', value: t.done ? '已完成' : '待辦' },
-        { label: '建立', value: fmtDate(t.createdAt) },
-      ], q, { ts: toMs(t.createdAt) })),
+    tasks.forEach((t_: Task) =>
+      push(bh('task', t_.id, [{ title: t_.text }], t_.done ? t('gsearch.taskDone', { defaultValue: '已完成' }) : t('gsearch.taskPending', { defaultValue: '待辦' }), [
+        { label: t('gsearch.metaStatus', { defaultValue: '狀態' }), value: t_.done ? t('gsearch.taskDone', { defaultValue: '已完成' }) : t('gsearch.taskPending', { defaultValue: '待辦' }) },
+        { label: t('gsearch.metaCreated', { defaultValue: '建立' }), value: fmtDate(t_.createdAt) },
+      ], q, { ts: toMs(t_.createdAt) })),
     )
-    topics.forEach((t: Topic) =>
-      push(buildHit('topic', t.id, [{ title: t.topic, extra: `${t.part} · ${t.area}` }], `${t.part} · ${t.area}`, [
-        { label: '部分', value: t.part },
-        { label: '範疇', value: t.area },
+    topics.forEach((t_: Topic) =>
+      push(bh('topic', t_.id, [{ title: t_.topic, extra: `${t_.part} · ${t_.area}` }], `${t_.part} · ${t_.area}`, [
+        { label: t('gsearch.metaPart', { defaultValue: '部分' }), value: t_.part },
+        { label: t('gsearch.metaArea', { defaultValue: '範疇' }), value: t_.area },
       ], q)),
     )
-    transactions.forEach((t: Transaction) => {
-      const cat = catById.get(t.categoryId)
-      push(buildHit('tx', t.id, [{ title: t.note || (cat?.name ?? '未分類'), extra: cat?.name }], `${t.kind === 'income' ? '+' : '−'}$${t.amount} · ${t.date}`, [
-        { label: '類型', value: t.kind === 'income' ? '收入' : '支出' },
-        { label: '金額', value: `$${t.amount}` },
-        { label: '分類', value: cat?.name ?? '未分類' },
-        { label: '日期', value: t.date },
-      ], q, { ts: toMs(t.createdAt) ?? toMs(t.date) }))
+    transactions.forEach((t_: Transaction) => {
+      const cat = catById.get(t_.categoryId)
+      push(bh('tx', t_.id, [{ title: t_.note || (cat?.name ?? t('gsearch.txUncategorised', { defaultValue: '未分類' })), extra: cat?.name }], `${t_.kind === 'income' ? '+' : '−'}$${t_.amount} · ${t_.date}`, [
+        { label: t('gsearch.metaTxType', { defaultValue: '類型' }), value: t_.kind === 'income' ? t('gsearch.txIncome', { defaultValue: '收入' }) : t('gsearch.txExpense', { defaultValue: '支出' }) },
+        { label: t('gsearch.metaAmount', { defaultValue: '金額' }), value: `$${t_.amount}` },
+        { label: t('gsearch.metaCategory', { defaultValue: '分類' }), value: cat?.name ?? t('gsearch.txUncategorised', { defaultValue: '未分類' }) },
+        { label: t('gsearch.metaDate', { defaultValue: '日期' }), value: t_.date },
+      ], q, { ts: toMs(t_.createdAt) ?? toMs(t_.date) }))
     })
     events.forEach((e: CalendarEvent) =>
-      push(buildHit('event', e.id, [{ title: e.title, body: e.notes }, { title: '', extra: e.location }], `${e.date}${e.time ? ' ' + e.time : ''}`, [
-        { label: '日期', value: e.date },
-        ...(e.time ? [{ label: '時間', value: e.time }] : []),
-        ...(e.location ? [{ label: '地點', value: e.location }] : []),
+      push(bh('event', e.id, [{ title: e.title, body: e.notes }, { title: '', extra: e.location }], `${e.date}${e.time ? ' ' + e.time : ''}`, [
+        { label: t('gsearch.metaDate', { defaultValue: '日期' }), value: e.date },
+        ...(e.time ? [{ label: t('gsearch.metaTime', { defaultValue: '時間' }), value: e.time }] : []),
+        ...(e.location ? [{ label: t('gsearch.metaLocation', { defaultValue: '地點' }), value: e.location }] : []),
       ], q, { ts: toMs(`${e.date}${e.time ? 'T' + e.time : ''}`) })),
     )
     countdowns.forEach((c: Countdown) =>
-      push(buildHit('countdown', c.id, [{ title: c.title, body: c.notes }], `${c.date}${daysToLabel(c.date)}`, [
-        { label: '目標日', value: c.date },
-        { label: '倒數', value: daysToLabel(c.date).trim() || '—' },
+      push(bh('countdown', c.id, [{ title: c.title, body: c.notes }], `${c.date}${daysToLabel(c.date, t)}`, [
+        { label: t('gsearch.metaTarget', { defaultValue: '目標日' }), value: c.date },
+        { label: t('gsearch.metaCountdown', { defaultValue: '倒數' }), value: daysToLabel(c.date, t).trim() || '—' },
       ], q, { ts: toMs(c.createdAt) ?? toMs(c.date) })),
     )
     inbox.forEach((it) =>
-      push(buildHit('inbox', it.id, [{ title: it.text }], relativeTime(it.createdAt) ?? undefined, [
-        { label: '擷取', value: fmtDate(it.createdAt) },
+      push(bh('inbox', it.id, [{ title: it.text }], relativeTime(it.createdAt) ?? undefined, [
+        { label: t('gsearch.metaCapture', { defaultValue: '擷取' }), value: fmtDate(it.createdAt) },
       ], q, { ts: toMs(it.createdAt) })),
     )
     return out
@@ -513,14 +572,14 @@ export default function GlobalSearch() {
         // 要顯式接住 rejection，先唔會誤報「已複製」+ 避免 unhandled rejection
         if (p) {
           p.then(
-            () => toast.success('已複製到剪貼簿'),
-            () => toast.error('複製失敗'),
+            () => toast.success(t('gsearch.toastCopied', { defaultValue: '已複製到剪貼簿' })),
+            () => toast.error(t('gsearch.toastCopyFail', { defaultValue: '複製失敗' })),
           )
         } else {
-          toast.error('複製失敗')
+          toast.error(t('gsearch.toastCopyFail', { defaultValue: '複製失敗' }))
         }
       } catch {
-        toast.error('複製失敗')
+        toast.error(t('gsearch.toastCopyFail', { defaultValue: '複製失敗' }))
       }
     },
     [toast],
@@ -599,7 +658,7 @@ export default function GlobalSearch() {
       const now = new Date().toISOString()
       if (target === 'inbox') {
         inboxCol.add({ id: uid(), text, mode, createdAt: now })
-        toast.success('已加入快速擷取')
+        toast.success(t('gsearch.toastInboxAdded', { defaultValue: '已加入快速擷取' }))
       } else if (target === 'note') {
         richNotesCol.add({
           id: uid(),
@@ -614,10 +673,10 @@ export default function GlobalSearch() {
           createdAt: now,
           updatedAt: now,
         })
-        toast.success('已建立個人筆記')
+        toast.success(t('gsearch.toastNoteCreated', { defaultValue: '已建立個人筆記' }))
       } else {
         tasksCol.add({ id: uid(), text, done: false, createdAt: now })
-        toast.success('已建立待辦')
+        toast.success(t('gsearch.toastTaskCreated', { defaultValue: '已建立待辦' }))
       }
       pushRecent(text)
     },
@@ -645,10 +704,10 @@ export default function GlobalSearch() {
             </span>
             <div className="min-w-0">
               <p className="text-[11px] font-medium uppercase tracking-[0.28em] text-accent/70">
-                指揮中心 · COMMAND
+                {t('gsearch.kicker', { defaultValue: '指揮中心 · COMMAND' })}
               </p>
               <h1 className="-mt-0.5 font-serif text-[22px] font-semibold leading-tight tracking-tight text-slate-800 dark:text-slate-100">
-                全域搜尋
+                {t('gsearch.heading', { defaultValue: '全域搜尋' })}
               </h1>
             </div>
             <Kbd className="ml-auto hidden shrink-0 items-center gap-1 sm:inline-flex">
@@ -672,8 +731,8 @@ export default function GlobalSearch() {
               type="text"
               value={raw}
               onChange={(e) => setRaw(e.target.value)}
-              placeholder="搵筆記、題庫、資源、班別、學生、行事曆…"
-              aria-label="全域搜尋"
+              placeholder={t('gsearch.placeholder', { defaultValue: '搵筆記、題庫、資源、班別、學生、行事曆…' })}
+              aria-label={t('gsearch.ariaLabel', { defaultValue: '全域搜尋' })}
               className="min-w-0 flex-1 bg-transparent text-base text-slate-800 outline-none placeholder:text-slate-400 dark:text-slate-100 dark:placeholder:text-slate-500 sm:text-[15px]"
             />
             {raw ? (
@@ -684,7 +743,7 @@ export default function GlobalSearch() {
                   setKindFilter('all')
                   focusInput()
                 }}
-                aria-label="清除搜尋"
+                aria-label={t('gsearch.clearSearch', { defaultValue: '清除搜尋' })}
                 className="shrink-0 rounded-full p-1 text-slate-400 transition hover:bg-slate-200/70 hover:text-slate-600 dark:hover:bg-slate-700 dark:hover:text-slate-200"
               >
                 <X size={16} />
@@ -699,11 +758,11 @@ export default function GlobalSearch() {
           <div
             className="mt-2 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800"
             role="listbox"
-            aria-label="type 運算子建議"
+            aria-label={t('gsearch.typeAutocompleteLabel', { defaultValue: 'type 運算子建議' })}
           >
             <div className="flex items-center gap-1.5 border-b border-slate-100 px-3 py-1.5 text-[11px] font-medium uppercase tracking-wider text-slate-400 dark:border-slate-700/60 dark:text-slate-500">
               <Hash size={12} />
-              限定類別
+              {t('gsearch.limitCategory', { defaultValue: '限定類別' })}
             </div>
             <div className="max-h-56 overflow-y-auto p-1">
               {typeSugs.map((s) => {
@@ -740,9 +799,9 @@ export default function GlobalSearch() {
             <SegmentedControl
               size="sm"
               options={[
-                { id: 'grouped' as const, label: '分類' },
-                { id: 'ranked' as const, label: '最相關' },
-                { id: 'recent' as const, label: '最近' },
+                { id: 'grouped' as const, label: t('gsearch.viewGrouped', { defaultValue: '分類' }) },
+                { id: 'ranked' as const, label: t('gsearch.viewRanked', { defaultValue: '最相關' }) },
+                { id: 'recent' as const, label: t('gsearch.viewRecent', { defaultValue: '最近' }) },
               ]}
               value={view}
               onChange={setView}
@@ -758,7 +817,11 @@ export default function GlobalSearch() {
                   : 'border-slate-200 bg-white text-slate-500 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700',
               )}
             >
-              {scopeMode ? `只搜${mode === 'learning' ? '個人' : '工作'}模式` : '搜全部模式'}
+              {scopeMode
+                ? (mode === 'learning'
+                    ? t('gsearch.scopeOnlyLearning', { defaultValue: '只搜個人模式' })
+                    : t('gsearch.scopeOnlyWork', { defaultValue: '只搜工作模式' }))
+                : t('gsearch.scopeAll', { defaultValue: '搜全部模式' })}
             </button>
             <div className="flex-1" />
             {hasQuery && (
@@ -770,13 +833,13 @@ export default function GlobalSearch() {
                 <span className="tabular-nums text-base font-semibold text-accent-strong dark:text-accent">
                   {total}
                 </span>
-                項命中
+                {t('gsearch.hitsUnit', { defaultValue: '項命中' })}
                 {raw.trim() && (
-                  <Tooltip label={isPinned(query || raw, pins) ? '取消釘選' : '釘選此搜尋'}>
+                  <Tooltip label={isPinned(query || raw, pins) ? t('gsearch.unpinSearch', { defaultValue: '取消釘選' }) : t('gsearch.pinSearch', { defaultValue: '釘選此搜尋' })}>
                     <button
                       type="button"
                       onClick={() => togglePin(query || raw)}
-                      aria-label={isPinned(query || raw, pins) ? '取消釘選此搜尋' : '釘選此搜尋'}
+                      aria-label={isPinned(query || raw, pins) ? t('gsearch.pinSearchAriaUnpin', { defaultValue: '取消釘選此搜尋' }) : t('gsearch.pinSearchAriaPin', { defaultValue: '釘選此搜尋' })}
                       aria-pressed={isPinned(query || raw, pins)}
                       className={cx(
                         'rounded-md p-1 transition',
@@ -800,7 +863,7 @@ export default function GlobalSearch() {
                 size="sm"
                 options={pillOrder.map((id) => ({
                   id,
-                  label: id === 'all' ? '全部' : KIND_META[id].label,
+                  label: id === 'all' ? t('gsearch.pillAll', { defaultValue: '全部' }) : t(KIND_LABEL_KEY[id], { defaultValue: KIND_META[id].label }),
                 }))}
                 counts={kindCounts}
                 active={kindFilter}
@@ -827,26 +890,26 @@ export default function GlobalSearch() {
       ) : total === 0 ? (
         <EmptyState
           icon={Radar}
-          title={`掃唔到「${query || raw}」`}
+          title={t('gsearch.emptyTitle', { defaultValue: `掃唔到「${query || raw}」` }).replace('{{query}}', query || raw)}
           hint={
             scopeMode
-              ? '換個關鍵字、清除類別過濾，或者撳「搜全部模式」擴大探照範圍。又或者就用呢句字，即刻開一筆：'
-              : '換個關鍵字、清除類別過濾。又或者就用呢句字，即刻開一筆：'
+              ? t('gsearch.emptyHintScoped', { defaultValue: '換個關鍵字、清除類別過濾，或者撳「搜全部模式」擴大探照範圍。又或者就用呢句字，即刻開一筆：' })
+              : t('gsearch.emptyHintAll', { defaultValue: '換個關鍵字、清除類別過濾。又或者就用呢句字，即刻開一筆：' })
           }
           action={
             <div className="flex flex-wrap items-center justify-center gap-2">
               <Button variant="secondary" size="sm" icon={InboxIcon} onClick={() => createFromQuery('inbox')}>
-                加入擷取
+                {t('gsearch.addToInbox', { defaultValue: '加入擷取' })}
               </Button>
               <Button variant="secondary" size="sm" icon={FileText} onClick={() => createFromQuery('note')}>
-                建立筆記
+                {t('gsearch.createNote', { defaultValue: '建立筆記' })}
               </Button>
               <Button variant="secondary" size="sm" icon={CheckSquare} onClick={() => createFromQuery('task')}>
-                建立待辦
+                {t('gsearch.createTask', { defaultValue: '建立待辦' })}
               </Button>
               {scopeMode && (
                 <Button variant="ghost" size="sm" icon={PlusCircle} onClick={() => setScopeMode(false)}>
-                  搜全部模式
+                  {t('gsearch.searchAllModes', { defaultValue: '搜全部模式' })}
                 </Button>
               )}
             </div>
@@ -888,7 +951,7 @@ export default function GlobalSearch() {
                           <GIcon size={14} />
                         </span>
                         <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">
-                          {g.label}
+                          {t(KIND_LABEL_KEY[g.kindId], { defaultValue: g.label })}
                         </span>
                         <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium tabular-nums text-slate-400 dark:bg-slate-700/60 dark:text-slate-500">
                           {g.hits.length}
@@ -929,7 +992,7 @@ export default function GlobalSearch() {
                   onCopy={() => copyText(activeHit.body || activeHit.title)}
                   onPushInbox={() => {
                     inboxCol.add({ id: uid(), text: activeHit.title, mode, createdAt: new Date().toISOString() })
-                    toast.success('已加入快速擷取')
+                    toast.success(t('gsearch.toastInboxAdded', { defaultValue: '已加入快速擷取' }))
                   }}
                 />
               ) : null}
@@ -943,20 +1006,20 @@ export default function GlobalSearch() {
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 px-1 text-[11px] text-slate-400 dark:text-slate-500">
           <span className="flex items-center gap-1">
             <Kbd>↑</Kbd>
-            <Kbd>↓</Kbd> 選擇
+            <Kbd>↓</Kbd> {t('gsearch.kbdSelect', { defaultValue: '選擇' })}
           </span>
           <span className="flex items-center gap-1">
-            <Kbd>↵</Kbd> 開啟
+            <Kbd>↵</Kbd> {t('gsearch.kbdOpen', { defaultValue: '開啟' })}
           </span>
           <span className="flex items-center gap-1">
             <Kbd>⌘</Kbd>
-            <Kbd>1–9</Kbd> 快速跳
+            <Kbd>1–9</Kbd> {t('gsearch.kbdJump', { defaultValue: '快速跳' })}
           </span>
           <span className="flex items-center gap-1">
-            <Kbd>Tab</Kbd> 切類別
+            <Kbd>Tab</Kbd> {t('gsearch.kbdCycleKind', { defaultValue: '切類別' })}
           </span>
           <span className="flex items-center gap-1">
-            <Kbd>esc</Kbd> 清空
+            <Kbd>esc</Kbd> {t('gsearch.kbdClear', { defaultValue: '清空' })}
           </span>
         </div>
       )}
@@ -982,6 +1045,7 @@ function ResultRow({
   onOpen: () => void
   rowRef: (el: HTMLButtonElement | null) => void
 }) {
+  const { t } = useTranslation()
   const Icon = hit.icon
   // 標題高亮：獨立 fuzzyMatch（index 永遠對應標題本身，唔會錯位）
   const titleHit = query ? fuzzyMatch(hit.title, query) : null
@@ -1077,7 +1141,7 @@ function ResultRow({
         )}
       </span>
       <Badge tone={hit.badgeTone} className="mt-0.5 hidden shrink-0 sm:inline-flex">
-        {hit.kindLabel}
+        {t(KIND_LABEL_KEY[hit.kindId], { defaultValue: hit.kindLabel })}
       </Badge>
       <ArrowRight
         size={15}
@@ -1104,6 +1168,7 @@ function PreviewPanel({
   onCopy: () => void
   onPushInbox: () => void
 }) {
+  const { t } = useTranslation()
   const Icon = hit.icon
   const bodySegs = hit.body
     ? highlightSegments(hit.body.slice(0, 600), query ? (fuzzyMatch(hit.body.slice(0, 600), query)?.indices ?? []) : [])
@@ -1113,14 +1178,14 @@ function PreviewPanel({
       <div className="border-b border-slate-100 bg-slate-50/40 p-4 dark:border-slate-700/60 dark:bg-slate-900/30">
         <p className="mb-2 flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-[0.22em] text-slate-400 dark:text-slate-500">
           <Radar size={11} className="text-accent/70" />
-          鎖定 · PREVIEW
+          {t('gsearch.previewKicker', { defaultValue: '鎖定 · PREVIEW' })}
         </p>
         <div className="flex items-start gap-3">
           <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
             <Icon size={18} />
           </span>
           <div className="min-w-0 flex-1">
-            <Badge tone={hit.badgeTone}>{hit.kindLabel}</Badge>
+            <Badge tone={hit.badgeTone}>{t(KIND_LABEL_KEY[hit.kindId], { defaultValue: hit.kindLabel })}</Badge>
             <h3 className="mt-1.5 break-words text-sm font-semibold text-slate-800 dark:text-slate-100">
               {hit.title}
             </h3>
@@ -1161,15 +1226,15 @@ function PreviewPanel({
 
       <div className="flex items-center gap-2 border-t border-slate-100 p-3 dark:border-slate-700/60">
         <Button size="sm" icon={CornerDownLeft} onClick={onOpen} className="flex-1">
-          開啟
+          {t('gsearch.openButton', { defaultValue: '開啟' })}
         </Button>
-        <Tooltip label="複製內容">
-          <IconButton label="複製內容" size="sm" onClick={onCopy}>
+        <Tooltip label={t('gsearch.copyContent', { defaultValue: '複製內容' })}>
+          <IconButton label={t('gsearch.copyContent', { defaultValue: '複製內容' })} size="sm" onClick={onCopy}>
             <Copy size={16} />
           </IconButton>
         </Tooltip>
-        <Tooltip label="加入快速擷取">
-          <IconButton label="加入快速擷取" size="sm" onClick={onPushInbox}>
+        <Tooltip label={t('gsearch.addToCapture', { defaultValue: '加入快速擷取' })}>
+          <IconButton label={t('gsearch.addToCapture', { defaultValue: '加入快速擷取' })} size="sm" onClick={onPushInbox}>
             <InboxIcon size={16} />
           </IconButton>
         </Tooltip>
@@ -1194,8 +1259,15 @@ function StartScreen({
   onClearRecents: () => void
   onUnpin: (q: string) => void
 }) {
+  const { t } = useTranslation()
   const examples = ['市場營銷', '5A', '會議', '死線', '目標']
   const isFresh = pins.length === 0 && recents.length === 0
+  const operatorHints = [
+    { token: 'type:note', fill: 'type:note ', desc: t('gsearch.opDescTypeNote', { defaultValue: '限定某類資料（例如 type:note 淨係筆記）' }) },
+    { token: 'is:pinned', fill: 'is:pinned ', desc: t('gsearch.opDescIsPinned', { defaultValue: '淨係顯示已釘選嘅項目' }) },
+    { token: 'in:recent', fill: 'in:recent ', desc: t('gsearch.opDescInRecent', { defaultValue: `淨係喺最近 ${RECENT_DAYS} 日更新／建立嘅嘢搵` }).replace('{{days}}', String(RECENT_DAYS)) },
+    { token: 'sort:recent', fill: 'sort:recent ', desc: t('gsearch.opDescSortRecent', { defaultValue: '改用「最近」排序而唔係相關度' }) },
+  ]
   return (
     <div className="space-y-4">
       {/* 首次／空白：command-center 歡迎面板（暖文案 + 例子做明確下一步） */}
@@ -1209,11 +1281,10 @@ function StartScreen({
             <Radar size={26} />
           </span>
           <h2 className="relative mt-4 font-serif text-xl font-semibold tracking-tight text-slate-800 dark:text-slate-100">
-            一格搜尋，掃晒成個平台
+            {t('gsearch.welcomeHeading', { defaultValue: '一格搜尋，掃晒成個平台' })}
           </h2>
           <p className="relative mx-auto mt-2 max-w-md text-sm leading-relaxed text-slate-500 dark:text-slate-400">
-            筆記、題庫、資源、教案、會議、班別、學生、行事曆、待辦、記帳…
-            即時模糊比對，鍵盤一路操控。打幾個字就見到。
+            {t('gsearch.welcomeBody', { defaultValue: '筆記、題庫、資源、教案、會議、班別、學生、行事曆、待辦、記帳…\n            即時模糊比對，鍵盤一路操控。打幾個字就見到。' })}
           </p>
           <div className="relative mt-5 flex flex-wrap items-center justify-center gap-2">
             {examples.map((ex) => (
@@ -1236,7 +1307,7 @@ function StartScreen({
           <div className="mb-2.5 flex items-center gap-1.5">
             <Star size={14} className="fill-amber-400 text-amber-500" />
             <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-              釘選搜尋
+              {t('gsearch.pinnedSearches', { defaultValue: '釘選搜尋' })}
             </h2>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -1252,7 +1323,7 @@ function StartScreen({
                 <button
                   type="button"
                   onClick={() => onUnpin(p.q)}
-                  aria-label="取消釘選"
+                  aria-label={t('gsearch.unpinSearch', { defaultValue: '取消釘選' })}
                   className="px-1.5 py-1 text-amber-400 transition hover:text-amber-600 dark:hover:text-amber-200"
                 >
                   <X size={12} />
@@ -1269,7 +1340,7 @@ function StartScreen({
             <div className="flex items-center gap-1.5">
               <Clock size={14} className="text-slate-400" />
               <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-                最近搜尋
+                {t('gsearch.recentSearches', { defaultValue: '最近搜尋' })}
               </h2>
             </div>
             <button
@@ -1277,7 +1348,7 @@ function StartScreen({
               onClick={onClearRecents}
               className="text-xs text-slate-400 transition hover:text-rose-500"
             >
-              清除
+              {t('gsearch.clearRecents', { defaultValue: '清除' })}
             </button>
           </div>
           <ul className="-mx-1 divide-y divide-slate-100 dark:divide-slate-700/60">
@@ -1297,7 +1368,7 @@ function StartScreen({
                 <button
                   type="button"
                   onClick={() => onRemoveRecent(r.id)}
-                  aria-label="移除"
+                  aria-label={t('gsearch.removeRecent', { defaultValue: '移除' })}
                   className="mr-1 rounded-md p-2 text-slate-300 opacity-0 transition hover:text-rose-500 focus-visible:opacity-100 group-hover:opacity-100 max-sm:opacity-100 dark:text-slate-600"
                 >
                   <X size={14} />
@@ -1311,7 +1382,7 @@ function StartScreen({
       {/* 試下搵（fresh 時 hero 已示範，呢度只喺有歷史時補充） */}
       {!isFresh && (
         <div className="flex flex-wrap items-center gap-2 px-1 text-xs text-slate-400 dark:text-slate-500">
-          <span>試下搵：</span>
+          <span>{t('gsearch.trySearcing', { defaultValue: '試下搵：' })}</span>
           {examples.map((ex) => (
             <button
               key={ex}
@@ -1327,8 +1398,8 @@ function StartScreen({
 
       {/* 運算子（Raycast 風 power-user 提示）— 撳一下即套入搜尋框 */}
       <div className="flex flex-wrap items-center gap-2 px-1 text-xs text-slate-400 dark:text-slate-500">
-        <span>運算子：</span>
-        {OPERATOR_HINTS.map((op) => (
+        <span>{t('gsearch.operators', { defaultValue: '運算子：' })}</span>
+        {operatorHints.map((op) => (
           <Tooltip key={op.token} label={op.desc}>
             <button
               type="button"
@@ -1343,14 +1414,6 @@ function StartScreen({
     </div>
   )
 }
-
-// 運算子提示（StartScreen 顯示；token = 標籤，fill = 撳落去套入搜尋框嘅字）
-const OPERATOR_HINTS: { token: string; fill: string; desc: string }[] = [
-  { token: 'type:note', fill: 'type:note ', desc: '限定某類資料（例如 type:note 淨係筆記）' },
-  { token: 'is:pinned', fill: 'is:pinned ', desc: '淨係顯示已釘選嘅項目' },
-  { token: 'in:recent', fill: 'in:recent ', desc: `淨係喺最近 ${RECENT_DAYS} 日更新／建立嘅嘢搵` },
-  { token: 'sort:recent', fill: 'sort:recent ', desc: '改用「最近」排序而唔係相關度' },
-]
 
 // 分組標頭嘅 icon chip 軟色（沿用既有 6 個 tone，畀每個類別一個鮮明身份，
 // 避免「一排一模一樣 slate chip」嘅 spreadsheet 感）。
@@ -1386,15 +1449,19 @@ function fmtDate(iso?: string): string {
   return `${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()}`
 }
 
-function daysToLabel(dateStr: string): string {
+function daysToLabel(
+  dateStr: string,
+  _t?: (key: string, opts: { defaultValue: string }) => string,
+): string {
+  const tFn = _t ?? ((_k: string, o: { defaultValue: string }) => o.defaultValue)
   const target = Date.parse(dateStr + 'T00:00:00')
   if (Number.isNaN(target)) return ''
   const today = new Date()
   today.setHours(0, 0, 0, 0)
   const days = Math.round((target - today.getTime()) / 864e5)
-  if (days === 0) return ' · 今日'
-  if (days > 0) return ` · 仲有 ${days} 日`
-  return ` · 過咗 ${-days} 日`
+  if (days === 0) return tFn('gsearch.daysToday', { defaultValue: ' · 今日' })
+  if (days > 0) return tFn('gsearch.daysLeft', { defaultValue: ` · 仲有 ${days} 日` }).replace('{{days}}', String(days))
+  return tFn('gsearch.daysPast', { defaultValue: ` · 過咗 ${-days} 日` }).replace('{{days}}', String(-days))
 }
 
 const QTYPE: Record<string, string> = { mc: '選擇題', short: '短答', long: '長答', case: '個案' }

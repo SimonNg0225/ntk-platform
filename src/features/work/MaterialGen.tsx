@@ -14,6 +14,7 @@ import {
   Briefcase,
   type LucideIcon,
 } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { useCollection } from '../../lib/store'
 import { useNav } from '../../context/NavContext'
 import { isAIConfigured } from '../../lib/aiClient'
@@ -23,6 +24,8 @@ import { QuestionGeneratorModal } from './materialGen/QuestionGeneratorModal'
 import { WorksheetGenerator } from './materialGen/WorksheetGenerator'
 import { PaperGenerator } from './materialGen/PaperGenerator'
 import type { GenKind } from './materialGen/engine'
+import './materialGen/i18n'
+
 
 // ============================================================
 //  MaterialGen — 「教材生成」hub（Phase C）
@@ -52,69 +55,93 @@ type ActiveTool =
 
 interface ToolCard {
   id: string
-  title: string
-  blurb: string
+  titleKey: string
+  titleDefault: string
+  blurbKey: string
+  blurbDefault: string
   icon: LucideIcon
   open: ActiveTool
   /** 存去邊（卡腳標示） */
-  dest: '題庫' | '組卷'
+  destKey: string
+  destDefault: string
   /** bonus / 進階標記 */
-  badge?: string
+  badgeKey?: string
+  badgeDefault?: string
 }
 
 const TOOLS: ToolCard[] = [
   {
     id: 'mc',
-    title: 'MC 生成',
-    blurb: '一鍵草擬選擇題：題幹、選項同正解齊備，逐條揀入題庫。',
+    titleKey: 'mat.toolMcTitle',
+    titleDefault: 'MC 生成',
+    blurbKey: 'mat.toolMcBlurb',
+    blurbDefault: '一鍵草擬選擇題：題幹、選項同正解齊備，逐條揀入題庫。',
     icon: ListChecks,
     open: { kind: 'question', gen: 'mc' },
-    dest: '題庫',
+    destKey: 'mat.destBank',
+    destDefault: '題庫',
   },
   {
     id: 'short',
-    title: '短答題生成',
-    blurb: '生成短答題連參考答案，適合課堂提問同小測。',
+    titleKey: 'mat.toolShortTitle',
+    titleDefault: '短答題生成',
+    blurbKey: 'mat.toolShortBlurb',
+    blurbDefault: '生成短答題連參考答案，適合課堂提問同小測。',
     icon: FileText,
     open: { kind: 'question', gen: 'short' },
-    dest: '題庫',
+    destKey: 'mat.destBank',
+    destDefault: '題庫',
   },
   {
     id: 'case',
-    title: '教學個案',
-    blurb: '商業情境 case study：完整處境 + 引導小題 + 評分準則。',
+    titleKey: 'mat.toolCaseTitle',
+    titleDefault: '教學個案',
+    blurbKey: 'mat.toolCaseBlurb',
+    blurbDefault: '商業情境 case study：完整處境 + 引導小題 + 評分準則。',
     icon: Briefcase,
     open: { kind: 'question', gen: 'case' },
-    dest: '題庫',
+    destKey: 'mat.destBank',
+    destDefault: '題庫',
   },
   {
     id: 'long',
-    title: '結構式長題',
-    blurb: '分段（a / b / c…）結構式長題目，附整體評分準則。',
+    titleKey: 'mat.toolLongTitle',
+    titleDefault: '結構式長題',
+    blurbKey: 'mat.toolLongBlurb',
+    blurbDefault: '分段（a / b / c…）結構式長題目，附整體評分準則。',
     icon: SquareStack,
     open: { kind: 'question', gen: 'long' },
-    dest: '題庫',
-    badge: '進階',
+    destKey: 'mat.destBank',
+    destDefault: '題庫',
+    badgeKey: 'mat.toolLongBadge',
+    badgeDefault: '進階',
   },
   {
     id: 'worksheet',
-    title: '教學練習生成',
-    blurb: '一份混合（MC ＋ 短答）課堂練習，可逐條揀入題庫或直接列印。',
+    titleKey: 'mat.toolWorksheetTitle',
+    titleDefault: '教學練習生成',
+    blurbKey: 'mat.toolWorksheetBlurb',
+    blurbDefault: '一份混合（MC ＋ 短答）課堂練習，可逐條揀入題庫或直接列印。',
     icon: ClipboardList,
     open: { kind: 'worksheet' },
-    dest: '題庫',
+    destKey: 'mat.destBank',
+    destDefault: '題庫',
   },
   {
     id: 'paper',
-    title: '試卷生成',
-    blurb: '揀課題範圍同各題型題數，先抽題庫、唔夠先生成，組成一份試卷。',
+    titleKey: 'mat.toolPaperTitle',
+    titleDefault: '試卷生成',
+    blurbKey: 'mat.toolPaperBlurb',
+    blurbDefault: '揀課題範圍同各題型題數，先抽題庫、唔夠先生成，組成一份試卷。',
     icon: FileStack,
     open: { kind: 'paper' },
-    dest: '組卷',
+    destKey: 'mat.destPaper',
+    destDefault: '組卷',
   },
 ]
 
 export default function MaterialGen() {
+  const { t } = useTranslation()
   const nav = useNav()
   const topicsRaw = useCollection(topicsCol)
   const questions = useCollection(questionsCol)
@@ -142,20 +169,20 @@ export default function MaterialGen() {
           aria-hidden
           className="pointer-events-none absolute -right-6 top-3 hidden -rotate-6 select-none items-center gap-1 rounded-xl border-2 border-dashed border-accent/20 px-4 py-2 font-serif text-xs font-semibold uppercase tracking-[0.25em] text-accent/25 dark:border-accent/25 dark:text-accent/25 sm:flex"
         >
-          <Stamp size={13} /> BAFS · 製作工房
+          <Stamp size={13} /> {t('mat.stampLabel', { defaultValue: 'BAFS · 製作工房' })}
         </span>
         <div className="min-w-0">
           <p className="flex items-center gap-2 text-[11px] font-medium uppercase tracking-[0.3em] text-accent/70">
             <Hammer size={13} />
-            教材工作枱 · Material Studio
+            {t('mat.kicker', { defaultValue: '教材工作枱 · Material Studio' })}
           </p>
           <h1 className="mt-1.5 font-serif text-[28px] font-semibold leading-none tracking-tight text-slate-800 dark:text-slate-100 sm:text-[34px]">
-            教材生成
+            {t('mat.hubTitle', { defaultValue: '教材生成' })}
           </h1>
           <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-            一個工作枱，集齊 BAFS 出題、個案、練習同試卷生成。生成完直接入
-            <span className="font-medium text-accent-strong dark:text-accent">題庫</span>
-            ，再可組卷、出自測、重用。
+            {t('mat.hubDesc', { defaultValue: '一個工作枱，集齊 BAFS 出題、個案、練習同試卷生成。生成完直接入' })}
+            <span className="font-medium text-accent-strong dark:text-accent">{t('mat.hubDescBank', { defaultValue: '題庫' })}</span>
+            {t('mat.hubDescEnd', { defaultValue: '，再可組卷、出自測、重用。' })}
           </p>
         </div>
         {/* 工房雙線（檯面分隔感） */}
@@ -170,9 +197,9 @@ export default function MaterialGen() {
         <div className="flex items-start gap-3 rounded-2xl border border-amber-300/50 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-500/25 dark:bg-amber-500/10 dark:text-amber-200">
           <Bot size={18} className="mt-0.5 shrink-0" />
           <div className="space-y-0.5">
-            <p className="font-medium">AI 生成功能未啟用</p>
+            <p className="font-medium">{t('mat.aiNotConfiguredTitle', { defaultValue: 'AI 生成功能未啟用' })}</p>
             <p className="text-xs leading-relaxed text-amber-700 dark:text-amber-300/90">
-              要設定好 Supabase 並部署 gemini Edge Function 先用到 AI 生成（步驟見 docs/SETUP.md）。未接 AI 都可以照用「試卷生成」由題庫抽現有題組卷。
+              {t('mat.aiNotConfiguredDesc', { defaultValue: '要設定好 Supabase 並部署 gemini Edge Function 先用到 AI 生成（步驟見 docs/SETUP.md）。未接 AI 都可以照用「試卷生成」由題庫抽現有題組卷。' })}
             </p>
           </div>
         </div>
@@ -180,14 +207,14 @@ export default function MaterialGen() {
         <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-accent/20 bg-accent-soft/40 px-4 py-2.5 text-sm dark:border-accent/25 dark:bg-accent/10">
           <span className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
             <Sparkles size={15} className="text-accent" />
-            想自由追問、調教題目？
+            {t('mat.aiReadyPrompt', { defaultValue: '想自由追問、調教題目？' })}
           </span>
           <button
             type="button"
             onClick={() => nav.open('work-ai')}
             className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold text-accent-strong transition hover:bg-accent-soft dark:text-accent dark:hover:bg-accent/15"
           >
-            喺 AI 助手繼續傾
+            {t('mat.aiReadyLink', { defaultValue: '喺 AI 助手繼續傾' })}
             <ArrowUpRight size={14} />
           </button>
         </div>
@@ -195,38 +222,38 @@ export default function MaterialGen() {
 
       {/* ───────── 工具卡（工作枱檯面）───────── */}
       <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-        {TOOLS.map((t) => {
-          const Icon = t.icon
+        {TOOLS.map((tool) => {
+          const Icon = tool.icon
           return (
             <button
-              key={t.id}
+              key={tool.id}
               type="button"
-              onClick={() => setActive(t.open)}
+              onClick={() => setActive(tool.open)}
               className="group flex h-full flex-col rounded-2xl border border-slate-200/80 bg-white p-4 text-left shadow-xs transition duration-150 hover:-translate-y-0.5 hover:border-accent/40 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:border-slate-700/60 dark:bg-slate-800 dark:shadow-none dark:hover:border-accent/40"
             >
               <div className="flex items-start justify-between gap-2">
                 <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-accent-soft text-accent-strong transition group-hover:bg-accent group-hover:text-white dark:bg-accent/15 dark:text-accent dark:group-hover:bg-accent dark:group-hover:text-white">
                   <Icon size={20} strokeWidth={1.9} />
                 </span>
-                {t.badge ? (
-                  <Badge tone="slate">{t.badge}</Badge>
+                {tool.badgeKey ? (
+                  <Badge tone="slate">{t(tool.badgeKey, { defaultValue: tool.badgeDefault })}</Badge>
                 ) : null}
               </div>
               <h2 className="mt-3 flex items-center gap-1.5 text-base font-semibold text-slate-800 dark:text-slate-100">
-                {t.title}
+                {t(tool.titleKey, { defaultValue: tool.titleDefault })}
               </h2>
               <p className="mt-1 flex-1 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
-                {t.blurb}
+                {t(tool.blurbKey, { defaultValue: tool.blurbDefault })}
               </p>
               <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-2.5 dark:border-slate-700/60">
                 <span className="inline-flex items-center gap-1 text-[11px] font-medium text-slate-400 dark:text-slate-500">
-                  存入
+                  {t('mat.cardSaveTo', { defaultValue: '存入' })}
                   <span className="font-semibold text-accent-strong dark:text-accent">
-                    {t.dest}
+                    {t(tool.destKey, { defaultValue: tool.destDefault })}
                   </span>
                 </span>
                 <span className="inline-flex items-center gap-0.5 text-xs font-medium text-slate-400 transition group-hover:text-accent dark:text-slate-500 dark:group-hover:text-accent">
-                  開始
+                  {t('mat.cardStart', { defaultValue: '開始' })}
                   <ChevronRight size={14} className="transition group-hover:translate-x-0.5" />
                 </span>
               </div>
@@ -238,15 +265,15 @@ export default function MaterialGen() {
       {/* 題庫存量小結（連去題庫） */}
       <div className="flex flex-wrap items-center justify-between gap-2 px-1 text-xs text-slate-400 dark:text-slate-500">
         <span className="tabular-nums">
-          題庫現有 {questions.length} 條
-          {aiCount > 0 ? <> · 其中 {aiCount} 條由 AI 生成</> : null}
+          {t('mat.bankCountPre', { defaultValue: '題庫現有' })} {questions.length} {t('mat.bankCountPost', { defaultValue: '條' })}
+          {aiCount > 0 ? <> · {t('mat.bankAiCountPre', { defaultValue: '其中' })} {aiCount} {t('mat.bankAiCountPost', { defaultValue: '條由 AI 生成' })}</> : null}
         </span>
         <button
           type="button"
           onClick={() => nav.open('work-questions')}
           className="inline-flex items-center gap-0.5 font-medium text-slate-400 transition hover:text-accent dark:text-slate-500 dark:hover:text-accent"
         >
-          去 BAFS 題庫
+          {t('mat.goToBank', { defaultValue: '去 BAFS 題庫' })}
           <ChevronRight size={13} />
         </button>
       </div>

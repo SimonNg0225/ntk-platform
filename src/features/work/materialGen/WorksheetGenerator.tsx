@@ -11,6 +11,7 @@ import {
   Save,
   Sparkles,
 } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { uid } from '../../../lib/store'
 import { useToast } from '../../../context/ToastContext'
 import { useAuth } from '../../../context/AuthContext'
@@ -73,12 +74,12 @@ type Draft = GenDraft & { _key: string; _selected: boolean }
 const TOTAL_OPTIONS = [4, 6, 8, 10, 12]
 
 // MC 佔比（其餘為短答）—— 用比例 chip，避免兩個數字輸入
-const MC_RATIOS: { id: string; label: string; mc: number }[] = [
-  { id: 'mc-heavy', label: 'MC 為主', mc: 0.75 },
-  { id: 'balanced', label: '均衡', mc: 0.5 },
-  { id: 'short-heavy', label: '短答為主', mc: 0.25 },
-  { id: 'mc-only', label: '只 MC', mc: 1 },
-  { id: 'short-only', label: '只短答', mc: 0 },
+const MC_RATIOS: { id: string; labelKey: string; labelDefault: string; mc: number }[] = [
+  { id: 'mc-heavy', labelKey: 'mat.wsMcHeavy', labelDefault: 'MC 為主', mc: 0.75 },
+  { id: 'balanced', labelKey: 'mat.wsBalanced', labelDefault: '均衡', mc: 0.5 },
+  { id: 'short-heavy', labelKey: 'mat.wsShortHeavy', labelDefault: '短答為主', mc: 0.25 },
+  { id: 'mc-only', labelKey: 'mat.wsMcOnly', labelDefault: '只 MC', mc: 1 },
+  { id: 'short-only', labelKey: 'mat.wsShortOnly', labelDefault: '只短答', mc: 0 },
 ]
 
 const PROMPT_EXAMPLES = [
@@ -99,6 +100,7 @@ export function WorksheetGenerator({
   onClose,
   onSaved,
 }: WorksheetGeneratorProps) {
+  const { t } = useTranslation()
   const toast = useToast()
   const { user } = useAuth()
 
@@ -148,7 +150,7 @@ export function WorksheetGenerator({
   const run = async () => {
     if (!topicId || busy) return
     if (split.mc === 0 && split.short === 0) {
-      toast.error('請設定題數')
+      toast.error(t('mat.wsToastNoCount', { defaultValue: '請設定題數' }))
       return
     }
     setBusy(true)
@@ -165,7 +167,7 @@ export function WorksheetGenerator({
       ])
       const collected: GenDraft[] = [...mcRes, ...shRes]
       if (collected.length === 0) {
-        toast.error('AI 出嘅練習格式唔啱，請再試一次。')
+        toast.error(t('mat.wsToastBadFormat', { defaultValue: 'AI 出嘅練習格式唔啱，請再試一次。' }))
         return
       }
       // MC 行先、短答行後（練習常見排序）
@@ -178,7 +180,7 @@ export function WorksheetGenerator({
       )
       setStep('preview')
     } catch (e) {
-      toast.error((e as Error).message || 'AI 出練習失敗，請再試一次。')
+      toast.error((e as Error).message || t('mat.wsToastFailed', { defaultValue: 'AI 出練習失敗，請再試一次。' }))
     } finally {
       setBusy(false)
     }
@@ -196,7 +198,7 @@ export function WorksheetGenerator({
   // ── 存入題庫（逐條 add；MC 壓縮選項對齊答案）──
   const commit = () => {
     if (selectedDrafts.length === 0) {
-      toast.error('請最少揀一條題目')
+      toast.error(t('mat.wsToastNoSelect', { defaultValue: '請最少揀一條題目' }))
       return
     }
     for (const d of selectedDrafts) {
@@ -217,7 +219,7 @@ export function WorksheetGenerator({
         createdAt: new Date().toISOString(),
       })
     }
-    toast.success(`已加入 ${selectedDrafts.length} 條題目到題庫`)
+    toast.success(t('mat.wsToastAdded', { defaultValue: `已加入 ${selectedDrafts.length} 條題目到題庫`, count: selectedDrafts.length }))
     onSaved?.(selectedDrafts.length)
     onClose()
   }
@@ -225,7 +227,7 @@ export function WorksheetGenerator({
   // ── 列印（開新視窗；重用題庫列印格式，留白作答區）──
   const print = (withAnswers: boolean) => {
     if (previewQuestions.length === 0) {
-      toast.error('未有題目可列印')
+      toast.error(t('mat.wsToastNoPrint', { defaultValue: '未有題目可列印' }))
       return
     }
     const meta: PaperMeta = {
@@ -236,30 +238,30 @@ export function WorksheetGenerator({
     }
     const html = buildPrintHtml(meta, previewQuestions, () => topicName, withAnswers)
     const ok = openPrintWindow(html)
-    if (!ok) toast.error('瀏覽器擋咗彈出視窗，請允許後再試。')
+    if (!ok) toast.error(t('mat.wsToastPopupBlocked', { defaultValue: '瀏覽器擋咗彈出視窗，請允許後再試。' }))
   }
 
   // ── AI gate（同題庫 AI 出題一致）──
   if (!isAIConfigured || !user) {
     return (
-      <Modal open onClose={onClose} title="生成教學練習">
+      <Modal open onClose={onClose} title={t('mat.wsModalTitle', { defaultValue: '生成教學練習' })}>
         <div className="space-y-4">
           {!isAIConfigured ? (
             <EmptyState
               icon={Bot}
-              title="AI 助手未啟用"
-              hint="要設定好 Supabase 並部署 gemini Edge Function 先用到。步驟見 docs/SETUP.md。"
+              title={t('mat.wsAiDisabledTitle', { defaultValue: 'AI 助手未啟用' })}
+              hint={t('mat.wsAiDisabledHint', { defaultValue: '要設定好 Supabase 並部署 gemini Edge Function 先用到。步驟見 docs/SETUP.md。' })}
             />
           ) : (
             <EmptyState
               icon={Lock}
-              title="請先登入先可以用 AI 生成練習"
-              hint="喺左下角用 Google 登入後就用得。"
+              title={t('mat.wsLoginTitle', { defaultValue: '請先登入先可以用 AI 生成練習' })}
+              hint={t('mat.wsLoginHint', { defaultValue: '喺左下角用 Google 登入後就用得。' })}
             />
           )}
           <div className="flex justify-end">
             <Button variant="secondary" onClick={onClose}>
-              關閉
+              {t('mat.wsCloseBtn', { defaultValue: '關閉' })}
             </Button>
           </div>
         </div>
@@ -268,7 +270,7 @@ export function WorksheetGenerator({
   }
 
   return (
-    <Modal open onClose={onClose} title="生成教學練習" size="lg">
+    <Modal open onClose={onClose} title={t('mat.wsModalTitle', { defaultValue: '生成教學練習' })} size="lg">
       {step === 'setup' ? (
         <div className="space-y-5">
           <div className="flex items-start gap-3 rounded-2xl border border-accent/20 bg-accent-soft/50 p-3.5 dark:border-accent/25 dark:bg-accent/10">
@@ -276,41 +278,41 @@ export function WorksheetGenerator({
               <ClipboardList size={16} />
             </span>
             <p className="text-xs leading-relaxed text-slate-600 dark:text-slate-300">
-              揀好課題、難度同
+              {t('mat.wsSetupHint', { defaultValue: '揀好課題、難度同' })}
               <span className="font-semibold text-accent-strong dark:text-accent">
-                MC ＋ 短答混合比例
+                {t('mat.wsSetupHintStrong', { defaultValue: 'MC ＋ 短答混合比例' })}
               </span>
-              ，AI 會草擬一份貼香港 BAFS 課程嘅練習。生成後可逐條揀／改，再存入題庫或列印。
+              {t('mat.wsSetupHintEnd', { defaultValue: '，AI 會草擬一份貼香港 BAFS 課程嘅練習。生成後可逐條揀／改，再存入題庫或列印。' })}
             </p>
           </div>
 
           <section className="space-y-3 rounded-2xl border border-slate-200/80 bg-slate-50/60 p-4 dark:border-slate-700/60 dark:bg-slate-900/40">
-            <Field label="練習名稱（可留空）">
+            <Field label={t('mat.wsFieldTitle', { defaultValue: '練習名稱（可留空）' })}>
               <Input
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder="例如：市場營銷 課堂練習"
+                placeholder={t('mat.wsTitlePlaceholder', { defaultValue: '例如：市場營銷 課堂練習' })}
                 disabled={busy}
               />
             </Field>
-            <Field label="課題">
+            <Field label={t('mat.wsFieldTopic', { defaultValue: '課題' })}>
               <Select value={topicId} onChange={(e) => setTopicId(e.target.value)}>
-                {topics.map((t) => (
-                  <option key={t.id} value={t.id}>
-                    {t.topic}
+                {topics.map((tp) => (
+                  <option key={tp.id} value={tp.id}>
+                    {tp.topic}
                   </option>
                 ))}
               </Select>
             </Field>
             <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
-              <Field label="難度">
+              <Field label={t('mat.wsFieldDifficulty', { defaultValue: '難度' })}>
                 <Pills
                   options={DIFF_ORDER.map((d) => ({ id: d, label: DIFF_LABEL[d] }))}
                   active={difficulty}
                   onChange={setDifficulty}
                 />
               </Field>
-              <Field label="總題數">
+              <Field label={t('mat.wsFieldTotal', { defaultValue: '總題數' })}>
                 <Select
                   value={String(total)}
                   onChange={(e) => setTotal(Number(e.target.value))}
@@ -318,7 +320,7 @@ export function WorksheetGenerator({
                 >
                   {TOTAL_OPTIONS.map((n) => (
                     <option key={n} value={n}>
-                      {n} 題
+                      {n} {t('mat.paperCountUnit', { defaultValue: '題' })}
                     </option>
                   ))}
                 </Select>
@@ -329,36 +331,36 @@ export function WorksheetGenerator({
           {/* 混合比例 */}
           <section className="space-y-2.5">
             <span className="text-xs font-medium text-slate-600 dark:text-slate-300">
-              題型比例
+              {t('mat.wsRatioLabel', { defaultValue: '題型比例' })}
             </span>
             <Pills
-              options={MC_RATIOS.map((r) => ({ id: r.id, label: r.label }))}
+              options={MC_RATIOS.map((r) => ({ id: r.id, label: t(r.labelKey, { defaultValue: r.labelDefault }) }))}
               active={ratioId}
               onChange={setRatioId}
             />
             <p className="flex flex-wrap items-center gap-1.5 text-xs text-slate-400 dark:text-slate-500">
-              預計：
+              {t('mat.wsPreviewPre', { defaultValue: '預計：' })}
               {split.mc > 0 && (
                 <Badge tone="blue">
-                  選擇題 <span className="nums ml-0.5">{split.mc}</span>
+                  {t('mat.wsMcBadgePre', { defaultValue: '選擇題' })} <span className="nums ml-0.5">{split.mc}</span>
                 </Badge>
               )}
               {split.short > 0 && (
                 <Badge tone="accent">
-                  短答題 <span className="nums ml-0.5">{split.short}</span>
+                  {t('mat.wsShortBadgePre', { defaultValue: '短答題' })} <span className="nums ml-0.5">{split.short}</span>
                 </Badge>
               )}
               <span className="text-slate-400 dark:text-slate-500">
-                · 合共 <span className="nums font-semibold">{split.mc + split.short}</span> 題
+                · {t('mat.wsPreviewTotalPre', { defaultValue: '合共' })} <span className="nums font-semibold">{split.mc + split.short}</span> {t('mat.paperCountUnit', { defaultValue: '題' })}
               </span>
             </p>
           </section>
 
-          <Field label="補充指示（可留空）">
+          <Field label={t('mat.wsFieldExtra', { defaultValue: '補充指示（可留空）' })}>
             <Textarea
               value={extra}
               onChange={(e) => setExtra(e.target.value)}
-              placeholder="例如：由淺入深、題目要貼香港情境…"
+              placeholder={t('mat.wsExtraPlaceholder', { defaultValue: '例如：由淺入深、題目要貼香港情境…' })}
               rows={2}
               disabled={busy}
             />
@@ -385,7 +387,7 @@ export function WorksheetGenerator({
             >
               <p className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
                 <Sparkles size={15} className="animate-pulse text-accent" />
-                AI 諗緊練習，請等一等…
+                {t('mat.wsBusyMsg', { defaultValue: 'AI 諗緊練習，請等一等…' })}
               </p>
               <div className="h-2.5 w-full animate-pulse rounded-full bg-slate-200 dark:bg-slate-700" />
               <div className="h-2.5 w-4/5 animate-pulse rounded-full bg-slate-200 dark:bg-slate-700" />
@@ -395,7 +397,7 @@ export function WorksheetGenerator({
 
           <div className="flex justify-end gap-2 border-t border-slate-100 pt-4 dark:border-slate-700/60">
             <Button variant="secondary" onClick={onClose} disabled={busy}>
-              取消
+              {t('mat.wsCancelBtn', { defaultValue: '取消' })}
             </Button>
             <Button
               icon={Sparkles}
@@ -403,7 +405,7 @@ export function WorksheetGenerator({
               onClick={run}
               disabled={busy || !topicId || split.mc + split.short === 0}
             >
-              {busy ? '生成中…' : '生成練習'}
+              {busy ? t('mat.wsGenerateBtnBusy', { defaultValue: '生成中…' }) : t('mat.wsGenerateBtn', { defaultValue: '生成練習' })}
             </Button>
           </div>
         </div>
@@ -417,16 +419,16 @@ export function WorksheetGenerator({
                 {DIFF_LABEL[difficulty]}
               </Badge>
               <span className="text-xs text-slate-400 dark:text-slate-500">
-                已選 <span className="nums">{selectedCount}／{drafts.length}</span> · 共{' '}
-                <span className="nums">{selectedMarks}</span> 分
+                {t('mat.wsReviewSelectedPre', { defaultValue: '已選' })} <span className="nums">{selectedCount}／{drafts.length}</span> · {t('mat.wsReviewMarksPre', { defaultValue: '共' })}{' '}
+                <span className="nums">{selectedMarks}</span> {t('mat.wsReviewMarksPost', { defaultValue: '分' })}
               </span>
             </div>
             <div className="flex items-center gap-2">
               <Button variant="ghost" size="sm" onClick={() => setAll(true)}>
-                全選
+                {t('mat.wsSelectAll', { defaultValue: '全選' })}
               </Button>
               <Button variant="ghost" size="sm" onClick={() => setAll(false)}>
-                取消全選
+                {t('mat.wsDeselectAll', { defaultValue: '取消全選' })}
               </Button>
             </div>
           </div>
@@ -446,7 +448,7 @@ export function WorksheetGenerator({
                     checked={d._selected}
                     onChange={() => toggleDraft(d._key)}
                     className="mt-1 h-4 w-4 shrink-0 accent-[color:var(--accent)]"
-                    aria-label="加入題庫"
+                    aria-label={t('mat.wsCheckboxLabel', { defaultValue: '加入題庫' })}
                   />
                   <span className="nums mt-0.5 shrink-0 text-sm font-bold text-slate-400 dark:text-slate-500">
                     {i + 1}.
@@ -473,7 +475,7 @@ export function WorksheetGenerator({
                               {String.fromCharCode(65 + oi)}. {o}
                             </span>
                             {oi === d.answerIndex && (
-                              <Check size={14} className="shrink-0" aria-label="正確答案" />
+                              <Check size={14} className="shrink-0" aria-label={t('mat.wsCorrectAnswerLabel', { defaultValue: '正確答案' })} />
                             )}
                           </li>
                         ))}
@@ -482,7 +484,7 @@ export function WorksheetGenerator({
                     {d.type !== 'mc' && d.answer && (
                       <p className="whitespace-pre-wrap text-sm text-slate-600 dark:text-slate-300">
                         <span className="font-semibold text-slate-700 dark:text-slate-200">
-                          參考答案：
+                          {t('mat.wsRefAnswer', { defaultValue: '參考答案：' })}
                         </span>
                         {d.answer}
                       </p>
@@ -493,7 +495,7 @@ export function WorksheetGenerator({
                       </Badge>
                       {d.marks ? (
                         <span className="inline-flex items-center rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-medium tabular-nums text-slate-500 dark:bg-slate-700/60 dark:text-slate-400">
-                          {d.marks} 分
+                          {d.marks} {t('mat.wsMarkUnit', { defaultValue: '分' })}
                         </span>
                       ) : null}
                     </div>
@@ -506,19 +508,19 @@ export function WorksheetGenerator({
           {/* 動作 */}
           <div className="flex flex-wrap justify-end gap-2 border-t border-slate-100 pt-4 dark:border-slate-700/60">
             <Button variant="ghost" icon={ArrowLeft} onClick={() => setStep('setup')} disabled={busy}>
-              重新設定
+              {t('mat.wsBackBtn', { defaultValue: '重新設定' })}
             </Button>
             <Button variant="secondary" icon={RotateCcw} loading={busy} onClick={run} disabled={busy}>
-              {busy ? '生成中…' : '再生成'}
+              {busy ? t('mat.wsRegenBtnBusy', { defaultValue: '生成中…' }) : t('mat.wsRegenBtn', { defaultValue: '再生成' })}
             </Button>
             <Button variant="secondary" icon={Printer} onClick={() => print(false)} disabled={busy || selectedCount === 0}>
-              列印（學生）
+              {t('mat.wsPrintStudent', { defaultValue: '列印（學生）' })}
             </Button>
             <Button variant="secondary" icon={Printer} onClick={() => print(true)} disabled={busy || selectedCount === 0}>
-              列印（含答案）
+              {t('mat.wsPrintAnswers', { defaultValue: '列印（含答案）' })}
             </Button>
             <Button icon={Save} onClick={commit} disabled={busy || selectedCount === 0}>
-              存入題庫（<span className="nums">{selectedCount}</span>）
+              {t('mat.wsSaveBtnPre', { defaultValue: '存入題庫（' })}<span className="nums">{selectedCount}</span>{t('mat.wsSaveBtnPost', { defaultValue: '）' })}
             </Button>
           </div>
         </div>

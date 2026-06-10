@@ -1,4 +1,5 @@
 import { useId, useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { LineChart } from 'lucide-react'
 import { cx } from '../../../ui'
 import {
@@ -64,6 +65,7 @@ export function CategoryDonut({
   centerLabel: string
   size?: number
 }) {
+  const { t } = useTranslation()
   const total = segments.reduce((s, x) => s + x.value, 0)
   const r = (size - 22) / 2
   const c = 2 * Math.PI * r
@@ -100,7 +102,7 @@ export function CategoryDonut({
                 className="transition-all duration-500"
               >
                 <title>
-                  {seg.label}：{fmtMoney(seg.value)}（{Math.round(frac * 100)}%）
+                  {t('budget.donutTooltip', { defaultValue: '{{label}}：{{amount}}（{{pct}}%）', label: seg.label, amount: fmtMoney(seg.value), pct: Math.round(frac * 100) })}
                 </title>
               </circle>
             )
@@ -159,12 +161,13 @@ export function CategoryDonut({
 
 // ───────── 2. 每月收 / 支雙色長條 ─────────
 export function CashflowBars({ rows }: { rows: TrendRow[] }) {
+  const { t } = useTranslation()
   const max = useMemo(
     () => Math.max(1, ...rows.map((r) => Math.max(r.income, r.expense))),
     [rows],
   )
   const hasData = rows.some((r) => r.income > 0 || r.expense > 0)
-  if (!hasData) return <ChartEmpty message="累積幾個月記錄，就會見到收支趨勢。" height={176} />
+  if (!hasData) return <ChartEmpty message={t('budget.chartNoData', { defaultValue: '累積幾個月記錄，就會見到收支趨勢。' })} height={176} />
   return (
     <div>
       <div className="flex h-44 items-end gap-2">
@@ -174,25 +177,25 @@ export function CashflowBars({ rows }: { rows: TrendRow[] }) {
             <div key={r.key} className="flex flex-1 flex-col items-center gap-1">
               <div className="flex w-full flex-1 items-end justify-center gap-1">
                 <div
-                  title={`收入 ${fmtMoney(r.income)}`}
+                  title={`${t('budget.chartIncomeLabel', { defaultValue: '收入' })} ${fmtMoney(r.income)}`}
                   className="w-1/2 max-w-[1.4rem] rounded-t-md bg-emerald-400 transition-all duration-500 hover:bg-emerald-500 dark:bg-emerald-500"
                   style={{ height: `${Math.max((r.income / max) * 100, r.income > 0 ? 3 : 0)}%` }}
                 />
                 <div
-                  title={`支出 ${fmtMoney(r.expense)}`}
+                  title={`${t('budget.chartExpenseLabel', { defaultValue: '支出' })} ${fmtMoney(r.expense)}`}
                   className="w-1/2 max-w-[1.4rem] rounded-t-md bg-rose-400 transition-all duration-500 hover:bg-rose-500 dark:bg-rose-500"
                   style={{ height: `${Math.max((r.expense / max) * 100, r.expense > 0 ? 3 : 0)}%` }}
                 />
               </div>
-              <span className="text-[10px] tabular-nums text-slate-400">{m}月</span>
+              <span className="text-[10px] tabular-nums text-slate-400">{t('budget.monthShort', { defaultValue: '{{m}}月', m })}</span>
             </div>
           )
         })}
       </div>
       <Legend
         items={[
-          { color: 'bg-emerald-400 dark:bg-emerald-500', label: '收入' },
-          { color: 'bg-rose-400 dark:bg-rose-500', label: '支出' },
+          { color: 'bg-emerald-400 dark:bg-emerald-500', label: t('budget.chartIncomeLabel', { defaultValue: '收入' }) },
+          { color: 'bg-rose-400 dark:bg-rose-500', label: t('budget.chartExpenseLabel', { defaultValue: '支出' }) },
         ]}
       />
     </div>
@@ -201,11 +204,12 @@ export function CashflowBars({ rows }: { rows: TrendRow[] }) {
 
 // ───────── 3. 每月淨結餘折線（含零軸 + 漸層）─────────
 export function BalanceTrend({ rows, height = 168 }: { rows: TrendRow[]; height?: number }) {
+  const { t } = useTranslation()
   const gid = useId().replace(/[:]/g, '')
   const values = rows.map((r) => r.balance)
   const hasData = rows.some((r) => r.income > 0 || r.expense > 0)
   const max = Math.max(1, ...values.map((v) => Math.abs(v)))
-  if (!hasData) return <ChartEmpty message="記低幾個月收支，淨結餘走勢會喺度顯示。" height={height} />
+  if (!hasData) return <ChartEmpty message={t('budget.balanceNoData', { defaultValue: '記低幾個月收支，淨結餘走勢會喺度顯示。' })} height={height} />
   const W = 100
   const padX = 3
   const usableW = W - padX * 2
@@ -259,7 +263,7 @@ export function BalanceTrend({ rows, height = 168 }: { rows: TrendRow[]; height?
               vectorEffect="non-scaling-stroke"
             >
               <title>
-                {r.key}：結餘 {fmtMoney(r.balance)}
+                {t('budget.balanceTooltip', { defaultValue: '{{key}}：結餘 {{amount}}', key: r.key, amount: fmtMoney(r.balance) })}
               </title>
             </circle>
           ))}
@@ -273,7 +277,7 @@ export function BalanceTrend({ rows, height = 168 }: { rows: TrendRow[]; height?
               key={i}
               className="flex-1 text-center text-[9px] tabular-nums text-slate-400 dark:text-slate-500"
             >
-              {m}月
+              {t('budget.monthShort', { defaultValue: '{{m}}月', m })}
             </span>
           )
         })}
@@ -290,9 +294,10 @@ export function DailySpendChart({
   cells: DayCell[]
   todayDay: number | null
 }) {
+  const { t } = useTranslation()
   const max = useMemo(() => Math.max(1, ...cells.map((c) => c.expense)), [cells])
   const hasData = cells.some((c) => c.expense > 0)
-  if (!hasData) return <ChartEmpty message="今個月仲未有支出，記低第一筆就見到走勢。" height={112} />
+  if (!hasData) return <ChartEmpty message={t('budget.dailyNoData', { defaultValue: '今個月仲未有支出，記低第一筆就見到走勢。' })} height={112} />
   return (
     <div>
       <div className="flex h-28 items-end gap-px">
@@ -302,7 +307,7 @@ export function DailySpendChart({
             <div
               key={c.day}
               className="group flex flex-1 flex-col items-center justify-end"
-              title={`${c.day} 日：支出 ${fmtMoney(c.expense)}`}
+              title={t('budget.dailyBarTooltip', { defaultValue: '{{day}} 日：支出 {{amount}}', day: c.day, amount: fmtMoney(c.expense) })}
             >
               <div
                 className={cx(
@@ -331,6 +336,7 @@ export function DailySpendChart({
 
 // ───────── 5. 本月支出熱力日曆 ─────────
 export function SpendingHeatmap({ cells }: { cells: DayCell[] }) {
+  const { t } = useTranslation()
   const max = useMemo(() => Math.max(1, ...cells.map((c) => c.expense)), [cells])
   const total = cells.reduce((s, c) => s + c.expense, 0)
   const activeDays = cells.filter((c) => c.expense > 0).length
@@ -366,7 +372,7 @@ export function SpendingHeatmap({ cells }: { cells: DayCell[] }) {
         {cells.map((c) => (
           <span
             key={c.day}
-            title={`${c.day} 日：支出 ${fmtMoney(c.expense)}`}
+            title={t('budget.heatmapCellTooltip', { defaultValue: '{{day}} 日：支出 {{amount}}', day: c.day, amount: fmtMoney(c.expense) })}
             className={cx(
               'flex aspect-square items-center justify-center rounded-[5px] text-[9px] tabular-nums ring-1 ring-inset ring-slate-900/5 transition dark:ring-white/5',
               LEVEL_CLS[level(c.expense)],
@@ -379,19 +385,17 @@ export function SpendingHeatmap({ cells }: { cells: DayCell[] }) {
       </div>
       <div className="mt-2 flex items-center justify-between text-[11px] text-slate-400 dark:text-slate-500">
         <span className="tabular-nums">
-          消費{' '}
-          <span className="font-semibold text-slate-600 dark:text-slate-300">{activeDays}</span> 日 ·
-          共{' '}
+          {t('budget.heatmapActiveDays', { defaultValue: '消費 {{days}} 日 · 共', days: activeDays })}{' '}
           <span className="font-semibold text-slate-600 dark:text-slate-300">
             {fmtMoneyShort(total)}
           </span>
         </span>
         <span className="flex items-center gap-1">
-          少
+          {t('budget.heatmapLess', { defaultValue: '少' })}
           {LEVEL_CLS.map((cls, i) => (
             <span key={i} className={cx('h-[11px] w-[11px] rounded-[3px] ring-1 ring-inset ring-slate-900/5 dark:ring-white/5', cls)} />
           ))}
-          多
+          {t('budget.heatmapMore', { defaultValue: '多' })}
         </span>
       </div>
     </div>

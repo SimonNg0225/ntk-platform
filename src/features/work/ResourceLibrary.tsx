@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import './resourceLibrary/i18n'
 import {
   Archive,
   BarChart3,
@@ -96,21 +98,21 @@ import { Insights } from './resourceLibrary/Insights'
 
 type TopView = 'grid' | 'list' | 'board' | 'insights'
 
-const SMART_VIEWS: { id: SmartView; label: string; icon: LucideIcon }[] = [
-  { id: 'all', label: '全部資源', icon: BookMarked },
-  { id: 'favorites', label: '收藏', icon: Star },
-  { id: 'recent_opened', label: '最近開啟', icon: ExternalLink },
-  { id: 'stale', label: '需要整理', icon: CalendarClock },
-  { id: 'unsorted', label: '未分類', icon: Inbox },
-  { id: 'broken', label: '失效連結', icon: Link2Off },
-  { id: 'archived', label: '封存', icon: Archive },
+const SMART_VIEWS: { id: SmartView; labelKey: string; label: string; icon: LucideIcon }[] = [
+  { id: 'all', labelKey: 'res.smart_all', label: '全部資源', icon: BookMarked },
+  { id: 'favorites', labelKey: 'res.smart_favorites', label: '收藏', icon: Star },
+  { id: 'recent_opened', labelKey: 'res.smart_recent_opened', label: '最近開啟', icon: ExternalLink },
+  { id: 'stale', labelKey: 'res.smart_stale', label: '需要整理', icon: CalendarClock },
+  { id: 'unsorted', labelKey: 'res.smart_unsorted', label: '未分類', icon: Inbox },
+  { id: 'broken', labelKey: 'res.smart_broken', label: '失效連結', icon: Link2Off },
+  { id: 'archived', labelKey: 'res.smart_archived', label: '封存', icon: Archive },
 ]
 
-const VIEW_OPTIONS: { id: TopView; label: string; icon: LucideIcon }[] = [
-  { id: 'grid', label: '卡片視圖', icon: LayoutGrid },
-  { id: 'list', label: '清單視圖', icon: ListIcon },
-  { id: 'board', label: '看板視圖', icon: SquareKanban },
-  { id: 'insights', label: '洞察統計', icon: BarChart3 },
+const VIEW_OPTIONS: { id: TopView; labelKey: string; label: string; icon: LucideIcon }[] = [
+  { id: 'grid', labelKey: 'res.view_grid', label: '卡片視圖', icon: LayoutGrid },
+  { id: 'list', labelKey: 'res.view_list', label: '清單視圖', icon: ListIcon },
+  { id: 'board', labelKey: 'res.view_board', label: '看板視圖', icon: SquareKanban },
+  { id: 'insights', labelKey: 'res.view_insights', label: '洞察統計', icon: BarChart3 },
 ]
 
 // 類型 tone chip（每種資源類型一隻色 + 圓點，對齊統計圖表語言，一眼分到類型）
@@ -138,20 +140,22 @@ function ViewSwitcher({
   value: TopView
   onChange: (v: TopView) => void
 }) {
+  const { t } = useTranslation()
   return (
     <div
       role="group"
-      aria-label="切換視圖"
+      aria-label={t('res.view_switcher_aria', { defaultValue: '切換視圖' })}
       className="inline-flex rounded-xl border border-slate-200 bg-slate-50 p-0.5 dark:border-slate-700 dark:bg-slate-800/60"
     >
       {VIEW_OPTIONS.map((o) => {
         const on = value === o.id
+        const label = t(o.labelKey, { defaultValue: o.label })
         return (
-          <Tooltip key={o.id} label={o.label}>
+          <Tooltip key={o.id} label={label}>
             <button
               type="button"
               onClick={() => onChange(o.id)}
-              aria-label={o.label}
+              aria-label={label}
               aria-current={on ? 'true' : undefined}
               className={cx(
                 'inline-flex items-center justify-center rounded-lg px-3 py-1.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
@@ -182,6 +186,7 @@ function CensusStrip({
     broken: number
   }
 }) {
+  const { t } = useTranslation()
   const cells: {
     label: string
     value: number | string
@@ -191,35 +196,45 @@ function CensusStrip({
     tone: 'accent' | 'amber' | 'rose' | 'plain'
   }[] = [
     {
-      label: '館藏總數',
+      label: t('res.census_total_label', { defaultValue: '館藏總數' }),
       value: census.total,
-      unit: '項',
+      unit: t('res.census_total_unit', { defaultValue: '項' }),
       icon: Layers,
-      hint: census.total > 0 ? '已分門別類收好' : '由第一項開始',
+      hint: census.total > 0
+        ? t('res.census_total_hint_ok', { defaultValue: '已分門別類收好' })
+        : t('res.census_total_hint_empty', { defaultValue: '由第一項開始' }),
       tone: 'accent',
     },
     {
-      label: '累計借閱',
+      label: t('res.census_opens_label', { defaultValue: '累計借閱' }),
       value: census.opens,
-      unit: '次',
+      unit: t('res.census_opens_unit', { defaultValue: '次' }),
       icon: TrendingUp,
-      hint: `${census.withLink} 項可開啟`,
+      hint: t('res.census_opens_hint', { defaultValue: `${census.withLink} 項可開啟`, count: census.withLink }),
       tone: 'plain',
     },
     {
-      label: '收藏',
+      label: t('res.census_favs_label', { defaultValue: '收藏' }),
       value: census.favorites,
-      unit: '項',
+      unit: t('res.census_favs_unit', { defaultValue: '項' }),
       icon: Star,
-      hint: census.favorites > 0 ? '加星嘅常用教材' : '撳星收藏常用',
+      hint: census.favorites > 0
+        ? t('res.census_favs_hint_ok', { defaultValue: '加星嘅常用教材' })
+        : t('res.census_favs_hint_empty', { defaultValue: '撳星收藏常用' }),
       tone: 'amber',
     },
     {
-      label: '連結健康',
-      value: census.broken > 0 ? census.broken : '良好',
-      unit: census.broken > 0 ? '失效' : undefined,
+      label: t('res.census_links_label', { defaultValue: '連結健康' }),
+      value: census.broken > 0
+        ? census.broken
+        : t('res.census_links_value_ok', { defaultValue: '良好' }),
+      unit: census.broken > 0
+        ? t('res.census_links_unit_broken', { defaultValue: '失效' })
+        : undefined,
       icon: Link2Off,
-      hint: census.broken > 0 ? '撳「失效連結」抽屜整理' : '未見失效連結',
+      hint: census.broken > 0
+        ? t('res.census_links_hint_broken', { defaultValue: '撳「失效連結」抽屜整理' })
+        : t('res.census_links_hint_ok', { defaultValue: '未見失效連結' }),
       tone: census.broken > 0 ? 'rose' : 'plain',
     },
   ]
@@ -295,6 +310,7 @@ export default function ResourceLibrary() {
   const openLog = useCollection(resourceOpenLogCol)
   const toast = useToast()
   const confirm = useConfirm()
+  const { t } = useTranslation()
 
   const [view, setView] = useState<TopView>('grid')
   const [source, setSource] = useState<'lib' | 'drive'>('lib')
@@ -412,9 +428,9 @@ export default function ResourceLibrary() {
 
   const removeOne = async (id: string, title: string) => {
     const ok = await confirm({
-      title: '刪除資源？',
-      message: `「${title}」將會被永久刪除，呢個動作無法復原。`,
-      confirmText: '刪除',
+      title: t('res.confirm_delete_title', { defaultValue: '刪除資源？' }),
+      message: t('res.confirm_delete_msg', { defaultValue: `「${title}」將會被永久刪除，呢個動作無法復原。`, title }),
+      confirmText: t('res.confirm_delete_confirm', { defaultValue: '刪除' }),
       tone: 'danger',
     })
     if (!ok) return
@@ -426,30 +442,30 @@ export default function ResourceLibrary() {
       n.delete(id)
       return n
     })
-    toast.success('已刪除資源')
+    toast.success(t('res.toast_deleted', { defaultValue: '已刪除資源' }))
   }
 
   // ── 批量操作 ──
   const bulkFavorite = () => {
     selected.forEach((id) => upsertMeta(id, { favorite: true }))
-    toast.success(`已收藏 ${selected.size} 項`)
+    toast.success(t('res.toast_bulk_fav', { defaultValue: `已收藏 ${selected.size} 項`, count: selected.size }))
     clearSelect()
   }
   const bulkArchive = () => {
     selected.forEach((id) => upsertMeta(id, { archived: true }))
-    toast.success(`已封存 ${selected.size} 項`)
+    toast.success(t('res.toast_bulk_archive', { defaultValue: `已封存 ${selected.size} 項`, count: selected.size }))
     clearSelect()
   }
   const bulkMove = (folderId: string | undefined) => {
     selected.forEach((id) => upsertMeta(id, { folderId }))
-    toast.success(`已移動 ${selected.size} 項`)
+    toast.success(t('res.toast_bulk_move', { defaultValue: `已移動 ${selected.size} 項`, count: selected.size }))
     clearSelect()
   }
   const bulkDelete = async () => {
     const ok = await confirm({
-      title: `刪除 ${selected.size} 項資源？`,
-      message: '呢個動作無法復原。',
-      confirmText: '刪除',
+      title: t('res.confirm_bulk_delete_title', { defaultValue: `刪除 ${selected.size} 項資源？`, count: selected.size }),
+      message: t('res.confirm_bulk_delete_msg', { defaultValue: '呢個動作無法復原。' }),
+      confirmText: t('res.confirm_delete_confirm', { defaultValue: '刪除' }),
       tone: 'danger',
     })
     if (!ok) return
@@ -457,7 +473,7 @@ export default function ResourceLibrary() {
       resourcesCol.remove(id)
       resourceMetaCol.remove(id)
     })
-    toast.success(`已刪除 ${selected.size} 項`)
+    toast.success(t('res.toast_bulk_delete', { defaultValue: `已刪除 ${selected.size} 項`, count: selected.size }))
     clearSelect()
   }
 
@@ -472,27 +488,27 @@ export default function ResourceLibrary() {
         <div className="min-w-0">
           <p className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.3em] text-accent/70">
             <Library size={13} strokeWidth={2} />
-            典藏目錄 · Archive
+            {t('res.masthead_kicker', { defaultValue: '典藏目錄 · Archive' })}
           </p>
           <h1 className="mt-1 font-serif text-2xl font-semibold leading-tight tracking-tight text-slate-800 dark:text-slate-100 sm:text-[28px]">
-            教學資源庫
+            {t('res.page_title', { defaultValue: '教學資源庫' })}
           </h1>
           <p className="mt-1.5 max-w-xl text-sm leading-relaxed text-slate-500 dark:text-slate-400">
-            講義、簡報、試題、連結同筆記，分門別類收入抽屜；貼條連結就自動建檔，幾時想用一搜即返。
+            {t('res.page_desc', { defaultValue: '講義、簡報、試題、連結同筆記，分門別類收入抽屜；貼條連結就自動建檔，幾時想用一搜即返。' })}
           </p>
         </div>
         <div className="flex shrink-0 items-center gap-2">
-          <Tooltip label="管理收藏夾">
+          <Tooltip label={t('res.manage_folders_btn', { defaultValue: '管理收藏夾' })}>
             <Button
               variant="secondary"
               icon={FolderPlus}
               onClick={() => setShowFolderMgr(true)}
             >
-              收藏夾
+              {t('res.manage_folders_btn', { defaultValue: '收藏夾' })}
             </Button>
           </Tooltip>
           <Button icon={Plus} onClick={() => setShowAdd(true)}>
-            新增資源
+            {t('res.add_resource_btn', { defaultValue: '新增資源' })}
           </Button>
         </div>
       </header>
@@ -500,7 +516,7 @@ export default function ResourceLibrary() {
       {/* ───────── 來源切換：我的庫（本機收藏）↔ Google Drive（live 唯讀） ───────── */}
       <div className="inline-flex rounded-xl border border-slate-200 bg-slate-50 p-0.5 dark:border-slate-700 dark:bg-slate-800/60">
         {([
-          { id: 'lib', label: '我的庫', icon: Library },
+          { id: 'lib', label: t('res.source_my_lib', { defaultValue: '我的庫' }), icon: Library },
           { id: 'drive', label: 'Google Drive', icon: HardDrive },
         ] as const).map((o) => {
           const on = source === o.id
@@ -556,7 +572,7 @@ export default function ResourceLibrary() {
                 ref={searchRef}
                 value={filter.search}
                 onChange={(e) => patch({ search: e.target.value })}
-                placeholder="搜尋標題 / 備註 / 網域 / 標籤…"
+                placeholder={t('res.search_placeholder', { defaultValue: '搜尋標題 / 備註 / 網域 / 標籤…' })}
                 className="w-full rounded-xl border border-slate-300 bg-white py-2 pl-9 pr-16 text-base sm:text-sm text-slate-800 shadow-xs outline-none transition placeholder:text-slate-400 focus:border-accent focus:ring-2 focus:ring-accent/30 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-500 dark:shadow-none"
               />
               {filter.search ? (
@@ -564,7 +580,7 @@ export default function ResourceLibrary() {
                   type="button"
                   onClick={() => patch({ search: '' })}
                   className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-700"
-                  aria-label="清除搜尋"
+                  aria-label={t('res.search_clear_aria', { defaultValue: '清除搜尋' })}
                 >
                   <X size={14} />
                 </button>
@@ -581,9 +597,9 @@ export default function ResourceLibrary() {
                 patch({ type: e.target.value as ResourceType | 'all' })
               }
               className="w-auto rounded-xl"
-              aria-label="類型篩選"
+              aria-label={t('res.filter_type_aria', { defaultValue: '類型篩選' })}
             >
-              <option value="all">全部類型</option>
+              <option value="all">{t('res.filter_type_all', { defaultValue: '全部類型' })}</option>
               {TYPE_ORDER.map((k) => (
                 <option key={k} value={k}>
                   {TYPE_LABEL[k]}
@@ -595,9 +611,9 @@ export default function ResourceLibrary() {
               value={filter.topicId}
               onChange={(e) => patch({ topicId: e.target.value })}
               className="hidden w-auto rounded-xl sm:block"
-              aria-label="課題篩選"
+              aria-label={t('res.filter_topic_aria', { defaultValue: '課題篩選' })}
             >
-              <option value="">全部課題</option>
+              <option value="">{t('res.filter_topic_all', { defaultValue: '全部課題' })}</option>
               {topics.map((t) => (
                 <option key={t.id} value={t.id}>
                   {t.topic}
@@ -609,7 +625,7 @@ export default function ResourceLibrary() {
               value={filter.sort}
               onChange={(e) => patch({ sort: e.target.value as SortKey })}
               className="w-auto rounded-xl"
-              aria-label="排序"
+              aria-label={t('res.filter_sort_aria', { defaultValue: '排序' })}
             >
               {(Object.keys(SORT_LABEL) as SortKey[]).map((k) => (
                 <option key={k} value={k}>
@@ -625,15 +641,15 @@ export default function ResourceLibrary() {
           {(filter.tags.length > 0 || activeFilterCount > 0) &&
             view !== 'insights' && (
               <div className="flex flex-wrap items-center gap-1.5">
-                {filter.tags.map((t) => (
+                {filter.tags.map((tag) => (
                   <button
-                    key={t}
+                    key={tag}
                     type="button"
-                    onClick={() => toggleTag(t)}
-                    aria-label={`移除標籤篩選 #${t}`}
+                    onClick={() => toggleTag(tag)}
+                    aria-label={t('res.tag_remove_aria', { defaultValue: `移除標籤篩選 #${tag}`, tag })}
                     className="inline-flex items-center gap-1 rounded-md bg-accent px-2 py-0.5 text-[11px] font-medium text-white"
                   >
-                    #{t}
+                    #{tag}
                     <X size={11} aria-hidden="true" />
                   </button>
                 ))}
@@ -649,7 +665,7 @@ export default function ResourceLibrary() {
                   }
                   className="text-[11px] text-slate-400 underline-offset-2 hover:text-slate-600 hover:underline dark:text-slate-500"
                 >
-                  清除篩選
+                  {t('res.filter_clear', { defaultValue: '清除篩選' })}
                 </button>
               </div>
             )}
@@ -666,7 +682,7 @@ export default function ResourceLibrary() {
           {/* 搜尋 / 篩選結果數（螢幕閱讀器即時播報） */}
           {view !== 'insights' && (
             <p className="sr-only" role="status" aria-live="polite">
-              {`${filtered.length} 項資源`}
+              {t('res.results_sr', { defaultValue: `${filtered.length} 項資源`, count: filtered.length })}
             </p>
           )}
 
@@ -682,18 +698,18 @@ export default function ResourceLibrary() {
             filter.smart === 'stale' && activeFilterCount === 0 && !filter.search ? (
               <EmptyState
                 icon={CalendarClock}
-                title="資源庫好乾淨 ✨"
-                hint="冇久未開啟或者從未用過嘅資源，全部都整理得貼貼服服。"
+                title={t('res.empty_stale_title', { defaultValue: '資源庫好乾淨 ✨' })}
+                hint={t('res.empty_stale_hint', { defaultValue: '冇久未開啟或者從未用過嘅資源，全部都整理得貼貼服服。' })}
               />
             ) : (
               <EmptyState
                 icon={BookMarked}
                 art="empty-resources"
-                title="呢格抽屜暫時係空嘅"
-                hint="撳「新增資源」開始建檔，貼條連結就會自動幫你猜類型歸類；又或者調整下篩選，睇返其他抽屜。"
+                title={t('res.empty_drawer_title', { defaultValue: '呢格抽屜暫時係空嘅' })}
+                hint={t('res.empty_drawer_hint', { defaultValue: '撳「新增資源」開始建檔，貼條連結就會自動幫你猜類型歸類；又或者調整下篩選，睇返其他抽屜。' })}
                 action={
                   <Button icon={Plus} onClick={() => setShowAdd(true)}>
-                    新增資源
+                    {t('res.empty_drawer_action', { defaultValue: '新增資源' })}
                   </Button>
                 }
               />
@@ -788,6 +804,7 @@ function Sidebar({
   folderCounts: Map<string, number>
   onManageFolders: () => void
 }) {
+  const { t } = useTranslation()
   const ordered = [...folders].sort((a, b) => a.order - b.order)
   return (
     <aside className="shrink-0 space-y-5 lg:w-56">
@@ -795,10 +812,10 @@ function Sidebar({
       <div>
         <p className="mb-1.5 hidden items-center gap-1.5 px-2.5 text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 lg:flex">
           <Inbox size={12} />
-          快速抽屜
+          {t('res.sidebar_quick_drawer', { defaultValue: '快速抽屜' })}
         </p>
         <nav
-          aria-label="智能視圖"
+          aria-label={t('res.sidebar_smart_nav_aria', { defaultValue: '智能視圖' })}
           className="flex gap-1.5 overflow-x-auto pb-0.5 lg:flex-col lg:gap-0.5 lg:overflow-visible lg:pb-0"
         >
           {SMART_VIEWS.map((v) => {
@@ -818,7 +835,7 @@ function Sidebar({
                 )}
               >
                 <v.icon size={16} strokeWidth={1.9} className="shrink-0" />
-                <span className="flex-1 text-left">{v.label}</span>
+                <span className="flex-1 text-left">{t(v.labelKey, { defaultValue: v.label })}</span>
                 <span
                   className={cx(
                     'tabular-nums text-xs',
@@ -840,14 +857,14 @@ function Sidebar({
         <div className="mb-1.5 flex items-center justify-between px-2.5">
           <span className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
             <BookMarked size={12} />
-            收藏抽屜
+            {t('res.sidebar_collections', { defaultValue: '收藏抽屜' })}
           </span>
-          <Tooltip label="管理收藏夾" side="left">
+          <Tooltip label={t('res.manage_folders_btn', { defaultValue: '管理收藏夾' })} side="left">
             <button
               type="button"
               onClick={onManageFolders}
               className="rounded p-0.5 text-slate-400 transition hover:text-slate-600 dark:hover:text-slate-300"
-              aria-label="管理收藏夾"
+              aria-label={t('res.sidebar_manage_folders_aria', { defaultValue: '管理收藏夾' })}
             >
               <FolderPlus size={14} />
             </button>
@@ -855,7 +872,7 @@ function Sidebar({
         </div>
         <div className="space-y-0.5">
           <FolderRow
-            label="全部收藏夾"
+            label={t('res.sidebar_all_folders', { defaultValue: '全部收藏夾' })}
             color="slate"
             count={[...folderCounts.values()].reduce((s, n) => s + n, 0)}
             active={filter.folderId === 'all' && filter.smart === 'all'}
@@ -928,17 +945,18 @@ function TagFilterBar({
   active: string[]
   onToggle: (t: string) => void
 }) {
+  const { t } = useTranslation()
   return (
     <div className="flex flex-wrap gap-1.5">
-      {tags.map((t) => {
-        const on = active.includes(t.tag)
+      {tags.map((item) => {
+        const on = active.includes(item.tag)
         return (
           <button
-            key={t.tag}
+            key={item.tag}
             type="button"
-            onClick={() => onToggle(t.tag)}
+            onClick={() => onToggle(item.tag)}
             aria-pressed={on}
-            aria-label={`標籤篩選 #${t.tag}（${t.count}）`}
+            aria-label={t('res.tag_filter_aria', { defaultValue: `標籤篩選 #${item.tag}（${item.count}）`, tag: item.tag, count: item.count })}
             className={cx(
               'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium transition',
               on
@@ -946,9 +964,9 @@ function TagFilterBar({
                 : 'bg-slate-100 text-slate-500 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700',
             )}
           >
-            #{t.tag}
+            #{item.tag}
             <span className={cx('tabular-nums', on ? 'text-white/70' : 'text-slate-400')}>
-              {t.count}
+              {item.count}
             </span>
           </button>
         )
@@ -977,6 +995,7 @@ function GridView({
   onToggleSelect: (id: string) => void
   onToggleFav: (id: string, v: boolean) => void
 }) {
+  const { t } = useTranslation()
   return (
     <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
       {rows.map(({ res, meta, domain }, i) => {
@@ -1012,7 +1031,9 @@ function GridView({
                     : 'text-slate-300 opacity-0 hover:text-slate-500 group-hover:opacity-100 dark:text-slate-600',
                 )}
                 aria-pressed={isSel}
-                aria-label={isSel ? `取消選取「${res.title}」` : `選取「${res.title}」`}
+                aria-label={isSel
+                  ? t('res.grid_deselect_aria', { defaultValue: `取消選取「${res.title}」`, title: res.title })
+                  : t('res.grid_select_aria', { defaultValue: `選取「${res.title}」`, title: res.title })}
               >
                 <CheckSquare size={18} className={cx(isSel && 'fill-accent/15')} />
               </button>
@@ -1022,9 +1043,11 @@ function GridView({
                   <TypeIconBox type={res.type} />
                 </span>
                 <div className="flex items-center gap-0.5">
-                  <Tooltip label={meta.favorite ? '取消收藏' : '收藏'}>
+                  <Tooltip label={meta.favorite
+                    ? t('res.grid_unfav_tooltip', { defaultValue: '取消收藏' })
+                    : t('res.grid_fav_tooltip', { defaultValue: '收藏' })}>
                     <IconButton
-                      label="收藏"
+                      label={t('res.grid_fav_label', { defaultValue: '收藏' })}
                       size="sm"
                       active={meta.favorite}
                       onClick={() => onToggleFav(res.id, !meta.favorite)}
@@ -1035,8 +1058,8 @@ function GridView({
                       />
                     </IconButton>
                   </Tooltip>
-                  <Tooltip label="詳情">
-                    <IconButton label="詳情" size="sm" onClick={() => onDetail(res.id)}>
+                  <Tooltip label={t('res.grid_detail_tooltip', { defaultValue: '詳情' })}>
+                    <IconButton label={t('res.grid_detail_label', { defaultValue: '詳情' })} size="sm" onClick={() => onDetail(res.id)}>
                       <MoreVertical size={15} />
                     </IconButton>
                   </Tooltip>
@@ -1060,7 +1083,7 @@ function GridView({
                 )}
                 {meta.broken && (
                   <Badge tone="rose" icon={Link2Off}>
-                    失效
+                    {t('res.grid_broken_badge', { defaultValue: '失效' })}
                   </Badge>
                 )}
               </div>
@@ -1079,12 +1102,12 @@ function GridView({
 
               {res.tags && res.tags.length > 0 && (
                 <div className="mt-2.5 flex flex-wrap gap-1">
-                  {res.tags.slice(0, 3).map((t) => (
+                  {res.tags.slice(0, 3).map((tag) => (
                     <span
-                      key={t}
+                      key={tag}
                       className="rounded-md bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-500 dark:bg-slate-800 dark:text-slate-400"
                     >
-                      #{t}
+                      #{tag}
                     </span>
                   ))}
                   {res.tags.length > 3 && (
@@ -1102,15 +1125,17 @@ function GridView({
                   <button
                     type="button"
                     onClick={() => onOpen(res)}
-                    aria-label={`開啟「${res.title}」（新分頁）`}
+                    aria-label={t('res.grid_open_aria', { defaultValue: `開啟「${res.title}」（新分頁）`, title: res.title })}
                     className="inline-flex shrink-0 items-center gap-1 rounded-lg bg-accent-soft px-2.5 py-1 text-xs font-semibold text-accent-strong transition hover:bg-accent hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:bg-accent/15 dark:text-accent dark:hover:bg-accent dark:hover:text-white"
                   >
-                    開啟
+                    {t('res.grid_open_btn', { defaultValue: '開啟' })}
                     <ExternalLink size={12} aria-hidden="true" />
                   </button>
                 ) : (
                   <span className="shrink-0 text-[11px] text-slate-400">
-                    {meta.opens > 0 ? `借閱 ${meta.opens} 次` : '純筆記'}
+                    {meta.opens > 0
+                      ? t('res.grid_opens_count', { defaultValue: `借閱 ${meta.opens} 次`, count: meta.opens })
+                      : t('res.grid_note_only', { defaultValue: '純筆記' })}
                   </span>
                 )}
               </div>
@@ -1148,6 +1173,7 @@ function ListView({
   onToggleAll: (on: boolean) => void
   onToggleFav: (id: string, v: boolean) => void
 }) {
+  const { t } = useTranslation()
   const folderById = new Map(folders.map((f) => [f.id, f]))
   return (
     <Table>
@@ -1162,17 +1188,19 @@ function ListView({
                 allSelected ? 'text-accent' : 'text-slate-300 dark:text-slate-600',
               )}
               aria-pressed={allSelected}
-              aria-label={allSelected ? '取消全選' : '全選'}
+              aria-label={allSelected
+                ? t('res.list_select_all_aria', { defaultValue: '取消全選' })
+                : t('res.list_deselect_all_aria', { defaultValue: '全選' })}
             >
               <CheckSquare size={16} className={cx(allSelected && 'fill-accent/15')} />
             </button>
           </Th>
-          <Th>標題</Th>
-          <Th className="hidden sm:table-cell">類型</Th>
-          <Th className="hidden md:table-cell">收藏夾</Th>
-          <Th align="right" className="hidden sm:table-cell">開啟</Th>
-          <Th className="hidden lg:table-cell">最後開啟</Th>
-          <Th align="right">動作</Th>
+          <Th>{t('res.list_col_title', { defaultValue: '標題' })}</Th>
+          <Th className="hidden sm:table-cell">{t('res.list_col_type', { defaultValue: '類型' })}</Th>
+          <Th className="hidden md:table-cell">{t('res.list_col_folder', { defaultValue: '收藏夾' })}</Th>
+          <Th align="right" className="hidden sm:table-cell">{t('res.list_col_opens', { defaultValue: '開啟' })}</Th>
+          <Th className="hidden lg:table-cell">{t('res.list_col_last_opened', { defaultValue: '最後開啟' })}</Th>
+          <Th align="right">{t('res.list_col_actions', { defaultValue: '動作' })}</Th>
         </Tr>
       </Thead>
       <Tbody>
@@ -1190,7 +1218,9 @@ function ListView({
                     isSel ? 'text-accent' : 'text-slate-300 dark:text-slate-600',
                   )}
                   aria-pressed={isSel}
-                  aria-label={isSel ? `取消選取「${res.title}」` : `選取「${res.title}」`}
+                  aria-label={isSel
+                    ? t('res.list_deselect_row_aria', { defaultValue: `取消選取「${res.title}」`, title: res.title })
+                    : t('res.list_select_row_aria', { defaultValue: `選取「${res.title}」`, title: res.title })}
                 >
                   <CheckSquare size={16} className={cx(isSel && 'fill-accent/15')} />
                 </button>
@@ -1224,7 +1254,7 @@ function ListView({
                           · {topicName(res.topicId)}
                         </span>
                       )}
-                      {meta.broken && <Badge tone="rose">失效</Badge>}
+                      {meta.broken && <Badge tone="rose">{t('res.list_broken_badge', { defaultValue: '失效' })}</Badge>}
                     </div>
                   </div>
                 </div>
@@ -1253,7 +1283,7 @@ function ListView({
               <Td align="right">
                 <div className="inline-flex items-center gap-0.5">
                   <IconButton
-                    label="收藏"
+                    label={t('res.list_fav_label', { defaultValue: '收藏' })}
                     size="sm"
                     active={meta.favorite}
                     onClick={() => onToggleFav(res.id, !meta.favorite)}
@@ -1264,11 +1294,11 @@ function ListView({
                     />
                   </IconButton>
                   {res.url && (
-                    <IconButton label="開啟" size="sm" onClick={() => onOpen(res)}>
+                    <IconButton label={t('res.list_open_label', { defaultValue: '開啟' })} size="sm" onClick={() => onOpen(res)}>
                       <ExternalLink size={14} />
                     </IconButton>
                   )}
-                  <IconButton label="詳情" size="sm" onClick={() => onDetail(res.id)}>
+                  <IconButton label={t('res.list_detail_label', { defaultValue: '詳情' })} size="sm" onClick={() => onDetail(res.id)}>
                     <MoreVertical size={14} />
                   </IconButton>
                 </div>
@@ -1297,10 +1327,11 @@ function BoardView({
   onDetail: (id: string) => void
   onMove: (id: string, folderId: string | undefined) => void
 }) {
+  const { t } = useTranslation()
   const ordered = [...folders].sort((a, b) => a.order - b.order)
   const columns: { id: string; name: string; color: string }[] = [
     ...ordered.map((f) => ({ id: f.id, name: f.name, color: f.color })),
-    { id: '__none', name: '未分類', color: 'slate' },
+    { id: '__none', name: t('res.board_unsorted', { defaultValue: '未分類' }), color: 'slate' },
   ]
   const byCol = new Map<string, ResourceRow[]>()
   for (const col of columns) byCol.set(col.id, [])
@@ -1316,7 +1347,9 @@ function BoardView({
       .filter((c) => c.id !== currentCol)
       .map((c) => ({
         id: c.id,
-        label: c.id === '__none' ? '移出收藏夾' : `移到「${c.name}」`,
+        label: c.id === '__none'
+          ? t('res.board_move_out', { defaultValue: '移出收藏夾' })
+          : t('res.board_move_to', { defaultValue: `移到「${c.name}」`, name: c.name }),
         icon: SquareKanban as typeof SquareKanban,
         onSelect: () => onMove(resId, c.id === '__none' ? undefined : c.id),
       }))
@@ -1347,7 +1380,7 @@ function BoardView({
             <div className="flex-1 space-y-2 overflow-y-auto p-2" style={{ maxHeight: '60vh' }}>
               {items.length === 0 ? (
                 <p className="px-3 py-8 text-center text-xs leading-relaxed text-slate-400 dark:text-slate-500">
-                  呢個抽屜仲空，喺其他卡片嘅選單揀「移到呢度」歸檔。
+                  {t('res.board_empty_col', { defaultValue: '呢個抽屜仲空，喺其他卡片嘅選單揀「移到呢度」歸檔。' })}
                 </p>
               ) : (
                 items.map(({ res, meta, domain }) => (
@@ -1380,19 +1413,19 @@ function BoardView({
                         <button
                           type="button"
                           onClick={() => onOpen(res)}
-                          aria-label={`開啟「${res.title}」（新分頁）`}
+                          aria-label={t('res.board_open_aria', { defaultValue: `開啟「${res.title}」（新分頁）`, title: res.title })}
                           className="inline-flex items-center gap-1 rounded text-[11px] font-medium text-accent hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
                         >
-                          開啟 <ExternalLink size={10} aria-hidden="true" />
+                          {t('res.board_open_btn', { defaultValue: '開啟' })} <ExternalLink size={10} aria-hidden="true" />
                         </button>
                       ) : (
-                        <span className="text-[10px] text-slate-400">無連結</span>
+                        <span className="text-[10px] text-slate-400">{t('res.board_no_link', { defaultValue: '無連結' })}</span>
                       )}
                       <Menu
                         align="end"
                         trigger={
                           <span
-                            aria-label={`「${res.title}」更多操作`}
+                            aria-label={t('res.board_more_aria', { defaultValue: `「${res.title}」更多操作`, title: res.title })}
                             className="rounded p-0.5 text-slate-400 opacity-0 transition hover:text-slate-600 group-hover:opacity-100"
                           >
                             <MoreVertical size={14} />
@@ -1401,7 +1434,7 @@ function BoardView({
                         items={[
                           {
                             id: 'detail',
-                            label: '詳情',
+                            label: t('res.board_detail_item', { defaultValue: '詳情' }),
                             icon: MoreVertical,
                             onSelect: () => onDetail(res.id),
                           },
@@ -1440,27 +1473,28 @@ function BulkBar({
   onMove: (folderId: string | undefined) => void
   onDelete: () => void
 }) {
+  const { t } = useTranslation()
   return (
     <div className="fixed inset-x-0 bottom-4 z-40 flex animate-fade-in-up justify-center px-4">
       <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2 shadow-overlay dark:border-slate-700 dark:bg-slate-800">
         <span className="inline-flex items-center gap-1.5 rounded-full bg-accent-soft px-2.5 py-1 text-sm font-medium text-accent-strong dark:bg-accent/15 dark:text-accent">
-          已選 <span className="tabular-nums">{count}</span> 項
+          {t('res.bulk_selected', { defaultValue: '已選' })} <span className="tabular-nums">{count}</span> {t('res.bulk_selected_unit', { defaultValue: '項' })}
         </span>
         <Separator orientation="vertical" className="h-5" />
         <Button variant="secondary" size="sm" icon={Star} onClick={onFavorite}>
-          收藏
+          {t('res.bulk_fav_btn', { defaultValue: '收藏' })}
         </Button>
         <Menu
           align="start"
           trigger={
             <Button variant="secondary" size="sm" icon={SquareKanban}>
-              移到收藏夾
+              {t('res.bulk_move_btn', { defaultValue: '移到收藏夾' })}
             </Button>
           }
           items={[
             {
               id: 'none',
-              label: '移出收藏夾',
+              label: t('res.bulk_move_out', { defaultValue: '移出收藏夾' }),
               icon: Inbox,
               onSelect: () => onMove(undefined),
             },
@@ -1475,12 +1509,12 @@ function BulkBar({
           ]}
         />
         <Button variant="secondary" size="sm" icon={Archive} onClick={onArchive}>
-          封存
+          {t('res.bulk_archive_btn', { defaultValue: '封存' })}
         </Button>
         <Button variant="danger" size="sm" icon={Trash2} onClick={onDelete}>
-          刪除
+          {t('res.bulk_delete_btn', { defaultValue: '刪除' })}
         </Button>
-        <IconButton label="取消選取" size="sm" onClick={onClear}>
+        <IconButton label={t('res.bulk_cancel_aria', { defaultValue: '取消選取' })} size="sm" onClick={onClear}>
           <X size={16} />
         </IconButton>
       </div>
@@ -1504,6 +1538,7 @@ function FolderManager({
 }) {
   const toast = useToast()
   const confirm = useConfirm()
+  const { t } = useTranslation()
   const [name, setName] = useState('')
   const [color, setColor] = useState<string>('accent')
   const [editId, setEditId] = useState<string | null>(null)
@@ -1513,7 +1548,7 @@ function FolderManager({
 
   const add = () => {
     if (!name.trim()) {
-      toast.error('請輸入收藏夾名稱')
+      toast.error(t('res.folder_new_label', { defaultValue: '請輸入收藏夾名稱' }))
       return
     }
     const maxOrder = folders.reduce((m, f) => Math.max(m, f.order), -1)
@@ -1525,25 +1560,25 @@ function FolderManager({
     })
     setName('')
     setColor('accent')
-    toast.success('已新增收藏夾')
+    toast.success(t('res.toast_folder_added', { defaultValue: '已新增收藏夾' }))
   }
 
   const saveEdit = (id: string) => {
     if (!editName.trim()) return
     resourceFoldersCol.update(id, { name: editName.trim() })
     setEditId(null)
-    toast.success('已更新')
+    toast.success(t('res.toast_folder_updated', { defaultValue: '已更新' }))
   }
 
   const remove = async (f: ResourceFolder) => {
     const n = counts.get(f.id) ?? 0
     const ok = await confirm({
-      title: `刪除收藏夾「${f.name}」？`,
+      title: t('res.confirm_folder_delete_title', { defaultValue: `刪除收藏夾「${f.name}」？`, name: f.name }),
       message:
         n > 0
-          ? `入面 ${n} 項資源唔會被刪，只會變返「未分類」。`
-          : '此收藏夾沒有資源。',
-      confirmText: '刪除',
+          ? t('res.confirm_folder_delete_msg_resources', { defaultValue: `入面 ${n} 項資源唔會被刪，只會變返「未分類」。`, count: n })
+          : t('res.confirm_folder_delete_msg_empty', { defaultValue: '此收藏夾沒有資源。' }),
+      confirmText: t('res.confirm_delete_confirm', { defaultValue: '刪除' }),
       tone: 'danger',
     })
     if (!ok) return
@@ -1551,32 +1586,32 @@ function FolderManager({
     for (const m of resourceMetaCol.get())
       if (m.folderId === f.id) upsertMeta(m.id, { folderId: undefined })
     resourceFoldersCol.remove(f.id)
-    toast.success('已刪除收藏夾')
+    toast.success(t('res.toast_folder_deleted', { defaultValue: '已刪除收藏夾' }))
   }
 
   const recolor = (id: string, c: string) =>
     resourceFoldersCol.update(id, { color: c })
 
   return (
-    <Modal open={open} onClose={onClose} title="管理收藏夾" size="md">
+    <Modal open={open} onClose={onClose} title={t('res.folder_mgr_title', { defaultValue: '管理收藏夾' })} size="md">
       <div className="space-y-4">
         {/* 新增 */}
         <div className="rounded-2xl border border-slate-200/80 bg-slate-50/60 p-3.5 dark:border-slate-700/60 dark:bg-slate-800/40">
-          <Field label="新收藏夾名稱">
+          <Field label={t('res.folder_new_label', { defaultValue: '新收藏夾名稱' })}>
             <div className="flex gap-2">
               <Input
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && add()}
-                placeholder="例如：DSE 操卷"
+                placeholder={t('res.folder_new_placeholder', { defaultValue: '例如：DSE 操卷' })}
               />
               <Button icon={Plus} onClick={add}>
-                新增
+                {t('res.folder_add_btn', { defaultValue: '新增' })}
               </Button>
             </div>
           </Field>
           <div className="mt-2.5 flex items-center gap-1.5">
-            <span className="text-[11px] text-slate-500 dark:text-slate-400">顏色</span>
+            <span className="text-[11px] text-slate-500 dark:text-slate-400">{t('res.folder_color_label', { defaultValue: '顏色' })}</span>
             {FOLDER_COLOR_KEYS.map((c) => (
               <button
                 key={c}
@@ -1589,7 +1624,7 @@ function FolderManager({
                     ? 'ring-slate-400 dark:ring-slate-300'
                     : 'ring-transparent hover:ring-slate-200',
                 )}
-                aria-label={`顏色 ${c}`}
+                aria-label={t('res.folder_color_aria', { defaultValue: `顏色 ${c}`, color: c })}
                 aria-pressed={color === c}
               />
             ))}
@@ -1599,7 +1634,7 @@ function FolderManager({
         {/* 列表 */}
         {ordered.length === 0 ? (
           <p className="py-6 text-center text-sm text-slate-400 dark:text-slate-500">
-            仲未有收藏抽屜，喺上面開一個開始歸類。
+            {t('res.folder_empty', { defaultValue: '仲未有收藏抽屜，喺上面開一個開始歸類。' })}
           </p>
         ) : (
           <ul className="space-y-1.5">
@@ -1612,7 +1647,7 @@ function FolderManager({
                   align="start"
                   trigger={
                     <span
-                      aria-label={`更改「${f.name}」顏色`}
+                      aria-label={t('res.folder_change_color_aria', { defaultValue: `更改「${f.name}」顏色`, name: f.name })}
                       className={cx(
                         'h-4 w-4 cursor-pointer rounded-full ring-2 ring-offset-1 ring-transparent transition hover:ring-slate-200 dark:ring-offset-slate-800',
                         folderColor(f.color).dot,
@@ -1646,7 +1681,7 @@ function FolderManager({
                   {counts.get(f.id) ?? 0}
                 </span>
                 <IconButton
-                  label="重新命名"
+                  label={t('res.folder_rename_aria', { defaultValue: '重新命名' })}
                   size="sm"
                   onClick={() => {
                     setEditId(f.id)
@@ -1656,7 +1691,7 @@ function FolderManager({
                   <Pencil size={14} />
                 </IconButton>
                 <IconButton
-                  label="刪除"
+                  label={t('res.folder_delete_aria', { defaultValue: '刪除' })}
                   size="sm"
                   tone="danger"
                   onClick={() => remove(f)}
@@ -1670,7 +1705,7 @@ function FolderManager({
 
         <p className="flex items-center gap-1.5 text-[11px] text-slate-400">
           <Sparkles size={12} />
-          提示：喺看板視圖可以用卡片選單把資源移到收藏夾。
+          {t('res.folder_hint', { defaultValue: '提示：喺看板視圖可以用卡片選單把資源移到收藏夾。' })}
         </p>
       </div>
     </Modal>

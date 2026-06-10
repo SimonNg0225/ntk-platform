@@ -1,4 +1,6 @@
 import { useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import './countdown/i18n'
 import type { LucideIcon } from 'lucide-react'
 import {
   AlarmClock,
@@ -68,31 +70,35 @@ export function toneOf(days: number): Tone {
  */
 const URGENCY: Record<
   Tone,
-  { status: string; dot: string; bar: string; stub: string; ring: string }
+  { statusKey: string; statusDefault: string; dot: string; bar: string; stub: string; ring: string }
 > = {
   rose: {
-    status: '最後召集',
+    statusKey: 'cd.urgencyFinal',
+    statusDefault: '最後召喚',
     dot: 'bg-rose-500',
     bar: 'bg-rose-500',
     stub: 'bg-rose-50 text-rose-600 dark:bg-rose-500/15 dark:text-rose-300',
     ring: 'group-hover:border-rose-300/70 dark:group-hover:border-rose-500/40',
   },
   amber: {
-    status: '準備登機',
+    statusKey: 'cd.urgencyBoarding',
+    statusDefault: '登機中',
     dot: 'bg-amber-500',
     bar: 'bg-amber-500',
     stub: 'bg-amber-50 text-amber-600 dark:bg-amber-500/15 dark:text-amber-300',
     ring: 'group-hover:border-amber-300/70 dark:group-hover:border-amber-500/40',
   },
   green: {
-    status: '準時候機',
+    statusKey: 'cd.urgencyOnTime',
+    statusDefault: '準時',
     dot: 'bg-emerald-500',
     bar: 'bg-emerald-500',
     stub: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-300',
     ring: 'group-hover:border-emerald-300/70 dark:group-hover:border-emerald-500/40',
   },
   slate: {
-    status: '已抵達',
+    statusKey: 'cd.urgencyArrived',
+    statusDefault: '已抵達',
     dot: 'bg-slate-400 dark:bg-slate-500',
     bar: 'bg-slate-300 dark:bg-slate-600',
     stub: 'bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-300',
@@ -158,31 +164,36 @@ function FlapDisplay({
 
 const CATEGORY_META: Record<
   CountdownCategory,
-  { icon: LucideIcon; label: string; chip: string }
+  { icon: LucideIcon; labelKey: string; labelDefault: string; chip: string }
 > = {
   exam: {
     icon: NotebookPen,
-    label: '考試',
+    labelKey: 'cd.catExam',
+    labelDefault: '考試',
     chip: 'bg-violet-50 text-violet-600 dark:bg-violet-500/15 dark:text-violet-300',
   },
   deadline: {
     icon: AlarmClock,
-    label: '死線',
+    labelKey: 'cd.catDeadline',
+    labelDefault: '死線',
     chip: 'bg-rose-50 text-rose-600 dark:bg-rose-500/15 dark:text-rose-300',
   },
   assessment: {
     icon: BarChart3,
-    label: '評估',
+    labelKey: 'cd.catAssessment',
+    labelDefault: '評估',
     chip: 'bg-amber-50 text-amber-600 dark:bg-amber-500/15 dark:text-amber-300',
   },
   event: {
     icon: PartyPopper,
-    label: '活動',
+    labelKey: 'cd.catEvent',
+    labelDefault: '活動',
     chip: 'bg-sky-50 text-sky-600 dark:bg-sky-500/15 dark:text-sky-300',
   },
   other: {
     icon: Pin,
-    label: '其他',
+    labelKey: 'cd.catOther',
+    labelDefault: '其他',
     chip: 'bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-300',
   },
 }
@@ -225,14 +236,14 @@ export function formatDate(dateKey: string, time?: string): string {
 }
 
 /** 親切嘅一句註腳，按緊急度變語氣（登機口廣播口吻，但保持溫暖）。 */
-function urgencyHint(days: number): string {
-  if (days === 0) return '今日起飛，加油！'
-  if (days === 1) return '聽日就到閘口喇'
-  if (days <= 3) return '即將登機，做最後衝刺'
-  if (days <= 7) return '一星期內，記得 check-in'
-  if (days <= 14) return '兩星期內，慢慢執行李'
-  if (days <= 30) return '一個月內，可以開始計劃'
-  return '航班排好咗，放鬆啲'
+function urgencyHint(days: number, tFn: (key: string, opts: { defaultValue: string }) => string): string {
+  if (days === 0) return tFn('cd.hintToday', { defaultValue: '今日起飛，加油！' })
+  if (days === 1) return tFn('cd.hintTomorrow', { defaultValue: '聽日就到閘口喇' })
+  if (days <= 3) return tFn('cd.hint3Days', { defaultValue: '即將登機，做最後衝刺' })
+  if (days <= 7) return tFn('cd.hint7Days', { defaultValue: '一星期內，記得 check-in' })
+  if (days <= 14) return tFn('cd.hint14Days', { defaultValue: '兩星期內，慢慢執行李' })
+  if (days <= 30) return tFn('cd.hint30Days', { defaultValue: '一個月內，可以開始計劃' })
+  return tFn('cd.hintFar', { defaultValue: '航班排好咗，放鬆啲' })
 }
 
 type TabId = 'upcoming' | 'past'
@@ -280,6 +291,7 @@ function FilterPill({
 }
 
 export default function Countdown() {
+  const { t } = useTranslation()
   const items = useCollection(countdownsCol)
   const { mode } = useMode()
   const toast = useToast()
@@ -373,19 +385,19 @@ export default function Countdown() {
     if (trimmedNotes) payload.notes = trimmedNotes
     countdownsCol.add(payload)
     setModalOpen(false)
-    toast.success('已新增倒數')
+    toast.success(t('cd.toastAdded', { defaultValue: '已新增倒數' }))
   }
 
   async function handleRemove(c: CountdownItem) {
     const ok = await confirm({
-      title: '刪除倒數？',
-      message: `確定要刪除「${c.title}」？此動作無法復原。`,
-      confirmText: '刪除',
+      title: t('cd.confirmDeleteTitle', { defaultValue: '刪除倒數？' }),
+      message: t('cd.confirmDeleteMsg', { defaultValue: `確定要刪除「${c.title}」？此動作無法復原。`, title: c.title }),
+      confirmText: t('cd.confirmDeleteBtn', { defaultValue: '刪除' }),
       tone: 'danger',
     })
     if (!ok) return
     countdownsCol.remove(c.id)
-    toast.success('已刪除倒數')
+    toast.success(t('cd.toastDeleted', { defaultValue: '已刪除倒數' }))
   }
 
   // 單張倒數卡 = 一張登機牌（同 upcoming 分段同 past flat list 共用，外觀一致）。
@@ -429,7 +441,7 @@ export default function Countdown() {
               </span>
               <div className="min-w-0">
                 <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-slate-400 dark:text-slate-500">
-                  {meta ? meta.label : '行程'} · 閘口 {gateCode}
+                  {meta ? t(meta.labelKey, { defaultValue: meta.labelDefault }) : t('cd.cardCategoryFallback', { defaultValue: '行程' })} · {t('cd.cardGate', { defaultValue: '閘口' })} {gateCode}
                 </p>
                 <h3 className="truncate text-base font-semibold text-slate-800 dark:text-slate-100">
                   {c.title}
@@ -445,7 +457,7 @@ export default function Countdown() {
               </div>
             </div>
             <IconButton
-              label={`刪除「${c.title}」`}
+              label={t('cd.cardDeleteLabel', { defaultValue: `刪除「${c.title}」`, title: c.title })}
               tone="danger"
               onClick={() => handleRemove(c)}
               className="shrink-0 opacity-0 transition group-hover:opacity-100 focus-visible:opacity-100"
@@ -458,20 +470,20 @@ export default function Countdown() {
           <div className="mt-5 flex flex-1 items-end">
             {isToday ? (
               <div className="flex items-baseline gap-2">
-                <FlapDisplay value="今" ariaLabel="今日出發" />
+                <FlapDisplay value="今" ariaLabel={t('cd.cardTodayAriaLabel', { defaultValue: '今日出發' })} />
                 <FlapDisplay value="日" />
                 <span className="ml-1 self-end pb-1 text-sm font-semibold text-rose-600 dark:text-rose-400">
-                  出發
+                  {t('cd.cardDepart', { defaultValue: '出發' })}
                 </span>
               </div>
             ) : (
               <p className="flex items-baseline gap-2.5">
                 <FlapDisplay
                   value={Math.abs(days)}
-                  ariaLabel={`${Math.abs(days)} 日${days > 0 ? '後' : '前'}`}
+                  ariaLabel={`${Math.abs(days)} ${t('cd.dayUnit', { defaultValue: '日' })}${days > 0 ? t('cd.cardDaysAfterSuffix', { defaultValue: '後' }) : t('cd.cardDaysBeforeSuffix', { defaultValue: '前' })}`}
                 />
                 <span className="self-end pb-1 text-sm font-medium text-slate-400 dark:text-slate-500">
-                  {days > 0 ? '日後起飛' : '日前已飛'}
+                  {days > 0 ? t('cd.cardDaysAfter', { defaultValue: '日後起飛' }) : t('cd.cardDaysBefore', { defaultValue: '日前已飛' })}
                 </span>
               </p>
             )}
@@ -506,7 +518,7 @@ export default function Countdown() {
         <div className="relative flex shrink-0 flex-col justify-between gap-3 p-5 sm:w-44">
           <div>
             <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-slate-400 dark:text-slate-500">
-              狀態 · Status
+              {t('cd.cardStatus', { defaultValue: '狀態' })} · Status
             </p>
             <p className="mt-1.5 flex items-center gap-2">
               <span className={cx('relative flex h-2 w-2', isPast && 'opacity-60')}>
@@ -521,7 +533,7 @@ export default function Countdown() {
                 <span className={cx('relative inline-flex h-2 w-2 rounded-full', u.dot)} />
               </span>
               <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">
-                {u.status}
+                {t(u.statusKey, { defaultValue: u.statusDefault })}
               </span>
             </p>
           </div>
@@ -540,7 +552,7 @@ export default function Countdown() {
               <div
                 className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-700/60"
                 role="img"
-                aria-label={`距離出發 ${days} 日`}
+                aria-label={t('cd.cardProgressLabel', { defaultValue: `距離出發 ${days} 日`, days })}
               >
                 <div
                   className={cx('h-full rounded-full transition-all duration-700', u.bar)}
@@ -561,7 +573,7 @@ export default function Countdown() {
         {/* 頂部色帶（destination strip，跟模式主色） */}
         <div className="hero-gradient flex items-center justify-between gap-3 px-5 py-2.5 sm:px-7">
           <span className="inline-flex items-center gap-2 font-mono text-[11px] font-semibold uppercase tracking-[0.3em] text-white">
-            <PlaneTakeoff size={14} /> Departures · 重要日子
+            <PlaneTakeoff size={14} /> {t('cd.heroDepartures', { defaultValue: 'Departures · 重要日子' })}
           </span>
           <span className="hidden font-mono text-[11px] uppercase tracking-[0.3em] text-white/70 sm:inline">
             EziTeach Terminal
@@ -579,10 +591,10 @@ export default function Countdown() {
           <div className="flex flex-wrap items-start justify-between gap-x-5 gap-y-4">
             <div className="min-w-0">
               <p className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.3em] text-slate-400">
-                <PlaneTakeoff size={13} className="shrink-0" /> Departures · 離境時刻表
+                <PlaneTakeoff size={13} className="shrink-0" /> {t('cd.heroKicker', { defaultValue: 'Departures · 離境時刻表' })}
               </p>
               <h1 className="mt-1.5 font-serif text-[28px] font-semibold leading-none tracking-tight text-white sm:text-[34px]">
-                重要日子倒數
+                {t('cd.heroTitle', { defaultValue: '重要日子倒數' })}
               </h1>
 
               {/* 最近一班「航班」：翻牌大數字（live 狀態，承接功能名做副資訊） */}
@@ -595,27 +607,27 @@ export default function Countdown() {
               </p>
               <div className="mt-3 flex items-end gap-3">
                 {nearestDays === null ? (
-                  <FlapDisplay value="—" ariaLabel="未有倒數" />
+                  <FlapDisplay value="—" ariaLabel={t('cd.heroNoCountdowns', { defaultValue: '未有倒數' })} />
                 ) : nearestDays === 0 ? (
                   <div className="flex items-baseline gap-2">
-                    <FlapDisplay value="今" ariaLabel="今日出發" />
+                    <FlapDisplay value="今" ariaLabel={t('cd.cardTodayAriaLabel', { defaultValue: '今日出發' })} />
                     <FlapDisplay value="日" />
                   </div>
                 ) : (
                   <>
-                    <FlapDisplay value={nearestDays} ariaLabel={`最近一項仲有 ${nearestDays} 日`} />
+                    <FlapDisplay value={nearestDays} ariaLabel={t('cd.heroNearestLabel', { defaultValue: `最近一項仲有 ${nearestDays} 日`, days: nearestDays })} />
                     <span className="pb-1 font-mono text-sm uppercase tracking-widest text-slate-400">
-                      日後
+                      {t('cd.heroDaysUnit', { defaultValue: '日後' })}
                     </span>
                   </>
                 )}
               </div>
               <p className="mt-3 max-w-sm text-sm text-slate-300">
                 {nearestDays === null
-                  ? '考試、死線、評估同活動，登記咗就一眼睇到仲爭幾耐起飛。'
+                  ? t('cd.heroEmptyDesc', { defaultValue: '考試、死線、評估同活動，登記咗就一眼睇到仲爭幾耐起飛。' })
                   : nearestDays === 0
-                    ? '今日就係大日子，準備好出發喇！'
-                    : `${upcoming.length} 班「航班」候機中 · ${urgencyHint(nearestDays)}`}
+                    ? t('cd.heroTodayDesc', { defaultValue: '今日就係大日子，準備好出發喇！' })
+                    : t('cd.heroCountDesc', { defaultValue: `${upcoming.length} 班「航班」候機中 · ${urgencyHint(nearestDays, t)}`, count: upcoming.length, hint: urgencyHint(nearestDays, t) })}
               </p>
             </div>
             <div className="flex shrink-0 flex-col items-stretch gap-2 sm:items-end">
@@ -625,14 +637,14 @@ export default function Countdown() {
                 onClick={openAddModal}
                 className="border-white/15 bg-white/10 text-white backdrop-blur hover:bg-white/20 dark:border-white/15 dark:bg-white/10 dark:text-white dark:hover:bg-white/20"
               >
-                登記新航班
+                {t('cd.btnRegister', { defaultValue: '登記新航班' })}
               </Button>
               <button
                 type="button"
                 onClick={() => setSubscribeOpen(true)}
                 className="inline-flex items-center justify-center gap-1.5 rounded-full border border-white/10 bg-white/[0.06] px-3 py-1.5 text-xs font-medium text-slate-300 backdrop-blur transition hover:bg-white/15 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
               >
-                <Smartphone size={13} /> 訂閱到手機日曆
+                <Smartphone size={13} /> {t('cd.btnSubscribe', { defaultValue: '訂閱到手機日曆' })}
               </button>
             </div>
           </div>
@@ -640,14 +652,14 @@ export default function Countdown() {
           {/* 板底指標列（即將 / 最近 / 已抵達）— 翻牌字 + 標籤，取代三張一式 StatCard */}
           <div className="mt-6 grid grid-cols-3 divide-x divide-white/10 rounded-2xl bg-white/[0.04] ring-1 ring-white/10">
             {[
-              { label: '候機中', sub: 'BOARDING', value: upcoming.length, icon: PlaneTakeoff },
+              { label: t('cd.statBoarding', { defaultValue: '候機中' }), sub: 'BOARDING', value: upcoming.length, icon: PlaneTakeoff },
               {
-                label: '最近一項',
+                label: t('cd.statNext', { defaultValue: '最近一項' }),
                 sub: 'NEXT',
-                value: nearestDays === null ? '—' : `${nearestDays}日`,
+                value: nearestDays === null ? '—' : `${nearestDays}${t('cd.statDayUnit', { defaultValue: '日' })}`,
                 icon: Hourglass,
               },
-              { label: '已抵達', sub: 'ARRIVED', value: past.length, icon: PlaneLanding },
+              { label: t('cd.statArrived', { defaultValue: '已抵達' }), sub: 'ARRIVED', value: past.length, icon: PlaneLanding },
             ].map((s) => {
               const I = s.icon
               return (
@@ -669,8 +681,8 @@ export default function Countdown() {
       {/* 分頁（離境 / 抵達） */}
       <Tabs<TabId>
         tabs={[
-          { id: 'upcoming', label: '候機中' },
-          { id: 'past', label: '已抵達' },
+          { id: 'upcoming', label: t('cd.tabUpcoming', { defaultValue: '候機中' }) },
+          { id: 'past', label: t('cd.tabPast', { defaultValue: '已抵達' }) },
         ]}
         active={tab}
         onChange={setTab}
@@ -681,7 +693,7 @@ export default function Countdown() {
       {tab === 'upcoming' && upcoming.length > 0 && (
         <div className="-mt-1 flex flex-wrap gap-2">
           <FilterPill
-            label="全部"
+            label={t('cd.filterAll', { defaultValue: '全部' })}
             count={counts.all}
             active={catFilter === 'all'}
             onClick={() => setCatFilter('all')}
@@ -691,7 +703,7 @@ export default function Countdown() {
             return (
               <FilterPill
                 key={c}
-                label={m.label}
+                label={t(m.labelKey, { defaultValue: m.labelDefault })}
                 icon={m.icon}
                 count={counts[c]}
                 active={catFilter === c}
@@ -709,11 +721,11 @@ export default function Countdown() {
             catFilter !== 'all' ? (
               <EmptyState
                 icon={CalendarHeart}
-                title="呢個閘口暫時冇航班"
-                hint="揀返「全部」，或者撳上面其他閘口睇下。"
+                title={t('cd.emptyGateTitle', { defaultValue: '呢個閘口暫時冇航班' })}
+                hint={t('cd.emptyGateHint', { defaultValue: '揀返「全部」，或者撳上面其他閘口睇下。' })}
                 action={
                   <Button variant="ghost" onClick={() => setCatFilter('all')}>
-                    睇全部
+                    {t('cd.emptyGateAction', { defaultValue: '睇全部' })}
                   </Button>
                 }
               />
@@ -721,11 +733,11 @@ export default function Countdown() {
               <EmptyState
                 icon={PlaneTakeoff}
                 art="empty-countdown"
-                title="班次表仲係空白，登記第一班航班"
-                hint="考試、交功課、生日、旅行⋯⋯登記個日子入離境牌，之後就一眼睇到仲爭幾耐起飛。"
+                title={t('cd.emptyBoardTitle', { defaultValue: '班次表仲係空白，登記第一班航班' })}
+                hint={t('cd.emptyBoardHint', { defaultValue: '考試、交功課、生日、旅行⋯⋯登記個日子入離境牌，之後就一眼睇到仲爭幾耐起飛。' })}
                 action={
                   <Button icon={Plus} onClick={openAddModal}>
-                    登記第一班航班
+                    {t('cd.emptyBoardAction', { defaultValue: '登記第一班航班' })}
                   </Button>
                 }
               />
@@ -733,8 +745,8 @@ export default function Countdown() {
           ) : (
             <EmptyState
               icon={PlaneLanding}
-              title="暫時未有航班抵達"
-              hint="日子過咗之後會搬嚟「已抵達」，等你回望飛過嘅里程碑。"
+              title={t('cd.emptyPastTitle', { defaultValue: '暫時未有航班抵達' })}
+              hint={t('cd.emptyPastHint', { defaultValue: '日子過咗之後會搬嚟「已抵達」，等你回望飛過嘅里程碑。' })}
             />
           )
         ) : tab === 'upcoming' ? (
@@ -747,7 +759,7 @@ export default function Countdown() {
                 </h2>
                 <span className="h-px flex-1 bg-gradient-to-r from-slate-200 to-transparent dark:from-slate-700/70" />
                 <span className="font-mono text-[11px] tabular-nums text-slate-400 dark:text-slate-500">
-                  {g.items.length} 班 · {g.hint}
+                  {g.items.length} {t('cd.groupFlightUnit', { defaultValue: '班' })} · {g.hint}
                 </span>
               </div>
               <div className="space-y-4">{g.items.map(renderCard)}</div>
@@ -779,7 +791,7 @@ export default function Countdown() {
                   <button
                     type="button"
                     onClick={() => setModalOpen(false)}
-                    aria-label="關閉"
+                    aria-label={t('cd.modalClose', { defaultValue: '關閉' })}
                     className="rounded-lg p-1 text-white/70 transition hover:bg-white/15 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
                   >
                     <X size={18} />
@@ -792,13 +804,13 @@ export default function Countdown() {
                 <div className="relative flex items-end justify-between gap-4 px-5 py-4 sm:px-6">
                   <div className="min-w-0">
                     <p className="flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-[0.3em] text-slate-400">
-                      <PlaneTakeoff size={13} className="shrink-0" /> Check-in · 登記航班
+                      <PlaneTakeoff size={13} className="shrink-0" /> {t('cd.modalCheckinKicker', { defaultValue: 'Check-in · 登記航班' })}
                     </p>
                     <h3
                       id="countdown-modal-title"
                       className="mt-1 font-serif text-2xl font-semibold leading-none tracking-tight text-white"
                     >
-                      登記新航班
+                      {t('cd.modalTitle', { defaultValue: '登記新航班' })}
                     </h3>
                   </div>
                   {/* 翻牌預覽存根：跟日期即時更新（似填飛時嗰張小副聯） */}
@@ -814,17 +826,17 @@ export default function Countdown() {
                     </p>
                     <div className="mt-1.5 flex items-end justify-end gap-1.5">
                       {draftDays === null ? (
-                        <FlapDisplay value="—" size="sm" ariaLabel="未揀日期" />
+                        <FlapDisplay value="—" size="sm" ariaLabel={t('cd.modalNoDraftDate', { defaultValue: '未揀日期' })} />
                       ) : draftDays === 0 ? (
                         <div className="flex items-baseline gap-1">
-                          <FlapDisplay value="今" size="sm" ariaLabel="今日出發" />
+                          <FlapDisplay value="今" size="sm" ariaLabel={t('cd.cardTodayAriaLabel', { defaultValue: '今日出發' })} />
                           <FlapDisplay value="日" size="sm" />
                         </div>
                       ) : (
                         <FlapDisplay
                           value={Math.abs(draftDays)}
                           size="sm"
-                          ariaLabel={`${Math.abs(draftDays)} 日${draftDays > 0 ? '後' : '前'}`}
+                          ariaLabel={`${Math.abs(draftDays)} ${t('cd.dayUnit', { defaultValue: '日' })}${draftDays > 0 ? t('cd.cardDaysAfterSuffix', { defaultValue: '後' }) : t('cd.cardDaysBeforeSuffix', { defaultValue: '前' })}`}
                         />
                       )}
                     </div>
@@ -834,13 +846,13 @@ export default function Countdown() {
 
               {/* 主聯：表單欄位，分區排版（航班 → 班次 → 閘口 → 備註） */}
               <div className="space-y-5">
-                <Field label="航班名稱（想倒數啲咩？）">
+                <Field label={t('cd.modalFieldTitle', { defaultValue: '航班名稱（想倒數啲咩？）' })}>
                   <Input
                     type="text"
                     icon={PenLine}
                     value={fTitle}
                     onChange={(e) => setFTitle(e.target.value)}
-                    placeholder="例如：期末考試、交報告、去旅行"
+                    placeholder={t('cd.modalFieldTitlePlaceholder', { defaultValue: '例如：期末考試、交報告、去旅行' })}
                     autoFocus
                   />
                 </Field>
@@ -848,10 +860,10 @@ export default function Countdown() {
                 {/* 班次：日期 + 時間（一組「departure」資料） */}
                 <div className="space-y-3">
                   <p className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.25em] text-slate-400 dark:text-slate-500">
-                    <CalendarDays size={12} /> Departure · 起飛班次
+                    <CalendarDays size={12} /> {t('cd.modalDepartureKicker', { defaultValue: 'Departure · 起飛班次' })}
                   </p>
                   <div className="grid gap-3 sm:grid-cols-2">
-                    <Field label="離境日期">
+                    <Field label={t('cd.modalFieldDate', { defaultValue: '離境日期' })}>
                       <Input
                         type="date"
                         icon={CalendarDays}
@@ -859,7 +871,7 @@ export default function Countdown() {
                         onChange={(e) => setFDate(e.target.value)}
                       />
                     </Field>
-                    <Field label="時間（選填）">
+                    <Field label={t('cd.modalFieldTime', { defaultValue: '時間（選填）' })}>
                       <Input
                         type="time"
                         icon={Clock}
@@ -874,7 +886,7 @@ export default function Countdown() {
                 <div className="space-y-2.5">
                   <p className="flex items-center justify-between gap-2 font-mono text-[10px] uppercase tracking-[0.25em] text-slate-400 dark:text-slate-500">
                     <span className="inline-flex items-center gap-1.5">
-                      <Tag size={12} /> Gate · 閘口分類（選填）
+                      <Tag size={12} /> {t('cd.modalGateKicker', { defaultValue: 'Gate · 閘口分類（選填）' })}
                     </span>
                     <span className="tabular-nums text-slate-400 dark:text-slate-500">
                       {draftGate}
@@ -899,19 +911,19 @@ export default function Countdown() {
                           )}
                         >
                           <Icon size={14} />
-                          {m.label}
+                          {t(m.labelKey, { defaultValue: m.labelDefault })}
                         </button>
                       )
                     })}
                   </div>
                 </div>
 
-                <Field label="備註（選填）">
+                <Field label={t('cd.modalFieldNotes', { defaultValue: '備註（選填）' })}>
                   <Textarea
                     value={fNotes}
                     onChange={(e) => setFNotes(e.target.value)}
                     rows={2}
-                    placeholder="想記低嘅細節，例如地點、範圍⋯⋯"
+                    placeholder={t('cd.modalFieldNotesPlaceholder', { defaultValue: '想記低嘅細節，例如地點、範圍⋯⋯' })}
                   />
                 </Field>
               </div>
@@ -937,17 +949,17 @@ export default function Countdown() {
                 <span className="inline-flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-wider text-slate-400 dark:text-slate-500">
                   <span className={cx('h-1.5 w-1.5 rounded-full', draftU.dot)} />
                   {draftDays === null
-                    ? '揀返日期'
+                    ? t('cd.modalStatusNeedDate', { defaultValue: '揀返日期' })
                     : draftDays === 0
                       ? 'Now boarding'
-                      : draftU.status}
+                      : t(draftU.statusKey, { defaultValue: draftU.statusDefault })}
                 </span>
                 <div className="flex gap-2">
                   <Button type="button" variant="ghost" onClick={() => setModalOpen(false)}>
-                    取消
+                    {t('cd.modalBtnCancel', { defaultValue: '取消' })}
                   </Button>
                   <Button type="submit" icon={Plus} disabled={!fTitle.trim()}>
-                    登記航班
+                    {t('cd.modalBtnSubmit', { defaultValue: '登記航班' })}
                   </Button>
                 </div>
               </div>

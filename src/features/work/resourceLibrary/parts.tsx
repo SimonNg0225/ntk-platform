@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   Clapperboard,
   ClipboardList,
@@ -73,6 +74,7 @@ export function StarRating({
   onChange?: (v: number) => void
   size?: number
 }) {
+  const { t } = useTranslation()
   const [hover, setHover] = useState(0)
   const readOnly = !onChange
   return (
@@ -95,7 +97,7 @@ export function StarRating({
               !readOnly && 'cursor-pointer hover:scale-110',
               readOnly && 'cursor-default',
             )}
-            aria-label={`評 ${n} 星`}
+            aria-label={t('res.star_rating_aria', { defaultValue: `評 ${n} 星`, n })}
           >
             <Star
               size={size}
@@ -122,31 +124,32 @@ export function TagEditor({
   onChange: (tags: string[]) => void
   suggestions?: string[]
 }) {
+  const { t } = useTranslation()
   const [draft, setDraft] = useState('')
   const add = (raw: string) => {
-    const t = raw.trim().replace(/^#/, '')
-    if (!t) return
-    if (!value.includes(t)) onChange([...value, t])
+    const tag = raw.trim().replace(/^#/, '')
+    if (!tag) return
+    if (!value.includes(tag)) onChange([...value, tag])
     setDraft('')
   }
-  const remove = (t: string) => onChange(value.filter((x) => x !== t))
+  const remove = (tag: string) => onChange(value.filter((x) => x !== tag))
   const pool = suggestions
     .filter((s) => !value.includes(s) && (!draft || s.includes(draft.trim())))
     .slice(0, 6)
   return (
     <div className="space-y-1.5">
       <div className="flex flex-wrap gap-1.5 rounded-lg border border-slate-300 bg-white px-2 py-1.5 focus-within:border-accent focus-within:ring-2 focus-within:ring-accent/30 dark:border-slate-700 dark:bg-slate-800">
-        {value.map((t) => (
+        {value.map((tag) => (
           <span
-            key={t}
+            key={tag}
             className="inline-flex items-center gap-1 rounded-md bg-accent-soft px-1.5 py-0.5 text-[11px] font-medium text-accent-strong dark:bg-accent/15 dark:text-accent"
           >
-            #{t}
+            #{tag}
             <button
               type="button"
-              onClick={() => remove(t)}
+              onClick={() => remove(tag)}
               className="rounded hover:text-rose-500"
-              aria-label={`移除標籤 ${t}`}
+              aria-label={t('res.tag_remove_label', { defaultValue: `移除標籤 ${tag}`, tag })}
             >
               <X size={11} />
             </button>
@@ -163,7 +166,7 @@ export function TagEditor({
               remove(value[value.length - 1])
             }
           }}
-          placeholder={value.length ? '' : '輸入標籤後按 Enter…'}
+          placeholder={value.length ? '' : t('res.tag_input_placeholder', { defaultValue: '輸入標籤後按 Enter…' })}
           className="min-w-[6rem] flex-1 bg-transparent text-base sm:text-sm text-slate-800 outline-none placeholder:text-slate-400 dark:text-slate-100 dark:placeholder:text-slate-500"
         />
       </div>

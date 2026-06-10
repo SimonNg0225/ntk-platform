@@ -1,4 +1,6 @@
 import { useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import './lessonPlanner/i18n'
 import { useCollection } from '../../lib/store'
 import { lessonPlansCol, classesCol, topicsCol } from '../../data/collections'
 import type { LessonPlan } from '../../data/types'
@@ -91,6 +93,7 @@ const STATUS_ICON: Record<PlanStatus, typeof Circle> = {
 }
 
 export default function LessonPlanner() {
+  const { t } = useTranslation()
   const plans = useCollection(lessonPlansCol)
   const classes = useCollection(classesCol)
   const topics = useCollection(topicsCol)
@@ -324,11 +327,11 @@ export default function LessonPlanner() {
         createdAt: new Date().toISOString(),
       })
       writeMeta(created.id, d)
-      toast.success('已新增教案')
+      toast.success(t('lesson.toastAdded', { defaultValue: '已新增教案' }))
     } else if (editingId) {
       lessonPlansCol.update(editingId, toPlanPayload(d))
       writeMeta(editingId, d)
-      toast.success('已儲存教案')
+      toast.success(t('lesson.toastSaved', { defaultValue: '已儲存教案' }))
     }
     setEditorOpen(false)
   }
@@ -338,25 +341,25 @@ export default function LessonPlanner() {
     if (!d.phases.length && !d.materials.length) return
     planTemplatesCol.add({
       id: uidLocal('tpl'),
-      name: d.title.trim() || '未命名範本',
+      name: d.title.trim() || t('lesson.templateUnnamed', { defaultValue: '未命名範本' }),
       objectives: d.objectives.trim(),
       phases: d.phases.map((p) => ({ ...p })),
       materials: d.materials.map((m) => ({ text: m.text })),
       createdAt: new Date().toISOString(),
     })
-    toast.success('已存為範本')
+    toast.success(t('lesson.toastTemplateAdded', { defaultValue: '已存為範本' }))
   }
 
   const removeTemplate = async (id: string, name: string) => {
     const ok = await confirm({
-      title: '刪除範本？',
-      message: `「${name}」將會被刪除。`,
-      confirmText: '刪除',
+      title: t('lesson.confirmDeleteTemplateTitle', { defaultValue: '刪除範本？' }),
+      message: t('lesson.confirmDeleteTemplateMessage', { defaultValue: `「${name}」將會被刪除。`, name }),
+      confirmText: t('lesson.confirmDeleteText', { defaultValue: '刪除' }),
       tone: 'danger',
     })
     if (ok) {
       planTemplatesCol.remove(id)
-      toast.success('已刪除範本')
+      toast.success(t('lesson.toastTemplateDeleted', { defaultValue: '已刪除範本' }))
     }
   }
 
@@ -408,14 +411,14 @@ export default function LessonPlanner() {
   }
 
   const duplicate = (p: LessonPlan) => {
-    cloneTo(p)
-    toast.success('已複製教案')
+    cloneTo(p, undefined, t('lesson.cloneSuffix', { defaultValue: '（副本）' }))
+    toast.success(t('lesson.toastDuplicated', { defaultValue: '已複製教案' }))
   }
 
   const confirmDupToDate = () => {
     if (!dupTarget) return
     cloneTo(dupTarget, dupDate, '')
-    toast.success(`已複製到 ${shortDateLabel(dupDate)}`)
+    toast.success(t('lesson.toastDupToDate', { defaultValue: `已複製到 ${shortDateLabel(dupDate)}`, date: shortDateLabel(dupDate) }))
     setDupTarget(null)
   }
 
@@ -432,20 +435,20 @@ export default function LessonPlanner() {
     }
     if (metaById.has(p.id)) planMetaCol.update(p.id, patch)
     else planMetaCol.add(patch)
-    toast.success(`狀態：${STATUS_META[next].label}`)
+    toast.success(t('lesson.toastStatusChanged', { defaultValue: `狀態：${STATUS_META[next].label}`, label: STATUS_META[next].label }))
   }
 
   const remove = async (p: LessonPlan) => {
     const ok = await confirm({
-      title: '刪除教案？',
-      message: `「${p.title}」將會被永久刪除，呢個動作無法復原。`,
-      confirmText: '刪除',
+      title: t('lesson.confirmDeletePlanTitle', { defaultValue: '刪除教案？' }),
+      message: t('lesson.confirmDeletePlanMessage', { defaultValue: `「${p.title}」將會被永久刪除，呢個動作無法復原。`, title: p.title }),
+      confirmText: t('lesson.confirmDeleteText', { defaultValue: '刪除' }),
       tone: 'danger',
     })
     if (!ok) return
     lessonPlansCol.remove(p.id)
     if (metaById.has(p.id)) planMetaCol.remove(p.id)
-    toast.success('已刪除教案')
+    toast.success(t('lesson.toastPlanDeleted', { defaultValue: '已刪除教案' }))
   }
 
   const doPrint = (p: LessonPlan) => {
@@ -456,7 +459,7 @@ export default function LessonPlanner() {
       topicName: topicName(p.topicId),
       area: topicArea(p.topicId),
     })
-    if (!ok) toast.error('瀏覽器封鎖咗彈窗，請允許後再試')
+    if (!ok) toast.error(t('lesson.toastPrintBlocked', { defaultValue: '瀏覽器封鎖咗彈窗，請允許後再試' }))
   }
 
   const hasFilter =
@@ -500,14 +503,14 @@ export default function LessonPlanner() {
             </span>
             <div className="min-w-0">
               <p className="text-[11px] font-medium uppercase tracking-[0.32em] text-accent-soft/90">
-                教師備課桌
+                {t('lesson.teacherDesk', { defaultValue: '教師備課桌' })}
               </p>
               <h1 className="mt-1 font-serif text-[26px] font-semibold leading-tight tracking-tight text-white sm:text-3xl">
-                備課 / 教案
+                {t('lesson.lessonPlannerTitle', { defaultValue: '備課 / 教案' })}
               </h1>
               <p className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-slate-300/90">
                 <span className="tabular-nums">
-                  在備 {stats.total} 份教案
+                  {t('lesson.totalPlansCount', { defaultValue: '在備 {{count}} 份教案', count: stats.total })}
                 </span>
                 {stats.thisWeek > 0 && (
                   <>
@@ -515,7 +518,7 @@ export default function LessonPlanner() {
                       ·
                     </span>
                     <span className="inline-flex items-center gap-1 font-medium text-accent-soft">
-                      <CalendarRange size={12} /> 本週 {stats.thisWeek} 堂
+                      <CalendarRange size={12} /> {t('lesson.thisWeekCount', { defaultValue: '本週 {{count}} 堂', count: stats.thisWeek })}
                     </span>
                   </>
                 )}
@@ -529,7 +532,7 @@ export default function LessonPlanner() {
               className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-white/15 bg-white/5 px-3 text-sm font-medium text-slate-100 backdrop-blur-sm transition hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
             >
               <Sparkles size={15} />
-              範本
+              {t('lesson.templatesBtn', { defaultValue: '範本' })}
             </button>
             <button
               type="button"
@@ -537,7 +540,7 @@ export default function LessonPlanner() {
               className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-white px-3.5 text-sm font-semibold text-slate-800 shadow-sm transition hover:bg-accent-soft hover:text-accent-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
             >
               <Plus size={16} />
-              新增教案
+              {t('lesson.newPlanBtn', { defaultValue: '新增教案' })}
             </button>
           </div>
         </div>
@@ -546,30 +549,30 @@ export default function LessonPlanner() {
       {/* ───────── 備課曆書帶：細口統計（hairline grid · serif 大數字） ───────── */}
       <section className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl bg-slate-200/70 ring-1 ring-slate-200/80 dark:bg-slate-700/50 dark:ring-slate-700/60 sm:grid-cols-4">
         <AlmanacStat
-          label="教案總數"
+          label={t('lesson.statTotalLabel', { defaultValue: '教案總數' })}
           value={stats.total}
           icon={NotebookPen}
-          hint={stats.total > 0 ? '持續累積中' : '由第一份開始'}
+          hint={stats.total > 0 ? t('lesson.statTotalHintSome', { defaultValue: '持續累積中' }) : t('lesson.statTotalHintEmpty', { defaultValue: '由第一份開始' })}
         />
         <AlmanacStat
-          label="本週課堂"
+          label={t('lesson.statWeekLabel', { defaultValue: '本週課堂' })}
           value={stats.thisWeek}
           icon={CalendarRange}
-          hint="星期一至五"
+          hint={t('lesson.statWeekHint', { defaultValue: '星期一至五' })}
         />
         <AlmanacStat
-          label="已授課"
+          label={t('lesson.statTaughtLabel', { defaultValue: '已授課' })}
           value={stats.taught}
           icon={CheckCircle2}
-          hint={stats.ready ? `另有 ${stats.ready} 個已就緒` : '完成授課嘅教案'}
+          hint={stats.ready ? t('lesson.statTaughtHintReady', { defaultValue: '另有 {{count}} 個已就緒', count: stats.ready }) : t('lesson.statTaughtHint', { defaultValue: '完成授課嘅教案' })}
         />
         <AlmanacStat
-          label="課程覆蓋"
+          label={t('lesson.statCoverageLabel', { defaultValue: '課程覆蓋' })}
           value={stats.coverPct}
           unit="%"
           icon={PieChart}
           hot={stats.coverPct > 0}
-          hint={`已備 ${stats.plannedCount}/${topics.length} 課題`}
+          hint={t('lesson.statCoverageHint', { defaultValue: '已備 {{planned}}/{{total}} 課題', planned: stats.plannedCount, total: topics.length })}
         />
       </section>
 
@@ -579,23 +582,23 @@ export default function LessonPlanner() {
           value={view}
           onChange={setView}
           options={[
-            { id: 'list', label: '列表', icon: LayoutGrid },
-            { id: 'week', label: '週備課', icon: CalendarRange },
-            { id: 'coverage', label: '覆蓋分析', icon: PieChart },
+            { id: 'list', label: t('lesson.viewList', { defaultValue: '列表' }), icon: LayoutGrid },
+            { id: 'week', label: t('lesson.viewWeek', { defaultValue: '週備課' }), icon: CalendarRange },
+            { id: 'coverage', label: t('lesson.viewCoverage', { defaultValue: '覆蓋分析' }), icon: PieChart },
           ]}
         />
         {view === 'list' && (
           <div className="hidden items-center gap-1.5 sm:flex">
-            <span className="text-xs text-slate-400">排序</span>
+            <span className="text-xs text-slate-400">{t('lesson.sortLabel', { defaultValue: '排序' })}</span>
             <Select
               value={sortKey}
               onChange={(e) => setSortKey(e.target.value as SortKey)}
               className="w-auto"
             >
-              <option value="date">授課日期</option>
-              <option value="created">最新建立</option>
-              <option value="title">標題</option>
-              <option value="status">狀態</option>
+              <option value="date">{t('lesson.sortDate', { defaultValue: '授課日期' })}</option>
+              <option value="created">{t('lesson.sortCreated', { defaultValue: '最新建立' })}</option>
+              <option value="title">{t('lesson.sortTitle', { defaultValue: '標題' })}</option>
+              <option value="status">{t('lesson.sortStatus', { defaultValue: '狀態' })}</option>
             </Select>
           </div>
         )}
@@ -609,13 +612,13 @@ export default function LessonPlanner() {
             <Input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="搜尋標題 / 目標 / 課題…"
+              placeholder={t('lesson.searchPlaceholder', { defaultValue: '搜尋標題 / 目標 / 課題…' })}
             />
             <Select
               value={filterClass}
               onChange={(e) => setFilterClass(e.target.value)}
             >
-              <option value="">全部班別</option>
+              <option value="">{t('lesson.filterAllClasses', { defaultValue: '全部班別' })}</option>
               {classes.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.name}
@@ -626,7 +629,7 @@ export default function LessonPlanner() {
               value={filterArea}
               onChange={(e) => setFilterArea(e.target.value)}
             >
-              <option value="">全部範疇</option>
+              <option value="">{t('lesson.filterAllAreas', { defaultValue: '全部範疇' })}</option>
               {areas.map((a) => (
                 <option key={a} value={a}>
                   {a}
@@ -637,7 +640,7 @@ export default function LessonPlanner() {
               value={filterTopic}
               onChange={(e) => setFilterTopic(e.target.value)}
             >
-              <option value="">全部課題</option>
+              <option value="">{t('lesson.filterAllTopics', { defaultValue: '全部課題' })}</option>
               {sortedTopics.map((t) => (
                 <option key={t.id} value={t.id}>
                   {t.topic}
@@ -653,7 +656,7 @@ export default function LessonPlanner() {
               active={(filterStatus || 'all') as PlanStatus | 'all'}
               onChange={(id) => setFilterStatus(id === 'all' ? '' : id)}
               options={[
-                { id: 'all', label: '全部' },
+                { id: 'all', label: t('lesson.filterAll', { defaultValue: '全部' }) },
                 ...STATUS_ORDER.map((s) => ({ id: s, label: STATUS_META[s].label })),
               ]}
               counts={{
@@ -665,7 +668,7 @@ export default function LessonPlanner() {
             />
             {hasFilter && (
               <Button size="sm" variant="ghost" onClick={clearFilters}>
-                清除篩選
+                {t('lesson.clearFilters', { defaultValue: '清除篩選' })}
               </Button>
             )}
           </div>
@@ -673,20 +676,20 @@ export default function LessonPlanner() {
           {visible.length === 0 ? (
             <EmptyState
               icon={NotebookPen}
-              title={hasFilter ? '揾唔到符合條件嘅教案' : '一齊開始第一份教案'}
+              title={hasFilter ? t('lesson.emptyFilterTitle', { defaultValue: '揾唔到符合條件嘅教案' }) : t('lesson.emptyFirstTitle', { defaultValue: '一齊開始第一份教案' })}
               hint={
                 hasFilter
-                  ? '試吓放寬篩選或搜尋條件，再睇睇。'
-                  : '備課由一份教案開始 — 寫低教學環節同教材，亦可由範本快速套用。'
+                  ? t('lesson.emptyFilterHint', { defaultValue: '試吓放寬篩選或搜尋條件，再睇睇。' })
+                  : t('lesson.emptyFirstHint', { defaultValue: '備課由一份教案開始 — 寫低教學環節同教材，亦可由範本快速套用。' })
               }
               action={
                 hasFilter ? (
                   <Button size="sm" variant="secondary" onClick={clearFilters}>
-                    清除篩選
+                    {t('lesson.clearFilters', { defaultValue: '清除篩選' })}
                   </Button>
                 ) : (
                   <Button size="sm" icon={Plus} onClick={() => openCreate()}>
-                    新增教案
+                    {t('lesson.newPlanBtn', { defaultValue: '新增教案' })}
                   </Button>
                 )
               }
@@ -729,7 +732,7 @@ export default function LessonPlanner() {
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-1">
               <IconButton
-                label="上一週"
+                label={t('lesson.weekPrevLabel', { defaultValue: '上一週' })}
                 onClick={() => setWeekStart(addDaysKey(weekStart, -7))}
               >
                 <ChevronLeft size={18} />
@@ -738,7 +741,7 @@ export default function LessonPlanner() {
                 {weekRangeLabel(weekStart)}
               </span>
               <IconButton
-                label="下一週"
+                label={t('lesson.weekNextLabel', { defaultValue: '下一週' })}
                 onClick={() => setWeekStart(addDaysKey(weekStart, 7))}
               >
                 <ChevronRight size={18} />
@@ -746,17 +749,14 @@ export default function LessonPlanner() {
             </div>
             <div className="flex items-center gap-2">
               <Badge tone="slate">
-                <span className="tabular-nums" aria-live="polite">
-                  {weekTotal}
-                </span>{' '}
-                個課堂
+                {t('lesson.weekLessonsCount', { defaultValue: '{{count}} 個課堂', count: weekTotal })}
               </Badge>
               <Button
                 size="sm"
                 variant="secondary"
                 onClick={() => setWeekStart(startOfWeekKey(new Date()))}
               >
-                本週
+                {t('lesson.weekTodayBtn', { defaultValue: '本週' })}
               </Button>
             </div>
           </div>
@@ -792,10 +792,10 @@ export default function LessonPlanner() {
                           : 'text-slate-600 dark:text-slate-300',
                       )}
                     >
-                      星期{WEEKDAY_SHORT[i]}
+                      {t('lesson.weekDayLabel', { defaultValue: '星期{{day}}', day: WEEKDAY_SHORT[i] })}
                       {isToday && (
                         <span className="rounded-full bg-accent px-1.5 py-px text-[9px] font-semibold uppercase tracking-wide text-white">
-                          今日
+                          {t('lesson.weekTodayBadge', { defaultValue: '今日' })}
                         </span>
                       )}
                     </span>
@@ -826,7 +826,7 @@ export default function LessonPlanner() {
                           <div className="flex items-center gap-1">
                             {m?.period != null && (
                               <span className="rounded bg-slate-200 px-1 text-[10px] font-semibold tabular-nums text-slate-500 dark:bg-slate-700 dark:text-slate-300">
-                                第{m.period}節
+                                {t('lesson.weekPeriodLabel', { defaultValue: '第{{n}}節', n: m.period })}
                               </span>
                             )}
                             <span className="truncate text-xs font-medium text-slate-700 dark:text-slate-200">
@@ -838,7 +838,7 @@ export default function LessonPlanner() {
                             {dur > 0 && (
                               <span className="inline-flex items-center gap-0.5 tabular-nums">
                                 <Clock size={10} />
-                                {dur}分
+                                {t('lesson.weekDurationMin', { defaultValue: '{{min}}分', min: dur })}
                               </span>
                             )}
                           </div>
@@ -851,7 +851,7 @@ export default function LessonPlanner() {
                       className="mt-auto flex items-center justify-center gap-1 rounded-lg border border-dashed border-slate-200 py-1 text-[11px] text-slate-400 transition hover:border-accent/40 hover:text-accent dark:border-slate-700"
                     >
                       <Plus size={12} />
-                      加課
+                      {t('lesson.weekDayAdd', { defaultValue: '加課' })}
                     </button>
                   </div>
                 </div>
@@ -868,14 +868,14 @@ export default function LessonPlanner() {
             <div className="mb-3 flex items-center justify-between gap-2">
               <div className="min-w-0">
                 <h3 className="font-serif text-lg font-semibold tracking-tight text-slate-800 dark:text-slate-100">
-                  BAFS 課程覆蓋率
+                  {t('lesson.coverageTitle', { defaultValue: 'BAFS 課程覆蓋率' })}
                 </h3>
                 <p className="mt-0.5 text-xs text-slate-400 dark:text-slate-500">
-                  按課題範疇統計：已授課 / 已備課 / 全部課題
+                  {t('lesson.coverageSubtitle', { defaultValue: '按課題範疇統計：已授課 / 已備課 / 全部課題' })}
                 </p>
               </div>
               <Badge tone="accent">
-                <span className="tabular-nums">{stats.coverPct}%</span> 已備
+                {t('lesson.coveragePctBadge', { defaultValue: '{{pct}}% 已備', pct: stats.coverPct })}
               </Badge>
             </div>
             <CoverageChart
@@ -898,7 +898,7 @@ export default function LessonPlanner() {
                 <>
                   <h3 className="mb-2.5 flex items-center gap-1.5 font-serif text-lg font-semibold tracking-tight text-slate-800 dark:text-slate-100">
                     <Circle size={15} className="text-slate-400" />
-                    未備課嘅課題
+                    {t('lesson.coverageMissingTitle', { defaultValue: '未備課嘅課題' })}
                     {missing.length > 0 && (
                       <Badge tone="slate" className="ml-0.5">
                         <span className="tabular-nums">{missing.length}</span>
@@ -913,16 +913,16 @@ export default function LessonPlanner() {
                         strokeWidth={1.75}
                       />
                       <p className="text-sm font-medium text-emerald-600 dark:text-emerald-400">
-                        全部課題都已備課，好齊整！
+                        {t('lesson.coverageAllDoneMsg', { defaultValue: '全部課題都已備課，好齊整！' })}
                       </p>
                       <p className="text-xs text-slate-400 dark:text-slate-500">
-                        整個 BAFS 課程都有對應教案了。
+                        {t('lesson.coverageAllDoneHint', { defaultValue: '整個 BAFS 課程都有對應教案了。' })}
                       </p>
                     </div>
                   ) : (
                     <>
                       <p className="mb-2.5 text-xs text-slate-400 dark:text-slate-500">
-                        撳一下即建立呢個課題嘅教案。
+                        {t('lesson.coverageMissingHint', { defaultValue: '撳一下即建立呢個課題嘅教案。' })}
                       </p>
                       <div className="flex flex-wrap gap-1.5">
                         {missing.map((t) => (
@@ -968,45 +968,44 @@ export default function LessonPlanner() {
       <Modal
         open={templatesOpen}
         onClose={() => setTemplatesOpen(false)}
-        title="教案範本庫"
+        title={t('lesson.templatesModalTitle', { defaultValue: '教案範本庫' })}
         size="lg"
       >
         <div className="space-y-2.5">
           <p className="text-xs text-slate-500 dark:text-slate-400">
-            範本包含教學環節同教材骨架。喺編輯教案時撳「存為範本」可加入更多。
+            {t('lesson.templatesHint', { defaultValue: '範本包含教學環節同教材骨架。喺編輯教案時撳「存為範本」可加入更多。' })}
           </p>
           {templates.length === 0 ? (
             <EmptyState
               icon={Sparkles}
-              title="仲未有範本"
-              hint="編輯任何教案時，於底部撳「存為範本」即可建立。"
+              title={t('lesson.templatesEmptyTitle', { defaultValue: '仲未有範本' })}
+              hint={t('lesson.templatesEmptyHint', { defaultValue: '編輯任何教案時，於底部撳「存為範本」即可建立。' })}
             />
           ) : (
             <ul className="space-y-2">
-              {templates.map((t) => {
-                const mins = totalPhaseMinutes(t.phases)
+              {templates.map((tpl) => {
+                const mins = totalPhaseMinutes(tpl.phases)
                 return (
                   <li
-                    key={t.id}
+                    key={tpl.id}
                     className="flex items-start justify-between gap-3 rounded-lg border border-slate-200 p-3 dark:border-slate-700"
                   >
                     <div className="min-w-0 flex-1">
                       <div className="text-sm font-semibold text-slate-800 dark:text-slate-100">
-                        {t.name}
+                        {tpl.name}
                       </div>
                       <div className="mt-1 flex flex-wrap items-center gap-1.5">
                         <Badge tone="slate" icon={ListChecks}>
-                          <span className="tabular-nums">{t.phases.length}</span> 環節
+                          {t('lesson.templatePhases', { defaultValue: '{{count}} 環節', count: tpl.phases.length })}
                         </Badge>
                         {mins > 0 && (
                           <Badge tone="slate" icon={Clock}>
-                            <span className="tabular-nums">{mins}</span> 分
+                            {t('lesson.templateDuration', { defaultValue: '{{min}} 分', min: mins })}
                           </Badge>
                         )}
-                        {t.materials.length > 0 && (
+                        {tpl.materials.length > 0 && (
                           <Badge tone="slate">
-                            <span className="tabular-nums">{t.materials.length}</span>{' '}
-                            教材
+                            {t('lesson.templateMaterials', { defaultValue: '{{count}} 教材', count: tpl.materials.length })}
                           </Badge>
                         )}
                       </div>
@@ -1016,14 +1015,14 @@ export default function LessonPlanner() {
                         size="sm"
                         variant="secondary"
                         icon={Plus}
-                        onClick={() => newFromTemplate(t.id)}
+                        onClick={() => newFromTemplate(tpl.id)}
                       >
-                        用此建立
+                        {t('lesson.templateUseBtn', { defaultValue: '用此建立' })}
                       </Button>
                       <IconButton
-                        label="刪除範本"
+                        label={t('lesson.templateDeleteAriaLabel', { defaultValue: '刪除範本' })}
                         tone="danger"
-                        onClick={() => removeTemplate(t.id, t.name)}
+                        onClick={() => removeTemplate(tpl.id, tpl.name)}
                       >
                         <Trash2 size={16} strokeWidth={1.8} />
                       </IconButton>
@@ -1040,24 +1039,24 @@ export default function LessonPlanner() {
       <Modal
         open={dupTarget !== null}
         onClose={() => setDupTarget(null)}
-        title="複製到指定日期"
+        title={t('lesson.dupModalTitle', { defaultValue: '複製到指定日期' })}
         size="sm"
         footer={
           <>
             <Button variant="ghost" onClick={() => setDupTarget(null)}>
-              取消
+              {t('lesson.dupModalCancelBtn', { defaultValue: '取消' })}
             </Button>
             <Button icon={CalendarCheck} onClick={confirmDupToDate}>
-              複製
+              {t('lesson.dupModalConfirmBtn', { defaultValue: '複製' })}
             </Button>
           </>
         }
       >
         <div className="space-y-3">
           <p className="text-sm text-slate-600 dark:text-slate-300">
-            複製「{dupTarget?.title}」並設定新嘅授課日期（新副本狀態為草稿）。
+            {t('lesson.dupModalBody', { defaultValue: '複製「{{title}}」並設定新嘅授課日期（新副本狀態為草稿）。', title: dupTarget?.title })}
           </p>
-          <Field label="授課日期">
+          <Field label={t('lesson.dupModalDateLabel', { defaultValue: '授課日期' })}>
             <Input
               type="date"
               value={dupDate}
@@ -1159,6 +1158,7 @@ function PlanCard({
   onPrint: () => void
   onRemove: () => void
 }) {
+  const { t } = useTranslation()
   const status = meta?.status ?? 'draft'
   const sMeta = STATUS_META[status]
   const SIcon = STATUS_ICON[status]
@@ -1196,7 +1196,7 @@ function PlanCard({
           <div className="flex items-baseline gap-2">
             {period != null && (
               <span className="shrink-0 rounded-md bg-slate-100 px-1.5 py-0.5 text-[11px] font-semibold tabular-nums text-slate-500 ring-1 ring-inset ring-slate-200/80 dark:bg-slate-700/70 dark:text-slate-300 dark:ring-slate-600/60">
-                第{period}節
+                {t('lesson.cardPeriodLabel', { defaultValue: '第{{n}}節', n: period })}
               </span>
             )}
             <button
@@ -1208,11 +1208,11 @@ function PlanCard({
             </button>
           </div>
           <div className="mt-2 flex flex-wrap items-center gap-1.5">
-            <Tooltip label="撳一下切換狀態">
+            <Tooltip label={t('lesson.cardStatusTooltip', { defaultValue: '撳一下切換狀態' })}>
               <button
                 type="button"
                 onClick={onCycleStatus}
-                aria-label={`狀態：${sMeta.label}，撳一下切換`}
+                aria-label={t('lesson.cardStatusAriaLabel', { defaultValue: '狀態：{{label}}，撳一下切換', label: sMeta.label })}
               >
                 <Badge tone={sMeta.tone} icon={SIcon}>
                   {sMeta.label}
@@ -1229,13 +1229,13 @@ function PlanCard({
           </div>
         </div>
         <div className="flex shrink-0 items-center gap-0.5">
-          <Tooltip label="編輯">
-            <IconButton label="編輯教案" onClick={onEdit}>
+          <Tooltip label={t('lesson.cardEditTooltip', { defaultValue: '編輯' })}>
+            <IconButton label={t('lesson.cardEditAriaLabel', { defaultValue: '編輯教案' })} onClick={onEdit}>
               <Pencil size={17} strokeWidth={1.8} />
             </IconButton>
           </Tooltip>
-          <Tooltip label="列印">
-            <IconButton label="列印教案" onClick={onPrint}>
+          <Tooltip label={t('lesson.cardPrintTooltip', { defaultValue: '列印' })}>
+            <IconButton label={t('lesson.cardPrintAriaLabel', { defaultValue: '列印教案' })} onClick={onPrint}>
               <Printer size={17} strokeWidth={1.8} />
             </IconButton>
           </Tooltip>
@@ -1243,28 +1243,28 @@ function PlanCard({
             trigger={
               <span className="inline-flex items-center justify-center rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600 dark:text-slate-500 dark:hover:bg-slate-800">
                 <MoreVertical size={17} strokeWidth={1.8} />
-                <span className="sr-only">{plan.title} 更多操作</span>
+                <span className="sr-only">{t('lesson.cardMenuMore', { defaultValue: '{{title}} 更多操作', title: plan.title })}</span>
               </span>
             }
             items={[
-              { id: 'edit', label: '編輯', icon: Pencil, onSelect: onEdit },
-              { id: 'dup', label: '複製', icon: Copy, onSelect: onDuplicate },
+              { id: 'edit', label: t('lesson.cardMenuEdit', { defaultValue: '編輯' }), icon: Pencil, onSelect: onEdit },
+              { id: 'dup', label: t('lesson.cardMenuDuplicate', { defaultValue: '複製' }), icon: Copy, onSelect: onDuplicate },
               {
                 id: 'dupdate',
-                label: '複製到指定日…',
+                label: t('lesson.cardMenuDupToDate', { defaultValue: '複製到指定日…' }),
                 icon: CalendarCheck,
                 onSelect: onDupToDate,
               },
-              { id: 'print', label: '列印', icon: Printer, onSelect: onPrint },
+              { id: 'print', label: t('lesson.cardMenuPrint', { defaultValue: '列印' }), icon: Printer, onSelect: onPrint },
               {
                 id: 'status',
-                label: `切換狀態（${sMeta.label}）`,
+                label: t('lesson.cardMenuCycleStatus', { defaultValue: '切換狀態（{{label}}）', label: sMeta.label }),
                 icon: SIcon,
                 onSelect: onCycleStatus,
               },
               {
                 id: 'del',
-                label: '刪除',
+                label: t('lesson.cardMenuDelete', { defaultValue: '刪除' }),
                 icon: Trash2,
                 tone: 'danger',
                 onSelect: onRemove,
@@ -1277,7 +1277,7 @@ function PlanCard({
       {topicName && (
         <p className="mt-2.5 truncate text-xs text-slate-500 dark:text-slate-400">
           <span className="font-medium uppercase tracking-wide text-slate-400 dark:text-slate-500">
-            課題
+            {t('lesson.cardTopicLabel', { defaultValue: '課題' })}
           </span>
           <span aria-hidden="true" className="mx-1.5 text-slate-300 dark:text-slate-600">
             ·
@@ -1297,18 +1297,18 @@ function PlanCard({
           {phaseCount > 0 && (
             <span className="inline-flex items-center gap-1 text-[11px] text-slate-500 dark:text-slate-400">
               <ListChecks size={13} className="text-accent/70" />
-              <span className="tabular-nums">{phaseCount}</span> 環節
+              {t('lesson.cardPhaseCount', { defaultValue: '{{count}} 環節', count: phaseCount })}
             </span>
           )}
           {dur > 0 && (
             <span className="inline-flex items-center gap-1 text-[11px] text-slate-500 dark:text-slate-400">
               <Clock size={13} className="text-accent/70" />
-              <span className="tabular-nums">{dur}</span> 分鐘
+              {t('lesson.cardDurationMin', { defaultValue: '{{min}} 分鐘', min: dur })}
             </span>
           )}
           {mat.total > 0 && (
             <span className="ml-auto inline-flex min-w-[7rem] items-center gap-1.5 text-[11px] text-slate-500 dark:text-slate-400">
-              <span className="shrink-0">教材</span>
+              <span className="shrink-0">{t('lesson.cardMaterials', { defaultValue: '教材' })}</span>
               <ProgressBar
                 value={matPct}
                 size="sm"

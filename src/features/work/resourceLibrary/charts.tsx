@@ -1,4 +1,5 @@
 import { useId, useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   FolderTree,
   Hash,
@@ -44,6 +45,7 @@ function ChartEmpty({
 
 // ───────── 1. 類型占比甜甜圈（SVG，多段）─────────
 export function TypeDonut({ stats, total }: { stats: TypeStat[]; total: number }) {
+  const { t } = useTranslation()
   const size = 132
   const stroke = 14
   const r = (size - stroke) / 2
@@ -55,7 +57,7 @@ export function TypeDonut({ stats, total }: { stats: TypeStat[]; total: number }
   if (total === 0)
     return (
       <ChartEmpty icon={PieChart}>
-        加入資源後，呢度會顯示各類型嘅占比。
+        {t('res.chart_type_empty', { defaultValue: '加入資源後，呢度會顯示各類型嘅占比。' })}
       </ChartEmpty>
     )
 
@@ -68,7 +70,7 @@ export function TypeDonut({ stats, total }: { stats: TypeStat[]; total: number }
           viewBox={`0 0 ${size} ${size}`}
           className="-rotate-90"
           role="img"
-          aria-label="資源類型占比"
+          aria-label={t('res.chart_type_donut_aria', { defaultValue: '資源類型占比' })}
         >
           <circle
             cx={c}
@@ -107,7 +109,7 @@ export function TypeDonut({ stats, total }: { stats: TypeStat[]; total: number }
             {total}
           </span>
           <span className="text-[11px] text-slate-400 dark:text-slate-500">
-            總資源
+            {t('res.chart_type_total_label', { defaultValue: '總資源' })}
           </span>
         </div>
       </div>
@@ -138,12 +140,13 @@ export function TypeDonut({ stats, total }: { stats: TypeStat[]; total: number }
 
 // ───────── 2. 收藏夾資源數橫條 ─────────
 export function FolderBars({ stats }: { stats: FolderStat[] }) {
+  const { t } = useTranslation()
   const max = useMemo(() => Math.max(1, ...stats.map((s) => s.count)), [stats])
   const visible = stats.filter((s) => s.count > 0)
   if (visible.length === 0)
     return (
       <ChartEmpty icon={FolderTree}>
-        將資源放入收藏夾，就會見到每個夾嘅分佈。
+        {t('res.chart_folder_empty', { defaultValue: '將資源放入收藏夾，就會見到每個夾嘅分佈。' })}
       </ChartEmpty>
     )
   return (
@@ -187,6 +190,7 @@ export function ActivityChart({
   added: TrendPoint[]
   opened: TrendPoint[]
 }) {
+  const { t } = useTranslation()
   const gradId = useId()
   const W = 520
   const H = 170
@@ -223,7 +227,7 @@ export function ActivityChart({
   if (totalAdded === 0 && totalOpened === 0)
     return (
       <ChartEmpty icon={LineChartIcon}>
-        近 30 日未有新增或開啟紀錄，開幾條資源就會見到趨勢。
+        {t('res.chart_activity_empty', { defaultValue: '近 30 日未有新增或開啟紀錄，開幾條資源就會見到趨勢。' })}
       </ChartEmpty>
     )
 
@@ -234,7 +238,7 @@ export function ActivityChart({
         className="w-full"
         preserveAspectRatio="none"
         role="img"
-        aria-label="新增與開啟活動折線圖"
+        aria-label={t('res.chart_activity_aria', { defaultValue: '新增與開啟活動折線圖' })}
       >
         <defs>
           <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
@@ -242,23 +246,23 @@ export function ActivityChart({
             <stop offset="100%" className="[stop-color:theme(colors.blue.400)]" stopOpacity={0} />
           </linearGradient>
         </defs>
-        {ticks.map((t) => (
-          <g key={t}>
+        {ticks.map((tick) => (
+          <g key={tick}>
             <line
               x1={padL}
               x2={W - padR}
-              y1={y(t)}
-              y2={y(t)}
+              y1={y(tick)}
+              y2={y(tick)}
               className="stroke-slate-100 dark:stroke-slate-800"
               strokeWidth={1}
             />
             <text
               x={padL - 5}
-              y={y(t) + 3}
+              y={y(tick) + 3}
               textAnchor="end"
               className="fill-slate-400 text-[9px] tabular-nums dark:fill-slate-500"
             >
-              {t}
+              {tick}
             </text>
           </g>
         ))}
@@ -297,11 +301,11 @@ export function ActivityChart({
       <div className="mt-1.5 flex items-center justify-center gap-4 text-[11px] text-slate-500 dark:text-slate-400">
         <span className="flex items-center gap-1.5">
           <span className="h-0.5 w-4 rounded bg-accent" />
-          新增 <span className="tabular-nums font-medium">{totalAdded}</span>
+          {t('res.chart_legend_added', { defaultValue: '新增' })} <span className="tabular-nums font-medium">{totalAdded}</span>
         </span>
         <span className="flex items-center gap-1.5">
           <span className="h-0.5 w-4 rounded bg-blue-500" />
-          開啟 <span className="tabular-nums font-medium">{totalOpened}</span>
+          {t('res.chart_legend_opened', { defaultValue: '開啟' })} <span className="tabular-nums font-medium">{totalOpened}</span>
         </span>
       </div>
     </div>
@@ -318,23 +322,24 @@ export function TagCloud({
   active: string[]
   onToggle: (tag: string) => void
 }) {
-  const max = useMemo(() => Math.max(1, ...tags.map((t) => t.count)), [tags])
+  const { t } = useTranslation()
+  const max = useMemo(() => Math.max(1, ...tags.map((tag) => tag.count)), [tags])
   if (tags.length === 0)
     return (
       <ChartEmpty icon={Hash}>
-        畀資源加啲標籤，常用標籤就會喺呢度浮現。
+        {t('res.chart_tags_empty', { defaultValue: '畀資源加啲標籤，常用標籤就會喺呢度浮現。' })}
       </ChartEmpty>
     )
   return (
     <div className="flex flex-wrap items-center gap-2">
-      {tags.map((t) => {
-        const ratio = t.count / max
+      {tags.map((tag) => {
+        const ratio = tag.count / max
         const fs = 11 + Math.round(ratio * 8) // 11–19px
-        const on = active.includes(t.tag)
+        const on = active.includes(tag.tag)
         return (
           <button
-            key={t.tag}
-            onClick={() => onToggle(t.tag)}
+            key={tag.tag}
+            onClick={() => onToggle(tag.tag)}
             style={{ fontSize: fs }}
             className={cx(
               'inline-flex items-center gap-1 rounded-full px-2.5 py-1 font-medium leading-none transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
@@ -343,14 +348,14 @@ export function TagCloud({
                 : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700',
             )}
           >
-            #{t.tag}
+            #{tag.tag}
             <span
               className={cx(
                 'tabular-nums text-[10px]',
                 on ? 'text-white/75' : 'text-slate-400',
               )}
             >
-              {t.count}
+              {tag.count}
             </span>
           </button>
         )
@@ -365,11 +370,12 @@ export function OpenLeaderboard({
 }: {
   rows: { id: string; title: string; opens: number }[]
 }) {
+  const { t } = useTranslation()
   const max = useMemo(() => Math.max(1, ...rows.map((r) => r.opens)), [rows])
   if (rows.length === 0)
     return (
       <ChartEmpty icon={TrendingUp}>
-        開過嘅教材會喺呢度排名，睇下邊份用得最多。
+        {t('res.chart_leaderboard_empty', { defaultValue: '開過嘅教材會喺呢度排名，睇下邊份用得最多。' })}
       </ChartEmpty>
     )
   return (
@@ -414,11 +420,12 @@ export function CoverageBars({
 }: {
   rows: { id: string; name: string; count: number }[]
 }) {
+  const { t } = useTranslation()
   const max = useMemo(() => Math.max(1, ...rows.map((r) => r.count)), [rows])
   if (rows.length === 0)
     return (
       <ChartEmpty icon={Tags}>
-        將資源連結到課題，就會見到各課題嘅覆蓋情況。
+        {t('res.chart_coverage_empty', { defaultValue: '將資源連結到課題，就會見到各課題嘅覆蓋情況。' })}
       </ChartEmpty>
     )
   return (

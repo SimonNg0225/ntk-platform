@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Copy, Trash2, MapPin } from 'lucide-react'
 import type { Klass } from '../../../data/types'
 import {
@@ -73,6 +74,7 @@ export default function SlotEditor({
   onRemove: () => void
   onApplyToWeekdays: boolean // 是否顯示「套用到其他日」
 }) {
+  const { t } = useTranslation()
   const [d, setD] = useState<EditorDraft | null>(draft)
   // 套用到其他星期（同節）— 預設只當前日
   const [applyDays, setApplyDays] = useState<number[]>([])
@@ -91,7 +93,7 @@ export default function SlotEditor({
   const className = d.classId
     ? (classes.find((c) => c.id === d.classId)?.name ?? '')
     : ''
-  const previewTitle = d.subject.trim() || className || '課堂'
+  const previewTitle = d.subject.trim() || className || t('tt.fallbackLesson', { defaultValue: '課堂' })
   // masthead Day token：取「一…六」尾字（WeekGrid 欄頭同一手法）
   const dayToken = dayShort(d.day)
 
@@ -109,20 +111,20 @@ export default function SlotEditor({
     <Modal
       open={!!draft}
       onClose={onClose}
-      title={d.slotId ? '編輯課堂' : '新增課堂'}
+      title={d.slotId ? t('tt.editorEditTitle', { defaultValue: '編輯課堂' }) : t('tt.editorAddTitle', { defaultValue: '新增課堂' })}
       size="md"
       footer={
         <div className="flex w-full items-center justify-between gap-2">
           {d.slotId ? (
             <Button variant="danger" size="sm" icon={Trash2} onClick={onRemove}>
-              刪除
+              {t('tt.editorDelete', { defaultValue: '刪除' })}
             </Button>
           ) : (
             <span />
           )}
           <div className="flex gap-2">
             <Button variant="secondary" onClick={onClose}>
-              取消
+              {t('tt.editorCancel', { defaultValue: '取消' })}
             </Button>
             <Button
               disabled={!canSave}
@@ -130,7 +132,7 @@ export default function SlotEditor({
                 onSave(d, applyDays.length ? applyDays : [d.day])
               }
             >
-              儲存課堂
+              {t('tt.editorSave', { defaultValue: '儲存課堂' })}
             </Button>
           </div>
         </div>
@@ -145,7 +147,7 @@ export default function SlotEditor({
               {dayToken}
             </span>
             <span className="mt-0.5 text-[8px] font-semibold uppercase tracking-widest text-white/70">
-              星期
+              {t('tt.editorWeekdayLabel', { defaultValue: '星期' })}
             </span>
           </span>
           <div className="min-w-0">
@@ -167,14 +169,14 @@ export default function SlotEditor({
 
         {/* ── 課堂內容 ── */}
         <div>
-          <GroupLabel>課堂內容</GroupLabel>
+          <GroupLabel>{t('tt.groupContentLabel', { defaultValue: '課堂內容' })}</GroupLabel>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <Field label="班別（選填）">
+            <Field label={t('tt.fieldClass', { defaultValue: '班別（選填）' })}>
               <Select
                 value={d.classId}
                 onChange={(e) => patch({ classId: e.target.value })}
               >
-                <option value="">未選擇</option>
+                <option value="">{t('tt.fieldClassPlaceholder', { defaultValue: '未選擇' })}</option>
                 {classes.map((cls) => (
                   <option key={cls.id} value={cls.id}>
                     {cls.name}
@@ -183,32 +185,32 @@ export default function SlotEditor({
               </Select>
             </Field>
 
-            <Field label="科目">
+            <Field label={t('tt.fieldSubject', { defaultValue: '科目' })}>
               <Input
                 type="text"
                 value={d.subject}
                 onChange={(e) => patch({ subject: e.target.value })}
-                placeholder="例如：BAFS（會計）"
+                placeholder={t('tt.fieldSubjectPlaceholder', { defaultValue: '例如：BAFS（會計）' })}
               />
             </Field>
 
-            <Field label="課室（選填）">
+            <Field label={t('tt.fieldRoom', { defaultValue: '課室（選填）' })}>
               <Input
                 type="text"
                 value={d.room}
                 onChange={(e) => patch({ room: e.target.value })}
-                placeholder="例如：1A / 商業室"
+                placeholder={t('tt.fieldRoomPlaceholder', { defaultValue: '例如：1A / 商業室' })}
               />
             </Field>
 
-            <Field label="循環週">
+            <Field label={t('tt.fieldWeek', { defaultValue: '循環週' })}>
               <Select
                 value={d.week}
                 onChange={(e) => patch({ week: e.target.value as WeekCycle })}
               >
-                <option value="all">每週</option>
-                <option value="A">A 週（單週）</option>
-                <option value="B">B 週（雙週）</option>
+                <option value="all">{t('tt.weekAll', { defaultValue: '每週' })}</option>
+                <option value="A">{t('tt.weekA', { defaultValue: 'A 週（單週）' })}</option>
+                <option value="B">{t('tt.weekB', { defaultValue: 'B 週（雙週）' })}</option>
               </Select>
             </Field>
           </div>
@@ -216,22 +218,22 @@ export default function SlotEditor({
 
         {/* ── 教學備註 ── */}
         <div className="space-y-3">
-          <GroupLabel>教學備註</GroupLabel>
-          <Field label="協作老師（選填）">
+          <GroupLabel>{t('tt.groupNotesLabel', { defaultValue: '教學備註' })}</GroupLabel>
+          <Field label={t('tt.fieldCoTeacher', { defaultValue: '協作老師（選填）' })}>
             <Input
               type="text"
               value={d.coTeacher}
               onChange={(e) => patch({ coTeacher: e.target.value })}
-              placeholder="例如：陳 sir（拆班 / 合教）"
+              placeholder={t('tt.fieldCoTeacherPlaceholder', { defaultValue: '例如：陳 sir（拆班 / 合教）' })}
             />
           </Field>
 
-          <Field label="備課提示 / 課題（選填）">
+          <Field label={t('tt.fieldNote', { defaultValue: '備課提示 / 課題（選填）' })}>
             <Input
               type="text"
               value={d.note}
               onChange={(e) => patch({ note: e.target.value })}
-              placeholder="例如：成本會計 — 分批成本法"
+              placeholder={t('tt.fieldNotePlaceholder', { defaultValue: '例如：成本會計 — 分批成本法' })}
             />
           </Field>
         </div>
@@ -239,10 +241,10 @@ export default function SlotEditor({
         {/* ── 堂卡外觀（顏色 + 即時堂卡預覽）── */}
         <div>
           <div className="mb-2.5 flex items-center justify-between gap-2">
-            <GroupLabel>堂卡外觀</GroupLabel>
+            <GroupLabel>{t('tt.groupAppearanceLabel', { defaultValue: '堂卡外觀' })}</GroupLabel>
             {!d.color && (
               <span className="text-[11px] font-normal normal-case text-slate-400">
-                自動 · {colorOf(autoColor).label}
+                {t('tt.colorAutoLabel', { defaultValue: `自動 · ${colorOf(autoColor).label}`, label: colorOf(autoColor).label })}
               </span>
             )}
           </div>
@@ -259,7 +261,7 @@ export default function SlotEditor({
                   : 'bg-slate-100 text-slate-500 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700',
               )}
             >
-              自動
+              {t('tt.colorAuto', { defaultValue: '自動' })}
             </button>
             {SLOT_COLOR_KEYS.map((c) => (
               <button
@@ -282,7 +284,7 @@ export default function SlotEditor({
           {/* 預覽 = 真‧堂卡（1:1 重現 WeekGrid chip：左色脊 + 科目 + pill）*/}
           <div className="mt-3 rounded-2xl border border-dashed border-slate-200/80 bg-slate-50/50 p-3 dark:border-slate-700/60 dark:bg-slate-900/30">
             <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">
-              落格預覽
+              {t('tt.cardPreviewLabel', { defaultValue: '落格預覽' })}
             </p>
             <div
               className={cx(
@@ -307,7 +309,7 @@ export default function SlotEditor({
                 )}
                 {d.week !== 'all' && (
                   <span className="rounded-md bg-black/[0.06] px-1.5 py-px text-[10px] font-semibold dark:bg-white/10">
-                    {d.week} 週
+                    {t('tt.weekChip', { defaultValue: `${d.week} 週`, w: d.week })}
                   </span>
                 )}
               </div>
@@ -318,11 +320,11 @@ export default function SlotEditor({
         {/* ── 批量套用到其他星期（同一節）── */}
         {onApplyToWeekdays && (
           <div>
-            <GroupLabel>套用到其他日</GroupLabel>
+            <GroupLabel>{t('tt.groupApplyLabel', { defaultValue: '套用到其他日' })}</GroupLabel>
             <div className="rounded-2xl border border-slate-200/70 bg-slate-50/50 p-3 dark:border-slate-700/60 dark:bg-slate-900/30">
               <p className="mb-2.5 flex items-center gap-1.5 text-xs font-medium text-slate-600 dark:text-slate-300">
                 <Copy size={13} className="text-slate-400" />
-                同一節（第 {d.period} 節）一併排入呢幾日
+                {t('tt.applyHint', { defaultValue: `同一節（第 ${d.period} 節）一併排入呢幾日`, period: d.period })}
               </p>
               <div className="flex flex-wrap gap-1.5">
                 {DAY_DEFS.map((dd) => {
@@ -357,7 +359,7 @@ export default function SlotEditor({
               </div>
               {applyDays.length > 1 && (
                 <p className="mt-2.5 text-[11px] text-amber-600 dark:text-amber-400">
-                  會覆寫所揀日子嘅同一節（已有課堂會被取代）。
+                  {t('tt.applyWarning', { defaultValue: '會覆寫所揀日子嘅同一節（已有課堂會被取代）。' })}
                 </p>
               )}
             </div>

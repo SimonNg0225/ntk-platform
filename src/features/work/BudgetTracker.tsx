@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import './budget/i18n'
 import {
   ArrowDownRight,
   ArrowUpRight,
@@ -111,15 +113,13 @@ import {
 
 type TopTab = 'overview' | 'list' | 'budgets' | 'analysis' | 'recurring' | 'categories'
 
-const KIND_PILLS: { id: TxKind; label: string }[] = [
-  { id: 'expense', label: '支出' },
-  { id: 'income', label: '收入' },
-]
+// KIND_PILLS are built inside component so t() is available
 
 const EMOJI_CHOICES = ['🏷️', '💼', '🍜', '🚇', '🛍️', '🧾', '🎮', '🏠', '💊', '✈️', '📚', '🎁', '☕', '⛽', '🏥']
 
 // ───────── 頂層元件 ─────────
 export default function BudgetTracker() {
+  const { t } = useTranslation()
   const txs = useCollection(transactionsCol)
   const cats = useCollection(txCategoriesCol)
   const envelopes = useCollection(budgetsCol)
@@ -140,7 +140,7 @@ export default function BudgetTracker() {
   }, [cats])
 
   const catOf = (id: string) => cats.find((c) => c.id === id)
-  const catName = (id: string) => catOf(id)?.name ?? '未分類'
+  const catName = (id: string) => catOf(id)?.name ?? t('budget.uncategorised', { defaultValue: '未分類' })
 
   // ───── 本月過濾 + 統計 ─────
   const monthTxs = useMemo(
@@ -188,16 +188,16 @@ export default function BudgetTracker() {
       <header className="flex flex-wrap items-end justify-between gap-x-4 gap-y-3">
         <div className="min-w-0">
           <p className="text-[11px] font-medium uppercase tracking-[0.3em] text-accent/70">
-            Ledger · 流水帳
+            {t('budget.ledgerKicker', { defaultValue: 'Ledger · 流水帳' })}
           </p>
           <h1 className="mt-1 font-serif text-2xl font-semibold leading-tight tracking-tight text-slate-800 dark:text-slate-100 sm:text-[28px]">
-            收支記帳
+            {t('budget.title', { defaultValue: '收支記帳' })}
           </h1>
           <p className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-slate-500 dark:text-slate-400">
             <span className="tabular-nums">{monthLabel(month)}</span>
             <span aria-hidden="true" className="text-slate-300 dark:text-slate-600">·</span>
             <span className="tabular-nums">
-              本月 {stats.count} 筆過帳
+              {t('budget.monthCount', { defaultValue: '本月 {{count}} 筆過帳', count: stats.count })}
             </span>
             {due.length > 0 && tab !== 'recurring' && (
               <>
@@ -206,7 +206,7 @@ export default function BudgetTracker() {
                   onClick={() => setTab('recurring')}
                   className="inline-flex items-center gap-1 font-medium text-amber-600 transition hover:text-amber-700 dark:text-amber-400 dark:hover:text-amber-300"
                 >
-                  <CalendarClock size={12} /> {due.length} 筆定期待入帳
+                  <CalendarClock size={12} /> {t('budget.dueAlert', { defaultValue: '{{count}} 筆定期待入帳', count: due.length })}
                 </button>
               </>
             )}
@@ -214,22 +214,22 @@ export default function BudgetTracker() {
         </div>
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-0.5 rounded-full border border-slate-200/80 bg-white p-0.5 shadow-xs dark:border-slate-700/60 dark:bg-slate-800 dark:shadow-none">
-            <IconButton label="上個月" onClick={() => setMonth((m) => shiftMonth(m, -1))}>
+            <IconButton label={t('budget.prevMonth', { defaultValue: '上個月' })} onClick={() => setMonth((m) => shiftMonth(m, -1))}>
               <ChevronLeft size={18} />
             </IconButton>
             <button
               onClick={() => setMonth(monthKey(new Date()))}
               className="min-w-[6.5rem] rounded-full px-2.5 py-1 text-center text-sm font-semibold tabular-nums text-slate-800 transition hover:bg-slate-100 dark:text-slate-100 dark:hover:bg-slate-700"
-              title="返回本月"
+              title={t('budget.returnToCurrentMonth', { defaultValue: '返回本月' })}
             >
               {monthLabel(month)}
             </button>
-            <IconButton label="下個月" onClick={() => setMonth((m) => shiftMonth(m, 1))}>
+            <IconButton label={t('budget.nextMonth', { defaultValue: '下個月' })} onClick={() => setMonth((m) => shiftMonth(m, 1))}>
               <ChevronRight size={18} />
             </IconButton>
           </div>
           <Button icon={Plus} onClick={() => openAdd('expense')}>
-            記一筆
+            {t('budget.addEntry', { defaultValue: '記一筆' })}
           </Button>
         </div>
       </header>
@@ -240,12 +240,12 @@ export default function BudgetTracker() {
       {/* Tabs */}
       <Tabs
         tabs={[
-          { id: 'overview', label: '總覽' },
-          { id: 'list', label: '記錄' },
-          { id: 'budgets', label: '預算' },
-          { id: 'analysis', label: '分析' },
-          { id: 'recurring', label: '定期' },
-          { id: 'categories', label: '分類' },
+          { id: 'overview', label: t('budget.tabOverview', { defaultValue: '總覽' }) },
+          { id: 'list', label: t('budget.tabList', { defaultValue: '記錄' }) },
+          { id: 'budgets', label: t('budget.tabBudgets', { defaultValue: '預算' }) },
+          { id: 'analysis', label: t('budget.tabAnalysis', { defaultValue: '分析' }) },
+          { id: 'recurring', label: t('budget.tabRecurring', { defaultValue: '定期' }) },
+          { id: 'categories', label: t('budget.tabCategories', { defaultValue: '分類' }) },
         ]}
         active={tab}
         onChange={setTab}
@@ -339,6 +339,7 @@ function LedgerStatement({
   stats: ReturnType<typeof computeMonthStats>
   expenseTrend?: { value: string; dir: 'up' | 'down' | 'flat' }
 }) {
+  const { t } = useTranslation()
   const positive = stats.balance >= 0
   return (
     <section className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-sm dark:border-slate-700/60 dark:bg-slate-800 dark:shadow-none">
@@ -353,7 +354,7 @@ function LedgerStatement({
           />
           <div className="relative flex items-center justify-between">
             <span className="text-[11px] font-medium uppercase tracking-wider text-white/75">
-              本月結餘
+              {t('budget.monthBalance', { defaultValue: '本月結餘' })}
             </span>
             <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-white/15 backdrop-blur">
               <Wallet size={15} />
@@ -365,7 +366,7 @@ function LedgerStatement({
             </p>
             <p className="mt-2 inline-flex items-center gap-1 rounded-full bg-white/15 px-2 py-0.5 text-[11px] font-medium text-white/90 backdrop-blur">
               {positive ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
-              {positive ? '收大於支' : '入不敷支'}
+              {positive ? t('budget.positive', { defaultValue: '收大於支' }) : t('budget.negative', { defaultValue: '入不敷支' })}
             </p>
           </div>
         </div>
@@ -375,23 +376,23 @@ function LedgerStatement({
           <LedgerLine
             icon={ArrowUpRight}
             tone="emerald"
-            label="收入"
+            label={t('budget.income', { defaultValue: '收入' })}
             amount={`+${fmtMoney(stats.income)}`}
           />
           <LedgerLine
             icon={ArrowDownRight}
             tone="rose"
-            label="支出"
+            label={t('budget.expense', { defaultValue: '支出' })}
             amount={`−${fmtMoney(stats.expense)}`}
             trend={expenseTrend}
-            note={stats.count > 0 ? `${stats.count} 筆` : undefined}
+            note={stats.count > 0 ? t('budget.entryCount', { defaultValue: '{{count}} 筆', count: stats.count }) : undefined}
           />
           <LedgerLine
             icon={Sparkles}
             tone="accent"
-            label="儲蓄率"
+            label={t('budget.savingsRate', { defaultValue: '儲蓄率' })}
             amount={stats.savingsRate == null ? '—' : `${stats.savingsRate}%`}
-            note={stats.savingsRate == null ? '記低收支即計' : '收入用剩'}
+            note={stats.savingsRate == null ? t('budget.savingsRateHint', { defaultValue: '記低收支即計' }) : t('budget.savingsRateNote', { defaultValue: '收入用剩' })}
             ruled
           />
         </dl>
@@ -499,12 +500,13 @@ function OverviewTab({
   onGoRecurring: () => void
   onAdd: (k: TxKind) => void
 }) {
+  const { t } = useTranslation()
   const cells = useMemo(() => dailyBreakdown(monthTxs, month), [monthTxs, month])
   const todayDay =
     month === monthKey(new Date()) ? Number(todayIso().slice(8, 10)) : null
 
   const donutSegs = expenseCats.slice(0, 7).map((row, i) => ({
-    label: catOf(row.categoryId)?.name ?? '未分類',
+    label: catOf(row.categoryId)?.name ?? t('budget.uncategorised', { defaultValue: '未分類' }),
     value: row.amount,
     color: SLICE_HEX[i % SLICE_HEX.length],
   }))
@@ -516,15 +518,15 @@ function OverviewTab({
       <div className="animate-fade-in">
         <EmptyState
           icon={Receipt}
-          title="呢個月暫時冇記錄"
-          hint="撳「記一筆」開始記低你嘅收支，總覽會即時計出分類佔比、預算同每日走勢。"
+          title={t('budget.emptyTitle', { defaultValue: '呢個月暫時冇記錄' })}
+          hint={t('budget.emptyHint', { defaultValue: '撳「記一筆」開始記低你嘅收支，總覽會即時計出分類佔比、預算同每日走勢。' })}
           action={
             <div className="flex gap-2">
               <Button icon={Plus} onClick={() => onAdd('expense')}>
-                記支出
+                {t('budget.addExpense', { defaultValue: '記支出' })}
               </Button>
               <Button variant="secondary" icon={Plus} onClick={() => onAdd('income')}>
-                記收入
+                {t('budget.addIncome', { defaultValue: '記收入' })}
               </Button>
             </div>
           }
@@ -538,10 +540,10 @@ function OverviewTab({
         <Card className="flex items-center gap-3 border-amber-200 bg-amber-50/70 p-3 dark:border-amber-500/30 dark:bg-amber-500/10">
           <CalendarClock size={18} className="shrink-0 text-amber-600 dark:text-amber-400" />
           <p className="flex-1 text-sm text-amber-800 dark:text-amber-200">
-            有 <span className="font-semibold tabular-nums">{due.length}</span> 筆定期收支到期未入帳
+            {t('budget.dueCard', { defaultValue: '有 {{count}} 筆定期收支到期未入帳', count: due.length })}
           </p>
           <Button size="sm" variant="secondary" onClick={onGoRecurring}>
-            前往處理
+            {t('budget.goHandle', { defaultValue: '前往處理' })}
           </Button>
         </Card>
       )}
@@ -549,16 +551,16 @@ function OverviewTab({
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         {/* 分類佔比 */}
         <Card className="rounded-2xl p-4">
-          <SectionTitle icon={PieChart}>本月支出分類</SectionTitle>
+          <SectionTitle icon={PieChart}>{t('budget.categoryBreakdown', { defaultValue: '本月支出分類' })}</SectionTitle>
           {donutSegs.length === 0 ? (
             <p className="py-8 text-center text-sm text-slate-500 dark:text-slate-400">
-              今個月仲未有支出記錄。
+              {t('budget.noExpenseYet', { defaultValue: '今個月仲未有支出記錄。' })}
             </p>
           ) : (
             <CategoryDonut
               segments={donutSegs}
               centerValue={fmtMoney(stats.expense).replace('HK$', '')}
-              centerLabel="本月支出"
+              centerLabel={t('budget.centerLabel', { defaultValue: '本月支出' })}
             />
           )}
         </Card>
@@ -572,24 +574,24 @@ function OverviewTab({
                 onClick={onGoBudgets}
                 className="text-xs font-medium text-accent hover:underline dark:text-accent"
               >
-                管理
+                {t('budget.manage', { defaultValue: '管理' })}
               </button>
             }
           >
-            預算狀況
+            {t('budget.budgetOverview', { defaultValue: '預算狀況' })}
           </SectionTitle>
           {bRows.length === 0 ? (
             <div className="flex flex-col items-center gap-2 py-6 text-center">
-              <p className="text-sm text-slate-500 dark:text-slate-400">仲未為分類設預算。</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400">{t('budget.noBudgetYet', { defaultValue: '仲未為分類設預算。' })}</p>
               <Button size="sm" variant="secondary" icon={Target} onClick={onGoBudgets}>
-                設定分類預算
+                {t('budget.setBudget', { defaultValue: '設定分類預算' })}
               </Button>
             </div>
           ) : (
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <span className="text-sm text-slate-600 dark:text-slate-300">
-                  總預算用咗{' '}
+                  {t('budget.totalBudgetUsed', { defaultValue: '總預算用咗' })}{' '}
                   <span className="font-semibold tabular-nums text-slate-800 dark:text-slate-100">
                     {bSummary.pct}%
                   </span>
@@ -611,7 +613,7 @@ function OverviewTab({
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center justify-between text-xs">
                           <span className="truncate text-slate-600 dark:text-slate-300">
-                            {cat?.icon ?? '🏷️'} {cat?.name ?? '未分類'}
+                            {cat?.icon ?? '🏷️'} {cat?.name ?? t('budget.uncategorised', { defaultValue: '未分類' })}
                           </span>
                           <span
                             className={cx(
@@ -640,23 +642,23 @@ function OverviewTab({
           icon={TrendingDown}
           right={
             <span className="text-xs tabular-nums text-slate-400">
-              日均 {fmtMoney(stats.dailyAvg)}
+              {t('budget.dailyAvgLabel', { defaultValue: '日均 {{amount}}', amount: fmtMoney(stats.dailyAvg) })}
             </span>
           }
         >
-          本月每日支出
+          {t('budget.dailySpend', { defaultValue: '本月每日支出' })}
         </SectionTitle>
         <DailySpendChart cells={cells} todayDay={todayDay} />
         {todayDay != null && stats.projectedExpense > stats.expense && (
           <p className="mt-3 flex items-center gap-1.5 rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-500 dark:bg-slate-800/60 dark:text-slate-400">
             <Sparkles size={13} className="text-accent" />
-            按目前速度，本月底支出預計約{' '}
+            {t('budget.projectionNote', { defaultValue: '按目前速度，本月底支出預計約' })}{' '}
             <span className="font-semibold tabular-nums text-slate-700 dark:text-slate-200">
               {fmtMoney(stats.projectedExpense)}
             </span>
             {prevExpense > 0 && (
               <span className="tabular-nums">
-                （上月 {fmtMoney(prevExpense)}）
+                {t('budget.prevMonthNote', { defaultValue: '（上月 {{amount}}）', amount: fmtMoney(prevExpense) })}
               </span>
             )}
           </p>
@@ -665,25 +667,25 @@ function OverviewTab({
 
       {/* 最近交易（收據樣式：serif 抬頭 + leader 行 + 鋸齒底邊） */}
       <Card className="rounded-2xl p-4">
-        <SectionTitle icon={Receipt}>最近交易</SectionTitle>
+        <SectionTitle icon={Receipt}>{t('budget.recentTransactions', { defaultValue: '最近交易' })}</SectionTitle>
         <ul className="divide-y divide-dashed divide-slate-200/80 dark:divide-slate-700/60">
-          {recent.map((t) => {
-            const cat = catOf(t.categoryId)
-            const income = t.kind === 'income'
+          {recent.map((tx) => {
+            const cat = catOf(tx.categoryId)
+            const income = tx.kind === 'income'
             return (
               <li
-                key={t.id}
+                key={tx.id}
                 className="flex items-center gap-3 py-2 text-sm"
               >
                 <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-base dark:bg-slate-700/60">
                   {cat?.icon ?? '🏷️'}
                 </span>
                 <span className="min-w-0 flex-1 truncate text-slate-700 dark:text-slate-200">
-                  {cat?.name ?? '未分類'}
-                  {t.note && <span className="ml-1.5 text-xs text-slate-400">· {t.note}</span>}
+                  {cat?.name ?? t('budget.uncategorised', { defaultValue: '未分類' })}
+                  {tx.note && <span className="ml-1.5 text-xs text-slate-400">· {tx.note}</span>}
                 </span>
                 <span className="shrink-0 text-xs tabular-nums text-slate-400">
-                  {fmtDate(t.date)}
+                  {fmtDate(tx.date)}
                 </span>
                 <span
                   className={cx(
@@ -694,7 +696,7 @@ function OverviewTab({
                   )}
                 >
                   {income ? '+' : '−'}
-                  {fmtMoney(t.amount)}
+                  {fmtMoney(tx.amount)}
                 </span>
               </li>
             )
@@ -728,6 +730,7 @@ function RecordsTab({
   onEdit: (t: Transaction) => void
   onAdd: () => void
 }) {
+  const { t } = useTranslation()
   const toast = useToast()
   const confirm = useConfirm()
   const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS)
@@ -773,33 +776,33 @@ function RecordsTab({
 
   const bulkDelete = async () => {
     const ok = await confirm({
-      title: `刪除 ${selected.size} 筆記錄？`,
-      message: '揀咗嘅收支記錄會永久移除，無法復原。',
-      confirmText: '刪除',
+      title: t('budget.confirmBulkDeleteTitle', { defaultValue: '刪除 {{count}} 筆記錄？', count: selected.size }),
+      message: t('budget.confirmBulkDeleteMessage', { defaultValue: '揀咗嘅收支記錄會永久移除，無法復原。' }),
+      confirmText: t('budget.confirmBulkDeleteConfirm', { defaultValue: '刪除' }),
       tone: 'danger',
     })
     if (!ok) return
     for (const id of selected) transactionsCol.remove(id)
-    toast.success(`已刪除 ${selected.size} 筆記錄`)
+    toast.success(t('budget.bulkDeletedToast', { defaultValue: '已刪除 {{count}} 筆記錄', count: selected.size }))
     setSelected(new Set())
   }
 
-  const removeOne = async (t: Transaction) => {
+  const removeOne = async (tx: Transaction) => {
     const ok = await confirm({
-      title: '刪除記錄？',
-      message: '此筆收支記錄將永久移除，無法復原。',
-      confirmText: '刪除',
+      title: t('budget.confirmDeleteOneTitle', { defaultValue: '刪除記錄？' }),
+      message: t('budget.confirmDeleteOneMessage', { defaultValue: '此筆收支記錄將永久移除，無法復原。' }),
+      confirmText: t('budget.confirmDeleteOneConfirm', { defaultValue: '刪除' }),
       tone: 'danger',
     })
     if (!ok) return
-    transactionsCol.remove(t.id)
-    toast.success('已刪除記錄')
+    transactionsCol.remove(tx.id)
+    toast.success(t('budget.deletedOneToast', { defaultValue: '已刪除記錄' }))
   }
 
   const exportCsv = () => {
     if (visible.length === 0) return
     downloadCsv(`收支_${monthTxs[0]?.date.slice(0, 7) ?? 'export'}.csv`, txToCsvRows(visible, cats))
-    toast.success('已匯出 CSV')
+    toast.success(t('budget.exportedCsvToast', { defaultValue: '已匯出 CSV' }))
   }
 
   const active = filtersActive(filters)
@@ -813,20 +816,20 @@ function RecordsTab({
             icon={Search}
             value={filters.text}
             onChange={(e) => setFilters((f) => ({ ...f, text: e.target.value }))}
-            placeholder="搜尋備註 / 分類…"
+            placeholder={t('budget.searchPlaceholder', { defaultValue: '搜尋備註 / 分類…' })}
           />
         </div>
         <IconButton
-          label="進階篩選"
+          label={t('budget.advancedFilter', { defaultValue: '進階篩選' })}
           active={showFilter || active}
           onClick={() => setShowFilter((v) => !v)}
         >
           <Filter size={18} />
         </IconButton>
-        <IconButton label="匯入 CSV" onClick={() => setShowImport(true)}>
+        <IconButton label={t('budget.importCsv', { defaultValue: '匯入 CSV' })} onClick={() => setShowImport(true)}>
           <Upload size={18} />
         </IconButton>
-        <IconButton label="匯出 CSV" onClick={exportCsv} disabled={visible.length === 0}>
+        <IconButton label={t('budget.exportCsv', { defaultValue: '匯出 CSV' })} onClick={exportCsv} disabled={visible.length === 0}>
           <Download size={18} />
         </IconButton>
       </div>
@@ -839,9 +842,9 @@ function RecordsTab({
       <div className="flex flex-wrap items-center justify-between gap-2">
         <Pills
           options={[
-            { id: 'all', label: '全部' },
-            { id: 'income', label: '收入' },
-            { id: 'expense', label: '支出' },
+            { id: 'all', label: t('budget.filterAll', { defaultValue: '全部' }) },
+            { id: 'income', label: t('budget.filterIncome', { defaultValue: '收入' }) },
+            { id: 'expense', label: t('budget.filterExpense', { defaultValue: '支出' }) },
           ]}
           active={filters.kind}
           onChange={(v) => setFilters((f) => ({ ...f, kind: v as 'all' | TxKind }))}
@@ -852,7 +855,7 @@ function RecordsTab({
             onClick={() => setFilters(EMPTY_FILTERS)}
             className="inline-flex items-center gap-1 text-xs text-slate-400 hover:text-rose-500"
           >
-            <X size={12} /> 清除篩選
+            <X size={12} /> {t('budget.clearFilter', { defaultValue: '清除篩選' })}
           </button>
         )}
       </div>
@@ -860,12 +863,12 @@ function RecordsTab({
       {/* 進階篩選展開 */}
       {showFilter && (
         <Card className="grid grid-cols-1 gap-3 p-4 sm:grid-cols-3 animate-fade-in">
-          <Field label="分類">
+          <Field label={t('budget.filterCategory', { defaultValue: '分類' })}>
             <Select
               value={filters.categoryId}
               onChange={(e) => setFilters((f) => ({ ...f, categoryId: e.target.value }))}
             >
-              <option value="">全部分類</option>
+              <option value="">{t('budget.filterAllCategories', { defaultValue: '全部分類' })}</option>
               {cats.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.icon ? `${c.icon} ` : ''}
@@ -874,7 +877,7 @@ function RecordsTab({
               ))}
             </Select>
           </Field>
-          <Field label="最低金額">
+          <Field label={t('budget.filterMinAmount', { defaultValue: '最低金額' })}>
             <Input
               inputMode="decimal"
               value={filters.min ?? ''}
@@ -884,10 +887,10 @@ function RecordsTab({
                   min: e.target.value === '' ? null : Number(e.target.value.replace(/[^0-9.]/g, '')),
                 }))
               }
-              placeholder="不限"
+              placeholder={t('budget.filterNoLimit', { defaultValue: '不限' })}
             />
           </Field>
-          <Field label="最高金額">
+          <Field label={t('budget.filterMaxAmount', { defaultValue: '最高金額' })}>
             <Input
               inputMode="decimal"
               value={filters.max ?? ''}
@@ -897,7 +900,7 @@ function RecordsTab({
                   max: e.target.value === '' ? null : Number(e.target.value.replace(/[^0-9.]/g, '')),
                 }))
               }
-              placeholder="不限"
+              placeholder={t('budget.filterNoLimit', { defaultValue: '不限' })}
             />
           </Field>
         </Card>
@@ -913,7 +916,7 @@ function RecordsTab({
               onChange={toggleAll}
               className="h-3.5 w-3.5 cursor-pointer rounded border-slate-300 text-accent focus:ring-accent/40 dark:border-slate-600 dark:bg-slate-700"
             />
-            {selected.size > 0 ? `已揀 ${selected.size} 筆` : `全選（${visible.length}）`}
+            {selected.size > 0 ? t('budget.selectedCount', { defaultValue: '已揀 {{count}} 筆', count: selected.size }) : t('budget.selectAll', { defaultValue: '全選（{{count}}）', count: visible.length })}
           </label>
           <span
             className="flex items-center gap-3 tabular-nums text-slate-400"
@@ -933,13 +936,13 @@ function RecordsTab({
       {selected.size > 0 && (
         <div className="sticky top-2 z-10 flex items-center gap-2 rounded-lg border border-accent/30 bg-accent-soft px-3 py-2 shadow-sm dark:border-accent/40 dark:bg-accent/15 animate-fade-in">
           <span className="text-sm font-medium text-accent-strong dark:text-accent">
-            已揀 {selected.size} 筆
+            {t('budget.selectedCount', { defaultValue: '已揀 {{count}} 筆', count: selected.size })}
           </span>
           <Button size="sm" variant="danger" icon={Trash2} onClick={bulkDelete} className="ml-auto">
-            刪除
+            {t('budget.bulkDelete', { defaultValue: '刪除' })}
           </Button>
           <Button size="sm" variant="ghost" onClick={() => setSelected(new Set())}>
-            取消
+            {t('budget.cancelSelection', { defaultValue: '取消' })}
           </Button>
         </div>
       )}
@@ -947,24 +950,24 @@ function RecordsTab({
       {/* 列表 */}
       {visible.length === 0 ? (
         active ? (
-          <EmptyState icon={Search} title="冇符合篩選嘅記錄" hint="試吓放寬條件或清除篩選。" />
+          <EmptyState icon={Search} title={t('budget.noFilterResults', { defaultValue: '冇符合篩選嘅記錄' })} hint={t('budget.noFilterHint', { defaultValue: '試吓放寬條件或清除篩選。' })} />
         ) : (
           <EmptyState
             icon={Receipt}
-            title="呢個月暫時冇記錄"
-            hint="撳「記一筆」開始記低你嘅收支。"
-            action={<Button icon={Plus} onClick={onAdd}>記一筆</Button>}
+            title={t('budget.noRecordsTitle', { defaultValue: '呢個月暫時冇記錄' })}
+            hint={t('budget.noRecordsHint', { defaultValue: '撳「記一筆」開始記低你嘅收支。' })}
+            action={<Button icon={Plus} onClick={onAdd}>{t('budget.addEntryBtn', { defaultValue: '記一筆' })}</Button>}
           />
         )
       ) : (
         <ul className="space-y-1.5">
-          {visible.map((t, i) => {
-            const cat = catOf(t.categoryId)
-            const income = t.kind === 'income'
-            const checked = selected.has(t.id)
+          {visible.map((tx, i) => {
+            const cat = catOf(tx.categoryId)
+            const income = tx.kind === 'income'
+            const checked = selected.has(tx.id)
             return (
               <li
-                key={t.id}
+                key={tx.id}
                 className={cx(
                   'group relative flex items-center gap-3 overflow-hidden rounded-2xl border border-slate-200/80 bg-white py-2.5 pl-3 pr-3.5 transition duration-200 animate-fade-in-up hover:border-slate-300 hover:shadow-md dark:border-slate-700/60 dark:bg-slate-800 dark:hover:border-slate-600',
                   checked && 'border-accent/40 ring-1 ring-accent/30',
@@ -982,9 +985,9 @@ function RecordsTab({
                 <input
                   type="checkbox"
                   checked={checked}
-                  onChange={() => toggle(t.id)}
+                  onChange={() => toggle(tx.id)}
                   className="ml-0.5 h-4 w-4 shrink-0 cursor-pointer rounded border-slate-300 text-accent focus:ring-accent/40 dark:border-slate-600 dark:bg-slate-700"
-                  aria-label="揀選記錄"
+                  aria-label={t('budget.selectRecord', { defaultValue: '揀選記錄' })}
                 />
                 <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-lg dark:bg-slate-700/60">
                   {cat?.icon ?? '🏷️'}
@@ -992,15 +995,15 @@ function RecordsTab({
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-1.5">
                     <span className="text-sm font-medium text-slate-800 dark:text-slate-100">
-                      {cat?.name ?? '未分類'}
+                      {cat?.name ?? t('budget.uncategorised', { defaultValue: '未分類' })}
                     </span>
-                    {!cat && <Badge tone="slate">未分類</Badge>}
+                    {!cat && <Badge tone="slate">{t('budget.uncategorised', { defaultValue: '未分類' })}</Badge>}
                   </div>
                   <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs">
-                    {t.note && (
-                      <span className="truncate text-slate-500 dark:text-slate-400">{t.note}</span>
+                    {tx.note && (
+                      <span className="truncate text-slate-500 dark:text-slate-400">{tx.note}</span>
                     )}
-                    <span className="tabular-nums text-slate-400">{fmtDate(t.date)}</span>
+                    <span className="tabular-nums text-slate-400">{fmtDate(tx.date)}</span>
                   </div>
                 </div>
                 <span
@@ -1012,16 +1015,16 @@ function RecordsTab({
                   )}
                 >
                   {income ? '+' : '−'}
-                  {fmtMoney(t.amount)}
+                  {fmtMoney(tx.amount)}
                 </span>
                 <div className="flex shrink-0 items-center gap-0.5">
-                  <IconButton label="編輯記錄" onClick={() => onEdit(t)}>
+                  <IconButton label={t('budget.editRecord', { defaultValue: '編輯記錄' })} onClick={() => onEdit(tx)}>
                     <Pencil size={16} />
                   </IconButton>
                   <IconButton
-                    label="刪除記錄"
+                    label={t('budget.deleteRecord', { defaultValue: '刪除記錄' })}
                     tone="danger"
-                    onClick={() => removeOne(t)}
+                    onClick={() => removeOne(tx)}
                     className="sm:opacity-0 sm:transition sm:group-hover:opacity-100"
                   >
                     <Trash2 size={16} />
@@ -1052,6 +1055,7 @@ function BudgetsTab({
   bSummary: ReturnType<typeof budgetSummary>
   catOf: (id: string) => TxCategory | undefined
 }) {
+  const { t } = useTranslation()
   const toast = useToast()
   const expenseCats = cats.filter((c) => c.kind === 'expense')
   const budgeted = new Set(bRows.map((r) => r.categoryId))
@@ -1072,7 +1076,7 @@ function BudgetsTab({
                 <Target size={17} aria-hidden="true" />
               </span>
               <div>
-                <p className="text-xs text-slate-500 dark:text-slate-400">本月總預算</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">{t('budget.totalBudgetThisMonth', { defaultValue: '本月總預算' })}</p>
                 <p className="mt-0.5 text-2xl font-bold tabular-nums text-slate-800 dark:text-slate-100">
                   {fmtMoney(bSummary.totalSpent)}
                   <span className="ml-1 text-sm font-normal text-slate-400">
@@ -1090,12 +1094,12 @@ function BudgetsTab({
                     : 'text-emerald-600 dark:text-emerald-400',
                 )}
               >
-                {bSummary.remaining < 0 ? '超支 ' : '剩 '}
+                {bSummary.remaining < 0 ? t('budget.over', { defaultValue: '超支 ' }) : t('budget.remaining', { defaultValue: '剩 ' })}
                 {fmtMoney(Math.abs(bSummary.remaining))}
               </p>
               {bSummary.overCount > 0 && (
                 <Badge tone="rose" className="mt-1">
-                  {bSummary.overCount} 個分類超支
+                  {t('budget.overBudgetCategories', { defaultValue: '{{count}} 個分類超支', count: bSummary.overCount })}
                 </Badge>
               )}
             </div>
@@ -1109,7 +1113,7 @@ function BudgetsTab({
           </div>
           {!isCurrent && (
             <p className="mt-2 text-xs text-slate-400">
-              註：預算上限為固定設定，呢度顯示 {monthLabel(month)} 嘅實際使用情況。
+              {t('budget.budgetNote', { defaultValue: '註：預算上限為固定設定，呢度顯示 {{month}} 嘅實際使用情況。', month: monthLabel(month) })}
             </p>
           )}
         </Card>
@@ -1119,12 +1123,12 @@ function BudgetsTab({
       {bRows.length === 0 ? (
         <EmptyState
           icon={Target}
-          title="仲未設分類預算"
-          hint="為支出分類設定每月上限，就可以追蹤超支同剩餘。揀下面任何一個分類開始。"
+          title={t('budget.noBudgetsTitle', { defaultValue: '仲未設分類預算' })}
+          hint={t('budget.noBudgetsHint', { defaultValue: '為支出分類設定每月上限，就可以追蹤超支同剩餘。揀下面任何一個分類開始。' })}
         />
       ) : (
         <div className="space-y-2">
-          <SectionTitle>分類預算</SectionTitle>
+          <SectionTitle>{t('budget.categoryBudgets', { defaultValue: '分類預算' })}</SectionTitle>
           {bRows.map((r) => {
             const cat = catOf(r.categoryId)
             return (
@@ -1132,7 +1136,7 @@ function BudgetsTab({
                 <button
                   type="button"
                   onClick={() => cat && setEditCat(cat)}
-                  aria-label={`編輯 ${cat?.name ?? '未分類'} 預算`}
+                  aria-label={t('budget.editBudgetAriaLabel', { defaultValue: '編輯 {{name}} 預算', name: cat?.name ?? t('budget.uncategorised', { defaultValue: '未分類' }) })}
                   className="flex w-full items-center gap-3 rounded-lg text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
                 >
                   <BudgetRing pct={r.pct} over={r.status === 'over'} />
@@ -1140,10 +1144,10 @@ function BudgetsTab({
                     <div className="flex items-center justify-between gap-2">
                       <span className="flex items-center gap-1.5 text-sm font-medium text-slate-800 dark:text-slate-100">
                         <span>{cat?.icon ?? '🏷️'}</span>
-                        {cat?.name ?? '未分類'}
+                        {cat?.name ?? t('budget.uncategorised', { defaultValue: '未分類' })}
                         {r.rollover && (
                           <Badge tone="slate" className="ml-1">
-                            結轉
+                            {t('budget.rolloverBadge', { defaultValue: '結轉' })}
                           </Badge>
                         )}
                       </span>
@@ -1168,7 +1172,7 @@ function BudgetsTab({
                       />
                     </div>
                     <div className="mt-1 flex items-center justify-between text-xs">
-                      <span className="tabular-nums text-slate-400">{r.pct}% 已用</span>
+                      <span className="tabular-nums text-slate-400">{t('budget.pctUsed', { defaultValue: '{{pct}}% 已用', pct: r.pct })}</span>
                       <span
                         className={cx(
                           'tabular-nums',
@@ -1178,8 +1182,8 @@ function BudgetsTab({
                         )}
                       >
                         {r.remaining < 0
-                          ? `超 ${fmtMoney(-r.remaining)}`
-                          : `剩 ${fmtMoney(r.remaining)}`}
+                          ? t('budget.overAmount', { defaultValue: '超 {{amount}}', amount: fmtMoney(-r.remaining) })
+                          : t('budget.remainingAmount', { defaultValue: '剩 {{amount}}', amount: fmtMoney(r.remaining) })}
                       </span>
                     </div>
                   </div>
@@ -1193,7 +1197,7 @@ function BudgetsTab({
       {/* 未設預算嘅分類 */}
       {unbudgeted.length > 0 && (
         <div className="space-y-2">
-          <SectionTitle>未設預算</SectionTitle>
+          <SectionTitle>{t('budget.unbudgetedSection', { defaultValue: '未設預算' })}</SectionTitle>
           <Card>
             <ul className="divide-y divide-slate-100 dark:divide-slate-700">
               {unbudgeted.map((c) => (
@@ -1201,7 +1205,7 @@ function BudgetsTab({
                   <span className="text-lg">{c.icon ?? '🏷️'}</span>
                   <span className="flex-1 text-sm text-slate-700 dark:text-slate-200">{c.name}</span>
                   <Button size="sm" variant="secondary" icon={Plus} onClick={() => setEditCat(c)}>
-                    設預算
+                    {t('budget.setBudgetBtn', { defaultValue: '設預算' })}
                   </Button>
                 </li>
               ))}
@@ -1234,6 +1238,7 @@ function BudgetEditModal({
   onClose: () => void
   onSaved: (msg: string) => void
 }) {
+  const { t } = useTranslation()
   const [limit, setLimit] = useState(existing ? String(existing.limit) : '')
   const [rollover, setRollover] = useState(existing?.rollover ?? false)
   const num = Number(limit)
@@ -1242,12 +1247,12 @@ function BudgetEditModal({
   const save = () => {
     if (!valid) return
     upsertBudget(cat.id, num, rollover)
-    onSaved(existing ? '已更新預算' : '已設定預算')
+    onSaved(existing ? t('budget.budgetUpdatedToast', { defaultValue: '已更新預算' }) : t('budget.budgetCreatedToast', { defaultValue: '已設定預算' }))
     onClose()
   }
   const clear = () => {
     upsertBudget(cat.id, 0, false)
-    onSaved('已移除預算')
+    onSaved(t('budget.budgetRemovedToast', { defaultValue: '已移除預算' }))
     onClose()
   }
 
@@ -1260,14 +1265,14 @@ function BudgetEditModal({
         <>
           {existing && (
             <Button variant="ghost" onClick={clear} className="mr-auto text-rose-600">
-              移除預算
+              {t('budget.removeBudget', { defaultValue: '移除預算' })}
             </Button>
           )}
           <Button variant="secondary" onClick={onClose}>
-            取消
+            {t('budget.cancel', { defaultValue: '取消' })}
           </Button>
           <Button onClick={save} disabled={!valid}>
-            {existing ? '更新上限' : '立此預算'}
+            {existing ? t('budget.updateLimit', { defaultValue: '更新上限' }) : t('budget.createBudget', { defaultValue: '立此預算' })}
           </Button>
         </>
       }
@@ -1279,7 +1284,7 @@ function BudgetEditModal({
         </span>
         <div className="min-w-0">
           <p className="text-[10px] font-medium uppercase tracking-[0.3em] text-accent/70">
-            Envelope · 預算信封
+            {t('budget.envelopeKicker', { defaultValue: 'Envelope · 預算信封' })}
           </p>
           <h3 className="mt-0.5 truncate font-serif text-lg font-semibold leading-tight text-slate-800 dark:text-slate-100">
             {cat.name}
@@ -1288,7 +1293,7 @@ function BudgetEditModal({
       </header>
 
       <div className="space-y-3.5">
-        <Field label="每月上限（HK$）">
+        <Field label={t('budget.monthlyLimit', { defaultValue: '每月上限（HK$）' })}>
           {/* 帳本式上限輸入：固定 HK$ 前綴 + 大 serif 數字 */}
           <div className="flex items-baseline gap-2 rounded-xl border border-slate-200 bg-slate-50/70 px-3.5 py-2.5 transition focus-within:border-accent focus-within:ring-2 focus-within:ring-accent/30 dark:border-slate-700 dark:bg-slate-900/40">
             <span
@@ -1305,7 +1310,7 @@ function BudgetEditModal({
               placeholder="3,000"
               inputMode="decimal"
               autoFocus
-              aria-label="每月上限"
+              aria-label={t('budget.monthlyLimitAriaLabel', { defaultValue: '每月上限' })}
               className="w-full bg-transparent font-serif text-2xl font-semibold leading-none tabular-nums slashed-zero text-slate-800 outline-none placeholder:text-slate-300 dark:text-slate-100 dark:placeholder:text-slate-600"
             />
           </div>
@@ -1319,10 +1324,10 @@ function BudgetEditModal({
           />
           <span>
             <span className="block text-sm font-medium text-slate-700 dark:text-slate-200">
-              結轉至下月
+              {t('budget.rolloverLabel', { defaultValue: '結轉至下月' })}
             </span>
             <span className="block text-xs text-slate-400">
-              用剩 / 超支會喺概念上帶落下個月（標示用）。
+              {t('budget.rolloverHint', { defaultValue: '用剩 / 超支會喺概念上帶落下個月（標示用）。' })}
             </span>
           </span>
         </label>
@@ -1347,6 +1352,7 @@ function AnalysisTab({
   stats: ReturnType<typeof computeMonthStats>
   catOf: (id: string) => TxCategory | undefined
 }) {
+  const { t } = useTranslation()
   const [range, setRange] = useState<6 | 12>(6)
   const [kind, setKind] = useState<TxKind>('expense')
 
@@ -1367,20 +1373,20 @@ function AnalysisTab({
               value={String(range) as '6' | '12'}
               onChange={(v) => setRange(Number(v) as 6 | 12)}
               options={[
-                { id: '6', label: '6 個月' },
-                { id: '12', label: '12 個月' },
+                { id: '6', label: t('budget.months6', { defaultValue: '6 個月' }) },
+                { id: '12', label: t('budget.months12', { defaultValue: '12 個月' }) },
               ]}
             />
           }
         >
-          收支趨勢
+          {t('budget.cashflowTrend', { defaultValue: '收支趨勢' })}
         </SectionTitle>
         <CashflowBars rows={trend} />
       </Card>
 
       {/* 淨結餘走勢 */}
       <Card className="rounded-2xl p-4">
-        <SectionTitle icon={Wallet}>每月淨結餘</SectionTitle>
+        <SectionTitle icon={Wallet}>{t('budget.netBalance', { defaultValue: '每月淨結餘' })}</SectionTitle>
         <BalanceTrend rows={trend} />
       </Card>
 
@@ -1395,17 +1401,17 @@ function AnalysisTab({
                 value={kind}
                 onChange={setKind}
                 options={[
-                  { id: 'expense', label: '支出' },
-                  { id: 'income', label: '收入' },
+                  { id: 'expense', label: t('budget.analysisExpense', { defaultValue: '支出' }) },
+                  { id: 'income', label: t('budget.analysisIncome', { defaultValue: '收入' }) },
                 ]}
               />
             }
           >
-            本月{kind === 'expense' ? '支出' : '收入'}分類
+            {t('budget.categoryBreakdownAnalysis', { defaultValue: '本月{{kind}}分類', kind: kind === 'expense' ? t('budget.expenseKind', { defaultValue: '支出' }) : t('budget.incomeKind', { defaultValue: '收入' }) })}
           </SectionTitle>
           {catStats.length === 0 ? (
             <p className="py-8 text-center text-sm text-slate-500 dark:text-slate-400">
-              今個月仲未有{kind === 'expense' ? '支出' : '收入'}記錄。
+              {kind === 'expense' ? t('budget.noExpenseCats', { defaultValue: '今個月仲未有支出記錄。' }) : t('budget.noIncomeCats', { defaultValue: '今個月仲未有收入記錄。' })}
             </p>
           ) : (
             <ul className="space-y-3">
@@ -1416,8 +1422,8 @@ function AnalysisTab({
                     <div className="mb-1 flex items-center justify-between text-xs">
                       <span className="flex items-center gap-1.5 text-slate-600 dark:text-slate-300">
                         <span>{cat?.icon ?? '🏷️'}</span>
-                        {cat?.name ?? '未分類'}
-                        <span className="text-slate-400">· {row.count} 筆</span>
+                        {cat?.name ?? t('budget.uncategorised', { defaultValue: '未分類' })}
+                        <span className="text-slate-400">· {t('budget.entryCount', { defaultValue: '{{count}} 筆', count: row.count })}</span>
                       </span>
                       <span className="flex items-center gap-2">
                         <span className="font-semibold tabular-nums text-slate-700 dark:text-slate-200">
@@ -1443,24 +1449,24 @@ function AnalysisTab({
         </Card>
 
         <Card className="rounded-2xl p-4">
-          <SectionTitle icon={TrendingDown}>本月消費熱力</SectionTitle>
+          <SectionTitle icon={TrendingDown}>{t('budget.spendingHeatmap', { defaultValue: '本月消費熱力' })}</SectionTitle>
           <SpendingHeatmap cells={dailyBreakdown(monthTxs, month)} />
         </Card>
       </div>
 
       {/* 統計摘要 */}
       <Card className="rounded-2xl p-4">
-        <SectionTitle icon={Sparkles}>本月數據</SectionTitle>
+        <SectionTitle icon={Sparkles}>{t('budget.monthlyStats', { defaultValue: '本月數據' })}</SectionTitle>
         <div className="grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-4">
-          <Stat label="日均支出" value={fmtMoney(stats.dailyAvg)} />
-          <Stat label="最大單筆" value={fmtMoney(stats.topExpense)} />
+          <Stat label={t('budget.statDailyAvg', { defaultValue: '日均支出' })} value={fmtMoney(stats.dailyAvg)} />
+          <Stat label={t('budget.statTopExpense', { defaultValue: '最大單筆' })} value={fmtMoney(stats.topExpense)} />
           <Stat
-            label="月底預測"
+            label={t('budget.statProjected', { defaultValue: '月底預測' })}
             value={fmtMoney(stats.projectedExpense)}
-            hint={month === monthKey(new Date()) ? '按目前速度' : '實際'}
+            hint={month === monthKey(new Date()) ? t('budget.statProjectedHint', { defaultValue: '按目前速度' }) : t('budget.statProjectedActual', { defaultValue: '實際' })}
           />
           <Stat
-            label="儲蓄率"
+            label={t('budget.statSavingsRate', { defaultValue: '儲蓄率' })}
             value={stats.savingsRate == null ? '—' : `${stats.savingsRate}%`}
           />
         </div>
@@ -1495,6 +1501,7 @@ function RecurringTab({
   catOf: (id: string) => TxCategory | undefined
   catName: (id: string) => string
 }) {
+  const { t } = useTranslation()
   const toast = useToast()
   const confirm = useConfirm()
   const [showForm, setShowForm] = useState(false)
@@ -1520,7 +1527,7 @@ function RecurringTab({
       createdAt: new Date().toISOString(),
     })
     recurringCol.update(r.id, { lastPosted: info.dueDate })
-    toast.success(`已入帳：${catName(r.categoryId)} ${fmtMoney(r.amount)}`)
+    toast.success(t('budget.postedToast', { defaultValue: '已入帳：{{name}} {{amount}}', name: catName(r.categoryId), amount: fmtMoney(r.amount) }))
   }
 
   const postAll = () => {
@@ -1536,7 +1543,7 @@ function RecurringTab({
       })
       recurringCol.update(r.id, { lastPosted: info.dueDate })
     }
-    toast.success(`已入帳 ${due.length} 筆定期收支`)
+    toast.success(t('budget.postedAllToast', { defaultValue: '已入帳 {{count}} 筆定期收支', count: due.length }))
   }
 
   const toggleActive = (r: RecurringTx) =>
@@ -1544,14 +1551,14 @@ function RecurringTab({
 
   const remove = async (r: RecurringTx) => {
     const ok = await confirm({
-      title: '刪除定期項目？',
-      message: '只會刪除呢個範本，已入帳嘅記錄唔受影響。',
-      confirmText: '刪除',
+      title: t('budget.confirmDeleteRecurringTitle', { defaultValue: '刪除定期項目？' }),
+      message: t('budget.confirmDeleteRecurringMessage', { defaultValue: '只會刪除呢個範本，已入帳嘅記錄唔受影響。' }),
+      confirmText: t('budget.confirmDeleteRecurringConfirm', { defaultValue: '刪除' }),
       tone: 'danger',
     })
     if (!ok) return
     recurringCol.remove(r.id)
-    toast.success('已刪除定期項目')
+    toast.success(t('budget.deletedRecurringToast', { defaultValue: '已刪除定期項目' }))
   }
 
   return (
@@ -1562,10 +1569,10 @@ function RecurringTab({
           <div className="mb-3 flex items-center justify-between">
             <span className="flex items-center gap-1.5 text-sm font-semibold text-amber-800 dark:text-amber-200">
               <CalendarClock size={16} />
-              待入帳（{due.length}）
+              {t('budget.pendingHeader', { defaultValue: '待入帳（{{count}}）', count: due.length })}
             </span>
             <Button size="sm" icon={CheckCircle2} onClick={postAll}>
-              全部入帳
+              {t('budget.postAll', { defaultValue: '全部入帳' })}
             </Button>
           </div>
           <ul className="space-y-2">
@@ -1582,14 +1589,14 @@ function RecurringTab({
                   </span>
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium text-slate-800 dark:text-slate-100">
-                      {cat?.name ?? '未分類'}
+                      {cat?.name ?? t('budget.uncategorised', { defaultValue: '未分類' })}
                       {r.note && <span className="ml-1 text-xs text-slate-400">· {r.note}</span>}
                     </p>
                     <p className="text-xs tabular-nums text-slate-400">
-                      應於 {fmtDate(info.dueDate)}
+                      {t('budget.dueOn', { defaultValue: '應於 {{date}}', date: fmtDate(info.dueDate) })}
                       {info.overdueDays > 0 && (
                         <span className="ml-1 text-amber-600 dark:text-amber-400">
-                          （遲咗 {info.overdueDays} 日）
+                          {t('budget.overdueBy', { defaultValue: '（遲咗 {{days}} 日）', days: info.overdueDays })}
                         </span>
                       )}
                     </p>
@@ -1606,7 +1613,7 @@ function RecurringTab({
                     {fmtMoney(r.amount)}
                   </span>
                   <Button size="sm" variant="secondary" onClick={() => post(info)}>
-                    入帳
+                    {t('budget.postOne', { defaultValue: '入帳' })}
                   </Button>
                 </li>
               )
@@ -1616,7 +1623,7 @@ function RecurringTab({
       )}
 
       <div className="flex items-center justify-between">
-        <SectionTitle>所有定期項目</SectionTitle>
+        <SectionTitle>{t('budget.allRecurringSection', { defaultValue: '所有定期項目' })}</SectionTitle>
         <Button
           size="sm"
           icon={Plus}
@@ -1625,15 +1632,15 @@ function RecurringTab({
             setShowForm(true)
           }}
         >
-          新增定期
+          {t('budget.addRecurring', { defaultValue: '新增定期' })}
         </Button>
       </div>
 
       {sorted.length === 0 ? (
         <EmptyState
           icon={Repeat}
-          title="仲未有定期收支"
-          hint="設定薪金、訂閱、租金等定期收支，到期就可以一鍵入帳，唔使每次手動記。"
+          title={t('budget.noRecurringTitle', { defaultValue: '仲未有定期收支' })}
+          hint={t('budget.noRecurringHint', { defaultValue: '設定薪金、訂閱、租金等定期收支，到期就可以一鍵入帳，唔使每次手動記。' })}
           action={
             <Button
               icon={Plus}
@@ -1642,7 +1649,7 @@ function RecurringTab({
                 setShowForm(true)
               }}
             >
-              新增定期
+              {t('budget.addRecurring', { defaultValue: '新增定期' })}
             </Button>
           }
         />
@@ -1661,24 +1668,24 @@ function RecurringTab({
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-1.5">
                       <span className="text-sm font-medium text-slate-800 dark:text-slate-100">
-                        {cat?.name ?? '未分類'}
+                        {cat?.name ?? t('budget.uncategorised', { defaultValue: '未分類' })}
                       </span>
                       <Badge tone="blue">{CYCLE_LABEL[r.cycle]}</Badge>
-                      {!r.active && <Badge tone="slate">已暫停</Badge>}
-                      {isDue && r.active && <Badge tone="amber">待入帳</Badge>}
+                      {!r.active && <Badge tone="slate">{t('budget.pausedBadge', { defaultValue: '已暫停' })}</Badge>}
+                      {isDue && r.active && <Badge tone="amber">{t('budget.dueBadge', { defaultValue: '待入帳' })}</Badge>}
                     </div>
                     <p className="mt-0.5 text-xs text-slate-400">
                       {r.note && <span>{r.note} · </span>}
                       {r.active ? (
                         <span className="tabular-nums">
-                          下次 {fmtDate(next)}
+                          {t('budget.nextDue', { defaultValue: '下次 {{date}}', date: fmtDate(next) })}
                           {(() => {
                             const d = daysBetween(todayIso(), next)
-                            return d > 0 ? `（${d} 日後）` : d === 0 ? '（今日）' : ''
+                            return d > 0 ? t('budget.daysLater', { defaultValue: '（{{days}} 日後）', days: d }) : d === 0 ? t('budget.today', { defaultValue: '（今日）' }) : ''
                           })()}
                         </span>
                       ) : (
-                        '已暫停'
+                        t('budget.pausedStatus', { defaultValue: '已暫停' })
                       )}
                     </p>
                   </div>
@@ -1695,13 +1702,13 @@ function RecurringTab({
                   </span>
                   <div className="flex shrink-0 items-center gap-0.5">
                     <IconButton
-                      label={r.active ? '暫停' : '啟用'}
+                      label={r.active ? t('budget.pauseBtn', { defaultValue: '暫停' }) : t('budget.resumeBtn', { defaultValue: '啟用' })}
                       onClick={() => toggleActive(r)}
                     >
                       {r.active ? <Pause size={16} /> : <Play size={16} />}
                     </IconButton>
                     <IconButton
-                      label="編輯"
+                      label={t('budget.editBtn', { defaultValue: '編輯' })}
                       onClick={() => {
                         setEditing(r)
                         setShowForm(true)
@@ -1710,7 +1717,7 @@ function RecurringTab({
                       <Pencil size={16} />
                     </IconButton>
                     <IconButton
-                      label="刪除"
+                      label={t('budget.deleteBtn', { defaultValue: '刪除' })}
                       tone="danger"
                       onClick={() => remove(r)}
                       className="sm:opacity-0 sm:transition sm:group-hover:opacity-100"
@@ -1749,6 +1756,11 @@ function RecurringFormModal({
   onClose: () => void
   onSaved: (msg: string) => void
 }) {
+  const { t } = useTranslation()
+  const KIND_PILLS: { id: TxKind; label: string }[] = [
+    { id: 'expense', label: t('budget.filterExpense', { defaultValue: '支出' }) },
+    { id: 'income', label: t('budget.filterIncome', { defaultValue: '收入' }) },
+  ]
   const [kind, setKind] = useState<TxKind>(editing?.kind ?? 'expense')
   const [amount, setAmount] = useState(editing ? String(editing.amount) : '')
   const [note, setNote] = useState(editing?.note ?? '')
@@ -1780,7 +1792,7 @@ function RecurringFormModal({
         anchorDay,
         startDate,
       })
-      onSaved('已更新定期項目')
+      onSaved(t('budget.updatedRecurringToast', { defaultValue: '已更新定期項目' }))
     } else {
       recurringCol.add({
         kind,
@@ -1793,7 +1805,7 @@ function RecurringFormModal({
         active: true,
         createdAt: new Date().toISOString(),
       })
-      onSaved('已新增定期項目')
+      onSaved(t('budget.addedRecurringToast', { defaultValue: '已新增定期項目' }))
     }
     onClose()
   }
@@ -1807,10 +1819,10 @@ function RecurringFormModal({
       footer={
         <>
           <Button variant="secondary" onClick={onClose}>
-            取消
+            {t('budget.cancel', { defaultValue: '取消' })}
           </Button>
           <Button onClick={save} disabled={!valid}>
-            {editing ? '儲存' : '新增'}
+            {editing ? t('budget.saveBtn', { defaultValue: '儲存' }) : t('budget.addBtn', { defaultValue: '新增' })}
           </Button>
         </>
       }
@@ -1818,17 +1830,17 @@ function RecurringFormModal({
       {/* 定期收支抬頭：kicker + serif 標題（呼應帳本語言，標示自動入帳範本） */}
       <header className="-mx-5 -mt-5 mb-4 border-b border-dashed border-slate-200/90 px-5 pb-3.5 dark:border-slate-700/70 sm:-mx-6 sm:-mt-6 sm:px-6">
         <p className="text-[10px] font-medium uppercase tracking-[0.3em] text-accent/70">
-          Standing order · 定期
+          {t('budget.recurringKicker', { defaultValue: 'Standing order · 定期' })}
         </p>
         <h3 className="mt-1 flex items-center gap-2 font-serif text-lg font-semibold leading-tight text-slate-800 dark:text-slate-100">
           <Repeat size={17} className="text-accent" aria-hidden="true" />
-          {editing ? '編輯定期項目' : '新增定期項目'}
+          {editing ? t('budget.editRecurringTitle', { defaultValue: '編輯定期項目' }) : t('budget.addRecurringTitle', { defaultValue: '新增定期項目' })}
         </h3>
       </header>
 
       <div className="space-y-3">
         <Pills options={KIND_PILLS} active={kind} onChange={switchKind} />
-        <Field label="金額（HK$）">
+        <Field label={t('budget.amountField', { defaultValue: '金額（HK$）' })}>
           <div
             className={cx(
               'flex items-baseline gap-2 rounded-xl border bg-slate-50/70 px-3.5 py-2.5 transition focus-within:ring-2 focus-within:ring-accent/30 dark:bg-slate-900/40',
@@ -1853,7 +1865,7 @@ function RecurringFormModal({
               }
               placeholder="0.00"
               inputMode="decimal"
-              aria-label="金額"
+              aria-label={t('budget.amountAriaLabel', { defaultValue: '金額' })}
               className={cx(
                 'w-full bg-transparent font-serif text-2xl font-semibold leading-none tabular-nums slashed-zero outline-none placeholder:text-slate-300 dark:placeholder:text-slate-600',
                 income ? 'text-emerald-700 dark:text-emerald-300' : 'text-rose-700 dark:text-rose-300',
@@ -1861,10 +1873,10 @@ function RecurringFormModal({
             />
           </div>
         </Field>
-        <Field label="分類">
+        <Field label={t('budget.categoryField', { defaultValue: '分類' })}>
           {kindCats.length === 0 ? (
             <p className="rounded-xl border border-dashed border-slate-200 px-3 py-2 text-xs text-slate-400 dark:border-slate-700">
-              呢個類型仲未有分類，請先去「分類」頁新增。
+              {t('budget.noCategoryMsg', { defaultValue: '呢個類型仲未有分類，請先去「分類」頁新增。' })}
             </p>
           ) : (
             <Select value={categoryId} onChange={(e) => setCategoryId(e.target.value)}>
@@ -1878,23 +1890,23 @@ function RecurringFormModal({
           )}
         </Field>
         <div className="grid grid-cols-2 gap-3">
-          <Field label="週期">
+          <Field label={t('budget.cycleField', { defaultValue: '週期' })}>
             <Select value={cycle} onChange={(e) => setCycle(e.target.value as RecurrenceCycle)}>
-              <option value="weekly">每週</option>
-              <option value="biweekly">每兩週</option>
-              <option value="monthly">每月</option>
-              <option value="yearly">每年</option>
+              <option value="weekly">{t('budget.cycleWeekly', { defaultValue: '每週' })}</option>
+              <option value="biweekly">{t('budget.cycleBiweekly', { defaultValue: '每兩週' })}</option>
+              <option value="monthly">{t('budget.cycleMonthly', { defaultValue: '每月' })}</option>
+              <option value="yearly">{t('budget.cycleYearly', { defaultValue: '每年' })}</option>
             </Select>
           </Field>
-          <Field label="開始日期" hint="由此日起按週期計到期">
+          <Field label={t('budget.startDateField', { defaultValue: '開始日期' })} hint={t('budget.startDateHint', { defaultValue: '由此日起按週期計到期' })}>
             <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
           </Field>
         </div>
-        <Field label="備註（可選）">
+        <Field label={t('budget.noteField', { defaultValue: '備註（可選）' })}>
           <Input
             value={note}
             onChange={(e) => setNote(e.target.value)}
-            placeholder="例如：Netflix、出糧、交租…"
+            placeholder={t('budget.notePlaceholder', { defaultValue: '例如：Netflix、出糧、交租…' })}
           />
         </Field>
       </div>
@@ -1920,6 +1932,11 @@ function TxFormModal({
   onClose: () => void
   onSaved: (msg: string) => void
 }) {
+  const { t } = useTranslation()
+  const KIND_PILLS: { id: TxKind; label: string }[] = [
+    { id: 'expense', label: t('budget.filterExpense', { defaultValue: '支出' }) },
+    { id: 'income', label: t('budget.filterIncome', { defaultValue: '收入' }) },
+  ]
   const [kind, setKind] = useState<TxKind>(editing?.kind ?? presetKind)
   const [amount, setAmount] = useState(editing ? String(editing.amount) : '')
   const [date, setDate] = useState(editing?.date ?? defaultDate)
@@ -1953,10 +1970,10 @@ function TxFormModal({
     }
     if (editing) {
       transactionsCol.update(editing.id, payload)
-      onSaved('已儲存修改')
+      onSaved(t('budget.savedTxToast', { defaultValue: '已儲存修改' }))
     } else {
       transactionsCol.add({ ...payload, createdAt: new Date().toISOString() })
-      onSaved('已新增記錄')
+      onSaved(t('budget.addedTxToast', { defaultValue: '已新增記錄' }))
     }
     onClose()
   }
@@ -1967,17 +1984,17 @@ function TxFormModal({
       <header className="-mx-5 -mt-5 mb-4 flex items-start justify-between gap-3 border-b border-dashed border-slate-200/90 px-5 pb-3.5 dark:border-slate-700/70 sm:-mx-6 sm:-mt-6 sm:px-6">
         <div className="min-w-0">
           <p className="text-[10px] font-medium uppercase tracking-[0.3em] text-accent/70">
-            Ledger · {income ? '收入' : '支出'}
+            Ledger · {income ? t('budget.ledgerIncomeKicker', { defaultValue: '收入' }) : t('budget.ledgerExpenseKicker', { defaultValue: '支出' })}
           </p>
           <h3 className="mt-1 flex items-center gap-2 font-serif text-xl font-semibold leading-tight text-slate-800 dark:text-slate-100">
             <Receipt size={18} className="text-accent" aria-hidden="true" />
-            {editing ? '編輯記錄' : '記一筆'}
+            {editing ? t('budget.editRecordTitle', { defaultValue: '編輯記錄' }) : t('budget.addRecordTitle', { defaultValue: '記一筆' })}
           </h3>
         </div>
         <button
           onClick={onClose}
           className="-mr-1 mt-0.5 shrink-0 rounded-lg p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:hover:bg-slate-700"
-          aria-label="關閉"
+          aria-label={t('budget.closeAriaLabel', { defaultValue: '關閉' })}
         >
           <X size={18} />
         </button>
@@ -1987,7 +2004,7 @@ function TxFormModal({
         <Pills options={KIND_PILLS} active={kind} onChange={switchKind} />
 
         {/* 收據「合計」行：大 serif 金額 + 收支正負色，帶 ruled 底線質感 */}
-        <Field label="金額（HK$）">
+        <Field label={t('budget.amountFieldHK', { defaultValue: '金額（HK$）' })}>
           <div
             className={cx(
               'flex items-baseline gap-2 rounded-xl border bg-slate-50/70 px-3.5 py-2.5 transition focus-within:ring-2 focus-within:ring-accent/30 dark:bg-slate-900/40',
@@ -2013,7 +2030,7 @@ function TxFormModal({
               placeholder="0.00"
               inputMode="decimal"
               autoFocus={!editing}
-              aria-label="金額"
+              aria-label={t('budget.txAmountAriaLabel', { defaultValue: '金額' })}
               className={cx(
                 'w-full bg-transparent font-serif text-2xl font-semibold leading-none tabular-nums slashed-zero outline-none placeholder:text-slate-300 dark:placeholder:text-slate-600',
                 income ? 'text-emerald-700 dark:text-emerald-300' : 'text-rose-700 dark:text-rose-300',
@@ -2036,10 +2053,10 @@ function TxFormModal({
           </div>
         )}
 
-        <Field label="分類">
+        <Field label={t('budget.txCategoryField', { defaultValue: '分類' })}>
           {kindCats.length === 0 ? (
             <p className="rounded-xl border border-dashed border-slate-200 px-3 py-2 text-xs text-slate-400 dark:border-slate-700">
-              呢個類型仲未有分類，請先去「分類」頁新增。
+              {t('budget.txNoCategoryMsg', { defaultValue: '呢個類型仲未有分類，請先去「分類」頁新增。' })}
             </p>
           ) : (
             <div className="grid grid-cols-4 gap-1.5 sm:grid-cols-5">
@@ -2076,14 +2093,14 @@ function TxFormModal({
         </Field>
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-[minmax(0,9rem)_1fr]">
-          <Field label="日期">
+          <Field label={t('budget.dateField', { defaultValue: '日期' })}>
             <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
           </Field>
-          <Field label="備註（可選）">
+          <Field label={t('budget.txNoteField', { defaultValue: '備註（可選）' })}>
             <Input
               value={note}
               onChange={(e) => setNote(e.target.value)}
-              placeholder="例如：午餐、出糧…"
+              placeholder={t('budget.txNotePlaceholder', { defaultValue: '例如：午餐、出糧…' })}
             />
           </Field>
         </div>
@@ -2091,10 +2108,10 @@ function TxFormModal({
         {/* 結算線：帳簿雙底線收結，呼應 LedgerStatement 嘅 ruled 行 */}
         <div className="-mx-5 mt-1 flex items-center justify-end gap-2 border-t-2 border-double border-slate-200 px-5 pt-4 dark:border-slate-700 sm:-mx-6 sm:px-6">
           <Button variant="secondary" onClick={onClose}>
-            取消
+            {t('budget.cancel', { defaultValue: '取消' })}
           </Button>
           <Button icon={editing ? undefined : Plus} onClick={save} disabled={!valid}>
-            {editing ? '儲存修改' : '記低'}
+            {editing ? t('budget.saveTx', { defaultValue: '儲存修改' }) : t('budget.addTx', { defaultValue: '記低' })}
           </Button>
         </div>
       </div>
@@ -2114,6 +2131,7 @@ function ImportTxModal({
   catName: (id: string) => string
   onClose: () => void
 }) {
+  const { t } = useTranslation()
   const toast = useToast()
   const fileRef = useRef<HTMLInputElement>(null)
   const [text, setText] = useState('')
@@ -2140,7 +2158,7 @@ function ImportTxModal({
 
   const commit = () => {
     if (preview.parsed.length === 0) {
-      toast.error('未有可匯入嘅交易')
+      toast.error(t('budget.noTxToImportError', { defaultValue: '未有可匯入嘅交易' }))
       return
     }
     const now = new Date().toISOString()
@@ -2154,7 +2172,7 @@ function ImportTxModal({
         createdAt: now,
       })
     }
-    toast.success(`已匯入 ${preview.parsed.length} 筆交易`)
+    toast.success(t('budget.importedToast', { defaultValue: '已匯入 {{count}} 筆交易', count: preview.parsed.length }))
     onClose()
   }
 
@@ -2164,17 +2182,17 @@ function ImportTxModal({
       <header className="-mx-5 -mt-5 mb-4 flex items-start justify-between gap-3 border-b border-dashed border-slate-200/90 px-5 pb-3.5 dark:border-slate-700/70 sm:-mx-6 sm:-mt-6 sm:px-6">
         <div className="min-w-0">
           <p className="text-[10px] font-medium uppercase tracking-[0.3em] text-accent/70">
-            Ledger · 匯入
+            {t('budget.importKicker', { defaultValue: 'Ledger · 匯入' })}
           </p>
           <h3 className="mt-1 flex items-center gap-2 font-serif text-xl font-semibold leading-tight text-slate-800 dark:text-slate-100">
             <Upload size={18} className="text-accent" aria-hidden="true" />
-            匯入交易（CSV）
+            {t('budget.importTitle', { defaultValue: '匯入交易（CSV）' })}
           </h3>
         </div>
         <button
           onClick={onClose}
           className="-mr-1 mt-0.5 shrink-0 rounded-lg p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:hover:bg-slate-700"
-          aria-label="關閉"
+          aria-label={t('budget.closeAriaLabel', { defaultValue: '關閉' })}
         >
           <X size={18} />
         </button>
@@ -2186,7 +2204,7 @@ function ImportTxModal({
             <Upload size={16} />
           </span>
           <p className="text-xs leading-relaxed text-slate-600 dark:text-slate-300">
-            CSV 欄位：日期、類型（收入／支出）、分類、金額、備註，同匯出格式一樣。類型留空會按金額正負推斷；分類名會自動對應到最相近嘅現有分類，對唔到就落「未分類」。第一次用建議先下載範本。
+            {t('budget.importInfo', { defaultValue: 'CSV 欄位：日期、類型（收入／支出）、分類、金額、備註，同匯出格式一樣。類型留空會按金額正負推斷；分類名會自動對應到最相近嘅現有分類，對唔到就落「未分類」。第一次用建議先下載範本。' })}
           </p>
         </div>
 
@@ -2202,18 +2220,18 @@ function ImportTxModal({
             }}
           />
           <Button variant="secondary" icon={Upload} onClick={() => fileRef.current?.click()}>
-            選擇 CSV 檔
+            {t('budget.chooseCsvBtn', { defaultValue: '選擇 CSV 檔' })}
           </Button>
           <Button variant="ghost" icon={Download} onClick={downloadTemplate}>
-            下載範本
+            {t('budget.downloadTemplateBtn', { defaultValue: '下載範本' })}
           </Button>
         </div>
 
-        <Field label="或直接貼上 CSV 內容">
+        <Field label={t('budget.pasteLabel', { defaultValue: '或直接貼上 CSV 內容' })}>
           <Textarea
             value={text}
             onChange={(e) => setText(e.target.value)}
-            placeholder="日期,類型,分類,金額,備註…"
+            placeholder={t('budget.pastePlaceholder', { defaultValue: '日期,類型,分類,金額,備註…' })}
             rows={6}
             className="font-mono text-xs"
           />
@@ -2223,16 +2241,16 @@ function ImportTxModal({
           <div className="rounded-2xl border border-slate-200/80 bg-slate-50/60 p-3.5 dark:border-slate-700/60 dark:bg-slate-900/40">
             <div className="mb-2.5 flex flex-wrap items-center gap-2 text-xs" aria-live="polite">
               <Badge tone="green" dot>
-                可匯入 {preview.parsed.length}
+                {t('budget.canImportBadge', { defaultValue: '可匯入 {{count}}', count: preview.parsed.length })}
               </Badge>
               {unmatched > 0 && (
                 <Badge tone="amber" dot>
-                  未分類 {unmatched}
+                  {t('budget.uncategorisedBadge', { defaultValue: '未分類 {{count}}', count: unmatched })}
                 </Badge>
               )}
               {preview.skipped > 0 && (
                 <Badge tone="rose" dot>
-                  略過 {preview.skipped}
+                  {t('budget.skippedBadge', { defaultValue: '略過 {{count}}', count: preview.skipped })}
                 </Badge>
               )}
             </div>
@@ -2244,10 +2262,10 @@ function ImportTxModal({
                 >
                   <span className="shrink-0 tabular-nums text-slate-400">{fmtDate(p.date)}</span>
                   <Badge tone={p.kind === 'income' ? 'green' : 'rose'}>
-                    {p.kind === 'income' ? '收入' : '支出'}
+                    {p.kind === 'income' ? t('budget.importIncomeLabel', { defaultValue: '收入' }) : t('budget.importExpenseLabel', { defaultValue: '支出' })}
                   </Badge>
                   <span className="shrink-0 truncate text-slate-500 dark:text-slate-400">
-                    {p.matched ? catName(p.categoryId) : `未分類${p.rawCategory ? `（${p.rawCategory}）` : ''}`}
+                    {p.matched ? catName(p.categoryId) : `${t('budget.uncategorisedLabel', { defaultValue: '未分類' })}${p.rawCategory ? `（${p.rawCategory}）` : ''}`}
                   </span>
                   <span
                     className={cx(
@@ -2264,7 +2282,7 @@ function ImportTxModal({
               ))}
               {preview.parsed.length > 8 && (
                 <li className="text-xs text-slate-400 dark:text-slate-500">
-                  …仲有 {preview.parsed.length - 8} 筆
+                  {t('budget.moreRows', { defaultValue: '…仲有 {{count}} 筆', count: preview.parsed.length - 8 })}
                 </li>
               )}
             </ul>
@@ -2273,10 +2291,10 @@ function ImportTxModal({
 
         <div className="flex justify-end gap-2 pt-2">
           <Button variant="secondary" onClick={onClose}>
-            取消
+            {t('budget.cancel', { defaultValue: '取消' })}
           </Button>
           <Button onClick={commit} disabled={preview.parsed.length === 0}>
-            匯入（{preview.parsed.length}）
+            {t('budget.importBtn', { defaultValue: '匯入（{{count}}）', count: preview.parsed.length })}
           </Button>
         </div>
       </div>
@@ -2296,6 +2314,7 @@ function CategoryManager({
   cats: TxCategory[]
   envelopes: ReturnType<typeof budgetsCol.get>
 }) {
+  const { t } = useTranslation()
   const toast = useToast()
   const confirm = useConfirm()
 
@@ -2322,22 +2341,22 @@ function CategoryManager({
       icon,
       createdAt: new Date().toISOString(),
     })
-    toast.success('已新增分類')
+    toast.success(t('budget.addedCatToast', { defaultValue: '已新增分類' }))
     setName('')
     setIcon(EMOJI_CHOICES[1])
   }
 
   const remove = async (cat: TxCategory) => {
     const ok = await confirm({
-      title: '刪除分類？',
-      message: '已用咗呢個分類嘅記錄會變成「未分類」，但唔會被刪。分類嘅預算亦會一併移除。',
-      confirmText: '刪除',
+      title: t('budget.confirmDeleteCatTitle', { defaultValue: '刪除分類？' }),
+      message: t('budget.confirmDeleteCatMessage', { defaultValue: '已用咗呢個分類嘅記錄會變成「未分類」，但唔會被刪。分類嘅預算亦會一併移除。' }),
+      confirmText: t('budget.confirmDeleteCatConfirm', { defaultValue: '刪除' }),
       tone: 'danger',
     })
     if (!ok) return
     txCategoriesCol.remove(cat.id)
     if (budgetsCol.get().some((b) => b.id === cat.id)) budgetsCol.remove(cat.id)
-    toast.success('已刪除分類')
+    toast.success(t('budget.deletedCatToast', { defaultValue: '已刪除分類' }))
   }
 
   const renderSection = (sectionKind: TxKind, title: string) => {
@@ -2346,7 +2365,7 @@ function CategoryManager({
       <div>
         <SectionTitle>{title}</SectionTitle>
         {list.length === 0 ? (
-          <p className="text-sm text-slate-500 dark:text-slate-400">下面加返個分類就得。</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400">{t('budget.emptyCatHint', { defaultValue: '下面加返個分類就得。' })}</p>
         ) : (
           <Card>
             <ul className="divide-y divide-slate-100 dark:divide-slate-700">
@@ -2364,10 +2383,10 @@ function CategoryManager({
                       </Badge>
                     )}
                     <span className="text-xs tabular-nums text-slate-400">
-                      {countByCat.get(c.id) ?? 0} 筆
+                      {t('budget.catEntries', { defaultValue: '{{count}} 筆', count: countByCat.get(c.id) ?? 0 })}
                     </span>
                     <IconButton
-                      label={`刪除分類 ${c.name}`}
+                      label={t('budget.deleteCatAriaLabel', { defaultValue: '刪除分類 {{name}}', name: c.name })}
                       tone="danger"
                       onClick={() => remove(c)}
                       className="sm:opacity-0 sm:transition sm:group-hover:opacity-100"
@@ -2386,35 +2405,35 @@ function CategoryManager({
 
   return (
     <div className="space-y-5">
-      {renderSection('expense', '支出分類')}
-      {renderSection('income', '收入分類')}
+      {renderSection('expense', t('budget.expenseCatsSection', { defaultValue: '支出分類' }))}
+      {renderSection('income', t('budget.incomeCatsSection', { defaultValue: '收入分類' }))}
 
       <Separator />
 
       {/* 新增分類 */}
       <Card className="space-y-3 border-accent/30 bg-accent-soft/40 p-4">
-        <SectionTitle>新增分類</SectionTitle>
+        <SectionTitle>{t('budget.addCategorySection', { defaultValue: '新增分類' })}</SectionTitle>
         <div className="flex flex-wrap items-end gap-2">
           <div className="min-w-[140px] flex-1">
-            <Field label="名稱">
+            <Field label={t('budget.catNameLabel', { defaultValue: '名稱' })}>
               <Input
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && add()}
-                placeholder="例如：保險"
+                placeholder={t('budget.catNamePlaceholder', { defaultValue: '例如：保險' })}
               />
             </Field>
           </div>
           <div className="w-28">
-            <Field label="類型">
+            <Field label={t('budget.catTypeLabel', { defaultValue: '類型' })}>
               <Select value={kind} onChange={(e) => setKind(e.target.value as TxKind)}>
-                <option value="expense">支出</option>
-                <option value="income">收入</option>
+                <option value="expense">{t('budget.catTypeExpense', { defaultValue: '支出' })}</option>
+                <option value="income">{t('budget.catTypeIncome', { defaultValue: '收入' })}</option>
               </Select>
             </Field>
           </div>
           <Button onClick={add} disabled={!name.trim()}>
-            新增
+            {t('budget.addCategoryBtn', { defaultValue: '新增' })}
           </Button>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -2424,7 +2443,7 @@ function CategoryManager({
               type="button"
               onClick={() => setIcon(choice)}
               aria-pressed={choice === icon}
-              aria-label={`揀 emoji ${choice}`}
+              aria-label={t('budget.pickEmojiAriaLabel', { defaultValue: '揀 emoji {{emoji}}', emoji: choice })}
               className={cx(
                 'flex h-9 w-9 items-center justify-center rounded-xl border text-lg transition focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
                 choice === icon

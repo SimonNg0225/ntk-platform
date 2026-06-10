@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { cx } from '../../../ui'
 import type { AreaCoverage } from './util'
 
@@ -17,6 +18,8 @@ export default function CoverageChart({
   onSelectArea?: (area: string) => void
   activeArea?: string
 }) {
+  const { t } = useTranslation()
+
   if (rows.length === 0) return null
 
   return (
@@ -50,7 +53,7 @@ export default function CoverageChart({
                   {r.area}
                 </span>
                 <span className="shrink-0 text-[10px] text-slate-400 dark:text-slate-500">
-                  {r.part === '必修' ? '必修' : '選修'}
+                  {r.part === '必修' ? t('lesson.coveragePartRequired', { defaultValue: '必修' }) : t('lesson.coveragePartElective', { defaultValue: '選修' })}
                 </span>
               </div>
               <span className="shrink-0 text-[11px] tabular-nums text-slate-400 dark:text-slate-500">
@@ -79,17 +82,17 @@ export default function CoverageChart({
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 px-2 pt-0.5 text-[10px] text-slate-400 dark:text-slate-500">
         <span className="inline-flex items-center gap-1">
           <span className="h-2 w-2 rounded-full bg-accent" />
-          已授課
+          {t('lesson.coverageLegendTaught', { defaultValue: '已授課' })}
         </span>
         <span className="inline-flex items-center gap-1">
           <span className="h-2 w-2 rounded-full bg-accent/35" />
-          已備課
+          {t('lesson.coverageLegendPlanned', { defaultValue: '已備課' })}
         </span>
         <span className="inline-flex items-center gap-1">
           <span className="h-2 w-2 rounded-full bg-slate-200 dark:bg-slate-600" />
-          全部課題
+          {t('lesson.coverageLegendAll', { defaultValue: '全部課題' })}
         </span>
-        <span className="ml-auto tabular-nums">數字：授 / 備 / 總</span>
+        <span className="ml-auto tabular-nums">{t('lesson.coverageLegendNumbers', { defaultValue: '數字：授 / 備 / 總' })}</span>
       </div>
     </div>
   )
