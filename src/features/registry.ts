@@ -52,6 +52,7 @@ const Attendance = lazyFeature(() => import('./work/Attendance'))
 const ParentComms = lazyFeature(() => import('./work/ParentComms'))
 const MeetingNotes = lazyFeature(() => import('./work/MeetingNotes'))
 const AdminDocs = lazyFeature(() => import('./work/adminDocs/AdminDocs'))
+const Scan = lazyFeature(() => import('./work/scan/Scan'))
 const DocDigest = lazyFeature(() => import('./work/docDigest/DocDigest'))
 const BudgetTracker = lazyFeature(() => import('./work/BudgetTracker'))
 const WorkDashboard = lazyFeature(() => import('./work/WorkDashboard'))
@@ -474,6 +475,17 @@ export const FEATURES: Feature[] = [
     icon: '📄',
     group: '行政',
     component: AdminDocs,
+    status: 'ready',
+  },
+  {
+    id: 'work-scan',
+    selfManagedHeader: true,
+    modes: ['work'],
+    name: '掃描 PDF',
+    description: '用鏡頭或上載相片，自動偵邊拉正、套掃描濾鏡，輸出可搜尋 PDF。',
+    icon: '📷',
+    group: '行政',
+    component: Scan,
     status: 'ready',
   },
   {

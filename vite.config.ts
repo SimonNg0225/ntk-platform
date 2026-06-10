@@ -139,6 +139,11 @@ export default defineConfig(({ mode }) => {
         registerType: 'prompt',
         injectRegister: false, // 改由 src/components/PwaUpdater.tsx 自行 registerSW（要 periodic update）
         includeAssets: ['favicon.svg', 'apple-touch-icon.png'],
+        workbox: {
+          // OpenCV.js（10MB+）係掃描功能用嘅，runtime 先 fetch `/vendor/opencv/opencv.js`，
+          // 唔應該（亦超過 2MiB 上限）入 precache manifest；排除佢免 build 報錯。
+          globIgnores: ['**/vendor/opencv/**'],
+        },
         manifest: {
           name: 'EziTeach 教學易 · 香港教師工作台',
           short_name: 'EziTeach',
