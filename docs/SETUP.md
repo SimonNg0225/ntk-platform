@@ -216,3 +216,5 @@ VITE_SUPABASE_ANON_KEY=...
 申請：https://www.pexels.com/api/
 
 .pptx 匯出純前端（PptxGenJS），無需任何設定／API key；撳「匯出 PPTX」即下載可編輯嘅 PowerPoint。
+
+圖片上載會喺瀏覽器自動縮細並內嵌入簡報（data URL），毋須額外雲端儲存設定。

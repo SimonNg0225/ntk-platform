@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Play, FileDown, Trash2, Presentation } from 'lucide-react'
+import { Play, FileDown, Trash2, Presentation, Pencil } from 'lucide-react'
 import { exportDeckPptx } from './pptx/export'
 import { Button, IconButton } from '../../../ui'
 import { useConfirm } from '../../../context/ConfirmContext'
@@ -11,7 +11,7 @@ import { slideDecksCol } from './store'
 import SlidePreview from './SlidePreview'
 import PresentMode from './PresentMode'
 
-export default function DeckView({ deck }: { deck: SlideDeck }) {
+export default function DeckView({ deck, onEdit }: { deck: SlideDeck; onEdit?: () => void }) {
   const { t } = useTranslation()
   const confirm = useConfirm()
   const toast = useToast()
@@ -42,6 +42,7 @@ export default function DeckView({ deck }: { deck: SlideDeck }) {
       <div className="flex items-center justify-between gap-2">
         <h3 className="truncate text-sm font-semibold">{deck.title}</h3>
         <div className="flex gap-1">
+          {onEdit && <Button size="sm" variant="secondary" icon={Pencil} onClick={onEdit}>{t('slides.edit', { defaultValue: '編輯' })}</Button>}
           <Button size="sm" icon={Play} onClick={() => setPresent(true)}>{t('slides.present', { defaultValue: '放映' })}</Button>
           <Button size="sm" variant="secondary" icon={FileDown} onClick={() => exportDeckPdf(deck)}>{t('slides.exportPdf', { defaultValue: '匯出 PDF' })}</Button>
           <Button size="sm" variant="secondary" icon={Presentation} disabled={exporting} onClick={() => void downloadPptx()}>

@@ -9,11 +9,13 @@ import { useCollection } from '../../lib/store'
 import { slideDecksCol } from './slides/store'
 import Generator from './slides/Generator'
 import DeckView from './slides/DeckView'
+import DeckEditor from './slides/DeckEditor'
 
 export default function Slides() {
   const { t } = useTranslation()
   const { user, configured, signInWithGoogle } = useAuth()
   const [tab, setTab] = useState<'gen' | 'mine'>('gen')
+  const [editId, setEditId] = useState<string | null>(null)
   const decks = useCollection(slideDecksCol)
 
   if (!isAIConfigured) {
@@ -22,6 +24,15 @@ export default function Slides() {
   if (!user) {
     return <EmptyState icon={Sparkles} title={t('slides.loginTitle', { defaultValue: '登入先可以生成簡報' })} hint={t('slides.loginHint', { defaultValue: 'AI 功能經你自己嘅 Supabase + Gemini 運作。' })}
       action={configured ? <Button onClick={() => void signInWithGoogle()}>{t('slides.loginBtn', { defaultValue: '用 Google 登入' })}</Button> : undefined} />
+  }
+
+  if (editId) {
+    const editDeck = decks.find((d) => d.id === editId)
+    if (!editDeck) {
+      setEditId(null)
+    } else {
+      return <DeckEditor deck={editDeck} onClose={() => setEditId(null)} />
+    }
   }
 
   return (
@@ -39,7 +50,7 @@ export default function Slides() {
         ? <Generator onCreated={() => setTab('mine')} />
         : decks.length === 0
           ? <p className="py-10 text-center text-sm text-slate-400">{t('slides.emptyMine', { defaultValue: '仲未有簡報，去左邊生成一份。' })}</p>
-          : <div className="space-y-8">{decks.map((d) => <DeckView key={d.id} deck={d} />)}</div>}
+          : <div className="space-y-8">{decks.map((d) => <DeckView key={d.id} deck={d} onEdit={() => setEditId(d.id)} />)}</div>}
     </div>
   )
 }
