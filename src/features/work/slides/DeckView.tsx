@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Play, FileDown, Trash2 } from 'lucide-react'
+import { Play, FileDown, Trash2, Presentation } from 'lucide-react'
+import { exportDeckPptx } from './pptx/export'
 import { Button, IconButton } from '../../../ui'
 import { useConfirm } from '../../../context/ConfirmContext'
 import { useToast } from '../../../context/ToastContext'
@@ -15,7 +16,19 @@ export default function DeckView({ deck }: { deck: SlideDeck }) {
   const confirm = useConfirm()
   const toast = useToast()
   const [present, setPresent] = useState(false)
+  const [exporting, setExporting] = useState(false)
   const theme = getTheme(deck.themeId)
+
+  const downloadPptx = async () => {
+    try {
+      setExporting(true)
+      await exportDeckPptx(deck, theme)
+    } catch {
+      toast.error(t('slides.exportFailed', { defaultValue: '匯出失敗，請再試' }))
+    } finally {
+      setExporting(false)
+    }
+  }
 
   const remove = async () => {
     if (await confirm({ title: t('slides.confirmDelete', { defaultValue: '刪除呢份簡報？' }), tone: 'danger' })) {
@@ -31,6 +44,9 @@ export default function DeckView({ deck }: { deck: SlideDeck }) {
         <div className="flex gap-1">
           <Button size="sm" icon={Play} onClick={() => setPresent(true)}>{t('slides.present', { defaultValue: '放映' })}</Button>
           <Button size="sm" variant="secondary" icon={FileDown} onClick={() => exportDeckPdf(deck)}>{t('slides.exportPdf', { defaultValue: '匯出 PDF' })}</Button>
+          <Button size="sm" variant="secondary" icon={Presentation} disabled={exporting} onClick={() => void downloadPptx()}>
+            {exporting ? t('slides.exportingPptx', { defaultValue: '匯出中…' }) : t('slides.exportPptx', { defaultValue: '匯出 PPTX' })}
+          </Button>
           <IconButton label={t('slides.delete', { defaultValue: '刪除' })} size="sm" onClick={() => void remove()}><Trash2 size={15} /></IconButton>
         </div>
       </div>
