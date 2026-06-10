@@ -214,3 +214,5 @@ VITE_SUPABASE_ANON_KEY=...
 
 未設定時，圖庫搜尋會自動停用（仍可用內建插圖／上載圖片）。
 申請：https://www.pexels.com/api/
+
+.pptx 匯出純前端（PptxGenJS），無需任何設定／API key；撳「匯出 PPTX」即下載可編輯嘅 PowerPoint。
