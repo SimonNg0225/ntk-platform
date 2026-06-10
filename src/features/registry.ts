@@ -34,6 +34,7 @@ const ClassesWidget = lazyFeature(() => import('./work/ClassesWidget'))
 const CurriculumProgress = lazyFeature(() => import('./work/CurriculumProgress'))
 const QuestionBank = lazyFeature(() => import('./work/QuestionBank'))
 const MaterialGen = lazyFeature(() => import('./work/MaterialGen'))
+const Slides = lazyFeature(() => import('./work/Slides'))
 const Grading = lazyFeature(() => import('./work/Grading'))
 const ResourceLibrary = lazyFeature(() => import('./work/ResourceLibrary'))
 const Gradebook = lazyFeature(() => import('./work/Gradebook'))
@@ -278,6 +279,17 @@ export const FEATURES: Feature[] = [
     icon: '🏭',
     group: '教學',
     component: MaterialGen,
+    status: 'ready',
+  },
+  {
+    id: 'work-slides',
+    selfManagedHeader: true,
+    modes: ['work'],
+    name: '教學簡報',
+    description: 'AI 由課題生成簡報，多個有個性樣板，可放映同匯出。',
+    icon: '🖼️',
+    group: '教學',
+    component: Slides,
     status: 'ready',
   },
   {

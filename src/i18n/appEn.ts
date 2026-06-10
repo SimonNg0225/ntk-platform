@@ -100,6 +100,7 @@ export const appEn = {
     'work-timetable': { name: 'Timetable', desc: 'Your weekly teaching timetable.' },
     'work-questions': { name: 'Question bank', desc: 'Store questions by topic / type / difficulty.' },
     'work-generate': { name: 'Material generator', desc: 'AI-generate MC / short / case / long questions, exercises and papers straight into the bank.' },
+    'work-slides': { name: 'Teaching slides', desc: 'AI-generate teaching slide decks from a topic, with distinctive templates; present and export.' },
     'work-resources': { name: 'Resource library', desc: 'Save handouts, past papers and material links.' },
     'work-classes': { name: 'Class management', desc: 'Record the classes and students you teach.' },
     'work-gradebook': { name: 'Gradebook', desc: 'Record assessment scores, averages and weaknesses.' },
