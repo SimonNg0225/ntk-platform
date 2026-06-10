@@ -75,13 +75,48 @@ export async function downscaleDataUrl(dataUrl: string): Promise<{ dataUrl: stri
 // 偵測用嘅工作解析度（細啲快好多，搵大張紙嘅四邊形夠用）。
 const DETECT_MAX = 900
 
+/** 由一個 contour 抽四角：approxPolyDP →（唔係四點）convex hull →（再唔係）minAreaRect。 */
+function quadFromContour(cv: any, cnt: any): Pt[] | null {
+  const read = (m: any): Pt[] => {
+    const d = m.data32S as Int32Array
+    return [
+      { x: d[0], y: d[1] }, { x: d[2], y: d[3] },
+      { x: d[4], y: d[5] }, { x: d[6], y: d[7] },
+    ]
+  }
+  // 1) 直接 approxPolyDP（理想：清晰四邊形）
+  const approx = new cv.Mat()
+  cv.approxPolyDP(cnt, approx, 0.02 * cv.arcLength(cnt, true), true)
+  let pts: Pt[] | null = approx.rows === 4 ? read(approx) : null
+  approx.delete()
+  if (pts) return pts
+  // 2) 凸包再 approx（邊有缺口時補返）
+  const hull = new cv.Mat()
+  cv.convexHull(cnt, hull, false, true)
+  const approx2 = new cv.Mat()
+  cv.approxPolyDP(hull, approx2, 0.02 * cv.arcLength(hull, true), true)
+  if (approx2.rows === 4) pts = read(approx2)
+  approx2.delete(); hull.delete()
+  if (pts) return pts
+  // 3) minAreaRect 最小旋轉外框（終極 fallback：至少框到最大那塊）
+  try {
+    const rr = cv.minAreaRect(cnt)
+    const v = cv.RotatedRect.points(rr)
+    return [
+      { x: v[0].x, y: v[0].y }, { x: v[1].x, y: v[1].y },
+      { x: v[2].x, y: v[2].y }, { x: v[3].x, y: v[3].y },
+    ]
+  } catch {
+    return null
+  }
+}
+
 /**
  * 自動偵文件四角，回**正規化**座標（0..1，相對圖片）；偵唔到 / 結果離譜回 null。
  *
- * 用標準 OpenCV 文件偵測管線（比 jscanify getCornerPoints 準好多，
- * 傾斜 / 唔填滿畫面都食得到）：
- *   灰階 → 高斯模糊 → Canny 邊緣 → 膨脹補口 → findContours
- *   → 對每個 contour approxPolyDP，揀「四點 + 凸 + 面積最大」嗰個做文件。
+ * Robust 文件偵測（應付低對比 / light-on-light）：
+ *   灰階 → 模糊 → Otsu 自適應 Canny → 形態學 close 駁口 → findContours
+ *   → 揀面積最大（≥15%）嘅 contour → quadFromContour（approx/hull/minAreaRect）。
  * 回正規化座標（而非像素）→ caller 唔使再除尺寸（避免 naturalWidth race）。
  */
 export async function detectCorners(dataUrl: string): Promise<Corners | null> {
@@ -100,40 +135,34 @@ export async function detectCorners(dataUrl: string): Promise<Corners | null> {
     canvas.getContext('2d')!.drawImage(img, 0, 0, dw, dh)
 
     const src = cv.imread(canvas)
-    const gray = new cv.Mat(), blur = new cv.Mat(), edges = new cv.Mat()
+    const gray = new cv.Mat(), blur = new cv.Mat(), edges = new cv.Mat(), otsuTmp = new cv.Mat()
     const contours = new cv.MatVector(), hier = new cv.Mat()
     try {
       cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY)
       cv.GaussianBlur(gray, blur, new cv.Size(5, 5), 0)
-      cv.Canny(blur, edges, 75, 200)
-      const ker = cv.Mat.ones(3, 3, cv.CV_8U)
-      cv.dilate(edges, edges, ker)
+      // Otsu 計門檻 → Canny 跟對比自動調（捉得到淡邊）。
+      const otsu = cv.threshold(blur, otsuTmp, 0, 255, cv.THRESH_BINARY + cv.THRESH_OTSU)
+      cv.Canny(blur, edges, Math.max(10, otsu * 0.5), otsu)
+      // 形態學 close 駁返斷咗嘅邊（5×5）。
+      const ker = cv.getStructuringElement(cv.MORPH_RECT, new cv.Size(5, 5))
+      cv.morphologyEx(edges, edges, cv.MORPH_CLOSE, ker)
       ker.delete()
       cv.findContours(edges, contours, hier, cv.RETR_LIST, cv.CHAIN_APPROX_SIMPLE)
 
-      // 搵「四點 + 凸 + 面積最大（且 ≥ 偵測圖 15%）」嘅 contour 做文件外框。
-      let best: Pt[] | null = null
-      let bestArea = 0
-      const detArea = dw * dh
+      // 揀面積最大（且 ≥ 偵測圖 15%）嘅 contour 做文件外框。
+      let bestIdx = -1
+      let bestArea = dw * dh * 0.15
       for (let i = 0; i < contours.size(); i++) {
         const cnt = contours.get(i)
-        const approx = new cv.Mat()
-        const peri = cv.arcLength(cnt, true)
-        cv.approxPolyDP(cnt, approx, 0.02 * peri, true)
-        if (approx.rows === 4 && cv.isContourConvex(approx)) {
-          const area = cv.contourArea(approx)
-          if (area > bestArea && area > detArea * 0.15) {
-            bestArea = area
-            const d = approx.data32S as Int32Array
-            best = [
-              { x: d[0], y: d[1] }, { x: d[2], y: d[3] },
-              { x: d[4], y: d[5] }, { x: d[6], y: d[7] },
-            ]
-          }
-        }
-        approx.delete()
+        const a = cv.contourArea(cnt)
         cnt.delete()
+        if (a > bestArea) { bestArea = a; bestIdx = i }
       }
+      if (bestIdx < 0) return null
+
+      const cnt = contours.get(bestIdx)
+      const best = quadFromContour(cv, cnt)
+      cnt.delete()
       if (!best) return null
 
       // 縮放返原尺寸 → 排序四角 → 合理性驗證 → 正規化。
@@ -143,7 +172,7 @@ export async function detectCorners(dataUrl: string): Promise<Corners | null> {
       const norm = (p: Pt): Pt => ({ x: p.x / W, y: p.y / H })
       return { tl: norm(q.tl), tr: norm(q.tr), br: norm(q.br), bl: norm(q.bl) }
     } finally {
-      src.delete(); gray.delete(); blur.delete(); edges.delete()
+      src.delete(); gray.delete(); blur.delete(); edges.delete(); otsuTmp.delete()
       contours.delete(); hier.delete()
     }
   } catch {

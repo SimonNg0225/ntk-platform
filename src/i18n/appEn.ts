@@ -206,6 +206,8 @@ export const appEn = {
     applying: 'Processing…',
     redetect: 'Re-detect',
     detecting: 'Detecting…',
+    detectOkHint: 'Corners auto-detected · drag the white dots to fine-tune (zooms in)',
+    detectNoneHint: 'Paper edge not found · drag the white corner dots to frame it (zooms while dragging)',
     fullPage: 'Full page',
     lowResHint: 'Low resolution — try "Upload photo" for a sharper scan',
     addPage: 'Add page',

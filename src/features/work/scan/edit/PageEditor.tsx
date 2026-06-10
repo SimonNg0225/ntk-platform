@@ -17,13 +17,18 @@ export default function PageEditor({
   const [filter, setFilter] = useState<Filter>(page.filter)
   const [busy, setBusy] = useState(false)
   const [detecting, setDetecting] = useState(false)
+  const [detectStatus, setDetectStatus] = useState<'idle' | 'ok' | 'none'>('idle')
 
   // detectCorners 回正規化座標（0..1）→ 直接 set，唔使再除尺寸（避免 race）。
   const runDetect = useCallback(() => {
     setDetecting(true)
     let alive = true
     detectCorners(page.rawDataUrl)
-      .then((c) => { if (alive && c) setCorners(c) })
+      .then((c) => {
+        if (!alive) return
+        if (c) { setCorners(c); setDetectStatus('ok') }
+        else setDetectStatus('none') // 偵唔到 → 留全頁，等用戶手動拖
+      })
       .finally(() => { if (alive) setDetecting(false) })
     return () => { alive = false }
   }, [page.rawDataUrl])
@@ -64,8 +69,16 @@ export default function PageEditor({
     <div className="space-y-4">
       <div className="relative mx-auto max-w-md overflow-hidden rounded-xl bg-slate-100 dark:bg-slate-800">
         <img src={page.rawDataUrl} alt="" className="block w-full" />
-        <CornerOverlay corners={corners} onChange={setCorners} />
+        <CornerOverlay corners={corners} onChange={setCorners} src={page.rawDataUrl} />
       </div>
+
+      <p className="text-center text-xs text-fg-muted">
+        {detecting
+          ? t('scan.detecting', { defaultValue: '偵測中…' })
+          : detectStatus === 'ok'
+            ? t('scan.detectOkHint', { defaultValue: '已自動偵測四角 · 拖白點微調（會放大）' })
+            : t('scan.detectNoneHint', { defaultValue: '偵唔到紙邊 · 拖四角白點手動框（拖時會放大對準）' })}
+      </p>
 
       {/* 四角偵測救援 + 來源解析度（診斷） */}
       <div className="flex flex-wrap items-center justify-between gap-2">
