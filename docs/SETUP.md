@@ -203,3 +203,14 @@ VITE_SUPABASE_ANON_KEY=...
 - **scope** 用 `drive.readonly`（敏感）→ 所以保持 OAuth「測試中」模式（你 + 測試使用者用得）。
 - token 約 1 小時，過期撳返「連接」即可。
 - client ID 係**可以公開**嘅，放前端無問題（OAuth token flow 唔涉及 secret）。
+
+---
+
+### 教學簡報 — 圖庫搜尋（選用）
+
+簡報生成可用 Pexels 免費圖庫搜圖。喺環境變數加：
+
+    VITE_PEXELS_API_KEY=你嘅_pexels_key
+
+未設定時，圖庫搜尋會自動停用（仍可用內建插圖／上載圖片）。
+申請：https://www.pexels.com/api/
