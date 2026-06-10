@@ -10,9 +10,20 @@
 // ============================================================
 
 import { supabase, isSupabaseConfigured } from './supabase'
-import { safeFilename } from './export/file'
 
 export const SCAN_BUCKET = 'scans'
+
+// Supabase Storage 物件 key 唔收非 ASCII（中文 → "Invalid key"）。
+// 將檔名轉做 ASCII-safe 片段；全部唔合 → fallback 'scan'。
+// （人類可讀中文標題照樣存喺資源庫 Resource.title，唔靠 storage key。）
+function asciiKeySegment(name: string): string {
+  const base = name
+    .replace(/\.pdf$/i, '')
+    .replace(/[^A-Za-z0-9._-]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 50)
+  return base || 'scan'
+}
 
 // 簽名連結有效期：1 年（夠長，當「永久」用；過期可日後重簽）。
 const SIGNED_URL_TTL = 60 * 60 * 24 * 365
@@ -42,8 +53,7 @@ export async function uploadScanPdf(
   if (!supabase) throw new Error('未接雲端')
   if (!userId) throw new Error('未登入')
 
-  const safe = safeFilename(filename.replace(/\.pdf$/i, ''), 'pdf')
-  const path = `${userId}/${Date.now()}-${safe}`
+  const path = `${userId}/${Date.now()}-${asciiKeySegment(filename)}.pdf`
 
   const up = await supabase.storage.from(SCAN_BUCKET).upload(path, blob, {
     contentType: 'application/pdf',

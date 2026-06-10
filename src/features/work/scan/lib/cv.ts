@@ -184,12 +184,19 @@ export async function warpEnhance(dataUrl: string, corners: Corners | null, filt
   const gray = new cv.Mat()
   cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY)
   let dst = gray
+  let png = false
   if (filter === 'bw') {
     dst = new cv.Mat()
-    cv.adaptiveThreshold(gray, dst, 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY, 15, 10)
+    // adaptiveThreshold 鄰域隨圖大細放大（高解析度用大 block，減少筆畫內雜訊）；必須奇數。
+    const minEdge = Math.min(outCanvas.width, outCanvas.height)
+    let bs = Math.round(minEdge / 45)
+    if (bs % 2 === 0) bs += 1
+    bs = Math.max(15, Math.min(41, bs))
+    cv.adaptiveThreshold(gray, dst, 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY, bs, 12)
+    png = true // 二值圖用 PNG（無損）；JPEG 會喺黑白硬邊整出鋸齒/糊化，似低 DPI。
   }
   const show = document.createElement('canvas')
   cv.imshow(show, dst)
   src.delete(); gray.delete(); if (dst !== gray) dst.delete()
-  return show.toDataURL('image/jpeg', JPEG_Q)
+  return png ? show.toDataURL('image/png') : show.toDataURL('image/jpeg', JPEG_Q)
 }

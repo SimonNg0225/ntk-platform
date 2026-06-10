@@ -69,8 +69,12 @@ export async function buildScanPdf(pages: ScanPage[], opts: BuildOptions): Promi
     const { w: imgW, h: imgH } = await imgDims(p.processedDataUrl)
     const dims = pageDimsFromImage(imgW, imgH)
     const page = doc.addPage([dims.w, dims.h])
-    const jpg = await doc.embedJpg(dataUrlToBytes(p.processedDataUrl))
-    page.drawImage(jpg, { x: 0, y: 0, width: dims.w, height: dims.h })
+    // 黑白濾鏡輸出 PNG（無損）；彩色/灰階係 JPEG。按格式 embed。
+    const bytes = dataUrlToBytes(p.processedDataUrl)
+    const embedded = p.processedDataUrl.startsWith('data:image/png')
+      ? await doc.embedPng(bytes)
+      : await doc.embedJpg(bytes)
+    page.drawImage(embedded, { x: 0, y: 0, width: dims.w, height: dims.h })
 
     if (opts.ocr && font) {
       try {
