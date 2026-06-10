@@ -171,6 +171,43 @@ describe('parseDeck', () => {
     expect(d.slides[0].quote).toEqual({ text: '知之為知之，不知為不知，是知也。', attribution: '《論語》' })
   })
 
+  it('解析 cards 版式（desc 選填）', () => {
+    const d = parseDeck(
+      wrap([
+        {
+          title: '三件工具',
+          bullets: ['工具一', '工具二', '工具三'],
+          layout: 'cards',
+          cards: [
+            { title: '會計等式', desc: '即時診斷交易影響' },
+            { title: '試算表偵錯' },
+            { title: '概念教練', desc: '逐個概念拆解' },
+          ],
+        },
+      ]),
+      'X',
+    )
+    expect(d.slides[0].layout).toBe('cards')
+    expect(d.slides[0].cards).toHaveLength(3)
+    expect(d.slides[0].cards?.[1].desc).toBeUndefined()
+  })
+
+  it('解析每版 subtitle 同 takeaway', () => {
+    const d = parseDeck(
+      wrap([
+        {
+          title: '會計等式練習場',
+          subtitle: 'Accounting Equation Playground',
+          bullets: ['判斷增減', '即時對照'],
+          takeaway: '資產 = 負債 + 資本，永遠平衡。',
+        },
+      ]),
+      'X',
+    )
+    expect(d.slides[0].subtitle).toBe('Accounting Equation Playground')
+    expect(d.slides[0].takeaway).toBe('資產 = 負債 + 資本，永遠平衡。')
+  })
+
   it('顯式 section 會清空 bullets', () => {
     const d = parseDeck(
       wrap([{ title: '第二章 均衡', bullets: ['呢啲應該被清走'], layout: 'section' }]),
@@ -239,9 +276,40 @@ describe('parseDeck', () => {
     expect(d.slides[0].layout).toBeUndefined()
   })
 
+  it('cards 得 1 張回退要點版', () => {
+    const d = parseDeck(
+      wrap([{ title: 'A', bullets: ['x'], layout: 'cards', cards: [{ title: '一張卡' }] }]),
+      'X',
+    )
+    expect(d.slides[0].layout).toBeUndefined()
+    expect(d.slides[0].cards).toBeUndefined()
+  })
+
+  it('cards 7 張回退要點版', () => {
+    const seven = Array.from({ length: 7 }, (_, i) => ({ title: `卡${i}` }))
+    const d = parseDeck(wrap([{ title: 'A', bullets: ['x'], layout: 'cards', cards: seven }]), 'X')
+    expect(d.slides[0].layout).toBeUndefined()
+    expect(d.slides[0].cards).toBeUndefined()
+  })
+
   it('imageQuery 非字串會被剷走', () => {
     const d = parseDeck(wrap([{ title: 'A', bullets: ['x'], imageQuery: 42 }]), 'X')
     expect(d.slides[0].imageQuery).toBeUndefined()
+  })
+
+  it('subtitle／takeaway 非字串或空白會被剷走', () => {
+    const d = parseDeck(
+      wrap([{ title: 'A', bullets: ['x'], subtitle: 7, takeaway: '   ' }]),
+      'X',
+    )
+    expect(d.slides[0].subtitle).toBeUndefined()
+    expect(d.slides[0].takeaway).toBeUndefined()
+  })
+
+  it('takeaway 超長會截斷', () => {
+    const d = parseDeck(wrap([{ title: 'A', bullets: ['x'], takeaway: '長'.repeat(60) }]), 'X')
+    expect(d.slides[0].takeaway).toHaveLength(46)
+    expect(d.slides[0].takeaway?.endsWith('…')).toBe(true)
   })
 
   // ───────── 截長 + 搜尋詞清理 ─────────

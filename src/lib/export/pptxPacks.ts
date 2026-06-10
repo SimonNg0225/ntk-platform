@@ -14,7 +14,7 @@ import type PptxGenJS from 'pptxgenjs'
 import type { Deck, SlideLayout } from './types'
 import { mix, estimateLines, fitTitle, clampText } from './pptxText'
 
-export type SlidePackId = 'inkwell' | 'celadon' | 'dawn' | 'nocturne' | 'grid'
+export type SlidePackId = 'inkwell' | 'celadon' | 'dawn' | 'nocturne' | 'grid' | 'seminar'
 
 /** 嵌入簡報嘅相（由 stock 層提供；width/height 係真實 pixel，計裁切比例必需） */
 export interface SlideImage {
@@ -42,6 +42,7 @@ export type MarkerSpec =
   | { kind: 'circle'; size: number; linePt: number; color: string; indent: number }
   | { kind: 'roundSquare'; size: number; radius: number; color: string; indent: number }
   | { kind: 'square'; size: number; color: string; indent: number }
+  | { kind: 'dot'; size: number; color: string; indent: number } // 講堂：實心圓點
   | { kind: 'dash'; color: string; indent: number } // 夜讀：金「—」文字 run
 
 export type TileStyle = 'hairline' | 'tintCard' | 'whiteOnTint' | 'panel' | 'cellBorder'
@@ -66,9 +67,13 @@ export type SplitPhotoStyle = 'bleedHair' | 'circle' | 'bleedMotif' | 'bleedScri
 /** 內容框 render 上下文 */
 export interface FrameCtx {
   title: string
+  /** 版題下短副題（多數係英文對照） */
+  subtitle?: string
   kicker: string
   /** 真實版號（封面 = 1） */
   pageNo: number
+  /** 全 deck 總版數（連封面）— 分數頁碼「13 / 23」用 */
+  pageTotal: number
   brand: string
   layout: SlideLayout
   /** split 配圖版 — 影響題闊、右上角飾物同頁碼位置 */
@@ -98,6 +103,8 @@ export interface Pack {
   displayFont: string
   displayItalic: boolean
   pageNoColor: string
+  /** true = 頁碼用「13 / 23」分數格式（講堂） */
+  pageNoFraction?: boolean
   chartColors: string[]
   chartGridColor: string
   /** bullets 字級階梯：n=2 / 3 / 4 / 5 / ≥6 */
@@ -226,6 +233,8 @@ interface ScaffoldOpts {
   titleY: number
   /** false = 唔畫 header 髮線（曙光） */
   hairline: boolean
+  /** 整體下移（講堂 header band 佔咗頂部） */
+  offset?: number
 }
 
 interface ScaffoldOut {
@@ -262,10 +271,24 @@ function scaffold(slide: PptxGenJS.Slide, p: Pack, ctx: FrameCtx, opt: ScaffoldO
     color: p.ink,
     lineSpacingMultiple: 1.1,
   })
+  const off = opt.offset ?? 0
   const shift = lines === 2 ? 0.35 : 0
+  // 副題（英文對照）：版題下細字，body 順延
+  let subShift = 0
+  if (ctx.subtitle) {
+    subShift = lines === 2 ? 0.42 : 0.3
+    tx(slide, clampText(ctx.subtitle, 48), {
+      x: 0.9,
+      y: opt.titleY + (lines === 2 ? 1.3 : 0.62),
+      w: titleW,
+      h: 0.32,
+      fontSize: 12,
+      color: p.inkSoft,
+    })
+  }
   const contentW = ctx.hasPhoto ? 6.6 : 11.53
-  if (opt.hairline) hline(slide, 0.9, 1.95 + shift, contentW, p.hair)
-  const bodyY = 2.25 + shift
+  if (opt.hairline) hline(slide, 0.9, 1.95 + off + shift + subShift, contentW, p.hair)
+  const bodyY = 2.25 + off + shift + subShift
   return {
     body: { x: 0.9, y: bodyY, w: ctx.hasPhoto ? 6.2 : 11.53, h: 6.55 - bodyY },
     shift,
@@ -277,10 +300,11 @@ function scaffold(slide: PptxGenJS.Slide, p: Pack, ctx: FrameCtx, opt: ScaffoldO
 function drawFooter(slide: PptxGenJS.Slide, p: Pack, ctx: FrameCtx): void {
   tx(slide, ctx.brand, { x: 0.9, y: 7.05, w: 5, h: 0.3, fontSize: 8, color: p.faint })
   const movePage = ctx.hasPhoto && p.splitPhoto !== 'circle'
-  tx(slide, pad2(ctx.pageNo), {
-    x: movePage ? 6.55 : 11.63,
+  const label = p.pageNoFraction ? `${ctx.pageNo} / ${ctx.pageTotal}` : pad2(ctx.pageNo)
+  tx(slide, label, {
+    x: movePage ? 6.15 : 11.23,
     y: 7.03,
-    w: 0.8,
+    w: 1.2,
     h: 0.3,
     fontSize: 9,
     align: 'right',
@@ -700,9 +724,119 @@ const grid: Pack = {
   },
 }
 
+// ============================================================
+//  講堂 seminar — 研討發佈級深藍金（參照 EDB sharing deck 風格）
+//  · header band：深藍頂帶 + 金線（running header，雙語 microcopy）
+//  · 雙語層次：中文大題 + 英文副題（subtitle）係本 pack 嘅靈魂
+//  · 章節：全藍 + 右上超大 ghost 數字；頁碼「13 / 23」分數格式
+// ============================================================
+
+const SEM = {
+  ink: '14283C',
+  soft: '5B6B7C',
+  faint: '93A1B0',
+  hair: 'D9E1E8',
+  navy: '0A2C51', // header／包底帶
+  coverBg: '16395E',
+  accent: '155E74', // teal kicker／marker
+  gold: 'B08C3E',
+  panel: 'EBF3F5', // 冰青 callout
+}
+
+/** 講堂 header band：深藍頂帶 + 金線 + 雙語 microcopy */
+function seminarHeaderBand(slide: PptxGenJS.Slide, brand: string): void {
+  slide.addShape('rect', { x: 0, y: 0, w: 13.33, h: 0.42, fill: { color: SEM.navy }, line: { type: 'none' } })
+  slide.addShape('rect', { x: 0, y: 0.42, w: 13.33, h: 0.024, fill: { color: SEM.gold }, line: { type: 'none' } })
+  tx(slide, brand.toUpperCase(), { x: 0.9, y: 0.1, w: 6, h: 0.26, fontSize: 8, color: 'FFFFFF', charSpacing: 2, bold: true })
+  tx(slide, '教學簡報 · TEACHING DECK', { x: 7.43, y: 0.1, w: 5, h: 0.26, fontSize: 8, color: 'A9BDD1', charSpacing: 1, align: 'right' })
+}
+
+const seminar: Pack = {
+  id: 'seminar',
+  name: '講堂',
+  hint: '研討發佈 · 深藍金',
+  swatches: ['#0A2C51', '#B08C3E', '#EBF3F5'],
+  dark: false,
+  bg: 'FFFFFF',
+  ink: SEM.ink,
+  inkSoft: SEM.soft,
+  faint: SEM.faint,
+  hair: SEM.hair,
+  accent: SEM.accent,
+  statColor: SEM.navy,
+  panel: SEM.panel,
+  cardRadius: 0.05,
+  displayFont: 'Arial',
+  displayItalic: false,
+  pageNoColor: SEM.soft,
+  pageNoFraction: true,
+  chartColors: ['0A2C51', '155E74', 'B08C3E', '8FA3B5'],
+  chartGridColor: SEM.hair,
+  bulletPt: [18, 17, 16, 16, 15],
+  titlePt: 30,
+  marker: { kind: 'dot', size: 0.09, color: SEM.accent, indent: 0.3 },
+  tileStyle: 'hairline',
+  compareStyle: 'panels',
+  stepNode: { kind: 'circleOutline', size: 0.34, color: SEM.accent, numColor: SEM.accent },
+  quoteMark: { kind: 'glyph', color: SEM.gold },
+  splitPhoto: 'bleedHair',
+
+  cover(slide, deck, brand, img) {
+    slide.background = { color: SEM.coverBg }
+    if (img) {
+      addCoverImage(slide, img, { x: 0, y: 0, w: 13.33, h: 7.5 })
+      // 深藍 scrim 保白字（shape fill transparency 正常 work）
+      slide.addShape('rect', { x: 0, y: 0, w: 13.33, h: 7.5, fill: { color: SEM.coverBg, transparency: 28 }, line: { type: 'none' } })
+    }
+    // 金短線 + kicker
+    slide.addShape('rect', { x: 0.9, y: 0.82, w: 1.1, h: 0.03, fill: { color: SEM.gold }, line: { type: 'none' } })
+    tx(slide, 'TEACHING DECK · 教學簡報', { x: 0.9, y: 1.0, w: 8, h: 0.3, fontSize: 10, color: SEM.gold, charSpacing: 4, bold: true })
+    const fit = fitTitle(deck.title, 'cover')
+    tx(slide, deck.title, { x: 0.9, y: 2.45, w: 11.4, h: 2.0, fontSize: fit.fontPt, bold: true, color: 'FFFFFF', lineSpacingMultiple: 1.08, fit: 'shrink' })
+    if (deck.subtitle) {
+      tx(slide, deck.subtitle, { x: 0.9, y: 4.55, w: 10.5, h: 0.5, fontSize: 16, color: 'C7D3DF' })
+    }
+    // 底部 meta block（研討會式：金髮線 + 日期／版數／品牌兩行）
+    slide.addShape('rect', { x: 0.9, y: 6.18, w: 1.1, h: 0.024, fill: { color: SEM.gold }, line: { type: 'none' } })
+    tx(slide, `${dateLabel()} ｜ 共 ${deck.slides.length + 1} 版`, { x: 0.9, y: 6.38, w: 8, h: 0.3, fontSize: 10, color: 'C7D3DF' })
+    tx(slide, brand, { x: 0.9, y: 6.74, w: 8, h: 0.3, fontSize: 9, color: '8FA3B5' })
+    if (img?.credit) {
+      tx(slide, img.credit, { x: 8.93, y: 7.06, w: 3.9, h: 0.26, fontSize: 8, color: '8FA3B5', align: 'right' })
+    }
+  },
+
+  section(slide, no, title) {
+    slide.background = { color: SEM.navy }
+    // 右上超大 ghost 數字（研討 deck 標誌）
+    tx(slide, pad2(no), {
+      x: 6.9,
+      y: 0.45,
+      w: 6,
+      h: 3.2,
+      fontSize: 170,
+      bold: true,
+      color: mix('FFFFFF', SEM.navy, 0.14),
+      fontFace: 'Arial',
+      align: 'right',
+    })
+    slide.addShape('rect', { x: 0.9, y: 3.95, w: 1.1, h: 0.03, fill: { color: SEM.gold }, line: { type: 'none' } })
+    tx(slide, `SECTION ${sectionWord(no)}`, { x: 0.9, y: 4.12, w: 6, h: 0.3, fontSize: 10, color: SEM.gold, charSpacing: 4, bold: true })
+    tx(slide, title, { x: 0.9, y: 4.55, w: 11.2, h: 1.4, fontSize: 32, bold: true, color: 'FFFFFF', lineSpacingMultiple: 1.08 })
+  },
+
+  contentFrame(slide, ctx) {
+    slide.background = { color: 'FFFFFF' }
+    seminarHeaderBand(slide, ctx.brand)
+    const { body } = scaffold(slide, seminar, ctx, { kickerY: 0.85, titleY: 1.15, hairline: true, offset: 0.25 })
+    hline(slide, 0.9, 6.92, 11.53, SEM.hair)
+    drawFooter(slide, seminar, ctx)
+    return body
+  },
+}
+
 // ───────── 滙出 ─────────
 
-export const PACKS: Record<SlidePackId, Pack> = { inkwell, celadon, dawn, nocturne, grid }
+export const PACKS: Record<SlidePackId, Pack> = { inkwell, celadon, dawn, nocturne, grid, seminar }
 
 /** 揀選 UI 排序（墨韻為預設行先） */
-export const PACK_LIST: Pack[] = [inkwell, celadon, dawn, nocturne, grid]
+export const PACK_LIST: Pack[] = [inkwell, celadon, dawn, nocturne, grid, seminar]

@@ -101,6 +101,15 @@ function drawRows(slide: PptxGenJS.Slide, pack: Pack, items: string[], o: RowOpt
         fill: { color: m.color },
         line: { type: 'none' },
       })
+    } else if (m.kind === 'dot') {
+      slide.addShape('ellipse', {
+        x: o.x + 0.02,
+        y: y + (lineH - m.size) / 2,
+        w: m.size,
+        h: m.size,
+        fill: { color: m.color },
+        line: { type: 'none' },
+      })
     } else {
       slide.addShape('rect', {
         x: o.x + 0.02,
@@ -536,6 +545,93 @@ export function renderSteps(slide: PptxGenJS.Slide, body: Rect, pack: Pack, s: S
         fit: 'shrink',
       })
     }
+  })
+}
+
+// ───────── cards（2-6 張並列概念卡）─────────
+
+export function renderCards(slide: PptxGenJS.Slide, body: Rect, pack: Pack, s: Slide): void {
+  const items = (s.cards ?? []).slice(0, 6)
+  if (items.length < 2) return
+  const n = items.length
+  const cols = n <= 3 ? n : n === 4 ? 2 : 3
+  const rows = Math.ceil(n / cols)
+  const gutter = 0.25
+  const cardW = (body.w - gutter * (cols - 1)) / cols
+  const cardH = Math.min(rows === 1 ? 3.2 : 2.05, (body.h - gutter * (rows - 1)) / rows)
+  const top = body.y + 0.1
+  // 邊框卡（白底 + 髮線框）定 tint 卡，跟 pack 系統行
+  const bordered = pack.tileStyle === 'hairline' || pack.tileStyle === 'cellBorder'
+
+  items.forEach((card, i) => {
+    const cx = body.x + (i % cols) * (cardW + gutter)
+    const cy = top + Math.floor(i / cols) * (cardH + gutter)
+    if (bordered) {
+      slide.addShape('rect', { x: cx, y: cy, w: cardW, h: cardH, fill: { color: pack.bg }, line: { color: pack.hair, width: 0.75 } })
+    } else {
+      slide.addShape('roundRect', { x: cx, y: cy, w: cardW, h: cardH, rectRadius: pack.cardRadius, fill: { color: pack.panel }, line: { type: 'none' } })
+    }
+    // accent 頂邊（研討 deck 卡片標誌）
+    slide.addShape('rect', { x: cx, y: cy, w: cardW, h: 0.035, fill: { color: pack.accent }, line: { type: 'none' } })
+    const inset = 0.22
+    tx(slide, clampText(card.title, 12), {
+      x: cx + inset,
+      y: cy + 0.2,
+      w: cardW - inset * 2,
+      h: 0.55,
+      fontSize: 16,
+      bold: true,
+      color: pack.ink,
+      lineSpacingMultiple: 1.15,
+    })
+    if (card.desc) {
+      tx(slide, clampText(card.desc, 36), {
+        x: cx + inset,
+        y: cy + 0.78,
+        w: cardW - inset * 2,
+        h: cardH - 0.95,
+        fontSize: 12,
+        color: pack.inkSoft,
+        lineSpacingMultiple: 1.3,
+        fit: 'shrink',
+      })
+    }
+  })
+}
+
+// ───────── takeaway（版底包底帶）─────────
+
+export function renderTakeaway(slide: PptxGenJS.Slide, pack: Pack, text: string, band: Rect): void {
+  if (pack.id === 'seminar' || pack.dark) {
+    // 深色實帶 + 白字（研討 deck「包底」）
+    const fill = pack.id === 'seminar' ? '0A2C51' : pack.panel
+    slide.addShape('rect', { x: band.x, y: band.y, w: band.w, h: band.h, fill: { color: fill }, line: { type: 'none' } })
+    tx(slide, clampText(text, 46), {
+      x: band.x + 0.25,
+      y: band.y,
+      w: band.w - 0.5,
+      h: band.h,
+      fontSize: 13,
+      bold: true,
+      color: pack.dark && pack.id !== 'seminar' ? pack.ink : 'FFFFFF',
+      valign: 'middle',
+      fit: 'shrink',
+    })
+    return
+  }
+  // 淺色 pack：tint 帶 + accent 左邊條 + 墨色字
+  slide.addShape('rect', { x: band.x, y: band.y, w: band.w, h: band.h, fill: { color: pack.panel }, line: { type: 'none' } })
+  slide.addShape('rect', { x: band.x, y: band.y, w: 0.05, h: band.h, fill: { color: pack.accent }, line: { type: 'none' } })
+  tx(slide, clampText(text, 46), {
+    x: band.x + 0.28,
+    y: band.y,
+    w: band.w - 0.56,
+    h: band.h,
+    fontSize: 13,
+    bold: true,
+    color: pack.ink,
+    valign: 'middle',
+    fit: 'shrink',
   })
 }
 

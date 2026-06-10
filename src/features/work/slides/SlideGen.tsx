@@ -14,6 +14,7 @@ import {
   Columns2,
   ListOrdered,
   Quote,
+  LayoutGrid,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import {
@@ -62,12 +63,13 @@ const MODEL_OPTS: { id: AIModel; label: string }[] = [
 /** 內頁配圖上限 — 同一 deck 最多攞 4 張內頁相（控制檔案大細＋API 用量） */
 const MAX_SLIDE_PHOTOS = 4
 
-/** 預覽列表嘅版式 badge — 對應引擎四款特別版式（section 由空 bullets 推斷，唔標） */
+/** 預覽列表嘅版式 badge — 對應引擎特別版式（section 由空 bullets 推斷，唔標） */
 const LAYOUT_BADGES: Record<string, { label: string; icon: LucideIcon }> = {
   stats: { label: '數據', icon: Hash },
   compare: { label: '對比', icon: Columns2 },
   steps: { label: '步驟', icon: ListOrdered },
   quote: { label: '金句', icon: Quote },
+  cards: { label: '卡片', icon: LayoutGrid },
 }
 
 function fmtDate(iso: string): string {

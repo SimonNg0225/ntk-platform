@@ -142,6 +142,19 @@ function sampleDeck(): Deck {
         quote: { text: '老吾老，以及人之老；幼吾幼，以及人之幼。', attribution: '孟子 · 梁惠王上' },
       },
       {
+        title: '四大政策支柱',
+        subtitle: 'Four Policy Pillars', // 版題英文副題
+        layout: 'cards',
+        bullets: ['安老服務', '醫療配套', '退休保障', '長者就業'],
+        cards: [
+          { title: '安老服務', desc: '居家為本、院舍為後' },
+          { title: '醫療配套', desc: '基層醫療 + 慢病管理' },
+          { title: '退休保障', desc: '三根支柱模式' },
+          { title: '長者就業', desc: '彈性工時再培訓' },
+        ],
+        takeaway: '政策要四柱並行，單靠一邊都唔掂。', // 包底帶
+      },
+      {
         title: '長者人口趨勢數據',
         bullets: ['長者比例由 2016 年起加速上升', '2046 年預計達三成', '勞動人口同步收縮'],
         chart: {
@@ -158,14 +171,14 @@ function sampleDeck(): Deck {
 }
 
 describe('buildPptxFile smoke', () => {
-  it('5 個 pack 各砌一次：zip 完整兼 theme patch 生效', async () => {
+  it('全部 pack 各砌一次：zip 完整兼 theme patch 生效', async () => {
     const deck = sampleDeck()
     const photo = { dataUri: PNG_1PX, credit: '相片：Test / Pexels', width: 800, height: 1200 }
     for (const packMeta of SLIDE_PACKS) {
       const out = await buildPptxFile(deck, {
         pack: packMeta.id,
         coverPhoto: photo,
-        slidePhotos: { 5: photo }, // 同版有 chart → 應該行 chart 路（唔會爆）
+        slidePhotos: { 6: photo }, // 同版有 chart → 應該行 chart 路（唔會爆）
       })
       // node 環境回 Uint8Array
       expect(out).toBeInstanceOf(Uint8Array)
@@ -180,19 +193,19 @@ describe('buildPptxFile smoke', () => {
       expect(theme).toContain('Microsoft JhengHei')
       expect(theme).not.toContain('<a:ea typeface=""/>')
       expect(theme).not.toContain('新細明體')
-      // 每版都有 slide XML（封面 + 6 版）
-      expect(zip.file('ppt/slides/slide7.xml')).toBeTruthy()
+      // 每版都有 slide XML（封面 + 7 版）
+      expect(zip.file('ppt/slides/slide8.xml')).toBeTruthy()
     }
   }, 30000)
 
   it('配圖版（無 chart）都出到檔', async () => {
     const deck = sampleDeck()
-    // 抽走 chart，令第 6 版行 split 配圖路
-    deck.slides[5] = { ...deck.slides[5], chart: undefined }
+    // 抽走 chart，令呢版行 split 配圖路
+    deck.slides[6] = { ...deck.slides[6], chart: undefined }
     const photo = { dataUri: PNG_1PX, credit: '相片：Test / Pexels', width: 1200, height: 800 }
-    const out = (await buildPptxFile(deck, { pack: 'celadon', slidePhotos: { 5: photo } })) as Uint8Array
+    const out = (await buildPptxFile(deck, { pack: 'celadon', slidePhotos: { 6: photo } })) as Uint8Array
     expect(out.length).toBeGreaterThan(10240)
-    expect(new PizZip(out).file('ppt/slides/slide7.xml')).toBeTruthy()
+    expect(new PizZip(out).file('ppt/slides/slide8.xml')).toBeTruthy()
   })
 
   it('layout 資料唔合格會靜默回退 bullets（唔 throw）', async () => {

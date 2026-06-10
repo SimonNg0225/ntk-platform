@@ -2,6 +2,7 @@ import { extractJsonObject } from '../../../lib/aiJson'
 import type {
   Deck,
   Slide,
+  SlideCard,
   SlideChart,
   SlideCompare,
   SlideLayout,
@@ -45,6 +46,10 @@ export function buildSlideSystem(subjectName: string | undefined, count: number)
     '    "steps":[{"title":"步驟名","desc":"簡短說明（選填）"}]（2-5 步，title ≤12 字、desc ≤40 字）',
     '  · "layout":"quote" — 金句／定義一句想做大先用（全套最多 1 版），另加：',
     '    "quote":{"text":"一句金句或定義","attribution":"出處（選填）"}（text ≤60 字）',
+    '  · "layout":"cards" — 3-6 個並列概念／分類／工具想逐個成卡先用，另加：',
+    '    "cards":[{"title":"卡題","desc":"一句說明（選填）"}]（title ≤12 字、desc ≤36 字）',
+    '- 每版可選 "subtitle"：版題下嘅短英文對照副題（雙語課堂用，≤8 個英文詞，例 "Accounting Equation Playground"）；唔啱就唔好出。',
+    '- 每版可選 "takeaway"：一句包底重點（≤40 字，會做版底色帶俾學生抄低）；全套揀 2-4 版最關鍵嘅先出，唔好版版有。',
   ]
   if (count >= 8) {
     lines.push('- 可以插 1-2 版章節分隔版：title 係章節名、"bullets": []，唔使 layout，用嚟分大段落。')
@@ -155,6 +160,21 @@ function parseSteps(raw: unknown): SlideStep[] | undefined {
   return items.length >= 2 && items.length <= 5 ? items : undefined
 }
 
+/** cards：逐張要 title（≤12 字），desc 選填（≤36 字）；2-6 張先有效。 */
+function parseCards(raw: unknown): SlideCard[] | undefined {
+  if (!Array.isArray(raw)) return undefined
+  const items: SlideCard[] = []
+  for (const it of raw) {
+    if (!it || typeof it !== 'object') continue
+    const r = it as Record<string, unknown>
+    const title = cleanStr(r.title)
+    if (!title) continue
+    const desc = cleanStr(r.desc)
+    items.push({ title: clamp(title, 12), desc: desc ? clamp(desc, 36) : undefined })
+  }
+  return items.length >= 2 && items.length <= 6 ? items : undefined
+}
+
 /** quote：text 非空（≤60 字）先有效，attribution 選填。 */
 function parseQuote(raw: unknown): SlideQuote | undefined {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return undefined
@@ -186,6 +206,10 @@ function parseLayoutFields(rec: Record<string, unknown>): Partial<Slide> {
   if (layout === 'quote') {
     const quote = parseQuote(rec.quote)
     return quote ? { layout: 'quote' satisfies SlideLayout, quote } : {}
+  }
+  if (layout === 'cards') {
+    const cards = parseCards(rec.cards)
+    return cards ? { layout: 'cards' satisfies SlideLayout, cards } : {}
   }
   // 'section' 喺 parseDeck 處理（normalize bullets=[]）；'bullets'／未知值 = 預設要點版
   return {}
@@ -226,8 +250,19 @@ export function parseDeck(raw: string, fallbackTitle: string): Deck {
       const notes = typeof rec.notes === 'string' && rec.notes.trim() ? rec.notes.trim() : undefined
       const chart = parseChart(rec.chart)
       const imageQuery = parseImageQuery(rec.imageQuery)
+      const slideSubtitle = cleanStr(rec.subtitle)
+      const takeaway = cleanStr(rec.takeaway)
       const layoutFields: Partial<Slide> = isSection ? { layout: 'section' } : parseLayoutFields(rec)
-      slides.push({ title: slideTitle || '（未命名）', bullets, notes, chart, imageQuery, ...layoutFields })
+      slides.push({
+        title: slideTitle || '（未命名）',
+        subtitle: slideSubtitle ? clamp(slideSubtitle, 48) : undefined,
+        bullets,
+        notes,
+        chart,
+        imageQuery,
+        takeaway: takeaway ? clamp(takeaway, 46) : undefined,
+        ...layoutFields,
+      })
     }
   }
 

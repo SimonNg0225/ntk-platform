@@ -12,7 +12,7 @@
 import type { Deck, Slide, SlideLayout } from './types'
 import { downloadBlob, safeFilename } from './file'
 import { FONT, PACKS, PACK_LIST, pickKicker, type FrameCtx, type Pack, type SlideImage, type SlidePackId } from './pptxPacks'
-import { renderBullets, renderCompare, renderQuote, renderStats, renderSteps } from './pptxLayouts'
+import { renderBullets, renderCards, renderCompare, renderQuote, renderStats, renderSteps, renderTakeaway } from './pptxLayouts'
 
 export type { SlidePackId, SlideImage } from './pptxPacks'
 
@@ -57,6 +57,8 @@ function effectiveLayout(s: Slide): SlideLayout {
     case 'quote':
       // 超長引文做唔大 — 降級行 bullets 路
       return s.quote?.text && [...s.quote.text].length <= 80 ? 'quote' : 'bullets'
+    case 'cards':
+      return s.cards && s.cards.length >= 2 && s.cards.length <= 6 && s.cards.every((c) => c.title) ? 'cards' : 'bullets'
     default:
       return 'bullets'
   }
@@ -117,14 +119,20 @@ export async function buildPptxFile(deck: Deck, opts: PptxOptions = {}): Promise
     const photo = layout === 'bullets' && !s.chart ? opts.slidePhotos?.[i] : undefined
     const ctx: FrameCtx = {
       title: s.title,
+      subtitle: s.subtitle,
       kicker: pickKicker(s.title, i, Boolean(s.chart)),
       pageNo: i + 2, // 真實版號（封面 = 1）
+      pageTotal: deck.slides.length + 1,
       brand,
       layout,
       hasPhoto: Boolean(photo),
       hasChart: Boolean(s.chart),
     }
-    const body = pack.contentFrame(slide, ctx)
+    const fullBody = pack.contentFrame(slide, ctx)
+
+    // 包底帶：預留版底 0.74"，版式喺收窄咗嘅 body 入面排
+    const takeaway = s.takeaway?.trim()
+    const body = takeaway ? { ...fullBody, h: fullBody.h - 0.74 } : fullBody
 
     switch (layout) {
       case 'stats':
@@ -139,8 +147,19 @@ export async function buildPptxFile(deck: Deck, opts: PptxOptions = {}): Promise
       case 'quote':
         renderQuote(slide, body, pack, s)
         break
+      case 'cards':
+        renderCards(slide, body, pack, s)
+        break
       default:
         renderBullets(slide, body, pack, s, photo)
+    }
+    if (takeaway) {
+      renderTakeaway(slide, pack, takeaway, {
+        x: fullBody.x,
+        y: fullBody.y + fullBody.h - 0.54,
+        w: fullBody.w,
+        h: 0.54,
+      })
     }
     if (s.notes) slide.addNotes(s.notes)
   })

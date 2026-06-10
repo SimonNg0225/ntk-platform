@@ -30,7 +30,13 @@ export interface SlideChart {
 }
 
 /** 版式 — 缺省 'bullets'；bullets.length===0 視為 'section'（章節分隔） */
-export type SlideLayout = 'bullets' | 'stats' | 'compare' | 'steps' | 'quote' | 'section'
+export type SlideLayout = 'bullets' | 'stats' | 'compare' | 'steps' | 'quote' | 'cards' | 'section'
+
+/** 並列概念卡 — title ≤12 字，desc ≤36 字 */
+export interface SlideCard {
+  title: string
+  desc?: string
+}
 
 /** 大數字 tile — value ≤8 字（'75%'/'1842'），label ≤20 字 */
 export interface SlideStat {
@@ -60,6 +66,8 @@ export interface SlideQuote {
 
 export interface Slide {
   title: string
+  /** 短副題（選填）— 多數係英文對照（雙語課堂），版題下細字 */
+  subtitle?: string
   /** 永遠必填（兜底 + 兼容舊紀錄）；每點 ≤60 字，≤6 點 */
   bullets: string[]
   /** 講者備註（選填） */
@@ -76,6 +84,10 @@ export interface Slide {
   steps?: SlideStep[]
   /** layout='quote' 用 */
   quote?: SlideQuote
+  /** layout='cards' 用 — 2-6 張並列概念卡先有效 */
+  cards?: SlideCard[]
+  /** 包底重點（選填）— 一句 ≤46 字，render 做版底色帶 */
+  takeaway?: string
   /** 英文 Pexels 搜尋詞（1-4 個字），值得配相嘅版先有 */
   imageQuery?: string
 }

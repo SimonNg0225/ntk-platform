@@ -1,4 +1,4 @@
-export type { ExportBlock, ExportDoc, Slide, Deck, SlideChart, SlideLayout, SlideStat, SlideCompare, SlideStep, SlideQuote } from './types'
+export type { ExportBlock, ExportDoc, Slide, Deck, SlideChart, SlideLayout, SlideStat, SlideCompare, SlideStep, SlideQuote, SlideCard } from './types'
 export { downloadBlob, safeFilename } from './file'
 export { downloadDocx } from './docx'
 export { printDoc } from './print'
