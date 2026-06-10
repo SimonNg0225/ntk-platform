@@ -3,9 +3,11 @@ import { useTranslation } from 'react-i18next'
 import { Download, FileText, Files, ScanText, Library, Users } from 'lucide-react'
 import { Button, SegmentedControl, Select } from '../../../ui'
 import { useToast } from '../../../context/ToastContext'
+import { useAuth } from '../../../context/AuthContext'
 import { useCollection } from '../../../lib/store'
 import { classesCol, studentsCol } from '../../../data/collections'
 import { downloadBlob } from '../../../lib/export/file'
+import { isScanStorageConfigured, uploadScanPdf } from '../../../lib/supabaseStorage'
 import type { OutputMode, ScanPage } from './lib/types'
 import { buildScanPdf, buildPerPagePdfs } from './lib/buildPdf'
 import { outputFilenames } from './lib/naming'
@@ -20,6 +22,7 @@ export default function ExportBar({
 }) {
   const { t } = useTranslation()
   const toast = useToast()
+  const { user } = useAuth()
   const classes = useCollection(classesCol)
   const students = useCollection(studentsCol)
   const [mode, setMode] = useState<OutputMode>('merged')
@@ -59,18 +62,47 @@ export default function ExportBar({
   }
 
   // 去向②③：存資源庫（+ 可選綁班級／學生）。
-  // 資源庫只存 metadata + 連結，無 blob 儲存（Google Drive 只讀，唔上載），
-  // 所以登記一條 metadata row，同時照樣下載個 PDF 畀用戶留底。
+  //  · 已接雲端 + 已登入 → 上載 PDF 去 Supabase Storage，資源庫存可 click
+  //    簽名連結（跨裝置打得開），唔強制下載。
+  //  · 否則 → 降級：登記 metadata row + 下載個 PDF 畀用戶留底。
   async function saveToLibrary() {
     if (!pages.length) return
     setBusy(true)
     try {
       const names = outputFilenames(baseName, 'merged', pages.length)
       const bytes = await buildScanPdf(pages, { ocr })
-      downloadBlob(
-        new Blob([bytes as BlobPart], { type: 'application/pdf' }),
-        names[0],
-      )
+      const blob = new Blob([bytes as BlobPart], { type: 'application/pdf' })
+
+      // 雲端路徑：上載去 Storage，存簽名連結。
+      if (isScanStorageConfigured && user) {
+        try {
+          const { path, url } = await uploadScanPdf(blob, names[0], user.id)
+          registerScanResource({
+            title: baseName,
+            classId: classId || undefined,
+            studentId: studentId || undefined,
+            url,
+            storagePath: path,
+          })
+          toast.success(
+            t('scan.savedToCloud', {
+              defaultValue: '已存上雲端資源庫，可喺資源庫直接開',
+            }),
+          )
+          setBindOpen(false)
+          return
+        } catch {
+          // 上載失敗（未開 bucket / 網絡）→ 跌落本機降級路徑。
+          toast.error(
+            t('scan.cloudFailed', {
+              defaultValue: '雲端上載失敗，改為本機登記 + 下載留底',
+            }),
+          )
+        }
+      }
+
+      // 降級：登記 metadata + 下載留底。
+      downloadBlob(blob, names[0])
       registerScanResource({
         title: baseName,
         classId: classId || undefined,

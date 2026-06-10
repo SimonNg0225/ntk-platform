@@ -1,0 +1,62 @@
+// ============================================================
+//  掃描 PDF → Supabase Storage（private bucket「scans」）
+//  ------------------------------------------------------------
+//  資源庫只存 metadata + 連結，無 blob 儲存。要真・雲端存檔，
+//  就將 PDF 上載去 Storage（檔案物件，唔係塞落 collection 同步），
+//  路徑 `${userId}/<timestamp>-<safe>.pdf`，回傳長效「簽名連結」
+//  （bucket 不公開；簽名 URL 喺有效期內任何人有連結都打得開）。
+//  需要已接雲端 + 已登入；否則 throw，呼叫端降級返本機 metadata + 下載。
+//  ⚠️ 要先喺 Supabase 跑 migration 0008（開 bucket + RLS）。
+// ============================================================
+
+import { supabase, isSupabaseConfigured } from './supabase'
+import { safeFilename } from './export/file'
+
+export const SCAN_BUCKET = 'scans'
+
+// 簽名連結有效期：1 年（夠長，當「永久」用；過期可日後重簽）。
+const SIGNED_URL_TTL = 60 * 60 * 24 * 365
+
+/** 有接雲端先有得存 Supabase（同 isSupabaseConfigured 一致）。 */
+export const isScanStorageConfigured = isSupabaseConfigured
+
+export interface UploadedScan {
+  /** Storage 物件路徑（bucket 內，例 `<uid>/169...-掃描.pdf`） */
+  path: string
+  /** 長效簽名連結（資源庫直接 click 開） */
+  url: string
+}
+
+/**
+ * 上載掃描 PDF 去 Storage 並回傳簽名連結。
+ * @param blob     PDF Blob
+ * @param filename 建議檔名（會去 .pdf、清不合法字元、加時間戳）
+ * @param userId   登入用戶 id（路徑首段；對應 RLS 只准存自己 uid 資料夾）
+ * @throws 未接雲端 / 未登入 / 上載或簽名失敗
+ */
+export async function uploadScanPdf(
+  blob: Blob,
+  filename: string,
+  userId: string,
+): Promise<UploadedScan> {
+  if (!supabase) throw new Error('未接雲端')
+  if (!userId) throw new Error('未登入')
+
+  const safe = safeFilename(filename.replace(/\.pdf$/i, ''), 'pdf')
+  const path = `${userId}/${Date.now()}-${safe}`
+
+  const up = await supabase.storage.from(SCAN_BUCKET).upload(path, blob, {
+    contentType: 'application/pdf',
+    upsert: false,
+  })
+  if (up.error) throw up.error
+
+  const signed = await supabase.storage
+    .from(SCAN_BUCKET)
+    .createSignedUrl(path, SIGNED_URL_TTL)
+  if (signed.error || !signed.data?.signedUrl) {
+    throw signed.error ?? new Error('簽名連結產生失敗')
+  }
+
+  return { path, url: signed.data.signedUrl }
+}

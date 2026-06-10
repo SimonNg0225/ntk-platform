@@ -26,6 +26,10 @@ export interface RegisterScanInput {
   studentId?: string
   /** 額外備註（選填） */
   note?: string
+  /** 雲端 PDF 連結（有就資源庫可直接 click 開；無 = 本機降級） */
+  url?: string
+  /** 雲端 Storage 路徑（記低，將來可重簽連結） */
+  storagePath?: string
 }
 
 /** 由 classId / studentId 砌人類可讀標籤（班名、學生名），搵唔到就回 undefined。 */
@@ -58,12 +62,19 @@ export function registerScanResource(input: RegisterScanInput): Resource {
   if (cls) noteParts.push(`班級：${cls}${input.classId ? `（${input.classId}）` : ''}`)
   if (stu) noteParts.push(`學生：${stu}${input.studentId ? `（${input.studentId}）` : ''}`)
   if (input.note?.trim()) noteParts.push(input.note.trim())
-  noteParts.push('來源：相機掃描（本機檔案，已另存下載）')
+  noteParts.push(
+    input.url
+      ? '來源：相機掃描（已存雲端 Supabase Storage）'
+      : '來源：相機掃描（本機檔案，已另存下載）',
+  )
+  if (input.storagePath) noteParts.push(`雲端路徑：${input.storagePath}`)
   const notes = noteParts.join('\n')
 
   return resourcesCol.add({
     title,
     type: SCAN_RESOURCE_TYPE,
+    // url 有就存（資源庫可直接開）；無就唔放呢個欄位（Resource.url 選填）。
+    ...(input.url ? { url: input.url } : {}),
     tags,
     notes,
     createdAt: new Date().toISOString(),

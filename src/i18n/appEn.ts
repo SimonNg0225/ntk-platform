@@ -226,5 +226,7 @@ export const appEn = {
     student: 'Student (optional)',
     studentNone: '— Whole class (unspecified) —',
     saveBound: 'Save & bind',
+    savedToCloud: 'Saved to cloud library — open it straight from the library',
+    cloudFailed: 'Cloud upload failed — registered locally + downloaded a copy',
   },
 }
