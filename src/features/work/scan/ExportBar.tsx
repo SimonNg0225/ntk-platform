@@ -91,12 +91,15 @@ export default function ExportBar({
           )
           setBindOpen(false)
           return
-        } catch {
-          // 上載失敗（未開 bucket / 網絡）→ 跌落本機降級路徑。
+        } catch (err) {
+          // 上載失敗（未開 bucket / RLS / 網絡）→ 跌落本機降級路徑。
+          // 把真實錯誤 log + 顯示，方便診斷（例 "Bucket not found"）。
+          console.error('[scan] 雲端上載失敗', err)
+          const reason = err instanceof Error ? err.message : String(err)
           toast.error(
             t('scan.cloudFailed', {
               defaultValue: '雲端上載失敗，改為本機登記 + 下載留底',
-            }),
+            }) + (reason ? `（${reason}）` : ''),
           )
         }
       }
