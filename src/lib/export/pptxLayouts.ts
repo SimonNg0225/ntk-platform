@@ -110,6 +110,17 @@ function drawRows(slide: PptxGenJS.Slide, pack: Pack, items: string[], o: RowOpt
         fill: { color: m.color },
         line: { type: 'none' },
       })
+    } else if (m.kind === 'triangle') {
+      // ▶ 指向右（pptxgenjs triangle 默認向上，轉 90°）
+      slide.addShape('triangle', {
+        x: o.x + 0.02,
+        y: y + (lineH - m.size) / 2,
+        w: m.size,
+        h: m.size,
+        rotate: 90,
+        fill: { color: m.color },
+        line: { type: 'none' },
+      })
     } else {
       slide.addShape('rect', {
         x: o.x + 0.02,
@@ -149,8 +160,8 @@ function renderChartPanel(slide: PptxGenJS.Slide, pack: Pack, chart: SlideChart,
       chartArea: { roundedCorners: false },
       showLegend: true,
       legendPos: 'r',
-      legendFontSize: 9,
-      legendColor: pack.inkSoft,
+      legendFontSize: 10,
+      legendColor: pack.ink, // QA：inkSoft 喺深底 pack 讀唔到
       legendFontFace: FONT,
       showPercent: true,
       // label 拉出扇形外（落喺版底色上），用 pack 主文字色 — 淺色扇形白字隱形嘅問題一次過解決
@@ -211,8 +222,8 @@ function renderPhotoPanel(slide: PptxGenJS.Slide, pack: Pack, photo: SlideImage)
     // 夜讀：深底 scrim 統一暗調（shape fill transparency 正常 work）
     slide.addShape('rect', { x: frame.x, y: frame.y, w: frame.w, h: frame.h, fill: { color: pack.bg, transparency: 35 }, line: { type: 'none' } })
   } else if (pack.splitPhoto === 'bleedMotif') {
-    // 曙光：左下疊一個琥珀圓角方 motif
-    slide.addShape('roundRect', { x: 7.45, y: 6.15, w: 0.9, h: 0.9, rectRadius: 0.12, fill: { color: pack.accent }, line: { type: 'none' } })
+    // 騎縫 accent 圓角方 motif — 貼住版底先似出血，半天吊會似跌咗嘢
+    slide.addShape('roundRect', { x: 7.45, y: 6.68, w: 0.9, h: 0.82, rectRadius: 0.12, fill: { color: pack.accent }, line: { type: 'none' } })
   }
   photoCreditOnImage(slide, photo.credit, frame)
 }
@@ -243,9 +254,9 @@ export function renderBullets(slide: PptxGenJS.Slide, body: Rect, pack: Pack, s:
 
   // 字級／間距自適應：點少 → 大字鬆排，點多 → 收緊
   const ladder = pack.bulletPt[Math.min(Math.max(n, 2), 6) - 2]
-  const sparse = n <= 2 && !hasChart && !hasPhoto
-  let basePt = sparse ? Math.min(22, ladder + 2) : ladder // 疏版加大一檔，免似漏咗嘢
-  const baseGap = n <= 2 ? 0.4 : n === 3 ? 0.26 : n === 4 ? 0.22 : n === 5 ? 0.18 : 0.16
+  const sparse = n <= 3 && !hasChart && !hasPhoto // ≤3 點都算疏（QA：頂置下半空似漏嘢）
+  let basePt = n <= 2 && sparse ? Math.min(22, ladder + 2) : ladder // 2 點先加大一檔
+  const baseGap = n <= 2 ? 0.4 : n === 3 ? 0.28 : n === 4 ? 0.22 : n === 5 ? 0.18 : 0.16
   let textW = body.w
   if (hasChart) {
     textW = Math.min(5.2, body.w)
@@ -253,12 +264,13 @@ export function renderBullets(slide: PptxGenJS.Slide, body: Rect, pack: Pack, s:
   } else if (hasPhoto) {
     basePt = Math.min(basePt, 16)
   }
-  // 起始 y：3-4 點微調，5-6 點頂住起；疏版用光學中心（中線偏上）俾個版有錨點
+  // 起始 y：4 點微調，5-6 點頂住起；疏版用光學中心（中線偏上）俾個版有錨點
   let startY = body.y + (n <= 2 ? 0.4 : n <= 4 ? 0.05 : 0)
   const { pt, gap } = fitRowsPt(bullets, basePt, baseGap, textW, pack.marker.indent, body.y + body.h - startY)
   if (sparse) {
     const blockH = rowsHeight(bullets, pt, gap, textW - pack.marker.indent)
-    startY = body.y + Math.min(1.6, Math.max(0.4, (body.h - blockH) * 0.34))
+    const factor = n <= 2 ? 0.34 : 0.2 // 3 點輕推就夠，唔好變咗死板置中
+    startY = body.y + Math.min(1.6, Math.max(0.3, (body.h - blockH) * factor))
   }
   drawRows(slide, pack, bullets, { x: body.x, y: startY, w: textW, maxY: body.y + body.h, pt, gap, color: pack.ink })
 
@@ -287,7 +299,7 @@ export function renderStats(slide: PptxGenJS.Slide, body: Rect, pack: Pack, s: S
   const gutter = 0.2
   const colW = (body.w - gutter * (n - 1)) / n
   const top = body.y + 0.2
-  const tileH = 2.9
+  const tileH = 2.5 // 收矮卡身：QA 一致投訴 2.9 下半截齊齊吉
 
   if (pack.tileStyle === 'whiteOnTint') {
     // 曙光：tint 大底 + 每項白卡
@@ -330,7 +342,7 @@ export function renderStats(slide: PptxGenJS.Slide, body: Rect, pack: Pack, s: S
     const inset = insetAll
     tx(slide, values[i], {
       x: tileX + inset,
-      y: top + 0.25,
+      y: top + 0.3,
       w: colW - inset * 2,
       h: 0.95,
       fontSize: uniformPt,
@@ -343,7 +355,7 @@ export function renderStats(slide: PptxGenJS.Slide, body: Rect, pack: Pack, s: S
     })
     tx(slide, clampText(st.label.trim(), 20), {
       x: tileX + inset,
-      y: top + 1.35,
+      y: top + 1.4,
       w: colW - inset * 2,
       h: 0.85,
       fontSize: 14,
@@ -383,9 +395,12 @@ export function renderCompare(slide: PptxGenJS.Slide, body: Rect, pack: Pack, s:
   const inset = carded ? 0.3 : 0
 
   if (carded) {
-    // 兩卡統一 panel 色 — 半桶水色差似走色多過似設計
-    slide.addShape('roundRect', { x: leftX - 0.05, y: body.y, w: 5.6, h: body.h, rectRadius: pack.cardRadius, fill: { color: pack.panel }, line: { type: 'none' } })
-    slide.addShape('roundRect', { x: rightX - 0.05, y: body.y, w: 5.6, h: body.h, rectRadius: pack.cardRadius, fill: { color: pack.panel }, line: { type: 'none' } })
+    // radius 0 嘅 pack 用直角 rect（roundRect + rectRadius:0 會跌返去 pptxgenjs 預設圓角）
+    const shape = pack.cardRadius > 0 ? 'roundRect' : 'rect'
+    const radiusOpt = pack.cardRadius > 0 ? { rectRadius: pack.cardRadius } : {}
+    // 右欄可用 panelAlt 做 A/B 對照（粉彩）；缺省兩卡同色
+    slide.addShape(shape, { x: leftX - 0.05, y: body.y, w: 5.6, h: body.h, ...radiusOpt, fill: { color: pack.panel }, line: { type: 'none' } })
+    slide.addShape(shape, { x: rightX - 0.05, y: body.y, w: 5.6, h: body.h, ...radiusOpt, fill: { color: pack.panelAlt ?? pack.panel }, line: { type: 'none' } })
   }
   if (style === 'hairline') {
     // 墨韻：中間一條直髮線就係全部結構
@@ -410,7 +425,7 @@ export function renderCompare(slide: PptxGenJS.Slide, body: Rect, pack: Pack, s:
   ]
   sides.forEach((side) => {
     tx(slide, clampText(side.title.trim(), 12), { x: side.x + inset, y: headerY, w: colW - inset * 2, h: 0.4, fontSize: 17, bold: true, color: pack.ink })
-    hline(slide, side.x + inset, headerY + 0.5, colW - inset * 2, carded ? mix(pack.ink, pack.panel, 0.16) : pack.hair)
+    hline(slide, side.x + inset, headerY + 0.5, colW - inset * 2, carded ? mix(pack.ink, pack.panel, 0.16) : pack.hair, 0.75, pack.structDash)
     const startY = headerY + 0.68
     const maxY = body.y + body.h - (carded ? 0.15 : 0)
     const { pt, gap } = fitRowsPt(side.points, 15, 0.2, colW - inset * 2, pack.marker.indent, maxY - startY)
@@ -475,7 +490,7 @@ export function renderSteps(slide: PptxGenJS.Slide, body: Rect, pack: Pack, s: S
     const lineY = body.y + 0.75
     const firstC = body.x + colW * 0.5
     const lastC = body.x + colW * (n - 0.5)
-    hline(slide, firstC, lineY, lastC - firstC, pack.hair)
+    hline(slide, firstC, lineY, lastC - firstC, pack.hair, 0.75, pack.structDash)
     items.forEach((st, i) => {
       const cx = body.x + colW * (i + 0.5)
       const colX = body.x + colW * i + 0.1
@@ -509,7 +524,7 @@ export function renderSteps(slide: PptxGenJS.Slide, body: Rect, pack: Pack, s: S
   const rowH = (body.h - 0.2) / n
   const firstCy = body.y + 0.1 + 0.18
   const lastCy = body.y + 0.1 + (n - 1) * rowH + 0.18
-  vline(slide, lineX, firstCy, lastCy - firstCy, pack.hair)
+  vline(slide, lineX, firstCy, lastCy - firstCy, pack.hair, 0.75, pack.structDash)
   const textX = lineX + 0.55
   const textW = Math.min(8.6, body.x + body.w - textX)
   items.forEach((st, i) => {
@@ -568,11 +583,14 @@ export function renderCards(slide: PptxGenJS.Slide, body: Rect, pack: Pack, s: S
     const cy = top + Math.floor(i / cols) * (cardH + gutter)
     if (bordered) {
       slide.addShape('rect', { x: cx, y: cy, w: cardW, h: cardH, fill: { color: pack.bg }, line: { color: pack.hair, width: 0.75 } })
-    } else {
+    } else if (pack.cardRadius > 0) {
       slide.addShape('roundRect', { x: cx, y: cy, w: cardW, h: cardH, rectRadius: pack.cardRadius, fill: { color: pack.panel }, line: { type: 'none' } })
+    } else {
+      slide.addShape('rect', { x: cx, y: cy, w: cardW, h: cardH, fill: { color: pack.panel }, line: { type: 'none' } })
     }
-    // accent 頂邊（研討 deck 卡片標誌）
-    slide.addShape('rect', { x: cx, y: cy, w: cardW, h: 0.035, fill: { color: pack.accent }, line: { type: 'none' } })
+    // accent 頂邊（研討 deck 卡片標誌）— 內縮對齊卡框/圓角，唔好戴歪帽
+    const barInset = bordered ? 0.01 : Math.max(0.01, pack.cardRadius * 0.9)
+    slide.addShape('rect', { x: cx + barInset, y: cy, w: cardW - barInset * 2, h: 0.035, fill: { color: pack.accent }, line: { type: 'none' } })
     const inset = 0.22
     tx(slide, clampText(card.title, 12), {
       x: cx + inset,
@@ -637,42 +655,60 @@ export function renderTakeaway(slide: PptxGenJS.Slide, pack: Pack, text: string,
 
 // ───────── quote（大引文）─────────
 
+/** 簡單亮度判斷（俾引號徽章揀字色） */
+function isLightColor(hex: string): boolean {
+  const h = hex.replace('#', '')
+  return parseInt(h.slice(0, 2), 16) + parseInt(h.slice(2, 4), 16) + parseInt(h.slice(4, 6), 16) > 380
+}
+
 export function renderQuote(slide: PptxGenJS.Slide, body: Rect, pack: Pack, s: Slide): void {
   const q = s.quote
   if (!q?.text) return
   const text = clampText(q.text.trim(), 80)
   const pt = [...text].length > 40 ? 22 : 26
-  const markY = body.y - 0.25
+  const lines = estimateLines(text, pt, 10)
+  const textH = (lines * pt * 1.5) / 72 + 0.15
+
+  // 成個 quote 組（徽章 + 引文 + 署名）計總高，喺 body 內光學置中（中線偏上）
+  const markH = pack.quoteMark.kind === 'glyph' ? 0.95 : 0.78
+  const attrH = q.attribution ? 0.62 : 0
+  const blockH = markH + textH + attrH
+  const topY = body.y + Math.max(0, (body.h - blockH) * 0.42)
 
   const m = pack.quoteMark
   if (m.kind === 'glyph') {
-    tx(slide, '“', { x: 1.55, y: markY, w: 1.2, h: 1.05, fontSize: 60, bold: true, color: m.color, fontFace: pack.displayFont, italic: pack.displayItalic })
+    tx(slide, '“', { x: 1.55, y: topY - 0.2, w: 1.2, h: 1.05, fontSize: 60, bold: true, color: m.color, fontFace: pack.displayFont, italic: pack.displayItalic })
   } else if (m.kind === 'circle') {
-    slide.addShape('ellipse', { x: 1.6, y: markY + 0.15, w: m.size, h: m.size, fill: { type: 'none' }, line: { color: m.color, width: m.linePt } })
-  } else if (m.kind === 'roundSquare') {
-    slide.addShape('roundRect', { x: 1.6, y: markY + 0.25, w: m.size, h: m.size, rectRadius: m.radius, fill: { color: m.color }, line: { type: 'none' } })
-    // 方塊內加白引號 — 淨色方塊會似走失咗嘅 icon
-    tx(slide, '“', { x: 1.6, y: markY + 0.3, w: m.size, h: m.size + 0.12, fontSize: 30, bold: true, color: 'FFFFFF', align: 'center', valign: 'middle', fontFace: 'Georgia' })
+    // 圈內配引號 — 空心淨圈會似漏咗嘢
+    const size = Math.max(m.size, 0.5)
+    slide.addShape('ellipse', { x: 1.6, y: topY, w: size, h: size, fill: { type: 'none' }, line: { color: m.color, width: m.linePt } })
+    tx(slide, '“', { x: 1.6, y: topY + 0.07, w: size, h: size, fontSize: 26, bold: true, color: m.color, align: 'center', valign: 'middle', fontFace: 'Georgia' })
   } else {
-    slide.addShape('rect', { x: 1.6, y: markY + 0.3, w: m.size, h: m.size, fill: { color: m.color }, line: { type: 'none' } })
-    tx(slide, '“', { x: 1.6, y: markY + 0.35, w: m.size, h: m.size + 0.12, fontSize: 30, bold: true, color: 'FFFFFF', align: 'center', valign: 'middle', fontFace: 'Georgia' })
+    // 方／圓角方：統一做 0.5" 徽章 + 對比色引號（token size 太細會似污漬）
+    const size = Math.max(m.size, 0.5)
+    const glyphColor = isLightColor(m.color) ? pack.ink : 'FFFFFF'
+    if (m.kind === 'roundSquare') {
+      slide.addShape('roundRect', { x: 1.6, y: topY, w: size, h: size, rectRadius: m.radius, fill: { color: m.color }, line: { type: 'none' } })
+    } else {
+      slide.addShape('rect', { x: 1.6, y: topY, w: size, h: size, fill: { color: m.color }, line: { type: 'none' } })
+    }
+    tx(slide, '“', { x: 1.6, y: topY + 0.09, w: size, h: size, fontSize: 30, bold: true, color: glyphColor, align: 'center', valign: 'middle', fontFace: 'Georgia' })
   }
 
   // 引文靠左唔置中（編輯紀律），行距 1.5 鬆排
-  const textY = body.y + 0.45
-  const lines = estimateLines(text, pt, 10)
+  const textY = topY + markH
   tx(slide, text, {
     x: 1.6,
     y: textY,
     w: 10,
-    h: (lines * pt * 1.5) / 72 + 0.15,
+    h: textH,
     fontSize: pt,
     color: pack.ink,
     lineSpacingMultiple: 1.5,
     fit: 'shrink',
   })
   if (q.attribution) {
-    const attrY = Math.min(textY + (lines * pt * 1.5) / 72 + 0.5, body.y + body.h - 0.35)
+    const attrY = Math.min(textY + textH + 0.3, body.y + body.h - 0.35)
     tx(slide, `── ${clampText(q.attribution.trim(), 16)}`, { x: 1.6, y: attrY, w: 9, h: 0.32, fontSize: 12, color: pack.inkSoft })
   }
 }

@@ -11,10 +11,16 @@
 
 import type { Deck, Slide, SlideLayout } from './types'
 import { downloadBlob, safeFilename } from './file'
-import { FONT, PACKS, PACK_LIST, pickKicker, type FrameCtx, type Pack, type SlideImage, type SlidePackId } from './pptxPacks'
+import { CORE_PACKS, FONT, pickKicker, type FrameCtx, type Pack, type SlideImage, type SlidePackId } from './pptxPacks'
+import { GALLERY_PACKS_1 } from './pptxPacksGallery1'
+import { GALLERY_PACKS_2 } from './pptxPacksGallery2'
 import { renderBullets, renderCards, renderCompare, renderQuote, renderStats, renderSteps, renderTakeaway } from './pptxLayouts'
 
 export type { SlidePackId, SlideImage } from './pptxPacks'
+
+/** 全部 pack（6 核心 + 10 gallery）；揀選 UI 按此排序 */
+const PACK_LIST: Pack[] = [...CORE_PACKS, ...GALLERY_PACKS_1, ...GALLERY_PACKS_2]
+const PACKS = Object.fromEntries(PACK_LIST.map((p) => [p.id, p])) as Record<SlidePackId, Pack>
 
 /** 揀選卡 UI 用嘅 pack 清單（swatches 連 #，可直接入 style） */
 export const SLIDE_PACKS: { id: SlidePackId; name: string; hint: string; swatches: [string, string, string] }[] = PACK_LIST.map(

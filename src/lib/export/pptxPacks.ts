@@ -14,7 +14,24 @@ import type PptxGenJS from 'pptxgenjs'
 import type { Deck, SlideLayout } from './types'
 import { mix, estimateLines, fitTitle, clampText } from './pptxText'
 
-export type SlidePackId = 'inkwell' | 'celadon' | 'dawn' | 'nocturne' | 'grid' | 'seminar'
+export type SlidePackId =
+  | 'inkwell'
+  | 'celadon'
+  | 'dawn'
+  | 'nocturne'
+  | 'grid'
+  | 'seminar'
+  // gallery（pptxPacksGallery1/2）
+  | 'chalk'
+  | 'press'
+  | 'neon'
+  | 'confetti'
+  | 'pastel'
+  | 'blueprint'
+  | 'ivy'
+  | 'redgrid'
+  | 'transit'
+  | 'ocean'
 
 /** 嵌入簡報嘅相（由 stock 層提供；width/height 係真實 pixel，計裁切比例必需） */
 export interface SlideImage {
@@ -43,6 +60,7 @@ export type MarkerSpec =
   | { kind: 'roundSquare'; size: number; radius: number; color: string; indent: number }
   | { kind: 'square'; size: number; color: string; indent: number }
   | { kind: 'dot'; size: number; color: string; indent: number } // 講堂：實心圓點
+  | { kind: 'triangle'; size: number; color: string; indent: number } // 彩斑：▶ 三角
   | { kind: 'dash'; color: string; indent: number } // 夜讀：金「—」文字 run
 
 export type TileStyle = 'hairline' | 'tintCard' | 'whiteOnTint' | 'panel' | 'cellBorder'
@@ -105,6 +123,10 @@ export interface Pack {
   pageNoColor: string
   /** true = 頁碼用「13 / 23」分數格式（講堂） */
   pageNoFraction?: boolean
+  /** true = 版式結構線（steps 連接線／compare 欄題線）用虛線（粉筆） */
+  structDash?: boolean
+  /** compare 右欄面板用嘅另一隻色（粉彩 A/B 對照）；缺省同 panel */
+  panelAlt?: string
   chartColors: string[]
   chartGridColor: string
   /** bullets 字級階梯：n=2 / 3 / 4 / 5 / ≥6 */
@@ -129,14 +151,14 @@ export function tx(slide: PptxGenJS.Slide, text: string, opts: PptxGenJS.TextPro
   slide.addText(text, { fontFace: FONT, lang: 'zh-HK', bullet: false, margin: 0, valign: 'top', ...opts })
 }
 
-/** 橫髮線 */
-export function hline(slide: PptxGenJS.Slide, x: number, y: number, w: number, color: string, pt = 0.75): void {
-  slide.addShape('line', { x, y, w, h: 0, line: { color, width: pt } })
+/** 橫髮線（dash = 虛線版，粉筆等手感 pack 用） */
+export function hline(slide: PptxGenJS.Slide, x: number, y: number, w: number, color: string, pt = 0.75, dash = false): void {
+  slide.addShape('line', { x, y, w, h: 0, line: { color, width: pt, ...(dash ? { dashType: 'sysDash' as const } : {}) } })
 }
 
-/** 直髮線 */
-export function vline(slide: PptxGenJS.Slide, x: number, y: number, h: number, color: string, pt = 0.75): void {
-  slide.addShape('line', { x, y, w: 0, h, line: { color, width: pt } })
+/** 直髮線（dash = 虛線版） */
+export function vline(slide: PptxGenJS.Slide, x: number, y: number, h: number, color: string, pt = 0.75, dash = false): void {
+  slide.addShape('line', { x, y, w: 0, h, line: { color, width: pt, ...(dash ? { dashType: 'sysDash' as const } : {}) } })
 }
 
 /**
@@ -189,18 +211,18 @@ function goldPair(slide: PptxGenJS.Slide, x: number, y: number, w: number): void
   hline(slide, x, y + 0.045, w, 'D4A94E', 0.5)
 }
 
-function dateLabel(): string {
+export function dateLabel(): string {
   const d = new Date()
   return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日`
 }
 
-function pad2(n: number): string {
+export function pad2(n: number): string {
   return String(n).padStart(2, '0')
 }
 
 const SECTION_WORDS = ['ONE', 'TWO', 'THREE', 'FOUR', 'FIVE', 'SIX', 'SEVEN', 'EIGHT', 'NINE', 'TEN', 'ELEVEN', 'TWELVE']
 
-function sectionWord(no: number): string {
+export function sectionWord(no: number): string {
   return SECTION_WORDS[no - 1] ?? String(no)
 }
 
@@ -246,7 +268,7 @@ interface ScaffoldOut {
 }
 
 /** kicker + 版題 + （選擇性）folio 髮線；回傳 body 區域同位移 */
-function scaffold(slide: PptxGenJS.Slide, p: Pack, ctx: FrameCtx, opt: ScaffoldOpts): ScaffoldOut {
+export function scaffold(slide: PptxGenJS.Slide, p: Pack, ctx: FrameCtx, opt: ScaffoldOpts): ScaffoldOut {
   const titleW = ctx.hasPhoto ? 6.5 : 10.4
   const fit = fitTitle(ctx.title)
   const pt = Math.min(p.titlePt, fit.fontPt)
@@ -297,7 +319,7 @@ function scaffold(slide: PptxGenJS.Slide, p: Pack, ctx: FrameCtx, opt: ScaffoldO
 }
 
 /** 頁尾：brand 8pt 左 + 頁碼 9pt（pack display 字體）右；配圖出血版頁碼移入文字欄 */
-function drawFooter(slide: PptxGenJS.Slide, p: Pack, ctx: FrameCtx): void {
+export function drawFooter(slide: PptxGenJS.Slide, p: Pack, ctx: FrameCtx): void {
   tx(slide, ctx.brand, { x: 0.9, y: 7.05, w: 5, h: 0.3, fontSize: 8, color: p.faint })
   const movePage = ctx.hasPhoto && p.splitPhoto !== 'circle'
   const label = p.pageNoFraction ? `${ctx.pageNo} / ${ctx.pageTotal}` : pad2(ctx.pageNo)
@@ -835,8 +857,6 @@ const seminar: Pack = {
 }
 
 // ───────── 滙出 ─────────
+// 完整 PACKS／PACK_LIST 喺 pptx.ts 組裝（本檔 6 套核心 + gallery 兩檔 10 套）
 
-export const PACKS: Record<SlidePackId, Pack> = { inkwell, celadon, dawn, nocturne, grid, seminar }
-
-/** 揀選 UI 排序（墨韻為預設行先） */
-export const PACK_LIST: Pack[] = [inkwell, celadon, dawn, nocturne, grid, seminar]
+export const CORE_PACKS: Pack[] = [inkwell, celadon, dawn, nocturne, grid, seminar]
