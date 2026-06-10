@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { lessonPlanToSlides } from './fromLessonPlan'
 import type { LessonPlan } from '../../../data/types'
 import type { PlanMeta } from '../lessonPlanner/util'
+import type { BulletsContent } from './types'
 
 const plan: LessonPlan = {
   id: 'p1', title: '通脹與物價', date: '2026-03-15',
@@ -44,7 +45,7 @@ describe('slides/fromLessonPlan', () => {
     const s = lessonPlanToSlides(plan, meta)
     expect(s.some((x) => x.content.type === 'bullets' && x.content.heading === '課堂活動' && x.content.items.includes('小組討論'))).toBe(true)
     const mat = s.find((x) => x.content.type === 'bullets' && x.content.heading === '教材準備')
-    expect(mat?.content.items).toEqual(['工作紙', 'PPT', 'CPI 數據表'])
+    expect((mat?.content as BulletsContent | undefined)?.items).toEqual(['工作紙', 'PPT', 'CPI 數據表'])
   })
 
   it('每張 slide 有唯一 id', () => {

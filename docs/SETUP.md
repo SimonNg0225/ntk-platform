@@ -218,3 +218,5 @@ VITE_SUPABASE_ANON_KEY=...
 .pptx 匯出純前端（PptxGenJS），無需任何設定／API key；撳「匯出 PPTX」即下載可編輯嘅 PowerPoint。
 
 圖片上載會喺瀏覽器自動縮細並內嵌入簡報（data URL），毋須額外雲端儲存設定。
+
+亦可喺「教學簡報 → 由教案」分頁，揀一份備課教案一鍵轉成簡報初稿，再用編輯器微調。
