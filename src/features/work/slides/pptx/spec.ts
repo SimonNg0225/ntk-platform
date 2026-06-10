@@ -21,6 +21,7 @@ export type SlideOp =
       x: number; y: number; w: number
       fontSize: number; color: string; headColor: string; fontFace: string
     }
+  // 'shape' op 預留畀 Phase 3 主題裝飾（buildSlideOps 暫未產生）
   | { kind: 'shape'; x: number; y: number; w: number; h: number; color: string }
 
 // ── 版面常數（16:9 = 10in × 5.625in）──
@@ -34,7 +35,7 @@ const BODY_H = 3.6
 // PptxGenJS 色彩要 6 位 hex（無 #）；非法值回退黑色
 export function hex(c: string): string {
   const v = c.replace('#', '').toUpperCase()
-  return /^[0-9A-F]{3,8}$/.test(v) ? v : '000000'
+  return /^([0-9A-F]{6}|[0-9A-F]{3})$/.test(v) ? v : '000000'
 }
 
 // CSS font stack → PptxGenJS 單一字體名（PowerPoint 缺字時自動替換）
@@ -65,7 +66,7 @@ export function buildSlideOps(slide: Slide, theme: Theme): SlideOp[] {
       if (c.subheading) ops.push({ kind: 'text', text: c.subheading, x: MX, y: 3.3, w: CW, h: 0.8, fontSize: 20, color: hex(p.muted), align: 'center', fontFace: body })
       break
     case 'section':
-      if (c.kicker) ops.push({ kind: 'text', text: c.kicker, x: MX, y: 2.0, w: CW, h: 0.6, fontSize: 16, color: hex(p.muted), align: 'center', fontFace: body })
+      if (c.kicker) ops.push({ kind: 'text', text: c.kicker, x: MX, y: 1.9, w: CW, h: 0.5, fontSize: 16, color: hex(p.muted), align: 'center', fontFace: body })
       ops.push({ kind: 'text', text: c.heading, x: MX, y: 2.5, w: CW, h: 1.0, fontSize: 32, bold: true, color: hex(p.primary), align: 'center', fontFace: disp })
       break
     case 'bullets':
@@ -101,6 +102,11 @@ export function buildSlideOps(slide: Slide, theme: Theme): SlideOp[] {
       ops.push(heading(c.heading))
       ops.push(bulletsOp(c.points.map((pt) => `✓ ${pt}`)))
       break
+    default: {
+      // 編譯期守欄：若日後加咗新 SlideType 但漏咗喺度處理，TS 會報錯
+      const _exhaustive: never = c
+      void _exhaustive
+    }
   }
   return ops
 }

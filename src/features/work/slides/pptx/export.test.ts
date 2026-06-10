@@ -4,7 +4,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 const addText = vi.fn()
 const addTable = vi.fn()
 const addShape = vi.fn()
-const slideObj = { addText, addTable, addShape, background: undefined as unknown }
+const addNotes = vi.fn()
+const slideObj = { addText, addTable, addShape, addNotes, background: undefined as unknown }
 const addSlide = vi.fn(() => slideObj)
 const writeFile = vi.fn(() => Promise.resolve('deck.pptx'))
 
@@ -42,5 +43,19 @@ describe('slides/pptx/export', () => {
     expect(addSlide).toHaveBeenCalledTimes(2)
     expect(addText).toHaveBeenCalled()      // title + bullets 都會 addText
     expect(writeFile).toHaveBeenCalledWith({ fileName: '通脹 _ 報告.pptx' })
+  })
+
+  it('speakerNotes → addNotes 被呼叫', async () => {
+    const deckWithNotes: SlideDeck = {
+      id: 'd2', title: 'notes-deck', themeId: 'academic', slides: [
+        { id: 's1', content: { type: 'title', heading: '測試' }, speakerNotes: '記得提問' },
+      ], createdAt: 'x', updatedAt: 'x',
+    }
+    await exportDeckPptx(deckWithNotes, getTheme('academic'))
+    expect(addNotes).toHaveBeenCalledWith('記得提問')
+  })
+
+  it('pptxFileName 去除已有 .pptx 副檔名避免重複', () => {
+    expect(pptxFileName('deck.pptx')).toBe('deck.pptx')
   })
 })

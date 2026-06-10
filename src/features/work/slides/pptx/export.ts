@@ -6,7 +6,8 @@ import { buildSlideOps, type SlideOp } from './spec'
 
 // 檔名消毒：去走 OS 不容許嘅字元，補 .pptx
 export function pptxFileName(title: string): string {
-  const safe = (title.trim() || 'slides').replace(/[\\/:*?"<>|]/g, '_')
+  let safe = (title.trim() || 'slides').replace(/[\\/:*?"<>|]/g, '_')
+  safe = safe.replace(/\.pptx$/i, '')
   return `${safe}.pptx`
 }
 
