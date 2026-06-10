@@ -44,6 +44,8 @@ export default function DeckView({ deck }: { deck: SlideDeck }) {
   )
 }
 
+const safeColor = (c: string) => (/^#[0-9a-fA-F]{3,8}$/.test(c) ? c : '#000000')
+
 // 開新視窗、render slide 縮圖、用瀏覽器列印成 PDF（橫向、逐頁分頁）。
 function exportDeckPdf(deck: SlideDeck) {
   const w = window.open('', '_blank')
@@ -58,8 +60,8 @@ function exportDeckPdf(deck: SlideDeck) {
       @page { size: A4 landscape; margin: 0 }
       body { margin: 0; font-family: system-ui }
       .sl { width: 100vw; height: 100vh; display: flex; align-items: center; justify-content: center;
-            background: ${p.bg}; color: ${p.text}; page-break-after: always; }
-      .sl h2 { color: ${p.primary}; font-size: 32px; padding: 0 8% }
+            background: ${safeColor(p.bg)}; color: ${safeColor(p.text)}; page-break-after: always; }
+      .sl h2 { color: ${safeColor(p.primary)}; font-size: 32px; padding: 0 8% }
     </style></head><body>${slidesHtml}</body></html>`)
   w.document.close()
   w.focus()

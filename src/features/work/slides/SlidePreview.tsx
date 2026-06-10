@@ -51,7 +51,12 @@ function Body({ slide }: { slide: Slide }) {
         </div>
       )
     case 'section':
-      return <h1 className="text-center text-[3.4vw] font-bold" style={{ color: 'var(--sl-primary)', fontFamily: 'var(--sl-font-display)' }}>{c.heading}</h1>
+      return (
+        <div className="text-center">
+          {c.kicker && <p className="text-[1.4vw]" style={{ color: 'var(--sl-muted)' }}>{c.kicker}</p>}
+          <h1 className="text-[3.4vw] font-bold" style={{ color: 'var(--sl-primary)', fontFamily: 'var(--sl-font-display)' }}>{c.heading}</h1>
+        </div>
+      )
     case 'bullets':
       return (
         <>
@@ -74,6 +79,7 @@ function Body({ slide }: { slide: Slide }) {
         </>
       )
     case 'imageText':
+      // imageSide intentionally unused until Phase 3 image UI
       return (
         <>
           <Heading>{c.heading}</Heading>
