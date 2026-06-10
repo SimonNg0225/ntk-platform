@@ -25,7 +25,7 @@ i18n.addResourceBundle(
       needTopic: 'Enter a topic',
       genFailed: 'Generation failed, please retry',
       saved: 'Deck saved',
-      emptyMine: 'No decks yet. Generate one on the left.',
+      emptyMine: 'No decks yet. Create one from the Generate or From-plan tab.',
       present: 'Present',
       exportPdf: 'Export PDF',
       exportPptx: 'Export PPTX',

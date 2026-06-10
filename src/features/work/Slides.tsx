@@ -56,7 +56,7 @@ export default function Slides() {
         : tab === 'plan'
           ? <FromPlan onCreated={() => setTab('mine')} />
           : decks.length === 0
-            ? <p className="py-10 text-center text-sm text-slate-400">{t('slides.emptyMine', { defaultValue: '仲未有簡報，去左邊生成一份。' })}</p>
+            ? <p className="py-10 text-center text-sm text-slate-400">{t('slides.emptyMine', { defaultValue: '仲未有簡報，喺「生成」或「由教案」整一份。' })}</p>
             : <div className="space-y-8">{decks.map((d) => <DeckView key={d.id} deck={d} onEdit={() => setEditId(d.id)} />)}</div>}
     </div>
   )

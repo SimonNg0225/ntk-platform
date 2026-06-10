@@ -22,6 +22,7 @@ export default function FromPlan({ onCreated }: { onCreated: (id: string) => voi
   }
 
   const convert = () => {
+    if (!planId) return
     const plan = plans.find((p) => p.id === planId) ?? plans[0]
     const meta = planMetaCol.get().find((m) => m.id === plan.id)
     const slides = lessonPlanToSlides(plan, meta)
