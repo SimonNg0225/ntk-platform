@@ -23,6 +23,7 @@ export type SlideOp =
     }
   // 'shape' op 預留畀 Phase 3 主題裝飾（buildSlideOps 暫未產生）
   | { kind: 'shape'; x: number; y: number; w: number; h: number; color: string }
+  | { kind: 'image'; src: string; x: number; y: number; w: number; h: number }
 
 // ── 版面常數（16:9 = 10in × 5.625in）──
 const MX = 0.6
@@ -107,6 +108,9 @@ export function buildSlideOps(slide: Slide, theme: Theme): SlideOp[] {
       const _exhaustive: never = c
       void _exhaustive
     }
+  }
+  if (slide.imageRef?.src) {
+    ops.push({ kind: 'image', src: slide.imageRef.src, x: 6.2, y: 1.6, w: 3.2, h: 3.2 })
   }
   return ops
 }

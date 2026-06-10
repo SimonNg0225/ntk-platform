@@ -95,4 +95,11 @@ describe('slides/pptx/spec — buildSlideOps', () => {
     expect(ops.some((o) => o.kind === 'text' && o.text === '圖文')).toBe(true)
     expect(ops.some((o) => o.kind === 'text' && o.text === '內文')).toBe(true)
   })
+
+  it('slide 有 imageRef 時，buildSlideOps 末尾加一個 image op（右側）', () => {
+    const s: Slide = { id: 'i', content: { type: 'bullets', heading: 'H', items: ['a'] }, imageRef: { kind: 'stock', src: 'data:image/png;base64,xx' } }
+    const ops = buildSlideOps(s, theme)
+    const img = ops.find((o) => o.kind === 'image')
+    expect(img).toMatchObject({ kind: 'image', src: 'data:image/png;base64,xx' })
+  })
 })

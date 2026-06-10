@@ -39,6 +39,13 @@ function applyOp(slide: PptxGenJS.Slide, pptx: PptxGenJS, op: SlideOp): void {
     case 'shape':
       slide.addShape(pptx.ShapeType.rect, { x: op.x, y: op.y, w: op.w, h: op.h, fill: { color: op.color } })
       break
+    case 'image': {
+      const imgOpts = op.src.startsWith('data:')
+        ? { data: op.src, x: op.x, y: op.y, w: op.w, h: op.h }
+        : { path: op.src, x: op.x, y: op.y, w: op.w, h: op.h }
+      slide.addImage(imgOpts)
+      break
+    }
   }
 }
 

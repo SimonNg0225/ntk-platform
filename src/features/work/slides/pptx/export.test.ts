@@ -5,7 +5,8 @@ const addText = vi.fn()
 const addTable = vi.fn()
 const addShape = vi.fn()
 const addNotes = vi.fn()
-const slideObj = { addText, addTable, addShape, addNotes, background: undefined as unknown }
+const addImage = vi.fn()
+const slideObj = { addText, addTable, addShape, addNotes, addImage, background: undefined as unknown }
 const addSlide = vi.fn(() => slideObj)
 const writeFile = vi.fn(() => Promise.resolve('deck.pptx'))
 
@@ -57,5 +58,15 @@ describe('slides/pptx/export', () => {
 
   it('pptxFileName 去除已有 .pptx 副檔名避免重複', () => {
     expect(pptxFileName('deck.pptx')).toBe('deck.pptx')
+  })
+
+  it('slide 有 imageRef 時 addImage 被呼叫（data URL）', async () => {
+    const deckWithImage: SlideDeck = {
+      id: 'd3', title: 'img-deck', themeId: 'academic', slides: [
+        { id: 's1', content: { type: 'bullets', heading: 'H', items: ['a'] }, imageRef: { kind: 'upload', src: 'data:image/jpeg;base64,zz' } },
+      ], createdAt: 'x', updatedAt: 'x',
+    }
+    await exportDeckPptx(deckWithImage, getTheme('academic'))
+    expect(addImage).toHaveBeenCalledWith(expect.objectContaining({ data: 'data:image/jpeg;base64,zz' }))
   })
 })
