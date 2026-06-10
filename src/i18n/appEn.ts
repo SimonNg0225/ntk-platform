@@ -218,5 +218,13 @@ export const appEn = {
     done: 'PDF ready',
     failed: 'Failed, please retry',
     defaultName: 'Scan',
+    saveToLib: 'Save to library',
+    savedToLib: 'Registered in library; PDF downloaded as a copy',
+    bind: 'Bind class / student',
+    class: 'Class',
+    classNone: '— No class —',
+    student: 'Student (optional)',
+    studentNone: '— Whole class (unspecified) —',
+    saveBound: 'Save & bind',
   },
 }
