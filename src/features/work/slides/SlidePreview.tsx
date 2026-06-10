@@ -1,6 +1,7 @@
 import type { Slide } from './types'
 import type { Theme } from './themes'
 import { themeStyle } from './styleMap'
+import { cx } from '../../../ui'
 
 interface Props {
   slide: Slide
@@ -78,14 +79,23 @@ function Body({ slide }: { slide: Slide }) {
           </div>
         </>
       )
-    case 'imageText':
-      // imageSide intentionally unused until Phase 3 image UI
+    case 'imageText': {
+      const img = slide.imageRef?.src
+      const full = c.imageSide === 'full'
       return (
         <>
           <Heading>{c.heading}</Heading>
-          <p className="text-[1.5vw]">{c.body}</p>
+          {full && img ? (
+            <img src={img} alt={slide.imageRef?.alt ?? ''} className="mx-auto max-h-[55%] rounded object-contain" />
+          ) : (
+            <div className={cx('flex gap-[4%]', c.imageSide === 'left' && 'flex-row-reverse')}>
+              <p className="flex-1 text-[1.5vw]">{c.body}</p>
+              {img && <img src={img} alt={slide.imageRef?.alt ?? ''} className="w-[38%] rounded object-contain" />}
+            </div>
+          )}
         </>
       )
+    }
     case 'quote':
       return (
         <blockquote className="text-center">
