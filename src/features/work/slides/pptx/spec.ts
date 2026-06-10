@@ -79,9 +79,9 @@ export function buildSlideOps(slide: Slide, theme: Theme): SlideOp[] {
       ops.push(bulletsOp(c.right, MX + 4.4, 4.2))
       break
     case 'imageText':
-      // imageSide 留待 Phase 3 圖片 UI；Phase 2 只輸出標題 + 內文
+      // imageSide 留待 Phase 3 圖片 UI；有 imageRef 時內文收窄避免與右側圖片重疊
       ops.push(heading(c.heading))
-      ops.push({ kind: 'text', text: c.body, x: MX, y: BODY_Y, w: CW, h: BODY_H, fontSize: 18, color: hex(p.text), align: 'left', fontFace: body })
+      ops.push({ kind: 'text', text: c.body, x: MX, y: BODY_Y, w: slide.imageRef?.src ? 5.4 : CW, h: BODY_H, fontSize: 18, color: hex(p.text), align: 'left', fontFace: body })
       break
     case 'quote':
       ops.push({ kind: 'text', text: `「${c.text}」`, x: MX, y: 2.0, w: CW, h: 1.6, fontSize: 30, italic: true, bold: true, color: hex(p.text), align: 'center', fontFace: disp })

@@ -26,7 +26,7 @@ export default function DeckEditor({ deck, onClose }: { deck: SlideDeck; onClose
   const theme = getTheme(themeId)
 
   const update = (i: number, s: Slide) => setSlides((arr) => arr.map((x, k) => (k === i ? s : x)))
-  const add = (type: SlideType) => { setSlides((arr) => [...arr, newSlide(type)]); setSel(slides.length) }
+  const add = (type: SlideType) => setSlides((arr) => { const next = [...arr, newSlide(type)]; queueMicrotask(() => setSel(next.length - 1)); return next })
   const del = (i: number) => { setSlides((arr) => arr.filter((_, k) => k !== i)); setSel((s) => Math.max(0, Math.min(s, slides.length - 2))) }
   const move = (i: number, dir: -1 | 1) => { setSlides((arr) => reorderSlides(arr, i, dir)); setSel((s) => Math.max(0, Math.min(s + dir, slides.length - 1))) }
   const retype = (i: number, type: SlideType) => update(i, changeSlideType(slides[i], type))

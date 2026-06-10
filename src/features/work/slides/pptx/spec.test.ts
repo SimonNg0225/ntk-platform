@@ -96,6 +96,19 @@ describe('slides/pptx/spec — buildSlideOps', () => {
     expect(ops.some((o) => o.kind === 'text' && o.text === '內文')).toBe(true)
   })
 
+  it('imageText 有 imageRef → 內文 text op w=5.4（收窄避重疊）', () => {
+    const s: Slide = { id: 'it1', content: { type: 'imageText', heading: '圖文', body: '內文', imageSide: 'right' }, imageRef: { kind: 'stock', src: 'data:image/png;base64,xx' } }
+    const ops = buildSlideOps(s, theme)
+    const bodyOp = ops.find((o) => o.kind === 'text' && o.kind === 'text' && (o as { text: string }).text === '內文')
+    expect(bodyOp).toMatchObject({ w: 5.4 })
+  })
+
+  it('imageText 無 imageRef → 內文 text op w=CW（8.8）', () => {
+    const ops = buildSlideOps(slide({ type: 'imageText', heading: '圖文', body: '內文', imageSide: 'right' }), theme)
+    const bodyOp = ops.find((o) => o.kind === 'text' && (o as { text: string }).text === '內文')
+    expect(bodyOp).toMatchObject({ w: 8.8 })
+  })
+
   it('slide 有 imageRef 時，buildSlideOps 末尾加一個 image op（右側）', () => {
     const s: Slide = { id: 'i', content: { type: 'bullets', heading: 'H', items: ['a'] }, imageRef: { kind: 'stock', src: 'data:image/png;base64,xx' } }
     const ops = buildSlideOps(s, theme)

@@ -83,7 +83,7 @@ export default function ImagePicker({ open, onClose, onPick }: Props) {
             </div>
             <div className="grid grid-cols-3 gap-2">
               {results.map((r, i) => (
-                <button key={i} onClick={() => pick(r)} className="overflow-hidden rounded-lg border border-[color:var(--border)] hover:border-accent">
+                <button key={i} onClick={() => pick(r)} aria-label={r.alt || t('slides.imgPickTitle', { defaultValue: '插入圖片' })} className="overflow-hidden rounded-lg border border-[color:var(--border)] hover:border-accent">
                   <img src={r.src} alt={r.alt ?? ''} className="h-24 w-full object-cover" />
                 </button>
               ))}
