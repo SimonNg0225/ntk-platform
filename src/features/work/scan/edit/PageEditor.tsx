@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Check, RefreshCw } from 'lucide-react'
+import { Check, RefreshCw, Maximize, ScanSearch } from 'lucide-react'
 import { Button, SegmentedControl, cx } from '../../../../ui'
 import type { Corners, Filter, ScanPage } from '../lib/types'
 import { detectCorners, warpEnhance } from '../lib/cv'
@@ -16,23 +16,27 @@ export default function PageEditor({
   const [corners, setCorners] = useState<Corners>(FULL)
   const [filter, setFilter] = useState<Filter>(page.filter)
   const [busy, setBusy] = useState(false)
+  const [detecting, setDetecting] = useState(false)
 
-  // 載入時量圖 + 自動偵邊（偵唔到用 FULL）。
+  // detectCorners 回正規化座標（0..1）→ 直接 set，唔使再除尺寸（避免 race）。
+  const runDetect = useCallback(() => {
+    setDetecting(true)
+    let alive = true
+    detectCorners(page.rawDataUrl)
+      .then((c) => { if (alive && c) setCorners(c) })
+      .finally(() => { if (alive) setDetecting(false) })
+    return () => { alive = false }
+  }, [page.rawDataUrl])
+
+  // 載入時量圖 + 自動偵邊（偵唔到 / 離譜 → 留喺 FULL，等用戶手動調）。
   useEffect(() => {
     let alive = true
     const img = new Image()
     img.onload = () => { if (alive) setImgDims({ w: img.naturalWidth, h: img.naturalHeight }) }
     img.src = page.rawDataUrl
-    detectCorners(page.rawDataUrl).then((c) => {
-      if (!alive || !c) return
-      const w = img.naturalWidth || 1, h = img.naturalHeight || 1
-      setCorners({
-        tl: { x: c.tl.x / w, y: c.tl.y / h }, tr: { x: c.tr.x / w, y: c.tr.y / h },
-        br: { x: c.br.x / w, y: c.br.y / h }, bl: { x: c.bl.x / w, y: c.bl.y / h },
-      })
-    })
-    return () => { alive = false }
-  }, [page.rawDataUrl])
+    const cancelDetect = runDetect()
+    return () => { alive = false; cancelDetect() }
+  }, [page.rawDataUrl, runDetect])
 
   async function apply() {
     setBusy(true)
@@ -54,12 +58,35 @@ export default function PageEditor({
     { id: 'bw', label: t('scan.filterBw', { defaultValue: '黑白' }) },
   ]
 
+  const lowRes = imgDims.w > 1 && Math.max(imgDims.w, imgDims.h) < 1400
+
   return (
     <div className="space-y-4">
       <div className="relative mx-auto max-w-md overflow-hidden rounded-xl bg-slate-100 dark:bg-slate-800">
         <img src={page.rawDataUrl} alt="" className="block w-full" />
         <CornerOverlay corners={corners} onChange={setCorners} />
       </div>
+
+      {/* 四角偵測救援 + 來源解析度（診斷） */}
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex gap-2">
+          <Button variant="ghost" icon={ScanSearch} onClick={runDetect} disabled={detecting}>
+            {detecting
+              ? t('scan.detecting', { defaultValue: '偵測中…' })
+              : t('scan.redetect', { defaultValue: '重新偵測' })}
+          </Button>
+          <Button variant="ghost" icon={Maximize} onClick={() => setCorners(FULL)}>
+            {t('scan.fullPage', { defaultValue: '全頁' })}
+          </Button>
+        </div>
+        {imgDims.w > 1 && (
+          <span className={cx('text-xs', lowRes ? 'text-amber-600 dark:text-amber-400' : 'text-fg-muted')}>
+            {imgDims.w}×{imgDims.h}
+            {lowRes && ` · ${t('scan.lowResHint', { defaultValue: '解析度偏低，建議改用「上載相片」影' })}`}
+          </span>
+        )}
+      </div>
+
       <div className="flex flex-wrap items-center justify-between gap-3">
         <SegmentedControl options={filterOpts} value={filter} onChange={setFilter} />
         <div className="flex gap-2">

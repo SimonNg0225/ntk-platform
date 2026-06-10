@@ -20,8 +20,14 @@ export default function CameraCapture({
     let cancelled = false
     async function start() {
       try {
+        // 要求最高解析度（ideal 唔會 throw；瀏覽器揀最接近嘅）。
+        // 唔指定 → 預設得 ~640×480/720p，文件會好糊。
         const stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: { ideal: 'environment' } },
+          video: {
+            facingMode: { ideal: 'environment' },
+            width: { ideal: 3840 },
+            height: { ideal: 2160 },
+          },
           audio: false,
         })
         if (cancelled) {

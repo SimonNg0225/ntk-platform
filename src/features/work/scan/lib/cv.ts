@@ -1,11 +1,14 @@
 // 懶載自存 OpenCV.js（注入 <script>）+ jscanify。只喺入到編輯器先 import 呢個檔。
 import type { Corners, Filter, Pt } from './types'
-import { downscaleDims } from './geometry'
+import { downscaleDims, isPlausibleQuad } from './geometry'
 // 用 'jscanify/client'（瀏覽器版）；bare 'jscanify' 係 Node 版（require canvas/jsdom）行唔到。
 import type jscanifyType from 'jscanify/client'
 
 const OPENCV_SRC = '/vendor/opencv/opencv.js'
-const MAX_EDGE = 2000
+// 文件掃描要夠細節（~200 DPI A4 ≈ 2339px），長邊封 2400 平衡清晰度同記憶體。
+const MAX_EDGE = 2400
+// JPEG 輸出質素（高啲減少文字邊糊化）。
+const JPEG_Q = 0.95
 
 let cvReady: Promise<void> | null = null
 let scannerP: Promise<jscanifyType> | null = null
@@ -51,17 +54,28 @@ function imgFromDataUrl(dataUrl: string): Promise<HTMLImageElement> {
   })
 }
 
-/** 先降採樣（慳記憶體/加快），回新 dataUrl + 像素尺寸。 */
+/**
+ * 先降採樣（慳記憶體/加快），回新 dataUrl + 像素尺寸。
+ * 已經係 JPEG 又唔使縮 → 唔重新編碼（避免多一次 lossy pass，保留原畫質）。
+ */
 export async function downscaleDataUrl(dataUrl: string): Promise<{ dataUrl: string; w: number; h: number }> {
   const img = await imgFromDataUrl(dataUrl)
-  const { w, h } = downscaleDims(img.naturalWidth, img.naturalHeight, MAX_EDGE)
+  const ow = img.naturalWidth, oh = img.naturalHeight
+  const { w, h } = downscaleDims(ow, oh, MAX_EDGE)
+  const noResize = w === ow && h === oh
+  if (noResize && dataUrl.startsWith('data:image/jpeg')) {
+    return { dataUrl, w, h }
+  }
   const c = document.createElement('canvas')
   c.width = w; c.height = h
   c.getContext('2d')!.drawImage(img, 0, 0, w, h)
-  return { dataUrl: c.toDataURL('image/jpeg', 0.92), w, h }
+  return { dataUrl: c.toDataURL('image/jpeg', JPEG_Q), w, h }
 }
 
-/** 自動偵文件四角；偵唔到回 null（caller 用全幅）。 */
+/**
+ * 自動偵文件四角，回**正規化**座標（0..1，相對圖片）；偵唔到 / 結果離譜回 null。
+ * 回正規化（而非像素）→ caller 唔使再除圖片尺寸（避免 naturalWidth 未 load 嘅 race）。
+ */
 export async function detectCorners(dataUrl: string): Promise<Corners | null> {
   const cv = (window as any).cv
   let mat: any = null
@@ -69,8 +83,10 @@ export async function detectCorners(dataUrl: string): Promise<Corners | null> {
   try {
     const scanner = await getScanner()
     const img = await imgFromDataUrl(dataUrl)
+    const W = img.naturalWidth, H = img.naturalHeight
+    if (W <= 0 || H <= 0) return null
     const canvas = document.createElement('canvas')
-    canvas.width = img.naturalWidth; canvas.height = img.naturalHeight
+    canvas.width = W; canvas.height = H
     canvas.getContext('2d')!.drawImage(img, 0, 0)
     mat = cv.imread(canvas)
     contour = scanner.findPaperContour(mat)
@@ -78,8 +94,14 @@ export async function detectCorners(dataUrl: string): Promise<Corners | null> {
     const pts = scanner.getCornerPoints(contour)
     const { topLeftCorner: tl, topRightCorner: tr, bottomRightCorner: br, bottomLeftCorner: bl } = pts
     if (!tl || !tr || !br || !bl) return null
-    const toPt = (p: { x: number; y: number }): Pt => ({ x: p.x, y: p.y })
-    return { tl: toPt(tl), tr: toPt(tr), br: toPt(br), bl: toPt(bl) }
+    const px: Corners = {
+      tl: { x: tl.x, y: tl.y }, tr: { x: tr.x, y: tr.y },
+      br: { x: br.x, y: br.y }, bl: { x: bl.x, y: bl.y },
+    }
+    // jscanify 有時會回退化／太細／出界嘅四邊形 → 過濾，退回 null 由 caller 用全頁。
+    if (!isPlausibleQuad(px, W, H)) return null
+    const norm = (p: Pt): Pt => ({ x: p.x / W, y: p.y / H })
+    return { tl: norm(px.tl), tr: norm(px.tr), br: norm(px.br), bl: norm(px.bl) }
   } catch {
     return null
   } finally {
@@ -115,7 +137,7 @@ export async function warpEnhance(dataUrl: string, corners: Corners | null, filt
   }
 
   // 濾鏡：color 直接回（唔掂 OpenCV）；gray / bw 先用 OpenCV。
-  if (filter === 'color') return outCanvas.toDataURL('image/jpeg', 0.9)
+  if (filter === 'color') return outCanvas.toDataURL('image/jpeg', JPEG_Q)
 
   const src = cv.imread(outCanvas)
   const gray = new cv.Mat()
@@ -128,5 +150,5 @@ export async function warpEnhance(dataUrl: string, corners: Corners | null, filt
   const show = document.createElement('canvas')
   cv.imshow(show, dst)
   src.delete(); gray.delete(); if (dst !== gray) dst.delete()
-  return show.toDataURL('image/jpeg', 0.9)
+  return show.toDataURL('image/jpeg', JPEG_Q)
 }
