@@ -3,6 +3,10 @@ import { allThemes, getTheme } from './index'
 import { SLIDE_TYPES } from '../types'
 
 describe('slides/themes', () => {
+  it('開檔有 4 個樣板', () => {
+    expect(allThemes.map((t) => t.id)).toEqual(['academic', 'playful', 'minimal', 'chalk'])
+  })
+
   it('getTheme 無效 id 回退第一個 theme', () => {
     expect(getTheme('nope').id).toBe(allThemes[0].id)
   })
