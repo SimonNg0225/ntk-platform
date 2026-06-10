@@ -8,7 +8,28 @@ describe('buildSlideSystem', () => {
     expect(s).toContain('8')
     expect(s).toContain('slides')
   })
+
+  it('有 layout 同配圖指引', () => {
+    const s = buildSlideSystem(undefined, 6)
+    expect(s).toContain('"layout"')
+    expect(s).toContain('"stats"')
+    expect(s).toContain('"compare"')
+    expect(s).toContain('"steps"')
+    expect(s).toContain('"quote"')
+    expect(s).toContain('"imageQuery"')
+    expect(s).toContain('"coverImageQuery"')
+  })
+
+  it('版數夠 8 先提章節分隔版', () => {
+    expect(buildSlideSystem('中史', 8)).toContain('章節分隔')
+    expect(buildSlideSystem('中史', 6)).not.toContain('章節分隔')
+  })
 })
+
+/** 砌一個齊 title 嘅 deck JSON（slides + deck 級額外欄位） */
+function wrap(slides: unknown[], extra: Record<string, unknown> = {}): string {
+  return JSON.stringify({ title: 'T', slides, ...extra })
+}
 
 describe('parseDeck', () => {
   const good = {
@@ -54,5 +75,249 @@ describe('parseDeck', () => {
   it('冇 slides 會 throw', () => {
     expect(() => parseDeck(JSON.stringify({ title: 'T', slides: [] }), 'X')).toThrow()
     expect(() => parseDeck('唔係 JSON', 'X')).toThrow()
+  })
+
+  it('舊格式（無新欄位）照舊 parse', () => {
+    const d = parseDeck(JSON.stringify(good), 'X')
+    expect(d.coverImageQuery).toBeUndefined()
+    expect(d.slides[0].layout).toBeUndefined()
+    expect(d.slides[0].stats).toBeUndefined()
+    expect(d.slides[0].imageQuery).toBeUndefined()
+  })
+
+  // ───────── 每款 layout 解析成功 ─────────
+
+  it('解析 stats 版式', () => {
+    const d = parseDeck(
+      wrap([
+        {
+          title: '關鍵數字',
+          bullets: ['合格率 75%', '滿分 100'],
+          layout: 'stats',
+          stats: [
+            { value: ' 75% ', label: ' 合格率 ' },
+            { value: '1842', label: '南京條約年份' },
+          ],
+        },
+      ]),
+      'X',
+    )
+    expect(d.slides[0].layout).toBe('stats')
+    expect(d.slides[0].stats).toEqual([
+      { value: '75%', label: '合格率' },
+      { value: '1842', label: '南京條約年份' },
+    ])
+    expect(d.slides[0].bullets).toEqual(['合格率 75%', '滿分 100'])
+  })
+
+  it('解析 compare 版式', () => {
+    const d = parseDeck(
+      wrap([
+        {
+          title: '供 vs 求',
+          bullets: ['供應上升', '需求下降'],
+          layout: 'compare',
+          compare: {
+            leftTitle: '供應',
+            left: ['價格升供應升', '生產成本影響'],
+            rightTitle: '需求',
+            right: ['價格升需求跌', '收入影響'],
+          },
+        },
+      ]),
+      'X',
+    )
+    expect(d.slides[0].layout).toBe('compare')
+    expect(d.slides[0].compare?.leftTitle).toBe('供應')
+    expect(d.slides[0].compare?.right).toHaveLength(2)
+  })
+
+  it('解析 steps 版式（desc 選填）', () => {
+    const d = parseDeck(
+      wrap([
+        {
+          title: '實驗步驟',
+          bullets: ['準備', '加熱', '記錄'],
+          layout: 'steps',
+          steps: [
+            { title: '準備器材', desc: '量筒、酒精燈' },
+            { title: '加熱' },
+            { title: '記錄結果', desc: ' ' },
+          ],
+        },
+      ]),
+      'X',
+    )
+    expect(d.slides[0].layout).toBe('steps')
+    expect(d.slides[0].steps).toHaveLength(3)
+    expect(d.slides[0].steps?.[0].desc).toBe('量筒、酒精燈')
+    expect(d.slides[0].steps?.[1].desc).toBeUndefined()
+    expect(d.slides[0].steps?.[2].desc).toBeUndefined()
+  })
+
+  it('解析 quote 版式', () => {
+    const d = parseDeck(
+      wrap([
+        {
+          title: '名言',
+          bullets: ['知與行'],
+          layout: 'quote',
+          quote: { text: '知之為知之，不知為不知，是知也。', attribution: '《論語》' },
+        },
+      ]),
+      'X',
+    )
+    expect(d.slides[0].layout).toBe('quote')
+    expect(d.slides[0].quote).toEqual({ text: '知之為知之，不知為不知，是知也。', attribution: '《論語》' })
+  })
+
+  it('顯式 section 會清空 bullets', () => {
+    const d = parseDeck(
+      wrap([{ title: '第二章 均衡', bullets: ['呢啲應該被清走'], layout: 'section' }]),
+      'X',
+    )
+    expect(d.slides[0].layout).toBe('section')
+    expect(d.slides[0].bullets).toEqual([])
+  })
+
+  it('空 bullets 版照保留（推斷做章節）', () => {
+    const d = parseDeck(wrap([{ title: '第一章 概念', bullets: [] }]), 'X')
+    expect(d.slides).toHaveLength(1)
+    expect(d.slides[0].layout).toBeUndefined()
+    expect(d.slides[0].bullets).toEqual([])
+  })
+
+  // ───────── 唔合格 → 靜默回退要點版 ─────────
+
+  it('stats 得 1 項回退要點版', () => {
+    const d = parseDeck(
+      wrap([{ title: 'A', bullets: ['x'], layout: 'stats', stats: [{ value: '75%', label: '合格率' }] }]),
+      'X',
+    )
+    expect(d.slides[0].layout).toBeUndefined()
+    expect(d.slides[0].stats).toBeUndefined()
+    expect(d.slides[0].bullets).toEqual(['x'])
+  })
+
+  it('stats 5 項回退要點版', () => {
+    const five = Array.from({ length: 5 }, (_, i) => ({ value: `${i}`, label: `項目${i}` }))
+    const d = parseDeck(wrap([{ title: 'A', bullets: ['x'], layout: 'stats', stats: five }]), 'X')
+    expect(d.slides[0].layout).toBeUndefined()
+    expect(d.slides[0].stats).toBeUndefined()
+  })
+
+  it('compare 缺一邊回退要點版', () => {
+    const d = parseDeck(
+      wrap([
+        {
+          title: 'A',
+          bullets: ['x'],
+          layout: 'compare',
+          compare: { leftTitle: '供應', left: ['一', '二'] },
+        },
+      ]),
+      'X',
+    )
+    expect(d.slides[0].layout).toBeUndefined()
+    expect(d.slides[0].compare).toBeUndefined()
+  })
+
+  it('steps 空陣列回退要點版', () => {
+    const d = parseDeck(wrap([{ title: 'A', bullets: ['x'], layout: 'steps', steps: [] }]), 'X')
+    expect(d.slides[0].layout).toBeUndefined()
+    expect(d.slides[0].steps).toBeUndefined()
+  })
+
+  it('quote 非 object 回退要點版', () => {
+    const d = parseDeck(wrap([{ title: 'A', bullets: ['x'], layout: 'quote', quote: '一句嘢' }]), 'X')
+    expect(d.slides[0].layout).toBeUndefined()
+    expect(d.slides[0].quote).toBeUndefined()
+  })
+
+  it('未知 layout 值當普通要點版', () => {
+    const d = parseDeck(wrap([{ title: 'A', bullets: ['x'], layout: 'fancy' }]), 'X')
+    expect(d.slides[0].layout).toBeUndefined()
+  })
+
+  it('imageQuery 非字串會被剷走', () => {
+    const d = parseDeck(wrap([{ title: 'A', bullets: ['x'], imageQuery: 42 }]), 'X')
+    expect(d.slides[0].imageQuery).toBeUndefined()
+  })
+
+  // ───────── 截長 + 搜尋詞清理 ─────────
+
+  it('超長字段會截斷', () => {
+    const longBullet = '長'.repeat(70)
+    const d = parseDeck(
+      wrap([
+        {
+          title: 'A',
+          bullets: Array.from({ length: 8 }, () => longBullet),
+          layout: 'stats',
+          stats: [
+            { value: '一二三四五六七八九十', label: '標'.repeat(25) },
+            { value: '75%', label: '合格率' },
+          ],
+        },
+        {
+          title: 'B',
+          bullets: ['x'],
+          layout: 'quote',
+          quote: { text: '句'.repeat(70) },
+        },
+      ]),
+      'X',
+    )
+    // bullets：最多 6 點、每點 ≤60 字
+    expect(d.slides[0].bullets).toHaveLength(6)
+    expect(d.slides[0].bullets[0]).toHaveLength(60)
+    expect(d.slides[0].bullets[0].endsWith('…')).toBe(true)
+    // stats：value ≤8 字、label ≤20 字
+    expect(d.slides[0].stats?.[0].value).toHaveLength(8)
+    expect(d.slides[0].stats?.[0].label).toHaveLength(20)
+    // quote：text ≤60 字
+    expect(d.slides[1].quote?.text).toHaveLength(60)
+  })
+
+  it('steps 同 compare 字段都會截長', () => {
+    const d = parseDeck(
+      wrap([
+        {
+          title: 'A',
+          bullets: ['x'],
+          layout: 'steps',
+          steps: [
+            { title: '步'.repeat(15), desc: '述'.repeat(50) },
+            { title: '完成' },
+          ],
+        },
+        {
+          title: 'B',
+          bullets: ['y'],
+          layout: 'compare',
+          compare: {
+            leftTitle: '甲',
+            left: ['點'.repeat(35), '短點'],
+            rightTitle: '乙',
+            right: ['一', '二'],
+          },
+        },
+      ]),
+      'X',
+    )
+    expect(d.slides[0].steps?.[0].title).toHaveLength(12)
+    expect(d.slides[0].steps?.[0].desc).toHaveLength(40)
+    expect(d.slides[1].compare?.left[0]).toHaveLength(30)
+  })
+
+  it('imageQuery 清理空白並最多 4 個字', () => {
+    const d = parseDeck(
+      wrap([{ title: 'A', bullets: ['x'], imageQuery: '  great   wall of china sunset  ' }], {
+        coverImageQuery: ' hong kong harbour skyline night ',
+      }),
+      'X',
+    )
+    expect(d.slides[0].imageQuery).toBe('great wall of china')
+    expect(d.coverImageQuery).toBe('hong kong harbour skyline')
   })
 })

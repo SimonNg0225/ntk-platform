@@ -32,7 +32,7 @@ const HIGHLIGHTS: { icon: typeof Sparkles; title: string; desc: string }[] = [
   {
     icon: Presentation,
     title: 'AI 教學簡報（PPT）',
-    desc: '揀課題或貼內容，AI 生成 PowerPoint 大綱，一鍵下載 .pptx。',
+    desc: '揀課題或貼內容，AI 生成 PowerPoint：5 套設計模板、版式自動配、封面內頁配圖，一鍵下載 .pptx。',
   },
   {
     icon: PenLine,

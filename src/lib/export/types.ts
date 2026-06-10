@@ -29,17 +29,61 @@ export interface SlideChart {
   unit?: string
 }
 
+/** 版式 — 缺省 'bullets'；bullets.length===0 視為 'section'（章節分隔） */
+export type SlideLayout = 'bullets' | 'stats' | 'compare' | 'steps' | 'quote' | 'section'
+
+/** 大數字 tile — value ≤8 字（'75%'/'1842'），label ≤20 字 */
+export interface SlideStat {
+  value: string
+  label: string
+}
+
+/** 兩欄對比 — 每邊 2-4 點，每點 ≤30 字 */
+export interface SlideCompare {
+  leftTitle: string
+  left: string[]
+  rightTitle: string
+  right: string[]
+}
+
+/** 流程步驟 — title ≤12 字，desc ≤40 字 */
+export interface SlideStep {
+  title: string
+  desc?: string
+}
+
+/** 大引文 — text ≤60 字 */
+export interface SlideQuote {
+  text: string
+  attribution?: string
+}
+
 export interface Slide {
   title: string
+  /** 永遠必填（兜底 + 兼容舊紀錄）；每點 ≤60 字，≤6 點 */
   bullets: string[]
   /** 講者備註（選填） */
   notes?: string
   /** 數據圖表（選填） */
   chart?: SlideChart
+  /** 版式（選填）— 缺省 'bullets'；bullets.length===0 視為 'section' */
+  layout?: SlideLayout
+  /** layout='stats' 用 — 2-4 項先有效 */
+  stats?: SlideStat[]
+  /** layout='compare' 用 */
+  compare?: SlideCompare
+  /** layout='steps' 用 — 2-5 步先有效 */
+  steps?: SlideStep[]
+  /** layout='quote' 用 */
+  quote?: SlideQuote
+  /** 英文 Pexels 搜尋詞（1-4 個字），值得配相嘅版先有 */
+  imageQuery?: string
 }
 
 export interface Deck {
   title: string
   subtitle?: string
   slides: Slide[]
+  /** 英文封面搜尋詞（選填） */
+  coverImageQuery?: string
 }

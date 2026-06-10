@@ -12,6 +12,8 @@ export interface DeckRecord extends Entity {
   title: string
   subtitle?: string
   slides: Slide[]
+  /** AI 出嘅英文封面搜尋詞（選填）— 下載時攞 Pexels 封面相用 */
+  coverImageQuery?: string
 }
 
 export const slideDecksCol = createCollection<DeckRecord>('work_slide_decks', [])

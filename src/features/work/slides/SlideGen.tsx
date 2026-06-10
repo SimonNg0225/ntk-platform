@@ -9,7 +9,13 @@ import {
   StickyNote,
   BarChart3,
   Image as ImageIcon,
+  Images,
+  Hash,
+  Columns2,
+  ListOrdered,
+  Quote,
 } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 import {
   Badge,
   Button,
@@ -33,9 +39,11 @@ import { topicsCol } from '../../../data/collections'
 import { getSubjectPack } from '../../../data/subjects'
 import {
   downloadPptx,
-  SLIDE_THEMES,
-  type SlideThemeId,
+  SLIDE_PACKS,
+  type SlidePackId,
+  type SlideImage,
   fetchCoverPhoto,
+  fetchSlidePhoto,
   isStockConfigured,
 } from '../../../lib/export'
 import { slideDecksCol, type DeckRecord } from './slideStore'
@@ -50,6 +58,17 @@ const MODEL_OPTS: { id: AIModel; label: string }[] = [
   { id: 'gemini-2.5-flash', label: 'Flash' },
   { id: 'gemini-2.5-pro', label: 'Pro' },
 ]
+
+/** 內頁配圖上限 — 同一 deck 最多攞 4 張內頁相（控制檔案大細＋API 用量） */
+const MAX_SLIDE_PHOTOS = 4
+
+/** 預覽列表嘅版式 badge — 對應引擎四款特別版式（section 由空 bullets 推斷，唔標） */
+const LAYOUT_BADGES: Record<string, { label: string; icon: LucideIcon }> = {
+  stats: { label: '數據', icon: Hash },
+  compare: { label: '對比', icon: Columns2 },
+  steps: { label: '步驟', icon: ListOrdered },
+  quote: { label: '金句', icon: Quote },
+}
 
 function fmtDate(iso: string): string {
   try {
@@ -82,8 +101,9 @@ export default function SlideGen() {
   const [busy, setBusy] = useState(false)
   const [current, setCurrent] = useState<DeckRecord | null>(null)
   const [downloading, setDownloading] = useState(false)
-  const [theme, setTheme] = useState<SlideThemeId>('navy')
+  const [pack, setPack] = useState<SlidePackId>('inkwell')
   const [usePhoto, setUsePhoto] = useState(false)
+  const [useSlidePhotos, setUseSlidePhotos] = useState(true)
 
   const hasInput = mode === 'topic' ? topics.length > 0 : text.trim().length > 0
 
@@ -108,6 +128,7 @@ export default function SlideGen() {
         title: deck.title,
         subtitle: deck.subtitle,
         slides: deck.slides,
+        coverImageQuery: deck.coverImageQuery,
       })
       setCurrent(rec)
       toast.success(`簡報已生成（${deck.slides.length} 版）`)
@@ -121,12 +142,40 @@ export default function SlideGen() {
   async function download(rec: DeckRecord) {
     setDownloading(true)
     try {
-      let coverPhoto: { dataUri: string; credit: string } | undefined
+      // 封面相 — 優先用 AI 出嘅英文搜尋詞，冇就退返副題／科目／標題
+      let coverPhoto: SlideImage | undefined
       if (usePhoto && isStockConfigured) {
-        const photo = await fetchCoverPhoto(`${rec.subtitle || subjectName || rec.title} 教學`)
-        if (photo) coverPhoto = { dataUri: photo.dataUri, credit: photo.credit }
+        const photo = await fetchCoverPhoto(
+          rec.coverImageQuery || `${rec.subtitle || subjectName || rec.title} 教學`,
+        )
+        if (photo) coverPhoto = photo
       }
-      await downloadPptx({ title: rec.title, subtitle: rec.subtitle, slides: rec.slides }, rec.title, theme, coverPhoto)
+      // 內頁配圖 — AI 標咗 imageQuery 嘅頭 4 版並行攞相，攞唔到嗰版靜默略過
+      let slidePhotos: Record<number, SlideImage> | undefined
+      if (useSlidePhotos && isStockConfigured) {
+        const targets = rec.slides
+          .map((s, i) => (s.imageQuery ? { index: i, query: s.imageQuery } : null))
+          .filter((t): t is { index: number; query: string } => t !== null)
+          .slice(0, MAX_SLIDE_PHOTOS)
+        if (targets.length > 0) {
+          const photos = await Promise.all(targets.map((t) => fetchSlidePhoto(t.query)))
+          const found: Record<number, SlideImage> = {}
+          photos.forEach((p, i) => {
+            if (p) found[targets[i].index] = p
+          })
+          if (Object.keys(found).length > 0) slidePhotos = found
+        }
+      }
+      await downloadPptx(
+        {
+          title: rec.title,
+          subtitle: rec.subtitle,
+          slides: rec.slides,
+          coverImageQuery: rec.coverImageQuery,
+        },
+        rec.title,
+        { pack, coverPhoto, slidePhotos },
+      )
       toast.success('已下載 PowerPoint')
     } catch (e) {
       toast.error((e as Error).message || '下載失敗')
@@ -163,7 +212,7 @@ export default function SlideGen() {
           教學簡報
         </h1>
         <p className="mt-2 text-[13px] text-slate-500 dark:text-slate-400">
-          揀課題或貼內容，AI 生成 PowerPoint 大綱（封面 + 逐版重點 + 講者備註），一鍵下載 .pptx。
+          揀課題或貼內容，AI 生成 PowerPoint：5 套設計模板，數據／對比／步驟／金句版式自動配，封面與內頁可自動配相，一鍵下載 .pptx。
         </p>
       </header>
 
@@ -225,10 +274,12 @@ export default function SlideGen() {
           rec={current}
           onDownload={() => download(current)}
           downloading={downloading}
-          theme={theme}
-          onTheme={setTheme}
+          pack={pack}
+          onPack={setPack}
           usePhoto={usePhoto}
           onUsePhoto={setUsePhoto}
+          useSlidePhotos={useSlidePhotos}
+          onUseSlidePhotos={setUseSlidePhotos}
         />
       )}
 
@@ -284,18 +335,22 @@ function DeckView({
   rec,
   onDownload,
   downloading,
-  theme,
-  onTheme,
+  pack,
+  onPack,
   usePhoto,
   onUsePhoto,
+  useSlidePhotos,
+  onUseSlidePhotos,
 }: {
   rec: DeckRecord
   onDownload: () => void
   downloading: boolean
-  theme: SlideThemeId
-  onTheme: (t: SlideThemeId) => void
+  pack: SlidePackId
+  onPack: (p: SlidePackId) => void
   usePhoto: boolean
   onUsePhoto: (v: boolean) => void
+  useSlidePhotos: boolean
+  onUseSlidePhotos: (v: boolean) => void
 }) {
   return (
     <Card padded className="space-y-4 ring-1 ring-accent/20">
@@ -312,81 +367,129 @@ function DeckView({
       </div>
       {rec.subtitle && <p className="text-[13px] text-slate-500 dark:text-slate-400">{rec.subtitle}</p>}
 
-      {/* 模板主題揀選（下載 .pptx 時套用） */}
-      <div className="flex flex-wrap items-center gap-2">
-        <span className="text-[11px] font-medium uppercase tracking-wider text-slate-400">模板主題</span>
-        {SLIDE_THEMES.map((th) => (
+      {/* 模板揀選 + 配相選項（下載 .pptx 時套用） */}
+      <div className="space-y-2">
+        <span className="block text-[11px] font-medium uppercase tracking-wider text-slate-400">
+          模板
+        </span>
+        <div className="flex flex-wrap gap-2">
+          {SLIDE_PACKS.map((p) => (
+            <button
+              key={p.id}
+              type="button"
+              onClick={() => onPack(p.id)}
+              aria-pressed={pack === p.id}
+              className={cx(
+                'flex w-[124px] flex-col items-start gap-1 rounded-xl border px-3 py-2 text-left transition active:scale-[0.97]',
+                pack === p.id
+                  ? 'border-accent bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent'
+                  : 'border-black/[0.08] text-slate-600 hover:bg-black/[0.03] dark:border-white/10 dark:text-slate-300',
+              )}
+            >
+              <span className="flex -space-x-1.5">
+                {p.swatches.map((c, ci) => (
+                  <span
+                    key={ci}
+                    className="h-3.5 w-3.5 rounded-full ring-1 ring-black/10 dark:ring-white/20"
+                    style={{ background: c }}
+                  />
+                ))}
+              </span>
+              <span className="text-xs font-semibold">{p.name}</span>
+              <span className="text-[10px] leading-tight text-slate-400 dark:text-slate-500">
+                {p.hint}
+              </span>
+            </button>
+          ))}
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
           <button
-            key={th.id}
             type="button"
-            onClick={() => onTheme(th.id)}
-            aria-pressed={theme === th.id}
+            onClick={() => onUsePhoto(!usePhoto)}
+            disabled={!isStockConfigured}
+            aria-pressed={usePhoto && isStockConfigured}
+            title={isStockConfigured ? '封面用 Pexels 免費相片' : '需先設定 VITE_PEXELS_KEY 環境變數'}
             className={cx(
-              'inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-medium transition active:scale-[0.97]',
-              theme === th.id
+              'inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-medium transition active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-50',
+              usePhoto && isStockConfigured
                 ? 'border-accent bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent'
                 : 'border-black/[0.08] text-slate-600 hover:bg-black/[0.03] dark:border-white/10 dark:text-slate-300',
             )}
           >
-            <span className="h-3 w-3 rounded-full" style={{ background: th.swatch }} />
-            {th.name}
+            <ImageIcon size={13} /> 封面相片
           </button>
-        ))}
-        <span className="mx-1 h-4 w-px bg-black/[0.08] dark:bg-white/10" />
-        <button
-          type="button"
-          onClick={() => onUsePhoto(!usePhoto)}
-          disabled={!isStockConfigured}
-          aria-pressed={usePhoto && isStockConfigured}
-          title={isStockConfigured ? '封面用 Pexels 免費相片' : '需先設定 VITE_PEXELS_KEY 環境變數'}
-          className={cx(
-            'inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-medium transition active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-50',
-            usePhoto && isStockConfigured
-              ? 'border-accent bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent'
-              : 'border-black/[0.08] text-slate-600 hover:bg-black/[0.03] dark:border-white/10 dark:text-slate-300',
-          )}
-        >
-          <ImageIcon size={13} /> 封面相片
-        </button>
+          <button
+            type="button"
+            onClick={() => onUseSlidePhotos(!useSlidePhotos)}
+            disabled={!isStockConfigured}
+            aria-pressed={useSlidePhotos && isStockConfigured}
+            title={
+              isStockConfigured
+                ? 'AI 標咗配圖嘅內頁自動配 Pexels 相片（最多 4 版）'
+                : '需先設定 VITE_PEXELS_KEY 環境變數'
+            }
+            className={cx(
+              'inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-medium transition active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-50',
+              useSlidePhotos && isStockConfigured
+                ? 'border-accent bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent'
+                : 'border-black/[0.08] text-slate-600 hover:bg-black/[0.03] dark:border-white/10 dark:text-slate-300',
+            )}
+          >
+            <Images size={13} /> 內頁配圖
+          </button>
+        </div>
       </div>
 
       <div className="space-y-2">
-        {rec.slides.map((s, i) => (
-          <div
-            key={i}
-            className="rounded-xl border border-black/[0.06] bg-slate-50/60 p-3 dark:border-white/[0.08] dark:bg-slate-800/40"
-          >
-            <div className="flex items-center gap-2">
-              <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-accent-soft text-[11px] font-semibold text-accent-strong dark:bg-accent/15 dark:text-accent">
-                {i + 1}
-              </span>
-              <p className="min-w-0 flex-1 text-sm font-semibold text-slate-700 dark:text-slate-200">
-                {s.title}
-              </p>
-              {s.chart && (
-                <span className="inline-flex shrink-0 items-center gap-1 rounded-md bg-blue-50 px-1.5 py-0.5 text-[10px] font-medium text-blue-600 dark:bg-blue-500/15 dark:text-blue-300">
-                  <BarChart3 size={11} /> 圖表
+        {rec.slides.map((s, i) => {
+          const layoutBadge = s.layout ? LAYOUT_BADGES[s.layout] : undefined
+          return (
+            <div
+              key={i}
+              className="rounded-xl border border-black/[0.06] bg-slate-50/60 p-3 dark:border-white/[0.08] dark:bg-slate-800/40"
+            >
+              <div className="flex items-center gap-2">
+                <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-accent-soft text-[11px] font-semibold text-accent-strong dark:bg-accent/15 dark:text-accent">
+                  {i + 1}
                 </span>
+                <p className="min-w-0 flex-1 text-sm font-semibold text-slate-700 dark:text-slate-200">
+                  {s.title}
+                </p>
+                {layoutBadge && (
+                  <span className="inline-flex shrink-0 items-center gap-1 rounded-md bg-violet-50 px-1.5 py-0.5 text-[10px] font-medium text-violet-600 dark:bg-violet-500/15 dark:text-violet-300">
+                    <layoutBadge.icon size={11} /> {layoutBadge.label}
+                  </span>
+                )}
+                {s.chart && (
+                  <span className="inline-flex shrink-0 items-center gap-1 rounded-md bg-blue-50 px-1.5 py-0.5 text-[10px] font-medium text-blue-600 dark:bg-blue-500/15 dark:text-blue-300">
+                    <BarChart3 size={11} /> 圖表
+                  </span>
+                )}
+                {s.imageQuery && (
+                  <span className="inline-flex shrink-0 items-center gap-1 rounded-md bg-emerald-50 px-1.5 py-0.5 text-[10px] font-medium text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-300">
+                    <ImageIcon size={11} /> 配圖
+                  </span>
+                )}
+              </div>
+              {s.bullets.length > 0 && (
+                <ul className="mt-1.5 space-y-0.5 pl-7">
+                  {s.bullets.map((b, bi) => (
+                    <li key={bi} className="flex gap-1.5 text-[13px] text-slate-600 dark:text-slate-300">
+                      <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-accent/60" />
+                      <span>{b}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {s.notes && (
+                <p className="mt-1.5 flex items-start gap-1.5 pl-7 text-[11px] text-slate-400 dark:text-slate-500">
+                  <StickyNote size={11} className="mt-0.5 shrink-0" />
+                  {s.notes}
+                </p>
               )}
             </div>
-            {s.bullets.length > 0 && (
-              <ul className="mt-1.5 space-y-0.5 pl-7">
-                {s.bullets.map((b, bi) => (
-                  <li key={bi} className="flex gap-1.5 text-[13px] text-slate-600 dark:text-slate-300">
-                    <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-accent/60" />
-                    <span>{b}</span>
-                  </li>
-                ))}
-              </ul>
-            )}
-            {s.notes && (
-              <p className="mt-1.5 flex items-start gap-1.5 pl-7 text-[11px] text-slate-400 dark:text-slate-500">
-                <StickyNote size={11} className="mt-0.5 shrink-0" />
-                {s.notes}
-              </p>
-            )}
-          </div>
-        ))}
+          )
+        })}
       </div>
     </Card>
   )
