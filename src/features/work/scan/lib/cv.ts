@@ -114,12 +114,27 @@ function quadFromContour(cv: any, cnt: any): Pt[] | null {
 /**
  * 自動偵文件四角，回**正規化**座標（0..1，相對圖片）；偵唔到 / 結果離譜回 null。
  *
- * Robust 文件偵測（應付低對比 / light-on-light）：
- *   灰階 → 模糊 → Otsu 自適應 Canny → 形態學 close 駁口 → findContours
- *   → 揀面積最大（≥15%）嘅 contour → quadFromContour（approx/hull/minAreaRect）。
- * 回正規化座標（而非像素）→ caller 唔使再除尺寸（避免 naturalWidth race）。
+ * 引擎次序：
+ *   1. ML（DocAligner heatmap，mlDetect.ts）—— light-on-light 都食得到，主力。
+ *   2. Classical OpenCV（下面 detectCornersClassical）—— ML 載入失敗時保底。
  */
 export async function detectCorners(dataUrl: string): Promise<Corners | null> {
+  try {
+    const { detectCornersML } = await import('./mlDetect')
+    const ml = await detectCornersML(dataUrl)
+    if (ml) return ml
+  } catch {
+    // ML 引擎唔得（模型/wasm 載入失敗、舊瀏覽器）→ 跌落 classical。
+  }
+  return detectCornersClassical(dataUrl)
+}
+
+/**
+ * Classical 文件偵測（應付低對比能力有限，做 ML 嘅保底）：
+ *   灰階 → 模糊 → Otsu 自適應 Canny → 形態學 close 駁口 → findContours
+ *   → 揀面積最大（≥15%）嘅 contour → quadFromContour（approx/hull/minAreaRect）。
+ */
+async function detectCornersClassical(dataUrl: string): Promise<Corners | null> {
   try {
     await getScanner() // 確保 OpenCV 載入（window.cv 就緒）
     const cv = (window as any).cv

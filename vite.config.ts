@@ -140,9 +140,10 @@ export default defineConfig(({ mode }) => {
         injectRegister: false, // 改由 src/components/PwaUpdater.tsx 自行 registerSW（要 periodic update）
         includeAssets: ['favicon.svg', 'apple-touch-icon.png'],
         workbox: {
-          // OpenCV.js（10MB+）係掃描功能用嘅，runtime 先 fetch `/vendor/opencv/opencv.js`，
-          // 唔應該（亦超過 2MiB 上限）入 precache manifest；排除佢免 build 報錯。
-          globIgnores: ['**/vendor/opencv/**'],
+          // 掃描功能嘅大檔（OpenCV 10MB / DocAligner 模型 4.5MB / ORT wasm 12MB）
+          // 全部 runtime 先 fetch，唔應該（亦超過 2MiB 上限）入 precache；排除免 build 報錯。
+          // **/*.wasm = onnxruntime-web emit 出嚟嘅 hashed wasm asset（~12MB）。
+          globIgnores: ['**/vendor/opencv/**', '**/vendor/docaligner/**', '**/*.wasm'],
         },
         manifest: {
           name: 'EziTeach 教學易 · 香港教師工作台',
