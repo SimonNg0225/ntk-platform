@@ -53,20 +53,60 @@ function buildInput() {
   return data
 }
 
-// ---------- 熱圖 → 角點（門檻 0.3，加權重心，跟官方 postprocess 簡化） ----------
+// ---------- 熱圖 → 角點（門檻 0.3 → 最大連通 blob → 重心，跟官方） ----------
+// ⚠️ 同 src/features/work/scan/lib/mlDetect.ts cornerFromHeatmap 保持一致。
+const HEAT_THRESHOLD = 0.3
 function cornerFromHeatmap(hm, hw, hh) {
-  let peak = 0
-  for (let i = 0; i < hm.length; i++) if (hm[i] > peak) peak = hm[i]
-  if (peak < 0.3) return null
-  let sx = 0, sy = 0, sw = 0
-  for (let y = 0; y < hh; y++) {
-    for (let x = 0; x < hw; x++) {
-      const v = hm[y * hw + x]
-      if (v >= 0.3) { sx += x * v; sy += y * v; sw += v }
+  const n = hw * hh
+  const label = new Int32Array(n).fill(-1)
+  const stack = []
+  let bestSum = 0
+  let best = null
+  let blobId = 0
+  for (let start = 0; start < n; start++) {
+    if (hm[start] < HEAT_THRESHOLD || label[start] !== -1) continue
+    let sx = 0, sy = 0, sw = 0
+    stack.push(start)
+    label[start] = blobId
+    while (stack.length) {
+      const i = stack.pop()
+      const x = i % hw, y = (i / hw) | 0
+      const v = hm[i]
+      sx += x * v; sy += y * v; sw += v
+      for (let dy = -1; dy <= 1; dy++) {
+        for (let dx = -1; dx <= 1; dx++) {
+          if (!dx && !dy) continue
+          const nx = x + dx, ny = y + dy
+          if (nx < 0 || ny < 0 || nx >= hw || ny >= hh) continue
+          const j = ny * hw + nx
+          if (label[j] === -1 && hm[j] >= HEAT_THRESHOLD) {
+            label[j] = blobId
+            stack.push(j)
+          }
+        }
+      }
     }
+    if (sw > bestSum) { bestSum = sw; best = { sx, sy, sw } }
+    blobId++
   }
-  if (sw <= 0) return null
-  return { x: (sx / sw + 0.5) / hw, y: (sy / sw + 0.5) / hh } // 0..1
+  if (!best || best.sw <= 0) return null
+  return { x: (best.sx / best.sw + 0.5) / hw, y: (best.sy / best.sw + 0.5) / hh }
+}
+
+// ---------- 純測試：雙 blob 陷阱（要揀大嗰團，唔係兩團平均） ----------
+{
+  const hw = 32, hh = 32
+  const hm = new Float32Array(hw * hh)
+  // 大 blob 喺 (5,5) 附近 3×3；細 blob 喺 (25,25) 單格
+  for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) hm[(5 + dy) * hw + (5 + dx)] = 0.9
+  hm[25 * hw + 25] = 0.8
+  const p = cornerFromHeatmap(hm, hw, hh)
+  const px = p.x * hw - 0.5, py = p.y * hh - 0.5
+  if (Math.abs(px - 5) > 0.6 || Math.abs(py - 5) > 0.6) {
+    console.log(`❌ blob 測試 FAIL：應揀大 blob (5,5)，實際 (${px.toFixed(1)},${py.toFixed(1)})`)
+    process.exit(1)
+  }
+  console.log('✅ 雙 blob 陷阱：正確揀最大 blob（唔係平均）')
 }
 
 const session = await ort.InferenceSession.create(MODEL)

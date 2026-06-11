@@ -70,20 +70,49 @@ function toTensorData(img: HTMLImageElement): Float32Array {
   return out
 }
 
-/** 單條 channel 熱圖 → 0..1 角點（門檻 0.3 加權重心）；冇訊號回 null。 */
+/**
+ * 單條 channel 熱圖 → 0..1 角點；冇訊號回 null。
+ * 跟官方 postprocess：門檻 0.3 → **最大連通 blob** → 重心。
+ * ⚠️ 唔可以用全圖重心：真實相片有時有第二團假響應（例如表格角落），
+ * 全圖重心會俾佢拉到入面（角縮入紙內）；最大 blob 先穩。
+ */
 function cornerFromHeatmap(hm: Float32Array, hw: number, hh: number): Pt | null {
-  let peak = 0
-  for (let i = 0; i < hm.length; i++) if (hm[i] > peak) peak = hm[i]
-  if (peak < HEAT_THRESHOLD) return null
-  let sx = 0, sy = 0, sw = 0
-  for (let y = 0; y < hh; y++) {
-    for (let x = 0; x < hw; x++) {
-      const v = hm[y * hw + x]
-      if (v >= HEAT_THRESHOLD) { sx += x * v; sy += y * v; sw += v }
+  const n = hw * hh
+  // -1 = 未標記；0+ = blob id
+  const label = new Int32Array(n).fill(-1)
+  const stack: number[] = []
+  let bestSum = 0
+  let best: { sx: number; sy: number; sw: number } | null = null
+  let blobId = 0
+  for (let start = 0; start < n; start++) {
+    if (hm[start] < HEAT_THRESHOLD || label[start] !== -1) continue
+    // BFS/DFS flood fill（8 連通）
+    let sx = 0, sy = 0, sw = 0
+    stack.push(start)
+    label[start] = blobId
+    while (stack.length) {
+      const i = stack.pop()!
+      const x = i % hw, y = (i / hw) | 0
+      const v = hm[i]
+      sx += x * v; sy += y * v; sw += v
+      for (let dy = -1; dy <= 1; dy++) {
+        for (let dx = -1; dx <= 1; dx++) {
+          if (!dx && !dy) continue
+          const nx = x + dx, ny = y + dy
+          if (nx < 0 || ny < 0 || nx >= hw || ny >= hh) continue
+          const j = ny * hw + nx
+          if (label[j] === -1 && hm[j] >= HEAT_THRESHOLD) {
+            label[j] = blobId
+            stack.push(j)
+          }
+        }
+      }
     }
+    if (sw > bestSum) { bestSum = sw; best = { sx, sy, sw } }
+    blobId++
   }
-  if (sw <= 0) return null
-  return { x: (sx / sw + 0.5) / hw, y: (sy / sw + 0.5) / hh }
+  if (!best || best.sw <= 0) return null
+  return { x: (best.sx / best.sw + 0.5) / hw, y: (best.sy / best.sw + 0.5) / hh }
 }
 
 /**
