@@ -99,6 +99,45 @@ function renderBlueprintSchematic(slide: PptxGenJS.Slide, body: Rect, pack: Pack
   })
 }
 
+/**
+ * 第二招牌：stats 渲染成「工程規格標籤」——
+ * 全版淡藍曬方格底，各 stat 入一個方框（square frame + 四角對位十字），
+ * 值用巨號 displayFont，標籤做尺寸標註（dimension caption）。2–4 項。
+ */
+function renderBlueprintSpecTags(slide: PptxGenJS.Slide, body: Rect, pack: Pack, s: Slide): void {
+  const items = (s.stats ?? []).slice(0, 4)
+  if (items.length < 2) return
+  const n = items.length
+  const grid = mix(pack.accent, pack.bg, 0.18)
+  // 淡藍曬方格底（每 0.5" 一格）
+  const cols = Math.floor(body.w / 0.5)
+  const rows = Math.floor(body.h / 0.5)
+  for (let c = 0; c <= cols; c++) vline(slide, body.x + c * 0.5, body.y, rows * 0.5, grid, 0.5)
+  for (let r = 0; r <= rows; r++) hline(slide, body.x, body.y + r * 0.5, cols * 0.5, grid, 0.5)
+  const gap = 0.4
+  const cw = (body.w - gap * (n - 1)) / n
+  const th = Math.min(2.6, body.h - 0.6)
+  const ty = body.y + (body.h - th) / 2
+  items.forEach((st, i) => {
+    const cx = body.x + i * (cw + gap)
+    // 規格方框
+    slide.addShape('rect', { x: cx, y: ty, w: cw, h: th, fill: { type: 'none' }, line: { color: pack.accent, width: 1 } })
+    // 四角對位十字 tick
+    bluCross(slide, cx, ty, 0.14)
+    bluCross(slide, cx + cw, ty, 0.14)
+    bluCross(slide, cx, ty + th, 0.14)
+    bluCross(slide, cx + cw, ty + th, 0.14)
+    // 頂部 spec 編號
+    tx(slide, `SPEC ${pad2(i + 1)}`, { x: cx + 0.12, y: ty + 0.08, w: cw - 0.24, h: 0.22, fontSize: 8, color: pack.faint, charSpacing: 2, bold: true, fontFace: pack.displayFont })
+    // 巨號數值
+    tx(slide, clampText(st.value.trim(), 8), { x: cx + 0.1, y: ty + 0.34, w: cw - 0.2, h: th * 0.5, fontSize: 56, bold: true, color: pack.ink, align: 'center', valign: 'middle', fontFace: pack.displayFont, fit: 'shrink' })
+    // 尺寸標註：register ticks 夾住 label
+    const dy = ty + th - 0.5
+    ruler(slide, cx + 0.16, dy, cw - 0.32)
+    tx(slide, clampText(st.label.trim(), 22), { x: cx + 0.12, y: dy + 0.14, w: cw - 0.24, h: 0.34, fontSize: 11, color: pack.inkSoft, align: 'center', fit: 'shrink' })
+  })
+}
+
 const blueprint: Pack = {
   id: 'blueprint',
   name: '藍曬',
@@ -127,7 +166,7 @@ const blueprint: Pack = {
   stepNode: { kind: 'squareFill', size: 0.3, color: BLU.accent, numColor: BLU.bg },
   quoteMark: { kind: 'square', size: 0.14, color: BLU.accent },
   splitPhoto: 'bleedHair',
-  overrides: { steps: renderBlueprintSchematic },
+  overrides: { steps: renderBlueprintSchematic, stats: renderBlueprintSpecTags },
 
   cover(slide, deck, brand, img) {
     slide.background = { color: BLU.bg }
@@ -255,6 +294,55 @@ function renderIvyCrests(slide: PptxGenJS.Slide, body: Rect, pack: Pack, s: Slid
   })
 }
 
+/**
+ * 第二招牌：quote 渲染成「學院題詞」——
+ * 金菱形 + 常春藤葉 flourish 開首，大號 Georgia 引文居中，
+ * 金學刊雙細線壓底，attribution 做落款。學報卷首題詞氣派。
+ */
+function renderIvyEpigraph(slide: PptxGenJS.Slide, body: Rect, pack: Pack, s: Slide): void {
+  const q = s.quote
+  if (!q || !q.text.trim()) return
+  const cw = Math.min(9.6, body.w - 1.2)
+  const cx = body.x + (body.w - cw) / 2
+  // 頂部金菱形 + 葉脈雙細線 flourish
+  ivyDiamond(slide, cx + cw / 2 - 0.07, body.y + 0.2, 0.14)
+  ivyPair(slide, cx + cw / 2 - 0.7, body.y + 0.5, 1.4, pack.accent)
+  // 大號 serif 引文（書名號夾住，居中）
+  const quoteY = body.y + 0.95
+  const quoteH = Math.max(1.6, body.h - 2.4)
+  tx(slide, `「${clampText(q.text.trim(), 60)}」`, {
+    x: cx,
+    y: quoteY,
+    w: cw,
+    h: quoteH,
+    fontSize: 30,
+    color: pack.ink,
+    align: 'center',
+    valign: 'middle',
+    italic: true,
+    lineSpacingMultiple: 1.3,
+    fontFace: pack.displayFont,
+    fit: 'shrink',
+  })
+  // 金學刊雙細線
+  const ruleY = quoteY + quoteH + 0.18
+  ivyPair(slide, cx + cw / 2 - 1.0, ruleY, 2.0, IVY.gold)
+  // 落款 attribution
+  if (q.attribution) {
+    tx(slide, `— ${clampText(q.attribution.trim(), 30)}`, {
+      x: cx,
+      y: ruleY + 0.2,
+      w: cw,
+      h: 0.4,
+      fontSize: 14,
+      color: pack.inkSoft,
+      align: 'center',
+      italic: true,
+      fontFace: pack.displayFont,
+    })
+  }
+}
+
 const ivy: Pack = {
   id: 'ivy',
   name: '翠廬',
@@ -283,7 +371,7 @@ const ivy: Pack = {
   stepNode: { kind: 'circleOutline', size: 0.34, color: IVY.gold, numColor: IVY.accent },
   quoteMark: { kind: 'glyph', color: IVY.gold },
   splitPhoto: 'bleedHair',
-  overrides: { cards: renderIvyCrests },
+  overrides: { cards: renderIvyCrests, quote: renderIvyEpigraph },
 
   cover(slide, deck, brand, img) {
     slide.background = { color: 'FFFFFF' }
@@ -394,6 +482,42 @@ function renderRedgridBigNumbers(slide: PptxGenJS.Slide, body: Rect, pack: Pack,
   })
 }
 
+/**
+ * 第二招牌：cards 渲染成「雜誌格子卡」——
+ * 緊密編輯網格，各卡頂部朱紅 rule、displayFont 粗標題、正文，
+ * 卡與卡之間以細朱紅 gutter rule 分隔。編輯雜誌版面感。2–6 卡。
+ */
+function renderRedgridMagCards(slide: PptxGenJS.Slide, body: Rect, pack: Pack, s: Slide): void {
+  const items = (s.cards ?? []).slice(0, 6)
+  if (items.length < 2) return
+  const n = items.length
+  const cols = n <= 2 ? n : n <= 4 ? 2 : 3
+  const rows = Math.ceil(n / cols)
+  const gap = 0.34
+  const cw = (body.w - gap * (cols - 1)) / cols
+  const ch = (body.h - gap * (rows - 1)) / rows
+  items.forEach((card, i) => {
+    const r = Math.floor(i / cols)
+    const c = i % cols
+    const cx = body.x + c * (cw + gap)
+    const cy = body.y + r * (ch + gap)
+    // 頂部朱紅 rule
+    slide.addShape('rect', { x: cx, y: cy, w: cw, h: 0.1, fill: { color: pack.accent }, line: { type: 'none' } })
+    // 卡號
+    tx(slide, pad2(i + 1), { x: cx, y: cy + 0.2, w: cw, h: 0.3, fontSize: 11, bold: true, color: pack.accent, charSpacing: 2, fontFace: pack.displayFont })
+    // 粗標題
+    tx(slide, clampText(card.title.trim(), 14), { x: cx, y: cy + 0.52, w: cw, h: 0.6, fontSize: 19, bold: true, color: pack.ink, lineSpacingMultiple: 1.06, fontFace: pack.displayFont, fit: 'shrink' })
+    // 正文
+    if (card.desc) {
+      tx(slide, clampText(card.desc.trim(), 80), { x: cx, y: cy + 1.18, w: cw, h: ch - 1.3, fontSize: 12, color: pack.inkSoft, lineSpacingMultiple: 1.24, fit: 'shrink' })
+    }
+    // gutter rule（右側欄縫，非最後一欄）
+    if (c < cols - 1) {
+      vline(slide, cx + cw + gap / 2, cy, ch, mix(pack.accent, pack.bg, 0.6), 0.75)
+    }
+  })
+}
+
 const redgrid: Pack = {
   id: 'redgrid',
   name: '習字',
@@ -422,7 +546,7 @@ const redgrid: Pack = {
   stepNode: { kind: 'squareFill', size: 0.32, color: RED.accent, numColor: 'FFFFFF' },
   quoteMark: { kind: 'glyph', color: RED.accent },
   splitPhoto: 'bleedHair',
-  overrides: { stats: renderRedgridBigNumbers },
+  overrides: { stats: renderRedgridBigNumbers, cards: renderRedgridMagCards },
 
   cover(slide, deck, brand, img) {
     slide.background = { color: 'FFFFFF' }
@@ -554,6 +678,35 @@ function renderTransitMetro(slide: PptxGenJS.Slide, body: Rect, pack: Pack, s: S
   })
 }
 
+/**
+ * 第二招牌：stats 渲染成「月台離站顯示板」——
+ * 黑底顯示板，各 stat 一行 split-flap LED 感：信號黃 displayFont 數值（左），
+ * 標籤做「目的地」（右），行間細灰分隔線。配合 metro steps。2–4 項。
+ */
+function renderTransitDepartureBoard(slide: PptxGenJS.Slide, body: Rect, pack: Pack, s: Slide): void {
+  const items = (s.stats ?? []).slice(0, 4)
+  if (items.length < 2) return
+  const n = items.length
+  // 黑顯示板
+  slide.addShape('roundRect', { x: body.x, y: body.y, w: body.w, h: body.h, rectRadius: pack.cardRadius, fill: { color: pack.ink }, line: { type: 'none' } })
+  const padX = 0.4
+  const headH = 0.42
+  // 板頭：欄目標題
+  tx(slide, 'TIME', { x: body.x + padX, y: body.y + 0.12, w: 2.0, h: headH - 0.12, fontSize: 9, bold: true, color: pack.faint, charSpacing: 3, fontFace: pack.displayFont })
+  tx(slide, 'DESTINATION 目的地', { x: body.x + padX + 2.4, y: body.y + 0.12, w: body.w - padX * 2 - 2.4, h: headH - 0.12, fontSize: 9, bold: true, color: pack.faint, charSpacing: 2, fontFace: pack.displayFont })
+  hline(slide, body.x + padX, body.y + headH, body.w - padX * 2, mix(pack.accent, pack.ink, 0.5), 1)
+  const rowH = (body.h - headH - 0.16) / n
+  items.forEach((st, i) => {
+    const ry = body.y + headH + i * rowH
+    // split-flap LED 數值（信號黃，左）
+    tx(slide, clampText(st.value.trim(), 8), { x: body.x + padX, y: ry, w: 2.2, h: rowH, fontSize: 30, bold: true, color: pack.accent, valign: 'middle', fontFace: pack.displayFont, fit: 'shrink' })
+    // 目的地標籤（白，右）
+    tx(slide, clampText(st.label.trim(), 28), { x: body.x + padX + 2.4, y: ry, w: body.w - padX * 2 - 2.4, h: rowH, fontSize: 15, bold: true, color: 'FFFFFF', valign: 'middle', fontFace: pack.displayFont, fit: 'shrink' })
+    // 行間分隔線
+    if (i < n - 1) hline(slide, body.x + padX, ry + rowH, body.w - padX * 2, mix(pack.faint, pack.ink, 0.4), 0.5)
+  })
+}
+
 const transit: Pack = {
   id: 'transit',
   name: '月台',
@@ -582,7 +735,7 @@ const transit: Pack = {
   stepNode: { kind: 'squareFill', size: 0.34, color: TRN.ink, numColor: TRN.accent },
   quoteMark: { kind: 'square', size: 0.14, color: TRN.accent },
   splitPhoto: 'bleedHair',
-  overrides: { steps: renderTransitMetro },
+  overrides: { steps: renderTransitMetro, stats: renderTransitDepartureBoard },
 
   cover(slide, deck, brand, img) {
     slide.background = { color: 'FFFFFF' }
@@ -699,6 +852,36 @@ function renderOceanDescent(slide: PptxGenJS.Slide, body: Rect, pack: Pack, s: S
   })
 }
 
+/**
+ * 第二招牌：stats 渲染成「深度計氣泡」——
+ * 各 stat 一粒實心海色氣泡（由淺入深逐粒下沉），值入圓內、標籤喺下，
+ * 小上升氣泡點綴。深度計讀數意象。2–4 項。
+ */
+function renderOceanDepthGauge(slide: PptxGenJS.Slide, body: Rect, pack: Pack, s: Slide): void {
+  const items = (s.stats ?? []).slice(0, 4)
+  if (items.length < 2) return
+  const n = items.length
+  const gap = 0.4
+  const cw = (body.w - gap * (n - 1)) / n
+  const d = Math.min(cw - 0.3, 2.2, body.h - 0.9)
+  items.forEach((st, i) => {
+    const cx = body.x + i * (cw + gap) + cw / 2
+    const depth = n === 1 ? 0 : i / (n - 1)
+    // 逐粒下沉：氣泡 y 按深度遞增
+    const cy = body.y + 0.2 + depth * Math.max(0, body.h - d - 1.1)
+    const fillColor = mix(pack.accent, pack.ink, depth * 0.7)
+    // 實心海色氣泡圓
+    slide.addShape('ellipse', { x: cx - d / 2, y: cy, w: d, h: d, fill: { color: fillColor }, line: { color: mix('FFFFFF', fillColor, 0.4), width: 1.25 } })
+    // 值入圓內
+    tx(slide, clampText(st.value.trim(), 8), { x: cx - d / 2, y: cy, w: d, h: d, fontSize: 36, bold: true, color: 'FFFFFF', align: 'center', valign: 'middle', fontFace: pack.displayFont, fit: 'shrink' })
+    // 小上升氣泡點綴（圓上方）
+    bubble(slide, cx + d / 2 - 0.18, cy - 0.18, 0.14, fillColor)
+    bubble(slide, cx + d / 2 - 0.02, cy - 0.42, 0.09, fillColor)
+    // 標籤喺圓下
+    tx(slide, clampText(st.label.trim(), 22), { x: cx - cw / 2, y: cy + d + 0.14, w: cw, h: 0.6, fontSize: 13, color: pack.inkSoft, align: 'center', lineSpacingMultiple: 1.15, fit: 'shrink' })
+  })
+}
+
 const ocean: Pack = {
   id: 'ocean',
   name: '深海',
@@ -727,7 +910,7 @@ const ocean: Pack = {
   stepNode: { kind: 'circleOutline', size: 0.34, color: OCE.accent, numColor: OCE.accent },
   quoteMark: { kind: 'circle', size: 0.5, linePt: 1.5, color: OCE.accent },
   splitPhoto: 'bleedScrim',
-  overrides: { steps: renderOceanDescent },
+  overrides: { steps: renderOceanDescent, stats: renderOceanDepthGauge },
 
   cover(slide, deck, brand, img) {
     slide.background = { color: 'FFFFFF' }
