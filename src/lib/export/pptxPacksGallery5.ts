@@ -27,6 +27,7 @@ import {
 } from './pptxPacks'
 import type { Slide } from './types'
 import { clampText, estimateLines, fitTitle, mix } from './pptxText'
+import { gradLinear } from './pptxGradients'
 
 // ============================================================
 //  漫畫 comic — 美式漫畫
@@ -362,8 +363,13 @@ const ISO = { bg: 'EEF1F5', ink: '222834', soft: '5A6473', faint: '99A2B0', hair
 function isoBlock(slide: PptxGenJS.Slide, x: number, y: number, w: number, h: number, off: number, face: string, shadow: string, borderPt = 2): Rect {
   // 後偏移塊（硬陰影，深色）
   slide.addShape('rect', { x: x + off, y: y + off, w, h, fill: { color: shadow }, line: { type: 'none' } })
-  // 前面塊（粗墨邊）
-  slide.addShape('rect', { x, y, w, h, fill: { color: face }, line: { color: ISO.ink, width: borderPt } })
+  // 前面塊（粗墨邊）+ 受光漸層：頂亮 → 面色 → 底暗（真立體受光，由 gradFill 注入）
+  const lit = gradLinear(90, [
+    { pos: 0, color: mix(face, 'FFFFFF', 0.32) },
+    { pos: 55, color: face },
+    { pos: 100, color: mix(face, ISO.ink, 0.14) },
+  ])
+  slide.addShape('rect', { x, y, w, h, fill: { color: lit }, line: { color: ISO.ink, width: borderPt } })
   return { x, y, w, h }
 }
 

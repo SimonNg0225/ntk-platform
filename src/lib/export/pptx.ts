@@ -20,6 +20,7 @@ import { GALLERY_PACKS_5 } from './pptxPacksGallery5'
 import { GALLERY_PACKS_6 } from './pptxPacksGallery6'
 import { GALLERY_PACKS_7 } from './pptxPacksGallery7'
 import { renderBullets, renderCards, renderCompare, renderEmphasisFrame, renderQuote, renderStats, renderSteps, renderTakeaway } from './pptxLayouts'
+import { resetGradients, injectGradients } from './pptxGradients'
 
 export type { SlidePackId, SlideImage } from './pptxPacks'
 
@@ -128,6 +129,12 @@ async function patchThemeAndPackage(buf: ArrayBuffer): Promise<Blob | Uint8Array
   } catch {
     // 搵唔到目標就照原樣出檔（唔好 throw）
   }
+  // 漸層注入：將 pack 登記咗的 sentinel solid fill 換成 OOXML gradFill
+  try {
+    injectGradients(zip)
+  } catch {
+    // 注入失敗就照原樣出檔（漸層變番 sentinel 純色，唔好 throw）
+  }
   if (isBrowser()) {
     return zip.generate({ type: 'blob', mimeType: PPTX_MIME })
   }
@@ -139,6 +146,7 @@ async function patchThemeAndPackage(buf: ArrayBuffer): Promise<Blob | Uint8Array
  * 瀏覽器回 Blob、Node 回 Uint8Array。
  */
 export async function buildPptxFile(deck: Deck, opts: PptxOptions = {}): Promise<Blob | Uint8Array> {
+  resetGradients() // 清空今次 build 的漸層登記（非 reentrant：一次一份）
   const PptxGenJS = (await import('pptxgenjs')).default
   const pptx = new PptxGenJS()
   pptx.layout = 'LAYOUT_WIDE' // 16:9 = 13.33 × 7.5 吋
