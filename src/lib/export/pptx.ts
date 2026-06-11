@@ -114,6 +114,40 @@ function effectiveLayout(s: Slide): SlideLayout {
   }
 }
 
+/**
+ * 修正非法負 extent：OOXML 嘅 <a:ext cx/cy> 必須 ≥ 0，但斜線／向上線經 pptxgenjs
+ * 可能出負值，令 PowerPoint「無法讀取」。將負 ext 轉成正 ext + 對應 flip + 平移 off
+ * （外觀不變）。逐 slide XML 套用。
+ */
+function normalizeNegExt(xml: string): string {
+  return xml.replace(
+    /<a:xfrm([^>]*)><a:off x="(-?\d+)" y="(-?\d+)"\/><a:ext cx="(-?\d+)" cy="(-?\d+)"\/><\/a:xfrm>/g,
+    (full, attrs: string, xs: string, ys: string, cxs: string, cys: string) => {
+      let x = parseInt(xs, 10)
+      let y = parseInt(ys, 10)
+      let cx = parseInt(cxs, 10)
+      let cy = parseInt(cys, 10)
+      if (cx >= 0 && cy >= 0) return full
+      let flipH = /flipH="1"/.test(attrs)
+      let flipV = /flipV="1"/.test(attrs)
+      if (cx < 0) {
+        x += cx
+        cx = -cx
+        flipH = !flipH
+      }
+      if (cy < 0) {
+        y += cy
+        cy = -cy
+        flipV = !flipV
+      }
+      let a = attrs.replace(/\s*flip[HV]="[01]"/g, '')
+      if (flipH) a += ' flipH="1"'
+      if (flipV) a += ' flipV="1"'
+      return `<a:xfrm${a}><a:off x="${x}" y="${y}"/><a:ext cx="${cx}" cy="${cy}"/></a:xfrm>`
+    },
+  )
+}
+
 /** §6 theme patch：theme1.xml 嘅空 a:ea 軌 + Hant script 表換做 CJK 字體 */
 async function patchThemeAndPackage(buf: ArrayBuffer): Promise<Blob | Uint8Array> {
   const PizZip = (await import('pizzip')).default
@@ -134,6 +168,19 @@ async function patchThemeAndPackage(buf: ArrayBuffer): Promise<Blob | Uint8Array
     injectGradients(zip)
   } catch {
     // 注入失敗就照原樣出檔（漸層變番 sentinel 純色，唔好 throw）
+  }
+  // 修正非法負 extent（斜線／向上線），否則 PowerPoint 讀唔到檔
+  try {
+    const names = Object.keys((zip as unknown as { files: Record<string, unknown> }).files)
+    for (const name of names) {
+      if (!/^ppt\/slides\/slide\d+\.xml$/.test(name)) continue
+      const sx = zip.file(name)?.asText()
+      if (!sx) continue
+      const fixed = normalizeNegExt(sx)
+      if (fixed !== sx) zip.file(name, fixed)
+    }
+  } catch {
+    // 正規化失敗就照原樣出檔（唔好 throw）
   }
   if (isBrowser()) {
     return zip.generate({ type: 'blob', mimeType: PPTX_MIME })
