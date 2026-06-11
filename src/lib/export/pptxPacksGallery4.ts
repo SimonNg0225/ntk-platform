@@ -26,6 +26,7 @@ import {
 } from './pptxPacks'
 import type { Slide } from './types'
 import { clampText, estimateLines, fitTitle, mix } from './pptxText'
+import { gradLinear, gradRadial } from './pptxGradients'
 
 // ============================================================
 //  典藏 marble — 美術館
@@ -143,11 +144,20 @@ const marble: Pack = {
 
   cover(slide, deck, brand, img) {
     slide.background = { color: MAR.bg }
+    // 全版極淡畫廊紙深度漸層（壓底，展牆內容浮其上）
+    slide.addShape('rect', {
+      x: 0,
+      y: 0,
+      w: 13.33,
+      h: 7.5,
+      fill: { color: gradLinear(90, [{ pos: 0, color: mix(MAR.bg, 'FFFFFF', 0.04) }, { pos: 100, color: mix(MAR.bg, MAR.ink, 0.06) }]) },
+      line: { type: 'none' },
+    })
     const hasImg = Boolean(img)
     if (img) {
-      // 掛牆作品：炭黑外框 + 米白裱邊（matte）+ 相四邊內髮線
+      // 掛牆作品：炭黑外框 + 米白裱邊（matte，極淡裱紙漸層）+ 相四邊內髮線
       const frame: Rect = { x: 7.6, y: 1.0, w: 4.8, h: 4.5 }
-      slide.addShape('rect', { x: frame.x, y: frame.y, w: frame.w, h: frame.h, fill: { color: 'FCFAF4' }, line: { color: MAR.ink, width: 2.5 } })
+      slide.addShape('rect', { x: frame.x, y: frame.y, w: frame.w, h: frame.h, fill: { color: gradLinear(90, [{ pos: 0, color: mix('FCFAF4', 'FFFFFF', 0.5) }, { pos: 100, color: mix('FCFAF4', MAR.ink, 0.06) }]) }, line: { color: MAR.ink, width: 2.5 } })
       const inset = 0.32
       const art: Rect = { x: frame.x + inset, y: frame.y + inset, w: frame.w - inset * 2, h: frame.h - inset * 2 }
       addCoverImage(slide, img, art)
@@ -328,8 +338,8 @@ const origami: Pack = {
       oriTri(slide, frame.x + frame.w - 0.55, frame.y, 0.55, ORI.accent, 90)
       photoCreditOnImage(slide, img.credit, frame)
     } else {
-      // 右下角 3 塊大摺痕三角層疊（兩塊淡摺灰 + 一塊極淡鶴紅）
-      oriTri(slide, 8.4, 2.4, 4.6, mix(ORI.ink, 'FFFFFF', 0.06), 90)
+      // 右下角 3 塊大摺痕三角層疊（兩塊淡摺灰 + 一塊極淡鶴紅；最大塊加摺光漸層）
+      oriTri(slide, 8.4, 2.4, 4.6, gradLinear(90, [{ pos: 0, color: mix(ORI.ink, 'FFFFFF', 0.03) }, { pos: 100, color: mix(ORI.ink, 'FFFFFF', 0.1) }]), 90)
       oriTri(slide, 9.6, 3.9, 3.4, mix(ORI.ink, 'FFFFFF', 0.1), 180)
       oriTri(slide, 11.2, 5.4, 2.0, mix(ORI.accent, 'FFFFFF', 0.12), 0)
     }
@@ -511,6 +521,9 @@ const cinema: Pack = {
       addCoverImage(slide, img, { x: 0, y: 0, w: 13.33, h: 7.5 })
       slide.addShape('rect', { x: 0, y: 0, w: 13.33, h: 7.5, fill: { color: CIN.bg, transparency: 30 }, line: { type: 'none' } })
       photoCreditOnImage(slide, img.credit, { x: 0, y: 0, w: 13.33, h: 7.5 })
+    } else {
+      // 題後 marquee 琥珀暈：放射漸層由中央淡琥珀淡出至底色（戲院聚光感）
+      slide.addShape('rect', { x: 2.4, y: 1.5, w: 8.53, h: 3.4, fill: { color: gradRadial([{ pos: 0, color: mix(CIN.bg, CIN.accent, 0.12) }, { pos: 100, color: CIN.bg }]) }, line: { type: 'none' } })
     }
     // 上下菲林齒孔帶
     const holes = hasImg ? mix(CIN.ink, CIN.bg, 0.55) : mix(CIN.accent, CIN.bg, 0.25)
@@ -676,7 +689,8 @@ const festival: Pack = {
     const by = 0.85
     const bw = 1.45
     const bh = 5.8
-    slide.addShape('rect', { x: bx, y: by, w: bw, h: bh, fill: { color: FES.deep }, line: { color: FES.accent, width: 1.25 } })
+    // 揮春直幡：深紅垂直漸層（頂喜慶紅 → 底沉穩深紅）+ 金邊
+    slide.addShape('rect', { x: bx, y: by, w: bw, h: bh, fill: { color: gradLinear(90, [{ pos: 0, color: mix(FES.deep, FES.bg, 0.55) }, { pos: 100, color: mix(FES.deep, '000000', 0.12) }]) }, line: { color: FES.accent, width: 1.25 } })
     tx(slide, '教\n學\n簡\n報', { x: bx, y: by + 0.38, w: bw, h: 3.6, fontSize: 28, bold: true, color: FES.ink, align: 'center', lineSpacingMultiple: 1.25 })
     slide.addShape('diamond', { x: bx + bw / 2 - 0.07, y: by + 4.2, w: 0.14, h: 0.14, fill: { color: FES.accent }, line: { type: 'none' } })
     tx(slide, dateLabel(), { x: bx + 0.08, y: by + bh - 0.68, w: bw - 0.16, h: 0.5, fontSize: 9, color: FES.accent, align: 'center', lineSpacingMultiple: 1.2 })

@@ -28,7 +28,7 @@ import {
 } from './pptxPacks'
 import type { Slide } from './types'
 import { clampText, estimateLines, fitTitle, mix } from './pptxText'
-import { gradLinear } from './pptxGradients'
+import { gradLinear, gradRadial } from './pptxGradients'
 
 // ============================================================
 //  蒸汽波 vapor — Y2K 復古
@@ -179,6 +179,22 @@ const vapor: Pack = {
     perspGrid(slide, 0, 4.7, 13.33, 7.5, mix(VAP.cyan, VAP.bg, 0.7))
     // 橫紋落日（右上，無相時擺大）
     if (!hasImg) {
+      // 真放射落日輝光：桃紅中心 → 青淡出（墊喺橫紋落日後）
+      const sunR = 1.7 * 1.5
+      slide.addShape('ellipse', {
+        x: 10.4 - sunR,
+        y: 2.5 - sunR,
+        w: sunR * 2,
+        h: sunR * 2,
+        fill: {
+          color: gradRadial([
+            { pos: 0, color: VAP.pink, alpha: 42 },
+            { pos: 60, color: mix(VAP.pink, VAP.cyan, 0.5), alpha: 18 },
+            { pos: 100, color: VAP.cyan, alpha: 0 },
+          ]),
+        },
+        line: { type: 'none' },
+      })
       bandedSun(slide, 10.4, 2.5, 1.7)
     }
     // kicker
@@ -356,9 +372,36 @@ const bauhaus: Pack = {
   cover(slide, deck, brand, img) {
     slide.background = { color: BAU.bg }
     const hasImg = Boolean(img)
+    // 全版極淡米白深度漸層（壓底，幾何構成浮其上）
+    slide.addShape('rect', {
+      x: 0,
+      y: 0,
+      w: 13.33,
+      h: 7.5,
+      fill: {
+        color: gradLinear(90, [
+          { pos: 0, color: mix(BAU.bg, 'FFFFFF', 0.04) },
+          { pos: 100, color: mix(BAU.bg, BAU.ink, 0.06) },
+        ]),
+      },
+      line: { type: 'none' },
+    })
     // 包浩斯構圖：大紅圓（右上）+ 藍三角（右下）+ 黃方（角）+ 粗黑斜桿
     if (!hasImg) {
-      bauCircle(slide, 9.0, 0.7, 3.4, BAU.red)
+      // 大紅圓 hero：極淡受光漸層（頂亮 → 紅 → 底沉），保持平塗膽色
+      slide.addShape('ellipse', {
+        x: 9.0,
+        y: 0.7,
+        w: 3.4,
+        h: 3.4,
+        fill: {
+          color: gradLinear(90, [
+            { pos: 0, color: mix(BAU.red, 'FFFFFF', 0.18) },
+            { pos: 100, color: mix(BAU.red, BAU.ink, 0.14) },
+          ]),
+        },
+        line: { type: 'none' },
+      })
       bauTri(slide, 9.3, 4.2, 2.8, BAU.blue, 180)
       bauSquare(slide, 11.7, 3.3, 1.0, BAU.yellow)
     }
@@ -462,8 +505,9 @@ function orbitRings(slide: PptxGenJS.Slide, cx: number, cy: number, r0: number, 
 
 /** 帶光暈星：細實心金點 + 外一圈極淡光暈環（cx/cy = 中心，d = 星直徑） */
 function glowStar(slide: PptxGenJS.Slide, cx: number, cy: number, d: number, color: string, glow: string): void {
-  const g = d * 2.4
-  slide.addShape('ellipse', { x: cx - g / 2, y: cy - g / 2, w: g, h: g, fill: { type: 'none' }, line: { color: glow, width: 1 } })
+  const g = d * 3
+  // 真光暈：放射漸層（中心 glow 半透 → 邊緣全透）
+  slide.addShape('ellipse', { x: cx - g / 2, y: cy - g / 2, w: g, h: g, fill: { color: gradRadial([{ pos: 0, color: glow, alpha: 55 }, { pos: 100, color: glow, alpha: 0 }]) }, line: { type: 'none' } })
   slide.addShape('ellipse', { x: cx - d / 2, y: cy - d / 2, w: d, h: d, fill: { color }, line: { type: 'none' } })
 }
 
@@ -563,6 +607,36 @@ const cosmos: Pack = {
       addCoverImage(slide, img, { x: 0, y: 0, w: 13.33, h: 7.5 })
       slide.addShape('rect', { x: 0, y: 0, w: 13.33, h: 7.5, fill: { color: COS.bg, transparency: 32 }, line: { type: 'none' } })
       photoCreditOnImage(slide, img.credit, { x: 0, y: 0, w: 13.33, h: 7.5 })
+    }
+    // 無相時：版底極淡午夜藍深度漸層（頂部微帶金暈，底沉）
+    if (!img) {
+      slide.addShape('rect', {
+        x: 0,
+        y: 0,
+        w: 13.33,
+        h: 7.5,
+        fill: {
+          color: gradLinear(90, [
+            { pos: 0, color: mix(COS.bg, COS.gold, 0.06) },
+            { pos: 100, color: COS.bg },
+          ]),
+        },
+        line: { type: 'none' },
+      })
+      // 題後柔金輝光（放射，淡出至全透）
+      slide.addShape('ellipse', {
+        x: -1.6,
+        y: 1.3,
+        w: 7.0,
+        h: 4.0,
+        fill: {
+          color: gradRadial([
+            { pos: 0, color: mix(COS.gold, COS.bg, 0.5), alpha: 22 },
+            { pos: 100, color: COS.bg, alpha: 0 },
+          ]),
+        },
+        line: { type: 'none' },
+      })
     }
     // 全版淡星野
     starfield(slide, { x: 0, y: 0, w: 13.33, h: 7.5 }, hasImg ? 30 : 60, 17, mix(COS.ink, COS.bg, hasImg ? 0.5 : 0.68))

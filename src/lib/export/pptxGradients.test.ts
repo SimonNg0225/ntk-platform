@@ -28,7 +28,7 @@ test('gradLinear 回 FE-sentinel；injectGradients 換成 gradFill', () => {
   const out = zip.files['ppt/slides/slide1.xml']
   expect(out).toContain('<a:gradFill')
   expect(out).toContain('<a:lin ang="5400000"') // 90° = 上→下
-  expect(out).toContain('<a:gs pos="0"><a:srgbClr val="FF0000"/></a:gs>')
+  expect(out).toContain('<a:gs pos="0"><a:srgbClr val="FF0000"></a:srgbClr></a:gs>')
   expect(out).not.toContain(s) // sentinel 已換走
 })
 
