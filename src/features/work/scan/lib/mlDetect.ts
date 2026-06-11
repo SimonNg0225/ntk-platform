@@ -13,7 +13,11 @@
 import type { Corners, Pt } from './types'
 import { isPlausibleQuad, orderCorners } from './geometry'
 
-const MODEL_URL = '/vendor/docaligner/lcnet100_h_e_bifpn_256_fp32.onnx'
+// 主力 fastvit_sa24（官方 benchmark 最準，79MB）；fetch/init 失敗先退 lcnet100（4.5MB）。
+const MODEL_URLS = [
+  '/vendor/docaligner/fastvit_sa24_h_e_bifpn_256_fp32.onnx',
+  '/vendor/docaligner/lcnet100_h_e_bifpn_256_fp32.onnx',
+]
 // ORT wasm 自存。⚠️ 要用 object 形式淨指 .wasm：
 //  · string prefix 會令 ORT 連 loader .mjs 都去嗰度 import —— vite dev
 //    禁止由 public/ 模組式 import（?import 會 fail）。
@@ -33,12 +37,20 @@ function getSession() {
     // 用 /wasm 子路徑（wasm-only build）：default bundle 會拖埋 26MB jsep wasm。
     const ort = await import('onnxruntime-web/wasm')
     ort.env.wasm.wasmPaths = { wasm: ORT_WASM_URL }
-    const resp = await fetch(MODEL_URL)
-    if (!resp.ok) throw new Error('模型載入失敗')
-    const session = await ort.InferenceSession.create(await resp.arrayBuffer(), {
-      executionProviders: ['wasm'],
-    })
-    return { ort, session }
+    let lastErr: unknown = null
+    for (const url of MODEL_URLS) {
+      try {
+        const resp = await fetch(url)
+        if (!resp.ok) throw new Error(`模型載入失敗 ${resp.status}`)
+        const session = await ort.InferenceSession.create(await resp.arrayBuffer(), {
+          executionProviders: ['wasm'],
+        })
+        return { ort, session }
+      } catch (e) {
+        lastErr = e // 試下一個（sa24 落唔到 → lcnet100）
+      }
+    }
+    throw lastErr ?? new Error('模型載入失敗')
   })()
   // 失敗就重置，下次再試（例如暫時網絡問題）。
   sessionP.catch(() => { sessionP = null })

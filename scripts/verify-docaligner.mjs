@@ -8,7 +8,9 @@
 
 import * as ort from 'onnxruntime-node'
 
-const MODEL = new URL('../public/vendor/docaligner/lcnet100_h_e_bifpn_256_fp32.onnx', import.meta.url).pathname
+// 預設驗證 app 用緊嗰個（sa24）；可傳 arg 驗其他：node scripts/verify-docaligner.mjs lcnet100_...onnx
+const MODEL_FILE = process.argv[2] ?? 'fastvit_sa24_h_e_bifpn_256_fp32.onnx'
+const MODEL = new URL(`../public/vendor/docaligner/${MODEL_FILE}`, import.meta.url).pathname
 const N = 256
 
 // ---------- 合成圖：淺灰底 + 白紙四邊形（微旋轉 + 輕微透視） ----------
@@ -35,19 +37,47 @@ function pointInQuad(p, q) {
   return true
 }
 
+function distToQuadEdge(p, q) {
+  // 點到四邊形各邊嘅最短距離（粗略，畀陰影用）
+  let best = Infinity
+  for (let i = 0; i < 4; i++) {
+    const a = q[i], b = q[(i + 1) % 4]
+    const vx = b.x - a.x, vy = b.y - a.y
+    const t = Math.max(0, Math.min(1, ((p.x - a.x) * vx + (p.y - a.y) * vy) / (vx * vx + vy * vy)))
+    const dx = p.x - (a.x + t * vx), dy = p.y - (a.y + t * vy)
+    best = Math.min(best, Math.hypot(dx, dy))
+  }
+  return best
+}
+
 function buildInput() {
-  // CHW float32 /255。背景 0.82（淺灰），紙 0.95（白），加少少 noise 似真相。
+  // CHW float32 /255。盡量似真相（sa24 對「太假」嘅平色塊唔肯認）：
+  //  · 背景：淺灰 + 光照漸變 + noise（似枱面）
+  //  · 紙：白 + 漸變 + noise + 「文字行」（深色橫紋）
+  //  · 紙邊外圍：輕微陰影
   const data = new Float32Array(3 * N * N)
   for (let y = 0; y < N; y++) {
     for (let x = 0; x < N; x++) {
-      const inside = pointInQuad({ x, y }, GT)
-      const base = inside ? 0.95 : 0.82
-      const noise = (Math.random() - 0.5) * 0.02
-      const v = Math.min(1, Math.max(0, base + noise))
+      const p = { x, y }
+      const inside = pointInQuad(p, GT)
+      let v
+      if (inside) {
+        v = 0.93 + 0.04 * (1 - y / N) // 紙：上面光啲
+        // 假文字行：每 9px 一行、行高 3px，行內隨機斷開（似字距）
+        const rowPhase = y % 9
+        if (rowPhase < 3 && y > 55 && y < 200 && x > 60 && x < 195) {
+          if (Math.sin(x * 1.7 + y * 13.7) > -0.2) v = 0.28 + Math.random() * 0.1
+        }
+      } else {
+        v = 0.80 + 0.06 * (x / N) // 枱面：左暗右光
+        const d = distToQuadEdge(p, GT)
+        if (d < 6) v -= 0.10 * (1 - d / 6) // 紙邊外輕微陰影
+      }
+      v = Math.min(1, Math.max(0, v + (Math.random() - 0.5) * 0.025))
       const i = y * N + x
-      data[i] = v               // R
-      data[N * N + i] = v       // G
-      data[2 * N * N + i] = v   // B
+      data[i] = v
+      data[N * N + i] = v
+      data[2 * N * N + i] = v * 0.98 // 輕微偏黃（白熾燈感）
     }
   }
   return data
