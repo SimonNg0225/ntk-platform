@@ -16,12 +16,24 @@ import { GALLERY_PACKS_1 } from './pptxPacksGallery1'
 import { GALLERY_PACKS_2 } from './pptxPacksGallery2'
 import { GALLERY_PACKS_3 } from './pptxPacksGallery3'
 import { GALLERY_PACKS_4 } from './pptxPacksGallery4'
+import { GALLERY_PACKS_5 } from './pptxPacksGallery5'
+import { GALLERY_PACKS_6 } from './pptxPacksGallery6'
+import { GALLERY_PACKS_7 } from './pptxPacksGallery7'
 import { renderBullets, renderCards, renderCompare, renderEmphasisFrame, renderQuote, renderStats, renderSteps, renderTakeaway } from './pptxLayouts'
 
 export type { SlidePackId, SlideImage } from './pptxPacks'
 
-/** 全部 pack（6 核心 + 18 gallery）；揀選 UI 按此排序 */
-const PACK_LIST: Pack[] = [...CORE_PACKS, ...GALLERY_PACKS_1, ...GALLERY_PACKS_2, ...GALLERY_PACKS_3, ...GALLERY_PACKS_4]
+/** 全部 pack（6 核心 + 28 gallery）；揀選 UI 按此排序 */
+const PACK_LIST: Pack[] = [
+  ...CORE_PACKS,
+  ...GALLERY_PACKS_1,
+  ...GALLERY_PACKS_2,
+  ...GALLERY_PACKS_3,
+  ...GALLERY_PACKS_4,
+  ...GALLERY_PACKS_5,
+  ...GALLERY_PACKS_6,
+  ...GALLERY_PACKS_7,
+]
 const PACKS = Object.fromEntries(PACK_LIST.map((p) => [p.id, p])) as Record<SlidePackId, Pack>
 
 /**
