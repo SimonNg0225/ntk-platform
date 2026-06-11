@@ -230,7 +230,34 @@ function renderPhotoPanel(slide: PptxGenJS.Slide, pack: Pack, photo: SlideImage)
 
 // ───────── bullets（預設 + chart / 配圖 變奏）─────────
 
-export function renderBullets(slide: PptxGenJS.Slide, body: Rect, pack: Pack, s: Slide, photo?: SlideImage): void {
+/** 版面節奏：兩欄列點（同款 bullets 連續版輪替用，破單欄重複感） */
+function renderBulletsTwoCol(slide: PptxGenJS.Slide, body: Rect, pack: Pack, bullets: string[]): void {
+  const colW = (body.w - 0.5) / 2
+  const half = Math.ceil(bullets.length / 2)
+  const cols = [bullets.slice(0, half), bullets.slice(half)]
+  cols.forEach((col, i) => {
+    const x = body.x + i * (colW + 0.5)
+    const { pt, gap } = fitRowsPt(col, 16, 0.2, colW, pack.marker.indent, body.h - 0.1)
+    drawRows(slide, pack, col, { x, y: body.y + 0.1, w: colW, maxY: body.y + body.h, pt, gap, color: pack.ink, startNo: i === 0 ? 1 : half + 1 })
+  })
+}
+
+/** 版面節奏：大首點 lede（accent 短線 + 首點放大）+ 其餘列點 */
+function renderBulletsLede(slide: PptxGenJS.Slide, body: Rect, pack: Pack, bullets: string[]): void {
+  const lede = bullets[0].trim()
+  const rest = bullets.slice(1)
+  const ledePt = 20
+  const ledeLines = Math.min(2, estimateLines(lede, ledePt, body.w))
+  const ledeH = ledeLines * lineHeightIn(ledePt)
+  hline(slide, body.x, body.y + 0.08, 0.7, pack.accent, 2.5)
+  tx(slide, lede, { x: body.x, y: body.y + 0.22, w: body.w, h: ledeH + 0.12, fontSize: ledePt, bold: true, color: pack.ink, lineSpacingMultiple: 1.15, fit: 'shrink' })
+  if (rest.length === 0) return
+  const restY = body.y + 0.22 + ledeH + 0.34
+  const { pt, gap } = fitRowsPt(rest, 15, 0.18, body.w, pack.marker.indent, body.y + body.h - restY)
+  drawRows(slide, pack, rest, { x: body.x, y: restY, w: body.w, maxY: body.y + body.h, pt, gap, color: pack.ink, startNo: 2 })
+}
+
+export function renderBullets(slide: PptxGenJS.Slide, body: Rect, pack: Pack, s: Slide, photo?: SlideImage, seq = 0): void {
   const bullets = s.bullets ?? []
   const hasChart = Boolean(s.chart)
   const hasPhoto = Boolean(photo) && !hasChart // chart 優先（spec §5.2）
@@ -250,6 +277,20 @@ export function renderBullets(slide: PptxGenJS.Slide, body: Rect, pack: Pack, s:
       drawRows(slide, pack, col, { x, y: body.y, w: colW, maxY: body.y + body.h, pt, gap, color: pack.ink, startNo: i === 0 ? 1 : half + 1 })
     })
     return
+  }
+
+  // 版面節奏：同款 bullets 連續版輪替構圖（v=seq%3），破除一頁跟一頁太似。
+  // chart／配相版維持單欄（佈局已被佔用）。
+  if (!hasChart && !hasPhoto) {
+    const v = seq % 3
+    if (v === 2 && n >= 4) {
+      renderBulletsTwoCol(slide, body, pack, bullets)
+      return
+    }
+    if (v === 1 && n >= 3) {
+      renderBulletsLede(slide, body, pack, bullets)
+      return
+    }
   }
 
   // 字級／間距自適應：點少 → 大字鬆排，點多 → 收緊
