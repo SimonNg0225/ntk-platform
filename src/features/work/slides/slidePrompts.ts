@@ -64,6 +64,16 @@ const PACK_FAVORS: Partial<Record<SlidePackId, PackFavor>> = {
   origami: { layouts: ['steps', 'compare'], note: '幾何摺疊' },
   cinema: { layouts: ['quote', 'cards'], note: '戲劇敘事' },
   festival: { layouts: ['cards', 'quote'], note: '節慶喜慶' },
+  comic: { layouts: ['cards', 'stats'], note: '漫畫分鏡' },
+  manuscript: { layouts: ['quote', 'cards'], note: '泥金手抄', bilingual: 'high' },
+  isometric: { layouts: ['stats', 'steps'], note: '立體積木' },
+  glitch: { layouts: ['compare', 'stats'], note: '故障科技', bilingual: 'high' },
+  vapor: { layouts: ['stats', 'steps'], note: '蒸汽波', density: 'sparse' },
+  bauhaus: { layouts: ['cards', 'compare'], note: '幾何構成' },
+  cosmos: { layouts: ['steps', 'stats'], note: '星座連線' },
+  scrapbook: { layouts: ['cards', 'steps'], note: '手帳拼貼', density: 'sparse' },
+  sumi: { layouts: ['quote', 'steps'], note: '水墨留白', density: 'sparse' },
+  brutalist: { layouts: ['stats', 'compare'], note: '粗獷大字', density: 'dense' },
 }
 
 export function buildSlideSystem(subjectName: string | undefined, count: number, pack?: SlidePackId): string {
