@@ -401,6 +401,74 @@ function renderInscription_inkwell(slide: PptxGenJS.Slide, body: Rect, pack: Pac
   }
 }
 
+/**
+ * 招牌 cards：冊頁／書帖 —— 卡作層疊手稿葉，左緣朱砂側標籤 +
+ * 老式 serif 標題、細髮線葉緣。書卷、人文。
+ */
+function renderBooklet_inkwell(slide: PptxGenJS.Slide, body: Rect, pack: Pack, s: Slide): void {
+  const cards = (s.cards ?? []).slice(0, 5)
+  if (cards.length < 2) return
+  const n = cards.length
+  const gap = 0.28
+  const leafH = Math.min(1.3, (body.h - gap * (n - 1)) / n)
+  const tabW = 0.42
+  cards.forEach((card, i) => {
+    const ly = body.y + i * (leafH + gap)
+    // 手稿葉：白底 + 細髮線葉緣
+    slide.addShape('rect', {
+      x: body.x,
+      y: ly,
+      w: body.w,
+      h: leafH,
+      fill: { color: 'FFFFFF' },
+      line: { color: pack.hair, width: 0.75 },
+      shadow: { type: 'outer', color: '78716C', opacity: 0.22, blur: 4, offset: 2, angle: 90 },
+    })
+    // 左緣朱砂側標籤 + serif 序號
+    slide.addShape('rect', { x: body.x, y: ly, w: tabW, h: leafH, fill: { color: pack.accent }, line: { type: 'none' } })
+    tx(slide, String(i + 1), {
+      x: body.x,
+      y: ly,
+      w: tabW,
+      h: leafH,
+      fontSize: 18,
+      bold: true,
+      color: 'FFFFFF',
+      align: 'center',
+      valign: 'middle',
+      fontFace: pack.displayFont,
+      italic: pack.displayItalic,
+    })
+    // 標題 serif + 葉內髮線分隔
+    const textX = body.x + tabW + 0.34
+    const textW = body.x + body.w - textX - 0.24
+    tx(slide, clampText(card.title.trim(), 22), {
+      x: textX,
+      y: ly + 0.16,
+      w: textW,
+      h: 0.4,
+      fontSize: 17,
+      bold: true,
+      color: pack.ink,
+      fontFace: pack.displayFont,
+      italic: pack.displayItalic,
+    })
+    if (card.desc && card.desc.trim()) {
+      hline(slide, textX, ly + 0.6, textW, pack.hair, 0.5)
+      tx(slide, clampText(card.desc.trim(), 70), {
+        x: textX,
+        y: ly + 0.7,
+        w: textW,
+        h: Math.max(0.3, leafH - 0.84),
+        fontSize: 12,
+        color: pack.inkSoft,
+        lineSpacingMultiple: 1.2,
+        fit: 'shrink',
+      })
+    }
+  })
+}
+
 const inkwell: Pack = {
   id: 'inkwell',
   name: '墨韻',
@@ -429,7 +497,7 @@ const inkwell: Pack = {
   stepNode: { kind: 'bare', size: 0.34, color: INK.accent, numColor: INK.accent },
   quoteMark: { kind: 'glyph', color: mix(INK.accent, 'FFFFFF', 0.18) },
   splitPhoto: 'bleedHair',
-  overrides: { quote: renderInscription_inkwell },
+  overrides: { quote: renderInscription_inkwell, cards: renderBooklet_inkwell },
 
   cover(slide, deck, brand, img) {
     slide.background = { color: 'FFFFFF' }
@@ -559,6 +627,63 @@ function renderHubSpoke_celadon(slide: PptxGenJS.Slide, body: Rect, pack: Pack, 
   })
 }
 
+/**
+ * 招牌 stats：圓盤儀錶 —— 每個數字坐喺一隻青瓷細環圓盤中央（statColor），
+ * label 喺盤下。正圓 motif、清雅。
+ */
+function renderDials_celadon(slide: PptxGenJS.Slide, body: Rect, pack: Pack, s: Slide): void {
+  const stats = (s.stats ?? []).slice(0, 4)
+  if (stats.length < 2) return
+  const n = stats.length
+  const gap = 0.4
+  const cellW = (body.w - gap * (n - 1)) / n
+  const dial = Math.min(cellW - 0.1, body.h - 1.0, 2.2)
+  const cy = body.y + (body.h - 0.5) / 2
+  stats.forEach((st, i) => {
+    const cx = body.x + i * (cellW + gap) + cellW / 2
+    const dx = cx - dial / 2
+    const dy = cy - dial / 2
+    // 細環圓盤：淡 tint 底 + 兩重 accent 環（內細外厚）
+    slide.addShape('ellipse', { x: dx, y: dy, w: dial, h: dial, fill: { color: pack.panel }, line: { color: pack.accent, width: 2 } })
+    const inset = 0.16
+    slide.addShape('ellipse', {
+      x: dx + inset,
+      y: dy + inset,
+      w: dial - inset * 2,
+      h: dial - inset * 2,
+      fill: { type: 'none' },
+      line: { color: mix(pack.accent, pack.panel, 0.45), width: 1 },
+    })
+    // 中央數值（statColor 陶土點睛）
+    tx(slide, clampText(st.value.trim(), 8), {
+      x: dx + 0.1,
+      y: dy,
+      w: dial - 0.2,
+      h: dial,
+      fontSize: 38,
+      bold: true,
+      color: pack.statColor,
+      align: 'center',
+      valign: 'middle',
+      fontFace: pack.displayFont,
+      italic: pack.displayItalic,
+      fit: 'shrink',
+    })
+    // 盤下 label
+    tx(slide, clampText(st.label.trim(), 20), {
+      x: cx - cellW / 2,
+      y: dy + dial + 0.14,
+      w: cellW,
+      h: 0.36,
+      fontSize: 12,
+      color: pack.inkSoft,
+      align: 'center',
+      valign: 'top',
+      lineSpacingMultiple: 1.1,
+    })
+  })
+}
+
 const celadon: Pack = {
   id: 'celadon',
   name: '青瓷',
@@ -587,7 +712,7 @@ const celadon: Pack = {
   stepNode: { kind: 'circleOutline', size: 0.34, color: CEL.accent, numColor: CEL.accent },
   quoteMark: { kind: 'circle', size: 0.5, linePt: 1.5, color: CEL.accent },
   splitPhoto: 'circle',
-  overrides: { cards: renderHubSpoke_celadon },
+  overrides: { cards: renderHubSpoke_celadon, stats: renderDials_celadon },
 
   cover(slide, deck, brand, img) {
     slide.background = { color: 'FFFFFF' }
@@ -692,6 +817,75 @@ function renderSteppingStones_dawn(slide: PptxGenJS.Slide, body: Rect, pack: Pac
   })
 }
 
+/**
+ * 招牌 cards：氣球貼紙卡 —— 大圓角卡填柔琥珀混色，左上頑皮圓徽章（序號），
+ * 大標題。初小、跳脫。
+ */
+function renderBalloonCards_dawn(slide: PptxGenJS.Slide, body: Rect, pack: Pack, s: Slide): void {
+  const cards = (s.cards ?? []).slice(0, 4)
+  if (cards.length < 2) return
+  const n = cards.length
+  const cols = n <= 2 ? n : 2
+  const rows = Math.ceil(n / cols)
+  const gx = 0.4
+  const gy = 0.35
+  const cardW = (body.w - gx * (cols - 1)) / cols
+  const cardH = (body.h - gy * (rows - 1)) / rows
+  // 每張卡用唔同柔琥珀色階（hue 輪替）
+  const tints = [0.78, 0.6, 0.7, 0.5]
+  const badge = Math.min(0.7, cardH * 0.4)
+  cards.forEach((card, i) => {
+    const col = i % cols
+    const row = Math.floor(i / cols)
+    const cxX = body.x + col * (cardW + gx)
+    const cyY = body.y + row * (cardH + gy)
+    const fill = mix(pack.accent, 'FFFFFF', tints[i % tints.length])
+    // 大圓角卡（柔琥珀）+ 微外陰影
+    slide.addShape('roundRect', {
+      x: cxX,
+      y: cyY,
+      w: cardW,
+      h: cardH,
+      rectRadius: pack.cardRadius * 2.4,
+      fill: { color: fill },
+      line: { type: 'none' },
+      shadow: { type: 'outer', color: pack.accent, opacity: 0.2, blur: 6, offset: 3, angle: 90 },
+    })
+    // 左上頑皮圓徽章 + 序號
+    const bx = cxX + 0.3
+    const by = cyY + 0.3
+    slide.addShape('ellipse', { x: bx, y: by, w: badge, h: badge, fill: { color: pack.accent }, line: { type: 'none' } })
+    tx(slide, String(i + 1), { x: bx, y: by, w: badge, h: badge, fontSize: 26, bold: true, color: 'FFFFFF', align: 'center', valign: 'middle', fontFace: pack.displayFont })
+    // 大標題（徽章右）
+    const titleX = bx + badge + 0.26
+    tx(slide, clampText(card.title.trim(), 16), {
+      x: titleX,
+      y: by - 0.04,
+      w: cxX + cardW - titleX - 0.3,
+      h: badge + 0.08,
+      fontSize: 19,
+      bold: true,
+      color: pack.ink,
+      valign: 'middle',
+      lineSpacingMultiple: 1.05,
+      fit: 'shrink',
+    })
+    // 說明（卡身下半）
+    if (card.desc && card.desc.trim()) {
+      tx(slide, clampText(card.desc.trim(), 70), {
+        x: cxX + 0.32,
+        y: by + badge + 0.18,
+        w: cardW - 0.64,
+        h: Math.max(0.3, cardH - badge - 0.7),
+        fontSize: 13,
+        color: pack.inkSoft,
+        lineSpacingMultiple: 1.2,
+        fit: 'shrink',
+      })
+    }
+  })
+}
+
 const dawn: Pack = {
   id: 'dawn',
   name: '曙光',
@@ -720,7 +914,7 @@ const dawn: Pack = {
   stepNode: { kind: 'roundSquareFill', size: 0.4, color: DAWN.accent, numColor: 'FFFFFF' },
   quoteMark: { kind: 'roundSquare', size: 0.4, radius: 0.1, color: DAWN.accent },
   splitPhoto: 'bleedMotif',
-  overrides: { steps: renderSteppingStones_dawn },
+  overrides: { steps: renderSteppingStones_dawn, cards: renderBalloonCards_dawn },
 
   cover(slide, deck, brand, img) {
     slide.background = { color: 'FFFFFF' }
@@ -834,6 +1028,67 @@ function renderHudStats_nocturne(slide: PptxGenJS.Slide, body: Rect, pack: Pack,
   })
 }
 
+/**
+ * 招牌 quote：聚光題刻 —— 巨號引文置中，背後一塊淡混色面板營造柔和聚光感，
+ * 燙金細線 + 落款。深底、靜謐。
+ */
+function renderSpotlight_nocturne(slide: PptxGenJS.Slide, body: Rect, pack: Pack, s: Slide): void {
+  const q = s.quote
+  if (!q || !q.text || !q.text.trim()) return
+  const text = clampText(q.text.trim(), 70)
+  // 背後柔和聚光面板（淡混色塊，營造 radial 感）
+  const padX = Math.min(1.0, body.w * 0.1)
+  const panelX = body.x + padX
+  const panelW = body.w - padX * 2
+  const panelH = Math.min(body.h - 0.4, 4.0)
+  const panelY = body.y + (body.h - panelH) / 2
+  slide.addShape('roundRect', {
+    x: panelX,
+    y: panelY,
+    w: panelW,
+    h: panelH,
+    rectRadius: pack.cardRadius,
+    fill: { color: mix(pack.panel, pack.bg, 0.4) },
+    line: { type: 'none' },
+    shadow: { type: 'outer', color: '000000', opacity: 0.4, blur: 12, offset: 0, angle: 90 },
+  })
+  // 上方燙金細線（短，置中）
+  const ruleW = 1.2
+  goldPair(slide, panelX + panelW / 2 - ruleW / 2, panelY + 0.5, ruleW)
+  // 巨號引文置中
+  const pt = 30
+  const quoteY = panelY + 0.85
+  const quoteH = panelH - 1.7
+  tx(slide, text, {
+    x: panelX + 0.4,
+    y: quoteY,
+    w: panelW - 0.8,
+    h: quoteH,
+    fontSize: pt,
+    color: pack.ink,
+    fontFace: pack.displayFont,
+    italic: pack.displayItalic,
+    align: 'center',
+    valign: 'middle',
+    lineSpacingMultiple: 1.18,
+    fit: 'shrink',
+  })
+  // 落款（attribution）細金字
+  if (q.attribution && q.attribution.trim()) {
+    tx(slide, `— ${clampText(q.attribution.trim(), 30)}`, {
+      x: panelX + 0.4,
+      y: panelY + panelH - 0.6,
+      w: panelW - 0.8,
+      h: 0.4,
+      fontSize: 13,
+      color: pack.accent,
+      fontFace: pack.displayFont,
+      italic: pack.displayItalic,
+      align: 'center',
+    })
+  }
+}
+
 const nocturne: Pack = {
   id: 'nocturne',
   name: '夜讀',
@@ -862,7 +1117,7 @@ const nocturne: Pack = {
   stepNode: { kind: 'circleOutline', size: 0.34, color: NOC.accent, numColor: NOC.accent },
   quoteMark: { kind: 'glyph', color: mix(NOC.accent, NOC.bg, 0.3) },
   splitPhoto: 'bleedScrim',
-  overrides: { stats: renderHudStats_nocturne },
+  overrides: { stats: renderHudStats_nocturne, quote: renderSpotlight_nocturne },
 
   cover(slide, deck, brand, img) {
     slide.background = { color: NOC.bg }
@@ -967,6 +1222,55 @@ function renderCoordTable_grid(slide: PptxGenJS.Slide, body: Rect, pack: Pack, s
   }
 }
 
+/**
+ * 招牌 stats：Swiss 模組網格 —— 等分格以鈷藍髮線分隔，四角 register tick，
+ * 巨號數字 + 說明。工程、精準。
+ */
+function renderModularStats_grid(slide: PptxGenJS.Slide, body: Rect, pack: Pack, s: Slide): void {
+  const stats = (s.stats ?? []).slice(0, 4)
+  if (stats.length < 2) return
+  const n = stats.length
+  const cellW = body.w / n
+  // 外框 register tick 四角
+  gridTick(slide, body.x, body.y, 1, 1, pack.accent)
+  gridTick(slide, body.x + body.w, body.y, -1, 1, pack.accent)
+  gridTick(slide, body.x, body.y + body.h, 1, -1, pack.accent)
+  gridTick(slide, body.x + body.w, body.y + body.h, -1, -1, pack.accent)
+  stats.forEach((st, i) => {
+    const cx = body.x + i * cellW
+    // 內部分格鈷藍縱髮線（首格不畫）
+    if (i > 0) vline(slide, cx, body.y, body.h, pack.accent, 0.75)
+    // 巨號數字（左上對齊，Swiss tabular 感）
+    tx(slide, clampText(st.value.trim(), 8), {
+      x: cx + 0.3,
+      y: body.y + 0.4,
+      w: cellW - 0.5,
+      h: body.h - 1.3,
+      fontSize: 52,
+      bold: true,
+      color: pack.statColor,
+      align: 'left',
+      valign: 'top',
+      fontFace: pack.displayFont,
+      fit: 'shrink',
+    })
+    // 格內髮線分隔 + 說明
+    hline(slide, cx + 0.3, body.y + body.h - 0.95, cellW - 0.6, pack.hair, 0.75)
+    tx(slide, clampText(st.label.trim(), 28), {
+      x: cx + 0.3,
+      y: body.y + body.h - 0.82,
+      w: cellW - 0.5,
+      h: 0.66,
+      fontSize: 12,
+      color: pack.inkSoft,
+      align: 'left',
+      valign: 'top',
+      lineSpacingMultiple: 1.15,
+      fit: 'shrink',
+    })
+  })
+}
+
 const grid: Pack = {
   id: 'grid',
   name: '方格',
@@ -995,7 +1299,7 @@ const grid: Pack = {
   stepNode: { kind: 'squareFill', size: 0.3, color: GRD.accent, numColor: 'FFFFFF' },
   quoteMark: { kind: 'square', size: 0.14, color: GRD.accent },
   splitPhoto: 'bleedHair',
-  overrides: { compare: renderCoordTable_grid },
+  overrides: { compare: renderCoordTable_grid, stats: renderModularStats_grid },
 
   cover(slide, deck, brand, img) {
     slide.background = { color: 'FFFFFF' }
@@ -1124,6 +1428,64 @@ function renderAgendaTimeline_seminar(slide: PptxGenJS.Slide, body: Rect, pack: 
   })
 }
 
+/**
+ * 招牌 quote：討論提問 —— 超大問句配前導金標記與細鈦線，
+ * 框成研討「思考停頓」。問題引導、講堂。
+ */
+function renderDiscussionPrompt_seminar(slide: PptxGenJS.Slide, body: Rect, pack: Pack, s: Slide): void {
+  const q = s.quote
+  if (!q || !q.text || !q.text.trim()) return
+  const text = clampText(q.text.trim(), 80)
+  // 前導金標記（粗短金條，似議程引號）
+  const markX = body.x
+  const markY = body.y + 0.5
+  slide.addShape('rect', { x: markX, y: markY, w: 0.5, h: 0.06, fill: { color: pack.quoteMark.color }, line: { type: 'none' } })
+  // 上方「討論 · DISCUSS」kicker
+  tx(slide, '討論 · DISCUSSION', {
+    x: markX + 0.7,
+    y: markY - 0.1,
+    w: body.w - 0.7,
+    h: 0.3,
+    fontSize: 11,
+    bold: true,
+    charSpacing: 3,
+    color: pack.accent,
+    valign: 'middle',
+  })
+  // 超大問句
+  const pt = 34
+  const quoteY = markY + 0.5
+  const quoteW = body.w - 0.2
+  const lines = Math.max(1, Math.min(4, estimateLines(text, pt, quoteW)))
+  const quoteH = Math.min(body.h - 1.8, lines * lineHeightIn(pt) + 0.3)
+  tx(slide, text, {
+    x: markX,
+    y: quoteY,
+    w: quoteW,
+    h: quoteH,
+    fontSize: pt,
+    bold: true,
+    color: pack.ink,
+    lineSpacingMultiple: 1.16,
+    valign: 'top',
+    fit: 'shrink',
+  })
+  // 細鈦線（思考停頓框底）
+  const ruleY = quoteY + quoteH + 0.28
+  hline(slide, markX, ruleY, body.w, pack.hair, 0.75)
+  // 落款（attribution）細淡字
+  if (q.attribution && q.attribution.trim()) {
+    tx(slide, `— ${clampText(q.attribution.trim(), 36)}`, {
+      x: markX,
+      y: ruleY + 0.16,
+      w: body.w,
+      h: 0.4,
+      fontSize: 13,
+      color: pack.faint,
+    })
+  }
+}
+
 const seminar: Pack = {
   id: 'seminar',
   name: '講堂',
@@ -1153,7 +1515,7 @@ const seminar: Pack = {
   stepNode: { kind: 'circleOutline', size: 0.34, color: SEM.accent, numColor: SEM.accent },
   quoteMark: { kind: 'glyph', color: SEM.gold },
   splitPhoto: 'bleedHair',
-  overrides: { steps: renderAgendaTimeline_seminar },
+  overrides: { steps: renderAgendaTimeline_seminar, quote: renderDiscussionPrompt_seminar },
 
   cover(slide, deck, brand, img) {
     slide.background = { color: SEM.coverBg }
