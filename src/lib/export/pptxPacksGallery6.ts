@@ -28,6 +28,7 @@ import {
 } from './pptxPacks'
 import type { Slide } from './types'
 import { clampText, estimateLines, fitTitle, mix } from './pptxText'
+import { gradLinear } from './pptxGradients'
 
 // ============================================================
 //  蒸汽波 vapor — Y2K 復古
@@ -113,14 +114,13 @@ function renderVaporSunsetTiles(slide: PptxGenJS.Slide, body: Rect, pack: Pack, 
     const cx = body.x + i * (cw + gap)
     // tile 底板（panel）
     slide.addShape('roundRect', { x: cx, y: ty, w: cw, h: th, rectRadius: pack.cardRadius, fill: { color: pack.panel }, line: { color: mix(VAP.pink, pack.bg, 0.4), width: 1 } })
-    // 桃／青交替橫帶（落日）
-    const bands = 6
-    const bh = bandZone / bands
-    for (let b = 0; b < bands; b++) {
-      const by = ty + b * bh
-      const col = b % 2 === 0 ? mix(VAP.pink, pack.panel, 0.25) : mix(VAP.cyan, pack.panel, 0.3)
-      slide.addShape('rect', { x: cx + 0.08, y: by + 0.08, w: cw - 0.16, h: bh * 0.74, fill: { color: col }, line: { type: 'none' } })
-    }
+    // 落日漸層：桃紅（頂）→ 紫 → 青（底），由 gradFill 注入（取代假橫帶）
+    const sunset = gradLinear(90, [
+      { pos: 0, color: VAP.pink },
+      { pos: 50, color: mix(VAP.pink, VAP.cyan, 0.5) },
+      { pos: 100, color: VAP.cyan },
+    ])
+    slide.addShape('rect', { x: cx + 0.08, y: ty + 0.08, w: cw - 0.16, h: bandZone - 0.02, fill: { color: sunset }, line: { type: 'none' } })
     // 巨號值（疊喺條紋之上）
     tx(slide, clampText(st.value.trim(), 8), { x: cx + 0.1, y: ty + 0.12, w: cw - 0.2, h: bandZone, fontSize: 52, bold: true, color: pack.ink, align: 'center', valign: 'middle', fontFace: pack.displayFont, fit: 'shrink' })
     // 標籤（條紋下）
