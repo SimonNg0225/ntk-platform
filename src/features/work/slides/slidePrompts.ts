@@ -1,4 +1,5 @@
 import { extractJsonObject } from '../../../lib/aiJson'
+import type { SlidePackId } from '../../../lib/export/pptxPacks'
 import type {
   Deck,
   Slide,
@@ -15,7 +16,42 @@ import type {
 //  教學簡報 — Prompt 建構 + 解析（純函式，可單元測試）
 // ============================================================
 
-export function buildSlideSystem(subjectName: string | undefined, count: number): string {
+/** layout → 中文叫法（prompt 提示用） */
+const LAYOUT_ZH: Record<SlideLayout, string> = {
+  bullets: '要點',
+  stats: '大數字',
+  compare: '對比',
+  steps: '流程',
+  quote: '金句',
+  cards: '分類卡',
+  section: '章節',
+}
+
+/**
+ * 模板 pack → 版式偏好（pack-aware 生成）。
+ * 偏好嘅兩款 layout = 該 pack 嘅招牌版式，令生成內容自然落到招牌結構，
+ * 連「展示形式」都按 pack 分叉（非淨係 render 層）。只係「傾向」，唔夾硬。
+ */
+const PACK_FAVORS: Partial<Record<SlidePackId, { layouts: SlideLayout[]; note: string }>> = {
+  inkwell: { layouts: ['quote', 'cards'], note: '人文書卷' },
+  celadon: { layouts: ['cards', 'stats'], note: '科學自然' },
+  dawn: { layouts: ['steps', 'cards'], note: '初小活潑、淺白' },
+  nocturne: { layouts: ['stats', 'quote'], note: '沉穩聚焦' },
+  grid: { layouts: ['compare', 'stats'], note: '數理精準' },
+  seminar: { layouts: ['steps', 'quote'], note: '研討思辨' },
+  chalk: { layouts: ['compare', 'steps'], note: '課堂板書' },
+  press: { layouts: ['bullets', 'stats'], note: '新聞報導' },
+  neon: { layouts: ['stats', 'steps'], note: '科技數據' },
+  confetti: { layouts: ['cards', 'stats'], note: '繽紛活潑' },
+  pastel: { layouts: ['compare', 'cards'], note: '柔和對照' },
+  blueprint: { layouts: ['steps', 'stats'], note: '工程圖則' },
+  ivy: { layouts: ['cards', 'quote'], note: '學院典雅' },
+  redgrid: { layouts: ['stats', 'cards'], note: '雜誌編排' },
+  transit: { layouts: ['steps', 'stats'], note: '路線旅程' },
+  ocean: { layouts: ['steps', 'stats'], note: '分層遞進' },
+}
+
+export function buildSlideSystem(subjectName: string | undefined, count: number, pack?: SlidePackId): string {
   const subjectLine = subjectName ? `任教科目：${subjectName}。` : ''
   const lines = [
     `你係教學簡報設計助手。${subjectLine}根據用家俾嘅課題或內容，設計一套教學 PowerPoint 大綱。`,
@@ -59,6 +95,13 @@ export function buildSlideSystem(subjectName: string | undefined, count: number)
     '- "coverImageQuery" 必須出：1-4 個字嘅英文搜尋詞，配合簡報主題搵封面相。',
     '- 只輸出 JSON，唔好有多餘文字。',
   )
+  const fav = pack ? PACK_FAVORS[pack] : undefined
+  if (fav) {
+    const zh = fav.layouts.map((l) => LAYOUT_ZH[l]).join('、')
+    lines.push(
+      `- 版式風格：本套用「${fav.note}」取向 —— 內容合適時優先選用 ${zh} 版式（自然為主，唔好夾硬堆砌），令整體展示形式更貼合主題。`,
+    )
+  }
   return lines.join('\n')
 }
 

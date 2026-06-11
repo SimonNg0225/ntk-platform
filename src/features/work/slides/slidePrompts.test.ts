@@ -24,6 +24,20 @@ describe('buildSlideSystem', () => {
     expect(buildSlideSystem('中史', 8)).toContain('章節分隔')
     expect(buildSlideSystem('中史', 6)).not.toContain('章節分隔')
   })
+
+  it('pack-aware：按 pack 注入版式偏好（缺省唔加）', () => {
+    expect(buildSlideSystem('地理', 8)).not.toContain('版式風格')
+    // 月台 transit 偏好流程 + 大數字
+    const transit = buildSlideSystem('地理', 8, 'transit')
+    expect(transit).toContain('版式風格')
+    expect(transit).toContain('路線旅程')
+    expect(transit).toContain('流程')
+    expect(transit).toContain('大數字')
+    // 方格 grid 偏好對比 + 大數字
+    const grid = buildSlideSystem('數學', 8, 'grid')
+    expect(grid).toContain('對比')
+    expect(grid).toContain('數理精準')
+  })
 })
 
 /** 砌一個齊 title 嘅 deck JSON（slides + deck 級額外欄位） */
