@@ -139,6 +139,7 @@ export async function buildPptxFile(deck: Deck, opts: PptxOptions = {}): Promise
 
   // ── 內容 / 章節 ──
   let sectionNo = 0
+  let contentSeq = 0 // 內容版序（0-based，唔計章節）— 版面節奏 + 逐版母題用
   deck.slides.forEach((s, i) => {
     const slide = pptx.addSlide()
     const layout = effectiveLayout(s)
@@ -150,6 +151,7 @@ export async function buildPptxFile(deck: Deck, opts: PptxOptions = {}): Promise
       return
     }
 
+    const seq = contentSeq++
     // chart 同 photo 同版 → chart 優先（可編輯係賣點）；配圖只限 bullets 版式
     const photo = layout === 'bullets' && !s.chart ? opts.slidePhotos?.[i] : undefined
     const ctx: FrameCtx = {
@@ -162,8 +164,11 @@ export async function buildPptxFile(deck: Deck, opts: PptxOptions = {}): Promise
       layout,
       hasPhoto: Boolean(photo),
       hasChart: Boolean(s.chart),
+      seq,
     }
     const fullBody = pack.contentFrame(slide, ctx)
+    // 逐版母題（喺 frame 之後、內容之前）— pack 自選，缺省冇
+    pack.deco?.(slide, ctx)
 
     // 包底帶：預留版底 0.74"，版式喺收窄咗嘅 body 入面排
     const takeaway = s.takeaway?.trim()
@@ -191,7 +196,7 @@ export async function buildPptxFile(deck: Deck, opts: PptxOptions = {}): Promise
           renderCards(slide, body, pack, s)
           break
         default:
-          renderBullets(slide, body, pack, s, photo)
+          renderBullets(slide, body, pack, s, photo, seq)
       }
     }
     if (takeaway) {

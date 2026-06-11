@@ -97,6 +97,8 @@ export interface FrameCtx {
   /** split 配圖版 — 影響題闊、右上角飾物同頁碼位置 */
   hasPhoto: boolean
   hasChart: boolean
+  /** 內容版序（0-based，唔計封面同章節）— 逐版母題輪換（deco）用 */
+  seq: number
 }
 
 export interface Pack {
@@ -148,6 +150,12 @@ export interface Pack {
    * 例：月台 transit 將 steps 渲染成地鐵線路圖。
    */
   overrides?: Partial<Record<SlideLayout, LayoutRenderFn>>
+  /**
+   * 逐版母題（選填）—— 喺 contentFrame 之後、內容之前畫一個會按 ctx.seq
+   * 輪換／演進嘅細母題（角飾／背景紋／編號位移），令同一 pack 內版與版唔重複。
+   * 必須克制：只擺邊位／角位，唔好壓住內容區。
+   */
+  deco?(slide: PptxGenJS.Slide, ctx: FrameCtx): void
 }
 
 /** 招牌版式渲染函數簽名 —— 同 pptxLayouts 的 renderX 一致（slide, body, pack, slide-data） */
@@ -613,6 +621,37 @@ const inkwell: Pack = {
     drawFooter(slide, inkwell, ctx)
     return body
   },
+
+  // 逐版母題：細朱砂印 —— 角位按 seq % 4 順時針輪換（極淡 vermilion）
+  deco(slide, ctx) {
+    const seal = 0.12
+    // 四角位（皆在內容區外的極邊）：右上 → 右下 → 左下 → 左上
+    const spots: [number, number][] = [
+      [12.72, 0.56],
+      [12.72, 7.04],
+      [0.46, 7.04],
+      [0.46, 0.56],
+    ]
+    const [sx, sy] = spots[ctx.seq % 4]
+    const seal印 = mix(INK.accent, 'FFFFFF', 0.62)
+    slide.addShape('rect', {
+      x: sx - seal / 2,
+      y: sy - seal / 2,
+      w: seal,
+      h: seal,
+      fill: { type: 'none' },
+      line: { color: seal印, width: 1 },
+    })
+    // 印心一小點
+    slide.addShape('rect', {
+      x: sx - 0.02,
+      y: sy - 0.02,
+      w: 0.04,
+      h: 0.04,
+      fill: { color: seal印 },
+      line: { type: 'none' },
+    })
+  },
 }
 
 // ============================================================
@@ -905,6 +944,22 @@ const celadon: Pack = {
     drawFooter(slide, celadon, ctx)
     return body
   },
+
+  // 逐版母題：青瓷弧 —— 角位（左下／右下交替）一隻細圓環，半徑按 seq 漸長
+  deco(slide, ctx) {
+    const r = 0.22 + (ctx.seq % 3) * 0.1
+    // 偶版左下角、奇版右下角（皆在 footer 線之下的極邊）
+    const cx = ctx.seq % 2 === 0 ? 0.5 : 12.83
+    const cy = 7.42
+    slide.addShape('ellipse', {
+      x: cx - r,
+      y: cy - r,
+      w: r * 2,
+      h: r * 2,
+      fill: { type: 'none' },
+      line: { color: mix(CEL.accent, 'FFFFFF', 0.68), width: 1 },
+    })
+  },
 }
 
 // ============================================================
@@ -1170,6 +1225,27 @@ const dawn: Pack = {
     drawFooter(slide, dawn, ctx)
     return body
   },
+
+  // 逐版母題：琥珀小圓點群 —— 右上極角，數量 = (seq%3)+1，柔琥珀 tint
+  deco(slide, ctx) {
+    const count = (ctx.seq % 3) + 1
+    const dot = 0.1
+    const gap = 0.18
+    const tint = mix(DAWN.accent, 'FFFFFF', 0.5)
+    const baseX = 12.78
+    const y = 0.5
+    for (let i = 0; i < count; i++) {
+      slide.addShape('roundRect', {
+        x: baseX - i * gap - dot / 2,
+        y: y - dot / 2,
+        w: dot,
+        h: dot,
+        rectRadius: 0.03,
+        fill: { color: tint },
+        line: { type: 'none' },
+      })
+    }
+  },
 }
 
 // ============================================================
@@ -1434,6 +1510,14 @@ const nocturne: Pack = {
     drawFooter(slide, nocturne, ctx)
     return body
   },
+
+  // 逐版母題：燙金角刻 —— 上邊右側一對細金線（goldPair），長度／橫位按 seq 微移
+  deco(slide, ctx) {
+    const len = 0.4 + (ctx.seq % 3) * 0.12
+    // 右上極邊，橫位隨 seq 細移（不入內容區）
+    const x = 12.86 - len - (ctx.seq % 2) * 0.16
+    goldPair(slide, x, 0.5, len)
+  },
 }
 
 // ============================================================
@@ -1678,6 +1762,26 @@ const grid: Pack = {
     const { body } = scaffold(slide, grid, ctx, { kickerY: 0.6, titleY: 0.9, hairline: true })
     drawFooter(slide, grid, ctx)
     return body
+  },
+
+  // 逐版母題：register 準星 + 座標標籤 —— 右上極邊，準星橫位按 seq 階進、標籤遞增
+  deco(slide, ctx) {
+    const faint = mix(GRD.accent, 'FFFFFF', 0.7)
+    // 準星 x 位按 seq 階進（在右上極邊內 0.12" 一步循環，避開內容區）
+    const cx = 12.18 + (ctx.seq % 4) * 0.12
+    const cy = 0.5
+    crosshair(slide, cx, cy, 0.16, faint)
+    // 細座標標籤「01」「02」… 遞增
+    tx(slide, '0' + (ctx.seq + 1), {
+      x: cx + 0.14,
+      y: cy - 0.11,
+      w: 0.5,
+      h: 0.22,
+      fontSize: 7,
+      color: faint,
+      fontFace: 'Arial',
+      charSpacing: 1,
+    })
   },
 }
 
@@ -1946,6 +2050,28 @@ const seminar: Pack = {
     hline(slide, 0.9, 6.92, 11.53, SEM.hair)
     drawFooter(slide, seminar, ctx)
     return body
+  },
+
+  // 逐版母題：金索引刻 —— 右下極角一短金鈦（長度按 seq 漸進）+ 細點列（數 = seq%4）
+  deco(slide, ctx) {
+    const faint = mix(SEM.gold, 'FFFFFF', 0.45)
+    // 短金鈦：右下角，長度隨 seq 階進（在 footer 之下的極邊）
+    const len = 0.24 + (ctx.seq % 4) * 0.14
+    const rx = 12.82
+    const ry = 7.4
+    hline(slide, rx - len, ry, len, faint, 1)
+    // 鈦上方細點列：數量 = seq%4（演進刻度感）
+    const dots = ctx.seq % 4
+    for (let i = 0; i < dots; i++) {
+      slide.addShape('rect', {
+        x: rx - 0.04 - i * 0.12,
+        y: ry - 0.16,
+        w: 0.04,
+        h: 0.04,
+        fill: { color: faint },
+        line: { type: 'none' },
+      })
+    }
   },
 }
 

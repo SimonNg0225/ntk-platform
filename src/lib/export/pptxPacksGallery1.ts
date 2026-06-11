@@ -22,6 +22,7 @@ import {
   sectionWord,
   tx,
   vline,
+  type FrameCtx,
   type Pack,
   type Rect,
 } from './pptxPacks'
@@ -257,6 +258,24 @@ const chalk: Pack = {
     drawFooter(slide, chalk, ctx)
     return body
   },
+
+  // 逐版母題：一條微小虛線粉筆 tick + 細小 smudge，按 seq % 4 逐版換角
+  deco(slide: PptxGenJS.Slide, ctx: FrameCtx): void {
+    const corner = ctx.seq % 4 // 0 左上 1 右上 2 右下 3 左下
+    const tick = 0.3 // tick 長度隨 seq 微微長短
+    const len = tick + (ctx.seq % 3) * 0.06
+    const smudge = mix(CHK.ink, CHK.bg, 0.78)
+    const corners: { x: number; y: number; dir: 'h' | 'v'; dotX: number; dotY: number }[] = [
+      { x: 0.42, y: 0.42, dir: 'h', dotX: 0.46, dotY: 0.56 }, // 左上
+      { x: 13.33 - 0.42 - len, y: 0.42, dir: 'h', dotX: 13.33 - 0.58, dotY: 0.56 }, // 右上
+      { x: 13.33 - 0.42 - len, y: 7.08, dir: 'h', dotX: 13.33 - 0.58, dotY: 6.92 }, // 右下
+      { x: 0.42, y: 7.08, dir: 'h', dotX: 0.46, dotY: 6.92 }, // 左下
+    ]
+    const c = corners[corner]
+    dashH(slide, c.x, c.y, len, CHK.hair, 1)
+    // 細小 smudge 圓點（faint）
+    slide.addShape('ellipse', { x: c.dotX, y: c.dotY, w: 0.09, h: 0.09, fill: { color: smudge }, line: { type: 'none' } })
+  },
 }
 
 // ============================================================
@@ -450,6 +469,17 @@ const press: Pack = {
     }
     drawFooter(slide, press, ctx)
     return body
+  },
+
+  // 逐版母題：細小「edition」dateline — 一條 faint 短 rule + 小號 "No.N"，按 seq 上下角交替
+  deco(slide: PptxGenJS.Slide, ctx: FrameCtx): void {
+    const top = ctx.seq % 2 === 0
+    const y = top ? 0.42 : 7.04
+    const x = 11.0 // 右側極角，body 之外
+    const w = 1.43
+    const faintRule = mix(PRS.ink, 'FFFFFF', 0.72)
+    hline(slide, x, y, w, faintRule, 0.5)
+    tx(slide, `No.${ctx.seq + 1}`, { x, y: top ? y + 0.05 : y - 0.27, w, h: 0.24, fontSize: 8, color: PRS.faint, align: 'right', charSpacing: 1, fontFace: 'Georgia' })
   },
 }
 
@@ -671,6 +701,29 @@ const neon: Pack = {
     const { body } = scaffold(slide, neon, { ...ctx, kicker: `[ ${ctx.kicker} ]` }, { kickerY: 0.58, titleY: 0.9, hairline: true })
     drawFooter(slide, neon, ctx)
     return body
+  },
+
+  // 逐版母題：細小發光圓點，位置按 seq % 4 換角、hue 按 seq 喺 cyan／magenta 間切換
+  deco(slide: PptxGenJS.Slide, ctx: FrameCtx): void {
+    const corner = ctx.seq % 4
+    const glow = ctx.seq % 2 === 0 ? NEO.accent : NEO.magenta
+    const d = 0.1
+    const spots: { x: number; y: number }[] = [
+      { x: 0.46, y: 0.46 }, // 左上
+      { x: 13.33 - 0.46 - d, y: 0.46 }, // 右上
+      { x: 13.33 - 0.46 - d, y: 7.5 - 0.46 - d }, // 右下
+      { x: 0.46, y: 7.5 - 0.46 - d }, // 左下
+    ]
+    const sp = spots[corner]
+    slide.addShape('ellipse', {
+      x: sp.x,
+      y: sp.y,
+      w: d,
+      h: d,
+      fill: { color: glow },
+      line: { type: 'none' },
+      shadow: { type: 'outer', color: glow, blur: 6, offset: 0, angle: 0, opacity: 0.6 },
+    })
   },
 }
 
@@ -936,6 +989,32 @@ const confetti: Pack = {
     drawFooter(slide, confetti, ctx)
     return body
   },
+
+  // 逐版母題：2–3 粒細小彩斑散落一角，位置／色由 seq 決定性 seed，逐版唔同
+  deco(slide: PptxGenJS.Slide, ctx: FrameCtx): void {
+    const hues = [CFT.yellow, CFT.coral, CFT.teal, CFT.accent]
+    // 按 seq 換角（左下／右下交替），避開 body 區
+    const right = ctx.seq % 2 === 0
+    const ox = right ? 12.55 : 0.5
+    const oy = 7.04
+    const count = 2 + (ctx.seq % 2) // 2 或 3 粒
+    for (let i = 0; i < count; i++) {
+      const seed = ctx.seq * 7 + i * 3
+      const hue = hues[seed % hues.length]
+      const dx = (right ? -1 : 1) * ((seed % 3) * 0.16)
+      const dy = -((seed % 2) * 0.14)
+      const px = ox + dx
+      const py = oy + dy
+      const kind = seed % 3
+      if (kind === 0) {
+        slide.addShape('triangle', { x: px, y: py, w: 0.13, h: 0.13, fill: { color: hue }, line: { type: 'none' }, rotate: 12 + (seed % 5) * 6 })
+      } else if (kind === 1) {
+        slide.addShape('ellipse', { x: px, y: py, w: 0.1, h: 0.1, fill: { color: hue }, line: { type: 'none' } })
+      } else {
+        confettiPlus(slide, px + 0.06, py + 0.06, 0.13, hue)
+      }
+    }
+  },
 }
 
 // ============================================================
@@ -1157,6 +1236,21 @@ const pastel: Pack = {
     slide.addShape('roundRect', { x: 0.9, y: body.y - 0.32, w: contentW, h: 0.06, rectRadius: 0.03, fill: { color: PAS.blush }, line: { type: 'none' } })
     drawFooter(slide, pastel, ctx)
     return body
+  },
+
+  // 逐版母題：一個細小軟圓 blob，tint 按 seq 喺 panel／panelAlt 交替、角位按 seq % 4 換
+  deco(slide: PptxGenJS.Slide, ctx: FrameCtx): void {
+    const tint = ctx.seq % 2 === 0 ? PAS.panel : (pastel.panelAlt ?? PAS.panel)
+    const d = 0.34 + (ctx.seq % 3) * 0.05 // blob 大細微微脈動
+    const corner = ctx.seq % 4
+    const spots: { x: number; y: number }[] = [
+      { x: 0.4, y: 0.4 }, // 左上
+      { x: 13.33 - 0.4 - d, y: 0.4 }, // 右上
+      { x: 13.33 - 0.4 - d, y: 7.5 - 0.4 - d }, // 右下
+      { x: 0.4, y: 7.5 - 0.4 - d }, // 左下
+    ]
+    const sp = spots[corner]
+    blob(slide, sp.x, sp.y, d, tint)
   },
 }
 

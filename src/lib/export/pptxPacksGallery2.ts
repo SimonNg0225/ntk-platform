@@ -217,6 +217,16 @@ const blueprint: Pack = {
   splitPhoto: 'bleedHair',
   overrides: { steps: renderBlueprintSchematic, stats: renderBlueprintSpecTags, compare: renderBlueprintSpecCompare },
 
+  // 逐版母題：右下角極邊一個遞增座標標籤 + 小對位十字（似圖則格網座標 A1/B2…）
+  deco(slide, ctx) {
+    const col = String.fromCharCode(65 + (ctx.seq % 6)) // A,B,C…
+    const row = (ctx.seq % 6) + 1
+    const cx = 12.62
+    const cy = 7.0
+    bluCross(slide, cx, cy, 0.12)
+    tx(slide, `${col}${row}`, { x: cx - 0.6, y: cy - 0.28, w: 0.5, h: 0.2, fontSize: 8, color: blueprint.faint, charSpacing: 1, bold: true, align: 'right', valign: 'middle', fontFace: blueprint.displayFont })
+  },
+
   cover(slide, deck, brand, img) {
     slide.background = { color: BLU.bg }
     const hasImg = Boolean(img)
@@ -455,6 +465,15 @@ const ivy: Pack = {
   splitPhoto: 'bleedHair',
   overrides: { cards: renderIvyCrests, quote: renderIvyEpigraph, steps: renderIvyTimeline },
 
+  // 逐版母題：角落一粒小金菱形 + 學刊細線，左下／右下角按 seq 交替（書卷頁角徽）
+  deco(slide, ctx) {
+    const right = ctx.seq % 2 === 1
+    const dx = right ? 12.34 : 0.74
+    const dy = 6.96
+    ivyDiamond(slide, dx, dy, 0.1)
+    ivyPair(slide, right ? dx - 0.7 : dx + 0.16, dy + 0.04, 0.6, mix(IVY.gold, 'FFFFFF', 0.2))
+  },
+
   cover(slide, deck, brand, img) {
     slide.background = { color: 'FFFFFF' }
     // 左綠欄（書脊）：徽記 + kicker + 白雙細線 + 底部日期／brand
@@ -664,6 +683,19 @@ const redgrid: Pack = {
   quoteMark: { kind: 'glyph', color: RED.accent },
   splitPhoto: 'bleedHair',
   overrides: { stats: renderRedgridBigNumbers, cards: renderRedgridMagCards, compare: renderRedgridSpread },
+
+  // 逐版母題：右下角極邊一個小淡朱田字格，內裡一粒朱點按 seq 走過四格（似逐格寫字）
+  deco(slide, ctx) {
+    const size = 0.26
+    const gx = 12.4
+    const gy = 6.86
+    tianGrid(slide, gx, gy, size, 0.5, RED.gridline)
+    const cell = ctx.seq % 4 // 0=左上 1=右上 2=左下 3=右下
+    const dot = 0.07
+    const ox = (cell % 2 === 1 ? size * 0.5 : 0) + size * 0.25 - dot / 2
+    const oy = (cell >= 2 ? size * 0.5 : 0) + size * 0.25 - dot / 2
+    slide.addShape('ellipse', { x: gx + ox, y: gy + oy, w: dot, h: dot, fill: { color: mix(RED.accent, 'FFFFFF', 0.25) }, line: { type: 'none' } })
+  },
 
   cover(slide, deck, brand, img) {
     slide.background = { color: 'FFFFFF' }
@@ -897,6 +929,17 @@ const transit: Pack = {
   splitPhoto: 'bleedHair',
   overrides: { steps: renderTransitMetro, stats: renderTransitDepartureBoard, compare: renderTransitPlatforms },
 
+  // 逐版母題：右下角極邊一個遞增「站 N」小信號黃牌（逐版前進一站）
+  deco(slide, ctx) {
+    const n = ctx.seq + 1
+    const w = 0.5
+    const h = 0.2
+    const bx = 12.43 - w
+    const by = 6.92
+    slide.addShape('roundRect', { x: bx, y: by, w, h, rectRadius: 0.04, fill: { color: mix(TRN.accent, 'FFFFFF', 0.12) }, line: { type: 'none' } })
+    tx(slide, `站 ${n}`, { x: bx, y: by, w, h, fontSize: 8, bold: true, color: TRN.ink, align: 'center', valign: 'middle', fontFace: transit.displayFont })
+  },
+
   cover(slide, deck, brand, img) {
     slide.background = { color: 'FFFFFF' }
     const hasImg = Boolean(img)
@@ -1107,6 +1150,18 @@ const ocean: Pack = {
   quoteMark: { kind: 'circle', size: 0.5, linePt: 1.5, color: OCE.accent },
   splitPhoto: 'bleedScrim',
   overrides: { steps: renderOceanDescent, stats: renderOceanDepthGauge, cards: renderOceanStrata },
+
+  // 逐版母題：右下角極邊一個遞增深度標籤 + 小氣泡，氣泡逐版往上、深度逐版加深（愈潛愈深）
+  deco(slide, ctx) {
+    const depth = (ctx.seq + 1) * 10
+    const lx = 12.43
+    const ly = 6.96
+    // 深度標籤（海色淡字）
+    tx(slide, `-${depth}m`, { x: lx - 0.9, y: ly - 0.04, w: 0.9, h: 0.2, fontSize: 8, bold: true, color: mix(OCE.accent, 'FFFFFF', 0.25), align: 'right', valign: 'middle', fontFace: ocean.displayFont })
+    // 小氣泡：逐版往上升（y 隨 seq 減）
+    const rise = (ctx.seq % 5) * 0.04
+    bubble(slide, lx - 1.06, ly - 0.02 - rise, 0.1, mix(OCE.accent, 'FFFFFF', 0.35))
+  },
 
   cover(slide, deck, brand, img) {
     slide.background = { color: 'FFFFFF' }

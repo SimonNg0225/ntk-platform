@@ -18,6 +18,7 @@ describe('buildSlideSystem', () => {
     expect(s).toContain('"quote"')
     expect(s).toContain('"imageQuery"')
     expect(s).toContain('"coverImageQuery"')
+    expect(s).toContain('版式要交錯')
   })
 
   it('版數夠 8 先提章節分隔版', () => {
