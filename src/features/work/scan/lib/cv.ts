@@ -5,10 +5,13 @@ import { downscaleDims, isPlausibleQuad, orderCorners } from './geometry'
 import type jscanifyType from 'jscanify/client'
 
 const OPENCV_SRC = '/vendor/opencv/opencv.js'
-// 文件掃描要夠細節（~200 DPI A4 ≈ 2339px），長邊封 2400 平衡清晰度同記憶體。
-const MAX_EDGE = 2400
+// 原圖長邊上限：保留多啲細節畀 warp 高解析度取樣（12MP 相只輕微縮）。
+const MAX_EDGE = 3200
 // JPEG 輸出質素（高啲減少文字邊糊化）。
 const JPEG_Q = 0.95
+// warp 輸出目標長邊（唔夠就喺 warp 階段由原圖插值放大；只放大唔縮細）。
+// 黑白要喺高解析度先 threshold（~285 DPI A4），先冇「低 DPI」鋸齒感。
+const TARGET_LONG: Record<Filter, number> = { bw: 3300, gray: 2600, color: 2400 }
 
 let cvReady: Promise<void> | null = null
 let scannerP: Promise<jscanifyType> | null = null
@@ -207,16 +210,32 @@ export async function warpEnhance(dataUrl: string, corners: Corners | null, filt
   srcCanvas.width = img.naturalWidth; srcCanvas.height = img.naturalHeight
   srcCanvas.getContext('2d')!.drawImage(img, 0, 0)
 
+  const target = TARGET_LONG[filter]
   let outCanvas: HTMLCanvasElement
   if (corners) {
-    const w = Math.round(Math.hypot(corners.tr.x - corners.tl.x, corners.tr.y - corners.tl.y))
-    const h = Math.round(Math.hypot(corners.bl.x - corners.tl.x, corners.bl.y - corners.tl.y))
+    // 基準尺寸 = 四角距離（原圖像素）；唔夠目標就喺 warp 階段直接由原圖
+    // 插值放大（warpPerspective 取樣，質素好過事後 upscale）。只放大唔縮細。
+    const baseW = Math.hypot(corners.tr.x - corners.tl.x, corners.tr.y - corners.tl.y)
+    const baseH = Math.hypot(corners.bl.x - corners.tl.x, corners.bl.y - corners.tl.y)
+    const k = Math.max(1, target / Math.max(baseW, baseH))
+    const w = Math.round(baseW * k)
+    const h = Math.round(baseH * k)
     const cps = {
       topLeftCorner: corners.tl, topRightCorner: corners.tr,
       bottomLeftCorner: corners.bl, bottomRightCorner: corners.br,
     }
     // cps 已傳 → jscanify 唔會回 null；保險起見偵唔到就退回全幅。
     outCanvas = scanner.extractPaper(srcCanvas, w, h, cps) ?? srcCanvas
+  } else if (Math.max(srcCanvas.width, srcCanvas.height) < target) {
+    // 全幅（無裁切）：都放大到目標，等 bw threshold 喺高解析度做。
+    const k = target / Math.max(srcCanvas.width, srcCanvas.height)
+    const up = document.createElement('canvas')
+    up.width = Math.round(srcCanvas.width * k)
+    up.height = Math.round(srcCanvas.height * k)
+    const uctx = up.getContext('2d')!
+    uctx.imageSmoothingQuality = 'high'
+    uctx.drawImage(srcCanvas, 0, 0, up.width, up.height)
+    outCanvas = up
   } else {
     outCanvas = srcCanvas
   }
@@ -235,7 +254,7 @@ export async function warpEnhance(dataUrl: string, corners: Corners | null, filt
     const minEdge = Math.min(outCanvas.width, outCanvas.height)
     let bs = Math.round(minEdge / 45)
     if (bs % 2 === 0) bs += 1
-    bs = Math.max(15, Math.min(41, bs))
+    bs = Math.max(15, Math.min(61, bs)) // 高解析度（~300DPI）行大啲嘅鄰域
     cv.adaptiveThreshold(gray, dst, 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY, bs, 12)
     png = true // 二值圖用 PNG（無損）；JPEG 會喺黑白硬邊整出鋸齒/糊化，似低 DPI。
   }
