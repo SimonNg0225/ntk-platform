@@ -215,7 +215,7 @@ export default function SlideGen() {
           教學簡報
         </h1>
         <p className="mt-2 text-[13px] text-slate-500 dark:text-slate-400">
-          揀課題或貼內容，AI 生成 PowerPoint：16 套設計模板，數據／對比／步驟／金句／卡片版式自動配，封面與內頁可自動配相，一鍵下載 .pptx。
+          揀課題或貼內容，AI 生成 PowerPoint：{SLIDE_PACKS.length} 套設計模板，數據／對比／步驟／金句／卡片版式自動配，封面與內頁可自動配相，一鍵下載 .pptx。
         </p>
       </header>
 

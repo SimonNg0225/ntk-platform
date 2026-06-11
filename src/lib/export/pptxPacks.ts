@@ -32,6 +32,15 @@ export type SlidePackId =
   | 'redgrid'
   | 'transit'
   | 'ocean'
+  // gallery 第三/四輯（pptxPacksGallery3/4）
+  | 'washi'
+  | 'terminal'
+  | 'pixel'
+  | 'botanic'
+  | 'marble'
+  | 'origami'
+  | 'cinema'
+  | 'festival'
 
 /** 嵌入簡報嘅相（由 stock 層提供；width/height 係真實 pixel，計裁切比例必需） */
 export interface SlideImage {
