@@ -41,6 +41,17 @@ export type SlidePackId =
   | 'origami'
   | 'cinema'
   | 'festival'
+  // gallery 第五/六/七輯（pptxPacksGallery5/6/7）
+  | 'comic'
+  | 'manuscript'
+  | 'isometric'
+  | 'glitch'
+  | 'vapor'
+  | 'bauhaus'
+  | 'cosmos'
+  | 'scrapbook'
+  | 'sumi'
+  | 'brutalist'
 
 /** 嵌入簡報嘅相（由 stock 層提供；width/height 係真實 pixel，計裁切比例必需） */
 export interface SlideImage {
