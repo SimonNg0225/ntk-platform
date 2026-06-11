@@ -90,6 +90,8 @@ export interface Slide {
   takeaway?: string
   /** 英文 Pexels 搜尋詞（1-4 個字），值得配相嘅版先有 */
   imageQuery?: string
+  /** 重點版（選填）— AI 標全套 1-3 版最重要嘅，引擎加重處理（accent L-frame）造輕重節奏 */
+  emphasis?: boolean
 }
 
 export interface Deck {

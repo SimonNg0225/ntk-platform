@@ -97,6 +97,7 @@ export function buildSlideSystem(subjectName: string | undefined, count: number,
     '    "cards":[{"title":"卡題","desc":"一句說明（選填）"}]（title ≤12 字、desc ≤36 字）',
     '- 每版可選 "subtitle"：版題下嘅短英文對照副題（雙語課堂用，≤8 個英文詞，例 "Accounting Equation Playground"）；唔啱就唔好出。',
     '- 每版可選 "takeaway"：一句包底重點（≤40 字，會做版底色帶俾學生抄低）；全套揀 2-4 版最關鍵嘅先出，唔好版版有。',
+    '- 每版可選 "emphasis": true：全套只揀 1-3 版「最重要／高潮」嘅版標記（例如核心概念、總結金句），引擎會為佢加重視覺處理，造成輕重節奏；千祈唔好多版標，否則就冇咗強調效果。',
   ]
   if (count >= 8) {
     lines.push('- 可以插 1-2 版章節分隔版：title 係章節名、"bullets": []，唔使 layout，用嚟分大段落。')
@@ -316,6 +317,7 @@ export function parseDeck(raw: string, fallbackTitle: string): Deck {
       const imageQuery = parseImageQuery(rec.imageQuery)
       const slideSubtitle = cleanStr(rec.subtitle)
       const takeaway = cleanStr(rec.takeaway)
+      const emphasis = !isSection && rec.emphasis === true
       const layoutFields: Partial<Slide> = isSection ? { layout: 'section' } : parseLayoutFields(rec)
       slides.push({
         title: slideTitle || '（未命名）',
@@ -325,6 +327,7 @@ export function parseDeck(raw: string, fallbackTitle: string): Deck {
         chart,
         imageQuery,
         takeaway: takeaway ? clamp(takeaway, 46) : undefined,
+        emphasis: emphasis || undefined,
         ...layoutFields,
       })
     }

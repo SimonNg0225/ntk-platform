@@ -658,6 +658,18 @@ export function renderCards(slide: PptxGenJS.Slide, body: Rect, pack: Pack, s: S
   })
 }
 
+// ───────── emphasis（重點版強調）─────────
+
+/**
+ * 重點版強調：accent「L-frame」（頂色帶 + 左脊）。
+ * AI 標 emphasis 嘅版先畫，令成套有明確輕重節奏。
+ * 只擺最邊位（x0 / y0），唔壓內容區（x≥0.9, y≥0.5）。
+ */
+export function renderEmphasisFrame(slide: PptxGenJS.Slide, pack: Pack): void {
+  slide.addShape('rect', { x: 0, y: 0, w: 13.333, h: 0.16, fill: { color: pack.accent }, line: { type: 'none' } })
+  slide.addShape('rect', { x: 0, y: 0, w: 0.16, h: 7.5, fill: { color: pack.accent }, line: { type: 'none' } })
+}
+
 // ───────── takeaway（版底包底帶）─────────
 
 export function renderTakeaway(slide: PptxGenJS.Slide, pack: Pack, text: string, band: Rect): void {

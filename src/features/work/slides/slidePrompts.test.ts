@@ -55,12 +55,32 @@ describe('buildSlideSystem', () => {
     expect(inkwell).not.toContain('內容密度')
     expect(inkwell).not.toContain('- 雙語：')
   })
+
+  it('有 emphasis 重點版指引', () => {
+    expect(buildSlideSystem('地理', 8)).toContain('emphasis')
+  })
 })
 
 /** 砌一個齊 title 嘅 deck JSON（slides + deck 級額外欄位） */
 function wrap(slides: unknown[], extra: Record<string, unknown> = {}): string {
   return JSON.stringify({ title: 'T', slides, ...extra })
 }
+
+describe('parseDeck emphasis', () => {
+  it('解析 emphasis：true → 保留；缺省／false → undefined', () => {
+    const d = parseDeck(
+      wrap([
+        { title: '重點版', bullets: ['a', 'b'], emphasis: true },
+        { title: '普通版', bullets: ['c', 'd'] },
+        { title: '明示 false', bullets: ['e'], emphasis: false },
+      ]),
+      'X',
+    )
+    expect(d.slides[0].emphasis).toBe(true)
+    expect(d.slides[1].emphasis).toBeUndefined()
+    expect(d.slides[2].emphasis).toBeUndefined()
+  })
+})
 
 describe('parseDeck', () => {
   const good = {

@@ -14,7 +14,7 @@ import { downloadBlob, safeFilename } from './file'
 import { CORE_PACKS, FONT, pickKicker, type FrameCtx, type Pack, type SlideImage, type SlidePackId } from './pptxPacks'
 import { GALLERY_PACKS_1 } from './pptxPacksGallery1'
 import { GALLERY_PACKS_2 } from './pptxPacksGallery2'
-import { renderBullets, renderCards, renderCompare, renderQuote, renderStats, renderSteps, renderTakeaway } from './pptxLayouts'
+import { renderBullets, renderCards, renderCompare, renderEmphasisFrame, renderQuote, renderStats, renderSteps, renderTakeaway } from './pptxLayouts'
 
 export type { SlidePackId, SlideImage } from './pptxPacks'
 
@@ -169,6 +169,8 @@ export async function buildPptxFile(deck: Deck, opts: PptxOptions = {}): Promise
     const fullBody = pack.contentFrame(slide, ctx)
     // 逐版母題（喺 frame 之後、內容之前）— pack 自選，缺省冇
     pack.deco?.(slide, ctx)
+    // 重點版強調：AI 標 emphasis 嘅版畫 accent L-frame，造輕重節奏
+    if (s.emphasis) renderEmphasisFrame(slide, pack)
 
     // 包底帶：預留版底 0.74"，版式喺收窄咗嘅 body 入面排
     const takeaway = s.takeaway?.trim()
