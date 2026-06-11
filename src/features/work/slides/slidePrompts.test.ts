@@ -38,6 +38,21 @@ describe('buildSlideSystem', () => {
     expect(grid).toContain('對比')
     expect(grid).toContain('數理精準')
   })
+
+  it('pack-aware 進階：密度／雙語按 pack 調', () => {
+    // dawn 初小：少字大圖 + 唔出英文副題
+    const dawn = buildSlideSystem('常識', 8, 'dawn')
+    expect(dawn).toContain('寧少而精')
+    expect(dawn).toContain('唔好出英文對照')
+    // press 報章：較密
+    expect(buildSlideSystem('通識', 8, 'press')).toContain('較密')
+    // ivy 學院：高雙語
+    expect(buildSlideSystem('英文', 8, 'ivy')).toContain('英文對照')
+    // inkwell 無調密度／雙語（注意：base prompt 本身有「雙語課堂」字眼，故只斷言冇加 guidance line）
+    const inkwell = buildSlideSystem('中文', 8, 'inkwell')
+    expect(inkwell).not.toContain('內容密度')
+    expect(inkwell).not.toContain('- 雙語：')
+  })
 })
 
 /** 砌一個齊 title 嘅 deck JSON（slides + deck 級額外欄位） */

@@ -31,23 +31,30 @@ const LAYOUT_ZH: Record<SlideLayout, string> = {
  * 模板 pack → 版式偏好（pack-aware 生成）。
  * 偏好嘅兩款 layout = 該 pack 嘅招牌版式，令生成內容自然落到招牌結構，
  * 連「展示形式」都按 pack 分叉（非淨係 render 層）。只係「傾向」，唔夾硬。
+ * density = 字數密度／章節節奏；bilingual = 英文對照副題比例。
  */
-const PACK_FAVORS: Partial<Record<SlidePackId, { layouts: SlideLayout[]; note: string }>> = {
+type PackFavor = {
+  layouts: SlideLayout[]
+  note: string
+  density?: 'sparse' | 'dense'
+  bilingual?: 'high' | 'low'
+}
+const PACK_FAVORS: Partial<Record<SlidePackId, PackFavor>> = {
   inkwell: { layouts: ['quote', 'cards'], note: '人文書卷' },
   celadon: { layouts: ['cards', 'stats'], note: '科學自然' },
-  dawn: { layouts: ['steps', 'cards'], note: '初小活潑、淺白' },
+  dawn: { layouts: ['steps', 'cards'], note: '初小活潑、淺白', density: 'sparse', bilingual: 'low' },
   nocturne: { layouts: ['stats', 'quote'], note: '沉穩聚焦' },
-  grid: { layouts: ['compare', 'stats'], note: '數理精準' },
-  seminar: { layouts: ['steps', 'quote'], note: '研討思辨' },
+  grid: { layouts: ['compare', 'stats'], note: '數理精準', density: 'dense' },
+  seminar: { layouts: ['steps', 'quote'], note: '研討思辨', bilingual: 'high' },
   chalk: { layouts: ['compare', 'steps'], note: '課堂板書' },
-  press: { layouts: ['bullets', 'stats'], note: '新聞報導' },
+  press: { layouts: ['bullets', 'stats'], note: '新聞報導', density: 'dense' },
   neon: { layouts: ['stats', 'steps'], note: '科技數據' },
-  confetti: { layouts: ['cards', 'stats'], note: '繽紛活潑' },
+  confetti: { layouts: ['cards', 'stats'], note: '繽紛活潑', density: 'sparse' },
   pastel: { layouts: ['compare', 'cards'], note: '柔和對照' },
-  blueprint: { layouts: ['steps', 'stats'], note: '工程圖則' },
-  ivy: { layouts: ['cards', 'quote'], note: '學院典雅' },
+  blueprint: { layouts: ['steps', 'stats'], note: '工程圖則', density: 'dense', bilingual: 'high' },
+  ivy: { layouts: ['cards', 'quote'], note: '學院典雅', bilingual: 'high' },
   redgrid: { layouts: ['stats', 'cards'], note: '雜誌編排' },
-  transit: { layouts: ['steps', 'stats'], note: '路線旅程' },
+  transit: { layouts: ['steps', 'stats'], note: '路線旅程', bilingual: 'high' },
   ocean: { layouts: ['steps', 'stats'], note: '分層遞進' },
 }
 
@@ -101,6 +108,16 @@ export function buildSlideSystem(subjectName: string | undefined, count: number,
     lines.push(
       `- 版式風格：本套用「${fav.note}」取向 —— 內容合適時優先選用 ${zh} 版式（自然為主，唔好夾硬堆砌），令整體展示形式更貼合主題。`,
     )
+    if (fav.density === 'sparse') {
+      lines.push('- 內容密度：每版 2-3 個短要點、字眼淺白具體，寧少而精；多用大圖（imageQuery 可去到 4-5 版），唔好插章節分隔版，保持輕快。')
+    } else if (fav.density === 'dense') {
+      lines.push('- 內容密度：每版可較密（4-6 個要點），資訊量充足、條理分明；版數較多時用章節分隔版組織內容。')
+    }
+    if (fav.bilingual === 'high') {
+      lines.push('- 雙語：大部分內容版加英文對照 "subtitle"（≤8 個英文詞），方便雙語課堂。')
+    } else if (fav.bilingual === 'low') {
+      lines.push('- 雙語：對象為初小，唔好出英文對照 "subtitle"，全用淺白中文。')
+    }
   }
   return lines.join('\n')
 }

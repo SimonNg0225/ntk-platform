@@ -49,6 +49,7 @@ import {
 } from '../../../lib/export'
 import { slideDecksCol, type DeckRecord } from './slideStore'
 import { buildSlideSystem, parseDeck } from './slidePrompts'
+import PackPreview from './PackPreview'
 
 type Mode = 'topic' | 'text'
 const MODE_OPTS: { id: Mode; label: string }[] = [
@@ -382,23 +383,16 @@ function DeckView({
               onClick={() => onPack(p.id)}
               aria-pressed={pack === p.id}
               className={cx(
-                'flex w-[124px] flex-col items-start gap-1 rounded-xl border px-3 py-2 text-left transition active:scale-[0.97]',
+                'flex w-[124px] flex-col items-stretch gap-1 rounded-xl border px-2 py-2 text-left transition active:scale-[0.97]',
                 pack === p.id
                   ? 'border-accent bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent'
                   : 'border-black/[0.08] text-slate-600 hover:bg-black/[0.03] dark:border-white/10 dark:text-slate-300',
               )}
             >
-              <span className="flex -space-x-1.5">
-                {p.swatches.map((c, ci) => (
-                  <span
-                    key={ci}
-                    className="h-3.5 w-3.5 rounded-full ring-1 ring-black/10 dark:ring-white/20"
-                    style={{ background: c }}
-                  />
-                ))}
-              </span>
-              <span className="text-xs font-semibold">{p.name}</span>
-              <span className="text-[10px] leading-tight text-slate-400 dark:text-slate-500">
+              {/* token-driven 代表性封面縮圖（非真引擎 render） */}
+              <PackPreview pack={p} />
+              <span className="px-1 text-xs font-semibold">{p.name}</span>
+              <span className="px-1 text-[10px] leading-tight text-slate-400 dark:text-slate-500">
                 {p.hint}
               </span>
             </button>
