@@ -142,6 +142,46 @@ function renderChalkChain(slide: PptxGenJS.Slide, body: Rect, pack: Pack, s: Sli
   })
 }
 
+/**
+ * 招牌：cards 渲染成釘住黑板貼 ——
+ * 每張卡係一個 sysDash 虛線框「便條」，頂上一粒粉筆圓點當「釘」／夾住，
+ * 卡題用手繪 displayFont、微微散落（交替小錯位）。Pinned board notes。
+ */
+function renderChalkNotes(slide: PptxGenJS.Slide, body: Rect, pack: Pack, s: Slide): void {
+  const items = (s.cards ?? []).slice(0, 6)
+  if (items.length < 2) return
+  const n = items.length
+  const cols = n <= 2 ? n : n <= 4 ? 2 : 3
+  const rows = Math.ceil(n / cols)
+  const gapX = 0.4
+  const gapY = 0.4
+  const inset = 0.18
+  const cellW = (body.w - gapX * (cols - 1) - inset * 2) / cols
+  const cellH = (body.h - gapY * (rows - 1) - inset * 2) / rows
+  const dotR = 0.13
+  items.forEach((card, i) => {
+    const r = Math.floor(i / cols)
+    const c = i % cols
+    const cellX = body.x + inset + c * (cellW + gapX)
+    const baseY = body.y + inset + r * (cellH + gapY)
+    // 微微散落（交替小錯位），夾喺 body 內
+    const stagger = i % 2 === 0 ? -0.05 : 0.05
+    const cy = Math.min(Math.max(baseY + stagger, body.y + inset), body.y + body.h - cellH - inset)
+    // 虛線框便條
+    slide.addShape('rect', { x: cellX, y: cy + dotR, w: cellW, h: cellH - dotR, fill: { color: pack.panel }, line: { color: pack.hair, width: 1, dashType: 'sysDash' } })
+    // 頂上粉筆圓「釘」
+    slide.addShape('ellipse', { x: cellX + cellW / 2 - dotR, y: cy, w: dotR * 2, h: dotR * 2, fill: { color: pack.accent }, line: { type: 'none' } })
+    // 卡題（手繪 displayFont）+ 虛線底劃
+    const padX = 0.24
+    const titleY = cy + dotR + 0.18
+    tx(slide, clampText(card.title.trim(), 16), { x: cellX + padX, y: titleY, w: cellW - padX * 2, h: 0.42, fontSize: 16, bold: true, color: pack.ink, valign: 'top', fontFace: pack.displayFont, fit: 'shrink' })
+    dashH(slide, cellX + padX, titleY + 0.46, cellW - padX * 2, pack.hair, 1)
+    if (card.desc) {
+      tx(slide, clampText(card.desc.trim(), 48), { x: cellX + padX, y: titleY + 0.56, w: cellW - padX * 2, h: cellH - dotR - 0.74, fontSize: 12, color: pack.inkSoft, valign: 'top', lineSpacingMultiple: 1.16, fit: 'shrink' })
+    }
+  })
+}
+
 const chalk: Pack = {
   id: 'chalk',
   name: '粉筆',
@@ -171,7 +211,7 @@ const chalk: Pack = {
   quoteMark: { kind: 'glyph', color: CHK.accent },
   splitPhoto: 'bleedScrim',
   structDash: true, // 版式結構線都行虛線，貫徹粉筆 stroke
-  overrides: { compare: renderChalkTChart, steps: renderChalkChain },
+  overrides: { compare: renderChalkTChart, steps: renderChalkChain, cards: renderChalkNotes },
 
   cover(slide, deck, brand, img) {
     slide.background = { color: CHK.bg }
@@ -299,6 +339,35 @@ function renderPressFigures(slide: PptxGenJS.Slide, body: Rect, pack: Pack, s: S
   })
 }
 
+/**
+ * 招牌：cards 渲染成報紙版塊欄 ——
+ * 每張卡係一個報紙版塊：頂上粗 rule + 細 section 標籤、欄題用 Georgia，
+ * 欄間幼直線 gutter 分隔。Newspaper section blocks。
+ */
+function renderPressSections(slide: PptxGenJS.Slide, body: Rect, pack: Pack, s: Slide): void {
+  const items = (s.cards ?? []).slice(0, 4)
+  if (items.length < 2) return
+  const n = items.length
+  const gutter = 0.4
+  const colW = (body.w - gutter * (n - 1)) / n
+  items.forEach((card, i) => {
+    const cx = body.x + i * (colW + gutter)
+    // 欄間幼直線 gutter 分隔
+    if (i > 0) vline(slide, cx - gutter / 2, body.y, body.h, pack.hair, 0.5)
+    // 頂上粗 rule
+    hline(slide, cx, body.y, colW, pack.ink, 2.25)
+    // 細 section 標籤
+    tx(slide, clampText(`SECTION ${String.fromCharCode(65 + i)}`, 16), { x: cx, y: body.y + 0.08, w: colW, h: 0.26, fontSize: 9, bold: true, color: pack.accent, charSpacing: 3, fontFace: pack.displayFont })
+    // 欄題（Georgia）
+    tx(slide, clampText(card.title.trim(), 18), { x: cx, y: body.y + 0.42, w: colW, h: 0.6, fontSize: 18, bold: true, color: pack.ink, valign: 'top', fontFace: pack.displayFont, lineSpacingMultiple: 1.04, fit: 'shrink' })
+    // 欄題下幼線
+    hline(slide, cx, body.y + 1.06, colW, pack.hair, 0.75)
+    if (card.desc) {
+      tx(slide, clampText(card.desc.trim(), 110), { x: cx, y: body.y + 1.18, w: colW, h: body.h - 1.18, fontSize: 13, color: pack.inkSoft, valign: 'top', lineSpacingMultiple: 1.18, fit: 'shrink' })
+    }
+  })
+}
+
 const press: Pack = {
   id: 'press',
   name: '號外',
@@ -327,7 +396,7 @@ const press: Pack = {
   stepNode: { kind: 'bare', size: 0.34, color: PRS.accent, numColor: PRS.accent },
   quoteMark: { kind: 'glyph', color: PRS.accent },
   splitPhoto: 'bleedHair',
-  overrides: { bullets: renderPressColumns, stats: renderPressFigures },
+  overrides: { bullets: renderPressColumns, stats: renderPressFigures, cards: renderPressSections },
 
   cover(slide, deck, brand, img) {
     slide.background = { color: 'FFFFFF' }
@@ -483,6 +552,53 @@ function renderNeonPipeline(slide: PptxGenJS.Slide, body: Rect, pack: Pack, s: S
   })
 }
 
+/**
+ * 招牌：compare 渲染成 HUD 雙面板 ——
+ * 兩塊發光邊框面板（accent／magenta outer-shadow glow），中央一個「VS」分隔，
+ * 每點前一粒發光圓點。HUD dual panels。
+ */
+function renderNeonVersus(slide: PptxGenJS.Slide, body: Rect, pack: Pack, s: Slide): void {
+  const cmp = s.compare
+  if (!cmp || cmp.left.length < 1 || cmp.right.length < 1) return
+  const magenta = pack.statColor
+  const sides: { title: string; pts: string[]; glow: string }[] = [
+    { title: cmp.leftTitle, pts: cmp.left.slice(0, 4), glow: pack.accent },
+    { title: cmp.rightTitle, pts: cmp.right.slice(0, 4), glow: magenta },
+  ]
+  const vsW = 0.7
+  const panelW = (body.w - vsW) / 2
+  sides.forEach((side, i) => {
+    const px = i === 0 ? body.x : body.x + panelW + vsW
+    // 發光邊框面板
+    slide.addShape('rect', {
+      x: px,
+      y: body.y,
+      w: panelW,
+      h: body.h,
+      fill: { color: pack.panel },
+      line: { color: side.glow, width: 2 },
+      shadow: { type: 'outer', color: side.glow, blur: 12, offset: 0, angle: 0, opacity: 0.55 },
+    })
+    const padX = 0.3
+    // 欄題 + 下發光線
+    tx(slide, clampText(side.title.trim(), 18), { x: px + padX, y: body.y + 0.24, w: panelW - padX * 2, h: 0.5, fontSize: 18, bold: true, color: pack.ink, valign: 'middle', fontFace: pack.displayFont, fit: 'shrink' })
+    slide.addShape('line', { x: px + padX, y: body.y + 0.84, w: panelW - padX * 2, h: 0, line: { color: side.glow, width: 1.5 }, shadow: { type: 'outer', color: side.glow, blur: 8, offset: 0, angle: 0, opacity: 0.5 } })
+    // 發光圓點分點
+    const startY = body.y + 1.1
+    const lineH = Math.min(0.62, (body.y + body.h - startY - 0.1) / Math.max(side.pts.length, 1))
+    side.pts.forEach((pt, pi) => {
+      const py = startY + pi * lineH
+      slide.addShape('ellipse', { x: px + padX, y: py + 0.06, w: 0.12, h: 0.12, fill: { color: side.glow }, line: { type: 'none' }, shadow: { type: 'outer', color: side.glow, blur: 7, offset: 0, angle: 0, opacity: 0.7 } })
+      tx(slide, clampText(pt.trim(), 30), { x: px + padX + 0.28, y: py, w: panelW - padX * 2 - 0.28, h: lineH, fontSize: 14, color: pack.inkSoft, valign: 'top', lineSpacingMultiple: 1.12, fit: 'shrink' })
+    })
+  })
+  // 中央 VS 分隔
+  const vsX = body.x + panelW
+  const vsY = body.y + body.h / 2 - 0.3
+  slide.addShape('ellipse', { x: vsX + (vsW - 0.6) / 2, y: vsY, w: 0.6, h: 0.6, fill: { color: pack.bg }, line: { color: magenta, width: 2 }, shadow: { type: 'outer', color: magenta, blur: 12, offset: 0, angle: 0, opacity: 0.7 } })
+  tx(slide, 'VS', { x: vsX + (vsW - 0.6) / 2, y: vsY, w: 0.6, h: 0.6, fontSize: 18, bold: true, color: magenta, align: 'center', valign: 'middle', fontFace: pack.displayFont })
+}
+
 const neon: Pack = {
   id: 'neon',
   name: '霓虹',
@@ -511,7 +627,7 @@ const neon: Pack = {
   stepNode: { kind: 'squareFill', size: 0.32, color: NEO.accent, numColor: NEO.bg },
   quoteMark: { kind: 'square', size: 0.14, color: NEO.magenta },
   splitPhoto: 'bleedScrim',
-  overrides: { stats: renderNeonRings, steps: renderNeonPipeline },
+  overrides: { stats: renderNeonRings, steps: renderNeonPipeline, compare: renderNeonVersus },
 
   cover(slide, deck, brand, img) {
     slide.background = { color: NEO.bg }
@@ -680,6 +796,66 @@ function renderConfettiBubbles(slide: PptxGenJS.Slide, body: Rect, pack: Pack, s
   })
 }
 
+/**
+ * 招牌：steps 渲染成跳飛機路徑 ——
+ * 每步一個彩色方／圓格（輪換四色），沿一條 zig-zag 高低交替路徑擺放、
+ * 短斜虛線連起，格內序號、步題喺格邊。Playful hopscotch path。
+ */
+function renderConfettiHopscotch(slide: PptxGenJS.Slide, body: Rect, pack: Pack, s: Slide): void {
+  const items = (s.steps ?? []).slice(0, 5)
+  if (items.length < 2) return
+  const hues = [CFT.yellow, CFT.coral, CFT.teal, CFT.accent]
+  const n = items.length
+  const tile = Math.min(0.8, body.h / 3)
+  const colW = body.w / n
+  // zig-zag：奇偶步上下交替
+  const topY = body.y + 0.3
+  const botY = body.y + body.h - tile - 0.95
+  const centers: { cx: number; cy: number }[] = []
+  items.forEach((_st, i) => {
+    const cx = body.x + i * colW + (colW - tile) / 2
+    const cy = i % 2 === 0 ? topY : botY
+    centers.push({ cx, cy })
+  })
+  // 短斜虛線連起相鄰格
+  for (let i = 0; i < n - 1; i++) {
+    const a = centers[i]
+    const b = centers[i + 1]
+    const x1 = a.cx + tile / 2
+    const y1 = a.cy + tile / 2
+    const x2 = b.cx + tile / 2
+    const y2 = b.cy + tile / 2
+    // 由左至右；偶→奇向下（預設對角），奇→偶向上需 flipV
+    const goingUp = y2 < y1
+    slide.addShape('line', { x: Math.min(x1, x2), y: Math.min(y1, y2), w: Math.abs(x2 - x1), h: Math.abs(y2 - y1), line: { color: pack.faint, width: 1.5, dashType: 'sysDash' }, flipV: goingUp })
+  }
+  items.forEach((st, i) => {
+    const { cx, cy } = centers[i]
+    const hue = hues[i % hues.length]
+    // 彩色格：偶數方、奇數圓，輪換色
+    const shape = i % 2 === 0 ? 'roundRect' : 'ellipse'
+    slide.addShape(shape, {
+      x: cx,
+      y: cy,
+      w: tile,
+      h: tile,
+      rectRadius: pack.cardRadius,
+      fill: { color: hue },
+      line: { type: 'none' },
+      shadow: { type: 'outer', color: '000000', blur: 5, offset: 2, angle: 90, opacity: 0.18 },
+    })
+    // 格內序號（黃格用深墨確保對比）
+    const numColor = hue === CFT.yellow ? pack.ink : 'FFFFFF'
+    tx(slide, String(i + 1), { x: cx, y: cy, w: tile, h: tile, fontSize: 26, bold: true, color: numColor, align: 'center', valign: 'middle', fontFace: pack.displayFont })
+    // 步題喺格下／上
+    const labelY = cy + tile + 0.1
+    tx(slide, clampText(st.title.trim(), 22), { x: body.x + i * colW + 0.05, y: labelY, w: colW - 0.1, h: 0.5, fontSize: 14, bold: true, color: pack.ink, align: 'center', valign: 'top', lineSpacingMultiple: 1.1, fit: 'shrink' })
+    if (st.desc) {
+      tx(slide, clampText(st.desc.trim(), 38), { x: body.x + i * colW + 0.05, y: labelY + 0.5, w: colW - 0.1, h: body.y + body.h - (labelY + 0.5), fontSize: 11, color: pack.inkSoft, align: 'center', valign: 'top', lineSpacingMultiple: 1.12, fit: 'shrink' })
+    }
+  })
+}
+
 const confetti: Pack = {
   id: 'confetti',
   name: '彩斑',
@@ -708,7 +884,7 @@ const confetti: Pack = {
   stepNode: { kind: 'roundSquareFill', size: 0.34, color: CFT.coral, numColor: 'FFFFFF' },
   quoteMark: { kind: 'circle', size: 0.5, linePt: 2, color: CFT.yellow },
   splitPhoto: 'bleedMotif',
-  overrides: { cards: renderConfettiStickies, stats: renderConfettiBubbles },
+  overrides: { cards: renderConfettiStickies, stats: renderConfettiBubbles, steps: renderConfettiHopscotch },
 
   cover(slide, deck, brand, img) {
     slide.background = { color: 'FFFFFF' }
@@ -826,6 +1002,43 @@ function renderPastelBubbles(slide: PptxGenJS.Slide, body: Rect, pack: Pack, s: 
 }
 
 /**
+ * 招牌：stats 渲染成軟糖巨號 ——
+ * 每個 stat 一塊大圓角軟糖磚（交替 pack.panel／panelAlt），
+ * 大柔墨數字置頂、label 喺下，頂一條圓端 accent soft bar 點睛。Soft big numbers。
+ */
+function renderPastelStats(slide: PptxGenJS.Slide, body: Rect, pack: Pack, s: Slide): void {
+  const items = (s.stats ?? []).slice(0, 4)
+  if (items.length < 2) return
+  const n = items.length
+  const gap = 0.45
+  const tileW = (body.w - gap * (n - 1)) / n
+  const tileH = Math.min(2.7, body.h)
+  const tileY = body.y + (body.h - tileH) / 2
+  const fills = [pack.panel, pack.panelAlt ?? pack.panel]
+  const barW = Math.min(0.7, tileW * 0.4)
+  items.forEach((st, i) => {
+    const tx0 = body.x + i * (tileW + gap)
+    // 軟糖磚
+    slide.addShape('roundRect', {
+      x: tx0,
+      y: tileY,
+      w: tileW,
+      h: tileH,
+      rectRadius: 0.22,
+      fill: { color: fills[i % fills.length] },
+      line: { type: 'none' },
+      shadow: { type: 'outer', color: '000000', blur: 6, offset: 2, angle: 90, opacity: 0.1 },
+    })
+    // 頂部圓端 accent soft bar
+    slide.addShape('roundRect', { x: tx0 + (tileW - barW) / 2, y: tileY + 0.32, w: barW, h: 0.06, rectRadius: 0.03, fill: { color: pack.accent }, line: { type: 'none' } })
+    // 大柔墨數字
+    tx(slide, clampText(st.value.trim(), 8), { x: tx0 + 0.16, y: tileY + 0.46, w: tileW - 0.32, h: tileH - 1.0, fontSize: 48, bold: true, color: pack.ink, align: 'center', valign: 'middle', fontFace: pack.displayFont, fit: 'shrink' })
+    // label
+    tx(slide, clampText(st.label.trim(), 24), { x: tx0 + 0.18, y: tileY + tileH - 0.56, w: tileW - 0.36, h: 0.46, fontSize: 13, color: pack.inkSoft, align: 'center', valign: 'top', lineSpacingMultiple: 1.12, fit: 'shrink' })
+  })
+}
+
+/**
  * 招牌：cards 渲染成軟糖圓卡 ——
  * 大圓角卡（交替 pack.panel／panelAlt 軟糖底），左上一個軟圓點 accent，
  * 卡題 + 說明溫柔排佈。Soft rounded cards。
@@ -897,7 +1110,7 @@ const pastel: Pack = {
   stepNode: { kind: 'circleOutline', size: 0.34, color: PAS.accent, numColor: PAS.accent },
   quoteMark: { kind: 'circle', size: 0.5, linePt: 1.5, color: PAS.accent },
   splitPhoto: 'bleedMotif',
-  overrides: { compare: renderPastelBubbles, cards: renderPastelCards },
+  overrides: { compare: renderPastelBubbles, cards: renderPastelCards, stats: renderPastelStats },
 
   cover(slide, deck, brand, img) {
     slide.background = { color: 'FFFFFF' }

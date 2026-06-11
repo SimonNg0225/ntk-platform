@@ -22,10 +22,39 @@ export type { SlidePackId, SlideImage } from './pptxPacks'
 const PACK_LIST: Pack[] = [...CORE_PACKS, ...GALLERY_PACKS_1, ...GALLERY_PACKS_2]
 const PACKS = Object.fromEntries(PACK_LIST.map((p) => [p.id, p])) as Record<SlidePackId, Pack>
 
-/** 揀選卡 UI 用嘅 pack 清單（swatches 連 #，可直接入 style） */
-export const SLIDE_PACKS: { id: SlidePackId; name: string; hint: string; swatches: [string, string, string] }[] = PACK_LIST.map(
-  (p) => ({ id: p.id, name: p.name, hint: p.hint, swatches: p.swatches }),
-)
+/**
+ * 揀選卡 UI 用嘅 pack 清單。swatches 連 #，可直接入 style；
+ * bg/ink/accent 係引擎 token（純 hex，冇 #）俾 <PackPreview> 砌代表性封面縮圖
+ * （唔係真 pptx engine render — 純前端 token-driven mock）；dark = 深底 pack。
+ */
+export interface SlidePackOption {
+  id: SlidePackId
+  name: string
+  hint: string
+  swatches: [string, string, string]
+  /** 引擎 token（純 hex，冇 #）：背景色 */
+  bg: string
+  /** 引擎 token（純 hex，冇 #）：墨／文字色 */
+  ink: string
+  /** 引擎 token（純 hex，冇 #）：點睛色 */
+  accent: string
+  /** 深底 pack（縮圖按此調對比） */
+  dark: boolean
+  /** 標題顯示字體（縮圖 faux 標題用） */
+  displayFont: string
+}
+
+export const SLIDE_PACKS: SlidePackOption[] = PACK_LIST.map((p) => ({
+  id: p.id,
+  name: p.name,
+  hint: p.hint,
+  swatches: p.swatches,
+  bg: p.bg,
+  ink: p.ink,
+  accent: p.accent,
+  dark: p.dark,
+  displayFont: p.displayFont,
+}))
 
 export interface PptxOptions {
   /** 模板 pack，預設墨韻 */

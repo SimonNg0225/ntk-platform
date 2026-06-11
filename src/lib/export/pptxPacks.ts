@@ -469,6 +469,72 @@ function renderBooklet_inkwell(slide: PptxGenJS.Slide, body: Rect, pack: Pack, s
   })
 }
 
+/**
+ * 招牌 steps：卷軸 —— 細朱砂縱鈦由上而下貫穿，每步一粒毛筆墨點節點，
+ * Georgia 老式序號喺點旁，serif 標題＋說明逐級而下。書卷、人文。
+ */
+function renderScroll_inkwell(slide: PptxGenJS.Slide, body: Rect, pack: Pack, s: Slide): void {
+  const items = (s.steps ?? []).slice(0, 5)
+  if (items.length < 2) return
+  const n = items.length
+  const railX = body.x + 0.4
+  const rowH = Math.min(1.3, body.h / n)
+  const dot = 0.2
+  const firstC = body.y + rowH / 2
+  const lastC = body.y + rowH * (n - 1) + rowH / 2
+  // 縱貫朱砂鈦（卷軸主線）
+  vline(slide, railX, firstC, lastC - firstC, mix(pack.accent, 'FFFFFF', 0.4), 1)
+  const numX = body.x + 0.7
+  const textX = numX + 0.55
+  const textW = body.x + body.w - textX
+  items.forEach((st, i) => {
+    const rowY = body.y + i * rowH
+    const cY = rowY + rowH / 2
+    // 毛筆墨點節點（實心朱砂圓）
+    slide.addShape('ellipse', { x: railX - dot / 2, y: cY - dot / 2, w: dot, h: dot, fill: { color: pack.accent }, line: { type: 'none' } })
+    // Georgia 老式序號
+    tx(slide, String(i + 1), {
+      x: numX,
+      y: cY - 0.3,
+      w: 0.5,
+      h: 0.6,
+      fontSize: 26,
+      bold: true,
+      color: pack.accent,
+      align: 'center',
+      valign: 'middle',
+      fontFace: pack.displayFont,
+      italic: pack.displayItalic,
+    })
+    // serif 標題 + 說明
+    tx(slide, clampText(st.title.trim(), 22), {
+      x: textX,
+      y: rowY + 0.12,
+      w: textW,
+      h: 0.4,
+      fontSize: 17,
+      bold: true,
+      color: pack.ink,
+      fontFace: pack.displayFont,
+      italic: pack.displayItalic,
+    })
+    if (st.desc && st.desc.trim()) {
+      tx(slide, clampText(st.desc.trim(), 60), {
+        x: textX,
+        y: rowY + 0.54,
+        w: textW,
+        h: Math.max(0.3, rowH - 0.62),
+        fontSize: 12,
+        color: pack.inkSoft,
+        lineSpacingMultiple: 1.2,
+        fit: 'shrink',
+      })
+    }
+    // 列間細髮線（最後一行不畫）
+    if (i < n - 1) hline(slide, textX, rowY + rowH, textW, pack.hair, 0.5)
+  })
+}
+
 const inkwell: Pack = {
   id: 'inkwell',
   name: '墨韻',
@@ -497,7 +563,7 @@ const inkwell: Pack = {
   stepNode: { kind: 'bare', size: 0.34, color: INK.accent, numColor: INK.accent },
   quoteMark: { kind: 'glyph', color: mix(INK.accent, 'FFFFFF', 0.18) },
   splitPhoto: 'bleedHair',
-  overrides: { quote: renderInscription_inkwell, cards: renderBooklet_inkwell },
+  overrides: { quote: renderInscription_inkwell, cards: renderBooklet_inkwell, steps: renderScroll_inkwell },
 
   cover(slide, deck, brand, img) {
     slide.background = { color: 'FFFFFF' }
@@ -684,6 +750,90 @@ function renderDials_celadon(slide: PptxGenJS.Slide, body: Rect, pack: Pack, s: 
   })
 }
 
+/**
+ * 招牌 compare：圓弧對照 —— 左右各一塊相向半圓 tint 面板（青瓷 vs 陶土 statColor），
+ * 欄題坐弧頂、要點列於弧內，中央一條細圓環分界。圓潤、清雅。
+ */
+function renderArcCompare_celadon(slide: PptxGenJS.Slide, body: Rect, pack: Pack, s: Slide): void {
+  const cmp = s.compare
+  if (!cmp || !cmp.left?.length || !cmp.right?.length) return
+  const cx = body.x + body.w / 2
+  const cy = body.y + body.h / 2
+  const panelW = body.w / 2 - 0.5
+  const panelH = Math.min(body.h, 4.6)
+  const panelY = cy - panelH / 2
+  const sides: [string, string[], number, string, number][] = [
+    [cmp.leftTitle, cmp.left, body.x, pack.accent, 1],
+    [cmp.rightTitle, cmp.right, cx + 0.5, pack.statColor, -1],
+  ]
+  for (const [title, points, px, color, dir] of sides) {
+    // 相向半圓 tint 面板（roundRect 大圓角貼向中軸，似弧）
+    slide.addShape('roundRect', {
+      x: px,
+      y: panelY,
+      w: panelW,
+      h: panelH,
+      rectRadius: Math.min(panelW, panelH) * 0.48,
+      fill: { color: mix(color, 'FFFFFF', 0.84) },
+      line: { color, width: 1.5 },
+    })
+    // 欄題坐弧頂
+    const titleX = dir > 0 ? px + 0.3 : px + 0.5
+    tx(slide, clampText(title.trim(), 18), {
+      x: titleX,
+      y: panelY + 0.34,
+      w: panelW - 0.8,
+      h: 0.44,
+      fontSize: 16,
+      bold: true,
+      color,
+      align: 'center',
+    })
+    // 要點列於弧內
+    const pts = points.slice(0, 4)
+    const listY = panelY + 1.0
+    const rowH = Math.min(0.7, (panelH - 1.4) / pts.length)
+    pts.forEach((p, i) => {
+      const ry = listY + i * rowH
+      const bx = titleX + 0.2
+      slide.addShape('ellipse', { x: bx, y: ry + 0.08, w: 0.1, h: 0.1, fill: { color }, line: { type: 'none' } })
+      tx(slide, clampText(p.trim(), 30), {
+        x: bx + 0.24,
+        y: ry,
+        w: panelW - 1.1,
+        h: rowH,
+        fontSize: 12,
+        color: pack.inkSoft,
+        valign: 'top',
+        lineSpacingMultiple: 1.15,
+        fit: 'shrink',
+      })
+    })
+  }
+  // 中央細圓環分界
+  const ring = Math.min(0.7, panelH * 0.16)
+  slide.addShape('ellipse', {
+    x: cx - ring / 2,
+    y: cy - ring / 2,
+    w: ring,
+    h: ring,
+    fill: { color: 'FFFFFF' },
+    line: { color: pack.accent, width: 1.5 },
+  })
+  tx(slide, 'vs', {
+    x: cx - ring / 2,
+    y: cy - ring / 2,
+    w: ring,
+    h: ring,
+    fontSize: 13,
+    bold: true,
+    color: pack.accent,
+    align: 'center',
+    valign: 'middle',
+    fontFace: pack.displayFont,
+  })
+}
+
 const celadon: Pack = {
   id: 'celadon',
   name: '青瓷',
@@ -712,7 +862,7 @@ const celadon: Pack = {
   stepNode: { kind: 'circleOutline', size: 0.34, color: CEL.accent, numColor: CEL.accent },
   quoteMark: { kind: 'circle', size: 0.5, linePt: 1.5, color: CEL.accent },
   splitPhoto: 'circle',
-  overrides: { cards: renderHubSpoke_celadon, stats: renderDials_celadon },
+  overrides: { cards: renderHubSpoke_celadon, stats: renderDials_celadon, compare: renderArcCompare_celadon },
 
   cover(slide, deck, brand, img) {
     slide.background = { color: 'FFFFFF' }
@@ -886,6 +1036,63 @@ function renderBalloonCards_dawn(slide: PptxGenJS.Slide, body: Rect, pack: Pack,
   })
 }
 
+/**
+ * 招牌 stats：積木大數 —— 厚實圓角琥珀方塊，每塊頂住巨號數字、底放短 label，
+ * 塊色階輪替似搭積木。初小、跳脫。
+ */
+function renderBlockStats_dawn(slide: PptxGenJS.Slide, body: Rect, pack: Pack, s: Slide): void {
+  const stats = (s.stats ?? []).slice(0, 4)
+  if (stats.length < 2) return
+  const n = stats.length
+  const gap = 0.4
+  const tileW = (body.w - gap * (n - 1)) / n
+  const tileH = Math.min(body.h - 0.4, 3.4)
+  const ty = body.y + (body.h - tileH) / 2
+  const tints = [0.7, 0.52, 0.62, 0.44]
+  stats.forEach((st, i) => {
+    const tx0 = body.x + i * (tileW + gap)
+    const fill = mix(pack.accent, 'FFFFFF', tints[i % tints.length])
+    // 厚實圓角琥珀方塊（微外陰影）
+    slide.addShape('roundRect', {
+      x: tx0,
+      y: ty,
+      w: tileW,
+      h: tileH,
+      rectRadius: pack.cardRadius * 2.4,
+      fill: { color: fill },
+      line: { type: 'none' },
+      shadow: { type: 'outer', color: pack.accent, opacity: 0.2, blur: 6, offset: 3, angle: 90 },
+    })
+    // 巨號數字
+    tx(slide, clampText(st.value.trim(), 8), {
+      x: tx0 + 0.1,
+      y: ty + 0.3,
+      w: tileW - 0.2,
+      h: tileH - 1.1,
+      fontSize: 56,
+      bold: true,
+      color: pack.ink,
+      align: 'center',
+      valign: 'middle',
+      fontFace: pack.displayFont,
+      fit: 'shrink',
+    })
+    // 短 label
+    tx(slide, clampText(st.label.trim(), 18), {
+      x: tx0 + 0.2,
+      y: ty + tileH - 0.7,
+      w: tileW - 0.4,
+      h: 0.5,
+      fontSize: 14,
+      bold: true,
+      color: mix(pack.accent, pack.ink, 0.4),
+      align: 'center',
+      valign: 'middle',
+      lineSpacingMultiple: 1.1,
+    })
+  })
+}
+
 const dawn: Pack = {
   id: 'dawn',
   name: '曙光',
@@ -914,7 +1121,7 @@ const dawn: Pack = {
   stepNode: { kind: 'roundSquareFill', size: 0.4, color: DAWN.accent, numColor: 'FFFFFF' },
   quoteMark: { kind: 'roundSquare', size: 0.4, radius: 0.1, color: DAWN.accent },
   splitPhoto: 'bleedMotif',
-  overrides: { steps: renderSteppingStones_dawn, cards: renderBalloonCards_dawn },
+  overrides: { steps: renderSteppingStones_dawn, cards: renderBalloonCards_dawn, stats: renderBlockStats_dawn },
 
   cover(slide, deck, brand, img) {
     slide.background = { color: 'FFFFFF' }
@@ -1089,6 +1296,76 @@ function renderSpotlight_nocturne(slide: PptxGenJS.Slide, body: Rect, pack: Pack
   }
 }
 
+/**
+ * 招牌 steps：燙金時間線 —— 縱向金鈦串連各步，節點係發光金圓（柔外陰影暈），
+ * 序號嵌節點、淡墨標題＋說明逐級而下。深底、靜謐。
+ */
+function renderGiltTimeline_nocturne(slide: PptxGenJS.Slide, body: Rect, pack: Pack, s: Slide): void {
+  const items = (s.steps ?? []).slice(0, 5)
+  if (items.length < 2) return
+  const n = items.length
+  const railX = body.x + 0.45
+  const rowH = Math.min(1.3, body.h / n)
+  const node = 0.42
+  const firstC = body.y + rowH / 2
+  const lastC = body.y + rowH * (n - 1) + rowH / 2
+  // 縱貫金鈦
+  vline(slide, railX, firstC, lastC - firstC, pack.accent, 1)
+  const textX = railX + 0.55
+  const textW = body.x + body.w - textX
+  items.forEach((st, i) => {
+    const rowY = body.y + i * rowH
+    const cY = rowY + rowH / 2
+    // 發光金節點（柔外陰影暈）
+    slide.addShape('ellipse', {
+      x: railX - node / 2,
+      y: cY - node / 2,
+      w: node,
+      h: node,
+      fill: { color: mix(pack.accent, pack.bg, 0.15) },
+      line: { color: pack.accent, width: 1.25 },
+      shadow: { type: 'outer', color: pack.accent, opacity: 0.5, blur: 7, offset: 0, angle: 90 },
+    })
+    tx(slide, String(i + 1), {
+      x: railX - node / 2,
+      y: cY - node / 2,
+      w: node,
+      h: node,
+      fontSize: 16,
+      bold: true,
+      color: pack.bg,
+      align: 'center',
+      valign: 'middle',
+      fontFace: pack.displayFont,
+      italic: pack.displayItalic,
+    })
+    // 淡墨標題 + 說明
+    tx(slide, clampText(st.title.trim(), 24), {
+      x: textX,
+      y: rowY + 0.12,
+      w: textW,
+      h: 0.4,
+      fontSize: 17,
+      bold: true,
+      color: pack.ink,
+    })
+    if (st.desc && st.desc.trim()) {
+      tx(slide, clampText(st.desc.trim(), 60), {
+        x: textX,
+        y: rowY + 0.54,
+        w: textW,
+        h: Math.max(0.3, rowH - 0.62),
+        fontSize: 12,
+        color: pack.inkSoft,
+        lineSpacingMultiple: 1.2,
+        fit: 'shrink',
+      })
+    }
+    // 列間細髮線（最後一行不畫）
+    if (i < n - 1) hline(slide, textX, rowY + rowH, textW, pack.hair, 0.5)
+  })
+}
+
 const nocturne: Pack = {
   id: 'nocturne',
   name: '夜讀',
@@ -1117,7 +1394,7 @@ const nocturne: Pack = {
   stepNode: { kind: 'circleOutline', size: 0.34, color: NOC.accent, numColor: NOC.accent },
   quoteMark: { kind: 'glyph', color: mix(NOC.accent, NOC.bg, 0.3) },
   splitPhoto: 'bleedScrim',
-  overrides: { stats: renderHudStats_nocturne, quote: renderSpotlight_nocturne },
+  overrides: { stats: renderHudStats_nocturne, quote: renderSpotlight_nocturne, steps: renderGiltTimeline_nocturne },
 
   cover(slide, deck, brand, img) {
     slide.background = { color: NOC.bg }
@@ -1271,6 +1548,56 @@ function renderModularStats_grid(slide: PptxGenJS.Slide, body: Rect, pack: Pack,
   })
 }
 
+/**
+ * 招牌 steps：座標描點 —— 全 body 淡網格，鈷藍橫軸貫穿，各步以方節點
+ * 順序描點於軸上，節點下垂引線連標題＋說明，四角 register tick。工程、精準。
+ */
+function renderPlottedSteps_grid(slide: PptxGenJS.Slide, body: Rect, pack: Pack, s: Slide): void {
+  const items = (s.steps ?? []).slice(0, 5)
+  if (items.length < 2) return
+  const n = items.length
+  const gridColor = mix(pack.hair, 'FFFFFF', 0.2)
+  // 淡網格（每 0.5" 一格）
+  const cols = Math.floor(body.w / 0.5)
+  const rows = Math.floor(body.h / 0.5)
+  for (let c = 0; c <= cols; c++) vline(slide, body.x + c * 0.5, body.y, rows * 0.5, gridColor, 0.5)
+  for (let r = 0; r <= rows; r++) hline(slide, body.x, body.y + r * 0.5, cols * 0.5, gridColor, 0.5)
+  // 外框 register tick 四角
+  gridTick(slide, body.x, body.y, 1, 1, pack.accent)
+  gridTick(slide, body.x + body.w, body.y, -1, 1, pack.accent)
+  gridTick(slide, body.x, body.y + body.h, 1, -1, pack.accent)
+  gridTick(slide, body.x + body.w, body.y + body.h, -1, -1, pack.accent)
+  // 鈷藍橫軸（描點基準線）
+  const axisY = body.y + body.h * 0.36
+  hline(slide, body.x + 0.1, axisY, body.w - 0.2, pack.accent, 1.25)
+  const colW = body.w / n
+  const node = 0.34
+  items.forEach((st, i) => {
+    const cx = body.x + i * colW + colW / 2
+    // 軸上方節點（鈷藍實心方 + 白序號）
+    slide.addShape('rect', { x: cx - node / 2, y: axisY - node / 2, w: node, h: node, fill: { color: pack.accent }, line: { type: 'none' } })
+    tx(slide, String(i + 1), { x: cx - node / 2, y: axisY - node / 2, w: node, h: node, fontSize: 14, bold: true, color: 'FFFFFF', align: 'center', valign: 'middle', fontFace: pack.displayFont })
+    // 垂直引線（節點下垂至標題區）
+    vline(slide, cx, axisY + node / 2, 0.34, pack.accent, 0.75)
+    // 標題 + 說明（軸下，每欄置中）
+    const labelY = axisY + node / 2 + 0.44
+    tx(slide, clampText(st.title.trim(), 14), { x: cx - colW / 2 + 0.12, y: labelY, w: colW - 0.24, h: 0.4, fontSize: 14, bold: true, color: pack.ink, align: 'center', lineSpacingMultiple: 1.05, fit: 'shrink' })
+    if (st.desc && st.desc.trim()) {
+      tx(slide, clampText(st.desc.trim(), 44), {
+        x: cx - colW / 2 + 0.12,
+        y: labelY + 0.42,
+        w: colW - 0.24,
+        h: Math.max(0.3, body.y + body.h - labelY - 0.5),
+        fontSize: 11,
+        color: pack.inkSoft,
+        align: 'center',
+        lineSpacingMultiple: 1.15,
+        fit: 'shrink',
+      })
+    }
+  })
+}
+
 const grid: Pack = {
   id: 'grid',
   name: '方格',
@@ -1299,7 +1626,7 @@ const grid: Pack = {
   stepNode: { kind: 'squareFill', size: 0.3, color: GRD.accent, numColor: 'FFFFFF' },
   quoteMark: { kind: 'square', size: 0.14, color: GRD.accent },
   splitPhoto: 'bleedHair',
-  overrides: { compare: renderCoordTable_grid, stats: renderModularStats_grid },
+  overrides: { compare: renderCoordTable_grid, stats: renderModularStats_grid, steps: renderPlottedSteps_grid },
 
   cover(slide, deck, brand, img) {
     slide.background = { color: 'FFFFFF' }
@@ -1486,6 +1813,58 @@ function renderDiscussionPrompt_seminar(slide: PptxGenJS.Slide, body: Rect, pack
   }
 }
 
+/**
+ * 招牌 compare：正反辯論 —— 兩欄分作「正方／反方」，各以議程式欄題帶
+ * 領銜（正方深藍 navy、反方金 gold），中央縱分界線 + 「正 / 反」標記，
+ * 論點逐條列於欄內。問題引導、講堂。
+ */
+function renderDebate_seminar(slide: PptxGenJS.Slide, body: Rect, pack: Pack, s: Slide): void {
+  const cmp = s.compare
+  if (!cmp || !cmp.left?.length || !cmp.right?.length) return
+  const cx = body.x + body.w / 2
+  const gap = 0.5
+  const colW = (body.w - gap) / 2
+  const bandH = 0.5
+  const sides: [string, string, string[], number, string][] = [
+    ['正方 · FOR', cmp.leftTitle, cmp.left, body.x, pack.statColor],
+    ['反方 · AGAINST', cmp.rightTitle, cmp.right, cx + gap / 2, SEM.gold],
+  ]
+  // 中央縱分界線
+  vline(slide, cx, body.y, body.h, pack.hair, 1.25)
+  for (const [motion, title, points, colX, color] of sides) {
+    // 議程式欄題帶（滿色 band + 白「正方／反方」標記）
+    slide.addShape('rect', { x: colX, y: body.y, w: colW, h: bandH, fill: { color }, line: { type: 'none' } })
+    tx(slide, motion, { x: colX + 0.2, y: body.y, w: colW - 0.4, h: bandH, fontSize: 12, bold: true, charSpacing: 2, color: 'FFFFFF', valign: 'middle' })
+    // 動議式欄題（band 下）
+    tx(slide, clampText(title.trim(), 24), { x: colX + 0.2, y: body.y + bandH + 0.16, w: colW - 0.4, h: 0.44, fontSize: 16, bold: true, color: pack.ink, fontFace: pack.displayFont })
+    hline(slide, colX + 0.2, body.y + bandH + 0.7, colW - 0.4, color, 1)
+    // 論點逐條
+    const pts = points.slice(0, 5)
+    const listY = body.y + bandH + 0.9
+    const rowH = Math.min(0.72, (body.y + body.h - listY) / pts.length)
+    pts.forEach((p, i) => {
+      const ry = listY + i * rowH
+      slide.addShape('rect', { x: colX + 0.22, y: ry + 0.07, w: 0.1, h: 0.1, fill: { color }, line: { type: 'none' } })
+      tx(slide, clampText(p.trim(), 32), {
+        x: colX + 0.46,
+        y: ry,
+        w: colW - 0.66,
+        h: rowH,
+        fontSize: 12,
+        color: pack.inkSoft,
+        valign: 'top',
+        lineSpacingMultiple: 1.18,
+        fit: 'shrink',
+      })
+    })
+  }
+  // 中央「正 / 反」標記方塊
+  const vs = 0.4
+  const vsY = body.y + body.h / 2 - vs / 2
+  slide.addShape('roundRect', { x: cx - vs / 2, y: vsY, w: vs, h: vs, rectRadius: pack.cardRadius, fill: { color: pack.accent }, line: { type: 'none' } })
+  tx(slide, 'vs', { x: cx - vs / 2, y: vsY, w: vs, h: vs, fontSize: 12, bold: true, color: 'FFFFFF', align: 'center', valign: 'middle', fontFace: pack.displayFont })
+}
+
 const seminar: Pack = {
   id: 'seminar',
   name: '講堂',
@@ -1515,7 +1894,7 @@ const seminar: Pack = {
   stepNode: { kind: 'circleOutline', size: 0.34, color: SEM.accent, numColor: SEM.accent },
   quoteMark: { kind: 'glyph', color: SEM.gold },
   splitPhoto: 'bleedHair',
-  overrides: { steps: renderAgendaTimeline_seminar, quote: renderDiscussionPrompt_seminar },
+  overrides: { steps: renderAgendaTimeline_seminar, quote: renderDiscussionPrompt_seminar, compare: renderDebate_seminar },
 
   cover(slide, deck, brand, img) {
     slide.background = { color: SEM.coverBg }
