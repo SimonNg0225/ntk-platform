@@ -28,6 +28,7 @@ import {
 } from './pptxPacks'
 import type { Slide } from './types'
 import { clampText, estimateLines, fitTitle, mix } from './pptxText'
+import { gradLinear, gradRadial } from './pptxGradients'
 
 // ============================================================
 //  粉筆 chalk — 黑板手感
@@ -220,6 +221,16 @@ const chalk: Pack = {
       // full-bleed 相 + 黑板色 scrim（70% 不透明保字）；虛線框照畫喺 scrim 上
       addCoverImage(slide, img, { x: 0, y: 0, w: 13.33, h: 7.5 })
       slide.addShape('rect', { x: 0, y: 0, w: 13.33, h: 7.5, fill: { color: CHK.bg, transparency: 30 }, line: { type: 'none' } })
+    } else {
+      // 黑板微微深淺漸層：頂部 accent 一抹微暖 → 底部沉墨，似真黑板受光
+      slide.addShape('rect', {
+        x: 0,
+        y: 0,
+        w: 13.33,
+        h: 7.5,
+        fill: { color: gradLinear(90, [{ pos: 0, color: mix(CHK.bg, CHK.accent, 0.1) }, { pos: 100, color: CHK.bg }]) },
+        line: { type: 'none' },
+      })
     }
     // 粉筆畫框：四條 sysDash 線 inset 0.32
     dashH(slide, 0.32, 0.32, 12.69, CHK.hair)
@@ -420,6 +431,15 @@ const press: Pack = {
   cover(slide, deck, brand, img) {
     slide.background = { color: 'FFFFFF' }
     const hasImg = Boolean(img)
+    // 報紙紙張微微泛黃／受墨：頂部一抹暖白 → 底部極淡墨，俾白底一點縱深
+    slide.addShape('rect', {
+      x: 0,
+      y: 0,
+      w: 13.33,
+      h: 7.5,
+      fill: { color: gradLinear(90, [{ pos: 0, color: mix('FFFFFF', PRS.accent, 0.03) }, { pos: 100, color: mix('FFFFFF', PRS.ink, 0.05) }]) },
+      line: { type: 'none' },
+    })
     // 報頭：雙線 + 報名 + 右對齊日期
     doubleRule(slide, 0.9, 0.55, 11.53)
     tx(slide, 'EZITEACH DAILY · 教學日報', { x: 0.9, y: 0.72, w: 7, h: 0.3, fontSize: 11, color: PRS.ink, charSpacing: 3, bold: true })
@@ -521,7 +541,17 @@ function renderNeonRings(slide: PptxGenJS.Slide, body: Rect, pack: Pack, s: Slid
   items.forEach((st, i) => {
     const cellX = body.x + i * (cellW + gap)
     const rx = cellX + (cellW - ring) / 2
-    // 發光圓環：accent outline + 柔和 outer shadow
+    // 真光暈：放射漸層（中心 accent 半透 → 邊緣全透）
+    const gw = ring * 1.42
+    slide.addShape('ellipse', {
+      x: rx - (gw - ring) / 2,
+      y: ringY - (gw - ring) / 2,
+      w: gw,
+      h: gw,
+      fill: { color: gradRadial([{ pos: 0, color: pack.accent, alpha: 50 }, { pos: 100, color: pack.accent, alpha: 0 }]) },
+      line: { type: 'none' },
+    })
+    // 發光圓環：accent outline
     slide.addShape('ellipse', {
       x: rx,
       y: ringY,
@@ -529,7 +559,6 @@ function renderNeonRings(slide: PptxGenJS.Slide, body: Rect, pack: Pack, s: Slid
       h: ring,
       fill: { type: 'none' },
       line: { color: pack.accent, width: 4 },
-      shadow: { type: 'outer', color: pack.accent, blur: 12, offset: 0, angle: 0, opacity: 0.65 },
     })
     // 大數字置中
     tx(slide, clampText(st.value.trim(), 8), { x: rx, y: ringY, w: ring, h: ring, fontSize: 38, bold: true, color: pack.ink, align: 'center', valign: 'middle', fontFace: pack.displayFont, fit: 'shrink' })
@@ -563,6 +592,16 @@ function renderNeonPipeline(slide: PptxGenJS.Slide, body: Rect, pack: Pack, s: S
   })
   items.forEach((st, i) => {
     const cx = body.x + i * colW + colW / 2
+    // 真光暈（放射漸層）
+    const ng = dot * 2.1
+    slide.addShape('ellipse', {
+      x: cx - ng / 2,
+      y: lineY - ng / 2,
+      w: ng,
+      h: ng,
+      fill: { color: gradRadial([{ pos: 0, color: pack.accent, alpha: 48 }, { pos: 100, color: pack.accent, alpha: 0 }]) },
+      line: { type: 'none' },
+    })
     // 發光圓點節點
     slide.addShape('ellipse', {
       x: cx - dot / 2,
@@ -666,6 +705,15 @@ const neon: Pack = {
       // scrim 要夠深，先保得住近黑 neon 底色身份（30 會俾相搶走色溫）
       slide.addShape('rect', { x: 0, y: 0, w: 13.33, h: 7.5, fill: { color: NEO.bg, transparency: 18 }, line: { type: 'none' } })
     }
+    // 標題後柔光暈：cyan 放射漸層（中心半透 → 邊緣全透），似螢光燈管映喺近黑底
+    slide.addShape('ellipse', {
+      x: -0.6,
+      y: 1.6,
+      w: 8.4,
+      h: 4.2,
+      fill: { color: gradRadial([{ pos: 0, color: NEO.accent, alpha: 38 }, { pos: 100, color: NEO.accent, alpha: 0 }]) },
+      line: { type: 'none' },
+    })
     tx(slide, '[ TEACHING DECK · 教學簡報 ]', { x: 0.9, y: 1.0, w: 8, h: 0.3, fontSize: 10, color: NEO.accent, charSpacing: 2, bold: true })
     // 雙色錯位線（glitch 訊號）
     hline(slide, 0.9, 1.45, 2.6, NEO.accent, 1.5)
@@ -941,6 +989,15 @@ const confetti: Pack = {
 
   cover(slide, deck, brand, img) {
     slide.background = { color: 'FFFFFF' }
+    // 白底微微縱深：頂部一抹鈷藍暖白 → 底部極淡墨，俾散落彩斑一個柔和舞台
+    slide.addShape('rect', {
+      x: 0,
+      y: 0,
+      w: 13.33,
+      h: 7.5,
+      fill: { color: gradLinear(90, [{ pos: 0, color: mix('FFFFFF', CFT.accent, 0.04) }, { pos: 100, color: mix('FFFFFF', CFT.ink, 0.05) }]) },
+      line: { type: 'none' },
+    })
     if (img) {
       // 右半大方相（直角），四角各遮一細彩斑；credit 喺相下
       const frame: Rect = { x: 7.4, y: 1.5, w: 5.0, h: 4.2 }
@@ -1194,7 +1251,15 @@ const pastel: Pack = {
   cover(slide, deck, brand, img) {
     slide.background = { color: 'FFFFFF' }
     // 右上三色 blob（有相時做相嘅底層 — 先畫 blob 後畫相）
-    blob(slide, 9.2, -1.6, 5.6, PAS.blush)
+    // 主腮紅雲：放射漸層由微深玫瑰心 → 淡 blush 邊，似一團受光柔雲
+    slide.addShape('ellipse', {
+      x: 9.2,
+      y: -1.6,
+      w: 5.6,
+      h: 5.6,
+      fill: { color: gradRadial([{ pos: 0, color: mix(PAS.blush, PAS.accent, 0.16) }, { pos: 100, color: PAS.blush }]) },
+      line: { type: 'none' },
+    })
     blob(slide, 7.9, 1.15, 2.6, PAS.sky)
     blob(slide, 11.3, 4.0, 1.2, PAS.mint)
     if (img) {

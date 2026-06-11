@@ -27,6 +27,7 @@ import {
 } from './pptxPacks'
 import type { Slide } from './types'
 import { clampText, estimateLines, fitTitle, mix } from './pptxText'
+import { gradLinear } from './pptxGradients'
 
 // ============================================================
 //  藍曬 blueprint — 工程圖紙
@@ -230,6 +231,15 @@ const blueprint: Pack = {
   cover(slide, deck, brand, img) {
     slide.background = { color: BLU.bg }
     const hasImg = Boolean(img)
+    // 藍曬紙微微受光：頂部一抹淡藍 accent → 底部沉藍，俾圖紙底一點縱深
+    slide.addShape('rect', {
+      x: 0,
+      y: 0,
+      w: 13.33,
+      h: 7.5,
+      fill: { color: gradLinear(90, [{ pos: 0, color: mix(BLU.bg, BLU.accent, 0.1) }, { pos: 100, color: BLU.bg }]) },
+      line: { type: 'none' },
+    })
     // 全框 sysDash 圖紙邊（inset 0.3）
     slide.addShape('rect', { x: 0.3, y: 0.3, w: 12.73, h: 6.9, fill: { type: 'none' }, line: { color: BLU.accent, width: 1, dashType: 'sysDash' } })
     // 頂部間尺 + kicker
@@ -477,7 +487,15 @@ const ivy: Pack = {
   cover(slide, deck, brand, img) {
     slide.background = { color: 'FFFFFF' }
     // 左綠欄（書脊）：徽記 + kicker + 白雙細線 + 底部日期／brand
-    slide.addShape('rect', { x: 0, y: 0, w: 4.6, h: 7.5, fill: { color: IVY.accent }, line: { type: 'none' } })
+    // 書脊森綠微微縱深漸層（頂部提亮 → 底部沉墨綠），似精裝布封受光
+    slide.addShape('rect', {
+      x: 0,
+      y: 0,
+      w: 4.6,
+      h: 7.5,
+      fill: { color: gradLinear(90, [{ pos: 0, color: mix(IVY.accent, 'FFFFFF', 0.12) }, { pos: 100, color: mix(IVY.accent, IVY.ink, 0.16) }]) },
+      line: { type: 'none' },
+    })
     ivyDiamond(slide, 0.9, 1.0, 0.16)
     tx(slide, 'TEACHING DECK', { x: 0.9, y: 1.35, w: 3.4, h: 0.3, fontSize: 9, color: 'FFFFFF', charSpacing: 4, bold: true })
     ivyPair(slide, 0.9, 1.7, 2.2, 'FFFFFF')
@@ -700,6 +718,15 @@ const redgrid: Pack = {
   cover(slide, deck, brand, img) {
     slide.background = { color: 'FFFFFF' }
     const hasImg = Boolean(img)
+    // 習字簿宣紙微微泛色：頂部一抹暖白 → 底部極淡朱墨，俾白底一點縱深
+    slide.addShape('rect', {
+      x: 0,
+      y: 0,
+      w: 13.33,
+      h: 7.5,
+      fill: { color: gradLinear(90, [{ pos: 0, color: mix('FFFFFF', RED.accent, 0.03) }, { pos: 100, color: mix('FFFFFF', RED.ink, 0.05) }]) },
+      line: { type: 'none' },
+    })
     // 左上大田字格 — 內放題目第一個字（書法帖開筆）
     tianGrid(slide, 0.9, 0.95, 2.1, 1.25, RED.gridline)
     const first = [...deck.title.trim()][0] ?? '習'
@@ -949,7 +976,16 @@ const transit: Pack = {
     // 站牌式 title：黑 pill 載白字（有相時 pill 上移收薄讓位俾橫幅相）
     const pillY = hasImg ? 2.2 : 2.4
     const pillH = hasImg ? 1.5 : 1.7
-    slide.addShape('roundRect', { x: 0.9, y: pillY, w: 11.53, h: pillH, rectRadius: 0.12, fill: { color: TRN.ink }, line: { type: 'none' } })
+    // 黑站牌微微縱深漸層（頂部一絲信號黃暖光 → 底部沉黑），似搪瓷站牌受光
+    slide.addShape('roundRect', {
+      x: 0.9,
+      y: pillY,
+      w: 11.53,
+      h: pillH,
+      rectRadius: 0.12,
+      fill: { color: gradLinear(90, [{ pos: 0, color: mix(TRN.ink, TRN.accent, 0.08) }, { pos: 100, color: TRN.ink }]) },
+      line: { type: 'none' },
+    })
     const fit = fitTitle(deck.title, 'cover')
     const pt = Math.min(38, fit.fontPt)
     tx(slide, deck.title, { x: 1.25, y: pillY, w: 10.9, h: pillH, fontSize: pt, bold: true, color: 'FFFFFF', valign: 'middle', lineSpacingMultiple: 1.05, fit: 'shrink' })
@@ -1174,7 +1210,15 @@ const ocean: Pack = {
     // 版底三層浪：由淺到深逐層疊上
     wave(slide, -1.5, 5.9, 16.3, 3.4, OCE.band1)
     wave(slide, -2.2, 6.45, 17.7, 3.4, OCE.band2)
-    wave(slide, -1.0, 7.0, 15.3, 3.0, OCE.band3)
+    // 最前一層浪：頂弧受光提亮 → 深處沉入 accent 海色，俾招牌浪帶縱深
+    slide.addShape('ellipse', {
+      x: -1.0,
+      y: 7.0,
+      w: 15.3,
+      h: 3.0,
+      fill: { color: gradLinear(90, [{ pos: 0, color: mix(OCE.band3, 'FFFFFF', 0.14) }, { pos: 100, color: mix(OCE.band3, OCE.accent, 0.22) }]) },
+      line: { type: 'none' },
+    })
     // 右側上升氣泡
     const bubbleColor = hasImg ? 'FFFFFF' : OCE.accent
     bubble(slide, 11.6, 3.2, 0.3, bubbleColor)

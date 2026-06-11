@@ -13,6 +13,8 @@ export interface GradStop {
   pos: number
   /** 6 位 hex（無 #） */
   color: string
+  /** 不透明度 0–100（缺省 100 = 不透明）。發光／淡出用 */
+  alpha?: number
 }
 export type GradDef =
   | { kind: 'linear'; angle: number; stops: GradStop[] } // angle：度，順時針，0=左→右，90=上→下
@@ -50,7 +52,8 @@ function gradXml(def: GradDef): string {
   const gsLst = def.stops
     .map((s) => {
       const pos = Math.round(Math.min(100, Math.max(0, s.pos)) * 1000)
-      return `<a:gs pos="${pos}"><a:srgbClr val="${s.color}"/></a:gs>`
+      const alpha = s.alpha === undefined ? '' : `<a:alpha val="${Math.round(Math.min(100, Math.max(0, s.alpha)) * 1000)}"/>`
+      return `<a:gs pos="${pos}"><a:srgbClr val="${s.color}">${alpha}</a:srgbClr></a:gs>`
     })
     .join('')
   if (def.kind === 'radial') {

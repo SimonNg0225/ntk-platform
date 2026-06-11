@@ -133,8 +133,12 @@ const comic: Pack = {
   cover(slide, deck, brand, img) {
     slide.background = { color: COM.bg }
     const hasImg = Boolean(img)
-    // 全版粗黑外框（漫畫封面兜邊）
-    comFrame(slide, 0.3, 0.3, 12.73, 6.9, COM.bg, 2.5)
+    // 全版粗黑外框（漫畫封面兜邊）+ 極淡奶白底深度漸層
+    const coverBg = gradLinear(90, [
+      { pos: 0, color: mix(COM.bg, 'FFFFFF', 0.04) },
+      { pos: 100, color: mix(COM.bg, COM.ink, 0.06) },
+    ])
+    comFrame(slide, 0.3, 0.3, 12.73, 6.9, coverBg, 2.5)
     // 左上半調網點 + kicker
     comHalftone(slide, 0.7, 0.66, 8, 2, 0.16, 0.07, mix(COM.ink, COM.bg, 0.18))
     tx(slide, 'COMIC DECK · 教學簡報', { x: 0.9, y: 1.18, w: 7, h: 0.3, fontSize: 10, color: COM.accent, charSpacing: 3, bold: true, fontFace: 'Arial' })
@@ -145,7 +149,11 @@ const comic: Pack = {
     const pt = Math.min(40, fit.fontPt)
     const lines = Math.max(1, Math.min(2, estimateLines(deck.title, pt, titleW - 0.5)))
     const boxH = lines === 2 ? 2.3 : 1.5
-    comFrame(slide, 0.9, boxY, titleW, boxH, COM.panel, 2.5)
+    const panelGrad = gradLinear(90, [
+      { pos: 0, color: mix(COM.panel, 'FFFFFF', 0.04) },
+      { pos: 100, color: mix(COM.panel, COM.ink, 0.05) },
+    ])
+    comFrame(slide, 0.9, boxY, titleW, boxH, panelGrad, 2.5)
     tx(slide, deck.title, { x: 1.2, y: boxY, w: titleW - 0.6, h: boxH, fontSize: pt, bold: true, color: COM.ink, valign: 'middle', lineSpacingMultiple: 1.04, fontFace: 'Arial Black', fit: 'shrink' })
     let cursorY = boxY + boxH + 0.24
     if (deck.subtitle) {
@@ -298,6 +306,20 @@ const manuscript: Pack = {
   cover(slide, deck, brand, img) {
     slide.background = { color: MAN.bg }
     const hasImg = Boolean(img)
+    // 全版極淡羊皮紙深度漸層（壓底，元素浮其上）
+    slide.addShape('rect', {
+      x: 0,
+      y: 0,
+      w: 13.33,
+      h: 7.5,
+      fill: {
+        color: gradLinear(90, [
+          { pos: 0, color: mix(MAN.bg, 'FFFFFF', 0.04) },
+          { pos: 100, color: mix(MAN.bg, MAN.ink, 0.06) },
+        ]),
+      },
+      line: { type: 'none' },
+    })
     // 左上泥金大寫首字塊（似抄本開篇）
     const first = [...deck.title.trim()][0] ?? 'A'
     manInitial(slide, 0.9, 0.95, 1.7, first, 86)
@@ -443,6 +465,20 @@ const isometric: Pack = {
   cover(slide, deck, brand, img) {
     slide.background = { color: ISO.bg }
     const hasImg = Boolean(img)
+    // 全版極淺灰深度漸層（壓底，積木浮其上）
+    slide.addShape('rect', {
+      x: 0,
+      y: 0,
+      w: 13.33,
+      h: 7.5,
+      fill: {
+        color: gradLinear(90, [
+          { pos: 0, color: mix(ISO.bg, 'FFFFFF', 0.04) },
+          { pos: 100, color: mix(ISO.bg, ISO.ink, 0.06) },
+        ]),
+      },
+      line: { type: 'none' },
+    })
     // kicker
     tx(slide, 'BUILD DECK · 教學簡報', { x: 0.9, y: 1.1, w: 7, h: 0.3, fontSize: 10, color: ISO.accent, charSpacing: 3, bold: true })
     // 題目嵌一塊大 pop-out 塊（白面 + 後偏移鮮藍硬陰影）
@@ -622,6 +658,23 @@ const glitch: Pack = {
       addCoverImage(slide, img, { x: 0, y: 0, w: 13.33, h: 7.5 })
       slide.addShape('rect', { x: 0, y: 0, w: 13.33, h: 7.5, fill: { color: GLI.bg, transparency: 28 }, line: { type: 'none' } })
       photoCreditOnImage(slide, img.credit, { x: 0, y: 0, w: 13.33, h: 7.5 })
+    }
+    // 無相時：版底極淡洋紅→青斜向漸層（保持冷峻，僅一抹故障輝光）
+    if (!img) {
+      slide.addShape('rect', {
+        x: 0,
+        y: 0,
+        w: 13.33,
+        h: 7.5,
+        fill: {
+          color: gradLinear(120, [
+            { pos: 0, color: mix(GLI.bg, GLI.accent, 0.1) },
+            { pos: 60, color: GLI.bg },
+            { pos: 100, color: mix(GLI.bg, GLI.cyan, 0.08) },
+          ]),
+        },
+        line: { type: 'none' },
+      })
     }
     // 全版掃描線（極淡）
     scanlines(slide, 0.3, 0.5, 12.73, Math.floor(6.5 / 0.18), 0.18, mix(GLI.cyan, GLI.bg, hasImg ? 0.12 : 0.08))

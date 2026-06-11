@@ -26,6 +26,7 @@ import {
 } from './pptxPacks'
 import type { Slide } from './types'
 import { clampText, estimateLines, fitTitle, mix } from './pptxText'
+import { gradLinear } from './pptxGradients'
 
 // ============================================================
 //  和紙 washi — 侘寂留白
@@ -141,8 +142,8 @@ const washi: Pack = {
   cover(slide, deck, brand, img) {
     slide.background = { color: WAS.bg }
     const hasImg = Boolean(img)
-    // 左緣柿色簾邊（直條貼死左邊）
-    slide.addShape('rect', { x: 0, y: 0, w: 0.16, h: 7.5, fill: { color: WAS.accent }, line: { type: 'none' } })
+    // 左緣柿色簾邊（直條貼死左邊；垂直漸層柿色微深淺）
+    slide.addShape('rect', { x: 0, y: 0, w: 0.16, h: 7.5, fill: { color: gradLinear(90, [{ pos: 0, color: mix(WAS.accent, 'FFFFFF', 0.18) }, { pos: 100, color: mix(WAS.accent, WAS.ink, 0.14) }]) }, line: { type: 'none' } })
     if (img) {
       // 右上相框：撕紙錯位淡層墊底，相片 + 髮線框疊上（柿淡影右下露邊）
       tornPair(slide, 7.6, 1.0, 4.9, 3.3)
@@ -292,8 +293,8 @@ const terminal: Pack = {
   cover(slide, deck, brand, img) {
     slide.background = { color: TRM.bg }
     const hasImg = Boolean(img)
-    // 全闊視窗頂欄 + 三點 + 視窗名
-    slide.addShape('rect', { x: 0, y: 0, w: 13.33, h: 0.5, fill: { color: TRM.panel }, line: { type: 'none' } })
+    // 全闊視窗頂欄 + 三點 + 視窗名（頂欄垂直漸層：頂淡綠暈 → panel）
+    slide.addShape('rect', { x: 0, y: 0, w: 13.33, h: 0.5, fill: { color: gradLinear(90, [{ pos: 0, color: mix(TRM.panel, TRM.accent, 0.1) }, { pos: 100, color: TRM.panel }]) }, line: { type: 'none' } })
     termDots(slide, 0.42, 0.2)
     tx(slide, 'eziteach — bash', { x: 4.67, y: 0.13, w: 4, h: 0.26, fontSize: 9, color: TRM.faint, align: 'center', fontFace: 'Consolas' })
     hline(slide, 0, 0.5, 13.33, TRM.hair, 0.75)
@@ -479,9 +480,9 @@ const pixel: Pack = {
   cover(slide, deck, brand, img) {
     slide.background = { color: PIX.bg }
     const hasImg = Boolean(img)
-    // 頂部雙色像素方塊 + kicker
-    slide.addShape('rect', { x: 0.9, y: 0.92, w: 0.16, h: 0.16, fill: { color: PIX.accent }, line: { type: 'none' } })
-    slide.addShape('rect', { x: 1.1, y: 0.92, w: 0.16, h: 0.16, fill: { color: PIX.cyan }, line: { type: 'none' } })
+    // 頂部雙色像素方塊 + kicker（各自垂直漸層微亮→微深，保 8-bit 硬塊感）
+    slide.addShape('rect', { x: 0.9, y: 0.92, w: 0.16, h: 0.16, fill: { color: gradLinear(90, [{ pos: 0, color: mix(PIX.accent, 'FFFFFF', 0.18) }, { pos: 100, color: mix(PIX.accent, PIX.ink, 0.14) }]) }, line: { type: 'none' } })
+    slide.addShape('rect', { x: 1.1, y: 0.92, w: 0.16, h: 0.16, fill: { color: gradLinear(90, [{ pos: 0, color: mix(PIX.cyan, 'FFFFFF', 0.18) }, { pos: 100, color: mix(PIX.cyan, PIX.ink, 0.14) }]) }, line: { type: 'none' } })
     tx(slide, 'TEACHING DECK · 教學簡報', { x: 1.4, y: 0.88, w: 7, h: 0.3, fontSize: 10, bold: true, color: PIX.ink, charSpacing: 3 })
     // blocky 題目 + 像素底線
     const titleW = hasImg ? 6.3 : 10.6
@@ -679,9 +680,9 @@ const botanic: Pack = {
       }
       botTape(slide, px, 1.32, -4)
     }
-    // 標本標籤塊（左下）：白底雙細線 + 編目欄位
+    // 標本標籤塊（左下）：白底雙細線 + 編目欄位（極淡台紙漸層：純白 → 米白底微沉）
     const lb: Rect = { x: 0.9, y: 4.25, w: 6.9, h: 2.55 }
-    slide.addShape('rect', { x: lb.x, y: lb.y, w: lb.w, h: lb.h, fill: { color: 'FFFFFF' }, line: { color: mix(BOT.ink, BOT.bg, 0.5), width: 1 } })
+    slide.addShape('rect', { x: lb.x, y: lb.y, w: lb.w, h: lb.h, fill: { color: gradLinear(90, [{ pos: 0, color: mix('FFFFFF', BOT.bg, 0.04) }, { pos: 100, color: mix(BOT.bg, BOT.ink, 0.06) }]) }, line: { color: mix(BOT.ink, BOT.bg, 0.5), width: 1 } })
     slide.addShape('rect', { x: lb.x + 0.06, y: lb.y + 0.06, w: lb.w - 0.12, h: lb.h - 0.12, fill: { type: 'none' }, line: { color: BOT.hair, width: 0.5 } })
     tx(slide, 'HERBARIUM · 教學簡報', { x: lb.x + 0.3, y: lb.y + 0.22, w: 4.5, h: 0.28, fontSize: 9, bold: true, color: BOT.accent, charSpacing: 3 })
     tx(slide, 'No.001', { x: lb.x + lb.w - 1.5, y: lb.y + 0.22, w: 1.2, h: 0.28, fontSize: 11, italic: true, color: BOT.deep, align: 'right', fontFace: 'Georgia' })
