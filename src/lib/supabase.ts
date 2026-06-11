@@ -22,6 +22,9 @@ export const supabase: SupabaseClient | null = isSupabaseConfigured
         persistSession: true,
         autoRefreshToken: true,
         detectSessionInUrl: true,
+        // PKCE：OAuth 回流用 ?code=… 再換 session，access/refresh token 唔會
+        // 出現喺網址 hash / 瀏覽器歷史，比預設 implicit flow 安全。
+        flowType: 'pkce',
       },
     })
   : null
