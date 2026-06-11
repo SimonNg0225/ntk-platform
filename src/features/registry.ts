@@ -307,7 +307,7 @@ export const FEATURES: Feature[] = [
     selfManagedHeader: true,
     modes: ['work'],
     name: '教學簡報',
-    description: '揀課題或貼內容，AI 生成 PowerPoint：16 套設計模板、版式自動配、封面內頁配圖，一鍵下載 .pptx。',
+    description: '揀課題或貼內容，AI 生成 PowerPoint：24 套設計模板、版式自動配、封面內頁配圖，一鍵下載 .pptx。',
     icon: '📽️',
     group: '教學',
     component: SlideGen,

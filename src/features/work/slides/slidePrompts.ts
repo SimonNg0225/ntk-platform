@@ -56,6 +56,14 @@ const PACK_FAVORS: Partial<Record<SlidePackId, PackFavor>> = {
   redgrid: { layouts: ['stats', 'cards'], note: '雜誌編排' },
   transit: { layouts: ['steps', 'stats'], note: '路線旅程', bilingual: 'high' },
   ocean: { layouts: ['steps', 'stats'], note: '分層遞進' },
+  washi: { layouts: ['quote', 'cards'], note: '侘寂留白', density: 'sparse' },
+  terminal: { layouts: ['steps', 'stats'], note: '程式碼風', bilingual: 'high' },
+  pixel: { layouts: ['steps', 'stats'], note: '遊戲關卡', density: 'sparse' },
+  botanic: { layouts: ['cards', 'steps'], note: '田野筆記' },
+  marble: { layouts: ['quote', 'stats'], note: '典藏美術' },
+  origami: { layouts: ['steps', 'compare'], note: '幾何摺疊' },
+  cinema: { layouts: ['quote', 'cards'], note: '戲劇敘事' },
+  festival: { layouts: ['cards', 'quote'], note: '節慶喜慶' },
 }
 
 export function buildSlideSystem(subjectName: string | undefined, count: number, pack?: SlidePackId): string {
