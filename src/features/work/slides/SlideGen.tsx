@@ -117,7 +117,7 @@ export default function SlideGen() {
     setBusy(true)
     try {
       const raw = await complete({
-        system: buildSlideSystem(subjectName, count),
+        system: buildSlideSystem(subjectName, count, pack),
         messages: [{ role: 'user', content: source }],
         model,
         temperature: 0.5,
