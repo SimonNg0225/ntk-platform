@@ -132,6 +132,16 @@ export async function detectCorners(dataUrl: string): Promise<Corners | null> {
   return detectCornersClassical(dataUrl)
 }
 
+/** 預熱 ML 偵測模型（開鏡頭時 fire-and-forget，慳走冷啟動）。 */
+export async function warmUpDetect(): Promise<void> {
+  try {
+    const { warmUpML } = await import('./mlDetect')
+    await warmUpML()
+  } catch {
+    /* 預熱失敗無所謂 */
+  }
+}
+
 /**
  * Classical 文件偵測（應付低對比能力有限，做 ML 嘅保底）：
  *   灰階 → 模糊 → Otsu 自適應 Canny → 形態學 close 駁口 → findContours
@@ -199,6 +209,69 @@ async function detectCornersClassical(dataUrl: string): Promise<Corners | null> 
 }
 
 /**
+ * 文件二值化（似真掃描器）：去陰影 + Sauvola 局部門檻。
+ *  1. 背景估計：縮細做形態學 close（去走深色字、剩光紙背景）→ 放大 → divide
+ *     令光照／陰影／暗角拉平到白底。
+ *  2. Sauvola：T = μ·(1 + k·(σ/R − 1))。局部自適應，筆畫乾淨、唔會大片糊黑。
+ *     μ/σ 用 boxFilter（積分式，wasm 快），最後一遍公式喺 JS 行。
+ * gray = CV_8U 灰階（caller 擁有，唔 delete）；回新 CV_8U 0/255 Mat。
+ */
+function binarizeDoc(cv: any, gray: any): any {
+  const W = gray.cols, H = gray.rows
+  const tmp: any[] = []
+  const mk = () => { const m = new cv.Mat(); tmp.push(m); return m }
+  try {
+    // 1) 背景估計（1/4 縮圖做 close，快）→ 放大返
+    const small = mk()
+    const s = 0.25
+    cv.resize(gray, small, new cv.Size(Math.max(1, Math.round(W * s)), Math.max(1, Math.round(H * s))), 0, 0, cv.INTER_AREA)
+    const bgSmall = mk()
+    const ker = cv.getStructuringElement(cv.MORPH_ELLIPSE, new cv.Size(15, 15))
+    cv.morphologyEx(small, bgSmall, cv.MORPH_CLOSE, ker)
+    ker.delete()
+    const bg = mk()
+    cv.resize(bgSmall, bg, new cv.Size(W, H), 0, 0, cv.INTER_LINEAR)
+
+    // 2) divide 去陰影：norm = gray*255/max(bg,1)
+    const gray32 = mk(), bg32 = mk()
+    gray.convertTo(gray32, cv.CV_32F)
+    bg.convertTo(bg32, cv.CV_32F)
+    const ones = cv.Mat.ones(H, W, cv.CV_32F); tmp.push(ones)
+    cv.max(bg32, ones, bg32)
+    const norm = mk()
+    cv.divide(gray32, bg32, norm, 255)
+
+    // 3) Sauvola：μ / E[x²] via boxFilter（normalize=true）
+    let win = Math.round(Math.min(W, H) / 30)
+    if (win % 2 === 0) win += 1
+    win = Math.max(25, Math.min(81, win))
+    const ksize = new cv.Size(win, win)
+    const anchor = new cv.Point(-1, -1)
+    const mean = mk(), sq = mk(), sqmean = mk()
+    cv.boxFilter(norm, mean, cv.CV_32F, ksize, anchor, true, cv.BORDER_REPLICATE)
+    cv.multiply(norm, norm, sq, 1, cv.CV_32F)
+    cv.boxFilter(sq, sqmean, cv.CV_32F, ksize, anchor, true, cv.BORDER_REPLICATE)
+
+    const nD = norm.data32F as Float32Array
+    const mD = mean.data32F as Float32Array
+    const qD = sqmean.data32F as Float32Array
+    const out = new cv.Mat(H, W, cv.CV_8U)
+    const oD = out.data as Uint8Array
+    const k = 0.25, R = 128
+    for (let i = 0; i < nD.length; i++) {
+      const m = mD[i]
+      const v = qD[i] - m * m
+      const sd = v > 0 ? Math.sqrt(v) : 0
+      const T = m * (1 + k * (sd / R - 1))
+      oD[i] = nD[i] >= T ? 255 : 0
+    }
+    return out
+  } finally {
+    for (const m of tmp) { try { m.delete() } catch { /* noop */ } }
+  }
+}
+
+/**
  * 用四角拉正透視 + 套濾鏡，回 processed dataUrl。
  * corners=null → 唔做透視，淨係套濾鏡。
  */
@@ -249,14 +322,18 @@ export async function warpEnhance(dataUrl: string, corners: Corners | null, filt
   let dst = gray
   let png = false
   if (filter === 'bw') {
-    dst = new cv.Mat()
-    // adaptiveThreshold 鄰域隨圖大細放大（高解析度用大 block，減少筆畫內雜訊）；必須奇數。
-    const minEdge = Math.min(outCanvas.width, outCanvas.height)
-    let bs = Math.round(minEdge / 45)
-    if (bs % 2 === 0) bs += 1
-    bs = Math.max(15, Math.min(61, bs)) // 高解析度（~300DPI）行大啲嘅鄰域
-    cv.adaptiveThreshold(gray, dst, 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY, bs, 12)
     png = true // 二值圖用 PNG（無損）；JPEG 會喺黑白硬邊整出鋸齒/糊化，似低 DPI。
+    try {
+      dst = binarizeDoc(cv, gray) // 去陰影 + Sauvola
+    } catch {
+      // 保底：adaptiveThreshold（鄰域隨圖大細放大）。
+      dst = new cv.Mat()
+      const minEdge = Math.min(outCanvas.width, outCanvas.height)
+      let bs = Math.round(minEdge / 45)
+      if (bs % 2 === 0) bs += 1
+      bs = Math.max(15, Math.min(61, bs))
+      cv.adaptiveThreshold(gray, dst, 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY, bs, 12)
+    }
   }
   const show = document.createElement('canvas')
   cv.imshow(show, dst)

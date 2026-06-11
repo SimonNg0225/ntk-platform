@@ -57,6 +57,20 @@ function getSession() {
   return sessionP
 }
 
+/**
+ * 預熱：背景載入模型 + wasm + 跑一次 dummy 推論（JIT 編譯 kernel）。
+ * 喺開鏡頭時 fire-and-forget，等用戶影完即用、慳走冷啟動延遲。
+ */
+export async function warmUpML(): Promise<void> {
+  try {
+    const { ort, session } = await getSession()
+    const dummy = new ort.Tensor('float32', new Float32Array(3 * N * N), [1, 3, N, N])
+    await session.run({ [session.inputNames[0]]: dummy })
+  } catch {
+    /* 預熱失敗無所謂，真正用時再試 / 退 classical */
+  }
+}
+
 function imgFromDataUrl(dataUrl: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const img = new Image()

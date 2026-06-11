@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Camera, ImagePlus, X } from 'lucide-react'
 import { Button, IconButton } from '../../../../ui'
+import { warmUpDetect } from '../lib/cv'
 
 export default function CameraCapture({
   onCapture,
@@ -15,6 +16,9 @@ export default function CameraCapture({
   const streamRef = useRef<MediaStream | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
   const [camErr, setCamErr] = useState(false)
+
+  // 一開鏡頭即喺背景預熱四角偵測模型，影完即用（慳冷啟動）。
+  useEffect(() => { void warmUpDetect() }, [])
 
   useEffect(() => {
     let cancelled = false
