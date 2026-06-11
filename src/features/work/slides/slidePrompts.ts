@@ -145,6 +145,66 @@ export function buildSlideSystem(subjectName: string | undefined, count: number,
   return lines.join('\n')
 }
 
+/**
+ * 「跟我嘅分段分版」嚴格框架模式：版數／標題／次序鎖死，
+ * AI 只可以喺每版自己嘅內容範圍內精煉做 bullets、揀版式、寫備註。
+ * pages 來自 manualPages.parseManualPages。
+ */
+export function buildFrameworkSystem(
+  subjectName: string | undefined,
+  pages: { title: string; lines: string[] }[],
+  pack?: SlidePackId,
+): string {
+  const subjectLine = subjectName ? `任教科目：${subjectName}。` : ''
+  const pageList = pages
+    .map((p, i) => {
+      const body = p.lines.length > 0 ? p.lines.join('；') : '（章節分隔，唔使內容）'
+      return `  第 ${i + 1} 版《${p.title}》：${body}`
+    })
+    .join('\n')
+  const lines = [
+    `你係教學簡報設計助手。${subjectLine}用家已經自己分好版，你嘅工作係將每一版嘅內容執靚，但絕對唔可以改動分版框架。`,
+    '用家嘅分版框架（鎖死，不得更改）：',
+    pageList,
+    '只輸出一個 JSON 物件，唔好有任何其他文字或 markdown code fence：',
+    '{',
+    '  "title": "簡報標題",',
+    '  "subtitle": "副標題（簡短）",',
+    '  "coverImageQuery": "封面相英文搜尋詞（1-4 個英文字）",',
+    '  "slides": [',
+    '    {"title": "版面標題", "bullets": ["精煉要點"], "notes": "講者備註", "chart": null}',
+    '  ]',
+    '}',
+    '鐵律（違反即廢）：',
+    `- slides 必須剛好 ${pages.length} 版，次序同框架完全一致，唔准加版、減版、合併或重排。`,
+    '- 每版 title 必須沿用框架嘅標題（只可輕微整理標點／空白）。',
+    '- 每版內容只可以用返該版框架入面嘅材料嚟精煉（執靚字眼、斬做要點），唔准將內容搬去第二版，亦唔准加入框架冇嘅新事實。',
+    '規則：',
+    '- 一律用繁體中文（可書面廣東話）。',
+    '- 每版 3-5 個要點（框架材料少就少啲），短句／關鍵詞，唔好成段文字。',
+    '- notes 寫老師口頭講解提示（1-2 句）。',
+    '- 框架標明「章節分隔」嗰版：出 "layout":"section"、"bullets":[]。',
+    '- 內容啱先好揀 "layout" 版式（唔填 = 普通要點版）；揀咗 layout 嗰版都一樣要出 bullets，再另出對應欄位：',
+    '  · "layout":"stats" — 該版有 2-4 個關鍵數字先用，另加 "stats":[{"value":"75%","label":"合格率"}]（value ≤8 字、label ≤20 字）',
+    '  · "layout":"compare" — 該版本身係正反／異同先用，另加 "compare":{"leftTitle":"優點","left":["…"],"rightTitle":"缺點","right":["…"]}（兩邊各 2-4 點）',
+    '  · "layout":"steps" — 流程／步驟先用，另加 "steps":[{"title":"步驟名","desc":"說明（選填）"}]（2-5 步）',
+    '  · "layout":"quote" — 金句／定義一句先用，另加 "quote":{"text":"…","attribution":"出處（選填）"}（text ≤60 字）',
+    '  · "layout":"cards" — 並列概念先用，另加 "cards":[{"title":"卡題","desc":"說明（選填）"}]（2-6 張）',
+    '- 涉及數據嘅版可加 "chart"（{"type":"bar|line|pie","categories":[…],"series":[{"name":"…","values":[…]}]}），否則 "chart": null。',
+    '- 講具體實物／場景嘅版可加 "imageQuery"（1-4 個字英文搜尋詞）；全套最多 4 版。',
+    '- "coverImageQuery" 必須出。',
+    '- 只輸出 JSON。',
+  ]
+  const fav = pack ? PACK_FAVORS[pack] : undefined
+  if (fav) {
+    const zh = fav.layouts.map((l) => LAYOUT_ZH[l]).join('、')
+    lines.push(
+      `- 版式風格：本套用「${fav.note}」取向 —— 內容合適時優先選用 ${zh} 版式（自然為主，唔好夾硬堆砌）。`,
+    )
+  }
+  return lines.join('\n')
+}
+
 // ───────── 解析小工具 ─────────
 
 /** 截長：超過 max 就斬到 max-1 加 '…'（結果長度 ≤ max）。 */
@@ -298,6 +358,54 @@ function parseLayoutFields(rec: Record<string, unknown>): Partial<Slide> {
   return {}
 }
 
+/**
+ * 解析單版 record（parseDeck 逐版 + slideAi 單版重寫共用）。
+ * 標題同 bullets 都空 → null（跳過呢版）。
+ */
+export function parseSlideRecord(rec: Record<string, unknown>): Slide | null {
+  const slideTitle = typeof rec.title === 'string' ? rec.title.trim() : ''
+  // AI 顯式出 layout:'section' → normalize 成空 bullets（之後由 bullets.length===0 推斷）
+  const isSection = rec.layout === 'section'
+  const bullets = isSection
+    ? []
+    : Array.isArray(rec.bullets)
+      ? rec.bullets
+          .filter((x): x is string => typeof x === 'string')
+          .map((x) => x.trim())
+          .filter(Boolean)
+          .slice(0, 6)
+          .map((x) => clamp(x, 60))
+      : []
+  if (!slideTitle && bullets.length === 0) return null
+  const notes = typeof rec.notes === 'string' && rec.notes.trim() ? rec.notes.trim() : undefined
+  const chart = parseChart(rec.chart)
+  const imageQuery = parseImageQuery(rec.imageQuery)
+  const slideSubtitle = cleanStr(rec.subtitle)
+  const takeaway = cleanStr(rec.takeaway)
+  const emphasis = !isSection && rec.emphasis === true
+  const layoutFields: Partial<Slide> = isSection ? { layout: 'section' } : parseLayoutFields(rec)
+  return {
+    title: slideTitle || '（未命名）',
+    subtitle: slideSubtitle ? clamp(slideSubtitle, 48) : undefined,
+    bullets,
+    notes,
+    chart,
+    imageQuery,
+    takeaway: takeaway ? clamp(takeaway, 46) : undefined,
+    emphasis: emphasis || undefined,
+    ...layoutFields,
+  }
+}
+
+/** 解析「單版 JSON」AI 回應（slideAi 用）；唔合格 throw。 */
+export function parseSlideJson(raw: string): Slide {
+  const o = extractJsonObject<Record<string, unknown>>(raw)
+  if (!o || typeof o !== 'object') throw new Error('AI 回應格式唔正確，請再試一次。')
+  const slide = parseSlideRecord(o)
+  if (!slide) throw new Error('AI 出唔到呢版內容，請再試一次。')
+  return slide
+}
+
 /** 解析 AI 簡報回應；格式唔正確 throw。 */
 export function parseDeck(raw: string, fallbackTitle: string): Deck {
   const o = extractJsonObject<Record<string, unknown>>(raw)
@@ -315,39 +423,8 @@ export function parseDeck(raw: string, fallbackTitle: string): Deck {
   if (Array.isArray(o.slides)) {
     for (const s of o.slides) {
       if (!s || typeof s !== 'object') continue
-      const rec = s as Record<string, unknown>
-      const slideTitle = typeof rec.title === 'string' ? rec.title.trim() : ''
-      // AI 顯式出 layout:'section' → normalize 成空 bullets（之後由 bullets.length===0 推斷）
-      const isSection = rec.layout === 'section'
-      const bullets = isSection
-        ? []
-        : Array.isArray(rec.bullets)
-          ? rec.bullets
-              .filter((x): x is string => typeof x === 'string')
-              .map((x) => x.trim())
-              .filter(Boolean)
-              .slice(0, 6)
-              .map((x) => clamp(x, 60))
-          : []
-      if (!slideTitle && bullets.length === 0) continue
-      const notes = typeof rec.notes === 'string' && rec.notes.trim() ? rec.notes.trim() : undefined
-      const chart = parseChart(rec.chart)
-      const imageQuery = parseImageQuery(rec.imageQuery)
-      const slideSubtitle = cleanStr(rec.subtitle)
-      const takeaway = cleanStr(rec.takeaway)
-      const emphasis = !isSection && rec.emphasis === true
-      const layoutFields: Partial<Slide> = isSection ? { layout: 'section' } : parseLayoutFields(rec)
-      slides.push({
-        title: slideTitle || '（未命名）',
-        subtitle: slideSubtitle ? clamp(slideSubtitle, 48) : undefined,
-        bullets,
-        notes,
-        chart,
-        imageQuery,
-        takeaway: takeaway ? clamp(takeaway, 46) : undefined,
-        emphasis: emphasis || undefined,
-        ...layoutFields,
-      })
+      const slide = parseSlideRecord(s as Record<string, unknown>)
+      if (slide) slides.push(slide)
     }
   }
 

@@ -15,6 +15,11 @@ import {
   ListOrdered,
   Quote,
   LayoutGrid,
+  Pencil,
+  ChevronUp,
+  ChevronDown,
+  Plus,
+  ListTree,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import {
@@ -47,8 +52,11 @@ import {
   fetchSlidePhoto,
   isStockConfigured,
 } from '../../../lib/export'
+import type { Slide } from '../../../lib/export/types'
 import { slideDecksCol, type DeckRecord } from './slideStore'
-import { buildSlideSystem, parseDeck } from './slidePrompts'
+import { buildSlideSystem, buildFrameworkSystem, parseDeck } from './slidePrompts'
+import { parseManualPages, frameworkToDeck, detectManualPages } from './manualPages'
+import SlideEditor from './editor/SlideEditor'
 import PackPreview from './PackPreview'
 
 type Mode = 'topic' | 'text'
@@ -107,6 +115,10 @@ export default function SlideGen() {
   const [pack, setPack] = useState<SlidePackId>('inkwell')
   const [usePhoto, setUsePhoto] = useState(false)
   const [useSlidePhotos, setUseSlidePhotos] = useState(true)
+  // 「跟我嘅分段分版」：--- 或空行斬版，AI 只執靚唔改分頁
+  const [followPages, setFollowPages] = useState(false)
+  // 逐版編輯器
+  const [editingIndex, setEditingIndex] = useState<number | null>(null)
 
   const hasInput = mode === 'topic' ? topics.length > 0 : text.trim().length > 0
 
@@ -115,15 +127,25 @@ export default function SlideGen() {
     const topic = topics.find((t) => t.id === topicId) ?? topics[0]
     const source = mode === 'topic' ? `課題：${topic?.topic ?? ''}` : text.trim()
     const fallbackTitle = mode === 'topic' ? (topic?.topic ?? '教學簡報') : '教學簡報'
+    // 「跟我嘅分段分版」：要 ≥2 段先有意義
+    const pages = mode === 'text' && followPages ? parseManualPages(text) : []
+    const frameworkMode = pages.length >= 2
     setBusy(true)
     try {
       const raw = await complete({
-        system: buildSlideSystem(subjectName, count, pack),
+        system: frameworkMode
+          ? buildFrameworkSystem(subjectName, pages, pack)
+          : buildSlideSystem(subjectName, count, pack),
         messages: [{ role: 'user', content: source }],
         model,
         temperature: 0.5,
       })
-      const deck = parseDeck(raw, fallbackTitle)
+      let deck = parseDeck(raw, fallbackTitle)
+      // 鐵律保險：AI 版數對唔上 → 照你嘅分段直接入版，分頁永遠唔會被打亂
+      if (frameworkMode && deck.slides.length !== pages.length) {
+        deck = { ...frameworkToDeck(pages, deck.title || fallbackTitle), subtitle: deck.subtitle, coverImageQuery: deck.coverImageQuery }
+        toast.info('AI 分版對唔上你嘅分段，已照你嘅分段直接入版（可逐版再執）')
+      }
       const rec = slideDecksCol.add({
         createdAt: new Date().toISOString(),
         topicName: mode === 'topic' ? (topic?.topic ?? '') : deck.title,
@@ -194,6 +216,49 @@ export default function SlideGen() {
     if (current?.id === id) setCurrent(null)
   }
 
+  // ───────── 逐版操作（即時 persist 落 collection + 同步 current）─────────
+
+  function updateSlides(slides: Slide[]) {
+    if (!current) return
+    slideDecksCol.update(current.id, { slides })
+    setCurrent({ ...current, slides })
+  }
+
+  function saveSlide(i: number, s: Slide) {
+    if (!current) return
+    const slides = [...current.slides]
+    slides[i] = s
+    updateSlides(slides)
+    setEditingIndex(null)
+  }
+
+  function moveSlide(i: number, dir: -1 | 1) {
+    if (!current) return
+    const j = i + dir
+    if (j < 0 || j >= current.slides.length) return
+    const slides = [...current.slides]
+    ;[slides[i], slides[j]] = [slides[j], slides[i]]
+    updateSlides(slides)
+  }
+
+  async function deleteSlide(i: number) {
+    if (!current) return
+    if (current.slides.length <= 1) {
+      toast.error('至少要留一版')
+      return
+    }
+    const ok = await confirm({ title: `刪除第 ${i + 1} 版？`, tone: 'danger', confirmText: '刪除' })
+    if (!ok) return
+    updateSlides(current.slides.filter((_, j) => j !== i))
+  }
+
+  function addSlide() {
+    if (!current) return
+    const slides = [...current.slides, { title: '新一版', bullets: ['要點一', '要點二'] }]
+    updateSlides(slides)
+    setEditingIndex(slides.length - 1) // 即入編輯
+  }
+
   if (!isAIConfigured) {
     return (
       <EmptyState
@@ -244,14 +309,54 @@ export default function SlideGen() {
               rows={5}
               value={text}
               onChange={(e) => setText(e.target.value)}
-              placeholder="貼上課題大綱、筆記或教學重點…"
+              placeholder={'貼上課題大綱、筆記或教學重點…\n想自己控制分頁：用 --- 或空行分段，每段首行做該版標題，再開「跟我嘅分段分版」。'}
             />
           </Field>
         )}
 
+        {/* 跟我嘅分段分版：分頁聽你、文字聽 AI */}
+        {mode === 'text' && (
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setFollowPages((v) => !v)}
+              aria-pressed={followPages}
+              className={cx(
+                'inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-medium transition active:scale-[0.97]',
+                followPages
+                  ? 'border-accent bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent'
+                  : 'border-black/[0.08] text-slate-600 hover:bg-black/[0.03] dark:border-white/10 dark:text-slate-300',
+              )}
+            >
+              <ListTree size={13} /> 跟我嘅分段分版
+            </button>
+            {followPages ? (
+              <span className="text-[11px] text-slate-400">
+                {(() => {
+                  const n = parseManualPages(text).length
+                  return n >= 2
+                    ? `會出剛好 ${n} 版（分頁鎖死，AI 只執靚每版文字）`
+                    : '要至少 2 段（--- 或空行分隔）先生效'
+                })()}
+              </span>
+            ) : (
+              detectManualPages(text) && (
+                <span className="text-[11px] text-amber-600 dark:text-amber-400">
+                  偵測到你嘅內容有分段 — 開呢個掣可以鎖住你嘅分頁
+                </span>
+              )
+            )}
+          </div>
+        )}
+
         <div className="flex flex-wrap items-end justify-between gap-3">
           <Field label="版數">
-            <Select value={String(count)} onChange={(e) => setCount(Number(e.target.value))}>
+            <Select
+              value={String(count)}
+              onChange={(e) => setCount(Number(e.target.value))}
+              disabled={mode === 'text' && followPages}
+              title={mode === 'text' && followPages ? '分版跟你嘅分段，版數唔使揀' : undefined}
+            >
               {[6, 8, 10, 12].map((n) => (
                 <option key={n} value={n}>
                   約 {n} 版
@@ -283,6 +388,21 @@ export default function SlideGen() {
           onUsePhoto={setUsePhoto}
           useSlidePhotos={useSlidePhotos}
           onUseSlidePhotos={setUseSlidePhotos}
+          onEdit={setEditingIndex}
+          onMove={moveSlide}
+          onDelete={(i) => void deleteSlide(i)}
+          onAdd={addSlide}
+        />
+      )}
+
+      {/* 逐版編輯器 */}
+      {current && editingIndex !== null && current.slides[editingIndex] && (
+        <SlideEditor
+          slide={current.slides[editingIndex]}
+          index={editingIndex}
+          model={model}
+          onSave={(s) => saveSlide(editingIndex, s)}
+          onClose={() => setEditingIndex(null)}
         />
       )}
 
@@ -337,6 +457,10 @@ export default function SlideGen() {
 function DeckView({
   rec,
   onDownload,
+  onEdit,
+  onMove,
+  onDelete,
+  onAdd,
   downloading,
   pack,
   onPack,
@@ -354,6 +478,10 @@ function DeckView({
   onUsePhoto: (v: boolean) => void
   useSlidePhotos: boolean
   onUseSlidePhotos: (v: boolean) => void
+  onEdit: (i: number) => void
+  onMove: (i: number, dir: -1 | 1) => void
+  onDelete: (i: number) => void
+  onAdd: () => void
 }) {
   return (
     <Card padded className="space-y-4 ring-1 ring-accent/20">
@@ -442,7 +570,7 @@ function DeckView({
           return (
             <div
               key={i}
-              className="rounded-xl border border-black/[0.06] bg-slate-50/60 p-3 dark:border-white/[0.08] dark:bg-slate-800/40"
+              className="group rounded-xl border border-black/[0.06] bg-slate-50/60 p-3 transition hover:border-accent/30 dark:border-white/[0.08] dark:bg-slate-800/40"
             >
               <div className="flex items-center gap-2">
                 <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-accent-soft text-[11px] font-semibold text-accent-strong dark:bg-accent/15 dark:text-accent">
@@ -451,6 +579,26 @@ function DeckView({
                 <p className="min-w-0 flex-1 text-sm font-semibold text-slate-700 dark:text-slate-200">
                   {s.title}
                 </p>
+                {/* 逐版操作：編輯／上移／下移／刪除 */}
+                <span className="flex shrink-0 items-center opacity-0 transition group-hover:opacity-100 focus-within:opacity-100">
+                  <IconButton label="上移" size="sm" onClick={() => onMove(i, -1)} disabled={i === 0}>
+                    <ChevronUp size={14} />
+                  </IconButton>
+                  <IconButton
+                    label="下移"
+                    size="sm"
+                    onClick={() => onMove(i, 1)}
+                    disabled={i === rec.slides.length - 1}
+                  >
+                    <ChevronDown size={14} />
+                  </IconButton>
+                  <IconButton label="刪除呢版" size="sm" tone="danger" onClick={() => onDelete(i)}>
+                    <Trash2 size={14} />
+                  </IconButton>
+                </span>
+                <IconButton label="編輯呢版" size="sm" onClick={() => onEdit(i)}>
+                  <Pencil size={14} />
+                </IconButton>
                 {layoutBadge && (
                   <span className="inline-flex shrink-0 items-center gap-1 rounded-md bg-violet-50 px-1.5 py-0.5 text-[10px] font-medium text-violet-600 dark:bg-violet-500/15 dark:text-violet-300">
                     <layoutBadge.icon size={11} /> {layoutBadge.label}
@@ -486,6 +634,13 @@ function DeckView({
             </div>
           )
         })}
+        <button
+          type="button"
+          onClick={onAdd}
+          className="flex w-full items-center justify-center gap-1.5 rounded-xl border-2 border-dashed border-black/[0.08] py-2.5 text-xs font-medium text-slate-400 transition hover:border-accent/40 hover:text-accent dark:border-white/10 dark:text-slate-500"
+        >
+          <Plus size={14} /> 加一版
+        </button>
       </div>
     </Card>
   )
