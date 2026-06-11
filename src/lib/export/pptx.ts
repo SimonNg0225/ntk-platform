@@ -140,24 +140,30 @@ export async function buildPptxFile(deck: Deck, opts: PptxOptions = {}): Promise
     const takeaway = s.takeaway?.trim()
     const body = takeaway ? { ...fullBody, h: fullBody.h - 0.74 } : fullBody
 
-    switch (layout) {
-      case 'stats':
-        renderStats(slide, body, pack, s)
-        break
-      case 'compare':
-        renderCompare(slide, body, pack, s)
-        break
-      case 'steps':
-        renderSteps(slide, body, pack, s)
-        break
-      case 'quote':
-        renderQuote(slide, body, pack, s)
-        break
-      case 'cards':
-        renderCards(slide, body, pack, s)
-        break
-      default:
-        renderBullets(slide, body, pack, s, photo)
+    // pack 招牌版式覆寫優先（例：月台 transit 的 steps = 地鐵線路圖）；缺省行共用 renderX
+    const override = pack.overrides?.[layout]
+    if (override) {
+      override(slide, body, pack, s)
+    } else {
+      switch (layout) {
+        case 'stats':
+          renderStats(slide, body, pack, s)
+          break
+        case 'compare':
+          renderCompare(slide, body, pack, s)
+          break
+        case 'steps':
+          renderSteps(slide, body, pack, s)
+          break
+        case 'quote':
+          renderQuote(slide, body, pack, s)
+          break
+        case 'cards':
+          renderCards(slide, body, pack, s)
+          break
+        default:
+          renderBullets(slide, body, pack, s, photo)
+      }
     }
     if (takeaway) {
       renderTakeaway(slide, pack, takeaway, {

@@ -11,8 +11,8 @@
 // ============================================================
 
 import type PptxGenJS from 'pptxgenjs'
-import type { Deck, SlideLayout } from './types'
-import { mix, estimateLines, fitTitle, clampText } from './pptxText'
+import type { Deck, Slide, SlideLayout } from './types'
+import { mix, estimateLines, fitTitle, clampText, lineHeightIn } from './pptxText'
 
 export type SlidePackId =
   | 'inkwell'
@@ -142,7 +142,16 @@ export interface Pack {
   section(slide: PptxGenJS.Slide, no: number, title: string): void
   /** 畫 kicker／版題／髮線／頁尾，回傳 body 區域俾 layout 用 */
   contentFrame(slide: PptxGenJS.Slide, ctx: FrameCtx): Rect
+  /**
+   * 招牌版式覆寫（選填）—— pack 為個別 layout 提供自家結構渲染，
+   * 缺省行共用 renderX。section 不適用（章節有獨立 section()）。
+   * 例：月台 transit 將 steps 渲染成地鐵線路圖。
+   */
+  overrides?: Partial<Record<SlideLayout, LayoutRenderFn>>
 }
+
+/** 招牌版式渲染函數簽名 —— 同 pptxLayouts 的 renderX 一致（slide, body, pack, slide-data） */
+export type LayoutRenderFn = (slide: PptxGenJS.Slide, body: Rect, pack: Pack, s: Slide) => void
 
 // ───────── 共用繪圖小工具 ─────────
 
@@ -342,6 +351,56 @@ export function drawFooter(slide: PptxGenJS.Slide, p: Pack, ctx: FrameCtx): void
 
 const INK = { ink: '1C1917', soft: '78716C', faint: 'A8A29E', hair: 'E7E2DC', accent: 'C2410C' }
 
+/**
+ * 招牌 quote：碑刻題款 —— 左上朱砂方印（實心 accent block），
+ * 引文 Georgia 巨號排喺印旁／印下，短粗朱紅刻線，落款細淡字。
+ */
+function renderInscription_inkwell(slide: PptxGenJS.Slide, body: Rect, pack: Pack, s: Slide): void {
+  const q = s.quote
+  if (!q || !q.text || !q.text.trim()) return
+  const text = clampText(q.text.trim(), 60)
+  // 左上朱砂方印（題款印章感）
+  const seal = 0.5
+  const sealX = body.x
+  const sealY = body.y + 0.06
+  slide.addShape('rect', { x: sealX, y: sealY, w: seal, h: seal, fill: { color: pack.accent }, line: { type: 'none' } })
+  // 引文：印右起，Georgia 巨號（displayFont）
+  const quoteX = sealX + seal + 0.4
+  const quoteW = body.x + body.w - quoteX
+  const pt = 32
+  const lines = Math.max(1, Math.min(4, estimateLines(text, pt, quoteW)))
+  const quoteH = Math.min(body.h - 1.2, lines * lineHeightIn(pt) + 0.2)
+  tx(slide, text, {
+    x: quoteX,
+    y: sealY,
+    w: quoteW,
+    h: quoteH,
+    fontSize: pt,
+    color: pack.ink,
+    fontFace: pack.displayFont,
+    italic: pack.displayItalic,
+    lineSpacingMultiple: 1.16,
+    valign: 'top',
+    fit: 'shrink',
+  })
+  // 短粗朱紅刻線
+  const ruleY = sealY + quoteH + 0.3
+  slide.addShape('rect', { x: quoteX, y: ruleY, w: 1.1, h: 0.05, fill: { color: pack.accent }, line: { type: 'none' } })
+  // 落款（attribution）細淡字
+  if (q.attribution && q.attribution.trim()) {
+    tx(slide, `— ${clampText(q.attribution.trim(), 30)}`, {
+      x: quoteX,
+      y: ruleY + 0.18,
+      w: quoteW,
+      h: 0.4,
+      fontSize: 13,
+      color: pack.faint,
+      fontFace: pack.displayFont,
+      italic: pack.displayItalic,
+    })
+  }
+}
+
 const inkwell: Pack = {
   id: 'inkwell',
   name: '墨韻',
@@ -370,6 +429,7 @@ const inkwell: Pack = {
   stepNode: { kind: 'bare', size: 0.34, color: INK.accent, numColor: INK.accent },
   quoteMark: { kind: 'glyph', color: mix(INK.accent, 'FFFFFF', 0.18) },
   splitPhoto: 'bleedHair',
+  overrides: { quote: renderInscription_inkwell },
 
   cover(slide, deck, brand, img) {
     slide.background = { color: 'FFFFFF' }
@@ -427,6 +487,78 @@ const inkwell: Pack = {
 
 const CEL = { ink: '1F2A27', soft: '5F6F6A', faint: 'A4B0AB', hair: 'DCE7E2', accent: '2C6E63', pop: 'C97B2D', panel: 'ECF3F0' }
 
+/**
+ * 招牌 cards：中樞放射 —— 中央圓承載版題精髓，2–6 張卡作圓周節點環繞，
+ * 細放射髮線由中心連向每個節點。圓潤、有機。
+ */
+function renderHubSpoke_celadon(slide: PptxGenJS.Slide, body: Rect, pack: Pack, s: Slide): void {
+  const cards = (s.cards ?? []).slice(0, 6)
+  if (cards.length < 2) return
+  const n = cards.length
+  // 中心 + 半徑（按 body 收身）
+  const cx = body.x + body.w / 2
+  const cy = body.y + body.h / 2
+  const radius = Math.min(body.w / 2 - 1.5, body.h / 2 - 0.7)
+  const hubR = 0.62
+  const nodeR = 0.5
+  // 先畫放射髮線（壓喺節點下）
+  for (let i = 0; i < n; i++) {
+    const ang = -Math.PI / 2 + (2 * Math.PI * i) / n
+    const nxC = cx + radius * Math.cos(ang)
+    const nyC = cy + radius * Math.sin(ang)
+    slide.addShape('line', { x: cx, y: cy, w: nxC - cx, h: nyC - cy, line: { color: pack.hair, width: 1 } })
+  }
+  // 中央 tint 圓 + accent 環
+  slide.addShape('ellipse', { x: cx - hubR, y: cy - hubR, w: hubR * 2, h: hubR * 2, fill: { color: pack.panel }, line: { color: pack.accent, width: 2 } })
+  tx(slide, clampText(s.title.trim(), 12), {
+    x: cx - hubR + 0.06,
+    y: cy - hubR,
+    w: hubR * 2 - 0.12,
+    h: hubR * 2,
+    fontSize: 13,
+    bold: true,
+    color: pack.accent,
+    align: 'center',
+    valign: 'middle',
+  })
+  // 各卡作圓周節點
+  cards.forEach((card, i) => {
+    const ang = -Math.PI / 2 + (2 * Math.PI * i) / n
+    const nxC = cx + radius * Math.cos(ang)
+    const nyC = cy + radius * Math.sin(ang)
+    slide.addShape('ellipse', { x: nxC - nodeR, y: nyC - nodeR, w: nodeR * 2, h: nodeR * 2, fill: { color: 'FFFFFF' }, line: { color: pack.accent, width: 1.5 } })
+    slide.addShape('ellipse', { x: nxC - 0.05, y: nyC - nodeR - 0.16, w: 0.1, h: 0.1, fill: { color: pack.statColor }, line: { type: 'none' } })
+    tx(slide, clampText(card.title.trim(), 10), {
+      x: nxC - nodeR - 0.2,
+      y: nyC - nodeR + 0.06,
+      w: nodeR * 2 + 0.4,
+      h: nodeR * 2 - 0.12,
+      fontSize: 12,
+      bold: true,
+      color: pack.ink,
+      align: 'center',
+      valign: 'middle',
+    })
+    if (card.desc && card.desc.trim()) {
+      // 說明放節點外側（離心方向）
+      const outX = nxC + (nodeR + 0.1) * Math.cos(ang)
+      const outY = nyC + (nodeR + 0.1) * Math.sin(ang)
+      const dw = 1.7
+      tx(slide, clampText(card.desc.trim(), 36), {
+        x: outX - dw / 2,
+        y: outY,
+        w: dw,
+        h: 0.6,
+        fontSize: 10,
+        color: pack.inkSoft,
+        align: 'center',
+        lineSpacingMultiple: 1.15,
+        fit: 'shrink',
+      })
+    }
+  })
+}
+
 const celadon: Pack = {
   id: 'celadon',
   name: '青瓷',
@@ -455,6 +587,7 @@ const celadon: Pack = {
   stepNode: { kind: 'circleOutline', size: 0.34, color: CEL.accent, numColor: CEL.accent },
   quoteMark: { kind: 'circle', size: 0.5, linePt: 1.5, color: CEL.accent },
   splitPhoto: 'circle',
+  overrides: { cards: renderHubSpoke_celadon },
 
   cover(slide, deck, brand, img) {
     slide.background = { color: 'FFFFFF' }
@@ -505,6 +638,60 @@ const celadon: Pack = {
 
 const DAWN = { ink: '292524', soft: '79716B', faint: 'B3ABA3', hair: 'EDE5DB', accent: 'D97706', panel: 'FDF1E1' }
 
+/**
+ * 招牌 steps：跳石仔 —— 大圓角方「石」上下交錯，石內大序號，
+ * 石下放標題＋說明，石間虛點連接。大、跳脫。
+ */
+function renderSteppingStones_dawn(slide: PptxGenJS.Slide, body: Rect, pack: Pack, s: Slide): void {
+  const items = (s.steps ?? []).slice(0, 5)
+  if (items.length < 2) return
+  const n = items.length
+  const stone = Math.min(1.1, (body.w - 0.4) / n - 0.25)
+  const seg = (body.w - stone) / (n - 1)
+  const midY = body.y + body.h * 0.4
+  const bounce = Math.min(0.45, body.h * 0.12)
+  const softFill = mix(pack.accent, 'FFFFFF', 0.55)
+  items.forEach((st, i) => {
+    const sx = body.x + seg * i
+    const up = i % 2 === 0
+    const sy = midY + (up ? -bounce : bounce) - stone / 2
+    const cx = sx + stone / 2
+    // 虛點連接（去下一塊石）
+    if (i < n - 1) {
+      const nx = body.x + seg * (i + 1) + stone / 2
+      const nUp = (i + 1) % 2 === 0
+      const ny = midY + (nUp ? -bounce : bounce)
+      const dots = 4
+      for (let d = 1; d <= dots; d++) {
+        const t = d / (dots + 1)
+        const dx = cx + (nx - cx) * t
+        const dy = (sy + stone / 2) + (ny - (sy + stone / 2)) * t
+        slide.addShape('ellipse', { x: dx - 0.035, y: dy - 0.035, w: 0.07, h: 0.07, fill: { color: pack.accent }, line: { type: 'none' } })
+      }
+    }
+    // 圓角方石（柔琥珀填色）
+    slide.addShape('roundRect', { x: sx, y: sy, w: stone, h: stone, rectRadius: pack.cardRadius * 2.2, fill: { color: softFill }, line: { color: pack.accent, width: 1.5 } })
+    tx(slide, String(i + 1), { x: sx, y: sy, w: stone, h: stone, fontSize: 40, bold: true, color: pack.accent, align: 'center', valign: 'middle', fontFace: pack.displayFont })
+    // 石下標題 + 說明
+    const labelY = sy + stone + 0.16
+    const colW = seg + stone * 0.4
+    tx(slide, clampText(st.title.trim(), 12), { x: cx - colW / 2, y: labelY, w: colW, h: 0.36, fontSize: 15, bold: true, color: pack.ink, align: 'center' })
+    if (st.desc && st.desc.trim()) {
+      tx(slide, clampText(st.desc.trim(), 40), {
+        x: cx - colW / 2,
+        y: labelY + 0.38,
+        w: colW,
+        h: Math.max(0.3, body.y + body.h - labelY - 0.5),
+        fontSize: 11,
+        color: pack.inkSoft,
+        align: 'center',
+        lineSpacingMultiple: 1.2,
+        fit: 'shrink',
+      })
+    }
+  })
+}
+
 const dawn: Pack = {
   id: 'dawn',
   name: '曙光',
@@ -533,6 +720,7 @@ const dawn: Pack = {
   stepNode: { kind: 'roundSquareFill', size: 0.4, color: DAWN.accent, numColor: 'FFFFFF' },
   quoteMark: { kind: 'roundSquare', size: 0.4, radius: 0.1, color: DAWN.accent },
   splitPhoto: 'bleedMotif',
+  overrides: { steps: renderSteppingStones_dawn },
 
   cover(slide, deck, brand, img) {
     slide.background = { color: 'FFFFFF' }
@@ -589,6 +777,63 @@ const dawn: Pack = {
 
 const NOC = { bg: '101826', ink: 'F8FAFC', soft: '94A3B8', faint: '55657F', hair: '2A3447', accent: 'D4A94E', panel: '1B2435' }
 
+/**
+ * 招牌 stats：懸浮 HUD 面板 —— 每個數字坐喺浮起面板上，
+ * 上下各一條燙金細線、巨號 accent／statColor + label、微外陰影。
+ */
+function renderHudStats_nocturne(slide: PptxGenJS.Slide, body: Rect, pack: Pack, s: Slide): void {
+  const stats = (s.stats ?? []).slice(0, 4)
+  if (stats.length < 2) return
+  const n = stats.length
+  const gap = 0.3
+  const panelW = (body.w - gap * (n - 1)) / n
+  const panelH = Math.min(2.6, body.h - 0.4)
+  const py = body.y + (body.h - panelH) / 2
+  stats.forEach((st, i) => {
+    const px = body.x + i * (panelW + gap)
+    // 浮起面板（外陰影）
+    slide.addShape('roundRect', {
+      x: px,
+      y: py,
+      w: panelW,
+      h: panelH,
+      rectRadius: pack.cardRadius,
+      fill: { color: pack.panel },
+      line: { type: 'none' },
+      shadow: { type: 'outer', color: '000000', opacity: 0.45, blur: 8, offset: 3, angle: 90 },
+    })
+    // 上下燙金細線
+    const inset = 0.3
+    hline(slide, px + inset, py + 0.45, panelW - inset * 2, pack.accent, 0.75)
+    hline(slide, px + inset, py + panelH - 0.45, panelW - inset * 2, pack.accent, 0.75)
+    // 巨號 + label
+    tx(slide, clampText(st.value.trim(), 8), {
+      x: px + 0.1,
+      y: py + 0.6,
+      w: panelW - 0.2,
+      h: panelH - 1.4,
+      fontSize: 44,
+      bold: true,
+      color: pack.statColor,
+      align: 'center',
+      valign: 'middle',
+      fontFace: pack.displayFont,
+      italic: pack.displayItalic,
+      fit: 'shrink',
+    })
+    tx(slide, clampText(st.label.trim(), 20), {
+      x: px + 0.15,
+      y: py + panelH - 0.4,
+      w: panelW - 0.3,
+      h: 0.34,
+      fontSize: 11,
+      color: pack.inkSoft,
+      align: 'center',
+      valign: 'middle',
+    })
+  })
+}
+
 const nocturne: Pack = {
   id: 'nocturne',
   name: '夜讀',
@@ -617,6 +862,7 @@ const nocturne: Pack = {
   stepNode: { kind: 'circleOutline', size: 0.34, color: NOC.accent, numColor: NOC.accent },
   quoteMark: { kind: 'glyph', color: mix(NOC.accent, NOC.bg, 0.3) },
   splitPhoto: 'bleedScrim',
+  overrides: { stats: renderHudStats_nocturne },
 
   cover(slide, deck, brand, img) {
     slide.background = { color: NOC.bg }
@@ -664,6 +910,63 @@ const nocturne: Pack = {
 
 const GRD = { ink: '0F172A', soft: '64748B', faint: '94A3B8', hair: 'E2E8F0', accent: '1E40AF', cross: '94A3B8', crossSoft: 'CBD5E1' }
 
+/** register tick：欄框四角短「L」對位記號（cobalt） */
+function gridTick(slide: PptxGenJS.Slide, x: number, y: number, dx: number, dy: number, color: string): void {
+  const len = 0.14
+  hline(slide, x, y, dx * len, color, 1)
+  vline(slide, x, y, dy * len, color, 1)
+}
+
+/**
+ * 招牌 compare：座標表 —— 全 body 淡網格，左右欄以 register tick 四角框定，
+ * 中央鈷藍縱軸線 + 小「VS」方塊，每點前綴細方 marker。工程／精準。
+ */
+function renderCoordTable_grid(slide: PptxGenJS.Slide, body: Rect, pack: Pack, s: Slide): void {
+  const cmp = s.compare
+  if (!cmp || !cmp.left?.length || !cmp.right?.length) return
+  const gridColor = mix(pack.hair, 'FFFFFF', 0.2)
+  // 淡網格（每 0.5" 一格）
+  const cols = Math.floor(body.w / 0.5)
+  const rows = Math.floor(body.h / 0.5)
+  for (let c = 0; c <= cols; c++) vline(slide, body.x + c * 0.5, body.y, rows * 0.5, gridColor, 0.5)
+  for (let r = 0; r <= rows; r++) hline(slide, body.x, body.y + r * 0.5, cols * 0.5, gridColor, 0.5)
+  // 中央縱軸 + VS 方塊
+  const axisX = body.x + body.w / 2
+  vline(slide, axisX, body.y, body.h, pack.accent, 1.25)
+  const vs = 0.4
+  const vsY = body.y + body.h / 2 - vs / 2
+  slide.addShape('rect', { x: axisX - vs / 2, y: vsY, w: vs, h: vs, fill: { color: pack.accent }, line: { type: 'none' } })
+  tx(slide, 'VS', { x: axisX - vs / 2, y: vsY, w: vs, h: vs, fontSize: 12, bold: true, color: 'FFFFFF', align: 'center', valign: 'middle', fontFace: pack.displayFont })
+  // 兩欄
+  const gap = 0.5
+  const colW = (body.w - gap) / 2 - 0.2
+  const cols2: [string, string[], number][] = [
+    [cmp.leftTitle, cmp.left, body.x + 0.05],
+    [cmp.rightTitle, cmp.right, axisX + gap / 2 + 0.15],
+  ]
+  for (const [title, points, colX] of cols2) {
+    // register tick 四角
+    const tx0 = colX
+    const ty0 = body.y + 0.05
+    gridTick(slide, tx0, ty0, 1, 1, pack.accent)
+    gridTick(slide, tx0 + colW, ty0, -1, 1, pack.accent)
+    gridTick(slide, tx0, body.y + body.h - 0.05, 1, -1, pack.accent)
+    gridTick(slide, tx0 + colW, body.y + body.h - 0.05, -1, -1, pack.accent)
+    // 欄題
+    tx(slide, clampText(title.trim(), 22), { x: colX + 0.22, y: ty0 + 0.18, w: colW - 0.4, h: 0.4, fontSize: 16, bold: true, color: pack.ink, fontFace: pack.displayFont })
+    hline(slide, colX + 0.22, ty0 + 0.66, colW - 0.44, pack.accent, 1)
+    // 各點：細方 marker + 文字
+    const pts = points.slice(0, 5)
+    const listY = ty0 + 0.86
+    const rowH = Math.min(0.66, (body.h - 1.1) / pts.length)
+    pts.forEach((p, i) => {
+      const ry = listY + i * rowH
+      slide.addShape('rect', { x: colX + 0.24, y: ry + 0.07, w: 0.1, h: 0.1, fill: { color: pack.accent }, line: { type: 'none' } })
+      tx(slide, clampText(p.trim(), 30), { x: colX + 0.46, y: ry, w: colW - 0.66, h: rowH, fontSize: 12, color: pack.inkSoft, valign: 'top', lineSpacingMultiple: 1.15, fit: 'shrink' })
+    })
+  }
+}
+
 const grid: Pack = {
   id: 'grid',
   name: '方格',
@@ -692,6 +995,7 @@ const grid: Pack = {
   stepNode: { kind: 'squareFill', size: 0.3, color: GRD.accent, numColor: 'FFFFFF' },
   quoteMark: { kind: 'square', size: 0.14, color: GRD.accent },
   splitPhoto: 'bleedHair',
+  overrides: { compare: renderCoordTable_grid },
 
   cover(slide, deck, brand, img) {
     slide.background = { color: 'FFFFFF' }
@@ -773,6 +1077,53 @@ function seminarHeaderBand(slide: PptxGenJS.Slide, brand: string): void {
   tx(slide, '教學簡報 · TEACHING DECK', { x: 7.43, y: 0.1, w: 5, h: 0.26, fontSize: 8, color: 'A9BDD1', charSpacing: 1, align: 'right' })
 }
 
+/**
+ * 招牌 steps：議程時間表 —— 縱向列表，每步左側時段方塊（序號）以縱線串連，
+ * 右側標題＋說明，似研討會議程。
+ */
+function renderAgendaTimeline_seminar(slide: PptxGenJS.Slide, body: Rect, pack: Pack, s: Slide): void {
+  const items = (s.steps ?? []).slice(0, 5)
+  if (items.length < 2) return
+  const n = items.length
+  const slotW = 0.9
+  const slotX = body.x + 0.05
+  const slotH = Math.min(0.7, slotW * 0.66)
+  const rowH = Math.min(1.3, body.h / n)
+  const textX = slotX + slotW + 0.4
+  const textW = body.x + body.w - textX
+  // 縱貫時間線（串連各時段方塊中心）
+  const lineX = slotX + slotW / 2
+  const firstC = body.y + rowH / 2
+  const lastC = body.y + rowH * (n - 1) + rowH / 2
+  vline(slide, lineX, firstC, lastC - firstC, pack.hair, 1.25)
+  items.forEach((st, i) => {
+    const rowY = body.y + i * rowH
+    const cY = rowY + rowH / 2
+    // 時段方塊（深藍 navy）+ 序號
+    const blkY = cY - slotH / 2
+    slide.addShape('roundRect', { x: slotX, y: blkY, w: slotW, h: slotH, rectRadius: pack.cardRadius, fill: { color: pack.statColor }, line: { type: 'none' } })
+    tx(slide, String(i + 1).padStart(2, '0'), { x: slotX, y: blkY, w: slotW, h: slotH, fontSize: 22, bold: true, color: 'FFFFFF', align: 'center', valign: 'middle', fontFace: pack.displayFont })
+    // 連接點：金小方接駁時段塊與文字欄
+    slide.addShape('rect', { x: textX - 0.26, y: cY - 0.05, w: 0.1, h: 0.1, fill: { color: pack.accent }, line: { type: 'none' } })
+    // 右側標題 + 說明
+    tx(slide, clampText(st.title.trim(), 24), { x: textX, y: rowY + 0.1, w: textW, h: 0.36, fontSize: 16, bold: true, color: pack.ink })
+    if (st.desc && st.desc.trim()) {
+      tx(slide, clampText(st.desc.trim(), 60), {
+        x: textX,
+        y: rowY + 0.48,
+        w: textW,
+        h: Math.max(0.3, rowH - 0.56),
+        fontSize: 12,
+        color: pack.inkSoft,
+        lineSpacingMultiple: 1.18,
+        fit: 'shrink',
+      })
+    }
+    // 列間細髮線（最後一行不畫）
+    if (i < n - 1) hline(slide, textX, rowY + rowH, textW, pack.hair, 0.5)
+  })
+}
+
 const seminar: Pack = {
   id: 'seminar',
   name: '講堂',
@@ -802,6 +1153,7 @@ const seminar: Pack = {
   stepNode: { kind: 'circleOutline', size: 0.34, color: SEM.accent, numColor: SEM.accent },
   quoteMark: { kind: 'glyph', color: SEM.gold },
   splitPhoto: 'bleedHair',
+  overrides: { steps: renderAgendaTimeline_seminar },
 
   cover(slide, deck, brand, img) {
     slide.background = { color: SEM.coverBg }
