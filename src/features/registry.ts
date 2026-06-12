@@ -58,6 +58,9 @@ const BudgetTracker = lazyFeature(() => import('./work/BudgetTracker'))
 const WorkDashboard = lazyFeature(() => import('./work/WorkDashboard'))
 const Team = lazyFeature(() => import('./work/Team'))
 
+// 社群功能
+const Forum = lazyFeature(() => import('./forum/Forum'))
+
 // 共用功能
 const Calendar = lazyFeature(() => import('./shared/Calendar'))
 const Countdown = lazyFeature(() => import('./shared/Countdown'))
@@ -519,6 +522,18 @@ export const FEATURES: Feature[] = [
     icon: '💰',
     group: '理財',
     component: BudgetTracker,
+    status: 'ready',
+  },
+
+  // ═══════════ 社群 ═══════════
+  {
+    id: 'community-forum',
+    modes: ['work', 'learning'],
+    name: '老師社群',
+    description: '同全港老師分版討論：教學、班務、考評、見工求職。',
+    icon: '💬',
+    group: '社群',
+    component: Forum,
     status: 'ready',
   },
 
