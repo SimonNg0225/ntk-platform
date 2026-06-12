@@ -256,6 +256,7 @@ export default function AskData() {
         messages,
         system: SYSTEM,
         signal: controller.signal,
+        source: 'ask-data',
       })) {
         full += chunk
         setAnswer(full)

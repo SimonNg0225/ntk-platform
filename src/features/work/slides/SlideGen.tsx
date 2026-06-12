@@ -176,6 +176,7 @@ export default function SlideGen() {
         messages: [{ role: 'user', content: source }],
         model,
         temperature: 0.5,
+        source: 'slides',
       })
       let deck = parseDeck(raw, fallbackTitle)
       // 鐵律保險：AI 版數對唔上 → 照你嘅分段直接入版，分頁永遠唔會被打亂

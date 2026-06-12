@@ -51,7 +51,7 @@ export async function aiTriage(
       content: `以下係待整理嘅擷取項目（格式「索引. 內容」）：\n\n${list}\n\n替每一條判斷分類，回 JSON 陣列。`,
     },
   ]
-  const raw = await complete({ messages, system: SYSTEM, signal })
+  const raw = await complete({ messages, system: SYSTEM, signal, source: 'inbox' })
   const arr = parseJsonArray<AiTriageResult>(raw)
   if (!arr) throw new Error('AI 回應唔係有效 JSON，請再試一次。')
 

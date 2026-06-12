@@ -134,6 +134,7 @@ export default function Assess({ model }: { model: AIModel }) {
         messages: [{ role: 'user', content: buildPrompt(form, bmiValue) }],
         model,
         temperature: 0.5,
+        source: 'fitness',
       })
       const parsed = parseAdvice(raw)
       if (!parsed) {

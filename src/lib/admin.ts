@@ -36,7 +36,7 @@ async function callAdmin<T>(action: string, body: Record<string, unknown> = {}):
 export interface AdminOverview {
   users: { total: number }
   subs: { pro: number; activePro: number; free: number; mrrHkd: number }
-  ai: { genToday: number; genMonth: number; transMonth: number; estCostUsd: number }
+  ai: { genToday: number; callsMonth: number; transMonth: number; costUsd: number }
   orgs: { count: number; seats: number; members: number }
   tickets: { open: number; total: number }
   announcements: { active: number }
@@ -52,20 +52,27 @@ export interface AdminUser {
   current_period_end: string | null
 }
 
+export interface UsageFeature {
+  feature: string
+  calls: number
+  inTok: number
+  outTok: number
+  cost: number
+}
+
 export interface AdminUsage {
   month: string
-  genMonth: number
-  transMonth: number
-  costPerCall: number
-  costPerTranscribe: number
-  estCostUsd: number
+  totals: { calls: number; inTok: number; outTok: number; cost: number }
+  pricing: { flashIn: number; flashOut: number; proIn: number; proOut: number }
+  features: UsageFeature[]
   top: {
     user_id: string
     email: string | null
-    general: number
-    transcribe: number
-    total: number
-    estCostUsd: number
+    calls: number
+    inTok: number
+    outTok: number
+    cost: number
+    features: { feature: string; cost: number }[]
   }[]
 }
 
@@ -109,7 +116,8 @@ export const adminListUsers = (q = '', page = 1) =>
 export const adminSetPlan = (userId: string, plan: 'free' | 'pro', status = '') =>
   callAdmin<{ ok: true }>('set-plan', { userId, plan, status })
 
-export const adminUsage = () => callAdmin<AdminUsage>('usage')
+export const adminUsage = (month?: string) =>
+  callAdmin<AdminUsage>('usage', month ? { month } : {})
 
 export const adminListOrgs = () => callAdmin<AdminOrg[]>('orgs')
 

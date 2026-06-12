@@ -83,6 +83,7 @@ export default function FormQA({ model }: { model: AIModel }) {
         system: SYSTEM,
         model,
         signal: controller.signal,
+        source: 'fitness',
       })) {
         full += chunk
         setStreaming(full)

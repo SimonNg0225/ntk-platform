@@ -994,7 +994,7 @@ function CoachInsight({ workouts }: { workouts: Workout[] }) {
             '\n\n用繁體中文（廣東話書面語），俾 2-3 點具體建議：訓練量趨勢、疲勞/恢復、下一步點加量或減載。每點一句，唔好客套，唔好醫療診斷。',
         },
       ]
-      const out = await complete({ messages, temperature: 0.6 })
+      const out = await complete({ messages, temperature: 0.6, source: 'fitness' })
       setInsight(out.trim() || '暫時冇建議，繼續記錄更多訓練先。')
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'AI 分析失敗')

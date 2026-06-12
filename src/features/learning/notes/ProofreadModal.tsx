@@ -32,6 +32,7 @@ export default function ProofreadModal({
           system: PROOFREAD_SYSTEM,
           messages: [{ role: 'user', content }],
           temperature: 0.1,
+          source: 'notes',
         })
         if (!alive) return
         setIssues(parseProofread(raw))

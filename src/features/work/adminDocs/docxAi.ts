@@ -120,6 +120,7 @@ export async function suggestFields(
   const out = await complete({
     model,
     messages: [{ role: 'user', content: buildSuggestPrompt(trimmed) }],
+    source: 'admin-docs',
   })
   return parseSuggestedFields(out)
 }
@@ -425,6 +426,7 @@ export async function draftContent(
   const out = await complete({
     model,
     messages: [{ role: 'user', content: buildDraftPrompt(fields, trimmed) }],
+    source: 'admin-docs',
   })
   return parseDraftContent(out, fields)
 }

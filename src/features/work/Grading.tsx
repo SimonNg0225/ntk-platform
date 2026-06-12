@@ -141,6 +141,7 @@ export default function Grading() {
         messages: [{ role: 'user', content, images }],
         model,
         signal: controller.signal,
+        source: 'grading',
       })) {
         setOutput((o) => o + chunk)
       }

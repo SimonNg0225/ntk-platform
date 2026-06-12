@@ -543,6 +543,7 @@ export default function NutritionView() {
         system: NUTRITION_SYSTEM,
         model: 'gemini-2.5-flash',
         temperature: 0.2,
+        source: 'nutrition',
       })
       const raw = parseItemsObject(out)
       if (!raw) {
