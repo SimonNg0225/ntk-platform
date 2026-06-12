@@ -143,7 +143,7 @@ const marble: Pack = {
     }
   },
 
-  cover(slide, deck, brand, img) {
+  cover(slide, deck, brand, img, title) {
     slide.background = { color: MAR.bg }
     // 招牌雲石紋理底圖（瀏覽器 Canvas raster；冇 canvas 時 fallback 全版極淡畫廊紙深度漸層）
     const tex = coverTextureUri('marble')
@@ -181,10 +181,20 @@ const marble: Pack = {
     marbleDiamond(slide, hasImg ? px : px + pw / 2 - 0.07, 1.3, 0.14)
     tx(slide, 'COLLECTION · 教學典藏', { x: px, y: 1.62, w: pw, h: 0.3, fontSize: 10, color: MAR.accent, charSpacing: 4, bold: true, align })
     marbleRule(slide, ruleX, 2.18, 2.6, MAR.accent)
-    const fit = fitTitle(deck.title, 'cover')
-    const lines = Math.max(1, Math.min(2, estimateLines(deck.title, fit.fontPt, pw)))
-    tx(slide, deck.title, { x: px, y: 2.55, w: pw, h: 1.55, fontSize: fit.fontPt, bold: true, color: MAR.ink, align, lineSpacingMultiple: 1.08, fit: 'shrink' })
-    let cursorY = 2.55 + (lines * fit.fontPt * 1.08) / 72 + 0.2
+    let cursorY: number
+    if (title) {
+      // 高擬真：招牌標題圖（跨平台一致）
+      const th = Math.min(1.55, pw / title.aspect)
+      const tw = th * title.aspect
+      const tImgX = align === 'center' ? px + (pw - tw) / 2 : px
+      slide.addImage({ data: title.dataUri, x: tImgX, y: 2.55, w: tw, h: th })
+      cursorY = 2.55 + th + 0.16
+    } else {
+      const fit = fitTitle(deck.title, 'cover')
+      const lines = Math.max(1, Math.min(2, estimateLines(deck.title, fit.fontPt, pw)))
+      tx(slide, deck.title, { x: px, y: 2.55, w: pw, h: 1.55, fontSize: fit.fontPt, bold: true, color: MAR.ink, align, lineSpacingMultiple: 1.08, fit: 'shrink' })
+      cursorY = 2.55 + (lines * fit.fontPt * 1.08) / 72 + 0.2
+    }
     if (deck.subtitle) {
       tx(slide, deck.subtitle, { x: px, y: cursorY, w: pw, h: 0.5, fontSize: 15, color: MAR.soft, align })
       cursorY += 0.55
