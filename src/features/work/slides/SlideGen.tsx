@@ -52,6 +52,8 @@ import {
   fetchCoverPhoto,
   fetchSlidePhoto,
   isStockConfigured,
+  renderTitleImage,
+  hasTitleFont,
 } from '../../../lib/export'
 import type { Slide } from '../../../lib/export/types'
 import { slideDecksCol, type DeckRecord } from './slideStore'
@@ -117,6 +119,8 @@ export default function SlideGen() {
   const [pack, setPack] = useState<SlidePackId>('inkwell')
   const [usePhoto, setUsePhoto] = useState(false)
   const [useSlidePhotos, setUseSlidePhotos] = useState(true)
+  // 高擬真標題：用招牌字體 Canvas render 封面標題（圖，跨平台一致；中文 latin 字體會自動 fallback）
+  const [highFi, setHighFi] = useState(false)
   // 「跟我嘅分段分版」：--- 或空行斬版，AI 只執靚唔改分頁
   const [followPages, setFollowPages] = useState(false)
   // 逐版編輯器
@@ -225,6 +229,12 @@ export default function SlideGen() {
           if (Object.keys(found).length > 0) slidePhotos = found
         }
       }
+      // 高擬真標題（招牌字體 → 圖）；失敗／中文 latin 字體會回 null → 引擎用原生標題
+      let coverTitle
+      if (highFi && hasTitleFont(pack)) {
+        const meta = SLIDE_PACKS.find((p) => p.id === pack)
+        coverTitle = (await renderTitleImage(rec.title, pack, meta?.ink ?? '1A1A1A', 160)) ?? undefined
+      }
       await downloadPptx(
         {
           title: rec.title,
@@ -233,7 +243,7 @@ export default function SlideGen() {
           coverImageQuery: rec.coverImageQuery,
         },
         rec.title,
-        { pack, coverPhoto, slidePhotos },
+        { pack, coverPhoto, slidePhotos, coverTitle },
       )
       toast.success('已下載 PowerPoint')
     } catch (e) {
@@ -429,6 +439,9 @@ export default function SlideGen() {
           onUsePhoto={setUsePhoto}
           useSlidePhotos={useSlidePhotos}
           onUseSlidePhotos={setUseSlidePhotos}
+          highFi={highFi}
+          onHighFi={setHighFi}
+          showHighFi={hasTitleFont(pack)}
           onEdit={setEditingIndex}
           onMove={moveSlide}
           onDelete={(i) => void deleteSlide(i)}
@@ -509,6 +522,9 @@ function DeckView({
   onUsePhoto,
   useSlidePhotos,
   onUseSlidePhotos,
+  highFi,
+  onHighFi,
+  showHighFi,
 }: {
   rec: DeckRecord
   onDownload: () => void
@@ -519,6 +535,9 @@ function DeckView({
   onUsePhoto: (v: boolean) => void
   useSlidePhotos: boolean
   onUseSlidePhotos: (v: boolean) => void
+  highFi: boolean
+  onHighFi: (v: boolean) => void
+  showHighFi: boolean
   onEdit: (i: number) => void
   onMove: (i: number, dir: -1 | 1) => void
   onDelete: (i: number) => void
@@ -602,6 +621,22 @@ function DeckView({
           >
             <Images size={13} /> 內頁配圖
           </button>
+          {showHighFi && (
+            <button
+              type="button"
+              onClick={() => onHighFi(!highFi)}
+              aria-pressed={highFi}
+              title="封面標題用招牌字體 render 成圖（跨平台一致；標題變圖、唔可喺 PPT 改）"
+              className={cx(
+                'inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-medium transition active:scale-[0.97]',
+                highFi
+                  ? 'border-accent bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent'
+                  : 'border-black/[0.08] text-slate-600 hover:bg-black/[0.03] dark:border-white/10 dark:text-slate-300',
+              )}
+            >
+              <Sparkles size={13} /> 高擬真標題
+            </button>
+          )}
         </div>
       </div>
 

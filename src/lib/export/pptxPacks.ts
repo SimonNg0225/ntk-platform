@@ -11,7 +11,7 @@
 // ============================================================
 
 import type PptxGenJS from 'pptxgenjs'
-import type { Deck, Slide, SlideLayout } from './types'
+import type { CoverTitle, Deck, Slide, SlideLayout } from './types'
 import { mix, estimateLines, fitTitle, clampText, lineHeightIn } from './pptxText'
 import { gradLinear, gradRadial } from './pptxGradients'
 import { coverTextureUri } from './slideTextures'
@@ -162,7 +162,7 @@ export interface Pack {
   stepNode: StepNodeSpec
   quoteMark: QuoteMarkSpec
   splitPhoto: SplitPhotoStyle
-  cover(slide: PptxGenJS.Slide, deck: Deck, brand: string, img?: SlideImage): void
+  cover(slide: PptxGenJS.Slide, deck: Deck, brand: string, img?: SlideImage, title?: CoverTitle): void
   section(slide: PptxGenJS.Slide, no: number, title: string): void
   /** 畫 kicker／版題／髮線／頁尾，回傳 body 區域俾 layout 用 */
   contentFrame(slide: PptxGenJS.Slide, ctx: FrameCtx): Rect

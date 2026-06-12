@@ -101,3 +101,11 @@ export interface Deck {
   /** 英文封面搜尋詞（選填） */
   coverImageQuery?: string
 }
+
+/** 高擬真標題圖（Canvas 用招牌字體 render 嘅標題 PNG）— 高擬真模式封面用 */
+export interface CoverTitle {
+  /** PNG data URI */
+  dataUri: string
+  /** 圖闊/高比例 */
+  aspect: number
+}

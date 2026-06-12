@@ -395,7 +395,7 @@ const sumi: Pack = {
     })
   },
 
-  cover(slide, deck, brand, img) {
+  cover(slide, deck, brand, img, title) {
     slide.background = { color: SUM.bg }
     const hasImg = Boolean(img)
     // 招牌水墨紋理底圖（瀏覽器 Canvas raster；冇 canvas 時 fallback 漸層底）
@@ -429,12 +429,20 @@ const sumi: Pack = {
     // 題在大片留白中（左下偏上）
     tx(slide, '水墨 · 教學簡報', { x: 0.95, y: 2.55, w: 8, h: 0.3, fontSize: 11, color: SUM.accent, charSpacing: 4, bold: true })
     const titleW = hasImg ? 6.6 : 9.4
-    const fit = fitTitle(deck.title, 'cover')
-    const lines = Math.max(1, Math.min(2, estimateLines(deck.title, fit.fontPt, titleW)))
-    tx(slide, deck.title, { x: 0.95, y: 3.05, w: titleW, h: 1.55, fontSize: fit.fontPt, bold: true, color: SUM.ink, lineSpacingMultiple: 1.1, fit: 'shrink' })
+    let belowY: number
+    if (title) {
+      // 高擬真：招牌毛筆標題圖（跨平台一致）
+      const th = Math.min(1.5, titleW / title.aspect)
+      slide.addImage({ data: title.dataUri, x: 0.95, y: 3.0, w: th * title.aspect, h: th })
+      belowY = 3.0 + th + 0.16
+    } else {
+      const fit = fitTitle(deck.title, 'cover')
+      const lines = Math.max(1, Math.min(2, estimateLines(deck.title, fit.fontPt, titleW)))
+      tx(slide, deck.title, { x: 0.95, y: 3.05, w: titleW, h: 1.55, fontSize: fit.fontPt, bold: true, color: SUM.ink, lineSpacingMultiple: 1.1, fit: 'shrink' })
+      belowY = 3.05 + (lines * fit.fontPt * 1.1) / 72 + 0.2
+    }
     if (deck.subtitle) {
-      const subY = 3.05 + (lines * fit.fontPt * 1.1) / 72 + 0.2
-      tx(slide, deck.subtitle, { x: 0.95, y: subY, w: titleW, h: 0.5, fontSize: 15, color: SUM.soft })
+      tx(slide, deck.subtitle, { x: 0.95, y: belowY, w: titleW, h: 0.5, fontSize: 15, color: SUM.soft })
     }
     // 飛白分隔
     flyingWhite(slide, 0.95, 5.35, 4.2, 3)
