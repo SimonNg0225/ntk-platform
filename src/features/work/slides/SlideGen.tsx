@@ -20,6 +20,7 @@ import {
   ChevronDown,
   Plus,
   ListTree,
+  RefreshCw,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import {
@@ -56,6 +57,7 @@ import type { Slide } from '../../../lib/export/types'
 import { slideDecksCol, type DeckRecord } from './slideStore'
 import { buildSlideSystem, buildFrameworkSystem, parseDeck } from './slidePrompts'
 import { parseManualPages, frameworkToDeck, detectManualPages } from './manualPages'
+import { slideSourceKey } from './sourceKey'
 import SlideEditor from './editor/SlideEditor'
 import PackPreview from './PackPreview'
 
@@ -119,10 +121,28 @@ export default function SlideGen() {
   const [followPages, setFollowPages] = useState(false)
   // 逐版編輯器
   const [editingIndex, setEditingIndex] = useState<number | null>(null)
+  // 同內容自動重用：當前顯示緊嘅係呢個 key 嘅重用版本（用嚟顯示「重新生成」退路）
+  const [reusedKey, setReusedKey] = useState<string | null>(null)
 
   const hasInput = mode === 'topic' ? topics.length > 0 : text.trim().length > 0
 
-  async function run() {
+  // 當前輸入嘅內容指紋（同 run 入面計法一致）
+  const currentKey = useMemo(() => {
+    const topic = topics.find((t) => t.id === topicId) ?? topics[0]
+    const pages = mode === 'text' && followPages ? parseManualPages(text) : []
+    return slideSourceKey({
+      mode,
+      text,
+      topicId,
+      topicText: topic?.topic ?? '',
+      count,
+      framework: pages.length >= 2,
+      pageCount: pages.length,
+      model,
+    })
+  }, [mode, text, topicId, topics, count, followPages, model])
+
+  async function run(force = false) {
     if (busy || !hasInput) return
     const topic = topics.find((t) => t.id === topicId) ?? topics[0]
     const source = mode === 'topic' ? `課題：${topic?.topic ?? ''}` : text.trim()
@@ -130,6 +150,19 @@ export default function SlideGen() {
     // 「跟我嘅分段分版」：要 ≥2 段先有意義
     const pages = mode === 'text' && followPages ? parseManualPages(text) : []
     const frameworkMode = pages.length >= 2
+
+    // 同內容自動重用：搵返最新一份同指紋嘅舊簡報，直接攞唔再行 AI。
+    if (!force) {
+      const cached = history.find((r) => r.sourceKey === currentKey)
+      if (cached) {
+        setCurrent(cached)
+        setReusedKey(currentKey)
+        setEditingIndex(null)
+        toast.success('用回之前生成咗的版本（慳 AI；想重新做可㩒「重新生成」）')
+        return
+      }
+    }
+    setReusedKey(null)
     setBusy(true)
     try {
       const raw = await complete({
@@ -154,6 +187,7 @@ export default function SlideGen() {
         subtitle: deck.subtitle,
         slides: deck.slides,
         coverImageQuery: deck.coverImageQuery,
+        sourceKey: currentKey, // 內容指紋：下次同內容直接重用、唔再行 AI
       })
       setCurrent(rec)
       toast.success(`簡報已生成（${deck.slides.length} 版）`)
@@ -364,9 +398,16 @@ export default function SlideGen() {
               ))}
             </Select>
           </Field>
-          <Button icon={Sparkles} onClick={run} loading={busy} disabled={!hasInput}>
-            {busy ? '生成緊…' : '生成簡報'}
-          </Button>
+          <div className="flex items-center gap-2">
+            {reusedKey === currentKey && !busy && (
+              <Button variant="ghost" icon={RefreshCw} onClick={() => void run(true)}>
+                重新生成
+              </Button>
+            )}
+            <Button icon={Sparkles} onClick={() => void run()} loading={busy} disabled={!hasInput}>
+              {busy ? '生成緊…' : '生成簡報'}
+            </Button>
+          </div>
         </div>
       </Card>
 
