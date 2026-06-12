@@ -485,6 +485,67 @@ Deno.serve(async (req: Request) => {
         return json({ data: { ok: true } })
       }
 
+      // ════════════ 論壇審核 ════════════
+      case 'forum:reports': {
+        const { data: reports } = await admin.from('forum_reports')
+          .select('id, target_type, target_id, reason, status, created_at')
+          .eq('status', 'open').order('created_at', { ascending: false }).limit(200)
+        const threadIds = (reports ?? []).filter((r) => r.target_type === 'thread').map((r) => r.target_id)
+        const postIds = (reports ?? []).filter((r) => r.target_type === 'post').map((r) => r.target_id)
+        const [{ data: ths }, { data: pos }] = await Promise.all([
+          threadIds.length ? admin.from('forum_threads').select('id, title, body, status, author_id').in('id', threadIds) : Promise.resolve({ data: [] as unknown[] }),
+          postIds.length ? admin.from('forum_posts').select('id, body, status, author_id, thread_id').in('id', postIds) : Promise.resolve({ data: [] as unknown[] }),
+        ])
+        const tm = new Map((ths ?? []).map((t: Record<string, unknown>) => [t.id, t]))
+        const pm = new Map((pos ?? []).map((p: Record<string, unknown>) => [p.id, p]))
+        return json({ data: (reports ?? []).map((r) => ({
+          ...r,
+          content: r.target_type === 'thread' ? tm.get(r.target_id) ?? null : pm.get(r.target_id) ?? null,
+        })) })
+      }
+      case 'forum:remove': {
+        const type = String(body.type), id = String(body.id ?? '')
+        const table = type === 'thread' ? 'forum_threads' : 'forum_posts'
+        const { error } = await admin.from(table).update({ status: 'removed' }).eq('id', id)
+        if (error) return json({ error: error.message }, 500)
+        await admin.from('forum_reports').update({ status: 'resolved' }).eq('target_id', id)
+        await audit('forum-remove', id, { type })
+        return json({ data: { ok: true } })
+      }
+      case 'forum:thread-flag': {
+        const id = String(body.id ?? '')
+        const patch: Record<string, unknown> = {}
+        if (typeof body.pinned === 'boolean') patch.pinned = body.pinned
+        if (typeof body.featured === 'boolean') patch.featured = body.featured
+        if (body.status === 'active' || body.status === 'locked') patch.status = body.status
+        if (Object.keys(patch).length === 0) return json({ error: '冇嘢要改。' }, 400)
+        const { error } = await admin.from('forum_threads').update(patch).eq('id', id)
+        if (error) return json({ error: error.message }, 500)
+        await audit('forum-flag', id, patch)
+        return json({ data: { ok: true } })
+      }
+      case 'forum:resolve-report': {
+        const id = String(body.id ?? '')
+        const { error } = await admin.from('forum_reports').update({ status: 'resolved' }).eq('id', id)
+        if (error) return json({ error: error.message }, 500)
+        return json({ data: { ok: true } })
+      }
+      case 'forum:ban': {
+        const userId = String(body.userId ?? ''), reason = String(body.reason ?? '')
+        const { error } = await admin.from('forum_bans')
+          .upsert({ user_id: userId, reason, banned_by: actorEmail }, { onConflict: 'user_id' })
+        if (error) return json({ error: error.message }, 500)
+        await audit('forum-ban', userId, { reason })
+        return json({ data: { ok: true } })
+      }
+      case 'forum:unban': {
+        const userId = String(body.userId ?? '')
+        const { error } = await admin.from('forum_bans').delete().eq('user_id', userId)
+        if (error) return json({ error: error.message }, 500)
+        await audit('forum-unban', userId)
+        return json({ data: { ok: true } })
+      }
+
       default:
         return json({ error: `未知 action：${action}` }, 400)
     }
