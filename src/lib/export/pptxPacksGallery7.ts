@@ -27,6 +27,7 @@ import {
 import type { Slide } from './types'
 import { clampText, estimateLines, fitTitle, mix } from './pptxText'
 import { gradLinear } from './pptxGradients'
+import { coverTextureUri } from './slideTextures'
 
 // ============================================================
 //  手帳 scrapbook — 拼貼手帳
@@ -180,20 +181,26 @@ const scrapbook: Pack = {
   cover(slide, deck, brand, img) {
     slide.background = { color: SCR.bg }
     const hasImg = Boolean(img)
-    // 全版極淡牛皮卡紙深度漸層（壓底，貼紙浮其上）
-    slide.addShape('rect', {
-      x: 0,
-      y: 0,
-      w: 13.33,
-      h: 7.5,
-      fill: {
-        color: gradLinear(90, [
-          { pos: 0, color: mix(SCR.bg, 'FFFFFF', 0.04) },
-          { pos: 100, color: mix(SCR.bg, SCR.ink, 0.06) },
-        ]),
-      },
-      line: { type: 'none' },
-    })
+    // 無相時：招牌手帳紋理底圖（瀏覽器 Canvas raster；冇 canvas 時 fallback 漸層底）
+    const tex = hasImg ? null : coverTextureUri('scrapbook')
+    if (tex) {
+      slide.addImage({ data: tex, x: 0, y: 0, w: 13.333, h: 7.5, sizing: { type: 'cover', w: 13.333, h: 7.5 } })
+    } else {
+      // 全版極淡牛皮卡紙深度漸層（壓底，貼紙浮其上）
+      slide.addShape('rect', {
+        x: 0,
+        y: 0,
+        w: 13.33,
+        h: 7.5,
+        fill: {
+          color: gradLinear(90, [
+            { pos: 0, color: mix(SCR.bg, 'FFFFFF', 0.04) },
+            { pos: 100, color: mix(SCR.bg, SCR.ink, 0.06) },
+          ]),
+        },
+        line: { type: 'none' },
+      })
+    }
     // 牛皮卡紙板感：極淡內裱髮線框
     slide.addShape('rect', { x: 0.32, y: 0.32, w: 12.69, h: 6.86, fill: { type: 'none' }, line: { color: mix(SCR.ink, SCR.bg, 0.16), width: 0.75 } })
     if (img) {
@@ -391,20 +398,25 @@ const sumi: Pack = {
   cover(slide, deck, brand, img) {
     slide.background = { color: SUM.bg }
     const hasImg = Boolean(img)
-    // 全版極淡宣紙色深度漸層（壓底，水墨／題字浮其上）
-    slide.addShape('rect', {
-      x: 0,
-      y: 0,
-      w: 13.33,
-      h: 7.5,
-      fill: {
-        color: gradLinear(90, [
-          { pos: 0, color: mix(SUM.bg, 'FFFFFF', 0.04) },
-          { pos: 100, color: mix(SUM.bg, SUM.ink, 0.05) },
-        ]),
-      },
-      line: { type: 'none' },
-    })
+    // 招牌水墨紋理底圖（瀏覽器 Canvas raster；冇 canvas 時 fallback 漸層底）
+    const tex = coverTextureUri('sumi')
+    if (tex) {
+      slide.addImage({ data: tex, x: 0, y: 0, w: 13.333, h: 7.5, sizing: { type: 'cover', w: 13.333, h: 7.5 } })
+    } else {
+      slide.addShape('rect', {
+        x: 0,
+        y: 0,
+        w: 13.33,
+        h: 7.5,
+        fill: {
+          color: gradLinear(90, [
+            { pos: 0, color: mix(SUM.bg, 'FFFFFF', 0.04) },
+            { pos: 100, color: mix(SUM.bg, SUM.ink, 0.05) },
+          ]),
+        },
+        line: { type: 'none' },
+      })
+    }
     // 一道大水墨筆掃過右上角（層疊灰 roundRect）
     inkStroke(slide, { x: 8.8, y: -0.6, w: 5.4, h: 2.6 }, 12)
     if (img) {
@@ -573,20 +585,26 @@ const brutalist: Pack = {
   cover(slide, deck, brand, img) {
     slide.background = { color: BRU.bg }
     const hasImg = Boolean(img)
-    // 全版極淡米白深度漸層（壓底，硬框／巨字浮其上 —— 保持生硬僅添微深度）
-    slide.addShape('rect', {
-      x: 0,
-      y: 0,
-      w: 13.33,
-      h: 7.5,
-      fill: {
-        color: gradLinear(90, [
-          { pos: 0, color: mix(BRU.bg, 'FFFFFF', 0.04) },
-          { pos: 100, color: mix(BRU.bg, BRU.ink, 0.06) },
-        ]),
-      },
-      line: { type: 'none' },
-    })
+    // 無相時：招牌粗獷紋理底圖（瀏覽器 Canvas raster；冇 canvas 時 fallback 漸層底）
+    const tex = hasImg ? null : coverTextureUri('brutalist')
+    if (tex) {
+      slide.addImage({ data: tex, x: 0, y: 0, w: 13.333, h: 7.5, sizing: { type: 'cover', w: 13.333, h: 7.5 } })
+    } else {
+      // 全版極淡米白深度漸層（壓底，硬框／巨字浮其上 —— 保持生硬僅添微深度）
+      slide.addShape('rect', {
+        x: 0,
+        y: 0,
+        w: 13.33,
+        h: 7.5,
+        fill: {
+          color: gradLinear(90, [
+            { pos: 0, color: mix(BRU.bg, 'FFFFFF', 0.04) },
+            { pos: 100, color: mix(BRU.bg, BRU.ink, 0.06) },
+          ]),
+        },
+        line: { type: 'none' },
+      })
+    }
     // 巨型極淡 outline 頁式數字（背景，部分出右下）
     tx(slide, '01', { x: 7.0, y: 2.4, w: 7.0, h: 5.4, fontSize: 400, bold: true, color: mix(BRU.ink, BRU.bg, 0.05), align: 'right', valign: 'bottom', fontFace: 'Arial Black' })
     // 頂部 mono 標籤

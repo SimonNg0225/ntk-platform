@@ -29,6 +29,7 @@ import {
 import type { Slide } from './types'
 import { clampText, estimateLines, fitTitle, mix } from './pptxText'
 import { gradLinear, gradRadial } from './pptxGradients'
+import { coverTextureUri } from './slideTextures'
 
 // ============================================================
 //  蒸汽波 vapor — Y2K 復古
@@ -175,6 +176,13 @@ const vapor: Pack = {
   cover(slide, deck, brand, img) {
     slide.background = { color: VAP.bg }
     const hasImg = Boolean(img)
+    // 無相時：招牌 Y2K 紋理底圖（瀏覽器 Canvas raster；冇 canvas 時純底色）
+    if (!hasImg) {
+      const tex = coverTextureUri('vapor')
+      if (tex) {
+        slide.addImage({ data: tex, x: 0, y: 0, w: 13.333, h: 7.5, sizing: { type: 'cover', w: 13.333, h: 7.5 } })
+      }
+    }
     // 版底透視地網格（地平線 ~4.7）
     perspGrid(slide, 0, 4.7, 13.33, 7.5, mix(VAP.cyan, VAP.bg, 0.7))
     // 橫紋落日（右上，無相時擺大）
@@ -372,20 +380,26 @@ const bauhaus: Pack = {
   cover(slide, deck, brand, img) {
     slide.background = { color: BAU.bg }
     const hasImg = Boolean(img)
-    // 全版極淡米白深度漸層（壓底，幾何構成浮其上）
-    slide.addShape('rect', {
-      x: 0,
-      y: 0,
-      w: 13.33,
-      h: 7.5,
-      fill: {
-        color: gradLinear(90, [
-          { pos: 0, color: mix(BAU.bg, 'FFFFFF', 0.04) },
-          { pos: 100, color: mix(BAU.bg, BAU.ink, 0.06) },
-        ]),
-      },
-      line: { type: 'none' },
-    })
+    // 無相時：招牌包浩斯紋理底圖（瀏覽器 Canvas raster；冇 canvas 時 fallback 漸層底）
+    const tex = hasImg ? null : coverTextureUri('bauhaus')
+    if (tex) {
+      slide.addImage({ data: tex, x: 0, y: 0, w: 13.333, h: 7.5, sizing: { type: 'cover', w: 13.333, h: 7.5 } })
+    } else {
+      // 全版極淡米白深度漸層（壓底，幾何構成浮其上）
+      slide.addShape('rect', {
+        x: 0,
+        y: 0,
+        w: 13.33,
+        h: 7.5,
+        fill: {
+          color: gradLinear(90, [
+            { pos: 0, color: mix(BAU.bg, 'FFFFFF', 0.04) },
+            { pos: 100, color: mix(BAU.bg, BAU.ink, 0.06) },
+          ]),
+        },
+        line: { type: 'none' },
+      })
+    }
     // 包浩斯構圖：大紅圓（右上）+ 藍三角（右下）+ 黃方（角）+ 粗黑斜桿
     if (!hasImg) {
       // 大紅圓 hero：極淡受光漸層（頂亮 → 紅 → 底沉），保持平塗膽色
@@ -608,21 +622,26 @@ const cosmos: Pack = {
       slide.addShape('rect', { x: 0, y: 0, w: 13.33, h: 7.5, fill: { color: COS.bg, transparency: 32 }, line: { type: 'none' } })
       photoCreditOnImage(slide, img.credit, { x: 0, y: 0, w: 13.33, h: 7.5 })
     }
-    // 無相時：版底極淡午夜藍深度漸層（頂部微帶金暈，底沉）
+    // 無相時：招牌星雲紋理底圖（瀏覽器 Canvas raster；冇 canvas 時 fallback 漸層底）
     if (!img) {
-      slide.addShape('rect', {
-        x: 0,
-        y: 0,
-        w: 13.33,
-        h: 7.5,
-        fill: {
-          color: gradLinear(90, [
-            { pos: 0, color: mix(COS.bg, COS.gold, 0.06) },
-            { pos: 100, color: COS.bg },
-          ]),
-        },
-        line: { type: 'none' },
-      })
+      const tex = coverTextureUri('cosmos')
+      if (tex) {
+        slide.addImage({ data: tex, x: 0, y: 0, w: 13.333, h: 7.5, sizing: { type: 'cover', w: 13.333, h: 7.5 } })
+      } else {
+        slide.addShape('rect', {
+          x: 0,
+          y: 0,
+          w: 13.33,
+          h: 7.5,
+          fill: {
+            color: gradLinear(90, [
+              { pos: 0, color: mix(COS.bg, COS.gold, 0.06) },
+              { pos: 100, color: COS.bg },
+            ]),
+          },
+          line: { type: 'none' },
+        })
+      }
       // 題後柔金輝光（放射，淡出至全透）
       slide.addShape('ellipse', {
         x: -1.6,

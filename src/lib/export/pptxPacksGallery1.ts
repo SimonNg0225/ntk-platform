@@ -29,6 +29,7 @@ import {
 import type { Slide } from './types'
 import { clampText, estimateLines, fitTitle, mix } from './pptxText'
 import { gradLinear, gradRadial } from './pptxGradients'
+import { coverTextureUri } from './slideTextures'
 
 // ============================================================
 //  粉筆 chalk — 黑板手感
@@ -222,15 +223,21 @@ const chalk: Pack = {
       addCoverImage(slide, img, { x: 0, y: 0, w: 13.33, h: 7.5 })
       slide.addShape('rect', { x: 0, y: 0, w: 13.33, h: 7.5, fill: { color: CHK.bg, transparency: 30 }, line: { type: 'none' } })
     } else {
-      // 黑板微微深淺漸層：頂部 accent 一抹微暖 → 底部沉墨，似真黑板受光
-      slide.addShape('rect', {
-        x: 0,
-        y: 0,
-        w: 13.33,
-        h: 7.5,
-        fill: { color: gradLinear(90, [{ pos: 0, color: mix(CHK.bg, CHK.accent, 0.1) }, { pos: 100, color: CHK.bg }]) },
-        line: { type: 'none' },
-      })
+      // 招牌粉筆紋理底圖（瀏覽器 Canvas raster；冇 canvas 時 fallback 漸層底）
+      const tex = coverTextureUri('chalk')
+      if (tex) {
+        slide.addImage({ data: tex, x: 0, y: 0, w: 13.333, h: 7.5, sizing: { type: 'cover', w: 13.333, h: 7.5 } })
+      } else {
+        // 黑板微微深淺漸層：頂部 accent 一抹微暖 → 底部沉墨，似真黑板受光
+        slide.addShape('rect', {
+          x: 0,
+          y: 0,
+          w: 13.33,
+          h: 7.5,
+          fill: { color: gradLinear(90, [{ pos: 0, color: mix(CHK.bg, CHK.accent, 0.1) }, { pos: 100, color: CHK.bg }]) },
+          line: { type: 'none' },
+        })
+      }
     }
     // 粉筆畫框：四條 sysDash 線 inset 0.32
     dashH(slide, 0.32, 0.32, 12.69, CHK.hair)
@@ -431,15 +438,21 @@ const press: Pack = {
   cover(slide, deck, brand, img) {
     slide.background = { color: 'FFFFFF' }
     const hasImg = Boolean(img)
-    // 報紙紙張微微泛黃／受墨：頂部一抹暖白 → 底部極淡墨，俾白底一點縱深
-    slide.addShape('rect', {
-      x: 0,
-      y: 0,
-      w: 13.33,
-      h: 7.5,
-      fill: { color: gradLinear(90, [{ pos: 0, color: mix('FFFFFF', PRS.accent, 0.03) }, { pos: 100, color: mix('FFFFFF', PRS.ink, 0.05) }]) },
-      line: { type: 'none' },
-    })
+    // 招牌報紙紙紋底圖（瀏覽器 Canvas raster；冇 canvas 時 fallback 漸層底）
+    const tex = coverTextureUri('press')
+    if (tex) {
+      slide.addImage({ data: tex, x: 0, y: 0, w: 13.333, h: 7.5, sizing: { type: 'cover', w: 13.333, h: 7.5 } })
+    } else {
+      // 報紙紙張微微泛黃／受墨：頂部一抹暖白 → 底部極淡墨，俾白底一點縱深
+      slide.addShape('rect', {
+        x: 0,
+        y: 0,
+        w: 13.33,
+        h: 7.5,
+        fill: { color: gradLinear(90, [{ pos: 0, color: mix('FFFFFF', PRS.accent, 0.03) }, { pos: 100, color: mix('FFFFFF', PRS.ink, 0.05) }]) },
+        line: { type: 'none' },
+      })
+    }
     // 報頭：雙線 + 報名 + 右對齊日期
     doubleRule(slide, 0.9, 0.55, 11.53)
     tx(slide, 'EZITEACH DAILY · 教學日報', { x: 0.9, y: 0.72, w: 7, h: 0.3, fontSize: 11, color: PRS.ink, charSpacing: 3, bold: true })
@@ -704,6 +717,10 @@ const neon: Pack = {
       addCoverImage(slide, img, { x: 0, y: 0, w: 13.33, h: 7.5 })
       // scrim 要夠深，先保得住近黑 neon 底色身份（30 會俾相搶走色溫）
       slide.addShape('rect', { x: 0, y: 0, w: 13.33, h: 7.5, fill: { color: NEO.bg, transparency: 18 }, line: { type: 'none' } })
+    } else {
+      // 招牌螢光掃描紋理底圖（瀏覽器 Canvas raster；冇 canvas 時 fallback 純色底）
+      const tex = coverTextureUri('neon')
+      if (tex) slide.addImage({ data: tex, x: 0, y: 0, w: 13.333, h: 7.5, sizing: { type: 'cover', w: 13.333, h: 7.5 } })
     }
     // 標題後柔光暈：cyan 放射漸層（中心半透 → 邊緣全透），似螢光燈管映喺近黑底
     slide.addShape('ellipse', {
@@ -989,15 +1006,21 @@ const confetti: Pack = {
 
   cover(slide, deck, brand, img) {
     slide.background = { color: 'FFFFFF' }
-    // 白底微微縱深：頂部一抹鈷藍暖白 → 底部極淡墨，俾散落彩斑一個柔和舞台
-    slide.addShape('rect', {
-      x: 0,
-      y: 0,
-      w: 13.33,
-      h: 7.5,
-      fill: { color: gradLinear(90, [{ pos: 0, color: mix('FFFFFF', CFT.accent, 0.04) }, { pos: 100, color: mix('FFFFFF', CFT.ink, 0.05) }]) },
-      line: { type: 'none' },
-    })
+    // 招牌彩斑散落紋理底圖（瀏覽器 Canvas raster；冇 canvas 時 fallback 漸層底）
+    const tex = coverTextureUri('confetti')
+    if (tex) {
+      slide.addImage({ data: tex, x: 0, y: 0, w: 13.333, h: 7.5, sizing: { type: 'cover', w: 13.333, h: 7.5 } })
+    } else {
+      // 白底微微縱深：頂部一抹鈷藍暖白 → 底部極淡墨，俾散落彩斑一個柔和舞台
+      slide.addShape('rect', {
+        x: 0,
+        y: 0,
+        w: 13.33,
+        h: 7.5,
+        fill: { color: gradLinear(90, [{ pos: 0, color: mix('FFFFFF', CFT.accent, 0.04) }, { pos: 100, color: mix('FFFFFF', CFT.ink, 0.05) }]) },
+        line: { type: 'none' },
+      })
+    }
     if (img) {
       // 右半大方相（直角），四角各遮一細彩斑；credit 喺相下
       const frame: Rect = { x: 7.4, y: 1.5, w: 5.0, h: 4.2 }
@@ -1250,6 +1273,9 @@ const pastel: Pack = {
 
   cover(slide, deck, brand, img) {
     slide.background = { color: 'FFFFFF' }
+    // 招牌柔霧網格紋理底圖（瀏覽器 Canvas raster；冇 canvas 時 fallback 純色底）
+    const tex = coverTextureUri('pastel')
+    if (tex) slide.addImage({ data: tex, x: 0, y: 0, w: 13.333, h: 7.5, sizing: { type: 'cover', w: 13.333, h: 7.5 } })
     // 右上三色 blob（有相時做相嘅底層 — 先畫 blob 後畫相）
     // 主腮紅雲：放射漸層由微深玫瑰心 → 淡 blush 邊，似一團受光柔雲
     slide.addShape('ellipse', {

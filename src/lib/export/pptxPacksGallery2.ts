@@ -28,6 +28,7 @@ import {
 import type { Slide } from './types'
 import { clampText, estimateLines, fitTitle, mix } from './pptxText'
 import { gradLinear } from './pptxGradients'
+import { coverTextureUri } from './slideTextures'
 
 // ============================================================
 //  藍曬 blueprint — 工程圖紙
@@ -231,15 +232,21 @@ const blueprint: Pack = {
   cover(slide, deck, brand, img) {
     slide.background = { color: BLU.bg }
     const hasImg = Boolean(img)
-    // 藍曬紙微微受光：頂部一抹淡藍 accent → 底部沉藍，俾圖紙底一點縱深
-    slide.addShape('rect', {
-      x: 0,
-      y: 0,
-      w: 13.33,
-      h: 7.5,
-      fill: { color: gradLinear(90, [{ pos: 0, color: mix(BLU.bg, BLU.accent, 0.1) }, { pos: 100, color: BLU.bg }]) },
-      line: { type: 'none' },
-    })
+    // 招牌藍曬圖紙紋理底圖（瀏覽器 Canvas raster；冇 canvas 時 fallback 漸層底）
+    const tex = coverTextureUri('blueprint')
+    if (tex) {
+      slide.addImage({ data: tex, x: 0, y: 0, w: 13.333, h: 7.5, sizing: { type: 'cover', w: 13.333, h: 7.5 } })
+    } else {
+      // 藍曬紙微微受光：頂部一抹淡藍 accent → 底部沉藍，俾圖紙底一點縱深
+      slide.addShape('rect', {
+        x: 0,
+        y: 0,
+        w: 13.33,
+        h: 7.5,
+        fill: { color: gradLinear(90, [{ pos: 0, color: mix(BLU.bg, BLU.accent, 0.1) }, { pos: 100, color: BLU.bg }]) },
+        line: { type: 'none' },
+      })
+    }
     // 全框 sysDash 圖紙邊（inset 0.3）
     slide.addShape('rect', { x: 0.3, y: 0.3, w: 12.73, h: 6.9, fill: { type: 'none' }, line: { color: BLU.accent, width: 1, dashType: 'sysDash' } })
     // 頂部間尺 + kicker
@@ -486,6 +493,9 @@ const ivy: Pack = {
 
   cover(slide, deck, brand, img) {
     slide.background = { color: 'FFFFFF' }
+    // 招牌學報紙紋底圖（瀏覽器 Canvas raster；冇 canvas 時 fallback 純色底）
+    const tex = coverTextureUri('ivy')
+    if (tex) slide.addImage({ data: tex, x: 0, y: 0, w: 13.333, h: 7.5, sizing: { type: 'cover', w: 13.333, h: 7.5 } })
     // 左綠欄（書脊）：徽記 + kicker + 白雙細線 + 底部日期／brand
     // 書脊森綠微微縱深漸層（頂部提亮 → 底部沉墨綠），似精裝布封受光
     slide.addShape('rect', {
@@ -718,15 +728,21 @@ const redgrid: Pack = {
   cover(slide, deck, brand, img) {
     slide.background = { color: 'FFFFFF' }
     const hasImg = Boolean(img)
-    // 習字簿宣紙微微泛色：頂部一抹暖白 → 底部極淡朱墨，俾白底一點縱深
-    slide.addShape('rect', {
-      x: 0,
-      y: 0,
-      w: 13.33,
-      h: 7.5,
-      fill: { color: gradLinear(90, [{ pos: 0, color: mix('FFFFFF', RED.accent, 0.03) }, { pos: 100, color: mix('FFFFFF', RED.ink, 0.05) }]) },
-      line: { type: 'none' },
-    })
+    // 招牌習字簿格紙紋理底圖（瀏覽器 Canvas raster；冇 canvas 時 fallback 漸層底）
+    const tex = coverTextureUri('redgrid')
+    if (tex) {
+      slide.addImage({ data: tex, x: 0, y: 0, w: 13.333, h: 7.5, sizing: { type: 'cover', w: 13.333, h: 7.5 } })
+    } else {
+      // 習字簿宣紙微微泛色：頂部一抹暖白 → 底部極淡朱墨，俾白底一點縱深
+      slide.addShape('rect', {
+        x: 0,
+        y: 0,
+        w: 13.33,
+        h: 7.5,
+        fill: { color: gradLinear(90, [{ pos: 0, color: mix('FFFFFF', RED.accent, 0.03) }, { pos: 100, color: mix('FFFFFF', RED.ink, 0.05) }]) },
+        line: { type: 'none' },
+      })
+    }
     // 左上大田字格 — 內放題目第一個字（書法帖開筆）
     tianGrid(slide, 0.9, 0.95, 2.1, 1.25, RED.gridline)
     const first = [...deck.title.trim()][0] ?? '習'
@@ -970,6 +986,9 @@ const transit: Pack = {
   cover(slide, deck, brand, img) {
     slide.background = { color: 'FFFFFF' }
     const hasImg = Boolean(img)
+    // 招牌交通柔霧紋理底圖（瀏覽器 Canvas raster；冇 canvas 時 fallback 純色底）
+    const tex = coverTextureUri('transit')
+    if (tex) slide.addImage({ data: tex, x: 0, y: 0, w: 13.333, h: 7.5, sizing: { type: 'cover', w: 13.333, h: 7.5 } })
     // kicker 行：chevron 隊 + 字
     chevronRow(slide, 0.9, 1.85, 0.2, 0.26)
     tx(slide, 'TEACHING DECK · 教學簡報', { x: 1.75, y: 1.82, w: 7, h: 0.3, fontSize: 10, color: TRN.ink, charSpacing: 2, bold: true })
@@ -1206,6 +1225,10 @@ const ocean: Pack = {
       // full-bleed 相 + 深海 scrim，文字轉白（浪照畫 — 實色疊喺 scrim 上）
       addCoverImage(slide, img, { x: 0, y: 0, w: 13.33, h: 7.5 })
       slide.addShape('rect', { x: 0, y: 0, w: 13.33, h: 7.5, fill: { color: OCE.deep, transparency: 40 }, line: { type: 'none' } })
+    } else {
+      // 招牌海浪紋理底圖（瀏覽器 Canvas raster；冇 canvas 時 fallback 純色底）
+      const tex = coverTextureUri('ocean')
+      if (tex) slide.addImage({ data: tex, x: 0, y: 0, w: 13.333, h: 7.5, sizing: { type: 'cover', w: 13.333, h: 7.5 } })
     }
     // 版底三層浪：由淺到深逐層疊上
     wave(slide, -1.5, 5.9, 16.3, 3.4, OCE.band1)
