@@ -27,6 +27,7 @@ import {
 import type { Slide } from './types'
 import { clampText, estimateLines, fitTitle, mix } from './pptxText'
 import { gradLinear } from './pptxGradients'
+import { coverTextureUri } from './slideTextures'
 
 // ============================================================
 //  手帳 scrapbook — 拼貼手帳
@@ -391,20 +392,25 @@ const sumi: Pack = {
   cover(slide, deck, brand, img) {
     slide.background = { color: SUM.bg }
     const hasImg = Boolean(img)
-    // 全版極淡宣紙色深度漸層（壓底，水墨／題字浮其上）
-    slide.addShape('rect', {
-      x: 0,
-      y: 0,
-      w: 13.33,
-      h: 7.5,
-      fill: {
-        color: gradLinear(90, [
-          { pos: 0, color: mix(SUM.bg, 'FFFFFF', 0.04) },
-          { pos: 100, color: mix(SUM.bg, SUM.ink, 0.05) },
-        ]),
-      },
-      line: { type: 'none' },
-    })
+    // 招牌水墨紋理底圖（瀏覽器 Canvas raster；冇 canvas 時 fallback 漸層底）
+    const tex = coverTextureUri('sumi')
+    if (tex) {
+      slide.addImage({ data: tex, x: 0, y: 0, w: 13.333, h: 7.5, sizing: { type: 'cover', w: 13.333, h: 7.5 } })
+    } else {
+      slide.addShape('rect', {
+        x: 0,
+        y: 0,
+        w: 13.33,
+        h: 7.5,
+        fill: {
+          color: gradLinear(90, [
+            { pos: 0, color: mix(SUM.bg, 'FFFFFF', 0.04) },
+            { pos: 100, color: mix(SUM.bg, SUM.ink, 0.05) },
+          ]),
+        },
+        line: { type: 'none' },
+      })
+    }
     // 一道大水墨筆掃過右上角（層疊灰 roundRect）
     inkStroke(slide, { x: 8.8, y: -0.6, w: 5.4, h: 2.6 }, 12)
     if (img) {

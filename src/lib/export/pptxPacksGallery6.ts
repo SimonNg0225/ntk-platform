@@ -29,6 +29,7 @@ import {
 import type { Slide } from './types'
 import { clampText, estimateLines, fitTitle, mix } from './pptxText'
 import { gradLinear, gradRadial } from './pptxGradients'
+import { coverTextureUri } from './slideTextures'
 
 // ============================================================
 //  蒸汽波 vapor — Y2K 復古
@@ -608,21 +609,26 @@ const cosmos: Pack = {
       slide.addShape('rect', { x: 0, y: 0, w: 13.33, h: 7.5, fill: { color: COS.bg, transparency: 32 }, line: { type: 'none' } })
       photoCreditOnImage(slide, img.credit, { x: 0, y: 0, w: 13.33, h: 7.5 })
     }
-    // 無相時：版底極淡午夜藍深度漸層（頂部微帶金暈，底沉）
+    // 無相時：招牌星雲紋理底圖（瀏覽器 Canvas raster；冇 canvas 時 fallback 漸層底）
     if (!img) {
-      slide.addShape('rect', {
-        x: 0,
-        y: 0,
-        w: 13.33,
-        h: 7.5,
-        fill: {
-          color: gradLinear(90, [
-            { pos: 0, color: mix(COS.bg, COS.gold, 0.06) },
-            { pos: 100, color: COS.bg },
-          ]),
-        },
-        line: { type: 'none' },
-      })
+      const tex = coverTextureUri('cosmos')
+      if (tex) {
+        slide.addImage({ data: tex, x: 0, y: 0, w: 13.333, h: 7.5, sizing: { type: 'cover', w: 13.333, h: 7.5 } })
+      } else {
+        slide.addShape('rect', {
+          x: 0,
+          y: 0,
+          w: 13.33,
+          h: 7.5,
+          fill: {
+            color: gradLinear(90, [
+              { pos: 0, color: mix(COS.bg, COS.gold, 0.06) },
+              { pos: 100, color: COS.bg },
+            ]),
+          },
+          line: { type: 'none' },
+        })
+      }
       // 題後柔金輝光（放射，淡出至全透）
       slide.addShape('ellipse', {
         x: -1.6,

@@ -27,6 +27,7 @@ import {
 import type { Slide } from './types'
 import { clampText, estimateLines, fitTitle, mix } from './pptxText'
 import { gradLinear } from './pptxGradients'
+import { coverTextureUri } from './slideTextures'
 
 // ============================================================
 //  和紙 washi — 侘寂留白
@@ -142,6 +143,9 @@ const washi: Pack = {
   cover(slide, deck, brand, img) {
     slide.background = { color: WAS.bg }
     const hasImg = Boolean(img)
+    // 招牌和紙紋理底圖（瀏覽器 Canvas raster；冇 canvas 時 fallback 純色底）
+    const tex = coverTextureUri('washi')
+    if (tex) slide.addImage({ data: tex, x: 0, y: 0, w: 13.333, h: 7.5, sizing: { type: 'cover', w: 13.333, h: 7.5 } })
     // 左緣柿色簾邊（直條貼死左邊；垂直漸層柿色微深淺）
     slide.addShape('rect', { x: 0, y: 0, w: 0.16, h: 7.5, fill: { color: gradLinear(90, [{ pos: 0, color: mix(WAS.accent, 'FFFFFF', 0.18) }, { pos: 100, color: mix(WAS.accent, WAS.ink, 0.14) }]) }, line: { type: 'none' } })
     if (img) {
