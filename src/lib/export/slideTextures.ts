@@ -207,6 +207,45 @@ function gFestive(x: Ctx, W: number, H: number, p: Pal): void {
   x.strokeStyle = `rgba(${ar},${ag},${ab},0.5)`; x.lineWidth = 2 * (W / 1600); x.strokeRect(W * 0.025, H * 0.04, W * 0.95, H * 0.92)
 }
 
+/** tapered 毛筆：沿 bezier 鋪圓，闊度 w0→w1（飛白筆觸用） */
+function brushStroke(x: Ctx, q: number[], w0: number, w1: number, color: string): void {
+  const N = 70
+  for (let i = 0; i <= N; i++) {
+    const t = i / N, mt = 1 - t
+    const px = mt * mt * mt * q[0] + 3 * mt * mt * t * q[2] + 3 * mt * t * t * q[4] + t * t * t * q[6]
+    const py = mt * mt * mt * q[1] + 3 * mt * mt * t * q[3] + 3 * mt * t * t * q[5] + t * t * t * q[7]
+    x.fillStyle = color
+    x.beginPath()
+    x.arc(px, py, (w0 * (1 - t) + w1 * t) / 2, 0, 7)
+    x.fill()
+  }
+}
+
+/** 遠山留白：宣紙底 + 底部三層遠山柔墨 + 一道淡墨橫掃 + 朱砂印（sumi 新底板） */
+function gInkMountain(x: Ctx, W: number, H: number, p: Pal): void {
+  fill(x, W, H, p.bg)
+  grain(x, W, H, 7000, '60,53,44', 0.022, 11)
+  const [ir, ig, ib] = hex2rgb(p.ink)
+  const layers: [number, number, string][] = [[0.66, 0.06, '92,92,92'], [0.76, 0.1, '66,66,66'], [0.86, 0.16, '40,40,40']]
+  for (const [yy, a, g] of layers) {
+    x.beginPath()
+    x.moveTo(0, yy * H)
+    x.bezierCurveTo(W * 0.25, (yy - 0.06) * H, W * 0.5, (yy + 0.05) * H, W * 0.7, (yy - 0.03) * H)
+    x.bezierCurveTo(W * 0.85, (yy - 0.08) * H, W * 0.95, (yy + 0.02) * H, W, (yy - 0.02) * H)
+    x.lineTo(W, H)
+    x.lineTo(0, H)
+    x.closePath()
+    const gr = x.createLinearGradient(0, yy * H - 0.08 * H, 0, H)
+    gr.addColorStop(0, `rgba(${g},${a})`)
+    gr.addColorStop(1, `rgba(${g},${a * 0.4})`)
+    x.fillStyle = gr
+    x.fill()
+  }
+  brushStroke(x, [0.1 * W, 0.4 * H, 0.35 * W, 0.36 * H, 0.6 * W, 0.42 * H, 0.86 * W, 0.38 * H], 10 * (W / 1600), 2 * (W / 1600), `rgba(${ir},${ig},${ib},0.12)`)
+  x.fillStyle = p.accent
+  x.fillRect(0.9 * W, 0.1 * H, 0.045 * W, 0.075 * H)
+}
+
 // ───────── 每套 pack → generator + 色板 ─────────
 type Gen = (x: Ctx, W: number, H: number, p: Pal) => void
 const TEX: Record<string, [Gen, Pal]> = {
@@ -250,7 +289,7 @@ const TEX: Record<string, [Gen, Pal]> = {
   cosmos: [gNebula, { bg: '#0B1026', ink: 'E8ECFF', accent: 'F4C95D', accent2: '785AD8', accent3: '2878C8' }],
   // gallery7
   scrapbook: [gPaper, { bg: '#EFE7D6', ink: '3A352C', accent: '#5BB0A6' }],
-  sumi: [gInkWash, { bg: '#F6F3EC', ink: '1C1B19', accent: '#B33A26' }],
+  sumi: [gInkMountain, { bg: '#F6F3EC', ink: '1C1B19', accent: '#B33A26' }],
   brutalist: [gNoise, { bg: '#F4F4F0', ink: '000000', accent: '#FF4D00' }],
 }
 
