@@ -546,6 +546,62 @@ Deno.serve(async (req: Request) => {
         return json({ data: { ok: true } })
       }
 
+      // ════════════ 社群檢舉 ════════════
+      case 'reports:list': {
+        const { data: reports, error } = await admin
+          .from('resource_reports')
+          .select('id, resource_id, reporter_id, reason, detail, status, created_at')
+          .eq('status', 'open')
+          .order('created_at', { ascending: false })
+          .limit(200)
+        if (error) return json({ error: error.message }, 500)
+        const ids = [...new Set((reports ?? []).map((r) => r.resource_id))]
+        const resMap: Record<string, unknown> = {}
+        if (ids.length) {
+          const { data: res } = await admin
+            .from('shared_resources')
+            .select('id, title, owner_id, status, file_path')
+            .in('id', ids)
+          for (const x of res ?? []) resMap[x.id as string] = x
+        }
+        const rows = (reports ?? []).map((r) => ({ ...r, resource: resMap[r.resource_id] ?? null }))
+        return json({ data: rows })
+      }
+
+      case 'reports:resolve': {
+        const id = String(body.id ?? '')
+        const act = String(body.resolution ?? '')
+        if (!id || (act !== 'remove' && act !== 'dismiss')) {
+          return json({ error: '參數不正確。' }, 400)
+        }
+        const { data: rep } = await admin
+          .from('resource_reports')
+          .select('id, resource_id')
+          .eq('id', id)
+          .maybeSingle()
+        if (!rep) return json({ error: '搵唔到檢舉。' }, 404)
+
+        if (act === 'dismiss') {
+          await admin.from('resource_reports').update({ status: 'reviewed' }).eq('id', id)
+          await audit('report-dismiss', id)
+          return json({ data: { ok: true } })
+        }
+        // remove：下架資源 + 刪 storage 檔（public 直連都失效）+ 標 actioned
+        const { data: res } = await admin
+          .from('shared_resources')
+          .select('id, file_path')
+          .eq('id', rep.resource_id)
+          .maybeSingle()
+        await admin.from('shared_resources').update({ status: 'removed' }).eq('id', rep.resource_id)
+        if (res?.file_path) {
+          await admin.storage.from('community').remove([res.file_path as string])
+        }
+        // 同一資源其他 open 檢舉一齊標 actioned
+        await admin.from('resource_reports').update({ status: 'actioned' }).eq('resource_id', rep.resource_id).eq('status', 'open')
+        await audit('report-remove', rep.resource_id as string)
+        return json({ data: { ok: true } })
+      }
+
       default:
         return json({ error: `未知 action：${action}` }, 400)
     }

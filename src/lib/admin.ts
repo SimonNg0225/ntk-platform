@@ -185,3 +185,19 @@ export const adminForumResolve = (id: string) =>
   callAdmin<{ ok: true }>('forum:resolve-report', { id })
 export const adminForumBan = (userId: string, reason = '') =>
   callAdmin<{ ok: true }>('forum:ban', { userId, reason })
+// ── 社群檢舉（資源分享區）─────────────────────────────────────
+export interface CommunityReport {
+  id: string
+  resource_id: string
+  reporter_id: string | null
+  reason: string
+  detail: string | null
+  status: string
+  created_at: string
+  resource: { id: string; title: string; owner_id: string; status: string; file_path: string | null } | null
+}
+
+export const adminListReports = () => callAdmin<CommunityReport[]>('reports:list')
+
+export const adminResolveReport = (id: string, resolution: 'remove' | 'dismiss') =>
+  callAdmin<{ ok: true }>('reports:resolve', { id, resolution })

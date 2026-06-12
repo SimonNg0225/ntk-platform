@@ -53,6 +53,8 @@ import {
   adminForumRemove,
   adminForumResolve,
   adminForumBan,
+  adminListReports,
+  adminResolveReport,
   type AdminOverview,
   type AdminUser,
   type AdminUsage,
@@ -61,6 +63,7 @@ import {
   type AdminTicket,
   type AdminEntry,
   type ForumReport,
+  type CommunityReport,
 } from '../lib/admin'
 
 // ============================================================
@@ -512,9 +515,96 @@ function ContentTab() {
     <div className="space-y-5">
       <AnnouncementsCard />
       <ForumReportsCard />
+      <ReportsCard />
       <TicketsCard />
       <AdminsCard />
     </div>
+  )
+}
+
+const REPORT_REASON_LABEL: Record<string, string> = {
+  copyright: '侵犯版權',
+  inappropriate: '不當內容',
+  quality: '質素差 / 與描述不符',
+  other: '其他',
+}
+
+// 社群檢舉收件箱：審核資源分享區嘅檢舉，可下架資源（連 storage 檔一齊刪）或標唔成立。
+function ReportsCard() {
+  const { data, loading, err, reload } = useAsync<CommunityReport[]>(adminListReports)
+  const toast = useToast()
+  const confirm = useConfirm()
+  const [busy, setBusy] = useState<string | null>(null)
+  const [rows, setRows] = useState<CommunityReport[]>([])
+  useEffect(() => {
+    if (data) setRows(data)
+  }, [data])
+
+  const resolve = async (rep: CommunityReport, resolution: 'remove' | 'dismiss') => {
+    if (resolution === 'remove') {
+      const ok = await confirm({
+        title: `下架「${rep.resource?.title ?? '資源'}」？`,
+        tone: 'danger',
+        confirmText: '下架',
+      })
+      if (!ok) return
+    }
+    try {
+      setBusy(rep.id)
+      await adminResolveReport(rep.id, resolution)
+      setRows((cur) => cur.filter((x) => x.id !== rep.id))
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : '處理失敗')
+    } finally {
+      setBusy(null)
+    }
+  }
+
+  return (
+    <Card className="p-5">
+      <SectionTitle right={<RefreshBtn loading={loading} onClick={reload} />}>
+        <span className="inline-flex items-center gap-1.5">
+          社群檢舉 {rows.length > 0 && <Badge tone="rose">{rows.length} 待審</Badge>}
+        </span>
+      </SectionTitle>
+      {!data ? (
+        <LoadErr loading={loading} err={err} empty={rows.length === 0} />
+      ) : rows.length === 0 ? (
+        <EmptyState icon="🛡️" title="冇待審檢舉。" />
+      ) : (
+        <ul className="space-y-2">
+          {rows.map((rep) => (
+            <li key={rep.id} className="rounded-xl border border-[color:var(--border)] p-3">
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="truncate text-sm font-semibold text-slate-800 dark:text-slate-100">
+                      {rep.resource?.title ?? '（資源已刪）'}
+                    </span>
+                    <Badge tone="rose">{REPORT_REASON_LABEL[rep.reason] ?? rep.reason}</Badge>
+                    {rep.resource?.status === 'removed' && <Badge tone="slate">已下架</Badge>}
+                  </div>
+                  {rep.detail && (
+                    <p className="mt-1 whitespace-pre-wrap text-xs text-slate-600 dark:text-slate-300">{rep.detail}</p>
+                  )}
+                  <p className="mt-1 text-[10px] text-slate-400">
+                    <span className="tabular-nums">{fmtDateTime(rep.created_at)}</span>
+                  </p>
+                </div>
+                <div className="flex shrink-0 items-center gap-1.5">
+                  <Button size="sm" variant="ghost" disabled={busy === rep.id} onClick={() => resolve(rep, 'dismiss')}>
+                    唔成立
+                  </Button>
+                  <Button size="sm" variant="danger" icon={Trash2} disabled={busy === rep.id} onClick={() => resolve(rep, 'remove')}>
+                    下架
+                  </Button>
+                </div>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+    </Card>
   )
 }
 

@@ -36,6 +36,7 @@ const QuestionBank = lazyFeature(() => import('./work/QuestionBank'))
 const MaterialGen = lazyFeature(() => import('./work/MaterialGen'))
 const Grading = lazyFeature(() => import('./work/Grading'))
 const ResourceLibrary = lazyFeature(() => import('./work/ResourceLibrary'))
+const Community = lazyFeature(() => import('./work/community/Community'))
 const Gradebook = lazyFeature(() => import('./work/Gradebook'))
 const ReportComments = lazyFeature(() => import('./work/reportComments/ReportComments'))
 const ClassTools = lazyFeature(() => import('./work/classTools/ClassTools'))
@@ -358,6 +359,17 @@ export const FEATURES: Feature[] = [
     icon: '🗂️',
     group: '教學',
     component: ResourceLibrary,
+    status: 'ready',
+  },
+  {
+    id: 'work-community',
+    selfManagedHeader: true,
+    modes: ['work'],
+    name: '資源分享區',
+    description: '全港老師互相分享教學資源，上載／瀏覽／下載／評分。',
+    icon: '🌐',
+    group: '教學',
+    component: Community,
     status: 'ready',
   },
   {

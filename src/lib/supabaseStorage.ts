@@ -70,3 +70,57 @@ export async function uploadScanPdf(
 
   return { path, url: signed.data.signedUrl }
 }
+
+// ============================================================
+//  資源分享區（private bucket「community」）
+//  ------------------------------------------------------------
+//  老師上載教學資源檔案；private bucket → 只有登入老師簽名先下載到
+//  （未登入冇 session → 簽唔到 → 下載唔到）。⚠️ 要先跑 migration 0012。
+// ============================================================
+
+export const COMMUNITY_BUCKET = 'community'
+
+// 下載/預覽簽名連結有效期：1 個鐘（短期，過期重簽）。
+const COMMUNITY_URL_TTL = 60 * 60
+
+function extOf(name: string): string {
+  const i = name.lastIndexOf('.')
+  return i >= 0 ? name.slice(i + 1).toLowerCase().replace(/[^a-z0-9]/g, '') : ''
+}
+
+export interface UploadedCommunityFile {
+  /** Storage 物件路徑（bucket 內，例 `<uid>/<resourceId>-教案.pdf`） */
+  path: string
+}
+
+/**
+ * 上載資源檔案去 community bucket。路徑 `<userId>/<resourceId>-<safe>.<ext>`
+ * 對應 RLS 只准存自己 uid 資料夾。唔即時簽 URL（下載時先用 communitySignedUrl 短期簽）。
+ */
+export async function uploadCommunityFile(
+  blob: Blob,
+  filename: string,
+  userId: string,
+  resourceId: string,
+): Promise<UploadedCommunityFile> {
+  if (!supabase) throw new Error('未接雲端')
+  if (!userId) throw new Error('未登入')
+
+  const ext = extOf(filename)
+  const safe = asciiKeySegment(filename.replace(/\.[^.]+$/, ''))
+  const path = `${userId}/${resourceId}-${safe}${ext ? '.' + ext : ''}`
+
+  const up = await supabase.storage.from(COMMUNITY_BUCKET).upload(path, blob, {
+    contentType: blob.type || 'application/octet-stream',
+    upsert: true,
+  })
+  if (up.error) throw up.error
+  return { path }
+}
+
+/** 攞短期（1 個鐘）簽名連結；private bucket 要登入 session（RLS）。失敗回 null。 */
+export async function communitySignedUrl(path: string): Promise<string | null> {
+  if (!supabase) return null
+  const signed = await supabase.storage.from(COMMUNITY_BUCKET).createSignedUrl(path, COMMUNITY_URL_TTL)
+  return signed.data?.signedUrl ?? null
+}
