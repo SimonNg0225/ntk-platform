@@ -67,7 +67,7 @@ type TabId = 'overview' | 'users' | 'usage' | 'orgs' | 'content'
 const fmtDate = (s: string | null) =>
   s ? new Date(s).toLocaleDateString('zh-HK', { year: '2-digit', month: '2-digit', day: '2-digit' }) : '—'
 const fmtDateTime = (s: string) => new Date(s).toLocaleString('zh-HK')
-const usd = (n: number) => `US$${n.toFixed(2)}`
+const usd = (n: number) => `US$${(Number.isFinite(n) ? n : 0).toFixed(2)}`
 
 export default function Admin() {
   const { user } = useAuth()
@@ -326,7 +326,10 @@ const FEATURE_LABEL: Record<string, string> = {
   nutrition: '營養估算',
 }
 const flabel = (f: string) => FEATURE_LABEL[f] ?? f
-const fmtTok = (n: number) => (n >= 1000 ? `${(n / 1000).toFixed(1)}k` : String(n))
+const fmtTok = (n: number) => {
+  const v = Number.isFinite(n) ? n : 0
+  return v >= 1000 ? `${(v / 1000).toFixed(1)}k` : String(v)
+}
 
 function UsageTab() {
   const [expanded, setExpanded] = useState<string | null>(null)

@@ -15,7 +15,6 @@ import {
 import { preloadAllFeatures } from '../features/registry'
 import { smartApplyTopics } from '../features/work/topicImport/applyTopics'
 import { Card, Button, Field, Input, SectionTitle } from '../ui'
-import AdminSupportCard from '../components/AdminSupportCard'
 import { seedAllDemo } from '../lib/demoData'
 import {
   summarizeData,
@@ -237,9 +236,6 @@ export default function Settings() {
 
   return (
     <div className="space-y-6">
-      {/* 客服收件箱（只 admin 顯示） */}
-      <AdminSupportCard />
-
       {/* 外觀 */}
       <Card className="p-5">
         <SectionTitle>{t('settings.appearance')}</SectionTitle>
