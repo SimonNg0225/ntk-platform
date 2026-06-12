@@ -37,13 +37,26 @@ async function thumbFromImage(file: File): Promise<Blob | null> {
 }
 
 /** 由 PDF 檔案生成第一頁縮略圖 Blob（lazy import pdf.js）。 */
+// pdfjs worker：用 Vite `?worker` 由打包器正確 emit worker（避免 production
+// 用 `?url` 時 worker 路徑 404 → 回 index.html → 「text/html is not a valid
+// JavaScript MIME type」）。只 init 一次，之後共用同一個 worker port。
+let pdfjsReady: Promise<typeof import('pdfjs-dist')> | null = null
+function loadPdfjs(): Promise<typeof import('pdfjs-dist')> {
+  if (!pdfjsReady) {
+    pdfjsReady = (async () => {
+      const [pdfjsLib, { default: PdfWorker }] = await Promise.all([
+        import('pdfjs-dist'),
+        import('pdfjs-dist/build/pdf.worker.min.mjs?worker'),
+      ])
+      pdfjsLib.GlobalWorkerOptions.workerPort = new PdfWorker()
+      return pdfjsLib
+    })()
+  }
+  return pdfjsReady
+}
+
 async function thumbFromPdf(file: File): Promise<Blob | null> {
-  // 延遲載入 pdfjs-dist，避免初始 bundle 太大
-  const [pdfjsLib, { default: workerUrl }] = await Promise.all([
-    import('pdfjs-dist'),
-    import('pdfjs-dist/build/pdf.worker.min.mjs?url'),
-  ])
-  pdfjsLib.GlobalWorkerOptions.workerSrc = workerUrl
+  const pdfjsLib = await loadPdfjs()
 
   const buf = await file.arrayBuffer()
   const doc = await pdfjsLib.getDocument({ data: buf }).promise
