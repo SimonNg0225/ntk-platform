@@ -124,3 +124,33 @@ export async function communitySignedUrl(path: string): Promise<string | null> {
   const signed = await supabase.storage.from(COMMUNITY_BUCKET).createSignedUrl(path, COMMUNITY_URL_TTL)
   return signed.data?.signedUrl ?? null
 }
+
+/** 批量簽名（gallery 顯示縮圖用）。回 path → signedUrl map。 */
+export async function communitySignedUrls(paths: string[]): Promise<Map<string, string>> {
+  const map = new Map<string, string>()
+  if (!supabase || paths.length === 0) return map
+  const { data } = await supabase.storage.from(COMMUNITY_BUCKET).createSignedUrls(paths, COMMUNITY_URL_TTL)
+  for (const item of data ?? []) {
+    if (item.signedUrl && item.path) map.set(item.path, item.signedUrl)
+  }
+  return map
+}
+
+/** 上載縮圖去 community bucket（路徑 `<userId>/<resourceId>.thumb.jpg`）。回 path，失敗回 null。 */
+export async function uploadCommunityThumb(
+  blob: Blob,
+  userId: string,
+  resourceId: string,
+): Promise<string | null> {
+  if (!supabase || !userId) return null
+  const path = `${userId}/${resourceId}.thumb.jpg`
+  const up = await supabase.storage.from(COMMUNITY_BUCKET).upload(path, blob, {
+    contentType: 'image/jpeg',
+    upsert: true,
+  })
+  if (up.error) {
+    console.warn('[thumb] 上載縮圖失敗：', up.error)
+    return null
+  }
+  return path
+}
