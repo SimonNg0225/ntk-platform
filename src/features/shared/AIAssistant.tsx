@@ -1548,34 +1548,34 @@ function MessageBubble({
             isUser ? 'pr-1' : 'pl-[42px]',
           )}
         >
-          <Tooltip label={copied ? t('aiasst.copied', { defaultValue: '已複製' }) : t('aiasst.copy', { defaultValue: '複製' })}>
+          <Tooltip side="bottom" label={copied ? t('aiasst.copied', { defaultValue: '已複製' }) : t('aiasst.copy', { defaultValue: '複製' })}>
             <IconButton label={t('aiasst.copy', { defaultValue: '複製' })} size="sm" onClick={doCopy}>
               {copied ? <Check size={13} /> : <Copy size={13} />}
             </IconButton>
           </Tooltip>
           {!isUser && (
-            <Tooltip label={t('aiasst.saveToNote', { defaultValue: '加入筆記' })}>
+            <Tooltip side="bottom" label={t('aiasst.saveToNote', { defaultValue: '加入筆記' })}>
               <IconButton label={t('aiasst.saveToNote', { defaultValue: '加入筆記' })} size="sm" onClick={onSaveNote}>
                 <StickyNote size={13} />
               </IconButton>
             </Tooltip>
           )}
           {isUser && (
-            <Tooltip label={t('aiasst.editResend', { defaultValue: '編輯重發' })}>
+            <Tooltip side="bottom" label={t('aiasst.editResend', { defaultValue: '編輯重發' })}>
               <IconButton label={t('aiasst.edit', { defaultValue: '編輯' })} size="sm" onClick={() => { setDraft(msg.content); setEditing(true) }}>
                 <Pencil size={13} />
               </IconButton>
             </Tooltip>
           )}
           {canRegen && (
-            <Tooltip label={t('aiasst.regenerate', { defaultValue: '重新生成' })}>
+            <Tooltip side="bottom" label={t('aiasst.regenerate', { defaultValue: '重新生成' })}>
               <IconButton label={t('aiasst.regenerate', { defaultValue: '重新生成' })} size="sm" onClick={onRegen}>
                 <RefreshCw size={13} />
               </IconButton>
             </Tooltip>
           )}
           {isLast && (
-            <Tooltip label={t('aiasst.deleteFromHere', { defaultValue: '由此刪除' })}>
+            <Tooltip side="bottom" label={t('aiasst.deleteFromHere', { defaultValue: '由此刪除' })}>
               <IconButton label={t('aiasst.delete', { defaultValue: '刪除' })} size="sm" tone="danger" onClick={onDelete}>
                 <Trash2 size={13} />
               </IconButton>
