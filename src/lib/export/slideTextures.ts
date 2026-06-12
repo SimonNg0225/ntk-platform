@@ -49,20 +49,30 @@ function gInkWash(x: Ctx, W: number, H: number, p: Pal): void {
   if (p.accent) { x.fillStyle = p.accent; roundRect(x, 0.08 * W, 0.17 * H, 0.044 * W, 0.078 * H, 0.005 * W); x.fill() }
 }
 function gNebula(x: Ctx, W: number, H: number, p: Pal): void {
-  fill(x, W, H, p.bg)
-  const clouds: [number, number, number, string][] = [[0.31, 0.42, 0.52, p.accent2 || '785AD8'], [0.7, 0.62, 0.46, p.accent3 || '2878C8'], [0.51, 0.28, 0.36, p.accent || 'C84696']]
+  // 深空漸層底（頂稍亮 → 底沉）
+  const [br, bgc, bb] = hex2rgb(p.bg)
+  const lt = (v: number, a: number) => Math.min(255, Math.round(v + a))
+  const dk = (v: number, m: number) => Math.round(v * m)
+  const sky = x.createLinearGradient(0, 0, 0, H)
+  sky.addColorStop(0, `rgb(${lt(br, 8)},${lt(bgc, 12)},${lt(bb, 22)})`)
+  sky.addColorStop(0.6, `rgb(${br},${bgc},${bb})`)
+  sky.addColorStop(1, `rgb(${dk(br, 0.5)},${dk(bgc, 0.5)},${dk(bb, 0.55)})`)
+  x.fillStyle = sky; x.fillRect(0, 0, W, H)
+  // 銀河帶（斜向柔光）
+  x.save(); x.translate(W * 0.55, H * 0.42); x.rotate(-0.32)
+  const mw = x.createLinearGradient(0, -H * 0.3, 0, H * 0.3)
+  mw.addColorStop(0, 'rgba(150,160,200,0)'); mw.addColorStop(0.5, 'rgba(150,160,200,0.09)'); mw.addColorStop(1, 'rgba(150,160,200,0)')
+  x.fillStyle = mw; x.fillRect(-W, -H * 0.16, 2 * W, H * 0.32); x.restore()
+  // 暗調星雲（去飽和、層疊三組柔暈）
   x.globalCompositeOperation = 'lighter'
-  for (const [fx, fy, fr, c] of clouds) {
-    const [r, g, b] = hex2rgb(c)
-    radial(x, fx * W, fy * H, fr * W, `rgba(${r},${g},${b},0.45)`, `rgba(${r},${g},${b},0)`); x.fillRect(0, 0, W, H)
-  }
+  const wisps: [number, number, number, string][] = [[0.34, 0.4, 0.42, '52,70,120'], [0.64, 0.56, 0.38, '40,104,104'], [0.5, 0.3, 0.32, '130,86,104']]
+  for (const [fx, fy, fr, rgb] of wisps) for (let k = 0; k < 3; k++) { const r = fr * W * (0.55 + k * 0.28), a = 0.075 - k * 0.02; radial(x, (fx + (k - 1) * 0.05) * W, (fy + (k - 1) * 0.04) * H, r, `rgba(${rgb},${a})`, `rgba(${rgb},0)`); x.fillRect(0, 0, W, H) }
   x.globalCompositeOperation = 'source-over'
-  const rnd = mkRnd(42), [sr, sg, sb] = hex2rgb(p.ink)
-  for (let i = 0; i < 520; i++) { const s = rnd(); x.fillStyle = `rgba(${sr},${sg},${sb},${0.3 + s * 0.7})`; x.beginPath(); x.arc(rnd() * W, rnd() * H, (s < 0.9 ? s * 1.3 : 2.2) * (W / 1600), 0, 7); x.fill() }
-  const [ar, ag, ab] = hex2rgb(p.accent)
-  for (const [fx, fy] of [[0.22, 0.33], [0.74, 0.47], [0.56, 0.71]] as [number, number][]) {
-    radial(x, fx * W, fy * H, 0.022 * W, `rgba(${ar},${ag},${ab},0.9)`, `rgba(${ar},${ag},${ab},0)`); x.fillRect(fx * W - 0.04 * W, fy * H - 0.05 * H, 0.08 * W, 0.1 * H)
-  }
+  grain(x, W, H, 24000, '140,150,190', 0.018, 91) // 氣體顆粒
+  const [sr, sg, sb] = hex2rgb(p.ink), r2 = mkRnd(7)
+  for (let i = 0; i < 760; i++) { const s = r2(), sz = (s < 0.86 ? s * 0.9 : s < 0.97 ? 1.6 : 2.5) * (W / 1600); x.fillStyle = `rgba(${sr},${sg},${sb},${0.22 + s * 0.6})`; x.beginPath(); x.arc(r2() * W, r2() * H, sz, 0, 7); x.fill() }
+  const [ar, ag, ab] = hex2rgb(p.accent) // 兩粒柔光星（無十字閃）
+  for (const [fx, fy] of [[0.26, 0.3], [0.72, 0.62]] as [number, number][]) { radial(x, fx * W, fy * H, 0.018 * W, `rgba(${ar},${ag},${ab},0.85)`, `rgba(${ar},${ag},${ab},0)`); x.fillRect(fx * W - 0.04 * W, fy * H - 0.06 * H, 0.08 * W, 0.12 * H) }
 }
 function gPaper(x: Ctx, W: number, H: number, p: Pal): void {
   fill(x, W, H, p.bg)
@@ -176,11 +186,25 @@ function gNoise(x: Ctx, W: number, H: number, p: Pal): void {
   if (p.accent) { x.fillStyle = p.accent; x.fillRect(0, 0.88 * H, W, 0.025 * H) } // 粗底色帶
 }
 function gFestive(x: Ctx, W: number, H: number, p: Pal): void {
-  fill(x, W, H, p.bg)
-  const [ar, ag, ab] = hex2rgb(p.accent), r = mkRnd(31)
+  // 紅金絲緞：對角紅漸層 + 金斜光帶 + 細金粉 + 金框
+  const [br, bgc, bb] = hex2rgb(p.bg)
+  const lt = (m: number) => `rgb(${Math.min(255, Math.round(br + (255 - br) * m))},${Math.min(255, Math.round(bgc + (255 - bgc) * m))},${Math.min(255, Math.round(bb + (255 - bb) * m))})`
+  const dk = (m: number) => `rgb(${Math.round(br * m)},${Math.round(bgc * m)},${Math.round(bb * m)})`
+  const g = x.createLinearGradient(0, 0, W, H)
+  g.addColorStop(0, dk(0.9)); g.addColorStop(0.5, lt(0.12)); g.addColorStop(1, dk(0.82))
+  x.fillStyle = g; x.fillRect(0, 0, W, H)
+  const [ar, ag, ab] = hex2rgb(p.accent)
   x.globalCompositeOperation = 'lighter'
-  for (let i = 0; i < 60; i++) { const rad = (10 + r() * 60) * (W / 1600); radial(x, r() * W, r() * H, rad, `rgba(${ar},${ag},${ab},${0.1 + r() * 0.2})`, `rgba(${ar},${ag},${ab},0)`); x.fillRect(0, 0, W, H) }
+  for (let i = 0; i < 6; i++) {
+    x.save(); x.translate(W * (0.1 + i * 0.16), 0); x.rotate(0.5)
+    const lg = x.createLinearGradient(0, 0, 90 * (W / 1600), 0)
+    lg.addColorStop(0, `rgba(${ar},${ag},${ab},0)`); lg.addColorStop(0.5, `rgba(${ar},${ag},${ab},${0.05 + (i % 2) * 0.03})`); lg.addColorStop(1, `rgba(${ar},${ag},${ab},0)`)
+    x.fillStyle = lg; x.fillRect(0, -H, 90 * (W / 1600), 3 * H); x.restore()
+  }
   x.globalCompositeOperation = 'source-over'
+  const r = mkRnd(5)
+  for (let i = 0; i < 800; i++) { x.fillStyle = `rgba(${ar},${ag},${ab},${0.1 + r() * 0.3})`; x.fillRect(r() * W, r() * H, 1, 1) }
+  x.strokeStyle = `rgba(${ar},${ag},${ab},0.5)`; x.lineWidth = 2 * (W / 1600); x.strokeRect(W * 0.025, H * 0.04, W * 0.95, H * 0.92)
 }
 
 // ───────── 每套 pack → generator + 色板 ─────────
