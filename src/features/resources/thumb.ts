@@ -78,7 +78,9 @@ export async function generateThumb(file: File): Promise<Blob | null> {
       return await thumbFromPdf(file)
     }
     return null
-  } catch {
+  } catch (e) {
+    // 診斷：surface 真正錯誤（pdfjs / canvas）。生成失敗唔阻上載，照出 placeholder。
+    console.warn('[thumb] generateThumb 失敗：', e)
     return null
   }
 }
