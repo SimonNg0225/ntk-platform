@@ -121,6 +121,7 @@ export const appEn = {
     countdown: { name: 'Countdowns', desc: 'Big-number countdowns to exams, deadlines and assessments.' },
     quiz: { name: 'Self-quiz', desc: 'Pull MC from the bank, auto-mark, score and weakness analysis.' },
     'community-forum': { name: 'Teacher community', desc: 'Discuss teaching, class, assessment and jobs with teachers across HK.' },
+    'community-resources': { name: 'Resource sharing', desc: 'Upload and download teaching resources; share with teachers across HK.' },
   },
 
   // ── 重要日子倒數（Countdown，登機牌主題）──

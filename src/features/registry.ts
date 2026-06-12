@@ -61,6 +61,7 @@ const Team = lazyFeature(() => import('./work/Team'))
 
 // 社群功能
 const Forum = lazyFeature(() => import('./forum/Forum'))
+const Resources = lazyFeature(() => import('./resources/Resources'))
 
 // 共用功能
 const Calendar = lazyFeature(() => import('./shared/Calendar'))
@@ -546,6 +547,16 @@ export const FEATURES: Feature[] = [
     icon: '💬',
     group: '社群',
     component: Forum,
+    status: 'ready',
+  },
+  {
+    id: 'community-resources',
+    modes: ['work', 'learning'],
+    name: '資源分享',
+    description: '上載 / 下載教學資源，同全港老師交流教材。',
+    icon: '📚',
+    group: '社群',
+    component: Resources,
     status: 'ready',
   },
 
