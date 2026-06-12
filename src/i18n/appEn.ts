@@ -121,6 +121,28 @@ export const appEn = {
     quiz: { name: 'Self-quiz', desc: 'Pull MC from the bank, auto-mark, score and weakness analysis.' },
   },
 
+  // ── 重要日子倒數（Countdown，登機牌主題）──
+  countdown: {
+    status: {
+      finalCall: 'Final call',
+      boarding: 'Now boarding',
+      onTime: 'On schedule',
+      arrived: 'Arrived',
+      early: 'Arrived early',
+      delayed: 'Flight delayed',
+    },
+    action: {
+      markArrived: 'Mark arrived',
+      markLate: 'Log arrival',
+      undo: 'Undo arrival',
+    },
+    toast: {
+      added: 'Countdown added — synced to Calendar',
+      arrived: 'Logged: arrived ✈',
+      early: 'Logged: arrived early ✈',
+    },
+  },
+
   // ── 訂閱到手機日曆（CalendarSubscribe）──
   calSub: {
     kicker: 'On the go · Subscribe',
