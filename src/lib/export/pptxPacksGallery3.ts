@@ -297,6 +297,9 @@ const terminal: Pack = {
   cover(slide, deck, brand, img) {
     slide.background = { color: TRM.bg }
     const hasImg = Boolean(img)
+    // 招牌掃描線／終端紋理底圖（瀏覽器 Canvas raster；冇 canvas 時 fallback 純色底）
+    const tex = coverTextureUri('terminal')
+    if (tex) slide.addImage({ data: tex, x: 0, y: 0, w: 13.333, h: 7.5, sizing: { type: 'cover', w: 13.333, h: 7.5 } })
     // 全闊視窗頂欄 + 三點 + 視窗名（頂欄垂直漸層：頂淡綠暈 → panel）
     slide.addShape('rect', { x: 0, y: 0, w: 13.33, h: 0.5, fill: { color: gradLinear(90, [{ pos: 0, color: mix(TRM.panel, TRM.accent, 0.1) }, { pos: 100, color: TRM.panel }]) }, line: { type: 'none' } })
     termDots(slide, 0.42, 0.2)
@@ -484,6 +487,9 @@ const pixel: Pack = {
   cover(slide, deck, brand, img) {
     slide.background = { color: PIX.bg }
     const hasImg = Boolean(img)
+    // 招牌像素網格紋理底圖（瀏覽器 Canvas raster；冇 canvas 時 fallback 純色底）
+    const tex = coverTextureUri('pixel')
+    if (tex) slide.addImage({ data: tex, x: 0, y: 0, w: 13.333, h: 7.5, sizing: { type: 'cover', w: 13.333, h: 7.5 } })
     // 頂部雙色像素方塊 + kicker（各自垂直漸層微亮→微深，保 8-bit 硬塊感）
     slide.addShape('rect', { x: 0.9, y: 0.92, w: 0.16, h: 0.16, fill: { color: gradLinear(90, [{ pos: 0, color: mix(PIX.accent, 'FFFFFF', 0.18) }, { pos: 100, color: mix(PIX.accent, PIX.ink, 0.14) }]) }, line: { type: 'none' } })
     slide.addShape('rect', { x: 1.1, y: 0.92, w: 0.16, h: 0.16, fill: { color: gradLinear(90, [{ pos: 0, color: mix(PIX.cyan, 'FFFFFF', 0.18) }, { pos: 100, color: mix(PIX.cyan, PIX.ink, 0.14) }]) }, line: { type: 'none' } })
@@ -655,6 +661,9 @@ const botanic: Pack = {
 
   cover(slide, deck, brand, img) {
     slide.background = { color: BOT.bg }
+    // 招牌植物標本台紙紋理底圖（瀏覽器 Canvas raster；冇 canvas 時 fallback 純色底）
+    const tex = coverTextureUri('botanic')
+    if (tex) slide.addImage({ data: tex, x: 0, y: 0, w: 13.333, h: 7.5, sizing: { type: 'cover', w: 13.333, h: 7.5 } })
     // 標本台紙：雙細線框 + 四角膠紙
     botFrame(slide, 0.42, 0.42, 12.49, 6.66, mix(BOT.ink, BOT.bg, 0.5))
     botTape(slide, 0.42, 0.42, -45)

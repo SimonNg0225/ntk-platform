@@ -27,6 +27,7 @@ import {
 import type { Slide } from './types'
 import { clampText, estimateLines, fitTitle, mix } from './pptxText'
 import { gradLinear, gradRadial } from './pptxGradients'
+import { coverTextureUri } from './slideTextures'
 
 // ============================================================
 //  典藏 marble — 美術館
@@ -144,15 +145,21 @@ const marble: Pack = {
 
   cover(slide, deck, brand, img) {
     slide.background = { color: MAR.bg }
-    // 全版極淡畫廊紙深度漸層（壓底，展牆內容浮其上）
-    slide.addShape('rect', {
-      x: 0,
-      y: 0,
-      w: 13.33,
-      h: 7.5,
-      fill: { color: gradLinear(90, [{ pos: 0, color: mix(MAR.bg, 'FFFFFF', 0.04) }, { pos: 100, color: mix(MAR.bg, MAR.ink, 0.06) }]) },
-      line: { type: 'none' },
-    })
+    // 招牌雲石紋理底圖（瀏覽器 Canvas raster；冇 canvas 時 fallback 全版極淡畫廊紙深度漸層）
+    const tex = coverTextureUri('marble')
+    if (tex) {
+      slide.addImage({ data: tex, x: 0, y: 0, w: 13.333, h: 7.5, sizing: { type: 'cover', w: 13.333, h: 7.5 } })
+    } else {
+      // 全版極淡畫廊紙深度漸層（壓底，展牆內容浮其上）
+      slide.addShape('rect', {
+        x: 0,
+        y: 0,
+        w: 13.33,
+        h: 7.5,
+        fill: { color: gradLinear(90, [{ pos: 0, color: mix(MAR.bg, 'FFFFFF', 0.04) }, { pos: 100, color: mix(MAR.bg, MAR.ink, 0.06) }]) },
+        line: { type: 'none' },
+      })
+    }
     const hasImg = Boolean(img)
     if (img) {
       // 掛牆作品：炭黑外框 + 米白裱邊（matte，極淡裱紙漸層）+ 相四邊內髮線
@@ -329,6 +336,9 @@ const origami: Pack = {
 
   cover(slide, deck, brand, img) {
     slide.background = { color: 'FFFFFF' }
+    // 招牌摺紙紋理底圖（瀏覽器 Canvas raster；冇 canvas 時 fallback 純白底）
+    const tex = coverTextureUri('origami')
+    if (tex) slide.addImage({ data: tex, x: 0, y: 0, w: 13.333, h: 7.5, sizing: { type: 'cover', w: 13.333, h: 7.5 } })
     const hasImg = Boolean(img)
     if (img) {
       // 右側相 + 髮線框 + 紅摺角（似摺起咗嘅頁角）
@@ -522,6 +532,9 @@ const cinema: Pack = {
       slide.addShape('rect', { x: 0, y: 0, w: 13.33, h: 7.5, fill: { color: CIN.bg, transparency: 30 }, line: { type: 'none' } })
       photoCreditOnImage(slide, img.credit, { x: 0, y: 0, w: 13.33, h: 7.5 })
     } else {
+      // 招牌菲林／戲院紋理底圖（瀏覽器 Canvas raster；冇 canvas 時 fallback 純色底）
+      const tex = coverTextureUri('cinema')
+      if (tex) slide.addImage({ data: tex, x: 0, y: 0, w: 13.333, h: 7.5, sizing: { type: 'cover', w: 13.333, h: 7.5 } })
       // 題後 marquee 琥珀暈：放射漸層由中央淡琥珀淡出至底色（戲院聚光感）
       slide.addShape('rect', { x: 2.4, y: 1.5, w: 8.53, h: 3.4, fill: { color: gradRadial([{ pos: 0, color: mix(CIN.bg, CIN.accent, 0.12) }, { pos: 100, color: CIN.bg }]) }, line: { type: 'none' } })
     }
@@ -681,6 +694,9 @@ const festival: Pack = {
 
   cover(slide, deck, brand, img) {
     slide.background = { color: FES.bg }
+    // 招牌節慶紋理底圖（瀏覽器 Canvas raster；冇 canvas 時 fallback 純色底）
+    const tex = coverTextureUri('festival')
+    if (tex) slide.addImage({ data: tex, x: 0, y: 0, w: 13.333, h: 7.5, sizing: { type: 'cover', w: 13.333, h: 7.5 } })
     // 全版金細框（外 1.5pt + 內 0.5pt 淡金）
     fesFrame(slide, 0.28, FES.accent, 1.5)
     fesFrame(slide, 0.4, mix(FES.accent, FES.bg, 0.5), 0.5)

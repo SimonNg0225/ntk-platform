@@ -14,6 +14,7 @@ import type PptxGenJS from 'pptxgenjs'
 import type { Deck, Slide, SlideLayout } from './types'
 import { mix, estimateLines, fitTitle, clampText, lineHeightIn } from './pptxText'
 import { gradLinear, gradRadial } from './pptxGradients'
+import { coverTextureUri } from './slideTextures'
 
 export type SlidePackId =
   | 'inkwell'
@@ -597,15 +598,21 @@ const inkwell: Pack = {
   cover(slide, deck, brand, img) {
     slide.background = { color: 'FFFFFF' }
     const hasImg = Boolean(img)
-    // 全幅極淡縱向底調（白→微暖墨）— 為封面添紙感深度，不改構圖
-    slide.addShape('rect', {
-      x: 0,
-      y: 0,
-      w: 13.33,
-      h: 7.5,
-      fill: { color: gradLinear(90, [{ pos: 0, color: mix('FFFFFF', 'FFFFFF', 0.04) }, { pos: 100, color: mix('FFFFFF', INK.ink, 0.06) }]) },
-      line: { type: 'none' },
-    })
+    // 招牌紋理底圖（瀏覽器 Canvas raster；冇 canvas 時 fallback 極淡縱向底調）
+    const tex = coverTextureUri('inkwell')
+    if (tex) {
+      slide.addImage({ data: tex, x: 0, y: 0, w: 13.333, h: 7.5, sizing: { type: 'cover', w: 13.333, h: 7.5 } })
+    } else {
+      // 全幅極淡縱向底調（白→微暖墨）— 為封面添紙感深度，不改構圖
+      slide.addShape('rect', {
+        x: 0,
+        y: 0,
+        w: 13.33,
+        h: 7.5,
+        fill: { color: gradLinear(90, [{ pos: 0, color: mix('FFFFFF', 'FFFFFF', 0.04) }, { pos: 100, color: mix('FFFFFF', INK.ink, 0.06) }]) },
+        line: { type: 'none' },
+      })
+    }
     // 頂部 folio 髮線 + kicker
     hline(slide, 0.9, 0.78, hasImg ? 7.9 : 11.53, INK.hair)
     tx(slide, '教學簡報 · TEACHING NOTES', { x: 0.9, y: 0.42, w: 7, h: 0.3, fontSize: 9, color: INK.accent, charSpacing: 4, bold: true })
@@ -935,15 +942,21 @@ const celadon: Pack = {
 
   cover(slide, deck, brand, img) {
     slide.background = { color: 'FFFFFF' }
-    // 全幅極淡縱向底調（白→微青墨）— 添清雅深度，不改構圖
-    slide.addShape('rect', {
-      x: 0,
-      y: 0,
-      w: 13.33,
-      h: 7.5,
-      fill: { color: gradLinear(90, [{ pos: 0, color: mix('FFFFFF', 'FFFFFF', 0.04) }, { pos: 100, color: mix('FFFFFF', CEL.ink, 0.06) }]) },
-      line: { type: 'none' },
-    })
+    // 招牌紋理底圖（瀏覽器 Canvas raster；冇 canvas 時 fallback 極淡縱向底調）
+    const tex = coverTextureUri('celadon')
+    if (tex) {
+      slide.addImage({ data: tex, x: 0, y: 0, w: 13.333, h: 7.5, sizing: { type: 'cover', w: 13.333, h: 7.5 } })
+    } else {
+      // 全幅極淡縱向底調（白→微青墨）— 添清雅深度，不改構圖
+      slide.addShape('rect', {
+        x: 0,
+        y: 0,
+        w: 13.33,
+        h: 7.5,
+        fill: { color: gradLinear(90, [{ pos: 0, color: mix('FFFFFF', 'FFFFFF', 0.04) }, { pos: 100, color: mix('FFFFFF', CEL.ink, 0.06) }]) },
+        line: { type: 'none' },
+      })
+    }
     // 正圓 motif：tint 實心細圓 →（相）→ 大 outline 圓 → 陶土細點
     slide.addShape('ellipse', { x: 8.05, y: 5.35, w: 1.6, h: 1.6, fill: { color: CEL.panel }, line: { type: 'none' } })
     if (img) addCoverImage(slide, img, { x: 8.1, y: 1.45, w: 4.6, h: 4.6 }, true)
@@ -1219,15 +1232,21 @@ const dawn: Pack = {
 
   cover(slide, deck, brand, img) {
     slide.background = { color: 'FFFFFF' }
-    // 全幅極淡縱向底調（白→微暖）— 添日出暖意深度，不改構圖
-    slide.addShape('rect', {
-      x: 0,
-      y: 0,
-      w: 13.33,
-      h: 7.5,
-      fill: { color: gradLinear(90, [{ pos: 0, color: mix('FFFFFF', 'FFFFFF', 0.04) }, { pos: 100, color: mix('FFFFFF', DAWN.accent, 0.06) }]) },
-      line: { type: 'none' },
-    })
+    // 招牌紋理底圖（瀏覽器 Canvas raster；冇 canvas 時 fallback 極淡縱向底調）
+    const tex = coverTextureUri('dawn')
+    if (tex) {
+      slide.addImage({ data: tex, x: 0, y: 0, w: 13.333, h: 7.5, sizing: { type: 'cover', w: 13.333, h: 7.5 } })
+    } else {
+      // 全幅極淡縱向底調（白→微暖）— 添日出暖意深度，不改構圖
+      slide.addShape('rect', {
+        x: 0,
+        y: 0,
+        w: 13.33,
+        h: 7.5,
+        fill: { color: gradLinear(90, [{ pos: 0, color: mix('FFFFFF', 'FFFFFF', 0.04) }, { pos: 100, color: mix('FFFFFF', DAWN.accent, 0.06) }]) },
+        line: { type: 'none' },
+      })
+    }
     // 右下「日出三階」：底邊齊 y6.3，由淡到實
     slide.addShape('roundRect', { x: 9.0, y: 5.4, w: 0.9, h: 0.9, rectRadius: 0.12, fill: { color: mix(DAWN.accent, 'FFFFFF', 0.18) }, line: { type: 'none' } })
     slide.addShape('roundRect', { x: 10.05, y: 4.9, w: 1.4, h: 1.4, rectRadius: 0.12, fill: { color: mix(DAWN.accent, 'FFFFFF', 0.45) }, line: { type: 'none' } })
@@ -1536,15 +1555,21 @@ const nocturne: Pack = {
       addCoverImage(slide, img, { x: 0, y: 0, w: 13.33, h: 7.5 })
       slide.addShape('rect', { x: 0, y: 0, w: 13.33, h: 7.5, fill: { color: NOC.bg, transparency: 62 }, line: { type: 'none' } })
     } else {
-      // 全幅柔金暈：題後極淡放射光 → 深底，添夜讀景深（無相時）
-      slide.addShape('rect', {
-        x: 0,
-        y: 0,
-        w: 13.33,
-        h: 7.5,
-        fill: { color: gradRadial([{ pos: 0, color: mix(NOC.bg, NOC.accent, 0.12) }, { pos: 100, color: NOC.bg }]) },
-        line: { type: 'none' },
-      })
+      // 招牌紋理底圖（瀏覽器 Canvas raster；冇 canvas 時 fallback 柔金暈底）
+      const tex = coverTextureUri('nocturne')
+      if (tex) {
+        slide.addImage({ data: tex, x: 0, y: 0, w: 13.333, h: 7.5, sizing: { type: 'cover', w: 13.333, h: 7.5 } })
+      } else {
+        // 全幅柔金暈：題後極淡放射光 → 深底，添夜讀景深（無相時）
+        slide.addShape('rect', {
+          x: 0,
+          y: 0,
+          w: 13.33,
+          h: 7.5,
+          fill: { color: gradRadial([{ pos: 0, color: mix(NOC.bg, NOC.accent, 0.12) }, { pos: 100, color: NOC.bg }]) },
+          line: { type: 'none' },
+        })
+      }
     }
     goldPair(slide, 0.9, 0.7, 3.3)
     tx(slide, '教學簡報 · TEACHING DECK', { x: 0.9, y: 0.95, w: 7, h: 0.32, fontSize: 10, color: NOC.accent, charSpacing: 4, bold: true })
@@ -1781,15 +1806,21 @@ const grid: Pack = {
 
   cover(slide, deck, brand, img) {
     slide.background = { color: 'FFFFFF' }
-    // 全幅極淡縱向底調（白→微鈷墨）— 添理性冷調深度，不改構圖
-    slide.addShape('rect', {
-      x: 0,
-      y: 0,
-      w: 13.33,
-      h: 7.5,
-      fill: { color: gradLinear(90, [{ pos: 0, color: mix('FFFFFF', 'FFFFFF', 0.04) }, { pos: 100, color: mix('FFFFFF', GRD.ink, 0.05) }]) },
-      line: { type: 'none' },
-    })
+    // 招牌紋理底圖（瀏覽器 Canvas raster；冇 canvas 時 fallback 極淡縱向底調）
+    const tex = coverTextureUri('grid')
+    if (tex) {
+      slide.addImage({ data: tex, x: 0, y: 0, w: 13.333, h: 7.5, sizing: { type: 'cover', w: 13.333, h: 7.5 } })
+    } else {
+      // 全幅極淡縱向底調（白→微鈷墨）— 添理性冷調深度，不改構圖
+      slide.addShape('rect', {
+        x: 0,
+        y: 0,
+        w: 13.33,
+        h: 7.5,
+        fill: { color: gradLinear(90, [{ pos: 0, color: mix('FFFFFF', 'FFFFFF', 0.04) }, { pos: 100, color: mix('FFFFFF', GRD.ink, 0.05) }]) },
+        line: { type: 'none' },
+      })
+    }
     // 四角準星
     crosshair(slide, 0.55, 0.55, 0.28, GRD.cross)
     crosshair(slide, 12.78, 0.55, 0.28, GRD.cross)
@@ -2083,15 +2114,21 @@ const seminar: Pack = {
       // 深藍 scrim 保白字（shape fill transparency 正常 work）
       slide.addShape('rect', { x: 0, y: 0, w: 13.33, h: 7.5, fill: { color: SEM.coverBg, transparency: 28 }, line: { type: 'none' } })
     } else {
-      // 全幅柔金暈：題後極淡放射光 → 深藍底，添研討發佈級景深（無相時）
-      slide.addShape('rect', {
-        x: 0,
-        y: 0,
-        w: 13.33,
-        h: 7.5,
-        fill: { color: gradRadial([{ pos: 0, color: mix(SEM.coverBg, SEM.gold, 0.12) }, { pos: 100, color: SEM.coverBg }]) },
-        line: { type: 'none' },
-      })
+      // 招牌紋理底圖（瀏覽器 Canvas raster；冇 canvas 時 fallback 柔金暈底）
+      const tex = coverTextureUri('seminar')
+      if (tex) {
+        slide.addImage({ data: tex, x: 0, y: 0, w: 13.333, h: 7.5, sizing: { type: 'cover', w: 13.333, h: 7.5 } })
+      } else {
+        // 全幅柔金暈：題後極淡放射光 → 深藍底，添研討發佈級景深（無相時）
+        slide.addShape('rect', {
+          x: 0,
+          y: 0,
+          w: 13.33,
+          h: 7.5,
+          fill: { color: gradRadial([{ pos: 0, color: mix(SEM.coverBg, SEM.gold, 0.12) }, { pos: 100, color: SEM.coverBg }]) },
+          line: { type: 'none' },
+        })
+      }
     }
     // 金短線 + kicker
     slide.addShape('rect', { x: 0.9, y: 0.82, w: 1.1, h: 0.03, fill: { color: SEM.gold }, line: { type: 'none' } })
