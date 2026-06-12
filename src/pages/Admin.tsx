@@ -36,7 +36,6 @@ import { useAuth } from '../context/AuthContext'
 import { useToast } from '../context/ToastContext'
 import { useConfirm } from '../context/ConfirmContext'
 import {
-  isAdminEmail,
   adminOverview,
   adminListUsers,
   adminSetPlan,
@@ -47,12 +46,16 @@ import {
   adminDeleteAnnouncement,
   adminListTickets,
   adminSetTicketStatus,
+  adminListAdmins,
+  adminAddAdmin,
+  adminRemoveAdmin,
   type AdminOverview,
   type AdminUser,
   type AdminUsage,
   type AdminOrg,
   type Announcement,
   type AdminTicket,
+  type AdminEntry,
 } from '../lib/admin'
 
 // ============================================================
@@ -70,10 +73,16 @@ const fmtDateTime = (s: string) => new Date(s).toLocaleString('zh-HK')
 const usd = (n: number) => `US$${(Number.isFinite(n) ? n : 0).toFixed(2)}`
 
 export default function Admin() {
-  const { user } = useAuth()
+  const { isAdmin, adminChecked } = useAuth()
   const [tab, setTab] = useState<TabId>('overview')
-  const isAdmin = isAdminEmail(user?.email)
 
+  if (!adminChecked) {
+    return (
+      <Card className="p-8">
+        <p className="py-8 text-center text-sm text-slate-400">載入中…</p>
+      </Card>
+    )
+  }
   if (!isAdmin) {
     return (
       <Card className="p-8">
@@ -498,7 +507,116 @@ function ContentTab() {
     <div className="space-y-5">
       <AnnouncementsCard />
       <TicketsCard />
+      <AdminsCard />
     </div>
+  )
+}
+
+// 管理員名單（DB 管理）：加一個 email，嗰位即時可以喺後台睇到全部客服查詢，
+// 唔使改 ADMIN_EMAILS 環境變數或重新部署。env 白名單嗰啲標「環境變數」唯讀。
+function AdminsCard() {
+  const { data, loading, err, reload } = useAsync<AdminEntry[]>(adminListAdmins)
+  const toast = useToast()
+  const confirm = useConfirm()
+  const [rows, setRows] = useState<AdminEntry[]>([])
+  const [email, setEmail] = useState('')
+  const [busy, setBusy] = useState(false)
+  useEffect(() => {
+    if (data) setRows(data)
+  }, [data])
+
+  const add = async () => {
+    const e = email.trim().toLowerCase()
+    if (!e || !e.includes('@')) {
+      toast.error('請輸入有效 email')
+      return
+    }
+    try {
+      setBusy(true)
+      await adminAddAdmin(e)
+      toast.success('已加入管理員')
+      setEmail('')
+      reload()
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : '加入失敗')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const remove = async (entry: AdminEntry) => {
+    const ok = await confirm({ title: `移除管理員 ${entry.email}？`, tone: 'danger', confirmText: '移除' })
+    if (!ok) return
+    try {
+      setBusy(true)
+      await adminRemoveAdmin(entry.email)
+      setRows((cur) => cur.filter((x) => x.email !== entry.email))
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : '移除失敗')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <Card className="p-5">
+      <SectionTitle right={<RefreshBtn loading={loading} onClick={reload} />}>管理員名單</SectionTitle>
+      <p className="mb-3 text-sm text-slate-500 dark:text-slate-400">
+        加一個 email，嗰位老師即時可以喺後台睇到全部客服查詢（唔使改環境變數或重新部署）。標「環境變數」嗰啲喺 ADMIN_EMAILS 設定，唔可以喺度移除。
+      </p>
+      <div className="mb-4 flex items-end gap-2">
+        <div className="flex-1">
+          <Field label="新增管理員 email">
+            <Input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="teacher@school.edu.hk"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') void add()
+              }}
+            />
+          </Field>
+        </div>
+        <Button icon={Plus} onClick={add} loading={busy} disabled={!email.trim()}>
+          加入
+        </Button>
+      </div>
+      {!data ? (
+        <LoadErr loading={loading} err={err} empty={rows.length === 0} />
+      ) : rows.length === 0 ? (
+        <EmptyState icon="👤" title="未有管理員。" />
+      ) : (
+        <ul className="space-y-2">
+          {rows.map((a) => (
+            <li
+              key={a.email}
+              className="flex items-center justify-between gap-2 rounded-xl border border-[color:var(--border)] p-3"
+            >
+              <div className="min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="truncate text-sm font-medium text-slate-800 dark:text-slate-100">{a.email}</span>
+                  <Badge tone={a.source === 'env' ? 'slate' : 'green'}>{a.source === 'env' ? '環境變數' : 'DB'}</Badge>
+                </div>
+                {a.source === 'db' && (a.added_by || a.created_at) && (
+                  <p className="mt-1 text-[10px] text-slate-400">
+                    {a.added_by ? `由 ${a.added_by} 加入` : ''}
+                    {a.created_at ? ` · ${fmtDateTime(a.created_at)}` : ''}
+                  </p>
+                )}
+              </div>
+              {a.source === 'db' ? (
+                <Button size="sm" variant="ghost" icon={Trash2} disabled={busy} onClick={() => remove(a)}>
+                  移除
+                </Button>
+              ) : (
+                <span className="shrink-0 text-[10px] text-slate-400">唯讀</span>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+    </Card>
   )
 }
 

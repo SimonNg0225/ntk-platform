@@ -11,7 +11,6 @@ import { featName, groupLabel } from '../i18n/appEn'
 import ModeSwitcher from './ModeSwitcher'
 import AccountBox from './AccountBox'
 import { useAuth } from '../context/AuthContext'
-import { isAdminEmail } from '../lib/support'
 
 const COLLAPSE_KEY = 'ntk.sidebarCollapsed'
 
@@ -55,8 +54,7 @@ export default function Sidebar({
 }: Props) {
   const { t } = useTranslation()
   const { modeDef } = useMode()
-  const { user } = useAuth()
-  const showAdmin = isAdminEmail(user?.email)
+  const { isAdmin: showAdmin } = useAuth()
   const groups = groupedFeatures(modeDef.id)
 
   const recents = useCollection(recentFeaturesCol)

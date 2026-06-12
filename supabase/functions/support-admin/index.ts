@@ -48,9 +48,19 @@ Deno.serve(async (req: Request) => {
   if (authError || !user) return json({ error: '請先登入。' }, 401)
 
   const email = (user.email ?? '').toLowerCase()
-  if (!email || !ADMIN_EMAILS.includes(email)) {
-    return json({ error: '只有管理員可以存取。' }, 403)
+  const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY)
+
+  // admin 判斷：ADMIN_EMAILS env（bootstrap）OR app_admins 表（DB 名單，後台即時增刪）
+  let allowed = !!email && ADMIN_EMAILS.includes(email)
+  if (!allowed && email) {
+    const { data: adminRow } = await admin
+      .from('app_admins')
+      .select('email')
+      .eq('email', email)
+      .maybeSingle()
+    allowed = !!adminRow
   }
+  if (!allowed) return json({ error: '只有管理員可以存取。' }, 403)
 
   let body: { action?: string; id?: string; status?: string }
   try {
@@ -58,8 +68,6 @@ Deno.serve(async (req: Request) => {
   } catch {
     return json({ error: 'Request body 唔係有效 JSON。' }, 400)
   }
-
-  const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY)
 
   if (body.action === 'list') {
     const { data, error } = await admin

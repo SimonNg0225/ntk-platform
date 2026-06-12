@@ -11,6 +11,22 @@ import { isAdminEmail } from './support'
 
 export { isAdminEmail }
 
+/**
+ * DB-aware 管理員判斷：env 白名單（即時、bootstrap）OR app_admins 表（查 DB）。
+ * RLS 只准讀「自己嗰行」，所以非管理員查自己嘅 email 會回 0 行 = 唔係 admin。
+ */
+export async function checkIsAdmin(email: string | null | undefined): Promise<boolean> {
+  if (!email) return false
+  if (isAdminEmail(email)) return true
+  if (!supabase) return false
+  const { data } = await supabase
+    .from('app_admins')
+    .select('email')
+    .eq('email', email.toLowerCase())
+    .maybeSingle()
+  return !!data
+}
+
 async function callAdmin<T>(action: string, body: Record<string, unknown> = {}): Promise<T> {
   if (!supabase) throw new Error('未接 Supabase。')
   const {
@@ -107,6 +123,14 @@ export interface AdminTicket {
   created_at: string
 }
 
+export interface AdminEntry {
+  email: string
+  /** 'env' = ADMIN_EMAILS 環境變數（bootstrap，唯讀）；'db' = app_admins 表（可移除） */
+  source: 'env' | 'db'
+  added_by: string | null
+  created_at: string | null
+}
+
 // ── API ───────────────────────────────────────────────────
 export const adminOverview = () => callAdmin<AdminOverview>('overview')
 
@@ -134,3 +158,12 @@ export const adminListTickets = () => callAdmin<AdminTicket[]>('tickets:list')
 
 export const adminSetTicketStatus = (id: string, status: 'open' | 'closed') =>
   callAdmin<{ ok: true }>('tickets:set-status', { id, status })
+
+// ── 管理員名單（DB 管理）─────────────────────────────────────
+export const adminListAdmins = () => callAdmin<AdminEntry[]>('admins:list')
+
+export const adminAddAdmin = (email: string) =>
+  callAdmin<{ ok: true }>('admins:add', { email })
+
+export const adminRemoveAdmin = (email: string) =>
+  callAdmin<{ ok: true }>('admins:remove', { email })

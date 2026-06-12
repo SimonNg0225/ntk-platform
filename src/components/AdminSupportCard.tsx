@@ -4,7 +4,6 @@ import { Card, SectionTitle, Badge, Button, EmptyState, cx } from '../ui'
 import { useAuth } from '../context/AuthContext'
 import { useToast } from '../context/ToastContext'
 import {
-  isAdminEmail,
   adminListTickets,
   adminSetTicketStatus,
   type SupportTicket,
@@ -16,13 +15,11 @@ import {
 // ============================================================
 
 export default function AdminSupportCard() {
-  const { user } = useAuth()
+  const { isAdmin } = useAuth()
   const toast = useToast()
   const [tickets, setTickets] = useState<SupportTicket[]>([])
   const [loading, setLoading] = useState(false)
   const [busyId, setBusyId] = useState<string | null>(null)
-
-  const isAdmin = isAdminEmail(user?.email)
 
   const reload = () => {
     setLoading(true)

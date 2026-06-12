@@ -79,9 +79,21 @@ Deno.serve(async (req: Request) => {
   if (authError || !user) return json({ error: '請先登入。' }, 401)
 
   const actorEmail = (user.email ?? '').toLowerCase()
-  if (!actorEmail || !ADMIN_EMAILS.includes(actorEmail)) {
-    return json({ error: '只有管理員可以存取。' }, 403)
+
+  // ── 2) service_role（繞過 RLS；亦俾下面 DB 白名單查 app_admins）──
+  const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY)
+
+  // admin 判斷：ADMIN_EMAILS env（bootstrap）OR app_admins 表（DB 名單，後台即時增刪、唔使重新部署）
+  let allowed = !!actorEmail && ADMIN_EMAILS.includes(actorEmail)
+  if (!allowed && actorEmail) {
+    const { data: adminRow } = await admin
+      .from('app_admins')
+      .select('email')
+      .eq('email', actorEmail)
+      .maybeSingle()
+    allowed = !!adminRow
   }
+  if (!allowed) return json({ error: '只有管理員可以存取。' }, 403)
 
   let body: Record<string, unknown>
   try {
@@ -90,9 +102,6 @@ Deno.serve(async (req: Request) => {
     return json({ error: 'Request body 唔係有效 JSON。' }, 400)
   }
   const action = String(body.action ?? '')
-
-  // ── 2) service_role（繞過 RLS）──
-  const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY)
 
   const audit = (a: string, target: string | null, meta?: unknown) =>
     admin
@@ -427,6 +436,52 @@ Deno.serve(async (req: Request) => {
           .eq('id', id)
         if (error) return json({ error: error.message }, 500)
         await audit('ticket-status', id, { status })
+        return json({ data: { ok: true } })
+      }
+
+      // ════════════ 管理員名單 ════════════
+      // env（ADMIN_EMAILS）= bootstrap 唯讀；app_admins 表 = 後台可增刪。
+      case 'admins:list': {
+        const { data, error } = await admin
+          .from('app_admins')
+          .select('email, added_by, created_at')
+          .order('created_at', { ascending: true })
+        if (error) return json({ error: error.message }, 500)
+        const dbList = (data ?? []).map((r) => ({
+          email: r.email as string,
+          source: 'db' as const,
+          added_by: (r.added_by as string | null) ?? null,
+          created_at: (r.created_at as string | null) ?? null,
+        }))
+        const dbEmails = new Set(dbList.map((a) => a.email))
+        const envList = ADMIN_EMAILS.filter((e) => !dbEmails.has(e)).map((e) => ({
+          email: e,
+          source: 'env' as const,
+          added_by: null,
+          created_at: null,
+        }))
+        return json({ data: [...envList, ...dbList] })
+      }
+
+      case 'admins:add': {
+        const email = String(body.email ?? '').trim().toLowerCase()
+        if (!email || !email.includes('@')) return json({ error: '請輸入有效 email。' }, 400)
+        const { error } = await admin
+          .from('app_admins')
+          .upsert({ email, added_by: actorEmail }, { onConflict: 'email' })
+        if (error) return json({ error: error.message }, 500)
+        await audit('admin-add', email)
+        return json({ data: { ok: true } })
+      }
+
+      case 'admins:remove': {
+        const email = String(body.email ?? '').trim().toLowerCase()
+        if (!email) return json({ error: '缺少 email。' }, 400)
+        // 防自鎖：唔可以移除自己（env bootstrap admin 移唔到，因為佢唔喺表入面）
+        if (email === actorEmail) return json({ error: '唔可以移除自己。' }, 400)
+        const { error } = await admin.from('app_admins').delete().eq('email', email)
+        if (error) return json({ error: error.message }, 500)
+        await audit('admin-remove', email)
         return json({ data: { ok: true } })
       }
 

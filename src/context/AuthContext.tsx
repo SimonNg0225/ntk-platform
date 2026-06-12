@@ -10,6 +10,8 @@ import type { Session, User } from '@supabase/supabase-js'
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
 import { attachSync, detachSync } from '../lib/sync'
 import { identifyUser, resetIdentity, track } from '../lib/observability'
+import { isAdminEmail } from '../lib/support'
+import { checkIsAdmin } from '../lib/admin'
 
 // ============================================================
 //  AuthContext
@@ -24,6 +26,10 @@ interface AuthContextValue {
   loading: boolean
   /** 有冇接好 Supabase（即係可唔可以登入） */
   configured: boolean
+  /** 當前用戶係咪管理員（env 白名單 OR app_admins 表）。 */
+  isAdmin: boolean
+  /** 管理員身份查完未（DB 慢查；未查完時 gate 應顯示載入中而非「冇權限」）。 */
+  adminChecked: boolean
   signInWithGoogle: () => Promise<void>
   signOut: () => Promise<void>
 }
@@ -63,12 +69,49 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => detachSync()
   }, [userId, session?.user?.email])
 
+  // 管理員身份：env 白名單即時知（唔閃），否則查 app_admins 表（DB 名單）
+  const email = session?.user?.email ?? null
+  const [isAdmin, setIsAdmin] = useState(false)
+  const [adminChecked, setAdminChecked] = useState(false)
+  useEffect(() => {
+    if (!email) {
+      setIsAdmin(false)
+      setAdminChecked(true)
+      return
+    }
+    if (isAdminEmail(email)) {
+      setIsAdmin(true)
+      setAdminChecked(true)
+      return
+    }
+    let cancelled = false
+    setAdminChecked(false)
+    checkIsAdmin(email)
+      .then((r) => {
+        if (!cancelled) {
+          setIsAdmin(r)
+          setAdminChecked(true)
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setIsAdmin(false)
+          setAdminChecked(true)
+        }
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [email])
+
   const value = useMemo<AuthContextValue>(
     () => ({
       user: session?.user ?? null,
       session,
       loading,
       configured: isSupabaseConfigured,
+      isAdmin,
+      adminChecked,
       signInWithGoogle: async () => {
         if (!supabase) return
         track('signup_started', { provider: 'google' })
@@ -84,7 +127,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         await supabase.auth.signOut()
       },
     }),
-    [session, loading],
+    [session, loading, isAdmin, adminChecked],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
