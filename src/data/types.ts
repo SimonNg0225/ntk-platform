@@ -271,6 +271,9 @@ export interface Countdown extends Entity {
   category?: CountdownCategory
   mode?: 'learning' | 'work' | 'both' // 同 CalendarEvent 一致；用嚟過濾
   notes?: string
+  /** 標記「到達」(即完成) 嘅時間 (ISO)。早於 date 當日 = 提前到達；
+   *  未設且已過 date = 航班延誤。 */
+  arrivedAt?: string
   createdAt: string
 }
 

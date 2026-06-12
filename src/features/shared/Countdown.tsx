@@ -19,10 +19,11 @@ import {
   Tag,
   Ticket,
   Trash2,
+  Undo2,
   X,
 } from 'lucide-react'
 import { useCollection } from '../../lib/store'
-import { countdownsCol } from '../../data/collections'
+import { countdownsCol, eventsCol } from '../../data/collections'
 import type { Countdown as CountdownItem, CountdownCategory } from '../../data/types'
 import {
   groupByTime,
@@ -99,6 +100,13 @@ const URGENCY: Record<
     stub: 'bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-300',
     ring: 'group-hover:border-slate-300 dark:group-hover:border-slate-600',
   },
+}
+
+// 候機（未到達）狀態文字 i18n key + 中文 default（按緊急度 tone）。
+const UPCOMING_STATUS: Record<'rose' | 'amber' | 'green', { key: string; zh: string }> = {
+  rose: { key: 'countdown.status.finalCall', zh: '最後召集' },
+  amber: { key: 'countdown.status.boarding', zh: '準備登機' },
+  green: { key: 'countdown.status.onTime', zh: '準時候機' },
 }
 
 // ───────── Split-flap 顯示牌（機場離境牌數字感）─────────
@@ -310,21 +318,21 @@ export default function Countdown() {
     [items, mode],
   )
 
-  // 即將到嚟（今日及未來）：升序，最近喺前。
+  // 候機中（未到達 且 今日／未來）：升序，最近喺前。已標記到達嘅唔再算候機。
   const upcoming = useMemo(
     () =>
       visible
-        .filter((c) => daysUntil(c.date, todayKey) >= 0)
+        .filter((c) => !c.arrivedAt && daysUntil(c.date, todayKey) >= 0)
         .slice()
         .sort((a, b) => a.date.localeCompare(b.date)),
     [visible, todayKey],
   )
 
-  // 已過去：降序，最近過去喺前。
+  // 已過去 / 已到達（已標記到達，或已過 date）：降序，最近喺前。
   const past = useMemo(
     () =>
       visible
-        .filter((c) => daysUntil(c.date, todayKey) < 0)
+        .filter((c) => !!c.arrivedAt || daysUntil(c.date, todayKey) < 0)
         .slice()
         .sort((a, b) => b.date.localeCompare(a.date)),
     [visible, todayKey],
@@ -373,9 +381,23 @@ export default function Countdown() {
     if (fCategory) payload.category = fCategory
     const trimmedNotes = fNotes.trim()
     if (trimmedNotes) payload.notes = trimmedNotes
-    countdownsCol.add(payload)
+    const created = countdownsCol.add(payload)
+    // 同步去「行事曆」：建立一個全日活動，id = cd-<countdownId> 連住個倒數，
+    // 之後刪倒數時一齊清走，避免行事曆殘留孤兒事件。
+    eventsCol.add({
+      id: `cd-${created.id}`,
+      title: trimmed,
+      date: fDate,
+      allDay: !fTime,
+      time: fTime || undefined,
+      mode: 'both',
+      calendarId:
+        mode === 'work' ? 'cal-work' : mode === 'learning' ? 'cal-study' : 'cal-personal',
+      type: 'countdown',
+      notes: trimmedNotes || undefined,
+    })
     setModalOpen(false)
-    toast.success('已新增倒數')
+    toast.success(t('countdown.toast.added', { defaultValue: '已新增倒數，並同步到行事曆' }))
   }
 
   async function handleRemove(c: CountdownItem) {
@@ -387,7 +409,24 @@ export default function Countdown() {
     })
     if (!ok) return
     countdownsCol.remove(c.id)
+    eventsCol.remove(`cd-${c.id}`) // 同步清走行事曆嗰個連結事件
     toast.success('已刪除倒數')
+  }
+
+  // 標記「到達」（完成）。早於 date 當日 = 提前到達。
+  function markArrived(c: CountdownItem) {
+    countdownsCol.update(c.id, { arrivedAt: new Date().toISOString() })
+    const early = todayKey < c.date
+    toast.success(
+      early
+        ? t('countdown.toast.early', { defaultValue: '已記錄：提前到達 ✈' })
+        : t('countdown.toast.arrived', { defaultValue: '已記錄：到達 ✈' }),
+    )
+  }
+
+  // 取消到達（撳錯／要重開倒數）。
+  function undoArrived(c: CountdownItem) {
+    countdownsCol.update(c.id, { arrivedAt: undefined })
   }
 
   // 單張倒數卡 = 一張登機牌（同 upcoming 分段同 past flat list 共用，外觀一致）。
@@ -396,16 +435,32 @@ export default function Countdown() {
   // 兩聯之間一條虛線打孔縫（手機上下疊、sm 以上左右並排）。
   function renderCard(c: CountdownItem, index = 0) {
     const days = daysUntil(c.date, todayKey)
-    const tone = toneOf(days)
+    // 到達狀態：arrived = 已標記；arrivedEarly = 到達日早過 deadline；
+    // delayed = 未到達且已過 deadline（航班延誤）。
+    const arrived = !!c.arrivedAt
+    const arrivedEarly = arrived && (c.arrivedAt as string).slice(0, 10) < c.date
+    const delayed = !arrived && days < 0
+    const tone: Tone = arrived ? (arrivedEarly ? 'green' : 'slate') : delayed ? 'rose' : toneOf(days)
     const u = URGENCY[tone]
+    const statusText = arrived
+      ? arrivedEarly
+        ? t('countdown.status.early', { defaultValue: '提前到達' })
+        : t('countdown.status.arrived', { defaultValue: '已抵達' })
+      : delayed
+        ? t('countdown.status.delayed', { defaultValue: '航班延誤' })
+        : t(UPCOMING_STATUS[tone as 'rose' | 'amber' | 'green'].key, {
+            defaultValue: UPCOMING_STATUS[tone as 'rose' | 'amber' | 'green'].zh,
+          })
     const meta = c.category ? CATEGORY_META[c.category] : null
     const CatIcon = meta ? meta.icon : Ticket
-    const isToday = days === 0
+    const isToday = !arrived && days === 0
     const isPast = days < 0
+    // 候機（未到達、未延誤）先閃燈
+    const showPing = !arrived && !delayed && days >= 0
     // 閘口代碼：分類首兩個英文 + 緊急度（純裝飾，似登機牌嘅 gate）
     const gateCode = (c.category ? c.category.slice(0, 2) : 'NT').toUpperCase()
-    // 30 日內畫一條「逼近」進度條（越近越滿）；其餘 / 已過去唔畫。
-    const progress = !isPast && days <= 30 ? Math.round((1 - days / 30) * 100) : null
+    // 30 日內畫一條「逼近」進度條（越近越滿）；已到達 / 已過去唔畫。
+    const progress = !isPast && !arrived && days <= 30 ? Math.round((1 - days / 30) * 100) : null
 
     return (
       <article
@@ -458,7 +513,25 @@ export default function Countdown() {
 
           {/* split-flap 大數字區 */}
           <div className="mt-5 flex flex-1 items-end">
-            {isToday ? (
+            {arrived ? (
+              <span
+                className={cx(
+                  'inline-flex items-center gap-2 text-lg font-semibold',
+                  arrivedEarly
+                    ? 'text-emerald-600 dark:text-emerald-400'
+                    : 'text-slate-500 dark:text-slate-400',
+                )}
+              >
+                <PlaneLanding size={22} strokeWidth={2} />
+                {statusText}
+              </span>
+            ) : delayed ? (
+              <span className="inline-flex items-center gap-2 text-lg font-semibold text-rose-600 dark:text-rose-400">
+                <AlarmClock size={22} strokeWidth={2} />
+                {statusText}
+                <span className="text-sm font-medium text-rose-400/90">· {Math.abs(days)} 日</span>
+              </span>
+            ) : isToday ? (
               <div className="flex items-baseline gap-2">
                 <FlapDisplay value="今" ariaLabel="今日出發" />
                 <FlapDisplay value="日" />
@@ -511,8 +584,8 @@ export default function Countdown() {
               狀態 · Status
             </p>
             <p className="mt-1.5 flex items-center gap-2">
-              <span className={cx('relative flex h-2 w-2', isPast && 'opacity-60')}>
-                {!isPast && (
+              <span className={cx('relative flex h-2 w-2', arrived && 'opacity-70')}>
+                {showPing && (
                   <span
                     className={cx(
                       'absolute inline-flex h-full w-full animate-ping rounded-full opacity-60',
@@ -523,7 +596,7 @@ export default function Countdown() {
                 <span className={cx('relative inline-flex h-2 w-2 rounded-full', u.dot)} />
               </span>
               <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">
-                {u.status}
+                {statusText}
               </span>
             </p>
           </div>
@@ -536,7 +609,17 @@ export default function Countdown() {
                 u.stub,
               )}
             >
-              {days > 0 ? `T-${days}` : isToday ? 'DEP TODAY' : `+${-days}d`}
+              {arrived
+                ? arrivedEarly
+                  ? 'EARLY ✓'
+                  : 'ARRIVED ✓'
+                : delayed
+                  ? 'DELAYED'
+                  : days > 0
+                    ? `T-${days}`
+                    : isToday
+                      ? 'DEP TODAY'
+                      : `+${-days}d`}
             </span>
             {progress !== null && (
               <div
@@ -549,6 +632,28 @@ export default function Countdown() {
                   style={{ width: `${progress}%` }}
                 />
               </div>
+            )}
+            {/* 到達操作：未到達 → 標記到達（延誤就補登）；已到達 → 取消 */}
+            {!arrived ? (
+              <button
+                type="button"
+                onClick={() => markArrived(c)}
+                className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-emerald-200 bg-emerald-50 px-2.5 py-1.5 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/40 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300 dark:hover:bg-emerald-500/20"
+              >
+                <PlaneLanding size={13} />
+                {delayed
+                  ? t('countdown.action.markLate', { defaultValue: '補登到達' })
+                  : t('countdown.action.markArrived', { defaultValue: '標記到達' })}
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => undoArrived(c)}
+                className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-400 transition hover:text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30 dark:hover:text-slate-200"
+              >
+                <Undo2 size={13} />
+                {t('countdown.action.undo', { defaultValue: '取消到達' })}
+              </button>
             )}
           </div>
         </div>
