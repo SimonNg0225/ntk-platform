@@ -293,7 +293,9 @@ export function AppShell() {
                   <h1 className="flex items-center gap-2 text-2xl font-bold text-slate-800 dark:text-slate-100">
                     <FeatureIcon icon="🛠️" size={24} className="text-accent" /> 後台管理
                   </h1>
-                  <Admin />
+                  <ErrorBoundary onReset={() => navigate(null)}>
+                    <Admin />
+                  </ErrorBoundary>
                 </div>
               ) : !feature ? (
                 <Home onOpen={navigate} />
