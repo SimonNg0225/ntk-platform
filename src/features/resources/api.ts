@@ -138,6 +138,9 @@ export async function uploadResource(input: UploadResourceInput): Promise<Shared
       const tp = `${user.id}/${id}.thumb.jpg`
       const { error: thumbErr } = await sb.storage.from('community').upload(tp, thumbBlob, { contentType: 'image/jpeg' })
       if (!thumbErr) thumbPath = tp
+      else console.warn('[thumb] 上載縮圖失敗：', thumbErr)
+    } else {
+      console.warn('[thumb] 冇生成到縮圖（type=', input.file.type, '）')
     }
   }
 
