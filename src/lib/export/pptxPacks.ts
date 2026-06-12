@@ -595,7 +595,7 @@ const inkwell: Pack = {
   splitPhoto: 'bleedHair',
   overrides: { quote: renderInscription_inkwell, cards: renderBooklet_inkwell, steps: renderScroll_inkwell },
 
-  cover(slide, deck, brand, img) {
+  cover(slide, deck, brand, img, title) {
     slide.background = { color: 'FFFFFF' }
     const hasImg = Boolean(img)
     // 招牌紋理底圖（瀏覽器 Canvas raster；冇 canvas 時 fallback 極淡縱向底調）
@@ -618,11 +618,19 @@ const inkwell: Pack = {
     tx(slide, '教學簡報 · TEACHING NOTES', { x: 0.9, y: 0.42, w: 7, h: 0.3, fontSize: 9, color: INK.accent, charSpacing: 4, bold: true })
     // 題 + 副題（雜誌封面式：有相時收窄文字欄）
     const titleW = hasImg ? 7.6 : 10.6
-    const fit = fitTitle(deck.title, 'cover')
-    const lines = Math.max(1, Math.min(2, estimateLines(deck.title, fit.fontPt, titleW)))
-    tx(slide, deck.title, { x: 0.9, y: 2.35, w: titleW, h: 1.55, fontSize: fit.fontPt, bold: true, color: INK.ink, lineSpacingMultiple: 1.08, fit: 'shrink' })
+    let subY: number
+    if (title) {
+      // 高擬真：招牌標題圖（跨平台一致）
+      const th = Math.min(1.55, titleW / title.aspect)
+      slide.addImage({ data: title.dataUri, x: 0.9, y: 2.35, w: th * title.aspect, h: th })
+      subY = 2.35 + th + 0.16
+    } else {
+      const fit = fitTitle(deck.title, 'cover')
+      const lines = Math.max(1, Math.min(2, estimateLines(deck.title, fit.fontPt, titleW)))
+      tx(slide, deck.title, { x: 0.9, y: 2.35, w: titleW, h: 1.55, fontSize: fit.fontPt, bold: true, color: INK.ink, lineSpacingMultiple: 1.08, fit: 'shrink' })
+      subY = 2.35 + (lines * fit.fontPt * 1.08) / 72 + 0.25
+    }
     if (deck.subtitle) {
-      const subY = 2.35 + (lines * fit.fontPt * 1.08) / 72 + 0.25
       tx(slide, deck.subtitle, { x: 0.9, y: subY, w: hasImg ? 7.4 : 10, h: 0.5, fontSize: 16, color: INK.soft })
     }
     // 左下：朱砂方印 + 日期
@@ -940,7 +948,7 @@ const celadon: Pack = {
   splitPhoto: 'circle',
   overrides: { cards: renderHubSpoke_celadon, stats: renderDials_celadon, compare: renderArcCompare_celadon },
 
-  cover(slide, deck, brand, img) {
+  cover(slide, deck, brand, img, title) {
     slide.background = { color: 'FFFFFF' }
     // 招牌紋理底圖（瀏覽器 Canvas raster；冇 canvas 時 fallback 極淡縱向底調）
     const tex = coverTextureUri('celadon')
@@ -964,12 +972,21 @@ const celadon: Pack = {
     slide.addShape('ellipse', { x: 12.55, y: 1.5, w: 0.22, h: 0.22, fill: { color: CEL.pop }, line: { type: 'none' } })
     // 左欄文字
     tx(slide, '教學簡報 · TEACHING DECK', { x: 0.9, y: 2.08, w: 6.5, h: 0.3, fontSize: 9, color: CEL.accent, charSpacing: 3, bold: true })
-    const fit = fitTitle(deck.title, 'cover')
-    const pt = Math.min(42, fit.fontPt)
-    const lines = Math.max(1, Math.min(3, estimateLines(deck.title, pt, 6.6)))
-    tx(slide, deck.title, { x: 0.9, y: 2.5, w: 6.6, h: 2.3, fontSize: pt, bold: true, color: CEL.ink, lineSpacingMultiple: 1.12, fit: 'shrink' })
+    const titleW = 6.6
+    let subY: number
+    if (title) {
+      // 高擬真：招牌標題圖（跨平台一致）
+      const th = Math.min(2.3, titleW / title.aspect)
+      slide.addImage({ data: title.dataUri, x: 0.9, y: 2.5, w: th * title.aspect, h: th })
+      subY = 2.5 + th + 0.16
+    } else {
+      const fit = fitTitle(deck.title, 'cover')
+      const pt = Math.min(42, fit.fontPt)
+      const lines = Math.max(1, Math.min(3, estimateLines(deck.title, pt, titleW)))
+      tx(slide, deck.title, { x: 0.9, y: 2.5, w: titleW, h: 2.3, fontSize: pt, bold: true, color: CEL.ink, lineSpacingMultiple: 1.12, fit: 'shrink' })
+      subY = 2.5 + (lines * pt * 1.12) / 72 + 0.22
+    }
     if (deck.subtitle) {
-      const subY = 2.5 + (lines * pt * 1.12) / 72 + 0.22
       tx(slide, deck.subtitle, { x: 0.9, y: subY, w: 6.4, h: 0.5, fontSize: 15, color: CEL.soft })
     }
     tx(slide, brand, { x: 0.9, y: 6.7, w: 5, h: 0.3, fontSize: 8, color: CEL.faint })
@@ -1548,7 +1565,7 @@ const nocturne: Pack = {
   splitPhoto: 'bleedScrim',
   overrides: { stats: renderHudStats_nocturne, quote: renderSpotlight_nocturne, steps: renderGiltTimeline_nocturne },
 
-  cover(slide, deck, brand, img) {
+  cover(slide, deck, brand, img, title) {
     slide.background = { color: NOC.bg }
     if (img) {
       // full-bleed 相打底 + 深底 scrim（shape fill transparency 正常 work）
@@ -1573,12 +1590,21 @@ const nocturne: Pack = {
     }
     goldPair(slide, 0.9, 0.7, 3.3)
     tx(slide, '教學簡報 · TEACHING DECK', { x: 0.9, y: 0.95, w: 7, h: 0.32, fontSize: 10, color: NOC.accent, charSpacing: 4, bold: true })
-    const fit = fitTitle(deck.title, 'cover')
-    const pt = Math.min(42, fit.fontPt)
-    const lines = Math.max(1, Math.min(2, estimateLines(deck.title, pt, 10.8)))
-    tx(slide, deck.title, { x: 0.9, y: 2.55, w: 10.8, h: 1.5, fontSize: pt, bold: true, color: NOC.ink, lineSpacingMultiple: 1.1, fit: 'shrink' })
+    const titleW = 10.8
+    let subY: number
+    if (title) {
+      // 高擬真：招牌標題圖（跨平台一致）
+      const th = Math.min(1.5, titleW / title.aspect)
+      slide.addImage({ data: title.dataUri, x: 0.9, y: 2.55, w: th * title.aspect, h: th })
+      subY = 2.55 + th + 0.16
+    } else {
+      const fit = fitTitle(deck.title, 'cover')
+      const pt = Math.min(42, fit.fontPt)
+      const lines = Math.max(1, Math.min(2, estimateLines(deck.title, pt, titleW)))
+      tx(slide, deck.title, { x: 0.9, y: 2.55, w: titleW, h: 1.5, fontSize: pt, bold: true, color: NOC.ink, lineSpacingMultiple: 1.1, fit: 'shrink' })
+      subY = 2.55 + (lines * pt * 1.1) / 72 + 0.25
+    }
     if (deck.subtitle) {
-      const subY = 2.55 + (lines * pt * 1.1) / 72 + 0.25
       tx(slide, deck.subtitle, { x: 0.9, y: subY, w: 10.5, h: 0.5, fontSize: 15, color: NOC.soft })
     }
     tx(slide, brand, { x: 0.9, y: 7.05, w: 5, h: 0.3, fontSize: 8, color: NOC.faint })
@@ -2107,7 +2133,7 @@ const seminar: Pack = {
   splitPhoto: 'bleedHair',
   overrides: { steps: renderAgendaTimeline_seminar, quote: renderDiscussionPrompt_seminar, compare: renderDebate_seminar },
 
-  cover(slide, deck, brand, img) {
+  cover(slide, deck, brand, img, title) {
     slide.background = { color: SEM.coverBg }
     if (img) {
       addCoverImage(slide, img, { x: 0, y: 0, w: 13.33, h: 7.5 })
@@ -2133,8 +2159,15 @@ const seminar: Pack = {
     // 金短線 + kicker
     slide.addShape('rect', { x: 0.9, y: 0.82, w: 1.1, h: 0.03, fill: { color: SEM.gold }, line: { type: 'none' } })
     tx(slide, 'TEACHING DECK · 教學簡報', { x: 0.9, y: 1.0, w: 8, h: 0.3, fontSize: 10, color: SEM.gold, charSpacing: 4, bold: true })
-    const fit = fitTitle(deck.title, 'cover')
-    tx(slide, deck.title, { x: 0.9, y: 2.45, w: 11.4, h: 2.0, fontSize: fit.fontPt, bold: true, color: 'FFFFFF', lineSpacingMultiple: 1.08, fit: 'shrink' })
+    const titleW = 11.4
+    if (title) {
+      // 高擬真：招牌標題圖（跨平台一致）
+      const th = Math.min(2.0, titleW / title.aspect)
+      slide.addImage({ data: title.dataUri, x: 0.9, y: 2.45, w: th * title.aspect, h: th })
+    } else {
+      const fit = fitTitle(deck.title, 'cover')
+      tx(slide, deck.title, { x: 0.9, y: 2.45, w: titleW, h: 2.0, fontSize: fit.fontPt, bold: true, color: 'FFFFFF', lineSpacingMultiple: 1.08, fit: 'shrink' })
+    }
     if (deck.subtitle) {
       tx(slide, deck.subtitle, { x: 0.9, y: 4.55, w: 10.5, h: 0.5, fontSize: 16, color: 'C7D3DF' })
     }

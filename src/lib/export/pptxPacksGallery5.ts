@@ -311,7 +311,7 @@ const manuscript: Pack = {
     manVine(slide, x, y, dx, dy, c)
   },
 
-  cover(slide, deck, brand, img) {
+  cover(slide, deck, brand, img, title) {
     slide.background = { color: MAN.bg }
     const hasImg = Boolean(img)
     // 招牌羊皮紙紋理底圖（瀏覽器 Canvas raster；冇 canvas 時 fallback 全版極淡羊皮紙深度漸層）
@@ -344,11 +344,19 @@ const manuscript: Pack = {
     manVine(slide, 12.83, 7.0, -0.4, -0.4, mix(MAN.gilt, MAN.bg, 0.35))
     // 題低位 + 上下雙金線夾住
     const titleW = hasImg ? 6.4 : 11.2
-    const fit = fitTitle(deck.title, 'cover')
-    const lines = Math.max(1, Math.min(2, estimateLines(deck.title, fit.fontPt, titleW)))
     manRule(slide, 0.9, 3.7, hasImg ? 6.4 : 4.2, MAN.gilt)
-    tx(slide, deck.title, { x: 0.9, y: 4.0, w: titleW, h: 1.55, fontSize: fit.fontPt, bold: true, color: MAN.ink, lineSpacingMultiple: 1.08, fontFace: 'Georgia', fit: 'shrink' })
-    let cursorY = 4.0 + (lines * fit.fontPt * 1.08) / 72 + 0.2
+    let cursorY: number
+    if (title) {
+      // 高擬真：招牌標題圖（跨平台一致）
+      const th = Math.min(1.55, titleW / title.aspect)
+      slide.addImage({ data: title.dataUri, x: 0.9, y: 4.0, w: th * title.aspect, h: th })
+      cursorY = 4.0 + th + 0.16
+    } else {
+      const fit = fitTitle(deck.title, 'cover')
+      const lines = Math.max(1, Math.min(2, estimateLines(deck.title, fit.fontPt, titleW)))
+      tx(slide, deck.title, { x: 0.9, y: 4.0, w: titleW, h: 1.55, fontSize: fit.fontPt, bold: true, color: MAN.ink, lineSpacingMultiple: 1.08, fontFace: 'Georgia', fit: 'shrink' })
+      cursorY = 4.0 + (lines * fit.fontPt * 1.08) / 72 + 0.2
+    }
     if (deck.subtitle) {
       tx(slide, deck.subtitle, { x: 0.9, y: cursorY, w: titleW, h: 0.5, fontSize: 15, color: MAN.soft })
       cursorY += 0.5

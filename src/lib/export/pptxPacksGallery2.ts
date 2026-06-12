@@ -491,7 +491,7 @@ const ivy: Pack = {
     ivyPair(slide, right ? dx - 0.7 : dx + 0.16, dy + 0.04, 0.6, mix(IVY.gold, 'FFFFFF', 0.2))
   },
 
-  cover(slide, deck, brand, img) {
+  cover(slide, deck, brand, img, title) {
     slide.background = { color: 'FFFFFF' }
     // 招牌學報紙紋底圖（瀏覽器 Canvas raster；冇 canvas 時 fallback 純色底）
     const tex = coverTextureUri('ivy')
@@ -513,11 +513,20 @@ const ivy: Pack = {
     tx(slide, brand, { x: 0.9, y: 6.8, w: 3.4, h: 0.3, fontSize: 9, color: 'FFFFFF' })
     // 右白欄：金菱形 + 題 + 副題
     ivyDiamond(slide, 5.1, 1.85, 0.14)
-    const fit = fitTitle(deck.title, 'cover')
-    const lines = Math.max(1, Math.min(2, estimateLines(deck.title, fit.fontPt, 7.6)))
-    tx(slide, deck.title, { x: 5.1, y: 2.3, w: 7.6, h: 1.6, fontSize: fit.fontPt, bold: true, color: IVY.ink, lineSpacingMultiple: 1.08, fit: 'shrink' })
+    const titleW = 7.6
+    let subY: number
+    if (title) {
+      // 高擬真：招牌標題圖（跨平台一致）
+      const th = Math.min(1.6, titleW / title.aspect)
+      slide.addImage({ data: title.dataUri, x: 5.1, y: 2.3, w: th * title.aspect, h: th })
+      subY = 2.3 + th + 0.16
+    } else {
+      const fit = fitTitle(deck.title, 'cover')
+      const lines = Math.max(1, Math.min(2, estimateLines(deck.title, fit.fontPt, titleW)))
+      tx(slide, deck.title, { x: 5.1, y: 2.3, w: titleW, h: 1.6, fontSize: fit.fontPt, bold: true, color: IVY.ink, lineSpacingMultiple: 1.08, fit: 'shrink' })
+      subY = 2.3 + (lines * fit.fontPt * 1.08) / 72 + 0.22
+    }
     if (deck.subtitle) {
-      const subY = 2.3 + (lines * fit.fontPt * 1.08) / 72 + 0.22
       tx(slide, deck.subtitle, { x: 5.1, y: subY, w: 7.4, h: 0.5, fontSize: 15, color: IVY.soft })
     }
     if (img) {

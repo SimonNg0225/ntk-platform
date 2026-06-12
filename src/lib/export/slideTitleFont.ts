@@ -12,10 +12,25 @@
 import type { CoverTitle } from './types'
 export type { CoverTitle }
 
+// CDN（jsdelivr）fontsource CSS — 用先至載，瀏覽器按 unicode-range 只攞用到嗰幾隻字
+const WENKAI = 'https://cdn.jsdelivr.net/npm/@fontsource/lxgw-wenkai-tc@5/index.css' // 文楷（繁體楷/毛筆）OFL
+const NOTOSERIF = 'https://cdn.jsdelivr.net/npm/@fontsource/noto-serif-tc@5/index.css' // 思源宋（繁體明體）OFL
+const PRESSSTART = 'https://cdn.jsdelivr.net/npm/@fontsource/press-start-2p@5/index.css' // 像素（latin）OFL
+
 /** pack → 招牌標題字體（family + CDN CSS + latinOnly）。只列有招牌字體嘅 pack。 */
 const FONT_BY_PACK: Record<string, { family: string; css: string; latinOnly?: boolean }> = {
-  sumi: { family: 'LXGW WenKai TC', css: 'https://cdn.jsdelivr.net/npm/@fontsource/lxgw-wenkai-tc@5/index.css' },
-  pixel: { family: 'Press Start 2P', css: 'https://cdn.jsdelivr.net/npm/@fontsource/press-start-2p@5/index.css', latinOnly: true },
+  // 文楷 — 書卷／學院／研討／青瓷／夜讀／水墨（楷書毛筆，文氣）
+  sumi: { family: 'LXGW WenKai TC', css: WENKAI },
+  inkwell: { family: 'LXGW WenKai TC', css: WENKAI },
+  ivy: { family: 'LXGW WenKai TC', css: WENKAI },
+  seminar: { family: 'LXGW WenKai TC', css: WENKAI },
+  celadon: { family: 'LXGW WenKai TC', css: WENKAI },
+  nocturne: { family: 'LXGW WenKai TC', css: WENKAI },
+  // 思源宋 — 典藏／手抄本（明體，古典正式）
+  marble: { family: 'Noto Serif TC', css: NOTOSERIF },
+  manuscript: { family: 'Noto Serif TC', css: NOTOSERIF },
+  // 像素 latin（英文題先有，中文 fallback）
+  pixel: { family: 'Press Start 2P', css: PRESSSTART, latinOnly: true },
 }
 
 const CJK = /[㐀-鿿豈-﫿]/
