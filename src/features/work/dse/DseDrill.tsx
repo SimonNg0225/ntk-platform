@@ -98,6 +98,7 @@ export default function DseDrill() {
         messages: [{ role: 'user', content: `課題：${topic.topic}` }],
         model,
         temperature: 0.5,
+        source: 'dse-drill',
       })
       const questions = parseDse(raw)
       const rec = dseCol.add({

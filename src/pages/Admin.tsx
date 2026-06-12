@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ReactNode } from 'react'
+import { Fragment, useEffect, useMemo, useState, type ReactNode } from 'react'
 import {
   LayoutDashboard,
   Users,
@@ -164,9 +164,9 @@ function OverviewTab({ onJump }: { onJump: (t: TabId) => void }) {
             <StatCard label="總用戶" value={data.users.total} unit="人" icon={Users} onClick={() => onJump('users')} />
             <StatCard label="付費 Pro（生效）" value={data.subs.activePro} unit="人" highlight onClick={() => onJump('users')} />
             <StatCard label="估算 MRR" value={`HK$${data.subs.mrrHkd.toLocaleString()}`} hint="生效 Pro × 月費（估算）" />
-            <StatCard label="本月 AI 成本（估）" value={usd(data.ai.estCostUsd)} hint="按呼叫次數估算" onClick={() => onJump('usage')} />
-            <StatCard label="今日一般 AI" value={data.ai.genToday} unit="次" onClick={() => onJump('usage')} />
-            <StatCard label="本月一般 AI" value={data.ai.genMonth} unit="次" />
+            <StatCard label="本月 AI 成本（實算）" value={usd(data.ai.costUsd)} highlight hint="按真實 token 計" onClick={() => onJump('usage')} />
+            <StatCard label="本月 AI 呼叫" value={data.ai.callsMonth} unit="次" onClick={() => onJump('usage')} />
+            <StatCard label="今日免費一般 AI" value={data.ai.genToday} unit="次" />
             <StatCard label="本月錄音轉文字" value={data.ai.transMonth} unit="次" />
             <StatCard label="學校 / 團隊" value={data.orgs.count} unit="個" onClick={() => onJump('orgs')} />
             <StatCard label="團隊座位" value={data.orgs.seats} unit="席" hint={`已用 ${data.orgs.members} 席`} />
@@ -174,7 +174,7 @@ function OverviewTab({ onJump }: { onJump: (t: TabId) => void }) {
             <StatCard label="生效公告" value={data.announcements.active} unit="則" onClick={() => onJump('content')} />
           </div>
           <p className="mt-4 text-xs text-slate-400">
-            ⓘ AI 成本同 MRR 為估算值（Gemini 唔逐次回 token；MRR 假設全部 Pro 按月費）。實數以 Stripe / Google Cloud 帳單為準。
+            ⓘ AI 成本按真實 token × 單價計（由開始記錄之後嘅呼叫）。MRR 為估算（假設全部 Pro 按月費）。實數以 Stripe / Google Cloud 帳單為準。
           </p>
         </>
       )}
@@ -299,8 +299,38 @@ function UsersTab() {
 }
 
 // ════════════ 用量 + AI 成本 ════════════
+// 功能 source → 中文標籤（顯示用；未覆蓋嘅就照原樣顯示）
+const FEATURE_LABEL: Record<string, string> = {
+  general: '一般 AI',
+  transcribe: '錄音轉文字',
+  grading: '批改',
+  'essay-mark': '作文批改',
+  'material-gen': '教材生成',
+  slides: '簡報',
+  'lesson-plan': '教案',
+  'teach-guide': '教學指引',
+  'question-bank': '題庫',
+  'dse-drill': 'DSE 操練',
+  rubric: '評分準則',
+  'report-comments': '成績評語',
+  'doc-digest': '文件摘要',
+  'admin-docs': '行政文件',
+  'topic-import': '課題匯入',
+  'ai-assistant': 'AI 助手',
+  'ask-data': '問我資料',
+  inbox: '收件匣整理',
+  'quick-add': '快速加入',
+  notes: '筆記',
+  'card-gen': '溫習卡',
+  fitness: '健身教練',
+  nutrition: '營養估算',
+}
+const flabel = (f: string) => FEATURE_LABEL[f] ?? f
+const fmtTok = (n: number) => (n >= 1000 ? `${(n / 1000).toFixed(1)}k` : String(n))
+
 function UsageTab() {
-  const { data, loading, err, reload } = useAsync<AdminUsage>(adminUsage)
+  const [expanded, setExpanded] = useState<string | null>(null)
+  const { data, loading, err, reload } = useAsync<AdminUsage>(() => adminUsage())
   return (
     <Card className="p-5">
       <SectionTitle right={<RefreshBtn loading={loading} onClick={reload} />}>
@@ -311,40 +341,99 @@ function UsageTab() {
       ) : (
         <>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <StatCard label="一般 AI" value={data.genMonth} unit="次" />
-            <StatCard label="錄音轉文字" value={data.transMonth} unit="次" />
-            <StatCard label="估算總成本" value={usd(data.estCostUsd)} highlight hint="按呼叫次數 × 單價" />
-            <StatCard label="單價（每次）" value={usd(data.costPerCall)} hint={`轉文字 ${usd(data.costPerTranscribe)}/次`} />
+            <StatCard label="總呼叫" value={data.totals.calls} unit="次" />
+            <StatCard label="Input tokens" value={fmtTok(data.totals.inTok)} />
+            <StatCard label="Output tokens" value={fmtTok(data.totals.outTok)} />
+            <StatCard label="真實總成本" value={usd(data.totals.cost)} highlight hint="按 token × 單價" />
           </div>
-          <p className="mb-2 mt-5 text-sm font-medium text-slate-600 dark:text-slate-300">本月用量 Top 20</p>
-          {data.top.length === 0 ? (
-            <EmptyState icon="📊" title="本月暫無 AI 用量。" />
+
+          {/* 按功能 */}
+          <p className="mb-2 mt-5 text-sm font-medium text-slate-600 dark:text-slate-300">按功能（成本排序）</p>
+          {data.features.length === 0 ? (
+            <EmptyState icon="📊" title="本月暫無 AI 用量記錄。" hint="開始記錄之後嘅 AI 呼叫先會喺度顯示。" />
           ) : (
             <Table>
               <Thead>
                 <Tr>
-                  <Th>用戶</Th>
-                  <Th align="right">一般</Th>
-                  <Th align="right">轉文字</Th>
-                  <Th align="right">合計</Th>
-                  <Th align="right">估算成本</Th>
+                  <Th>功能</Th>
+                  <Th align="right">呼叫</Th>
+                  <Th align="right">In</Th>
+                  <Th align="right">Out</Th>
+                  <Th align="right">成本</Th>
                 </Tr>
               </Thead>
               <Tbody>
-                {data.top.map((t) => (
-                  <Tr key={t.user_id}>
-                    <Td>{t.email ?? t.user_id.slice(0, 8)}</Td>
-                    <Td numeric>{t.general}</Td>
-                    <Td numeric>{t.transcribe}</Td>
-                    <Td numeric>{t.total}</Td>
-                    <Td numeric>{usd(t.estCostUsd)}</Td>
+                {data.features.map((f) => (
+                  <Tr key={f.feature}>
+                    <Td>{flabel(f.feature)}</Td>
+                    <Td numeric>{f.calls}</Td>
+                    <Td numeric>{fmtTok(f.inTok)}</Td>
+                    <Td numeric>{fmtTok(f.outTok)}</Td>
+                    <Td numeric>{usd(f.cost)}</Td>
                   </Tr>
                 ))}
               </Tbody>
             </Table>
           )}
+
+          {/* 按用戶 */}
+          {data.top.length > 0 && (
+            <>
+              <p className="mb-2 mt-5 text-sm font-medium text-slate-600 dark:text-slate-300">
+                每位用戶成本（Top {data.top.length}）· 撳一行睇用咗咩功能
+              </p>
+              <Table>
+                <Thead>
+                  <Tr>
+                    <Th>用戶</Th>
+                    <Th align="right">呼叫</Th>
+                    <Th align="right">In</Th>
+                    <Th align="right">Out</Th>
+                    <Th align="right">成本</Th>
+                  </Tr>
+                </Thead>
+                <Tbody>
+                  {data.top.map((t) => (
+                    <Fragment key={t.user_id}>
+                      <Tr onClick={() => setExpanded(expanded === t.user_id ? null : t.user_id)}>
+                        <Td>
+                          <span className="inline-flex items-center gap-1">
+                            <span className="text-slate-400">{expanded === t.user_id ? '▾' : '▸'}</span>
+                            {t.email ?? t.user_id.slice(0, 8)}
+                          </span>
+                        </Td>
+                        <Td numeric>{t.calls}</Td>
+                        <Td numeric>{fmtTok(t.inTok)}</Td>
+                        <Td numeric>{fmtTok(t.outTok)}</Td>
+                        <Td numeric>{usd(t.cost)}</Td>
+                      </Tr>
+                      {expanded === t.user_id && (
+                        <Tr>
+                          <Td className="bg-slate-50/60 dark:bg-slate-800/40">
+                            <div className="flex flex-wrap gap-1.5 py-1">
+                              {t.features.map((f) => (
+                                <Badge key={f.feature} tone="slate">
+                                  {flabel(f.feature)} · {usd(f.cost)}
+                                </Badge>
+                              ))}
+                            </div>
+                          </Td>
+                          <Td className="bg-slate-50/60 dark:bg-slate-800/40" />
+                          <Td className="bg-slate-50/60 dark:bg-slate-800/40" />
+                          <Td className="bg-slate-50/60 dark:bg-slate-800/40" />
+                          <Td className="bg-slate-50/60 dark:bg-slate-800/40" />
+                        </Tr>
+                      )}
+                    </Fragment>
+                  ))}
+                </Tbody>
+              </Table>
+            </>
+          )}
+
           <p className="mt-3 text-xs text-slate-400">
-            ⓘ 成本為估算（單價可喺 Edge Function 環境變數 AI_COST_PER_CALL_USD / AI_COST_PER_TRANSCRIBE_USD 調整）。實數以 Google Cloud 帳單為準。
+            ⓘ 真實成本 = token × 單價（Flash US${data.pricing.flashIn}/{data.pricing.flashOut}、Pro US${data.pricing.proIn}/{data.pricing.proOut} 每 1M in/out，可由 Edge Function 環境變數調整）。
+            記錄由本功能上線後開始累積；舊有呼叫無 token 資料。實數以 Google Cloud 帳單為準。
           </p>
         </>
       )}

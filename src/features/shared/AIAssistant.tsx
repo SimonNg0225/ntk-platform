@@ -393,6 +393,7 @@ export default function AIAssistant() {
           model,
           temperature: temp,
           signal: controller.signal,
+          source: 'ai-assistant',
         })) {
           full += chunk
           setStreaming(full)

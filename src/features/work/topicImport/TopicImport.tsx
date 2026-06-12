@@ -77,6 +77,7 @@ export default function TopicImport() {
         messages: [{ role: 'user', content: content || '（請閱讀附圖課程文件）', images }],
         model,
         temperature: 0.2,
+        source: 'topic-import',
       })
       setImported(parseTopics(raw))
       toast.success('已抽取課題，請預覽再載入')

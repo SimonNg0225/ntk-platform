@@ -218,6 +218,7 @@ export async function generate(
         }),
       },
     ],
+    source: 'material-gen',
   })
   const rows = extractJsonArray<unknown>(out)
   return parseDrafts(kind, rows)

@@ -129,6 +129,7 @@ export default function ReportComments() {
         messages: [{ role: 'user', content }],
         model,
         temperature: 0.5,
+        source: 'report-comments',
       })
       setComments(parseComments(raw, students.length))
       toast.success('全班評語已生成')
@@ -148,6 +149,7 @@ export default function ReportComments() {
         messages: [{ role: 'user', content: summaryLine(1, data[i]) }],
         model,
         temperature: 0.7,
+        source: 'report-comments',
       })
       const one = parseComments(raw, 1)[0]
       if (one) {

@@ -161,6 +161,7 @@ export default function PlanGen({ model }: { model: AIModel }) {
               images: [{ mimeType, data: b64 }],
             },
           ],
+          source: 'fitness',
         })
         const list = parseJsonArray<string>(raw) || []
         const matched = EQUIPMENT.filter((e) =>
@@ -209,6 +210,7 @@ export default function PlanGen({ model }: { model: AIModel }) {
         ],
         model,
         temperature: 0.6,
+        source: 'fitness',
       })
       const parsed = parsePlan(raw)
       if (!parsed) {

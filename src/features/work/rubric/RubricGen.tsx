@@ -80,6 +80,7 @@ export default function RubricGen() {
           messages: [{ role: 'user', content: q }],
           model,
           temperature: 0.3,
+          source: 'rubric',
         })
         rec = rubricCol.add({
           createdAt: new Date().toISOString(),
@@ -94,6 +95,7 @@ export default function RubricGen() {
           messages: [{ role: 'user', content: q }],
           model,
           temperature: 0.3,
+          source: 'rubric',
         })
         rec = rubricCol.add({
           createdAt: new Date().toISOString(),

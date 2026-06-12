@@ -98,6 +98,7 @@ export default function EssayMark() {
         messages: [{ role: 'user', content: mode === 'text' ? text.trim() : '（請閱讀附圖作文）', images }],
         model,
         temperature: 0.3,
+        source: 'essay-mark',
       })
       const result = parseEssay(raw)
       const rec = essayMarkCol.add({

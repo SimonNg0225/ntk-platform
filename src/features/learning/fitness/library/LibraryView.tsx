@@ -489,6 +489,7 @@ function DetailModal({
               `只回純文字解釋，唔好標題、唔好 markdown、唔好任何前後綴。`,
           },
         ],
+        source: 'fitness',
       })
       const text = stripJsonFence(raw).trim()
       if (!text) {

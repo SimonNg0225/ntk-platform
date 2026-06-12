@@ -29,9 +29,16 @@ const ADMIN_EMAILS = (Deno.env.get('ADMIN_EMAILS') ?? '')
   .map((s) => s.trim().toLowerCase())
   .filter(Boolean)
 
-// AI 成本估算單價（USD / 次）。Gemini 無逐次回 token，故以「每次呼叫」估，標明為估算。
-const COST_PER_CALL = Number(Deno.env.get('AI_COST_PER_CALL_USD') ?? '0.002')
-const COST_PER_TRANSCRIBE = Number(Deno.env.get('AI_COST_PER_TRANSCRIBE_USD') ?? '0.02')
+// AI 真實成本：按 model 嘅 token 單價（USD / 1M tokens）。預設為 Gemini 2.5 公開價，
+// 可由環境變數調整。成本 = in_tokens/1M × in 價 + out_tokens/1M × out 價。
+const FLASH_IN = Number(Deno.env.get('GEMINI_FLASH_IN_USD_PER_M') ?? '0.30')
+const FLASH_OUT = Number(Deno.env.get('GEMINI_FLASH_OUT_USD_PER_M') ?? '2.50')
+const PRO_IN = Number(Deno.env.get('GEMINI_PRO_IN_USD_PER_M') ?? '1.25')
+const PRO_OUT = Number(Deno.env.get('GEMINI_PRO_OUT_USD_PER_M') ?? '10.00')
+function costUsd(model: string, inTok: number, outTok: number): number {
+  const pro = (model ?? '').includes('pro')
+  return (inTok / 1e6) * (pro ? PRO_IN : FLASH_IN) + (outTok / 1e6) * (pro ? PRO_OUT : FLASH_OUT)
+}
 // Pro 月費（HKD）—— 估 MRR 用。
 const PRO_PRICE_HKD = Number(Deno.env.get('PRO_PRICE_HKD') ?? '48')
 
@@ -114,18 +121,26 @@ Deno.serve(async (req: Request) => {
         ).length
         const pro = subs.filter((s) => s.plan === 'pro').length
 
-        // AI 用量（按 bucket 前綴聚合）
-        const [genTodayRes, genMonthRes, transMonthRes] = await Promise.all([
-          admin.from('ai_usage').select('count').like('bucket', `general:${today}`),
-          admin.from('ai_usage').select('count').like('bucket', `general:${month}-%`),
-          admin.from('ai_usage').select('count').like('bucket', `transcribe:${month}`),
-        ])
-        const sum = (rows: { count: number }[] | null) =>
-          (rows ?? []).reduce((n, r) => n + (r.count ?? 0), 0)
-        const genToday = sum(genTodayRes.data)
-        const genMonth = sum(genMonthRes.data)
-        const transMonth = sum(transMonthRes.data)
-        const estCostUsd = genMonth * COST_PER_CALL + transMonth * COST_PER_TRANSCRIBE
+        // AI 用量 + 真實成本（本月，由 ai_usage_stats 按 token 計，所有用戶都計）
+        const { data: statRows } = await admin
+          .from('ai_usage_stats')
+          .select('feature, model, calls, in_tokens, out_tokens')
+          .eq('ym', month)
+          .limit(50000)
+        let callsMonth = 0
+        let transMonth = 0
+        let aiCostUsd = 0
+        for (const r of statRows ?? []) {
+          callsMonth += r.calls ?? 0
+          if (r.feature === 'transcribe') transMonth += r.calls ?? 0
+          aiCostUsd += costUsd(r.model, r.in_tokens ?? 0, r.out_tokens ?? 0)
+        }
+        // 今日免費一般 AI 呼叫（沿用 ai_usage 額度計數，反映免費額度用量）
+        const { data: genTodayRows } = await admin
+          .from('ai_usage')
+          .select('count')
+          .like('bucket', `general:${today}`)
+        const genToday = (genTodayRows ?? []).reduce((n, r) => n + (r.count ?? 0), 0)
 
         // 用戶總數（auth.users）
         let totalUsers = 0
@@ -145,7 +160,7 @@ Deno.serve(async (req: Request) => {
               free: Math.max(totalUsers - pro, 0),
               mrrHkd: activePro * PRO_PRICE_HKD,
             },
-            ai: { genToday, genMonth, transMonth, estCostUsd },
+            ai: { genToday, callsMonth, transMonth, costUsd: aiCostUsd },
             orgs: {
               count: (orgsRes.data ?? []).length,
               seats: (orgsRes.data ?? []).reduce((n, o) => n + (o.seats ?? 0), 0),
@@ -219,54 +234,87 @@ Deno.serve(async (req: Request) => {
         return json({ data: { ok: true } })
       }
 
-      // ════════════ 用量 + AI 成本 ════════════
+      // ════════════ 用量 + AI 成本（真實 token，含 per-feature / per-user）════════════
       case 'usage': {
-        const month = ym()
+        const month = String((body.month as string) || ym())
         const { data: rows, error } = await admin
-          .from('ai_usage')
-          .select('user_id, bucket, count')
-          .or(`bucket.like.general:${month}-%,bucket.like.transcribe:${month}`)
-          .limit(20000)
+          .from('ai_usage_stats')
+          .select('user_id, feature, model, calls, in_tokens, out_tokens')
+          .eq('ym', month)
+          .limit(50000)
         if (error) return json({ error: error.message }, 500)
 
-        let genMonth = 0
-        let transMonth = 0
-        const perUser = new Map<string, { general: number; transcribe: number }>()
+        let calls = 0
+        let inTok = 0
+        let outTok = 0
+        let cost = 0
+        const byFeature = new Map<string, { calls: number; inTok: number; outTok: number; cost: number }>()
+        const byUser = new Map<
+          string,
+          { calls: number; inTok: number; outTok: number; cost: number; features: Map<string, number> }
+        >()
+
         for (const r of rows ?? []) {
-          const isTrans = r.bucket.startsWith('transcribe:')
-          if (isTrans) transMonth += r.count
-          else genMonth += r.count
-          const cur = perUser.get(r.user_id) ?? { general: 0, transcribe: 0 }
-          if (isTrans) cur.transcribe += r.count
-          else cur.general += r.count
-          perUser.set(r.user_id, cur)
+          const c = costUsd(r.model, r.in_tokens ?? 0, r.out_tokens ?? 0)
+          calls += r.calls ?? 0
+          inTok += r.in_tokens ?? 0
+          outTok += r.out_tokens ?? 0
+          cost += c
+
+          const f = byFeature.get(r.feature) ?? { calls: 0, inTok: 0, outTok: 0, cost: 0 }
+          f.calls += r.calls ?? 0
+          f.inTok += r.in_tokens ?? 0
+          f.outTok += r.out_tokens ?? 0
+          f.cost += c
+          byFeature.set(r.feature, f)
+
+          const u = byUser.get(r.user_id) ?? {
+            calls: 0,
+            inTok: 0,
+            outTok: 0,
+            cost: 0,
+            features: new Map<string, number>(),
+          }
+          u.calls += r.calls ?? 0
+          u.inTok += r.in_tokens ?? 0
+          u.outTok += r.out_tokens ?? 0
+          u.cost += c
+          u.features.set(r.feature, (u.features.get(r.feature) ?? 0) + c)
+          byUser.set(r.user_id, u)
         }
 
-        // Top 用戶（按總呼叫）+ 補 email
-        const top = [...perUser.entries()]
-          .map(([user_id, v]) => ({ user_id, ...v, total: v.general + v.transcribe }))
-          .sort((a, b) => b.total - a.total)
-          .slice(0, 20)
-        const emailMap = new Map<string, string | null>()
+        const features = [...byFeature.entries()]
+          .map(([feature, v]) => ({ feature, ...v }))
+          .sort((a, b) => b.cost - a.cost)
+
+        // Top 用戶（按成本）+ 補 email + 每位嘅功能花費分佈
+        const top = [...byUser.entries()]
+          .map(([user_id, v]) => ({ user_id, ...v }))
+          .sort((a, b) => b.cost - a.cost)
+          .slice(0, 50)
         await Promise.all(
           top.map(async (t) => {
             const { data } = await admin.auth.admin.getUserById(t.user_id)
-            emailMap.set(t.user_id, data?.user?.email ?? null)
+            ;(t as unknown as { email: string | null }).email = data?.user?.email ?? null
           }),
         )
 
         return json({
           data: {
             month,
-            genMonth,
-            transMonth,
-            costPerCall: COST_PER_CALL,
-            costPerTranscribe: COST_PER_TRANSCRIBE,
-            estCostUsd: genMonth * COST_PER_CALL + transMonth * COST_PER_TRANSCRIBE,
+            totals: { calls, inTok, outTok, cost },
+            pricing: { flashIn: FLASH_IN, flashOut: FLASH_OUT, proIn: PRO_IN, proOut: PRO_OUT },
+            features,
             top: top.map((t) => ({
-              ...t,
-              email: emailMap.get(t.user_id) ?? null,
-              estCostUsd: t.general * COST_PER_CALL + t.transcribe * COST_PER_TRANSCRIBE,
+              user_id: t.user_id,
+              email: (t as unknown as { email: string | null }).email ?? null,
+              calls: t.calls,
+              inTok: t.inTok,
+              outTok: t.outTok,
+              cost: t.cost,
+              features: [...t.features.entries()]
+                .map(([feature, c]) => ({ feature, cost: c }))
+                .sort((a, b) => b.cost - a.cost),
             })),
           },
         })

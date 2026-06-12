@@ -267,6 +267,7 @@ export async function parseQuickAdd(
   const out = await complete({
     model: 'gemini-2.5-flash',
     messages: [{ role: 'user', content }],
+    source: 'quick-add',
   })
   const arr = parseJsonArray<unknown>(out)
   if (!arr) return []

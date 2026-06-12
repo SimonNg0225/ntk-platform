@@ -68,6 +68,36 @@ interface RequestBody {
   temperature?: number
   stream?: boolean
   feature?: string // 額度分流用：'transcribe' = 錄音轉文字（每月）；其餘 = 一般 AI（每日）
+  source?: string // 用量分析用：功能標籤（grading / slides…）。唔影響額度，淨係記錄。
+}
+
+// 用量記錄（best-effort，唔阻 AI 回應）：每次成功呼叫後記低真實 token。
+// 所有用戶都記（連 Pro / 白名單），帶住功能 + model。寫入 ai_usage_stats。
+async function logAiUsage(
+  userId: string,
+  label: string,
+  model: string,
+  usage: { promptTokenCount?: number; candidatesTokenCount?: number } | null | undefined,
+): Promise<void> {
+  try {
+    if (!SERVICE_ROLE_KEY) return
+    const inTok = Math.max(0, Number(usage?.promptTokenCount ?? 0)) | 0
+    const outTok = Math.max(0, Number(usage?.candidatesTokenCount ?? 0)) | 0
+    if (!inTok && !outTok) return
+    const now = new Date()
+    const ym = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}`
+    const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY)
+    await admin.rpc('bump_ai_usage', {
+      p_user: userId,
+      p_ym: ym,
+      p_feature: label,
+      p_model: model,
+      p_in: inTok,
+      p_out: outTok,
+    })
+  } catch {
+    /* best-effort：記錄失敗唔影響用戶 */
+  }
 }
 
 function json(obj: unknown, status = 200): Response {
@@ -170,6 +200,11 @@ Deno.serve(async (req: Request) => {
 
   const model =
     body.model && ALLOWED_MODELS.has(body.model) ? body.model : DEFAULT_MODEL
+  // 用量分析標籤：優先用 source（功能），否則 feature（如 transcribe），預設 general。
+  const usageLabel =
+    (typeof body.source === 'string' && body.source) ||
+    (typeof body.feature === 'string' && body.feature) ||
+    'general'
   const wantStream = body.stream !== false // 預設 streaming
   const temperature =
     typeof body.temperature === 'number' ? body.temperature : 0.7
@@ -216,6 +251,7 @@ Deno.serve(async (req: Request) => {
       data?.candidates?.[0]?.content?.parts
         ?.map((p: { text?: string }) => p.text ?? '')
         .join('') ?? ''
+    await logAiUsage(user.id, usageLabel, model, data?.usageMetadata)
     return json({ text })
   }
 
@@ -236,7 +272,9 @@ Deno.serve(async (req: Request) => {
     )
   }
 
-  const stream = transformGeminiSSE(res.body)
+  const stream = transformGeminiSSE(res.body, (usage) =>
+    logAiUsage(user.id, usageLabel, model, usage),
+  )
   return new Response(stream, {
     headers: {
       ...corsHeaders,
@@ -252,10 +290,15 @@ Deno.serve(async (req: Request) => {
 //   data: [DONE]           ← 完結
 function transformGeminiSSE(
   body: ReadableStream<Uint8Array>,
+  onDone?: (
+    usage: { promptTokenCount?: number; candidatesTokenCount?: number } | undefined,
+  ) => void | Promise<void>,
 ): ReadableStream<Uint8Array> {
   const encoder = new TextEncoder()
   const decoder = new TextDecoder()
   let buffer = ''
+  // Gemini 喺串流中／最後一個 chunk 會帶 usageMetadata（真實 token）；逐個 chunk 更新，最後用。
+  let usage: { promptTokenCount?: number; candidatesTokenCount?: number } | undefined
 
   return new ReadableStream<Uint8Array>({
     async start(controller) {
@@ -274,6 +317,7 @@ function transformGeminiSSE(
             if (!payload || payload === '[DONE]') continue
             try {
               const parsed = JSON.parse(payload)
+              if (parsed?.usageMetadata) usage = parsed.usageMetadata
               const text =
                 parsed?.candidates?.[0]?.content?.parts
                   ?.map((p: { text?: string }) => p.text ?? '')
@@ -289,6 +333,7 @@ function transformGeminiSSE(
           }
         }
         controller.enqueue(encoder.encode('data: [DONE]\n\n'))
+        if (onDone) await onDone(usage)
       } catch (e) {
         controller.enqueue(
           encoder.encode(

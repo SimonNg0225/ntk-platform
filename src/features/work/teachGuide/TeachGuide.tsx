@@ -116,6 +116,7 @@ export default function TeachGuide() {
         ],
         model,
         temperature: 0.4,
+        source: 'teach-guide',
       })
       const result = parseGuide(raw)
       if (isEmptyGuide(result)) {

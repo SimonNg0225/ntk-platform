@@ -50,6 +50,7 @@ export async function rewriteSlide(
     messages: [{ role: 'user', content: JSON.stringify(slide) }],
     model,
     temperature: 0.5,
+    source: 'slides',
   })
   return parseSlideJson(raw)
 }
@@ -66,6 +67,7 @@ export async function aiConvertSlide(
     messages: [{ role: 'user', content: JSON.stringify(slide) }],
     model,
     temperature: 0.4,
+    source: 'slides',
   })
   const out = parseSlideJson(raw)
   const outLayout = out.layout ?? 'bullets'

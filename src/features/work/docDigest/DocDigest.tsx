@@ -107,7 +107,7 @@ export default function DocDigest() {
       const messages: AIMessage[] = [
         { role: 'user', content: inputText || '（請閱讀附圖嘅文件）', images: image },
       ]
-      const raw = await complete({ messages, system, model, temperature: 0.2 })
+      const raw = await complete({ messages, system, model, temperature: 0.2, source: 'doc-digest' })
       const result = parseDigest(raw)
 
       const rec = docDigestCol.add({
