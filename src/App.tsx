@@ -18,10 +18,12 @@ import { OnboardingModal } from './components/OnboardingModal'
 import PwaUpdater from './components/PwaUpdater'
 import PwaInstallPrompt from './components/PwaInstallPrompt'
 import SupportButton from './components/SupportButton'
+import AnnouncementBanner from './components/AnnouncementBanner'
 import { useToast } from './context/ToastContext'
 import { seedAllDemo, hasOnboarded, markOnboarded } from './lib/demoData'
 import Home from './pages/Home'
 import Settings from './pages/Settings'
+import Admin from './pages/Admin'
 import ComingSoon from './components/ComingSoon'
 import ErrorBoundary from './components/ErrorBoundary'
 import { getFeature, preloadAllFeatures } from './features/registry'
@@ -173,11 +175,12 @@ export function AppShell() {
   const navigate = (id: string | null) => {
     setActiveId(id)
     setDrawerOpen(false)
-    if (id && id !== '__settings__') pushRecentFeature(id)
+    if (id && id !== '__settings__' && id !== '__admin__') pushRecentFeature(id)
   }
 
   const isSettings = activeId === '__settings__'
-  const feature = activeId && !isSettings ? getFeature(activeId) : undefined
+  const isAdmin = activeId === '__admin__'
+  const feature = activeId && !isSettings && !isAdmin ? getFeature(activeId) : undefined
 
   return (
     <NavProvider open={navigate}>
@@ -188,6 +191,7 @@ export function AppShell() {
             activeId={activeId}
             onSelect={navigate}
             onOpenSettings={() => navigate('__settings__')}
+            onOpenAdmin={() => navigate('__admin__')}
             rail={sidebarMode === 'rail'}
             onCollapse={cycleSidebar}
             onExpand={() => setSidebarMode('expanded')}
@@ -214,6 +218,7 @@ export function AppShell() {
                 activeId={activeId}
                 onSelect={navigate}
                 onOpenSettings={() => navigate('__settings__')}
+                onOpenAdmin={() => navigate('__admin__')}
                 onClose={() => setDrawerOpen(false)}
                 className="h-full"
               />
@@ -232,6 +237,9 @@ export function AppShell() {
             onSearch={() => setPaletteOpen(true)}
             onQuickAdd={() => setQuickAddOpen(true)}
           />
+
+          {/* 全站公告橫額（登入用戶；admin 喺後台出） */}
+          <AnnouncementBanner />
 
           {/* 桌面右上角固定「快速加入」浮掣（手機改用頂欄 icon）。
               絕對定位喺 <main> 右上，z-30 浮喺內容之上；位於右邊內距區，
@@ -273,6 +281,19 @@ export function AppShell() {
                     {t('shell.settings', { defaultValue: '設定' })}
                   </h1>
                   <Settings />
+                </div>
+              ) : isAdmin ? (
+                <div className="space-y-5">
+                  <button
+                    onClick={() => navigate(null)}
+                    className="text-sm text-slate-400 transition hover:text-accent"
+                  >
+                    ← {t('shell.backOverview', { defaultValue: '返回概覽' })}
+                  </button>
+                  <h1 className="flex items-center gap-2 text-2xl font-bold text-slate-800 dark:text-slate-100">
+                    <FeatureIcon icon="🛠️" size={24} className="text-accent" /> 後台管理
+                  </h1>
+                  <Admin />
                 </div>
               ) : !feature ? (
                 <Home onOpen={navigate} />
