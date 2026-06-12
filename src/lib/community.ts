@@ -1,4 +1,5 @@
 import { supabase, isSupabaseConfigured } from './supabase'
+import { downloadBlob } from './export/file'
 import { uploadCommunityFile, communitySignedUrl } from './supabaseStorage'
 import type {
   PublishInput,
@@ -376,4 +377,21 @@ export async function reportResource(resourceId: string, reason: string, detail?
 /** 攞檔案嘅短期下載/預覽連結（private bucket → 要登入 session 簽名）。 */
 export async function resourceFileUrl(filePath: string): Promise<string | null> {
   return communitySignedUrl(filePath)
+}
+
+/**
+ * 下載資源檔案：先 fetch 成 blob 再喺 app 自己 origin 觸發下載
+ * （避免「允許 xxx.supabase.co 下載」嘅 cross-origin prompt，兼用返靚檔名）。
+ * CORS / 網絡失敗 → 退返開新分頁（至少開到）。
+ */
+export async function downloadResourceFile(filePath: string, fileName?: string): Promise<void> {
+  const url = await communitySignedUrl(filePath)
+  if (!url) throw new Error('攞唔到下載連結')
+  try {
+    const res = await fetch(url)
+    if (!res.ok) throw new Error('下載失敗')
+    downloadBlob(await res.blob(), fileName || 'resource')
+  } catch {
+    window.open(url, '_blank', 'noopener')
+  }
 }

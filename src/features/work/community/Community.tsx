@@ -29,7 +29,7 @@ import {
   rateResource,
   getMyRating,
   reportResource,
-  resourceFileUrl,
+  downloadResourceFile,
   type CommunityResource,
 } from '../../../lib/community'
 import {
@@ -276,8 +276,13 @@ function ResourceDetail({ r, onClose }: { r: CommunityResource | null; onClose: 
       setBusy(true)
       await bumpDownload(r.id)
       setStat((x) => ({ ...x, down: x.down + 1 }))
-      const url = r.filePath ? await resourceFileUrl(r.filePath) : r.externalUrl
-      if (url) window.open(url, '_blank', 'noopener')
+      if (r.filePath) {
+        // 檔案：blob 下載（唔彈 cross-origin prompt、用返靚檔名）
+        await downloadResourceFile(r.filePath, r.fileName ?? undefined)
+      } else if (r.externalUrl) {
+        // 純連結：照開新分頁
+        window.open(r.externalUrl, '_blank', 'noopener')
+      }
     } catch (e) {
       toast.error(e instanceof Error ? e.message : '下載失敗')
     } finally {
