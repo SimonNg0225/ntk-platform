@@ -10,6 +10,8 @@ import { cx, IconButton } from '../ui'
 import { featName, groupLabel } from '../i18n/appEn'
 import ModeSwitcher from './ModeSwitcher'
 import AccountBox from './AccountBox'
+import { useAuth } from '../context/AuthContext'
+import { isAdminEmail } from '../lib/support'
 
 const COLLAPSE_KEY = 'ntk.sidebarCollapsed'
 
@@ -26,6 +28,8 @@ interface Props {
   activeId: string | null
   onSelect: (id: string | null) => void
   onOpenSettings?: () => void
+  /** 開後台管理（只 admin 顯示入口） */
+  onOpenAdmin?: () => void
   /** 喺手機抽屜入面用：揀完一項就關抽屜 */
   onClose?: () => void
   className?: string
@@ -42,6 +46,7 @@ export default function Sidebar({
   activeId,
   onSelect,
   onOpenSettings,
+  onOpenAdmin,
   onClose,
   className = '',
   rail = false,
@@ -50,6 +55,8 @@ export default function Sidebar({
 }: Props) {
   const { t } = useTranslation()
   const { modeDef } = useMode()
+  const { user } = useAuth()
+  const showAdmin = isAdminEmail(user?.email)
   const groups = groupedFeatures(modeDef.id)
 
   const recents = useCollection(recentFeaturesCol)
@@ -137,8 +144,20 @@ export default function Sidebar({
           ))}
         </nav>
 
-        {/* 頁腳：設定 + 完全收起 */}
+        {/* 頁腳：後台（admin）+ 設定 + 完全收起 */}
         <div className="flex flex-col items-center gap-1 border-t border-black/[0.06] py-2 dark:border-white/[0.06]">
+          {showAdmin && (
+            <RailButton
+              active={activeId === '__admin__'}
+              title="後台管理"
+              onClick={() => {
+                onOpenAdmin?.()
+                onClose?.()
+              }}
+            >
+              <FeatureIcon icon="🛠️" size={18} className={iconColor(activeId === '__admin__')} />
+            </RailButton>
+          )}
           <RailButton
             active={activeId === '__settings__'}
             title={t('shell.settings', { defaultValue: '設定' })}
@@ -290,8 +309,20 @@ export default function Sidebar({
         })}
       </nav>
 
-      {/* 頁腳：設定 + 帳戶區 + 版本 */}
+      {/* 頁腳：後台（admin）+ 設定 + 帳戶區 + 版本 */}
       <div className="border-t border-black/[0.06] dark:border-white/[0.06]">
+        {showAdmin && (
+          <button
+            onClick={() => {
+              onOpenAdmin?.()
+              onClose?.()
+            }}
+            className={cx(navClass(activeId === '__admin__'), 'mx-2 mt-2 w-[calc(100%-1rem)]')}
+          >
+            <FeatureIcon icon="🛠️" size={18} className={iconColor(activeId === '__admin__')} />
+            <span>後台管理</span>
+          </button>
+        )}
         <button
           onClick={() => {
             onOpenSettings?.()
