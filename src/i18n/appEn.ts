@@ -80,6 +80,7 @@ export const appEn = {
     行政: 'Admin',
     理財: 'Finance',
     工具: 'Tools',
+    社群: 'Community',
   },
 
   feat: {
@@ -119,6 +120,7 @@ export const appEn = {
     inbox: { name: 'Quick capture', desc: 'Drop a thought in a second; turn it into a task or note later.' },
     countdown: { name: 'Countdowns', desc: 'Big-number countdowns to exams, deadlines and assessments.' },
     quiz: { name: 'Self-quiz', desc: 'Pull MC from the bank, auto-mark, score and weakness analysis.' },
+    'community-forum': { name: 'Teacher community', desc: 'Discuss teaching, class, assessment and jobs with teachers across HK.' },
   },
 
   // ── 重要日子倒數（Countdown，登機牌主題）──
