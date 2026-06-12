@@ -9,7 +9,7 @@
 //  pptxgenjs 同 pizzip 都係動態 import，唔拖慢首屏。
 // ============================================================
 
-import type { Deck, Slide, SlideLayout } from './types'
+import type { CoverTitle, Deck, Slide, SlideLayout } from './types'
 import { downloadBlob, safeFilename } from './file'
 import { CORE_PACKS, FONT, pickKicker, type FrameCtx, type Pack, type SlideImage, type SlidePackId } from './pptxPacks'
 import { GALLERY_PACKS_1 } from './pptxPacksGallery1'
@@ -79,6 +79,8 @@ export interface PptxOptions {
   slidePhotos?: Record<number, SlideImage>
   /** 頁尾品牌字 */
   brand?: string
+  /** 高擬真標題圖（招牌字體 render，cover 用先有效；缺省用原生標題） */
+  coverTitle?: CoverTitle
 }
 
 const BRAND = 'EziTeach · 教學易'
@@ -204,7 +206,7 @@ export async function buildPptxFile(deck: Deck, opts: PptxOptions = {}): Promise
   const brand = opts.brand ?? BRAND
 
   // ── 封面 ──
-  pack.cover(pptx.addSlide(), deck, brand, opts.coverPhoto)
+  pack.cover(pptx.addSlide(), deck, brand, opts.coverPhoto, opts.coverTitle)
 
   // ── 內容 / 章節 ──
   let sectionNo = 0

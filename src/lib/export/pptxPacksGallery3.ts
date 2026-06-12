@@ -484,7 +484,7 @@ const pixel: Pack = {
     }
   },
 
-  cover(slide, deck, brand, img) {
+  cover(slide, deck, brand, img, title) {
     slide.background = { color: PIX.bg }
     const hasImg = Boolean(img)
     // 招牌像素網格紋理底圖（瀏覽器 Canvas raster；冇 canvas 時 fallback 純色底）
@@ -496,10 +496,18 @@ const pixel: Pack = {
     tx(slide, 'TEACHING DECK · 教學簡報', { x: 1.4, y: 0.88, w: 7, h: 0.3, fontSize: 10, bold: true, color: PIX.ink, charSpacing: 3 })
     // blocky 題目 + 像素底線
     const titleW = hasImg ? 6.3 : 10.6
-    const fit = fitTitle(deck.title, 'cover')
-    const lines = Math.max(1, Math.min(2, estimateLines(deck.title, fit.fontPt, titleW)))
-    tx(slide, deck.title, { x: 0.9, y: 2.2, w: titleW, h: 1.6, fontSize: fit.fontPt, bold: true, color: PIX.ink, lineSpacingMultiple: 1.1, fit: 'shrink' })
-    const ruleY = 2.2 + (lines * fit.fontPt * 1.1) / 72 + 0.18
+    let ruleY: number
+    if (title) {
+      // 高擬真：招牌像素字標題圖（英文題先有；中文會 fallback 原生）
+      const th = Math.min(1.1, titleW / title.aspect)
+      slide.addImage({ data: title.dataUri, x: 0.9, y: 2.3, w: th * title.aspect, h: th })
+      ruleY = 2.3 + th + 0.16
+    } else {
+      const fit = fitTitle(deck.title, 'cover')
+      const lines = Math.max(1, Math.min(2, estimateLines(deck.title, fit.fontPt, titleW)))
+      tx(slide, deck.title, { x: 0.9, y: 2.2, w: titleW, h: 1.6, fontSize: fit.fontPt, bold: true, color: PIX.ink, lineSpacingMultiple: 1.1, fit: 'shrink' })
+      ruleY = 2.2 + (lines * fit.fontPt * 1.1) / 72 + 0.18
+    }
     pixelRule(slide, 0.92, ruleY, 8)
     if (deck.subtitle) {
       tx(slide, deck.subtitle, { x: 0.9, y: ruleY + 0.3, w: titleW, h: 0.45, fontSize: 14, color: PIX.soft })
