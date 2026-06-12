@@ -66,7 +66,7 @@ export async function listThreads(boardId: string, sort: ThreadSort, page = 0): 
 
 export async function searchThreads(boardId: string, q: string): Promise<ForumThread[]> {
   if (!supabase || !q.trim()) return []
-  const like = `%${q.trim()}%`
+  const like = `*${q.trim()}*` // PostgREST .or() 內 ilike 用 * 做萬用字元（唔係 %）
   const { data, error } = await supabase.from('forum_threads').select('*')
     .eq('board_id', boardId).eq('status', 'active')
     .or(`title.ilike.${like},body.ilike.${like}`)
