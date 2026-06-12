@@ -49,6 +49,10 @@ import {
   adminListAdmins,
   adminAddAdmin,
   adminRemoveAdmin,
+  adminForumReports,
+  adminForumRemove,
+  adminForumResolve,
+  adminForumBan,
   type AdminOverview,
   type AdminUser,
   type AdminUsage,
@@ -56,6 +60,7 @@ import {
   type Announcement,
   type AdminTicket,
   type AdminEntry,
+  type ForumReport,
 } from '../lib/admin'
 
 // ============================================================
@@ -506,6 +511,7 @@ function ContentTab() {
   return (
     <div className="space-y-5">
       <AnnouncementsCard />
+      <ForumReportsCard />
       <TicketsCard />
       <AdminsCard />
     </div>
@@ -612,6 +618,80 @@ function AdminsCard() {
               ) : (
                 <span className="shrink-0 text-[10px] text-slate-400">唯讀</span>
               )}
+            </li>
+          ))}
+        </ul>
+      )}
+    </Card>
+  )
+}
+
+function ForumReportsCard() {
+  const { data, loading, err, reload } = useAsync<ForumReport[]>(adminForumReports)
+  const toast = useToast()
+  const [rows, setRows] = useState<ForumReport[]>([])
+  useEffect(() => {
+    if (data) setRows(data)
+  }, [data])
+
+  const remove = async (r: ForumReport) => {
+    try {
+      await adminForumRemove(r.target_type, r.target_id)
+      setRows((c) => c.filter((x) => x.id !== r.id))
+      toast.success('已移除內容')
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : '失敗')
+    }
+  }
+  const ignore = async (r: ForumReport) => {
+    try {
+      await adminForumResolve(r.id)
+      setRows((c) => c.filter((x) => x.id !== r.id))
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : '失敗')
+    }
+  }
+  const ban = async (r: ForumReport) => {
+    if (!r.content?.author_id) return
+    try {
+      await adminForumBan(r.content.author_id)
+      toast.success('已封禁該用戶')
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : '失敗')
+    }
+  }
+
+  return (
+    <Card className="p-5">
+      <SectionTitle right={<RefreshBtn loading={loading} onClick={reload} />}>
+        <span className="inline-flex items-center gap-1.5">
+          論壇檢舉 {rows.length > 0 && <Badge tone="amber">{rows.length}</Badge>}
+        </span>
+      </SectionTitle>
+      {!data ? (
+        <LoadErr loading={loading} err={err} empty={rows.length === 0} />
+      ) : rows.length === 0 ? (
+        <EmptyState icon="✅" title="冇待處理檢舉。" />
+      ) : (
+        <ul className="space-y-2">
+          {rows.map((r) => (
+            <li key={r.id} className="rounded-xl border border-[color:var(--border)] p-3">
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <Badge tone="slate">{r.target_type === 'thread' ? '主題' : '回覆'}</Badge>
+                  <p className="mt-1 line-clamp-2 text-xs text-slate-600 dark:text-slate-300">
+                    {r.content?.title ?? ''} {r.content?.body ?? '（內容已不存在）'}
+                  </p>
+                  <p className="mt-1 text-[10px] text-slate-400">
+                    理由：{r.reason || '（無）'} · {new Date(r.created_at).toLocaleString('zh-HK')}
+                  </p>
+                </div>
+                <div className="flex shrink-0 flex-col gap-1">
+                  <Button size="sm" variant="danger" onClick={() => remove(r)}>移除</Button>
+                  <Button size="sm" variant="ghost" onClick={() => ban(r)}>封禁作者</Button>
+                  <Button size="sm" variant="ghost" onClick={() => ignore(r)}>忽略</Button>
+                </div>
+              </div>
             </li>
           ))}
         </ul>

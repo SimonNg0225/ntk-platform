@@ -167,3 +167,21 @@ export const adminAddAdmin = (email: string) =>
 
 export const adminRemoveAdmin = (email: string) =>
   callAdmin<{ ok: true }>('admins:remove', { email })
+
+// ── 論壇審核 ──
+export interface ForumReport {
+  id: string
+  target_type: 'thread' | 'post'
+  target_id: string
+  reason: string
+  status: string
+  created_at: string
+  content: { title?: string; body?: string; status?: string; author_id?: string } | null
+}
+export const adminForumReports = () => callAdmin<ForumReport[]>('forum:reports')
+export const adminForumRemove = (type: 'thread' | 'post', id: string) =>
+  callAdmin<{ ok: true }>('forum:remove', { type, id })
+export const adminForumResolve = (id: string) =>
+  callAdmin<{ ok: true }>('forum:resolve-report', { id })
+export const adminForumBan = (userId: string, reason = '') =>
+  callAdmin<{ ok: true }>('forum:ban', { userId, reason })
