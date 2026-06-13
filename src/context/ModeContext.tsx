@@ -35,8 +35,10 @@ const ModeContext = createContext<ModeContextValue | null>(null)
 
 function readInitialMode(): ModeId {
   if (typeof localStorage === 'undefined') return DEFAULT_MODE
-  const saved = localStorage.getItem(STORAGE_KEY)
-  return saved === 'learning' || saved === 'work' ? saved : DEFAULT_MODE
+  const saved = localStorage.getItem(STORAGE_KEY) as ModeId | null
+  // 只接受「目前開放」嘅模式（MODE_ORDER）；舊用戶揀過而家收起咗嘅模式
+  // （例如 learning）→ 回預設工作模式。
+  return saved && MODE_ORDER.includes(saved) ? saved : DEFAULT_MODE
 }
 
 export function ModeProvider({ children }: { children: ReactNode }) {
@@ -60,7 +62,10 @@ export function ModeProvider({ children }: { children: ReactNode }) {
   }, [mode])
 
   const value = useMemo<ModeContextValue>(() => {
-    const setMode = (next: ModeId) => setModeState(next)
+    // 收起咗嘅模式（唔喺 MODE_ORDER）唔畀切換過去；防止任何 caller 跳入隱藏模式。
+    const setMode = (next: ModeId) => {
+      if (MODE_ORDER.includes(next)) setModeState(next)
+    }
     const toggleMode = () =>
       setModeState((curr) => {
         const idx = MODE_ORDER.indexOf(curr)

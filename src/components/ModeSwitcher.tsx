@@ -10,6 +10,8 @@ export default function ModeSwitcher({
   size?: 'full' | 'compact'
 }) {
   const { mode, setMode } = useMode()
+  // 只開放一個模式（個人模式暫時收起）→ 毋須切換掣，唔顯示。
+  if (MODE_ORDER.length < 2) return null
   const compact = size === 'compact'
 
   return (

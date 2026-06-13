@@ -63,8 +63,15 @@ export const MODES: Record<ModeId, ModeDef> = {
   },
 }
 
-/** 模式排列次序（用喺切換掣）。工作行先 → 對應商業化主打教師市場。 */
-export const MODE_ORDER: ModeId[] = ['work', 'learning']
+/**
+ * 對用戶開放（可切換）嘅模式次序 —— 用喺切換掣 / 指令面板 / 預設模式 /
+ * 初始模式 clamp。
+ *
+ * 暫時淨係開「工作」；「個人模式」（learning）嘅 MODES 定義、功能、所有代碼
+ * 全部保留，純粹係唔對用戶開放。想開返畀用戶：喺下面加返 'learning' 即可，
+ * 切換掣 / 指令面板 / 手機底欄會自動恢復雙模式，毋須改其他地方。
+ */
+export const MODE_ORDER: ModeId[] = ['work']
 
 /** 預設模式 —— 商業化對象係全港老師，預設入「工作模式」。 */
 export const DEFAULT_MODE: ModeId = 'work'
