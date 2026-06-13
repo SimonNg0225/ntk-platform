@@ -8,6 +8,13 @@ import {
 } from 'react'
 import type { Session, User } from '@supabase/supabase-js'
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
+import {
+  isDevAuth,
+  makeDevSession,
+  loadDevSession,
+  saveDevSession,
+  clearDevSession,
+} from '../lib/devAuth'
 import { attachSync, detachSync } from '../lib/sync'
 import { identifyUser, resetIdentity, track } from '../lib/observability'
 import { isAdminEmail } from '../lib/support'
@@ -41,7 +48,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(isSupabaseConfigured)
 
   useEffect(() => {
-    if (!supabase) return
+    if (!supabase) {
+      // 冇接 Supabase：本機 dev 登入時還原上次撳過嘅假 session（refresh 唔甩）。
+      if (isDevAuth) setSession(loadDevSession())
+      return
+    }
     // 開頁先攞返現有 session
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session)
@@ -109,11 +120,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       user: session?.user ?? null,
       session,
       loading,
-      configured: isSupabaseConfigured,
+      configured: isSupabaseConfigured || isDevAuth,
       isAdmin,
       adminChecked,
       signInWithGoogle: async () => {
-        if (!supabase) return
+        if (!supabase) {
+          // 本機 dev：唔行真 OAuth，即刻以假帳戶登入（存 localStorage）。
+          if (isDevAuth) {
+            const s = makeDevSession()
+            saveDevSession(s)
+            setSession(s)
+          }
+          return
+        }
         track('signup_started', { provider: 'google' })
         await supabase.auth.signInWithOAuth({
           provider: 'google',
@@ -123,7 +142,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         })
       },
       signOut: async () => {
-        if (!supabase) return
+        if (!supabase) {
+          if (isDevAuth) {
+            clearDevSession()
+            setSession(null)
+          }
+          return
+        }
         await supabase.auth.signOut()
       },
     }),
