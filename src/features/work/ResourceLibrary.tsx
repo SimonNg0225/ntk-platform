@@ -169,120 +169,183 @@ function ViewSwitcher({
   )
 }
 
-// 典藏簿統計帶：館藏 / 收藏 / 借閱 / 連結健康（hairline grid，serif 大數字；
-// 借閱用 accent 高亮做主指標，連結有失效時轉暖色提醒）
-function CensusStrip({
-  census,
+// ─────────────────────────────────────────────
+//  生動 overview（參考工作儀表板）：accent hero banner + 彩色可撳統計磚。
+//  icon chip + 大 tabular 數字 + hover 升起 + tone 配色（accent/amber/…）。
+// ─────────────────────────────────────────────
+type Tone = 'accent' | 'amber' | 'emerald' | 'violet' | 'sky' | 'rose'
+const TONE: Record<Tone, { chip: string; val: string }> = {
+  accent: { chip: 'bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent', val: 'text-accent' },
+  amber: { chip: 'bg-amber-50 text-amber-600 dark:bg-amber-500/15 dark:text-amber-300', val: 'text-amber-500' },
+  emerald: { chip: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-300', val: 'text-emerald-500' },
+  violet: { chip: 'bg-violet-50 text-violet-600 dark:bg-violet-500/15 dark:text-violet-300', val: 'text-violet-500' },
+  sky: { chip: 'bg-sky-50 text-sky-600 dark:bg-sky-500/15 dark:text-sky-300', val: 'text-sky-500' },
+  rose: { chip: 'bg-rose-50 text-rose-600 dark:bg-rose-500/15 dark:text-rose-300', val: 'text-rose-500' },
+}
+
+// 可撳統計磚（撳一下即跳對應智能視圖；hover icon chip 放大 + 卡片升起）
+function StatTile({
+  label, value, unit, hint, icon: Icon, tone, active, onClick,
 }: {
-  census: {
-    total: number
-    opens: number
-    favorites: number
-    withLink: number
-    broken: number
-  }
+  label: string
+  value: number | string
+  unit?: string
+  hint?: string
+  icon: LucideIcon
+  tone: Tone
+  active?: boolean
+  onClick: () => void
 }) {
-  const cells: {
-    label: string
-    value: number | string
-    unit?: string
-    icon: LucideIcon
-    hint: string
-    tone: 'accent' | 'amber' | 'rose' | 'plain'
-  }[] = [
-    {
-      label: '館藏總數',
-      value: census.total,
-      unit: '項',
-      icon: Layers,
-      hint: census.total > 0 ? '已分門別類收好' : '由第一項開始',
-      tone: 'accent',
-    },
-    {
-      label: '累計借閱',
-      value: census.opens,
-      unit: '次',
-      icon: TrendingUp,
-      hint: `${census.withLink} 項可開啟`,
-      tone: 'plain',
-    },
-    {
-      label: '收藏',
-      value: census.favorites,
-      unit: '項',
-      icon: Star,
-      hint: census.favorites > 0 ? '加星嘅常用教材' : '撳星收藏常用',
-      tone: 'amber',
-    },
-    {
-      label: '連結健康',
-      value: census.broken > 0 ? census.broken : '良好',
-      unit: census.broken > 0 ? '失效' : undefined,
-      icon: Link2Off,
-      hint: census.broken > 0 ? '撳「失效連結」抽屜整理' : '未見失效連結',
-      tone: census.broken > 0 ? 'rose' : 'plain',
-    },
-  ]
+  const t = TONE[tone]
   return (
-    <section
-      aria-label="典藏總覽"
-      className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl bg-slate-200/70 ring-1 ring-slate-200/80 dark:bg-slate-700/50 dark:ring-slate-700/60 sm:grid-cols-4"
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      className={cx(
+        'group flex cursor-pointer flex-col justify-between gap-3 rounded-2xl border bg-white p-4 text-left transition duration-200 hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98] dark:bg-slate-800',
+        active
+          ? 'border-accent/50 ring-1 ring-accent/30 dark:border-accent/50'
+          : 'border-slate-200/80 hover:border-slate-300 dark:border-slate-700/60 dark:hover:border-slate-600',
+      )}
     >
-      {cells.map((c) => {
-        const I = c.icon
-        const hot = c.tone !== 'plain'
-        const labelTone =
-          c.tone === 'amber'
-            ? 'text-amber-600/80 dark:text-amber-400/80'
-            : c.tone === 'rose'
-              ? 'text-rose-600/80 dark:text-rose-400/80'
-              : c.tone === 'accent'
-                ? 'text-accent/80'
-                : 'text-slate-400 dark:text-slate-500'
-        const valueTone =
-          c.tone === 'amber'
-            ? 'text-amber-600 dark:text-amber-400'
-            : c.tone === 'rose'
-              ? 'text-rose-600 dark:text-rose-400'
-              : c.tone === 'accent'
-                ? 'text-accent-strong dark:text-accent'
-                : 'text-slate-800 dark:text-slate-100'
-        const bg =
-          c.tone === 'rose'
-            ? 'bg-rose-50 dark:bg-rose-500/10'
-            : c.tone === 'accent'
-              ? 'bg-accent-soft dark:bg-accent/15'
-              : 'bg-white dark:bg-slate-800'
-        return (
-          <div key={c.label} className={cx('px-4 py-3.5 transition-colors', bg)}>
-            <p
-              className={cx(
-                'flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide',
-                labelTone,
-              )}
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-medium text-slate-400 dark:text-slate-500">{label}</span>
+        <span className={cx('flex h-8 w-8 items-center justify-center rounded-xl transition duration-200 group-hover:scale-110', t.chip)}>
+          <Icon size={16} />
+        </span>
+      </div>
+      <div>
+        <p className="flex items-baseline gap-1">
+          <span className={cx('text-2xl font-semibold tabular-nums slashed-zero sm:text-3xl', t.val)}>{value}</span>
+          {unit && <span className="text-sm font-medium text-slate-400">{unit}</span>}
+        </p>
+        {hint && <p className="mt-0.5 truncate text-[11px] text-slate-400">{hint}</p>}
+      </div>
+    </button>
+  )
+}
+
+// accent hero banner：館名牌 kicker + serif 標題 + 動態語 + 主動作 + 館藏大數字 + 類型分佈條
+function LibraryHero({
+  source, total, opens, folders, typeDist, line, onAdd, onFolders,
+}: {
+  source: 'lib' | 'drive'
+  total: number
+  opens: number
+  folders: number
+  typeDist: { type: ResourceType; count: number }[]
+  line: string
+  onAdd: () => void
+  onFolders: () => void
+}) {
+  return (
+    <section className="relative overflow-hidden rounded-3xl bg-accent p-5 text-white shadow-sm sm:p-6">
+      {/* 柔光裝飾（生動感，純裝飾） */}
+      <div aria-hidden="true" className="pointer-events-none absolute -right-12 -top-14 h-48 w-48 rounded-full bg-white/10 blur-2xl" />
+      <div aria-hidden="true" className="pointer-events-none absolute -bottom-20 right-28 h-40 w-40 rounded-full bg-white/5 blur-2xl" />
+      <div className="relative flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+        <div className="min-w-0">
+          <p className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.3em] text-white/70">
+            <Library size={13} strokeWidth={2} /> 典藏目錄 · Archive
+          </p>
+          <h1 className="mt-1.5 text-2xl font-semibold tracking-tight sm:text-[28px]">教學資源庫</h1>
+          <p className="mt-2 max-w-md text-sm leading-relaxed text-white/85" aria-live="polite">{line}</p>
+          <div className="mt-4 flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={onAdd}
+              className="inline-flex items-center gap-1.5 rounded-xl bg-white px-3.5 py-2 text-sm font-semibold text-accent-strong shadow-sm transition hover:bg-white/90 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
             >
-              <I size={12} className={cx('shrink-0', hot ? '' : 'opacity-80')} />
-              <span className="truncate">{c.label}</span>
-            </p>
-            <p
-              className={cx(
-                'mt-1 text-[26px] font-semibold leading-none tabular-nums slashed-zero',
-                valueTone,
-              )}
+              <Plus size={16} /> 新增資源
+            </button>
+            <button
+              type="button"
+              onClick={onFolders}
+              className="inline-flex items-center gap-1.5 rounded-xl bg-white/15 px-3.5 py-2 text-sm font-semibold text-white backdrop-blur transition hover:bg-white/25 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
             >
-              {c.value}
-              {c.unit && (
-                <span className="ml-1 font-sans text-sm font-normal text-slate-400">
-                  {c.unit}
-                </span>
-              )}
-            </p>
-            <p className="mt-1 truncate text-[11px] text-slate-400 dark:text-slate-500">
-              {c.hint}
-            </p>
+              <FolderPlus size={16} /> 收藏夾
+            </button>
           </div>
-        )
-      })}
+        </div>
+
+        {source === 'lib' && (
+          <div className="shrink-0 rounded-2xl bg-white/10 p-4 backdrop-blur sm:w-72">
+            <p className="flex items-center gap-1 text-xs text-white/70">
+              <Layers size={12} /> 館藏總數
+            </p>
+            <p className="mt-0.5 text-4xl font-semibold tabular-nums slashed-zero">
+              {total}
+              <span className="ml-1 text-sm font-medium text-white/60">項</span>
+            </p>
+            <p className="mt-0.5 flex items-center gap-1 text-[11px] text-white/70">
+              <TrendingUp size={11} /> 累計借閱 {opens} 次 · {folders} 個收藏夾
+            </p>
+            {total > 0 && typeDist.length > 0 && (
+              <>
+                <div className="mt-3 flex h-2 overflow-hidden rounded-full bg-white/20">
+                  {typeDist.map((d) => (
+                    <span
+                      key={d.type}
+                      className={cx('h-full', TYPE_COLOR[d.type].dot)}
+                      style={{ width: `${(d.count / total) * 100}%` }}
+                    />
+                  ))}
+                </div>
+                <div className="mt-2 flex flex-wrap gap-x-2.5 gap-y-1">
+                  {typeDist.map((d) => (
+                    <span key={d.type} className="inline-flex items-center gap-1 text-[10px] text-white/85">
+                      <span className={cx('h-1.5 w-1.5 rounded-full', TYPE_COLOR[d.type].dot)} />
+                      {TYPE_LABEL[d.type]} {d.count}
+                    </span>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+        )}
+      </div>
+    </section>
+  )
+}
+
+// 彩色可撳統計磚一行（每粒對應一個智能視圖，撳一下即跳）
+function StatTilesRow({
+  census, smartCounts, activeSmart, jump,
+}: {
+  census: { total: number; opens: number; favorites: number; withLink: number; broken: number }
+  smartCounts: Record<SmartView, number>
+  activeSmart: SmartView | null
+  jump: (s: SmartView) => void
+}) {
+  return (
+    <section aria-label="快速統計" className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+      <StatTile
+        label="收藏" value={census.favorites} unit="項" icon={Star} tone="amber"
+        hint={census.favorites > 0 ? '加星嘅常用教材' : '撳星收藏常用'}
+        active={activeSmart === 'favorites'} onClick={() => jump('favorites')}
+      />
+      <StatTile
+        label="最近開啟" value={smartCounts.recent_opened} unit="項" icon={ExternalLink} tone="sky"
+        hint={`累計借閱 ${census.opens} 次`}
+        active={activeSmart === 'recent_opened'} onClick={() => jump('recent_opened')}
+      />
+      <StatTile
+        label="需要整理" value={smartCounts.stale} unit="項" icon={CalendarClock} tone="violet"
+        hint={smartCounts.stale > 0 ? '好耐冇用過' : '全部貼貼服服'}
+        active={activeSmart === 'stale'} onClick={() => jump('stale')}
+      />
+      <StatTile
+        label="未分類" value={smartCounts.unsorted} unit="項" icon={Inbox} tone="emerald"
+        hint={smartCounts.unsorted > 0 ? '未入收藏夾' : '全部歸咗檔'}
+        active={activeSmart === 'unsorted'} onClick={() => jump('unsorted')}
+      />
+      <StatTile
+        label="連結健康" value={census.broken > 0 ? census.broken : '良好'} unit={census.broken > 0 ? '失效' : undefined}
+        icon={Link2Off} tone={census.broken > 0 ? 'rose' : 'emerald'}
+        hint={census.broken > 0 ? '撳入去整理' : '未見失效連結'}
+        active={activeSmart === 'broken'} onClick={() => jump('broken')}
+      />
     </section>
   )
 }
@@ -355,6 +418,31 @@ export default function ResourceLibrary() {
       broken,
     }
   }, [allRows])
+
+  // 類型分佈（非封存）：畀 hero 彩色分佈條用
+  const typeDist = useMemo(
+    () =>
+      TYPE_ORDER.map((tp) => ({
+        type: tp,
+        count: allRows.filter((r) => !r.meta.archived && r.res.type === tp).length,
+      })).filter((d) => d.count > 0),
+    [allRows],
+  )
+
+  // hero 動態語：按來源 / 庫狀態揀最該講嗰句（生動 + 有指引）
+  const heroLine =
+    source === 'drive'
+      ? '正瀏覽 Google Drive（live 唯讀）。想永久收藏、評分或歸類，切返「我的庫」。'
+      : census.total === 0
+        ? '由第一條連結或一份講義開始 —— 貼上就自動幫你猜類型、建檔歸類。'
+        : census.broken > 0
+          ? `有 ${census.broken} 條失效連結，撳下面「連結健康」清理返。`
+          : smartCounts.stale > 0
+            ? `${smartCounts.stale} 項好耐冇用過，得閒整理下保持貼服。`
+            : `館藏 ${census.total} 項、累計借閱 ${census.opens} 次 —— 幾時想用，一搜即返。`
+
+  // 目前生效嘅智能視圖（folderId 為 all 先當 smart 生效）→ 畀統計磚高亮
+  const activeSmart: SmartView | null = filter.folderId === 'all' ? filter.smart : null
 
   // 鍵盤：/ 聚焦搜尋、n 新增
   useEffect(() => {
@@ -467,35 +555,17 @@ export default function ResourceLibrary() {
 
   return (
     <div className="space-y-5">
-      {/* ───────── 典藏 masthead：館名牌（serif 大標題 + 借閱卡概念） ───────── */}
-      <header className="flex flex-wrap items-end justify-between gap-x-4 gap-y-3">
-        <div className="min-w-0">
-          <p className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.3em] text-accent/70">
-            <Library size={13} strokeWidth={2} />
-            典藏目錄 · Archive
-          </p>
-          <h1 className="mt-1 text-2xl font-semibold leading-tight tracking-tight text-slate-800 dark:text-slate-100 sm:text-[28px]">
-            教學資源庫
-          </h1>
-          <p className="mt-1.5 max-w-xl text-sm leading-relaxed text-slate-500 dark:text-slate-400">
-            講義、簡報、試題、連結同筆記，分門別類收入抽屜；貼條連結就自動建檔，幾時想用一搜即返。
-          </p>
-        </div>
-        <div className="flex shrink-0 items-center gap-2">
-          <Tooltip label="管理收藏夾">
-            <Button
-              variant="secondary"
-              icon={FolderPlus}
-              onClick={() => setShowFolderMgr(true)}
-            >
-              收藏夾
-            </Button>
-          </Tooltip>
-          <Button icon={Plus} onClick={() => setShowAdd(true)}>
-            新增資源
-          </Button>
-        </div>
-      </header>
+      {/* ───────── 生動 hero：accent 館名牌 + 動態語 + 主動作 + 館藏大數字 + 類型分佈 ───────── */}
+      <LibraryHero
+        source={source}
+        total={census.total}
+        opens={census.opens}
+        folders={folders.length}
+        typeDist={typeDist}
+        line={heroLine}
+        onAdd={() => setShowAdd(true)}
+        onFolders={() => setShowFolderMgr(true)}
+      />
 
       {/* ───────── 來源切換：我的庫（本機收藏）↔ Google Drive（live 唯讀） ───────── */}
       <div className="inline-flex rounded-xl border border-slate-200 bg-slate-50 p-0.5 dark:border-slate-700 dark:bg-slate-800/60">
@@ -529,8 +599,13 @@ export default function ResourceLibrary() {
         <DriveView />
       ) : (
       <>
-      {/* ───────── 典藏簿：細口統計帶（hairline grid · serif 大數字） ───────── */}
-      <CensusStrip census={census} />
+      {/* ───────── 彩色可撳統計磚（撳一下即跳對應智能視圖） ───────── */}
+      <StatTilesRow
+        census={census}
+        smartCounts={smartCounts}
+        activeSmart={activeSmart}
+        jump={(s) => patch({ smart: s, folderId: 'all' })}
+      />
 
       <div className="flex flex-col gap-4 lg:flex-row">
         {/* ─── 側欄：智能視圖 + 收藏夾 ─── */}
