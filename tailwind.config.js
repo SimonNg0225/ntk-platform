@@ -32,6 +32,8 @@ export default {
           '"Segoe UI"',
           'sans-serif',
         ],
+        // 襯線（行銷首頁標題 / 作業簿風）：拉丁 Fraunces，中文 Noto Serif HK
+        serif: ['Fraunces', '"Noto Serif HK"', 'Georgia', '"Songti TC"', 'serif'],
         mono: ['ui-monospace', '"SF Mono"', 'Menlo', 'monospace'],
       },
       fontSize: {
