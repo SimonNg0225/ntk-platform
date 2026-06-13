@@ -15,6 +15,7 @@ import ShortcutsModal from './features/shared/shortcuts/ShortcutsModal'
 import QuickAddButton from './features/shared/quickAdd/QuickAddButton'
 import QuickAddModal from './features/shared/quickAdd/QuickAddModal'
 import { OnboardingModal } from './components/OnboardingModal'
+import ProfileGate from './features/onboarding/ProfileGate'
 import PwaUpdater from './components/PwaUpdater'
 import PwaInstallPrompt from './components/PwaInstallPrompt'
 import SupportButton from './components/SupportButton'
@@ -382,6 +383,9 @@ export function AppShell() {
             toast.success(n > 0 ? `已載入 ${n} 筆示範資料 🎉` : '已有資料，毋須載入')
           }}
         />
+
+        {/* 新用戶首次登入：彈出個人資料登記（已登入 + 未登記先出） */}
+        <ProfileGate />
 
         <PwaUpdater />
         <PwaInstallPrompt />
