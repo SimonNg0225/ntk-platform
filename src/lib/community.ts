@@ -1,6 +1,12 @@
 import { supabase, isSupabaseConfigured } from './supabase'
 import { downloadBlob } from './export/file'
-import { uploadCommunityFile, communitySignedUrl } from './supabaseStorage'
+import {
+  uploadCommunityFile,
+  communitySignedUrl,
+  communitySignedUrls,
+  uploadCommunityThumb,
+} from './supabaseStorage'
+import { generateThumb } from './resourceThumb'
 import type {
   PublishInput,
   ResourceFilter,
@@ -52,6 +58,10 @@ export interface CommunityResource {
   ratingCount: number
   createdAt: string
   updatedAt: string
+  /** 縮圖 storage 路徑（null/undefined = 出 placeholder） */
+  thumbPath?: string | null
+  /** 縮圖簽名 URL（listResources / getResource 會帶；gallery 顯示用） */
+  thumbUrl?: string | null
   /** join 落嚟嘅發佈者檔案（listResources / getResource 會帶） */
   owner?: CommunityProfile
 }
@@ -116,6 +126,7 @@ type ResourceRow = {
   save_count: number
   rating_sum: number
   rating_count: number
+  thumb_path: string | null
   created_at: string
   updated_at: string
 }
@@ -142,22 +153,32 @@ function toResource(r: ResourceRow): CommunityResource {
     saveCount: r.save_count,
     ratingSum: r.rating_sum,
     ratingCount: r.rating_count,
+    thumbPath: r.thumb_path,
     createdAt: r.created_at,
     updatedAt: r.updated_at,
   }
 }
 
 const RES_COLS =
-  'id, owner_id, title, description, subject_pack_id, topic_id, grade, type, tags, file_path, file_name, file_mime, file_size, external_url, license, status, download_count, save_count, rating_sum, rating_count, created_at, updated_at'
+  'id, owner_id, title, description, subject_pack_id, topic_id, grade, type, tags, file_path, file_name, file_mime, file_size, external_url, license, status, download_count, save_count, rating_sum, rating_count, thumb_path, created_at, updated_at'
 
-/** 為一批資源帶埋發佈者檔案（owner_id → profiles，第二 query 併入）。 */
+/** 為一批資源帶埋發佈者檔案 + 縮圖簽名 URL（gallery 顯示用）。 */
 async function attachOwners(rows: CommunityResource[]): Promise<CommunityResource[]> {
   if (rows.length === 0) return rows
   const ids = [...new Set(rows.map((r) => r.ownerId))]
   const { data } = await need().from('profiles').select('*').in('id', ids)
   const map = new Map<string, CommunityProfile>()
   for (const p of (data ?? []) as ProfileRow[]) map.set(p.id, toProfile(p))
-  return rows.map((r) => ({ ...r, owner: map.get(r.ownerId) }))
+
+  // 批量簽縮圖 URL
+  const thumbPaths = rows.map((r) => r.thumbPath).filter((p): p is string => Boolean(p))
+  const thumbMap = await communitySignedUrls(thumbPaths)
+
+  return rows.map((r) => ({
+    ...r,
+    owner: map.get(r.ownerId),
+    thumbUrl: r.thumbPath ? (thumbMap.get(r.thumbPath) ?? null) : null,
+  }))
 }
 
 // ───────── Profile ─────────
@@ -271,12 +292,20 @@ export async function publishResource(p: PublishPayload): Promise<string> {
   let fileMime: string | null = null
   let fileSize: number | null = null
   let fileName: string | null = null
+  let thumbPath: string | null = null
   if (p.file && p.hasFile) {
     const up = await uploadCommunityFile(p.file, p.fileName ?? p.file.name ?? 'file', ownerId, id)
     filePath = up.path
     fileMime = p.file.type || null
     fileSize = p.file.size
     fileName = p.fileName ?? p.file.name ?? null
+    // 生成縮圖（圖片 / PDF）→ 上載；失敗就維持 null（出 placeholder）
+    const thumbBlob = await generateThumb(p.file)
+    if (thumbBlob) {
+      thumbPath = await uploadCommunityThumb(thumbBlob, ownerId, id)
+    } else {
+      console.warn('[thumb] 冇生成到縮圖（type=', p.file.type, '）')
+    }
   }
   const { error } = await need()
     .from('shared_resources')
@@ -297,6 +326,7 @@ export async function publishResource(p: PublishPayload): Promise<string> {
       external_url: p.hasFile ? null : p.externalUrl?.trim() || null,
       license: p.license,
       status: p.status ?? 'published',
+      thumb_path: thumbPath,
     })
   if (error) throw new Error(error.message)
   return id

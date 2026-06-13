@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Share2, Search, Download, Bookmark, BookmarkCheck, Flag, ExternalLink, Users, Sparkles, Plus } from 'lucide-react'
+import { Share2, Search, Download, Bookmark, BookmarkCheck, Flag, ExternalLink, Users, Sparkles, Plus, FileText } from 'lucide-react'
 import {
   Badge,
   Button,
@@ -195,7 +195,15 @@ function ResourceCard({ r, onOpen }: { r: CommunityResource; onOpen: () => void 
   const subj = subjectName(r.subjectPackId)
   return (
     <Card hover clip onClick={onOpen} className="flex cursor-pointer flex-col">
-      <div className={cx('h-1 w-full', c.bar)} />
+      {/* 縮圖區：有縮圖出圖，否則類型色底 + 檔案 icon */}
+      <div className={cx('relative flex h-32 w-full items-center justify-center overflow-hidden', r.thumbUrl ? 'bg-slate-100 dark:bg-slate-800' : c.chipBg)}>
+        {r.thumbUrl ? (
+          <img src={r.thumbUrl} alt={r.title} className="h-full w-full object-cover" loading="lazy" />
+        ) : (
+          <FileText size={30} strokeWidth={1.75} className={cx('opacity-50', c.chipText)} />
+        )}
+        <span className={cx('absolute left-0 top-0 h-1 w-full', c.bar)} />
+      </div>
       <div className="flex flex-1 flex-col gap-2 p-3.5">
         <div className="flex flex-wrap items-center gap-1.5">
           <span className={cx('rounded-md px-1.5 py-0.5 text-[10px] font-semibold', c.chipBg, c.chipText)}>
