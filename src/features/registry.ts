@@ -40,7 +40,6 @@ const Community = lazyFeature(() => import('./work/community/Community'))
 const Gradebook = lazyFeature(() => import('./work/Gradebook'))
 const ReportComments = lazyFeature(() => import('./work/reportComments/ReportComments'))
 const ClassTools = lazyFeature(() => import('./work/classTools/ClassTools'))
-const EssayMark = lazyFeature(() => import('./work/essayMark/EssayMark'))
 const RubricGen = lazyFeature(() => import('./work/rubric/RubricGen'))
 const DseDrill = lazyFeature(() => import('./work/dse/DseDrill'))
 const Transcribe = lazyFeature(() => import('./work/transcribe/Transcribe'))
@@ -55,7 +54,6 @@ const MeetingNotes = lazyFeature(() => import('./work/MeetingNotes'))
 const AdminDocs = lazyFeature(() => import('./work/adminDocs/AdminDocs'))
 const Scan = lazyFeature(() => import('./work/scan/Scan'))
 const DocDigest = lazyFeature(() => import('./work/docDigest/DocDigest'))
-const BudgetTracker = lazyFeature(() => import('./work/BudgetTracker'))
 const WorkDashboard = lazyFeature(() => import('./work/WorkDashboard'))
 const Team = lazyFeature(() => import('./work/Team'))
 
@@ -417,17 +415,6 @@ export const FEATURES: Feature[] = [
     status: 'ready',
   },
   {
-    id: 'work-essay-mark',
-    selfManagedHeader: true,
-    modes: ['work'],
-    name: '作文批改',
-    description: '貼或影低作文，AI 按準則打分、標病句、寫總評（中／英），可匯出 Word。',
-    icon: '✍️',
-    group: '學生',
-    component: EssayMark,
-    status: 'ready',
-  },
-  {
     id: 'work-attendance',
     selfManagedHeader: true,
     modes: ['work'],
@@ -523,17 +510,6 @@ export const FEATURES: Feature[] = [
     icon: '🎙️',
     group: '行政',
     component: Transcribe,
-    status: 'ready',
-  },
-  {
-    id: 'work-budget',
-    selfManagedHeader: true,
-    modes: ['learning', 'work'],
-    name: '收支記帳',
-    description: '記錄每日收入支出，睇本月結餘同分類佔比。',
-    icon: '💰',
-    group: '理財',
-    component: BudgetTracker,
     status: 'ready',
   },
 

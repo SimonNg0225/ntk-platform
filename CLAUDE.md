@@ -37,3 +37,12 @@
   - `pptx.ts`：dispatch + 出檔後 patch（theme 字體 / 漸層 / 修正非法負 `<a:ext>`）。
   - 鐵律：文字經 `tx()`、色 6-hex 無 `#`、tint 用 `mix()`、shadow 只 outer、`<a:ext>` 不可為負。
 - 生成 prompt：`src/features/work/slides/slidePrompts.ts`（pack-aware：版式偏好 / 密度 / 雙語）。
+
+## 逐科科目檔案（餵官方文件調教批改 / 課程等）
+- 當我講要為某科餵 **syllabus / DSE 題 / marking scheme / 考生範例 / 考評報告** 嚟調教批改
+  （或課程大綱、教學指引、出題等）→ 跟 `docs/subject-profiles.md` 個 playbook 做
+  （一次一科：讀 → 提煉成衍生指引 → 更新該科檔案 → `tsc`/`build`/`test` → 畀我睇 diff → 微調）。
+- **版權鐵律**：DSE / HKEAA 材料只可**提煉成衍生指引**入 codebase，唔可以原文照搬入 repo，
+  亦**絕對唔可以**流入公開資源分享區（違《社群守則》）。
+- 起點：`src/features/work/grading/markingProfiles.ts`（27 科 v0 generic 批改檔案）；
+  課程大綱喺 `src/data/subjects.ts` 嘅 `SUBJECT_PACKS`。
