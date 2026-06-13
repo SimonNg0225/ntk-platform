@@ -540,6 +540,7 @@ export default function ParentComms() {
       '主題',
       '觀感',
       '聯絡人',
+      '電話',
       '內容摘要',
       '需跟進',
       '跟進到期',
@@ -554,6 +555,7 @@ export default function ParentComms() {
       meta?.category ? CATEGORY_LABEL[meta.category] : '',
       meta?.outcome ? OUTCOME_LABEL[meta.outcome] : '',
       meta?.contactName ?? '',
+      meta?.contactPhone ?? '',
       comm.summary,
       comm.followUp ? '是' : '否',
       meta?.followUpDate ?? '',
@@ -1355,6 +1357,17 @@ function TimelineCard({
                   <span className="text-xs text-slate-400 dark:text-slate-500">
                     · {meta.contactName}
                   </span>
+                )}
+                {meta?.contactPhone && (
+                  <a
+                    href={`tel:${meta.contactPhone.replace(/\s+/g, '')}`}
+                    onClick={(e) => e.stopPropagation()}
+                    className="inline-flex items-center gap-0.5 text-xs font-medium text-accent transition hover:underline"
+                    title={`致電 ${meta.contactPhone}`}
+                  >
+                    <Phone size={11} className="shrink-0" />
+                    {meta.contactPhone}
+                  </a>
                 )}
                 <MetaBadges meta={meta} />
               </div>

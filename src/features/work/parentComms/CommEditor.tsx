@@ -35,6 +35,7 @@ import {
   Meh,
   MessageSquareText,
   PenLine,
+  Phone,
   Send,
   Smile,
   Sparkles,
@@ -85,6 +86,7 @@ export interface CommDraft {
   category: Category | ''
   outcome: Outcome | ''
   contactName: string
+  contactPhone: string
   followUpDate: string
   followUpNote: string
   remindMinutes: number | ''
@@ -102,6 +104,7 @@ function emptyDraft(): CommDraft {
     category: '',
     outcome: '',
     contactName: '',
+    contactPhone: '',
     followUpDate: '',
     followUpNote: '',
     remindMinutes: '',
@@ -123,6 +126,7 @@ function draftFromRow(row: CommRow): CommDraft {
     category: meta?.category ?? '',
     outcome: meta?.outcome ?? '',
     contactName: meta?.contactName ?? '',
+    contactPhone: meta?.contactPhone ?? '',
     followUpDate: meta?.followUpDate ?? '',
     followUpNote: meta?.followUpNote ?? '',
     remindMinutes: meta?.remindMinutes ?? '',
@@ -220,6 +224,7 @@ export default function CommEditor({
           category: d.category || undefined,
           outcome: d.outcome || undefined,
           contactName: d.contactName.trim() || undefined,
+          contactPhone: d.contactPhone.trim() || undefined,
           followUpDate: followUp ? d.followUpDate || undefined : undefined,
           followUpNote: followUp ? d.followUpNote.trim() || undefined : undefined,
           remindMinutes:
@@ -352,7 +357,7 @@ export default function CommEditor({
             </Field>
           </div>
 
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <Field label="日期">
               <Input type="date" value={d.date} onChange={(e) => set('date', e.target.value)} />
             </Field>
@@ -364,6 +369,16 @@ export default function CommEditor({
                   </option>
                 ))}
               </Select>
+            </Field>
+            <Field label="電話（選填）" hint="可一撳即打 / WhatsApp">
+              <Input
+                icon={Phone}
+                type="tel"
+                inputMode="tel"
+                value={d.contactPhone}
+                onChange={(e) => set('contactPhone', e.target.value)}
+                placeholder="例如 9123 4567"
+              />
             </Field>
             <Field label="主題分類">
               <Select

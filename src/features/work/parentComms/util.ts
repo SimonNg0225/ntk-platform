@@ -31,6 +31,7 @@ export interface CommMeta extends Entity {
   category?: Category // 溝通主題分類
   outcome?: Outcome // 觀感：正面 / 中性 / 需關注
   contactName?: string // 聯絡人（例如「陳太」）
+  contactPhone?: string // 聯絡電話（致電 / WhatsApp；可一撳即打）
   followUpDate?: string // 跟進到期日 YYYY-MM-DD（followUp=true 時生效）
   followUpNote?: string // 跟進待辦內容
   remindMinutes?: number // 提前提醒（分鐘，顯示用）
