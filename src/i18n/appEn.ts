@@ -62,6 +62,16 @@ export const appEn = {
     bnCards: 'Cards',
     recent: 'Recent',
     allFeatures: 'All features',
+    filterFeatures: 'Search features…',
+    accordion: 'Accordion (open one group at a time)',
+    expandAll: 'Expand all',
+    collapseAll: 'Collapse all',
+    pinnedRecent: 'Pinned · Recent',
+    pin: 'Pin',
+    unpin: 'Unpin',
+    clear: 'Clear',
+    noFeatureMatch: 'No matching feature',
+    admin: 'Admin',
   },
 
   mode: {
