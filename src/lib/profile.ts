@@ -24,6 +24,10 @@ export interface AppProfile {
   showSchool: boolean
   bio: string | null
   avatarColor: string | null
+  /** 預設 persona id（m-01.. / f-01..；null = 文字頭像） */
+  avatarPreset: string | null
+  /** 自訂上載頭像 URL（留畀下一階段；今期未啟用） */
+  avatarUrl: string | null
   /** 完成首次登記嘅時間（null = 未登記） */
   onboardedAt: string | null
   acceptedTermsAt: string | null
@@ -39,6 +43,7 @@ export interface RegistrationInput {
   showSchool: boolean
   bio: string | null
   avatarColor: string | null
+  avatarPreset: string | null
 }
 
 function need() {
@@ -64,12 +69,14 @@ type AppProfileRow = {
   show_school: boolean
   bio: string | null
   avatar_color: string | null
+  avatar_preset: string | null
+  avatar_url: string | null
   onboarded_at: string | null
   accepted_terms_at: string | null
 }
 
 const COLS =
-  'id, display_name, role, subjects, bands, school, show_school, bio, avatar_color, onboarded_at, accepted_terms_at'
+  'id, display_name, role, subjects, bands, school, show_school, bio, avatar_color, avatar_preset, avatar_url, onboarded_at, accepted_terms_at'
 
 function toAppProfile(r: AppProfileRow): AppProfile {
   return {
@@ -82,6 +89,8 @@ function toAppProfile(r: AppProfileRow): AppProfile {
     showSchool: r.show_school,
     bio: r.bio,
     avatarColor: r.avatar_color,
+    avatarPreset: r.avatar_preset,
+    avatarUrl: r.avatar_url,
     onboardedAt: r.onboarded_at,
     acceptedTermsAt: r.accepted_terms_at,
   }
@@ -144,6 +153,7 @@ export async function completeRegistration(input: RegistrationInput): Promise<vo
         show_school: input.showSchool,
         bio: input.bio,
         avatar_color: input.avatarColor,
+        avatar_preset: input.avatarPreset,
         onboarded_at: now,
         accepted_terms_at: now,
       },

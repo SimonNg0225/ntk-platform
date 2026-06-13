@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { Check } from 'lucide-react'
-import { Modal, Button, Field, Input, Select, Textarea, cx } from '../../ui'
+import { Modal, Button, Field, Input, Select, Textarea, Avatar, cx } from '../../ui'
 import { useToast } from '../../context/ToastContext'
 import { useSettings } from '../../context/SettingsContext'
 import { SUBJECT_PACKS } from '../../data/subjects'
@@ -14,6 +14,7 @@ import {
   type SchoolBand,
 } from '../../lib/profile'
 import { ROLES, BANDS, validateRegistration } from './logic'
+import { PERSONAS_BY_GENDER, type PersonaGender } from '../../lib/personas'
 
 // ============================================================
 //  新用戶註冊 — 首次登入嘅個人資料登記表單（硬 gate，填好先入到 app）。
@@ -52,6 +53,41 @@ function Chip({ on, onClick, children }: { on: boolean; onClick: () => void; chi
   )
 }
 
+/** 單個 persona 頭像揀掣（顯示喺已揀底色上，揀中描邊）。 */
+function PersonaTile({
+  id,
+  selected,
+  color,
+  onPick,
+}: {
+  id: string
+  selected: boolean
+  color: string
+  onPick: () => void
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onPick}
+      aria-pressed={selected}
+      aria-label={`頭像 ${id}`}
+      className={cx(
+        'rounded-full transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
+        selected
+          ? 'ring-2 ring-accent ring-offset-2 ring-offset-[color:var(--surface)]'
+          : 'ring-1 ring-black/[0.06] hover:ring-black/20 dark:ring-white/10 dark:hover:ring-white/25',
+      )}
+    >
+      <Avatar preset={id} color={color} size="md" />
+    </button>
+  )
+}
+
+const PERSONA_GROUPS: { g: PersonaGender; label: string }[] = [
+  { g: 'male', label: '男老師' },
+  { g: 'female', label: '女老師' },
+]
+
 export default function ProfileSetupModal({
   open,
   onDone,
@@ -72,6 +108,7 @@ export default function ProfileSetupModal({
   const [showSchool, setShowSchool] = useState(false)
   const [bio, setBio] = useState('')
   const [avatarColor, setAvatarColor] = useState(AVATAR_COLORS[0])
+  const [avatarPreset, setAvatarPreset] = useState<string | null>(null)
   const [agreed, setAgreed] = useState(false)
   const [busy, setBusy] = useState(false)
 
@@ -93,6 +130,7 @@ export default function ProfileSetupModal({
         setShowSchool(p.showSchool)
         setBio(p.bio ?? '')
         if (p.avatarColor) setAvatarColor(p.avatarColor)
+        setAvatarPreset(p.avatarPreset)
       })
       .catch(() => {})
     return () => {
@@ -124,6 +162,7 @@ export default function ProfileSetupModal({
       showSchool,
       bio: bio.trim() || null,
       avatarColor,
+      avatarPreset,
     }
     try {
       setBusy(true)
@@ -229,6 +268,43 @@ export default function ProfileSetupModal({
         {/* 簡介（選填） */}
         <Field label="簡介（選填）">
           <Textarea rows={2} value={bio} onChange={(e) => setBio(e.target.value)} placeholder="一兩句介紹你教咩 / 風格" maxLength={120} />
+        </Field>
+
+        {/* 揀頭像（教師形象 persona） */}
+        <Field label="頭像">
+          <div className="flex items-start gap-4">
+            <div className="flex shrink-0 flex-col items-center gap-1">
+              <Avatar preset={avatarPreset} color={avatarColor} name={displayName} size="xl" />
+              <span className="text-[11px] text-slate-400">預覽</span>
+            </div>
+            <div className="min-w-0 flex-1 space-y-3">
+              {PERSONA_GROUPS.map(({ g, label }) => (
+                <div key={g}>
+                  <p className="mb-1.5 text-[11px] font-medium text-slate-500 dark:text-slate-400">
+                    {label}
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {PERSONAS_BY_GENDER[g].map((p) => (
+                      <PersonaTile
+                        key={p.id}
+                        id={p.id}
+                        selected={avatarPreset === p.id}
+                        color={avatarColor}
+                        onPick={() => setAvatarPreset(p.id)}
+                      />
+                    ))}
+                  </div>
+                </div>
+              ))}
+              <button
+                type="button"
+                onClick={() => setAvatarPreset(null)}
+                className="text-xs font-medium text-slate-500 underline underline-offset-2 transition hover:text-accent dark:text-slate-400"
+              >
+                唔用形象 · 用文字頭像（署名首字）
+              </button>
+            </div>
+          </div>
         </Field>
 
         {/* 頭像顏色 */}

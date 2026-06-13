@@ -7,6 +7,7 @@ import type {
   TextareaHTMLAttributes,
 } from 'react'
 import { Illustration } from '../components/Illustration'
+import { personaSvgUrl } from '../lib/personas'
 import {
   ArrowDownRight,
   ArrowUpRight,
@@ -1262,14 +1263,20 @@ export function OptionButtons<T extends string>({
 }
 
 // ───────── Avatar ─────────
+//  顯示優先：上載圖 src → 預設 persona preset（疊 color 底）→ 文字（署名首字）+ color。
+//  color 係 6-hex（無 #）；冇 color 時文字頭像用品牌 accent 色。
 export function Avatar({
   name,
   src,
+  preset,
+  color,
   size = 'sm',
 }: {
   name?: string
   src?: string
-  size?: 'xs' | 'sm' | 'md' | 'lg'
+  preset?: string | null
+  color?: string | null
+  size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl'
 }) {
   const dim =
     size === 'xs'
@@ -1278,25 +1285,34 @@ export function Avatar({
         ? 'h-9 w-9 text-sm'
         : size === 'lg'
           ? 'h-11 w-11 text-base'
-          : 'h-7 w-7 text-xs'
+          : size === 'xl'
+            ? 'h-20 w-20 text-2xl'
+            : 'h-7 w-7 text-xs'
+  const ring = 'ring-1 ring-inset ring-slate-900/5 dark:ring-white/10'
   if (src)
     return (
-      <img
-        src={src}
-        alt={name ?? ''}
-        className={cx(
-          'rounded-full object-cover ring-1 ring-inset ring-slate-900/5 dark:ring-white/10',
-          dim,
-        )}
-      />
+      <img src={src} alt={name ?? ''} className={cx('rounded-full object-cover', ring, dim)} />
+    )
+  if (preset)
+    return (
+      <span
+        className={cx('inline-flex items-center justify-center overflow-hidden rounded-full', ring, dim)}
+        style={color ? { background: `#${color}` } : undefined}
+      >
+        <img src={personaSvgUrl(preset)} alt={name ?? ''} className="h-full w-full object-cover" />
+      </span>
     )
   const initials = (name ?? '?').trim().charAt(0).toUpperCase()
   return (
     <span
       className={cx(
-        'inline-flex items-center justify-center rounded-full bg-accent-soft font-medium text-accent-strong dark:bg-accent/15 dark:text-accent',
+        'inline-flex items-center justify-center rounded-full font-medium',
+        color
+          ? 'text-white'
+          : 'bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent',
         dim,
       )}
+      style={color ? { background: `#${color}` } : undefined}
     >
       {initials}
     </span>

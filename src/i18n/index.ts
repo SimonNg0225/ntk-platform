@@ -153,7 +153,7 @@ const resources = {
 
       terms: {
         title: '服務條款',
-        updated: '2026 年 6 月 7 日',
+        updated: '2026 年 6 月 13 日',
         intro:
           '歡迎使用 教學易 EziTeach（「本平台」）。當你使用本平台，即表示你同意以下條款。如不同意，請停止使用。',
         s1Title: '服務說明',
@@ -173,9 +173,9 @@ const resources = {
         s5Title: 'AI 內容免責',
         s5Body:
           'AI 生成之題目、教案、評語等僅供參考，可能有錯誤或不準確之處。你須在專業判斷下自行覆核，方可用於教學或評估。',
-        s6Title: '你的資料與內容',
+        s6Title: '你的資料、內容與分享',
         s6Body:
-          '你保留對自己輸入內容嘅權利。你授權我哋為提供服務所需而處理及儲存有關內容（包括雲端同步及 AI 處理）。資料處理詳見私隱政策。',
+          '你保留對自己輸入內容嘅權利。你授權我哋為提供服務所需而處理及儲存有關內容（包括雲端同步及 AI 處理）。當你喺資源分享區或老師社群分享內容，即表示你確認你擁有或有權分享該內容，並授予其他用戶為教學／非商業用途下載及使用該內容嘅非專屬、可撤回授權；你可隨時移除你分享嘅內容。社群行為守則詳見《社群守則》，資料處理詳見私隱政策。',
         s7Title: '知識產權',
         s7Body: '平台之軟件、設計及商標屬本平台或其授權人所有，未經許可不得複製或再分發。',
         s8Title: '免責聲明與責任限制',
@@ -374,7 +374,7 @@ const resources = {
 
       terms: {
         title: 'Terms of Service',
-        updated: '7 June 2026',
+        updated: '13 June 2026',
         intro:
           'Welcome to EziTeach ("the Platform"). By using the Platform, you agree to the following terms. If you do not agree, please stop using it.',
         s1Title: 'Description of service',
@@ -394,9 +394,9 @@ const resources = {
         s5Title: 'AI content disclaimer',
         s5Body:
           'AI-generated questions, lesson plans, comments and the like are for reference only and may contain errors or inaccuracies. You must review them yourself using professional judgement before using them for teaching or assessment.',
-        s6Title: 'Your data and content',
+        s6Title: 'Your data, content and sharing',
         s6Body:
-          'You retain the rights to the content you enter. You authorise us to process and store such content as needed to provide the service (including cloud sync and AI processing). For details on data handling, see the Privacy Policy.',
+          'You retain the rights to the content you enter. You authorise us to process and store such content as needed to provide the service (including cloud sync and AI processing). When you share content in the resource-sharing space or teachers’ community, you confirm that you own or have the right to share it, and you grant other users a non-exclusive, revocable licence to download and use it for teaching / non-commercial purposes; you may remove your shared content at any time. Community conduct is set out in the Community Guidelines, and data handling in the Privacy Policy.',
         s7Title: 'Intellectual property',
         s7Body:
           'The Platform’s software, design and trademarks belong to the Platform or its licensors and may not be copied or redistributed without permission.',
