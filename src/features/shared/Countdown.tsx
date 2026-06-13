@@ -662,7 +662,7 @@ export default function Countdown() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-3xl space-y-6 p-4 sm:p-6">
+    <div className="w-full space-y-6 p-4 sm:p-6">
       {/* Hero — 機場離境牌：深色顯示板 + 翻牌大數字（跟模式主色作頂帶） */}
       <header className="relative overflow-hidden rounded-3xl bg-slate-900 text-white shadow-lg shadow-slate-900/30 ring-1 ring-white/5 dark:bg-slate-950 dark:shadow-black/40">
         {/* 頂部色帶（destination strip，跟模式主色） */}

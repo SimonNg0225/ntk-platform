@@ -70,7 +70,7 @@ export default function AdminDocs() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-4xl space-y-5 p-4 sm:p-6">
+    <div className="w-full space-y-5 p-4 sm:p-6">
       {/* ───────── masthead：公文卷宗封面（kicker + serif 標題 + 左裝訂線 + 分隔線）───────── */}
       <header className="relative overflow-hidden rounded-3xl border border-slate-200/80 bg-white pl-7 pr-5 py-5 shadow-xs dark:border-slate-700/60 dark:bg-slate-800 dark:shadow-none sm:pl-9 sm:pr-7 sm:py-6">
         {/* 左側裝訂線（卷宗釘裝感，純裝飾） */}

@@ -264,7 +264,7 @@ export default function HabitTracker() {
   ]
 
   return (
-    <div className="mx-auto w-full max-w-3xl space-y-5 p-4">
+    <div className="w-full space-y-5 p-4">
       {/* ───────── 老黃曆 masthead：功能名做頁面身份（kicker 老黃曆 + serif「習慣追蹤」+ 今日曆書行） ───────── */}
       <header className="flex flex-wrap items-end justify-between gap-x-4 gap-y-3">
         <div className="min-w-0">

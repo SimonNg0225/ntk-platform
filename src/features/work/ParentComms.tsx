@@ -578,7 +578,7 @@ export default function ParentComms() {
       : overview.thisMonth >= overview.lastMonth
 
   return (
-    <div className="mx-auto max-w-5xl space-y-5 p-4 sm:p-6">
+    <div className="space-y-5 p-4 sm:p-6">
       {/* ───────── 通訊錄 masthead：信箋封面感（kicker + serif 標題 + 郵戳裝飾）───────── */}
       <header className="relative animate-fade-in-up overflow-hidden rounded-3xl border border-slate-200/80 bg-white px-5 py-5 shadow-xs dark:border-slate-700/60 dark:bg-slate-800 dark:shadow-none sm:px-7 sm:py-6">
         {/* 右上「郵戳」裝飾（純裝飾，唔搶主次） */}

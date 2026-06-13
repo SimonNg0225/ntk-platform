@@ -284,7 +284,7 @@ export default function AskData() {
   const showCaret = busy && !isError
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6">
+    <div className="space-y-6">
       {/* ───────── 查詢台 masthead：serif 大標題 + 偵探語氣（自管 header） ───────── */}
       <header className="animate-fade-in-up">
         <p className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.3em] text-accent/70">

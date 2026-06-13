@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { LifeBuoy, Send } from 'lucide-react'
+import { Headset, Send } from 'lucide-react'
 import { Modal, Button, Field, Input, Textarea, Badge, EmptyState, cx } from '../ui'
 import { useAuth } from '../context/AuthContext'
 import { useToast } from '../context/ToastContext'
@@ -76,7 +76,7 @@ export default function SupportButton() {
         aria-label="聯絡客服"
         className="fixed bottom-20 right-5 z-40 flex h-12 w-12 items-center justify-center rounded-full bg-accent text-white shadow-lg transition hover:bg-accent-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 md:bottom-5"
       >
-        <LifeBuoy size={22} strokeWidth={1.75} />
+        <Headset size={22} strokeWidth={1.75} />
       </button>
 
       <Modal open={open} onClose={() => setOpen(false)} title="客服支援" size="md">

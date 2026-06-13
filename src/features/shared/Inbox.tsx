@@ -533,7 +533,7 @@ export default function Inbox() {
 
   // ──────────────────────────────────────────────────────────
   return (
-    <div className="mx-auto w-full max-w-3xl p-4 sm:p-6">
+    <div className="w-full p-4 sm:p-6">
       {/* 便條桌面 masthead：功能名做頁面身份（kicker Inbox + serif「快速擷取」+ 概念副題）。
           host 已收起標題（selfManagedHeader），呢個係呢頁唯一頂部標題。 */}
       <header className="mb-5 flex items-end justify-between gap-3">

@@ -515,7 +515,7 @@ export default function MeetingNotes() {
   //  Render
   // ============================================================
   return (
-    <div className="mx-auto w-full max-w-4xl space-y-5 p-4 sm:p-6">
+    <div className="w-full space-y-5 p-4 sm:p-6">
       {/* ───────── 記事簿 masthead：簿面封面感（kicker + serif 簿名 + 記事橫線 + 左裝訂線）───────── */}
       <header className="relative overflow-hidden rounded-3xl border border-slate-200/80 bg-white pl-7 pr-5 py-5 shadow-xs dark:border-slate-700/60 dark:bg-slate-800 dark:shadow-none sm:pl-9 sm:pr-7 sm:py-6">
         {/* 左側裝訂線（速記簿螺旋孔感，純裝飾） */}
