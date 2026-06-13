@@ -55,7 +55,6 @@ const MeetingNotes = lazyFeature(() => import('./work/MeetingNotes'))
 const AdminDocs = lazyFeature(() => import('./work/adminDocs/AdminDocs'))
 const Scan = lazyFeature(() => import('./work/scan/Scan'))
 const DocDigest = lazyFeature(() => import('./work/docDigest/DocDigest'))
-const BudgetTracker = lazyFeature(() => import('./work/BudgetTracker'))
 const WorkDashboard = lazyFeature(() => import('./work/WorkDashboard'))
 const Team = lazyFeature(() => import('./work/Team'))
 
@@ -523,17 +522,6 @@ export const FEATURES: Feature[] = [
     icon: '🎙️',
     group: '行政',
     component: Transcribe,
-    status: 'ready',
-  },
-  {
-    id: 'work-budget',
-    selfManagedHeader: true,
-    modes: ['learning', 'work'],
-    name: '收支記帳',
-    description: '記錄每日收入支出，睇本月結餘同分類佔比。',
-    icon: '💰',
-    group: '理財',
-    component: BudgetTracker,
     status: 'ready',
   },
 
