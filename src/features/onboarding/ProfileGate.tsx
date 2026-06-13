@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '../../context/AuthContext'
-import { needsRegistration } from '../../lib/profile'
+import { useSettings } from '../../context/SettingsContext'
+import { needsRegistration, getMyDisplayName } from '../../lib/profile'
 import ProfileSetupModal from './ProfileSetupModal'
 
 // ============================================================
@@ -11,6 +12,7 @@ import ProfileSetupModal from './ProfileSetupModal'
 
 export default function ProfileGate() {
   const { user, configured, loading } = useAuth()
+  const { setDisplayName } = useSettings()
   const [open, setOpen] = useState(false)
 
   const uid = user?.id
@@ -23,6 +25,12 @@ export default function ProfileGate() {
     needsRegistration()
       .then((need) => {
         if (!cancelled) setOpen(need)
+      })
+      .catch(() => {})
+    // 已登記用戶：用 Supabase canonical 署名 hydrate 本機歡迎訊息（失敗無聲忽略）。
+    getMyDisplayName()
+      .then((n) => {
+        if (!cancelled && n) setDisplayName(n)
       })
       .catch(() => {})
     return () => {

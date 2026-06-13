@@ -113,6 +113,25 @@ export async function getMyAppProfile(): Promise<AppProfile | null> {
 }
 
 /**
+ * 只攞顯示名（輕量；唔依賴 0015 新欄位，migration 未跑都安全）。
+ * 用嚟登入時 hydrate 本機歡迎訊息，令本機同 Supabase canonical 一致。
+ */
+export async function getMyDisplayName(): Promise<string | null> {
+  if (!supabase) return null
+  const {
+    data: { session },
+  } = await supabase.auth.getSession()
+  if (!session) return null
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('display_name')
+    .eq('id', session.user.id)
+    .maybeSingle()
+  if (error || !data) return null
+  return (data as { display_name: string | null }).display_name
+}
+
+/**
  * 已登入但未完成登記（onboarded_at 為 NULL / 無 profile）→ true。
  * 任何情況（未接 Supabase / 未登入 / 未跑 0014 migration / 查詢出錯）一律
  * 回 false，務求「唔好阻住用戶用 app」。
@@ -162,6 +181,11 @@ export async function completeRegistration(input: RegistrationInput): Promise<vo
   if (error) throw new Error(error.message)
 
   // 同步論壇公開檔案（一處填、論壇即見正確署名 / 學校 / 科目）。best-effort。
+  await syncForumProfile(id, input)
+}
+
+/** best-effort 同步論壇公開檔案（forum_profiles）；失敗唔阻主流程。 */
+async function syncForumProfile(id: string, input: RegistrationInput): Promise<void> {
   try {
     await need()
       .from('forum_profiles')
@@ -175,6 +199,31 @@ export async function completeRegistration(input: RegistrationInput): Promise<vo
         { onConflict: 'user_id' },
       )
   } catch {
-    /* 論壇同步係加分項，失敗都當登記成功 */
+    /* 論壇同步係加分項，失敗都唔阻主流程 */
   }
+}
+
+/**
+ * 編輯個人資料：更新 canonical profiles，但**唔郁** onboarded_at / accepted_terms_at
+ * （已登記用戶改料唔應該重新同意條款）。同樣 best-effort 同步論壇公開檔案。
+ */
+export async function updateMyProfile(input: RegistrationInput): Promise<void> {
+  const id = await uid()
+  const { error } = await need()
+    .from('profiles')
+    .update({
+      display_name: input.displayName,
+      role: input.role,
+      subjects: input.subjects,
+      bands: input.bands,
+      school: input.school,
+      show_school: input.showSchool,
+      bio: input.bio,
+      avatar_color: input.avatarColor,
+      avatar_preset: input.avatarPreset,
+    })
+    .eq('id', id)
+  if (error) throw new Error(error.message)
+
+  await syncForumProfile(id, input)
 }

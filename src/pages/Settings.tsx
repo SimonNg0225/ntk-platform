@@ -21,6 +21,8 @@ import {
   formatBackupReminder,
   type DataOverview,
 } from '../features/settings/dataOverview'
+import ProfileSetupModal from '../features/onboarding/ProfileSetupModal'
+import { isProfileConfigured } from '../lib/profile'
 
 // 設定頁：外觀、個人資料、資料管理（匯出/匯入/清除）
 export default function Settings() {
@@ -44,6 +46,7 @@ export default function Settings() {
   const fileRef = useRef<HTMLInputElement>(null)
   const [overview, setOverview] = useState<DataOverview | null>(null)
   const [checking, setChecking] = useState(false)
+  const [editProfileOpen, setEditProfileOpen] = useState(false)
   const topics = useCollection(topicsCol)
 
   // 我的資料一覽：先 preload 全部 feature collection 登記齊（同匯出/匯入同源），
@@ -305,14 +308,29 @@ export default function Settings() {
       {/* 個人資料 */}
       <Card className="p-5">
         <SectionTitle>{t('settings.profile')}</SectionTitle>
-        <Field label="顯示名稱" hint="會喺歡迎訊息顯示">
+        <Field label="顯示名稱" hint="本機歡迎訊息用">
           <Input
             value={displayName}
             onChange={(e) => setDisplayName(e.target.value)}
             placeholder="例如：陳老師"
           />
         </Field>
+        {isProfileConfigured && (
+          <div className="mt-3 border-t border-[color:var(--border)] pt-3">
+            <p className="mb-2 text-xs text-slate-500 dark:text-slate-400">
+              註冊時填嘅完整檔案（頭像、身份、任教科目、學校、簡介）存喺你帳戶，可隨時睇返同改。
+            </p>
+            <Button variant="ghost" onClick={() => setEditProfileOpen(true)}>
+              編輯完整個人資料（含頭像）
+            </Button>
+          </div>
+        )}
       </Card>
+      <ProfileSetupModal
+        open={editProfileOpen}
+        mode="edit"
+        onDone={() => setEditProfileOpen(false)}
+      />
 
       {/* 任教科目（多科課程包） */}
       <Card className="p-5">

@@ -7,6 +7,7 @@ import { SUBJECT_PACKS } from '../../data/subjects'
 import { HONORIFICS, buildDisplayName } from '../work/community/util'
 import {
   completeRegistration,
+  updateMyProfile,
   getMyAppProfile,
   isProfileConfigured,
   type RegistrationInput,
@@ -91,10 +92,14 @@ const PERSONA_GROUPS: { g: PersonaGender; label: string }[] = [
 export default function ProfileSetupModal({
   open,
   onDone,
+  mode = 'register',
 }: {
   open: boolean
   onDone: () => void
+  /** register = 首次登記（硬 gate + 條款）；edit = 註冊後改料（可關、免條款）。 */
+  mode?: 'register' | 'edit'
 }) {
+  const isEdit = mode === 'edit'
   const toast = useToast()
   const { setDisplayName, setSubjectPackId } = useSettings()
 
@@ -144,7 +149,7 @@ export default function ProfileSetupModal({
     set(list.includes(id) ? list.filter((x) => x !== id) : [...list, id])
 
   async function submit() {
-    const v = validateRegistration({ displayName, role, subjects }, agreed)
+    const v = validateRegistration({ displayName, role, subjects }, isEdit ? true : agreed)
     if (!v.ok) {
       toast.error(v.error ?? '請檢查資料。')
       return
@@ -166,11 +171,13 @@ export default function ProfileSetupModal({
     }
     try {
       setBusy(true)
-      await completeRegistration(input)
+      if (isEdit) await updateMyProfile(input)
+      else await completeRegistration(input)
+      // 同步本機顯示名（歡迎訊息用），令本機同 Supabase 一致。
       setDisplayName(displayName)
-      // 揀咗科目 → 順手將主科設做課題大綱嘅預設（之後設定仍可改）。
-      if (subjects[0]) setSubjectPackId(subjects[0])
-      toast.success('歡迎加入！個人資料已建立 🎉')
+      // 首次登記：順手將主科設做課題大綱預設（編輯時唔覆蓋用戶當前選擇）。
+      if (!isEdit && subjects[0]) setSubjectPackId(subjects[0])
+      toast.success(isEdit ? '個人資料已更新 ✓' : '歡迎加入！個人資料已建立 🎉')
       onDone()
     } catch (e) {
       toast.error(e instanceof Error ? e.message : '建立失敗，請再試。')
@@ -181,7 +188,13 @@ export default function ProfileSetupModal({
 
   // 硬 gate：onClose / 背景撳一律唔關，填好撳掣先走。
   return (
-    <Modal open={open} onClose={() => {}} closeOnBackdrop={false} size="lg" ariaLabel="新用戶登記">
+    <Modal
+      open={open}
+      onClose={isEdit ? onDone : () => {}}
+      closeOnBackdrop={isEdit}
+      size="lg"
+      ariaLabel={isEdit ? '編輯個人資料' : '新用戶登記'}
+    >
       <div className="space-y-5">
         {/* 標題 */}
         <div className="flex items-start gap-3">
@@ -193,10 +206,17 @@ export default function ProfileSetupModal({
               data-modal-title
               className="text-[17px] font-semibold tracking-tight text-slate-800 dark:text-slate-100"
             >
-              建立你嘅老師檔案
+              {isEdit ? '編輯個人資料' : '建立你嘅老師檔案'}
             </h2>
             <p className="mt-0.5 text-sm leading-relaxed text-slate-500 dark:text-slate-400">
-              花一分鐘填好，資源分享區同論壇就會用呢個身份。<span className="text-rose-500">*</span> 為必填。
+              {isEdit ? (
+                '改完即時更新；資源分享區同論壇都會跟住更新。'
+              ) : (
+                <>
+                  花一分鐘填好，資源分享區同論壇就會用呢個身份。
+                  <span className="text-rose-500">*</span> 為必填。
+                </>
+              )}
             </p>
           </div>
         </div>
@@ -327,8 +347,9 @@ export default function ProfileSetupModal({
           </div>
         </Field>
 
-        {/* 同意條款（連結開新分頁，唔會誤觸 checkbox） */}
-        <div className="flex items-start gap-2 rounded-xl bg-[color:var(--surface-2)] p-3 text-xs leading-relaxed text-slate-600 dark:text-slate-300">
+        {/* 同意條款（連結開新分頁，唔會誤觸 checkbox）—— 只首次登記要 */}
+        {!isEdit && (
+          <div className="flex items-start gap-2 rounded-xl bg-[color:var(--surface-2)] p-3 text-xs leading-relaxed text-slate-600 dark:text-slate-300">
           <input
             id="reg-agree"
             type="checkbox"
@@ -359,10 +380,11 @@ export default function ProfileSetupModal({
               {' '}—— 尊重版權、友善交流，唔上載侵權或不當內容。
             </label>
           </span>
-        </div>
+          </div>
+        )}
 
         <Button icon={Check} onClick={submit} loading={busy} fullWidth size="lg">
-          完成登記，開始使用
+          {isEdit ? '儲存變更' : '完成登記，開始使用'}
         </Button>
       </div>
     </Modal>
