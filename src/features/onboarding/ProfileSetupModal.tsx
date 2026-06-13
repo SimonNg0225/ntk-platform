@@ -251,18 +251,39 @@ export default function ProfileSetupModal({
           </div>
         </Field>
 
-        {/* 同意條款 */}
-        <label className="flex cursor-pointer items-start gap-2 rounded-xl bg-[color:var(--surface-2)] p-3 text-xs leading-relaxed text-slate-600 dark:text-slate-300">
+        {/* 同意條款（連結開新分頁，唔會誤觸 checkbox） */}
+        <div className="flex items-start gap-2 rounded-xl bg-[color:var(--surface-2)] p-3 text-xs leading-relaxed text-slate-600 dark:text-slate-300">
           <input
+            id="reg-agree"
             type="checkbox"
             checked={agreed}
             onChange={(e) => setAgreed(e.target.checked)}
             className="mt-0.5 h-4 w-4 shrink-0 rounded border-slate-300 text-accent focus:ring-accent/40 dark:border-slate-600 dark:bg-slate-700"
           />
           <span>
-            我已閱讀並同意服務條款與社群守則 —— 尊重版權、友善交流，唔上載侵權或不當內容。
+            <label htmlFor="reg-agree" className="cursor-pointer">我已閱讀並同意</label>
+            <a
+              href="/terms"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mx-0.5 font-medium text-accent underline underline-offset-2 hover:text-accent-strong"
+            >
+              服務條款
+            </a>
+            與
+            <a
+              href="/guidelines"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mx-0.5 font-medium text-accent underline underline-offset-2 hover:text-accent-strong"
+            >
+              社群守則
+            </a>
+            <label htmlFor="reg-agree" className="cursor-pointer">
+              {' '}—— 尊重版權、友善交流，唔上載侵權或不當內容。
+            </label>
           </span>
-        </label>
+        </div>
 
         <Button icon={Check} onClick={submit} loading={busy} fullWidth size="lg">
           完成登記，開始使用

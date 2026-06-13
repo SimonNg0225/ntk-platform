@@ -65,9 +65,14 @@ const resources = {
       },
       ctaTitle: '今個學期，由更有條理開始',
       ctaSub: '免費試用全部教學功能，需要時先升級。',
-      footer: { privacy: '私隱政策', terms: '服務條款', pricing: '定價', copy: '為香港教育工作者而設' },
+      footer: { privacy: '私隱政策', terms: '服務條款', guidelines: '社群守則', pricing: '定價', copy: '為香港教育工作者而設' },
 
       common: { backHome: '返回首頁' },
+      legal: {
+        updatedLabel: '最後更新：',
+        disclaimer:
+          '本頁內容僅供一般參考，唔構成法律意見；如中英文版本有歧義，以中文版為準。',
+      },
 
       pricing: {
         metaTitle: '定價 · 教學易 EziTeach',
@@ -185,6 +190,40 @@ const resources = {
         s12Post: '。',
       },
 
+      guidelines: {
+        title: '社群守則',
+        updated: '2026 年 6 月 13 日',
+        intro:
+          '教學易 EziTeach 嘅資源分享區同老師社群論壇，係畀全港老師交流教學資源同經驗嘅地方。為咗保持一個專業、互信、友善嘅環境，請遵守以下守則。本守則構成《服務條款》嘅一部分；違反者我哋可移除內容、發出警告或暫停帳戶。',
+        s1Title: '尊重同專業',
+        s1Body:
+          '以禮待人、就事論事。嚴禁人身攻擊、騷擾、歧視、仇恨言論或任何形式嘅欺凌。歡迎理性討論同表達不同意見，但唔好針對個人。',
+        s2Title: '分享資源嘅版權',
+        s2Body:
+          '只可分享你自己創作、或你有權分享嘅內容。請尊重版權 —— 唔好上載出版社教科書、未經授權嘅試題或答案、考評局（HKEAA）版權材料等。上載時如實標示授權（「原創」或「可分享」），並確保你有權授予其他老師下載及課堂使用。',
+        s3Title: '保護學生私隱',
+        s3Body:
+          '唔好上載含可識別學生個人資料嘅內容（姓名、相片、成績、學生作品等），除非已遮蔽處理或取得適當同意。處理學生資料須符合所屬學校政策及香港《個人資料（私隱）條例》。',
+        s4Title: '內容要切題、有質素',
+        s4Body:
+          '請分享同教學相關嘅資源同討論。唔好洗版、賣廣告、招攬生意、重覆張貼，或發布與教學無關嘅內容。',
+        s5Title: '禁止內容',
+        s5Body:
+          '嚴禁違法、侵權、淫穢、暴力、虛假誤導、含惡意程式或連結嘅內容，以及任何洩露未公開試題或違反保密協議嘅材料。',
+        s6Title: '檢舉與處理',
+        s6Body:
+          '見到違規內容，可用每項資源或帖子嘅「檢舉」功能通知我哋。我哋會檢視並按情況移除內容、發出警告，或暫停／終止帳戶。即使以匿名分享，管理員仍可追溯帳戶以防濫用。',
+        s7Title: '匿名分享',
+        s7Body:
+          '你可揀匿名分享，公開只顯示「匿名老師」。匿名唔等於免責 —— 你仍須對所分享內容負責，本守則一樣適用。',
+        s8Title: '內容免責',
+        s8Body:
+          '社群資源由老師自發貢獻，教學易唔保證其準確性、完整性或適用性。用於課堂或評估前，請自行專業判斷及覆核。',
+        s9Title: '守則修改',
+        s9Body:
+          '我哋可不時更新本守則，並喺本頁公布更新日期。重大變更會盡量另行通知。如有查詢，請見《服務條款》嘅聯絡方式。',
+      },
+
       settings: {
         appearance: '外觀',
         appearanceHint: '選擇介面主題',
@@ -241,9 +280,14 @@ const resources = {
       },
       ctaTitle: 'Start this term more organised',
       ctaSub: 'Try every teaching feature free; upgrade when you need to.',
-      footer: { privacy: 'Privacy', terms: 'Terms', pricing: 'Pricing', copy: 'Made for Hong Kong educators' },
+      footer: { privacy: 'Privacy', terms: 'Terms', guidelines: 'Community Guidelines', pricing: 'Pricing', copy: 'Made for Hong Kong educators' },
 
       common: { backHome: 'Back to home' },
+      legal: {
+        updatedLabel: 'Last updated: ',
+        disclaimer:
+          'This page is provided for general reference only and does not constitute legal advice; in case of any discrepancy between the Chinese and English versions, the Chinese version prevails.',
+      },
 
       pricing: {
         metaTitle: 'Pricing · EziTeach',
@@ -366,6 +410,40 @@ const resources = {
         s12Title: 'Contact us',
         s12Pre: 'For enquiries, please email',
         s12Post: '.',
+      },
+
+      guidelines: {
+        title: 'Community Guidelines',
+        updated: '13 June 2026',
+        intro:
+          'The EziTeach resource-sharing space and teachers’ forum are places for Hong Kong teachers to exchange teaching materials and experience. To keep the environment professional, trusting and friendly, please follow these guidelines. They form part of the Terms of Service; we may remove content, issue warnings or suspend accounts for violations.',
+        s1Title: 'Respect and professionalism',
+        s1Body:
+          'Be courteous and address the issue, not the person. Harassment, personal attacks, discrimination, hate speech and bullying of any kind are prohibited. Reasoned disagreement is welcome; targeting individuals is not.',
+        s2Title: 'Copyright of shared resources',
+        s2Body:
+          'Only share content you created or have the right to share. Respect copyright — do not upload publishers’ textbooks, unauthorised exam papers or answers, or HKEAA copyright materials. Label the licence honestly ("Original" or "Shareable") and ensure you may grant other teachers the right to download and use it in class.',
+        s3Title: 'Protect student privacy',
+        s3Body:
+          'Do not upload content with identifiable student personal data (names, photos, results, student work) unless redacted or properly consented. Handling of student data must comply with your school’s policies and the Personal Data (Privacy) Ordinance.',
+        s4Title: 'Keep content relevant and useful',
+        s4Body:
+          'Share teaching-related resources and discussion. No spam, advertising, solicitation, repeated posting or off-topic content.',
+        s5Title: 'Prohibited content',
+        s5Body:
+          'Strictly no illegal, infringing, obscene, violent, false or misleading content, no malware or malicious links, and no material that leaks unreleased exam questions or breaches confidentiality.',
+        s6Title: 'Reporting and enforcement',
+        s6Body:
+          'Use the "Report" action on any resource or post to flag violations. We will review and may remove content, issue warnings, or suspend or terminate accounts. Even for anonymous posts, administrators can trace the account to prevent abuse.',
+        s7Title: 'Anonymous sharing',
+        s7Body:
+          'You may share anonymously, shown publicly as "Anonymous teacher". Anonymity does not remove responsibility — you remain accountable for what you share, and these guidelines still apply.',
+        s8Title: 'Content disclaimer',
+        s8Body:
+          'Community resources are contributed voluntarily by teachers; EziTeach does not guarantee their accuracy, completeness or fitness. Use your professional judgement and review before classroom or assessment use.',
+        s9Title: 'Changes to these guidelines',
+        s9Body:
+          'We may update these guidelines from time to time and post the updated date on this page. We will try to give notice of material changes. For enquiries, see the contact details in the Terms of Service.',
       },
 
       settings: {

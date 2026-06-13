@@ -7,6 +7,7 @@ import Landing from './marketing/Landing.tsx'
 import Pricing from './marketing/Pricing.tsx'
 import Privacy from './marketing/Privacy.tsx'
 import Terms from './marketing/Terms.tsx'
+import Guidelines from './marketing/Guidelines.tsx'
 import CookieConsent from './components/CookieConsent.tsx'
 import SupportWidget from './components/SupportWidget.tsx'
 import { initObservability } from './lib/observability.ts'
@@ -30,6 +31,7 @@ createRoot(document.getElementById('root')!).render(
             <Route path="/pricing" element={<Pricing />} />
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/terms" element={<Terms />} />
+            <Route path="/guidelines" element={<Guidelines />} />
             <Route path="/app/*" element={<AppShell />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
