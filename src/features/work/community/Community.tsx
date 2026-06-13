@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Share2, Search, Download, Bookmark, BookmarkCheck, Flag, ExternalLink, Users, Sparkles, Plus, FileText } from 'lucide-react'
+import { Share2, Search, Download, Bookmark, BookmarkCheck, Flag, ExternalLink, Users, Sparkles, Plus, FileText, Presentation, ClipboardList, Link2, Video, StickyNote, Info, type LucideIcon } from 'lucide-react'
 import {
   Badge,
   Button,
@@ -10,6 +10,7 @@ import {
   Input,
   Modal,
   Select,
+  Skeleton,
   Tabs,
   Textarea,
   Tooltip,
@@ -66,9 +67,13 @@ export default function Community() {
             資源分享區
           </h1>
           <p className="mt-2 text-[13px] text-slate-500 dark:text-slate-400">
-            全港老師互相分享教學資源 —— 上載、瀏覽、下載、評分、收藏。{' '}
-            {!isCommunityConfigured && <span className="text-amber-600 dark:text-amber-400">（示範資料；接 Supabase 後顯示真實分享）</span>}
+            全港老師互相分享教學資源 —— 上載、瀏覽、下載、評分、收藏。
           </p>
+          {!isCommunityConfigured && (
+            <span className="mt-2.5 inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-1 text-[11px] font-medium text-amber-700 ring-1 ring-amber-200 dark:bg-amber-500/10 dark:text-amber-300 dark:ring-amber-500/20">
+              <Info size={12} strokeWidth={2} className="shrink-0" /> 示範資料 · 接 Supabase 後顯示真實分享
+            </span>
+          )}
         </div>
         <Button icon={Plus} onClick={openPublish} className="shrink-0">
           分享資源
@@ -136,6 +141,26 @@ function BrowseTab() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filter, sort])
 
+  // 快捷下載（卡片直接撳，唔使開詳情）；demo 模式提示接後端。
+  async function handleDownload(r: CommunityResource) {
+    if (!isCommunityConfigured) return toast.error('示範資料；接 Supabase + 登入後先用到')
+    try {
+      await bumpDownload(r.id)
+      setRows((prev) => prev.map((x) => (x.id === r.id ? { ...x, downloadCount: x.downloadCount + 1 } : x)))
+      if (r.filePath) await downloadResourceFile(r.filePath, r.fileName ?? undefined)
+      else if (r.externalUrl) window.open(r.externalUrl, '_blank', 'noopener')
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : '下載失敗')
+    }
+  }
+
+  const hasFilter = !!(q || subject || type)
+  const clearFilters = () => {
+    setQ('')
+    setSubject('')
+    setType('')
+  }
+
   return (
     <div className="space-y-4">
       {/* 工具列 */}
@@ -166,19 +191,37 @@ function BrowseTab() {
               </option>
             ))}
           </Select>
-          <span className="ml-auto text-xs text-slate-400">{rows.length} 份資源</span>
+          <span className="ml-auto flex items-center gap-2.5 text-xs text-slate-400">
+            {hasFilter && (
+              <button
+                onClick={clearFilters}
+                className="font-medium text-slate-400 transition hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+              >
+                清除篩選
+              </button>
+            )}
+            <span className="tabular-nums">{rows.length} 份資源</span>
+          </span>
         </div>
       </Card>
 
       {/* 列表 */}
       {loading ? (
-        <p className="py-12 text-center text-sm text-slate-400">載入中…</p>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <CardSkeleton key={i} />
+          ))}
+        </div>
       ) : rows.length === 0 ? (
-        <EmptyState icon="🔍" title="搵唔到資源" hint="試吓換個科目或關鍵字。" />
+        <EmptyState
+          icon="🔍"
+          title="搵唔到資源"
+          hint={hasFilter ? '試吓換個科目或關鍵字，或清除篩選。' : '未有資源，做第一個分享嘅老師。'}
+        />
       ) : (
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {rows.map((r) => (
-            <ResourceCard key={r.id} r={r} onOpen={() => setOpen(r)} />
+            <ResourceCard key={r.id} r={r} onOpen={() => setOpen(r)} onDownload={() => handleDownload(r)} />
           ))}
         </div>
       )}
@@ -190,37 +233,106 @@ function BrowseTab() {
 
 // ───────── 資源卡 ─────────
 
-function ResourceCard({ r, onOpen }: { r: CommunityResource; onOpen: () => void }) {
+// 每個類型一隻線性圖示（type tile / 無縮圖封面用）
+const TYPE_ICON: Record<string, LucideIcon> = {
+  handout: FileText,
+  slides: Presentation,
+  paper: ClipboardList,
+  link: Link2,
+  video: Video,
+  note: StickyNote,
+}
+
+function CardSkeleton() {
+  return (
+    <Card clip className="flex flex-col">
+      <div className="flex flex-col gap-2.5 p-4">
+        <div className="flex items-center gap-2.5">
+          <Skeleton className="h-10 w-10 rounded-xl" />
+          <div className="flex-1 space-y-1.5">
+            <Skeleton className="h-2.5 w-12" />
+            <Skeleton className="h-2.5 w-20" />
+          </div>
+        </div>
+        <Skeleton className="h-4 w-3/4" />
+        <Skeleton className="h-3 w-full" />
+        <Skeleton className="h-3 w-5/6" />
+        <div className="mt-1 flex items-center justify-between border-t border-black/[0.05] pt-3 dark:border-white/[0.06]">
+          <Skeleton className="h-5 w-24 rounded-full" />
+          <Skeleton className="h-3 w-10" />
+        </div>
+      </div>
+    </Card>
+  )
+}
+
+function ResourceCard({
+  r,
+  onOpen,
+  onDownload,
+}: {
+  r: CommunityResource
+  onOpen: () => void
+  onDownload: () => void
+}) {
   const c = TYPE_COLOR[r.type]
   const subj = subjectName(r.subjectPackId)
+  const TypeIcon = TYPE_ICON[r.type] ?? FileText
+  const meta = [subj, r.grade].filter(Boolean).join(' · ')
+  const canDownload = !!(r.filePath || r.externalUrl)
+
   return (
-    <Card hover clip onClick={onOpen} className="flex cursor-pointer flex-col">
-      {/* 縮圖區：有縮圖出圖，否則類型色底 + 檔案 icon */}
-      <div className={cx('relative flex h-32 w-full items-center justify-center overflow-hidden', r.thumbUrl ? 'bg-slate-100 dark:bg-slate-800' : c.chipBg)}>
-        {r.thumbUrl ? (
-          <img src={r.thumbUrl} alt={r.title} className="h-full w-full object-cover" loading="lazy" />
-        ) : (
-          <FileText size={30} strokeWidth={1.75} className={cx('opacity-50', c.chipText)} />
-        )}
-        <span className={cx('absolute left-0 top-0 h-1 w-full', c.bar)} />
-      </div>
-      <div className="flex flex-1 flex-col gap-2 p-3.5">
-        <div className="flex flex-wrap items-center gap-1.5">
-          <span className={cx('rounded-md px-1.5 py-0.5 text-[10px] font-semibold', c.chipBg, c.chipText)}>
+    <Card hover clip onClick={onOpen} className="group flex cursor-pointer flex-col">
+      {/* 有縮圖：真圖做 16:9 封面 + 類型 badge 疊上；冇縮圖：body 用 type tile。 */}
+      {r.thumbUrl && (
+        <div className="relative aspect-[16/9] w-full overflow-hidden bg-slate-100 dark:bg-slate-800">
+          <img
+            src={r.thumbUrl}
+            alt=""
+            loading="lazy"
+            className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]"
+          />
+          <span className="pointer-events-none absolute inset-x-0 top-0 h-10 bg-gradient-to-b from-black/25 to-transparent" />
+          <span className={cx('absolute left-2.5 top-2.5 rounded-md px-2 py-0.5 text-[11px] font-semibold text-white shadow-sm', c.bar)}>
             {TYPE_LABEL[r.type]}
           </span>
-          {subj && <Badge tone="slate">{subj}</Badge>}
-          {r.grade && <span className="text-[11px] text-slate-400">{r.grade}</span>}
         </div>
-        <h3 className="line-clamp-2 text-[14px] font-semibold leading-snug text-slate-800 dark:text-slate-100">
+      )}
+
+      <div className="flex flex-1 flex-col gap-2.5 p-4">
+        {r.thumbUrl ? (
+          meta && <p className="text-[11px] text-slate-400">{meta}</p>
+        ) : (
+          <div className="flex items-center gap-2.5">
+            <span className={cx('flex h-10 w-10 shrink-0 items-center justify-center rounded-xl', c.chipBg, c.chipText)}>
+              <TypeIcon size={20} strokeWidth={1.75} />
+            </span>
+            <div className="min-w-0">
+              <p className={cx('text-[11px] font-semibold', c.chipText)}>{TYPE_LABEL[r.type]}</p>
+              {meta && <p className="truncate text-[11px] text-slate-400">{meta}</p>}
+            </div>
+          </div>
+        )}
+
+        <h3 className="line-clamp-2 text-[15px] font-semibold leading-snug text-slate-800 dark:text-slate-100">
           {r.title}
         </h3>
         {r.description && (
-          <p className="line-clamp-2 text-[12px] leading-relaxed text-slate-500 dark:text-slate-400">
+          <p className="line-clamp-2 text-[12.5px] leading-relaxed text-slate-500 dark:text-slate-400">
             {r.description}
           </p>
         )}
-        <div className="mt-auto flex items-center justify-between gap-2 pt-1">
+        {r.tags.length > 0 && (
+          <div className="flex flex-wrap gap-1.5">
+            {r.tags.slice(0, 3).map((t) => (
+              <span key={t} className="rounded-md bg-black/[0.04] px-1.5 py-0.5 text-[11px] text-slate-500 dark:bg-white/[0.06] dark:text-slate-400">
+                #{t}
+              </span>
+            ))}
+          </div>
+        )}
+
+        <div className="mt-auto flex items-center justify-between gap-2 border-t border-black/[0.05] pt-2.5 dark:border-white/[0.06]">
           <span className="flex min-w-0 items-center gap-1.5">
             <Avatar profile={r.owner} size={22} />
             <span className="truncate text-[11px] text-slate-500 dark:text-slate-400">
@@ -234,6 +346,19 @@ function ResourceCard({ r, onOpen }: { r: CommunityResource; onOpen: () => void 
             </span>
           </span>
         </div>
+
+        {canDownload && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              onDownload()
+            }}
+            className="flex items-center justify-center gap-1.5 rounded-lg border border-black/[0.08] py-1.5 text-[12px] font-medium text-slate-600 transition hover:border-accent/40 hover:bg-accent/[0.06] hover:text-accent-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:border-white/10 dark:text-slate-300 dark:hover:text-accent"
+          >
+            {r.filePath ? <Download size={13} strokeWidth={2} /> : <ExternalLink size={13} strokeWidth={2} />}
+            {r.filePath ? '下載' : '開啟連結'}
+          </button>
+        )}
       </div>
     </Card>
   )
