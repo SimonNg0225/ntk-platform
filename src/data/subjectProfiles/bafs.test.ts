@@ -22,10 +22,17 @@ describe('BAFS 知識檔案', () => {
     }
   })
 
-  it('registry：bafs 有、未知科無', () => {
-    expect(getSubjectKnowledge('bafs')?.subject).toBe('bafs')
+  it('registry：拆兩科 bafs-acct / bafs-bm；舊 bafs 當會計；未知科無', () => {
+    expect(getSubjectKnowledge('bafs-acct')?.subject).toBe('bafs-acct')
+    expect(getSubjectKnowledge('bafs-bm')?.subject).toBe('bafs-bm')
+    expect(getSubjectKnowledge('bafs')?.subject).toBe('bafs-acct')
     expect(getSubjectKnowledge('zzz')).toBeUndefined()
     expect(getSubjectKnowledge(undefined)).toBeUndefined()
+  })
+
+  it('拆出嚟嘅兩科：會計 = 必修+會計；商管 = 必修+商管', () => {
+    expect(getSubjectKnowledge('bafs-acct')!.strands.map((s) => s.key)).toEqual(['core', 'accounting'])
+    expect(getSubjectKnowledge('bafs-bm')!.strands.map((s) => s.key)).toEqual(['core', 'bm'])
   })
 })
 

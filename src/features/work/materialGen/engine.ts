@@ -44,6 +44,8 @@ export interface GenOptions {
   count: number
   extra: string
   model?: AIModel
+  /** 科目名（令出題貼返科；唔傳就用通用高中語境）。 */
+  subject?: string
 }
 
 const DEFAULT_MODEL: AIModel = 'gemini-2.5-flash'
@@ -62,10 +64,12 @@ const KIND_WORD: Record<GenKind, string> = {
 export function buildPrompt(
   kind: GenKind,
   topicName: string,
-  opts: { difficulty: Difficulty; count: number; extra: string },
+  opts: { difficulty: Difficulty; count: number; extra: string; subject?: string },
 ): string {
   const diffWord = DIFF_LABEL[opts.difficulty]
   const extra = opts.extra.trim()
+  const subj = opts.subject?.trim()
+  const persona = subj ? `你係香港高中「${subj}」科老師` : '你係香港高中老師'
 
   let shape: string
   switch (kind) {
@@ -82,18 +86,18 @@ export function buildPrompt(
       break
     case 'case':
       shape =
-        '{ "scenario": "個案情境描述（香港中小企／真實商業處境）", "parts": [{ "label": "(a)", "q": "引導小題", "marks": 4 }, { "label": "(b)", "q": "引導小題", "marks": 6 }], "marking": "整體評分準則 / 參考答案" }（parts 至少 2 個引導小題）'
+        '{ "scenario": "個案情境描述（貼合該科嘅真實情境）", "parts": [{ "label": "(a)", "q": "引導小題", "marks": 4 }, { "label": "(b)", "q": "引導小題", "marks": 6 }], "marking": "整體評分準則 / 參考答案" }（parts 至少 2 個引導小題）'
       break
   }
 
   return [
-    `你係香港高中 BAFS（企業、會計與財務概論）科老師。請就課題「${topicName}」出 ${opts.count} 條${KIND_WORD[kind]}，難度為「${diffWord}」。`,
-    '內容要貼合香港高中 BAFS 課程，用繁體中文。',
+    `${persona}。請就課題「${topicName}」出 ${opts.count} 條${KIND_WORD[kind]}，難度為「${diffWord}」。`,
+    `內容要貼合香港高中${subj ? `「${subj}」` : ''}課程，用繁體中文。`,
     kind === 'long'
       ? '長題目要分結構式小題（a / b / c…），逐小題標分，並附整體評分準則。'
       : '',
     kind === 'case'
-      ? '個案要有一段完整商業情境，再附引導小題（a / b / c…），逐小題標分，並附整體評分準則。'
+      ? '個案要有一段完整情境（貼合該科），再附引導小題（a / b / c…），逐小題標分，並附整體評分準則。'
       : '',
     extra ? `額外要求：${extra}` : '',
     '',
@@ -215,6 +219,7 @@ export async function generate(
           difficulty: opts.difficulty,
           count: opts.count,
           extra: opts.extra,
+          subject: opts.subject,
         }),
       },
     ],

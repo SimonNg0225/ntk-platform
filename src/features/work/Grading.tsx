@@ -80,7 +80,8 @@ const issueMeta = (type: string): IssueType =>
 
 // 科目顯示名（舊「作文批改」記錄係 zh/en）
 const subjectLabel = (subject: string): string =>
-  subject === 'zh' ? '中文' : subject === 'en' ? 'English' : profileForSubject(subject).label
+  getSubjectKnowledge(subject)?.label ??
+  (subject === 'zh' ? '中文' : subject === 'en' ? 'English' : profileForSubject(subject).label)
 
 type InputMode = 'text' | 'photo'
 

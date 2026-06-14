@@ -39,11 +39,14 @@ describe('subjects — 科目包', () => {
     }
   })
 
-  it('BAFS 包直接重用 BAFS_TOPICS（預設種子不變）', () => {
-    const bafs = getSubjectPack('bafs')
-    expect(bafs).toBeDefined()
-    expect(bafs!.topics).toBe(BAFS_TOPICS)
-    expect(packTopics(bafs!)).toBe(BAFS_TOPICS)
+  it('BAFS 已拆會計 / 商管兩科（各由 BAFS_TOPICS 重新加前綴派生）', () => {
+    const acct = getSubjectPack('bafs-acct')
+    const bm = getSubjectPack('bafs-bm')
+    expect(acct).toBeDefined()
+    expect(bm).toBeDefined()
+    expect(packTopics(acct!).length).toBe(BAFS_TOPICS.length)
+    expect(packTopics(bm!).length).toBe(BAFS_TOPICS.length)
+    expect(getSubjectPack('bafs')).toBeUndefined() // 舊合併科已移除
   })
 
   it('預設包 id 對應一個存在嘅包', () => {

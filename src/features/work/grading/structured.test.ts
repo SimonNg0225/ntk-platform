@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { SUBJECT_PACKS } from '../../../data/subjects'
+import { getSubjectKnowledge } from '../../../data/subjectProfiles'
 import { MARKING_PROFILES, profileForSubject } from './markingProfiles'
 import { buildStructuredSystem, parseStructured } from './structured'
 
@@ -12,9 +13,11 @@ describe('markingProfiles', () => {
     }
   })
 
-  it('全 27 科逐科 bespoke：每個 pack id 都有自己嘅 profile（非 fallback）', () => {
+  it('每個 SUBJECT_PACK 都有 bespoke 批改檔（generic markingProfile 或 rich 知識檔）', () => {
     for (const p of SUBJECT_PACKS) {
-      expect(MARKING_PROFILES[p.id]?.packId).toBe(p.id)
+      const hasGeneric = MARKING_PROFILES[p.id]?.packId === p.id
+      const hasRich = !!getSubjectKnowledge(p.id)
+      expect(hasGeneric || hasRich).toBe(true)
     }
   })
 

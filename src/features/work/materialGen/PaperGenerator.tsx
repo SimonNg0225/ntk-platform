@@ -13,8 +13,10 @@ import {
 import { useCollection } from '../../../lib/store'
 import { useToast } from '../../../context/ToastContext'
 import { useAuth } from '../../../context/AuthContext'
+import { useSettings } from '../../../context/SettingsContext'
 import { isAIConfigured } from '../../../lib/aiClient'
 import { questionsCol, papersCol } from '../../../data/collections'
+import { getSubjectPack } from '../../../data/subjects'
 import type { Difficulty, Question, QuestionType } from '../../../data/types'
 import {
   Badge,
@@ -124,6 +126,7 @@ export function PaperGenerator({ topics, onClose, onSaved }: PaperGeneratorProps
   const [busy, setBusy] = useState(false)
   const [outcome, setOutcome] = useState<BuildOutcome | null>(null)
 
+  const subjectName = getSubjectPack(useSettings().subjectPackId)?.name
   const topicName = useMemo(() => {
     const map = new Map(topics.map((t) => [t.id, t.topic]))
     return (id: string) => map.get(id) ?? '未分類'
@@ -237,6 +240,7 @@ export function PaperGenerator({ topics, onClose, onSaved }: PaperGeneratorProps
               difficulty: diff,
               count: gap,
               extra: extra.trim(),
+              subject: subjectName,
             })
             for (const d of drafts) {
               if (gap <= 0) break

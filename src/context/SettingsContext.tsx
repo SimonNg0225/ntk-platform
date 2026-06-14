@@ -67,6 +67,8 @@ function load(): Settings {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (raw) {
       const parsed = JSON.parse(raw)
+      // 遷移：BAFS 拆會計 / 商管兩科後，舊 'bafs' → 會計範疇
+      if (parsed.subjectPackId === 'bafs') parsed.subjectPackId = 'bafs-acct'
       // 正規化外觀偏好：壞值 / 缺欄位一律 fallback 做關（保住「不變行為」）
       const appearance: AppearancePrefs = normalizeAppearancePrefs(parsed)
       return { ...DEFAULTS, ...parsed, ...appearance }

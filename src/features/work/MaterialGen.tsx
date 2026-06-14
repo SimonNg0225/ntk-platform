@@ -16,8 +16,10 @@ import {
 } from 'lucide-react'
 import { useCollection } from '../../lib/store'
 import { useNav } from '../../context/NavContext'
+import { useSettings } from '../../context/SettingsContext'
 import { isAIConfigured } from '../../lib/aiClient'
 import { topicsCol, questionsCol } from '../../data/collections'
+import { getSubjectPack } from '../../data/subjects'
 import { Badge } from '../../ui'
 import { QuestionGeneratorModal } from './materialGen/QuestionGeneratorModal'
 import { WorksheetGenerator } from './materialGen/WorksheetGenerator'
@@ -116,6 +118,8 @@ const TOOLS: ToolCard[] = [
 
 export default function MaterialGen() {
   const nav = useNav()
+  const { subjectPackId } = useSettings()
+  const subjShort = getSubjectPack(subjectPackId)?.short ?? '本科'
   const topicsRaw = useCollection(topicsCol)
   const questions = useCollection(questionsCol)
 
@@ -142,7 +146,7 @@ export default function MaterialGen() {
           aria-hidden
           className="pointer-events-none absolute -right-6 top-3 hidden -rotate-6 select-none items-center gap-1 rounded-xl border-2 border-dashed border-accent/20 px-4 py-2 text-xs font-semibold uppercase tracking-[0.25em] text-accent/25 dark:border-accent/25 dark:text-accent/25 sm:flex"
         >
-          <Stamp size={13} /> BAFS · 製作工房
+          <Stamp size={13} /> {subjShort} · 製作工房
         </span>
         <div className="min-w-0">
           <p className="flex items-center gap-2 text-[11px] font-medium uppercase tracking-[0.3em] text-accent/70">
@@ -153,7 +157,7 @@ export default function MaterialGen() {
             教材生成
           </h1>
           <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-            一個工作枱，集齊 BAFS 出題、個案、練習同試卷生成。生成完直接入
+            一個工作枱，集齊{subjShort}出題、個案、練習同試卷生成。生成完直接入
             <span className="font-medium text-accent-strong dark:text-accent">題庫</span>
             ，再可組卷、出自測、重用。
           </p>
@@ -246,7 +250,7 @@ export default function MaterialGen() {
           onClick={() => nav.open('work-questions')}
           className="inline-flex items-center gap-0.5 font-medium text-slate-400 transition active:scale-[0.98] hover:text-accent dark:text-slate-500 dark:hover:text-accent"
         >
-          去 BAFS 題庫
+          去{subjShort}題庫
           <ChevronRight size={13} />
         </button>
       </div>

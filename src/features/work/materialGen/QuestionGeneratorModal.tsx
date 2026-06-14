@@ -3,8 +3,10 @@ import { ArrowLeft, Bot, Check, Lock, Plus, RotateCcw, Sparkles } from 'lucide-r
 import { uid } from '../../../lib/store'
 import { useToast } from '../../../context/ToastContext'
 import { useAuth } from '../../../context/AuthContext'
+import { useSettings } from '../../../context/SettingsContext'
 import { isAIConfigured } from '../../../lib/aiClient'
 import { questionsCol } from '../../../data/collections'
+import { getSubjectPack } from '../../../data/subjects'
 import type { Difficulty } from '../../../data/types'
 import {
   Badge,
@@ -73,6 +75,7 @@ export function QuestionGeneratorModal({
 }: QuestionGeneratorModalProps) {
   const toast = useToast()
   const { user } = useAuth()
+  const { subjectPackId } = useSettings()
 
   const [topicId, setTopicId] = useState(topics[0]?.id ?? '')
   const [difficulty, setDifficulty] = useState<Difficulty>('medium')
@@ -92,7 +95,7 @@ export function QuestionGeneratorModal({
     if (!topicId || busy) return
     setBusy(true)
     try {
-      const out = await generate(kind, { topicName, difficulty, count, extra })
+      const out = await generate(kind, { topicName, difficulty, count, extra, subject: getSubjectPack(subjectPackId)?.name })
       const parsed: Draft[] = out.map((d) => ({
         ...d,
         _key: uid(),

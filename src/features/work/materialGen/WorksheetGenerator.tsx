@@ -14,8 +14,10 @@ import {
 import { uid } from '../../../lib/store'
 import { useToast } from '../../../context/ToastContext'
 import { useAuth } from '../../../context/AuthContext'
+import { useSettings } from '../../../context/SettingsContext'
 import { isAIConfigured } from '../../../lib/aiClient'
 import { questionsCol } from '../../../data/collections'
+import { getSubjectPack } from '../../../data/subjects'
 import type { Difficulty, Question } from '../../../data/types'
 import {
   Badge,
@@ -116,6 +118,8 @@ export function WorksheetGenerator({
   const [drafts, setDrafts] = useState<Draft[]>([])
 
   const topicName = topics.find((t) => t.id === topicId)?.topic ?? ''
+  const { subjectPackId } = useSettings()
+  const subjectName = getSubjectPack(subjectPackId)?.name
   const ratio = MC_RATIOS.find((r) => r.id === ratioId) ?? MC_RATIOS[1]
   const split = useMemo(
     () => splitCounts(total, ratio.mc),
@@ -157,10 +161,10 @@ export function WorksheetGenerator({
       // → 總延遲 = max(mc, short) 而非相加，慳時間又唔使改共用引擎 / 撈一個混合 prompt。
       const [mcRes, shRes] = await Promise.all([
         split.mc > 0
-          ? generate('mc', { topicName, difficulty, count: split.mc, extra: extra.trim() })
+          ? generate('mc', { topicName, difficulty, count: split.mc, extra: extra.trim(), subject: subjectName })
           : Promise.resolve([] as GenDraft[]),
         split.short > 0
-          ? generate('short', { topicName, difficulty, count: split.short, extra: extra.trim() })
+          ? generate('short', { topicName, difficulty, count: split.short, extra: extra.trim(), subject: subjectName })
           : Promise.resolve([] as GenDraft[]),
       ])
       const collected: GenDraft[] = [...mcRes, ...shRes]

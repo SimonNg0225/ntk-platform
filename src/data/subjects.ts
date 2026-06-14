@@ -112,16 +112,26 @@ const ECON: OutlineRow[] = [
   [ECON_E2, '單元二 貿易理論之延伸、經濟增長與發展 Extension of Trade Theory, Economic Growth & Development', '經濟增長與發展 Economic growth & development'],
 ]
 
+// 2024 改制：公開試只餘卷一閱讀 + 卷二寫作。卷一核心 = 十二篇指定文言。
 const CHIN: OutlineRow[] = [
-  ['閱讀', '文言文', '指定文言經典篇章'],
-  ['閱讀', '白話文', '記敘 / 描寫 / 抒情 / 說明 / 議論文'],
-  ['閱讀', '閱讀理解', '篇章分析與寫作手法'],
-  ['寫作', '實用文', '書信、啟事、演講辭、建議書'],
-  ['寫作', '記敘抒情', '記事與抒情寫作'],
-  ['寫作', '議論文', '立論、駁論與論證'],
-  ['聆聽與說話', '聆聽', '聆聽理解與摘錄重點'],
-  ['聆聽與說話', '說話', '小組討論與個人短講'],
-  ['文化與品德', '中華文化', '經典與文化專題'],
+  ['指定文言（十二篇）', '先秦諸子', '《論語》論仁／論孝／論君子'],
+  ['指定文言（十二篇）', '先秦諸子', '《魚我所欲也》（孟子）'],
+  ['指定文言（十二篇）', '先秦諸子', '《逍遙遊》（節錄）（莊子）'],
+  ['指定文言（十二篇）', '先秦諸子', '《勸學》（節錄）（荀子）'],
+  ['指定文言（十二篇）', '史傳', '《廉頗藺相如列傳》（節錄）（司馬遷）'],
+  ['指定文言（十二篇）', '古文', '《出師表》（諸葛亮）'],
+  ['指定文言（十二篇）', '古文', '《師說》（韓愈）'],
+  ['指定文言（十二篇）', '古文', '《始得西山宴遊記》（柳宗元）'],
+  ['指定文言（十二篇）', '古文', '《岳陽樓記》（范仲淹）'],
+  ['指定文言（十二篇）', '古文', '《六國論》（蘇洵）'],
+  ['指定文言（十二篇）', '詩', '唐詩三首（山居秋暝／月下獨酌／登樓）'],
+  ['指定文言（十二篇）', '詞', '詞三首（念奴嬌／聲聲慢／青玉案）'],
+  ['閱讀', '課外文言', '虛詞實詞、句式、語譯、內容理解'],
+  ['閱讀', '白話文', '內容理解、段意主旨、寫作手法、詞句賞析'],
+  ['寫作', '記敘抒情', '審題立意、選材佈局、描寫抒情'],
+  ['寫作', '議論', '論點論據論證、立論駁論'],
+  ['寫作', '描寫說明', '多感官描寫、說明方法'],
+  ['寫作', '實用文', '書信、演講辭、建議書、啟事'],
 ]
 
 const ENG: OutlineRow[] = [
@@ -424,8 +434,13 @@ const MUSIC: OutlineRow[] = [
 // 通用空白包：唔啱上面任何科 / 想自己由零建立課題嘅老師用。
 const CUSTOM: Topic[] = []
 
+// BAFS 拆兩科：各自重用 BAFS 課題，但 id 重新加返自己 pack 前綴（避免兩科 topic id 相撞）。
+const rePrefix = (packId: string, base: Topic[]): Topic[] =>
+  base.map((t, i) => ({ ...t, id: `${packId}-${String(i + 1).padStart(2, '0')}` }))
+
 export const SUBJECT_PACKS: SubjectPack[] = [
-  { id: 'bafs', name: '企業、會計與財務概論 (BAFS)', short: 'BAFS', topics: BAFS_TOPICS },
+  { id: 'bafs-acct', name: '企會財（會計範疇）', short: 'BAFS會計', topics: rePrefix('bafs-acct', BAFS_TOPICS) },
+  { id: 'bafs-bm', name: '企會財（商業管理範疇）', short: 'BAFS商管', topics: rePrefix('bafs-bm', BAFS_TOPICS) },
   { id: 'econ', name: '經濟', short: '經濟', topics: buildTopics('econ', ECON) },
   { id: 'chin', name: '中國語文', short: '中文', topics: buildTopics('chin', CHIN) },
   { id: 'eng', name: '英國語文', short: 'English', topics: buildTopics('eng', ENG) },
@@ -454,8 +469,8 @@ export const SUBJECT_PACKS: SubjectPack[] = [
   { id: 'custom', name: '其他科目（自訂課題）', short: '自訂', topics: CUSTOM },
 ]
 
-/** 預設科目包 id（＝ BAFS，保持與舊版 topics 種子一致）。 */
-export const DEFAULT_SUBJECT_PACK_ID = 'bafs'
+/** 預設科目包 id（＝ BAFS 會計範疇；BAFS 已拆會計 / 商管兩科）。 */
+export const DEFAULT_SUBJECT_PACK_ID = 'bafs-acct'
 
 export function getSubjectPack(id: string): SubjectPack | undefined {
   return SUBJECT_PACKS.find((p) => p.id === id)
