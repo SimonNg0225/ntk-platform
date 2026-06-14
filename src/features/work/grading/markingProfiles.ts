@@ -63,6 +63,7 @@ const I = {
   enContent: { key: 'content', label: 'Content', tone: 'slate' } as IssueType,
   enAnalysis: { key: 'analysis', label: 'Analysis', tone: 'amber' } as IssueType,
   enEvidence: { key: 'evidence', label: 'Evidence', tone: 'blue' } as IssueType,
+  enOrg: { key: 'organization', label: 'Organisation', tone: 'green' } as IssueType,
 }
 
 export const MARKING_PROFILES: Record<string, MarkingProfile> = {
@@ -111,7 +112,7 @@ export const MARKING_PROFILES: Record<string, MarkingProfile> = {
       { criterion: 'Organisation', max: 7 },
       { criterion: 'Mechanics (spelling/punctuation)', max: 7 },
     ],
-    issues: [I.enGrammar, I.enVocab, I.enSpelling, I.enContent],
+    issues: [I.enContent, I.enGrammar, I.enVocab, I.enSpelling, I.enOrg],
     notes: 'Mark grammar, tense, register and cohesion. Flag awkward or incorrect expressions and suggest natural alternatives.',
   },
   math: {

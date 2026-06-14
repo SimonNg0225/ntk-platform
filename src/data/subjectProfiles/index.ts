@@ -1,6 +1,7 @@
 import type { SubjectKnowledge } from './types'
 import { BAFS } from './bafs'
 import { CHIN } from './chin'
+import { ENG } from './eng'
 
 // ============================================================
 //  科目知識檔案 registry
@@ -31,6 +32,7 @@ const REGISTRY: Record<string, SubjectKnowledge> = {
   'bafs-bm': BAFS_BM,
   bafs: BAFS_ACCT, // 舊資料 subjectPackId / 記錄 = 'bafs' → 當會計範疇處理
   chin: CHIN,
+  eng: ENG,
 }
 
 /** 攞某科 rich 知識檔（無 → undefined，grading 用 generic）。 */

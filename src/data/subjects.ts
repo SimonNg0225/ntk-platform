@@ -135,15 +135,18 @@ const CHIN: OutlineRow[] = [
 ]
 
 const ENG: OutlineRow[] = [
-  ['Reading', 'Skills', 'Skimming, scanning & inference'],
-  ['Reading', 'Text types', 'Articles, reports, narratives'],
-  ['Writing', 'Functional', 'Letters, emails, proposals'],
-  ['Writing', 'Argumentative', 'Essays & persuasive writing'],
-  ['Listening', 'Skills', 'Note-taking & integrated tasks'],
-  ['Speaking', 'Group interaction', 'Discussion & decision-making'],
-  ['Speaking', 'Individual response', 'Presentation & Q&A'],
-  ['Language', 'Grammar', 'Tenses, voice, clauses'],
-  ['Language', 'Vocabulary', 'Collocations & register'],
+  ['Paper 1 Reading', 'Literal comprehension', 'Skimming, scanning, reference & text features'],
+  ['Paper 1 Reading', 'Inference & interpretation', 'Inference, tone / purpose, vocabulary in context'],
+  ['Paper 2 Writing', 'Argumentative / persuasive', 'Essays, letters to editor, speeches, proposals'],
+  ['Paper 2 Writing', 'Narrative / descriptive', 'Stories & descriptive writing'],
+  ['Paper 2 Writing', 'Functional texts', 'Letters, emails, reports, blogs, reviews'],
+  ['Paper 2 Writing', 'Part B electives', 'Short stories / drama / workplace / social issues (~400 words)'],
+  ['Paper 3 Listening & Integrated', 'Listening & note-taking', 'Gist / detail, gap-fill, completion'],
+  ['Paper 3 Listening & Integrated', 'Integrated skills', 'Data File selection & integrated writing'],
+  ['Paper 4 Speaking', 'Group interaction', 'Discussion & decision-making'],
+  ['Paper 4 Speaking', 'Individual response', 'Individual response & Q&A'],
+  ['Language', 'Grammar', 'Tenses, voice, clauses, agreement'],
+  ['Language', 'Vocabulary & register', 'Collocations, word formation & register'],
 ]
 
 const MATH: OutlineRow[] = [
