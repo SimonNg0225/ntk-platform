@@ -4,6 +4,27 @@ import { CHIN } from './chin'
 import { ENG } from './eng'
 import { MATH } from './math'
 import { CSD } from './csd'
+import { ECON } from './econ'
+import { PHYS } from './phys'
+import { CHEM } from './chem'
+import { BIO } from './bio'
+import { CHLIT } from './chlit'
+import { ENGLIT } from './englit'
+import { CHIST } from './chist'
+import { HIST } from './hist'
+import { GEOG } from './geog'
+import { ERS } from './ers'
+import { THS } from './ths'
+import { ICT } from './ict'
+import { DAT } from './dat'
+import { HMSC } from './hmsc'
+import { TL } from './tl'
+import { SCI } from './sci'
+import { M1 } from './m1'
+import { M2 } from './m2'
+import { PE } from './pe'
+import { VA } from './va'
+import { MUSIC } from './music'
 
 // ============================================================
 //  科目知識檔案 registry
@@ -37,6 +58,27 @@ const REGISTRY: Record<string, SubjectKnowledge> = {
   eng: ENG,
   math: MATH,
   csd: CSD,
+  econ: ECON,
+  phys: PHYS,
+  chem: CHEM,
+  bio: BIO,
+  chlit: CHLIT,
+  englit: ENGLIT,
+  chist: CHIST,
+  hist: HIST,
+  geog: GEOG,
+  ers: ERS,
+  ths: THS,
+  ict: ICT,
+  dat: DAT,
+  hmsc: HMSC,
+  tl: TL,
+  sci: SCI,
+  m1: M1,
+  m2: M2,
+  pe: PE,
+  va: VA,
+  music: MUSIC,
 }
 
 /** 攞某科 rich 知識檔（無 → undefined，grading 用 generic）。 */
