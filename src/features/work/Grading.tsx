@@ -49,8 +49,10 @@ import {
   type CommentTone,
 } from './grading/prompts'
 import { buildStructuredSystem, parseStructured } from './grading/structured'
+import { buildRichSystem, resolveStrand } from './grading/richSystem'
 import { MARKING_PROFILES, profileForSubject, type IssueType } from './grading/markingProfiles'
 import { gradingCol, type GradingRecord } from './grading/gradingStore'
+import { getSubjectKnowledge } from '../../data/subjectProfiles'
 
 // ============================================================
 //  AI 批改（教學 AI 工具）
@@ -93,6 +95,8 @@ export default function Grading() {
 
   // ── 批改答案（結構化）──
   const [subject, setSubject] = useState<string>(subjectPackId || 'custom')
+  const [strandKey, setStrandKey] = useState('') // 多範疇科（如 BAFS）嘅學習範疇
+  const [areaKey, setAreaKey] = useState('') // 課題範疇（空 = 全部 / 由 AI 自動判斷）
   const [question, setQuestion] = useState('')
   const [customRubric, setCustomRubric] = useState('')
   const [totalMarks, setTotalMarks] = useState('')
@@ -114,7 +118,22 @@ export default function Grading() {
   const abortRef = useRef<AbortController | null>(null)
 
   const profile = profileForSubject(subject)
-  const rubricPreview = profile.rubric.map((r) => `${r.criterion}（${r.max}）`).join('、')
+  // 有 rich 知識檔嘅科（如 BAFS 兩範疇）→ 用 strand / area 度身定制；否則用 generic profile。
+  const knowledge = getSubjectKnowledge(subject)
+  const activeStrand = knowledge ? resolveStrand(knowledge, strandKey) : undefined
+  const activeArea = activeStrand && areaKey ? activeStrand.areas.find((a) => a.key === areaKey) : undefined
+  const rubricPreview = activeArea
+    ? activeArea.rubric.map((r) => `${r.criterion}（${r.max}）`).join('、')
+    : activeStrand
+      ? `${activeStrand.label} · ${activeStrand.areas.map((a) => a.label.split(' ')[0]).join('、')}`
+      : profile.rubric.map((r) => `${r.criterion}（${r.max}）`).join('、')
+
+  // 切科目：重設範疇 / 課題
+  const onSubjectChange = (v: string) => {
+    setSubject(v)
+    setStrandKey('')
+    setAreaKey('')
+  }
 
   const history = useMemo(
     () => [...records].sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
@@ -163,13 +182,12 @@ export default function Grading() {
         images = [await fileToImage(file)]
         title = question.trim() ? question.trim().slice(0, 24) : '相片作答'
       }
+      if (knowledge && activeStrand) title = `[${activeStrand.label}] ${title}`
+      const sharedOpts = { rubric: customRubric, question, totalMarks, hasImage: inputMode === 'photo' }
       const raw = await complete({
-        system: buildStructuredSystem(profile, {
-          rubric: customRubric,
-          question,
-          totalMarks,
-          hasImage: inputMode === 'photo',
-        }),
+        system: knowledge
+          ? buildRichSystem(knowledge, { ...sharedOpts, strandKey: activeStrand?.key, areaKey })
+          : buildStructuredSystem(profile, sharedOpts),
         messages: [
           {
             role: 'user',
@@ -271,7 +289,7 @@ export default function Grading() {
             <Card className="space-y-3 p-4">
               <div className="grid grid-cols-[1fr_auto] gap-2">
                 <Field label="科目（按呢科準則批改）" hint={`本科準則：${rubricPreview}`}>
-                  <Select value={subject} onChange={(e) => setSubject(e.target.value)}>
+                  <Select value={subject} onChange={(e) => onSubjectChange(e.target.value)}>
                     {SUBJECT_PACKS.map((p) => (
                       <option key={p.id} value={p.id}>
                         {p.short}
@@ -288,6 +306,36 @@ export default function Grading() {
                   />
                 </Field>
               </div>
+
+              {knowledge && activeStrand && (
+                <div className="grid grid-cols-2 gap-2">
+                  <Field label="學習範疇">
+                    <Select
+                      value={activeStrand.key}
+                      onChange={(e) => {
+                        setStrandKey(e.target.value)
+                        setAreaKey('')
+                      }}
+                    >
+                      {knowledge.strands.map((s) => (
+                        <option key={s.key} value={s.key}>
+                          {s.label}
+                        </option>
+                      ))}
+                    </Select>
+                  </Field>
+                  <Field label="課題範疇">
+                    <Select value={areaKey} onChange={(e) => setAreaKey(e.target.value)}>
+                      <option value="">全部（自動判斷）</option>
+                      {activeStrand.areas.map((a) => (
+                        <option key={a.key} value={a.key}>
+                          {a.label}
+                        </option>
+                      ))}
+                    </Select>
+                  </Field>
+                </div>
+              )}
 
               <Field label="題目 / 寫作提示（選填）">
                 <Textarea
