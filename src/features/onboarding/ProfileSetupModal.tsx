@@ -4,6 +4,7 @@ import { Modal, Button, Field, Input, Select, Textarea, Avatar, cx } from '../..
 import { useToast } from '../../context/ToastContext'
 import { useSettings } from '../../context/SettingsContext'
 import { SUBJECT_PACKS } from '../../data/subjects'
+import { loadTopicsForSubjects } from '../work/topicImport/applyTopics'
 import { HONORIFICS, buildDisplayName } from '../work/community/util'
 import {
   completeRegistration,
@@ -177,6 +178,8 @@ export default function ProfileSetupModal({
       setDisplayName(displayName)
       // 首次登記：順手將主科設做課題大綱預設（編輯時唔覆蓋用戶當前選擇）。
       if (!isEdit && subjects[0]) setSubjectPackId(subjects[0])
+      // 任教科目 → 課題自動同步：每科只首次載入（additive，唔覆蓋手動課題）。
+      loadTopicsForSubjects(subjects)
       toast.success(isEdit ? '個人資料已更新 ✓' : '歡迎加入！個人資料已建立 🎉')
       onDone()
     } catch (e) {

@@ -12,6 +12,7 @@ import { groupLabel } from '../i18n/appEn'
 import { cx } from '../ui'
 import { getMyAppProfile, type AppProfile } from '../lib/profile'
 import { getSubjectPack, type SubjectPack } from '../data/subjects'
+import { loadTopicsForSubjects } from '../features/work/topicImport/applyTopics'
 
 interface Props {
   onOpen: (id: string) => void
@@ -62,7 +63,10 @@ export default function Home({ onOpen }: Props) {
     let alive = true
     getMyAppProfile()
       .then((p) => {
-        if (alive) setProfile(p)
+        if (!alive) return
+        setProfile(p)
+        // 任教科目 → 課題自動同步（load-once；覆蓋已登記嘅現有用戶）。
+        if (p) loadTopicsForSubjects(p.subjects)
       })
       .catch(() => {})
     return () => {

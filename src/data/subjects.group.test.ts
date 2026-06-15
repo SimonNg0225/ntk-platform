@@ -1,5 +1,10 @@
 import { describe, it, expect } from 'vitest'
-import { packOfTopicId, groupTopicsBySubject } from './subjects'
+import {
+  packOfTopicId,
+  groupTopicsBySubject,
+  missingTopicsForSubjects,
+  getSubjectPack,
+} from './subjects'
 import type { Topic } from './types'
 
 const t = (id: string, topic = id): Topic => ({ id, part: '', area: '', topic, order: 0 })
@@ -51,5 +56,39 @@ describe('groupTopicsBySubject', () => {
 
   it('空輸入 → 空陣列', () => {
     expect(groupTopicsBySubject([])).toEqual([])
+  })
+})
+
+describe('missingTopicsForSubjects', () => {
+  const chin = getSubjectPack('chin')!
+  const econ = getSubjectPack('econ')!
+  const acct = getSubjectPack('bafs-acct')!
+
+  it('全新科目 → 回該科全部課題', () => {
+    expect(missingTopicsForSubjects([], ['chin']).map((t) => t.id)).toEqual(
+      chin.topics.map((t) => t.id),
+    )
+  })
+
+  it('id 已存在 → 唔重覆', () => {
+    expect(missingTopicsForSubjects(chin.topics, ['chin'])).toEqual([])
+  })
+
+  it('文字去重：legacy bafs-NN 已在 → 載 bafs-acct 唔翻撈（同一批 BAFS 課題）', () => {
+    const legacy = acct.topics.map((t, i) => ({
+      ...t,
+      id: `bafs-${String(i + 1).padStart(2, '0')}`,
+    }))
+    expect(missingTopicsForSubjects(legacy, ['bafs-acct'])).toEqual([])
+  })
+
+  it('未知科目 id → 跳過', () => {
+    expect(missingTopicsForSubjects([], ['zzz-唔存在'])).toEqual([])
+  })
+
+  it('多科：只補未有嗰啲', () => {
+    expect(missingTopicsForSubjects(chin.topics, ['chin', 'econ']).map((t) => t.id)).toEqual(
+      econ.topics.map((t) => t.id),
+    )
   })
 })

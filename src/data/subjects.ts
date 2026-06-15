@@ -511,6 +511,33 @@ export interface TopicGroup {
 }
 
 /**
+ * 任教科目 → 要補載嘅課題（additive 同步用）。
+ * 為 subjectIds 各科 pack 揾出「未喺 existing 出現過」嘅課題；同時以 **id 同
+ * 課題文字** 去重，避免 legacy `bafs-NN` 同拆科後 `bafs-acct-NN`（同一批 BAFS
+ * 課題、文字一樣）重覆載入。純函式，唔郁任何 collection。
+ */
+export function missingTopicsForSubjects(
+  existing: Topic[],
+  subjectIds: string[],
+): Topic[] {
+  const haveId = new Set(existing.map((t) => t.id))
+  const haveText = new Set(existing.map((t) => t.topic.trim()))
+  const out: Topic[] = []
+  for (const sid of subjectIds) {
+    const pack = getSubjectPack(sid)
+    if (!pack) continue
+    for (const t of pack.topics) {
+      const text = t.topic.trim()
+      if (haveId.has(t.id) || haveText.has(text)) continue
+      haveId.add(t.id)
+      haveText.add(text)
+      out.push(t)
+    }
+  }
+  return out
+}
+
+/**
  * 將一批課題按所屬科目分組（保留輸入次序；同組內亦保留次序）。
  * 配唔到 pack 嘅課題：用 id 第一段做 key，friendly 名（如 bafs→企會財）或「其他課題」。
  */
