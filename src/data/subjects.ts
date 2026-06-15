@@ -480,3 +480,54 @@ export const DEFAULT_SUBJECT_PACK_ID = 'bafs-acct'
 export function getSubjectPack(id: string): SubjectPack | undefined {
   return SUBJECT_PACKS.find((p) => p.id === id)
 }
+
+// ── 課題 → 科目 反查 / 分組 ───────────────────────────────────
+// 老師可同時載入多科課題（topicsCol 係扁平一袋），UI 要按科目分區先唔亂。
+
+/** 友善名：legacy 前綴（未拆 pack 前嘅舊 id，如 bafs-NN）對應科目名。 */
+const LEGACY_SUBJECT_NAMES: Record<string, string> = {
+  bafs: '企會財（BAFS）',
+}
+
+/**
+ * 由 topic id 反查所屬科目包。用「最長 pack id 前綴（以 `-` 為界）」配對，
+ * 確保 `bafs-acct-01` 配到 `bafs-acct` 而唔係誤配去更短嘅前綴。配唔到回 undefined
+ * （例如 legacy `bafs-01` —— 冇 plain `bafs` pack）。
+ */
+export function packOfTopicId(topicId: string): SubjectPack | undefined {
+  let best: SubjectPack | undefined
+  for (const p of SUBJECT_PACKS) {
+    if (topicId === p.id || topicId.startsWith(p.id + '-')) {
+      if (!best || p.id.length > best.id.length) best = p
+    }
+  }
+  return best
+}
+
+export interface TopicGroup {
+  key: string // 科目 key（pack id 或 legacy 前綴）
+  name: string // 科目顯示名
+  topics: Topic[]
+}
+
+/**
+ * 將一批課題按所屬科目分組（保留輸入次序；同組內亦保留次序）。
+ * 配唔到 pack 嘅課題：用 id 第一段做 key，friendly 名（如 bafs→企會財）或「其他課題」。
+ */
+export function groupTopicsBySubject(topics: Topic[]): TopicGroup[] {
+  const order: string[] = []
+  const map = new Map<string, TopicGroup>()
+  for (const t of topics) {
+    const pack = packOfTopicId(t.id)
+    const key = pack?.id ?? (t.id.split('-')[0] || 'other')
+    const name = pack?.name ?? LEGACY_SUBJECT_NAMES[key] ?? '其他課題'
+    let g = map.get(key)
+    if (!g) {
+      g = { key, name, topics: [] }
+      map.set(key, g)
+      order.push(key)
+    }
+    g.topics.push(t)
+  }
+  return order.map((k) => map.get(k)!)
+}

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ChevronDown } from 'lucide-react'
 import { useMode } from '../context/ModeContext'
@@ -10,6 +10,8 @@ import FeatureCard, { type ToneKey } from '../components/FeatureCard'
 import PlanBadge from '../components/PlanBadge'
 import { groupLabel } from '../i18n/appEn'
 import { cx } from '../ui'
+import { getMyAppProfile, type AppProfile } from '../lib/profile'
+import { getSubjectPack, type SubjectPack } from '../data/subjects'
 
 interface Props {
   onOpen: (id: string) => void
@@ -32,6 +34,13 @@ const GROUP_TONE: Record<string, ToneKey> = {
 
 const WEEKDAYS = ['日', '一', '二', '三', '四', '五', '六']
 
+const ROLE_LABEL: Record<string, string> = {
+  teacher: '教師',
+  pre_service: '準教師',
+  tutor: '導師',
+  other: '其他',
+}
+
 function timeGreeting(): string {
   const h = new Date().getHours()
   if (h < 5) return '夜深了'
@@ -45,6 +54,28 @@ export default function Home({ onOpen }: Props) {
   const { t } = useTranslation()
   const { modeDef } = useMode()
   const { displayName } = useSettings()
+
+  // 個人資料（任教科目等）—— canonical 喺 Supabase profiles，async 攞；
+  // 未接 / 未登入 / 未登記一律 null，靜靜唔顯示。
+  const [profile, setProfile] = useState<AppProfile | null>(null)
+  useEffect(() => {
+    let alive = true
+    getMyAppProfile()
+      .then((p) => {
+        if (alive) setProfile(p)
+      })
+      .catch(() => {})
+    return () => {
+      alive = false
+    }
+  }, [])
+  const roleLabel = profile?.role ? ROLE_LABEL[profile.role] : null
+  const school = profile?.showSchool ? profile.school?.trim() || null : null
+  const subjects = (profile?.subjects ?? [])
+    .map((id) => getSubjectPack(id))
+    .filter((p): p is SubjectPack => Boolean(p))
+  const hasProfileMeta = Boolean(roleLabel || school || subjects.length)
+
   const groups = groupedFeatures(modeDef.id)
   const total = groups.reduce((n, g) => n + g.items.length, 0)
 
@@ -81,6 +112,32 @@ export default function Home({ onOpen }: Props) {
               <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                 {t(`mode.${modeDef.id}.tagline`, { defaultValue: modeDef.tagline })}
               </p>
+
+              {/* 個人資料：角色 · 學校 · 任教科目 */}
+              {hasProfileMeta && (
+                <div className="mt-3 flex flex-wrap items-center gap-x-2.5 gap-y-1.5 text-xs text-slate-500 dark:text-slate-400">
+                  {roleLabel && (
+                    <span className="inline-flex items-center rounded-md bg-slate-100 px-2 py-0.5 font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                      {roleLabel}
+                    </span>
+                  )}
+                  {school && <span className="truncate">{school}</span>}
+                  {subjects.length > 0 && (
+                    <span className="inline-flex flex-wrap items-center gap-1">
+                      <span className="text-slate-400 dark:text-slate-500">任教：</span>
+                      {subjects.map((p) => (
+                        <span
+                          key={p.id}
+                          title={p.name}
+                          className="rounded-md bg-accent-soft px-1.5 py-0.5 font-medium text-accent-strong dark:bg-accent/15 dark:text-accent"
+                        >
+                          {p.short}
+                        </span>
+                      ))}
+                    </span>
+                  )}
+                </div>
+              )}
             </div>
             <div className="flex flex-col items-end gap-2">
               <PlanBadge />

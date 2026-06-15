@@ -13,6 +13,7 @@ import {
 import { useToast } from '../../../context/ToastContext'
 import type { AIModel } from '../../../lib/aiClient'
 import type { Topic } from '../../../data/types'
+import { groupTopicsBySubject } from '../../../data/subjects'
 import { generateLesson, type LessonGen, type GenSkeleton } from './lessonAi'
 import { templatesForSubject, type BuiltinLessonTemplate } from './subjectTemplates'
 
@@ -55,6 +56,8 @@ export default function GenerateModal({
 }) {
   const toast = useToast()
   const builtinTemplates = useMemo(() => templatesForSubject(subjectId), [subjectId])
+  // 課題按科目分組（老師可同時載入多科 → 用 optgroup 分區，唔好一鋪過撈埋）
+  const topicGroups = useMemo(() => groupTopicsBySubject(topics), [topics])
 
   const [topicId, setTopicId] = useState(topics[0]?.id ?? '')
   const [brief, setBrief] = useState('')
@@ -124,10 +127,14 @@ export default function GenerateModal({
           <Field label="課題">
             {topics.length > 0 ? (
               <Select value={topicId} onChange={(e) => setTopicId(e.target.value)}>
-                {topics.map((t) => (
-                  <option key={t.id} value={t.id}>
-                    {t.topic}
-                  </option>
+                {topicGroups.map((g) => (
+                  <optgroup key={g.key} label={g.name}>
+                    {g.topics.map((t) => (
+                      <option key={t.id} value={t.id}>
+                        {t.topic}
+                      </option>
+                    ))}
+                  </optgroup>
                 ))}
               </Select>
             ) : (
