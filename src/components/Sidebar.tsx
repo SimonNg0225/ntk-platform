@@ -179,7 +179,7 @@ export default function Sidebar({
     return (
       <aside
         className={cx(
-          'flex w-[68px] shrink-0 flex-col border-r border-black/[0.06] bg-white/80 backdrop-blur-xl dark:border-white/[0.06] dark:bg-slate-900/70',
+          'et-glass-sidebar flex w-[68px] shrink-0 flex-col',
           className,
         )}
       >
@@ -287,7 +287,7 @@ export default function Sidebar({
   return (
     <aside
       className={cx(
-        'flex w-72 shrink-0 flex-col border-r border-black/[0.06] bg-white/80 backdrop-blur-xl dark:border-white/[0.06] dark:bg-slate-900/70',
+        'et-glass-sidebar flex w-72 shrink-0 flex-col',
         className,
       )}
     >
@@ -344,7 +344,7 @@ export default function Sidebar({
             onChange={(e) => setFilter(e.target.value)}
             placeholder={t('shell.filterFeatures', { defaultValue: '搜尋功能…' })}
             aria-label={t('shell.filterFeatures', { defaultValue: '搜尋功能…' })}
-            className="w-full rounded-lg border border-black/[0.08] bg-black/[0.02] py-1.5 pl-8 pr-7 text-[13px] text-slate-700 placeholder:text-slate-400 transition focus:border-accent/40 focus:bg-white focus:outline-none focus:ring-2 focus:ring-accent/15 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-200 dark:focus:bg-slate-800"
+            className="w-full rounded-xl border border-black/[0.08] bg-black/[0.02] py-1.5 pl-8 pr-7 text-[13px] text-slate-700 placeholder:text-slate-400 transition focus:border-accent/40 focus:bg-white focus:outline-none focus:ring-2 focus:ring-accent/15 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-200 dark:focus:bg-slate-800"
           />
           {filter && (
             <button
@@ -467,7 +467,7 @@ export default function Sidebar({
                   <button
                     onClick={() => toggleGroup(g.group)}
                     aria-expanded={!isCol}
-                    className="sticky top-0 z-[5] flex w-full items-center gap-2 rounded-md bg-white/90 px-3 pb-1 pt-5 text-[11px] font-semibold text-slate-400/90 backdrop-blur-sm transition-colors hover:text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:bg-slate-900/90 dark:text-slate-500 dark:hover:text-slate-300"
+                    className="flex w-full items-center gap-2 rounded-md px-3 pb-1 pt-5 text-[11px] font-semibold text-slate-400/90 transition-colors hover:text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:text-slate-500 dark:hover:text-slate-300"
                   >
                     <span className="tracking-tight">{groupLabel(t, g.group)}</span>
                     <span className="rounded-full bg-black/[0.05] px-1.5 text-[10px] font-medium tabular-nums text-slate-400 dark:bg-white/10 dark:text-slate-500">
@@ -585,7 +585,7 @@ function NavRow({
         {active && (
           <span
             aria-hidden
-            className="pointer-events-none absolute left-0 inset-y-1.5 w-[3px] rounded-r-full bg-accent"
+            className="pointer-events-none absolute left-0 inset-y-[7px] w-[3px] rounded-r-[4px] bg-gradient-to-b from-[color:var(--accent-grad-from)] to-[color:var(--accent-strong)]"
           />
         )}
         <span className={chipClass(active)}>
@@ -624,18 +624,18 @@ function NavRow({
 
 function chipClass(active: boolean) {
   return cx(
-    'flex h-7 w-7 shrink-0 items-center justify-center rounded-md transition',
+    'flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-[9px] transition',
     active
-      ? 'bg-accent/15'
-      : 'bg-black/[0.035] group-hover/navrow:bg-black/[0.06] dark:bg-white/[0.06] dark:group-hover/navrow:bg-white/[0.1]',
+      ? 'bg-accent/20'
+      : 'bg-black/[0.045] group-hover/navrow:bg-black/[0.06] dark:bg-white/[0.06] dark:group-hover/navrow:bg-white/[0.1]',
   )
 }
 
 function navClass(active: boolean) {
   return cx(
-    'group flex w-full items-center gap-2 rounded-lg px-2 py-1 text-[13px] transition duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.985]',
+    'group flex w-full items-center gap-2.5 rounded-[13px] px-2.5 py-1.5 text-[13.5px] transition duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.985]',
     active
-      ? 'bg-accent/10 font-semibold text-accent-strong dark:bg-accent/20 dark:text-accent'
+      ? 'et-glass-active font-semibold text-accent-strong dark:text-accent'
       : 'font-medium text-slate-600 hover:bg-black/[0.04] hover:text-slate-900 dark:text-slate-300 dark:hover:bg-white/[0.06] dark:hover:text-white',
   )
 }

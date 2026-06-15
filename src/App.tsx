@@ -196,7 +196,7 @@ export function AppShell() {
             rail={sidebarMode === 'rail'}
             onCollapse={cycleSidebar}
             onExpand={() => setSidebarMode('expanded')}
-            className="hidden border-r border-black/[0.06] dark:border-white/[0.06] md:flex"
+            className="hidden md:m-3 md:flex"
           />
         )}
 
@@ -221,7 +221,7 @@ export function AppShell() {
                 onOpenSettings={() => navigate('__settings__')}
                 onOpenAdmin={() => navigate('__admin__')}
                 onClose={() => setDrawerOpen(false)}
-                className="h-full"
+                className="my-2.5 ml-2.5 h-[calc(100%-1.25rem)]"
               />
             </div>
           </div>
