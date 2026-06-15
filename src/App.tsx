@@ -58,6 +58,9 @@ export function AppShell() {
   })
   const toast = useToast()
   const drawerRef = useRef<HTMLDivElement>(null)
+  // iOS：開抽屜嗰下 tap，遮罩瞬間彈出喺手指底，touch→mouse 相容 click 會打中遮罩即關。
+  // 開啟後短暫「未武裝」，等開掣嗰下 ghost click 食唔到自己（要撳兩次先開到嘅元兇）。
+  const dismissArmedRef = useRef(false)
 
   useEffect(() => {
     try {
@@ -82,6 +85,11 @@ export function AppShell() {
     const prevActive = document.activeElement as HTMLElement | null
     const panel = drawerRef.current
     panel?.focus()
+    // 開啟瞬間遮罩唔武裝，350ms 後先可點擊關閉（過濾掉開掣嗰下 ghost click）
+    dismissArmedRef.current = false
+    const armTimer = window.setTimeout(() => {
+      dismissArmedRef.current = true
+    }, 350)
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         e.stopPropagation()
@@ -106,6 +114,8 @@ export function AppShell() {
     }
     document.addEventListener('keydown', onKey)
     return () => {
+      window.clearTimeout(armTimer)
+      dismissArmedRef.current = false
       document.removeEventListener('keydown', onKey)
       prevActive?.focus?.()
     }
@@ -205,7 +215,9 @@ export function AppShell() {
           <div className="fixed inset-0 z-40 md:hidden">
             <div
               className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
-              onClick={() => setDrawerOpen(false)}
+              onClick={() => {
+                if (dismissArmedRef.current) setDrawerOpen(false)
+              }}
             />
             <div
               ref={drawerRef}

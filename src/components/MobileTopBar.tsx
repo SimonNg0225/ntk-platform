@@ -19,7 +19,7 @@ export default function MobileTopBar({
 
   return (
     <header className="sticky top-0 z-20 flex items-center gap-3 border-b border-slate-200 bg-white/90 px-4 py-2.5 backdrop-blur-md dark:border-slate-800 dark:bg-slate-900/90 md:hidden">
-      <IconButton label="開啟選單" onClick={onMenu}>
+      <IconButton label="開啟選單" onClick={onMenu} className="touch-manipulation">
         <MenuIcon size={22} strokeWidth={1.75} />
       </IconButton>
 
