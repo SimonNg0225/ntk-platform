@@ -37,6 +37,7 @@ import {
   CalendarRange,
   PieChart,
   Sparkles,
+  FileText,
   MoreVertical,
   ListChecks,
   ChevronLeft,
@@ -69,9 +70,16 @@ import {
   todayKey,
   totalPhaseMinutes,
   uidLocal,
+  makePhase,
+  makeMaterial,
   type PlanMeta,
   type PlanStatus,
 } from './lessonPlanner/util'
+import { useSettings } from '../../context/SettingsContext'
+import { getSubjectPack } from '../../data/subjects'
+import { isAIConfigured } from '../../lib/aiClient'
+import GenerateModal, { type GeneratedLesson } from './lessonPlanner/GenerateModal'
+import { templatesForSubject } from './lessonPlanner/subjectTemplates'
 
 // ============================================================
 //  備課 / 教案 — 媲美 Planbook / Common Curriculum 嘅教師備課工具
@@ -98,6 +106,15 @@ export default function LessonPlanner() {
   const templates = useCollection(planTemplatesCol)
   const toast = useToast()
   const confirm = useConfirm()
+  const { subjectPackId } = useSettings()
+  const subjectName =
+    subjectPackId && subjectPackId !== 'custom'
+      ? getSubjectPack(subjectPackId)?.name
+      : undefined
+  const builtinTemplates = useMemo(
+    () => templatesForSubject(subjectPackId),
+    [subjectPackId],
+  )
 
   const [view, setView] = useState<View>('list')
 
@@ -115,6 +132,7 @@ export default function LessonPlanner() {
   const [editorInitial, setEditorInitial] = useState<PlanDraft>(emptyDraft)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [templatesOpen, setTemplatesOpen] = useState(false)
+  const [aiOpen, setAiOpen] = useState(false)
   const [dupTarget, setDupTarget] = useState<LessonPlan | null>(null)
   const [dupDate, setDupDate] = useState(todayKey())
 
@@ -379,6 +397,49 @@ export default function LessonPlanner() {
     setEditorOpen(true)
   }
 
+  // ── 由內建科目範本開始（直接用，建空白教案骨架）──
+  const newFromBuiltin = (tplId: string) => {
+    const tpl = builtinTemplates.find((t) => t.id === tplId)
+    if (!tpl) return
+    setEditorMode('create')
+    setEditorInitial({
+      ...emptyDraft,
+      title: tpl.name,
+      objectives: tpl.objectives,
+      phases: tpl.phases.map((p) => ({ ...makePhase(p.label, p.minutes), detail: p.detail })),
+      materials: tpl.materials.map((text) => makeMaterial(text)),
+    })
+    setEditingId(null)
+    setTemplatesOpen(false)
+    setEditorOpen(true)
+  }
+
+  // ── AI 生成結果 → 預填編輯器（create 模式，老師審核後存）──
+  const applyAiResult = (r: GeneratedLesson) => {
+    const { gen, topic, classId, templateName } = r
+    const today = todayKey()
+    const resourceParts = [
+      gen.activities.trim() ? `課堂活動：${gen.activities.trim()}` : '',
+      templateName ? `（範本：${templateName}）` : '',
+    ].filter(Boolean)
+    setEditorMode('create')
+    setEditorInitial({
+      ...emptyDraft,
+      title: topic.topic,
+      topicId: topic.id,
+      classId: classId || '',
+      date: today,
+      objectives: gen.objectives,
+      resourcesNote: resourceParts.join('\n'),
+      phases: gen.phases.map((p) => ({ ...makePhase(p.label, p.minutes), detail: p.detail })),
+      materials: gen.materials.map((text) => makeMaterial(text)),
+    })
+    setEditingId(null)
+    setAiOpen(false)
+    setEditorOpen(true)
+    toast.success('AI 教案已生成，可以再逐項執靚再儲存')
+  }
+
   // ── 複製 / 複製到指定日 / 狀態切換 / 刪除 / 列印 ──
   const cloneTo = (p: LessonPlan, date?: string, suffix = '（副本）') => {
     const created = lessonPlansCol.add({
@@ -477,44 +538,34 @@ export default function LessonPlanner() {
 
   return (
     <div className="space-y-5">
-      {/* ───────── 黑板 masthead：教師備課桌（白堊 serif 標題 + 粉筆刻度） ───────── */}
-      <header className="relative overflow-hidden rounded-3xl border border-slate-700/70 bg-slate-800 px-5 py-5 text-slate-100 shadow-md dark:border-slate-700/60 dark:bg-slate-900 sm:px-7 sm:py-6">
-        {/* 暖光暈（粉筆灰調，呼應「黑板暖感」） */}
+      {/* ───────── Masthead：accent hero（對齊工作儀表板卡片語言） ───────── */}
+      <header className="relative overflow-hidden rounded-2xl bg-accent px-5 py-5 text-white shadow-sm sm:px-7 sm:py-6">
         <span
           aria-hidden="true"
-          className="pointer-events-none absolute -right-16 -top-20 h-56 w-56 rounded-full bg-accent/20 blur-3xl"
+          className="pointer-events-none absolute -right-16 -top-20 h-56 w-56 rounded-full bg-white/10 blur-3xl"
         />
         <span
           aria-hidden="true"
-          className="pointer-events-none absolute -bottom-24 -left-10 h-48 w-48 rounded-full bg-amber-400/10 blur-3xl"
-        />
-        {/* 黑板底部白堊刻度線 */}
-        <span
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-x-5 bottom-0 h-px bg-gradient-to-r from-transparent via-white/15 to-transparent sm:inset-x-7"
+          className="pointer-events-none absolute -bottom-24 -left-10 h-48 w-48 rounded-full bg-white/[0.06] blur-3xl"
         />
         <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-start gap-3.5">
-            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/10 text-white shadow-inner ring-1 ring-inset ring-white/15 backdrop-blur-sm">
+            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/15 text-white ring-1 ring-inset ring-white/20 backdrop-blur-sm">
               <GraduationCap size={24} strokeWidth={1.75} />
             </span>
             <div className="min-w-0">
-              <p className="text-[11px] font-medium uppercase tracking-[0.32em] text-accent-soft/90">
+              <p className="text-[11px] font-medium uppercase tracking-[0.32em] text-white/70">
                 教師備課桌
               </p>
               <h1 className="mt-1 text-[26px] font-semibold leading-tight tracking-tight text-white sm:text-3xl">
                 備課 / 教案
               </h1>
-              <p className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-slate-300/90">
-                <span className="tabular-nums">
-                  在備 {stats.total} 份教案
-                </span>
+              <p className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-white/80">
+                <span className="tabular-nums">在備 {stats.total} 份教案</span>
                 {stats.thisWeek > 0 && (
                   <>
-                    <span aria-hidden="true" className="text-slate-500">
-                      ·
-                    </span>
-                    <span className="inline-flex items-center gap-1 font-medium text-accent-soft">
+                    <span aria-hidden="true" className="text-white/40">·</span>
+                    <span className="inline-flex items-center gap-1 font-medium">
                       <CalendarRange size={12} /> 本週 {stats.thisWeek} 堂
                     </span>
                   </>
@@ -522,23 +573,33 @@ export default function LessonPlanner() {
               </p>
             </div>
           </div>
-          <div className="flex shrink-0 items-center gap-2">
+          <div className="flex shrink-0 flex-wrap items-center gap-2">
             <button
               type="button"
               onClick={() => setTemplatesOpen(true)}
-              className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-white/15 bg-white/5 px-3 text-sm font-medium text-slate-100 backdrop-blur-sm transition active:scale-[0.98] hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
+              className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-white/20 bg-white/10 px-3 text-sm font-medium text-white backdrop-blur-sm transition active:scale-[0.98] hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
             >
-              <Sparkles size={15} />
+              <FileText size={15} />
               範本
             </button>
             <button
               type="button"
               onClick={() => openCreate()}
-              className="inline-flex h-9 items-center gap-1.5 rounded-xl bg-white px-3.5 text-sm font-semibold text-slate-800 shadow-sm transition active:scale-[0.98] hover:bg-accent-soft hover:text-accent-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
+              className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-white/20 bg-white/10 px-3 text-sm font-medium text-white backdrop-blur-sm transition active:scale-[0.98] hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
             >
               <Plus size={16} />
-              新增教案
+              新增
             </button>
+            {isAIConfigured && (
+              <button
+                type="button"
+                onClick={() => setAiOpen(true)}
+                className="inline-flex h-9 items-center gap-1.5 rounded-xl bg-white px-3.5 text-sm font-semibold text-accent-strong shadow-sm transition active:scale-[0.98] hover:bg-accent-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
+              >
+                <Sparkles size={16} />
+                AI 整教案
+              </button>
+            )}
           </div>
         </div>
       </header>
@@ -964,6 +1025,19 @@ export default function LessonPlanner() {
         onSaveAsTemplate={saveAsTemplate}
       />
 
+      {/* ─────────────── AI 整教案 ─────────────── */}
+      {aiOpen && (
+        <GenerateModal
+          topics={sortedTopics}
+          classes={classes}
+          subjectId={subjectPackId}
+          subjectName={subjectName}
+          defaultModel="gemini-2.5-flash"
+          onGenerated={applyAiResult}
+          onClose={() => setAiOpen(false)}
+        />
+      )}
+
       {/* ─────────────── 範本庫 ─────────────── */}
       <Modal
         open={templatesOpen}
@@ -972,6 +1046,47 @@ export default function LessonPlanner() {
         size="lg"
       >
         <div className="space-y-2.5">
+          {/* 內建科目範本（跟任教科目） */}
+          <div>
+            <div className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400">
+              <FileText size={13} />
+              {subjectName ? `${subjectName} 範本` : '通用範本'}
+            </div>
+            <ul className="grid gap-2 sm:grid-cols-2">
+              {builtinTemplates.map((t) => {
+                const mins = totalPhaseMinutes(
+                  t.phases.map((p) => ({ id: '', label: p.label, minutes: p.minutes, detail: p.detail })),
+                )
+                return (
+                  <li
+                    key={t.id}
+                    className="flex items-start justify-between gap-2 rounded-lg border border-slate-200 p-2.5 dark:border-slate-700"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-1.5">
+                        <span className="truncate text-sm font-semibold text-slate-800 dark:text-slate-100">
+                          {t.name}
+                        </span>
+                        <span className="shrink-0 rounded bg-accent-soft px-1 text-[10px] font-medium text-accent-strong dark:bg-accent/15 dark:text-accent">
+                          {t.style}
+                        </span>
+                      </div>
+                      <div className="mt-1 text-[11px] text-slate-400 dark:text-slate-500">
+                        {t.phases.length} 環節 · {mins} 分
+                      </div>
+                    </div>
+                    <Button size="sm" variant="ghost" icon={Plus} onClick={() => newFromBuiltin(t.id)}>
+                      用
+                    </Button>
+                  </li>
+                )
+              })}
+            </ul>
+          </div>
+
+          <div className="mb-1.5 mt-3 flex items-center gap-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400">
+            <Sparkles size={13} /> 我的範本
+          </div>
           <p className="text-xs text-slate-500 dark:text-slate-400">
             範本包含教學環節同教材骨架。喺編輯教案時撳「存為範本」可加入更多。
           </p>
