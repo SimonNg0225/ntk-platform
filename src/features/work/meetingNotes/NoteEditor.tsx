@@ -677,13 +677,35 @@ export default function NoteEditor({
             跟進行動
           </ClauseTitle>
           {draft.actions.length === 0 ? (
-            <div className="flex flex-col items-center gap-1 rounded-xl border border-dashed border-slate-200 bg-slate-50/50 px-3 py-5 text-center dark:border-slate-700 dark:bg-slate-800/30">
+            <div className="flex flex-col items-center gap-2.5 rounded-xl border border-dashed border-slate-200 bg-slate-50/50 px-3 py-5 text-center dark:border-slate-700 dark:bg-slate-800/30">
               <ListChecks size={20} className="text-slate-300 dark:text-slate-600" />
-              <p className="text-xs text-slate-400 dark:text-slate-500">
-                仲未有跟進項目。可手動加，或喺內容用{' '}
-                <code className="rounded bg-slate-100 px-1 dark:bg-slate-800">- [ ]</code>{' '}
-                寫好再撳「抽取」。
-              </p>
+              {parsed.actions.length > 0 ? (
+                <>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    記事內容偵測到{' '}
+                    <span className="font-semibold text-accent">{parsed.actions.length}</span>{' '}
+                    個行動項目
+                  </p>
+                  <div className="flex flex-wrap items-center justify-center gap-2">
+                    <Button size="sm" icon={Sparkles} onClick={extractFromContent}>
+                      一鍵整理成跟進項目
+                    </Button>
+                    <Button size="sm" variant="ghost" icon={Plus} onClick={addAction}>
+                      手動加
+                    </Button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <p className="text-xs text-slate-400 dark:text-slate-500">仲未有跟進項目</p>
+                  <Button size="sm" variant="secondary" icon={Plus} onClick={addAction}>
+                    手動加項目
+                  </Button>
+                  <p className="text-[11px] text-slate-400 dark:text-slate-500">
+                    或喺上面記事內容撳「＋ 行動項目」寫低，再喺度整理成清單
+                  </p>
+                </>
+              )}
             </div>
           ) : (
             <div className="space-y-2">
