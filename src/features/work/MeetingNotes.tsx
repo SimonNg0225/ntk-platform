@@ -271,6 +271,18 @@ export default function MeetingNotes() {
 
   // ───────── 合併資料 ─────────
   const merged = useMemo(() => mergeNotes(notes, metas), [notes, metas])
+
+  // 常用出席者：彙總過往記事嘅出席者，按出現次數排（畀編輯器快速一撳加）。
+  const suggestedAttendees = useMemo(() => {
+    const freq = new Map<string, number>()
+    for (const m of metas) {
+      for (const a of m.attendees) {
+        const name = a.trim()
+        if (name) freq.set(name, (freq.get(name) ?? 0) + 1)
+      }
+    }
+    return [...freq.entries()].sort((a, b) => b[1] - a[1]).map(([name]) => name)
+  }, [metas])
   const mergedById = useMemo(
     () => new Map(merged.map((m) => [m.note.id, m])),
     [merged],
@@ -905,6 +917,7 @@ export default function MeetingNotes() {
         mode={editorMode}
         initial={editorInitial}
         templates={templates}
+        suggestedAttendees={suggestedAttendees}
         onClose={() => setEditorOpen(false)}
         onSave={handleSave}
       />
