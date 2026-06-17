@@ -114,33 +114,23 @@ const TYPE_RAIL: Record<string, string> = {
 //  記事簿語言：每個欄位分組當一條「議程條款」，左貼 serif 條款記號，
 //  令編輯流程讀落似草擬一份正式議程，而非填一張通用表單。
 function ClauseTitle({
-  mark,
   kicker,
   children,
   right,
 }: {
-  mark: string
   kicker: string
   children: React.ReactNode
   right?: React.ReactNode
 }) {
   return (
     <div className="mb-2.5 flex items-end justify-between gap-3">
-      <div className="flex min-w-0 items-center gap-2">
-        <span
-          aria-hidden
-          className="inline-flex h-6 min-w-[1.6rem] shrink-0 items-center justify-center rounded-md bg-slate-100 px-1 text-[13px] font-bold tabular-nums slashed-zero text-slate-500 dark:bg-slate-700/60 dark:text-slate-300"
-        >
-          {mark}
-        </span>
-        <div className="min-w-0">
-          <p className="text-[10px] font-medium uppercase tracking-[0.22em] text-slate-400 dark:text-slate-500">
-            {kicker}
-          </p>
-          <h2 className="text-[15px] font-semibold leading-tight text-slate-700 dark:text-slate-200">
-            {children}
-          </h2>
-        </div>
+      <div className="min-w-0">
+        <p className="text-[10px] font-medium uppercase tracking-[0.22em] text-slate-400 dark:text-slate-500">
+          {kicker}
+        </p>
+        <h2 className="text-[15px] font-semibold leading-tight text-slate-700 dark:text-slate-200">
+          {children}
+        </h2>
       </div>
       {right && <div className="shrink-0">{right}</div>}
     </div>
@@ -417,7 +407,7 @@ export default function NoteEditor({
 
         {/* ───────── §1 開會詳情：日期 / 時間 / 時長 / 地點 ───────── */}
         <section>
-          <ClauseTitle mark="§1" kicker="Convening">
+          <ClauseTitle kicker="Convening">
             開會詳情
           </ClauseTitle>
           <div className="grid grid-cols-2 gap-3 rounded-2xl border border-slate-200/80 p-4 dark:border-slate-700/60 sm:grid-cols-4">
@@ -470,7 +460,6 @@ export default function NoteEditor({
         {/* ───────── §2 出席者（chips）───────── */}
         <section>
           <ClauseTitle
-            mark="§2"
             kicker="Present"
             right={
               draft.attendees.length > 0 ? (
@@ -524,7 +513,6 @@ export default function NoteEditor({
         {/* ───────── §3 記事內容（朱紅起始線稿紙面）+ 範本 + 抽取 ───────── */}
         <section>
           <ClauseTitle
-            mark="§3"
             kicker="Minutes"
             right={
               <div className="flex items-center gap-1.5">
@@ -597,7 +585,6 @@ export default function NoteEditor({
         {/* ───────── §4 議決事項（serif R-NN 決議章，同詳情一致）───────── */}
         <section>
           <ClauseTitle
-            mark="§4"
             kicker="Resolutions"
             right={
               draft.decisions.length > 0 ? (
@@ -659,7 +646,6 @@ export default function NoteEditor({
         {/* ───────── §5 跟進行動（可勾選改卷格）───────── */}
         <section>
           <ClauseTitle
-            mark="§5"
             kicker="Action items"
             right={
               <div className="flex items-center gap-2">
@@ -780,7 +766,7 @@ export default function NoteEditor({
 
         {/* ───────── §6 索引標籤 ───────── */}
         <section>
-          <ClauseTitle mark="§6" kicker="Index tags">
+          <ClauseTitle kicker="Index tags">
             標籤
           </ClauseTitle>
           <Input
