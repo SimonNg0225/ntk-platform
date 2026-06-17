@@ -11,6 +11,7 @@ import {
   Tooltip,
   cx,
 } from '../../../ui'
+import { useConfirm } from '../../../context/ConfirmContext'
 import {
   CalendarClock,
   CheckSquare,
@@ -165,6 +166,7 @@ export default function NoteEditor({
   const [attendeeInput, setAttendeeInput] = useState('')
   const [decisionInput, setDecisionInput] = useState('')
   const contentRef = useRef<HTMLTextAreaElement | null>(null)
+  const confirm = useConfirm()
 
   // 每次開啟 / 切換初值時重設
   useEffect(() => {
@@ -177,6 +179,28 @@ export default function NoteEditor({
 
   const canSave =
     draft.title.trim().length > 0 && draft.content.trim().length > 0
+
+  // 有未儲存改動？（同初值比 + 仲未 Enter 入嘅出席者／議決輸入）
+  const dirty =
+    JSON.stringify(draft) !== JSON.stringify(initial) ||
+    attendeeInput.trim().length > 0 ||
+    decisionInput.trim().length > 0
+
+  // 防誤關：有改動先彈確認，避免撳背景／Esc／取消 一下就無咗成份草稿。
+  async function guardedClose() {
+    if (!dirty) {
+      onClose()
+      return
+    }
+    const ok = await confirm({
+      title: '放棄未儲存嘅記事？',
+      message: '你打咗嘅議程內容仲未儲存，離開就會冇咗。',
+      confirmText: '放棄離開',
+      cancelText: '繼續編輯',
+      tone: 'danger',
+    })
+    if (ok) onClose()
+  }
 
   const patch = (p: Partial<EditorDraft>) => setDraft((d) => ({ ...d, ...p }))
 
@@ -277,11 +301,12 @@ export default function NoteEditor({
     // 令彈窗用返主畫面記事簿嘅 serif + kicker + 裝訂線 + 雙線視覺語言。
     <Modal
       open={open}
-      onClose={onClose}
+      onClose={guardedClose}
+      closeOnBackdrop={false}
       size="xl"
       footer={
         <>
-          <Button variant="secondary" onClick={onClose}>
+          <Button variant="secondary" onClick={guardedClose}>
             取消
           </Button>
           <Button onClick={() => onSave(draft)} disabled={!canSave} icon={CheckSquare}>
@@ -319,7 +344,7 @@ export default function NoteEditor({
                 {draft.title.trim() ? ` · ${draft.title.trim()}` : ' · 未命名記事'}
               </p>
             </div>
-            <IconButton label="關閉" onClick={onClose} className="-mr-1 shrink-0">
+            <IconButton label="關閉" onClick={guardedClose} className="-mr-1 shrink-0">
               <X size={18} />
             </IconButton>
           </div>
