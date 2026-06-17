@@ -269,7 +269,16 @@ export default function NoteEditor({
 
   // ───────── 由內容抽取行動 / 決議（似 Granola）─────────
   const parsed = useMemo(() => parseContent(draft.content), [draft.content])
-  const extractCount = parsed.actions.length + parsed.decisions.length
+  // 只計「未抽取」嘅新項目（以 text 去重）—— 抽取過後加新內容都認得到。
+  const newActionCount = useMemo(() => {
+    const existing = new Set(draft.actions.map((a) => a.text.trim()))
+    return parsed.actions.filter((a) => !existing.has(a.text.trim())).length
+  }, [parsed.actions, draft.actions])
+  const newDecisionCount = useMemo(() => {
+    const existing = new Set(draft.decisions.map((x) => x.trim()))
+    return parsed.decisions.filter((x) => !existing.has(x.trim())).length
+  }, [parsed.decisions, draft.decisions])
+  const newCount = newActionCount + newDecisionCount
 
   function extractFromContent() {
     setDraft((d) => {
@@ -526,18 +535,18 @@ export default function NoteEditor({
                   }
                   items={tpItems}
                 />
-                <Tooltip label="由內容嘅 - [ ] / &gt; 自動抽出行動同決議">
+                <Tooltip label="由內容嘅 - [ ] / &gt; 自動整理出未加入嘅行動同決議">
                   <button
                     type="button"
                     onClick={extractFromContent}
-                    disabled={extractCount === 0}
+                    disabled={newCount === 0}
                     className={cx(
                       'inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium transition disabled:opacity-40',
                       'text-accent hover:bg-accent-soft dark:hover:bg-accent/15',
                     )}
                   >
                     <Sparkles size={13} />
-                    抽取 {extractCount > 0 ? `(${extractCount})` : ''}
+                    抽取 {newCount > 0 ? `(${newCount})` : ''}
                   </button>
                 </Tooltip>
               </div>
@@ -653,6 +662,12 @@ export default function NoteEditor({
                   <span className="text-[13px] font-semibold tabular-nums text-slate-400 dark:text-slate-500">
                     {doneActions}/{draft.actions.length}
                   </span>
+                )}
+                {/* 已有項目 + 內容仲有未抽取嘅 → 直接喺度整理新項目 */}
+                {draft.actions.length > 0 && newActionCount > 0 && (
+                  <Button size="sm" variant="ghost" icon={Sparkles} onClick={extractFromContent}>
+                    整理 {newActionCount} 個新項目
+                  </Button>
                 )}
                 <Button size="sm" variant="ghost" icon={Plus} onClick={addAction}>
                   加項目
