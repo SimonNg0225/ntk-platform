@@ -204,6 +204,25 @@ export default function NoteEditor({
 
   const patch = (p: Partial<EditorDraft>) => setDraft((d) => ({ ...d, ...p }))
 
+  // 一撳喺游標所在處插入行首標記（行動項目 / 決議），免用戶記 markdown 語法。
+  function insertLinePrefix(prefix: string) {
+    const ta = contentRef.current
+    const cur = draft.content
+    const pos = ta ? ta.selectionStart : cur.length
+    const before = cur.slice(0, pos)
+    const after = cur.slice(pos)
+    const lead = before.length > 0 && !before.endsWith('\n') ? '\n' : ''
+    const insert = lead + prefix
+    patch({ content: before + insert + after })
+    const caret = before.length + insert.length
+    setTimeout(() => {
+      if (ta) {
+        ta.focus()
+        ta.setSelectionRange(caret, caret)
+      }
+    }, 0)
+  }
+
   // ───────── 出席者 chips ─────────
   function addAttendees(raw: string) {
     const names = raw
@@ -546,17 +565,33 @@ export default function NoteEditor({
             />
             <Textarea
               ref={contentRef}
-              className="min-h-[180px] resize-y border-0 bg-transparent py-3.5 pl-6 pr-3.5 font-[450] leading-relaxed shadow-none focus:ring-0"
+              className="min-h-[320px] resize-y border-0 bg-transparent py-3.5 pl-6 pr-3.5 font-[450] leading-relaxed shadow-none focus:ring-0"
               value={draft.content}
               onChange={(e) => patch({ content: e.target.value })}
-              placeholder={'會議重點…\n\n小貼士：\n- [ ] 行動項目（可加 @負責人 !2026-06-01）\n> 決議事項'}
+              placeholder={'會議重點、討論、跟進…\n\n喺下面撳「＋ 行動項目」或「＋ 決議」就會自動加好格式，你淨係要打內容。'}
             />
           </div>
-          <p className="mt-1.5 text-[11px] leading-relaxed text-slate-400 dark:text-slate-500">
-            支援 <code className="rounded bg-slate-100 px-1 dark:bg-slate-800">- [ ]</code>{' '}
-            行動項目（<code className="rounded bg-slate-100 px-1 dark:bg-slate-800">@人 !日期</code>）同{' '}
-            <code className="rounded bg-slate-100 px-1 dark:bg-slate-800">&gt;</code> 決議；撳「抽取」轉成下面結構化清單。
-          </p>
+          {/* 一撳插入：免記 markdown 語法 */}
+          <div className="mt-2 flex flex-wrap items-center gap-1.5">
+            <button
+              type="button"
+              onClick={() => insertLinePrefix('- [ ] ')}
+              className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-2 py-1 text-[11px] font-medium text-slate-600 transition hover:border-accent/40 hover:text-accent dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+            >
+              <CheckSquare size={12} /> ＋ 行動項目
+            </button>
+            <button
+              type="button"
+              onClick={() => insertLinePrefix('> ')}
+              className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-2 py-1 text-[11px] font-medium text-slate-600 transition hover:border-accent/40 hover:text-accent dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+            >
+              <Gavel size={12} /> ＋ 決議
+            </button>
+            <span className="text-[11px] text-slate-400 dark:text-slate-500">
+              行動項目可加 <code className="rounded bg-slate-100 px-1 dark:bg-slate-800">@負責人</code>{' '}
+              <code className="rounded bg-slate-100 px-1 dark:bg-slate-800">!日期</code> · 寫好撳右上「抽取」整理成清單
+            </span>
+          </div>
         </section>
 
         {/* ───────── §4 議決事項（serif R-NN 決議章，同詳情一致）───────── */}
