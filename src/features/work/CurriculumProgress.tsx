@@ -25,6 +25,7 @@ import {
 import { useCollection, createCollection, uid } from '../../lib/store'
 import { useToast } from '../../context/ToastContext'
 import { useConfirm } from '../../context/ConfirmContext'
+import { useSubjectLabel } from '../../context/SettingsContext'
 import { classesCol, topicsCol, progressCol } from '../../data/collections'
 import type { ProgressStatus, Topic } from '../../data/types'
 import {
@@ -95,6 +96,7 @@ export default function CurriculumProgress() {
   const classes = useCollection(classesCol)
   const topics = useCollection(topicsCol)
   const progress = useCollection(progressCol)
+  const subj = useSubjectLabel()
   const [classId, setClassId] = useState<string>(classes[0]?.id ?? '')
   const [view, setView] = useState<ViewTab>('list')
 
@@ -114,7 +116,7 @@ export default function CurriculumProgress() {
       <EmptyState
         icon={School}
         title="仲未鋪到路軌"
-        hint="先去「班別管理」開一班，就可以喺呢度沿住 BAFS 課程大綱鋪設教學路線。"
+        hint={`先去「班別管理」開一班，就可以喺呢度沿住${subj.name}課程大綱鋪設教學路線。`}
       />
     )
   }
@@ -137,7 +139,7 @@ export default function CurriculumProgress() {
               課程進度
             </h1>
             <p className="mt-1.5 max-w-md text-sm leading-relaxed text-slate-600 dark:text-slate-300">
-              沿住 BAFS 課程大綱鋪一條教學路軌，逐站標記里程碑，一眼睇到{' '}
+              沿住{subj.name}課程大綱鋪一條教學路軌，逐站標記里程碑，一眼睇到{' '}
               <span className="font-medium text-slate-700 dark:text-slate-200">
                 {activeClass?.name}
               </span>{' '}
@@ -286,6 +288,7 @@ function ListView({
   const toast = useToast()
   const confirm = useConfirm()
   const progress = useCollection(progressCol)
+  const subj = useSubjectLabel()
   const plans = useCollection(planCol)
   const today = todayKey()
 
@@ -517,7 +520,7 @@ function ListView({
           hint={
             query || statusFilter !== 'all' || partFilter !== 'all'
               ? '清除搜尋或篩選，就會見返成條路線。'
-              : '課題資料載入後，BAFS 課程路線就會喺度逐站展開。'
+              : `課題資料載入後，${subj.name}課程路線就會喺度逐站展開。`
           }
         />
       ) : (

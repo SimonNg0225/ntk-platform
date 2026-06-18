@@ -1287,7 +1287,7 @@ function AnalysisTab({ classId, className }: { classId: string; className: strin
             tone="amber"
             hint={t('gradebook.topicsHint', {
               defaultValue:
-                '把評估連住 BAFS 課題（評估分頁設定），就會喺呢度睇到課題層面嘅強弱。',
+                '把評估連住課題（評估分頁設定），就會喺呢度睇到課題層面嘅強弱。',
             })}
           >
             {t('gradebook.topicsHeading', { defaultValue: '各課題表現（由弱到強）' })}
@@ -1298,7 +1298,7 @@ function AnalysisTab({ classId, className }: { classId: string; className: strin
               title={t('gradebook.emptyTopicsTitle', { defaultValue: '未連起課題' })}
               hint={t('gradebook.emptyTopicsHint', {
                 defaultValue:
-                  '去「評估」分頁，為測驗／考試揀返對應 BAFS 課題，就會睇到弱項。',
+                  '去「評估」分頁，為測驗／考試揀返對應課題，就會睇到弱項。',
               })}
             />
           ) : (

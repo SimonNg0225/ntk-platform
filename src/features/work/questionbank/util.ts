@@ -707,7 +707,7 @@ export function buildPrintHtml(
   @media print{ body{padding:0} @page{margin:18mm} }
 </style></head><body>
   <div class="head">
-    <h1>${escapeHtml(meta.title || 'BAFS 自擬試卷')}</h1>
+    <h1>${escapeHtml(meta.title || '自擬試卷')}</h1>
     <div class="meta">
       <span>班別：${escapeHtml(meta.className || '____________')}</span>
       <span>時限：${escapeHtml(meta.durationMin ? meta.durationMin + ' 分鐘' : '____ 分鐘')}</span>

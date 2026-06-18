@@ -51,7 +51,7 @@ i18n.addResourceBundle(
         'Add tests, exams or homework above; link a topic too and you can run topic-weakness analysis.',
       emptyTopicsTitle: 'No topics linked yet',
       emptyTopicsHint:
-        'Go to the "Assessments" tab and pick the matching BAFS topic for a test / exam to see weaknesses here.',
+        'Go to the "Assessments" tab and pick the matching topic for a test / exam to see weaknesses here.',
       emptyRankingTitle: 'The leaderboard hasn’t kicked off',
       emptyRankingHint:
         'Once scores are entered, the class ranking will be sorted out right away.',
@@ -136,7 +136,7 @@ i18n.addResourceBundle(
       // ── Topics ──
       topicsHeading: 'Performance by topic (weakest to strongest)',
       topicsHint:
-        'Link assessments to BAFS topics (in the Assessments tab) to see topic-level strengths and weaknesses here.',
+        'Link assessments to topics (in the Assessments tab) to see topic-level strengths and weaknesses here.',
       topicUncategorized: 'Uncategorised',
 
       // ── Ranking ──

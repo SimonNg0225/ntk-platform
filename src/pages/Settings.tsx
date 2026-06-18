@@ -352,6 +352,7 @@ export default function Settings() {
             onChange={(e) => setSubjectPackId(e.target.value)}
             className="w-full rounded-lg border border-[color:var(--border)] bg-[color:var(--surface)] px-3 py-2 text-base sm:text-sm text-slate-800 outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/30 dark:text-slate-100"
           >
+            <option value="">未指定（全 app 顯示中性字眼）</option>
             {SUBJECT_PACKS.map((p) => (
               <option key={p.id} value={p.id}>
                 {p.name}
@@ -360,10 +361,12 @@ export default function Settings() {
           </select>
         </Field>
         <div className="mt-3 flex flex-col gap-2 sm:flex-row">
-          <Button variant="ghost" onClick={() => applySubject('append')}>
+          <Button variant="ghost" disabled={!subjectPackId} onClick={() => applySubject('append')}>
             附加此科課題
           </Button>
-          <Button onClick={() => applySubject('replace')}>智能切換做此科</Button>
+          <Button disabled={!subjectPackId} onClick={() => applySubject('replace')}>
+            智能切換做此科
+          </Button>
         </div>
         <p className="mt-2 text-xs text-slate-400 dark:text-slate-500">
           起始大綱為精簡模板，未必涵蓋官方課程全部細項，可自行調整。
