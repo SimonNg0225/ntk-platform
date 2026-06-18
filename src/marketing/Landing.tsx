@@ -5,9 +5,6 @@ import { motion, useReducedMotion, type Variants } from 'framer-motion'
 import {
   ClipboardList,
   FileText,
-  TrendingUp,
-  CalendarDays,
-  MessagesSquare,
   Sparkles,
   Presentation,
   Highlighter,
@@ -16,6 +13,7 @@ import {
   ShieldCheck,
   Cloud,
   ArrowRight,
+  Bell,
   Loader2,
   type LucideIcon,
 } from 'lucide-react'
@@ -26,11 +24,11 @@ import { track } from '../lib/observability'
 // ============================================================
 //  商業化 · 行銷首頁（Landing）—— 對象：全港老師
 //  ------------------------------------------------------------
-//  「作業簿・改簿」風（editorial）：襯線標題、橫間線紙、主題色筆圈重點、
-//  「閱」印章、✓ 評改記號。配色全用 token（--accent / --surface …），
-//  自動跟 ModeContext 主題色同深／淺色模式；動態用 framer-motion，
-//  並尊重「減少動態」(prefers-reduced-motion)。
-//  產品入口 '/app'，定價 '/pricing'。
+//  Hero =「改簿枱面 + 課堂時間表」：左邊一張白紙（sans 標題跟功能頁 + 鋼藍底線 +
+//  紅筆感 ✓ 清單 + 靛藍「閱」印），右邊一張真‧課堂表做產品預覽，貼住
+//  黃調便利貼。配色用 hero 專用鋼藍盤（--hero-*，高級藍白、自帶深色），
+//  其餘版塊續用 --accent / --surface token。動態用 framer-motion，
+//  並尊重「減少動態」(prefers-reduced-motion)。產品入口 '/app'，定價 '/pricing'。
 // ============================================================
 
 // icon + i18n key（文案喺 src/i18n）
@@ -49,6 +47,9 @@ const TRUST_ITEMS: { icon: LucideIcon; k: string }[] = [
   { icon: FileText, k: 'a11y' },
 ]
 
+// hero 紙面 ✓ 清單：六大功能（i18n hero.ck1..6）
+const CHECK_KEYS = ['ck1', 'ck2', 'ck3', 'ck4', 'ck5', 'ck6'] as const
+
 // 手繪感 ✓（評改記號）；color 預設跟主題色。
 function PenTick({ className = '', color = 'var(--accent)' }: { className?: string; color?: string }) {
   return (
@@ -58,39 +59,27 @@ function PenTick({ className = '', color = 'var(--accent)' }: { className?: stri
   )
 }
 
-// 紅筆圈（跟主題色）：橢圓 + 一道底線 swash，雙筆畫由 pathLength 畫出。
-function PenCircle({ reduce }: { reduce: boolean }) {
-  const draw = (delay: number): Variants => ({
-    hidden: { pathLength: reduce ? 1 : 0, opacity: reduce ? 1 : 0 },
-    show: {
-      pathLength: 1,
-      opacity: 1,
-      transition: { pathLength: { duration: reduce ? 0 : 0.85, delay: reduce ? 0 : delay, ease: 'easeInOut' }, opacity: { duration: 0.01, delay: reduce ? 0 : delay } },
-    },
-  })
+// 鋼藍手繪底線：一道波浪 stroke 喺重點字下面，由左至右畫出（pathLength）。
+function SteelUnderline({ reduce }: { reduce: boolean }) {
   return (
     <svg
-      viewBox="0 0 300 104"
+      viewBox="0 0 260 12"
       preserveAspectRatio="none"
       aria-hidden
-      className="pointer-events-none absolute left-[-13px] top-[-10px] h-[calc(100%+22px)] w-[calc(100%+26px)] overflow-visible"
+      className="pointer-events-none absolute -bottom-2 left-0 h-[11px] w-full overflow-visible"
     >
       <motion.path
-        d="M40 54 C 10 24, 130 9, 214 13 C 288 17, 298 44, 280 64 C 260 86, 138 94, 70 87 C 18 81, 12 58, 46 44"
+        d="M3 7 Q 66 2 130 6 T 257 5"
         fill="none"
-        stroke="var(--accent)"
+        stroke="var(--hero-steel)"
         strokeWidth={3}
         strokeLinecap="round"
-        variants={draw(0.95)}
-      />
-      <motion.path
-        d="M30 96 C 110 89, 198 93, 282 86"
-        fill="none"
-        stroke="var(--accent)"
-        strokeWidth={2.4}
-        strokeLinecap="round"
-        opacity={0.55}
-        variants={draw(1.5)}
+        initial={{ pathLength: reduce ? 1 : 0, opacity: reduce ? 1 : 0 }}
+        animate={{ pathLength: 1, opacity: 1 }}
+        transition={{
+          pathLength: { duration: reduce ? 0 : 0.85, delay: reduce ? 0 : 0.7, ease: 'easeInOut' },
+          opacity: { duration: 0.01, delay: reduce ? 0 : 0.7 },
+        }}
       />
     </svg>
   )
@@ -187,10 +176,10 @@ export default function Landing() {
       >
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-3.5">
           <div className="flex items-center gap-2.5">
-            <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-accent font-serif text-base font-bold text-white shadow-sm">
+            <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-accent text-base font-bold text-white shadow-sm">
               E
             </span>
-            <span className="font-serif text-[17px] font-bold tracking-tight">
+            <span className="text-[17px] font-bold tracking-tight">
               {t('shell.brandName', { defaultValue: '教學易' })}
             </span>
           </div>
@@ -211,96 +200,140 @@ export default function Landing() {
         </div>
       </motion.header>
 
-      {/* Hero — 作業簿頁：橫間線 + margin 線 + 主題色筆圈重點 + 印章 */}
-      <section className="relative mx-auto max-w-6xl overflow-hidden px-6 pb-20 pt-16 sm:pt-24">
-        {/* 極淡主題色光暈（color-mix，深淺色都啱） */}
+      {/* Hero — 改簿枱面 + 課堂時間表（鋼藍藍白） */}
+      <section className="relative overflow-hidden" style={{ background: 'var(--hero-mist)' }}>
+        {/* 冷調鋼藍光暈 */}
         <div
           aria-hidden
           className="pointer-events-none absolute inset-0"
           style={{
             background:
-              'radial-gradient(115% 72% at 88% -10%, color-mix(in srgb, var(--accent) 9%, transparent), transparent 62%)',
+              'radial-gradient(120% 80% at 85% -8%, color-mix(in srgb, var(--hero-steel) 13%, transparent), transparent 60%)',
           }}
         />
-        {/* 作業簿橫間線（跟邊框 token，深淺色自適應） */}
+        {/* 極淡網格質感（頂部顯、向下淡出） */}
         <div
           aria-hidden
           className="pointer-events-none absolute inset-0"
           style={{
             backgroundImage:
-              'repeating-linear-gradient(to bottom, transparent 0 38px, var(--border) 38px 39px)',
-            opacity: 0.65,
+              'linear-gradient(var(--hero-line) 1px, transparent 1px), linear-gradient(90deg, var(--hero-line) 1px, transparent 1px)',
+            backgroundSize: '34px 34px',
+            maskImage: 'radial-gradient(125% 85% at 50% 0%, #000, transparent 72%)',
+            WebkitMaskImage: 'radial-gradient(125% 85% at 50% 0%, #000, transparent 72%)',
           }}
         />
-        {/* 左 margin 線（跟主題色）+ 頂部紙釘點 */}
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-y-0 left-3 w-[2px] sm:left-[58px]"
-          style={{ background: 'var(--accent)', opacity: 0.3 }}
-        />
-        <div
-          aria-hidden
-          className="pointer-events-none absolute left-[7px] top-6 h-2 w-2 rounded-full sm:left-[54px]"
-          style={{ background: 'var(--accent)', opacity: 0.55 }}
-        />
 
-        <div className="relative grid items-center gap-x-12 gap-y-14 lg:grid-cols-[1.05fr_0.95fr]">
-          {/* 文案 */}
-          <motion.div variants={container} initial="hidden" animate="show">
-            <motion.span
-              variants={item}
-              className="inline-flex items-center gap-2 rounded-full border border-[color:var(--border)] bg-[color:var(--surface)] px-3.5 py-1.5 font-serif text-sm italic text-accent-strong shadow-xs dark:text-accent"
-            >
-              <PenTick className="h-[17px] w-[17px]" />
-              {t('hero.badge')}
-            </motion.span>
-
-            <motion.h1
-              variants={item}
-              className="mt-6 font-serif text-[2.6rem] font-bold leading-[1.14] tracking-tight sm:text-[3.4rem] sm:leading-[1.1]"
-            >
-              <span className="block">{line1}</span>
-              <span className="block whitespace-normal sm:whitespace-nowrap">
-                {line2pre}
-                <span className="relative inline-block text-accent">
-                  {h1accent}
-                  <PenCircle reduce={reduce} />
-                </span>
-              </span>
-            </motion.h1>
-
-            <motion.p
-              variants={item}
-              className="mt-7 max-w-xl text-base leading-[1.85] text-[color:var(--text-secondary)] sm:text-[17px]"
-            >
-              {t('hero.sub')}
-            </motion.p>
-
-            <motion.div variants={item} className="mt-9 flex flex-col gap-3 sm:flex-row">
-              <Link
-                to="/app"
-                onClick={() => track('landing_cta_click', { target: 'hero' })}
-                className="inline-flex items-center justify-center gap-2 rounded-full bg-accent px-7 py-3.5 font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-accent-strong hover:shadow-md active:translate-y-0"
+        <div className="relative mx-auto max-w-6xl px-6 pb-24 pt-16 sm:pt-24">
+          <div className="grid items-center gap-x-10 gap-y-14 lg:grid-cols-[1.04fr_0.96fr]">
+            {/* 左：改簿紙面 */}
+            <motion.div variants={container} initial="hidden" animate="show" className="relative">
+              <div
+                className="relative rounded-[14px] border px-7 py-8 shadow-overlay sm:-rotate-[0.6deg] sm:px-10 sm:py-11"
+                style={{ background: 'var(--hero-paper)', borderColor: 'var(--hero-paper-border)' }}
               >
-                {user ? t('hero.ctaEnter') : t('hero.ctaStart')}
-                <ArrowRight size={18} strokeWidth={2} />
-              </Link>
-              <Link
-                to="/pricing"
-                className="inline-flex items-center justify-center rounded-full border-2 border-[color:var(--border-strong)] px-7 py-3.5 font-semibold text-[color:var(--text-secondary)] transition hover:-translate-y-0.5 hover:border-accent hover:text-accent"
+                {/* 紙張左 margin 線 */}
+                <div
+                  aria-hidden
+                  className="pointer-events-none absolute inset-y-6 left-4 w-[2px] sm:left-6"
+                  style={{ background: 'var(--hero-margin)' }}
+                />
+                <div className="sm:pl-5">
+                  <motion.span
+                    variants={item}
+                    className="inline-flex items-center gap-2 rounded-full px-3 py-1 text-sm font-medium"
+                    style={{ background: 'var(--hero-chip-bg)', color: 'var(--hero-steel)' }}
+                  >
+                    <PenTick className="h-[16px] w-[16px]" color="var(--hero-steel)" />
+                    {t('hero.badge')}
+                  </motion.span>
+
+                  <motion.h1
+                    variants={item}
+                    className="mt-5 text-[1.95rem] font-semibold leading-[1.18] tracking-tight sm:text-[3.05rem] sm:leading-[1.1]"
+                    style={{ color: 'var(--hero-ink)' }}
+                  >
+                    <span className="block">{line1}</span>
+                    <span className="block whitespace-normal sm:whitespace-nowrap">
+                      {line2pre}
+                      <span className="relative inline-block" style={{ color: 'var(--hero-steel)' }}>
+                        {h1accent}
+                        <SteelUnderline reduce={reduce} />
+                      </span>
+                    </span>
+                  </motion.h1>
+
+                  <motion.p variants={item} className="mt-6 text-[15px]" style={{ color: 'var(--hero-slate)' }}>
+                    {t('hero.checkLead')}
+                  </motion.p>
+
+                  {/* ✓ 清單：六大功能，鋼藍手繪打勾 */}
+                  <motion.ul variants={item} className="mt-3 grid grid-cols-2 gap-x-6 gap-y-2.5">
+                    {CHECK_KEYS.map((k) => (
+                      <li
+                        key={k}
+                        className="flex items-center gap-2 text-[15px] font-medium"
+                        style={{ color: 'var(--hero-ink)' }}
+                      >
+                        <PenTick className="h-[17px] w-[17px] flex-none" color="var(--hero-steel)" />
+                        {t(`hero.${k}`)}
+                      </li>
+                    ))}
+                  </motion.ul>
+
+                  <motion.div variants={item} className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
+                    <Link
+                      to="/app"
+                      onClick={() => track('landing_cta_click', { target: 'hero' })}
+                      className="inline-flex items-center justify-center gap-2 rounded-full px-7 py-3.5 font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md active:translate-y-0"
+                      style={{ background: 'var(--hero-btn)' }}
+                    >
+                      {user ? t('hero.ctaEnter') : t('hero.ctaStart')}
+                      <ArrowRight size={18} strokeWidth={2} />
+                    </Link>
+                    <Link
+                      to="/pricing"
+                      className="inline-flex items-center justify-center rounded-full border-2 px-7 py-3.5 font-semibold transition hover:-translate-y-0.5"
+                      style={{
+                        borderColor: 'color-mix(in srgb, var(--hero-steel) 40%, transparent)',
+                        color: 'var(--hero-steel)',
+                      }}
+                    >
+                      {t('hero.ctaPricing')}
+                    </Link>
+                  </motion.div>
+
+                  <motion.p
+                    variants={item}
+                    className="mt-5 flex items-center gap-2 text-sm"
+                    style={{ color: 'var(--hero-muted)' }}
+                  >
+                    <PenTick className="h-[14px] w-[14px]" color="var(--hero-muted)" />
+                    {t('hero.noCard')}
+                  </motion.p>
+                </div>
+              </div>
+
+              {/* 靛藍「閱」印：蓋喺紙右上角 */}
+              <motion.div
+                aria-hidden
+                initial={{ scale: reduce ? 1 : 1.7, opacity: 0, rotate: -32 }}
+                animate={{ scale: 1, opacity: 0.95, rotate: -9 }}
+                transition={reduce ? { duration: 0 } : { delay: 1.5, type: 'spring', stiffness: 260, damping: 13 }}
+                className="absolute -right-1 -top-4 grid h-[62px] w-[62px] place-items-center rounded-[12px] border-[3px] text-3xl font-bold sm:-right-3 sm:-top-5"
+                style={{
+                  borderColor: 'var(--hero-seal)',
+                  color: 'var(--hero-seal)',
+                  background: 'color-mix(in srgb, var(--hero-paper) 62%, transparent)',
+                }}
               >
-                {t('hero.ctaPricing')}
-              </Link>
+                閱
+              </motion.div>
             </motion.div>
 
-            <motion.p variants={item} className="mt-5 flex items-center gap-2 font-serif text-sm italic text-[color:var(--text-muted)]">
-              <PenTick className="h-[15px] w-[15px]" color="var(--text-muted)" />
-              {t('hero.noCard')}
-            </motion.p>
-          </motion.div>
-
-          {/* 產品預覽：批改過嘅迷你工作儀表板 + 「閱」印章 */}
-          <DashboardPreview reduce={reduce} ease={ease} />
+            {/* 右：課堂時間表 */}
+            <TimetablePreview reduce={reduce} ease={ease} />
+          </div>
         </div>
       </section>
 
@@ -308,8 +341,8 @@ export default function Landing() {
       <section className="border-t border-[color:var(--border)] bg-[color:var(--surface)]">
         <div className="mx-auto max-w-6xl px-6 py-20">
           <motion.div {...reveal} variants={item} className="flex items-baseline gap-3">
-            <span className="font-serif text-sm italic text-accent">／</span>
-            <h2 className="font-serif text-sm font-semibold uppercase tracking-[0.18em] text-[color:var(--text-muted)]">
+            <span className="text-sm text-accent">／</span>
+            <h2 className="text-sm font-semibold uppercase tracking-[0.18em] text-[color:var(--text-muted)]">
               {t('featuresTitle')}
             </h2>
           </motion.div>
@@ -326,13 +359,13 @@ export default function Landing() {
                   variants={item}
                   className="group relative bg-[color:var(--surface)] p-7 transition hover:bg-[color:var(--surface-2)]"
                 >
-                  <span className="absolute right-5 top-5 font-serif text-sm italic text-[color:var(--text-muted)]/70">
+                  <span className="absolute right-5 top-5 text-sm font-medium tabular-nums text-[color:var(--text-muted)]/70">
                     {String(i + 1).padStart(2, '0')}
                   </span>
                   <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-accent-soft text-accent-strong transition group-hover:scale-105 dark:bg-accent/15 dark:text-accent">
                     <I size={21} strokeWidth={1.75} />
                   </span>
-                  <h3 className="mt-5 font-serif text-lg font-bold">{t(`f.${f.k}Title`)}</h3>
+                  <h3 className="mt-5 text-lg font-semibold">{t(`f.${f.k}Title`)}</h3>
                   <p className="mt-2 text-sm leading-relaxed text-[color:var(--text-secondary)]">
                     {t(`f.${f.k}Desc`)}
                   </p>
@@ -343,7 +376,7 @@ export default function Landing() {
 
           {/* 仲有更多：長尾功能標籤雲（忠實反映 registry 真實功能） */}
           <motion.div {...reveal} variants={item} className="mt-7">
-            <div className="flex items-center gap-2 font-serif text-sm italic text-accent">
+            <div className="flex items-center gap-2 text-sm text-accent">
               <Sparkles size={16} strokeWidth={1.75} />
               {t('f.moreTitle')}
             </div>
@@ -392,7 +425,7 @@ export default function Landing() {
           }}
         />
         <div className="relative">
-          <h2 className="font-serif text-3xl font-bold tracking-tight sm:text-4xl">{t('ctaTitle')}</h2>
+          <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">{t('ctaTitle')}</h2>
           <p className="mt-4 text-[color:var(--text-secondary)]">{t('ctaSub')}</p>
           <Link
             to="/app"
@@ -421,108 +454,85 @@ export default function Landing() {
   )
 }
 
-// 產品預覽：純 CSS 迷你工作儀表板，鏡像真實 app 介面，加咗「改簿」記號。純裝飾，aria-hidden。
-const PREVIEW_KPIS: { label: string; value: string; unit: string; icon: LucideIcon; tint?: string }[] = [
-  { label: '未完成待辦', value: '6', unit: '件', icon: ClipboardList },
-  { label: '今日課堂', value: '4', unit: '節', icon: CalendarDays },
-  { label: '出席率', value: '97', unit: '%', icon: TrendingUp, tint: 'var(--success)' },
-  { label: '待跟進家長', value: '2', unit: '位', icon: MessagesSquare },
+// 產品預覽：課堂時間表（六大功能擺入堂節，「現正一節」實色鋼藍跳出）+ 改簿便利貼。純裝飾。
+const TIMETABLE: { period: string; time: string; label: string; tone: 'soft' | 'soft2' | 'active' }[] = [
+  { period: '第一節', time: '08:30', label: '備課', tone: 'soft' },
+  { period: '第二節', time: '09:25', label: '教案', tone: 'soft2' },
+  { period: '第三節', time: '10:40', label: '教學簡報', tone: 'active' },
+  { period: '午息', time: '', label: '改簿存檔', tone: 'soft' },
+  { period: '第四節', time: '13:30', label: '會議記錄', tone: 'soft2' },
+  { period: '放學', time: '', label: '掃描存檔', tone: 'soft' },
 ]
 
-const PREVIEW_AGENDA: { time: string; label: string; tick: string }[] = [
-  { time: '09:15', label: '5A 課堂 · 會計入門', tick: 'var(--success)' },
-  { time: '11:00', label: '交 5B 測驗評分', tick: 'var(--accent)' },
-  { time: '14:30', label: '家長會面 · 陳同學', tick: 'var(--warning)' },
-]
-
-function DashboardPreview({ reduce, ease }: { reduce: boolean; ease: [number, number, number, number] }) {
+function TimetablePreview({ reduce, ease }: { reduce: boolean; ease: [number, number, number, number] }) {
   return (
     <motion.div
       aria-hidden
-      initial={{ opacity: 0, y: reduce ? 0 : 20 }}
+      initial={{ opacity: 0, y: reduce ? 0 : 22 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: reduce ? 0 : 0.7, delay: reduce ? 0 : 0.45, ease }}
+      transition={{ duration: reduce ? 0 : 0.7, delay: reduce ? 0 : 0.4, ease }}
       className="relative hidden lg:block"
     >
-      <div className="overflow-hidden rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface)] shadow-overlay">
-        {/* 視窗列 */}
-        <div className="flex items-center gap-1.5 border-b border-[color:var(--border)] bg-[color:var(--surface-2)] px-4 py-2.5">
-          <span className="h-2.5 w-2.5 rounded-full bg-[color:var(--border-strong)]" />
-          <span className="h-2.5 w-2.5 rounded-full bg-[color:var(--border-strong)]" />
-          <span className="h-2.5 w-2.5 rounded-full bg-[color:var(--border-strong)]" />
-          <span className="ml-3 font-serif text-[12px] italic text-[color:var(--text-muted)]">工作儀表板</span>
+      <div
+        className="overflow-hidden rounded-[14px] border shadow-overlay lg:rotate-[0.8deg]"
+        style={{ background: 'var(--hero-paper)', borderColor: 'var(--hero-paper-border)' }}
+      >
+        {/* 頂欄：課鐘 */}
+        <div className="flex items-center gap-2 px-4 py-3 text-white" style={{ background: 'var(--hero-bar)' }}>
+          <Bell size={15} strokeWidth={2} />
+          <span className="text-[13px] font-semibold tracking-wide">今日課堂表</span>
+          <span className="ml-auto text-[11px] text-white/70">星期一</span>
         </div>
-
-        <div className="space-y-3 p-4">
-          {/* hero 條 */}
-          <div className="flex items-center justify-between rounded-xl bg-accent px-4 py-3.5 text-white">
-            <div>
-              <p className="text-[10px] text-white/70">星期三 · 5 月 7 日</p>
-              <p className="font-serif text-[15px] font-bold">早晨，陳老師</p>
-            </div>
-            <div className="text-right">
-              <p className="font-serif text-xl font-bold leading-none">2/4</p>
-              <p className="mt-0.5 text-[10px] text-white/70">今日課堂</p>
-            </div>
-          </div>
-
-          {/* KPI 磚 */}
-          <div className="grid grid-cols-2 gap-2.5">
-            {PREVIEW_KPIS.map((k) => {
-              const I = k.icon
-              return (
-                <div
-                  key={k.label}
-                  className="rounded-xl border border-[color:var(--border)] bg-[color:var(--surface)] p-3 transition hover:border-[color:var(--border-strong)]"
+        <ul>
+          {TIMETABLE.map((r, i) => (
+            <li
+              key={r.period}
+              className="flex items-center justify-between px-4 py-3"
+              style={{
+                borderTop: i === 0 ? 'none' : '1px solid var(--hero-line)',
+                background: r.tone === 'active' ? 'color-mix(in srgb, var(--hero-steel) 8%, transparent)' : 'transparent',
+              }}
+            >
+              <span className="flex items-baseline gap-2">
+                <span
+                  className="text-[12.5px] font-medium"
+                  style={{ color: r.tone === 'active' ? 'var(--hero-steel)' : 'var(--hero-muted)' }}
                 >
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-medium text-[color:var(--text-muted)]">{k.label}</span>
-                    <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
-                      <I size={13} strokeWidth={1.75} />
-                    </span>
-                  </div>
-                  <p className="mt-2 flex items-baseline gap-0.5">
-                    <span
-                      className="font-serif text-2xl font-bold leading-none"
-                      style={k.tint ? { color: k.tint } : { color: 'var(--text)' }}
-                    >
-                      {k.value}
-                    </span>
-                    <span className="text-[10px] font-medium text-[color:var(--text-muted)]">{k.unit}</span>
-                  </p>
-                </div>
-              )
-            })}
-          </div>
-
-          {/* 今日議程 */}
-          <div className="rounded-xl border border-[color:var(--border)] bg-[color:var(--surface)] p-3.5">
-            <p className="mb-2.5 font-serif text-[11px] italic text-[color:var(--text-muted)]">今日議程</p>
-            <ul className="space-y-2">
-              {PREVIEW_AGENDA.map((a) => (
-                <li key={a.time} className="flex items-center gap-2.5">
-                  <span className="w-9 text-right font-serif text-[11px] font-semibold text-[color:var(--text-secondary)]">
-                    {a.time}
+                  {r.period}
+                </span>
+                {r.time && (
+                  <span className="text-[11px] tabular-nums" style={{ color: 'var(--hero-muted)' }}>
+                    {r.time}
                   </span>
-                  <PenTick className="h-[15px] w-[15px] flex-none" color={a.tick} />
-                  <span className="truncate text-xs text-[color:var(--text-secondary)]">{a.label}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
+                )}
+              </span>
+              <span
+                className="rounded-lg px-2.5 py-1 text-[12px] font-semibold"
+                style={
+                  r.tone === 'active'
+                    ? { background: 'var(--hero-btn)', color: '#fff' }
+                    : {
+                        background: r.tone === 'soft2' ? 'var(--hero-chip-bg2)' : 'var(--hero-chip-bg)',
+                        color: 'var(--hero-chip-ink)',
+                      }
+                }
+              >
+                {r.label}
+              </span>
+            </li>
+          ))}
+        </ul>
       </div>
 
-      {/* 「閱」印章：蓋喺卡右下角，半露出、旋轉 */}
+      {/* 改簿便利貼：蓋喺右下角 */}
       <motion.div
-        aria-hidden
-        initial={{ scale: reduce ? 1 : 1.7, opacity: 0, rotate: -34 }}
-        animate={{ scale: 1, opacity: 0.92, rotate: -12 }}
-        transition={reduce ? { duration: 0 } : { delay: 1.6, type: 'spring', stiffness: 260, damping: 13 }}
-        className="absolute -bottom-5 -right-3 grid h-[78px] w-[78px] place-items-center rounded-full border-[3px] border-double text-accent"
-        style={{ borderColor: 'var(--accent)', background: 'color-mix(in srgb, var(--surface) 86%, transparent)' }}
+        initial={{ opacity: 0, scale: reduce ? 1 : 0.8, rotate: reduce ? 5 : 14 }}
+        animate={{ opacity: 1, scale: 1, rotate: 5 }}
+        transition={reduce ? { duration: 0 } : { delay: 1.2, type: 'spring', stiffness: 240, damping: 14 }}
+        className="absolute -bottom-5 -right-4 rounded-[3px] px-3.5 py-2 text-[13px] font-semibold shadow-sm"
+        style={{ background: 'var(--hero-sticky-bg)', color: 'var(--hero-sticky-ink)' }}
       >
-        <span className="font-serif text-3xl font-black">閱</span>
+        今日改 32 本 ✓
       </motion.div>
     </motion.div>
   )
