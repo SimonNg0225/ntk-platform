@@ -188,7 +188,7 @@ export default function SlotEditor({
                 type="text"
                 value={d.subject}
                 onChange={(e) => patch({ subject: e.target.value })}
-                placeholder="例如：BAFS（會計）"
+                placeholder="例如：中文、數學"
               />
             </Field>
 

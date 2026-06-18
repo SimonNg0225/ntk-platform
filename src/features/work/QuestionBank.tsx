@@ -35,6 +35,7 @@ import {
 import { useCollection } from '../../lib/store'
 import { useToast } from '../../context/ToastContext'
 import { useConfirm } from '../../context/ConfirmContext'
+import { useSubjectLabel } from '../../context/SettingsContext'
 import { useNav } from '../../context/NavContext'
 import { questionsCol, topicsCol, papersCol, type SavedPaper } from '../../data/collections'
 import type { Difficulty, Question, QuestionType } from '../../data/types'
@@ -284,6 +285,7 @@ export default function QuestionBank() {
   const toast = useToast()
   const confirm = useConfirm()
   const nav = useNav()
+  const subj = useSubjectLabel()
   const questions = useCollection(questionsCol)
   const topics = useCollection(topicsCol)
 
@@ -454,7 +456,7 @@ export default function QuestionBank() {
           aria-hidden
           className="pointer-events-none absolute -right-6 top-3 hidden -rotate-6 select-none rounded-xl border-2 border-dashed border-accent/20 px-4 py-2 text-xs font-semibold uppercase tracking-[0.25em] text-accent/25 dark:border-accent/25 dark:text-accent/25 sm:block"
         >
-          BAFS · 校本評核
+          {subj.short} · 校本評核
         </span>
         <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-4">
           <div className="min-w-0">
@@ -463,7 +465,7 @@ export default function QuestionBank() {
               考評檔案 · Assessment Bank
             </p>
             <h1 className="mt-1.5 text-[28px] font-semibold leading-none tracking-tight text-slate-800 dark:text-slate-100 sm:text-[34px]">
-              BAFS 題庫
+              {subj.short} 題庫
             </h1>
             <p className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-slate-500 dark:text-slate-400">
               <span className="tabular-nums">
@@ -1250,6 +1252,9 @@ function PaperStudio({
   const toast = useToast()
   const confirm = useConfirm()
   const papers = useCollection(papersCol)
+  const subj = useSubjectLabel()
+  // 預設卷名：跟任教科目（未指定就唔加科名前綴）
+  const defaultPaperTitle = subj.chosen ? `${subj.short} 自擬試卷` : '自擬試卷'
 
   const [mode, setMode] = useState<'manual' | 'auto'>('manual')
   const [picked, setPicked] = useState<string[]>([]) // 有序題目 id
@@ -1322,7 +1327,7 @@ function PaperStudio({
       return
     }
     papersCol.add({
-      title: meta.title.trim() || 'BAFS 自擬試卷',
+      title: meta.title.trim() || defaultPaperTitle,
       className: meta.className.trim(),
       durationMin: meta.durationMin.trim(),
       questionIds: picked,
@@ -1388,7 +1393,7 @@ function PaperStudio({
             <Input
               value={meta.title}
               onChange={(e) => setMeta((m) => ({ ...m, title: e.target.value }))}
-              placeholder="BAFS 自擬試卷"
+              placeholder={defaultPaperTitle}
             />
           </Field>
           <Field label="班別">
@@ -1600,7 +1605,7 @@ function PaperStudio({
                 卷面預覽
               </p>
               <h3 className="truncate text-base font-semibold text-slate-800 dark:text-slate-100">
-                {meta.title.trim() || 'BAFS 自擬試卷'}
+                {meta.title.trim() || defaultPaperTitle}
               </h3>
             </div>
             <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-500 dark:bg-slate-800 dark:text-slate-400">

@@ -76,6 +76,7 @@ export function QuestionGeneratorModal({
   const toast = useToast()
   const { user } = useAuth()
   const { subjectPackId } = useSettings()
+  const subjectName = getSubjectPack(subjectPackId)?.name
 
   const [topicId, setTopicId] = useState(topics[0]?.id ?? '')
   const [difficulty, setDifficulty] = useState<Difficulty>('medium')
@@ -185,7 +186,7 @@ export function QuestionGeneratorModal({
               <Sparkles size={16} />
             </span>
             <p className="text-xs leading-relaxed text-slate-600 dark:text-slate-300">
-              揀好課題同難度，AI 會幫你草擬一批貼合香港 BAFS 課程嘅
+              揀好課題同難度，AI 會幫你草擬一批貼合香港{subjectName ?? '中學'}課程嘅
               {TYPE_LABEL[kind]}。生成後可以逐條揀返要邊條先加入題庫。
             </p>
           </div>

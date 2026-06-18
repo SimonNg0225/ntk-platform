@@ -284,7 +284,7 @@ export function WorksheetGenerator({
               <span className="font-semibold text-accent-strong dark:text-accent">
                 MC ＋ 短答混合比例
               </span>
-              ，AI 會草擬一份貼香港 BAFS 課程嘅練習。生成後可逐條揀／改，再存入題庫或列印。
+              ，AI 會草擬一份貼香港{subjectName ?? '中學'}課程嘅練習。生成後可逐條揀／改，再存入題庫或列印。
             </p>
           </div>
 

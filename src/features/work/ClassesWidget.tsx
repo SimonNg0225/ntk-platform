@@ -68,6 +68,7 @@ import {
 } from '../../ui'
 import { useToast } from '../../context/ToastContext'
 import { useConfirm } from '../../context/ConfirmContext'
+import { useSubjectLabel } from '../../context/SettingsContext'
 import {
   CLASS_TONES,
   GENDER_META,
@@ -1496,6 +1497,7 @@ function ClassEditor({
 
   const [name, setName] = useState(klass?.name ?? '')
   const [subject, setSubject] = useState(klass?.subject ?? '')
+  const subj = useSubjectLabel()
   const [formTeacher, setFormTeacher] = useState(existing?.formTeacher ?? '')
   const [room, setRoom] = useState(existing?.room ?? '')
   const [term, setTerm] = useState(existing?.term ?? defaultTerm())
@@ -1515,7 +1517,7 @@ function ClassEditor({
     } else {
       const created = classesCol.add({
         name: name.trim(),
-        subject: subject.trim() || 'BAFS（商業管理）',
+        subject: subject.trim() || (subj.chosen ? subj.name : ''),
       })
       id = created.id
     }
@@ -1572,7 +1574,7 @@ function ClassEditor({
               <Input
                 value={subject}
                 onChange={(e) => setSubject(e.target.value)}
-                placeholder="BAFS（商業管理）"
+                placeholder={subj.chosen ? subj.name : '科目 / 組別（選填）'}
               />
             </Field>
           </div>

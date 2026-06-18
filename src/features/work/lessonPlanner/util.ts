@@ -78,7 +78,7 @@ export const planTemplatesCol = createCollection<PlanTemplate>(
   [
     {
       id: 'tpl-bafs-standard',
-      name: 'BAFS 標準課堂（三段式 55 分鐘）',
+      name: '標準課堂（三段式 55 分鐘）',
       objectives:
         '1. 學生能說明本課核心概念\n2. 學生能應用概念分析香港營商個案\n3. 學生能完成相關練習',
       phases: PHASE_PRESETS.map((p, i) => ({

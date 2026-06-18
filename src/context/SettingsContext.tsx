@@ -14,7 +14,7 @@ import {
   COMPACT_DENSITY_CLASS,
   type AppearancePrefs,
 } from '../features/settings/appearancePrefs'
-import { DEFAULT_SUBJECT_PACK_ID } from '../data/subjects'
+import { getSubjectPack } from '../data/subjects'
 
 // ============================================================
 //  設定系統（深色模式、密度、預設模式…）
@@ -32,7 +32,7 @@ interface Settings {
   reduceMotion: boolean
   /** 緊湊密度（可達性偏好；預設關＝行為不變，套 .density-compact） */
   compactDensity: boolean
-  /** 任教科目包 id（驅動課題大綱 / 教學 AI 語境）；預設 BAFS */
+  /** 任教科目包 id（驅動課題大綱 / 教學 AI 語境）；'' = 未指定（全 app 顯示中性字眼） */
   subjectPackId: string
 }
 
@@ -56,7 +56,7 @@ const DEFAULTS: Settings = {
   theme: 'system',
   displayName: '',
   lastBackupAt: null,
-  subjectPackId: DEFAULT_SUBJECT_PACK_ID,
+  subjectPackId: '', // 未指定 —— 出廠唔預設任何科目，用戶喺設定 / onboarding 自己揀
   ...APPEARANCE_DEFAULTS,
 }
 
@@ -159,4 +159,23 @@ export function useSettings(): SettingsApi {
   const ctx = useContext(SettingsContext)
   if (!ctx) throw new Error('useSettings 必須喺 <SettingsProvider> 入面用')
   return ctx
+}
+
+/**
+ * 任教科目顯示名（跟設定）。未指定（'' / 找唔到 / custom）時回中性「本科」，
+ * 全 app 用嚟取代寫死嘅科目字眼（如「BAFS」），跟用戶揀嘅科目客製化。
+ *   · name  完整科名（如「化學」「企會財（會計範疇）」）
+ *   · short 簡短科名（如「化學」「BAFS會計」）
+ *   · chosen 用戶有冇揀到具體科（custom / 未揀 = false）
+ */
+// eslint-disable-next-line react-refresh/only-export-components
+export function useSubjectLabel(): { name: string; short: string; chosen: boolean } {
+  const { subjectPackId } = useSettings()
+  const pack = subjectPackId ? getSubjectPack(subjectPackId) : undefined
+  const chosen = !!pack && pack.id !== 'custom'
+  return {
+    name: chosen ? pack!.name : '本科',
+    short: chosen ? pack!.short : '本科',
+    chosen,
+  }
 }

@@ -929,7 +929,7 @@ export default function LessonPlanner() {
             <div className="mb-3 flex items-center justify-between gap-2">
               <div className="min-w-0">
                 <h3 className="text-lg font-semibold tracking-tight text-slate-800 dark:text-slate-100">
-                  BAFS 課程覆蓋率
+                  {subjectName ?? '本科'} 課程覆蓋率
                 </h3>
                 <p className="mt-0.5 text-xs text-slate-400 dark:text-slate-500">
                   按課題範疇統計：已授課 / 已備課 / 全部課題
@@ -977,7 +977,7 @@ export default function LessonPlanner() {
                         全部課題都已備課，好齊整！
                       </p>
                       <p className="text-xs text-slate-400 dark:text-slate-500">
-                        整個 BAFS 課程都有對應教案了。
+                        整個{subjectName ?? '本科'}課程都有對應教案了。
                       </p>
                     </div>
                   ) : (

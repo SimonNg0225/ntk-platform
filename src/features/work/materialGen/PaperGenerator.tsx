@@ -306,7 +306,7 @@ export function PaperGenerator({ topics, onClose, onSaved }: PaperGeneratorProps
       return
     }
     const paper = papersCol.add({
-      title: title.trim() || 'BAFS 自擬試卷',
+      title: title.trim() || (subjectName ? `${subjectName} 自擬試卷` : '自擬試卷'),
       className: className.trim(),
       durationMin: durationMin.trim(),
       questionIds: outcome.questionIds,
@@ -416,6 +416,7 @@ function SetupView(props: {
   onBuild: () => void
   onClose: () => void
 }) {
+  const subjectName = getSubjectPack(useSettings().subjectPackId)?.name
   const {
     topics,
     title,
@@ -462,7 +463,7 @@ function SetupView(props: {
           <Input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="例如：BAFS 第一次測驗"
+            placeholder={subjectName ? `例如：${subjectName} 第一次測驗` : '例如：第一次測驗'}
             disabled={busy}
           />
         </Field>
