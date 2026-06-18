@@ -24,7 +24,7 @@ import { track } from '../lib/observability'
 // ============================================================
 //  商業化 · 行銷首頁（Landing）—— 對象：全港老師
 //  ------------------------------------------------------------
-//  Hero =「改簿枱面 + 課堂時間表」：左邊一張白紙（襯線標題 + 鋼藍底線 +
+//  Hero =「改簿枱面 + 課堂時間表」：左邊一張白紙（sans 標題跟功能頁 + 鋼藍底線 +
 //  紅筆感 ✓ 清單 + 靛藍「閱」印），右邊一張真‧課堂表做產品預覽，貼住
 //  黃調便利貼。配色用 hero 專用鋼藍盤（--hero-*，高級藍白、自帶深色），
 //  其餘版塊續用 --accent / --surface token。動態用 framer-motion，
@@ -176,10 +176,10 @@ export default function Landing() {
       >
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-3.5">
           <div className="flex items-center gap-2.5">
-            <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-accent font-serif text-base font-bold text-white shadow-sm">
+            <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-accent text-base font-bold text-white shadow-sm">
               E
             </span>
-            <span className="font-serif text-[17px] font-bold tracking-tight">
+            <span className="text-[17px] font-bold tracking-tight">
               {t('shell.brandName', { defaultValue: '教學易' })}
             </span>
           </div>
@@ -241,7 +241,7 @@ export default function Landing() {
                 <div className="sm:pl-5">
                   <motion.span
                     variants={item}
-                    className="inline-flex items-center gap-2 rounded-full px-3 py-1 font-serif text-sm italic"
+                    className="inline-flex items-center gap-2 rounded-full px-3 py-1 text-sm font-medium"
                     style={{ background: 'var(--hero-chip-bg)', color: 'var(--hero-steel)' }}
                   >
                     <PenTick className="h-[16px] w-[16px]" color="var(--hero-steel)" />
@@ -250,7 +250,7 @@ export default function Landing() {
 
                   <motion.h1
                     variants={item}
-                    className="mt-5 font-serif text-[1.95rem] font-bold leading-[1.18] tracking-tight sm:text-[3.05rem] sm:leading-[1.1]"
+                    className="mt-5 text-[1.95rem] font-semibold leading-[1.18] tracking-tight sm:text-[3.05rem] sm:leading-[1.1]"
                     style={{ color: 'var(--hero-ink)' }}
                   >
                     <span className="block">{line1}</span>
@@ -305,7 +305,7 @@ export default function Landing() {
 
                   <motion.p
                     variants={item}
-                    className="mt-5 flex items-center gap-2 font-serif text-sm italic"
+                    className="mt-5 flex items-center gap-2 text-sm"
                     style={{ color: 'var(--hero-muted)' }}
                   >
                     <PenTick className="h-[14px] w-[14px]" color="var(--hero-muted)" />
@@ -320,7 +320,7 @@ export default function Landing() {
                 initial={{ scale: reduce ? 1 : 1.7, opacity: 0, rotate: -32 }}
                 animate={{ scale: 1, opacity: 0.95, rotate: -9 }}
                 transition={reduce ? { duration: 0 } : { delay: 1.5, type: 'spring', stiffness: 260, damping: 13 }}
-                className="absolute -right-1 -top-4 grid h-[62px] w-[62px] place-items-center rounded-[12px] border-[3px] font-serif text-3xl font-black sm:-right-3 sm:-top-5"
+                className="absolute -right-1 -top-4 grid h-[62px] w-[62px] place-items-center rounded-[12px] border-[3px] text-3xl font-bold sm:-right-3 sm:-top-5"
                 style={{
                   borderColor: 'var(--hero-seal)',
                   color: 'var(--hero-seal)',
@@ -341,8 +341,8 @@ export default function Landing() {
       <section className="border-t border-[color:var(--border)] bg-[color:var(--surface)]">
         <div className="mx-auto max-w-6xl px-6 py-20">
           <motion.div {...reveal} variants={item} className="flex items-baseline gap-3">
-            <span className="font-serif text-sm italic text-accent">／</span>
-            <h2 className="font-serif text-sm font-semibold uppercase tracking-[0.18em] text-[color:var(--text-muted)]">
+            <span className="text-sm text-accent">／</span>
+            <h2 className="text-sm font-semibold uppercase tracking-[0.18em] text-[color:var(--text-muted)]">
               {t('featuresTitle')}
             </h2>
           </motion.div>
@@ -359,13 +359,13 @@ export default function Landing() {
                   variants={item}
                   className="group relative bg-[color:var(--surface)] p-7 transition hover:bg-[color:var(--surface-2)]"
                 >
-                  <span className="absolute right-5 top-5 font-serif text-sm italic text-[color:var(--text-muted)]/70">
+                  <span className="absolute right-5 top-5 text-sm font-medium tabular-nums text-[color:var(--text-muted)]/70">
                     {String(i + 1).padStart(2, '0')}
                   </span>
                   <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-accent-soft text-accent-strong transition group-hover:scale-105 dark:bg-accent/15 dark:text-accent">
                     <I size={21} strokeWidth={1.75} />
                   </span>
-                  <h3 className="mt-5 font-serif text-lg font-bold">{t(`f.${f.k}Title`)}</h3>
+                  <h3 className="mt-5 text-lg font-semibold">{t(`f.${f.k}Title`)}</h3>
                   <p className="mt-2 text-sm leading-relaxed text-[color:var(--text-secondary)]">
                     {t(`f.${f.k}Desc`)}
                   </p>
@@ -376,7 +376,7 @@ export default function Landing() {
 
           {/* 仲有更多：長尾功能標籤雲（忠實反映 registry 真實功能） */}
           <motion.div {...reveal} variants={item} className="mt-7">
-            <div className="flex items-center gap-2 font-serif text-sm italic text-accent">
+            <div className="flex items-center gap-2 text-sm text-accent">
               <Sparkles size={16} strokeWidth={1.75} />
               {t('f.moreTitle')}
             </div>
@@ -425,7 +425,7 @@ export default function Landing() {
           }}
         />
         <div className="relative">
-          <h2 className="font-serif text-3xl font-bold tracking-tight sm:text-4xl">{t('ctaTitle')}</h2>
+          <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">{t('ctaTitle')}</h2>
           <p className="mt-4 text-[color:var(--text-secondary)]">{t('ctaSub')}</p>
           <Link
             to="/app"
@@ -480,7 +480,7 @@ function TimetablePreview({ reduce, ease }: { reduce: boolean; ease: [number, nu
         {/* 頂欄：課鐘 */}
         <div className="flex items-center gap-2 px-4 py-3 text-white" style={{ background: 'var(--hero-bar)' }}>
           <Bell size={15} strokeWidth={2} />
-          <span className="font-serif text-[13px] font-bold tracking-wide">今日課堂表</span>
+          <span className="text-[13px] font-semibold tracking-wide">今日課堂表</span>
           <span className="ml-auto text-[11px] text-white/70">星期一</span>
         </div>
         <ul>
@@ -501,7 +501,7 @@ function TimetablePreview({ reduce, ease }: { reduce: boolean; ease: [number, nu
                   {r.period}
                 </span>
                 {r.time && (
-                  <span className="font-serif text-[11px]" style={{ color: 'var(--hero-muted)' }}>
+                  <span className="text-[11px] tabular-nums" style={{ color: 'var(--hero-muted)' }}>
                     {r.time}
                   </span>
                 )}
@@ -529,7 +529,7 @@ function TimetablePreview({ reduce, ease }: { reduce: boolean; ease: [number, nu
         initial={{ opacity: 0, scale: reduce ? 1 : 0.8, rotate: reduce ? 5 : 14 }}
         animate={{ opacity: 1, scale: 1, rotate: 5 }}
         transition={reduce ? { duration: 0 } : { delay: 1.2, type: 'spring', stiffness: 240, damping: 14 }}
-        className="absolute -bottom-5 -right-4 rounded-[3px] px-3.5 py-2 font-serif text-[15px] italic shadow-sm"
+        className="absolute -bottom-5 -right-4 rounded-[3px] px-3.5 py-2 text-[13px] font-semibold shadow-sm"
         style={{ background: 'var(--hero-sticky-bg)', color: 'var(--hero-sticky-ink)' }}
       >
         今日改 32 本 ✓
