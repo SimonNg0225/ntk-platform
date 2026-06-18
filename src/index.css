@@ -38,6 +38,26 @@
   --danger: #e11d48; --danger-soft: #fff1f2; --danger-strong: #be123c;
   --info: #2563eb; --info-soft: #eff6ff; --info-strong: #1d4ed8;
 
+  /* hero（行銷首頁）專用鋼藍盤 — 高級藍白；自帶深色覆寫，唔受 ModeContext 影響。
+     鋼藍偏灰、帶少少暖，避開生硬原色藍；改簿枱面 + 課堂表用同一家族深淺。 */
+  --hero-mist: #eef2f8;       /* 冷調霧白枱面 */
+  --hero-paper: #ffffff;      /* 紙／卡面 */
+  --hero-paper-border: rgba(31, 42, 68, 0.12);
+  --hero-ink: #1f2a44;        /* 深海軍墨 — 標題 */
+  --hero-slate: #5c6779;      /* 次要正文 */
+  --hero-muted: #8a93a6;      /* 提示 / 節次時間 */
+  --hero-steel: #3f5d8a;      /* 鋼藍 — 筆畫 / ✓ / 底線 / 文字強調 */
+  --hero-btn: #3f5d8a;        /* 主按鈕填色（白字） */
+  --hero-chip-bg: #eaeff8;    /* 節次 chip 軟底 */
+  --hero-chip-bg2: #eef3fb;
+  --hero-chip-ink: #34507f;
+  --hero-line: rgba(31, 42, 68, 0.08);
+  --hero-margin: rgba(63, 93, 138, 0.3);  /* 紙張左 margin 線 */
+  --hero-seal: #2c3e63;       /* 靛藍「閱」印 */
+  --hero-sticky-bg: #dce6f5;  /* 便利貼 */
+  --hero-sticky-ink: #2c3e63;
+  --hero-bar: #2c3e63;        /* 課堂表頂欄 */
+
   /* type scale（字級/行高）— tailwind fontSize 引用 */
   --fs-2xs: 11px; --lh-2xs: 16px;
   --fs-xs: 12px; --lh-xs: 16px;
@@ -83,6 +103,25 @@ html.dark {
   --warning-soft: rgba(245, 158, 11, 0.15);
   --danger-soft: rgba(225, 29, 72, 0.15);
   --info-soft: rgba(37, 99, 235, 0.15);
+
+  /* hero 鋼藍盤 — 深色（午夜藍紙面） */
+  --hero-mist: #0c1322;
+  --hero-paper: #16213a;
+  --hero-paper-border: rgba(255, 255, 255, 0.1);
+  --hero-ink: #eaf0fb;
+  --hero-slate: #a6b6cf;
+  --hero-muted: #7787a0;
+  --hero-steel: #7d9bcf;
+  --hero-btn: #5577ad;
+  --hero-chip-bg: rgba(125, 155, 207, 0.16);
+  --hero-chip-bg2: rgba(125, 155, 207, 0.1);
+  --hero-chip-ink: #b9cbec;
+  --hero-line: rgba(255, 255, 255, 0.08);
+  --hero-margin: rgba(125, 155, 207, 0.34);
+  --hero-seal: #94aee0;
+  --hero-sticky-bg: #233351;
+  --hero-sticky-ink: #cdddf6;
+  --hero-bar: #34507f;
 
   --shadow-xs: 0 1px 2px rgba(2, 6, 12, 0.4);
   --shadow-sm: 0 1px 2px rgba(2, 6, 12, 0.5), 0 1px 3px rgba(2, 6, 12, 0.4);
