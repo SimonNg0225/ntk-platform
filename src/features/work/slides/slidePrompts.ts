@@ -76,6 +76,28 @@ const PACK_FAVORS: Partial<Record<SlidePackId, PackFavor>> = {
   brutalist: { layouts: ['stats', 'compare'], note: '粗獷大字', density: 'dense' },
 }
 
+// 共用文案規範 —— 直接影響專業感／同 Claude design 嘅差距，最啱拉高弱模型（Flash）。
+const COPY_RULES = [
+  '文案規範（嚴格跟）：',
+  '- 每點只講一個重點，動詞或關鍵詞行先；用短語，唔好完整句、唔好句號。',
+  '- 同一版各要點平行結構（句式／詞性一致、長短相近），睇落整齊。',
+  '- 標題用「結論先行」短語（≤14 字），可以斷言式直接講重點；唔好「XX 簡介／概述」式空題。',
+  '- 具體勝抽象：用數字、例子、專有名詞，代替「好多／重要／各方面」呢類空泛字。',
+  '- 刪虛詞（的／進行／方面／相關／一啲）；一句講得到就唔好兩句。',
+  '- 同一概念由頭到尾用同一個叫法，方便學生記。',
+  '- 英文對照要係真・對應術語，唔係逐字直譯。',
+]
+
+// 共用設計品味 —— 教學簡報嘅「設計判斷」playbook（自由生成用）。
+const DESIGN_PLAYBOOK = [
+  '設計品味（教學簡報）：',
+  '- 一版一焦點：每版只圍繞一個主訊息，多過一個 idea 就拆版。',
+  '- 視覺層級：最緊要嗰句要最突出（升做 takeaway／quote／stats／emphasis），其餘做支撐。',
+  '- 少即是多：寧願 3 點到位，好過 6 點注水；版面留白好過塞滿。',
+  '- 教學節奏：導入 → 概念 → 例子／對比／流程 →（數據）→ 小結；尾一兩版用 quote／takeaway／emphasis 收結。',
+  '- 版式服務內容：揀版式係因為內容語意啱（流程→steps、對比→compare、並列→cards…），唔係為好睇而堆砌。',
+]
+
 export function buildSlideSystem(subjectName: string | undefined, count: number, pack?: SlidePackId): string {
   const subjectLine = subjectName ? `任教科目：${subjectName}。` : ''
   const lines = [
@@ -125,6 +147,7 @@ export function buildSlideSystem(subjectName: string | undefined, count: number,
     '- "coverImageQuery" 必須出：1-4 個字嘅英文搜尋詞，配合簡報主題搵封面相。',
     '- 只輸出 JSON，唔好有多餘文字。',
   )
+  lines.push(...COPY_RULES, ...DESIGN_PLAYBOOK)
   const fav = pack ? PACK_FAVORS[pack] : undefined
   if (fav) {
     const zh = fav.layouts.map((l) => LAYOUT_ZH[l]).join('、')
@@ -195,6 +218,7 @@ export function buildFrameworkSystem(
     '- "coverImageQuery" 必須出。',
     '- 只輸出 JSON。',
   ]
+  lines.push(...COPY_RULES) // 框架模式結構鎖死，只加文案規範（唔加拆版／節奏類設計指引）
   const fav = pack ? PACK_FAVORS[pack] : undefined
   if (fav) {
     const zh = fav.layouts.map((l) => LAYOUT_ZH[l]).join('、')
