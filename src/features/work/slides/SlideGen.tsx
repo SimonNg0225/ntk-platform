@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState, type ReactNode } from 'react'
 import {
   Presentation,
   Sparkles,
@@ -23,6 +23,10 @@ import {
   RefreshCw,
   StopCircle,
   Wand2,
+  ArrowLeft,
+  ArrowRight,
+  Upload,
+  ClipboardList,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import {
@@ -65,17 +69,32 @@ import { refineDeck, mergeRefinedDeck } from './refineDeck'
 import { parseManualPages, frameworkToDeck, detectManualPages } from './manualPages'
 import { slideSourceKey } from './sourceKey'
 import SlideEditor from './editor/SlideEditor'
-import PackPreview from './PackPreview'
 import DeckPreview from './preview/DeckPreview'
+import StepRail, { type StepDef } from './studio/StepRail'
+import PackGallery from './studio/PackGallery'
+import UploadDrop from './studio/UploadDrop'
+import { SAMPLE_DECK } from './studio/sampleDeck'
 
 type Mode = 'topic' | 'text'
-const MODE_OPTS: { id: Mode; label: string }[] = [
-  { id: 'topic', label: '揀課題' },
-  { id: 'text', label: '貼內容' },
-]
+/** 起點：揀課題 / 貼內容 / 上載教材（mode 由佢 derive：topic→topic，其餘→text） */
+type Source = 'topic' | 'paste' | 'upload'
+
 const MODEL_OPTS: { id: AIModel; label: string }[] = [
   { id: 'gemini-2.5-flash', label: 'Flash' },
   { id: 'gemini-2.5-pro', label: 'Pro' },
+]
+
+const STEPS: StepDef[] = [
+  { id: 1, label: '起點' },
+  { id: 2, label: '設計' },
+  { id: 3, label: '設定' },
+  { id: 4, label: '生成' },
+]
+
+const SOURCE_CARDS: { id: Source; icon: LucideIcon; title: string; desc: string }[] = [
+  { id: 'topic', icon: ListTree, title: '揀課題', desc: '由你嘅課題庫一鍵帶入' },
+  { id: 'paste', icon: ClipboardList, title: '貼內容', desc: '大綱、筆記、教學重點' },
+  { id: 'upload', icon: Upload, title: '上載教材', desc: 'PDF · Word · 文字檔，AI 抽重點' },
 ]
 
 /** 內頁配圖上限 — 同一 deck 最多攞 4 張內頁相（控制檔案大細＋API 用量） */
@@ -113,9 +132,16 @@ export default function SlideGen() {
     [records],
   )
 
-  const [mode, setMode] = useState<Mode>('topic')
+  // 引導步驟
+  const [step, setStep] = useState(1)
+  const [maxStep, setMaxStep] = useState(1)
+  // 起點 → 衍生生成模式
+  const [source, setSource] = useState<Source>('topic')
+  const mode: Mode = source === 'topic' ? 'topic' : 'text'
+
   const [topicId, setTopicId] = useState<string>(() => topics[0]?.id ?? '')
   const [text, setText] = useState('')
+  const [uploadBusy, setUploadBusy] = useState(false)
   const [count, setCount] = useState(8)
   const [model, setModel] = useState<AIModel>('gemini-2.5-flash')
   const [busy, setBusy] = useState(false)
@@ -142,10 +168,22 @@ export default function SlideGen() {
 
   const hasInput = mode === 'topic' ? topics.length > 0 : text.trim().length > 0
 
+  // 上載抽取嘅文字交返嚟（穩定 ref，UploadDrop effect 用）
+  const handleUploadText = useCallback((t: string, b: boolean) => {
+    setText(t)
+    setUploadBusy(b)
+  }, [])
+
+  function chooseSource(s: Source) {
+    setSource(s)
+    if (s !== 'paste') setFollowPages(false)
+    if (s !== 'upload') setUploadBusy(false)
+  }
+
   // 當前輸入嘅內容指紋（同 run 入面計法一致）
   const currentKey = useMemo(() => {
     const topic = topics.find((t) => t.id === topicId) ?? topics[0]
-    const pages = mode === 'text' && followPages ? parseManualPages(text) : []
+    const pages = source === 'paste' && followPages ? parseManualPages(text) : []
     return slideSourceKey({
       mode,
       text,
@@ -156,15 +194,15 @@ export default function SlideGen() {
       pageCount: pages.length,
       model,
     })
-  }, [mode, text, topicId, topics, count, followPages, model])
+  }, [mode, source, text, topicId, topics, count, followPages, model])
 
   async function run(force = false) {
     if (busy || !hasInput) return
     const topic = topics.find((t) => t.id === topicId) ?? topics[0]
-    const source = mode === 'topic' ? `課題：${topic?.topic ?? ''}` : text.trim()
+    const aiInput = mode === 'topic' ? `課題：${topic?.topic ?? ''}` : text.trim()
     const fallbackTitle = mode === 'topic' ? (topic?.topic ?? '教學簡報') : '教學簡報'
-    // 「跟我嘅分段分版」：要 ≥2 段先有意義
-    const pages = mode === 'text' && followPages ? parseManualPages(text) : []
+    // 「跟我嘅分段分版」：要 ≥2 段先有意義（只限「貼內容」）
+    const pages = source === 'paste' && followPages ? parseManualPages(text) : []
     const frameworkMode = pages.length >= 2
 
     // 同內容自動重用：搵返最新一份同指紋嘅舊簡報，直接攞唔再行 AI。
@@ -194,7 +232,7 @@ export default function SlideGen() {
           system: frameworkMode
             ? buildFrameworkSystem(subjectName, pages, pack)
             : buildSlideSystem(subjectName, count, pack),
-          messages: [{ role: 'user', content: source }],
+          messages: [{ role: 'user', content: aiInput }],
           model,
           temperature: 0.5,
           source: 'slides',
@@ -408,6 +446,34 @@ export default function SlideGen() {
     )
   }
 
+  function goStep(n: number) {
+    setStep(n)
+    setMaxStep((m) => Math.max(m, n))
+  }
+
+  // Step 1 要有有效輸入先可以「下一步」；其餘步驟有預設值，隨時可前進。
+  const canNext =
+    step !== 1
+      ? true
+      : mode === 'topic'
+        ? topics.length > 0
+        : source === 'upload'
+          ? text.trim().length > 0 && !uploadBusy
+          : text.trim().length > 0
+
+  // 右邊預覽：步驟 1-3 示意 SAMPLE；生成中用 stream；完成用 current。
+  const previewDeck = current
+    ? { title: current.title, subtitle: current.subtitle, slides: current.slides, coverImageQuery: current.coverImageQuery }
+    : streamSlides.length > 0
+      ? {
+          title: streamMeta.title || '生成中…',
+          subtitle: streamMeta.subtitle,
+          slides: streamSlides,
+          coverImageQuery: streamMeta.coverImageQuery,
+        }
+      : SAMPLE_DECK
+  const previewIsSample = !current && streamSlides.length === 0
+
   return (
     <div className="space-y-5">
       <header className="min-w-0">
@@ -416,159 +482,302 @@ export default function SlideGen() {
           教學備課 · Slides
         </p>
         <h1 className="mt-1 text-[26px] font-semibold leading-none tracking-tight text-slate-800 dark:text-slate-100 sm:text-[30px]">
-          教學簡報
+          簡報工作室
         </h1>
         <p className="mt-2 text-[13px] text-slate-500 dark:text-slate-400">
-          揀課題或貼內容，AI 生成 PowerPoint：{SLIDE_PACKS.length} 套設計模板，數據／對比／步驟／金句／卡片版式自動配，封面與內頁可自動配相，一鍵下載 .pptx。
+          四步引導：揀起點 → 揀設計 → 設定 → 生成。{SLIDE_PACKS.length} 套模板、上載教材自動抽重點、右邊即時預覽，一鍵下載 .pptx。
         </p>
       </header>
 
-      {/* 輸入 */}
-      <Card padded className="space-y-3">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <SegmentedControl options={MODE_OPTS} value={mode} onChange={setMode} />
-          <Tooltip label="Flash 快 · Pro 強">
-            <SegmentedControl size="sm" options={MODEL_OPTS} value={model} onChange={setModel} />
-          </Tooltip>
-        </div>
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(320px,400px)]">
+        {/* 左：引導 */}
+        <div className="min-w-0 space-y-4">
+          <StepRail steps={STEPS} current={step} maxReached={maxStep} onJump={goStep} />
 
-        {mode === 'topic' ? (
-          <Field label="課題">
-            <Select value={topicId} onChange={(e) => setTopicId(e.target.value)}>
-              {topics.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.topic}
-                </option>
-              ))}
-            </Select>
-          </Field>
-        ) : (
-          <Field label="內容">
-            <Textarea
-              rows={5}
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              placeholder={'貼上課題大綱、筆記或教學重點…\n想自己控制分頁：用 --- 或空行分段，每段首行做該版標題，再開「跟我嘅分段分版」。'}
-            />
-          </Field>
-        )}
+          <Card padded className="space-y-4">
+            {step === 1 && (
+              <div className="space-y-4">
+                <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">你想點開始？</h3>
+                <div className="grid gap-2.5 sm:grid-cols-3">
+                  {SOURCE_CARDS.map((c) => {
+                    const active = source === c.id
+                    return (
+                      <button
+                        key={c.id}
+                        type="button"
+                        onClick={() => chooseSource(c.id)}
+                        aria-pressed={active}
+                        className={cx(
+                          'flex flex-col items-start gap-1.5 rounded-xl border p-3 text-left transition active:scale-[0.98]',
+                          active
+                            ? 'border-accent bg-accent-soft/50 ring-1 ring-accent/30 dark:bg-accent/10'
+                            : 'border-black/[0.08] hover:border-accent/40 hover:bg-black/[0.02] dark:border-white/10 dark:hover:bg-white/[0.03]',
+                        )}
+                      >
+                        <span
+                          className={cx(
+                            'flex h-8 w-8 items-center justify-center rounded-lg',
+                            active
+                              ? 'bg-accent text-white'
+                              : 'bg-black/[0.05] text-slate-500 dark:bg-white/10 dark:text-slate-300',
+                          )}
+                        >
+                          <c.icon size={17} />
+                        </span>
+                        <span
+                          className={cx(
+                            'text-sm font-semibold',
+                            active ? 'text-accent-strong dark:text-accent' : 'text-slate-700 dark:text-slate-200',
+                          )}
+                        >
+                          {c.title}
+                        </span>
+                        <span className="text-[11px] leading-tight text-slate-400 dark:text-slate-500">{c.desc}</span>
+                      </button>
+                    )
+                  })}
+                </div>
 
-        {/* 跟我嘅分段分版：分頁聽你、文字聽 AI */}
-        {mode === 'text' && (
-          <div className="flex flex-wrap items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setFollowPages((v) => !v)}
-              aria-pressed={followPages}
-              className={cx(
-                'inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-medium transition active:scale-[0.97]',
-                followPages
-                  ? 'border-accent bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent'
-                  : 'border-black/[0.08] text-slate-600 hover:bg-black/[0.03] dark:border-white/10 dark:text-slate-300',
-              )}
-            >
-              <ListTree size={13} /> 跟我嘅分段分版
-            </button>
-            {followPages ? (
-              <span className="text-[11px] text-slate-400">
-                {(() => {
-                  const n = parseManualPages(text).length
-                  return n >= 2
-                    ? `會出剛好 ${n} 版（分頁鎖死，AI 只執靚每版文字）`
-                    : '要至少 2 段（--- 或空行分隔）先生效'
-                })()}
-              </span>
-            ) : (
-              detectManualPages(text) && (
-                <span className="text-[11px] text-amber-600 dark:text-amber-400">
-                  偵測到你嘅內容有分段 — 開呢個掣可以鎖住你嘅分頁
-                </span>
-              )
+                {source === 'topic' &&
+                  (topics.length > 0 ? (
+                    <Field label="課題">
+                      <Select value={topicId} onChange={(e) => setTopicId(e.target.value)}>
+                        {topics.map((t) => (
+                          <option key={t.id} value={t.id}>
+                            {t.topic}
+                          </option>
+                        ))}
+                      </Select>
+                    </Field>
+                  ) : (
+                    <p className="rounded-lg bg-amber-50 px-3 py-2 text-[12px] text-amber-700 dark:bg-amber-500/10 dark:text-amber-300">
+                      仲未有課題。去「課題」加返，或改用「貼內容 / 上載教材」。
+                    </p>
+                  ))}
+
+                {source === 'paste' && (
+                  <Field label="內容">
+                    <Textarea
+                      rows={6}
+                      value={text}
+                      onChange={(e) => setText(e.target.value)}
+                      placeholder={'貼上課題大綱、筆記或教學重點…\n想自己控制分頁：用 --- 或空行分段，每段首行做該版標題，再開「跟我嘅分段分版」。'}
+                    />
+                  </Field>
+                )}
+
+                {source === 'upload' && <UploadDrop onChange={handleUploadText} />}
+
+                {source === 'paste' && (
+                  <div className="flex flex-wrap items-center gap-2">
+                    <ToggleChip active={followPages} onClick={() => setFollowPages((v) => !v)} icon={ListTree}>
+                      跟我嘅分段分版
+                    </ToggleChip>
+                    {followPages ? (
+                      <span className="text-[11px] text-slate-400">
+                        {(() => {
+                          const n = parseManualPages(text).length
+                          return n >= 2
+                            ? `會出剛好 ${n} 版（分頁鎖死，AI 只執靚每版文字）`
+                            : '要至少 2 段（--- 或空行分隔）先生效'
+                        })()}
+                      </span>
+                    ) : (
+                      detectManualPages(text) && (
+                        <span className="text-[11px] text-amber-600 dark:text-amber-400">
+                          偵測到你嘅內容有分段 — 開呢個掣可以鎖住你嘅分頁
+                        </span>
+                      )
+                    )}
+                  </div>
+                )}
+              </div>
             )}
-          </div>
-        )}
 
-        <div className="flex flex-wrap items-end justify-between gap-3">
-          <Field label="版數">
-            <Select
-              value={String(count)}
-              onChange={(e) => setCount(Number(e.target.value))}
-              disabled={mode === 'text' && followPages}
-              title={mode === 'text' && followPages ? '分版跟你嘅分段，版數唔使揀' : undefined}
+            {step === 2 && (
+              <div className="space-y-3">
+                <div className="flex items-baseline justify-between gap-2">
+                  <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">揀個設計</h3>
+                  <span className="text-[11px] text-slate-400">{SLIDE_PACKS.length} 套 · 揀完睇右邊預覽</span>
+                </div>
+                <PackGallery pack={pack} onPack={setPack} />
+              </div>
+            )}
+
+            {step === 3 && (
+              <div className="space-y-4">
+                <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">設定</h3>
+                <div className="flex flex-wrap items-end gap-4">
+                  <Field label="版數">
+                    <Select
+                      value={String(count)}
+                      onChange={(e) => setCount(Number(e.target.value))}
+                      disabled={source === 'paste' && followPages}
+                      title={source === 'paste' && followPages ? '分版跟你嘅分段，版數唔使揀' : undefined}
+                    >
+                      {[6, 8, 10, 12].map((n) => (
+                        <option key={n} value={n}>
+                          約 {n} 版
+                        </option>
+                      ))}
+                    </Select>
+                  </Field>
+                  <Field label="AI 模型">
+                    <Tooltip label="Flash 快 · Pro 強">
+                      <SegmentedControl size="sm" options={MODEL_OPTS} value={model} onChange={setModel} />
+                    </Tooltip>
+                  </Field>
+                </div>
+                {source === 'paste' && followPages && (
+                  <p className="text-[11px] text-slate-400">已開「跟我嘅分段分版」：版數鎖住跟你嘅分段。</p>
+                )}
+
+                <div className="space-y-2">
+                  <span className="block text-[11px] font-medium uppercase tracking-wider text-slate-400">配圖</span>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <ToggleChip
+                      active={usePhoto && isStockConfigured}
+                      disabled={!isStockConfigured}
+                      onClick={() => setUsePhoto(!usePhoto)}
+                      icon={ImageIcon}
+                      title={isStockConfigured ? '封面用 Pexels 免費相片' : '需先設定 VITE_PEXELS_KEY 環境變數'}
+                    >
+                      封面相片
+                    </ToggleChip>
+                    <ToggleChip
+                      active={useSlidePhotos && isStockConfigured}
+                      disabled={!isStockConfigured}
+                      onClick={() => setUseSlidePhotos(!useSlidePhotos)}
+                      icon={Images}
+                      title={
+                        isStockConfigured
+                          ? 'AI 標咗配圖嘅內頁自動配 Pexels 相片（最多 4 版）'
+                          : '需先設定 VITE_PEXELS_KEY 環境變數'
+                      }
+                    >
+                      內頁配圖
+                    </ToggleChip>
+                    {hasTitleFont(pack) && (
+                      <ToggleChip
+                        active={highFi}
+                        onClick={() => setHighFi(!highFi)}
+                        icon={Sparkles}
+                        title="封面標題用招牌字體 render 成圖（跨平台一致；標題變圖、唔可喺 PPT 改）"
+                      >
+                        高擬真標題
+                      </ToggleChip>
+                    )}
+                  </div>
+                  {!isStockConfigured && (
+                    <p className="text-[11px] text-slate-400">配圖需要設定 VITE_PEXELS_KEY 環境變數先用到。</p>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {step === 4 && (
+              <div className="space-y-4">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">生成簡報</h3>
+                    <p className="mt-0.5 text-[11px] text-slate-400 dark:text-slate-500">
+                      {SOURCE_CARDS.find((c) => c.id === source)?.title} ·{' '}
+                      {SLIDE_PACKS.find((p) => p.id === pack)?.name} · 約 {count} 版 ·{' '}
+                      {model === 'gemini-2.5-flash' ? 'Flash' : 'Pro'}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {busy ? (
+                      <Button variant="ghost" icon={StopCircle} onClick={stopRun}>
+                        停止
+                      </Button>
+                    ) : (
+                      <>
+                        {reusedKey === currentKey && (
+                          <Button variant="ghost" icon={RefreshCw} onClick={() => void run(true)}>
+                            重新生成
+                          </Button>
+                        )}
+                        <Button icon={Sparkles} onClick={() => void run()} loading={busy} disabled={!hasInput}>
+                          {current ? '再生成' : '生成簡報'}
+                        </Button>
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                {busy && (
+                  <p className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
+                    <Loader2 size={16} className="animate-spin text-accent" />
+                    {streamSlides.length > 0
+                      ? `由 AI 設計緊… 已生成 ${streamSlides.length} 版`
+                      : '由 AI 設計緊…'}
+                  </p>
+                )}
+
+                {current && !busy && (
+                  <ResultPanel
+                    rec={current}
+                    downloading={downloading}
+                    onDownload={() => void download(current)}
+                    onRefine={() => void refine()}
+                    refining={refining}
+                    canRestore={lastBeforeRefine !== null}
+                    onRestore={restoreRefine}
+                    onEdit={setEditingIndex}
+                    onMove={moveSlide}
+                    onDelete={(i) => void deleteSlide(i)}
+                    onAdd={addSlide}
+                  />
+                )}
+
+                {!current && !busy && (
+                  <p className="rounded-lg bg-slate-50 px-3 py-3 text-center text-[12px] text-slate-400 dark:bg-slate-800/40 dark:text-slate-500">
+                    撳「生成簡報」，AI 會即時逐版砌出嚟，右邊睇住效果。
+                  </p>
+                )}
+              </div>
+            )}
+          </Card>
+
+          <div className="flex items-center justify-between gap-2">
+            <Button
+              variant="ghost"
+              icon={ArrowLeft}
+              onClick={() => setStep((s) => Math.max(1, s - 1))}
+              disabled={step === 1}
             >
-              {[6, 8, 10, 12].map((n) => (
-                <option key={n} value={n}>
-                  約 {n} 版
-                </option>
-              ))}
-            </Select>
-          </Field>
-          <div className="flex items-center gap-2">
-            {reusedKey === currentKey && !busy && (
-              <Button variant="ghost" icon={RefreshCw} onClick={() => void run(true)}>
-                重新生成
+              上一步
+            </Button>
+            {step < 4 ? (
+              <Button icon={ArrowRight} onClick={() => goStep(step + 1)} disabled={!canNext}>
+                下一步
               </Button>
+            ) : (
+              <span className="text-[11px] text-slate-400">
+                {busy ? '生成緊…' : current ? '可下載，或返上一步改設定再生成' : '撳「生成簡報」開始'}
+              </span>
             )}
-            <Button icon={Sparkles} onClick={() => void run()} loading={busy} disabled={!hasInput}>
-              {busy ? '生成緊…' : '生成簡報'}
-            </Button>
           </div>
         </div>
-      </Card>
 
-      {busy && (
-        <Card padded className="space-y-3 ring-1 ring-accent/20">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <p className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
-              <Loader2 size={16} className="animate-spin text-accent" />
-              {streamSlides.length > 0
-                ? `由 AI 設計緊簡報… 已生成 ${streamSlides.length} 版`
-                : '由 AI 設計緊簡報…'}
-            </p>
-            <Button variant="ghost" size="sm" icon={StopCircle} onClick={stopRun}>
-              停止
-            </Button>
+        {/* 右：即時預覽 */}
+        <aside className="space-y-2 lg:sticky lg:top-4 lg:self-start">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-medium uppercase tracking-wider text-slate-400">即時預覽</span>
+            <span className="text-[11px] text-slate-400 dark:text-slate-500">
+              {previewIsSample ? '風格示意（揀模板睇效果）' : busy ? '生成緊…' : '你嘅簡報'}
+            </span>
           </div>
-          {streamSlides.length > 0 && (
-            <DeckPreview
-              deck={{
-                title: streamMeta.title || '生成中…',
-                subtitle: streamMeta.subtitle,
-                slides: streamSlides,
-                coverImageQuery: streamMeta.coverImageQuery,
-              }}
-              pack={pack}
-              streaming
-            />
-          )}
-        </Card>
-      )}
-
-      {/* 結果 */}
-      {current && (
-        <DeckView
-          rec={current}
-          onDownload={() => download(current)}
-          downloading={downloading}
-          pack={pack}
-          onPack={setPack}
-          usePhoto={usePhoto}
-          onUsePhoto={setUsePhoto}
-          useSlidePhotos={useSlidePhotos}
-          onUseSlidePhotos={setUseSlidePhotos}
-          highFi={highFi}
-          onHighFi={setHighFi}
-          showHighFi={hasTitleFont(pack)}
-          onEdit={setEditingIndex}
-          onMove={moveSlide}
-          onDelete={(i) => void deleteSlide(i)}
-          onAdd={addSlide}
-          onRefine={() => void refine()}
-          refining={refining}
-          canRestore={lastBeforeRefine !== null}
-          onRestore={restoreRefine}
-        />
-      )}
+          <DeckPreview
+            deck={previewDeck}
+            pack={pack}
+            cols={2}
+            streaming={busy}
+            onSelect={current ? setEditingIndex : undefined}
+          />
+        </aside>
+      </div>
 
       {/* 逐版編輯器 */}
       {current && editingIndex !== null && current.slides[editingIndex] && (
@@ -593,15 +802,14 @@ export default function SlideGen() {
                 onClick={() => {
                   setCurrent(r)
                   setLastBeforeRefine(null)
+                  goStep(4)
                 }}
                 className={cx('p-3', current?.id === r.id && 'ring-1 ring-accent/30')}
               >
                 <div className="flex items-center gap-2.5">
                   <Presentation size={16} className="shrink-0 text-accent" />
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium text-slate-700 dark:text-slate-200">
-                      {r.title}
-                    </p>
+                    <p className="truncate text-sm font-medium text-slate-700 dark:text-slate-200">{r.title}</p>
                     <p className="mt-0.5 text-[11px] text-slate-400 dark:text-slate-500">
                       {fmtDate(r.createdAt)} · {r.slides.length} 版
                     </p>
@@ -620,71 +828,80 @@ export default function SlideGen() {
           </div>
         </div>
       )}
-
-      {history.length === 0 && !current && (
-        <EmptyState
-          icon={Presentation}
-          title="未有簡報"
-          hint="揀課題或貼內容，生成第一套教學 PowerPoint。"
-        />
-      )}
     </div>
   )
 }
 
-function DeckView({
+/** 細 toggle chip — 設定步驟／分段掣共用 */
+function ToggleChip({
+  active,
+  disabled,
+  onClick,
+  icon: Icon,
+  title,
+  children,
+}: {
+  active: boolean
+  disabled?: boolean
+  onClick: () => void
+  icon: LucideIcon
+  title?: string
+  children: ReactNode
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      aria-pressed={active}
+      title={title}
+      className={cx(
+        'inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-medium transition active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-50',
+        active
+          ? 'border-accent bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent'
+          : 'border-black/[0.08] text-slate-600 hover:bg-black/[0.03] dark:border-white/10 dark:text-slate-300',
+      )}
+    >
+      <Icon size={13} /> {children}
+    </button>
+  )
+}
+
+/** 結果面板 — 生成後嘅 actions（再潤飾／還原／下載）+ 可逐版編輯嘅清單。 */
+function ResultPanel({
   rec,
-  onDownload,
-  onEdit,
-  onMove,
-  onDelete,
-  onAdd,
   downloading,
-  pack,
-  onPack,
-  usePhoto,
-  onUsePhoto,
-  useSlidePhotos,
-  onUseSlidePhotos,
-  highFi,
-  onHighFi,
-  showHighFi,
+  onDownload,
   onRefine,
   refining,
   canRestore,
   onRestore,
+  onEdit,
+  onMove,
+  onDelete,
+  onAdd,
 }: {
   rec: DeckRecord
-  onDownload: () => void
   downloading: boolean
-  pack: SlidePackId
-  onPack: (p: SlidePackId) => void
-  usePhoto: boolean
-  onUsePhoto: (v: boolean) => void
-  useSlidePhotos: boolean
-  onUseSlidePhotos: (v: boolean) => void
-  highFi: boolean
-  onHighFi: (v: boolean) => void
-  showHighFi: boolean
-  onEdit: (i: number) => void
-  onMove: (i: number, dir: -1 | 1) => void
-  onDelete: (i: number) => void
-  onAdd: () => void
+  onDownload: () => void
   onRefine: () => void
   refining: boolean
   canRestore: boolean
   onRestore: () => void
+  onEdit: (i: number) => void
+  onMove: (i: number, dir: -1 | 1) => void
+  onDelete: (i: number) => void
+  onAdd: () => void
 }) {
-  const [view, setView] = useState<'preview' | 'list'>('preview')
   return (
-    <Card padded className="space-y-4 ring-1 ring-accent/20">
+    <div className="space-y-3 rounded-xl border border-accent/20 bg-accent-soft/20 p-3 dark:bg-accent/[0.06]">
       <div className="flex flex-wrap items-center gap-2">
         <Badge tone="accent" icon={Presentation}>
           {rec.slides.length} 版
         </Badge>
-        <h2 className="min-w-0 flex-1 text-base font-semibold tracking-tight text-slate-800 dark:text-slate-100">
+        <h3 className="min-w-0 flex-1 text-sm font-semibold tracking-tight text-slate-800 dark:text-slate-100">
           {rec.title}
-        </h2>
+        </h3>
         {canRestore && (
           <Button variant="ghost" icon={RefreshCw} onClick={onRestore} disabled={refining}>
             還原
@@ -699,133 +916,22 @@ function DeckView({
           下載 PowerPoint
         </Button>
       </div>
-      {rec.subtitle && <p className="text-[13px] text-slate-500 dark:text-slate-400">{rec.subtitle}</p>}
+      {rec.subtitle && <p className="text-[12px] text-slate-500 dark:text-slate-400">{rec.subtitle}</p>}
+      <p className="text-[11px] text-slate-400 dark:text-slate-500">㩒任何一版可逐版編輯。</p>
 
-      {/* 模板揀選 + 配相選項（下載 .pptx 時套用） */}
       <div className="space-y-2">
-        <span className="block text-[11px] font-medium uppercase tracking-wider text-slate-400">
-          模板
-        </span>
-        <div className="flex flex-wrap gap-2">
-          {SLIDE_PACKS.map((p) => (
-            <button
-              key={p.id}
-              type="button"
-              onClick={() => onPack(p.id)}
-              aria-pressed={pack === p.id}
-              className={cx(
-                'flex w-[124px] flex-col items-stretch gap-1 rounded-xl border px-2 py-2 text-left transition active:scale-[0.97]',
-                pack === p.id
-                  ? 'border-accent bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent'
-                  : 'border-black/[0.08] text-slate-600 hover:bg-black/[0.03] dark:border-white/10 dark:text-slate-300',
-              )}
-            >
-              {/* token-driven 代表性封面縮圖（非真引擎 render） */}
-              <PackPreview pack={p} />
-              <span className="px-1 text-xs font-semibold">{p.name}</span>
-              <span className="px-1 text-[10px] leading-tight text-slate-400 dark:text-slate-500">
-                {p.hint}
-              </span>
-            </button>
-          ))}
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <button
-            type="button"
-            onClick={() => onUsePhoto(!usePhoto)}
-            disabled={!isStockConfigured}
-            aria-pressed={usePhoto && isStockConfigured}
-            title={isStockConfigured ? '封面用 Pexels 免費相片' : '需先設定 VITE_PEXELS_KEY 環境變數'}
-            className={cx(
-              'inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-medium transition active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-50',
-              usePhoto && isStockConfigured
-                ? 'border-accent bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent'
-                : 'border-black/[0.08] text-slate-600 hover:bg-black/[0.03] dark:border-white/10 dark:text-slate-300',
-            )}
-          >
-            <ImageIcon size={13} /> 封面相片
-          </button>
-          <button
-            type="button"
-            onClick={() => onUseSlidePhotos(!useSlidePhotos)}
-            disabled={!isStockConfigured}
-            aria-pressed={useSlidePhotos && isStockConfigured}
-            title={
-              isStockConfigured
-                ? 'AI 標咗配圖嘅內頁自動配 Pexels 相片（最多 4 版）'
-                : '需先設定 VITE_PEXELS_KEY 環境變數'
-            }
-            className={cx(
-              'inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-medium transition active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-50',
-              useSlidePhotos && isStockConfigured
-                ? 'border-accent bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent'
-                : 'border-black/[0.08] text-slate-600 hover:bg-black/[0.03] dark:border-white/10 dark:text-slate-300',
-            )}
-          >
-            <Images size={13} /> 內頁配圖
-          </button>
-          {showHighFi && (
-            <button
-              type="button"
-              onClick={() => onHighFi(!highFi)}
-              aria-pressed={highFi}
-              title="封面標題用招牌字體 render 成圖（跨平台一致；標題變圖、唔可喺 PPT 改）"
-              className={cx(
-                'inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-medium transition active:scale-[0.97]',
-                highFi
-                  ? 'border-accent bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent'
-                  : 'border-black/[0.08] text-slate-600 hover:bg-black/[0.03] dark:border-white/10 dark:text-slate-300',
-              )}
-            >
-              <Sparkles size={13} /> 高擬真標題
-            </button>
-          )}
-        </div>
-      </div>
-
-      <div className="flex items-center justify-between gap-2">
-        <SegmentedControl
-          size="sm"
-          options={[
-            { id: 'preview', label: '預覽' },
-            { id: 'list', label: '清單' },
-          ]}
-          value={view}
-          onChange={setView}
-        />
-        {view === 'preview' && (
-          <span className="text-[11px] text-slate-400 dark:text-slate-500">㩒卡入逐版編輯</span>
-        )}
-      </div>
-
-      {view === 'preview' ? (
-        <DeckPreview
-          deck={{
-            title: rec.title,
-            subtitle: rec.subtitle,
-            slides: rec.slides,
-            coverImageQuery: rec.coverImageQuery,
-          }}
-          pack={pack}
-          onSelect={onEdit}
-        />
-      ) : (
-        <div className="space-y-2">
         {rec.slides.map((s, i) => {
           const layoutBadge = s.layout ? LAYOUT_BADGES[s.layout] : undefined
           return (
             <div
               key={i}
-              className="group rounded-xl border border-black/[0.06] bg-slate-50/60 p-3 transition hover:border-accent/30 dark:border-white/[0.08] dark:bg-slate-800/40"
+              className="group rounded-xl border border-black/[0.06] bg-white/70 p-3 transition hover:border-accent/30 dark:border-white/[0.08] dark:bg-slate-800/40"
             >
               <div className="flex items-center gap-2">
                 <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-accent-soft text-[11px] font-semibold text-accent-strong dark:bg-accent/15 dark:text-accent">
                   {i + 1}
                 </span>
-                <p className="min-w-0 flex-1 text-sm font-semibold text-slate-700 dark:text-slate-200">
-                  {s.title}
-                </p>
-                {/* 逐版操作：編輯／上移／下移／刪除 */}
+                <p className="min-w-0 flex-1 text-sm font-semibold text-slate-700 dark:text-slate-200">{s.title}</p>
                 <span className="flex shrink-0 items-center opacity-0 transition group-hover:opacity-100 focus-within:opacity-100">
                   <IconButton label="上移" size="sm" onClick={() => onMove(i, -1)} disabled={i === 0}>
                     <ChevronUp size={14} />
@@ -887,8 +993,7 @@ function DeckView({
         >
           <Plus size={14} /> 加一版
         </button>
-        </div>
-      )}
-    </Card>
+      </div>
+    </div>
   )
 }

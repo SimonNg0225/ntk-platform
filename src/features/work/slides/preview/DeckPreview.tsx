@@ -27,8 +27,12 @@ export default function DeckPreview(props: {
   activeIndex?: number
   onSelect?: (i: number) => void
   streaming?: boolean
+  /** 固定欄數（窄面板用）；唔傳就跟 viewport 響應式 1/2/3 欄 */
+  cols?: 1 | 2 | 3
 }): JSX.Element {
-  const { deck, pack, activeIndex, onSelect, streaming } = props
+  const { deck, pack, activeIndex, onSelect, streaming, cols } = props
+  const gridCols =
+    cols === 1 ? 'grid-cols-1' : cols === 2 ? 'grid-cols-2' : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'
   const theme = packTheme(pack)
   const vars = cssVarsFromTheme(theme)
 
@@ -37,7 +41,7 @@ export default function DeckPreview(props: {
       <p className="mb-2 text-[11px] text-slate-400 dark:text-slate-500">
         預覽為近似（配色／版式示意）；漸層、招牌版式可能微異 —— 真實效果以下載嘅 .pptx 為準。
       </p>
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      <div className={`grid gap-3 ${gridCols}`}>
         {/* 封面卡 */}
         <div
           className="aspect-[16/9] overflow-hidden rounded-xl ring-1 ring-black/[0.06] dark:ring-white/[0.08]"
