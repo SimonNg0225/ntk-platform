@@ -116,6 +116,76 @@ function effectiveLayout(s: Slide): SlideLayout {
   }
 }
 
+export { effectiveLayout }
+
+/**
+ * 螢幕預覽用嘅輕量主題抽取（on-screen renderer 對齊 .pptx 配色／字體用）。
+ * ------------------------------------------------------------
+ * 只抽純資料 token（全部 hex 無 `#`，UI 用自己加），唔抽 cover/section/
+ * contentFrame/overrides/deco 等 function 欄位（螢幕版唔行真引擎 render）。
+ * 鐵律：未知 id 回退 inkwell，永不 undefined。
+ */
+export interface PackTheme {
+  id: SlidePackId
+  name: string
+  dark: boolean
+  /** 背景色（hex 無 #） */
+  bg: string
+  /** 墨／文字色 */
+  ink: string
+  /** 次級文字色 */
+  inkSoft: string
+  /** 最淡文字／署名色 */
+  faint: string
+  /** 髮線色 */
+  hair: string
+  /** 點睛色 */
+  accent: string
+  /** stats 數值色 */
+  statColor: string
+  /** 卡片／浮面板底色 */
+  panel: string
+  /** compare 右欄另一隻面板色（缺省同 panel） */
+  panelAlt?: string
+  /** 卡片圓角（吋；螢幕用按比例縮放） */
+  cardRadius: number
+  /** 標題顯示字體 */
+  displayFont: string
+  /** 標題顯示字體斜體 */
+  displayItalic: boolean
+  /** 版式結構線用虛線（steps 連接線／compare 欄題線） */
+  structDash: boolean
+  /** 圖表色系 */
+  chartColors: string[]
+  /** 圖表格線色 */
+  chartGridColor: string
+}
+
+/** 抽出某 pack 嘅螢幕預覽主題；未知 id 回退 inkwell。 */
+export function packTheme(id: SlidePackId): PackTheme {
+  const p = PACKS[id] ?? PACKS.inkwell
+  return {
+    id: p.id,
+    name: p.name,
+    dark: p.dark,
+    bg: p.bg,
+    ink: p.ink,
+    inkSoft: p.inkSoft,
+    faint: p.faint,
+    hair: p.hair,
+    accent: p.accent,
+    statColor: p.statColor,
+    panel: p.panel,
+    panelAlt: p.panelAlt,
+    cardRadius: p.cardRadius,
+    displayFont: p.displayFont,
+    displayItalic: p.displayItalic,
+    structDash: Boolean(p.structDash),
+    chartColors: p.chartColors,
+    chartGridColor: p.chartGridColor,
+  }
+}
+
 /**
  * 修正非法負 extent：OOXML 嘅 <a:ext cx/cy> 必須 ≥ 0，但斜線／向上線經 pptxgenjs
  * 可能出負值，令 PowerPoint「無法讀取」。將負 ext 轉成正 ext + 對應 flip + 平移 off

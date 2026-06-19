@@ -21,6 +21,8 @@ import {
   Plus,
   ListTree,
   RefreshCw,
+  StopCircle,
+  Wand2,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import {
@@ -41,7 +43,7 @@ import { useToast } from '../../../context/ToastContext'
 import { useConfirm } from '../../../context/ConfirmContext'
 import { useSettings } from '../../../context/SettingsContext'
 import { useCollection } from '../../../lib/store'
-import { complete, isAIConfigured, type AIModel } from '../../../lib/aiClient'
+import { streamChat, isAIConfigured, type AIModel } from '../../../lib/aiClient'
 import { topicsCol } from '../../../data/collections'
 import { getSubjectPack } from '../../../data/subjects'
 import {
@@ -58,10 +60,13 @@ import {
 import type { Slide } from '../../../lib/export/types'
 import { slideDecksCol, type DeckRecord } from './slideStore'
 import { buildSlideSystem, buildFrameworkSystem, parseDeck } from './slidePrompts'
+import { createDeckStreamParser, type DeckStreamMeta } from './streamDeck'
+import { refineDeck, mergeRefinedDeck } from './refineDeck'
 import { parseManualPages, frameworkToDeck, detectManualPages } from './manualPages'
 import { slideSourceKey } from './sourceKey'
 import SlideEditor from './editor/SlideEditor'
 import PackPreview from './PackPreview'
+import DeckPreview from './preview/DeckPreview'
 
 type Mode = 'topic' | 'text'
 const MODE_OPTS: { id: Mode; label: string }[] = [
@@ -127,6 +132,13 @@ export default function SlideGen() {
   const [editingIndex, setEditingIndex] = useState<number | null>(null)
   // 同內容自動重用：當前顯示緊嘅係呢個 key 嘅重用版本（用嚟顯示「重新生成」退路）
   const [reusedKey, setReusedKey] = useState<string | null>(null)
+  // 串流逐版生成：邊收 delta 邊砌預覽（落地仍以 parseDeck 為真相）
+  const [streamSlides, setStreamSlides] = useState<Slide[]>([])
+  const [streamMeta, setStreamMeta] = useState<DeckStreamMeta>({})
+  const [abortCtl, setAbortCtl] = useState<AbortController | null>(null)
+  // AI 再潤飾（可選、可還原）
+  const [refining, setRefining] = useState(false)
+  const [lastBeforeRefine, setLastBeforeRefine] = useState<DeckRecord | null>(null)
 
   const hasInput = mode === 'topic' ? topics.length > 0 : text.trim().length > 0
 
@@ -168,16 +180,42 @@ export default function SlideGen() {
     }
     setReusedKey(null)
     setBusy(true)
+    setStreamSlides([])
+    setStreamMeta({})
+    const ctl = new AbortController()
+    setAbortCtl(ctl)
+    let aborted = false
     try {
-      const raw = await complete({
-        system: frameworkMode
-          ? buildFrameworkSystem(subjectName, pages, pack)
-          : buildSlideSystem(subjectName, count, pack),
-        messages: [{ role: 'user', content: source }],
-        model,
-        temperature: 0.5,
-        source: 'slides',
-      })
+      // 串流逐版生成：邊收 delta 邊砌預覽（樂觀渲染）；落地以 parseDeck(fullRaw) 為真相。
+      const parser = createDeckStreamParser()
+      let raw = ''
+      try {
+        for await (const chunk of streamChat({
+          system: frameworkMode
+            ? buildFrameworkSystem(subjectName, pages, pack)
+            : buildSlideSystem(subjectName, count, pack),
+          messages: [{ role: 'user', content: source }],
+          model,
+          temperature: 0.5,
+          source: 'slides',
+          signal: ctl.signal,
+        })) {
+          raw += chunk
+          const r = parser.push(chunk)
+          if (r.meta) setStreamMeta((m) => ({ ...m, ...r.meta }))
+          if (r.slides.length) setStreamSlides((s) => [...s, ...r.slides])
+        }
+      } catch (streamErr) {
+        if (ctl.signal.aborted) {
+          aborted = true
+        } else {
+          throw streamErr
+        }
+      }
+      if (aborted) {
+        toast.info('已停止生成')
+        return
+      }
       let deck = parseDeck(raw, fallbackTitle)
       // 鐵律保險：AI 版數對唔上 → 照你嘅分段直接入版，分頁永遠唔會被打亂
       if (frameworkMode && deck.slides.length !== pages.length) {
@@ -195,12 +233,20 @@ export default function SlideGen() {
         sourceKey: currentKey, // 內容指紋：下次同內容直接重用、唔再行 AI
       })
       setCurrent(rec)
+      setLastBeforeRefine(null)
       toast.success(`簡報已生成（${deck.slides.length} 版）`)
     } catch (e) {
-      toast.error((e as Error).message || '生成失敗，請再試。')
+      if (!aborted) toast.error((e as Error).message || '生成失敗，請再試。')
     } finally {
       setBusy(false)
+      setAbortCtl(null)
+      setStreamSlides([])
+      setStreamMeta({})
     }
+  }
+
+  function stopRun() {
+    abortCtl?.abort()
   }
 
   async function download(rec: DeckRecord) {
@@ -267,6 +313,54 @@ export default function SlideGen() {
     if (!current) return
     slideDecksCol.update(current.id, { slides })
     setCurrent({ ...current, slides })
+  }
+
+  async function refine() {
+    if (!current || refining) return
+    setRefining(true)
+    const before = current
+    try {
+      const refined = await refineDeck(
+        {
+          title: current.title,
+          subtitle: current.subtitle,
+          slides: current.slides,
+          coverImageQuery: current.coverImageQuery,
+        },
+        { subjectName, pack, model: 'gemini-2.5-flash' },
+      )
+      const merged = mergeRefinedDeck(
+        { title: before.title, subtitle: before.subtitle, slides: before.slides, coverImageQuery: before.coverImageQuery },
+        refined,
+      )
+      setLastBeforeRefine(before)
+      slideDecksCol.update(current.id, {
+        title: merged.title,
+        subtitle: merged.subtitle,
+        slides: merged.slides,
+        coverImageQuery: merged.coverImageQuery,
+      })
+      setCurrent({ ...current, ...merged })
+      toast.success('已 AI 再潤飾（可還原）')
+    } catch (e) {
+      toast.error((e as Error).message || '潤飾失敗')
+    } finally {
+      setRefining(false)
+    }
+  }
+
+  function restoreRefine() {
+    if (!current || !lastBeforeRefine) return
+    const b = lastBeforeRefine
+    slideDecksCol.update(current.id, {
+      title: b.title,
+      subtitle: b.subtitle,
+      slides: b.slides,
+      coverImageQuery: b.coverImageQuery,
+    })
+    setCurrent({ ...current, title: b.title, subtitle: b.subtitle, slides: b.slides, coverImageQuery: b.coverImageQuery })
+    setLastBeforeRefine(null)
+    toast.success('已還原潤飾前版本')
   }
 
   function saveSlide(i: number, s: Slide) {
@@ -423,9 +517,31 @@ export default function SlideGen() {
       </Card>
 
       {busy && (
-        <div className="flex items-center justify-center gap-2 py-4 text-sm text-slate-400">
-          <Loader2 size={16} className="animate-spin text-accent" /> 由 AI 設計緊簡報…
-        </div>
+        <Card padded className="space-y-3 ring-1 ring-accent/20">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
+              <Loader2 size={16} className="animate-spin text-accent" />
+              {streamSlides.length > 0
+                ? `由 AI 設計緊簡報… 已生成 ${streamSlides.length} 版`
+                : '由 AI 設計緊簡報…'}
+            </p>
+            <Button variant="ghost" size="sm" icon={StopCircle} onClick={stopRun}>
+              停止
+            </Button>
+          </div>
+          {streamSlides.length > 0 && (
+            <DeckPreview
+              deck={{
+                title: streamMeta.title || '生成中…',
+                subtitle: streamMeta.subtitle,
+                slides: streamSlides,
+                coverImageQuery: streamMeta.coverImageQuery,
+              }}
+              pack={pack}
+              streaming
+            />
+          )}
+        </Card>
       )}
 
       {/* 結果 */}
@@ -447,6 +563,10 @@ export default function SlideGen() {
           onMove={moveSlide}
           onDelete={(i) => void deleteSlide(i)}
           onAdd={addSlide}
+          onRefine={() => void refine()}
+          refining={refining}
+          canRestore={lastBeforeRefine !== null}
+          onRestore={restoreRefine}
         />
       )}
 
@@ -470,7 +590,10 @@ export default function SlideGen() {
               <Card
                 key={r.id}
                 hover
-                onClick={() => setCurrent(r)}
+                onClick={() => {
+                  setCurrent(r)
+                  setLastBeforeRefine(null)
+                }}
                 className={cx('p-3', current?.id === r.id && 'ring-1 ring-accent/30')}
               >
                 <div className="flex items-center gap-2.5">
@@ -526,6 +649,10 @@ function DeckView({
   highFi,
   onHighFi,
   showHighFi,
+  onRefine,
+  refining,
+  canRestore,
+  onRestore,
 }: {
   rec: DeckRecord
   onDownload: () => void
@@ -543,7 +670,12 @@ function DeckView({
   onMove: (i: number, dir: -1 | 1) => void
   onDelete: (i: number) => void
   onAdd: () => void
+  onRefine: () => void
+  refining: boolean
+  canRestore: boolean
+  onRestore: () => void
 }) {
+  const [view, setView] = useState<'preview' | 'list'>('preview')
   return (
     <Card padded className="space-y-4 ring-1 ring-accent/20">
       <div className="flex flex-wrap items-center gap-2">
@@ -553,6 +685,16 @@ function DeckView({
         <h2 className="min-w-0 flex-1 text-base font-semibold tracking-tight text-slate-800 dark:text-slate-100">
           {rec.title}
         </h2>
+        {canRestore && (
+          <Button variant="ghost" icon={RefreshCw} onClick={onRestore} disabled={refining}>
+            還原
+          </Button>
+        )}
+        <Tooltip label="用 AI 重整結構／文案（可還原，唔影響主生成）">
+          <Button variant="ghost" icon={Wand2} onClick={onRefine} loading={refining}>
+            AI 再潤飾
+          </Button>
+        </Tooltip>
         <Button icon={Download} onClick={onDownload} loading={downloading}>
           下載 PowerPoint
         </Button>
@@ -641,7 +783,34 @@ function DeckView({
         </div>
       </div>
 
-      <div className="space-y-2">
+      <div className="flex items-center justify-between gap-2">
+        <SegmentedControl
+          size="sm"
+          options={[
+            { id: 'preview', label: '預覽' },
+            { id: 'list', label: '清單' },
+          ]}
+          value={view}
+          onChange={setView}
+        />
+        {view === 'preview' && (
+          <span className="text-[11px] text-slate-400 dark:text-slate-500">㩒卡入逐版編輯</span>
+        )}
+      </div>
+
+      {view === 'preview' ? (
+        <DeckPreview
+          deck={{
+            title: rec.title,
+            subtitle: rec.subtitle,
+            slides: rec.slides,
+            coverImageQuery: rec.coverImageQuery,
+          }}
+          pack={pack}
+          onSelect={onEdit}
+        />
+      ) : (
+        <div className="space-y-2">
         {rec.slides.map((s, i) => {
           const layoutBadge = s.layout ? LAYOUT_BADGES[s.layout] : undefined
           return (
@@ -718,7 +887,8 @@ function DeckView({
         >
           <Plus size={14} /> 加一版
         </button>
-      </div>
+        </div>
+      )}
     </Card>
   )
 }

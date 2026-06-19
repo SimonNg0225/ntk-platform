@@ -2,7 +2,7 @@ export type { ExportBlock, ExportDoc, Slide, Deck, SlideChart, SlideLayout, Slid
 export { downloadBlob, safeFilename } from './file'
 export { downloadDocx } from './docx'
 export { printDoc } from './print'
-export { buildPptxFile, downloadPptx, SLIDE_PACKS, type SlidePackId, type SlideImage, type PptxOptions } from './pptx'
+export { buildPptxFile, downloadPptx, SLIDE_PACKS, packTheme, effectiveLayout, type SlidePackId, type SlideImage, type PptxOptions, type PackTheme } from './pptx'
 export { fetchCoverPhoto, fetchSlidePhoto, isStockConfigured, type StockPhoto } from './stock'
 export { renderTitleImage, hasTitleFont } from './slideTitleFont'
 export type { CoverTitle } from './types'
