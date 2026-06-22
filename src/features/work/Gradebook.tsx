@@ -29,6 +29,7 @@ import {
 } from '../../ui'
 import {
   ArrowDownAZ,
+  ArrowRight,
   ArrowUpDown,
   BarChart3,
   BookMarked,
@@ -267,7 +268,11 @@ export default function Gradebook() {
       </div>
 
       {activeClass && tab === 'grid' && (
-        <ScoreGrid classId={activeClass.id} className={activeClass.name} />
+        <ScoreGrid
+          classId={activeClass.id}
+          className={activeClass.name}
+          onJump={setTab}
+        />
       )}
       {activeClass && tab === 'analysis' && (
         <AnalysisTab classId={activeClass.id} className={activeClass.name} />
@@ -312,7 +317,130 @@ function useClassData(classId: string) {
 // ============================================================
 type SortMode = 'name' | 'total-desc' | 'total-asc'
 
-function ScoreGrid({ classId, className }: { classId: string; className: string }) {
+// ───────── 入分前引導：兩步建立（學生 → 評估）─────────
+//  取代死板 empty state：清楚交代入分前要做嘅兩步，每步顯示完成狀態，
+//  未完成嘅一撳即跳去對應分頁（解決「叫你去某分頁但要自己揾」嘅死路）。
+function GridSetupGuide({
+  students,
+  assessments,
+  onJump,
+}: {
+  students: number
+  assessments: number
+  onJump: (tab: Tab) => void
+}) {
+  const { t } = useTranslation()
+  const steps = [
+    {
+      tab: 'students' as Tab,
+      icon: Users,
+      done: students > 0,
+      title: t('gradebook.setupStudents', { defaultValue: '加學生' }),
+      todo: t('gradebook.setupStudentsTodo', { defaultValue: '建立班內名單' }),
+      doneText: t('gradebook.setupStudentsDone', {
+        count: students,
+        defaultValue: '已收錄 {{count}} 位學生',
+      }),
+    },
+    {
+      tab: 'assessments' as Tab,
+      icon: FolderOpen,
+      done: assessments > 0,
+      title: t('gradebook.setupAssess', { defaultValue: '設定評估' }),
+      todo: t('gradebook.setupAssessTodo', { defaultValue: '加測考／功課項目' }),
+      doneText: t('gradebook.setupAssessDone', {
+        count: assessments,
+        defaultValue: '已設定 {{count}} 項評估',
+      }),
+    },
+  ]
+
+  return (
+    <div className="rounded-2xl border border-dashed border-slate-300/70 bg-slate-50/60 px-5 py-9 dark:border-slate-700/60 dark:bg-slate-800/40 sm:px-8">
+      <div className="mx-auto max-w-md text-center">
+        <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
+          <NotebookPen size={26} strokeWidth={1.75} />
+        </span>
+        <h3 className="mt-4 text-lg font-semibold text-slate-800 dark:text-slate-100">
+          {t('gradebook.emptyGridTitle', { defaultValue: '準備好就可以入分' })}
+        </h3>
+        <p className="mt-1.5 text-sm text-slate-500 dark:text-slate-400">
+          {t('gradebook.setupLead', {
+            defaultValue: '跟住兩步整好，成績表就會即刻郁起嚟。',
+          })}
+        </p>
+      </div>
+
+      <div className="mx-auto mt-7 grid max-w-xl gap-3 sm:grid-cols-2">
+        {steps.map((s, i) => {
+          const StepIcon = s.icon
+          return (
+            <div
+              key={s.tab}
+              className={cx(
+                'flex flex-col rounded-xl border bg-white p-4 dark:bg-slate-800',
+                s.done
+                  ? 'border-emerald-200/80 dark:border-emerald-500/30'
+                  : 'border-slate-200 dark:border-slate-700',
+              )}
+            >
+              <div className="flex items-start gap-3">
+                <span
+                  className={cx(
+                    'flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-sm font-semibold tabular-nums',
+                    s.done
+                      ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-400'
+                      : 'bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent',
+                  )}
+                >
+                  {s.done ? <Check size={18} strokeWidth={2.5} /> : i + 1}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="flex items-center gap-1.5 font-medium text-slate-800 dark:text-slate-100">
+                    <StepIcon size={15} className="shrink-0 text-slate-400" />
+                    {s.title}
+                  </p>
+                  <p
+                    className={cx(
+                      'mt-0.5 text-xs',
+                      s.done
+                        ? 'text-emerald-600/90 dark:text-emerald-400/90'
+                        : 'text-slate-500 dark:text-slate-400',
+                    )}
+                  >
+                    {s.done ? s.doneText : s.todo}
+                  </p>
+                </div>
+              </div>
+              <Button
+                variant={s.done ? 'ghost' : 'primary'}
+                size="sm"
+                fullWidth
+                className="mt-3.5"
+                iconRight={s.done ? undefined : ArrowRight}
+                onClick={() => onJump(s.tab)}
+              >
+                {s.done
+                  ? t('gradebook.setupManage', { defaultValue: '管理' })
+                  : s.title}
+              </Button>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+function ScoreGrid({
+  classId,
+  className,
+  onJump,
+}: {
+  classId: string
+  className: string
+  onJump: (tab: Tab) => void
+}) {
   const { t } = useTranslation()
   const toast = useToast()
   const { students, assessments, scores, scheme, bands } = useClassData(classId)
@@ -441,14 +569,10 @@ function ScoreGrid({ classId, className }: { classId: string; className: string 
 
   if (students.length === 0 || assessments.length === 0) {
     return (
-      <EmptyState
-        icon={NotebookPen}
-        art="empty-gradebook"
-        title={t('gradebook.emptyGridTitle', { defaultValue: '準備好就可以入分' })}
-        hint={t('gradebook.emptyGridHint', {
-          defaultValue:
-            '先去「學生」同「評估」分頁加入名單同測考，呢張成績表就會即刻郁起嚟。',
-        })}
+      <GridSetupGuide
+        students={students.length}
+        assessments={assessments.length}
+        onJump={onJump}
       />
     )
   }

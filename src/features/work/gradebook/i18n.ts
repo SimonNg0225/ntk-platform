@@ -40,6 +40,14 @@ i18n.addResourceBundle(
       emptyGridTitle: 'Ready to enter scores',
       emptyGridHint:
         'Add your roster and assessments in the "Students" and "Assessments" tabs first, and this grade sheet will spring to life.',
+      setupLead: 'Two quick steps and your grade sheet springs to life.',
+      setupStudents: 'Add students',
+      setupStudentsTodo: 'Build your class roster',
+      setupStudentsDone: '{{count}} student(s) on roster',
+      setupAssess: 'Set up assessments',
+      setupAssessTodo: 'Add tests / assignments',
+      setupAssessDone: '{{count}} assessment(s) set up',
+      setupManage: 'Manage',
       emptyAnalysisTitle: 'Analysis is waiting for you',
       emptyAnalysisHint:
         'Add students and assessments, enter the scores, and distributions, grade shares and topic strengths will be charted here automatically.',
