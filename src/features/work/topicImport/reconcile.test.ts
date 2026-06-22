@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { reconcileTopics, planSummary } from './reconcile'
+import { reconcileTopics, planSummary, planDedupe, planAppendByText } from './reconcile'
 
 const existing = [
   { id: 'a', topic: '香港的營商環境' },
@@ -54,5 +54,76 @@ describe('reconcileTopics', () => {
     expect(p.adds).toHaveLength(2)
     expect(p.keeps).toHaveLength(3) // 全部舊有都有資料連住 → 保留
     expect(p.removes).toHaveLength(0)
+  })
+})
+
+describe('planDedupe', () => {
+  it('同名又冇資料連住 → 剷走多出條（保留首條）', () => {
+    const topics = [
+      { id: 'chin-01', topic: '《論語》論仁／論孝／論君子' },
+      { id: 'uid-x', topic: '《論語》論仁／論孝／論君子' }, // 同名、唔同 id（by-id 漏網）
+      { id: 'chin-02', topic: '《魚我所欲也》（孟子）' },
+    ]
+    const remove = planDedupe(topics, () => false)
+    expect(remove).toEqual(['uid-x']) // 保留首條 chin-01，剷走重複嗰條
+  })
+
+  it('referenced 條一律保留，唔會被剷', () => {
+    const topics = [
+      { id: 'uid-x', topic: '《論語》論仁' }, // 冇資料連住
+      { id: 'chin-01', topic: '《論語》論仁' }, // 有資料連住（referenced）
+    ]
+    const remove = planDedupe(topics, (id) => id === 'chin-01')
+    expect(remove).toEqual(['uid-x']) // 剷 unreferenced，保留 referenced
+  })
+
+  it('兩條同名都 referenced → 都保留（唔斷連，寧可暫留重複）', () => {
+    const topics = [
+      { id: 'a', topic: '同一課題' },
+      { id: 'b', topic: '同一課題' },
+    ]
+    expect(planDedupe(topics, () => true)).toEqual([])
+  })
+
+  it('內部空格差異都當同名（norm）', () => {
+    const topics = [
+      { id: 'a', topic: '唐詩 三首' },
+      { id: 'b', topic: '唐詩三首' },
+    ]
+    expect(planDedupe(topics, () => false)).toEqual(['b'])
+  })
+
+  it('冇重複 → 空陣列', () => {
+    const topics = [
+      { id: 'a', topic: '甲' },
+      { id: 'b', topic: '乙' },
+    ]
+    expect(planDedupe(topics, () => false)).toEqual([])
+  })
+})
+
+describe('planAppendByText', () => {
+  const have = [
+    { topic: '《論語》論仁', order: 1 },
+    { topic: '《魚我所欲也》（孟子）', order: 2 },
+  ]
+
+  it('跳過同名（即使 id 唔同），order 接喺最大值後', () => {
+    const incoming = [
+      { id: 'chin-01', part: 'A', area: 'a', topic: '《論語》論仁' }, // 同名 → skip
+      { id: 'chin-99', part: 'A', area: 'a', topic: '新課題' }, // 新 → 加
+    ]
+    const out = planAppendByText(have, incoming)
+    expect(out).toHaveLength(1)
+    expect(out[0]).toMatchObject({ id: 'chin-99', topic: '新課題', order: 3 })
+  })
+
+  it('incoming 自身同名只加一次', () => {
+    const out = planAppendByText([], [
+      { part: 'A', area: 'a', topic: '重複' },
+      { part: 'A', area: 'a', topic: '重複' },
+    ])
+    expect(out).toHaveLength(1)
+    expect(out[0].order).toBe(1)
   })
 })

@@ -13,7 +13,7 @@ import {
   packTopics,
 } from '../data/subjects'
 import { preloadAllFeatures } from '../features/registry'
-import { smartApplyTopics } from '../features/work/topicImport/applyTopics'
+import { smartApplyTopics, appendTopicsByText } from '../features/work/topicImport/applyTopics'
 import { Card, Button, Field, Input, SectionTitle } from '../ui'
 import { seedAllDemo } from '../lib/demoData'
 import {
@@ -127,12 +127,10 @@ export default function Settings() {
           (r.removed ? ` · 清走 ${r.removed}` : ''),
       )
     } else {
-      const existing = new Set(topics.map((t) => t.id))
-      const added = incoming.filter((t) => !existing.has(t.id))
-      topicsCol.set([...topics, ...added])
+      const added = appendTopicsByText(incoming)
       toast.success(
-        added.length > 0
-          ? `已附加 ${added.length} 個課題`
+        added > 0
+          ? `已附加 ${added} 個課題`
           : '呢個科目嘅課題已經喺清單入面',
       )
     }

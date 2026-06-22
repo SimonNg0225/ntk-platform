@@ -6,7 +6,14 @@ import {
   lessonPlansCol,
 } from '../../../data/collections'
 import { getSubjectPack, missingTopicsForSubjects } from '../../../data/subjects'
-import { reconcileTopics, planSummary, type TopicInput, type ApplyResult } from './reconcile'
+import {
+  reconcileTopics,
+  planSummary,
+  planDedupe,
+  planAppendByText,
+  type TopicInput,
+  type ApplyResult,
+} from './reconcile'
 
 // ============================================================
 //  Smart 套用課題 — 執行 reconcile 計劃喺 topicsCol
@@ -91,4 +98,33 @@ export function loadTopicsForSubjects(subjectIds: string[]): number {
   }
   markSubjectsSynced(fresh) // 即使 toAdd 為空（已存在）都標記，避免下次再掃
   return toAdd.length
+}
+
+// ============================================================
+//  附加課題（按課題名去重）— Settings / TopicImport 「附加」共用
+//  ------------------------------------------------------------
+//  舊版「附加」淨係 by id 去重（或冇去重），但同一課題喺唔同 flow 會有唔同
+//  id（pack id vs 隨機 uid），令同名課題重複入庫。改為按課題名 norm 去重。
+//  incoming 帶 id 就保留（維持 pack 分組）；回傳實際新增數。
+// ============================================================
+export function appendTopicsByText(incoming: (TopicInput & { id?: string })[]): number {
+  const toAdd = planAppendByText(topicsCol.get(), incoming)
+  for (const a of toAdd) {
+    topicsCol.add({ id: a.id, part: a.part, area: a.area, topic: a.topic, order: a.order })
+  }
+  return toAdd.length
+}
+
+// ============================================================
+//  去重整理 topicsCol（self-heal）
+//  ------------------------------------------------------------
+//  剷走同名（norm）又冇資料連住嘅重複課題；referenced 嘅一律保留唔郁，
+//  唔會斷開題庫／進度／評估／備課嘅連繫。每次開首頁跑一次，止住歷史污染。
+//  回傳實際剷走數。
+// ============================================================
+export function dedupeTopicsCol(): number {
+  const refs = referencedIds()
+  const removeIds = planDedupe(topicsCol.get(), (id) => refs.has(id))
+  removeIds.forEach((id) => topicsCol.remove(id))
+  return removeIds.length
 }

@@ -12,7 +12,7 @@ import { groupLabel } from '../i18n/appEn'
 import { cx } from '../ui'
 import { getMyAppProfile, type AppProfile } from '../lib/profile'
 import { getSubjectPack, type SubjectPack } from '../data/subjects'
-import { loadTopicsForSubjects } from '../features/work/topicImport/applyTopics'
+import { loadTopicsForSubjects, dedupeTopicsCol } from '../features/work/topicImport/applyTopics'
 
 interface Props {
   onOpen: (id: string) => void
@@ -60,6 +60,7 @@ export default function Home({ onOpen }: Props) {
   // 未接 / 未登入 / 未登記一律 null，靜靜唔顯示。
   const [profile, setProfile] = useState<AppProfile | null>(null)
   useEffect(() => {
+    dedupeTopicsCol() // self-heal：清走歷史重複課題（同名又冇資料連住嘅）
     let alive = true
     getMyAppProfile()
       .then((p) => {

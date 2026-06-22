@@ -17,7 +17,7 @@ import { extractFromFile } from '../docDigest/extract'
 import { topicsCol } from '../../../data/collections'
 import { getSubjectPack } from '../../../data/subjects'
 import { buildImportSystem, parseTopics, type ImportedTopic } from './importPrompts'
-import { smartApplyTopics } from './applyTopics'
+import { smartApplyTopics, appendTopicsByText } from './applyTopics'
 
 type Mode = 'file' | 'text' | 'photo'
 const MODE_OPTS: { id: Mode; label: string }[] = [
@@ -90,11 +90,8 @@ export default function TopicImport() {
 
   function loadAppend() {
     if (!imported) return
-    const maxOrder = existing.reduce((m, t) => Math.max(m, t.order), 0)
-    imported.forEach((it, i) =>
-      topicsCol.add({ part: it.part, area: it.area, topic: it.topic, order: maxOrder + i + 1 }),
-    )
-    toast.success(`已附加 ${imported.length} 個課題`)
+    const added = appendTopicsByText(imported)
+    toast.success(added > 0 ? `已附加 ${added} 個課題` : '呢啲課題已經喺清單入面')
     setImported(null)
     setText('')
     setFile(null)

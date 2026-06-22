@@ -87,3 +87,56 @@ export function planSummary(plan: ReconcilePlan): ApplyResult {
     removed: plan.removes.length,
   }
 }
+
+// ============================================================
+//  去重（dedupe）— 純函式
+//  ------------------------------------------------------------
+//  同一課題（按課題名 norm 去重）唔同 flow 會有唔同 id（pack id `chin-01`
+//  vs smartApply / 手動附加嘅隨機 uid），令「淨係 by id」去重漏網、重複入庫。
+//  呢度按課題名揾出要剷走嘅「重複垃圾」：
+//   · 有資料連住（referenced）嘅一律保留（題庫／進度等唔斷連）；
+//   · 同名又冇資料連住嘅多出條 → 剷（保留首條佔位嗰個）。
+//  回傳要移除嘅 id 清單。純函式，唔掂 collection。
+// ============================================================
+export function planDedupe(
+  topics: { id: string; topic: string }[],
+  isReferenced: (id: string) => boolean,
+): string[] {
+  const seen = new Set<string>()
+  // referenced 條一律保留並先佔位（佢哋係 canonical）
+  for (const t of topics) {
+    const k = norm(t.topic)
+    if (k && isReferenced(t.id)) seen.add(k)
+  }
+  const remove: string[] = []
+  for (const t of topics) {
+    const k = norm(t.topic)
+    if (!k || isReferenced(t.id)) continue
+    if (seen.has(k)) remove.push(t.id)
+    else seen.add(k)
+  }
+  return remove
+}
+
+// ============================================================
+//  附加（append）— 純函式，按課題名去重
+//  ------------------------------------------------------------
+//  「附加」課題時跳過同名（norm）已存在嘅，回傳實際要 add 嘅項（order 接喺
+//  現有最大值之後）。incoming 帶 id 就保留（維持 pack 分組），冇就由 store 補。
+// ============================================================
+export function planAppendByText(
+  existing: { topic: string; order: number }[],
+  incoming: (TopicInput & { id?: string })[],
+): (TopicInput & { id?: string; order: number })[] {
+  const have = new Set(existing.map((t) => norm(t.topic)))
+  let order = existing.reduce((m, t) => Math.max(m, t.order), 0)
+  const out: (TopicInput & { id?: string; order: number })[] = []
+  for (const it of incoming) {
+    const k = norm(it.topic)
+    if (!k || have.has(k)) continue
+    have.add(k)
+    order += 1
+    out.push({ id: it.id, part: it.part, area: it.area, topic: it.topic, order })
+  }
+  return out
+}
