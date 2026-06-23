@@ -4,28 +4,30 @@ import {
   Check,
   CheckCheck,
   ChevronDown,
+  ChevronRight,
+  CircleCheckBig,
+  CircleDashed,
   ClipboardList,
   Columns3,
   Download,
   Flag,
   Gauge,
-  Hourglass,
   LayoutList,
-  MapPin,
-  Milestone,
+  ListChecks,
   Printer,
   Route,
   School,
   Search,
   SlidersHorizontal,
-  TrainTrack,
   TrendingUp,
   X,
 } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 import { useCollection, createCollection, uid } from '../../lib/store'
 import { useToast } from '../../context/ToastContext'
 import { useConfirm } from '../../context/ConfirmContext'
 import { useSubjectLabel } from '../../context/SettingsContext'
+import { useNav } from '../../context/NavContext'
 import { classesCol, topicsCol, progressCol } from '../../data/collections'
 import type { ProgressStatus, Topic } from '../../data/types'
 import {
@@ -33,10 +35,12 @@ import {
   Button,
   Card,
   EmptyState,
+  FeatureGuide,
   Field,
   IconButton,
   Input,
   Modal,
+  PageHero,
   Pills,
   ProgressBar,
   SectionTitle,
@@ -53,6 +57,7 @@ import {
   Tooltip,
   cx,
 } from '../../ui'
+import type { FeatureGuideStep } from '../../ui'
 import { DonutWithLegend, PacingChart, AreaBars, type PacingPoint } from './curriculum/Charts'
 import {
   type CurriculumPlan,
@@ -92,17 +97,72 @@ const VIEW_ICONS: Partial<Record<ViewTab, typeof LayoutList>> = {
 
 type StatusFilter = 'all' | ProgressStatus
 
+// ───────── tone map（跟 WorkDashboard：chip 底 + 數字字）─────────
+type Tone = 'accent' | 'amber' | 'emerald' | 'violet' | 'sky' | 'rose'
+const TONE: Record<Tone, { chip: string; val: string }> = {
+  accent: { chip: 'bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent', val: 'text-accent' },
+  amber: { chip: 'bg-amber-50 text-amber-600 dark:bg-amber-500/15 dark:text-amber-300', val: 'text-amber-500' },
+  emerald: { chip: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-300', val: 'text-emerald-500' },
+  violet: { chip: 'bg-violet-50 text-violet-600 dark:bg-violet-500/15 dark:text-violet-300', val: 'text-violet-500' },
+  sky: { chip: 'bg-sky-50 text-sky-600 dark:bg-sky-500/15 dark:text-sky-300', val: 'text-sky-500' },
+  rose: { chip: 'bg-rose-50 text-rose-600 dark:bg-rose-500/15 dark:text-rose-300', val: 'text-rose-500' },
+}
+
+// 1×1 統計磚（chip icon + tabular-nums；純展示，唔可點）
+function StatTile({
+  label,
+  value,
+  unit,
+  hint,
+  icon: Icon,
+  tone,
+}: {
+  label: string
+  value: number | string
+  unit?: string
+  hint?: string
+  icon: LucideIcon
+  tone: Tone
+}) {
+  const t = TONE[tone]
+  return (
+    <div className="flex flex-col justify-between rounded-2xl border border-slate-200/80 bg-white p-4 dark:border-slate-700/60 dark:bg-slate-800">
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-medium text-slate-400 dark:text-slate-500">{label}</span>
+        <span className={cx('flex h-8 w-8 items-center justify-center rounded-xl', t.chip)}>
+          <Icon size={16} />
+        </span>
+      </div>
+      <div className="mt-3">
+        <p className="flex items-baseline gap-1">
+          <span className={cx('text-3xl font-semibold tabular-nums slashed-zero', t.val)}>{value}</span>
+          {unit && <span className="text-sm font-medium text-slate-400">{unit}</span>}
+        </p>
+        {hint && <p className="mt-0.5 truncate text-[11px] text-slate-400">{hint}</p>}
+      </div>
+    </div>
+  )
+}
+
+// 功能教學引導步驟（defaultValue 廣東話，唔改 i18n 檔）
+const PROGRESS_GUIDE: FeatureGuideStep[] = [
+  { title: '揀班別', desc: '喺上方揀返要追進度嘅班，下面就會載入該班嘅課程大綱。' },
+  { title: '標記進度', desc: '逐個課題撳一下，喺未開始 / 進行中 / 完成之間切換；可整個範疇一鍵標完成。' },
+  { title: '排期睇進度', desc: '撳課題旁嘅排期掣設目標完成日，「教學進度表」同「分析」就會睇到落後 / 超前。' },
+]
+
 export default function CurriculumProgress() {
   const classes = useCollection(classesCol)
   const topics = useCollection(topicsCol)
   const progress = useCollection(progressCol)
   const subj = useSubjectLabel()
+  const { open } = useNav()
   const [classId, setClassId] = useState<string>(classes[0]?.id ?? '')
   const [view, setView] = useState<ViewTab>('list')
 
   const activeClass = classes.find((c) => c.id === classId) ?? classes[0]
 
-  // 路線進度（masthead 鐵軌儀表用）：當前班別整體完成度。
+  // 當前班別整體完成度（masthead 進度條用）。
   const journey = useMemo(
     () =>
       activeClass
@@ -113,72 +173,63 @@ export default function CurriculumProgress() {
 
   if (classes.length === 0) {
     return (
-      <EmptyState
-        icon={School}
-        title="仲未鋪到路軌"
-        hint={`先去「班別管理」開一班，就可以喺呢度沿住${subj.name}課程大綱鋪設教學路線。`}
-      />
+      <div className="space-y-5">
+        <PageHero
+          icon={Route}
+          kicker="Curriculum Progress"
+          title="課程進度"
+          description={`沿住${subj.name}課程大綱追蹤每班教到邊。`}
+        />
+        <EmptyState
+          icon={School}
+          title="仲未有班別"
+          hint={`先去「班別管理」開一班，就可以喺呢度追蹤${subj.name}課程進度。`}
+          action={
+            <Button size="sm" variant="secondary" icon={ChevronRight} onClick={() => open('work-classes')}>
+              去班別管理
+            </Button>
+          }
+        />
+      </div>
     )
   }
 
   return (
-    <div className="space-y-6">
-      {/* ───────── 路線卡 masthead：教學旅程嘅起點站 ───────── */}
-      <header className="relative overflow-hidden rounded-3xl border border-accent/20 bg-gradient-to-br from-accent-soft/70 via-white to-white p-5 dark:border-accent/25 dark:from-accent/15 dark:via-slate-800 dark:to-slate-800 sm:p-6">
-        {/* 背景裝飾：一條淡淡嘅路軌虛線（dashed border，opacity 跟 accent 變數） */}
-        <span
-          aria-hidden="true"
-          className="pointer-events-none absolute -right-8 top-1/2 hidden w-56 -translate-y-1/2 border-t-2 border-dashed border-accent/25 sm:block"
+    <div className="space-y-5">
+      <PageHero
+        icon={Route}
+        kicker="Curriculum Progress"
+        title="課程進度"
+        description={`沿住${subj.name}課程大綱追蹤每班教到邊。`}
+      />
+
+      <FeatureGuide storageKey="curriculumProgress" title="課程進度點用？" steps={PROGRESS_GUIDE} />
+
+      {/* 班別選擇（純展示卡） */}
+      <div className="rounded-2xl border border-slate-200/80 bg-white p-4 dark:border-slate-700/60 dark:bg-slate-800">
+        <div className="mb-2.5 flex items-center gap-1.5 text-xs font-semibold text-slate-500 dark:text-slate-300">
+          <School size={13} /> 班別
+        </div>
+        <Pills
+          size="sm"
+          options={classes.map((c) => ({ id: c.id, label: c.name }))}
+          active={activeClass?.id ?? ''}
+          onChange={setClassId}
         />
-        <div className="relative flex flex-wrap items-start justify-between gap-x-5 gap-y-4">
-          <div className="min-w-0">
-            <p className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.28em] text-accent/80">
-              <Route size={13} /> 教學路線圖
-            </p>
-            <h1 className="mt-1.5 text-[28px] font-semibold leading-tight tracking-tight text-slate-800 dark:text-slate-100 sm:text-[34px]">
-              課程進度
-            </h1>
-            <p className="mt-1.5 max-w-md text-sm leading-relaxed text-slate-600 dark:text-slate-300">
-              沿住{subj.name}課程大綱鋪一條教學路軌，逐站標記里程碑，一眼睇到{' '}
-              <span className="font-medium text-slate-700 dark:text-slate-200">
-                {activeClass?.name}
-              </span>{' '}
-              行到邊。
-            </p>
-          </div>
-
-          {/* 旅程儀表：到站比例 + 迷你路軌 */}
-          {journey.total > 0 && (
-            <div className="shrink-0">
-              <div className="flex items-baseline gap-1.5">
-                <span className="text-3xl font-semibold leading-none tabular-nums text-accent-strong dark:text-accent sm:text-4xl">
-                  {journey.pct}
-                </span>
-                <span className="text-base font-semibold text-accent-strong/70 dark:text-accent/70">
-                  %
-                </span>
-              </div>
-              <p className="mt-1 text-right text-xs tabular-nums text-slate-500 dark:text-slate-400">
-                已抵 {journey.done} / {journey.total} 站
-              </p>
-              <JourneyRail done={journey.done} total={journey.total} />
+        {activeClass && journey.total > 0 && (
+          <div className="mt-3.5 border-t border-slate-200 pt-3 dark:border-slate-700">
+            <div className="flex items-end justify-between gap-3">
+              <span className="text-xs text-slate-400 dark:text-slate-500">
+                {activeClass.name} · 已完成 {journey.done} / {journey.total} 個課題
+              </span>
+              <span className="text-2xl font-semibold leading-none text-accent tabular-nums slashed-zero">
+                {journey.pct}%
+              </span>
             </div>
-          )}
-        </div>
-
-        {/* 班別 = 路線選擇 */}
-        <div className="relative mt-5 flex flex-wrap items-center gap-x-2 gap-y-2">
-          <span className="inline-flex items-center gap-1 text-[11px] font-medium uppercase tracking-wide text-slate-400 dark:text-slate-500">
-            <MapPin size={12} /> 路線
-          </span>
-          <Pills
-            size="sm"
-            options={classes.map((c) => ({ id: c.id, label: c.name }))}
-            active={activeClass?.id ?? ''}
-            onChange={setClassId}
-          />
-        </div>
-      </header>
+            <ProgressBar value={journey.pct} className="mt-2" />
+          </div>
+        )}
+      </div>
 
       <Tabs tabs={VIEW_TABS} active={view} onChange={setView} icons={VIEW_ICONS} />
 
@@ -192,83 +243,6 @@ export default function CurriculumProgress() {
       {activeClass && view === 'analysis' && (
         <AnalysisView classId={activeClass.id} className={activeClass.name} topics={topics} />
       )}
-    </div>
-  )
-}
-
-// ───────── 旅程路軌（masthead 迷你進度鐵軌：枕木 + 已行段着色）─────────
-//  純展示衍生自 done/total；尊重 reduced-motion（只用 width transition）。
-function JourneyRail({ done, total }: { done: number; total: number }) {
-  const pct = total ? Math.round((done / total) * 100) : 0
-  // 枕木數量：跟課題量縮放，封頂 16 條，至少 6 條。
-  const ties = Math.max(6, Math.min(16, total))
-  return (
-    <div className="mt-2 w-40 sm:w-48">
-      <div className="relative h-2.5 overflow-hidden rounded-full bg-slate-200/80 dark:bg-slate-700/70">
-        {/* 枕木刻度 */}
-        <div aria-hidden="true" className="absolute inset-0 flex items-center justify-between px-1">
-          {Array.from({ length: ties }).map((_, i) => (
-            <span key={i} className="h-1.5 w-px bg-white/50 dark:bg-slate-900/40" />
-          ))}
-        </div>
-        {/* 已行路段 */}
-        <div
-          className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-accent to-accent-strong transition-all duration-700 ease-out dark:from-accent dark:to-accent"
-          style={{ width: `${pct}%` }}
-        />
-      </div>
-    </div>
-  )
-}
-
-// ───────── 路程結算格（hairline grid · serif 大數字；達標 hot / 脫班 alert）─────────
-function LedgerStat({
-  label,
-  value,
-  unit,
-  hint,
-  icon: I,
-  hot,
-  alert,
-}: {
-  label: string
-  value: number | string
-  unit?: string
-  hint?: string
-  icon: typeof Milestone
-  hot?: boolean
-  alert?: boolean
-}) {
-  const accentText = hot
-    ? 'text-emerald-600 dark:text-emerald-400'
-    : alert
-      ? 'text-rose-600 dark:text-rose-400'
-      : 'text-slate-800 dark:text-slate-100'
-  const labelText = hot
-    ? 'text-emerald-600/80 dark:text-emerald-400/80'
-    : alert
-      ? 'text-rose-500/80 dark:text-rose-400/80'
-      : 'text-slate-400 dark:text-slate-500'
-  return (
-    <div
-      className={cx(
-        'px-3.5 py-3.5 transition-colors sm:px-4',
-        hot
-          ? 'bg-emerald-50 dark:bg-emerald-500/10'
-          : alert
-            ? 'bg-rose-50/70 dark:bg-rose-500/10'
-            : 'bg-white dark:bg-slate-800',
-      )}
-    >
-      <p className={cx('flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide', labelText)}>
-        <I size={12} className="shrink-0" />
-        <span className="truncate">{label}</span>
-      </p>
-      <p className={cx('mt-1 text-[26px] font-semibold leading-none tabular-nums slashed-zero', accentText)}>
-        {value}
-        {unit && <span className="ml-1 font-sans text-sm font-normal text-slate-400">{unit}</span>}
-      </p>
-      {hint && <p className="mt-1 truncate text-[11px] text-slate-400 dark:text-slate-500">{hint}</p>}
     </div>
   )
 }
@@ -412,38 +386,27 @@ function ListView({
 
   return (
     <div className="space-y-4">
-      {/* 路程結算帶：里程碑統計（hairline grid · serif 大數字） */}
-      <section className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl bg-slate-200/70 ring-1 ring-slate-200/80 dark:bg-slate-700/50 dark:ring-slate-700/60 sm:grid-cols-4">
-        <LedgerStat label="全程站數" value={topics.length} unit="站" icon={Milestone} />
-        <LedgerStat label="已抵達" value={overall.done} unit="站" icon={Flag} hint={`完成度 ${overall.pct}%`} hot={overall.total > 0 && overall.done === overall.total} />
-        <LedgerStat label="途中" value={overall.inProgress} unit="站" icon={TrainTrack} />
-        <LedgerStat
-          label="脫班"
+      {/* 進度統計磚 */}
+      <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <StatTile label="課題總數" value={topics.length} unit="個" icon={ListChecks} tone="accent" />
+        <StatTile
+          label="已完成"
+          value={overall.done}
+          unit="個"
+          icon={CircleCheckBig}
+          tone="emerald"
+          hint={`完成度 ${overall.pct}%`}
+        />
+        <StatTile label="進行中" value={overall.inProgress} unit="個" icon={CircleDashed} tone="amber" />
+        <StatTile
+          label="落後"
           value={behindCount}
-          unit="站"
+          unit="個"
           icon={CalendarClock}
-          hint={behindCount > 0 ? '已過目標完成日' : '全程準時'}
-          alert={behindCount > 0}
+          tone={behindCount > 0 ? 'rose' : 'sky'}
+          hint={behindCount > 0 ? '已過目標完成日' : '全部準時'}
         />
       </section>
-
-      {/* 整體路程 */}
-      <Card className="border-accent/20 bg-accent-soft/40 p-4 dark:border-accent/25 dark:bg-accent/10">
-        <div className="flex items-end justify-between gap-3">
-          <div>
-            <span className="text-sm font-medium text-slate-700 dark:text-slate-200">
-              {className} 教學路程
-            </span>
-            <p className="nums mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-              已抵達 {overall.done} / {topics.length} 個里程碑
-            </p>
-          </div>
-          <span className="nums text-2xl font-semibold leading-none text-accent-strong dark:text-accent">
-            {overall.pct}%
-          </span>
-        </div>
-        <ProgressBar value={overall.pct} className="mt-2.5" />
-      </Card>
 
       {/* 工具列：搜尋 + 篩選 + 匯出 */}
       <Card className="space-y-3 p-3 sm:p-4">
@@ -511,46 +474,43 @@ function ListView({
         </div>
       </Card>
 
-      {/* 課題路軌：部分 = 沿線車站，範疇 = 路段，課題 = 里程碑 */}
+      {/* 課題清單：部分 → 範疇 → 課題 */}
       <div aria-live="polite">
       {grouped.length === 0 ? (
-        <EmptyState
-          icon={query || statusFilter !== 'all' || partFilter !== 'all' ? Search : Route}
-          title={query || statusFilter !== 'all' || partFilter !== 'all' ? '呢段路冇符合嘅站' : '路軌仲未鋪好'}
-          hint={
-            query || statusFilter !== 'all' || partFilter !== 'all'
-              ? '清除搜尋或篩選，就會見返成條路線。'
-              : `課題資料載入後，${subj.name}課程路線就會喺度逐站展開。`
-          }
-        />
-      ) : (
-        <div className="relative space-y-3">
-          {/* 主路軌：貫穿所有車站嘅連續線 */}
-          <span
-            aria-hidden="true"
-            className="absolute bottom-3 left-[11px] top-3 w-0.5 bg-gradient-to-b from-accent/30 via-slate-200 to-slate-200 dark:from-accent/40 dark:via-slate-700/70 dark:to-slate-700/70"
+        (query || statusFilter !== 'all' || partFilter !== 'all') ? (
+          <EmptyState
+            icon={Search}
+            title="冇符合嘅課題"
+            hint="清除搜尋或篩選，就會見返所有課題。"
+            action={
+              <Button
+                size="sm"
+                variant="secondary"
+                onClick={() => {
+                  setQuery('')
+                  setStatusFilter('all')
+                  setPartFilter('all')
+                }}
+              >
+                清除篩選
+              </Button>
+            }
           />
+        ) : (
+          <EmptyState
+            icon={Route}
+            title="仲未有課題"
+            hint={`${subj.name}課程大綱載入後，課題會喺度逐個列出，到時就可以開始標記進度。`}
+          />
+        )
+      ) : (
+        <div className="space-y-4">
           {grouped.map((part, pi) => {
             const isCollapsed = !!collapsed[part.part]
             const c = countStatuses(progress, classId, part.items.map((t) => t.id))
             const cleared = c.total > 0 && c.done === c.total
             return (
-              <div key={part.part} className="relative pl-9">
-                {/* 車站標記（路軌節點） */}
-                <span
-                  aria-hidden="true"
-                  className={cx(
-                    'absolute left-0 top-1 flex h-6 w-6 items-center justify-center rounded-full ring-4 ring-white transition-colors dark:ring-slate-900',
-                    cleared
-                      ? 'bg-emerald-500 text-white'
-                      : c.done > 0
-                        ? 'bg-accent text-white'
-                        : 'border-2 border-slate-300 bg-white text-slate-400 dark:border-slate-600 dark:bg-slate-800',
-                  )}
-                >
-                  {cleared ? <Check size={13} strokeWidth={3} /> : <span className="text-xs font-bold tabular-nums">{pi + 1}</span>}
-                </span>
-
+              <section key={part.part}>
                 <button
                   type="button"
                   onClick={() =>
@@ -560,11 +520,23 @@ function ListView({
                   className="group flex w-full items-center justify-between gap-2 rounded-xl py-1 text-left transition active:scale-[0.98]"
                 >
                   <span className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+                    {/* 序號 chip */}
+                    <span
+                      aria-hidden="true"
+                      className={cx(
+                        'flex h-6 w-6 shrink-0 items-center justify-center rounded-lg text-xs font-semibold tabular-nums',
+                        cleared
+                          ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-300'
+                          : 'bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent',
+                      )}
+                    >
+                      {cleared ? <Check size={13} strokeWidth={3} /> : pi + 1}
+                    </span>
                     <span className="text-base font-semibold tracking-tight text-slate-700 dark:text-slate-200">
                       {part.part}
                     </span>
-                    <Badge tone={cleared ? 'green' : 'slate'} className="nums">
-                      {c.done}/{c.total} 站
+                    <Badge tone={cleared ? 'green' : 'slate'} className="tabular-nums">
+                      {c.done}/{c.total}
                     </Badge>
                   </span>
                   <ChevronDown
@@ -598,7 +570,7 @@ function ListView({
                                 </span>
                                 <span
                                   className={cx(
-                                    'nums shrink-0 text-xs font-medium',
+                                    'shrink-0 text-xs font-medium tabular-nums',
                                     areaCleared
                                       ? 'text-emerald-600 dark:text-emerald-400'
                                       : 'text-slate-400 dark:text-slate-500',
@@ -613,9 +585,9 @@ function ListView({
                                 className="mt-2 h-1.5"
                               />
                             </div>
-                            <Tooltip label="整段標記抵達">
+                            <Tooltip label="整個範疇標記完成">
                               <IconButton
-                                label="整段標記抵達"
+                                label="整個範疇標記完成"
                                 size="sm"
                                 onClick={() => bulkArea(area.items, 'done', area.area)}
                               >
@@ -624,7 +596,7 @@ function ListView({
                             </Tooltip>
                           </div>
                           <ul>
-                            {area.items.map((tp, ti) => (
+                            {area.items.map((tp) => (
                               <TopicRow
                                 key={tp.id}
                                 topic={tp}
@@ -632,7 +604,6 @@ function ListView({
                                 dateDone={recordOf(progress, classId, tp.id)?.dateDone}
                                 plan={planOf(plans, classId, tp.id)}
                                 today={today}
-                                last={ti === area.items.length - 1}
                                 onCycle={() => cycle(tp.id)}
                                 onSetStatus={(s) => setStatus(tp.id, s)}
                                 onEditPlan={() => setEditing(tp)}
@@ -644,7 +615,7 @@ function ListView({
                     })}
                   </div>
                 )}
-              </div>
+              </section>
             )
           })}
         </div>
@@ -663,15 +634,13 @@ function ListView({
   )
 }
 
-// ───── 單一課題 = 路軌里程碑站 ─────
-//  左側迷你路軌：站點記號（完成=實心✓／進行中=半實心／未開始=空心圈）+ 連桿。
+// ───── 單一課題列：狀態色點 + 課題名 + 排期資訊 + 狀態切換 ─────
 function TopicRow({
   topic,
   status,
   dateDone,
   plan,
   today,
-  last,
   onCycle,
   onSetStatus,
   onEditPlan,
@@ -681,7 +650,6 @@ function TopicRow({
   dateDone?: string
   plan?: CurriculumPlan
   today: string
-  last?: boolean
   onCycle: () => void
   onSetStatus: (s: ProgressStatus) => void
   onEditPlan: () => void
@@ -693,32 +661,21 @@ function TopicRow({
   const inProgress = status === 'in_progress'
 
   return (
-    <li className="group relative flex items-center gap-3 px-4 py-2.5">
-      {/* 站點欄：連桿 + 里程碑記號 */}
-      <div className="relative flex w-3 shrink-0 justify-center self-stretch">
-        {!last && (
-          <span
-            aria-hidden="true"
-            className={cx(
-              'absolute left-1/2 top-[18px] bottom-[-10px] w-px -translate-x-1/2',
-              done ? 'bg-emerald-300/70 dark:bg-emerald-500/30' : 'bg-slate-200 dark:bg-slate-700/70',
-            )}
-          />
+    <li className="group relative flex items-center gap-2.5 px-4 py-2.5 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/60">
+      {/* 狀態色點 */}
+      <span
+        aria-hidden="true"
+        className={cx(
+          'flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full transition-colors',
+          done
+            ? 'bg-emerald-500'
+            : inProgress
+              ? 'bg-amber-400'
+              : 'border-2 border-slate-300 bg-white dark:border-slate-600 dark:bg-slate-800',
         )}
-        <span
-          aria-hidden="true"
-          className={cx(
-            'relative z-10 mt-[5px] flex h-3 w-3 items-center justify-center rounded-full transition-colors',
-            done
-              ? 'bg-emerald-500'
-              : inProgress
-                ? 'border-2 border-amber-400 bg-gradient-to-r from-amber-400 from-50% to-transparent to-50%'
-                : 'border-2 border-slate-300 bg-white dark:border-slate-600 dark:bg-slate-800',
-          )}
-        >
-          {done && <Check size={8} strokeWidth={4} className="text-white" />}
-        </span>
-      </div>
+      >
+        {done && <Check size={9} strokeWidth={4} className="text-white" />}
+      </span>
 
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
@@ -955,19 +912,19 @@ function ScheduleView({
   }
 
   if (topics.length === 0) {
-    return <EmptyState icon={ClipboardList} title="時刻表仲未編到" hint="課題資料載入後，呢度就會列出成條路線嘅時刻表。" />
+    return <EmptyState icon={ClipboardList} title="仲未有課題" hint="課程大綱載入後，呢度會按教學週列出每個課題嘅進度表。" />
   }
 
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-        <StatCard label="已編入時刻表" value={scheduledCount} unit={`/ ${topics.length}`} icon={CalendarClock} />
-        <StatCard label="行車總節數" value={totalPeriods} unit="節" icon={Gauge} />
+        <StatCard label="已排期" value={scheduledCount} unit={`/ ${topics.length}`} icon={CalendarClock} />
+        <StatCard label="總節數" value={totalPeriods} unit="節" icon={Gauge} />
         <StatCard
-          label="脫班站數"
+          label="落後課題"
           value={behindCount}
-          unit="站"
-          icon={Hourglass}
+          unit="個"
+          icon={CalendarClock}
           highlight={behindCount > 0}
         />
       </div>
@@ -994,13 +951,22 @@ function ScheduleView({
       </div>
 
       {filtered.length === 0 ? (
-        <EmptyState icon={CalendarClock} title="呢班車冇站" hint="試吓切換上面嘅進度狀態篩選。" />
+        <EmptyState
+          icon={CalendarClock}
+          title="冇符合嘅課題"
+          hint="試吓切換上面嘅進度狀態篩選。"
+          action={
+            <Button size="sm" variant="secondary" onClick={() => setPaceFilter('all')}>
+              睇全部
+            </Button>
+          }
+        />
       ) : (
         <Table>
           <Thead>
             <Tr>
               <Th align="center">週</Th>
-              <Th>站（課題）</Th>
+              <Th>課題</Th>
               <Th align="center">節數</Th>
               <Th align="center">目標日</Th>
               <Th align="center">進度</Th>
@@ -1056,7 +1022,7 @@ function ScheduleView({
         </Table>
       )}
       <p className="text-xs text-slate-400 dark:text-slate-500">
-        想編入時刻表？喺「進度清單」每個站撳 <CalendarClock size={12} className="inline" /> 設定教學週、節數同目標完成日。
+        想排期？喺「進度清單」每個課題撳 <CalendarClock size={12} className="inline" /> 設定教學週、節數同目標完成日。
       </p>
     </div>
   )
@@ -1119,13 +1085,13 @@ function MatrixView({
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
           <span className="inline-flex items-center gap-1.5">
-            <span className="h-3 w-3 rounded-sm bg-emerald-500" /> 完成
+            <span className="h-3 w-3 rounded bg-emerald-500" /> 完成
           </span>
           <span className="inline-flex items-center gap-1.5">
-            <span className="h-3 w-3 rounded-sm bg-amber-100 dark:bg-amber-500/20" /> 進行中
+            <span className="h-3 w-3 rounded bg-amber-100 dark:bg-amber-500/20" /> 進行中
           </span>
           <span className="inline-flex items-center gap-1.5">
-            <span className="h-3 w-3 rounded-sm bg-slate-100 dark:bg-slate-800" /> 未開始
+            <span className="h-3 w-3 rounded bg-slate-100 dark:bg-slate-800" /> 未開始
           </span>
         </div>
         <Button variant="secondary" size="sm" icon={Download} onClick={exportCsv}>
@@ -1133,11 +1099,11 @@ function MatrixView({
         </Button>
       </div>
 
-      <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700/60">
+      <div className="overflow-x-auto rounded-2xl border border-slate-200/80 dark:border-slate-700/60">
         <table className="min-w-full border-collapse text-sm">
           <thead>
             <tr className="bg-slate-50/80 dark:bg-slate-800/60">
-              <th className="sticky left-0 z-10 bg-slate-50/80 px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 backdrop-blur dark:bg-slate-800/90 dark:text-slate-400">
+              <th className="sticky left-0 z-10 bg-slate-50/80 px-3 py-2.5 text-left text-xs font-semibold text-slate-500 backdrop-blur dark:bg-slate-800/90 dark:text-slate-400">
                 課題
               </th>
               {classes.map((c) => (
@@ -1194,7 +1160,7 @@ function MatrixView({
         </table>
       </div>
       <p className="text-xs text-slate-400 dark:text-slate-500">
-        一眼睇晒所有班別嘅課程覆蓋差異 — 邊班落後、邊個課題未開，立即見到。
+        一眼比較所有班別嘅課程覆蓋 — 邊班落後、邊個課題未開始，即刻見到。
       </p>
     </div>
   )
@@ -1248,7 +1214,7 @@ function RowGroup({
                 <Tooltip label={`${c.name} · ${m.label}`}>
                   <span
                     className={cx(
-                      'inline-flex h-7 w-7 items-center justify-center rounded-md text-xs font-semibold',
+                      'inline-flex h-7 w-7 items-center justify-center rounded-lg text-xs font-semibold',
                       m.cls,
                     )}
                   >
@@ -1363,17 +1329,17 @@ function AnalysisView({
       <div className="grid gap-4 lg:grid-cols-2">
         {/* 完成度 donut */}
         <Card className="p-4">
-          <SectionTitle icon={Route}>全程到站比例</SectionTitle>
+          <SectionTitle icon={Route}>整體完成度</SectionTitle>
           <DonutWithLegend
             segments={donutSegments}
             centerLabel={`${overall.pct}%`}
-            centerSub={`${overall.done}/${overall.total} 站`}
+            centerSub={`${overall.done}/${overall.total} 個課題`}
           />
         </Card>
 
         {/* 範疇橫條 */}
         <Card className="p-4">
-          <SectionTitle icon={LayoutList}>各路段進度（由慢到快）</SectionTitle>
+          <SectionTitle icon={LayoutList}>各範疇完成度（由低到高）</SectionTitle>
           {areaRows.length === 0 ? (
             <p className="text-sm text-slate-500 dark:text-slate-400">未有資料。</p>
           ) : (
@@ -1389,7 +1355,7 @@ function AnalysisView({
           right={
             <span className="flex items-center gap-3 text-[11px] text-slate-400 dark:text-slate-500">
               <span className="inline-flex items-center gap-1">
-                <span className="inline-block h-0.5 w-4 border-t-2 border-dashed border-slate-400" /> 時刻表
+                <span className="inline-block h-0.5 w-4 border-t-2 border-dashed border-slate-400" /> 計劃
               </span>
               <span className="inline-flex items-center gap-1">
                 <span className="inline-block h-0.5 w-4 bg-emerald-500" /> 實際
@@ -1397,12 +1363,18 @@ function AnalysisView({
             </span>
           }
         >
-          {className} 行車進度（累積到站）
+          {className} 累積完成進度
         </SectionTitle>
         {pacing.length === 0 ? (
-          <p className="py-6 text-center text-sm text-slate-500 dark:text-slate-400">
-            喺「進度清單」為每個站設定目標完成日，呢度就會畫出時刻表對實際嘅行車線。
-          </p>
+          <div className="flex flex-col items-center gap-2 py-8 text-center">
+            <span className="flex h-12 w-12 items-center justify-center rounded-full bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
+              <CalendarClock size={22} />
+            </span>
+            <p className="text-sm font-medium text-slate-600 dark:text-slate-300">仲未有排期資料</p>
+            <p className="max-w-xs text-xs text-slate-400">
+              喺「進度清單」為課題設定目標完成日，呢度就會畫出計劃對實際嘅完成曲線。
+            </p>
+          </div>
         ) : (
           <PacingChart points={pacing} total={overall.total} />
         )}
@@ -1410,11 +1382,15 @@ function AnalysisView({
 
       {/* 需關注課題 */}
       <Card className="p-4">
-        <SectionTitle icon={CalendarClock}>需要催車嘅站（脫班 / 臨近死線）</SectionTitle>
+        <SectionTitle icon={CalendarClock}>需要關注嘅課題（落後 / 臨近死線）</SectionTitle>
         {attention.length === 0 ? (
-          <p className="flex items-center gap-1.5 text-sm text-slate-500 dark:text-slate-400">
-            <Check size={15} className="text-emerald-500" /> 全程準時，暫時冇脫班或臨近死線嘅站。
-          </p>
+          <div className="flex flex-col items-center gap-2 py-6 text-center">
+            <span className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-50 text-emerald-500 dark:bg-emerald-500/15">
+              <CircleCheckBig size={22} />
+            </span>
+            <p className="text-sm font-medium text-slate-600 dark:text-slate-300">進度準時</p>
+            <p className="max-w-xs text-xs text-slate-400">暫時冇落後或臨近死線嘅課題。</p>
+          </div>
         ) : (
           <ul className="space-y-2">
             {attention.map((a) => {
@@ -1422,7 +1398,7 @@ function AnalysisView({
               return (
                 <li
                   key={a.topic.id}
-                  className="flex items-center justify-between gap-2 rounded-lg border border-slate-100 px-3 py-2 dark:border-slate-700/60"
+                  className="flex items-center justify-between gap-2 rounded-xl border border-slate-200/80 px-3 py-2 dark:border-slate-700/60"
                 >
                   <div className="min-w-0">
                     <div className="truncate text-sm text-slate-700 dark:text-slate-200">
@@ -1436,7 +1412,7 @@ function AnalysisView({
                     {a.target && (
                       <span className="tabular-nums text-xs text-slate-400">{fmtDate(a.target)}</span>
                     )}
-                    <Badge tone={cfg.tone} icon={a.pace === 'behind' ? X : Hourglass}>
+                    <Badge tone={cfg.tone} icon={a.pace === 'behind' ? X : CalendarClock}>
                       {cfg.label}
                     </Badge>
                   </div>

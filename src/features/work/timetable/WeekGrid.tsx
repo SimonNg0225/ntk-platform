@@ -43,11 +43,11 @@ export default function WeekGrid({
   onOpenCell: (day: number, period: number) => void
 }) {
   return (
-    <div className="overflow-x-auto rounded-3xl border border-slate-200/70 bg-white p-2.5 shadow-xs dark:border-slate-700/60 dark:bg-slate-800 dark:shadow-none sm:p-4">
+    <div className="overflow-x-auto rounded-2xl border border-slate-200/80 bg-white p-2.5 dark:border-slate-700/60 dark:bg-slate-800 sm:p-4">
       <table className="w-full min-w-[600px] border-separate border-spacing-x-1.5 border-spacing-y-1.5 text-sm">
         <thead>
           <tr>
-            <th className="sticky left-0 z-10 w-20 bg-white pb-2 pl-1 text-left align-bottom text-[10px] font-medium uppercase tracking-[0.15em] text-slate-400 dark:bg-slate-800 dark:text-slate-500">
+            <th className="sticky left-0 z-10 w-20 bg-white pb-2 pl-1 text-left align-bottom text-xs font-semibold text-slate-500 dark:bg-slate-800 dark:text-slate-400">
               節 / 時間
             </th>
             {days.map((day) => {
@@ -73,7 +73,13 @@ export default function WeekGrid({
                     >
                       {letter}
                     </span>
-                    <span className="text-[10px] font-semibold uppercase tracking-wide">
+                    <span
+                      className={cx(
+                        'text-[10px] font-semibold',
+                        // 「Day」係英文先 uppercase；「今日／星期」純中文唔好 uppercase（字距會散）
+                        cycle && !isToday && 'uppercase tracking-wide',
+                      )}
+                    >
                       {isToday ? '今日' : cycle ? 'Day' : '星期'}
                     </span>
                   </div>

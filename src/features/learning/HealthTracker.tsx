@@ -4,7 +4,6 @@ import {
   Minus,
   Target,
   Download,
-  Flame,
   Scale,
   Moon,
   Dumbbell,
@@ -20,7 +19,7 @@ import {
   ArrowUpRight,
   type LucideIcon,
 } from 'lucide-react'
-import { Card, Button, Input, Field, Modal, SegmentedControl, EmptyState, cx } from '../../ui'
+import { Card, Button, Input, Field, Modal, SegmentedControl, EmptyState, FeatureGuide, PageHero, type FeatureGuideStep, cx } from '../../ui'
 import { useToast } from '../../context/ToastContext'
 import { useHealthLogs, useHealthGoals, logDay, saveGoals } from './health/store'
 import { MOOD_EMOJI } from './health/types'
@@ -33,11 +32,30 @@ type Range = '14' | '30'
 // 心情 1–5 對應嘅友善廣東話描述（配 MOOD_EMOJI 同序）
 const MOOD_LABELS = ['好攰', '麻麻', '一般', '幾好', '好正'] as const
 
-// 指標色調（淺底深字 + 深色 /15，跟設計系統分類色）
+// 教學引導步驟（3 步：設定目標 → 每日入錄 → 睇趨勢）
+const GUIDE_STEPS: FeatureGuideStep[] = [
+  {
+    title: '設定健康目標',
+    desc: '撳右上「目標」，定低每晚睡眠、每週運動、每日飲水（同可選嘅目標體重）。',
+  },
+  {
+    title: '入錄今日讀數',
+    desc: '喺「今日入錄」填體重、睡眠，撳掣加運動／飲水，再揀一個心情面色。',
+  },
+  {
+    title: '睇趨勢同連續',
+    desc: '上方「今日讀數」即時對住目標；下面「趨勢圖譜」睇 14／30 日變化。',
+  },
+]
+
+// 指標色調 chip（淺底深字 + 深色 /15，跟 WorkDashboard TONE map）。
+// 註：tone key 'indigo' 係資料層（health/types.ts MetricDef）同 Charts TONE_COLOR
+// 鎖死嘅契約（睡眠折線色），唔郁；但 chip 視覺改用設計系統 6 色之一嘅 violet
+// （睡眠／休息語意槽），避免寫死非設計系統嘅 indigo-* utility。
 type Tone = 'accent' | 'indigo' | 'emerald' | 'amber' | 'sky' | 'rose'
 const TONE_CHIP: Record<Tone, string> = {
   accent: 'bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent',
-  indigo: 'bg-indigo-50 text-indigo-600 dark:bg-indigo-500/15 dark:text-indigo-300',
+  indigo: 'bg-violet-50 text-violet-600 dark:bg-violet-500/15 dark:text-violet-300',
   emerald: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-300',
   amber: 'bg-amber-50 text-amber-600 dark:bg-amber-500/15 dark:text-amber-300',
   sky: 'bg-sky-50 text-sky-600 dark:bg-sky-500/15 dark:text-sky-300',
@@ -153,7 +171,7 @@ function VitalRow({
 
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-1.5">
-          <span className="text-[11px] font-medium uppercase tracking-wide text-slate-400 dark:text-slate-500">{label}</span>
+          <span className="text-[11px] font-semibold text-slate-400 dark:text-slate-500">{label}</span>
           {status && (
             <span
               className={cx(
@@ -301,56 +319,42 @@ export default function HealthTracker() {
 
   return (
     <div className="space-y-6">
-      {/* ───────── 生命徵象 masthead（自管 header：kicker + serif 標題 + 今日狀態） ───────── */}
-      <header className="flex flex-wrap items-end justify-between gap-x-5 gap-y-4">
-        <div className="min-w-0">
-          <p className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.28em] text-accent/70">
-            <HeartPulse size={13} aria-hidden="true" />
-            生命徵象 · Vitals
-          </p>
-          <h1 className="mt-1.5 text-[28px] font-semibold leading-tight tracking-tight text-slate-800 dark:text-slate-100 sm:text-[32px]">
-            健康追蹤
-          </h1>
-          <p className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-slate-500 dark:text-slate-400">
-            <span className="tabular-nums">{longDateLabel(today)}</span>
-            {summary.streak > 0 && (
-              <>
-                <span aria-hidden="true" className="text-slate-300 dark:text-slate-600">·</span>
-                <span className="inline-flex items-center gap-1 font-medium text-amber-600 dark:text-amber-400">
-                  <Flame size={12} aria-hidden="true" /> 連續記錄 {summary.streak} 日
-                </span>
-              </>
-            )}
-          </p>
-        </div>
-        <div className="flex shrink-0 items-center gap-2">
-          {/* 今日狀態指示（臨床監測燈號） */}
-          <span
-            className={cx(
-              'inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium',
-              summary.loggedToday
-                ? 'bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-200 dark:bg-emerald-500/15 dark:text-emerald-300 dark:ring-emerald-500/20'
-                : 'bg-slate-100 text-slate-500 ring-1 ring-inset ring-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:ring-slate-700',
-            )}
-          >
-            <span aria-hidden="true" className={cx('relative flex h-2 w-2', summary.loggedToday && 'text-emerald-500')}>
-              <span className={cx('absolute inline-flex h-full w-full rounded-full', summary.loggedToday ? 'animate-ping bg-emerald-400/60' : 'bg-slate-300 dark:bg-slate-600')} />
-              <span className={cx('relative inline-flex h-2 w-2 rounded-full', summary.loggedToday ? 'bg-emerald-500' : 'bg-slate-400 dark:bg-slate-500')} />
+      {/* ───────── 標題：統一 PageHero（accent hero：icon + 標題 + 長日期／連續說明 + 今日狀態 chip／目標掣） ───────── */}
+      <PageHero
+        icon={HeartPulse}
+        kicker="Health Tracker"
+        title="健康追蹤"
+        description={`${longDateLabel(today)}${summary.streak > 0 ? ` · 連續記錄 ${summary.streak} 日` : ''}`}
+        actions={
+          <>
+            {/* 今日狀態指示（紫底白色監測燈號 pill） */}
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1.5 text-xs font-medium text-white backdrop-blur-sm">
+              <span aria-hidden="true" className="relative flex h-2 w-2">
+                <span className={cx('absolute inline-flex h-full w-full rounded-full', summary.loggedToday ? 'animate-ping bg-white/70' : 'bg-white/40')} />
+                <span className={cx('relative inline-flex h-2 w-2 rounded-full', summary.loggedToday ? 'bg-white' : 'bg-white/60')} />
+              </span>
+              {summary.loggedToday ? '今日已記錄' : '今日待記錄'}
             </span>
-            {summary.loggedToday ? '今日已記錄' : '今日待記錄'}
-          </span>
-          <Button variant="secondary" size="sm" icon={Target} onClick={() => setGoalsOpen(true)}>
-            目標
-          </Button>
-        </div>
-      </header>
+            <button
+              type="button"
+              onClick={() => setGoalsOpen(true)}
+              className="inline-flex items-center gap-1.5 rounded-xl bg-white/15 px-3 py-1.5 text-sm font-medium backdrop-blur-sm transition hover:bg-white/25"
+            >
+              <Target size={15} /> 目標
+            </button>
+          </>
+        }
+      />
+
+      {/* ───────── 教學引導：點用呢個功能（可摺疊 + 永久收起） ───────── */}
+      <FeatureGuide storageKey="health" title="健康追蹤點用？" steps={GUIDE_STEPS} />
 
       {/* ───────── 生命徵象面板（vitals monitor：hairline 分隔 + sparkline 讀數） ───────── */}
       <Card clip className="animate-fade-in">
         <div className="flex items-center justify-between gap-3 border-b border-slate-200/70 bg-slate-50/60 px-4 py-3 dark:border-slate-700/60 dark:bg-slate-800/40 sm:px-5">
           <div className="flex items-center gap-2">
             <Activity size={15} className="text-accent" aria-hidden="true" />
-            <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">今日讀數</h2>
+            <h2 className="text-xs font-semibold text-slate-500 dark:text-slate-400">今日讀數</h2>
             <span className="text-[11px] text-slate-400 dark:text-slate-500">近 14 日趨勢</span>
           </div>
           <span className="hidden text-[11px] text-slate-400 dark:text-slate-500 sm:inline">即時更新</span>
@@ -734,7 +738,7 @@ function GoalChannel({
         <label htmlFor={id} className="flex min-w-0 flex-1 items-center gap-1.5">
           <span className="truncate text-sm font-semibold text-slate-700 dark:text-slate-200">{label}</span>
           {optional && (
-            <span className="shrink-0 rounded-full bg-slate-100 px-1.5 py-px text-[10px] font-medium uppercase tracking-wide text-slate-400 dark:bg-slate-700/60 dark:text-slate-400">
+            <span className="shrink-0 rounded-full bg-slate-100 px-1.5 py-px text-[10px] font-medium text-slate-400 dark:bg-slate-700/60 dark:text-slate-400">
               可選
             </span>
           )}

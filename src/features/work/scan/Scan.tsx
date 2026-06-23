@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Camera, ScanLine } from 'lucide-react'
-import { Button, EmptyState } from '../../../ui'
+import { Camera, ScanLine, FileScan, Layers } from 'lucide-react'
+import { Button, EmptyState, SectionTitle, FeatureGuide, PageHero, type FeatureGuideStep } from '../../../ui'
 import type { ScanPage } from './lib/types'
 import { downscaleDataUrl } from './lib/cv'
 import { disposeOcr } from './lib/ocr'
@@ -12,6 +12,22 @@ import ExportBar from './ExportBar'
 
 let seq = 0
 const newId = () => `scan-${Date.now()}-${seq++}`
+
+// ───────── 掃描教學引導（FeatureGuide：3 步「點用」）─────────
+const SCAN_GUIDE: FeatureGuideStep[] = [
+  {
+    title: '影低或上載',
+    desc: '撳「開始掃描」用鏡頭影文件，或上載相片，逐頁加入。',
+  },
+  {
+    title: '拉正＋執相',
+    desc: '系統自動偵測四角拉正；可手動微調邊界、揀濾鏡令字更清。',
+  },
+  {
+    title: '輸出 PDF',
+    desc: '開 OCR 令 PDF 可搜尋，再下載，或直接存入資源庫綁班級／學生。',
+  },
+]
 
 export default function Scan() {
   const { t } = useTranslation()
@@ -45,31 +61,68 @@ export default function Scan() {
   const editing = pages.find((p) => p.id === editingId) ?? null
 
   return (
-    <div className="space-y-6">
-      {/* bespoke masthead */}
-      <header className="-mx-1">
-        <p className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.3em] text-accent/70">
-          <ScanLine size={12} />{t('scan.kicker', { defaultValue: '文件掃描 · Scan' })}
-        </p>
-        <h1 className="mt-1 text-2xl font-semibold tracking-tight text-fg">{t('scan.title', { defaultValue: '掃描 PDF' })}</h1>
-        <p className="mt-1 text-sm text-fg-secondary">{t('scan.subtitle', { defaultValue: '影低文件即變掃描檔，自動拉正、可搜尋，輸出 PDF。' })}</p>
-      </header>
+    <div className="space-y-5">
+      <PageHero
+        icon={FileScan}
+        kicker={t('scan.kicker', { defaultValue: '文件掃描' })}
+        title={t('scan.title', { defaultValue: '掃描 PDF' })}
+        description={
+          pages.length > 0
+            ? t('scan.subtitleCount', {
+                count: pages.length,
+                defaultValue: '已加入 {{count}} 頁 · 拉正執相後輸出 PDF。',
+              })
+            : t('scan.subtitle', {
+                defaultValue: '影低文件即變掃描檔，自動拉正、可搜尋，輸出 PDF。',
+              })
+        }
+      />
 
       {capturing && <CameraCapture onCapture={handleCaptured} onClose={() => setCapturing(false)} />}
 
       {editing ? (
         <PageEditor page={editing} onDone={updatePage} onReshoot={() => { deletePage(editing.id); setCapturing(true) }} />
       ) : pages.length === 0 ? (
-        <EmptyState
-          icon={Camera}
-          title={t('scan.emptyTitle', { defaultValue: '未有掃描' })}
-          hint={t('scan.emptyDesc', { defaultValue: '影低或上載文件相片，自動變成掃描 PDF。' })}
-          action={<Button icon={Camera} onClick={() => setCapturing(true)}>{t('scan.start', { defaultValue: '開始掃描' })}</Button>}
-        />
+        <>
+          <FeatureGuide
+            storageKey="scan"
+            title={t('scan.guideTitle', { defaultValue: '掃描 PDF 點用？' })}
+            steps={SCAN_GUIDE}
+          />
+          <EmptyState
+            icon={Camera}
+            title={t('scan.emptyTitle', { defaultValue: '由第一頁開始' })}
+            hint={t('scan.emptyDesc', {
+              defaultValue: '影低或上載文件相片，自動拉正、可搜尋，一鍵輸出掃描 PDF。',
+            })}
+            action={
+              <Button icon={Camera} onClick={() => setCapturing(true)}>
+                {t('scan.start', { defaultValue: '開始掃描' })}
+              </Button>
+            }
+          />
+        </>
       ) : (
         <>
-          <PageStrip pages={pages} onAdd={() => setCapturing(true)} onEdit={setEditingId} onDelete={deletePage} onMove={movePage} />
-          <ExportBar pages={pages} baseName={t('scan.defaultName', { defaultValue: '掃描' })} />
+          <section>
+            <SectionTitle
+              icon={Layers}
+              right={
+                <Button size="sm" variant="ghost" icon={Camera} onClick={() => setCapturing(true)}>
+                  {t('scan.addPage', { defaultValue: '加一頁' })}
+                </Button>
+              }
+            >
+              {t('scan.pagesLabel', { defaultValue: '掃描頁' })}
+            </SectionTitle>
+            <PageStrip pages={pages} onAdd={() => setCapturing(true)} onEdit={setEditingId} onDelete={deletePage} onMove={movePage} />
+          </section>
+          <section>
+            <SectionTitle icon={ScanLine}>
+              {t('scan.exportLabel', { defaultValue: '輸出 PDF' })}
+            </SectionTitle>
+            <ExportBar pages={pages} baseName={t('scan.defaultName', { defaultValue: '掃描' })} />
+          </section>
         </>
       )}
     </div>

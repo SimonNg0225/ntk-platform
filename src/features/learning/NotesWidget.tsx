@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   Archive,
   BarChart3,
@@ -39,10 +40,12 @@ import {
   Button,
   Card,
   EmptyState,
+  FeatureGuide,
   IconButton,
   Input,
   Menu,
   Modal,
+  PageHero,
   Pills,
   Select,
   SegmentedControl,
@@ -112,6 +115,7 @@ const FOLDER_COLOR_LABELS: { id: FolderColor; label: string }[] =
   FOLDER_COLOR_KEYS.map((k) => ({ id: k, label: folderColorOf(k).label }))
 
 export default function NotesWidget() {
+  const { t } = useTranslation()
   const notes = useCollection(richNotesCol)
   const notebooks = useCollection(notebooksCol)
   const savedFilters = useCollection(savedFiltersCol)
@@ -426,61 +430,39 @@ export default function NotesWidget() {
       ? notebooks.find((n) => n.id === scope.id)?.name ?? '筆記本'
       : sidebarItems.find((i) => i.scope.kind === scope.kind)?.label ?? '筆記'
 
+  const heroDesc =
+    t('notes.countN', { n: counts.all, defaultValue: `${counts.all} 則筆記` }) +
+    ' · ' +
+    t('notes.wordsN', {
+      n: stats.totalWords.toLocaleString(),
+      defaultValue: `共 ${stats.totalWords.toLocaleString()} 字`,
+    }) +
+    (counts.pinned > 0
+      ? ' · ' +
+        t('notes.pinnedN', { n: counts.pinned, defaultValue: `${counts.pinned} 釘選` })
+      : '')
+
   return (
     <div className="space-y-5">
-      {/* ───────── 手稿封面 masthead：稿紙橫線 + serif 題名 + 版權頁式統計 ───────── */}
-      <header className="relative overflow-hidden rounded-3xl border border-amber-200/70 bg-gradient-to-br from-amber-50/80 via-white to-white px-5 py-5 dark:border-amber-500/20 dark:from-amber-500/[0.07] dark:via-slate-800 dark:to-slate-800 sm:px-6 sm:py-6">
-        {/* 稿紙橫線（極淡，純裝飾） */}
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-0 opacity-[0.5] dark:opacity-[0.35]"
-          style={{
-            backgroundImage:
-              'repeating-linear-gradient(to bottom, transparent 0, transparent 33px, rgb(180 150 100 / 0.18) 33px, rgb(180 150 100 / 0.18) 34px)',
-          }}
-        />
-        {/* 左側裝訂紅線（手稿頁邊欄） */}
-        <span
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-y-0 left-9 hidden w-px bg-rose-300/50 dark:bg-rose-400/25 sm:block"
-        />
-        <div className="relative flex flex-wrap items-end justify-between gap-x-4 gap-y-4">
-          <div className="min-w-0">
-            <p className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.3em] text-accent/80 dark:text-accent">
-              <NotebookIcon size={12} />
-              手稿 · Manuscript
-            </p>
-            <h1 className="mt-1.5 text-[30px] font-semibold leading-none tracking-tight text-slate-800 dark:text-slate-100 sm:text-4xl">
-              個人筆記
-            </h1>
-            {/* 版權頁式 colophon */}
-            <p className="mt-2.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-sm italic text-slate-500 dark:text-slate-400">
-              <span className="tabular-nums">{counts.all} 則手記</span>
-              <span aria-hidden="true" className="not-italic text-amber-400/70 dark:text-amber-500/50">·</span>
-              <span className="tabular-nums">親手寫落 {stats.totalWords.toLocaleString()} 字</span>
-              {counts.pinned > 0 && (
-                <>
-                  <span aria-hidden="true" className="not-italic text-amber-400/70 dark:text-amber-500/50">·</span>
-                  <span className="inline-flex items-center gap-1 not-italic font-sans text-xs font-medium text-accent-strong dark:text-accent">
-                    <Pin size={11} className="fill-current" /> {counts.pinned} 則釘住
-                  </span>
-                </>
-              )}
-            </p>
-          </div>
-          <div className="flex items-center gap-1.5">
+      <PageHero
+        icon={NotebookIcon}
+        kicker={t('notes.kicker', { defaultValue: '個人筆記' })}
+        title={t('notes.title', { defaultValue: '記低每一個念頭' })}
+        description={heroDesc}
+        actions={
+          <>
             <Menu
               align="end"
-              label="備份"
+              label={t('notes.backup', { defaultValue: '備份' })}
               trigger={
-                <span className="inline-flex h-9 items-center gap-1.5 rounded-full border border-amber-200/80 bg-white/70 px-3 text-sm font-medium text-slate-600 backdrop-blur transition hover:bg-white dark:border-amber-500/20 dark:bg-slate-800/60 dark:text-slate-300 dark:hover:bg-slate-800">
+                <span className="inline-flex h-9 items-center gap-1.5 rounded-xl bg-white/15 px-3 text-sm font-medium text-white backdrop-blur-sm transition hover:bg-white/25 active:scale-[0.98]">
                   <Archive size={15} />
-                  <span className="hidden sm:inline">備份</span>
+                  <span className="hidden sm:inline">{t('notes.backup', { defaultValue: '備份' })}</span>
                 </span>
               }
               items={[
-                { id: 'export', label: '匯出 JSON 備份', icon: Download, onSelect: exportJson },
-                { id: 'import', label: '匯入 JSON 備份', icon: Upload, onSelect: () => fileRef.current?.click() },
+                { id: 'export', label: t('notes.exportJson', { defaultValue: '匯出 JSON 備份' }), icon: Download, onSelect: exportJson },
+                { id: 'import', label: t('notes.importJson', { defaultValue: '匯入 JSON 備份' }), icon: Upload, onSelect: () => fileRef.current?.click() },
               ]}
             />
             <input
@@ -492,44 +474,67 @@ export default function NotesWidget() {
             />
             <Menu
               align="end"
-              label="用範本開新筆記"
+              label={t('notes.useTemplate', { defaultValue: '用範本開新筆記' })}
               trigger={
-                <span className="inline-flex h-9 items-center gap-1.5 rounded-full border border-amber-200/80 bg-white/70 px-3 text-sm font-medium text-slate-600 backdrop-blur transition hover:bg-white dark:border-amber-500/20 dark:bg-slate-800/60 dark:text-slate-300 dark:hover:bg-slate-800">
+                <span className="inline-flex h-9 items-center gap-1.5 rounded-xl bg-white/15 px-3 text-sm font-medium text-white backdrop-blur-sm transition hover:bg-white/25 active:scale-[0.98]">
                   <FileText size={15} />
-                  <span className="hidden sm:inline">範本</span>
+                  <span className="hidden sm:inline">{t('notes.template', { defaultValue: '範本' })}</span>
                 </span>
               }
-              items={NOTE_TEMPLATES.map((t) => ({
-                id: t.id,
-                label: t.label,
-                onSelect: () => createNote(t.body),
+              items={NOTE_TEMPLATES.map((tpl) => ({
+                id: tpl.id,
+                label: tpl.label,
+                onSelect: () => createNote(tpl.body),
               }))}
             />
-            <Button
-              size="sm"
-              variant={showStats ? 'primary' : 'secondary'}
-              icon={BarChart3}
+            <button
+              type="button"
               onClick={() => setShowStats((v) => !v)}
-              className="h-9 rounded-full"
+              aria-pressed={showStats}
+              className={cx(
+                'inline-flex h-9 items-center gap-1.5 rounded-xl px-3 text-sm font-medium backdrop-blur-sm transition active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50',
+                showStats ? 'bg-white text-accent-strong' : 'bg-white/15 text-white hover:bg-white/25',
+              )}
             >
-              <span className="hidden sm:inline">統計</span>
-            </Button>
-            <Button
-              size="sm"
-              icon={Plus}
+              <BarChart3 size={15} />
+              <span className="hidden sm:inline">{t('notes.stats', { defaultValue: '統計' })}</span>
+            </button>
+            <button
+              type="button"
               onClick={() => createNote()}
-              className="h-9 rounded-full shadow-sm shadow-accent/25"
+              className="inline-flex h-9 items-center gap-1.5 rounded-xl bg-white px-3.5 text-sm font-semibold text-accent-strong shadow-sm transition hover:bg-white/90 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
             >
-              寫一頁
-            </Button>
-          </div>
-        </div>
-      </header>
+              <Plus size={16} />
+              {t('notes.writeOne', { defaultValue: '寫一頁' })}
+            </button>
+          </>
+        }
+      />
 
-      {showStats && <StatsPanel stats={stats} notebooks={notebooks} onPickTag={(t) => {
+      {/* 點用教學引導（可摺疊 + 可永久收起） */}
+      <FeatureGuide
+        storageKey="notes"
+        title={t('notes.guideTitle', { defaultValue: '個人筆記點用？' })}
+        steps={[
+          {
+            title: t('notes.guide1Title', { defaultValue: '開一頁，寫低重點' }),
+            desc: t('notes.guide1Desc', { defaultValue: '撳「寫一頁」即刻落筆；或揀「範本」用課堂筆記、會議記錄等框架快速開始。' }),
+          },
+          {
+            title: t('notes.guide2Title', { defaultValue: '用 #標籤 同待辦歸類' }),
+            desc: t('notes.guide2Desc', { defaultValue: '內文打 #關鍵字 自動變標籤；打 - [ ] 變待辦剔格。撳左邊標籤即可篩選。' }),
+          },
+          {
+            title: t('notes.guide3Title', { defaultValue: '用卷冊收納、搜尋翻揭' }),
+            desc: t('notes.guide3Desc', { defaultValue: '建立卷冊分門別類；頂部搜尋框跨全部筆記搵字，常用條件可儲成智能檢視。' }),
+          },
+        ]}
+      />
+
+      {showStats && <StatsPanel stats={stats} notebooks={notebooks} onPickTag={(tag) => {
         setShowStats(false)
         setScope({ kind: 'all' })
-        setActiveTag(t)
+        setActiveTag(tag)
       }} />}
 
       <div className="grid grid-cols-1 gap-3 lg:grid-cols-[200px_minmax(0,1fr)_minmax(0,1.1fr)]">
@@ -559,8 +564,8 @@ export default function NotesWidget() {
                     className={cx(
                       'group flex w-full items-center gap-2.5 rounded-xl py-1.5 pl-3 pr-2.5 text-sm transition active:scale-[0.98]',
                       on
-                        ? 'bg-accent-soft font-medium text-accent-strong shadow-xs dark:bg-accent/15 dark:text-accent'
-                        : 'text-slate-600 hover:bg-amber-50/70 dark:text-slate-300 dark:hover:bg-slate-700/50',
+                        ? 'bg-accent-soft font-medium text-accent-strong dark:bg-accent/15 dark:text-accent'
+                        : 'text-slate-600 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800/60',
                     )}
                   >
                     {/* 章節記號（活躍時實心 accent 條） */}
@@ -568,7 +573,7 @@ export default function NotesWidget() {
                       aria-hidden="true"
                       className={cx(
                         'h-4 w-[3px] shrink-0 rounded-full transition',
-                        on ? 'bg-accent' : 'bg-transparent group-hover:bg-amber-300/70',
+                        on ? 'bg-accent' : 'bg-transparent group-hover:bg-slate-300 dark:group-hover:bg-slate-600',
                       )}
                     />
                     <it.icon size={15} className="shrink-0" />
@@ -593,7 +598,7 @@ export default function NotesWidget() {
                   <div key={f.id} className="group/sf flex items-center">
                     <button
                       onClick={() => applySavedFilter(f)}
-                      className="flex min-w-0 flex-1 items-center gap-2.5 rounded-xl py-1.5 pl-3 pr-2 text-sm text-slate-600 transition hover:bg-amber-50/70 active:scale-[0.98] dark:text-slate-300 dark:hover:bg-slate-700/50"
+                      className="flex min-w-0 flex-1 items-center gap-2.5 rounded-xl py-1.5 pl-3 pr-2 text-sm text-slate-600 transition hover:bg-slate-50 active:scale-[0.98] dark:text-slate-300 dark:hover:bg-slate-800/60"
                     >
                       <Bookmark size={14} className="shrink-0 text-accent/70" />
                       <span className="flex-1 truncate text-left">{f.name}</span>
@@ -621,8 +626,8 @@ export default function NotesWidget() {
             </div>
             <nav className="space-y-0.5">
               {notebooks.length === 0 && (
-                <p className="px-3 py-1.5 text-xs italic text-slate-400 dark:text-slate-500">
-                  撳上面 ＋，開一卷收納相關手記。
+                <p className="px-3 py-1.5 text-xs text-slate-400 dark:text-slate-500">
+                  {t('notes.noNotebookHint', { defaultValue: '撳上面 ＋，開一卷收納相關筆記。' })}
                 </p>
               )}
               {notebooks.map((nb) => {
@@ -641,8 +646,8 @@ export default function NotesWidget() {
                     className={cx(
                       'group flex w-full items-center gap-2.5 rounded-xl py-1.5 pl-3 pr-2.5 text-sm transition active:scale-[0.98]',
                       on
-                        ? 'bg-amber-100/60 font-medium text-slate-800 shadow-xs dark:bg-slate-700/60 dark:text-slate-100'
-                        : 'text-slate-600 hover:bg-amber-50/70 dark:text-slate-300 dark:hover:bg-slate-700/50',
+                        ? 'bg-accent-soft font-medium text-accent-strong dark:bg-accent/15 dark:text-accent'
+                        : 'text-slate-600 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800/60',
                     )}
                   >
                     <span className={cx('h-2.5 w-2.5 shrink-0 rounded-full ring-2 ring-white dark:ring-slate-800', c.dot)} />
@@ -811,24 +816,24 @@ export default function NotesWidget() {
               }
               title={
                 hasFilter
-                  ? '揭唔到相符嘅一頁'
+                  ? t('notes.emptyFilterTitle', { defaultValue: '搵唔到相符筆記' })
                   : scope.kind === 'trash'
-                    ? '廢紙簍乾乾淨淨'
+                    ? t('notes.emptyTrashTitle', { defaultValue: '垃圾桶乾乾淨淨' })
                     : scope.kind === 'archived'
-                      ? '未有收起嘅手記'
-                      : '由空白一頁開始'
+                      ? t('notes.emptyArchivedTitle', { defaultValue: '未有封存筆記' })
+                      : t('notes.emptyTitle', { defaultValue: '由第一則筆記開始' })
               }
               hint={
                 hasFilter
-                  ? '試下換個關鍵字，或者清除標籤篩選。'
+                  ? t('notes.emptyFilterHint', { defaultValue: '試下換個關鍵字，或者清除標籤篩選。' })
                   : scope.kind === 'all' || scope.kind === 'notebook'
-                    ? '記低靈感、課堂重點或者待辦——用 #標籤 歸類、- [ ] 整待辦，一頁一頁儲成你自己嘅手稿。'
+                    ? t('notes.emptyHint', { defaultValue: '記低靈感、課堂重點或待辦——用 #標籤 歸類、- [ ] 整待辦剔格。' })
                     : undefined
               }
               action={
                 !hasFilter && (scope.kind === 'all' || scope.kind === 'notebook') ? (
                   <Button size="sm" icon={Pencil} onClick={() => createNote()}>
-                    落筆寫第一頁
+                    {t('notes.writeFirst', { defaultValue: '寫第一則筆記' })}
                   </Button>
                 ) : undefined
               }
@@ -884,12 +889,12 @@ export default function NotesWidget() {
           )}
         >
           {selected ? (
-            <Card className="flex h-full min-h-[28rem] flex-col rounded-3xl border-amber-200/60 p-3 dark:border-amber-500/15 sm:p-4">
+            <Card className="flex h-full min-h-[28rem] flex-col rounded-2xl border-slate-200/80 p-3 dark:border-slate-700/60 sm:p-4">
               <button
                 onClick={() => setMobilePane('list')}
-                className="mb-2 inline-flex items-center gap-1 self-start text-xs font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 lg:hidden"
+                className="mb-2 inline-flex items-center gap-1 self-start text-xs font-medium text-slate-500 transition hover:text-slate-700 active:scale-[0.98] dark:text-slate-400 dark:hover:text-slate-200 lg:hidden"
               >
-                <ChevronLeft size={14} /> 返回目錄
+                <ChevronLeft size={14} /> {t('notes.backToList', { defaultValue: '返回列表' })}
               </button>
               <Editor
                 note={selected}
@@ -901,32 +906,24 @@ export default function NotesWidget() {
               />
             </Card>
           ) : (
-            <div className="relative hidden h-full min-h-[28rem] items-center justify-center overflow-hidden rounded-3xl border border-amber-200/60 bg-gradient-to-br from-amber-50/60 via-white to-white p-6 dark:border-amber-500/15 dark:from-amber-500/[0.05] dark:via-slate-800 dark:to-slate-800 lg:flex">
-              {/* 稿紙橫線（極淡） */}
-              <div
-                aria-hidden="true"
-                className="pointer-events-none absolute inset-0 opacity-[0.45] dark:opacity-30"
-                style={{
-                  backgroundImage:
-                    'repeating-linear-gradient(to bottom, transparent 0, transparent 33px, rgb(180 150 100 / 0.16) 33px, rgb(180 150 100 / 0.16) 34px)',
-                }}
-              />
-              <div className="relative max-w-xs text-center">
-                <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-accent-soft text-accent-strong shadow-sm dark:bg-accent/15 dark:text-accent">
-                  <PenLine size={24} />
-                </span>
-                <p className="mt-4 text-lg font-semibold text-slate-700 dark:text-slate-200">
-                  攤開一頁，由呢度書寫
-                </p>
-                <p className="mt-1.5 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
-                  揀左邊任何一頁手記翻開，或者開一張全新稿紙。
-                </p>
-                <div className="mt-4">
-                  <Button size="sm" icon={Pencil} onClick={() => createNote()}>
-                    寫一頁
-                  </Button>
-                </div>
-              </div>
+            <div className="hidden h-full min-h-[28rem] flex-col items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-slate-50/60 p-6 text-center dark:border-slate-700 dark:bg-slate-800/40 lg:flex">
+              <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
+                <PenLine size={24} strokeWidth={1.75} />
+              </span>
+              <p className="mt-3 text-sm font-medium text-slate-600 dark:text-slate-300">
+                {t('notes.detailEmptyTitle', { defaultValue: '揀一則筆記翻開' })}
+              </p>
+              <p className="mt-1 max-w-xs text-xs text-slate-400 dark:text-slate-500">
+                {t('notes.detailEmptyHint', { defaultValue: '喺左邊揀任何一則睇內容，或者開一張新筆記。' })}
+              </p>
+              <button
+                type="button"
+                onClick={() => createNote()}
+                className="mt-4 inline-flex items-center gap-1 text-xs font-medium text-accent transition hover:text-accent-strong active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+              >
+                <Pencil size={13} />
+                {t('notes.writeOneArrow', { defaultValue: '寫一則新筆記 →' })}
+              </button>
             </div>
           )}
         </section>
@@ -939,17 +936,13 @@ export default function NotesWidget() {
   )
 }
 
-// ───────── 索引欄章節標題（目錄頁式：小帽 + 漸隱橫線） ─────────
+// ───────── 索引欄章節標題（純中文細標，跟 SectionTitle 字色階層） ─────────
 function IndexLabel({ children }: { children: ReactNode }) {
   return (
-    <div className="mb-1.5 flex items-center gap-2 px-1">
-      <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">
+    <div className="mb-1.5 px-1">
+      <span className="text-xs font-semibold text-slate-400 dark:text-slate-500">
         {children}
       </span>
-      <span
-        aria-hidden="true"
-        className="h-px flex-1 bg-gradient-to-r from-amber-300/50 to-transparent dark:from-amber-500/25"
-      />
     </div>
   )
 }
@@ -1020,18 +1013,18 @@ function NoteRow({
           'border-slate-200/80 bg-white dark:border-slate-700/60 dark:bg-slate-800',
         active
           ? 'border-accent/50 shadow-sm ring-1 ring-accent/40 dark:border-accent/50'
-          : 'hover:-translate-y-0.5 hover:border-amber-300/70 hover:shadow-md dark:hover:border-slate-600',
+          : 'hover:border-slate-300 hover:shadow-md dark:hover:border-slate-600',
         grid && 'h-full',
       )}
     >
-      {/* 手稿頁邊裝訂線（活躍 = accent，平時淡琥珀） */}
+      {/* 頁邊色條（活躍＝accent，平時淡灰，純裝飾） */}
       <span
         aria-hidden="true"
         className={cx(
           'pointer-events-none absolute inset-y-3 left-2 w-px transition-colors',
           active
             ? 'bg-accent/50'
-            : 'bg-amber-300/40 group-hover:bg-amber-400/60 dark:bg-amber-500/25',
+            : 'bg-slate-200 group-hover:bg-slate-300 dark:bg-slate-700 dark:group-hover:bg-slate-600',
         )}
       />
       <div className="flex items-start gap-2.5">
@@ -1093,7 +1086,7 @@ function NoteRow({
         {tags.length > (grid ? 4 : 2) && (
           <span className="text-[10px] text-slate-400">+{tags.length - (grid ? 4 : 2)}</span>
         )}
-        <span className="ml-auto text-[11px] italic tabular-nums text-slate-400 dark:text-slate-500">
+        <span className="ml-auto text-[11px] tabular-nums text-slate-400 dark:text-slate-500">
           {relativeTime(note.updatedAt)}
         </span>
       </div>
@@ -1190,8 +1183,9 @@ function NoteBoard({
   selectedId: string | null
   onOpen: (id: string) => void
 }) {
+  const { t } = useTranslation()
   const columns: { id: string | null; name: string; color: string }[] = [
-    { id: null, name: '未分類', color: 'slate' },
+    { id: null, name: t('notes.uncategorized', { defaultValue: '未分類' }), color: 'slate' },
     ...notebooks.map((nb) => ({ id: nb.id as string | null, name: nb.name, color: nb.color })),
   ]
   return (
@@ -1227,8 +1221,8 @@ function NoteBoard({
                 />
               ))}
               {items.length === 0 && (
-                <p className="px-2 py-4 text-center text-xs italic text-slate-400 dark:text-slate-500">
-                  （空）
+                <p className="px-2 py-4 text-center text-xs text-slate-400 dark:text-slate-500">
+                  {t('notes.boardColEmpty', { defaultValue: '（空）' })}
                 </p>
               )}
             </div>
@@ -1277,7 +1271,7 @@ function StatsPanel({
     : 0
 
   return (
-    <Card className="space-y-5 rounded-3xl border-amber-200/60 p-3 dark:border-amber-500/15 sm:p-4">
+    <Card className="space-y-5 rounded-2xl border-slate-200/80 p-3 dark:border-slate-700/60 sm:p-4">
       {/* KPI */}
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
         <StatCard

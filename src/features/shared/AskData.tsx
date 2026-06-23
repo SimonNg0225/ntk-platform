@@ -7,13 +7,11 @@ import {
   Sparkles,
   Square,
   CornerDownLeft,
-  FileSearch,
   AlertTriangle,
   NotebookPen,
   ListTodo,
   Target,
   CalendarDays,
-  Quote,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { streamChat, isAIConfigured, type AIMessage } from '../../lib/aiClient'
@@ -30,19 +28,43 @@ import { journalDocsCol } from '../learning/journal/store'
 import { healthLogsCol, getGoals as getHealthGoals } from '../learning/health/store'
 import { summarize as summarizeHealth } from '../learning/health/util'
 import { workoutCol } from '../learning/fitness/training/store'
-import { Button, EmptyState, Textarea, cx } from '../../ui'
+import {
+  Button,
+  EmptyState,
+  Textarea,
+  FeatureGuide,
+  type FeatureGuideStep,
+  PageHero,
+  cx,
+} from '../../ui'
 
 // ============================================================
-//  「問我嘅資料 AI」— 資料偵探 / 查詢台（Inquiry Desk）
+//  「問我嘅資料 AI」— 用你自己嘅資料嚟問 AI
 //  ------------------------------------------------------------
-//  概念：呢個唔係一般 chat，而係一個「data-grounded 查詢台」——
-//  AI 淨係根據你嘅卷宗（筆記 / 待辦 / 目標 / 日程 / 日誌）查案、引證作答。
-//  落手前先攤開「證據在案」清單（即時數你有幾多份卷宗），令查詢有根有據。
+//  AI 淨係根據你親手記低嘅資料（筆記 / 待辦 / 目標 / 日程 / 日誌）作答，
+//  唔靠估、唔捏造。發問前先攤開「可參考資料」清單，等你知佢手頭有啲咩。
 //  收集跨功能資料做 context，經 Supabase Edge Function 問 Gemini。
 //  未啟用 / 未登入優雅守門。
+//  ※ 本檔只負責呈現層；資料流 / collection 讀寫 / API 一律不變。
 // ============================================================
 
-// 範例查詢：撳一下即時立案發問。配一隻 lucide icon 暗示引用邊類卷宗。
+// 教學引導：教用家「點用」呢個功能（2–4 步，FeatureGuide 只取頭 4 步）。
+const GUIDE_STEPS: FeatureGuideStep[] = [
+  {
+    title: '揀條問題或者自己打',
+    desc: '撳下面嘅範例問題即刻問，或者喺底部輸入框打你想知嘅嘢。',
+  },
+  {
+    title: 'AI 翻你嘅資料作答',
+    desc: '佢只會睇你記低嘅筆記、待辦、目標同日程，唔會捏造其他資料。',
+  },
+  {
+    title: '追問落去',
+    desc: '答完可以再撳範例或者繼續打，一步步問深入啲。',
+  },
+]
+
+// 範例問題：撳一下即刻發問。配一隻 lucide icon 暗示會參考邊類資料。
 const SUGGESTIONS: { text: string; icon: LucideIcon }[] = [
   { text: '我今個星期有咩重要事？', icon: CalendarDays },
   { text: '總結我最近嘅筆記重點', icon: NotebookPen },
@@ -53,13 +75,14 @@ const SUGGESTIONS: { text: string; icon: LucideIcon }[] = [
 const SYSTEM =
   '你係用戶「教學易」嘅私人 AI 助理。下面係佢嘅個人資料摘要，請主要根據呢啲資料（配合常識）用繁體中文（可書面廣東話）扼要、有條理咁回答。如果資料唔夠就照答並提一句。唔好捏造唔存在嘅具體資料。'
 
-// 「證據在案」卷宗類別（配分類色；用嚟向用戶顯示 AI 手上有幾多份資料可查）。
+// 「可參考資料」類別（配語意色；向用戶顯示 AI 手上有幾多份資料可查）。
 // 純展示用，數法對齊 buildContext() 嘅篩選，令清單係真實 context 預覽。
 type EvidenceKind = {
   key: string
   label: string
   icon: LucideIcon
-  tint: string
+  /** 語意 tone（對齊 WorkDashboard TONE map） */
+  tone: 'violet' | 'amber' | 'rose' | 'sky'
   count: number
 }
 
@@ -185,28 +208,28 @@ export default function AskData() {
         key: 'notes',
         label: '筆記',
         icon: NotebookPen,
-        tint: 'violet',
+        tone: 'violet',
         count: notes.filter((n) => !n.trashed).length,
       },
       {
         key: 'tasks',
         label: '待辦',
         icon: ListTodo,
-        tint: 'amber',
+        tone: 'amber',
         count: tasks.filter((t) => !t.done).length,
       },
       {
         key: 'goals',
         label: '目標',
         icon: Target,
-        tint: 'rose',
+        tone: 'rose',
         count: goalsCol.get().length,
       },
       {
         key: 'events',
         label: '日程',
         icon: CalendarDays,
-        tint: 'blue',
+        tone: 'sky',
         count: eventsCol.get().filter((e) => (e.endDate ?? e.date) >= today).length,
       },
     ]
@@ -284,93 +307,100 @@ export default function AskData() {
   const showCaret = busy && !isError
 
   return (
-    <div className="space-y-6">
-      {/* ───────── 查詢台 masthead：serif 大標題 + 偵探語氣（自管 header） ───────── */}
-      <header className="animate-fade-in-up">
-        <p className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.3em] text-accent/70">
-          <FileSearch size={13} className="shrink-0" />
-          查詢台 · Inquiry Desk
-        </p>
-        <h1 className="mt-1.5 text-[27px] font-semibold leading-[1.15] tracking-tight text-slate-800 dark:text-slate-100 sm:text-[32px]">
-          問我嘅資料 AI
-        </h1>
-        <p className="mt-2 max-w-lg text-sm leading-relaxed text-slate-500 dark:text-slate-400">
-          開案查問。我淨係根據你<span className="font-medium text-slate-600 dark:text-slate-300">親手記低嘅卷宗</span>
-          ——筆記、待辦、目標同日程——引證作答，唔靠估。
-        </p>
-      </header>
+    <div className="space-y-5">
+      {/* ───────── Masthead：共用 PageHero（accent hero） ───────── */}
+      <PageHero
+        icon={Sparkles}
+        kicker="AI · Ask Your Data"
+        title="問我嘅資料 AI"
+        description="只根據你記低嘅筆記、待辦、目標同日程作答，唔靠估。"
+      />
 
-      {/* ───────── 證據在案：手頭卷宗清單（data-grounded 嘅靈魂；落案前先攤開） ───────── */}
+      {/* ───────── 教學引導：點用呢個功能 ───────── */}
+      <FeatureGuide
+        storageKey="ask-data"
+        title="問我嘅資料 AI 點用？"
+        steps={GUIDE_STEPS}
+      />
+
+      {/* ───────── 可參考資料：手頭資料份數（發問前先攤開，等用家知 AI 睇緊咩） ───────── */}
       {!started && (
-        <section
-          aria-label="證據在案"
-          className="animate-fade-in-up overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-xs dark:border-slate-700/60 dark:bg-slate-800 dark:shadow-none"
-          style={{ animationDelay: '60ms' }}
-        >
-          <div className="flex items-center justify-between gap-3 border-b border-dashed border-slate-200/80 px-5 py-3 dark:border-slate-700/60">
-            <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-              <FileSearch size={13} className="shrink-0" />
-              證據在案
-            </p>
+        <section aria-label="可參考資料" className="space-y-3">
+          <div className="flex items-center justify-between gap-2">
+            <h2 className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 dark:text-slate-300">
+              <Search size={14} className="shrink-0 text-slate-400" />
+              可參考資料
+            </h2>
             <span className="inline-flex items-center gap-1 rounded-full bg-accent-soft px-2.5 py-0.5 text-[11px] font-medium text-accent-strong dark:bg-accent/15 dark:text-accent">
               <span className="tabular-nums slashed-zero">{totalFiles}</span> 份可查
             </span>
           </div>
 
-          {/* 卷宗類別：唔做一排死板等分卡，用 hairline grid + 大數字營造「歸檔」感 */}
-          <div className="grid grid-cols-2 gap-px bg-slate-200/60 dark:bg-slate-700/50 sm:grid-cols-4">
-            {evidence.map((e) => (
-              <EvidenceTile key={e.key} item={e} />
-            ))}
-          </div>
-
-          {totalFiles === 0 && (
-            // 空狀態：有溫度，唔係冷冰冰「無資料」
-            <p className="px-5 py-3.5 text-xs leading-relaxed text-slate-400 dark:text-slate-500">
-              卷宗仲係空白嘅。去記低幾條筆記、待辦或者目標，我就有嘢可以幫你查。
-            </p>
+          {totalFiles === 0 ? (
+            // 引導式空狀態：icon + 標題 + 提示 + CTA 直接跳去下一步
+            <EmptyState
+              icon={NotebookPen}
+              title="仲未有資料可以參考"
+              hint="去記低幾條筆記、待辦或者目標，AI 就有嘢可以幫你查。你亦可以直接喺下面問問題。"
+              action={
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  icon={Send}
+                  onClick={() => inputRef.current?.focus()}
+                >
+                  直接問問題
+                </Button>
+              }
+            />
+          ) : (
+            // 資料類別：統計磚（對齊 dashboard StatTile 樣式）
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+              {evidence.map((e) => (
+                <EvidenceTile key={e.key} item={e} />
+              ))}
+            </div>
           )}
         </section>
       )}
 
-      {/* ───────── 查問記錄：你（委託人）/ 案頭（AI 查卷作答），柔和氣泡 ───────── */}
+      {/* ───────── 對話：你 / AI（柔和氣泡，跟 dashboard 色階） ───────── */}
       {started && (
         <div className="space-y-4">
-          {/* 你（委託人） */}
+          {/* 你嘅問題 */}
           {askedQuestion && (
-            <div className="flex animate-fade-in-up justify-end gap-2.5">
+            <div className="flex justify-end gap-2.5">
               <div className="max-w-[85%]">
-                <p className="mb-1 pr-1 text-right text-[10px] font-medium uppercase tracking-wider text-slate-400 dark:text-slate-500">
-                  你嘅查問
+                <p className="mb-1 pr-1 text-right text-xs font-medium text-slate-400 dark:text-slate-500">
+                  你
                 </p>
-                <div className="flex items-start gap-2 rounded-2xl rounded-br-md bg-accent px-4 py-2.5 text-sm leading-relaxed text-white shadow-sm">
-                  <Quote size={14} className="mt-0.5 shrink-0 text-white/50" aria-hidden="true" />
-                  <span>{askedQuestion}</span>
+                <div className="rounded-2xl bg-accent px-4 py-2.5 text-sm leading-relaxed text-white shadow-sm">
+                  {askedQuestion}
                 </div>
               </div>
             </div>
           )}
 
-          {/* 案頭（AI） */}
-          <div className="flex animate-fade-in-up gap-2.5">
+          {/* AI 回答 */}
+          <div className="flex gap-2.5">
             <span
               className={cx(
-                'mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full',
+                'mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl',
                 isError
-                  ? 'bg-rose-50 text-rose-500 dark:bg-rose-500/15 dark:text-rose-300'
+                  ? 'bg-rose-50 text-rose-600 dark:bg-rose-500/15 dark:text-rose-300'
                   : 'bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent',
               )}
             >
-              {isError ? <AlertTriangle size={16} /> : <FileSearch size={16} />}
+              {isError ? <AlertTriangle size={16} /> : <Sparkles size={16} />}
             </span>
 
             <div className="min-w-0 flex-1">
-              <p className="mb-1 pl-1 text-[10px] font-medium uppercase tracking-wider text-slate-400 dark:text-slate-500">
-                {isError ? '查詢台' : '案頭調卷'}
+              <p className="mb-1 pl-1 text-xs font-medium text-slate-400 dark:text-slate-500">
+                AI 助理
               </p>
 
               {isError ? (
-                <div className="max-w-[85%] rounded-2xl rounded-tl-md border border-rose-200/70 bg-rose-50/70 px-4 py-3 dark:border-rose-500/30 dark:bg-rose-500/10">
+                <div className="max-w-[85%] rounded-2xl border border-rose-200/70 bg-rose-50/70 px-4 py-3 dark:border-rose-500/30 dark:bg-rose-500/10">
                   <p className="text-sm font-medium text-rose-700 dark:text-rose-300">
                     唔好意思，啱啱有啲問題
                   </p>
@@ -383,22 +413,22 @@ export default function AskData() {
                     className="mt-3"
                     onClick={() => void ask(askedQuestion)}
                   >
-                    再查一次
+                    再試一次
                   </Button>
                 </div>
               ) : answer === '' && busy ? (
-                // 載入：柔和點動 + 偵探語氣（翻緊你嘅卷宗）
+                // 載入：柔和點動
                 <div
                   role="status"
                   aria-live="polite"
                   aria-busy="true"
-                  className="inline-flex items-center gap-1.5 rounded-2xl rounded-tl-md border border-slate-200/80 bg-white px-4 py-3.5 dark:border-slate-700/60 dark:bg-slate-800"
+                  className="inline-flex items-center gap-1.5 rounded-2xl border border-slate-200/80 bg-white px-4 py-3.5 dark:border-slate-700/60 dark:bg-slate-800 dark:shadow-none"
                 >
                   <span className="h-2 w-2 animate-bounce rounded-full bg-accent [animation-delay:-0.3s]" />
                   <span className="h-2 w-2 animate-bounce rounded-full bg-accent [animation-delay:-0.15s]" />
                   <span className="h-2 w-2 animate-bounce rounded-full bg-accent" />
                   <span className="ml-1.5 text-xs text-slate-400 dark:text-slate-500">
-                    翻緊你嘅卷宗…
+                    翻緊你嘅資料…
                   </span>
                 </div>
               ) : (
@@ -406,7 +436,7 @@ export default function AskData() {
                   role="status"
                   aria-live="polite"
                   aria-busy={busy}
-                  className="max-w-[85%] whitespace-pre-wrap break-words rounded-2xl rounded-tl-md border border-slate-200/80 bg-white px-4 py-3 text-sm leading-relaxed text-slate-700 shadow-xs dark:border-slate-700/60 dark:bg-slate-800 dark:text-slate-200 dark:shadow-none"
+                  className="max-w-[85%] whitespace-pre-wrap break-words rounded-2xl border border-slate-200/80 bg-white px-4 py-3 text-sm leading-relaxed text-slate-700 dark:border-slate-700/60 dark:bg-slate-800 dark:text-slate-200 dark:shadow-none"
                 >
                   {answer}
                   {showCaret && (
@@ -422,12 +452,12 @@ export default function AskData() {
         </div>
       )}
 
-      {/* ───────── 立案查詢 chips（撳一下即發問）───────── */}
+      {/* ───────── 範例問題（撳一下即發問）───────── */}
       {(!started || (!busy && !isError)) && (
-        <div className={cx(started && 'border-t border-slate-200/70 pt-4 dark:border-slate-700/60')}>
+        <div className={cx(started && 'border-t border-slate-200 pt-4 dark:border-slate-700')}>
           <p className="mb-2.5 flex items-center gap-1.5 text-xs font-medium text-slate-400 dark:text-slate-500">
-            <Search size={12} className="shrink-0" />
-            {started ? '繼續追查' : '由呢度開案查問'}
+            <Sparkles size={12} className="shrink-0" />
+            {started ? '繼續問落去' : '試下問呢啲'}
           </p>
           <div className="flex flex-wrap gap-2">
             {SUGGESTIONS.map((s) => (
@@ -436,7 +466,7 @@ export default function AskData() {
                 type="button"
                 onClick={() => void ask(s.text)}
                 disabled={busy}
-                className="group inline-flex items-center gap-1.5 rounded-full border border-slate-200/80 bg-white px-3.5 py-1.5 text-xs text-slate-600 shadow-xs transition duration-200 active:scale-[0.98] hover:-translate-y-0.5 hover:border-accent/40 hover:bg-accent-soft/50 hover:text-accent-strong disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700/60 dark:bg-slate-800 dark:text-slate-300 dark:shadow-none dark:hover:border-accent/40 dark:hover:bg-accent/10 dark:hover:text-accent"
+                className="group inline-flex items-center gap-1.5 rounded-full border border-slate-200/80 bg-white px-3.5 py-1.5 text-xs text-slate-600 transition duration-200 hover:border-accent/40 hover:bg-accent-soft/50 hover:text-accent-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700/60 dark:bg-slate-800 dark:text-slate-300 dark:shadow-none dark:hover:border-accent/40 dark:hover:bg-accent/10 dark:hover:text-accent"
               >
                 <s.icon size={13} className="text-slate-400 transition group-hover:text-accent" />
                 {s.text}
@@ -446,9 +476,9 @@ export default function AskData() {
         </div>
       )}
 
-      {/* ───────── 查詢單：圓潤、貼底、focus 有 accent 環、送出掣明顯 ───────── */}
+      {/* ───────── 輸入框：圓潤、貼底、focus 有 accent 環、送出掣明顯 ───────── */}
       <div className="sticky bottom-3 z-10">
-        <div className="flex items-end gap-2 rounded-2xl border border-slate-200/80 bg-white/95 p-2 pl-3.5 shadow-md backdrop-blur transition focus-within:border-accent focus-within:ring-2 focus-within:ring-accent/30 dark:border-slate-700/60 dark:bg-slate-800/95 dark:shadow-none">
+        <div className="flex items-end gap-2 rounded-2xl border border-slate-200/80 bg-white/95 p-2 pl-3.5 shadow-md backdrop-blur transition focus-within:border-accent focus-within:ring-2 focus-within:ring-accent/40 dark:border-slate-700/60 dark:bg-slate-800/95 dark:shadow-none">
           <Search
             size={17}
             aria-hidden="true"
@@ -458,8 +488,8 @@ export default function AskData() {
             ref={inputRef}
             rows={1}
             className="max-h-40 min-h-[40px] flex-1 resize-none border-0 bg-transparent px-0 py-2 shadow-none focus:border-0 focus:ring-0 dark:bg-transparent"
-            aria-label="向你嘅資料查問"
-            placeholder="想查啲咩？例如：我今個星期最緊要做咩？"
+            aria-label="問你嘅資料"
+            placeholder="想問啲咩？例如：我今個星期最緊要做咩？"
             value={q}
             onChange={(e) => setQ(e.target.value)}
             onKeyDown={onKeyDown}
@@ -475,11 +505,11 @@ export default function AskData() {
             </Button>
           ) : (
             <Button icon={Send} onClick={() => void ask(q)} disabled={!q.trim()}>
-              查問
+              問
             </Button>
           )}
         </div>
-        <p className="mt-1.5 hidden items-center justify-center gap-1.5 text-center text-[11px] text-slate-400 dark:text-slate-500 sm:flex">
+        <p className="mt-1.5 hidden items-center justify-center gap-1.5 text-center text-xs text-slate-400 dark:text-slate-500 sm:flex">
           <span className="inline-flex items-center gap-1">
             <CornerDownLeft size={11} /> Enter 送出 · Shift + Enter 換行
           </span>
@@ -493,54 +523,59 @@ export default function AskData() {
   )
 }
 
-// ───────── 證據卷宗格（hairline grid · 分類色 icon chip · serif 大數字）─────────
-//  分類色（violet/amber/rose/blue）淺底 + 深字 + 深色 /15，全部帶 dark:。
-const TILE_TINT: Record<string, { chip: string; num: string }> = {
+// ───────── 資料統計磚（純展示卡，對齊 dashboard StatTile：tone chip + 大數字）─────────
+//  TONE map 嚴格照 WorkDashboard：chip 底+icon 字 / val 數字字 兩組，全部帶 dark:。
+const TONE: Record<
+  EvidenceKind['tone'],
+  { chip: string; val: string }
+> = {
   violet: {
     chip: 'bg-violet-50 text-violet-600 dark:bg-violet-500/15 dark:text-violet-300',
-    num: 'text-violet-700 dark:text-violet-300',
+    val: 'text-violet-500',
   },
   amber: {
     chip: 'bg-amber-50 text-amber-600 dark:bg-amber-500/15 dark:text-amber-300',
-    num: 'text-amber-700 dark:text-amber-300',
+    val: 'text-amber-500',
   },
   rose: {
     chip: 'bg-rose-50 text-rose-600 dark:bg-rose-500/15 dark:text-rose-300',
-    num: 'text-rose-700 dark:text-rose-300',
+    val: 'text-rose-500',
   },
-  blue: {
-    chip: 'bg-blue-50 text-blue-600 dark:bg-blue-500/15 dark:text-blue-300',
-    num: 'text-blue-700 dark:text-blue-300',
+  sky: {
+    chip: 'bg-sky-50 text-sky-600 dark:bg-sky-500/15 dark:text-sky-300',
+    val: 'text-sky-500',
   },
 }
 
 function EvidenceTile({ item }: { item: EvidenceKind }) {
-  const tint = TILE_TINT[item.tint] ?? TILE_TINT.blue
+  const tone = TONE[item.tone]
   const I = item.icon
   const empty = item.count === 0
   return (
-    <div className="flex items-center gap-3 bg-white px-4 py-3.5 dark:bg-slate-800">
-      <span
-        className={cx(
-          'flex h-9 w-9 shrink-0 items-center justify-center rounded-xl',
-          empty ? 'bg-slate-100 text-slate-400 dark:bg-slate-700/60 dark:text-slate-500' : tint.chip,
-        )}
-      >
-        <I size={17} />
-      </span>
-      <div className="min-w-0">
-        <p
-          className={cx(
-            'text-[22px] font-semibold leading-none tabular-nums slashed-zero',
-            empty ? 'text-slate-300 dark:text-slate-600' : tint.num,
-          )}
-        >
-          {item.count}
-        </p>
-        <p className="mt-0.5 truncate text-xs text-slate-500 dark:text-slate-400">
+    <div className="flex flex-col justify-between rounded-2xl border border-slate-200/80 bg-white p-4 dark:border-slate-700/60 dark:bg-slate-800">
+      <div className="flex items-start justify-between">
+        <p className="text-xs font-medium text-slate-400 dark:text-slate-500">
           {item.label}
         </p>
+        <span
+          className={cx(
+            'flex h-8 w-8 shrink-0 items-center justify-center rounded-xl',
+            empty
+              ? 'bg-slate-100 text-slate-400 dark:bg-slate-700/60 dark:text-slate-500'
+              : tone.chip,
+          )}
+        >
+          <I size={16} />
+        </span>
       </div>
+      <p
+        className={cx(
+          'mt-3 text-3xl font-semibold tabular-nums slashed-zero',
+          empty ? 'text-slate-300 dark:text-slate-600' : tone.val,
+        )}
+      >
+        {item.count}
+      </p>
     </div>
   )
 }

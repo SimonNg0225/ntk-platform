@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useCollection } from '../../lib/store'
 import { meetingNotesCol } from '../../data/collections'
 import {
@@ -6,15 +7,16 @@ import {
   Button,
   Card,
   EmptyState,
+  FeatureGuide,
   IconButton,
   Input,
   Menu,
   Modal,
+  PageHero,
   Pills,
   SectionTitle,
   SegmentedControl,
   Select,
-  Tabs,
   Tooltip,
   cx,
 } from '../../ui'
@@ -45,11 +47,8 @@ import {
   UserX,
   type LucideIcon,
 } from 'lucide-react'
-// 速記簿概念：頁面以「會議記事簿（Minute Book）」為母題——
-//   · masthead = 記事簿封面（kicker + serif 簿名 + 記事橫線 + 左側裝訂線）
-//   · 統計帶 = 速記清點（hairline grid · serif 大數字）
-//   · 筆記列 = 議程條目（serif 條目號牌 Item NN + 類型色脊 + ruled feel）
-//   · 議決 / 行動 = 議程編號 + 改卷式勾號
+// 設計語言跟「工作儀表板」：accent hero masthead + StatTile bento + 半透明邊框卡，
+// 字體統一 font-semibold（去走舊版 serif 速記簿母題）；數字 tabular-nums slashed-zero。
 import { useToast } from '../../context/ToastContext'
 import { useConfirm } from '../../context/ConfirmContext'
 import NoteEditor, {
@@ -108,6 +107,13 @@ const SORT_LABEL: Record<SortKey, string> = {
   actions: '未完成行動',
 }
 
+// hero 內視圖切換（取代舊 Tabs；圖示 + 標籤）
+const VIEW_TABS: Record<View, { label: string; icon: LucideIcon }> = {
+  notes: { label: '筆記', icon: NotebookPen },
+  actions: { label: '行動中心', icon: ListChecks },
+  stats: { label: '統計分析', icon: PieChart },
+}
+
 function longDateLabel(key: string): string {
   if (!key) return ''
   const d = fromKey(key)
@@ -127,26 +133,25 @@ function dueBadgeTone(due: string | undefined, done: boolean) {
 // 筆記卡左側類型色脊（對應 MEETING_TYPE_META 嘅 BadgeTone）
 const TYPE_RAIL: Record<string, string> = {
   accent: 'bg-accent',
-  blue: 'bg-blue-500',
+  blue: 'bg-sky-500',
   green: 'bg-emerald-500',
   amber: 'bg-amber-500',
   rose: 'bg-rose-500',
   slate: 'bg-slate-300 dark:bg-slate-600',
 }
 
-// 議程條目號牌底色（淺底 + 深字 + 深色 /15，對齊類型 tone）——
-// 用喺筆記卡左側「Item NN」serif 牌，令每行似一條議程項。
+// 條目號牌底色（淺底 + 深字 + 深色 /15，對齊類型 tone，跟 dashboard chip 規範）。
 const ITEM_PLATE: Record<string, string> = {
   accent: 'bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent',
-  blue: 'bg-blue-50 text-blue-600 dark:bg-blue-500/15 dark:text-blue-300',
+  blue: 'bg-sky-50 text-sky-600 dark:bg-sky-500/15 dark:text-sky-300',
   green: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-300',
   amber: 'bg-amber-50 text-amber-600 dark:bg-amber-500/15 dark:text-amber-300',
   rose: 'bg-rose-50 text-rose-600 dark:bg-rose-500/15 dark:text-rose-300',
   slate: 'bg-slate-100 text-slate-500 dark:bg-slate-700/60 dark:text-slate-300',
 }
 
-// ───────── 議程條目號牌（serif Item NN）─────────
-//  記事簿語言：每場會議當一條「議程項」，左側貼一個 serif 編號牌（類型色做底光）。
+// ───────── 條目號牌（類型色 chip + 編號）─────────
+//  每場會議當一條議程項，左側貼一個編號 chip（類型色底光），跟 dashboard 字重規範。
 function AgendaPlate({
   index,
   tone,
@@ -161,18 +166,13 @@ function AgendaPlate({
   return (
     <span
       className={cx(
-        'relative inline-flex shrink-0 flex-col items-center justify-center rounded-xl px-2 py-1.5 leading-none',
+        'relative inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-sm font-semibold tabular-nums slashed-zero leading-none',
         ITEM_PLATE[tone] ?? ITEM_PLATE.slate,
         className,
       )}
       aria-hidden
     >
-      <span className="text-[8px] font-semibold uppercase tracking-[0.18em] opacity-60">
-        Item
-      </span>
-      <span className="text-[17px] font-bold tabular-nums slashed-zero">
-        {String(index).padStart(2, '0')}
-      </span>
+      {String(index).padStart(2, '0')}
       {pinned && (
         <Pin
           size={11}
@@ -184,64 +184,73 @@ function AgendaPlate({
   )
 }
 
-// ───────── 速記清點格（hairline grid · serif 大數字；hot 高亮）─────────
-//  記事簿摘要帶：同 Journal「Almanac」/ QuestionBank「清點帶」一致嘅編輯體節奏。
-function TallyCell({
+// 六種語意 tone（嚴格照 WorkDashboard：chip 底+icon 字 / 數字字 兩組）
+type Tone = 'accent' | 'amber' | 'emerald' | 'violet' | 'sky' | 'rose'
+const TONE: Record<Tone, { chip: string; val: string }> = {
+  accent: { chip: 'bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent', val: 'text-accent' },
+  amber: { chip: 'bg-amber-50 text-amber-600 dark:bg-amber-500/15 dark:text-amber-300', val: 'text-amber-500' },
+  emerald: { chip: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-300', val: 'text-emerald-500' },
+  violet: { chip: 'bg-violet-50 text-violet-600 dark:bg-violet-500/15 dark:text-violet-300', val: 'text-violet-500' },
+  sky: { chip: 'bg-sky-50 text-sky-600 dark:bg-sky-500/15 dark:text-sky-300', val: 'text-sky-500' },
+  rose: { chip: 'bg-rose-50 text-rose-600 dark:bg-rose-500/15 dark:text-rose-300', val: 'text-rose-500' },
+}
+
+// ───────── 統計磚（dashboard StatTile：圖示 chip + tabular 大數字）─────────
+function StatTile({
   label,
   value,
   unit,
   hint,
   icon: Icon,
-  hot,
+  tone,
+  onClick,
 }: {
   label: string
   value: number | string
   unit?: string
   hint?: string
   icon: LucideIcon
-  hot?: boolean
+  tone: Tone
+  onClick?: () => void
 }) {
-  return (
-    <div
-      className={cx(
-        'px-3.5 py-3.5 transition-colors sm:px-4',
-        hot ? 'bg-accent-soft dark:bg-accent/15' : 'bg-white dark:bg-slate-800',
-      )}
-    >
-      <p
-        className={cx(
-          'flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide',
-          hot ? 'text-accent/80' : 'text-slate-400 dark:text-slate-500',
-        )}
-      >
-        <Icon size={12} className="shrink-0" />
-        <span className="truncate">{label}</span>
-      </p>
-      <p
-        className={cx(
-          'mt-1 text-[26px] font-semibold leading-none tabular-nums slashed-zero',
-          hot
-            ? 'text-accent-strong dark:text-accent'
-            : 'text-slate-800 dark:text-slate-100',
-        )}
-      >
-        {value}
-        {unit && (
-          <span className="ml-1 font-sans text-sm font-normal text-slate-400">
-            {unit}
-          </span>
-        )}
-      </p>
-      {hint && (
-        <p className="mt-1 truncate text-[11px] text-slate-400 dark:text-slate-500">
-          {hint}
+  const t = TONE[tone]
+  const body = (
+    <>
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-medium text-slate-400 dark:text-slate-500">{label}</span>
+        <span className={cx('flex h-8 w-8 items-center justify-center rounded-xl', t.chip)}>
+          <Icon size={16} />
+        </span>
+      </div>
+      <div>
+        <p className="flex items-baseline gap-1">
+          <span className={cx('text-3xl font-semibold tabular-nums slashed-zero', t.val)}>{value}</span>
+          {unit && <span className="text-sm font-medium text-slate-400">{unit}</span>}
         </p>
-      )}
+        {hint && <p className="mt-0.5 truncate text-[11px] text-slate-400">{hint}</p>}
+      </div>
+    </>
+  )
+  if (onClick) {
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        className="group flex cursor-pointer flex-col justify-between rounded-2xl border border-slate-200/80 bg-white p-4 text-left transition duration-200 hover:border-slate-300 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98] dark:border-slate-700/60 dark:bg-slate-800 dark:hover:border-slate-600"
+      >
+        {body}
+      </button>
+    )
+  }
+  return (
+    <div className="flex flex-col justify-between rounded-2xl border border-slate-200/80 bg-white p-4 dark:border-slate-700/60 dark:bg-slate-800">
+      {body}
     </div>
   )
 }
 
 export default function MeetingNotes() {
+  const { t } = useTranslation()
   const notes = useCollection(meetingNotesCol)
   const metas = useCollection(noteMetaCol)
   const templates = useCollection(noteTemplatesCol)
@@ -526,106 +535,149 @@ export default function MeetingNotes() {
   // ============================================================
   //  Render
   // ============================================================
+  // 行動中心提示：撳統計磚跳去對應篩選
+  function openActions(filter: ActionFilter) {
+    setActionGroupBy('list')
+    setActionFilter(filter)
+    setView('actions')
+  }
+
   return (
     <div className="w-full space-y-5 p-4 sm:p-6">
-      {/* ───────── 記事簿 masthead：簿面封面感（kicker + serif 簿名 + 記事橫線 + 左裝訂線）───────── */}
-      <header className="relative overflow-hidden rounded-3xl border border-slate-200/80 bg-white pl-7 pr-5 py-5 shadow-xs dark:border-slate-700/60 dark:bg-slate-800 dark:shadow-none sm:pl-9 sm:pr-7 sm:py-6">
-        {/* 左側裝訂線（速記簿螺旋孔感，純裝飾） */}
-        <span
-          aria-hidden
-          className="pointer-events-none absolute inset-y-4 left-3 flex w-1 flex-col items-center justify-between sm:left-4"
-        >
-          {Array.from({ length: 7 }).map((_, i) => (
-            <span
-              key={i}
-              className="h-1 w-1 rounded-full bg-accent/25 dark:bg-accent/30"
-            />
-          ))}
-        </span>
-        <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-4">
-          <div className="min-w-0">
-            <p className="flex items-center gap-2 text-[11px] font-medium uppercase tracking-[0.3em] text-accent/70">
-              <NotebookPen size={13} />
-              Minutes · 會議記事簿
-            </p>
-            <h1 className="mt-1.5 text-[28px] font-semibold leading-none tracking-tight text-slate-800 dark:text-slate-100 sm:text-[34px]">
-              會議筆記
-            </h1>
-            <p className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-slate-500 dark:text-slate-400">
-              <span className="tabular-nums">
-                記事 {notes.length} 則 · 跟進 {stats.total} 項
-              </span>
-              {stats.open > 0 ? (
-                <>
-                  <span aria-hidden className="text-slate-300 dark:text-slate-600">·</span>
-                  <span className="inline-flex items-center gap-1 font-medium text-accent-strong dark:text-accent">
-                    <ListChecks size={12} /> 待辦 {stats.open} 項
-                  </span>
-                </>
-              ) : stats.total > 0 ? (
-                <>
-                  <span aria-hidden className="text-slate-300 dark:text-slate-600">·</span>
-                  <span className="inline-flex items-center gap-1 font-medium text-emerald-600 dark:text-emerald-400">
-                    <CheckSquare size={12} /> 跟進已清
-                  </span>
-                </>
-              ) : null}
-            </p>
-          </div>
-          <Button onClick={openAdd} icon={Plus} className="shrink-0">
-            新增筆記
-          </Button>
-        </div>
-        {/* 記事橫線（封面分隔感：一實一虛，似簿頁開頭嘅留白線） */}
-        <div className="mt-5 space-y-1.5" aria-hidden>
-          <span className="block h-px bg-slate-200/90 dark:bg-slate-700/70" />
-          <span className="block h-px bg-slate-200/50 dark:bg-slate-700/40" />
-        </div>
-      </header>
+      {/* ───────── 共用 PageHero（accent hero）+ hero 內視圖切換 ───────── */}
+      <PageHero
+        icon={NotebookPen}
+        kicker={t('meetingNotes.kicker', { defaultValue: '會議筆記' })}
+        title={t('meetingNotes.title', { defaultValue: '記低每場會議，跟進唔甩' })}
+        description={
+          stats.open > 0
+            ? t('meetingNotes.heroOpen', {
+                n: stats.open,
+                defaultValue: `仲有 ${stats.open} 項跟進等緊你處理。`,
+              })
+            : stats.total > 0
+              ? t('meetingNotes.heroClear', { defaultValue: '所有跟進都搞掂晒，乾淨企理。' })
+              : t('meetingNotes.heroEmpty', { defaultValue: '由第一場會議開始，建立你嘅會議紀錄。' })
+        }
+        actions={
+          <button
+            type="button"
+            onClick={openAdd}
+            className="inline-flex items-center gap-1.5 rounded-xl bg-white/15 px-3 py-1.5 text-sm font-medium backdrop-blur-sm transition hover:bg-white/25"
+          >
+            <Plus size={15} />
+            {t('meetingNotes.newNote', { defaultValue: '新增筆記' })}
+          </button>
+        }
+        tabs={(['notes', 'actions', 'stats'] as View[]).map((id) => {
+          const meta = VIEW_TABS[id]
+          const on = view === id
+          return (
+            <button
+              key={id}
+              type="button"
+              onClick={() => setView(id)}
+              aria-pressed={on}
+              className={cx(
+                'inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs transition',
+                on
+                  ? 'bg-white font-semibold text-accent-strong'
+                  : 'bg-white/15 font-medium text-white hover:bg-white/25',
+              )}
+            >
+              <meta.icon size={13} />
+              {meta.label}
+            </button>
+          )
+        })}
+      />
 
-      {/* ───────── 速記清點帶：hairline grid · serif 大數字 ───────── */}
-      <section className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl bg-slate-200/70 ring-1 ring-slate-200/80 dark:bg-slate-700/50 dark:ring-slate-700/60 sm:grid-cols-4">
-        <TallyCell
-          label="會議記事"
+      {/* ───────── 統計磚（StatTile）───────── */}
+      <section className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        {/* 會議記事 */}
+        <StatTile
+          label={t('meetingNotes.statNotes', { defaultValue: '會議記事' })}
           value={notes.length}
-          unit="則"
+          unit={t('meetingNotes.unitNotes', { defaultValue: '則' })}
           icon={NotebookPen}
-          hint="累積會議紀錄"
+          tone="accent"
+          hint={t('meetingNotes.statNotesHint', { defaultValue: '累積會議紀錄' })}
+          onClick={() => setView('notes')}
         />
-        <TallyCell
-          label="待跟進"
+
+        {/* 待跟進 */}
+        <StatTile
+          label={t('meetingNotes.statOpen', { defaultValue: '待跟進' })}
           value={stats.open}
-          unit="項"
+          unit={t('meetingNotes.unitItems', { defaultValue: '項' })}
           icon={ListChecks}
-          hot={stats.open > 0}
-          hint={`共 ${stats.total} 項 · 完成 ${stats.completionPct}%`}
+          tone={stats.open > 0 ? 'accent' : 'emerald'}
+          hint={
+            stats.open > 0
+              ? t('meetingNotes.statOpenHint', {
+                  total: stats.total,
+                  defaultValue: `共 ${stats.total} 項待跟進`,
+                })
+              : t('meetingNotes.allDone', { defaultValue: '全部搞掂 🎉' })
+          }
+          onClick={() => openActions('open')}
         />
-        <TallyCell
-          label="逾期"
+
+        {/* 逾期 */}
+        <StatTile
+          label={t('meetingNotes.statOverdue', { defaultValue: '逾期' })}
           value={stats.overdue}
-          unit="項"
+          unit={t('meetingNotes.unitItems', { defaultValue: '項' })}
           icon={AlarmClock}
-          hint={stats.overdue > 0 ? '需即時處理' : '一切順利'}
+          tone={stats.overdue > 0 ? 'rose' : 'emerald'}
+          hint={
+            stats.overdue > 0
+              ? t('meetingNotes.statOverdueHint', { defaultValue: '需即時處理' })
+              : t('meetingNotes.statNoOverdue', { defaultValue: '一切順利' })
+          }
+          onClick={() => openActions('overdue')}
         />
-        <TallyCell
-          label="7 日內到期"
+
+        {/* 7 日內到期 */}
+        <StatTile
+          label={t('meetingNotes.statSoon', { defaultValue: '7 日內到期' })}
           value={stats.dueSoon}
-          unit="項"
+          unit={t('meetingNotes.unitItems', { defaultValue: '項' })}
           icon={CalendarClock}
-          hint={stats.dueSoon > 0 ? '排定時間跟進' : '近期無到期'}
+          tone={stats.dueSoon > 0 ? 'amber' : 'sky'}
+          hint={
+            stats.dueSoon > 0
+              ? t('meetingNotes.statSoonHint', { defaultValue: '排定時間跟進' })
+              : t('meetingNotes.statNoSoon', { defaultValue: '近期無到期' })
+          }
+          onClick={() => openActions('soon')}
         />
       </section>
 
-      {/* 視圖切換 */}
-      <Tabs<View>
-        tabs={[
-          { id: 'notes', label: '筆記' },
-          { id: 'actions', label: '行動中心' },
-          { id: 'stats', label: '統計分析' },
+      {/* ───────── 教學引導：點用會議筆記 ───────── */}
+      <FeatureGuide
+        storageKey="meetingNotes"
+        title={t('meetingNotes.guideTitle', { defaultValue: '會議筆記點用？' })}
+        steps={[
+          {
+            title: t('meetingNotes.guideStep1Title', { defaultValue: '新增會議' }),
+            desc: t('meetingNotes.guideStep1Desc', {
+              defaultValue: '撳「新增筆記」記低會議類型、時間、出席者；可套用議程範本快速開始。',
+            }),
+          },
+          {
+            title: t('meetingNotes.guideStep2Title', { defaultValue: '記低決議同行動' }),
+            desc: t('meetingNotes.guideStep2Desc', {
+              defaultValue: '逐項加入跟進行動，填上負責人同到期日，方便日後追蹤。',
+            }),
+          },
+          {
+            title: t('meetingNotes.guideStep3Title', { defaultValue: '跨會議追跟進' }),
+            desc: t('meetingNotes.guideStep3Desc', {
+              defaultValue: '去「行動中心」一覽所有跟進，按逾期 / 負責人分類，剔咗即更新。',
+            }),
+          },
         ]}
-        active={view}
-        onChange={setView}
-        icons={{ notes: NotebookPen, actions: ListChecks, stats: PieChart }}
       />
 
       {/* ═══════════ 筆記視圖 ═══════════ */}
@@ -1326,13 +1378,13 @@ function NoteDetail({
         </div>
       )}
 
-      {/* 內容（Markdown-ish 渲染）——速記頁：左側朱紅起始線 + 淡格線底 */}
+      {/* 內容（Markdown-ish 渲染）——柔底卡 + 左側淡色起始線 */}
       <div>
         <SectionTitle icon={FileText}>記事內容</SectionTitle>
-        <div className="relative space-y-1 overflow-hidden rounded-xl border border-slate-100 bg-slate-50/50 py-3.5 pl-5 pr-3.5 dark:border-slate-700/60 dark:bg-slate-800/30">
+        <div className="relative space-y-1 overflow-hidden rounded-xl border border-slate-200/80 bg-slate-50/60 py-3.5 pl-5 pr-3.5 dark:border-slate-700/60 dark:bg-slate-800/40">
           <span
             aria-hidden
-            className="pointer-events-none absolute inset-y-2 left-2.5 w-px bg-rose-300/50 dark:bg-rose-500/30"
+            className="pointer-events-none absolute inset-y-2 left-2.5 w-px bg-slate-200 dark:bg-slate-700"
           />
           {segments.map((s, i) => {
             switch (s.kind) {
@@ -1415,7 +1467,7 @@ function NoteDetail({
                 key={i}
                 className="flex items-start gap-2.5 rounded-lg bg-accent-soft/50 px-3 py-2 text-sm text-slate-700 dark:bg-accent/10 dark:text-slate-200"
               >
-                <span className="mt-px shrink-0 text-[13px] font-bold tabular-nums slashed-zero text-accent-strong dark:text-accent">
+                <span className="mt-px shrink-0 text-[13px] font-semibold tabular-nums slashed-zero text-accent-strong dark:text-accent">
                   R{String(i + 1).padStart(2, '0')}
                 </span>
                 <span className="min-w-0">{d}</span>

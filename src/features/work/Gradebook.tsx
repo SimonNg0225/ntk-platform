@@ -17,8 +17,10 @@ import {
   Card,
   EmptyState,
   Field,
+  FeatureGuide,
   IconButton,
   Input,
+  PageHero,
   Pills,
   SegmentedControl,
   Select,
@@ -26,6 +28,7 @@ import {
   Tabs,
   Tooltip,
   cx,
+  type FeatureGuideStep,
 } from '../../ui'
 import {
   ArrowDownAZ,
@@ -104,50 +107,45 @@ const TAB_ICONS: Partial<Record<Tab, typeof BarChart3>> = {
   scheme: SlidersHorizontal,
 }
 
-// ───────── 成績冊 masthead：改卷簿封面（kicker + serif 標題 + 卷務行 + 戳印）─────────
-//  訂造概念 = 教師成績冊 / 分數矩陣：封面似一本帳簿，右上一個淡淡「成績冊」鋼印。
-function GradebookHeader({ subtitle }: { subtitle?: ReactNode }) {
+// ───────── 頁首：共用 PageHero（accent hero）─────────
+function GradebookHeader({ description }: { description?: string }) {
   const { t } = useTranslation()
   return (
-    <header className="relative overflow-hidden rounded-3xl border border-slate-200/80 bg-white px-5 py-5 shadow-xs dark:border-slate-700/60 dark:bg-slate-800 dark:shadow-none sm:px-7 sm:py-6">
-      {/* 封面右上鋼印（純裝飾，唔搶主次）*/}
-      <span
-        aria-hidden
-        className="pointer-events-none absolute -right-5 top-3 hidden -rotate-6 select-none rounded-xl border-2 border-dashed border-accent/20 px-4 py-2 text-xs font-semibold uppercase tracking-[0.25em] text-accent/25 dark:border-accent/25 dark:text-accent/25 sm:block"
-      >
-        {t('gradebook.stampLedger', { defaultValue: '成績冊 · Ledger' })}
-      </span>
-      <div className="flex items-start gap-3.5">
-        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
-          <GraduationCap size={24} />
-        </span>
-        <div className="min-w-0">
-          <p className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.3em] text-accent/70">
-            <BookMarked size={13} />
-            {t('gradebook.kicker', { defaultValue: '分數矩陣 · Gradebook' })}
-          </p>
-          <h1 className="mt-1 text-[28px] font-semibold leading-none tracking-tight text-slate-800 dark:text-slate-100 sm:text-[34px]">
-            {t('gradebook.title', { defaultValue: '成績管理' })}
-          </h1>
-          <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-            {subtitle ??
-              t('gradebook.subtitleDefault', {
-                defaultValue: '加權計分、等級分佈、課題弱項同個人成績單——對齊學校評核標準。',
-              })}
-          </p>
-        </div>
-      </div>
-      {/* 帳簿雙線（封面分隔感）*/}
-      <div className="mt-5 space-y-1" aria-hidden>
-        <span className="block h-px bg-slate-200/90 dark:bg-slate-700/70" />
-        <span className="block h-px bg-slate-200/60 dark:bg-slate-700/40" />
-      </div>
-    </header>
+    <PageHero
+      icon={GraduationCap}
+      kicker={t('gradebook.kicker', { defaultValue: 'Gradebook' })}
+      title={t('gradebook.title', { defaultValue: '成績管理' })}
+      description={
+        description ??
+        t('gradebook.subtitleDefault', {
+          defaultValue: '加權計分、等級分佈、課題弱項同個人成績單，對齊學校評核標準。',
+        })
+      }
+    />
   )
 }
 
-// ───────── 帳簿清點格（hairline grid · serif 大數字；達標 hot 高亮）─────────
-//  成績冊概念：似改卷簿封底嘅清點欄，一格一個關鍵數，serif 數字、ledger 質感。
+// ───────── 成績表教學引導（FeatureGuide：4 步「點用」）─────────
+const GRADEBOOK_GUIDE: FeatureGuideStep[] = [
+  {
+    title: '揀班別',
+    desc: '喺上方書籤揀返要記成績嘅班。每班獨立一本成績冊。',
+  },
+  {
+    title: '加學生同評估',
+    desc: '去「學生」分頁建立名單，「評估」分頁加測考／功課項目。',
+  },
+  {
+    title: '入分睇統計',
+    desc: '返「成績表」逐格填分（或由 Excel 貼上），即時睇平均、等第同名次。',
+  },
+  {
+    title: '調評分方案',
+    desc: '去「評分方案」設加權、等級制同分界，對齊校本標準。',
+  },
+]
+
+// ───────── 清點格（一格一個關鍵數；達標 hot 高亮）─────────
 function LedgerStat({
   label,
   value,
@@ -170,29 +168,27 @@ function LedgerStat({
     >
       <p
         className={cx(
-          'flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide',
+          'flex items-center gap-1.5 text-xs font-medium',
           hot
             ? 'text-emerald-600/80 dark:text-emerald-400/80'
             : 'text-slate-400 dark:text-slate-500',
         )}
       >
-        <Icon size={12} className="shrink-0" />
+        <Icon size={13} className="shrink-0" />
         <span className="truncate">{label}</span>
       </p>
-      <p
-        className={cx(
-          'mt-1 text-[26px] font-semibold leading-none tabular-nums slashed-zero',
-          hot
-            ? 'text-emerald-600 dark:text-emerald-400'
-            : 'text-slate-800 dark:text-slate-100',
-        )}
-      >
-        {value}
-        {unit && (
-          <span className="ml-1 font-sans text-sm font-normal text-slate-400">
-            {unit}
-          </span>
-        )}
+      <p className="mt-1 flex items-baseline gap-1">
+        <span
+          className={cx(
+            'text-3xl font-semibold tabular-nums slashed-zero',
+            hot
+              ? 'text-emerald-600 dark:text-emerald-400'
+              : 'text-slate-800 dark:text-slate-100',
+          )}
+        >
+          {value}
+        </span>
+        {unit && <span className="text-sm font-medium text-slate-400">{unit}</span>}
       </p>
     </div>
   )
@@ -215,6 +211,11 @@ export default function Gradebook() {
     return (
       <div className="space-y-5">
         <GradebookHeader />
+        <FeatureGuide
+          storageKey="gradebook"
+          title={t('gradebook.guideTitle', { defaultValue: '成績表點用？' })}
+          steps={GRADEBOOK_GUIDE}
+        />
         <EmptyState
           icon={School}
           art="empty-gradebook"
@@ -231,27 +232,30 @@ export default function Gradebook() {
   return (
     <div className="space-y-5">
       <GradebookHeader
-        subtitle={
-          <>
-            {t('gradebook.subtitleLead', {
-              defaultValue: '加權計分、等級分佈、課題弱項同個人成績單。',
-            })}
-            {classes.length > 1 && (
-              <span className="ml-1 tabular-nums text-slate-400 dark:text-slate-500">
-                {t('gradebook.booksCount', {
-                  count: classes.length,
-                  defaultValue: '· 本冊收錄 {{count}} 班',
-                })}
-              </span>
-            )}
-          </>
+        description={
+          t('gradebook.subtitleLead', {
+            defaultValue: '加權計分、等級分佈、課題弱項同個人成績單。',
+          }) +
+          (classes.length > 1
+            ? ' ' +
+              t('gradebook.booksCount', {
+                count: classes.length,
+                defaultValue: '· 收錄 {{count}} 班',
+              })
+            : '')
         }
       />
 
-      {/* 帳簿索引：班別書籤 + 分頁標籤（似帳簿側邊書脊）*/}
-      <div className="space-y-3 rounded-3xl border border-slate-200/80 bg-white p-3 shadow-xs dark:border-slate-700/60 dark:bg-slate-800 dark:shadow-none">
+      <FeatureGuide
+        storageKey="gradebook"
+        title={t('gradebook.guideTitle', { defaultValue: '成績表點用？' })}
+        steps={GRADEBOOK_GUIDE}
+      />
+
+      {/* 班別書籤 + 分頁標籤 */}
+      <div className="space-y-3 rounded-2xl border border-slate-200/80 bg-white p-3 dark:border-slate-700/60 dark:bg-slate-800">
         <div className="flex items-center gap-2 px-0.5">
-          <span className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+          <span className="flex shrink-0 items-center gap-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400">
             <BookMarked size={13} className="shrink-0" />
             {t('gradebook.classLabel', { defaultValue: '班別' })}
           </span>
@@ -589,20 +593,20 @@ function ScoreGrid({
     <div className="space-y-4">
       {/* 帳簿總結帶：班級平均做主角（serif 大數字 + 等第章），右接清點格 */}
       <section className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl bg-slate-200/70 ring-1 ring-slate-200/80 dark:bg-slate-700/50 dark:ring-slate-700/60 sm:grid-cols-4">
-        {/* 主格：班級（加權）平均 — 跨兩欄、accent 底、serif 巨數 */}
+        {/* 主格：班級（加權）平均 — 跨兩欄、accent 底、巨數 */}
         <div className="col-span-2 flex items-center justify-between gap-3 bg-accent-soft/70 px-4 py-3.5 dark:bg-accent/10 sm:px-5">
           <div className="min-w-0">
-            <p className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide text-accent-strong/80 dark:text-accent/80">
-              <Target size={12} className="shrink-0" />
+            <p className="flex items-center gap-1.5 text-xs font-medium text-accent-strong/80 dark:text-accent/80">
+              <Target size={13} className="shrink-0" />
               {scheme.weighted
                 ? t('gradebook.classWeightedAvg', { defaultValue: '班級加權平均' })
                 : t('gradebook.classAvg', { defaultValue: '班級平均' })}
             </p>
             <p className="mt-1 flex items-baseline gap-2">
-              <span className="text-[34px] font-semibold leading-none tabular-nums slashed-zero text-accent-strong dark:text-accent">
+              <span className="text-4xl font-semibold tabular-nums slashed-zero text-accent-strong dark:text-accent">
                 {classAvg == null ? '—' : `${Math.round(classAvg)}`}
                 {classAvg != null && (
-                  <span className="ml-0.5 font-sans text-lg font-normal text-accent-strong/60 dark:text-accent/60">
+                  <span className="ml-0.5 text-lg font-medium text-accent-strong/60 dark:text-accent/60">
                     %
                   </span>
                 )}
@@ -610,7 +614,7 @@ function ScoreGrid({
               {classBand && <Badge tone={classBand.tone}>{classBand.label}</Badge>}
             </p>
           </div>
-          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white/70 text-accent-strong dark:bg-white/10 dark:text-accent">
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/70 text-accent-strong dark:bg-white/10 dark:text-accent">
             <BookMarked size={22} strokeWidth={1.8} />
           </span>
         </div>
@@ -669,12 +673,12 @@ function ScoreGrid({
         </div>
       </div>
 
-      {/* ───────── 成績矩陣（改卷簿）：ruled 帳格 · serif 題號 · ledger spine ───────── */}
+      {/* ───────── 成績矩陣：學生 × 評估，逐格入分 ───────── */}
       <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white dark:border-slate-700/60 dark:bg-slate-800">
         <div className="flex items-center gap-1.5 border-b border-slate-200/80 px-4 py-2.5 dark:border-slate-700/60">
           <NotebookPen size={13} className="shrink-0 text-slate-400 dark:text-slate-500" />
-          <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-            {t('gradebook.scoreMatrix', { defaultValue: '成績矩陣 · Score Matrix' })}
+          <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+            {t('gradebook.scoreMatrix', { defaultValue: '成績矩陣' })}
           </span>
           <span className="ml-auto text-[11px] tabular-nums text-slate-400 dark:text-slate-500">
             {t('gradebook.matrixDims', {
@@ -838,9 +842,9 @@ function ScoreGrid({
             <tfoot>
               <tr className="border-t-2 border-slate-200/80 bg-slate-50/80 dark:border-slate-700/60 dark:bg-slate-800/60">
                 <td className="sticky left-0 z-10 border-r border-slate-200/80 bg-slate-50/95 px-3 py-2.5 backdrop-blur dark:border-slate-700/60 dark:bg-slate-800/95">
-                  <span className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
-                    <Calculator size={12} className="shrink-0" />
-                    {t('gradebook.footerSettle', { defaultValue: '結算 · 全班平均' })}
+                  <span className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400">
+                    <Calculator size={13} className="shrink-0" />
+                    {t('gradebook.footerSettle', { defaultValue: '全班平均' })}
                   </span>
                 </td>
                 {assessments.map((a) => {
@@ -861,7 +865,7 @@ function ScoreGrid({
                     </td>
                   )
                 })}
-                <td className="border-l border-slate-200/80 px-3 py-2 text-center text-[15px] font-bold tabular-nums slashed-zero text-accent dark:border-slate-700/60">
+                <td className="border-l border-slate-200/80 px-3 py-2 text-center text-[15px] font-semibold tabular-nums slashed-zero text-accent dark:border-slate-700/60">
                   {classAvg == null ? '—' : `${Math.round(classAvg)}%`}
                 </td>
                 <td className="px-2 py-2" colSpan={2} />
@@ -1251,7 +1255,7 @@ function AnalysisTab({ classId, className }: { classId: string; className: strin
           </div>
 
           <div className="grid gap-4 lg:grid-cols-2">
-            <Card className="rounded-3xl p-5">
+            <Card className="rounded-2xl p-4 sm:p-5">
               <ChartHead icon={BarChart3} tone="accent">
                 {t('gradebook.chartDistribution', {
                   defaultValue: '分數分佈（全班總分）',
@@ -1265,7 +1269,7 @@ function AnalysisTab({ classId, className }: { classId: string; className: strin
               </p>
             </Card>
 
-            <Card className="rounded-3xl p-5">
+            <Card className="rounded-2xl p-4 sm:p-5">
               <ChartHead icon={Trophy} tone="violet">
                 {t('gradebook.chartGradeShare', {
                   scale: SCALE_LABEL[scheme.scale],
@@ -1275,14 +1279,14 @@ function AnalysisTab({ classId, className }: { classId: string; className: strin
               <GradeDonut counts={stats.gradeCounts} scale={scheme.scale} bands={bands} />
             </Card>
 
-            <Card className="rounded-3xl p-5">
+            <Card className="rounded-2xl p-4 sm:p-5">
               <ChartHead icon={ArrowUpDown} tone="sky">
                 {t('gradebook.chartBoxplot', { defaultValue: '全班成績離散（箱形圖）' })}
               </ChartHead>
               <BoxPlot stats={stats.box} passMark={stats.passMark} />
             </Card>
 
-            <Card className="rounded-3xl p-5">
+            <Card className="rounded-2xl p-4 sm:p-5">
               <ChartHead icon={UserCheck} tone="rose">
                 {t('gradebook.chartWeakStudents', {
                   value: stats.passMark,
@@ -1325,7 +1329,7 @@ function AnalysisTab({ classId, className }: { classId: string; className: strin
             </Card>
           </div>
 
-          <Card className="rounded-3xl p-5">
+          <Card className="rounded-2xl p-4 sm:p-5">
             <ChartHead
               icon={Sparkles}
               tone="emerald"
@@ -1345,7 +1349,7 @@ function AnalysisTab({ classId, className }: { classId: string; className: strin
           {perAssessment.map((x) => {
             const band = x.avg != null ? gradeOf(x.avg, scheme.scale, bands) : null
             return (
-              <Card key={x.a.id} className="rounded-3xl p-5">
+              <Card key={x.a.id} className="rounded-2xl p-4 sm:p-5">
                 <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">
@@ -1405,7 +1409,7 @@ function AnalysisTab({ classId, className }: { classId: string; className: strin
       )}
 
       {view === 'topics' && (
-        <Card className="rounded-3xl p-5">
+        <Card className="rounded-2xl p-4 sm:p-5">
           <ChartHead
             icon={Target}
             tone="amber"
@@ -1480,7 +1484,7 @@ function AnalysisTab({ classId, className }: { classId: string; className: strin
       <>
         {(improved.length > 0 || declined.length > 0) && (
           <div className="grid gap-3 sm:grid-cols-2">
-            <Card className="rounded-3xl p-4">
+            <Card className="rounded-2xl p-4">
               <ChartHead icon={TrendingUp} tone="emerald">
                 {t('gradebook.mostImproved', { defaultValue: '進步最大' })}
                 <span className="ml-1 font-normal text-slate-400">
@@ -1516,7 +1520,7 @@ function AnalysisTab({ classId, className }: { classId: string; className: strin
                 </ul>
               )}
             </Card>
-            <Card className="rounded-3xl p-4">
+            <Card className="rounded-2xl p-4">
               <ChartHead icon={TrendingDown} tone="rose">
                 {t('gradebook.needsAttention', { defaultValue: '需要關注' })}
                 <span className="ml-1 font-normal text-slate-400">
@@ -1554,7 +1558,7 @@ function AnalysisTab({ classId, className }: { classId: string; className: strin
             </Card>
           </div>
         )}
-        <Card className="rounded-3xl p-2">
+        <Card className="rounded-2xl p-2">
           {ranking.length === 0 ? (
             <EmptyState
               icon={Trophy}
@@ -2039,9 +2043,9 @@ function AssessmentsTab({ classId }: { classId: string }) {
         />
       ) : (
         <Card clip className="rounded-2xl">
-          <div className="flex items-center gap-1.5 border-b border-slate-100 px-4 py-2.5 dark:border-slate-700/60">
+          <div className="flex items-center gap-1.5 border-b border-slate-200 px-4 py-2.5 dark:border-slate-700/60">
             <FolderOpen size={13} className="shrink-0 text-slate-400 dark:text-slate-500" />
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
               {t('gradebook.assessmentList', { defaultValue: '評估清單' })}
             </span>
             <span className="ml-auto text-[11px] tabular-nums text-slate-400 dark:text-slate-500">

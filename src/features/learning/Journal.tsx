@@ -1,4 +1,5 @@
 import { useMemo, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   ArrowDownWideNarrow,
   ArrowUpWideNarrow,
@@ -34,9 +35,12 @@ import {
   Button,
   Card,
   EmptyState,
+  FeatureGuide,
+  type FeatureGuideStep,
   IconButton,
   Input,
   Menu,
+  PageHero,
   SectionTitle,
   SegmentedControl,
   Tooltip,
@@ -144,7 +148,24 @@ const SORTS: { id: SortId; label: string }[] = [
   { id: 'words', label: '字數' },
 ]
 
+// 教學引導：教用家「點用」個人日誌（3 步）
+const GUIDE_STEPS: FeatureGuideStep[] = [
+  {
+    title: '寫低今日一筆',
+    desc: '撳右上「寫日誌」，記低反思；可加標題、心情、天氣同 #標籤。',
+  },
+  {
+    title: '切換三種視圖',
+    desc: '時間軸睇逐篇、熱力圖睇成年寫作節奏、統計睇心情趨勢同字數。',
+  },
+  {
+    title: '搜尋・篩選・回顧',
+    desc: '用關鍵字或心情、標籤快速搵返；「歷年今日」帶你重溫舊文。',
+  },
+]
+
 export default function Journal() {
+  const { t } = useTranslation()
   const docs = useCollection(journalDocsCol)
   const toast = useToast()
   const confirm = useConfirm()
@@ -350,88 +371,89 @@ export default function Journal() {
 
   return (
     <div className="space-y-5">
-      {/* ───────── 日誌扉頁 masthead：功能名做頁面身份（kicker 日記扉頁 + serif「個人日誌」+ 今日 dateline）
-           host 已收起標題（selfManagedHeader），呢個係呢頁唯一頂部標題。 ───────── */}
-      <header className="flex flex-wrap items-end justify-between gap-x-4 gap-y-3">
-        <div className="min-w-0">
-          <p className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.3em] text-accent/70">
-            <BookText size={13} className="shrink-0" />
-            日記扉頁 · Daily Journal
-          </p>
-          <h1 className="mt-1 text-2xl font-semibold leading-tight tracking-tight text-slate-800 dark:text-slate-100 sm:text-[28px]">
-            個人日誌
-          </h1>
-          <p className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-slate-500 dark:text-slate-400">
-            <span className="tabular-nums">{longDate(today)}</span>
-            <span aria-hidden="true" className="text-slate-300 dark:text-slate-600">·</span>
-            <span className="tabular-nums">共 {stats.total} 篇反思</span>
-            {stats.streak > 0 && (
-              <>
-                <span aria-hidden="true" className="text-slate-300 dark:text-slate-600">·</span>
-                <span className="inline-flex items-center gap-1 font-medium text-accent-strong dark:text-accent">
-                  <Flame size={12} /> 連續 {stats.streak} 日
+      {/* ───────── 頁面頂部：共用 PageHero（accent hero）─────────
+           host 已收起標題（selfManagedHeader），呢個係呢頁唯一頂部標題。 */}
+      <PageHero
+        icon={BookText}
+        kicker={t('journal.kicker', { defaultValue: '學習成長 · 每日反思' })}
+        title={t('journal.title', { defaultValue: '個人日誌' })}
+        description={[
+          longDate(today),
+          t('journal.totalN', { n: stats.total, defaultValue: `共 ${stats.total} 篇反思` }),
+          stats.streak > 0
+            ? t('journal.streakN', { n: stats.streak, defaultValue: `連續 ${stats.streak} 日` })
+            : null,
+        ]
+          .filter(Boolean)
+          .join(' · ')}
+        actions={
+          <>
+            <Menu
+              align="end"
+              trigger={
+                <span className="inline-flex items-center gap-1.5 rounded-xl bg-white/15 px-3 py-1.5 text-sm font-medium backdrop-blur-sm transition hover:bg-white/25">
+                  <Download size={15} />
+                  {t('journal.export', { defaultValue: '匯出' })}
                 </span>
-              </>
-            )}
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Menu
-            align="end"
-            trigger={
-              <span className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-600 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700">
-                <Download size={15} />
-                匯出
-              </span>
-            }
-            items={[
-              { id: 'md', label: '匯出 Markdown', icon: Download, onSelect: exportMd },
-              { id: 'json', label: '匯出 JSON（備份）', icon: Download, onSelect: exportJson },
-            ]}
-          />
-          <Button icon={PenLine} onClick={() => openNew()}>
-            寫日誌
-          </Button>
-        </div>
-      </header>
-
-      {/* ───────── Almanac：細口統計帶（hairline grid · serif 數字） ───────── */}
-      <div className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl bg-slate-200/70 ring-1 ring-slate-200/80 dark:bg-slate-700/50 dark:ring-slate-700/60 sm:grid-cols-4">
-        {[
-          { label: '連續天數', icon: Flame, value: stats.streak, unit: '日', hint: stats.streak > 0 ? '今日記得寫低！' : '由今日開始', hot: stats.streak > 0 },
-          { label: '日誌總數', icon: BookText, value: stats.total, unit: '篇', hint: `活躍 ${stats.activeDays} 日`, hot: false },
-          { label: '累積字數', icon: Sparkles, value: stats.totalWords.toLocaleString(), unit: '', hint: `平均 ${stats.avgWords} 字／篇`, hot: false },
-          { label: '最長連續', icon: History, value: stats.longest, unit: '日', hint: `精選 ${stats.favorites} 篇`, hot: false },
-        ].map((s) => {
-          const I = s.icon
-          return (
-            <div
-              key={s.label}
-              className={cx(
-                'px-4 py-3.5 transition-colors',
-                s.hot
-                  ? 'bg-accent-soft dark:bg-accent/15'
-                  : 'bg-white dark:bg-slate-800',
-              )}
+              }
+              items={[
+                { id: 'md', label: t('journal.exportMd', { defaultValue: '匯出 Markdown' }), icon: Download, onSelect: exportMd },
+                { id: 'json', label: t('journal.exportJson', { defaultValue: '匯出 JSON（備份）' }), icon: Download, onSelect: exportJson },
+              ]}
+            />
+            <button
+              type="button"
+              onClick={() => openNew()}
+              className="inline-flex items-center gap-1.5 rounded-xl bg-white/15 px-3 py-1.5 text-sm font-medium backdrop-blur-sm transition hover:bg-white/25"
             >
-              <p className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide text-slate-400 dark:text-slate-500">
-                <I size={12} className={s.hot ? 'text-accent' : ''} />
-                {s.label}
-              </p>
-              <p
-                className={cx(
-                  'mt-1 text-[26px] font-semibold leading-none tabular-nums slashed-zero',
-                  s.hot ? 'text-accent-strong dark:text-accent' : 'text-slate-800 dark:text-slate-100',
-                )}
-              >
-                {s.value}
-                {s.unit && <span className="ml-1 font-sans text-sm font-normal text-slate-400">{s.unit}</span>}
-              </p>
-              <p className="mt-1 truncate text-[11px] text-slate-400 dark:text-slate-500">{s.hint}</p>
-            </div>
-          )
-        })}
-      </div>
+              <PenLine size={15} />
+              {t('journal.write', { defaultValue: '寫日誌' })}
+            </button>
+          </>
+        }
+      />
+
+      {/* ───────── 教學引導：點用呢個功能 ───────── */}
+      <FeatureGuide
+        storageKey="journal"
+        title={t('journal.guideTitle', { defaultValue: '個人日誌點用？' })}
+        steps={GUIDE_STEPS}
+      />
+
+      {/* ───────── 統計帶：四張統計磚（同 dashboard StatTile 一致） ───────── */}
+      <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <JournalStat
+          label={t('journal.statStreak', { defaultValue: '連續天數' })}
+          value={stats.streak}
+          unit={t('journal.unitDay', { defaultValue: '日' })}
+          hint={stats.streak > 0 ? t('journal.statStreakHotHint', { defaultValue: '今日記得寫低！' }) : t('journal.statStreakHint', { defaultValue: '由今日開始' })}
+          icon={Flame}
+          tone={stats.streak > 0 ? 'amber' : 'slate'}
+        />
+        <JournalStat
+          label={t('journal.statTotal', { defaultValue: '日誌總數' })}
+          value={stats.total}
+          unit={t('journal.unitEntry', { defaultValue: '篇' })}
+          hint={t('journal.statActiveN', { n: stats.activeDays, defaultValue: `活躍 ${stats.activeDays} 日` })}
+          icon={BookText}
+          tone="accent"
+        />
+        <JournalStat
+          label={t('journal.statWords', { defaultValue: '累積字數' })}
+          value={stats.totalWords.toLocaleString()}
+          hint={t('journal.statAvgWords', { n: stats.avgWords, defaultValue: `平均 ${stats.avgWords} 字／篇` })}
+          icon={Sparkles}
+          tone="sky"
+        />
+        <JournalStat
+          label={t('journal.statLongest', { defaultValue: '最長連續' })}
+          value={stats.longest}
+          unit={t('journal.unitDay', { defaultValue: '日' })}
+          hint={t('journal.statFavN', { n: stats.favorites, defaultValue: `精選 ${stats.favorites} 篇` })}
+          icon={History}
+          tone="violet"
+        />
+      </section>
 
       {/* ───────── 視圖切換 ───────── */}
       <SegmentedControl<ViewId>
@@ -478,24 +500,26 @@ export default function Journal() {
         </Card>
       )}
 
-      {/* ───────── 今日提示（未寫今日時，溫和邀請） ───────── */}
+      {/* ───────── 今日提示（未寫今日時，溫和邀請；CTA 虛邊磚） ───────── */}
       {view === 'timeline' && docs.length > 0 && !existingDates.has(today) && (
         <button
+          type="button"
           onClick={() => openNew()}
-          className="group flex w-full items-center gap-4 overflow-hidden rounded-2xl border border-accent/25 bg-gradient-to-br from-accent-soft/70 to-accent-soft/20 p-4 text-left transition duration-200 hover:-translate-y-0.5 hover:border-accent/45 hover:shadow-md active:scale-[0.98] dark:border-accent/30 dark:from-accent/15 dark:to-accent/5"
+          aria-label={t('journal.todayNudgeAria', { defaultValue: '今日仲未寫日誌，去寫一篇' })}
+          className="group flex w-full items-center gap-3 rounded-2xl border border-dashed border-accent/40 bg-accent-soft/50 p-4 text-left transition duration-200 hover:border-accent hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98] dark:border-accent/40 dark:bg-accent/10"
         >
-          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-accent text-white shadow-sm shadow-accent/30 transition group-hover:scale-105">
-            <PenLine size={19} />
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-accent text-white">
+            <PenLine size={18} />
           </span>
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-semibold text-accent-strong dark:text-accent">
-              今日仲未寫，記低一筆？
+            <p className="text-sm font-medium text-accent-strong dark:text-accent">
+              {t('journal.todayNudgeTitle', { defaultValue: '今日仲未寫，記低一筆？' })}
             </p>
-            <p className="mt-0.5 truncate text-[15px] italic text-slate-600 dark:text-slate-300">
-              「{promptOfDay(today)}」
+            <p className="mt-0.5 truncate text-xs text-slate-500 dark:text-slate-400">
+              {promptOfDay(today)}
             </p>
           </div>
-          <ChevronRight size={18} className="shrink-0 text-accent transition group-hover:translate-x-0.5" />
+          <ChevronRight size={16} className="shrink-0 text-accent transition group-hover:translate-x-0.5" />
         </button>
       )}
 
@@ -540,17 +564,18 @@ export default function Journal() {
           {/* 心情 + 精選快篩 */}
           <div className="flex flex-wrap items-center gap-1.5">
             <button
+              type="button"
               onClick={() => setFavOnly((v) => !v)}
               aria-pressed={favOnly}
               className={cx(
-                'inline-flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-medium transition active:scale-[0.98]',
+                'inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98]',
                 favOnly
                   ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300'
                   : 'bg-slate-100 text-slate-500 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700',
               )}
             >
               <Star size={12} className={favOnly ? 'fill-amber-400 text-amber-400' : ''} />
-              精選
+              {t('journal.favorite', { defaultValue: '精選' })}
             </button>
             <span className="mx-0.5 h-4 w-px bg-slate-200 dark:bg-slate-700" />
             {MOODS.map((m) => {
@@ -583,11 +608,12 @@ export default function Journal() {
                 return (
                   <button
                     key={tag}
+                    type="button"
                     onClick={() => setTagFilter(on ? null : tag)}
                     aria-pressed={on}
                     aria-label={`標籤 ${tag}，${count} 篇`}
                     className={cx(
-                      'inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-medium transition active:scale-[0.98]',
+                      'inline-flex items-center gap-1 rounded-lg px-2 py-0.5 text-[11px] font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98]',
                       on
                         ? 'bg-accent text-white'
                         : 'bg-accent-soft text-accent-strong hover:brightness-95 dark:bg-accent/15 dark:text-accent',
@@ -645,13 +671,13 @@ export default function Journal() {
             <div className="space-y-6">
               {grouped.map((g) => (
                 <div key={g.ym}>
-                  {/* 月份分隔（serif） */}
+                  {/* 月份分隔 */}
                   <div className="mb-3 flex items-baseline gap-3">
-                    <h3 className="text-lg font-semibold tracking-tight text-slate-700 dark:text-slate-200">
+                    <h3 className="text-sm font-semibold tracking-tight text-slate-700 dark:text-slate-200">
                       {g.label}
                     </h3>
                     <span className="h-px flex-1 bg-gradient-to-r from-slate-200 to-transparent dark:from-slate-700/70" />
-                    <span className="text-xs italic tabular-nums text-slate-400">{g.items.length} 篇</span>
+                    <span className="text-xs tabular-nums text-slate-400">{g.items.length} 篇</span>
                   </div>
                   {/* 日記書脊：連續細線 + 逐篇心情色節點 */}
                   <div className="relative">
@@ -714,6 +740,53 @@ export default function Journal() {
 }
 
 // ============================================================
+//  統計磚（同 WorkDashboard StatTile 一致：tone chip + 大數字）
+// ============================================================
+type StatTone = 'accent' | 'amber' | 'emerald' | 'violet' | 'sky' | 'rose' | 'slate'
+const STAT_TONE: Record<StatTone, { chip: string; val: string }> = {
+  accent: { chip: 'bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent', val: 'text-accent' },
+  amber: { chip: 'bg-amber-50 text-amber-600 dark:bg-amber-500/15 dark:text-amber-300', val: 'text-amber-500' },
+  emerald: { chip: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-300', val: 'text-emerald-500' },
+  violet: { chip: 'bg-violet-50 text-violet-600 dark:bg-violet-500/15 dark:text-violet-300', val: 'text-violet-500' },
+  sky: { chip: 'bg-sky-50 text-sky-600 dark:bg-sky-500/15 dark:text-sky-300', val: 'text-sky-500' },
+  rose: { chip: 'bg-rose-50 text-rose-600 dark:bg-rose-500/15 dark:text-rose-300', val: 'text-rose-500' },
+  slate: { chip: 'bg-slate-100 text-slate-500 dark:bg-slate-700/60 dark:text-slate-300', val: 'text-slate-700 dark:text-slate-200' },
+}
+
+function JournalStat({
+  label,
+  value,
+  unit,
+  hint,
+  icon: Icon,
+  tone,
+}: {
+  label: string
+  value: string | number
+  unit?: string
+  hint?: string
+  icon: typeof BookText
+  tone: StatTone
+}) {
+  const tc = STAT_TONE[tone]
+  return (
+    <div className="flex flex-col justify-between rounded-2xl border border-slate-200/80 bg-white p-4 dark:border-slate-700/60 dark:bg-slate-800">
+      <div className="flex items-center justify-between gap-2">
+        <p className="truncate text-xs font-medium text-slate-400 dark:text-slate-500">{label}</p>
+        <span className={cx('flex h-8 w-8 shrink-0 items-center justify-center rounded-xl', tc.chip)}>
+          <Icon size={16} />
+        </span>
+      </div>
+      <div className="mt-3 flex items-baseline gap-1">
+        <span className={cx('text-3xl font-semibold tabular-nums slashed-zero', tc.val)}>{value}</span>
+        {unit && <span className="text-sm font-medium text-slate-400">{unit}</span>}
+      </div>
+      {hint && <p className="mt-0.5 truncate text-[11px] text-slate-400 dark:text-slate-500">{hint}</p>}
+    </div>
+  )
+}
+
+// ============================================================
 //  單篇日誌卡
 // ============================================================
 const TRUNCATE = 240
@@ -758,12 +831,12 @@ function EntryCard({
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex min-w-0 items-start gap-3">
-          {/* serif 日期塊（書脊節點已帶心情色，呢度主打「邊一日」） */}
+          {/* 日期塊（書脊節點已帶心情色，呢度主打「邊一日」） */}
           <div className="flex w-10 shrink-0 flex-col items-center pt-0.5">
-            <span className="text-[26px] font-semibold leading-none tabular-nums text-slate-700 dark:text-slate-200">
+            <span className="text-2xl font-semibold leading-none tabular-nums slashed-zero text-slate-700 dark:text-slate-200">
               {dp.day}
             </span>
-            <span className="mt-1 text-[10px] font-medium uppercase tracking-wider text-slate-400">
+            <span className="mt-1 text-[10px] font-medium text-slate-400 dark:text-slate-500">
               週{dp.weekday}
             </span>
           </div>
@@ -841,22 +914,23 @@ function EntryCard({
       )}
 
       <div className="mt-2 flex flex-wrap items-center gap-1.5">
-        {tags.map((t) => {
-          const on = activeTag?.toLowerCase() === t.toLowerCase()
+        {tags.map((tag) => {
+          const on = activeTag?.toLowerCase() === tag.toLowerCase()
           return (
             <button
-              key={t}
-              onClick={() => onPickTag(t)}
+              key={tag}
+              type="button"
+              onClick={() => onPickTag(tag)}
               aria-pressed={on}
-              aria-label={`以標籤 ${t} 篩選`}
+              aria-label={`以標籤 ${tag} 篩選`}
               className={cx(
-                'rounded-md px-1.5 py-0.5 text-[11px] font-medium transition active:scale-[0.98]',
+                'rounded-lg px-1.5 py-0.5 text-[11px] font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98]',
                 on
                   ? 'bg-accent text-white'
                   : 'bg-accent-soft text-accent-strong hover:brightness-95 dark:bg-accent/15 dark:text-accent',
               )}
             >
-              #{t}
+              #{tag}
             </button>
           )
         })}

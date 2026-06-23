@@ -4,23 +4,21 @@ import type { LucideIcon } from 'lucide-react'
 import {
   AlarmClock,
   BarChart3,
+  CalendarClock,
   CalendarDays,
   CalendarHeart,
+  CheckCircle2,
   Clock,
   Hourglass,
   NotebookPen,
   PartyPopper,
   PenLine,
-  PlaneLanding,
-  PlaneTakeoff,
   Pin,
   Plus,
   Smartphone,
   Tag,
-  Ticket,
   Trash2,
   Undo2,
-  X,
 } from 'lucide-react'
 import { useCollection } from '../../lib/store'
 import { countdownsCol, eventsCol } from '../../data/collections'
@@ -37,10 +35,13 @@ import { useConfirm } from '../../context/ConfirmContext'
 import {
   Button,
   EmptyState,
+  FeatureGuide,
   Field,
   IconButton,
   Input,
   Modal,
+  PageHero,
+  SectionTitle,
   Tabs,
   Textarea,
   cx,
@@ -59,110 +60,60 @@ export function toneOf(days: number): Tone {
   return 'green'
 }
 
-/**
- * 緊急度 → 登機牌狀態配色（airport departure-board 語彙）。
- *  · status：候機顯示牌上嗰句狀態字（boarding / final call …）
- *  · dot：狀態燈顏色
- *  · bar：逼近進度條
- *  · stub：登機牌右半「存根」嘅底色（呼應緊急度，帶 dark:）
- *  · ring：hover 時卡片邊框點亮
- * 大數字（split-flap）一律深色板 + 白字，靠狀態燈同存根帶緊急度，唔靠數字變色。
- */
-const URGENCY: Record<
-  Tone,
-  { status: string; dot: string; bar: string; stub: string; ring: string }
-> = {
-  rose: {
-    status: '最後召集',
-    dot: 'bg-rose-500',
-    bar: 'bg-rose-500',
-    stub: 'bg-rose-50 text-rose-600 dark:bg-rose-500/15 dark:text-rose-300',
-    ring: 'group-hover:border-rose-300/70 dark:group-hover:border-rose-500/40',
+// ───────── 設計系統語意色（對齊 WorkDashboard 的 TONE map）─────────
+// chip = icon 章底+字色、val = 大數字字色、dot = 狀態點、bar = 進度條填充。
+type SemTone = 'accent' | 'amber' | 'emerald' | 'sky' | 'violet' | 'rose' | 'slate'
+const SEM_TONE: Record<SemTone, { chip: string; val: string; dot: string; bar: string }> = {
+  accent: {
+    chip: 'bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent',
+    val: 'text-accent',
+    dot: 'bg-accent',
+    bar: 'bg-accent',
   },
   amber: {
-    status: '準備登機',
+    chip: 'bg-amber-50 text-amber-600 dark:bg-amber-500/15 dark:text-amber-300',
+    val: 'text-amber-500',
     dot: 'bg-amber-500',
     bar: 'bg-amber-500',
-    stub: 'bg-amber-50 text-amber-600 dark:bg-amber-500/15 dark:text-amber-300',
-    ring: 'group-hover:border-amber-300/70 dark:group-hover:border-amber-500/40',
   },
-  green: {
-    status: '準時候機',
+  emerald: {
+    chip: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-300',
+    val: 'text-emerald-500',
     dot: 'bg-emerald-500',
     bar: 'bg-emerald-500',
-    stub: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-300',
-    ring: 'group-hover:border-emerald-300/70 dark:group-hover:border-emerald-500/40',
+  },
+  sky: {
+    chip: 'bg-sky-50 text-sky-600 dark:bg-sky-500/15 dark:text-sky-300',
+    val: 'text-sky-500',
+    dot: 'bg-sky-500',
+    bar: 'bg-sky-500',
+  },
+  violet: {
+    chip: 'bg-violet-50 text-violet-600 dark:bg-violet-500/15 dark:text-violet-300',
+    val: 'text-violet-500',
+    dot: 'bg-violet-500',
+    bar: 'bg-violet-500',
+  },
+  rose: {
+    chip: 'bg-rose-50 text-rose-600 dark:bg-rose-500/15 dark:text-rose-300',
+    val: 'text-rose-500',
+    dot: 'bg-rose-500',
+    bar: 'bg-rose-500',
   },
   slate: {
-    status: '已抵達',
+    chip: 'bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-300',
+    val: 'text-slate-500 dark:text-slate-400',
     dot: 'bg-slate-400 dark:bg-slate-500',
     bar: 'bg-slate-300 dark:bg-slate-600',
-    stub: 'bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-300',
-    ring: 'group-hover:border-slate-300 dark:group-hover:border-slate-600',
   },
 }
 
-// 候機（未到達）狀態文字 i18n key + 中文 default（按緊急度 tone）。
-const UPCOMING_STATUS: Record<'rose' | 'amber' | 'green', { key: string; zh: string }> = {
-  rose: { key: 'countdown.status.finalCall', zh: '最後召集' },
-  amber: { key: 'countdown.status.boarding', zh: '準備登機' },
-  green: { key: 'countdown.status.onTime', zh: '準時候機' },
-}
-
-// ───────── Split-flap 顯示牌（機場離境牌數字感）─────────
-// 深色板條 + 中央橫縫（::after hairline）+ 等寬數字。純表現，唔影響任何邏輯。
-// size: 'lg' 用喺登機牌大數字、'sm' 用喺頂部 hero 狀態牌。
-
-/** 單一翻牌槽：一個字元（數字 / 「今日」字 / 「—」）。 */
-function FlapSlot({
-  char,
-  size = 'lg',
-}: {
-  char: string
-  size?: 'sm' | 'lg'
-}) {
-  const dim =
-    size === 'lg'
-      ? 'h-14 w-10 text-4xl sm:h-16 sm:w-12 sm:text-5xl'
-      : 'h-9 w-7 text-2xl sm:h-10 sm:w-8 sm:text-3xl'
-  return (
-    <span
-      className={cx(
-        'relative inline-flex items-center justify-center rounded-md bg-slate-900 font-mono font-semibold leading-none tabular-nums slashed-zero text-slate-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_1px_2px_rgba(15,23,42,0.4)] ring-1 ring-inset ring-white/5 dark:bg-slate-950',
-        // 中央翻牌縫（一條穿過中線嘅暗痕）
-        'after:pointer-events-none after:absolute after:inset-x-0 after:top-1/2 after:h-px after:-translate-y-1/2 after:bg-black/45',
-        dim,
-      )}
-    >
-      {char}
-    </span>
-  )
-}
-
-/** 一組翻牌：將一個（已絕對值）數字逐位拆成翻牌槽；非數字內容當單槽顯示。 */
-function FlapDisplay({
-  value,
-  size = 'lg',
-  ariaLabel,
-}: {
-  value: number | string
-  size?: 'sm' | 'lg'
-  ariaLabel?: string
-}) {
-  const text = String(value)
-  const chars = /^\d+$/.test(text) ? text.split('') : [text]
-  const gap = size === 'lg' ? 'gap-1.5' : 'gap-1'
-  return (
-    <span
-      className={cx('inline-flex items-stretch', gap)}
-      role="img"
-      aria-label={ariaLabel ?? text}
-    >
-      {chars.map((c, i) => (
-        <FlapSlot key={i} char={c} size={size} />
-      ))}
-    </span>
-  )
+/** 緊急度 Tone → 設計系統語意色（rose=緊急 / amber=接近 / emerald=尚遠 / slate=已過）。 */
+function semOf(tone: Tone): SemTone {
+  if (tone === 'rose') return 'rose'
+  if (tone === 'amber') return 'amber'
+  if (tone === 'green') return 'emerald'
+  return 'slate'
 }
 
 const CATEGORY_META: Record<
@@ -233,20 +184,20 @@ export function formatDate(dateKey: string, time?: string): string {
   return time ? `${base} ${time}` : base
 }
 
-/** 親切嘅一句註腳，按緊急度變語氣（登機口廣播口吻，但保持溫暖）。 */
+/** 親切嘅一句註腳，按緊急度變語氣。 */
 function urgencyHint(days: number): string {
-  if (days === 0) return '今日起飛，加油！'
-  if (days === 1) return '聽日就到閘口喇'
-  if (days <= 3) return '即將登機，做最後衝刺'
-  if (days <= 7) return '一星期內，記得 check-in'
-  if (days <= 14) return '兩星期內，慢慢執行李'
-  if (days <= 30) return '一個月內，可以開始計劃'
-  return '航班排好咗，放鬆啲'
+  if (days === 0) return '就係今日，加油！'
+  if (days === 1) return '聽日就到喇'
+  if (days <= 3) return '只剩幾日，做最後衝刺'
+  if (days <= 7) return '一星期內，記得預備'
+  if (days <= 14) return '兩星期內，可以開始準備'
+  if (days <= 30) return '一個月內，慢慢計劃'
+  return '時間充裕，放鬆啲'
 }
 
 type TabId = 'upcoming' | 'past'
 
-/** 頂部分類篩選用嘅 pill（航廈「閘口」選擇器；樣式對齊 Modal 入面嘅分類掣）。 */
+/** 頂部分類篩選 pill（SegmentedControl 風格嘅輕量分類掣）。 */
 function FilterPill({
   label,
   count,
@@ -276,7 +227,7 @@ function FilterPill({
       {label}
       <span
         className={cx(
-          'rounded px-1 font-mono text-[11px] tabular-nums',
+          'rounded-md px-1 text-[11px] font-semibold tabular-nums',
           active
             ? 'bg-white/20 text-white'
             : 'bg-slate-100 text-slate-500 dark:bg-slate-700/70 dark:text-slate-400',
@@ -318,7 +269,7 @@ export default function Countdown() {
     [items, mode],
   )
 
-  // 候機中（未到達 且 今日／未來）：升序，最近喺前。已標記到達嘅唔再算候機。
+  // 即將到嚟（未到達 且 今日／未來）：升序，最近喺前。已標記到達嘅唔再算。
   const upcoming = useMemo(
     () =>
       visible
@@ -328,7 +279,7 @@ export default function Countdown() {
     [visible, todayKey],
   )
 
-  // 已過去 / 已到達（已標記到達，或已過 date）：降序，最近喺前。
+  // 已過去 / 已完成（已標記到達，或已過 date）：降序，最近喺前。
   const past = useMemo(
     () =>
       visible
@@ -340,6 +291,7 @@ export default function Countdown() {
 
   // 頂部統計：最近一項（最快到嚟嘅未過事件 N 日）。用全部 upcoming（唔受篩選影響）。
   const nearestDays = upcoming.length > 0 ? daysUntil(upcoming[0].date, todayKey) : null
+  const nearest = upcoming.length > 0 ? upcoming[0] : null
 
   // 分類 pill 計數（用全部 upcoming，篩走邊個都仍見到總量）。
   const counts = useMemo(() => categoryCounts(upcoming), [upcoming])
@@ -413,382 +365,308 @@ export default function Countdown() {
     toast.success('已刪除倒數')
   }
 
-  // 標記「到達」（完成）。早於 date 當日 = 提前到達。
+  // 標記「完成」。早於 date 當日 = 提前完成。
   function markArrived(c: CountdownItem) {
     countdownsCol.update(c.id, { arrivedAt: new Date().toISOString() })
     const early = todayKey < c.date
     toast.success(
       early
-        ? t('countdown.toast.early', { defaultValue: '已記錄：提前到達 ✈' })
-        : t('countdown.toast.arrived', { defaultValue: '已記錄：到達 ✈' }),
+        ? t('countdown.toast.early', { defaultValue: '已記錄：提前完成' })
+        : t('countdown.toast.arrived', { defaultValue: '已記錄：完成' }),
     )
   }
 
-  // 取消到達（撳錯／要重開倒數）。
+  // 取消完成（撳錯／要重開倒數）。
   function undoArrived(c: CountdownItem) {
     countdownsCol.update(c.id, { arrivedAt: undefined })
   }
 
-  // 單張倒數卡 = 一張登機牌（同 upcoming 分段同 past flat list 共用，外觀一致）。
-  // 左半「主聯」：閘口 chip + 航班名（標題）+ 離境日期 + split-flap 大數字；
-  // 右半「存根」：狀態燈 + 緊急度狀態字 + 逼近進度（過去航班顯示「已抵達」）。
-  // 兩聯之間一條虛線打孔縫（手機上下疊、sm 以上左右並排）。
-  function renderCard(c: CountdownItem, index = 0) {
+  // 單張倒數卡：純展示卡（rounded-2xl）。左邊分類 icon 章 + 標題 + 日期；
+  // 中間大數字（剩餘日數，tone 著色）；底部進度條（30 日內）+ 狀態 + 操作。
+  function renderCard(c: CountdownItem) {
     const days = daysUntil(c.date, todayKey)
-    // 到達狀態：arrived = 已標記；arrivedEarly = 到達日早過 deadline；
-    // delayed = 未到達且已過 deadline（航班延誤）。
+    // 完成狀態：arrived = 已標記；arrivedEarly = 完成日早過 deadline；
+    // overdue = 未完成且已過 deadline。
     const arrived = !!c.arrivedAt
     const arrivedEarly = arrived && (c.arrivedAt as string).slice(0, 10) < c.date
-    const delayed = !arrived && days < 0
-    const tone: Tone = arrived ? (arrivedEarly ? 'green' : 'slate') : delayed ? 'rose' : toneOf(days)
-    const u = URGENCY[tone]
-    const statusText = arrived
-      ? arrivedEarly
-        ? t('countdown.status.early', { defaultValue: '提前到達' })
-        : t('countdown.status.arrived', { defaultValue: '已抵達' })
-      : delayed
-        ? t('countdown.status.delayed', { defaultValue: '航班延誤' })
-        : t(UPCOMING_STATUS[tone as 'rose' | 'amber' | 'green'].key, {
-            defaultValue: UPCOMING_STATUS[tone as 'rose' | 'amber' | 'green'].zh,
-          })
+    const overdue = !arrived && days < 0
+    const tone: Tone = arrived ? (arrivedEarly ? 'green' : 'slate') : overdue ? 'rose' : toneOf(days)
+    const sem = SEM_TONE[semOf(tone)]
     const meta = c.category ? CATEGORY_META[c.category] : null
-    const CatIcon = meta ? meta.icon : Ticket
+    const CatIcon = meta ? meta.icon : CalendarClock
     const isToday = !arrived && days === 0
     const isPast = days < 0
-    // 候機（未到達、未延誤）先閃燈
-    const showPing = !arrived && !delayed && days >= 0
-    // 閘口代碼：分類首兩個英文 + 緊急度（純裝飾，似登機牌嘅 gate）
-    const gateCode = (c.category ? c.category.slice(0, 2) : 'NT').toUpperCase()
-    // 30 日內畫一條「逼近」進度條（越近越滿）；已到達 / 已過去唔畫。
+    // 30 日內畫一條「逼近」進度條（越近越滿）；已完成 / 已過去唔畫。
     const progress = !isPast && !arrived && days <= 30 ? Math.round((1 - days / 30) * 100) : null
+
+    const statusText = arrived
+      ? arrivedEarly
+        ? t('countdown.status.early', { defaultValue: '提前完成' })
+        : t('countdown.status.arrived', { defaultValue: '已完成' })
+      : overdue
+        ? t('countdown.status.overdue', { defaultValue: `逾期 ${Math.abs(days)} 日` })
+        : isToday
+          ? t('countdown.status.today', { defaultValue: '就在今日' })
+          : t('countdown.status.left', { defaultValue: `尚餘 ${days} 日` })
 
     return (
       <article
-        key={c.id}
-        className={cx(
-          'group relative flex animate-fade-in-up flex-col overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-xs transition duration-200 hover:-translate-y-0.5 hover:shadow-md dark:border-slate-700/60 dark:bg-slate-800 dark:shadow-none sm:flex-row',
-          u.ring,
-        )}
-        style={{ animationDelay: `${Math.min(index, 8) * 45}ms` }}
+        className="rounded-2xl border border-slate-200/80 bg-white p-4 dark:border-slate-700/60 dark:bg-slate-800"
       >
-        {/* 主聯 */}
-        <div className="relative flex flex-1 flex-col p-5">
-          {/* 第一行：閘口 chip + 航班名 + 刪除 */}
-          <div className="flex items-start justify-between gap-3">
-            <div className="flex min-w-0 items-center gap-3">
-              <span
-                className={cx(
-                  'relative flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl transition duration-200 group-hover:scale-105',
-                  meta ? meta.chip : 'bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent',
-                )}
-              >
-                <CatIcon size={21} strokeWidth={2} />
-              </span>
-              <div className="min-w-0">
-                <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-slate-400 dark:text-slate-500">
-                  {meta ? meta.label : '行程'} · 閘口 {gateCode}
-                </p>
-                <h3 className="truncate text-base font-semibold text-slate-800 dark:text-slate-100">
-                  {c.title}
-                </h3>
-                <p className="mt-0.5 flex items-center gap-1.5 truncate text-xs text-slate-500 dark:text-slate-400">
-                  {isPast ? (
-                    <PlaneLanding size={13} className="shrink-0 text-slate-400" />
-                  ) : (
-                    <PlaneTakeoff size={13} className="shrink-0 text-accent" />
-                  )}
-                  {formatDate(c.date, c.time)}
-                </p>
-              </div>
-            </div>
-            <IconButton
-              label={`刪除「${c.title}」`}
-              tone="danger"
-              onClick={() => handleRemove(c)}
-              className="shrink-0 opacity-0 transition group-hover:opacity-100 focus-visible:opacity-100"
+        {/* 頂列：分類 icon 章 + 標題 + 日期 + 刪除 */}
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex min-w-0 items-center gap-3">
+            <span
+              className={cx(
+                'flex h-9 w-9 shrink-0 items-center justify-center rounded-xl',
+                meta ? meta.chip : 'bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent',
+              )}
             >
-              <Trash2 size={17} />
-            </IconButton>
-          </div>
-
-          {/* split-flap 大數字區 */}
-          <div className="mt-5 flex flex-1 items-end">
-            {arrived ? (
-              <span
-                className={cx(
-                  'inline-flex items-center gap-2 text-lg font-semibold',
-                  arrivedEarly
-                    ? 'text-emerald-600 dark:text-emerald-400'
-                    : 'text-slate-500 dark:text-slate-400',
-                )}
-              >
-                <PlaneLanding size={22} strokeWidth={2} />
-                {statusText}
-              </span>
-            ) : delayed ? (
-              <span className="inline-flex items-center gap-2 text-lg font-semibold text-rose-600 dark:text-rose-400">
-                <AlarmClock size={22} strokeWidth={2} />
-                {statusText}
-                <span className="text-sm font-medium text-rose-400/90">· {Math.abs(days)} 日</span>
-              </span>
-            ) : isToday ? (
-              <div className="flex items-baseline gap-2">
-                <FlapDisplay value="今" ariaLabel="今日出發" />
-                <FlapDisplay value="日" />
-                <span className="ml-1 self-end pb-1 text-sm font-semibold text-rose-600 dark:text-rose-400">
-                  出發
-                </span>
-              </div>
-            ) : (
-              <p className="flex items-baseline gap-2.5">
-                <FlapDisplay
-                  value={Math.abs(days)}
-                  ariaLabel={`${Math.abs(days)} 日${days > 0 ? '後' : '前'}`}
-                />
-                <span className="self-end pb-1 text-sm font-medium text-slate-400 dark:text-slate-500">
-                  {days > 0 ? '日後起飛' : '日前已飛'}
-                </span>
+              <CatIcon size={18} />
+            </span>
+            <div className="min-w-0">
+              <h3 className="truncate text-sm font-semibold text-slate-700 dark:text-slate-200">
+                {c.title}
+              </h3>
+              <p className="mt-0.5 truncate text-xs text-slate-400 dark:text-slate-500">
+                {meta ? `${meta.label} · ` : ''}
+                {formatDate(c.date, c.time)}
               </p>
-            )}
+            </div>
           </div>
+          <IconButton
+            label={`刪除「${c.title}」`}
+            tone="danger"
+            onClick={() => handleRemove(c)}
+            className="shrink-0"
+          >
+            <Trash2 size={16} />
+          </IconButton>
+        </div>
 
-          {c.notes && (
-            <p className="mt-3 whitespace-pre-wrap break-words text-sm leading-relaxed text-slate-500 dark:text-slate-400">
-              {c.notes}
+        {/* 大數字 / 狀態 */}
+        <div className="mt-3">
+          {arrived || overdue ? (
+            <p className="flex items-center gap-1.5">
+              <span className={cx('flex h-2 w-2 shrink-0 rounded-full', sem.dot)} />
+              <span className={cx('text-lg font-semibold', sem.val)}>{statusText}</span>
+            </p>
+          ) : isToday ? (
+            <p className="flex items-baseline gap-1.5">
+              <span className={cx('text-3xl font-semibold tabular-nums slashed-zero', sem.val)}>
+                {t('countdown.todayBig', { defaultValue: '今日' })}
+              </span>
+            </p>
+          ) : (
+            <p className="flex items-baseline gap-1.5">
+              <span className={cx('text-3xl font-semibold tabular-nums slashed-zero', sem.val)}>
+                {days}
+              </span>
+              <span className="text-sm font-medium text-slate-400 dark:text-slate-500">
+                {t('countdown.daysLeft', { defaultValue: '日後' })}
+              </span>
             </p>
           )}
         </div>
 
-        {/* 打孔縫：手機橫向、sm 以上直向；兩端各一個半圓凹位（登機牌撕口） */}
-        <div className="relative shrink-0 sm:w-px">
-          {/* 半圓凹位 */}
-          <span
-            aria-hidden="true"
-            className="absolute left-0 top-0 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-slate-50 dark:bg-slate-900 sm:left-1/2"
-          />
-          <span
-            aria-hidden="true"
-            className="absolute bottom-0 right-0 h-3 w-3 translate-x-1/2 translate-y-1/2 rounded-full bg-slate-50 dark:bg-slate-900 sm:left-1/2 sm:right-auto sm:translate-x-[-50%]"
-          />
-          {/* 虛線本體 */}
-          <span
-            aria-hidden="true"
-            className="block h-px w-full border-t border-dashed border-slate-300/80 dark:border-slate-600/70 sm:h-full sm:w-px sm:border-l sm:border-t-0"
-          />
-        </div>
-
-        {/* 存根（boarding-pass stub）：狀態 + 逼近進度 */}
-        <div className="relative flex shrink-0 flex-col justify-between gap-3 p-5 sm:w-44">
-          <div>
-            <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-slate-400 dark:text-slate-500">
-              狀態 · Status
-            </p>
-            <p className="mt-1.5 flex items-center gap-2">
-              <span className={cx('relative flex h-2 w-2', arrived && 'opacity-70')}>
-                {showPing && (
-                  <span
-                    className={cx(
-                      'absolute inline-flex h-full w-full animate-ping rounded-full opacity-60',
-                      u.dot,
-                    )}
-                  />
-                )}
-                <span className={cx('relative inline-flex h-2 w-2 rounded-full', u.dot)} />
-              </span>
-              <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">
-                {statusText}
-              </span>
-            </p>
+        {/* 逼近進度條（30 日內、未完成、未過去先畫） */}
+        {progress !== null && (
+          <div
+            className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-700/60"
+            role="img"
+            aria-label={`距離 ${days} 日`}
+          >
+            <div
+              className={cx('h-full rounded-full transition-all duration-500 ease-out', sem.bar)}
+              style={{ width: `${progress}%` }}
+            />
           </div>
+        )}
 
-          {/* 緊急度存根標籤 + 逼近進度 */}
-          <div className="space-y-2">
-            <span
-              className={cx(
-                'inline-flex items-center rounded-md px-2 py-0.5 font-mono text-[11px] font-medium uppercase tracking-wider',
-                u.stub,
-              )}
+        {c.notes && (
+          <p className="mt-3 whitespace-pre-wrap break-words text-sm leading-relaxed text-slate-500 dark:text-slate-400">
+            {c.notes}
+          </p>
+        )}
+
+        {/* 操作：未完成 → 標記完成；已完成 → 取消 */}
+        <div className="mt-3 flex items-center justify-end border-t border-slate-200 pt-3 dark:border-slate-700">
+          {!arrived ? (
+            <button
+              type="button"
+              onClick={() => markArrived(c)}
+              className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-emerald-600 transition hover:bg-emerald-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/40 active:scale-[0.98] dark:text-emerald-300 dark:hover:bg-emerald-500/15"
             >
-              {arrived
-                ? arrivedEarly
-                  ? 'EARLY ✓'
-                  : 'ARRIVED ✓'
-                : delayed
-                  ? 'DELAYED'
-                  : days > 0
-                    ? `T-${days}`
-                    : isToday
-                      ? 'DEP TODAY'
-                      : `+${-days}d`}
-            </span>
-            {progress !== null && (
-              <div
-                className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-700/60"
-                role="img"
-                aria-label={`距離出發 ${days} 日`}
-              >
-                <div
-                  className={cx('h-full rounded-full transition-all duration-700', u.bar)}
-                  style={{ width: `${progress}%` }}
-                />
-              </div>
-            )}
-            {/* 到達操作：未到達 → 標記到達（延誤就補登）；已到達 → 取消 */}
-            {!arrived ? (
-              <button
-                type="button"
-                onClick={() => markArrived(c)}
-                className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-emerald-200 bg-emerald-50 px-2.5 py-1.5 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/40 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300 dark:hover:bg-emerald-500/20"
-              >
-                <PlaneLanding size={13} />
-                {delayed
-                  ? t('countdown.action.markLate', { defaultValue: '補登到達' })
-                  : t('countdown.action.markArrived', { defaultValue: '標記到達' })}
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={() => undoArrived(c)}
-                className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-400 transition hover:text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30 dark:hover:text-slate-200"
-              >
-                <Undo2 size={13} />
-                {t('countdown.action.undo', { defaultValue: '取消到達' })}
-              </button>
-            )}
-          </div>
+              <CheckCircle2 size={14} />
+              {overdue
+                ? t('countdown.action.markLate', { defaultValue: '補記完成' })
+                : t('countdown.action.markArrived', { defaultValue: '標記完成' })}
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => undoArrived(c)}
+              className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-400 transition hover:bg-slate-50 hover:text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98] dark:text-slate-500 dark:hover:bg-slate-800/60 dark:hover:text-slate-200"
+            >
+              <Undo2 size={14} />
+              {t('countdown.action.undo', { defaultValue: '取消完成' })}
+            </button>
+          )}
         </div>
       </article>
     )
   }
 
+  // hero 副題：跟最近一項倒數動態變（無 → 引導句；今日 → 就係今日；其餘 → 仲有 N 日）。
+  const heroDescription =
+    nearestDays === null
+      ? t('countdown.subtitleEmpty', { defaultValue: '記低考試、死線、評估同活動，一眼睇到仲爭幾耐。' })
+      : nearestDays === 0
+        ? t('countdown.subtitleToday', {
+            title: nearest?.title ?? '',
+            defaultValue: `「${nearest?.title ?? ''}」就係今日 · ${urgencyHint(0)}`,
+          })
+        : t('countdown.subtitleNext', {
+            n: nearestDays,
+            title: nearest?.title ?? '',
+            defaultValue: `下一個「${nearest?.title ?? ''}」仲有 ${nearestDays} 日 · ${urgencyHint(nearestDays)}`,
+          })
+
   return (
     <div className="w-full space-y-6 p-4 sm:p-6">
-      {/* Hero — 機場離境牌：深色顯示板 + 翻牌大數字（跟模式主色作頂帶） */}
-      <header className="relative overflow-hidden rounded-3xl bg-slate-900 text-white shadow-lg shadow-slate-900/30 ring-1 ring-white/5 dark:bg-slate-950 dark:shadow-black/40">
-        {/* 頂部色帶（destination strip，跟模式主色） */}
-        <div className="hero-gradient flex items-center justify-between gap-3 px-5 py-2.5 sm:px-7">
-          <span className="inline-flex items-center gap-2 font-mono text-[11px] font-semibold uppercase tracking-[0.3em] text-white">
-            <PlaneTakeoff size={14} /> Departures · 重要日子
-          </span>
-          <span className="hidden font-mono text-[11px] uppercase tracking-[0.3em] text-white/70 sm:inline">
-            EziTeach Terminal
-          </span>
-        </div>
+      {/* ───────── 頁頂 accent hero（共用 PageHero）───────── */}
+      <PageHero
+        icon={CalendarClock}
+        kicker={t('countdown.kicker', { defaultValue: '重要日子' })}
+        title={t('countdown.title', { defaultValue: '重要日子倒數' })}
+        description={heroDescription}
+        actions={
+          <>
+            <button
+              type="button"
+              onClick={() => setSubscribeOpen(true)}
+              className="inline-flex items-center gap-1.5 rounded-xl bg-white/15 px-3 py-1.5 text-sm font-medium backdrop-blur-sm transition hover:bg-white/25"
+            >
+              <Smartphone size={15} /> {t('cal.subscribeMobile', { defaultValue: '訂閱到手機' })}
+            </button>
+            <button
+              type="button"
+              onClick={openAddModal}
+              className="inline-flex items-center gap-1.5 rounded-xl bg-white/15 px-3 py-1.5 text-sm font-medium backdrop-blur-sm transition hover:bg-white/25"
+            >
+              <Plus size={15} /> {t('countdown.add', { defaultValue: '新增倒數' })}
+            </button>
+          </>
+        }
+      />
 
-        {/* 微弱掃描線質感（純裝飾） */}
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-0 bg-[repeating-linear-gradient(0deg,transparent,transparent_3px,rgba(255,255,255,0.02)_3px,rgba(255,255,255,0.02)_4px)]"
-        />
+      {/* ───────── 教學引導：教用家點用倒數（可摺疊 + 可永久收起）───────── */}
+      <FeatureGuide
+        storageKey="countdown"
+        title={t('countdown.guideTitle', { defaultValue: '重要日子倒數點用？' })}
+        steps={[
+          {
+            title: t('countdown.guideStep1Title', { defaultValue: '新增重要日子' }),
+            desc: t('countdown.guideStep1Desc', { defaultValue: '撳「新增倒數」，填返名同日期；可選分類（考試／死線／活動）同時間。' }),
+          },
+          {
+            title: t('countdown.guideStep2Title', { defaultValue: '一眼睇剩幾多日' }),
+            desc: t('countdown.guideStep2Desc', { defaultValue: '每張卡顯示尚餘日數，越接近顏色越緊張；上面數字話你知最近一個幾時到。' }),
+          },
+          {
+            title: t('countdown.guideStep3Title', { defaultValue: '完成就標記低' }),
+            desc: t('countdown.guideStep3Desc', { defaultValue: '搞掂咗撳「標記完成」，佢會搬去「已完成」一頁；撳錯可隨時取消。' }),
+          },
+          {
+            title: t('countdown.guideStep4Title', { defaultValue: '同步入手機日曆' }),
+            desc: t('countdown.guideStep4Desc', { defaultValue: '新增嘅倒數會自動入行事曆；撳「訂閱到手機」可一拉同步入電話。' }),
+          },
+        ]}
+      />
 
-        <div className="relative px-5 py-6 sm:px-7 sm:py-7">
-          {/* 頁面身份：kicker + serif 功能名（離境時刻表概念，功能名做主標題） */}
-          <div className="flex flex-wrap items-start justify-between gap-x-5 gap-y-4">
-            <div className="min-w-0">
-              <p className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.3em] text-slate-400">
-                <PlaneTakeoff size={13} className="shrink-0" /> Departures · 離境時刻表
-              </p>
-              <h1 className="mt-1.5 text-[28px] font-semibold leading-none tracking-tight text-white sm:text-[34px]">
-                重要日子倒數
-              </h1>
-
-              {/* 最近一班「航班」：翻牌大數字（live 狀態，承接功能名做副資訊） */}
-              <p className="mt-5 font-mono text-[11px] uppercase tracking-[0.25em] text-slate-400">
-                {nearestDays === null
-                  ? 'No scheduled departures'
-                  : nearestDays === 0
-                    ? 'Now boarding'
-                    : 'Next departure in'}
-              </p>
-              <div className="mt-3 flex items-end gap-3">
-                {nearestDays === null ? (
-                  <FlapDisplay value="—" ariaLabel="未有倒數" />
-                ) : nearestDays === 0 ? (
-                  <div className="flex items-baseline gap-2">
-                    <FlapDisplay value="今" ariaLabel="今日出發" />
-                    <FlapDisplay value="日" />
-                  </div>
-                ) : (
-                  <>
-                    <FlapDisplay value={nearestDays} ariaLabel={`最近一項仲有 ${nearestDays} 日`} />
-                    <span className="pb-1 font-mono text-sm uppercase tracking-widest text-slate-400">
-                      日後
-                    </span>
-                  </>
-                )}
-              </div>
-              <p className="mt-3 max-w-sm text-sm text-slate-300">
-                {nearestDays === null
-                  ? '考試、死線、評估同活動，登記咗就一眼睇到仲爭幾耐起飛。'
-                  : nearestDays === 0
-                    ? '今日就係大日子，準備好出發喇！'
-                    : `${upcoming.length} 班「航班」候機中 · ${urgencyHint(nearestDays)}`}
-              </p>
-            </div>
-            <div className="flex shrink-0 flex-col items-stretch gap-2 sm:items-end">
-              <Button
-                variant="secondary"
-                icon={Plus}
-                onClick={openAddModal}
-                className="border-white/15 bg-white/10 text-white backdrop-blur hover:bg-white/20 dark:border-white/15 dark:bg-white/10 dark:text-white dark:hover:bg-white/20"
+      {/* ───────── KPI：三項統計（即將到嚟 / 最近一項 / 已完成）───────── */}
+      <section aria-label={t('countdown.statsLabel', { defaultValue: '倒數統計' })}>
+        <SectionTitle icon={Hourglass}>
+          {t('countdown.statsTitle', { defaultValue: '概覽' })}
+        </SectionTitle>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          {[
+            {
+              key: 'upcoming',
+              label: t('countdown.statUpcoming', { defaultValue: '即將到嚟' }),
+              value: upcoming.length,
+              unit: t('countdown.unitItems', { defaultValue: '項' }),
+              hint: t('countdown.statUpcomingHint', { defaultValue: '尚未到嘅日子' }),
+              icon: CalendarDays,
+              tone: 'accent' as SemTone,
+            },
+            {
+              key: 'nearest',
+              label: t('countdown.statNearest', { defaultValue: '最近一項' }),
+              value: nearestDays === null ? '—' : nearestDays === 0 ? t('countdown.todayBig', { defaultValue: '今日' }) : nearestDays,
+              unit: nearestDays && nearestDays > 0 ? t('countdown.daysLeft', { defaultValue: '日後' }) : undefined,
+              hint: nearest?.title ?? t('countdown.statNearestEmpty', { defaultValue: '未有倒數' }),
+              icon: Hourglass,
+              tone: 'amber' as SemTone,
+            },
+            {
+              key: 'done',
+              label: t('countdown.statDone', { defaultValue: '已完成' }),
+              value: past.length,
+              unit: t('countdown.unitItems', { defaultValue: '項' }),
+              hint: t('countdown.statDoneHint', { defaultValue: '過去 / 已搞掂' }),
+              icon: CheckCircle2,
+              tone: 'emerald' as SemTone,
+            },
+          ].map((s) => {
+            const sem = SEM_TONE[s.tone]
+            const Icon = s.icon
+            return (
+              <div
+                key={s.key}
+                className="flex flex-col justify-between rounded-2xl border border-slate-200/80 bg-white p-4 dark:border-slate-700/60 dark:bg-slate-800"
               >
-                登記新航班
-              </Button>
-              <button
-                type="button"
-                onClick={() => setSubscribeOpen(true)}
-                className="inline-flex items-center justify-center gap-1.5 rounded-full border border-white/10 bg-white/[0.06] px-3 py-1.5 text-xs font-medium text-slate-300 backdrop-blur transition active:scale-[0.98] hover:bg-white/15 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
-              >
-                <Smartphone size={13} /> {t('cal.subscribeMobile', { defaultValue: '訂閱到手機日曆' })}
-              </button>
-            </div>
-          </div>
-
-          {/* 板底指標列（即將 / 最近 / 已抵達）— 翻牌字 + 標籤，取代三張一式 StatCard */}
-          <div className="mt-6 grid grid-cols-3 divide-x divide-white/10 rounded-2xl bg-white/[0.04] ring-1 ring-white/10">
-            {[
-              { label: '候機中', sub: 'BOARDING', value: upcoming.length, icon: PlaneTakeoff },
-              {
-                label: '最近一項',
-                sub: 'NEXT',
-                value: nearestDays === null ? '—' : `${nearestDays}日`,
-                icon: Hourglass,
-              },
-              { label: '已抵達', sub: 'ARRIVED', value: past.length, icon: PlaneLanding },
-            ].map((s) => {
-              const I = s.icon
-              return (
-                <div key={s.sub} className="px-3 py-3 text-center sm:px-4">
-                  <p className="flex items-center justify-center gap-1 font-mono text-[10px] uppercase tracking-[0.2em] text-slate-400">
-                    <I size={11} /> {s.sub}
-                  </p>
-                  <p className="mt-1 font-mono text-2xl font-semibold tabular-nums slashed-zero text-white sm:text-3xl">
-                    {s.value}
-                  </p>
-                  <p className="mt-0.5 text-[11px] text-slate-400">{s.label}</p>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-medium text-slate-400 dark:text-slate-500">
+                    {s.label}
+                  </span>
+                  <span className={cx('flex h-8 w-8 items-center justify-center rounded-xl', sem.chip)}>
+                    <Icon size={16} />
+                  </span>
                 </div>
-              )
-            })}
-          </div>
+                <div className="mt-3">
+                  <p className="flex items-baseline gap-1">
+                    <span className={cx('text-3xl font-semibold tabular-nums slashed-zero', sem.val)}>
+                      {s.value}
+                    </span>
+                    {s.unit && (
+                      <span className="text-sm font-medium text-slate-400">{s.unit}</span>
+                    )}
+                  </p>
+                  <p className="mt-0.5 truncate text-[11px] text-slate-400">{s.hint}</p>
+                </div>
+              </div>
+            )
+          })}
         </div>
-      </header>
+      </section>
 
-      {/* 分頁（離境 / 抵達） */}
+      {/* 分頁（即將到嚟 / 已完成） */}
       <Tabs<TabId>
         tabs={[
-          { id: 'upcoming', label: '候機中' },
-          { id: 'past', label: '已抵達' },
+          { id: 'upcoming', label: t('countdown.tabUpcoming', { defaultValue: '即將到嚟' }) },
+          { id: 'past', label: t('countdown.tabPast', { defaultValue: '已完成' }) },
         ]}
         active={tab}
         onChange={setTab}
-        icons={{ upcoming: PlaneTakeoff, past: PlaneLanding }}
+        icons={{ upcoming: CalendarDays, past: CheckCircle2 }}
       />
 
       {/* 分類篩選 pill（只喺「即將到嚟」一頁；有兩個或以上分類先值得顯示） */}
       {tab === 'upcoming' && upcoming.length > 0 && (
         <div className="-mt-1 flex flex-wrap gap-2">
           <FilterPill
-            label="全部"
+            label={t('countdown.filterAll', { defaultValue: '全部' })}
             count={counts.all}
             active={catFilter === 'all'}
             onClick={() => setCatFilter('all')}
@@ -816,176 +694,117 @@ export default function Countdown() {
             catFilter !== 'all' ? (
               <EmptyState
                 icon={CalendarHeart}
-                title="呢個閘口暫時冇航班"
-                hint="揀返「全部」，或者撳上面其他閘口睇下。"
+                title={t('countdown.emptyFilterTitle', { defaultValue: '呢個分類暫時冇倒數' })}
+                hint={t('countdown.emptyFilterHint', { defaultValue: '揀返「全部」，或者撳上面其他分類睇下。' })}
                 action={
-                  <Button variant="ghost" onClick={() => setCatFilter('all')}>
-                    睇全部
+                  <Button size="sm" variant="secondary" onClick={() => setCatFilter('all')}>
+                    {t('countdown.seeAll', { defaultValue: '睇全部' })}
                   </Button>
                 }
               />
             ) : (
               <EmptyState
-                icon={PlaneTakeoff}
+                icon={CalendarClock}
                 art="empty-countdown"
-                title="班次表仲係空白，登記第一班航班"
-                hint="考試、交功課、生日、旅行⋯⋯登記個日子入離境牌，之後就一眼睇到仲爭幾耐起飛。"
+                title={t('countdown.emptyTitle', { defaultValue: '仲未有倒數，加返第一個' })}
+                hint={t('countdown.emptyHint', { defaultValue: '考試、交功課、生日、旅行⋯⋯記低個日子，之後就一眼睇到仲爭幾耐。' })}
                 action={
-                  <Button icon={Plus} onClick={openAddModal}>
-                    登記第一班航班
+                  <Button size="sm" icon={Plus} onClick={openAddModal}>
+                    {t('countdown.emptyCta', { defaultValue: '新增第一個倒數' })}
                   </Button>
                 }
               />
             )
           ) : (
             <EmptyState
-              icon={PlaneLanding}
-              title="暫時未有航班抵達"
-              hint="日子過咗之後會搬嚟「已抵達」，等你回望飛過嘅里程碑。"
+              icon={CheckCircle2}
+              title={t('countdown.emptyPastTitle', { defaultValue: '暫時未有已完成嘅倒數' })}
+              hint={t('countdown.emptyPastHint', { defaultValue: '日子過咗或者標記完成之後，會搬嚟呢度等你回望。' })}
             />
           )
         ) : tab === 'upcoming' ? (
-          // 即將到嚟：按 本週內 / 本月內 / 更遠 分段（似離境牌嘅時段分區）。
+          // 即將到嚟：按 本週內 / 本月內 / 更遠 分段。
           groups.map((g) => (
             <div key={g.bucket} className="space-y-3">
-              <div className="flex items-center gap-3 px-0.5">
-                <h2 className="font-mono text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
-                  {g.label}
-                </h2>
-                <span className="h-px flex-1 bg-gradient-to-r from-slate-200 to-transparent dark:from-slate-700/70" />
-                <span className="font-mono text-[11px] tabular-nums text-slate-400 dark:text-slate-500">
-                  {g.items.length} 班 · {g.hint}
-                </span>
+              <SectionTitle
+                right={
+                  <span className="text-xs font-medium tabular-nums text-slate-400 dark:text-slate-500">
+                    {t('countdown.groupCount', { n: g.items.length, defaultValue: `${g.items.length} 項` })}
+                  </span>
+                }
+              >
+                {g.label}
+              </SectionTitle>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {g.items.map((c) => (
+                  <div key={c.id}>{renderCard(c)}</div>
+                ))}
               </div>
-              <div className="space-y-4">{g.items.map(renderCard)}</div>
             </div>
           ))
         ) : (
-          // 已過去：維持一條 flat list。
-          <div className="space-y-4">{list.map(renderCard)}</div>
+          // 已過去：維持一條 grid。
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {list.map((c) => (
+              <div key={c.id}>{renderCard(c)}</div>
+            ))}
+          </div>
         )}
       </section>
 
-      {/* 新增 Modal（登機 check-in 牌）— 內容自帶離境牌語彙：深色頭聯 + 翻牌預覽存根 */}
+      {/* 新增 Modal */}
       <Modal open={modalOpen} onClose={() => setModalOpen(false)} size="md">
         {(() => {
-          // 純表現用：由表單日期即時推算倒數，餵返同卡片一致嘅翻牌預覽。
-          // 唔加 state / handler，只係讀現有 state + 共用 helper（toneOf / URGENCY / FlapDisplay）。
+          // 純表現用：由表單日期即時推算倒數，餵返同卡片一致嘅預覽。
           const draftDays = fDate ? daysUntil(fDate, todayKey) : null
-          const draftTone = draftDays === null ? 'slate' : toneOf(draftDays)
-          const draftU = URGENCY[draftTone]
-          const draftGate = (fCategory ? fCategory.slice(0, 2) : 'NT').toUpperCase()
+          const draftSem = SEM_TONE[draftDays === null ? 'slate' : semOf(toneOf(draftDays))]
           return (
             <form onSubmit={handleAdd}>
-              {/* 頭聯：深色離境牌標頭（呼應 hero 顯示板）+ 自設關閉掣 */}
-              <div className="relative -m-5 mb-5 overflow-hidden rounded-t-2xl bg-slate-900 text-white ring-1 ring-white/5 dark:bg-slate-950 sm:-m-6 sm:mb-6 sm:rounded-t-2xl">
-                <div className="relative z-10 hero-gradient flex items-center justify-between gap-3 px-5 py-2 sm:px-6">
-                  <span className="inline-flex items-center gap-2 font-mono text-[11px] font-semibold uppercase tracking-[0.3em] text-white">
-                    <Ticket size={13} /> Boarding Pass
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => setModalOpen(false)}
-                    aria-label="關閉"
-                    className="rounded-lg p-1 text-white/70 transition active:scale-[0.98] hover:bg-white/15 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
-                  >
-                    <X size={18} />
-                  </button>
-                </div>
-                <div
-                  aria-hidden="true"
-                  className="pointer-events-none absolute inset-0 bg-[repeating-linear-gradient(0deg,transparent,transparent_3px,rgba(255,255,255,0.02)_3px,rgba(255,255,255,0.02)_4px)]"
-                />
-                <div className="relative flex items-end justify-between gap-4 px-5 py-4 sm:px-6">
-                  <div className="min-w-0">
-                    <p className="flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-[0.3em] text-slate-400">
-                      <PlaneTakeoff size={13} className="shrink-0" /> Check-in · 登記航班
-                    </p>
-                    <h3
-                      id="countdown-modal-title"
-                      className="mt-1 text-2xl font-semibold leading-none tracking-tight text-white"
-                    >
-                      登記新航班
-                    </h3>
-                  </div>
-                  {/* 翻牌預覽存根：跟日期即時更新（似填飛時嗰張小副聯） */}
-                  <div className="shrink-0 text-right">
-                    <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-slate-400">
-                      {draftDays === null
-                        ? 'No date'
-                        : draftDays === 0
-                          ? 'Departs today'
-                          : draftDays > 0
-                            ? `T-${draftDays}`
-                            : `+${-draftDays}d`}
-                    </p>
-                    <div className="mt-1.5 flex items-end justify-end gap-1.5">
-                      {draftDays === null ? (
-                        <FlapDisplay value="—" size="sm" ariaLabel="未揀日期" />
-                      ) : draftDays === 0 ? (
-                        <div className="flex items-baseline gap-1">
-                          <FlapDisplay value="今" size="sm" ariaLabel="今日出發" />
-                          <FlapDisplay value="日" size="sm" />
-                        </div>
-                      ) : (
-                        <FlapDisplay
-                          value={Math.abs(draftDays)}
-                          size="sm"
-                          ariaLabel={`${Math.abs(draftDays)} 日${draftDays > 0 ? '後' : '前'}`}
-                        />
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <h3
+                id="countdown-modal-title"
+                className="text-[17px] font-semibold tracking-tight text-slate-800 dark:text-slate-100"
+              >
+                {t('countdown.modalTitle', { defaultValue: '新增倒數' })}
+              </h3>
+              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                {t('countdown.modalDesc', { defaultValue: '填返想倒數嘅日子，之後會自動同步入行事曆。' })}
+              </p>
 
-              {/* 主聯：表單欄位，分區排版（航班 → 班次 → 閘口 → 備註） */}
-              <div className="space-y-5">
-                <Field label="航班名稱（想倒數啲咩？）">
+              <div className="mt-5 space-y-5">
+                <Field label={t('countdown.fieldTitle', { defaultValue: '名稱（想倒數啲咩？）' })}>
                   <Input
                     type="text"
                     icon={PenLine}
                     value={fTitle}
                     onChange={(e) => setFTitle(e.target.value)}
-                    placeholder="例如：期末考試、交報告、去旅行"
+                    placeholder={t('countdown.fieldTitlePh', { defaultValue: '例如：期末考試、交報告、去旅行' })}
                     autoFocus
                   />
                 </Field>
 
-                {/* 班次：日期 + 時間（一組「departure」資料） */}
-                <div className="space-y-3">
-                  <p className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.25em] text-slate-400 dark:text-slate-500">
-                    <CalendarDays size={12} /> Departure · 起飛班次
-                  </p>
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <Field label="離境日期">
-                      <Input
-                        type="date"
-                        icon={CalendarDays}
-                        value={fDate}
-                        onChange={(e) => setFDate(e.target.value)}
-                      />
-                    </Field>
-                    <Field label="時間（選填）">
-                      <Input
-                        type="time"
-                        icon={Clock}
-                        value={fTime}
-                        onChange={(e) => setFTime(e.target.value)}
-                      />
-                    </Field>
-                  </div>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <Field label={t('countdown.fieldDate', { defaultValue: '日期' })}>
+                    <Input
+                      type="date"
+                      icon={CalendarDays}
+                      value={fDate}
+                      onChange={(e) => setFDate(e.target.value)}
+                    />
+                  </Field>
+                  <Field label={t('countdown.fieldTime', { defaultValue: '時間（選填）' })}>
+                    <Input
+                      type="time"
+                      icon={Clock}
+                      value={fTime}
+                      onChange={(e) => setFTime(e.target.value)}
+                    />
+                  </Field>
                 </div>
 
-                {/* 閘口：分類選擇（選中嗰個喺存根顯示閘口代碼） */}
+                {/* 分類選擇 */}
                 <div className="space-y-2.5">
-                  <p className="flex items-center justify-between gap-2 font-mono text-[10px] uppercase tracking-[0.25em] text-slate-400 dark:text-slate-500">
-                    <span className="inline-flex items-center gap-1.5">
-                      <Tag size={12} /> Gate · 閘口分類（選填）
-                    </span>
-                    <span className="tabular-nums text-slate-400 dark:text-slate-500">
-                      {draftGate}
-                    </span>
+                  <p className="flex items-center gap-1.5 text-xs font-medium text-slate-400 dark:text-slate-500">
+                    <Tag size={13} /> {t('countdown.fieldCategory', { defaultValue: '分類（選填）' })}
                   </p>
                   <div className="flex flex-wrap gap-2">
                     {CATEGORY_OPTIONS.map((c) => {
@@ -1013,48 +832,34 @@ export default function Countdown() {
                   </div>
                 </div>
 
-                <Field label="備註（選填）">
+                <Field label={t('countdown.fieldNotes', { defaultValue: '備註（選填）' })}>
                   <Textarea
                     value={fNotes}
                     onChange={(e) => setFNotes(e.target.value)}
                     rows={2}
-                    placeholder="想記低嘅細節，例如地點、範圍⋯⋯"
+                    placeholder={t('countdown.fieldNotesPh', { defaultValue: '想記低嘅細節，例如地點、範圍⋯⋯' })}
                   />
                 </Field>
               </div>
 
-              {/* 撕口：一條虛線打孔縫分隔主聯同操作（呼應卡片撕口） */}
-              <div className="relative mt-6">
-                <span
-                  aria-hidden="true"
-                  className="absolute left-0 top-1/2 h-3 w-3 -translate-x-[7px] -translate-y-1/2 rounded-full bg-slate-100 dark:bg-slate-900"
-                />
-                <span
-                  aria-hidden="true"
-                  className="absolute right-0 top-1/2 h-3 w-3 translate-x-[7px] -translate-y-1/2 rounded-full bg-slate-100 dark:bg-slate-900"
-                />
-                <span
-                  aria-hidden="true"
-                  className="block h-px w-full border-t border-dashed border-slate-300/80 dark:border-slate-600/70"
-                />
-              </div>
-
-              {/* 操作列：登記提示語（跟存根狀態色）+ 主／次按鈕 */}
-              <div className="mt-4 flex items-center justify-between gap-3">
-                <span className="inline-flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-wider text-slate-400 dark:text-slate-500">
-                  <span className={cx('h-1.5 w-1.5 rounded-full', draftU.dot)} />
+              {/* 操作列：剩餘日數預覽 + 主／次按鈕 */}
+              <div className="mt-6 flex items-center justify-between gap-3">
+                <span className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-400 dark:text-slate-500">
+                  <span className={cx('h-1.5 w-1.5 rounded-full', draftSem.dot)} />
                   {draftDays === null
-                    ? '揀返日期'
+                    ? t('countdown.previewNoDate', { defaultValue: '揀返日期' })
                     : draftDays === 0
-                      ? 'Now boarding'
-                      : draftU.status}
+                      ? t('countdown.previewToday', { defaultValue: '就在今日' })
+                      : draftDays > 0
+                        ? t('countdown.previewLeft', { n: draftDays, defaultValue: `尚餘 ${draftDays} 日` })
+                        : t('countdown.previewPast', { n: -draftDays, defaultValue: `已過 ${-draftDays} 日` })}
                 </span>
                 <div className="flex gap-2">
                   <Button type="button" variant="ghost" onClick={() => setModalOpen(false)}>
-                    取消
+                    {t('countdown.cancel', { defaultValue: '取消' })}
                   </Button>
                   <Button type="submit" icon={Plus} disabled={!fTitle.trim()}>
-                    登記航班
+                    {t('countdown.addConfirm', { defaultValue: '新增' })}
                   </Button>
                 </div>
               </div>

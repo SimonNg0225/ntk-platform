@@ -1319,4 +1319,12 @@ export function Avatar({
   )
 }
 
+// ───────── FeatureGuide（功能頁教學引導）─────────
+export { FeatureGuide } from './FeatureGuide'
+export type { FeatureGuideStep } from './FeatureGuide'
+
+// ───────── PageHero（功能頁頂部 accent 大色塊）─────────
+export { PageHero } from './PageHero'
+export type { PageHeroProps } from './PageHero'
+
 export { cx }

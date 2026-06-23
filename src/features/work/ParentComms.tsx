@@ -6,9 +6,11 @@ import {
   Button,
   Card,
   EmptyState,
+  FeatureGuide,
   IconButton,
   Input,
   Menu,
+  PageHero,
   SectionTitle,
   SegmentedControl,
   Select,
@@ -21,6 +23,7 @@ import {
   Tooltip,
   Tr,
   cx,
+  type FeatureGuideStep,
 } from '../../ui'
 import { useToast } from '../../context/ToastContext'
 import { useConfirm } from '../../context/ConfirmContext'
@@ -163,7 +166,7 @@ type FollowFilter = 'all' | 'open' | 'overdue' | 'done'
 //  嘅摘要。純表現層 —— 全部資料 / handler / export 不變。
 // ============================================================
 
-// 區段小帽（uppercase kicker + icon）—— 統一頁內節奏（對齊 bespoke 參考）
+// 區段小帽（icon + 中文標題）—— 跟 SPEC：純中文唔 uppercase / 唔加字距
 function SectionLabel({
   icon: I,
   children,
@@ -174,9 +177,9 @@ function SectionLabel({
   right?: React.ReactNode
 }) {
   return (
-    <div className="flex items-center justify-between gap-2 px-0.5">
-      <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">
-        <I size={13} className="shrink-0" />
+    <div className="mb-3 flex items-center justify-between gap-2 px-0.5">
+      <p className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400">
+        <I size={14} className="shrink-0" />
         {children}
       </p>
       {right}
@@ -184,7 +187,7 @@ function SectionLabel({
   )
 }
 
-// 信摘格（hairline grid · serif 大數字；要點達標時 hot 高亮）
+// 清點格（hairline grid 一格一指標；要點達標時 hot 高亮，tone 跟 accent）
 function LedgerStat({
   label,
   value,
@@ -203,44 +206,69 @@ function LedgerStat({
   return (
     <div
       className={cx(
-        'px-3.5 py-3.5 transition-colors sm:px-4',
+        'p-4 transition-colors',
         hot ? 'bg-accent-soft dark:bg-accent/15' : 'bg-white dark:bg-slate-800',
       )}
     >
-      <p
-        className={cx(
-          'flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide',
-          hot
-            ? 'text-accent-strong/80 dark:text-accent/80'
-            : 'text-slate-400 dark:text-slate-500',
-        )}
-      >
-        <I size={12} className="shrink-0" />
-        <span className="truncate">{label}</span>
-      </p>
-      <p
-        className={cx(
-          'mt-1 text-[26px] font-semibold leading-none tabular-nums slashed-zero',
-          hot
-            ? 'text-accent-strong dark:text-accent'
-            : 'text-slate-800 dark:text-slate-100',
-        )}
-      >
-        {value}
-        {unit && (
-          <span className="ml-1 font-sans text-sm font-normal text-slate-400">
-            {unit}
-          </span>
-        )}
+      <div className="flex items-center justify-between">
+        <span
+          className={cx(
+            'truncate text-xs font-medium',
+            hot
+              ? 'text-accent-strong dark:text-accent'
+              : 'text-slate-400 dark:text-slate-500',
+          )}
+        >
+          {label}
+        </span>
+        <span
+          className={cx(
+            'flex h-8 w-8 shrink-0 items-center justify-center rounded-xl',
+            hot
+              ? 'bg-accent text-white dark:bg-accent dark:text-white'
+              : 'bg-slate-100 text-slate-400 dark:bg-slate-700/60 dark:text-slate-500',
+          )}
+        >
+          <I size={16} />
+        </span>
+      </div>
+      <p className="mt-2 flex items-baseline gap-1">
+        <span
+          className={cx(
+            'text-3xl font-semibold tabular-nums slashed-zero',
+            hot
+              ? 'text-accent-strong dark:text-accent'
+              : 'text-slate-800 dark:text-slate-100',
+          )}
+        >
+          {value}
+        </span>
+        {unit && <span className="text-sm font-medium text-slate-400">{unit}</span>}
       </p>
       {hint && (
-        <p className="mt-1 truncate text-[11px] text-slate-400 dark:text-slate-500">
+        <p className="mt-0.5 truncate text-[11px] text-slate-400 dark:text-slate-500">
           {hint}
         </p>
       )}
     </div>
   )
 }
+
+// ───────── 家長溝通教學引導（FeatureGuide：3 步「點用」）─────────
+const PARENT_COMMS_GUIDE: FeatureGuideStep[] = [
+  {
+    title: '寫一封',
+    desc: '撳右上「寫一封」記低每次同家長／學生嘅往來，揀埋班別、學生同聯絡方式。',
+  },
+  {
+    title: '排待回覆',
+    desc: '需要跟進嘅信件設到期日，逾期會自動提醒；搞掂撳一下標記已回覆。',
+  },
+  {
+    title: '睇聯絡人同統計',
+    desc: '「聯絡人」分頁睇邊位家長太耐冇聯絡，「統計」分頁睇信量同觀感分佈。',
+  },
+]
 
 export default function ParentComms() {
   const comms = useCollection(parentCommsCol)
@@ -581,44 +609,21 @@ export default function ParentComms() {
 
   return (
     <div className="space-y-5 p-4 sm:p-6">
-      {/* ───────── 通訊錄 masthead：信箋封面感（kicker + serif 標題 + 郵戳裝飾）───────── */}
-      <header className="relative animate-fade-in-up overflow-hidden rounded-3xl border border-slate-200/80 bg-white px-5 py-5 shadow-xs dark:border-slate-700/60 dark:bg-slate-800 dark:shadow-none sm:px-7 sm:py-6">
-        {/* 右上「郵戳」裝飾（純裝飾，唔搶主次） */}
-        <span
-          aria-hidden
-          className="pointer-events-none absolute -right-7 top-4 hidden -rotate-[8deg] select-none flex-col items-center rounded-full border-2 border-dashed border-accent/20 px-5 py-3 text-[10px] font-semibold uppercase tracking-[0.3em] text-accent/25 dark:border-accent/25 dark:text-accent/25 sm:flex"
-        >
-          <Send size={16} className="mb-0.5" />
-          家校通訊
-        </span>
-        <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-4">
-          <div className="min-w-0">
-            <p className="flex items-center gap-2 text-[11px] font-medium uppercase tracking-[0.3em] text-accent/70">
-              <Mail size={13} />
-              通訊錄 · Correspondence
-            </p>
-            <h1 className="mt-1.5 text-[28px] font-semibold leading-none tracking-tight text-slate-800 dark:text-slate-100 sm:text-[34px]">
-              家長溝通
-            </h1>
-            <p className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-slate-500 dark:text-slate-400">
-              <span className="tabular-nums">
-                往來 {overview.total} 封 · 已聯絡 {overview.contactedStudents} 位家長
-              </span>
-              {overview.openFollowUps > 0 && (
-                <>
-                  <span aria-hidden className="text-slate-300 dark:text-slate-600">·</span>
-                  <span className="inline-flex items-center gap-1 font-medium text-accent-strong dark:text-accent">
-                    <Hourglass size={12} /> {overview.openFollowUps} 封待回覆
-                  </span>
-                </>
-              )}
-            </p>
-          </div>
-          <div className="flex shrink-0 items-center gap-2">
+      {/* ───────── 頁首：共用 PageHero（accent 大色塊）───────── */}
+      <PageHero
+        icon={Mail}
+        kicker="Parent Comms"
+        title="家長溝通"
+        description={
+          `往來 ${overview.total} 封 · 已聯絡 ${overview.contactedStudents} 位家長` +
+          (overview.openFollowUps > 0 ? ` · ${overview.openFollowUps} 封待回覆` : '')
+        }
+        actions={
+          <>
             <Menu
               align="end"
               trigger={
-                <span className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700">
+                <span className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl bg-white/15 px-3 py-1.5 text-sm font-medium text-white backdrop-blur-sm transition hover:bg-white/25">
                   更多
                   <ChevronDown size={15} />
                 </span>
@@ -644,19 +649,25 @@ export default function ParentComms() {
                 },
               ]}
             />
-            <Button onClick={openNew} icon={Plus}>
-              寫一封
-            </Button>
-          </div>
-        </div>
-        {/* 信箋雙線（封面分隔感） */}
-        <div className="mt-5 space-y-1" aria-hidden>
-          <span className="block h-px bg-slate-200/90 dark:bg-slate-700/70" />
-          <span className="block h-px bg-slate-200/60 dark:bg-slate-700/40" />
-        </div>
-      </header>
+            <button
+              type="button"
+              onClick={openNew}
+              className="inline-flex items-center gap-1.5 rounded-xl bg-white px-3 py-1.5 text-sm font-semibold text-accent-strong shadow-sm transition hover:bg-white/90"
+            >
+              <Plus size={15} /> 寫一封
+            </button>
+          </>
+        }
+      />
 
-      {/* ───────── 通訊摘要：hairline grid · serif 大數字 ───────── */}
+      {/* ───────── 教學引導（FeatureGuide：3 步「點用」，可永久收起）───────── */}
+      <FeatureGuide
+        storageKey="parent-comms"
+        title="家長溝通點用？"
+        steps={PARENT_COMMS_GUIDE}
+      />
+
+      {/* ───────── 通訊摘要：hairline grid 一格一指標 ───────── */}
       <section className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl bg-slate-200/70 ring-1 ring-slate-200/80 dark:bg-slate-700/50 dark:ring-slate-700/60 lg:grid-cols-4">
         <LedgerStat
           label="往來總數"
@@ -894,10 +905,13 @@ export default function ParentComms() {
             setPreset({ classId, studentId })
             setEditorOpen(true)
           }}
+          onNew={openNew}
         />
       )}
 
-      {tab === 'analytics' && <AnalyticsView rows={allRows} studentMap={studentMap} />}
+      {tab === 'analytics' && (
+        <AnalyticsView rows={allRows} studentMap={studentMap} onNew={openNew} />
+      )}
 
       {/* 編輯器 + 範本管理 */}
       <CommEditor
@@ -1504,7 +1518,7 @@ function TableView({
           </span>
         }
       >
-        通訊錄 · Ledger
+        通訊錄
       </SectionLabel>
       {selectedCount > 0 && (
         <div className="flex flex-wrap items-center gap-2 rounded-lg border border-accent/30 bg-accent-soft px-3 py-2 text-sm dark:border-accent/40 dark:bg-accent/15">
@@ -1762,6 +1776,7 @@ function StudentsView({
   today,
   onFilterStudent,
   onDraft,
+  onNew,
 }: {
   rows: CommRow[]
   roster: { id: string; name: string; classId: string }[]
@@ -1770,6 +1785,7 @@ function StudentsView({
   today: string
   onFilterStudent: (classId: string, studentId: string) => void
   onDraft: (classId: string, studentId: string) => void
+  onNew: () => void
 }) {
   const gaps = useMemo(() => contactGaps(roster, rows, undefined, today), [roster, rows, today])
   const summaries = useMemo(() => summarizeByStudent(rows), [rows])
@@ -1803,6 +1819,11 @@ function StudentsView({
           icon={Contact}
           title="仲未有指定學生嘅信件"
           hint="寫信時揀埋學生，呢度就會逐位列出佢哋嘅往來脈絡，似一本通訊錄。"
+          action={
+            <Button size="sm" variant="secondary" icon={Plus} onClick={onNew}>
+              寫一封
+            </Button>
+          }
         />
       ) : (
         <>
@@ -1814,7 +1835,7 @@ function StudentsView({
               </span>
             }
           >
-            聯絡人 · Contacts
+            聯絡人
           </SectionLabel>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
       {list.map((s) => {
@@ -1912,9 +1933,11 @@ function StudentsView({
 function AnalyticsView({
   rows,
   studentMap,
+  onNew,
 }: {
   rows: CommRow[]
   studentMap: Map<string, { id: string; name: string }>
+  onNew: () => void
 }) {
   const [months, setMonths] = useState(6)
 
@@ -1939,13 +1962,18 @@ function AnalyticsView({
         icon={BarChart3}
         title="仲未有信件可分析"
         hint="開始往來通訊之後，呢度會自動整理出每月信量、聯絡方式同觀感分佈。"
+        action={
+          <Button size="sm" variant="secondary" icon={Plus} onClick={onNew}>
+            寫一封
+          </Button>
+        }
       />
     )
   }
 
   return (
     <div className="space-y-4">
-      <SectionLabel icon={BarChart3}>信件分析 · Insights</SectionLabel>
+      <SectionLabel icon={BarChart3}>信件分析</SectionLabel>
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <Card className="p-4 lg:col-span-2">
           <SectionTitle

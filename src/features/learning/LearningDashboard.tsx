@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useCollection } from '../../lib/store'
 import {
   cardsCol,
@@ -30,16 +31,20 @@ import {
   ArrowUp,
   ArrowDown,
   RotateCcw,
+  LayoutGrid,
+  LayoutDashboard,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import {
-  Card,
   SectionTitle,
   Button,
   Modal,
   IconButton,
   Tooltip,
   SegmentedControl,
+  EmptyState,
+  FeatureGuide,
+  PageHero,
   cx,
 } from '../../ui'
 import BentoOverview from './dashboard/BentoOverview'
@@ -108,6 +113,7 @@ export default function LearningDashboard() {
   const { open } = useNav()
   const { displayName } = useSettings()
   const toast = useToast()
+  const { t } = useTranslation()
 
   // ── 偏好（自家持久化）──
   const prefsAll = useCollection(dashPrefsCol)
@@ -206,12 +212,53 @@ export default function LearningDashboard() {
 
   return (
     <div className="space-y-5">
-      {/* 工具列 */}
-      <div className="flex justify-end">
-        <Button variant="secondary" size="sm" icon={Sliders} onClick={() => setCustomizing(true)}>
-          自訂
-        </Button>
-      </div>
+      {/* ── Hero：統一共用 PageHero（accent hero） ── */}
+      <PageHero
+        icon={LayoutDashboard}
+        kicker={t('dashboard.kicker', { defaultValue: 'Personal Overview' })}
+        title={t('dashboard.title', { defaultValue: '個人總覽' })}
+        description={
+          kpis.streak > 0
+            ? t('dashboard.subtitleStreak', {
+                n: kpis.streak,
+                defaultValue: `各功能真實數據彙整於一頁 · 連續活躍 ${kpis.streak} 日`,
+              })
+            : t('dashboard.subtitle', {
+                defaultValue: '知識卡、習慣、專注、目標、閱讀、日誌 — 真實數據彙整於一頁。',
+              })
+        }
+        actions={
+          <Tooltip label={t('dashboard.customizeHint', { defaultValue: '開關面板、調次序、切換密度' })}>
+            <button
+              type="button"
+              onClick={() => setCustomizing(true)}
+              className="inline-flex items-center gap-1.5 rounded-xl bg-white/15 px-3 py-1.5 text-sm font-medium backdrop-blur-sm transition hover:bg-white/25"
+            >
+              <Sliders size={15} /> {t('dashboard.customize', { defaultValue: '自訂' })}
+            </button>
+          </Tooltip>
+        }
+      />
+
+      {/* 教學引導：教用家點睇 / 點配置呢個總覽 */}
+      <FeatureGuide
+        storageKey="learning-dashboard"
+        title="個人總覽點用？"
+        steps={[
+          {
+            title: '一眼睇晒今日',
+            desc: '上方大格顯示問候、今日專注進度同今日任務；統計磚係本週學習數字。',
+          },
+          {
+            title: '撳磚直接跳功能',
+            desc: '撳任何一塊磚（知識卡 / 習慣 / 專注 / 目標…）就會去返嗰個功能頁。',
+          },
+          {
+            title: '自訂版面',
+            desc: '撳右上「自訂」開關面板、調次序，或切換舒適 / 緊湊密度，啱自己就得。',
+          },
+        ]}
+      />
 
       {/* 重型 Bento overview（不規則磚 + 真實統計，全部由真實資料層彙整） */}
       <BentoOverview
@@ -227,17 +274,16 @@ export default function LearningDashboard() {
 
       {/* 可配置 widget grid */}
       {visible.length === 0 ? (
-        <Card className="p-4">
-          <div className="flex flex-col items-center gap-3 py-8 text-center">
-            <span className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-slate-400 dark:bg-slate-800">
-              <Sliders size={22} />
-            </span>
-            <p className="text-sm text-slate-500 dark:text-slate-400">所有面板都收埋咗</p>
+        <EmptyState
+          icon={LayoutGrid}
+          title="所有面板都收埋咗"
+          hint="喺「自訂」開返你想睇嘅卡片，或調整顯示次序。"
+          action={
             <Button size="sm" variant="secondary" onClick={() => setCustomizing(true)}>
               開返面板
             </Button>
-          </div>
-        </Card>
+          }
+        />
       ) : (
         <div className={cx('grid grid-cols-1 gap-3', compact ? 'lg:grid-cols-3' : 'lg:grid-cols-2')}>
           {visible.map((id) => (

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useCollection } from '../../lib/store'
 import { useToast } from '../../context/ToastContext'
 import { useConfirm } from '../../context/ConfirmContext'
@@ -11,8 +12,12 @@ import {
   EmptyState,
   SegmentedControl,
   IconButton,
+  FeatureGuide,
+  type FeatureGuideStep,
+  PageHero,
   cx,
 } from '../../ui'
+import type { LucideIcon } from 'lucide-react'
 import {
   Plus,
   Search,
@@ -63,7 +68,24 @@ import StatsView from './habits/StatsView'
 type View = 'today' | 'all' | 'stats'
 type SortKey = 'order' | 'streak' | 'name'
 
+// 教學引導步驟（3 步：建立 → 每日打卡 → 睇連續/統計）
+const GUIDE_STEPS: FeatureGuideStep[] = [
+  {
+    title: '新增習慣',
+    desc: '撳右上「新增習慣」，揀 emoji、顏色同頻率（每日／指定星期）。',
+  },
+  {
+    title: '每日打卡',
+    desc: '喺「今日」分頁逐個剔返做咗嘅習慣，保持連續唔斷纜。',
+  },
+  {
+    title: '睇連續同統計',
+    desc: '頂部睇今日完成同最長連續；「統計」分頁有 heatmap 同趨勢。',
+  },
+]
+
 export default function HabitTracker() {
+  const { t } = useTranslation()
   const toast = useToast()
   const confirm = useConfirm()
 
@@ -124,6 +146,13 @@ export default function HabitTracker() {
     })
     return arr
   }, [activeHabits, category, query, sort, byHabit])
+
+  // 「全部」分頁係咪有篩選緊（決定空狀態係「無習慣」定「篩唔到」）
+  const filtersActive = query.trim() !== '' || category !== 'all'
+  function clearFilters() {
+    setQuery('')
+    setCategory('all')
+  }
 
   // 今日待辦：依「應做」分拆
   // 用 activeHabits（而非 visible），令「今日」分頁唔受「全部」分頁殘留嘅
@@ -265,57 +294,66 @@ export default function HabitTracker() {
 
   return (
     <div className="w-full space-y-5 p-4">
-      {/* ───────── 老黃曆 masthead：功能名做頁面身份（kicker 老黃曆 + serif「習慣追蹤」+ 今日曆書行） ───────── */}
-      <header className="flex flex-wrap items-end justify-between gap-x-4 gap-y-3">
-        <div className="min-w-0">
-          <p className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.3em] text-accent/70">
-            <CalendarDays size={13} className="shrink-0" />
-            老黃曆 · Daily Almanac
-          </p>
-          <h1 className="mt-1 text-2xl font-semibold leading-tight tracking-tight text-slate-800 dark:text-slate-100 sm:text-[28px]">
-            習慣追蹤
-          </h1>
-          <p className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-slate-500 dark:text-slate-400">
-            <span className="tabular-nums">{longTodayLabel(today)}</span>
-            <span aria-hidden="true" className="text-slate-300 dark:text-slate-600">·</span>
-            <span className="tabular-nums">在養成 {activeHabits.length} 個習慣</span>
-            {stats.bestCurrentStreak > 0 && (
-              <>
-                <span aria-hidden="true" className="text-slate-300 dark:text-slate-600">·</span>
-                <span className="inline-flex items-center gap-1 font-medium text-amber-600 dark:text-amber-400">
-                  <Flame size={12} /> 最旺 {stats.bestCurrentStreak} 日連續
-                </span>
-              </>
-            )}
-          </p>
-        </div>
-        <Button icon={Plus} onClick={openCreate}>
-          新增習慣
-        </Button>
-      </header>
+      {/* ───────── PageHero：統一 accent hero（icon chip + 標題 + 今日狀態副題） ───────── */}
+      <PageHero
+        icon={CalendarCheck}
+        kicker={t('habits.kicker', { defaultValue: '學習成長 · 每日養成' })}
+        title={t('habits.title', { defaultValue: '習慣追蹤' })}
+        description={t('habits.heroSubtitle', {
+          date: longTodayLabel(today),
+          n: activeHabits.length,
+          defaultValue: `${longTodayLabel(today)} · 在養成 ${activeHabits.length} 個習慣`,
+        })}
+        actions={
+          <Button
+            icon={Plus}
+            variant="secondary"
+            onClick={openCreate}
+            className="border-white/25 bg-white/15 text-white hover:bg-white/25 dark:border-white/25 dark:bg-white/15 dark:hover:bg-white/25"
+          >
+            {t('habits.addHabit', { defaultValue: '新增習慣' })}
+          </Button>
+        }
+      />
 
-      {/* ───────── 曆書帶：細口統計（hairline grid · serif 大數字） ───────── */}
-      <section className="grid grid-cols-3 gap-px overflow-hidden rounded-2xl bg-slate-200/70 ring-1 ring-slate-200/80 dark:bg-slate-700/50 dark:ring-slate-700/60">
-        <AlmanacStat
-          label="今日完成"
+      {/* ───────── 教學引導：點用呢個功能 ───────── */}
+      <FeatureGuide
+        storageKey="habits"
+        title={t('habits.guideTitle', { defaultValue: '習慣追蹤點用？' })}
+        steps={GUIDE_STEPS}
+      />
+
+      {/* ───────── 統計帶：三張統計磚（同 dashboard StatTile 一致） ───────── */}
+      <section className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <HabitStat
+          label={t('habits.statDoneToday', { defaultValue: '今日完成' })}
           value={`${stats.doneToday}/${stats.dueToday}`}
           icon={ListChecks}
-          hint={`完成率 ${stats.todayRate}%`}
-          hot={allDone}
+          tone={allDone ? 'emerald' : 'accent'}
+          hint={t('habits.statRate', {
+            r: stats.todayRate,
+            defaultValue: `完成率 ${stats.todayRate}%`,
+          })}
         />
-        <AlmanacStat
-          label="最長連續"
+        <HabitStat
+          label={t('habits.statBestStreak', { defaultValue: '最長連續' })}
           value={stats.bestCurrentStreak}
-          unit="日"
+          unit={t('habits.unitDay', { defaultValue: '日' })}
           icon={Flame}
-          hint={stats.bestCurrentStreak > 0 ? '保持落去！' : '由今日開始'}
+          tone="amber"
+          hint={
+            stats.bestCurrentStreak > 0
+              ? t('habits.statKeepGoing', { defaultValue: '保持落去！' })
+              : t('habits.statStartToday', { defaultValue: '由今日開始' })
+          }
         />
-        <AlmanacStat
-          label="近 7 日完美"
+        <HabitStat
+          label={t('habits.statPerfect7', { defaultValue: '近 7 日完美' })}
           value={stats.perfectDays7}
-          unit="日"
+          unit={t('habits.unitDay', { defaultValue: '日' })}
           icon={Sparkles}
-          hint="全部達標"
+          tone="violet"
+          hint={t('habits.statAllHit', { defaultValue: '全部達標' })}
         />
       </section>
 
@@ -333,11 +371,13 @@ export default function HabitTracker() {
             <EmptyState
               icon={Sprout}
               art="empty-habits"
-              title="仲未有習慣"
-              hint="撳「新增習慣」開始，揀 emoji、顏色同頻率，每日打卡保持連續。"
+              title={t('habits.emptyTitle', { defaultValue: '仲未有習慣' })}
+              hint={t('habits.emptyHint', {
+                defaultValue: '撳「新增習慣」開始，揀 emoji、顏色同頻率，每日打卡保持連續。',
+              })}
               action={
                 <Button icon={Plus} onClick={openCreate}>
-                  新增第一個習慣
+                  {t('habits.emptyCta', { defaultValue: '新增第一個習慣' })}
                 </Button>
               }
             />
@@ -358,7 +398,10 @@ export default function HabitTracker() {
               {todayBuckets.due.length > 0 && (
                 <div className="space-y-2">
                   <SectionLabel icon={CalendarCheck}>
-                    今日排程 · {todayBuckets.due.length}
+                    {t('habits.todayDue', {
+                      n: todayBuckets.due.length,
+                      defaultValue: `今日排程 · ${todayBuckets.due.length}`,
+                    })}
                   </SectionLabel>
                   {todayBuckets.due.map((h, i) => (
                     <div
@@ -384,7 +427,9 @@ export default function HabitTracker() {
 
               {todayBuckets.notDue.length > 0 && (
                 <div className="space-y-2">
-                  <SectionLabel icon={Sprout}>今日休息日</SectionLabel>
+                  <SectionLabel icon={Sprout}>
+                    {t('habits.restDay', { defaultValue: '今日休息日' })}
+                  </SectionLabel>
                   {todayBuckets.notDue.map((h) => (
                     <Card
                       key={h.id}
@@ -415,7 +460,7 @@ export default function HabitTracker() {
                 icon={Search}
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="搜尋習慣 / 分類…"
+                placeholder={t('habits.searchPlaceholder', { defaultValue: '搜尋習慣 / 分類…' })}
                 className="flex-1"
               />
               <div className="flex gap-2">
@@ -424,7 +469,7 @@ export default function HabitTracker() {
                   onChange={(e) => setCategory(e.target.value)}
                   className="flex-1 sm:w-36"
                 >
-                  <option value="all">全部分類</option>
+                  <option value="all">{t('habits.allCategories', { defaultValue: '全部分類' })}</option>
                   {categories.map((c) => (
                     <option key={c} value={c}>
                       {c}
@@ -439,26 +484,47 @@ export default function HabitTracker() {
                 value={sort}
                 onChange={setSort}
                 options={[
-                  { id: 'order', label: '預設' },
-                  { id: 'streak', label: '連續' },
-                  { id: 'name', label: '名稱' },
+                  { id: 'order', label: t('habits.sortDefault', { defaultValue: '預設' }) },
+                  { id: 'streak', label: t('habits.sortStreak', { defaultValue: '連續' }) },
+                  { id: 'name', label: t('habits.sortName', { defaultValue: '名稱' }) },
                 ]}
               />
               <span
                 aria-live="polite"
                 className="text-xs tabular-nums text-slate-400 dark:text-slate-500"
               >
-                {visible.length} 個習慣
+                {t('habits.countN', { n: visible.length, defaultValue: `${visible.length} 個習慣` })}
               </span>
             </div>
           </Card>
 
           {visible.length === 0 ? (
-            <EmptyState
-              icon={Search}
-              title="搵唔到習慣"
-              hint="試下換個關鍵字或分類，或者新增一個習慣。"
-            />
+            filtersActive ? (
+              <EmptyState
+                icon={Search}
+                title={t('habits.noMatchTitle', { defaultValue: '搵唔到習慣' })}
+                hint={t('habits.noMatchHint', { defaultValue: '試下換個關鍵字或分類。' })}
+                action={
+                  <Button size="sm" variant="secondary" onClick={clearFilters}>
+                    {t('habits.clearFilters', { defaultValue: '清除篩選' })}
+                  </Button>
+                }
+              />
+            ) : (
+              <EmptyState
+                icon={Sprout}
+                art="empty-habits"
+                title={t('habits.emptyTitle', { defaultValue: '仲未有習慣' })}
+                hint={t('habits.emptyHintAll', {
+                  defaultValue: '建立第一個習慣，之後喺「今日」分頁逐日打卡。',
+                })}
+                action={
+                  <Button icon={Plus} onClick={openCreate}>
+                    {t('habits.emptyCta', { defaultValue: '新增第一個習慣' })}
+                  </Button>
+                }
+              />
+            )
           ) : (
             <div className="space-y-2">
               {visible.map((h) => (
@@ -484,11 +550,19 @@ export default function HabitTracker() {
               <button
                 type="button"
                 onClick={() => setShowArchived((v) => !v)}
-                className="flex w-full items-center gap-2 px-1 py-2 text-xs font-medium uppercase tracking-wide text-slate-400 transition active:scale-[0.98] hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300"
+                className="flex w-full items-center gap-2 rounded-lg px-1 py-2 text-xs font-medium text-slate-400 transition active:scale-[0.98] hover:text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:text-slate-500 dark:hover:text-slate-300"
+                aria-expanded={showArchived}
               >
                 <Archive size={14} />
-                已封存（{archivedHabits.length}）
-                <span className="ml-auto normal-case">{showArchived ? '收起' : '展開'}</span>
+                {t('habits.archivedN', {
+                  n: archivedHabits.length,
+                  defaultValue: `已封存（${archivedHabits.length}）`,
+                })}
+                <span className="ml-auto">
+                  {showArchived
+                    ? t('habits.collapse', { defaultValue: '收起' })
+                    : t('habits.expand', { defaultValue: '展開' })}
+                </span>
               </button>
               {showArchived && (
                 <Card className="mt-1 rounded-2xl divide-y divide-slate-100 dark:divide-slate-700/60">
@@ -504,13 +578,17 @@ export default function HabitTracker() {
                             {h.name}
                           </p>
                           <p className="text-xs text-slate-400 dark:text-slate-500">
-                            {freqLabel(h.frequency)} · 累計 {(byHabit.get(h.id)?.size ?? 0)} 次
+                            {t('habits.archivedMeta', {
+                              freq: freqLabel(h.frequency),
+                              n: byHabit.get(h.id)?.size ?? 0,
+                              defaultValue: `${freqLabel(h.frequency)} · 累計 ${byHabit.get(h.id)?.size ?? 0} 次`,
+                            })}
                           </p>
                         </div>
-                        <IconButton label="還原" onClick={() => toggleArchive(h)}>
+                        <IconButton label={t('habits.restore', { defaultValue: '還原' })} onClick={() => toggleArchive(h)}>
                           <ArchiveRestore size={17} />
                         </IconButton>
-                        <IconButton label="永久刪除" tone="danger" onClick={() => confirmDeleteArchived(h)}>
+                        <IconButton label={t('habits.deleteForever', { defaultValue: '永久刪除' })} tone="danger" onClick={() => confirmDeleteArchived(h)}>
                           <Trash2 size={17} />
                         </IconButton>
                       </div>
@@ -524,7 +602,9 @@ export default function HabitTracker() {
           {/* 啟用中習慣的封存入口（在詳情外快速封存） */}
           {visible.length > 0 && (
             <p className="px-1 text-center text-xs text-slate-400 dark:text-slate-500">
-              想暫停某個習慣？喺習慣詳情可封存而唔刪除記錄。
+              {t('habits.archiveTip', {
+                defaultValue: '想暫停某個習慣？喺習慣詳情可封存而唔刪除記錄。',
+              })}
             </p>
           )}
         </div>
@@ -538,7 +618,7 @@ export default function HabitTracker() {
         {view === 'today' && allDone && (
           <div className="flex items-center justify-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 py-3 text-sm font-medium text-emerald-700 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-300">
             <PartyPopper size={18} />
-            今日全部習慣完成，keep it up！
+            {t('habits.allDoneCelebrate', { defaultValue: '今日全部習慣完成，keep it up！' })}
           </div>
         )}
       </div>
@@ -579,7 +659,8 @@ function longTodayLabel(key: string): string {
   return `${y}年${m}月${d}日 · 星期${WD_FULL[dow] ?? ''}`
 }
 
-// ───────── 區段標籤（小帽 + icon；取代散落嘅 <p>，統一節奏）─────────
+// ───────── 區段標籤（小帽 + icon；統一節奏）─────────
+//  純中文標籤，故唔落 uppercase/tracking（doNots：CJK uppercase 無效＋字距散）。
 function SectionLabel({
   icon: Icon,
   children,
@@ -588,57 +669,55 @@ function SectionLabel({
   children: ReactNode
 }) {
   return (
-    <p className="flex items-center gap-1.5 px-1 text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+    <p className="flex items-center gap-1.5 px-1 text-xs font-semibold text-slate-500 dark:text-slate-300">
       <Icon size={13} className="shrink-0" />
       {children}
     </p>
   )
 }
 
-// ───────── 曆書帶統計格（hairline grid · serif 大數字；達標時 hot 高亮）─────────
-function AlmanacStat({
+// ───────── 統計磚（同 WorkDashboard StatTile 一致：tone chip + 大數字）─────────
+type Tone = 'accent' | 'amber' | 'emerald' | 'violet' | 'sky' | 'rose'
+const TONE: Record<Tone, { chip: string; val: string }> = {
+  accent: { chip: 'bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent', val: 'text-accent' },
+  amber: { chip: 'bg-amber-50 text-amber-600 dark:bg-amber-500/15 dark:text-amber-300', val: 'text-amber-500' },
+  emerald: { chip: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-300', val: 'text-emerald-500' },
+  violet: { chip: 'bg-violet-50 text-violet-600 dark:bg-violet-500/15 dark:text-violet-300', val: 'text-violet-500' },
+  sky: { chip: 'bg-sky-50 text-sky-600 dark:bg-sky-500/15 dark:text-sky-300', val: 'text-sky-500' },
+  rose: { chip: 'bg-rose-50 text-rose-600 dark:bg-rose-500/15 dark:text-rose-300', val: 'text-rose-500' },
+}
+
+function HabitStat({
   label,
   value,
   unit,
   hint,
   icon: Icon,
-  hot,
+  tone,
 }: {
   label: string
   value: number | string
   unit?: string
   hint?: string
-  icon: typeof Flame
-  hot?: boolean
+  icon: LucideIcon
+  tone: Tone
 }) {
+  const tn = TONE[tone]
   return (
-    <div
-      className={cx(
-        'px-3.5 py-3.5 transition-colors sm:px-4',
-        hot
-          ? 'bg-emerald-50 dark:bg-emerald-500/10'
-          : 'bg-white dark:bg-slate-800',
-      )}
-    >
-      <p
-        className={cx(
-          'flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide',
-          hot ? 'text-emerald-600/80 dark:text-emerald-400/80' : 'text-slate-400 dark:text-slate-500',
-        )}
-      >
-        <Icon size={12} className="shrink-0" />
-        <span className="truncate">{label}</span>
-      </p>
-      <p
-        className={cx(
-          'mt-1 text-[26px] font-semibold leading-none tabular-nums slashed-zero',
-          hot ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-800 dark:text-slate-100',
-        )}
-      >
-        {value}
-        {unit && <span className="ml-1 font-sans text-sm font-normal text-slate-400">{unit}</span>}
-      </p>
-      {hint && <p className="mt-1 truncate text-[11px] text-slate-400 dark:text-slate-500">{hint}</p>}
+    <div className="flex flex-col justify-between rounded-2xl border border-slate-200/80 bg-white p-4 dark:border-slate-700/60 dark:bg-slate-800">
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-medium text-slate-400 dark:text-slate-500">{label}</span>
+        <span className={cx('flex h-8 w-8 items-center justify-center rounded-xl', tn.chip)}>
+          <Icon size={16} />
+        </span>
+      </div>
+      <div className="mt-3">
+        <p className="flex items-baseline gap-1">
+          <span className={cx('text-3xl font-semibold tabular-nums slashed-zero', tn.val)}>{value}</span>
+          {unit && <span className="text-sm font-medium text-slate-400">{unit}</span>}
+        </p>
+        {hint && <p className="mt-0.5 truncate text-[11px] text-slate-400">{hint}</p>}
+      </div>
     </div>
   )
 }

@@ -37,7 +37,7 @@ export default function StepRail({
               onClick={() => reachable && onJump(s.id)}
               aria-current={active ? 'step' : undefined}
               className={cx(
-                'inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium transition disabled:cursor-default',
+                'inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 disabled:cursor-default',
                 active
                   ? 'bg-accent text-white'
                   : done
@@ -49,7 +49,7 @@ export default function StepRail({
             >
               <span
                 className={cx(
-                  'flex h-4 w-4 items-center justify-center rounded-full text-[10px]',
+                  'flex h-4 w-4 items-center justify-center rounded-full text-[10px] tabular-nums',
                   active ? 'bg-white/25' : done ? 'bg-accent/20' : 'bg-black/[0.06] dark:bg-white/10',
                 )}
               >

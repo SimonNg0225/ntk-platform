@@ -1,18 +1,21 @@
 import { useMemo, useState } from 'react'
-import { Scale, Sparkles, FileText, Copy, Trash2, Clock } from 'lucide-react'
+import { Scale, Sparkles, FileText, Copy, Trash2, Clock, ListChecks, Grid3x3 } from 'lucide-react'
 import {
   Badge,
   Button,
   Card,
   EmptyState,
+  FeatureGuide,
   Field,
   IconButton,
+  PageHero,
   SectionTitle,
   SegmentedControl,
   Select,
   Textarea,
   Tooltip,
   cx,
+  type FeatureGuideStep,
 } from '../../../ui'
 import { useToast } from '../../../context/ToastContext'
 import { useConfirm } from '../../../context/ConfirmContext'
@@ -123,44 +126,102 @@ export default function RubricGen() {
 
   if (!isAIConfigured) {
     return (
-      <EmptyState
-        icon={Scale}
-        title="評分準則未啟用"
-        hint="要設定好 Supabase 並部署 gemini Edge Function 先用到。"
-      />
+      <div className="space-y-5">
+        <PageHero
+          icon={Scale}
+          kicker="Rubric Studio"
+          title="評分準則"
+          description="貼上題目或任務，AI 一鍵擬「評分指引」（參考答案＋評分點）或「評分量表」（準則 × 等級），可複製或下載做 Word。"
+        />
+        <EmptyState
+          icon={Scale}
+          title="評分準則未啟用"
+          hint="要設定好 Supabase 並部署 gemini Edge Function 先用到 AI 生成（步驟見 docs/SETUP.md）。"
+        />
+      </div>
     )
   }
 
+  // 教學引導：跟住模式換內容（同一 storageKey，「知道喇」後兩個都收起）
+  const SCHEME_GUIDE: FeatureGuideStep[] = [
+    {
+      title: '貼題目或任務',
+      desc: '將要批改嘅題目、寫作任務或專題要求貼入下面，愈具體 AI 出得愈準。',
+    },
+    {
+      title: '揀總分',
+      desc: 'set 返呢題嘅總分，AI 會將分數分配落各個評分點。',
+    },
+    {
+      title: '生成 + 取用',
+      desc: '撳生成即出參考答案同評分點，滿意就複製或下載做 Word。',
+    },
+  ]
+  const RUBRIC_GUIDE: FeatureGuideStep[] = [
+    {
+      title: '貼題目或任務',
+      desc: '將要評分嘅題目、寫作任務或專題要求貼入下面，愈具體 AI 出得愈準。',
+    },
+    {
+      title: '揀等級數',
+      desc: '選 3–5 級，AI 會為每個準則寫由高到低嘅表現描述。',
+    },
+    {
+      title: '生成 + 取用',
+      desc: '撳生成即出「準則 × 等級」量表，滿意就複製或下載做 Word。',
+    },
+  ]
+
+  const canRun = !!question.trim()
+
   return (
     <div className="space-y-5">
-      <header className="min-w-0">
-        <p className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.3em] text-accent/70">
-          <Scale size={13} className="shrink-0" />
-          教學備課 · Rubric
-        </p>
-        <h1 className="mt-1 text-[26px] font-semibold leading-none tracking-tight text-slate-800 dark:text-slate-100 sm:text-[30px]">
-          評分準則
-        </h1>
-        <p className="mt-2 text-[13px] text-slate-500 dark:text-slate-400">
-          貼上題目或任務，AI 一鍵擬「評分指引」（參考答案＋評分點）或「評分量表」（準則×等級）。
-        </p>
-      </header>
+      <PageHero
+        icon={Scale}
+        kicker="Rubric Studio"
+        title="評分準則"
+        description="貼上題目或任務，AI 一鍵擬「評分指引」（參考答案＋評分點）或「評分量表」（準則 × 等級），可複製或下載做 Word。"
+      />
 
-      <Card padded className="space-y-3">
+      {/* 教學引導：點用呢個功能（可摺疊 / 永久收起） */}
+      <FeatureGuide
+        storageKey="rubric-gen"
+        title={mode === 'scheme' ? '評分指引點用？' : '評分量表點用？'}
+        steps={mode === 'scheme' ? SCHEME_GUIDE : RUBRIC_GUIDE}
+      />
+
+      {/* ───────── 輸入卡 ───────── */}
+      <Card padded className="space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <SegmentedControl options={MODE_OPTS} value={mode} onChange={setMode} />
+          <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 dark:text-slate-300">
+            {mode === 'scheme' ? <ListChecks size={13} className="text-accent" /> : <Grid3x3 size={13} className="text-accent" />}
+            {mode === 'scheme' ? '出參考答案＋逐項評分點' : '出準則 × 表現等級量表'}
+          </div>
           <Tooltip label="Flash 快 · Pro 強">
             <SegmentedControl size="sm" options={MODEL_OPTS} value={model} onChange={setModel} />
           </Tooltip>
         </div>
+
+        <Field
+          label="要做邊種？"
+          hint={mode === 'scheme' ? '評分指引：適合有標準答案嘅題目（如計算、簡答）。' : '評分量表：適合開放式作答（如寫作、專題、匯報）。'}
+        >
+          <SegmentedControl options={MODE_OPTS} value={mode} onChange={setMode} />
+        </Field>
+
         <Field label="題目 / 任務">
           <Textarea
             rows={4}
             value={question}
             onChange={(e) => setQuestion(e.target.value)}
-            placeholder="貼上題目、寫作任務或專題要求…"
+            placeholder={
+              mode === 'scheme'
+                ? '例：解釋光合作用嘅過程同重要性。'
+                : '例：就「全球暖化」寫一篇 400 字議論文。'
+            }
           />
         </Field>
+
         <div className="flex flex-wrap items-end justify-between gap-3">
           {mode === 'scheme' ? (
             <Field label="總分">
@@ -183,8 +244,8 @@ export default function RubricGen() {
               </Select>
             </Field>
           )}
-          <Button icon={Sparkles} onClick={run} loading={busy} disabled={!question.trim()}>
-            {busy ? '生成緊…' : '生成'}
+          <Button icon={Sparkles} onClick={run} loading={busy} disabled={!canRun}>
+            {busy ? '生成緊…' : mode === 'scheme' ? '生成評分指引' : '生成評分量表'}
           </Button>
         </div>
       </Card>
@@ -192,8 +253,10 @@ export default function RubricGen() {
       {current && <ResultCard rec={current} />}
 
       {history.length > 0 && (
-        <div>
-          <SectionTitle icon={Clock}>歷史</SectionTitle>
+        <section>
+          <SectionTitle icon={Clock} description="撳返任何一條即重新查看">
+            歷史紀錄
+          </SectionTitle>
           <div className="space-y-2">
             {history.map((r) => (
               <Card
@@ -209,7 +272,7 @@ export default function RubricGen() {
                   <p className="min-w-0 flex-1 truncate text-sm font-medium text-slate-700 dark:text-slate-200">
                     {r.question}
                   </p>
-                  <span className="shrink-0 text-[11px] text-slate-400">{fmtDate(r.createdAt)}</span>
+                  <span className="shrink-0 text-[11px] tabular-nums text-slate-400">{fmtDate(r.createdAt)}</span>
                   <div onClick={(e) => e.stopPropagation()}>
                     <IconButton label="刪除" size="sm" tone="danger" onClick={() => void del(r.id)}>
                       <Trash2 size={14} />
@@ -219,11 +282,31 @@ export default function RubricGen() {
               </Card>
             ))}
           </div>
-        </div>
+        </section>
       )}
 
       {history.length === 0 && !current && (
-        <EmptyState icon={Scale} title="未有評分準則" hint="貼上第一條題目，試吓 AI 出評分指引。" />
+        <EmptyState
+          icon={Scale}
+          title="未有評分準則"
+          hint={
+            mode === 'scheme'
+              ? '喺上面貼第一條題目，揀返總分，AI 即幫你出參考答案同評分點。'
+              : '喺上面貼第一條任務，揀返等級數，AI 即幫你出「準則 × 等級」量表。'
+          }
+          action={
+            <Button
+              size="sm"
+              variant="secondary"
+              icon={Sparkles}
+              onClick={() => {
+                document.querySelector<HTMLTextAreaElement>('textarea')?.focus()
+              }}
+            >
+              貼題目開始
+            </Button>
+          }
+        />
       )}
     </div>
   )
@@ -280,7 +363,7 @@ function ResultCard({ rec }: { rec: RubricRecord }) {
         <Badge tone="accent" icon={Scale}>
           {rec.mode === 'rubric' ? '評分量表' : '評分指引'}
         </Badge>
-        <h2 className="min-w-0 flex-1 truncate text-sm font-medium text-slate-600 dark:text-slate-300">
+        <h2 className="min-w-0 flex-1 truncate text-sm font-semibold text-slate-700 dark:text-slate-200">
           {rec.question}
         </h2>
         <Button variant="secondary" size="sm" icon={Copy} onClick={copyAll}>
@@ -295,14 +378,14 @@ function ResultCard({ rec }: { rec: RubricRecord }) {
         <div className="space-y-3">
           {rec.scheme.modelAnswer && (
             <div>
-              <p className="mb-1 text-[11px] font-semibold text-slate-400 dark:text-slate-500">參考答案</p>
+              <p className="mb-1 text-xs font-semibold text-slate-500 dark:text-slate-400">參考答案</p>
               <p className="text-sm leading-relaxed text-slate-700 dark:text-slate-200">
                 {rec.scheme.modelAnswer}
               </p>
             </div>
           )}
           <div>
-            <p className="mb-1.5 text-[11px] font-semibold text-slate-400 dark:text-slate-500">
+            <p className="mb-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400">
               評分點（共 {rec.scheme.total} 分）
             </p>
             <div className="space-y-1.5">
@@ -322,7 +405,7 @@ function ResultCard({ rec }: { rec: RubricRecord }) {
           {rec.rubric.criteria.map((c, i) => (
             <div
               key={i}
-              className="rounded-xl border border-black/[0.06] bg-slate-50/60 p-3 dark:border-white/[0.08] dark:bg-slate-800/40"
+              className="rounded-xl border border-slate-200/80 bg-slate-50/60 p-3 dark:border-slate-700/60 dark:bg-slate-800/40"
             >
               <p className="mb-2 text-sm font-semibold text-accent-strong dark:text-accent">{c.name}</p>
               <div className="space-y-1.5">

@@ -9,7 +9,6 @@ import {
   FolderPlus,
   HardDrive,
   Inbox,
-  Layers,
   LayoutGrid,
   Library,
   Link2Off,
@@ -21,7 +20,6 @@ import {
   Sparkles,
   SquareKanban,
   Star,
-  TrendingUp,
   Trash2,
   X,
 } from 'lucide-react'
@@ -33,12 +31,14 @@ import {
   Badge,
   Button,
   EmptyState,
+  FeatureGuide,
   Field,
   IconButton,
   Input,
   Kbd,
   Menu,
   Modal,
+  PageHero,
   Select,
   Separator,
   Table,
@@ -50,6 +50,7 @@ import {
   Tr,
   cx,
 } from '../../ui'
+import type { FeatureGuideStep } from '../../ui'
 import { useToast } from '../../context/ToastContext'
 import { useConfirm } from '../../context/ConfirmContext'
 import DriveView from './resourceLibrary/drive/DriveView'
@@ -203,7 +204,7 @@ function StatTile({
       onClick={onClick}
       aria-pressed={active}
       className={cx(
-        'group flex cursor-pointer flex-col justify-between gap-3 rounded-2xl border bg-white p-4 text-left transition duration-200 hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98] dark:bg-slate-800',
+        'group flex cursor-pointer flex-col justify-between gap-3 rounded-2xl border bg-white p-4 text-left transition duration-200 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98] dark:bg-slate-800',
         active
           ? 'border-accent/50 ring-1 ring-accent/30 dark:border-accent/50'
           : 'border-slate-200/80 hover:border-slate-300 dark:border-slate-700/60 dark:hover:border-slate-600',
@@ -211,7 +212,7 @@ function StatTile({
     >
       <div className="flex items-center justify-between">
         <span className="text-xs font-medium text-slate-400 dark:text-slate-500">{label}</span>
-        <span className={cx('flex h-8 w-8 items-center justify-center rounded-xl transition duration-200 group-hover:scale-110', t.chip)}>
+        <span className={cx('flex h-8 w-8 items-center justify-center rounded-xl transition', t.chip)}>
           <Icon size={16} />
         </span>
       </div>
@@ -223,89 +224,6 @@ function StatTile({
         {hint && <p className="mt-0.5 truncate text-[11px] text-slate-400">{hint}</p>}
       </div>
     </button>
-  )
-}
-
-// accent hero banner：館名牌 kicker + serif 標題 + 動態語 + 主動作 + 館藏大數字 + 類型分佈條
-function LibraryHero({
-  source, total, opens, folders, typeDist, line, onAdd, onFolders,
-}: {
-  source: 'lib' | 'drive'
-  total: number
-  opens: number
-  folders: number
-  typeDist: { type: ResourceType; count: number }[]
-  line: string
-  onAdd: () => void
-  onFolders: () => void
-}) {
-  return (
-    <section className="relative overflow-hidden rounded-3xl bg-accent p-5 text-white shadow-sm sm:p-6">
-      {/* 柔光裝飾（生動感，純裝飾） */}
-      <div aria-hidden="true" className="pointer-events-none absolute -right-12 -top-14 h-48 w-48 rounded-full bg-white/10 blur-2xl" />
-      <div aria-hidden="true" className="pointer-events-none absolute -bottom-20 right-28 h-40 w-40 rounded-full bg-white/5 blur-2xl" />
-      <div className="relative flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
-        <div className="min-w-0">
-          <p className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.3em] text-white/70">
-            <Library size={13} strokeWidth={2} /> 典藏目錄 · Archive
-          </p>
-          <h1 className="mt-1.5 text-2xl font-semibold tracking-tight sm:text-[28px]">教學資源庫</h1>
-          <p className="mt-2 max-w-md text-sm leading-relaxed text-white/85" aria-live="polite">{line}</p>
-          <div className="mt-4 flex flex-wrap gap-2">
-            <button
-              type="button"
-              onClick={onAdd}
-              className="inline-flex items-center gap-1.5 rounded-xl bg-white px-3.5 py-2 text-sm font-semibold text-accent-strong shadow-sm transition hover:bg-white/90 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
-            >
-              <Plus size={16} /> 新增資源
-            </button>
-            <button
-              type="button"
-              onClick={onFolders}
-              className="inline-flex items-center gap-1.5 rounded-xl bg-white/15 px-3.5 py-2 text-sm font-semibold text-white backdrop-blur transition hover:bg-white/25 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
-            >
-              <FolderPlus size={16} /> 收藏夾
-            </button>
-          </div>
-        </div>
-
-        {source === 'lib' && (
-          <div className="shrink-0 rounded-2xl bg-white/10 p-4 backdrop-blur sm:w-72">
-            <p className="flex items-center gap-1 text-xs text-white/70">
-              <Layers size={12} /> 館藏總數
-            </p>
-            <p className="mt-0.5 text-4xl font-semibold tabular-nums slashed-zero">
-              {total}
-              <span className="ml-1 text-sm font-medium text-white/60">項</span>
-            </p>
-            <p className="mt-0.5 flex items-center gap-1 text-[11px] text-white/70">
-              <TrendingUp size={11} /> 累計借閱 {opens} 次 · {folders} 個收藏夾
-            </p>
-            {total > 0 && typeDist.length > 0 && (
-              <>
-                <div className="mt-3 flex h-2 overflow-hidden rounded-full bg-white/20">
-                  {typeDist.map((d) => (
-                    <span
-                      key={d.type}
-                      className={cx('h-full', TYPE_COLOR[d.type].dot)}
-                      style={{ width: `${(d.count / total) * 100}%` }}
-                    />
-                  ))}
-                </div>
-                <div className="mt-2 flex flex-wrap gap-x-2.5 gap-y-1">
-                  {typeDist.map((d) => (
-                    <span key={d.type} className="inline-flex items-center gap-1 text-[10px] text-white/85">
-                      <span className={cx('h-1.5 w-1.5 rounded-full', TYPE_COLOR[d.type].dot)} />
-                      {TYPE_LABEL[d.type]} {d.count}
-                    </span>
-                  ))}
-                </div>
-              </>
-            )}
-          </div>
-        )}
-      </div>
-    </section>
   )
 }
 
@@ -419,16 +337,6 @@ export default function ResourceLibrary() {
     }
   }, [allRows])
 
-  // 類型分佈（非封存）：畀 hero 彩色分佈條用
-  const typeDist = useMemo(
-    () =>
-      TYPE_ORDER.map((tp) => ({
-        type: tp,
-        count: allRows.filter((r) => !r.meta.archived && r.res.type === tp).length,
-      })).filter((d) => d.count > 0),
-    [allRows],
-  )
-
   // hero 動態語：按來源 / 庫狀態揀最該講嗰句（生動 + 有指引）
   const heroLine =
     source === 'drive'
@@ -443,6 +351,13 @@ export default function ResourceLibrary() {
 
   // 目前生效嘅智能視圖（folderId 為 all 先當 smart 生效）→ 畀統計磚高亮
   const activeSmart: SmartView | null = filter.folderId === 'all' ? filter.smart : null
+
+  // 教學引導步驟：講清「點用」呢個資源庫（新增 → 歸類 → 搜尋取用）
+  const LIB_GUIDE: FeatureGuideStep[] = [
+    { title: '貼連結即收藏', desc: '撳「新增資源」貼上網址或加講義，系統自動猜類型、抽網域。' },
+    { title: '分收藏夾歸類', desc: '開收藏夾分門別類；用卡片視圖加星標記常用教材。' },
+    { title: '一搜即取用', desc: '頂部搜尋或撳統計磚（收藏／需要整理）快速篩出要嘅資源。' },
+  ]
 
   // 鍵盤：/ 聚焦搜尋、n 新增
   useEffect(() => {
@@ -555,16 +470,30 @@ export default function ResourceLibrary() {
 
   return (
     <div className="space-y-5">
-      {/* ───────── 生動 hero：accent 館名牌 + 動態語 + 主動作 + 館藏大數字 + 類型分佈 ───────── */}
-      <LibraryHero
-        source={source}
-        total={census.total}
-        opens={census.opens}
-        folders={folders.length}
-        typeDist={typeDist}
-        line={heroLine}
-        onAdd={() => setShowAdd(true)}
-        onFolders={() => setShowFolderMgr(true)}
+      {/* ───────── 共用 PageHero：accent 大色塊 + icon chip + 動態語 + 主動作 ───────── */}
+      <PageHero
+        icon={Library}
+        kicker="Resource Library"
+        title="教學資源庫"
+        description={heroLine}
+        actions={
+          <>
+            <button
+              type="button"
+              onClick={() => setShowAdd(true)}
+              className="inline-flex items-center gap-1.5 rounded-xl bg-white px-3 py-1.5 text-sm font-semibold text-accent-strong shadow-sm transition hover:bg-white/90 active:scale-[0.98]"
+            >
+              <Plus size={15} /> 新增資源
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowFolderMgr(true)}
+              className="inline-flex items-center gap-1.5 rounded-xl bg-white/15 px-3 py-1.5 text-sm font-medium backdrop-blur-sm transition hover:bg-white/25 active:scale-[0.98]"
+            >
+              <FolderPlus size={15} /> 收藏夾
+            </button>
+          </>
+        }
       />
 
       {/* ───────── 來源切換：我的庫（本機收藏）↔ Google Drive（live 唯讀） ───────── */}
@@ -599,6 +528,13 @@ export default function ResourceLibrary() {
         <DriveView />
       ) : (
       <>
+      {/* ───────── 教學引導：教用家「點用」呢個資源庫（可摺疊 / 永久收起） ───────── */}
+      <FeatureGuide
+        storageKey="resourceLibrary"
+        title="資源庫點用？"
+        steps={LIB_GUIDE}
+      />
+
       {/* ───────── 彩色可撳統計磚（撳一下即跳對應智能視圖） ───────── */}
       <StatTilesRow
         census={census}
@@ -759,6 +695,16 @@ export default function ResourceLibrary() {
                 icon={CalendarClock}
                 title="資源庫好乾淨 ✨"
                 hint="冇久未開啟或者從未用過嘅資源，全部都整理得貼貼服服。"
+                action={
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    icon={BookMarked}
+                    onClick={() => patch({ smart: 'all', folderId: 'all' })}
+                  >
+                    睇全部資源
+                  </Button>
+                }
               />
             ) : (
               <EmptyState
@@ -1061,10 +1007,10 @@ function GridView({
           <article
             key={res.id}
             className={cx(
-              'group relative flex animate-fade-in-up flex-col overflow-hidden rounded-3xl border bg-white shadow-xs transition duration-200 dark:bg-slate-800 dark:shadow-none',
+              'group relative flex animate-fade-in-up flex-col overflow-hidden rounded-2xl border bg-white shadow-xs transition duration-200 dark:bg-slate-800 dark:shadow-none',
               isSel
                 ? 'border-accent/50 ring-2 ring-accent ring-offset-1 ring-offset-white dark:ring-offset-slate-900'
-                : 'border-slate-200/80 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md dark:border-slate-700/60 dark:hover:border-slate-600',
+                : 'border-slate-200/80 hover:border-slate-300 hover:shadow-md dark:border-slate-700/60 dark:hover:border-slate-600',
               meta.broken && 'opacity-80',
             )}
             style={{ animationDelay: `${Math.min(i, 11) * 35}ms` }}
@@ -1428,7 +1374,7 @@ function BoardView({
                 items.map(({ res, meta, domain }) => (
                   <div
                     key={res.id}
-                    className="group rounded-xl border border-slate-200/80 bg-white p-2.5 shadow-xs transition duration-200 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md dark:border-slate-700 dark:bg-slate-800 dark:shadow-none dark:hover:border-slate-600"
+                    className="group rounded-xl border border-slate-200/80 bg-white p-2.5 shadow-xs transition duration-200 hover:border-slate-300 hover:shadow-md dark:border-slate-700 dark:bg-slate-800 dark:shadow-none dark:hover:border-slate-600"
                   >
                     <div className="flex items-start gap-2">
                       <TypeIconBox type={res.type} size="sm" />

@@ -26,10 +26,10 @@ export default function PackGallery({
             onClick={() => onPack(p.id)}
             aria-pressed={active}
             className={cx(
-              'group flex flex-col items-stretch gap-1.5 rounded-xl border p-2 text-left transition active:scale-[0.98]',
+              'group flex flex-col items-stretch gap-1.5 rounded-xl border p-2 text-left transition duration-200 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
               active
                 ? 'border-accent bg-accent-soft/40 ring-2 ring-accent/30 dark:bg-accent/10'
-                : 'border-black/[0.08] hover:border-accent/40 hover:bg-black/[0.02] dark:border-white/10 dark:hover:bg-white/[0.03]',
+                : 'border-slate-200/80 hover:border-slate-300 hover:shadow-md dark:border-slate-700/60 dark:hover:border-slate-600',
             )}
           >
             <div className="relative">

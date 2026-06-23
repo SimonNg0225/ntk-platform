@@ -51,6 +51,9 @@ import {
   StatCard,
   SectionTitle,
   Card,
+  FeatureGuide,
+  PageHero,
+  type FeatureGuideStep,
   cx,
 } from '../../ui'
 import {
@@ -718,8 +721,79 @@ export default function AIAssistant() {
   const personaLabel = personaLabelOf(activePersona, t)
   const modelShort = models.find((m) => m.id === activeModel)?.short ?? activeModel
 
+  // 「點用」教學引導步驟（按模式微調文案；只渲染頭 4 步）
+  const guideSteps: FeatureGuideStep[] =
+    mode === 'work'
+      ? [
+          {
+            title: t('aiasst.guideWorkStep1Title', { defaultValue: '揀個落手位' }),
+            desc: t('aiasst.guideWorkStep1Desc', { defaultValue: '由首頁卡片揀「出題 / 寫教案 / 擬評語」，或直接打低你想備嘅課。' }),
+          },
+          {
+            title: t('aiasst.guideWorkStep2Title', { defaultValue: '連結教材做上下文' }),
+            desc: t('aiasst.guideWorkStep2Desc', { defaultValue: '撳「上下文」連結筆記或會議紀錄，AI 答嘢就會貼返你嘅教材。' }),
+          },
+          {
+            title: t('aiasst.guideWorkStep3Title', { defaultValue: '調回應風格' }),
+            desc: t('aiasst.guideWorkStep3Desc', { defaultValue: '「精準 / 平衡 / 創意」按需要揀；想換深入啲就揀「深入」模型。' }),
+          },
+          {
+            title: t('aiasst.guideWorkStep4Title', { defaultValue: '存起好嘢' }),
+            desc: t('aiasst.guideWorkStep4Desc', { defaultValue: '滿意嘅回覆可「加入筆記」，或整段對話匯出做 Markdown。' }),
+          },
+        ]
+      : [
+          {
+            title: t('aiasst.guideLearnStep1Title', { defaultValue: '揀個落手位' }),
+            desc: t('aiasst.guideLearnStep1Desc', { defaultValue: '由首頁卡片揀「解釋概念 / 出練習 / 規劃溫習」，或直接打低你想問嘅嘢。' }),
+          },
+          {
+            title: t('aiasst.guideLearnStep2Title', { defaultValue: '連結筆記做上下文' }),
+            desc: t('aiasst.guideLearnStep2Desc', { defaultValue: '撳「上下文」連結你嘅筆記，AI 就會就住你嘅內容嚟答。' }),
+          },
+          {
+            title: t('aiasst.guideLearnStep3Title', { defaultValue: '調回應風格' }),
+            desc: t('aiasst.guideLearnStep3Desc', { defaultValue: '想答案精簡就揀「精準」，想多啲例子就揀「創意」。' }),
+          },
+          {
+            title: t('aiasst.guideLearnStep4Title', { defaultValue: '存起重點' }),
+            desc: t('aiasst.guideLearnStep4Desc', { defaultValue: '有用嘅答案可「加入筆記」一鍵收藏，方便日後溫習。' }),
+          },
+        ]
+
   return (
-    <div className="flex h-[78vh] gap-3">
+    <div className="flex flex-col gap-3">
+      {/* 頁頂：統一共用 PageHero（accent hero）。標題/副題按模式微調，
+          有對話時副題帶對話數，否則用模式標語。 */}
+      <PageHero
+        icon={Sparkles}
+        kicker={t('aiasst.heroKicker', { defaultValue: 'AI Assistant' })}
+        title={
+          mode === 'work'
+            ? t('aiasst.heroTitleWork', { defaultValue: '教學助手' })
+            : t('aiasst.heroTitleLearning', { defaultValue: '個人 AI 助手' })
+        }
+        description={
+          stats.threads > 0
+            ? t('aiasst.heroSubtitleHas', {
+                n: stats.threads,
+                tagline,
+                defaultValue: `${stats.threads} 個對話 · ${tagline}`,
+              })
+            : tagline
+        }
+      />
+      {/* 教學引導：未開對話（landing）時喺頂顯示「點用」；可摺疊 + 可永久收起。
+          開咗對話後讓位畀對話工作枱（避免食用垂直空間）。 */}
+      {!currentThreadId && (
+        <FeatureGuide
+          storageKey={`aiAssistant.${mode}`}
+          title={t('aiasst.guideTitle', { defaultValue: '個人 AI 助手點用？' })}
+          steps={guideSteps}
+        />
+      )}
+
+      <div className="flex h-[78vh] min-h-0 gap-3">
       {/* ───────── 側欄：對話清單（手機=抽屜 overlay；sm+=inline）───────── */}
       {sidebarOpen && (
         <button
@@ -941,7 +1015,7 @@ export default function AIAssistant() {
         {/* 訊息區 */}
         <div
           ref={scrollRef}
-          className="flex-1 space-y-6 overflow-y-auto rounded-3xl border border-slate-200/70 bg-slate-50/60 p-4 dark:border-slate-700/60 dark:bg-slate-900/30 sm:px-5 sm:py-5"
+          className="flex-1 space-y-6 overflow-y-auto rounded-2xl border border-slate-200/80 bg-slate-50/60 p-4 dark:border-slate-700/60 dark:bg-slate-900/30 sm:px-5 sm:py-5"
         >
           {messages.length === 0 && streaming === null ? (
             <Welcome
@@ -1034,6 +1108,7 @@ export default function AIAssistant() {
           onOpenTemplate={onOpenTemplateStable}
           onOpenContext={onOpenContextStable}
         />
+      </div>
       </div>
 
       {/* ───────── Modals ───────── */}
@@ -1199,7 +1274,7 @@ const Composer = memo(function Composer({
   }
 
   return (
-    <div className="sticky bottom-0 rounded-3xl border border-slate-200/80 bg-white p-2 shadow-sm transition focus-within:border-accent/50 focus-within:ring-2 focus-within:ring-accent/20 dark:border-slate-700/70 dark:bg-slate-800 dark:shadow-none">
+    <div className="sticky bottom-0 rounded-2xl border border-slate-200/80 bg-white p-2 shadow-sm transition focus-within:border-accent/50 focus-within:ring-2 focus-within:ring-accent/20 dark:border-slate-700/70 dark:bg-slate-800 dark:shadow-none">
       {/* ⚠️ iOS Safari：input/textarea font-size < 16px 會喺 focus 自動放大頁面，
          每次 focus 都引起 viewport zoom → 用戶見到「跳一跳」。所以手機強制 ≥16px。
          desktop (sm:) 先回到原本嘅 13.5px 設計尺寸。 */}
@@ -1251,7 +1326,7 @@ const Composer = memo(function Composer({
 function ThreadGroup({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <p className="px-2 pb-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+      <p className="px-2 pb-1 text-[11px] font-semibold text-slate-400 dark:text-slate-500">
         {label}
       </p>
       <div className="space-y-0.5">{children}</div>
@@ -1360,7 +1435,7 @@ function Welcome({
           <p className="mx-auto max-w-md text-sm leading-relaxed text-slate-500 dark:text-slate-400">
             {t('aiasst.welcomeSub', { defaultValue: '想由邊度開始？揀一個落手位，或者直接打低你想備嘅課、想出嘅題。' })}
           </p>
-          <p className="pt-0.5 text-[11px] font-medium uppercase tracking-[0.18em] text-slate-400/80 dark:text-slate-500">
+          <p className="pt-0.5 text-xs font-medium text-slate-400 dark:text-slate-500">
             {tagline}
           </p>
         </div>
@@ -1368,7 +1443,7 @@ function Welcome({
 
       <div className="w-full">
         <div className="mb-3 flex items-center gap-3 px-0.5 text-left">
-          <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">
+          <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
             {t('aiasst.welcomeTryAsking', { defaultValue: '由呢度開始' })}
           </span>
           <span className="h-px flex-1 bg-slate-200/70 dark:bg-slate-700/60" />
@@ -1381,9 +1456,9 @@ function Welcome({
               <button
                 key={tpl.id}
                 onClick={() => onPick(tpl)}
-                className="group flex items-center gap-3 rounded-2xl border border-slate-200/80 bg-white p-3.5 text-left shadow-xs transition duration-200 hover:-translate-y-0.5 hover:border-accent/40 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:border-slate-700/60 dark:bg-slate-800 dark:shadow-none dark:hover:border-accent/50"
+                className="group flex items-center gap-3 rounded-2xl border border-slate-200/80 bg-white p-3.5 text-left shadow-xs transition duration-200 hover:border-slate-300 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98] dark:border-slate-700/60 dark:bg-slate-800 dark:shadow-none dark:hover:border-slate-600"
               >
-                <span className={cx('flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition duration-200 group-hover:scale-105', tone)}>
+                <span className={cx('flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition', tone)}>
                   <Icon size={18} strokeWidth={1.9} />
                 </span>
                 <span className="min-w-0 flex-1">
@@ -2348,7 +2423,7 @@ function CommandPalette({
 }
 
 function PaletteLabel({ children }: { children: React.ReactNode }) {
-  return <p className="px-2 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-wider text-slate-400">{children}</p>
+  return <p className="px-2 pb-1 pt-2 text-[11px] font-semibold text-slate-400">{children}</p>
 }
 
 function PaletteRow({

@@ -16,6 +16,7 @@ import {
   LayoutList,
   ListChecks,
   ListTodo,
+  PartyPopper,
   Pencil,
   Plus,
   Search,
@@ -34,15 +35,18 @@ import {
   Button,
   Card,
   EmptyState,
+  FeatureGuide,
   Field,
   IconButton,
   Input,
   Menu,
   Modal,
+  PageHero,
   SectionTitle,
   SegmentedControl,
   Tabs,
   cx,
+  type FeatureGuideStep,
 } from '../../ui'
 import { useToast } from '../../context/ToastContext'
 import { useConfirm } from '../../context/ConfirmContext'
@@ -78,18 +82,18 @@ import {
 } from './todo/util'
 
 // ============================================================
-//  待辦 / 批改 — 老師嘅「改簿檯」任務清單
+//  待辦 / 批改 — 老師嘅任務清單
 //  ------------------------------------------------------------
-//  訂造概念：checklist + 批改紅筆。成頁似一本攤開嘅改簿——
-//  勾選格 = 老師喺簿上打剔；屬「批改」嘅任務披上紅筆 accent
-//  （紅邊欄線 + 紅「批」筆章），同其餘待辦一眼分得開。
-//  模式主色（青藍 teal）做頁面身份；紅筆只係批改任務嘅 accent。
+//  呈現層跟「工作儀表板」統一設計語言：PageHeader masthead、
+//  StatTile 統計磚（TONE map）、rounded-2xl 卡、slate 字階、
+//  引導式空狀態。批改任務保留紅筆 accent（rose=警示）做語意標示，
+//  同其餘待辦一眼分得開。
 //
-//  邏輯完全沿用 Things / Todoist 級實作：共用 tasksCol（Task）做
-//  真相來源；優先級 / 到期 / 專案 / 標籤 / 備註 / 子任務存喺 feature
-//  自己嘅 collection（見 todo/store.ts）。視圖：今日 · 之後 ·
-//  所有（按專案）· 統計。Power：智能快速輸入、優先級、到期分組、
-//  子任務、標籤、專案、搜尋、批量、範本、生產力圖表。
+//  邏輯完全沿用：共用 tasksCol（Task）做真相來源；優先級 / 到期 /
+//  專案 / 標籤 / 備註 / 子任務存喺 feature 自己嘅 collection
+//  （見 todo/store.ts）。視圖：今日 · 之後 · 所有（按專案）· 統計。
+//  Power：智能快速輸入、優先級、到期分組、子任務、標籤、專案、
+//  搜尋、批量、範本、生產力圖表。
 // ============================================================
 
 // 「批改任務」純表現層偵測：由現有資料（標籤 / 任務文字）推斷，
@@ -111,20 +115,49 @@ const SORT_LABEL: Record<SortMode, string> = {
   created: '建立',
 }
 
-// 清點格色調（hot 高亮：rose=要跟進 / accent=今日焦點 / emerald=做完）
-type TallyTone = 'plain' | 'accent' | 'rose' | 'emerald'
+// ───────── 教學引導步驟（FeatureGuide）─────────
+const GUIDE_STEPS: FeatureGuideStep[] = [
+  {
+    title: '記低一筆',
+    desc: '喺上方輸入框打任務即可。可加符號：! 優先級、# 專案、@ 標籤、今日／聽日／+N 到期。',
+  },
+  {
+    title: '逐項打剔',
+    desc: '撳左邊圓格就當完成；批改類任務會自動披紅筆，喺清單一眼分得出。',
+  },
+  {
+    title: '切換視圖',
+    desc: '「今日」睇逾期同今日到期，「之後」按日期分組，「所有」按專案睇。',
+  },
+  {
+    title: '睇統計',
+    desc: '「統計」分頁有完成率、連續打剔同熱力圖，睇返自己嘅生產力走勢。',
+  },
+]
 
-// ───────── 改簿清點帶（hairline grid · serif 大數字）─────────
-//  改簿檯概念：頁頂一條「清點帶」似老師埋班簿前嘅點算——逾期幾本、
-//  今日要改幾本、未剔幾項、已剔幾項。可撳嗰格直接跳對應視圖。
-function TallyStat({
+// ───────── 統計磚色調（跟 WorkDashboard TONE map，6 語意色）─────────
+//  語意慣例：rose=逾期/警示、emerald=完成/良好、accent=中性主指標、
+//  amber=時間/今日、sky=完成數/平均、violet=課堂。chip（底+icon 字）
+//  同 val（數字字）兩組同色系。
+type Tone = 'accent' | 'amber' | 'emerald' | 'violet' | 'sky' | 'rose'
+const TONE: Record<Tone, { chip: string; val: string }> = {
+  accent: { chip: 'bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent', val: 'text-accent' },
+  amber: { chip: 'bg-amber-50 text-amber-600 dark:bg-amber-500/15 dark:text-amber-300', val: 'text-amber-500' },
+  emerald: { chip: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-300', val: 'text-emerald-500' },
+  violet: { chip: 'bg-violet-50 text-violet-600 dark:bg-violet-500/15 dark:text-violet-300', val: 'text-violet-500' },
+  sky: { chip: 'bg-sky-50 text-sky-600 dark:bg-sky-500/15 dark:text-sky-300', val: 'text-sky-500' },
+  rose: { chip: 'bg-rose-50 text-rose-600 dark:bg-rose-500/15 dark:text-rose-300', val: 'text-rose-500' },
+}
+
+// ───────── 統計磚（StatTile，整段照 WorkDashboard）─────────
+//  可撳就跳對應視圖；純展示（無 onClick）就去 cursor/hover/ring。
+function StatTile({
   label,
   value,
   unit,
   hint,
   icon: Icon,
-  tone = 'plain',
-  hot,
+  tone,
   onClick,
 }: {
   label: string
@@ -132,29 +165,10 @@ function TallyStat({
   unit?: string
   hint?: string
   icon: LucideIcon
-  tone?: TallyTone
-  hot?: boolean
+  tone: Tone
   onClick?: () => void
 }) {
-  // hot 底色 + 數字色（紅=逾期 / 青=今日焦點 / 綠=完成）
-  const hotBg =
-    tone === 'rose'
-      ? 'bg-rose-50 dark:bg-rose-500/10'
-      : tone === 'emerald'
-        ? 'bg-emerald-50 dark:bg-emerald-500/10'
-        : 'bg-accent-soft dark:bg-accent/12'
-  const hotLabel =
-    tone === 'rose'
-      ? 'text-rose-600/80 dark:text-rose-400/80'
-      : tone === 'emerald'
-        ? 'text-emerald-600/80 dark:text-emerald-400/80'
-        : 'text-accent/80 dark:text-accent/80'
-  const hotNum =
-    tone === 'rose'
-      ? 'text-rose-600 dark:text-rose-400'
-      : tone === 'emerald'
-        ? 'text-emerald-600 dark:text-emerald-400'
-        : 'text-accent-strong dark:text-accent'
+  const t = TONE[tone]
   const interactive = !!onClick
   return (
     <button
@@ -163,39 +177,25 @@ function TallyStat({
       disabled={!interactive}
       aria-label={interactive ? `${label}：${value}${unit ?? ''}` : undefined}
       className={cx(
-        'group/tally px-3.5 py-3.5 text-left transition active:scale-[0.98] sm:px-4',
-        hot ? hotBg : 'bg-white dark:bg-slate-800',
+        'flex flex-col justify-between rounded-2xl border border-slate-200/80 bg-white p-4 text-left transition duration-200 dark:border-slate-700/60 dark:bg-slate-800',
         interactive
-          ? 'cursor-pointer hover:bg-slate-50 focus-visible:relative focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent/40 dark:hover:bg-slate-700/60'
+          ? 'group cursor-pointer hover:border-slate-300 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98] dark:hover:border-slate-600'
           : 'cursor-default',
-        hot && interactive && 'hover:brightness-[0.98]',
       )}
     >
-      <span
-        className={cx(
-          'flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide',
-          hot ? hotLabel : 'text-slate-400 dark:text-slate-500',
-        )}
-      >
-        <Icon size={12} className="shrink-0" />
-        <span className="truncate">{label}</span>
-      </span>
-      <span
-        className={cx(
-          'mt-1 block text-[26px] font-semibold leading-none tabular-nums slashed-zero',
-          hot ? hotNum : 'text-slate-800 dark:text-slate-100',
-        )}
-      >
-        {value}
-        {unit && (
-          <span className="ml-1 font-sans text-sm font-normal text-slate-400">{unit}</span>
-        )}
-      </span>
-      {hint && (
-        <span className="mt-1 block truncate text-[11px] text-slate-400 dark:text-slate-500">
-          {hint}
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-medium text-slate-400 dark:text-slate-500">{label}</span>
+        <span className={cx('flex h-8 w-8 items-center justify-center rounded-xl', t.chip)}>
+          <Icon size={16} />
         </span>
-      )}
+      </div>
+      <div className="mt-3">
+        <p className="flex items-baseline gap-1">
+          <span className={cx('text-3xl font-semibold tabular-nums slashed-zero', t.val)}>{value}</span>
+          {unit && <span className="text-sm font-medium text-slate-400">{unit}</span>}
+        </p>
+        {hint && <p className="mt-0.5 truncate text-[11px] text-slate-400">{hint}</p>}
+      </div>
     </button>
   )
 }
@@ -256,6 +256,8 @@ export default function TodoWidget() {
   const [tmplModal, setTmplModal] = useState(false)
 
   const QUICK_INPUT_ID = 'todo-quick-add'
+  // 引導式空狀態 CTA：聚焦快速輸入框（純 UI，唔改資料）
+  const focusQuickAdd = () => document.getElementById(QUICK_INPUT_ID)?.focus()
 
   // ───────── 合併成 FullTask（補底 meta）─────────
   const full: FullTask[] = useMemo(() => {
@@ -508,52 +510,28 @@ export default function TodoWidget() {
 
   return (
     <div className="space-y-5">
-      {/* ───────── 改簿檯 masthead：本頁自管標題（含功能名「待辦 / 批改」）───────── */}
-      <header className="relative overflow-hidden rounded-3xl border border-slate-200/80 bg-white px-5 py-5 shadow-xs dark:border-slate-700/60 dark:bg-slate-800 dark:shadow-none sm:px-7 sm:py-6">
-        {/* 右側紅墨裝飾：似改簿時隨手剔嘅一筆（純裝飾，唔搶主次）*/}
-        <span
-          aria-hidden
-          className="pointer-events-none absolute -right-5 top-4 hidden -rotate-6 select-none text-[3.5rem] font-bold leading-none text-rose-500/10 dark:text-rose-500/15 sm:block"
-        >
-          ✓
-        </span>
-        <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-4">
-          <div className="min-w-0">
-            <p className="flex items-center gap-2 text-[11px] font-medium uppercase tracking-[0.3em] text-accent/70">
-              <ClipboardCheck size={13} />
-              改簿檯 · Marking Desk
-            </p>
-            <h1 className="mt-1.5 text-[28px] font-semibold leading-none tracking-tight text-slate-800 dark:text-slate-100 sm:text-[34px]">
-              待辦 / 批改
-            </h1>
-            <p className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-slate-500 dark:text-slate-400">
-              <span className="tabular-nums">
-                未剔 {counts.active} 項 · 今日到期 {counts.todayDue} 項
-              </span>
-              {counts.marking > 0 && (
-                <>
-                  <span aria-hidden className="text-slate-300 dark:text-slate-600">·</span>
-                  <span className="inline-flex items-center gap-1 font-medium text-rose-600 dark:text-rose-400">
-                    <Highlighter size={12} /> {counts.marking} 項待批改
-                  </span>
-                </>
-              )}
-            </p>
-          </div>
-          {/* 卷務操作：範本 + 更多（似改簿檯上嘅工具）*/}
-          <div className="flex shrink-0 items-center gap-2">
-            <Button
-              variant="secondary"
-              size="sm"
-              icon={Sparkles}
+      {/* ───────── 頁頂 accent hero（共用 PageHero）───────── */}
+      <PageHero
+        icon={ClipboardCheck}
+        kicker="Tasks & Grading"
+        title="待辦 / 批改"
+        description={
+          `未剔 ${counts.active} 項 · 今日到期 ${counts.todayDue} 項` +
+          (counts.marking > 0 ? ` · ${counts.marking} 項待批改` : '')
+        }
+        actions={
+          <>
+            <button
+              type="button"
               onClick={() => setTmplModal(true)}
+              className="inline-flex items-center gap-1.5 rounded-xl bg-white/15 px-3 py-1.5 text-sm font-medium backdrop-blur-sm transition hover:bg-white/25"
             >
-              範本
-            </Button>
+              <Sparkles size={15} /> 範本
+            </button>
             <Menu
               align="end"
               trigger={
-                <span className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-slate-200/80 bg-white px-3 text-sm font-medium text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700/60 dark:bg-slate-800 dark:text-slate-200 dark:hover:border-slate-600">
+                <span className="inline-flex items-center gap-1.5 rounded-xl bg-white/15 px-3 py-1.5 text-sm font-medium text-white backdrop-blur-sm transition hover:bg-white/25">
                   更多
                   <ChevronRight size={14} className="rotate-90" />
                 </span>
@@ -580,55 +558,51 @@ export default function TodoWidget() {
                 },
               ]}
             />
-          </div>
-        </div>
-        {/* 改簿檯雙線（封面分隔感）*/}
-        <div className="mt-5 space-y-1" aria-hidden>
-          <span className="block h-px bg-slate-200/90 dark:bg-slate-700/70" />
-          <span className="block h-px bg-slate-200/60 dark:bg-slate-700/40" />
-        </div>
-      </header>
+          </>
+        }
+      />
 
-      {/* ───────── 清點帶：hairline grid · serif 大數字（可撳跳視圖）───────── */}
-      <section className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl bg-slate-200/70 ring-1 ring-slate-200/80 dark:bg-slate-700/50 dark:ring-slate-700/60 sm:grid-cols-4">
-        <TallyStat
+      {/* ───────── 教學引導：點用呢個功能（可摺疊 + 永久收起）───────── */}
+      <FeatureGuide storageKey="todo" title="待辦 / 批改點用？" steps={GUIDE_STEPS} />
+
+      {/* ───────── 統計磚：4 張 StatTile（可撳跳視圖）───────── */}
+      <section className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <StatTile
           label="逾期"
           value={counts.overdue}
           unit="項"
           icon={Flag}
           tone="rose"
-          hot={counts.overdue > 0}
           hint={counts.overdue > 0 ? '需要跟進' : '一切如常'}
           onClick={() => {
             setView('upcoming')
             setSearch('')
           }}
         />
-        <TallyStat
+        <StatTile
           label="今日到期"
           value={counts.todayDue}
           unit="項"
           icon={Sun}
-          tone="accent"
-          hot={counts.todayDue > 0}
+          tone="amber"
           hint={counts.todayDue > 0 ? '今日搞掂佢' : '今日好輕鬆'}
           onClick={() => setView('today')}
         />
-        <TallyStat
+        <StatTile
           label="未剔"
           value={counts.active}
           unit="項"
           icon={ListTodo}
+          tone="accent"
           hint={counts.marking > 0 ? `含 ${counts.marking} 項批改` : '清單仲有嘢做'}
           onClick={() => setView('all')}
         />
-        <TallyStat
+        <StatTile
           label="已剔"
           value={counts.done}
           unit="項"
           icon={CheckCheck}
           tone="emerald"
-          hot={counts.done > 0 && counts.active === 0}
           hint="累計打剔"
         />
       </section>
@@ -752,7 +726,7 @@ export default function TodoWidget() {
 
       {/* ── 視圖內容 ── */}
       {view === 'stats' ? (
-        <StatsView tasks={full} projects={projects} />
+        <StatsView tasks={full} projects={projects} onAddFocus={focusQuickAdd} />
       ) : view === 'today' ? (
         <TodayView
           tasks={filtered}
@@ -764,6 +738,8 @@ export default function TodoWidget() {
           onOpen={setEditingId}
           onSelect={toggleSelect}
           onRemove={removeTask}
+          onAddFocus={focusQuickAdd}
+          onGoUpcoming={() => setView('upcoming')}
         />
       ) : view === 'upcoming' ? (
         <UpcomingView
@@ -776,6 +752,7 @@ export default function TodoWidget() {
           onOpen={setEditingId}
           onSelect={toggleSelect}
           onRemove={removeTask}
+          onAddFocus={focusQuickAdd}
         />
       ) : (
         <AllView
@@ -793,6 +770,7 @@ export default function TodoWidget() {
           onSelect={toggleSelect}
           onRemove={removeTask}
           onManageProjects={() => setProjModal(true)}
+          onAddFocus={focusQuickAdd}
         />
       )}
 
@@ -1046,7 +1024,7 @@ function Group({
             <Icon size={14} />
           </span>
         )}
-        <h3 className={cx('text-xs font-semibold uppercase tracking-wider', toneCls)}>
+        <h3 className={cx('text-xs font-semibold', toneCls)}>
           {title}
         </h3>
         <span className="tabular-nums text-[11px] font-semibold text-slate-400 dark:text-slate-500">
@@ -1074,6 +1052,8 @@ function TodayView(props: {
   onOpen: (id: string) => void
   onSelect: (id: string) => void
   onRemove: (t: FullTask) => void
+  onAddFocus: () => void
+  onGoUpcoming: () => void
 }) {
   const { tasks, sorter, projects } = props
   const today = todayISO()
@@ -1092,9 +1072,19 @@ function TodayView(props: {
   if (empty)
     return (
       <EmptyState
-        icon={Sun}
-        title="今日好清爽 ☀️"
-        hint="冇逾期或今日到期嘅任務。喺上面快速輸入加一項，或者去「之後」睇將來嘅安排。"
+        icon={PartyPopper}
+        title="今日好清爽"
+        hint="冇逾期或今日到期嘅任務。記低一筆，或睇吓將來嘅安排。"
+        action={
+          <div className="flex flex-wrap items-center justify-center gap-2">
+            <Button size="sm" icon={Plus} onClick={props.onAddFocus}>
+              記低一筆
+            </Button>
+            <Button size="sm" variant="secondary" icon={CalendarDays} onClick={props.onGoUpcoming}>
+              睇之後
+            </Button>
+          </div>
+        }
       />
     )
 
@@ -1132,6 +1122,7 @@ function UpcomingView(props: {
   onOpen: (id: string) => void
   onSelect: (id: string) => void
   onRemove: (t: FullTask) => void
+  onAddFocus: () => void
 }) {
   const { tasks, sorter, projects } = props
   const today = todayISO()
@@ -1152,7 +1143,12 @@ function UpcomingView(props: {
       <EmptyState
         icon={CalendarDays}
         title="日程一片空白"
-        hint="所有任務都搞掂咗，或者試吓喺上面加一項。"
+        hint="所有任務都搞掂咗。記低一筆，喺輸入框用「+N」就排到將來。"
+        action={
+          <Button size="sm" icon={Plus} onClick={props.onAddFocus}>
+            記低一筆
+          </Button>
+        }
       />
     )
 
@@ -1210,6 +1206,7 @@ function AllView(props: {
   onSelect: (id: string) => void
   onRemove: (t: FullTask) => void
   onManageProjects: () => void
+  onAddFocus: () => void
 }) {
   const {
     tasks,
@@ -1220,6 +1217,7 @@ function AllView(props: {
     showDone,
     setShowDone,
     onManageProjects,
+    onAddFocus,
   } = props
 
   const inboxCount = tasks.filter((t) => !t.done && !t.meta.projectId).length
@@ -1309,7 +1307,7 @@ function AllView(props: {
           <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-slate-100 text-slate-500 dark:bg-slate-700/60 dark:text-slate-300">
             <ClipboardCheck size={14} />
           </span>
-          <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+          <h3 className="text-xs font-semibold text-slate-500 dark:text-slate-400">
             任務冊
           </h3>
           <span className="tabular-nums text-[11px] font-semibold text-slate-400 dark:text-slate-500">
@@ -1329,7 +1327,12 @@ function AllView(props: {
           <EmptyState
             icon={InboxIcon}
             title={activeProject === 'inbox' ? '收件匣空空如也' : '呢個專案仲未有任務'}
-            hint="喺上面快速輸入加一項，或者揀返第個專案睇睇。"
+            hint="記低一筆就會出現喺度，或者揀返第個專案睇睇。"
+            action={
+              <Button size="sm" icon={Plus} onClick={onAddFocus}>
+                記低一筆
+              </Button>
+            }
           />
         ) : (
           <Card clip className="divide-y divide-slate-100 dark:divide-slate-700/60">
@@ -1444,7 +1447,15 @@ function rowProps(p: RowHandlers, taskId: string) {
 // ============================================================
 //  統計視圖（自製圖表）
 // ============================================================
-function StatsView({ tasks, projects }: { tasks: FullTask[]; projects: Project[] }) {
+function StatsView({
+  tasks,
+  projects,
+  onAddFocus,
+}: {
+  tasks: FullTask[]
+  projects: Project[]
+  onAddFocus: () => void
+}) {
   const [range, setRange] = useState<14 | 30 | 90>(30)
   const trend = useMemo(() => buildTrend(tasks, range), [tasks, range])
   const heat = useMemo(() => buildHeat(tasks, 119), [tasks]) // 17 週
@@ -1495,32 +1506,35 @@ function StatsView({ tasks, projects }: { tasks: FullTask[]; projects: Project[]
         icon={BarChart3}
         title="統計仲係一張白紙"
         hint="加幾項待辦、逐一完成，呢度就會慢慢長出你嘅生產力走勢同熱力圖。"
+        action={
+          <Button size="sm" icon={Plus} onClick={onAddFocus}>
+            記低一筆
+          </Button>
+        }
       />
     )
 
   return (
     <div className="space-y-4">
-      <section className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl bg-slate-200/70 ring-1 ring-slate-200/80 dark:bg-slate-700/50 dark:ring-slate-700/60 sm:grid-cols-4">
-        <TallyStat
+      <section className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <StatTile
           label="連續完成"
           value={streak}
           unit="日"
           icon={Sparkles}
           tone="accent"
-          hot={streak > 0}
           hint={streak > 0 ? '繼續保持！' : '今日完成一項就開始'}
         />
-        <TallyStat
+        <StatTile
           label="完成率"
           value={completionRate}
           unit="%"
           icon={CheckCircle2}
           tone="emerald"
-          hot={completionRate >= 80}
           hint={`近 ${range} 日完成 ${completedInRange}`}
         />
-        <TallyStat label="進行中" value={active.length} unit="項" icon={CircleDashed} />
-        <TallyStat label="累計完成" value={completed.length} unit="項" icon={ListChecks} />
+        <StatTile label="進行中" value={active.length} unit="項" icon={CircleDashed} tone="amber" />
+        <StatTile label="累計完成" value={completed.length} unit="項" icon={ListChecks} tone="sky" />
       </section>
 
       <Card padded>

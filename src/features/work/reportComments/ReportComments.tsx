@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   MessageSquareQuote,
   Sparkles,
@@ -6,18 +7,25 @@ import {
   Copy,
   RefreshCw,
   Loader2,
+  SlidersHorizontal,
+  Users,
+  ListChecks,
 } from 'lucide-react'
 import {
   Badge,
   Button,
   Card,
   EmptyState,
+  FeatureGuide,
   Field,
   IconButton,
+  PageHero,
+  SectionTitle,
   SegmentedControl,
   Select,
   Textarea,
   Tooltip,
+  type FeatureGuideStep,
 } from '../../../ui'
 import { useToast } from '../../../context/ToastContext'
 import { useSettings } from '../../../context/SettingsContext'
@@ -53,6 +61,7 @@ const MODEL_OPTS: { id: AIModel; label: string }[] = [
 ]
 
 export default function ReportComments() {
+  const { t } = useTranslation()
   const toast = useToast()
   const { subjectPackId } = useSettings()
   const subjectName = subjectPackId !== 'custom' ? getSubjectPack(subjectPackId)?.name : undefined
@@ -204,90 +213,143 @@ export default function ReportComments() {
     }
   }
 
+  // 教學引導步驟（廣東話 inline，唔改 i18n 檔）
+  const GUIDE: FeatureGuideStep[] = [
+    {
+      title: t('reportComments.guide1Title', { defaultValue: '揀班別' }),
+      desc: t('reportComments.guide1Desc', {
+        defaultValue: '揀返要出評語嗰班；AI 會讀返該班每個學生嘅成績同進度。',
+      }),
+    },
+    {
+      title: t('reportComments.guide2Title', { defaultValue: '調語氣同長度' }),
+      desc: t('reportComments.guide2Desc', {
+        defaultValue: '揀鼓勵 / 中肯 / 嚴謹、中英、長短；撳「生成全班評語」一次過出齊。',
+      }),
+    },
+    {
+      title: t('reportComments.guide3Title', { defaultValue: '微調再匯出' }),
+      desc: t('reportComments.guide3Desc', {
+        defaultValue: '逐個改字、唔啱可重生；滿意就複製全部或下載做 Word。',
+      }),
+    },
+  ]
+
   if (!isAIConfigured) {
     return (
       <EmptyState
         icon={MessageSquareQuote}
-        title="成績表評語未啟用"
-        hint="要設定好 Supabase 並部署 gemini Edge Function 先用到。"
+        title={t('reportComments.aiOffTitle', { defaultValue: '成績表評語未啟用' })}
+        hint={t('reportComments.aiOffHint', {
+          defaultValue: '要設定好 Supabase 並部署 gemini Edge Function 先用到。',
+        })}
       />
     )
   }
   if (classes.length === 0) {
     return (
       <EmptyState
-        icon={MessageSquareQuote}
-        title="未有班別"
-        hint="先去「班別管理」開班、加學生，再去「成績管理」入分，就可以一鍵出評語。"
+        icon={Users}
+        title={t('reportComments.noClassTitle', { defaultValue: '未有班別' })}
+        hint={t('reportComments.noClassHint', {
+          defaultValue: '先去「班別管理」開班、加學生，再去「成績管理」入分，就可以一鍵出評語。',
+        })}
       />
     )
   }
 
   return (
     <div className="space-y-5">
-      <header className="min-w-0">
-        <p className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.3em] text-accent/70">
-          <MessageSquareQuote size={13} className="shrink-0" />
-          學生評估 · Report Comments
-        </p>
-        <h1 className="mt-1 text-[26px] font-semibold leading-none tracking-tight text-slate-800 dark:text-slate-100 sm:text-[30px]">
-          成績表評語
-        </h1>
-        <p className="mt-2 text-[13px] text-slate-500 dark:text-slate-400">
-          揀班，AI 按每個學生嘅成績一次過寫全班評語，可逐個微調、重生，再匯出 Word。
-        </p>
-      </header>
+      {/* 頁首 */}
+      <PageHero
+        icon={MessageSquareQuote}
+        kicker={t('reportComments.kicker', { defaultValue: 'Report Comments' })}
+        title={t('reportComments.title', { defaultValue: '成績表評語' })}
+        description={t('reportComments.subtitle', {
+          defaultValue: '揀班，AI 按每個學生成績一次過寫全班評語，可逐個微調、重生，再匯出 Word。',
+        })}
+      />
+
+      {/* 教學引導 */}
+      <FeatureGuide
+        storageKey="report-comments"
+        title={t('reportComments.guideTitle', { defaultValue: '成績表評語點用？' })}
+        steps={GUIDE}
+      />
 
       {/* 設定 */}
-      <Card padded className="space-y-3">
-        <div className="grid gap-3 sm:grid-cols-2">
-          <Field label="班別">
-            <Select value={classId} onChange={(e) => setClassId(e.target.value)}>
-              {classes.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}（{allStudents.filter((s) => s.classId === c.id).length} 人）
-                </option>
-              ))}
-            </Select>
-          </Field>
-          <Field label="模型">
-            <Tooltip label="Flash 快 · Pro 強">
-              <SegmentedControl options={MODEL_OPTS} value={model} onChange={setModel} />
-            </Tooltip>
-          </Field>
-          <Field label="語氣">
-            <SegmentedControl options={TONE_OPTS} value={tone} onChange={setTone} />
-          </Field>
-          <div className="grid grid-cols-2 gap-3">
-            <Field label="語言">
-              <SegmentedControl options={LANG_OPTS} value={lang} onChange={setLang} />
+      <section>
+        <SectionTitle icon={SlidersHorizontal}>
+          {t('reportComments.settingsTitle', { defaultValue: '生成設定' })}
+        </SectionTitle>
+        <Card padded className="space-y-4">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Field label={t('reportComments.fieldClass', { defaultValue: '班別' })}>
+              <Select value={classId} onChange={(e) => setClassId(e.target.value)}>
+                {classes.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}（{allStudents.filter((s) => s.classId === c.id).length} 人）
+                  </option>
+                ))}
+              </Select>
             </Field>
-            <Field label="長度">
-              <SegmentedControl options={LEN_OPTS} value={length} onChange={setLength} />
+            <Field label={t('reportComments.fieldModel', { defaultValue: '模型' })}>
+              <Tooltip label={t('reportComments.modelHint', { defaultValue: 'Flash 快 · Pro 強' })}>
+                <SegmentedControl options={MODEL_OPTS} value={model} onChange={setModel} />
+              </Tooltip>
             </Field>
+            <Field label={t('reportComments.fieldTone', { defaultValue: '語氣' })}>
+              <SegmentedControl options={TONE_OPTS} value={tone} onChange={setTone} />
+            </Field>
+            <div className="grid grid-cols-2 gap-3">
+              <Field label={t('reportComments.fieldLang', { defaultValue: '語言' })}>
+                <SegmentedControl options={LANG_OPTS} value={lang} onChange={setLang} />
+              </Field>
+              <Field label={t('reportComments.fieldLength', { defaultValue: '長度' })}>
+                <SegmentedControl options={LEN_OPTS} value={length} onChange={setLength} />
+              </Field>
+            </div>
           </div>
-        </div>
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <span className="text-[11px] text-slate-400">
-            {students.length} 個學生 · {assessments.length} 項評估
-          </span>
-          <Button icon={Sparkles} onClick={runAll} loading={busy} disabled={students.length === 0}>
-            {busy ? '生成緊…' : '生成全班評語'}
-          </Button>
-        </div>
-      </Card>
+          <div className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-200 pt-3 dark:border-slate-700">
+            <span className="inline-flex items-center gap-3 text-xs text-slate-400 dark:text-slate-500">
+              <span className="inline-flex items-center gap-1">
+                <Users size={13} className="shrink-0" />
+                <span className="tabular-nums slashed-zero">{students.length}</span>{' '}
+                {t('reportComments.studentsUnit', { defaultValue: '個學生' })}
+              </span>
+              <span className="inline-flex items-center gap-1">
+                <ListChecks size={13} className="shrink-0" />
+                <span className="tabular-nums slashed-zero">{assessments.length}</span>{' '}
+                {t('reportComments.assessmentsUnit', { defaultValue: '項評估' })}
+              </span>
+            </span>
+            <Button icon={Sparkles} onClick={runAll} loading={busy} disabled={students.length === 0}>
+              {busy
+                ? t('reportComments.generating', { defaultValue: '生成緊…' })
+                : t('reportComments.generateAll', { defaultValue: '生成全班評語' })}
+            </Button>
+          </div>
+        </Card>
+      </section>
 
-      {/* 評語列表 */}
-      {hasComments && (
-        <>
-          <div className="flex items-center justify-end gap-2">
-            <Button variant="secondary" size="sm" icon={Copy} onClick={copyAll}>
-              複製全部
-            </Button>
-            <Button variant="secondary" size="sm" icon={FileText} onClick={exportWord}>
-              下載 Word
-            </Button>
-          </div>
+      {/* 評語列表 / 引導式空狀態 */}
+      {hasComments ? (
+        <section>
+          <SectionTitle
+            icon={MessageSquareQuote}
+            right={
+              <div className="flex items-center gap-2">
+                <Button variant="secondary" size="sm" icon={Copy} onClick={copyAll}>
+                  {t('reportComments.copyAll', { defaultValue: '複製全部' })}
+                </Button>
+                <Button variant="secondary" size="sm" icon={FileText} onClick={exportWord}>
+                  {t('reportComments.downloadWord', { defaultValue: '下載 Word' })}
+                </Button>
+              </div>
+            }
+          >
+            {t('reportComments.listTitle', { defaultValue: '全班評語' })}
+          </SectionTitle>
           <div className="space-y-2">
             {students.map((s, i) => (
               <Card key={s.id} padded className="space-y-2">
@@ -296,11 +358,15 @@ export default function ReportComments() {
                   <span className="flex-1 text-sm font-medium text-slate-700 dark:text-slate-200">
                     {s.name}
                   </span>
-                  <span className="text-[11px] tabular-nums text-slate-400">
+                  <span className="tabular-nums slashed-zero text-[11px] text-slate-400 dark:text-slate-500">
                     {data[i]?.overall != null ? `${Math.round(data[i].overall!)}%` : '—'}
                   </span>
-                  <Tooltip label="重新生成">
-                    <IconButton label="重新生成" size="sm" onClick={() => void regenOne(i)}>
+                  <Tooltip label={t('reportComments.regen', { defaultValue: '重新生成' })}>
+                    <IconButton
+                      label={t('reportComments.regen', { defaultValue: '重新生成' })}
+                      size="sm"
+                      onClick={() => void regenOne(i)}
+                    >
                       {regenIdx === i ? (
                         <Loader2 size={14} className="animate-spin" />
                       ) : (
@@ -313,12 +379,37 @@ export default function ReportComments() {
                   rows={2}
                   value={comments[i] ?? ''}
                   onChange={(e) => editComment(i, e.target.value)}
-                  placeholder="（未生成 — 撳右上重生）"
+                  placeholder={t('reportComments.cellPlaceholder', {
+                    defaultValue: '（未生成 — 撳右上重生）',
+                  })}
                 />
               </Card>
             ))}
           </div>
-        </>
+        </section>
+      ) : students.length === 0 ? (
+        <EmptyState
+          icon={Users}
+          title={t('reportComments.emptyNoStudentTitle', { defaultValue: '呢班未有學生' })}
+          hint={t('reportComments.emptyNoStudentHint', {
+            defaultValue: '揀返另一班，或去「班別管理」加學生先可以出評語。',
+          })}
+        />
+      ) : (
+        <EmptyState
+          icon={Sparkles}
+          title={t('reportComments.emptyReadyTitle', { defaultValue: '準備好出全班評語' })}
+          hint={t('reportComments.emptyReadyHint', {
+            defaultValue: '上面設定好語氣同長度，撳一下就一次過生成全班評語。',
+          })}
+          action={
+            <Button icon={Sparkles} onClick={runAll} loading={busy} disabled={students.length === 0}>
+              {busy
+                ? t('reportComments.generating', { defaultValue: '生成緊…' })
+                : t('reportComments.generateAll', { defaultValue: '生成全班評語' })}
+            </Button>
+          }
+        />
       )}
     </div>
   )

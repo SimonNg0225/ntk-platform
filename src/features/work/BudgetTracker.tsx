@@ -41,6 +41,7 @@ import {
   IconButton,
   Input,
   Modal,
+  PageHeader,
   Pills,
   ProgressBar,
   SectionTitle,
@@ -184,55 +185,41 @@ export default function BudgetTracker() {
 
   return (
     <div className="space-y-5">
-      {/* ───────── 帳本 masthead：serif 標題 + 月份翻揭 + 記一筆 ───────── */}
-      <header className="flex flex-wrap items-end justify-between gap-x-4 gap-y-3">
-        <div className="min-w-0">
-          <p className="text-[11px] font-medium uppercase tracking-[0.3em] text-accent/70">
-            Ledger · 流水帳
-          </p>
-          <h1 className="mt-1 text-2xl font-semibold leading-tight tracking-tight text-slate-800 dark:text-slate-100 sm:text-[28px]">
-            收支記帳
-          </h1>
-          <p className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-slate-500 dark:text-slate-400">
-            <span className="tabular-nums">{monthLabel(month)}</span>
-            <span aria-hidden="true" className="text-slate-300 dark:text-slate-600">·</span>
-            <span className="tabular-nums">
-              本月 {stats.count} 筆過帳
-            </span>
+      <PageHeader
+        icon={Wallet}
+        title="收支記帳"
+        description={`${monthLabel(month)} · 本月 ${stats.count} 筆過帳`}
+        actions={
+          <>
             {due.length > 0 && tab !== 'recurring' && (
-              <>
-                <span aria-hidden="true" className="text-slate-300 dark:text-slate-600">·</span>
-                <button
-                  onClick={() => setTab('recurring')}
-                  className="inline-flex items-center gap-1 font-medium text-amber-600 transition hover:text-amber-700 dark:text-amber-400 dark:hover:text-amber-300"
-                >
-                  <CalendarClock size={12} /> {due.length} 筆定期待入帳
-                </button>
-              </>
+              <button
+                onClick={() => setTab('recurring')}
+                className="inline-flex items-center gap-1 text-xs font-medium text-amber-600 transition hover:text-amber-700 dark:text-amber-400 dark:hover:text-amber-300"
+              >
+                <CalendarClock size={12} /> {due.length} 筆定期待入帳
+              </button>
             )}
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="flex items-center gap-0.5 rounded-full border border-slate-200/80 bg-white p-0.5 shadow-xs dark:border-slate-700/60 dark:bg-slate-800 dark:shadow-none">
-            <IconButton label="上個月" onClick={() => setMonth((m) => shiftMonth(m, -1))}>
-              <ChevronLeft size={18} />
-            </IconButton>
-            <button
-              onClick={() => setMonth(monthKey(new Date()))}
-              className="min-w-[6.5rem] rounded-full px-2.5 py-1 text-center text-sm font-semibold tabular-nums text-slate-800 transition hover:bg-slate-100 active:scale-[0.98] dark:text-slate-100 dark:hover:bg-slate-700"
-              title="返回本月"
-            >
-              {monthLabel(month)}
-            </button>
-            <IconButton label="下個月" onClick={() => setMonth((m) => shiftMonth(m, 1))}>
-              <ChevronRight size={18} />
-            </IconButton>
-          </div>
-          <Button icon={Plus} onClick={() => openAdd('expense')}>
-            記一筆
-          </Button>
-        </div>
-      </header>
+            <div className="flex items-center gap-0.5 rounded-full border border-slate-200/80 bg-white p-0.5 shadow-xs dark:border-slate-700/60 dark:bg-slate-800 dark:shadow-none">
+              <IconButton label="上個月" onClick={() => setMonth((m) => shiftMonth(m, -1))}>
+                <ChevronLeft size={18} />
+              </IconButton>
+              <button
+                onClick={() => setMonth(monthKey(new Date()))}
+                className="min-w-[6.5rem] rounded-full px-2.5 py-1 text-center text-sm font-semibold tabular-nums text-slate-800 transition hover:bg-slate-100 active:scale-[0.98] dark:text-slate-100 dark:hover:bg-slate-700"
+                title="返回本月"
+              >
+                {monthLabel(month)}
+              </button>
+              <IconButton label="下個月" onClick={() => setMonth((m) => shiftMonth(m, 1))}>
+                <ChevronRight size={18} />
+              </IconButton>
+            </div>
+            <Button icon={Plus} onClick={() => openAdd('expense')}>
+              記一筆
+            </Button>
+          </>
+        }
+      />
 
       {/* ───────── 結餘對帳單（單張帳本身分；ledger 行 + 帳簿側欄） ───────── */}
       <LedgerStatement stats={stats} expenseTrend={expenseTrend} />

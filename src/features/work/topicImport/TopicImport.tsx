@@ -1,16 +1,20 @@
 import { useMemo, useRef, useState } from 'react'
-import { Inbox, Upload, Camera, Sparkles, Check, Loader2, ListPlus, Replace } from 'lucide-react'
+import { Inbox, Upload, Camera, Sparkles, Check, Loader2, ListPlus, Replace, FileText, Settings } from 'lucide-react'
 import {
   Badge,
   Button,
   Card,
   EmptyState,
+  FeatureGuide,
+  PageHero,
   SegmentedControl,
   Textarea,
   Tooltip,
+  type FeatureGuideStep,
 } from '../../../ui'
 import { useToast } from '../../../context/ToastContext'
 import { useSettings } from '../../../context/SettingsContext'
+import { useNav } from '../../../context/NavContext'
 import { useCollection } from '../../../lib/store'
 import { complete, isAIConfigured, type AIMessage, type AIModel } from '../../../lib/aiClient'
 import { extractFromFile } from '../docDigest/extract'
@@ -30,8 +34,28 @@ const MODEL_OPTS: { id: AIModel; label: string }[] = [
   { id: 'gemini-2.5-pro', label: 'Pro' },
 ]
 
+const GUIDE_STEPS: FeatureGuideStep[] = [
+  {
+    title: '揀來源',
+    desc: '上載 PDF／Word 課程文件、貼上課題文字，或直接影相。',
+  },
+  {
+    title: '抽取課題',
+    desc: '撳「抽取課題」，AI 會讀內容、整理成一條條課題。',
+  },
+  {
+    title: '預覽確認',
+    desc: '按範疇分組睇清楚，確認抽得啱先載入。',
+  },
+  {
+    title: '載入做課題',
+    desc: '「附加」加喺後面；「智能切換」按課題名保留題庫／進度連繫。',
+  },
+]
+
 export default function TopicImport() {
   const toast = useToast()
+  const nav = useNav()
   const { subjectPackId } = useSettings()
   const subjectName = subjectPackId !== 'custom' ? getSubjectPack(subjectPackId)?.name : undefined
   const existing = useCollection(topicsCol)
@@ -112,28 +136,36 @@ export default function TopicImport() {
 
   if (!isAIConfigured) {
     return (
-      <EmptyState
-        icon={Inbox}
-        title="課題匯入未啟用"
-        hint="要設定好 Supabase 並部署 gemini Edge Function 先用到。"
-      />
+      <div className="space-y-5">
+        <PageHero
+          icon={Inbox}
+          kicker="Topic Import"
+          title="課題匯入"
+          description="上載官方課程指引，AI 抽出課題，一鍵載入做你科嘅課題。"
+        />
+        <EmptyState
+          icon={Inbox}
+          title="課題匯入未啟用"
+          hint="要設定好 Supabase 並部署 gemini Edge Function 先用到。步驟見 docs/SETUP.md。"
+        />
+      </div>
     )
   }
 
   return (
     <div className="space-y-5">
-      <header className="min-w-0">
-        <p className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.3em] text-accent/70">
-          <Inbox size={13} className="shrink-0" />
-          課程設定 · Topics
-        </p>
-        <h1 className="mt-1 text-[26px] font-semibold leading-none tracking-tight text-slate-800 dark:text-slate-100 sm:text-[30px]">
-          課題匯入
-        </h1>
-        <p className="mt-2 text-[13px] text-slate-500 dark:text-slate-400">
-          上載官方課程指引 / 補充資料 / syllabus，AI 抽出課題，一鍵載入做你科嘅課題（題庫、進度、出題、指引都會用）。
-        </p>
-      </header>
+      <PageHero
+        icon={Inbox}
+        kicker="Topic Import"
+        title="課題匯入"
+        description="上載官方課程指引／補充資料／syllabus，AI 抽出課題，一鍵載入做你科嘅課題（題庫、進度、出題、指引都會用）。"
+      />
+
+      <FeatureGuide
+        storageKey="topicImport"
+        title="課題匯入點用？"
+        steps={GUIDE_STEPS}
+      />
 
       <Card padded className="space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
@@ -163,59 +195,108 @@ export default function TopicImport() {
             <button
               type="button"
               onClick={() => fileInput.current?.click()}
-              className="flex w-full flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-black/[0.12] bg-slate-50/60 px-4 py-8 text-center transition hover:border-accent/40 hover:bg-accent-soft/40 dark:border-white/[0.12] dark:bg-slate-800/40"
+              className="flex w-full flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-accent/40 bg-accent-soft/50 px-4 py-8 text-center transition duration-200 hover:border-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98] dark:border-accent/40 dark:bg-accent/10 dark:hover:border-accent"
             >
-              {mode === 'photo' ? <Camera size={22} className="text-accent" /> : <Upload size={22} className="text-accent" />}
+              <span className="flex h-12 w-12 items-center justify-center rounded-full bg-accent text-white">
+                {mode === 'photo' ? <Camera size={22} strokeWidth={1.75} /> : <Upload size={22} strokeWidth={1.75} />}
+              </span>
               <span className="text-sm font-medium text-slate-600 dark:text-slate-300">
                 {file ? file.name : mode === 'photo' ? '影相 / 揀相片' : '揀 PDF / Word 課程文件'}
+              </span>
+              <span className="text-xs text-slate-400 dark:text-slate-500">
+                {file
+                  ? '撳「抽取課題」開始'
+                  : mode === 'photo'
+                    ? '對住課程文件影一張清晰相片'
+                    : '支援 PDF · Word · 純文字'}
               </span>
             </button>
           </div>
         )}
 
-        <div className="flex justify-end">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <p className="text-xs text-slate-400 dark:text-slate-500">
+            {hasInput ? '準備好喇，撳右邊抽取課題。' : '先揀來源（上載／貼文字／影相）。'}
+          </p>
           <Button icon={busy ? Loader2 : Sparkles} onClick={extract} loading={busy} disabled={!hasInput}>
             {busy ? '抽取中…' : '抽取課題'}
           </Button>
         </div>
       </Card>
 
-      {imported && (
-        <Card padded className="space-y-4 ring-1 ring-accent/20">
-          <div className="flex flex-wrap items-center gap-2">
-            <Badge tone="accent" icon={Check}>
-              {imported.length} 個課題
-            </Badge>
-            <span className="flex-1 text-[13px] text-slate-500 dark:text-slate-400">預覽 — 確認後載入</span>
-            <Button variant="secondary" size="sm" icon={ListPlus} onClick={loadAppend}>
-              附加
-            </Button>
-            <Button size="sm" icon={Replace} onClick={loadSmart}>
-              智能切換
-            </Button>
-          </div>
-          <div className="space-y-3">
-            {grouped.map(([area, items]) => (
-              <div key={area}>
-                <p className="mb-1 text-[11px] font-semibold text-accent-strong dark:text-accent">{area}</p>
-                <ul className="space-y-0.5">
-                  {items.map((it, i) => (
-                    <li key={i} className="flex gap-2 text-[13px] text-slate-700 dark:text-slate-200">
-                      <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-accent/50" />
-                      {it.topic}
-                      {it.part && <span className="text-[11px] text-slate-400">· {it.part}</span>}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
-        </Card>
-      )}
+      {imported ? (
+        imported.length > 0 ? (
+          <Card padded className="space-y-4 ring-1 ring-accent/20">
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge tone="accent" icon={Check}>
+                {imported.length} 個課題
+              </Badge>
+              <span className="flex-1 text-sm text-slate-500 dark:text-slate-400">預覽 — 確認後載入</span>
+              <Button variant="secondary" size="sm" icon={ListPlus} onClick={loadAppend}>
+                附加
+              </Button>
+              <Button size="sm" icon={Replace} onClick={loadSmart}>
+                智能切換
+              </Button>
+            </div>
+            <div className="space-y-3">
+              {grouped.map(([area, items]) => (
+                <div key={area}>
+                  <p className="mb-1.5 text-xs font-semibold text-slate-500 dark:text-slate-300">{area}</p>
+                  <ul className="space-y-1">
+                    {items.map((it, i) => (
+                      <li key={i} className="flex items-start gap-2 text-sm text-slate-700 dark:text-slate-200">
+                        <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-accent" />
+                        <span className="min-w-0">
+                          {it.topic}
+                          {it.part && <span className="ml-1 text-xs text-slate-400">· {it.part}</span>}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          </Card>
+        ) : (
+          <EmptyState
+            icon={FileText}
+            title="抽唔到課題"
+            hint="可能來源唔係課程文件，或者內容太少。換另一份文件，或試吓影相再抽。"
+            action={
+              <Button size="sm" variant="secondary" icon={Sparkles} onClick={() => setImported(null)}>
+                再試一次
+              </Button>
+            }
+          />
+        )
+      ) : null}
 
-      <p className="text-[11px] text-slate-400">
-        現時課題：{existing.length} 個。「附加」會加喺後面；「智能切換」會按課題名保留連繫（題庫/進度唔甩號），冇用嘅先清走。
-      </p>
+      {existing.length === 0 ? (
+        <section className="flex flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-slate-200/80 bg-slate-50/60 px-6 py-8 text-center dark:border-slate-700/60 dark:bg-slate-800/40">
+          <span className="flex h-12 w-12 items-center justify-center rounded-full bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
+            <Inbox size={22} strokeWidth={1.75} />
+          </span>
+          <p className="text-sm font-medium text-slate-600 dark:text-slate-300">你科仲未有課題</p>
+          <p className="max-w-xs text-xs text-slate-400 dark:text-slate-500">
+            上面抽取一份課程文件就會載入；或者去設定揀返任教科目，帶出官方課程大綱。
+          </p>
+          <button
+            type="button"
+            onClick={() => nav.open('settings')}
+            className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-accent transition hover:text-accent-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98]"
+          >
+            <Settings size={13} />
+            去設定揀科目 →
+          </button>
+        </section>
+      ) : (
+        <p className="text-xs text-slate-400 dark:text-slate-500">
+          現時課題：
+          <span className="font-semibold tabular-nums slashed-zero text-slate-500 dark:text-slate-300">{existing.length}</span>
+          {' '}個。「附加」會加喺後面；「智能切換」會按課題名保留連繫（題庫／進度唔甩號），冇用嘅先清走。
+        </p>
+      )}
     </div>
   )
 }

@@ -1,8 +1,9 @@
 import { useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useCollection } from '../../lib/store'
 import { quizAttemptsCol } from '../../data/collections'
-import { ClipboardList, Flame, History, Notebook, Swords, TrendingUp } from 'lucide-react'
-import { Tabs } from '../../ui'
+import { Flame, History, Notebook, Swords, TrendingUp } from 'lucide-react'
+import { FeatureGuide, type FeatureGuideStep, PageHero } from '../../ui'
 import { SetupView } from './quiz/SetupView'
 import { QuizRunner } from './quiz/Runner'
 import { ResultView } from './quiz/ResultView'
@@ -31,6 +32,7 @@ type View =
   | { name: 'result'; attemptId: string; settings: QuizSettings }
 
 export default function QuizMode() {
+  const { t } = useTranslation()
   const [tab, setTab] = useState<Tab>('quiz')
   const [view, setView] = useState<View>({ name: 'setup' })
 
@@ -53,6 +55,28 @@ export default function QuizMode() {
     setTab('quiz')
     setView({ name: 'setup', topicId })
   }
+
+  // 教學引導步驟（3 步；defaultValue 廣東話，唔改 i18n 檔）
+  const GUIDE_STEPS: FeatureGuideStep[] = [
+    {
+      title: t('quiz.guide1Title', { defaultValue: '揀賽制同範圍' }),
+      desc: t('quiz.guide1Desc', {
+        defaultValue: '揀練習 / 測驗 / 搶分，再揀課題、難度同題數，題目由你嘅題庫即時抽。',
+      }),
+    },
+    {
+      title: t('quiz.guide2Title', { defaultValue: '開始作答' }),
+      desc: t('quiz.guide2Desc', {
+        defaultValue: '逐題作答，完成後自動批改；可用鍵盤導航、標記題目同打亂選項。',
+      }),
+    },
+    {
+      title: t('quiz.guide3Title', { defaultValue: '睇統計、操練錯題' }),
+      desc: t('quiz.guide3Desc', {
+        defaultValue: '喺「統計」睇命中率走勢同課題掌握度，答錯嘅自動入「錯題本」集中重做。',
+      }),
+    },
+  ]
 
   // ── 做題中 / 結果頁：全屏接管（唔顯示 tabs）──
   if (view.name === 'quiz') {
@@ -79,48 +103,64 @@ export default function QuizMode() {
 
   return (
     <div className="space-y-5">
-      {/* ───────── 競技場 masthead：功能名做頁面身份（kicker 競技場 + serif「自我測驗」+ 賽季戰況行）───────── */}
-      <header className="flex flex-wrap items-end justify-between gap-x-4 gap-y-2">
-        <div className="min-w-0">
-          <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.3em] text-accent/70 dark:text-accent/80">
-            <Swords size={13} className="shrink-0" />
-            競技場 · Quiz Arena
-          </p>
-          <h1 className="mt-1 text-[28px] font-semibold leading-none tracking-tight text-slate-800 dark:text-slate-100 sm:text-[32px]">
-            自我測驗
-          </h1>
-          <p className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-slate-500 dark:text-slate-400">
-            <span className="inline-flex items-center gap-1">
-              <ClipboardList size={12} className="shrink-0 opacity-70" />
-              揀個賽制即刻開戰，自動批改、即睇掌握度
-            </span>
-            {attempts.length > 0 && (
-              <>
-                <span aria-hidden="true" className="text-slate-300 dark:text-slate-600">·</span>
-                <span className="tabular-nums">已戰 {attempts.length} 次</span>
-                {bestScore > 0 && (
-                  <>
-                    <span aria-hidden="true" className="text-slate-300 dark:text-slate-600">·</span>
-                    <span className="inline-flex items-center gap-1 font-medium text-amber-600 dark:text-amber-400">
-                      <Flame size={12} className="shrink-0" /> 最佳 {bestScore}%
-                    </span>
-                  </>
-                )}
-              </>
-            )}
-          </p>
-        </div>
-      </header>
+      {/* ───────── PageHero（共用 accent hero：icon chip + kicker + 標題 + 副題 + 戰績 + 分頁） ───────── */}
+      <PageHero
+        icon={Swords}
+        kicker={t('quiz.kicker', { defaultValue: '自學工具 · 由你嘅題庫即時出題' })}
+        title={t('quiz.title', { defaultValue: '自我測驗' })}
+        description={t('quiz.subtitle', {
+          defaultValue: '揀個賽制即刻開始，自動批改，即睇命中率同課題掌握度。',
+        })}
+        actions={
+          attempts.length > 0 ? (
+            <div className="flex shrink-0 items-center gap-2">
+              <span className="inline-flex items-center gap-1 rounded-full bg-white/15 px-2.5 py-0.5 text-[11px] font-medium text-white backdrop-blur-sm">
+                {t('quiz.doneCount', { defaultValue: '已測' })}
+                <span className="tabular-nums slashed-zero">{attempts.length}</span>
+                {t('quiz.doneUnit', { defaultValue: '次' })}
+              </span>
+              {bestScore > 0 && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-white/15 px-2.5 py-0.5 text-[11px] font-medium text-white backdrop-blur-sm">
+                  <Flame size={12} className="shrink-0" />
+                  {t('quiz.best', { defaultValue: '最佳' })}
+                  <span className="tabular-nums slashed-zero">{bestScore}%</span>
+                </span>
+              )}
+            </div>
+          ) : undefined
+        }
+        tabs={(
+          [
+            { id: 'quiz' as Tab, label: `測驗${attempts.length ? ` · ${attempts.length}` : ''}`, Icon: History },
+            { id: 'stats' as Tab, label: '統計', Icon: TrendingUp },
+            { id: 'mistakes' as Tab, label: `錯題本${activeMistakes ? ` · ${activeMistakes}` : ''}`, Icon: Notebook },
+          ] as const
+        ).map(({ id, label, Icon }) => {
+          const on = tab === id
+          return (
+            <button
+              key={id}
+              type="button"
+              onClick={() => setTab(id)}
+              className={
+                'inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold transition ' +
+                (on
+                  ? 'bg-white text-accent-strong'
+                  : 'bg-white/15 font-medium text-white hover:bg-white/25')
+              }
+            >
+              <Icon size={14} />
+              {label}
+            </button>
+          )
+        })}
+      />
 
-      <Tabs<Tab>
-        tabs={[
-          { id: 'quiz', label: `測驗${attempts.length ? ` · ${attempts.length}` : ''}` },
-          { id: 'stats', label: '統計' },
-          { id: 'mistakes', label: `錯題本${activeMistakes ? ` · ${activeMistakes}` : ''}` },
-        ]}
-        active={tab}
-        onChange={setTab}
-        icons={{ quiz: History, stats: TrendingUp, mistakes: Notebook }}
+      {/* ───────── 教學引導：點用呢個功能 ───────── */}
+      <FeatureGuide
+        storageKey="quiz"
+        title={t('quiz.guideTitle', { defaultValue: '自我測驗點用？' })}
+        steps={GUIDE_STEPS}
       />
 
       {tab === 'quiz' && (

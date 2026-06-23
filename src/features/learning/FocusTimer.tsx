@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { BarChart3, History, FolderKanban, Settings2, Flame, Timer } from 'lucide-react'
-import type { LucideIcon } from 'lucide-react'
-import { cx } from '../../ui'
+import { cx, PageHero, FeatureGuide, type FeatureGuideStep } from '../../ui'
 import { useCollection } from '../../lib/store'
 import {
   focusLogsCol,
@@ -23,15 +23,8 @@ import type { FocusSettings } from './focus/types'
 
 type TabId = 'timer' | 'stats' | 'history' | 'projects' | 'settings'
 
-const TABS: { id: TabId; label: string; icon: LucideIcon }[] = [
-  { id: 'timer', label: '計時', icon: Timer },
-  { id: 'stats', label: '數據', icon: BarChart3 },
-  { id: 'history', label: '紀錄', icon: History },
-  { id: 'projects', label: '專案', icon: FolderKanban },
-  { id: 'settings', label: '設定', icon: Settings2 },
-]
-
 export default function FocusTimer() {
+  const { t } = useTranslation()
   const logs = useCollection(focusLogsCol)
   const projects = useCollection(focusProjectsCol)
   const settingsAll = useCollection(focusSettingsCol)
@@ -56,85 +49,114 @@ export default function FocusTimer() {
     }
   }, [logs])
 
+  const tabs: { id: TabId; label: string }[] = [
+    { id: 'timer', label: t('focus.tabTimer', { defaultValue: '計時' }) },
+    { id: 'stats', label: t('focus.tabStats', { defaultValue: '數據' }) },
+    { id: 'history', label: t('focus.tabHistory', { defaultValue: '紀錄' }) },
+    { id: 'projects', label: t('focus.tabProjects', { defaultValue: '專案' }) },
+    { id: 'settings', label: t('focus.tabSettings', { defaultValue: '設定' }) },
+  ]
+
+  const guideSteps: FeatureGuideStep[] = [
+    {
+      title: t('focus.guide1Title', { defaultValue: '揀時長同事項' }),
+      desc: t('focus.guide1Desc', {
+        defaultValue: '喺「計時」揀番專注時長，想記錄做緊邊樣就揀返專案。',
+      }),
+    },
+    {
+      title: t('focus.guide2Title', { defaultValue: '開始專注' }),
+      desc: t('focus.guide2Desc', {
+        defaultValue: '撳開始，期間放低手機；完成一節會自動入「紀錄」。',
+      }),
+    },
+    {
+      title: t('focus.guide3Title', { defaultValue: '休息再開' }),
+      desc: t('focus.guide3Desc', {
+        defaultValue: '一節完會提你小休，循環幾節之後就有長休。',
+      }),
+    },
+    {
+      title: t('focus.guide4Title', { defaultValue: '睇返成果' }),
+      desc: t('focus.guide4Desc', {
+        defaultValue: '去「數據」睇專注趨勢同連續日，保持節奏。',
+      }),
+    },
+  ]
+
   const onTimer = tab === 'timer'
 
+  const tabIcons: Record<TabId, typeof Timer> = {
+    timer: Timer,
+    stats: BarChart3,
+    history: History,
+    projects: FolderKanban,
+    settings: Settings2,
+  }
+
+  // 今日狀態副題（原 masthead 副題搬入 hero description）
+  const heroDesc =
+    todaySessions > 0
+      ? t('focus.todayDone', {
+          n: todaySessions,
+          dur: fmtDuration(todayMin),
+          defaultValue: `今日已完成 ${todaySessions} 節 · ${fmtDuration(todayMin)}`,
+        })
+      : t('focus.todayStart', { defaultValue: '準備好就由一節開始' })
+
   return (
-    <div className="space-y-8">
-      {/* ── 靜謐 masthead：置中、留白、似一頁禪修扉頁；功能名「專注計時器」做頁面身份 ── */}
-      <header className="flex flex-col items-center pt-1 text-center">
-        <p className="flex items-center justify-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.28em] text-accent/70">
-          <Timer size={13} className="shrink-0" />
-          專注計時器 · Focus Timer
-        </p>
-        <h1 className="mt-2.5 text-[28px] font-semibold leading-none tracking-tight text-slate-800 dark:text-slate-100 sm:text-[34px]">
-          靜下來，做一件事
-        </h1>
-        {/* 今日節奏：一句溫和摘要，唔用搶眼 badge */}
-        <p className="mt-3 flex flex-wrap items-center justify-center gap-x-2.5 gap-y-1 text-[13px] text-slate-500 dark:text-slate-400">
-          {todaySessions > 0 ? (
-            <span className="tabular-nums">
-              今日已完成{' '}
-              <span className="font-semibold text-slate-700 dark:text-slate-200">
-                {todaySessions}
-              </span>{' '}
-              節 · {fmtDuration(todayMin)}
+    <div className="w-full space-y-5 p-4">
+      {/* ───────── 共用 PageHero（accent hero）：icon + 標題 + 今日狀態 + 連續日 + 分頁 ───────── */}
+      <PageHero
+        icon={Timer}
+        kicker={t('focus.kicker', { defaultValue: '學習成長 · 深度專注' })}
+        title={t('focus.title', { defaultValue: '專注計時器' })}
+        description={heroDesc}
+        actions={
+          streak > 0 ? (
+            <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-xs font-semibold text-white backdrop-blur-sm">
+              <Flame size={13} className="shrink-0" />
+              <span className="tabular-nums slashed-zero">
+                {t('focus.streakDays', {
+                  n: streak,
+                  defaultValue: `連續 ${streak} 日`,
+                })}
+              </span>
             </span>
-          ) : (
-            <span>準備好就由一節開始</span>
-          )}
-          {streak > 0 && (
-            <>
-              <span aria-hidden="true" className="text-slate-300 dark:text-slate-600">
-                ·
-              </span>
-              <span className="inline-flex items-center gap-1 text-amber-600 dark:text-amber-400">
-                <Flame size={13} className="shrink-0" />
-                <span className="tabular-nums">連續 {streak} 日</span>
-              </span>
-            </>
-          )}
-        </p>
-      </header>
+          ) : undefined
+        }
+        tabs={tabs.map((tb) => {
+          const I = tabIcons[tb.id]
+          const on = tab === tb.id
+          return (
+            <button
+              key={tb.id}
+              type="button"
+              onClick={() => setTab(tb.id)}
+              aria-pressed={on}
+              className={cx(
+                'inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60',
+                on
+                  ? 'bg-white font-semibold text-accent-strong'
+                  : 'bg-white/15 text-white hover:bg-white/25',
+              )}
+            >
+              <I size={14} />
+              {tb.label}
+            </button>
+          )
+        })}
+      />
 
-      {/* ── 安靜索引：底線式 tab，唔搶計時盤風頭 ── */}
-      <nav
-        aria-label="專注番茄鐘分頁"
-        className="-mx-1 overflow-x-auto"
-      >
-        <div className="mx-auto flex w-max min-w-full items-center justify-center gap-1 border-b border-slate-200/70 px-1 dark:border-slate-700/50">
-          {TABS.map((t) => {
-            const on = tab === t.id
-            const Icon = t.icon
-            return (
-              <button
-                key={t.id}
-                type="button"
-                aria-current={on ? 'page' : undefined}
-                onClick={() => setTab(t.id)}
-                className={cx(
-                  'group relative inline-flex items-center gap-1.5 whitespace-nowrap px-3 py-2.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-900',
-                  on
-                    ? 'text-accent-strong dark:text-accent'
-                    : 'text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300',
-                )}
-              >
-                <Icon size={15} className="shrink-0" />
-                {t.label}
-                <span
-                  aria-hidden="true"
-                  className={cx(
-                    'absolute inset-x-2 -bottom-px h-0.5 rounded-full transition-all duration-300',
-                    on ? 'bg-accent opacity-100' : 'bg-transparent opacity-0',
-                  )}
-                />
-              </button>
-            )
-          })}
-        </div>
-      </nav>
+      {/* ───────── 教學引導：點用呢個功能 ───────── */}
+      <FeatureGuide
+        storageKey="focus-timer"
+        title={t('focus.guideTitle', { defaultValue: '專注計時器點用？' })}
+        steps={guideSteps}
+      />
 
-      {/* 計時盤要大量留白；其餘數據頁回到常規節奏 */}
-      <div className={cx('animate-fade-in', onTimer && 'pb-6 pt-2 sm:pt-6')}>
+      {/* 計時盤要多啲留白；其餘數據頁回到常規節奏 */}
+      <div className={cx('animate-fade-in', onTimer && 'pt-1 sm:pt-3')}>
         {tab === 'timer' && (
           <TimerView
             settings={settings}

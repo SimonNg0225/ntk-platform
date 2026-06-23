@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useCollection } from '../../lib/store'
 import { lessonPlansCol, classesCol, topicsCol } from '../../data/collections'
 import type { LessonPlan } from '../../data/types'
@@ -19,8 +20,11 @@ import {
   ProgressBar,
   Menu,
   Pills,
+  FeatureGuide,
+  PageHero,
   cx,
 } from '../../ui'
+import type { FeatureGuideStep } from '../../ui'
 import {
   Plus,
   Pencil,
@@ -106,6 +110,7 @@ export default function LessonPlanner() {
   const templates = useCollection(planTemplatesCol)
   const toast = useToast()
   const confirm = useConfirm()
+  const { t } = useTranslation()
   const { subjectPackId } = useSettings()
   const subjectName =
     subjectPackId && subjectPackId !== 'custom'
@@ -117,6 +122,37 @@ export default function LessonPlanner() {
   )
 
   const [view, setView] = useState<View>('list')
+
+  // 功能教學引導（2–4 步，針對備課流程）
+  const guideSteps: FeatureGuideStep[] = [
+    {
+      title: t('lessonPlanner.guide1Title', { defaultValue: '新增或揀範本' }),
+      desc: t('lessonPlanner.guide1Desc', {
+        defaultValue:
+          '撳「新增」由零開始，或撳「範本」套用現成教學環節骨架，慳返時間。',
+      }),
+    },
+    {
+      title: t('lessonPlanner.guide2Title', { defaultValue: '排教學環節' }),
+      desc: t('lessonPlanner.guide2Desc', {
+        defaultValue:
+          '逐個環節填時間同教材，系統會自動加總一堂分鐘數，方便控時。',
+      }),
+    },
+    {
+      title: t('lessonPlanner.guide3Title', { defaultValue: '切換備課狀態' }),
+      desc: t('lessonPlanner.guide3Desc', {
+        defaultValue:
+          '撳教案上嘅狀態章，由「草稿 → 就緒 → 已授」推進，一眼睇晒進度。',
+      }),
+    },
+    {
+      title: t('lessonPlanner.guide4Title', { defaultValue: '睇覆蓋分析' }),
+      desc: t('lessonPlanner.guide4Desc', {
+        defaultValue: '轉去「覆蓋分析」睇邊啲課題未備，撳一下即建立對應教案。',
+      }),
+    },
+  ]
 
   // 篩選 / 搜尋 / 排序
   const [filterClass, setFilterClass] = useState('')
@@ -538,46 +574,22 @@ export default function LessonPlanner() {
 
   return (
     <div className="space-y-5">
-      {/* ───────── Masthead：accent hero（對齊工作儀表板卡片語言） ───────── */}
-      <header className="relative overflow-hidden rounded-2xl bg-accent px-5 py-5 text-white shadow-sm sm:px-7 sm:py-6">
-        <span
-          aria-hidden="true"
-          className="pointer-events-none absolute -right-16 -top-20 h-56 w-56 rounded-full bg-white/10 blur-3xl"
-        />
-        <span
-          aria-hidden="true"
-          className="pointer-events-none absolute -bottom-24 -left-10 h-48 w-48 rounded-full bg-white/[0.06] blur-3xl"
-        />
-        <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-start gap-3.5">
-            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/15 text-white ring-1 ring-inset ring-white/20 backdrop-blur-sm">
-              <GraduationCap size={24} strokeWidth={1.75} />
-            </span>
-            <div className="min-w-0">
-              <p className="text-[11px] font-medium uppercase tracking-[0.32em] text-white/70">
-                教師備課桌
-              </p>
-              <h1 className="mt-1 text-[26px] font-semibold leading-tight tracking-tight text-white sm:text-3xl">
-                備課 / 教案
-              </h1>
-              <p className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-white/80">
-                <span className="tabular-nums">在備 {stats.total} 份教案</span>
-                {stats.thisWeek > 0 && (
-                  <>
-                    <span aria-hidden="true" className="text-white/40">·</span>
-                    <span className="inline-flex items-center gap-1 font-medium">
-                      <CalendarRange size={12} /> 本週 {stats.thisWeek} 堂
-                    </span>
-                  </>
-                )}
-              </p>
-            </div>
-          </div>
-          <div className="flex shrink-0 flex-wrap items-center gap-2">
+      {/* ───────── Masthead：共用 PageHero（accent hero） ───────── */}
+      <PageHero
+        icon={GraduationCap}
+        kicker={t('lessonPlanner.kicker', { defaultValue: '教師備課桌' })}
+        title={t('lessonPlanner.title', { defaultValue: '備課 / 教案' })}
+        description={
+          stats.thisWeek > 0
+            ? `在備 ${stats.total} 份教案 · 本週 ${stats.thisWeek} 堂`
+            : `在備 ${stats.total} 份教案`
+        }
+        actions={
+          <>
             <button
               type="button"
               onClick={() => setTemplatesOpen(true)}
-              className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-white/20 bg-white/10 px-3 text-sm font-medium text-white backdrop-blur-sm transition active:scale-[0.98] hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
+              className="inline-flex items-center gap-1.5 rounded-xl bg-white/15 px-3 py-1.5 text-sm font-medium backdrop-blur-sm transition hover:bg-white/25"
             >
               <FileText size={15} />
               範本
@@ -585,7 +597,7 @@ export default function LessonPlanner() {
             <button
               type="button"
               onClick={() => openCreate()}
-              className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-white/20 bg-white/10 px-3 text-sm font-medium text-white backdrop-blur-sm transition active:scale-[0.98] hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
+              className="inline-flex items-center gap-1.5 rounded-xl bg-white/15 px-3 py-1.5 text-sm font-medium backdrop-blur-sm transition hover:bg-white/25"
             >
               <Plus size={16} />
               新增
@@ -594,15 +606,22 @@ export default function LessonPlanner() {
               <button
                 type="button"
                 onClick={() => setAiOpen(true)}
-                className="inline-flex h-9 items-center gap-1.5 rounded-xl bg-white px-3.5 text-sm font-semibold text-accent-strong shadow-sm transition active:scale-[0.98] hover:bg-accent-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
+                className="inline-flex items-center gap-1.5 rounded-xl bg-white px-3.5 py-1.5 text-sm font-semibold !text-accent-strong shadow-sm transition hover:bg-accent-soft"
               >
                 <Sparkles size={16} />
                 AI 整教案
               </button>
             )}
-          </div>
-        </div>
-      </header>
+          </>
+        }
+      />
+
+      {/* ───────── 教學引導：教用家點用備課功能（可摺疊・可永久收起） ───────── */}
+      <FeatureGuide
+        storageKey="lesson-planner"
+        title={t('lessonPlanner.guideTitle', { defaultValue: '備課 / 教案點用？' })}
+        steps={guideSteps}
+      />
 
       {/* ───────── 備課曆書帶：細口統計（hairline grid · serif 大數字） ───────── */}
       <section className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl bg-slate-200/70 ring-1 ring-slate-200/80 dark:bg-slate-700/50 dark:ring-slate-700/60 sm:grid-cols-4">
@@ -996,7 +1015,7 @@ export default function LessonPlanner() {
                               setEditingId(null)
                               setEditorOpen(true)
                             }}
-                            className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2 py-1 text-xs text-slate-600 transition active:scale-[0.98] hover:bg-accent-soft hover:text-accent-strong dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-accent/15 dark:hover:text-accent"
+                            className="inline-flex items-center gap-1 rounded-lg bg-slate-100 px-2 py-1 text-xs text-slate-600 transition active:scale-[0.98] hover:bg-accent-soft hover:text-accent-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-accent/15 dark:hover:text-accent"
                           >
                             <Plus size={11} />
                             {t.topic}

@@ -3,9 +3,8 @@ import {
   Plus,
   TrendingUp,
   Flag,
-  Footprints,
-  Mountain,
-  MountainSnow,
+  Target,
+  CircleDashed,
   Search,
   LayoutGrid,
   List,
@@ -13,7 +12,8 @@ import {
   CalendarClock,
   ChevronRight,
   CheckCircle2,
-  Tent,
+  PauseCircle,
+  Sparkles,
 } from 'lucide-react'
 import { useCollection, uid } from '../../lib/store'
 import { goalsCol } from '../../data/collections'
@@ -28,6 +28,9 @@ import {
   Select,
   SectionTitle,
   Tabs,
+  FeatureGuide,
+  PageHero,
+  type FeatureGuideStep,
   cx,
 } from '../../ui'
 import { useToast } from '../../context/ToastContext'
@@ -53,7 +56,7 @@ import {
   STATUS_FILTERS,
   type StatusFilter,
 } from './goals/util'
-import { StatusDonut, CategoryBars, AscentMeter } from './goals/Charts'
+import { StatusDonut, CategoryBars } from './goals/Charts'
 import GoalEditor, { type EditorSeed } from './goals/GoalEditor'
 import GoalDetail from './goals/GoalDetail'
 
@@ -72,14 +75,34 @@ interface EnrichedGoal {
   momentum: number
 }
 
-// 登山語境：每個進度區間對應一句「攀升狀態」+ 海拔感詞彙
-function altitudeLabel(progress: number, isDone: boolean): string {
-  if (isDone) return '已登頂'
-  if (progress >= 75) return '逼近山頂'
-  if (progress >= 40) return '穩步上山'
+// 進度區間對應一句簡短狀態（清晰、唔花巧）
+function progressLabel(progress: number, isDone: boolean): string {
+  if (isDone) return '已完成'
+  if (progress >= 75) return '快完成'
+  if (progress >= 40) return '進行中'
   if (progress > 0) return '剛起步'
-  return '喺山腳'
+  return '未開始'
 }
+
+// 功能教學引導（2–4 步）
+const GUIDE_STEPS: FeatureGuideStep[] = [
+  {
+    title: '新增一個目標',
+    desc: '撳「新目標」，或喺上方輸入框打個名快速加。',
+  },
+  {
+    title: '拆做里程碑',
+    desc: '入去目標細拆成幾個小步驟，進度會自動跟住更新。',
+  },
+  {
+    title: '記低進度',
+    desc: '完成里程碑或簽到打卡，保持動力。',
+  },
+  {
+    title: '睇統計',
+    desc: '切去「統計」分頁，一眼睇晒狀態同各分類進度。',
+  },
+]
 
 export default function GoalsWidget() {
   const goals = useCollection(goalsCol)
@@ -263,30 +286,35 @@ export default function GoalsWidget() {
 
   return (
     <div className="space-y-6">
-      {/* ───────── 攀登誌 masthead：頁面身份（kicker + serif 功能名「個人目標」）───────── */}
-      <header className="flex flex-wrap items-end justify-between gap-x-4 gap-y-3">
-        <div className="min-w-0">
-          <p className="inline-flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.3em] text-accent/70">
-            <Mountain size={13} className="shrink-0" />
-            攀登誌 · Summit Log
-          </p>
-          <h1 className="mt-1 text-2xl font-semibold leading-tight tracking-tight text-slate-800 dark:text-slate-100 sm:text-[28px]">
-            個人目標
-          </h1>
-          <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">
-            揀座山頭、拆里程碑，一步步攀上去。
-          </p>
-        </div>
-        {!hasGoals && (
-          <Button icon={Plus} onClick={openNew} className="shrink-0">
-            新目標
-          </Button>
-        )}
-      </header>
+      {/* ───────── Page header：共用 PageHero（accent hero） ───────── */}
+      <PageHero
+        icon={Target}
+        kicker="Goals"
+        title="個人目標"
+        description="訂目標、拆里程碑，逐步達成。"
+        actions={
+          hasGoals ? (
+            <button
+              type="button"
+              onClick={openNew}
+              className="inline-flex items-center gap-1.5 rounded-xl bg-white/15 px-3 py-1.5 text-sm font-medium backdrop-blur-sm transition hover:bg-white/25"
+            >
+              <Plus size={15} /> 新目標
+            </button>
+          ) : undefined
+        }
+      />
 
-      {/* ───────── 大本營：攀升主視覺（整體海拔 / 動量）───────── */}
+      {/* ───────── 教學引導：點用呢個功能 ───────── */}
+      <FeatureGuide
+        storageKey="goals"
+        title="個人目標點用？"
+        steps={GUIDE_STEPS}
+      />
+
+      {/* ───────── Hero：整體進度概覽 ───────── */}
       {hasGoals && (
-        <BaseCamp
+        <GoalsHero
           avg={stats.avg}
           total={stats.total}
           done={stats.done}
@@ -294,42 +322,45 @@ export default function GoalsWidget() {
           dueSoon={stats.dueSoon}
           overdue={stats.overdue}
           checkinDays={stats.checkinDays}
-          onNew={openNew}
         />
       )}
 
-      {/* 快速新增：山腳起步 */}
-      <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-slate-200/80 bg-slate-50/60 p-2 dark:border-slate-700/60 dark:bg-slate-800/40">
-        <Input
-          value={quick}
-          onChange={(e) => setQuick(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && quickAdd()}
-          placeholder="想攻頂啲咩？寫低一個目標就出發…"
-          icon={Footprints}
-          className="min-w-[12rem] flex-1 border-transparent bg-white shadow-none dark:bg-slate-900/40"
-        />
-        <Button onClick={quickAdd} icon={Plus} variant="secondary" className="shrink-0">
-          快速加
-        </Button>
-        <Button onClick={openNew} icon={Plus} className="hidden shrink-0 sm:inline-flex">
-          細拆路線
-        </Button>
-      </div>
+      {/* 快速新增 */}
+      {hasGoals && (
+        <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-slate-200/80 bg-slate-50/60 p-2 dark:border-slate-700/60 dark:bg-slate-800/40">
+          <Input
+            value={quick}
+            onChange={(e) => setQuick(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && quickAdd()}
+            placeholder="想達成啲咩？寫低一個目標…"
+            icon={Plus}
+            className="min-w-[12rem] flex-1 border-transparent bg-white shadow-none dark:bg-slate-900/40"
+          />
+          <Button onClick={quickAdd} icon={Plus} variant="secondary" className="shrink-0">
+            快速加
+          </Button>
+          <Button onClick={openNew} icon={Target} className="hidden shrink-0 sm:inline-flex">
+            細拆里程碑
+          </Button>
+        </div>
+      )}
 
       {/* 視圖切換 */}
-      <Tabs<ViewId>
-        tabs={[
-          { id: 'board', label: '路線圖' },
-          { id: 'list', label: '清單' },
-          { id: 'insights', label: '統計' },
-        ]}
-        active={view}
-        onChange={setView}
-        icons={{ board: LayoutGrid, list: List, insights: PieChart }}
-      />
+      {hasGoals && (
+        <Tabs<ViewId>
+          tabs={[
+            { id: 'board', label: '看板' },
+            { id: 'list', label: '清單' },
+            { id: 'insights', label: '統計' },
+          ]}
+          active={view}
+          onChange={setView}
+          icons={{ board: LayoutGrid, list: List, insights: PieChart }}
+        />
+      )}
 
       {/* 篩選列（board / list 共用）*/}
-      {view !== 'insights' && (
+      {hasGoals && view !== 'insights' && (
         <div className="space-y-3">
           <Pills<CatFilter>
             options={[{ id: 'all', label: '全部' }, ...CATEGORIES.map((c) => ({ id: c.id, label: c.label }))]}
@@ -355,8 +386,8 @@ export default function GoalsWidget() {
             />
             <Select value={sort} onChange={(e) => setSort(e.target.value as SortId)} className="sm:w-44">
               <option value="recent">最新建立</option>
-              <option value="progress">海拔（高→低）</option>
-              <option value="momentum">攀升動量（近 14 日）</option>
+              <option value="progress">進度（高→低）</option>
+              <option value="momentum">動量（近 14 日）</option>
               <option value="due">截止日（近→遠）</option>
               <option value="priority">優先程度</option>
               <option value="name">名稱</option>
@@ -375,20 +406,20 @@ export default function GoalsWidget() {
       {/* ───────── 內容 ───────── */}
       {enriched.length === 0 ? (
         <EmptyState
-          icon={MountainSnow}
+          icon={Target}
           art="empty-goals"
-          title="仲未有要攀嘅山"
-          hint="揀一個想達成嘅目標當山頂，拆成幾個沿途里程碑，一步步行上去。"
+          title="仲未有目標"
+          hint="訂一個想達成嘅目標，拆成幾個小里程碑，逐步行落去。"
           action={
             <Button onClick={openNew} icon={Plus}>
-              立一個山頭
+              新增第一個目標
             </Button>
           }
         />
       ) : view === 'insights' ? (
         <InsightsView donutSegments={donutSegments} total={stats.total} categoryRows={categoryRows} avg={stats.avg} />
       ) : filtered.length === 0 ? (
-        <EmptyState icon={Search} title="呢條路線冇目標" hint="試吓換個分類，或者清除搜尋。" />
+        <EmptyState icon={Search} title="冇符合嘅目標" hint="試吓換個分類，或者清除搜尋。" />
       ) : view === 'board' ? (
         <BoardView items={filtered} onOpen={setDetailId} grouped={!isFiltering} />
       ) : (
@@ -408,9 +439,9 @@ export default function GoalsWidget() {
 }
 
 // ============================================================
-//  大本營 Hero — 整體攀升概覽（海拔錶 + 沿途數字 + 等高線底紋）
+//  Hero — 整體進度概覽（accent 實色底，跟工作儀表板 hero）
 // ============================================================
-function BaseCamp({
+function GoalsHero({
   avg,
   total,
   done,
@@ -418,7 +449,6 @@ function BaseCamp({
   dueSoon,
   overdue,
   checkinDays,
-  onNew,
 }: {
   avg: number
   total: number
@@ -427,79 +457,60 @@ function BaseCamp({
   dueSoon: number
   overdue: number
   checkinDays: number
-  onNew: () => void
 }) {
-  // 攀升提示：用整體海拔 + 逾期/快到期狀況講一句有溫度嘅話
-  const summitLine =
+  // 一句狀態：按整體進度 + 逾期/快到期情況
+  const line =
     total > 0 && done === total
-      ? '全部山頭都登頂喇，犀利！'
+      ? '所有目標都完成喇，做得好！'
       : overdue > 0
-        ? `有 ${overdue} 個目標蘇州過後，今日追返少少？`
+        ? `有 ${overdue} 個目標已逾期，今日追返少少？`
         : dueSoon > 0
-          ? `${dueSoon} 個山頭就到頂，加把勁衝刺。`
+          ? `${dueSoon} 個目標快到期，加把勁衝刺。`
           : avg >= 75
-            ? '大隊已逼近山頂，最後一段最關鍵。'
+            ? '大部分已接近完成，最後一段最關鍵。'
             : avg >= 40
-              ? '穩步上山中，保持節奏。'
-              : '啱啱由山腳出發，行多步得多步。'
+              ? '穩步推進中，保持節奏。'
+              : '啱啱起步，行多步得多步。'
+
+  const headline = done === total && total > 0 ? '全部完成' : `進行中 ${active} 個目標`
 
   return (
-    <section className="hero-gradient relative isolate overflow-hidden rounded-3xl p-5 text-white shadow-lg shadow-accent/25 sm:p-6">
-      {/* 等高線 / 山稜底紋（純裝飾，pointer-events-none）*/}
-      <div aria-hidden="true" className="pointer-events-none absolute inset-0 opacity-[0.18]">
-        <svg className="h-full w-full" viewBox="0 0 400 200" preserveAspectRatio="xMidYMax slice">
-          {/* 三層等高山稜，由淺入深疊出縱深感 */}
-          <path d="M0 200 L70 118 L130 150 L210 70 L280 116 L340 60 L400 104 L400 200 Z" fill="white" opacity="0.18" />
-          <path d="M0 200 L60 150 L140 168 L220 120 L300 156 L360 118 L400 150 L400 200 Z" fill="white" opacity="0.22" />
-          <path d="M0 200 L90 176 L170 188 L250 162 L330 184 L400 172 L400 200 Z" fill="white" opacity="0.3" />
-        </svg>
-      </div>
-      <div aria-hidden="true" className="pointer-events-none absolute -right-10 -top-12 h-44 w-44 rounded-full bg-white/10 blur-2xl" />
+    <section className="relative flex flex-col justify-between gap-5 overflow-hidden rounded-2xl bg-accent p-5 text-white shadow-sm sm:flex-row sm:items-end sm:gap-4">
+      {/* 左：身份 + 一句狀態 + 沿途數字 */}
+      <div className="min-w-0">
+        <p className="text-xs font-medium text-white/70">個人目標</p>
+        <h2 className="mt-2 text-2xl font-semibold tracking-tight">{headline}</h2>
+        <p className="mt-3 max-w-md text-sm text-white/80" aria-live="polite">
+          {line}
+        </p>
 
-      <div className="relative flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
-        {/* 左：身份 + 攀升提示 */}
-        <div className="min-w-0">
-          <p className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.28em] text-white/70">
-            <Mountain size={13} />
-            攀登中
-          </p>
-          <h2 className="mt-2 text-2xl font-semibold leading-tight tracking-tight sm:text-[28px]">
-            {done === total && total > 0 ? '全員登頂' : `攀緊 ${active} 座山`}
-          </h2>
-          <p className="mt-1.5 max-w-md text-sm leading-relaxed text-white/75">{summitLine}</p>
-
-          {/* 沿途數字：細口 hairline，唔搶海拔錶 */}
-          <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-white/80">
-            <span className="inline-flex items-center gap-1.5">
-              <Flag size={13} className="text-white/60" />
-              <span className="text-base font-semibold tabular-nums">{total}</span> 個山頭
-            </span>
-            <span aria-hidden="true" className="h-3 w-px bg-white/20" />
-            <span className="inline-flex items-center gap-1.5">
-              <CheckCircle2 size={13} className="text-white/60" />
-              <span className="text-base font-semibold tabular-nums">{done}</span> 已登頂
-            </span>
-            <span aria-hidden="true" className="h-3 w-px bg-white/20" />
-            <span className="inline-flex items-center gap-1.5">
-              <Footprints size={13} className="text-white/60" />
-              本週行咗 <span className="text-base font-semibold tabular-nums">{checkinDays}</span> 日
-            </span>
-          </div>
+        <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-white/80">
+          <span className="inline-flex items-center gap-1.5">
+            <Flag size={13} className="text-white/60" />
+            <span className="text-base font-semibold tabular-nums slashed-zero">{total}</span> 個目標
+          </span>
+          <span aria-hidden="true" className="h-3 w-px bg-white/20" />
+          <span className="inline-flex items-center gap-1.5">
+            <CheckCircle2 size={13} className="text-white/60" />
+            <span className="text-base font-semibold tabular-nums slashed-zero">{done}</span> 已完成
+          </span>
+          <span aria-hidden="true" className="h-3 w-px bg-white/20" />
+          <span className="inline-flex items-center gap-1.5">
+            <Sparkles size={13} className="text-white/60" />
+            本週打卡 <span className="text-base font-semibold tabular-nums slashed-zero">{checkinDays}</span> 日
+          </span>
         </div>
+      </div>
 
-        {/* 右：海拔錶（整體平均進度做攀升軌跡）*/}
-        <div className="flex shrink-0 items-center gap-4 self-stretch sm:self-auto">
-          <AscentMeter value={avg} />
-          <div className="hidden sm:block">
-            <Button
-              onClick={onNew}
-              variant="secondary"
-              icon={Plus}
-              className="border-white/30 bg-white/15 text-white backdrop-blur hover:bg-white/25 dark:border-white/20 dark:bg-white/15 dark:text-white dark:hover:bg-white/25"
-            >
-              新目標
-            </Button>
-          </div>
+      {/* 右：整體進度（平均完成度）*/}
+      <div className="shrink-0 sm:w-56">
+        <p className="text-xs text-white/70">整體進度</p>
+        <p className="mt-0.5 text-4xl font-semibold tabular-nums slashed-zero">
+          {avg}
+          <span className="ml-1 text-sm font-medium text-white/60">%</span>
+        </p>
+        <div className="mt-2.5 h-2 w-full overflow-hidden rounded-full bg-white/20">
+          <div className="h-full rounded-full bg-white transition-all duration-700" style={{ width: `${avg}%` }} />
         </div>
       </div>
     </section>
@@ -507,7 +518,7 @@ function BaseCamp({
 }
 
 // ============================================================
-//  路線圖視圖（按攀升階段分欄；篩選時退為單一網格）
+//  看板視圖（按狀態分欄；篩選時退為單一網格）
 // ============================================================
 function BoardView({
   items,
@@ -521,17 +532,41 @@ function BoardView({
   if (!grouped) {
     return (
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        {items.map((e, i) => (
-          <GoalCard key={e.goal.id} e={e} onOpen={onOpen} index={i} />
+        {items.map((e) => (
+          <GoalCard key={e.goal.id} e={e} onOpen={onOpen} />
         ))}
       </div>
     )
   }
-  // 攀升三階段：上山中 / 紮營休息 / 已登頂
-  const columns: { id: GoalMeta['status']; label: string; empty: string; icon: typeof Mountain }[] = [
-    { id: 'active', label: '上山中', empty: '冇山頭喺路上，立一個？', icon: Footprints },
-    { id: 'paused', label: '紮營休息', empty: '冇暫停嘅山頭', icon: Tent },
-    { id: 'done', label: '已登頂', empty: '仲未登頂任何山頭', icon: MountainSnow },
+  // 三種狀態：進行中 / 暫停 / 已完成
+  const columns: {
+    id: GoalMeta['status']
+    label: string
+    empty: string
+    icon: typeof Target
+    chip: string
+  }[] = [
+    {
+      id: 'active',
+      label: '進行中',
+      empty: '冇進行中嘅目標',
+      icon: CircleDashed,
+      chip: 'bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent',
+    },
+    {
+      id: 'paused',
+      label: '暫停',
+      empty: '冇暫停嘅目標',
+      icon: PauseCircle,
+      chip: 'bg-amber-50 text-amber-600 dark:bg-amber-500/15 dark:text-amber-300',
+    },
+    {
+      id: 'done',
+      label: '已完成',
+      empty: '仲未完成任何目標',
+      icon: CheckCircle2,
+      chip: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-300',
+    },
   ]
   return (
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
@@ -542,7 +577,7 @@ function BoardView({
         return (
           <div key={col.id} className="space-y-2.5">
             <div className="flex items-center gap-2 px-1">
-              <span className={cx('inline-flex h-6 w-6 items-center justify-center rounded-lg', col.id === 'done' ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-300' : col.id === 'paused' ? 'bg-amber-50 text-amber-600 dark:bg-amber-500/15 dark:text-amber-300' : 'bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent')}>
+              <span className={cx('inline-flex h-6 w-6 items-center justify-center rounded-lg', col.chip)}>
                 <ColIcon size={14} />
               </span>
               <Badge tone={st.tone as 'accent'} dot>
@@ -551,12 +586,12 @@ function BoardView({
               <span className="text-xs font-medium tabular-nums text-slate-400">{colItems.length}</span>
             </div>
             {colItems.length === 0 ? (
-              <div className="flex flex-col items-center gap-1.5 rounded-3xl border border-dashed border-slate-200/80 bg-slate-50/40 px-3 py-8 text-center dark:border-slate-700/60 dark:bg-slate-800/30">
-                <ColIcon size={20} className="text-slate-300 dark:text-slate-600" />
+              <div className="flex flex-col items-center gap-1.5 rounded-2xl border border-dashed border-slate-200/80 bg-slate-50/60 px-3 py-8 text-center dark:border-slate-700/60 dark:bg-slate-800/40">
+                <ColIcon size={20} strokeWidth={1.75} className="text-slate-300 dark:text-slate-600" />
                 <span className="text-xs text-slate-400 dark:text-slate-500">{col.empty}</span>
               </div>
             ) : (
-              colItems.map((e, i) => <GoalCard key={e.goal.id} e={e} onOpen={onOpen} index={i} />)
+              colItems.map((e) => <GoalCard key={e.goal.id} e={e} onOpen={onOpen} />)
             )}
           </div>
         )
@@ -566,63 +601,54 @@ function BoardView({
 }
 
 // ============================================================
-//  清單視圖（密集列；快速掃描）— 左側海拔軌
+//  清單視圖（密集列；快速掃描）
 // ============================================================
 function ListView({ items, onOpen }: { items: EnrichedGoal[]; onOpen: (id: string) => void }) {
   return (
     <ul className="space-y-2">
-      {items.map((e, i) => {
+      {items.map((e) => {
         const cat = catMeta(e.meta?.category)
         const due = dueLabel(e.meta?.targetDate)
         const doneMs = e.milestones.filter((m) => m.done).length
         const CatIcon = cat.icon
         const isDone = e.status === 'done'
         return (
-          <li key={e.goal.id} className="animate-fade-in-up" style={{ animationDelay: `${Math.min(i, 12) * 28}ms` }}>
+          <li key={e.goal.id}>
             <button
               type="button"
               onClick={() => onOpen(e.goal.id)}
-              className="group flex w-full items-stretch gap-0 overflow-hidden rounded-2xl border border-slate-200/80 bg-white text-left shadow-xs transition duration-200 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98] dark:border-slate-700/60 dark:bg-slate-800 dark:shadow-none dark:hover:border-slate-600"
+              className="group flex w-full items-center gap-3 rounded-2xl border border-slate-200/80 bg-white p-3 text-left transition duration-200 hover:border-slate-300 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98] dark:border-slate-700/60 dark:bg-slate-800 dark:hover:border-slate-600"
             >
-              {/* 左側垂直海拔軌：填到對應高度 */}
-              <span aria-hidden="true" className="relative w-1.5 shrink-0 bg-slate-100 dark:bg-slate-700/70">
-                <span
-                  className={cx('absolute inset-x-0 bottom-0 rounded-t-full transition-all duration-500', isDone ? 'bg-emerald-500' : 'bg-accent')}
-                  style={{ height: `${Math.max(4, e.progress)}%` }}
-                />
+              <span className={cx('inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-xl ring-1 ring-inset', cat.ring, cat.text)}>
+                <CatIcon size={15} />
               </span>
-              <div className="flex flex-1 items-center gap-3 p-3">
-                <span className={cx('inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-xl ring-1 ring-inset', cat.ring, cat.text)}>
-                  <CatIcon size={15} />
+              <div className="min-w-0 flex-1">
+                <span className={cx(
+                  'block truncate text-sm font-medium',
+                  isDone ? 'text-slate-400' : 'text-slate-800 dark:text-slate-100',
+                )}>
+                  {e.goal.title}
                 </span>
-                <div className="min-w-0 flex-1">
-                  <span className={cx(
-                    'block truncate text-sm font-medium',
-                    isDone ? 'text-slate-400' : 'text-slate-800 dark:text-slate-100',
-                  )}>
-                    {e.goal.title}
-                  </span>
-                  <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500 dark:text-slate-400">
-                    <span className="text-slate-400 dark:text-slate-500">{altitudeLabel(e.progress, isDone)}</span>
-                    {e.milestones.length > 0 && (
-                      <span className="inline-flex items-center gap-1">
-                        <Flag size={11} className="text-slate-400" />
-                        <span className="tabular-nums">
-                          {doneMs}/{e.milestones.length}
-                        </span>
+                <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500 dark:text-slate-400">
+                  <span className="text-slate-400 dark:text-slate-500">{progressLabel(e.progress, isDone)}</span>
+                  {e.milestones.length > 0 && (
+                    <span className="inline-flex items-center gap-1">
+                      <Flag size={11} className="text-slate-400" />
+                      <span className="tabular-nums">
+                        {doneMs}/{e.milestones.length}
                       </span>
-                    )}
-                    {due && (
-                      <span className={cx('inline-flex items-center gap-1', due.tone === 'rose' ? 'font-medium text-rose-500' : due.tone === 'amber' && 'text-amber-600 dark:text-amber-400')}>
-                        <CalendarClock size={11} />
-                        {due.text}
-                      </span>
-                    )}
-                  </div>
+                    </span>
+                  )}
+                  {due && (
+                    <span className={cx('inline-flex items-center gap-1', due.tone === 'rose' ? 'font-medium text-rose-500' : due.tone === 'amber' && 'text-amber-600 dark:text-amber-400')}>
+                      <CalendarClock size={11} />
+                      {due.text}
+                    </span>
+                  )}
                 </div>
-                <span className={cx('shrink-0 text-lg font-semibold tabular-nums', isDone ? 'text-emerald-500' : 'text-accent')}>{e.progress}%</span>
-                <ChevronRight size={16} className="shrink-0 text-slate-300 transition-transform duration-200 group-hover:translate-x-0.5 dark:text-slate-600" />
               </div>
+              <span className={cx('shrink-0 text-lg font-semibold tabular-nums slashed-zero', isDone ? 'text-emerald-500' : 'text-accent')}>{e.progress}%</span>
+              <ChevronRight size={16} className="shrink-0 text-slate-300 transition-transform duration-200 group-hover:translate-x-0.5 dark:text-slate-600" />
             </button>
           </li>
         )
@@ -632,24 +658,24 @@ function ListView({ items, onOpen }: { items: EnrichedGoal[]; onOpen: (id: strin
 }
 
 // ============================================================
-//  目標卡（路線圖用）— 攀升軌跡 + 里程碑沿途節點
+//  目標卡（看板用）— 進度條 + 里程碑計數
 // ============================================================
-function GoalCard({ e, onOpen, index }: { e: EnrichedGoal; onOpen: (id: string) => void; index: number }) {
+function GoalCard({ e, onOpen }: { e: EnrichedGoal; onOpen: (id: string) => void }) {
   const cat = catMeta(e.meta?.category)
   const pr = priorityMeta(e.meta?.priority)
   const due = dueLabel(e.meta?.targetDate)
   const doneMs = e.milestones.filter((m) => m.done).length
   const CatIcon = cat.icon
   const isDone = e.status === 'done'
+  const v = Math.max(0, Math.min(100, e.progress))
   return (
     <button
       type="button"
       onClick={() => onOpen(e.goal.id)}
-      style={{ animationDelay: `${Math.min(index, 12) * 32}ms` }}
-      className="group flex w-full animate-fade-in-up flex-col rounded-3xl border border-slate-200/80 bg-white p-4 text-left shadow-xs transition duration-200 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98] dark:border-slate-700/60 dark:bg-slate-800 dark:shadow-none dark:hover:border-slate-600"
+      className="group flex w-full flex-col rounded-2xl border border-slate-200/80 bg-white p-4 text-left transition duration-200 hover:border-slate-300 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98] dark:border-slate-700/60 dark:bg-slate-800 dark:hover:border-slate-600"
     >
       <div className="flex items-start gap-2.5">
-        <span className={cx('flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl ring-1 ring-inset transition duration-200 group-hover:scale-105', cat.ring, cat.text)}>
+        <span className={cx('flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ring-1 ring-inset', cat.ring, cat.text)}>
           <CatIcon size={17} />
         </span>
         <div className="min-w-0 flex-1">
@@ -662,23 +688,28 @@ function GoalCard({ e, onOpen, index }: { e: EnrichedGoal; onOpen: (id: string) 
           <p className="mt-0.5 flex items-center gap-1.5 text-xs text-slate-400 dark:text-slate-500">
             <span className="truncate">{cat.label}</span>
             <span aria-hidden="true" className="text-slate-300 dark:text-slate-600">·</span>
-            <span className="shrink-0">{altitudeLabel(e.progress, isDone)}</span>
+            <span className="shrink-0">{progressLabel(e.progress, isDone)}</span>
           </p>
         </div>
         {isDone ? (
-          <MountainSnow size={18} className="shrink-0 text-emerald-500" />
+          <CheckCircle2 size={18} className="shrink-0 text-emerald-500" />
         ) : (
           e.meta?.priority === 'high' && <Flag size={15} className="mt-0.5 shrink-0 text-rose-500" />
         )}
       </div>
 
-      {/* 攀升軌跡：水平路徑 + 里程碑沿途節點 + 終點旗（serif 海拔數字）*/}
+      {/* 進度：條 + 百分比 */}
       <div className="mt-4">
-        <AscentTrail progress={e.progress} milestones={e.milestones} isDone={isDone} />
+        <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-700">
+          <div
+            className={cx('h-full rounded-full transition-all duration-500 ease-out', isDone ? 'bg-emerald-500' : 'bg-accent')}
+            style={{ width: `${v}%` }}
+          />
+        </div>
         <div className="mt-2 flex items-baseline justify-between">
-          <span className="text-[11px] font-medium uppercase tracking-wide text-slate-400 dark:text-slate-500">海拔</span>
-          <span className={cx('text-xl font-semibold leading-none tabular-nums', isDone ? 'text-emerald-500' : 'text-accent')}>
-            {e.progress}<span className="ml-0.5 text-xs font-sans font-medium text-slate-400">%</span>
+          <span className="text-[11px] font-medium text-slate-400 dark:text-slate-500">完成度</span>
+          <span className={cx('text-xl font-semibold leading-none tabular-nums slashed-zero', isDone ? 'text-emerald-500' : 'text-accent')}>
+            {e.progress}<span className="ml-0.5 text-xs font-medium text-slate-400">%</span>
           </span>
         </div>
       </div>
@@ -706,66 +737,6 @@ function GoalCard({ e, onOpen, index }: { e: EnrichedGoal; onOpen: (id: string) 
   )
 }
 
-// ───────── 攀升軌跡（卡內）：路徑線 + 已行段填色 + 里程碑節點 + 終點旗 ─────────
-function AscentTrail({
-  progress,
-  milestones,
-  isDone,
-}: {
-  progress: number
-  milestones: Milestone[]
-  isDone: boolean
-}) {
-  const fill = isDone ? 'bg-emerald-500' : 'bg-accent'
-  const v = Math.max(0, Math.min(100, progress))
-  // 里程碑沿路徑均分做節點（最多顯示 6 個，避免細卡擠擁）
-  const shown = milestones.slice(0, 6)
-  const n = shown.length
-  return (
-    <div className="relative h-3.5">
-      {/* 底軌 */}
-      <span aria-hidden="true" className="absolute inset-x-0 top-1/2 h-1.5 -translate-y-1/2 rounded-full bg-slate-100 dark:bg-slate-700/70" />
-      {/* 已攀升段 */}
-      <span
-        aria-hidden="true"
-        className={cx('absolute left-0 top-1/2 h-1.5 -translate-y-1/2 rounded-full transition-all duration-500 ease-out', fill)}
-        style={{ width: `${v}%` }}
-      />
-      {/* 里程碑沿途節點 */}
-      {n > 0 &&
-        shown.map((m, i) => {
-          // 均分定位（首站近起點、尾站近終點），避免重疊端點旗
-          const pos = n === 1 ? 50 : (i / (n - 1)) * 92 + 4
-          return (
-            <span
-              key={m.id}
-              aria-hidden="true"
-              className={cx(
-                'absolute top-1/2 h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full ring-2 ring-white transition-colors dark:ring-slate-800',
-                m.done ? (isDone ? 'bg-emerald-500' : 'bg-accent') : 'bg-slate-300 dark:bg-slate-600',
-              )}
-              style={{ left: `${pos}%` }}
-            />
-          )
-        })}
-      {/* 終點：山頂旗 */}
-      <span
-        aria-hidden="true"
-        className={cx(
-          'absolute right-0 top-1/2 flex h-5 w-5 -translate-y-1/2 translate-x-1 items-center justify-center rounded-full ring-2 transition-colors',
-          isDone
-            ? 'bg-emerald-500 text-white ring-white dark:ring-slate-800'
-            : v >= 100
-              ? 'bg-accent text-white ring-white dark:ring-slate-800'
-              : 'bg-white text-slate-300 ring-slate-200 dark:bg-slate-800 dark:text-slate-500 dark:ring-slate-600',
-        )}
-      >
-        <Flag size={11} className={isDone || v >= 100 ? 'fill-current' : ''} />
-      </span>
-    </div>
-  )
-}
-
 // ============================================================
 //  統計視圖（自製圖表）
 // ============================================================
@@ -782,16 +753,18 @@ function InsightsView({
 }) {
   return (
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-      <Card className="rounded-3xl p-4 sm:p-5">
-        <SectionTitle icon={PieChart}>登山隊狀態</SectionTitle>
+      <Card className="p-4 sm:p-5">
+        <SectionTitle icon={PieChart}>目標狀態</SectionTitle>
         <div className="flex justify-center py-2">
           <StatusDonut segments={donutSegments} total={total} />
         </div>
       </Card>
 
-      <Card className="rounded-3xl p-4 sm:p-5">
-        <SectionTitle icon={TrendingUp}>各路線平均海拔</SectionTitle>
-        <p className="mb-3 text-xs text-slate-400">整體平均海拔 <span className="text-sm font-semibold tabular-nums text-accent">{avg}%</span></p>
+      <Card className="p-4 sm:p-5">
+        <SectionTitle icon={TrendingUp}>各分類平均進度</SectionTitle>
+        <p className="mb-3 text-xs text-slate-400">
+          整體平均 <span className="text-sm font-semibold tabular-nums slashed-zero text-accent">{avg}%</span>
+        </p>
         <CategoryBars rows={categoryRows} />
       </Card>
     </div>

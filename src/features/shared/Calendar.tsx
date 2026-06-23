@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { CalendarArrowDown, CalendarRange, ChevronLeft, ChevronRight, Dot, Plus, SlidersHorizontal, Smartphone } from 'lucide-react'
+import { CalendarArrowDown, CalendarDays, CalendarPlus, ChevronLeft, ChevronRight, Dot, Plus, SlidersHorizontal, Smartphone } from 'lucide-react'
 import { useCollection } from '../../lib/store'
 import { eventsCol, calendarsCol, countdownsCol } from '../../data/collections'
 import type { CalendarEvent } from '../../data/types'
-import { Button, IconButton, SegmentedControl, cx } from '../../ui'
+import { Button, FeatureGuide, IconButton, PageHero, SegmentedControl, cx } from '../../ui'
 import { useToast } from '../../context/ToastContext'
 import EventEditor from './calendar/EventEditor'
 import MonthView from './calendar/MonthView'
@@ -33,12 +33,12 @@ const VIEWS: { id: View; label: string }[] = [
   { id: 'year', label: '年' },
 ]
 
-// 標題上方嘅小字眉題（按視圖換口吻，呼應「精緻週記」氣質）
+// 工具列嘅小字眉題（slate kicker，純中文唔用 uppercase；點明而家睇緊邊個範圍）
 const VIEW_EYEBROW: Record<View, string> = {
-  day: 'Today',
-  week: 'This Week',
-  month: 'This Month',
-  year: 'This Year',
+  day: '當日',
+  week: '本週',
+  month: '本月',
+  year: '全年',
 }
 
 function addMonths(d: Date, n: number): Date {
@@ -157,35 +157,66 @@ export default function Calendar() {
     calendarsCol.update(id, { visible: !visible })
   }
 
+  // 副題用嘅事件統計（顯示中行事曆嘅事件數；純呈現，唔影響資料流）
+  const visibleEventCount = useMemo(() => {
+    const hidden = new Set(cals.filter((c) => !c.visible).map((c) => c.id))
+    // 未指定行事曆嘅事件當顯示；其餘睇所屬行事曆有冇被收起
+    return events.filter((e) => !e.calendarId || !hidden.has(e.calendarId)).length
+  }, [events, cals])
+
   return (
     <div className="flex h-[78vh] flex-col gap-4">
-      {/* ───────── 週記 masthead：功能名「行事曆」做頁面身份（kicker + serif 大標題）───────── */}
-      <header className="min-w-0">
-        <p className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.3em] text-accent/70">
-          <CalendarRange size={13} className="shrink-0" />
-          日程週記 · Calendar
-        </p>
-        <h1 className="mt-1 text-[26px] font-semibold leading-none tracking-tight text-slate-800 dark:text-slate-100 sm:text-[30px]">
-          行事曆
-        </h1>
-      </header>
+      {/* ───────── 頁頂 accent hero（共用 PageHero，統一各功能頁頂部語言）───────── */}
+      <PageHero
+        icon={CalendarDays}
+        kicker={t('cal.kicker', { defaultValue: '日程行事曆' })}
+        title={t('cal.title', { defaultValue: '行事曆' })}
+        description={t('cal.subtitle', {
+          n: visibleEventCount,
+          defaultValue: `共 ${visibleEventCount} 項活動 · 日 / 週 / 月 / 年 · 重複事件 · 匯出訂閱`,
+        })}
+      />
+
+      {/* ───────── 教學引導：教用家點用行事曆（可摺疊 + 可永久收起）───────── */}
+      <FeatureGuide
+        storageKey="calendar"
+        title={t('cal.guideTitle', { defaultValue: '行事曆點用？' })}
+        steps={[
+          {
+            title: t('cal.guideStep1Title', { defaultValue: '揀檢視範圍' }),
+            desc: t('cal.guideStep1Desc', { defaultValue: '右上揀「日 / 週 / 月 / 年」，用箭咀前後翻，按「今日」即刻跳返今天。' }),
+          },
+          {
+            title: t('cal.guideStep2Title', { defaultValue: '加活動' }),
+            desc: t('cal.guideStep2Desc', { defaultValue: '撳「新增」，或喺週／日格直接撳一格揀時段；要重複嘅喺編輯窗設定。' }),
+          },
+          {
+            title: t('cal.guideStep3Title', { defaultValue: '用顏色分類' }),
+            desc: t('cal.guideStep3Desc', { defaultValue: '撳色標籤可即時收起／顯示該類行事曆；按「管理」改名同顏色。' }),
+          },
+          {
+            title: t('cal.guideStep4Title', { defaultValue: '匯出或訂閱手機' }),
+            desc: t('cal.guideStep4Desc', { defaultValue: '「匯出 .ics」存檔，或「訂閱到手機日曆」一拉就同步入電話。' }),
+          },
+        ]}
+      />
 
       {/* 工具列 — 當前日期 + 前後／今日導覽，右邊放檢視切換同新增 */}
       <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
         <div className="min-w-0">
-          <p className="text-[11px] font-medium uppercase tracking-[0.3em] text-accent/70">
+          <p className="text-xs font-medium text-slate-400 dark:text-slate-500">
             {VIEW_EYEBROW[view]}
           </p>
-          <h2 className="mt-0.5 text-xl font-semibold leading-none tracking-tight text-slate-700 dark:text-slate-200 sm:text-2xl">
+          <h2 className="mt-0.5 text-xl font-semibold tracking-tight text-slate-700 dark:text-slate-200 sm:text-2xl">
             {title}
           </h2>
         </div>
         <div className="flex items-center gap-1.5">
-          <div className="flex items-center rounded-full border border-slate-200/80 bg-white p-0.5 shadow-xs dark:border-slate-700/60 dark:bg-slate-800 dark:shadow-none">
-            <IconButton label="上一個" onClick={() => nav(-1)}>
+          <div className="flex items-center rounded-full border border-slate-200/80 bg-white p-0.5 dark:border-slate-700/60 dark:bg-slate-800">
+            <IconButton label={t('cal.prev', { defaultValue: '上一個' })} onClick={() => nav(-1)}>
               <ChevronLeft size={18} />
             </IconButton>
-            <IconButton label="下一個" onClick={() => nav(1)}>
+            <IconButton label={t('cal.next', { defaultValue: '下一個' })} onClick={() => nav(1)}>
               <ChevronRight size={18} />
             </IconButton>
           </div>
@@ -193,17 +224,17 @@ export default function Calendar() {
             <button
               type="button"
               onClick={() => setCursor(new Date())}
-              className="inline-flex items-center gap-1 rounded-full border border-slate-200/80 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 shadow-xs transition duration-200 hover:border-accent/40 hover:text-accent active:scale-[0.98] dark:border-slate-700/60 dark:bg-slate-800 dark:text-slate-300 dark:shadow-none dark:hover:text-accent"
+              className="inline-flex items-center gap-1 rounded-full border border-slate-200/80 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 transition duration-200 hover:border-slate-300 hover:text-accent active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:border-slate-700/60 dark:bg-slate-800 dark:text-slate-300 dark:hover:border-slate-600 dark:hover:text-accent"
             >
               <Dot size={16} className="-mx-1 text-accent" />
-              今日
+              {t('cal.today', { defaultValue: '今日' })}
             </button>
           )}
         </div>
         <div className="flex-1" />
         <SegmentedControl options={VIEWS} value={view} onChange={setView} />
         <Button size="sm" icon={Plus} onClick={openCreate}>
-          新增
+          {t('cal.new', { defaultValue: '新增' })}
         </Button>
       </div>
 
@@ -285,22 +316,37 @@ export default function Calendar() {
             <button
               type="button"
               onClick={openCreate}
-              className="inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium text-accent transition active:scale-[0.98] active:opacity-70"
+              className="inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium text-accent transition hover:text-accent-strong active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
             >
-              <Plus size={14} /> 新增
+              <Plus size={14} /> {t('cal.new', { defaultValue: '新增' })}
             </button>
           </div>
           {(occByDate.get(cursorKey) ?? []).length === 0 ? (
-            <p className="px-1 py-4 text-center text-sm text-slate-400 dark:text-slate-500">
-              呢日冇活動
-            </p>
+            <div className="flex flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-slate-200/80 bg-slate-50/60 px-6 py-8 text-center dark:border-slate-700/60 dark:bg-slate-800/40">
+              <span className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500">
+                <CalendarPlus size={22} strokeWidth={1.75} />
+              </span>
+              <p className="text-sm font-medium text-slate-600 dark:text-slate-300">
+                {t('cal.emptyDayTitle', { defaultValue: '呢日仲未有安排' })}
+              </p>
+              <p className="max-w-xs text-xs text-slate-400 dark:text-slate-500">
+                {t('cal.emptyDayHint', { defaultValue: '撳一下加返堂、會議或提醒，今日就一目了然。' })}
+              </p>
+              <button
+                type="button"
+                onClick={openCreate}
+                className="mt-1 text-xs font-medium text-accent transition hover:text-accent-strong active:scale-[0.98]"
+              >
+                {t('cal.emptyDayCta', { defaultValue: '加第一項活動 →' })}
+              </button>
+            </div>
           ) : (
             (occByDate.get(cursorKey) ?? []).map((occ) => (
               <button
                 key={`${occ.event.id}-${occ.dateKey}`}
                 type="button"
                 onClick={() => openEdit(occ.event, occ.dateKey)}
-                className="flex w-full items-center gap-2.5 rounded-xl border border-slate-200/70 bg-white px-3 py-2.5 text-left shadow-xs transition active:scale-[0.98] active:bg-slate-50 dark:border-slate-700/60 dark:bg-slate-800 dark:active:bg-slate-700/60"
+                className="flex w-full items-center gap-2.5 rounded-xl border border-slate-200/80 bg-white px-3 py-2.5 text-left transition hover:border-slate-300 hover:bg-slate-50 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:border-slate-700/60 dark:bg-slate-800 dark:hover:border-slate-600 dark:hover:bg-slate-800/60"
               >
                 <span
                   className={cx(

@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   Compass,
   Target,
@@ -14,6 +15,8 @@ import {
   GraduationCap,
   FileText,
   Printer,
+  Settings,
+  Wand2,
   type LucideIcon,
 } from 'lucide-react'
 import {
@@ -21,14 +24,16 @@ import {
   Button,
   Card,
   EmptyState,
+  FeatureGuide,
   Field,
   IconButton,
-  SectionTitle,
+  PageHero,
   SegmentedControl,
   Select,
   Textarea,
   Tooltip,
   cx,
+  type FeatureGuideStep,
 } from '../../../ui'
 import { useToast } from '../../../context/ToastContext'
 import { useConfirm } from '../../../context/ConfirmContext'
@@ -64,6 +69,13 @@ const SECTIONS: {
   { key: 'assessment', label: '評估方式', icon: ClipboardCheck, tone: 'slate' },
 ]
 
+const GUIDE_STEPS: FeatureGuideStep[] = [
+  { title: '揀課題', desc: '喺上方揀返今次想備課嘅課題；課題嚟自你嘅課程大綱。' },
+  { title: '補充背景（選填）', desc: '可填班級程度、節數、想強調嘅角度，AI 會貼住嚟出。' },
+  { title: '生成指引', desc: '一鍵出齊重點、學生常見誤解、教學步驟、活動、差異化同評估。' },
+  { title: '下載或接落去', desc: '可匯出 Word／PDF，或直接跳去生成教材、教案、測驗。' },
+]
+
 function fmtDate(iso: string): string {
   try {
     const d = new Date(iso)
@@ -74,6 +86,7 @@ function fmtDate(iso: string): string {
 }
 
 export default function TeachGuide() {
+  const { t } = useTranslation()
   const toast = useToast()
   const confirm = useConfirm()
   const nav = useNav()
@@ -147,120 +160,218 @@ export default function TeachGuide() {
 
   if (!isAIConfigured) {
     return (
-      <EmptyState
-        icon={Compass}
-        title="教學指引未啟用"
-        hint="要設定好 Supabase 並部署 gemini Edge Function 先用到。步驟見 docs/SETUP.md。"
-      />
+      <div className="space-y-5">
+        <PageHero
+          icon={Compass}
+          kicker={t('teachGuide.kicker', { defaultValue: 'Teaching Guide' })}
+          title={t('teachGuide.title', { defaultValue: '教學指引' })}
+          description={t('teachGuide.subtitle', {
+            defaultValue: '揀一個課題，AI 教你「點教」：重點、誤解、步驟、活動、差異化、評估。',
+          })}
+        />
+        <EmptyState
+          icon={Compass}
+          title={t('teachGuide.aiOffTitle', { defaultValue: '教學指引未啟用' })}
+          hint={t('teachGuide.aiOffHint', {
+            defaultValue:
+              '要設定好 Supabase 並部署 gemini Edge Function 先用到。步驟見 docs/SETUP.md。',
+          })}
+        />
+      </div>
     )
   }
 
   return (
     <div className="space-y-5">
-      <header className="min-w-0">
-        <p className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.3em] text-accent/70">
-          <Compass size={13} className="shrink-0" />
-          教學備課 · Teaching Guide
-        </p>
-        <h1 className="mt-1 text-[26px] font-semibold leading-none tracking-tight text-slate-800 dark:text-slate-100 sm:text-[30px]">
-          教學指引
-        </h1>
-        <p className="mt-2 text-[13px] text-slate-500 dark:text-slate-400">
-          揀一個課題，AI 教你「點教」：重點、學生常見誤解、教學步驟、活動、差異化、評估。
-        </p>
-      </header>
+      <PageHero
+        icon={Compass}
+        kicker={t('teachGuide.kicker', { defaultValue: 'Teaching Guide' })}
+        title={t('teachGuide.title', { defaultValue: '教學指引' })}
+        description={t('teachGuide.subtitle', {
+          defaultValue: '揀一個課題，AI 教你「點教」：重點、誤解、步驟、活動、差異化、評估。',
+        })}
+      />
 
-      {/* 輸入 */}
-      <Card padded className="space-y-3">
-        <div className="grid gap-3 sm:grid-cols-2">
-          <Field label="課題">
-            <Select value={topicId} onChange={(e) => setTopicId(e.target.value)}>
-              {topics.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.topic}
-                </option>
-              ))}
-            </Select>
-          </Field>
-          <Field label="模型">
-            <Tooltip label="Flash 快 · Pro 強">
-              <SegmentedControl options={MODEL_OPTIONS} value={model} onChange={setModel} />
-            </Tooltip>
-          </Field>
-        </div>
-        <Field label="補充（選填）" hint="例如班級程度、想強調嘅角度、節數">
-          <Textarea
-            rows={2}
-            value={extra}
-            onChange={(e) => setExtra(e.target.value)}
-            placeholder="例：中四基礎班，2 節，想多啲生活例子"
-          />
-        </Field>
-        <div className="flex justify-end">
-          <Button icon={Sparkles} onClick={run} loading={busy} disabled={topics.length === 0}>
-            {busy ? '生成緊…' : '生成指引'}
-          </Button>
-        </div>
-      </Card>
+      <FeatureGuide
+        storageKey="teachGuide"
+        title={t('teachGuide.guideTitle', { defaultValue: '教學指引點用？' })}
+        steps={GUIDE_STEPS}
+      />
 
-      {/* 生成教材（跳去現有功能） */}
-      <Card padded className="flex flex-wrap items-center gap-2">
-        <span className="mr-1 text-[13px] font-medium text-slate-500 dark:text-slate-400">
-          生成教材：
-        </span>
-        <Button variant="secondary" size="sm" icon={Sparkles} onClick={() => nav.open('work-generate')}>
-          教材生成
-        </Button>
-        <Button variant="secondary" size="sm" icon={NotebookPen} onClick={() => nav.open('work-lesson-plan')}>
-          備課 / 教案
-        </Button>
-        <Button variant="secondary" size="sm" icon={GraduationCap} onClick={() => nav.open('quiz')}>
-          自我測驗
-        </Button>
-      </Card>
+      {topics.length === 0 ? (
+        <EmptyState
+          icon={Compass}
+          title={t('teachGuide.noTopicTitle', { defaultValue: '仲未有課題' })}
+          hint={t('teachGuide.noTopicHint', {
+            defaultValue: '先去設定揀返你嘅任教科目，就會帶出課程大綱嘅課題畀你備課。',
+          })}
+          action={
+            <Button
+              size="sm"
+              variant="secondary"
+              icon={Settings}
+              onClick={() => nav.open('__settings__')}
+            >
+              {t('teachGuide.goSettings', { defaultValue: '去設定揀科目' })}
+            </Button>
+          }
+        />
+      ) : (
+        <>
+          {/* 輸入：揀課題 → 補充 → 生成（純展示卡） */}
+          <section className="rounded-2xl border border-slate-200/80 bg-white p-4 dark:border-slate-700/60 dark:bg-slate-800">
+            <div className="mb-3 flex items-center gap-1.5 text-xs font-semibold text-slate-500 dark:text-slate-300">
+              <Wand2 size={13} />
+              {t('teachGuide.composeHeading', { defaultValue: '生成教學指引' })}
+            </div>
+            <div className="space-y-3">
+              <div className="grid gap-3 sm:grid-cols-2">
+                <Field label={t('teachGuide.topicLabel', { defaultValue: '課題' })}>
+                  <Select value={topicId} onChange={(e) => setTopicId(e.target.value)}>
+                    {topics.map((tp) => (
+                      <option key={tp.id} value={tp.id}>
+                        {tp.topic}
+                      </option>
+                    ))}
+                  </Select>
+                </Field>
+                <Field label={t('teachGuide.modelLabel', { defaultValue: '模型' })}>
+                  <Tooltip label={t('teachGuide.modelHint', { defaultValue: 'Flash 快 · Pro 強' })}>
+                    <SegmentedControl options={MODEL_OPTIONS} value={model} onChange={setModel} />
+                  </Tooltip>
+                </Field>
+              </div>
+              <Field
+                label={t('teachGuide.extraLabel', { defaultValue: '補充（選填）' })}
+                hint={t('teachGuide.extraHint', {
+                  defaultValue: '例如班級程度、想強調嘅角度、節數',
+                })}
+              >
+                <Textarea
+                  rows={2}
+                  value={extra}
+                  onChange={(e) => setExtra(e.target.value)}
+                  placeholder={t('teachGuide.extraPlaceholder', {
+                    defaultValue: '例：中四基礎班，2 節，想多啲生活例子',
+                  })}
+                />
+              </Field>
+              <div className="flex justify-end">
+                <Button icon={Sparkles} onClick={run} loading={busy}>
+                  {busy
+                    ? t('teachGuide.generating', { defaultValue: '生成緊…' })
+                    : t('teachGuide.generate', { defaultValue: '生成指引' })}
+                </Button>
+              </div>
+            </div>
+          </section>
+
+          {/* 接落去：跳去其他教材功能（純展示卡） */}
+          <section className="rounded-2xl border border-slate-200/80 bg-white p-4 dark:border-slate-700/60 dark:bg-slate-800">
+            <div className="mb-0.5 flex items-center gap-1.5 text-xs font-semibold text-slate-500 dark:text-slate-300">
+              <Sparkles size={13} />
+              {t('teachGuide.nextSteps', { defaultValue: '接落去' })}
+            </div>
+            <p className="mb-3 text-[11px] text-slate-400 dark:text-slate-500">
+              {t('teachGuide.nextStepsDesc', {
+                defaultValue: '備課完，接住開教材、教案或測驗。',
+              })}
+            </p>
+            <div className="flex flex-wrap items-center gap-2">
+              <Button
+                variant="secondary"
+                size="sm"
+                icon={Sparkles}
+                onClick={() => nav.open('work-generate')}
+              >
+                {t('teachGuide.toGenerate', { defaultValue: '教材生成' })}
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
+                icon={NotebookPen}
+                onClick={() => nav.open('work-lesson-plan')}
+              >
+                {t('teachGuide.toLessonPlan', { defaultValue: '備課 / 教案' })}
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
+                icon={GraduationCap}
+                onClick={() => nav.open('quiz')}
+              >
+                {t('teachGuide.toQuiz', { defaultValue: '自我測驗' })}
+              </Button>
+            </div>
+          </section>
+        </>
+      )}
 
       {/* 結果 */}
       {current && <GuideView rec={current} />}
 
       {/* 歷史 */}
       {history.length > 0 && (
-        <div>
-          <SectionTitle icon={Clock}>歷史</SectionTitle>
+        <section>
+          <div className="mb-3 flex items-center gap-1.5 text-xs font-semibold text-slate-500 dark:text-slate-300">
+            <Clock size={13} />
+            {t('teachGuide.history', { defaultValue: '歷史' })}
+            <span className="tabular-nums font-normal text-slate-400 dark:text-slate-500">
+              · {history.length}
+            </span>
+          </div>
           <div className="space-y-2">
-            {history.map((r) => (
-              <Card
-                key={r.id}
-                hover
-                onClick={() => setCurrent(r)}
-                className={cx('p-3', current?.id === r.id && 'ring-1 ring-accent/30')}
-              >
-                <div className="flex items-center gap-2.5">
-                  <Compass size={16} className="shrink-0 text-accent" />
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium text-slate-700 dark:text-slate-200">
+            {history.map((r) => {
+              const active = current?.id === r.id
+              return (
+                <button
+                  key={r.id}
+                  type="button"
+                  onClick={() => setCurrent(r)}
+                  aria-label={r.topicName}
+                  aria-pressed={active}
+                  className={cx(
+                    'group flex w-full items-center gap-2.5 rounded-xl border bg-white px-3 py-2.5 text-left transition duration-200 hover:border-slate-300 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.99] dark:bg-slate-800 dark:hover:border-slate-600',
+                    active
+                      ? 'border-accent/40 ring-1 ring-accent/30'
+                      : 'border-slate-200/80 dark:border-slate-700/60',
+                  )}
+                >
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
+                    <Compass size={16} />
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-sm font-medium text-slate-700 dark:text-slate-200">
                       {r.topicName}
-                    </p>
-                    <p className="mt-0.5 text-[11px] text-slate-400 dark:text-slate-500">
+                    </span>
+                    <span className="mt-0.5 block text-[11px] tabular-nums text-slate-400 dark:text-slate-500">
                       {fmtDate(r.createdAt)}
-                    </p>
-                  </div>
-                  <div onClick={(e) => e.stopPropagation()}>
-                    <IconButton label="刪除" size="sm" tone="danger" onClick={() => void del(r.id)}>
+                    </span>
+                  </span>
+                  <span onClick={(e) => e.stopPropagation()}>
+                    <IconButton
+                      label={t('teachGuide.delete', { defaultValue: '刪除' })}
+                      size="sm"
+                      tone="danger"
+                      onClick={() => void del(r.id)}
+                    >
                       <Trash2 size={14} />
                     </IconButton>
-                  </div>
-                </div>
-              </Card>
-            ))}
+                  </span>
+                </button>
+              )
+            })}
           </div>
-        </div>
+        </section>
       )}
 
-      {history.length === 0 && !current && (
+      {topics.length > 0 && history.length === 0 && !current && (
         <EmptyState
           icon={Compass}
-          title="未有教學指引"
-          hint="揀一個課題，生成第一份「點教」指引。"
+          title={t('teachGuide.emptyTitle', { defaultValue: '未有教學指引' })}
+          hint={t('teachGuide.emptyHint', {
+            defaultValue: '喺上面揀一個課題，撳「生成指引」整第一份「點教」備課。',
+          })}
         />
       )}
     </div>

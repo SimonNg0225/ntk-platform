@@ -1,4 +1,5 @@
 import { useMemo, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   ClipboardCheck,
   MessageSquareQuote,
@@ -10,15 +11,19 @@ import {
   Upload,
   Trash2,
   Clock,
+  Type,
+  PenLine,
 } from 'lucide-react'
 import {
   Badge,
   Button,
   Card,
   EmptyState,
+  FeatureGuide,
   Field,
   IconButton,
   Input,
+  PageHero,
   SectionTitle,
   Select,
   SegmentedControl,
@@ -26,6 +31,7 @@ import {
   Tooltip,
   cx,
 } from '../../ui'
+import type { FeatureGuideStep } from '../../ui'
 import { useAuth } from '../../context/AuthContext'
 import { useToast } from '../../context/ToastContext'
 import { useConfirm } from '../../context/ConfirmContext'
@@ -86,11 +92,54 @@ const subjectLabel = (subject: string): string =>
 type InputMode = 'text' | 'photo'
 
 export default function Grading() {
+  const { t } = useTranslation()
   const { user, configured, signInWithGoogle } = useAuth()
   const toast = useToast()
   const confirm = useConfirm()
   const { subjectPackId } = useSettings()
   const records = useCollection(gradingCol)
+
+  // 教學引導步驟（跟分頁切換；defaultValue 廣東話，唔改 i18n 檔）
+  const MARK_GUIDE: FeatureGuideStep[] = [
+    {
+      title: t('grading.markGuide1Title', { defaultValue: '揀科目' }),
+      desc: t('grading.markGuide1Desc', {
+        defaultValue: '揀返呢份功課嘅科目，AI 會跟返該科準則同慣例批改。',
+      }),
+    },
+    {
+      title: t('grading.markGuide2Title', { defaultValue: '貼答案或影相' }),
+      desc: t('grading.markGuide2Desc', {
+        defaultValue: '貼上學生作答文字，或影低手寫 / 試卷，AI 會自動讀字。',
+      }),
+    },
+    {
+      title: t('grading.markGuide3Title', { defaultValue: '撳批改，睇結果' }),
+      desc: t('grading.markGuide3Desc', {
+        defaultValue: '逐項打分、標錯處、寫總評；可複製或下載做 Word。',
+      }),
+    },
+  ]
+  const COMMENT_GUIDE: FeatureGuideStep[] = [
+    {
+      title: t('grading.commentGuide1Title', { defaultValue: '寫表現摘要' }),
+      desc: t('grading.commentGuide1Desc', {
+        defaultValue: '簡單列低分數、課堂表現、出席等重點，愈具體愈貼。',
+      }),
+    },
+    {
+      title: t('grading.commentGuide2Title', { defaultValue: '揀語氣' }),
+      desc: t('grading.commentGuide2Desc', {
+        defaultValue: '揀鼓勵 / 中肯等語氣，AI 會用相應口吻寫。',
+      }),
+    },
+    {
+      title: t('grading.commentGuide3Title', { defaultValue: '生成 + 複製' }),
+      desc: t('grading.commentGuide3Desc', {
+        defaultValue: '即時串流出一段成績表評語，滿意就一鍵複製。',
+      }),
+    },
+  ]
 
   const [tab, setTab] = useState<'mark' | 'comment'>('mark')
 
@@ -108,6 +157,7 @@ export default function Grading() {
   const [marking, setMarking] = useState(false)
   const [current, setCurrent] = useState<GradingRecord | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
+  const answerRef = useRef<HTMLTextAreaElement>(null)
 
   // ── 成績表評語（串流自由文字）──
   const [studentName, setStudentName] = useState('')
@@ -117,6 +167,7 @@ export default function Grading() {
   const [commenting, setCommenting] = useState(false)
   const [comment, setComment] = useState('')
   const abortRef = useRef<AbortController | null>(null)
+  const summaryRef = useRef<HTMLTextAreaElement>(null)
 
   const profile = profileForSubject(subject)
   // 有 rich 知識檔嘅科（如 BAFS 兩範疇）→ 用 strand / area 度身定制；否則用 generic profile。
@@ -146,8 +197,8 @@ export default function Grading() {
     return (
       <EmptyState
         icon={Sparkles}
-        title="AI 批改需要接好 Supabase + Gemini"
-        hint="設定步驟見 docs/SETUP.md。"
+        title={t('grading.gateConfigTitle', { defaultValue: 'AI 批改需要接好 Supabase + Gemini' })}
+        hint={t('grading.gateConfigHint', { defaultValue: '設定步驟見 docs/SETUP.md。' })}
       />
     )
   }
@@ -155,11 +206,13 @@ export default function Grading() {
     return (
       <EmptyState
         icon={Sparkles}
-        title="登入先可以用 AI 批改"
-        hint="AI 功能經你自己嘅 Supabase + Gemini 運作。"
+        title={t('grading.gateLoginTitle', { defaultValue: '登入先可以用 AI 批改' })}
+        hint={t('grading.gateLoginHint', { defaultValue: 'AI 功能經你自己嘅 Supabase + Gemini 運作。' })}
         action={
           configured ? (
-            <Button onClick={() => void signInWithGoogle()}>用 Google 登入</Button>
+            <Button onClick={() => void signInWithGoogle()}>
+              {t('grading.signInGoogle', { defaultValue: '用 Google 登入' })}
+            </Button>
           ) : undefined
         }
       />
@@ -170,7 +223,12 @@ export default function Grading() {
 
   async function runMark() {
     if (marking || !hasMarkInput) {
-      if (!hasMarkInput) toast.error(inputMode === 'text' ? '請輸入學生答案' : '請上載答案相片')
+      if (!hasMarkInput)
+        toast.error(
+          inputMode === 'text'
+            ? t('grading.errNoText', { defaultValue: '請輸入學生答案' })
+            : t('grading.errNoPhoto', { defaultValue: '請上載答案相片' }),
+        )
       return
     }
     setMarking(true)
@@ -212,16 +270,20 @@ export default function Grading() {
       setCurrent(rec)
       setAnswerText('')
       setFile(null)
-      toast.success('批改完成')
+      toast.success(t('grading.markDone', { defaultValue: '批改完成' }))
     } catch (e) {
-      toast.error((e as Error).message || '批改失敗，請再試。')
+      toast.error((e as Error).message || t('grading.markFail', { defaultValue: '批改失敗，請再試。' }))
     } finally {
       setMarking(false)
     }
   }
 
   async function delRecord(id: string) {
-    const ok = await confirm({ title: '刪除呢個批改？', tone: 'danger', confirmText: '刪除' })
+    const ok = await confirm({
+      title: t('grading.delConfirm', { defaultValue: '刪除呢個批改？' }),
+      tone: 'danger',
+      confirmText: t('grading.delete', { defaultValue: '刪除' }),
+    })
     if (!ok) return
     gradingCol.remove(id)
     if (current?.id === id) setCurrent(null)
@@ -234,7 +296,7 @@ export default function Grading() {
 
   async function runComment() {
     if (!summary.trim()) {
-      toast.error('請輸入學生表現摘要')
+      toast.error(t('grading.errNoSummary', { defaultValue: '請輸入學生表現摘要' }))
       return
     }
     const controller = new AbortController()
@@ -253,35 +315,63 @@ export default function Grading() {
       }
     } catch (e) {
       if ((e as Error).name !== 'AbortError') {
-        toast.error((e as Error).message || 'AI 失敗，請再試')
+        toast.error((e as Error).message || t('grading.aiFail', { defaultValue: 'AI 失敗，請再試' }))
       }
     } finally {
       setCommenting(false)
     }
   }
 
+  const TABS: { id: 'mark' | 'comment'; label: string; icon: typeof ClipboardCheck }[] = [
+    { id: 'mark', label: t('grading.tabMark', { defaultValue: '批改答案' }), icon: ClipboardCheck },
+    {
+      id: 'comment',
+      label: t('grading.tabComment', { defaultValue: '成績表評語' }),
+      icon: MessageSquareQuote,
+    },
+  ]
+
   return (
     <div className="space-y-5">
-      {/* 分頁 */}
-      <div className="flex gap-1 rounded-lg bg-slate-100 p-1 text-sm dark:bg-slate-800">
-        {[
-          { id: 'mark' as const, label: '批改答案', icon: ClipboardCheck },
-          { id: 'comment' as const, label: '成績表評語', icon: MessageSquareQuote },
-        ].map((tb) => (
-          <button
-            key={tb.id}
-            onClick={() => setTab(tb.id)}
-            className={cx(
-              'flex flex-1 items-center justify-center gap-1.5 rounded-md px-3 py-1.5 font-medium transition',
-              tab === tb.id
-                ? 'bg-white text-slate-800 shadow-sm dark:bg-slate-700 dark:text-slate-100'
-                : 'text-slate-500 hover:text-slate-700 dark:text-slate-400',
-            )}
-          >
-            <tb.icon size={15} /> {tb.label}
-          </button>
-        ))}
-      </div>
+      {/* 頁頂 accent hero（統一各功能頁），分頁切換放 hero 內底部 */}
+      <PageHero
+        icon={ClipboardCheck}
+        kicker={t('grading.kicker', { defaultValue: 'AI Grading' })}
+        title={t('grading.title', { defaultValue: 'AI 批改' })}
+        description={t('grading.subtitle', {
+          defaultValue: '逐科準則結構化批改學生作答（文字 / 相片），逐項打分、標錯處、寫總評；亦可一鍵生成成績表評語。',
+        })}
+        tabs={
+          <>
+            {TABS.map(({ id, label, icon: Icon }) => (
+              <button
+                key={id}
+                type="button"
+                onClick={() => setTab(id)}
+                className={cx(
+                  'inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs transition',
+                  tab === id
+                    ? 'bg-white font-semibold text-accent-strong'
+                    : 'bg-white/15 font-medium text-white hover:bg-white/25',
+                )}
+              >
+                <Icon size={13} /> {label}
+              </button>
+            ))}
+          </>
+        }
+      />
+
+      {/* 教學引導：跟住分頁換內容（同一 storageKey，「知道喇」後兩個都收起） */}
+      <FeatureGuide
+        storageKey="grading"
+        title={
+          tab === 'mark'
+            ? t('grading.guideMarkTitle', { defaultValue: 'AI 批改點用？' })
+            : t('grading.guideCommentTitle', { defaultValue: '成績表評語點用？' })
+        }
+        steps={tab === 'mark' ? MARK_GUIDE : COMMENT_GUIDE}
+      />
 
       {tab === 'mark' ? (
         <>
@@ -289,7 +379,13 @@ export default function Grading() {
             {/* 輸入 */}
             <Card className="space-y-3 p-4">
               <div className="grid grid-cols-[1fr_auto] gap-2">
-                <Field label="科目（按呢科準則批改）" hint={`本科準則：${rubricPreview}`}>
+                <Field
+                  label={t('grading.subjectLabel', { defaultValue: '科目（按呢科準則批改）' })}
+                  hint={t('grading.subjectHint', {
+                    rubric: rubricPreview,
+                    defaultValue: `本科準則：${rubricPreview}`,
+                  })}
+                >
                   <Select value={subject} onChange={(e) => onSubjectChange(e.target.value)}>
                     {SUBJECT_PACKS.map((p) => (
                       <option key={p.id} value={p.id}>
@@ -298,11 +394,11 @@ export default function Grading() {
                     ))}
                   </Select>
                 </Field>
-                <Field label="滿分（選填）">
+                <Field label={t('grading.totalMarksLabel', { defaultValue: '滿分（選填）' })}>
                   <Input
                     value={totalMarks}
                     onChange={(e) => setTotalMarks(e.target.value)}
-                    placeholder="自動"
+                    placeholder={t('grading.totalMarksPlaceholder', { defaultValue: '自動' })}
                     className="w-24"
                   />
                 </Field>
@@ -310,7 +406,7 @@ export default function Grading() {
 
               {knowledge && activeStrand && (
                 <div className="grid grid-cols-2 gap-2">
-                  <Field label="學習範疇">
+                  <Field label={t('grading.strandLabel', { defaultValue: '學習範疇' })}>
                     <Select
                       value={activeStrand.key}
                       onChange={(e) => {
@@ -325,9 +421,9 @@ export default function Grading() {
                       ))}
                     </Select>
                   </Field>
-                  <Field label="課題範疇">
+                  <Field label={t('grading.areaLabel', { defaultValue: '課題範疇' })}>
                     <Select value={areaKey} onChange={(e) => setAreaKey(e.target.value)}>
-                      <option value="">全部（自動判斷）</option>
+                      <option value="">{t('grading.areaAll', { defaultValue: '全部（自動判斷）' })}</option>
                       {activeStrand.areas.map((a) => (
                         <option key={a.key} value={a.key}>
                           {a.label}
@@ -338,16 +434,18 @@ export default function Grading() {
                 </div>
               )}
 
-              <Field label="題目 / 寫作提示（選填）">
+              <Field label={t('grading.questionLabel', { defaultValue: '題目 / 寫作提示（選填）' })}>
                 <Textarea
                   rows={2}
                   value={question}
                   onChange={(e) => setQuestion(e.target.value)}
-                  placeholder="例如：解釋通脹三個成因 / 作文題目"
+                  placeholder={t('grading.questionPlaceholder', {
+                    defaultValue: '例如：解釋通脹三個成因 / 作文題目',
+                  })}
                 />
               </Field>
 
-              <Field label="自訂評分準則（選填，蓋過本科預設）">
+              <Field label={t('grading.rubricLabel', { defaultValue: '自訂評分準則（選填，蓋過本科預設）' })}>
                 <Textarea
                   rows={2}
                   value={customRubric}
@@ -364,11 +462,11 @@ export default function Grading() {
                     setFile(null)
                   }}
                   options={[
-                    { id: 'text', label: '貼文字' },
-                    { id: 'photo', label: '影相 / 試卷' },
+                    { id: 'text', label: t('grading.inputText', { defaultValue: '貼文字' }), icon: Type },
+                    { id: 'photo', label: t('grading.inputPhoto', { defaultValue: '影相 / 試卷' }), icon: Camera },
                   ]}
                 />
-                <Tooltip label="快 · 仔細">
+                <Tooltip label={t('grading.modelHint', { defaultValue: '快 · 仔細' })}>
                   <SegmentedControl<AIModel>
                     size="sm"
                     value={markModel}
@@ -380,10 +478,11 @@ export default function Grading() {
 
               {inputMode === 'text' ? (
                 <Textarea
+                  ref={answerRef}
                   rows={6}
                   value={answerText}
                   onChange={(e) => setAnswerText(e.target.value)}
-                  placeholder="貼上學生作答…"
+                  placeholder={t('grading.answerPlaceholder', { defaultValue: '貼上學生作答…' })}
                 />
               ) : (
                 <div>
@@ -398,14 +497,18 @@ export default function Grading() {
                   <button
                     type="button"
                     onClick={() => fileRef.current?.click()}
-                    className="flex w-full flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-black/[0.12] bg-slate-50/60 px-4 py-8 text-center transition hover:border-accent/40 hover:bg-accent-soft/40 dark:border-white/[0.12] dark:bg-slate-800/40"
+                    className="group flex w-full flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-accent/40 bg-accent-soft/50 px-4 py-8 text-center transition duration-200 hover:border-accent hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98] dark:border-accent/40 dark:bg-accent/10"
                   >
-                    <Camera size={22} className="text-accent" />
+                    <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent text-white">
+                      <Camera size={20} />
+                    </span>
                     <span className="text-sm font-medium text-slate-600 dark:text-slate-300">
-                      {file ? file.name : '影相 / 揀相片（手寫 / 試卷）'}
+                      {file ? file.name : t('grading.photoCta', { defaultValue: '影相 / 揀相片（手寫 / 試卷）' })}
                     </span>
                     {!file && (
-                      <span className="text-[11px] text-slate-400">影低學生作答，AI 會讀字批改</span>
+                      <span className="text-[11px] text-slate-400 dark:text-slate-500">
+                        {t('grading.photoHint', { defaultValue: '影低學生作答，AI 會讀字批改' })}
+                      </span>
                     )}
                   </button>
                 </div>
@@ -418,7 +521,9 @@ export default function Grading() {
                   loading={marking}
                   disabled={!hasMarkInput}
                 >
-                  {marking ? '批改中…' : '批改'}
+                  {marking
+                    ? t('grading.marking', { defaultValue: '批改中…' })
+                    : t('grading.mark', { defaultValue: '批改' })}
                 </Button>
               </div>
             </Card>
@@ -428,12 +533,31 @@ export default function Grading() {
               {current ? (
                 <ResultCard rec={current} />
               ) : (
-                <Card className="flex h-full items-center justify-center p-4">
-                  <p className="py-10 text-center text-sm text-slate-400">
-                    揀科目、貼學生作答，撳「批改」。
-                    <br />
-                    AI 會按 <span className="font-medium text-slate-500">{profile.label}</span> 科準則逐項打分、標錯處、寫總評。
+                <Card className="flex h-full flex-col items-center justify-center gap-2 p-4 text-center">
+                  <span className="flex h-12 w-12 items-center justify-center rounded-full bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
+                    <ClipboardCheck size={22} strokeWidth={1.75} />
+                  </span>
+                  <p className="mt-1 text-sm font-medium text-slate-600 dark:text-slate-300">
+                    {t('grading.markEmptyTitle', { defaultValue: '準備好就批改' })}
                   </p>
+                  <p className="max-w-xs text-xs text-slate-400 dark:text-slate-500">
+                    {t('grading.markEmptyHint', {
+                      subject: profile.label,
+                      defaultValue: `AI 會按「${profile.label}」科準則逐項打分、標錯處、寫總評。`,
+                    })}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (inputMode === 'text') answerRef.current?.focus()
+                      else fileRef.current?.click()
+                    }}
+                    className="mt-1 text-xs font-medium text-accent transition hover:text-accent-strong active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 rounded-lg"
+                  >
+                    {inputMode === 'text'
+                      ? t('grading.markEmptyCtaText', { defaultValue: '貼上學生作答 →' })
+                      : t('grading.markEmptyCtaPhoto', { defaultValue: '影相 / 揀相片 →' })}
+                  </button>
                 </Card>
               )}
             </div>
@@ -441,15 +565,20 @@ export default function Grading() {
 
           {/* 歷史 */}
           {history.length > 0 && (
-            <div>
-              <SectionTitle icon={Clock}>批改記錄</SectionTitle>
+            <section>
+              <SectionTitle icon={Clock}>
+                {t('grading.historyTitle', { defaultValue: '批改記錄' })}
+              </SectionTitle>
               <div className="space-y-2">
                 {history.map((r) => (
                   <Card
                     key={r.id}
                     hover
                     onClick={() => setCurrent(r)}
-                    className={cx('p-3', current?.id === r.id && 'ring-1 ring-accent/30')}
+                    className={cx(
+                      'p-3 transition',
+                      current?.id === r.id && 'border-accent/40 ring-1 ring-accent/30',
+                    )}
                   >
                     <div className="flex items-center gap-2.5">
                       <Badge tone="accent">{subjectLabel(r.subject)}</Badge>
@@ -457,12 +586,17 @@ export default function Grading() {
                         <p className="truncate text-sm font-medium text-slate-700 dark:text-slate-200">
                           {r.title}
                         </p>
-                        <p className="mt-0.5 text-[11px] text-slate-400 dark:text-slate-500">
+                        <p className="mt-0.5 text-[11px] tabular-nums text-slate-400 dark:text-slate-500">
                           {fmtDate(r.createdAt)} · {r.total}/{r.maxTotal}
                         </p>
                       </div>
                       <div onClick={(e) => e.stopPropagation()}>
-                        <IconButton label="刪除" size="sm" tone="danger" onClick={() => void delRecord(r.id)}>
+                        <IconButton
+                          label={t('grading.delete', { defaultValue: '刪除' })}
+                          size="sm"
+                          tone="danger"
+                          onClick={() => void delRecord(r.id)}
+                        >
                           <Trash2 size={14} />
                         </IconButton>
                       </div>
@@ -470,29 +604,35 @@ export default function Grading() {
                   </Card>
                 ))}
               </div>
-            </div>
+            </section>
           )}
         </>
       ) : (
         /* 成績表評語 */
         <div className="grid gap-5 lg:grid-cols-2">
           <Card className="space-y-3 p-4">
-            <Field label="學生姓名（選填）">
+            <Field label={t('grading.studentName', { defaultValue: '學生姓名（選填）' })}>
               <Input
                 value={studentName}
                 onChange={(e) => setStudentName(e.target.value)}
-                placeholder="例如：陳大文"
+                placeholder={t('grading.studentNamePlaceholder', { defaultValue: '例如：陳大文' })}
               />
             </Field>
-            <Field label="表現摘要">
+            <Field
+              label={t('grading.summaryLabel', { defaultValue: '表現摘要' })}
+              hint={t('grading.summaryHint', { defaultValue: '愈具體愈準：分數、課堂表現、出席、欠交等。' })}
+            >
               <Textarea
+                ref={summaryRef}
                 rows={6}
                 value={summary}
                 onChange={(e) => setSummary(e.target.value)}
-                placeholder="例如：數學 85（全班第 3）、中文 60、上課積極、偶有欠交功課、出席率 95%"
+                placeholder={t('grading.summaryPlaceholder', {
+                  defaultValue: '例如：數學 85（全班第 3）、中文 60、上課積極、偶有欠交功課、出席率 95%',
+                })}
               />
             </Field>
-            <Field label="語氣">
+            <Field label={t('grading.toneLabel', { defaultValue: '語氣' })}>
               <SegmentedControl<CommentTone>
                 value={tone}
                 onChange={setTone}
@@ -500,34 +640,39 @@ export default function Grading() {
               />
             </Field>
             <div className="flex items-center justify-between gap-2 pt-1">
-              <SegmentedControl<AIModel>
-                size="sm"
-                value={commentModel}
-                onChange={setCommentModel}
-                options={MODELS}
-              />
+              <Tooltip label={t('grading.modelHint', { defaultValue: '快 · 仔細' })}>
+                <SegmentedControl<AIModel>
+                  size="sm"
+                  value={commentModel}
+                  onChange={setCommentModel}
+                  options={MODELS}
+                />
+              </Tooltip>
               {commenting ? (
                 <Button variant="secondary" icon={Square} onClick={stopComment}>
-                  停止
+                  {t('grading.stop', { defaultValue: '停止' })}
                 </Button>
               ) : (
                 <Button icon={Sparkles} onClick={runComment}>
-                  生成評語
+                  {t('grading.generateComment', { defaultValue: '生成評語' })}
                 </Button>
               )}
             </div>
           </Card>
 
-          <Card className="p-4">
+          <Card className="flex flex-col p-4">
             <div className="mb-2 flex items-center justify-between">
-              <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">評語</span>
+              <span className="flex items-center gap-1.5 text-sm font-semibold text-slate-700 dark:text-slate-200">
+                <MessageSquareQuote size={15} />
+                {t('grading.commentResult', { defaultValue: '評語' })}
+              </span>
               {comment && !commenting && (
                 <IconButton
-                  label="複製"
+                  label={t('grading.copy', { defaultValue: '複製' })}
                   size="sm"
                   onClick={() => {
                     void navigator.clipboard.writeText(comment)
-                    toast.success('已複製')
+                    toast.success(t('grading.copied', { defaultValue: '已複製' }))
                   }}
                 >
                   <Copy size={15} />
@@ -540,11 +685,28 @@ export default function Grading() {
                 {commenting && <span className="ml-0.5 animate-pulse">▍</span>}
               </div>
             ) : commenting ? (
-              <p className="py-10 text-center text-sm text-slate-400">AI 思考緊…</p>
-            ) : (
-              <p className="py-10 text-center text-sm text-slate-400">
-                輸入學生表現摘要，撳「生成評語」。
+              <p className="flex flex-1 items-center justify-center py-10 text-center text-sm text-slate-400">
+                {t('grading.thinking', { defaultValue: 'AI 思考緊…' })}
               </p>
+            ) : (
+              <div className="flex flex-1 flex-col items-center justify-center gap-2 py-6 text-center">
+                <span className="flex h-12 w-12 items-center justify-center rounded-full bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
+                  <PenLine size={22} strokeWidth={1.75} />
+                </span>
+                <p className="mt-1 text-sm font-medium text-slate-600 dark:text-slate-300">
+                  {t('grading.commentEmptyTitle', { defaultValue: '一段成績表評語' })}
+                </p>
+                <p className="max-w-xs text-xs text-slate-400 dark:text-slate-500">
+                  {t('grading.commentEmptyHint', { defaultValue: '填好表現摘要、揀語氣，AI 即時幫你寫。' })}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => summaryRef.current?.focus()}
+                  className="mt-1 rounded-lg text-xs font-medium text-accent transition hover:text-accent-strong active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+                >
+                  {t('grading.commentEmptyCta', { defaultValue: '填表現摘要 →' })}
+                </button>
+              </div>
             )}
           </Card>
         </div>
@@ -589,6 +751,7 @@ function gradingToDoc(rec: GradingRecord): ExportDoc {
 }
 
 function ResultCard({ rec }: { rec: GradingRecord }) {
+  const { t } = useTranslation()
   const toast = useToast()
   const pct = rec.maxTotal > 0 ? Math.round((rec.total / rec.maxTotal) * 100) : 0
   const copyAll = () => {
@@ -598,22 +761,22 @@ function ResultCard({ rec }: { rec: GradingRecord }) {
       '總評：' + rec.overall,
     ]
     void navigator.clipboard?.writeText(lines.join('\n'))
-    toast.success('已複製')
+    toast.success(t('grading.copied', { defaultValue: '已複製' }))
   }
   const dlWord = async () => {
     try {
       await downloadDocx(gradingToDoc(rec))
-      toast.success('已下載 Word')
+      toast.success(t('grading.wordDone', { defaultValue: '已下載 Word' }))
     } catch (e) {
-      toast.error((e as Error).message || '下載失敗')
+      toast.error((e as Error).message || t('grading.downloadFail', { defaultValue: '下載失敗' }))
     }
   }
 
   return (
-    <Card padded className="space-y-4 ring-1 ring-accent/20">
+    <Card padded className="space-y-4 border-accent/30 ring-1 ring-accent/20">
       <div className="flex flex-wrap items-center gap-3">
         <div className="flex items-baseline gap-1">
-          <span className="text-3xl font-bold tabular-nums text-accent-strong dark:text-accent">
+          <span className="text-3xl font-semibold tabular-nums slashed-zero text-accent-strong dark:text-accent">
             {rec.total}
           </span>
           <span className="text-sm text-slate-400">/ {rec.maxTotal}</span>
@@ -626,10 +789,10 @@ function ResultCard({ rec }: { rec: GradingRecord }) {
         </div>
         <div className="ml-auto flex items-center gap-2">
           <Button variant="secondary" size="sm" icon={Copy} onClick={copyAll}>
-            複製
+            {t('grading.copy', { defaultValue: '複製' })}
           </Button>
           <Button variant="secondary" size="sm" icon={FileText} onClick={dlWord}>
-            Word
+            {t('grading.word', { defaultValue: 'Word' })}
           </Button>
         </div>
       </div>
@@ -639,7 +802,7 @@ function ResultCard({ rec }: { rec: GradingRecord }) {
           {rec.scores.map((s, i) => (
             <div key={i} className="flex flex-wrap items-center gap-2 text-sm">
               <span className="font-medium text-slate-700 dark:text-slate-200">{s.criterion}</span>
-              <span className="tabular-nums text-accent-strong dark:text-accent">
+              <span className="tabular-nums slashed-zero text-accent-strong dark:text-accent">
                 {s.score}/{s.max}
               </span>
               {s.comment && (
@@ -652,7 +815,9 @@ function ResultCard({ rec }: { rec: GradingRecord }) {
 
       {rec.issues.length > 0 && (
         <div>
-          <p className="mb-1.5 text-[11px] font-semibold text-slate-400 dark:text-slate-500">錯處標示</p>
+          <p className="mb-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400">
+            {t('grading.issuesHeading', { defaultValue: '錯處標示' })}
+          </p>
           <div className="space-y-2">
             {rec.issues.map((iss, i) => {
               const meta = issueMeta(iss.type)
@@ -680,7 +845,9 @@ function ResultCard({ rec }: { rec: GradingRecord }) {
 
       {rec.overall && (
         <div>
-          <p className="mb-1 text-[11px] font-semibold text-slate-400 dark:text-slate-500">總評</p>
+          <p className="mb-1 text-xs font-semibold text-slate-500 dark:text-slate-400">
+            {t('grading.overallHeading', { defaultValue: '總評' })}
+          </p>
           <p className="text-sm leading-relaxed text-slate-700 dark:text-slate-200">{rec.overall}</p>
         </div>
       )}

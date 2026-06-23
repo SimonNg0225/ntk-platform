@@ -45,14 +45,17 @@ import {
   Card,
   cx,
   EmptyState,
+  FeatureGuide,
   Field,
   IconButton,
   Input,
   Modal,
+  PageHero,
   Pills,
   SegmentedControl,
   Select,
   Textarea,
+  type FeatureGuideStep,
 } from '../../ui'
 import {
   assemblePaper,
@@ -370,6 +373,60 @@ export default function QuestionBank() {
     })
   const clearSelection = () => setSelected(new Set())
 
+  // ───── 教學引導（跟視圖換內容；defaultValue 廣東話，唔改 i18n 檔）─────
+  const BANK_GUIDE: FeatureGuideStep[] = [
+    {
+      title: '入題：擬題、AI 出題或匯入',
+      desc: '撳「新增題目」逐條擬，或者「AI 出題」一鍵草擬，又或者「匯入」貼上 CSV。',
+    },
+    {
+      title: '分類好：課題 · 題型 · 難度',
+      desc: '每條題標返課題同難度，之後篩選、組卷同統計先準。',
+    },
+    {
+      title: '篩選 + 查重執靚題庫',
+      desc: '用上方搜尋同篩選快速搵題；「查重」幫你揪出重複，保持題庫乾淨。',
+    },
+    {
+      title: '揀「組卷」就能出卷',
+      desc: '題庫夠料之後，切去「組卷」手揀或藍圖自動抽題，一鍵列印。',
+    },
+  ]
+  const ANALYTICS_GUIDE: FeatureGuideStep[] = [
+    {
+      title: '睇題型同難度分佈',
+      desc: '一眼睇晒 MC／長題佔比同深淺比例，留意份卷會唔會太淺或太深。',
+    },
+    {
+      title: '查課題覆蓋矩陣',
+      desc: '熱圖顯示邊個課題夠題、邊個係空白，補題前先睇呢度。',
+    },
+    {
+      title: '對住缺口補題',
+      desc: '「覆蓋缺口」列出未有題嘅課題；返去「題庫」針對性出題補返。',
+    },
+  ]
+  const PAPER_GUIDE: FeatureGuideStep[] = [
+    {
+      title: '填卷面資料',
+      desc: '輸入試卷標題、班別同時限，會印喺卷頭。',
+    },
+    {
+      title: '揀題：手動或藍圖自動',
+      desc: '由題池逐條揀，或者用「藍圖自動組卷」設定各難度題數一鍵抽題。',
+    },
+    {
+      title: '排序、列印、儲存',
+      desc: '調好題目次序後，可列印（連／唔連答案）或儲存試卷下次再用。',
+    },
+  ]
+  const guideProps =
+    view === 'analytics'
+      ? { title: '卷面分析點睇？', steps: ANALYTICS_GUIDE }
+      : view === 'paper'
+        ? { title: '組卷點用？', steps: PAPER_GUIDE }
+        : { title: '題庫點用？', steps: BANK_GUIDE }
+
   const openAdd = () => {
     setEditing(null)
     setShowForm(true)
@@ -449,57 +506,35 @@ export default function QuestionBank() {
 
   return (
     <div className="space-y-5">
-      {/* ───────── 考評檔案 masthead：卷面封面感（kicker + serif 標題 + 卷務行）───────── */}
-      <header className="relative overflow-hidden rounded-3xl border border-slate-200/80 bg-white px-5 py-5 shadow-xs dark:border-slate-700/60 dark:bg-slate-800 dark:shadow-none sm:px-7 sm:py-6">
-        {/* 封面右上「卷務戳印」裝飾（純裝飾，唔搶主次） */}
-        <span
-          aria-hidden
-          className="pointer-events-none absolute -right-6 top-3 hidden -rotate-6 select-none rounded-xl border-2 border-dashed border-accent/20 px-4 py-2 text-xs font-semibold uppercase tracking-[0.25em] text-accent/25 dark:border-accent/25 dark:text-accent/25 sm:block"
-        >
-          {subj.short} · 校本評核
-        </span>
-        <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-4">
-          <div className="min-w-0">
-            <p className="flex items-center gap-2 text-[11px] font-medium uppercase tracking-[0.3em] text-accent/70">
-              <ScrollText size={13} />
-              考評檔案 · Assessment Bank
-            </p>
-            <h1 className="mt-1.5 text-[28px] font-semibold leading-none tracking-tight text-slate-800 dark:text-slate-100 sm:text-[34px]">
-              {subj.short} 題庫
-            </h1>
-            <p className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-slate-500 dark:text-slate-400">
-              <span className="tabular-nums">
-                存題 {stats.total} 條 · 覆蓋 {stats.topicsCovered}/{topics.length} 個課題
-              </span>
-              {stats.total > 0 && (
-                <>
-                  <span aria-hidden className="text-slate-300 dark:text-slate-600">·</span>
-                  <span className="inline-flex items-center gap-1 font-medium text-accent-strong dark:text-accent">
-                    <Scale size={12} /> 卷面難度 {difficultyIndexLabel(stats.difficultyIndex)}
-                  </span>
-                </>
-              )}
-            </p>
-          </div>
-          {/* 視圖切換：似試卷檔案的分頁標籤 */}
-          <div className="shrink-0">
-            <SegmentedControl<ViewId>
-              value={view}
-              onChange={setView}
-              options={[
-                { id: 'bank', label: '題庫', icon: BookMarked },
-                { id: 'analytics', label: '統計', icon: BarChart3 },
-                { id: 'paper', label: '組卷', icon: FileText },
-              ]}
-            />
-          </div>
-        </div>
-        {/* 卷面雙線（封面分隔感） */}
-        <div className="mt-5 space-y-1" aria-hidden>
-          <span className="block h-px bg-slate-200/90 dark:bg-slate-700/70" />
-          <span className="block h-px bg-slate-200/60 dark:bg-slate-700/40" />
-        </div>
-      </header>
+      <PageHero
+        icon={BookMarked}
+        kicker="Question Bank"
+        title={`${subj.short} 題庫`}
+        description={`存題 ${stats.total} 條 · 覆蓋 ${stats.topicsCovered}/${topics.length} 個課題`}
+        tabs={(
+          [
+            { id: 'bank', label: '題庫', icon: BookMarked },
+            { id: 'analytics', label: '統計', icon: BarChart3 },
+            { id: 'paper', label: '組卷', icon: FileText },
+          ] as { id: ViewId; label: string; icon: LucideIcon }[]
+        ).map(({ id, label, icon: TabIcon }) => (
+          <button
+            key={id}
+            type="button"
+            onClick={() => setView(id)}
+            aria-pressed={view === id}
+            className={cx(
+              'inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition',
+              view === id
+                ? 'bg-white font-semibold text-accent-strong'
+                : 'bg-white/15 text-white hover:bg-white/25',
+            )}
+          >
+            <TabIcon size={13} />
+            {label}
+          </button>
+        ))}
+      />
 
       {/* ───────── 改卷員清點帶：hairline grid · serif 大數字 ───────── */}
       <section className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl bg-slate-200/70 ring-1 ring-slate-200/80 dark:bg-slate-700/50 dark:ring-slate-700/60 sm:grid-cols-4">
@@ -532,6 +567,9 @@ export default function QuestionBank() {
           hint={difficultyIndexLabel(stats.difficultyIndex)}
         />
       </section>
+
+      {/* 教學引導：跟視圖換內容（同一 storageKey，「知道喇」後三個視圖都收起） */}
+      <FeatureGuide storageKey="questionbank" {...guideProps} />
 
       {view === 'bank' && (
         <BankView
@@ -578,7 +616,13 @@ export default function QuestionBank() {
       )}
 
       {view === 'analytics' && (
-        <AnalyticsView questions={questions} topics={topics} stats={stats} />
+        <AnalyticsView
+          questions={questions}
+          topics={topics}
+          stats={stats}
+          onGoBank={() => setView('bank')}
+          onShowAI={() => nav.open('work-generate')}
+        />
       )}
 
       {view === 'paper' && (
@@ -1098,10 +1142,14 @@ function AnalyticsView({
   questions,
   topics,
   stats,
+  onGoBank,
+  onShowAI,
 }: {
   questions: Question[]
   topics: { id: string; topic: string; area?: string }[]
   stats: ReturnType<typeof computeStats>
+  onGoBank: () => void
+  onShowAI: () => void
 }) {
   const rows = useMemo(
     () => buildTopicRows(questions, topics),
@@ -1119,6 +1167,16 @@ function AnalyticsView({
         icon={BarChart3}
         title="未有題目，畫唔到卷面分析"
         hint="入幾條題之後，呢度會出現題型佔比、難度分佈同課題覆蓋熱圖，幫你睇住份卷夠唔夠均衡。"
+        action={
+          <div className="flex flex-wrap justify-center gap-2">
+            <Button icon={BookMarked} onClick={onGoBank}>
+              去題庫加題
+            </Button>
+            <Button variant="secondary" icon={Sparkles} onClick={onShowAI}>
+              AI 出題
+            </Button>
+          </div>
+        }
       />
     )
 
@@ -1622,6 +1680,25 @@ function PaperStudio({
                 mode === 'manual'
                   ? '由左邊題池揀題入卷，或者切去「藍圖自動組卷」一鍵抽題。'
                   : '設定每個難度想出幾題，撳「自動組卷」就幫你抽好。'
+              }
+              action={
+                mode === 'manual' ? (
+                  <Button
+                    variant="secondary"
+                    icon={Wand2}
+                    onClick={() => setMode('auto')}
+                  >
+                    試吓藍圖自動組卷
+                  </Button>
+                ) : (
+                  <Button
+                    variant="secondary"
+                    icon={FolderOpen}
+                    onClick={() => setMode('manual')}
+                  >
+                    改用手動揀題
+                  </Button>
+                )
               }
             />
           ) : (

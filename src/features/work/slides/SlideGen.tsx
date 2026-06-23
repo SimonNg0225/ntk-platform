@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useState, type ReactNode } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   Presentation,
   Sparkles,
@@ -34,8 +35,11 @@ import {
   Button,
   Card,
   EmptyState,
+  FeatureGuide,
+  type FeatureGuideStep,
   Field,
   IconButton,
+  PageHero,
   SectionTitle,
   SegmentedControl,
   Select,
@@ -119,6 +123,7 @@ function fmtDate(iso: string): string {
 }
 
 export default function SlideGen() {
+  const { t } = useTranslation()
   const toast = useToast()
   const confirm = useConfirm()
   const { subjectPackId } = useSettings()
@@ -169,8 +174,8 @@ export default function SlideGen() {
   const hasInput = mode === 'topic' ? topics.length > 0 : text.trim().length > 0
 
   // 上載抽取嘅文字交返嚟（穩定 ref，UploadDrop effect 用）
-  const handleUploadText = useCallback((t: string, b: boolean) => {
-    setText(t)
+  const handleUploadText = useCallback((txt: string, b: boolean) => {
+    setText(txt)
     setUploadBusy(b)
   }, [])
 
@@ -440,8 +445,10 @@ export default function SlideGen() {
     return (
       <EmptyState
         icon={Presentation}
-        title="教學簡報未啟用"
-        hint="要設定好 Supabase 並部署 gemini Edge Function 先用到。步驟見 docs/SETUP.md。"
+        title={t('slideGen.aiOff.title', { defaultValue: '簡報工作室未啟用' })}
+        hint={t('slideGen.aiOff.hint', {
+          defaultValue: '要設定好 Supabase 並部署 gemini Edge Function 先用到 AI 生成（步驟見 docs/SETUP.md）。',
+        })}
       />
     )
   }
@@ -474,20 +481,52 @@ export default function SlideGen() {
       : SAMPLE_DECK
   const previewIsSample = !current && streamSlides.length === 0
 
+  // 教學引導（4 步：揀起點 → 揀設計 → 設定 → 生成下載）
+  const guideSteps: FeatureGuideStep[] = [
+    {
+      title: t('slideGen.guide.s1.title', { defaultValue: '揀返起點' }),
+      desc: t('slideGen.guide.s1.desc', {
+        defaultValue: '由課題庫帶入、貼上你嘅大綱筆記，或上載 PDF/Word 教材畀 AI 抽重點。',
+      }),
+    },
+    {
+      title: t('slideGen.guide.s2.title', { defaultValue: '揀個設計' }),
+      desc: t('slideGen.guide.s2.desc', {
+        defaultValue: `由 ${SLIDE_PACKS.length} 套模板揀一套，揀完即刻喺右邊預覽睇到風格。`,
+      }),
+    },
+    {
+      title: t('slideGen.guide.s3.title', { defaultValue: '設定版數同配圖' }),
+      desc: t('slideGen.guide.s3.desc', {
+        defaultValue: '揀大約版數、AI 模型，需要就開封面相／內頁配圖。',
+      }),
+    },
+    {
+      title: t('slideGen.guide.s4.title', { defaultValue: '生成、執靚、下載' }),
+      desc: t('slideGen.guide.s4.desc', {
+        defaultValue: 'AI 逐版砌出嚟，可逐版編輯或 AI 再潤飾，啱晒一鍵下載 .pptx。',
+      }),
+    },
+  ]
+
   return (
     <div className="space-y-5">
-      <header className="min-w-0">
-        <p className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.3em] text-accent/70">
-          <Presentation size={13} className="shrink-0" />
-          教學備課 · Slides
-        </p>
-        <h1 className="mt-1 text-[26px] font-semibold leading-none tracking-tight text-slate-800 dark:text-slate-100 sm:text-[30px]">
-          簡報工作室
-        </h1>
-        <p className="mt-2 text-[13px] text-slate-500 dark:text-slate-400">
-          四步引導：揀起點 → 揀設計 → 設定 → 生成。{SLIDE_PACKS.length} 套模板、上載教材自動抽重點、右邊即時預覽，一鍵下載 .pptx。
-        </p>
-      </header>
+      {/* ───────── 頂部 PageHero（共用 accent hero） ───────── */}
+      <PageHero
+        icon={Presentation}
+        kicker={t('slideGen.kicker', { defaultValue: 'Slide Studio' })}
+        title={t('slideGen.title', { defaultValue: '簡報工作室' })}
+        description={t('slideGen.subtitle', {
+          defaultValue: '四步引導砌好教學簡報：揀起點、揀設計、設定、生成。右邊即時睇效果，一鍵下載 .pptx。',
+        })}
+      />
+
+      {/* ───────── 教學引導：點用呢個功能（可摺疊 / 永久收起） ───────── */}
+      <FeatureGuide
+        storageKey="slide-gen"
+        title={t('slideGen.guide.title', { defaultValue: '簡報工作室點用？' })}
+        steps={guideSteps}
+      />
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(320px,400px)]">
         {/* 左：引導 */}
@@ -497,7 +536,9 @@ export default function SlideGen() {
           <Card padded className="space-y-4">
             {step === 1 && (
               <div className="space-y-4">
-                <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">你想點開始？</h3>
+                <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                  {t('slideGen.step1.heading', { defaultValue: '你想點開始？' })}
+                </h3>
                 <div className="grid gap-2.5 sm:grid-cols-3">
                   {SOURCE_CARDS.map((c) => {
                     const active = source === c.id
@@ -508,21 +549,21 @@ export default function SlideGen() {
                         onClick={() => chooseSource(c.id)}
                         aria-pressed={active}
                         className={cx(
-                          'flex flex-col items-start gap-1.5 rounded-xl border p-3 text-left transition active:scale-[0.98]',
+                          'group flex flex-col items-start gap-1.5 rounded-2xl border p-3 text-left transition duration-200 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
                           active
-                            ? 'border-accent bg-accent-soft/50 ring-1 ring-accent/30 dark:bg-accent/10'
-                            : 'border-black/[0.08] hover:border-accent/40 hover:bg-black/[0.02] dark:border-white/10 dark:hover:bg-white/[0.03]',
+                            ? 'border-accent bg-accent-soft/50 dark:bg-accent/10'
+                            : 'border-slate-200/80 bg-white hover:border-slate-300 hover:shadow-md dark:border-slate-700/60 dark:bg-slate-800 dark:hover:border-slate-600',
                         )}
                       >
                         <span
                           className={cx(
-                            'flex h-8 w-8 items-center justify-center rounded-lg',
+                            'flex h-8 w-8 items-center justify-center rounded-xl',
                             active
                               ? 'bg-accent text-white'
-                              : 'bg-black/[0.05] text-slate-500 dark:bg-white/10 dark:text-slate-300',
+                              : 'bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent',
                           )}
                         >
-                          <c.icon size={17} />
+                          <c.icon size={16} />
                         </span>
                         <span
                           className={cx(
@@ -540,28 +581,33 @@ export default function SlideGen() {
 
                 {source === 'topic' &&
                   (topics.length > 0 ? (
-                    <Field label="課題">
+                    <Field label={t('slideGen.topic.label', { defaultValue: '課題' })}>
                       <Select value={topicId} onChange={(e) => setTopicId(e.target.value)}>
-                        {topics.map((t) => (
-                          <option key={t.id} value={t.id}>
-                            {t.topic}
+                        {topics.map((tp) => (
+                          <option key={tp.id} value={tp.id}>
+                            {tp.topic}
                           </option>
                         ))}
                       </Select>
                     </Field>
                   ) : (
-                    <p className="rounded-lg bg-amber-50 px-3 py-2 text-[12px] text-amber-700 dark:bg-amber-500/10 dark:text-amber-300">
-                      仲未有課題。去「課題」加返，或改用「貼內容 / 上載教材」。
+                    <p className="rounded-xl bg-amber-50 px-3 py-2 text-[12px] text-amber-700 dark:bg-amber-500/10 dark:text-amber-300">
+                      {t('slideGen.topic.empty', {
+                        defaultValue: '仲未有課題。去「課題」加返，或改用「貼內容 / 上載教材」開始。',
+                      })}
                     </p>
                   ))}
 
                 {source === 'paste' && (
-                  <Field label="內容">
+                  <Field label={t('slideGen.paste.label', { defaultValue: '內容' })}>
                     <Textarea
                       rows={6}
                       value={text}
                       onChange={(e) => setText(e.target.value)}
-                      placeholder={'貼上課題大綱、筆記或教學重點…\n想自己控制分頁：用 --- 或空行分段，每段首行做該版標題，再開「跟我嘅分段分版」。'}
+                      placeholder={t('slideGen.paste.placeholder', {
+                        defaultValue:
+                          '貼上課題大綱、筆記或教學重點…\n想自己控制分頁：用 --- 或空行分段，每段首行做該版標題，再開「跟我嘅分段分版」。',
+                      })}
                     />
                   </Field>
                 )}
@@ -571,21 +617,28 @@ export default function SlideGen() {
                 {source === 'paste' && (
                   <div className="flex flex-wrap items-center gap-2">
                     <ToggleChip active={followPages} onClick={() => setFollowPages((v) => !v)} icon={ListTree}>
-                      跟我嘅分段分版
+                      {t('slideGen.followPages.chip', { defaultValue: '跟我嘅分段分版' })}
                     </ToggleChip>
                     {followPages ? (
                       <span className="text-[11px] text-slate-400">
                         {(() => {
                           const n = parseManualPages(text).length
                           return n >= 2
-                            ? `會出剛好 ${n} 版（分頁鎖死，AI 只執靚每版文字）`
-                            : '要至少 2 段（--- 或空行分隔）先生效'
+                            ? t('slideGen.followPages.ok', {
+                                defaultValue: `會出剛好 ${n} 版（分頁鎖死，AI 只執靚每版文字）`,
+                                n,
+                              })
+                            : t('slideGen.followPages.need', {
+                                defaultValue: '要至少 2 段（--- 或空行分隔）先生效',
+                              })
                         })()}
                       </span>
                     ) : (
                       detectManualPages(text) && (
                         <span className="text-[11px] text-amber-600 dark:text-amber-400">
-                          偵測到你嘅內容有分段 — 開呢個掣可以鎖住你嘅分頁
+                          {t('slideGen.followPages.detected', {
+                            defaultValue: '偵測到你嘅內容有分段 — 開呢個掣可以鎖住你嘅分頁',
+                          })}
                         </span>
                       )
                     )}
@@ -597,8 +650,14 @@ export default function SlideGen() {
             {step === 2 && (
               <div className="space-y-3">
                 <div className="flex items-baseline justify-between gap-2">
-                  <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">揀個設計</h3>
-                  <span className="text-[11px] text-slate-400">{SLIDE_PACKS.length} 套 · 揀完睇右邊預覽</span>
+                  <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                    {t('slideGen.step2.heading', { defaultValue: '揀個設計' })}
+                  </h3>
+                  <span className="text-[11px] text-slate-400">
+                    {t('slideGen.step2.hint', {
+                      defaultValue: `${SLIDE_PACKS.length} 套 · 揀完睇右邊預覽`,
+                    })}
+                  </span>
                 </div>
                 <PackGallery pack={pack} onPack={setPack} />
               </div>
@@ -606,43 +665,59 @@ export default function SlideGen() {
 
             {step === 3 && (
               <div className="space-y-4">
-                <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">設定</h3>
+                <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                  {t('slideGen.step3.heading', { defaultValue: '設定' })}
+                </h3>
                 <div className="flex flex-wrap items-end gap-4">
-                  <Field label="版數">
+                  <Field label={t('slideGen.count.label', { defaultValue: '版數' })}>
                     <Select
                       value={String(count)}
                       onChange={(e) => setCount(Number(e.target.value))}
                       disabled={source === 'paste' && followPages}
-                      title={source === 'paste' && followPages ? '分版跟你嘅分段，版數唔使揀' : undefined}
+                      title={
+                        source === 'paste' && followPages
+                          ? t('slideGen.count.lockedTip', { defaultValue: '分版跟你嘅分段，版數唔使揀' })
+                          : undefined
+                      }
                     >
                       {[6, 8, 10, 12].map((n) => (
                         <option key={n} value={n}>
-                          約 {n} 版
+                          {t('slideGen.count.option', { defaultValue: `約 ${n} 版`, n })}
                         </option>
                       ))}
                     </Select>
                   </Field>
-                  <Field label="AI 模型">
-                    <Tooltip label="Flash 快 · Pro 強">
+                  <Field label={t('slideGen.model.label', { defaultValue: 'AI 模型' })}>
+                    <Tooltip label={t('slideGen.model.tip', { defaultValue: 'Flash 快 · Pro 強' })}>
                       <SegmentedControl size="sm" options={MODEL_OPTS} value={model} onChange={setModel} />
                     </Tooltip>
                   </Field>
                 </div>
                 {source === 'paste' && followPages && (
-                  <p className="text-[11px] text-slate-400">已開「跟我嘅分段分版」：版數鎖住跟你嘅分段。</p>
+                  <p className="text-[11px] text-slate-400">
+                    {t('slideGen.count.lockedNote', {
+                      defaultValue: '已開「跟我嘅分段分版」：版數鎖住跟你嘅分段。',
+                    })}
+                  </p>
                 )}
 
                 <div className="space-y-2">
-                  <span className="block text-[11px] font-medium uppercase tracking-wider text-slate-400">配圖</span>
+                  <span className="block text-xs font-semibold text-slate-500 dark:text-slate-400">
+                    {t('slideGen.images.label', { defaultValue: '配圖' })}
+                  </span>
                   <div className="flex flex-wrap items-center gap-2">
                     <ToggleChip
                       active={usePhoto && isStockConfigured}
                       disabled={!isStockConfigured}
                       onClick={() => setUsePhoto(!usePhoto)}
                       icon={ImageIcon}
-                      title={isStockConfigured ? '封面用 Pexels 免費相片' : '需先設定 VITE_PEXELS_KEY 環境變數'}
+                      title={
+                        isStockConfigured
+                          ? t('slideGen.images.coverTip', { defaultValue: '封面用 Pexels 免費相片' })
+                          : t('slideGen.images.needKey', { defaultValue: '需先設定 VITE_PEXELS_KEY 環境變數' })
+                      }
                     >
-                      封面相片
+                      {t('slideGen.images.cover', { defaultValue: '封面相片' })}
                     </ToggleChip>
                     <ToggleChip
                       active={useSlidePhotos && isStockConfigured}
@@ -651,25 +726,33 @@ export default function SlideGen() {
                       icon={Images}
                       title={
                         isStockConfigured
-                          ? 'AI 標咗配圖嘅內頁自動配 Pexels 相片（最多 4 版）'
-                          : '需先設定 VITE_PEXELS_KEY 環境變數'
+                          ? t('slideGen.images.innerTip', {
+                              defaultValue: 'AI 標咗配圖嘅內頁自動配 Pexels 相片（最多 4 版）',
+                            })
+                          : t('slideGen.images.needKey', { defaultValue: '需先設定 VITE_PEXELS_KEY 環境變數' })
                       }
                     >
-                      內頁配圖
+                      {t('slideGen.images.inner', { defaultValue: '內頁配圖' })}
                     </ToggleChip>
                     {hasTitleFont(pack) && (
                       <ToggleChip
                         active={highFi}
                         onClick={() => setHighFi(!highFi)}
                         icon={Sparkles}
-                        title="封面標題用招牌字體 render 成圖（跨平台一致；標題變圖、唔可喺 PPT 改）"
+                        title={t('slideGen.images.highFiTip', {
+                          defaultValue: '封面標題用招牌字體 render 成圖（跨平台一致；標題變圖、唔可喺 PPT 改）',
+                        })}
                       >
-                        高擬真標題
+                        {t('slideGen.images.highFi', { defaultValue: '高擬真標題' })}
                       </ToggleChip>
                     )}
                   </div>
                   {!isStockConfigured && (
-                    <p className="text-[11px] text-slate-400">配圖需要設定 VITE_PEXELS_KEY 環境變數先用到。</p>
+                    <p className="text-[11px] text-slate-400">
+                      {t('slideGen.images.pexelsHint', {
+                        defaultValue: '配圖需要設定 VITE_PEXELS_KEY 環境變數先用到。',
+                      })}
+                    </p>
                   )}
                 </div>
               </div>
@@ -679,27 +762,32 @@ export default function SlideGen() {
               <div className="space-y-4">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div className="min-w-0">
-                    <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">生成簡報</h3>
+                    <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                      {t('slideGen.step4.heading', { defaultValue: '生成簡報' })}
+                    </h3>
                     <p className="mt-0.5 text-[11px] text-slate-400 dark:text-slate-500">
                       {SOURCE_CARDS.find((c) => c.id === source)?.title} ·{' '}
-                      {SLIDE_PACKS.find((p) => p.id === pack)?.name} · 約 {count} 版 ·{' '}
+                      {SLIDE_PACKS.find((p) => p.id === pack)?.name} · {t('slideGen.step4.count', { defaultValue: '約' })}{' '}
+                      <span className="tabular-nums">{count}</span> 版 ·{' '}
                       {model === 'gemini-2.5-flash' ? 'Flash' : 'Pro'}
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
                     {busy ? (
                       <Button variant="ghost" icon={StopCircle} onClick={stopRun}>
-                        停止
+                        {t('slideGen.action.stop', { defaultValue: '停止' })}
                       </Button>
                     ) : (
                       <>
                         {reusedKey === currentKey && (
                           <Button variant="ghost" icon={RefreshCw} onClick={() => void run(true)}>
-                            重新生成
+                            {t('slideGen.action.regen', { defaultValue: '重新生成' })}
                           </Button>
                         )}
                         <Button icon={Sparkles} onClick={() => void run()} loading={busy} disabled={!hasInput}>
-                          {current ? '再生成' : '生成簡報'}
+                          {current
+                            ? t('slideGen.action.again', { defaultValue: '再生成' })
+                            : t('slideGen.action.generate', { defaultValue: '生成簡報' })}
                         </Button>
                       </>
                     )}
@@ -710,8 +798,11 @@ export default function SlideGen() {
                   <p className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
                     <Loader2 size={16} className="animate-spin text-accent" />
                     {streamSlides.length > 0
-                      ? `由 AI 設計緊… 已生成 ${streamSlides.length} 版`
-                      : '由 AI 設計緊…'}
+                      ? t('slideGen.busy.progress', {
+                          defaultValue: `由 AI 設計緊… 已生成 ${streamSlides.length} 版`,
+                          n: streamSlides.length,
+                        })
+                      : t('slideGen.busy.start', { defaultValue: '由 AI 設計緊…' })}
                   </p>
                 )}
 
@@ -732,9 +823,35 @@ export default function SlideGen() {
                 )}
 
                 {!current && !busy && (
-                  <p className="rounded-lg bg-slate-50 px-3 py-3 text-center text-[12px] text-slate-400 dark:bg-slate-800/40 dark:text-slate-500">
-                    撳「生成簡報」，AI 會即時逐版砌出嚟，右邊睇住效果。
-                  </p>
+                  <div className="flex flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-slate-200/80 bg-slate-50/60 px-6 py-10 text-center dark:border-slate-700/60 dark:bg-slate-800/40">
+                    <span className="flex h-12 w-12 items-center justify-center rounded-full bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
+                      <Wand2 size={22} strokeWidth={1.75} />
+                    </span>
+                    <p className="text-sm font-medium text-slate-600 dark:text-slate-300">
+                      {t('slideGen.step4.empty.title', { defaultValue: '準備好就開始生成' })}
+                    </p>
+                    <p className="max-w-xs text-xs text-slate-400 dark:text-slate-500">
+                      {t('slideGen.step4.empty.hint', {
+                        defaultValue: 'AI 會即時逐版砌出嚟，右邊睇住效果；生成後可逐版執靚。',
+                      })}
+                    </p>
+                    <Button
+                      size="sm"
+                      icon={Sparkles}
+                      onClick={() => void run()}
+                      disabled={!hasInput}
+                      className="mt-1"
+                    >
+                      {t('slideGen.action.generate', { defaultValue: '生成簡報' })}
+                    </Button>
+                    {!hasInput && (
+                      <p className="text-[11px] text-amber-600 dark:text-amber-400">
+                        {t('slideGen.step4.empty.needInput', {
+                          defaultValue: '返第 1 步揀返起點先（課題／貼內容／上載教材）。',
+                        })}
+                      </p>
+                    )}
+                  </div>
                 )}
               </div>
             )}
@@ -747,15 +864,19 @@ export default function SlideGen() {
               onClick={() => setStep((s) => Math.max(1, s - 1))}
               disabled={step === 1}
             >
-              上一步
+              {t('slideGen.nav.prev', { defaultValue: '上一步' })}
             </Button>
             {step < 4 ? (
               <Button icon={ArrowRight} onClick={() => goStep(step + 1)} disabled={!canNext}>
-                下一步
+                {t('slideGen.nav.next', { defaultValue: '下一步' })}
               </Button>
             ) : (
               <span className="text-[11px] text-slate-400">
-                {busy ? '生成緊…' : current ? '可下載，或返上一步改設定再生成' : '撳「生成簡報」開始'}
+                {busy
+                  ? t('slideGen.nav.busy', { defaultValue: '生成緊…' })
+                  : current
+                    ? t('slideGen.nav.done', { defaultValue: '可下載，或返上一步改設定再生成' })
+                    : t('slideGen.nav.idle', { defaultValue: '撳「生成簡報」開始' })}
               </span>
             )}
           </div>
@@ -764,9 +885,15 @@ export default function SlideGen() {
         {/* 右：即時預覽 */}
         <aside className="space-y-2 lg:sticky lg:top-4 lg:self-start">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-medium uppercase tracking-wider text-slate-400">即時預覽</span>
+            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+              {t('slideGen.preview.label', { defaultValue: '即時預覽' })}
+            </span>
             <span className="text-[11px] text-slate-400 dark:text-slate-500">
-              {previewIsSample ? '風格示意（揀模板睇效果）' : busy ? '生成緊…' : '你嘅簡報'}
+              {previewIsSample
+                ? t('slideGen.preview.sample', { defaultValue: '風格示意（揀模板睇效果）' })
+                : busy
+                  ? t('slideGen.preview.busy', { defaultValue: '生成緊…' })
+                  : t('slideGen.preview.yours', { defaultValue: '你嘅簡報' })}
             </span>
           </div>
           <DeckPreview
@@ -793,7 +920,7 @@ export default function SlideGen() {
       {/* 歷史 */}
       {history.length > 0 && (
         <div>
-          <SectionTitle icon={Clock}>歷史</SectionTitle>
+          <SectionTitle icon={Clock}>{t('slideGen.history.title', { defaultValue: '歷史' })}</SectionTitle>
           <div className="space-y-2">
             {history.map((r) => (
               <Card
@@ -807,18 +934,20 @@ export default function SlideGen() {
                 className={cx('p-3', current?.id === r.id && 'ring-1 ring-accent/30')}
               >
                 <div className="flex items-center gap-2.5">
-                  <Presentation size={16} className="shrink-0 text-accent" />
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
+                    <Presentation size={16} />
+                  </span>
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium text-slate-700 dark:text-slate-200">{r.title}</p>
                     <p className="mt-0.5 text-[11px] text-slate-400 dark:text-slate-500">
-                      {fmtDate(r.createdAt)} · {r.slides.length} 版
+                      {fmtDate(r.createdAt)} · <span className="tabular-nums slashed-zero">{r.slides.length}</span> 版
                     </p>
                   </div>
                   <div className="flex items-center" onClick={(e) => e.stopPropagation()}>
-                    <IconButton label="下載" size="sm" onClick={() => void download(r)}>
+                    <IconButton label={t('slideGen.action.download', { defaultValue: '下載' })} size="sm" onClick={() => void download(r)}>
                       <Download size={14} />
                     </IconButton>
-                    <IconButton label="刪除" size="sm" tone="danger" onClick={() => void del(r.id)}>
+                    <IconButton label={t('slideGen.action.delete', { defaultValue: '刪除' })} size="sm" tone="danger" onClick={() => void del(r.id)}>
                       <Trash2 size={14} />
                     </IconButton>
                   </div>
@@ -856,10 +985,10 @@ function ToggleChip({
       aria-pressed={active}
       title={title}
       className={cx(
-        'inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-medium transition active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-50',
+        'inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-medium transition active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 disabled:cursor-not-allowed disabled:opacity-50',
         active
           ? 'border-accent bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent'
-          : 'border-black/[0.08] text-slate-600 hover:bg-black/[0.03] dark:border-white/10 dark:text-slate-300',
+          : 'border-slate-200/80 text-slate-600 hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700/60 dark:text-slate-300 dark:hover:bg-slate-800/60',
       )}
     >
       <Icon size={13} /> {children}
@@ -893,31 +1022,34 @@ function ResultPanel({
   onDelete: (i: number) => void
   onAdd: () => void
 }) {
+  const { t } = useTranslation()
   return (
-    <div className="space-y-3 rounded-xl border border-accent/20 bg-accent-soft/20 p-3 dark:bg-accent/[0.06]">
+    <div className="space-y-3 rounded-2xl border border-accent/20 bg-accent-soft/20 p-3 dark:bg-accent/[0.06]">
       <div className="flex flex-wrap items-center gap-2">
         <Badge tone="accent" icon={Presentation}>
-          {rec.slides.length} 版
+          <span className="tabular-nums slashed-zero">{rec.slides.length}</span> 版
         </Badge>
         <h3 className="min-w-0 flex-1 text-sm font-semibold tracking-tight text-slate-800 dark:text-slate-100">
           {rec.title}
         </h3>
         {canRestore && (
           <Button variant="ghost" icon={RefreshCw} onClick={onRestore} disabled={refining}>
-            還原
+            {t('slideGen.result.restore', { defaultValue: '還原' })}
           </Button>
         )}
-        <Tooltip label="用 AI 重整結構／文案（可還原，唔影響主生成）">
+        <Tooltip label={t('slideGen.result.refineTip', { defaultValue: '用 AI 重整結構／文案（可還原，唔影響主生成）' })}>
           <Button variant="ghost" icon={Wand2} onClick={onRefine} loading={refining}>
-            AI 再潤飾
+            {t('slideGen.result.refine', { defaultValue: 'AI 再潤飾' })}
           </Button>
         </Tooltip>
         <Button icon={Download} onClick={onDownload} loading={downloading}>
-          下載 PowerPoint
+          {t('slideGen.result.download', { defaultValue: '下載 PowerPoint' })}
         </Button>
       </div>
       {rec.subtitle && <p className="text-[12px] text-slate-500 dark:text-slate-400">{rec.subtitle}</p>}
-      <p className="text-[11px] text-slate-400 dark:text-slate-500">㩒任何一版可逐版編輯。</p>
+      <p className="text-[11px] text-slate-400 dark:text-slate-500">
+        {t('slideGen.result.editHint', { defaultValue: '㩒任何一版可逐版編輯。' })}
+      </p>
 
       <div className="space-y-2">
         {rec.slides.map((s, i) => {
@@ -925,30 +1057,30 @@ function ResultPanel({
           return (
             <div
               key={i}
-              className="group rounded-xl border border-black/[0.06] bg-white/70 p-3 transition hover:border-accent/30 dark:border-white/[0.08] dark:bg-slate-800/40"
+              className="group rounded-xl border border-slate-200/80 bg-white/70 p-3 transition hover:border-accent/30 dark:border-slate-700/60 dark:bg-slate-800/40"
             >
               <div className="flex items-center gap-2">
-                <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-accent-soft text-[11px] font-semibold text-accent-strong dark:bg-accent/15 dark:text-accent">
+                <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-accent-soft text-[11px] font-semibold tabular-nums text-accent-strong dark:bg-accent/15 dark:text-accent">
                   {i + 1}
                 </span>
                 <p className="min-w-0 flex-1 text-sm font-semibold text-slate-700 dark:text-slate-200">{s.title}</p>
                 <span className="flex shrink-0 items-center opacity-0 transition group-hover:opacity-100 focus-within:opacity-100">
-                  <IconButton label="上移" size="sm" onClick={() => onMove(i, -1)} disabled={i === 0}>
+                  <IconButton label={t('slideGen.slide.up', { defaultValue: '上移' })} size="sm" onClick={() => onMove(i, -1)} disabled={i === 0}>
                     <ChevronUp size={14} />
                   </IconButton>
                   <IconButton
-                    label="下移"
+                    label={t('slideGen.slide.down', { defaultValue: '下移' })}
                     size="sm"
                     onClick={() => onMove(i, 1)}
                     disabled={i === rec.slides.length - 1}
                   >
                     <ChevronDown size={14} />
                   </IconButton>
-                  <IconButton label="刪除呢版" size="sm" tone="danger" onClick={() => onDelete(i)}>
+                  <IconButton label={t('slideGen.slide.delete', { defaultValue: '刪除呢版' })} size="sm" tone="danger" onClick={() => onDelete(i)}>
                     <Trash2 size={14} />
                   </IconButton>
                 </span>
-                <IconButton label="編輯呢版" size="sm" onClick={() => onEdit(i)}>
+                <IconButton label={t('slideGen.slide.edit', { defaultValue: '編輯呢版' })} size="sm" onClick={() => onEdit(i)}>
                   <Pencil size={14} />
                 </IconButton>
                 {layoutBadge && (
@@ -957,13 +1089,13 @@ function ResultPanel({
                   </span>
                 )}
                 {s.chart && (
-                  <span className="inline-flex shrink-0 items-center gap-1 rounded-md bg-blue-50 px-1.5 py-0.5 text-[10px] font-medium text-blue-600 dark:bg-blue-500/15 dark:text-blue-300">
-                    <BarChart3 size={11} /> 圖表
+                  <span className="inline-flex shrink-0 items-center gap-1 rounded-md bg-sky-50 px-1.5 py-0.5 text-[10px] font-medium text-sky-600 dark:bg-sky-500/15 dark:text-sky-300">
+                    <BarChart3 size={11} /> {t('slideGen.slide.chart', { defaultValue: '圖表' })}
                   </span>
                 )}
                 {s.imageQuery && (
                   <span className="inline-flex shrink-0 items-center gap-1 rounded-md bg-emerald-50 px-1.5 py-0.5 text-[10px] font-medium text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-300">
-                    <ImageIcon size={11} /> 配圖
+                    <ImageIcon size={11} /> {t('slideGen.slide.image', { defaultValue: '配圖' })}
                   </span>
                 )}
               </div>
@@ -989,9 +1121,9 @@ function ResultPanel({
         <button
           type="button"
           onClick={onAdd}
-          className="flex w-full items-center justify-center gap-1.5 rounded-xl border-2 border-dashed border-black/[0.08] py-2.5 text-xs font-medium text-slate-400 transition hover:border-accent/40 hover:text-accent dark:border-white/10 dark:text-slate-500"
+          className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-slate-300 py-2.5 text-xs font-medium text-slate-400 transition active:scale-[0.98] hover:border-accent/40 hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:border-slate-700 dark:text-slate-500"
         >
-          <Plus size={14} /> 加一版
+          <Plus size={14} /> {t('slideGen.slide.add', { defaultValue: '加一版' })}
         </button>
       </div>
     </div>

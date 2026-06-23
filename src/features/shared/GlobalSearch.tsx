@@ -6,6 +6,7 @@ import {
   useRef,
   useState,
 } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useCollection } from '../../lib/store'
 import {
   questionsCol,
@@ -61,6 +62,9 @@ import {
   Button,
   Separator,
   Tooltip,
+  FeatureGuide,
+  type FeatureGuideStep,
+  PageHero,
   cx,
 } from '../../ui'
 import {
@@ -232,7 +236,28 @@ function toMs(s?: string): number | undefined {
 // 視圖模式（grouped 分類 / ranked 最相關 / recent 最近——按 hit 既有 ts 排）
 type ViewMode = 'grouped' | 'ranked' | 'recent'
 
+// 教學引導：教用家「點用」呢個功能（2–4 步，FeatureGuide 只取頭 4 步）。
+const GUIDE_STEPS: FeatureGuideStep[] = [
+  {
+    title: '打幾個字',
+    desc: '喺上方一格打關鍵字，即時掃晒筆記、題庫、資源、班別、學生、行事曆…',
+  },
+  {
+    title: '收窄範圍',
+    desc: '撳「分類／最相關／最近」切換排序，或用下方類別 pill 揀返一種資料。',
+  },
+  {
+    title: '鍵盤直達',
+    desc: '↑↓ 揀、↵ 開、⌘1–9 快速跳；右邊預覽即時睇內容。',
+  },
+  {
+    title: '進階運算子',
+    desc: '輸入 type:note 限定類別、is:pinned 睇釘選、in:recent 揀最近更新。',
+  },
+]
+
 export default function GlobalSearch() {
+  const { t } = useTranslation()
   const { open } = useNav()
   const { mode } = useMode()
   const toast = useToast()
@@ -627,33 +652,28 @@ export default function GlobalSearch() {
 
   return (
     <div className="space-y-4">
-      {/* ───────── 指揮中心 masthead：搜尋框即係主角（自管 header；功能名「全域搜尋」做身份） ─────────
-          探照燈隱喻：聚焦時打開 accent 光暈，輸入框升高、邊框點亮。 */}
-      <section className="group/cmd relative overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-xs transition-colors duration-300 focus-within:border-accent/40 dark:border-slate-700/60 dark:bg-slate-800 dark:shadow-none dark:focus-within:border-accent/40">
+      {/* ───────── 統一 PageHero（accent hero）：功能名「全域搜尋」做身份 ───────── */}
+      <PageHero
+        icon={Radar}
+        kicker={t('globalSearch.kicker', { defaultValue: 'Global Search' })}
+        title={t('globalSearch.title', { defaultValue: '全域搜尋' })}
+        description={t('globalSearch.subtitle', { defaultValue: '一格搜尋，掃晒成個平台' })}
+        actions={
+          <span className="hidden items-center gap-1 rounded-lg bg-white/15 px-2.5 py-1 font-mono text-xs font-medium text-white backdrop-blur-sm sm:inline-flex">
+            <Command size={11} /> K
+          </span>
+        }
+      />
+
+      {/* ───────── 探照燈搜尋台：搜尋框即係主角 ─────────
+          聚焦時打開 accent 光暈，輸入框升高、邊框點亮。 */}
+      <section className="group/cmd relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm transition-colors duration-300 focus-within:border-accent/40 dark:border-slate-700/60 dark:bg-slate-800 dark:shadow-none dark:focus-within:border-accent/40">
         {/* 探照燈光暈（靜態，reduced-motion 無礙）：右上柔光 + 聚焦時加亮 */}
         <div
           aria-hidden="true"
           className="pointer-events-none absolute -right-16 -top-24 h-64 w-64 rounded-full bg-accent/10 opacity-60 blur-3xl transition-opacity duration-500 group-focus-within/cmd:opacity-100 dark:bg-accent/20"
         />
         <div className="relative p-4 sm:p-5">
-          {/* 身份條：kicker + 功能名（取代 host 預設 header） */}
-          <div className="mb-3 flex items-center gap-2.5">
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-accent text-white shadow-sm shadow-accent/30">
-              <Radar size={18} />
-            </span>
-            <div className="min-w-0">
-              <p className="text-[11px] font-medium uppercase tracking-[0.28em] text-accent/70">
-                指揮中心 · COMMAND
-              </p>
-              <h1 className="-mt-0.5 text-[22px] font-semibold leading-tight tracking-tight text-slate-800 dark:text-slate-100">
-                全域搜尋
-              </h1>
-            </div>
-            <Kbd className="ml-auto hidden shrink-0 items-center gap-1 sm:inline-flex">
-              <Command size={11} /> K
-            </Kbd>
-          </div>
-
           {/* 探照燈輸入框 — 大、圓潤、聚焦點亮 */}
           <div
             ref={searchBoxRef}
@@ -699,7 +719,7 @@ export default function GlobalSearch() {
             role="listbox"
             aria-label="type 運算子建議"
           >
-            <div className="flex items-center gap-1.5 border-b border-slate-100 px-3 py-1.5 text-[11px] font-medium uppercase tracking-wider text-slate-400 dark:border-slate-700/60 dark:text-slate-500">
+            <div className="flex items-center gap-1.5 border-b border-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-400 dark:border-slate-700/60 dark:text-slate-500">
               <Hash size={12} />
               限定類別
             </div>
@@ -808,6 +828,15 @@ export default function GlobalSearch() {
           )}
         </div>
       </section>
+
+      {/* ───────── 教學引導：點用呢個功能（只喺未輸入時出，唔阻搜尋流程） ───────── */}
+      {!hasQuery && (
+        <FeatureGuide
+          storageKey="global-search"
+          title={t('globalSearch.guideTitle', { defaultValue: '全域搜尋點用？' })}
+          steps={GUIDE_STEPS}
+        />
+      )}
 
       {/* 主體：未輸入 → 最近 / 釘選；有輸入 → 結果 + 預覽 */}
       {!hasQuery ? (
@@ -1109,9 +1138,9 @@ function PreviewPanel({
   return (
     <UICard clip>
       <div className="border-b border-slate-100 bg-slate-50/40 p-4 dark:border-slate-700/60 dark:bg-slate-900/30">
-        <p className="mb-2 flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-[0.22em] text-slate-400 dark:text-slate-500">
-          <Radar size={11} className="text-accent/70" />
-          鎖定 · PREVIEW
+        <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold text-slate-400 dark:text-slate-500">
+          <Radar size={12} className="text-accent/70" />
+          預覽
         </p>
         <div className="flex items-start gap-3">
           <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
@@ -1192,48 +1221,46 @@ function StartScreen({
   onClearRecents: () => void
   onUnpin: (q: string) => void
 }) {
+  const { t } = useTranslation()
   const examples = ['市場營銷', '5A', '會議', '死線', '目標']
   const isFresh = pins.length === 0 && recents.length === 0
   return (
     <div className="space-y-4">
-      {/* 首次／空白：command-center 歡迎面板（暖文案 + 例子做明確下一步） */}
+      {/* 首次／空白：引導式空狀態（icon + 標題 + 提示 + 例子做直接 CTA） */}
       {isFresh && (
-        <UICard clip className="relative p-6 text-center sm:p-8">
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute left-1/2 top-0 h-40 w-40 -translate-x-1/2 -translate-y-1/2 rounded-full bg-accent/10 blur-3xl dark:bg-accent/15"
-          />
-          <span className="relative mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
-            <Radar size={26} />
+        <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-slate-50/60 px-6 py-10 text-center dark:border-slate-700/60 dark:bg-slate-800/40">
+          <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
+            <Radar size={24} strokeWidth={1.75} />
           </span>
-          <h2 className="relative mt-4 text-xl font-semibold tracking-tight text-slate-800 dark:text-slate-100">
-            一格搜尋，掃晒成個平台
+          <h2 className="mt-3 text-sm font-medium text-slate-600 dark:text-slate-300">
+            {t('globalSearch.startTitle', { defaultValue: '由邊度開始？' })}
           </h2>
-          <p className="relative mx-auto mt-2 max-w-md text-sm leading-relaxed text-slate-500 dark:text-slate-400">
-            筆記、題庫、資源、教案、會議、班別、學生、行事曆、待辦、記帳…
-            即時模糊比對，鍵盤一路操控。打幾個字就見到。
+          <p className="mt-1 max-w-xs text-xs text-slate-400 dark:text-slate-500">
+            {t('globalSearch.startHint', {
+              defaultValue: '打幾個字即時掃晒全平台，或撳下面例子試下：',
+            })}
           </p>
-          <div className="relative mt-5 flex flex-wrap items-center justify-center gap-2">
+          <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
             {examples.map((ex) => (
               <button
                 key={ex}
                 type="button"
                 onClick={() => onPick(ex)}
-                className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-600 shadow-xs transition active:scale-[0.98] hover:border-accent/40 hover:bg-accent-soft hover:text-accent-strong dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:border-accent/40 dark:hover:bg-accent/15 dark:hover:text-accent"
+                className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-600 transition active:scale-[0.98] hover:border-accent/40 hover:bg-accent-soft hover:text-accent-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:border-accent/40 dark:hover:bg-accent/15 dark:hover:text-accent"
               >
                 <Search size={13} className="opacity-60" />
                 {ex}
               </button>
             ))}
           </div>
-        </UICard>
+        </div>
       )}
 
       {pins.length > 0 && (
         <UICard className="p-4">
           <div className="mb-2.5 flex items-center gap-1.5">
             <Star size={14} className="fill-amber-400 text-amber-500" />
-            <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+            <h2 className="text-xs font-semibold text-slate-400 dark:text-slate-500">
               釘選搜尋
             </h2>
           </div>
@@ -1266,7 +1293,7 @@ function StartScreen({
           <div className="mb-1 flex items-center justify-between">
             <div className="flex items-center gap-1.5">
               <Clock size={14} className="text-slate-400" />
-              <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+              <h2 className="text-xs font-semibold text-slate-400 dark:text-slate-500">
                 最近搜尋
               </h2>
             </div>

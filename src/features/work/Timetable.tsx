@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   Download,
   LayoutGrid,
@@ -12,6 +13,8 @@ import {
   ChevronRight,
   MapPin,
   Sparkles,
+  CalendarDays,
+  CalendarPlus,
 } from 'lucide-react'
 import { createCollection, useCollection } from '../../lib/store'
 import { timetableCol, classesCol, cycleCalendarCol } from '../../data/collections'
@@ -21,10 +24,12 @@ import {
   Badge,
   Button,
   Card,
+  EmptyState,
+  FeatureGuide,
   Field,
-  IconButton,
   Input,
   Modal,
+  PageHero,
   SegmentedControl,
   Select,
   cx,
@@ -94,6 +99,7 @@ const timetableConfigCol = createCollection<TimetableConfig>('timetable_config',
 type ViewId = 'grid' | 'workload' | 'print'
 
 export default function Timetable() {
+  const { t } = useTranslation()
   const slots = useCollection(timetableCol)
   const classes = useCollection(classesCol)
   const metas = useCollection(timetableMetaCol)
@@ -328,42 +334,82 @@ export default function Timetable() {
 
   return (
     <div className="space-y-5 print:space-y-0">
-      {/* ───────── 週記 masthead：六日循環做頁面身份（serif「時間表」+ cycle 緞帶） ───────── */}
-      <header className="print:hidden">
-        <div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-3">
-          <div className="min-w-0">
-            <p className="text-[11px] font-medium uppercase tracking-[0.3em] text-accent/70">
-              {cycle ? '六日循環 · 週記網格' : '每週課表'}
-            </p>
-            <h1 className="mt-1 text-2xl font-semibold leading-tight tracking-tight text-slate-800 dark:text-slate-100 sm:text-[28px]">
-              時間表
-            </h1>
-            <p className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-slate-500 dark:text-slate-400">
-              <span className="tabular-nums">每週 {visibleSlots.length} 節課堂</span>
-              <span aria-hidden="true" className="text-slate-300 dark:text-slate-600">·</span>
-              <span>鐘聲時間 · 撞堂偵測 · 工作量分析</span>
-            </p>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <IconButton label="設定鐘聲時間" onClick={() => setShowSettings(true)}>
-              <Settings2 size={18} />
-            </IconButton>
-            <IconButton label="匯出 CSV" onClick={handleExport}>
-              <Download size={18} />
-            </IconButton>
+      {/* ───────── page hero：統一 accent 大色塊 ───────── */}
+      <PageHero
+        className="print:hidden"
+        icon={CalendarDays}
+        kicker={t('timetable.kicker', {
+          defaultValue: cycle ? '六日循環課表' : '每週課表',
+        })}
+        title={t('timetable.title', { defaultValue: '時間表' })}
+        description={t('timetable.subtitle', {
+          n: visibleSlots.length,
+          defaultValue: `每週 ${visibleSlots.length} 節課堂 · 鐘聲時間 · 撞堂偵測 · 工作量分析`,
+        })}
+        actions={
+          <>
+            <button
+              type="button"
+              onClick={() => setShowSettings(true)}
+              className="inline-flex items-center gap-1.5 rounded-xl bg-white/15 px-3 py-1.5 text-sm font-medium backdrop-blur-sm transition hover:bg-white/25"
+            >
+              <Settings2 size={15} />
+              {t('timetable.editBells', { defaultValue: '設定鐘聲時間' })}
+            </button>
+            <button
+              type="button"
+              onClick={handleExport}
+              className="inline-flex items-center gap-1.5 rounded-xl bg-white/15 px-3 py-1.5 text-sm font-medium backdrop-blur-sm transition hover:bg-white/25"
+            >
+              <Download size={15} />
+              {t('timetable.exportCsv', { defaultValue: '匯出 CSV' })}
+            </button>
             {view === 'print' && (
-              <Button size="sm" icon={Printer} onClick={() => window.print()}>
-                列印
-              </Button>
+              <button
+                type="button"
+                onClick={() => window.print()}
+                className="inline-flex items-center gap-1.5 rounded-xl bg-white/15 px-3 py-1.5 text-sm font-medium backdrop-blur-sm transition hover:bg-white/25"
+              >
+                <Printer size={15} />
+                {t('timetable.print', { defaultValue: '列印' })}
+              </button>
             )}
-          </div>
-        </div>
+          </>
+        }
+      />
 
-        {/* cycle 緞帶：Day A–F，今日嗰格高亮（去 Excel，循環概念視覺化） */}
-        {cycle && (
-          <CycleRibbon todayDay={todayDay} days={days} className="mt-4" />
-        )}
-      </header>
+      {/* cycle 緞帶：Day A–F，今日嗰格高亮（去 Excel，循環概念視覺化） */}
+      {cycle && (
+        <div className="print:hidden">
+          <CycleRibbon todayDay={todayDay} days={days} />
+        </div>
+      )}
+
+      {/* ───────── 教學引導：教用家點用時間表（可摺疊 + 可永久收起） ───────── */}
+      <div className="print:hidden">
+        <FeatureGuide
+          storageKey="timetable"
+          title={t('timetable.guideTitle', { defaultValue: '時間表點用？' })}
+          steps={[
+            {
+              title: t('timetable.guideStep1Title', { defaultValue: '撳格仔加堂' }),
+              desc: t('timetable.guideStep1Desc', { defaultValue: '喺週課表撳任何一格，填科目、班別同課室就加到一節。' }),
+            },
+            {
+              title: t('timetable.guideStep2Title', { defaultValue: '一次填多日' }),
+              desc: t('timetable.guideStep2Desc', { defaultValue: '同一節重複出現？喺編輯窗揀「套用到多日」，一次過填齊。' }),
+            },
+            {
+              title: t('timetable.guideStep3Title', { defaultValue: '設定鐘聲時間' }),
+              desc: t('timetable.guideStep3Desc', { defaultValue: '撳右上齒輪改每節上下課時間、小息午膳同顯示日子。' }),
+            },
+            {
+              title: t('timetable.guideStep4Title', { defaultValue: '睇工作量同列印' }),
+              desc: t('timetable.guideStep4Desc', { defaultValue: '切去「工作量」睇每日節數同空堂；「列印」可印出或匯出 CSV。' }),
+            },
+          ]}
+        />
+      </div>
 
       {/* 今日 / 下一堂 面板 */}
       <div className="print:hidden">
@@ -413,9 +459,9 @@ export default function Timetable() {
           value={view}
           onChange={setView}
           options={[
-            { id: 'grid', label: '週課表', icon: LayoutGrid },
-            { id: 'workload', label: '工作量', icon: PieChart },
-            { id: 'print', label: '列印', icon: Printer },
+            { id: 'grid', label: t('timetable.viewGrid', { defaultValue: '週課表' }), icon: LayoutGrid },
+            { id: 'workload', label: t('timetable.viewWorkload', { defaultValue: '工作量' }), icon: PieChart },
+            { id: 'print', label: t('timetable.viewPrint', { defaultValue: '列印' }), icon: Printer },
           ]}
         />
         {view === 'grid' && classes.length > 0 && (
@@ -426,10 +472,10 @@ export default function Timetable() {
               onChange={(e) => setFilterClass(e.target.value)}
               className="w-40"
             >
-              <option value="">全部班別</option>
+              <option value="">{t('timetable.filterAll', { defaultValue: '全部班別' })}</option>
               {classes.map((c) => (
                 <option key={c.id} value={c.id}>
-                  聚焦 {c.name}
+                  {t('timetable.filterFocus', { name: c.name, defaultValue: `聚焦 ${c.name}` })}
                 </option>
               ))}
             </Select>
@@ -439,18 +485,36 @@ export default function Timetable() {
 
       {/* 視圖內容 */}
       {view === 'grid' && (
-        <WeekGrid
-          bells={bells}
-          days={days}
-          cycle={cycle}
-          todayDay={todayDay}
-          slotByKey={slotByKey}
-          metaByKey={metaByKey}
-          classNameById={classNameById}
-          conflictKeys={conflictKeys}
-          dimClassId={filterClass}
-          onOpenCell={openCell}
-        />
+        <>
+          {/* 引導式空狀態：未有任何課堂時，引導落第一步（撳格加堂 / 設定鐘聲）。
+              網格保留喺下面，所以用家可以直接撳格開始。 */}
+          {slots.length === 0 && (
+            <EmptyState
+              icon={CalendarPlus}
+              title={t('timetable.emptyTitle', { defaultValue: '由第一節課開始排' })}
+              hint={t('timetable.emptyHint', {
+                defaultValue: '撳下面網格任何一格就可以加堂；或先設定每節上下課鐘聲時間。',
+              })}
+              action={
+                <Button size="sm" variant="secondary" icon={Settings2} onClick={() => setShowSettings(true)}>
+                  {t('timetable.emptyCta', { defaultValue: '設定鐘聲時間' })}
+                </Button>
+              }
+            />
+          )}
+          <WeekGrid
+            bells={bells}
+            days={days}
+            cycle={cycle}
+            todayDay={todayDay}
+            slotByKey={slotByKey}
+            metaByKey={metaByKey}
+            classNameById={classNameById}
+            conflictKeys={conflictKeys}
+            dimClassId={filterClass}
+            onOpenCell={openCell}
+          />
+        </>
       )}
 
       {view === 'workload' && (
@@ -541,14 +605,9 @@ function TodayPanel({
   return (
     <Card
       padded
-      className="relative overflow-hidden border-accent/25 bg-gradient-to-br from-accent-soft/70 via-accent-soft/20 to-transparent dark:border-accent/20 dark:from-accent/12 dark:via-accent/5"
+      className="border-accent/25 bg-accent-soft/40 dark:border-accent/20 dark:bg-accent/10"
     >
-      {/* 柔光點綴（高影響時刻先用，純裝飾） */}
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute -right-10 -top-14 h-36 w-36 rounded-full bg-accent/10 blur-3xl dark:bg-accent/15"
-      />
-      <div className="relative flex flex-col gap-3.5 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3.5 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3.5">
           {/* serif 大字「今日」身份磚（cycle 模式直接顯示 Day 字母） */}
           <span className="flex h-14 w-14 shrink-0 flex-col items-center justify-center rounded-2xl bg-accent text-white shadow-sm shadow-accent/30">
@@ -559,14 +618,19 @@ function TodayPanel({
                 <span className="text-2xl font-semibold leading-none">
                   {cycle ? cycleShort(todayDay) : dayLabel(todayDay).slice(-1)}
                 </span>
-                <span className="mt-0.5 text-[9px] font-medium uppercase tracking-widest text-white/70">
+                <span
+                  className={cx(
+                    'mt-0.5 text-[9px] font-medium text-white/70',
+                    cycle && 'uppercase tracking-widest',
+                  )}
+                >
                   {cycle ? 'Day' : '星期'}
                 </span>
               </>
             )}
           </span>
           <div className="min-w-0">
-            <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-accent/70">
+            <p className="text-xs font-medium text-accent dark:text-accent">
               {isWeekend
                 ? cycle ? '今日唔使返學' : '今日休息'
                 : `今日 · ${cycle ? `Day ${cycleShort(todayDay)}` : dayLabel(todayDay)}`}

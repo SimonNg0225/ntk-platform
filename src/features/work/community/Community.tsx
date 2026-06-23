@@ -1,20 +1,24 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Share2, Search, Download, Bookmark, BookmarkCheck, Flag, ExternalLink, Users, Sparkles, Plus, FileText, Presentation, ClipboardList, Link2, Video, StickyNote, Info, type LucideIcon } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
+import { Share2, Search, SearchX, Download, Bookmark, BookmarkCheck, Flag, ExternalLink, Users, Sparkles, Plus, FileText, Presentation, ClipboardList, Link2, Video, StickyNote, Info, type LucideIcon } from 'lucide-react'
 import {
   Badge,
   Button,
   Card,
   EmptyState,
+  FeatureGuide,
   Field,
   IconButton,
   Input,
   Modal,
   Select,
   Skeleton,
+  PageHero,
   Tabs,
   Textarea,
   Tooltip,
   cx,
+  type FeatureGuideStep,
 } from '../../../ui'
 import { useToast } from '../../../context/ToastContext'
 import { SUBJECT_PACKS } from '../../../data/subjects'
@@ -51,6 +55,7 @@ import { DEMO_RESOURCES } from './demo'
 type Tab = 'browse' | 'mine' | 'profile'
 
 export default function Community() {
+  const { t } = useTranslation()
   const [tab, setTab] = useState<Tab>('browse')
   const [publishing, setPublishing] = useState(false)
   const [reloadKey, setReloadKey] = useState(0)
@@ -58,40 +63,41 @@ export default function Community() {
 
   return (
     <div className="space-y-5">
-      <header className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.3em] text-accent/70">
-            <Share2 size={13} className="shrink-0" /> 教學社群 · Community
-          </p>
-          <h1 className="mt-1 text-[26px] font-semibold leading-none tracking-tight text-slate-800 dark:text-slate-100 sm:text-[30px]">
-            資源分享區
-          </h1>
-          <p className="mt-2 text-[13px] text-slate-500 dark:text-slate-400">
-            全港老師互相分享教學資源 —— 上載、瀏覽、下載、評分、收藏。
-          </p>
-          {!isCommunityConfigured && (
-            <span className="mt-2.5 inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-1 text-[11px] font-medium text-amber-700 ring-1 ring-amber-200 dark:bg-amber-500/10 dark:text-amber-300 dark:ring-amber-500/20">
-              <Info size={12} strokeWidth={2} className="shrink-0" /> 示範資料 · 接 Supabase 後顯示真實分享
-            </span>
-          )}
-        </div>
-        <Button icon={Plus} onClick={openPublish} className="shrink-0">
-          分享資源
-        </Button>
-      </header>
+      <PageHero
+        icon={Share2}
+        kicker={t('community.kicker', { defaultValue: '教學社群' })}
+        title={t('community.title', { defaultValue: '資源分享區' })}
+        description={t('community.subtitle', { defaultValue: '全港老師互相分享教材 — 上載、瀏覽、下載、評分、收藏。' })}
+        actions={
+          <button
+            type="button"
+            onClick={openPublish}
+            className="inline-flex items-center gap-1.5 rounded-xl bg-white/15 px-3 py-1.5 text-sm font-medium backdrop-blur-sm transition hover:bg-white/25"
+          >
+            <Plus size={15} /> {t('community.share', { defaultValue: '分享資源' })}
+          </button>
+        }
+      />
+
+      {!isCommunityConfigured && (
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-1 text-[11px] font-medium text-amber-600 dark:bg-amber-500/15 dark:text-amber-300">
+          <Info size={12} strokeWidth={2} className="shrink-0" />
+          {t('community.demoNote', { defaultValue: '示範資料 · 接 Supabase 後顯示真實分享' })}
+        </span>
+      )}
 
       <Tabs<Tab>
         active={tab}
         onChange={setTab}
         tabs={[
-          { id: 'browse', label: '瀏覽' },
-          { id: 'mine', label: '我的分享' },
-          { id: 'profile', label: '我的身份' },
+          { id: 'browse', label: t('community.tabBrowse', { defaultValue: '瀏覽' }) },
+          { id: 'mine', label: t('community.tabMine', { defaultValue: '我的分享' }) },
+          { id: 'profile', label: t('community.tabProfile', { defaultValue: '我的身份' }) },
         ]}
         icons={{ browse: Search, mine: Sparkles, profile: Users }}
       />
 
-      {tab === 'browse' && <BrowseTab key={`b${reloadKey}`} />}
+      {tab === 'browse' && <BrowseTab key={`b${reloadKey}`} onPublish={openPublish} />}
       {tab === 'mine' && <MyShares key={`m${reloadKey}`} onPublish={openPublish} />}
       {tab === 'profile' && <ProfileTab />}
 
@@ -106,7 +112,15 @@ export default function Community() {
 
 // ───────── 瀏覽 ─────────
 
-function BrowseTab() {
+// 教學引導步驟（zh-HK source；正式翻譯可加 i18n key）
+const BROWSE_GUIDE: FeatureGuideStep[] = [
+  { title: '搜尋 / 篩選', desc: '用上面搜尋框，或揀科目、類型同排序，快手搵到啱用嘅教材。' },
+  { title: '預覽同下載', desc: '撳資源卡睇詳情；撳「下載」即取檔案，連結型就直接開啟。' },
+  { title: '評分同收藏', desc: '好用就畀星支持作者；「收藏」會同時加入你嘅資源庫。' },
+]
+
+function BrowseTab({ onPublish }: { onPublish: () => void }) {
+  const { t } = useTranslation()
   const toast = useToast()
   const [q, setQ] = useState('')
   const [subject, setSubject] = useState('')
@@ -163,12 +177,24 @@ function BrowseTab() {
 
   return (
     <div className="space-y-4">
+      {/* 教學引導：教用家點搵 + 點用資源 */}
+      <FeatureGuide
+        storageKey="community"
+        title={t('community.guideTitle', { defaultValue: '資源分享區點用？' })}
+        steps={BROWSE_GUIDE}
+      />
+
       {/* 工具列 */}
       <Card padded className="space-y-3">
-        <Input icon={Search} value={q} onChange={(e) => setQ(e.target.value)} placeholder="搜尋標題、描述、標籤…" />
+        <Input
+          icon={Search}
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          placeholder={t('community.searchPlaceholder', { defaultValue: '搜尋標題、描述、標籤…' })}
+        />
         <div className="flex flex-wrap items-center gap-2">
           <Select value={subject} onChange={(e) => setSubject(e.target.value)} className="w-auto">
-            <option value="">所有科目</option>
+            <option value="">{t('community.allSubjects', { defaultValue: '所有科目' })}</option>
             {SUBJECT_PACKS.map((p) => (
               <option key={p.id} value={p.id}>
                 {p.short}
@@ -176,14 +202,14 @@ function BrowseTab() {
             ))}
           </Select>
           <Select value={type} onChange={(e) => setType(e.target.value)} className="w-auto">
-            <option value="">所有類型</option>
-            {TYPE_ORDER.map((t) => (
-              <option key={t} value={t}>
-                {TYPE_LABEL[t]}
+            <option value="">{t('community.allTypes', { defaultValue: '所有類型' })}</option>
+            {TYPE_ORDER.map((tp) => (
+              <option key={tp} value={tp}>
+                {TYPE_LABEL[tp]}
               </option>
             ))}
           </Select>
-          <span className="mx-1 hidden h-4 w-px bg-black/[0.08] dark:bg-white/10 sm:block" />
+          <span className="mx-1 hidden h-4 w-px bg-slate-200 dark:bg-slate-700 sm:block" />
           <Select value={sort} onChange={(e) => setSort(e.target.value as ResourceSort)} className="w-auto">
             {(Object.keys(SORT_LABELS) as ResourceSort[]).map((s) => (
               <option key={s} value={s}>
@@ -191,16 +217,18 @@ function BrowseTab() {
               </option>
             ))}
           </Select>
-          <span className="ml-auto flex items-center gap-2.5 text-xs text-slate-400">
+          <span className="ml-auto flex items-center gap-2.5 text-xs text-slate-400 dark:text-slate-500">
             {hasFilter && (
               <button
                 onClick={clearFilters}
-                className="font-medium text-slate-400 transition hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+                className="rounded-lg font-medium text-slate-400 transition hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98] dark:text-slate-500"
               >
-                清除篩選
+                {t('community.clearFilters', { defaultValue: '清除篩選' })}
               </button>
             )}
-            <span className="tabular-nums">{rows.length} 份資源</span>
+            <span className="tabular-nums slashed-zero">
+              {t('community.countResources', { n: rows.length, defaultValue: `${rows.length} 份資源` })}
+            </span>
           </span>
         </div>
       </Card>
@@ -213,11 +241,29 @@ function BrowseTab() {
           ))}
         </div>
       ) : rows.length === 0 ? (
-        <EmptyState
-          icon="🔍"
-          title="搵唔到資源"
-          hint={hasFilter ? '試吓換個科目或關鍵字，或清除篩選。' : '未有資源，做第一個分享嘅老師。'}
-        />
+        hasFilter ? (
+          <EmptyState
+            icon={SearchX}
+            title={t('community.emptyFilteredTitle', { defaultValue: '搵唔到符合嘅資源' })}
+            hint={t('community.emptyFilteredHint', { defaultValue: '試吓換個科目或關鍵字，或清除晒篩選再睇。' })}
+            action={
+              <Button size="sm" variant="secondary" icon={SearchX} onClick={clearFilters}>
+                {t('community.clearFilters', { defaultValue: '清除篩選' })}
+              </Button>
+            }
+          />
+        ) : (
+          <EmptyState
+            icon={Share2}
+            title={t('community.emptyTitle', { defaultValue: '仲未有資源' })}
+            hint={t('community.emptyHint', { defaultValue: '做第一個分享教材嘅老師，幫返同行慳時間。' })}
+            action={
+              <Button size="sm" variant="secondary" icon={Plus} onClick={onPublish}>
+                {t('community.share', { defaultValue: '分享資源' })}
+              </Button>
+            }
+          />
+        )
       ) : (
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {rows.map((r) => (
@@ -257,7 +303,7 @@ function CardSkeleton() {
         <Skeleton className="h-4 w-3/4" />
         <Skeleton className="h-3 w-full" />
         <Skeleton className="h-3 w-5/6" />
-        <div className="mt-1 flex items-center justify-between border-t border-black/[0.05] pt-3 dark:border-white/[0.06]">
+        <div className="mt-1 flex items-center justify-between border-t border-slate-200/70 pt-3 dark:border-slate-700/60">
           <Skeleton className="h-5 w-24 rounded-full" />
           <Skeleton className="h-3 w-10" />
         </div>
@@ -332,17 +378,17 @@ function ResourceCard({
           </div>
         )}
 
-        <div className="mt-auto flex items-center justify-between gap-2 border-t border-black/[0.05] pt-2.5 dark:border-white/[0.06]">
+        <div className="mt-auto flex items-center justify-between gap-2 border-t border-slate-200/70 pt-2.5 dark:border-slate-700/60">
           <span className="flex min-w-0 items-center gap-1.5">
             <Avatar profile={r.owner} size={22} />
             <span className="truncate text-[11px] text-slate-500 dark:text-slate-400">
               {r.owner ? publicName(r.owner) : '老師'}
             </span>
           </span>
-          <span className="flex shrink-0 items-center gap-2 text-[11px] text-slate-400">
+          <span className="flex shrink-0 items-center gap-2 text-[11px] text-slate-400 dark:text-slate-500">
             <Stars value={avgRating(r)} />
             <span className="inline-flex items-center gap-0.5">
-              <Download size={12} /> {r.downloadCount}
+              <Download size={12} /> <span className="tabular-nums slashed-zero">{r.downloadCount}</span>
             </span>
           </span>
         </div>
@@ -353,7 +399,7 @@ function ResourceCard({
               e.stopPropagation()
               onDownload()
             }}
-            className="flex items-center justify-center gap-1.5 rounded-lg border border-black/[0.08] py-1.5 text-[12px] font-medium text-slate-600 transition hover:border-accent/40 hover:bg-accent/[0.06] hover:text-accent-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:border-white/10 dark:text-slate-300 dark:hover:text-accent"
+            className="flex items-center justify-center gap-1.5 rounded-lg border border-slate-200/80 py-1.5 text-[12px] font-medium text-slate-600 transition hover:border-accent/40 hover:bg-accent-soft/50 hover:text-accent-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98] dark:border-slate-700/60 dark:text-slate-300 dark:hover:text-accent"
           >
             {r.filePath ? <Download size={13} strokeWidth={2} /> : <ExternalLink size={13} strokeWidth={2} />}
             {r.filePath ? '下載' : '開啟連結'}
@@ -567,15 +613,15 @@ function ResourceDetail({ r, onClose }: { r: CommunityResource | null; onClose: 
               { label: '收藏', value: stat.save },
               { label: '評分', value: stat.count ? avg.toFixed(1) : '—' },
             ].map((x) => (
-              <div key={x.label} className="rounded-xl border border-black/[0.06] py-2 dark:border-white/[0.08]">
-                <p className="text-base font-semibold tabular-nums text-slate-800 dark:text-slate-100">{x.value}</p>
-                <p className="text-[11px] text-slate-400">{x.label}</p>
+              <div key={x.label} className="rounded-xl border border-slate-200/80 py-2 dark:border-slate-700/60">
+                <p className="text-base font-semibold tabular-nums slashed-zero text-slate-800 dark:text-slate-100">{x.value}</p>
+                <p className="text-[11px] text-slate-400 dark:text-slate-500">{x.label}</p>
               </div>
             ))}
           </div>
 
           {/* 你嘅評分 */}
-          <div className="flex items-center justify-between rounded-xl border border-black/[0.06] px-3 py-2.5 dark:border-white/[0.08]">
+          <div className="flex items-center justify-between rounded-xl border border-slate-200/80 px-3 py-2.5 dark:border-slate-700/60">
             <span className="text-[12px] text-slate-500 dark:text-slate-400">{myRating ? '你嘅評分' : '畀個評分'}</span>
             <StarPicker value={myRating ?? 0} onPick={onRate} />
           </div>

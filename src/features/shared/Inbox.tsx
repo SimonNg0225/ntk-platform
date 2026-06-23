@@ -5,6 +5,7 @@ import {
   useRef,
   useState,
 } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   Inbox as InboxIcon,
   Plus,
@@ -28,7 +29,6 @@ import {
   Clock,
   ArrowDownWideNarrow,
   PenLine,
-  Sparkle,
   CalendarPlus,
   CalendarClock,
   Sun,
@@ -63,6 +63,9 @@ import {
   Separator,
   Field,
   Modal,
+  PageHero,
+  FeatureGuide,
+  type FeatureGuideStep,
   cx,
 } from '../../ui'
 import { useToast } from '../../context/ToastContext'
@@ -153,7 +156,24 @@ const CHIP_SPINE: Record<InboxKind, string> = {
   reference: 'bg-slate-300 dark:bg-slate-600',
 }
 
+// ───────── 快速擷取教學引導（FeatureGuide：3 步「點用」）─────────
+const INBOX_GUIDE: FeatureGuideStep[] = [
+  {
+    title: '即刻掉低',
+    desc: '諗到啲咩就喺上面個框寫低，撳「掉低」收起，唔使即刻分類。',
+  },
+  {
+    title: '得閒先分類',
+    desc: '撳一張便條，揀去待辦／筆記／行事曆／題庫／倒數，一 click 歸位。',
+  },
+  {
+    title: '清空收件匣',
+    desc: '處理完就歸檔，保持收件匣清爽；擱得耐嘅會提你優先清。',
+  },
+]
+
 export default function Inbox() {
+  const { t } = useTranslation()
   const items = useCollection(inboxCol)
   const metas = useCollection(inboxMetaCol)
   const toast = useToast()
@@ -534,50 +554,44 @@ export default function Inbox() {
   // ──────────────────────────────────────────────────────────
   return (
     <div className="w-full p-4 sm:p-6">
-      {/* 便條桌面 masthead：功能名做頁面身份（kicker Inbox + serif「快速擷取」+ 概念副題）。
-          host 已收起標題（selfManagedHeader），呢個係呢頁唯一頂部標題。 */}
-      <header className="mb-5 flex items-end justify-between gap-3">
-        <div className="min-w-0">
-          <p className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.28em] text-accent/70">
-            <InboxIcon size={12} strokeWidth={2.5} />
-            Inbox · 便條桌面
-          </p>
-          <h1 className="mt-1.5 flex flex-wrap items-baseline gap-x-2.5 gap-y-0.5 text-[26px] font-semibold leading-tight tracking-tight text-slate-800 dark:text-slate-100 sm:text-3xl">
-            快速擷取
-            <span className="text-base font-normal italic text-slate-400 dark:text-slate-500">
-              掉低個諗法
-            </span>
-          </h1>
-          <p className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-sm text-slate-500 dark:text-slate-400">
-            <span>一秒記低，得閒先慢慢分類。</span>
-            {stats.inboxCount > 0 && (
-              <>
-                <span aria-hidden="true" className="text-slate-300 dark:text-slate-600">·</span>
-                <span className="tabular-nums">
-                  仲有 <span className="font-medium text-slate-600 dark:text-slate-300">{stats.inboxCount}</span> 件待清
-                </span>
-              </>
-            )}
-          </p>
-        </div>
-        <Tooltip label={showStats ? '收起統計' : '展開統計'}>
-          <IconButton
-            label="統計"
-            active={showStats}
+      {/* 頁首 accent hero（共用 PageHero）。host 已收起標題（selfManagedHeader），
+          呢個係呢頁唯一頂部標題。右上：統計切換掣。 */}
+      <PageHero
+        icon={InboxIcon}
+        kicker={t('inbox.kicker', { defaultValue: 'Quick Capture' })}
+        title={t('inbox.title', { defaultValue: '快速擷取' })}
+        description={t('inbox.subtitle', { defaultValue: '一秒記低個諗法，得閒先慢慢分類。' })}
+        actions={
+          <button
+            type="button"
+            aria-pressed={showStats}
             onClick={() => setShowStats((v) => !v)}
+            className="inline-flex items-center gap-1.5 rounded-xl bg-white/15 px-3 py-1.5 text-sm font-medium backdrop-blur-sm transition hover:bg-white/25"
           >
-            <BarChart3 size={18} />
-          </IconButton>
-        </Tooltip>
-      </header>
+            <BarChart3 size={15} />
+            {showStats
+              ? t('inbox.statsHide', { defaultValue: '收起統計' })
+              : t('inbox.statsShow', { defaultValue: '展開統計' })}
+          </button>
+        }
+      />
 
-      {/* 擷取框 — 全頁主角「便條紙」：左側分類色脊 + serif 邀請、focus 有 accent 環 */}
+      {/* 教學引導：教用家「點用」呢個功能（可摺疊 + 可永久收起） */}
+      <div className="mt-4">
+        <FeatureGuide
+          storageKey="inbox"
+          title={t('inbox.guideTitle', { defaultValue: '快速擷取點用？' })}
+          steps={INBOX_GUIDE}
+        />
+      </div>
+
+      {/* 擷取框 — 全頁主角「便條紙」：左側分類色脊、focus 有 accent 環 */}
       <div
         className={cx(
-          'group relative overflow-hidden rounded-[26px] border bg-white shadow-sm transition duration-200 dark:bg-slate-800 dark:shadow-none',
+          'group relative mt-4 overflow-hidden rounded-2xl border bg-white transition duration-200 dark:bg-slate-800 dark:shadow-none',
           text.trim()
-            ? 'border-accent/50 shadow-lg shadow-accent/10 ring-4 ring-accent/10'
-            : 'border-slate-200/80 hover:border-slate-300 dark:border-slate-700/60 dark:hover:border-slate-600',
+            ? 'border-accent/50 shadow-md ring-2 ring-accent/40'
+            : 'border-slate-200/80 shadow-[0_1px_2px_rgba(15,23,42,0.04)] hover:border-slate-300 dark:border-slate-700/60 dark:hover:border-slate-600',
         )}
       >
         {/* 便條左脊：未打字溫和 accent，打字時跟「睇似」分類色 */}
@@ -605,7 +619,7 @@ export default function Inbox() {
                   capture()
                 }
               }}
-              placeholder="諗到啲咩，就喺度寫低…　例如「記得交 IES 初稿 #功課」"
+              placeholder={t('inbox.capturePlaceholder', { defaultValue: '諗到啲咩，就喺度寫低…　例如「記得交 IES 初稿 #功課」' })}
               className="min-h-0 resize-none border-0 bg-transparent px-0 text-base leading-relaxed shadow-none placeholder:text-slate-400 focus:ring-0 dark:bg-transparent dark:placeholder:text-slate-500"
             />
           </div>
@@ -636,7 +650,7 @@ export default function Inbox() {
             disabled={!text.trim()}
             className="shrink-0"
           >
-            掉低
+            {t('inbox.captureBtn', { defaultValue: '掉低' })}
           </Button>
         </div>
       </div>
@@ -701,13 +715,13 @@ export default function Inbox() {
                   s.hot ? 'bg-accent-soft dark:bg-accent/15' : 'bg-white dark:bg-slate-800',
                 )}
               >
-                <p className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                <p className="flex items-center gap-1.5 text-xs font-medium text-slate-400 dark:text-slate-500">
                   <I size={12} className={s.hot ? 'text-accent' : ''} />
                   {s.label}
                 </p>
                 <p
                   className={cx(
-                    'mt-1 text-[26px] font-semibold leading-none tabular-nums slashed-zero',
+                    'mt-1 text-3xl font-semibold leading-none tabular-nums slashed-zero',
                     s.hot ? 'text-accent-strong dark:text-accent' : 'text-slate-800 dark:text-slate-100',
                   )}
                 >
@@ -932,45 +946,47 @@ export default function Inbox() {
       {visible.length === 0 ? (
         <div className="mt-4">
           {tab === 'inbox' && !search && kindFilter === 'all' && !tagFilter ? (
-            // 全新 / 已清空：層疊便條插圖 + serif 邀請 + 例子 + 明確下一步
-            <div className="flex flex-col items-center rounded-3xl border border-dashed border-slate-200 bg-slate-50/60 px-6 py-14 text-center dark:border-slate-700 dark:bg-slate-800/40">
-              {/* 層疊便條紙（純 div 砌；扇形微傾，輕鬆「乾淨桌面」感） */}
-              <div className="relative mb-6 h-16 w-16">
+            // 全新 / 已清空：引導式空狀態（情感 icon + 標題 + 提示 + 例子 + CTA 直接落筆）
+            <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-black/[0.1] bg-slate-50/60 px-6 py-12 text-center dark:border-white/[0.12] dark:bg-slate-800/40">
+              {/* 層疊便條紙（純 div 砌；輕鬆「乾淨桌面」感） */}
+              <div className="relative mb-3 h-12 w-12">
                 <span
                   aria-hidden="true"
-                  className="absolute inset-0 -rotate-[10deg] rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800"
+                  className="absolute inset-0 -rotate-[10deg] rounded-xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800"
                 />
                 <span
                   aria-hidden="true"
-                  className="absolute inset-0 rotate-[7deg] rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800"
+                  className="absolute inset-0 rotate-[7deg] rounded-xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800"
                 />
-                <span className="absolute inset-0 flex items-center justify-center rounded-2xl bg-accent text-white shadow-md shadow-accent/25">
-                  <PenLine size={28} strokeWidth={1.75} />
+                <span className="absolute inset-0 flex items-center justify-center rounded-xl bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
+                  <PenLine size={22} strokeWidth={1.75} />
                 </span>
-                <Sparkle
-                  size={16}
-                  className="absolute -right-2 -top-1 text-accent/60 dark:text-accent/70"
-                  fill="currentColor"
-                />
               </div>
-              <p className="text-xl font-semibold text-slate-700 dark:text-slate-200">
-                張枱好乾淨
+              <p className="text-sm font-medium text-slate-600 dark:text-slate-300">
+                {t('inbox.emptyTitle', { defaultValue: '張枱好乾淨' })}
               </p>
-              <p className="mt-2 max-w-sm text-sm leading-relaxed text-slate-500 dark:text-slate-400">
-                諗到啲咩就即刻記低，唔使諗點分類。得閒先逐張便條揀去做待辦、筆記定行事曆。
+              <p className="mt-1 max-w-xs text-xs text-slate-400 dark:text-slate-500">
+                {t('inbox.emptyHint', {
+                  defaultValue:
+                    '諗到啲咩就即刻記低，唔使諗點分類。得閒先逐張揀去待辦、筆記或行事曆。',
+                })}
               </p>
-              <div className="mt-5 flex flex-wrap items-center justify-center gap-1.5">
-                <span className="text-xs text-slate-400 dark:text-slate-500">譬如：</span>
+              <div className="mt-4 flex flex-wrap items-center justify-center gap-1.5">
+                <span className="text-[11px] text-slate-400 dark:text-slate-500">
+                  {t('inbox.emptyEgLabel', { defaultValue: '譬如：' })}
+                </span>
                 <Badge tone="blue" icon={KIND_ICON.task}>記得收測驗卷</Badge>
                 <Badge tone="rose" icon={KIND_ICON.countdown}>期末考試 5月8日</Badge>
                 <Badge tone="accent" icon={KIND_ICON.note}>一個 app 嘅靈感 #idea</Badge>
               </div>
               <Button
-                className="mt-6"
+                className="mt-4"
+                size="sm"
+                variant="secondary"
                 icon={Plus}
                 onClick={() => captureRef.current?.focus()}
               >
-                掉低第一個諗法
+                {t('inbox.emptyCta', { defaultValue: '掉低第一個諗法' })}
               </Button>
             </div>
           ) : (
@@ -978,13 +994,28 @@ export default function Inbox() {
               icon={tab === 'archived' ? Archive : Search}
               title={
                 tab === 'archived'
-                  ? '仲未有歸檔嘅項目'
-                  : '搵唔到符合嘅項目'
+                  ? t('inbox.emptyArchivedTitle', { defaultValue: '仲未有歸檔嘅項目' })
+                  : t('inbox.emptyFilterTitle', { defaultValue: '搵唔到符合嘅項目' })
               }
               hint={
                 tab === 'archived'
-                  ? '整理好嘅項目會收喺呢度，隨時可以還原。'
-                  : '試下清除搜尋或過濾條件，再睇多次。'
+                  ? t('inbox.emptyArchivedHint', { defaultValue: '整理好嘅項目會收喺呢度，隨時可以還原。' })
+                  : t('inbox.emptyFilterHint', { defaultValue: '試下清除搜尋或過濾條件，再睇多次。' })
+              }
+              action={
+                tab !== 'archived' && (kindFilter !== 'all' || tagFilter || search) ? (
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    onClick={() => {
+                      setKindFilter('all')
+                      setTagFilter(null)
+                      setSearch('')
+                    }}
+                  >
+                    {t('inbox.clearFilters', { defaultValue: '清除過濾' })}
+                  </Button>
+                ) : undefined
               }
             />
           )}
@@ -998,7 +1029,7 @@ export default function Inbox() {
                   {g.label}
                 </span>
                 <span className="h-px flex-1 bg-gradient-to-r from-slate-200 to-transparent dark:from-slate-700/70" />
-                <span className="text-xs italic tabular-nums text-slate-400 dark:text-slate-500">
+                <span className="text-xs tabular-nums text-slate-400 dark:text-slate-500">
                   {g.rows.length} 件
                 </span>
               </div>
@@ -1383,35 +1414,36 @@ function EventDraftModal({
       }
     >
       <div className="space-y-5">
-        {/* ───────── 便條頁眉：kicker（呼應 inbox masthead）+ serif 標題 + 虛線分隔 ───────── */}
+        {/* ───────── 頁眉：icon chip + 標題 + 副題（跟 dashboard PageHeader / Modal 慣例）───────── */}
         <header className="-mx-5 -mt-5 mb-1 px-5 pt-5 sm:-mx-6 sm:-mt-6 sm:px-6 sm:pt-6">
           <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <p className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.28em] text-accent/70">
-                <InboxIcon size={12} strokeWidth={2.5} className="shrink-0" />
-                Inbox · 歸去行事曆
-              </p>
-              <h2 className="mt-1 flex flex-wrap items-baseline gap-x-2 text-[22px] font-semibold leading-tight tracking-tight text-slate-800 dark:text-slate-100 sm:text-[26px]">
-                揀個日子
-                <span className="text-sm font-normal italic text-slate-400 dark:text-slate-500">
-                  畀張便條落腳
-                </span>
-              </h2>
+            <div className="flex min-w-0 items-start gap-3">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-300">
+                <CalendarPlus size={18} />
+              </span>
+              <div className="min-w-0">
+                <p className="text-xs text-slate-400 dark:text-slate-500">
+                  歸去行事曆
+                </p>
+                <h2 className="mt-0.5 text-[17px] font-semibold tracking-tight text-slate-800 dark:text-slate-100">
+                  揀個日子
+                </h2>
+                <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
+                  畀張便條揀返個日子同時間，加入行事曆。
+                </p>
+              </div>
             </div>
             <IconButton label="關閉" onClick={onClose} className="-mr-1 shrink-0">
               <X size={18} />
             </IconButton>
           </div>
-          {/* 便條撕邊：實線 + 半透虛影（同主畫面 hairline 語言）*/}
-          <div className="mt-4 space-y-1" aria-hidden>
-            <span className="block h-px bg-slate-200/90 dark:bg-slate-700/70" />
-            <span className="block h-px bg-slate-200/60 dark:bg-slate-700/40" />
-          </div>
+          {/* 分隔線（同主畫面 hairline 語言）*/}
+          <div className="mt-4 border-t border-slate-200 dark:border-slate-700" aria-hidden />
         </header>
 
         {/* 便條預覽 — 真係披返一張「便條紙」：事件色脊（emerald）+ 圖示 chip + 標籤，
             呼應主畫面擷取框 / 卡片。令用戶睇得到「我正喺度歸呢張便條」。*/}
-        <div className="relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-xs dark:border-slate-700/60 dark:bg-slate-800/60">
+        <div className="relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-slate-700/60 dark:bg-slate-800/60 dark:shadow-none">
           <span
             aria-hidden="true"
             className={cx('absolute inset-y-0 left-0 w-1.5', CHIP_SPINE.event)}
@@ -1439,7 +1471,7 @@ function EventDraftModal({
 
         {/* 時間 — 分區小題（kicker + hairline，呼應 Wave 編輯器 Section）*/}
         <div className="space-y-3">
-          <p className="flex items-center gap-2 text-[11px] font-medium uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">
+          <p className="flex items-center gap-2 text-xs font-semibold text-slate-500 dark:text-slate-400">
             <CalendarClock size={13} className="shrink-0 text-accent/70" />
             幾時
             <span className="ml-1 h-px flex-1 bg-gradient-to-r from-slate-200 to-transparent dark:from-slate-700/70" />
