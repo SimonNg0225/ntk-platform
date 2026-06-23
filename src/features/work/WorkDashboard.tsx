@@ -18,6 +18,7 @@ import {
   countdownsCol,
   inboxCol,
 } from '../../data/collections'
+import { STUDENT_DATA_ENABLED, isFeatureAvailable } from '../../lib/featureFlags'
 import { taskMetaCol } from './todo/store'
 import { cycleDayForDate } from './timetable/util'
 import { useNav } from '../../context/NavContext'
@@ -317,7 +318,7 @@ export default function WorkDashboard() {
         return
       }
       const sc = SHORTCUTS.find((s) => s.key === e.key)
-      if (sc) {
+      if (sc && isFeatureAvailable(sc.nav)) {
         e.preventDefault()
         open(sc.nav)
       }
@@ -474,8 +475,13 @@ export default function WorkDashboard() {
     toast.success(t('wdash.taskDoneToast', { defaultValue: '已完成待辦' }))
   }
 
-  // 顯示緊嘅 widget（依次序、去除收起）
-  const visibleWidgets = layout.order.filter((w) => !layout.hidden.includes(w))
+  // 顯示緊嘅 widget（依次序、去除收起）；收費版未過學生資料合規前，隱藏涉學生／班級嘅 widget。
+  const studentWidgets: WidgetId[] = ['curriculum', 'attendance', 'grades', 'parentFollowUp', 'classLoad']
+  const visibleWidgets = layout.order.filter(
+    (w) =>
+      !layout.hidden.includes(w) &&
+      (STUDENT_DATA_ENABLED || !studentWidgets.includes(w)),
+  )
 
   return (
     <div className="space-y-5">
@@ -596,7 +602,7 @@ export default function WorkDashboard() {
       {/* ───────── 鍵盤捷徑提示 ───────── */}
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 border-t border-slate-200 pt-4 text-xs text-slate-400 dark:border-slate-700 dark:text-slate-500">
         <span className="font-medium">{t('wdash.shortcuts', { defaultValue: '捷徑' })}</span>
-        {SHORTCUTS.map((s) => (
+        {SHORTCUTS.filter((s) => isFeatureAvailable(s.nav)).map((s) => (
           <span key={s.key} className="inline-flex items-center gap-1">
             <Kbd>{s.key}</Kbd>
             {t(`wdash.${SHORTCUT_I18N[s.key]}`, { defaultValue: s.label })}
@@ -721,7 +727,8 @@ function WorkBento({
         onClick={() => open('work-tasks')}
       />
 
-      {/* ── 課程進度環 1×1 ── */}
+      {/* ── 課程進度環 1×1（學生／班級，收費版隱藏）── */}
+      {isFeatureAvailable('work-curriculum') && (
       <button
         type="button"
         onClick={() => open('work-curriculum')}
@@ -738,6 +745,7 @@ function WorkBento({
           <p className="truncate text-[11px] text-slate-400">{classProgress.length > 0 ? t('wdash.overallCompletion', { defaultValue: '整體完成度' }) : t('wdash.noClasses', { defaultValue: '未有班別' })}</p>
         </div>
       </button>
+      )}
 
       {/* ── 本週完成 1×1 ── */}
       <StatTile
@@ -746,13 +754,15 @@ function WorkBento({
         hint={t('wdash.last7Tasks', { defaultValue: '近 7 日待辦' })}
         onClick={() => open('work-tasks')}
       />
-      {/* ── 待跟進家長 1×1 ── */}
+      {/* ── 待跟進家長 1×1（學生／家長，收費版隱藏）── */}
+      {isFeatureAvailable('work-parent-comms') && (
       <StatTile
         label={t('wdash.followUpParents', { defaultValue: '待跟進家長' })} value={followUps.length} unit={t('wdash.unitPeople', { defaultValue: '位' })} icon={Phone}
         tone={followUps.length > 0 ? 'rose' : 'emerald'}
         hint={followUps.length > 0 ? t('wdash.remindParents', { defaultValue: '記得覆返家長' }) : t('wdash.allFollowedUp', { defaultValue: '全部跟進完' })}
         onClick={() => open('work-parent-comms')}
       />
+      )}
 
       {/* ── 今日議程 2×1 ── */}
       <section className="flex min-h-0 flex-col rounded-2xl border border-slate-200/80 bg-white p-4 dark:border-slate-700/60 dark:bg-slate-800 sm:col-span-2">
@@ -810,12 +820,14 @@ function WorkBento({
         hint={todayClassCount > 0 ? t('wdash.donePeriodsN', { n: classesPassed, defaultValue: `已上 ${classesPassed} 節` }) : t('wdash.noClassToday', { defaultValue: '今日無課' })}
         onClick={() => open('work-timetable')}
       />
-      {/* ── 出席率 1×1 ── */}
+      {/* ── 出席率 1×1（學生，收費版隱藏）── */}
+      {isFeatureAvailable('work-attendance') && (
       <StatTile
         label={t('wdash.attendanceRate', { defaultValue: '出席率' })} value={attSummary.total > 0 ? attSummary.rate : '—'} unit={attSummary.total > 0 ? '%' : undefined}
         icon={Users} tone="emerald" hint={attSummary.total > 0 ? t('wdash.classes30N', { n: attSummary.total, defaultValue: `近 30 日 · ${attSummary.total} 次` }) : t('wdash.noAttendanceYet', { defaultValue: '未有點名' })}
         onClick={() => open('work-attendance')}
       />
+      )}
 
       {/* ── 今日待辦 2×2 ── */}
       <section className="flex flex-col rounded-2xl border border-slate-200/80 bg-white p-4 dark:border-slate-700/60 dark:bg-slate-800 sm:col-span-2 lg:row-span-2">
@@ -893,13 +905,15 @@ function WorkBento({
         hint={nextCd ? nextCd.cd.title : t('wdash.noCountdown', { defaultValue: '未有倒數' })}
         onClick={() => open('countdown')}
       />
-      {/* ── 成績平均 1×1 ── */}
+      {/* ── 成績平均 1×1（學生，收費版隱藏）── */}
+      {isFeatureAvailable('work-gradebook') && (
       <StatTile
         label={t('wdash.recentAverage', { defaultValue: '最近平均' })} value={gradeSummary.graded > 0 ? gradeSummary.average : '—'} unit={gradeSummary.graded > 0 ? '%' : undefined}
         icon={GraduationCap} tone="sky"
         hint={gradeSummary.graded > 0 ? t('wdash.gradedPeopleN', { n: gradeSummary.graded, defaultValue: `${gradeSummary.graded} 人評分` }) : t('wdash.noGradesYet', { defaultValue: '未有評分' })}
         onClick={() => open('work-gradebook')}
       />
+      )}
       {/* ── 問 AI CTA 1×1 ── */}
       <button
         type="button"
@@ -1701,7 +1715,7 @@ function QuickActionsWidget({ open }: { open: (id: string) => void }) {
     <section>
       <SectionTitle icon={LayoutGrid}>{t('wdash.quickActionsTitle', { defaultValue: '快速動作' })}</SectionTitle>
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        {QUICK_ACTIONS.map((a) => (
+        {QUICK_ACTIONS.filter((a) => isFeatureAvailable(a.key)).map((a) => (
           <Card key={a.key} hover onClick={() => open(a.key)} className="flex flex-col items-center gap-2 p-4 text-center">
             <span className="flex h-10 w-10 items-center justify-center rounded-full bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
               <a.icon size={20} strokeWidth={2} />

@@ -2,6 +2,7 @@ import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Search, Clock } from 'lucide-react'
 import { FEATURES } from '../features/registry'
+import { isFeatureAvailable } from '../lib/featureFlags'
 import { FeatureIcon } from '../features/featureIcons'
 import { useMode } from '../context/ModeContext'
 import { useCollection } from '../lib/store'
@@ -84,7 +85,7 @@ export default function CommandPalette({
       })
     }
 
-    FEATURES.filter((f) => f.modes.includes(mode)).forEach((f) =>
+    FEATURES.filter((f) => f.modes.includes(mode) && isFeatureAvailable(f.id)).forEach((f) =>
       list.push({
         id: f.id,
         label: featName(t, f),

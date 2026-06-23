@@ -45,10 +45,8 @@ import type {
 // 共用骨幹
 export const topicsCol = createCollection<Topic>('topics', BAFS_TOPICS)
 
-export const classesCol = createCollection<Klass>('classes', [
-  { id: 'class-5a', name: '5A', subject: 'BAFS（商業管理）' },
-  { id: 'class-6b', name: '6B', subject: 'BAFS（商業管理）' },
-])
+// 收費版預設唔 seed 班別（demo 班別屬學生資料脈絡，避免新 account 殘留）。
+export const classesCol = createCollection<Klass>('classes', [])
 
 export const studentsCol = createCollection<Student>('students', [])
 

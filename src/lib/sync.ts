@@ -1,5 +1,6 @@
 import { supabase } from './supabase'
 import { collectionRegistry } from './store'
+import { isCollectionSyncable } from './featureFlags'
 
 // ============================================================
 //  雲端同步 (Supabase ⇄ 本地集合)
@@ -85,6 +86,8 @@ export async function attachSync(userId: string): Promise<void> {
 
   // 2) 套用：雲端有 → 覆蓋本地；雲端冇 → seed 本地上雲
   for (const [key, col] of collectionRegistry) {
+    // 學生／家長 PII collection 喺旗標關閉時唔上雲（收費版未過 PDPO 合規）。
+    if (!isCollectionSyncable(key)) continue
     if (cloud.has(key)) {
       col.set(cloud.get(key) as never[]) // cloud 優先
     } else {
@@ -96,6 +99,7 @@ export async function attachSync(userId: string): Promise<void> {
 
   // 3) 監聽本地改動 → 寫返上雲（hydration 期間唔會 push）
   for (const [key, col] of collectionRegistry) {
+    if (!isCollectionSyncable(key)) continue
     const unsub = col.subscribe(() => {
       if (hydrating || attachedUserId !== userId) return
       schedulePush(userId, key, col.get)

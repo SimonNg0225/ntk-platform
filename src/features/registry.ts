@@ -1,6 +1,7 @@
 import { lazy, type ComponentType, type LazyExoticComponent } from 'react'
 import type { Feature } from './types'
 import type { ModeId } from '../modes/modes'
+import { isFeatureAvailable } from '../lib/featureFlags'
 
 // 動態載入 feature 元件 → 各功能拆獨立 chunk，到用先 load（縮細初始 bundle）。
 // .preload：App idle 時背景預載全部，確保所有功能嘅 collection 都登記（同步 / 匯出完整）。
@@ -596,7 +597,7 @@ export const FEATURES: Feature[] = [
 
 // 攞返某個模式可以見到嘅功能
 export function featuresForMode(mode: ModeId): Feature[] {
-  return FEATURES.filter((f) => f.modes.includes(mode))
+  return FEATURES.filter((f) => f.modes.includes(mode) && isFeatureAvailable(f.id))
 }
 
 // 攞返某個模式嘅功能，按 group 分組（保持註冊次序）
@@ -615,6 +616,7 @@ export function groupedFeatures(mode: ModeId): { group: string; items: Feature[]
 
 // 用 id 攞返一個功能
 export function getFeature(id: string): Feature | undefined {
+  if (!isFeatureAvailable(id)) return undefined
   return FEATURES.find((f) => f.id === id)
 }
 
@@ -623,6 +625,7 @@ export function getFeature(id: string): Feature | undefined {
 export function preloadAllFeatures(): Promise<void> {
   const loaders: Promise<unknown>[] = []
   for (const f of FEATURES) {
+    if (!isFeatureAvailable(f.id)) continue
     const c = f.component as Partial<LazyFeature> | undefined
     if (c && typeof c.preload === 'function') loaders.push(c.preload())
   }
