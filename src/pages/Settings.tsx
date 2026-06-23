@@ -14,6 +14,8 @@ import {
 } from '../data/subjects'
 import { preloadAllFeatures } from '../features/registry'
 import { smartApplyTopics, appendTopicsByText } from '../features/work/topicImport/applyTopics'
+import { useAuth } from '../context/AuthContext'
+import { supabase } from '../lib/supabase'
 import { Card, Button, Field, Input, SectionTitle } from '../ui'
 import { seedAllDemo } from '../lib/demoData'
 import {
@@ -43,6 +45,7 @@ export default function Settings() {
   const { t, i18n } = useTranslation()
   const toast = useToast()
   const confirm = useConfirm()
+  const { user, configured, signOut } = useAuth()
   const fileRef = useRef<HTMLInputElement>(null)
   const [overview, setOverview] = useState<DataOverview | null>(null)
   const [checking, setChecking] = useState(false)
@@ -174,6 +177,36 @@ export default function Settings() {
     await preloadAllFeatures()
     for (const col of collectionRegistry.values()) col.set([] as never[])
     toast.success('已清除所有資料')
+  }
+
+  // 永久刪除雲端帳戶（PDPO 刪除權）：call delete-account edge function
+  // 刪晒雲端資料 + auth 帳戶，再清本機 + 登出。不可逆。
+  const deleteAccount = async () => {
+    if (!supabase || !user) return
+    if (
+      !(await confirm({
+        title: '永久刪除雲端帳戶？',
+        message:
+          '會永久刪除你喺雲端嘅所有資料同登入帳戶（包括電郵），不可逆。本機資料亦會一併清除。建議先匯出備份。',
+        confirmText: '永久刪除',
+        tone: 'danger',
+      }))
+    )
+      return
+    try {
+      const { error } = await supabase.functions.invoke('delete-account', {
+        method: 'POST',
+      })
+      if (error) throw error
+      await preloadAllFeatures()
+      for (const col of collectionRegistry.values()) col.set([] as never[])
+      await signOut()
+      toast.success('帳戶已永久刪除')
+    } catch (e) {
+      toast.error(
+        e instanceof Error ? e.message : '刪除失敗，請稍後再試或聯絡支援。',
+      )
+    }
   }
 
   // 手動檢查 SW 更新（PwaUpdater 平時自動檢查；呢度做手動後備）。
@@ -454,6 +487,11 @@ export default function Settings() {
           <Button variant="danger" onClick={clearAll}>
             🗑 清除所有資料
           </Button>
+          {configured && user && (
+            <Button variant="danger" onClick={deleteAccount}>
+              ⚠️ 刪除雲端帳戶
+            </Button>
+          )}
         </div>
       </Card>
 

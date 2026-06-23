@@ -116,7 +116,7 @@ const resources = {
 
       privacy: {
         title: '私隱政策',
-        updated: '2026 年 6 月 7 日',
+        updated: '2026 年 6 月 23 日',
         intro:
           '教學易 EziTeach（「本平台」）尊重並保障你的個人資料私隱。本政策說明我哋會收集咩資料、點樣使用同保護，以及你擁有嘅權利。本平台主要為香港教育工作者而設，會按香港《個人資料（私隱）條例》（第 486 章）行事。',
         s1Title: '我哋收集嘅資料',
@@ -124,7 +124,7 @@ const resources = {
         s1Account: '：你用 Google 登入時提供嘅名稱同電郵地址。',
         s1InputLabel: '你輸入嘅內容',
         s1Input:
-          '：筆記、班別、成績、教案、題目等。預設只存喺你裝置嘅瀏覽器（localStorage）；登入後會同步到我哋嘅雲端供應商 Supabase。',
+          '：筆記、教案、題目等教學內容。預設只存喺你裝置嘅瀏覽器（localStorage）；登入後會同步到我哋嘅雲端供應商 Supabase。現階段本平台唔收集學生個人資料（成績、名單等學生功能未開放）。',
         s1AiLabel: 'AI 請求',
         s1Ai: '：你使用教學 AI 時輸入嘅文字／圖片，會經我哋的伺服器代理送往 Google Gemini 處理，用以生成回應。',
         s1PayLabel: '付款資料',
@@ -144,7 +144,7 @@ const resources = {
           '本平台依賴以下服務商，各自有其私隱政策：Supabase（雲端儲存／驗證）、Google Gemini（AI）、Stripe（付款）、PostHog（分析）、Sentry（錯誤監控）、Vercel（寄存）。',
         s4Title: '資料儲存與保安',
         s4Body:
-          '雲端資料以行級安全（RLS）隔離，確保每位用戶只可存取自己嘅資料。我哋採取合理技術措施保護資料，但互聯網傳輸無法保證絕對安全。',
+          '雲端資料以行級安全（RLS）隔離，確保每位用戶只可存取自己嘅資料。部分服務商位於香港境外，你嘅資料可能會傳輸並儲存喺境外，我哋會採取合理措施確保有適當保障。我哋採取合理技術措施保護資料，但互聯網傳輸無法保證絕對安全。',
         s5Title: '你的權利',
         s5Body:
           '你可隨時在「設定」匯出或清除本機資料，亦可要求查閱、更正或刪除我哋持有的個人資料。你可在 Cookie 橫額或瀏覽器設定撤回分析同意。',
@@ -152,7 +152,7 @@ const resources = {
         s6Body: '我哋只在你「接受」後才載入分析 cookie。拒絕不會影響核心功能。錯誤監控屬維持服務之正當利益。',
         s7Title: '兒童',
         s7Body:
-          '平台供教師專業使用。我哋不會主動向兒童收集個人資料；老師輸入嘅學生資料由老師按校方政策負責管理。',
+          '平台供教師專業使用。現階段平台唔提供亦唔收集任何學生個人資料；我哋亦不會向兒童收集個人資料。',
         s8Title: '聯絡我哋',
         s8Pre: '如對私隱有任何查詢，請電郵至',
         s8Post: '。',
@@ -341,7 +341,7 @@ const resources = {
 
       privacy: {
         title: 'Privacy Policy',
-        updated: '7 June 2026',
+        updated: '23 June 2026',
         intro:
           'EziTeach ("the Platform") respects and protects the privacy of your personal data. This policy explains what data we collect, how we use and protect it, and the rights you have. The Platform is primarily designed for Hong Kong educators and operates in accordance with the Hong Kong Personal Data (Privacy) Ordinance (Cap. 486).',
         s1Title: 'Data we collect',
@@ -349,7 +349,7 @@ const resources = {
         s1Account: ': the name and email address you provide when signing in with Google.',
         s1InputLabel: 'Content you enter',
         s1Input:
-          ': notes, classes, grades, lesson plans, questions and so on. By default this is stored only in your device’s browser (localStorage); once you sign in it syncs to our cloud provider, Supabase.',
+          ': notes, lesson plans, questions and other teaching content. By default this is stored only in your device’s browser (localStorage); once you sign in it syncs to our cloud provider, Supabase. At this stage the Platform does not collect student personal data (grades, rosters and other student features are not yet available).',
         s1AiLabel: 'AI requests',
         s1Ai: ': the text and images you enter when using the teaching AI are sent through our server proxy to Google Gemini for processing to generate responses.',
         s1PayLabel: 'Payment data',
@@ -371,7 +371,7 @@ const resources = {
           'The Platform relies on the following service providers, each with its own privacy policy: Supabase (cloud storage / authentication), Google Gemini (AI), Stripe (payments), PostHog (analytics), Sentry (error monitoring) and Vercel (hosting).',
         s4Title: 'Data storage and security',
         s4Body:
-          'Cloud data is isolated with row-level security (RLS), ensuring each user can only access their own data. We take reasonable technical measures to protect data, but transmission over the internet cannot be guaranteed to be absolutely secure.',
+          'Cloud data is isolated with row-level security (RLS), ensuring each user can only access their own data. Some service providers are located outside Hong Kong, so your data may be transferred to and stored overseas; we take reasonable measures to ensure an appropriate level of protection. We take reasonable technical measures to protect data, but transmission over the internet cannot be guaranteed to be absolutely secure.',
         s5Title: 'Your rights',
         s5Body:
           'You can export or clear local data at any time in Settings, and may request to access, correct or delete the personal data we hold. You can withdraw analytics consent via the cookie banner or your browser settings.',
@@ -380,7 +380,7 @@ const resources = {
           'We only load analytics cookies after you "Accept". Declining does not affect core features. Error monitoring is a legitimate interest in maintaining the service.',
         s7Title: 'Children',
         s7Body:
-          'The Platform is for professional use by teachers. We do not actively collect personal data from children; student data entered by a teacher is managed by that teacher in accordance with their school’s policies.',
+          'The Platform is for professional use by teachers. At this stage the Platform does not provide for, nor collect, any student personal data; nor do we collect personal data from children.',
         s8Title: 'Contact us',
         s8Pre: 'For any privacy enquiries, please email',
         s8Post: '.',
