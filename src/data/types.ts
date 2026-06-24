@@ -255,6 +255,37 @@ export interface MeetingNote extends Entity {
   createdAt: string
 }
 
+// 觀課／評課工具（零學生 PII —— 觀嘅係老師嘅課）
+export type ObservationCriterionKey =
+  | 'objectives'
+  | 'classroom'
+  | 'engagement'
+  | 'questioning'
+  | 'timing'
+  | 'differentiation'
+
+// 單一準則嘅 AI 觀察（每準則一兩句）
+export interface ObservationCriterion {
+  key: ObservationCriterionKey
+  note: string
+}
+
+export interface Observation extends Entity {
+  createdAt: string
+  teacher: string // 被觀老師
+  klass: string // 班別（自由文字，零學生 PII，唔接 classesCol）
+  subject: string // 科目
+  date: string // YYYY-MM-DD 觀課日子
+  period: string // 節次（自由文字，例：第3節 / Day A P5）
+  topic: string // 課題
+  source: string // 課堂內容原文（貼上嘅文字稿 或 transcribe 出嘅 transcript）
+  // ── AI 撮要結果（未跑 AI 前全空）──
+  criteria: ObservationCriterion[] // 六準則逐項觀察
+  highlights: string[] // 整體亮點 2-3
+  improvements: string[] // 改進建議 2-3
+  model?: string // 用咗邊個 model（顯示用）
+}
+
 // 快速擷取 Inbox（共用）
 export interface InboxItem extends Entity {
   text: string

@@ -69,6 +69,8 @@ const Inbox = lazyFeature(() => import('./shared/Inbox'))
 const QuizMode = lazyFeature(() => import('./shared/QuizMode'))
 const AIAssistant = lazyFeature(() => import('./shared/AIAssistant'))
 const AskData = lazyFeature(() => import('./shared/AskData'))
+const Observation = lazyFeature(() => import('./work/observation/Observation'))
+const WorkReport = lazyFeature(() => import('./work/workReport/WorkReport'))
 
 // ============================================================
 //  功能註冊表 (Feature Registry) — 平台擴充中心
@@ -511,6 +513,30 @@ export const FEATURES: Feature[] = [
     icon: '🎙️',
     group: '行政',
     component: Transcribe,
+    status: 'ready',
+  },
+  {
+    id: 'work-observation',
+    selfManagedHeader: true,
+    modes: ['work'],
+    name: '觀課 / 評課',
+    description:
+      '貼課堂文字稿或錄音轉文字，AI 對六項觀課準則撮要 + 亮點同建議，存記錄可列印。',
+    icon: '👁️',
+    group: '教學',
+    component: Observation,
+    status: 'ready',
+  },
+  {
+    id: 'work-report',
+    selfManagedHeader: true,
+    modes: ['work'],
+    name: '工作週報',
+    description:
+      '揀時段一鍵聚合行事曆、待辦、會議筆記，AI 撮要成一頁「做咗咩 / 待跟進 / 重點」。',
+    icon: '🗞️',
+    group: '行政',
+    component: WorkReport,
     status: 'ready',
   },
 

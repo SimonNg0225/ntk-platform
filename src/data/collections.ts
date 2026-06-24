@@ -27,6 +27,7 @@ import type {
   AttendanceRecord,
   ParentComm,
   MeetingNote,
+  Observation,
   InboxItem,
   Countdown,
   AiThread,
@@ -126,6 +127,7 @@ export const cycleCalendarCol = createCollection<CycleCalendarEntry>(
 export const attendanceCol = createCollection<AttendanceRecord>('attendance', [])
 export const parentCommsCol = createCollection<ParentComm>('parent_comms', [])
 export const meetingNotesCol = createCollection<MeetingNote>('meeting_notes', [])
+export const observationsCol = createCollection<Observation>('observations', [])
 export const inboxCol = createCollection<InboxItem>('inbox', [])
 export const countdownsCol = createCollection<Countdown>('countdowns', [
   {
