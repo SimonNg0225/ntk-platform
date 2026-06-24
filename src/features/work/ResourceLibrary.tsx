@@ -488,9 +488,11 @@ export default function ResourceLibrary() {
             <button
               type="button"
               onClick={() => setShowFolderMgr(true)}
-              className="inline-flex items-center gap-1.5 rounded-xl bg-white/15 px-3 py-1.5 text-sm font-medium backdrop-blur-sm transition hover:bg-white/25 active:scale-[0.98]"
+              title="收藏夾"
+              className="inline-flex items-center gap-1.5 rounded-xl bg-white/15 px-2.5 py-1.5 text-sm font-medium backdrop-blur-sm transition hover:bg-white/25 active:scale-[0.98] sm:px-3"
             >
-              <FolderPlus size={15} /> 收藏夾
+              <FolderPlus size={15} />
+              <span className="hidden sm:inline">收藏夾</span>
             </button>
           </>
         }

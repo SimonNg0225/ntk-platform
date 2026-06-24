@@ -19,6 +19,7 @@ import type { LucideIcon } from 'lucide-react'
 import { Button, Field, IconButton, Input, Modal, Select, Textarea, cx } from '../../../../ui'
 import { useToast } from '../../../../context/ToastContext'
 import type { AIModel } from '../../../../lib/aiClient'
+import { classifyAIError } from '../../../../lib/aiError'
 import type {
   Slide,
   SlideChart,
@@ -139,7 +140,7 @@ export default function SlideEditor({
       setChartDraft(chartToDraft(out.chart))
       toast.success(t('slides.aiDone', { defaultValue: 'AI 執好咗，可以再手執' }))
     } catch (e) {
-      toast.error((e as Error).message || t('slides.aiFail', { defaultValue: 'AI 失敗，原版唔郁' }))
+      toast.error(classifyAIError(e).message, { label: '重試', onClick: () => runAi(kind, target) })
     } finally {
       setAiBusy(false)
     }

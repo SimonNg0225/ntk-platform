@@ -15,6 +15,7 @@ import { useToast } from '../../../context/ToastContext'
 import { useAuth } from '../../../context/AuthContext'
 import { useSettings } from '../../../context/SettingsContext'
 import { isAIConfigured } from '../../../lib/aiClient'
+import { classifyAIError } from '../../../lib/aiError'
 import { questionsCol, papersCol } from '../../../data/collections'
 import { getSubjectPack } from '../../../data/subjects'
 import type { Difficulty, Question, QuestionType } from '../../../data/types'
@@ -198,6 +199,53 @@ export function PaperGenerator({ topics, onClose, onSaved }: PaperGeneratorProps
   const genTopicPool = (): TopicLite[] =>
     scope.length === 0 ? topics : topics.filter((t) => scope.includes(t.id))
 
+  // 為單一題型生成 gap 條，逐條入題庫，把新 id push 入 sink；
+  // 回傳實際生成嘅條數（生成失敗會 throw，由呼叫端 catch）。
+  // pool 為輪流分配嘅 topic 池，rr 為共用 round-robin 指標（用 box 傳引用）。
+  const generateForType = async (
+    type: QuestionType,
+    diff: Difficulty,
+    gap: number,
+    pool: TopicLite[],
+    rr: { i: number },
+    sink: string[],
+  ): Promise<number> => {
+    if (gap <= 0 || pool.length === 0) return 0
+    const drafts = await generate(type, {
+      topicName: pool[rr.i % pool.length].topic,
+      difficulty: diff,
+      count: gap,
+      extra: extra.trim(),
+      subject: subjectName,
+    })
+    let made = 0
+    for (const d of drafts) {
+      if (made >= gap) break
+      if (!d.stem.trim()) continue
+      const topic = pool[rr.i % pool.length]
+      rr.i++
+      const mc =
+        type === 'mc'
+          ? compactMcOptions(d.options ?? [], d.answerIndex ?? 0)
+          : null
+      const added = questionsCol.add({
+        topicId: topic.id,
+        type,
+        difficulty: diff,
+        stem: d.stem.trim(),
+        options: mc ? mc.options : undefined,
+        answerIndex: mc ? mc.answerIndex : undefined,
+        answer: type !== 'mc' ? d.answer?.trim() : undefined,
+        marks: d.marks ?? undefined,
+        source: 'AI 生成（試卷）',
+        createdAt: new Date().toISOString(),
+      })
+      sink.push(added.id)
+      made++
+    }
+    return made
+  }
+
   const build = async () => {
     if (busy) return
     if (plan.length === 0) {
@@ -221,7 +269,7 @@ export function PaperGenerator({ topics, onClose, onSaved }: PaperGeneratorProps
       let generated = 0
       let shortfall = 0
       const pool = genTopicPool()
-      let rr = 0 // round-robin 指標（生成時輪流分配 topic）
+      const rr = { i: 0 } // round-robin 指標（生成時輪流分配 topic）
 
       for (const { type, n } of plan) {
         const diff = diffOf(type)
@@ -233,44 +281,14 @@ export function PaperGenerator({ topics, onClose, onSaved }: PaperGeneratorProps
 
         // 2) 唔夠 → 用引擎生成補足，逐條入題庫
         let gap = n - existing.length
-        if (gap > 0 && isAIConfigured && user && pool.length > 0) {
+        if (gap > 0 && isAIConfigured && user) {
           try {
-            const drafts = await generate(type, {
-              topicName: pool[rr % pool.length].topic,
-              difficulty: diff,
-              count: gap,
-              extra: extra.trim(),
-              subject: subjectName,
-            })
-            for (const d of drafts) {
-              if (gap <= 0) break
-              if (!d.stem.trim()) continue
-              const topic = pool[rr % pool.length]
-              rr++
-              const mc =
-                type === 'mc'
-                  ? compactMcOptions(d.options ?? [], d.answerIndex ?? 0)
-                  : null
-              const added = questionsCol.add({
-                topicId: topic.id,
-                type,
-                difficulty: diff,
-                stem: d.stem.trim(),
-                options: mc ? mc.options : undefined,
-                answerIndex: mc ? mc.answerIndex : undefined,
-                answer: type !== 'mc' ? d.answer?.trim() : undefined,
-                marks: d.marks ?? undefined,
-                source: 'AI 生成（試卷）',
-                createdAt: new Date().toISOString(),
-              })
-              pickedIds.push(added.id)
-              generated++
-              gap--
-            }
+            const made = await generateForType(type, diff, gap, pool, rr, pickedIds)
+            generated += made
+            gap -= made
           } catch (e) {
-            toast.error(
-              `${TYPE_LABEL[type]}生成失敗：${(e as Error).message || '請再試一次'}`,
-            )
+            const info = classifyAIError(e)
+            toast.error(`${TYPE_LABEL[type]}生成失敗：${info.message}`)
           }
         }
         shortfall += Math.max(0, gap)
@@ -294,7 +312,78 @@ export function PaperGenerator({ topics, onClose, onSaved }: PaperGeneratorProps
         )
       }
     } catch (e) {
-      toast.error((e as Error).message || '組卷失敗，請再試一次。')
+      toast.error(classifyAIError(e).message, { label: '重試', onClick: build })
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  // 只補足 shortfall：唔重抽、唔重洗牌；按而家 outcome 仲欠幾多就生成幾多，
+  // 把新題 append 落 outcome.questionIds（preview 即時更新）。
+  const topUp = async () => {
+    if (busy || !outcome) return
+    if (!isAIConfigured || !user) {
+      toast.error(
+        !isAIConfigured
+          ? 'AI 未啟用（見 docs/SETUP.md），無法生成補足。可返回減少題數，或先補題。'
+          : '請先登入先可以用 AI 生成補足。',
+      )
+      return
+    }
+    const pool = genTopicPool()
+    if (pool.length === 0) {
+      toast.error('範圍內冇課題可生成，請返回設定調整範圍。')
+      return
+    }
+
+    setBusy(true)
+    try {
+      // 數而家 outcome 入面每個題型 + 難度已有幾多條
+      const byId = new Map(allQuestions.map((q) => [q.id, q]))
+      const have = (type: QuestionType, diff: Difficulty) =>
+        outcome.questionIds.reduce((acc, id) => {
+          const q = byId.get(id)
+          return acc + (q && q.type === type && q.difficulty === diff ? 1 : 0)
+        }, 0)
+
+      const newIds: string[] = []
+      const rr = { i: 0 }
+      let made = 0
+      let stillShort = 0
+      for (const { type, n } of plan) {
+        const diff = diffOf(type)
+        const gap = n - have(type, diff)
+        if (gap <= 0) continue
+        try {
+          const m = await generateForType(type, diff, gap, pool, rr, newIds)
+          made += m
+          stillShort += Math.max(0, gap - m)
+        } catch (e) {
+          const info = classifyAIError(e)
+          toast.error(`${TYPE_LABEL[type]}補足失敗：${info.message}`)
+          stillShort += gap
+        }
+      }
+
+      if (made === 0) {
+        toast.error('今次補足生成唔到新題，遲少少再試，或返回減少題數。')
+        return
+      }
+
+      const nextIds = [...outcome.questionIds, ...newIds]
+      setOutcome({
+        questionIds: nextIds,
+        pulled: outcome.pulled,
+        generated: outcome.generated + made,
+        shortfall: stillShort,
+      })
+      if (stillShort > 0) {
+        toast.success(`已補足 ${made} 題，仲欠 ${stillShort} 題。`)
+      } else {
+        toast.success(`已補足 ${made} 題，題數已齊。`)
+      }
+    } catch (e) {
+      toast.error(classifyAIError(e).message, { label: '重試', onClick: topUp })
     } finally {
       setBusy(false)
     }
@@ -378,6 +467,7 @@ export function PaperGenerator({ topics, onClose, onSaved }: PaperGeneratorProps
           busy={busy}
           onBack={reset}
           onRebuild={build}
+          onTopUp={topUp}
           onSave={savePaper}
           onPrint={print}
         />
@@ -677,6 +767,7 @@ function PreviewView({
   busy,
   onBack,
   onRebuild,
+  onTopUp,
   onSave,
   onPrint,
 }: {
@@ -688,6 +779,7 @@ function PreviewView({
   busy: boolean
   onBack: () => void
   onRebuild: () => void
+  onTopUp: () => void
   onSave: () => void
   onPrint: (withAnswers: boolean) => void
 }) {
@@ -736,9 +828,21 @@ function PreviewView({
       </div>
 
       {outcome.shortfall > 0 && (
-        <p className="rounded-xl border border-amber-300/50 bg-amber-50 px-3 py-2 text-xs text-amber-700 dark:border-amber-500/25 dark:bg-amber-500/10 dark:text-amber-300">
-          題庫加生成仍欠 {outcome.shortfall} 題（題池不足或部分生成失敗）。可「再組卷」或返回減少題數。
-        </p>
+        <div className="flex flex-wrap items-center gap-2 rounded-xl border border-amber-300/50 bg-amber-50 px-3 py-2.5 text-xs text-amber-700 dark:border-amber-500/25 dark:bg-amber-500/10 dark:text-amber-300">
+          <span className="flex-1">
+            仍欠 {outcome.shortfall} 題（題池不足或部分生成失敗）。可即場叫 AI 補足，唔使返去重組。
+          </span>
+          <Button
+            size="sm"
+            icon={Sparkles}
+            loading={busy}
+            onClick={onTopUp}
+            disabled={busy}
+            className="shrink-0"
+          >
+            {busy ? '生成中…' : '再生成補足'}
+          </Button>
+        </div>
       )}
 
       {/* 逐題預覽（含列印用 print 區，但 util 列印係開新視窗，呢度只係螢幕預覽） */}

@@ -31,6 +31,7 @@ import { useConfirm } from '../../../context/ConfirmContext'
 import { useSettings } from '../../../context/SettingsContext'
 import { useCollection } from '../../../lib/store'
 import { complete, isAIConfigured, type AIModel } from '../../../lib/aiClient'
+import { classifyAIError } from '../../../lib/aiError'
 import { topicsCol } from '../../../data/collections'
 import type { Difficulty } from '../../../data/types'
 import { getSubjectPack } from '../../../data/subjects'
@@ -117,7 +118,7 @@ export default function DseDrill() {
       setCurrent(rec)
       toast.success(`已生成 ${questions.length} 題`)
     } catch (e) {
-      toast.error((e as Error).message || '生成失敗，請再試。')
+      toast.error(classifyAIError(e).message, { label: '重試', onClick: run })
     } finally {
       setBusy(false)
     }

@@ -351,27 +351,36 @@ export default function Timetable() {
             <button
               type="button"
               onClick={() => setShowSettings(true)}
-              className="inline-flex items-center gap-1.5 rounded-xl bg-white/15 px-3 py-1.5 text-sm font-medium backdrop-blur-sm transition hover:bg-white/25"
+              title={t('timetable.editBells', { defaultValue: '設定鐘聲時間' })}
+              className="inline-flex items-center gap-1.5 rounded-xl bg-white/15 px-2.5 py-1.5 text-sm font-medium backdrop-blur-sm transition hover:bg-white/25 sm:px-3"
             >
               <Settings2 size={15} />
-              {t('timetable.editBells', { defaultValue: '設定鐘聲時間' })}
+              <span className="hidden sm:inline">
+                {t('timetable.editBells', { defaultValue: '設定鐘聲時間' })}
+              </span>
             </button>
             <button
               type="button"
               onClick={handleExport}
-              className="inline-flex items-center gap-1.5 rounded-xl bg-white/15 px-3 py-1.5 text-sm font-medium backdrop-blur-sm transition hover:bg-white/25"
+              title={t('timetable.exportCsv', { defaultValue: '匯出 CSV' })}
+              className="inline-flex items-center gap-1.5 rounded-xl bg-white/15 px-2.5 py-1.5 text-sm font-medium backdrop-blur-sm transition hover:bg-white/25 sm:px-3"
             >
               <Download size={15} />
-              {t('timetable.exportCsv', { defaultValue: '匯出 CSV' })}
+              <span className="hidden sm:inline">
+                {t('timetable.exportCsv', { defaultValue: '匯出 CSV' })}
+              </span>
             </button>
             {view === 'print' && (
               <button
                 type="button"
                 onClick={() => window.print()}
-                className="inline-flex items-center gap-1.5 rounded-xl bg-white/15 px-3 py-1.5 text-sm font-medium backdrop-blur-sm transition hover:bg-white/25"
+                title={t('timetable.print', { defaultValue: '列印' })}
+                className="inline-flex items-center gap-1.5 rounded-xl bg-white/15 px-2.5 py-1.5 text-sm font-medium backdrop-blur-sm transition hover:bg-white/25 sm:px-3"
               >
                 <Printer size={15} />
-                {t('timetable.print', { defaultValue: '列印' })}
+                <span className="hidden sm:inline">
+                  {t('timetable.print', { defaultValue: '列印' })}
+                </span>
               </button>
             )}
           </>

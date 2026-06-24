@@ -5,6 +5,7 @@ import { useToast } from '../../../context/ToastContext'
 import { useAuth } from '../../../context/AuthContext'
 import { useSettings } from '../../../context/SettingsContext'
 import { isAIConfigured } from '../../../lib/aiClient'
+import { classifyAIError } from '../../../lib/aiError'
 import { questionsCol } from '../../../data/collections'
 import { getSubjectPack } from '../../../data/subjects'
 import type { Difficulty } from '../../../data/types'
@@ -109,7 +110,7 @@ export function QuestionGeneratorModal({
       setDrafts(parsed)
       setStep('review')
     } catch (e) {
-      toast.error((e as Error).message || 'AI 出題失敗，請再試一次。')
+      toast.error(classifyAIError(e).message, { label: '重試', onClick: run })
     } finally {
       setBusy(false)
     }

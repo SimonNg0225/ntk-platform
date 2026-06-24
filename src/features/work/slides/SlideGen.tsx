@@ -52,6 +52,7 @@ import { useConfirm } from '../../../context/ConfirmContext'
 import { useSettings } from '../../../context/SettingsContext'
 import { useCollection } from '../../../lib/store'
 import { streamChat, isAIConfigured, type AIModel } from '../../../lib/aiClient'
+import { classifyAIError } from '../../../lib/aiError'
 import { topicsCol } from '../../../data/collections'
 import { getSubjectPack } from '../../../data/subjects'
 import {
@@ -279,7 +280,7 @@ export default function SlideGen() {
       setLastBeforeRefine(null)
       toast.success(`簡報已生成（${deck.slides.length} 版）`)
     } catch (e) {
-      if (!aborted) toast.error((e as Error).message || '生成失敗，請再試。')
+      if (!aborted) toast.error(classifyAIError(e).message, { label: '重試', onClick: () => run(true) })
     } finally {
       setBusy(false)
       setAbortCtl(null)
@@ -386,7 +387,7 @@ export default function SlideGen() {
       setCurrent({ ...current, ...merged })
       toast.success('已 AI 再潤飾（可還原）')
     } catch (e) {
-      toast.error((e as Error).message || '潤飾失敗')
+      toast.error(classifyAIError(e).message, { label: '重試', onClick: refine })
     } finally {
       setRefining(false)
     }

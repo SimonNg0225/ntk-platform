@@ -10,6 +10,7 @@ import { useTranslation } from 'react-i18next'
 import { useCollection } from '../../lib/store'
 import {
   questionsCol,
+  papersCol,
   resourcesCol,
   lessonPlansCol,
   meetingNotesCol,
@@ -19,18 +20,19 @@ import {
   goalsCol,
   eventsCol,
   countdownsCol,
-  transactionsCol,
-  txCategoriesCol,
   decksCol,
   cardsCol,
   topicsCol,
   inboxCol,
+  type SavedPaper,
 } from '../../data/collections'
 // 深化功能嘅真資料喺各自 feature-local collection（唔係 legacy core col）
 import { richNotesCol, type RichNote } from '../learning/notes/store'
 import { journalDocsCol } from '../learning/journal/store'
 import type { JournalDoc } from '../learning/journal/util'
 import { booksCol, STATUS_LABEL, type Book } from '../learning/reading/types'
+import { habitV2Col, type Habit } from '../learning/habits/types'
+import { slideDecksCol, type DeckRecord } from '../work/slides/slideStore'
 import type {
   Question,
   Resource,
@@ -42,13 +44,13 @@ import type {
   Goal,
   CalendarEvent,
   Countdown,
-  Transaction,
   Deck,
   Card,
   Topic,
 } from '../../data/types'
 import { useNav } from '../../context/NavContext'
 import { useMode } from '../../context/ModeContext'
+import { isFeatureAvailable } from '../../lib/featureFlags'
 import { useToast } from '../../context/ToastContext'
 import { uid } from '../../lib/store'
 import {
@@ -95,6 +97,9 @@ import {
   Radar,
   SlidersHorizontal,
   Command,
+  FileStack,
+  Repeat,
+  Presentation,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import {
@@ -119,7 +124,7 @@ import {
 // ============================================================
 //  全域搜尋 — Spotlight / Raycast 級
 //  ------------------------------------------------------------
-//  • 跨 18 個資料源即時模糊搜尋（子序列比對 + 評分 + 高亮）
+//  • 跨 20 個資料源即時模糊搜尋（子序列比對 + 評分 + 高亮）
 //  • 鍵盤全操控：↑↓ 揀、↵ 開、⌘↵ 主動作、Tab 切類別、Esc 清空
 //  • 分類群組 / 統一排序兩種視圖、類別過濾、type: 運算子
 //  • 桌面右側即時預覽面板（全文 + 中繼資料 + 動作）
@@ -161,10 +166,13 @@ const KIND_META: Record<string, Omit<SourceKind, 'id'>> = {
   journal: { label: '個人日誌', featureId: 'learning-journal', icon: NotebookPen, tone: 'accent', modes: ['learning'] },
   goal: { label: '個人目標', featureId: 'learning-goals', icon: Target, tone: 'green', modes: ['learning'] },
   reading: { label: '閱讀清單', featureId: 'learning-reading', icon: BookOpen, tone: 'blue', modes: ['learning'] },
+  habit: { label: '習慣', featureId: 'learning-habits', icon: Repeat, tone: 'green', modes: ['learning'] },
   deck: { label: '知識卡牌組', featureId: 'learning-flashcards', icon: Layers, tone: 'accent', modes: ['learning'] },
   card: { label: '知識卡', featureId: 'learning-flashcards', icon: Layers, tone: 'accent', modes: ['learning'] },
   question: { label: '題庫', featureId: 'work-questions', icon: HelpCircle, tone: 'amber', modes: ['work'] },
+  paper: { label: '試卷', featureId: 'work-questions', icon: FileStack, tone: 'amber', modes: ['work'] },
   resource: { label: '教學資源', featureId: 'work-resources', icon: FolderOpen, tone: 'blue', modes: ['work'] },
+  slide: { label: '簡報', featureId: 'work-slides', icon: Presentation, tone: 'accent', modes: ['work'] },
   lesson: { label: '備課教案', featureId: 'work-lesson-plan', icon: ClipboardList, tone: 'accent', modes: ['work'] },
   meeting: { label: '會議筆記', featureId: 'work-meeting-notes', icon: ListTree, tone: 'slate', modes: ['work'] },
   klass: { label: '班別', featureId: 'work-classes', icon: GraduationCap, tone: 'blue', modes: ['work'] },
@@ -287,12 +295,13 @@ export default function GlobalSearch() {
   const goals = useCollection(goalsCol)
   const events = useCollection(eventsCol)
   const countdowns = useCollection(countdownsCol)
-  const transactions = useCollection(transactionsCol)
-  const txCategories = useCollection(txCategoriesCol)
   const decks = useCollection(decksCol)
   const cards = useCollection(cardsCol)
   const topics = useCollection(topicsCol)
   const inbox = useCollection(inboxCol)
+  const papers = useCollection(papersCol)
+  const habits = useCollection(habitV2Col)
+  const slideDecks = useCollection(slideDecksCol)
   const recents = useCollection(recentsCol)
   const pins = useCollection(pinsCol)
 
@@ -312,7 +321,6 @@ export default function GlobalSearch() {
   // 班別 / 課題 對照（畀題目、學生、教案做副標）
   const classById = useMemo(() => new Map(classes.map((c) => [c.id, c.name])), [classes])
   const topicById = useMemo(() => new Map(topics.map((t) => [t.id, t.topic])), [topics])
-  const catById = useMemo(() => new Map(txCategories.map((c) => [c.id, c])), [txCategories])
   const deckById = useMemo(() => new Map(decks.map((d) => [d.id, d.name])), [decks])
 
   // 把所有實體整成 Hit 候選（未過濾 query）
@@ -411,15 +419,26 @@ export default function GlobalSearch() {
         { label: '範疇', value: t.area },
       ], q)),
     )
-    transactions.forEach((t: Transaction) => {
-      const cat = catById.get(t.categoryId)
-      push(buildHit('tx', t.id, [{ title: t.note || (cat?.name ?? '未分類'), extra: cat?.name }], `${t.kind === 'income' ? '+' : '−'}$${t.amount} · ${t.date}`, [
-        { label: '類型', value: t.kind === 'income' ? '收入' : '支出' },
-        { label: '金額', value: `$${t.amount}` },
-        { label: '分類', value: cat?.name ?? '未分類' },
-        { label: '日期', value: t.date },
-      ], q, { ts: toMs(t.createdAt) ?? toMs(t.date) }))
+    papers.forEach((p: SavedPaper) =>
+      push(buildHit('paper', p.id, [{ title: p.title, extra: p.className }], `${p.questionIds.length} 題${p.className ? ` · ${p.className}` : ''}`, [
+        { label: '題數', value: String(p.questionIds.length) },
+        ...(p.className ? [{ label: '班別', value: p.className }] : []),
+        ...(p.durationMin ? [{ label: '時長', value: `${p.durationMin} 分鐘` }] : []),
+      ], q, { ts: toMs(p.createdAt) })),
+    )
+    habits.forEach((h: Habit) => {
+      if (h.archived) return
+      push(buildHit('habit', h.id, [{ title: h.name, body: h.notes }, { title: '', extra: h.category }], h.goalKind === 'quit' ? '戒除' : '養成', [
+        { label: '目標', value: h.goalKind === 'quit' ? '戒除' : '養成' },
+        ...(h.category ? [{ label: '分類', value: h.category }] : []),
+      ], q, { ts: toMs(h.createdAt) }))
     })
+    slideDecks.forEach((d: DeckRecord) =>
+      push(buildHit('slide', d.id, [{ title: d.title || d.topicName, body: d.subtitle }], d.topicName, [
+        { label: '課題', value: d.topicName },
+        { label: '頁數', value: String(d.slides.length) },
+      ], q, { ts: toMs(d.createdAt) })),
+    )
     events.forEach((e: CalendarEvent) =>
       push(buildHit('event', e.id, [{ title: e.title, body: e.notes }, { title: '', extra: e.location }], `${e.date}${e.time ? ' ' + e.time : ''}`, [
         { label: '日期', value: e.date },
@@ -438,11 +457,14 @@ export default function GlobalSearch() {
         { label: '擷取', value: fmtDate(it.createdAt) },
       ], q, { ts: toMs(it.createdAt) })),
     )
-    return out
+    // 私隱閘：被 gate 嘅學生／家長功能（同其資料實體）一律唔出搜尋結果。
+    // 每條 Hit 都帶 featureId，用 isFeatureAvailable 一次過濾掉功能入口 + 實體
+    // （e.g. work-gradebook 學生、work-classes 班別、work-curriculum 課題）。
+    return out.filter((h) => isFeatureAvailable(h.featureId))
   }, [
     deferredQuery, notes, journal, goals, reading, decks, cards, questions, resources,
-    lessonPlans, meetingNotes, classes, students, tasks, topics, transactions,
-    events, countdowns, inbox, classById, topicById, catById, deckById,
+    lessonPlans, meetingNotes, classes, students, tasks, topics, papers, habits,
+    slideDecks, events, countdowns, inbox, classById, topicById, deckById,
   ])
 
   // 「最近」排序生效條件：view='recent' 視圖 或 sort:recent 運算子（兩者共用同一

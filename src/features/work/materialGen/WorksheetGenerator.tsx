@@ -16,6 +16,7 @@ import { useToast } from '../../../context/ToastContext'
 import { useAuth } from '../../../context/AuthContext'
 import { useSettings } from '../../../context/SettingsContext'
 import { isAIConfigured } from '../../../lib/aiClient'
+import { classifyAIError } from '../../../lib/aiError'
 import { questionsCol } from '../../../data/collections'
 import { getSubjectPack } from '../../../data/subjects'
 import type { Difficulty, Question } from '../../../data/types'
@@ -182,7 +183,7 @@ export function WorksheetGenerator({
       )
       setStep('preview')
     } catch (e) {
-      toast.error((e as Error).message || 'AI 出練習失敗，請再試一次。')
+      toast.error(classifyAIError(e).message, { label: '重試', onClick: run })
     } finally {
       setBusy(false)
     }
