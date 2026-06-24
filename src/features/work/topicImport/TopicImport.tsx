@@ -12,6 +12,7 @@ import {
   Tooltip,
   type FeatureGuideStep,
 } from '../../../ui'
+import CreditMeter from '../../../components/CreditMeter'
 import { useToast } from '../../../context/ToastContext'
 import { useSettings } from '../../../context/SettingsContext'
 import { useNav } from '../../../context/NavContext'
@@ -219,9 +220,12 @@ export default function TopicImport() {
           <p className="text-xs text-slate-400 dark:text-slate-500">
             {hasInput ? '準備好喇，撳右邊抽取課題。' : '先揀來源（上載／貼文字／影相）。'}
           </p>
-          <Button icon={busy ? Loader2 : Sparkles} onClick={extract} loading={busy} disabled={!hasInput}>
-            {busy ? '抽取中…' : '抽取課題'}
-          </Button>
+          <div className="flex items-center gap-2">
+            <CreditMeter source="topic-import" model={model} />
+            <Button icon={busy ? Loader2 : Sparkles} onClick={extract} loading={busy} disabled={!hasInput}>
+              {busy ? '抽取中…' : '抽取課題'}
+            </Button>
+          </div>
         </div>
       </Card>
 

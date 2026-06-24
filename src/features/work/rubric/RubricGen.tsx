@@ -32,6 +32,7 @@ import {
   parseRubric,
   type RubricMode,
 } from './rubricPrompts'
+import CreditMeter from '../../../components/CreditMeter'
 
 const MODE_OPTS: { id: RubricMode; label: string }[] = [
   { id: 'scheme', label: '評分指引' },
@@ -245,9 +246,12 @@ export default function RubricGen() {
               </Select>
             </Field>
           )}
-          <Button icon={Sparkles} onClick={run} loading={busy} disabled={!canRun}>
-            {busy ? '生成緊…' : mode === 'scheme' ? '生成評分指引' : '生成評分量表'}
-          </Button>
+          <div className="flex items-center gap-3">
+            <CreditMeter source="rubric" model={model} />
+            <Button icon={Sparkles} onClick={run} loading={busy} disabled={!canRun}>
+              {busy ? '生成緊…' : mode === 'scheme' ? '生成評分指引' : '生成評分量表'}
+            </Button>
+          </div>
         </div>
       </Card>
 

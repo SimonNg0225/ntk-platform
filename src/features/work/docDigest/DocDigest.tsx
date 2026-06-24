@@ -28,6 +28,7 @@ import {
   Tooltip,
   cx,
 } from '../../../ui'
+import CreditMeter from '../../../components/CreditMeter'
 import { useToast } from '../../../context/ToastContext'
 import { useConfirm } from '../../../context/ConfirmContext'
 import { useCollection } from '../../../lib/store'
@@ -300,7 +301,8 @@ export default function DocDigest() {
             </div>
           )}
 
-          <div className="flex justify-end">
+          <div className="flex items-center justify-end gap-2">
+            <CreditMeter source="doc-digest" model={model} className="mr-auto" />
             <Button icon={Sparkles} onClick={run} loading={busy} disabled={!hasInput}>
               {busy
                 ? t('docDigest.run.busy', { defaultValue: '速讀中…' })

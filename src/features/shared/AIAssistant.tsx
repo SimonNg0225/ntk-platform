@@ -119,6 +119,7 @@ import {
 } from './aiAssistant/util'
 import { Markdown } from './aiAssistant/markdown'
 import { ActivityBars, RatioBar } from './aiAssistant/charts'
+import CreditMeter from '../../components/CreditMeter'
 
 // ============================================================
 //  AI 助手 — ChatGPT / Claude 級對話工作枱
@@ -1103,6 +1104,7 @@ export default function AIAssistant() {
           seed={seed}
           busy={busy}
           contextCount={activeContexts.length}
+          model={activeModel}
           onSend={onSendStable}
           onStop={onStopStable}
           onOpenTemplate={onOpenTemplateStable}
@@ -1199,6 +1201,7 @@ const Composer = memo(function Composer({
   seed,
   busy,
   contextCount,
+  model,
   onSend,
   onStop,
   onOpenTemplate,
@@ -1207,6 +1210,7 @@ const Composer = memo(function Composer({
   seed: { text: string; n: number }
   busy: boolean
   contextCount: number
+  model: AIModel
   onSend: (text: string) => void
   onStop: () => void
   onOpenTemplate: () => void
@@ -1307,6 +1311,7 @@ const Composer = memo(function Composer({
           className="ml-1 text-[11px] tabular-nums text-slate-400 empty:hidden dark:text-slate-500"
         />
         <div className="flex-1" />
+        <CreditMeter source="ai-assistant" model={model} className="mr-1 hidden sm:inline-flex" />
         {busy ? (
           <Button variant="secondary" size="sm" icon={Square} onClick={onStop}>
             {t('aiasst.stop', { defaultValue: '停止' })}

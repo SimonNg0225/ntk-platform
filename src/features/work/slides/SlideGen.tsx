@@ -47,6 +47,7 @@ import {
   Tooltip,
   cx,
 } from '../../../ui'
+import CreditMeter from '../../../components/CreditMeter'
 import { useToast } from '../../../context/ToastContext'
 import { useConfirm } from '../../../context/ConfirmContext'
 import { useSettings } from '../../../context/SettingsContext'
@@ -775,6 +776,7 @@ export default function SlideGen() {
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
+                    {!busy && <CreditMeter source="slides" model={model} />}
                     {busy ? (
                       <Button variant="ghost" icon={StopCircle} onClick={stopRun}>
                         {t('slideGen.action.stop', { defaultValue: '停止' })}

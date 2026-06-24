@@ -12,6 +12,7 @@ import {
   Save,
   Sparkles,
 } from 'lucide-react'
+import CreditMeter from '../../../components/CreditMeter'
 import { uid } from '../../../lib/store'
 import { useToast } from '../../../context/ToastContext'
 import { useAuth } from '../../../context/AuthContext'
@@ -556,7 +557,8 @@ export function WorksheetGenerator({
             </div>
           )}
 
-          <div className="flex justify-end gap-2 border-t border-slate-100 pt-4 dark:border-slate-700/60">
+          <div className="flex flex-wrap items-center justify-end gap-2 border-t border-slate-100 pt-4 dark:border-slate-700/60">
+            <CreditMeter source="material-gen" className="mr-auto" />
             <Button variant="secondary" onClick={onClose} disabled={busy}>
               取消
             </Button>

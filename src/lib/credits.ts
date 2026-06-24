@@ -34,12 +34,17 @@ export interface ChargeContext {
   model?: string
 }
 
+/** 由單一用量標籤（= ai_usage_stats.feature / source tag）計點數。 */
+export function creditCostOf(label: string, model?: string): number {
+  const base = COST_BY_KEY[label] ?? DEFAULT_COST
+  const mult = model === 'gemini-2.5-pro' ? PRO_MODEL_MULTIPLIER : 1
+  return base * mult
+}
+
 /** 一次 AI 動作扣幾多點。 */
 export function creditCost(ctx: ChargeContext): number {
   const key = ctx.feature === 'transcribe' ? 'transcribe' : (ctx.source ?? '')
-  const base = COST_BY_KEY[key] ?? DEFAULT_COST
-  const mult = ctx.model === 'gemini-2.5-pro' ? PRO_MODEL_MULTIPLIER : 1
-  return base * mult
+  return creditCostOf(key, ctx.model)
 }
 
 /** 某層每月點數池。 */

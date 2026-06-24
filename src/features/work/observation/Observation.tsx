@@ -46,6 +46,7 @@ import {
   buildObservationUser,
   parseObservationSummary,
 } from './observationPrompts'
+import CreditMeter from '../../../components/CreditMeter'
 
 const MODEL: AIModel = 'gemini-2.5-flash'
 
@@ -463,6 +464,7 @@ function FormView(props: {
         </Field>
 
         <div className="flex flex-col items-end gap-1.5">
+          <CreditMeter source="observation" />
           <Button
             icon={props.busy ? Loader2 : Sparkles}
             onClick={props.onRun}

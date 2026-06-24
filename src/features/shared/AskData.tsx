@@ -37,6 +37,7 @@ import {
   PageHero,
   cx,
 } from '../../ui'
+import CreditMeter from '../../components/CreditMeter'
 
 // ============================================================
 //  「問我嘅資料 AI」— 用你自己嘅資料嚟問 AI
@@ -479,6 +480,9 @@ export default function AskData() {
 
       {/* ───────── 輸入框：圓潤、貼底、focus 有 accent 環、送出掣明顯 ───────── */}
       <div className="sticky bottom-3 z-10">
+        <div className="mb-1.5 flex justify-end px-1">
+          <CreditMeter source="ask-data" />
+        </div>
         <div className="flex items-end gap-2 rounded-2xl border border-slate-200/80 bg-white/95 p-2 pl-3.5 shadow-md backdrop-blur transition focus-within:border-accent focus-within:ring-2 focus-within:ring-accent/40 dark:border-slate-700/60 dark:bg-slate-800/95 dark:shadow-none">
           <Search
             size={17}

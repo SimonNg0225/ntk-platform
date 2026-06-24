@@ -32,6 +32,7 @@ import {
   cx,
 } from '../../ui'
 import type { FeatureGuideStep } from '../../ui'
+import CreditMeter from '../../components/CreditMeter'
 import { useAuth } from '../../context/AuthContext'
 import { useToast } from '../../context/ToastContext'
 import { useConfirm } from '../../context/ConfirmContext'
@@ -515,7 +516,8 @@ export default function Grading() {
                 </div>
               )}
 
-              <div className="flex justify-end">
+              <div className="flex items-center justify-end gap-2">
+                <CreditMeter source="grading" model={markModel} className="mr-auto" />
                 <Button
                   icon={inputMode === 'photo' ? Upload : Sparkles}
                   onClick={runMark}

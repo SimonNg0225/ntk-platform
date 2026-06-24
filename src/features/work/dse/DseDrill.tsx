@@ -38,6 +38,7 @@ import { getSubjectPack } from '../../../data/subjects'
 import { downloadDocx, type ExportBlock, type ExportDoc } from '../../../lib/export'
 import { dseCol, getDseDate, setDseDate, type DseRecord } from './dseStore'
 import { buildDseSystem, parseDse, DSE_PAPERS, type DsePaper } from './dsePrompts'
+import CreditMeter from '../../../components/CreditMeter'
 
 const DIFF_OPTS: { id: Difficulty; label: string }[] = [
   { id: 'easy', label: '淺' },
@@ -269,7 +270,8 @@ export default function DseDrill() {
                   </Field>
                 </div>
               </div>
-              <div className="flex justify-end">
+              <div className="flex items-center justify-end gap-3">
+                <CreditMeter source="dse-drill" model={model} />
                 <Button icon={Sparkles} onClick={run} loading={busy}>
                   {busy
                     ? t('dse.cta.busy', { defaultValue: '出題中…' })

@@ -46,6 +46,7 @@ import { getSubjectPack } from '../../../data/subjects'
 import { downloadDocx, printDoc, type ExportBlock, type ExportDoc } from '../../../lib/export'
 import { teachGuideCol, type GuideRecord } from './guideStore'
 import { buildGuideSystem, parseGuide, isEmptyGuide, type GuideResult } from './prompts'
+import CreditMeter from '../../../components/CreditMeter'
 
 const MODEL_OPTIONS: { id: AIModel; label: string }[] = [
   { id: 'gemini-2.5-flash', label: 'Flash' },
@@ -257,7 +258,8 @@ export default function TeachGuide() {
                   })}
                 />
               </Field>
-              <div className="flex justify-end">
+              <div className="flex items-center justify-end gap-3">
+                <CreditMeter source="teach-guide" model={model} />
                 <Button icon={Sparkles} onClick={run} loading={busy}>
                   {busy
                     ? t('teachGuide.generating', { defaultValue: '生成緊…' })

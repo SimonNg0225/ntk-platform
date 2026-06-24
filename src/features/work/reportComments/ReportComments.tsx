@@ -27,6 +27,7 @@ import {
   Tooltip,
   type FeatureGuideStep,
 } from '../../../ui'
+import CreditMeter from '../../../components/CreditMeter'
 import { useToast } from '../../../context/ToastContext'
 import { useSettings } from '../../../context/SettingsContext'
 import { useCollection } from '../../../lib/store'
@@ -324,11 +325,14 @@ export default function ReportComments() {
                 {t('reportComments.assessmentsUnit', { defaultValue: '項評估' })}
               </span>
             </span>
-            <Button icon={Sparkles} onClick={runAll} loading={busy} disabled={students.length === 0}>
-              {busy
-                ? t('reportComments.generating', { defaultValue: '生成緊…' })
-                : t('reportComments.generateAll', { defaultValue: '生成全班評語' })}
-            </Button>
+            <div className="flex items-center gap-2">
+              <CreditMeter source="report-comments" model={model} />
+              <Button icon={Sparkles} onClick={runAll} loading={busy} disabled={students.length === 0}>
+                {busy
+                  ? t('reportComments.generating', { defaultValue: '生成緊…' })
+                  : t('reportComments.generateAll', { defaultValue: '生成全班評語' })}
+              </Button>
+            </div>
           </div>
         </Card>
       </section>

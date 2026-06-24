@@ -35,6 +35,7 @@ import { meetingNotesCol } from '../../../data/collections'
 import { downloadDocx, type ExportBlock, type ExportDoc } from '../../../lib/export'
 import { transcribeCol, type TranscriptRecord } from './transcribeStore'
 import { buildTranscribeSystem, parseTranscript } from './transcribePrompts'
+import CreditMeter from '../../../components/CreditMeter'
 
 const MODEL_OPTS: { id: AIModel; label: string }[] = [
   { id: 'gemini-2.5-flash', label: 'Flash' },
@@ -200,7 +201,8 @@ export default function Transcribe() {
                 })}
           </span>
         </button>
-        <div className="flex justify-end">
+        <div className="flex items-center justify-end gap-3">
+          <CreditMeter source="transcribe" feature="transcribe" model={model} />
           <Button icon={busy ? Loader2 : Upload} onClick={run} loading={busy} disabled={!file}>
             {busy
               ? t('transcribe.action.running', { defaultValue: '轉錄中…' })

@@ -52,6 +52,7 @@ import {
   type ResolvedRange,
   type AggregatedData,
 } from './reportRange'
+import CreditMeter from '../../../components/CreditMeter'
 
 const MODEL_OPTS: { id: AIModel; label: string }[] = [
   { id: 'gemini-2.5-flash', label: 'Flash' },
@@ -278,7 +279,8 @@ export default function WorkReport() {
           </span>
         </div>
 
-        <div className="flex justify-end">
+        <div className="flex items-center justify-end gap-3">
+          <CreditMeter source="work-report" model={model} />
           <Button
             icon={busy ? Loader2 : Sparkles}
             onClick={run}
