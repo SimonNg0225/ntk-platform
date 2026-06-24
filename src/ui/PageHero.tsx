@@ -68,29 +68,33 @@ export function PageHero({
         className="pointer-events-none absolute -bottom-24 -left-10 h-48 w-48 rounded-full bg-white/[0.06] blur-3xl"
       />
 
-      <div className="relative flex items-start gap-3.5">
-        {/* icon chip */}
-        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/15 text-white ring-1 ring-inset ring-white/20 backdrop-blur-sm">
-          <IconCmp size={24} strokeWidth={1.75} />
-        </span>
+      <div className="relative flex flex-col gap-3 sm:flex-row sm:items-start sm:gap-3.5">
+        {/* icon chip + 標題（永遠同一行；手機唔會畀操作掣逼到爆行斷字） */}
+        <div className="flex min-w-0 items-start gap-3.5 sm:flex-1">
+          {/* icon chip */}
+          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/15 text-white ring-1 ring-inset ring-white/20 backdrop-blur-sm">
+            <IconCmp size={24} strokeWidth={1.75} />
+          </span>
 
-        <div className="min-w-0 flex-1">
-          {kicker && (
-            <p className="text-[11px] font-medium uppercase tracking-[0.32em] text-white/70">
-              {kicker}
-            </p>
-          )}
-          <h1 className="mt-1 text-2xl font-semibold leading-tight tracking-tight text-white sm:text-3xl">
-            {title}
-          </h1>
-          {description && (
-            <p className="mt-1.5 max-w-md text-sm text-white/80">{description}</p>
-          )}
+          <div className="min-w-0 flex-1">
+            {kicker && (
+              <p className="text-[11px] font-medium uppercase tracking-[0.32em] text-white/70">
+                {kicker}
+              </p>
+            )}
+            <h1 className="mt-1 text-2xl font-semibold leading-tight tracking-tight text-white sm:text-3xl">
+              {title}
+            </h1>
+            {description && (
+              <p className="mt-1.5 max-w-md text-sm text-white/80">{description}</p>
+            )}
+          </div>
         </div>
 
-        {/* 右上操作區（紫底半透明白掣） */}
+        {/* 操作區：手機跌落標題下面（flex-wrap，唔逼標題），sm+ 返右上角。 */}
+        {/* text-white = 預設白字（半透明白掣靠繼承）；自設色嘅主掣（如 bg-white text-accent-strong）唔會再被蓋成白底白字 */}
         {actions && (
-          <div className="relative ml-auto flex shrink-0 items-center gap-2 [&_button]:text-white">
+          <div className="relative flex flex-wrap items-center gap-2 text-white sm:ml-auto sm:shrink-0">
             {actions}
           </div>
         )}
