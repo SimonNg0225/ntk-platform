@@ -64,6 +64,7 @@ export default function Community() {
   return (
     <div className="space-y-5">
       <PageHero
+        guideKey="community"
         icon={Share2}
         kicker={t('community.kicker', { defaultValue: '教學社群' })}
         title={t('community.title', { defaultValue: '資源分享區' })}

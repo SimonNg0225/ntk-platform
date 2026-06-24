@@ -512,6 +512,7 @@ export default function TodoWidget() {
     <div className="space-y-5">
       {/* ───────── 頁頂 accent hero（共用 PageHero）───────── */}
       <PageHero
+        guideKey="todo"
         icon={ClipboardCheck}
         kicker="Tasks & Grading"
         title="待辦 / 批改"

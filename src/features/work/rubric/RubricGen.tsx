@@ -128,6 +128,7 @@ export default function RubricGen() {
     return (
       <div className="space-y-5">
         <PageHero
+          guideKey="rubric-gen"
           icon={Scale}
           kicker="Rubric Studio"
           title="評分準則"

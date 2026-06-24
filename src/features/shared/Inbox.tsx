@@ -557,6 +557,7 @@ export default function Inbox() {
       {/* 頁首 accent hero（共用 PageHero）。host 已收起標題（selfManagedHeader），
           呢個係呢頁唯一頂部標題。右上：統計切換掣。 */}
       <PageHero
+        guideKey="inbox"
         icon={InboxIcon}
         kicker={t('inbox.kicker', { defaultValue: 'Quick Capture' })}
         title={t('inbox.title', { defaultValue: '快速擷取' })}

@@ -536,6 +536,7 @@ export default function Countdown() {
     <div className="w-full space-y-6 p-4 sm:p-6">
       {/* ───────── 頁頂 accent hero（共用 PageHero）───────── */}
       <PageHero
+        guideKey="countdown"
         icon={CalendarClock}
         kicker={t('countdown.kicker', { defaultValue: '重要日子' })}
         title={t('countdown.title', { defaultValue: '重要日子倒數' })}

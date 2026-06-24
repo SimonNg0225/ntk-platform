@@ -105,6 +105,7 @@ export default function QuizMode() {
     <div className="space-y-5">
       {/* ───────── PageHero（共用 accent hero：icon chip + kicker + 標題 + 副題 + 戰績 + 分頁） ───────── */}
       <PageHero
+        guideKey="quiz"
         icon={Swords}
         kicker={t('quiz.kicker', { defaultValue: '自學工具 · 由你嘅題庫即時出題' })}
         title={t('quiz.title', { defaultValue: '自我測驗' })}

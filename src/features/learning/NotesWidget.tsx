@@ -445,6 +445,7 @@ export default function NotesWidget() {
   return (
     <div className="space-y-5">
       <PageHero
+        guideKey="notes"
         icon={NotebookIcon}
         kicker={t('notes.kicker', { defaultValue: '個人筆記' })}
         title={t('notes.title', { defaultValue: '記低每一個念頭' })}

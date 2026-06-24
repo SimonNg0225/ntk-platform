@@ -138,6 +138,7 @@ export default function TopicImport() {
     return (
       <div className="space-y-5">
         <PageHero
+          guideKey="topicImport"
           icon={Inbox}
           kicker="Topic Import"
           title="課題匯入"

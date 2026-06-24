@@ -288,6 +288,7 @@ export default function GoalsWidget() {
     <div className="space-y-6">
       {/* ───────── Page header：共用 PageHero（accent hero） ───────── */}
       <PageHero
+        guideKey="goals"
         icon={Target}
         kicker="Goals"
         title="個人目標"

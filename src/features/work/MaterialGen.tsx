@@ -176,6 +176,7 @@ export default function MaterialGen() {
     <div className="space-y-5">
       {/* ───────── Masthead：共用 PageHero（accent hero）───────── */}
       <PageHero
+        guideKey="material-gen"
         icon={Layers}
         kicker="Material Studio"
         title="教材生成"

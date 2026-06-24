@@ -63,6 +63,7 @@ export default function Scan() {
   return (
     <div className="space-y-5">
       <PageHero
+        guideKey="scan"
         icon={FileScan}
         kicker={t('scan.kicker', { defaultValue: '文件掃描' })}
         title={t('scan.title', { defaultValue: '掃描 PDF' })}

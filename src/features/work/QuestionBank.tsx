@@ -507,6 +507,7 @@ export default function QuestionBank() {
   return (
     <div className="space-y-5">
       <PageHero
+        guideKey="questionbank"
         icon={BookMarked}
         kicker="Question Bank"
         title={`${subj.short} 題庫`}

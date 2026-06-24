@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import type { LucideIcon } from 'lucide-react'
+import { GuideHelpButton } from './FeatureGuide'
 
 // ============================================================
 //  PageHero — accent masthead（功能頁頂部大色塊）
@@ -21,6 +22,8 @@ export type PageHeroProps = {
   actions?: ReactNode
   /** hero 內底部分頁切換（紫底上嘅白色 pill）。可選。 */
   tabs?: ReactNode
+  /** 傳教學引導嘅 storageKey → hero 右上自動加「點用？」掣，隨時叫返該功能教學。 */
+  guideKey?: string
   /** 額外 class（接落最外層 header） */
   className?: string
 }
@@ -49,6 +52,7 @@ export function PageHero({
   description,
   actions,
   tabs,
+  guideKey,
   className,
 }: PageHeroProps) {
   return (
@@ -93,8 +97,9 @@ export function PageHero({
 
         {/* 操作區：手機跌落標題下面（flex-wrap，唔逼標題），sm+ 返右上角。 */}
         {/* text-white = 預設白字（半透明白掣靠繼承）；自設色嘅主掣（如 bg-white text-accent-strong）唔會再被蓋成白底白字 */}
-        {actions && (
+        {(actions || guideKey) && (
           <div className="relative flex flex-wrap items-center gap-2 text-white sm:ml-auto sm:shrink-0">
+            {guideKey && <GuideHelpButton storageKey={guideKey} />}
             {actions}
           </div>
         )}

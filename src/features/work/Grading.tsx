@@ -335,6 +335,7 @@ export default function Grading() {
     <div className="space-y-5">
       {/* 頁頂 accent hero（統一各功能頁），分頁切換放 hero 內底部 */}
       <PageHero
+        guideKey="grading"
         icon={ClipboardCheck}
         kicker={t('grading.kicker', { defaultValue: 'AI Grading' })}
         title={t('grading.title', { defaultValue: 'AI 批改' })}

@@ -214,6 +214,7 @@ export default function LearningDashboard() {
     <div className="space-y-5">
       {/* ── Hero：統一共用 PageHero（accent hero） ── */}
       <PageHero
+        guideKey="learning-dashboard"
         icon={LayoutDashboard}
         kicker={t('dashboard.kicker', { defaultValue: 'Personal Overview' })}
         title={t('dashboard.title', { defaultValue: '個人總覽' })}

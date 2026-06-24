@@ -108,6 +108,7 @@ export default function FocusTimer() {
     <div className="w-full space-y-5 p-4">
       {/* ───────── 共用 PageHero（accent hero）：icon + 標題 + 今日狀態 + 連續日 + 分頁 ───────── */}
       <PageHero
+        guideKey="focus-timer"
         icon={Timer}
         kicker={t('focus.kicker', { defaultValue: '學習成長 · 深度專注' })}
         title={t('focus.title', { defaultValue: '專注計時器' })}

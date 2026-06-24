@@ -65,6 +65,7 @@ export default function Fitness() {
     <div className="space-y-5">
       {/* ───────── page hero（統一共用 PageHero accent hero） ───────── */}
       <PageHero
+        guideKey="fitness"
         icon={HeartPulse}
         kicker={t('fitness.kicker', { defaultValue: '個人成長 · 健身追蹤' })}
         title={t('fitness.title', { defaultValue: '健身中心' })}

@@ -145,6 +145,7 @@ export default function Transcribe() {
     <div className="space-y-5">
       {/* ───────── 頁首：共用 PageHero（accent hero） ───────── */}
       <PageHero
+        guideKey="transcribe"
         icon={Mic}
         kicker={t('transcribe.kicker', { defaultValue: 'Transcribe' })}
         title={t('transcribe.title', { defaultValue: '錄音轉文字' })}

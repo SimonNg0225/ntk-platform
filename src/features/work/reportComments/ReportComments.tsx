@@ -262,6 +262,7 @@ export default function ReportComments() {
     <div className="space-y-5">
       {/* 頁首 */}
       <PageHero
+        guideKey="report-comments"
         icon={MessageSquareQuote}
         kicker={t('reportComments.kicker', { defaultValue: 'Report Comments' })}
         title={t('reportComments.title', { defaultValue: '成績表評語' })}

@@ -174,6 +174,7 @@ export default function DseDrill() {
   return (
     <div className="space-y-5">
       <PageHero
+        guideKey="dse-drill"
         icon={GraduationCap}
         kicker={t('dse.kicker', { defaultValue: '公開試 · DSE' })}
         title={t('dse.title', { defaultValue: 'DSE 操練' })}

@@ -191,6 +191,7 @@ export default function DocDigest() {
     return (
       <div className="space-y-5">
         <PageHero
+          guideKey="doc-digest"
           icon={FileSearch}
           kicker={t('docDigest.kicker', { defaultValue: 'Doc Digest' })}
           title={t('docDigest.title', { defaultValue: '文件速讀' })}

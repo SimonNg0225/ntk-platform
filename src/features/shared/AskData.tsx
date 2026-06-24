@@ -310,6 +310,7 @@ export default function AskData() {
     <div className="space-y-5">
       {/* ───────── Masthead：共用 PageHero（accent hero） ───────── */}
       <PageHero
+        guideKey="ask-data"
         icon={Sparkles}
         kicker="AI · Ask Your Data"
         title="問我嘅資料 AI"

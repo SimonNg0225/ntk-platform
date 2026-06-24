@@ -576,6 +576,7 @@ export default function LessonPlanner() {
     <div className="space-y-5">
       {/* ───────── Masthead：共用 PageHero（accent hero） ───────── */}
       <PageHero
+        guideKey="lesson-planner"
         icon={GraduationCap}
         kicker={t('lessonPlanner.kicker', { defaultValue: '教師備課桌' })}
         title={t('lessonPlanner.title', { defaultValue: '備課 / 教案' })}

@@ -155,6 +155,7 @@ export default function Flashcards() {
     <div className="space-y-5">
       {/* ───────── Hero：統一共用 PageHero（accent hero）───────── */}
       <PageHero
+        guideKey="flashcards"
         icon={BookMarked}
         kicker={t('flashcards.kicker', { defaultValue: 'Spaced Repetition' })}
         title={t('flashcards.pageTitle', { defaultValue: '知識卡 + 複習' })}

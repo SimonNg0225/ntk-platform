@@ -270,6 +270,7 @@ export default function Team() {
   return (
     <div className="space-y-5">
       <PageHero
+        guideKey="team"
         icon={Users}
         kicker={t('team.kicker', { defaultValue: '學校・科組協作' })}
         title={t('team.title', { defaultValue: '團隊與座位' })}

@@ -227,6 +227,7 @@ export default function ClassesWidget() {
     <div className="space-y-5">
       {/* ───────── 頁首：共用 PageHero（accent hero）───────── */}
       <PageHero
+        guideKey="classes"
         icon={BookUser}
         kicker={t('classes.kicker', { defaultValue: 'Classes' })}
         title={t('classes.title', { defaultValue: '班別管理' })}

@@ -369,6 +369,7 @@ export default function ReadingList() {
     <div className="space-y-5">
       {/* ── Hero：統一共用 PageHero（accent hero） ── */}
       <PageHero
+        guideKey="reading-list"
         icon={Library}
         kicker={t('reading.kicker', { defaultValue: 'Reading Log' })}
         title={t('reading.title', { defaultValue: '閱讀清單' })}

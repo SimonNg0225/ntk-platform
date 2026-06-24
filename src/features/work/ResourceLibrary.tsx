@@ -472,6 +472,7 @@ export default function ResourceLibrary() {
     <div className="space-y-5">
       {/* ───────── 共用 PageHero：accent 大色塊 + icon chip + 動態語 + 主動作 ───────── */}
       <PageHero
+        guideKey="resourceLibrary"
         icon={Library}
         kicker="Resource Library"
         title="教學資源庫"

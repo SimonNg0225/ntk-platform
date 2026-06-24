@@ -336,6 +336,7 @@ export default function Timetable() {
     <div className="space-y-5 print:space-y-0">
       {/* ───────── page hero：統一 accent 大色塊 ───────── */}
       <PageHero
+        guideKey="timetable"
         className="print:hidden"
         icon={CalendarDays}
         kicker={t('timetable.kicker', {

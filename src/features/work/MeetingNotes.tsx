@@ -546,6 +546,7 @@ export default function MeetingNotes() {
     <div className="w-full space-y-5 p-4 sm:p-6">
       {/* ───────── 共用 PageHero（accent hero）+ hero 內視圖切換 ───────── */}
       <PageHero
+        guideKey="meetingNotes"
         icon={NotebookPen}
         kicker={t('meetingNotes.kicker', { defaultValue: '會議筆記' })}
         title={t('meetingNotes.title', { defaultValue: '記低每場會議，跟進唔甩' })}

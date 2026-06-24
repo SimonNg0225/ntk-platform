@@ -296,6 +296,7 @@ export default function HabitTracker() {
     <div className="w-full space-y-5 p-4">
       {/* ───────── PageHero：統一 accent hero（icon chip + 標題 + 今日狀態副題） ───────── */}
       <PageHero
+        guideKey="habits"
         icon={CalendarCheck}
         kicker={t('habits.kicker', { defaultValue: '學習成長 · 每日養成' })}
         title={t('habits.title', { defaultValue: '習慣追蹤' })}

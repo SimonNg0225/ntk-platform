@@ -514,6 +514,7 @@ export default function SlideGen() {
     <div className="space-y-5">
       {/* ───────── 頂部 PageHero（共用 accent hero） ───────── */}
       <PageHero
+        guideKey="slide-gen"
         icon={Presentation}
         kicker={t('slideGen.kicker', { defaultValue: 'Slide Studio' })}
         title={t('slideGen.title', { defaultValue: '簡報工作室' })}

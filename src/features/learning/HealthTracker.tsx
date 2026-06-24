@@ -321,6 +321,7 @@ export default function HealthTracker() {
     <div className="space-y-6">
       {/* ───────── 標題：統一 PageHero（accent hero：icon + 標題 + 長日期／連續說明 + 今日狀態 chip／目標掣） ───────── */}
       <PageHero
+        guideKey="health"
         icon={HeartPulse}
         kicker="Health Tracker"
         title="健康追蹤"

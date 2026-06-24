@@ -377,6 +377,7 @@ function Masthead({ subtitle }: { subtitle?: string }) {
   })
   return (
     <PageHero
+      guideKey="attendance"
       icon={Stamp}
       kicker={t('attend.kicker', { defaultValue: 'Attendance' })}
       title={t('attend.title', { defaultValue: '點名 / 出席' })}

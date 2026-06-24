@@ -162,6 +162,7 @@ export default function TeachGuide() {
     return (
       <div className="space-y-5">
         <PageHero
+          guideKey="teachGuide"
           icon={Compass}
           kicker={t('teachGuide.kicker', { defaultValue: 'Teaching Guide' })}
           title={t('teachGuide.title', { defaultValue: '教學指引' })}

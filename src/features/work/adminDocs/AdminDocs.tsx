@@ -111,6 +111,7 @@ export default function AdminDocs() {
     <div className="w-full space-y-5 p-4 sm:p-6">
       {/* ───────── 頁面身份 hero（共用 PageHero accent 色塊）───────── */}
       <PageHero
+        guideKey="work-admin-docs"
         icon={FileStack}
         kicker={t('adminDocs.kicker', { defaultValue: 'Admin Docs' })}
         title={t('adminDocs.pageTitle', { defaultValue: '行政文件' })}

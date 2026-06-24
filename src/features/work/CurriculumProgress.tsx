@@ -175,6 +175,7 @@ export default function CurriculumProgress() {
     return (
       <div className="space-y-5">
         <PageHero
+          guideKey="curriculumProgress"
           icon={Route}
           kicker="Curriculum Progress"
           title="課程進度"

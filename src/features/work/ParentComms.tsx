@@ -611,6 +611,7 @@ export default function ParentComms() {
     <div className="space-y-5 p-4 sm:p-6">
       {/* ───────── 頁首：共用 PageHero（accent 大色塊）───────── */}
       <PageHero
+        guideKey="parent-comms"
         icon={Mail}
         kicker="Parent Comms"
         title="家長溝通"

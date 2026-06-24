@@ -676,6 +676,7 @@ export default function GlobalSearch() {
     <div className="space-y-4">
       {/* ───────── 統一 PageHero（accent hero）：功能名「全域搜尋」做身份 ───────── */}
       <PageHero
+        guideKey="global-search"
         icon={Radar}
         kicker={t('globalSearch.kicker', { defaultValue: 'Global Search' })}
         title={t('globalSearch.title', { defaultValue: '全域搜尋' })}

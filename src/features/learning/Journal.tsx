@@ -374,6 +374,7 @@ export default function Journal() {
       {/* ───────── 頁面頂部：共用 PageHero（accent hero）─────────
            host 已收起標題（selfManagedHeader），呢個係呢頁唯一頂部標題。 */}
       <PageHero
+        guideKey="journal"
         icon={BookText}
         kicker={t('journal.kicker', { defaultValue: '學習成長 · 每日反思' })}
         title={t('journal.title', { defaultValue: '個人日誌' })}

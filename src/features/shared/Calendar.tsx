@@ -4,7 +4,7 @@ import { CalendarArrowDown, CalendarDays, CalendarPlus, ChevronLeft, ChevronRigh
 import { useCollection } from '../../lib/store'
 import { eventsCol, calendarsCol, countdownsCol } from '../../data/collections'
 import type { CalendarEvent } from '../../data/types'
-import { Button, FeatureGuide, GuideHelpButton, IconButton, PageHero, SegmentedControl, cx } from '../../ui'
+import { Button, FeatureGuide, IconButton, PageHero, SegmentedControl, cx } from '../../ui'
 import { useToast } from '../../context/ToastContext'
 import EventEditor from './calendar/EventEditor'
 import MonthView from './calendar/MonthView'
@@ -175,7 +175,7 @@ export default function Calendar() {
           n: visibleEventCount,
           defaultValue: `共 ${visibleEventCount} 項活動 · 日 / 週 / 月 / 年 · 重複事件 · 匯出訂閱`,
         })}
-        actions={<GuideHelpButton storageKey="calendar" />}
+        guideKey="calendar"
       />
 
       {/* ───────── 教學引導：教用家點用行事曆（可摺疊 + 可永久收起）───────── */}

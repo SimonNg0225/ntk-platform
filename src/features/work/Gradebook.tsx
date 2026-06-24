@@ -112,6 +112,7 @@ function GradebookHeader({ description }: { description?: string }) {
   const { t } = useTranslation()
   return (
     <PageHero
+      guideKey="gradebook"
       icon={GraduationCap}
       kicker={t('gradebook.kicker', { defaultValue: 'Gradebook' })}
       title={t('gradebook.title', { defaultValue: '成績管理' })}
