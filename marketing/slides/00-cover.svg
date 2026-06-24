@@ -1,0 +1,16 @@
+<svg width="1080" height="1350" viewBox="0 0 680 850" role="img" xmlns="http://www.w3.org/2000/svg">
+<title>輪播封面 — 教學易</title>
+<desc>品牌靛藍封面:香港老師一站式工作台,8 個重點功能逐頁睇,免費開始 eziteach.hk。</desc>
+<style>text{font-family:'PingFang HK','Noto Sans HK','Microsoft JhengHei','Hiragino Sans GB',sans-serif}</style>
+<rect x="0" y="0" width="680" height="850" fill="#4f46e5"/>
+<circle cx="620" cy="80" r="200" fill="#4338ca" opacity="0.5"/>
+<circle cx="60" cy="800" r="180" fill="#818cf8" opacity="0.28"/>
+<text x="56" y="84" font-size="28" font-weight="700" fill="#ffffff">EziTeach 教學易</text>
+<text x="56" y="114" font-size="16" font-weight="400" fill="#c7d2fe">香港教師工作台</text>
+<text x="56" y="376" font-size="64" font-weight="700" fill="#ffffff">香港老師</text>
+<text x="56" y="452" font-size="64" font-weight="700" fill="#ffffff">一站式工作台</text>
+<text x="56" y="514" font-size="23" font-weight="400" fill="#e0e7ff">備課、改卷、行政,一個地方搞掂。</text>
+<text x="56" y="556" font-size="21" font-weight="500" fill="#c7d2fe">8 個重點功能逐頁睇 →</text>
+<rect x="56" y="744" width="410" height="64" rx="16" fill="#ffffff"/>
+<text x="84" y="784" font-size="24" font-weight="700" fill="#4f46e5">免費開始 → eziteach.hk</text>
+</svg>

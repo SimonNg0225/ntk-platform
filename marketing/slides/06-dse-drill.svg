@@ -1,0 +1,17 @@
+<svg width="1080" height="1350" viewBox="0 0 680 850" role="img" xmlns="http://www.w3.org/2000/svg">
+<title>第 6 頁 — DSE 操練</title>
+<desc>練返公開試手感:按課題出 DSE 風格題、連評分要點同提示、仲有 DSE 倒數。</desc>
+<style>text{font-family:'PingFang HK','Noto Sans HK','Microsoft JhengHei','Hiragino Sans GB',sans-serif}</style>
+<rect x="0" y="0" width="680" height="850" fill="#4f46e5"/>
+<circle cx="632" cy="86" r="150" fill="#4338ca" opacity="0.45"/>
+<circle cx="48" cy="812" r="150" fill="#818cf8" opacity="0.25"/>
+<text x="56" y="80" font-size="20" font-weight="700" fill="#c7d2fe">教學易</text>
+<text x="624" y="124" font-size="72" font-weight="700" fill="#a5b4fc" text-anchor="end">06</text>
+<text x="56" y="252" font-size="42" font-weight="700" fill="#ffffff">DSE 操練</text>
+<text x="56" y="302" font-size="28" font-weight="500" fill="#e0e7ff">練返公開試手感</text>
+<circle cx="64" cy="392" r="5" fill="#a5b4fc"/><text x="86" y="398" font-size="21" font-weight="400" fill="#e0e7ff">按課題出 DSE 風格題</text>
+<circle cx="64" cy="450" r="5" fill="#a5b4fc"/><text x="86" y="456" font-size="21" font-weight="400" fill="#e0e7ff">連評分要點同達標提示</text>
+<circle cx="64" cy="508" r="5" fill="#a5b4fc"/><text x="86" y="514" font-size="21" font-weight="400" fill="#e0e7ff">仲有 DSE 倒數</text>
+<rect x="56" y="726" width="568" height="64" rx="16" fill="#ffffff"/>
+<text x="340" y="766" font-size="21" font-weight="700" fill="#4f46e5" text-anchor="middle">DSE 風格題 · 評分要點 · 倒數</text>
+</svg>

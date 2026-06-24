@@ -1,0 +1,17 @@
+<svg width="1080" height="1350" viewBox="0 0 680 850" role="img" xmlns="http://www.w3.org/2000/svg">
+<title>第 5 頁 — 教材生成</title>
+<desc>出題出卷一個工作枱:MC短答個案長題、練習試卷一鍵生成、直接入題庫可重用。</desc>
+<style>text{font-family:'PingFang HK','Noto Sans HK','Microsoft JhengHei','Hiragino Sans GB',sans-serif}</style>
+<rect x="0" y="0" width="680" height="850" fill="#4f46e5"/>
+<circle cx="632" cy="86" r="150" fill="#4338ca" opacity="0.45"/>
+<circle cx="48" cy="812" r="150" fill="#818cf8" opacity="0.25"/>
+<text x="56" y="80" font-size="20" font-weight="700" fill="#c7d2fe">教學易</text>
+<text x="624" y="124" font-size="72" font-weight="700" fill="#a5b4fc" text-anchor="end">05</text>
+<text x="56" y="252" font-size="42" font-weight="700" fill="#ffffff">教材生成</text>
+<text x="56" y="302" font-size="28" font-weight="500" fill="#e0e7ff">出題、出卷,一個工作枱</text>
+<circle cx="64" cy="392" r="5" fill="#a5b4fc"/><text x="86" y="398" font-size="21" font-weight="400" fill="#e0e7ff">MC／短答／個案／長題</text>
+<circle cx="64" cy="450" r="5" fill="#a5b4fc"/><text x="86" y="456" font-size="21" font-weight="400" fill="#e0e7ff">練習、試卷一鍵生成</text>
+<circle cx="64" cy="508" r="5" fill="#a5b4fc"/><text x="86" y="514" font-size="21" font-weight="400" fill="#e0e7ff">直接入題庫,可組卷重用</text>
+<rect x="56" y="726" width="568" height="64" rx="16" fill="#ffffff"/>
+<text x="340" y="766" font-size="21" font-weight="700" fill="#4f46e5" text-anchor="middle">6 種題型 → 入題庫</text>
+</svg>
