@@ -52,7 +52,7 @@ async function callAdmin<T>(action: string, body: Record<string, unknown> = {}):
 // ── 型別 ──────────────────────────────────────────────────
 export interface AdminOverview {
   users: { total: number }
-  subs: { pro: number; activePro: number; free: number; mrrHkd: number }
+  subs: { pro: number; activePro: number; plus: number; activePlus: number; free: number; mrrHkd: number }
   ai: { genToday: number; callsMonth: number; transMonth: number; costUsd: number }
   orgs: { count: number; seats: number; members: number }
   tickets: { open: number; total: number }
@@ -141,7 +141,7 @@ export const adminOverview = () => callAdmin<AdminOverview>('overview')
 export const adminListUsers = (q = '', page = 1) =>
   callAdmin<{ users: AdminUser[]; page: number; hasMore: boolean }>('users', { q, page })
 
-export const adminSetPlan = (userId: string, plan: 'free' | 'pro', status = '') =>
+export const adminSetPlan = (userId: string, plan: 'free' | 'plus' | 'pro', status = '') =>
   callAdmin<{ ok: true }>('set-plan', { userId, plan, status })
 
 export const adminUsage = (month?: string) =>

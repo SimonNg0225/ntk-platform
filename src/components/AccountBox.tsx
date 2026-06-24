@@ -93,7 +93,7 @@ export default function AccountBox() {
 
 function PlanRow() {
   const { t, i18n } = useTranslation()
-  const { isPro, currentPeriodEnd } = useSubscription()
+  const { isPaid, currentPeriodEnd } = useSubscription()
 
   const dateStr = currentPeriodEnd ? fmtDate(currentPeriodEnd, i18n.language) : ''
 
@@ -101,7 +101,7 @@ function PlanRow() {
     <div className="rounded-xl bg-black/[0.03] px-2.5 py-2 dark:bg-white/[0.04]">
       <div className="flex items-center justify-between gap-2">
         <PlanBadge />
-        {isPro ? (
+        {isPaid ? (
           <Link
             to="/pricing"
             className="text-[11px] font-medium text-slate-400 transition hover:text-accent"
@@ -118,7 +118,7 @@ function PlanRow() {
           </Link>
         )}
       </div>
-      {isPro && dateStr && (
+      {isPaid && dateStr && (
         <p className="mt-1 text-[10px] text-slate-400 dark:text-slate-500">
           {t('shell.renews', { date: dateStr, defaultValue: `續訂 ${dateStr}` })}
         </p>

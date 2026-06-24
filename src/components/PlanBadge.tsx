@@ -13,7 +13,7 @@ import { useSubscription } from '../hooks/useSubscription'
 
 export default function PlanBadge({ className = '' }: { className?: string }) {
   const { t } = useTranslation()
-  const { isPro, status, loading, isTest } = useSubscription()
+  const { isPro, plan, status, loading, isTest } = useSubscription()
 
   if (loading) {
     return (
@@ -36,6 +36,16 @@ export default function PlanBadge({ className = '' }: { className?: string }) {
           : trial
             ? t('shell.planProTrial', { defaultValue: 'Pro · 試用' })
             : t('shell.planPro', { defaultValue: 'Pro' })}
+      </span>
+    )
+  }
+
+  if (plan === 'plus') {
+    return (
+      <span
+        className={`inline-flex items-center rounded-md bg-accent-soft px-2 py-0.5 text-[11px] font-bold text-accent-strong dark:bg-accent/15 dark:text-accent ${className}`}
+      >
+        {t('shell.planPlus', { defaultValue: 'Plus' })}
       </span>
     )
   }

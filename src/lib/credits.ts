@@ -62,7 +62,7 @@ interface Ledger {
 
 function thisMonth(): string {
   const d = new Date()
-  return `${d.getFullYear()}-${d.getMonth() + 1}`
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
 }
 
 // 記憶體鏡：localStorage 喺測試 / 私隱模式可能唔可靠，記憶體保證同程序內一致。

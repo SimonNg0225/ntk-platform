@@ -185,7 +185,8 @@ function OverviewTab({ onJump }: { onJump: (t: TabId) => void }) {
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
             <StatCard label="總用戶" value={data.users.total} unit="人" icon={Users} onClick={() => onJump('users')} />
             <StatCard label="付費 Pro（生效）" value={data.subs.activePro} unit="人" highlight onClick={() => onJump('users')} />
-            <StatCard label="估算 MRR" value={`HK$${data.subs.mrrHkd.toLocaleString()}`} hint="生效 Pro × 月費（估算）" />
+            <StatCard label="付費 Plus（生效）" value={data.subs.activePlus} unit="人" onClick={() => onJump('users')} />
+            <StatCard label="估算 MRR" value={`HK$${data.subs.mrrHkd.toLocaleString()}`} hint="Plus + Pro × 月費（估算）" />
             <StatCard label="本月 AI 成本（實算）" value={usd(data.ai.costUsd)} highlight hint="按真實 token 計" onClick={() => onJump('usage')} />
             <StatCard label="本月 AI 呼叫" value={data.ai.callsMonth} unit="次" onClick={() => onJump('usage')} />
             <StatCard label="今日免費一般 AI" value={data.ai.genToday} unit="次" />
@@ -224,7 +225,7 @@ function UsersTab() {
     if (data?.users) setRows(data.users)
   }, [data])
 
-  const setPlan = async (u: AdminUser, plan: 'free' | 'pro') => {
+  const setPlan = async (u: AdminUser, plan: 'free' | 'plus' | 'pro') => {
     try {
       setBusy(u.id)
       await adminSetPlan(u.id, plan)
@@ -233,7 +234,7 @@ function UsersTab() {
           x.id === u.id ? { ...x, plan, status: plan === 'pro' ? 'active' : 'inactive' } : x,
         ),
       )
-      toast.success(`已將 ${u.email ?? u.id} 設為 ${plan === 'pro' ? 'Pro' : 'Free'}`)
+      toast.success(`已將 ${u.email ?? u.id} 設為 ${plan === 'pro' ? 'Pro' : plan === 'plus' ? 'Plus' : 'Free'}`)
     } catch (e) {
       toast.error(e instanceof Error ? e.message : '更新失敗')
     } finally {
@@ -278,7 +279,7 @@ function UsersTab() {
                     <div className="text-[10px] text-slate-400">最後登入 {fmtDate(u.last_sign_in_at)}</div>
                   </Td>
                   <Td>
-                    <Badge tone={u.plan === 'pro' ? 'green' : 'slate'}>{u.plan === 'pro' ? 'Pro' : 'Free'}</Badge>
+                    <Badge tone={u.plan === 'pro' ? 'green' : u.plan === 'plus' ? 'blue' : 'slate'}>{u.plan === 'pro' ? 'Pro' : u.plan === 'plus' ? 'Plus' : 'Free'}</Badge>
                   </Td>
                   <Td>
                     <span className="text-xs text-slate-500">{u.status}</span>
@@ -286,15 +287,21 @@ function UsersTab() {
                   <Td>{fmtDate(u.current_period_end)}</Td>
                   <Td>{fmtDate(u.created_at)}</Td>
                   <Td align="right">
-                    {u.plan === 'pro' ? (
-                      <Button size="sm" variant="ghost" disabled={busy === u.id} onClick={() => setPlan(u, 'free')}>
-                        降為 Free
-                      </Button>
-                    ) : (
-                      <Button size="sm" variant="secondary" disabled={busy === u.id} onClick={() => setPlan(u, 'pro')}>
-                        設為 Pro
-                      </Button>
-                    )}
+                    <div className="flex justify-end gap-1">
+                      {(['free', 'plus', 'pro'] as const)
+                        .filter((p) => p !== u.plan)
+                        .map((p) => (
+                          <Button
+                            key={p}
+                            size="sm"
+                            variant="ghost"
+                            disabled={busy === u.id}
+                            onClick={() => setPlan(u, p)}
+                          >
+                            {p === 'free' ? '設 Free' : p === 'plus' ? '設 Plus' : '設 Pro'}
+                          </Button>
+                        ))}
+                    </div>
                   </Td>
                 </Tr>
               ))}
