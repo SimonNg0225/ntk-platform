@@ -75,11 +75,13 @@ export interface UsageFeature {
   inTok: number
   outTok: number
   cost: number
+  /** AI 點數消耗（對齊 credits.ts 權重）。 */
+  pts: number
 }
 
 export interface AdminUsage {
   month: string
-  totals: { calls: number; inTok: number; outTok: number; cost: number }
+  totals: { calls: number; inTok: number; outTok: number; cost: number; pts: number }
   pricing: { flashIn: number; flashOut: number; proIn: number; proOut: number }
   features: UsageFeature[]
   top: {
@@ -89,6 +91,7 @@ export interface AdminUsage {
     inTok: number
     outTok: number
     cost: number
+    pts: number
     features: { feature: string; cost: number }[]
   }[]
 }

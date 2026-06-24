@@ -39,6 +39,13 @@ function costUsd(model: string, inTok: number, outTok: number): number {
   const pro = (model ?? '').includes('pro')
   return (inTok / 1e6) * (pro ? PRO_IN : FLASH_IN) + (outTok / 1e6) * (pro ? PRO_OUT : FLASH_OUT)
 }
+// AI 點數成本（對齊前端 src/lib/credits.ts 權重）：標準 1 / 簡報 3 / 錄音 16；Pro ×4。
+const PTS_BY_FEATURE: Record<string, number> = { slides: 3, transcribe: 16 }
+function costPts(feature: string, model: string, calls: number): number {
+  const base = PTS_BY_FEATURE[feature] ?? 1
+  const mult = (model ?? '').includes('pro') ? 4 : 1
+  return base * mult * (calls ?? 0)
+}
 // Pro 月費（HKD）—— 估 MRR 用。
 const PRO_PRICE_HKD = Number(Deno.env.get('PRO_PRICE_HKD') ?? '48')
 
@@ -257,24 +264,28 @@ Deno.serve(async (req: Request) => {
         let inTok = 0
         let outTok = 0
         let cost = 0
-        const byFeature = new Map<string, { calls: number; inTok: number; outTok: number; cost: number }>()
+        let pts = 0
+        const byFeature = new Map<string, { calls: number; inTok: number; outTok: number; cost: number; pts: number }>()
         const byUser = new Map<
           string,
-          { calls: number; inTok: number; outTok: number; cost: number; features: Map<string, number> }
+          { calls: number; inTok: number; outTok: number; cost: number; pts: number; features: Map<string, number> }
         >()
 
         for (const r of rows ?? []) {
           const c = costUsd(r.model, r.in_tokens ?? 0, r.out_tokens ?? 0)
+          const p = costPts(r.feature, r.model, r.calls ?? 0)
           calls += r.calls ?? 0
           inTok += r.in_tokens ?? 0
           outTok += r.out_tokens ?? 0
           cost += c
+          pts += p
 
-          const f = byFeature.get(r.feature) ?? { calls: 0, inTok: 0, outTok: 0, cost: 0 }
+          const f = byFeature.get(r.feature) ?? { calls: 0, inTok: 0, outTok: 0, cost: 0, pts: 0 }
           f.calls += r.calls ?? 0
           f.inTok += r.in_tokens ?? 0
           f.outTok += r.out_tokens ?? 0
           f.cost += c
+          f.pts += p
           byFeature.set(r.feature, f)
 
           const u = byUser.get(r.user_id) ?? {
@@ -282,12 +293,14 @@ Deno.serve(async (req: Request) => {
             inTok: 0,
             outTok: 0,
             cost: 0,
+            pts: 0,
             features: new Map<string, number>(),
           }
           u.calls += r.calls ?? 0
           u.inTok += r.in_tokens ?? 0
           u.outTok += r.out_tokens ?? 0
           u.cost += c
+          u.pts += p
           u.features.set(r.feature, (u.features.get(r.feature) ?? 0) + c)
           byUser.set(r.user_id, u)
         }
@@ -311,7 +324,7 @@ Deno.serve(async (req: Request) => {
         return json({
           data: {
             month,
-            totals: { calls, inTok, outTok, cost },
+            totals: { calls, inTok, outTok, cost, pts },
             pricing: { flashIn: FLASH_IN, flashOut: FLASH_OUT, proIn: PRO_IN, proOut: PRO_OUT },
             features,
             top: top.map((t) => ({
@@ -321,6 +334,7 @@ Deno.serve(async (req: Request) => {
               inTok: t.inTok,
               outTok: t.outTok,
               cost: t.cost,
+              pts: t.pts,
               features: [...t.features.entries()]
                 .map(([feature, c]) => ({ feature, cost: c }))
                 .sort((a, b) => b.cost - a.cost),

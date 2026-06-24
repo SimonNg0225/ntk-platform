@@ -359,17 +359,18 @@ function UsageTab() {
   return (
     <Card className="p-5">
       <SectionTitle right={<RefreshBtn loading={loading} onClick={reload} />}>
-        AI 用量 + 成本（{data?.month ?? '本月'}）
+        AI 用量 · 點數 · 成本（{data?.month ?? '本月'}）
       </SectionTitle>
       {!data ? (
         <LoadErr loading={loading} err={err} />
       ) : (
         <>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
             <StatCard label="總呼叫" value={data.totals.calls} unit="次" />
+            <StatCard label="AI 點數" value={data.totals.pts} unit="點" highlight hint="對齊用戶方案額度" />
             <StatCard label="Input tokens" value={fmtTok(data.totals.inTok)} />
             <StatCard label="Output tokens" value={fmtTok(data.totals.outTok)} />
-            <StatCard label="真實總成本" value={usd(data.totals.cost)} highlight hint="按 token × 單價" />
+            <StatCard label="真實成本" value={usd(data.totals.cost)} hint="token × 單價" />
           </div>
 
           {/* 按功能 */}
@@ -382,6 +383,7 @@ function UsageTab() {
                 <Tr>
                   <Th>功能</Th>
                   <Th align="right">呼叫</Th>
+                  <Th align="right">點數</Th>
                   <Th align="right">In</Th>
                   <Th align="right">Out</Th>
                   <Th align="right">成本</Th>
@@ -392,6 +394,7 @@ function UsageTab() {
                   <Tr key={f.feature}>
                     <Td>{flabel(f.feature)}</Td>
                     <Td numeric>{f.calls}</Td>
+                    <Td numeric>{f.pts}</Td>
                     <Td numeric>{fmtTok(f.inTok)}</Td>
                     <Td numeric>{fmtTok(f.outTok)}</Td>
                     <Td numeric>{usd(f.cost)}</Td>
@@ -412,6 +415,7 @@ function UsageTab() {
                   <Tr>
                     <Th>用戶</Th>
                     <Th align="right">呼叫</Th>
+                    <Th align="right">點數</Th>
                     <Th align="right">In</Th>
                     <Th align="right">Out</Th>
                     <Th align="right">成本</Th>
@@ -428,6 +432,7 @@ function UsageTab() {
                           </span>
                         </Td>
                         <Td numeric>{t.calls}</Td>
+                        <Td numeric>{t.pts}</Td>
                         <Td numeric>{fmtTok(t.inTok)}</Td>
                         <Td numeric>{fmtTok(t.outTok)}</Td>
                         <Td numeric>{usd(t.cost)}</Td>
@@ -447,6 +452,7 @@ function UsageTab() {
                           <Td className="bg-slate-50/60 dark:bg-slate-800/40" />
                           <Td className="bg-slate-50/60 dark:bg-slate-800/40" />
                           <Td className="bg-slate-50/60 dark:bg-slate-800/40" />
+                          <Td className="bg-slate-50/60 dark:bg-slate-800/40" />
                         </Tr>
                       )}
                     </Fragment>
@@ -457,7 +463,7 @@ function UsageTab() {
           )}
 
           <p className="mt-3 text-xs text-slate-400">
-            ⓘ 真實成本 = token × 單價（Flash US${data.pricing.flashIn}/{data.pricing.flashOut}、Pro US${data.pricing.proIn}/{data.pricing.proOut} 每 1M in/out，可由 Edge Function 環境變數調整）。
+            ⓘ 點數 = 用戶方案額度權重（標準 1 / 簡報 3 / 錄音 16；Pro 模型 ×4），同用戶端見到嘅一致。真實成本 = token × 單價（Flash US${data.pricing.flashIn}/{data.pricing.flashOut}、Pro US${data.pricing.proIn}/{data.pricing.proOut} 每 1M in/out，可由 Edge Function 環境變數調整）。
             記錄由本功能上線後開始累積；舊有呼叫無 token 資料。實數以 Google Cloud 帳單為準。
           </p>
         </>
