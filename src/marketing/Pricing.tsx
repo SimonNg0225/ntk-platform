@@ -20,6 +20,8 @@ import {
 import { track } from '../lib/observability'
 
 const HAS_ANNUAL = PLANS.some((p) => p.annualPriceId)
+// 方案層級（升 / 降級判斷）
+const RANK: Record<string, number> = { free: 0, plus: 1, pro: 2 }
 
 // ============================================================
 //  商業化 · 定價頁（/pricing）
@@ -140,6 +142,7 @@ export default function Pricing() {
         <div className="mt-10 grid gap-6 sm:grid-cols-3">
           {PLANS.map((plan) => {
             const isCurrent = plan.id === sub.plan
+            const isUpgrade = (RANK[plan.id] ?? 0) > (RANK[sub.plan] ?? 0)
             return (
               <div
                 key={plan.id}
@@ -197,6 +200,17 @@ export default function Pricing() {
                         {t('pricing.current')}
                       </div>
                     )
+                  ) : sub.isPaid ? (
+                    // 已付費用戶轉方案（升 / 降）→ 走 Stripe Portal，Stripe 自動按比例計費
+                    <button
+                      onClick={onManage}
+                      disabled={busy === 'portal'}
+                      className="w-full rounded-xl border border-slate-300 py-3 font-semibold text-slate-700 transition hover:border-accent hover:text-accent disabled:opacity-50 dark:border-slate-700 dark:text-slate-200"
+                    >
+                      {busy === 'portal'
+                        ? t('pricing.opening')
+                        : `${isUpgrade ? t('pricing.upgrade', { defaultValue: '升級' }) : t('pricing.downgrade', { defaultValue: '降級' })} ${plan.name}`}
+                    </button>
                   ) : (
                     <button
                       onClick={() => onPick(plan)}
