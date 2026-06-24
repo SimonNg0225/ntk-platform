@@ -1,0 +1,38 @@
+<svg width="1080" height="1509" viewBox="0 0 680 950" role="img" xmlns="http://www.w3.org/2000/svg">
+<title>EziTeach 教學易宣傳海報(品牌 indigo)</title>
+<desc>直度海報:標題「備課、改卷、行政,一個工作台搞掂」,四個功能賣點,免費開始 CTA 同網址 eziteach.hk,用品牌靛藍色。</desc>
+<style>text{font-family:'PingFang HK','Noto Sans HK','Microsoft JhengHei','Hiragino Sans GB',sans-serif}</style>
+<rect x="0" y="0" width="680" height="950" fill="#4f46e5"/>
+<circle cx="630" cy="70" r="190" fill="#4338ca" opacity="0.5"/>
+<circle cx="60" cy="900" r="170" fill="#818cf8" opacity="0.3"/>
+<circle cx="600" cy="470" r="90" fill="#a5b4fc" opacity="0.14"/>
+<text x="56" y="88" font-size="30" font-weight="700" fill="#ffffff">EziTeach 教學易</text>
+<text x="56" y="118" font-size="16" font-weight="400" fill="#c7d2fe">香港教師一站式工作台</text>
+<text x="56" y="252" font-size="58" font-weight="700" fill="#ffffff">備課・改卷・行政</text>
+<text x="56" y="324" font-size="58" font-weight="700" fill="#ffffff">一個工作台搞掂</text>
+<text x="56" y="386" font-size="23" font-weight="400" fill="#e0e7ff">慳返嘅時間,留畀真正嘅教學。</text>
+<circle cx="72" cy="472" r="15" fill="#a5b4fc"/>
+<path d="M64 472 L70 478 L81 465" stroke="#3730a3" stroke-width="3.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="102" y="479" font-size="22" font-weight="400" fill="#ffffff">一鍵出堂課簡報・34 套版式</text>
+<circle cx="72" cy="537" r="15" fill="#a5b4fc"/>
+<path d="M64 537 L70 543 L81 530" stroke="#3730a3" stroke-width="3.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="102" y="544" font-size="22" font-weight="400" fill="#ffffff">AI 輔助批改・多科覆蓋</text>
+<circle cx="72" cy="602" r="15" fill="#a5b4fc"/>
+<path d="M64 602 L70 608 L81 595" stroke="#3730a3" stroke-width="3.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="102" y="609" font-size="22" font-weight="400" fill="#ffffff">教學資源一區共享</text>
+<circle cx="72" cy="667" r="15" fill="#a5b4fc"/>
+<path d="M64 667 L70 673 L81 660" stroke="#3730a3" stroke-width="3.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="102" y="674" font-size="22" font-weight="400" fill="#ffffff">識循環日・廣東話介面</text>
+<rect x="56" y="742" width="568" height="112" rx="20" fill="#ffffff"/>
+<text x="92" y="800" font-size="36" font-weight="700" fill="#4f46e5">免費開始</text>
+<text x="92" y="832" font-size="18" font-weight="400" fill="#4338ca">開瀏覽器即用 · eziteach.hk</text>
+<rect x="520" y="766" width="72" height="72" rx="8" fill="#ffffff" stroke="#4f46e5" stroke-width="2"/>
+<rect x="528" y="774" width="16" height="16" rx="2" fill="none" stroke="#4f46e5" stroke-width="2.5"/>
+<rect x="568" y="774" width="16" height="16" rx="2" fill="none" stroke="#4f46e5" stroke-width="2.5"/>
+<rect x="528" y="814" width="16" height="16" rx="2" fill="none" stroke="#4f46e5" stroke-width="2.5"/>
+<rect x="556" y="800" width="5" height="5" fill="#4f46e5"/>
+<rect x="566" y="808" width="5" height="5" fill="#4f46e5"/>
+<rect x="574" y="818" width="5" height="5" fill="#4f46e5"/>
+<rect x="566" y="826" width="5" height="5" fill="#4f46e5"/>
+<text x="56" y="906" font-size="16" font-weight="400" fill="#c7d2fe">為香港教育工作者而設 · 廣東話介面</text>
+</svg>

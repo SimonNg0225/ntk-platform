@@ -1,0 +1,25 @@
+# Marketing 素材
+
+EziTeach 教學易宣傳圖素材(向量 SVG,品牌色 indigo `#4f46e5`)。
+
+| 檔案 | 用途 | 尺寸 |
+|---|---|---|
+| `eziteach-poster-portrait.svg` | 宣傳海報(直度,A 系列比例) | 1080 × 1509 |
+| `eziteach-ig-threads-square.svg` | IG / Threads 方圖 | 1080 × 1080(1:1) |
+
+## 轉 PNG / JPG
+
+SVG 係向量,任何尺寸都清。匯出方法:
+
+- **最簡單**:用瀏覽器開個 `.svg`,screenshot 或印成 PDF。
+- **CLI**(要裝):
+  - `rsvg-convert -w 1080 eziteach-ig-threads-square.svg -o ig.png`
+  - 或 `npx svgexport eziteach-poster-portrait.svg poster.png 1080:`
+- **設計工具**:Figma / Inkscape / Canva 直接 import SVG。
+
+## 注意
+
+- 字體用系統 CJK(PingFang HK / Noto Sans HK / 微軟正黑)。喺冇呢啲字體嘅機(例如 Linux CI)轉 PNG,中文可能 fallback 走樣 —— 匯出前裝返 Noto Sans HK。
+- 文案只講教師生產力功能(避開未上線嘅學生資料功能)。
+- 網址 `eziteach.hk`、客服 `support@eziteach.hk`。
+- 海報個 QR 係佔位圖,上線前換真 QR(指向 eziteach.hk)。
