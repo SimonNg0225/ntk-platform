@@ -14,6 +14,21 @@ function cx(...parts: (string | false | null | undefined)[]) {
 }
 
 const DISMISS_PREFIX = 'featureGuide.dismissed.'
+const REOPEN_EVENT = 'featureGuide:reopen'
+
+/** 清返某功能嘅 dismissed flag + 即時喺畫面重新展開該教學引導（畀 hero「點用？」掣用）。 */
+export function reopenFeatureGuide(storageKey: string) {
+  try {
+    localStorage.removeItem(DISMISS_PREFIX + storageKey)
+  } catch {
+    /* localStorage 不可用就算 */
+  }
+  try {
+    window.dispatchEvent(new CustomEvent(REOPEN_EVENT, { detail: storageKey }))
+  } catch {
+    /* 環境冇 window 就算 */
+  }
+}
 
 export type FeatureGuideStep = {
   /** 步驟標題（一句短語） */
@@ -49,6 +64,19 @@ export function FeatureGuide({
       /* localStorage 不可用就照顯示 */
     }
   }, [lsKey])
+
+  // 畀外部（如 hero 嘅「點用？」掣）叫返出嚟：清 dismissed + 展開。
+  // 放喺 early-return 之前，dismissed 時組件雖然 render null，但呢個 listener 照樣生效。
+  useEffect(() => {
+    const onReopen = (e: Event) => {
+      if ((e as CustomEvent).detail === storageKey) {
+        setDismissed(false)
+        setCollapsed(false)
+      }
+    }
+    window.addEventListener(REOPEN_EVENT, onReopen)
+    return () => window.removeEventListener(REOPEN_EVENT, onReopen)
+  }, [storageKey])
 
   if (dismissed || steps.length === 0) return null
 
@@ -115,5 +143,27 @@ export function FeatureGuide({
         </ol>
       )}
     </section>
+  )
+}
+
+/** Hero「點用？」掣：擺落 PageHero 嘅 actions，畀用戶隨時重新展開該功能嘅教學引導。 */
+export function GuideHelpButton({
+  storageKey,
+  label,
+}: {
+  storageKey: string
+  label?: string
+}) {
+  const { t } = useTranslation()
+  return (
+    <button
+      type="button"
+      onClick={() => reopenFeatureGuide(storageKey)}
+      title={t('featureGuide.reopenHint', { defaultValue: '重新顯示功能教學' })}
+      className="inline-flex items-center gap-1.5 rounded-xl bg-white/15 px-3 py-1.5 text-sm font-medium backdrop-blur-sm transition hover:bg-white/25 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
+    >
+      <Lightbulb size={15} />
+      {label ?? t('featureGuide.reopen', { defaultValue: '點用？' })}
+    </button>
   )
 }

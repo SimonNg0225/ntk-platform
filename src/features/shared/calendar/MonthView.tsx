@@ -35,7 +35,7 @@ export default function MonthView({
   const dragRef = useRef<{ ev: CalendarEvent; from: string } | null>(null)
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-xs dark:border-slate-700/60 dark:bg-slate-800 dark:shadow-none">
+    <div className="flex min-h-[28rem] flex-1 flex-col overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-xs dark:border-slate-700/60 dark:bg-slate-800 dark:shadow-none">
       {/* 星期標頭 —— 週末用淡色，去掉硬底線改幼分隔 */}
       <div className="grid grid-cols-7 px-1 pb-1 pt-2.5 text-center">
         {WEEKDAYS.map((w, i) => (
