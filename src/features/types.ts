@@ -31,4 +31,6 @@ export interface Feature {
    * 返回掣仍然由 host 提供。預設 false / undefined = host render 標準 header。
    */
   selfManagedHeader?: boolean
+  /** 要付費方案（Plus / Pro）先用得；免費用戶會見到升級提示。 */
+  requiresPaid?: boolean
 }

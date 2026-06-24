@@ -5,6 +5,7 @@ import {
   ChevronsDownUp,
   ChevronsUpDown,
   PanelLeftClose,
+  Lock,
   Pin,
   Rows3,
   Search,
@@ -14,6 +15,7 @@ import { useMode } from '../context/ModeContext'
 import { groupedFeatures, getFeature } from '../features/registry'
 import type { Feature } from '../features/types'
 import { FeatureIcon } from '../features/featureIcons'
+import { useSubscription } from '../hooks/useSubscription'
 import { useCollection } from '../lib/store'
 import { recentFeaturesCol } from './commandPalette/util'
 import { pinnedFeaturesCol, togglePin } from './sidebar/pins'
@@ -82,6 +84,7 @@ export default function Sidebar({
 }: Props) {
   const { t } = useTranslation()
   const { modeDef } = useMode()
+  const { isPaid } = useSubscription()
   const { isAdmin: showAdmin } = useAuth()
   const groups = groupedFeatures(modeDef.id)
   const allItems = useMemo(() => groups.flatMap((g) => g.items), [groups])
@@ -411,7 +414,13 @@ export default function Sidebar({
                   onSelect={() => choose(f.id)}
                   pinId={f.id}
                   pinned={pinnedIds.has(f.id)}
-                  badge={f.status === 'soon' ? <SoonBadge /> : undefined}
+                  badge={
+                    f.status === 'soon' ? (
+                      <SoonBadge />
+                    ) : f.requiresPaid && !isPaid ? (
+                      <LockBadge />
+                    ) : undefined
+                  }
                 />
               ))}
             </div>
@@ -495,7 +504,13 @@ export default function Sidebar({
                           tabIndex={isCol ? -1 : 0}
                           pinId={f.id}
                           pinned={pinnedIds.has(f.id)}
-                          badge={f.status === 'soon' ? <SoonBadge /> : undefined}
+                          badge={
+                    f.status === 'soon' ? (
+                      <SoonBadge />
+                    ) : f.requiresPaid && !isPaid ? (
+                      <LockBadge />
+                    ) : undefined
+                  }
                         />
                       ))}
                     </div>
@@ -553,6 +568,17 @@ function SoonBadge() {
   return (
     <span className="rounded-md bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-400 dark:bg-slate-800 dark:text-slate-500">
       {t('shell.soon', { defaultValue: '即將' })}
+    </span>
+  )
+}
+
+function LockBadge() {
+  return (
+    <span
+      className="inline-flex items-center rounded-md bg-accent-soft px-1 py-0.5 text-accent-strong dark:bg-accent/15 dark:text-accent"
+      title="付費功能（Plus / Pro）"
+    >
+      <Lock size={11} strokeWidth={2.5} />
     </span>
   )
 }

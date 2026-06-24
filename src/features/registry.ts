@@ -317,6 +317,7 @@ export const FEATURES: Feature[] = [
     group: '教學',
     component: SlideGen,
     status: 'ready',
+    requiresPaid: true,
   },
   {
     id: 'work-rubric',
@@ -481,6 +482,7 @@ export const FEATURES: Feature[] = [
     group: '行政',
     component: AdminDocs,
     status: 'ready',
+    requiresPaid: true,
   },
   {
     id: 'work-scan',
@@ -492,6 +494,7 @@ export const FEATURES: Feature[] = [
     group: '行政',
     component: Scan,
     status: 'ready',
+    requiresPaid: true,
   },
   {
     id: 'work-doc-digest',

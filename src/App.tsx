@@ -27,6 +27,8 @@ import Settings from './pages/Settings'
 import Admin from './pages/Admin'
 import ComingSoon from './components/ComingSoon'
 import ErrorBoundary from './components/ErrorBoundary'
+import PaidGate from './components/PaidGate'
+import { useSubscription } from './hooks/useSubscription'
 import { getFeature, preloadAllFeatures } from './features/registry'
 import { FeatureIcon } from './features/featureIcons'
 import { track } from './lib/observability'
@@ -40,6 +42,7 @@ import { featName, featDesc } from './i18n/appEn'
 export function AppShell() {
   const { t } = useTranslation()
   const { mode, modeDef } = useMode()
+  const { isPaid, loading: subLoading } = useSubscription()
   const [activeId, setActiveId] = useState<string | null>(null)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [paletteOpen, setPaletteOpen] = useState(false)
@@ -336,7 +339,9 @@ export function AppShell() {
                     </div>
                   )}
                   <div>
-                    {feature.status === 'ready' && feature.component ? (
+                    {feature.requiresPaid && !isPaid ? (
+                      <PaidGate feature={feature} loading={subLoading} />
+                    ) : feature.status === 'ready' && feature.component ? (
                       <ErrorBoundary key={feature.id} onReset={() => navigate(null)}>
                         <Suspense
                           fallback={
