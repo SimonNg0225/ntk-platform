@@ -144,7 +144,7 @@ Deno.serve(async (req: Request) => {
         }
         let periodEnd: string | null = null
         let status = 'active'
-        let plan: 'free' | 'plus' | 'pro' = 'pro'
+        let plan: 'free' | 'plus' | 'pro' = 'free' // 無 subscription（如 setup/一次性）→ 唔誤升 pro
         if (subscriptionId) {
           const subscription =
             await stripe.subscriptions.retrieve(subscriptionId)

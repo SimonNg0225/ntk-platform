@@ -25,6 +25,7 @@ const GENERAL_FREE_DAILY = Number(Deno.env.get('AI_DAILY_FREE_LIMIT') ?? '20')
 // 錄音轉文字（音訊成本高）：免費 / Pro 各有每月上限。
 const TRANSCRIBE_FREE_MONTHLY = Number(Deno.env.get('AI_TRANSCRIBE_FREE_MONTHLY') ?? '1')
 const TRANSCRIBE_PRO_MONTHLY = Number(Deno.env.get('AI_TRANSCRIBE_PRO_MONTHLY') ?? '20')
+const TRANSCRIBE_PLUS_MONTHLY = Number(Deno.env.get('AI_TRANSCRIBE_PLUS_MONTHLY') ?? '10')
 
 // 測試白名單：呢啲 email 跳過每日額度（等同 Pro 無限），方便未接付款前測試。
 // 取 AI_UNLIMITED_EMAILS，未設就退回 ADMIN_EMAILS（同 support-admin 共用一張名單）。
@@ -159,22 +160,27 @@ Deno.serve(async (req: Request) => {
       .select('plan, status')
       .eq('user_id', user.id)
       .maybeSingle()
-    const isPro =
-      sub?.plan === 'pro' &&
-      (sub?.status === 'active' || sub?.status === 'trialing')
+    const active = sub?.status === 'active' || sub?.status === 'trialing'
+    const isPro = sub?.plan === 'pro' && active
+    const isPlus = sub?.plan === 'plus' && active
+    const isPaid = isPro || isPlus
 
     const feature = typeof body.feature === 'string' ? body.feature : 'general'
     const now = new Date()
     const ym = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}`
     const ymd = `${ym}-${String(now.getUTCDate()).padStart(2, '0')}`
 
-    // 一般 AI + Pro → 無限（bucket 留 null 即跳過檢查）
+    // 一般 AI + 付費（Plus / Pro）→ 無限（bucket 留 null 即跳過檢查）
     let bucket: string | null = null
     let limit = 0
     if (feature === 'transcribe') {
       bucket = `transcribe:${ym}` // 每月
-      limit = isPro ? TRANSCRIBE_PRO_MONTHLY : TRANSCRIBE_FREE_MONTHLY
-    } else if (!isPro) {
+      limit = isPro
+        ? TRANSCRIBE_PRO_MONTHLY
+        : isPlus
+          ? TRANSCRIBE_PLUS_MONTHLY
+          : TRANSCRIBE_FREE_MONTHLY
+    } else if (!isPaid) {
       bucket = `general:${ymd}` // 每日
       limit = GENERAL_FREE_DAILY
     }
@@ -191,8 +197,10 @@ Deno.serve(async (req: Request) => {
           feature === 'transcribe'
             ? isPro
               ? `本月錄音轉文字額度已用完（Pro 每月 ${TRANSCRIBE_PRO_MONTHLY} 次）。下個月 1 號重置。`
-              : `本月免費錄音轉文字額度已用完（每月 ${TRANSCRIBE_FREE_MONTHLY} 次）。升級 Pro 每月 ${TRANSCRIBE_PRO_MONTHLY} 次，或下個月再試。`
-            : `已用完今日免費 AI 額度（每日 ${GENERAL_FREE_DAILY} 次）。升級 Pro 即可無限使用，或聽日再試。`
+              : isPlus
+                ? `本月錄音轉文字額度已用完（Plus 每月 ${TRANSCRIBE_PLUS_MONTHLY} 次）。升級 Pro 每月 ${TRANSCRIBE_PRO_MONTHLY} 次，或下個月再試。`
+                : `本月免費錄音轉文字額度已用完（每月 ${TRANSCRIBE_FREE_MONTHLY} 次）。升級 Plus／Pro，或下個月再試。`
+            : `已用完今日免費 AI 額度（每日 ${GENERAL_FREE_DAILY} 次）。升級 Plus／Pro 即可大幅提升，或聽日再試。`
         return json({ error: msg, code: 'quota_exceeded' }, 429)
       }
     }

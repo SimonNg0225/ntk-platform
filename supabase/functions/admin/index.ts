@@ -43,11 +43,12 @@ function costUsd(model: string, inTok: number, outTok: number): number {
 const PTS_BY_FEATURE: Record<string, number> = { slides: 3, transcribe: 16 }
 function costPts(feature: string, model: string, calls: number): number {
   const base = PTS_BY_FEATURE[feature] ?? 1
-  const mult = (model ?? '').includes('pro') ? 4 : 1
+  const mult = model === 'gemini-2.5-pro' ? 4 : 1 // 對齊 credits.ts creditCostOf
   return base * mult * (calls ?? 0)
 }
 // Pro 月費（HKD）—— 估 MRR 用。
-const PRO_PRICE_HKD = Number(Deno.env.get('PRO_PRICE_HKD') ?? '48')
+const PRO_PRICE_HKD = Number(Deno.env.get('PRO_PRICE_HKD') ?? '78')
+const PLUS_PRICE_HKD = Number(Deno.env.get('PLUS_PRICE_HKD') ?? '28')
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -132,10 +133,11 @@ Deno.serve(async (req: Request) => {
         ])
 
         const subs = subsRes.data ?? []
-        const activePro = subs.filter(
-          (s) => s.plan === 'pro' && ['active', 'trialing'].includes(s.status),
-        ).length
+        const isActive = (st: string) => ['active', 'trialing'].includes(st)
+        const activePro = subs.filter((s) => s.plan === 'pro' && isActive(s.status)).length
+        const activePlus = subs.filter((s) => s.plan === 'plus' && isActive(s.status)).length
         const pro = subs.filter((s) => s.plan === 'pro').length
+        const plus = subs.filter((s) => s.plan === 'plus').length
 
         // AI 用量 + 真實成本（本月，由 ai_usage_stats 按 token 計，所有用戶都計）
         const { data: statRows } = await admin
@@ -173,8 +175,10 @@ Deno.serve(async (req: Request) => {
             subs: {
               pro,
               activePro,
-              free: Math.max(totalUsers - pro, 0),
-              mrrHkd: activePro * PRO_PRICE_HKD,
+              plus,
+              activePlus,
+              free: Math.max(totalUsers - pro - plus, 0),
+              mrrHkd: activePro * PRO_PRICE_HKD + activePlus * PLUS_PRICE_HKD,
             },
             ai: { genToday, callsMonth, transMonth, costUsd: aiCostUsd },
             orgs: {
@@ -234,14 +238,14 @@ Deno.serve(async (req: Request) => {
         const userId = String(body.userId ?? '')
         const plan = String(body.plan ?? '')
         const status = String(body.status ?? '')
-        if (!userId || !['free', 'pro'].includes(plan)) {
+        if (!userId || !['free', 'plus', 'pro'].includes(plan)) {
           return json({ error: '參數不正確。' }, 400)
         }
         const { error } = await admin.from('subscriptions').upsert(
           {
             user_id: userId,
             plan,
-            status: status || (plan === 'pro' ? 'active' : 'inactive'),
+            status: status || (plan !== 'free' ? 'active' : 'inactive'),
           },
           { onConflict: 'user_id' },
         )
