@@ -14,7 +14,7 @@ const CRISP_ID = import.meta.env.VITE_CRISP_WEBSITE_ID as string | undefined
 /** 客服 email（mailto fallback 用）。 */
 export const SUPPORT_MAILTO =
   (import.meta.env.VITE_SUPPORT_EMAIL as string | undefined) ??
-  'support@eziteach.example'
+  'support@eziteach.hk'
 
 /** in-app 聯絡表單可唔可以直接提交（要 Supabase）；否則用 mailto。 */
 export const isContactConfigured = isSupabaseConfigured
