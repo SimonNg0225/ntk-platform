@@ -7,7 +7,7 @@ import {
   PartyPopper, Trophy, TrendingDown, Users, Palmtree, AlarmClock, Pin, Ban, Mail,
   Handshake, MessageSquare, FileText, FileSearch, Presentation, Dices, PenLine, Scale, Mic, Link, Clapperboard, BookMarked, Bookmark, WandSparkles,
   Dumbbell, Zap, RotateCcw, Printer, Download, Lock, HelpCircle, Sprout, Star,
-  Receipt, Tag, HeartPulse, ClipboardCheck,
+  Receipt, Tag, HeartPulse, ClipboardCheck, Globe, ScanLine,
 } from 'lucide-react'
 
 // ============================================================
@@ -108,6 +108,8 @@ const EMOJI_TO_ICON: Record<string, LucideIcon> = {
   '🖍️': ClipboardCheck,
   '🖍': ClipboardCheck,
   '🪄': WandSparkles, // 教材生成（AI 出題）
+  '🌐': Globe, // 資源分享區（社群）
+  '📷': ScanLine, // 掃描 PDF
 }
 
 /** emoji → lucide 圖示元件；冇對應就回 null（呼叫方 fallback 顯示 emoji）。 */

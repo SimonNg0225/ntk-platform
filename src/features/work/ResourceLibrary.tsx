@@ -1001,7 +1001,7 @@ function GridView({
   onToggleFav: (id: string, v: boolean) => void
 }) {
   return (
-    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
       {rows.map(({ res, meta, domain }, i) => {
         const isSel = selected.has(res.id)
         const tc = TYPE_COLOR[res.type]
@@ -1009,10 +1009,10 @@ function GridView({
           <article
             key={res.id}
             className={cx(
-              'group relative flex animate-fade-in-up flex-col overflow-hidden rounded-2xl border bg-white shadow-xs transition duration-200 dark:bg-slate-800 dark:shadow-none',
+              'group relative flex animate-fade-in-up flex-col overflow-hidden rounded-2xl border bg-white shadow-sm transition-all duration-200 dark:bg-slate-800 dark:shadow-none',
               isSel
                 ? 'border-accent/50 ring-2 ring-accent ring-offset-1 ring-offset-white dark:ring-offset-slate-900'
-                : 'border-slate-200/80 hover:border-slate-300 hover:shadow-md dark:border-slate-700/60 dark:hover:border-slate-600',
+                : 'border-slate-200/70 hover:-translate-y-0.5 hover:border-slate-300/70 hover:shadow-lg dark:border-slate-700/50 dark:hover:border-slate-600',
               meta.broken && 'opacity-80',
             )}
             style={{ animationDelay: `${Math.min(i, 11) * 35}ms` }}
@@ -1023,7 +1023,7 @@ function GridView({
               className={cx('absolute inset-y-0 left-0 w-1', tc.dot)}
             />
 
-            <div className="flex flex-1 flex-col p-4 pl-5">
+            <div className="flex flex-1 flex-col p-5 pl-6">
               {/* 選取角 */}
               <button
                 type="button"
