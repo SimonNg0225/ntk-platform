@@ -1320,7 +1320,7 @@ export function Avatar({
 }
 
 // ───────── FeatureGuide（功能頁教學引導）─────────
-export { FeatureGuide, GuideHelpButton, reopenFeatureGuide } from './FeatureGuide'
+export { FeatureGuide, GuideHelpButton, toggleFeatureGuide } from './FeatureGuide'
 export type { FeatureGuideStep } from './FeatureGuide'
 
 // ───────── PageHero（功能頁頂部 accent 大色塊）─────────
