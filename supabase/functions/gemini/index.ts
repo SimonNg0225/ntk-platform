@@ -27,6 +27,18 @@ const TRANSCRIBE_FREE_MONTHLY = Number(Deno.env.get('AI_TRANSCRIBE_FREE_MONTHLY'
 const TRANSCRIBE_PRO_MONTHLY = Number(Deno.env.get('AI_TRANSCRIBE_PRO_MONTHLY') ?? '20')
 const TRANSCRIBE_PLUS_MONTHLY = Number(Deno.env.get('AI_TRANSCRIBE_PLUS_MONTHLY') ?? '10')
 
+// AI 點數池（對齊 src/lib/credits.ts monthlyCredits）+ 逐動作扣點權重。
+// 直接用點數池做權威閘，同前端 useCredits / 後台 admin 同一套數。
+const POINTS_FREE = Number(Deno.env.get('AI_POINTS_FREE') ?? '30')
+const POINTS_PLUS = Number(Deno.env.get('AI_POINTS_PLUS') ?? '300')
+const POINTS_PRO = Number(Deno.env.get('AI_POINTS_PRO') ?? '1000')
+const POINTS_BY_LABEL: Record<string, number> = { slides: 3, transcribe: 16 }
+function pointCost(label: string, model: string): number {
+  const base = POINTS_BY_LABEL[label] ?? 1
+  const mult = model === 'gemini-2.5-pro' ? 4 : 1
+  return base * mult
+}
+
 // 測試白名單：呢啲 email 跳過每日額度（等同 Pro 無限），方便未接付款前測試。
 // 取 AI_UNLIMITED_EMAILS，未設就退回 ADMIN_EMAILS（同 support-admin 共用一張名單）。
 const UNLIMITED_EMAILS = (
@@ -149,8 +161,19 @@ Deno.serve(async (req: Request) => {
     return json({ error: '冇提供 messages。' }, 400)
   }
 
-  // ── 訂閱 / 額度檢查（按功能）─────────────────────────────
-  // 一般 AI：免費每日上限、Pro 無限；錄音轉文字（成本高）：免費 / Pro 各有每月上限。白名單不限。
+  const model =
+    body.model && ALLOWED_MODELS.has(body.model) ? body.model : DEFAULT_MODEL
+  // 用量標籤：優先 source（功能），否則 feature（如 transcribe），預設 general。
+  const usageLabel =
+    (typeof body.source === 'string' && body.source) ||
+    (typeof body.feature === 'string' && body.feature) ||
+    'general'
+
+  // ── 訂閱 / AI 點數池額度檢查 ─────────────────────────────
+  // 直接用點數池做權威閘（同前端 useCredits / 後台同一套權重，數一致）：
+  // 免費 30 / Plus 300 / Pro 1000 點/月；每次扣 1（標準）/ 3（簡報）/ 16（錄音）點，
+  // 用 Pro 高階模型 ×4。已用點數由 ai_usage_stats（每月 calls × 權重）即時計。白名單不限。
+  // 注意：read-then-check，極端並發下可能輕微超用（可接受；目的係防失控，唔係分毫不差）。
   const callerEmail = (user.email ?? '').toLowerCase()
   const whitelisted = !!callerEmail && UNLIMITED_EMAILS.includes(callerEmail)
   if (SERVICE_ROLE_KEY && !whitelisted) {
@@ -161,58 +184,36 @@ Deno.serve(async (req: Request) => {
       .eq('user_id', user.id)
       .maybeSingle()
     const active = sub?.status === 'active' || sub?.status === 'trialing'
-    const isPro = sub?.plan === 'pro' && active
-    const isPlus = sub?.plan === 'plus' && active
-    const isPaid = isPro || isPlus
+    const pool =
+      active && sub?.plan === 'pro'
+        ? POINTS_PRO
+        : active && sub?.plan === 'plus'
+          ? POINTS_PLUS
+          : POINTS_FREE
 
-    const feature = typeof body.feature === 'string' ? body.feature : 'general'
     const now = new Date()
     const ym = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}`
-    const ymd = `${ym}-${String(now.getUTCDate()).padStart(2, '0')}`
-
-    // 一般 AI + 付費（Plus / Pro）→ 無限（bucket 留 null 即跳過檢查）
-    let bucket: string | null = null
-    let limit = 0
-    if (feature === 'transcribe') {
-      bucket = `transcribe:${ym}` // 每月
-      limit = isPro
-        ? TRANSCRIBE_PRO_MONTHLY
-        : isPlus
-          ? TRANSCRIBE_PLUS_MONTHLY
-          : TRANSCRIBE_FREE_MONTHLY
-    } else if (!isPaid) {
-      bucket = `general:${ymd}` // 每日
-      limit = GENERAL_FREE_DAILY
-    }
-
-    if (bucket) {
-      const { data: quota, error: quotaErr } = await admin.rpc('consume_ai_quota', {
-        p_user: user.id,
-        p_bucket: bucket,
-        p_limit: limit,
-      })
-      const row = Array.isArray(quota) ? quota[0] : quota
-      if (!quotaErr && row && row.allowed === false) {
-        const msg =
-          feature === 'transcribe'
-            ? isPro
-              ? `本月錄音轉文字額度已用完（Pro 每月 ${TRANSCRIBE_PRO_MONTHLY} 次）。下個月 1 號重置。`
-              : isPlus
-                ? `本月錄音轉文字額度已用完（Plus 每月 ${TRANSCRIBE_PLUS_MONTHLY} 次）。升級 Pro 每月 ${TRANSCRIBE_PRO_MONTHLY} 次，或下個月再試。`
-                : `本月免費錄音轉文字額度已用完（每月 ${TRANSCRIBE_FREE_MONTHLY} 次）。升級 Plus／Pro，或下個月再試。`
-            : `已用完今日免費 AI 額度（每日 ${GENERAL_FREE_DAILY} 次）。升級 Plus／Pro 即可大幅提升，或聽日再試。`
-        return json({ error: msg, code: 'quota_exceeded' }, 429)
-      }
+    const cost = pointCost(usageLabel, model)
+    const { data: rows } = await admin
+      .from('ai_usage_stats')
+      .select('feature, model, calls')
+      .eq('user_id', user.id)
+      .eq('ym', ym)
+    const used = (rows ?? []).reduce(
+      (s: number, r: { feature: string; model: string; calls: number }) =>
+        s + pointCost(r.feature, r.model) * (r.calls ?? 0),
+      0,
+    )
+    if (used + cost > pool) {
+      return json(
+        {
+          error: `本月 AI 點數已用完（${used}/${pool} 點，呢個動作要 ${cost} 點）。升級方案或下個月 1 號重置。`,
+          code: 'quota_exceeded',
+        },
+        429,
+      )
     }
   }
-
-  const model =
-    body.model && ALLOWED_MODELS.has(body.model) ? body.model : DEFAULT_MODEL
-  // 用量分析標籤：優先用 source（功能），否則 feature（如 transcribe），預設 general。
-  const usageLabel =
-    (typeof body.source === 'string' && body.source) ||
-    (typeof body.feature === 'string' && body.feature) ||
-    'general'
   const wantStream = body.stream !== false // 預設 streaming
   const temperature =
     typeof body.temperature === 'number' ? body.temperature : 0.7
