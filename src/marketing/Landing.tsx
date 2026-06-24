@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Helmet } from 'react-helmet-async'
 import { motion, useReducedMotion, type Variants } from 'framer-motion'
+import { COMPANY } from '../lib/companyInfo'
 import {
   ClipboardList,
   FileText,
@@ -449,6 +450,18 @@ export default function Landing() {
           <Link to="/pricing" className="transition hover:text-accent">{t('footer.pricing')}</Link>
         </div>
         <p className="mt-3">© {new Date().getFullYear()} {t('shell.brandName', { defaultValue: '教學易' })} · {t('footer.copy')}</p>
+        <p className="mt-1">
+          {COMPANY.legalName ? (
+            <>
+              {COMPANY.legalName}
+              {COMPANY.brNumber ? ` · 商業登記證 ${COMPANY.brNumber}` : ''}
+              {' · '}
+            </>
+          ) : null}
+          <a className="transition hover:text-accent" href={`mailto:${COMPANY.supportEmail}`}>
+            {COMPANY.supportEmail}
+          </a>
+        </p>
       </footer>
     </div>
   )

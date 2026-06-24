@@ -15,6 +15,11 @@ const ADMIN_ALERT_EMAIL = Deno.env.get('ADMIN_ALERT_EMAIL') ?? ''
 /** 客服收件箱（未設則退回 ADMIN_ALERT_EMAIL）。 */
 export const SUPPORT_EMAIL = Deno.env.get('SUPPORT_EMAIL') ?? ADMIN_ALERT_EMAIL
 
+// 商業 / 法律資料（email footer 用；未 set 嘅行自動隱藏）。
+// 攞到 BR 後：supabase secrets set COMPANY_NAME=... BR_NUMBER=...
+const COMPANY_NAME = Deno.env.get('COMPANY_NAME') ?? ''
+const BR_NUMBER = Deno.env.get('BR_NUMBER') ?? ''
+
 export const isEmailConfigured = Boolean(RESEND_API_KEY)
 
 export async function sendEmail(opts: {
@@ -79,7 +84,9 @@ function shell(title: string, bodyHtml: string): string {
   <div style="border:1px solid #e2e8f0;border-top:0;border-radius:0 0 12px 12px;padding:24px">
     <h2 style="margin:0 0 12px;font-size:16px">${title}</h2>
     ${bodyHtml}
-    <p style="margin:24px 0 0;font-size:12px;color:#94a3b8">EziTeach · 香港教師工作台</p>
+    <p style="margin:24px 0 0;font-size:12px;color:#94a3b8;line-height:1.6">EziTeach · 香港教師工作台${
+      COMPANY_NAME ? `<br>${COMPANY_NAME}${BR_NUMBER ? ` · 商業登記證 ${BR_NUMBER}` : ''}` : ''
+    }${SUPPORT_EMAIL ? `<br>聯絡：${SUPPORT_EMAIL}` : ''}</p>
   </div>
 </div>`
 }

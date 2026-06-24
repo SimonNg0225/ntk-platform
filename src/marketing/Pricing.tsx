@@ -7,6 +7,7 @@ import { useAuth } from '../context/AuthContext'
 import { useToast } from '../context/ToastContext'
 import { useSubscription } from '../hooks/useSubscription'
 import { redeemTestCode, clearTestPro } from '../lib/testPro'
+import { COMPANY } from '../lib/companyInfo'
 import {
   PLANS,
   isBillingConfigured,
@@ -271,6 +272,15 @@ export default function Pricing() {
             </code>
           </p>
         )}
+        <p className="mt-6 text-center text-[11px] leading-relaxed text-slate-400">
+          {COMPANY.legalName || COMPANY.brand}
+          {COMPANY.brNumber ? ` · 商業登記證 ${COMPANY.brNumber}` : ''}
+          {' · 聯絡 '}
+          <a className="underline transition hover:text-accent" href={`mailto:${COMPANY.supportEmail}`}>
+            {COMPANY.supportEmail}
+          </a>
+          {' · 價格以港幣（HKD）計。'}
+        </p>
       </div>
     </div>
   )
