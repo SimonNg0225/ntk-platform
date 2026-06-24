@@ -5,6 +5,7 @@ import {
   Gauge,
   Building2,
   Megaphone,
+  Rocket,
   RefreshCw,
   Check,
   RotateCcw,
@@ -65,6 +66,7 @@ import {
   type ForumReport,
   type CommunityReport,
 } from '../lib/admin'
+import MarketingTab from '../features/admin/MarketingTab'
 
 // ============================================================
 //  後台管理系統（EziTeach Admin）
@@ -73,7 +75,7 @@ import {
 //  只 admin（VITE_ADMIN_EMAILS）顯示；真正權限由 admin Edge Function 驗。
 // ============================================================
 
-type TabId = 'overview' | 'users' | 'usage' | 'orgs' | 'content'
+type TabId = 'overview' | 'users' | 'usage' | 'orgs' | 'content' | 'marketing'
 
 const fmtDate = (s: string | null) =>
   s ? new Date(s).toLocaleDateString('zh-HK', { year: '2-digit', month: '2-digit', day: '2-digit' }) : '—'
@@ -110,6 +112,7 @@ export default function Admin() {
           { id: 'usage', label: '用量 + AI 成本' },
           { id: 'orgs', label: '學校 B2B' },
           { id: 'content', label: '內容 + 支援' },
+          { id: 'marketing', label: '行銷' },
         ]}
         icons={{
           overview: LayoutDashboard,
@@ -117,6 +120,7 @@ export default function Admin() {
           usage: Gauge,
           orgs: Building2,
           content: Megaphone,
+          marketing: Rocket,
         }}
       />
       {tab === 'overview' && <OverviewTab onJump={setTab} />}
@@ -124,6 +128,7 @@ export default function Admin() {
       {tab === 'usage' && <UsageTab />}
       {tab === 'orgs' && <OrgsTab />}
       {tab === 'content' && <ContentTab />}
+      {tab === 'marketing' && <MarketingTab />}
     </div>
   )
 }

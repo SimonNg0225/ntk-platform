@@ -1,5 +1,6 @@
 import { supabase } from './supabase'
 import { isAdminEmail } from './support'
+import type { MarketingAsset } from './marketingContent'
 
 // ============================================================
 //  後台管理 client（EziTeach Admin）
@@ -153,6 +154,15 @@ export const adminSaveAnnouncement = (a: Partial<Announcement>) =>
 
 export const adminDeleteAnnouncement = (id: string) =>
   callAdmin<{ ok: true }>('announcements:delete', { id })
+
+// ── 行銷內容（marketing_content；雲端共享，全 admin 共用）──
+export const adminListMarketing = () => callAdmin<MarketingAsset[]>('marketing:list')
+
+export const adminSaveMarketing = (a: Partial<MarketingAsset>) =>
+  callAdmin<{ ok: true }>('marketing:save', { asset: a })
+
+export const adminDeleteMarketing = (id: string) =>
+  callAdmin<{ ok: true }>('marketing:delete', { id })
 
 export const adminListTickets = () => callAdmin<AdminTicket[]>('tickets:list')
 

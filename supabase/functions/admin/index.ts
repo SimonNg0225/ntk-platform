@@ -413,6 +413,55 @@ Deno.serve(async (req: Request) => {
         return json({ data: { ok: true } })
       }
 
+      // ════════════ 內容：行銷（marketing_content）════════════
+      case 'marketing:list': {
+        const { data, error } = await admin
+          .from('marketing_content')
+          .select('id, type, title, channel, status, body, notes, created_by, created_at, updated_at')
+          .order('updated_at', { ascending: false })
+          .limit(500)
+        if (error) return json({ error: error.message }, 500)
+        return json({ data })
+      }
+
+      case 'marketing:save': {
+        const a = (body.asset ?? {}) as Record<string, unknown>
+        const title = String(a.title ?? '').trim()
+        if (!title) return json({ error: '標題不可為空。' }, 400)
+        const TYPES = ['landing', 'demo-script', 'seo-article', 'social', 'email', 'other']
+        const STATUSES = ['idea', 'draft', 'review', 'published']
+        const type = TYPES.includes(String(a.type)) ? String(a.type) : 'other'
+        const status = STATUSES.includes(String(a.status)) ? String(a.status) : 'draft'
+        const row = {
+          type,
+          title,
+          channel: String(a.channel ?? ''),
+          status,
+          body: String(a.body ?? ''),
+          notes: String(a.notes ?? ''),
+          created_by: actorEmail,
+        }
+        if (a.id) {
+          const { error } = await admin.from('marketing_content').update(row).eq('id', String(a.id))
+          if (error) return json({ error: error.message }, 500)
+          await audit('marketing-update', String(a.id), { title })
+        } else {
+          const { error } = await admin.from('marketing_content').insert(row)
+          if (error) return json({ error: error.message }, 500)
+          await audit('marketing-create', null, { title })
+        }
+        return json({ data: { ok: true } })
+      }
+
+      case 'marketing:delete': {
+        const id = String(body.id ?? '')
+        if (!id) return json({ error: '缺少 id。' }, 400)
+        const { error } = await admin.from('marketing_content').delete().eq('id', id)
+        if (error) return json({ error: error.message }, 500)
+        await audit('marketing-delete', id)
+        return json({ data: { ok: true } })
+      }
+
       // ════════════ 支援：客服 ════════════
       case 'tickets:list': {
         const { data, error } = await admin
