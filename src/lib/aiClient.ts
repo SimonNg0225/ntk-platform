@@ -1,4 +1,6 @@
 import { supabase, isSupabaseConfigured } from './supabase'
+import { isBillingConfigured } from './billing'
+import { chargeCredits, getActivePlan } from './credits'
 
 // ============================================================
 //  前端 AI client
@@ -63,6 +65,20 @@ async function authedHeaders(): Promise<Record<string, string>> {
 export async function* streamChat(
   opts: AIChatOptions,
 ): AsyncGenerator<string, void, unknown> {
+  // AI 點數計量：只喺已配置收費（接咗 Stripe）時 enforce；未配置 → inert，
+  // 零行為改變。權威額度仍喺後端 gemini Edge Function，呢度淨係前端 UX gating。
+  if (isBillingConfigured) {
+    const charge = chargeCredits(getActivePlan(), {
+      source: opts.source,
+      feature: opts.feature,
+      model: opts.model,
+    })
+    if (!charge.ok) {
+      throw new Error(
+        `AI 點數唔夠：今個月剩 ${charge.remaining} 點，呢個動作要 ${charge.cost} 點。可去定價頁升級。`,
+      )
+    }
+  }
   const headers = DEV_AI ? { 'Content-Type': 'application/json' } : await authedHeaders()
   const res = await fetch(DEV_AI ? '/dev-ai/gemini' : functionsUrl(), {
     method: 'POST',

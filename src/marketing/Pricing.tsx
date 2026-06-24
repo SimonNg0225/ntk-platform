@@ -137,11 +137,9 @@ export default function Pricing() {
           )}
         </div>
 
-        <div className="mt-10 grid gap-6 sm:grid-cols-2">
+        <div className="mt-10 grid gap-6 sm:grid-cols-3">
           {PLANS.map((plan) => {
-            const isCurrent =
-              (plan.id === 'pro' && sub.isPro) ||
-              (plan.id === 'free' && !sub.isPro)
+            const isCurrent = plan.id === sub.plan
             return (
               <div
                 key={plan.id}
@@ -186,7 +184,7 @@ export default function Pricing() {
 
                 <div className="mt-6">
                   {isCurrent ? (
-                    plan.id === 'pro' ? (
+                    plan.id !== 'free' ? (
                       <button
                         onClick={onManage}
                         disabled={busy === 'portal'}
@@ -211,9 +209,9 @@ export default function Pricing() {
                     >
                       {busy === plan.id
                         ? t('pricing.processing')
-                        : plan.id === 'pro'
-                          ? t('pricing.upgradePro')
-                          : t('pricing.startFree')}
+                        : plan.id === 'free'
+                          ? t('pricing.startFree')
+                          : `${t('pricing.upgrade', { defaultValue: '升級' })} ${plan.name}`}
                     </button>
                   )}
                 </div>

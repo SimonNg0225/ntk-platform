@@ -12,7 +12,7 @@ import { track } from './observability'
 //  前端永遠掂唔到。未接 Supabase / 未設 price → 當免費版。
 // ============================================================
 
-export type PlanId = 'free' | 'pro'
+export type PlanId = 'free' | 'plus' | 'pro'
 
 export type BillingCycle = 'monthly' | 'annual'
 
@@ -20,6 +20,10 @@ export interface Plan {
   id: PlanId
   name: string
   priceLabel: string
+  /** 月費（HKD 數字，0 = 免費）；用嚟計 AI 成本佔比。 */
+  priceHkd: number
+  /** 每月 AI 點數池（見 credits.ts；池 × 點價 ≤ 月費 30%）。 */
+  monthlyCredits: number
   tagline: string
   /** Stripe Price ID（月繳；喺 .env 設定）。免費版冇。 */
   priceId?: string
@@ -33,6 +37,11 @@ export interface Plan {
   highlighted?: boolean
 }
 
+const PLUS_PRICE_ID = import.meta.env.VITE_STRIPE_PLUS_PRICE_ID as
+  | string
+  | undefined
+const PLUS_ANNUAL_PRICE_ID = import.meta.env
+  .VITE_STRIPE_PLUS_ANNUAL_PRICE_ID as string | undefined
 const PRO_PRICE_ID = import.meta.env.VITE_STRIPE_PRO_PRICE_ID as
   | string
   | undefined
@@ -53,33 +62,54 @@ export function priceForCycle(
 export const PLANS: Plan[] = [
   {
     id: 'free',
-    name: '免費版',
+    name: '免費',
     priceLabel: 'HK$0',
-    tagline: '老師自用，永久免費',
+    priceHkd: 0,
+    monthlyCredits: 30,
+    tagline: '試吓 AI 備課',
     features: [
-      '全部教學功能：備課、題庫、成績、點名、家長溝通',
-      '本機儲存 + 單一裝置雲端同步',
-      '每日 AI 出題 / 批改額度（基本）',
-      '每月 1 次錄音轉文字',
-      '社群支援',
+      '全部備課工具：出題、教案、簡報、DSE 操練、文件摘要…',
+      '每月 30 AI 點數（試用）',
+      '本機儲存 + 單裝置雲端同步',
+      '社群資源分享',
+    ],
+  },
+  {
+    id: 'plus',
+    name: 'Plus',
+    priceLabel: 'HK$28 / 月',
+    priceHkd: 28,
+    monthlyCredits: 300,
+    tagline: '日常備課，夠用有突',
+    priceId: PLUS_PRICE_ID,
+    annualPriceId: PLUS_ANNUAL_PRICE_ID,
+    annualPriceLabel: 'HK$280 / 年',
+    annualNote: '年繳慳兩個月',
+    features: [
+      '免費版全部功能',
+      '每月 300 AI 點數（約 300 份教材 / 100 套簡報 / 18 段錄音）',
+      '🎙️ 錄音轉文字',
+      '多裝置即時雲端同步',
+      '優先客服',
     ],
   },
   {
     id: 'pro',
     name: 'Pro',
-    priceLabel: 'HK$48 / 月',
-    tagline: '重度備課 / 全職教師',
+    priceLabel: 'HK$78 / 月',
+    priceHkd: 78,
+    monthlyCredits: 1000,
+    tagline: '重度備課 / 全日校老師',
     priceId: PRO_PRICE_ID,
     annualPriceId: PRO_ANNUAL_PRICE_ID,
-    annualPriceLabel: 'HK$480 / 年',
+    annualPriceLabel: 'HK$780 / 年',
     annualNote: '年繳慳兩個月',
     highlighted: true,
     features: [
-      '免費版全部功能',
-      '無限 AI 出題、教案、批改評語',
-      '每月 20 次錄音轉文字',
-      '多裝置即時雲端同步',
-      '成績進階統計 + 資料匯出',
+      'Plus 全部功能',
+      '每月 1000 AI 點數（約 1000 份教材 / 333 套簡報 / 62 段錄音）',
+      '可用 Pro 高階 AI 模型（出靚啲）',
+      '錄音額度更多',
       '優先客服支援',
     ],
   },

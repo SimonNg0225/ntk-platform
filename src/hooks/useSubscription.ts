@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { hasTestPro, onTestProChange } from '../lib/testPro'
+import { setActivePlan } from '../lib/credits'
 
 // ============================================================
 //  商業化 · 訂閱狀態 hook
@@ -12,10 +13,12 @@ import { hasTestPro, onTestProChange } from '../lib/testPro'
 // ============================================================
 
 export interface SubscriptionState {
-  plan: 'free' | 'pro'
+  plan: 'free' | 'plus' | 'pro'
   status: string | null
-  /** 有冇有效付費訂閱（用嚟做功能 gating）。 */
+  /** 嚴格 Pro 層（高階模型 / 最大額度）。 */
   isPro: boolean
+  /** 有冇有效付費訂閱（Plus 或 Pro）。 */
+  isPaid: boolean
   currentPeriodEnd: string | null
   loading: boolean
   /** 係咪測試 Pro（推廣代碼「NTK」本機解鎖，非真實付費）。 */
@@ -26,6 +29,7 @@ const FREE: SubscriptionState = {
   plan: 'free',
   status: null,
   isPro: false,
+  isPaid: false,
   currentPeriodEnd: null,
   loading: false,
   isTest: false,
@@ -35,6 +39,7 @@ const TEST_PRO: SubscriptionState = {
   plan: 'pro',
   status: 'test',
   isPro: true,
+  isPaid: true,
   currentPeriodEnd: null,
   loading: false,
   isTest: true,
@@ -65,11 +70,14 @@ export function useSubscription(): SubscriptionState {
       .then(({ data }) => {
         if (cancelled) return
         const active = data?.status === 'active' || data?.status === 'trialing'
-        const isPro = active && data?.plan === 'pro'
+        const raw = data?.plan as string | undefined
+        const plan =
+          active && (raw === 'plus' || raw === 'pro') ? raw : 'free'
         setState({
-          plan: isPro ? 'pro' : 'free',
+          plan,
           status: (data?.status as string | undefined) ?? null,
-          isPro,
+          isPro: plan === 'pro',
+          isPaid: plan !== 'free',
           currentPeriodEnd:
             (data?.current_period_end as string | undefined) ?? null,
           loading: false,
@@ -82,6 +90,10 @@ export function useSubscription(): SubscriptionState {
   }, [user])
 
   // 測試 Pro 蓋過（除非真實已經係 Pro）
-  if (testPro && !state.isPro) return TEST_PRO
-  return state
+  const effective = testPro && !state.isPro ? TEST_PRO : state
+  // 同步當前層畀 aiClient 點數計量讀取
+  useEffect(() => {
+    setActivePlan(effective.plan)
+  }, [effective.plan])
+  return effective
 }
