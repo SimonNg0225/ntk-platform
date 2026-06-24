@@ -38,9 +38,29 @@ const stripe = new Stripe(STRIPE_SECRET_KEY, {
 })
 const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY)
 
-// 由 Stripe subscription 狀態推導我哋嘅 plan
-function planFromStatus(status: string): 'free' | 'pro' {
-  return status === 'active' || status === 'trialing' ? 'pro' : 'free'
+// 收費層對應嘅 Stripe price id（月 / 年）。未 set → 對唔到 → fallback pro
+// （= 同舊 planFromStatus 行為一致，所以未設 env 前 push 都唔會改變現狀）。
+const PLUS_PRICE_IDS = new Set(
+  [
+    Deno.env.get('STRIPE_PLUS_PRICE_ID'),
+    Deno.env.get('STRIPE_PLUS_ANNUAL_PRICE_ID'),
+  ].filter(Boolean) as string[],
+)
+const PRO_PRICE_IDS = new Set(
+  [
+    Deno.env.get('STRIPE_PRO_PRICE_ID'),
+    Deno.env.get('STRIPE_PRO_ANNUAL_PRICE_ID'),
+  ].filter(Boolean) as string[],
+)
+
+// 由 subscription 嘅 price + 狀態推導我哋嘅 plan（3 層）
+function planFromSubscription(sub: Stripe.Subscription): 'free' | 'plus' | 'pro' {
+  const active = sub.status === 'active' || sub.status === 'trialing'
+  if (!active) return 'free'
+  const priceId = sub.items.data[0]?.price?.id
+  if (priceId && PLUS_PRICE_IDS.has(priceId)) return 'plus'
+  if (priceId && PRO_PRICE_IDS.has(priceId)) return 'pro'
+  return 'pro' // active 但對唔到 price → 保守當 pro，唔好誤降級
 }
 
 // 安全攞訂閱週期結束時間：新版 API（2025+/dahlia）將 current_period_end
@@ -124,21 +144,23 @@ Deno.serve(async (req: Request) => {
         }
         let periodEnd: string | null = null
         let status = 'active'
+        let plan: 'free' | 'plus' | 'pro' = 'pro'
         if (subscriptionId) {
           const subscription =
             await stripe.subscriptions.retrieve(subscriptionId)
           status = subscription.status
           periodEnd = periodEndIso(subscription)
+          plan = planFromSubscription(subscription)
         }
         await upsertByCustomer(customerId, {
           stripe_subscription_id: subscriptionId,
           status,
-          plan: planFromStatus(status),
+          plan,
           current_period_end: periodEnd,
         })
         // 交易 email：歡迎升級（收件人 = checkout 填嘅 email）
         const email = session.customer_details?.email
-        if (email && planFromStatus(status) === 'pro') {
+        if (email && plan === 'pro') {
           const m = welcomeProEmail()
           await sendEmail({ to: email, subject: m.subject, html: m.html })
         }
@@ -166,7 +188,7 @@ Deno.serve(async (req: Request) => {
         await upsertByCustomer(customerId, {
           stripe_subscription_id: subscription.id,
           status,
-          plan: planFromStatus(status),
+          plan: deleted ? 'free' : planFromSubscription(subscription),
           current_period_end: periodEndIso(subscription),
         })
         // 交易 email：取消通知
