@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useCollection } from '../../lib/store'
-import { lessonPlansCol, classesCol, topicsCol } from '../../data/collections'
+import { lessonPlansCol, topicsCol } from '../../data/collections'
 import type { LessonPlan } from '../../data/types'
 import { useToast } from '../../context/ToastContext'
 import { useConfirm } from '../../context/ConfirmContext'
@@ -104,7 +104,6 @@ const STATUS_ICON: Record<PlanStatus, typeof Circle> = {
 
 export default function LessonPlanner() {
   const plans = useCollection(lessonPlansCol)
-  const classes = useCollection(classesCol)
   const topics = useCollection(topicsCol)
   const metas = useCollection(planMetaCol)
   const templates = useCollection(planTemplatesCol)
@@ -155,7 +154,6 @@ export default function LessonPlanner() {
   ]
 
   // 篩選 / 搜尋 / 排序
-  const [filterClass, setFilterClass] = useState('')
   const [filterTopic, setFilterTopic] = useState('')
   const [filterStatus, setFilterStatus] = useState<PlanStatus | ''>('')
   const [filterArea, setFilterArea] = useState('')
@@ -202,7 +200,6 @@ export default function LessonPlanner() {
     return out
   }, [sortedTopics])
 
-  const className = (id?: string) => classes.find((c) => c.id === id)?.name
   const topicName = (id?: string) => (id ? topicById.get(id)?.topic : undefined)
   const topicArea = (id?: string) => (id ? topicById.get(id)?.area : undefined)
   const statusOf = (id: string): PlanStatus => metaById.get(id)?.status ?? 'draft'
@@ -211,7 +208,6 @@ export default function LessonPlanner() {
   const visible = useMemo(() => {
     const q = search.trim().toLowerCase()
     const filtered = plans.filter((p) => {
-      if (filterClass && p.classId !== filterClass) return false
       if (filterTopic && p.topicId !== filterTopic) return false
       if (filterArea && topicArea(p.topicId) !== filterArea) return false
       if (filterStatus && statusOf(p.id) !== filterStatus) return false
@@ -250,7 +246,6 @@ export default function LessonPlanner() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     plans,
-    filterClass,
     filterTopic,
     filterArea,
     filterStatus,
@@ -549,7 +544,6 @@ export default function LessonPlanner() {
     const ok = printPlan({
       plan: p,
       meta: metaById.get(p.id),
-      className: className(p.classId),
       topicName: topicName(p.topicId),
       area: topicArea(p.topicId),
     })
@@ -557,9 +551,8 @@ export default function LessonPlanner() {
   }
 
   const hasFilter =
-    !!filterClass || !!filterTopic || !!filterStatus || !!filterArea || !!search.trim()
+    !!filterTopic || !!filterStatus || !!filterArea || !!search.trim()
   const clearFilters = () => {
-    setFilterClass('')
     setFilterTopic('')
     setFilterStatus('')
     setFilterArea('')
@@ -686,23 +679,12 @@ export default function LessonPlanner() {
       {view === 'list' && (
         <>
           {/* 篩選列 */}
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
             <Input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="搜尋標題 / 目標 / 課題…"
             />
-            <Select
-              value={filterClass}
-              onChange={(e) => setFilterClass(e.target.value)}
-            >
-              <option value="">全部班別</option>
-              {classes.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </Select>
             <Select
               value={filterArea}
               onChange={(e) => setFilterArea(e.target.value)}
@@ -783,7 +765,6 @@ export default function LessonPlanner() {
                   <PlanCard
                     plan={p}
                     meta={metaById.get(p.id)}
-                    className={className(p.classId)}
                     topicName={topicName(p.topicId)}
                     area={topicArea(p.topicId)}
                     objective={firstObjective(p.objectives)}
@@ -915,7 +896,6 @@ export default function LessonPlanner() {
                             </span>
                           </div>
                           <div className="mt-0.5 flex items-center gap-1.5 text-[10px] text-slate-400">
-                            {p.classId && <span>{className(p.classId)}</span>}
                             {dur > 0 && (
                               <span className="inline-flex items-center gap-0.5 tabular-nums">
                                 <Clock size={10} />
@@ -1037,7 +1017,6 @@ export default function LessonPlanner() {
         open={editorOpen}
         mode={editorMode}
         initial={editorInitial}
-        classes={classes}
         topics={sortedTopics}
         templates={templates}
         onClose={closeEditor}
@@ -1049,7 +1028,7 @@ export default function LessonPlanner() {
       {aiOpen && (
         <GenerateModal
           topics={sortedTopics}
-          classes={classes}
+          classes={[]}
           subjectId={subjectPackId}
           subjectName={subjectName}
           defaultModel="gemini-2.5-flash"

@@ -7,7 +7,6 @@ import {
   RotateCcw,
   Settings2,
   PieChart,
-  Filter,
   Clock,
   AlertTriangle,
   ChevronRight,
@@ -17,7 +16,7 @@ import {
   CalendarPlus,
 } from 'lucide-react'
 import { createCollection, useCollection } from '../../lib/store'
-import { timetableCol, classesCol, cycleCalendarCol } from '../../data/collections'
+import { timetableCol, cycleCalendarCol } from '../../data/collections'
 import { NTK_BELLS } from '../../data/ntk-seed'
 import type { Entity } from '../../lib/store'
 import {
@@ -31,7 +30,6 @@ import {
   Modal,
   PageHero,
   SegmentedControl,
-  Select,
   cx,
 } from '../../ui'
 import { useToast } from '../../context/ToastContext'
@@ -101,7 +99,6 @@ type ViewId = 'grid' | 'workload' | 'print'
 export default function Timetable() {
   const { t } = useTranslation()
   const slots = useCollection(timetableCol)
-  const classes = useCollection(classesCol)
   const metas = useCollection(timetableMetaCol)
   const configs = useCollection(timetableConfigCol)
   const cycleCalendar = useCollection(cycleCalendarCol)
@@ -110,7 +107,6 @@ export default function Timetable() {
 
   const [view, setView] = useState<ViewId>('grid')
   const [draft, setDraft] = useState<EditorDraft | null>(null)
-  const [filterClass, setFilterClass] = useState('') // '' = 全部
   const [showSettings, setShowSettings] = useState(false)
 
   // 現在分鐘（每分鐘更新一次，畀「下一堂」用）
@@ -152,11 +148,9 @@ export default function Timetable() {
     return m
   }, [metas])
 
-  const classNameById = useMemo(() => {
-    const m = new Map<string, string>()
-    for (const c of classes) m.set(c.id, c.name)
-    return m
-  }, [classes])
+  // 班別子系統已移除：時間表只用科目文字。仍向下游視圖傳一個穩定空 map
+  // （WeekGrid / WorkloadView / PrintView 等仍要 classNameById prop）。
+  const classNameById = useMemo(() => new Map<string, string>(), [])
 
   // 班別 → 穩定顏色（甜甜圈 / 圖例用）
   const classColorKey = useMemo(() => {
@@ -239,7 +233,7 @@ export default function Timetable() {
       setDraft({
         day,
         period,
-        classId: filterClass || '',
+        classId: '',
         subject: '',
         room: '',
         week: 'all',
@@ -474,23 +468,6 @@ export default function Timetable() {
             { id: 'print', label: t('timetable.viewPrint', { defaultValue: '列印' }), icon: Printer },
           ]}
         />
-        {view === 'grid' && classes.length > 0 && (
-          <div className="flex items-center gap-1.5">
-            <Filter size={14} className="text-slate-400" />
-            <Select
-              value={filterClass}
-              onChange={(e) => setFilterClass(e.target.value)}
-              className="w-40"
-            >
-              <option value="">{t('timetable.filterAll', { defaultValue: '全部班別' })}</option>
-              {classes.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {t('timetable.filterFocus', { name: c.name, defaultValue: `聚焦 ${c.name}` })}
-                </option>
-              ))}
-            </Select>
-          </div>
-        )}
       </div>
 
       {/* 視圖內容 */}
@@ -521,7 +498,7 @@ export default function Timetable() {
             metaByKey={metaByKey}
             classNameById={classNameById}
             conflictKeys={conflictKeys}
-            dimClassId={filterClass}
+            dimClassId={''}
             onOpenCell={openCell}
           />
         </>
@@ -551,7 +528,6 @@ export default function Timetable() {
       {/* 編輯器 */}
       <SlotEditor
         draft={draft}
-        classes={classes}
         periodLabel={`第 ${draft?.period ?? 0} 節`}
         timeLabel={
           editorPeriod ? `${editorPeriod.start}–${editorPeriod.end}` : undefined

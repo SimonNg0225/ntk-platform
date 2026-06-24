@@ -1,11 +1,9 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Download, FileText, Files, ScanText, Library, Users } from 'lucide-react'
-import { Button, SegmentedControl, Select } from '../../../ui'
+import { Download, FileText, Files, ScanText, Library } from 'lucide-react'
+import { Button, SegmentedControl } from '../../../ui'
 import { useToast } from '../../../context/ToastContext'
 import { useAuth } from '../../../context/AuthContext'
-import { useCollection } from '../../../lib/store'
-import { classesCol, studentsCol } from '../../../data/collections'
 import { downloadBlob } from '../../../lib/export/file'
 import { isScanStorageConfigured, uploadScanPdf } from '../../../lib/supabaseStorage'
 import type { OutputMode, ScanPage } from './lib/types'
@@ -23,16 +21,9 @@ export default function ExportBar({
   const { t } = useTranslation()
   const toast = useToast()
   const { user } = useAuth()
-  const classes = useCollection(classesCol)
-  const students = useCollection(studentsCol)
   const [mode, setMode] = useState<OutputMode>('merged')
   const [ocr, setOcr] = useState(true)
   const [busy, setBusy] = useState(false)
-  // 去向②③：存資源庫（可選綁班級／學生）
-  const [bindOpen, setBindOpen] = useState(false)
-  const [classId, setClassId] = useState('')
-  const [studentId, setStudentId] = useState('')
-  const classStudents = students.filter((s) => s.classId === classId)
 
   async function run() {
     if (!pages.length) return
@@ -79,8 +70,6 @@ export default function ExportBar({
           const { path, url } = await uploadScanPdf(blob, names[0], user.id)
           registerScanResource({
             title: baseName,
-            classId: classId || undefined,
-            studentId: studentId || undefined,
             url,
             storagePath: path,
           })
@@ -89,7 +78,6 @@ export default function ExportBar({
               defaultValue: '已存上雲端資源庫，可喺資源庫直接開',
             }),
           )
-          setBindOpen(false)
           return
         } catch (err) {
           // 上載失敗（未開 bucket / RLS / 網絡）→ 跌落本機降級路徑。
@@ -108,15 +96,12 @@ export default function ExportBar({
       downloadBlob(blob, names[0])
       registerScanResource({
         title: baseName,
-        classId: classId || undefined,
-        studentId: studentId || undefined,
       })
       toast.success(
         t('scan.savedToLib', {
           defaultValue: '已登記到資源庫，並下載 PDF 留底',
         }),
       )
-      setBindOpen(false)
     } catch {
       toast.error(t('scan.failed', { defaultValue: '生成失敗，請再試' }))
     } finally {
@@ -145,15 +130,6 @@ export default function ExportBar({
           </Button>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          {/* 去向③：綁班級／學生（展開內聯選擇器） */}
-          <Button
-            variant={bindOpen ? 'primary' : 'ghost'}
-            icon={Users}
-            onClick={() => setBindOpen((v) => !v)}
-            disabled={busy || !pages.length}
-          >
-            {t('scan.bind', { defaultValue: '綁班級／學生' })}
-          </Button>
           {/* 去向②：存資源庫 */}
           <Button
             variant="ghost"
@@ -171,61 +147,6 @@ export default function ExportBar({
           </Button>
         </div>
       </div>
-
-      {bindOpen && (
-        <div className="flex flex-wrap items-end gap-3 rounded-lg border border-border bg-surface px-3 py-2.5">
-          <label className="block space-y-1">
-            <span className="text-xs font-medium text-slate-600 dark:text-slate-300">
-              {t('scan.class', { defaultValue: '班級' })}
-            </span>
-            <Select
-              value={classId}
-              onChange={(e) => {
-                setClassId(e.target.value)
-                setStudentId('')
-              }}
-              className="min-w-[10rem]"
-            >
-              <option value="">
-                {t('scan.classNone', { defaultValue: '— 不綁班級 —' })}
-              </option>
-              {classes.map((k) => (
-                <option key={k.id} value={k.id}>
-                  {k.name}
-                  {k.subject ? ` · ${k.subject}` : ''}
-                </option>
-              ))}
-            </Select>
-          </label>
-          <label className="block space-y-1">
-            <span className="text-xs font-medium text-slate-600 dark:text-slate-300">
-              {t('scan.student', { defaultValue: '學生（選填）' })}
-            </span>
-            <Select
-              value={studentId}
-              onChange={(e) => setStudentId(e.target.value)}
-              disabled={!classId}
-              className="min-w-[10rem]"
-            >
-              <option value="">
-                {t('scan.studentNone', { defaultValue: '— 全班（不指定）—' })}
-              </option>
-              {classStudents.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.name}
-                </option>
-              ))}
-            </Select>
-          </label>
-          <Button
-            icon={Library}
-            onClick={saveToLibrary}
-            disabled={busy || !pages.length}
-          >
-            {t('scan.saveBound', { defaultValue: '存入並綁定' })}
-          </Button>
-        </div>
-      )}
     </div>
   )
 }

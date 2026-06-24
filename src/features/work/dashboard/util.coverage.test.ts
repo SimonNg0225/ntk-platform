@@ -2,13 +2,10 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import {
   buildTaskTrend,
   buildHeat,
-  buildClassProgress,
-  buildGradeSummary,
   completedInRange,
   addKey,
   type MergedTask,
 } from './util'
-import type { Klass, ClassProgress, Assessment, Score } from '../../../data/types'
 import { localDay } from '../todo/util'
 
 // ============================================================
@@ -177,113 +174,6 @@ describe('buildHeat', () => {
     ]
     const out = buildHeat(tasks, 5)
     expect(out.find((c) => c.key === '2026-05-15')!.count).toBe(3)
-  })
-})
-
-// ============================================================
-//  Bug #1 [high]：buildClassProgress percent 冇 clamp 上限
-//  ------------------------------------------------------------
-//  done = 該班 status==='done' 列數；total = totalTopics（全域）。
-//  當 done > totalTopics（刪 topic 但 progress 殘留），percent 應 clamp 100，
-//  done 顯示亦應 <= total。修前會見 167%。
-// ============================================================
-describe('buildClassProgress — percent / done 應 clamp（揭發 Bug #1）', () => {
-  const classes: Klass[] = [{ id: 'c1', name: '5A', subject: 'BAFS' }]
-
-  it('done(5) > totalTopics(3)：percent clamp 至 100、done 顯示 clamp 至 total', () => {
-    const progress: ClassProgress[] = [
-      { id: 'p1', classId: 'c1', topicId: 't1', status: 'done' },
-      { id: 'p2', classId: 'c1', topicId: 't2', status: 'done' },
-      { id: 'p3', classId: 'c1', topicId: 't3', status: 'done' },
-      { id: 'p4', classId: 'c1', topicId: 't4', status: 'done' },
-      { id: 'p5', classId: 'c1', topicId: 't5', status: 'done' },
-    ]
-    const rows = buildClassProgress(classes, progress, 3)
-    expect(rows[0].total).toBe(3)
-    // 防 UI 顯示「5/3（167%）」：percent 上限 100、done 不超 total
-    expect(rows[0].percent).toBe(100)
-    expect(rows[0].done).toBeLessThanOrEqual(rows[0].total)
-    expect(rows[0].done).toBe(3)
-  })
-
-  it('正常 done(2) <= total(4)：percent 不受 clamp 影響、done 原值', () => {
-    const progress: ClassProgress[] = [
-      { id: 'p1', classId: 'c1', topicId: 't1', status: 'done' },
-      { id: 'p2', classId: 'c1', topicId: 't2', status: 'done' },
-      { id: 'p3', classId: 'c1', topicId: 't3', status: 'in_progress' },
-    ]
-    const rows = buildClassProgress(classes, progress, 4)
-    expect(rows[0]).toMatchObject({ done: 2, inProgress: 1, total: 4, percent: 50 })
-  })
-
-  it('done = total：percent 剛好 100、done = total', () => {
-    const progress: ClassProgress[] = [
-      { id: 'p1', classId: 'c1', topicId: 't1', status: 'done' },
-      { id: 'p2', classId: 'c1', topicId: 't2', status: 'done' },
-    ]
-    const rows = buildClassProgress(classes, progress, 2)
-    expect(rows[0].percent).toBe(100)
-    expect(rows[0].done).toBe(2)
-  })
-})
-
-// ============================================================
-//  Bug #2 [med]：buildGradeSummary 揀「最近評估」混合比較
-//  不同長度日期字串（date 10 字 vs createdAt ISO）。
-//  ------------------------------------------------------------
-//  同一日曆日下，ISO 字串字典序排喺裸 date 之後，
-//  令「只有 createdAt（無 date）」嗰份被當成更新而誤選。
-//  正確：用日 key（slice 0..10）統一比較。
-// ============================================================
-describe('buildGradeSummary — 同日 date vs createdAt 揀選（揭發 Bug #2）', () => {
-  const asmt = (over: Partial<Assessment> & { id: string }): Assessment => ({
-    classId: 'c1',
-    name: '測驗',
-    type: '測驗',
-    maxScore: 100,
-    createdAt: '2026-05-01T00:00:00.000Z',
-    ...over,
-  })
-  const sc = (assessmentId: string, score: number | null, id = assessmentId + score): Score => ({
-    id,
-    assessmentId,
-    studentId: 's',
-    score,
-  })
-
-  it('A 有 date=2026-05-10、B 只有 createdAt=2026-05-10T08:00（同曆日）→ 應揀 A（有明確 date）', () => {
-    const assessments = [
-      asmt({ id: 'A', date: '2026-05-10', createdAt: '2026-05-10T00:00:00.000Z' }),
-      asmt({ id: 'B', date: undefined, createdAt: '2026-05-10T08:00:00.000Z' }),
-    ]
-    // A 全部 90 分、B 全部 30 分；揀啱 A → average 90、揀錯 B → average 30
-    const scores = [sc('A', 90, 'a90'), sc('B', 30, 'b30')]
-    const out = buildGradeSummary(assessments, scores)
-    expect(out.assessment?.id).toBe('A')
-    expect(out.average).toBe(90)
-    expect(out.graded).toBe(1)
-  })
-
-  it('不同曆日仍按日期降序揀最新（B 較新一日）', () => {
-    const assessments = [
-      asmt({ id: 'A', date: '2026-05-10' }),
-      asmt({ id: 'B', date: undefined, createdAt: '2026-05-11T08:00:00.000Z' }),
-    ]
-    const scores = [sc('A', 90, 'a90'), sc('B', 30, 'b30')]
-    const out = buildGradeSummary(assessments, scores)
-    expect(out.assessment?.id).toBe('B')
-    expect(out.average).toBe(30)
-  })
-
-  it('兩份都只有 createdAt：仍揀較新嗰份', () => {
-    const assessments = [
-      asmt({ id: 'A', date: undefined, createdAt: '2026-05-09T08:00:00.000Z' }),
-      asmt({ id: 'B', date: undefined, createdAt: '2026-05-12T08:00:00.000Z' }),
-    ]
-    const scores = [sc('A', 90, 'a90'), sc('B', 40, 'b40')]
-    const out = buildGradeSummary(assessments, scores)
-    expect(out.assessment?.id).toBe('B')
-    expect(out.average).toBe(40)
   })
 })
 

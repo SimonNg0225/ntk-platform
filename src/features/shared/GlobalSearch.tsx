@@ -14,8 +14,6 @@ import {
   resourcesCol,
   lessonPlansCol,
   meetingNotesCol,
-  classesCol,
-  studentsCol,
   tasksCol,
   goalsCol,
   eventsCol,
@@ -38,15 +36,12 @@ import type {
   Resource,
   LessonPlan,
   MeetingNote,
-  Klass,
-  Student,
   Task,
   Goal,
   CalendarEvent,
   Countdown,
   Deck,
   Card,
-  Topic,
 } from '../../data/types'
 import { useNav } from '../../context/NavContext'
 import { useMode } from '../../context/ModeContext'
@@ -75,8 +70,6 @@ import {
   HelpCircle,
   FolderOpen,
   ClipboardList,
-  Users2,
-  GraduationCap,
   CheckSquare,
   Target,
   CalendarDays,
@@ -175,10 +168,7 @@ const KIND_META: Record<string, Omit<SourceKind, 'id'>> = {
   slide: { label: '簡報', featureId: 'work-slides', icon: Presentation, tone: 'accent', modes: ['work'] },
   lesson: { label: '備課教案', featureId: 'work-lesson-plan', icon: ClipboardList, tone: 'accent', modes: ['work'] },
   meeting: { label: '會議筆記', featureId: 'work-meeting-notes', icon: ListTree, tone: 'slate', modes: ['work'] },
-  klass: { label: '班別', featureId: 'work-classes', icon: GraduationCap, tone: 'blue', modes: ['work'] },
-  student: { label: '學生', featureId: 'work-gradebook', icon: Users2, tone: 'blue', modes: ['work'] },
   task: { label: '待辦事項', featureId: 'work-tasks', icon: CheckSquare, tone: 'amber', modes: ['work'] },
-  topic: { label: '課程課題', featureId: 'work-curriculum', icon: Hash, tone: 'slate', modes: ['work'] },
   event: { label: '行事曆', featureId: 'calendar', icon: CalendarDays, tone: 'accent', modes: ['learning', 'work'] },
   countdown: { label: '重要日子', featureId: 'countdown', icon: Timer, tone: 'rose', modes: ['learning', 'work'] },
   inbox: { label: '快速擷取', featureId: 'inbox', icon: InboxIcon, tone: 'slate', modes: ['learning', 'work'] },
@@ -289,8 +279,6 @@ export default function GlobalSearch() {
   const meetingNotes = useCollection(meetingNotesCol)
   const reading = useCollection(booksCol)
   const journal = useCollection(journalDocsCol)
-  const classes = useCollection(classesCol)
-  const students = useCollection(studentsCol)
   const tasks = useCollection(tasksCol)
   const goals = useCollection(goalsCol)
   const events = useCollection(eventsCol)
@@ -318,8 +306,7 @@ export default function GlobalSearch() {
   // 輸入框即時更新、重運算延後一拍跟上。輸入鍵盤 chrome 仍用即時 query。
   const deferredQuery = useDeferredValue(query)
 
-  // 班別 / 課題 對照（畀題目、學生、教案做副標）
-  const classById = useMemo(() => new Map(classes.map((c) => [c.id, c.name])), [classes])
+  // 課題 對照（畀題目、教案做副標）
   const topicById = useMemo(() => new Map(topics.map((t) => [t.id, t.topic])), [topics])
   const deckById = useMemo(() => new Map(decks.map((d) => [d.id, d.name])), [decks])
 
@@ -383,9 +370,8 @@ export default function GlobalSearch() {
       ], q, { ts: toMs(r.createdAt) })),
     )
     lessonPlans.forEach((l: LessonPlan) =>
-      push(buildHit('lesson', l.id, [{ title: l.title, body: [l.objectives, l.activities].filter(Boolean).join('\n\n') }], l.classId ? classById.get(l.classId) : l.date, [
+      push(buildHit('lesson', l.id, [{ title: l.title, body: [l.objectives, l.activities].filter(Boolean).join('\n\n') }], l.date, [
         ...(l.date ? [{ label: '日期', value: l.date }] : []),
-        ...(l.classId ? [{ label: '班別', value: classById.get(l.classId) ?? '—' }] : []),
         ...(l.topicId ? [{ label: '課題', value: topicById.get(l.topicId) ?? '—' }] : []),
       ], q, { ts: toMs(l.createdAt) ?? toMs(l.date) })),
     )
@@ -395,29 +381,11 @@ export default function GlobalSearch() {
         ...(mn.tags?.length ? [{ label: '標籤', value: mn.tags.join('、') }] : []),
       ], q, { ts: toMs(mn.createdAt) ?? toMs(mn.date) })),
     )
-    classes.forEach((c: Klass) =>
-      push(buildHit('klass', c.id, [{ title: c.name, extra: c.subject }], c.subject, [
-        { label: '科目', value: c.subject },
-        { label: '人數', value: String(students.filter((s) => s.classId === c.id).length) },
-      ], q)),
-    )
-    students.forEach((s: Student) =>
-      push(buildHit('student', s.id, [{ title: s.name, extra: s.studentNo }], classById.get(s.classId), [
-        { label: '班別', value: classById.get(s.classId) ?? '—' },
-        ...(s.studentNo ? [{ label: '學號', value: s.studentNo }] : []),
-      ], q)),
-    )
     tasks.forEach((t: Task) =>
       push(buildHit('task', t.id, [{ title: t.text }], t.done ? '已完成' : '待辦', [
         { label: '狀態', value: t.done ? '已完成' : '待辦' },
         { label: '建立', value: fmtDate(t.createdAt) },
       ], q, { ts: toMs(t.createdAt) })),
-    )
-    topics.forEach((t: Topic) =>
-      push(buildHit('topic', t.id, [{ title: t.topic, extra: `${t.part} · ${t.area}` }], `${t.part} · ${t.area}`, [
-        { label: '部分', value: t.part },
-        { label: '範疇', value: t.area },
-      ], q)),
     )
     papers.forEach((p: SavedPaper) =>
       push(buildHit('paper', p.id, [{ title: p.title, extra: p.className }], `${p.questionIds.length} 題${p.className ? ` · ${p.className}` : ''}`, [
@@ -457,14 +425,13 @@ export default function GlobalSearch() {
         { label: '擷取', value: fmtDate(it.createdAt) },
       ], q, { ts: toMs(it.createdAt) })),
     )
-    // 私隱閘：被 gate 嘅學生／家長功能（同其資料實體）一律唔出搜尋結果。
-    // 每條 Hit 都帶 featureId，用 isFeatureAvailable 一次過濾掉功能入口 + 實體
-    // （e.g. work-gradebook 學生、work-classes 班別、work-curriculum 課題）。
+    // 私隱閘：被 gate 嘅功能（同其資料實體）一律唔出搜尋結果。
+    // 每條 Hit 都帶 featureId，用 isFeatureAvailable 一次過濾掉功能入口 + 實體。
     return out.filter((h) => isFeatureAvailable(h.featureId))
   }, [
     deferredQuery, notes, journal, goals, reading, decks, cards, questions, resources,
-    lessonPlans, meetingNotes, classes, students, tasks, topics, papers, habits,
-    slideDecks, events, countdowns, inbox, classById, topicById, deckById,
+    lessonPlans, meetingNotes, tasks, papers, habits,
+    slideDecks, events, countdowns, inbox, topicById, deckById,
   ])
 
   // 「最近」排序生效條件：view='recent' 視圖 或 sort:recent 運算子（兩者共用同一

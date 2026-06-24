@@ -4,13 +4,8 @@ import { BAFS_TOPICS } from './bafs'
 import { NTK_SLOTS, NTK_CYCLE_CALENDAR } from './ntk-seed'
 import type {
   Topic,
-  Klass,
-  Student,
-  ClassProgress,
   Question,
   Resource,
-  Assessment,
-  Score,
   Deck,
   Card,
   JournalEntry,
@@ -24,8 +19,6 @@ import type {
   HabitLog,
   LessonPlan,
   TimetableSlot,
-  AttendanceRecord,
-  ParentComm,
   MeetingNote,
   Observation,
   InboxItem,
@@ -46,13 +39,7 @@ import type {
 // 共用骨幹
 export const topicsCol = createCollection<Topic>('topics', BAFS_TOPICS)
 
-// 收費版預設唔 seed 班別（demo 班別屬學生資料脈絡，避免新 account 殘留）。
-export const classesCol = createCollection<Klass>('classes', [])
-
-export const studentsCol = createCollection<Student>('students', [])
-
 // 工作模式
-export const progressCol = createCollection<ClassProgress>('class_progress', [])
 export const questionsCol = createCollection<Question>('questions', [])
 // 已儲存試卷（題庫組卷工作室 + 教材生成「試卷生成」共用同一 instance，跨組件實時同步）
 export interface SavedPaper extends Entity {
@@ -64,8 +51,6 @@ export interface SavedPaper extends Entity {
 }
 export const papersCol = createCollection<SavedPaper>('questionbank.papers', [])
 export const resourcesCol = createCollection<Resource>('resources', [])
-export const assessmentsCol = createCollection<Assessment>('assessments', [])
-export const scoresCol = createCollection<Score>('scores', [])
 
 // 學習模式
 export const decksCol = createCollection<Deck>('decks', [])
@@ -124,8 +109,6 @@ export const cycleCalendarCol = createCollection<CycleCalendarEntry>(
   'cycle_calendar',
   NTK_CYCLE_CALENDAR,
 )
-export const attendanceCol = createCollection<AttendanceRecord>('attendance', [])
-export const parentCommsCol = createCollection<ParentComm>('parent_comms', [])
 export const meetingNotesCol = createCollection<MeetingNote>('meeting_notes', [])
 export const observationsCol = createCollection<Observation>('observations', [])
 export const inboxCol = createCollection<InboxItem>('inbox', [])

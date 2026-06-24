@@ -1,8 +1,6 @@
 import {
   topicsCol,
   questionsCol,
-  progressCol,
-  assessmentsCol,
   lessonPlansCol,
 } from '../../../data/collections'
 import { getSubjectPack, missingTopicsForSubjects } from '../../../data/subjects'
@@ -17,14 +15,12 @@ import {
 
 // ============================================================
 //  Smart 套用課題 — 執行 reconcile 計劃喺 topicsCol
-//  同名保留 id（題庫/進度/評估/備課 連繫唔甩）；舊有有資料連住就保留，否則清走。
+//  同名保留 id（題庫/備課 連繫唔甩）；舊有有資料連住就保留，否則清走。
 // ============================================================
 
 function referencedIds(): Set<string> {
   const ids = new Set<string>()
   for (const q of questionsCol.get()) ids.add(q.topicId)
-  for (const p of progressCol.get()) ids.add(p.topicId)
-  for (const a of assessmentsCol.get()) if (a.topicId) ids.add(a.topicId)
   for (const l of lessonPlansCol.get()) if (l.topicId) ids.add(l.topicId)
   return ids
 }
@@ -119,7 +115,7 @@ export function appendTopicsByText(incoming: (TopicInput & { id?: string })[]): 
 //  去重整理 topicsCol（self-heal）
 //  ------------------------------------------------------------
 //  剷走同名（norm）又冇資料連住嘅重複課題；referenced 嘅一律保留唔郁，
-//  唔會斷開題庫／進度／評估／備課嘅連繫。每次開首頁跑一次，止住歷史污染。
+//  唔會斷開題庫／備課嘅連繫。每次開首頁跑一次，止住歷史污染。
 //  回傳實際剷走數。
 // ============================================================
 export function dedupeTopicsCol(): number {

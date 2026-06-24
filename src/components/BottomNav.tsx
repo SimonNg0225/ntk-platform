@@ -1,8 +1,8 @@
 import { useTranslation } from 'react-i18next'
 import {
   Home,
-  ClipboardCheck,
-  GraduationCap,
+  NotebookPen,
+  FileText,
   Calendar,
   LayoutGrid,
   Bot,
@@ -33,8 +33,8 @@ const CAL: Item = { id: 'calendar', icon: Calendar, key: 'bnCal', zh: '行事曆
 const NAV: Record<'work' | 'learning', Item[]> = {
   work: [
     HOME,
-    { id: 'work-grading', icon: ClipboardCheck, key: 'bnMark', zh: '批改' },
-    { id: 'work-gradebook', icon: GraduationCap, key: 'bnGrades', zh: '成績' },
+    { id: 'work-lesson-plan', icon: NotebookPen, key: 'bnLesson', zh: '備課' },
+    { id: 'work-generate', icon: FileText, key: 'bnGen', zh: '教材' },
     CAL,
     MORE,
   ],

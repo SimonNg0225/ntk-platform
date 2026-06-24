@@ -12,28 +12,7 @@ export interface Topic extends Entity {
   order: number
 }
 
-export interface Klass extends Entity {
-  name: string // 例如 5A
-  subject: string // 例如 BAFS（商業管理）
-}
-
-export interface Student extends Entity {
-  classId: string
-  name: string
-  studentNo?: string
-}
-
 // ───── 工作模式 ─────
-export type ProgressStatus = 'not_started' | 'in_progress' | 'done'
-
-export interface ClassProgress extends Entity {
-  classId: string
-  topicId: string
-  status: ProgressStatus
-  notes?: string
-  dateDone?: string
-}
-
 export type QuestionType = 'mc' | 'short' | 'long' | 'case'
 export type Difficulty = 'easy' | 'medium' | 'hard'
 
@@ -67,23 +46,6 @@ export interface Resource extends Entity {
   tags?: string[]
   notes?: string
   createdAt: string
-}
-
-export interface Assessment extends Entity {
-  classId: string
-  name: string
-  type: string // 測驗 / 考試 / 功課
-  date?: string
-  maxScore: number
-  topicId?: string
-  createdAt: string
-}
-
-export interface Score extends Entity {
-  assessmentId: string
-  studentId: string
-  score: number | null
-  remark?: string
 }
 
 // ───── 學習模式 ─────
@@ -224,26 +186,6 @@ export interface TimetableSlot extends Entity {
 export interface CycleCalendarEntry extends Entity {
   date: string // YYYY-MM-DD
   cycleDay: number // 1..6
-}
-
-// 出席（工作）
-export type AttendanceStatus = 'present' | 'absent' | 'late'
-export interface AttendanceRecord extends Entity {
-  classId: string
-  studentId: string
-  date: string // YYYY-MM-DD
-  status: AttendanceStatus
-}
-
-// 家長 / 學生溝通記錄（工作）
-export interface ParentComm extends Entity {
-  classId: string
-  studentId?: string
-  date: string
-  channel: string // 電話 / 電郵 / 面談 / 手冊
-  summary: string
-  followUp?: boolean
-  createdAt: string
 }
 
 // 會議 / 行政筆記（工作）

@@ -25,7 +25,7 @@ import {
   CalendarDays,
   X,
 } from 'lucide-react'
-import type { Klass, LessonPlan, Topic } from '../../../data/types'
+import type { LessonPlan, Topic } from '../../../data/types'
 import { useToast } from '../../../context/ToastContext'
 import {
   PHASE_PRESETS,
@@ -105,7 +105,6 @@ export default function PlanEditor({
   open,
   mode,
   initial,
-  classes,
   topics,
   templates,
   onClose,
@@ -115,7 +114,6 @@ export default function PlanEditor({
   open: boolean
   mode: 'create' | 'edit'
   initial: PlanDraft
-  classes: Klass[]
   topics: Topic[]
   templates: PlanTemplate[]
   onClose: () => void
@@ -199,7 +197,6 @@ export default function PlanEditor({
   const matDone = d.materials.filter((m) => m.done).length
 
   // ── masthead 即時情境（粉筆寫喺黑板上嘅課堂頭）──
-  const className = classes.find((c) => c.id === d.classId)?.name
   const topicName = topics.find((t) => t.id === d.topicId)?.topic
   const dateLabel = d.date
     ? new Date(d.date + 'T00:00:00').toLocaleDateString('zh-HK', {
@@ -315,12 +312,6 @@ export default function PlanEditor({
                   />
                   {sMeta.label}
                 </span>
-                {className && (
-                  <>
-                    <Sep />
-                    <span>{className}</span>
-                  </>
-                )}
                 {topicName && (
                   <>
                     <Sep />
@@ -443,20 +434,7 @@ export default function PlanEditor({
                 title="歸檔與排程"
                 icon={CalendarDays}
               />
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                <Field label="班別">
-                  <Select
-                    value={d.classId}
-                    onChange={(e) => set('classId', e.target.value)}
-                  >
-                    <option value="">未指定</option>
-                    {classes.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.name}
-                      </option>
-                    ))}
-                  </Select>
-                </Field>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <Field label="課題">
                   <Select
                     value={d.topicId}

@@ -1,14 +1,8 @@
 import type {
   Task,
   TimetableSlot,
-  Klass,
   CalendarEvent,
   CalendarCategory,
-  AttendanceRecord,
-  Score,
-  Assessment,
-  ClassProgress,
-  ParentComm,
   Countdown,
 } from '../../../data/types'
 import type { TaskMeta } from '../todo/types'
@@ -22,9 +16,7 @@ import {
 import { getOccurrences, colorOf, minutesOf } from '../../shared/calendar/util'
 import type {
   AgendaItem,
-  ClassProgressRow,
   DayLoad,
-  GradeBin,
   HeatCell,
   TrendPoint,
 } from './types'
@@ -167,7 +159,6 @@ function periodTimeLabel(period: number): string {
 // ───────── 今日議程（合併課堂 / 事件 / 到期待辦 / 倒數）─────────
 export function buildAgenda(opts: {
   timetable: TimetableSlot[]
-  classNameById: Map<string, string>
   events: CalendarEvent[]
   calendars: CalendarCategory[]
   tasks: MergedTask[]
@@ -177,19 +168,18 @@ export function buildAgenda(opts: {
   /** cycle 模式：今日嘅 cycle day(1..6)，覆寫用嚟篩今日堂；無則用 jsDay（星期制）。 */
   slotDay?: number
 }): AgendaItem[] {
-  const { timetable, classNameById, events, calendars, tasks, countdowns, todayKey, jsDay, slotDay } = opts
+  const { timetable, events, calendars, tasks, countdowns, todayKey, jsDay, slotDay } = opts
   const items: AgendaItem[] = []
 
   // 課堂：cycle 模式用 slotDay(cycle day)，否則用 jsDay（星期日=0 通常無）
   for (const s of todaySlots(timetable, slotDay ?? jsDay)) {
-    const label = s.classId ? classNameById.get(s.classId) ?? s.subject : s.subject
     items.push({
       id: `class-${s.id}`,
       kind: 'class',
       time: periodTimeLabel(s.period),
       sortKey: periodToMinutes(s.period),
-      title: label,
-      subtitle: `第 ${s.period} 節 · ${s.subject}`,
+      title: s.subject,
+      subtitle: `第 ${s.period} 節`,
       colorClass: 'bg-accent',
       badge: s.room || undefined,
       navTo: 'work-timetable',
@@ -256,110 +246,6 @@ export function buildAgenda(opts: {
   return items
 }
 
-// ───────── 各班課程進度 ─────────
-export function buildClassProgress(
-  classes: Klass[],
-  progress: ClassProgress[],
-  totalTopics: number,
-): ClassProgressRow[] {
-  return classes.map((k) => {
-    const rows = progress.filter((p) => p.classId === k.id)
-    const done = rows.filter((p) => p.status === 'done').length
-    const inProgress = rows.filter((p) => p.status === 'in_progress').length
-    const total = totalTopics || rows.length
-    // done 可能多過 total（刪咗 topic 但 progress 列殘留）→ clamp，避免顯示 5/3（167%）
-    const doneCapped = Math.min(done, total)
-    const percent = total > 0 ? Math.min(100, Math.round((done / total) * 100)) : 0
-    return { id: k.id, name: k.name, done: doneCapped, inProgress, total, percent }
-  })
-}
-
-// 整體課程完成百分比（所有班平均）
-export function overallProgressPercent(rows: ClassProgressRow[]): number {
-  if (rows.length === 0) return 0
-  const sum = rows.reduce((s, r) => s + r.percent, 0)
-  return Math.round(sum / rows.length)
-}
-
-// ───────── 出席率（近 N 日整體）─────────
-export interface AttendanceSummary {
-  present: number
-  late: number
-  absent: number
-  total: number
-  rate: number // present+late 視為到（出席率 %）
-}
-
-export function buildAttendance(
-  records: AttendanceRecord[],
-  sinceKey: string,
-): AttendanceSummary {
-  let present = 0
-  let late = 0
-  let absent = 0
-  for (const r of records) {
-    if (r.date < sinceKey) continue
-    if (r.status === 'present') present++
-    else if (r.status === 'late') late++
-    else absent++
-  }
-  const total = present + late + absent
-  const rate = total > 0 ? Math.round(((present + late) / total) * 100) : 0
-  return { present, late, absent, total, rate }
-}
-
-// ───────── 成績分布（最近一次評估，分數區間直方圖）─────────
-export interface GradeSummary {
-  assessment?: Assessment
-  bins: GradeBin[]
-  average: number // 百分比
-  graded: number
-  max: number
-}
-
-export function buildGradeSummary(
-  assessments: Assessment[],
-  scores: Score[],
-): GradeSummary {
-  // 揀最近（有日期者按日期；否則 createdAt）有成績嘅評估
-  const withScores = assessments.filter((a) =>
-    scores.some((s) => s.assessmentId === a.id && s.score != null),
-  )
-  if (withScores.length === 0) {
-    return { bins: emptyBins(), average: 0, graded: 0, max: 0 }
-  }
-  // 統一做日 key（10 字）再比較：避免裸 date '2026-05-10' 同 ISO createdAt
-  // '2026-05-10T08:00…' 因長度唔同而字典序錯位（同曆日下誤選只有 createdAt 嗰份）
-  const dayKey = (a: Assessment) => (a.date ?? a.createdAt).slice(0, 10)
-  const latest = withScores
-    .slice()
-    .sort((a, b) => dayKey(b).localeCompare(dayKey(a)))[0]
-  const rows = scores.filter(
-    (s) => s.assessmentId === latest.id && s.score != null,
-  )
-  const max = latest.maxScore || 100
-  const bins = emptyBins()
-  let sumPct = 0
-  for (const s of rows) {
-    const pct = Math.max(0, Math.min(100, ((s.score as number) / max) * 100))
-    sumPct += pct
-    const bi = pct >= 100 ? 4 : Math.min(4, Math.floor(pct / 20))
-    bins[bi].count++
-  }
-  const average = rows.length > 0 ? Math.round(sumPct / rows.length) : 0
-  return { assessment: latest, bins, average, graded: rows.length, max }
-}
-
-function emptyBins(): GradeBin[] {
-  return [
-    { label: '0–19', count: 0 },
-    { label: '20–39', count: 0 },
-    { label: '40–59', count: 0 },
-    { label: '60–79', count: 0 },
-    { label: '80–100', count: 0 },
-  ]
-}
-
 // ───────── 本週課擔（每日節數）─────────
 export function buildWeekLoad(
   timetable: TimetableSlot[],
@@ -378,23 +264,6 @@ export function buildWeekLoad(
     })
   }
   return out
-}
-
-// ───────── 待跟進家長（按班分組）─────────
-export interface FollowUpRow {
-  comm: ParentComm
-  className: string
-}
-
-export function buildFollowUps(
-  comms: ParentComm[],
-  classNameById: Map<string, string>,
-): FollowUpRow[] {
-  return comms
-    .filter((c) => c.followUp === true)
-    .slice()
-    .sort((a, b) => b.date.localeCompare(a.date))
-    .map((c) => ({ comm: c, className: classNameById.get(c.classId) ?? '—' }))
 }
 
 // ───────── 倒數（work / both，未過期，最近排前）─────────

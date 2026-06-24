@@ -31,16 +31,10 @@ const Fitness = lazyFeature(() => import('./learning/Fitness'))
 
 // 工作模式功能
 const TodoWidget = lazyFeature(() => import('./work/TodoWidget'))
-const ClassesWidget = lazyFeature(() => import('./work/ClassesWidget'))
-const CurriculumProgress = lazyFeature(() => import('./work/CurriculumProgress'))
 const QuestionBank = lazyFeature(() => import('./work/QuestionBank'))
 const MaterialGen = lazyFeature(() => import('./work/MaterialGen'))
-const Grading = lazyFeature(() => import('./work/Grading'))
 const ResourceLibrary = lazyFeature(() => import('./work/ResourceLibrary'))
 const Community = lazyFeature(() => import('./work/community/Community'))
-const Gradebook = lazyFeature(() => import('./work/Gradebook'))
-const ReportComments = lazyFeature(() => import('./work/reportComments/ReportComments'))
-const ClassTools = lazyFeature(() => import('./work/classTools/ClassTools'))
 const RubricGen = lazyFeature(() => import('./work/rubric/RubricGen'))
 const DseDrill = lazyFeature(() => import('./work/dse/DseDrill'))
 const Transcribe = lazyFeature(() => import('./work/transcribe/Transcribe'))
@@ -49,8 +43,6 @@ const LessonPlanner = lazyFeature(() => import('./work/LessonPlanner'))
 const TeachGuide = lazyFeature(() => import('./work/teachGuide/TeachGuide'))
 const SlideGen = lazyFeature(() => import('./work/slides/SlideGen'))
 const Timetable = lazyFeature(() => import('./work/Timetable'))
-const Attendance = lazyFeature(() => import('./work/Attendance'))
-const ParentComms = lazyFeature(() => import('./work/ParentComms'))
 const MeetingNotes = lazyFeature(() => import('./work/MeetingNotes'))
 const AdminDocs = lazyFeature(() => import('./work/adminDocs/AdminDocs'))
 const Scan = lazyFeature(() => import('./work/scan/Scan'))
@@ -232,27 +224,6 @@ export const FEATURES: Feature[] = [
     status: 'ready',
   },
   {
-    id: 'work-grading',
-    modes: ['work'],
-    name: 'AI 批改',
-    description: '批改學生答案（文字 / 相片）+ 生成成績表評語。',
-    icon: '🖍️',
-    group: 'AI',
-    component: Grading,
-    status: 'ready',
-  },
-  {
-    id: 'work-curriculum',
-    selfManagedHeader: true,
-    modes: ['work'],
-    name: '課程進度',
-    description: '對住課程大綱追蹤每班進度。',
-    icon: '📊',
-    group: '教學',
-    component: CurriculumProgress,
-    status: 'ready',
-  },
-  {
     id: 'work-lesson-plan',
     selfManagedHeader: true,
     modes: ['work'],
@@ -372,72 +343,6 @@ export const FEATURES: Feature[] = [
     icon: '🌐',
     group: '教學',
     component: Community,
-    status: 'ready',
-  },
-  {
-    id: 'work-classes',
-    selfManagedHeader: true,
-    modes: ['work'],
-    name: '班別管理',
-    description: '記錄你任教嘅班別同學生。',
-    icon: '🏫',
-    group: '學生',
-    component: ClassesWidget,
-    status: 'ready',
-  },
-  {
-    id: 'work-gradebook',
-    selfManagedHeader: true,
-    modes: ['work'],
-    name: '成績管理',
-    description: '記錄評估分數、計平均、睇弱項。',
-    icon: '📈',
-    group: '學生',
-    component: Gradebook,
-    status: 'ready',
-  },
-  {
-    id: 'work-report-comments',
-    selfManagedHeader: true,
-    modes: ['work'],
-    name: '成績表評語',
-    description: '揀班，AI 按每個學生成績一次過寫全班評語，可微調、重生、匯出 Word。',
-    icon: '💬',
-    group: '學生',
-    component: ReportComments,
-    status: 'ready',
-  },
-  {
-    id: 'work-class-tools',
-    selfManagedHeader: true,
-    modes: ['work'],
-    name: '課堂工具',
-    description: '隨機抽人、即時分組、計時、計分 —— 上堂即用。',
-    icon: '🎲',
-    group: '學生',
-    component: ClassTools,
-    status: 'ready',
-  },
-  {
-    id: 'work-attendance',
-    selfManagedHeader: true,
-    modes: ['work'],
-    name: '點名 / 出席',
-    description: '每堂記錄學生出席狀況。',
-    icon: '🙋',
-    group: '學生',
-    component: Attendance,
-    status: 'ready',
-  },
-  {
-    id: 'work-parent-comms',
-    selfManagedHeader: true,
-    modes: ['work'],
-    name: '家長溝通',
-    description: '記錄與家長／學生嘅聯絡同跟進。',
-    icon: '📞',
-    group: '學生',
-    component: ParentComms,
     status: 'ready',
   },
   {

@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import { Copy, Trash2, MapPin } from 'lucide-react'
-import type { Klass } from '../../../data/types'
 import {
   Button,
   Field,
@@ -56,7 +55,6 @@ function GroupLabel({ children }: { children: ReactNode }) {
 
 export default function SlotEditor({
   draft,
-  classes,
   periodLabel,
   timeLabel,
   onClose,
@@ -65,7 +63,6 @@ export default function SlotEditor({
   onApplyToWeekdays,
 }: {
   draft: EditorDraft | null
-  classes: Klass[]
   periodLabel: string
   timeLabel?: string
   onClose: () => void
@@ -84,14 +81,11 @@ export default function SlotEditor({
 
   if (!d) return null
 
-  const autoColor = autoColorFor(d.subject || d.classId || 'x')
+  const autoColor = autoColorFor(d.subject || 'x')
   const previewColor = d.color || autoColor
-  const canSave = d.subject.trim().length > 0 || d.classId.length > 0
+  const canSave = d.subject.trim().length > 0
 
-  const className = d.classId
-    ? (classes.find((c) => c.id === d.classId)?.name ?? '')
-    : ''
-  const previewTitle = d.subject.trim() || className || '課堂'
+  const previewTitle = d.subject.trim() || '課堂'
   // masthead Day token：取「一…六」尾字（WeekGrid 欄頭同一手法）
   const dayToken = dayShort(d.day)
 
@@ -169,20 +163,6 @@ export default function SlotEditor({
         <div>
           <GroupLabel>課堂內容</GroupLabel>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <Field label="班別（選填）">
-              <Select
-                value={d.classId}
-                onChange={(e) => patch({ classId: e.target.value })}
-              >
-                <option value="">未選擇</option>
-                {classes.map((cls) => (
-                  <option key={cls.id} value={cls.id}>
-                    {cls.name}
-                  </option>
-                ))}
-              </Select>
-            </Field>
-
             <Field label="科目">
               <Input
                 type="text"
@@ -294,11 +274,6 @@ export default function SlotEditor({
                 {previewTitle}
               </span>
               <div className="mt-auto flex flex-wrap items-center gap-1">
-                {className && (
-                  <span className="rounded-md bg-black/[0.06] px-1.5 py-px text-[10px] font-medium dark:bg-white/10">
-                    {className}
-                  </span>
-                )}
                 {d.room && (
                   <span className="inline-flex items-center gap-0.5 rounded-md bg-black/[0.06] px-1.5 py-px text-[10px] dark:bg-white/10">
                     <MapPin size={9} className="shrink-0 opacity-70" />

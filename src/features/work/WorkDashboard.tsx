@@ -6,19 +6,12 @@ import {
   tasksCol,
   timetableCol,
   cycleCalendarCol,
-  classesCol,
   eventsCol,
   calendarsCol,
-  parentCommsCol,
-  progressCol,
-  topicsCol,
-  attendanceCol,
-  scoresCol,
-  assessmentsCol,
   countdownsCol,
   inboxCol,
 } from '../../data/collections'
-import { STUDENT_DATA_ENABLED, isFeatureAvailable } from '../../lib/featureFlags'
+import { isFeatureAvailable } from '../../lib/featureFlags'
 import { taskMetaCol } from './todo/store'
 import { cycleDayForDate } from './timetable/util'
 import { useNav } from '../../context/NavContext'
@@ -29,7 +22,6 @@ import {
   Badge,
   SectionTitle,
   EmptyState,
-  ProgressBar,
   IconButton,
   Input,
   SegmentedControl,
@@ -81,22 +73,14 @@ import {
   completionStreak,
   completedInRange,
   buildAgenda,
-  buildClassProgress,
-  overallProgressPercent,
-  buildAttendance,
-  buildGradeSummary,
   buildWeekLoad,
-  buildFollowUps,
   buildCountdowns,
   COUNTDOWN_META,
 } from './dashboard/util'
 import {
   TaskTrendChart,
   HeatStrip,
-  Donut,
-  GradeHistogram,
   WeekLoadBars,
-  MiniRing,
 } from './dashboard/Charts'
 import {
   dashboardLayoutCol,
@@ -218,24 +202,20 @@ function StatTile({
   )
 }
 
-// 跳功能用嘅鍵盤捷徑（1–6）
+// 跳功能用嘅鍵盤捷徑（1–4）
 const SHORTCUTS: { key: string; nav: string; label: string }[] = [
   { key: '1', nav: 'work-tasks', label: '待辦' },
   { key: '2', nav: 'work-timetable', label: '時間表' },
-  { key: '3', nav: 'work-attendance', label: '點名' },
-  { key: '4', nav: 'work-gradebook', label: '成績' },
-  { key: '5', nav: 'calendar', label: '行事曆' },
-  { key: '6', nav: 'work-ai', label: 'AI' },
+  { key: '3', nav: 'calendar', label: '行事曆' },
+  { key: '4', nav: 'work-ai', label: 'AI' },
 ]
 
 // 捷徑 key → wdash i18n key（畀提示列用 t() 翻譯）
 const SHORTCUT_I18N: Record<string, string> = {
   '1': 'scTasks',
   '2': 'scTimetable',
-  '3': 'scAttendance',
-  '4': 'scGradebook',
-  '5': 'scCalendar',
-  '6': 'scAi',
+  '3': 'scCalendar',
+  '4': 'scAi',
 }
 
 export default function WorkDashboard() {
@@ -247,15 +227,8 @@ export default function WorkDashboard() {
   const tasks = useCollection(tasksCol)
   const taskMetas = useCollection(taskMetaCol)
   const timetable = useCollection(timetableCol)
-  const classes = useCollection(classesCol)
   const events = useCollection(eventsCol)
   const calendars = useCollection(calendarsCol)
-  const parentComms = useCollection(parentCommsCol)
-  const progress = useCollection(progressCol)
-  const topics = useCollection(topicsCol)
-  const attendance = useCollection(attendanceCol)
-  const scores = useCollection(scoresCol)
-  const assessments = useCollection(assessmentsCol)
   const countdowns = useCollection(countdownsCol)
 
   // ── 版面設定（自己嘅 collection）──
@@ -297,12 +270,6 @@ export default function WorkDashboard() {
   const dateLabel = `${now.getMonth() + 1}月${now.getDate()}日 星期${WEEKDAY_LABELS[jsDay]}`
   const hello = greeting(now.getHours())
   const who = layout.greetingName.trim() || t('wdash.defaultName', { defaultValue: '老師' })
-
-  const classNameById = useMemo(() => {
-    const map = new Map<string, string>()
-    for (const k of classes) map.set(k.id, k.name)
-    return map
-  }, [classes])
 
   const merged = useMemo(() => mergeTasks(tasks, taskMetas), [tasks, taskMetas])
 
@@ -348,7 +315,6 @@ export default function WorkDashboard() {
     () =>
       buildAgenda({
         timetable,
-        classNameById,
         events,
         calendars,
         tasks: merged,
@@ -357,28 +323,10 @@ export default function WorkDashboard() {
         jsDay,
         slotDay: ttDay,
       }),
-    [timetable, classNameById, events, calendars, merged, countdowns, todayKey, jsDay, ttDay],
+    [timetable, events, calendars, merged, countdowns, todayKey, jsDay, ttDay],
   )
 
-  const classProgress = useMemo(
-    () => buildClassProgress(classes, progress, topics.length),
-    [classes, progress, topics],
-  )
-  const overallProgress = overallProgressPercent(classProgress)
-
-  const attSummary = useMemo(
-    () => buildAttendance(attendance, addKey(todayKey, -30)),
-    [attendance, todayKey],
-  )
-  const gradeSummary = useMemo(
-    () => buildGradeSummary(assessments, scores),
-    [assessments, scores],
-  )
   const weekLoad = useMemo(() => buildWeekLoad(timetable, jsDay), [timetable, jsDay])
-  const followUps = useMemo(
-    () => buildFollowUps(parentComms, classNameById),
-    [parentComms, classNameById],
-  )
   const upcomingCountdowns = useMemo(
     () => buildCountdowns(countdowns, todayKey),
     [countdowns, todayKey],
@@ -400,7 +348,6 @@ export default function WorkDashboard() {
             ? { dir: 'down', text: `${diff}` }
             : { dir: 'flat', text: '0' }
 
-    const followUpCount = parentComms.filter((c) => c.followUp === true).length
     const end7 = addKey(todayKey, 7)
     const upcoming7 = events.filter((e) => e.date >= todayKey && e.date <= end7).length
 
@@ -433,19 +380,11 @@ export default function WorkDashboard() {
         unit: t('wdash.unitPeriods', { defaultValue: '節' }),
         icon: 'event',
         navTo: 'work-timetable',
-      },
-      {
-        key: 'follow',
-        label: t('wdash.followUpParents', { defaultValue: '待跟進家長' }),
-        value: followUpCount,
-        icon: 'parent',
-        navTo: 'work-parent-comms',
-        highlight: followUpCount > 0,
         delta:
           upcoming7 > 0 ? { dir: 'flat', text: t('wdash.upcoming7N', { n: upcoming7, defaultValue: `未來 7 日 ${upcoming7} 事件` }) } : undefined,
       },
     ]
-  }, [t, timetable, jsDay, merged, todayKey, parentComms, events, openTasks, overdueTasks])
+  }, [t, timetable, ttDay, merged, todayKey, events, openTasks, overdueTasks])
 
   // ── 快速擷取（掉入 Inbox）──
   function submitCapture() {
@@ -475,12 +414,11 @@ export default function WorkDashboard() {
     toast.success(t('wdash.taskDoneToast', { defaultValue: '已完成待辦' }))
   }
 
-  // 顯示緊嘅 widget（依次序、去除收起）；收費版未過學生資料合規前，隱藏涉學生／班級嘅 widget。
-  const studentWidgets: WidgetId[] = ['curriculum', 'attendance', 'grades', 'parentFollowUp', 'classLoad']
+  // 顯示緊嘅 widget（依次序、去除收起）。學生／班級子系統已移除，
+  // 相關 widget（課程進度 / 出席 / 成績 / 家長跟進）一律唔再渲染。
+  const removedWidgets: WidgetId[] = ['curriculum', 'attendance', 'grades', 'parentFollowUp']
   const visibleWidgets = layout.order.filter(
-    (w) =>
-      !layout.hidden.includes(w) &&
-      (STUDENT_DATA_ENABLED || !studentWidgets.includes(w)),
+    (w) => !layout.hidden.includes(w) && !removedWidgets.includes(w),
   )
 
   return (
@@ -519,12 +457,7 @@ export default function WorkDashboard() {
         kpis={kpis}
         openTasks={openTasks.length}
         overdueTasks={overdueTasks}
-        overallProgress={overallProgress}
-        classProgress={classProgress}
-        attSummary={attSummary}
-        gradeSummary={gradeSummary}
         weekLoad={weekLoad}
-        followUps={followUps}
         upcomingCountdowns={upcomingCountdowns}
         nowMinutes={now.getHours() * 60 + now.getMinutes()}
         completeTask={completeTask}
@@ -583,12 +516,7 @@ export default function WorkDashboard() {
                 trend,
                 heat,
                 streak,
-                classProgress,
-                overallProgress,
-                attSummary,
-                gradeSummary,
                 weekLoad,
-                followUps,
                 upcomingCountdowns,
                 rangeDays: layout.rangeDays,
                 completeTask,
@@ -632,12 +560,7 @@ function WorkBento({
   kpis,
   openTasks,
   overdueTasks,
-  overallProgress,
-  classProgress,
-  attSummary,
-  gradeSummary,
   weekLoad,
-  followUps,
   upcomingCountdowns,
   nowMinutes,
   completeTask,
@@ -651,12 +574,7 @@ function WorkBento({
   kpis: Kpi[]
   openTasks: number
   overdueTasks: number
-  overallProgress: number
-  classProgress: ReturnType<typeof buildClassProgress>
-  attSummary: ReturnType<typeof buildAttendance>
-  gradeSummary: ReturnType<typeof buildGradeSummary>
   weekLoad: ReturnType<typeof buildWeekLoad>
-  followUps: ReturnType<typeof buildFollowUps>
   upcomingCountdowns: ReturnType<typeof buildCountdowns>
   nowMinutes: number
   completeTask: (id: string) => void
@@ -727,26 +645,6 @@ function WorkBento({
         onClick={() => open('work-tasks')}
       />
 
-      {/* ── 課程進度環 1×1（學生／班級，收費版隱藏）── */}
-      {isFeatureAvailable('work-curriculum') && (
-      <button
-        type="button"
-        onClick={() => open('work-curriculum')}
-        className="group flex cursor-pointer items-center gap-3 rounded-2xl border border-slate-200/80 bg-white p-4 text-left transition duration-200 hover:border-slate-300 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98] dark:border-slate-700/60 dark:bg-slate-800 dark:hover:border-slate-600"
-      >
-        <MiniRing value={overallProgress} size={56} stroke={6} tone={overallProgress >= 80 ? 'green' : 'accent'}>
-          <span className="text-[11px] font-semibold tabular-nums text-slate-700 dark:text-slate-200">{overallProgress}%</span>
-        </MiniRing>
-        <div className="min-w-0">
-          <p className="text-xs font-medium text-slate-400 dark:text-slate-500">{t('wdash.curriculumProgress', { defaultValue: '課程進度' })}</p>
-          <p className="mt-0.5 text-lg font-semibold tabular-nums text-slate-800 dark:text-slate-100">
-            {classProgress.length}<span className="text-sm text-slate-400"> {t('wdash.unitClasses', { defaultValue: '班' })}</span>
-          </p>
-          <p className="truncate text-[11px] text-slate-400">{classProgress.length > 0 ? t('wdash.overallCompletion', { defaultValue: '整體完成度' }) : t('wdash.noClasses', { defaultValue: '未有班別' })}</p>
-        </div>
-      </button>
-      )}
-
       {/* ── 本週完成 1×1 ── */}
       <StatTile
         label={t('wdash.doneThisWeek', { defaultValue: '本週完成' })} value={doneKpi?.value ?? 0} unit={t('wdash.unitItems', { defaultValue: '件' })} icon={CheckSquare} tone="sky"
@@ -754,16 +652,6 @@ function WorkBento({
         hint={t('wdash.last7Tasks', { defaultValue: '近 7 日待辦' })}
         onClick={() => open('work-tasks')}
       />
-      {/* ── 待跟進家長 1×1（學生／家長，收費版隱藏）── */}
-      {isFeatureAvailable('work-parent-comms') && (
-      <StatTile
-        label={t('wdash.followUpParents', { defaultValue: '待跟進家長' })} value={followUps.length} unit={t('wdash.unitPeople', { defaultValue: '位' })} icon={Phone}
-        tone={followUps.length > 0 ? 'rose' : 'emerald'}
-        hint={followUps.length > 0 ? t('wdash.remindParents', { defaultValue: '記得覆返家長' }) : t('wdash.allFollowedUp', { defaultValue: '全部跟進完' })}
-        onClick={() => open('work-parent-comms')}
-      />
-      )}
-
       {/* ── 今日議程 2×1 ── */}
       <section className="flex min-h-0 flex-col rounded-2xl border border-slate-200/80 bg-white p-4 dark:border-slate-700/60 dark:bg-slate-800 sm:col-span-2">
         <div className="mb-1.5 flex items-center justify-between">
@@ -820,15 +708,6 @@ function WorkBento({
         hint={todayClassCount > 0 ? t('wdash.donePeriodsN', { n: classesPassed, defaultValue: `已上 ${classesPassed} 節` }) : t('wdash.noClassToday', { defaultValue: '今日無課' })}
         onClick={() => open('work-timetable')}
       />
-      {/* ── 出席率 1×1（學生，收費版隱藏）── */}
-      {isFeatureAvailable('work-attendance') && (
-      <StatTile
-        label={t('wdash.attendanceRate', { defaultValue: '出席率' })} value={attSummary.total > 0 ? attSummary.rate : '—'} unit={attSummary.total > 0 ? '%' : undefined}
-        icon={Users} tone="emerald" hint={attSummary.total > 0 ? t('wdash.classes30N', { n: attSummary.total, defaultValue: `近 30 日 · ${attSummary.total} 次` }) : t('wdash.noAttendanceYet', { defaultValue: '未有點名' })}
-        onClick={() => open('work-attendance')}
-      />
-      )}
-
       {/* ── 今日待辦 2×2 ── */}
       <section className="flex flex-col rounded-2xl border border-slate-200/80 bg-white p-4 dark:border-slate-700/60 dark:bg-slate-800 sm:col-span-2 lg:row-span-2">
         <div className="mb-2 flex items-center justify-between">
@@ -905,15 +784,6 @@ function WorkBento({
         hint={nextCd ? nextCd.cd.title : t('wdash.noCountdown', { defaultValue: '未有倒數' })}
         onClick={() => open('countdown')}
       />
-      {/* ── 成績平均 1×1（學生，收費版隱藏）── */}
-      {isFeatureAvailable('work-gradebook') && (
-      <StatTile
-        label={t('wdash.recentAverage', { defaultValue: '最近平均' })} value={gradeSummary.graded > 0 ? gradeSummary.average : '—'} unit={gradeSummary.graded > 0 ? '%' : undefined}
-        icon={GraduationCap} tone="sky"
-        hint={gradeSummary.graded > 0 ? t('wdash.gradedPeopleN', { n: gradeSummary.graded, defaultValue: `${gradeSummary.graded} 人評分` }) : t('wdash.noGradesYet', { defaultValue: '未有評分' })}
-        onClick={() => open('work-gradebook')}
-      />
-      )}
       {/* ── 問 AI CTA 1×1 ── */}
       <button
         type="button"
@@ -1111,12 +981,7 @@ interface WidgetCtx {
   trend: ReturnType<typeof buildTaskTrend>
   heat: ReturnType<typeof buildHeat>
   streak: number
-  classProgress: ReturnType<typeof buildClassProgress>
-  overallProgress: number
-  attSummary: ReturnType<typeof buildAttendance>
-  gradeSummary: ReturnType<typeof buildGradeSummary>
   weekLoad: ReturnType<typeof buildWeekLoad>
-  followUps: ReturnType<typeof buildFollowUps>
   upcomingCountdowns: ReturnType<typeof buildCountdowns>
   rangeDays: number
   completeTask: (id: string) => void
@@ -1133,14 +998,12 @@ function renderWidget(id: WidgetId, ctx: WidgetCtx) {
       return <AgendaWidget items={ctx.agenda} jsDay={ctx.jsDay} completeTask={ctx.completeTask} open={ctx.open} />
     case 'taskTrend':
       return <TaskTrendWidget ctx={ctx} />
+    // 學生／班級子系統已移除：以下 widget 唔再渲染（亦已喺 visibleWidgets 過濾）。
     case 'curriculum':
-      return <CurriculumWidget rows={ctx.classProgress} overall={ctx.overallProgress} open={ctx.open} />
     case 'attendance':
-      return <AttendanceWidget s={ctx.attSummary} open={ctx.open} />
     case 'grades':
-      return <GradesWidget s={ctx.gradeSummary} open={ctx.open} />
     case 'parentFollowUp':
-      return <FollowUpWidget rows={ctx.followUps} open={ctx.open} />
+      return null
     case 'countdown':
       return <CountdownWidget rows={ctx.upcomingCountdowns} open={ctx.open} />
     case 'classLoad':
@@ -1423,201 +1286,6 @@ function Stat({
   )
 }
 
-// ───────── 各班課程進度 ─────────
-function CurriculumWidget({
-  rows,
-  overall,
-  open,
-}: {
-  rows: ReturnType<typeof buildClassProgress>
-  overall: number
-  open: (id: string) => void
-}) {
-  const { t } = useTranslation()
-  return (
-    <section>
-      <SectionTitle
-        icon={School}
-        right={
-          <Button size="sm" variant="ghost" iconRight={ChevronRight} onClick={() => open('work-curriculum')}>
-            {t('wdash.details', { defaultValue: '詳情' })}
-          </Button>
-        }
-      >
-        {t('wdash.curriculumTitle', { defaultValue: '各班課程進度' })}
-      </SectionTitle>
-      {rows.length === 0 ? (
-        <EmptyState icon={School} title={t('wdash.noClassesTitle', { defaultValue: '未有班別資料' })} hint={t('wdash.noClassesHint', { defaultValue: '加入班別後即可追蹤進度。' })} />
-      ) : (
-        <Card className="space-y-4 p-4">
-          <div className="flex items-center justify-between rounded-lg bg-accent-soft px-3 py-2 dark:bg-accent/10">
-            <span className="text-sm font-medium text-slate-700 dark:text-slate-200">{t('wdash.overallCompletionLabel', { defaultValue: '整體完成度' })}</span>
-            <span className="text-lg font-semibold tabular-nums text-accent-strong dark:text-accent">{overall}%</span>
-          </div>
-          {rows.map((cp) => (
-            <div key={cp.id}>
-              <div className="mb-1.5 flex items-center justify-between text-sm">
-                <span className="font-medium text-slate-800 dark:text-slate-100">{cp.name}</span>
-                <span className="flex items-center gap-2 tabular-nums text-slate-500 dark:text-slate-400">
-                  {cp.inProgress > 0 && (
-                    <span className="text-[11px] text-amber-600 dark:text-amber-400">{t('wdash.inProgressN', { n: cp.inProgress, defaultValue: `${cp.inProgress} 進行中` })}</span>
-                  )}
-                  {cp.done}/{cp.total}（{cp.percent}%）
-                </span>
-              </div>
-              <ProgressBar value={cp.percent} tone={cp.percent >= 80 ? 'green' : cp.percent >= 40 ? 'accent' : 'amber'} />
-            </div>
-          ))}
-        </Card>
-      )}
-    </section>
-  )
-}
-
-// ───────── 出席率 ─────────
-function AttendanceWidget({
-  s,
-  open,
-}: {
-  s: ReturnType<typeof buildAttendance>
-  open: (id: string) => void
-}) {
-  const { t } = useTranslation()
-  return (
-    <section>
-      <SectionTitle
-        icon={Users}
-        right={
-          <Button size="sm" variant="ghost" iconRight={ChevronRight} onClick={() => open('work-attendance')}>
-            {t('wdash.takeAttendance', { defaultValue: '點名' })}
-          </Button>
-        }
-        description={t('wdash.last30Overall', { defaultValue: '近 30 日整體' })}
-      >
-        {t('wdash.attendanceTitle', { defaultValue: '出席率' })}
-      </SectionTitle>
-      {s.total === 0 ? (
-        <EmptyState icon={Users} title={t('wdash.noAttendanceTitle', { defaultValue: '未有點名紀錄' })} hint={t('wdash.noAttendanceHint', { defaultValue: '去點名／出席記錄學生出席狀況。' })} />
-      ) : (
-        <Card className="p-4">
-          <Donut
-            centerValue={`${s.rate}%`}
-            centerLabel={t('wdash.attendanceTitle', { defaultValue: '出席率' })}
-            segments={[
-              { label: t('wdash.attPresent', { defaultValue: '出席' }), value: s.present, color: '#34d399' },
-              { label: t('wdash.attLate', { defaultValue: '遲到' }), value: s.late, color: '#fbbf24' },
-              { label: t('wdash.attAbsent', { defaultValue: '缺席' }), value: s.absent, color: '#fb7185' },
-            ]}
-          />
-          <p className="mt-3 text-center text-xs tabular-nums text-slate-400 dark:text-slate-500">
-            {t('wdash.attRecordsN', { n: s.total, defaultValue: `共 ${s.total} 次記錄` })}
-          </p>
-        </Card>
-      )}
-    </section>
-  )
-}
-
-// ───────── 成績分布 ─────────
-function GradesWidget({
-  s,
-  open,
-}: {
-  s: ReturnType<typeof buildGradeSummary>
-  open: (id: string) => void
-}) {
-  const { t } = useTranslation()
-  return (
-    <section>
-      <SectionTitle
-        icon={GraduationCap}
-        right={
-          <Button size="sm" variant="ghost" iconRight={ChevronRight} onClick={() => open('work-gradebook')}>
-            {t('wdash.gradebook', { defaultValue: '成績冊' })}
-          </Button>
-        }
-      >
-        {t('wdash.gradesTitle', { defaultValue: '成績分布' })}
-      </SectionTitle>
-      {s.graded === 0 ? (
-        <EmptyState icon={GraduationCap} title={t('wdash.noGradesTitle', { defaultValue: '未有評分紀錄' })} hint={t('wdash.noGradesHint', { defaultValue: '喺成績管理輸入分數後即見分布。' })} />
-      ) : (
-        <Card className="space-y-3 p-4">
-          <div className="flex items-center justify-between">
-            <div className="min-w-0">
-              <p className="truncate text-sm font-medium text-slate-800 dark:text-slate-100">
-                {s.assessment?.name ?? t('wdash.recentAssessment', { defaultValue: '最近評估' })}
-              </p>
-              <p className="text-xs text-slate-400">
-                {t('wdash.gradedMaxN', { graded: s.graded, max: s.max, defaultValue: `${s.graded} 人 · 滿分 ${s.max}` })}
-              </p>
-            </div>
-            <div className="text-right">
-              <p className="text-2xl font-semibold tabular-nums text-accent-strong dark:text-accent">{s.average}%</p>
-              <p className="text-[11px] text-slate-400">{t('wdash.averageLabel', { defaultValue: '平均' })}</p>
-            </div>
-          </div>
-          <GradeHistogram bins={s.bins} />
-        </Card>
-      )}
-    </section>
-  )
-}
-
-// ───────── 待跟進家長 ─────────
-function FollowUpWidget({
-  rows,
-  open,
-}: {
-  rows: ReturnType<typeof buildFollowUps>
-  open: (id: string) => void
-}) {
-  const { t } = useTranslation()
-  return (
-    <section>
-      <SectionTitle
-        icon={Phone}
-        right={
-          <Button size="sm" variant="ghost" iconRight={ChevronRight} onClick={() => open('work-parent-comms')}>
-            {t('wdash.parentComms', { defaultValue: '家長溝通' })}
-          </Button>
-        }
-      >
-        {t('wdash.followUpTitle', { defaultValue: '待跟進家長' })}
-      </SectionTitle>
-      {rows.length === 0 ? (
-        <EmptyState icon={PartyPopper} title={t('wdash.noFollowUpTitle', { defaultValue: '無待跟進事項' })} hint={t('wdash.noFollowUpHint', { defaultValue: '所有家長聯絡都跟進完了。' })} />
-      ) : (
-        <Card className="divide-y divide-slate-100 p-0 dark:divide-slate-800">
-          {rows.slice(0, 5).map(({ comm, className }) => (
-            <button
-              key={comm.id}
-              onClick={() => open('work-parent-comms')}
-              className="flex w-full items-center gap-3 px-3 py-2.5 text-left transition hover:bg-slate-50 active:scale-[0.98] dark:hover:bg-slate-800/50"
-            >
-              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-rose-50 text-rose-500 dark:bg-rose-500/10">
-                <Phone size={15} />
-              </span>
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium text-slate-800 dark:text-slate-100">{comm.summary}</p>
-                <p className="text-xs text-slate-400">
-                  {className} · {comm.channel} · {comm.date}
-                </p>
-              </div>
-              <Badge tone="rose" dot>
-                {t('wdash.followUpBadge', { defaultValue: '待跟進' })}
-              </Badge>
-            </button>
-          ))}
-          {rows.length > 5 && (
-            <div className="px-3 py-2 text-center text-xs text-slate-400">{t('wdash.moreItemsN', { n: rows.length - 5, defaultValue: `仲有 ${rows.length - 5} 項…` })}</div>
-          )}
-        </Card>
-      )}
-    </section>
-  )
-}
-
 // ───────── 重要日子倒數 ─────────
 function CountdownWidget({
   rows,
@@ -1700,13 +1368,10 @@ function ClassLoadWidget({ data }: { data: ReturnType<typeof buildWeekLoad> }) {
 // ───────── 快速動作 ─────────
 const QUICK_ACTIONS: { key: string; label: string; i18n: string; icon: LucideIcon }[] = [
   { key: 'work-tasks', label: '待辦事項', i18n: 'qaTasks', icon: NotebookPen },
-  { key: 'work-attendance', label: '點名考勤', i18n: 'qaAttendance', icon: CheckSquare },
-  { key: 'work-gradebook', label: '成績管理', i18n: 'qaGradebook', icon: GraduationCap },
   { key: 'work-lesson-plan', label: '備課教案', i18n: 'qaLessonPlan', icon: ClipboardList },
   { key: 'work-timetable', label: '時間表', i18n: 'qaTimetable', icon: CalendarDays },
   { key: 'calendar', label: '行事曆', i18n: 'qaCalendar', icon: Calendar },
   { key: 'work-ai', label: '教學 AI', i18n: 'qaAi', icon: Sparkles },
-  { key: 'work-parent-comms', label: '家長溝通', i18n: 'qaParentComms', icon: Phone },
 ]
 
 function QuickActionsWidget({ open }: { open: (id: string) => void }) {

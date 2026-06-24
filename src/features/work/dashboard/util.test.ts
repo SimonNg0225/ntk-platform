@@ -9,30 +9,19 @@ import {
   completedInRange,
   todaySlots,
   buildAgenda,
-  buildClassProgress,
-  overallProgressPercent,
-  buildAttendance,
-  buildGradeSummary,
   buildWeekLoad,
-  buildFollowUps,
   buildCountdowns,
   type MergedTask,
 } from './util'
 import type {
   Task,
   TimetableSlot,
-  Klass,
   CalendarEvent,
   CalendarCategory,
-  AttendanceRecord,
-  Score,
-  Assessment,
-  ClassProgress,
-  ParentComm,
   Countdown,
 } from '../../../data/types'
 import type { TaskMeta } from '../todo/types'
-import type { ClassProgressRow, HeatCell } from './types'
+import type { HeatCell } from './types'
 
 // ───────── 小工具：砌測試資料（只填關心嘅欄位）─────────
 const meta = (over: Partial<TaskMeta> & { id: string }): TaskMeta => ({
@@ -245,7 +234,6 @@ describe('buildAgenda', () => {
   const jsDay = 1
   const base = {
     timetable: [] as TimetableSlot[],
-    classNameById: new Map<string, string>(),
     events: [] as CalendarEvent[],
     calendars: [] as CalendarCategory[],
     tasks: [] as MergedTask[],
@@ -262,7 +250,6 @@ describe('buildAgenda', () => {
     const items = buildAgenda({
       ...base,
       timetable: [{ id: 't1', day: 1, period: 1, subject: '數', room: 'R1' }],
-      classNameById: new Map([['c1', '5A']]),
     })
     expect(items).toHaveLength(1)
     expect(items[0]).toMatchObject({
@@ -270,6 +257,7 @@ describe('buildAgenda', () => {
       time: '08:00',
       sortKey: 480, // 8*60
       badge: 'R1',
+      title: '數',
     })
   })
 
@@ -341,193 +329,6 @@ describe('buildAgenda', () => {
 })
 
 // ============================================================
-//  班級課程進度
-// ============================================================
-describe('buildClassProgress', () => {
-  const classes: Klass[] = [
-    { id: 'c1', name: '5A', subject: 'BAFS' },
-    { id: 'c2', name: '5B', subject: 'BAFS' },
-  ]
-  const progress: ClassProgress[] = [
-    { id: 'p1', classId: 'c1', topicId: 't1', status: 'done' },
-    { id: 'p2', classId: 'c1', topicId: 't2', status: 'done' },
-    { id: 'p3', classId: 'c1', topicId: 't3', status: 'in_progress' },
-    { id: 'p4', classId: 'c2', topicId: 't1', status: 'not_started' },
-  ]
-  it('用 totalTopics 做分母計百分比', () => {
-    const rows = buildClassProgress(classes, progress, 4)
-    // c1: done 2 / 4 = 50%；c2: done 0 / 4 = 0%
-    expect(rows).toEqual([
-      { id: 'c1', name: '5A', done: 2, inProgress: 1, total: 4, percent: 50 },
-      { id: 'c2', name: '5B', done: 0, inProgress: 0, total: 4, percent: 0 },
-    ])
-  })
-  it('totalTopics=0 時退回該班 row 數做分母', () => {
-    const rows = buildClassProgress(classes, progress, 0)
-    // c1: 3 rows, done 2 → round(2/3*100)=67；c2: 1 row, done 0 → 0
-    expect(rows[0]).toMatchObject({ total: 3, percent: 67 })
-    expect(rows[1]).toMatchObject({ total: 1, percent: 0 })
-  })
-  it('班無進度且 totalTopics=0 → 分母 0 → percent 0（無 NaN）', () => {
-    const rows = buildClassProgress([{ id: 'c9', name: '6A', subject: 'X' }], [], 0)
-    expect(rows[0]).toEqual({ id: 'c9', name: '6A', done: 0, inProgress: 0, total: 0, percent: 0 })
-  })
-  it('空班 → 空陣列', () => {
-    expect(buildClassProgress([], progress, 4)).toEqual([])
-  })
-})
-
-describe('overallProgressPercent', () => {
-  const row = (percent: number): ClassProgressRow => ({
-    id: 'x',
-    name: 'x',
-    done: 0,
-    inProgress: 0,
-    total: 0,
-    percent,
-  })
-  it('多班平均（四捨五入）', () => {
-    // (50+0)/2 = 25
-    expect(overallProgressPercent([row(50), row(0)])).toBe(25)
-    // (67+0+50)/3 = 39
-    expect(overallProgressPercent([row(67), row(0), row(50)])).toBe(39)
-  })
-  it('空陣列 → 0（無除零）', () => {
-    expect(overallProgressPercent([])).toBe(0)
-  })
-})
-
-// ============================================================
-//  出席率
-// ============================================================
-describe('buildAttendance', () => {
-  const recs: AttendanceRecord[] = [
-    { id: 'r1', classId: 'c1', studentId: 's1', date: '2026-05-01', status: 'present' },
-    { id: 'r2', classId: 'c1', studentId: 's2', date: '2026-05-02', status: 'late' },
-    { id: 'r3', classId: 'c1', studentId: 's3', date: '2026-05-03', status: 'absent' },
-    { id: 'r4', classId: 'c1', studentId: 's4', date: '2026-04-30', status: 'absent' }, // sinceKey 之前，過濾
-  ]
-  it('present+late 視為到，計出席率', () => {
-    const s = buildAttendance(recs, '2026-05-01')
-    // present1 late1 absent1 total3；rate=round(2/3*100)=67
-    expect(s).toEqual({ present: 1, late: 1, absent: 1, total: 3, rate: 67 })
-  })
-  it('sinceKey 過濾（< sinceKey 唔計）', () => {
-    const s = buildAttendance(recs, '2026-05-03')
-    // 只 r3 absent
-    expect(s).toEqual({ present: 0, late: 0, absent: 1, total: 1, rate: 0 })
-  })
-  it('空記錄 → total 0、rate 0（無除零 NaN）', () => {
-    expect(buildAttendance([], '2026-05-01')).toEqual({
-      present: 0,
-      late: 0,
-      absent: 0,
-      total: 0,
-      rate: 0,
-    })
-  })
-})
-
-// ============================================================
-//  成績分布
-// ============================================================
-describe('buildGradeSummary', () => {
-  const asmt = (over: Partial<Assessment> & { id: string }): Assessment => ({
-    classId: 'c1',
-    name: '測驗',
-    type: '測驗',
-    maxScore: 100,
-    createdAt: '2026-05-01T00:00:00.000Z',
-    ...over,
-  })
-  const sc = (assessmentId: string, score: number | null, id = assessmentId + score): Score => ({
-    id,
-    assessmentId,
-    studentId: 's',
-    score,
-  })
-
-  it('無任何有成績評估 → 空 bins / 0', () => {
-    const out = buildGradeSummary([asmt({ id: 'a1' })], [])
-    expect(out.assessment).toBeUndefined()
-    expect(out.graded).toBe(0)
-    expect(out.average).toBe(0)
-    expect(out.max).toBe(0)
-    expect(out.bins.map((b) => b.count)).toEqual([0, 0, 0, 0, 0])
-  })
-
-  it('揀最近日期嗰份評估', () => {
-    const assessments = [
-      asmt({ id: 'old', date: '2026-05-01' }),
-      asmt({ id: 'new', date: '2026-05-10' }),
-    ]
-    const scores = [sc('old', 50), sc('new', 90)]
-    const out = buildGradeSummary(assessments, scores)
-    expect(out.assessment?.id).toBe('new')
-    expect(out.graded).toBe(1)
-  })
-
-  it('分數入正確區間（0-19/20-39/40-59/60-79/80-100）', () => {
-    // maxScore 100；分數 = 百分比
-    const scores = [
-      sc('a1', 0, 'x0'), // bin0
-      sc('a1', 19, 'x19'), // bin0
-      sc('a1', 20, 'x20'), // bin1
-      sc('a1', 59, 'x59'), // bin2
-      sc('a1', 60, 'x60'), // bin3
-      sc('a1', 79, 'x79'), // bin3
-      sc('a1', 80, 'x80'), // bin4
-      sc('a1', 100, 'x100'), // bin4
-    ]
-    const out = buildGradeSummary([asmt({ id: 'a1', date: '2026-05-01' })], scores)
-    expect(out.bins.map((b) => b.count)).toEqual([2, 1, 1, 2, 2])
-    expect(out.graded).toBe(8)
-  })
-
-  it('平均百分比四捨五入；maxScore 換算', () => {
-    // maxScore 50：score 25 → 50%、score 50 → 100%、score 40 → 80%
-    const out = buildGradeSummary(
-      [asmt({ id: 'a1', date: '2026-05-01', maxScore: 50 })],
-      [sc('a1', 25, 'q25'), sc('a1', 50, 'q50'), sc('a1', 40, 'q40')],
-    )
-    // pct: 50,100,80 → avg = round(230/3) = 77
-    expect(out.average).toBe(77)
-    expect(out.max).toBe(50)
-    // bin: 50→2, 100→4, 80→4
-    expect(out.bins.map((b) => b.count)).toEqual([0, 0, 1, 0, 2])
-  })
-
-  it('null 分數唔計入（揀評估 + 統計都跳過）', () => {
-    const out = buildGradeSummary(
-      [asmt({ id: 'a1', date: '2026-05-01' })],
-      [sc('a1', null, 'n1'), sc('a1', 80, 'g1')],
-    )
-    expect(out.graded).toBe(1)
-    expect(out.average).toBe(80)
-  })
-
-  it('超出滿分嘅分數 clamp 到 100（唔爆 bin / 唔超 100%）', () => {
-    // maxScore 50、score 60 → 120% → clamp 100 → bin4、average 100
-    const out = buildGradeSummary(
-      [asmt({ id: 'a1', date: '2026-05-01', maxScore: 50 })],
-      [sc('a1', 60, 'over')],
-    )
-    expect(out.average).toBe(100)
-    expect(out.bins.map((b) => b.count)).toEqual([0, 0, 0, 0, 1])
-  })
-
-  it('maxScore=0 退回 100，唔會除以零變 NaN', () => {
-    const out = buildGradeSummary(
-      [asmt({ id: 'a1', date: '2026-05-01', maxScore: 0 })],
-      [sc('a1', 50, 'z')],
-    )
-    expect(out.max).toBe(100)
-    expect(Number.isNaN(out.average)).toBe(false)
-    expect(out.average).toBe(50)
-  })
-})
-
-// ============================================================
 //  本週課擔（每日節數）
 // ============================================================
 describe('buildWeekLoad', () => {
@@ -555,26 +356,6 @@ describe('buildWeekLoad', () => {
   it('空時間表 → 全部 0', () => {
     const out = buildWeekLoad([], 1)
     expect(out.map((d) => d.periods)).toEqual([0, 0, 0, 0, 0, 0])
-  })
-})
-
-// ============================================================
-//  待跟進家長（按日期新→舊）
-// ============================================================
-describe('buildFollowUps', () => {
-  const comms: ParentComm[] = [
-    { id: 'm1', classId: 'c1', date: '2026-05-01', channel: '電話', summary: 'a', followUp: true, createdAt: '' },
-    { id: 'm2', classId: 'c2', date: '2026-05-05', channel: '電郵', summary: 'b', followUp: true, createdAt: '' },
-    { id: 'm3', classId: 'c1', date: '2026-05-03', channel: '面談', summary: 'c', followUp: false, createdAt: '' },
-  ]
-  it('只取 followUp，按日期降序，補班名', () => {
-    const out = buildFollowUps(comms, new Map([['c1', '5A']]))
-    expect(out.map((r) => r.comm.id)).toEqual(['m2', 'm1'])
-    expect(out[0].className).toBe('—') // c2 無對應 → fallback
-    expect(out[1].className).toBe('5A')
-  })
-  it('無 followUp → 空', () => {
-    expect(buildFollowUps([comms[2]], new Map())).toEqual([])
   })
 })
 

@@ -55,8 +55,8 @@ export const appEn = {
     switchTo: 'Switch to {{mode}}',
     bnHome: 'Home',
     bnMore: 'Menu',
-    bnMark: 'Mark',
-    bnGrades: 'Grades',
+    bnLesson: 'Lessons',
+    bnGen: 'Materials',
     bnCal: 'Calendar',
     bnAI: 'AI',
     bnCards: 'Cards',
@@ -76,7 +76,7 @@ export const appEn = {
 
   mode: {
     learning: { name: 'Personal', short: 'Personal', tagline: 'Record life, keep growing' },
-    work: { name: 'Work', short: 'Work', tagline: 'Prep · marking · grades · parent comms — all in one' },
+    work: { name: 'Work', short: 'Work', tagline: 'Prep · AI questions · slides · lessons — all in one' },
   },
 
   group: {
@@ -108,17 +108,11 @@ export const appEn = {
     'learning-fitness': { name: 'Fitness centre', desc: 'Body metrics, training log, AI nutrition, AI coach, exercise library.' },
     'work-dashboard': { name: 'Work dashboard', desc: "Today's lessons, tasks, follow-ups and class progress at a glance." },
     'work-ai': { name: 'Teaching AI', desc: 'Questions, lesson outlines, marking comments, class activities.' },
-    'work-grading': { name: 'AI marking', desc: 'Mark student answers (text / photo) + generate report-card comments.' },
-    'work-curriculum': { name: 'Curriculum progress', desc: 'Track each class against the syllabus.' },
     'work-lesson-plan': { name: 'Lesson planning', desc: 'Write and organise teaching plans.' },
     'work-timetable': { name: 'Timetable', desc: 'Your weekly teaching timetable.' },
     'work-questions': { name: 'Question bank', desc: 'Store questions by topic / type / difficulty.' },
     'work-generate': { name: 'Material generator', desc: 'AI-generate MC / short / case / long questions, exercises and papers straight into the bank.' },
     'work-resources': { name: 'Resource library', desc: 'Save handouts, past papers and material links.' },
-    'work-classes': { name: 'Class management', desc: 'Record the classes and students you teach.' },
-    'work-gradebook': { name: 'Gradebook', desc: 'Record assessment scores, averages and weaknesses.' },
-    'work-attendance': { name: 'Attendance', desc: 'Record student attendance each lesson.' },
-    'work-parent-comms': { name: 'Parent communication', desc: 'Log contact and follow-ups with parents / students.' },
     'work-tasks': { name: 'To-do / marking', desc: 'Prep, marking and admin tasks at a glance.' },
     'work-meeting-notes': { name: 'Meeting notes', desc: 'Notes for meetings and admin matters.' },
     'work-team': { name: 'Team / seats', desc: 'Create a school / panel team, invite colleagues and manage seats.' },
