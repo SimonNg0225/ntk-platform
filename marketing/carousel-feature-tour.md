@@ -2,8 +2,9 @@
 
 IG / Threads 輪播逐頁腳本(封面 + 8 功能頁 + CTA = 10 版,啱 IG 上限)。
 配圖:`marketing/` 嘅品牌 SVG(封面)+ app 真截圖(功能頁)。
-真截圖喺 `marketing/slides/screenshots/`(`01`–`08`.png,對應下面第 1–8 頁;1440×1024 @2x)。
-另 `marketing/slides/` 有 10 版設計版面(00 封面 + 01–08 功能 + 09 CTA)。
+✅ 成品(可直接出帖):`marketing/slides/ig/`(`01`–`08`.png,1080×1350)= 真截圖 + 品牌外框 + 標題疊字合成嘅 IG 4:5。
+原料:`marketing/slides/screenshots/`(`01`–`08`.png,1440×1024 @2x 原始截圖)。
+另 `marketing/slides/` 有 10 版純設計版面(00 封面 + 01–08 功能 + 09 CTA);封面同 CTA 出帖時擺 `00`／`09`。
 建議比例:IG 輪播 4:5(1080×1350),截圖記得 crop 主內容區。品牌色 indigo `#4f46e5`。
 
 ---
