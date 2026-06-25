@@ -177,11 +177,13 @@ export default function Landing() {
       >
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-3.5">
           <div className="flex items-center gap-2.5">
-            <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-accent text-base font-bold text-white shadow-sm">
-              E
-            </span>
+            <img
+              src="/favicon.svg"
+              alt="EziTeach 教學易"
+              className="h-9 w-9 rounded-lg shadow-sm"
+            />
             <span className="text-[17px] font-bold tracking-tight">
-              {t('shell.brandName', { defaultValue: '教學易' })}
+              EziTeach 教學易
             </span>
           </div>
           <nav className="flex items-center gap-5 text-sm">
