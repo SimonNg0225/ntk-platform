@@ -7,6 +7,8 @@ import { useAuth } from '../context/AuthContext'
 import { useToast } from '../context/ToastContext'
 import { useSubscription } from '../hooks/useSubscription'
 import { redeemTestCode, clearTestPro } from '../lib/testPro'
+import { useConfirm } from '../context/ConfirmContext'
+import { refundEstimate, refundRequest, hkd } from '../lib/refund'
 import { COMPANY } from '../lib/companyInfo'
 import {
   PLANS,
@@ -35,6 +37,7 @@ export default function Pricing() {
   const { t } = useTranslation()
   const sub = useSubscription()
   const toast = useToast()
+  const confirm = useConfirm()
   const [busy, setBusy] = useState<string | null>(null)
   const [cycle, setCycle] = useState<BillingCycle>('monthly')
   const [promo, setPromo] = useState('')
@@ -83,6 +86,32 @@ export default function Pricing() {
       await openBillingPortal()
     } catch (e) {
       toast.error(e instanceof Error ? e.message : t('pricing.portalFailed'))
+      setBusy(null)
+    }
+  }
+
+  async function onRefund() {
+    try {
+      setBusy('refund')
+      const est = await refundEstimate()
+      setBusy(null)
+      const ok = await confirm({
+        title: '申請退款',
+        tone: 'danger',
+        confirmText: '確認退款',
+        message: `你可退 ${hkd(est.refundCents)}（本期已用 ${Math.round(est.usagePct * 100)}% AI 點數；已扣 Stripe 手續費 ${hkd(est.feeCents)}）。確認後會即時取消訂閱、收返付費功能。`,
+      })
+      if (!ok) return
+      setBusy('refund')
+      const r = await refundRequest()
+      if (r.status === 'done') {
+        toast.success(`已退款 ${hkd(r.refundCents)}，訂閱已取消。`)
+      } else {
+        toast.info('退款申請已提交，待管理員審批後處理。')
+      }
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : '退款失敗，請稍後再試。')
+    } finally {
       setBusy(null)
     }
   }
@@ -188,13 +217,22 @@ export default function Pricing() {
                 <div className="mt-6">
                   {isCurrent ? (
                     plan.id !== 'free' ? (
-                      <button
-                        onClick={onManage}
-                        disabled={busy === 'portal'}
-                        className="w-full rounded-xl border border-slate-300 py-3 font-semibold text-slate-700 transition hover:border-accent hover:text-accent disabled:opacity-50 dark:border-slate-700 dark:text-slate-200"
-                      >
-                        {busy === 'portal' ? t('pricing.opening') : t('pricing.manage')}
-                      </button>
+                      <div className="space-y-2">
+                        <button
+                          onClick={onManage}
+                          disabled={busy === 'portal'}
+                          className="w-full rounded-xl border border-slate-300 py-3 font-semibold text-slate-700 transition hover:border-accent hover:text-accent disabled:opacity-50 dark:border-slate-700 dark:text-slate-200"
+                        >
+                          {busy === 'portal' ? t('pricing.opening') : t('pricing.manage')}
+                        </button>
+                        <button
+                          onClick={onRefund}
+                          disabled={busy === 'refund'}
+                          className="w-full text-center text-xs text-slate-400 transition hover:text-rose-500 disabled:opacity-50"
+                        >
+                          {busy === 'refund' ? '處理中…' : '申請退款（按 AI 用量退未用份額）'}
+                        </button>
+                      </div>
                     ) : (
                       <div className="w-full rounded-xl bg-slate-100 py-3 text-center font-semibold text-slate-400 dark:bg-slate-800">
                         {t('pricing.current')}

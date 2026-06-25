@@ -66,6 +66,13 @@ import {
   type ForumReport,
   type CommunityReport,
 } from '../lib/admin'
+import {
+  adminRefundsList,
+  adminRefundApprove,
+  adminRefundReject,
+  hkd,
+  type AdminRefund,
+} from '../lib/refund'
 import MarketingTab from '../features/admin/MarketingTab'
 
 // ============================================================
@@ -75,7 +82,7 @@ import MarketingTab from '../features/admin/MarketingTab'
 //  只 admin（VITE_ADMIN_EMAILS）顯示；真正權限由 admin Edge Function 驗。
 // ============================================================
 
-type TabId = 'overview' | 'users' | 'usage' | 'orgs' | 'content' | 'marketing'
+type TabId = 'overview' | 'users' | 'usage' | 'refunds' | 'orgs' | 'content' | 'marketing'
 
 const fmtDate = (s: string | null) =>
   s ? new Date(s).toLocaleDateString('zh-HK', { year: '2-digit', month: '2-digit', day: '2-digit' }) : '—'
@@ -110,6 +117,7 @@ export default function Admin() {
           { id: 'overview', label: '概覽' },
           { id: 'users', label: '用戶 + 訂閱' },
           { id: 'usage', label: '用量 + AI 成本' },
+          { id: 'refunds', label: '退款' },
           { id: 'orgs', label: '學校 B2B' },
           { id: 'content', label: '內容 + 支援' },
           { id: 'marketing', label: '行銷' },
@@ -126,6 +134,7 @@ export default function Admin() {
       {tab === 'overview' && <OverviewTab onJump={setTab} />}
       {tab === 'users' && <UsersTab />}
       {tab === 'usage' && <UsageTab />}
+      {tab === 'refunds' && <RefundsTab />}
       {tab === 'orgs' && <OrgsTab />}
       {tab === 'content' && <ContentTab />}
       {tab === 'marketing' && <MarketingTab />}
@@ -480,6 +489,94 @@ function UsageTab() {
 }
 
 // ════════════ 學校 B2B ════════════
+function RefundsTab() {
+  const toast = useToast()
+  const [busy, setBusy] = useState<string | null>(null)
+  const { data, loading, err, reload } = useAsync<AdminRefund[]>(() =>
+    adminRefundsList(),
+  )
+  const act = async (id: string, approve: boolean) => {
+    try {
+      setBusy(id)
+      if (approve) {
+        await adminRefundApprove(id)
+        toast.success('已批准並退款')
+      } else {
+        await adminRefundReject(id)
+        toast.info('已拒絕')
+      }
+      reload()
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : '操作失敗')
+    } finally {
+      setBusy(null)
+    }
+  }
+  return (
+    <Card className="p-5">
+      <SectionTitle right={<RefreshBtn loading={loading} onClick={reload} />}>
+        退款待審（大額）
+      </SectionTitle>
+      {!data ? (
+        <LoadErr loading={loading} err={err} />
+      ) : data.length === 0 ? (
+        <EmptyState icon="✅" title="冇待審退款。" hint="細額退款自動處理；大額先會喺度等審批。" />
+      ) : (
+        <Table>
+          <Thead>
+            <Tr>
+              <Th>用戶</Th>
+              <Th align="right">已付</Th>
+              <Th align="right">用量</Th>
+              <Th align="right">退款額</Th>
+              <Th align="right">操作</Th>
+            </Tr>
+          </Thead>
+          <Tbody>
+            {data.map((r) => (
+              <Tr key={r.id}>
+                <Td>
+                  {r.email ?? r.user_id.slice(0, 8)}
+                  <div className="text-[10px] text-slate-400">{fmtDate(r.created_at)}</div>
+                </Td>
+                <Td numeric>{hkd(r.amount_paid_cents)}</Td>
+                <Td numeric>{Math.round(r.usage_pct * 100)}%</Td>
+                <Td numeric>
+                  <strong>{hkd(r.refund_cents)}</strong>
+                  <div className="text-[10px] text-slate-400">扣 {hkd(r.fee_cents)} 手續費</div>
+                </Td>
+                <Td align="right">
+                  <div className="flex justify-end gap-1">
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      disabled={busy === r.id}
+                      onClick={() => act(r.id, true)}
+                    >
+                      批准
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      disabled={busy === r.id}
+                      onClick={() => act(r.id, false)}
+                    >
+                      拒絕
+                    </Button>
+                  </div>
+                </Td>
+              </Tr>
+            ))}
+          </Tbody>
+        </Table>
+      )}
+      <p className="mt-3 text-xs text-slate-400">
+        ⓘ 退款額 = 未用份額（按 AI 點數用量）× 已付 − Stripe 手續費（用戶承擔）。批准 = 即時 Stripe 退款 + 取消訂閱。細額已自動處理，唔會喺度出現。
+      </p>
+    </Card>
+  )
+}
+
 function OrgsTab() {
   const { data, loading, err, reload } = useAsync<AdminOrg[]>(adminListOrgs)
   return (
