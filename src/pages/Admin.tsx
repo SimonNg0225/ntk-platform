@@ -275,6 +275,7 @@ function UsersTab() {
                 <Th>用戶</Th>
                 <Th>方案</Th>
                 <Th>狀態</Th>
+                <Th>剩餘點數</Th>
                 <Th>到期</Th>
                 <Th>註冊</Th>
                 <Th align="right">操作</Th>
@@ -292,6 +293,23 @@ function UsersTab() {
                   </Td>
                   <Td>
                     <span className="text-xs text-slate-500">{u.status}</span>
+                  </Td>
+                  <Td>
+                    {u.creditsUnlimited ? (
+                      <span className="text-xs text-slate-400" title="白名單帳戶：無限額">
+                        ∞
+                      </span>
+                    ) : u.creditsRemaining != null && u.creditsPool != null ? (
+                      <span
+                        className={`text-xs tabular-nums ${u.creditsRemaining <= u.creditsPool * 0.1 ? 'font-medium text-rose-500 dark:text-rose-400' : 'text-slate-600 dark:text-slate-300'}`}
+                        title={`本月已用 ${u.creditsUsed ?? 0} 點`}
+                      >
+                        {u.creditsRemaining}
+                        <span className="text-slate-300 dark:text-slate-600">/{u.creditsPool}</span>
+                      </span>
+                    ) : (
+                      <span className="text-xs text-slate-300">—</span>
+                    )}
                   </Td>
                   <Td>{fmtDate(u.current_period_end)}</Td>
                   <Td>{fmtDate(u.created_at)}</Td>

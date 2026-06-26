@@ -67,6 +67,14 @@ export interface AdminUser {
   plan: string
   status: string
   current_period_end: string | null
+  /** 本月已用 AI 點數（權威：ai_usage_stats × 權重）。 */
+  creditsUsed?: number
+  /** 該層每月點數池。 */
+  creditsPool?: number
+  /** 本月剩餘點數（= pool − used，下限 0）。 */
+  creditsRemaining?: number
+  /** 白名單帳戶（無限額）。 */
+  creditsUnlimited?: boolean
 }
 
 export interface UsageFeature {

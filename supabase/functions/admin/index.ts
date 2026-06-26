@@ -46,6 +46,15 @@ function costPts(feature: string, model: string, calls: number): number {
   const mult = model === 'gemini-2.5-pro' ? 4 : 1 // 對齊 credits.ts creditCostOf
   return base * mult * (calls ?? 0)
 }
+// AI 點數池（對齊 src/lib/credits.ts monthlyCredits / gemini fn，可由環境變數調整）。
+const POINTS_FREE = Number(Deno.env.get('AI_POINTS_FREE') ?? '30')
+const POINTS_PLUS = Number(Deno.env.get('AI_POINTS_PLUS') ?? '300')
+const POINTS_PRO = Number(Deno.env.get('AI_POINTS_PRO') ?? '1000')
+// AI 無限額白名單（對齊 gemini fn：AI_UNLIMITED_EMAILS，未設退回 ADMIN_EMAILS）。
+const UNLIMITED_EMAILS = (Deno.env.get('AI_UNLIMITED_EMAILS') ?? Deno.env.get('ADMIN_EMAILS') ?? '')
+  .split(',')
+  .map((s) => s.trim().toLowerCase())
+  .filter(Boolean)
 // Pro 月費（HKD）—— 估 MRR 用。
 const PRO_PRICE_HKD = Number(Deno.env.get('PRO_PRICE_HKD') ?? '78')
 const PLUS_PRICE_HKD = Number(Deno.env.get('PLUS_PRICE_HKD') ?? '28')
@@ -231,7 +240,43 @@ Deno.serve(async (req: Request) => {
           status: subMap.get(u.id)?.status ?? 'inactive',
           current_period_end: subMap.get(u.id)?.current_period_end ?? null,
         }))
-        return json({ data: { users: merged, page, hasMore: (data?.users ?? []).length === perPage } })
+
+        // 本月 AI 點數用量（權威：ai_usage_stats × 權重，計法對齊 gemini fn）
+        const curYm = ym()
+        const usedMap = new Map<string, number>()
+        if (ids.length) {
+          const { data: usage } = await admin
+            .from('ai_usage_stats')
+            .select('user_id, feature, model, calls')
+            .in('user_id', ids)
+            .eq('ym', curYm)
+          for (const r of usage ?? [])
+            usedMap.set(
+              r.user_id,
+              (usedMap.get(r.user_id) ?? 0) + costPts(r.feature, r.model, r.calls),
+            )
+        }
+        const withCredits = merged.map((u) => {
+          const unlimited = !!u.email && UNLIMITED_EMAILS.includes(u.email.toLowerCase())
+          const active = u.status === 'active' || u.status === 'trialing'
+          const pool =
+            active && u.plan === 'pro'
+              ? POINTS_PRO
+              : active && u.plan === 'plus'
+                ? POINTS_PLUS
+                : POINTS_FREE
+          const used = Math.round(usedMap.get(u.id) ?? 0)
+          return {
+            ...u,
+            creditsUnlimited: unlimited,
+            creditsPool: pool,
+            creditsUsed: used,
+            creditsRemaining: Math.max(0, pool - used),
+          }
+        })
+        return json({
+          data: { users: withCredits, page, hasMore: (data?.users ?? []).length === perPage },
+        })
       }
 
       case 'set-plan': {
