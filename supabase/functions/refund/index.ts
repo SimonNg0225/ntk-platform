@@ -51,6 +51,21 @@ function json(obj: unknown, status = 200): Response {
 
 const MONTH_MS = (365 / 12) * 24 * 60 * 60 * 1000
 
+// 當前計費週期開始（Unix 秒）。新版 Stripe API（2025+/dahlia）將 current_period_*
+// 由 subscription 頂層移去 items；兩邊都試，最後 fallback start_date（首訂閱用）。
+function periodStartUnix(sub: Stripe.Subscription): number {
+  const anySub = sub as unknown as {
+    current_period_start?: number
+    items?: { data?: Array<{ current_period_start?: number }> }
+  }
+  return (
+    anySub.current_period_start ??
+    anySub.items?.data?.[0]?.current_period_start ??
+    sub.start_date ??
+    0
+  )
+}
+
 interface RefundCalc {
   ok: boolean
   error?: string
@@ -118,7 +133,8 @@ async function computeRefund(admin: Admin, userId: string): Promise<RefundCalc |
   // 未用份額（月費 / 年費）
   let unusedFrac: number
   if (cycle === 'year') {
-    const periodStartMs = (sub.start_date ?? Math.floor(now.getTime() / 1000)) * 1000
+    const ps = periodStartUnix(sub)
+    const periodStartMs = (ps || Math.floor(now.getTime() / 1000)) * 1000
     const elapsedFullMonths = Math.max(
       0,
       Math.min(11, Math.floor((now.getTime() - periodStartMs) / MONTH_MS)),
