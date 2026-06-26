@@ -666,6 +666,8 @@ export function renderCards(slide: PptxGenJS.Slide, body: Rect, pack: Pack, s: S
  * 只擺最邊位（x0 / y0），唔壓內容區（x≥0.9, y≥0.5）。
  */
 export function renderEmphasisFrame(slide: PptxGenJS.Slide, pack: Pack): void {
+  // 講堂 pack 本身已有深藍 header band 撐起版面結構，再疊頂帶＋全高左脊會重複又突兀 → 跳過
+  if (pack.id === 'seminar') return
   slide.addShape('rect', { x: 0, y: 0, w: 13.333, h: 0.16, fill: { color: pack.accent }, line: { type: 'none' } })
   slide.addShape('rect', { x: 0, y: 0, w: 0.16, h: 7.5, fill: { color: pack.accent }, line: { type: 'none' } })
 }

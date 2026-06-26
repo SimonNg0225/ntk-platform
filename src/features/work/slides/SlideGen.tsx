@@ -758,6 +758,9 @@ export default function SlideGen() {
                     </p>
                   )}
                 </div>
+                <div className="flex justify-end border-t border-slate-100 pt-3 dark:border-slate-800">
+                  <CreditMeter source="slides" model={model} />
+                </div>
               </div>
             )}
 
@@ -808,6 +811,30 @@ export default function SlideGen() {
                         })
                       : t('slideGen.busy.start', { defaultValue: '由 AI 設計緊…' })}
                   </p>
+                )}
+
+                {current && !busy && (
+                  <div className="flex flex-wrap items-center gap-2 rounded-xl border border-slate-200/70 bg-slate-50/60 px-3 py-2 dark:border-slate-700/60 dark:bg-slate-800/40">
+                    <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                      {t('slideGen.restyle.label', { defaultValue: '換風格下載' })}
+                    </span>
+                    <Select
+                      value={pack}
+                      onChange={(e) => setPack(e.target.value as SlidePackId)}
+                      className="h-8 text-xs"
+                    >
+                      {SLIDE_PACKS.map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {p.name}
+                        </option>
+                      ))}
+                    </Select>
+                    <span className="text-[11px] text-slate-400 dark:text-slate-500">
+                      {t('slideGen.restyle.hint', {
+                        defaultValue: '即時換版面，唔使再生成、唔扣點',
+                      })}
+                    </span>
+                  </div>
                 )}
 
                 {current && !busy && (
