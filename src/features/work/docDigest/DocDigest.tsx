@@ -106,7 +106,14 @@ export default function DocDigest() {
         if (ex.image) image = [ex.image]
         sourceType = ex.sourceType
         if (!inputText && !ex.image) {
-          throw new Error('呢個檔抽唔到文字（可能係掃描件）。試吓改用「影相」。')
+          throw new Error('呢個檔抽唔到文字。請確認檔案有可讀內容，或試吓改用「影相」。')
+        }
+        if (ex.scanPagesDropped && ex.scanPagesDropped > 0) {
+          toast.info(
+            `掃描頁多過 50 版，餘下 ${ex.scanPagesDropped} 版未處理；建議分批上載（已多扣 1 點作 AI 辨識）`,
+          )
+        } else if (ex.usedVision) {
+          toast.info('掃描頁已用 AI 圖像辨識補字（多扣 1 點）')
         }
       }
 
@@ -293,7 +300,7 @@ export default function DocDigest() {
                     {mode === 'photo'
                       ? t('docDigest.upload.photoHint', { defaultValue: '手機可即影紙本通告' })
                       : t('docDigest.upload.fileHint', {
-                          defaultValue: '掃描件抽唔到字 → 改用影相',
+                          defaultValue: '掃描件自動 AI 辨識文字（多扣 1 點）',
                         })}
                   </span>
                 )}
