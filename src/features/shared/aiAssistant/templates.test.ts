@@ -140,6 +140,17 @@ describe('builtinTemplates — 範本庫 + 與抽 / 填一致性', () => {
       expect(blanked.includes('{{')).toBe(false)
     }
   })
+
+  it('敏感工作範本提醒先匿名化學生資料', () => {
+    const work = builtinTemplates('work')
+    const feedback = work.find((t) => t.id === 'w-feedback')!
+    const parentFollowup = work.find((t) => t.id === 'w-parent-followup')!
+
+    expect(feedback.body).toContain('已移除姓名')
+    expect(feedback.body).toContain('匿名學生答案')
+    expect(parentFollowup.body).toContain('代號')
+    expect(parentFollowup.body).toContain('避免姓名')
+  })
 })
 
 describe('TEMPLATE_VAR_RE — 共用正則狀態守護', () => {
