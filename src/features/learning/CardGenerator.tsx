@@ -834,7 +834,7 @@ export default function CardGenerator() {
                       setTopic(p.topic)
                       setType(p.type)
                     }}
-                    className="inline-flex items-center gap-1.5 rounded-full border border-slate-200/80 bg-white px-3 py-1.5 text-xs text-slate-600 transition duration-200 active:scale-[0.98] hover:border-accent/40 hover:bg-accent-soft/40 hover:text-accent-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700/60 dark:bg-slate-800 dark:text-slate-300 dark:hover:border-accent/40 dark:hover:bg-accent/10 dark:hover:text-accent"
+                    className="inline-flex min-h-11 items-center gap-1.5 rounded-full border border-slate-200/80 bg-white px-3 text-xs text-slate-600 transition duration-200 active:scale-[0.98] hover:border-accent/40 hover:bg-accent-soft/40 hover:text-accent-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700/60 dark:bg-slate-800 dark:text-slate-300 dark:hover:border-accent/40 dark:hover:bg-accent/10 dark:hover:text-accent"
                   >
                     <span>{p.emoji}</span>
                     {p.label}
@@ -1315,7 +1315,7 @@ export default function CardGenerator() {
                               <button
                                 type="button"
                                 onClick={() => patchDraft(d.id, { flipped: true })}
-                                className="flex items-center gap-1.5 rounded-xl border border-dashed border-slate-300/70 px-3 py-2 text-left text-xs text-slate-400 transition active:scale-[0.98] hover:border-accent/40 hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:border-slate-600/70 dark:text-slate-500 dark:hover:text-accent"
+                                className="flex min-h-11 items-center gap-1.5 rounded-xl border border-dashed border-slate-300/70 px-3 text-left text-xs text-slate-400 transition active:scale-[0.98] hover:border-accent/40 hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:border-slate-600/70 dark:text-slate-500 dark:hover:text-accent"
                               >
                                 <Eye size={13} className="shrink-0" />
                                 {t('cardGen.card.reveal', {
@@ -1487,7 +1487,7 @@ export default function CardGenerator() {
                 <button
                   type="button"
                   onClick={() => nav.open('learning-flashcards')}
-                  className="mt-2 flex w-full items-center justify-center gap-1.5 text-xs font-medium text-accent transition active:scale-[0.98] hover:text-accent-strong"
+                  className="mt-2 flex min-h-11 w-full items-center justify-center gap-1.5 rounded-lg text-xs font-medium text-accent transition active:scale-[0.98] hover:text-accent-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
                 >
                   <Brain size={14} className="shrink-0" />
                   {t('cardGen.save.goReview', {
