@@ -49,11 +49,11 @@ const PLAN_FIT: Record<
   plus: {
     label: '日常老師',
     bestFor: '每星期都要備課、出教材、同步多部裝置',
-    outcome: '300 點覆蓋日常備課，價錢低過一杯咖啡幾日',
+    outcome: '300 點覆蓋日常備課，適合每週穩定使用',
     icon: ClipboardList,
   },
   pro: {
-    label: '重度備課',
+    label: '密集備課',
     bestFor: '全日校老師、公開試班、需要高階模型和更多額度',
     outcome: '1000 點 + Pro 模型，適合密集出卷、簡報和回饋',
     icon: Sparkles,
@@ -383,7 +383,7 @@ export default function Pricing() {
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[color:var(--border)] px-4 py-4 sm:px-6">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.12em] text-accent">
-                Plan finder
+                方案建議
               </p>
               <h2 className="mt-1 text-lg font-semibold tracking-tight text-slate-800 dark:text-slate-100">
                 一眼睇清邊個方案啱你
