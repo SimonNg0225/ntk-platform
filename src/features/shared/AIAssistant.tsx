@@ -157,6 +157,22 @@ const MODE_AI: Record<
   },
 }
 
+const WORK_WELCOME_TEMPLATE_IDS = [
+  'w-next-lesson',
+  'w-differentiated-worksheet',
+  'w-mc',
+  'w-feedback',
+  'w-parent-followup',
+  'w-admin-email',
+]
+
+function welcomeTemplatesForMode(mode: ModeId): BuiltinTemplate[] {
+  const all = builtinTemplates(mode)
+  if (mode !== 'work') return all.slice(0, 6)
+  const byId = new Map(all.map((tpl) => [tpl.id, tpl]))
+  return WORK_WELCOME_TEMPLATE_IDS.map((id) => byId.get(id)).filter((tpl): tpl is BuiltinTemplate => Boolean(tpl))
+}
+
 const isMac =
   typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform)
 const MOD = isMac ? '⌘' : 'Ctrl'
@@ -1025,7 +1041,7 @@ export default function AIAssistant() {
             <Welcome
               greeting={greeting}
               tagline={tagline}
-              templates={builtinTemplates(mode).slice(0, 6)}
+              templates={welcomeTemplatesForMode(mode)}
               onPick={(t) => {
                 // 帶變數：直接開「填寫」表單（之前係開成個範本庫，要喺度再揀多次先填到）。
                 // 冇變數：直接填入 Composer。
