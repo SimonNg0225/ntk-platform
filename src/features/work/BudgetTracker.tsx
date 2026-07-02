@@ -194,7 +194,7 @@ export default function BudgetTracker() {
             {due.length > 0 && tab !== 'recurring' && (
               <button
                 onClick={() => setTab('recurring')}
-                className="inline-flex items-center gap-1 text-xs font-medium text-amber-600 transition hover:text-amber-700 dark:text-amber-400 dark:hover:text-amber-300"
+                className="inline-flex min-h-11 cursor-pointer items-center gap-1 rounded-full px-3 text-xs font-medium text-amber-600 transition hover:bg-amber-50 hover:text-amber-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 dark:text-amber-400 dark:hover:bg-amber-500/10 dark:hover:text-amber-300"
               >
                 <CalendarClock size={12} /> {due.length} 筆定期待入帳
               </button>
@@ -205,7 +205,7 @@ export default function BudgetTracker() {
               </IconButton>
               <button
                 onClick={() => setMonth(monthKey(new Date()))}
-                className="min-w-[6.5rem] rounded-full px-2.5 py-1 text-center text-sm font-semibold tabular-nums text-slate-800 transition hover:bg-slate-100 active:scale-[0.98] dark:text-slate-100 dark:hover:bg-slate-700"
+                className="min-h-11 min-w-[7.25rem] cursor-pointer rounded-full px-3 text-center text-sm font-semibold tabular-nums text-slate-800 transition hover:bg-slate-100 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:text-slate-100 dark:hover:bg-slate-700"
                 title="返回本月"
               >
                 {monthLabel(month)}
@@ -424,8 +424,8 @@ function LedgerLine({
         ruled && 'mt-0.5 border-t-2 border-double border-slate-200 pt-3 dark:border-slate-700',
       )}
     >
-      <span className={cx('flex h-8 w-8 shrink-0 items-center justify-center rounded-lg', LINE_CHIP[tone])}>
-        <Icon size={15} aria-hidden="true" />
+      <span className={cx('flex h-11 w-11 shrink-0 items-center justify-center rounded-xl', LINE_CHIP[tone])}>
+        <Icon size={18} aria-hidden="true" />
       </span>
       <dt className="shrink-0 text-sm font-medium text-slate-600 dark:text-slate-300">
         {label}
@@ -662,7 +662,7 @@ function OverviewTab({
                 key={t.id}
                 className="flex items-center gap-3 py-2 text-sm"
               >
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-base dark:bg-slate-700/60">
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-lg dark:bg-slate-700/60">
                   {cat?.icon ?? '🏷️'}
                 </span>
                 <span className="min-w-0 flex-1 truncate text-slate-700 dark:text-slate-200">
@@ -1055,8 +1055,8 @@ function BudgetsTab({
         <Card className="rounded-2xl p-4">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-2.5">
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
-                <Target size={17} aria-hidden="true" />
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
+                <Target size={18} aria-hidden="true" />
               </span>
               <div>
                 <p className="text-xs text-slate-500 dark:text-slate-400">本月總預算</p>
@@ -1564,7 +1564,7 @@ function RecurringTab({
                   key={r.id}
                   className="flex items-center gap-3 rounded-lg bg-white/70 p-2.5 dark:bg-slate-800/50"
                 >
-                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white text-base dark:bg-slate-700">
+                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white text-lg dark:bg-slate-700">
                     {cat?.icon ?? '🏷️'}
                   </span>
                   <div className="min-w-0 flex-1">
@@ -1642,7 +1642,7 @@ function RecurringTab({
             return (
               <Card key={r.id} className={cx('group p-3', !r.active && 'opacity-60')}>
                 <div className="flex items-center gap-3">
-                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-lg dark:bg-slate-700">
+                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-lg dark:bg-slate-700">
                     {cat?.icon ?? '🏷️'}
                   </span>
                   <div className="min-w-0 flex-1">
@@ -2171,8 +2171,8 @@ function ImportTxModal({
 
       <div className="space-y-4">
         <div className="flex items-start gap-3 rounded-2xl border border-accent/20 bg-accent-soft/50 p-3.5 dark:border-accent/25 dark:bg-accent/10">
-          <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-accent text-white">
-            <Upload size={16} />
+          <span className="mt-0.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-accent text-white">
+            <Upload size={18} />
           </span>
           <p className="text-xs leading-relaxed text-slate-600 dark:text-slate-300">
             CSV 欄位：日期、類型（收入／支出）、分類、金額、備註，同匯出格式一樣。類型留空會按金額正負推斷；分類名會自動對應到最相近嘅現有分類，對唔到就落「未分類」。第一次用建議先下載範本。
@@ -2415,7 +2415,7 @@ function CategoryManager({
               aria-pressed={choice === icon}
               aria-label={`揀 emoji ${choice}`}
               className={cx(
-                'flex h-9 w-9 items-center justify-center rounded-xl border text-lg transition active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
+                'flex h-11 w-11 cursor-pointer items-center justify-center rounded-xl border text-lg transition active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
                 choice === icon
                   ? 'border-accent bg-accent-soft text-accent-strong'
                   : 'border-slate-200 bg-white hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700',
