@@ -1167,7 +1167,7 @@ export function Menu({
                 setOpen(false)
               }}
               className={cx(
-                'flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent/40 disabled:opacity-40',
+                'flex w-full max-sm:min-h-11 items-center gap-2 rounded-lg px-2.5 py-1.5 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent/40 disabled:opacity-40',
                 it.tone === 'danger'
                   ? 'text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-500/10'
                   : 'text-slate-700 hover:bg-black/[0.04] dark:text-slate-200 dark:hover:bg-white/[0.06]',
