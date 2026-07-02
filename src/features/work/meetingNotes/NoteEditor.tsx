@@ -460,13 +460,13 @@ export default function NoteEditor({
             {draft.attendees.map((a) => (
               <span
                 key={a}
-                className="inline-flex items-center gap-1 rounded-md bg-white py-0.5 pl-2 pr-1 text-xs text-slate-600 ring-1 ring-slate-200/80 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700"
+                className="inline-flex min-h-11 items-center gap-1 rounded-md bg-white pl-2 pr-1 text-xs text-slate-600 ring-1 ring-slate-200/80 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700"
               >
                 {a}
                 <button
                   type="button"
                   onClick={() => removeAttendee(a)}
-                  className="rounded p-0.5 text-slate-400 transition hover:bg-slate-200 hover:text-rose-500 dark:hover:bg-slate-700"
+                  className="inline-flex min-h-9 min-w-9 items-center justify-center rounded text-slate-400 transition hover:bg-slate-200 hover:text-rose-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400/40 dark:hover:bg-slate-700"
                   aria-label={`移除 ${a}`}
                 >
                   <X size={11} />
@@ -505,7 +505,7 @@ export default function NoteEditor({
                     key={n}
                     type="button"
                     onClick={() => addAttendees(n)}
-                    className="rounded-md border border-dashed border-slate-300 px-1.5 py-0.5 text-[11px] text-slate-500 transition hover:border-accent hover:text-accent dark:border-slate-600 dark:text-slate-400"
+                    className="inline-flex min-h-11 items-center rounded-md border border-dashed border-slate-300 px-2.5 text-[11px] text-slate-500 transition hover:border-accent hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:border-slate-600 dark:text-slate-400"
                   >
                     ＋ {n}
                   </button>
@@ -522,7 +522,7 @@ export default function NoteEditor({
                 <Menu
                   align="end"
                   trigger={
-                    <span className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-accent transition hover:bg-accent-soft dark:hover:bg-accent/15">
+                    <span className="inline-flex min-h-11 items-center gap-1 rounded-md px-2 text-xs font-medium text-accent transition hover:bg-accent-soft dark:hover:bg-accent/15">
                       <FileText size={13} />
                       套用範本
                     </span>
@@ -535,7 +535,7 @@ export default function NoteEditor({
                     onClick={extractFromContent}
                     disabled={newCount === 0}
                     className={cx(
-                      'inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium transition disabled:opacity-40',
+                      'inline-flex min-h-11 items-center gap-1 rounded-md px-2 text-xs font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 disabled:cursor-not-allowed disabled:opacity-40',
                       'text-accent hover:bg-accent-soft dark:hover:bg-accent/15',
                     )}
                   >
@@ -562,14 +562,14 @@ export default function NoteEditor({
             <button
               type="button"
               onClick={() => insertLinePrefix('- [ ] ')}
-              className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-2 py-1 text-[11px] font-medium text-slate-600 transition hover:border-accent/40 hover:text-accent dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+              className="inline-flex min-h-11 items-center gap-1 rounded-md border border-slate-200 bg-white px-2 text-[11px] font-medium text-slate-600 transition hover:border-accent/40 hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
             >
               <CheckSquare size={12} /> ＋ 行動項目
             </button>
             <button
               type="button"
               onClick={() => insertLinePrefix('> ')}
-              className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-2 py-1 text-[11px] font-medium text-slate-600 transition hover:border-accent/40 hover:text-accent dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+              className="inline-flex min-h-11 items-center gap-1 rounded-md border border-slate-200 bg-white px-2 text-[11px] font-medium text-slate-600 transition hover:border-accent/40 hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
             >
               <Gavel size={12} /> ＋ 決議
             </button>
@@ -706,7 +706,7 @@ export default function NoteEditor({
                     type="button"
                     onClick={() => updateAction(a.id, { done: !a.done })}
                     className={cx(
-                      'shrink-0 transition active:scale-90',
+                      'inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-lg transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-90',
                       a.done
                         ? 'text-emerald-500'
                         : 'text-slate-300 hover:text-accent dark:text-slate-600',
@@ -755,6 +755,7 @@ export default function NoteEditor({
                       label="刪除項目"
                       tone="danger"
                       size="sm"
+                      className="min-h-11 min-w-11"
                       onClick={() => removeAction(a.id)}
                     >
                       <Trash2 size={14} />
@@ -771,7 +772,7 @@ export default function NoteEditor({
           <button
             type="button"
             onClick={() => setMoreOpen((v) => !v)}
-            className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 transition hover:text-accent dark:text-slate-400"
+            className="inline-flex min-h-11 items-center gap-1.5 rounded-lg px-2 text-sm font-medium text-slate-500 transition hover:bg-slate-100 hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:text-slate-400 dark:hover:bg-slate-800"
           >
             <ChevronDown size={15} className={cx('transition', moreOpen && 'rotate-180')} />
             更多細節（時長、地點、標籤）
