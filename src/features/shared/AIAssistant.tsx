@@ -1936,7 +1936,7 @@ function TemplateLibrary({
   }
 
   return (
-    <Modal open={open} onClose={onClose} title={t('aiasst.tplPromptLibrary', { defaultValue: 'Prompt 範本庫' })} size="lg">
+    <Modal open={open} onClose={onClose} title={t('aiasst.tplPromptLibrary', { defaultValue: '常用指令庫' })} size="lg">
       <div className="space-y-3">
         <div className="flex items-center gap-2">
           <SegmentedControl
@@ -1985,7 +1985,7 @@ function TemplateLibrary({
             )}
 
             {mine.length === 0 && !creating ? (
-              <EmptyState icon={Library} title={t('aiasst.tplEmptyMineTitle', { defaultValue: '仲未有自訂範本' })} hint={t('aiasst.tplEmptyMineHint', { defaultValue: '將你常用嘅 prompt 存起，下次一 click 即用。' })} />
+              <EmptyState icon={Library} title={t('aiasst.tplEmptyMineTitle', { defaultValue: '仲未有自訂範本' })} hint={t('aiasst.tplEmptyMineHint', { defaultValue: '將常用要求存起，下次一按即用。' })} />
             ) : (
               <div className="grid max-h-[42vh] grid-cols-1 gap-2 overflow-y-auto sm:grid-cols-2">
                 {mine.map((tpl) => (
