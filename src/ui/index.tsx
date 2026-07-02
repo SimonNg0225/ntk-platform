@@ -54,7 +54,7 @@ type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger'
 type ButtonSize = 'sm' | 'md' | 'lg'
 
 const BTN_BASE =
-  'inline-flex max-sm:min-h-11 items-center justify-center gap-1.5 rounded-xl font-semibold transition duration-150 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-900'
+  'inline-flex min-h-11 cursor-pointer items-center justify-center gap-1.5 rounded-xl font-semibold transition duration-150 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-900'
 const BTN_VARIANT: Record<ButtonVariant, string> = {
   primary:
     'bg-accent text-white hover:bg-accent-strong shadow-sm dark:shadow-none',
@@ -1167,7 +1167,7 @@ export function Menu({
                 setOpen(false)
               }}
               className={cx(
-                'flex w-full max-sm:min-h-11 items-center gap-2 rounded-lg px-2.5 py-1.5 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent/40 disabled:opacity-40',
+                'flex min-h-11 w-full cursor-pointer items-center gap-2 rounded-lg px-2.5 py-1.5 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent/40 disabled:cursor-not-allowed disabled:opacity-40',
                 it.tone === 'danger'
                   ? 'text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-500/10'
                   : 'text-slate-700 hover:bg-black/[0.04] dark:text-slate-200 dark:hover:bg-white/[0.06]',
@@ -1208,7 +1208,7 @@ export function SegmentedControl<T extends string>({
             aria-pressed={on}
             onClick={() => onChange(o.id)}
             className={cx(
-              'inline-flex max-sm:min-h-11 items-center gap-1.5 rounded-full font-medium transition duration-200 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
+              'inline-flex min-h-11 cursor-pointer items-center gap-1.5 rounded-full font-medium transition duration-200 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
               pad,
               on
                 ? 'bg-white text-slate-800 shadow-[0_1px_2px_rgba(0,0,0,0.08)] ring-1 ring-black/[0.04] dark:bg-slate-700 dark:text-slate-100 dark:ring-white/10'
@@ -1251,7 +1251,7 @@ export function OptionButtons<T extends string>({
             aria-pressed={on}
             onClick={() => onChange(clearable && on ? '' : o.id)}
             className={cx(
-              'flex-1 rounded-xl border px-3 py-2 text-sm font-medium transition duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-900',
+              'min-h-11 flex-1 cursor-pointer rounded-xl border px-3 py-2 text-sm font-medium transition duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-900',
               on
                 ? 'border-accent bg-accent text-white shadow-sm shadow-accent/20'
                 : 'border-black/[0.08] bg-white text-slate-600 hover:bg-black/[0.03] dark:border-white/10 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-white/[0.06]',
