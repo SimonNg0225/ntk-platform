@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Download, Share, Plus, X } from 'lucide-react'
+import { BRAND_NAME } from '../lib/brand'
 
 // ──────────────────────────────────────────────────────────────
 //  PWA 安裝提示
@@ -89,12 +90,12 @@ export default function PwaInstallPrompt() {
       <div className="flex w-full max-w-md items-center gap-3 rounded-2xl border border-accent/30 bg-white/95 p-3 shadow-lg backdrop-blur dark:border-accent/30 dark:bg-slate-800/95">
         <img
           src="/favicon.svg"
-          alt="EziTeach 教學易"
+          alt={BRAND_NAME}
           className="h-10 w-10 shrink-0 rounded-xl shadow-sm"
         />
         <div className="min-w-0 flex-1">
           <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">
-            安裝 EziTeach 教學易
+            安裝 {BRAND_NAME}
           </p>
           {ios ? (
             <p className="mt-0.5 flex flex-wrap items-center gap-1 text-xs text-slate-500 dark:text-slate-400">

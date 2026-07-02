@@ -1,5 +1,5 @@
 -- ============================================================
---  NTK Platform · 0002_commercialization
+--  EziTeach AI · 0002_commercialization
 --  商業化：訂閱 (subscriptions) + Webhook 冪等 (billing_events)
 -- ------------------------------------------------------------
 --  多租戶安全原則：

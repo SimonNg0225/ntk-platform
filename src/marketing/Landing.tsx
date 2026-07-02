@@ -21,6 +21,7 @@ import {
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../context/AuthContext'
 import { track } from '../lib/observability'
+import { BRAND_NAME, BRAND_FULL_ZH, BRAND_TAGLINE_ZH } from '../lib/brand'
 
 // ============================================================
 //  商業化 · 行銷首頁（Landing）—— 對象：全港老師
@@ -43,9 +44,10 @@ const FEATURE_ITEMS: { icon: LucideIcon; k: string }[] = [
 ]
 
 const TRUST_ITEMS: { icon: LucideIcon; k: string }[] = [
-  { icon: ShieldCheck, k: 'local' },
-  { icon: Cloud, k: 'offline' },
-  { icon: FileText, k: 'a11y' },
+  { icon: Users, k: 'solo' },
+  { icon: ShieldCheck, k: 'privacy' },
+  { icon: Highlighter, k: 'review' },
+  { icon: Cloud, k: 'portable' },
 ]
 
 // hero 紙面 ✓ 清單：六大功能（i18n hero.ck1..6）
@@ -148,23 +150,23 @@ export default function Landing() {
   return (
     <div className="min-h-screen bg-[color:var(--app-bg)] text-[color:var(--text)]">
       <Helmet>
-        <title>EziTeach 教學易 · 香港教師一站式工作台</title>
+        <title>{BRAND_FULL_ZH}</title>
         <meta
           name="description"
-          content="為香港老師而設的一站式工作台：備課、AI 出題、成績與弱項分析、點名、家長溝通、行政文件。資料在地、雲端同步、適用任何科目。"
+          content="EziTeach AI 是香港老師的 AI 工作台：個人老師可先免費使用，備課、AI 出題、成績與弱項分析、點名、家長溝通、行政文件一個地方完成。"
         />
         <meta property="og:type" content="website" />
-        <meta property="og:site_name" content="EziTeach 教學易" />
-        <meta property="og:title" content="EziTeach 教學易 · 香港教師工作台" />
+        <meta property="og:site_name" content={BRAND_NAME} />
+        <meta property="og:title" content={BRAND_FULL_ZH} />
         <meta
           property="og:description"
-          content="備課 · AI 出題 · 成績分析 · 點名 · 家長溝通 —— 老師的日常工作，一個平台搞掂。"
+          content="一位老師都開得起：備課 · AI 出題 · 成績分析 · 點名 · 家長溝通，由備課到回饋一條龍。"
         />
         <meta name="twitter:card" content="summary" />
-        <meta name="twitter:title" content="EziTeach 教學易 · 香港教師工作台" />
+        <meta name="twitter:title" content={BRAND_FULL_ZH} />
         <meta
           name="twitter:description"
-          content="備課 · AI 出題 · 成績分析 · 點名 · 家長溝通 —— 老師的日常工作，一個平台搞掂。"
+          content="一位老師都開得起：備課 · AI 出題 · 成績分析 · 點名 · 家長溝通，由備課到回饋一條龍。"
         />
       </Helmet>
 
@@ -179,11 +181,11 @@ export default function Landing() {
           <div className="flex items-center gap-2.5">
             <img
               src="/favicon.svg"
-              alt="EziTeach 教學易"
+              alt={BRAND_NAME}
               className="h-9 w-9 rounded-lg shadow-sm"
             />
             <span className="text-[17px] font-bold tracking-tight">
-              EziTeach 教學易
+              {BRAND_NAME}
             </span>
           </div>
           <nav className="flex items-center gap-5 text-sm">
@@ -451,7 +453,7 @@ export default function Landing() {
           <span aria-hidden>·</span>
           <Link to="/pricing" className="transition hover:text-accent">{t('footer.pricing')}</Link>
         </div>
-        <p className="mt-3">© {new Date().getFullYear()} {t('shell.brandName', { defaultValue: '教學易' })} · {t('footer.copy')}</p>
+        <p className="mt-3">© {new Date().getFullYear()} {BRAND_NAME} · {BRAND_TAGLINE_ZH}</p>
         <p className="mt-1">
           {COMPANY.legalName ? (
             <>

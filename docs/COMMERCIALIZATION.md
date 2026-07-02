@@ -1,6 +1,6 @@
 # 商業化指南（Commercialization）
 
-呢份文件係 NTK Platform 由「個人自用」行去「商業化（多用戶 · 收費 · 可營運）」嘅
+呢份文件係 EziTeach AI 由「個人自用」行去「商業化（多用戶 · 收費 · 可營運）」嘅
 **設定步驟 + Roadmap**。
 
 > TL;DR：所有商業化功能**未設 env 就降級**，唔影響現有訪客模式。
@@ -131,7 +131,7 @@ if (!isPro) return <UpgradePrompt />   // 例如 AI 無限額度、進階統計
 - secret（未設 → email 靜靜 no-op，唔影響收費邏輯）：
   ```bash
   supabase secrets set RESEND_API_KEY=re_...
-  supabase secrets set RESEND_FROM='NTK Platform <noreply@你的網域>'
+  supabase secrets set RESEND_FROM='EziTeach AI <noreply@你的網域>'
   supabase secrets set ADMIN_ALERT_EMAIL=you@example.com
   supabase functions deploy stripe-webhook --no-verify-jwt
   ```

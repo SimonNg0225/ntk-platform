@@ -4,13 +4,13 @@
 //  - sendEmail()：寄一封 HTML email（未設 RESEND_API_KEY → no-op 回 false）。
 //  - alertAdmin()：寄系統告警去 ADMIN_ALERT_EMAIL（webhook 失敗等）。
 //  secret（用 `supabase secrets set`）：
-//    RESEND_API_KEY、RESEND_FROM（例：'EziTeach <noreply@yourdomain>'）、
+//    RESEND_API_KEY、RESEND_FROM（例：'EziTeach AI <noreply@yourdomain>'）、
 //    ADMIN_ALERT_EMAIL。
 // ============================================================
 
 const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY') ?? ''
 const RESEND_FROM =
-  Deno.env.get('RESEND_FROM') ?? 'EziTeach <noreply@eziteach.example>'
+  Deno.env.get('RESEND_FROM') ?? 'EziTeach AI <noreply@eziteach.example>'
 const ADMIN_ALERT_EMAIL = Deno.env.get('ADMIN_ALERT_EMAIL') ?? ''
 /** 客服收件箱（未設則退回 ADMIN_ALERT_EMAIL）。 */
 export const SUPPORT_EMAIL = Deno.env.get('SUPPORT_EMAIL') ?? ADMIN_ALERT_EMAIL
@@ -59,7 +59,7 @@ export async function alertAdmin(
   if (!ADMIN_ALERT_EMAIL) return
   await sendEmail({
     to: ADMIN_ALERT_EMAIL,
-    subject: `[NTK Alert] ${subject}`,
+    subject: `[EziTeach AI Alert] ${subject}`,
     html: `<pre style="font:13px/1.5 ui-monospace,monospace;white-space:pre-wrap">${escapeHtml(
       detail,
     )}</pre>`,
@@ -79,12 +79,12 @@ const BRAND = '#0d9488'
 function shell(title: string, bodyHtml: string): string {
   return `<div style="font-family:ui-sans-serif,system-ui,'Noto Sans HK',sans-serif;max-width:480px;margin:0 auto;color:#1e293b">
   <div style="background:${BRAND};color:#fff;padding:20px 24px;border-radius:12px 12px 0 0">
-    <h1 style="margin:0;font-size:18px">EziTeach</h1>
+    <h1 style="margin:0;font-size:18px">EziTeach AI</h1>
   </div>
   <div style="border:1px solid #e2e8f0;border-top:0;border-radius:0 0 12px 12px;padding:24px">
     <h2 style="margin:0 0 12px;font-size:16px">${title}</h2>
     ${bodyHtml}
-    <p style="margin:24px 0 0;font-size:12px;color:#94a3b8;line-height:1.6">EziTeach · 香港教師工作台${
+    <p style="margin:24px 0 0;font-size:12px;color:#94a3b8;line-height:1.6">EziTeach AI · 香港老師的 AI 工作台${
       COMPANY_NAME ? `<br>${COMPANY_NAME}${BR_NUMBER ? ` · 商業登記證 ${BR_NUMBER}` : ''}` : ''
     }${SUPPORT_EMAIL ? `<br>聯絡：${SUPPORT_EMAIL}` : ''}</p>
   </div>
@@ -93,7 +93,7 @@ function shell(title: string, bodyHtml: string): string {
 
 export function welcomeProEmail(): { subject: string; html: string } {
   return {
-    subject: '歡迎升級 EziTeach Pro 🎉',
+    subject: '歡迎升級 EziTeach AI Pro 🎉',
     html: shell(
       '訂閱已生效',
       `<p style="margin:0 0 8px;font-size:14px;line-height:1.6">多謝你升級 <strong>Pro</strong>！你而家可以無限使用教學 AI、多裝置即時同步同進階成績統計。</p>
@@ -121,7 +121,7 @@ export function supportTicketEmail(opts: {
 
 export function canceledEmail(): { subject: string; html: string } {
   return {
-    subject: 'EziTeach 訂閱已取消',
+    subject: 'EziTeach AI 訂閱已取消',
     html: shell(
       '訂閱已取消',
       `<p style="margin:0 0 8px;font-size:14px;line-height:1.6">你嘅 Pro 訂閱已取消，服務會維持到目前結算週期結束。</p>

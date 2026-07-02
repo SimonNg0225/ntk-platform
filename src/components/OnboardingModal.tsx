@@ -7,10 +7,9 @@ import {
   TrendingUp,
   Presentation,
   PenLine,
-  Dices,
-  FileSearch,
 } from 'lucide-react'
 import { Modal, Button } from '../ui'
+import { BRAND_NAME } from '../lib/brand'
 
 // ============================================================
 //  首次使用導覽（onboarding）—— 教師導向功能教學 + 一鍵載入示範資料。
@@ -21,43 +20,41 @@ import { Modal, Button } from '../ui'
 const HIGHLIGHTS: { icon: typeof Sparkles; title: string; desc: string }[] = [
   {
     icon: ClipboardList,
-    title: '備課 · 教學指引 · 課程進度',
-    desc: '教案 + 課程進度，再加 AI「點教」指引：重點、學生常見誤解、活動、評估。',
+    title: '備課流程',
+    desc: '由課題開始，整理教案、教學指引、課堂活動同評估方向。',
   },
   {
     icon: FileText,
-    title: '題庫 · AI 出題 · 試卷',
-    desc: '輸入課題，AI 出 MC／短答／長題，入題庫、砌試卷、印工作紙。',
-  },
-  {
-    icon: Presentation,
-    title: 'AI 教學簡報（PPT）',
-    desc: '揀課題或貼內容，AI 生成 PowerPoint：34 套設計模板、版式自動配、封面內頁配圖，一鍵下載 .pptx。',
+    title: '教材與題目',
+    desc: 'AI 出 MC／短答／長題、工作紙同評分準則，再收返入題庫。',
   },
   {
     icon: PenLine,
-    title: 'AI 批改 · 作文批改 · 評語',
-    desc: '貼／影答案或作文 → AI 按準則打分、標病句；一鍵出全班成績表評語。',
-  },
-  {
-    icon: TrendingUp,
-    title: '成績 · 點名 · 弱項分析',
-    desc: '記分自動計平均、標弱項；逐堂點名統計出席率。',
-  },
-  {
-    icon: Dices,
-    title: '課堂工具',
-    desc: '隨機抽人、即時分組、計時、計分 —— 上堂即用。',
-  },
-  {
-    icon: FileSearch,
-    title: '文件速讀 · 行政文件',
-    desc: '貼／影行政文件 → AI 歸類、抽重點、列跟進；Word 範本逐欄填即印。',
+    title: '批改與回饋',
+    desc: 'AI 先做初稿：分數、病句、評語同弱項；最後由老師覆核。',
   },
   {
     icon: Cloud,
-    title: '雲端同步 · AI 助手 · ⌘K',
-    desc: '多裝置同步；教學 AI 接 Gemini；隨時 ⌘K 秒跳任何功能。',
+    title: '個人先用',
+    desc: '不用先開學校帳戶；資料本機優先，登入後再跨裝置同步。',
+  },
+]
+
+const START_STEPS: { icon: typeof Sparkles; title: string; desc: string }[] = [
+  {
+    icon: ClipboardList,
+    title: '揀一個課題',
+    desc: '先做下一堂，不用一次設定全個學期。',
+  },
+  {
+    icon: Presentation,
+    title: '生成教材',
+    desc: '教案、題目、簡報和工作紙逐步接上。',
+  },
+  {
+    icon: TrendingUp,
+    title: '課後補強',
+    desc: '把弱項、評語、待辦收回工作台。',
   },
 ]
 
@@ -71,7 +68,7 @@ export function OnboardingModal({
   onLoadDemo: () => void
 }) {
   return (
-    <Modal open={open} onClose={onClose} title="歡迎使用 教學易 EziTeach" size="lg">
+    <Modal open={open} onClose={onClose} title={`歡迎使用 ${BRAND_NAME}`} size="lg">
       <div className="space-y-5">
         <div className="flex items-start gap-3">
           <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-accent text-lg font-bold text-white shadow-sm">
@@ -80,15 +77,40 @@ export function OnboardingModal({
           <p className="text-sm leading-relaxed text-slate-600 dark:text-slate-300">
             為香港老師而設嘅
             <strong className="font-semibold text-slate-800 dark:text-slate-100">
-              一站式工作台
+              AI 工作台
             </strong>
-            —— 備課、出題、批改、成績、點名、家長溝通，全部收喺一個地方。
-            下面係幾個核心功能；左上角仲可以切去
+            —— 先由一位老師自己用起，備課、出題、批改、行政慢慢收返埋一個地方。
+            左上角仲可以切去
             <strong className="font-semibold text-slate-800 dark:text-slate-100">
               個人模式
             </strong>
             打理自己嘅成長。
           </p>
+        </div>
+
+        <div className="grid gap-3 sm:grid-cols-3">
+          {START_STEPS.map((h, index) => {
+            const I = h.icon
+            return (
+              <div
+                key={h.title}
+                className="rounded-xl border border-accent/20 bg-accent-soft/40 p-3 dark:border-accent/25 dark:bg-accent/10"
+              >
+                <div className="flex items-center gap-2">
+                  <span className="nums rounded-md bg-white px-1.5 py-0.5 text-[11px] font-semibold text-accent-strong dark:bg-slate-800 dark:text-accent">
+                    {index + 1}
+                  </span>
+                  <I size={16} strokeWidth={1.75} className="text-accent" aria-hidden="true" />
+                </div>
+                <p className="mt-2 text-sm font-semibold text-slate-800 dark:text-slate-100">
+                  {h.title}
+                </p>
+                <p className="mt-0.5 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+                  {h.desc}
+                </p>
+              </div>
+            )
+          })}
         </div>
 
         <div className="grid gap-3 sm:grid-cols-2">

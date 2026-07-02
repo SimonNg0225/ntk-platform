@@ -1,5 +1,6 @@
 import { createCollection } from '../../../lib/store'
 import type { MeetingNote } from '../../../data/types'
+import { BRAND_EXPORT } from '../../../lib/brand'
 
 // ============================================================
 //  會議 / 行政筆記 — 深化資料模型 + 工具（媲美 Notion / Fellow）
@@ -650,7 +651,7 @@ export function buildPrintHtml(input: PrintInput): string {
   ${decisions}
   ${actions}
   ${tags}
-  <div class="foot">EziTeach 教學易 · 會議 / 行政筆記 · 列印於 ${new Date().toLocaleString('zh-HK')}</div>
+  <div class="foot">${BRAND_EXPORT} · 會議 / 行政筆記 · 列印於 ${new Date().toLocaleString('zh-HK')}</div>
   <script>window.onload=function(){setTimeout(function(){window.print()},200)}</script>
 </body></html>`
 }

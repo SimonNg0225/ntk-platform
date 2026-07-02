@@ -1,6 +1,7 @@
 import i18n from 'i18next'
 import { initReactI18next } from 'react-i18next'
 import { appEn } from './appEn'
+import { BRAND_NAME, BRAND_TAGLINE_ZH } from '../lib/brand'
 
 // ============================================================
 //  i18n（多語言）
@@ -32,17 +33,21 @@ const resources = {
   'zh-HK': {
     translation: {
       signingIn: '登入中…',
+      shell: {
+        brandName: BRAND_NAME,
+        brandSub: BRAND_TAGLINE_ZH,
+      },
       nav: { pricing: '定價', start: '免費開始', enterApp: '進入工作台' },
       hero: {
-        badge: '專為香港老師而設',
-        h1pre: '老師的日常工作，一個平台',
-        h1accent: '由頭到尾搞掂',
-        sub: '備課、AI 出題、成績與弱項分析、點名、家長溝通、行政文件 —— 散落喺 Excel、WhatsApp、紙張嘅教學工作，收返埋一個專業工作台。',
+        badge: '個人老師先用 · 香港課堂場景',
+        h1pre: '一位老師都開得起，',
+        h1accent: '備課到回饋一條龍',
+        sub: '備課、AI 出題、成績與弱項分析、點名、家長溝通、行政文件 —— 先由你自己免費用起，需要時再帶入科組或學校。',
         ctaStart: '免費開始使用',
         ctaEnter: '進入工作台',
         ctaPricing: '查看定價',
-        noCard: '無需信用卡 · 即開即用 · 適用任何任教科目',
-        checkLead: '逐項幫你打勾，唔使再周圍搵：',
+        noCard: '無需信用卡 · 不用學校帳戶 · 適用任何任教科目',
+        checkLead: '由備課到課後整理，逐步幫你收好：',
         ck1: '備課',
         ck2: '教案',
         ck3: '教學簡報',
@@ -50,7 +55,7 @@ const resources = {
         ck5: '會議記錄',
         ck6: '掃描存檔',
       },
-      featuresTitle: '涵蓋老師的一週',
+      featuresTitle: '由一位老師的日常開始',
       f: {
         prepTitle: '備課與教案',
         prepDesc: '教案、課程進度、時間表、題庫一站管理；AI「點教」指引列出教學重點、學生常見誤解、課堂活動與評估。',
@@ -65,9 +70,13 @@ const resources = {
         commTitle: '家長 · 行政 · 文件',
         commDesc: '家長溝通記錄連跟進；Word 行政文件套版即印、文件速讀抽重點、會議／觀課錄音轉文字、掃描 PDF。',
         moreTitle: '仲有更多',
-        more: '教學 AI 助手、問我嘅資料 AI、教學資源庫、資源分享區、老師社群、行事曆、全域搜尋、重要日子倒數、自我測驗、快速擷取、團隊／座位',
+        more: '教學 AI 助手、問我嘅資料 AI、教學資源庫、資源分享區、老師社群、行事曆、全域搜尋、重要日子倒數、自我測驗、快速擷取、日後科組協作',
       },
       trust: {
+        solo: '個人老師可即開即用',
+        privacy: '私隱先行，學生資料要謹慎處理',
+        review: 'AI 只作初稿，教師保留最後判斷',
+        portable: '本機優先，登入後再雲端同步',
         local: '資料存你部機，登入先雲端同步',
         offline: '可安裝、離線可用（PWA）',
         a11y: '無障礙設計 · 手機 / 平板適配',
@@ -84,8 +93,8 @@ const resources = {
       },
 
       pricing: {
-        metaTitle: '定價 · 教學易 EziTeach',
-        metaDesc: '教學易（EziTeach）方案與定價：免費版永久免費，Pro 解鎖無限 AI 同多裝置同步。',
+        metaTitle: `定價 · ${BRAND_NAME}`,
+        metaDesc: `${BRAND_NAME} 方案與定價：免費版永久免費，Pro 解鎖無限 AI 同多裝置同步。`,
         title: '簡單透明嘅定價',
         subtitle: '老師免費用齊教學功能，需要時先升級。',
         monthly: '月繳',
@@ -118,7 +127,7 @@ const resources = {
         title: '私隱政策',
         updated: '2026 年 6 月 23 日',
         intro:
-          '教學易 EziTeach（「本平台」）尊重並保障你的個人資料私隱。本政策說明我哋會收集咩資料、點樣使用同保護，以及你擁有嘅權利。本平台主要為香港教育工作者而設，會按香港《個人資料（私隱）條例》（第 486 章）行事。',
+          `${BRAND_NAME}（「本平台」）尊重並保障你的個人資料私隱。本政策說明我哋會收集咩資料、點樣使用同保護，以及你擁有嘅權利。本平台主要為香港教育工作者而設，會按香港《個人資料（私隱）條例》（第 486 章）行事。`,
         s1Title: '我哋收集嘅資料',
         s1AccountLabel: '帳戶資料',
         s1Account: '：你用 Google 登入時提供嘅名稱同電郵地址。',
@@ -162,7 +171,7 @@ const resources = {
         title: '服務條款',
         updated: '2026 年 6 月 13 日',
         intro:
-          '歡迎使用 教學易 EziTeach（「本平台」）。當你使用本平台，即表示你同意以下條款。如不同意，請停止使用。',
+          `歡迎使用 ${BRAND_NAME}（「本平台」）。當你使用本平台，即表示你同意以下條款。如不同意，請停止使用。`,
         s1Title: '服務說明',
         s1Body:
           '本平台為香港教師提供備課、出題、成績管理、點名、家長溝通、行政文件及 AI 教學助手等工具。我哋可能不時更新、增刪功能。',
@@ -203,7 +212,7 @@ const resources = {
         title: '社群守則',
         updated: '2026 年 6 月 13 日',
         intro:
-          '教學易 EziTeach 嘅資源分享區同老師社群論壇，係畀全港老師交流教學資源同經驗嘅地方。為咗保持一個專業、互信、友善嘅環境，請遵守以下守則。本守則構成《服務條款》嘅一部分；違反者我哋可移除內容、發出警告或暫停帳戶。',
+          `${BRAND_NAME} 嘅資源分享區同老師社群論壇，係畀全港老師交流教學資源同經驗嘅地方。為咗保持一個專業、互信、友善嘅環境，請遵守以下守則。本守則構成《服務條款》嘅一部分；違反者我哋可移除內容、發出警告或暫停帳戶。`,
         s1Title: '尊重同專業',
         s1Body:
           '以禮待人、就事論事。嚴禁人身攻擊、騷擾、歧視、仇恨言論或任何形式嘅欺凌。歡迎理性討論同表達不同意見，但唔好針對個人。',
@@ -227,7 +236,7 @@ const resources = {
           '你可揀匿名分享，公開只顯示「匿名老師」。匿名唔等於免責 —— 你仍須對所分享內容負責，本守則一樣適用。',
         s8Title: '內容免責',
         s8Body:
-          '社群資源由老師自發貢獻，教學易唔保證其準確性、完整性或適用性。用於課堂或評估前，請自行專業判斷及覆核。',
+          `${BRAND_NAME} 唔保證社群資源嘅準確性、完整性或適用性。用於課堂或評估前，請自行專業判斷及覆核。`,
         s9Title: '守則修改',
         s9Body:
           '我哋可不時更新本守則，並喺本頁公布更新日期。重大變更會盡量另行通知。如有查詢，請見《服務條款》嘅聯絡方式。',
@@ -258,15 +267,15 @@ const resources = {
       signingIn: 'Signing in…',
       nav: { pricing: 'Pricing', start: 'Get started', enterApp: 'Open workspace' },
       hero: {
-        badge: 'Built for Hong Kong teachers',
-        h1pre: "A teacher's whole workday, ",
-        h1accent: 'handled in one place',
-        sub: 'Lesson prep, AI question generation, grades & weakness analysis, attendance, parent comms, admin documents — your teaching work, scattered across Excel, WhatsApp and paper, brought into one professional workspace.',
+        badge: 'Individual teachers first · Hong Kong classroom context',
+        h1pre: 'One teacher can start, ',
+        h1accent: 'from prep to feedback',
+        sub: 'Lesson prep, AI question generation, grades & weakness analysis, attendance, parent comms and admin documents — start free as an individual teacher, then bring it to your panel or school when ready.',
         ctaStart: 'Start free',
         ctaEnter: 'Open workspace',
         ctaPricing: 'See pricing',
-        noCard: 'No credit card · Works instantly · Any teaching subject',
-        checkLead: 'Every job ticked off — nothing slips through:',
+        noCard: 'No credit card · No school account required · Any teaching subject',
+        checkLead: 'From prep to post-lesson follow-up:',
         ck1: 'Lesson prep',
         ck2: 'Lesson plans',
         ck3: 'Slides',
@@ -274,7 +283,7 @@ const resources = {
         ck5: 'Meeting notes',
         ck6: 'Scan & file',
       },
-      featuresTitle: "Covers a teacher's week",
+      featuresTitle: "Starts with one teacher's week",
       f: {
         prepTitle: 'Planning & lessons',
         prepDesc: 'Lesson plans, curriculum progress, timetable and question bank in one place; an AI "how to teach" guide lists key points, common misconceptions, activities and assessment.',
@@ -289,9 +298,13 @@ const resources = {
         commTitle: 'Parents · admin · docs',
         commDesc: 'Parent contact logs with follow-ups; fill Word admin templates to print, doc digest, meeting/lesson audio to text, and PDF scanning.',
         moreTitle: 'And more',
-        more: 'Teaching AI assistant, Ask-your-data AI, Resource library, Resource sharing, Teacher community, Calendar, Global search, Countdowns, Self-quiz, Quick capture, Team / seats, Budget',
+        more: 'Teaching AI assistant, Ask-your-data AI, Resource library, Resource sharing, Teacher community, Calendar, Global search, Countdowns, Self-quiz, Quick capture, panel collaboration later, Budget',
       },
       trust: {
+        solo: 'Individual teachers can start instantly',
+        privacy: 'Privacy-first handling of student data',
+        review: 'AI drafts; teachers keep final judgment',
+        portable: 'Local-first, cloud sync after sign-in',
         local: 'Data on your device, synced once you sign in',
         offline: 'Installable, works offline (PWA)',
         a11y: 'Accessible · phone / tablet ready',
@@ -308,7 +321,7 @@ const resources = {
       },
 
       pricing: {
-        metaTitle: 'Pricing · EziTeach',
+        metaTitle: `Pricing · ${BRAND_NAME}`,
         metaDesc:
           'EziTeach plans and pricing: the free plan is free forever, Pro unlocks unlimited AI and multi-device sync.',
         title: 'Simple, transparent pricing',

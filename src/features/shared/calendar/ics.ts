@@ -419,7 +419,7 @@ export function wrapCalendar(veventLineGroups: string[], calName?: string): stri
   const lines: string[] = [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
-    'PRODID:-//EziTeach//Calendar Export//ZH',
+    'PRODID:-//EziTeach AI//Calendar Export//ZH',
     'CALSCALE:GREGORIAN',
     'METHOD:PUBLISH',
   ]

@@ -21,6 +21,7 @@ import { GALLERY_PACKS_6 } from './pptxPacksGallery6'
 import { GALLERY_PACKS_7 } from './pptxPacksGallery7'
 import { renderBullets, renderCards, renderCompare, renderEmphasisFrame, renderQuote, renderStats, renderSteps, renderTakeaway } from './pptxLayouts'
 import { resetGradients, injectGradients } from './pptxGradients'
+import { BRAND_EXPORT } from '../brand'
 
 export type { SlidePackId, SlideImage } from './pptxPacks'
 
@@ -83,7 +84,7 @@ export interface PptxOptions {
   coverTitle?: CoverTitle
 }
 
-const BRAND = 'EziTeach · 教學易'
+const BRAND = BRAND_EXPORT
 const PPTX_MIME = 'application/vnd.openxmlformats-officedocument.presentationml.presentation'
 
 function isBrowser(): boolean {

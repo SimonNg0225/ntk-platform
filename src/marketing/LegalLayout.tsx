@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { Helmet } from 'react-helmet-async'
 import { useTranslation } from 'react-i18next'
 import { ArrowLeft } from 'lucide-react'
+import { BRAND_NAME } from '../lib/brand'
 
 // 法律頁共用版面（私隱政策 / 服務條款）。機構級、克制排版。
 export default function LegalLayout({
@@ -18,7 +19,7 @@ export default function LegalLayout({
   return (
     <div className="min-h-screen bg-[color:var(--app-bg)] px-6 py-12 text-slate-900 dark:text-slate-100">
       <Helmet>
-        <title>{title} · EziTeach 教學易</title>
+        <title>{title} · {BRAND_NAME}</title>
         <meta name="robots" content="all" />
       </Helmet>
       <article className="mx-auto max-w-3xl">

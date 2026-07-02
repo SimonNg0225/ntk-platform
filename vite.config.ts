@@ -1,6 +1,7 @@
 import { defineConfig, loadEnv, type Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
+import { BRAND_NAME, BRAND_FULL_ZH, BRAND_TAGLINE_ZH } from './src/lib/brand'
 
 // ── Dev-only：本地複製 Supabase 「gemini」Edge Function ─────────────────────
 // 令你淨係用一個免費 Gemini API key（.env.local 嘅 GEMINI_API_KEY）就可以喺本機
@@ -146,9 +147,9 @@ export default defineConfig(({ mode }) => {
           globIgnores: ['**/vendor/opencv/**', '**/vendor/docaligner/**', '**/*.wasm'],
         },
         manifest: {
-          name: 'EziTeach 教學易 · 香港教師工作台',
-          short_name: 'EziTeach',
-          description: '個人學習與工作平台 — 學習 / 工作雙模式，雲端同步 + AI 助手',
+          name: BRAND_FULL_ZH,
+          short_name: BRAND_NAME,
+          description: `${BRAND_TAGLINE_ZH}：備課、出題、批改、行政同課堂流程一個地方完成。`,
           lang: 'zh-HK',
           theme_color: '#2f6cb3',
           background_color: '#f4f7fb',

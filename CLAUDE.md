@@ -28,8 +28,8 @@
 
 ---
 
-## 專案速覽（EziTeach 教學易）
-- React + TypeScript + Vite + Tailwind；香港教師一站式工作台。
+## 專案速覽（EziTeach AI）
+- React + TypeScript + Vite + Tailwind；香港老師的 AI 工作台。
 - 測試：`npx vitest run`；型別：`npx tsc --noEmit`；build：`npm run build`。
 - 教學簡報引擎喺 `src/lib/export/`（pptxgenjs 純 code 出 .pptx）：
   - 34 套模板 pack（`pptxPacks.ts` 核心 6 + `pptxPacksGallery1..7`），每套有招牌版式 override + 逐版母題 deco。

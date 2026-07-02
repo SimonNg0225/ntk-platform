@@ -1,4 +1,4 @@
-# NTK Platform · 發展藍圖 (Roadmap)
+# EziTeach AI · 發展藍圖 (Roadmap)
 
 > 由「純前端 + 瀏覽器儲存」進化成「**雲端帳戶 + AI 助手**」嘅完整計劃。
 > 加入兩塊新基建：**Supabase**（後端 / 資料庫 / 登入）同 **Gemini**（AI）。

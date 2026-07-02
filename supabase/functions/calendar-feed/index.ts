@@ -441,10 +441,10 @@ export function buildIcs(
   const lines: string[] = [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
-    'PRODID:-//EziTeach//Calendar Feed//ZH',
+    'PRODID:-//EziTeach AI//Calendar Feed//ZH',
     'CALSCALE:GREGORIAN',
     'METHOD:PUBLISH',
-    'X-WR-CALNAME:EziTeach 教學易',
+    'X-WR-CALNAME:EziTeach AI',
   ]
   lines.push(...groups, 'END:VCALENDAR')
   return lines.map(foldLine).join('\r\n') + '\r\n'

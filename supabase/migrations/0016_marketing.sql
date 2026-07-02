@@ -1,5 +1,5 @@
 -- ============================================================
---  EziTeach 教學易 · 0016_marketing（後台行銷內容管理）
+--  EziTeach AI · 0016_marketing（後台行銷內容管理）
 -- ------------------------------------------------------------
 --  新表 marketing_content：集中管理推廣 campaign 嘅內容草稿
 --  （Landing 文案 / 示範腳本 / SEO 文 / 社交帖 / Email…）,
@@ -46,11 +46,11 @@ create trigger marketing_content_touch_updated_at
 insert into public.marketing_content (id, type, title, channel, status, body, notes) values
 (
   'a0000000-0000-0000-0000-000000000001', 'landing', 'Landing page 文案 v1', 'Landing page', 'draft',
-  $body$H1：香港老師嘅一站式工作台
+  $body$H1：香港老師嘅 AI 工作台
 副標：備課、改卷、行政,一個地方搞掂——慳返嘅時間,留畀真正嘅教學。
 
 Hero：
-EziTeach 教學易 為香港前線老師而整。由出堂課簡報、AI 輔助批改,到教學資源共享同行政文件,全部喺同一個地方完成。廣東話介面,識香港校曆(循環日)。
+EziTeach AI 為香港前線老師而整。由出堂課簡報、AI 輔助批改,到教學資源共享同行政文件,全部喺同一個地方完成。廣東話介面,識香港校曆(循環日)。
 
 價值點：
 1. 一鍵出堂課簡報 —— 輸入課題,即出可下載 .pptx,34 套專業版式任揀。
@@ -72,7 +72,7 @@ FAQ：
 - 有冇學校團隊版? 有,科組／全校可開團隊。
 
 SEO meta：
-Title：EziTeach 教學易 — 香港老師一站式備課・批改・資源工作台
+Title：EziTeach AI — 香港老師的 AI 工作台
 Description：為香港前線老師而設:一鍵出堂課簡報、AI 輔助批改、教學資源共享,廣東話介面、識循環日。免費開始,慳時間留畀教學。$body$,
   $notes$主 CTA「免費開始」;社會證據同 testimonial 待補真實數字。$notes$
 ),
@@ -87,7 +87,7 @@ Description：為香港前線老師而設:一鍵出堂課簡報、AI 輔助批�
 8–18s：㩒生成,一版版有圖有重點跳出。字幕「一鍵,成份簡報出晒。」
 18–26s：揀版式(showcase 幾套) + 下載 .pptx。字幕「34 套版式,下載即用真檔。」
 26–32s：老師熄機走人。旁白「慳返嘅時間,留畀教學。」
-32–35s（CTA）：收尾卡。字幕「EziTeach 教學易・免費試 → 連結喺 bio」
+32–35s（CTA）：收尾卡。字幕「EziTeach AI・免費試 → 連結喺 bio」
 
 備註：
 - 全程真實 screen recording,唔好用 mockup。
@@ -124,7 +124,7 @@ H2 5. 由今個暑假開始
 暑假備課季試一個工具,9 月開學就順。
 
 結論 + CTA：
-與其逐個 app 拼,不如試吓一站式工作台。EziTeach 教學易免費開始。
+與其逐個 app 拼,不如試吓 AI 工作台。EziTeach AI 免費開始。
 
 Meta description：
 香港教師備課工具邊個好?由出簡報、批改到資源管理,本指南教你揀啱工具、慳返備課改卷時間,暑假開始 9 月開學就順。

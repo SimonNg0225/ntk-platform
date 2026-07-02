@@ -5,7 +5,7 @@
 
 ## 目標
 
-將 NTK Platform 全部 31 個功能頁嘅設計美感**再進一步提升**，延續「個人儀表板（bento）+ 個人日誌（editorial diary）」嗰種「有溫度、唔似 AI 生成、有層次」嘅水準。
+將 EziTeach AI 全部 31 個功能頁嘅設計美感**再進一步提升**，延續「個人儀表板（bento）+ 個人日誌（editorial diary）」嗰種「有溫度、唔似 AI 生成、有層次」嘅水準。
 
 ## 已拍板參數（user 決定）
 

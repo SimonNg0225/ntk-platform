@@ -25,6 +25,7 @@ import {
 } from '../features/settings/dataOverview'
 import ProfileSetupModal from '../features/onboarding/ProfileSetupModal'
 import { isProfileConfigured } from '../lib/profile'
+import { BRAND_FULL_ZH } from '../lib/brand'
 
 // 設定頁：外觀、個人資料、資料管理（匯出/匯入/清除）
 export default function Settings() {
@@ -512,7 +513,7 @@ export default function Settings() {
       </Card>
 
       <p className="text-center text-xs text-slate-400">
-        EziTeach 教學易 · 教師工作台
+        {BRAND_FULL_ZH}
       </p>
     </div>
   )

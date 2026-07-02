@@ -5,7 +5,7 @@
 <rect x="0" y="0" width="680" height="850" fill="#4f46e5"/>
 <circle cx="632" cy="86" r="150" fill="#4338ca" opacity="0.45"/>
 <circle cx="48" cy="812" r="150" fill="#818cf8" opacity="0.25"/>
-<text x="56" y="80" font-size="20" font-weight="700" fill="#c7d2fe">教學易</text>
+<text x="56" y="80" font-size="20" font-weight="700" fill="#c7d2fe">EziTeach AI</text>
 <text x="624" y="124" font-size="72" font-weight="700" fill="#a5b4fc" text-anchor="end">02</text>
 <text x="56" y="252" font-size="42" font-weight="700" fill="#ffffff">教學 AI 助手</text>
 <text x="56" y="302" font-size="28" font-weight="500" fill="#e0e7ff">出題、教案、批改評語</text>

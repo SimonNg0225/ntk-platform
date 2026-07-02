@@ -1,5 +1,5 @@
 -- ============================================================
---  EziTeach 教學易 · 0006_support（客服 / 意見）
+--  EziTeach AI · 0006_support（客服 / 意見）
 -- ------------------------------------------------------------
 --  in-app 客服表單嘅後台：support 表單 → support edge function
 --  （service_role）插入 support_tickets + email 通知客服。

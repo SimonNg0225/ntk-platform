@@ -22,6 +22,7 @@ import ModeSwitcher from './ModeSwitcher'
 import AccountBox from './AccountBox'
 import { useAuth } from '../context/AuthContext'
 import type { ModeId } from '../modes/modes'
+import { BRAND_NAME, BRAND_TAGLINE_ZH } from '../lib/brand'
 
 const DEFAULT_SIDEBAR_IDS: Record<ModeId, readonly string[]> = {
   work: ['work-dashboard', 'work-ai', 'work-lesson-plan', 'work-generate', 'work-tasks', 'calendar'],
@@ -148,7 +149,7 @@ export default function Sidebar({
           >
             <img
               src="/favicon.svg"
-              alt="EziTeach 教學易"
+              alt={BRAND_NAME}
               className="h-10 w-10 rounded-xl shadow-sm"
             />
           </button>
@@ -251,15 +252,15 @@ export default function Sidebar({
         <div className="flex items-center gap-2.5">
           <img
             src="/favicon.svg"
-            alt="EziTeach 教學易"
+            alt={BRAND_NAME}
             className="h-10 w-10 rounded-xl shadow-sm"
           />
           <div>
             <p className="text-[15px] font-semibold leading-none tracking-tight text-slate-800 dark:text-slate-100">
-              {t('shell.brandName', { defaultValue: '教學易' })}
+              {t('shell.brandName', { defaultValue: BRAND_NAME })}
             </p>
             <p className="mt-1.5 text-[11px] tracking-tight text-slate-400 dark:text-slate-500">
-              {t('shell.brandSub', { defaultValue: '教師工作台 · 個人成長' })}
+              {t('shell.brandSub', { defaultValue: BRAND_TAGLINE_ZH })}
             </p>
           </div>
         </div>

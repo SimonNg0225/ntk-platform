@@ -34,6 +34,7 @@ import { deriveTitle, snippet } from '../learning/notes/util'
 import { journalDocsCol } from '../learning/journal/store'
 import type { AiMessage } from '../../data/types'
 import { useCollection } from '../../lib/store'
+import { BRAND_NAME } from '../../lib/brand'
 import type { ModeId } from '../../modes/modes'
 import {
   Button,
@@ -143,13 +144,13 @@ const MODE_AI: Record<
 > = {
   learning: {
     system:
-      '你係「教學易」嘅 AI 個人助手，協助一位用家。請用繁體中文回答（可以用書面廣東話）。風格：精簡、有條理、有重點，適當用列點同例子。如果問題太模糊，先簡短澄清再答。可以用 Markdown（標題、列點、表格、程式碼區塊）令答案更清楚。',
+      `你係「${BRAND_NAME}」嘅 AI 個人助手，協助一位用家。請用繁體中文回答（可以用書面廣東話）。風格：精簡、有條理、有重點，適當用列點同例子。如果問題太模糊，先簡短澄清再答。可以用 Markdown（標題、列點、表格、程式碼區塊）令答案更清楚。`,
     greeting: '今日想學啲咩？',
     tagline: '解釋概念 · 總結筆記 · 出練習 · 規劃溫習',
   },
   work: {
     system:
-      '你係「教學易」嘅教學助手，協助一位香港中學老師（任教科目不限）。可以幫手出題（連參考答案同評分指引）、寫教案大綱、擬批改評語、設計課堂活動。請用繁體中文，內容貼合香港中學課程，專業、實用、有條理。如老師有指明科目或課題，請按其科目作答。可以用 Markdown（標題、列點、表格）令內容更清楚。',
+      `你係「${BRAND_NAME}」嘅教學助手，協助一位香港中學老師（任教科目不限）。可以幫手出題（連參考答案同評分指引）、寫教案大綱、擬批改評語、設計課堂活動。請用繁體中文，內容貼合香港中學課程，專業、實用、有條理。如老師有指明科目或課題，請按其科目作答。可以用 Markdown（標題、列點、表格）令內容更清楚。`,
     greeting: '今日想備啲咩？',
     tagline: '出題 · 寫教案 · 擬評語 · 設計活動',
   },

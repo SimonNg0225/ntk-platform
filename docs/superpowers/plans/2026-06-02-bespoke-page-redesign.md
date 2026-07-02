@@ -2,7 +2,7 @@
 
 > **For agentic workers:** 執行機制 = **Workflow tool**（user 明確要求多 agent fan-out），唔行 TDD subagent-per-task。每波一個 Workflow script，波與波之間由主 loop 做驗證 gate。
 
-**Goal:** 用多 agent workflow 將全部 31 個 NTK Platform 功能頁逐頁訂造獨特美學，純表現層，騎用同一套 token。
+**Goal:** 用多 agent workflow 將全部 31 個 EziTeach AI 功能頁逐頁訂造獨特美學，純表現層，騎用同一套 token。
 
 **Architecture:** 3 波 Workflow（A/B/C）。每波 = 一個 `Workflow({script})`，script 內每頁 spawn 一個深度 design agent（預設 subagent，有 Edit/Write），各收「訂造概念 + frontend-design 原則 + 設計憲法」。每波 barrier 後，主 loop inline 跑 `tsc` →（有 error）定點修 → preview 抽查 → 先放下一波。
 
@@ -17,7 +17,7 @@
 每個 Workflow agent 收以下 prompt（`<…>` 由 script 按頁替換）：
 
 ```
-你係資深 UI/UX 設計工程師，重塑 NTK Platform 一個功能頁嘅【外觀】。
+你係資深 UI/UX 設計工程師，重塑 EziTeach AI 一個功能頁嘅【外觀】。
 
 【目標頁】<NAME>
   主檔：<FILE>.tsx；可連埋同 folder 嘅 presentation 子檔一齊提升。

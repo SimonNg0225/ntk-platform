@@ -1,12 +1,12 @@
 // ============================================================
-//  NTK Platform — 今日課堂 iOS 小組件（Scriptable）
+//  EziTeach AI — 今日課堂 iOS 小組件（Scriptable）
 //  ------------------------------------------------------------
 //  喺 iPhone 主畫面顯示「今日課堂」：計返今日係 Day 幾（6 日循環，
 //  由校曆 cycle_calendar 決定；或星期模式），列出當日堂 + 高亮緊上嗰節。
 //  同 ntk-widget.js 一樣由你 Supabase 嘅 app_rows 攞數據。
 //
 //  ── 安裝 ──────────────────────────────────────────────────
-//  1. Scriptable（免費）→ ＋ 新 script → 改名「NTK 課堂」→ 全文貼入。
+//  1. Scriptable（免費）→ ＋ 新 script → 改名「EziTeach 課堂」→ 全文貼入。
 //  2. 填好下面 CONFIG（同 ntk-widget.js 一模一樣）：
 //       • SUPABASE_URL：同 .env.local 嘅 VITE_SUPABASE_URL 一樣
 //       • SUPABASE_KEY：service_role key（Dashboard → Settings → API）
@@ -14,7 +14,7 @@
 //       • USER_ID：你嘅 Supabase 用戶 UID —— ⚠️ 係一條 **UUID**
 //         （Dashboard → Authentication → Users → 複製 User UID），
 //         唔係你個 GitHub / 登入名！
-//  3. 主畫面長按 → ＋ → Scriptable → 中 / 大 widget → Script 揀「NTK 課堂」。
+//  3. 主畫面長按 → ＋ → Scriptable → 中 / 大 widget → Script 揀「EziTeach 課堂」。
 //  ============================================================
 
 const CONFIG = {
@@ -211,7 +211,7 @@ function errorWidget(message) {
   const w = new ListWidget()
   w.backgroundColor = BG_TOP
   w.setPadding(16, 16, 16, 16)
-  const t = w.addText('NTK 課堂 widget 設定未完成')
+  const t = w.addText('EziTeach 課堂 widget 設定未完成')
   t.font = Font.semiboldSystemFont(13)
   t.textColor = FG
   w.addSpacer(6)

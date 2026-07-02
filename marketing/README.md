@@ -1,6 +1,6 @@
 # Marketing 素材
 
-EziTeach 教學易宣傳圖素材(向量 SVG,品牌色 indigo `#4f46e5`)。
+EziTeach AI 宣傳圖素材(向量 SVG,品牌色 indigo `#4f46e5`)。
 
 | 檔案 | 用途 | 尺寸 |
 |---|---|---|

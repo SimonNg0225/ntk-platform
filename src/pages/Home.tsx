@@ -196,6 +196,36 @@ export default function Home({ onOpen }: Props) {
           },
         ]
 
+  const teachingLoop =
+    modeDef.id === 'work'
+      ? [
+          {
+            step: '01',
+            title: '定課題',
+            meta: '教案同教學指引先成形',
+            featureId: 'work-lesson-plan',
+          },
+          {
+            step: '02',
+            title: '出教材',
+            meta: '工作紙、小測、簡報接住做',
+            featureId: 'work-generate',
+          },
+          {
+            step: '03',
+            title: '上堂用',
+            meta: '時間表同課堂工具跟住走',
+            featureId: 'work-timetable',
+          },
+          {
+            step: '04',
+            title: '回饋補強',
+            meta: '評分準則、弱項同補充練習',
+            featureId: 'work-rubric',
+          },
+        ]
+      : []
+
   const openFeature = (featureId?: string) => {
     if (!featureId) return
     onOpen(featureId)
@@ -363,6 +393,69 @@ export default function Home({ onOpen }: Props) {
           </div>
         </section>
       </div>
+
+      {teachingLoop.length > 0 && (
+        <section className="rounded-2xl border border-[color:var(--border)] bg-white p-4 shadow-xs dark:bg-slate-800 sm:p-5">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-accent">
+                Teacher-first loop
+              </p>
+              <h2 className="mt-1 text-lg font-semibold tracking-tight text-slate-800 dark:text-slate-100">
+                由備課到回饋，一位老師都開得起
+              </h2>
+            </div>
+            <span className="rounded-full bg-accent-soft px-3 py-1 text-xs font-semibold text-accent-strong dark:bg-accent/15 dark:text-accent">
+              先散戶 · 後科組
+            </span>
+          </div>
+
+          <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+            {teachingLoop.map((item) => (
+              <button
+                key={item.step}
+                type="button"
+                onClick={() => openFeature(item.featureId)}
+                className="group flex min-h-[112px] cursor-pointer flex-col rounded-xl border border-[color:var(--border)] bg-[color:var(--surface-2)] p-3 text-left transition hover:border-accent/40 hover:bg-white hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:hover:bg-slate-800"
+              >
+                <span className="nums w-fit rounded-md bg-white px-2 py-0.5 text-[11px] font-semibold text-slate-400 dark:bg-slate-700 dark:text-slate-300">
+                  {item.step}
+                </span>
+                <span className="mt-3 text-sm font-semibold text-slate-800 dark:text-slate-100">
+                  {item.title}
+                </span>
+                <span className="mt-1 line-clamp-2 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+                  {item.meta}
+                </span>
+                <span className="mt-auto inline-flex items-center gap-1 pt-3 text-xs font-semibold text-accent">
+                  開始
+                  <ArrowRight size={13} strokeWidth={2} className="transition group-hover:translate-x-0.5" />
+                </span>
+              </button>
+            ))}
+          </div>
+
+          <div className="mt-4 grid gap-2 sm:grid-cols-3">
+            {[
+              ['教師覆核', 'AI 先出初稿，最後判斷留返畀你'],
+              ['私隱先行', '避免輸入可識別學生資料'],
+              ['即開即用', '不用先建立學校或科組帳戶'],
+            ].map(([title, meta]) => (
+              <div
+                key={title}
+                className="rounded-xl border border-slate-200/80 bg-slate-50 px-3 py-2.5 dark:border-slate-700/60 dark:bg-slate-800/60"
+              >
+                <p className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+                  {title}
+                </p>
+                <p className="mt-0.5 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+                  {meta}
+                </p>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       <section>
         <div className="mb-3 flex items-center justify-between gap-3">

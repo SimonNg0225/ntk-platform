@@ -1,4 +1,5 @@
 import type { Feature } from '../features/types'
+import { BRAND_NAME, BRAND_TAGLINE_EN } from '../lib/brand'
 
 // ============================================================
 //  i18n · app 導航 / 外殼 英文資源（en）
@@ -24,7 +25,7 @@ export const groupLabel = (t: TFn, g: string): string =>
 
 export const appEn = {
   shell: {
-    brandName: 'EziTeach',
+    brandName: BRAND_NAME,
     home: 'Overview',
     settings: 'Settings',
     backOverview: 'Back to overview',
@@ -35,7 +36,7 @@ export const appEn = {
     expandSidebar: 'Expand sidebar (⌘B)',
     soon: 'Soon',
     comingSoon: 'Coming soon',
-    brandSub: 'Teacher workspace · growth',
+    brandSub: BRAND_TAGLINE_EN,
     guestMode: '👤 Guest mode · local',
     signOut: 'Sign out',
     loginGoogle: 'Sign in with Google',
@@ -115,7 +116,7 @@ export const appEn = {
     'work-resources': { name: 'Resource library', desc: 'Save handouts, past papers and material links.' },
     'work-tasks': { name: 'To-do / marking', desc: 'Prep, marking and admin tasks at a glance.' },
     'work-meeting-notes': { name: 'Meeting notes', desc: 'Notes for meetings and admin matters.' },
-    'work-team': { name: 'Team / seats', desc: 'Create a school / panel team, invite colleagues and manage seats.' },
+    'work-team': { name: 'Panel collaboration', desc: 'Later, create a school / panel space and organise materials with colleagues.' },
     'work-admin-docs': { name: 'Admin documents', desc: 'Upload Word templates, fill {tags} field by field, generate .docx to print.' },
     'work-budget': { name: 'Budget', desc: 'Log daily income and expenses; see monthly balance and category split.' },
     'ask-data': { name: 'Ask-my-data AI', desc: 'AI answers from your notes / tasks / goals / schedule.' },

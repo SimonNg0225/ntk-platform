@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { useMode } from '../context/ModeContext'
 import { IconButton } from '../ui'
 import ModeSwitcher from './ModeSwitcher'
+import { BRAND_NAME } from '../lib/brand'
 
 // 手機頂欄（只喺細螢幕顯示）：漢堡選單 + 品牌 + 快速加入 + 搜尋 + 緊湊模式切換
 export default function MobileTopBar({
@@ -26,11 +27,11 @@ export default function MobileTopBar({
       <div className="flex min-w-0 items-center gap-2">
         <img
           src="/favicon.svg"
-          alt="EziTeach 教學易"
+          alt={BRAND_NAME}
           className="h-8 w-8 shrink-0 rounded-xl shadow-sm"
         />
         <span className="truncate text-sm font-bold text-slate-800 dark:text-slate-100">
-          {t('shell.brandName', { defaultValue: '教學易' })}
+          {t('shell.brandName', { defaultValue: BRAND_NAME })}
           <span className="ml-1 font-medium text-slate-400 dark:text-slate-500">
             · {t(`mode.${modeDef.id}.short`, { defaultValue: modeDef.short })}
           </span>

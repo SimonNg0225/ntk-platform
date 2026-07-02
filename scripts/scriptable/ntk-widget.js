@@ -1,5 +1,5 @@
 // ============================================================
-//  NTK Platform — iOS 主畫面小組件（Scriptable）
+//  EziTeach AI — iOS 主畫面小組件（Scriptable）
 //  ------------------------------------------------------------
 //  個人用：喺 iPhone「Scriptable」app 入面跑，由 Supabase 直接攞數據，
 //  喺主畫面顯示：🔥 連續寫日誌天數 · ✅ 未完成待辦 · ⏳ 下個重要日子倒數。
@@ -10,7 +10,7 @@
 //
 //  ── 安裝步驟 ──────────────────────────────────────────────
 //  1. App Store 下載「Scriptable」（免費）。
-//  2. Scriptable → ＋ 新增 script → 改名 NTK → 將呢個檔全文貼入去。
+//  2. Scriptable → ＋ 新增 script → 改名 EziTeach AI → 將呢個檔全文貼入去。
 //  3. 填好下面 CONFIG 三項：
 //       • SUPABASE_URL：同 .env.local 嘅 VITE_SUPABASE_URL 一樣
 //       • SUPABASE_KEY：建議用 service_role key（Supabase Dashboard →
@@ -20,7 +20,7 @@
 //         切勿外洩 / commit。淨係用 anon key 嘅話 RLS 會擋住，攞唔到資料。
 //       • USER_ID：你嘅 Supabase 用戶 UID（Dashboard → Authentication →
 //         Users → 撳你個帳戶 → 複製 User UID）。
-//  4. 主畫面長按 → ＋ → Scriptable → 揀中型 widget → 編輯 → Script 揀 NTK。
+//  4. 主畫面長按 → ＋ → Scriptable → 揀中型 widget → 編輯 → Script 揀 EziTeach AI。
 //  ============================================================
 
 const CONFIG = {
@@ -122,7 +122,7 @@ function buildWidget(data) {
   dot.font = Font.boldSystemFont(10)
   dot.textColor = ACCENT
   head.addSpacer(6)
-  const title = head.addText('NTK 個人平台')
+  const title = head.addText('EziTeach AI')
   title.font = Font.semiboldSystemFont(13)
   title.textColor = FG
   head.addSpacer()
@@ -154,7 +154,7 @@ function errorWidget(message) {
   const w = new ListWidget()
   w.backgroundColor = BG_TOP
   w.setPadding(16, 16, 16, 16)
-  const t = w.addText('NTK widget 設定未完成')
+  const t = w.addText('EziTeach AI widget 設定未完成')
   t.font = Font.semiboldSystemFont(13)
   t.textColor = FG
   w.addSpacer(6)

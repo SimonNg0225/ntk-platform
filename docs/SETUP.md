@@ -1,4 +1,4 @@
-# NTK Platform · 接入 Supabase + Gemini 設定指引
+# EziTeach AI · 接入 Supabase + Gemini 設定指引
 
 > 呢份係「**你要親手做**」嘅清單。code 我已經寫晒，但建 project、跑 SQL、部署 function、設 key 呢幾步要喺你自己嘅帳戶做。
 > 由零開始，照住做一次就得。預計 30–45 分鐘。

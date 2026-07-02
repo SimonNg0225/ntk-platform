@@ -28,6 +28,7 @@ import {
   ProgressBar,
   cx,
 } from '../../../ui'
+import { BRAND_NAME } from '../../../lib/brand'
 import { useToast } from '../../../context/ToastContext'
 import { focusCol } from '../../../data/collections'
 import { focusLogsCol, fmtClock, fmtDuration, todayKey, keyOf } from './store'
@@ -155,9 +156,9 @@ export default function TimerView({
   // 文件標題顯示倒數（似真 app）
   useEffect(() => {
     const meta = KIND_META[phase]
-    document.title = running ? `${fmtClock(secondsLeft)} · ${meta.label}` : 'EziTeach 教學易'
+    document.title = running ? `${fmtClock(secondsLeft)} · ${meta.label}` : BRAND_NAME
     return () => {
-      document.title = 'EziTeach 教學易'
+      document.title = BRAND_NAME
     }
   }, [secondsLeft, running, phase])
 

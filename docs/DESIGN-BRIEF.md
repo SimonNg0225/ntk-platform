@@ -1,4 +1,4 @@
-# NTK Platform — 介面重塑設計綱領（Wave 1）
+# EziTeach AI — 介面重塑設計綱領（Wave 1）
 
 > 目標：將頁面由「generic、AI 生成、生硬」變成**有溫度、有層次、精緻**的產品介面。
 > 品質標竿 = 個人儀表板（`src/features/learning/dashboard/BentoOverview.tsx`）。

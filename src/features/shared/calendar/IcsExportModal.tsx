@@ -6,6 +6,7 @@ import { useToast } from '../../../context/ToastContext'
 import { downloadText } from '../../learning/journal/util'
 import { buildICS, exportStamp, eventsToVevents, countdownsToVevents } from './ics'
 import { toKey } from './util'
+import { BRAND_NAME } from '../../../lib/brand'
 
 // ============================================================
 //  匯出 .ics — 把可見事件（尊重行事曆開關 + 重複展開）同／或全部倒數
@@ -138,7 +139,7 @@ export default function IcsExportModal({
       includeEvents: withEvents,
       includeCountdowns: withCountdowns,
       now,
-      calName: '教學易 行事曆匯出',
+      calName: `${BRAND_NAME} 行事曆匯出`,
     })
     downloadText(`eziteach-calendar-${exportStamp(now)}.ics`, ics, 'text/calendar')
     toast.success(total > 0 ? `已匯出 ${total} 項到 .ics` : '已匯出（暫時無內容）')

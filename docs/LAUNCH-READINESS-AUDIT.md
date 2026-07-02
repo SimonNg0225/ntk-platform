@@ -99,7 +99,7 @@ webhook 只處理 checkout/subscription updated/deleted。信用卡過期、續�
 - **團隊方案賣咗座位但成員間未 share 資料** 🛠️🧑‍💼：`org_id` 前端零使用，`app_rows` 全 user-scoped → 要諗清楚 team 賣咩 value。
 - **Ops 缺口**：零 staging、CI 唔 gate lint/typecheck（無 ESLint config）、e2e 唔卡 main、無 health check / uptime 監控、部署全人手、`package.json` 無 `engines` pin。
 - **交易 email 缺收據信 + 團隊邀請信**（目前邀請靠 copy link，無自動寄）。
-- **docs 品牌殘留「NTK Platform」**（SETUP/COMMERCIALIZATION/`alertAdmin` 主旨 `[NTK Alert]`）→ 更新做 EziTeach。
+- **docs 品牌殘留「EziTeach AI」**（SETUP/COMMERCIALIZATION/`alertAdmin` 主旨 `[EziTeach AI Alert]`）→ 更新做 EziTeach AI。
 - **OnboardingModal / SupportButton / Settings 多數 UI 仍 hardcode 廣東話**（i18n 漸進中）。
 
 ---

@@ -1,5 +1,5 @@
 -- ============================================================
---  EziTeach 教學易 · 0015_avatar_preset（頭像 persona / 上載）
+--  EziTeach AI · 0015_avatar_preset（頭像 persona / 上載）
 -- ------------------------------------------------------------
 --  畀首次註冊（features/onboarding）同個人檔案揀「教師形象頭像」。
 --   · avatar_preset  預設 persona id（m-01..m-10 / f-01..f-10；NULL = 用文字頭像）

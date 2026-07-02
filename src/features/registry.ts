@@ -370,8 +370,8 @@ export const FEATURES: Feature[] = [
   {
     id: 'work-team',
     modes: ['work'],
-    name: '團隊 / 座位',
-    description: '建立學校 / 科組團隊，邀請同事、管理座位。',
+    name: '科組協作',
+    description: '日後可建立學校 / 科組空間，邀請同事一齊整理教材。',
     icon: '👥',
     group: '行政',
     component: Team,
