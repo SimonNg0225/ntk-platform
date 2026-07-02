@@ -580,7 +580,7 @@ export default function MeetingNotes() {
               onClick={() => setView(id)}
               aria-pressed={on}
               className={cx(
-                'inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs transition',
+                'inline-flex min-h-11 items-center gap-1.5 rounded-full px-3 text-xs transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 active:scale-[0.98]',
                 on
                   ? 'bg-white font-semibold text-accent-strong'
                   : 'bg-white/15 font-medium text-white hover:bg-white/25',
@@ -729,7 +729,7 @@ export default function MeetingNotes() {
                 type="button"
                 onClick={() => setActiveTag(null)}
                 aria-pressed={activeTag === null}
-                className="transition active:scale-[0.98]"
+                className="inline-flex min-h-11 items-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98]"
               >
                 <Badge tone={activeTag === null ? 'accent' : 'slate'}>全部</Badge>
               </button>
@@ -740,7 +740,7 @@ export default function MeetingNotes() {
                   onClick={() => setActiveTag((c) => (c === tag ? null : tag))}
                   aria-pressed={activeTag === tag}
                   aria-label={`篩選標籤 ${tag}`}
-                  className="transition active:scale-[0.98]"
+                  className="inline-flex min-h-11 items-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98]"
                 >
                   <Badge tone={activeTag === tag ? 'accent' : 'slate'}>#{tag}</Badge>
                 </button>
@@ -1123,7 +1123,7 @@ function NoteRow({
                 }}
                 aria-pressed={activeTag === t}
                 aria-label={`篩選標籤 ${t}`}
-                className="transition active:scale-[0.98]"
+                className="inline-flex min-h-11 items-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98]"
               >
                 <Badge tone={activeTag === t ? 'accent' : 'slate'}>#{t}</Badge>
               </button>
@@ -1243,7 +1243,7 @@ function ActionRow({
           <button
             type="button"
             onClick={onOpenNote}
-            className="inline-flex items-center gap-1 transition hover:text-accent active:scale-[0.98]"
+            className="inline-flex min-h-11 items-center gap-1 rounded-lg px-2 transition hover:bg-accent-soft hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98] dark:hover:bg-accent/15"
           >
             <CornerDownRight size={12} />
             {action.noteTitle}
