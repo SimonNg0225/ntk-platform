@@ -81,7 +81,7 @@ export default function AnnouncementBanner() {
             <button
               onClick={() => dismiss(a.id)}
               aria-label="關閉公告"
-              className="shrink-0 rounded p-0.5 opacity-60 transition hover:opacity-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-current/40"
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg opacity-60 transition hover:opacity-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-current/40"
             >
               <X size={16} />
             </button>
