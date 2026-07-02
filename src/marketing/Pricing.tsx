@@ -192,7 +192,7 @@ export default function Pricing() {
         <div className="text-center">
           <Link
             to="/"
-            className="inline-flex items-center gap-1 text-sm text-slate-400 transition hover:text-accent"
+            className="inline-flex min-h-11 items-center gap-1 rounded-lg px-2 text-sm text-slate-400 transition hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
           >
             <ArrowLeft size={14} strokeWidth={1.75} /> {t('common.backHome')}
           </Link>
@@ -213,7 +213,7 @@ export default function Pricing() {
                 <button
                   key={c}
                   onClick={() => setCycle(c)}
-                  className={`rounded-lg px-4 py-1.5 font-medium transition ${
+                  className={`min-h-10 rounded-lg px-4 font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 ${
                     cycle === c
                       ? 'bg-accent text-white'
                       : 'text-slate-500 hover:text-accent dark:text-slate-400'
@@ -328,14 +328,14 @@ export default function Pricing() {
                         <button
                           onClick={onManage}
                           disabled={busy === 'portal'}
-                          className="w-full rounded-xl border border-slate-300 py-3 font-semibold text-slate-700 transition hover:border-accent hover:text-accent disabled:opacity-50 dark:border-slate-700 dark:text-slate-200"
+                          className="w-full rounded-xl border border-slate-300 py-3 font-semibold text-slate-700 transition hover:border-accent hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 disabled:opacity-50 dark:border-slate-700 dark:text-slate-200"
                         >
                           {busy === 'portal' ? t('pricing.opening') : t('pricing.manage')}
                         </button>
                         <button
                           onClick={onRefund}
                           disabled={busy === 'refund'}
-                          className="w-full text-center text-xs text-slate-400 transition hover:text-rose-500 disabled:opacity-50"
+                          className="min-h-11 w-full rounded-lg text-center text-xs text-slate-400 transition hover:text-rose-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400/40 disabled:opacity-50"
                         >
                           {busy === 'refund' ? '處理中…' : '申請退款（按 AI 用量退未用份額）'}
                         </button>
@@ -350,7 +350,7 @@ export default function Pricing() {
                     <button
                       onClick={onManage}
                       disabled={busy === 'portal'}
-                      className="w-full rounded-xl border border-slate-300 py-3 font-semibold text-slate-700 transition hover:border-accent hover:text-accent disabled:opacity-50 dark:border-slate-700 dark:text-slate-200"
+                      className="w-full rounded-xl border border-slate-300 py-3 font-semibold text-slate-700 transition hover:border-accent hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 disabled:opacity-50 dark:border-slate-700 dark:text-slate-200"
                     >
                       {busy === 'portal'
                         ? t('pricing.opening')
@@ -360,7 +360,7 @@ export default function Pricing() {
                     <button
                       onClick={() => onPick(plan)}
                       disabled={busy === plan.id}
-                      className={`w-full rounded-xl py-3 font-semibold transition disabled:opacity-50 ${
+                      className={`w-full rounded-xl py-3 font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 disabled:opacity-50 ${
                         plan.highlighted
                           ? 'bg-accent text-white hover:opacity-90'
                           : 'border border-slate-300 text-slate-700 hover:border-accent hover:text-accent dark:border-slate-700 dark:text-slate-200'
