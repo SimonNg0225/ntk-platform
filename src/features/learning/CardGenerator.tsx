@@ -649,8 +649,8 @@ export default function CardGenerator() {
         actions={
           totalGen > 0 ? (
             <div className="flex items-center gap-2.5 rounded-2xl bg-white/15 px-4 py-2 ring-1 ring-inset ring-white/20 backdrop-blur-sm">
-              <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-white/20 text-white">
-                <Layers size={16} />
+              <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/20 text-white">
+                <Layers size={18} />
               </span>
               <div className="leading-tight">
                 <p className="text-lg font-semibold tabular-nums slashed-zero text-white">
@@ -674,7 +674,7 @@ export default function CardGenerator() {
               aria-selected={on}
               onClick={() => setTab(tabItem.id)}
               className={cx(
-                'inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60',
+                'inline-flex min-h-11 items-center gap-1.5 rounded-full px-3 text-xs font-medium transition active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60',
                 on
                   ? 'bg-white font-semibold text-accent-strong'
                   : 'bg-white/15 text-white hover:bg-white/25',
@@ -756,7 +756,7 @@ export default function CardGenerator() {
                     disabled={busy}
                     aria-pressed={on}
                     className={cx(
-                      'flex flex-col items-start gap-1.5 rounded-2xl border p-3 text-left transition duration-200 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 disabled:opacity-50',
+                      'flex min-h-[118px] flex-col items-start gap-1.5 rounded-2xl border p-3 text-left transition duration-200 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 disabled:cursor-not-allowed disabled:opacity-50',
                       on
                         ? 'border-accent/40 bg-accent-soft/50 dark:border-accent/40 dark:bg-accent/10'
                         : 'border-slate-200/80 bg-white hover:border-slate-300 hover:shadow-md dark:border-slate-700/60 dark:bg-slate-800 dark:hover:border-slate-600',
@@ -764,13 +764,13 @@ export default function CardGenerator() {
                   >
                     <span
                       className={cx(
-                        'flex h-8 w-8 items-center justify-center rounded-xl transition',
+                        'flex h-11 w-11 items-center justify-center rounded-xl transition',
                         on
                           ? 'bg-accent text-white'
                           : 'bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-300',
                       )}
                     >
-                      <ct.icon size={16} />
+                      <ct.icon size={18} />
                     </span>
                     <span
                       className={cx(
@@ -983,8 +983,8 @@ export default function CardGenerator() {
           {busy && drafts.length === 0 && (
             <Card className="space-y-4 p-5">
               <div className="flex items-center gap-2.5">
-                <span className="relative flex h-8 w-8 items-center justify-center rounded-xl bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
-                  <Sparkles size={16} className="animate-pulse" />
+                <span className="relative flex h-11 w-11 items-center justify-center rounded-xl bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
+                  <Sparkles size={18} className="animate-pulse" />
                 </span>
                 <div className="leading-tight">
                   <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
