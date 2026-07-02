@@ -2000,7 +2000,7 @@ function QuestionFormModal({
                       {/* serif 答案圈 — 對齊評卷參考嘅卷面字母牌 */}
                       <span
                         className={cx(
-                          'flex h-7 w-7 cursor-pointer items-center justify-center rounded-full text-[13px] font-bold transition peer-focus-visible:ring-2 peer-focus-visible:ring-accent/40',
+                          'flex h-11 w-11 cursor-pointer items-center justify-center rounded-full text-sm font-bold transition peer-focus-visible:ring-2 peer-focus-visible:ring-accent/40',
                           on
                             ? 'bg-emerald-500 text-white shadow-sm'
                             : 'bg-slate-100 text-slate-500 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600',
