@@ -5,6 +5,7 @@ import {
   Bot,
   CalendarClock,
   CalendarDays,
+  Inbox as InboxIcon,
   ListTodo,
   Plus,
   Repeat,
@@ -15,11 +16,10 @@ import { useToast } from '../../../context/ToastContext'
 import { useMode } from '../../../context/ModeContext'
 import { useNav } from '../../../context/NavContext'
 import { isAIConfigured } from '../../../lib/aiClient'
-import { tasksCol, countdownsCol, eventsCol } from '../../../data/collections'
+import { tasksCol, countdownsCol, eventsCol, inboxCol } from '../../../data/collections'
 import type { CountdownCategory } from '../../../data/types'
 import {
   Button,
-  EmptyState,
   Field,
   IconButton,
   Input,
@@ -243,19 +243,53 @@ export function QuickAddModal({ open, onClose }: QuickAddModalProps) {
     close()
   }
 
+  const captureToInbox = () => {
+    const input = text.trim()
+    if (!input) {
+      toast.error('請先輸入內容')
+      return
+    }
+    inboxCol.add({ text: input, mode, createdAt: new Date().toISOString() })
+    toast.success('已放入快速擷取', {
+      label: '看 Inbox',
+      onClick: () => nav.open('inbox'),
+    })
+    close()
+  }
+
   // ───────── 未接 AI：友善 gate（同題庫 AI 出題一致）─────────
   if (!isAIConfigured) {
     return (
       <Modal open={open} onClose={close} title="快速加入">
         <div className="space-y-4">
-          <EmptyState
-            icon={Bot}
-            title="AI 助手未啟用"
-            hint="快速加入要靠 AI 分析你嘅文字。要設定好 Supabase 並部署 gemini Edge Function 先用到，步驟見 docs/SETUP.md。"
-          />
-          <div className="flex justify-end">
+          <div className="flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-3.5 text-amber-900 dark:border-amber-500/25 dark:bg-amber-500/10 dark:text-amber-100">
+            <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-600 dark:bg-amber-500/20 dark:text-amber-300">
+              <Bot size={16} />
+            </span>
+            <div>
+              <p className="text-sm font-semibold">AI 分析暫時未啟用</p>
+              <p className="mt-1 text-xs leading-relaxed text-amber-800/80 dark:text-amber-100/75">
+                你仍然可以先記低內容，系統會放入 Inbox，之後再分類成待辦、提醒或行事曆。
+              </p>
+            </div>
+          </div>
+
+          <Field label="先記低">
+            <Textarea
+              rows={4}
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              placeholder="例如：下星期三 3pm 同 5A 家長開會"
+              autoFocus
+            />
+          </Field>
+
+          <div className="flex flex-col justify-end gap-2 sm:flex-row">
             <Button variant="secondary" onClick={close}>
               關閉
+            </Button>
+            <Button icon={InboxIcon} onClick={captureToInbox} disabled={!text.trim()}>
+              放入 Inbox
             </Button>
           </div>
         </div>
