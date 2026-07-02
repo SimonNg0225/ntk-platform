@@ -148,7 +148,7 @@ export default function PaidGate({
             <button
               type="button"
               onClick={() => nav.open(copy.fallbackId)}
-              className="mt-4 inline-flex min-h-10 cursor-pointer items-center gap-1.5 rounded-xl border border-slate-300 px-3 text-sm font-semibold text-slate-700 transition hover:border-accent hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:border-slate-700 dark:text-slate-200"
+              className="mt-4 inline-flex min-h-11 cursor-pointer items-center gap-1.5 rounded-xl border border-slate-300 px-3 text-sm font-semibold text-slate-700 transition hover:border-accent hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:border-slate-700 dark:text-slate-200"
             >
               {copy.fallbackLabel}
               <ArrowRight size={14} strokeWidth={2} />
@@ -162,7 +162,7 @@ export default function PaidGate({
           </p>
           <Link
             to="/pricing"
-            className="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-xl bg-accent px-4 text-sm font-semibold text-white transition hover:bg-accent-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+            className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-xl bg-accent px-4 text-sm font-semibold text-white transition hover:bg-accent-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
           >
             <Sparkles size={15} strokeWidth={2.25} />
             {t('gate.cta', { defaultValue: '比較方案' })}
