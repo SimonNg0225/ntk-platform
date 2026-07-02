@@ -144,14 +144,18 @@ export default function ProfileTab() {
           </Field>
 
           <Field label="頭像顏色">
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               {AVATAR_COLORS.map((c) => (
                 <button
                   key={c}
                   type="button"
                   onClick={() => setAvatarColor(c)}
                   aria-label={`色 ${c}`}
-                  className={cx('h-7 w-7 rounded-full ring-2 ring-offset-2 ring-offset-[color:var(--surface)] transition', avatarColor === c ? 'ring-accent' : 'ring-transparent')}
+                  aria-pressed={avatarColor === c}
+                  className={cx(
+                    'h-11 w-11 rounded-full ring-2 ring-offset-2 ring-offset-[color:var(--surface)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
+                    avatarColor === c ? 'ring-accent' : 'ring-transparent',
+                  )}
                   style={{ background: `#${c}` }}
                 />
               ))}
