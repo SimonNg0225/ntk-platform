@@ -1,12 +1,11 @@
 import {
   Sparkles,
-  Cloud,
   Database,
   ClipboardList,
   FileText,
-  TrendingUp,
-  Presentation,
   PenLine,
+  ShieldCheck,
+  UserRound,
 } from 'lucide-react'
 import { Modal, Button } from '../ui'
 import { BRAND_NAME } from '../lib/brand'
@@ -17,44 +16,39 @@ import { BRAND_NAME } from '../lib/brand'
 //  純 UI；載入示範資料嘅實際動作由 onLoadDemo（接 seedAllDemo）傳入。
 // ============================================================
 
-const HIGHLIGHTS: { icon: typeof Sparkles; title: string; desc: string }[] = [
+const TRUST_POINTS: { icon: typeof Sparkles; title: string; desc: string }[] = [
   {
-    icon: ClipboardList,
-    title: '備課流程',
-    desc: '由課題開始，整理教案、教學指引、課堂活動同評估方向。',
+    icon: UserRound,
+    title: '個人先用',
+    desc: '不用先開學校或科組帳戶，一位老師都可以即刻開始。',
   },
   {
-    icon: FileText,
-    title: '教材與題目',
-    desc: 'AI 出 MC／短答／長題、工作紙同評分準則，再收返入題庫。',
+    icon: ShieldCheck,
+    title: '私隱先行',
+    desc: '先處理課題、教案、教材；避免輸入可識別學生資料。',
   },
   {
     icon: PenLine,
-    title: '批改與回饋',
-    desc: 'AI 先做初稿：分數、病句、評語同弱項；最後由老師覆核。',
-  },
-  {
-    icon: Cloud,
-    title: '個人先用',
-    desc: '不用先開學校帳戶；資料本機優先，登入後再跨裝置同步。',
+    title: '教師覆核',
+    desc: 'AI 幫你出初稿，教學判斷同最後版本仍然由老師決定。',
   },
 ]
 
 const START_STEPS: { icon: typeof Sparkles; title: string; desc: string }[] = [
   {
     icon: ClipboardList,
-    title: '揀一個課題',
-    desc: '先做下一堂，不用一次設定全個學期。',
+    title: '輸入下一堂課題',
+    desc: '例如「市場營銷」或「成本概念」，不用先設定全個學期。',
   },
   {
-    icon: Presentation,
-    title: '生成教材',
-    desc: '教案、題目、簡報和工作紙逐步接上。',
+    icon: FileText,
+    title: '揀一個任務包',
+    desc: '教案、小測、簡報或課後回饋，先做最急嗰一件。',
   },
   {
-    icon: TrendingUp,
-    title: '課後補強',
-    desc: '把弱項、評語、待辦收回工作台。',
+    icon: PenLine,
+    title: '用 AI 初稿起步',
+    desc: '結果會接到對應工具，之後再整理到 Inbox 或功能庫。',
   },
 ]
 
@@ -74,21 +68,18 @@ export function OnboardingModal({
           <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-accent text-lg font-bold text-white shadow-sm">
             E
           </span>
-          <p className="text-sm leading-relaxed text-slate-600 dark:text-slate-300">
-            為香港老師而設嘅
-            <strong className="font-semibold text-slate-800 dark:text-slate-100">
-              AI 工作台
-            </strong>
-            —— 先由一位老師自己用起，備課、出題、批改、行政慢慢收返埋一個地方。
-            左上角仲可以切去
-            <strong className="font-semibold text-slate-800 dark:text-slate-100">
-              個人模式
-            </strong>
-            打理自己嘅成長。
-          </p>
+          <div>
+            <h2 className="text-lg font-semibold tracking-tight text-slate-800 dark:text-slate-100">
+              先由下一堂課開始
+            </h2>
+            <p className="mt-1 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+              不用先理解全部功能；輸入一個課題，揀一個任務包，再逐步把備課、
+              出題、簡報同回饋收回同一個工作台。
+            </p>
+          </div>
         </div>
 
-        <div className="grid gap-3 sm:grid-cols-3">
+        <div className="grid gap-2 sm:grid-cols-3">
           {START_STEPS.map((h, index) => {
             const I = h.icon
             return (
@@ -113,40 +104,43 @@ export function OnboardingModal({
           })}
         </div>
 
-        <div className="grid gap-3 sm:grid-cols-2">
-          {HIGHLIGHTS.map((h) => {
+        <div className="grid gap-2 sm:grid-cols-3">
+          {TRUST_POINTS.map((h) => {
             const I = h.icon
             return (
               <div
                 key={h.title}
-                className="flex items-start gap-3 rounded-xl border border-[color:var(--border)] p-3"
+                className="rounded-xl border border-[color:var(--border)] p-3"
               >
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
-                  <I size={16} strokeWidth={1.75} aria-hidden="true" />
-                </span>
-                <div className="min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
+                    <I size={16} strokeWidth={1.75} aria-hidden="true" />
+                  </span>
                   <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">
                     {h.title}
                   </p>
-                  <p className="mt-0.5 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
-                    {h.desc}
-                  </p>
                 </div>
+                <p className="mt-2 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+                  {h.desc}
+                </p>
               </div>
             )
           })}
         </div>
 
-        <div className="rounded-xl bg-[color:var(--surface-2)] p-3 text-center">
-          <p className="text-xs text-slate-500 dark:text-slate-400">
-            想即刻睇下實際運作？載入一份示範資料（隨時可喺設定清除）。
+        <div className="rounded-xl bg-[color:var(--surface-2)] p-3">
+          <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+            建議第一步：打開首頁，輸入下一堂課題。
+          </p>
+          <p className="mt-1 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+            想先睇完整例子，可以載入示範資料；所有示範內容之後都可在設定清除。
           </p>
           <div className="mt-3 flex flex-col justify-center gap-2 sm:flex-row">
-            <Button icon={Database} onClick={onLoadDemo}>
-              載入示範資料
+            <Button icon={ClipboardList} onClick={onClose}>
+              開始準備下一堂
             </Button>
-            <Button variant="ghost" icon={Sparkles} onClick={onClose}>
-              我自己由零開始
+            <Button variant="secondary" icon={Database} onClick={onLoadDemo}>
+              載入示範資料
             </Button>
           </div>
         </div>
