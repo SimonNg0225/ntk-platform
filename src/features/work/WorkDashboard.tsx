@@ -386,13 +386,13 @@ export default function WorkDashboard() {
     ]
   }, [t, timetable, ttDay, merged, todayKey, events, openTasks, overdueTasks])
 
-  // ── 快速擷取（掉入 Inbox）──
+  // ── 快速記低（放入 Inbox）──
   function submitCapture() {
     const text = capture.trim()
     if (!text) return
     inboxCol.add({ text, mode: 'work', createdAt: new Date().toISOString() })
     setCapture('')
-    toast.success(t('wdash.capturedToast', { defaultValue: '已掉入快速擷取' }))
+    toast.success(t('wdash.capturedToast', { defaultValue: '已放入 Inbox' }))
   }
 
   // ── 完成待辦 ──
@@ -470,7 +470,7 @@ export default function WorkDashboard() {
           <Input
             icon={InboxIcon}
             value={capture}
-            placeholder={t('wdash.capturePlaceholder', { defaultValue: '快速記低一個諗法 / 待辦…（Enter 掉入收件匣）' })}
+            placeholder={t('wdash.capturePlaceholder', { defaultValue: '快速記低一個諗法 / 待辦…（Enter 放入 Inbox）' })}
             onChange={(e) => setCapture(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === 'Enter') submitCapture()
@@ -483,7 +483,7 @@ export default function WorkDashboard() {
           onClick={submitCapture}
           disabled={!capture.trim()}
         >
-          {t('wdash.capture', { defaultValue: '擷取' })}
+          {t('wdash.capture', { defaultValue: '記低' })}
         </Button>
       </div>
 

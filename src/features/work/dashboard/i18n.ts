@@ -73,9 +73,9 @@ i18n.addResourceBundle(
       customize: 'Customize',
 
       // ── Quick capture ──
-      capturePlaceholder: 'Jot down a thought / to-do quickly… (Enter to drop into inbox)',
-      capture: 'Capture',
-      capturedToast: 'Dropped into quick capture',
+      capturePlaceholder: 'Quickly jot down a thought / to-do… (Enter to save to Inbox)',
+      capture: 'Jot down',
+      capturedToast: 'Saved to Inbox',
 
       // ── Toasts ──
       taskDoneToast: 'To-do completed',
