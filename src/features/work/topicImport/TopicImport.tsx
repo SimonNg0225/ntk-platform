@@ -289,7 +289,7 @@ export default function TopicImport() {
           <button
             type="button"
             onClick={() => nav.open('settings')}
-            className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-accent transition hover:text-accent-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98]"
+            className="mt-1 inline-flex min-h-11 items-center gap-1 rounded-lg px-3 text-xs font-medium text-accent transition hover:bg-accent-soft hover:text-accent-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98] dark:hover:bg-accent/15"
           >
             <Settings size={13} />
             去設定揀科目 →
