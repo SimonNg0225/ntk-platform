@@ -101,8 +101,8 @@ export default function PaidGate({
               <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-accent-soft dark:bg-accent/15">
                 <FeatureIcon icon={feature.icon} size={30} className="text-accent" />
               </span>
-              <span className="absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full bg-accent text-white shadow">
-                <Lock size={14} strokeWidth={2.5} />
+              <span className="absolute -bottom-1.5 -right-1.5 flex h-9 w-9 items-center justify-center rounded-full bg-accent text-white shadow">
+                <Lock size={16} strokeWidth={2.5} />
               </span>
             </div>
             <div className="min-w-0 flex-1">
@@ -162,9 +162,9 @@ export default function PaidGate({
           </p>
           <Link
             to="/pricing"
-            className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-xl bg-accent px-4 text-sm font-semibold text-white transition hover:bg-accent-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+            className="inline-flex min-h-11 cursor-pointer items-center justify-center gap-1.5 rounded-xl bg-accent px-4 text-sm font-semibold text-white transition hover:bg-accent-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
           >
-            <Sparkles size={15} strokeWidth={2.25} />
+            <Sparkles size={16} strokeWidth={2.25} />
             {t('gate.cta', { defaultValue: '比較方案' })}
           </Link>
         </div>
