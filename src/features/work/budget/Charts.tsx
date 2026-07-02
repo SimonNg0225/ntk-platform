@@ -32,10 +32,12 @@ function ChartEmpty({ message, height }: { message: string; height?: number }) {
       role="img"
       aria-label={message}
     >
-      <span className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 text-slate-400 dark:bg-slate-700/60 dark:text-slate-500">
-        <LineChart size={17} strokeWidth={1.75} />
+      <span className="flex h-11 w-11 items-center justify-center rounded-full bg-slate-100 text-slate-400 dark:bg-slate-700/60 dark:text-slate-500">
+        <LineChart size={19} strokeWidth={1.75} />
       </span>
-      <p className="text-xs text-slate-500 dark:text-slate-400">{message}</p>
+      <p className="max-w-[18rem] text-sm leading-relaxed text-slate-500 dark:text-slate-400">
+        {message}
+      </p>
     </div>
   )
 }
@@ -132,11 +134,11 @@ export function CategoryDonut({
           return (
             <li
               key={i}
-              className="flex items-center justify-between gap-2 rounded-lg px-2 py-1 text-sm transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/60"
+              className="flex min-h-11 items-center justify-between gap-2 rounded-xl px-2.5 py-1.5 text-sm transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/60"
             >
               <span className="flex min-w-0 items-center gap-2 text-slate-600 dark:text-slate-300">
                 <span
-                  className="h-2.5 w-2.5 shrink-0 rounded-full"
+                  className="h-3 w-3 shrink-0 rounded-full ring-2 ring-white dark:ring-slate-900"
                   style={{ background: seg.color }}
                 />
                 <span className="truncate">{seg.label}</span>
@@ -377,7 +379,7 @@ export function SpendingHeatmap({ cells }: { cells: DayCell[] }) {
           </span>
         ))}
       </div>
-      <div className="mt-2 flex items-center justify-between text-[11px] text-slate-400 dark:text-slate-500">
+      <div className="mt-2 flex min-h-11 flex-wrap items-center justify-between gap-2 rounded-xl bg-slate-50/60 px-2.5 text-[11px] text-slate-400 dark:bg-slate-800/40 dark:text-slate-500">
         <span className="tabular-nums">
           消費{' '}
           <span className="font-semibold text-slate-600 dark:text-slate-300">{activeDays}</span> 日 ·
@@ -389,7 +391,7 @@ export function SpendingHeatmap({ cells }: { cells: DayCell[] }) {
         <span className="flex items-center gap-1">
           少
           {LEVEL_CLS.map((cls, i) => (
-            <span key={i} className={cx('h-[11px] w-[11px] rounded-[3px] ring-1 ring-inset ring-slate-900/5 dark:ring-white/5', cls)} />
+            <span key={i} className={cx('h-3 w-3 rounded-[4px] ring-1 ring-inset ring-slate-900/5 dark:ring-white/5', cls)} />
           ))}
           多
         </span>
@@ -441,13 +443,13 @@ export function BudgetRing({
 // ───────── 圖例 ─────────
 function Legend({ items }: { items: { color: string; label: string }[] }) {
   return (
-    <div className="mt-2 flex flex-wrap items-center justify-center gap-3">
+    <div className="mt-2 flex min-h-11 flex-wrap items-center justify-center gap-2 rounded-xl bg-slate-50/60 px-2 py-1 dark:bg-slate-800/40">
       {items.map((it) => (
         <span
           key={it.label}
-          className="flex items-center gap-1.5 text-[11px] text-slate-500 dark:text-slate-400"
+          className="flex min-h-8 items-center gap-1.5 rounded-full px-2 text-[11px] font-medium text-slate-500 dark:text-slate-400"
         >
-          <span className={cx('h-2.5 w-2.5 rounded-sm', it.color)} />
+          <span className={cx('h-3 w-3 rounded-sm ring-2 ring-white dark:ring-slate-900', it.color)} />
           {it.label}
         </span>
       ))}
