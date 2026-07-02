@@ -141,14 +141,14 @@ function Toggle({
       </div>
       <span
         className={cx(
-          'relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition',
+          'relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition',
           on ? 'bg-accent' : 'bg-slate-200 dark:bg-slate-600',
         )}
       >
         <span
           className={cx(
-            'inline-block h-4 w-4 transform rounded-full bg-white shadow transition',
-            on ? 'translate-x-4' : 'translate-x-0.5',
+            'inline-block h-5 w-5 transform rounded-full bg-white shadow transition',
+            on ? 'translate-x-5' : 'translate-x-0.5',
           )}
         />
       </span>
