@@ -38,7 +38,7 @@ export default function AccountBox() {
       <div className="space-y-2 px-4 py-3">
         <button
           onClick={signInWithGoogle}
-          className="flex w-full items-center justify-center gap-2 rounded-xl border border-black/[0.08] bg-white px-3 py-2.5 text-[13px] font-medium text-slate-700 transition hover:bg-black/[0.03] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-1 dark:border-white/10 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-white/[0.06]"
+          className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-black/[0.08] bg-white px-3 text-[13px] font-medium text-slate-700 transition hover:bg-black/[0.03] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-1 dark:border-white/10 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-white/[0.06]"
         >
           <GoogleIcon />
           {t('shell.loginGoogle', { defaultValue: '用 Google 登入' })}
@@ -47,7 +47,7 @@ export default function AccountBox() {
           <PlanBadge />
           <Link
             to="/pricing"
-            className="text-[11px] font-medium text-slate-400 transition hover:text-accent"
+            className="inline-flex min-h-11 items-center rounded-lg px-2 text-[11px] font-medium text-slate-400 transition hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
           >
             {t('shell.seePro', { defaultValue: '睇 Pro 方案' })}
           </Link>
@@ -79,7 +79,7 @@ export default function AccountBox() {
         </p>
         <button
           onClick={signOut}
-          className="text-xs text-slate-400 transition hover:text-red-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:text-slate-500"
+          className="inline-flex min-h-11 items-center rounded-lg px-2 text-xs text-slate-400 transition hover:text-red-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:text-slate-500"
         >
           {t('shell.signOut', { defaultValue: '登出' })}
         </button>
@@ -104,14 +104,14 @@ function PlanRow() {
         {isPaid ? (
           <Link
             to="/pricing"
-            className="text-[11px] font-medium text-slate-400 transition hover:text-accent"
+            className="inline-flex min-h-11 items-center rounded-lg px-2 text-[11px] font-medium text-slate-400 transition hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
           >
             {t('shell.manage', { defaultValue: '管理' })}
           </Link>
         ) : (
           <Link
             to="/pricing"
-            className="inline-flex items-center gap-0.5 rounded-md bg-accent px-2 py-1 text-[11px] font-semibold text-white transition hover:bg-accent-strong"
+            className="inline-flex min-h-11 items-center gap-0.5 rounded-lg bg-accent px-2 text-[11px] font-semibold text-white transition hover:bg-accent-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
           >
             {t('shell.seePlans', { defaultValue: '睇方案' })}
             <ArrowUpRight size={12} strokeWidth={2.25} />
