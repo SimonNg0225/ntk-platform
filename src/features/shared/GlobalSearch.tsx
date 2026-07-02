@@ -1021,7 +1021,7 @@ function ResultRow({
       onMouseEnter={onHover}
       onClick={onOpen}
       className={cx(
-        'group relative flex w-full items-start gap-3 rounded-lg py-2 pl-3 pr-2.5 text-left transition active:scale-[0.98]',
+        'group relative flex min-h-14 w-full cursor-pointer items-start gap-3 rounded-lg py-2 pl-3 pr-2.5 text-left transition active:scale-[0.98]',
         active
           ? 'bg-accent-soft dark:bg-accent/15'
           : 'hover:bg-slate-50 dark:hover:bg-slate-700/40',
@@ -1037,13 +1037,13 @@ function ResultRow({
       />
       <span
         className={cx(
-          'mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg transition-colors',
+          'mt-0.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-lg transition-colors',
           active
             ? 'bg-accent text-white shadow-sm shadow-accent/30'
             : 'bg-slate-100 text-slate-400 dark:bg-slate-700 dark:text-slate-400',
         )}
       >
-        <Icon size={15} />
+        <Icon size={18} />
       </span>
       <span className="min-w-0 flex-1">
         <span className="flex items-center gap-2">
@@ -1133,7 +1133,7 @@ function PreviewPanel({
           預覽
         </p>
         <div className="flex items-start gap-3">
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
             <Icon size={18} />
           </span>
           <div className="min-w-0 flex-1">
@@ -1236,7 +1236,7 @@ function StartScreen({
                 key={ex}
                 type="button"
                 onClick={() => onPick(ex)}
-                className="inline-flex min-h-11 items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 text-sm font-medium text-slate-600 transition active:scale-[0.98] hover:border-accent/40 hover:bg-accent-soft hover:text-accent-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:border-accent/40 dark:hover:bg-accent/15 dark:hover:text-accent"
+                className="inline-flex min-h-11 cursor-pointer items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 text-sm font-medium text-slate-600 transition active:scale-[0.98] hover:border-accent/40 hover:bg-accent-soft hover:text-accent-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:border-accent/40 dark:hover:bg-accent/15 dark:hover:text-accent"
               >
                 <Search size={13} className="opacity-60" />
                 {ex}
@@ -1260,7 +1260,7 @@ function StartScreen({
                 <button
                   type="button"
                   onClick={() => onPick(p.q)}
-                  className="inline-flex min-h-11 items-center pl-3 pr-1.5 font-medium text-amber-700 transition active:scale-[0.98] hover:bg-amber-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/40 dark:text-amber-300 dark:hover:bg-amber-500/15"
+                  className="inline-flex min-h-11 cursor-pointer items-center pl-3 pr-1.5 font-medium text-amber-700 transition active:scale-[0.98] hover:bg-amber-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/40 dark:text-amber-300 dark:hover:bg-amber-500/15"
                 >
                   {p.q}
                 </button>
@@ -1268,7 +1268,7 @@ function StartScreen({
                   type="button"
                   onClick={() => onUnpin(p.q)}
                   aria-label="取消釘選"
-                  className="flex h-11 w-11 items-center justify-center text-amber-400 transition active:scale-[0.98] hover:text-amber-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/40 dark:hover:text-amber-200"
+                  className="flex h-11 w-11 cursor-pointer items-center justify-center text-amber-400 transition active:scale-[0.98] hover:text-amber-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/40 dark:hover:text-amber-200"
                 >
                   <X size={12} />
                 </button>
@@ -1290,7 +1290,7 @@ function StartScreen({
             <button
               type="button"
               onClick={onClearRecents}
-              className="inline-flex min-h-11 items-center rounded-lg px-2 text-xs text-slate-400 transition active:scale-[0.98] hover:text-rose-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400/40"
+              className="inline-flex min-h-11 cursor-pointer items-center rounded-lg px-2 text-xs text-slate-400 transition active:scale-[0.98] hover:text-rose-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400/40"
             >
               清除
             </button>
@@ -1301,7 +1301,7 @@ function StartScreen({
                 <button
                   type="button"
                   onClick={() => onPick(r.q)}
-                  className="flex min-h-11 flex-1 items-center gap-2.5 rounded-md px-2 text-left text-sm text-slate-600 transition active:scale-[0.98] hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:text-slate-300 dark:hover:bg-slate-700/40"
+                  className="flex min-h-11 flex-1 cursor-pointer items-center gap-2.5 rounded-md px-2 text-left text-sm text-slate-600 transition active:scale-[0.98] hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:text-slate-300 dark:hover:bg-slate-700/40"
                 >
                   <Search size={14} className="shrink-0 text-slate-300 dark:text-slate-600" />
                   <span className="truncate">{r.q}</span>
@@ -1313,7 +1313,7 @@ function StartScreen({
                   type="button"
                   onClick={() => onRemoveRecent(r.id)}
                   aria-label="移除"
-                  className="mr-1 flex h-11 w-11 items-center justify-center rounded-md text-slate-300 opacity-0 transition active:scale-[0.98] hover:text-rose-500 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400/40 group-hover:opacity-100 max-sm:opacity-100 dark:text-slate-600"
+                  className="mr-1 flex h-11 w-11 cursor-pointer items-center justify-center rounded-md text-slate-300 opacity-0 transition active:scale-[0.98] hover:text-rose-500 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400/40 group-hover:opacity-100 max-sm:opacity-100 dark:text-slate-600"
                 >
                   <X size={14} />
                 </button>
@@ -1332,7 +1332,7 @@ function StartScreen({
               key={ex}
               type="button"
               onClick={() => onPick(ex)}
-              className="inline-flex max-sm:min-h-11 items-center rounded-full bg-slate-100 px-2.5 py-1 font-medium text-slate-500 transition active:scale-[0.98] hover:bg-accent hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-accent dark:hover:text-white"
+              className="inline-flex max-sm:min-h-11 cursor-pointer items-center rounded-full bg-slate-100 px-2.5 py-1 font-medium text-slate-500 transition active:scale-[0.98] hover:bg-accent hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-accent dark:hover:text-white"
             >
               {ex}
             </button>
@@ -1348,7 +1348,7 @@ function StartScreen({
             <button
               type="button"
               onClick={() => onPick(op.fill)}
-              className="inline-flex max-sm:min-h-11 items-center rounded-full border border-slate-200 bg-white px-2.5 py-1 font-mono font-medium text-slate-500 transition active:scale-[0.98] hover:border-accent hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 dark:hover:border-accent dark:hover:text-accent"
+              className="inline-flex max-sm:min-h-11 cursor-pointer items-center rounded-full border border-slate-200 bg-white px-2.5 py-1 font-mono font-medium text-slate-500 transition active:scale-[0.98] hover:border-accent hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 dark:hover:border-accent dark:hover:text-accent"
             >
               {op.token}
             </button>
