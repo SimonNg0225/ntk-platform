@@ -110,6 +110,12 @@ const WORK_TEMPLATES: BuiltinTemplate[] = [
     body: '為課題「{{課題}}」設計一個 {{時間}} 分鐘嘅互動課堂活動，包括目標、步驟、分組安排同總結提問。',
   },
   {
+    id: 'w-differentiated-worksheet',
+    category: '教學',
+    title: '分層工作紙',
+    body: '為「{{課題}}」設計一份 {{班級／程度}} 適用嘅分層工作紙，輸出：\n\n1. 基礎題 3 題\n2. 核心題 3 題\n3. 挑戰題 2 題\n4. 每題答案重點\n5. 老師批改時要留意嘅常見錯誤',
+  },
+  {
     id: 'w-feedback',
     category: '批改',
     title: '擬批改評語',
@@ -126,6 +132,18 @@ const WORK_TEMPLATES: BuiltinTemplate[] = [
     category: '溝通',
     title: '家長通訊草稿',
     body: '幫我草擬一段俾家長嘅訊息：關於「{{事項}}」，語氣專業有禮，重點清晰。',
+  },
+  {
+    id: 'w-parent-followup',
+    category: '溝通',
+    title: '家長跟進訊息',
+    body: '幫我草擬一段俾家長嘅跟進訊息。學生情況：「{{學生情況}}」；希望家長配合：「{{家長可配合事項}}」。請用溫和、具體、非指責語氣，並列出 2 個可行下一步。',
+  },
+  {
+    id: 'w-admin-email',
+    category: '行政',
+    title: '行政電郵草稿',
+    body: '幫我草擬一封行政電郵：收件人「{{收件人}}」，目的「{{目的}}」，需要對方於「{{限期}}」前處理。語氣簡潔、專業、有禮，並加上清楚 subject line。',
   },
 ]
 
