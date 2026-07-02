@@ -996,7 +996,7 @@ export default function LessonPlanner() {
                               setEditingId(null)
                               setEditorOpen(true)
                             }}
-                            className="inline-flex items-center gap-1 rounded-lg bg-slate-100 px-2 py-1 text-xs text-slate-600 transition active:scale-[0.98] hover:bg-accent-soft hover:text-accent-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-accent/15 dark:hover:text-accent"
+                            className="inline-flex min-h-11 items-center gap-1 rounded-lg bg-slate-100 px-3 text-xs text-slate-600 transition hover:bg-accent-soft hover:text-accent-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98] dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-accent/15 dark:hover:text-accent"
                           >
                             <Plus size={11} />
                             {t.topic}
@@ -1355,7 +1355,7 @@ function PlanCard({
           </Tooltip>
           <Menu
             trigger={
-              <span className="inline-flex items-center justify-center rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600 dark:text-slate-500 dark:hover:bg-slate-800">
+              <span className="inline-flex h-11 w-11 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:text-slate-500 dark:hover:bg-slate-800">
                 <MoreVertical size={17} strokeWidth={1.8} />
                 <span className="sr-only">{plan.title} 更多操作</span>
               </span>

@@ -173,7 +173,7 @@ export default function GenerateModal({
                 onClick={() => setDurationMin(m)}
                 aria-pressed={durationMin === m}
                 className={cx(
-                  'rounded-lg border px-2.5 py-1 text-xs font-medium transition active:scale-[0.97]',
+                  'inline-flex min-h-11 items-center rounded-lg border px-3 text-xs font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.97]',
                   durationMin === m
                     ? 'border-accent bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent'
                     : 'border-black/[0.08] text-slate-600 hover:bg-black/[0.03] dark:border-white/10 dark:text-slate-300',
@@ -198,7 +198,7 @@ export default function GenerateModal({
               onClick={() => setTplId('')}
               aria-pressed={tplId === ''}
               className={cx(
-                'inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-medium transition active:scale-[0.97]',
+                'inline-flex min-h-11 items-center gap-1.5 rounded-lg border px-3 text-xs font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.97]',
                 tplId === ''
                   ? 'border-accent bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent'
                   : 'border-black/[0.08] text-slate-600 hover:bg-black/[0.03] dark:border-white/10 dark:text-slate-300',
@@ -214,7 +214,7 @@ export default function GenerateModal({
                 aria-pressed={tplId === t.id}
                 title={t.phases.map((p) => `${p.label}(${p.minutes}')`).join(' → ')}
                 className={cx(
-                  'inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-medium transition active:scale-[0.97]',
+                  'inline-flex min-h-11 items-center gap-1.5 rounded-lg border px-3 text-xs font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.97]',
                   tplId === t.id
                     ? 'border-accent bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent'
                     : 'border-black/[0.08] text-slate-600 hover:bg-black/[0.03] dark:border-white/10 dark:text-slate-300',
