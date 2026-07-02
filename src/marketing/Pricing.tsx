@@ -105,7 +105,7 @@ export default function Pricing() {
 
   function applyPromo() {
     if (redeemTestCode(promo)) {
-      toast.success('已啟用測試 Pro。')
+      toast.success('已啟用 Pro 試用。')
       setPromo('')
     } else {
       toast.error('推廣代碼無效')
@@ -430,12 +430,12 @@ export default function Pricing() {
           {sub.isTest ? (
             <div className="flex items-center justify-between gap-2 rounded-xl border border-accent/40 bg-accent-soft px-4 py-3 dark:bg-accent/10">
               <span className="inline-flex items-center gap-1.5 text-sm font-medium text-accent-strong dark:text-accent">
-                <Ticket size={15} /> 已啟用測試 Pro
+                <Ticket size={15} /> 已啟用 Pro 試用
               </span>
               <button
                 onClick={() => {
                   clearTestPro()
-                  toast.info('已取消測試 Pro')
+                  toast.info('已取消 Pro 試用')
                 }}
                 className="text-xs font-medium text-slate-500 transition hover:text-accent"
               >

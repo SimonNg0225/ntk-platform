@@ -32,7 +32,7 @@ export default function PlanBadge({ className = '' }: { className?: string }) {
       >
         <Crown size={11} strokeWidth={2.25} />
         {isTest
-          ? t('shell.planProTest', { defaultValue: 'Pro · 測試' })
+          ? t('shell.planProTest', { defaultValue: 'Pro · 試用' })
           : trial
             ? t('shell.planProTrial', { defaultValue: 'Pro · 試用' })
             : t('shell.planPro', { defaultValue: 'Pro' })}

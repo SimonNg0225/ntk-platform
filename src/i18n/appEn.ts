@@ -50,7 +50,7 @@ export const appEn = {
     planFree: 'Free',
     planPro: 'Pro',
     planProTrial: 'Pro · Trial',
-    planProTest: 'Pro · Test',
+    planProTest: 'Pro · Trial',
     quickAdd: 'Quick capture',
     navHint: 'Navigate',
     actionHint: 'Action',
