@@ -48,7 +48,13 @@ export function StarPicker({ value, onPick }: { value: number; onPick: (n: numbe
   return (
     <span className="inline-flex items-center gap-1">
       {[1, 2, 3, 4, 5].map((n) => (
-        <button key={n} type="button" onClick={() => onPick(n)} className="transition active:scale-90" aria-label={`${n} 星`}>
+        <button
+          key={n}
+          type="button"
+          onClick={() => onPick(n)}
+          className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl transition hover:bg-amber-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 active:scale-90 dark:hover:bg-amber-400/10"
+          aria-label={`${n} 星`}
+        >
           <Star
             size={22}
             className={cx(n <= value ? 'fill-amber-400 text-amber-400' : 'text-slate-300 hover:text-amber-300 dark:text-slate-600')}
@@ -77,7 +83,7 @@ export function Toggle({
       role="switch"
       aria-checked={on}
       onClick={() => onChange(!on)}
-      className="flex w-full items-center justify-between gap-3 rounded-xl text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+      className="flex min-h-11 w-full items-center justify-between gap-3 rounded-xl text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
     >
       <span className="min-w-0">
         <span className="block text-sm text-slate-700 dark:text-slate-200">{label}</span>
