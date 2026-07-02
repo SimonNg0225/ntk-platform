@@ -210,7 +210,7 @@ export default function MaterialGen() {
           <button
             type="button"
             onClick={() => nav.open('work-ai')}
-            className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold text-accent-strong transition active:scale-[0.98] hover:bg-accent-soft dark:text-accent dark:hover:bg-accent/15"
+            className="inline-flex min-h-11 items-center gap-1 rounded-lg px-3 text-xs font-semibold text-accent-strong transition hover:bg-accent-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98] dark:text-accent dark:hover:bg-accent/15"
           >
             喺 AI 助手繼續傾
             <ArrowUpRight size={14} />

@@ -599,7 +599,7 @@ function SetupView(props: {
                 disabled={busy}
                 onClick={() => toggleScope(t.id)}
                 className={cx(
-                  'rounded-full px-3 py-1 text-xs font-medium transition disabled:opacity-50',
+                  'inline-flex min-h-11 items-center rounded-full px-3 text-xs font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98] disabled:opacity-50',
                   on
                     ? 'bg-accent text-white shadow-sm dark:shadow-none'
                     : 'bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-800 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700',
