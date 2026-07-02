@@ -222,7 +222,7 @@ function BrowseTab({ onPublish }: { onPublish: () => void }) {
             {hasFilter && (
               <button
                 onClick={clearFilters}
-                className="rounded-lg font-medium text-slate-400 transition hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98] dark:text-slate-500"
+                className="inline-flex min-h-11 items-center rounded-lg px-2 font-medium text-slate-400 transition hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98] dark:text-slate-500"
               >
                 {t('community.clearFilters', { defaultValue: '清除篩選' })}
               </button>

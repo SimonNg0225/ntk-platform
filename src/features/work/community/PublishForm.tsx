@@ -144,7 +144,7 @@ export default function PublishForm({
                   type="button"
                   onClick={() => fileRef.current?.click()}
                   className={cx(
-                    'flex w-full items-center gap-2 rounded-xl border border-dashed px-3 py-3 text-sm transition',
+                    'flex min-h-11 w-full items-center gap-2 rounded-xl border border-dashed px-3 py-3 text-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
                     file
                       ? 'border-accent/40 bg-accent-soft/40 text-accent-strong dark:text-accent'
                       : 'border-black/15 text-slate-500 hover:border-accent/40 hover:text-accent dark:border-white/15',
