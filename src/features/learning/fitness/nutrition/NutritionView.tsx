@@ -834,7 +834,7 @@ export default function NutritionView() {
                   onClick={() => quickAdd(f)}
                   title={`P${Math.round(f.proteinG)} · F${Math.round(f.fatG)} · C${Math.round(f.carbG)} · 用過 ${f.count} 次`}
                   aria-label={`加入 ${f.label}，${Math.round(f.calories)} kcal`}
-                  className="group inline-flex max-w-full items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-600 transition hover:border-accent/50 hover:bg-accent-soft hover:text-accent-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:border-accent/50 dark:hover:bg-accent/10 dark:hover:text-accent"
+                  className="group inline-flex min-h-11 max-w-full items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 text-xs font-medium text-slate-600 transition hover:border-accent/50 hover:bg-accent-soft hover:text-accent-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98] dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:border-accent/50 dark:hover:bg-accent/10 dark:hover:text-accent"
                 >
                   <Plus
                     size={12}
@@ -860,7 +860,7 @@ export default function NutritionView() {
                     key={ex}
                     type="button"
                     onClick={() => setText(ex)}
-                    className="inline-flex max-w-full items-center gap-1 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs text-slate-500 transition hover:border-accent/50 hover:bg-accent-soft hover:text-accent-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 dark:hover:border-accent/50 dark:hover:bg-accent/10 dark:hover:text-accent"
+                    className="inline-flex min-h-11 max-w-full items-center gap-1 rounded-full border border-slate-200 bg-white px-3 text-xs text-slate-500 transition hover:border-accent/50 hover:bg-accent-soft hover:text-accent-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98] dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 dark:hover:border-accent/50 dark:hover:bg-accent/10 dark:hover:text-accent"
                   >
                     <Sparkles size={11} className="shrink-0 opacity-70" />
                     <span className="truncate">{ex}</span>
