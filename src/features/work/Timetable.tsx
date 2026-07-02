@@ -347,7 +347,7 @@ export default function Timetable() {
               type="button"
               onClick={() => setShowSettings(true)}
               title={t('timetable.editBells', { defaultValue: '設定鐘聲時間' })}
-              className="inline-flex items-center gap-1.5 rounded-xl bg-white/15 px-2.5 py-1.5 text-sm font-medium backdrop-blur-sm transition hover:bg-white/25 sm:px-3"
+              className="inline-flex min-h-11 items-center gap-1.5 rounded-xl bg-white/15 px-2.5 text-sm font-medium backdrop-blur-sm transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 sm:px-3"
             >
               <Settings2 size={15} />
               <span className="hidden sm:inline">
@@ -358,7 +358,7 @@ export default function Timetable() {
               type="button"
               onClick={handleExport}
               title={t('timetable.exportCsv', { defaultValue: '匯出 CSV' })}
-              className="inline-flex items-center gap-1.5 rounded-xl bg-white/15 px-2.5 py-1.5 text-sm font-medium backdrop-blur-sm transition hover:bg-white/25 sm:px-3"
+              className="inline-flex min-h-11 items-center gap-1.5 rounded-xl bg-white/15 px-2.5 text-sm font-medium backdrop-blur-sm transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 sm:px-3"
             >
               <Download size={15} />
               <span className="hidden sm:inline">
@@ -370,7 +370,7 @@ export default function Timetable() {
                 type="button"
                 onClick={() => window.print()}
                 title={t('timetable.print', { defaultValue: '列印' })}
-                className="inline-flex items-center gap-1.5 rounded-xl bg-white/15 px-2.5 py-1.5 text-sm font-medium backdrop-blur-sm transition hover:bg-white/25 sm:px-3"
+                className="inline-flex min-h-11 items-center gap-1.5 rounded-xl bg-white/15 px-2.5 text-sm font-medium backdrop-blur-sm transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 sm:px-3"
               >
                 <Printer size={15} />
                 <span className="hidden sm:inline">
