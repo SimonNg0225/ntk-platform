@@ -32,8 +32,8 @@ export default function ModeSwitcher({
             key={id}
             onClick={() => setMode(id)}
             className={[
-              'flex flex-1 items-center justify-center gap-1.5 font-semibold transition duration-200 active:scale-[0.97]',
-              compact ? 'rounded-full px-3 py-1.5 text-xs' : 'rounded-full px-3 py-2 text-[13px]',
+              'flex min-h-11 flex-1 items-center justify-center gap-1.5 font-semibold transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.97]',
+              compact ? 'rounded-full px-3 text-xs' : 'rounded-full px-3 text-[13px]',
               active
                 ? activeCls
                 : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200',
