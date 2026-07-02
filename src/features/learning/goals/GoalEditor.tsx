@@ -290,7 +290,7 @@ export default function GoalEditor({
                     setDragIdx(null)
                   }}
                   className={cx(
-                    'group flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-2.5 py-2 transition-colors dark:border-slate-700 dark:bg-slate-800',
+                    'group flex min-h-14 items-center gap-2 rounded-xl border border-slate-200 bg-white px-2.5 py-2 transition-colors dark:border-slate-700 dark:bg-slate-800',
                     m.done && 'border-emerald-200/70 bg-emerald-50/40 dark:border-emerald-500/20 dark:bg-emerald-500/5',
                     dragIdx === i && 'opacity-50',
                   )}
@@ -314,7 +314,7 @@ export default function GoalEditor({
                     aria-pressed={m.done}
                     aria-label={m.done ? `將路標「${m.title}」標記為未踏` : `踏過路標「${m.title}」`}
                     className={cx(
-                      'flex h-4 w-4 shrink-0 items-center justify-center rounded border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-1',
+                      'flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-lg border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-1',
                       m.done
                         ? 'border-emerald-500 bg-emerald-500 text-white'
                         : 'border-slate-300 bg-white dark:border-slate-600 dark:bg-slate-700',
@@ -347,18 +347,22 @@ export default function GoalEditor({
                         onClick={() => setWeight(m.id, w)}
                         aria-label={`設定路段難度為 ${w}`}
                         aria-pressed={(m.weight || 1) === w}
-                        className={cx(
-                          'h-1.5 w-3 rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
-                          (m.weight || 1) >= w ? 'bg-accent' : 'bg-slate-200 dark:bg-slate-600',
-                        )}
-                      />
+                        className="inline-flex min-h-11 min-w-8 items-center justify-center rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+                      >
+                        <span
+                          className={cx(
+                            'h-1.5 w-3 rounded-full transition-colors',
+                            (m.weight || 1) >= w ? 'bg-accent' : 'bg-slate-200 dark:bg-slate-600',
+                          )}
+                        />
+                      </button>
                     ))}
                   </div>
                   <IconButton
                     label="移除路標"
                     tone="danger"
                     onClick={() => removeMs(m.id)}
-                    className="min-h-[36px] min-w-[36px] opacity-100 transition focus-within:opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100"
+                    className="min-h-11 min-w-11 opacity-100 transition focus-within:opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100"
                   >
                     <Trash2 size={14} />
                   </IconButton>

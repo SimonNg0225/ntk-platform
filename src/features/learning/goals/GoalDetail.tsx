@@ -351,7 +351,7 @@ export default function GoalDetail({
                     aria-pressed={m.done}
                     aria-label={m.done ? `將路標「${m.title}」標記為未踏` : `踏過路標「${m.title}」`}
                     className={cx(
-                      'flex h-5 w-5 shrink-0 items-center justify-center rounded-md border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-1',
+                      'flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-lg border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-1',
                       m.done
                         ? 'border-emerald-500 bg-emerald-500 text-white'
                         : 'border-slate-300 hover:border-accent dark:border-slate-600',
@@ -433,8 +433,8 @@ export default function GoalDetail({
           ) : (
             <ul className="mt-3 space-y-2">
               {[...checkins].reverse().map((c) => (
-                <li key={c.id} className="group flex items-start gap-3 rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-700">
-                  <span className="mt-0.5 flex h-8 w-12 shrink-0 flex-col items-center justify-center rounded-md bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
+                <li key={c.id} className="group flex min-h-14 items-start gap-3 rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-700">
+                  <span className="mt-0.5 flex h-11 w-14 shrink-0 flex-col items-center justify-center rounded-lg bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
                     <span className="text-sm font-semibold leading-none tabular-nums">{c.progress}%</span>
                     <span className="mt-0.5 text-[8px] font-medium uppercase tracking-wide opacity-70">海拔</span>
                   </span>
@@ -446,7 +446,7 @@ export default function GoalDetail({
                     label="刪除日誌"
                     tone="danger"
                     onClick={() => removeCheckin(c.id)}
-                    className="min-h-[36px] min-w-[36px] opacity-100 transition focus-within:opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100"
+                    className="min-h-11 min-w-11 opacity-100 transition focus-within:opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100"
                   >
                     <Trash2 size={14} />
                   </IconButton>
