@@ -482,7 +482,7 @@ export default function ResourceLibrary() {
             <button
               type="button"
               onClick={() => setShowAdd(true)}
-              className="inline-flex items-center gap-1.5 rounded-xl bg-white px-3 py-1.5 text-sm font-semibold text-accent-strong shadow-sm transition hover:bg-white/90 active:scale-[0.98]"
+              className="inline-flex min-h-11 items-center gap-1.5 rounded-xl bg-white px-3 text-sm font-semibold text-accent-strong shadow-sm transition hover:bg-white/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 active:scale-[0.98]"
             >
               <Plus size={15} /> 新增資源
             </button>
@@ -490,7 +490,7 @@ export default function ResourceLibrary() {
               type="button"
               onClick={() => setShowFolderMgr(true)}
               title="收藏夾"
-              className="inline-flex items-center gap-1.5 rounded-xl bg-white/15 px-2.5 py-1.5 text-sm font-medium backdrop-blur-sm transition hover:bg-white/25 active:scale-[0.98] sm:px-3"
+              className="inline-flex min-h-11 items-center gap-1.5 rounded-xl bg-white/15 px-2.5 text-sm font-medium backdrop-blur-sm transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 active:scale-[0.98] sm:px-3"
             >
               <FolderPlus size={15} />
               <span className="hidden sm:inline">收藏夾</span>
@@ -870,7 +870,7 @@ function Sidebar({
             <button
               type="button"
               onClick={onManageFolders}
-              className="rounded p-0.5 text-slate-400 transition hover:text-slate-600 active:scale-[0.98] dark:hover:text-slate-300"
+              className="flex h-11 w-11 items-center justify-center rounded-lg text-slate-400 transition hover:text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98] dark:hover:text-slate-300"
               aria-label="管理收藏夾"
             >
               <FolderPlus size={14} />
