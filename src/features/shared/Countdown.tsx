@@ -546,14 +546,14 @@ export default function Countdown() {
             <button
               type="button"
               onClick={() => setSubscribeOpen(true)}
-              className="inline-flex items-center gap-1.5 rounded-xl bg-white/15 px-3 py-1.5 text-sm font-medium backdrop-blur-sm transition hover:bg-white/25"
+              className="inline-flex min-h-11 items-center gap-1.5 rounded-xl bg-white/15 px-3 text-sm font-medium backdrop-blur-sm transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
             >
               <Smartphone size={15} /> {t('cal.subscribeMobile', { defaultValue: '訂閱到手機' })}
             </button>
             <button
               type="button"
               onClick={openAddModal}
-              className="inline-flex items-center gap-1.5 rounded-xl bg-white/15 px-3 py-1.5 text-sm font-medium backdrop-blur-sm transition hover:bg-white/25"
+              className="inline-flex min-h-11 items-center gap-1.5 rounded-xl bg-white/15 px-3 text-sm font-medium backdrop-blur-sm transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
             >
               <Plus size={15} /> {t('countdown.add', { defaultValue: '新增倒數' })}
             </button>
