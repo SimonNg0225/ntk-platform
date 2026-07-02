@@ -1,10 +1,10 @@
 import { Sparkles } from 'lucide-react'
 
 // ============================================================
-//  QuickAddButton — 桌面右上角「快速加入」浮動觸發掣
+//  QuickAddButton — 桌面右上角「快速記低」浮動觸發掣
 //  ------------------------------------------------------------
 //  純觸發（受控）：modal 開關由 App 統一持有（quickAddOpen），等
-//  桌面浮掣 / 手機頂欄 / 指令面板 / 鍵盤捷徑 共用同一個 QuickAddModal
+//  桌面浮掣 / 手機頂欄 / 指令面板 / 鍵盤捷徑共用同一個 QuickAddModal
 //  實例。色用 --accent（工作=teal / 學習=indigo），深色 OK。
 //  喺 App 主內容區用 absolute 定位喺右上角，唔擋「← 返回概覽」同標題
 //  （見 App.tsx 接線）。

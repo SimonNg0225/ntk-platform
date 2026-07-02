@@ -375,7 +375,7 @@ const FEATURE_LABEL: Record<string, string> = {
   'ai-assistant': 'AI 助手',
   'ask-data': '問我資料',
   inbox: '收件匣整理',
-  'quick-add': '快速加入',
+  'quick-add': '快速記低',
   notes: '筆記',
   'card-gen': '溫習卡',
   fitness: '健身教練',

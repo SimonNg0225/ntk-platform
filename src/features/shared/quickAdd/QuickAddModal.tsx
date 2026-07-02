@@ -270,7 +270,7 @@ export function QuickAddModal({ open, onClose }: QuickAddModalProps) {
   // ───────── 未接 AI：友善 gate（同題庫 AI 出題一致）─────────
   if (!isAIConfigured) {
     return (
-      <Modal open={open} onClose={close} title="快速加入">
+      <Modal open={open} onClose={close} title="快速記低">
         <div className="space-y-4">
           <div className="flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-3.5 text-amber-900 dark:border-amber-500/25 dark:bg-amber-500/10 dark:text-amber-100">
             <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-600 dark:bg-amber-500/20 dark:text-amber-300">
@@ -308,7 +308,7 @@ export function QuickAddModal({ open, onClose }: QuickAddModalProps) {
   }
 
   return (
-    <Modal open={open} onClose={close} title="快速加入">
+    <Modal open={open} onClose={close} title="快速記低">
       {step === 'input' ? (
         <div className="space-y-4">
           <div className="flex items-start gap-3 rounded-2xl border border-accent/20 bg-accent-soft/50 p-3.5 dark:border-accent/25 dark:bg-accent/10">

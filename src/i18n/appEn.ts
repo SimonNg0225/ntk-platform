@@ -51,7 +51,7 @@ export const appEn = {
     planPro: 'Pro',
     planProTrial: 'Pro · Trial',
     planProTest: 'Pro · Test',
-    quickAdd: 'Quick add',
+    quickAdd: 'Quick capture',
     navHint: 'Navigate',
     actionHint: 'Action',
     modeHint: 'Mode',

@@ -147,7 +147,7 @@ export function AppShell() {
     return () => window.removeEventListener('keydown', handler)
   }, [])
 
-  // ⌘J / Ctrl+J 開「快速加入」（自然語言 → 待辦／提醒／行事曆）
+  // ⌘J / Ctrl+J 開「快速記低」（自然語言 → 待辦／提醒／行事曆）
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'j') {
@@ -257,7 +257,7 @@ export function AppShell() {
           {/* 全站公告橫額（登入用戶；admin 喺後台出） */}
           <AnnouncementBanner />
 
-          {/* 桌面右上角固定「快速加入」浮掣（手機改用頂欄 icon）。
+          {/* 桌面右上角固定「快速記低」浮掣（手機改用頂欄 icon）。
               絕對定位喺 <main> 右上，z-30 浮喺內容之上；位於右邊內距區，
               唔會撞到內容區左上嘅「← 返回概覽」同標題。 */}
           <QuickAddButton

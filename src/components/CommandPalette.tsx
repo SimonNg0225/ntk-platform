@@ -24,7 +24,7 @@ interface Props {
   open: boolean
   onClose: () => void
   onNavigate: (featureId: string | null) => void
-  /** 開「快速加入」modal（自然語言 → 待辦／提醒／行事曆）；唔記入最近 */
+  /** 開「快速記低」modal（自然語言 → 待辦／提醒／行事曆）；唔記入最近 */
   onQuickAdd?: () => void
 }
 
@@ -115,11 +115,11 @@ export default function CommandPalette({
       action: () => onNavigate(null),
     })
 
-    // 快速加入（自然語言 → 待辦／提醒／行事曆）；非導航目的地，唔記入最近
+    // 快速記低（自然語言 → 待辦／提醒／行事曆）；非導航目的地，唔記入最近
     if (onQuickAdd) {
       list.push({
         id: 'quick-add',
-        label: t('shell.quickAdd', { defaultValue: '快速加入' }),
+        label: t('shell.quickAdd', { defaultValue: '快速記低' }),
         icon: '✨',
         hint: t('shell.actionHint', { defaultValue: '動作' }),
         aliases: ['快速記低', 'capture', 'inbox', '待辦', '提醒', 'todo'],
