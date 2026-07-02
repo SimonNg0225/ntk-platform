@@ -477,7 +477,7 @@ export default function NotesWidget() {
               align="end"
               label={t('notes.useTemplate', { defaultValue: '用範本開新筆記' })}
               trigger={
-                <span className="inline-flex h-9 items-center gap-1.5 rounded-xl bg-white/15 px-3 text-sm font-medium text-white backdrop-blur-sm transition hover:bg-white/25 active:scale-[0.98]">
+                <span className="inline-flex min-h-11 items-center gap-1.5 rounded-xl bg-white/15 px-3 text-sm font-medium text-white backdrop-blur-sm transition hover:bg-white/25 active:scale-[0.98]">
                   <FileText size={15} />
                   <span className="hidden sm:inline">{t('notes.template', { defaultValue: '範本' })}</span>
                 </span>
@@ -555,6 +555,7 @@ export default function NotesWidget() {
                 return (
                   <button
                     key={it.key}
+                    type="button"
                     onClick={() => {
                       setScope(it.scope)
                       setActiveTag(null)
@@ -563,7 +564,7 @@ export default function NotesWidget() {
                     }}
                     aria-current={on ? 'page' : undefined}
                     className={cx(
-                      'group flex w-full items-center gap-2.5 rounded-xl py-1.5 pl-3 pr-2.5 text-sm transition active:scale-[0.98]',
+                      'group flex min-h-11 w-full items-center gap-2.5 rounded-xl pl-3 pr-2.5 text-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98]',
                       on
                         ? 'bg-accent-soft font-medium text-accent-strong dark:bg-accent/15 dark:text-accent'
                         : 'text-slate-600 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800/60',
@@ -598,16 +599,18 @@ export default function NotesWidget() {
                 {savedFilters.map((f) => (
                   <div key={f.id} className="group/sf flex items-center">
                     <button
+                      type="button"
                       onClick={() => applySavedFilter(f)}
-                      className="flex min-w-0 flex-1 items-center gap-2.5 rounded-xl py-1.5 pl-3 pr-2 text-sm text-slate-600 transition hover:bg-slate-50 active:scale-[0.98] dark:text-slate-300 dark:hover:bg-slate-800/60"
+                      className="flex min-h-11 min-w-0 flex-1 items-center gap-2.5 rounded-xl pl-3 pr-2 text-sm text-slate-600 transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98] dark:text-slate-300 dark:hover:bg-slate-800/60"
                     >
                       <Bookmark size={14} className="shrink-0 text-accent/70" />
                       <span className="flex-1 truncate text-left">{f.name}</span>
                     </button>
                     <button
+                      type="button"
                       onClick={() => savedFiltersCol.remove(f.id)}
                       aria-label={`刪除智能檢視「${f.name}」`}
-                      className="ml-0.5 hidden shrink-0 rounded p-1 text-slate-300 transition hover:text-rose-500 active:scale-[0.98] group-hover/sf:block dark:text-slate-600"
+                      className="ml-0.5 hidden min-h-11 min-w-11 shrink-0 items-center justify-center rounded text-slate-300 transition hover:text-rose-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400/40 active:scale-[0.98] group-hover/sf:inline-flex dark:text-slate-600"
                     >
                       <X size={13} />
                     </button>
@@ -621,7 +624,7 @@ export default function NotesWidget() {
           <div>
             <div className="flex items-center justify-between">
               <IndexLabel>卷冊</IndexLabel>
-              <IconButton label="管理筆記本" size="sm" onClick={() => setNbModal(true)}>
+              <IconButton label="管理筆記本" size="sm" className="min-h-11 min-w-11" onClick={() => setNbModal(true)}>
                 <FolderPlus size={15} />
               </IconButton>
             </div>
@@ -637,6 +640,7 @@ export default function NotesWidget() {
                 return (
                   <button
                     key={nb.id}
+                    type="button"
                     onClick={() => {
                       setScope({ kind: 'notebook', id: nb.id })
                       setActiveTag(null)
@@ -645,7 +649,7 @@ export default function NotesWidget() {
                     }}
                     aria-current={on ? 'page' : undefined}
                     className={cx(
-                      'group flex w-full items-center gap-2.5 rounded-xl py-1.5 pl-3 pr-2.5 text-sm transition active:scale-[0.98]',
+                      'group flex min-h-11 w-full items-center gap-2.5 rounded-xl pl-3 pr-2.5 text-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98]',
                       on
                         ? 'bg-accent-soft font-medium text-accent-strong dark:bg-accent/15 dark:text-accent'
                         : 'text-slate-600 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800/60',
@@ -737,11 +741,12 @@ export default function NotesWidget() {
                   return (
                     <button
                       key={tag}
+                      type="button"
                       onClick={() => setActiveTag(on ? null : tag)}
                       aria-pressed={on}
                       aria-label={`標籤 ${tag}（${count}）${on ? '，已篩選' : ''}`}
                       className={cx(
-                        'inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-medium transition active:scale-[0.98]',
+                        'inline-flex min-h-11 items-center gap-1 rounded-md px-2.5 text-[11px] font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98]',
                         on
                           ? 'bg-accent text-white'
                           : 'bg-accent-soft text-accent-strong hover:brightness-95 dark:bg-accent/15 dark:text-accent',
@@ -754,11 +759,12 @@ export default function NotesWidget() {
                 })}
                 {hasFilter && (
                   <button
+                    type="button"
                     onClick={() => {
                       setQuery('')
                       setActiveTag(null)
                     }}
-                    className="inline-flex items-center gap-0.5 rounded-md px-1.5 py-0.5 text-[11px] font-medium text-slate-400 transition hover:text-slate-600 active:scale-[0.98] dark:hover:text-slate-200"
+                    className="inline-flex min-h-11 items-center gap-0.5 rounded-md px-2.5 text-[11px] font-medium text-slate-400 transition hover:text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98] dark:hover:text-slate-200"
                   >
                     <X size={12} /> 清除
                   </button>
