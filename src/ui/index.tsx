@@ -1112,7 +1112,7 @@ export function Menu({
     <div ref={ref} className="relative inline-flex">
       <button
         type="button"
-        className="inline-flex"
+        className="inline-flex items-center justify-center rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-1 focus-visible:ring-offset-white max-sm:min-h-11 max-sm:min-w-11 dark:focus-visible:ring-offset-slate-900"
         aria-label={label}
         aria-haspopup="menu"
         aria-expanded={open}
