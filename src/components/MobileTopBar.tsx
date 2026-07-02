@@ -40,7 +40,7 @@ export default function MobileTopBar({
 
       <div className="ml-auto flex items-center gap-1">
         {onQuickAdd && (
-          <IconButton label="快速加入" onClick={onQuickAdd}>
+          <IconButton label="快速記低" onClick={onQuickAdd}>
             <Sparkles size={20} strokeWidth={1.75} />
           </IconButton>
         )}
