@@ -85,9 +85,10 @@ export default function SupportButton() {
             {(['new', 'mine'] as const).map((tb) => (
               <button
                 key={tb}
+                type="button"
                 onClick={() => setTab(tb)}
                 className={cx(
-                  'min-h-11 flex-1 rounded-md px-3 py-1.5 font-medium transition sm:min-h-0',
+                  'min-h-11 flex-1 rounded-md px-3 font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98]',
                   tab === tb
                     ? 'bg-white text-slate-800 shadow-sm dark:bg-slate-700 dark:text-slate-100'
                     : 'text-slate-500 hover:text-slate-700 dark:text-slate-400',
