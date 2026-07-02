@@ -124,7 +124,7 @@ export function OnboardingModal({
                 className="rounded-xl border border-[color:var(--border)] p-3"
               >
                 <div className="flex items-center gap-2">
-                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
+                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
                     <I size={16} strokeWidth={1.75} aria-hidden="true" />
                   </span>
                   <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">

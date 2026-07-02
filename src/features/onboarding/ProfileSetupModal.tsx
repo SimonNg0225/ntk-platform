@@ -271,7 +271,7 @@ export default function ProfileSetupModal({
             type="button"
             onClick={() => setAdvancedOpen((v) => !v)}
             aria-expanded={optionalOpen}
-            className="flex w-full cursor-pointer items-center justify-between gap-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+            className="flex min-h-11 w-full cursor-pointer items-center justify-between gap-3 rounded-xl text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98]"
           >
             <span>
               <span className="block text-sm font-semibold text-slate-800 dark:text-slate-100">
@@ -304,12 +304,12 @@ export default function ProfileSetupModal({
               <Field label="學校（選填）">
                 <Input value={school} onChange={(e) => setSchool(e.target.value)} placeholder="例：聖文德書院" maxLength={30} />
               </Field>
-              <label className="flex cursor-pointer items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
+              <label className="flex min-h-11 cursor-pointer items-center gap-2 rounded-lg text-sm text-slate-600 focus-within:ring-2 focus-within:ring-accent/40 dark:text-slate-300">
                 <input
                   type="checkbox"
                   checked={showSchool}
                   onChange={(e) => setShowSchool(e.target.checked)}
-                  className="h-4 w-4 rounded border-slate-300 text-accent focus:ring-accent/40 dark:border-slate-600 dark:bg-slate-700"
+                  className="h-5 w-5 rounded border-slate-300 text-accent focus:ring-accent/40 dark:border-slate-600 dark:bg-slate-700"
                 />
                 喺署名顯示學校（預設唔顯示，保障私隱）
               </label>
@@ -348,7 +348,7 @@ export default function ProfileSetupModal({
                     <button
                       type="button"
                       onClick={() => setAvatarPreset(null)}
-                      className="text-xs font-medium text-slate-500 underline underline-offset-2 transition hover:text-accent dark:text-slate-400"
+                      className="inline-flex min-h-11 items-center rounded-lg px-3 text-xs font-medium text-slate-500 underline underline-offset-2 transition hover:bg-accent-soft hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98] dark:text-slate-400 dark:hover:bg-accent/15"
                     >
                       唔用形象 · 用文字頭像（署名首字）
                     </button>
