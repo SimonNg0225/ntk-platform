@@ -713,7 +713,7 @@ export default function AIAssistant() {
         action={
           import.meta.env.DEV ? (
             <Button variant="secondary" size="sm" onClick={() => setDevBypass(true)}>
-              {t('aiasst.gateTestMode', { defaultValue: '🧪 測試模式（dev only · 跳過 Supabase）' })}
+              {t('aiasst.gateTestMode', { defaultValue: '本機測試模式（略過 Supabase）' })}
             </Button>
           ) : null
         }
@@ -729,7 +729,7 @@ export default function AIAssistant() {
         action={
           import.meta.env.DEV ? (
             <Button variant="secondary" size="sm" onClick={() => setDevBypass(true)}>
-              {t('aiasst.gateTestModeLogin', { defaultValue: '🧪 測試模式（dev only · 跳過登入）' })}
+              {t('aiasst.gateTestModeLogin', { defaultValue: '本機測試模式（略過登入）' })}
             </Button>
           ) : null
         }

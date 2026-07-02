@@ -36,10 +36,10 @@ i18n.addResourceBundle(
       gateNotEnabledTitle: 'AI Assistant not enabled',
       gateNotEnabledHint:
         'You need to set up Supabase and deploy the gemini Edge Function first. See docs/SETUP.md for steps.',
-      gateTestMode: '🧪 Test mode (dev only · skip Supabase)',
+      gateTestMode: 'Local test mode (skip Supabase)',
       gateLoginTitle: 'Please sign in to use the AI Assistant',
       gateLoginHint: 'Sign in with Google at the bottom-left to start using it.',
-      gateTestModeLogin: '🧪 Test mode (dev only · skip login)',
+      gateTestModeLogin: 'Local test mode (skip sign-in)',
 
       // 側欄
       closeSidebar: 'Close sidebar',

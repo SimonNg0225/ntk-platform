@@ -233,7 +233,7 @@ export default function Settings() {
     try {
       const reg = await navigator.serviceWorker.getRegistration()
       if (!reg) {
-        toast.success('開發模式：暫未註冊 service worker')
+        toast.success('目前未啟用離線更新檢查')
         return
       }
       await reg.update()
