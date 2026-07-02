@@ -437,7 +437,7 @@ export default function Pricing() {
                   clearTestPro()
                   toast.info('已取消 Pro 試用')
                 }}
-                className="text-xs font-medium text-slate-500 transition hover:text-accent"
+                className="inline-flex min-h-11 items-center rounded-lg px-3 text-xs font-medium text-slate-500 transition hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
               >
                 取消
               </button>
@@ -453,12 +453,12 @@ export default function Pricing() {
                   onChange={(e) => setPromo(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && applyPromo()}
                   placeholder="輸入代碼"
-                  className="flex-1 rounded-lg border border-[color:var(--border)] bg-[color:var(--surface)] px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/30 dark:text-slate-100"
+                  className="min-h-11 flex-1 rounded-lg border border-[color:var(--border)] bg-[color:var(--surface)] px-3 text-sm text-slate-800 outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/30 dark:text-slate-100"
                 />
                 <button
                   onClick={applyPromo}
                   disabled={!promo.trim()}
-                  className="rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-white transition hover:bg-accent-strong disabled:opacity-50"
+                  className="min-h-11 rounded-lg bg-accent px-4 text-sm font-semibold text-white transition hover:bg-accent-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 disabled:opacity-50"
                 >
                   套用
                 </button>
