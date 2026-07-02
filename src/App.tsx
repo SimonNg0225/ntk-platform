@@ -288,7 +288,7 @@ export function AppShell() {
                 <div className="space-y-5">
                   <button
                     onClick={() => navigate(null)}
-                    className="text-[13px] text-slate-400 transition hover:text-accent"
+                    className="inline-flex min-h-11 items-center rounded-lg px-1 text-[13px] text-slate-400 transition hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
                   >
                     ← {t('shell.backOverview', { defaultValue: '返回概覽' })}
                   </button>
@@ -302,7 +302,7 @@ export function AppShell() {
                 <div className="space-y-5">
                   <button
                     onClick={() => navigate(null)}
-                    className="text-sm text-slate-400 transition hover:text-accent"
+                    className="inline-flex min-h-11 items-center rounded-lg px-1 text-sm text-slate-400 transition hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
                   >
                     ← {t('shell.backOverview', { defaultValue: '返回概覽' })}
                   </button>
@@ -319,7 +319,7 @@ export function AppShell() {
                 <div className="space-y-5">
                   <button
                     onClick={() => navigate(null)}
-                    className="text-[13px] text-slate-400 transition hover:text-accent"
+                    className="inline-flex min-h-11 items-center rounded-lg px-1 text-[13px] text-slate-400 transition hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
                   >
                     ← {t('shell.backToMode', {
                       mode: t(`mode.${modeDef.id}.name`, { defaultValue: modeDef.name }),
