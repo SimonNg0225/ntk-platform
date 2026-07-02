@@ -24,11 +24,11 @@ export default function MobileTopBar({
         <MenuIcon size={22} strokeWidth={1.75} />
       </IconButton>
 
-      <div className="flex min-w-0 items-center gap-2">
+      <div className="flex min-h-11 min-w-0 items-center gap-2">
         <img
           src="/favicon.svg"
           alt={BRAND_NAME}
-          className="h-8 w-8 shrink-0 rounded-xl shadow-sm"
+          className="h-10 w-10 shrink-0 rounded-xl shadow-sm"
         />
         <span className="truncate text-sm font-bold text-slate-800 dark:text-slate-100">
           {t('shell.brandName', { defaultValue: BRAND_NAME })}
