@@ -233,7 +233,7 @@ export default function LearningDashboard() {
             <button
               type="button"
               onClick={() => setCustomizing(true)}
-              className="inline-flex items-center gap-1.5 rounded-xl bg-white/15 px-3 py-1.5 text-sm font-medium backdrop-blur-sm transition hover:bg-white/25"
+              className="inline-flex min-h-11 items-center gap-1.5 rounded-xl bg-white/15 px-3 text-sm font-medium backdrop-blur-sm transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
             >
               <Sliders size={15} /> {t('dashboard.customize', { defaultValue: '自訂' })}
             </button>
@@ -502,4 +502,3 @@ interface TaskItem {
   target: string
   icon: LucideIcon
 }
-
