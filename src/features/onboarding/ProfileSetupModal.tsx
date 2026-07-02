@@ -74,7 +74,7 @@ function PersonaTile({
       aria-pressed={selected}
       aria-label={`頭像 ${id}`}
       className={cx(
-        'rounded-full transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
+        'inline-flex min-h-11 min-w-11 items-center justify-center rounded-full transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
         selected
           ? 'ring-2 ring-accent ring-offset-2 ring-offset-[color:var(--surface)]'
           : 'ring-1 ring-black/[0.06] hover:ring-black/20 dark:ring-white/10 dark:hover:ring-white/25',
@@ -358,7 +358,7 @@ export default function ProfileSetupModal({
 
               {/* 頭像顏色 */}
               <Field label="頭像顏色">
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
                   {AVATAR_COLORS.map((c) => (
                     <button
                       key={c}
@@ -367,7 +367,7 @@ export default function ProfileSetupModal({
                       aria-label={`頭像色 ${c}`}
                       aria-pressed={avatarColor === c}
                       className={cx(
-                        'h-7 w-7 rounded-full ring-2 ring-offset-2 ring-offset-[color:var(--surface)] transition',
+                        'h-11 w-11 rounded-full ring-2 ring-offset-2 ring-offset-[color:var(--surface)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
                         avatarColor === c ? 'ring-accent' : 'ring-transparent',
                       )}
                       style={{ background: `#${c}` }}
