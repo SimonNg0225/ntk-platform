@@ -10,6 +10,7 @@ import {
   Clock,
   FileText,
   Highlighter,
+  Inbox as InboxIcon,
   LayoutGrid,
   Presentation,
   Send,
@@ -116,6 +117,16 @@ const LESSON_PACKS: {
   },
 ]
 
+function lessonCaptureTitle(text: string): string {
+  return text
+    .replace(/\s*#下一堂課/g, '')
+    .replace(/^準備下一堂：/, '準備：')
+    .replace(/^出一份小測：/, '小測：')
+    .replace(/^製作教學簡報：/, '簡報：')
+    .replace(/^整理課後回饋：/, '回饋：')
+    .trim()
+}
+
 function resolveFeatures(ids: readonly string[], mode: ModeId): Feature[] {
   return ids
     .map((id) => getFeature(id))
@@ -141,6 +152,7 @@ export default function Home({ onOpen }: Props) {
   const timetable = useCollection(timetableCol)
   const cycleCalendar = useCollection(cycleCalendarCol)
   const countdowns = useCollection(countdownsCol)
+  const inboxItems = useCollection(inboxCol)
   const [lessonTopic, setLessonTopic] = useState(() => {
     try {
       return localStorage.getItem('eziteach.nextLessonTopic') ?? ''
@@ -206,6 +218,19 @@ export default function Home({ onOpen }: Props) {
     .filter((p): p is SubjectPack => Boolean(p))
   const topicSuggestion =
     todayLessons[0]?.subject || subjects[0]?.name || subjects[0]?.short || '市場營銷'
+  const nextLessonCaptures = useMemo(
+    () =>
+      inboxItems
+        .filter(
+          (item) =>
+            item.mode === 'work' &&
+            item.text.includes('#下一堂課'),
+        )
+        .slice()
+        .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+        .slice(0, 2),
+    [inboxItems],
+  )
   const hasProfileMeta = Boolean(roleLabel || school || subjects.length)
   const name = displayName.trim()
   const greeting = name ? `${timeGreeting(now.getHours())}，${name}` : `${timeGreeting(now.getHours())}，老師`
@@ -485,6 +510,39 @@ export default function Home({ onOpen }: Props) {
                   </div>
                 ))}
               </div>
+
+              {nextLessonCaptures.length > 0 && (
+                <div className="mt-3 rounded-xl border border-[color:var(--border)] bg-white/70 p-3 dark:bg-slate-900/20">
+                  <div className="mb-2 flex items-center justify-between gap-2">
+                    <span className="inline-flex min-w-0 items-center gap-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300">
+                      <InboxIcon size={13} strokeWidth={1.75} className="text-accent" />
+                      最近下一堂
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => onOpen('inbox')}
+                      className="shrink-0 text-xs font-semibold text-accent transition hover:text-accent-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+                    >
+                      看 Inbox
+                    </button>
+                  </div>
+                  <div className="space-y-1.5">
+                    {nextLessonCaptures.map((item) => (
+                      <button
+                        key={item.id}
+                        type="button"
+                        onClick={() => onOpen('inbox')}
+                        className="flex min-h-9 w-full cursor-pointer items-center justify-between gap-2 rounded-lg bg-slate-50 px-2.5 text-left text-xs transition hover:bg-accent-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:bg-slate-800/70 dark:hover:bg-accent/15"
+                      >
+                        <span className="truncate font-medium text-slate-700 dark:text-slate-200">
+                          {lessonCaptureTitle(item.text)}
+                        </span>
+                        <ArrowRight size={13} className="shrink-0 text-slate-300" />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </>
           ) : (
             <button
