@@ -284,7 +284,7 @@ export function HBars({
   if (total === 0)
     return (
       <p className="py-6 text-center text-sm text-slate-400 dark:text-slate-500">
-        全部專案都清空咗 🎉
+        全部專案都清空咗
       </p>
     )
   const max = Math.max(1, ...data.map((d) => d.value))

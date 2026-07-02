@@ -37,7 +37,7 @@ i18n.addResourceBundle(
       overdueCountN: '{{n}} overdue',
       upcoming7N: '{{n}} events in next 7 days',
       last7Tasks: 'Tasks in last 7 days',
-      allCleared: 'All cleared 🎉',
+      allCleared: 'All cleared',
       stayClear: 'Keeping it light',
       remindParents: 'Remember to reply to parents',
       allFollowedUp: 'All followed up',

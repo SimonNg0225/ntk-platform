@@ -198,7 +198,7 @@ export function grade(p: number): string {
 
 // 一句鼓勵語（按命中率）
 export function verdict(p: number): string {
-  if (p === 100) return '滿分！完美無瑕 🎉'
+  if (p === 100) return '滿分，完美無瑕'
   if (p >= 90) return '非常出色，掌握得好穩'
   if (p >= 80) return '做得好，繼續保持'
   if (p >= 60) return '及格有餘，再操幾轉就更穩'

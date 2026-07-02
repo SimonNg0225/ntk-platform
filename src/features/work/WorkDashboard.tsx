@@ -640,7 +640,7 @@ function WorkBento({
       <StatTile
         label={t('wdash.openTasks', { defaultValue: '未完成待辦' })} value={openTasks} unit={t('wdash.unitItems', { defaultValue: '件' })} icon={NotebookPen}
         tone={overdueTasks > 0 ? 'rose' : 'accent'}
-        hint={overdueTasks > 0 ? t('wdash.overdueCountN', { n: overdueTasks, defaultValue: `${overdueTasks} 件逾期` }) : openTasks === 0 ? t('wdash.allCleared', { defaultValue: '全部搞掂 🎉' }) : t('wdash.stayClear', { defaultValue: '保持清爽' })}
+        hint={overdueTasks > 0 ? t('wdash.overdueCountN', { n: overdueTasks, defaultValue: `${overdueTasks} 件逾期` }) : openTasks === 0 ? t('wdash.allCleared', { defaultValue: '全部完成' }) : t('wdash.stayClear', { defaultValue: '保持清爽' })}
         delta={overdueTasks > 0 ? { dir: 'down', text: t('wdash.overdueN', { n: overdueTasks, defaultValue: `${overdueTasks} 逾期` }) } : undefined}
         onClick={() => open('work-tasks')}
       />

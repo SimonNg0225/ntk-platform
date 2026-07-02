@@ -696,7 +696,7 @@ export default function ResourceLibrary() {
             filter.smart === 'stale' && activeFilterCount === 0 && !filter.search ? (
               <EmptyState
                 icon={CalendarClock}
-                title="資源庫好乾淨 ✨"
+                title="資源庫好乾淨"
                 hint="冇久未開啟或者從未用過嘅資源，全部都整理得貼貼服服。"
                 action={
                   <Button

@@ -1570,7 +1570,7 @@ function StatsView({
             />
           ) : (
             <p className="py-8 text-center text-sm text-slate-400 dark:text-slate-500">
-              冇未完成任務 🎉
+              冇未完成任務
             </p>
           )}
         </Card>

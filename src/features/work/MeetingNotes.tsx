@@ -619,7 +619,7 @@ export default function MeetingNotes() {
                   total: stats.total,
                   defaultValue: `共 ${stats.total} 項待跟進`,
                 })
-              : t('meetingNotes.allDone', { defaultValue: '全部搞掂 🎉' })
+              : t('meetingNotes.allDone', { defaultValue: '全部完成' })
           }
           onClick={() => openActions('open')}
         />
