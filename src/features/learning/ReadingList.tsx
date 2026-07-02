@@ -119,8 +119,8 @@ function StatTile({
     <>
       <div className="flex items-center justify-between">
         <span className="text-xs font-medium text-slate-400 dark:text-slate-500">{label}</span>
-        <span className={cx('flex h-8 w-8 items-center justify-center rounded-xl', tn.chip)}>
-          <Icon size={16} />
+        <span className={cx('flex h-11 w-11 items-center justify-center rounded-xl', tn.chip)}>
+          <Icon size={18} />
         </span>
       </div>
       <div>
@@ -570,7 +570,7 @@ export default function ReadingList() {
                   onClick={() => setShelfFilter(null)}
                   aria-pressed={!shelfFilter}
                   className={cx(
-                    'rounded-full px-2.5 py-0.5 text-xs font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98]',
+                    'inline-flex min-h-11 items-center rounded-full px-3 text-xs font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98]',
                     !shelfFilter
                       ? 'bg-accent text-white'
                       : 'bg-slate-100 text-slate-500 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700',
@@ -585,7 +585,7 @@ export default function ReadingList() {
                     onClick={() => setShelfFilter(shelfFilter === s ? null : s)}
                     aria-pressed={shelfFilter === s}
                     className={cx(
-                      'rounded-full px-2.5 py-0.5 text-xs font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98]',
+                      'inline-flex min-h-11 items-center rounded-full px-3 text-xs font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98]',
                       shelfFilter === s
                         ? 'bg-accent text-white'
                         : 'bg-slate-100 text-slate-500 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700',
