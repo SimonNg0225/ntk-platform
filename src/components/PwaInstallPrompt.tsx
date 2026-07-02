@@ -116,7 +116,7 @@ export default function PwaInstallPrompt() {
         {!ios && (
           <button
             onClick={install}
-            className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-accent px-3 py-2 text-sm font-semibold text-white transition hover:opacity-90"
+            className="inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-xl bg-accent px-3 py-2 text-sm font-semibold text-white transition hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
           >
             <Download size={15} /> 安裝
           </button>
@@ -124,7 +124,7 @@ export default function PwaInstallPrompt() {
         <button
           onClick={snooze}
           aria-label="稍後"
-          className="shrink-0 rounded-lg p-1.5 text-slate-400 transition hover:text-slate-600 dark:hover:text-slate-300"
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-slate-400 transition hover:text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:hover:text-slate-300"
         >
           <X size={16} />
         </button>
