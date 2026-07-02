@@ -392,7 +392,7 @@ export default function Journal() {
             <Menu
               align="end"
               trigger={
-                <span className="inline-flex items-center gap-1.5 rounded-xl bg-white/15 px-3 py-1.5 text-sm font-medium backdrop-blur-sm transition hover:bg-white/25">
+                <span className="inline-flex min-h-11 items-center gap-1.5 rounded-xl bg-white/15 px-3 text-sm font-medium backdrop-blur-sm transition hover:bg-white/25">
                   <Download size={15} />
                   {t('journal.export', { defaultValue: '匯出' })}
                 </span>
@@ -405,7 +405,7 @@ export default function Journal() {
             <button
               type="button"
               onClick={() => openNew()}
-              className="inline-flex items-center gap-1.5 rounded-xl bg-white/15 px-3 py-1.5 text-sm font-medium backdrop-blur-sm transition hover:bg-white/25"
+              className="inline-flex min-h-11 items-center gap-1.5 rounded-xl bg-white/15 px-3 text-sm font-medium backdrop-blur-sm transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
             >
               <PenLine size={15} />
               {t('journal.write', { defaultValue: '寫日誌' })}
@@ -636,7 +636,7 @@ export default function Journal() {
               </span>
               <button
                 onClick={clearFilters}
-                className="inline-flex items-center gap-1 font-medium text-slate-500 transition hover:text-slate-700 active:scale-[0.98] dark:text-slate-400 dark:hover:text-slate-200"
+                className="inline-flex min-h-11 items-center gap-1 rounded-lg px-2 font-medium text-slate-500 transition hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98] dark:text-slate-400 dark:hover:text-slate-200"
               >
                 <X size={12} />
                 清除篩選
