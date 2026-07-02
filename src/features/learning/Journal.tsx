@@ -509,7 +509,7 @@ export default function Journal() {
           aria-label={t('journal.todayNudgeAria', { defaultValue: '今日仲未寫日誌，去寫一篇' })}
           className="group flex w-full items-center gap-3 rounded-2xl border border-dashed border-accent/40 bg-accent-soft/50 p-4 text-left transition duration-200 hover:border-accent hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98] dark:border-accent/40 dark:bg-accent/10"
         >
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-accent text-white">
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-accent text-white">
             <PenLine size={18} />
           </span>
           <div className="min-w-0 flex-1">
@@ -775,8 +775,8 @@ function JournalStat({
     <div className="flex flex-col justify-between rounded-2xl border border-slate-200/80 bg-white p-4 dark:border-slate-700/60 dark:bg-slate-800">
       <div className="flex items-center justify-between gap-2">
         <p className="truncate text-xs font-medium text-slate-400 dark:text-slate-500">{label}</p>
-        <span className={cx('flex h-8 w-8 shrink-0 items-center justify-center rounded-xl', tc.chip)}>
-          <Icon size={16} />
+        <span className={cx('flex h-11 w-11 shrink-0 items-center justify-center rounded-xl', tc.chip)}>
+          <Icon size={18} />
         </span>
       </div>
       <div className="mt-3 flex items-baseline gap-1">
@@ -926,7 +926,7 @@ function EntryCard({
               aria-pressed={on}
               aria-label={`以標籤 ${tag} 篩選`}
               className={cx(
-                'rounded-lg px-1.5 py-0.5 text-[11px] font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98]',
+                'inline-flex min-h-11 items-center rounded-lg px-2.5 text-[11px] font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98]',
                 on
                   ? 'bg-accent text-white'
                   : 'bg-accent-soft text-accent-strong hover:brightness-95 dark:bg-accent/15 dark:text-accent',
