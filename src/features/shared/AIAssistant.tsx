@@ -856,7 +856,7 @@ export default function AIAssistant() {
             ) : (
               <>
                 {pinned.length > 0 && (
-                  <ThreadGroup label={t('aiasst.groupPinned', { defaultValue: '📌 置頂' })}>
+                  <ThreadGroup label={t('aiasst.groupPinned', { defaultValue: '置頂' })}>
                     {pinned.map((t) => (
                       <ThreadRow
                         key={t.id}

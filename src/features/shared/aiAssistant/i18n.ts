@@ -22,8 +22,8 @@ i18n.addResourceBundle(
       taglineWork: 'Set questions · Write lesson plans · Draft comments · Design activities',
 
       // 模型標籤
-      modelFlash: '⚡ Flash (fast)',
-      modelPro: '🧠 Pro (powerful)',
+      modelFlash: 'Flash (fast)',
+      modelPro: 'Pro (deeper)',
 
       // 人格標籤（store PERSONAS）
       personaDefault: 'Default',
@@ -49,7 +49,7 @@ i18n.addResourceBundle(
       emptyArchived: 'No archived conversations',
       emptyNoMatch: 'No conversations found',
       emptyNoThreads: 'No conversations yet — start chatting',
-      groupPinned: '📌 Pinned',
+      groupPinned: 'Pinned',
       // 時間分組（util TimeBucket）
       bucketToday: 'Today',
       bucketYesterday: 'Yesterday',
