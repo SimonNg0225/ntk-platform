@@ -32,12 +32,15 @@ export default function CookieConsent() {
       className="fixed inset-x-0 bottom-0 z-[60] px-4 pb-4"
     >
       <div className="mx-auto flex max-w-3xl flex-col gap-3 rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface)] p-4 shadow-overlay sm:flex-row sm:items-center">
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
+        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
           <Cookie size={18} strokeWidth={1.75} />
         </span>
         <p className="flex-1 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
           {t('cookie.text')}{' '}
-          <Link to="/privacy" className="font-medium text-accent hover:underline">
+          <Link
+            to="/privacy"
+            className="rounded font-medium text-accent hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+          >
             {t('cookie.privacy')}
           </Link>
           {t('cookie.textEnd')}
@@ -48,7 +51,7 @@ export default function CookieConsent() {
               rejectAnalytics()
               setDecided(true)
             }}
-            className="min-h-11 rounded-lg border border-[color:var(--border-strong)] px-4 py-2 text-sm font-semibold text-slate-600 transition hover:bg-[color:var(--surface-2)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:text-slate-300"
+            className="min-h-11 cursor-pointer rounded-lg border border-[color:var(--border-strong)] px-4 py-2 text-sm font-semibold text-slate-600 transition hover:bg-[color:var(--surface-2)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:text-slate-300"
           >
             {t('cookie.reject')}
           </button>
@@ -58,7 +61,7 @@ export default function CookieConsent() {
               loadCrisp()
               setDecided(true)
             }}
-            className="min-h-11 rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-white transition hover:bg-accent-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+            className="min-h-11 cursor-pointer rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-white transition hover:bg-accent-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
           >
             {t('cookie.accept')}
           </button>
