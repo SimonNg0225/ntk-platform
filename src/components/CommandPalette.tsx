@@ -281,10 +281,11 @@ export default function CommandPalette({
                   role="option"
                 >
                 <button
+                  type="button"
                   onMouseEnter={() => setActive(idx)}
                   onClick={() => run(idx)}
                   className={cx(
-                    'flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm transition-colors',
+                    'flex min-h-11 w-full items-center gap-3 rounded-lg px-3 text-left text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
                     on
                       ? 'bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent'
                       : 'text-slate-700 dark:text-slate-200',
