@@ -249,8 +249,8 @@ const GUIDE_STEPS: FeatureGuideStep[] = [
     desc: '↑↓ 揀、↵ 開、⌘1–9 快速跳；右邊預覽即時睇內容。',
   },
   {
-    title: '進階運算子',
-    desc: '輸入 type:note 限定類別、is:pinned 睇釘選、in:recent 揀最近更新。',
+    title: '進階搜尋',
+    desc: '需要時可用 type:note、is:pinned、in:recent 收窄結果。',
   },
 ]
 
@@ -1340,9 +1340,9 @@ function StartScreen({
         </div>
       )}
 
-      {/* 運算子（Raycast 風 power-user 提示）— 撳一下即套入搜尋框 */}
+      {/* 進階搜尋（Raycast 風 power-user 提示）— 撳一下即套入搜尋框 */}
       <div className="flex flex-wrap items-center gap-2 px-1 text-xs text-slate-400 dark:text-slate-500">
-        <span>運算子：</span>
+        <span>進階搜尋：</span>
         {OPERATOR_HINTS.map((op) => (
           <Tooltip key={op.token} label={op.desc}>
             <button
@@ -1359,12 +1359,12 @@ function StartScreen({
   )
 }
 
-// 運算子提示（StartScreen 顯示；token = 標籤，fill = 撳落去套入搜尋框嘅字）
+// 進階搜尋提示（StartScreen 顯示；token = 標籤，fill = 撳落去套入搜尋框嘅字）
 const OPERATOR_HINTS: { token: string; fill: string; desc: string }[] = [
-  { token: 'type:note', fill: 'type:note ', desc: '限定某類資料（例如 type:note 淨係筆記）' },
-  { token: 'is:pinned', fill: 'is:pinned ', desc: '淨係顯示已釘選嘅項目' },
-  { token: 'in:recent', fill: 'in:recent ', desc: `淨係喺最近 ${RECENT_DAYS} 日更新／建立嘅嘢搵` },
-  { token: 'sort:recent', fill: 'sort:recent ', desc: '改用「最近」排序而唔係相關度' },
+  { token: 'type:note', fill: 'type:note ', desc: '只看筆記類資料' },
+  { token: 'is:pinned', fill: 'is:pinned ', desc: '只看已釘選項目' },
+  { token: 'in:recent', fill: 'in:recent ', desc: `只看最近 ${RECENT_DAYS} 日更新／建立的項目` },
+  { token: 'sort:recent', fill: 'sort:recent ', desc: '按最近更新排序' },
 ]
 
 // 分組標頭嘅 icon chip 軟色（沿用既有 6 個 tone，畀每個類別一個鮮明身份，
