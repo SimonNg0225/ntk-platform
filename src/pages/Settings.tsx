@@ -115,7 +115,7 @@ export default function Settings() {
 
   const loadDemo = async () => {
     const n = await seedAllDemo()
-    toast.success(n > 0 ? `已載入 ${n} 筆示範資料` : '已有資料，毋須再載入')
+    toast.success(n > 0 ? `已載入 ${n} 筆試用資料` : '已有資料，毋須再載入')
   }
 
   // 載入選定科目嘅課題大綱到 topics 集合。
@@ -437,7 +437,7 @@ export default function Settings() {
           <p className="text-sm text-slate-400">計緊…</p>
         ) : overview.nonEmpty === 0 ? (
           <p className="text-sm text-slate-400">
-            仲未有資料。可以喺下面載入示範資料試吓。
+            仲未有資料。可以喺下面載入試用資料試吓。
           </p>
         ) : (
           <ul className="grid grid-cols-2 gap-x-4 gap-y-1.5 sm:grid-cols-3">
@@ -497,7 +497,7 @@ export default function Settings() {
             className="hidden"
           />
           <Button variant="secondary" icon={Sparkles} onClick={loadDemo}>
-            載入示範資料
+            載入試用資料
           </Button>
           <Button variant="danger" icon={Trash2} onClick={clearAll}>
             清除所有資料

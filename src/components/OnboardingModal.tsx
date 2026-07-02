@@ -133,14 +133,14 @@ export function OnboardingModal({
             建議第一步：打開首頁，輸入下一堂課題。
           </p>
           <p className="mt-1 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
-            想先睇完整例子，可以載入示範資料；所有示範內容之後都可在設定清除。
+            想先睇完整例子，可以載入試用資料；所有試用內容之後都可在設定清除。
           </p>
           <div className="mt-3 flex flex-col justify-center gap-2 sm:flex-row">
             <Button icon={ClipboardList} onClick={onClose}>
               開始準備下一堂
             </Button>
             <Button variant="secondary" icon={Database} onClick={onLoadDemo}>
-              載入示範資料
+              載入試用資料
             </Button>
           </div>
         </div>

@@ -397,7 +397,7 @@ export function AppShell() {
             const n = await seedAllDemo()
             markOnboarded()
             setOnboardOpen(false)
-            toast.success(n > 0 ? `已載入 ${n} 筆示範資料。` : '已有資料，毋須載入')
+            toast.success(n > 0 ? `已載入 ${n} 筆試用資料。` : '已有資料，毋須載入')
           }}
         />
 
