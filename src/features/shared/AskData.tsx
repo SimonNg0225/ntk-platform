@@ -245,7 +245,7 @@ export default function AskData() {
       <EmptyState
         icon={Bot}
         title="AI 未啟用"
-        hint="要設定好 Supabase 並部署 gemini Edge Function 先用到。步驟見 docs/SETUP.md。"
+        hint="此工作區尚未啟用 AI 功能。請聯絡管理員或支援團隊完成設定。"
       />
     )
   }

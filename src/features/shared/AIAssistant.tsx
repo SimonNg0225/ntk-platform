@@ -708,12 +708,12 @@ export default function AIAssistant() {
         icon={NotebookPen}
         title={t('aiasst.gateNotEnabledTitle', { defaultValue: 'AI 助手未啟用' })}
         hint={t('aiasst.gateNotEnabledHint', {
-          defaultValue: '要設定好 Supabase 並部署 gemini Edge Function 先用到。步驟見 docs/SETUP.md。',
+          defaultValue: '此工作區尚未啟用 AI 功能。請聯絡管理員或支援團隊完成設定。',
         })}
         action={
           import.meta.env.DEV ? (
             <Button variant="secondary" size="sm" onClick={() => setDevBypass(true)}>
-              {t('aiasst.gateTestMode', { defaultValue: '本機測試模式（略過 Supabase）' })}
+              {t('aiasst.gateTestMode', { defaultValue: '預覽 AI 介面' })}
             </Button>
           ) : null
         }
