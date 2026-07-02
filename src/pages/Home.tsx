@@ -468,8 +468,8 @@ export default function Home({ onOpen }: Props) {
                       onClick={() => startLessonPack(pack)}
                       className="group flex min-h-[76px] cursor-pointer items-center gap-3 rounded-xl border border-[color:var(--border)] bg-[color:var(--surface-2)] px-3 py-2.5 text-left transition hover:border-accent/40 hover:bg-white hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:hover:bg-slate-800"
                     >
-                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
-                        <Icon size={17} strokeWidth={1.75} />
+                      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
+                        <Icon size={18} strokeWidth={1.75} />
                       </span>
                       <span className="min-w-0 flex-1">
                         <span className="block truncate text-sm font-semibold text-slate-800 dark:text-slate-100">
@@ -553,8 +553,8 @@ export default function Home({ onOpen }: Props) {
               <span className="min-w-0 flex-1 truncate text-sm text-slate-500 dark:text-slate-400">
                 例如：幫我整理今日筆記重點
               </span>
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent text-white">
-                <Send size={15} strokeWidth={2} />
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-accent text-white">
+                <Send size={17} strokeWidth={2} />
               </span>
             </button>
           )}
@@ -646,8 +646,8 @@ export default function Home({ onOpen }: Props) {
                 onClick={() => onOpen(feature.id)}
                 className="group flex min-h-[76px] w-full cursor-pointer items-center gap-3 rounded-xl border border-[color:var(--border)] bg-white px-4 py-3 text-left transition hover:border-accent/40 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:bg-slate-800 dark:hover:border-accent/40"
               >
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
-                  <FeatureIcon icon={feature.icon} size={17} strokeWidth={1.75} />
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
+                  <FeatureIcon icon={feature.icon} size={18} strokeWidth={1.75} />
                 </span>
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-sm font-semibold text-slate-800 dark:text-slate-100">
@@ -681,8 +681,8 @@ export default function Home({ onOpen }: Props) {
                   className="flex min-h-[54px] w-full cursor-pointer items-center justify-between rounded-xl border border-[color:var(--border)] bg-white px-4 py-3 text-left transition hover:border-accent/40 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:bg-slate-800"
                 >
                   <span className="flex min-w-0 items-center gap-3">
-                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-300">
-                      <LayoutGrid size={15} strokeWidth={1.75} />
+                    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-300">
+                      <LayoutGrid size={17} strokeWidth={1.75} />
                     </span>
                     <span className="truncate text-sm font-semibold text-slate-700 dark:text-slate-100">
                       {groupLabel(t, group.group)}
@@ -759,13 +759,13 @@ function FlowRow({
     >
       <span
         className={cx(
-          'flex h-9 w-9 shrink-0 items-center justify-center rounded-xl',
+          'flex h-11 w-11 shrink-0 items-center justify-center rounded-xl',
           active
             ? 'bg-accent text-white'
             : 'bg-white text-slate-400 dark:bg-slate-700 dark:text-slate-300',
         )}
       >
-        <Icon size={16} strokeWidth={1.75} />
+        <Icon size={18} strokeWidth={1.75} />
       </span>
       <span className="min-w-0 flex-1">
         <span className="flex items-center gap-2">
@@ -814,17 +814,17 @@ function ActionCard({
       <div className="flex items-start justify-between gap-3">
         <span
           className={cx(
-            'flex h-10 w-10 shrink-0 items-center justify-center rounded-xl',
+            'flex h-11 w-11 shrink-0 items-center justify-center rounded-xl',
             primary
               ? 'bg-white/15 text-white'
               : 'bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent',
           )}
         >
-          <FeatureIcon icon={feature.icon} size={19} strokeWidth={1.75} />
+          <FeatureIcon icon={feature.icon} size={20} strokeWidth={1.75} />
         </span>
         <span
           className={cx(
-            'nums rounded-full px-2 py-0.5 text-xs font-semibold',
+            'nums inline-flex min-h-8 min-w-8 items-center justify-center rounded-full px-2 text-xs font-semibold',
             primary
               ? 'bg-white/15 text-white'
               : 'bg-slate-100 text-slate-400 dark:bg-slate-700 dark:text-slate-300',
