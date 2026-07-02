@@ -318,7 +318,7 @@ function ListView({
             return (
               <div
                 key={r.id}
-                className="group relative flex items-center gap-2.5 rounded-2xl border border-slate-200/80 bg-white pl-3 pr-12 transition duration-200 hover:border-slate-300 hover:shadow-md dark:border-slate-700/60 dark:bg-slate-800 dark:hover:border-slate-600"
+                className="group relative flex min-h-14 items-center gap-2.5 rounded-2xl border border-slate-200/80 bg-white pl-3 pr-14 transition duration-200 hover:border-slate-300 hover:shadow-md dark:border-slate-700/60 dark:bg-slate-800 dark:hover:border-slate-600"
               >
                 <button
                   type="button"
@@ -326,8 +326,8 @@ function ListView({
                   aria-label={r.teacher}
                   className="flex min-w-0 flex-1 items-center gap-2.5 rounded-2xl py-3 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.99]"
                 >
-                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
-                    <Eye size={16} />
+                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
+                    <Eye size={18} />
                   </span>
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium text-slate-700 dark:text-slate-200">
@@ -356,6 +356,7 @@ function ListView({
                     label={t('observation.card.delete', { defaultValue: '刪除' })}
                     size="sm"
                     tone="danger"
+                    className="min-h-11 min-w-11"
                     onClick={() => onDelete(r.id)}
                   >
                     <Trash2 size={14} />
@@ -397,7 +398,7 @@ function FormView(props: {
       <button
         type="button"
         onClick={props.onBack}
-        className="inline-flex items-center gap-1 text-xs font-medium text-slate-500 transition hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+        className="inline-flex min-h-11 items-center gap-1 rounded-lg px-2 text-xs font-medium text-slate-500 transition hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
       >
         <ArrowLeft size={14} />
         {t('observation.form.back', { defaultValue: '返回列表' })}
@@ -555,7 +556,7 @@ function DetailView({
       <button
         type="button"
         onClick={onBack}
-        className="inline-flex items-center gap-1 text-xs font-medium text-slate-500 transition hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+        className="inline-flex min-h-11 items-center gap-1 rounded-lg px-2 text-xs font-medium text-slate-500 transition hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
       >
         <ArrowLeft size={14} />
         {t('observation.result.back', { defaultValue: '返回列表' })}
@@ -651,7 +652,7 @@ function DetailView({
 
         {rec.source.trim() && (
           <details className="group rounded-xl border border-slate-200/80 bg-slate-50/60 p-3 dark:border-slate-700/60 dark:bg-slate-800/40">
-            <summary className="flex cursor-pointer items-center gap-1 text-[13px] font-medium text-slate-500 transition hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200">
+            <summary className="flex min-h-11 cursor-pointer items-center gap-1 rounded-lg px-2 text-[13px] font-medium text-slate-500 transition hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200">
               <ChevronRight
                 size={14}
                 className="shrink-0 text-slate-400 transition-transform duration-200 group-open:rotate-90"
