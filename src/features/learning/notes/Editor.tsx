@@ -405,7 +405,7 @@ export default function Editor({
                 aria-label={`色標 ${c.label}`}
                 aria-pressed={on}
                 onClick={() => patch({ color: ck })}
-                className="group flex h-8 w-8 items-center justify-center rounded-full"
+                className="group flex h-11 w-11 items-center justify-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
               >
                 <span
                   aria-hidden="true"
@@ -429,7 +429,7 @@ export default function Editor({
             trigger={
               <span
                 title="AI 助手：摘要 / 重點 / 標籤 / 潤飾"
-                className="inline-flex items-center justify-center rounded-lg p-1.5 text-accent transition hover:bg-accent-soft dark:text-accent dark:hover:bg-accent/15"
+                className="inline-flex h-11 w-11 items-center justify-center rounded-lg text-accent transition hover:bg-accent-soft dark:text-accent dark:hover:bg-accent/15"
               >
                 <Sparkles size={17} />
               </span>
