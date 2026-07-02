@@ -521,7 +521,7 @@ export default function Home({ onOpen }: Props) {
                     <button
                       type="button"
                       onClick={() => onOpen('inbox')}
-                      className="shrink-0 text-xs font-semibold text-accent transition hover:text-accent-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+                      className="inline-flex min-h-11 shrink-0 items-center rounded-lg px-2 text-xs font-semibold text-accent transition hover:text-accent-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
                     >
                       看 Inbox
                     </button>
@@ -532,7 +532,7 @@ export default function Home({ onOpen }: Props) {
                         key={item.id}
                         type="button"
                         onClick={() => onOpen('inbox')}
-                        className="flex min-h-9 w-full cursor-pointer items-center justify-between gap-2 rounded-lg bg-slate-50 px-2.5 text-left text-xs transition hover:bg-accent-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:bg-slate-800/70 dark:hover:bg-accent/15"
+                        className="flex min-h-11 w-full cursor-pointer items-center justify-between gap-2 rounded-lg bg-slate-50 px-2.5 text-left text-xs transition hover:bg-accent-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:bg-slate-800/70 dark:hover:bg-accent/15"
                       >
                         <span className="truncate font-medium text-slate-700 dark:text-slate-200">
                           {lessonCaptureTitle(item.text)}
@@ -565,7 +565,7 @@ export default function Home({ onOpen }: Props) {
                 key={feature.id}
                 type="button"
                 onClick={() => onOpen(feature.id)}
-                className="flex min-h-10 cursor-pointer items-center justify-center gap-1.5 rounded-xl bg-accent-soft px-2 text-xs font-semibold text-accent-strong transition hover:bg-accent/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:bg-accent/15 dark:text-accent"
+                className="flex min-h-11 cursor-pointer items-center justify-center gap-1.5 rounded-xl bg-accent-soft px-2 text-xs font-semibold text-accent-strong transition hover:bg-accent/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:bg-accent/15 dark:text-accent"
               >
                 <FeatureIcon icon={feature.icon} size={14} strokeWidth={1.75} />
                 <span className="truncate">{featName(t, feature)}</span>
@@ -587,7 +587,7 @@ export default function Home({ onOpen }: Props) {
             <button
               type="button"
               onClick={() => openFeature('calendar')}
-              className="inline-flex min-h-9 cursor-pointer items-center gap-1 rounded-xl px-2.5 text-xs font-semibold text-accent transition hover:bg-accent-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:hover:bg-accent/15"
+              className="inline-flex min-h-11 cursor-pointer items-center gap-1 rounded-xl px-2.5 text-xs font-semibold text-accent transition hover:bg-accent-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:hover:bg-accent/15"
             >
               排程
               <ArrowRight size={13} strokeWidth={2} />
