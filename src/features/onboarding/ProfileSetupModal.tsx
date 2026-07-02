@@ -162,7 +162,7 @@ export default function ProfileSetupModal({
       return
     }
     if (!isProfileConfigured) {
-      toast.error('示範模式：接 Supabase + 登入後先用得。')
+      toast.error('暫時未連接雲端登入，未能建立老師檔案。')
       return
     }
     const input: RegistrationInput = {
@@ -186,7 +186,7 @@ export default function ProfileSetupModal({
       if (!isEdit && subjects[0]) setSubjectPackId(subjects[0])
       // 任教科目 → 課題自動同步：每科只首次載入（additive，唔覆蓋手動課題）。
       loadTopicsForSubjects(subjects)
-      toast.success(isEdit ? '個人資料已更新 ✓' : '歡迎加入！個人資料已建立 🎉')
+      toast.success(isEdit ? '個人資料已更新。' : '老師檔案已建立，歡迎加入。')
       onDone()
     } catch (e) {
       toast.error(e instanceof Error ? e.message : '建立失敗，請再試。')
