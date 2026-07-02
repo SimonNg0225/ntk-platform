@@ -111,7 +111,7 @@ export default function Fitness() {
                 aria-selected={on}
                 onClick={() => setTab(tabItem.id)}
                 className={cx(
-                  'group flex flex-1 items-center gap-2.5 rounded-xl px-3 py-2.5 text-left transition duration-200 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
+                  'group flex min-h-14 flex-1 cursor-pointer items-center gap-2.5 rounded-xl px-3 py-2.5 text-left transition duration-200 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
                   on
                     ? 'bg-accent text-white shadow-sm'
                     : 'text-slate-500 hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-slate-800/60',
@@ -119,13 +119,13 @@ export default function Fitness() {
               >
                 <span
                   className={cx(
-                    'flex h-8 w-8 shrink-0 items-center justify-center rounded-xl transition',
+                    'flex h-11 w-11 shrink-0 items-center justify-center rounded-xl transition',
                     on
                       ? 'bg-white/15 text-white'
                       : 'bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent',
                   )}
                 >
-                  <Icon size={16} />
+                  <Icon size={18} />
                 </span>
                 <span className="min-w-0">
                   <span className="block text-sm font-semibold leading-tight">{tabItem.label}</span>
