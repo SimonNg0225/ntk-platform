@@ -1274,8 +1274,9 @@ function InboxRowCard({
             )}
             <Menu
               align="end"
+              label={`「${row.item.text.slice(0, 24)}」更多動作`}
               trigger={
-                <span className="inline-flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800">
+                <span className="inline-flex h-11 w-11 items-center justify-center rounded-xl text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800">
                   <span className="sr-only">更多動作</span>
                   <ChevronDownIcon />
                 </span>
