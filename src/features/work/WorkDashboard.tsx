@@ -674,7 +674,7 @@ function WorkBento({
         ) : (
           <ul className="min-h-0 flex-1 space-y-0.5 overflow-hidden">
             {agenda.slice(0, 4).map((it) => (
-              <li key={it.id} className="flex items-center gap-2.5 rounded-xl px-1.5 py-1.5">
+              <li key={it.id} className="flex min-h-11 items-center gap-2.5 rounded-xl px-3">
                 <span className="w-10 shrink-0 text-right text-[11px] font-semibold tabular-nums text-slate-500 dark:text-slate-400">
                   {it.time ?? (it.badge === '全日' ? t('wdash.allDay', { defaultValue: '全日' }) : '—')}
                 </span>
@@ -682,7 +682,7 @@ function WorkBento({
                 <button
                   type="button"
                   onClick={() => (it.kind === 'task' && it.taskId ? completeTask(it.taskId) : open(it.navTo ?? 'calendar'))}
-                  className="min-w-0 flex-1 text-left"
+                  className="min-h-11 min-w-0 flex-1 rounded-lg text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98]"
                 >
                   <span className={cx('block truncate text-sm', it.overdue ? 'font-medium text-rose-500' : 'text-slate-700 dark:text-slate-200')}>
                     {it.title}
@@ -729,7 +729,7 @@ function WorkBento({
             <button
               type="button"
               onClick={() => open('work-tasks')}
-              className="text-xs font-medium text-accent transition hover:text-accent-strong active:scale-[0.98]"
+              className="inline-flex min-h-11 items-center rounded-lg px-3 text-xs font-medium text-accent transition hover:bg-accent-soft hover:text-accent-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98] dark:hover:bg-accent/15"
             >
               {t('wdash.goPlanTodos', { defaultValue: '去待辦規劃 →' })}
             </button>
@@ -738,7 +738,7 @@ function WorkBento({
           <ul className="flex-1 space-y-1">
             {taskItems.slice(0, 6).map((it) => (
               <li key={it.id}>
-                <div className="flex w-full items-center gap-2.5 rounded-xl px-2 py-2 text-sm transition hover:bg-slate-50 dark:hover:bg-slate-800/60">
+                <div className="flex min-h-11 w-full items-center gap-2.5 rounded-xl px-3 text-sm transition hover:bg-slate-50 dark:hover:bg-slate-800/60">
                   <button
                     type="button"
                     onClick={() => it.taskId && completeTask(it.taskId)}
@@ -752,7 +752,7 @@ function WorkBento({
                   <button
                     type="button"
                     onClick={() => open(it.navTo ?? 'work-tasks')}
-                    className="min-w-0 flex-1 text-left"
+                    className="min-h-11 min-w-0 flex-1 rounded-lg text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98]"
                   >
                     <span className="block truncate text-slate-700 dark:text-slate-200">{it.title}</span>
                     {it.subtitle && (
@@ -1037,7 +1037,7 @@ function KpiWidget({ kpis, open }: { kpis: Kpi[]; open: (id: string) => void }) 
           >
             <div className="flex items-center justify-between">
               <span className="text-xs font-medium text-slate-400 dark:text-slate-500">{k.label}</span>
-              <span className={cx('flex h-8 w-8 items-center justify-center rounded-xl transition', t.chip)}>
+              <span className={cx('flex h-11 w-11 items-center justify-center rounded-xl transition', t.chip)}>
                 <Icon size={16} strokeWidth={2} />
               </span>
             </div>
@@ -1179,7 +1179,7 @@ function AgendaWidget({
               {/* 內容 */}
               <button
                 onClick={() => open(it.navTo ?? 'calendar')}
-                className="min-w-0 flex-1 text-left"
+                className="min-h-11 min-w-0 flex-1 rounded-lg text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98]"
               >
                 <p
                   className={cx(
