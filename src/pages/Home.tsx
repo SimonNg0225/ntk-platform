@@ -305,7 +305,7 @@ export default function Home({ onOpen }: Props) {
       'work',
       `我下一堂想教「${topic}」。請幫我先整理一個可即用的備課方向，包括教學目標、教學重點、學生常見誤解、課堂活動、評估方式同可延伸的教材方向。`,
     )
-    toast.success(`已準備「${topic}」嘅 AI prompt`)
+    toast.success(`已帶入「${topic}」到 AI 助手`)
     onOpen('work-ai')
   }
 
@@ -613,10 +613,10 @@ export default function Home({ onOpen }: Props) {
         <div className="mb-3 flex items-center justify-between gap-3">
           <div>
             <h2 className="text-base font-semibold text-slate-800 dark:text-slate-100">
-              今日要做咩？
+              常用工作
             </h2>
             <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-              保留最常用入口，其餘放入分類。
+              先放最高頻入口，其餘按分類收好。
             </p>
           </div>
         </div>
@@ -636,7 +636,7 @@ export default function Home({ onOpen }: Props) {
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1.35fr)_minmax(320px,0.65fr)]">
         <section>
           <h2 className="mb-3 text-base font-semibold text-slate-800 dark:text-slate-100">
-            快速入口
+            其他常用入口
           </h2>
           <div className="grid gap-2 sm:grid-cols-2">
             {quickFeatures.map((feature) => (
@@ -668,7 +668,7 @@ export default function Home({ onOpen }: Props) {
 
         <section>
           <h2 className="mb-3 text-base font-semibold text-slate-800 dark:text-slate-100">
-            功能庫
+            按分類瀏覽
           </h2>
           <div className="space-y-2">
             {groups.map((group) => {
