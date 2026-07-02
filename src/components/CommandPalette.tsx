@@ -1,6 +1,6 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Search, Clock } from 'lucide-react'
+import { Clock, Home, Search, Sparkles, type LucideIcon } from 'lucide-react'
 import { FEATURES } from '../features/registry'
 import { isFeatureAvailable } from '../lib/featureFlags'
 import { FeatureIcon } from '../features/featureIcons'
@@ -32,7 +32,7 @@ interface Props {
 interface Item {
   id: string
   label: string
-  icon: string
+  icon: string | LucideIcon
   hint: string
   aliases?: string[]
   recordable: boolean // 跳去「目的地」（首頁 / 功能）先記入最近；模式切換 false
@@ -108,7 +108,7 @@ export default function CommandPalette({
     list.push({
       id: 'home',
       label: t('shell.home', { defaultValue: '首頁概覽' }),
-      icon: '🏠',
+      icon: Home,
       hint: t('shell.navHint', { defaultValue: '導航' }),
       aliases: ['home', 'dashboard', '首頁', '概覽'],
       recordable: true,
@@ -120,7 +120,7 @@ export default function CommandPalette({
       list.push({
         id: 'quick-add',
         label: t('shell.quickAdd', { defaultValue: '快速記低' }),
-        icon: '✨',
+        icon: Sparkles,
         hint: t('shell.actionHint', { defaultValue: '動作' }),
         aliases: ['快速記低', 'capture', 'inbox', '待辦', '提醒', 'todo'],
         recordable: false,

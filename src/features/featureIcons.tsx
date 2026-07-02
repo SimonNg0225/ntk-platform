@@ -132,19 +132,19 @@ export function FeatureIcon({
   className,
   strokeWidth = 1.75, // 機構級：幼線（lucide 預設 2 偏粗），全 app 統一精煉外觀
 }: {
-  icon: string
+  icon: string | LucideIcon
   size?: number
   className?: string
   strokeWidth?: number
 }) {
-  const Cmp = iconForFeature(icon)
+  const Cmp = typeof icon === 'string' ? iconForFeature(icon) : icon
   if (Cmp)
     return (
       <Cmp size={size} strokeWidth={strokeWidth} className={className} aria-hidden />
     )
   return (
     <span className={className} aria-hidden>
-      {icon}
+      {typeof icon === 'string' ? icon : null}
     </span>
   )
 }
