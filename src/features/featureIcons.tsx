@@ -7,7 +7,7 @@ import {
   PartyPopper, Trophy, TrendingDown, Users, Palmtree, AlarmClock, Pin, Ban, Mail,
   Handshake, MessageSquare, FileText, FileSearch, Presentation, Dices, PenLine, Scale, Mic, Link, Clapperboard, BookMarked, Bookmark, WandSparkles,
   Dumbbell, Zap, RotateCcw, Printer, Download, Lock, HelpCircle, Sprout, Star,
-  Receipt, Tag, HeartPulse, ClipboardCheck, Globe, ScanLine, Eye, Newspaper,
+  Receipt, Tag, HeartPulse, ClipboardCheck, Globe, ScanLine, Eye, Newspaper, Wrench,
 } from 'lucide-react'
 
 // ============================================================
@@ -57,6 +57,8 @@ const EMOJI_TO_ICON: Record<string, LucideIcon> = {
   '🏠': Home,
   '⚙️': Settings,
   '⚙': Settings,
+  '🛠️': Wrench,
+  '🛠': Wrench,
   '👤': User,
   '🚧': Construction,
   '🎉': PartyPopper,
