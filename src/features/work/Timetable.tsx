@@ -347,7 +347,7 @@ export default function Timetable() {
               type="button"
               onClick={() => setShowSettings(true)}
               title={t('timetable.editBells', { defaultValue: '設定鐘聲時間' })}
-              className="inline-flex min-h-11 items-center gap-1.5 rounded-xl bg-white/15 px-2.5 text-sm font-medium backdrop-blur-sm transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 sm:px-3"
+              className="inline-flex min-h-11 cursor-pointer items-center gap-1.5 rounded-xl bg-white/15 px-2.5 text-sm font-medium backdrop-blur-sm transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 sm:px-3"
             >
               <Settings2 size={15} />
               <span className="hidden sm:inline">
@@ -358,7 +358,7 @@ export default function Timetable() {
               type="button"
               onClick={handleExport}
               title={t('timetable.exportCsv', { defaultValue: '匯出 CSV' })}
-              className="inline-flex min-h-11 items-center gap-1.5 rounded-xl bg-white/15 px-2.5 text-sm font-medium backdrop-blur-sm transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 sm:px-3"
+              className="inline-flex min-h-11 cursor-pointer items-center gap-1.5 rounded-xl bg-white/15 px-2.5 text-sm font-medium backdrop-blur-sm transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 sm:px-3"
             >
               <Download size={15} />
               <span className="hidden sm:inline">
@@ -370,7 +370,7 @@ export default function Timetable() {
                 type="button"
                 onClick={() => window.print()}
                 title={t('timetable.print', { defaultValue: '列印' })}
-                className="inline-flex min-h-11 items-center gap-1.5 rounded-xl bg-white/15 px-2.5 text-sm font-medium backdrop-blur-sm transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 sm:px-3"
+                className="inline-flex min-h-11 cursor-pointer items-center gap-1.5 rounded-xl bg-white/15 px-2.5 text-sm font-medium backdrop-blur-sm transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 sm:px-3"
               >
                 <Printer size={15} />
                 <span className="hidden sm:inline">
@@ -435,8 +435,8 @@ export default function Timetable() {
           aria-live="assertive"
           className="flex items-start gap-2.5 rounded-2xl border border-rose-200/80 bg-rose-50/70 p-3.5 dark:border-rose-500/25 dark:bg-rose-500/10 print:hidden"
         >
-          <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-rose-100 text-rose-600 dark:bg-rose-500/20 dark:text-rose-300">
-            <AlertTriangle size={16} />
+          <span className="mt-0.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-rose-100 text-rose-600 dark:bg-rose-500/20 dark:text-rose-300">
+            <AlertTriangle size={18} />
           </span>
           <div className="min-w-0">
             <p className="text-sm font-semibold text-rose-700 dark:text-rose-300">
@@ -709,7 +709,7 @@ function CycleRibbon({
             key={letter}
             role="listitem"
             className={cx(
-              'flex flex-1 shrink-0 items-center justify-center gap-1.5 rounded-xl px-3 py-1.5 text-sm font-medium transition-colors',
+              'flex min-h-11 flex-1 shrink-0 items-center justify-center gap-1.5 rounded-xl px-3 py-1.5 text-sm font-medium transition-colors',
               isToday
                 ? 'bg-accent text-white shadow-sm shadow-accent/25'
                 : inRange
@@ -719,7 +719,7 @@ function CycleRibbon({
           >
             <span
               className={cx(
-                'flex h-6 w-6 items-center justify-center rounded-lg text-[15px] font-semibold leading-none',
+                'flex h-8 w-8 items-center justify-center rounded-lg text-[15px] font-semibold leading-none',
                 isToday
                   ? 'bg-white/20'
                   : inRange
@@ -815,7 +815,7 @@ function SettingsModal({
           type="button"
           onClick={() => setCycleOn((v) => !v)}
           aria-pressed={cycleOn}
-          className="flex w-full items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50/60 p-3 text-left transition hover:bg-slate-100 active:scale-[0.98] dark:border-slate-700 dark:bg-slate-800/60 dark:hover:bg-slate-800"
+          className="flex min-h-14 w-full cursor-pointer items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50/60 p-3 text-left transition hover:bg-slate-100 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:border-slate-700 dark:bg-slate-800/60 dark:hover:bg-slate-800"
         >
           <span className="min-w-0">
             <span className="block text-sm font-medium text-slate-700 dark:text-slate-200">
@@ -830,14 +830,14 @@ function SettingsModal({
           <span
             aria-hidden="true"
             className={cx(
-              'relative h-6 w-11 shrink-0 rounded-full transition-colors',
+              'relative h-8 w-14 shrink-0 rounded-full transition-colors',
               cycleOn ? 'bg-accent' : 'bg-slate-300 dark:bg-slate-600',
             )}
           >
             <span
               className={cx(
-                'absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all',
-                cycleOn ? 'left-[22px]' : 'left-0.5',
+                'absolute top-1 h-6 w-6 rounded-full bg-white shadow transition-all',
+                cycleOn ? 'left-7' : 'left-1',
               )}
             />
           </span>
@@ -857,7 +857,7 @@ function SettingsModal({
                   type="button"
                   onClick={() => toggleDay(d.day)}
                   className={cx(
-                    'inline-flex min-h-11 items-center rounded-full px-3.5 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98]',
+                    'inline-flex min-h-11 cursor-pointer items-center rounded-full px-3.5 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98]',
                     on
                       ? 'bg-accent text-white shadow-sm dark:shadow-none'
                       : 'bg-slate-100 text-slate-500 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700',

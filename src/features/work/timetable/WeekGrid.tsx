@@ -65,7 +65,7 @@ export default function WeekGrid({
                   >
                     <span
                       className={cx(
-                        'flex h-8 w-8 items-center justify-center rounded-xl text-base font-semibold leading-none',
+                      'flex h-11 w-11 items-center justify-center rounded-xl text-base font-semibold leading-none',
                         isToday
                           ? 'bg-white/20 text-white'
                           : 'bg-slate-100 text-slate-600 dark:bg-slate-700/60 dark:text-slate-200',
@@ -155,7 +155,7 @@ export default function WeekGrid({
                         aria-label={cellLabel}
                         onClick={() => onOpenCell(day, bell.period)}
                         className={cx(
-                          'group relative flex h-[80px] w-full flex-col items-start gap-1 overflow-hidden rounded-2xl p-2.5 text-left transition duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-1 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-800',
+                          'group relative flex h-[80px] w-full cursor-pointer flex-col items-start gap-1 overflow-hidden rounded-2xl p-2.5 text-left transition duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-1 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-800',
                           slot
                             ? cx(
                                 color.cell,
