@@ -902,7 +902,7 @@ export default function AIAssistant() {
               aria-pressed={showArchived}
               onClick={() => setShowArchived((v) => !v)}
               className={cx(
-                'inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs transition active:scale-[0.98]',
+                'inline-flex min-h-11 items-center gap-1 rounded-lg px-3 text-xs transition active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
                 showArchived
                   ? 'bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent'
                   : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300',
@@ -913,7 +913,7 @@ export default function AIAssistant() {
             <button
               type="button"
               onClick={() => setStatsOpen(true)}
-              className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs text-slate-400 transition hover:text-slate-600 active:scale-[0.98] dark:hover:text-slate-300"
+              className="inline-flex min-h-11 items-center gap-1 rounded-lg px-3 text-xs text-slate-400 transition hover:text-slate-600 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:hover:text-slate-300"
             >
               <BarChart3 size={13} /> {t('aiasst.stats', { defaultValue: '統計' })}
             </button>
@@ -1496,7 +1496,7 @@ function Welcome({
 
       <button
         onClick={onOpenLibrary}
-        className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium text-slate-500 transition hover:bg-slate-100 hover:text-accent active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-accent"
+        className="inline-flex min-h-11 items-center gap-1.5 rounded-full px-3 text-xs font-medium text-slate-500 transition hover:bg-slate-100 hover:text-accent active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-accent"
       >
         <Library size={14} /> {t('aiasst.welcomeSeeAllTemplates', { defaultValue: '睇晒全部範本' })}
       </button>
