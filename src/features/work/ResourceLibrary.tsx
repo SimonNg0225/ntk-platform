@@ -1070,7 +1070,7 @@ function GridView({
               <button
                 type="button"
                 onClick={() => onDetail(res.id)}
-                className="mt-3 w-full break-words rounded text-left text-[15px] font-semibold leading-snug text-slate-800 transition hover:text-accent active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:text-slate-100 dark:hover:text-accent"
+                className="mt-3 flex min-h-11 w-full items-center break-words rounded-lg px-1 text-left text-[15px] font-semibold leading-snug text-slate-800 transition hover:text-accent active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:text-slate-100 dark:hover:text-accent"
               >
                 {res.title}
               </button>
@@ -1127,7 +1127,7 @@ function GridView({
                     type="button"
                     onClick={() => onOpen(res)}
                     aria-label={`開啟「${res.title}」（新分頁）`}
-                    className="inline-flex shrink-0 items-center gap-1 rounded-xl bg-accent-soft px-2.5 py-1 text-xs font-semibold text-accent-strong transition hover:bg-accent hover:text-white active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:bg-accent/15 dark:text-accent dark:hover:bg-accent dark:hover:text-white"
+                    className="inline-flex min-h-11 shrink-0 items-center gap-1 rounded-xl bg-accent-soft px-3 text-xs font-semibold text-accent-strong transition hover:bg-accent hover:text-white active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:bg-accent/15 dark:text-accent dark:hover:bg-accent dark:hover:text-white"
                   >
                     開啟
                     <ExternalLink size={12} aria-hidden="true" />
@@ -1226,7 +1226,7 @@ function ListView({
                     <button
                       type="button"
                       onClick={() => onDetail(res.id)}
-                      className="block max-w-[14rem] truncate rounded text-left font-medium text-slate-800 transition hover:text-accent active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:text-slate-100"
+                      className="flex min-h-11 max-w-[14rem] items-center truncate rounded-lg px-1 text-left font-medium text-slate-800 transition hover:text-accent active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:text-slate-100"
                     >
                       {res.title}
                       {meta.favorite && (
