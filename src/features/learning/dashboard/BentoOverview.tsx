@@ -62,8 +62,8 @@ function StatTile({
     >
       <div className="flex items-center justify-between">
         <span className="text-xs font-medium text-slate-400 dark:text-slate-500">{label}</span>
-        <span className={cx('flex h-8 w-8 items-center justify-center rounded-xl transition', t.chip)}>
-          <Icon size={16} />
+        <span className={cx('flex h-11 w-11 items-center justify-center rounded-xl transition', t.chip)}>
+          <Icon size={18} />
         </span>
       </div>
       <div>
@@ -250,8 +250,8 @@ export default function BentoOverview({
         onClick={() => open('learning-ai')}
         className="group flex cursor-pointer flex-col justify-between rounded-2xl border border-dashed border-accent/40 bg-accent-soft/50 p-4 text-left transition duration-200 hover:border-accent hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98] dark:bg-accent/10"
       >
-        <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-accent text-white transition">
-          <Zap size={16} />
+        <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-accent text-white transition">
+          <Zap size={18} />
         </span>
         <div>
           <p className="text-sm font-semibold text-accent-strong dark:text-accent">問 AI 助手</p>
