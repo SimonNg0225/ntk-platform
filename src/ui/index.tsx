@@ -11,6 +11,7 @@ import { personaSvgUrl } from '../lib/personas'
 import {
   ArrowDownRight,
   ArrowUpRight,
+  Inbox,
   Loader2,
   Minus,
   X,
@@ -328,7 +329,7 @@ export function SectionTitle({
 
 // ───────── EmptyState ─────────
 export function EmptyState({
-  icon = '✨',
+  icon = Inbox,
   title,
   hint,
   action,
