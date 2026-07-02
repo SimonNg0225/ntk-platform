@@ -38,7 +38,7 @@ export default function AccountBox() {
       <div className="space-y-2 px-4 py-3">
         <button
           onClick={signInWithGoogle}
-          className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-black/[0.08] bg-white px-3 text-[13px] font-medium text-slate-700 transition hover:bg-black/[0.03] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-1 dark:border-white/10 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-white/[0.06]"
+          className="flex min-h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-xl border border-black/[0.08] bg-white px-3 text-[13px] font-medium text-slate-700 transition hover:bg-black/[0.03] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-1 dark:border-white/10 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-white/[0.06]"
         >
           <GoogleIcon />
           {t('shell.loginGoogle', { defaultValue: '用 Google 登入' })}
@@ -66,11 +66,11 @@ export default function AccountBox() {
   return (
     <div className="space-y-2 px-4 py-3">
       {/* 帳戶 */}
-      <div className="flex items-center gap-2.5">
+      <div className="flex min-h-11 items-center gap-2.5">
         {avatar ? (
-          <img src={avatar} alt="" className="h-8 w-8 rounded-full object-cover" />
+          <img src={avatar} alt="" className="h-11 w-11 rounded-full object-cover" />
         ) : (
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-accent-soft text-sm font-bold text-accent-strong dark:bg-accent/15 dark:text-accent">
+          <div className="flex h-11 w-11 items-center justify-center rounded-full bg-accent-soft text-base font-bold text-accent-strong dark:bg-accent/15 dark:text-accent">
             {name.charAt(0).toUpperCase()}
           </div>
         )}
@@ -79,7 +79,7 @@ export default function AccountBox() {
         </p>
         <button
           onClick={signOut}
-          className="inline-flex min-h-11 items-center rounded-lg px-2 text-xs text-slate-400 transition hover:text-red-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:text-slate-500"
+          className="inline-flex min-h-11 cursor-pointer items-center rounded-lg px-2 text-xs text-slate-400 transition hover:text-red-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:text-slate-500"
         >
           {t('shell.signOut', { defaultValue: '登出' })}
         </button>
