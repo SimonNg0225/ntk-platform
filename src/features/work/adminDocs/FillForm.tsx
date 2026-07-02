@@ -551,22 +551,21 @@ function FillFormPdf({
           if (f.type === 'checkbox') {
             const checked = isCheckboxOn(values[f.tag])
             return (
-              <div
+              <button
                 key={f.tag}
-                className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-3.5 py-3 dark:border-slate-700 dark:bg-slate-800"
+                type="button"
+                role="switch"
+                aria-checked={checked}
+                aria-label={label}
+                onClick={() => setVal(f.tag, checked ? CHECKBOX_OFF : CHECKBOX_ON)}
+                className="flex w-full items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-3.5 py-3 text-left transition hover:border-slate-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-slate-600"
               >
                 <span className="min-w-0 text-sm font-medium text-slate-700 dark:text-slate-200">
                   {label}
                 </span>
-                <button
-                  type="button"
-                  role="switch"
-                  aria-checked={checked}
-                  aria-label={label}
-                  onClick={() =>
-                    setVal(f.tag, checked ? CHECKBOX_OFF : CHECKBOX_ON)
-                  }
-                  className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 ${
+                <span
+                  aria-hidden
+                  className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition ${
                     checked
                       ? 'bg-accent'
                       : 'bg-slate-300 dark:bg-slate-600'
@@ -577,8 +576,8 @@ function FillFormPdf({
                       checked ? 'translate-x-5' : 'translate-x-0.5'
                     }`}
                   />
-                </button>
-              </div>
+                </span>
+              </button>
             )
           }
 
