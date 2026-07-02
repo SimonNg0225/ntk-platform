@@ -44,7 +44,7 @@ function Chip({ on, onClick, children }: { on: boolean; onClick: () => void; chi
       aria-pressed={on}
       onClick={onClick}
       className={cx(
-        'rounded-full border px-3 py-1.5 text-sm font-medium transition active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
+        'inline-flex min-h-11 items-center rounded-full border px-3 py-1.5 text-sm font-medium transition active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
         on
           ? 'border-accent bg-accent text-white shadow-sm'
           : 'border-black/[0.1] bg-white text-slate-600 hover:bg-black/[0.03] dark:border-white/15 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-white/[0.06]',
