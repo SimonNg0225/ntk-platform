@@ -760,7 +760,7 @@ export default function GlobalSearch() {
               onClick={() => setScopeMode((v) => !v)}
               aria-pressed={scopeMode}
               className={cx(
-                'inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-medium transition active:scale-[0.98]',
+                'inline-flex max-sm:min-h-11 items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-medium transition active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
                 scopeMode
                   ? 'border-accent/30 bg-accent-soft text-accent-strong dark:border-accent/40 dark:bg-accent/15 dark:text-accent'
                   : 'border-slate-200 bg-white text-slate-500 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700',
@@ -1332,7 +1332,7 @@ function StartScreen({
               key={ex}
               type="button"
               onClick={() => onPick(ex)}
-              className="rounded-full bg-slate-100 px-2.5 py-1 font-medium text-slate-500 transition active:scale-[0.98] hover:bg-accent hover:text-white dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-accent dark:hover:text-white"
+              className="inline-flex max-sm:min-h-11 items-center rounded-full bg-slate-100 px-2.5 py-1 font-medium text-slate-500 transition active:scale-[0.98] hover:bg-accent hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-accent dark:hover:text-white"
             >
               {ex}
             </button>
@@ -1348,7 +1348,7 @@ function StartScreen({
             <button
               type="button"
               onClick={() => onPick(op.fill)}
-              className="rounded-full border border-slate-200 bg-white px-2.5 py-1 font-mono font-medium text-slate-500 transition active:scale-[0.98] hover:border-accent hover:text-accent dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 dark:hover:border-accent dark:hover:text-accent"
+              className="inline-flex max-sm:min-h-11 items-center rounded-full border border-slate-200 bg-white px-2.5 py-1 font-mono font-medium text-slate-500 transition active:scale-[0.98] hover:border-accent hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 dark:hover:border-accent dark:hover:text-accent"
             >
               {op.token}
             </button>
