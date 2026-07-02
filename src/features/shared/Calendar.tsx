@@ -163,6 +163,15 @@ export default function Calendar() {
     // 未指定行事曆嘅事件當顯示；其餘睇所屬行事曆有冇被收起
     return events.filter((e) => !e.calendarId || !hidden.has(e.calendarId)).length
   }, [events, cals])
+  const calendarSubtitle =
+    visibleEventCount === 0
+      ? t('cal.subtitleEmpty', {
+          defaultValue: '先加下一堂課、deadline 或家長會；之後可匯出或訂閱到手機日曆。',
+        })
+      : t('cal.subtitle', {
+          n: visibleEventCount,
+          defaultValue: `共 ${visibleEventCount} 項活動 · 日 / 週 / 月 / 年 · 重複事件 · 匯出訂閱`,
+        })
 
   return (
     <div className="flex min-h-[78vh] flex-col gap-4">
@@ -171,10 +180,7 @@ export default function Calendar() {
         icon={CalendarDays}
         kicker={t('cal.kicker', { defaultValue: '日程行事曆' })}
         title={t('cal.title', { defaultValue: '行事曆' })}
-        description={t('cal.subtitle', {
-          n: visibleEventCount,
-          defaultValue: `共 ${visibleEventCount} 項活動 · 日 / 週 / 月 / 年 · 重複事件 · 匯出訂閱`,
-        })}
+        description={calendarSubtitle}
         guideKey="calendar"
       />
 
@@ -331,7 +337,7 @@ export default function Calendar() {
                 {t('cal.emptyDayTitle', { defaultValue: '呢日仲未有安排' })}
               </p>
               <p className="max-w-xs text-xs text-slate-400 dark:text-slate-500">
-                {t('cal.emptyDayHint', { defaultValue: '撳一下加返堂、會議或提醒，今日就一目了然。' })}
+                {t('cal.emptyDayHint', { defaultValue: '撳一下加返課堂、deadline 或家長會，今日就一目了然。' })}
               </p>
               <button
                 type="button"
