@@ -280,6 +280,7 @@ export function QuickAddModal({ open, onClose }: QuickAddModalProps) {
               <p className="text-sm font-semibold">AI 分析暫時未啟用</p>
               <p className="mt-1 text-xs leading-relaxed text-amber-800/80 dark:text-amber-100/75">
                 你仍然可以先記低內容，系統會放入 Inbox，之後再分類成待辦、提醒或行事曆。
+                請避免輸入可識別學生資料；需要時先用班別、座號或代號代替。
               </p>
             </div>
           </div>
@@ -321,6 +322,9 @@ export function QuickAddModal({ open, onClose }: QuickAddModalProps) {
                 待辦 / 提醒 / 行事曆
               </span>
               ，再畀你確認同修改。例如「{examples[0]}」。
+              <span className="mt-1 block text-[11px] text-slate-500 dark:text-slate-400">
+                私隱提示：學生姓名、成績或個案資料先用代號或遮蔽後再輸入。
+              </span>
             </p>
           </div>
 
