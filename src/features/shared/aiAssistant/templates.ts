@@ -80,6 +80,12 @@ const LEARNING_TEMPLATES: BuiltinTemplate[] = [
 
 const WORK_TEMPLATES: BuiltinTemplate[] = [
   {
+    id: 'w-next-lesson',
+    category: '下一堂',
+    title: '明天上課包',
+    body: '我下一堂要教「{{課題}}」，班級 / 程度係「{{班級／程度}}」。請幫我整理一份可即用備課方向，輸出：\n\n1. 3 個學習目標\n2. 5 個教學重點\n3. 學生常見誤解\n4. 40 分鐘課堂流程\n5. 一個互動活動\n6. 3 條檢查理解問題\n7. 課後延伸或補充練習',
+  },
+  {
     id: 'w-mc',
     category: '出題',
     title: 'MC 題',
