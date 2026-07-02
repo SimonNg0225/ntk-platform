@@ -145,7 +145,7 @@ export default function Sidebar({
             onClick={onExpand}
             title={t('shell.expandSidebar', { defaultValue: '展開側欄' })}
             aria-label={t('shell.expandSidebar', { defaultValue: '展開側欄' })}
-            className="rounded-xl transition active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+            className="flex h-11 w-11 items-center justify-center rounded-xl transition active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
           >
             <img
               src="/favicon.svg"
@@ -230,7 +230,7 @@ export default function Sidebar({
               onClick={onCollapse}
               title={t('shell.hideSidebar', { defaultValue: '完全收起（⌘B）' })}
               aria-label={t('shell.hideSidebar', { defaultValue: '完全收起' })}
-              className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-400 transition hover:bg-black/[0.04] hover:text-slate-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:text-slate-500 dark:hover:bg-white/[0.06] dark:hover:text-slate-200"
+              className="flex h-11 w-11 items-center justify-center rounded-lg text-slate-400 transition hover:bg-black/[0.04] hover:text-slate-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:text-slate-500 dark:hover:bg-white/[0.06] dark:hover:text-slate-200"
             >
               <PanelLeftClose size={17} strokeWidth={1.75} />
             </button>
@@ -300,13 +300,13 @@ export default function Sidebar({
             onChange={(e) => setFilter(e.target.value)}
             placeholder={t('shell.filterFeatures', { defaultValue: '搜尋功能…' })}
             aria-label={t('shell.filterFeatures', { defaultValue: '搜尋功能…' })}
-            className="w-full rounded-xl border border-black/[0.08] bg-black/[0.02] py-1.5 pl-8 pr-7 text-[13px] text-slate-700 placeholder:text-slate-400 transition focus:border-accent/40 focus:bg-white focus:outline-none focus:ring-2 focus:ring-accent/15 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-200 dark:focus:bg-slate-800"
+            className="min-h-11 w-full rounded-xl border border-black/[0.08] bg-black/[0.02] py-1.5 pl-8 pr-11 text-[13px] text-slate-700 placeholder:text-slate-400 transition focus:border-accent/40 focus:bg-white focus:outline-none focus:ring-2 focus:ring-accent/15 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-200 dark:focus:bg-slate-800"
           />
           {filter && (
             <button
               onClick={() => setFilter('')}
               aria-label={t('shell.clear', { defaultValue: '清除' })}
-              className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded p-1 text-slate-400 transition hover:text-slate-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:hover:text-slate-300"
+              className="absolute right-0 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-xl text-slate-400 transition hover:text-slate-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:hover:text-slate-300"
             >
               <X size={14} strokeWidth={2} />
             </button>
@@ -418,7 +418,7 @@ export default function Sidebar({
                     type="button"
                     onClick={() => toggleOpenGroup(g.group)}
                     aria-expanded={isOpen}
-                    className="flex min-h-10 w-full cursor-pointer items-center gap-2 rounded-xl px-2.5 text-[13px] font-semibold text-slate-600 transition hover:bg-black/[0.04] hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:text-slate-300 dark:hover:bg-white/[0.06] dark:hover:text-white"
+                    className="flex min-h-11 w-full cursor-pointer items-center gap-2 rounded-xl px-2.5 text-[13px] font-semibold text-slate-600 transition hover:bg-black/[0.04] hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:text-slate-300 dark:hover:bg-white/[0.06] dark:hover:text-white"
                   >
                     <span className="truncate tracking-tight">{groupLabel(t, g.group)}</span>
                     <span className="ml-auto rounded-full bg-black/[0.05] px-1.5 text-[10px] font-medium tabular-nums text-slate-400 dark:bg-white/10 dark:text-slate-500">
@@ -561,7 +561,7 @@ function NavRow({
         </span>
         <span className="flex-1 truncate text-left">{label}</span>
         {badge}
-        {pinId && <span aria-hidden className="w-5 shrink-0" />}
+        {pinId && <span aria-hidden className="w-10 shrink-0" />}
       </button>
       {pinId && (
         <button
@@ -577,7 +577,7 @@ function NavRow({
               : t('shell.pin', { defaultValue: '釘選' })
           }
           className={cx(
-            'absolute right-1.5 top-1/2 z-10 -translate-y-1/2 rounded-md p-1 transition focus:outline-none focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-accent/40',
+            'absolute right-0.5 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-lg transition focus:outline-none focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-accent/40',
             pinned
               ? 'text-accent opacity-100'
               : 'text-slate-400 opacity-0 hover:bg-black/[0.06] hover:text-slate-600 group-hover/navrow:opacity-100 dark:hover:bg-white/10 dark:hover:text-slate-200',
@@ -601,7 +601,7 @@ function chipClass(active: boolean) {
 
 function navClass(active: boolean) {
   return cx(
-    'group flex w-full items-center gap-2.5 rounded-[13px] px-2.5 py-1.5 text-[13.5px] transition duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.985]',
+    'group flex min-h-11 w-full items-center gap-2.5 rounded-[13px] px-2.5 py-1.5 text-[13.5px] transition duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.985]',
     active
       ? 'et-glass-active font-semibold text-accent-strong dark:text-accent'
       : 'font-medium text-slate-600 hover:bg-black/[0.04] hover:text-slate-900 dark:text-slate-300 dark:hover:bg-white/[0.06] dark:hover:text-white',
@@ -626,7 +626,7 @@ function RailButton({
       title={title}
       aria-label={title}
       className={cx(
-        'group mx-auto flex h-10 w-10 items-center justify-center rounded-lg transition duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.97]',
+        'group mx-auto flex h-11 w-11 items-center justify-center rounded-lg transition duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.97]',
         active
           ? 'bg-accent/10 ring-1 ring-accent/25 dark:bg-accent/20'
           : 'hover:bg-black/[0.04] dark:hover:bg-white/[0.06]',
