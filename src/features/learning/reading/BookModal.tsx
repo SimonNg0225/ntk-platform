@@ -194,7 +194,7 @@ export default function BookModal({
             type="button"
             onClick={onClose}
             aria-label="關閉"
-            className="-mr-1 mt-0.5 shrink-0 rounded-lg p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:hover:bg-slate-700"
+            className="-mr-1 mt-0.5 inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98] dark:hover:bg-slate-700"
           >
             <X size={18} />
           </button>
@@ -254,7 +254,7 @@ export default function BookModal({
                   onClick={() => setStatus(s)}
                   aria-pressed={book.status === s}
                   className={cx(
-                    'rounded-lg border px-2 py-1.5 text-xs font-medium transition-colors',
+                    'inline-flex min-h-11 items-center justify-center rounded-lg border px-2 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98]',
                     book.status === s
                       ? 'border-accent bg-accent text-white shadow-sm'
                       : 'border-slate-200 text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800',
@@ -377,7 +377,7 @@ export default function BookModal({
                 type="date"
                 value={logDate}
                 onChange={(e) => setLogDate(e.target.value)}
-                className="rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-base sm:text-xs text-slate-700 outline-none focus:border-accent focus:ring-2 focus:ring-accent/30 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                className="min-h-11 rounded-lg border border-slate-300 bg-white px-3 text-base text-slate-700 outline-none focus:border-accent focus:ring-2 focus:ring-accent/30 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 sm:text-xs"
               />
               <Input
                 type="number"
@@ -420,7 +420,7 @@ export default function BookModal({
                     <button
                       type="button"
                       onClick={() => delSession(s.id)}
-                      className="-my-1 -mr-1 ml-auto inline-flex shrink-0 items-center justify-center rounded p-1.5 text-slate-300 transition-colors hover:text-rose-500 dark:text-slate-600"
+                      className="-my-1 -mr-1 ml-auto inline-flex h-11 w-11 shrink-0 items-center justify-center rounded text-slate-300 transition-colors hover:bg-rose-50 hover:text-rose-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400/40 active:scale-[0.98] dark:text-slate-600 dark:hover:bg-rose-500/10"
                       aria-label="刪除記錄"
                     >
                       <X size={13} />
@@ -438,14 +438,14 @@ export default function BookModal({
               {book.shelves.map((s) => (
                 <span
                   key={s}
-                  className="inline-flex items-center gap-1 rounded-full bg-accent-soft px-2.5 py-1 text-xs font-medium text-accent-strong dark:bg-accent/15 dark:text-accent"
+                  className="inline-flex min-h-11 items-center gap-1 rounded-full bg-accent-soft px-3 text-xs font-medium text-accent-strong dark:bg-accent/15 dark:text-accent"
                 >
                   {s}
                   <button
                     type="button"
                     onClick={() => removeShelf(s)}
                     aria-label={`移除 ${s}`}
-                    className="-my-1 -mr-1.5 inline-flex shrink-0 items-center justify-center rounded-full p-1.5 transition-colors hover:text-rose-500"
+                    className="-my-1 -mr-2 inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full transition-colors hover:text-rose-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400/40 active:scale-[0.98]"
                   >
                     <X size={12} />
                   </button>
@@ -456,7 +456,7 @@ export default function BookModal({
                 onChange={(e) => setShelfInput(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && addShelf(shelfInput)}
                 placeholder="加標籤…"
-                className="h-8 w-28 py-1 text-xs"
+                className="min-h-11 w-32 py-2 text-base sm:text-xs"
               />
             </div>
             {shelfSuggestions.length > 0 && (
@@ -466,7 +466,7 @@ export default function BookModal({
                     key={s}
                     type="button"
                     onClick={() => addShelf(s)}
-                    className="rounded-full border border-slate-200 px-2 py-0.5 text-[11px] text-slate-500 transition-colors hover:border-accent hover:text-accent dark:border-slate-700 dark:text-slate-400"
+                    className="inline-flex min-h-11 items-center rounded-full border border-slate-200 px-3 text-[11px] text-slate-500 transition-colors hover:border-accent hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98] dark:border-slate-700 dark:text-slate-400"
                   >
                     + {s}
                   </button>
