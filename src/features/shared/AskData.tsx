@@ -469,7 +469,7 @@ export default function AskData() {
                 type="button"
                 onClick={() => void ask(s.text)}
                 disabled={busy}
-                className="group inline-flex items-center gap-1.5 rounded-full border border-slate-200/80 bg-white px-3.5 py-1.5 text-xs text-slate-600 transition duration-200 hover:border-accent/40 hover:bg-accent-soft/50 hover:text-accent-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700/60 dark:bg-slate-800 dark:text-slate-300 dark:shadow-none dark:hover:border-accent/40 dark:hover:bg-accent/10 dark:hover:text-accent"
+                className="group inline-flex min-h-11 items-center gap-1.5 rounded-full border border-slate-200/80 bg-white px-3.5 text-xs text-slate-600 transition duration-200 hover:border-accent/40 hover:bg-accent-soft/50 hover:text-accent-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700/60 dark:bg-slate-800 dark:text-slate-300 dark:shadow-none dark:hover:border-accent/40 dark:hover:bg-accent/10 dark:hover:text-accent"
               >
                 <s.icon size={13} className="text-slate-400 transition group-hover:text-accent" />
                 {s.text}
@@ -493,7 +493,7 @@ export default function AskData() {
           <Textarea
             ref={inputRef}
             rows={1}
-            className="max-h-40 min-h-[40px] flex-1 resize-none border-0 bg-transparent px-0 py-2 shadow-none focus:border-0 focus:ring-0 dark:bg-transparent"
+            className="max-h-40 min-h-11 flex-1 resize-none border-0 bg-transparent px-0 py-2 shadow-none focus:border-0 focus:ring-0 dark:bg-transparent"
             aria-label="問你嘅資料"
             placeholder="想問啲咩？例如：我今個星期最緊要做咩？"
             value={q}
