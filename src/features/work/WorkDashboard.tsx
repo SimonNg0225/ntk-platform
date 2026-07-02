@@ -177,8 +177,8 @@ function StatTile({
     >
       <div className="flex items-center justify-between">
         <span className="text-xs font-medium text-slate-400 dark:text-slate-500">{label}</span>
-        <span className={cx('flex h-8 w-8 items-center justify-center rounded-xl transition', t.chip)}>
-          <Icon size={16} />
+        <span className={cx('flex h-11 w-11 items-center justify-center rounded-xl transition', t.chip)}>
+          <Icon size={18} />
         </span>
       </div>
       <div>
@@ -790,8 +790,8 @@ function WorkBento({
         onClick={() => open('work-ai')}
         className="group flex cursor-pointer flex-col justify-between rounded-2xl border border-dashed border-accent/40 bg-accent-soft/50 p-4 text-left transition duration-200 hover:border-accent hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98] dark:bg-accent/10"
       >
-        <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-accent text-white transition">
-          <Zap size={16} />
+        <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-accent text-white transition">
+          <Zap size={18} />
         </span>
         <div>
           <p className="text-sm font-semibold text-accent-strong dark:text-accent">{t('wdash.askTeachingAi', { defaultValue: '問教學 AI' })}</p>
@@ -820,8 +820,8 @@ function LayoutEditor({
   return (
     <Card className="space-y-4 border-accent/30 bg-accent-soft/40 p-4 dark:border-accent/30 dark:bg-accent/10">
       <div className="flex items-start gap-3">
-        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-accent text-white">
-          <Settings2 size={16} />
+        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-accent text-white">
+          <Settings2 size={18} />
         </span>
         <div className="min-w-0 flex-1">
           <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">{t('wdash.customizeDashboard', { defaultValue: '自訂儀表板' })}</p>
@@ -869,7 +869,7 @@ function LayoutEditor({
             <li
               key={id}
               className={cx(
-                'flex items-center gap-3 px-3 py-2',
+                'flex min-h-14 items-center gap-3 px-3 py-2',
                 isHidden && 'opacity-50',
               )}
             >
@@ -881,6 +881,7 @@ function LayoutEditor({
                 <IconButton
                   label={t('wdash.moveUp', { defaultValue: '上移' })}
                   size="sm"
+                  className="min-h-11 min-w-11"
                   disabled={i === 0}
                   onClick={() => moveWidget(id, -1)}
                 >
@@ -889,6 +890,7 @@ function LayoutEditor({
                 <IconButton
                   label={t('wdash.moveDown', { defaultValue: '下移' })}
                   size="sm"
+                  className="min-h-11 min-w-11"
                   disabled={i === order.length - 1}
                   onClick={() => moveWidget(id, 1)}
                 >
@@ -897,6 +899,7 @@ function LayoutEditor({
                 <IconButton
                   label={isHidden ? t('wdash.show', { defaultValue: '顯示' }) : t('wdash.hide', { defaultValue: '隱藏' })}
                   size="sm"
+                  className="min-h-11 min-w-11"
                   active={!isHidden}
                   onClick={() => toggleWidget(id)}
                 >
@@ -942,7 +945,7 @@ function WidgetFrame({
         <Menu
           align="end"
           trigger={
-            <span className="rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-700">
+            <span className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-md text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-700">
               <Settings2 size={15} />
               <span className="sr-only">{t('wdash.sectionSettings', { label, defaultValue: `${meta.label} 區塊設定` })}</span>
             </span>
