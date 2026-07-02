@@ -231,9 +231,9 @@ export default function StatsView({
             return (
               <div
                 key={r.habit.id}
-                className="flex items-center gap-3 rounded-xl px-2 py-2 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/60"
+                className="flex min-h-11 items-center gap-3 rounded-xl px-2 py-2 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/60"
               >
-                <span className={cx('flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-base', spec.soft)}>
+                <span className={cx('flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-lg', spec.soft)}>
                   {r.habit.icon ?? '⭐'}
                 </span>
                 <div className="min-w-0 flex-1">
@@ -350,9 +350,9 @@ function WeekdayInsightCard({
 
       {best && (
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-          <div className="flex items-center gap-3 rounded-2xl bg-emerald-50 px-3 py-2.5 dark:bg-emerald-500/10">
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
-              <ThumbsUp size={16} />
+          <div className="flex min-h-14 items-center gap-3 rounded-2xl bg-emerald-50 px-3 py-2.5 dark:bg-emerald-500/10">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
+              <ThumbsUp size={18} />
             </span>
             <div className="min-w-0">
               <p className="text-[11px] font-medium uppercase tracking-wide text-emerald-600/80 dark:text-emerald-400/80">
@@ -368,9 +368,9 @@ function WeekdayInsightCard({
           </div>
 
           {showWorst && worst && (
-            <div className="flex items-center gap-3 rounded-2xl bg-rose-50 px-3 py-2.5 dark:bg-rose-500/10">
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-rose-500/15 text-rose-600 dark:text-rose-400">
-                <ThumbsDown size={16} />
+            <div className="flex min-h-14 items-center gap-3 rounded-2xl bg-rose-50 px-3 py-2.5 dark:bg-rose-500/10">
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-rose-500/15 text-rose-600 dark:text-rose-400">
+                <ThumbsDown size={18} />
               </span>
               <div className="min-w-0">
                 <p className="text-[11px] font-medium uppercase tracking-wide text-rose-600/80 dark:text-rose-400/80">
@@ -400,9 +400,9 @@ function WeekdayInsightCard({
               return (
                 <div
                   key={p.id}
-                  className="flex items-center gap-3 rounded-xl px-2 py-1.5 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/60"
+                  className="flex min-h-11 items-center gap-3 rounded-xl px-2 py-1.5 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/60"
                 >
-                  <span className={cx('flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-sm', spec.soft)}>
+                  <span className={cx('flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-base', spec.soft)}>
                     {h?.icon ?? '⭐'}
                   </span>
                   <span className="min-w-0 flex-1 truncate text-sm text-slate-700 dark:text-slate-200">
