@@ -101,6 +101,7 @@ import {
   PERSONAS,
   personaById,
 } from './aiAssistant/store'
+import { consumeAiHandoff } from './aiAssistant/handoff'
 import type { ContextRef, ThreadMeta, PersonaId } from './aiAssistant/types'
 import {
   builtinTemplates,
@@ -329,8 +330,9 @@ export default function AIAssistant() {
 
   // 切模式 → 重設
   useEffect(() => {
+    const handoffText = consumeAiHandoff(mode)
     setCurrentThreadId(null)
-    setSeed((s) => ({ text: '', n: s.n + 1 }))
+    setSeed((s) => ({ text: handoffText ?? '', n: s.n + 1 }))
     setStreaming(null)
     setSearch('')
     setShowArchived(false)
