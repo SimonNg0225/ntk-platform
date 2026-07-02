@@ -2,12 +2,9 @@ import { useMemo, useState, type ReactNode } from 'react'
 import {
   X,
   ChevronDown,
-  ChevronsDownUp,
-  ChevronsUpDown,
   PanelLeftClose,
   Lock,
   Pin,
-  Rows3,
   Search,
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
@@ -24,33 +21,17 @@ import { featName, groupLabel } from '../i18n/appEn'
 import ModeSwitcher from './ModeSwitcher'
 import AccountBox from './AccountBox'
 import { useAuth } from '../context/AuthContext'
+import type { ModeId } from '../modes/modes'
 
-const COLLAPSE_KEY = 'ntk.sidebarCollapsed'
-const ACCORDION_KEY = 'ntk.sidebarAccordion'
-
-function loadCollapsed(): Set<string> {
-  try {
-    const raw = localStorage.getItem(COLLAPSE_KEY)
-    return new Set(raw ? (JSON.parse(raw) as string[]) : [])
-  } catch {
-    return new Set()
-  }
+const DEFAULT_SIDEBAR_IDS: Record<ModeId, readonly string[]> = {
+  work: ['work-dashboard', 'work-ai', 'work-lesson-plan', 'work-generate', 'work-tasks', 'calendar'],
+  learning: ['learning-dashboard', 'learning-ai', 'learning-flashcards', 'learning-notes', 'learning-goals', 'calendar'],
 }
 
-function saveCollapsed(next: Set<string>) {
-  try {
-    localStorage.setItem(COLLAPSE_KEY, JSON.stringify([...next]))
-  } catch {
-    /* ignore */
-  }
-}
-
-function loadAccordion(): boolean {
-  try {
-    return localStorage.getItem(ACCORDION_KEY) === '1'
-  } catch {
-    return false
-  }
+function resolveDefaultFeatures(ids: readonly string[], mode: ModeId): Feature[] {
+  return ids
+    .map((id) => getFeature(id))
+    .filter((f): f is Feature => f != null && f.modes.includes(mode) && f.status === 'ready')
 }
 
 interface Props {
@@ -113,8 +94,15 @@ export default function Sidebar({
   const recentFeatures = resolveFeatures(recents, 12)
     .filter((f) => !pinnedIds.has(f.id))
     .slice(0, 4)
+  const highlightedIds = new Set([
+    ...pinnedFeatures.map((f) => f.id),
+    ...recentFeatures.map((f) => f.id),
+  ])
+  const defaultFeatures = resolveDefaultFeatures(DEFAULT_SIDEBAR_IDS[modeDef.id], modeDef.id)
+    .filter((f) => !highlightedIds.has(f.id))
+    .slice(0, 6)
 
-  // 篩選（Tier 2 ①）：有輸入就改顯示扁平結果，蓋過分組 / 釘選 / 最近。
+  // 搜尋時顯示完整扁平結果；預設狀態保持簡化。
   const [filter, setFilter] = useState('')
   const q = filter.trim().toLowerCase()
   const filtered = useMemo(() => {
@@ -126,48 +114,12 @@ export default function Sidebar({
     )
   }, [q, allItems, t])
 
-  // 分組收合 + 手風琴（Tier 3）
-  const [collapsed, setCollapsed] = useState<Set<string>>(loadCollapsed)
-  const [accordion, setAccordion] = useState<boolean>(loadAccordion)
-
-  const toggleGroup = (g: string) => {
-    setCollapsed((prev) => {
-      let next: Set<string>
-      if (accordion) {
-        // 一次只開一組：揀嗰組打開、其餘收起。
-        next = prev.has(g)
-          ? new Set(groups.map((x) => x.group).filter((n) => n !== g))
-          : new Set(groups.map((x) => x.group))
-      } else {
-        next = new Set(prev)
-        if (next.has(g)) next.delete(g)
-        else next.add(g)
-      }
-      saveCollapsed(next)
-      return next
-    })
-  }
-
-  const curNames = groups.map((g) => g.group)
-  const allCollapsed = curNames.length > 0 && curNames.every((n) => collapsed.has(n))
-  const toggleAllGroups = () => {
-    setCollapsed((prev) => {
+  const [openGroups, setOpenGroups] = useState<Set<string>>(() => new Set())
+  const toggleOpenGroup = (group: string) => {
+    setOpenGroups((prev) => {
       const next = new Set(prev)
-      if (allCollapsed) curNames.forEach((n) => next.delete(n))
-      else curNames.forEach((n) => next.add(n))
-      saveCollapsed(next)
-      return next
-    })
-  }
-
-  const toggleAccordion = () => {
-    setAccordion((a) => {
-      const next = !a
-      try {
-        localStorage.setItem(ACCORDION_KEY, next ? '1' : '0')
-      } catch {
-        /* ignore */
-      }
+      if (next.has(group)) next.delete(group)
+      else next.add(group)
       return next
     })
   }
@@ -334,7 +286,7 @@ export default function Sidebar({
         <ModeSwitcher />
       </div>
 
-      {/* 篩選 + 分組工具（Tier 2 ① / Tier 3） */}
+      {/* 搜尋 */}
       <div className="mt-3 flex items-center gap-1 px-4">
         <div className="relative flex-1">
           <Search
@@ -359,44 +311,6 @@ export default function Sidebar({
             </button>
           )}
         </div>
-        {!filter && (
-          <>
-            <button
-              onClick={toggleAccordion}
-              aria-pressed={accordion}
-              title={t('shell.accordion', { defaultValue: '手風琴模式（開一組自動收其他）' })}
-              aria-label={t('shell.accordion', { defaultValue: '手風琴模式' })}
-              className={cx(
-                'flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
-                accordion
-                  ? 'bg-accent/10 text-accent dark:bg-accent/20'
-                  : 'text-slate-400 hover:bg-black/[0.04] hover:text-slate-600 dark:hover:bg-white/[0.06] dark:hover:text-slate-300',
-              )}
-            >
-              <Rows3 size={15} strokeWidth={1.75} />
-            </button>
-            <button
-              onClick={toggleAllGroups}
-              title={
-                allCollapsed
-                  ? t('shell.expandAll', { defaultValue: '展開全部' })
-                  : t('shell.collapseAll', { defaultValue: '收起全部' })
-              }
-              aria-label={
-                allCollapsed
-                  ? t('shell.expandAll', { defaultValue: '展開全部' })
-                  : t('shell.collapseAll', { defaultValue: '收起全部' })
-              }
-              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-slate-400 transition hover:bg-black/[0.04] hover:text-slate-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:hover:bg-white/[0.06] dark:hover:text-slate-300"
-            >
-              {allCollapsed ? (
-                <ChevronsUpDown size={15} strokeWidth={1.75} />
-              ) : (
-                <ChevronsDownUp size={15} strokeWidth={1.75} />
-              )}
-            </button>
-          </>
-        )}
       </div>
 
       {/* 功能導覽 */}
@@ -469,31 +383,58 @@ export default function Sidebar({
               </div>
             )}
 
+            {defaultFeatures.length > 0 && (
+              <div>
+                <p className="px-3 pb-1 pt-5 text-[11px] font-semibold text-slate-400/90 dark:text-slate-500">
+                  {t('shell.commonEntrances', { defaultValue: '常用入口' })}
+                </p>
+                {defaultFeatures.map((f) => (
+                  <NavRow
+                    key={`d-${f.id}`}
+                    active={activeId === f.id}
+                    icon={f.icon}
+                    label={featName(t, f)}
+                    onSelect={() => choose(f.id)}
+                    pinId={f.id}
+                    pinned={pinnedIds.has(f.id)}
+                  />
+                ))}
+              </div>
+            )}
+
+            <div>
+              <p className="px-3 pb-1 pt-5 text-[11px] font-semibold text-slate-400/90 dark:text-slate-500">
+                {t('shell.featureCategories', { defaultValue: '功能分類' })}
+              </p>
+            </div>
+
             {groups.map((g) => {
-              const isCol = collapsed.has(g.group)
+              const hasActive = g.items.some((f) => f.id === activeId)
+              const isOpen = openGroups.has(g.group) || hasActive
               return (
                 <div key={g.group}>
                   <button
-                    onClick={() => toggleGroup(g.group)}
-                    aria-expanded={!isCol}
-                    className="flex w-full items-center gap-2 rounded-md px-3 pb-1 pt-5 text-[11px] font-semibold text-slate-400/90 transition-colors hover:text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:text-slate-500 dark:hover:text-slate-300"
+                    type="button"
+                    onClick={() => toggleOpenGroup(g.group)}
+                    aria-expanded={isOpen}
+                    className="flex min-h-10 w-full cursor-pointer items-center gap-2 rounded-xl px-2.5 text-[13px] font-semibold text-slate-600 transition hover:bg-black/[0.04] hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:text-slate-300 dark:hover:bg-white/[0.06] dark:hover:text-white"
                   >
-                    <span className="tracking-tight">{groupLabel(t, g.group)}</span>
-                    <span className="rounded-full bg-black/[0.05] px-1.5 text-[10px] font-medium tabular-nums text-slate-400 dark:bg-white/10 dark:text-slate-500">
+                    <span className="truncate tracking-tight">{groupLabel(t, g.group)}</span>
+                    <span className="ml-auto rounded-full bg-black/[0.05] px-1.5 text-[10px] font-medium tabular-nums text-slate-400 dark:bg-white/10 dark:text-slate-500">
                       {g.items.length}
                     </span>
                     <ChevronDown
                       size={13}
-                      className={cx('ml-auto transition-transform', isCol && '-rotate-90')}
+                      className={cx('shrink-0 transition-transform', !isOpen && '-rotate-90')}
                     />
                   </button>
                   <div
                     className={cx(
-                      'grid transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]',
-                      isCol ? 'grid-rows-[0fr] opacity-0' : 'grid-rows-[1fr] opacity-100',
+                      'grid transition-all duration-200 ease-[cubic-bezier(0.32,0.72,0,1)]',
+                      isOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0',
                     )}
                   >
-                    <div className="space-y-0.5 overflow-hidden">
+                    <div className="space-y-0.5 overflow-hidden pl-2">
                       {g.items.map((f) => (
                         <NavRow
                           key={f.id}
@@ -501,16 +442,16 @@ export default function Sidebar({
                           icon={f.icon}
                           label={featName(t, f)}
                           onSelect={() => choose(f.id)}
-                          tabIndex={isCol ? -1 : 0}
+                          tabIndex={isOpen ? undefined : -1}
                           pinId={f.id}
                           pinned={pinnedIds.has(f.id)}
                           badge={
-                    f.status === 'soon' ? (
-                      <SoonBadge />
-                    ) : f.requiresPaid && !isPaid ? (
-                      <LockBadge />
-                    ) : undefined
-                  }
+                            f.status === 'soon' ? (
+                              <SoonBadge />
+                            ) : f.requiresPaid && !isPaid ? (
+                              <LockBadge />
+                            ) : undefined
+                          }
                         />
                       ))}
                     </div>
