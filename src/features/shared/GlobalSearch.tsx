@@ -238,7 +238,7 @@ type ViewMode = 'grouped' | 'ranked' | 'recent'
 const GUIDE_STEPS: FeatureGuideStep[] = [
   {
     title: '打幾個字',
-    desc: '喺上方一格打關鍵字，即時掃晒筆記、題庫、資源、班別、學生、行事曆…',
+    desc: '喺上方一格打關鍵字，即時掃晒筆記、題庫、資源、教案、Inbox、行事曆…',
   },
   {
     title: '收窄範圍',
@@ -680,7 +680,7 @@ export default function GlobalSearch() {
               type="text"
               value={raw}
               onChange={(e) => setRaw(e.target.value)}
-              placeholder="搵筆記、題庫、資源、班別、學生、行事曆…"
+              placeholder="搵筆記、題庫、資源、教案、Inbox、行事曆…"
               aria-label="全域搜尋"
               className="min-w-0 flex-1 bg-transparent text-base text-slate-800 outline-none placeholder:text-slate-400 dark:text-slate-100 dark:placeholder:text-slate-500 sm:text-[15px]"
             />
@@ -1212,7 +1212,7 @@ function StartScreen({
   onUnpin: (q: string) => void
 }) {
   const { t } = useTranslation()
-  const examples = ['市場營銷', '5A', '會議', '死線', '目標']
+  const examples = ['市場營銷', '教案', '小測', '會議', 'deadline', 'Inbox']
   const isFresh = pins.length === 0 && recents.length === 0
   return (
     <div className="space-y-4">
