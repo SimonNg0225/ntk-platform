@@ -448,7 +448,7 @@ export default function Settings() {
               .map((r) => (
                 <li
                   key={r.key}
-                  className="flex min-h-9 items-center justify-between gap-2 border-b border-slate-100 py-1 text-sm dark:border-slate-800"
+                  className="flex min-h-11 items-center justify-between gap-2 border-b border-slate-100 py-1 text-sm dark:border-slate-800"
                 >
                   <span className="truncate text-slate-600 dark:text-slate-300">
                     {r.label}
@@ -549,7 +549,7 @@ function ToggleRow({
   onChange: (v: boolean) => void
 }) {
   return (
-    <div className="flex items-center justify-between gap-4 py-2">
+    <div className="flex min-h-14 items-center justify-between gap-4 py-2">
       <div className="min-w-0">
         <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
           {label}
@@ -562,13 +562,13 @@ function ToggleRow({
         aria-checked={checked}
         aria-label={label}
         onClick={() => onChange(!checked)}
-        className={`relative inline-flex h-11 w-[68px] shrink-0 cursor-pointer items-center rounded-full px-1 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 ${
+        className={`relative inline-flex h-11 w-20 shrink-0 cursor-pointer items-center rounded-full px-1 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 ${
           checked ? 'bg-accent' : 'bg-slate-300 dark:bg-slate-600'
         }`}
       >
         <span
-          className={`inline-block h-7 w-7 transform rounded-full bg-white shadow-sm transition-transform ${
-            checked ? 'translate-x-8' : 'translate-x-0'
+          className={`inline-block h-9 w-9 transform rounded-full bg-white shadow-sm transition-transform ${
+            checked ? 'translate-x-9' : 'translate-x-0'
           }`}
         />
       </button>
