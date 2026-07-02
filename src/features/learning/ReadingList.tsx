@@ -952,7 +952,7 @@ function BookCoverCard({
                     onQuickStatus(b, 'reading')
                   }
                 }}
-                className="rounded-lg bg-accent-soft px-1.5 py-1 text-center text-[11px] font-medium text-accent-strong transition-colors hover:bg-accent hover:text-white dark:bg-accent/15 dark:text-accent"
+                className="flex min-h-11 items-center justify-center rounded-lg bg-accent-soft px-2 text-center text-[11px] font-medium text-accent-strong transition-colors hover:bg-accent hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98] dark:bg-accent/15 dark:text-accent"
               >
                 {t('reading.quickReading', { defaultValue: '在讀' })}
               </span>
@@ -972,7 +972,7 @@ function BookCoverCard({
                     onQuickStatus(b, 'done')
                   }
                 }}
-                className="rounded-lg bg-emerald-50 px-1.5 py-1 text-center text-[11px] font-medium text-emerald-700 transition-colors hover:bg-emerald-500 hover:text-white dark:bg-emerald-500/10 dark:text-emerald-300"
+                className="flex min-h-11 items-center justify-center rounded-lg bg-emerald-50 px-2 text-center text-[11px] font-medium text-emerald-700 transition-colors hover:bg-emerald-500 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/40 active:scale-[0.98] dark:bg-emerald-500/10 dark:text-emerald-300"
               >
                 {t('reading.quickDone', { defaultValue: '讀完' })}
               </span>
@@ -1447,7 +1447,7 @@ function AddBookModal({
                 type="button"
                 onClick={() => setStatus(s)}
                 className={cx(
-                  'rounded-lg border px-3 py-1.5 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98]',
+                  'inline-flex min-h-11 items-center rounded-lg border px-3 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98]',
                   status === s
                     ? 'border-accent bg-accent text-white'
                     : 'border-slate-200 text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800',
