@@ -1256,7 +1256,7 @@ function AllView(props: {
           {ordered.map((p) => (
             <ScopeChip
               key={p.id}
-              label={`${p.emoji ? p.emoji + ' ' : ''}${p.name}`}
+              label={p.name}
               dot={projColorCls(p.color).dot}
               count={projCount(p.id)}
               active={activeProject === p.id}
@@ -1283,7 +1283,7 @@ function AllView(props: {
           {ordered.map((p) => (
             <SidebarItem
               key={p.id}
-              label={`${p.emoji ? p.emoji + ' ' : ''}${p.name}`}
+              label={p.name}
               icon={
                 <span className={cx('h-2.5 w-2.5 rounded-full', projColorCls(p.color).dot)} />
               }
@@ -1657,7 +1657,7 @@ function BulkBar({
           { id: 'inbox', label: '收件匣', icon: InboxIcon, onSelect: () => onProject(undefined) },
           ...projects.map((p) => ({
             id: p.id,
-            label: `${p.emoji ? p.emoji + ' ' : ''}${p.name}`,
+            label: p.name,
             onSelect: () => onProject(p.id),
           })),
         ]}
@@ -1687,7 +1687,6 @@ function ProjectManager({
   const toast = useToast()
   const confirm = useConfirm()
   const [name, setName] = useState('')
-  const [emoji, setEmoji] = useState('')
   const [color, setColor] = useState(PROJ_COLORS[0])
 
   const ordered = [...projects].sort((a, b) => a.order - b.order)
@@ -1698,13 +1697,11 @@ function ProjectManager({
     const maxOrder = projects.reduce((m, p) => Math.max(m, p.order), -1)
     projectsCol.add({
       name: n,
-      emoji: emoji.trim() || undefined,
       color,
       order: maxOrder + 1,
       createdAt: new Date().toISOString(),
     })
     setName('')
-    setEmoji('')
     toast.success('已新增專案')
   }
 
@@ -1744,7 +1741,6 @@ function ProjectManager({
               className="flex items-center gap-3 rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-700"
             >
               <span className={cx('h-3 w-3 rounded-full', projColorCls(p.color).dot)} />
-              <span className="text-base leading-none">{p.emoji}</span>
               <span className="flex-1 truncate text-sm font-medium text-slate-700 dark:text-slate-200">
                 {p.name}
               </span>
@@ -1759,15 +1755,7 @@ function ProjectManager({
         </div>
 
         <div className="space-y-3 rounded-xl border border-slate-200 p-3 dark:border-slate-700">
-          <div className="grid grid-cols-[auto_1fr] gap-2">
-            <Field label="圖示">
-              <Input
-                value={emoji}
-                onChange={(e) => setEmoji(e.target.value.slice(0, 2))}
-                placeholder="📚"
-                className="w-16 text-center"
-              />
-            </Field>
+          <div className="grid gap-2">
             <Field label="名稱">
               <Input
                 value={name}
@@ -1845,34 +1833,43 @@ function TemplatePicker({
         揀個常用流程，一鍵鋪好成組任務（含優先級、相對到期、子任務）—— 例如批改一份練習嘅完整步驟。
       </p>
       <div className="space-y-2">
-        {templates.map((t) => (
-          <button
-            key={t.id}
-            type="button"
-            onClick={() => apply(t.id)}
-            className="group flex w-full items-center gap-3 rounded-2xl border border-slate-200 p-3 text-left transition duration-200 hover:-translate-y-0.5 hover:border-accent hover:shadow-md active:scale-[0.98] dark:border-slate-700 dark:hover:border-accent/60"
-          >
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent-soft text-xl dark:bg-accent/15">
-              {t.emoji ?? '📋'}
-            </span>
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-2">
-                <p className="truncate text-sm font-semibold text-slate-800 dark:text-slate-100">
-                  {t.name}
+        {templates.map((t) => {
+          const TemplateIcon = templateIconOf(t)
+          return (
+            <button
+              key={t.id}
+              type="button"
+              onClick={() => apply(t.id)}
+              className="group flex w-full items-center gap-3 rounded-2xl border border-slate-200 p-3 text-left transition duration-200 hover:-translate-y-0.5 hover:border-accent hover:shadow-md active:scale-[0.98] dark:border-slate-700 dark:hover:border-accent/60"
+            >
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent-soft text-accent dark:bg-accent/15">
+                <TemplateIcon size={20} />
+              </span>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2">
+                  <p className="truncate text-sm font-semibold text-slate-800 dark:text-slate-100">
+                    {t.name}
+                  </p>
+                  <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold tabular-nums text-slate-500 dark:bg-slate-700/60 dark:text-slate-300">
+                    <ListChecks size={10} />
+                    {t.items.length} 項
+                  </span>
+                </div>
+                <p className="mt-0.5 truncate text-xs text-slate-400 dark:text-slate-500">
+                  {t.items.map((i) => i.text).join(' · ')}
                 </p>
-                <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold tabular-nums text-slate-500 dark:bg-slate-700/60 dark:text-slate-300">
-                  <ListChecks size={10} />
-                  {t.items.length} 項
-                </span>
               </div>
-              <p className="mt-0.5 truncate text-xs text-slate-400 dark:text-slate-500">
-                {t.items.map((i) => i.text).join(' · ')}
-              </p>
-            </div>
-            <Plus size={16} className="shrink-0 text-accent transition group-hover:translate-x-0.5" />
-          </button>
-        ))}
+              <Plus size={16} className="shrink-0 text-accent transition group-hover:translate-x-0.5" />
+            </button>
+          )
+        })}
       </div>
     </Modal>
   )
+}
+
+function templateIconOf(template: TaskTemplate): LucideIcon {
+  if (template.id.includes('marking')) return ClipboardCheck
+  if (template.id.includes('lesson')) return ListTodo
+  return ListChecks
 }

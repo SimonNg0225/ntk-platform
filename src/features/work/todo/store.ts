@@ -18,7 +18,6 @@ export const projectsCol = createCollection<Project>('todo_projects', [
     id: 'proj-teaching',
     name: '教學',
     color: 'blue',
-    emoji: '📚',
     order: 0,
     createdAt: new Date().toISOString(),
   },
@@ -26,7 +25,6 @@ export const projectsCol = createCollection<Project>('todo_projects', [
     id: 'proj-admin',
     name: '行政',
     color: 'amber',
-    emoji: '🗂️',
     order: 1,
     createdAt: new Date().toISOString(),
   },
@@ -37,7 +35,6 @@ export const templatesCol = createCollection<TaskTemplate>('todo_templates', [
   {
     id: 'tmpl-marking',
     name: '批改一份練習',
-    emoji: '✍️',
     items: [
       { text: '收齊全班功課', priority: 2 },
       { text: '批改 + 寫評語', priority: 1, dueOffset: 2 },
@@ -49,7 +46,6 @@ export const templatesCol = createCollection<TaskTemplate>('todo_templates', [
   {
     id: 'tmpl-lesson',
     name: '備一堂新課',
-    emoji: '🧑‍🏫',
     items: [
       { text: '睇課程綱要 + 定學習目標', priority: 2 },
       {

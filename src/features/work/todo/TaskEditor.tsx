@@ -333,7 +333,6 @@ export function TaskEditor({
                 <option value="">收件匣</option>
                 {projects.map((p) => (
                   <option key={p.id} value={p.id}>
-                    {p.emoji ? `${p.emoji} ` : ''}
                     {p.name}
                   </option>
                 ))}
@@ -375,7 +374,7 @@ export function TaskEditor({
             {project && (
               <Badge tone="slate" className="gap-1">
                 <span className={cx('h-1.5 w-1.5 rounded-full', projColorCls(project.color).dot)} />
-                {project.emoji} {project.name}
+                {project.name}
               </Badge>
             )}
           </div>
