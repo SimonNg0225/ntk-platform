@@ -837,7 +837,7 @@ function RecordsTab({
         {active && (
           <button
             onClick={() => setFilters(EMPTY_FILTERS)}
-            className="inline-flex items-center gap-1 text-xs text-slate-400 hover:text-rose-500"
+            className="inline-flex min-h-11 items-center gap-1 rounded-lg px-2 text-xs text-slate-400 transition hover:text-rose-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
           >
             <X size={12} /> 清除篩選
           </button>
@@ -1962,8 +1962,9 @@ function TxFormModal({
           </h3>
         </div>
         <button
+          type="button"
           onClick={onClose}
-          className="-mr-1 mt-0.5 shrink-0 rounded-lg p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:hover:bg-slate-700"
+          className="-mr-1 mt-0.5 inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:hover:bg-slate-700"
           aria-label="關閉"
         >
           <X size={18} />
@@ -2015,7 +2016,7 @@ function TxFormModal({
                 key={q}
                 type="button"
                 onClick={() => setAmount(String(q))}
-                className="rounded-full border border-slate-200/80 bg-white px-3 py-1 text-xs font-medium tabular-nums text-slate-600 shadow-xs transition hover:border-accent/40 hover:bg-accent-soft hover:text-accent-strong active:scale-[0.98] dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:shadow-none dark:hover:bg-accent/15 dark:hover:text-accent"
+                className="inline-flex min-h-11 items-center rounded-full border border-slate-200/80 bg-white px-3 text-xs font-medium tabular-nums text-slate-600 shadow-xs transition hover:border-accent/40 hover:bg-accent-soft hover:text-accent-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98] dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:shadow-none dark:hover:bg-accent/15 dark:hover:text-accent"
               >
                 {q}
               </button>
@@ -2159,8 +2160,9 @@ function ImportTxModal({
           </h3>
         </div>
         <button
+          type="button"
           onClick={onClose}
-          className="-mr-1 mt-0.5 shrink-0 rounded-lg p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:hover:bg-slate-700"
+          className="-mr-1 mt-0.5 inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:hover:bg-slate-700"
           aria-label="關閉"
         >
           <X size={18} />
