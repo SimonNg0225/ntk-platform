@@ -334,14 +334,14 @@ export default function TeachGuide() {
                   aria-label={r.topicName}
                   aria-pressed={active}
                   className={cx(
-                    'group flex w-full items-center gap-2.5 rounded-xl border bg-white px-3 py-2.5 text-left transition duration-200 hover:border-slate-300 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.99] dark:bg-slate-800 dark:hover:border-slate-600',
+                    'group flex min-h-14 w-full items-center gap-2.5 rounded-xl border bg-white px-3 py-2.5 text-left transition duration-200 hover:border-slate-300 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.99] dark:bg-slate-800 dark:hover:border-slate-600',
                     active
                       ? 'border-accent/40 ring-1 ring-accent/30'
                       : 'border-slate-200/80 dark:border-slate-700/60',
                   )}
                 >
-                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
-                    <Compass size={16} />
+                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
+                    <Compass size={18} />
                   </span>
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-sm font-medium text-slate-700 dark:text-slate-200">
@@ -356,6 +356,7 @@ export default function TeachGuide() {
                       label={t('teachGuide.delete', { defaultValue: '刪除' })}
                       size="sm"
                       tone="danger"
+                      className="min-h-11 min-w-11"
                       onClick={() => void del(r.id)}
                     >
                       <Trash2 size={14} />
