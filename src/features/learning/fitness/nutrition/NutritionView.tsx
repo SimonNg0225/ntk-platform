@@ -206,10 +206,10 @@ function MiniStat({
           {label}
         </span>
         <span
-          className="flex h-8 w-8 items-center justify-center rounded-xl"
+          className="flex h-11 w-11 items-center justify-center rounded-xl"
           style={{ backgroundColor: `${color}1f`, color }}
         >
-          <I size={16} />
+          <I size={18} />
         </span>
       </div>
       <p className="mt-3 flex items-baseline gap-1 pl-1">
@@ -1073,14 +1073,14 @@ export default function NutritionView() {
                     {g.entries.map((e) => (
                       <li
                         key={e.id}
-                        className="group flex items-center gap-3 py-2.5"
+                        className="group flex min-h-14 items-center gap-3 py-2.5"
                       >
                         <div
-                          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg"
+                          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl"
                           style={{ backgroundColor: `${m.color}1a`, color: m.color }}
                           aria-hidden="true"
                         >
-                          <Flame size={16} />
+                          <Flame size={18} />
                         </div>
                         <div className="min-w-0 flex-1">
                           <p className="truncate text-sm font-medium text-slate-700 dark:text-slate-200">
