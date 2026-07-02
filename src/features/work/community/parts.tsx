@@ -77,7 +77,7 @@ export function Toggle({
       role="switch"
       aria-checked={on}
       onClick={() => onChange(!on)}
-      className="flex w-full items-center justify-between gap-3 text-left"
+      className="flex w-full items-center justify-between gap-3 rounded-xl text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
     >
       <span className="min-w-0">
         <span className="block text-sm text-slate-700 dark:text-slate-200">{label}</span>
@@ -85,11 +85,11 @@ export function Toggle({
       </span>
       <span
         className={cx(
-          'relative h-5 w-9 shrink-0 rounded-full transition',
+          'relative h-8 w-14 shrink-0 rounded-full transition-colors',
           on ? 'bg-accent' : 'bg-slate-300 dark:bg-slate-600',
         )}
       >
-        <span className={cx('absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-all', on ? 'left-[18px]' : 'left-0.5')} />
+        <span className={cx('absolute top-1 h-6 w-6 rounded-full bg-white shadow transition-all', on ? 'left-7' : 'left-1')} />
       </span>
     </button>
   )
