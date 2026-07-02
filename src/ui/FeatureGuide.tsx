@@ -71,7 +71,7 @@ export function FeatureGuide({
           type="button"
           onClick={() => setOpen(false)}
           aria-label={t('featureGuide.close', { defaultValue: '收起教學' })}
-          className="inline-flex shrink-0 items-center rounded-lg px-2 py-1 text-xs font-medium text-slate-400 transition hover:bg-slate-50 hover:text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98] dark:text-slate-500 dark:hover:bg-slate-800/60 dark:hover:text-slate-300"
+          className="inline-flex min-h-11 shrink-0 items-center rounded-lg px-3 text-xs font-medium text-slate-400 transition hover:bg-slate-50 hover:text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98] dark:text-slate-500 dark:hover:bg-slate-800/60 dark:hover:text-slate-300"
         >
           {t('featureGuide.dismiss', { defaultValue: '知道喇' })}
           <X size={13} className="ml-1" />
@@ -113,7 +113,7 @@ export function GuideHelpButton({
       type="button"
       onClick={() => toggleFeatureGuide(storageKey)}
       title={t('featureGuide.toggleHint', { defaultValue: '開／關功能教學' })}
-      className="inline-flex items-center gap-1.5 rounded-xl bg-white/15 px-3 py-1.5 text-sm font-medium backdrop-blur-sm transition hover:bg-white/25 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
+      className="inline-flex min-h-11 items-center gap-1.5 rounded-xl bg-white/15 px-3 text-sm font-medium backdrop-blur-sm transition hover:bg-white/25 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
     >
       <Lightbulb size={15} />
       {label ?? t('featureGuide.reopen', { defaultValue: '點用？' })}
