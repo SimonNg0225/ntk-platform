@@ -24,7 +24,7 @@ export const COLLECTION_LABELS: Record<string, CollectionMeta> = {
   // 共用骨幹
   topics: { label: '課題', unit: '個' },
   classes: { label: '班別', unit: '班' },
-  students: { label: '學生', unit: '位' },
+  students: { label: '學生資料', unit: '筆' },
   // 工作模式
   class_progress: { label: '課程進度', unit: '項' },
   questions: { label: '題庫題目', unit: '條' },
