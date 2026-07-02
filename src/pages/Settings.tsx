@@ -296,7 +296,7 @@ export default function Settings() {
             <button
               key={t.id}
               onClick={() => setTheme(t.id)}
-              className={`flex flex-col items-center gap-1.5 rounded-xl border p-4 text-sm font-medium transition ${
+              className={`flex flex-col items-center gap-1.5 rounded-xl border p-4 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 ${
                 theme === t.id
                   ? 'border-accent bg-accent-soft text-accent-strong dark:bg-accent/20 dark:text-accent'
                   : 'border-slate-200 text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800'
@@ -339,7 +339,7 @@ export default function Settings() {
             <button
               key={l.id}
               onClick={() => setLanguage(l.id)}
-              className={`rounded-xl border p-3 text-sm font-medium transition ${
+              className={`rounded-xl border p-3 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 ${
                 i18n.language === l.id
                   ? 'border-accent bg-accent-soft text-accent-strong dark:bg-accent/20 dark:text-accent'
                   : 'border-slate-200 text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800'
@@ -396,7 +396,7 @@ export default function Settings() {
           <select
             value={subjectPackId}
             onChange={(e) => setSubjectPackId(e.target.value)}
-            className="w-full rounded-lg border border-[color:var(--border)] bg-[color:var(--surface)] px-3 py-2 text-base sm:text-sm text-slate-800 outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/30 dark:text-slate-100"
+            className="min-h-11 w-full rounded-lg border border-[color:var(--border)] bg-[color:var(--surface)] px-3 text-base sm:text-sm text-slate-800 outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/30 dark:text-slate-100"
           >
             <option value="">未指定（全 app 顯示中性字眼）</option>
             {SUBJECT_PACKS.map((p) => (
