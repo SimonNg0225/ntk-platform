@@ -48,7 +48,7 @@ export default function CookieConsent() {
               rejectAnalytics()
               setDecided(true)
             }}
-            className="rounded-lg border border-[color:var(--border-strong)] px-4 py-2 text-sm font-semibold text-slate-600 transition hover:bg-[color:var(--surface-2)] dark:text-slate-300"
+            className="min-h-11 rounded-lg border border-[color:var(--border-strong)] px-4 py-2 text-sm font-semibold text-slate-600 transition hover:bg-[color:var(--surface-2)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:text-slate-300"
           >
             {t('cookie.reject')}
           </button>
@@ -58,7 +58,7 @@ export default function CookieConsent() {
               loadCrisp()
               setDecided(true)
             }}
-            className="rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-white transition hover:bg-accent-strong"
+            className="min-h-11 rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-white transition hover:bg-accent-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
           >
             {t('cookie.accept')}
           </button>
