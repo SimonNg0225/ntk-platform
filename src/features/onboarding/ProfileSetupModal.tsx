@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react'
-import { Check } from 'lucide-react'
+import { Check, ChevronDown } from 'lucide-react'
 import { Modal, Button, Field, Input, Select, Textarea, Avatar, cx } from '../../ui'
 import { useToast } from '../../context/ToastContext'
 import { useSettings } from '../../context/SettingsContext'
@@ -117,6 +117,11 @@ export default function ProfileSetupModal({
   const [avatarPreset, setAvatarPreset] = useState<string | null>(null)
   const [agreed, setAgreed] = useState(false)
   const [busy, setBusy] = useState(false)
+  const [advancedOpen, setAdvancedOpen] = useState(mode === 'edit')
+
+  useEffect(() => {
+    if (open) setAdvancedOpen(isEdit)
+  }, [open, isEdit])
 
   // 已有 profile（0014 前嘅舊用戶 / 喺資源分享區填過）→ 預填，免重新輸入。
   useEffect(() => {
@@ -145,6 +150,7 @@ export default function ProfileSetupModal({
   }, [open])
 
   const displayName = (custom.trim() || buildDisplayName(surname, honorific)).trim()
+  const optionalOpen = advancedOpen
 
   const toggle = <T extends string>(list: T[], set: (v: T[]) => void, id: T) =>
     set(list.includes(id) ? list.filter((x) => x !== id) : [...list, id])
@@ -215,10 +221,7 @@ export default function ProfileSetupModal({
               {isEdit ? (
                 '改完即時更新；資源分享區同論壇都會跟住更新。'
               ) : (
-                <>
-                  花一分鐘填好，資源分享區同論壇就會用呢個身份。
-                  <span className="text-rose-500">*</span> 為必填。
-                </>
+                '先填署名、身份、科目就可以開始；其他公開資料可之後再補。'
               )}
             </p>
           </div>
@@ -263,92 +266,118 @@ export default function ProfileSetupModal({
           </div>
         </Field>
 
-        {/* 任教學制（選填） */}
-        <Field label="任教學制 / 年級（選填）">
-          <div className="flex flex-wrap gap-2">
-            {BANDS.map((b) => (
-              <Chip key={b.id} on={bands.includes(b.id)} onClick={() => toggle(bands, setBands, b.id)}>
-                {b.label}
-              </Chip>
-            ))}
-          </div>
-        </Field>
+        <div className="rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface-2)] p-3">
+          <button
+            type="button"
+            onClick={() => setAdvancedOpen((v) => !v)}
+            aria-expanded={optionalOpen}
+            className="flex w-full cursor-pointer items-center justify-between gap-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+          >
+            <span>
+              <span className="block text-sm font-semibold text-slate-800 dark:text-slate-100">
+                {isEdit ? '公開資料' : '選填資料'}
+              </span>
+              <span className="mt-0.5 block text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+                學制、學校、簡介、頭像；唔填都可以先開始使用。
+              </span>
+            </span>
+            <ChevronDown
+              aria-hidden="true"
+              className={cx('h-5 w-5 shrink-0 text-slate-400 transition-transform', optionalOpen && 'rotate-180')}
+            />
+          </button>
 
-        {/* 學校（選填） */}
-        <Field label="學校（選填）">
-          <Input value={school} onChange={(e) => setSchool(e.target.value)} placeholder="例：聖文德書院" maxLength={30} />
-        </Field>
-        <label className="flex cursor-pointer items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
-          <input
-            type="checkbox"
-            checked={showSchool}
-            onChange={(e) => setShowSchool(e.target.checked)}
-            className="h-4 w-4 rounded border-slate-300 text-accent focus:ring-accent/40 dark:border-slate-600 dark:bg-slate-700"
-          />
-          喺署名顯示學校（預設唔顯示，保障私隱）
-        </label>
+          {optionalOpen && (
+            <div className="mt-4 space-y-4 border-t border-[color:var(--border)] pt-4">
+              {/* 任教學制（選填） */}
+              <Field label="任教學制 / 年級（選填）">
+                <div className="flex flex-wrap gap-2">
+                  {BANDS.map((b) => (
+                    <Chip key={b.id} on={bands.includes(b.id)} onClick={() => toggle(bands, setBands, b.id)}>
+                      {b.label}
+                    </Chip>
+                  ))}
+                </div>
+              </Field>
 
-        {/* 簡介（選填） */}
-        <Field label="簡介（選填）">
-          <Textarea rows={2} value={bio} onChange={(e) => setBio(e.target.value)} placeholder="一兩句介紹你教咩 / 風格" maxLength={120} />
-        </Field>
+              {/* 學校（選填） */}
+              <Field label="學校（選填）">
+                <Input value={school} onChange={(e) => setSchool(e.target.value)} placeholder="例：聖文德書院" maxLength={30} />
+              </Field>
+              <label className="flex cursor-pointer items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
+                <input
+                  type="checkbox"
+                  checked={showSchool}
+                  onChange={(e) => setShowSchool(e.target.checked)}
+                  className="h-4 w-4 rounded border-slate-300 text-accent focus:ring-accent/40 dark:border-slate-600 dark:bg-slate-700"
+                />
+                喺署名顯示學校（預設唔顯示，保障私隱）
+              </label>
 
-        {/* 揀頭像（教師形象 persona） */}
-        <Field label="頭像">
-          <div className="flex items-start gap-4">
-            <div className="flex shrink-0 flex-col items-center gap-1">
-              <Avatar preset={avatarPreset} color={avatarColor} name={displayName} size="xl" />
-              <span className="text-[11px] text-slate-400">預覽</span>
-            </div>
-            <div className="min-w-0 flex-1 space-y-3">
-              {PERSONA_GROUPS.map(({ g, label }) => (
-                <div key={g}>
-                  <p className="mb-1.5 text-[11px] font-medium text-slate-500 dark:text-slate-400">
-                    {label}
-                  </p>
-                  <div className="flex flex-wrap gap-2">
-                    {PERSONAS_BY_GENDER[g].map((p) => (
-                      <PersonaTile
-                        key={p.id}
-                        id={p.id}
-                        selected={avatarPreset === p.id}
-                        color={avatarColor}
-                        onPick={() => setAvatarPreset(p.id)}
-                      />
+              {/* 簡介（選填） */}
+              <Field label="簡介（選填）">
+                <Textarea rows={2} value={bio} onChange={(e) => setBio(e.target.value)} placeholder="一兩句介紹你教咩 / 風格" maxLength={120} />
+              </Field>
+
+              {/* 揀頭像（教師形象 persona） */}
+              <Field label="頭像">
+                <div className="flex items-start gap-4">
+                  <div className="flex shrink-0 flex-col items-center gap-1">
+                    <Avatar preset={avatarPreset} color={avatarColor} name={displayName} size="xl" />
+                    <span className="text-[11px] text-slate-400">預覽</span>
+                  </div>
+                  <div className="min-w-0 flex-1 space-y-3">
+                    {PERSONA_GROUPS.map(({ g, label }) => (
+                      <div key={g}>
+                        <p className="mb-1.5 text-[11px] font-medium text-slate-500 dark:text-slate-400">
+                          {label}
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                          {PERSONAS_BY_GENDER[g].map((p) => (
+                            <PersonaTile
+                              key={p.id}
+                              id={p.id}
+                              selected={avatarPreset === p.id}
+                              color={avatarColor}
+                              onPick={() => setAvatarPreset(p.id)}
+                            />
+                          ))}
+                        </div>
+                      </div>
                     ))}
+                    <button
+                      type="button"
+                      onClick={() => setAvatarPreset(null)}
+                      className="text-xs font-medium text-slate-500 underline underline-offset-2 transition hover:text-accent dark:text-slate-400"
+                    >
+                      唔用形象 · 用文字頭像（署名首字）
+                    </button>
                   </div>
                 </div>
-              ))}
-              <button
-                type="button"
-                onClick={() => setAvatarPreset(null)}
-                className="text-xs font-medium text-slate-500 underline underline-offset-2 transition hover:text-accent dark:text-slate-400"
-              >
-                唔用形象 · 用文字頭像（署名首字）
-              </button>
-            </div>
-          </div>
-        </Field>
+              </Field>
 
-        {/* 頭像顏色 */}
-        <Field label="頭像顏色">
-          <div className="flex gap-2">
-            {AVATAR_COLORS.map((c) => (
-              <button
-                key={c}
-                type="button"
-                onClick={() => setAvatarColor(c)}
-                aria-label={`頭像色 ${c}`}
-                aria-pressed={avatarColor === c}
-                className={cx(
-                  'h-7 w-7 rounded-full ring-2 ring-offset-2 ring-offset-[color:var(--surface)] transition',
-                  avatarColor === c ? 'ring-accent' : 'ring-transparent',
-                )}
-                style={{ background: `#${c}` }}
-              />
-            ))}
-          </div>
-        </Field>
+              {/* 頭像顏色 */}
+              <Field label="頭像顏色">
+                <div className="flex gap-2">
+                  {AVATAR_COLORS.map((c) => (
+                    <button
+                      key={c}
+                      type="button"
+                      onClick={() => setAvatarColor(c)}
+                      aria-label={`頭像色 ${c}`}
+                      aria-pressed={avatarColor === c}
+                      className={cx(
+                        'h-7 w-7 rounded-full ring-2 ring-offset-2 ring-offset-[color:var(--surface)] transition',
+                        avatarColor === c ? 'ring-accent' : 'ring-transparent',
+                      )}
+                      style={{ background: `#${c}` }}
+                    />
+                  ))}
+                </div>
+              </Field>
+            </div>
+          )}
+        </div>
 
         {/* 同意條款（連結開新分頁，唔會誤觸 checkbox）—— 只首次登記要 */}
         {!isEdit && (
