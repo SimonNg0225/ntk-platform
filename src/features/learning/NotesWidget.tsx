@@ -456,7 +456,7 @@ export default function NotesWidget() {
               align="end"
               label={t('notes.backup', { defaultValue: '備份' })}
               trigger={
-                <span className="inline-flex h-9 items-center gap-1.5 rounded-xl bg-white/15 px-3 text-sm font-medium text-white backdrop-blur-sm transition hover:bg-white/25 active:scale-[0.98]">
+                <span className="inline-flex min-h-11 items-center gap-1.5 rounded-xl bg-white/15 px-3 text-sm font-medium text-white backdrop-blur-sm transition hover:bg-white/25 active:scale-[0.98]">
                   <Archive size={15} />
                   <span className="hidden sm:inline">{t('notes.backup', { defaultValue: '備份' })}</span>
                 </span>
@@ -493,7 +493,7 @@ export default function NotesWidget() {
               onClick={() => setShowStats((v) => !v)}
               aria-pressed={showStats}
               className={cx(
-                'inline-flex h-9 items-center gap-1.5 rounded-xl px-3 text-sm font-medium backdrop-blur-sm transition active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50',
+                'inline-flex min-h-11 items-center gap-1.5 rounded-xl px-3 text-sm font-medium backdrop-blur-sm transition active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50',
                 showStats ? 'bg-white text-accent-strong' : 'bg-white/15 text-white hover:bg-white/25',
               )}
             >
@@ -503,7 +503,7 @@ export default function NotesWidget() {
             <button
               type="button"
               onClick={() => createNote()}
-              className="inline-flex h-9 items-center gap-1.5 rounded-xl bg-white px-3.5 text-sm font-semibold text-accent-strong shadow-sm transition hover:bg-white/90 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
+              className="inline-flex min-h-11 items-center gap-1.5 rounded-xl bg-white px-3.5 text-sm font-semibold text-accent-strong shadow-sm transition hover:bg-white/90 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
             >
               <Plus size={16} />
               {t('notes.writeOne', { defaultValue: '寫一頁' })}
@@ -698,7 +698,7 @@ export default function NotesWidget() {
                 <Select
                   value={sort}
                   onChange={(e) => setSort(e.target.value as SortKey)}
-                  className="h-8 w-auto py-1 text-xs"
+                  className="min-h-11 w-auto py-2 text-base sm:text-xs"
                 >
                   <option value="updated">最近修改</option>
                   <option value="created">建立時間</option>
@@ -785,7 +785,7 @@ export default function NotesWidget() {
                       : new Set(visible.map((n) => n.id)),
                   )
                 }
-                className="text-xs font-medium text-accent hover:text-accent-strong"
+                className="inline-flex min-h-11 items-center rounded-lg px-3 text-xs font-medium text-accent transition hover:bg-accent-soft hover:text-accent-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98] dark:hover:bg-accent/15"
               >
                 {checked.size === visible.length && visible.length > 0
                   ? '取消全選'
@@ -893,7 +893,7 @@ export default function NotesWidget() {
             <Card className="flex h-full min-h-[28rem] flex-col rounded-2xl border-slate-200/80 p-3 dark:border-slate-700/60 sm:p-4">
               <button
                 onClick={() => setMobilePane('list')}
-                className="mb-2 inline-flex items-center gap-1 self-start text-xs font-medium text-slate-500 transition hover:text-slate-700 active:scale-[0.98] dark:text-slate-400 dark:hover:text-slate-200 lg:hidden"
+                className="mb-2 inline-flex min-h-11 items-center gap-1 self-start rounded-lg px-3 text-xs font-medium text-slate-500 transition hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98] dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200 lg:hidden"
               >
                 <ChevronLeft size={14} /> {t('notes.backToList', { defaultValue: '返回列表' })}
               </button>
@@ -920,7 +920,7 @@ export default function NotesWidget() {
               <button
                 type="button"
                 onClick={() => createNote()}
-                className="mt-4 inline-flex items-center gap-1 text-xs font-medium text-accent transition hover:text-accent-strong active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+                className="mt-4 inline-flex min-h-11 items-center gap-1 rounded-lg px-3 text-xs font-medium text-accent transition hover:bg-accent-soft hover:text-accent-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98] dark:hover:bg-accent/15"
               >
                 <Pencil size={13} />
                 {t('notes.writeOneArrow', { defaultValue: '寫一則新筆記 →' })}
@@ -967,7 +967,7 @@ function BulkBtn({
       onClick={onClick}
       disabled={disabled}
       className={cx(
-        'inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40',
+        'inline-flex min-h-11 items-center gap-1 rounded-md px-3 text-xs font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40',
         tone === 'danger'
           ? 'text-rose-600 hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-500/10'
           : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700',
