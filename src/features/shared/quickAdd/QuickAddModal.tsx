@@ -273,8 +273,8 @@ export function QuickAddModal({ open, onClose }: QuickAddModalProps) {
       <Modal open={open} onClose={close} title="快速記低">
         <div className="space-y-4">
           <div className="flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-3.5 text-amber-900 dark:border-amber-500/25 dark:bg-amber-500/10 dark:text-amber-100">
-            <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-600 dark:bg-amber-500/20 dark:text-amber-300">
-              <Bot size={16} />
+            <span className="mt-0.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-600 dark:bg-amber-500/20 dark:text-amber-300">
+              <Bot size={18} />
             </span>
             <div>
               <p className="text-sm font-semibold">AI 分析暫時未啟用</p>
@@ -313,8 +313,8 @@ export function QuickAddModal({ open, onClose }: QuickAddModalProps) {
       {step === 'input' ? (
         <div className="space-y-4">
           <div className="flex items-start gap-3 rounded-2xl border border-accent/20 bg-accent-soft/50 p-3.5 dark:border-accent/25 dark:bg-accent/10">
-            <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-accent text-white">
-              <Sparkles size={16} />
+            <span className="mt-0.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-accent text-white">
+              <Sparkles size={18} />
             </span>
             <p className="text-xs leading-relaxed text-slate-600 dark:text-slate-300">
               打一句自然語言，AI 會幫你自動分流做{' '}
@@ -353,9 +353,9 @@ export function QuickAddModal({ open, onClose }: QuickAddModalProps) {
                 type="button"
                 disabled={busy}
                 onClick={() => setText(ex)}
-                className="inline-flex min-h-11 items-center gap-1 rounded-full border border-slate-200 bg-white px-3 text-xs font-medium text-slate-600 transition hover:border-accent/40 hover:bg-accent-soft hover:text-accent-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98] disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:border-accent/40 dark:hover:bg-accent/10 dark:hover:text-accent"
+                className="inline-flex min-h-11 cursor-pointer items-center gap-1 rounded-full border border-slate-200 bg-white px-3 text-xs font-medium text-slate-600 transition hover:border-accent/40 hover:bg-accent-soft hover:text-accent-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:border-accent/40 dark:hover:bg-accent/10 dark:hover:text-accent"
               >
-                <Plus size={12} />
+                <Plus size={14} />
                 {ex}
               </button>
             ))}
