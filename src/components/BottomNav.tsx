@@ -67,10 +67,13 @@ export default function BottomNav({
     >
       {items.map((it) => {
         const active = it.id === '__more__' ? false : it.id === activeId
+        const label = t(`shell.${it.key}`, { defaultValue: it.zh })
         return (
           <button
+            type="button"
             key={it.key}
             onClick={() => (it.id === '__more__' ? onMore() : onSelect(it.id))}
+            aria-label={label}
             aria-current={active ? 'page' : undefined}
             className={cx(
               'flex min-h-[52px] flex-1 flex-col items-center justify-center gap-0.5 py-2 text-[10px] font-medium transition-colors',
@@ -80,7 +83,7 @@ export default function BottomNav({
             )}
           >
             <it.icon size={20} strokeWidth={active ? 2.25 : 1.75} />
-            {t(`shell.${it.key}`, { defaultValue: it.zh })}
+            {label}
           </button>
         )
       })}
