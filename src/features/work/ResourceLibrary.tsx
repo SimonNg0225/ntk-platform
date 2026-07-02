@@ -1030,7 +1030,7 @@ function GridView({
                 type="button"
                 onClick={() => onToggleSelect(res.id)}
                 className={cx(
-                  'absolute left-3 top-3 z-10 rounded-md transition active:scale-[0.98] focus-visible:opacity-100',
+                  'absolute left-2 top-2 z-10 inline-flex h-11 w-11 items-center justify-center rounded-xl transition active:scale-[0.98] focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
                   isSel
                     ? 'text-accent opacity-100'
                     : 'text-slate-300 opacity-0 hover:text-slate-500 group-hover:opacity-100 dark:text-slate-600',
@@ -1038,7 +1038,7 @@ function GridView({
                 aria-pressed={isSel}
                 aria-label={isSel ? `取消選取「${res.title}」` : `選取「${res.title}」`}
               >
-                <CheckSquare size={18} className={cx(isSel && 'fill-accent/15')} />
+                <CheckSquare size={20} className={cx(isSel && 'fill-accent/15')} />
               </button>
 
               <div className="flex items-start justify-between pl-7">
@@ -1182,13 +1182,13 @@ function ListView({
               type="button"
               onClick={() => onToggleAll(!allSelected)}
               className={cx(
-                'inline-flex rounded transition active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
+                'inline-flex h-11 w-11 items-center justify-center rounded-xl transition active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
                 allSelected ? 'text-accent' : 'text-slate-300 dark:text-slate-600',
               )}
               aria-pressed={allSelected}
               aria-label={allSelected ? '取消全選' : '全選'}
             >
-              <CheckSquare size={16} className={cx(allSelected && 'fill-accent/15')} />
+              <CheckSquare size={18} className={cx(allSelected && 'fill-accent/15')} />
             </button>
           </Th>
           <Th>標題</Th>
@@ -1210,13 +1210,13 @@ function ListView({
                   type="button"
                   onClick={() => onToggleSelect(res.id)}
                   className={cx(
-                    'inline-flex rounded transition active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
+                    'inline-flex h-11 w-11 items-center justify-center rounded-xl transition active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
                     isSel ? 'text-accent' : 'text-slate-300 dark:text-slate-600',
                   )}
                   aria-pressed={isSel}
                   aria-label={isSel ? `取消選取「${res.title}」` : `選取「${res.title}」`}
                 >
-                  <CheckSquare size={16} className={cx(isSel && 'fill-accent/15')} />
+                  <CheckSquare size={18} className={cx(isSel && 'fill-accent/15')} />
                 </button>
               </Td>
               <Td>
