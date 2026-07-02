@@ -118,7 +118,7 @@ export const appEn = {
     'work-resources': { name: 'Resource library', desc: 'Save handouts, past papers and material links.' },
     'work-tasks': { name: 'To-do / marking', desc: 'Prep, marking and admin tasks at a glance.' },
     'work-meeting-notes': { name: 'Meeting notes', desc: 'Notes for meetings and admin matters.' },
-    'work-team': { name: 'Panel collaboration', desc: 'Later, create a school / panel space and organise materials with colleagues.' },
+    'work-team': { name: 'Panel collaboration', desc: 'Start from your own workspace, then open a panel space when you need colleagues.' },
     'work-admin-docs': { name: 'Admin documents', desc: 'Upload Word templates, fill {tags} field by field, generate .docx to print.' },
     'work-budget': { name: 'Budget', desc: 'Log daily income and expenses; see monthly balance and category split.' },
     'ask-data': { name: 'Ask-my-data AI', desc: 'AI answers from your notes / tasks / goals / schedule.' },

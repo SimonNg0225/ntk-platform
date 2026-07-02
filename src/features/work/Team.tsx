@@ -50,12 +50,12 @@ import {
 // ───────── 團隊教學引導（FeatureGuide：3 步「點用」）─────────
 const TEAM_GUIDE: FeatureGuideStep[] = [
   {
-    title: '建立團隊',
-    desc: '改個名（例如「聖保羅 商業科」），開一個學校／科組團隊。',
+    title: '先開一個空間',
+    desc: '可以用自己科目命名，先當個人備課空間；需要時再邀請同事。',
   },
   {
     title: '邀請同事',
-    desc: '入同事電郵產生加入連結（自動複製），傳俾佢開啟即加入。',
+    desc: '入同事電郵產生加入連結，傳俾佢開啟即加入同一個空間。',
   },
   {
     title: '管理座位同成員',
@@ -272,8 +272,8 @@ export default function Team() {
       <PageHero
         guideKey="team"
         icon={Users}
-        kicker={t('team.kicker', { defaultValue: '學校・科組協作' })}
-        title={t('team.title', { defaultValue: '團隊與座位' })}
+        kicker={t('team.kicker', { defaultValue: '個人先用・需要時協作' })}
+        title={t('team.title', { defaultValue: '協作空間與座位' })}
         description={
           org
             ? t('team.subtitleWithOrg', {
@@ -283,7 +283,7 @@ export default function Team() {
                 total: seatsTotal,
               })
             : t('team.subtitleDefault', {
-                defaultValue: '建立學校或科組團隊，用連結邀請同事，共用座位一齊備課。',
+                defaultValue: '先建立你自己的備課空間；需要時用連結邀請同事，共用座位一齊整理教材。',
               })
         }
       />
@@ -308,11 +308,11 @@ export default function Team() {
             <Building2 size={22} strokeWidth={1.75} />
           </span>
           <h2 className="mt-3 text-sm font-medium text-slate-600 dark:text-slate-300">
-            {t('team.emptyTitle', { defaultValue: '開你第一個團隊' })}
+            {t('team.emptyTitle', { defaultValue: '開你第一個協作空間' })}
           </h2>
           <p className="mt-1 max-w-xs text-xs text-slate-400 dark:text-slate-500">
             {t('team.emptyHint', {
-              defaultValue: '改個名，跟住就可以用連結邀請同事，共用座位一齊備課。',
+              defaultValue: '可以先只俾自己用；之後想同科同事共用教材，再用連結邀請佢哋加入。',
             })}
           </p>
           <div className="mt-4 flex w-full max-w-sm gap-2">
@@ -320,7 +320,7 @@ export default function Team() {
               icon={Building2}
               value={newOrgName}
               placeholder={t('team.orgNamePlaceholder', {
-                defaultValue: '團隊名稱（例如：聖保羅 商業科）',
+                defaultValue: '空間名稱（例如：我的 BAFS 備課）',
               })}
               onChange={(e) => setNewOrgName(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && onCreateOrg()}
