@@ -518,7 +518,7 @@ export default function EventEditor({
                         )
                       }
                       className={cx(
-                        'h-9 w-9 rounded-full text-sm font-medium transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
+                        'h-9 w-9 max-sm:h-11 max-sm:w-11 rounded-full text-sm font-medium transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
                         on
                           ? 'bg-accent text-white shadow-sm shadow-accent/25'
                           : 'bg-white text-slate-600 ring-1 ring-inset ring-slate-200 hover:bg-slate-100 hover:text-slate-800 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700 dark:hover:bg-slate-700',
