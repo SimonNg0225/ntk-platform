@@ -38,7 +38,7 @@ export default function MyShares({ onPublish }: { onPublish: () => void }) {
   }
   useEffect(load, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const demoBlock = () => toast.error('示範模式：接 Supabase + 登入後先用到。')
+  const demoBlock = () => toast.error('試用資料暫未能更新；完成雲端連線及登入後可用。')
 
   async function toggleStatus(r: CommunityResource) {
     if (!isCommunityConfigured) return demoBlock()
@@ -125,7 +125,7 @@ export default function MyShares({ onPublish }: { onPublish: () => void }) {
       )}
       {!isCommunityConfigured && (
         <p className="flex items-center justify-center gap-1 pt-1 text-[11px] text-amber-600 dark:text-amber-400">
-          <RefreshCw size={11} /> 示範資料；接 Supabase 後顯示你真實嘅分享。
+          <RefreshCw size={11} /> 試用資料；完成雲端連線後顯示你真實嘅分享。
         </p>
       )}
     </div>

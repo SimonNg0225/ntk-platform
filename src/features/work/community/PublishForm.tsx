@@ -55,7 +55,7 @@ export default function PublishForm({
     })
     if (!v.ok) { toast.error(v.error ?? '請檢查表單'); return }
     if (!isCommunityConfigured) {
-      toast.error('示範模式：接 Supabase + 登入後先發佈到。')
+      toast.error('試用模式暫未能發佈；完成雲端連線及登入後可用。')
       return
     }
     try {

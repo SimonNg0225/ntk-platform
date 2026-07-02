@@ -83,7 +83,7 @@ export default function Community() {
       {!isCommunityConfigured && (
         <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-1 text-[11px] font-medium text-amber-600 dark:bg-amber-500/15 dark:text-amber-300">
           <Info size={12} strokeWidth={2} className="shrink-0" />
-          {t('community.demoNote', { defaultValue: '示範資料 · 接 Supabase 後顯示真實分享' })}
+          {t('community.demoNote', { defaultValue: '試用資料 · 完成雲端連線後顯示真實分享' })}
         </span>
       )}
 
@@ -156,9 +156,9 @@ function BrowseTab({ onPublish }: { onPublish: () => void }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filter, sort])
 
-  // 快捷下載（卡片直接撳，唔使開詳情）；demo 模式提示接後端。
+  // 快捷下載（卡片直接撳，唔使開詳情）；試用模式提示稍後連線。
   async function handleDownload(r: CommunityResource) {
-    if (!isCommunityConfigured) return toast.error('示範資料；接 Supabase + 登入後先用到')
+    if (!isCommunityConfigured) return toast.error('試用資料暫未提供下載；完成雲端連線及登入後可用。')
     try {
       await bumpDownload(r.id)
       setRows((prev) => prev.map((x) => (x.id === r.id ? { ...x, downloadCount: x.downloadCount + 1 } : x)))
@@ -447,7 +447,7 @@ function ResourceDetail({ r, onClose }: { r: CommunityResource | null; onClose: 
   const c = TYPE_COLOR[r.type]
   const subj = subjectName(r.subjectPackId)
   const avg = stat.count > 0 ? stat.sum / stat.count : 0
-  const needBackend = () => toast.error('示範資料；接 Supabase + 登入後先用到')
+  const needBackend = () => toast.error('試用資料暫未提供下載；完成雲端連線及登入後可用。')
 
   async function onDownload() {
     if (!r) return

@@ -75,7 +75,7 @@ export default function ProfileTab() {
       return
     }
     if (!isCommunityConfigured) {
-      toast.error('示範模式：接 Supabase + 登入後先儲存到。')
+      toast.error('試用模式暫未能儲存；完成雲端連線及登入後可用。')
       return
     }
     try {
