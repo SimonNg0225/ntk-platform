@@ -344,7 +344,7 @@ export default function Team() {
                 type="button"
                 onClick={() => setOrgId(o.id)}
                 aria-pressed={o.id === orgId}
-                className={`rounded-lg border px-3 py-1.5 text-sm font-medium transition duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98] ${
+                className={`min-h-11 cursor-pointer rounded-lg border px-3 text-sm font-medium transition duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98] ${
                   o.id === orgId
                     ? 'border-accent bg-accent-soft text-accent-strong dark:bg-accent/20 dark:text-accent'
                     : 'border-slate-200 text-slate-600 hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:border-slate-600 dark:hover:bg-slate-800/60'
@@ -467,7 +467,7 @@ export default function Team() {
                     {invites.map((inv) => (
                       <li
                         key={inv.id}
-                        className="flex items-center gap-2 rounded-xl border border-slate-200/80 px-3 py-2 text-sm dark:border-slate-700/60"
+                        className="flex min-h-14 items-center gap-2 rounded-xl border border-slate-200/80 px-3 py-2 text-sm dark:border-slate-700/60"
                       >
                         <Badge tone="amber">
                           {t('team.pendingBadge', { defaultValue: '待接受' })}
@@ -480,6 +480,7 @@ export default function Team() {
                             defaultValue: '複製邀請連結',
                           })}
                           size="sm"
+                          className="min-h-11 min-w-11"
                           onClick={() => {
                             void navigator.clipboard.writeText(
                               `${window.location.origin}/app?invite=${inv.token}`,
@@ -532,21 +533,21 @@ export default function Team() {
                 {members.map((m) => (
                   <li
                     key={m.user_id}
-                    className="flex items-center gap-3 py-2.5"
+                    className="flex min-h-14 items-center gap-3 py-2.5"
                   >
                     <span
-                      className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl ${
+                      className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${
                         m.role === 'owner'
                           ? 'bg-amber-50 text-amber-600 dark:bg-amber-500/15 dark:text-amber-300'
                           : 'bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent'
                       }`}
                     >
                       {m.role === 'owner' ? (
-                        <Crown size={16} />
+                        <Crown size={18} />
                       ) : m.role === 'admin' ? (
-                        <ShieldCheck size={16} />
+                        <ShieldCheck size={18} />
                       ) : (
-                        <Users size={16} />
+                        <Users size={18} />
                       )}
                     </span>
                     <span className="flex-1 truncate text-sm text-slate-700 dark:text-slate-200">
@@ -565,6 +566,7 @@ export default function Team() {
                           defaultValue: '移除成員',
                         })}
                         size="sm"
+                        className="min-h-11 min-w-11"
                         onClick={() => onRemove(m)}
                       >
                         <Trash2 size={15} />
