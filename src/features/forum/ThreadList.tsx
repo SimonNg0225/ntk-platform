@@ -56,7 +56,7 @@ export default function ThreadList({ board, onBack, onOpenThread }: {
     <div className="space-y-5">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
-          <button onClick={onBack} className="mb-0.5 inline-flex items-center gap-1 rounded-lg text-xs text-slate-400 transition hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98]">
+          <button onClick={onBack} className="mb-0.5 inline-flex min-h-11 items-center gap-1 rounded-lg px-2 text-xs text-slate-400 transition hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98]">
             <ArrowLeft size={13} /> {t('forum.allBoards', { defaultValue: '所有版面' })}
           </button>
           <h1 className="truncate text-lg font-semibold tracking-tight text-slate-800 dark:text-slate-100">{board.name}</h1>

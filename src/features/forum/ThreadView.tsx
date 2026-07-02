@@ -58,7 +58,7 @@ export default function ThreadView({ threadId, onBack }: { threadId: string; onB
   }
 
   const backLink = (
-    <button onClick={onBack} className="inline-flex items-center gap-1 rounded-lg text-xs text-slate-400 transition hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98]">
+    <button onClick={onBack} className="inline-flex min-h-11 items-center gap-1 rounded-lg px-2 text-xs text-slate-400 transition hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98]">
       <ArrowLeft size={13} /> {t('forum.backToBoard', { defaultValue: '返回版面' })}
     </button>
   )
@@ -96,8 +96,8 @@ export default function ThreadView({ threadId, onBack }: { threadId: string; onB
             <p className="mt-1 text-xs text-slate-400">{thread.authorName} · {rel(thread.created_at)}</p>
           </div>
           <div className="flex shrink-0 gap-1">
-            <button onClick={() => setReport({ type: 'thread', id: thread.id })} className="rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-50 hover:text-rose-500 dark:hover:bg-slate-800/60" title={t('forum.report', { defaultValue: '檢舉' })} aria-label={t('forum.report', { defaultValue: '檢舉' })}><Flag size={15} /></button>
-            {meId === thread.author_id && <button onClick={() => del('thread', thread.id)} className="rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-50 hover:text-rose-500 dark:hover:bg-slate-800/60" title={t('forum.delete', { defaultValue: '刪除' })} aria-label={t('forum.delete', { defaultValue: '刪除' })}><Trash2 size={15} /></button>}
+            <button onClick={() => setReport({ type: 'thread', id: thread.id })} className="flex h-11 w-11 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-50 hover:text-rose-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400/40 dark:hover:bg-slate-800/60" title={t('forum.report', { defaultValue: '檢舉' })} aria-label={t('forum.report', { defaultValue: '檢舉' })}><Flag size={15} /></button>
+            {meId === thread.author_id && <button onClick={() => del('thread', thread.id)} className="flex h-11 w-11 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-50 hover:text-rose-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400/40 dark:hover:bg-slate-800/60" title={t('forum.delete', { defaultValue: '刪除' })} aria-label={t('forum.delete', { defaultValue: '刪除' })}><Trash2 size={15} /></button>}
           </div>
         </div>
         <p className="mt-3 whitespace-pre-wrap break-words text-sm leading-relaxed text-slate-700 dark:text-slate-200">{thread.body}</p>
@@ -106,7 +106,7 @@ export default function ThreadView({ threadId, onBack }: { threadId: string; onB
           <button
             onClick={upThread}
             aria-pressed={!!thread.mineUp}
-            className={cx('inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm font-medium transition active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40', thread.mineUp ? 'border-accent bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent' : 'border-slate-200 text-slate-500 hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800/60')}
+            className={cx('inline-flex min-h-11 items-center gap-1.5 rounded-lg border px-3 text-sm font-medium transition active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40', thread.mineUp ? 'border-accent bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent' : 'border-slate-200 text-slate-500 hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800/60')}
           >
             <ThumbsUp size={14} /> {t('forum.helpful', { defaultValue: '有用' })} · <span className="tabular-nums">{thread.score}</span>
           </button>
@@ -130,12 +130,12 @@ export default function ThreadView({ threadId, onBack }: { threadId: string; onB
           <div className="flex items-start justify-between gap-3">
             <p className="text-xs text-slate-400">{p.authorName} · {rel(p.created_at)}</p>
             <div className="flex shrink-0 gap-1">
-              <button onClick={() => setReport({ type: 'post', id: p.id })} className="rounded-lg p-1 text-slate-400 transition hover:bg-slate-50 hover:text-rose-500 dark:hover:bg-slate-800/60" title={t('forum.report', { defaultValue: '檢舉' })} aria-label={t('forum.report', { defaultValue: '檢舉' })}><Flag size={14} /></button>
-              {meId === p.author_id && <button onClick={() => del('post', p.id)} className="rounded-lg p-1 text-slate-400 transition hover:bg-slate-50 hover:text-rose-500 dark:hover:bg-slate-800/60" title={t('forum.delete', { defaultValue: '刪除' })} aria-label={t('forum.delete', { defaultValue: '刪除' })}><Trash2 size={14} /></button>}
+              <button onClick={() => setReport({ type: 'post', id: p.id })} className="flex h-11 w-11 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-50 hover:text-rose-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400/40 dark:hover:bg-slate-800/60" title={t('forum.report', { defaultValue: '檢舉' })} aria-label={t('forum.report', { defaultValue: '檢舉' })}><Flag size={14} /></button>
+              {meId === p.author_id && <button onClick={() => del('post', p.id)} className="flex h-11 w-11 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-50 hover:text-rose-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400/40 dark:hover:bg-slate-800/60" title={t('forum.delete', { defaultValue: '刪除' })} aria-label={t('forum.delete', { defaultValue: '刪除' })}><Trash2 size={14} /></button>}
             </div>
           </div>
           <p className="mt-1.5 whitespace-pre-wrap break-words text-sm text-slate-700 dark:text-slate-200">{p.body}</p>
-          <button onClick={() => upPost(p)} aria-pressed={!!p.mineUp} className={cx('mt-2 inline-flex items-center gap-1 rounded-lg text-xs font-medium transition active:scale-[0.98]', p.mineUp ? 'text-accent-strong dark:text-accent' : 'text-slate-400 hover:text-accent')}><ThumbsUp size={12} /> <span className="tabular-nums">{p.score}</span></button>
+          <button onClick={() => upPost(p)} aria-pressed={!!p.mineUp} className={cx('mt-2 inline-flex min-h-11 items-center gap-1 rounded-lg px-3 text-xs font-medium transition active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40', p.mineUp ? 'text-accent-strong dark:text-accent' : 'text-slate-400 hover:text-accent')}><ThumbsUp size={12} /> <span className="tabular-nums">{p.score}</span></button>
         </Card>
       ))}
 
