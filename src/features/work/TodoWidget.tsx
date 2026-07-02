@@ -525,14 +525,14 @@ export default function TodoWidget() {
             <button
               type="button"
               onClick={() => setTmplModal(true)}
-              className="inline-flex items-center gap-1.5 rounded-xl bg-white/15 px-3 py-1.5 text-sm font-medium backdrop-blur-sm transition hover:bg-white/25"
+              className="inline-flex min-h-11 items-center gap-1.5 rounded-xl bg-white/15 px-3 text-sm font-medium backdrop-blur-sm transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
             >
               <Sparkles size={15} /> 範本
             </button>
             <Menu
               align="end"
               trigger={
-                <span className="inline-flex items-center gap-1.5 rounded-xl bg-white/15 px-3 py-1.5 text-sm font-medium text-white backdrop-blur-sm transition hover:bg-white/25">
+                <span className="inline-flex min-h-11 items-center gap-1.5 rounded-xl bg-white/15 px-3 text-sm font-medium text-white backdrop-blur-sm transition hover:bg-white/25">
                   更多
                   <ChevronRight size={14} className="rotate-90" />
                 </span>
