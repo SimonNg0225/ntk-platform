@@ -620,7 +620,7 @@ function ListView({ items, onOpen }: { items: EnrichedGoal[]; onOpen: (id: strin
               onClick={() => onOpen(e.goal.id)}
               className="group flex w-full items-center gap-3 rounded-2xl border border-slate-200/80 bg-white p-3 text-left transition duration-200 hover:border-slate-300 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98] dark:border-slate-700/60 dark:bg-slate-800 dark:hover:border-slate-600"
             >
-              <span className={cx('inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-xl ring-1 ring-inset', cat.ring, cat.text)}>
+              <span className={cx('inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ring-1 ring-inset', cat.ring, cat.text)}>
                 <CatIcon size={15} />
               </span>
               <div className="min-w-0 flex-1">
@@ -676,7 +676,7 @@ function GoalCard({ e, onOpen }: { e: EnrichedGoal; onOpen: (id: string) => void
       className="group flex w-full flex-col rounded-2xl border border-slate-200/80 bg-white p-4 text-left transition duration-200 hover:border-slate-300 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98] dark:border-slate-700/60 dark:bg-slate-800 dark:hover:border-slate-600"
     >
       <div className="flex items-start gap-2.5">
-        <span className={cx('flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ring-1 ring-inset', cat.ring, cat.text)}>
+        <span className={cx('flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ring-1 ring-inset', cat.ring, cat.text)}>
           <CatIcon size={17} />
         </span>
         <div className="min-w-0 flex-1">
