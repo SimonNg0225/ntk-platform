@@ -107,7 +107,7 @@ i18n.addResourceBundle(
       templateLibrary: 'Template library',
       templateLibraryTooltip: 'Template library ({{mod}}/)',
       linkContext: 'Link context',
-      composerCount: '{{words}} words · ~{{tokens}} tokens',
+      composerCount: '{{words}} words',
       stop: 'Stop',
       send: 'Send',
 

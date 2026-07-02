@@ -111,7 +111,6 @@ import {
 } from './aiAssistant/templates'
 import {
   approxWords,
-  approxTokens,
   groupByTime,
   computeStats,
   conversationToMarkdown,
@@ -1253,9 +1252,8 @@ const Composer = memo(function Composer({
     if (countRef.current) {
       countRef.current.textContent = has
         ? t('aiasst.composerCount', {
-            defaultValue: `${approxWords(v)} 字 · ~${approxTokens(v)} tokens`,
+            defaultValue: `${approxWords(v)} 字`,
             words: approxWords(v),
-            tokens: approxTokens(v),
           })
         : ''
     }
