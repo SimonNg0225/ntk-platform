@@ -194,7 +194,7 @@ export default function HabitEditor({
           type="button"
           onClick={onClose}
           aria-label="關閉"
-          className="-mr-1 -mt-1 shrink-0 rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:hover:bg-slate-700"
+          className="-mr-1 -mt-1 inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98] dark:hover:bg-slate-700"
         >
           <X size={18} />
         </button>
@@ -269,7 +269,7 @@ export default function HabitEditor({
                       onClick={() => patch('icon', c)}
                       aria-pressed={on}
                       className={cx(
-                        'flex h-9 w-9 items-center justify-center rounded-xl border text-lg transition focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
+                        'flex h-11 w-11 items-center justify-center rounded-xl border text-lg transition focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98]',
                         on
                           ? 'border-accent bg-accent-soft shadow-xs'
                           : 'border-slate-200 bg-white hover:-translate-y-0.5 hover:border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-slate-600',
@@ -294,7 +294,7 @@ export default function HabitEditor({
                       aria-label={colorOf(c).label}
                       aria-pressed={on}
                       className={cx(
-                        'h-8 w-8 rounded-full ring-2 ring-offset-2 transition hover:scale-110 dark:ring-offset-slate-800',
+                        'h-11 w-11 rounded-full ring-2 ring-offset-2 transition hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98] dark:ring-offset-slate-800',
                         colorOf(c).dot,
                         on ? 'ring-slate-400 dark:ring-slate-300' : 'ring-transparent',
                       )}
@@ -327,7 +327,7 @@ export default function HabitEditor({
                     type="button"
                     onClick={() => patch('weeklyTimes', n)}
                     className={cx(
-                      'h-8 w-8 rounded-lg text-sm font-semibold tabular-nums transition-colors',
+                      'h-11 w-11 rounded-lg text-sm font-semibold tabular-nums transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98]',
                       d.weeklyTimes === n
                         ? 'bg-accent text-white'
                         : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600',
@@ -351,7 +351,7 @@ export default function HabitEditor({
                     onClick={() => toggleWeekday(i)}
                     aria-pressed={on}
                     className={cx(
-                      'flex h-9 flex-1 items-center justify-center rounded-lg text-sm font-semibold transition-colors',
+                      'flex min-h-11 flex-1 items-center justify-center rounded-lg text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98]',
                       on
                         ? 'bg-accent text-white'
                         : 'bg-slate-100 text-slate-500 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-400 dark:hover:bg-slate-600',
@@ -384,7 +384,7 @@ export default function HabitEditor({
                 type="button"
                 onClick={() => patch('category', d.category === c ? '' : c)}
                 className={cx(
-                  'rounded-full px-2.5 py-1 text-xs font-medium transition-colors',
+                  'inline-flex min-h-11 items-center rounded-full px-3 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98]',
                   d.category === c
                     ? 'bg-accent text-white'
                     : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600',

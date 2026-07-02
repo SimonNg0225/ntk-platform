@@ -137,7 +137,7 @@ export default function HabitDetail({
           type="button"
           onClick={onClose}
           aria-label="關閉"
-          className="-mr-1 -mt-1 shrink-0 rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:hover:bg-slate-700"
+          className="-mr-1 -mt-1 inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98] dark:hover:bg-slate-700"
         >
           <X size={18} />
         </button>
@@ -236,7 +236,7 @@ export default function HabitDetail({
                 aria-pressed={isDone}
                 aria-label={`${key} ${isDone ? '已完成' : '未完成'}`}
                 className={cx(
-                  'flex aspect-square items-center justify-center rounded-lg text-xs font-medium tabular-nums transition focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 disabled:cursor-not-allowed disabled:opacity-30',
+                  'flex aspect-square min-h-11 items-center justify-center rounded-lg text-xs font-medium tabular-nums transition focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 disabled:cursor-not-allowed disabled:opacity-30',
                   isDone
                     ? cx(spec.solid, 'shadow-xs')
                     : scheduled
