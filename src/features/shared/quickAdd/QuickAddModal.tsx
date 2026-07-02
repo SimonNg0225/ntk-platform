@@ -126,11 +126,20 @@ function recurrenceDraftLabel(rec: RecurrenceDraft, t: TFn): string {
   return base
 }
 
-const EXAMPLES = [
-  '下星期三 3pm 同 5A 家長開會',
-  '6 月 20 號交專題報告',
-  '影印明日課堂筆記',
-]
+const MODE_EXAMPLES = {
+  work: [
+    '下星期三 3pm 同 5A 家長開會',
+    '明天下午前改 5A 小測',
+    '星期五交科組會議紀錄',
+    '下堂教市場營銷，準備小測',
+  ],
+  learning: [
+    '今晚 8pm 溫 BAFS 成本會計',
+    '星期日做完第 3 章練習',
+    '明天整理英文作文錯字',
+    '6 月 20 號交專題報告',
+  ],
+} as const
 
 export function QuickAddModal({ open, onClose }: QuickAddModalProps) {
   const { t } = useTranslation()
@@ -143,6 +152,7 @@ export function QuickAddModal({ open, onClose }: QuickAddModalProps) {
   const [busy, setBusy] = useState(false)
   // 一段文字可拆出多項 → 多張預覽卡。
   const [drafts, setDrafts] = useState<ParsedDraft[]>([])
+  const examples = MODE_EXAMPLES[mode]
 
   // 關閉時重設，下次開返乾淨一張（用喺 onClose 同成功加入後）
   const reset = () => {
@@ -279,7 +289,7 @@ export function QuickAddModal({ open, onClose }: QuickAddModalProps) {
               rows={4}
               value={text}
               onChange={(e) => setText(e.target.value)}
-              placeholder="例如：下星期三 3pm 同 5A 家長開會"
+              placeholder={`例如：${examples[0]}`}
               autoFocus
             />
           </Field>
@@ -310,7 +320,7 @@ export function QuickAddModal({ open, onClose }: QuickAddModalProps) {
               <span className="font-semibold text-accent-strong dark:text-accent">
                 待辦 / 提醒 / 行事曆
               </span>
-              ，再畀你確認同修改。例如「下星期三 3pm 同家長開會」。
+              ，再畀你確認同修改。例如「{examples[0]}」。
             </p>
           </div>
 
@@ -325,7 +335,7 @@ export function QuickAddModal({ open, onClose }: QuickAddModalProps) {
                   void analyze()
                 }
               }}
-              placeholder="例如：下星期三 3pm 同 5A 家長開會 / 6 月 20 號交報告 / 影印筆記"
+              placeholder={`例如：${examples[0]} / ${examples[1]} / ${examples[2]}`}
               rows={3}
               disabled={busy}
               autoFocus
@@ -333,7 +343,7 @@ export function QuickAddModal({ open, onClose }: QuickAddModalProps) {
           </Field>
 
           <div className="-mt-1.5 flex flex-wrap gap-1.5">
-            {EXAMPLES.map((ex) => (
+            {examples.map((ex) => (
               <button
                 key={ex}
                 type="button"
