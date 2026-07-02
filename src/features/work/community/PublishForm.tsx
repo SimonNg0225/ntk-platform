@@ -172,7 +172,7 @@ export default function PublishForm({
           </Select>
         </Field>
         <p className="-mt-1 text-[11px] leading-relaxed text-slate-400">
-          請確認冇侵犯版權（例如出版社課本）。被檢舉成立會下架。
+          請確認冇侵犯版權（例如出版社課本），並先移除學生姓名、相片、成績等個人資料。被檢舉成立會下架。
         </p>
 
         <div className="flex justify-end gap-2 pt-1">

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Plus, Download, Bookmark, EyeOff, Eye, Trash2, RefreshCw } from 'lucide-react'
+import { Plus, Download, Bookmark, EyeOff, Eye, Trash2, RefreshCw, Upload } from 'lucide-react'
 import { Badge, Button, EmptyState, IconButton, cx } from '../../../ui'
 import { useToast } from '../../../context/ToastContext'
 import { useConfirm } from '../../../context/ConfirmContext'
@@ -81,7 +81,7 @@ export default function MyShares({ onPublish }: { onPublish: () => void }) {
       {loading ? (
         <p className="py-12 text-center text-sm text-slate-400">載入中…</p>
       ) : rows.length === 0 ? (
-        <EmptyState icon="📤" title="未分享過資源" hint="分享你第一份教材，幫到全港老師。" action={<Button icon={Plus} onClick={onPublish}>分享資源</Button>} />
+        <EmptyState icon={Upload} title="未分享過資源" hint="可以先瀏覽同收藏；準備好再分享第一份有權分享嘅教材。" action={<Button icon={Plus} onClick={onPublish}>分享資源</Button>} />
       ) : (
         <ul className="space-y-2">
           {rows.map((r) => {

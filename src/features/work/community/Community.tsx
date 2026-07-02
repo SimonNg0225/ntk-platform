@@ -68,7 +68,7 @@ export default function Community() {
         icon={Share2}
         kicker={t('community.kicker', { defaultValue: '教學社群' })}
         title={t('community.title', { defaultValue: '資源分享區' })}
-        description={t('community.subtitle', { defaultValue: '全港老師互相分享教材 — 上載、瀏覽、下載、評分、收藏。' })}
+        description={t('community.subtitle', { defaultValue: '先瀏覽同收藏合用教材；準備好時，再用署名或匿名方式分享資源。' })}
         actions={
           <button
             type="button"
@@ -257,7 +257,7 @@ function BrowseTab({ onPublish }: { onPublish: () => void }) {
           <EmptyState
             icon={Share2}
             title={t('community.emptyTitle', { defaultValue: '仲未有資源' })}
-            hint={t('community.emptyHint', { defaultValue: '做第一個分享教材嘅老師，幫返同行慳時間。' })}
+            hint={t('community.emptyHint', { defaultValue: '可以先由你第一份可分享教材開始；記得確認版權同移除學生個人資料。' })}
             action={
               <Button size="sm" variant="secondary" icon={Plus} onClick={onPublish}>
                 {t('community.share', { defaultValue: '分享資源' })}
