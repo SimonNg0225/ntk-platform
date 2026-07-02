@@ -567,7 +567,7 @@ export default function Inbox() {
             type="button"
             aria-pressed={showStats}
             onClick={() => setShowStats((v) => !v)}
-            className="inline-flex items-center gap-1.5 rounded-xl bg-white/15 px-3 py-1.5 text-sm font-medium backdrop-blur-sm transition hover:bg-white/25"
+            className="inline-flex min-h-11 items-center gap-1.5 rounded-xl bg-white/15 px-3 text-sm font-medium backdrop-blur-sm transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
           >
             <BarChart3 size={15} />
             {showStats
@@ -1233,7 +1233,7 @@ function InboxRowCard({
                 e.stopPropagation()
                 onAcceptAi()
               }}
-              className="group/ai mt-2 inline-flex max-w-full items-center gap-1.5 rounded-lg bg-accent-soft px-2.5 py-1.5 text-[11px] font-medium text-accent-strong transition active:scale-[0.98] hover:bg-accent/15 dark:bg-accent/10 dark:text-accent"
+              className="group/ai mt-2 inline-flex min-h-11 max-w-full items-center gap-1.5 rounded-lg bg-accent-soft px-2.5 text-[11px] font-medium text-accent-strong transition active:scale-[0.98] hover:bg-accent/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:bg-accent/10 dark:text-accent"
             >
               <Sparkles size={12} className="shrink-0" />
               <span className="truncate">
