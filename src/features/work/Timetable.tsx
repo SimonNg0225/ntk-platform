@@ -857,7 +857,7 @@ function SettingsModal({
                   type="button"
                   onClick={() => toggleDay(d.day)}
                   className={cx(
-                    'rounded-full px-3.5 py-1.5 text-sm font-medium transition active:scale-[0.98]',
+                    'inline-flex min-h-11 items-center rounded-full px-3.5 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98]',
                     on
                       ? 'bg-accent text-white shadow-sm dark:shadow-none'
                       : 'bg-slate-100 text-slate-500 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700',
@@ -906,14 +906,14 @@ function SettingsModal({
                     type="time"
                     value={r.start}
                     onChange={(e) => patchRow(i, { start: e.target.value })}
-                    className="w-full min-w-0 py-1 text-xs"
+                    className="min-h-11 w-full min-w-0 py-2 text-base sm:text-xs"
                   />
                   <span className="text-slate-300">–</span>
                   <Input
                     type="time"
                     value={r.end}
                     onChange={(e) => patchRow(i, { end: e.target.value })}
-                    className="w-full min-w-0 py-1 text-xs"
+                    className="min-h-11 w-full min-w-0 py-2 text-base sm:text-xs"
                   />
                 </div>
                 <span className="ml-auto shrink-0 text-[11px] tabular-nums text-slate-400">

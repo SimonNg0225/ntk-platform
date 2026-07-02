@@ -309,7 +309,7 @@ export default function SlotEditor({
                       aria-pressed={on}
                       onClick={() => toggleApplyDay(dd.day)}
                       className={cx(
-                        'flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-1 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-800',
+                        'inline-flex min-h-11 items-center gap-1.5 rounded-xl px-3 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-1 focus-visible:ring-offset-white active:scale-[0.98] dark:focus-visible:ring-offset-slate-800',
                         on
                           ? 'bg-accent text-white shadow-sm dark:shadow-none'
                           : 'bg-white text-slate-500 hover:bg-slate-100 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700',
