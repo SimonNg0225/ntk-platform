@@ -1,6 +1,19 @@
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Sun, Moon, Monitor, type LucideIcon } from 'lucide-react'
+import {
+  AlertTriangle,
+  Download,
+  LifeBuoy,
+  Moon,
+  Monitor,
+  RefreshCw,
+  RotateCcw,
+  Sparkles,
+  Sun,
+  Trash2,
+  Upload,
+  type LucideIcon,
+} from 'lucide-react'
 import { LANGUAGES, setLanguage } from '../i18n'
 import { useSettings } from '../context/SettingsContext'
 import { useToast } from '../context/ToastContext'
@@ -268,6 +281,7 @@ export default function Settings() {
       { id: 'dark', label: '深色', icon: Moon },
       { id: 'system', label: '跟隨系統', icon: Monitor },
     ]
+  const BackupReminderIcon = reminder.stale ? AlertTriangle : LifeBuoy
 
   return (
     <div className="space-y-6">
@@ -462,18 +476,18 @@ export default function Settings() {
               : 'bg-slate-50 text-slate-500 dark:bg-slate-800 dark:text-slate-400'
           }`}
         >
-          <span>{reminder.stale ? '⚠️' : '🛟'}</span>
+          <BackupReminderIcon size={16} className="shrink-0" />
           <span>{reminder.text}</span>
           {reminder.stale && (
             <span className="font-medium">· 建議而家匯出備份</span>
           )}
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button variant="secondary" onClick={doExport}>
-            ⬇ 匯出備份
+          <Button variant="secondary" icon={Download} onClick={doExport}>
+            匯出備份
           </Button>
-          <Button variant="secondary" onClick={() => fileRef.current?.click()}>
-            ⬆ 匯入備份
+          <Button variant="secondary" icon={Upload} onClick={() => fileRef.current?.click()}>
+            匯入備份
           </Button>
           <input
             ref={fileRef}
@@ -482,15 +496,15 @@ export default function Settings() {
             onChange={onFile}
             className="hidden"
           />
-          <Button variant="secondary" onClick={loadDemo}>
-            ✨ 載入示範資料
+          <Button variant="secondary" icon={Sparkles} onClick={loadDemo}>
+            載入示範資料
           </Button>
-          <Button variant="danger" onClick={clearAll}>
-            🗑 清除所有資料
+          <Button variant="danger" icon={Trash2} onClick={clearAll}>
+            清除所有資料
           </Button>
           {configured && user && (
-            <Button variant="danger" onClick={deleteAccount}>
-              ⚠️ 刪除雲端帳戶
+            <Button variant="danger" icon={AlertTriangle} onClick={deleteAccount}>
+              刪除雲端帳戶
             </Button>
           )}
         </div>
@@ -503,11 +517,11 @@ export default function Settings() {
           {t('settings.appUpdateHint')}
         </p>
         <div className="flex flex-wrap gap-2">
-          <Button variant="secondary" onClick={checkUpdate} disabled={checking}>
-            🔄 {checking ? '檢查中…' : '檢查更新'}
+          <Button variant="secondary" icon={RefreshCw} loading={checking} onClick={checkUpdate}>
+            {checking ? '檢查中…' : '檢查更新'}
           </Button>
-          <Button variant="secondary" onClick={hardReset}>
-            🧹 清除快取並重新載入
+          <Button variant="secondary" icon={RotateCcw} onClick={hardReset}>
+            清除快取並重新載入
           </Button>
         </div>
       </Card>
