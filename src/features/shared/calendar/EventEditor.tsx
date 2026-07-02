@@ -119,18 +119,18 @@ function Toggle({
       role="switch"
       aria-checked={checked}
       onClick={() => onChange(!checked)}
-      className="flex items-center gap-2.5 rounded-lg text-sm font-medium text-slate-700 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:text-slate-200 dark:focus-visible:ring-offset-slate-800"
+      className="flex min-h-11 items-center gap-2.5 rounded-lg text-sm font-medium text-slate-700 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:text-slate-200 dark:focus-visible:ring-offset-slate-800"
     >
       <span
         className={cx(
-          'relative h-5 w-9 rounded-full transition-colors duration-200',
+          'relative h-6 w-11 rounded-full transition-colors duration-200',
           checked ? 'bg-accent' : 'bg-slate-300 dark:bg-slate-600',
         )}
       >
         <span
           className={cx(
-            'absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-all duration-200',
-            checked ? 'left-[1.125rem]' : 'left-0.5',
+            'absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all duration-200',
+            checked ? 'left-[1.375rem]' : 'left-0.5',
           )}
         />
       </span>
