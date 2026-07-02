@@ -551,7 +551,7 @@ export default function HabitTracker() {
               <button
                 type="button"
                 onClick={() => setShowArchived((v) => !v)}
-                className="flex w-full items-center gap-2 rounded-lg px-1 py-2 text-xs font-medium text-slate-400 transition active:scale-[0.98] hover:text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:text-slate-500 dark:hover:text-slate-300"
+                className="flex min-h-11 w-full items-center gap-2 rounded-lg px-2 text-xs font-medium text-slate-400 transition active:scale-[0.98] hover:bg-slate-50 hover:text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:text-slate-500 dark:hover:bg-slate-800/60 dark:hover:text-slate-300"
                 aria-expanded={showArchived}
               >
                 <Archive size={14} />
@@ -570,8 +570,8 @@ export default function HabitTracker() {
                   {archivedHabits.map((h) => {
                     const spec = colorOf(h.color)
                     return (
-                      <div key={h.id} className="flex items-center gap-3 p-3">
-                        <span className={cx('flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-base', spec.soft)}>
+                      <div key={h.id} className="flex min-h-14 items-center gap-3 p-3">
+                        <span className={cx('flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-base', spec.soft)}>
                           {h.icon ?? '⭐'}
                         </span>
                         <div className="min-w-0 flex-1">
@@ -708,8 +708,8 @@ function HabitStat({
     <div className="flex flex-col justify-between rounded-2xl border border-slate-200/80 bg-white p-4 dark:border-slate-700/60 dark:bg-slate-800">
       <div className="flex items-center justify-between">
         <span className="text-xs font-medium text-slate-400 dark:text-slate-500">{label}</span>
-        <span className={cx('flex h-8 w-8 items-center justify-center rounded-xl', tn.chip)}>
-          <Icon size={16} />
+        <span className={cx('flex h-11 w-11 items-center justify-center rounded-xl', tn.chip)}>
+          <Icon size={18} />
         </span>
       </div>
       <div className="mt-3">
