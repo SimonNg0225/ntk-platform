@@ -320,7 +320,7 @@ export default function BrowseView() {
                   key={t}
                   onClick={() => setTagFilter((prev) => (prev === t ? '' : t))}
                   className={cx(
-                    'rounded-full px-2.5 py-0.5 text-[11px] font-medium transition',
+                    'inline-flex min-h-11 items-center rounded-full px-3 text-[11px] font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98]',
                     tagFilter === t
                       ? 'bg-accent text-white shadow-sm dark:shadow-none'
                       : 'bg-slate-100 text-slate-500 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700',
@@ -392,7 +392,7 @@ export default function BrowseView() {
               type="button"
               onClick={toggleAll}
               aria-pressed={allSelected}
-              className="inline-flex items-center gap-1.5 hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-1 rounded"
+              className="inline-flex min-h-11 items-center gap-1.5 rounded-lg px-3 hover:bg-accent-soft hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-1 active:scale-[0.98] dark:hover:bg-accent/15"
             >
               {allSelected ? <CheckSquare size={14} /> : <Square size={14} />}
               {allSelected ? '取消全選' : '全選'}
@@ -670,14 +670,14 @@ function EditCardModal({
             {tagList.map((t) => (
               <span
                 key={t}
-                className="inline-flex items-center gap-1 rounded-md bg-accent-soft px-2 py-0.5 text-xs text-accent-strong dark:bg-accent/15 dark:text-accent"
+                className="inline-flex min-h-11 items-center gap-1 rounded-md bg-accent-soft px-3 text-xs text-accent-strong dark:bg-accent/15 dark:text-accent"
               >
                 #{t}
                 <button
                   type="button"
                   aria-label={`移除標籤 ${t}`}
                   onClick={() => setTagList((l) => l.filter((x) => x !== t))}
-                  className="rounded hover:text-rose-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+                  className="-mr-2 inline-flex h-11 w-11 items-center justify-center rounded hover:text-rose-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400/40 active:scale-[0.98]"
                 >
                   <X size={11} />
                 </button>
@@ -741,7 +741,7 @@ function BulkTagModal({
               <button
                 key={t}
                 onClick={() => onApply(t)}
-                className="rounded-md bg-slate-100 px-2 py-1 text-xs text-slate-600 transition hover:bg-accent hover:text-white dark:bg-slate-800 dark:text-slate-300"
+                className="inline-flex min-h-11 items-center rounded-md bg-slate-100 px-3 text-xs text-slate-600 transition hover:bg-accent hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98] dark:bg-slate-800 dark:text-slate-300"
               >
                 #{t}
               </button>
