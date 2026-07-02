@@ -73,7 +73,7 @@ export default function Community() {
           <button
             type="button"
             onClick={openPublish}
-            className="inline-flex items-center gap-1.5 rounded-xl bg-white/15 px-3 py-1.5 text-sm font-medium backdrop-blur-sm transition hover:bg-white/25"
+            className="inline-flex min-h-11 items-center gap-1.5 rounded-xl bg-white/15 px-3 text-sm font-medium backdrop-blur-sm transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
           >
             <Plus size={15} /> {t('community.share', { defaultValue: '分享資源' })}
           </button>
@@ -400,7 +400,7 @@ function ResourceCard({
               e.stopPropagation()
               onDownload()
             }}
-            className="flex items-center justify-center gap-1.5 rounded-lg border border-slate-200/80 py-1.5 text-[12px] font-medium text-slate-600 transition hover:border-accent/40 hover:bg-accent-soft/50 hover:text-accent-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98] dark:border-slate-700/60 dark:text-slate-300 dark:hover:text-accent"
+            className="flex min-h-11 items-center justify-center gap-1.5 rounded-lg border border-slate-200/80 px-3 text-[12px] font-medium text-slate-600 transition hover:border-accent/40 hover:bg-accent-soft/50 hover:text-accent-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98] dark:border-slate-700/60 dark:text-slate-300 dark:hover:text-accent"
           >
             {r.filePath ? <Download size={13} strokeWidth={2} /> : <ExternalLink size={13} strokeWidth={2} />}
             {r.filePath ? '下載' : '開啟連結'}
