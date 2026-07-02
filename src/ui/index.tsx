@@ -783,8 +783,8 @@ export function IconButton({
       aria-label={label}
       disabled={disabled}
       className={cx(
-        'inline-flex items-center justify-center rounded-xl transition duration-150 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-1 focus-visible:ring-offset-white disabled:cursor-not-allowed disabled:opacity-40 max-sm:min-h-11 max-sm:min-w-11 dark:focus-visible:ring-offset-slate-900',
-        size === 'sm' ? 'p-1 min-h-8 min-w-8' : 'p-1.5 min-h-9 min-w-9',
+        'inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl transition duration-150 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-1 focus-visible:ring-offset-white disabled:cursor-not-allowed disabled:opacity-40 dark:focus-visible:ring-offset-slate-900',
+        size === 'sm' ? 'p-2' : 'p-2.5',
         active
           ? 'bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent'
           : tone === 'danger'
