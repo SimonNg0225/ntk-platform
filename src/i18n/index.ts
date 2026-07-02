@@ -94,9 +94,9 @@ const resources = {
 
       pricing: {
         metaTitle: `定價 · ${BRAND_NAME}`,
-        metaDesc: `${BRAND_NAME} 方案與定價：免費版永久免費，Pro 解鎖無限 AI 同多裝置同步。`,
-        title: '簡單透明嘅定價',
-        subtitle: '老師免費用齊教學功能，需要時先升級。',
+        metaDesc: `${BRAND_NAME} 方案與定價：免費版可試 AI 備課，Plus / Pro 提供更多 AI 點數同多裝置同步。`,
+        title: '一位老師都用得起',
+        subtitle: '先免費試完整個備課流程；需要更多 AI 點數、同步或高階模型時先升級。',
         monthly: '月繳',
         annual: '年繳',
         annualSave: '慳 2 個月',
@@ -323,9 +323,9 @@ const resources = {
       pricing: {
         metaTitle: `Pricing · ${BRAND_NAME}`,
         metaDesc:
-          'EziTeach plans and pricing: the free plan is free forever, Pro unlocks unlimited AI and multi-device sync.',
-        title: 'Simple, transparent pricing',
-        subtitle: 'Teachers get every teaching feature free; upgrade only when you need to.',
+          'EziTeach plans and pricing: start free with AI lesson prep, then upgrade for more AI credits and multi-device sync.',
+        title: 'Affordable for individual teachers',
+        subtitle: 'Try the full lesson-prep workflow free; upgrade only when you need more AI credits, sync, or advanced models.',
         monthly: 'Monthly',
         annual: 'Annual',
         annualSave: 'Save 2 months',
