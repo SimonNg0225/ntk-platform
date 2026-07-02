@@ -531,9 +531,10 @@ export function Tabs<T extends string>({
         return (
           <button
             key={t.id}
+            type="button"
             onClick={() => onChange(t.id)}
             className={cx(
-              'flex flex-1 items-center justify-center gap-1.5 rounded-lg font-medium transition duration-200 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-1',
+              'flex max-sm:min-h-11 flex-1 items-center justify-center gap-1.5 rounded-lg font-medium transition duration-200 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-1',
               pad,
               on
                 ? 'bg-white text-slate-800 shadow-[0_1px_2px_rgba(0,0,0,0.08)] ring-1 ring-black/[0.04] dark:bg-slate-700 dark:text-slate-100 dark:ring-white/10'
