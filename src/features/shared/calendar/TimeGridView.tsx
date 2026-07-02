@@ -178,6 +178,8 @@ export default function TimeGridView({
             <button
               key={dk}
               type="button"
+              aria-label={`${d.getMonth() + 1}月${d.getDate()}日，星期${WEEKDAYS[d.getDay()]}`}
+              aria-current={isToday ? 'date' : undefined}
               onClick={() => onPickDay(dk)}
               className={cx(
                 'flex flex-1 flex-col items-center gap-1 py-2.5 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent/40',
@@ -199,7 +201,7 @@ export default function TimeGridView({
               </span>
               <span
                 className={cx(
-                  'flex h-8 w-8 items-center justify-center rounded-full text-base font-semibold tabular-nums transition',
+                  'flex h-8 w-8 max-sm:h-11 max-sm:w-11 items-center justify-center rounded-full text-base font-semibold tabular-nums transition',
                   isToday
                     ? 'bg-accent text-white shadow-sm shadow-accent/30'
                     : 'text-slate-700 dark:text-slate-200',
