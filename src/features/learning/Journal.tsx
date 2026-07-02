@@ -569,7 +569,7 @@ export default function Journal() {
               onClick={() => setFavOnly((v) => !v)}
               aria-pressed={favOnly}
               className={cx(
-                'inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98]',
+                'inline-flex min-h-11 items-center gap-1 rounded-lg px-2.5 text-xs font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98]',
                 favOnly
                   ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300'
                   : 'bg-slate-100 text-slate-500 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700',
@@ -584,12 +584,13 @@ export default function Journal() {
               return (
                 <button
                   key={m.emoji}
+                  type="button"
                   title={m.label}
                   aria-label={`篩選心情：${m.label}`}
                   aria-pressed={on}
                   onClick={() => setMoodFilter(on ? null : m.emoji)}
                   className={cx(
-                    'rounded-lg px-2 py-1 text-base leading-none transition active:scale-[0.98]',
+                    'inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg px-2 text-base leading-none transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98]',
                     on
                       ? 'bg-white shadow-xs ring-1 ring-accent/40 dark:bg-slate-700'
                       : 'opacity-60 hover:bg-slate-100 hover:opacity-100 dark:hover:bg-slate-800',
@@ -614,7 +615,7 @@ export default function Journal() {
                     aria-pressed={on}
                     aria-label={`標籤 ${tag}，${count} 篇`}
                     className={cx(
-                      'inline-flex items-center gap-1 rounded-lg px-2 py-0.5 text-[11px] font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98]',
+                      'inline-flex min-h-11 items-center gap-1 rounded-lg px-2.5 text-[11px] font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98]',
                       on
                         ? 'bg-accent text-white'
                         : 'bg-accent-soft text-accent-strong hover:brightness-95 dark:bg-accent/15 dark:text-accent',
@@ -871,7 +872,7 @@ function EntryCard({
             )}
           </div>
         </div>
-        <div className="flex shrink-0 items-center gap-0.5 opacity-100 transition [&_button]:p-2 sm:opacity-0 sm:[&_button]:p-1 sm:group-hover:opacity-100 group-focus-within:opacity-100">
+        <div className="flex shrink-0 items-center gap-1 opacity-100 transition [&_button]:min-h-11 [&_button]:min-w-11 [&_button]:p-2 sm:opacity-0 sm:group-hover:opacity-100 group-focus-within:opacity-100">
           <Tooltip label={doc.favorite ? '取消精選' : '設為精選'}>
             <IconButton label="精選" size="sm" active={doc.favorite} onClick={onToggleFav}>
               <Star size={14} className={doc.favorite ? 'fill-amber-400 text-amber-400' : ''} />
