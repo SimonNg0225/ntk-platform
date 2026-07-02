@@ -661,7 +661,7 @@ function WorkBento({
           <button
             type="button"
             onClick={() => open('calendar')}
-            className="inline-flex items-center gap-0.5 text-xs font-medium text-accent transition hover:text-accent-strong active:scale-[0.98]"
+            className="inline-flex min-h-11 items-center gap-0.5 rounded-lg px-2 text-xs font-medium text-accent transition hover:text-accent-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98]"
           >
             {t('wdash.calendar', { defaultValue: '行事曆' })} <ChevronRight size={13} />
           </button>
