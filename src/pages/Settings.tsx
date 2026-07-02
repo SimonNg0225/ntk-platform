@@ -295,8 +295,9 @@ export default function Settings() {
           {themes.map((t) => (
             <button
               key={t.id}
+              type="button"
               onClick={() => setTheme(t.id)}
-              className={`flex flex-col items-center gap-1.5 rounded-xl border p-4 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 ${
+              className={`flex min-h-[84px] cursor-pointer flex-col items-center justify-center gap-1.5 rounded-xl border p-4 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 ${
                 theme === t.id
                   ? 'border-accent bg-accent-soft text-accent-strong dark:bg-accent/20 dark:text-accent'
                   : 'border-slate-200 text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800'
@@ -338,8 +339,9 @@ export default function Settings() {
           {LANGUAGES.map((l) => (
             <button
               key={l.id}
+              type="button"
               onClick={() => setLanguage(l.id)}
-              className={`rounded-xl border p-3 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 ${
+              className={`min-h-11 cursor-pointer rounded-xl border px-3 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 ${
                 i18n.language === l.id
                   ? 'border-accent bg-accent-soft text-accent-strong dark:bg-accent/20 dark:text-accent'
                   : 'border-slate-200 text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800'
@@ -446,7 +448,7 @@ export default function Settings() {
               .map((r) => (
                 <li
                   key={r.key}
-                  className="flex items-baseline justify-between gap-2 border-b border-slate-100 py-1 text-sm dark:border-slate-800"
+                  className="flex min-h-9 items-center justify-between gap-2 border-b border-slate-100 py-1 text-sm dark:border-slate-800"
                 >
                   <span className="truncate text-slate-600 dark:text-slate-300">
                     {r.label}
@@ -560,7 +562,7 @@ function ToggleRow({
         aria-checked={checked}
         aria-label={label}
         onClick={() => onChange(!checked)}
-        className={`relative inline-flex h-11 w-[68px] shrink-0 items-center rounded-full px-1 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 ${
+        className={`relative inline-flex h-11 w-[68px] shrink-0 cursor-pointer items-center rounded-full px-1 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 ${
           checked ? 'bg-accent' : 'bg-slate-300 dark:bg-slate-600'
         }`}
       >
