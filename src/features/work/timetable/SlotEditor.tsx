@@ -228,12 +228,12 @@ export default function SlotEditor({
           </div>
 
           {/* 顏色 token：自動 + 8 色色脊（呼應堂卡左色棒）*/}
-          <div className="flex flex-wrap items-center gap-1.5">
+          <div className="flex flex-wrap items-center gap-2">
             <button
               type="button"
               onClick={() => patch({ color: '' })}
               className={cx(
-                'rounded-lg px-2.5 py-1 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-1 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-800',
+                'inline-flex min-h-11 items-center rounded-lg px-3 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-1 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-800',
                 !d.color
                   ? 'bg-accent text-white shadow-sm dark:shadow-none'
                   : 'bg-slate-100 text-slate-500 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700',
@@ -249,7 +249,7 @@ export default function SlotEditor({
                 aria-pressed={d.color === c}
                 onClick={() => patch({ color: c })}
                 className={cx(
-                  'h-7 w-7 rounded-lg ring-2 ring-offset-1 transition-transform hover:scale-110 focus-visible:outline-none focus-visible:ring-accent/60 dark:ring-offset-slate-800',
+                  'h-11 w-11 rounded-xl ring-2 ring-offset-1 transition-colors focus-visible:outline-none focus-visible:ring-accent/60 dark:ring-offset-slate-800',
                   colorOf(c).bar,
                   d.color === c
                     ? 'ring-slate-900 dark:ring-white'
