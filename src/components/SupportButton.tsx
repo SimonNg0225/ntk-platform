@@ -54,7 +54,7 @@ export default function SupportButton() {
       try {
         setBusy(true)
         await submitSupportTicket(s, m)
-        toast.success('已收到你嘅查詢，我哋會盡快回覆 🙏')
+        toast.success('已收到你嘅查詢，我哋會盡快回覆。')
         setSubject('')
         setMessage('')
         setTab('mine')
@@ -134,7 +134,7 @@ export default function SupportButton() {
             {loadingTickets ? (
               <p className="py-6 text-center text-sm text-slate-400">載入中…</p>
             ) : tickets.length === 0 ? (
-              <EmptyState icon="📭" title="仲未有查詢記錄。" />
+              <EmptyState icon={Headset} title="仲未有查詢記錄。" />
             ) : (
               <ul className="max-h-80 space-y-2 overflow-y-auto">
                 {tickets.map((t) => (
