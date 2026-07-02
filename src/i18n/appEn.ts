@@ -43,7 +43,7 @@ export const appEn = {
     seePro: 'See Pro',
     seePlans: 'See plans',
     upgradePro: 'Upgrade Pro',
-    planHint: 'Plus / Pro add AI credits, sync, and advanced tools.',
+    planHint: 'Individual teachers can start on their own; Plus / Pro add AI credits, sync, and advanced tools.',
     manage: 'Manage',
     renews: 'Renews {{date}}',
     featuresCount: 'features',

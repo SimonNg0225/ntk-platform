@@ -125,7 +125,7 @@ function PlanRow() {
       ) : (
         <p className="mt-1 text-[10px] leading-relaxed text-slate-400 dark:text-slate-500">
           {t('shell.planHint', {
-            defaultValue: 'Plus / Pro 可加 AI 點數、同步同進階工具。',
+            defaultValue: '一位老師都可自行開始；Plus / Pro 加 AI 點數、同步同進階工具。',
           })}
         </p>
       )}

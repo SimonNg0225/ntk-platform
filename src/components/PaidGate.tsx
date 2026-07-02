@@ -158,14 +158,14 @@ export default function PaidGate({
 
         <div className="flex flex-col gap-2 border-t border-[color:var(--border)] bg-slate-50 px-5 py-4 dark:bg-slate-800/50 sm:flex-row sm:items-center sm:justify-between sm:px-6">
           <p className="text-xs leading-relaxed text-slate-500 dark:text-slate-400">
-            Plus 適合日常備課；Pro 適合密集出卷、簡報和高階模型。
+            一位老師都可以自行開始；Plus 適合日常備課，Pro 適合密集出卷、簡報和高階模型。
           </p>
           <Link
             to="/pricing"
             className="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-xl bg-accent px-4 text-sm font-semibold text-white transition hover:bg-accent-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
           >
             <Sparkles size={15} strokeWidth={2.25} />
-            {t('gate.cta', { defaultValue: '睇方案升級' })}
+            {t('gate.cta', { defaultValue: '比較方案' })}
           </Link>
         </div>
       </section>
