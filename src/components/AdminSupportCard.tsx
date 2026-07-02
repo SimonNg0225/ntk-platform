@@ -76,7 +76,7 @@ export default function AdminSupportCard() {
       {loading && tickets.length === 0 ? (
         <p className="py-6 text-center text-sm text-slate-400">載入中…</p>
       ) : tickets.length === 0 ? (
-        <EmptyState icon="📭" title="暫時未有查詢。" />
+        <EmptyState icon={Inbox} title="暫時未有查詢。" />
       ) : (
         <ul className="space-y-2">
           {tickets.map((t) => (

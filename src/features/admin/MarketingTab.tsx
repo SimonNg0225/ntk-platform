@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Plus, Pencil, Trash2, Copy, RefreshCw } from 'lucide-react'
+import { Plus, Pencil, Trash2, Copy, RefreshCw, Megaphone } from 'lucide-react'
 import {
   Card,
   SectionTitle,
@@ -180,7 +180,7 @@ export default function MarketingTab() {
       ) : err ? (
         <p className="py-8 text-center text-sm text-rose-500">{err}</p>
       ) : sorted.length === 0 ? (
-        <EmptyState icon="📣" title="未有內容。" hint="㩒「新增內容」開始草擬。" />
+        <EmptyState icon={Megaphone} title="未有內容。" hint="㩒「新增內容」開始草擬。" />
       ) : (
         <ul className="space-y-2">
           {sorted.map((a) => (

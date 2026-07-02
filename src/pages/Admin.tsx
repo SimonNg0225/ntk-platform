@@ -1,5 +1,6 @@
 import { Fragment, useEffect, useMemo, useState, type ReactNode } from 'react'
 import {
+  BarChart3,
   LayoutDashboard,
   Users,
   Gauge,
@@ -8,10 +9,16 @@ import {
   Rocket,
   RefreshCw,
   Check,
+  CheckCircle2,
+  Inbox,
+  Lock,
   RotateCcw,
+  School,
+  ShieldCheck,
   Trash2,
   Pencil,
   Plus,
+  UserRound,
 } from 'lucide-react'
 import {
   Card,
@@ -103,7 +110,7 @@ export default function Admin() {
   if (!isAdmin) {
     return (
       <Card className="p-8">
-        <EmptyState icon="🔒" title="冇權限" hint="呢個後台只限管理員存取。" />
+        <EmptyState icon={Lock} title="冇權限" hint="呢個後台只限管理員存取。" />
       </Card>
     )
   }
@@ -177,7 +184,7 @@ function Toolbar({ loading, onReload, children }: { loading: boolean; onReload: 
 function LoadErr({ loading, err, empty }: { loading: boolean; err: string | null; empty?: boolean }) {
   if (loading) return <p className="py-8 text-center text-sm text-slate-400">載入中…</p>
   if (err) return <p className="py-8 text-center text-sm text-rose-500">{err}</p>
-  if (empty) return <EmptyState icon="📭" title="暫時冇資料。" />
+  if (empty) return <EmptyState icon={Inbox} title="暫時冇資料。" />
   return null
 }
 
@@ -410,7 +417,7 @@ function UsageTab() {
           {/* 按功能 */}
           <p className="mb-2 mt-5 text-sm font-medium text-slate-600 dark:text-slate-300">按功能（成本排序）</p>
           {data.features.length === 0 ? (
-            <EmptyState icon="📊" title="本月暫無 AI 用量記錄。" hint="開始記錄之後嘅 AI 呼叫先會喺度顯示。" />
+            <EmptyState icon={BarChart3} title="本月暫無 AI 用量記錄。" hint="開始記錄之後嘅 AI 呼叫先會喺度顯示。" />
           ) : (
             <Table>
               <Thead>
@@ -538,7 +545,7 @@ function RefundsTab() {
       {!data ? (
         <LoadErr loading={loading} err={err} />
       ) : data.length === 0 ? (
-        <EmptyState icon="✅" title="冇待審退款。" hint="細額退款自動處理；大額先會喺度等審批。" />
+        <EmptyState icon={CheckCircle2} title="冇待審退款。" hint="細額退款自動處理；大額先會喺度等審批。" />
       ) : (
         <Table>
           <Thead>
@@ -603,7 +610,7 @@ function OrgsTab() {
       {!data ? (
         <LoadErr loading={loading} err={err} />
       ) : data.length === 0 ? (
-        <EmptyState icon="🏫" title="暫時未有團隊。" hint="老師喺「團隊」建立學校 / 科組後會喺度顯示。" />
+        <EmptyState icon={School} title="暫時未有團隊。" hint="老師喺「團隊」建立學校 / 科組後會喺度顯示。" />
       ) : (
         <Table>
           <Thead>
@@ -703,7 +710,7 @@ function ReportsCard() {
       {!data ? (
         <LoadErr loading={loading} err={err} empty={rows.length === 0} />
       ) : rows.length === 0 ? (
-        <EmptyState icon="🛡️" title="冇待審檢舉。" />
+        <EmptyState icon={ShieldCheck} title="冇待審檢舉。" />
       ) : (
         <ul className="space-y-2">
           {rows.map((rep) => (
@@ -814,7 +821,7 @@ function AdminsCard() {
       {!data ? (
         <LoadErr loading={loading} err={err} empty={rows.length === 0} />
       ) : rows.length === 0 ? (
-        <EmptyState icon="👤" title="未有管理員。" />
+        <EmptyState icon={UserRound} title="未有管理員。" />
       ) : (
         <ul className="space-y-2">
           {rows.map((a) => (
@@ -894,7 +901,7 @@ function ForumReportsCard() {
       {!data ? (
         <LoadErr loading={loading} err={err} empty={rows.length === 0} />
       ) : rows.length === 0 ? (
-        <EmptyState icon="✅" title="冇待處理檢舉。" />
+        <EmptyState icon={CheckCircle2} title="冇待處理檢舉。" />
       ) : (
         <ul className="space-y-2">
           {rows.map((r) => (
@@ -982,7 +989,7 @@ function AnnouncementsCard() {
       {!data ? (
         <LoadErr loading={loading} err={err} />
       ) : data.length === 0 ? (
-        <EmptyState icon="📣" title="未有公告。" />
+        <EmptyState icon={Megaphone} title="未有公告。" />
       ) : (
         <ul className="space-y-2">
           {data.map((a) => (
@@ -1094,7 +1101,7 @@ function TicketsCard() {
       {!data ? (
         <LoadErr loading={loading} err={err} empty={rows.length === 0} />
       ) : rows.length === 0 ? (
-        <EmptyState icon="📭" title="暫時未有查詢。" />
+        <EmptyState icon={Inbox} title="暫時未有查詢。" />
       ) : (
         <ul className="space-y-2">
           {rows.map((t) => (
