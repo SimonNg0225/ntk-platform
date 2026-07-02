@@ -514,7 +514,7 @@ export default function Editor({
         <Select
           value={note.notebookId ?? ''}
           onChange={(e) => patch({ notebookId: e.target.value || null })}
-          className="h-8 w-auto py-1 text-xs"
+          className="min-h-11 w-auto py-1 text-xs"
         >
           <option value="">未分類</option>
           {notebooks.map((nb) => (
@@ -534,7 +534,7 @@ export default function Editor({
               type="button"
               title={t.hint}
               onClick={() => applyTemplate(t.body)}
-              className="rounded-lg bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-500 transition hover:bg-accent-soft hover:text-accent-strong dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-accent/15 dark:hover:text-accent"
+              className="inline-flex min-h-11 items-center rounded-lg bg-slate-100 px-2.5 text-[11px] font-medium text-slate-500 transition hover:bg-accent-soft hover:text-accent-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-accent/15 dark:hover:text-accent"
             >
               {t.label}
             </button>
