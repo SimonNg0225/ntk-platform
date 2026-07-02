@@ -695,6 +695,7 @@ export default function TodoWidget() {
               onClick={() => setActiveTag((c) => (c === t ? null : t))}
               aria-pressed={activeTag === t}
               aria-label={`標籤篩選 ${t}`}
+              className="inline-flex min-h-11 items-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
             >
               <Badge tone={activeTag === t ? 'accent' : 'slate'}>{t}</Badge>
             </button>
@@ -703,7 +704,7 @@ export default function TodoWidget() {
             <button
               type="button"
               onClick={() => setActiveTag(null)}
-              className="text-xs text-slate-400 transition hover:text-rose-500 active:scale-[0.98]"
+              className="inline-flex min-h-11 items-center rounded-lg px-2 text-xs text-slate-400 transition hover:text-rose-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400/40 active:scale-[0.98]"
             >
               清除
             </button>
@@ -1295,7 +1296,7 @@ function AllView(props: {
           <button
             type="button"
             onClick={onManageProjects}
-            className="mt-1 inline-flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 text-xs font-medium text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 active:scale-[0.98] dark:hover:bg-slate-800 dark:hover:text-slate-300"
+            className="mt-1 inline-flex min-h-11 items-center gap-1.5 rounded-xl px-3 text-xs font-medium text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98] dark:hover:bg-slate-800 dark:hover:text-slate-300"
           >
             <FolderPlus size={14} /> 管理專案
           </button>

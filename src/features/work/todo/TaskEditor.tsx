@@ -361,7 +361,7 @@ export function TaskEditor({
               <button
                 type="button"
                 onClick={() => setDue(undefined)}
-                className="inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs text-slate-400 transition hover:text-rose-500"
+                className="inline-flex min-h-11 items-center gap-1 rounded-full px-3 text-xs text-slate-400 transition hover:text-rose-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400/40"
               >
                 <X size={12} /> 清除到期
               </button>
