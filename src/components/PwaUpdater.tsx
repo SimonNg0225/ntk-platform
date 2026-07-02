@@ -55,14 +55,14 @@ export default function PwaUpdater() {
         <span className="text-sm text-slate-700 dark:text-slate-200">有新版本可用</span>
         <button
           onClick={() => updateRef.current?.(true)}
-          className="ml-1 rounded-xl bg-accent px-3 py-1.5 text-sm font-semibold text-white transition hover:opacity-90"
+          className="ml-1 inline-flex min-h-11 items-center rounded-xl bg-accent px-3 text-sm font-semibold text-white transition hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
         >
           更新
         </button>
         <button
           onClick={() => setNeedRefresh(false)}
           aria-label="稍後"
-          className="rounded-lg p-1.5 text-slate-400 transition hover:text-slate-600 dark:hover:text-slate-300"
+          className="flex h-11 w-11 items-center justify-center rounded-lg text-slate-400 transition hover:text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:hover:text-slate-300"
         >
           <X size={15} />
         </button>
