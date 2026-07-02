@@ -107,11 +107,11 @@ const resources = {
         processing: '處理中…',
         upgradePro: '升級 Pro',
         startFree: '免費開始',
-        comingSoon: '收費功能即將推出，敬請期待。',
-        noAuth: '未接 Supabase，暫時無法登入升級。',
+        comingSoon: '收費功能正準備開放，敬請期待。',
+        noAuth: '暫時未能登入升級，請稍後再試或聯絡支援。',
         checkoutFailed: '開啟付款頁失敗。',
         portalFailed: '開啟客戶中心失敗。',
-        notConfiguredPre: 'ⓘ 收費功能尚未啟用（未設定 Stripe）。設定步驟見',
+        notConfiguredPre: '收費功能正準備開放；如需優先試用，請聯絡支援。',
       },
 
       cookie: {
@@ -336,11 +336,11 @@ const resources = {
         processing: 'Processing…',
         upgradePro: 'Upgrade to Pro',
         startFree: 'Start free',
-        comingSoon: 'Paid features are coming soon. Thanks for your patience.',
-        noAuth: 'Supabase is not connected, so sign-in and upgrade are unavailable for now.',
+        comingSoon: 'Paid features are being prepared. Thanks for your patience.',
+        noAuth: 'Sign-in and upgrade are temporarily unavailable. Try again later or contact support.',
         checkoutFailed: 'Failed to open the checkout page.',
         portalFailed: 'Failed to open the customer portal.',
-        notConfiguredPre: 'ⓘ Paid features are not yet enabled (Stripe is not configured). For setup steps, see',
+        notConfiguredPre: 'Paid features are being prepared. Contact support if you need early access.',
       },
 
       cookie: {

@@ -160,7 +160,7 @@ export default function Pricing() {
         title: '申請退款',
         tone: 'danger',
         confirmText: '確認退款',
-        message: `你可退 ${hkd(est.refundCents)}（本期已用 ${Math.round(est.usagePct * 100)}% AI 點數；已扣 Stripe 手續費 ${hkd(est.feeCents)}）。確認後會即時取消訂閱、收返付費功能。`,
+        message: `你可退 ${hkd(est.refundCents)}（本期已用 ${Math.round(est.usagePct * 100)}% AI 點數；已扣付款平台手續費 ${hkd(est.feeCents)}）。確認後會即時取消訂閱、收返付費功能。`,
       })
       if (!ok) return
       setBusy('refund')
@@ -469,10 +469,7 @@ export default function Pricing() {
 
         {!isBillingConfigured && (
           <p className="mt-8 text-center text-xs text-slate-400">
-            {t('pricing.notConfiguredPre')}{' '}
-            <code className="rounded bg-slate-100 px-1 dark:bg-slate-800">
-              docs/COMMERCIALIZATION.md
-            </code>
+            {t('pricing.notConfiguredPre')}
           </p>
         )}
         <p className="mt-6 text-center text-[11px] leading-relaxed text-slate-400">
