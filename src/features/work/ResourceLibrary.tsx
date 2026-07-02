@@ -1599,15 +1599,15 @@ function FolderManager({
               </Button>
             </div>
           </Field>
-          <div className="mt-2.5 flex items-center gap-1.5">
-            <span className="text-[11px] text-slate-500 dark:text-slate-400">顏色</span>
+          <div className="mt-2.5 flex flex-wrap items-center gap-2">
+            <span className="mr-1 text-[11px] text-slate-500 dark:text-slate-400">顏色</span>
             {FOLDER_COLOR_KEYS.map((c) => (
               <button
                 key={c}
                 type="button"
                 onClick={() => setColor(c)}
                 className={cx(
-                  'h-5 w-5 rounded-full ring-2 ring-offset-1 transition active:scale-[0.98] focus-visible:outline-none focus-visible:ring-accent dark:ring-offset-slate-800',
+                  'h-11 w-11 rounded-full ring-2 ring-offset-1 transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-accent dark:ring-offset-slate-800',
                   FOLDER_COLORS[c].dot,
                   color === c
                     ? 'ring-slate-400 dark:ring-slate-300'
@@ -1634,14 +1634,16 @@ function FolderManager({
               >
                 <Menu
                   align="start"
+                  label={`更改「${f.name}」顏色`}
                   trigger={
-                    <span
-                      aria-label={`更改「${f.name}」顏色`}
-                      className={cx(
-                        'h-4 w-4 cursor-pointer rounded-full ring-2 ring-offset-1 ring-transparent transition hover:ring-slate-200 dark:ring-offset-slate-800',
-                        folderColor(f.color).dot,
-                      )}
-                    />
+                    <span className="inline-flex h-11 w-11 items-center justify-center rounded-xl transition-colors hover:bg-slate-100 dark:hover:bg-slate-800">
+                      <span
+                        className={cx(
+                          'h-4 w-4 rounded-full ring-2 ring-offset-1 ring-transparent dark:ring-offset-slate-800',
+                          folderColor(f.color).dot,
+                        )}
+                      />
+                    </span>
                   }
                   items={FOLDER_COLOR_KEYS.map((c) => ({
                     id: c,
