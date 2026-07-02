@@ -25,7 +25,7 @@ const SCAN_GUIDE: FeatureGuideStep[] = [
   },
   {
     title: '輸出 PDF',
-    desc: '開 OCR 令 PDF 可搜尋，再下載，或直接存入資源庫綁班級／學生。',
+    desc: '開 OCR 令 PDF 可搜尋，再下載，或存入資源庫集中管理。',
   },
 ]
 

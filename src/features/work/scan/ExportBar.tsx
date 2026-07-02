@@ -52,7 +52,7 @@ export default function ExportBar({
     }
   }
 
-  // 去向②③：存資源庫（+ 可選綁班級／學生）。
+  // 去向②：存資源庫（雲端或本機 metadata）。
   //  · 已接雲端 + 已登入 → 上載 PDF 去 Supabase Storage，資源庫存可 click
   //    簽名連結（跨裝置打得開），唔強制下載。
   //  · 否則 → 降級：登記 metadata row + 下載個 PDF 畀用戶留底。
