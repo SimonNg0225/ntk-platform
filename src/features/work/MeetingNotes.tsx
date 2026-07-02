@@ -1144,8 +1144,9 @@ function NoteRow({
           </Tooltip>
           <Menu
             align="end"
+            label={`${note.title} 更多操作`}
             trigger={
-              <span className="inline-flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300">
+              <span className="inline-flex h-11 w-11 items-center justify-center rounded-xl text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300">
                 <MoreVertical size={16} />
                 <span className="sr-only">{note.title} 更多操作</span>
               </span>
