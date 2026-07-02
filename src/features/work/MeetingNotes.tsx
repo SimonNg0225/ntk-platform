@@ -1208,7 +1208,7 @@ function ActionRow({
         type="button"
         onClick={onToggle}
         className={cx(
-          'mt-0.5 shrink-0 transition active:scale-[0.98]',
+          '-ml-2 -mt-2 flex h-11 w-11 shrink-0 items-center justify-center rounded-lg transition hover:bg-slate-50 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:hover:bg-slate-700/50',
           action.done
             ? 'text-emerald-500'
             : 'text-slate-300 hover:text-accent dark:text-slate-600',
@@ -1498,7 +1498,7 @@ function NoteDetail({
                     type="button"
                     onClick={() => onToggleAction(a.id)}
                     className={cx(
-                      'mt-0.5 shrink-0 transition active:scale-[0.98]',
+                      '-ml-2 -mt-2 flex h-11 w-11 shrink-0 items-center justify-center rounded-lg transition hover:bg-slate-50 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:hover:bg-slate-700/50',
                       a.done
                         ? 'text-emerald-500'
                         : 'text-slate-300 hover:text-accent dark:text-slate-600',
