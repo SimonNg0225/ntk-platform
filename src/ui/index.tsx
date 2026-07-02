@@ -1207,7 +1207,7 @@ export function SegmentedControl<T extends string>({
             aria-pressed={on}
             onClick={() => onChange(o.id)}
             className={cx(
-              'inline-flex items-center gap-1.5 rounded-full font-medium transition duration-200 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
+              'inline-flex max-sm:min-h-11 items-center gap-1.5 rounded-full font-medium transition duration-200 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
               pad,
               on
                 ? 'bg-white text-slate-800 shadow-[0_1px_2px_rgba(0,0,0,0.08)] ring-1 ring-black/[0.04] dark:bg-slate-700 dark:text-slate-100 dark:ring-white/10'
