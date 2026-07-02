@@ -27,7 +27,7 @@ import {
 // ============================================================
 //  訂閱到手機日曆 —— 顯示 webcal:// 連結，iPhone/iPad 點一下即訂閱，
 //  之後 Apple 日曆自動同步 + 到時間原生彈提醒（靠 .ics feed 嘅 VALARM）。
-//  · 未接 Supabase / 未登入 → 友善提示（feed 要雲端 + 登入先有意義）。
+//  · 未接雲端 / 未登入 → 友善提示（訂閱日曆要雲端 + 登入先有意義）。
 //  · token 由 crypto 生成、存 calendarFeedCol（sync 上 Supabase 畀 feed
 //    function 反查）；可「重新產生」即時失效舊連結。
 //  · 雙語：i18n（zh-HK 預設靠 defaultValue；en 喺 appEn.calSub）。
@@ -173,7 +173,7 @@ export default function CalendarSubscribe({ onClose }: { onClose: () => void }) 
     <Modal open onClose={onClose} size="md">
       <Masthead onClose={onClose} />
 
-      {/* ───────── 狀態 1：未接 Supabase ───────── */}
+      {/* ───────── 狀態 1：未接雲端 ───────── */}
       {!configured ? (
         <GuardCard
           icon={CloudOff}
@@ -181,7 +181,7 @@ export default function CalendarSubscribe({ onClose }: { onClose: () => void }) 
         >
           {t('calSub.needCloudBody', {
             defaultValue:
-              '訂閱式日曆要靠雲端 feed，手機／iPad 先可以定時同步同原生彈提醒。呢部裝置暫時未接雲端，可以先用行事曆頁嘅「匯出 .ics」一次過匯入。',
+              '訂閱式日曆需要先完成雲端連線，手機／iPad 先可以自動同步同原生提醒。暫時可以先用行事曆頁嘅「匯出 .ics」一次過匯入。',
           })}
         </GuardCard>
       ) : !user ? (
@@ -209,7 +209,7 @@ export default function CalendarSubscribe({ onClose }: { onClose: () => void }) 
           title={t('calSub.noUrlTitle', { defaultValue: '連結暫時組唔到' })}
         >
           {t('calSub.noUrlBody', {
-            defaultValue: '讀唔到雲端網址設定（VITE_SUPABASE_URL）。請確認部署設定後再試。',
+            defaultValue: '暫時未能建立訂閱連結。請稍後再試，或聯絡管理員／支援團隊檢查雲端設定。',
           })}
         </GuardCard>
       ) : (
