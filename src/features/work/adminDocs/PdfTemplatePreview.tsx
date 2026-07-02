@@ -178,7 +178,7 @@ export default function PdfTemplatePreview({
           ...(f.options ? { options: f.options } : {}),
         })),
       })
-      toast.success(`PDF 範本「${trimmedName}」已儲存 🎉`)
+      toast.success(`PDF 範本「${trimmedName}」已儲存。`)
       onSaved()
     } catch (e) {
       toast.error(

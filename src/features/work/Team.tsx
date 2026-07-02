@@ -118,7 +118,7 @@ export default function Team() {
     if (token) {
       acceptInvite(token)
         .then((joinedId) => {
-          toast.success('已加入團隊 🎉')
+          toast.success('已加入團隊。')
           setOrgId(joinedId)
           // 清走 URL 上嘅 token
           const u = new URL(window.location.href)

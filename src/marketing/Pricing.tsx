@@ -105,7 +105,7 @@ export default function Pricing() {
 
   function applyPromo() {
     if (redeemTestCode(promo)) {
-      toast.success('已啟用測試 Pro 🎉')
+      toast.success('已啟用測試 Pro。')
       setPromo('')
     } else {
       toast.error('推廣代碼無效')

@@ -70,7 +70,7 @@ export default function PublishForm({
         externalUrl: mode === 'link' ? externalUrl : undefined,
         status: 'published',
       })
-      toast.success('已發佈到資源分享區 🎉')
+      toast.success('已發佈到資源分享區。')
       reset()
       onPublished?.()
       onClose()

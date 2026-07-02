@@ -513,7 +513,7 @@ function ResourceDetail({ r, onClose }: { r: CommunityResource | null; onClose: 
         count: myRating != null ? x.count : x.count + 1,
       }))
       setMyRating(n)
-      toast.success('多謝評分 🙏')
+      toast.success('多謝評分。')
     } catch (e) {
       toast.error(e instanceof Error ? e.message : '評分失敗')
     }
