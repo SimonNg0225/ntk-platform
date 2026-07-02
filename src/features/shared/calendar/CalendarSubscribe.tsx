@@ -244,7 +244,7 @@ export default function CalendarSubscribe({ onClose }: { onClose: () => void }) 
               </Button>
               <a
                 href={webcalUrl}
-                className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 shadow-xs transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-2 focus-visible:ring-offset-white active:scale-[0.98] dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:shadow-none dark:hover:bg-slate-700 dark:focus-visible:ring-offset-slate-900"
+                className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 text-xs font-medium text-slate-700 shadow-xs transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-2 focus-visible:ring-offset-white active:scale-[0.98] dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:shadow-none dark:hover:bg-slate-700 dark:focus-visible:ring-offset-slate-900"
               >
                 {t('calSub.openApple', { defaultValue: '在 Apple 裝置開啟' })}
                 <ExternalLink size={16} strokeWidth={2} />
