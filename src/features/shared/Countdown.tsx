@@ -217,7 +217,7 @@ function FilterPill({
       aria-pressed={active}
       onClick={onClick}
       className={cx(
-        'inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
+        'inline-flex min-h-11 items-center gap-1.5 rounded-full border px-3 text-xs font-medium transition active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
         active
           ? 'border-accent bg-accent text-white shadow-sm'
           : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700',
@@ -495,7 +495,7 @@ export default function Countdown() {
             <button
               type="button"
               onClick={() => markArrived(c)}
-              className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-emerald-600 transition hover:bg-emerald-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/40 active:scale-[0.98] dark:text-emerald-300 dark:hover:bg-emerald-500/15"
+              className="inline-flex min-h-11 items-center gap-1.5 rounded-lg px-2.5 text-xs font-medium text-emerald-600 transition hover:bg-emerald-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/40 active:scale-[0.98] dark:text-emerald-300 dark:hover:bg-emerald-500/15"
             >
               <CheckCircle2 size={14} />
               {overdue
@@ -506,7 +506,7 @@ export default function Countdown() {
             <button
               type="button"
               onClick={() => undoArrived(c)}
-              className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-400 transition hover:bg-slate-50 hover:text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98] dark:text-slate-500 dark:hover:bg-slate-800/60 dark:hover:text-slate-200"
+              className="inline-flex min-h-11 items-center gap-1.5 rounded-lg px-2.5 text-xs font-medium text-slate-400 transition hover:bg-slate-50 hover:text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98] dark:text-slate-500 dark:hover:bg-slate-800/60 dark:hover:text-slate-200"
             >
               <Undo2 size={14} />
               {t('countdown.action.undo', { defaultValue: '取消完成' })}
@@ -819,7 +819,7 @@ export default function Countdown() {
                           aria-pressed={on}
                           onClick={() => setFCategory(on ? '' : c)}
                           className={cx(
-                            'inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
+                            'inline-flex min-h-11 items-center gap-1.5 rounded-full border px-3 text-xs font-medium transition active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
                             on
                               ? 'border-accent bg-accent text-white shadow-sm'
                               : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700',
