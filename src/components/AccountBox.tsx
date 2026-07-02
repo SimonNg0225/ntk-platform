@@ -17,7 +17,7 @@ export default function AccountBox() {
       <div className="px-4 py-3">
         <div className="flex items-center justify-between gap-2">
           <span className="truncate text-xs text-slate-400 dark:text-slate-500">
-            {t('shell.guestMode', { defaultValue: '👤 訪客模式 · 本機' })}
+            {t('shell.guestMode', { defaultValue: '訪客模式 · 本機' })}
           </span>
           <PlanBadge />
         </div>
@@ -113,14 +113,20 @@ function PlanRow() {
             to="/pricing"
             className="inline-flex items-center gap-0.5 rounded-md bg-accent px-2 py-1 text-[11px] font-semibold text-white transition hover:bg-accent-strong"
           >
-            {t('shell.upgradePro', { defaultValue: '升級 Pro' })}
+            {t('shell.seePlans', { defaultValue: '睇方案' })}
             <ArrowUpRight size={12} strokeWidth={2.25} />
           </Link>
         )}
       </div>
-      {isPaid && dateStr && (
+      {isPaid && dateStr ? (
         <p className="mt-1 text-[10px] text-slate-400 dark:text-slate-500">
           {t('shell.renews', { date: dateStr, defaultValue: `續訂 ${dateStr}` })}
+        </p>
+      ) : (
+        <p className="mt-1 text-[10px] leading-relaxed text-slate-400 dark:text-slate-500">
+          {t('shell.planHint', {
+            defaultValue: 'Plus / Pro 可加 AI 點數、同步同進階工具。',
+          })}
         </p>
       )}
     </div>
