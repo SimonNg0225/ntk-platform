@@ -869,7 +869,7 @@ function BankView(props: {
           <button
             onClick={selectAllFiltered}
             aria-pressed={allFilteredSelected}
-            className="inline-flex items-center gap-1.5 rounded-xl px-2 py-1 text-sm font-medium text-accent-strong transition hover:bg-accent/10 active:scale-[0.98] dark:text-accent"
+            className="inline-flex min-h-11 items-center gap-1.5 rounded-xl px-3 text-sm font-medium text-accent-strong transition hover:bg-accent/10 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:text-accent"
           >
             {allFilteredSelected ? <CheckSquare size={16} /> : <Square size={16} />}
             全選（<span className="tabular-nums">{filtered.length}</span>）
@@ -954,20 +954,22 @@ function BankView(props: {
               <div className="min-w-0 flex-1 p-4">
                 <div className="flex items-start gap-3">
                   {selectMode && (
-                    <input
-                      type="checkbox"
-                      checked={selected.has(q.id)}
-                      onChange={() => toggleSelect(q.id)}
-                      className="mt-1 h-4 w-4 shrink-0 accent-[color:var(--accent)]"
-                      aria-label="選取題目"
-                    />
+                    <label className="-ml-2 -mt-2 flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-lg transition hover:bg-slate-50 focus-within:outline-none focus-within:ring-2 focus-within:ring-accent/40 dark:hover:bg-slate-800/60">
+                      <input
+                        type="checkbox"
+                        checked={selected.has(q.id)}
+                        onChange={() => toggleSelect(q.id)}
+                        className="h-4 w-4 shrink-0 accent-[color:var(--accent)]"
+                        aria-label="選取題目"
+                      />
+                    </label>
                   )}
                   {/* 卷面題號牌 */}
                   <QuestionPlate index={idx + 1} type={q.type} className="mt-0.5" />
                   <button
                     onClick={() => setExpanded(isOpen ? null : q.id)}
                     aria-expanded={isOpen}
-                    className="flex min-w-0 flex-1 items-start gap-2 break-words text-left text-[15px] font-medium leading-relaxed text-slate-800 dark:text-slate-100"
+                    className="flex min-h-11 min-w-0 flex-1 items-start gap-2 rounded-lg px-1 py-1 text-left text-[15px] font-medium leading-relaxed text-slate-800 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:text-slate-100"
                   >
                     <span className="min-w-0">{q.stem}</span>
                     <ChevronRight
@@ -1893,7 +1895,7 @@ function QuestionFormModal({
             type="button"
             onClick={onClose}
             aria-label="關閉"
-            className="-mr-1.5 -mt-1 shrink-0 rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:hover:bg-slate-700"
+            className="-mr-2 -mt-2 flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:hover:bg-slate-700"
           >
             <X size={18} />
           </button>
