@@ -223,17 +223,17 @@ export default function WorkReport() {
 
         {preset === 'custom' && (
           <div className="flex flex-wrap items-center gap-2">
-            <label className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
+            <label className="flex min-h-11 items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
               {t('workReport.custom.from', { defaultValue: '由' })}
               <input
                 type="date"
                 value={customStart}
                 max={customEnd < today ? customEnd : today}
                 onChange={(e) => setCustomStart(e.target.value)}
-                className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-sm text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                className="min-h-11 rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
               />
             </label>
-            <label className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
+            <label className="flex min-h-11 items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
               {t('workReport.custom.to', { defaultValue: '至' })}
               <input
                 type="date"
@@ -241,7 +241,7 @@ export default function WorkReport() {
                 min={customStart}
                 max={today}
                 onChange={(e) => setCustomEnd(e.target.value)}
-                className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-sm text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                className="min-h-11 rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
               />
             </label>
           </div>
@@ -258,7 +258,7 @@ export default function WorkReport() {
             open: agg.counts.open,
             notes: agg.counts.notes,
           })}
-          className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-xl bg-slate-50/60 px-3 py-2 text-[12px] text-slate-500 dark:bg-slate-800/40 dark:text-slate-400"
+          className="flex min-h-11 flex-wrap items-center gap-x-3 gap-y-1 rounded-xl bg-slate-50/60 px-3 py-2 text-[12px] text-slate-500 dark:bg-slate-800/40 dark:text-slate-400"
         >
           <span className="font-medium text-slate-600 dark:text-slate-300">{rangeLabel(range)}</span>
           <span className="inline-flex items-center gap-1">
@@ -500,8 +500,10 @@ function ResultCard({
       />
 
       {allEmpty && (
-        <div className="flex items-center gap-2.5 rounded-xl bg-slate-50/60 px-3 py-2.5 text-sm text-slate-400 dark:bg-slate-800/40 dark:text-slate-500">
-          <Clock size={16} className="shrink-0" />
+        <div className="flex min-h-11 items-center gap-2.5 rounded-xl bg-slate-50/60 px-3 py-2.5 text-sm text-slate-400 dark:bg-slate-800/40 dark:text-slate-500">
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white text-slate-400 dark:bg-slate-700/70">
+            <Clock size={16} />
+          </span>
           {t('workReport.result.noPoints', {
             defaultValue: '今次撮唔到明顯重點，可展開下面原始紀錄核對。',
           })}
@@ -510,7 +512,7 @@ function ResultCard({
 
       {/* 原始聚合清單（核對用）*/}
       <details className="group rounded-xl border border-slate-200/80 bg-slate-50/60 p-3 dark:border-slate-700/60 dark:bg-slate-800/40">
-        <summary className="flex cursor-pointer items-center gap-1 text-[13px] font-medium text-slate-500 transition hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200">
+        <summary className="flex min-h-11 cursor-pointer items-center gap-2 rounded-lg px-2 text-[13px] font-medium text-slate-500 transition hover:bg-white hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:text-slate-400 dark:hover:bg-slate-700/60 dark:hover:text-slate-200">
           <ChevronRight
             size={14}
             className="shrink-0 text-slate-400 transition-transform duration-200 group-open:rotate-90"
