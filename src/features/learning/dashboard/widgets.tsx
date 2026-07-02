@@ -304,7 +304,7 @@ export function AgendaWidget({
                   <button
                     key={c.id}
                     onClick={() => open('countdown')}
-                    className="flex w-full items-center gap-2 rounded-lg px-1 py-0.5 text-left text-sm transition hover:bg-slate-50 dark:hover:bg-slate-800/50"
+                    className="flex min-h-11 w-full items-center gap-2 rounded-lg px-3 text-left text-sm transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98] dark:hover:bg-slate-800/50"
                   >
                     <Hourglass size={14} className="shrink-0 text-amber-500" />
                     <span className="truncate text-slate-700 dark:text-slate-200">{c.title}</span>
@@ -471,7 +471,7 @@ export function HabitsTodayWidget({
                   onClick={() => onToggle(h.id, !done)}
                   aria-pressed={done}
                   className={cx(
-                    'flex w-full items-center gap-2.5 rounded-xl px-2 py-1.5 text-left text-sm transition',
+                    'flex min-h-11 w-full items-center gap-2.5 rounded-xl px-3 text-left text-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98]',
                     'hover:bg-slate-50 dark:hover:bg-slate-800/50',
                   )}
                 >
@@ -683,7 +683,7 @@ export function ActivityWidget({ items, open }: { items: ActivityItem[]; open: O
               <li key={it.id}>
                 <button
                   onClick={() => open(it.target)}
-                  className="flex w-full items-start gap-2.5 rounded-lg px-1 py-0.5 text-left transition hover:bg-slate-50 dark:hover:bg-slate-800/50"
+                  className="flex min-h-11 w-full items-start gap-2.5 rounded-lg px-3 py-2 text-left transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98] dark:hover:bg-slate-800/50"
                 >
                   <ActivityDot className={meta.dot} />
                   <span className="min-w-0 flex-1 truncate text-sm text-slate-700 dark:text-slate-200">{it.text}</span>
