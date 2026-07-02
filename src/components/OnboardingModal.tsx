@@ -76,6 +76,17 @@ export function OnboardingModal({
               不用先理解全部功能；輸入一個課題，揀一個任務包，再逐步把備課、
               出題、簡報同回饋收回同一個工作台。
             </p>
+            <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+              <Button icon={ClipboardList} onClick={onClose}>
+                開始準備下一堂
+              </Button>
+              <Button variant="secondary" icon={Database} onClick={onLoadDemo}>
+                載入試用資料
+              </Button>
+            </div>
+            <p className="mt-2 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+              試用資料日後可在設定清除。
+            </p>
           </div>
         </div>
 
@@ -126,23 +137,6 @@ export function OnboardingModal({
               </div>
             )
           })}
-        </div>
-
-        <div className="rounded-xl bg-[color:var(--surface-2)] p-3">
-          <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">
-            建議第一步：打開首頁，輸入下一堂課題。
-          </p>
-          <p className="mt-1 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
-            想先睇完整例子，可以載入試用資料；所有試用內容之後都可在設定清除。
-          </p>
-          <div className="mt-3 flex flex-col justify-center gap-2 sm:flex-row">
-            <Button icon={ClipboardList} onClick={onClose}>
-              開始準備下一堂
-            </Button>
-            <Button variant="secondary" icon={Database} onClick={onLoadDemo}>
-              載入試用資料
-            </Button>
-          </div>
         </div>
       </div>
     </Modal>
