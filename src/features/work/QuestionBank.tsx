@@ -525,7 +525,7 @@ export default function QuestionBank() {
             onClick={() => setView(id)}
             aria-pressed={view === id}
             className={cx(
-              'inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition',
+              'inline-flex min-h-11 items-center gap-1.5 rounded-full px-3 text-xs font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 active:scale-[0.98]',
               view === id
                 ? 'bg-white font-semibold text-accent-strong'
                 : 'bg-white/15 text-white hover:bg-white/25',
@@ -884,7 +884,7 @@ function BankView(props: {
                 bulkMoveTopic(e.target.value)
                 e.target.value = ''
               }}
-              className="w-32 text-xs"
+              className="min-h-11 w-32 text-base sm:text-xs"
               disabled={selected.size === 0}
             >
               <option value="">改課題…</option>
@@ -900,7 +900,7 @@ function BankView(props: {
                 if (e.target.value) bulkSetDifficulty(e.target.value as Difficulty)
                 e.target.value = ''
               }}
-              className="w-24 text-xs"
+              className="min-h-11 w-24 text-base sm:text-xs"
               disabled={selected.size === 0}
             >
               <option value="">改難度…</option>
@@ -1531,7 +1531,7 @@ function PaperStudio({
                       onClick={() => toggleBpTopic(t.id)}
                       aria-pressed={on}
                       className={cx(
-                        'rounded-full border px-2.5 py-1 text-xs font-medium transition active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
+                        'inline-flex min-h-11 items-center rounded-full border px-3 text-xs font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98]',
                         on
                           ? 'border-accent bg-accent text-white shadow-sm dark:shadow-none'
                           : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700',
