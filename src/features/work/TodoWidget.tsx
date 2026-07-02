@@ -1773,8 +1773,9 @@ function ProjectManager({
                   type="button"
                   onClick={() => setColor(c)}
                   aria-label={c}
+                  aria-pressed={color === c}
                   className={cx(
-                    'h-7 w-7 rounded-full ring-2 ring-offset-2 ring-offset-white transition active:scale-[0.98] dark:ring-offset-slate-800',
+                    'h-11 w-11 rounded-full ring-2 ring-offset-2 ring-offset-white transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-accent dark:ring-offset-slate-800',
                     projColorCls(c).dot,
                     color === c ? 'ring-slate-400 dark:ring-slate-300' : 'ring-transparent',
                   )}
