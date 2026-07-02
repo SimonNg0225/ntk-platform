@@ -136,7 +136,7 @@ export default function FocusTimer() {
               onClick={() => setTab(tb.id)}
               aria-pressed={on}
               className={cx(
-                'inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60',
+                'inline-flex min-h-11 items-center gap-1.5 rounded-full px-3 text-xs font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60',
                 on
                   ? 'bg-white font-semibold text-accent-strong'
                   : 'bg-white/15 text-white hover:bg-white/25',

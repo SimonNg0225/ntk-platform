@@ -101,7 +101,7 @@ export default function SettingsView({
       <button
         type="button"
         onClick={() => patch({ ...DEFAULT_SETTINGS })}
-        className="inline-flex items-center gap-1.5 rounded-md text-xs font-medium text-slate-400 transition hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+        className="inline-flex min-h-11 items-center gap-1.5 rounded-lg px-3 text-xs font-medium text-slate-400 transition hover:bg-slate-100 hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98] dark:hover:bg-slate-800"
       >
         <RefreshCw size={13} />
         還原預設設定

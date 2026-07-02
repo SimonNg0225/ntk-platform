@@ -456,7 +456,7 @@ export default function TimerView({
                   aria-label={`預設 ${p.focus} 分專注／${p.short} 分短休息／${p.long} 分長休息`}
                   onClick={() => applyPreset(p)}
                   className={cx(
-                    'rounded-full px-3 py-1 text-xs font-medium tabular-nums transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
+                    'inline-flex min-h-11 items-center rounded-full px-3 text-xs font-medium tabular-nums transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
                     on
                       ? 'bg-accent text-white shadow-sm dark:shadow-none'
                       : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200',
@@ -507,7 +507,7 @@ export default function TimerView({
                 type="button"
                 aria-label={`移除標籤 #${t}`}
                 onClick={() => setTags(tags.filter((x) => x !== t))}
-                className="inline-flex items-center gap-1 rounded-full bg-accent-soft px-2.5 py-0.5 text-[11px] font-medium text-accent-strong transition hover:bg-accent/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:bg-accent/15 dark:text-accent"
+                className="inline-flex min-h-11 items-center gap-1 rounded-full bg-accent-soft px-3 text-[11px] font-medium text-accent-strong transition hover:bg-accent/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98] dark:bg-accent/15 dark:text-accent"
               >
                 #{t}
                 <span aria-hidden="true" className="text-accent/60">×</span>
@@ -567,7 +567,7 @@ export default function TimerView({
             type="button"
             onClick={addInterruption}
             aria-label={`記錄分心，目前 ${interruptions} 次`}
-            className="inline-flex items-center gap-1.5 rounded-full px-2 py-1 transition-colors hover:text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:hover:text-slate-300"
+            className="inline-flex min-h-11 items-center gap-1.5 rounded-full px-3 transition-colors hover:bg-slate-100 hover:text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98] dark:hover:bg-slate-800 dark:hover:text-slate-300"
           >
             <AlertCircle size={13} />
             分心{' '}
@@ -581,7 +581,7 @@ export default function TimerView({
           aria-pressed={settings.chimeSound}
           aria-label={settings.chimeSound ? '完成鈴聲：開（點擊關閉）' : '完成鈴聲：關（點擊開啟）'}
           onClick={() => patchSettings({ chimeSound: !settings.chimeSound })}
-          className="inline-flex items-center gap-1.5 rounded-full px-2 py-1 transition-colors hover:text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:hover:text-slate-300"
+          className="inline-flex min-h-11 items-center gap-1.5 rounded-full px-3 transition-colors hover:bg-slate-100 hover:text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98] dark:hover:bg-slate-800 dark:hover:text-slate-300"
         >
           {settings.chimeSound ? <Volume2 size={13} /> : <VolumeX size={13} />}
           鈴聲{settings.chimeSound ? '開' : '關'}
