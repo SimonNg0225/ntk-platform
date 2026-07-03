@@ -2,10 +2,13 @@ import { useMemo, useState, type ReactNode } from 'react'
 import {
   X,
   ChevronDown,
+  Home,
   PanelLeftClose,
   Lock,
   Pin,
   Search,
+  Settings,
+  Wrench,
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useMode } from '../context/ModeContext'
@@ -102,6 +105,7 @@ export default function Sidebar({
   const defaultFeatures = resolveDefaultFeatures(DEFAULT_SIDEBAR_IDS[modeDef.id], modeDef.id)
     .filter((f) => !highlightedIds.has(f.id))
     .slice(0, 6)
+  const railFeatures = [...pinnedFeatures, ...recentFeatures, ...defaultFeatures].slice(0, 9)
 
   // 搜尋時顯示完整扁平結果；預設狀態保持簡化。
   const [filter, setFilter] = useState('')
@@ -135,66 +139,49 @@ export default function Sidebar({
     return (
       <aside
         className={cx(
-          'et-glass-sidebar flex w-[68px] shrink-0 flex-col',
+          'flex w-[68px] shrink-0 flex-col border-r border-slate-200/80 bg-white/95 dark:border-slate-800 dark:bg-slate-950/95',
           className,
         )}
-      >
+        >
         {/* 品牌：撳 logo 展開 */}
         <div className="flex justify-center px-2 py-3">
           <button
             onClick={onExpand}
             title={t('shell.expandSidebar', { defaultValue: '展開側欄' })}
             aria-label={t('shell.expandSidebar', { defaultValue: '展開側欄' })}
-            className="flex h-11 w-11 items-center justify-center rounded-xl transition active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+            className="group/rail relative flex h-11 w-11 items-center justify-center rounded-xl transition active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
           >
             <img
               src="/favicon.svg"
               alt={BRAND_NAME}
-              className="h-10 w-10 rounded-xl shadow-sm"
+              className="h-9 w-9 rounded-xl"
             />
+            <RailTooltip>{t('shell.expandSidebar', { defaultValue: '展開側欄' })}</RailTooltip>
           </button>
         </div>
 
-        {/* 功能 icon 列 */}
-        <nav className="flex-1 space-y-0.5 overflow-y-auto px-2 py-1">
+        {/* 功能 icon 列：rail 只放核心快捷，完整列表喺展開側欄 / 首頁功能庫。 */}
+        <nav className="flex-1 space-y-0.5 px-2 py-1">
           <RailButton
             active={activeId === null}
             title={t('shell.home', { defaultValue: '首頁概覽' })}
             onClick={() => choose(null)}
           >
-            <FeatureIcon icon="🏠" size={18} className={iconColor(activeId === null)} />
+            <Home size={18} strokeWidth={1.85} className={iconColor(activeId === null)} />
           </RailButton>
-          {pinnedFeatures.length > 0 && (
+          {railFeatures.length > 0 && (
             <div className="space-y-0.5">
               <div className="mx-auto my-1.5 h-px w-6 bg-black/[0.06] dark:bg-white/[0.08]" />
-              {pinnedFeatures.map((f) => {
+              {railFeatures.map((f) => {
                 const on = activeId === f.id
                 return (
-                  <RailButton key={`p-${f.id}`} active={on} title={featName(t, f)} onClick={() => choose(f.id)}>
+                  <RailButton key={f.id} active={on} title={featName(t, f)} onClick={() => choose(f.id)}>
                     <FeatureIcon icon={f.icon} size={18} className={iconColor(on)} />
                   </RailButton>
                 )
               })}
             </div>
           )}
-          {groups.map((g) => (
-            <div key={g.group} className="space-y-0.5">
-              <div className="mx-auto my-1.5 h-px w-6 bg-black/[0.06] dark:bg-white/[0.08]" />
-              {g.items.map((f) => {
-                const on = activeId === f.id
-                return (
-                  <RailButton
-                    key={f.id}
-                    active={on}
-                    title={featName(t, f)}
-                    onClick={() => choose(f.id)}
-                  >
-                    <FeatureIcon icon={f.icon} size={18} className={iconColor(on)} />
-                  </RailButton>
-                )
-              })}
-            </div>
-          ))}
         </nav>
 
         {/* 頁腳：後台（admin）+ 設定 + 完全收起 */}
@@ -208,7 +195,7 @@ export default function Sidebar({
                 onClose?.()
               }}
             >
-              <FeatureIcon icon="🛠️" size={18} className={iconColor(activeId === '__admin__')} />
+              <Wrench size={18} strokeWidth={1.85} className={iconColor(activeId === '__admin__')} />
             </RailButton>
           )}
           <RailButton
@@ -219,20 +206,17 @@ export default function Sidebar({
               onClose?.()
             }}
           >
-            <FeatureIcon
-              icon="⚙️"
-              size={18}
-              className={iconColor(activeId === '__settings__')}
-            />
+            <Settings size={18} strokeWidth={1.85} className={iconColor(activeId === '__settings__')} />
           </RailButton>
           {onCollapse && (
             <button
               onClick={onCollapse}
               title={t('shell.hideSidebar', { defaultValue: '完全收起（⌘B）' })}
               aria-label={t('shell.hideSidebar', { defaultValue: '完全收起' })}
-              className="flex h-11 w-11 items-center justify-center rounded-lg text-slate-400 transition hover:bg-black/[0.04] hover:text-slate-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:text-slate-500 dark:hover:bg-white/[0.06] dark:hover:text-slate-200"
+              className="group/rail relative flex h-11 w-11 items-center justify-center rounded-lg text-slate-400 transition hover:bg-black/[0.04] hover:text-slate-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:text-slate-500 dark:hover:bg-white/[0.06] dark:hover:text-slate-200"
             >
               <PanelLeftClose size={17} strokeWidth={1.75} />
+              <RailTooltip>{t('shell.hideSidebar', { defaultValue: '完全收起' })}</RailTooltip>
             </button>
           )}
         </div>
@@ -243,7 +227,7 @@ export default function Sidebar({
   return (
     <aside
       className={cx(
-        'et-glass-sidebar flex w-72 shrink-0 flex-col',
+        'et-glass-sidebar flex w-[276px] shrink-0 flex-col',
         className,
       )}
     >
@@ -256,10 +240,10 @@ export default function Sidebar({
             className="h-10 w-10 rounded-xl shadow-sm"
           />
           <div>
-            <p className="text-[15px] font-semibold leading-none tracking-tight text-slate-800 dark:text-slate-100">
+            <p className="text-[15px] font-semibold leading-none text-slate-900 dark:text-slate-100">
               {t('shell.brandName', { defaultValue: BRAND_NAME })}
             </p>
-            <p className="mt-1.5 text-[11px] tracking-tight text-slate-400 dark:text-slate-500">
+            <p className="mt-1.5 text-[11px] text-slate-500 dark:text-slate-500">
               {t('shell.brandSub', { defaultValue: BRAND_TAGLINE_ZH })}
             </p>
           </div>
@@ -420,7 +404,7 @@ export default function Sidebar({
                     aria-expanded={isOpen}
                     className="flex min-h-11 w-full cursor-pointer items-center gap-2 rounded-xl px-2.5 text-[13px] font-semibold text-slate-600 transition hover:bg-black/[0.04] hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:text-slate-300 dark:hover:bg-white/[0.06] dark:hover:text-white"
                   >
-                    <span className="truncate tracking-tight">{groupLabel(t, g.group)}</span>
+                    <span className="truncate">{groupLabel(t, g.group)}</span>
                     <span className="ml-auto rounded-full bg-black/[0.05] px-1.5 text-[10px] font-medium tabular-nums text-slate-400 dark:bg-white/10 dark:text-slate-500">
                       {g.items.length}
                     </span>
@@ -626,13 +610,22 @@ function RailButton({
       title={title}
       aria-label={title}
       className={cx(
-        'group mx-auto flex h-11 w-11 items-center justify-center rounded-lg transition duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.97]',
+        'group/rail relative mx-auto flex h-11 w-11 items-center justify-center rounded-lg transition duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.97]',
         active
           ? 'bg-accent/10 ring-1 ring-accent/25 dark:bg-accent/20'
           : 'hover:bg-black/[0.04] dark:hover:bg-white/[0.06]',
       )}
     >
       {children}
+      <RailTooltip>{title}</RailTooltip>
     </button>
+  )
+}
+
+function RailTooltip({ children }: { children: ReactNode }) {
+  return (
+    <span className="pointer-events-none absolute left-[calc(100%+0.65rem)] top-1/2 z-50 hidden -translate-y-1/2 whitespace-nowrap rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 opacity-0 shadow-md transition duration-150 group-hover/rail:block group-hover/rail:opacity-100 group-focus-visible/rail:block group-focus-visible/rail:opacity-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100">
+      {children}
+    </span>
   )
 }

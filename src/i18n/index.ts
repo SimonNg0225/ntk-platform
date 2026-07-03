@@ -38,8 +38,12 @@ const resources = {
         brandSub: BRAND_TAGLINE_ZH,
       },
       nav: { pricing: '定價', start: '免費開始', enterApp: '進入工作台' },
+      landingNav: { workflow: '工作流', features: '功能' },
       hero: {
         badge: '個人老師先用 · 香港課堂場景',
+        h1Title: '香港老師的 AI 工作台',
+        h1Line1: '香港老師的',
+        h1Line2: 'AI 工作台',
         h1pre: '一位老師都開得起，',
         h1accent: '備課到回饋一條龍',
         sub: '備課、AI 出題、成績與弱項分析、點名、家長溝通、行政文件 —— 先由你自己免費用起，需要時再帶入科組或學校。',
@@ -47,6 +51,11 @@ const resources = {
         ctaEnter: '進入工作台',
         ctaPricing: '查看定價',
         noCard: '無需信用卡 · 不用學校帳戶 · 適用任何任教科目',
+        stats: {
+          time: { value: '3 步', label: '課前、課中、課後跟進一次過收好' },
+          tools: { value: '30+', label: '常用教學工具集中在同一個工作台' },
+          solo: { value: '1 人', label: '個人老師不用等學校採購都可先用' },
+        },
         checkLead: '由備課到課後整理，逐步幫你收好：',
         ck1: '備課',
         ck2: '教案',
@@ -56,6 +65,24 @@ const resources = {
         ck6: '掃描存檔',
       },
       featuresTitle: '由一位老師的日常開始',
+      featuresHeadline: '不是再多一個 AI 聊天框，而是老師每日真的會用的工作台',
+      workflow: {
+        eyebrow: '由一堂課開始',
+        title: '把零散工作收成一條清晰流程',
+        sub: 'EziTeach AI 不是叫老師重新學一套系統，而是把原本散在 WhatsApp、試算表、文件夾和腦內的工作，收回一條由課前到課後的路線。',
+        before: {
+          title: '課前：備好一堂課',
+          desc: '把課題、教材和舊筆記變成教案、題目、簡報草稿與活動流程，先有可用版本再微調。',
+        },
+        during: {
+          title: '課中：按鐘聲推進',
+          desc: '點名、抽人、分組、計時和課堂任務放在同一頁，減少上堂時切換工具。',
+        },
+        after: {
+          title: '課後：回饋與跟進',
+          desc: '整理批改、弱項、評語和家長跟進，下一堂課要補什麼一眼就見到。',
+        },
+      },
       f: {
         prepTitle: '備課與教案',
         prepDesc: '教案、課程進度、時間表、題庫一站管理；AI「點教」指引列出教學重點、學生常見誤解、課堂活動與評估。',
@@ -71,6 +98,23 @@ const resources = {
         commDesc: '家長溝通記錄連跟進；Word 行政文件套版即印、文件速讀抽重點、會議／觀課錄音轉文字、掃描 PDF。',
         moreTitle: '仲有更多',
         more: '教學 AI 助手、問我嘅資料 AI、教學資源庫、資源分享區、老師社群、行事曆、全域搜尋、重要日子倒數、自我測驗、快速擷取、日後科組協作',
+      },
+      proof: {
+        eyebrow: '散戶先行',
+        quote: '先令一位老師覺得「今晚真係幫到我」，學校級 adoption 先有機會自然發生。',
+        quoteBy: '產品定位由個人老師切入：低門檻、快見效、私隱清楚、可搬走資料。當老師開始在科組分享成果，EziTeach AI 才順勢變成團隊工具。',
+        solo: {
+          title: '一位老師也能開始',
+          desc: '不用等學校採購、不用 IT 開帳戶；先用免費版整理自己的課堂工作流。',
+        },
+        privacy: {
+          title: '先保護學生私隱',
+          desc: '頁面和文案明確提醒遮蔽學生資料，AI 產出保留教師覆核。',
+        },
+        portable: {
+          title: '本機優先，再雲端同步',
+          desc: '個人老師最重視可控感：本機資料、登入同步、需要時可匯出。',
+        },
       },
       trust: {
         solo: '個人老師可即開即用',
@@ -266,8 +310,12 @@ const resources = {
       ...appEn,
       signingIn: 'Signing in…',
       nav: { pricing: 'Pricing', start: 'Get started', enterApp: 'Open workspace' },
+      landingNav: { workflow: 'Workflow', features: 'Features' },
       hero: {
         badge: 'Individual teachers first · Hong Kong classroom context',
+        h1Title: 'The AI workspace for Hong Kong teachers',
+        h1Line1: 'The AI workspace',
+        h1Line2: 'for Hong Kong teachers',
         h1pre: 'One teacher can start, ',
         h1accent: 'from prep to feedback',
         sub: 'Lesson prep, AI question generation, grades & weakness analysis, attendance, parent comms and admin documents — start free as an individual teacher, then bring it to your panel or school when ready.',
@@ -275,6 +323,11 @@ const resources = {
         ctaEnter: 'Open workspace',
         ctaPricing: 'See pricing',
         noCard: 'No credit card · No school account required · Any teaching subject',
+        stats: {
+          time: { value: '3 steps', label: 'Prep, lesson time and follow-up in one flow' },
+          tools: { value: '30+', label: 'Teaching tools gathered in one workspace' },
+          solo: { value: '1 teacher', label: 'Start before your school needs to buy anything' },
+        },
         checkLead: 'From prep to post-lesson follow-up:',
         ck1: 'Lesson prep',
         ck2: 'Lesson plans',
@@ -284,6 +337,24 @@ const resources = {
         ck6: 'Scan & file',
       },
       featuresTitle: "Starts with one teacher's week",
+      featuresHeadline: 'Not another AI chat box, but a workspace teachers can use every day',
+      workflow: {
+        eyebrow: 'Start with one lesson',
+        title: 'Turn scattered tasks into one clear flow',
+        sub: 'EziTeach AI does not ask teachers to learn a new operating system. It gathers the work spread across chats, spreadsheets, folders and memory into a route from prep to follow-up.',
+        before: {
+          title: 'Before class: prepare the lesson',
+          desc: 'Turn topics, materials and old notes into a lesson plan, questions, slide drafts and activity flow, then refine from a usable first version.',
+        },
+        during: {
+          title: 'During class: keep the lesson moving',
+          desc: 'Attendance, random picker, grouping, timer and class tasks sit on the same page, so there is less switching during class.',
+        },
+        after: {
+          title: 'After class: feedback and follow-up',
+          desc: 'Organise marking, weak spots, comments and parent follow-ups, so the next lesson plan is obvious.',
+        },
+      },
       f: {
         prepTitle: 'Planning & lessons',
         prepDesc: 'Lesson plans, curriculum progress, timetable and question bank in one place; an AI "how to teach" guide lists key points, common misconceptions, activities and assessment.',
@@ -299,6 +370,23 @@ const resources = {
         commDesc: 'Parent contact logs with follow-ups; fill Word admin templates to print, doc digest, meeting/lesson audio to text, and PDF scanning.',
         moreTitle: 'And more',
         more: 'Teaching AI assistant, Ask-your-data AI, Resource library, Resource sharing, Teacher community, Calendar, Global search, Countdowns, Self-quiz, Quick capture, panel collaboration later, Budget',
+      },
+      proof: {
+        eyebrow: 'Individual teachers first',
+        quote: 'Win the moment when one teacher feels, “this actually helps me tonight,” and school adoption has a reason to grow.',
+        quoteBy: 'The product enters through the individual teacher: low friction, quick value, clear privacy and portable data. Once teachers share outcomes with their panels, EziTeach AI can naturally become a team tool.',
+        solo: {
+          title: 'One teacher can start',
+          desc: 'No procurement cycle or IT account setup required; use the free plan to organise your own classroom workflow first.',
+        },
+        privacy: {
+          title: 'Student privacy first',
+          desc: 'The product reminds teachers to mask student data, and AI output stays under teacher review.',
+        },
+        portable: {
+          title: 'Local-first, then cloud sync',
+          desc: 'Individual teachers need control: local data, sign-in sync and export when needed.',
+        },
       },
       trust: {
         solo: 'Individual teachers can start instantly',

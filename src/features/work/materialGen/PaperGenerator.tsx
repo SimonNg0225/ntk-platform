@@ -69,6 +69,8 @@ type TopicLite = { id: string; topic: string }
 
 export interface PaperGeneratorProps {
   topics: TopicLite[]
+  initialExtra?: string
+  initialTitle?: string
   onClose: () => void
   /** 成功存卷後回呼（傳新卷標題 + 題數），畀 hub 更新 / toast */
   onSaved?: (info: { title: string; count: number }) => void
@@ -106,14 +108,20 @@ interface BuildOutcome {
   shortfall: number // 仍欠（生成失敗 / 無 AI）嘅數
 }
 
-export function PaperGenerator({ topics, onClose, onSaved }: PaperGeneratorProps) {
+export function PaperGenerator({
+  topics,
+  initialExtra = '',
+  initialTitle = '',
+  onClose,
+  onSaved,
+}: PaperGeneratorProps) {
   const toast = useToast()
   const { user } = useAuth()
   const papers = useCollection(papersCol)
   const allQuestions = useCollection(questionsCol)
 
   // ── 表單狀態 ──
-  const [title, setTitle] = useState('')
+  const [title, setTitle] = useState(initialTitle)
   const [className, setClassName] = useState('')
   const [durationMin, setDurationMin] = useState('')
   const [scope, setScope] = useState<string[]>([]) // 課題 id；空 = 全部課題
@@ -121,7 +129,7 @@ export function PaperGenerator({ topics, onClose, onSaved }: PaperGeneratorProps
   const [diffMode, setDiffMode] = useState<'overall' | 'perType'>('overall')
   const [overallDiff, setOverallDiff] = useState<Difficulty>('medium')
   const [perTypeDiff, setPerTypeDiff] = useState<DiffMap>(defaultDiffs)
-  const [extra, setExtra] = useState('')
+  const [extra, setExtra] = useState(initialExtra)
 
   // ── 流程狀態 ──
   const [step, setStep] = useState<'setup' | 'preview'>('setup')

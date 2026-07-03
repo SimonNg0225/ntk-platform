@@ -66,6 +66,8 @@ type TopicLite = { id: string; topic: string }
 
 export interface WorksheetGeneratorProps {
   topics: TopicLite[]
+  initialExtra?: string
+  initialTitle?: string
   onClose: () => void
   /** 成功存入題庫後回呼（傳新增條數），畀 hub 更新計數 / toast */
   onSaved?: (count: number) => void
@@ -113,6 +115,8 @@ function splitCounts(total: number, mcRatio: number): { mc: number; short: numbe
 
 export function WorksheetGenerator({
   topics,
+  initialExtra = '',
+  initialTitle = '',
   onClose,
   onSaved,
 }: WorksheetGeneratorProps) {
@@ -121,12 +125,12 @@ export function WorksheetGenerator({
   const { t } = useTranslation()
 
   // ── 表單狀態 ──
-  const [title, setTitle] = useState('')
+  const [title, setTitle] = useState(initialTitle)
   const [topicId, setTopicId] = useState(topics[0]?.id ?? '')
   const [difficulty, setDifficulty] = useState<Difficulty>('medium')
   const [total, setTotal] = useState(8)
   const [ratioId, setRatioId] = useState('balanced')
-  const [extra, setExtra] = useState('')
+  const [extra, setExtra] = useState(initialExtra)
 
   // ── 流程狀態 ──
   const [step, setStep] = useState<'setup' | 'preview'>('setup')

@@ -21,6 +21,7 @@ import { isAIConfigured } from '../../lib/aiClient'
 import { topicsCol, questionsCol } from '../../data/collections'
 import { getSubjectPack } from '../../data/subjects'
 import { Badge, FeatureGuide, type FeatureGuideStep, PageHero, cx } from '../../ui'
+import { consumeComposerHandoff, type ComposerMaterialTool } from '../shared/composerHandoff'
 import { QuestionGeneratorModal } from './materialGen/QuestionGeneratorModal'
 import { WorksheetGenerator } from './materialGen/WorksheetGenerator'
 import { PaperGenerator } from './materialGen/PaperGenerator'
@@ -52,6 +53,13 @@ type ActiveTool =
   | { kind: 'worksheet' }
   | { kind: 'paper' }
   | null
+
+function toolFromComposerIntent(tool?: ComposerMaterialTool): ActiveTool {
+  if (!tool) return null
+  if (tool === 'worksheet') return { kind: 'worksheet' }
+  if (tool === 'paper') return { kind: 'paper' }
+  return { kind: 'question', gen: tool }
+}
 
 // 語意 tone（嚴格照 WorkDashboard 的 TONE map：chip 底+icon 字）
 type Tone = 'accent' | 'amber' | 'emerald' | 'violet' | 'sky' | 'rose'
@@ -137,6 +145,7 @@ const TOOLS: ToolCard[] = [
 
 export default function MaterialGen() {
   const nav = useNav()
+  const composerHandoff = useMemo(() => consumeComposerHandoff('work-generate'), [])
   const { subjectPackId } = useSettings()
   const subjShort = getSubjectPack(subjectPackId)?.short ?? '本科'
   const topicsRaw = useCollection(topicsCol)
@@ -148,7 +157,10 @@ export default function MaterialGen() {
     [topicsRaw],
   )
 
-  const [active, setActive] = useState<ActiveTool>(null)
+  const [active, setActive] = useState<ActiveTool>(() =>
+    toolFromComposerIntent(composerHandoff?.materialTool),
+  )
+  const [initialInstruction, setInitialInstruction] = useState(composerHandoff?.text ?? '')
 
   // 題庫中由教材生成（AI）入庫嘅大約條數（source 含 AI），純展示
   const aiCount = useMemo(
@@ -307,14 +319,34 @@ export default function MaterialGen() {
         <QuestionGeneratorModal
           kind={active.gen}
           topics={topics}
-          onClose={() => setActive(null)}
+          initialExtra={initialInstruction}
+          onClose={() => {
+            setInitialInstruction('')
+            setActive(null)
+          }}
         />
       )}
       {active?.kind === 'worksheet' && (
-        <WorksheetGenerator topics={topics} onClose={() => setActive(null)} />
+        <WorksheetGenerator
+          topics={topics}
+          initialExtra={initialInstruction}
+          initialTitle={initialInstruction}
+          onClose={() => {
+            setInitialInstruction('')
+            setActive(null)
+          }}
+        />
       )}
       {active?.kind === 'paper' && (
-        <PaperGenerator topics={topics} onClose={() => setActive(null)} />
+        <PaperGenerator
+          topics={topics}
+          initialExtra={initialInstruction}
+          initialTitle={initialInstruction}
+          onClose={() => {
+            setInitialInstruction('')
+            setActive(null)
+          }}
+        />
       )}
     </div>
   )

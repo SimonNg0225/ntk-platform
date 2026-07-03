@@ -1,5 +1,5 @@
 import { Suspense, useEffect, useRef, useState, type ReactNode } from 'react'
-import { PanelLeft } from 'lucide-react'
+import { ArrowLeft, PanelLeft, Settings as SettingsIcon, Wrench } from 'lucide-react'
 import { ModeProvider, useMode } from './context/ModeContext'
 import { AuthProvider } from './context/AuthContext'
 import { NavProvider } from './context/NavContext'
@@ -21,7 +21,7 @@ import PwaInstallPrompt from './components/PwaInstallPrompt'
 import SupportButton from './components/SupportButton'
 import AnnouncementBanner from './components/AnnouncementBanner'
 import { useToast } from './context/ToastContext'
-import { seedAllDemo, hasOnboarded, markOnboarded } from './lib/demoData'
+import { seedAllDemo, markOnboarded } from './lib/demoData'
 import Home from './pages/Home'
 import Settings from './pages/Settings'
 import Admin from './pages/Admin'
@@ -48,7 +48,7 @@ export function AppShell() {
   const [paletteOpen, setPaletteOpen] = useState(false)
   const [quickAddOpen, setQuickAddOpen] = useState(false)
   const [shortcutsOpen, setShortcutsOpen] = useState(false)
-  const [onboardOpen, setOnboardOpen] = useState(() => !hasOnboarded())
+  const [onboardOpen, setOnboardOpen] = useState(false)
   // 桌面側欄三態：展開（w-72）→ 幼條（icon rail）→ 完全收起。記喺 localStorage。
   const [sidebarMode, setSidebarMode] = useState<'expanded' | 'rail' | 'hidden'>(() => {
     try {
@@ -57,7 +57,7 @@ export function AppShell() {
     } catch {
       /* ignore */
     }
-    return 'expanded'
+    return 'rail'
   })
   const toast = useToast()
   const drawerRef = useRef<HTMLDivElement>(null)
@@ -209,7 +209,11 @@ export function AppShell() {
             rail={sidebarMode === 'rail'}
             onCollapse={cycleSidebar}
             onExpand={() => setSidebarMode('expanded')}
-            className="hidden md:m-3 md:flex"
+            className={
+              sidebarMode === 'rail'
+                ? 'hidden md:flex'
+                : 'hidden md:my-3 md:ml-3 md:mr-2 md:flex'
+            }
           />
         )}
 
@@ -246,7 +250,11 @@ export function AppShell() {
         <main
           id="main-content"
           tabIndex={-1}
-          className="relative flex flex-1 flex-col overflow-hidden focus:outline-none"
+          className={`relative flex flex-1 flex-col overflow-hidden focus:outline-none ${
+            sidebarMode === 'expanded'
+              ? 'et-main-panel md:my-3 md:mr-3'
+              : ''
+          }`}
         >
           <MobileTopBar
             onMenu={() => setDrawerOpen(true)}
@@ -260,10 +268,12 @@ export function AppShell() {
           {/* 桌面右上角固定「快速記低」浮掣（手機改用頂欄 icon）。
               絕對定位喺 <main> 右上，z-30 浮喺內容之上；位於右邊內距區，
               唔會撞到內容區左上嘅「← 返回概覽」同標題。 */}
-          <QuickAddButton
-            onClick={() => setQuickAddOpen(true)}
-            className="absolute right-5 top-5 z-30 hidden md:inline-flex lg:right-8"
-          />
+          {activeId !== null && (
+            <QuickAddButton
+              onClick={() => setQuickAddOpen(true)}
+              className="absolute right-5 top-5 z-30 hidden md:inline-flex lg:right-8"
+            />
+          )}
 
           {/* 側欄收起時：桌面左上角浮出「展開側欄」掣 */}
           {sidebarMode === 'hidden' && (
@@ -283,17 +293,18 @@ export function AppShell() {
               sidebarMode === 'hidden' ? 'md:pl-12' : ''
             }`}
           >
-            <div className="app-content mx-auto w-full max-w-[2400px] px-4 py-6 sm:px-8 sm:py-8">
+            <div className="app-content mx-auto w-full max-w-[1800px] px-4 py-5 sm:px-6 sm:py-6 lg:px-8">
               {isSettings ? (
                 <div className="space-y-5">
                   <button
                     onClick={() => navigate(null)}
-                    className="inline-flex min-h-11 items-center rounded-lg px-1 text-[13px] text-slate-400 transition hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+                    className="inline-flex min-h-11 items-center gap-1.5 rounded-lg px-1 text-[13px] font-medium text-slate-500 transition hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
                   >
-                    ← {t('shell.backOverview', { defaultValue: '返回概覽' })}
+                    <ArrowLeft size={15} strokeWidth={1.9} />
+                    {t('shell.backOverview', { defaultValue: '返回概覽' })}
                   </button>
-                  <h1 className="flex items-center gap-2.5 text-[28px] font-semibold tracking-tight text-slate-800 dark:text-slate-100 sm:text-[32px]">
-                    <FeatureIcon icon="⚙️" size={24} className="text-accent" />{' '}
+                  <h1 className="flex items-center gap-2.5 text-2xl font-semibold text-slate-900 dark:text-slate-100 sm:text-[28px]">
+                    <SettingsIcon size={24} strokeWidth={1.75} className="text-accent" />{' '}
                     {t('shell.settings', { defaultValue: '設定' })}
                   </h1>
                   <Settings />
@@ -302,12 +313,13 @@ export function AppShell() {
                 <div className="space-y-5">
                   <button
                     onClick={() => navigate(null)}
-                    className="inline-flex min-h-11 items-center rounded-lg px-1 text-sm text-slate-400 transition hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+                    className="inline-flex min-h-11 items-center gap-1.5 rounded-lg px-1 text-sm font-medium text-slate-500 transition hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
                   >
-                    ← {t('shell.backOverview', { defaultValue: '返回概覽' })}
+                    <ArrowLeft size={15} strokeWidth={1.9} />
+                    {t('shell.backOverview', { defaultValue: '返回概覽' })}
                   </button>
-                  <h1 className="flex items-center gap-2 text-2xl font-bold text-slate-800 dark:text-slate-100">
-                    <FeatureIcon icon="🛠️" size={24} className="text-accent" /> 後台管理
+                  <h1 className="flex items-center gap-2.5 text-2xl font-semibold text-slate-900 dark:text-slate-100 sm:text-[28px]">
+                    <Wrench size={24} strokeWidth={1.75} className="text-accent" /> 後台管理
                   </h1>
                   <ErrorBoundary onReset={() => navigate(null)}>
                     <Admin />
@@ -319,9 +331,10 @@ export function AppShell() {
                 <div className="space-y-5">
                   <button
                     onClick={() => navigate(null)}
-                    className="inline-flex min-h-11 items-center rounded-lg px-1 text-[13px] text-slate-400 transition hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+                    className="inline-flex min-h-11 items-center gap-1.5 rounded-lg px-1 text-[13px] font-medium text-slate-500 transition hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
                   >
-                    ← {t('shell.backToMode', {
+                    <ArrowLeft size={15} strokeWidth={1.9} />
+                    {t('shell.backToMode', {
                       mode: t(`mode.${modeDef.id}.name`, { defaultValue: modeDef.name }),
                       defaultValue: `返回${modeDef.name}概覽`,
                     })}
@@ -329,7 +342,7 @@ export function AppShell() {
                   {/* 標準 header；selfManagedHeader 嘅功能自管 masthead，host 唔重複出標題 */}
                   {!feature.selfManagedHeader && (
                     <div>
-                      <h1 className="flex items-center gap-2.5 text-[28px] font-semibold tracking-tight text-slate-800 dark:text-slate-100 sm:text-[32px]">
+                      <h1 className="flex items-center gap-2.5 text-2xl font-semibold text-slate-900 dark:text-slate-100 sm:text-[28px]">
                         <FeatureIcon icon={feature.icon} size={24} className="text-accent" />
                         {featName(t, feature)}
                       </h1>

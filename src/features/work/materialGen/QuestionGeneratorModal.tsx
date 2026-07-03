@@ -57,6 +57,7 @@ export interface QuestionGeneratorModalProps {
   /** 鎖定生成題型（hub 每張卡對應一種） */
   kind: GenKind
   topics: { id: string; topic: string }[]
+  initialExtra?: string
   onClose: () => void
   /** 成功存入題庫後回呼（傳新增條數），畀 hub 更新計數 / toast */
   onSaved?: (count: number) => void
@@ -72,6 +73,7 @@ const KIND_TITLE: Record<GenKind, string> = {
 export function QuestionGeneratorModal({
   kind,
   topics,
+  initialExtra = '',
   onClose,
   onSaved,
 }: QuestionGeneratorModalProps) {
@@ -83,7 +85,7 @@ export function QuestionGeneratorModal({
   const [topicId, setTopicId] = useState(topics[0]?.id ?? '')
   const [difficulty, setDifficulty] = useState<Difficulty>('medium')
   const [count, setCount] = useState(5)
-  const [extra, setExtra] = useState('')
+  const [extra, setExtra] = useState(initialExtra)
 
   const [step, setStep] = useState<'setup' | 'review'>('setup')
   const [busy, setBusy] = useState(false)

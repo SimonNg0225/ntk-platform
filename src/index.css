@@ -18,7 +18,7 @@
   --accent-grad-to: #4338ca; /* indigo-700 */
 
   /* ② 靜態結構色 — 淺色（深色喺 html.dark 覆寫；ModeContext 唔掂） */
-  --app-bg: #f4f7fb;
+  --app-bg: #f6f8fc;
   --surface: #ffffff;
   --surface-2: #f8fafc; /* slate-50 */
   --surface-3: #f1f5f9; /* slate-100 — hover / 巢狀 */
@@ -61,8 +61,8 @@
   /* type scale（字級/行高）— tailwind fontSize 引用 */
   --fs-2xs: 11px; --lh-2xs: 16px;
   --fs-xs: 12px; --lh-xs: 16px;
-  --fs-sm: 13.5px; --lh-sm: 20px;
-  --fs-base: 15px; --lh-base: 24px;
+  --fs-sm: 14px; --lh-sm: 20px;
+  --fs-base: 15.5px; --lh-base: 24px;
   --fs-lg: 17px; --lh-lg: 26px;
   --fs-xl: 20px; --lh-xl: 28px;
   --fs-2xl: 24px; --lh-2xl: 32px;
@@ -73,6 +73,11 @@
   --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.05), 0 1px 3px rgba(15, 23, 42, 0.04);
   --shadow-md: 0 4px 12px -2px rgba(15, 23, 42, 0.08);
   --shadow-overlay: 0 16px 48px -8px rgba(15, 23, 42, 0.24);
+
+  --radius-shell: 22px;
+  --radius-panel: 18px;
+  --radius-card: 14px;
+  --radius-control: 14px;
 
   /* 字體：Inter 行拉丁/數字，Noto Sans HK / 系統字行中文（per-glyph fallback） */
   font-family:
@@ -131,39 +136,27 @@ html.dark {
   color-scheme: dark;
 }
 
-/* ───────── 液態玻璃側邊欄（iOS Liquid Glass）─────────
-   只作用喺側邊欄殼 + active 列；半透 + backdrop-blur + 鏡面高光邊。
-   桌面 in-flow 貼淺底＝斯文磨砂；手機抽屜浮喺內容上＝玻璃感最強。 */
+/* ───────── 側邊欄面板 ─────────
+   展開 / 手機抽屜用安靜白底；桌面 rail 則用 Tailwind 貼邊細欄。 */
 .et-glass-sidebar {
   position: relative;
   overflow: hidden;
-  border-radius: 28px; /* 全圓角浮板（搭配 m-* 內縮留邊）*/
-  background: linear-gradient(
-    120deg,
-    rgba(255, 255, 255, 0.65) 0%,
-    rgba(255, 255, 255, 0.55) 48%,
-    rgba(255, 255, 255, 0.49) 100%
-  );
-  backdrop-filter: blur(28px) saturate(180%) brightness(1.04);
-  -webkit-backdrop-filter: blur(28px) saturate(180%) brightness(1.04);
+  border: 1px solid rgba(226, 232, 240, 0.82);
+  border-radius: var(--radius-shell);
+  background: rgba(255, 255, 255, 0.97);
+  backdrop-filter: blur(16px) saturate(135%);
+  -webkit-backdrop-filter: blur(16px) saturate(135%);
   box-shadow:
-    0 18px 50px -24px rgba(30, 30, 60, 0.35),
-    inset 1px 1px 1px rgba(255, 255, 255, 0.7),
-    inset -1px -1px 2px rgba(255, 255, 255, 0.1);
+    0 18px 44px -34px rgba(15, 23, 42, 0.38),
+    inset 0 1px 0 rgba(255, 255, 255, 0.7);
 }
 html.dark .et-glass-sidebar {
-  background: linear-gradient(
-    120deg,
-    rgba(30, 41, 59, 0.66) 0%,
-    rgba(30, 41, 59, 0.5) 48%,
-    rgba(30, 41, 59, 0.42) 100%
-  );
+  border-color: rgba(51, 65, 85, 0.78);
+  background: rgba(15, 23, 42, 0.92);
   box-shadow:
-    0 22px 56px -24px rgba(0, 0, 0, 0.6),
-    inset 1px 1px 1px rgba(255, 255, 255, 0.12),
-    inset -1px -1px 2px rgba(255, 255, 255, 0.04);
+    0 18px 44px -28px rgba(0, 0, 0, 0.72),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
-/* 流光掃過（demo ::after）*/
 .et-glass-sidebar::after {
   content: '';
   position: absolute;
@@ -181,6 +174,7 @@ html.dark .et-glass-sidebar {
   pointer-events: none;
   z-index: 1;
   animation: et-glass-sheen 10s ease-in-out infinite;
+  display: none;
 }
 @keyframes et-glass-sheen {
   0%,
@@ -222,6 +216,7 @@ html.dark .et-glass-sidebar {
   mask-composite: exclude;
   pointer-events: none;
   z-index: 1;
+  display: none;
 }
 html.dark .et-glass-sidebar::before {
   background: linear-gradient(
@@ -240,26 +235,14 @@ html.dark .et-glass-sidebar::before {
   }
 }
 
-/* active 列：液態玻璃藥丸（取代 bg-accent/10）*/
+/* active 列：低干擾淡色藥丸 */
 .et-glass-active {
-  background: linear-gradient(
-    120deg,
-    rgba(99, 102, 241, 0.2),
-    rgba(99, 102, 241, 0.09)
-  );
-  box-shadow:
-    inset 0 1px 1px rgba(255, 255, 255, 0.7),
-    0 6px 16px -10px rgba(79, 70, 229, 0.55);
+  background: color-mix(in srgb, var(--accent) 11%, white);
+  box-shadow: none;
 }
 html.dark .et-glass-active {
-  background: linear-gradient(
-    120deg,
-    rgba(99, 102, 241, 0.32),
-    rgba(99, 102, 241, 0.14)
-  );
-  box-shadow:
-    inset 0 1px 1px rgba(255, 255, 255, 0.16),
-    0 6px 16px -10px rgba(79, 70, 229, 0.5);
+  background: color-mix(in srgb, var(--accent) 22%, #0f172a);
+  box-shadow: none;
 }
 
 /* ───────── 深色 accent 文字統一調亮（全 app）─────────
@@ -295,6 +278,30 @@ body,
 
 body {
   background: var(--app-bg);
+  color: var(--text);
+  font-size: var(--fs-base);
+  line-height: var(--lh-base);
+  letter-spacing: 0;
+}
+
+/* 產品介面以可讀性優先：中文 UI 不使用字距拉伸或負字距。 */
+[class*='tracking-'] {
+  letter-spacing: 0 !important;
+}
+
+@media (min-width: 768px) {
+  .et-main-panel {
+    border: 1px solid rgba(226, 232, 240, 0.82);
+    border-radius: var(--radius-shell);
+    background: var(--surface);
+    box-shadow: 0 18px 44px -34px rgba(15, 23, 42, 0.42);
+  }
+
+  html.dark .et-main-panel {
+    border-color: rgba(51, 65, 85, 0.78);
+    background: #0f172a;
+    box-shadow: 0 18px 44px -34px rgba(0, 0, 0, 0.7);
+  }
 }
 
 /* 文字選取色跟主題 */

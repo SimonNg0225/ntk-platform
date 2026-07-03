@@ -2,91 +2,66 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Helmet } from 'react-helmet-async'
 import { motion, useReducedMotion, type Variants } from 'framer-motion'
-import { COMPANY } from '../lib/companyInfo'
 import {
-  ClipboardList,
-  FileText,
-  Sparkles,
-  Presentation,
-  Highlighter,
-  Users,
-  FolderOpen,
-  ShieldCheck,
-  Cloud,
   ArrowRight,
+  BarChart3,
   Bell,
+  BookOpenCheck,
+  CheckCircle2,
+  ClipboardList,
+  Clock3,
+  Cloud,
+  FileText,
+  FolderOpen,
+  Highlighter,
   Loader2,
+  MessageSquareText,
+  Presentation,
+  ScanLine,
+  ShieldCheck,
+  Sparkles,
+  Users,
+  WandSparkles,
   type LucideIcon,
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { COMPANY } from '../lib/companyInfo'
 import { useAuth } from '../context/AuthContext'
 import { track } from '../lib/observability'
 import { BRAND_NAME, BRAND_FULL_ZH, BRAND_TAGLINE_ZH } from '../lib/brand'
 
 // ============================================================
-//  商業化 · 行銷首頁（Landing）—— 對象：全港老師
+//  EziTeach AI Landing — full-bleed workspace story
 //  ------------------------------------------------------------
-//  Hero =「改簿枱面 + 課堂時間表」：左邊一張白紙（sans 標題跟功能頁 + 鋼藍底線 +
-//  紅筆感 ✓ 清單 + 靛藍「閱」印），右邊一張真‧課堂表做產品預覽，貼住
-//  黃調便利貼。配色用 hero 專用鋼藍盤（--hero-*，高級藍白、自帶深色），
-//  其餘版塊續用 --accent / --surface token。動態用 framer-motion，
-//  並尊重「減少動態」(prefers-reduced-motion)。產品入口 '/app'，定價 '/pricing'。
+//  首屏不再用左右分欄白卡；改成產品工作台場景做背景，文案直接疊在
+//  full-bleed 畫面上。下方按「問題 → 工作流 → 功能 → 信任 → CTA」
+//  串成完整轉化敘事。所有互動目標維持 44px+，並尊重 reduced motion。
 // ============================================================
 
-// icon + i18n key（文案喺 src/i18n）
 const FEATURE_ITEMS: { icon: LucideIcon; k: string }[] = [
-  { icon: ClipboardList, k: 'prep' }, // 備課與教案
-  { icon: FileText, k: 'ai' }, // 出題與教材生成
-  { icon: Presentation, k: 'aia' }, // 教學簡報（PowerPoint）
-  { icon: Highlighter, k: 'grade' }, // 批改 · 成績 · 評語
-  { icon: Users, k: 'att' }, // 班務 · 點名 · 課堂
-  { icon: FolderOpen, k: 'comm' }, // 家長 · 行政 · 文件
+  { icon: ClipboardList, k: 'prep' },
+  { icon: FileText, k: 'ai' },
+  { icon: Presentation, k: 'aia' },
+  { icon: Highlighter, k: 'grade' },
+  { icon: Users, k: 'att' },
+  { icon: FolderOpen, k: 'comm' },
 ]
 
-const TRUST_ITEMS: { icon: LucideIcon; k: string }[] = [
+const WORKFLOW_ITEMS: { icon: LucideIcon; k: string; tone: string }[] = [
+  { icon: BookOpenCheck, k: 'before', tone: 'bg-sky-50 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300' },
+  { icon: Bell, k: 'during', tone: 'bg-indigo-50 text-indigo-700 dark:bg-indigo-500/15 dark:text-indigo-300' },
+  { icon: BarChart3, k: 'after', tone: 'bg-amber-50 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300' },
+]
+
+const PROOF_ITEMS: { icon: LucideIcon; k: string }[] = [
   { icon: Users, k: 'solo' },
   { icon: ShieldCheck, k: 'privacy' },
-  { icon: Highlighter, k: 'review' },
   { icon: Cloud, k: 'portable' },
 ]
 
-// hero 紙面 ✓ 清單：六大功能（i18n hero.ck1..6）
-const CHECK_KEYS = ['ck1', 'ck2', 'ck3', 'ck4', 'ck5', 'ck6'] as const
-
-// 手繪感 ✓（評改記號）；color 預設跟主題色。
-function PenTick({ className = '', color = 'var(--accent)' }: { className?: string; color?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" className={className} fill="none" aria-hidden>
-      <path d="M4 13l5 5L20 6" stroke={color} strokeWidth={3} strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  )
-}
-
-// 鋼藍手繪底線：一道波浪 stroke 喺重點字下面，由左至右畫出（pathLength）。
-function SteelUnderline({ reduce }: { reduce: boolean }) {
-  return (
-    <svg
-      viewBox="0 0 260 12"
-      preserveAspectRatio="none"
-      aria-hidden
-      className="pointer-events-none absolute -bottom-2 left-0 h-[11px] w-full overflow-visible"
-    >
-      <motion.path
-        d="M3 7 Q 66 2 130 6 T 257 5"
-        fill="none"
-        stroke="var(--hero-steel)"
-        strokeWidth={3}
-        strokeLinecap="round"
-        initial={{ pathLength: reduce ? 1 : 0, opacity: reduce ? 1 : 0 }}
-        animate={{ pathLength: 1, opacity: 1 }}
-        transition={{
-          pathLength: { duration: reduce ? 0 : 0.85, delay: reduce ? 0 : 0.7, ease: 'easeInOut' },
-          opacity: { duration: 0.01, delay: reduce ? 0 : 0.7 },
-        }}
-      />
-    </svg>
-  )
-}
+const HERO_STATS = ['time', 'tools', 'solo'] as const
+const SCENE_ROWS = ['prep', 'quiz', 'slides', 'marking', 'parents'] as const
+const TOOL_PILLS = ['備課', 'AI 出題', '成績分析', '點名', '家長訊息', '文件速讀', '掃描 PDF', '會議轉錄']
 
 export default function Landing() {
   const { user } = useAuth()
@@ -94,11 +69,6 @@ export default function Landing() {
   const navigate = useNavigate()
   const reduce = !!useReducedMotion()
 
-  // OAuth 回流偵測：Google 登入後 Supabase 會帶住 token 落到根目錄。
-  //   · PKCE flow → ?code=…（query string）
-  //   · 舊 implicit flow → #access_token=…（hash）
-  // 兩種都認，喺首次 render（supabase-js 清走之前）capture 住，session 一好就
-  // 自動轉去產品 /app。逾時 fallback：避免設定有誤時永遠卡住過場。
   const [oauthReturn] = useState(
     () =>
       typeof window !== 'undefined' &&
@@ -108,7 +78,6 @@ export default function Landing() {
   const [timedOut, setTimedOut] = useState(false)
 
   useEffect(() => {
-    // 只喺 OAuth 回流時自動轉去產品；正常已登入訪問首頁唔強制彈走。
     if (oauthReturn && user) navigate('/app', { replace: true })
   }, [oauthReturn, user, navigate])
 
@@ -118,7 +87,6 @@ export default function Landing() {
     return () => window.clearTimeout(id)
   }, [oauthReturn])
 
-  // 登入處理中：顯示過場，唔閃住行銷內容（逾時就照常顯示 Landing）。
   if (oauthReturn && !user && !timedOut) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-[color:var(--app-bg)] text-[color:var(--text-secondary)]">
@@ -128,14 +96,6 @@ export default function Landing() {
     )
   }
 
-  // 標題受控斷行：第一行到逗號收，第二行（一個平台…+ 重點）整句唔拆。中／英通用。
-  const h1pre = t('hero.h1pre')
-  const h1accent = t('hero.h1accent')
-  const m = h1pre.match(/^(.*?[，,])\s*(.*)$/)
-  const line1 = m ? m[1] : h1pre
-  const line2pre = m ? m[2] : ''
-
-  // 動態：逐項浮現 + 「減少動態」時即時定格。
   const ease: [number, number, number, number] = [0.22, 1, 0.36, 1]
   const container: Variants = {
     hidden: {},
@@ -170,34 +130,45 @@ export default function Landing() {
         />
       </Helmet>
 
-      {/* 頂欄 */}
       <motion.header
         initial={{ opacity: 0, y: reduce ? 0 : -8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: reduce ? 0 : 0.5, ease }}
-        className="sticky top-0 z-30 border-b border-[color:var(--border)] bg-[color:var(--app-bg)]/85 backdrop-blur-md"
+        className="sticky top-0 z-40 border-b border-slate-200/80 bg-white/90 backdrop-blur-xl dark:border-slate-800 dark:bg-slate-950/85"
       >
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-3.5">
-          <div className="flex items-center gap-2.5">
-            <img
-              src="/favicon.svg"
-              alt={BRAND_NAME}
-              className="h-9 w-9 rounded-lg shadow-sm"
-            />
-            <span className="text-[17px] font-bold tracking-tight">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
+          <Link
+            to="/"
+            className="flex min-h-11 cursor-pointer items-center gap-3 rounded-full pr-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+            aria-label={BRAND_NAME}
+          >
+            <img src="/favicon.svg" alt="" className="h-11 w-11 rounded-2xl shadow-sm" />
+            <span className="text-lg font-bold tracking-tight text-slate-900 dark:text-white">
               {BRAND_NAME}
             </span>
-          </div>
-          <nav className="flex items-center gap-5 text-sm">
+          </Link>
+          <nav className="flex items-center gap-2 text-sm sm:gap-3">
+            <a
+              href="#workflow"
+              className="hidden min-h-11 cursor-pointer items-center rounded-full px-3 font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white sm:inline-flex"
+            >
+              {t('landingNav.workflow')}
+            </a>
+            <a
+              href="#features"
+              className="hidden min-h-11 cursor-pointer items-center rounded-full px-3 font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white md:inline-flex"
+            >
+              {t('landingNav.features')}
+            </a>
             <Link
               to="/pricing"
-              className="font-medium text-[color:var(--text-secondary)] transition hover:text-accent"
+              className="inline-flex min-h-11 cursor-pointer items-center rounded-full px-3 font-semibold text-slate-700 transition hover:bg-slate-100 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:text-slate-200 dark:hover:bg-slate-800 dark:hover:text-white"
             >
               {t('nav.pricing')}
             </Link>
             <Link
               to="/app"
-              className="rounded-full bg-accent px-4 py-2 font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-accent-strong hover:shadow-md"
+              className="inline-flex min-h-11 cursor-pointer items-center justify-center rounded-full bg-[color:var(--accent)] px-4 font-semibold text-white shadow-sm shadow-indigo-500/20 transition hover:-translate-y-0.5 hover:bg-[color:var(--accent-strong)] hover:shadow-md hover:shadow-indigo-500/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:translate-y-0"
             >
               {user ? t('nav.enterApp') : t('nav.start')}
             </Link>
@@ -205,252 +176,276 @@ export default function Landing() {
         </div>
       </motion.header>
 
-      {/* Hero — 改簿枱面 + 課堂時間表（鋼藍藍白） */}
-      <section className="relative overflow-hidden" style={{ background: 'var(--hero-mist)' }}>
-        {/* 冷調鋼藍光暈 */}
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0"
-          style={{
-            background:
-              'radial-gradient(120% 80% at 85% -8%, color-mix(in srgb, var(--hero-steel) 13%, transparent), transparent 60%)',
-          }}
-        />
-        {/* 極淡網格質感（頂部顯、向下淡出） */}
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0"
-          style={{
-            backgroundImage:
-              'linear-gradient(var(--hero-line) 1px, transparent 1px), linear-gradient(90deg, var(--hero-line) 1px, transparent 1px)',
-            backgroundSize: '34px 34px',
-            maskImage: 'radial-gradient(125% 85% at 50% 0%, #000, transparent 72%)',
-            WebkitMaskImage: 'radial-gradient(125% 85% at 50% 0%, #000, transparent 72%)',
-          }}
-        />
+      <main>
+        <section className="relative isolate overflow-hidden border-b border-indigo-100/80 bg-[#f5f8ff] dark:border-slate-800 dark:bg-slate-950">
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-0 opacity-80 dark:opacity-30"
+            style={{
+              backgroundImage:
+                'linear-gradient(rgba(79,70,229,0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(14,165,233,0.08) 1px, transparent 1px)',
+              backgroundSize: '44px 44px',
+              maskImage: 'linear-gradient(to bottom, #000 0%, #000 62%, transparent 100%)',
+              WebkitMaskImage: 'linear-gradient(to bottom, #000 0%, #000 62%, transparent 100%)',
+            }}
+          />
 
-        <div className="relative mx-auto max-w-6xl px-6 pb-24 pt-16 sm:pt-24">
-          <div className="grid items-center gap-x-10 gap-y-14 lg:grid-cols-[1.04fr_0.96fr]">
-            {/* 左：改簿紙面 */}
-            <motion.div variants={container} initial="hidden" animate="show" className="relative">
-              <div
-                className="relative rounded-[14px] border px-7 py-8 shadow-overlay sm:-rotate-[0.6deg] sm:px-10 sm:py-11"
-                style={{ background: 'var(--hero-paper)', borderColor: 'var(--hero-paper-border)' }}
+          <div className="relative z-10 mx-auto flex max-w-7xl items-center px-4 py-12 sm:px-6 sm:py-16 lg:min-h-[calc(100svh-5rem)] lg:px-8 lg:py-0">
+            <motion.div
+              variants={container}
+              initial="hidden"
+              animate="show"
+              className="max-w-2xl lg:max-w-[32rem] xl:max-w-[34rem]"
+            >
+              <motion.span
+                variants={item}
+                className="inline-flex min-h-11 items-center gap-2 rounded-full border border-indigo-200 bg-white/85 px-3.5 text-sm font-semibold text-indigo-800 shadow-sm backdrop-blur dark:border-indigo-400/20 dark:bg-slate-900/80 dark:text-indigo-200"
               >
-                {/* 紙張左 margin 線 */}
-                <div
-                  aria-hidden
-                  className="pointer-events-none absolute inset-y-6 left-4 w-[2px] sm:left-6"
-                  style={{ background: 'var(--hero-margin)' }}
-                />
-                <div className="sm:pl-5">
-                  <motion.span
+                <CheckCircle2 size={17} strokeWidth={2} />
+                {t('hero.badge')}
+              </motion.span>
+
+              <motion.h1
+                variants={item}
+                aria-label={t('hero.h1Title')}
+                className="mt-6 max-w-2xl text-4xl font-black leading-[1.02] tracking-tight text-slate-950 sm:text-6xl lg:text-[4.25rem] xl:text-[4.75rem] dark:text-white"
+              >
+                <span className="block">{t('hero.h1Line1')}</span>
+                <span className="block">{t('hero.h1Line2')}</span>
+              </motion.h1>
+
+              <motion.p
+                variants={item}
+                className="mt-6 max-w-[32rem] text-lg leading-8 text-slate-700 sm:text-xl dark:text-slate-300"
+              >
+                {t('hero.sub')}
+              </motion.p>
+
+              <motion.div variants={item} className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
+                <Link
+                  to="/app"
+                  onClick={() => track('landing_cta_click', { target: 'hero' })}
+                  className="inline-flex min-h-14 cursor-pointer items-center justify-center gap-2 rounded-full bg-[color:var(--accent)] px-7 text-base font-bold text-white shadow-lg shadow-indigo-500/20 transition hover:-translate-y-0.5 hover:bg-[color:var(--accent-strong)] hover:shadow-xl hover:shadow-indigo-500/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:translate-y-0"
+                >
+                  {user ? t('hero.ctaEnter') : t('hero.ctaStart')}
+                  <ArrowRight size={19} strokeWidth={2.25} />
+                </Link>
+                <Link
+                  to="/pricing"
+                  className="inline-flex min-h-14 cursor-pointer items-center justify-center rounded-full border border-slate-300 bg-white/80 px-7 text-base font-bold text-slate-800 shadow-sm backdrop-blur transition hover:-translate-y-0.5 hover:border-slate-400 hover:bg-white hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:translate-y-0 dark:border-slate-700 dark:bg-slate-900/80 dark:text-slate-100 dark:hover:bg-slate-900"
+                >
+                  {t('hero.ctaPricing')}
+                </Link>
+              </motion.div>
+
+              <motion.div variants={item} className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-slate-600 dark:text-slate-300">
+                <span className="inline-flex items-center gap-1.5">
+                  <ShieldCheck size={16} className="text-[color:var(--accent-strong)] dark:text-accent" />
+                  {t('hero.noCard')}
+                </span>
+              </motion.div>
+
+              <motion.div variants={container} className="mt-9 grid max-w-xl grid-cols-3 gap-2 sm:gap-3">
+                {HERO_STATS.map((k) => (
+                  <motion.div
+                    key={k}
                     variants={item}
-                    className="inline-flex items-center gap-2 rounded-full px-3 py-1 text-sm font-medium"
-                    style={{ background: 'var(--hero-chip-bg)', color: 'var(--hero-steel)' }}
+                    className="rounded-2xl border border-white/80 bg-white/80 p-3 shadow-sm backdrop-blur dark:border-slate-700/80 dark:bg-slate-900/70"
                   >
-                    <PenTick className="h-[16px] w-[16px]" color="var(--hero-steel)" />
-                    {t('hero.badge')}
-                  </motion.span>
-
-                  <motion.h1
-                    variants={item}
-                    className="mt-5 text-[1.95rem] font-semibold leading-[1.18] tracking-tight sm:text-[3.05rem] sm:leading-[1.1]"
-                    style={{ color: 'var(--hero-ink)' }}
-                  >
-                    <span className="block">{line1}</span>
-                    <span className="block whitespace-normal sm:whitespace-nowrap">
-                      {line2pre}
-                      <span className="relative inline-block" style={{ color: 'var(--hero-steel)' }}>
-                        {h1accent}
-                        <SteelUnderline reduce={reduce} />
-                      </span>
-                    </span>
-                  </motion.h1>
-
-                  <motion.p variants={item} className="mt-6 text-[15px]" style={{ color: 'var(--hero-slate)' }}>
-                    {t('hero.checkLead')}
-                  </motion.p>
-
-                  {/* ✓ 清單：六大功能，鋼藍手繪打勾 */}
-                  <motion.ul variants={item} className="mt-3 grid grid-cols-2 gap-x-6 gap-y-2.5">
-                    {CHECK_KEYS.map((k) => (
-                      <li
-                        key={k}
-                        className="flex items-center gap-2 text-[15px] font-medium"
-                        style={{ color: 'var(--hero-ink)' }}
-                      >
-                        <PenTick className="h-[17px] w-[17px] flex-none" color="var(--hero-steel)" />
-                        {t(`hero.${k}`)}
-                      </li>
-                    ))}
-                  </motion.ul>
-
-                  <motion.div variants={item} className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
-                    <Link
-                      to="/app"
-                      onClick={() => track('landing_cta_click', { target: 'hero' })}
-                      className="inline-flex items-center justify-center gap-2 rounded-full px-7 py-3.5 font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md active:translate-y-0"
-                      style={{ background: 'var(--hero-btn)' }}
-                    >
-                      {user ? t('hero.ctaEnter') : t('hero.ctaStart')}
-                      <ArrowRight size={18} strokeWidth={2} />
-                    </Link>
-                    <Link
-                      to="/pricing"
-                      className="inline-flex items-center justify-center rounded-full border-2 px-7 py-3.5 font-semibold transition hover:-translate-y-0.5"
-                      style={{
-                        borderColor: 'color-mix(in srgb, var(--hero-steel) 40%, transparent)',
-                        color: 'var(--hero-steel)',
-                      }}
-                    >
-                      {t('hero.ctaPricing')}
-                    </Link>
+                    <p className="text-xl font-black tabular-nums text-slate-950 dark:text-white">
+                      {t(`hero.stats.${k}.value`)}
+                    </p>
+                    <p className="mt-1 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+                      {t(`hero.stats.${k}.label`)}
+                    </p>
                   </motion.div>
-
-                  <motion.p
-                    variants={item}
-                    className="mt-5 flex items-center gap-2 text-sm"
-                    style={{ color: 'var(--hero-muted)' }}
-                  >
-                    <PenTick className="h-[14px] w-[14px]" color="var(--hero-muted)" />
-                    {t('hero.noCard')}
-                  </motion.p>
-                </div>
-              </div>
-
-              {/* 靛藍「閱」印：蓋喺紙右上角 */}
-              <motion.div
-                aria-hidden
-                initial={{ scale: reduce ? 1 : 1.7, opacity: 0, rotate: -32 }}
-                animate={{ scale: 1, opacity: 0.95, rotate: -9 }}
-                transition={reduce ? { duration: 0 } : { delay: 1.5, type: 'spring', stiffness: 260, damping: 13 }}
-                className="absolute -right-1 -top-4 grid h-[62px] w-[62px] place-items-center rounded-[12px] border-[3px] text-3xl font-bold sm:-right-3 sm:-top-5"
-                style={{
-                  borderColor: 'var(--hero-seal)',
-                  color: 'var(--hero-seal)',
-                  background: 'color-mix(in srgb, var(--hero-paper) 62%, transparent)',
-                }}
-              >
-                閱
+                ))}
               </motion.div>
             </motion.div>
-
-            {/* 右：課堂時間表 */}
-            <TimetablePreview reduce={reduce} ease={ease} />
           </div>
-        </div>
-      </section>
 
-      {/* 功能 */}
-      <section className="border-t border-[color:var(--border)] bg-[color:var(--surface)]">
-        <div className="mx-auto max-w-6xl px-6 py-20">
-          <motion.div {...reveal} variants={item} className="flex items-baseline gap-3">
-            <span className="text-sm text-accent">／</span>
-            <h2 className="text-sm font-semibold uppercase tracking-[0.18em] text-[color:var(--text-muted)]">
-              {t('featuresTitle')}
-            </h2>
-          </motion.div>
-          <motion.div
-            {...reveal}
-            variants={container}
-            className="mt-8 grid gap-px overflow-hidden rounded-2xl border border-[color:var(--border)] bg-[color:var(--border)] sm:grid-cols-2 lg:grid-cols-3"
-          >
-            {FEATURE_ITEMS.map((f, i) => {
-              const I = f.icon
-              return (
-                <motion.div
-                  key={f.k}
-                  variants={item}
-                  className="group relative bg-[color:var(--surface)] p-7 transition hover:bg-[color:var(--surface-2)]"
-                >
-                  <span className="absolute right-5 top-5 text-sm font-medium tabular-nums text-[color:var(--text-muted)]/70">
-                    {String(i + 1).padStart(2, '0')}
-                  </span>
-                  <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-accent-soft text-accent-strong transition group-hover:scale-105 dark:bg-accent/15 dark:text-accent">
-                    <I size={21} strokeWidth={1.75} />
-                  </span>
-                  <h3 className="mt-5 text-lg font-semibold">{t(`f.${f.k}Title`)}</h3>
-                  <p className="mt-2 text-sm leading-relaxed text-[color:var(--text-secondary)]">
-                    {t(`f.${f.k}Desc`)}
-                  </p>
-                </motion.div>
-              )
-            })}
-          </motion.div>
+          <WorkspaceScene reduce={reduce} ease={ease} />
+        </section>
 
-          {/* 仲有更多：長尾功能標籤雲（忠實反映 registry 真實功能） */}
-          <motion.div {...reveal} variants={item} className="mt-7">
-            <div className="flex items-center gap-2 text-sm text-accent">
-              <Sparkles size={16} strokeWidth={1.75} />
-              {t('f.moreTitle')}
-            </div>
-            <div className="mt-3 flex flex-wrap gap-2">
-              {t('f.more')
-                .split(/[、,]/)
-                .map((tag) => (
-                  <span
-                    key={tag}
-                    className="rounded-full border border-[color:var(--border)] bg-[color:var(--app-bg)] px-3 py-1 text-xs text-[color:var(--text-secondary)] transition hover:border-accent hover:text-accent"
+        <section id="workflow" className="bg-white py-20 dark:bg-slate-950 sm:py-24">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <motion.div {...reveal} variants={container} className="grid gap-10 lg:grid-cols-[0.78fr_1.22fr] lg:items-start">
+              <motion.div variants={item}>
+                <span className="text-sm font-bold uppercase tracking-[0.2em] text-amber-600 dark:text-amber-300">
+                  {t('workflow.eyebrow')}
+                </span>
+                <h2 className="mt-4 text-3xl font-black tracking-tight text-slate-950 sm:text-4xl dark:text-white">
+                  {t('workflow.title')}
+                </h2>
+                <p className="mt-4 text-base leading-8 text-slate-600 dark:text-slate-300">
+                  {t('workflow.sub')}
+                </p>
+              </motion.div>
+
+              <motion.div variants={container} className="grid gap-3 md:grid-cols-3">
+                {WORKFLOW_ITEMS.map((step, index) => {
+                  const Icon = step.icon
+                  return (
+                    <motion.article
+                      key={step.k}
+                      variants={item}
+                      className="rounded-2xl border border-slate-200 bg-slate-50 p-5 transition hover:-translate-y-0.5 hover:border-slate-300 hover:bg-white hover:shadow-md dark:border-slate-800 dark:bg-slate-900 dark:hover:border-slate-700"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <span className={`flex h-12 w-12 items-center justify-center rounded-2xl ${step.tone}`}>
+                          <Icon size={22} strokeWidth={1.85} />
+                        </span>
+                        <span className="font-mono text-sm font-bold text-slate-300 dark:text-slate-600">
+                          {String(index + 1).padStart(2, '0')}
+                        </span>
+                      </div>
+                      <h3 className="mt-5 text-lg font-bold text-slate-950 dark:text-white">
+                        {t(`workflow.${step.k}.title`)}
+                      </h3>
+                      <p className="mt-2 text-sm leading-7 text-slate-600 dark:text-slate-300">
+                        {t(`workflow.${step.k}.desc`)}
+                      </p>
+                    </motion.article>
+                  )
+                })}
+              </motion.div>
+            </motion.div>
+          </div>
+        </section>
+
+        <section id="features" className="border-y border-slate-200 bg-slate-50 py-20 dark:border-slate-800 dark:bg-slate-900/55 sm:py-24">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <motion.div {...reveal} variants={item} className="max-w-2xl">
+              <span className="text-sm font-bold uppercase tracking-[0.2em] text-sky-700 dark:text-sky-300">
+                {t('featuresTitle')}
+              </span>
+              <h2 className="mt-4 text-3xl font-black tracking-tight text-slate-950 sm:text-4xl dark:text-white">
+                {t('featuresHeadline')}
+              </h2>
+            </motion.div>
+
+            <motion.div {...reveal} variants={container} className="mt-9 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {FEATURE_ITEMS.map((feature, index) => {
+                const Icon = feature.icon
+                return (
+                  <motion.article
+                    key={feature.k}
+                    variants={item}
+                    className="group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md dark:border-slate-800 dark:bg-slate-950/70 dark:hover:border-slate-700"
                   >
-                    {tag.trim()}
-                  </span>
-                ))}
-            </div>
-          </motion.div>
+                    <div className="flex items-start justify-between gap-3">
+                      <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-700 transition group-hover:bg-indigo-600 group-hover:text-white dark:bg-indigo-500/15 dark:text-indigo-300 dark:group-hover:bg-indigo-500 dark:group-hover:text-white">
+                        <Icon size={22} strokeWidth={1.85} />
+                      </span>
+                      <span className="font-mono text-sm font-bold text-slate-300 dark:text-slate-600">
+                        {String(index + 1).padStart(2, '0')}
+                      </span>
+                    </div>
+                    <h3 className="mt-5 text-lg font-bold text-slate-950 dark:text-white">
+                      {t(`f.${feature.k}Title`)}
+                    </h3>
+                    <p className="mt-2 text-sm leading-7 text-slate-600 dark:text-slate-300">
+                      {t(`f.${feature.k}Desc`)}
+                    </p>
+                  </motion.article>
+                )
+              })}
+            </motion.div>
 
-          {/* 信任條 */}
-          <motion.div {...reveal} variants={container} className="mt-9 flex flex-wrap gap-x-8 gap-y-3">
-            {TRUST_ITEMS.map((it) => {
-              const I = it.icon
-              return (
-                <motion.div
-                  key={it.k}
-                  variants={item}
-                  className="flex items-center gap-2 text-sm text-[color:var(--text-secondary)]"
+            <motion.div {...reveal} variants={item} className="mt-8 flex flex-wrap gap-2">
+              {TOOL_PILLS.map((tool) => (
+                <span
+                  key={tool}
+                  className="inline-flex min-h-9 items-center rounded-full border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-600 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-300"
                 >
-                  <I size={16} strokeWidth={1.75} className="text-accent" />
-                  {t(`trust.${it.k}`)}
-                </motion.div>
-              )
-            })}
-          </motion.div>
-        </div>
-      </section>
+                  {tool}
+                </span>
+              ))}
+            </motion.div>
+          </div>
+        </section>
 
-      {/* CTA */}
-      <motion.section {...reveal} variants={item} className="relative mx-auto max-w-5xl overflow-hidden px-6 py-24 text-center">
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0"
-          style={{
-            backgroundImage:
-              'repeating-linear-gradient(to bottom, transparent 0 38px, var(--border) 38px 39px)',
-            opacity: 0.4,
-          }}
-        />
-        <div className="relative">
-          <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">{t('ctaTitle')}</h2>
-          <p className="mt-4 text-[color:var(--text-secondary)]">{t('ctaSub')}</p>
-          <Link
-            to="/app"
-            onClick={() => track('landing_cta_click', { target: 'footer' })}
-            className="mt-8 inline-flex items-center justify-center gap-2 rounded-full bg-accent px-8 py-4 font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-accent-strong hover:shadow-md"
-          >
-            {t('hero.ctaStart')}
-            <ArrowRight size={18} strokeWidth={2} />
-          </Link>
-        </div>
-      </motion.section>
+        <section className="bg-white py-20 dark:bg-slate-950 sm:py-24">
+          <div className="mx-auto grid max-w-7xl gap-8 px-4 sm:px-6 lg:grid-cols-[1.05fr_0.95fr] lg:px-8">
+            <motion.div {...reveal} variants={item} className="rounded-3xl bg-indigo-950 p-7 text-white shadow-overlay shadow-indigo-500/10 dark:bg-slate-900">
+              <div className="flex items-center gap-2 text-sm font-bold text-amber-200">
+                <Sparkles size={17} strokeWidth={1.8} />
+                {t('proof.eyebrow')}
+              </div>
+              <blockquote className="mt-5 text-2xl font-black leading-tight tracking-tight sm:text-3xl">
+                {t('proof.quote')}
+              </blockquote>
+              <p className="mt-5 max-w-2xl text-sm leading-7 text-slate-300">
+                {t('proof.quoteBy')}
+              </p>
+            </motion.div>
 
-      <footer className="border-t border-[color:var(--border)] py-8 text-center text-xs text-[color:var(--text-muted)]">
+            <motion.div {...reveal} variants={container} className="grid gap-3">
+              {PROOF_ITEMS.map((proof) => {
+                const Icon = proof.icon
+                return (
+                  <motion.div
+                    key={proof.k}
+                    variants={item}
+                    className="flex min-h-24 items-start gap-4 rounded-2xl border border-slate-200 bg-slate-50 p-5 dark:border-slate-800 dark:bg-slate-900/70"
+                  >
+                    <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-700 dark:bg-indigo-500/15 dark:text-indigo-300">
+                      <Icon size={21} strokeWidth={1.85} />
+                    </span>
+                    <div>
+                      <h3 className="text-base font-bold text-slate-950 dark:text-white">
+                        {t(`proof.${proof.k}.title`)}
+                      </h3>
+                      <p className="mt-1 text-sm leading-7 text-slate-600 dark:text-slate-300">
+                        {t(`proof.${proof.k}.desc`)}
+                      </p>
+                    </div>
+                  </motion.div>
+                )
+              })}
+            </motion.div>
+          </div>
+        </section>
+
+        <motion.section
+          {...reveal}
+          variants={item}
+          className="mx-auto max-w-7xl px-4 pb-20 sm:px-6 sm:pb-24 lg:px-8"
+        >
+          <div className="relative overflow-hidden rounded-3xl bg-[color:var(--accent)] px-6 py-12 text-center text-white shadow-overlay shadow-indigo-500/20 sm:px-10 sm:py-16">
+            <div
+              aria-hidden="true"
+              className="absolute inset-0 opacity-20"
+              style={{
+                backgroundImage:
+                  'linear-gradient(rgba(255,255,255,0.4) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.4) 1px, transparent 1px)',
+                backgroundSize: '32px 32px',
+              }}
+            />
+            <div className="relative mx-auto max-w-3xl">
+              <h2 className="text-3xl font-black tracking-tight sm:text-5xl">{t('ctaTitle')}</h2>
+              <p className="mt-4 text-base leading-8 text-indigo-50 sm:text-lg">{t('ctaSub')}</p>
+              <Link
+                to="/app"
+                onClick={() => track('landing_cta_click', { target: 'footer' })}
+                className="mt-8 inline-flex min-h-14 cursor-pointer items-center justify-center gap-2 rounded-full bg-white px-8 text-base font-black text-[color:var(--accent-strong)] shadow-sm transition hover:-translate-y-0.5 hover:bg-indigo-50 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white active:translate-y-0"
+              >
+                {t('hero.ctaStart')}
+                <ArrowRight size={19} strokeWidth={2.25} />
+              </Link>
+            </div>
+          </div>
+        </motion.section>
+      </main>
+
+      <footer className="border-t border-slate-200 bg-white py-8 text-center text-xs text-slate-500 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-400">
         <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1">
           <Link to="/privacy" className="transition hover:text-accent">{t('footer.privacy')}</Link>
-          <span aria-hidden>·</span>
+          <span aria-hidden="true">·</span>
           <Link to="/terms" className="transition hover:text-accent">{t('footer.terms')}</Link>
-          <span aria-hidden>·</span>
+          <span aria-hidden="true">·</span>
           <Link to="/guidelines" className="transition hover:text-accent">{t('footer.guidelines')}</Link>
-          <span aria-hidden>·</span>
+          <span aria-hidden="true">·</span>
           <Link to="/pricing" className="transition hover:text-accent">{t('footer.pricing')}</Link>
         </div>
         <p className="mt-3">© {new Date().getFullYear()} {BRAND_NAME} · {BRAND_TAGLINE_ZH}</p>
@@ -471,86 +466,121 @@ export default function Landing() {
   )
 }
 
-// 產品預覽：課堂時間表（六大功能擺入堂節，「現正一節」實色鋼藍跳出）+ 改簿便利貼。純裝飾。
-const TIMETABLE: { period: string; time: string; label: string; tone: 'soft' | 'soft2' | 'active' }[] = [
-  { period: '第一節', time: '08:30', label: '備課', tone: 'soft' },
-  { period: '第二節', time: '09:25', label: '教案', tone: 'soft2' },
-  { period: '第三節', time: '10:40', label: '教學簡報', tone: 'active' },
-  { period: '午息', time: '', label: '改簿存檔', tone: 'soft' },
-  { period: '第四節', time: '13:30', label: '會議記錄', tone: 'soft2' },
-  { period: '放學', time: '', label: '掃描存檔', tone: 'soft' },
-]
-
-function TimetablePreview({ reduce, ease }: { reduce: boolean; ease: [number, number, number, number] }) {
+function WorkspaceScene({ reduce, ease }: { reduce: boolean; ease: [number, number, number, number] }) {
   return (
     <motion.div
-      aria-hidden
-      initial={{ opacity: 0, y: reduce ? 0 : 22 }}
+      aria-hidden="true"
+      initial={{ opacity: 0, y: reduce ? 0 : 18 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: reduce ? 0 : 0.7, delay: reduce ? 0 : 0.4, ease }}
-      className="relative hidden lg:block"
+      transition={{ duration: reduce ? 0 : 0.75, delay: reduce ? 0 : 0.2, ease }}
+      className="pointer-events-none relative z-0 mx-auto h-[430px] max-w-7xl px-4 pb-10 sm:h-[500px] sm:px-6 lg:absolute lg:inset-y-0 lg:right-0 lg:h-auto lg:w-[56%] lg:max-w-none lg:p-0"
     >
-      <div
-        className="overflow-hidden rounded-[14px] border shadow-overlay lg:rotate-[0.8deg]"
-        style={{ background: 'var(--hero-paper)', borderColor: 'var(--hero-paper-border)' }}
-      >
-        {/* 頂欄：課鐘 */}
-        <div className="flex items-center gap-2 px-4 py-3 text-white" style={{ background: 'var(--hero-bar)' }}>
-          <Bell size={15} strokeWidth={2} />
-          <span className="text-[13px] font-semibold tracking-wide">今日課堂表</span>
-          <span className="ml-auto text-[11px] text-white/70">星期一</span>
+      <div className="absolute inset-x-4 top-2 h-[410px] rounded-[2rem] border border-white/80 bg-white/58 shadow-overlay backdrop-blur-md dark:border-slate-700/70 dark:bg-slate-900/58 sm:top-6 sm:h-[450px] lg:left-8 lg:right-12 lg:top-28 lg:h-[520px]" />
+
+      <div className="absolute left-8 right-8 top-8 overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-xl shadow-slate-900/10 dark:border-slate-700 dark:bg-slate-900 sm:left-14 sm:right-20 sm:top-14 lg:left-16 lg:right-24 lg:top-36">
+        <div className="flex min-h-14 items-center gap-3 border-b border-slate-200 bg-slate-950 px-4 text-white dark:border-slate-700">
+          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/10">
+            <WandSparkles size={18} />
+          </span>
+          <div>
+            <p className="text-sm font-bold">{'今日工作台'}</p>
+            <p className="text-[11px] text-white/55">{'5 個任務 · 32 本待批改'}</p>
+          </div>
+          <span className="ml-auto rounded-full bg-sky-400/20 px-3 py-1 text-xs font-bold text-sky-100">
+            {'同步中'}
+          </span>
         </div>
-        <ul>
-          {TIMETABLE.map((r, i) => (
-            <li
-              key={r.period}
-              className="flex items-center justify-between px-4 py-3"
-              style={{
-                borderTop: i === 0 ? 'none' : '1px solid var(--hero-line)',
-                background: r.tone === 'active' ? 'color-mix(in srgb, var(--hero-steel) 8%, transparent)' : 'transparent',
-              }}
-            >
-              <span className="flex items-baseline gap-2">
-                <span
-                  className="text-[12.5px] font-medium"
-                  style={{ color: r.tone === 'active' ? 'var(--hero-steel)' : 'var(--hero-muted)' }}
-                >
-                  {r.period}
+
+        <div className="grid gap-0 md:grid-cols-[1fr_0.82fr]">
+          <div className="divide-y divide-slate-100 dark:divide-slate-800">
+            {SCENE_ROWS.map((row, index) => (
+              <div key={row} className="flex min-h-16 items-center gap-3 px-4 py-3">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200">
+                  {index === 0 ? <BookOpenCheck size={18} /> : null}
+                  {index === 1 ? <FileText size={18} /> : null}
+                  {index === 2 ? <Presentation size={18} /> : null}
+                  {index === 3 ? <Highlighter size={18} /> : null}
+                  {index === 4 ? <MessageSquareText size={18} /> : null}
                 </span>
-                {r.time && (
-                  <span className="text-[11px] tabular-nums" style={{ color: 'var(--hero-muted)' }}>
-                    {r.time}
-                  </span>
-                )}
-              </span>
-              <span
-                className="rounded-lg px-2.5 py-1 text-[12px] font-semibold"
-                style={
-                  r.tone === 'active'
-                    ? { background: 'var(--hero-btn)', color: '#fff' }
-                    : {
-                        background: r.tone === 'soft2' ? 'var(--hero-chip-bg2)' : 'var(--hero-chip-bg)',
-                        color: 'var(--hero-chip-ink)',
-                      }
-                }
-              >
-                {r.label}
-              </span>
-            </li>
-          ))}
-        </ul>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-bold text-slate-800 dark:text-slate-100">
+                    {row === 'prep' ? '中三商業環境教案' : null}
+                    {row === 'quiz' ? 'DSE 個案題 12 題' : null}
+                    {row === 'slides' ? '課堂簡報草稿' : null}
+                    {row === 'marking' ? '短答批改隊列' : null}
+                    {row === 'parents' ? '家長跟進訊息' : null}
+                  </p>
+                  <p className="mt-0.5 truncate text-xs text-slate-400 dark:text-slate-500">
+                    {row === 'prep' ? 'AI 已整理重點、活動、常見誤解' : null}
+                    {row === 'quiz' ? '連評分準則與參考答案' : null}
+                    {row === 'slides' ? '封面與版式已配好' : null}
+                    {row === 'marking' ? '今日已改 32 本' : null}
+                    {row === 'parents' ? '可先覆核再發送' : null}
+                  </p>
+                </div>
+                <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                  {index === 3 ? '進行中' : '已準備'}
+                </span>
+              </div>
+            ))}
+          </div>
+
+          <div className="border-t border-slate-100 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950/40 md:border-l md:border-t-0">
+            <div className="rounded-2xl border border-sky-200 bg-sky-50 p-4 dark:border-sky-500/20 dark:bg-sky-500/10">
+              <div className="flex items-center gap-2 text-sm font-bold text-sky-900 dark:text-sky-200">
+                <BarChart3 size={17} />
+                {'全班弱項'}
+              </div>
+              <div className="mt-4 space-y-3">
+                {['現金流', '折舊', '市場定位'].map((label, index) => (
+                  <div key={label}>
+                    <div className="mb-1 flex justify-between text-xs font-semibold text-slate-600 dark:text-slate-300">
+                      <span>{label}</span>
+                      <span>{[68, 52, 41][index]}%</span>
+                    </div>
+                    <div className="h-2 overflow-hidden rounded-full bg-white dark:bg-slate-800">
+                      <div
+                        className="h-full rounded-full bg-sky-500"
+                        style={{ width: `${[68, 52, 41][index]}%` }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="mt-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-500/20 dark:bg-amber-500/10">
+              <div className="flex items-center gap-2 text-sm font-bold text-amber-900 dark:text-amber-200">
+                <Clock3 size={17} />
+                {'下堂前 18 分鐘'}
+              </div>
+              <p className="mt-2 text-xs leading-relaxed text-amber-900/75 dark:text-amber-100/70">
+                {'已把教案、簡報、工作紙放入同一個課堂包。'}
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* 改簿便利貼：蓋喺右下角 */}
-      <motion.div
-        initial={{ opacity: 0, scale: reduce ? 1 : 0.8, rotate: reduce ? 5 : 14 }}
-        animate={{ opacity: 1, scale: 1, rotate: 5 }}
-        transition={reduce ? { duration: 0 } : { delay: 1.2, type: 'spring', stiffness: 240, damping: 14 }}
-        className="absolute -bottom-5 -right-4 rounded-[3px] px-3.5 py-2 text-[13px] font-semibold shadow-sm"
-        style={{ background: 'var(--hero-sticky-bg)', color: 'var(--hero-sticky-ink)' }}
-      >
-        今日改 32 本 ✓
-      </motion.div>
+      <div className="absolute bottom-8 left-7 hidden w-56 rotate-[-3deg] rounded-2xl border border-sky-200 bg-sky-50 p-4 text-sky-950 shadow-lg dark:border-sky-500/20 dark:bg-sky-500/10 dark:text-sky-100 sm:block lg:bottom-24 lg:left-0">
+        <div className="flex items-center gap-2 text-sm font-black">
+          <CheckCircle2 size={17} />
+          {'學生資料先遮蔽'}
+        </div>
+        <p className="mt-2 text-xs leading-relaxed opacity-75">
+          {'輸入前提示老師用代號，AI 初稿再由老師覆核。'}
+        </p>
+      </div>
+
+      <div className="absolute bottom-5 right-8 hidden w-64 rotate-[2deg] rounded-2xl border border-indigo-200 bg-indigo-50 p-4 text-indigo-950 shadow-lg dark:border-indigo-500/20 dark:bg-indigo-500/10 dark:text-indigo-100 sm:block lg:bottom-16 lg:right-8">
+        <div className="flex items-center gap-2 text-sm font-black">
+          <ScanLine size={17} />
+          {'掃描入庫'}
+        </div>
+        <p className="mt-2 text-xs leading-relaxed opacity-75">
+          {'PDF、相片、錄音和筆記都可整理成可搜尋資料。'}
+        </p>
+      </div>
     </motion.div>
   )
 }
