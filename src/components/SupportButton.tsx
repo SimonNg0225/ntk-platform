@@ -72,9 +72,10 @@ export default function SupportButton() {
   return (
     <>
       <button
+        type="button"
         onClick={() => setOpen(true)}
         aria-label="聯絡客服"
-        className="fixed bottom-20 right-4 z-40 flex h-12 w-12 items-center justify-center rounded-full bg-accent text-white shadow-lg transition hover:bg-accent-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 md:bottom-5 md:right-5"
+        className="fixed bottom-20 right-4 z-40 flex h-12 w-12 cursor-pointer items-center justify-center rounded-full bg-accent text-white shadow-lg transition hover:bg-accent-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 md:bottom-5 md:right-5"
       >
         <Headset size={22} strokeWidth={1.75} />
       </button>
@@ -88,7 +89,7 @@ export default function SupportButton() {
                 type="button"
                 onClick={() => setTab(tb)}
                 className={cx(
-                  'min-h-11 flex-1 rounded-md px-3 font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98]',
+                  'min-h-11 flex-1 cursor-pointer rounded-md px-3 font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98]',
                   tab === tb
                     ? 'bg-white text-slate-800 shadow-sm dark:bg-slate-700 dark:text-slate-100'
                     : 'text-slate-500 hover:text-slate-700 dark:text-slate-400',
