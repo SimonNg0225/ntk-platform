@@ -367,7 +367,7 @@ export function RangeToggle({
           onClick={() => onChange(o.value)}
           aria-pressed={value === o.value}
           className={cx(
-            'rounded-md px-2 py-0.5 text-[11px] font-medium transition',
+            'min-h-8 cursor-pointer rounded-md px-2 text-[11px] font-medium transition',
             value === o.value
               ? 'bg-accent text-white'
               : 'bg-slate-100 text-slate-500 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700',

@@ -452,7 +452,7 @@ export function QuizRunner({
                   aria-current={i === currentIdx ? 'true' : undefined}
                   aria-label={`第 ${i + 1} 題${done ? '（已作答）' : '（未作答）'}${flagged ? '（已標記）' : ''}`}
                   className={cx(
-                    'relative flex h-9 items-center justify-center rounded-lg text-xs font-semibold tabular-nums transition',
+                    'relative flex h-11 cursor-pointer items-center justify-center rounded-lg text-xs font-semibold tabular-nums transition',
                     i === currentIdx
                       ? 'bg-accent text-white ring-2 ring-accent/40'
                       : done
@@ -504,7 +504,7 @@ export function QuizRunner({
                 type="button"
                 onClick={toggleFlag}
                 className={cx(
-                  'rounded-lg p-1.5 transition',
+                  'flex h-11 w-11 cursor-pointer items-center justify-center rounded-lg transition',
                   flags[current.questionId]
                     ? 'bg-amber-50 text-amber-500 dark:bg-amber-500/10'
                     : 'text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-700',

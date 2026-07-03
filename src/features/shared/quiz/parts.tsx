@@ -52,13 +52,13 @@ export function OptionRow({
       onClick={onClick}
       disabled={disabled}
       className={cx(
-        'flex w-full items-start gap-2.5 rounded-xl border p-3 text-left text-sm transition disabled:cursor-default',
+        'flex min-h-14 w-full cursor-pointer items-start gap-2.5 rounded-xl border p-3 text-left text-sm transition disabled:cursor-default',
         tone,
       )}
     >
       <span
         className={cx(
-          'flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-xs font-semibold',
+          'flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-xs font-semibold',
           selected && !graded
             ? 'bg-accent text-white'
             : graded && isAnswer
