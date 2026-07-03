@@ -458,9 +458,9 @@ function MiniStat({
   tone: StatTone
 }) {
   return (
-    <div className="flex flex-col gap-2 rounded-2xl border border-slate-200/80 bg-white p-3.5 dark:border-slate-700/60 dark:bg-slate-800">
-      <span className={cx('flex h-8 w-8 items-center justify-center rounded-xl', STAT_CHIP[tone])}>
-        <Icon size={16} />
+    <div className="flex min-h-28 flex-col gap-2 rounded-2xl border border-slate-200/80 bg-white p-3.5 dark:border-slate-700/60 dark:bg-slate-800">
+      <span className={cx('flex h-11 w-11 items-center justify-center rounded-xl', STAT_CHIP[tone])}>
+        <Icon size={18} />
       </span>
       <div>
         <p className="flex items-baseline gap-0.5">
@@ -504,7 +504,7 @@ function ToggleChip({
       onClick={onClick}
       aria-pressed={active}
       className={cx(
-        'inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-40',
+        'inline-flex min-h-11 cursor-pointer items-center gap-1.5 rounded-full px-4 py-1.5 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-40',
         active
           ? 'bg-accent text-white shadow-sm dark:shadow-none'
           : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700',

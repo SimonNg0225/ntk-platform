@@ -138,8 +138,8 @@ export function TopicMasteryBars({
             onClick={() => onPick?.(r.topicId)}
             aria-label={onPick ? `練習「${nameOf(r.topicId)}」課題（命中 ${r.pct}%）` : undefined}
             className={cx(
-              'flex w-full items-center gap-3 rounded-xl px-2 py-1.5 text-left transition',
-              onPick && 'hover:bg-slate-50 dark:hover:bg-slate-800/60',
+              'flex min-h-11 w-full items-center gap-3 rounded-xl px-2 py-1.5 text-left transition disabled:cursor-default',
+              onPick && 'cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/60',
             )}
           >
             <span className="w-20 shrink-0 truncate text-xs font-medium text-slate-700 dark:text-slate-200 sm:w-24">
