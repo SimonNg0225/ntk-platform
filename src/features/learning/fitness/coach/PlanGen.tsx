@@ -263,7 +263,7 @@ export default function PlanGen({ model }: { model: AIModel }) {
                   aria-pressed={on}
                   onClick={() => setGoal(g.id)}
                   className={cx(
-                    'group flex flex-col items-start gap-1.5 rounded-2xl border p-3.5 text-left transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
+                    'group flex min-h-28 cursor-pointer flex-col items-start gap-1.5 rounded-2xl border p-3.5 text-left transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
                     on
                       ? 'border-accent/40 bg-accent-soft shadow-sm dark:border-accent/40 dark:bg-accent/15'
                       : 'border-slate-200 bg-white hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md dark:border-slate-700 dark:bg-slate-800 dark:hover:border-slate-600',
@@ -271,13 +271,13 @@ export default function PlanGen({ model }: { model: AIModel }) {
                 >
                   <span
                     className={cx(
-                      'flex h-8 w-8 items-center justify-center rounded-xl transition',
+                      'flex h-11 w-11 items-center justify-center rounded-xl transition',
                       on
                         ? 'bg-accent text-white'
                         : 'bg-slate-100 text-slate-500 group-hover:scale-105 dark:bg-slate-700/60 dark:text-slate-300',
                     )}
                   >
-                    <I size={16} aria-hidden="true" />
+                    <I size={18} aria-hidden="true" />
                   </span>
                   <span
                     className={cx(
@@ -307,7 +307,7 @@ export default function PlanGen({ model }: { model: AIModel }) {
                   aria-pressed={on}
                   onClick={() => toggleEquip(item)}
                   className={cx(
-                    'inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-900',
+                    'inline-flex min-h-11 cursor-pointer items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-900',
                     on
                       ? 'bg-accent text-white shadow-sm dark:shadow-none'
                       : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700',
@@ -354,7 +354,7 @@ export default function PlanGen({ model }: { model: AIModel }) {
                   aria-label={`每週 ${n} 日`}
                   onClick={() => setDaysPerWeek(n)}
                   className={cx(
-                    'min-w-[3rem] rounded-md px-3 py-1.5 text-sm font-medium tabular-nums transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
+                    'min-h-11 min-w-[3rem] cursor-pointer rounded-md px-3 text-sm font-medium tabular-nums transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
                     on
                       ? 'bg-white text-slate-800 shadow-xs dark:bg-slate-700 dark:text-slate-100'
                       : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200',
@@ -454,8 +454,8 @@ function DayCard({ day }: { day: CoachDay }) {
     <Card padded hover className="space-y-3">
       <div className="flex items-center justify-between gap-2">
         <h3 className="flex min-w-0 items-center gap-2 text-sm font-semibold text-slate-800 dark:text-slate-100">
-          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
-            <CalendarDays size={14} />
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
+            <CalendarDays size={18} />
           </span>
           <span className="break-words">{day.day}</span>
         </h3>
@@ -502,14 +502,14 @@ function SavedPlanRow({
   return (
     <Card clip>
       <div className="flex items-center gap-3 p-3">
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent" aria-hidden="true">
-          <Dumbbell size={16} />
+        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent" aria-hidden="true">
+          <Dumbbell size={18} />
         </span>
         <button
           type="button"
           onClick={() => setOpen((v) => !v)}
           aria-expanded={open}
-          className="min-w-0 flex-1 text-left focus-visible:outline-none"
+          className="min-h-11 min-w-0 flex-1 cursor-pointer rounded-lg px-1 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
         >
           <p className="truncate text-sm font-semibold text-slate-700 dark:text-slate-200">
             {plan.title}
