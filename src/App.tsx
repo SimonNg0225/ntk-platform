@@ -351,7 +351,7 @@ export function AppShell() {
                       </p>
                     </div>
                   )}
-                  <div>
+                  <div className="feature-runtime">
                     {feature.requiresPaid && !isPaid ? (
                       <PaidGate feature={feature} loading={subLoading} />
                     ) : feature.status === 'ready' && feature.component ? (

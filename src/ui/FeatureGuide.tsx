@@ -7,7 +7,7 @@ import { Lightbulb, X } from 'lucide-react'
 //  顯示某功能「點用」嘅 2–4 步精簡引導（序號 chip + 標題 + 一句說明）。
 //  默認唔顯示；由 hero「點用？」掣（GuideHelpButton / PageHero guideKey）
 //  toggle 開／關（撳一下開、再撳收）。transient — 唔記 localStorage。
-//  視覺跟 dashboard 設計系統：accent chip、slate 字色、rounded-2xl 半透明邊框卡。
+//  視覺跟產品首頁設計系統：白底、淡邊框、清楚步驟、低干擾。
 // ============================================================
 
 const TOGGLE_EVENT = 'featureGuide:toggle'
@@ -60,7 +60,7 @@ export function FeatureGuide({
   return (
     <section
       aria-label={heading}
-      className="rounded-2xl border border-slate-200/80 bg-white p-4 dark:border-slate-700/60 dark:bg-slate-800"
+      className="rounded-[16px] border border-slate-200/80 bg-white p-4 shadow-xs dark:border-slate-700/60 dark:bg-slate-900"
     >
       <div className="flex items-center justify-between gap-2">
         <span className="flex min-w-0 items-center gap-1.5 text-xs font-semibold text-slate-500 dark:text-slate-300">
@@ -81,7 +81,7 @@ export function FeatureGuide({
       <ol className="mt-3 space-y-2.5">
         {steps.slice(0, 4).map((step, i) => (
           <li key={i} className="flex items-start gap-2.5">
-            <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-xl bg-accent-soft text-xs font-semibold tabular-nums text-accent-strong dark:bg-accent/15 dark:text-accent">
+            <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-[9px] bg-accent-soft text-xs font-semibold tabular-nums text-accent-strong dark:bg-accent/15 dark:text-accent">
               {i + 1}
             </span>
             <div className="min-w-0">
@@ -113,7 +113,7 @@ export function GuideHelpButton({
       type="button"
       onClick={() => toggleFeatureGuide(storageKey)}
       title={t('featureGuide.toggleHint', { defaultValue: '開／關功能教學' })}
-      className="inline-flex min-h-11 items-center gap-1.5 rounded-xl bg-white/15 px-3 text-sm font-medium backdrop-blur-sm transition hover:bg-white/25 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
+      className="inline-flex min-h-11 items-center gap-1.5 rounded-[14px] border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-600 shadow-xs transition hover:border-accent/30 hover:text-accent active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:text-accent"
     >
       <Lightbulb size={15} />
       {label ?? t('featureGuide.reopen', { defaultValue: '點用？' })}

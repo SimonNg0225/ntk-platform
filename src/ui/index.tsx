@@ -233,9 +233,9 @@ export function Card({
     {
       onClick,
       className: cx(
-        'rounded-2xl border border-black/[0.06] bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-white/[0.08] dark:bg-slate-800 dark:shadow-none',
+        'rounded-[16px] border border-slate-200/80 bg-white shadow-xs dark:border-slate-700/70 dark:bg-slate-900 dark:shadow-none',
         hover &&
-          'transition duration-200 hover:border-black/[0.1] hover:shadow-[0_8px_24px_rgba(15,23,42,0.08)] dark:hover:border-white/15',
+          'transition duration-200 hover:border-accent/35 hover:bg-white dark:hover:border-accent/35',
         onClick && 'cursor-pointer',
         padded && 'p-4 sm:p-5',
         clip && 'overflow-hidden',
@@ -343,7 +343,7 @@ export function EmptyState({
   art?: string
 }) {
   return (
-    <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-black/[0.1] bg-slate-50/60 px-6 py-12 text-center dark:border-white/[0.12] dark:bg-slate-800/40">
+    <div className="flex flex-col items-center justify-center rounded-[16px] border border-dashed border-slate-200 bg-slate-50/70 px-6 py-10 text-center dark:border-slate-700/70 dark:bg-slate-900/40">
       {art ? (
         <Illustration name={art} className="mb-1 h-28 w-28 object-contain" />
       ) : typeof icon === 'string' ? (
@@ -973,7 +973,7 @@ export function Table({
   return (
     <div
       className={cx(
-        'overflow-x-auto rounded-2xl border border-black/[0.06] dark:border-white/[0.08]',
+        'overflow-x-auto rounded-[16px] border border-slate-200/80 bg-white dark:border-slate-700/70 dark:bg-slate-900',
         className,
       )}
     >
@@ -1326,7 +1326,7 @@ export function Avatar({
 export { FeatureGuide, GuideHelpButton, toggleFeatureGuide } from './FeatureGuide'
 export type { FeatureGuideStep } from './FeatureGuide'
 
-// ───────── PageHero（功能頁頂部 accent 大色塊）─────────
+// ───────── PageHero（功能頁頂部標準 masthead）─────────
 export { PageHero } from './PageHero'
 export type { PageHeroProps } from './PageHero'
 

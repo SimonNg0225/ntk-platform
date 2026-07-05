@@ -304,6 +304,78 @@ body {
   }
 }
 
+/* ───────── 功能頁 runtime polish ─────────
+   將舊功能頁的 accent masthead / 半透明白按鈕收斂成跟首頁一致的簡約工作台語言。
+   只作用於 App.tsx 的 feature-runtime，不影響 landing / marketing。 */
+.feature-runtime {
+  color: var(--text);
+}
+
+.feature-runtime .et-feature-hero-actions [class*='bg-white/15'],
+.feature-runtime .et-feature-hero-actions [class*='bg-white/20'],
+.feature-runtime .et-feature-hero-tabs [class*='bg-white/15'],
+.feature-runtime .et-feature-hero-tabs [class*='bg-white/20'] {
+  border: 1px solid var(--border) !important;
+  background: var(--surface-2) !important;
+  color: var(--text-secondary) !important;
+  box-shadow: none !important;
+}
+
+.feature-runtime .et-feature-hero-actions [class*='bg-white/15']:hover,
+.feature-runtime .et-feature-hero-actions [class*='bg-white/20']:hover,
+.feature-runtime .et-feature-hero-tabs [class*='bg-white/15']:hover,
+.feature-runtime .et-feature-hero-tabs [class*='bg-white/20']:hover {
+  border-color: color-mix(in srgb, var(--accent) 34%, var(--border)) !important;
+  background: var(--surface) !important;
+  color: var(--accent-strong) !important;
+}
+
+.feature-runtime .et-feature-hero-tabs .bg-white {
+  border: 1px solid color-mix(in srgb, var(--accent) 24%, var(--border)) !important;
+  background: var(--accent-soft) !important;
+  color: var(--accent-strong) !important;
+  box-shadow: none !important;
+}
+
+.feature-runtime .et-feature-hero-actions [class*='bg-white/15'] [class*='text-white'],
+.feature-runtime .et-feature-hero-actions [class*='bg-white/20'] [class*='text-white'],
+.feature-runtime .et-feature-hero-tabs [class*='bg-white/15'] [class*='text-white'],
+.feature-runtime .et-feature-hero-tabs [class*='bg-white/20'] [class*='text-white'] {
+  color: inherit !important;
+}
+
+.feature-runtime section.bg-accent.text-white,
+.feature-runtime header.bg-accent.text-white,
+.feature-runtime section.hero-gradient,
+.feature-runtime header.hero-gradient {
+  border: 1px solid var(--border) !important;
+  background: var(--surface) !important;
+  color: var(--text) !important;
+  box-shadow: var(--shadow-xs) !important;
+}
+
+.feature-runtime section.bg-accent.text-white [class*='text-white'],
+.feature-runtime header.bg-accent.text-white [class*='text-white'],
+.feature-runtime section.hero-gradient [class*='text-white'],
+.feature-runtime header.hero-gradient [class*='text-white'] {
+  color: var(--text-secondary) !important;
+}
+
+.feature-runtime section.bg-accent.text-white [class*='bg-white/15'],
+.feature-runtime header.bg-accent.text-white [class*='bg-white/15'],
+.feature-runtime section.hero-gradient [class*='bg-white/15'],
+.feature-runtime header.hero-gradient [class*='bg-white/15'] {
+  border: 1px solid var(--border) !important;
+  background: var(--surface-2) !important;
+  color: var(--accent-strong) !important;
+}
+
+.feature-runtime h1,
+.feature-runtime h2,
+.feature-runtime h3 {
+  letter-spacing: 0;
+}
+
 /* 文字選取色跟主題 */
 ::selection {
   background: var(--accent-soft);
