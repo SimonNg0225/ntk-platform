@@ -46,6 +46,7 @@ import type {
 import { useNav } from '../../context/NavContext'
 import { useMode } from '../../context/ModeContext'
 import { isFeatureAvailable } from '../../lib/featureFlags'
+import { clearComposerHandoff, readComposerHandoff } from './composerHandoff'
 import { useToast } from '../../context/ToastContext'
 import { uid } from '../../lib/store'
 import {
@@ -259,8 +260,9 @@ export default function GlobalSearch() {
   const { open } = useNav()
   const { mode } = useMode()
   const toast = useToast()
+  const composerHandoff = useMemo(() => readComposerHandoff('search'), [])
 
-  const [raw, setRaw] = useState('')
+  const [raw, setRaw] = useState(() => composerHandoff?.text ?? '')
   const [view, setView] = useState<ViewMode>('grouped')
   const [scopeMode, setScopeMode] = useState(true) // true = 只搜目前模式
   const [kindFilter, setKindFilter] = useState<string>('all')
@@ -270,6 +272,10 @@ export default function GlobalSearch() {
     searchBoxRef.current?.querySelector('input')?.focus()
   }, [])
   const rowRefs = useRef<Map<string, HTMLButtonElement>>(new Map())
+
+  useEffect(() => {
+    if (composerHandoff) clearComposerHandoff('search')
+  }, [composerHandoff])
 
   // 訂閱所有資料源
   const notes = useCollection(richNotesCol)

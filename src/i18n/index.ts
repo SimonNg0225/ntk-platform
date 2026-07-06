@@ -97,7 +97,7 @@ const resources = {
         commTitle: '家長 · 行政 · 文件',
         commDesc: '家長溝通記錄連跟進；Word 行政文件套版即印、文件速讀抽重點、會議／觀課錄音轉文字、掃描 PDF。',
         moreTitle: '仲有更多',
-        more: '教學 AI 助手、問我嘅資料 AI、教學資源庫、資源分享區、老師社群、行事曆、全域搜尋、重要日子倒數、自我測驗、快速擷取、日後科組協作',
+        more: '教學 AI 助手、教學資源庫、資源分享區、老師社群、行事曆、重要日子倒數、快速擷取、日後科組協作',
       },
       proof: {
         eyebrow: '散戶先行',
@@ -369,7 +369,7 @@ const resources = {
         commTitle: 'Parents · admin · docs',
         commDesc: 'Parent contact logs with follow-ups; fill Word admin templates to print, doc digest, meeting/lesson audio to text, and PDF scanning.',
         moreTitle: 'And more',
-        more: 'Teaching AI assistant, Ask-your-data AI, Resource library, Resource sharing, Teacher community, Calendar, Global search, Countdowns, Self-quiz, Quick capture, panel collaboration later, Budget',
+        more: 'Teaching AI assistant, Resource library, Resource sharing, Teacher community, Calendar, Countdowns, Quick capture, panel collaboration later, Budget',
       },
       proof: {
         eyebrow: 'Individual teachers first',

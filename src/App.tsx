@@ -10,6 +10,7 @@ import Sidebar from './components/Sidebar'
 import MobileTopBar from './components/MobileTopBar'
 import CommandPalette from './components/CommandPalette'
 import BottomNav from './components/BottomNav'
+import NextStepsBar from './components/NextStepsBar'
 import { pushRecentFeature } from './components/commandPalette/util'
 import ShortcutsModal from './features/shared/shortcuts/ShortcutsModal'
 import QuickAddButton from './features/shared/quickAdd/QuickAddButton'
@@ -370,6 +371,13 @@ export function AppShell() {
                       <ComingSoon name={featName(t, feature)} />
                     )}
                   </div>
+                  {feature.status === 'ready' && (
+                    <NextStepsBar
+                      activeId={feature.id}
+                      mode={modeDef.id}
+                      onOpen={navigate}
+                    />
+                  )}
                 </div>
               )}
             </div>

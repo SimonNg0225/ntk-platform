@@ -85,7 +85,7 @@ export default function Sidebar({
     for (const r of ids) {
       if (seen.has(r.featureId)) continue
       const f = getFeature(r.featureId)
-      if (f && f.modes.includes(modeDef.id) && f.status === 'ready') {
+      if (f && f.modes.includes(modeDef.id) && f.status === 'ready' && !f.hideFromNavigation) {
         out.push(f)
         seen.add(r.featureId)
         if (out.length >= limit) break

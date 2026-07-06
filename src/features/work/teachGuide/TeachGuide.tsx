@@ -74,7 +74,7 @@ const GUIDE_STEPS: FeatureGuideStep[] = [
   { title: '揀課題', desc: '喺上方揀返今次想備課嘅課題；課題嚟自你嘅課程大綱。' },
   { title: '補充背景（選填）', desc: '可填班級程度、節數、想強調嘅角度，AI 會貼住嚟出。' },
   { title: '生成指引', desc: '一鍵出齊重點、學生常見誤解、教學步驟、活動、差異化同評估。' },
-  { title: '下載或接落去', desc: '可匯出 Word／PDF，或直接跳去生成教材、教案、測驗。' },
+  { title: '下載或接落去', desc: '可匯出 Word／PDF，或直接跳去生成教材、教案或 DSE 操練。' },
 ]
 
 function fmtDate(iso: string): string {
@@ -277,7 +277,7 @@ export default function TeachGuide() {
             </div>
             <p className="mb-3 text-[11px] text-slate-400 dark:text-slate-500">
               {t('teachGuide.nextStepsDesc', {
-                defaultValue: '備課完，接住開教材、教案或測驗。',
+                defaultValue: '備課完，接住開教材、教案或 DSE 操練。',
               })}
             </p>
             <div className="flex flex-wrap items-center gap-2">
@@ -301,9 +301,9 @@ export default function TeachGuide() {
                 variant="secondary"
                 size="sm"
                 icon={GraduationCap}
-                onClick={() => nav.open('quiz')}
+                onClick={() => nav.open('work-dse')}
               >
-                {t('teachGuide.toQuiz', { defaultValue: '自我測驗' })}
+                {t('teachGuide.toDse', { defaultValue: 'DSE 操練' })}
               </Button>
             </div>
           </section>

@@ -23,15 +23,17 @@ export function writeComposerHandoff(input: Omit<ComposerHandoff, 'createdAt'>):
   }
 }
 
-export function consumeComposerHandoff(featureId: string): ComposerHandoff | null {
+export function readComposerHandoff(featureId: string): ComposerHandoff | null {
   try {
     const raw = localStorage.getItem(COMPOSER_HANDOFF_KEY)
     if (!raw) return null
-    localStorage.removeItem(COMPOSER_HANDOFF_KEY)
     const parsed = JSON.parse(raw) as Partial<ComposerHandoff>
     if (parsed.featureId !== featureId || typeof parsed.text !== 'string') return null
     const createdAt = parsed.createdAt ? new Date(parsed.createdAt).getTime() : 0
-    if (!Number.isFinite(createdAt) || Date.now() - createdAt > MAX_HANDOFF_AGE_MS) return null
+    if (!Number.isFinite(createdAt) || Date.now() - createdAt > MAX_HANDOFF_AGE_MS) {
+      localStorage.removeItem(COMPOSER_HANDOFF_KEY)
+      return null
+    }
     return {
       featureId,
       text: parsed.text.trim(),
@@ -41,4 +43,20 @@ export function consumeComposerHandoff(featureId: string): ComposerHandoff | nul
   } catch {
     return null
   }
+}
+
+export function clearComposerHandoff(featureId: string): void {
+  try {
+    if (readComposerHandoff(featureId)) {
+      localStorage.removeItem(COMPOSER_HANDOFF_KEY)
+    }
+  } catch {
+    /* ignore */
+  }
+}
+
+export function consumeComposerHandoff(featureId: string): ComposerHandoff | null {
+  const handoff = readComposerHandoff(featureId)
+  if (handoff) clearComposerHandoff(featureId)
+  return handoff
 }

@@ -35,6 +35,7 @@ interface Item {
   icon: string | LucideIcon
   hint: string
   aliases?: string[]
+  hiddenFromDefaults?: boolean
   recordable: boolean // 跳去「目的地」（首頁 / 功能）先記入最近；模式切換 false
   action: () => void
 }
@@ -135,6 +136,7 @@ export default function CommandPalette({
         icon: f.icon,
         hint: groupLabel(t, f.group),
         aliases: [f.description, ...(FEATURE_SEARCH_ALIASES[f.id] ?? [])],
+        hiddenFromDefaults: f.hideFromNavigation,
         recordable: true,
         action: () => onNavigate(f.id),
       }),
@@ -167,7 +169,7 @@ export default function CommandPalette({
     () =>
       query.trim()
         ? []
-        : resolveRecentItems(recentFeatures, baseItems),
+        : resolveRecentItems(recentFeatures, baseItems).filter((i) => !i.hiddenFromDefaults),
     [query, recentFeatures, baseItems],
   )
 
@@ -182,7 +184,7 @@ export default function CommandPalette({
       }
     }
     const recentIds = new Set(recentItems.map((i) => i.id))
-    const rest = baseItems.filter((i) => !recentIds.has(i.id))
+    const rest = baseItems.filter((i) => !recentIds.has(i.id) && !i.hiddenFromDefaults)
     return { items: [...recentItems, ...rest], recentCount: recentItems.length }
   }, [query, baseItems, recentItems])
 

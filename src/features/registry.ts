@@ -471,6 +471,7 @@ export const FEATURES: Feature[] = [
     group: 'AI',
     component: AskData,
     status: 'ready',
+    hideFromNavigation: true,
   },
   {
     id: 'calendar',
@@ -493,6 +494,7 @@ export const FEATURES: Feature[] = [
     group: '工具',
     component: GlobalSearch,
     status: 'ready',
+    hideFromNavigation: true,
   },
   {
     id: 'inbox',
@@ -519,7 +521,7 @@ export const FEATURES: Feature[] = [
   {
     id: 'quiz',
     selfManagedHeader: true,
-    modes: ['learning', 'work'],
+    modes: ['learning'],
     name: '自我測驗',
     description: '由題庫抽 MC 即時做題、自動批改、出分同弱項分析。',
     icon: '📝',
@@ -531,7 +533,9 @@ export const FEATURES: Feature[] = [
 
 // 攞返某個模式可以見到嘅功能
 export function featuresForMode(mode: ModeId): Feature[] {
-  return FEATURES.filter((f) => f.modes.includes(mode) && isFeatureAvailable(f.id))
+  return FEATURES.filter(
+    (f) => f.modes.includes(mode) && isFeatureAvailable(f.id) && !f.hideFromNavigation,
+  )
 }
 
 // 攞返某個模式嘅功能，按 group 分組（保持註冊次序）

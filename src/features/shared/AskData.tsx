@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState, type KeyboardEvent } from 'react'
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react'
 import {
   Bot,
   Lock,
@@ -39,6 +39,7 @@ import {
   cx,
 } from '../../ui'
 import CreditMeter from '../../components/CreditMeter'
+import { clearComposerHandoff, readComposerHandoff } from './composerHandoff'
 
 // ============================================================
 //  「問我嘅資料 AI」— 用你自己嘅資料嚟問 AI
@@ -192,12 +193,14 @@ export default function AskData() {
   // 訂閱令資料更新時 context 反映最新（亦確保 collection 已建立 / 登記）
   const notes = useCollection(richNotesCol)
   const tasks = useCollection(tasksCol)
+  const composerHandoff = useMemo(() => readComposerHandoff('ask-data'), [])
 
-  const [q, setQ] = useState('')
+  const [q, setQ] = useState(() => composerHandoff?.text ?? '')
   const [answer, setAnswer] = useState<string | null>(null)
   // askedQuestion：已送出嘅問題（用嚟喺對話度顯示「你」嗰格），同 q 輸入框分開。
   const [askedQuestion, setAskedQuestion] = useState('')
   const [busy, setBusy] = useState(false)
+  const [handoffAsked, setHandoffAsked] = useState(false)
   const abortRef = useRef<AbortController | null>(null)
   const inputRef = useRef<HTMLTextAreaElement | null>(null)
 
@@ -239,6 +242,13 @@ export default function AskData() {
   }, [notes, tasks])
 
   const totalFiles = evidence.reduce((s, e) => s + e.count, 0)
+
+  useEffect(() => {
+    if (!composerHandoff?.text || handoffAsked || !user || !isAIConfigured) return
+    setHandoffAsked(true)
+    clearComposerHandoff('ask-data')
+    void ask(composerHandoff.text)
+  }, [composerHandoff, handoffAsked, user, busy])
 
   if (!isAIConfigured) {
     return (

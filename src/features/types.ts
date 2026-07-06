@@ -33,4 +33,9 @@ export interface Feature {
   selfManagedHeader?: boolean
   /** 要付費方案（Plus / Pro）先用得；免費用戶會見到升級提示。 */
   requiresPaid?: boolean
+  /**
+   * 仍可用 id 直接開啟，但不出現在側欄、首頁分類、常用入口等主導航。
+   * 適合被首頁 composer / command palette 承擔的內嵌能力。
+   */
+  hideFromNavigation?: boolean
 }

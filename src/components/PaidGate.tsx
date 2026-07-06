@@ -158,7 +158,7 @@ export default function PaidGate({
 
         <div className="flex flex-col gap-2 border-t border-[color:var(--border)] bg-slate-50 px-5 py-4 dark:bg-slate-800/50 sm:flex-row sm:items-center sm:justify-between sm:px-6">
           <p className="text-xs leading-relaxed text-slate-500 dark:text-slate-400">
-            一位老師都可以自行開始；Plus 適合日常備課，Pro 適合密集出卷、簡報和高階模型。
+            免費版先完成核心備課；Plus 適合日常 AI 工作流，Pro 適合密集出卷、簡報和高階模型。
           </p>
           <Link
             to="/pricing"
