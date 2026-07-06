@@ -12,11 +12,9 @@ import {
   Highlighter,
   Mic,
   Plus,
-  Presentation,
   Search,
   Send,
   Sparkles,
-  WandSparkles,
   type LucideIcon,
 } from 'lucide-react'
 import { useMode } from '../context/ModeContext'
@@ -43,17 +41,13 @@ import {
   daysBetween,
   greeting as timeGreeting,
   localKey,
-  WEEKDAY_LABELS,
 } from '../features/work/dashboard/util'
-import PlanBadge from '../components/PlanBadge'
 import { featDesc, featName } from '../i18n/appEn'
 import { cx } from '../ui'
 import { getMyAppProfile, type AppProfile } from '../lib/profile'
 import { getSubjectPack, type SubjectPack } from '../data/subjects'
 import { loadTopicsForSubjects, dedupeTopicsCol } from '../features/work/topicImport/applyTopics'
 import { useToast } from '../context/ToastContext'
-import { patchMeta } from '../features/shared/inbox/store'
-import type { InboxKind } from '../features/shared/inbox/types'
 import { writeAiHandoff } from '../features/shared/aiAssistant/handoff'
 import {
   writeComposerHandoff,
@@ -68,55 +62,6 @@ const MODE_QUICK_IDS: Record<ModeId, readonly string[]> = {
   work: ['work-dashboard', 'work-ai', 'work-timetable', 'work-questions', 'work-doc-digest'],
   learning: ['learning-dashboard', 'learning-ai', 'learning-card-generator', 'learning-goals', 'calendar'],
 }
-
-const ROLE_LABEL: Record<string, string> = {
-  teacher: '教師',
-  pre_service: '準教師',
-  tutor: '導師',
-  other: '其他',
-}
-
-const LESSON_PACKS: {
-  title: string
-  desc: string
-  featureId: string
-  capturePrefix: string
-  kind: InboxKind
-  icon: LucideIcon
-}[] = [
-  {
-    title: '明天上課包',
-    desc: '教案、教學重點、課堂活動',
-    featureId: 'work-lesson-plan',
-    capturePrefix: '準備下一堂',
-    kind: 'task',
-    icon: ClipboardList,
-  },
-  {
-    title: '10 分鐘小測包',
-    desc: '題目、答案、評分點一次起稿',
-    featureId: 'work-generate',
-    capturePrefix: '出一份小測',
-    kind: 'question',
-    icon: FileText,
-  },
-  {
-    title: '簡報包',
-    desc: '由課題生成 PowerPoint 初稿',
-    featureId: 'work-slides',
-    capturePrefix: '製作教學簡報',
-    kind: 'reference',
-    icon: Presentation,
-  },
-  {
-    title: '課後回饋包',
-    desc: '評分準則、弱項、補充練習',
-    featureId: 'work-rubric',
-    capturePrefix: '整理課後回饋',
-    kind: 'task',
-    icon: Highlighter,
-  },
-]
 
 type TaskFlow = {
   id: string
@@ -302,7 +247,6 @@ function preferredFeatures(
 }
 
 export default function Home({ onOpen }: Props) {
-  const { t } = useTranslation()
   const { modeDef } = useMode()
   const { displayName } = useSettings()
   const toast = useToast()
@@ -367,8 +311,6 @@ export default function Home({ onOpen }: Props) {
   const aiFeature = getFeature(modeDef.id === 'work' ? 'work-ai' : 'learning-ai')
   const isWorkMode = modeDef.id === 'work'
 
-  const roleLabel = profile?.role ? ROLE_LABEL[profile.role] : null
-  const school = profile?.showSchool ? profile.school?.trim() || null : null
   const subjects = (profile?.subjects ?? [])
     .map((id) => getSubjectPack(id))
     .filter((p): p is SubjectPack => Boolean(p))
@@ -508,23 +450,8 @@ export default function Home({ onOpen }: Props) {
       .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
       .slice(0, 5)
   }, [inboxItems, lessonPlans, meetingNotes, papers, questions, resources])
-  const nextLessonCaptures = useMemo(
-    () =>
-      inboxItems
-        .filter(
-          (item) =>
-            item.mode === 'work' &&
-            item.text.includes('#下一堂課'),
-        )
-        .slice()
-        .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
-        .slice(0, 2),
-    [inboxItems],
-  )
-  const hasProfileMeta = Boolean(roleLabel || school || subjects.length)
   const name = displayName.trim()
   const greeting = name ? `${timeGreeting(now.getHours())}，${name}` : `${timeGreeting(now.getHours())}，老師`
-  const dateLabel = `${now.getFullYear()} 年 ${now.getMonth() + 1} 月 ${now.getDate()} 日 · 星期${WEEKDAY_LABELS[now.getDay()]}`
   const flowItems =
     modeDef.id === 'work'
       ? [
@@ -577,31 +504,6 @@ export default function Home({ onOpen }: Props) {
   const composerPlaceholder = isWorkMode
     ? '輸入課題、任務、搜尋或資料問題'
     : '輸入內容、目標、搜尋或資料問題'
-  const composerSuggestions = isWorkMode
-    ? [
-        `幫我準備「${topicSuggestion}」一堂 40 分鐘課`,
-        '生成一份 DSE 風格工作紙',
-        '搜尋我存過的市場營銷教案',
-        '根據我的資料列出本週要跟進事項',
-        '把會議重點變成跟進清單',
-      ]
-    : [
-        '幫我整理今日筆記重點',
-        '把這段內容變成知識卡',
-        '設計一個 25 分鐘溫習計劃',
-        '幫我拆解下一個學習目標',
-      ]
-  const guideSteps = isWorkMode
-    ? [
-        { icon: Plus, title: '輸入任務', meta: '課題、搜尋、資料問題' },
-        { icon: WandSparkles, title: '智能分流', meta: '教案、出題、搜尋、問資料' },
-        { icon: BookOpenCheck, title: '教師覆核', meta: '再帶入課堂' },
-      ]
-    : [
-        { icon: Plus, title: '輸入內容', meta: '筆記、目標、搜尋' },
-        { icon: WandSparkles, title: '智能分流', meta: '整理、搜尋、問資料' },
-        { icon: BookOpenCheck, title: '回到工具', meta: '知識卡、筆記、目標' },
-      ]
 
   useEffect(() => {
     try {
@@ -659,71 +561,19 @@ export default function Home({ onOpen }: Props) {
     dispatchComposerPrompt(flow.prompt)
   }
 
-  const startLessonPack = (pack: (typeof LESSON_PACKS)[number]) => {
-    const topic = lessonTopic.trim() || topicSuggestion
-    const item = inboxCol.add({
-      text: `${pack.capturePrefix}：${topic} #下一堂課`,
-      mode: 'work',
-      createdAt: new Date().toISOString(),
-    })
-    patchMeta(item.id, {
-      kind: pack.kind,
-      tags: ['下一堂課'],
-      pinned: true,
-    })
-    toast.success(`已記低「${topic}」`, {
-      label: '看 Inbox',
-      onClick: () => onOpen('inbox'),
-    })
-    onOpen(pack.featureId)
-  }
-
   return (
     <div className="-mx-4 -mt-1 sm:-mx-6 lg:-mx-8">
-      <section className="relative isolate overflow-hidden border-b border-slate-200/80 bg-white px-4 pb-8 pt-7 dark:border-slate-800 dark:bg-slate-950 sm:px-6 sm:pb-10 sm:pt-8 lg:px-8">
-        <div className="relative mx-auto flex min-h-[455px] max-w-[1180px] flex-col">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="min-w-0">
-              <p className="text-xs font-semibold uppercase text-accent">
-                {t(`mode.${modeDef.id}.name`, { defaultValue: modeDef.name })} · {dateLabel}
-              </p>
-              {hasProfileMeta && (
-                <div className="mt-2 flex flex-wrap items-center gap-x-2.5 gap-y-1.5 text-xs text-slate-500 dark:text-slate-400">
-                  {roleLabel && (
-                    <span className="inline-flex items-center rounded-full bg-white/80 px-2.5 py-1 font-semibold text-slate-600 shadow-xs dark:bg-slate-900/70 dark:text-slate-300">
-                      {roleLabel}
-                    </span>
-                  )}
-                  {school && <span className="truncate">{school}</span>}
-                  {subjects.length > 0 && (
-                    <span className="inline-flex flex-wrap items-center gap-1">
-                      <span className="text-slate-400 dark:text-slate-500">任教</span>
-                      {subjects.slice(0, 3).map((p) => (
-                        <span
-                          key={p.id}
-                          title={p.name}
-                          className="rounded-full bg-white/80 px-2 py-1 font-semibold text-accent-strong shadow-xs dark:bg-accent/15 dark:text-accent"
-                        >
-                          {p.short}
-                        </span>
-                      ))}
-                    </span>
-                  )}
-                </div>
-              )}
-            </div>
-            <PlanBadge />
-          </div>
-
-          <div className="flex flex-1 flex-col items-center justify-center py-8 text-center">
-            <span className="inline-flex min-h-10 items-center gap-2 rounded-full border border-indigo-200 bg-indigo-50/70 px-3.5 text-sm font-semibold text-indigo-800 shadow-xs dark:border-indigo-400/20 dark:bg-indigo-500/10 dark:text-indigo-200">
-              <Sparkles size={17} strokeWidth={1.9} />
+      <section className="relative isolate flex min-h-[calc(100svh-6.75rem)] overflow-hidden border-b border-slate-200/80 bg-[linear-gradient(180deg,#fff_0%,#f8fbff_58%,#fff_100%)] px-4 dark:border-slate-800 dark:bg-slate-950 dark:bg-none sm:px-6 md:min-h-[100svh] lg:px-8">
+        <div className="relative mx-auto flex w-full max-w-[1180px] flex-1 flex-col">
+          <div className="flex flex-1 flex-col items-center justify-center py-8 text-center sm:py-10">
+            <span className="inline-flex min-h-9 items-center gap-2 rounded-full border border-indigo-200 bg-indigo-50/70 px-3 text-[13px] font-semibold text-indigo-800 shadow-xs dark:border-indigo-400/20 dark:bg-indigo-500/10 dark:text-indigo-200">
+              <Sparkles size={16} strokeWidth={1.9} />
               EziTeach AI
             </span>
-            <h1 className="mt-5 max-w-4xl text-[38px] font-semibold leading-[1.12] text-slate-950 sm:text-[46px] lg:text-[52px] dark:text-white">
+            <h1 className="mt-5 max-w-4xl text-[36px] font-semibold leading-[1.08] text-slate-950 sm:text-[48px] lg:text-[56px] dark:text-white">
               {isWorkMode ? '想準備哪一堂課？' : '今日想整理什麼？'}
             </h1>
-            <p className="mt-4 max-w-2xl text-[16px] leading-7 text-slate-600 sm:text-[17px] dark:text-slate-300">
+            <p className="mt-3 max-w-2xl text-[15px] leading-7 text-slate-600 sm:text-[16px] dark:text-slate-300">
               {greeting}。由一句課題或任務開始，EziTeach AI 會把你帶到最合適的教學工具。
             </p>
 
@@ -732,26 +582,26 @@ export default function Home({ onOpen }: Props) {
                 event.preventDefault()
                 askTeachingAi()
               }}
-              className="mt-7 w-full max-w-[900px] rounded-[28px] bg-white p-1 shadow-[0_22px_60px_-44px_rgba(79,70,229,0.65)] ring-1 ring-slate-200/90 dark:bg-slate-900 dark:ring-slate-700/80"
+              className="mt-8 w-full max-w-[860px] rounded-[28px] bg-white p-1 shadow-[0_24px_72px_-52px_rgba(79,70,229,0.75)] ring-1 ring-slate-200/90 dark:bg-slate-900 dark:ring-slate-700/80"
             >
               <label htmlFor="home-ai-composer" className="sr-only">
                 {isWorkMode ? '輸入課題或教學任務' : '輸入學習內容或問題'}
               </label>
-              <div className="flex min-h-[64px] items-center gap-2 rounded-[24px] border border-slate-100 bg-white p-2 text-left dark:border-slate-700/70 dark:bg-slate-900">
+              <div className="flex min-h-[64px] items-center gap-1.5 rounded-[24px] border border-slate-100 bg-white p-2 text-left dark:border-slate-700/70 dark:bg-slate-900">
                 <button
                   type="button"
                   onClick={() => onOpen('inbox')}
                   aria-label="打開收件匣"
-                  className="flex h-12 w-12 shrink-0 cursor-pointer items-center justify-center rounded-full text-slate-500 transition hover:bg-slate-100 hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:text-slate-300 dark:hover:bg-slate-800"
+                  className="flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-full text-slate-500 transition hover:bg-slate-100 hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:text-slate-300 dark:hover:bg-slate-800"
                 >
-                  <Plus size={24} strokeWidth={1.8} />
+                  <Plus size={23} strokeWidth={1.8} />
                 </button>
                 <input
                   id="home-ai-composer"
                   value={lessonTopic}
                   onChange={(event) => setLessonTopic(event.target.value)}
                   placeholder={composerPlaceholder}
-                  className="min-h-12 min-w-0 flex-1 bg-transparent text-base text-slate-900 outline-none placeholder:text-slate-400 dark:text-slate-100 dark:placeholder:text-slate-500"
+                  className="min-h-11 min-w-0 flex-1 bg-transparent text-[15px] text-slate-900 outline-none placeholder:text-slate-400 dark:text-slate-100 dark:placeholder:text-slate-500"
                 />
                 <span className="hidden min-h-11 shrink-0 items-center rounded-full bg-indigo-50 px-3 text-sm font-semibold text-indigo-700 dark:bg-indigo-500/15 dark:text-indigo-200 sm:inline-flex">
                   {isWorkMode ? '教師 AI' : '學習 AI'}
@@ -760,75 +610,59 @@ export default function Home({ onOpen }: Props) {
                   type="button"
                   onClick={() => onOpen(isWorkMode ? 'work-transcribe' : aiFeature?.id ?? 'learning-ai')}
                   aria-label={isWorkMode ? '打開錄音轉文字' : '打開語音輸入'}
-                  className="hidden h-12 w-12 shrink-0 cursor-pointer items-center justify-center rounded-full text-slate-500 transition hover:bg-slate-100 hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:text-slate-300 dark:hover:bg-slate-800 sm:flex"
+                  className="hidden h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-full text-slate-500 transition hover:bg-slate-100 hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:text-slate-300 dark:hover:bg-slate-800 sm:flex"
                 >
                   <Mic size={20} strokeWidth={1.9} />
                 </button>
                 <button
                   type="submit"
-                  className="flex h-12 w-12 shrink-0 cursor-pointer items-center justify-center rounded-full bg-accent text-white shadow-sm transition hover:bg-accent-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+                  className="flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-full bg-accent text-white shadow-sm transition hover:bg-accent-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
                   aria-label="按內容開始處理"
                 >
                   <Send size={19} strokeWidth={2.1} />
                 </button>
               </div>
             </form>
-
-            <div className="mt-4 flex max-w-[900px] flex-wrap justify-center gap-2">
-              {composerSuggestions.map((suggestion) => (
-                <button
-                  key={suggestion}
-                  type="button"
-                  onClick={() => setLessonTopic(suggestion)}
-                  className="inline-flex min-h-10 cursor-pointer items-center rounded-full border border-slate-200 bg-white px-3.5 text-[13px] font-medium text-slate-600 shadow-xs transition hover:border-accent/30 hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-900"
-                >
-                  {suggestion}
-                </button>
-              ))}
-            </div>
-
-            <ol className="mt-6 grid w-full max-w-[840px] overflow-hidden rounded-[20px] border border-slate-200 bg-white p-1 text-left shadow-xs dark:border-slate-700/70 dark:bg-slate-900 sm:grid-cols-3">
-              {guideSteps.map((step, index) => {
-                const Icon = step.icon
-                return (
-                  <li
-                    key={step.title}
-                    className="relative flex min-h-[70px] items-center gap-3 rounded-[16px] px-3.5 py-3 sm:after:absolute sm:after:right-0 sm:after:top-1/2 sm:after:h-9 sm:after:w-px sm:after:-translate-y-1/2 sm:after:bg-slate-200 sm:last:after:hidden dark:sm:after:bg-slate-700"
-                  >
-                    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
-                      <Icon size={18} strokeWidth={1.8} />
-                    </span>
-                    <span className="min-w-0">
-                      <span className="block text-xs font-semibold text-slate-400">
-                        {String(index + 1).padStart(2, '0')}
-                      </span>
-                      <span className="block truncate text-sm font-bold text-slate-800 dark:text-slate-100">
-                        {step.title}
-                      </span>
-                      <span className="block truncate text-xs text-slate-500 dark:text-slate-400">
-                        {step.meta}
-                      </span>
-                    </span>
-                  </li>
-                )
-              })}
-            </ol>
           </div>
         </div>
       </section>
 
-      <div className="mx-auto w-full max-w-[1480px] space-y-6 px-4 py-5 sm:px-6 sm:py-6 lg:px-8">
+      <div className="mx-auto w-full max-w-[1420px] space-y-6 px-4 py-5 sm:px-6 sm:py-6 lg:px-8">
+        <section className="space-y-4">
+          <div>
+            <p className="text-xs font-semibold uppercase text-accent">
+              常用
+            </p>
+            <h2 className="mt-1 text-xl font-semibold text-slate-900 dark:text-slate-100">
+              常用任務
+            </h2>
+            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+              想快一點開始，可以直接揀一個任務方向。
+            </p>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            {taskFlows.map((flow) => (
+              <HeroTaskShortcut
+                key={flow.id}
+                flow={flow}
+                onStart={() => startTaskFlow(flow)}
+              />
+            ))}
+          </div>
+        </section>
+
         <section className="space-y-4">
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
               <p className="text-xs font-semibold uppercase text-accent">
-                Workspace
+                今日
               </p>
               <h2 className="mt-1 text-xl font-semibold text-slate-900 dark:text-slate-100">
-                今日工作區
+                今日重點
               </h2>
               <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                先揀一個任務流，系統會自動帶你去最合適的工具。
+                只保留現在最有用的三件事，其他工具需要時才打開。
               </p>
             </div>
             <button
@@ -841,127 +675,27 @@ export default function Home({ onOpen }: Props) {
             </button>
           </div>
 
-          <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_380px]">
-            <div className="grid auto-rows-min gap-2 self-start sm:grid-cols-2">
-              {taskFlows.map((flow, index) => (
-                <TaskFlowCard
-                  key={flow.id}
-                  flow={flow}
-                  primary={index === 0}
-                  onStart={() => startTaskFlow(flow)}
-                />
-              ))}
-            </div>
-
-            <aside className="rounded-[18px] border border-[color:var(--border)] bg-white p-3 shadow-xs dark:bg-slate-800 sm:p-4">
-              <div>
-                <p className="text-xs font-semibold uppercase text-slate-400 dark:text-slate-500">
-                  Today flow
-                </p>
-                <h3 className="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-100">
-                  今日流程
-                </h3>
-              </div>
-
-              <div className="mt-4 space-y-2">
-                <Metric
-                  icon={CheckSquare}
-                  label="待辦"
-                  value={openTasks.length}
-                  unit="件"
-                  hint={openTasks[0]?.text ?? '今日未有待辦壓住'}
-                />
-                <Metric
-                  icon={CalendarDays}
-                  label="課堂"
-                  value={todayLessons.length}
-                  unit="節"
-                  hint={todayLessons[0] ? `${todayLessons[0].subject} · 第 ${todayLessons[0].period} 節` : '今日無課堂安排'}
-                />
-                <Metric
-                  icon={Clock}
-                  label="倒數"
-                  value={daysToNext ?? '—'}
-                  unit={daysToNext === null ? undefined : '日'}
-                  hint={nextCountdown?.title ?? '未有即將到期事項'}
-                />
-              </div>
-
-              <div className="mt-4 space-y-2 border-t border-[color:var(--border)] pt-3">
-                {flowItems.map((item, index) => (
-                  <FlowRow
-                    key={`${item.time}-${item.title}`}
-                    icon={item.icon}
-                    time={item.time}
-                    title={item.title}
-                    meta={item.meta}
-                    active={index === 0}
-                    onClick={() => openFeature(item.featureId)}
-                  />
-                ))}
-              </div>
-            </aside>
+          <div className="grid gap-3 md:grid-cols-3">
+            {flowItems.map((item, index) => (
+              <FocusCard
+                key={`${item.time}-${item.title}`}
+                icon={item.icon}
+                time={item.time}
+                title={item.title}
+                meta={item.meta}
+                active={index === 0}
+                onClick={() => openFeature(item.featureId)}
+              />
+            ))}
           </div>
         </section>
-
-        {isWorkMode && (
-          <section className="rounded-[18px] border border-[color:var(--border)] bg-white p-4 shadow-xs dark:bg-slate-800 sm:p-5">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <p className="text-xs font-semibold uppercase text-sky-700 dark:text-sky-300">
-                  Teacher packs
-                </p>
-                <h2 className="mt-1 text-xl font-semibold text-slate-900 dark:text-slate-100">
-                  一鍵開始下一堂
-                </h2>
-              </div>
-              {nextLessonCaptures.length > 0 && (
-                <button
-                  type="button"
-                  onClick={() => onOpen('inbox')}
-                  className="inline-flex min-h-11 cursor-pointer items-center gap-1 rounded-xl px-2.5 text-xs font-semibold text-accent transition hover:bg-accent-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:hover:bg-accent/15"
-                >
-                  最近下一堂
-                  <ArrowRight size={13} strokeWidth={2} />
-                </button>
-              )}
-            </div>
-            <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-              {LESSON_PACKS.map((pack) => {
-                const Icon = pack.icon
-                return (
-                  <button
-                    key={pack.title}
-                    type="button"
-                    onClick={() => startLessonPack(pack)}
-                    className="group flex min-h-[118px] cursor-pointer flex-col rounded-[16px] border border-[color:var(--border)] bg-[color:var(--surface-2)] p-4 text-left transition hover:border-accent/40 hover:bg-white hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:hover:bg-slate-800"
-                  >
-                    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
-                      <Icon size={18} strokeWidth={1.75} />
-                    </span>
-                    <span className="mt-4 block text-sm font-bold text-slate-800 dark:text-slate-100">
-                      {pack.title}
-                    </span>
-                    <span className="mt-1 line-clamp-2 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
-                      {pack.desc}
-                    </span>
-                    <span className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-accent">
-                      開始
-                      <ArrowRight size={13} className="transition group-hover:translate-x-0.5" />
-                    </span>
-                  </button>
-                )
-              })}
-            </div>
-          </section>
-        )}
 
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1.35fr)_minmax(320px,0.65fr)]">
           <section className="rounded-[18px] border border-[color:var(--border)] bg-white p-4 shadow-xs dark:bg-slate-800 sm:p-5">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <p className="text-xs font-semibold uppercase text-accent">
-                  Review queue
+                  覆核
                 </p>
                 <h2 className="mt-1 text-xl font-semibold text-slate-900 dark:text-slate-100">
                   最近產出 / 待覆核
@@ -995,7 +729,7 @@ export default function Home({ onOpen }: Props) {
                     暫時未有產出需要覆核
                   </p>
                   <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                    由上方任務流開始，完成的教案、題目和記錄會在這裡浮現。
+                    由上方捷徑開始，完成的教案、題目和記錄會在這裡浮現。
                   </p>
                 </div>
               )}
@@ -1005,7 +739,7 @@ export default function Home({ onOpen }: Props) {
           <section className="rounded-[18px] border border-[color:var(--border)] bg-white p-4 shadow-xs dark:bg-slate-800 sm:p-5">
             <div className="mb-4">
               <p className="text-xs font-semibold uppercase text-slate-400 dark:text-slate-500">
-                Tool shelf
+                工具
               </p>
               <h2 className="mt-1 text-xl font-semibold text-slate-900 dark:text-slate-100">
                 工具庫
@@ -1030,13 +764,11 @@ export default function Home({ onOpen }: Props) {
   )
 }
 
-function TaskFlowCard({
+function HeroTaskShortcut({
   flow,
-  primary,
   onStart,
 }: {
   flow: TaskFlow
-  primary?: boolean
   onStart: () => void
 }) {
   const Icon = flow.icon
@@ -1044,40 +776,23 @@ function TaskFlowCard({
     <button
       type="button"
       onClick={onStart}
-      className={cx(
-        'group flex min-h-[148px] w-full cursor-pointer flex-col rounded-[18px] border p-4 text-left transition duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
-        primary
-          ? 'border-accent/35 bg-accent-soft/80 hover:border-accent/45 dark:bg-accent/15'
-          : 'border-[color:var(--border)] bg-white hover:border-accent/35 hover:bg-[color:var(--surface-2)] dark:bg-slate-800 dark:hover:border-accent/35',
-      )}
+      className="group flex min-h-[92px] w-full cursor-pointer flex-col rounded-[18px] border border-slate-200 bg-white p-3 shadow-xs transition duration-150 hover:-translate-y-0.5 hover:border-accent/35 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:border-slate-700 dark:bg-slate-900"
     >
-      <span className="flex items-start justify-between gap-3">
-        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white text-accent shadow-xs dark:bg-slate-800">
-          <Icon size={20} strokeWidth={1.8} />
+      <span className="flex items-center justify-between gap-3">
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[15px] bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
+          <Icon size={18} strokeWidth={1.8} />
         </span>
-        <span className="rounded-full bg-white px-2.5 py-1 text-[11px] font-semibold text-accent shadow-xs dark:bg-slate-800">
-          {flow.outcome}
-        </span>
+        <ArrowRight
+          size={15}
+          className="text-slate-300 transition group-hover:translate-x-0.5 group-hover:text-accent"
+          strokeWidth={2}
+        />
       </span>
-      <span className="mt-4 block text-base font-semibold text-slate-900 dark:text-slate-100">
+      <span className="mt-3 block text-sm font-semibold text-slate-900 dark:text-slate-100">
         {flow.title}
       </span>
-      <span className="mt-1 line-clamp-2 text-sm leading-relaxed text-slate-500 dark:text-slate-400">
-        {flow.desc}
-      </span>
-      <span className="mt-4 flex flex-wrap gap-1.5">
-        {flow.steps.map((step) => (
-          <span
-            key={step}
-            className="rounded-full bg-white/80 px-2 py-0.5 text-[11px] font-medium text-slate-500 ring-1 ring-slate-200/70 dark:bg-slate-900/70 dark:text-slate-400 dark:ring-slate-700"
-          >
-            {step}
-          </span>
-        ))}
-      </span>
-      <span className="mt-auto inline-flex items-center gap-1 pt-4 text-sm font-semibold text-accent">
-        開始
-        <ArrowRight size={14} className="transition group-hover:translate-x-0.5" />
+      <span className="mt-0.5 block text-xs font-medium text-slate-500 dark:text-slate-400">
+        {flow.outcome}
       </span>
     </button>
   )
@@ -1149,41 +864,7 @@ function ToolShelfRow({
   )
 }
 
-function Metric({
-  icon: Icon,
-  label,
-  value,
-  unit,
-  hint,
-}: {
-  icon: LucideIcon
-  label: string
-  value: number | string
-  unit?: string
-  hint: string
-}) {
-  return (
-    <div className="flex min-h-[58px] items-center gap-3 rounded-[14px] bg-[color:var(--surface-2)] px-3 py-2.5">
-      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-accent shadow-xs dark:bg-slate-700">
-        <Icon size={17} strokeWidth={1.8} />
-      </span>
-      <span className="min-w-0 flex-1">
-        <span className="block text-xs font-semibold text-slate-500 dark:text-slate-400">
-          {label}
-        </span>
-        <span className="mt-0.5 block truncate text-xs text-slate-500 dark:text-slate-400">
-          {hint}
-        </span>
-      </span>
-      <span className="nums shrink-0 text-right text-xl font-semibold text-slate-800 dark:text-slate-100">
-        {value}
-        {unit && <span className="ml-1 text-xs font-medium text-slate-400">{unit}</span>}
-      </span>
-    </div>
-  )
-}
-
-function FlowRow({
+function FocusCard({
   icon: Icon,
   time,
   title,
@@ -1203,32 +884,30 @@ function FlowRow({
       type="button"
       onClick={onClick}
       className={cx(
-        'group flex min-h-[58px] w-full cursor-pointer items-center gap-2.5 rounded-[14px] px-2.5 py-2 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
+        'group flex min-h-[104px] w-full cursor-pointer items-center gap-3 rounded-[18px] border px-4 py-4 text-left shadow-xs transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
         active
-          ? 'bg-accent-soft/70 dark:bg-accent/15'
-          : 'hover:bg-[color:var(--surface-2)]',
+          ? 'border-accent/25 bg-accent-soft/60 hover:border-accent/40 dark:bg-accent/15'
+          : 'border-[color:var(--border)] bg-white hover:border-accent/35 hover:bg-[color:var(--surface-2)] dark:bg-slate-800',
       )}
     >
       <span
         className={cx(
-          'flex h-9 w-9 shrink-0 items-center justify-center rounded-full',
+          'flex h-12 w-12 shrink-0 items-center justify-center rounded-[16px]',
           active
             ? 'bg-accent text-white'
             : 'bg-[color:var(--surface-2)] text-slate-400 dark:text-slate-300',
         )}
       >
-        <Icon size={16} strokeWidth={1.8} />
+        <Icon size={19} strokeWidth={1.8} />
       </span>
       <span className="min-w-0 flex-1">
-        <span className="flex min-w-0 items-center gap-2">
-          <span className="w-11 shrink-0 text-[11px] font-semibold text-slate-400 dark:text-slate-500">
-            {time}
-          </span>
-          <span className="truncate text-sm font-semibold text-slate-800 dark:text-slate-100">
-            {title}
-          </span>
+        <span className="block text-xs font-semibold text-slate-400 dark:text-slate-500">
+          {time}
         </span>
-        <span className="mt-0.5 block truncate text-xs text-slate-500 dark:text-slate-400">
+        <span className="mt-1 block truncate text-base font-semibold text-slate-900 dark:text-slate-100">
+          {title}
+        </span>
+        <span className="mt-1 block truncate text-sm text-slate-500 dark:text-slate-400">
           {meta}
         </span>
       </span>

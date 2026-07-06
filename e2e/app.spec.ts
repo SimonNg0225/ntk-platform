@@ -10,14 +10,14 @@ test.describe('產品外殼', () => {
     await expect(page.getByText(/歡迎使用/)).toHaveCount(0)
   })
 
-  test('範例 prompt 可帶入 composer；rail 可展開完整側欄', async ({ page }) => {
+  test('任務捷徑可直接分流；收起側欄可展開', async ({ page }) => {
     await page.goto('/app')
-    const composer = page.getByLabel('輸入課題或教學任務')
-    await page.getByRole('button', { name: /生成一份 DSE 風格工作紙/ }).click()
-    await expect(composer).toHaveValue('生成一份 DSE 風格工作紙')
 
     await page.getByRole('button', { name: '展開側欄' }).first().click()
     await expect(page.getByText('EziTeach AI').first()).toBeVisible()
+
+    await page.getByRole('button', { name: /出題與評核/ }).click()
+    await expect(page.getByRole('heading', { name: '教材生成' })).toBeVisible()
   })
 
   test('composer 會按內容打開對應工具，而不是一律進教學 AI', async ({ page }) => {

@@ -36,6 +36,8 @@ import { track } from './lib/observability'
 import { useTranslation } from 'react-i18next'
 import { featName, featDesc } from './i18n/appEn'
 
+const SIDEBAR_MODE_KEY = 'ntk.sidebarMode.v2'
+
 // 主框架：側邊欄 + 主內容區。
 // - 桌面（md 以上）：側邊欄固定喺左
 // - 手機：側邊欄收埋，改用頂欄漢堡掣 + 滑出式抽屜
@@ -53,12 +55,12 @@ export function AppShell() {
   // 桌面側欄三態：展開（w-72）→ 幼條（icon rail）→ 完全收起。記喺 localStorage。
   const [sidebarMode, setSidebarMode] = useState<'expanded' | 'rail' | 'hidden'>(() => {
     try {
-      const v = localStorage.getItem('ntk.sidebarMode')
+      const v = localStorage.getItem(SIDEBAR_MODE_KEY)
       if (v === 'expanded' || v === 'rail' || v === 'hidden') return v
     } catch {
       /* ignore */
     }
-    return 'rail'
+    return 'hidden'
   })
   const toast = useToast()
   const drawerRef = useRef<HTMLDivElement>(null)
@@ -68,7 +70,7 @@ export function AppShell() {
 
   useEffect(() => {
     try {
-      localStorage.setItem('ntk.sidebarMode', sidebarMode)
+      localStorage.setItem(SIDEBAR_MODE_KEY, sidebarMode)
     } catch {
       /* ignore */
     }
@@ -290,9 +292,7 @@ export function AppShell() {
 
           {/* overflow-x-hidden：杜絕任何過寬子元素令整頁可左右捲（iOS 尤甚）；寬表格各自有 overflow-x-auto 內捲，唔受影響 */}
           <div
-            className={`min-w-0 flex-1 overflow-x-hidden overflow-y-auto ${
-              sidebarMode === 'hidden' ? 'md:pl-12' : ''
-            }`}
+            className="min-w-0 flex-1 overflow-x-hidden overflow-y-auto"
           >
             <div className="app-content mx-auto w-full max-w-[1800px] px-4 py-5 sm:px-6 sm:py-6 lg:px-8">
               {isSettings ? (
@@ -427,7 +427,7 @@ export function AppShell() {
 
         <PwaUpdater />
         <PwaInstallPrompt />
-        <SupportButton />
+        {activeId !== null && <SupportButton />}
       </div>
     </NavProvider>
   )
