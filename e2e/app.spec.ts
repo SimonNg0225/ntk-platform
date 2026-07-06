@@ -30,4 +30,19 @@ test.describe('產品外殼', () => {
     await expect(page.getByRole('dialog', { name: '生成教學練習' })).toBeVisible()
     await expect(page.getByRole('heading', { name: '教學 AI' })).toHaveCount(0)
   })
+
+  test('composer 可分流到成績分析系統', async ({ page }) => {
+    await page.goto('/app')
+    await page.getByLabel('輸入課題或教學任務').fill('分析今次測驗成績同預測等級')
+    await page.getByRole('button', { name: '按內容開始處理' }).click()
+
+    await expect(page.getByRole('heading', { name: '成績分析' })).toBeVisible()
+    await expect(page.getByText('預測模型 beta')).toBeVisible()
+    await page.getByRole('button', { name: /精算風險/ }).click()
+    await expect(page.getByText('班級風險評級')).toBeVisible()
+    await expect(page.getByText('補救 ROI 排名')).toBeVisible()
+    await page.getByRole('button', { name: '成績報告' }).nth(1).click()
+    await expect(page.getByText('報告設定')).toBeVisible()
+    await expect(page.getByText('學生表現分析總報告')).toBeVisible()
+  })
 })

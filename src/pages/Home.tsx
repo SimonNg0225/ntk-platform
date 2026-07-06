@@ -149,6 +149,9 @@ function inferWorkComposerRoute(input: string): ComposerRoute {
   if (hasIntent(text, [/簡報|powerpoint|ppt|投影片|slide|deck|presentation/i])) {
     return { featureId: 'work-slides', label: '簡報工作室' }
   }
+  if (hasIntent(text, [/成績|分數|得分|測驗表現|考試表現|學生表現|弱項|等級預測|預測等級|成績預測|分數分佈|grade|score|analytics/i])) {
+    return { featureId: 'work-grade-analytics', label: '成績分析' }
+  }
   if (
     hasIntent(text, [
       /生成|出題|題目|工作紙|練習|小測|測驗|quiz|test|試卷|組卷|mc|選擇題|短答|長題|個案|case|dse\s*風格/i,

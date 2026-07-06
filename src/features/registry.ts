@@ -42,6 +42,7 @@ const TopicImport = lazyFeature(() => import('./work/topicImport/TopicImport'))
 const LessonPlanner = lazyFeature(() => import('./work/LessonPlanner'))
 const TeachGuide = lazyFeature(() => import('./work/teachGuide/TeachGuide'))
 const SlideGen = lazyFeature(() => import('./work/slides/SlideGen'))
+const GradeAnalytics = lazyFeature(() => import('./work/GradeAnalytics'))
 const Timetable = lazyFeature(() => import('./work/Timetable'))
 const MeetingNotes = lazyFeature(() => import('./work/MeetingNotes'))
 const AdminDocs = lazyFeature(() => import('./work/adminDocs/AdminDocs'))
@@ -310,6 +311,17 @@ export const FEATURES: Feature[] = [
     icon: '🎓',
     group: '教學',
     component: DseDrill,
+    status: 'ready',
+  },
+  {
+    id: 'work-grade-analytics',
+    selfManagedHeader: true,
+    modes: ['work'],
+    name: '成績分析',
+    description: '匯入測考分數，分析題目表現、預測等級、識別弱項和生成跟進分組。',
+    icon: '📈',
+    group: '教學',
+    component: GradeAnalytics,
     status: 'ready',
   },
   {
