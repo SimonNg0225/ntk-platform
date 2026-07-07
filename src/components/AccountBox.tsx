@@ -9,7 +9,7 @@ import PlanBadge from './PlanBadge'
 // 企業級訂閱慣例：永遠睇到自己係「免費版」定「Pro」，免費版有升級入口。
 export default function AccountBox() {
   const { t } = useTranslation()
-  const { user, configured, signInWithGoogle, signOut, loading } = useAuth()
+  const { user, configured, signOut, loading } = useAuth()
 
   // 未接 Supabase：訪客模式（等同免費版，本機運作）
   if (!configured) {
@@ -36,13 +36,13 @@ export default function AccountBox() {
   if (!user) {
     return (
       <div className="space-y-2 px-4 py-3">
-        <button
-          onClick={signInWithGoogle}
+        <Link
+          to="/login"
           className="flex min-h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-xl border border-black/[0.08] bg-white px-3 text-[13px] font-medium text-slate-700 transition hover:bg-black/[0.03] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-1 dark:border-white/10 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-white/[0.06]"
         >
           <GoogleIcon />
           {t('shell.loginGoogle', { defaultValue: '用 Google 登入' })}
-        </button>
+        </Link>
         <div className="flex items-center justify-between px-0.5">
           <PlanBadge />
           <Link

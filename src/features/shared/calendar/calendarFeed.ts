@@ -6,8 +6,9 @@ import { calendarFeedCol, type CalendarFeedToken } from '../../../data/collectio
 //  - token：≥128-bit、URL-safe 隨機字串，存喺 calendarFeedCol（單行
 //    id='token'）。會 sync 上 Supabase（app_rows，collection='calendar_feed'），
 //    畀 Edge Function calendar-feed 反查 user_id。
-//  - webcal 連結：webcal://<project-ref>.supabase.co/functions/v1/
-//    calendar-feed?token=<token>（project-ref 由 VITE_SUPABASE_URL 拆）。
+//  - webcal 連結：webcal://<configured-supabase-host>/functions/v1/
+//    calendar-feed?token=<token>（host 由 VITE_SUPABASE_URL 拆）。支援
+//    Supabase custom domain，例如 auth.eziteach.hk。
 //  - 純邏輯、無 React，方便單元測試。
 //  詳見 docs/superpowers/specs/2026-06-04-calendar-feed-reminders-design.md
 // ============================================================
@@ -71,42 +72,51 @@ export function peekToken(): string | null {
 }
 
 /**
- * 由 Supabase URL 拆 project-ref：
+ * 由 Supabase URL 拆 host：
  *   https://abcdefgh.supabase.co       → abcdefgh
- *   https://abcdefgh.supabase.co/      → abcdefgh
- *   https://abcdefgh.supabase.in.xxx   → abcdefgh（取第一段 subdomain）
- * 拆唔到（空 / 非 supabase host）→ null。
+ *   https://auth.eziteach.hk           → auth.eziteach.hk
+ * 拆唔到（空 / localhost / 單段 host）→ null。
  */
-export function projectRefFromUrl(url: string | undefined | null): string | null {
+export function supabaseHostFromUrl(url: string | undefined | null): string | null {
   if (!url) return null
   let host: string
   try {
-    host = new URL(url).host // 例如 abcdefgh.supabase.co
+    host = new URL(url.includes('://') ? url : `https://${url}`).host
   } catch {
     // 唔係完整 URL，當佢可能淨係 host
     host = String(url).replace(/^https?:\/\//, '').replace(/\/.*$/, '')
   }
   if (!host) return null
   host = host.replace(/:\d+$/, '') // 去走 :port（例如 localhost:54321）
-  // 真實 supabase 主機一定係多段（<ref>.supabase.co）；單段主機（如 localhost）
-  // 拆唔出合理 ref。
-  if (!host.includes('.')) return null
+  if (!host.includes('.') || host === 'localhost') return null
+  return host
+}
+
+/**
+ * 由標準 Supabase URL 拆 project-ref。
+ * custom domain 無 project-ref，會回 null；需要真正 request URL 時請用
+ * supabaseHostFromUrl / buildWebcalUrl。
+ */
+export function projectRefFromUrl(url: string | undefined | null): string | null {
+  const host = supabaseHostFromUrl(url)
+  if (!host || !host.includes('.supabase.')) return null
   const ref = host.split('.')[0]?.trim()
-  if (!ref || ref === 'supabase' || ref === 'localhost') return null
+  if (!ref || ref === 'supabase') return null
   return ref
 }
 
 /**
- * 組 webcal 連結：webcal://<ref>.supabase.co/functions/v1/calendar-feed?token=<token>
- * ref 拆唔到 → null。
+ * 組 webcal 連結：
+ * webcal://<configured-supabase-host>/functions/v1/calendar-feed?token=<token>
+ * host 拆唔到 → null。
  */
 export function buildWebcalUrl(
   supabaseUrl: string | undefined | null,
   token: string,
 ): string | null {
-  const ref = projectRefFromUrl(supabaseUrl)
-  if (!ref) return null
-  return `webcal://${ref}.supabase.co/functions/v1/calendar-feed?token=${encodeURIComponent(
+  const host = supabaseHostFromUrl(supabaseUrl)
+  if (!host) return null
+  return `webcal://${host}/functions/v1/calendar-feed?token=${encodeURIComponent(
     token,
   )}`
 }

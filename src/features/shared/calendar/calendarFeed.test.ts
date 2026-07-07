@@ -6,6 +6,7 @@ import {
   getOrCreateToken,
   rotateToken,
   peekToken,
+  supabaseHostFromUrl,
   projectRefFromUrl,
   buildWebcalUrl,
   buildHttpsUrl,
@@ -113,6 +114,28 @@ describe('projectRefFromUrl', () => {
   it('localhost / 退化 host → null', () => {
     expect(projectRefFromUrl('http://localhost:54321')).toBeNull()
   })
+
+  it('custom domain 無 project-ref → null', () => {
+    expect(projectRefFromUrl('https://auth.eziteach.hk')).toBeNull()
+  })
+})
+
+describe('supabaseHostFromUrl', () => {
+  it('由標準 supabase URL 拆 host', () => {
+    expect(supabaseHostFromUrl('https://abcdefgh.supabase.co')).toBe('abcdefgh.supabase.co')
+    expect(supabaseHostFromUrl('https://abcdefgh.supabase.co/rest/v1')).toBe('abcdefgh.supabase.co')
+  })
+
+  it('支援 Supabase custom domain', () => {
+    expect(supabaseHostFromUrl('https://auth.eziteach.hk')).toBe('auth.eziteach.hk')
+    expect(supabaseHostFromUrl('auth.eziteach.hk/functions/v1/gemini')).toBe('auth.eziteach.hk')
+  })
+
+  it('localhost / 空值 → null', () => {
+    expect(supabaseHostFromUrl('http://localhost:54321')).toBeNull()
+    expect(supabaseHostFromUrl('')).toBeNull()
+    expect(supabaseHostFromUrl(undefined)).toBeNull()
+  })
 })
 
 describe('buildWebcalUrl / buildHttpsUrl', () => {
@@ -138,7 +161,16 @@ describe('buildWebcalUrl / buildHttpsUrl', () => {
     )
   })
 
-  it('拆唔到 ref → null', () => {
+  it('custom domain 用原 host 砌 feed URL', () => {
+    expect(buildWebcalUrl('https://auth.eziteach.hk', TOKEN)).toBe(
+      'webcal://auth.eziteach.hk/functions/v1/calendar-feed?token=AbC-123_xyz',
+    )
+    expect(buildHttpsUrl('https://auth.eziteach.hk', TOKEN)).toBe(
+      'https://auth.eziteach.hk/functions/v1/calendar-feed?token=AbC-123_xyz',
+    )
+  })
+
+  it('拆唔到 host → null', () => {
     expect(buildWebcalUrl('', TOKEN)).toBeNull()
     expect(buildWebcalUrl(undefined, TOKEN)).toBeNull()
     expect(buildHttpsUrl('http://localhost:54321', TOKEN)).toBeNull()

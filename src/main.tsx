@@ -4,6 +4,8 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-route
 import { HelmetProvider } from 'react-helmet-async'
 import { Providers, AppShell } from './App.tsx'
 import Landing from './marketing/Landing.tsx'
+import Login from './marketing/Login.tsx'
+import AuthCallback from './marketing/AuthCallback.tsx'
 import Pricing from './marketing/Pricing.tsx'
 import Privacy from './marketing/Privacy.tsx'
 import Terms from './marketing/Terms.tsx'
@@ -34,6 +36,8 @@ function RouteAnalytics() {
 
 // 路由：
 //   /         → 行銷首頁（公開、SEO）
+//   /login    → 品牌登入頁
+//   /auth/callback → OAuth 回流中繼頁
 //   /pricing  → 定價頁
 //   /app/*    → 產品（原有 30+ 功能，內部用 state 導航）
 createRoot(document.getElementById('root')!).render(
@@ -44,6 +48,8 @@ createRoot(document.getElementById('root')!).render(
           <RouteAnalytics />
           <Routes>
             <Route path="/" element={<Landing />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/auth/callback" element={<AuthCallback />} />
             <Route path="/pricing" element={<Pricing />} />
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/terms" element={<Terms />} />

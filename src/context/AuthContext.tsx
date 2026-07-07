@@ -139,9 +139,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         track('signup_started', { provider: 'google' })
         await supabase.auth.signInWithOAuth({
           provider: 'google',
-          // 回流去根目錄（= Supabase 預設 Site URL，最穩陣，唔使逐個 path 加 allowlist）。
-          // 落到 '/' 後，Landing 偵測到 OAuth 回流會自動轉去 /app。
-          options: { redirectTo: window.location.origin },
+          // 回流去品牌化中繼頁，等登入中 / 登入失敗狀態都保持 EziTeach 介面。
+          // Supabase Authentication → URL Configuration 要 allow /auth/callback。
+          options: { redirectTo: `${window.location.origin}/auth/callback` },
         })
       },
       signOut: async () => {

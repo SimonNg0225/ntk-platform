@@ -3,15 +3,21 @@ import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 // ============================================================
 //  Supabase client
 //  ------------------------------------------------------------
-//  讀取 .env.local 入面嘅兩個變數：
+//  讀取 .env.local / Vercel 入面嘅兩個變數：
 //    VITE_SUPABASE_URL
 //    VITE_SUPABASE_ANON_KEY   ← anon key 係設計成可以放前端嘅
+//
+//  上線建議：
+//    若 Supabase 已啟用 custom domain（例：https://auth.eziteach.hk），
+//    VITE_SUPABASE_URL 請填 custom domain，而唔係 project-ref.supabase.co。
+//    咁 Google OAuth 頁面先會顯示品牌域名，唔會露出隨機 Supabase project URL。
 //
 //  如果未設定（例如 demo / 未接 Supabase），supabase 會係 null，
 //  成個 App 會以「訪客模式」運作（資料暫存喺瀏覽器）。
 // ============================================================
 
-const url = import.meta.env.VITE_SUPABASE_URL as string | undefined
+const rawUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined
+const url = rawUrl?.trim().replace(/\/+$/, '')
 const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined
 
 export const isSupabaseConfigured = Boolean(url && anonKey)

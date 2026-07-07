@@ -15,6 +15,10 @@
 | `VITE_SUPABASE_ANON_KEY` | 同上（anon public key） | `.env.local`（+ Vercel） |
 | `GEMINI_API_KEY` | Google AI Studio | Supabase secret（**唔好**放前端） |
 
+> 上線後如要 Google 登入頁顯示專業品牌，建議先做「步驟 3d — OAuth 品牌化」：
+> `VITE_SUPABASE_URL` 最終應改用 `https://auth.eziteach.hk`（或你的 Supabase custom domain），
+> 而不是隨機 project-ref `https://xxxx.supabase.co`。
+
 ⚠️ **安全底線**：`GEMINI_API_KEY` 同 Supabase `service_role` key **永遠唔好**放前端 / 唔好 commit。只有上面兩個 `VITE_` 開頭嘅先可以放前端。
 
 ---
@@ -36,6 +40,13 @@
 
    ```
    VITE_SUPABASE_URL=https://xxxx.supabase.co
+   VITE_SUPABASE_ANON_KEY=eyJhbGci...
+   ```
+
+   若已啟用 Supabase custom domain，改用：
+
+   ```
+   VITE_SUPABASE_URL=https://auth.eziteach.hk
    VITE_SUPABASE_ANON_KEY=eyJhbGci...
    ```
 
@@ -85,12 +96,66 @@
    - **Redirect URLs**：用萬用字元加齊各環境（一行一個）：
      ```
      http://localhost:5173/**
+     http://localhost:5177/**
+     https://eziteach.hk/auth/callback
      https://你的正式網域/**
      ```
      > Supabase 只接受喺呢個白名單入面嘅 `redirectTo`；唔喺名單就會
-     > **fallback 去 Site URL**。本 App 嘅 `redirectTo` 用根目錄（最穩陣），
-     > 落到 `/` 之後會**自動轉去 `/app`**，所以即使你只加咗根網域都 work。
+     > **fallback 去 Site URL**。本 App 嘅 `redirectTo` 用 `/auth/callback`，
+     > 回流時會顯示 EziTeach 品牌登入中介面，成功後自動入 `/app`。
 3. 返 App 撳「用 Google 登入」測試。登入後資料會自動由本機 seed 上雲、之後改動自動同步。
+
+### 3d. 上線品牌化：避免 Google 頁顯示 `xxxx.supabase.co`
+
+如果 Google 登入頁顯示「繼續前往 `xxxx.supabase.co`」，用戶會覺得離開咗 EziTeach。正式上線建議做以下設定：
+
+#### Supabase custom domain
+
+1. 在 Supabase Dashboard / CLI 新增 custom domain，建議：
+   - `auth.eziteach.hk`（偏登入/驗證語義）
+   - 或 `api.eziteach.hk`（偏 API 語義）
+2. 按 Supabase 指示加 DNS：
+   - CNAME：custom domain 指向 Supabase project domain
+   - TXT：`_acme-challenge.<custom-domain>` 用於 SSL 驗證
+3. 在 Google OAuth client 的 **Authorized redirect URIs** 保留舊 Supabase callback，再加新 custom-domain callback：
+
+   ```
+   https://xxxx.supabase.co/auth/v1/callback
+   https://auth.eziteach.hk/auth/v1/callback
+   ```
+
+   注意：這是「Google → Supabase」的 callback，負責決定 Google 登入頁顯示哪個網域；不是 App 的 `/auth/callback`。
+
+4. Supabase custom domain activate 後，把 `.env.local` / Vercel 變數改成：
+
+   ```
+   VITE_SUPABASE_URL=https://auth.eziteach.hk
+   ```
+
+   `VITE_SUPABASE_ANON_KEY` 不變。
+
+5. 在 Supabase → Authentication → URL Configuration 確保 App 回流地址存在：
+
+   ```
+   https://eziteach.hk/auth/callback
+   https://eziteach.hk/**
+   ```
+
+#### Google OAuth Branding
+
+Google Cloud → Google Auth Platform / OAuth consent screen：
+
+| 欄位 | 建議填法 |
+| --- | --- |
+| App name | `EziTeach AI` |
+| User support email | `support@eziteach.hk` |
+| App logo | EziTeach AI 正式 app icon |
+| App home page | `https://eziteach.hk` |
+| Privacy policy | `https://eziteach.hk/privacy` |
+| Terms of service | `https://eziteach.hk/terms` |
+| Authorized domains | `eziteach.hk` |
+
+Google 可能需要你 submit verification / publish app，品牌名和 logo 才會完整顯示。設定完成後，Google 登入頁應顯示 `EziTeach AI` 或至少 `auth.eziteach.hk`，不再顯示隨機 Supabase project URL。
 
 ---
 
