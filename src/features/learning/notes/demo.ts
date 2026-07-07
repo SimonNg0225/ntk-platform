@@ -5,7 +5,7 @@ import { richNotesCol, type RichNote } from './store'
 //  Notes 示範資料 seeder
 //  ------------------------------------------------------------
 //  一鍵填入真實感、連貫嘅樣本筆記，令空白 app 即刻「有嘢睇」。
-//  只負責 richNotesCol（筆記）。notebooksCol 已有內建種子（BAFS /
+//  只負責 richNotesCol（筆記）。notebooksCol 已有內建種子（DSE 溫習 /
 //  靈感速記），呢度嘅筆記直接掛返嗰兩個現有筆記本 id。
 //
 //  Idempotent：richNotesCol 而家係空（.get().length === 0）先種，
@@ -31,7 +31,7 @@ function isoDaysAgo(daysAgo: number, hour = 12, minute = 0): string {
 }
 
 // 已存在嘅內建筆記本 id（見 store.ts notebooksCol 種子）
-const NB_BAFS = 'nb-bafs'
+const NB_DSE = 'nb-dse'
 const NB_IDEAS = 'nb-ideas'
 
 interface NoteSeed {
@@ -50,7 +50,7 @@ interface NoteSeed {
 const SEED: NoteSeed[] = [
   {
     title: '本週溫習計劃',
-    notebookId: NB_BAFS,
+    notebookId: NB_DSE,
     pinned: true,
     favorite: true,
     color: 'amber',
@@ -58,21 +58,21 @@ const SEED: NoteSeed[] = [
     updatedDaysAgo: 0,
     updatedHour: 8,
     content:
-      '本週重點 #計劃 #bafs\n\n- [x] 重溫市場營銷 4P\n- [x] 做完 SWOT 練習題\n- [ ] 整理財務比率筆記\n- [ ] 約同學週六 grp study\n\n每晚至少一個番茄鐘，唔好臨急抱佛腳。',
+      '本週重點 #計劃 #DSE\n\n- [x] 重溫中文閱讀答題框架\n- [x] 做完英文 writing outline\n- [ ] 整理數學錯題\n- [ ] 約同學週六 grp study\n\n每晚至少一個番茄鐘，唔好臨急抱佛腳。',
   },
   {
-    title: '財務比率速記',
-    notebookId: NB_BAFS,
+    title: '英文寫作連接詞',
+    notebookId: NB_DSE,
     favorite: true,
     color: 'blue',
     createdDaysAgo: 4,
     updatedDaysAgo: 2,
     content:
-      '財務比率 #財務 #bafs\n\n流動比率 = 流動資產 / 流動負債（睇短期償債）\n毛利率 = 毛利 / 銷貨 × 100%\n存貨周轉率 = 銷貨成本 / 平均存貨\n\n- [ ] 搵公司年報試計一次\n- [ ] 對照行業平均',
+      'Essay 連接詞 #英文 #寫作\n\n對比：however, on the other hand, whereas\n遞進：moreover, furthermore, in addition\n結論：therefore, consequently, to sum up\n\n- [ ] 每種關係各背 3 個\n- [ ] 寫一段 argumentative paragraph 試用',
   },
   {
     title: '經濟學：供求彈性',
-    notebookId: NB_BAFS,
+    notebookId: NB_DSE,
     color: 'green',
     createdDaysAgo: 11,
     updatedDaysAgo: 5,
@@ -115,7 +115,7 @@ const SEED: NoteSeed[] = [
     createdDaysAgo: 13,
     updatedDaysAgo: 6,
     content:
-      '靈感速記 #idea #副業\n\n可以將自己嘅 BAFS / 經濟筆記整理成 PDF 套裝，喺網上賣畀師弟妹。\n配合一條 demo 影片同免費試閱頁。\n\n- [ ] 評估有冇市場\n- [ ] 整一頁 landing page',
+      '靈感速記 #idea #副業\n\n可以將 DSE 溫習筆記整理成 PDF 套裝，配合一條 demo 影片同免費試閱頁。\n\n- [ ] 評估有冇市場\n- [ ] 整一頁 landing page',
   },
   {
     title: '面試準備 — 自我介紹',

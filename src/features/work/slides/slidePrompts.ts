@@ -135,7 +135,7 @@ export function buildSlideSystem(subjectName: string | undefined, count: number,
     '    "quote":{"text":"一句金句或定義","attribution":"出處（選填）"}（text ≤60 字）',
     '  · "layout":"cards" — 3-6 個並列概念／分類／工具想逐個成卡先用，另加：',
     '    "cards":[{"title":"卡題","desc":"一句說明（選填）"}]（title ≤12 字、desc ≤36 字）',
-    '- 每版可選 "subtitle"：版題下嘅短英文對照副題（雙語課堂用，≤8 個英文詞，例 "Accounting Equation Playground"）；唔啱就唔好出。',
+    '- 每版可選 "subtitle"：版題下嘅短英文對照副題（雙語課堂用，≤8 個英文詞，例 "Argument Map"）；唔啱就唔好出。',
     '- 每版可選 "takeaway"：一句包底重點（≤40 字，會做版底色帶俾學生抄低）；全套揀 2-4 版最關鍵嘅先出，唔好版版有。',
     '- 每版可選 "emphasis": true：全套只揀 1-3 版「最重要／高潮」嘅版標記（例如核心概念、總結金句），引擎會為佢加重視覺處理，造成輕重節奏；千祈唔好多版標，否則就冇咗強調效果。',
   ]

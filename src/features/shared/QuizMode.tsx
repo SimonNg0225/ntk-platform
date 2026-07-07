@@ -14,7 +14,7 @@ import { DEFAULT_SETTINGS, mistakesCol, pct, type QuizSettings } from './quiz/ut
 // ============================================================
 //  自我測驗（QuizMode）— Quizlet / Kahoot 級
 //  ------------------------------------------------------------
-//  learning + work 共用。由 BAFS 題庫抽題即時做題。
+//  learning + work 共用。由題庫抽題即時做題。
 //  • 三種模式：練習（即查）/ 測驗（最後批改）/ 計時搶分（Kahoot）
 //  • 兩種題型：選擇題 + 短答題（文字自評）
 //  • 鍵盤導航 / 題目導航格 / 標記題目 / 打亂選項

@@ -32,7 +32,7 @@ import PaidGate from './components/PaidGate'
 import { useSubscription } from './hooks/useSubscription'
 import { getFeature, preloadAllFeatures } from './features/registry'
 import { FeatureIcon } from './features/featureIcons'
-import { track } from './lib/observability'
+import { track, trackPageView } from './lib/observability'
 import { useTranslation } from 'react-i18next'
 import { featName, featDesc } from './i18n/appEn'
 
@@ -64,6 +64,7 @@ export function AppShell() {
   })
   const toast = useToast()
   const drawerRef = useRef<HTMLDivElement>(null)
+  const appOpenedRef = useRef(false)
   // iOS：開抽屜嗰下 tap，遮罩瞬間彈出喺手指底，touch→mouse 相容 click 會打中遮罩即關。
   // 開啟後短暫「未武裝」，等開掣嗰下 ghost click 食唔到自己（要撳兩次先開到嘅元兇）。
   const dismissArmedRef = useRef(false)
@@ -135,6 +136,8 @@ export function AppShell() {
 
   // 漏斗：進入產品（一次）
   useEffect(() => {
+    if (appOpenedRef.current) return
+    appOpenedRef.current = true
     track('app_opened')
   }, [])
 
@@ -198,6 +201,34 @@ export function AppShell() {
   const isSettings = activeId === '__settings__'
   const isAdmin = activeId === '__admin__'
   const feature = activeId && !isSettings && !isAdmin ? getFeature(activeId) : undefined
+
+  useEffect(() => {
+    const screen = isSettings ? 'settings' : isAdmin ? 'admin' : feature ? 'feature' : 'overview'
+    const virtualPath =
+      screen === 'feature' && feature
+        ? `/app/${modeDef.id}/${feature.id}`
+        : `/app/${modeDef.id}/${screen}`
+    const props = {
+      page_kind: 'app',
+      virtual_path: virtualPath,
+      app_mode: modeDef.id,
+      app_screen: screen,
+      feature_id: feature?.id,
+      feature_name: feature ? featName(t, feature) : undefined,
+      feature_status: feature?.status,
+    }
+    trackPageView(props)
+    track('app_screen_viewed', props)
+    if (feature) {
+      track('feature_opened', {
+        feature_id: feature.id,
+        feature_name: featName(t, feature),
+        feature_status: feature.status,
+        feature_paid: Boolean(feature.requiresPaid),
+        mode: modeDef.id,
+      })
+    }
+  }, [activeId, feature, isAdmin, isSettings, modeDef.id, t])
 
   return (
     <NavProvider open={navigate}>

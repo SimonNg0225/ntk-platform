@@ -66,6 +66,8 @@ VITE_POSTHOG_KEY=phc_...
 VITE_POSTHOG_HOST=https://us.i.posthog.com
 ```
 
+事件清單、UTM link 寫法同漏斗建議見 `docs/ANALYTICS.md`。
+
 ---
 
 ## 3. 功能 Gating（點樣鎖 Pro 功能）

@@ -68,11 +68,13 @@ function nowIso() {
 }
 
 export const notebooksCol = createCollection<Notebook>('notes_notebooks_v2', [
-  { id: 'nb-bafs', name: 'BAFS 商業管理', color: 'accent', createdAt: nowIso() },
+  { id: 'nb-dse', name: 'DSE 溫習', color: 'accent', createdAt: nowIso() },
   { id: 'nb-ideas', name: '靈感速記', color: 'amber', createdAt: nowIso() },
 ])
 
 export const richNotesCol = createCollection<RichNote>('notes_rich_v2', seedNotes())
+
+migrateNeutralDemoNotes()
 
 // ───────── 儲存篩選（智能檢視）─────────
 export interface SavedFilter extends Entity {
@@ -103,19 +105,19 @@ function seedNotes(): RichNote[] {
   })
   return [
     mk(0, {
-      title: '市場營銷 4P',
-      notebookId: 'nb-bafs',
+      title: '中文議論文結構',
+      notebookId: 'nb-dse',
       pinned: true,
       favorite: true,
       color: 'amber',
       content:
-        '市場營銷組合 #marketing #bafs\n\n- [x] Product 產品\n- [x] Price 價格\n- [ ] Place 地點 / 通路\n- [ ] Promotion 推廣\n\n重點：4P 要互相配合，先有一致嘅市場定位。',
+        '中文議論文 #中文 #DSE\n\n- [x] 立場清晰\n- [x] 每段一個論點\n- [ ] 用例子支撐論據\n- [ ] 結尾扣題\n\n重點：論點、論據、論證要扣住題目，段落之間要有連貫。',
     }),
     mk(2, {
-      title: 'SWOT 分析框架',
-      notebookId: 'nb-bafs',
+      title: '英文寫作連接詞',
+      notebookId: 'nb-dse',
       content:
-        'SWOT #strategy #bafs\n\nStrengths 優勢 / Weaknesses 劣勢（內部）\nOpportunities 機會 / Threats 威脅（外部）\n\n用嚟做企業策略前嘅環境掃描。',
+        'Essay 連接詞 #英文 #DSE\n\n對比：however, on the other hand, whereas\n遞進：moreover, furthermore, in addition\n結論：therefore, consequently, to sum up\n\n用連接詞前要確定前後句關係，唔好為用而用。',
     }),
     mk(5, {
       title: '一本好書：深度工作',
@@ -129,4 +131,42 @@ function seedNotes(): RichNote[] {
       content: '可以整一個自己嘅溫習計劃表 app #idea\n配合番茄鐘同知識卡。',
     }),
   ]
+}
+
+function migrateNeutralDemoNotes() {
+  const notebooks = notebooksCol.get()
+  if (notebooks.some((book) => book.id === 'nb-bafs' && book.name === 'BAFS 商業管理')) {
+    notebooksCol.set(
+      notebooks.map((book) =>
+        book.id === 'nb-bafs' && book.name === 'BAFS 商業管理'
+          ? { ...book, name: 'DSE 溫習' }
+          : book,
+      ),
+    )
+  }
+
+  const notes = richNotesCol.get()
+  let changed = false
+  const migrated = notes.map((note) => {
+    if (note.title === '市場營銷 4P' && note.content.includes('#bafs')) {
+      changed = true
+      return {
+        ...note,
+        title: '中文議論文結構',
+        content:
+          '中文議論文 #中文 #DSE\n\n- [x] 立場清晰\n- [x] 每段一個論點\n- [ ] 用例子支撐論據\n- [ ] 結尾扣題\n\n重點：論點、論據、論證要扣住題目，段落之間要有連貫。',
+      }
+    }
+    if (note.title === 'SWOT 分析框架' && note.content.includes('#bafs')) {
+      changed = true
+      return {
+        ...note,
+        title: '英文寫作連接詞',
+        content:
+          'Essay 連接詞 #英文 #DSE\n\n對比：however, on the other hand, whereas\n遞進：moreover, furthermore, in addition\n結論：therefore, consequently, to sum up\n\n用連接詞前要確定前後句關係，唔好為用而用。',
+      }
+    }
+    return note
+  })
+  if (changed) richNotesCol.set(migrated)
 }

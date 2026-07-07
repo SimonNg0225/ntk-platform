@@ -1,6 +1,6 @@
-import { StrictMode } from 'react'
+import { StrictMode, useEffect } from 'react'
 import { createRoot } from 'react-dom/client'
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { HelmetProvider } from 'react-helmet-async'
 import { Providers, AppShell } from './App.tsx'
 import Landing from './marketing/Landing.tsx'
@@ -10,12 +10,27 @@ import Terms from './marketing/Terms.tsx'
 import Guidelines from './marketing/Guidelines.tsx'
 import CookieConsent from './components/CookieConsent.tsx'
 import SupportWidget from './components/SupportWidget.tsx'
-import { initObservability } from './lib/observability.ts'
+import { initObservability, trackPageView } from './lib/observability.ts'
 import './i18n'
 import './index.css'
 
 // 商業化：啟動可觀測性（未設 env → no-op）
 initObservability()
+
+function RouteAnalytics() {
+  const location = useLocation()
+
+  useEffect(() => {
+    if (location.pathname.startsWith('/app')) return
+    trackPageView({
+      page_kind: 'marketing',
+      route: location.pathname,
+      search: location.search || undefined,
+    })
+  }, [location.pathname, location.search])
+
+  return null
+}
 
 // 路由：
 //   /         → 行銷首頁（公開、SEO）
@@ -26,6 +41,7 @@ createRoot(document.getElementById('root')!).render(
     <HelmetProvider>
       <BrowserRouter>
         <Providers>
+          <RouteAnalytics />
           <Routes>
             <Route path="/" element={<Landing />} />
             <Route path="/pricing" element={<Pricing />} />

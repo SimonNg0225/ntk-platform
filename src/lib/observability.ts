@@ -42,19 +42,72 @@ function storeConsent(v: Consent): void {
 // 動態載入後快取返嘅 module reference（未 init → null → 所有呼叫 no-op）
 let sentry: typeof import('@sentry/react') | null = null
 let posthog: (typeof import('posthog-js'))['default'] | null = null
+const queuedEvents: { event: string; props?: Record<string, unknown> }[] = []
+let queuedIdentity: { userId: string; traits?: Record<string, unknown> } | null = null
+
+const ATTRIBUTION_KEYS = [
+  'utm_source',
+  'utm_medium',
+  'utm_campaign',
+  'utm_content',
+  'utm_term',
+  'gclid',
+  'fbclid',
+] as const
+
+function currentAttribution(): Record<string, string> {
+  if (typeof window === 'undefined') return {}
+  const url = new URL(window.location.href)
+  const out: Record<string, string> = {}
+  for (const key of ATTRIBUTION_KEYS) {
+    const value = url.searchParams.get(key)
+    if (value) out[key] = value
+  }
+  return out
+}
+
+function currentPageProps(): Record<string, unknown> {
+  if (typeof window === 'undefined') return {}
+  return {
+    $current_url: `${window.location.origin}${window.location.pathname}`,
+    path: window.location.pathname,
+    title: document.title,
+    referrer: document.referrer || undefined,
+    ...currentAttribution(),
+  }
+}
+
+function withCommonProps(props?: Record<string, unknown>): Record<string, unknown> {
+  return {
+    ...currentPageProps(),
+    ...props,
+  }
+}
+
+function flushQueuedEvents(): void {
+  if (!posthog) return
+  if (queuedIdentity) {
+    posthog.identify(queuedIdentity.userId, queuedIdentity.traits)
+  }
+  while (queuedEvents.length) {
+    const item = queuedEvents.shift()
+    if (item) posthog.capture(item.event, item.props)
+  }
+}
 
 async function initPosthog(): Promise<void> {
   if (posthog || !POSTHOG_KEY) return
   posthog = (await import('posthog-js')).default
   posthog.init(POSTHOG_KEY, {
     api_host: POSTHOG_HOST,
-    capture_pageview: true,
+    capture_pageview: false,
     autocapture: false,
     mask_all_text: true,
     mask_all_element_attributes: true,
     // 只為已識別用戶建 person profile，慳 event 額度 + 保私隱
     person_profiles: 'identified_only',
   })
+  flushQueuedEvents()
 }
 
 /** App 啟動時叫一次（main.tsx）。Sentry 照載；PostHog 要用戶已「接受」先載。 */
@@ -75,6 +128,7 @@ export async function initObservability(): Promise<void> {
 export async function acceptAnalytics(): Promise<void> {
   storeConsent('accepted')
   await initPosthog()
+  trackPageView({ source: 'cookie_accept' })
 }
 
 /** 用戶「拒絕」時呼叫：記低拒絕（唔載入分析）。 */
@@ -84,7 +138,26 @@ export function rejectAnalytics(): void {
 
 /** 追蹤產品事件（未同意 / 未 init → no-op）。 */
 export function track(event: string, props?: Record<string, unknown>): void {
-  posthog?.capture(event, props)
+  if (!POSTHOG_KEY || getConsent() !== 'accepted') return
+  const payload = withCommonProps(props)
+  if (posthog) {
+    posthog.capture(event, payload)
+    return
+  }
+  queuedEvents.push({ event, props: payload })
+}
+
+/** 追蹤頁面瀏覽；React Router / app 內虛擬頁面切換用。 */
+export function trackPageView(props?: Record<string, unknown>): void {
+  track('$pageview', props)
+}
+
+/** 追蹤外部連結點擊。 */
+export function trackOutboundClick(url: string, props?: Record<string, unknown>): void {
+  track('outbound_link_clicked', {
+    url,
+    ...props,
+  })
 }
 
 // ── Feature flags（PostHog；未同意 / 未配置 → 一律回 fallback）─────
@@ -114,12 +187,14 @@ export function identifyUser(
     delete safeTraits.email
     delete safeTraits.name
   }
-  posthog?.identify(userId, safeTraits)
+  queuedIdentity = { userId, traits: safeTraits }
+  if (posthog && getConsent() === 'accepted') posthog.identify(userId, safeTraits)
   sentry?.setUser({ id: userId })
 }
 
 /** 登出時清除身份。 */
 export function resetIdentity(): void {
+  queuedIdentity = null
   posthog?.reset()
   sentry?.setUser(null)
 }

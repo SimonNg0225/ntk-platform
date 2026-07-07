@@ -178,12 +178,14 @@ export default function Landing() {
             </a>
             <Link
               to="/pricing"
+              onClick={() => track('landing_cta_click', { target: 'header_pricing' })}
               className="inline-flex min-h-11 cursor-pointer items-center rounded-full px-3 font-semibold text-slate-200 transition hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/70"
             >
               {t('nav.pricing')}
             </Link>
             <Link
               to="/app"
+              onClick={() => track('landing_cta_click', { target: 'header_app' })}
               className="inline-flex min-h-11 cursor-pointer items-center justify-center rounded-full bg-[#5b4dff] px-4 font-semibold text-white shadow-sm shadow-indigo-500/30 transition hover:-translate-y-0.5 hover:bg-[#6c63ff] hover:shadow-md hover:shadow-indigo-500/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/70 active:translate-y-0"
             >
               {user ? t('nav.enterApp') : t('nav.start')}
@@ -272,6 +274,7 @@ export default function Landing() {
                 </Link>
                 <Link
                   to="/pricing"
+                  onClick={() => track('landing_cta_click', { target: 'hero_pricing' })}
                   className="inline-flex min-h-14 cursor-pointer items-center justify-center rounded-full border border-white/15 bg-white/10 px-7 text-base font-bold text-white shadow-sm backdrop-blur transition hover:-translate-y-0.5 hover:border-white/25 hover:bg-white/15 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/70 active:translate-y-0"
                 >
                   {t('hero.ctaPricing')}
@@ -560,7 +563,13 @@ export default function Landing() {
           <span aria-hidden="true">·</span>
           <Link to="/guidelines" className="transition hover:text-accent">{t('footer.guidelines')}</Link>
           <span aria-hidden="true">·</span>
-          <Link to="/pricing" className="transition hover:text-accent">{t('footer.pricing')}</Link>
+          <Link
+            to="/pricing"
+            onClick={() => track('landing_cta_click', { target: 'footer_pricing' })}
+            className="transition hover:text-accent"
+          >
+            {t('footer.pricing')}
+          </Link>
         </div>
         <p className="mt-3">© {new Date().getFullYear()} {BRAND_NAME} · {BRAND_TAGLINE_ZH}</p>
         <p className="mt-1">

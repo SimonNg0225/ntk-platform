@@ -81,7 +81,7 @@ export const milestonesCol = createCollection<Milestone>(
   'learning_goal_milestones',
   [
     { id: 'ms-1', goalId: 'goal-1', title: '溫完必修部分', done: true, weight: 2, order: 0, createdAt: new Date().toISOString(), doneAt: new Date().toISOString() },
-    { id: 'ms-2', goalId: 'goal-1', title: '溫完選修（商業管理）', done: false, weight: 3, order: 1, createdAt: new Date().toISOString() },
+    { id: 'ms-2', goalId: 'goal-1', title: '完成第一輪重點溫習', done: false, weight: 3, order: 1, createdAt: new Date().toISOString() },
     { id: 'ms-3', goalId: 'goal-1', title: '做一份模擬卷', done: false, weight: 1, order: 2, createdAt: new Date().toISOString() },
   ],
 )

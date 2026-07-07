@@ -78,10 +78,10 @@ export const planTemplatesCol = createCollection<PlanTemplate>(
   'lesson_plan_templates',
   [
     {
-      id: 'tpl-bafs-standard',
+      id: 'tpl-standard',
       name: '標準課堂（三段式 55 分鐘）',
       objectives:
-        '1. 學生能說明本課核心概念\n2. 學生能應用概念分析香港營商個案\n3. 學生能完成相關練習',
+        '1. 學生能說明本課核心概念\n2. 學生能應用概念分析課堂例子\n3. 學生能完成相關練習',
       phases: PHASE_PRESETS.map((p, i) => ({
         id: `tpl-ph-${i}`,
         label: p.label,
@@ -97,9 +97,9 @@ export const planTemplatesCol = createCollection<PlanTemplate>(
     },
     {
       id: 'tpl-case-study',
-      name: '個案研習課（HKDSE 卷二）',
+      name: '個案研習課（DSE 資料題）',
       objectives:
-        '1. 學生能拆解商業個案的關鍵資訊\n2. 學生能運用所學理論作出建議\n3. 學生能以適當格式組織答案',
+        '1. 學生能拆解資料個案的關鍵資訊\n2. 學生能運用所學概念作出分析\n3. 學生能以適當格式組織答案',
       phases: [
         { id: 'cs-0', label: '個案導讀', minutes: 10, detail: '' },
         { id: 'cs-1', label: '分組討論', minutes: 20, detail: '' },
@@ -111,6 +111,25 @@ export const planTemplatesCol = createCollection<PlanTemplate>(
     },
   ],
 )
+
+migrateNeutralPlanTemplates()
+
+function migrateNeutralPlanTemplates() {
+  const templates = planTemplatesCol.get()
+  if (!templates.some((tpl) => tpl.id === 'tpl-bafs-standard')) return
+  planTemplatesCol.set(
+    templates.map((tpl) =>
+      tpl.id === 'tpl-bafs-standard'
+        ? {
+            ...tpl,
+            id: 'tpl-standard',
+            objectives:
+              '1. 學生能說明本課核心概念\n2. 學生能應用概念分析課堂例子\n3. 學生能完成相關練習',
+          }
+        : tpl,
+    ),
+  )
+}
 
 // ───────── 工具 ─────────
 export function uidLocal(prefix = 'x'): string {
@@ -217,7 +236,7 @@ export interface AreaCoverage {
 }
 
 /**
- * 按 BAFS 課題範疇統計覆蓋率。
+ * 按課題範疇統計覆蓋率。
  * plannedTopicIds：有教案連住嘅課題；taughtTopicIds：教案狀態為已授課。
  */
 export function computeCoverage(
@@ -242,7 +261,7 @@ export function computeCoverage(
     if (plannedTopicIds.has(t.id)) row.plannedTopics += 1
     if (taughtTopicIds.has(t.id)) row.taughtTopics += 1
   }
-  // 依 BAFS 課題 order（first topic order）排
+  // 依課題 order（first topic order）排
   const orderOf = new Map<string, number>()
   for (const t of topics) {
     if (!orderOf.has(t.area)) orderOf.set(t.area, t.order)

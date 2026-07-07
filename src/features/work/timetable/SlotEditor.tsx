@@ -211,7 +211,7 @@ export default function SlotEditor({
               type="text"
               value={d.note}
               onChange={(e) => patch({ note: e.target.value })}
-              placeholder="例如：成本會計 — 分批成本法"
+              placeholder="例如：中文寫作 — 議論文立論"
             />
           </Field>
         </div>

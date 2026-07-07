@@ -11,6 +11,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
+    "ig:launch-grid": "node scripts/generate-ig-launch-grid.mjs",
     "gen:personas": "node scripts/gen-personas.mjs"
   },
   "dependencies": {

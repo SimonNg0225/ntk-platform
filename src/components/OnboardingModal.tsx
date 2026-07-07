@@ -38,7 +38,7 @@ const START_STEPS: { icon: typeof Sparkles; title: string; desc: string }[] = [
   {
     icon: ClipboardList,
     title: '輸入下一堂課題',
-    desc: '例如「市場營銷」或「成本概念」，不用先設定全個學期。',
+    desc: '例如「議論文結構」或「百分比應用」，不用先設定全個學期。',
   },
   {
     icon: FileText,

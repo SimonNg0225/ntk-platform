@@ -152,12 +152,12 @@ export function assembleDraft(
 // ───────── Prompt 範本庫 ─────────
 export const PRESETS: Preset[] = [
   {
-    id: 'p-bafs-4p',
-    label: '市場營銷 4P',
+    id: 'p-dse-writing-structure',
+    label: '中文：議論文結構',
     emoji: '📈',
     type: 'term',
     topic:
-      '市場營銷組合 4P：產品（Product）、價格（Price）、地點（Place）、推廣（Promotion）。逐個解釋定義同例子。',
+      '中文議論文基本結構：立場、論點、論據、論證、駁論、總結。逐個解釋用途同常見寫法。',
   },
   {
     id: 'p-econ-demand',
@@ -191,11 +191,11 @@ export const PRESETS: Preset[] = [
       'Common English idioms for DSE writing: break the ice, hit the books, piece of cake, under the weather, etc. Give meaning and example.',
   },
   {
-    id: 'p-acct-ratio',
-    label: '會計：財務比率',
+    id: 'p-percent-app',
+    label: '數學：百分比應用',
     emoji: '🧾',
     type: 'qa',
     topic:
-      '會計財務比率：流動比率、速動比率、毛利率、純利率、存貨周轉率，計算公式同意義。',
+      '百分比應用：百分比變化、折扣、利息、比例比較，整理計算公式、解題步驟同常見錯誤。',
   },
 ]

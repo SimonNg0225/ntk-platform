@@ -498,7 +498,7 @@ export default function QuestionBank() {
       return
     }
     downloadText(
-      `bafs-題庫-${new Date().toISOString().slice(0, 10)}.csv`,
+      `eziteach-題庫-${new Date().toISOString().slice(0, 10)}.csv`,
       questionsToCsv(list, topicName),
     )
     toast.success(`已匯出 ${list.length} 條題目（CSV）`)
@@ -2173,7 +2173,7 @@ function ImportModal({
           <Button
             variant="ghost"
             icon={Download}
-            onClick={() => downloadText('bafs-題庫範本.csv', csvTemplate())}
+            onClick={() => downloadText('eziteach-題庫範本.csv', csvTemplate())}
           >
             下載範本
           </Button>

@@ -364,7 +364,7 @@ function DeckHome({
             onChange={(e) => setName(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && add()}
             placeholder={t('flashcards.newDeckPlaceholder', {
-              defaultValue: '開個新牌組⋯⋯（例如 會計概念）',
+              defaultValue: '開個新牌組⋯⋯（例如 英文生字）',
             })}
             className="min-w-[180px] flex-1 bg-white dark:bg-slate-800"
           />

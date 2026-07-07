@@ -6,7 +6,7 @@ import type { Entity } from '../lib/store'
 
 // ───── 共用骨幹 ─────
 export interface Topic extends Entity {
-  part: string // 必修 / 選修(商業管理)
+  part: string // 必修 / 選修 / 模組
   area: string // 課題範疇
   topic: string // 課題
   order: number

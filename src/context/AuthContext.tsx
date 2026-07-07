@@ -67,18 +67,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // 登入後啟動雲端同步；登出 / 切換 user 時停止
   const userId = session?.user?.id
+  const authProvider =
+    (session?.user?.app_metadata?.provider as string | undefined) ?? (isDevAuth ? 'dev' : undefined)
   useEffect(() => {
     if (!isSupabaseConfigured) return
     // attachSync 內部會先 await 確保所有 lazy feature collection 登記齊先 hydrate。
     if (userId) {
       void attachSync(userId)
-      identifyUser(userId)
+      identifyUser(userId, { auth_provider: authProvider ?? 'unknown' })
+      track('user_signed_in', { auth_provider: authProvider ?? 'unknown' })
     } else {
       detachSync()
       resetIdentity()
     }
     return () => detachSync()
-  }, [userId])
+  }, [authProvider, userId])
 
   // 管理員身份：env 白名單即時知（唔閃），否則查 app_admins 表（DB 名單）
   const email = session?.user?.email ?? null

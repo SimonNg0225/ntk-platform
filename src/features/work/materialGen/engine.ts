@@ -59,7 +59,7 @@ const KIND_WORD: Record<GenKind, string> = {
 }
 
 // ───────── buildPrompt ─────────
-// 每個 kind 要 AI 回唔同 shape 嘅 JSON 陣列；全部繁中、貼香港高中 BAFS，
+// 每個 kind 要 AI 回唔同 shape 嘅 JSON 陣列；全部繁中、貼香港高中課堂，
 // 並明確要求「只回 JSON 陣列、陣列以外冇任何文字」。
 export function buildPrompt(
   kind: GenKind,

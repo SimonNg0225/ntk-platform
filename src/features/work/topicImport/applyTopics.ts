@@ -73,7 +73,7 @@ function markSubjectsSynced(ids: string[]): void {
 
 /**
  * 將 subjectIds 入面「未自動載入過」嘅科目課題補入 topicsCol。
- * - additive：只加唔減（按文字 / id 去重，唔會整 BAFS legacy/拆科重覆）。
+ * - additive：只加唔減（按文字 / id 去重，唔會整 legacy/拆科課題重覆）。
  * - load-once：每科記低已同步，重複呼叫（每次開首頁）都係 no-op。
  * - 保留 pack id（令分組 / 題庫連繫對得返）；order 接喺現有最大值之後。
  * 回傳實際新增嘅課題數。

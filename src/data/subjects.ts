@@ -4,12 +4,12 @@ import { BAFS_TOPICS } from './bafs'
 // ============================================================
 //  科目包 (Subject Packs)
 //  ------------------------------------------------------------
-//  商業化通用化：平台對象係全港跨科老師，唔再淨係 BAFS。
+//  商業化通用化：平台對象係全港跨科老師，唔再淨係單一科目。
 //  每個科目包提供一份「課題大綱」起始資料，老師揀咗就可以一鍵
 //  載入去 topics 集合（之後照樣可以喺介面自行增刪改）。
 //
 //  設計：
-//   - BAFS 包直接重用 src/data/bafs.ts 嘅 BAFS_TOPICS（id = bafs-NN），
+//   - 企會財包直接重用 src/data/bafs.ts 嘅內建課題（id = bafs-NN），
 //     令預設 topics 集合同舊版完全一致（唔影響既有資料 / 測試）。
 //   - 其他包用 outline（[part, area, topic]）+ buildPackTopics 生成
 //     穩定 id（`${packId}-NN`）。
@@ -40,7 +40,7 @@ function buildTopics(packId: string, outline: OutlineRow[]): Topic[] {
   }))
 }
 
-/** 由科目包生成 Topic[]（BAFS 直接用內建，其餘已預先 build 好）。 */
+/** 由科目包生成 Topic[]（內建包可直接重用，其餘已預先 build 好）。 */
 export function packTopics(pack: SubjectPack): Topic[] {
   return pack.topics
 }
@@ -439,13 +439,11 @@ const MUSIC: OutlineRow[] = [
 // 通用空白包：唔啱上面任何科 / 想自己由零建立課題嘅老師用。
 const CUSTOM: Topic[] = []
 
-// BAFS 拆兩科：各自重用 BAFS 課題，但 id 重新加返自己 pack 前綴（避免兩科 topic id 相撞）。
+// 企會財拆兩科：各自重用內建課題，但 id 重新加返自己 pack 前綴（避免兩科 topic id 相撞）。
 const rePrefix = (packId: string, base: Topic[]): Topic[] =>
   base.map((t, i) => ({ ...t, id: `${packId}-${String(i + 1).padStart(2, '0')}` }))
 
 export const SUBJECT_PACKS: SubjectPack[] = [
-  { id: 'bafs-acct', name: '企會財（會計範疇）', short: 'BAFS會計', topics: rePrefix('bafs-acct', BAFS_TOPICS) },
-  { id: 'bafs-bm', name: '企會財（商業管理範疇）', short: 'BAFS商管', topics: rePrefix('bafs-bm', BAFS_TOPICS) },
   { id: 'econ', name: '經濟', short: '經濟', topics: buildTopics('econ', ECON) },
   { id: 'chin', name: '中國語文', short: '中文', topics: buildTopics('chin', CHIN) },
   { id: 'eng', name: '英國語文', short: 'English', topics: buildTopics('eng', ENG) },
@@ -471,11 +469,13 @@ export const SUBJECT_PACKS: SubjectPack[] = [
   { id: 'pe', name: '體育', short: '體育', topics: buildTopics('pe', PE) },
   { id: 'va', name: '視覺藝術', short: '視藝', topics: buildTopics('va', VA) },
   { id: 'music', name: '音樂', short: '音樂', topics: buildTopics('music', MUSIC) },
+  { id: 'bafs-acct', name: '企會財（會計範疇）', short: '企會財會計', topics: rePrefix('bafs-acct', BAFS_TOPICS) },
+  { id: 'bafs-bm', name: '企會財（商業管理範疇）', short: '企會財商管', topics: rePrefix('bafs-bm', BAFS_TOPICS) },
   { id: 'custom', name: '其他科目（自訂課題）', short: '自訂', topics: CUSTOM },
 ]
 
-/** 預設科目包 id（＝ BAFS 會計範疇；BAFS 已拆會計 / 商管兩科）。 */
-export const DEFAULT_SUBJECT_PACK_ID = 'bafs-acct'
+/** 預設科目包 id：中性自訂包，避免新用戶被導向特定科目。 */
+export const DEFAULT_SUBJECT_PACK_ID = 'custom'
 
 export function getSubjectPack(id: string): SubjectPack | undefined {
   return SUBJECT_PACKS.find((p) => p.id === id)
@@ -486,7 +486,7 @@ export function getSubjectPack(id: string): SubjectPack | undefined {
 
 /** 友善名：legacy 前綴（未拆 pack 前嘅舊 id，如 bafs-NN）對應科目名。 */
 const LEGACY_SUBJECT_NAMES: Record<string, string> = {
-  bafs: '企會財（BAFS）',
+  bafs: '企會財',
 }
 
 /**
@@ -513,7 +513,7 @@ export interface TopicGroup {
 /**
  * 任教科目 → 要補載嘅課題（additive 同步用）。
  * 為 subjectIds 各科 pack 揾出「未喺 existing 出現過」嘅課題；同時以 **id 同
- * 課題文字** 去重，避免 legacy `bafs-NN` 同拆科後 `bafs-acct-NN`（同一批 BAFS
+ * 課題文字** 去重，避免 legacy `bafs-NN` 同拆科後 `bafs-acct-NN`（同一批內建
  * 課題、文字一樣）重覆載入。純函式，唔郁任何 collection。
  */
 export function missingTopicsForSubjects(

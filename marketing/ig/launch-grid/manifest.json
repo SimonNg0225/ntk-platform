@@ -1,0 +1,65 @@
+[
+  {
+    "order": 1,
+    "id": "01-brand-intro",
+    "title": "香港老師的 AI 工作台",
+    "png": "marketing/ig/launch-grid/01-brand-intro.png",
+    "svg": "marketing/ig/launch-grid/01-brand-intro.svg"
+  },
+  {
+    "order": 2,
+    "id": "02-late-night-slides",
+    "title": "夜晚十一點， 仲做緊聽日份簡報？",
+    "png": "marketing/ig/launch-grid/02-late-night-slides.png",
+    "svg": "marketing/ig/launch-grid/02-late-night-slides.svg"
+  },
+  {
+    "order": 3,
+    "id": "03-lesson-workflow",
+    "title": "課題 → 教案 → 活動 → 練習",
+    "png": "marketing/ig/launch-grid/03-lesson-workflow.png",
+    "svg": "marketing/ig/launch-grid/03-lesson-workflow.svg"
+  },
+  {
+    "order": 4,
+    "id": "04-dse-drill",
+    "title": "出題操練 更貼香港課堂",
+    "png": "marketing/ig/launch-grid/04-dse-drill.png",
+    "svg": "marketing/ig/launch-grid/04-dse-drill.svg"
+  },
+  {
+    "order": 5,
+    "id": "05-marking-feedback",
+    "title": "AI 幫你寫初稿 老師保留判斷",
+    "png": "marketing/ig/launch-grid/05-marking-feedback.png",
+    "svg": "marketing/ig/launch-grid/05-marking-feedback.svg"
+  },
+  {
+    "order": 6,
+    "id": "06-scan-pdf",
+    "title": "掃描 PDF， 教材唔再散晒",
+    "png": "marketing/ig/launch-grid/06-scan-pdf.png",
+    "svg": "marketing/ig/launch-grid/06-scan-pdf.svg"
+  },
+  {
+    "order": 7,
+    "id": "07-admin-calendar",
+    "title": "時間表、待辦 家長溝通一齊管",
+    "png": "marketing/ig/launch-grid/07-admin-calendar.png",
+    "svg": "marketing/ig/launch-grid/07-admin-calendar.svg"
+  },
+  {
+    "order": 8,
+    "id": "08-hk-workflow",
+    "title": "廣東話介面 貼近學校工作流",
+    "png": "marketing/ig/launch-grid/08-hk-workflow.png",
+    "svg": "marketing/ig/launch-grid/08-hk-workflow.svg"
+  },
+  {
+    "order": 9,
+    "id": "09-cta",
+    "title": "試用 EziTeach AI",
+    "png": "marketing/ig/launch-grid/09-cta.png",
+    "svg": "marketing/ig/launch-grid/09-cta.svg"
+  }
+]

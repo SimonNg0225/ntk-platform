@@ -67,7 +67,7 @@ function load(): Settings {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (raw) {
       const parsed = JSON.parse(raw)
-      // 遷移：BAFS 拆會計 / 商管兩科後，舊 'bafs' → 會計範疇
+      // 遷移：舊 'bafs' 科目包 → 企會財會計範疇
       if (parsed.subjectPackId === 'bafs') parsed.subjectPackId = 'bafs-acct'
       // 正規化外觀偏好：壞值 / 缺欄位一律 fallback 做關（保住「不變行為」）
       const appearance: AppearancePrefs = normalizeAppearancePrefs(parsed)
@@ -163,9 +163,9 @@ export function useSettings(): SettingsApi {
 
 /**
  * 任教科目顯示名（跟設定）。未指定（'' / 找唔到 / custom）時回中性「本科」，
- * 全 app 用嚟取代寫死嘅科目字眼（如「BAFS」），跟用戶揀嘅科目客製化。
+ * 全 app 用嚟取代寫死嘅科目字眼，跟用戶揀嘅科目客製化。
  *   · name  完整科名（如「化學」「企會財（會計範疇）」）
- *   · short 簡短科名（如「化學」「BAFS會計」）
+ *   · short 簡短科名（如「化學」「企會財會計」）
  *   · chosen 用戶有冇揀到具體科（custom / 未揀 = false）
  */
 // eslint-disable-next-line react-refresh/only-export-components

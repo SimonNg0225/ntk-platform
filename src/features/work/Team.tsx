@@ -320,7 +320,7 @@ export default function Team() {
               icon={Building2}
               value={newOrgName}
               placeholder={t('team.orgNamePlaceholder', {
-                defaultValue: '空間名稱（例如：我的 BAFS 備課）',
+                defaultValue: '空間名稱（例如：我的教學備課）',
               })}
               onChange={(e) => setNewOrgName(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && onCreateOrg()}

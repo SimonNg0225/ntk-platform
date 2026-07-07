@@ -814,8 +814,8 @@ describe('csvTemplate', () => {
       'topic,type,difficulty,stem,optionA,optionB,optionC,optionD,answer,marks',
     )
     const topics: TopicLite[] = [
-      { id: 'T1', topic: '香港營商環境' },
-      { id: 'T2', topic: '會計原則與概念' },
+      { id: 'T1', topic: '中文閱讀理解' },
+      { id: 'T2', topic: '英文寫作技巧' },
     ]
     const { parsed, skipped } = rowsToQuestions(parseCsv(tpl), topics)
     expect(skipped).toBe(0)

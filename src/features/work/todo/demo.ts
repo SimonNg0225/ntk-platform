@@ -94,7 +94,7 @@ const SAMPLES: Sample[] = [
     subtasks: ['對齊評分準則', '改 MC + 短題', '記分數入成績冊'],
   },
   {
-    text: '備聽日「市場營銷組合 4P」嗰堂',
+    text: '備聽日「中文議論文結構」嗰堂',
     priority: 2,
     dueOffset: 0,
     projectId: PROJ_TEACHING,
@@ -152,7 +152,7 @@ const SAMPLES: Sample[] = [
 
   // ── 之後 / 提早準備（未來日，有語意）────────────────────
   {
-    text: '出期末考卷（商業管理）初稿',
+    text: '出期末考卷初稿',
     priority: 1,
     dueOffset: 12,
     projectId: PROJ_TEACHING,

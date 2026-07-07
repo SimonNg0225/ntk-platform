@@ -29,7 +29,7 @@ export default function ProfileEdit({ open, onClose, onSaved }: { open: boolean;
       <div className="space-y-3">
         <Field label="顯示名"><Input value={name} onChange={(e) => setName(e.target.value)} placeholder="例如：陳老師" /></Field>
         <Field label="學校（選填）"><Input value={school} onChange={(e) => setSchool(e.target.value)} /></Field>
-        <Field label="任教科（選填，逗號分隔）"><Input value={subjects} onChange={(e) => setSubjects(e.target.value)} placeholder="中文、BAFS" /></Field>
+        <Field label="任教科（選填，逗號分隔）"><Input value={subjects} onChange={(e) => setSubjects(e.target.value)} placeholder="中文、英文、數學" /></Field>
         <div className="flex justify-end gap-2 pt-1">
           <Button variant="ghost" onClick={onClose}>取消</Button>
           <Button onClick={save} disabled={saving}>{saving ? '儲存中…' : '儲存'}</Button>

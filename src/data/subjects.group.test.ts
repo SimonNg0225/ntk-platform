@@ -42,10 +42,10 @@ describe('groupTopicsBySubject', () => {
     expect(groups[1].topics.map((x) => x.id)).toEqual(['chin-01', 'chin-02'])
   })
 
-  it('legacy bafs-NN → 友善名「企會財（BAFS）」', () => {
+  it('legacy bafs-NN → 友善名「企會財」', () => {
     const groups = groupTopicsBySubject([t('bafs-01'), t('bafs-02')])
     expect(groups).toHaveLength(1)
-    expect(groups[0].name).toBe('企會財（BAFS）')
+    expect(groups[0].name).toBe('企會財')
     expect(groups[0].topics).toHaveLength(2)
   })
 

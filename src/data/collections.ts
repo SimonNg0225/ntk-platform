@@ -1,6 +1,5 @@
 import { createCollection, collectionRegistry, type Entity } from '../lib/store'
 import { localDateStr } from '../lib/srs'
-import { BAFS_TOPICS } from './bafs'
 import { NTK_SLOTS, NTK_CYCLE_CALENDAR } from './ntk-seed'
 import type {
   Topic,
@@ -37,7 +36,16 @@ import type {
 // ============================================================
 
 // 共用骨幹
-export const topicsCol = createCollection<Topic>('topics', BAFS_TOPICS)
+const DEFAULT_TOPICS: Topic[] = [
+  { id: 'generic-01', part: '教學流程', area: '備課', topic: '學習目標與成功準則', order: 1 },
+  { id: 'generic-02', part: '教學流程', area: '備課', topic: '課堂活動設計', order: 2 },
+  { id: 'generic-03', part: '評估', area: '出題', topic: '分層練習與工作紙', order: 3 },
+  { id: 'generic-04', part: '評估', area: 'DSE 操練', topic: '公開試風格題目與評分準則', order: 4 },
+  { id: 'generic-05', part: '回饋', area: '批改', topic: '錯因分析與改善建議', order: 5 },
+  { id: 'generic-06', part: '教學資源', area: '整理', topic: '教材歸檔與課後跟進', order: 6 },
+]
+
+export const topicsCol = createCollection<Topic>('topics', DEFAULT_TOPICS)
 
 // 工作模式
 export const questionsCol = createCollection<Question>('questions', [])
@@ -62,7 +70,7 @@ export const notesCol = createCollection<Note>('learning_notes', [])
 export const goalsCol = createCollection<Goal>('learning_goals', [
   {
     id: 'goal-1',
-    title: '溫習 BAFS 課程內容（商業管理）',
+    title: '整理 DSE 課題與教材',
     progress: 60,
     createdAt: new Date().toISOString(),
   },
@@ -75,7 +83,7 @@ export const goalsCol = createCollection<Goal>('learning_goals', [
 ])
 export const tasksCol = createCollection<Task>('work_tasks', [
   { id: 'task-1', text: '批改 5A 班練習', done: false, createdAt: new Date().toISOString() },
-  { id: 'task-2', text: '預備下星期市場營銷課堂', done: false, createdAt: new Date().toISOString() },
+  { id: 'task-2', text: '預備下星期寫作課堂', done: false, createdAt: new Date().toISOString() },
   { id: 'task-3', text: '上載功課到學校平台', done: true, createdAt: new Date().toISOString() },
 ])
 
@@ -115,7 +123,7 @@ export const inboxCol = createCollection<InboxItem>('inbox', [])
 export const countdownsCol = createCollection<Countdown>('countdowns', [
   {
     id: 'cd-seed-1',
-    title: 'BAFS 模擬試',
+    title: 'DSE 模擬試',
     date: localDateStr(new Date(Date.now() + 7 * 864e5)),
     category: 'exam',
     mode: 'both',
@@ -152,6 +160,67 @@ export const transactionsCol = createCollection<Transaction>('transactions', [])
 
 // 自我測驗紀錄（learning + work 共用）
 export const quizAttemptsCol = createCollection<QuizAttempt>('quiz_attempts', [])
+
+migrateNeutralSeedData()
+
+function migrateNeutralSeedData() {
+  const topics = topicsCol.get()
+  if (topics.length > 0 && topics.every((topic) => /^bafs-\d+$/.test(topic.id))) {
+    topicsCol.set(DEFAULT_TOPICS)
+  }
+
+  const goals = goalsCol.get()
+  if (goals.some((goal) => goal.id === 'goal-1' && goal.title === '溫習 BAFS 課程內容（商業管理）')) {
+    goalsCol.set(
+      goals.map((goal) =>
+        goal.id === 'goal-1' && goal.title === '溫習 BAFS 課程內容（商業管理）'
+          ? { ...goal, title: '整理 DSE 課題與教材' }
+          : goal,
+      ),
+    )
+  }
+
+  const tasks = tasksCol.get()
+  if (tasks.some((task) => task.id === 'task-2' && task.text === '預備下星期市場營銷課堂')) {
+    tasksCol.set(
+      tasks.map((task) =>
+        task.id === 'task-2' && task.text === '預備下星期市場營銷課堂'
+          ? { ...task, text: '預備下星期寫作課堂' }
+          : task,
+      ),
+    )
+  }
+
+  const countdowns = countdownsCol.get()
+  if (countdowns.some((item) => item.id === 'cd-seed-1' && item.title === 'BAFS 模擬試')) {
+    countdownsCol.set(
+      countdowns.map((item) =>
+        item.id === 'cd-seed-1' && item.title === 'BAFS 模擬試'
+          ? { ...item, title: 'DSE 模擬試' }
+          : item,
+      ),
+    )
+  }
+
+  const slots = timetableCol.get()
+  let changedSlots = false
+  const nextSlots = slots.map((slot) => {
+    if (slot.subject === '3A · ASB') {
+      changedSlots = true
+      return { ...slot, subject: '3A · 班務' }
+    }
+    if (slot.subject === '3A · BAFS') {
+      changedSlots = true
+      return { ...slot, subject: '3A · 初中課' }
+    }
+    if (slot.subject.endsWith('· BAFS')) {
+      changedSlots = true
+      return { ...slot, subject: slot.subject.replace('BAFS', '高中課') }
+    }
+    return slot
+  })
+  if (changedSlots) timetableCol.set(nextSlots)
+}
 
 // ============================================================
 //  全部集合登記表（用嚟匯出 / 匯入 / 清除資料）

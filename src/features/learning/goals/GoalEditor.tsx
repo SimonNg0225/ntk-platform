@@ -207,7 +207,7 @@ export default function GoalEditor({
           <Input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="例如：考好 BAFS 文憑試"
+            placeholder="例如：完成 DSE 溫習計劃"
             autoFocus
           />
         </Field>

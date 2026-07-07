@@ -49,7 +49,7 @@ describe('subjectTemplates 結構驗證', () => {
 
   it('涵蓋主要 DSE 科目', () => {
     const ids = Object.keys(SUBJECT_LESSON_TEMPLATES)
-    for (const s of ['bafs', 'chin', 'eng', 'math', 'phys', 'chem', 'bio', 'econ']) {
+    for (const s of ['chin', 'eng', 'math', 'phys', 'chem', 'bio', 'econ']) {
       expect(ids, `缺 ${s}`).toContain(s)
     }
   })

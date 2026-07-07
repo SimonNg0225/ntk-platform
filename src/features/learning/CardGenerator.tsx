@@ -806,11 +806,11 @@ export default function CardGenerator() {
                 placeholder={
                   activeType
                     ? t('cardGen.topic.phType', {
-                        defaultValue: '例如：市場營銷 4P（{{type}}卡）…',
+                        defaultValue: '例如：中文議論文結構（{{type}}卡）…',
                         type: activeType.label,
                       })
                     : t('cardGen.topic.ph', {
-                        defaultValue: '例如：市場營銷 4P：產品、價格、地點、推廣…',
+                        defaultValue: '例如：中文議論文結構：論點、論據、論證、總結…',
                       })
                 }
               />
@@ -909,7 +909,7 @@ export default function CardGenerator() {
                 defaultValue: '標籤（可選，落卡時一齊寫入）',
               })}
               hint={t('cardGen.tags.hint', {
-                defaultValue: '以逗號分隔，例如：BAFS, 市場營銷',
+                defaultValue: '以逗號分隔，例如：DSE, 寫作',
               })}
             >
               <Input
@@ -917,7 +917,7 @@ export default function CardGenerator() {
                 value={tagInput}
                 onChange={(e) => setTagInput(e.target.value)}
                 disabled={busy}
-                placeholder="BAFS, 4P"
+                placeholder="DSE, 寫作"
               />
             </Field>
 
@@ -1460,7 +1460,7 @@ export default function CardGenerator() {
                   value={newDeckName}
                   onChange={(e) => setNewDeckName(e.target.value)}
                   placeholder={t('cardGen.deck.newPlaceholder', {
-                    defaultValue: '新牌組名稱（例如 市場營銷）',
+                    defaultValue: '新牌組名稱（例如 DSE 寫作）',
                   })}
                 />
               )}

@@ -316,7 +316,7 @@ export default function BudgetTracker() {
 }
 
 // ───────── 結餘對帳單（單張帳本：左頁帳本側欄結餘 + 右頁 ledger 過帳行）─────────
-//  概念：一張會計對帳單。左欄係 accent「帳本封皮」印住淨結餘大數；右欄係
+//  概念：一張收支對帳單。左欄係 accent「帳本封皮」印住淨結餘大數；右欄係
 //  收入 / 支出 / 儲蓄率三條 ledger 行（leader dots + 右對齊 tabular-nums 金額），
 //  最後一條雙底線收結，呼應傳統手寫帳簿嘅「結算」儀式。
 function LedgerStatement({

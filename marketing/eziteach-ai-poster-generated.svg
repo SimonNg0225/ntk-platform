@@ -1,0 +1,91 @@
+<svg width="1080" height="1509" viewBox="0 0 1080 1509" role="img" xmlns="http://www.w3.org/2000/svg">
+  <title>EziTeach AI 宣傳海報 - AI 生成主視覺版</title>
+  <desc>直度宣傳海報，以 AI 生成課室工作台主視覺配合 EziTeach AI 品牌文案。</desc>
+  <defs>
+    <linearGradient id="leftShade" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#020617" stop-opacity="0.96"/>
+      <stop offset="0.48" stop-color="#111827" stop-opacity="0.72"/>
+      <stop offset="1" stop-color="#111827" stop-opacity="0.04"/>
+    </linearGradient>
+    <linearGradient id="topShade" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#020617" stop-opacity="0.78"/>
+      <stop offset="1" stop-color="#020617" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="bottomShade" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#020617" stop-opacity="0"/>
+      <stop offset="0.46" stop-color="#020617" stop-opacity="0.72"/>
+      <stop offset="1" stop-color="#020617" stop-opacity="0.96"/>
+    </linearGradient>
+    <linearGradient id="brandLine" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#818cf8"/>
+      <stop offset="0.52" stop-color="#22d3ee"/>
+      <stop offset="1" stop-color="#f59e0b"/>
+    </linearGradient>
+    <filter id="softShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="16" stdDeviation="18" flood-color="#020617" flood-opacity="0.32"/>
+    </filter>
+    <style>
+      text {
+        font-family: 'PingFang HK', 'Noto Sans HK', 'Microsoft JhengHei', 'Hiragino Sans GB', Arial, sans-serif;
+      }
+    </style>
+  </defs>
+
+  <rect width="1080" height="1509" fill="#020617"/>
+  <image href="eziteach-ai-poster-visual.png" x="0" y="0" width="1080" height="1509" preserveAspectRatio="xMidYMid slice"/>
+  <rect width="1080" height="1509" fill="url(#leftShade)"/>
+  <rect width="1080" height="560" fill="url(#topShade)"/>
+  <rect y="760" width="1080" height="749" fill="url(#bottomShade)"/>
+
+  <g transform="translate(72 76)">
+    <rect x="0" y="0" width="292" height="58" rx="29" fill="#ffffff" fill-opacity="0.12" stroke="#c7d2fe" stroke-opacity="0.34"/>
+    <circle cx="29" cy="29" r="15" fill="#4f46e5"/>
+    <path d="M22 29h14M29 22v14" stroke="#ffffff" stroke-width="4" stroke-linecap="round"/>
+    <text x="58" y="38" font-size="25" font-weight="800" fill="#ffffff">EziTeach AI</text>
+    <text x="0" y="104" font-size="25" font-weight="500" fill="#c7d2fe">香港老師的 AI 工作台</text>
+  </g>
+
+  <g transform="translate(72 236)">
+    <text x="0" y="0" font-size="72" font-weight="800" fill="#ffffff">備課・出題・簡報</text>
+    <text x="0" y="86" font-size="72" font-weight="800" fill="#ffffff">行政工作一站搞掂</text>
+    <rect x="2" y="118" width="330" height="8" rx="4" fill="url(#brandLine)"/>
+    <text x="0" y="178" font-size="31" font-weight="500" fill="#e0e7ff">慳返時間，留畀真正嘅教學。</text>
+    <text x="0" y="222" font-size="24" font-weight="400" fill="#cbd5e1">由課堂設計到文件整理，將每日重複工作變成清晰流程。</text>
+  </g>
+
+  <g transform="translate(72 560)" fill="none">
+    <g transform="translate(0 0)">
+      <circle cx="20" cy="20" r="17" fill="#c7d2fe"/>
+      <path d="M12 20l6 6 11-13" stroke="#3730a3" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+      <text x="56" y="29" font-size="29" font-weight="650" fill="#ffffff">AI 教案與教材生成</text>
+    </g>
+    <g transform="translate(0 70)">
+      <circle cx="20" cy="20" r="17" fill="#c7d2fe"/>
+      <path d="M12 20l6 6 11-13" stroke="#3730a3" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+      <text x="56" y="29" font-size="29" font-weight="650" fill="#ffffff">DSE 出題操練</text>
+    </g>
+    <g transform="translate(0 140)">
+      <circle cx="20" cy="20" r="17" fill="#c7d2fe"/>
+      <path d="M12 20l6 6 11-13" stroke="#3730a3" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+      <text x="56" y="29" font-size="29" font-weight="650" fill="#ffffff">一鍵生成教學簡報</text>
+    </g>
+    <g transform="translate(0 210)">
+      <circle cx="20" cy="20" r="17" fill="#c7d2fe"/>
+      <path d="M12 20l6 6 11-13" stroke="#3730a3" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+      <text x="56" y="29" font-size="29" font-weight="650" fill="#ffffff">掃描 PDF、時間表、家長溝通</text>
+    </g>
+  </g>
+
+  <g transform="translate(72 1194)" filter="url(#softShadow)">
+    <rect width="936" height="184" rx="34" fill="#ffffff"/>
+    <rect x="28" y="28" width="218" height="128" rx="24" fill="#4f46e5"/>
+    <text x="64" y="109" font-size="46" font-weight="850" fill="#ffffff">免費開始</text>
+    <text x="286" y="70" font-size="43" font-weight="820" fill="#312e81">eziteach.hk</text>
+    <text x="286" y="114" font-size="25" font-weight="500" fill="#4f46e5">開瀏覽器即用 · 廣東話介面 · PWA 離線</text>
+    <text x="286" y="148" font-size="22" font-weight="400" fill="#475569">為香港教育工作者而設</text>
+    <circle cx="842" cy="92" r="45" fill="#eef2ff"/>
+    <path d="M824 92h32M842 76l16 16-16 16" stroke="#4f46e5" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+
+  <text x="72" y="1446" font-size="20" font-weight="450" fill="#c7d2fe">EziTeach AI · AI workspace for Hong Kong teachers</text>
+</svg>

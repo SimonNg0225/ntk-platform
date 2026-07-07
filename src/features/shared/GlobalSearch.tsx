@@ -1218,7 +1218,7 @@ function StartScreen({
   onUnpin: (q: string) => void
 }) {
   const { t } = useTranslation()
-  const examples = ['市場營銷', '教案', '小測', '會議', 'deadline', 'Inbox']
+  const examples = ['DSE 寫作', '教案', '小測', '會議', 'deadline', 'Inbox']
   const isFresh = pins.length === 0 && recents.length === 0
   return (
     <div className="space-y-4">

@@ -431,7 +431,7 @@ export function WorksheetGenerator({
               <Input
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder="例如：市場營銷 課堂練習"
+                placeholder="例如：中文寫作 課堂練習"
                 disabled={busy}
               />
             </Field>

@@ -10,7 +10,7 @@ import {
 } from './util'
 
 // ============================================================
-//  BAFS 題庫自製圖表（純 SVG / div，零 npm 依賴）
+//  題庫自製圖表（純 SVG / div，零 npm 依賴）
 //  - TypeDonut：題型佔比甜甜圈
 //  - DifficultyBars：三難度水平條（含百分比）
 //  - CoverageMatrix：課題 × 難度 熱力矩陣（找出覆蓋缺口）

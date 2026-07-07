@@ -140,14 +140,14 @@ function buildBlueprints(): DemoGoalBlueprint[] {
 
 // ============================================================
 //  簽到藍本：(goalId, 進度快照, 備註, 幾多日前)
-//  喺預設情況掛喺出廠目標 goal-1（溫 BAFS）/ goal-2（睇管理書）,
+//  喺預設情況掛喺出廠目標 goal-1（DSE 溫習）/ goal-2（睇管理書）,
 //  令動量曲線即刻有嘢睇。
 // ============================================================
 function buildDefaultCheckins(): Omit<GoalCheckin, 'id'>[] {
   return [
-    // goal-1：溫習 BAFS（出廠 progress 60）— 一路向上
-    { goalId: 'goal-1', progress: 35, note: '溫完必修部分，開始入選修。', createdAt: daysAgoISO(22, 22) },
-    { goalId: 'goal-1', progress: 48, note: '商業管理筆記整理好，做咗一份舊試題。', createdAt: daysAgoISO(15, 21) },
+    // goal-1：DSE 溫習（出廠 progress 60）— 一路向上
+    { goalId: 'goal-1', progress: 35, note: '溫完第一輪重點，開始整理錯題。', createdAt: daysAgoISO(22, 22) },
+    { goalId: 'goal-1', progress: 48, note: '中文閱讀框架整理好，做咗一份舊試題。', createdAt: daysAgoISO(15, 21) },
     { goalId: 'goal-1', progress: 60, note: '模擬卷拎到不錯分數，信心返晒嚟。', createdAt: daysAgoISO(6, 23) },
     // goal-2：睇管理學書（出廠 progress 25）— 慢慢嚟
     { goalId: 'goal-2', progress: 12, note: '揀咗《從 A 到 A+》，睇咗頭三章。', createdAt: daysAgoISO(19, 23) },

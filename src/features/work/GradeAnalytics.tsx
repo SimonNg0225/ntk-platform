@@ -127,7 +127,7 @@ type Analysis = {
   students: StudentInsight[]
 }
 
-type SubjectProfileId = 'bafs' | 'economics' | 'math' | 'chinese' | 'english' | 'general'
+type SubjectProfileId = 'economics' | 'math' | 'chinese' | 'english' | 'general'
 
 type SubjectProfile = {
   id: SubjectProfileId
@@ -155,61 +155,61 @@ type ReportMeta = {
 const QUESTION_SPECS: QuestionSpec[] = [
   {
     id: 'Q1',
-    title: '市場營銷概念；員工福利目的',
+    title: '核心概念理解；基礎知識應用',
     max: 8,
-    topic: '市場營銷概念',
+    topic: '核心概念',
     skill: '概念辨識',
     distribution: { 4: 2, 5: 4, 6: 6, 7: 10, 8: 21 },
     advice: '保留高分題做信心題，整理常見答題句式給低分學生補底。',
   },
   {
     id: 'Q2',
-    title: '中小企特徵；資訊管理支援營銷',
+    title: '資料理解與例子應用',
     max: 8,
-    topic: '營銷組合策略',
+    topic: '例子連結',
     skill: '例子連結',
     distribution: { 2: 1, 3: 3, 4: 3, 5: 1, 6: 9, 7: 1, 8: 25 },
     advice: '針對 3 至 5 分學生安排「概念 + 例子 + 效果」三步句式練習。',
   },
   {
     id: 'Q3',
-    title: '融資方法及缺點；股本融資好處',
+    title: '比較題與短論述',
     max: 8,
-    topic: '財務管理',
+    topic: '比較論述',
     skill: '比較論述',
     distribution: { 3: 2, 4: 8, 5: 1, 6: 5, 7: 9, 8: 18 },
-    advice: '用表格比較債務與股本融資，要求學生逐欄寫出風險和影響。',
+    advice: '用表格比較兩個概念，要求學生逐欄寫出理據和影響。',
   },
   {
     id: 'Q4',
-    title: '信貸政策改善應收貸款；不利銷量差異',
+    title: '數據解釋與情境分析',
     max: 8,
-    topic: '信貸控制與差異分析',
+    topic: '數據解釋',
     skill: '數據解釋',
     distribution: { 0: 2, 1: 1, 2: 4, 3: 5, 4: 4, 5: 3, 6: 13, 8: 11 },
-    advice: '先重教應收帳款政策，再用錯例拆解「銷量差異」和「價格差異」。',
+    advice: '先重教資料解讀步驟，再用錯例拆解「描述」和「解釋」的差別。',
   },
   {
     id: 'Q5',
-    title: '應付帳款周期率計算及評論',
+    title: '公式/步驟題與簡短評論',
     max: 4,
-    topic: '營運資金管理',
+    topic: '程序應用',
     skill: '公式應用',
     distribution: { 0: 5, 1: 2, 2: 2, 3: 10, 4: 24 },
     advice: '把計算步驟做成檢核清單，先穩住單位、公式、評論三件事。',
   },
   {
     id: 'Q6',
-    title: '可保風險；再訂購水平；服務特性；Maslow 留才',
+    title: '多概念整合題',
     max: 16,
-    topic: '管理與營運',
+    topic: '綜合概念',
     skill: '多概念整合',
     distribution: { 1: 1, 5: 2, 6: 1, 7: 1, 8: 3, 9: 2, 10: 3, 11: 2, 12: 5, 13: 4, 14: 8, 15: 1, 16: 10 },
     advice: '多概念題要分拆短練習，逐段建立關鍵詞和答題架構。',
   },
   {
     id: 'Q7',
-    title: '採購決策；槓桿比率；財務報酬；培訓；內部招聘',
+    title: '跨課題應用題',
     max: 16,
     topic: '綜合個案分析',
     skill: '跨課題應用',
@@ -218,9 +218,9 @@ const QUESTION_SPECS: QuestionSpec[] = [
   },
   {
     id: 'Q8/Q9',
-    title: '資本投資評估 / 商業市場；或預算差異 / 管理原則',
+    title: '高階分析 / 延伸題',
     max: 18,
-    topic: '資本投資與預算控制',
+    topic: '高階應用',
     skill: '高階分析',
     distribution: { 2: 2, 3: 3, 4: 1, 5: 1, 6: 1, 7: 5, 8: 3, 9: 3, 10: 2, 11: 4, 12: 4, 13: 3, 14: 1, 15: 3, 16: 2, 17: 2, 18: 3 },
     advice: '這是主要拉開分數題，建議分層教：先穩公式，再做評估語句和取捨判斷。',
@@ -262,18 +262,6 @@ const MARK_INPUT_HEADER_ROW = 10
 const MARK_INPUT_FIRST_DATA_ROW = 12
 
 const SUBJECT_PROFILES: SubjectProfile[] = [
-  {
-    id: 'bafs',
-    label: 'BAFS',
-    subject: 'BAFS',
-    paperName: 'Paper 2',
-    overviewNoun: '商業概念、計算題及個案應用',
-    answerLens: '概念 - 個案應用 - 局限/影響 - 小結',
-    evidenceLens: '題目文件、參考答案、封面逐題分數及匿名分數分佈',
-    lossLens: '概念欠精準、計算步驟不完整、個案連繫不足',
-    followUpLens: '先重建答題框架，再用短題和長答題分層練習',
-    gradeNote: '按校本 DSE-style 分數線作教學分流參考',
-  },
   {
     id: 'economics',
     label: '經濟',
@@ -1496,12 +1484,12 @@ export default function GradeAnalytics() {
   const [scenarioLift, setScenarioLift] = useState(8)
   const [importText, setImportText] = useState(SAMPLE_CSV)
   const [uploadedFileName, setUploadedFileName] = useState<string | null>(null)
-  const [subjectId, setSubjectId] = useState<SubjectProfileId>('bafs')
+  const [subjectId, setSubjectId] = useState<SubjectProfileId>('general')
   const [reportMeta, setReportMeta] = useState<ReportMeta>(() => ({
     school: '寧波第二中學',
     classLevel: '中五級',
     examName: '2025-2026 第二學期考試',
-    paperTitle: 'S5 T2 BAFS Paper 2',
+    paperTitle: 'S5 T2 DSE 模擬卷',
     source: '考生 PDF 封面逐題分數、題目文件及參考答案',
     date: new Date().toISOString().slice(0, 10),
     brand: 'EziTeach AI',
@@ -1585,7 +1573,7 @@ export default function GradeAnalytics() {
                 成績分析
               </h1>
               <p className="mt-2 text-sm leading-6 text-slate-500 dark:text-slate-400">
-                由分數分佈去到等級預測、弱項診斷、分層跟進。加入精算式風險分層、信心區間與補救 ROI，預設載入 S5 T2 BAFS Paper 2 匿名樣本。
+                由分數分佈去到等級預測、弱項診斷、分層跟進。加入精算式風險分層、信心區間與補救 ROI，預設載入匿名樣本，可匯入你自己科目的 CSV / Excel 分數。
               </p>
             </div>
             <div className="flex flex-wrap gap-2">

@@ -304,7 +304,7 @@ function ProjectModal({
     >
       <div className="space-y-5">
         <Field label="名稱" required>
-          <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="例如：BAFS 溫習" autoFocus />
+          <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="例如：DSE 溫習" autoFocus />
         </Field>
 
         {/* 外觀：圖示 + 顏色一組，hairline 分隔 */}

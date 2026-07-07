@@ -318,7 +318,7 @@ export default function Home({ onOpen }: Props) {
     .map((id) => getSubjectPack(id))
     .filter((p): p is SubjectPack => Boolean(p))
   const topicSuggestion =
-    todayLessons[0]?.subject || subjects[0]?.name || subjects[0]?.short || '市場營銷'
+    todayLessons[0]?.subject || subjects[0]?.name || subjects[0]?.short || 'DSE 課題'
   const taskFlows: TaskFlow[] = isWorkMode
     ? [
         {
