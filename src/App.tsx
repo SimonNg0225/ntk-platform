@@ -294,7 +294,11 @@ export function AppShell() {
           <div
             className="min-w-0 flex-1 overflow-x-hidden overflow-y-auto"
           >
-            <div className="app-content mx-auto w-full max-w-[1800px] px-4 py-5 sm:px-6 sm:py-6 lg:px-8">
+            <div
+              className={`app-content mx-auto w-full px-4 py-5 sm:px-6 sm:py-6 lg:px-8 ${
+                !isSettings && !isAdmin && !feature ? 'max-w-none' : 'max-w-[1800px]'
+              }`}
+            >
               {isSettings ? (
                 <div className="space-y-5">
                   <button

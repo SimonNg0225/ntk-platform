@@ -565,7 +565,7 @@ export default function Home({ onOpen }: Props) {
   }
 
   return (
-    <div className="-mx-4 -mt-1 sm:-mx-6 lg:-mx-8">
+    <div className="-mx-4 -my-5 sm:-mx-6 sm:-my-6 lg:-mx-8">
       <section className="relative isolate flex min-h-[calc(100svh-6.75rem)] overflow-hidden border-b border-slate-200/80 bg-[linear-gradient(180deg,#fff_0%,#f8fbff_58%,#fff_100%)] px-4 dark:border-slate-800 dark:bg-slate-950 dark:bg-none sm:px-6 md:min-h-[100svh] lg:px-8">
         <div className="relative mx-auto flex w-full max-w-[1180px] flex-1 flex-col">
           <div className="flex flex-1 flex-col items-center justify-center py-8 text-center sm:py-10">

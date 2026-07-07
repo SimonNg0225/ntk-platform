@@ -1,4 +1,6 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
+import JSZip from 'jszip'
+import * as XLSX from 'xlsx'
 import {
   AlertTriangle,
   Activity,
@@ -249,6 +251,15 @@ const SAMPLE_CSV = `學生,Q1,Q2,Q3,Q4,Q5,Q6,Q7,Q8/Q9
 S01,8,8,8,8,4,16,16,18
 S02,8,8,7,6,4,14,15,12
 S03,7,6,6,3,3,10,14,9`
+
+const MARK_TEMPLATE_FILENAME = 'EziTeach_AI_Cal_Mark_Template.xlsx'
+const MARK_INPUT_SHEET = '輸入分數'
+const MARK_CONFIG_SHEET = '設定'
+const MARK_SUMMARY_SHEET = '分析摘要'
+const MARK_HELP_SHEET = '使用說明'
+const MARK_TEMPLATE_ROWS = 60
+const MARK_INPUT_HEADER_ROW = 10
+const MARK_INPUT_FIRST_DATA_ROW = 12
 
 const SUBJECT_PROFILES: SubjectProfile[] = [
   {
@@ -727,8 +738,11 @@ function parseScoreCsv(text: string): StudentScore[] {
   })
 }
 
-function downloadText(filename: string, text: string, type = 'text/csv;charset=utf-8'): void {
-  const blob = new Blob([text], { type })
+type ExcelCellWithStyle = XLSX.CellObject & {
+  s?: Record<string, unknown>
+}
+
+function downloadBlob(filename: string, blob: Blob): void {
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
@@ -739,6 +753,11 @@ function downloadText(filename: string, text: string, type = 'text/csv;charset=u
   URL.revokeObjectURL(url)
 }
 
+function downloadText(filename: string, text: string, type = 'text/csv;charset=utf-8'): void {
+  const prefix = type.startsWith('text/csv') ? '\ufeff' : ''
+  downloadBlob(filename, new Blob([`${prefix}${text}`], { type }))
+}
+
 function studentsToCsv(students: StudentScore[]): string {
   const header = ['學生', ...QUESTION_SPECS.map((q) => q.id)]
   const rows = students.map((student) => [
@@ -746,6 +765,554 @@ function studentsToCsv(students: StudentScore[]): string {
     ...QUESTION_SPECS.map((q) => String(student.scores[q.id] ?? 0)),
   ])
   return [header, ...rows].map((row) => row.join(',')).join('\n')
+}
+
+function setCellStyle(sheet: XLSX.WorkSheet, address: string, style: Record<string, unknown>): void {
+  const cell = sheet[address] as ExcelCellWithStyle | undefined
+  if (!cell) return
+  cell.s = { ...(cell.s ?? {}), ...style }
+}
+
+function setRangeStyle(sheet: XLSX.WorkSheet, rangeRef: string, style: Record<string, unknown>): void {
+  const range = XLSX.utils.decode_range(rangeRef)
+  for (let row = range.s.r; row <= range.e.r; row += 1) {
+    for (let col = range.s.c; col <= range.e.c; col += 1) {
+      setCellStyle(sheet, XLSX.utils.encode_cell({ r: row, c: col }), style)
+    }
+  }
+}
+
+function setRangeNumberFormat(sheet: XLSX.WorkSheet, rangeRef: string, format: string): void {
+  const range = XLSX.utils.decode_range(rangeRef)
+  for (let row = range.s.r; row <= range.e.r; row += 1) {
+    for (let col = range.s.c; col <= range.e.c; col += 1) {
+      const address = XLSX.utils.encode_cell({ r: row, c: col })
+      const cell = sheet[address] as ExcelCellWithStyle | undefined
+      if (cell) cell.z = format
+    }
+  }
+}
+
+function setFormulaCell(
+  sheet: XLSX.WorkSheet,
+  address: string,
+  formula: string,
+  type: XLSX.ExcelDataType = 'n',
+  format?: string,
+): void {
+  sheet[address] = { f: formula, t: type, z: format } as ExcelCellWithStyle
+}
+
+function gradeFormula(percentCell: string): string {
+  return `IF(${percentCell}="","",IF(${percentCell}>=0.9,"5**",IF(${percentCell}>=0.85,"5*",IF(${percentCell}>=0.8,"5",IF(${percentCell}>=0.7,"4",IF(${percentCell}>=0.6,"3",IF(${percentCell}>=0.5,"2",IF(${percentCell}>=0.4,"1","U"))))))))`
+}
+
+function riskFormula(percentCell: string): string {
+  return `IF(${percentCell}="","",IF(${percentCell}<0.55,"優先跟進",IF(${percentCell}<0.7,"邊緣提升",IF(${percentCell}>=0.82,"高分拔尖","穩定掌握"))))`
+}
+
+const MARK_TEMPLATE_STYLES_XML = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+  <numFmts count="2">
+    <numFmt numFmtId="164" formatCode="0.0%"/>
+    <numFmt numFmtId="165" formatCode="0.0"/>
+  </numFmts>
+  <fonts count="6">
+    <font><sz val="11"/><color rgb="FF334155"/><name val="Aptos"/></font>
+    <font><b/><sz val="20"/><color rgb="FF1E293B"/><name val="Aptos Display"/></font>
+    <font><sz val="12"/><color rgb="FF64748B"/><name val="Aptos"/></font>
+    <font><b/><sz val="11"/><color rgb="FF3730A3"/><name val="Aptos"/></font>
+    <font><sz val="11"/><color rgb="FF334155"/><name val="Aptos"/></font>
+    <font><b/><sz val="11"/><color rgb="FF475569"/><name val="Aptos"/></font>
+  </fonts>
+  <fills count="6">
+    <fill><patternFill patternType="none"/></fill>
+    <fill><patternFill patternType="gray125"/></fill>
+    <fill><patternFill patternType="solid"><fgColor rgb="FFEEF2FF"/><bgColor indexed="64"/></patternFill></fill>
+    <fill><patternFill patternType="solid"><fgColor rgb="FFF8FAFC"/><bgColor indexed="64"/></patternFill></fill>
+    <fill><patternFill patternType="solid"><fgColor rgb="FFF1F5F9"/><bgColor indexed="64"/></patternFill></fill>
+    <fill><patternFill patternType="solid"><fgColor rgb="FFE0E7FF"/><bgColor indexed="64"/></patternFill></fill>
+  </fills>
+  <borders count="3">
+    <border><left/><right/><top/><bottom/><diagonal/></border>
+    <border><left/><right/><top/><bottom style="thin"><color rgb="FFE2E8F0"/></bottom><diagonal/></border>
+    <border><left style="thin"><color rgb="FFCBD5E1"/></left><right style="thin"><color rgb="FFCBD5E1"/></right><top style="thin"><color rgb="FFCBD5E1"/></top><bottom style="thin"><color rgb="FFCBD5E1"/></bottom><diagonal/></border>
+  </borders>
+  <cellStyleXfs count="1">
+    <xf numFmtId="0" fontId="0" fillId="0" borderId="0"/>
+  </cellStyleXfs>
+  <cellXfs count="11">
+    <xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>
+    <xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/>
+    <xf numFmtId="0" fontId="2" fillId="0" borderId="0" xfId="0" applyFont="1"/>
+    <xf numFmtId="0" fontId="3" fillId="2" borderId="2" xfId="0" applyFont="1" applyFill="1" applyBorder="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf>
+    <xf numFmtId="0" fontId="0" fillId="3" borderId="1" xfId="0" applyFill="1" applyBorder="1"><alignment vertical="center"/></xf>
+    <xf numFmtId="0" fontId="4" fillId="4" borderId="1" xfId="0" applyFill="1" applyBorder="1"><alignment vertical="center"/></xf>
+    <xf numFmtId="164" fontId="4" fillId="4" borderId="1" xfId="0" applyNumberFormat="1" applyFill="1" applyBorder="1"><alignment vertical="center"/></xf>
+    <xf numFmtId="165" fontId="4" fillId="4" borderId="1" xfId="0" applyNumberFormat="1" applyFill="1" applyBorder="1"><alignment vertical="center"/></xf>
+    <xf numFmtId="0" fontId="5" fillId="5" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1"><alignment vertical="center"/></xf>
+    <xf numFmtId="0" fontId="0" fillId="3" borderId="1" xfId="0" applyFill="1" applyBorder="1"><alignment vertical="center" wrapText="1"/></xf>
+    <xf numFmtId="0" fontId="1" fillId="3" borderId="2" xfId="0" applyFont="1" applyFill="1" applyBorder="1"><alignment horizontal="center" vertical="center"/></xf>
+  </cellXfs>
+  <cellStyles count="1">
+    <cellStyle name="Normal" xfId="0" builtinId="0"/>
+  </cellStyles>
+  <dxfs count="0"/>
+  <tableStyles count="0" defaultTableStyle="TableStyleMedium2" defaultPivotStyle="PivotStyleLight16"/>
+</styleSheet>`
+
+type CellPoint = {
+  col: number
+  row: number
+}
+
+function columnNumber(label: string): number {
+  return label.split('').reduce((total, char) => total * 26 + char.charCodeAt(0) - 64, 0)
+}
+
+function cellPoint(ref: string): CellPoint | null {
+  const match = /^([A-Z]+)(\d+)$/.exec(ref)
+  if (!match) return null
+  return {
+    col: columnNumber(match[1]),
+    row: Number(match[2]),
+  }
+}
+
+function inRect(point: CellPoint, startCol: number, startRow: number, endCol: number, endRow: number): boolean {
+  return point.col >= startCol && point.col <= endCol && point.row >= startRow && point.row <= endRow
+}
+
+function styleWorksheetXml(xml: string, styleForRef: (ref: string) => number | undefined): string {
+  const documentXml = new DOMParser().parseFromString(xml, 'application/xml')
+  Array.from(documentXml.getElementsByTagName('c')).forEach((cell) => {
+    const ref = cell.getAttribute('r')
+    if (!ref) return
+    const style = styleForRef(ref)
+    if (style !== undefined) cell.setAttribute('s', String(style))
+  })
+  return new XMLSerializer().serializeToString(documentXml)
+}
+
+function inputSheetStyle(ref: string): number | undefined {
+  const point = cellPoint(ref)
+  if (!point) return undefined
+  if (ref === 'A1') return 1
+  if (ref === 'A2') return 2
+  if (inRect(point, 1, 4, 15, 4)) return 8
+  if (inRect(point, 1, 5, 15, 8)) return 9
+  if (inRect(point, 1, 10, 15, 10)) return 3
+  if (inRect(point, 1, 11, 15, 11)) return 8
+  if (inRect(point, 1, 12, 10, 71) || inRect(point, 15, 12, 15, 71)) return 4
+  if (inRect(point, 11, 12, 11, 71)) return 7
+  if (inRect(point, 12, 12, 12, 71)) return 6
+  if (inRect(point, 13, 12, 14, 71)) return 5
+  return undefined
+}
+
+function configSheetStyle(ref: string): number | undefined {
+  const point = cellPoint(ref)
+  if (!point) return undefined
+  if (ref === 'A1') return 1
+  if (ref === 'A2') return 2
+  if (inRect(point, 1, 4, 4, 6)) return 8
+  if (inRect(point, 1, 8, 5, 8)) return 3
+  if (inRect(point, 1, 18, 2, 18)) return 3
+  if (inRect(point, 1, 9, 5, 16) || inRect(point, 1, 19, 2, 26)) return 4
+  return undefined
+}
+
+function summarySheetStyle(ref: string): number | undefined {
+  const point = cellPoint(ref)
+  if (!point) return undefined
+  if (ref === 'A1') return 1
+  if (ref === 'A2') return 2
+  if (inRect(point, 1, 4, 6, 4) || inRect(point, 1, 7, 7, 7)) return 3
+  if (inRect(point, 1, 5, 6, 5)) return point.col === 3 || point.col === 4 || point.col === 5 ? 6 : 10
+  if (inRect(point, 2, 8, 3, 15) || inRect(point, 5, 8, 6, 15)) return 7
+  if (inRect(point, 4, 8, 4, 15)) return 6
+  if (inRect(point, 7, 8, 7, 15)) return 9
+  if (inRect(point, 1, 8, 1, 15)) return 4
+  return undefined
+}
+
+function helpSheetStyle(ref: string): number | undefined {
+  const point = cellPoint(ref)
+  if (!point) return undefined
+  if (ref === 'A1') return 1
+  if (inRect(point, 1, 3, 1, 7)) return 3
+  if (inRect(point, 1, 9, 1, 11)) return 8
+  if (inRect(point, 2, 3, 2, 11)) return 9
+  return undefined
+}
+
+async function applyMarkTemplateStyles(payload: ArrayBuffer): Promise<Blob> {
+  const zip = await JSZip.loadAsync(payload)
+  zip.file('xl/styles.xml', MARK_TEMPLATE_STYLES_XML)
+  const styleTargets: [string, (ref: string) => number | undefined][] = [
+    ['xl/worksheets/sheet1.xml', inputSheetStyle],
+    ['xl/worksheets/sheet2.xml', configSheetStyle],
+    ['xl/worksheets/sheet3.xml', summarySheetStyle],
+    ['xl/worksheets/sheet4.xml', helpSheetStyle],
+  ]
+  await Promise.all(
+    styleTargets.map(async ([path, resolver]) => {
+      const file = zip.file(path)
+      if (!file) return
+      const xml = await file.async('string')
+      zip.file(path, styleWorksheetXml(xml, resolver))
+    }),
+  )
+  return zip.generateAsync({
+    type: 'blob',
+    mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    compression: 'DEFLATE',
+  })
+}
+
+function buildMarkInputSheet(profile: SubjectProfile, meta: ReportMeta): XLSX.WorkSheet {
+  const headers = [
+    '學生編號',
+    '姓名/代號',
+    ...QUESTION_SPECS.map((q) => q.id),
+    '總分',
+    '得分率',
+    '預測等級',
+    '風險分層',
+    '備註',
+  ]
+  const maxRow = [
+    '滿分',
+    '',
+    ...QUESTION_SPECS.map((q) => q.max),
+    '',
+    '',
+    '',
+    '',
+    '',
+  ]
+  const rows: (string | number)[][] = [
+    ['EziTeach AI Cal Mark'],
+    ['成績分析專用輸入表'],
+    [],
+    ['科目', profile.subject, '評估', meta.paperTitle, '級別', meta.classLevel, '日期', meta.date],
+    [
+      '使用方式',
+      '只需填寫學生編號及每題得分；總分、得分率、等級及風險分層會自動計算。請保留題號標題，以便平台上載讀取。',
+    ],
+    [],
+    ['資料私隱', '建議使用學生編號或匿名代號；上載後平台只以分數及代號分析，不需要學生全名。'],
+    ['可改欄位', '學生編號、姓名/代號、Q1 至 Q8/Q9 得分、備註。其餘計算欄可保留公式。'],
+    [],
+    headers,
+    maxRow,
+    ...Array.from({ length: MARK_TEMPLATE_ROWS }, (_, index) => [
+      `S${String(index + 1).padStart(2, '0')}`,
+      '',
+      ...QUESTION_SPECS.map(() => ''),
+      '',
+      '',
+      '',
+      '',
+      '',
+    ]),
+  ]
+  const sheet = XLSX.utils.aoa_to_sheet(rows)
+  const lastCol = XLSX.utils.encode_col(headers.length - 1)
+  const firstQuestionCol = XLSX.utils.encode_col(2)
+  const lastQuestionCol = XLSX.utils.encode_col(1 + QUESTION_SPECS.length)
+  const totalCol = XLSX.utils.encode_col(2 + QUESTION_SPECS.length)
+  const percentCol = XLSX.utils.encode_col(3 + QUESTION_SPECS.length)
+  const gradeCol = XLSX.utils.encode_col(4 + QUESTION_SPECS.length)
+  const riskCol = XLSX.utils.encode_col(5 + QUESTION_SPECS.length)
+  const tableHeaderRow = MARK_INPUT_HEADER_ROW
+  const maxExcelRow = MARK_INPUT_HEADER_ROW + 1
+  const firstDataRow = MARK_INPUT_FIRST_DATA_ROW
+  const lastDataRow = MARK_INPUT_FIRST_DATA_ROW + MARK_TEMPLATE_ROWS - 1
+
+  setFormulaCell(sheet, `${totalCol}${maxExcelRow}`, `SUM(${firstQuestionCol}${maxExcelRow}:${lastQuestionCol}${maxExcelRow})`, 'n', '0')
+  for (let row = firstDataRow; row <= lastDataRow; row += 1) {
+    setFormulaCell(
+      sheet,
+      `${totalCol}${row}`,
+      `IF(COUNTA(${firstQuestionCol}${row}:${lastQuestionCol}${row})=0,"",SUM(${firstQuestionCol}${row}:${lastQuestionCol}${row}))`,
+      'n',
+      '0.0',
+    )
+    setFormulaCell(sheet, `${percentCol}${row}`, `IF(${totalCol}${row}="","",${totalCol}${row}/$${totalCol}$${maxExcelRow})`, 'n', '0.0%')
+    setFormulaCell(sheet, `${gradeCol}${row}`, gradeFormula(`${percentCol}${row}`), 's')
+    setFormulaCell(sheet, `${riskCol}${row}`, riskFormula(`${percentCol}${row}`), 's')
+  }
+
+  sheet['!merges'] = [
+    XLSX.utils.decode_range(`A1:${lastCol}1`),
+    XLSX.utils.decode_range(`A2:${lastCol}2`),
+    XLSX.utils.decode_range(`B5:${lastCol}5`),
+    XLSX.utils.decode_range(`B7:${lastCol}7`),
+    XLSX.utils.decode_range(`B8:${lastCol}8`),
+  ]
+  sheet['!cols'] = [
+    { wch: 12 },
+    { wch: 16 },
+    ...QUESTION_SPECS.map(() => ({ wch: 9 })),
+    { wch: 10 },
+    { wch: 10 },
+    { wch: 12 },
+    { wch: 12 },
+    { wch: 24 },
+  ]
+  sheet['!rows'] = [
+    { hpt: 28 },
+    { hpt: 22 },
+    {},
+    { hpt: 22 },
+    { hpt: 34 },
+    {},
+    { hpt: 26 },
+    { hpt: 26 },
+    {},
+    { hpt: 26 },
+    { hpt: 24 },
+  ]
+  sheet['!autofilter'] = { ref: `A${tableHeaderRow}:${lastCol}${tableHeaderRow}` }
+
+  const titleStyle = { font: { bold: true, color: { rgb: '1E293B' }, sz: 20 } }
+  const subtitleStyle = { font: { color: { rgb: '475569' }, sz: 12 } }
+  const headerStyle = {
+    fill: { fgColor: { rgb: 'EEF2FF' } },
+    font: { bold: true, color: { rgb: '3730A3' } },
+    alignment: { horizontal: 'center', vertical: 'center' },
+    border: { bottom: { style: 'thin', color: { rgb: 'CBD5E1' } } },
+  }
+  const inputStyle = {
+    fill: { fgColor: { rgb: 'F8FAFC' } },
+    border: { bottom: { style: 'thin', color: { rgb: 'E2E8F0' } } },
+  }
+  const formulaStyle = {
+    fill: { fgColor: { rgb: 'F1F5F9' } },
+    font: { color: { rgb: '334155' } },
+  }
+  setCellStyle(sheet, 'A1', titleStyle)
+  setCellStyle(sheet, 'A2', subtitleStyle)
+  setRangeStyle(sheet, `A${tableHeaderRow}:${lastCol}${tableHeaderRow}`, headerStyle)
+  setRangeStyle(sheet, `${firstQuestionCol}${firstDataRow}:${lastQuestionCol}${lastDataRow}`, inputStyle)
+  setRangeStyle(sheet, `${totalCol}${firstDataRow}:${riskCol}${lastDataRow}`, formulaStyle)
+  setRangeNumberFormat(sheet, `${firstQuestionCol}${firstDataRow}:${lastQuestionCol}${lastDataRow}`, '0.0')
+  setRangeNumberFormat(sheet, `${totalCol}${firstDataRow}:${totalCol}${lastDataRow}`, '0.0')
+  setRangeNumberFormat(sheet, `${percentCol}${firstDataRow}:${percentCol}${lastDataRow}`, '0.0%')
+  return sheet
+}
+
+function buildMarkConfigSheet(profile: SubjectProfile, meta: ReportMeta): XLSX.WorkSheet {
+  const rows = [
+    ['EziTeach AI Cal Mark 設定'],
+    ['本頁用作標記科目、評估及題目結構。上載平台時會按「輸入分數」工作表的題號讀取。'],
+    [],
+    ['科目', profile.subject, '評估', meta.paperTitle],
+    ['級別', meta.classLevel, '學校/班級', meta.school],
+    ['資料來源', meta.source, '報告日期', meta.date],
+    [],
+    ['題號', '滿分', '課題', '能力焦點', '平台跟進建議'],
+    ...QUESTION_SPECS.map((q) => [q.id, q.max, q.topic, q.skill, q.advice]),
+    [],
+    ['等級線', '下限百分比'],
+    ['5**', '90%'],
+    ['5*', '85%'],
+    ['5', '80%'],
+    ['4', '70%'],
+    ['3', '60%'],
+    ['2', '50%'],
+    ['1', '40%'],
+    ['U', '<40%'],
+  ]
+  const sheet = XLSX.utils.aoa_to_sheet(rows)
+  sheet['!merges'] = [
+    XLSX.utils.decode_range('A1:E1'),
+    XLSX.utils.decode_range('A2:E2'),
+  ]
+  sheet['!cols'] = [{ wch: 12 }, { wch: 10 }, { wch: 28 }, { wch: 18 }, { wch: 52 }]
+  setCellStyle(sheet, 'A1', { font: { bold: true, color: { rgb: '1E293B' }, sz: 18 } })
+  setRangeStyle(sheet, 'A8:E8', {
+    fill: { fgColor: { rgb: 'EEF2FF' } },
+    font: { bold: true, color: { rgb: '3730A3' } },
+  })
+  setRangeStyle(sheet, 'A18:B18', {
+    fill: { fgColor: { rgb: 'F1F5F9' } },
+    font: { bold: true, color: { rgb: '334155' } },
+  })
+  return sheet
+}
+
+function buildMarkSummarySheet(): XLSX.WorkSheet {
+  const rows = [
+    ['EziTeach AI 成績摘要'],
+    ['此頁會根據「輸入分數」自動計算，方便老師在上載前快速檢查分數是否合理。'],
+    [],
+    ['樣本數', '總滿分', '班平均', '預測合格', '預測 5 或以上', '優先跟進'],
+    ['', '', '', '', '', ''],
+    [],
+    ['題目', '滿分', '平均', '得分率', '低於半分', '滿分人數', '教學提示'],
+    ...QUESTION_SPECS.map((q) => [q.id, q.max, '', '', '', '', q.advice]),
+  ]
+  const sheet = XLSX.utils.aoa_to_sheet(rows)
+  sheet['!merges'] = [
+    XLSX.utils.decode_range('A1:G1'),
+    XLSX.utils.decode_range('A2:G2'),
+  ]
+  sheet['!cols'] = [{ wch: 12 }, { wch: 10 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 56 }]
+  setFormulaCell(sheet, 'A5', `COUNT('${MARK_INPUT_SHEET}'!K${MARK_INPUT_FIRST_DATA_ROW}:K${MARK_INPUT_FIRST_DATA_ROW + MARK_TEMPLATE_ROWS - 1})`, 'n', '0')
+  setFormulaCell(sheet, 'B5', `'${MARK_INPUT_SHEET}'!K${MARK_INPUT_HEADER_ROW + 1}`, 'n', '0')
+  setFormulaCell(sheet, 'C5', `IF(A5=0,"",AVERAGE('${MARK_INPUT_SHEET}'!L${MARK_INPUT_FIRST_DATA_ROW}:L${MARK_INPUT_FIRST_DATA_ROW + MARK_TEMPLATE_ROWS - 1}))`, 'n', '0.0%')
+  setFormulaCell(sheet, 'D5', `IF(A5=0,"",COUNTIF('${MARK_INPUT_SHEET}'!L${MARK_INPUT_FIRST_DATA_ROW}:L${MARK_INPUT_FIRST_DATA_ROW + MARK_TEMPLATE_ROWS - 1},">=0.5")/A5)`, 'n', '0.0%')
+  setFormulaCell(sheet, 'E5', `IF(A5=0,"",COUNTIF('${MARK_INPUT_SHEET}'!L${MARK_INPUT_FIRST_DATA_ROW}:L${MARK_INPUT_FIRST_DATA_ROW + MARK_TEMPLATE_ROWS - 1},">=0.8")/A5)`, 'n', '0.0%')
+  setFormulaCell(sheet, 'F5', `COUNTIF('${MARK_INPUT_SHEET}'!L${MARK_INPUT_FIRST_DATA_ROW}:L${MARK_INPUT_FIRST_DATA_ROW + MARK_TEMPLATE_ROWS - 1},"<0.55")`, 'n', '0')
+  QUESTION_SPECS.forEach((_, index) => {
+    const row = 8 + index
+    const inputCol = XLSX.utils.encode_col(2 + index)
+    setFormulaCell(sheet, `B${row}`, `'${MARK_INPUT_SHEET}'!${inputCol}${MARK_INPUT_HEADER_ROW + 1}`, 'n', '0')
+    setFormulaCell(sheet, `C${row}`, `IF($A$5=0,"",AVERAGE('${MARK_INPUT_SHEET}'!${inputCol}${MARK_INPUT_FIRST_DATA_ROW}:${inputCol}${MARK_INPUT_FIRST_DATA_ROW + MARK_TEMPLATE_ROWS - 1}))`, 'n', '0.0')
+    setFormulaCell(sheet, `D${row}`, `IF($A$5=0,"",C${row}/B${row})`, 'n', '0.0%')
+    setFormulaCell(sheet, `E${row}`, `COUNTIF('${MARK_INPUT_SHEET}'!${inputCol}${MARK_INPUT_FIRST_DATA_ROW}:${inputCol}${MARK_INPUT_FIRST_DATA_ROW + MARK_TEMPLATE_ROWS - 1},"<"&B${row}*0.5)`, 'n', '0')
+    setFormulaCell(sheet, `F${row}`, `COUNTIF('${MARK_INPUT_SHEET}'!${inputCol}${MARK_INPUT_FIRST_DATA_ROW}:${inputCol}${MARK_INPUT_FIRST_DATA_ROW + MARK_TEMPLATE_ROWS - 1},B${row})`, 'n', '0')
+  })
+  setCellStyle(sheet, 'A1', { font: { bold: true, color: { rgb: '1E293B' }, sz: 18 } })
+  setRangeStyle(sheet, 'A4:F4', {
+    fill: { fgColor: { rgb: 'EEF2FF' } },
+    font: { bold: true, color: { rgb: '3730A3' } },
+    alignment: { horizontal: 'center' },
+  })
+  setRangeStyle(sheet, 'A7:G7', {
+    fill: { fgColor: { rgb: 'F1F5F9' } },
+    font: { bold: true, color: { rgb: '334155' } },
+  })
+  return sheet
+}
+
+function buildMarkHelpSheet(): XLSX.WorkSheet {
+  const rows = [
+    ['EziTeach AI Cal Mark 使用說明'],
+    [],
+    ['1', '下載模板後，先在「設定」頁確認科目、評估及題目滿分。'],
+    ['2', '到「輸入分數」頁，只填寫學生編號 / 代號及各題得分。'],
+    ['3', '如某學生缺席或未完成，請留空整行；不要輸入文字到分數欄。'],
+    ['4', '系統會讀取第 10 列的題號欄位；請不要刪除或改名 Q1 至 Q8/Q9。'],
+    ['5', '填妥後回到 EziTeach AI 成績分析頁，按「上載 Excel 並分析」。'],
+    [],
+    ['私隱建議', '使用學生編號或匿名代號即可；不需要上載學生全名。'],
+    ['支援格式', '.xlsx、.xls、.csv、.tsv。Excel 模板效果最佳。'],
+    ['分析輸出', '平台會生成班平均、等級預測、精算風險、題目診斷、跟進名單及成績報告。'],
+  ]
+  const sheet = XLSX.utils.aoa_to_sheet(rows)
+  sheet['!merges'] = [XLSX.utils.decode_range('A1:B1')]
+  sheet['!cols'] = [{ wch: 14 }, { wch: 86 }]
+  setCellStyle(sheet, 'A1', { font: { bold: true, color: { rgb: '1E293B' }, sz: 18 } })
+  setRangeStyle(sheet, 'A3:A7', {
+    fill: { fgColor: { rgb: 'EEF2FF' } },
+    font: { bold: true, color: { rgb: '3730A3' } },
+    alignment: { horizontal: 'center' },
+  })
+  return sheet
+}
+
+async function downloadMarkTemplate(profile: SubjectProfile, meta: ReportMeta): Promise<void> {
+  const workbook = XLSX.utils.book_new()
+  workbook.Props = {
+    Title: 'EziTeach AI Cal Mark Template',
+    Subject: `${profile.subject} 成績分析`,
+    Author: 'EziTeach AI',
+    Company: 'EziTeach AI',
+    CreatedDate: new Date(),
+  }
+  XLSX.utils.book_append_sheet(workbook, buildMarkInputSheet(profile, meta), MARK_INPUT_SHEET)
+  XLSX.utils.book_append_sheet(workbook, buildMarkConfigSheet(profile, meta), MARK_CONFIG_SHEET)
+  XLSX.utils.book_append_sheet(workbook, buildMarkSummarySheet(), MARK_SUMMARY_SHEET)
+  XLSX.utils.book_append_sheet(workbook, buildMarkHelpSheet(), MARK_HELP_SHEET)
+  const payload = XLSX.write(workbook, {
+    bookType: 'xlsx',
+    type: 'array',
+    compression: true,
+    cellStyles: true,
+  }) as ArrayBuffer
+  downloadBlob(MARK_TEMPLATE_FILENAME, await applyMarkTemplateStyles(payload))
+}
+
+function normalizeHeader(value: unknown): string {
+  return String(value ?? '')
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, '')
+    .replace(/[（）()]/g, '')
+}
+
+function matchesQuestionHeader(value: unknown, question: QuestionSpec): boolean {
+  const header = normalizeHeader(value)
+  const target = normalizeHeader(question.id)
+  if (header === target) return true
+  if (question.id !== 'Q8/Q9') return false
+  return ['q8', 'q9', 'q8q9', 'q8/q9', 'q8或q9'].includes(header)
+}
+
+function isBlankCell(value: unknown): boolean {
+  return value === null || value === undefined || String(value).trim() === ''
+}
+
+function parseScoreCell(value: unknown, label: string): number {
+  if (typeof value === 'number' && Number.isFinite(value)) return value
+  const parsed = Number(String(value).trim())
+  if (!Number.isFinite(parsed)) throw new Error(`${label} 不是有效分數。`)
+  return parsed
+}
+
+function parseScoreRows(rows: unknown[][]): StudentScore[] {
+  const headerRowIndex = rows.findIndex((row) =>
+    QUESTION_SPECS.every((q) => row.some((cell) => matchesQuestionHeader(cell, q))),
+  )
+  if (headerRowIndex < 0) throw new Error('找不到題號標題列，請保留 Q1 至 Q8/Q9 欄位。')
+  const headers = rows[headerRowIndex]
+  const questionIndexes = QUESTION_SPECS.map((q) => {
+    const index = headers.findIndex((header) => matchesQuestionHeader(header, q))
+    if (index < 0) throw new Error(`找不到欄位 ${q.id}`)
+    return index
+  })
+  const studentIndex = headers.findIndex((header) =>
+    ['學生', '學生編號', '學生代號', 'student', 'studentid', 'id'].includes(normalizeHeader(header)),
+  )
+  const parsed: StudentScore[] = []
+  rows.slice(headerRowIndex + 1).forEach((row, rowOffset) => {
+    const rawId = studentIndex >= 0 ? row[studentIndex] : row[0]
+    const id = String(rawId ?? '').trim()
+    if (normalizeHeader(id) === '滿分') return
+    const questionCells = questionIndexes.map((index) => row[index])
+    const allScoresBlank = questionCells.every(isBlankCell)
+    if (allScoresBlank) return
+    const safeId = id || `S${String(parsed.length + 1).padStart(2, '0')}`
+    const scores: Record<string, number> = {}
+    QUESTION_SPECS.forEach((q, qIndex) => {
+      const rawScore = questionCells[qIndex]
+      if (isBlankCell(rawScore)) throw new Error(`${safeId} 的 ${q.id} 未有分數。`)
+      const value = parseScoreCell(rawScore, `${safeId} 的 ${q.id}`)
+      scores[q.id] = clamp(value, 0, q.max)
+    })
+    parsed.push({ id: safeId, scores })
+    if (rowOffset > 500) throw new Error('暫時最多支援 500 行學生資料。')
+  })
+  if (parsed.length === 0) throw new Error('未找到任何學生分數，請在模板內輸入分數後再上載。')
+  return parsed
+}
+
+function parseScoreWorkbook(buffer: ArrayBuffer): StudentScore[] {
+  const workbook = XLSX.read(buffer, { type: 'array' })
+  const sheetName =
+    workbook.SheetNames.find((name) => normalizeHeader(name) === normalizeHeader(MARK_INPUT_SHEET)) ??
+    workbook.SheetNames[0]
+  const sheet = workbook.Sheets[sheetName]
+  if (!sheet) throw new Error('Excel 檔案沒有可讀取的工作表。')
+  const rows = XLSX.utils.sheet_to_json<unknown[]>(sheet, {
+    header: 1,
+    raw: true,
+    defval: '',
+  })
+  return parseScoreRows(rows)
 }
 
 function getSubjectProfile(id: SubjectProfileId): SubjectProfile {
@@ -922,11 +1489,13 @@ function buildReportMarkdown(
 
 export default function GradeAnalytics() {
   const toast = useToast()
+  const fileInputRef = useRef<HTMLInputElement | null>(null)
   const [view, setView] = useState<ViewId>('overview')
   const [students, setStudents] = useState<StudentScore[]>(() => buildDemoStudents())
   const [activeQuestionId, setActiveQuestionId] = useState('Q8/Q9')
   const [scenarioLift, setScenarioLift] = useState(8)
   const [importText, setImportText] = useState(SAMPLE_CSV)
+  const [uploadedFileName, setUploadedFileName] = useState<string | null>(null)
   const [subjectId, setSubjectId] = useState<SubjectProfileId>('bafs')
   const [reportMeta, setReportMeta] = useState<ReportMeta>(() => ({
     school: '寧波第二中學',
@@ -962,19 +1531,51 @@ export default function GradeAnalytics() {
     )
   }
 
+  const applyImportedScores = (parsed: StudentScore[], sourceLabel: string) => {
+    setStudents(parsed)
+    setUploadedFileName(sourceLabel)
+    toast.success(`已匯入 ${parsed.length} 位學生分數`)
+    setView('overview')
+  }
+
   const importCsv = () => {
     try {
       const parsed = parseScoreCsv(importText)
-      setStudents(parsed)
-      toast.success(`已匯入 ${parsed.length} 位學生分數`)
-      setView('overview')
+      applyImportedScores(parsed, '貼上 CSV / TSV')
     } catch (error) {
       toast.error(error instanceof Error ? error.message : '匯入失敗，請檢查格式。')
     }
   }
 
+  const importScoreFile = async (file: File | null | undefined) => {
+    if (!file) return
+    try {
+      const lowerName = file.name.toLowerCase()
+      if (lowerName.endsWith('.csv') || lowerName.endsWith('.tsv') || file.type.includes('csv')) {
+        const text = await file.text()
+        applyImportedScores(parseScoreCsv(text), file.name)
+        return
+      }
+      const buffer = await file.arrayBuffer()
+      applyImportedScores(parseScoreWorkbook(buffer), file.name)
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : '上載失敗，請檢查 Excel 欄位及分數格式。')
+    }
+  }
+
   return (
     <div className="-mx-4 -mt-1 bg-slate-50/70 pb-8 dark:bg-slate-950 sm:-mx-6 lg:-mx-8">
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".xlsx,.xls,.csv,.tsv,text/csv"
+        className="hidden"
+        aria-label="上載 Excel 或 CSV 分數檔"
+        onChange={(event) => {
+          void importScoreFile(event.currentTarget.files?.[0])
+          event.currentTarget.value = ''
+        }}
+      />
       <section className="border-b border-slate-200/80 bg-white px-4 py-5 dark:border-slate-800 dark:bg-slate-950 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-[1500px]">
           <div className="flex flex-wrap items-start justify-between gap-4">
@@ -994,6 +1595,15 @@ export default function GradeAnalytics() {
                 onClick={() => setView('report')}
               >
                 成績報告
+              </Button>
+              <Button
+                variant="secondary"
+                icon={Download}
+                onClick={() => {
+                  void downloadMarkTemplate(subjectProfile, reportMeta)
+                }}
+              >
+                Excel 模板
               </Button>
               <Button
                 variant="secondary"
@@ -1225,44 +1835,139 @@ export default function GradeAnalytics() {
         )}
 
         {view === 'import' && (
-          <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
+          <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_380px]">
             <Card className="p-4 sm:p-5">
-              <SectionTitle icon={FileSpreadsheet} description="支援 CSV 或由 Excel 複製貼上；第一列必須有題號">
-                匯入學生分數
+              <SectionTitle icon={FileSpreadsheet} description="下載平台專用 Excel，填分後直接上載分析">
+                EziTeach Cal Mark Excel
               </SectionTitle>
-              <Field
-                label="CSV 內容"
-                hint="欄位格式：學生,Q1,Q2,Q3,Q4,Q5,Q6,Q7,Q8/Q9"
-              >
-                <Textarea
-                  value={importText}
-                  onChange={(event) => setImportText(event.target.value)}
-                  className="min-h-[260px] font-mono text-sm"
-                />
-              </Field>
-              <div className="mt-4 flex flex-wrap gap-2">
-                <Button icon={Upload} onClick={importCsv}>
-                  匯入並分析
-                </Button>
-                <Button
-                  variant="secondary"
-                  icon={FileSpreadsheet}
-                  onClick={() => setImportText(studentsToCsv(buildDemoStudents()))}
-                >
-                  載入完整 demo
-                </Button>
+              <div className="mt-4 space-y-4">
+                <div className="rounded-2xl border border-accent/20 bg-accent-soft/60 p-4 dark:bg-accent/10">
+                  <p className="text-sm font-semibold text-accent-strong dark:text-accent-light">
+                    老師工作流
+                  </p>
+                  <p className="mt-1 text-sm leading-6 text-slate-600 dark:text-slate-300">
+                    模板已內置題號、滿分、總分公式、得分率、預測等級及風險分層。老師只需要填學生編號和每題分數。
+                  </p>
+                </div>
+
+                <div className="divide-y divide-slate-200 overflow-hidden rounded-2xl border border-slate-200 dark:divide-slate-800 dark:border-slate-800">
+                  {[
+                    ['01', '下載模板', '取得 EziTeach AI 專用 .xlsx，欄位與平台分析模型一致。'],
+                    ['02', '輸入分數', '在「輸入分數」工作表填 Q1 至 Q8/Q9，公式即時計算。'],
+                    ['03', '上載分析', '平台讀取 Excel 後生成預測、風險、弱項及報告。'],
+                  ].map(([step, title, body]) => (
+                    <div key={step} className="grid gap-3 p-3 sm:grid-cols-[56px_minmax(0,1fr)] sm:items-center">
+                      <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-sm font-semibold text-accent shadow-sm ring-1 ring-accent/10 dark:bg-slate-900">
+                        {step}
+                      </span>
+                      <div>
+                        <p className="text-sm font-semibold text-slate-900 dark:text-white">{title}</p>
+                        <p className="mt-0.5 text-sm leading-5 text-slate-500 dark:text-slate-400">{body}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    icon={Download}
+                    onClick={() => {
+                      void downloadMarkTemplate(subjectProfile, reportMeta)
+                    }}
+                  >
+                    下載 Excel 模板
+                  </Button>
+                  <Button variant="secondary" icon={Upload} onClick={() => fileInputRef.current?.click()}>
+                    上載 Excel 並分析
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    icon={FileSpreadsheet}
+                    onClick={() => setImportText(studentsToCsv(buildDemoStudents()))}
+                  >
+                    載入 demo CSV
+                  </Button>
+                </div>
+
+                {uploadedFileName && (
+                  <div className="flex items-center gap-2 rounded-xl bg-white px-3 py-2 text-sm text-slate-600 ring-1 ring-slate-200 dark:bg-slate-900 dark:text-slate-300 dark:ring-slate-800">
+                    <CheckCircle2 size={16} className="text-emerald-500" />
+                    最近上載：{uploadedFileName}
+                  </div>
+                )}
               </div>
             </Card>
 
             <Card className="p-4 sm:p-5">
-              <SectionTitle icon={BrainCircuit} description="參考 eClass SDAS，但更偏向老師日常行動">
-                系統能力方向
+              <SectionTitle icon={ShieldCheck} description="專業模板，減少上載錯誤">
+                模板設計
               </SectionTitle>
-              <div className="space-y-3 text-sm leading-6 text-slate-600 dark:text-slate-300">
-                <p>1. 以學生、題目、課題三個角度分析。</p>
-                <p>2. 用等級線做預測，標記優先跟進學生。</p>
-                <p>3. 自動把弱項轉成教學行動，而不只是報表。</p>
-                <p>4. 後續可接 PDF / Excel 自動讀分、跨班跨年比較。</p>
+              <div className="space-y-4">
+                <div className="space-y-2 text-sm text-slate-600 dark:text-slate-300">
+                  {[
+                    ['輸入分數', '老師唯一需要填寫的工作表'],
+                    ['設定', '科目、評估、題目滿分及等級線'],
+                    ['分析摘要', '上載前可先核對平均、合格率及弱項'],
+                    ['使用說明', '清楚列明可改欄位和私隱建議'],
+                  ].map(([title, body]) => (
+                    <div key={title} className="flex gap-3 border-b border-slate-100 pb-2 last:border-b-0 last:pb-0 dark:border-slate-800">
+                      <CheckCircle2 size={16} className="mt-0.5 shrink-0 text-accent" />
+                      <div>
+                        <p className="font-semibold text-slate-800 dark:text-slate-100">{title}</p>
+                        <p className="text-slate-500 dark:text-slate-400">{body}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                    目前題目滿分
+                  </p>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {QUESTION_SPECS.map((question) => (
+                      <span
+                        key={question.id}
+                        className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-300"
+                      >
+                        {question.id} / {question.max}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </Card>
+
+            <Card className="p-4 sm:p-5 xl:col-span-2">
+              <SectionTitle icon={BrainCircuit} description="給已有 CSV 或想由 Excel 複製貼上的老師使用">
+                進階匯入
+              </SectionTitle>
+              <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_340px]">
+                <Field
+                  label="CSV / TSV 內容"
+                  hint="欄位格式：學生,Q1,Q2,Q3,Q4,Q5,Q6,Q7,Q8/Q9"
+                >
+                  <Textarea
+                    value={importText}
+                    onChange={(event) => setImportText(event.target.value)}
+                    className="min-h-[220px] font-mono text-sm"
+                  />
+                </Field>
+                <div className="space-y-3 text-sm leading-6 text-slate-600 dark:text-slate-300">
+                  <p className="font-semibold text-slate-800 dark:text-slate-100">
+                    上載規則
+                  </p>
+                  <p>1. Excel 會自動搜尋含 Q1 至 Q8/Q9 的標題列。</p>
+                  <p>2. 分數可留整行空白；如某題漏填，系統會提示學生與題號。</p>
+                  <p>3. 可使用學生編號或匿名代號，不需要輸入真名。</p>
+                  <div className="flex flex-wrap gap-2 pt-1">
+                    <Button icon={Upload} onClick={importCsv}>
+                      匯入文字
+                    </Button>
+                    <Button variant="secondary" icon={Upload} onClick={() => fileInputRef.current?.click()}>
+                      選擇檔案
+                    </Button>
+                  </div>
+                </div>
               </div>
             </Card>
           </div>
