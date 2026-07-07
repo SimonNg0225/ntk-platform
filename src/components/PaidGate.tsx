@@ -34,9 +34,9 @@ interface GateCopy {
 
 const GATE_COPY: Record<string, GateCopy> = {
   'work-slides': {
-    label: '節省簡報製作時間',
-    outcome: '把課題或教材轉成 PowerPoint 初稿，連版式、封面、內頁同下載流程一次完成。',
-    included: ['34 套簡報模板', '自動安排版式和配圖', '匯出 .pptx 繼續編輯'],
+    label: '今晚少做一份簡報',
+    outcome: '把課題、筆記或教材變成可下載 PowerPoint 草稿，先有完整版本，再由老師逐版微調。',
+    included: ['推薦模板快速生成', '逐版編輯、排序和再潤飾', '匯出 .pptx，可繼續在 PowerPoint / Google Slides 編輯'],
     fallbackId: 'work-generate',
     fallbackLabel: '先生成教材',
     fallbackDesc: '先用免費教材生成，把內容整理好再手動製作簡報。',

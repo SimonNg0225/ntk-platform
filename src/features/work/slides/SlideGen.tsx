@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   Presentation,
@@ -7,6 +7,7 @@ import {
   Trash2,
   Clock,
   Loader2,
+  CheckCircle2,
   StickyNote,
   BarChart3,
   Image as ImageIcon,
@@ -74,6 +75,7 @@ import { createDeckStreamParser, type DeckStreamMeta } from './streamDeck'
 import { refineDeck, mergeRefinedDeck } from './refineDeck'
 import { parseManualPages, frameworkToDeck, detectManualPages } from './manualPages'
 import { slideSourceKey } from './sourceKey'
+import { clearComposerHandoff, readComposerHandoff } from '../../shared/composerHandoff'
 import SlideEditor from './editor/SlideEditor'
 import DeckPreview from './preview/DeckPreview'
 import StepRail, { type StepDef } from './studio/StepRail'
@@ -86,8 +88,8 @@ type Mode = 'topic' | 'text'
 type Source = 'topic' | 'paste' | 'upload'
 
 const MODEL_OPTS: { id: AIModel; label: string }[] = [
-  { id: 'gemini-2.5-flash', label: 'Flash' },
-  { id: 'gemini-2.5-pro', label: 'Pro' },
+  { id: 'gemini-2.5-flash', label: '快速草稿' },
+  { id: 'gemini-2.5-pro', label: '高質細緻' },
 ]
 
 const STEPS: StepDef[] = [
@@ -128,6 +130,8 @@ export default function SlideGen() {
   const { t } = useTranslation()
   const toast = useToast()
   const confirm = useConfirm()
+  const [composerHandoff] = useState(() => readComposerHandoff('work-slides'))
+  const handoffText = composerHandoff?.text ?? ''
   const { subjectPackId } = useSettings()
   const subjectName = subjectPackId !== 'custom' ? getSubjectPack(subjectPackId)?.name : undefined
 
@@ -140,14 +144,14 @@ export default function SlideGen() {
   )
 
   // 引導步驟
-  const [step, setStep] = useState(1)
-  const [maxStep, setMaxStep] = useState(1)
+  const [step, setStep] = useState(() => (handoffText ? 2 : 1))
+  const [maxStep, setMaxStep] = useState(() => (handoffText ? 2 : 1))
   // 起點 → 衍生生成模式
-  const [source, setSource] = useState<Source>('topic')
+  const [source, setSource] = useState<Source>(() => (handoffText ? 'paste' : 'topic'))
   const mode: Mode = source === 'topic' ? 'topic' : 'text'
 
   const [topicId, setTopicId] = useState<string>(() => topics[0]?.id ?? '')
-  const [text, setText] = useState('')
+  const [text, setText] = useState(handoffText)
   const [uploadBusy, setUploadBusy] = useState(false)
   const [count, setCount] = useState(8)
   const [model, setModel] = useState<AIModel>('gemini-2.5-flash')
@@ -174,6 +178,10 @@ export default function SlideGen() {
   const [lastBeforeRefine, setLastBeforeRefine] = useState<DeckRecord | null>(null)
 
   const hasInput = mode === 'topic' ? topics.length > 0 : text.trim().length > 0
+
+  useEffect(() => {
+    if (composerHandoff) clearComposerHandoff('work-slides')
+  }, [composerHandoff])
 
   // 上載抽取嘅文字交返嚟（穩定 ref，UploadDrop effect 用）
   const handleUploadText = useCallback((txt: string, b: boolean) => {
@@ -292,6 +300,18 @@ export default function SlideGen() {
 
   function stopRun() {
     abortCtl?.abort()
+  }
+
+  function fastGenerate() {
+    if (busy) return
+    if (!hasInput) {
+      goStep(1)
+      toast.error('先揀課題、貼內容或上載教材，就可以一鍵生成')
+      return
+    }
+    setStep(4)
+    setMaxStep(4)
+    void run()
   }
 
   async function download(rec: DeckRecord) {
@@ -447,9 +467,9 @@ export default function SlideGen() {
     return (
       <EmptyState
         icon={Presentation}
-        title={t('slideGen.aiOff.title', { defaultValue: '簡報工作室未啟用' })}
+        title={t('slideGen.aiOff.title', { defaultValue: '簡報工作室暫未開放' })}
         hint={t('slideGen.aiOff.hint', {
-          defaultValue: '要設定好 Supabase 並部署 gemini Edge Function 先用到 AI 生成（步驟見 docs/SETUP.md）。',
+          defaultValue: '目前環境未接上 AI 生成服務。正式開放後，可由課題、筆記或教材直接生成可編輯 PowerPoint。',
         })}
       />
     )
@@ -531,12 +551,49 @@ export default function SlideGen() {
         steps={guideSteps}
       />
 
+      <div className="flex flex-col gap-3 rounded-2xl border border-emerald-200/70 bg-emerald-50/70 px-4 py-3 dark:border-emerald-500/25 dark:bg-emerald-500/10 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0">
+          <p className="flex items-center gap-1.5 text-sm font-semibold text-emerald-800 dark:text-emerald-200">
+            <Sparkles size={15} />
+            {t('slideGen.fast.title', { defaultValue: '趕住明天上堂？' })}
+          </p>
+          <p className="mt-0.5 text-xs leading-relaxed text-emerald-700/80 dark:text-emerald-200/80">
+            {t('slideGen.fast.desc', {
+              defaultValue: '用推薦設定先生成 8 版草稿；完成後仍可逐版改、換模板，再下載 PowerPoint。',
+            })}
+          </p>
+        </div>
+        <div className="flex shrink-0 flex-wrap items-center gap-2">
+          <Button size="sm" icon={Sparkles} onClick={fastGenerate} disabled={!hasInput || busy} loading={busy}>
+            {t('slideGen.fast.cta', { defaultValue: '直接生成' })}
+          </Button>
+          <Button size="sm" variant="ghost" icon={ArrowRight} onClick={() => goStep(3)}>
+            {t('slideGen.fast.tune', { defaultValue: '先調設定' })}
+          </Button>
+        </div>
+      </div>
+
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(320px,400px)]">
         {/* 左：引導 */}
         <div className="min-w-0 space-y-4">
           <StepRail steps={STEPS} current={step} maxReached={maxStep} onJump={goStep} />
 
           <Card padded className="space-y-4">
+            {handoffText && (
+              <div className="flex flex-col gap-2 rounded-xl border border-accent/20 bg-accent-soft/40 px-3 py-2 text-xs text-slate-600 dark:bg-accent/10 dark:text-slate-300 sm:flex-row sm:items-center sm:justify-between">
+                <span className="min-w-0">
+                  {t('slideGen.handoff.ready', { defaultValue: '已由首頁帶入內容：' })}
+                  <span className="font-semibold text-accent-strong dark:text-accent">{handoffText}</span>
+                </span>
+                <button
+                  type="button"
+                  onClick={() => goStep(1)}
+                  className="shrink-0 rounded-lg px-2 py-1 font-semibold text-accent-strong transition hover:bg-accent-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:text-accent dark:hover:bg-accent/15"
+                >
+                  {t('slideGen.handoff.edit', { defaultValue: '修改起點' })}
+                </button>
+              </div>
+            )}
             {step === 1 && (
               <div className="space-y-4">
                 <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
@@ -717,7 +774,7 @@ export default function SlideGen() {
                       title={
                         isStockConfigured
                           ? t('slideGen.images.coverTip', { defaultValue: '封面用 Pexels 免費相片' })
-                          : t('slideGen.images.needKey', { defaultValue: '需先設定 VITE_PEXELS_KEY 環境變數' })
+                          : t('slideGen.images.needKey', { defaultValue: '相片庫暫未啟用' })
                       }
                     >
                       {t('slideGen.images.cover', { defaultValue: '封面相片' })}
@@ -732,7 +789,7 @@ export default function SlideGen() {
                           ? t('slideGen.images.innerTip', {
                               defaultValue: 'AI 標咗配圖嘅內頁自動配 Pexels 相片（最多 4 版）',
                             })
-                          : t('slideGen.images.needKey', { defaultValue: '需先設定 VITE_PEXELS_KEY 環境變數' })
+                          : t('slideGen.images.needKey', { defaultValue: '相片庫暫未啟用' })
                       }
                     >
                       {t('slideGen.images.inner', { defaultValue: '內頁配圖' })}
@@ -743,7 +800,7 @@ export default function SlideGen() {
                         onClick={() => setHighFi(!highFi)}
                         icon={Sparkles}
                         title={t('slideGen.images.highFiTip', {
-                          defaultValue: '封面標題用招牌字體 render 成圖（跨平台一致；標題變圖、唔可喺 PPT 改）',
+                          defaultValue: '封面標題以固定視覺輸出，適合重視版面一致的簡報。',
                         })}
                       >
                         {t('slideGen.images.highFi', { defaultValue: '高擬真標題' })}
@@ -753,7 +810,7 @@ export default function SlideGen() {
                   {!isStockConfigured && (
                     <p className="text-[11px] text-slate-400">
                       {t('slideGen.images.pexelsHint', {
-                        defaultValue: '配圖需要設定 VITE_PEXELS_KEY 環境變數先用到。',
+                        defaultValue: '相片庫暫未啟用；仍可生成有版式、可編輯的 PowerPoint。',
                       })}
                     </p>
                   )}
@@ -775,7 +832,7 @@ export default function SlideGen() {
                       {SOURCE_CARDS.find((c) => c.id === source)?.title} ·{' '}
                       {SLIDE_PACKS.find((p) => p.id === pack)?.name} · {t('slideGen.step4.count', { defaultValue: '約' })}{' '}
                       <span className="tabular-nums">{count}</span> 版 ·{' '}
-                      {model === 'gemini-2.5-flash' ? 'Flash' : 'Pro'}
+                      {model === 'gemini-2.5-flash' ? '快速草稿' : '高質細緻'}
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
@@ -943,6 +1000,7 @@ export default function SlideGen() {
           slide={current.slides[editingIndex]}
           index={editingIndex}
           model={model}
+          pack={pack}
           onSave={(s) => saveSlide(editingIndex, s)}
           onClose={() => setEditingIndex(null)}
         />
@@ -1081,6 +1139,17 @@ function ResultPanel({
       <p className="text-[11px] text-slate-400 dark:text-slate-500">
         {t('slideGen.result.editHint', { defaultValue: '㩒任何一版可逐版編輯。' })}
       </p>
+      <div className="grid gap-2 rounded-xl border border-emerald-200/70 bg-emerald-50/70 p-3 text-[11px] font-medium text-emerald-800 dark:border-emerald-500/25 dark:bg-emerald-500/10 dark:text-emerald-200 sm:grid-cols-3">
+        <span className="flex items-center gap-1.5">
+          <CheckCircle2 size={13} /> {t('slideGen.result.powerpointReady', { defaultValue: 'PowerPoint 可再編輯' })}
+        </span>
+        <span className="flex items-center gap-1.5">
+          <CheckCircle2 size={13} /> {t('slideGen.result.fontReady', { defaultValue: '中文字體已處理' })}
+        </span>
+        <span className="flex items-center gap-1.5">
+          <CheckCircle2 size={13} /> {t('slideGen.result.slidesEditable', { defaultValue: '逐版可改可排序' })}
+        </span>
+      </div>
 
       <div className="space-y-2">
         {rec.slides.map((s, i) => {

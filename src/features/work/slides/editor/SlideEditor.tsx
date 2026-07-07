@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, type CSSProperties } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   Hash,
@@ -20,11 +20,14 @@ import { Button, Field, IconButton, Input, Modal, Select, Textarea, cx } from '.
 import { useToast } from '../../../../context/ToastContext'
 import type { AIModel } from '../../../../lib/aiClient'
 import { classifyAIError } from '../../../../lib/aiError'
+import { packTheme, type SlidePackId } from '../../../../lib/export'
 import type {
   Slide,
   SlideChart,
   SlideLayout,
 } from '../../../../lib/export/types'
+import { SlidePreview } from '../preview/SlidePreview'
+import { cssVarsFromTheme } from '../preview/theme'
 import { convertSlide } from './convert'
 import { aiConvertSlide, rewriteSlide } from './slideAi'
 
@@ -93,12 +96,14 @@ export default function SlideEditor({
   slide,
   index,
   model,
+  pack,
   onSave,
   onClose,
 }: {
   slide: Slide
   index: number
   model: AIModel
+  pack: SlidePackId
   onSave: (s: Slide) => void
   onClose: () => void
 }) {
@@ -112,6 +117,9 @@ export default function SlideEditor({
 
   const layout = effectiveLayout(draft)
   const { chart, invalid: chartInvalid } = useMemo(() => draftToChart(chartDraft), [chartDraft])
+  const theme = useMemo(() => packTheme(pack), [pack])
+  const previewVars = useMemo(() => cssVarsFromTheme(theme), [theme])
+  const previewSlide = useMemo<Slide>(() => ({ ...draft, chart }), [draft, chart])
 
   const patch = (p: Partial<Slide>) => setDraft((d) => ({ ...d, ...p }))
   const snapshot = () => setPrev(JSON.parse(JSON.stringify(draft)) as Slide)
@@ -214,7 +222,7 @@ export default function SlideEditor({
       open
       onClose={onClose}
       title={t('slides.editTitle', { defaultValue: '編輯第 {{n}} 版', n: index + 1 })}
-      size="lg"
+      size="xl"
       footer={
         <div className="flex w-full items-center justify-between gap-2">
           <Button variant="ghost" icon={Undo2} onClick={undo} disabled={!prev}>
@@ -231,7 +239,28 @@ export default function SlideEditor({
         </div>
       }
     >
-      <div className="space-y-4">
+      <div className="grid gap-4 lg:grid-cols-[260px_minmax(0,1fr)]">
+        <aside
+          className="space-y-2 lg:sticky lg:top-0 lg:self-start"
+          style={previewVars as unknown as CSSProperties}
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+              {t('slides.preview', { defaultValue: '即時預覽' })}
+            </span>
+            <span className="text-[11px] text-slate-400 dark:text-slate-500">
+              {theme.name}
+            </span>
+          </div>
+          <div className="aspect-[16/9] overflow-hidden rounded-xl ring-1 ring-black/[0.08] dark:ring-white/[0.12]">
+            <SlidePreview slide={previewSlide} index={index} theme={theme} />
+          </div>
+          <p className="text-[11px] leading-relaxed text-slate-400 dark:text-slate-500">
+            {t('slides.previewHint', { defaultValue: '儲存前可先睇文字密度同版式節奏。' })}
+          </p>
+        </aside>
+
+        <div className="min-w-0 space-y-4">
         {/* 版式切換 chips */}
         <div className="flex flex-wrap gap-1.5">
           {LAYOUT_OPTS.map((o) => (
@@ -505,6 +534,7 @@ export default function SlideEditor({
             </div>
           </>
         )}
+        </div>
       </div>
     </Modal>
   )

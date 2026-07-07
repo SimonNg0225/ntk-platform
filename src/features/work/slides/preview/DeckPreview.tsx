@@ -39,7 +39,7 @@ export default function DeckPreview(props: {
   return (
     <div style={vars as unknown as CSSProperties}>
       <p className="mb-2 text-[11px] text-slate-400 dark:text-slate-500">
-        預覽為近似（配色／版式示意）；漸層、招牌版式可能微異 —— 真實效果以下載嘅 .pptx 為準。
+        畫面會貼近下載檔；下載後可在 PowerPoint 或 Google Slides 繼續編輯。
       </p>
       <div className={`grid gap-3 ${gridCols}`}>
         {/* 封面卡 */}
