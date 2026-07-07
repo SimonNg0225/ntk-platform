@@ -71,7 +71,7 @@ const USE_CASE_ITEMS: { icon: LucideIcon; k: string; tone: string }[] = [
 const FAQ_ITEMS = ['school', 'studentData', 'subjects', 'pricing', 'export', 'aiReview'] as const
 const HERO_STATS = ['time', 'tools', 'solo'] as const
 const SCENE_ROWS = ['prep', 'quiz', 'slides', 'marking', 'parents'] as const
-const TOOL_PILLS = ['備課', 'AI 出題', '成績分析', '點名', '家長訊息', '文件速讀', '掃描 PDF', '會議轉錄']
+const TOOL_PILLS = ['prep', 'teachingAI', 'lessonPlan', 'materials', 'slides', 'gradeAnalytics', 'scan', 'transcribe'] as const
 
 export default function Landing() {
   const { user } = useAuth()
@@ -123,20 +123,20 @@ export default function Landing() {
         <title>{BRAND_FULL_ZH}</title>
         <meta
           name="description"
-          content="EziTeach AI 是香港老師的 AI 工作台：個人老師可先免費使用，備課、AI 出題、成績與弱項分析、點名、家長溝通、行政文件一個地方完成。"
+          content={t('landingMeta.description')}
         />
         <meta property="og:type" content="website" />
         <meta property="og:site_name" content={BRAND_NAME} />
         <meta property="og:title" content={BRAND_FULL_ZH} />
         <meta
           property="og:description"
-          content="一位老師都開得起：備課 · AI 出題 · 成績分析 · 點名 · 家長溝通，由備課到回饋一條龍。"
+          content={t('landingMeta.socialDescription')}
         />
         <meta name="twitter:card" content="summary" />
         <meta name="twitter:title" content={BRAND_FULL_ZH} />
         <meta
           name="twitter:description"
-          content="一位老師都開得起：備課 · AI 出題 · 成績分析 · 點名 · 家長溝通，由備課到回饋一條龍。"
+          content={t('landingMeta.socialDescription')}
         />
       </Helmet>
 
@@ -439,7 +439,7 @@ export default function Landing() {
                   key={tool}
                   className="inline-flex min-h-9 items-center rounded-full border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-600 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-300"
                 >
-                  {tool}
+                  {t(`toolPills.${tool}`)}
                 </span>
               ))}
             </motion.div>
@@ -584,6 +584,7 @@ export default function Landing() {
 }
 
 function WorkspaceScene({ reduce, ease }: { reduce: boolean; ease: [number, number, number, number] }) {
+  const { t } = useTranslation()
   return (
     <motion.div
       aria-hidden="true"
@@ -615,8 +616,8 @@ function WorkspaceScene({ reduce, ease }: { reduce: boolean; ease: [number, numb
               <Presentation size={16} />
             </span>
             <div>
-              <p className="text-xs font-black">{'課堂簡報'}</p>
-              <p className="text-[10px] text-slate-300">{'12 slides · 已配圖'}</p>
+              <p className="text-xs font-black">{t('scene.slideTitle')}</p>
+              <p className="text-[10px] text-slate-300">{t('scene.slideMeta')}</p>
             </div>
           </div>
           <div className="relative mt-3 aspect-[16/9] overflow-hidden rounded-xl border border-white/10 bg-[linear-gradient(135deg,rgba(91,77,255,0.52),rgba(34,211,238,0.2))]">
@@ -637,13 +638,13 @@ function WorkspaceScene({ reduce, ease }: { reduce: boolean; ease: [number, numb
         <div className="absolute left-2 top-[31%] hidden w-56 rotate-[-4deg] rounded-2xl border border-cyan-300/25 bg-cyan-300/10 p-4 text-cyan-50 shadow-2xl shadow-black/25 backdrop-blur-md sm:block lg:left-3">
           <div className="flex items-center gap-2 text-sm font-black">
             <WandSparkles size={17} />
-            {'由課題生成'}
+            {t('scene.generatedTitle')}
           </div>
           <div className="mt-4 space-y-2">
-            {['教案重點', '課堂活動', '評分準則'].map((label) => (
+            {['lessonFocus', 'classActivity', 'rubric'].map((label) => (
               <div key={label} className="flex items-center gap-2 rounded-xl bg-white/10 px-3 py-2 text-xs font-bold">
                 <CheckCircle2 size={14} />
-                {label}
+                {t(`scene.generatedItems.${label}`)}
               </div>
             ))}
           </div>
@@ -652,12 +653,12 @@ function WorkspaceScene({ reduce, ease }: { reduce: boolean; ease: [number, numb
         <div className="absolute right-2 top-[42%] w-48 rotate-[4deg] rounded-2xl border border-white/15 bg-white/[0.12] p-4 text-white shadow-2xl shadow-black/30 backdrop-blur-md sm:right-12 sm:w-56 lg:right-20">
           <div className="flex items-center gap-2 text-sm font-black">
             <FileText size={17} />
-            {'明日任務包'}
+            {t('scene.taskPackTitle')}
           </div>
           <div className="mt-4 space-y-3">
-            {['工作紙', '短答題', '家長訊息'].map((label, index) => (
+            {['worksheet', 'shortAnswer', 'parentMessage'].map((label, index) => (
               <div key={label} className="flex items-center justify-between gap-3">
-                <span className="text-xs font-bold text-slate-200">{label}</span>
+                <span className="text-xs font-bold text-slate-200">{t(`scene.taskPackItems.${label}`)}</span>
                 <span className={`h-2.5 rounded-full ${index === 0 ? 'w-20 bg-cyan-300' : index === 1 ? 'w-16 bg-indigo-300' : 'w-12 bg-amber-200'}`} />
               </div>
             ))}
@@ -681,11 +682,11 @@ function WorkspaceScene({ reduce, ease }: { reduce: boolean; ease: [number, numb
                 <WandSparkles size={17} />
               </span>
               <div className="min-w-0">
-                <p className="truncate text-sm font-black text-white">{'今日工作台'}</p>
-                <p className="text-[10px] font-semibold text-slate-400">{'5 個任務 · 下堂前 18 分鐘'}</p>
+                <p className="truncate text-sm font-black text-white">{t('scene.workspaceTitle')}</p>
+                <p className="text-[10px] font-semibold text-slate-400">{t('scene.workspaceMeta')}</p>
               </div>
               <span className="ml-auto rounded-full bg-cyan-300/15 px-3 py-1 text-[10px] font-black text-cyan-200">
-                {'同步中'}
+                {t('scene.syncing')}
               </span>
             </div>
 
@@ -701,20 +702,14 @@ function WorkspaceScene({ reduce, ease }: { reduce: boolean; ease: [number, numb
                     </span>
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-xs font-black text-slate-100">
-                        {row === 'prep' ? '中三商業環境教案' : null}
-                        {row === 'quiz' ? 'DSE 個案題 12 題' : null}
-                        {row === 'slides' ? '教學簡報草稿' : null}
-                        {row === 'marking' ? '短答批改隊列' : null}
+                        {t(`scene.rows.${row}.title`)}
                       </p>
                       <p className="mt-0.5 truncate text-[10px] font-semibold text-slate-300">
-                        {row === 'prep' ? 'AI 已整理重點與活動' : null}
-                        {row === 'quiz' ? '連參考答案與 rubrics' : null}
-                        {row === 'slides' ? '封面與版式已配好' : null}
-                        {row === 'marking' ? '今日已改 32 本' : null}
+                        {t(`scene.rows.${row}.meta`)}
                       </p>
                     </div>
                     <span className="rounded-full bg-white/10 px-2.5 py-1 text-[10px] font-black text-slate-300">
-                      {index === 3 ? '進行中' : '已準備'}
+                      {index === 3 ? t('scene.statusActive') : t('scene.statusReady')}
                     </span>
                   </div>
                 ))}
@@ -724,13 +719,13 @@ function WorkspaceScene({ reduce, ease }: { reduce: boolean; ease: [number, numb
                 <div className="rounded-2xl border border-cyan-300/20 bg-cyan-300/10 p-4">
                   <div className="flex items-center gap-2 text-sm font-black text-cyan-100">
                     <BarChart3 size={17} />
-                    {'全班弱項'}
+                    {t('scene.weaknessTitle')}
                   </div>
                   <div className="mt-4 space-y-3">
-                    {['現金流', '折舊', '市場定位'].map((label, index) => (
+                    {['cashflow', 'depreciation', 'positioning'].map((label, index) => (
                       <div key={label}>
                         <div className="mb-1 flex justify-between text-[10px] font-bold text-slate-300">
-                          <span>{label}</span>
+                          <span>{t(`scene.weaknesses.${label}`)}</span>
                           <span>{[68, 52, 41][index]}%</span>
                         </div>
                         <div className="h-2 overflow-hidden rounded-full bg-white/10">
@@ -747,10 +742,10 @@ function WorkspaceScene({ reduce, ease }: { reduce: boolean; ease: [number, numb
                 <div className="mt-3 rounded-2xl border border-amber-200/20 bg-amber-200/10 p-4">
                   <div className="flex items-center gap-2 text-sm font-black text-amber-100">
                     <Clock3 size={17} />
-                    {'下載即用'}
+                    {t('scene.downloadTitle')}
                   </div>
                   <p className="mt-2 text-xs leading-relaxed text-amber-100/70">
-                    {'教案、簡報、工作紙已放入同一個課堂包。'}
+                    {t('scene.downloadBody')}
                   </p>
                 </div>
               </div>
