@@ -25,12 +25,12 @@ export default function LegalLayout({
       <article className="mx-auto max-w-3xl">
         <Link
           to="/"
-          className="inline-flex items-center gap-1 text-sm text-slate-400 transition hover:text-accent"
+          className="inline-flex items-center gap-1 text-sm text-slate-600 transition hover:text-accent dark:text-slate-300"
         >
           <ArrowLeft size={14} strokeWidth={1.75} /> {t('common.backHome')}
         </Link>
         <h1 className="mt-4 text-3xl font-bold tracking-tight">{title}</h1>
-        <p className="mt-2 text-sm text-slate-400">
+        <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
           {t('legal.updatedLabel')}
           {updated}
         </p>
@@ -39,7 +39,7 @@ export default function LegalLayout({
           {children}
         </div>
 
-        <p className="mt-12 rounded-xl border border-[color:var(--border)] bg-[color:var(--surface-2)] p-4 text-xs text-slate-400">
+        <p className="mt-12 rounded-xl border border-[color:var(--border)] bg-[color:var(--surface-2)] p-4 text-xs text-slate-600 dark:text-slate-300">
           {t('legal.disclaimer')}
         </p>
       </article>

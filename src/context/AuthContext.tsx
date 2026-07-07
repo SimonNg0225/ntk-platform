@@ -72,13 +72,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // attachSync 內部會先 await 確保所有 lazy feature collection 登記齊先 hydrate。
     if (userId) {
       void attachSync(userId)
-      identifyUser(userId, { email: session?.user?.email ?? undefined })
+      identifyUser(userId)
     } else {
       detachSync()
       resetIdentity()
     }
     return () => detachSync()
-  }, [userId, session?.user?.email])
+  }, [userId])
 
   // 管理員身份：env 白名單即時知（唔閃），否則查 app_admins 表（DB 名單）
   const email = session?.user?.email ?? null

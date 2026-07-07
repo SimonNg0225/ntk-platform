@@ -49,6 +49,9 @@ async function initPosthog(): Promise<void> {
   posthog.init(POSTHOG_KEY, {
     api_host: POSTHOG_HOST,
     capture_pageview: true,
+    autocapture: false,
+    mask_all_text: true,
+    mask_all_element_attributes: true,
     // 只為已識別用戶建 person profile，慳 event 額度 + 保私隱
     person_profiles: 'identified_only',
   })
@@ -106,7 +109,12 @@ export function identifyUser(
   userId: string,
   traits?: Record<string, unknown>,
 ): void {
-  posthog?.identify(userId, traits)
+  const safeTraits = traits ? { ...traits } : undefined
+  if (safeTraits) {
+    delete safeTraits.email
+    delete safeTraits.name
+  }
+  posthog?.identify(userId, safeTraits)
   sentry?.setUser({ id: userId })
 }
 

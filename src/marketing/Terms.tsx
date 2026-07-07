@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import LegalLayout, { LegalSection } from './LegalLayout'
+import { COMPANY } from '../lib/companyInfo'
 
 export default function Terms() {
   const { t } = useTranslation()
@@ -58,7 +59,7 @@ export default function Terms() {
 
       <LegalSection no={12} title={t('terms.s12Title')}>
         <p>
-          {t('terms.s12Pre')} <strong>support@eziteach.hk</strong>
+          {t('terms.s12Pre')} <strong>{COMPANY.supportEmail}</strong>
           {t('terms.s12Post')}
         </p>
       </LegalSection>

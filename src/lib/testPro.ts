@@ -1,16 +1,22 @@
 // ============================================================
 //  測試 Pro（推廣代碼）
 //  ------------------------------------------------------------
-//  ⚠️ 純前端測試機制：輸入代碼「NTK」即本機解鎖 Pro 體驗，方便未接
-//  金錢付款前試 Pro UI / 功能 gating。唔會寫雲端訂閱、唔會繞過伺服器
-//  端額度（Gemini 額度仍按真實訂閱）。之後接好 Stripe 即取代。
+//  ⚠️ 只限本地開發模式：方便未接付款前試 Pro UI / 功能 gating。
+//  Production bundle 必須唔提供 client-side 解鎖，避免變成收入漏洞。
 // ============================================================
 
 const KEY = 'ntk.testPro'
-const TEST_CODE = 'NTK'
+const TEST_CODE = import.meta.env.DEV
+  ? ((import.meta.env.VITE_TEST_PRO_CODE as string | undefined) ?? 'NTK')
+      .trim()
+      .toUpperCase()
+  : ''
 const EVENT = 'ntk:testpro'
 
+export const isTestProEnabled = import.meta.env.DEV && Boolean(TEST_CODE)
+
 export function hasTestPro(): boolean {
+  if (!isTestProEnabled) return false
   try {
     return localStorage.getItem(KEY) === '1'
   } catch {
@@ -31,6 +37,7 @@ function set(on: boolean): void {
 
 /** 套用推廣代碼；啱「NTK」就解鎖測試 Pro，回 true。 */
 export function redeemTestCode(code: string): boolean {
+  if (!isTestProEnabled) return false
   if (code.trim().toUpperCase() === TEST_CODE) {
     set(true)
     return true

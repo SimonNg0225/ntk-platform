@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import LegalLayout, { LegalSection } from './LegalLayout'
+import { COMPANY } from '../lib/companyInfo'
 
 export default function Privacy() {
   const { t } = useTranslation()
@@ -66,7 +67,7 @@ export default function Privacy() {
 
       <LegalSection no={8} title={t('privacy.s8Title')}>
         <p>
-          {t('privacy.s8Pre')} <strong>privacy@eziteach.example</strong>
+          {t('privacy.s8Pre')} <strong>{COMPANY.supportEmail}</strong>
           {t('privacy.s8Post')}
         </p>
       </LegalSection>

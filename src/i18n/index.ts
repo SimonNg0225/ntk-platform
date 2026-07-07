@@ -38,15 +38,18 @@ const resources = {
         brandSub: BRAND_TAGLINE_ZH,
       },
       nav: { pricing: '定價', start: '免費開始', enterApp: '進入工作台' },
-      landingNav: { workflow: '工作流', features: '功能' },
+      landingNav: { workflow: '工作流', features: '功能', faq: '常見問題' },
       hero: {
         badge: '個人老師先用 · 香港課堂場景',
-        h1Title: '香港老師的 AI 工作台',
-        h1Line1: '香港老師的',
-        h1Line2: 'AI 工作台',
+        painLabel: '老師痛點',
+        h1Title: '香港老師的 AI 工作台：夜晚十一點，仲做緊聽日份簡報？',
+        h1Line1: '夜晚十一點，',
+        h1Line2: '仲做緊聽日',
+        h1Joiner: '',
+        h1Line3: '份簡報？',
         h1pre: '一位老師都開得起，',
         h1accent: '備課到回饋一條龍',
-        sub: '備課、AI 出題、成績與弱項分析、點名、家長溝通、行政文件 —— 先由你自己免費用起，需要時再帶入科組或學校。',
+        sub: '由課題到教學簡報，一鍵生成，下載即用。備課、AI 出題、成績與跟進都收回同一個工作台。',
         ctaStart: '免費開始使用',
         ctaEnter: '進入工作台',
         ctaPricing: '查看定價',
@@ -81,6 +84,27 @@ const resources = {
         after: {
           title: '課後：回饋與跟進',
           desc: '整理批改、弱項、評語和家長跟進，下一堂課要補什麼一眼就見到。',
+        },
+      },
+      useCases: {
+        eyebrow: '最先值得打中的場景',
+        title: '先解決老師最願意付費的工作',
+        sub: '商業化唔係堆滿功能，而是讓老師一開頁就知道：今晚最花時間、最煩、最容易出錯的工作，可以先被處理好。',
+        nextLesson: {
+          title: '下一堂課任務包',
+          desc: '把課題、教材、時間表和待辦整理成一堂課包，老師由「有得改」開始，而不是由空白文件開始。',
+        },
+        materials: {
+          title: '教材與簡報',
+          desc: '由題目、工作紙到 PowerPoint，一次生成初稿；保留老師改動空間，適合趕課、補課和公開試操練。',
+        },
+        marking: {
+          title: '批改與弱項',
+          desc: '把評分準則、回饋句、成績和弱項分析放在同一條線，方便之後補底和家長跟進。',
+        },
+        admin: {
+          title: '行政與溝通',
+          desc: '會議筆記、文件速讀、家長訊息和掃描歸檔收回一處，減少老師放學後在多個工具之間來回。',
         },
       },
       f: {
@@ -125,9 +149,46 @@ const resources = {
         offline: '可安裝、離線可用（PWA）',
         a11y: '無障礙設計 · 手機 / 平板適配',
       },
+      faq: {
+        eyebrow: '常見問題',
+        title: '先解答購買前會問的事',
+        sub: '教育產品最怕「看起來好用，但不敢真的放進日常」。這裡把私隱、收費、資料和 AI 責任先講清楚。',
+        school: {
+          q: '一定要學校採購先用到嗎？',
+          a: '不用。產品定位是個人老師先行，你可以用免費版整理自己的備課和課後工作；到科組或學校有需要時，再升級或討論團隊方案。',
+        },
+        studentData: {
+          q: '可以輸入學生資料嗎？',
+          a: '建議先用代號或遮蔽可識別資料。平台文案和流程會提醒老師保護學生私隱，處理個人資料時仍要按學校政策和香港法例要求。',
+        },
+        subjects: {
+          q: '只適合 BAFS 嗎？',
+          a: '不是。BAFS 是起始示範科目，設定內可選不同任教科目；出題、教案、簡報和行政流程本身是跨科目工作流。',
+        },
+        pricing: {
+          q: '免費版和付費版最大分別是什麼？',
+          a: '免費版讓你試完整個工作流；Plus / Pro 主要增加每月 AI 點數、同步和高階模型等能力，適合每星期穩定使用或密集備課。',
+        },
+        export: {
+          q: '資料可以帶走嗎？',
+          a: '可以。產品保留匯出和清除資料入口；個人老師先建立可控感，之後再決定是否登入同步。',
+        },
+        aiReview: {
+          q: 'AI 生成內容可以直接用嗎？',
+          a: 'AI 只應作初稿。題目、教案、評語和家長訊息都應由老師覆核，尤其涉及學生、評估或正式文件時。',
+        },
+      },
       ctaTitle: '今個學期，由更有條理開始',
       ctaSub: '免費試用全部教學功能，需要時先升級。',
-      footer: { privacy: '私隱政策', terms: '服務條款', guidelines: '社群守則', pricing: '定價', copy: '為香港教育工作者而設' },
+      footer: {
+        privacy: '私隱政策',
+        terms: '服務條款',
+        guidelines: '社群守則',
+        pricing: '定價',
+        copy: '為香港教育工作者而設',
+        dataNotice:
+          '私隱政策及個人資料處理以香港《個人資料（私隱）條例》（第 486 章）的要求作設計方向；提交內容前，請先避免輸入可識別學生資料。',
+      },
 
       common: { backHome: '返回首頁' },
       legal: {
@@ -310,15 +371,18 @@ const resources = {
       ...appEn,
       signingIn: 'Signing in…',
       nav: { pricing: 'Pricing', start: 'Get started', enterApp: 'Open workspace' },
-      landingNav: { workflow: 'Workflow', features: 'Features' },
+      landingNav: { workflow: 'Workflow', features: 'Features', faq: 'FAQ' },
       hero: {
         badge: 'Individual teachers first · Hong Kong classroom context',
-        h1Title: 'The AI workspace for Hong Kong teachers',
-        h1Line1: 'The AI workspace',
-        h1Line2: 'for Hong Kong teachers',
+        painLabel: 'Teacher pain point',
+        h1Title: 'The AI workspace for Hong Kong teachers: still making tomorrow’s slides at 11pm?',
+        h1Line1: 'Still making',
+        h1Line2: 'tomorrow’s',
+        h1Joiner: ' ',
+        h1Line3: 'slides at 11pm?',
         h1pre: 'One teacher can start, ',
         h1accent: 'from prep to feedback',
-        sub: 'Lesson prep, AI question generation, grades & weakness analysis, attendance, parent comms and admin documents — start free as an individual teacher, then bring it to your panel or school when ready.',
+        sub: 'Go from topic to teaching slides in one flow. Generate, refine and download lesson packs inside the AI workspace for Hong Kong teachers.',
         ctaStart: 'Start free',
         ctaEnter: 'Open workspace',
         ctaPricing: 'See pricing',
@@ -353,6 +417,27 @@ const resources = {
         after: {
           title: 'After class: feedback and follow-up',
           desc: 'Organise marking, weak spots, comments and parent follow-ups, so the next lesson plan is obvious.',
+        },
+      },
+      useCases: {
+        eyebrow: 'Where it pays off first',
+        title: 'Start with the work teachers are willing to pay to reduce',
+        sub: 'Commercial readiness is not about adding more features. It is about making the visitor see that tonight’s slow, risky and repetitive work can be handled first.',
+        nextLesson: {
+          title: 'Next-lesson task pack',
+          desc: 'Turn topics, materials, timetable context and to-dos into one lesson pack, so teachers start from something editable rather than a blank document.',
+        },
+        materials: {
+          title: 'Materials and slides',
+          desc: 'Generate drafts for questions, worksheets and PowerPoint slides in one flow, while leaving space for teacher editing.',
+        },
+        marking: {
+          title: 'Marking and weak spots',
+          desc: 'Keep rubrics, feedback lines, grades and weakness analysis in one thread, ready for follow-up and parent communication.',
+        },
+        admin: {
+          title: 'Admin and communication',
+          desc: 'Meeting notes, document summaries, parent messages and scans sit in one place instead of across multiple tools after school.',
         },
       },
       f: {
@@ -397,9 +482,46 @@ const resources = {
         offline: 'Installable, works offline (PWA)',
         a11y: 'Accessible · phone / tablet ready',
       },
+      faq: {
+        eyebrow: 'FAQ',
+        title: 'Answer the questions buyers ask first',
+        sub: 'Education products must feel safe enough for daily use. Privacy, pricing, data ownership and AI responsibility are made explicit before signup.',
+        school: {
+          q: 'Do I need school procurement first?',
+          a: 'No. EziTeach AI is designed for individual teachers to start first. Use the free plan for your own workflow, then discuss panel or school options when there is demand.',
+        },
+        studentData: {
+          q: 'Can I enter student data?',
+          a: 'Use codes or remove identifiable details first. The product reminds teachers to protect student privacy; handling personal data must still follow school policy and Hong Kong law.',
+        },
+        subjects: {
+          q: 'Is this only for BAFS?',
+          a: 'No. BAFS is the starting subject pack, but the lesson planning, question generation, slides and admin workflows are designed to work across subjects.',
+        },
+        pricing: {
+          q: 'What is the main difference between free and paid plans?',
+          a: 'The free plan lets you try the full workflow. Plus and Pro mainly add monthly AI credits, sync and advanced model capacity for regular or heavy use.',
+        },
+        export: {
+          q: 'Can I take my data with me?',
+          a: 'Yes. Export and clear-data paths are built into the product, so individual teachers stay in control before deciding whether to sync.',
+        },
+        aiReview: {
+          q: 'Can AI output be used directly?',
+          a: 'AI output should be treated as a draft. Teachers should review questions, lesson plans, comments and parent messages before using them.',
+        },
+      },
       ctaTitle: 'Start this term more organised',
       ctaSub: 'Try every teaching feature free; upgrade when you need to.',
-      footer: { privacy: 'Privacy', terms: 'Terms', guidelines: 'Community Guidelines', pricing: 'Pricing', copy: 'Made for Hong Kong educators' },
+      footer: {
+        privacy: 'Privacy',
+        terms: 'Terms',
+        guidelines: 'Community Guidelines',
+        pricing: 'Pricing',
+        copy: 'Made for Hong Kong educators',
+        dataNotice:
+          'The Privacy Policy and personal data handling are designed with Hong Kong Personal Data (Privacy) Ordinance (Cap. 486) requirements in mind; avoid entering identifiable student data before submission.',
+      },
 
       common: { backHome: 'Back to home' },
       legal: {

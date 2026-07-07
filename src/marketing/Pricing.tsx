@@ -17,7 +17,7 @@ import {
 import { useAuth } from '../context/AuthContext'
 import { useToast } from '../context/ToastContext'
 import { useSubscription } from '../hooks/useSubscription'
-import { redeemTestCode, clearTestPro } from '../lib/testPro'
+import { redeemTestCode, clearTestPro, isTestProEnabled } from '../lib/testPro'
 import { useConfirm } from '../context/ConfirmContext'
 import { refundEstimate, refundRequest, hkd } from '../lib/refund'
 import { COMPANY } from '../lib/companyInfo'
@@ -192,7 +192,7 @@ export default function Pricing() {
         <div className="text-center">
           <Link
             to="/"
-            className="inline-flex min-h-11 items-center gap-1 rounded-lg px-2 text-sm text-slate-400 transition hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+            className="inline-flex min-h-11 items-center gap-1 rounded-lg px-2 text-sm text-slate-600 transition hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:text-slate-300"
           >
             <ArrowLeft size={14} strokeWidth={1.75} /> {t('common.backHome')}
           </Link>
@@ -203,7 +203,7 @@ export default function Pricing() {
           <h1 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">
             {t('pricing.title')}
           </h1>
-          <p className="mx-auto mt-3 max-w-2xl text-sm leading-relaxed text-slate-500 dark:text-slate-400 sm:text-base">
+          <p className="mx-auto mt-3 max-w-2xl text-sm leading-relaxed text-slate-600 dark:text-slate-300 sm:text-base">
             {t('pricing.subtitle')}
           </p>
 
@@ -216,7 +216,7 @@ export default function Pricing() {
                   className={`min-h-10 rounded-lg px-4 font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 ${
                     cycle === c
                       ? 'bg-accent text-white'
-                      : 'text-slate-500 hover:text-accent dark:text-slate-400'
+                      : 'text-slate-600 hover:text-accent dark:text-slate-300'
                   }`}
                 >
                   {c === 'monthly' ? t('pricing.monthly') : t('pricing.annual')}
@@ -249,7 +249,7 @@ export default function Pricing() {
                     {item.title}
                   </p>
                 </div>
-                <p className="mt-2 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+                <p className="mt-2 text-xs leading-relaxed text-slate-600 dark:text-slate-300">
                   {item.desc}
                 </p>
               </div>
@@ -280,7 +280,7 @@ export default function Pricing() {
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <h2 className="text-xl font-bold">{plan.name}</h2>
-                    <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                    <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
                       {plan.tagline}
                     </p>
                   </div>
@@ -293,7 +293,7 @@ export default function Pricing() {
                   <p className="mt-1 text-sm font-semibold leading-snug text-slate-800 dark:text-slate-100">
                     {fit.bestFor}
                   </p>
-                  <p className="mt-1 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+                  <p className="mt-1 text-xs leading-relaxed text-slate-600 dark:text-slate-300">
                     {fit.outcome}
                   </p>
                 </div>
@@ -335,13 +335,13 @@ export default function Pricing() {
                         <button
                           onClick={onRefund}
                           disabled={busy === 'refund'}
-                          className="min-h-11 w-full rounded-lg text-center text-xs text-slate-400 transition hover:text-rose-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400/40 disabled:opacity-50"
+                          className="min-h-11 w-full rounded-lg text-center text-xs text-slate-600 transition hover:text-rose-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400/40 disabled:opacity-50 dark:text-slate-300"
                         >
                           {busy === 'refund' ? '處理中…' : '申請退款（按 AI 用量退未用份額）'}
                         </button>
                       </div>
                     ) : (
-                      <div className="w-full rounded-xl bg-slate-100 py-3 text-center font-semibold text-slate-400 dark:bg-slate-800">
+                      <div className="w-full rounded-xl bg-slate-100 py-3 text-center font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
                         {t('pricing.current')}
                       </div>
                     )
@@ -396,7 +396,7 @@ export default function Pricing() {
           </div>
           <div className="overflow-x-auto">
             <table className="w-full min-w-[640px] text-left text-sm">
-              <thead className="bg-slate-50 text-xs font-semibold uppercase tracking-[0.08em] text-slate-400 dark:bg-slate-800/60 dark:text-slate-500">
+              <thead className="bg-slate-50 text-xs font-semibold uppercase tracking-[0.08em] text-slate-600 dark:bg-slate-800/60 dark:text-slate-300">
                 <tr>
                   <th className="px-4 py-3 sm:px-6">項目</th>
                   <th className="px-4 py-3">免費</th>
@@ -413,7 +413,7 @@ export default function Pricing() {
                     {[free, plus, pro].map((value, index) => (
                       <td
                         key={`${label}-${index}`}
-                        className="px-4 py-3 text-slate-500 dark:text-slate-400"
+                        className="px-4 py-3 text-slate-600 dark:text-slate-300"
                       >
                         {value}
                       </td>
@@ -425,54 +425,55 @@ export default function Pricing() {
           </div>
         </section>
 
-        {/* 推廣代碼（測試：輸入「NTK」即解鎖 Pro 體驗，未接付款前用） */}
-        <div className="mx-auto mt-8 max-w-sm">
-          {sub.isTest ? (
-            <div className="flex items-center justify-between gap-2 rounded-xl border border-accent/40 bg-accent-soft px-4 py-3 dark:bg-accent/10">
-              <span className="inline-flex items-center gap-1.5 text-sm font-medium text-accent-strong dark:text-accent">
-                <Ticket size={15} /> 已啟用 Pro 試用
-              </span>
-              <button
-                onClick={() => {
-                  clearTestPro()
-                  toast.info('已取消 Pro 試用')
-                }}
-                className="inline-flex min-h-11 items-center rounded-lg px-3 text-xs font-medium text-slate-500 transition hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
-              >
-                取消
-              </button>
-            </div>
-          ) : (
-            <div>
-              <label className="mb-1.5 block text-xs font-medium text-slate-500 dark:text-slate-400">
-                有推廣代碼？
-              </label>
-              <div className="flex gap-2">
-                <input
-                  value={promo}
-                  onChange={(e) => setPromo(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && applyPromo()}
-                  placeholder="輸入代碼"
-                  className="min-h-11 flex-1 rounded-lg border border-[color:var(--border)] bg-[color:var(--surface)] px-3 text-sm text-slate-800 outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/30 dark:text-slate-100"
-                />
+        {isTestProEnabled && (
+          <div className="mx-auto mt-8 max-w-sm">
+            {sub.isTest ? (
+              <div className="flex items-center justify-between gap-2 rounded-xl border border-accent/40 bg-accent-soft px-4 py-3 dark:bg-accent/10">
+                <span className="inline-flex items-center gap-1.5 text-sm font-medium text-accent-strong dark:text-accent">
+                  <Ticket size={15} /> 已啟用 Pro 試用
+                </span>
                 <button
-                  onClick={applyPromo}
-                  disabled={!promo.trim()}
-                  className="min-h-11 rounded-lg bg-accent px-4 text-sm font-semibold text-white transition hover:bg-accent-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 disabled:opacity-50"
+                  onClick={() => {
+                    clearTestPro()
+                    toast.info('已取消 Pro 試用')
+                  }}
+                  className="inline-flex min-h-11 items-center rounded-lg px-3 text-xs font-medium text-slate-600 transition hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:text-slate-300"
                 >
-                  套用
+                  取消
                 </button>
               </div>
-            </div>
-          )}
-        </div>
+            ) : (
+              <div>
+                <label className="mb-1.5 block text-xs font-medium text-slate-600 dark:text-slate-300">
+                  開發測試代碼
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    value={promo}
+                    onChange={(e) => setPromo(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && applyPromo()}
+                    placeholder="輸入代碼"
+                    className="min-h-11 flex-1 rounded-lg border border-[color:var(--border)] bg-[color:var(--surface)] px-3 text-sm text-slate-800 outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/30 dark:text-slate-100"
+                  />
+                  <button
+                    onClick={applyPromo}
+                    disabled={!promo.trim()}
+                    className="min-h-11 rounded-lg bg-accent px-4 text-sm font-semibold text-white transition hover:bg-accent-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 disabled:opacity-50"
+                  >
+                    套用
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         {!isBillingConfigured && (
-          <p className="mt-8 text-center text-xs text-slate-400">
+          <p className="mt-8 text-center text-xs text-slate-600 dark:text-slate-300">
             {t('pricing.notConfiguredPre')}
           </p>
         )}
-        <p className="mt-6 text-center text-[11px] leading-relaxed text-slate-400">
+        <p className="mt-6 text-center text-[11px] leading-relaxed text-slate-600 dark:text-slate-300">
           {COMPANY.legalName || COMPANY.brand}
           {COMPANY.brNumber ? ` · 商業登記證 ${COMPANY.brNumber}` : ''}
           {' · 聯絡 '}
