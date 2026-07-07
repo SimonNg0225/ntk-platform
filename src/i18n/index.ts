@@ -41,7 +41,7 @@ const resources = {
       landingNav: { workflow: '工作流', features: '功能', faq: '常見問題' },
       landingMeta: {
         description:
-          'EziTeach AI 是香港老師的 AI 工作台：由一句課題或任務開始，整合備課、出題、簡報、成績分析、文件整理、點名與家長溝通。可先免費開始，需要更多 AI 點數或 Pro 功能再升級。',
+          'EziTeach AI 是香港老師的 AI 工作台：由一句課題或任務開始，整合備課、出題、簡報、成績分析、文件整理、行政流程與課後跟進。可先免費開始，需要更多 AI 點數或 Pro 功能再升級。',
         socialDescription:
           '香港老師的 AI 工作台：備課、出題、簡報、成績分析、文件整理與課後跟進，一個地方完成。',
       },
@@ -55,14 +55,14 @@ const resources = {
         h1Line3: '跟進一站做',
         h1pre: '一位老師都開得起，',
         h1accent: '備課到回饋一條龍',
-        sub: '輸入課題、任務或資料，EziTeach AI 會幫你分流到備課、出題、簡報、成績分析、文件整理、點名與課後跟進等工具。',
+        sub: '輸入課題、任務或資料，EziTeach AI 會幫你分流到備課、出題、簡報、成績分析、文件整理、行政流程與課後跟進等工具。',
         ctaStart: '免費開始使用',
         ctaEnter: '進入工作台',
         ctaPricing: '查看定價',
         noCard: '可先免費開始 · 支援個人 Pro 訂閱 · 教師保留最後判斷',
         stats: {
           time: { value: '3 段', label: '課前、課中、課後工作接成一條線' },
-          tools: { value: '30+', label: '教學、行政、成績、文件工具集中管理' },
+          tools: { value: '20+', label: '教學、行政、成績、文件工作工具集中管理' },
           solo: { value: '1 位', label: '個人老師可先用，毋須等學校採購' },
         },
         checkLead: '由一句任務開始，逐步幫你收好：',
@@ -85,7 +85,7 @@ const resources = {
         },
         during: {
           title: '課中：按鐘聲推進',
-          desc: '時間表、點名、抽人、分組、計時、計分和課堂任務放回同一個工作台，減少上堂時來回切換。',
+          desc: '時間表、待辦、行事曆、重要日子倒數和課堂任務放回同一個工作台，減少上堂前後來回切換。',
         },
         after: {
           title: '課後：回饋與跟進',
@@ -110,7 +110,7 @@ const resources = {
         },
         admin: {
           title: '行政文件與溝通',
-          desc: '會議筆記、錄音轉文字、文件速讀、掃描 PDF、家長溝通記錄和行政 Word 套版收回一處。',
+          desc: '會議筆記、錄音轉文字、文件速讀、掃描 PDF、家長訊息初稿和行政 Word 套版收回一處。',
         },
       },
       f: {
@@ -123,9 +123,9 @@ const resources = {
         gradeTitle: '成績分析與批改',
         gradeDesc: '支援 Excel Cal Mark 模板匯入分數，分析題目表現、預測等級、弱項和跟進分組；AI 內容仍由老師覆核。',
         attTitle: '課堂與班務',
-        attDesc: '時間表、待辦、逐堂點名、隨機抽人、即時分組、計時、計分和重要日子倒數，上堂即開即用。',
+        attDesc: '時間表、待辦、行事曆、重要日子倒數與課堂任務整理，幫你上堂前後少啲切換。',
         commTitle: '行政、文件與溝通',
-        commDesc: '家長溝通記錄、Word 行政文件套版、文件速讀、會議 / 觀課錄音轉文字、掃描 PDF 和工作週報。',
+        commDesc: '家長訊息初稿、Word 行政文件套版、文件速讀、會議 / 觀課錄音轉文字、掃描 PDF 和工作週報。',
         moreTitle: '同一個工作台內還有',
         more: '教學 AI、全域搜尋、問我資料 AI、教學資源庫、資源分享區、老師社群、行事曆、快速擷取、科組協作',
       },
@@ -152,7 +152,7 @@ const resources = {
         review: 'AI 只作初稿，教師保留最後判斷',
         portable: '可本機使用，登入後再雲端同步',
         local: '資料存你部機，登入先雲端同步',
-        offline: '可安裝、離線可用（PWA）',
+        offline: '可安裝；部分本機功能可離線使用（PWA）',
         a11y: '無障礙設計 · 手機 / 平板適配',
       },
       faq: {
@@ -165,7 +165,7 @@ const resources = {
         },
         studentData: {
           q: '可以輸入學生資料嗎？',
-          a: '如要處理成績、點名或班務資料，建議先用學生編號或代號，避免輸入可識別資料。處理個人資料時仍要按學校政策和香港法例要求。',
+          a: '如要處理成績、班務或課堂紀錄，建議先用學生編號或代號，避免輸入可識別資料。處理個人資料時仍要按學校政策和香港法例要求。',
         },
         subjects: {
           q: '只適合某一科嗎？',
@@ -209,7 +209,7 @@ const resources = {
         taskPackItems: {
           worksheet: '工作紙',
           shortAnswer: '短答題',
-          parentMessage: '家長訊息',
+          parentMessage: '家長信初稿',
         },
         workspaceTitle: '今日工作台',
         workspaceMeta: '5 個任務 · 下堂前 18 分鐘',
@@ -218,7 +218,7 @@ const resources = {
           prep: { title: '中三商業環境教案', meta: 'AI 已整理重點與活動' },
           quiz: { title: 'DSE 個案題 12 題', meta: '連參考答案與評分準則' },
           slides: { title: '教學簡報草稿', meta: '封面與版式已配好' },
-          marking: { title: '短答批改隊列', meta: '今日已改 32 本' },
+          marking: { title: '待批改任務', meta: '今日跟進中' },
         },
         statusReady: '已準備',
         statusActive: '進行中',
@@ -238,7 +238,7 @@ const resources = {
         pricing: '定價',
         copy: '為香港教育工作者而設',
         dataNotice:
-          '私隱政策及個人資料處理以香港《個人資料（私隱）條例》（第 486 章）的要求作設計方向；處理成績、點名或班務資料前，請先使用代號或遮蔽可識別學生資料。',
+          '私隱政策及個人資料處理以香港《個人資料（私隱）條例》（第 486 章）的要求作設計方向；處理成績、班務或課堂紀錄前，請先使用代號或遮蔽可識別學生資料。',
       },
 
       common: { backHome: '返回首頁' },
@@ -317,7 +317,7 @@ const resources = {
         s6Body: '我哋只在你「接受」後才載入分析 cookie。拒絕不會影響核心功能。錯誤監控屬維持服務之正當利益。',
         s7Title: '兒童',
         s7Body:
-          '平台供教師專業使用，不面向兒童。若教師在成績、點名或班務工具輸入學生相關資料，須按學校政策及適用法律處理，並應盡量使用代號或遮蔽可識別資料；我哋不會主動向兒童收集個人資料。',
+          '平台供教師專業使用，不面向兒童。若教師在成績、班務或課堂紀錄工具輸入學生相關資料，須按學校政策及適用法律處理，並應盡量使用代號或遮蔽可識別資料；我哋不會主動向兒童收集個人資料。',
         s8Title: '聯絡我哋',
         s8Pre: '如對私隱有任何查詢，請電郵至',
         s8Post: '。',
@@ -330,7 +330,7 @@ const resources = {
           `歡迎使用 ${BRAND_NAME}（「本平台」）。當你使用本平台，即表示你同意以下條款。如不同意，請停止使用。`,
         s1Title: '服務說明',
         s1Body:
-          '本平台為香港教師提供備課、出題、成績管理、點名、家長溝通、行政文件及 AI 教學助手等工具。我哋可能不時更新、增刪功能。',
+          '本平台為香港教師提供備課、出題、成績管理、班務跟進、對外訊息初稿、行政文件及 AI 教學助手等工具。我哋可能不時更新、增刪功能。',
         s2Title: '帳戶',
         s2Body:
           '部分功能需以 Google 帳戶登入。你須對帳戶活動及所輸入內容負責，並確保處理學生資料時符合所屬學校之政策及適用法律。',
@@ -425,7 +425,7 @@ const resources = {
         },
         legalNoticeTitle: '學生資料處理提示',
         legalNotice:
-          '處理成績、點名、班務或課堂紀錄前，請先使用學生代號或遮蔽可識別個人資料。AI 內容只作初稿及輔助判斷，教師仍保留最後專業覆核。',
+          '處理成績、班務或課堂紀錄前，請先使用學生代號或遮蔽可識別個人資料。AI 內容只作初稿及輔助判斷，教師仍保留最後專業覆核。',
         legalCopyright: '© {{year}} EziTeach AI · 香港老師的 AI 工作台',
       },
     },
@@ -438,7 +438,7 @@ const resources = {
       landingNav: { workflow: 'Workflow', features: 'Features', faq: 'FAQ' },
       landingMeta: {
         description:
-          'EziTeach AI is the AI workspace for Hong Kong teachers: start from a topic or task and organise lesson prep, question generation, slides, grade analytics, document handling, attendance and parent follow-up. Start free, then upgrade for more AI credits or Pro features.',
+          'EziTeach AI is the AI workspace for Hong Kong teachers: start from a topic or task and organise lesson prep, question generation, slides, grade analytics, document handling, admin workflows and lesson follow-up. Start free, then upgrade for more AI credits or Pro features.',
         socialDescription:
           'The AI workspace for Hong Kong teachers: lesson prep, questions, slides, grade analytics, documents and follow-up in one place.',
       },
@@ -452,14 +452,14 @@ const resources = {
         h1Line3: 'follow-up',
         h1pre: 'One teacher can start, ',
         h1accent: 'from prep to feedback',
-        sub: 'Enter a topic, task or file, and EziTeach AI routes you to lesson prep, question generation, slides, grade analytics, document handling, attendance and follow-up tools.',
+        sub: 'Enter a topic, task or file, and EziTeach AI routes you to lesson prep, question generation, slides, grade analytics, document handling, admin workflows and follow-up tools.',
         ctaStart: 'Start free',
         ctaEnter: 'Open workspace',
         ctaPricing: 'See pricing',
         noCard: 'Start free · Individual Pro subscription · Teacher keeps final judgement',
         stats: {
           time: { value: '3 phases', label: 'Before, during and after class connected' },
-          tools: { value: '30+', label: 'Teaching, admin, grades and documents in one workspace' },
+          tools: { value: '20+', label: 'Teaching, admin, grades and document work in one workspace' },
           solo: { value: '1 teacher', label: 'Start individually before school procurement' },
         },
         checkLead: 'Start with one task and organise:',
@@ -482,7 +482,7 @@ const resources = {
         },
         during: {
           title: 'During class: keep the lesson moving',
-          desc: 'Timetable, attendance, random picker, grouping, timer, scoring and class tasks sit in the same workspace, reducing switching during class.',
+          desc: 'Timetable, tasks, calendar, countdowns and class-task planning sit in the same workspace, reducing switching before and after class.',
         },
         after: {
           title: 'After class: feedback and follow-up',
@@ -507,7 +507,7 @@ const resources = {
         },
         admin: {
           title: 'Admin documents and communication',
-          desc: 'Meeting notes, audio transcription, document digest, PDF scan, parent communication records and Word admin templates sit in one place.',
+          desc: 'Meeting notes, audio transcription, document digest, PDF scan, parent-message drafts and Word admin templates sit in one place.',
         },
       },
       f: {
@@ -520,9 +520,9 @@ const resources = {
         gradeTitle: 'Grade analytics and marking',
         gradeDesc: 'Import scores with the Excel Cal Mark template, analyse question performance, predict grades, identify weak spots and build follow-up groups. AI output remains under teacher review.',
         attTitle: 'Classroom and class admin',
-        attDesc: 'Timetable, tasks, attendance, random picker, instant grouping, timer, scoreboard and countdowns are ready for live class use.',
+        attDesc: 'Timetable, tasks, calendar, countdowns and class-task planning help reduce switching before and after lessons.',
         commTitle: 'Admin, documents and communication',
-        commDesc: 'Parent communication records, Word admin templates, document digest, meeting / lesson audio transcription, PDF scanning and weekly work reports.',
+        commDesc: 'Parent-message drafts, Word admin templates, document digest, meeting / lesson audio transcription, PDF scanning and weekly work reports.',
         moreTitle: 'Also in the same workspace',
         more: 'Teaching AI, global search, ask-my-data AI, resource library, resource sharing, teacher community, calendar, quick capture and panel collaboration',
       },
@@ -549,7 +549,7 @@ const resources = {
         review: 'AI drafts; teachers keep final judgment',
         portable: 'Local use first, cloud sync after sign-in',
         local: 'Data on your device, synced once you sign in',
-        offline: 'Installable, works offline (PWA)',
+        offline: 'Installable; some local tools work offline (PWA)',
         a11y: 'Accessible · phone / tablet ready',
       },
       faq: {
@@ -562,7 +562,7 @@ const resources = {
         },
         studentData: {
           q: 'Can I enter student data?',
-          a: 'For scores, attendance or class records, use student IDs or codes and avoid identifiable details where possible. Personal data handling must still follow school policy and Hong Kong law.',
+          a: 'For scores, class admin or lesson records, use student IDs or codes and avoid identifiable details where possible. Personal data handling must still follow school policy and Hong Kong law.',
         },
         subjects: {
           q: 'Is this only for one subject?',
@@ -606,7 +606,7 @@ const resources = {
         taskPackItems: {
           worksheet: 'Worksheet',
           shortAnswer: 'Short answers',
-          parentMessage: 'Parent message',
+          parentMessage: 'Parent-message draft',
         },
         workspaceTitle: "Today's workspace",
         workspaceMeta: '5 tasks · 18 min before next class',
@@ -615,7 +615,7 @@ const resources = {
           prep: { title: 'S3 business environment plan', meta: 'AI organised points and activities' },
           quiz: { title: '12 DSE case questions', meta: 'With answers and rubrics' },
           slides: { title: 'Teaching slide draft', meta: 'Cover and layouts prepared' },
-          marking: { title: 'Short-answer marking queue', meta: '32 scripts marked today' },
+          marking: { title: 'Marking tasks', meta: 'In progress today' },
         },
         statusReady: 'Ready',
         statusActive: 'In progress',
@@ -635,7 +635,7 @@ const resources = {
         pricing: 'Pricing',
         copy: 'Made for Hong Kong educators',
         dataNotice:
-          'The Privacy Policy and personal data handling are designed with Hong Kong Personal Data (Privacy) Ordinance (Cap. 486) requirements in mind; use codes or mask identifiable student details before handling scores, attendance or class records.',
+          'The Privacy Policy and personal data handling are designed with Hong Kong Personal Data (Privacy) Ordinance (Cap. 486) requirements in mind; use codes or mask identifiable student details before handling scores, class admin or lesson records.',
       },
 
       common: { backHome: 'Back to home' },
@@ -718,7 +718,7 @@ const resources = {
           'We only load analytics cookies after you "Accept". Declining does not affect core features. Error monitoring is a legitimate interest in maintaining the service.',
         s7Title: 'Children',
         s7Body:
-          'The Platform is for professional use by teachers and is not directed at children. If teachers enter student-related information in grade, attendance or class-management tools, they must handle it according to school policy and applicable law, and should use codes or mask identifiable details where possible. We do not actively collect personal data from children.',
+          'The Platform is for professional use by teachers and is not directed at children. If teachers enter student-related information in grade, class-management or lesson-record tools, they must handle it according to school policy and applicable law, and should use codes or mask identifiable details where possible. We do not actively collect personal data from children.',
         s8Title: 'Contact us',
         s8Pre: 'For any privacy enquiries, please email',
         s8Post: '.',
@@ -731,7 +731,7 @@ const resources = {
           'Welcome to EziTeach ("the Platform"). By using the Platform, you agree to the following terms. If you do not agree, please stop using it.',
         s1Title: 'Description of service',
         s1Body:
-          'The Platform provides Hong Kong teachers with tools for lesson prep, question generation, grade management, attendance, parent communication, admin documents and an AI teaching assistant. We may update, add or remove features from time to time.',
+          'The Platform provides Hong Kong teachers with tools for lesson prep, question generation, grade management, class follow-up, parent-message drafts, admin documents and an AI teaching assistant. We may update, add or remove features from time to time.',
         s2Title: 'Accounts',
         s2Body:
           'Some features require signing in with a Google account. You are responsible for your account activity and the content you enter, and must ensure that handling student data complies with your school’s policies and applicable law.',
@@ -830,7 +830,7 @@ const resources = {
         },
         legalNoticeTitle: 'Student Data Reminder',
         legalNotice:
-          'Before processing grades, attendance, class admin or lesson records, use student codes or mask identifiable personal data. AI output is a draft and support tool; teachers keep final professional review.',
+          'Before processing grades, class admin or lesson records, use student codes or mask identifiable personal data. AI output is a draft and support tool; teachers keep final professional review.',
         legalCopyright: '© {{year}} EziTeach AI · AI workspace for Hong Kong teachers',
       },
     },
