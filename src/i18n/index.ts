@@ -53,7 +53,7 @@ const resources = {
         ctaStart: '免費開始使用',
         ctaEnter: '進入工作台',
         ctaPricing: '查看定價',
-        noCard: '無需信用卡 · 不用學校帳戶 · 適用任何任教科目',
+        noCard: '可先免費開始 · 支援個人 Pro 訂閱 · 適用任何任教科目',
         stats: {
           time: { value: '3 步', label: '課前、課中、課後跟進一次過收好' },
           tools: { value: '30+', label: '常用教學工具集中在同一個工作台' },
