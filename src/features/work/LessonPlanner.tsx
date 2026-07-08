@@ -603,7 +603,7 @@ export default function LessonPlanner() {
                 className="inline-flex min-h-11 items-center gap-1.5 rounded-xl bg-white px-3.5 text-sm font-semibold !text-accent-strong shadow-sm transition hover:bg-accent-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
               >
                 <Sparkles size={16} />
-                AI 整教案
+                AI 生成教案
               </button>
             )}
           </>
@@ -1024,7 +1024,7 @@ export default function LessonPlanner() {
         onSaveAsTemplate={saveAsTemplate}
       />
 
-      {/* ─────────────── AI 整教案 ─────────────── */}
+      {/* ─────────────── AI 生成教案 ─────────────── */}
       {aiOpen && (
         <GenerateModal
           topics={sortedTopics}

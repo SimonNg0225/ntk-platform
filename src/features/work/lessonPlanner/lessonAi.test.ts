@@ -1,10 +1,10 @@
 import { describe, it, expect } from 'vitest'
-import { parseLessonGen } from './lessonAi'
+import { buildLessonSystem, parseLessonGen } from './lessonAi'
 
 const good = JSON.stringify({
-  objectives: '1. 學生能說明收入嘅定義\n2. 學生能用五步模型確認收入',
+  objectives: '1. 學生能說明收入的定義\n2. 學生能用五步模型確認收入',
   phases: [
-    { label: '引入', minutes: 5, detail: '提問：賣咗貨未收錢算唔算收入？' },
+    { label: '引入', minutes: 5, detail: '提問：賣出貨品但未收款是否算收入？' },
     { label: '講解', minutes: 20, detail: '逐步講五步模型' },
     { label: '課堂活動', minutes: 20, detail: '分組做個案' },
     { label: '總結', minutes: 10, detail: '回顧重點' },
@@ -16,9 +16,9 @@ const good = JSON.stringify({
 describe('parseLessonGen', () => {
   it('解析正常回應', () => {
     const r = parseLessonGen(good)
-    expect(r.objectives).toContain('收入嘅定義')
+    expect(r.objectives).toContain('收入的定義')
     expect(r.phases).toHaveLength(4)
-    expect(r.phases[0]).toEqual({ label: '引入', minutes: 5, detail: '提問：賣咗貨未收錢算唔算收入？' })
+    expect(r.phases[0]).toEqual({ label: '引入', minutes: 5, detail: '提問：賣出貨品但未收款是否算收入？' })
     expect(r.materials).toEqual(['PowerPoint 簡報', '課堂工作紙', 'DSE 過往試題'])
     expect(r.activities).toContain('分組討論')
   })
@@ -70,5 +70,34 @@ describe('parseLessonGen', () => {
     expect(r.objectives.length).toBeLessThanOrEqual(600)
     expect(r.phases[0].detail.length).toBeLessThanOrEqual(200)
     expect(r.activities.length).toBeLessThanOrEqual(600)
+  })
+})
+
+describe('buildLessonSystem', () => {
+  it('未選教學設計元素時不加入理論指令', () => {
+    const prompt = buildLessonSystem({ topic: '收入確認', brief: '', durationMin: 55 })
+    expect(prompt).not.toContain('教學設計元素：必須自然融入以下元素')
+  })
+
+  it('選中的教學設計元素會注入 prompt', () => {
+    const prompt = buildLessonSystem({
+      topic: '市場營銷',
+      brief: '用個案分析',
+      pedagogyIds: ['ai-learning', 'bloom-taxonomy', 'assessment-for-learning'],
+    })
+    expect(prompt).toContain('配合 AI 學習元素')
+    expect(prompt).toContain('Bloom Taxonomy')
+    expect(prompt).toContain('促進學習的評估')
+    expect(prompt).toContain('不要把教案變成理論清單')
+  })
+
+  it('未知 id 會被忽略', () => {
+    const prompt = buildLessonSystem({
+      topic: '市場營銷',
+      brief: '',
+      pedagogyIds: ['missing', 'udl'],
+    })
+    expect(prompt).toContain('UDL')
+    expect(prompt).not.toContain('missing')
   })
 })
