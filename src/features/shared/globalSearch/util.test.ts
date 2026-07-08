@@ -48,13 +48,13 @@ describe('fuzzyMatch — 子字串快路（連續命中大獎）', () => {
   })
 
   it('中段非詞首命中：無字頭/詞首獎，只扣「越前越好」', () => {
-    // "abcdef" / "cd" → sub=2，prev='b' 唔係 boundary
+    // "abcdef" / "cd" → sub=2，prev='b' 不是 boundary
     // 1000 + 2*6 - min(2,40) = 1000+12-2 = 1010
     expect(fuzzyMatch('abcdef', 'cd')).toEqual({ score: 1010, indices: [2, 3] })
   })
 
   it('大細階無關（toLowerCase）', () => {
-    // "HELLO" / "ell" → t="hello"，sub=1，prev='h' 唔係 boundary
+    // "HELLO" / "ell" → t="hello"，sub=1，prev='h' 不是 boundary
     // 1000 + 3*6 - 1 = 1017
     expect(fuzzyMatch('HELLO', 'ell')).toEqual({ score: 1017, indices: [1, 2, 3] })
   })
@@ -350,12 +350,12 @@ describe('typeSuggestions — type: 運算子自動完成（純函式）', () =>
   const sug = (raw: string) => typeSuggestions(raw, KINDS, labelOf)
   const ids = (raw: string) => sug(raw).map((s) => s.id)
 
-  it('唔係喺度打 type: → 空陣列（普通關鍵字）', () => {
+  it('不是喺度打 type: → 空陣列（普通關鍵字）', () => {
     expect(sug('hello')).toEqual([])
     expect(sug('')).toEqual([])
   })
 
-  it('啱啱打完 "type:"（partial 空）→ 列出全部 kind', () => {
+  it('剛剛打完 "type:"（partial 空）→ 列出全部 kind', () => {
     expect(ids('type:')).toEqual(KINDS)
   })
 
@@ -522,7 +522,7 @@ describe('isPinned — 釘選判斷（trim + 大細階無關）', () => {
 //  簽名係 relativeTime(iso?): string | null，內部用裸 Date.now()（與 inbox 版
 //  收 now 參數唔同 → 呢個係缺陷源頭：無法純函式注入，只能 fake timers）。
 //  分支（全部用第一性原理人手計門檻）：
-//    diff < 6e4(60s)        → '啱啱'
+//    diff < 6e4(60s)        → '剛剛'
 //    diff < 36e5(1hr)       → '{floor(diff/6e4)} 分鐘前'
 //    diff < 864e5(24hr)     → '{floor(diff/36e5)} 小時前'
 //    diff < 7×864e5(7日)    → '{floor(diff/864e5)} 日前'
@@ -562,11 +562,11 @@ describe('relativeTime（globalSearch 版，fake timers 釘死 now）', () => {
     expect(relativeTime('')).toBeNull() // 空字串先撞 !iso 短路 → null
   })
 
-  it('diff < 60s → 「啱啱」（含 0 同 59s 邊界）', () => {
+  it('diff < 60s → 「剛剛」（含 0 同 59s 邊界）', () => {
     pin()
-    expect(relativeTime(ago(0))).toBe('啱啱') // 啱啱同一刻
-    expect(relativeTime(ago(30 * 1000))).toBe('啱啱') // 30s
-    expect(relativeTime(ago(MIN - 1))).toBe('啱啱') // 59.999s 仍 < 6e4
+    expect(relativeTime(ago(0))).toBe('剛剛') // 剛剛同一刻
+    expect(relativeTime(ago(30 * 1000))).toBe('剛剛') // 30s
+    expect(relativeTime(ago(MIN - 1))).toBe('剛剛') // 59.999s 仍 < 6e4
   })
 
   it('分鐘分支：60s 起、59 分鐘上限（floor）', () => {

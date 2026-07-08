@@ -207,7 +207,7 @@ describe('Bug#3 lastLessonEndMin（取代硬編碼 16:00）', () => {
       lunch('12:00', '18:00'), // 超長 break，但唔算放學時間
       lesson(2, '13:00', '13:40'),
     ]
-    // 最後 lesson end = 13:40（唔係午膳 18:00）
+    // 最後 lesson end = 13:40（不是午膳 18:00）
     expect(lastLessonEndMin(bells)).toBe(13 * 60 + 40) // 820
   })
 

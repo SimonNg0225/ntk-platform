@@ -1,8 +1,8 @@
 // ============================================================
 //  逐 layout 螢幕子 render（純展示元件）
 //  ------------------------------------------------------------
-//  全部收 { slide, theme }，用 CSS 變數（preview/theme.ts 落喺外層）
-//  上色。螢幕版係「近似」：配色 + 版式結構對齊 .pptx，唔求像素完美。
+//  全部收 { slide, theme }，用 CSS 變數（preview/theme.ts 落在外層）
+//  上色。螢幕版係「近似」：配色 + 版式結構對齊 .pptx，不求像素完美。
 // ============================================================
 
 import type { Slide } from '../../../../lib/export/types'
@@ -229,7 +229,7 @@ export function SectionView({ slide, index }: ViewProps) {
   )
 }
 
-/** 極簡 SVG chart（純前端，零依賴）— 求色系一致，唔求精準 */
+/** 極簡 SVG chart（純前端，零依賴）— 求色系一致，不求精準 */
 export function ChartView({ slide, theme }: { slide: Slide; theme: PackTheme }) {
   const chart = slide.chart
   if (!chart) return null

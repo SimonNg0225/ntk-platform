@@ -109,7 +109,7 @@ describe('offsetFromToday', () => {
     expect(offsetFromToday(0)).toBe(todayISO()) // 必然同 today 基準一致
   })
 
-  it('+1 = 聽日；-1 = 尋日（偏移方向正確）', () => {
+  it('+1 = 明天；-1 = 昨天（偏移方向正確）', () => {
     vi.useFakeTimers()
     vi.setSystemTime(new Date(2026, 4, 15, 12, 0, 0)) // 2026-05-15
     expect(offsetFromToday(1)).toBe('2026-05-16')
@@ -152,7 +152,7 @@ describe('offsetFromToday', () => {
     vi.useFakeTimers()
     // 07:00 HKT = 2026-05-30T23:00:00Z；若用 UTC 切日會回 05-30，差一日。
     vi.setSystemTime(new Date(2026, 4, 31, 7, 0, 0))
-    expect(offsetFromToday(0)).toBe('2026-05-31') // 本地今日，唔係 UTC 05-30
+    expect(offsetFromToday(0)).toBe('2026-05-31') // 本地今日，不是 UTC 05-30
     expect(offsetFromToday(1)).toBe('2026-06-01')
   })
 })
@@ -192,7 +192,7 @@ describe('dueBucket', () => {
     expect(dueBucket(undefined, ref)).toBe('none')
     expect(dueBucket('', ref)).toBe('none')
   })
-  it('逾期/今日/聽日', () => {
+  it('逾期/今日/明天', () => {
     expect(dueBucket('2026-05-09', ref)).toBe('overdue')
     expect(dueBucket('2026-05-10', ref)).toBe('today')
     expect(dueBucket('2026-05-11', ref)).toBe('tomorrow')
@@ -228,7 +228,7 @@ describe('groupByDue', () => {
     expect(g.tomorrow.length + g.soon.length + g.later.length).toBe(0)
   })
 
-  it('聽日 / 未來 7 日（含）/ 之後（8 日）邊界', () => {
+  it('明天 / 未來 7 日（含）/ 之後（8 日）邊界', () => {
     const tmr = task({ id: '1', meta: { due: '2026-05-11' } }) // +1
     const soon7 = task({ id: '7', meta: { due: '2026-05-17' } }) // +7 含
     const later8 = task({ id: '8', meta: { due: '2026-05-18' } }) // +8
@@ -283,10 +283,10 @@ describe('groupByDue', () => {
 // ── dueLabel：人類可讀文字（ref = 2026-05-04 星期一）────────
 describe('dueLabel', () => {
   const ref = '2026-05-04' // 星期一
-  it('今日/聽日/尋日', () => {
+  it('今日/明天/昨天', () => {
     expect(dueLabel('2026-05-04', ref)).toBe('今日')
-    expect(dueLabel('2026-05-05', ref)).toBe('聽日')
-    expect(dueLabel('2026-05-03', ref)).toBe('尋日')
+    expect(dueLabel('2026-05-05', ref)).toBe('明天')
+    expect(dueLabel('2026-05-03', ref)).toBe('昨天')
   })
   it('逾期 N 日（N≥2）', () => {
     expect(dueLabel('2026-05-01', ref)).toBe('逾期 3 日')
@@ -366,7 +366,7 @@ describe('parseQuickAdd', () => {
     expect(daysBetween(todayISO(), r2.due!)).toBe(3) // +3 → 今日後 3 日
 
     const r3 = parseQuickAdd('交報告 tmr', projects)
-    expect(daysBetween(todayISO(), r3.due!)).toBe(1) // 聽日 → +1
+    expect(daysBetween(todayISO(), r3.due!)).toBe(1) // 明天 → +1
   })
 })
 
@@ -421,16 +421,16 @@ describe('completionStreak', () => {
   it('空陣列 → 0', () => {
     expect(completionStreak([])).toBe(0)
   })
-  it('今日未完成唔斷 streak（由尋日往前數）', () => {
-    // [前日, 尋日, 今日=0] → 數到尋日+前日 = 2
+  it('今日未完成唔斷 streak（由昨天往前數）', () => {
+    // [前日, 昨天, 今日=0] → 數到昨天+前日 = 2
     expect(completionStreak([cell(1), cell(1), cell(0)])).toBe(2)
   })
   it('今日完成 → 連同往前一齊數', () => {
-    // [前日=0, 尋日, 今日] → 今日+尋日 = 2，到前日=0 斷
+    // [前日=0, 昨天, 今日] → 今日+昨天 = 2，到前日=0 斷
     expect(completionStreak([cell(0), cell(1), cell(1)])).toBe(2)
   })
   it('中間有空窗即斷（非今日）', () => {
-    // [..., 尋日=0, 今日=1] → 今日 1，尋日 0 斷
+    // [..., 昨天=0, 今日=1] → 今日 1，昨天 0 斷
     expect(completionStreak([cell(1), cell(0), cell(1)])).toBe(1)
   })
   it('全部完成', () => {

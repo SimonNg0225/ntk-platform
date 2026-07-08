@@ -29,8 +29,8 @@ const LAYOUT_ZH: Record<SlideLayout, string> = {
 
 /**
  * 模板 pack → 版式偏好（pack-aware 生成）。
- * 偏好嘅兩款 layout = 該 pack 嘅招牌版式，令生成內容自然落到招牌結構，
- * 連「展示形式」都按 pack 分叉（非淨係 render 層）。只係「傾向」，唔夾硬。
+ * 偏好的兩款 layout = 該 pack 的招牌版式，令生成內容自然落到招牌結構，
+ * 連「展示形式」都按 pack 分叉（非只 render 層）。只是「傾向」，不硬加。
  * density = 字數密度／章節節奏；bilingual = 英文對照副題比例。
  */
 type PackFavor = {
@@ -76,55 +76,55 @@ const PACK_FAVORS: Partial<Record<SlidePackId, PackFavor>> = {
   brutalist: { layouts: ['stats', 'compare'], note: '粗獷大字', density: 'dense' },
 }
 
-// 共用文案規範 —— 直接影響專業感／同 Claude design 嘅差距，最啱拉高弱模型（Flash）。
+// 共用文案規範 —— 直接影響專業感及 Claude design 的差距，最適合拉高弱模型（Flash）。
 const COPY_RULES = [
   '文案規範（嚴格跟）：',
-  '- 每點只講一個重點，動詞或關鍵詞行先；用短語，唔好完整句、唔好句號。',
-  '- 同一版各要點平行結構（句式／詞性一致、長短相近），睇落整齊。',
-  '- 標題用「結論先行」短語（≤14 字），可以斷言式直接講重點；唔好「XX 簡介／概述」式空題。',
-  '- 具體勝抽象：用數字、例子、專有名詞，代替「好多／重要／各方面」呢類空泛字。',
-  '- 刪虛詞（的／進行／方面／相關／一啲）；一句講得到就唔好兩句。',
+  '- 每點只講一個重點，動詞或關鍵詞行先；用短語，不要完整句、不要句號。',
+  '- 同一版各要點平行結構（句式／詞性一致、長短相近），閱讀時要整齊。',
+  '- 標題用「結論先行」短語（≤14 字），可以斷言式直接講重點；不要「XX 簡介／概述」式空題。',
+  '- 具體勝抽象：用數字、例子、專有名詞，代替「很多／重要／各方面」這類空泛字。',
+  '- 刪虛詞（的／進行／方面／相關／一些）；一句講得到就不要兩句。',
   '- 同一概念由頭到尾用同一個叫法，方便學生記。',
-  '- 英文對照要係真・對應術語，唔係逐字直譯。',
+  '- 英文對照要使用真正對應的術語，不要逐字直譯。',
 ]
 
-// 共用設計品味 —— 教學簡報嘅「設計判斷」playbook（自由生成用）。
+// 共用設計品味 —— 教學簡報的「設計判斷」playbook（自由生成用）。
 const DESIGN_PLAYBOOK = [
   '設計品味（教學簡報）：',
   '- 一版一焦點：每版只圍繞一個主訊息，多過一個 idea 就拆版。',
-  '- 視覺層級：最緊要嗰句要最突出（升做 takeaway／quote／stats／emphasis），其餘做支撐。',
-  '- 少即是多：寧願 3 點到位，好過 6 點注水；版面留白好過塞滿。',
+  '- 視覺層級：最重要那句要最突出（升做 takeaway／quote／stats／emphasis），其餘做支撐。',
+  '- 少即是多：寧願 3 點到位，不要 6 點注水；版面留白優先於塞滿。',
   '- 教學節奏：導入 → 概念 → 例子／對比／流程 →（數據）→ 小結；尾一兩版用 quote／takeaway／emphasis 收結。',
-  '- 版式服務內容：揀版式係因為內容語意啱（流程→steps、對比→compare、並列→cards…），唔係為好睇而堆砌。',
+  '- 版式服務內容：選擇版式是因為內容語意適合（流程→steps、對比→compare、並列→cards…），不要只為了視覺效果而堆砌。',
 ]
 
 export function buildSlideSystem(subjectName: string | undefined, count: number, pack?: SlidePackId): string {
   const subjectLine = subjectName ? `任教科目：${subjectName}。` : ''
   const lines = [
-    `你係教學簡報設計助手。${subjectLine}根據用家俾嘅課題或內容，設計一套教學 PowerPoint 大綱。`,
-    '只輸出一個 JSON 物件，唔好有任何其他文字或 markdown code fence：',
+    `你是教學簡報設計助手。${subjectLine}根據使用者提供的課題或內容，設計一套教學 PowerPoint 大綱。`,
+    '只輸出一個 JSON 物件，不要有任何其他文字或 markdown code fence：',
     '{',
     '  "title": "簡報標題",',
     '  "subtitle": "副標題（科目／課題／班級，簡短）",',
     '  "coverImageQuery": "封面相英文搜尋詞（1-4 個英文字）",',
     '  "slides": [',
-    '    {"title": "版面標題", "bullets": ["3-5 個要點，每點精簡一句，唔好成段"], "notes": "講者備註（老師講解提示，1-2 句）", "chart": null}',
+    '    {"title": "版面標題", "bullets": ["3-5 個要點，每點精簡一句，不要成段"], "notes": "講者備註（老師講解提示，1-2 句）", "chart": null}',
     '  ]',
     '}',
     '規則：',
     '- 一律用繁體中文（可書面廣東話）。',
-    `- 約 ${count} 版內容（唔計封面）；由淺入深、有教學邏輯（導入→概念→例子→練習→總結）。`,
-    '- 版式要交錯：唔好連續 3 版用同一款（尤其唔好成套都係普通要點版）；內容啱就主動換 stats／compare／steps／cards／quote，令節奏有變化、唔重複。',
-    '- 逐版設計：當每一版都係一個獨立設計嚟諗，先為佢定一個「設計重點」，再用最啱嘅欄位實現 ——',
+    `- 約 ${count} 版內容（不計封面）；由淺入深、有教學邏輯（導入→概念→例子→練習→總結）。`,
+    '- 版式要交錯：不要連續 3 版使用同一款式（尤其不要整套都是普通要點版）；內容合適時主動使用 stats／compare／steps／cards／quote，令節奏有變化、不重複。',
+    '- 逐版設計：將每一版都視為一個獨立設計，先為該頁定一個「設計重點」，再用最適合的欄位實現 ——',
     '    強調數字→stats；正反異同→compare；流程時序→steps；金句定義→quote；並列分類→cards；想突出一句重點→takeaway；雙語對照→subtitle；具體場景值得配相→imageQuery。',
-    '    務求每版都至少有一個令佢突出嘅元素（特別版式／takeaway／subtitle／chart／imageQuery 之一），唔好成版淨係 5 個 bullet；但全部都要內容啱先用、唔好為咗花巧而夾硬堆。',
-    '- 每版 3-5 個要點，係短句／關鍵詞，唔好成段文字。',
+    '    務求每版都至少有一個突出的元素（特別版式／takeaway／subtitle／chart／imageQuery 之一），不要整頁只有 5 個 bullet；所有元素都必須配合內容，不要為了花巧而硬加。',
+    '- 每版 3-5 個要點，使用短句／關鍵詞，不要成段文字。',
     '- notes 寫老師口頭講解提示。',
-    '- 涉及數據（佔比／趨勢／比較）嘅版，可加 "chart"，否則一律 "chart": null：',
+    '- 涉及數據（佔比／趨勢／比較）的版，可加 "chart"，否則一律 "chart": null：',
     '    {"type":"bar|line|pie","categories":["標籤1","標籤2"],"series":[{"name":"系列名","values":[數字,…]}],"unit":"%（選填）"}',
-    '  · pie 只放一條 series；每條 series 嘅 values 數量要同 categories 一致（用真實合理數字）。',
-    '  · 全套最多 1-2 版有圖表，揀最值得視覺化嗰啲，唔好版版都加。',
-    '- 內容啱先好揀 "layout" 版式（唔填 = 普通要點版）；揀咗 layout 嗰版都一樣要出 bullets（同一內容嘅要點版本，做後備同講義），再另出對應欄位：',
+    '  · pie 只放一條 series；每條 series 的 values 數量要同 categories 一致（用真實合理數字）。',
+    '  · 全套最多 1-2 版有圖表，選擇最值得視覺化那些，不要版版都加。',
+    '- 內容合適時才選擇 "layout" 版式（不填 = 普通要點版）；選擇了 layout 該頁都一樣要出 bullets（同一內容的要點版本，做後備同講義），再另出對應欄位：',
     '  · "layout":"stats" — 有 2-4 個關鍵數字想做大先用（全套最多 2 版），另加：',
     '    "stats":[{"value":"75%","label":"合格率"},{"value":"1842","label":"南京條約年份"}]（value ≤8 字、label ≤20 字）',
     '  · "layout":"compare" — 正反／異同／A 對 B 先用，另加：',
@@ -133,44 +133,44 @@ export function buildSlideSystem(subjectName: string | undefined, count: number,
     '    "steps":[{"title":"步驟名","desc":"簡短說明（選填）"}]（2-5 步，title ≤12 字、desc ≤40 字）',
     '  · "layout":"quote" — 金句／定義一句想做大先用（全套最多 1 版），另加：',
     '    "quote":{"text":"一句金句或定義","attribution":"出處（選填）"}（text ≤60 字）',
-    '  · "layout":"cards" — 3-6 個並列概念／分類／工具想逐個成卡先用，另加：',
+    '  · "layout":"cards" — 3-6 個並列概念／分類／工具需要以卡片展示時才用，另加：',
     '    "cards":[{"title":"卡題","desc":"一句說明（選填）"}]（title ≤12 字、desc ≤36 字）',
-    '- 每版可選 "subtitle"：版題下嘅短英文對照副題（雙語課堂用，≤8 個英文詞，例 "Argument Map"）；唔啱就唔好出。',
-    '- 每版可選 "takeaway"：一句包底重點（≤40 字，會做版底色帶俾學生抄低）；全套揀 2-4 版最關鍵嘅先出，唔好版版有。',
-    '- 每版可選 "emphasis": true：全套只揀 1-3 版「最重要／高潮」嘅版標記（例如核心概念、總結金句），引擎會為佢加重視覺處理，造成輕重節奏；千祈唔好多版標，否則就冇咗強調效果。',
+    '- 每版可選 "subtitle"：版題下的短英文對照副題（雙語課堂用，≤8 個英文詞，例 "Argument Map"）；不正確就不要出。',
+    '- 每版可選 "takeaway"：一句總結重點（≤40 字，會做成版底色帶，方便學生摘錄）；全套選擇 2-4 版最關鍵的頁面才加入，不要每版都有。',
+    '- 每版可選 "emphasis": true：全套只選擇 1-3 版「最重要／高潮」的頁面標記（例如核心概念、總結金句），引擎會加強視覺處理，形成輕重節奏；不要標記太多頁，否則會失去強調效果。',
   ]
   if (count >= 8) {
-    lines.push('- 可以插 1-2 版章節分隔版：title 係章節名、"bullets": []，唔使 layout，用嚟分大段落。')
+    lines.push('- 可以插 1-2 版章節分隔版：title 係章節名、"bullets": []，不用 layout，用來分大段落。')
   }
   lines.push(
-    '- 講具體實物／場景、值得配相嘅版，可加 "imageQuery"：1-4 個字嘅英文 Pexels 搜尋詞（例 "great wall china"）；全套最多 4 版有 imageQuery。',
-    '- "coverImageQuery" 必須出：1-4 個字嘅英文搜尋詞，配合簡報主題搵封面相。',
-    '- 只輸出 JSON，唔好有多餘文字。',
+    '- 講具體實物／場景、值得配相的版，可加 "imageQuery"：1-4 個字的英文 Pexels 搜尋詞（例 "great wall china"）；全套最多 4 版有 imageQuery。',
+    '- "coverImageQuery" 必須出：1-4 個字的英文搜尋詞，配合簡報主題搜尋封面相。',
+    '- 只輸出 JSON，不要有多餘文字。',
   )
   lines.push(...COPY_RULES, ...DESIGN_PLAYBOOK)
   const fav = pack ? PACK_FAVORS[pack] : undefined
   if (fav) {
     const zh = fav.layouts.map((l) => LAYOUT_ZH[l]).join('、')
     lines.push(
-      `- 版式風格：本套用「${fav.note}」取向 —— 內容合適時優先選用 ${zh} 版式（自然為主，唔好夾硬堆砌），令整體展示形式更貼合主題。`,
+      `- 版式風格：本套用「${fav.note}」取向 —— 內容合適時優先選用 ${zh} 版式（自然為主，不要硬加），令整體展示形式更貼合主題。`,
     )
     if (fav.density === 'sparse') {
-      lines.push('- 內容密度：每版 2-3 個短要點、字眼淺白具體，寧少而精；多用大圖（imageQuery 可去到 4-5 版），唔好插章節分隔版，保持輕快。')
+      lines.push('- 內容密度：每版 2-3 個短要點、字眼淺白具體，寧少而精；多用大圖（imageQuery 可去到 4-5 版），不要插章節分隔版，保持輕快。')
     } else if (fav.density === 'dense') {
       lines.push('- 內容密度：每版可較密（4-6 個要點），資訊量充足、條理分明；版數較多時用章節分隔版組織內容。')
     }
     if (fav.bilingual === 'high') {
       lines.push('- 雙語：大部分內容版加英文對照 "subtitle"（≤8 個英文詞），方便雙語課堂。')
     } else if (fav.bilingual === 'low') {
-      lines.push('- 雙語：對象為初小，唔好出英文對照 "subtitle"，全用淺白中文。')
+      lines.push('- 雙語：對象為初小，不要出英文對照 "subtitle"，全用淺白中文。')
     }
   }
   return lines.join('\n')
 }
 
 /**
- * 「跟我嘅分段分版」嚴格框架模式：版數／標題／次序鎖死，
- * AI 只可以喺每版自己嘅內容範圍內精煉做 bullets、揀版式、寫備註。
+ * 「跟我的按段落分頁」嚴格框架模式：版數／標題／次序鎖死，
+ * AI 只可以在每版自己的內容範圍內精煉做 bullets、選擇版式、寫備註。
  * pages 來自 manualPages.parseManualPages。
  */
 export function buildFrameworkSystem(
@@ -181,15 +181,15 @@ export function buildFrameworkSystem(
   const subjectLine = subjectName ? `任教科目：${subjectName}。` : ''
   const pageList = pages
     .map((p, i) => {
-      const body = p.lines.length > 0 ? p.lines.join('；') : '（章節分隔，唔使內容）'
+      const body = p.lines.length > 0 ? p.lines.join('；') : '（章節分隔，不用內容）'
       return `  第 ${i + 1} 版《${p.title}》：${body}`
     })
     .join('\n')
   const lines = [
-    `你係教學簡報設計助手。${subjectLine}用家已經自己分好版，你嘅工作係將每一版嘅內容執靚，但絕對唔可以改動分版框架。`,
-    '用家嘅分版框架（鎖死，不得更改）：',
+    `你是教學簡報設計助手。${subjectLine}使用者已自行完成分頁，你的工作是潤飾每一頁的內容，但絕對不可以改動分頁框架。`,
+    '使用者的分頁框架（鎖定，不得更改）：',
     pageList,
-    '只輸出一個 JSON 物件，唔好有任何其他文字或 markdown code fence：',
+    '只輸出一個 JSON 物件，不要有任何其他文字或 markdown code fence：',
     '{',
     '  "title": "簡報標題",',
     '  "subtitle": "副標題（簡短）",',
@@ -199,31 +199,31 @@ export function buildFrameworkSystem(
     '  ]',
     '}',
     '鐵律（違反即廢）：',
-    `- slides 必須剛好 ${pages.length} 版，次序同框架完全一致，唔准加版、減版、合併或重排。`,
-    '- 每版 title 必須沿用框架嘅標題（只可輕微整理標點／空白）。',
-    '- 每版內容只可以用返該版框架入面嘅材料嚟精煉（執靚字眼、斬做要點），唔准將內容搬去第二版，亦唔准加入框架冇嘅新事實。',
+    `- slides 必須剛好 ${pages.length} 版，次序與框架完全一致，不准加頁、減頁、合併或重排。`,
+    '- 每版 title 必須沿用框架的標題（只可輕微整理標點／空白）。',
+    '- 每版內容只可以使用該版框架中的材料來精煉（潤飾字眼、整理成要點），不准將內容移到另一頁，亦不准加入框架沒有的新事實。',
     '規則：',
     '- 一律用繁體中文（可書面廣東話）。',
-    '- 每版 3-5 個要點（框架材料少就少啲），短句／關鍵詞，唔好成段文字。',
+    '- 每版 3-5 個要點（框架材料較少時可減少要點），短句／關鍵詞，不要成段文字。',
     '- notes 寫老師口頭講解提示（1-2 句）。',
-    '- 框架標明「章節分隔」嗰版：出 "layout":"section"、"bullets":[]。',
-    '- 內容啱先好揀 "layout" 版式（唔填 = 普通要點版）；揀咗 layout 嗰版都一樣要出 bullets，再另出對應欄位：',
+    '- 框架標明「章節分隔」該頁：出 "layout":"section"、"bullets":[]。',
+    '- 內容合適時才選擇 "layout" 版式（不填 = 普通要點版）；選擇了 layout 該頁都一樣要出 bullets，再另出對應欄位：',
     '  · "layout":"stats" — 該版有 2-4 個關鍵數字先用，另加 "stats":[{"value":"75%","label":"合格率"}]（value ≤8 字、label ≤20 字）',
-    '  · "layout":"compare" — 該版本身係正反／異同先用，另加 "compare":{"leftTitle":"優點","left":["…"],"rightTitle":"缺點","right":["…"]}（兩邊各 2-4 點）',
+    '  · "layout":"compare" — 該版本身是正反／異同對比時才用，另加 "compare":{"leftTitle":"優點","left":["…"],"rightTitle":"缺點","right":["…"]}（兩邊各 2-4 點）',
     '  · "layout":"steps" — 流程／步驟先用，另加 "steps":[{"title":"步驟名","desc":"說明（選填）"}]（2-5 步）',
     '  · "layout":"quote" — 金句／定義一句先用，另加 "quote":{"text":"…","attribution":"出處（選填）"}（text ≤60 字）',
     '  · "layout":"cards" — 並列概念先用，另加 "cards":[{"title":"卡題","desc":"說明（選填）"}]（2-6 張）',
-    '- 涉及數據嘅版可加 "chart"（{"type":"bar|line|pie","categories":[…],"series":[{"name":"…","values":[…]}]}），否則 "chart": null。',
-    '- 講具體實物／場景嘅版可加 "imageQuery"（1-4 個字英文搜尋詞）；全套最多 4 版。',
+    '- 涉及數據的版可加 "chart"（{"type":"bar|line|pie","categories":[…],"series":[{"name":"…","values":[…]}]}），否則 "chart": null。',
+    '- 講具體實物／場景的版可加 "imageQuery"（1-4 個字英文搜尋詞）；全套最多 4 版。',
     '- "coverImageQuery" 必須出。',
     '- 只輸出 JSON。',
   ]
-  lines.push(...COPY_RULES) // 框架模式結構鎖死，只加文案規範（唔加拆版／節奏類設計指引）
+  lines.push(...COPY_RULES) // 框架模式結構鎖死，只加文案規範（不加拆版／節奏類設計指引）
   const fav = pack ? PACK_FAVORS[pack] : undefined
   if (fav) {
     const zh = fav.layouts.map((l) => LAYOUT_ZH[l]).join('、')
     lines.push(
-      `- 版式風格：本套用「${fav.note}」取向 —— 內容合適時優先選用 ${zh} 版式（自然為主，唔好夾硬堆砌）。`,
+      `- 版式風格：本套用「${fav.note}」取向 —— 內容合適時優先選用 ${zh} 版式（自然為主，不要硬加）。`,
     )
   }
   return lines.join('\n')
@@ -250,7 +250,7 @@ function parseImageQuery(raw: unknown): string | undefined {
   return s.split(/\s+/).slice(0, 4).join(' ')
 }
 
-/** 解析 chart 欄位；唔合格回 undefined（向後相容）。 */
+/** 解析 chart 欄位；不合格回 undefined（向後相容）。 */
 function parseChart(raw: unknown): SlideChart | undefined {
   if (!raw || typeof raw !== 'object') return undefined
   const c = raw as Record<string, unknown>
@@ -275,7 +275,7 @@ function parseChart(raw: unknown): SlideChart | undefined {
   return { type, categories, series, unit }
 }
 
-/** stats：逐項要 value+label 字串，截長後 2-4 項先有效；唔合格回 undefined。 */
+/** stats：逐項要 value+label 字串，截長後 2-4 項先有效；不合格回 undefined。 */
 function parseStats(raw: unknown): SlideStat[] | undefined {
   if (!Array.isArray(raw)) return undefined
   const items: SlideStat[] = []
@@ -354,7 +354,7 @@ function parseQuote(raw: unknown): SlideQuote | undefined {
 
 /**
  * 逐款 layout 嚴格驗證：合格先保留 layout + 對應欄位；
- * 唔合格靜默回退普通要點版（永不因 layout 問題 throw）。
+ * 不合格靜默回退普通要點版（永不因 layout 問題 throw）。
  */
 function parseLayoutFields(rec: Record<string, unknown>): Partial<Slide> {
   const layout = rec.layout
@@ -378,13 +378,13 @@ function parseLayoutFields(rec: Record<string, unknown>): Partial<Slide> {
     const cards = parseCards(rec.cards)
     return cards ? { layout: 'cards' satisfies SlideLayout, cards } : {}
   }
-  // 'section' 喺 parseDeck 處理（normalize bullets=[]）；'bullets'／未知值 = 預設要點版
+  // 'section' 在 parseDeck 處理（normalize bullets=[]）；'bullets'／未知值 = 預設要點版
   return {}
 }
 
 /**
  * 解析單版 record（parseDeck 逐版 + slideAi 單版重寫共用）。
- * 標題同 bullets 都空 → null（跳過呢版）。
+ * 標題同 bullets 都空 → null（跳過此頁）。
  */
 export function parseSlideRecord(rec: Record<string, unknown>): Slide | null {
   const slideTitle = typeof rec.title === 'string' ? rec.title.trim() : ''
@@ -421,20 +421,20 @@ export function parseSlideRecord(rec: Record<string, unknown>): Slide | null {
   }
 }
 
-/** 解析「單版 JSON」AI 回應（slideAi 用）；唔合格 throw。 */
+/** 解析「單版 JSON」AI 回應（slideAi 用）；不合格 throw。 */
 export function parseSlideJson(raw: string): Slide {
   const o = extractJsonObject<Record<string, unknown>>(raw)
-  if (!o || typeof o !== 'object') throw new Error('AI 回應格式唔正確，請再試一次。')
+  if (!o || typeof o !== 'object') throw new Error('AI 回應格式不正確，請再試一次。')
   const slide = parseSlideRecord(o)
-  if (!slide) throw new Error('AI 出唔到呢版內容，請再試一次。')
+  if (!slide) throw new Error('AI 出不到此頁內容，請再試一次。')
   return slide
 }
 
-/** 解析 AI 簡報回應；格式唔正確 throw。 */
+/** 解析 AI 簡報回應；格式不正確 throw。 */
 export function parseDeck(raw: string, fallbackTitle: string): Deck {
   const o = extractJsonObject<Record<string, unknown>>(raw)
   if (!o || typeof o !== 'object') {
-    throw new Error('AI 回應格式唔正確，請再試一次。')
+    throw new Error('AI 回應格式不正確，請再試一次。')
   }
 
   const title =
@@ -453,7 +453,7 @@ export function parseDeck(raw: string, fallbackTitle: string): Deck {
   }
 
   if (slides.length === 0) {
-    throw new Error('AI 出唔到簡報內容，試吓換 Pro 或補充課題。')
+    throw new Error('AI 出不到簡報內容，嘗試換 Pro 或補充課題。')
   }
 
   return { title, subtitle, slides, coverImageQuery }

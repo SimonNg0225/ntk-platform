@@ -35,7 +35,7 @@ import { coverTextureUri } from './slideTextures'
 //  粉筆 chalk — 黑板手感
 //  墨綠黑板底，結構線全部用 sysDash 虛線（粉筆 stroke 感）；
 //  點睛色 = 粉筆黃 + 粉筆粉紅；motif 係三支圓端小粉筆，
-//  好似擺喺黑板槽咁微微唔同角度孖埋一齊。
+//  好似擺在黑板槽這樣微微不同角度孖埋一起。
 // ============================================================
 
 const CHK = { bg: '25382F', ink: 'F4F1E8', soft: 'C2CABB', faint: '8E988C', hair: '4A5A50', accent: 'F5D76E', pink: 'F1B8C4', panel: '2F4439' }
@@ -50,7 +50,7 @@ function dashV(slide: PptxGenJS.Slide, x: number, y: number, h: number, color: s
   slide.addShape('line', { x, y, w: 0, h, line: { color, width: pt, dashType: 'sysDash' } })
 }
 
-/** 粉筆條 motif：三支圓端 roundRect（黃／粉紅／白）微微唔同 rotate 疊排 */
+/** 粉筆條 motif：三支圓端 roundRect（黃／粉紅／白）微微不同 rotate 疊排 */
 function chalkSticks(slide: PptxGenJS.Slide, x: number, y: number, w = 0.42, h = 0.09): void {
   const sticks = [
     { color: CHK.accent, rotate: -8, dx: 0 },
@@ -98,7 +98,7 @@ function renderChalkTChart(slide: PptxGenJS.Slide, body: Rect, pack: Pack, s: Sl
     const lineH = Math.min(0.62, (body.h - 0.95) / Math.max(col.pts.length, 1))
     col.pts.forEach((pt, pi) => {
       const py = ruleY + 0.2 + pi * lineH
-      // 手繪 dash／check 記號（首點用 check，其餘用 dash）
+      // 手繪 dash／check 記號（首如何使用 check，其餘用 dash）
       const mark = pi === 0 ? '✓' : '–'
       tx(slide, mark, { x: cx, y: py, w: 0.3, h: lineH, fontSize: 16, bold: true, color: pack.accent, valign: 'top', fontFace: pack.displayFont })
       tx(slide, clampText(pt.trim(), 30), { x: cx + 0.34, y: py, w: colW - 0.34, h: lineH, fontSize: 15, color: pack.inkSoft, valign: 'top', lineSpacingMultiple: 1.1, fit: 'shrink' })
@@ -113,7 +113,7 @@ function renderChalkTChart(slide: PptxGenJS.Slide, body: Rect, pack: Pack, s: Sl
 /**
  * 招牌：steps 渲染成黑板推導鏈 ——
  * 每步一個粉筆節點（手繪虛線圈住序號），節點間用 sysDash 細線 + chevron
- * 箭咀手繪連起；步題用 displayFont 寫喺節點右邊、下加虛線底劃。Boardwork derivation。
+ * 箭咀手繪連起；步題用 displayFont 寫在節點右邊、下加虛線底劃。Boardwork derivation。
  */
 function renderChalkChain(slide: PptxGenJS.Slide, body: Rect, pack: Pack, s: Slide): void {
   const items = (s.steps ?? []).slice(0, 5)
@@ -167,7 +167,7 @@ function renderChalkNotes(slide: PptxGenJS.Slide, body: Rect, pack: Pack, s: Sli
     const c = i % cols
     const cellX = body.x + inset + c * (cellW + gapX)
     const baseY = body.y + inset + r * (cellH + gapY)
-    // 微微散落（交替小錯位），夾喺 body 內
+    // 微微散落（交替小錯位），夾在 body 內
     const stagger = i % 2 === 0 ? -0.05 : 0.05
     const cy = Math.min(Math.max(baseY + stagger, body.y + inset), body.y + body.h - cellH - inset)
     // 虛線框便條
@@ -219,11 +219,11 @@ const chalk: Pack = {
   cover(slide, deck, brand, img) {
     slide.background = { color: CHK.bg }
     if (img) {
-      // full-bleed 相 + 黑板色 scrim（70% 不透明保字）；虛線框照畫喺 scrim 上
+      // full-bleed 相 + 黑板色 scrim（70% 不透明保字）；虛線框照畫在 scrim 上
       addCoverImage(slide, img, { x: 0, y: 0, w: 13.33, h: 7.5 })
       slide.addShape('rect', { x: 0, y: 0, w: 13.33, h: 7.5, fill: { color: CHK.bg, transparency: 30 }, line: { type: 'none' } })
     } else {
-      // 招牌粉筆紋理底圖（瀏覽器 Canvas raster；冇 canvas 時 fallback 漸層底）
+      // 招牌粉筆紋理底圖（瀏覽器 Canvas raster；沒有 canvas 時 fallback 漸層底）
       const tex = coverTextureUri('chalk')
       if (tex) {
         slide.addImage({ data: tex, x: 0, y: 0, w: 13.333, h: 7.5, sizing: { type: 'cover', w: 13.333, h: 7.5 } })
@@ -299,7 +299,7 @@ const chalk: Pack = {
 // ============================================================
 //  號外 press — 活字報紙
 //  白報紙底 + 印章朱紅；報頭用「粗+細」雙線（傳統報紙 masthead），
-//  封面右上一個 rotate 12° 嘅「特刊」朱紅印章，巨號用 Georgia
+//  封面右上一個 rotate 12° 的「特刊」朱紅印章，巨號用 Georgia
 //  老活字；contentFrame 右上印「第 N 版」延續報紙語言。
 // ============================================================
 
@@ -352,7 +352,7 @@ function renderPressColumns(slide: PptxGenJS.Slide, body: Rect, pack: Pack, s: S
 /**
  * 招牌：stats 渲染成頭版數字 ——
  * 每個 stat 一欄報頭巨號（Georgia displayFont），數字上一條幼 rule、
- * 下一個細 caption；欄間幼直線分隔，似頭版並排嘅統計。Front-page figures。
+ * 下一個細 caption；欄間幼直線分隔，似頭版並排的統計。Front-page figures。
  */
 function renderPressFigures(slide: PptxGenJS.Slide, body: Rect, pack: Pack, s: Slide): void {
   const items = (s.stats ?? []).slice(0, 4)
@@ -438,12 +438,12 @@ const press: Pack = {
   cover(slide, deck, brand, img) {
     slide.background = { color: 'FFFFFF' }
     const hasImg = Boolean(img)
-    // 招牌報紙紙紋底圖（瀏覽器 Canvas raster；冇 canvas 時 fallback 漸層底）
+    // 招牌報紙紙紋底圖（瀏覽器 Canvas raster；沒有 canvas 時 fallback 漸層底）
     const tex = coverTextureUri('press')
     if (tex) {
       slide.addImage({ data: tex, x: 0, y: 0, w: 13.333, h: 7.5, sizing: { type: 'cover', w: 13.333, h: 7.5 } })
     } else {
-      // 報紙紙張微微泛黃／受墨：頂部一抹暖白 → 底部極淡墨，俾白底一點縱深
+      // 報紙紙張微微泛黃／受墨：頂部一抹暖白 → 底部極淡墨，給白底一點縱深
       slide.addShape('rect', {
         x: 0,
         y: 0,
@@ -474,7 +474,7 @@ const press: Pack = {
     doubleRule(slide, 0.9, 6.6, 11.53)
     tx(slide, `共 ${deck.slides.length + 1} 版 ｜ ${brand}`, { x: 0.9, y: 6.78, w: 8, h: 0.3, fontSize: 9, color: PRS.soft })
     if (img) {
-      // 報相：右下窗 + 幼黑框；署名用相內 chip（相底貼近雙線，相外冇位）
+      // 報相：右下窗 + 幼黑框；署名用相內 chip（相底貼近雙線，相外沒有位）
       const frame: Rect = { x: 7.6, y: 3.4, w: 5.0, h: 3.0 }
       addCoverImage(slide, img, frame)
       slide.addShape('rect', { x: frame.x, y: frame.y, w: frame.w, h: frame.h, fill: { type: 'none' }, line: { color: PRS.ink, width: 0.75 } })
@@ -541,7 +541,7 @@ function cornerBracket(slide: PptxGenJS.Slide, x: number, y: number, size: numbe
 /**
  * 招牌：stats 渲染成環形量錶 ——
  * 每個 stat 畫一個發光圓環（accent ellipse outline + 柔和 outer shadow），
- * 大數字置中、label 喺環下。HUD dashboard。
+ * 大數字置中、label 在環下。HUD dashboard。
  */
 function renderNeonRings(slide: PptxGenJS.Slide, body: Rect, pack: Pack, s: Slide): void {
   const items = (s.stats ?? []).slice(0, 4)
@@ -575,7 +575,7 @@ function renderNeonRings(slide: PptxGenJS.Slide, body: Rect, pack: Pack, s: Slid
     })
     // 大數字置中
     tx(slide, clampText(st.value.trim(), 8), { x: rx, y: ringY, w: ring, h: ring, fontSize: 38, bold: true, color: pack.ink, align: 'center', valign: 'middle', fontFace: pack.displayFont, fit: 'shrink' })
-    // label 喺環下
+    // label 在環下
     tx(slide, clampText(st.label.trim(), 22), { x: cellX, y: ringY + ring + 0.16, w: cellW, h: 0.6, fontSize: 13, color: pack.inkSoft, align: 'center', valign: 'top', lineSpacingMultiple: 1.12, fit: 'shrink' })
   })
 }
@@ -583,7 +583,7 @@ function renderNeonRings(slide: PptxGenJS.Slide, body: Rect, pack: Pack, s: Slid
 /**
  * 招牌：steps 渲染成發光節點管線 ——
  * 一條橫向發光主線（accent + outer shadow glow）串起每步一個發光圓點，
- * 點上序號、步題喺點下。HUD pipeline。
+ * 點上序號、步題在點下。HUD pipeline。
  */
 function renderNeonPipeline(slide: PptxGenJS.Slide, body: Rect, pack: Pack, s: Slide): void {
   const items = (s.steps ?? []).slice(0, 5)
@@ -626,7 +626,7 @@ function renderNeonPipeline(slide: PptxGenJS.Slide, body: Rect, pack: Pack, s: S
       shadow: { type: 'outer', color: pack.accent, blur: 10, offset: 0, angle: 0, opacity: 0.7 },
     })
     tx(slide, String(i + 1), { x: cx - dot / 2, y: lineY - dot / 2, w: dot, h: dot, fontSize: 18, bold: true, color: pack.accent, align: 'center', valign: 'middle', fontFace: pack.displayFont })
-    // 步題喺點下
+    // 步題在點下
     tx(slide, clampText(st.title.trim(), 22), { x: cx - colW / 2 + 0.1, y: lineY + dot / 2 + 0.18, w: colW - 0.2, h: 0.6, fontSize: 14, bold: true, color: pack.ink, align: 'center', valign: 'top', lineSpacingMultiple: 1.1, fit: 'shrink' })
     if (st.desc) {
       tx(slide, clampText(st.desc.trim(), 40), { x: cx - colW / 2 + 0.1, y: lineY + dot / 2 + 0.78, w: colW - 0.2, h: body.y + body.h - (lineY + dot / 2 + 0.78), fontSize: 11, color: pack.inkSoft, align: 'center', valign: 'top', lineSpacingMultiple: 1.14, fit: 'shrink' })
@@ -715,14 +715,14 @@ const neon: Pack = {
     slide.background = { color: NEO.bg }
     if (img) {
       addCoverImage(slide, img, { x: 0, y: 0, w: 13.33, h: 7.5 })
-      // scrim 要夠深，先保得住近黑 neon 底色身份（30 會俾相搶走色溫）
+      // scrim 要夠深，先保得住近黑 neon 底色身份（30 會給相搶走色溫）
       slide.addShape('rect', { x: 0, y: 0, w: 13.33, h: 7.5, fill: { color: NEO.bg, transparency: 18 }, line: { type: 'none' } })
     } else {
-      // 招牌螢光掃描紋理底圖（瀏覽器 Canvas raster；冇 canvas 時 fallback 純色底）
+      // 招牌螢光掃描紋理底圖（瀏覽器 Canvas raster；沒有 canvas 時 fallback 純色底）
       const tex = coverTextureUri('neon')
       if (tex) slide.addImage({ data: tex, x: 0, y: 0, w: 13.333, h: 7.5, sizing: { type: 'cover', w: 13.333, h: 7.5 } })
     }
-    // 標題後柔光暈：cyan 放射漸層（中心半透 → 邊緣全透），似螢光燈管映喺近黑底
+    // 標題後柔光暈：cyan 放射漸層（中心半透 → 邊緣全透），似螢光燈管映在近黑底
     slide.addShape('ellipse', {
       x: -0.6,
       y: 1.6,
@@ -744,14 +744,14 @@ const neon: Pack = {
     }
     tx(slide, `// ${dateLabel()}`, { x: 0.9, y: 6.45, w: 6, h: 0.3, fontSize: 10, color: NEO.faint })
     tx(slide, brand, { x: 0.9, y: 6.85, w: 5, h: 0.3, fontSize: 9, color: NEO.faint })
-    // 右下 bracket 錨實版角（浮喺半空會似框住空氣）
+    // 右下 bracket 錨實版角（浮在半空會似框住空氣）
     cornerBracket(slide, 12.69, 6.92, 0.26, NEO.accent, 'br')
     if (img) photoCreditOnImage(slide, img.credit, { x: 0, y: 0, w: 13.33, h: 7.5 })
   },
 
   section(slide, no, title) {
     slide.background = { color: NEO.bg }
-    // glitch 重影巨號：先畫 magenta 錯位，再疊 cyan 主體（兩層都要夠光先似著咗燈嘅 neon）
+    // glitch 重影巨號：先畫 magenta 錯位，再疊 cyan 主體（兩層都要夠光先似著了燈的 neon）
     tx(slide, pad2(no), { x: 0.86, y: 1.26, w: 6, h: 2.9, fontSize: 150, bold: true, color: mix(NEO.magenta, NEO.bg, 0.38), fontFace: 'Consolas' })
     tx(slide, pad2(no), { x: 0.8, y: 1.2, w: 6, h: 2.9, fontSize: 150, bold: true, color: mix(NEO.accent, NEO.bg, 0.55), fontFace: 'Consolas' })
     tx(slide, `[ SECTION ${sectionWord(no)} ]`, { x: 0.9, y: 4.15, w: 6, h: 0.3, fontSize: 10, color: NEO.accent, charSpacing: 2, fontFace: 'Consolas' })
@@ -768,7 +768,7 @@ const neon: Pack = {
     return body
   },
 
-  // 逐版母題：細小發光圓點，位置按 seq % 4 換角、hue 按 seq 喺 cyan／magenta 間切換
+  // 逐版母題：細小發光圓點，位置按 seq % 4 換角、hue 按 seq 在 cyan／magenta 間切換
   deco(slide: PptxGenJS.Slide, ctx: FrameCtx): void {
     const corner = ctx.seq % 4
     const glow = ctx.seq % 2 === 0 ? NEO.accent : NEO.magenta
@@ -796,7 +796,7 @@ const neon: Pack = {
 //  彩斑 confetti — Memphis 幾何
 //  白底 + 鈷藍／珊瑚／檸黃／湖水綠四色彩斑：三角、圓點、加號、
 //  短斜線散落右半似拋彩紙；motif trio（三角+圓點+加號）做角標，
-//  奶黃 tint 卡 + 圓角，幼小常識堂啱用。
+//  奶黃 tint 卡 + 圓角，幼小常識堂適合用。
 // ============================================================
 
 const CFT = { ink: '1F2430', soft: '6A7280', faint: 'A1A8B3', hair: 'E8EAEF', accent: '2B59C3', coral: 'FF5D5D', panel: 'FFF6E0', yellow: 'FFC53D', teal: '2EC4B6' }
@@ -824,7 +824,7 @@ function confettiTrio(slide: PptxGenJS.Slide, x: number, y: number, flip = false
 /**
  * 招牌：cards 渲染成散落便利貼 ——
  * 每張卡微微旋轉（交替 ± 小角度）、輪換幾隻 accent 色、三角角標、
- * 高低錯落擺位。Playful sticker wall。旋轉 ≤6°，卡須留喺 body 內。
+ * 高低錯落擺位。Playful sticker wall。旋轉 ≤6°，卡須留在 body 內。
  */
 function renderConfettiStickies(slide: PptxGenJS.Slide, body: Rect, pack: Pack, s: Slide): void {
   const items = (s.cards ?? []).slice(0, 6)
@@ -835,7 +835,7 @@ function renderConfettiStickies(slide: PptxGenJS.Slide, body: Rect, pack: Pack, 
   const rows = Math.ceil(n / cols)
   const gapX = 0.4
   const gapY = 0.35
-  // 留邊俾旋轉同錯落唔出 body
+  // 留邊給旋轉同錯落不出 body
   const inset = 0.22
   const cellW = (body.w - gapX * (cols - 1) - inset * 2) / cols
   const cellH = (body.h - gapY * (rows - 1) - inset * 2) / rows
@@ -877,7 +877,7 @@ function renderConfettiStickies(slide: PptxGenJS.Slide, body: Rect, pack: Pack, 
 /**
  * 招牌：stats 渲染成彩泡巨號 ——
  * 每個 stat 一個彩色圓泡（輪換 accent 色 tint 底 + 同色實邊），數字置中，
- * label 喺泡下；泡身高低錯落、各頂一細三角，玩味散落。Playful bubbles。
+ * label 在泡下；泡身高低錯落、各頂一細三角，玩味散落。Playful bubbles。
  */
 function renderConfettiBubbles(slide: PptxGenJS.Slide, body: Rect, pack: Pack, s: Slide): void {
   const items = (s.stats ?? []).slice(0, 4)
@@ -909,7 +909,7 @@ function renderConfettiBubbles(slide: PptxGenJS.Slide, body: Rect, pack: Pack, s
     slide.addShape('triangle', { x: bx + bubble / 2 - 0.1, y: by - 0.16, w: 0.2, h: 0.2, fill: { color: hue }, line: { type: 'none' }, rotate: i % 2 === 0 ? -16 : 16 })
     // 數字置中
     tx(slide, clampText(st.value.trim(), 8), { x: bx, y: by, w: bubble, h: bubble, fontSize: 34, bold: true, color: pack.ink, align: 'center', valign: 'middle', fontFace: pack.displayFont, fit: 'shrink' })
-    // label 喺泡下
+    // label 在泡下
     tx(slide, clampText(st.label.trim(), 22), { x: cellX, y: by + bubble + 0.12, w: cellW, h: 0.55, fontSize: 13, color: pack.inkSoft, align: 'center', valign: 'top', lineSpacingMultiple: 1.12, fit: 'shrink' })
   })
 }
@@ -917,7 +917,7 @@ function renderConfettiBubbles(slide: PptxGenJS.Slide, body: Rect, pack: Pack, s
 /**
  * 招牌：steps 渲染成跳飛機路徑 ——
  * 每步一個彩色方／圓格（輪換四色），沿一條 zig-zag 高低交替路徑擺放、
- * 短斜虛線連起，格內序號、步題喺格邊。Playful hopscotch path。
+ * 短斜虛線連起，格內序號、步題在格邊。Playful hopscotch path。
  */
 function renderConfettiHopscotch(slide: PptxGenJS.Slide, body: Rect, pack: Pack, s: Slide): void {
   const items = (s.steps ?? []).slice(0, 5)
@@ -965,7 +965,7 @@ function renderConfettiHopscotch(slide: PptxGenJS.Slide, body: Rect, pack: Pack,
     // 格內序號（黃格用深墨確保對比）
     const numColor = hue === CFT.yellow ? pack.ink : 'FFFFFF'
     tx(slide, String(i + 1), { x: cx, y: cy, w: tile, h: tile, fontSize: 26, bold: true, color: numColor, align: 'center', valign: 'middle', fontFace: pack.displayFont })
-    // 步題喺格下／上
+    // 步題在格下／上
     const labelY = cy + tile + 0.1
     tx(slide, clampText(st.title.trim(), 22), { x: body.x + i * colW + 0.05, y: labelY, w: colW - 0.1, h: 0.5, fontSize: 14, bold: true, color: pack.ink, align: 'center', valign: 'top', lineSpacingMultiple: 1.1, fit: 'shrink' })
     if (st.desc) {
@@ -986,7 +986,7 @@ const confetti: Pack = {
   faint: CFT.faint,
   hair: CFT.hair,
   accent: CFT.accent,
-  statColor: CFT.accent, // 鈷藍 — 珊瑚喺奶黃卡上對比唔夠（QA 2.6:1）
+  statColor: CFT.accent, // 鈷藍 — 珊瑚在奶黃卡上對比不夠（QA 2.6:1）
   panel: CFT.panel,
   cardRadius: 0.1,
   displayFont: 'Arial',
@@ -1006,12 +1006,12 @@ const confetti: Pack = {
 
   cover(slide, deck, brand, img) {
     slide.background = { color: 'FFFFFF' }
-    // 招牌彩斑散落紋理底圖（瀏覽器 Canvas raster；冇 canvas 時 fallback 漸層底）
+    // 招牌彩斑散落紋理底圖（瀏覽器 Canvas raster；沒有 canvas 時 fallback 漸層底）
     const tex = coverTextureUri('confetti')
     if (tex) {
       slide.addImage({ data: tex, x: 0, y: 0, w: 13.333, h: 7.5, sizing: { type: 'cover', w: 13.333, h: 7.5 } })
     } else {
-      // 白底微微縱深：頂部一抹鈷藍暖白 → 底部極淡墨，俾散落彩斑一個柔和舞台
+      // 白底微微縱深：頂部一抹鈷藍暖白 → 底部極淡墨，給散落彩斑一個柔和舞台
       slide.addShape('rect', {
         x: 0,
         y: 0,
@@ -1022,7 +1022,7 @@ const confetti: Pack = {
       })
     }
     if (img) {
-      // 右半大方相（直角），四角各遮一細彩斑；credit 喺相下
+      // 右半大方相（直角），四角各遮一細彩斑；credit 在相下
       const frame: Rect = { x: 7.4, y: 1.5, w: 5.0, h: 4.2 }
       addCoverImage(slide, img, frame)
       slide.addShape('triangle', { x: 7.22, y: 1.32, w: 0.3, h: 0.3, fill: { color: CFT.yellow }, line: { type: 'none' }, rotate: 18 })
@@ -1070,7 +1070,7 @@ const confetti: Pack = {
     return body
   },
 
-  // 逐版母題：2–3 粒細小彩斑散落一角，位置／色由 seq 決定性 seed，逐版唔同
+  // 逐版母題：2–3 粒細小彩斑散落一角，位置／色由 seq 決定性 seed，逐版不同
   deco(slide: PptxGenJS.Slide, ctx: FrameCtx): void {
     const hues = [CFT.yellow, CFT.coral, CFT.teal, CFT.accent]
     // 按 seq 換角（左下／右下交替），避開 body 區
@@ -1104,7 +1104,7 @@ const confetti: Pack = {
 //  分隔線用一條圓端粉紅 soft bar 代替髮線。
 // ============================================================
 
-// accent 用深一級玫瑰（D4738B）— 細字 eyebrow 喺白底先夠對比；blob 先用淡 blush
+// accent 用深一級玫瑰（D4738B）— 細字 eyebrow 在白底先夠對比；blob 先用淡 blush
 const PAS = { ink: '4A4458', soft: '8E8AA0', faint: 'B9B5C6', hair: 'EFEAF2', accent: 'D4738B', deepRose: 'C2566F', panel: 'F9EFF2', blush: 'F9E1E6', sky: 'DCEBF7', mint: 'E2F3EA' }
 
 /** 軟糖 blob：實心 ellipse（預設正圓） */
@@ -1163,7 +1163,7 @@ function renderPastelBubbles(slide: PptxGenJS.Slide, body: Rect, pack: Pack, s: 
 /**
  * 招牌：stats 渲染成軟糖巨號 ——
  * 每個 stat 一塊大圓角軟糖磚（交替 pack.panel／panelAlt），
- * 大柔墨數字置頂、label 喺下，頂一條圓端 accent soft bar 點睛。Soft big numbers。
+ * 大柔墨數字置頂、label 在下，頂一條圓端 accent soft bar 點睛。Soft big numbers。
  */
 function renderPastelStats(slide: PptxGenJS.Slide, body: Rect, pack: Pack, s: Slide): void {
   const items = (s.stats ?? []).slice(0, 4)
@@ -1252,7 +1252,7 @@ const pastel: Pack = {
   faint: PAS.faint,
   hair: PAS.hair,
   accent: PAS.accent,
-  statColor: PAS.deepRose, // 淡粉藍喺 blush 卡上對比 <3:1（QA major）→ 深玫瑰
+  statColor: PAS.deepRose, // 淡粉藍在 blush 卡上對比 <3:1（QA major）→ 深玫瑰
   panel: PAS.panel,
   panelAlt: PAS.sky, // compare 右欄轉粉藍，A/B 對照即時清晰
   cardRadius: 0.16,
@@ -1273,10 +1273,10 @@ const pastel: Pack = {
 
   cover(slide, deck, brand, img) {
     slide.background = { color: 'FFFFFF' }
-    // 招牌柔霧網格紋理底圖（瀏覽器 Canvas raster；冇 canvas 時 fallback 純色底）
+    // 招牌柔霧網格紋理底圖（瀏覽器 Canvas raster；沒有 canvas 時 fallback 純色底）
     const tex = coverTextureUri('pastel')
     if (tex) slide.addImage({ data: tex, x: 0, y: 0, w: 13.333, h: 7.5, sizing: { type: 'cover', w: 13.333, h: 7.5 } })
-    // 右上三色 blob（有相時做相嘅底層 — 先畫 blob 後畫相）
+    // 右上三色 blob（有相時做相的底層 — 先畫 blob 後畫相）
     // 主腮紅雲：放射漸層由微深玫瑰心 → 淡 blush 邊，似一團受光柔雲
     slide.addShape('ellipse', {
       x: 9.2,
@@ -1294,7 +1294,7 @@ const pastel: Pack = {
       tx(slide, img.credit, { x: 8.3, y: 5.85, w: 4.4, h: 0.24, fontSize: 8, color: PAS.faint, align: 'center' })
     }
     tx(slide, 'TEACHING DECK · 教學簡報', { x: 0.9, y: 2.05, w: 6.5, h: 0.3, fontSize: 10, color: PAS.accent, charSpacing: 2, bold: true })
-    // 有相時題收窄（圓相左緣 x8.3，預返 safe margin 唔好頂到）
+    // 有相時題收窄（圓相左緣 x8.3，預返 safe margin 不要頂到）
     const titleW = img ? 6.9 : 7.4
     const fit = fitTitle(deck.title, 'cover')
     const lines = Math.max(1, Math.min(2, estimateLines(deck.title, fit.fontPt, titleW)))
@@ -1323,13 +1323,13 @@ const pastel: Pack = {
       blob(slide, 11.6, 1.0, 0.26, PAS.mint)
     }
     const { body, contentW } = scaffold(slide, pastel, ctx, { kickerY: 0.58, titleY: 0.9, hairline: false })
-    // 圓端粉紅 soft bar 代替髮線（本 pack 嘅圓潤語言）
+    // 圓端粉紅 soft bar 代替髮線（本 pack 的圓潤語言）
     slide.addShape('roundRect', { x: 0.9, y: body.y - 0.32, w: contentW, h: 0.06, rectRadius: 0.03, fill: { color: PAS.blush }, line: { type: 'none' } })
     drawFooter(slide, pastel, ctx)
     return body
   },
 
-  // 逐版母題：一個細小軟圓 blob，tint 按 seq 喺 panel／panelAlt 交替、角位按 seq % 4 換
+  // 逐版母題：一個細小軟圓 blob，tint 按 seq 在 panel／panelAlt 交替、角位按 seq % 4 換
   deco(slide: PptxGenJS.Slide, ctx: FrameCtx): void {
     const tint = ctx.seq % 2 === 0 ? PAS.panel : (pastel.panelAlt ?? PAS.panel)
     const d = 0.34 + (ctx.seq % 3) * 0.05 // blob 大細微微脈動

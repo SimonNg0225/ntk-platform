@@ -1,8 +1,8 @@
 // ============================================================
 //  漸層注入 — 繞過 pptxgenjs（只支援 solid fill）的限制
 //  ------------------------------------------------------------
-//  做法：pack 用 gradLinear()/gradRadial() 攞一個「sentinel」純色當 fill，
-//  出檔後喺 PizZip 階段（同 theme patch 一樣）將該 sentinel 的
+//  做法：pack 用 gradLinear()/gradRadial() 取得一個「sentinel」純色當 fill，
+//  出檔後在 PizZip 階段（同 theme patch 一樣）將該 sentinel 的
 //  <a:solidFill> 換成 OOXML <a:gradFill>。保持向量、可編輯、檔細。
 //  sentinel 用 FE 前綴（pack 調色盤從不使用 FE 開頭 — 有測試守住）。
 //  注意：非 reentrant —— buildPptxFile 內「reset → 生成 → inject」順序使用。
@@ -73,9 +73,9 @@ interface ZipLike {
 }
 
 /**
- * 將所有 slide XML 內登記咗的 sentinel solid fill 換成 gradFill。
- * 回傳被替換的次數（俾測試 / 偵錯用）。
- * 收 unknown（PizZip 型別冇宣告 .files；內部按 ZipLike 結構 narrow）。
+ * 將所有 slide XML 內登記了的 sentinel solid fill 換成 gradFill。
+ * 回傳被替換的次數（給測試 / 偵錯用）。
+ * 收 unknown（PizZip 型別沒有宣告 .files；內部按 ZipLike 結構 narrow）。
  */
 export function injectGradients(zipUnknown: unknown): number {
   const zip = zipUnknown as ZipLike

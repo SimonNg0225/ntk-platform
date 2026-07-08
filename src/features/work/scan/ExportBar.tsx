@@ -54,8 +54,8 @@ export default function ExportBar({
 
   // 去向②：存資源庫（雲端或本機 metadata）。
   //  · 已接雲端 + 已登入 → 上載 PDF 去 Supabase Storage，資源庫存可 click
-  //    簽名連結（跨裝置打得開），唔強制下載。
-  //  · 否則 → 降級：登記 metadata row + 下載個 PDF 畀用戶留底。
+  //    簽名連結（跨裝置打得開），不強制下載。
+  //  · 否則 → 降級：登記 metadata row + 下載個 PDF 給用戶留底。
   async function saveToLibrary() {
     if (!pages.length) return
     setBusy(true)
@@ -75,7 +75,7 @@ export default function ExportBar({
           })
           toast.success(
             t('scan.savedToCloud', {
-              defaultValue: '已存上雲端資源庫，可喺資源庫直接開',
+              defaultValue: '已存上雲端資源庫，可在資源庫直接開',
             }),
           )
           return

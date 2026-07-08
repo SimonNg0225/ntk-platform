@@ -92,7 +92,7 @@ export function HealthWidget({ open }: { open: Open }) {
         健康
       </SectionTitle>
       {logs.length === 0 ? (
-        <EmptyState icon={HeartPulse} title="仲未記錄" hint="記低今日體重、睡眠、運動、飲水同心情。" />
+        <EmptyState icon={HeartPulse} title="尚未記錄" hint="記低今日體重、睡眠、運動、飲水同心情。" />
       ) : (
         <div className="flex items-center gap-4">
           <MiniRing value={s.waterPct} size={68} stroke={7}>
@@ -200,7 +200,7 @@ export function FlashcardsWidget({ input, kpis, open }: { input: DashInput; kpis
         知識卡
       </SectionTitle>
       {total === 0 ? (
-        <EmptyState icon={Brain} title="仲未有知識卡" hint="生成或新增知識卡，開始間隔重複。" />
+        <EmptyState icon={Brain} title="尚未有知識卡" hint="生成或新增知識卡，開始間隔重複。" />
       ) : (
         <div className="flex items-center gap-4">
           <MiniRing value={total ? ((total - kpis.dueCards) / total) * 100 : 0} size={68} stroke={7}>
@@ -271,7 +271,7 @@ export function AgendaWidget({
         今日日程
       </SectionTitle>
       {empty ? (
-        <EmptyState icon={CalendarDays} title="今日無安排" hint="行事曆冇事件，倒數亦未到。輕鬆一日。" />
+        <EmptyState icon={CalendarDays} title="今日無安排" hint="行事曆沒有事件，倒數亦未到。輕鬆一日。" />
       ) : (
         <div className="space-y-3">
           {todays.length > 0 && (
@@ -378,7 +378,7 @@ export function GoalsWidget({
         個人目標
       </SectionTitle>
       {rows.length === 0 ? (
-        <EmptyState icon={Target} title="仲未有目標" hint="設定個人目標，追蹤每一步進度。" />
+        <EmptyState icon={Target} title="尚未有目標" hint="設定個人目標，追蹤每一步進度。" />
       ) : (
         <ul className="space-y-3">
           {rows.map((r) => {
@@ -415,7 +415,7 @@ export function GoalsWidget({
   )
 }
 
-// ───────── 習慣打卡（今日應做，一撳完成）─────────
+// ───────── 習慣打卡（今日應做，一按完成）─────────
 export function HabitsTodayWidget({
   habits,
   habitLogs,
@@ -518,7 +518,7 @@ export function ReadingWidget({ input, kpis, open }: { input: DashInput; kpis: K
         在讀書籍
       </SectionTitle>
       {reading.length === 0 ? (
-        <EmptyState icon={BookOpen} title="而家無讀緊嘅書" hint="加本書入閱讀清單，開始閱讀之旅。" />
+        <EmptyState icon={BookOpen} title="現在無讀緊的書" hint="加本書入閱讀清單，開始閱讀之旅。" />
       ) : (
         <>
           <ul className="space-y-3">
@@ -588,7 +588,7 @@ export function MoodWidget({ input, open }: { input: DashInput; open: Open }) {
         心情走勢
       </SectionTitle>
       {!hasData ? (
-        <EmptyState icon={Smile} title="仲未有心情記錄" hint="寫日誌時揀返心情，呢度自動成圖。" />
+        <EmptyState icon={Smile} title="尚未有心情記錄" hint="寫日誌時重新選擇心情，這裡自動成圖。" />
       ) : (
         <>
           {recentMood && (
@@ -626,7 +626,7 @@ export function QuizWidget({ attempts, open }: { attempts: QuizAttempt[]; open: 
         測驗表現
       </SectionTitle>
       {!stats ? (
-        <EmptyState icon={ListChecks} title="仲未做過測驗" hint="由題庫抽 MC 即時測驗，呢度睇返表現。" />
+        <EmptyState icon={ListChecks} title="尚未做過測驗" hint="由題庫抽 MC 即時測驗，這裡查看表現。" />
       ) : (
         <div className="flex items-center gap-4">
           <MiniRing value={stats.acc} size={68} stroke={7} tone={stats.acc >= 70 ? 'green' : stats.acc >= 50 ? 'amber' : 'rose'}>
@@ -674,7 +674,7 @@ export function ActivityWidget({ items, open }: { items: ActivityItem[]; open: O
     <Card className="p-4">
       <SectionTitle icon={TrendingUp}>最近活動</SectionTitle>
       {items.length === 0 ? (
-        <EmptyState icon={Clock} title="仲未有活動" hint="開始記錄，呢度會記低你嘅每一步。" />
+        <EmptyState icon={Clock} title="尚未有活動" hint="開始記錄，這裡會記低你的每一步。" />
       ) : (
         <ul className="space-y-2.5">
           {items.map((it) => {

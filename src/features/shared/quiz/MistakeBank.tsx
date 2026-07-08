@@ -94,7 +94,7 @@ export function MistakeBank({ onPractice }: { onPractice: (questionIds: string[]
     if (mastered.length === 0) return
     const ok = await confirm({
       title: '清走已掌握題目？',
-      message: `會由錯題本移除 ${mastered.length} 條已掌握嘅題目（唔影響題庫）。`,
+      message: `會由錯題本移除 ${mastered.length} 條已掌握的題目（不影響題庫）。`,
       confirmText: '清走',
       tone: 'danger',
     })
@@ -107,8 +107,8 @@ export function MistakeBank({ onPractice }: { onPractice: (questionIds: string[]
     return (
       <EmptyState
         icon={Sparkles}
-        title="錯題本係空嘅，好嘢！"
-        hint="做測驗時答錯嘅題目會自動收集喺呢度，方便集中操練同追蹤掌握進度。"
+        title="錯題本暫時是空的，做得很好！"
+        hint="做測驗時答錯的題目會自動收集在這裡，方便集中操練同追蹤掌握進度。"
       />
     )
   }
@@ -136,7 +136,7 @@ export function MistakeBank({ onPractice }: { onPractice: (questionIds: string[]
           <div className="min-w-0">
             <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">集中操練錯題</p>
             <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-              抽起所有「待克服」題目即場再做，連續答啱兩次就自動標記掌握。
+              抽起所有「待克服」題目即場再做，連續答對兩次就自動標記掌握。
             </p>
           </div>
         </div>
@@ -176,7 +176,7 @@ export function MistakeBank({ onPractice }: { onPractice: (questionIds: string[]
 
       {/* 列表 */}
       {filtered.length === 0 ? (
-        <EmptyState icon={Search} title="無符合嘅題目" hint="試吓換個篩選或關鍵字。" />
+        <EmptyState icon={Search} title="無符合的題目" hint="嘗試換個篩選或關鍵字。" />
       ) : (
         <ul className="space-y-2" aria-live="polite">
           {filtered.map((m) => {

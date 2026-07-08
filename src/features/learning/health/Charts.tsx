@@ -18,7 +18,7 @@ interface Pt {
   value: number | null
 }
 
-/** 折線趨勢圖：連接有資料嘅點（跳過空日斷成段），底部漸變填色 + 端點。 */
+/** 折線趨勢圖：連接有資料的點（跳過空日斷成段），底部漸變填色 + 端點。 */
 export function LineTrend({
   points,
   tone,

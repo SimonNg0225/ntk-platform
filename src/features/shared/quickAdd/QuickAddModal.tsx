@@ -41,7 +41,7 @@ import {
 //  步驟一：打一句自然語言 →「分析」→ parseQuickAdd(text, mode)。
 //  步驟二：預覽卡 —— SegmentedControl 切類型（待辦 / 提醒 / 行事曆），
 //          按 kind 顯示可改欄位（標題 / 日期 / 時間 / 結束 / 分類）。
-//          parse 回 null 即退「手動模式」：kind=task、title=原文，唔卡死。
+//          parse 回 null 即退「手動模式」：kind=task、title=原文，不卡死。
 //  「加入」→ 按 kind 寫入對應 collection → toast +「檢視」捷徑 → onClose。
 //
 //  · 未接 AI（!isAIConfigured）顯示友善 gate（同題庫 AI 出題一致）。
@@ -89,12 +89,12 @@ const CATEGORY_OPTIONS: { id: CountdownCategory; label: string }[] = [
 // 重複（只限 event 卡）：none / 每日 / 每週。'' = 不重複。
 type RecFreqOption = '' | 'daily' | 'weekly'
 
-// 輕量 t 型別（同 react-i18next 嘅 t 相容；含 {{n}} 插值用嘅 n）。
+// 輕量 t 型別（同 react-i18next 的 t 相容；含 {{n}} 插值用的 n）。
 type TFn = (key: string, opts?: { defaultValue?: string; n?: number }) => string
 
 const WEEKDAY_LABELS = ['日', '一', '二', '三', '四', '五', '六'] as const
 
-/** 重複選項（雙語）：zh-HK 靠 defaultValue，en 喺 appEn.qadd。 */
+/** 重複選項（雙語）：zh-HK 靠 defaultValue，en 在 appEn.qadd。 */
 function recurrenceOptions(t: TFn): { id: RecFreqOption; label: string }[] {
   return [
     { id: '', label: t('qadd.recurNone', { defaultValue: '不重複' }) },
@@ -154,7 +154,7 @@ export function QuickAddModal({ open, onClose }: QuickAddModalProps) {
   const [drafts, setDrafts] = useState<ParsedDraft[]>([])
   const examples = MODE_EXAMPLES[mode]
 
-  // 關閉時重設，下次開返乾淨一張（用喺 onClose 同成功加入後）
+  // 關閉時重設，下次開返乾淨一張（用在 onClose 同成功加入後）
   const reset = () => {
     setStep('input')
     setText('')
@@ -166,8 +166,8 @@ export function QuickAddModal({ open, onClose }: QuickAddModalProps) {
     onClose()
   }
 
-  // 步驟一：交畀 AI 分析 → 入預覽。parse 回 null（AI 出錯 / 解唔到）
-  // 一律退「手動模式」：kind=task、title=原文（已 trim），用戶自己揀類型／填日期。
+  // 步驟一：交給 AI 分析 → 入預覽。parse 回 null（AI 出錯 / 解不到）
+  // 一律退「手動模式」：kind=task、title=原文（已 trim），用戶自己選擇類型／填日期。
   const analyze = async () => {
     const input = text.trim()
     if (!input || busy) return
@@ -177,7 +177,7 @@ export function QuickAddModal({ open, onClose }: QuickAddModalProps) {
       if (parsed.length > 0) {
         setDrafts(parsed)
       } else {
-        toast.info('AI 分析唔到，已轉做手動填寫')
+        toast.info('AI 分析不到，已轉做手動填寫')
         setDrafts([{ kind: 'task', title: input, mode }])
       }
       setStep('preview')
@@ -321,14 +321,14 @@ export function QuickAddModal({ open, onClose }: QuickAddModalProps) {
               <span className="font-semibold text-accent-strong dark:text-accent">
                 待辦 / 提醒 / 行事曆
               </span>
-              ，再畀你確認同修改。例如「{examples[0]}」。
+              ，再給你確認同修改。例如「{examples[0]}」。
               <span className="mt-1 block text-[11px] text-slate-500 dark:text-slate-400">
                 私隱提示：學生姓名、成績或個案資料先用代號或遮蔽後再輸入。
               </span>
             </p>
           </div>
 
-          <Field label="想記低啲乜？">
+          <Field label="想記低些乜？">
             <Textarea
               value={text}
               onChange={(e) => setText(e.target.value)}
@@ -392,11 +392,11 @@ export function QuickAddModal({ open, onClose }: QuickAddModalProps) {
       ) : (
         <div className="space-y-4">
           <p className="text-xs text-slate-500 dark:text-slate-400">
-            AI 拆咗{' '}
+            AI 拆了{' '}
             <span className="font-semibold text-accent-strong dark:text-accent">
               {drafts.length}
             </span>{' '}
-            項，逐張可改類型／日期／時間、或剔走唔要嘅，確認後一次過加入。
+            項，逐張可改類型／日期／時間、或剔走不要的，確認後一次過加入。
           </p>
 
           <div className="space-y-3">
@@ -421,7 +421,7 @@ export function QuickAddModal({ open, onClose }: QuickAddModalProps) {
                     </div>
                     {drafts.length > 1 && (
                       <IconButton
-                        label="移除呢項"
+                        label="移除此項"
                         size="sm"
                         onClick={() => removeDraft(i)}
                       >
@@ -443,7 +443,7 @@ export function QuickAddModal({ open, onClose }: QuickAddModalProps) {
                     <div className="grid gap-3 sm:grid-cols-2">
                       <Field
                         label="日期"
-                        error={needsDate ? '請揀一個日子' : undefined}
+                        error={needsDate ? '請選擇一個日子' : undefined}
                       >
                         <Input
                           type="date"
@@ -495,7 +495,7 @@ export function QuickAddModal({ open, onClose }: QuickAddModalProps) {
                           const next: RecurrenceDraft = {
                             freq,
                             interval: prev?.interval ?? 1,
-                            // 由每週切走再切返時，保留 AI 偵測到嘅星期幾
+                            // 由每週切走再切返時，保留 AI 偵測到的星期幾
                             ...(freq === 'weekly' && prev?.byWeekday?.length
                               ? { byWeekday: prev.byWeekday }
                               : {}),

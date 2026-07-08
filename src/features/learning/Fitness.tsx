@@ -10,7 +10,7 @@ import LibraryView from './fitness/library/LibraryView'
 
 // ============================================================
 //  健身中心 shell —— 個人模式「健身」分區，內含 5 個工具 tab。
-//  各 tab 係自足模組（自己 store/util/charts），喺呢度切換顯示。
+//  各 tab 係自足模組（自己 store/util/charts），在這裡切換顯示。
 //  ------------------------------------------------------------
 //  呈現層跟「工作儀表板」設計語言：accent masthead（PageHeader 式
 //  icon chip + 標題 + 狀態副題）+ FeatureGuide 教學引導 + 統一
@@ -36,27 +36,27 @@ export default function Fitness() {
 
   const guideSteps: FeatureGuideStep[] = [
     {
-      title: t('fitness.guideStep1Title', { defaultValue: '揀工具' }),
+      title: t('fitness.guideStep1Title', { defaultValue: '選擇工具' }),
       desc: t('fitness.guideStep1Desc', {
-        defaultValue: '喺下方分頁揀：體態、訓練、飲食、AI 教練或動作庫。',
+        defaultValue: '在下方分頁選擇：體態、訓練、飲食、AI 教練或動作庫。',
       }),
     },
     {
       title: t('fitness.guideStep2Title', { defaultValue: '記低數據' }),
       desc: t('fitness.guideStep2Desc', {
-        defaultValue: '喺體態記體重／體脂，喺訓練記每組重量次數，喺飲食記餐單。',
+        defaultValue: '在體態記體重／體脂，在訓練記每組重量次數，在飲食記餐單。',
       }),
     },
     {
-      title: t('fitness.guideStep3Title', { defaultValue: '睇趨勢' }),
+      title: t('fitness.guideStep3Title', { defaultValue: '查看趨勢' }),
       desc: t('fitness.guideStep3Desc', {
-        defaultValue: '系統即時整合圖表，睇體態走勢、訓練量同營養達標情況。',
+        defaultValue: '系統即時整合圖表，查看體態走勢、訓練量同營養達標情況。',
       }),
     },
     {
       title: t('fitness.guideStep4Title', { defaultValue: '問 AI 教練' }),
       desc: t('fitness.guideStep4Desc', {
-        defaultValue: '唔知點練？去 AI 教練攞訓練計劃、姿勢建議同進度評估。',
+        defaultValue: '不知點練？去 AI 教練取得訓練計劃、姿勢建議同進度評估。',
       }),
     },
   ]
@@ -70,10 +70,10 @@ export default function Fitness() {
         kicker={t('fitness.kicker', { defaultValue: '個人成長 · 健身追蹤' })}
         title={t('fitness.title', { defaultValue: '健身中心' })}
         description={t('fitness.subtitle', {
-          defaultValue: '體態、訓練、飲食、AI 教練同動作庫，一站睇晒。',
+          defaultValue: '體態、訓練、飲食、AI 教練同動作庫，一站查看全部。',
         })}
         actions={
-          // 現正開啟：跟住 active tab 嘅輕量狀態 pill（純展示）
+          // 現正開啟：跟住 active tab 的輕量狀態 pill（純展示）
           <div className="shrink-0 rounded-xl bg-white/15 px-3.5 py-2.5 backdrop-blur-sm" aria-live="polite">
             <p className="text-xs text-white/70">
               {t('fitness.nowOpen', { defaultValue: '現正開啟' })}
@@ -86,10 +86,10 @@ export default function Fitness() {
         }
       />
 
-      {/* ───────── 教學引導：點用呢個功能 ───────── */}
+      {/* ───────── 教學引導：如何使用此功能 ───────── */}
       <FeatureGuide
         storageKey="fitness"
-        title={t('fitness.guideTitle', { defaultValue: '健身中心點用？' })}
+        title={t('fitness.guideTitle', { defaultValue: '健身中心使用說明' })}
         steps={guideSteps}
       />
 

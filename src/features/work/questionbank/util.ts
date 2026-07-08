@@ -31,14 +31,14 @@ export const DIFF_TONE: Record<Difficulty, 'green' | 'amber' | 'rose'> = {
   medium: 'amber',
   hard: 'rose',
 }
-// 難度權重（用嚟計「卷面難度指數」0–100）
+// 難度權重（用來計「卷面難度指數」0–100）
 export const DIFF_WEIGHT: Record<Difficulty, number> = {
   easy: 1,
   medium: 2,
   hard: 3,
 }
 
-// 圖表 / chip 用嘅難度色（fill / bg 用 currentColor 或直接 class）
+// 圖表 / chip 用的難度色（fill / bg 用 currentColor 或直接 class）
 export const DIFF_FILL: Record<Difficulty, string> = {
   easy: 'text-emerald-500',
   medium: 'text-amber-500',
@@ -93,7 +93,7 @@ export interface BankStats {
   totalMarks: number
   withAnswer: number // 有參考答案 / MC（即「可即用」）
   aiCount: number // 標 source = AI 生成
-  topicsCovered: number // 有題目嘅課題數
+  topicsCovered: number // 有題目的課題數
   difficultyIndex: number // 0–100，全庫平均難度
 }
 
@@ -202,7 +202,7 @@ export function buildTopicRows(
   return [...map.values()]
 }
 
-// 課題覆蓋缺口：有 0 題嘅課題（提示老師補題）
+// 課題覆蓋缺口：有 0 題的課題（提示老師補題）
 export function coverageGaps(rows: TopicRow[]): TopicRow[] {
   return rows.filter((r) => r.total === 0 && r.topic !== '未分類')
 }
@@ -216,7 +216,7 @@ export function normStem(s: string): string {
     .replace(/[，。、；：？！「」『』（）()[\]{}.,;:?!"'`~\-_/\\]/g, '')
 }
 
-// 兩段標準化字串嘅 Jaccard（bigram）相似度 0–1
+// 兩段標準化字串的 Jaccard（bigram）相似度 0–1
 function bigramSet(s: string): Set<string> {
   const out = new Set<string>()
   if (s.length < 2) {
@@ -265,7 +265,7 @@ export function findDuplicates(
     }
   }
 
-  // 2) 高相似（未配對嘅之間兩兩比；O(n²) 但題庫規模可接受）
+  // 2) 高相似（未配對的之間兩兩比；O(n²) 但題庫規模可接受）
   const rest = questions.filter((q) => !used.has(q.id))
   for (let i = 0; i < rest.length; i++) {
     if (used.has(rest[i].id)) continue
@@ -291,7 +291,7 @@ export function findDuplicates(
 }
 
 // ───────── 試卷藍圖自動組卷 ─────────
-// 老師指定每個難度想要幾題 → 由符合範圍嘅題池隨機抽，盡量平均覆蓋課題。
+// 老師指定每個難度想要幾題 → 由符合範圍的題池隨機抽，盡量平均覆蓋課題。
 export interface Blueprint {
   topicIds: string[] // 空 = 全部課題
   type: '' | QuestionType // 空 = 不限題型
@@ -318,7 +318,7 @@ export interface AssembleResult {
   shortfall: Record<Difficulty, number> // 每個難度欠幾題（題池不足）
 }
 
-// 抽題：每個難度按需要抽，盡量「輪流」唔同課題（round-robin）以求平均覆蓋
+// 抽題：每個難度按需要抽，盡量「輪流」不同課題（round-robin）以求平均覆蓋
 export function assemblePaper(
   questions: Question[],
   bp: Blueprint,
@@ -369,7 +369,7 @@ export function assemblePaper(
 
 // ───────── CSV 匯出 / 匯入（零依賴）─────────
 const CSV_HEADERS = [
-  'topic', // 課題名（匯入時 fuzzy 對應，配唔到落第一個）
+  'topic', // 課題名（匯入時 fuzzy 對應，配不到落第一個）
   'type', // mc / short / long / case 或中文
   'difficulty', // easy / medium / hard 或 易/中/難
   'stem',
@@ -506,10 +506,10 @@ export interface ParsedRow {
   marks?: number
 }
 
-// 把 MC 選項去除空白項，並按壓縮後嘅新位置重新對應正確答案 index。
-// 表單／AI 草稿固定渲染 A–D 四格，中間留空會令 filter 後嘅 options 同
-// 原本嘅 answerIndex 錯位（出界或指向錯選項）。呢度一次過 trim + filter +
-// remap，畀儲存路徑用，確保 options 同 answerIndex 永遠一致。
+// 把 MC 選項去除空白項，並按壓縮後的新位置重新對應正確答案 index。
+// 表單／AI 草稿固定渲染 A–D 四格，中間留空會令 filter 後的 options 同
+// 原本的 answerIndex 錯位（出界或指向錯選項）。這裡一次過 trim + filter +
+// remap，給儲存路徑用，確保 options 同 answerIndex 永遠一致。
 export function compactMcOptions(
   options: string[],
   answerIndex: number,
@@ -524,7 +524,7 @@ export function compactMcOptions(
   }
 }
 
-// 把 CSV rows（含表頭）轉成可入庫嘅 ParsedRow[]，附帶被略過嘅行數
+// 把 CSV rows（含表頭）轉成可入庫的 ParsedRow[]，附帶被略過的行數
 export function rowsToQuestions(
   rows: string[][],
   topics: TopicLite[],
@@ -608,7 +608,7 @@ export function rowsToQuestions(
   return { parsed, skipped }
 }
 
-// CSV 範本（畀使用者下載對照）
+// CSV 範本（給使用者下載對照）
 export function csvTemplate(): string {
   return [
     CSV_HEADERS.join(','),
@@ -631,7 +631,7 @@ export function downloadText(filename: string, text: string, mime = 'text/csv;ch
   URL.revokeObjectURL(url)
 }
 
-// ───────── 列印（開新視窗，唔改全站 CSS）─────────
+// ───────── 列印（開新視窗，不改全站 CSS）─────────
 export interface PaperMeta {
   title: string
   className: string

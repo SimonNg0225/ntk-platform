@@ -43,8 +43,8 @@ export function relativeLabel(key?: string): string {
   if (!key) return ''
   const diff = Math.round((fromKey(key).getTime() - fromKey(todayKey()).getTime()) / 86400000)
   if (diff === 0) return '今日'
-  if (diff === 1) return '聽日'
-  if (diff === -1) return '尋日'
+  if (diff === 1) return '明天'
+  if (diff === -1) return '昨天'
   if (diff < 0) return `${-diff} 日前`
   return `${diff} 日後`
 }
@@ -52,7 +52,7 @@ export function relativeLabel(key?: string): string {
 export function progressPct(book: Book): number {
   if (book.status === 'done') return 100
   if (!book.totalPages || book.totalPages <= 0) return 0
-  // 未讀完用 floor：99.5%（如 199/200）唔應 round 成 100%，否則同真·讀完冇得分。
+  // 未讀完用 floor：99.5%（如 199/200）不應 round 成 100%，否則同真·讀完沒有得分。
   return Math.min(100, Math.floor(((book.currentPage ?? 0) / book.totalPages) * 100))
 }
 
@@ -66,13 +66,13 @@ export function totalPagesRead(book: Book): number {
 // ───────── 閱讀步速 + 預計讀完日（衍生統計） ─────────
 export interface ReadingPace {
   pagesPerDay: number // 平均每日頁數
-  remainingPages: number // 仲要讀幾多頁
-  daysLeft: number // 按步速推算仲要幾日（≥1）
+  remainingPages: number // 還要讀幾多頁
+  daysLeft: number // 按步速推算還要幾日（≥1）
   etaKey: string // 預計讀完日（YYYY-MM-DD，本地）
 }
 
 /**
- * 對「在讀」而且有 startedOn + 已知 totalPages 嘅書，
+ * 對「在讀」而且有 startedOn + 已知 totalPages 的書，
  * 計平均每日頁數同推算預計讀完日。
  * daysElapsed 用 daysBetween（含頭尾、本地時區）；pagesRead 用 totalPagesRead。
  * 缺料（非 reading / 無 startedOn / 無 totalPages / 未讀任何頁 / 已讀完無剩）→ null。
@@ -107,7 +107,7 @@ export interface Stats {
   avgRating: number
   totalPagesAll: number
   totalMinutes: number
-  ratingDist: number[] // index 1..5 → 本數（半星向上歸到整星嘅 bucket 顯示）
+  ratingDist: number[] // index 1..5 → 本數（半星向上歸到整星的 bucket 顯示）
   topShelves: { name: string; count: number }[]
   longestStreak: number
   currentStreak: number
@@ -193,7 +193,7 @@ export function computeStreaks(books: Book[]): {
     }
   }
 
-  // 目前連續：由今日（或尋日）往回數
+  // 目前連續：由今日（或昨天）往回數
   let current = 0
   let cursor = todayKey()
   if (!days.has(cursor)) {
@@ -240,9 +240,9 @@ export function monthlyFinished(books: Book[], months = 12): MonthBucket[] {
 }
 
 /**
- * 一本書「讀完」嘅本地年月 key（YYYY-MM）。
+ * 一本書「讀完」的本地年月 key（YYYY-MM）。
  * finishedOn 已是本地 key；createdAt 係 ISO(UTC)，要先轉本地 key，
- * 否則 HK 凌晨建立嘅書 UTC 會跌去前一日 → 落錯月份（甚至跌出今年）。
+ * 否則 HK 凌晨建立的書 UTC 會跌去前一日 → 落錯月份（甚至跌出今年）。
  */
 function finishedKey(book: Book): string {
   return book.finishedOn ?? toKey(new Date(book.createdAt))
@@ -253,9 +253,9 @@ function finishedMonthKey(book: Book): string {
 }
 
 /**
- * 指定年份「讀完」嘅本數（年度閱讀挑戰用）。
+ * 指定年份「讀完」的本數（年度閱讀挑戰用）。
  * 只計 status='done'，按 finishedOn 本地年份歸類；缺 finishedOn 用 createdAt 本地年份。
- * 不受 monthlyFinished 嘅 12 個月窗口限制 → 任何時候統計都準。
+ * 不受 monthlyFinished 的 12 個月窗口限制 → 任何時候統計都準。
  */
 export function finishedInYear(books: Book[], year: number): number {
   const prefix = `${year}-`

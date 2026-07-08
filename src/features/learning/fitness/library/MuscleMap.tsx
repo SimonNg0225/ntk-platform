@@ -1,7 +1,7 @@
 // ============================================================
 //  2D 肌群人體圖（代替 3D）—— 前 / 後視圖，按目標肌群著色。
 //  紅 = 主要肌（prime mover）、橙 = 協同/穩定肌、灰 = 其餘。
-//  （慣用「肌肉激活」配色；只此元件用，唔改全局海軍藍主題。）
+//  （慣用「肌肉激活」配色；只此元件用，不改全局海軍藍主題。）
 //  肌群名詞彙來自 library/data.ts，用 fuzzy 對應到 16 個身體區域。
 // ============================================================
 
@@ -10,7 +10,7 @@ export type Region =
   | 'abs' | 'obliques' | 'lats' | 'traps' | 'upperback' | 'lowerback'
   | 'quads' | 'hamstrings' | 'glutes' | 'calves' | 'adductors'
 
-/** 單個肌群名 → 區域（fuzzy；認唔到、空字串、非字串都回 null） */
+/** 單個肌群名 → 區域（fuzzy；認不到、空字串、非字串都回 null） */
 export function regionFor(muscle: string): Region | null {
   if (typeof muscle !== 'string' || !muscle) return null
   const m = muscle
@@ -46,8 +46,8 @@ export function regionsFor(muscles: string[]): Set<Region> {
 const PRIMARY = '#ef4444' // red-500
 const SECONDARY = '#f59e0b' // amber-500
 
-// 每個區域喺前 / 後視圖嘅形狀（stylised；x 對稱用兩件）。
-// 用簡單 ellipse / rounded-rect 砌出可辨識嘅肌群塊。
+// 每個區域在前 / 後視圖的形狀（stylised；x 對稱用兩件）。
+// 用簡單 ellipse / rounded-rect 砌出可辨識的肌群塊。
 interface Shape {
   region: Region
   el: 'ellipse' | 'rect'
@@ -149,7 +149,7 @@ export function MuscleMap({
 }) {
   const primary = regionsFor(primaryMuscles)
   const secondaryRaw = regionsFor(secondaryMuscles)
-  // 主要肌優先：若同時喺主要，唔重複落協同色
+  // 主要肌優先：若同時在主要，不重複落協同色
   const secondary = new Set<Region>([...secondaryRaw].filter((r) => !primary.has(r)))
   return (
     <div className={className}>

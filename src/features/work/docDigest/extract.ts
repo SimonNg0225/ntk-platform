@@ -4,16 +4,16 @@ import type { DigestSource } from './digestStore'
 
 // ============================================================
 //  文件速讀 — 由檔案抽出文字／圖片
-//  · .docx → 用行政文件已有嘅 extractText
+//  · .docx → 用行政文件已有的 extractText
 //  · .pdf  → pdf.js 逐頁 getTextContent；空頁 fallback Gemini Vision（hybrid）
-//  · 圖片  → base64 AIImage，交畀 Gemini Vision
-//  ⚠️ pdfjs 改為「用到先 import」：避免喺模組載入時 touch DOMMatrix
-//     （測試 / SSR 環境冇 DOMMatrix），亦慳首屏 bundle。
-//  Vision fallback：字數 < BLANK_THRESHOLD 嘅頁 → canvas render → 批次一個 call
+//  · 圖片  → base64 AIImage，交給 Gemini Vision
+//  ⚠️ pdfjs 改為「用到先 import」：避免在模組載入時 touch DOMMatrix
+//     （測試 / SSR 環境沒有 DOMMatrix），亦慳首屏 bundle。
+//  Vision fallback：字數 < BLANK_THRESHOLD 的頁 → canvas render → 批次一個 call
 //  成本控制：上限 MAX_VISION_PAGES 頁；超出部分保留 pdf.js 原文（可能為空）。
 // ============================================================
 
-/** 字數少於此閾值嘅頁視為掃描頁 / 空頁，交 Vision 補字 */
+/** 字數少於此閾值的頁視為掃描頁 / 空頁，交 Vision 補字 */
 const BLANK_THRESHOLD = 50
 /** 每份文件最多幾多頁交 Vision 處理（~50頁≈HK$0.04，超出部分留空） */
 const MAX_VISION_PAGES = 50
@@ -24,7 +24,7 @@ export interface ExtractResult {
   sourceType: DigestSource
   /** PDF 含掃描頁，已用 Gemini Vision 補字 */
   usedVision?: boolean
-  /** 掃描頁超出上限、未處理（留空）嘅頁數；0 = 全部處理到 */
+  /** 掃描頁超出上限、未處理（留空）的頁數；0 = 全部處理到 */
   scanPagesDropped?: number
 }
 
@@ -72,7 +72,7 @@ async function extractPdfText(
   pdfjsLib.GlobalWorkerOptions.workerSrc = workerUrl
   const pdf = await pdfjsLib.getDocument({ data: buf }).promise
 
-  // ── 第一輪：pdf.js 抽字，標記字數不足嘅空頁 ──────────────────────
+  // ── 第一輪：pdf.js 抽字，標記字數不足的空頁 ──────────────────────
   const pageTexts: string[] = []
   const blankNums: number[] = []
 
@@ -134,8 +134,8 @@ async function batchVisionExtract(images: AIImage[], pageNums: number[]): Promis
   const { complete } = await import('../../../lib/aiClient')
   const isMulti = images.length > 1
   const prompt = isMulti
-    ? `以下 ${images.length} 張圖片係掃描文件嘅第 ${pageNums.join('、')} 頁。請逐頁抽出所有文字，每頁之間用「---PAGE---」分隔，唔需要其他說明。`
-    : '請抽出這頁掃描文件的所有文字，保留原有格式，唔需要其他說明。'
+    ? `以下 ${images.length} 張圖片係掃描文件的第 ${pageNums.join('、')} 頁。請逐頁抽出所有文字，每頁之間用「---PAGE---」分隔，不需要其他說明。`
+    : '請抽出這頁掃描文件的所有文字，保留原有格式，不需要其他說明。'
 
   try {
     const result = await complete({

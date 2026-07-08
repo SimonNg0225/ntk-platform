@@ -1,14 +1,14 @@
 // ============================================================
-//  筆記範本（Notion 風）— 建立新筆記時一鍵套用，或喺編輯器插入
+//  筆記範本（Notion 風）— 建立新筆記時一鍵套用，或在編輯器插入
 //  ------------------------------------------------------------
 //  純資料，零依賴。body 用 markdown 風（首行 = 標題、#標籤、- [ ] 待辦），
-//  同 notes/util 嘅 deriveTitle / parseTags / checklistStat 完全相容。
+//  同 notes/util 的 deriveTitle / parseTags / checklistStat 完全相容。
 // ============================================================
 
 export interface NoteTemplate {
   id: string
   label: string
-  /** 側述（揀範本時顯示，提示結構） */
+  /** 側述（選擇範本時顯示，提示結構） */
   hint: string
   /** 預填內文（首行會被 deriveTitle 當標題） */
   body: string
@@ -29,7 +29,7 @@ export const NOTE_TEMPLATES: NoteTemplate[] = [
       '## 筆記',
       '- ',
       '',
-      '## 總結（一兩句講返重點）',
+      '## 總結（一兩句重述重點）',
       '',
     ].join('\n'),
   },
@@ -44,7 +44,7 @@ export const NOTE_TEMPLATES: NoteTemplate[] = [
       '## 今日學到',
       '- ',
       '',
-      '## 仲未明 / 疑問',
+      '## 尚未明 / 疑問',
       '- ',
       '',
       '## 跟進行動',
@@ -63,7 +63,7 @@ export const NOTE_TEMPLATES: NoteTemplate[] = [
       '## 本週成就',
       '- ',
       '',
-      '## 遇到嘅挑戰',
+      '## 遇到的挑戰',
       '- ',
       '',
       '## 下週重點',
@@ -137,7 +137,7 @@ export const NOTE_TEMPLATES: NoteTemplate[] = [
       '## 重點',
       '- ',
       '',
-      '## 我嘅行動',
+      '## 我的行動',
       '- [ ] ',
       '',
     ].join('\n'),

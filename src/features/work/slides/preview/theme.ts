@@ -1,9 +1,9 @@
 // ============================================================
 //  螢幕預覽主題 → CSS 變數
 //  ------------------------------------------------------------
-//  把 export 層嘅 PackTheme（純 hex 無 #）轉成帶 # 嘅 CSS 變數，
+//  把 export 層的 PackTheme（純 hex 無 #）轉成帶 # 的 CSS 變數，
 //  令 DeckPreview / SlidePreview 用一致配色貼近 .pptx。
-//  螢幕版係近似（唔行真引擎），漸層／招牌 override 唔會 1:1。
+//  螢幕版係近似（不行真引擎），漸層／招牌 override 不會 1:1。
 // ============================================================
 
 import { packTheme, type PackTheme, type SlidePackId } from '../../../../lib/export'
@@ -13,7 +13,7 @@ function h(hex: string): string {
   return `#${hex}`
 }
 
-/** preview 用嘅 CSS 變數集（帶 #） */
+/** preview 用的 CSS 變數集（帶 #） */
 export interface PreviewCssVars {
   '--pv-bg': string
   '--pv-ink': string
@@ -45,12 +45,12 @@ export function cssVarsFromTheme(t: PackTheme): PreviewCssVars {
   }
 }
 
-/** 由 pack id 直接攞 CSS 變數（UI helper）。 */
+/** 由 pack id 直接取得 CSS 變數（UI helper）。 */
 export function cssTheme(id: SlidePackId): PreviewCssVars {
   return cssVarsFromTheme(packTheme(id))
 }
 
-/** 加 # 嘅單色（子元件偶然要直接落 inline color 時用）。 */
+/** 加 # 的單色（子元件偶然要直接落 inline color 時用）。 */
 export function hash(hex: string): string {
   return h(hex)
 }

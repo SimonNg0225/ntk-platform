@@ -6,7 +6,7 @@ import { relativeTime, fullDateTime } from './util'
 //  全部零 import，完全未覆蓋）。
 //  ------------------------------------------------------------
 //  注意：journal/util 有同名 relativeTime（stats.test.ts 已測），但 notes 版
-//  閾值唔同 —— 措辭係「剛剛」（非「啱啱」）、跌出相對措辭嘅界線係 7 天（非
+//  閾值唔同 —— 措辭係「剛剛」（非「剛剛」）、跌出相對措辭嘅界線係 7 天（非
 //  30 日）、用「天前」（非「日前」）。故唔可以當已覆蓋，喺度逐分支重新驗。
 //
 //  時間相關：跟 srs.test.ts 風格用 vi.useFakeTimers + setSystemTime 鎖死

@@ -48,6 +48,6 @@ describe('parseProofread', () => {
   })
 
   it('格式唔正確會 throw', () => {
-    expect(() => parseProofread('唔係 JSON')).toThrow()
+    expect(() => parseProofread('不是 JSON')).toThrow()
   })
 })

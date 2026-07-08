@@ -97,8 +97,8 @@ export function Insights({
     return (
       <EmptyState
         icon={BarChart3}
-        title="仲未有資料做統計"
-        hint="新增啲資源、開幾條連結，呢度就會出類型占比、活動趨勢同開啟排行。"
+        title="尚未有資料做統計"
+        hint="新增些資源、開幾條連結，這裡就會出類型占比、活動趨勢同開啟排行。"
       />
     )
 
@@ -139,21 +139,21 @@ export function Insights({
         </Card>
 
         <Card className="p-4">
-          <SectionTitle icon={FolderTree} description="每個收藏夾嘅資源數">
+          <SectionTitle icon={FolderTree} description="每個收藏夾的資源數">
             收藏夾分佈
           </SectionTitle>
           <FolderBars stats={folderStats} />
         </Card>
 
         <Card className="p-4">
-          <SectionTitle icon={TrendingUp} description="最常開啟嘅教材">
+          <SectionTitle icon={TrendingUp} description="最常開啟的教材">
             開啟排行榜
           </SectionTitle>
           <OpenLeaderboard rows={leaders} />
         </Card>
 
         <Card className="p-4">
-          <SectionTitle icon={BarChart3} description="各課題下嘅資源數量">
+          <SectionTitle icon={BarChart3} description="各課題下的資源數量">
             課題覆蓋
           </SectionTitle>
           <CoverageBars rows={coverage} />

@@ -5,7 +5,7 @@ import type { MarketingAsset } from './marketingContent'
 // ============================================================
 //  後台管理 client（EziTeach Admin）
 //  ------------------------------------------------------------
-//  全部經 `admin` Edge Function（service_role 喺後端，前端攞唔到）。
+//  全部經 `admin` Edge Function（service_role 在後端，前端取得不到）。
 //  前端 isAdminEmail() 只係 UI gate；真正權限由 Edge Function 用
 //  ADMIN_EMAILS 白名單驗。
 // ============================================================
@@ -14,7 +14,7 @@ export { isAdminEmail }
 
 /**
  * DB-aware 管理員判斷：env 白名單（即時、bootstrap）OR app_admins 表（查 DB）。
- * RLS 只准讀「自己嗰行」，所以非管理員查自己嘅 email 會回 0 行 = 唔係 admin。
+ * RLS 只准讀「自己嗰行」，所以非管理員查自己的 email 會回 0 行 = 不是 admin。
  */
 export async function checkIsAdmin(email: string | null | undefined): Promise<boolean> {
   if (!email) return false

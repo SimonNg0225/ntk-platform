@@ -62,14 +62,14 @@ export default function SettingsView({
           <Toggle
             icon={Play}
             label="自動開始休息"
-            desc="專注完成後即刻開始休息倒數"
+            desc="專注完成後立即開始休息倒數"
             on={settings.autoStartBreaks}
             onChange={(v) => patch({ autoStartBreaks: v })}
           />
           <Toggle
             icon={Play}
             label="自動開始下一節專注"
-            desc="休息完成後即刻開始專注"
+            desc="休息完成後立即開始專注"
             on={settings.autoStartFocus}
             onChange={(v) => patch({ autoStartFocus: v })}
           />

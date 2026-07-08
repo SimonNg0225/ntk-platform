@@ -52,8 +52,8 @@ import { generate, type GenDraft } from './engine'
 //  ------------------------------------------------------------
 //  流程：表單（課題 / 程度 / 難度 / MC＋短答混合比例 / 補充）
 //    → 用共用引擎 generate() 各跑一次（mc、short），合併成一份練習。
-//    → 預覽逐題（可編輯題幹 / 揀要邊條）。
-//    → 「存入題庫」：把已選嘅逐條 questionsCol.add（type 各自 mc / short，
+//    → 預覽逐題（可編輯題幹 / 選擇要邊條）。
+//    → 「存入題庫」：把已選的逐條 questionsCol.add（type 各自 mc / short，
 //       連 topicId / difficulty / marks / source）。
 //    → 可選「列印」：重用 util.buildPrintHtml（學校練習格式，留白作答區）。
 //
@@ -69,11 +69,11 @@ export interface WorksheetGeneratorProps {
   initialExtra?: string
   initialTitle?: string
   onClose: () => void
-  /** 成功存入題庫後回呼（傳新增條數），畀 hub 更新計數 / toast */
+  /** 成功存入題庫後回呼（傳新增條數），給 hub 更新計數 / toast */
   onSaved?: (count: number) => void
 }
 
-// 練習草稿：保留來源題型 + 揀選 / 編輯狀態
+// 練習草稿：保留來源題型 + 選擇選 / 編輯狀態
 type Draft = GenDraft & { _key: string; _selected: boolean }
 
 // 差異化：每個程度各自一套結果 + 狀態（idle / loading / done / error）
@@ -137,7 +137,7 @@ export function WorksheetGenerator({
   const [busy, setBusy] = useState(false)
   const [drafts, setDrafts] = useState<Draft[]>([])
 
-  // ── 差異化（淺／中／深）—— opt-in，獨立 state，唔污染單一流程 ──
+  // ── 差異化（淺／中／深）—— opt-in，獨立 state，不污染單一流程 ──
   const [differentiated, setDifferentiated] = useState(false)
   const [diffResults, setDiffResults] =
     useState<Record<Difficulty, DiffResult>>(emptyDiffMap)
@@ -183,8 +183,8 @@ export function WorksheetGenerator({
     }
     setBusy(true)
     try {
-      // 各題型 prompt shape 唔同，分開 generate；但兩個請求並行（Promise.all）
-      // → 總延遲 = max(mc, short) 而非相加，慳時間又唔使改共用引擎 / 撈一個混合 prompt。
+      // 各題型 prompt shape 不同，分開 generate；但兩個請求並行（Promise.all）
+      // → 總延遲 = max(mc, short) 而非相加，慳時間又不用改共用引擎 / 撈一個混合 prompt。
       const [mcRes, shRes] = await Promise.all([
         split.mc > 0
           ? generate('mc', { topicName, difficulty, count: split.mc, extra: extra.trim(), subject: subjectName })
@@ -195,7 +195,7 @@ export function WorksheetGenerator({
       ])
       const collected: GenDraft[] = [...mcRes, ...shRes]
       if (collected.length === 0) {
-        toast.error('AI 出嘅練習格式唔啱，請再試一次。')
+        toast.error('AI 出的練習格式不正確，請再試一次。')
         return
       }
       // MC 行先、短答行後（練習常見排序）
@@ -226,7 +226,7 @@ export function WorksheetGenerator({
   // ── 存入題庫（逐條 add；MC 壓縮選項對齊答案）──
   const commit = () => {
     if (selectedDrafts.length === 0) {
-      toast.error('請最少揀一條題目')
+      toast.error('請最少選擇一條題目')
       return
     }
     for (const d of selectedDrafts) {
@@ -266,7 +266,7 @@ export function WorksheetGenerator({
     }
     const html = buildPrintHtml(meta, previewQuestions, () => topicName, withAnswers)
     const ok = openPrintWindow(html)
-    if (!ok) toast.error('瀏覽器擋咗彈出視窗，請允許後再試。')
+    if (!ok) toast.error('瀏覽器擋了彈出視窗，請允許後再試。')
   }
 
   // ── 差異化：單一程度生成（各自獨立 try；可供整體 orchestration / 單獨重試用）──
@@ -288,7 +288,7 @@ export function WorksheetGenerator({
           [diff]: {
             status: 'error',
             drafts: [],
-            error: t('worksheet.badFormat', { defaultValue: 'AI 出嘅練習格式唔啱，請再試。' }),
+            error: t('worksheet.badFormat', { defaultValue: 'AI 出的練習格式不正確，請再試。' }),
           },
         }))
         return
@@ -313,7 +313,7 @@ export function WorksheetGenerator({
     }
   }
 
-  // ── 差異化 orchestration：序列跑三程度，每程度各自獨立 try（一個失敗唔影響其餘）──
+  // ── 差異化 orchestration：序列跑三程度，每程度各自獨立 try（一個失敗不影響其餘）──
   const runDifferentiated = async () => {
     if (!topicId || busy) return
     if (split.mc === 0 && split.short === 0) {
@@ -334,7 +334,7 @@ export function WorksheetGenerator({
     }
   }
 
-  // ── 單一程度重試（只重跑該程度，唔影響其餘）──
+  // ── 單一程度重試（只重跑該程度，不影響其餘）──
   const retryDiff = async (diff: Difficulty) => {
     if (busy) return
     setBusy(true)
@@ -345,7 +345,7 @@ export function WorksheetGenerator({
     }
   }
 
-  // ── 差異化：每 tab 各自列印 / 匯出（重用 buildPrintHtml；difficulty 用該 tab 嘅 diff 令列印 tag 正確）──
+  // ── 差異化：每 tab 各自列印 / 匯出（重用 buildPrintHtml；difficulty 用該 tab 的 diff 令列印 tag 正確）──
   const printDiff = (diff: Difficulty, withAnswers: boolean) => {
     const res = diffResults[diff]
     if (res.status !== 'done' || res.drafts.length === 0) {
@@ -376,7 +376,7 @@ export function WorksheetGenerator({
     const html = buildPrintHtml(meta, qs, () => topicName, withAnswers)
     if (!openPrintWindow(html)) {
       toast.error(
-        t('worksheet.popupBlocked', { defaultValue: '瀏覽器擋咗彈出視窗，請允許後再試。' }),
+        t('worksheet.popupBlocked', { defaultValue: '瀏覽器擋了彈出視窗，請允許後再試。' }),
       )
     }
   }
@@ -395,8 +395,8 @@ export function WorksheetGenerator({
           ) : (
             <EmptyState
               icon={Lock}
-              title="請先登入先可以用 AI 生成練習"
-              hint="喺左下角用 Google 登入後就用得。"
+              title="請先登入以使用 AI 生成練習"
+              hint="在左下角使用 Google 登入後即可使用。"
             />
           )}
           <div className="flex justify-end">
@@ -418,11 +418,11 @@ export function WorksheetGenerator({
               <ClipboardList size={16} />
             </span>
             <p className="text-xs leading-relaxed text-slate-600 dark:text-slate-300">
-              揀好課題、難度同
+              選擇好課題、難度同
               <span className="font-semibold text-accent-strong dark:text-accent">
                 MC ＋ 短答混合比例
               </span>
-              ，AI 會草擬一份貼香港{subjectName ?? '中學'}課程嘅練習。生成後可逐條揀／改，再存入題庫或列印。
+              ，AI 會草擬一份貼香港{subjectName ?? '中學'}課程的練習。生成後可逐條選擇／改，再存入題庫或列印。
             </p>
           </div>
 
@@ -515,7 +515,7 @@ export function WorksheetGenerator({
                 <span className="block text-xs leading-relaxed text-slate-500 dark:text-slate-400">
                   {t('worksheet.diffMode.hint', {
                     defaultValue:
-                      '開咗之後一鍵就同一課題分別出「易／中／難」三套獨立工作紙，畀唔同程度學生。',
+                      '開了之後一鍵就同一課題分別出「易／中／難」三套獨立工作紙，給不同程度學生。',
                   })}
                 </span>
               </span>
@@ -553,7 +553,7 @@ export function WorksheetGenerator({
             >
               <p className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
                 <Sparkles size={15} className="animate-pulse text-accent" />
-                AI 諗緊練習，請等一等…
+                AI 想緊練習，請等一等…
               </p>
               <div className="h-2.5 w-full animate-pulse rounded-full bg-slate-200 dark:bg-slate-700" />
               <div className="h-2.5 w-4/5 animate-pulse rounded-full bg-slate-200 dark:bg-slate-700" />
@@ -716,7 +716,7 @@ export function WorksheetGenerator({
 
 // ============================================================
 //  DifferentiatedPreview — 差異化三 tab 預覽（淺／中／深）
-//  每 tab 一張完整工作紙（唯讀整張派發，唔做逐題揀選 / 編輯 / 入題庫）。
+//  每 tab 一張完整工作紙（唯讀整張派發，不做逐題選擇選 / 編輯 / 入題庫）。
 //  每 tab header 顯示自己 status（loading / done 題數 / error），各自獨立。
 // ============================================================
 function DifferentiatedPreview({
@@ -748,7 +748,7 @@ function DifferentiatedPreview({
         <Badge tone="accent">{topicName}</Badge>
         <span className="text-xs text-slate-400 dark:text-slate-500">
           {t('worksheet.diffMode.subtitle', {
-            defaultValue: '三套獨立工作紙，分別畀唔同程度學生',
+            defaultValue: '三套獨立工作紙，分別給不同程度學生',
           })}
         </span>
       </div>
@@ -826,7 +826,7 @@ function DifferentiatedPreview({
           <p className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
             <Sparkles size={15} className="animate-pulse text-accent" aria-hidden="true" />
             {t('worksheet.diffMode.loading', {
-              defaultValue: 'AI 諗緊呢個程度嘅練習，請等一等…',
+              defaultValue: 'AI 想緊這個程度的練習，請等一等…',
             })}
           </p>
           <div className="h-2.5 w-full animate-pulse rounded-full bg-slate-200 dark:bg-slate-700" />
@@ -837,7 +837,7 @@ function DifferentiatedPreview({
         <div className="space-y-3 rounded-2xl border border-rose-200/70 bg-rose-50/50 p-4 dark:border-rose-500/25 dark:bg-rose-500/10">
           <EmptyState
             icon={Bot}
-            title={t('worksheet.diffMode.failed', { defaultValue: '呢個程度生成唔到' })}
+            title={t('worksheet.diffMode.failed', { defaultValue: '這個程度生成不到' })}
             hint={cur.error}
           />
           <div className="flex justify-center">
@@ -848,7 +848,7 @@ function DifferentiatedPreview({
               onClick={() => onRetry(activeTab)}
               disabled={busy}
             >
-              {t('worksheet.diffMode.retry', { defaultValue: '重試呢個程度' })}
+              {t('worksheet.diffMode.retry', { defaultValue: '重試這個程度' })}
             </Button>
           </div>
         </div>

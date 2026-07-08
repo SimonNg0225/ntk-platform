@@ -1,25 +1,25 @@
 // ============================================================
 //  我的資料一覽 + 上次備份提醒 — 純邏輯核心
 //  ------------------------------------------------------------
-//  全部資料都喺本機 localStorage（見 lib/store.ts 嘅 collectionRegistry）。
-//  匯出備份前其實睇唔到入面有幾多嘢，亦唔知上次幾時備份過。呢個 module 抽出
+//  全部資料都在本機 localStorage（見 lib/store.ts 的 collectionRegistry）。
+//  匯出備份前其實查看不到中有幾多嘢，亦不知上次幾時備份過。這個 module 抽出
 //  純計算/格式化：
-//    - summarizeData：將 exportAllData() 個 data 物件 → 每個集合嘅
+//    - summarizeData：將 exportAllData() 個 data 物件 → 每個集合的
 //      「友好名稱 + 筆數 + 單位」清單（非空優先、按筆數降序），加總筆數。
 //    - backupAgeDays / formatBackupReminder：由「上次備份時間戳」算返相對
 //      日數同提示句（超過 N 日 → stale，UI 用 amber 提醒）。
-//  全部係純函式，唔掂 DOM / store，方便用 vitest 鎖時間單元測試。
+//  全部係純函式，不掂 DOM / store，方便用 vitest 鎖時間單元測試。
 // ============================================================
 
-/** 集合 key（去咗 ntk. 前綴，同 collectionRegistry / 匯出檔 data 的 key）→ 中文標籤 + 量詞 */
+/** 集合 key（去了 ntk. 前綴，同 collectionRegistry / 匯出檔 data 的 key）→ 中文標籤 + 量詞 */
 interface CollectionMeta {
   label: string
   /** 量詞（例：「篇」「條」），無就用預設「項」 */
   unit?: string
 }
 
-// key 對應 data/collections.ts 同各 lazy feature 自家 createCollection 嘅 key。
-// 未列出嘅 key 會用 fallback（見 metaForKey），所以新功能唔登記都唔會出錯。
+// key 對應 data/collections.ts 同各 lazy feature 自家 createCollection 的 key。
+// 未列出的 key 會用 fallback（見 metaForKey），所以新功能不登記都不會出錯。
 export const COLLECTION_LABELS: Record<string, CollectionMeta> = {
   // 共用骨幹
   topics: { label: '課題', unit: '個' },
@@ -78,17 +78,17 @@ export interface CollectionSummary {
 }
 
 export interface DataOverview {
-  /** 每個集合一行，已排序（有資料嘅優先、再按筆數降序、再按標籤穩定排） */
+  /** 每個集合一行，已排序（有資料的優先、再按筆數降序、再按標籤穩定排） */
   rows: CollectionSummary[]
   /** 全部集合筆數總和 */
   total: number
-  /** 有資料（count > 0）嘅集合數 */
+  /** 有資料（count > 0）的集合數 */
   nonEmpty: number
 }
 
 /**
- * 將 exportAllData() 個 data 物件 → 友好嘅資料一覽。
- * 只計值係陣列嘅 key（同 importAllData 嘅守衞一致，非陣列／壞值當 0／忽略）。
+ * 將 exportAllData() 個 data 物件 → 友好的資料一覽。
+ * 只計值係陣列的 key（同 importAllData 的守衞一致，非陣列／壞值當 0／忽略）。
  * 排序：有資料優先 → 筆數多優先 → 同筆數按標籤本地化排序（穩定、可預期）。
  */
 export function summarizeData(
@@ -123,10 +123,10 @@ export function summarizeData(
 }
 
 /**
- * 由上次備份時間戳算返「過咗幾多個完整日曆日」。
+ * 由上次備份時間戳算返「過了幾多個完整日曆日」。
  * - 無時間戳 / 無效 → null（即「未備份過」）。
- * - 用日曆日（本地午夜）差，唔係 24 小時整除：今日備份 = 0、尋日 = 1。
- *   咁「3 日前」嘅文案先同用戶直覺一致（唔會因為差幾粒鐘變 2 定 3）。
+ * - 用日曆日（本地午夜）差，不是 24 小時整除：今日備份 = 0、昨天 = 1。
+ *   這樣「3 日前」的文案先同用戶直覺一致（不會因為差幾粒鐘變 2 定 3）。
  * - 未來時間戳（多機時鐘偏差）→ clamp 到 0。
  */
 export function backupAgeDays(
@@ -158,7 +158,7 @@ export interface BackupReminder {
 
 /**
  * 產生「上次備份」提示。
- * @param staleDays 超過呢個日數就當需要提醒（amber）。預設 7 日。
+ * @param staleDays 超過這個日數就當需要提醒（amber）。預設 7 日。
  */
 export function formatBackupReminder(
   lastBackupISO: string | null | undefined,
@@ -171,7 +171,7 @@ export function formatBackupReminder(
   }
   let text: string
   if (ageDays === 0) text = '今日已備份'
-  else if (ageDays === 1) text = '上次備份：尋日'
+  else if (ageDays === 1) text = '上次備份：昨天'
   else text = `上次備份：${ageDays} 日前`
   return { text, stale: ageDays >= staleDays, never: false, ageDays }
 }

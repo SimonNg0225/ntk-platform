@@ -63,7 +63,7 @@ const TONE_BY_CAT: Record<ExerciseCategory, 'accent' | 'green' | 'amber' | 'rose
   全身: 'accent',
 }
 
-// 動作卡 icon chip 配色（依分類；寫足整串畀 Tailwind 掃到）
+// 動作卡 icon chip 配色（依分類；寫足整串給 Tailwind 掃到）
 const CAT_CHIP: Record<ExerciseCategory, string> = {
   胸: 'bg-rose-50 text-rose-600 dark:bg-rose-500/15 dark:text-rose-300',
   背: 'bg-blue-50 text-blue-600 dark:bg-blue-500/15 dark:text-blue-300',
@@ -74,7 +74,7 @@ const CAT_CHIP: Record<ExerciseCategory, string> = {
   全身: 'bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent',
 }
 
-// 動作卡左側色脊（依分類；寫足整串畀 Tailwind 掃到）
+// 動作卡左側色脊（依分類；寫足整串給 Tailwind 掃到）
 const CAT_SPINE: Record<ExerciseCategory, string> = {
   胸: 'bg-rose-400 dark:bg-rose-500/70',
   背: 'bg-blue-400 dark:bg-blue-500/70',
@@ -201,7 +201,7 @@ export default function LibraryView() {
             招式名冊
           </h2>
           <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-            按部位揀招、睇主／協同肌群同姿勢重點，收藏入你嘅出場名單。
+            按部位選擇招、查看主／協同肌群同姿勢重點，收藏入你的出場名單。
           </p>
         </div>
         {/* 收錄計數面板（似記分牌讀數） */}
@@ -289,8 +289,8 @@ export default function LibraryView() {
       {filtered.length === 0 ? (
         <EmptyState
           icon={Search}
-          title="搵唔到相符動作"
-          hint="試吓清空搜尋、或者揀返「全部」分類同器材。"
+          title="搜尋不到相符動作"
+          hint="嘗試清空搜尋、或者重新選擇「全部」分類同器材。"
           action={
             <Button
               variant="secondary"
@@ -483,10 +483,10 @@ function DetailModal({
           {
             role: 'user',
             content:
-              `你係專業健身教練。用繁體中文（廣東話書面語亦可）、3-4 句簡潔解釋「${exercise.name}」` +
-              `呢個動作：點解有效、最關鍵嘅發力或姿勢提示、同一個新手最易犯嘅錯。` +
+              `你是專業健身教練。用繁體中文（廣東話書面語亦可）、3-4 句簡潔解釋「${exercise.name}」` +
+              `此動作：為什麼有效、最關鍵的發力或姿勢提示、同一個新手最易犯的錯。` +
               `主練：${exercise.primaryMuscles.join('、')}；器材：${exercise.equipment.join('、')}。` +
-              `只回純文字解釋，唔好標題、唔好 markdown、唔好任何前後綴。`,
+              `只回純文字解釋，不要標題、不要 markdown、不要任何前後綴。`,
           },
         ],
         source: 'fitness',
@@ -623,7 +623,7 @@ function DetailModal({
                 key={i}
                 className="relative flex gap-3 text-sm text-slate-700 dark:text-slate-200"
               >
-                {/* 步序連接線（最後一步唔畫）*/}
+                {/* 步序連接線（最後一步不畫）*/}
                 {i < exercise.formCues.length - 1 && (
                   <span
                     aria-hidden="true"
@@ -649,7 +649,7 @@ function DetailModal({
           </p>
         </section>
 
-        {/* AI 解釋（gate：未設定就靜態提示，唔 call） */}
+        {/* AI 解釋（gate：未設定就靜態提示，不 call） */}
         <section
           className="rounded-xl border border-slate-200 bg-slate-50/70 p-3 dark:border-slate-700 dark:bg-slate-800/50"
           aria-live="polite"
@@ -679,11 +679,11 @@ function DetailModal({
                 loading={aiBusy}
                 onClick={explain}
               >
-                {canAI ? 'AI 解釋呢個動作' : '登入後可用 AI 解釋'}
+                {canAI ? 'AI 解釋此動作' : '登入後可用 AI 解釋'}
               </Button>
               {!user && isAIConfigured && (
                 <p className="text-xs text-slate-400 dark:text-slate-500">
-                  喺左下角登入後就用得（資料只存你裝置，登入後同步到你自己 Supabase）。
+                  在左下角登入後即可使用（資料只存於你的裝置，登入後同步到你的 Supabase）。
                 </p>
               )}
             </div>

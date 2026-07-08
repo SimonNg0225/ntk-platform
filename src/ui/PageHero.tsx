@@ -19,9 +19,9 @@ export type PageHeroProps = {
   description?: string
   /** 右上操作掣。舊式白字/半透明白底 action 會由 CSS compatibility layer 自動轉淡。 */
   actions?: ReactNode
-  /** hero 內底部分頁切換（紫底上嘅白色 pill）。可選。 */
+  /** hero 內底部分頁切換（紫底上的白色 pill）。可選。 */
   tabs?: ReactNode
-  /** 傳教學引導嘅 storageKey → hero 右上自動加「點用？」掣，隨時叫返該功能教學。 */
+  /** 傳教學引導的 storageKey → hero 右上自動加「使用說明」掣，隨時叫返該功能教學。 */
   guideKey?: string
   /** 額外 class（接落最外層 header） */
   className?: string
@@ -62,7 +62,7 @@ export function PageHero({
       )}
     >
       <div className="relative flex flex-col gap-3 sm:flex-row sm:items-start sm:gap-3.5">
-        {/* icon chip + 標題（永遠同一行；手機唔會畀操作掣逼到爆行斷字） */}
+        {/* icon chip + 標題（永遠同一行；手機不會給操作掣逼到爆行斷字） */}
         <div className="flex min-w-0 items-start gap-3.5 sm:flex-1">
           {/* icon chip */}
           <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[14px] bg-accent-soft text-accent-strong ring-1 ring-inset ring-accent/15 dark:bg-accent/15 dark:text-accent dark:ring-accent/25">
@@ -86,7 +86,7 @@ export function PageHero({
           </div>
         </div>
 
-        {/* 操作區：手機跌落標題下面（flex-wrap，唔逼標題），sm+ 返右上角。 */}
+        {/* 操作區：手機跌落標題下面（flex-wrap，不逼標題），sm+ 返右上角。 */}
         {(actions || guideKey) && (
           <div className="et-feature-hero-actions relative flex flex-wrap items-center gap-2 text-slate-600 sm:ml-auto sm:shrink-0 dark:text-slate-300">
             {guideKey && <GuideHelpButton storageKey={guideKey} />}

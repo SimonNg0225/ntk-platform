@@ -129,7 +129,7 @@ export default function Settings() {
     try {
       await preloadAllFeatures()
     } catch {
-      /* ignore：照匯出已登記嘅 collection */
+      /* ignore：照匯出已登記的 collection */
     }
     const blob = new Blob([JSON.stringify(exportAllData(), null, 2)], {
       type: 'application/json',
@@ -154,14 +154,14 @@ export default function Settings() {
     if (!pack) return
     const incoming = packTopics(pack)
     if (incoming.length === 0) {
-      toast.info('「自訂」科目冇預設課題，可喺「課程進度」自行新增。')
+      toast.info('「自訂」科目沒有預設課題，可在「課程進度」自行新增。')
       return
     }
     if (mode === 'replace') {
       const ok = await confirm({
         title: `切換做「${pack.name}」課題？`,
         message:
-          '智能切換：同名課題自動保留連繫（題庫／進度／評估／備課唔甩號）；舊有但仲有資料連住嘅會保留，冇用嘅先清走。安全、唔會失資料。',
+          '智能切換：同名課題自動保留連繫（題庫／進度／評估／備課不甩號）；舊有但還有資料連住的會保留，沒有用的先清走。安全、不會失資料。',
         confirmText: '智能切換',
       })
       if (!ok) return
@@ -176,7 +176,7 @@ export default function Settings() {
       toast.success(
         added > 0
           ? `已附加 ${added} 個課題`
-          : '呢個科目嘅課題已經喺清單入面',
+          : '此科目的課題已經在清單中',
       )
     }
   }
@@ -186,7 +186,7 @@ export default function Settings() {
     if (!file) return
     if (!(await confirm({
       title: '匯入資料？',
-      message: '匯入會覆寫現有對應資料，呢個動作無法復原。',
+      message: '匯入會覆寫現有對應資料，此動作無法復原。',
       confirmText: '匯入',
     }))) {
       if (fileRef.current) fileRef.current.value = ''
@@ -198,7 +198,7 @@ export default function Settings() {
       const n = importAllData(JSON.parse(text))
       toast.success(`已匯入 ${n} 類資料`)
     } catch {
-      toast.error('匯入失敗：檔案格式唔啱')
+      toast.error('匯入失敗：檔案格式不正確')
     }
     if (fileRef.current) fileRef.current.value = ''
   }
@@ -222,7 +222,7 @@ export default function Settings() {
       !(await confirm({
         title: '永久刪除雲端帳戶？',
         message:
-          '會永久刪除你喺雲端嘅所有資料同登入帳戶（包括電郵），不可逆。本機資料亦會一併清除。建議先匯出備份。',
+          '會永久刪除你在雲端的所有資料同登入帳戶（包括電郵），不可逆。本機資料亦會一併清除。建議先匯出備份。',
         confirmText: '永久刪除',
         tone: 'danger',
       }))
@@ -246,7 +246,7 @@ export default function Settings() {
 
   const checkUpdate = async () => {
     if (!('serviceWorker' in navigator)) {
-      toast.error('此瀏覽器唔支援離線快取')
+      toast.error('此瀏覽器不支援離線快取')
       return
     }
     setChecking(true)
@@ -259,7 +259,7 @@ export default function Settings() {
       await reg.update()
       toast.success(
         reg.waiting
-          ? '搵到新版本！睇下方「更新」提示'
+          ? '找到新版本！查看下方「更新」提示'
           : '已檢查 — 有新版會自動彈「更新」提示',
       )
     } catch {
@@ -274,7 +274,7 @@ export default function Settings() {
       !(await confirm({
         title: '清除快取並重新載入？',
         message:
-          '會清除程式快取同 service worker，強制載入最新版本。你嘅資料（筆記、班別、成績等）儲喺本機，唔受影響。',
+          '會清除程式快取同 service worker，強制載入最新版本。你的資料（筆記、班別、成績等）儲在本機，不受影響。',
         confirmText: '清除並重載',
       }))
     )
@@ -296,7 +296,7 @@ export default function Settings() {
   const themes: { id: 'light' | 'dark' | 'system'; label: string; desc: string; icon: LucideIcon }[] =
     [
       { id: 'light', label: '淺色', desc: '適合日間備課', icon: Sun },
-      { id: 'dark', label: '深色', desc: '夜晚改嘢更舒服', icon: Moon },
+      { id: 'dark', label: '深色', desc: '夜晚調整設定更舒服', icon: Moon },
       { id: 'system', label: '跟隨系統', desc: '自動配合裝置', icon: Monitor },
     ]
   const BackupReminderIcon = reminder.stale ? AlertTriangle : CheckCircle2
@@ -405,7 +405,7 @@ export default function Settings() {
               />
               <ToggleRow
                 label="緊湊密度"
-                hint="收窄主內容邊距，一屏睇多啲。"
+                hint="收窄主內容邊距，一屏查看多些。"
                 checked={compactDensity}
                 onChange={setCompactDensity}
               />
@@ -465,7 +465,7 @@ export default function Settings() {
                   </div>
                 </div>
                 <p className="mt-4 text-sm leading-6 text-slate-500 dark:text-slate-400">
-                  註冊時填嘅完整檔案（頭像、身份、任教科目、學校、簡介）存喺你帳戶，可隨時睇返同改。
+                  註冊時填的完整檔案（頭像、身份、任教科目、學校、簡介）存在你帳戶，可隨時查看同改。
                 </p>
                 {isProfileConfigured && (
                   <Button
@@ -566,7 +566,7 @@ export default function Settings() {
               <BackupReminderIcon size={17} className="mt-0.5 shrink-0" />
               <span>
                 {reminder.text}
-                {reminder.stale && <span className="font-semibold"> · 建議而家匯出備份</span>}
+                {reminder.stale && <span className="font-semibold"> · 建議現在匯出備份</span>}
               </span>
             </div>
 
@@ -575,10 +575,10 @@ export default function Settings() {
             ) : overview.nonEmpty === 0 ? (
               <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-center dark:border-slate-800 dark:bg-slate-950/40">
                 <p className="font-semibold text-slate-700 dark:text-slate-200">
-                  仲未有資料
+                  尚未有資料
                 </p>
                 <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                  可以喺下面載入試用資料，或者開始建立自己的課堂工作流。
+                  可以在下方載入試用資料，或者開始建立自己的課堂工作流。
                 </p>
               </div>
             ) : (
@@ -720,10 +720,10 @@ function SettingsOverview({
             <SmallPill icon={HardDrive}>{syncLabel}</SmallPill>
           </div>
           <h2 className="mt-4 text-2xl font-semibold tracking-tight text-slate-950 dark:text-slate-50">
-            {displayName || '老師'}，把工作台調到最啱自己用
+            {displayName || '老師'}，把工作台調到最適合自己用
           </h2>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500 dark:text-slate-400">
-            常用偏好放前面，資料和法律資訊放後面。日常開 app 時保持乾淨，需要管理時先進入呢一頁。
+            常用偏好放前面，資料和法律資訊放後面。日常開 app 時保持乾淨，需要管理時先進入此頁。
           </p>
         </div>
         <div className="grid grid-cols-2 border-t border-slate-100 bg-slate-50/70 p-3 dark:border-slate-800 dark:bg-slate-950/35 sm:grid-cols-3 lg:grid-cols-2 lg:border-l lg:border-t-0">
@@ -848,7 +848,7 @@ function SegmentChoice({
   )
 }
 
-// 設定用嘅可達性開關列。用原生 button 做 role=switch，鍵盤可達。
+// 設定用的可達性開關列。用原生 button 做 role=switch，鍵盤可達。
 function ToggleRow({
   label,
   hint,

@@ -1,23 +1,23 @@
 // ============================================================
 //  行政文件 — PDF 預覽引擎（pdf.js 渲染 + 彩色欄位框）
 //  ------------------------------------------------------------
-//  目的：似 docx 嗰個彩色預覽 —— 用 pdf.js 逐頁 render 落 <canvas>，
-//  再喺每頁上面按 AcroForm 欄位嘅 widget 座標疊半透彩色框，逐欄分辨。
+//  目的：似 docx 那個彩色預覽 —— 用 pdf.js 逐頁 render 落 <canvas>，
+//  再在每頁上面按 AcroForm 欄位的 widget 座標疊半透彩色框，逐欄分辨。
 //
-//  - PDF 原點喺左下、HTML 原點喺左上 → overlay top 要 y 翻轉。
-//  - 每頁包一層 position:relative wrapper：canvas 喺底、彩色框 div 喺面。
-//  - render 失敗照 throw，畀上層（PdfTemplatePreview）退「純清單」fallback。
-//  - 純 DOM 操作（唔依賴 React），同 highlight.ts 嘅 renderWithHighlights 平行。
+//  - PDF 原點在左下、HTML 原點在左上 → overlay top 要 y 翻轉。
+//  - 每頁包一層 position:relative wrapper：canvas 在底、彩色框 div 在面。
+//  - render 失敗照 throw，給上層（PdfTemplatePreview）退「純清單」fallback。
+//  - 純 DOM 操作（不依賴 React），同 highlight.ts 的 renderWithHighlights 平行。
 // ============================================================
 
 import * as pdfjsLib from 'pdfjs-dist'
 import type { PDFDocumentProxy } from 'pdfjs-dist'
-// Vite：?url 會將 worker 打包成獨立 asset 並回傳其 URL，喺 build 後 worker 仍可載入。
+// Vite：?url 會將 worker 打包成獨立 asset 並回傳其 URL，在 build 後 worker 仍可載入。
 import workerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url'
 import type { PdfFieldRect } from './pdfEngine'
 
 /**
- * 渲染所需嘅最小欄位形狀（畀疊框用）：
+ * 渲染所需的最小欄位形狀（給疊框用）：
  * 只需 `name`（= 對應 fieldColors / data-tag）+ `rects`（widget 座標連頁 index）。
  * `PdfField`（pdfEngine）天然兼容此形狀。
  */
@@ -31,12 +31,12 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = workerUrl
 
 /** 單頁最大 render 闊度（device px）——避免超大 PDF 撐爆記憶體；scale 以容器闊度為準但封頂。 */
 const MAX_RENDER_WIDTH = 1400
-/** 容器量唔到闊度時嘅後備 CSS 闊度（px）。 */
+/** 容器量不到闊度時的後備 CSS 闊度（px）。 */
 const FALLBACK_WIDTH = 360
 
 /**
- * 喺 `container` 內用 pdf.js 渲染 `buf`（PDF ArrayBuffer）每一頁，
- * 並按 `fields` 嘅 widget 座標疊半透彩色框（顏色由 `fieldColors`：欄位 name → 色）。
+ * 在 `container` 內用 pdf.js 渲染 `buf`（PDF ArrayBuffer）每一頁，
+ * 並按 `fields` 的 widget 座標疊半透彩色框（顏色由 `fieldColors`：欄位 name → 色）。
  *
  * - 清空 container → 逐頁 render → 每頁一個 `.adoc-pdf-page` relative wrapper
  *   （canvas 在底、`.adoc-pdf-box` 彩色框 div 在面，`data-tag` = 欄位 name）。
@@ -60,7 +60,7 @@ export async function renderPdfWithFieldBoxes(
 ): Promise<void> {
   container.innerHTML = ''
 
-  // pdf.js 會「轉移」傳入嘅 buffer（detach），故傳 copy，唔好整爛 caller 個 buf。
+  // pdf.js 會「轉移」傳入的 buffer（detach），故傳 copy，不要整爛 caller 個 buf。
   const data = buf.slice(0)
 
   const loadingTask = pdfjsLib.getDocument({ data })
@@ -74,23 +74,23 @@ export async function renderPdfWithFieldBoxes(
   }
 
   try {
-    // fit-width scale：以容器內可用闊度為準（量唔到用後備）。
+    // fit-width scale：以容器內可用闊度為準（量不到用後備）。
     const containerWidth =
       container.clientWidth > 0 ? container.clientWidth : FALLBACK_WIDTH
 
-    // 按頁 index 歸類欄位 rect（連顏色），畀逐頁疊框。
+    // 按頁 index 歸類欄位 rect（連顏色），給逐頁疊框。
     // 每項 = { name, color, x, y, w, h }（PDF 單位）。
     const rectsByPage = groupRectsByPage(fields, fieldColors)
 
     for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
       const page = await pdf.getPage(pageNum)
 
-      // 該頁 PDF 單位尺寸（scale=1）——畀 y 翻轉計頁高。
+      // 該頁 PDF 單位尺寸（scale=1）——給 y 翻轉計頁高。
       const baseViewport = page.getViewport({ scale: 1 })
       const pdfPageHeight = baseViewport.height
 
       // 自適 scale（封頂 MAX_RENDER_WIDTH），令窄屏 375px 都見到全頁、
-      // 又唔會 render 過大谷爆記憶體。
+      // 又不會 render 過大谷爆記憶體。
       const cappedWidth = Math.min(containerWidth, MAX_RENDER_WIDTH)
       const scale = cappedWidth / baseViewport.width
 
@@ -123,7 +123,7 @@ export async function renderPdfWithFieldBoxes(
 
       // ── 疊彩色欄位框（該頁）──
       // 用獨立 overlay 層（絕對定位、撐滿 wrapper），令 canvas max-width 縮放時
-      // overlay 亦跟住（百分比定位，唔受 device px 影響）。
+      // overlay 亦跟住（百分比定位，不受 device px 影響）。
       const overlay = container.ownerDocument.createElement('div')
       overlay.className = 'adoc-pdf-overlay'
       overlay.style.position = 'absolute'
@@ -133,7 +133,7 @@ export async function renderPdfWithFieldBoxes(
       const pageRects = rectsByPage.get(pageNum - 1) // rects 用 0-based page
       if (pageRects) {
         for (const r of pageRects) {
-          // 以「render 尺寸」為基準計百分比（overlay 與 canvas 同框、會一齊縮）。
+          // 以「render 尺寸」為基準計百分比（overlay 與 canvas 同框、會一起縮）。
           const leftPct = ((r.x * scale) / viewport.width) * 100
           const topPct =
             (((pdfPageHeight - r.y - r.h) * scale) / viewport.height) * 100
@@ -163,8 +163,8 @@ export async function renderPdfWithFieldBoxes(
       page.cleanup()
     }
   } finally {
-    // 收尾：銷毀此 document 嘅 transport（GlobalWorkerOptions 嘅 worker 仍共用、
-    // 唔受影響）。pdfjs v6：PDFDocumentProxy 冇 destroy，改由 loadingTask.destroy。
+    // 收尾：銷毀此 document 的 transport（GlobalWorkerOptions 的 worker 仍共用、
+    // 不受影響）。pdfjs v6：PDFDocumentProxy 沒有 destroy，改由 loadingTask.destroy。
     try {
       await loadingTask.destroy()
     } catch {
@@ -208,7 +208,7 @@ function groupRectsByPage(
 }
 
 /**
- * 將半透 rgba 顏色轉成較實淨嘅邊框色（提高 alpha）。
+ * 將半透 rgba 顏色轉成較實淨的邊框色（提高 alpha）。
  * 接受 `rgba(r, g, b, a)`；其餘格式原樣回傳（border 用原色都可接受）。
  */
 function solidify(color: string): string {

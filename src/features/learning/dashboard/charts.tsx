@@ -222,7 +222,7 @@ export function MoodTrend({
     const y = H - pad - ((score - 1) / 4) * (H - pad * 2)
     return { x, y }
   }
-  // 串連有值嘅點
+  // 串連有值的點
   const segs: string[] = []
   let started = false
   points.forEach((p, i) => {

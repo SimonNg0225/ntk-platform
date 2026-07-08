@@ -58,7 +58,7 @@ const env = (over: Partial<BudgetEnvelope>): BudgetEnvelope => ({
 
 describe('monthKey', () => {
   it('用本地年月（非 UTC）', () => {
-    // 喺 UTC+8，2026-05-15 本地仍係 5 月；確認用 getMonth 而唔係 toISOString
+    // 喺 UTC+8，2026-05-15 本地仍係 5 月；確認用 getMonth 而不是 toISOString
     expect(monthKey(new Date(2026, 4, 15))).toBe('2026-05')
   })
   it('月份補零', () => {
@@ -627,7 +627,7 @@ describe('csvRowsToTx', () => {
     const rows = parseCsv(
       [
         '日期,類型,分類,金額,備註',
-        '唔係日期,支出,飲食,68,',
+        '不是日期,支出,飲食,68,',
         '2026-05-03,支出,飲食,,缺金額',
         '2026-05-04,支出,飲食,0,零',
         '2026-05-05,支出,飲食,68,有效',

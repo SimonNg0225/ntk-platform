@@ -8,36 +8,36 @@ import { offsetFromToday } from './util'
 // ============================================================
 //  待辦 — 示範資料（seedDemo）
 //  ------------------------------------------------------------
-//  畀新用戶／示範場景一鍵填入真實感、連貫嘅樣本：一個有上進心、
-//  生活忙碌嘅老師嘅待辦清單。純資料、零 UI、零 React。
+//  給新用戶／示範場景一鍵填入真實感、連貫的樣本：一個有上進心、
+//  生活忙碌的老師的待辦清單。純資料、零 UI、零 React。
 //
 //  涉及三個 collection（互相用 task.id 串連）：
 //   · tasksCol（'work_tasks'，data/collections.ts）—— 任務真相來源
 //     Task { text / done / createdAt }。
 //   · taskMetaCol（'todo_task_meta'）—— sidecar，key = task.id，
 //     存優先級 / 到期 / 專案 / 標籤 / 備註 / 排序 / 完成時間。
-//   · subtasksCol（'todo_subtasks'）—— 個別任務嘅子任務清單。
-//   專案沿用 store.ts 內建嘅 proj-teaching（教學）/ proj-admin（行政）。
+//   · subtasksCol（'todo_subtasks'）—— 個別任務的子任務清單。
+//   專案沿用 store.ts 內建的 proj-teaching（教學）/ proj-admin（行政）。
 //
 //  鐵則：
-//   · Idempotent —— 每個 collection 只喺佢而家係空（.get().length === 0）
-//     先種；已有資料就跳過嗰個 collection。回傳總共加咗幾多 row。
-//   · 日期一律行 util 嘅本地日期 helper（todayISO / offsetFromToday），
-//     分佈喺最近 1–4 週（到期日跨「逾期 / 今日 / 即將」三類；只有提早
+//   · Idempotent —— 每個 collection 只在他現在係空（.get().length === 0）
+//     先種；已有資料就跳過那個 collection。回傳總共加了幾多 row。
+//   · 日期一律行 util 的本地日期 helper（todayISO / offsetFromToday），
+//     分佈在最近 1–4 週（到期日跨「逾期 / 今日 / 即將」三類；只有提早
 //     交報告呢類有語意先用未來日）。
-//   · 完成嘅任務同時 set done=true + meta.completedAt，趨勢圖 / 熱力圖 /
-//     連續完成日先有嘢睇；completedAt 分佈喺最近約兩週。
-//   · 純資料，唔掂 UI / 唔 import React。
+//   · 完成的任務同時 set done=true + meta.completedAt，趨勢圖 / 熱力圖 /
+//     連續完成日先有嘢查看；completedAt 分佈在最近約兩週。
+//   · 純資料，不掂 UI / 不 import React。
 // ============================================================
 
 const PROJ_TEACHING = 'proj-teaching'
 const PROJ_ADMIN = 'proj-admin'
 
 /**
- * 一條示範任務嘅藍本。略去 id（種入時派）。
+ * 一條示範任務的藍本。略去 id（種入時派）。
  * dueOffset / createdOffset / doneOffset 全部係「距今日數」（負=過去、
  * 0=今日、正=將來），種入時經 offsetFromToday 轉成本地 YYYY-MM-DD，
- * 令樣本隨「今日」滑動、唔會寫死。
+ * 令樣本隨「今日」滑動、不會寫死。
  */
 interface Sample {
   text: string
@@ -57,28 +57,28 @@ interface Sample {
   subtasks?: string[]
 }
 
-// 一個忙碌但有條理嘅老師：教學 + 行政 + 個人進修混雜。
-// 到期日刻意跨「逾期 / 今日 / 聽日 / 一週內 / 之後」幾桶，
-// 令智能分組、Today、Upcoming 各視圖都即刻有內容。
+// 一個忙碌但有條理的老師：教學 + 行政 + 個人進修混雜。
+// 到期日刻意跨「逾期 / 今日 / 明天 / 一週內 / 之後」幾桶，
+// 令智能分組、Today、Upcoming 各視圖都立即有內容。
 const SAMPLES: Sample[] = [
   // ── 逾期（紅色，最搶眼）──────────────────────────────
   {
-    text: '交上學期成績分析報告畀科主任',
+    text: '交上學期成績分析報告給科主任',
     priority: 1,
     dueOffset: -2,
     projectId: PROJ_ADMIN,
     tags: ['報告', '死線'],
-    note: '科主任追緊，今晚一定要搞掂個 PDF send 過去。',
+    note: '科主任追緊，今晚一定要完成個 PDF send 過去。',
     createdOffset: -9,
-    subtasks: ['整理各班平均分', '畫返成績分佈圖', '寫三點觀察 + 改善建議'],
+    subtasks: ['整理各班平均分', '繪製成績分佈圖', '寫三點觀察 + 改善建議'],
   },
   {
-    text: '回覆 4B 家長關於補課安排嘅電郵',
+    text: '回覆 4B 家長關於補課安排的電郵',
     priority: 2,
     dueOffset: -1,
     projectId: PROJ_ADMIN,
     tags: ['家長', '溝通'],
-    note: '已讀未回兩日，唔好再拖，下午小息打返。',
+    note: '已讀未回兩日，不要再拖，下午小息回覆。',
     createdOffset: -4,
   },
 
@@ -89,19 +89,19 @@ const SAMPLES: Sample[] = [
     dueOffset: 0,
     projectId: PROJ_TEACHING,
     tags: ['批改'],
-    note: '兩疊卷，目標今晚改一半，聽日派返。',
+    note: '兩疊試卷，目標今晚批改一半，明天派發。',
     createdOffset: -2,
     subtasks: ['對齊評分準則', '改 MC + 短題', '記分數入成績冊'],
   },
   {
-    text: '備聽日「中文議論文結構」嗰堂',
+    text: '準備明天「中文議論文結構」那一課',
     priority: 2,
     dueOffset: 0,
     projectId: PROJ_TEACHING,
     tags: ['備課'],
-    note: '想加個本地連鎖店個案，畀學生分組討論。',
+    note: '想加個本地連鎖店個案，給學生分組討論。',
     createdOffset: -3,
-    subtasks: ['揀個案 + 搵新聞', '整簡報', '印工作紙'],
+    subtasks: ['選擇一個案 + 搜尋新聞', '整簡報', '印工作紙'],
   },
   {
     text: '健身室練腳（深蹲日）',
@@ -112,14 +112,14 @@ const SAMPLES: Sample[] = [
     createdOffset: -1,
   },
 
-  // ── 聽日 / 一週內（即將）──────────────────────────────
+  // ── 明天 / 一週內（即將）──────────────────────────────
   {
     text: '同 5A 班主任跟進兩個缺交功課學生',
     priority: 2,
     dueOffset: 1,
     projectId: PROJ_ADMIN,
     tags: ['學生', '跟進'],
-    note: '小息去教員室搵佢傾，了解下係咪屋企有事。',
+    note: '小息去教員室搜尋他傾，了解下係咪屋企有事。',
     createdOffset: -2,
   },
   {
@@ -128,7 +128,7 @@ const SAMPLES: Sample[] = [
     dueOffset: 3,
     projectId: PROJ_ADMIN,
     tags: ['會議', '行政'],
-    note: '週四開會，講返本學期進度同考試卷分工。',
+    note: '週四開會，說明本學期進度及考試卷分工。',
     createdOffset: -3,
     subtasks: ['更新進度表', '列出落後課題', '建議補課時段'],
   },
@@ -137,7 +137,7 @@ const SAMPLES: Sample[] = [
     priority: 3,
     dueOffset: 4,
     tags: ['學習', '個人', '進修'],
-    note: '報咗錢就要跟完，週末搵兩個鐘做埋練習。',
+    note: '報了錢就要跟完，週末搜尋兩個鐘做埋練習。',
     createdOffset: -6,
   },
   {
@@ -157,7 +157,7 @@ const SAMPLES: Sample[] = [
     dueOffset: 12,
     projectId: PROJ_TEACHING,
     tags: ['出卷', '考試'],
-    note: '依藍圖出題，留返時間畀科主任 vet。',
+    note: '依藍圖出題，預留時間給科主任 vet。',
     createdOffset: -2,
     subtasks: ['對藍圖分配分數', '出 MC 20 題', '出長題 3 條', '寫評分指引'],
   },
@@ -211,7 +211,7 @@ const SAMPLES: Sample[] = [
 
 /**
  * 把「距今日數」轉成合理 ISO 時戳（該日某鐘數，本地時間）。
- * 用 offsetFromToday 攞本地 YYYY-MM-DD，再貼鐘數 → 穩定、唔係未來。
+ * 用 offsetFromToday 取得本地 YYYY-MM-DD，再貼鐘數 → 穩定、不是未來。
  */
 function isoAt(offsetDays: number, clock = '09:00:00'): string {
   return new Date(`${offsetFromToday(offsetDays)}T${clock}`).toISOString()
@@ -219,10 +219,10 @@ function isoAt(offsetDays: number, clock = '09:00:00'): string {
 
 /**
  * 種入示範待辦。
- * - 每個 collection 各自獨立 idempotent：只喺佢而家係空先種。
+ * - 每個 collection 各自獨立 idempotent：只在他現在係空先種。
  * - 任務（tasksCol）、中繼資料（taskMetaCol）、子任務（subtasksCol）
  *   用同一條 task.id 串連，視圖 join 得返。
- * - 回傳實際加入嘅 row 總數（三個 collection 相加）。
+ * - 回傳實際加入的 row 總數（三個 collection 相加）。
  */
 export function seedDemo(): number {
   const seedTasks = tasksCol.get().length === 0
@@ -235,8 +235,8 @@ export function seedDemo(): number {
   // 確保任務的 id 一致：
   //  · 如果要種任務，逐條派新 id；
   //  · 如果任務 collection 已有資料但 meta/subtasks 係空（罕有），
-  //    就唔再硬塞 meta/subtasks 落「未知 id」——直接跳過嗰兩個，
-  //    避免製造指向唔存在任務嘅孤兒 row。
+  //    就不再硬塞 meta/subtasks 落「未知 id」——直接跳過嗰兩個，
+  //    避免製造指向不存在任務的孤兒 row。
   if (!seedTasks) return 0
 
   const tasks: Task[] = []
@@ -280,7 +280,7 @@ export function seedDemo(): number {
           id: uid(),
           taskId: id,
           text,
-          // 已完成嘅母任務 → 子任務全勾；否則勾頭一兩個營造進度感。
+          // 已完成的母任務 → 子任務全勾；否則勾頭一兩個營造進度感。
           done: s.done ? true : j === 0,
           order: j,
         })

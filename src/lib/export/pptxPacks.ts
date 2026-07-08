@@ -55,7 +55,7 @@ export type SlidePackId =
   | 'sumi'
   | 'brutalist'
 
-/** 嵌入簡報嘅相（由 stock 層提供；width/height 係真實 pixel，計裁切比例必需） */
+/** 嵌入簡報的相（由 stock 層提供；width/height 係真實 pixel，計裁切比例必需） */
 export interface SlideImage {
   dataUri: string
   credit: string
@@ -119,7 +119,7 @@ export interface FrameCtx {
   /** split 配圖版 — 影響題闊、右上角飾物同頁碼位置 */
   hasPhoto: boolean
   hasChart: boolean
-  /** 內容版序（0-based，唔計封面同章節）— 逐版母題輪換（deco）用 */
+  /** 內容版序（0-based，不計封面同章節）— 逐版母題輪換（deco）用 */
   seq: number
 }
 
@@ -127,7 +127,7 @@ export interface Pack {
   id: SlidePackId
   name: string
   hint: string
-  /** 揀選卡 UI 用嘅 3 粒代表色（連 #） */
+  /** 選擇選卡 UI 用的 3 粒代表色（連 #） */
   swatches: [string, string, string]
   dark: boolean
   bg: string
@@ -149,7 +149,7 @@ export interface Pack {
   pageNoFraction?: boolean
   /** true = 版式結構線（steps 連接線／compare 欄題線）用虛線（粉筆） */
   structDash?: boolean
-  /** compare 右欄面板用嘅另一隻色（粉彩 A/B 對照）；缺省同 panel */
+  /** compare 右欄面板用的另一隻色（粉彩 A/B 對照）；缺省同 panel */
   panelAlt?: string
   chartColors: string[]
   chartGridColor: string
@@ -164,7 +164,7 @@ export interface Pack {
   splitPhoto: SplitPhotoStyle
   cover(slide: PptxGenJS.Slide, deck: Deck, brand: string, img?: SlideImage, title?: CoverTitle): void
   section(slide: PptxGenJS.Slide, no: number, title: string): void
-  /** 畫 kicker／版題／髮線／頁尾，回傳 body 區域俾 layout 用 */
+  /** 畫 kicker／版題／髮線／頁尾，回傳 body 區域給 layout 用 */
   contentFrame(slide: PptxGenJS.Slide, ctx: FrameCtx): Rect
   /**
    * 招牌版式覆寫（選填）—— pack 為個別 layout 提供自家結構渲染，
@@ -173,9 +173,9 @@ export interface Pack {
    */
   overrides?: Partial<Record<SlideLayout, LayoutRenderFn>>
   /**
-   * 逐版母題（選填）—— 喺 contentFrame 之後、內容之前畫一個會按 ctx.seq
-   * 輪換／演進嘅細母題（角飾／背景紋／編號位移），令同一 pack 內版與版唔重複。
-   * 必須克制：只擺邊位／角位，唔好壓住內容區。
+   * 逐版母題（選填）—— 在 contentFrame 之後、內容之前畫一個會按 ctx.seq
+   * 輪換／演進的細母題（角飾／背景紋／編號位移），令同一 pack 內版與版不重複。
+   * 必須克制：只擺邊位／角位，不要壓住內容區。
    */
   deco?(slide: PptxGenJS.Slide, ctx: FrameCtx): void
 }
@@ -201,8 +201,8 @@ export function vline(slide: PptxGenJS.Slide, x: number, y: number, h: number, c
 }
 
 /**
- * 以 cover 模式擺一張相：addImage 嘅 w/h 必須係相片真實比例，
- * sizing{w,h} 先係目標框（api-audit imageFinding — 比例俾錯會裁歪）。
+ * 以 cover 模式擺一張相：addImage 的 w/h 必須係相片真實比例，
+ * sizing{w,h} 先係目標框（api-audit imageFinding — 比例給錯會裁歪）。
  */
 export function addCoverImage(slide: PptxGenJS.Slide, img: SlideImage, frame: Rect, rounding = false): void {
   const ar = img.width > 0 && img.height > 0 ? img.width / img.height : frame.w / frame.h
@@ -238,7 +238,7 @@ export function photoCreditOnImage(slide: PptxGenJS.Slide, credit: string, frame
   })
 }
 
-/** 方格 pack 嘅「+」準星：兩條 1pt 線十字交叉（cx/cy = 中心，len = 全長） */
+/** 方格 pack 的「+」準星：兩條 1pt 線十字交叉（cx/cy = 中心，len = 全長） */
 function crosshair(slide: PptxGenJS.Slide, cx: number, cy: number, len: number, color: string): void {
   slide.addShape('line', { x: cx - len / 2, y: cy, w: len, h: 0, line: { color, width: 1 } })
   slide.addShape('line', { x: cx, y: cy - len / 2, w: 0, h: len, line: { color, width: 1 } })
@@ -279,7 +279,7 @@ const KICKER_RULES: { re: RegExp; label: string }[] = [
 
 const KICKER_CYCLE = ['INTRO · 導入', 'CONCEPT · 概念', 'EXAMPLE · 例子', 'PRACTICE · 練習', 'SUMMARY · 總結']
 
-/** 按版題揀語義 kicker（純文字標籤，任何 Office/WPS 100% 顯示） */
+/** 按版題選擇語義 kicker（純文字標籤，任何 Office/WPS 100% 顯示） */
 export function pickKicker(title: string, index: number, hasChart = false): string {
   const hit = KICKER_RULES.find((r) => r.re.test(title))
   if (hit) return hit.label
@@ -292,9 +292,9 @@ export function pickKicker(title: string, index: number, hasChart = false): stri
 interface ScaffoldOpts {
   kickerY: number
   titleY: number
-  /** false = 唔畫 header 髮線（曙光） */
+  /** false = 不畫 header 髮線（曙光） */
   hairline: boolean
-  /** 整體下移（講堂 header band 佔咗頂部） */
+  /** 整體下移（講堂 header band 佔了頂部） */
   offset?: number
 }
 
@@ -383,7 +383,7 @@ const INK = { ink: '1C1917', soft: '78716C', faint: 'A8A29E', hair: 'E7E2DC', ac
 
 /**
  * 招牌 quote：碑刻題款 —— 左上朱砂方印（實心 accent block），
- * 引文 Georgia 巨號排喺印旁／印下，短粗朱紅刻線，落款細淡字。
+ * 引文 Georgia 巨號排在印旁／印下，短粗朱紅刻線，落款細淡字。
  */
 function renderInscription_inkwell(slide: PptxGenJS.Slide, body: Rect, pack: Pack, s: Slide): void {
   const q = s.quote
@@ -501,7 +501,7 @@ function renderBooklet_inkwell(slide: PptxGenJS.Slide, body: Rect, pack: Pack, s
 
 /**
  * 招牌 steps：卷軸 —— 細朱砂縱鈦由上而下貫穿，每步一粒毛筆墨點節點，
- * Georgia 老式序號喺點旁，serif 標題＋說明逐級而下。書卷、人文。
+ * Georgia 老式序號在點旁，serif 標題＋說明逐級而下。書卷、人文。
  */
 function renderScroll_inkwell(slide: PptxGenJS.Slide, body: Rect, pack: Pack, s: Slide): void {
   const items = (s.steps ?? []).slice(0, 5)
@@ -598,7 +598,7 @@ const inkwell: Pack = {
   cover(slide, deck, brand, img, title) {
     slide.background = { color: 'FFFFFF' }
     const hasImg = Boolean(img)
-    // 招牌紋理底圖（瀏覽器 Canvas raster；冇 canvas 時 fallback 極淡縱向底調）
+    // 招牌紋理底圖（瀏覽器 Canvas raster；沒有 canvas 時 fallback 極淡縱向底調）
     const tex = coverTextureUri('inkwell')
     if (tex) {
       slide.addImage({ data: tex, x: 0, y: 0, w: 13.333, h: 7.5, sizing: { type: 'cover', w: 13.333, h: 7.5 } })
@@ -639,7 +639,7 @@ const inkwell: Pack = {
     // 右下 brand（有相時靠入文字欄）
     tx(slide, brand, { x: hasImg ? 4.8 : 8.43, y: 7.08, w: 4, h: 0.3, fontSize: 8, color: INK.faint, align: 'right' })
     if (img) {
-      // 右欄直幅 full-bleed 相 + 左緣髮線（唔使 scrim）
+      // 右欄直幅 full-bleed 相 + 左緣髮線（不用 scrim）
       const frame: Rect = { x: 9.23, y: 0, w: 4.1, h: 7.5 }
       addCoverImage(slide, img, frame)
       vline(slide, 9.23, 0, 7.5, INK.hair)
@@ -719,7 +719,7 @@ function renderHubSpoke_celadon(slide: PptxGenJS.Slide, body: Rect, pack: Pack, 
   const radius = Math.min(body.w / 2 - 1.5, body.h / 2 - 0.7)
   const hubR = 0.62
   const nodeR = 0.5
-  // 先畫放射髮線（壓喺節點下）
+  // 先畫放射髮線（壓在節點下）
   for (let i = 0; i < n; i++) {
     const ang = -Math.PI / 2 + (2 * Math.PI * i) / n
     const nxC = cx + radius * Math.cos(ang)
@@ -778,8 +778,8 @@ function renderHubSpoke_celadon(slide: PptxGenJS.Slide, body: Rect, pack: Pack, 
 }
 
 /**
- * 招牌 stats：圓盤儀錶 —— 每個數字坐喺一隻青瓷細環圓盤中央（statColor），
- * label 喺盤下。正圓 motif、清雅。
+ * 招牌 stats：圓盤儀錶 —— 每個數字坐在一隻青瓷細環圓盤中央（statColor），
+ * label 在盤下。正圓 motif、清雅。
  */
 function renderDials_celadon(slide: PptxGenJS.Slide, body: Rect, pack: Pack, s: Slide): void {
   const stats = (s.stats ?? []).slice(0, 4)
@@ -950,7 +950,7 @@ const celadon: Pack = {
 
   cover(slide, deck, brand, img, title) {
     slide.background = { color: 'FFFFFF' }
-    // 招牌紋理底圖（瀏覽器 Canvas raster；冇 canvas 時 fallback 極淡縱向底調）
+    // 招牌紋理底圖（瀏覽器 Canvas raster；沒有 canvas 時 fallback 極淡縱向底調）
     const tex = coverTextureUri('celadon')
     if (tex) {
       slide.addImage({ data: tex, x: 0, y: 0, w: 13.333, h: 7.5, sizing: { type: 'cover', w: 13.333, h: 7.5 } })
@@ -991,14 +991,14 @@ const celadon: Pack = {
     }
     tx(slide, brand, { x: 0.9, y: 6.7, w: 5, h: 0.3, fontSize: 8, color: CEL.faint })
     if (img) {
-      // 圓相喺白底 — 署名放圓相下方
+      // 圓相在白底 — 署名放圓相下方
       tx(slide, img.credit, { x: 8.1, y: 6.15, w: 4.6, h: 0.26, fontSize: 8, color: CEL.faint, align: 'center' })
     }
   },
 
   section(slide, no, title) {
     slide.background = { color: CEL.panel }
-    // 同心圓 + Arial 巨號（圓喺號碼右後，先畫；圓底同章節題保持 ≥0.2" 呼吸位）
+    // 同心圓 + Arial 巨號（圓在號碼右後，先畫；圓底同章節題保持 ≥0.2" 呼吸位）
     slide.addShape('ellipse', { x: 3.35, y: 1.35, w: 3.0, h: 3.0, fill: { type: 'none' }, line: { color: mix(CEL.accent, CEL.panel, 0.3), width: 1.5 } })
     tx(slide, pad2(no), { x: 0.9, y: 2.2, w: 4, h: 1.9, fontSize: 110, bold: true, color: CEL.accent, fontFace: 'Arial' })
     tx(slide, title, { x: 0.9, y: 4.6, w: 11, h: 1.2, fontSize: 30, bold: true, color: CEL.ink })
@@ -1008,7 +1008,7 @@ const celadon: Pack = {
   contentFrame(slide, ctx) {
     slide.background = { color: 'FFFFFF' }
     const { body } = scaffold(slide, celadon, ctx, { kickerY: 0.58, titleY: 0.9, hairline: true })
-    // 右上 0.16" outline 圓角標 — 全版式一致（圓裁相喺 y1.3 以下，唔會撞）
+    // 右上 0.16" outline 圓角標 — 全版式一致（圓裁相在 y1.3 以下，不會撞）
     slide.addShape('ellipse', { x: 12.27, y: 0.6, w: 0.16, h: 0.16, fill: { type: 'none' }, line: { color: CEL.accent, width: 1.25 } })
     drawFooter(slide, celadon, ctx)
     return body
@@ -1105,7 +1105,7 @@ function renderBalloonCards_dawn(slide: PptxGenJS.Slide, body: Rect, pack: Pack,
   const gy = 0.35
   const cardW = (body.w - gx * (cols - 1)) / cols
   const cardH = (body.h - gy * (rows - 1)) / rows
-  // 每張卡用唔同柔琥珀色階（hue 輪替）
+  // 每張卡用不同柔琥珀色階（hue 輪替）
   const tints = [0.78, 0.6, 0.7, 0.5]
   const badge = Math.min(0.7, cardH * 0.4)
   cards.forEach((card, i) => {
@@ -1249,7 +1249,7 @@ const dawn: Pack = {
 
   cover(slide, deck, brand, img) {
     slide.background = { color: 'FFFFFF' }
-    // 招牌紋理底圖（瀏覽器 Canvas raster；冇 canvas 時 fallback 極淡縱向底調）
+    // 招牌紋理底圖（瀏覽器 Canvas raster；沒有 canvas 時 fallback 極淡縱向底調）
     const tex = coverTextureUri('dawn')
     if (tex) {
       slide.addImage({ data: tex, x: 0, y: 0, w: 13.333, h: 7.5, sizing: { type: 'cover', w: 13.333, h: 7.5 } })
@@ -1296,7 +1296,7 @@ const dawn: Pack = {
   },
 
   section(slide, no, title) {
-    // 全版琥珀滿色 — 大膽、低年級啱（白字大字 contrast 達標）
+    // 全版琥珀滿色 — 大膽、低年級適合（白字大字 contrast 達標）
     slide.background = { color: DAWN.accent }
     tx(slide, pad2(no), { x: 8.7, y: 1.95, w: 3.8, h: 2.1, fontSize: 120, bold: true, color: mix('FFFFFF', DAWN.accent, 0.25), fontFace: 'Arial', align: 'right' })
     tx(slide, title, { x: 0.9, y: 3.35, w: 8, h: 1.6, fontSize: 34, bold: true, color: 'FFFFFF' })
@@ -1306,13 +1306,13 @@ const dawn: Pack = {
   contentFrame(slide, ctx) {
     slide.background = { color: 'FFFFFF' }
     const { body, shift } = scaffold(slide, dawn, ctx, { kickerY: 0.56, titleY: 0.88, hairline: false })
-    // 結構靠卡片：bullets／配圖版 body 包喺 tint 圓角大卡
+    // 結構靠卡片：bullets／配圖版 body 包在 tint 圓角大卡
     if (ctx.layout === 'bullets') {
       const cardW = ctx.hasPhoto ? 6.8 : ctx.hasChart ? 5.45 : 11.63
       const cardY = 2.15 + shift
       slide.addShape('roundRect', { x: 0.85, y: cardY, w: cardW, h: 6.6 - cardY, rectRadius: 0.12, fill: { color: DAWN.panel }, line: { type: 'none' } })
       drawFooter(slide, dawn, ctx)
-      // 內文喺卡內縮入 0.45
+      // 內文在卡內縮入 0.45
       return { x: 1.3, y: cardY + 0.25, w: cardW - 0.9, h: 6.6 - cardY - 0.5 }
     }
     drawFooter(slide, dawn, ctx)
@@ -1348,7 +1348,7 @@ const dawn: Pack = {
 const NOC = { bg: '101826', ink: 'F8FAFC', soft: '94A3B8', faint: '55657F', hair: '2A3447', accent: 'D4A94E', panel: '1B2435' }
 
 /**
- * 招牌 stats：懸浮 HUD 面板 —— 每個數字坐喺浮起面板上，
+ * 招牌 stats：懸浮 HUD 面板 —— 每個數字坐在浮起面板上，
  * 上下各一條燙金細線、巨號 accent／statColor + label、微外陰影。
  */
 function renderHudStats_nocturne(slide: PptxGenJS.Slide, body: Rect, pack: Pack, s: Slide): void {
@@ -1572,7 +1572,7 @@ const nocturne: Pack = {
       addCoverImage(slide, img, { x: 0, y: 0, w: 13.33, h: 7.5 })
       slide.addShape('rect', { x: 0, y: 0, w: 13.33, h: 7.5, fill: { color: NOC.bg, transparency: 62 }, line: { type: 'none' } })
     } else {
-      // 招牌紋理底圖（瀏覽器 Canvas raster；冇 canvas 時 fallback 柔金暈底）
+      // 招牌紋理底圖（瀏覽器 Canvas raster；沒有 canvas 時 fallback 柔金暈底）
       const tex = coverTextureUri('nocturne')
       if (tex) {
         slide.addImage({ data: tex, x: 0, y: 0, w: 13.333, h: 7.5, sizing: { type: 'cover', w: 13.333, h: 7.5 } })
@@ -1832,7 +1832,7 @@ const grid: Pack = {
 
   cover(slide, deck, brand, img) {
     slide.background = { color: 'FFFFFF' }
-    // 招牌紋理底圖（瀏覽器 Canvas raster；冇 canvas 時 fallback 極淡縱向底調）
+    // 招牌紋理底圖（瀏覽器 Canvas raster；沒有 canvas 時 fallback 極淡縱向底調）
     const tex = coverTextureUri('grid')
     if (tex) {
       slide.addImage({ data: tex, x: 0, y: 0, w: 13.333, h: 7.5, sizing: { type: 'cover', w: 13.333, h: 7.5 } })
@@ -1921,7 +1921,7 @@ const grid: Pack = {
 // ============================================================
 //  講堂 seminar — 研討發佈級深藍金（參照 EDB sharing deck 風格）
 //  · header band：深藍頂帶 + 金線（running header，雙語 microcopy）
-//  · 雙語層次：中文大題 + 英文副題（subtitle）係本 pack 嘅靈魂
+//  · 雙語層次：中文大題 + 英文副題（subtitle）係本 pack 的靈魂
 //  · 章節：全藍 + 右上超大 ghost 數字；頁碼「13 / 23」分數格式
 // ============================================================
 
@@ -2140,7 +2140,7 @@ const seminar: Pack = {
       // 深藍 scrim 保白字（shape fill transparency 正常 work）
       slide.addShape('rect', { x: 0, y: 0, w: 13.33, h: 7.5, fill: { color: SEM.coverBg, transparency: 28 }, line: { type: 'none' } })
     } else {
-      // 招牌紋理底圖（瀏覽器 Canvas raster；冇 canvas 時 fallback 柔金暈底）
+      // 招牌紋理底圖（瀏覽器 Canvas raster；沒有 canvas 時 fallback 柔金暈底）
       const tex = coverTextureUri('seminar')
       if (tex) {
         slide.addImage({ data: tex, x: 0, y: 0, w: 13.333, h: 7.5, sizing: { type: 'cover', w: 13.333, h: 7.5 } })
@@ -2232,6 +2232,6 @@ const seminar: Pack = {
 }
 
 // ───────── 滙出 ─────────
-// 完整 PACKS／PACK_LIST 喺 pptx.ts 組裝（本檔 6 套核心 + gallery 兩檔 10 套）
+// 完整 PACKS／PACK_LIST 在 pptx.ts 組裝（本檔 6 套核心 + gallery 兩檔 10 套）
 
 export const CORE_PACKS: Pack[] = [inkwell, celadon, dawn, nocturne, grid, seminar]

@@ -7,15 +7,15 @@ import type { Card } from '../data/types'
 export type Rating = 'again' | 'hard' | 'good' | 'easy'
 
 export const RATING_LABEL: Record<Rating, string> = {
-  again: '😵 唔記得',
-  hard: '😓 有啲難',
+  again: '😵 不記得',
+  hard: '😓 有些難',
   good: '🙂 記得',
   easy: '😎 好易',
 }
 
 /**
- * 本地時區 YYYY-MM-DD。刻意唔用 `toISOString().slice(0,10)`（嗰個係 UTC 切日）：
- * 喺 UTC+8（HKT）早上 UTC 仲未過午夜，會切到「噖日」，令到期日差一日。
+ * 本地時區 YYYY-MM-DD。刻意不用 `toISOString().slice(0,10)`（那個係 UTC 切日）：
+ * 在 UTC+8（HKT）早上 UTC 尚未過午夜，會切到「噖日」，令到期日差一日。
  */
 export function localDateStr(d: Date): string {
   const y = d.getFullYear()
@@ -32,7 +32,7 @@ export function isDue(card: Card): boolean {
   return card.dueDate <= todayStr()
 }
 
-/** 計出複習後嘅新排程（回傳要 update 落卡嘅欄位） */
+/** 計出複習後的新排程（回傳要 update 落卡的欄位） */
 export function schedule(card: Card, rating: Rating): Partial<Card> {
   let ease = card.ease
   let intervalDays = card.intervalDays

@@ -11,7 +11,7 @@ import { BRAND_NAME } from '../../../lib/brand'
 // ============================================================
 //  匯出 .ics — 把可見事件（尊重行事曆開關 + 重複展開）同／或全部倒數
 //  寫成標準 iCalendar 檔，下載後可匯入 Apple / Google / Outlook。
-//  範圍：今日前 6 個月 → 今日後 24 個月（覆蓋過去半年同未來兩年嘅重複）。
+//  範圍：今日前 6 個月 → 今日後 24 個月（覆蓋過去半年同未來兩年的重複）。
 // ============================================================
 
 const MONTHS_BACK = 6
@@ -110,7 +110,7 @@ export default function IcsExportModal({
   const rangeEnd = useMemo(() => shiftMonthsKey(now, MONTHS_FWD), [now])
 
   // 預覽計數（用同一套組裝邏輯數 VEVENT 數量，所見即所得）。
-  // 永遠數可匯出嘅總數（唔受勾選狀態影響），讓使用者知有幾多可揀。
+  // 永遠數可匯出的總數（不受勾選狀態影響），讓使用者知有幾多可選擇。
   const eventCount = useMemo(
     () =>
       eventsToVevents(events, cats, rangeStart, rangeEnd, '').filter(
@@ -127,7 +127,7 @@ export default function IcsExportModal({
 
   function doExport() {
     if (!withEvents && !withCountdowns) {
-      toast.error('揀返要匯出邊類先')
+      toast.error('重新選擇要匯出邊類先')
       return
     }
     const ics = buildICS({
@@ -147,7 +147,7 @@ export default function IcsExportModal({
   }
 
   return (
-    // 唔傳 title → 自管「週記」頁眉，令彈窗用返主畫面 serif + kicker + 雙線語言
+    // 不傳 title → 自管「週記」頁眉，令彈窗使用主畫面 serif + kicker + 雙線語言
     <Modal open onClose={onClose} size="md">
       {/* ───────── 週記頁眉：kicker + serif 標題 + 雙線封面分隔 ───────── */}
       <header className="-mx-5 -mt-5 mb-5 px-5 pt-5 sm:-mx-6 sm:-mt-6 sm:px-6 sm:pt-6">
@@ -174,7 +174,7 @@ export default function IcsExportModal({
       <div className="space-y-4">
         <p className="text-sm leading-relaxed text-slate-500 dark:text-slate-400">
           下載標準 iCalendar（.ics）檔，匯入 Apple / Google / Outlook
-          行事曆。只匯出顯示中嘅行事曆，重複事件會展開成逐次（涵蓋過去半年至未來兩年）。
+          行事曆。只匯出顯示中的行事曆，重複事件會展開成逐次（涵蓋過去半年至未來兩年）。
         </p>
 
         <div className="space-y-2.5">

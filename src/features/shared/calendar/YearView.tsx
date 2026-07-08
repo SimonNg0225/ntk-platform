@@ -61,7 +61,7 @@ export default function YearView({
                       )}
                     >
                       {cell.getDate()}
-                      {/* 有活動：底部柔和 accent 圓點（唔搶日子數字） */}
+                      {/* 有活動：底部柔和 accent 圓點（不搶日子數字） */}
                       {has && !isToday && (
                         <span className="absolute bottom-0.5 h-1 w-1 rounded-full bg-accent/70" />
                       )}

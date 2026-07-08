@@ -4,11 +4,11 @@ import { BRAND_NAME } from '../lib/brand'
 
 // ──────────────────────────────────────────────────────────────
 //  PWA 安裝提示
-//  - 只喺「未安裝」（唔係 standalone）先顯示；裝咗 / 喺 app 入面用 → 唔出。
+//  - 只在「未安裝」（不是 standalone）先顯示；裝了 / 在 app 中用 → 不出。
 //  - Android / 桌面 Chromium：捕捉 beforeinstallprompt → 原生「安裝」掣。
-//  - iOS Safari：冇 beforeinstallprompt，改出手動指引（分享 → 加到主畫面）。
-//  - 「直到加入為止」：撳「稍後」只係今次 session 收起，下次到訪再提；
-//    一旦 appinstalled / 進入 standalone 就永久唔再出。
+//  - iOS Safari：沒有 beforeinstallprompt，改出手動指引（分享 → 加到主畫面）。
+//  - 「直到加入為止」：按「稍後」只係今次 session 收起，下次到訪再提；
+//    一旦 appinstalled / 進入 standalone 就永久不再出。
 // ──────────────────────────────────────────────────────────────
 
 type BeforeInstallPromptEvent = Event & {
@@ -41,7 +41,7 @@ export default function PwaInstallPrompt() {
   const deferred = useRef<BeforeInstallPromptEvent | null>(null)
 
   useEffect(() => {
-    if (isStandalone()) return // 已經喺 app 入面用 → 唔提
+    if (isStandalone()) return // 已經在 app 中用 → 不提
     if (sessionStorage.getItem(SESSION_KEY) === '1') return // 今次 session 已收起
 
     const onBIP = (e: Event) => {
@@ -56,7 +56,7 @@ export default function PwaInstallPrompt() {
     window.addEventListener('beforeinstallprompt', onBIP)
     window.addEventListener('appinstalled', onInstalled)
 
-    // iOS：冇 beforeinstallprompt，直接出手動指引
+    // iOS：沒有 beforeinstallprompt，直接出手動指引
     if (isIOS()) {
       setIos(true)
       setShow(true)
@@ -82,7 +82,7 @@ export default function PwaInstallPrompt() {
     const { outcome } = await ev.userChoice
     deferred.current = null
     if (outcome === 'accepted') setShow(false)
-    else snooze() // 撳「取消」→ 今次 session 唔再煩，下次到訪再提
+    else snooze() // 按「取消」→ 今次 session 不再煩，下次到訪再提
   }
 
   return (
@@ -99,16 +99,16 @@ export default function PwaInstallPrompt() {
           </p>
           {ios ? (
             <p className="mt-0.5 flex flex-wrap items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
-              撳底部
+              按底部
               <Share size={13} className="inline text-accent" />
-              分享 → 揀
+              分享 → 選擇
               <span className="inline-flex items-center gap-0.5 font-medium text-slate-600 dark:text-slate-300">
                 <Plus size={12} /> 加入主畫面
               </span>
             </p>
           ) : (
             <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-              加到主畫面，一撳即開、似真 app 咁用
+              加到主畫面，一按即開、像正式 app 一樣使用
             </p>
           )}
         </div>

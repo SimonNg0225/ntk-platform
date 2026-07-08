@@ -11,7 +11,7 @@ import type { CardMeta } from './types'
 // ============================================================
 //  匯入 / 匯出（Anki import/export 級）
 //  - 匯出：CSV（正面,背面,標籤）或 JSON（連排程 + 中繼）
-//  - 匯入：貼 CSV / TSV 文字，或揀 .csv/.json 檔
+//  - 匯入：貼 CSV / TSV 文字，或選擇 .csv/.json 檔
 //    CSV 格式：每行「正面,背面,可選標籤(以 ; 分隔)」
 // ============================================================
 
@@ -68,7 +68,7 @@ export default function ImportExport({
   const doExport = () => {
     const cards = cardsCol.get().filter((c) => c.deckId === exportDeckId)
     if (cards.length === 0) {
-      toast.error('呢個牌組冇卡')
+      toast.error('這個牌組沒有卡')
       return
     }
     const deck = decks.find((d) => d.id === exportDeckId)
@@ -127,7 +127,7 @@ export default function ImportExport({
       .map((l) => l.trim())
       .filter(Boolean)
     if (rows.length === 0) {
-      toast.error('冇內容')
+      toast.error('沒有內容')
       return
     }
     // 跳過標頭（如果第一行似「正面,背面」）
@@ -160,7 +160,7 @@ export default function ImportExport({
       count++
     }
     if (count === 0) {
-      toast.error('解析唔到任何卡（格式：正面,背面,標籤）')
+      toast.error('解析不到任何卡（格式：正面,背面,標籤）')
       return
     }
     toast.success(`已匯入 ${count} 張`)
@@ -176,7 +176,7 @@ export default function ImportExport({
       }
       const cards = Array.isArray(parsed.cards) ? parsed.cards : []
       if (cards.length === 0) {
-        toast.error('JSON 入面冇 cards')
+        toast.error('JSON 中沒有 cards')
         return
       }
       const deckId =
@@ -208,7 +208,7 @@ export default function ImportExport({
       setImportText('')
       onClose()
     } catch {
-      toast.error('JSON 格式唔啱')
+      toast.error('JSON 格式不正確')
     }
   }
 
@@ -225,7 +225,7 @@ export default function ImportExport({
   const doImportText = () => {
     const t = importText.trim()
     if (!t) {
-      toast.error('貼啲內容先')
+      toast.error('貼些內容先')
       return
     }
     if (t.startsWith('{') || t.startsWith('[')) importJsonText(t)
@@ -252,7 +252,7 @@ export default function ImportExport({
         {(
           [
             { id: 'export', label: '備份匯出', sub: '整疊存落本機', icon: Download },
-            { id: 'import', label: '匯入入盒', sub: '貼或揀檔加入', icon: Inbox },
+            { id: 'import', label: '匯入入盒', sub: '貼或選擇檔加入', icon: Inbox },
           ] as const
         ).map((t) => {
           const active = tab === t.id
@@ -313,7 +313,7 @@ export default function ImportExport({
       {tab === 'export' ? (
         <div className="space-y-3">
           <p className="text-sm text-slate-500 dark:text-slate-400">
-            揀個牌組備份落本機——CSV 方便用 Excel 開，JSON 連埋排程進度。
+            選擇一個牌組備份落本機——CSV 方便用 Excel 開，JSON 連埋排程進度。
           </p>
           <Field label="牌組">
             <Select
@@ -339,7 +339,7 @@ export default function ImportExport({
             </Select>
           </Field>
 
-          {/* 出貨單：將要備份嘅一疊卡（serif 大數字 + 紅脊） */}
+          {/* 出貨單：將要備份的一疊卡（serif 大數字 + 紅脊） */}
           <div className="overflow-hidden rounded-xl border border-slate-200/80 bg-white dark:border-slate-700/60 dark:bg-slate-800">
             <span aria-hidden="true" className="block h-1 w-full bg-rose-300/70 dark:bg-rose-500/30" />
             <div className="flex items-center gap-3 px-4 py-3">
@@ -369,13 +369,13 @@ export default function ImportExport({
       ) : (
         <div className="space-y-3">
           <p className="text-sm text-slate-500 dark:text-slate-400">
-            貼上 CSV / TSV 或 JSON，亦可以揀檔——一次過入一批卡。
+            貼上 CSV / TSV 或 JSON，亦可以選擇檔——一次過入一批卡。
           </p>
           <Field label="匯入去">
             <Select
               value={importDeckId}
               onChange={(e) => setImportDeckId(e.target.value)}
-              aria-label="匯入去邊個牌組"
+              aria-label="匯入去哪個牌組"
             >
               <option value="__new__">＋ 新牌組</option>
               {decks.map((d) => (
@@ -402,7 +402,7 @@ export default function ImportExport({
                 rows={6}
                 value={importText}
                 onChange={(e) => setImportText(e.target.value)}
-                placeholder={'光合作用係咩?,植物用光造養分,生物;DSE\n需求定律,價跌量升,經濟'}
+                placeholder={'光合作用係什麼?,植物用光造養分,生物;DSE\n需求定律,價跌量升,經濟'}
                 className="rounded-none border-0 font-mono text-base shadow-none focus:ring-0 sm:text-xs"
                 aria-label="貼上匯入內容（CSV / TSV 或 JSON）"
               />

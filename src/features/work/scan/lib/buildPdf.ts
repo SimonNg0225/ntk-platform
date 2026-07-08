@@ -4,12 +4,12 @@ import type { ScanPage, OcrWord } from './types'
 import { pageDimsFromImage, mapBboxToPdf } from './pdfText'
 import { recognize } from './ocr'
 
-// Noto Sans TC（繁中）靜態字重 Regular 單一 instance，嵌入時子集化 → 輸出 PDF 唔脹。
+// Noto Sans TC（繁中）靜態字重 Regular 單一 instance，嵌入時子集化 → 輸出 PDF 不脹。
 // 用 @expo-google-fonts npm 套件（pin 版本）經 jsDelivr：
 //   - content-type: font/ttf、access-control-allow-origin: *（瀏覽器 fetch CORS OK）
 //   - sfnt magic 00 01 00 00（真 TrueType，pdf-lib + fontkit 可子集嵌入）
 //   - 靜態字重（非 variable）→ 子集化穩陣。
-// （原 plan 嘅 notofonts.github.io hinted 路徑已 403，故改用此可靠來源。）
+// （原 plan 的 notofonts.github.io hinted 路徑已 403，故改用此可靠來源。）
 const CJK_FONT_URL =
   'https://cdn.jsdelivr.net/npm/@expo-google-fonts/noto-sans-tc@0.4.3/400Regular/NotoSansTC_400Regular.ttf'
 
@@ -60,7 +60,7 @@ export async function buildScanPdf(pages: ScanPage[], opts: BuildOptions): Promi
       doc.registerFontkit(fontkit)
       font = await doc.embedFont(await cjkFontBytes(), { subset: true })
     } catch {
-      font = null // 字型攞唔到 → 全部跳過文字層
+      font = null // 字型取得不到 → 全部跳過文字層
     }
   }
 
@@ -89,11 +89,11 @@ export async function buildScanPdf(pages: ScanPage[], opts: BuildOptions): Promi
               size: r.h,
               font,
               color: rgb(0, 0, 0),
-              opacity: 0, // 隱形：可搜尋但唔遮圖
+              opacity: 0, // 隱形：可搜尋但不遮圖
             })
           } catch {
-            // 子集字型 cmap 缺某字 → pdf-lib 會喺 drawText 度 throw；
-            // 跳過呢個字，唔好整冧成頁文字層。
+            // 子集字型 cmap 缺某字 → pdf-lib 會在 drawText 度 throw；
+            // 跳過這個字，不要整冧成頁文字層。
           }
         }
       } catch {

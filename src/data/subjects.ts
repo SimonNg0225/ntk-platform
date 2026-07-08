@@ -4,16 +4,16 @@ import { BAFS_TOPICS } from './bafs'
 // ============================================================
 //  科目包 (Subject Packs)
 //  ------------------------------------------------------------
-//  商業化通用化：平台對象係全港跨科老師，唔再淨係單一科目。
-//  每個科目包提供一份「課題大綱」起始資料，老師揀咗就可以一鍵
-//  載入去 topics 集合（之後照樣可以喺介面自行增刪改）。
+//  商業化通用化：平台對象係全港跨科老師，不再只單一科目。
+//  每個科目包提供一份「課題大綱」起始資料，老師選擇了就可以一鍵
+//  載入去 topics 集合（之後照樣可以在介面自行增刪改）。
 //
 //  設計：
-//   - 企會財包直接重用 src/data/bafs.ts 嘅內建課題（id = bafs-NN），
-//     令預設 topics 集合同舊版完全一致（唔影響既有資料 / 測試）。
+//   - 企會財包直接重用 src/data/bafs.ts 的內建課題（id = bafs-NN），
+//     令預設 topics 集合同舊版完全一致（不影響既有資料 / 測試）。
 //   - 其他包用 outline（[part, area, topic]）+ buildPackTopics 生成
 //     穩定 id（`${packId}-NN`）。
-//   - 大綱係「起始模板」，求其精簡可用，唔保證涵蓋官方課程全部細項；
+//   - 大綱係「起始模板」，求其精簡可用，不保證涵蓋官方課程全部細項；
 //     老師可自行調整。
 // ============================================================
 
@@ -22,7 +22,7 @@ export interface SubjectPack {
   id: string
   /** 完整科目名稱 */
   name: string
-  /** 短名 / 縮寫，用喺選單 chip */
+  /** 短名 / 縮寫，用在選單 chip */
   short: string
   /** 課題清單（已生成穩定 id / order） */
   topics: Topic[]
@@ -122,7 +122,7 @@ const CHIN: OutlineRow[] = [
   ['指定文言（十二篇）', '古文', '《出師表》（諸葛亮）'],
   ['指定文言（十二篇）', '古文', '《師說》（韓愈）'],
   ['指定文言（十二篇）', '古文', '《始得西山宴遊記》（柳宗元）'],
-  ['指定文言（十二篇）', '古文', '《岳陽樓記》（范仲淹）'],
+  ['指定文言（十二篇）', '古文', '《岳陽樓記》（范還淹）'],
   ['指定文言（十二篇）', '古文', '《六國論》（蘇洵）'],
   ['指定文言（十二篇）', '詩', '唐詩三首（山居秋暝／月下獨酌／登樓）'],
   ['指定文言（十二篇）', '詞', '詞三首（念奴嬌／聲聲慢／青玉案）'],
@@ -268,7 +268,7 @@ const GEOG: OutlineRow[] = [
   ['必修', '轉變中的工業區位', '工業區位與全球生產'],
   ['必修', '建設可持續城市', '城市化、城市問題與規劃'],
   ['必修', '消失中的綠色樹林', '雨林與資源管理'],
-  ['必修', '對抗饑荒', '農業系統與糧食供應'],
+  ['必修', '對抗饑荒', '農業系統與糧吃供應'],
   ['必修', '全球增溫', '氣候變化的成因與影響'],
   ['選修', '動態的地球', '板塊構造與地貌作用'],
   ['選修', '水資源的供求', '水循環與水資源管理'],
@@ -344,7 +344,7 @@ const HMSC: OutlineRow[] = [
 const TL: OutlineRow[] = [
   ['共同部分', '科技與生活基礎', '飲食、衣著與消費'],
   ['共同部分', '資源管理', '個人、家庭與資源管理'],
-  ['食品科學', '營養與健康', '營養素與膳食設計'],
+  ['食品科學', '營養與健康', '營養素與膳吃設計'],
   ['食品科學', '食品科學與科技', '食物製備、安全與保存'],
   ['食品科學', '食品趨勢', '飲食文化與食品發展'],
   ['服裝成衣', '紡織與成衣', '纖維、布料與成衣特性'],
@@ -436,10 +436,10 @@ const MUSIC: OutlineRow[] = [
   ['綜合', '音樂與文化', '音樂在社會與文化的角色'],
 ]
 
-// 通用空白包：唔啱上面任何科 / 想自己由零建立課題嘅老師用。
+// 通用空白包：不適合上面任何科 / 想自己由零建立課題的老師用。
 const CUSTOM: Topic[] = []
 
-// 企會財拆兩科：各自重用內建課題，但 id 重新加返自己 pack 前綴（避免兩科 topic id 相撞）。
+// 企會財拆兩科：各自重用內建課題，但 id 重新加回自己 pack 前綴（避免兩科 topic id 相撞）。
 const rePrefix = (packId: string, base: Topic[]): Topic[] =>
   base.map((t, i) => ({ ...t, id: `${packId}-${String(i + 1).padStart(2, '0')}` }))
 
@@ -482,17 +482,17 @@ export function getSubjectPack(id: string): SubjectPack | undefined {
 }
 
 // ── 課題 → 科目 反查 / 分組 ───────────────────────────────────
-// 老師可同時載入多科課題（topicsCol 係扁平一袋），UI 要按科目分區先唔亂。
+// 老師可同時載入多科課題（topicsCol 係扁平一袋），UI 要按科目分區先不亂。
 
-/** 友善名：legacy 前綴（未拆 pack 前嘅舊 id，如 bafs-NN）對應科目名。 */
+/** 友善名：legacy 前綴（未拆 pack 前的舊 id，如 bafs-NN）對應科目名。 */
 const LEGACY_SUBJECT_NAMES: Record<string, string> = {
   bafs: '企會財',
 }
 
 /**
  * 由 topic id 反查所屬科目包。用「最長 pack id 前綴（以 `-` 為界）」配對，
- * 確保 `bafs-acct-01` 配到 `bafs-acct` 而唔係誤配去更短嘅前綴。配唔到回 undefined
- * （例如 legacy `bafs-01` —— 冇 plain `bafs` pack）。
+ * 確保 `bafs-acct-01` 配到 `bafs-acct` 而不是誤配去更短的前綴。配不到回 undefined
+ * （例如 legacy `bafs-01` —— 沒有 plain `bafs` pack）。
  */
 export function packOfTopicId(topicId: string): SubjectPack | undefined {
   let best: SubjectPack | undefined
@@ -511,10 +511,10 @@ export interface TopicGroup {
 }
 
 /**
- * 任教科目 → 要補載嘅課題（additive 同步用）。
- * 為 subjectIds 各科 pack 揾出「未喺 existing 出現過」嘅課題；同時以 **id 同
+ * 任教科目 → 要補載的課題（additive 同步用）。
+ * 為 subjectIds 各科 pack 揾出「未在 existing 出現過」的課題；同時以 **id 同
  * 課題文字** 去重，避免 legacy `bafs-NN` 同拆科後 `bafs-acct-NN`（同一批內建
- * 課題、文字一樣）重覆載入。純函式，唔郁任何 collection。
+ * 課題、文字一樣）重覆載入。純函式，不郁任何 collection。
  */
 export function missingTopicsForSubjects(
   existing: Topic[],
@@ -539,7 +539,7 @@ export function missingTopicsForSubjects(
 
 /**
  * 將一批課題按所屬科目分組（保留輸入次序；同組內亦保留次序）。
- * 配唔到 pack 嘅課題：用 id 第一段做 key，friendly 名（如 bafs→企會財）或「其他課題」。
+ * 配不到 pack 的課題：用 id 第一段做 key，friendly 名（如 bafs→企會財）或「其他課題」。
  */
 export function groupTopicsBySubject(topics: Topic[]): TopicGroup[] {
   const order: string[] = []

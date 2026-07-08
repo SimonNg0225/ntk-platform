@@ -128,7 +128,7 @@ export default function TimerView({
   const proj = activeProjects.find((p) => p.id === projectId)
   const ringColor = phase === 'focus' ? paletteOf(proj?.color).fill : 'var(--accent)'
 
-  // 設定改動 → 若停咗，重設當前節長度
+  // 設定改動 → 若停了，重設當前節長度
   useEffect(() => {
     if (!running && startRef.current === null) {
       setSecondsLeft(minutesFor(phase) * 60)
@@ -147,7 +147,7 @@ export default function TimerView({
     }
   }, [running])
 
-  // 滴答聲（只喺專注 + 開啟時）
+  // 滴答聲（只在專注 + 開啟時）
   useEffect(() => {
     if (running && phase === 'focus' && settings.tickSound) playTick()
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -164,7 +164,7 @@ export default function TimerView({
 
   // 倒數到 0
   useEffect(() => {
-    // 評分 modal 開住時暫停自動推進：背景倒數停喺 0，待用家儲存／略過
+    // 評分 modal 開住時暫停自動推進：背景倒數停在 0，待用家儲存／略過
     // （saveReview / onClose 會 setReview(null)）後本 effect 重跑，
     // 嗰刻 running 仍 true、secondsLeft 仍 0，即時補做 finishPhase 完成本節。
     if (review) return
@@ -228,7 +228,7 @@ export default function TimerView({
     }
     const created = focusLogsCol.add(logBase)
 
-    // 向後相容：完成嘅專注節同步寫共用 focusCol（儀表板 / 匯出可見）
+    // 向後相容：完成的專注節同步寫共用 focusCol（儀表板 / 匯出可見）
     if (phase === 'focus' && completed) {
       focusCol.add({
         startedAt: logBase.startedAt,
@@ -250,7 +250,7 @@ export default function TimerView({
         setSecondsLeft(minutesFor(nextKind) * 60)
         if (settings.chimeSound) playChime('focus')
         toast.success(
-          nextKind === 'long_break' ? '完成一節！該食個長 break 啦 🌳' : '完成一節專注 🍅',
+          nextKind === 'long_break' ? '完成一節！該吃個長 break 啦 🌳' : '完成一節專注 🍅',
         )
         // 完成節 → 問評分
         setRating(0)
@@ -261,7 +261,7 @@ export default function TimerView({
           setRunning(true)
         }
       } else {
-        // 放棄專注：唔轉 phase，重設本節
+        // 放棄專注：不轉 phase，重設本節
         setPhase('focus')
         setSecondsLeft(planned * 60)
         toast.info('已記錄一節未完成的專注')
@@ -326,7 +326,7 @@ export default function TimerView({
 
   return (
     <div className="mx-auto max-w-sm">
-      {/* ── 呼吸盤：單一焦點，大量留白，唔包卡邊 ── */}
+      {/* ── 呼吸盤：單一焦點，大量留白，不包卡邊 ── */}
       <section className="relative flex flex-col items-center">
         {/* 階段切換：低調三選一，似一條安靜的呼吸節律索引 */}
         <div className="inline-flex items-center gap-1 rounded-full bg-slate-100/80 p-1 dark:bg-slate-800/70">
@@ -358,7 +358,7 @@ export default function TimerView({
           })}
         </div>
 
-        {/* 呼吸盤本體：track + 進度環 + 隨運行緩緩呼吸嘅光暈 */}
+        {/* 呼吸盤本體：track + 進度環 + 隨運行緩緩呼吸的光暈 */}
         <div className="relative mt-10 flex h-72 w-72 items-center justify-center sm:h-80 sm:w-80">
           {/* 呼吸光暈：運行時慢脈動（prefers-reduced-motion 會自動停） */}
           {running && (
@@ -470,7 +470,7 @@ export default function TimerView({
         )}
       </section>
 
-      {/* 專注時：「現在做緊」——一條安靜捕捉欄，唔似死表單 */}
+      {/* 專注時：「現在做緊」——一條安靜捕捉欄，不似死表單 */}
       {phase === 'focus' && (
         <div className="mt-12 space-y-3">
           <p className="text-center text-[11px] font-medium uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">
@@ -480,7 +480,7 @@ export default function TimerView({
             <Input
               value={label}
               onChange={(e) => setLabel(e.target.value)}
-              placeholder="想專注喺邊件事？（選填）"
+              placeholder="想專注在邊件事？（選填）"
               className="flex-1 rounded-xl border-slate-200/80 bg-slate-50/60 text-center shadow-none focus:bg-white dark:border-slate-700/60 dark:bg-slate-800/50 dark:focus:bg-slate-800"
             />
             <Select
@@ -530,7 +530,7 @@ export default function TimerView({
         </div>
       )}
 
-      {/* 今日目標進度條：一條纖細安靜嘅律動 */}
+      {/* 今日目標進度條：一條纖細安靜的律動 */}
       {goal > 0 && (
         <div className="mt-10">
           <div className="mb-2 flex items-center justify-between text-[11px]">
@@ -560,7 +560,7 @@ export default function TimerView({
         </div>
       )}
 
-      {/* 安靜頁腳：分心打點 · 鈴聲 · 鍵盤捷徑（弱化，唔搶焦點） */}
+      {/* 安靜頁腳：分心打點 · 鈴聲 · 鍵盤捷徑（弱化，不搶焦點） */}
       <div className="mt-8 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-[11px] text-slate-400 dark:text-slate-500">
         {phase === 'focus' && (
           <button
@@ -595,7 +595,7 @@ export default function TimerView({
       <Modal
         open={!!review}
         onClose={() => setReview(null)}
-        title="呢一節，感覺點？"
+        title="這一節的狀態如何？"
         size="sm"
         footer={
           <>
@@ -635,7 +635,7 @@ export default function TimerView({
             <Textarea
               value={note}
               onChange={(e) => setNote(e.target.value)}
-              placeholder="完成咗啲咩？有咩可以改善？"
+              placeholder="完成了什麼？有什麼可以改善？"
               rows={3}
             />
           </Field>

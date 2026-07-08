@@ -26,7 +26,7 @@ const TONE_CHIP: Record<ToneKey, string> = {
   slate: 'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300',
 }
 
-// 功能磚 — Bento 風：圓角、分類色圖示 chip、hover 微升。喺首頁概覽用網格顯示。
+// 功能磚 — Bento 風：圓角、分類色圖示 chip、hover 微升。在首頁概覽用網格顯示。
 export default function FeatureCard({ feature, tone = 'accent', onOpen }: Props) {
   const { t } = useTranslation()
   const chip = TONE_CHIP[tone] ?? TONE_CHIP.accent

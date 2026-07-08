@@ -84,7 +84,7 @@ const STATUS_DOT: Record<BookStatus, string> = {
   dnf: 'bg-amber-500',
 }
 
-// ── 跟 WorkDashboard 嘅語意 tone map（chip 底+icon / 數字字）──
+// ── 跟 WorkDashboard 的語意 tone map（chip 底+icon / 數字字）──
 type Tone = 'accent' | 'amber' | 'emerald' | 'violet' | 'sky' | 'rose'
 const TONE: Record<Tone, { chip: string; val: string }> = {
   accent: { chip: 'bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent', val: 'text-accent' },
@@ -299,7 +299,7 @@ export default function ReadingList() {
     if (selected.size === 0) return
     const ok = await confirm({
       title: `刪除 ${selected.size} 本書？`,
-      message: '選取嘅書連同評分、筆記、閱讀記錄會被永久刪除。',
+      message: '選取的書連同評分、筆記、閱讀記錄會被永久刪除。',
       confirmText: '刪除',
       tone: 'danger',
     })
@@ -353,7 +353,7 @@ export default function ReadingList() {
     reader.onload = () => {
       const parsed = parseImport(String(reader.result))
       if (!parsed) {
-        toast.error('檔案格式唔啱')
+        toast.error('檔案格式不正確')
         return
       }
       const existing = new Set(booksCol.get().map((b) => b.id))
@@ -383,7 +383,7 @@ export default function ReadingList() {
                     ? `書架上共 ${stats.total} 本 · 正在讀 ${stats.byStatus.reading} 本`
                     : `書架上共 ${stats.total} 本`,
               })
-            : t('reading.subtitleEmpty', { defaultValue: '由第一本書開始，砌一個屬於你嘅書架。' })
+            : t('reading.subtitleEmpty', { defaultValue: '由第一本書開始，砌一個屬於你的書架。' })
         }
         actions={
           <button
@@ -396,33 +396,33 @@ export default function ReadingList() {
         }
       />
 
-      {/* ── 教學引導：教用家點用呢個功能（可摺疊 + 「知道喇」永久收起） ── */}
+      {/* ── 教學引導：教用家如何使用此功能（可摺疊 + 「知道了」永久收起） ── */}
       <FeatureGuide
         storageKey="reading-list"
-        title={t('reading.guideTitle', { defaultValue: '閱讀清單點用？' })}
+        title={t('reading.guideTitle', { defaultValue: '閱讀清單使用說明' })}
         steps={[
           {
             title: t('reading.guideStep1Title', { defaultValue: '加入書本' }),
-            desc: t('reading.guideStep1Desc', { defaultValue: '撳右上角「加書」，填書名（作者、頁數選填）就上架。' }),
+            desc: t('reading.guideStep1Desc', { defaultValue: '按右上角「加書」，填書名（作者、頁數選填）就上架。' }),
           },
           {
             title: t('reading.guideStep2Title', { defaultValue: '追蹤進度' }),
-            desc: t('reading.guideStep2Desc', { defaultValue: '撳開一本書，標「在讀／讀完」、評分、記低每次讀到第幾頁。' }),
+            desc: t('reading.guideStep2Desc', { defaultValue: '按開一本書，標「在讀／讀完」、評分、記低每次讀到第幾頁。' }),
           },
           {
             title: t('reading.guideStep3Title', { defaultValue: '定年度挑戰' }),
-            desc: t('reading.guideStep3Desc', { defaultValue: '設定今年想讀幾多本，進度環會幫你睇住達標進度。' }),
+            desc: t('reading.guideStep3Desc', { defaultValue: '設定今年想讀幾多本，進度環會幫你查看住達標進度。' }),
           },
           {
-            title: t('reading.guideStep4Title', { defaultValue: '睇統計' }),
-            desc: t('reading.guideStep4Desc', { defaultValue: '切去「統計」分頁，睇每月完成、評分分佈同閱讀活動。' }),
+            title: t('reading.guideStep4Title', { defaultValue: '查看統計' }),
+            desc: t('reading.guideStep4Desc', { defaultValue: '切去「統計」分頁，查看每月完成、評分分佈同閱讀活動。' }),
           },
         ]}
       />
 
       {/* ── 四格藏書統計（跟 dashboard StatTile：tone chip + tabular-nums） ── */}
       <section>
-        {/* 純中文 section 標題：跟 spec 唔落 uppercase/tracking（避免字距散） */}
+        {/* 純中文 section 標題：跟 spec 不落 uppercase/tracking（避免字距散） */}
         <h2 className="mb-3 text-xs font-semibold text-slate-500 dark:text-slate-400">
           {t('reading.overview', { defaultValue: '藏書概覽' })}
         </h2>
@@ -442,7 +442,7 @@ export default function ReadingList() {
             hint={
               stats.byStatus.to_read
                 ? t('reading.statReadingHint', { n: stats.byStatus.to_read, defaultValue: `${stats.byStatus.to_read} 本排隊等讀` })
-                : t('reading.statReadingHintEmpty', { defaultValue: '揀本書翻開吧' })
+                : t('reading.statReadingHintEmpty', { defaultValue: '選擇本書翻開吧' })
             }
             icon={BookOpen}
             tone="violet"
@@ -602,7 +602,7 @@ export default function ReadingList() {
                 icon={Search}
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder={t('reading.searchPlaceholder', { defaultValue: '搵書名、作者、書架…' })}
+                placeholder={t('reading.searchPlaceholder', { defaultValue: '搜尋書名、作者、書架…' })}
                 className="min-w-[12rem] flex-1"
                 aria-label={t('reading.searchAria', { defaultValue: '搜尋書本' })}
               />
@@ -636,12 +636,12 @@ export default function ReadingList() {
               icon={query.trim() || shelfFilter ? Search : BookMarked}
               title={
                 query.trim() || shelfFilter
-                  ? t('reading.emptyFilterTitle', { defaultValue: '搵唔到符合嘅書' })
-                  : t('reading.emptyTitle', { defaultValue: '書架仲未有書' })
+                  ? t('reading.emptyFilterTitle', { defaultValue: '搜尋不到符合的書' })
+                  : t('reading.emptyTitle', { defaultValue: '書架尚未有書' })
               }
               hint={
                 query.trim() || shelfFilter
-                  ? t('reading.emptyFilterHint', { defaultValue: '換個關鍵字，或者清除篩選再睇睇。' })
+                  ? t('reading.emptyFilterHint', { defaultValue: '換個關鍵字，或者清除篩選再查看查看。' })
                   : t('reading.emptyHint', { defaultValue: '加入第一本書，開始追蹤閱讀進度。' })
               }
               action={
@@ -723,7 +723,7 @@ function ReadingChallenge({
             {t('reading.challengeSetTitle', { y: year, defaultValue: `定個 ${year} 年閱讀挑戰` })}
           </p>
           <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-            {t('reading.challengeSetHint', { defaultValue: '立個小目標，睇住自己今年讀完幾多本。' })}
+            {t('reading.challengeSetHint', { defaultValue: '立個小目標，查看住自己今年讀完幾多本。' })}
           </p>
         </div>
         <Button size="sm" onClick={() => setEditing(true)}>
@@ -789,7 +789,7 @@ function ReadingChallenge({
               {done >= target ? (
                 <span className="ml-1.5 font-medium text-emerald-500">{t('reading.challengeReached', { defaultValue: '已達標 🎉' })}</span>
               ) : (
-                <span className="ml-1.5">{t('reading.challengeRemain', { n: target - done, defaultValue: `仲差 ${target - done} 本` })}</span>
+                <span className="ml-1.5">{t('reading.challengeRemain', { n: target - done, defaultValue: `還差 ${target - done} 本` })}</span>
               )}
             </p>
             <button
@@ -1044,8 +1044,8 @@ function LibraryGrid({
 //  清單視圖（list rows）—— 跟 dashboard 列項規律
 //  ------------------------------------------------------------
 //  · 每本書一行：狀態色點 + 書名/作者 + 評分或進度
-//  · 撳一行＝開書 / 選取模式下＝選取（功能同原本一致）
-//  · 純資料行，刪走立體書脊／木架等花巧裝飾，睇得更清楚
+//  · 按一行＝開書 / 選取模式下＝選取（功能同原本一致）
+//  · 純資料行，刪走立體書脊／木架等花巧裝飾，查看得更清楚
 // ============================================================
 
 function BookRow({
@@ -1132,7 +1132,7 @@ function ListView({
   const { t } = useTranslation()
   const rowProps = { selectMode, selected, onToggleSelect, onOpen }
 
-  // 純展示卡（唔可點），列項用 divide 分隔
+  // 純展示卡（不可點），列項用 divide 分隔
   if (!grouped) {
     return (
       <div className="rounded-2xl border border-slate-200/80 bg-white p-2 dark:border-slate-700/60 dark:bg-slate-800">
@@ -1233,8 +1233,8 @@ function StatsView({ books, stats }: { books: Book[]; stats: ReturnType<typeof c
     return (
       <EmptyState
         icon={BarChart3}
-        title={t('reading.statsEmptyTitle', { defaultValue: '仲未有閱讀紀錄' })}
-        hint={t('reading.statsEmptyHint', { defaultValue: '加幾本書、記低閱讀時段，呢度就會長出你嘅閱讀軌跡同趨勢。' })}
+        title={t('reading.statsEmptyTitle', { defaultValue: '尚未有閱讀紀錄' })}
+        hint={t('reading.statsEmptyHint', { defaultValue: '加幾本書、記低閱讀時段，這裡就會長出你的閱讀軌跡同趨勢。' })}
       />
     )
   }
@@ -1249,7 +1249,7 @@ function StatsView({ books, stats }: { books: Book[]; stats: ReturnType<typeof c
           label={t('reading.kpiPages', { defaultValue: '累計頁數' })}
           value={stats.totalPagesAll.toLocaleString()}
           unit={t('reading.unitPages', { defaultValue: '頁' })}
-          hint={t('reading.kpiPagesHint', { defaultValue: '讀過嘅總頁數' })}
+          hint={t('reading.kpiPagesHint', { defaultValue: '讀過的總頁數' })}
           icon={BookOpen}
           tone="accent"
         />
@@ -1283,7 +1283,7 @@ function StatsView({ books, stats }: { books: Book[]; stats: ReturnType<typeof c
       <CatalogueCard
         title={t('reading.chartMonthly', { defaultValue: '每月完成' })}
         icon={BarChart3}
-        description={t('reading.chartMonthlyDesc', { defaultValue: '過去 12 個月讀完本數（hover 睇頁數）' })}
+        description={t('reading.chartMonthlyDesc', { defaultValue: '過去 12 個月讀完本數（hover 查看頁數）' })}
       >
         <BarChart data={monthly} />
       </CatalogueCard>
@@ -1307,7 +1307,7 @@ function StatsView({ books, stats }: { books: Book[]; stats: ReturnType<typeof c
           {stats.rated > 0 ? (
             <RatingBars dist={stats.ratingDist} />
           ) : (
-            <p className="py-6 text-center text-sm text-slate-400">{t('reading.noRatingYet', { defaultValue: '仲未有評分' })}</p>
+            <p className="py-6 text-center text-sm text-slate-400">{t('reading.noRatingYet', { defaultValue: '尚未有評分' })}</p>
           )}
         </CatalogueCard>
 
@@ -1320,7 +1320,7 @@ function StatsView({ books, stats }: { books: Book[]; stats: ReturnType<typeof c
               centerBottom={t('reading.unitBooks', { defaultValue: '本' })}
             />
           ) : (
-            <p className="py-6 text-center text-sm text-slate-400">{t('reading.noFormatYet', { defaultValue: '仲未標格式' })}</p>
+            <p className="py-6 text-center text-sm text-slate-400">{t('reading.noFormatYet', { defaultValue: '尚未標格式' })}</p>
           )}
         </CatalogueCard>
 
@@ -1345,7 +1345,7 @@ function StatsView({ books, stats }: { books: Book[]; stats: ReturnType<typeof c
               })}
             </div>
           ) : (
-            <p className="py-6 text-center text-sm text-slate-400">{t('reading.noShelfYet', { defaultValue: '仲未有書架標籤' })}</p>
+            <p className="py-6 text-center text-sm text-slate-400">{t('reading.noShelfYet', { defaultValue: '尚未有書架標籤' })}</p>
           )}
         </CatalogueCard>
       </div>
@@ -1459,7 +1459,7 @@ function AddBookModal({
           </div>
         </Field>
         <p className="text-xs text-slate-400 dark:text-slate-500">
-          {t('reading.addModalHint', { defaultValue: '加入後可以喺詳情頁加封面、評分、書架標籤，仲可以記低每次閱讀進度。' })}
+          {t('reading.addModalHint', { defaultValue: '加入後可以在詳情頁加封面、評分、書架標籤，還可以記低每次閱讀進度。' })}
         </p>
       </div>
     </Modal>

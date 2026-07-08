@@ -31,7 +31,7 @@ describe('marking scheme', () => {
     expect(r.points).toHaveLength(1)
   })
   it('格式錯 throw', () => {
-    expect(() => parseScheme('唔係 JSON')).toThrow()
+    expect(() => parseScheme('不是 JSON')).toThrow()
   })
 })
 

@@ -103,7 +103,7 @@ export default function TimeGridView({
     return d.getHours() * 60 + d.getMinutes()
   })
   const scrollRef = useRef<HTMLDivElement>(null)
-  // 拖拉中嘅事件即時位置（preview）
+  // 拖拉中的事件即時位置（preview）
   const [drag, setDrag] = useState<{ id: string; start: number; end: number } | null>(null)
   const movedRef = useRef(false)
 
@@ -282,7 +282,7 @@ export default function TimeGridView({
                     : isWeekend && 'bg-slate-50/30 dark:bg-slate-900/20',
                 )}
               >
-                {/* 小時格（可撳新增） */}
+                {/* 小時格（可按新增） */}
                 {HOURS.map((h) => (
                   <button
                     key={h}

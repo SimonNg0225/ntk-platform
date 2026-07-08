@@ -6,19 +6,19 @@ import type { FoodEntry, MealSlot, NutritionGoals } from './types'
 // ============================================================
 //  AI 飲食營養 — 示範資料
 //  ------------------------------------------------------------
-//  一鍵填入一個「有上進心、生活忙碌」嘅人近一週嘅飲食紀錄：
-//  平日返工三餐 + 落 gym 後補蛋白小食、趕工嗰日求其食碗麵、
-//  週末同朋友食好啲。今日（anchor）特登鋪到「早午晚 + 小食」齊
-//  四個餐段，令日誌一打開即有嘢睇；目標係「減脂期」設定
+//  一鍵填入一個「有上進心、生活忙碌」的人近一週的飲食紀錄：
+//  平日上班三餐 + 落 gym 後補蛋白小吃、趕工嗰日求其吃碗麵、
+//  週末同朋友吃好些。今日（anchor）特登鋪到「早午晚 + 小吃」齊
+//  四個餐段，令日誌一打開即有嘢查看；目標係「減脂期」設定
 //  （略低卡、高蛋白）。
 //
 //  Idempotent：
-//   - foodCol 淨係喺佢而家係空（.length === 0）先種。
+//   - foodCol 只在他現在係空（.length === 0）先種。
 //   - goalsCol 係單例、出廠已帶 DEFAULT_GOALS（永遠 length === 1），
-//     所以只喺佢仲係「未被用戶改過嘅原廠預設」先覆寫做示範目標，
-//     唔會撞甩用戶自訂。
+//     所以只在他仍是「未被用戶改過的原廠預設」先覆寫做示範目標，
+//     不會撞甩用戶自訂。
 //
-//  日期一律用 common 嘅 recentDays（本地時區 key），分佈喺最近 7 日。
+//  日期一律用 common 的 recentDays（本地時區 key），分佈在最近 7 日。
 // ============================================================
 
 /** 一筆飲食草稿（未有 id / date / createdAt）。 */
@@ -27,7 +27,7 @@ type FoodDraft = Pick<
   'label' | 'calories' | 'proteinG' | 'fatG' | 'carbG' | 'meal'
 >
 
-/** 某一日嘅幾餐（dayOffset：0 = 今日，越大 = 越近今日）。 */
+/** 某一日的幾餐（dayOffset：0 = 今日，越大 = 越近今日）。 */
 interface DayMeals {
   /** recentDays 索引（0 = 7 日前，6 = 今日）。 */
   idx: number
@@ -35,9 +35,9 @@ interface DayMeals {
 }
 
 // recentDays(7)：index 0 = 6 日前，index 6 = 今日。
-// 今日（idx 6）刻意鋪足早／午／晚／小食四段，令日誌即刻飽滿。
+// 今日（idx 6）刻意鋪足早／午／晚／小吃四段，令日誌立即飽滿。
 const WEEK: DayMeals[] = [
-  // —— 6 日前（週末，同朋友食好啲）——
+  // —— 6 日前（週末，同朋友吃好些）——
   {
     idx: 0,
     meals: [
@@ -57,7 +57,7 @@ const WEEK: DayMeals[] = [
       { label: '蒸水蛋蒸魚配糙米飯', calories: 560, proteinG: 40, fatG: 16, carbG: 62, meal: 'dinner' },
     ],
   },
-  // —— 4 日前（返工平日，正常三餐）——
+  // —— 4 日前（上班平日，正常三餐）——
   {
     idx: 2,
     meals: [
@@ -67,7 +67,7 @@ const WEEK: DayMeals[] = [
       { label: '番茄炒蛋豆腐配白飯', calories: 540, proteinG: 28, fatG: 20, carbG: 60, meal: 'dinner' },
     ],
   },
-  // —— 3 日前（趕 deadline，求其食）——
+  // —— 3 日前（趕 deadline，求其吃）——
   {
     idx: 3,
     meals: [
@@ -86,13 +86,13 @@ const WEEK: DayMeals[] = [
       { label: '滷水雞髀配灼菜糙米飯', calories: 580, proteinG: 44, fatG: 18, carbG: 60, meal: 'dinner' },
     ],
   },
-  // —— 1 日前（平日，落班同同事食日本菜）——
+  // —— 1 日前（平日，落班同同事吃日本菜）——
   {
     idx: 5,
     meals: [
       { label: '無糖豆漿＋茶葉蛋兩隻', calories: 220, proteinG: 18, fatG: 11, carbG: 12, meal: 'breakfast' },
       { label: '照燒雞肉便當', calories: 590, proteinG: 36, fatG: 20, carbG: 64, meal: 'lunch' },
-      { label: '刺身定食（三文魚吞拿魚）', calories: 520, proteinG: 46, fatG: 18, carbG: 40, meal: 'dinner' },
+      { label: '刺身定吃（三文魚吞拿魚）', calories: 520, proteinG: 46, fatG: 18, carbG: 40, meal: 'dinner' },
     ],
   },
   // —— 今日（anchor）—— 鋪足四段，令日誌一打開就飽滿
@@ -107,7 +107,7 @@ const WEEK: DayMeals[] = [
   },
 ]
 
-/** 目標已被用戶改動過？（同原廠四個值任何一個唔同 → 當已改，唔覆寫） */
+/** 目標已被用戶改動過？（同原廠四個值任何一個不同 → 當已改，不覆寫） */
 function goalsArePristine(): boolean {
   const all = goalsCol.get()
   if (all.length === 0) return true // 空 → 當未設，照種
@@ -123,13 +123,13 @@ function goalsArePristine(): boolean {
 
 /**
  * 種飲食營養示範資料。
- * 回傳總共加咗幾多 row（飲食筆數 +（如有更新）目標 1 筆）。
+ * 回傳總共加了幾多 row（飲食筆數 +（如有更新）目標 1 筆）。
  */
 export function seedDemo(): number {
   let added = 0
 
   // ---- 每日目標（單例；減脂期：略低卡、高蛋白）----
-  // 出廠已帶 DEFAULT_GOALS，故只喺仍係原廠未改先覆寫做示範目標。
+  // 出廠已帶 DEFAULT_GOALS，故只在仍係原廠未改先覆寫做示範目標。
   if (goalsArePristine()) {
     const demoGoals: Omit<NutritionGoals, 'id'> = {
       calories: 2100,

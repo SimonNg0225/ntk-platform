@@ -72,7 +72,7 @@ export function ResultView({
     return (
       <Card className="space-y-4 p-8 text-center">
         <HelpCircle size={32} strokeWidth={1.75} className="mx-auto text-slate-300 dark:text-slate-600" />
-        <p className="text-sm font-medium text-slate-600 dark:text-slate-300">搵唔到呢份成績紀錄。</p>
+        <p className="text-sm font-medium text-slate-600 dark:text-slate-300">找不到此份成績紀錄。</p>
         <Button onClick={onBackToSetup}>返回</Button>
       </Card>
     )
@@ -172,7 +172,7 @@ export function ResultView({
             className="animate-fade-in-up text-sm text-slate-600 dark:text-slate-300"
             style={{ animationDelay: '180ms' }}
           >
-            答啱 <span className="font-semibold tabular-nums text-slate-700 dark:text-slate-200">{attempt.correctCount}</span> / {attempt.total} 題
+            答對 <span className="font-semibold tabular-nums text-slate-700 dark:text-slate-200">{attempt.correctCount}</span> / {attempt.total} 題
           </p>
 
           {/* 評語橫幅 */}
@@ -274,17 +274,17 @@ export function ResultView({
                   <Badge tone={DIFF_TONE[it.difficulty]}>{DIFF_LABEL[it.difficulty]}</Badge>
                   {short && <Badge tone="slate">短答</Badge>}
                   {short ? (
-                    // 短答：itemFromFrozen 對唔啱（無論有冇輸入）一律 selectedIndex=null，
-                    // 故唔可靠 selectedIndex 判「未作答」，直接以 correct 區分答啱／答錯。
+                    // 短答：itemFromFrozen 對不正確（無論有沒有輸入）一律 selectedIndex=null，
+                    // 故不可靠 selectedIndex 判「未作答」，直接以 correct 區分答對／答錯。
                     it.correct ? (
-                      <Badge tone="green">答啱</Badge>
+                      <Badge tone="green">答對</Badge>
                     ) : (
                       <Badge tone="rose">答錯</Badge>
                     )
                   ) : it.selectedIndex === null && !it.correct ? (
                     <Badge tone="slate">未作答</Badge>
                   ) : it.correct ? (
-                    <Badge tone="green">答啱</Badge>
+                    <Badge tone="green">答對</Badge>
                   ) : (
                     <Badge tone="rose">答錯</Badge>
                   )}
@@ -335,8 +335,8 @@ export function ResultView({
             <PartyPopper size={20} />
           </span>
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-semibold text-emerald-700 dark:text-emerald-300">全部答啱，零失誤！</p>
-            <p className="mt-0.5 text-xs text-emerald-600/80 dark:text-emerald-300/70">呢份冇錯題，換個範圍再挑戰下？</p>
+            <p className="text-sm font-semibold text-emerald-700 dark:text-emerald-300">全部答對，零失誤！</p>
+            <p className="mt-0.5 text-xs text-emerald-600/80 dark:text-emerald-300/70">此份沒有錯題，換個範圍再挑戰一下？</p>
           </div>
           <Button
             variant="secondary"
@@ -345,7 +345,7 @@ export function ResultView({
             onClick={() => onRetrySame(sameIds)}
             className="shrink-0"
           >
-            重做呢份
+            重做此份
           </Button>
         </div>
       ) : (
@@ -359,7 +359,7 @@ export function ResultView({
             <span className="tabular-nums">重做錯題（{wrongIds.length}）</span>
           </Button>
           <Button variant="secondary" icon={RefreshCw} disabled={sameIds.length === 0} onClick={() => onRetrySame(sameIds)}>
-            重做呢份
+            重做此份
           </Button>
           <Button variant="ghost" onClick={onBackToSetup}>
             返回

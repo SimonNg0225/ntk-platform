@@ -2,10 +2,10 @@ import { createCollection } from '../../../lib/store'
 import type { ThreadMeta, PromptTemplate, Persona } from './types'
 
 // ============================================================
-//  AI 助手 — 功能專屬持久化（唔掂 data/collections）
+//  AI 助手 — 功能專屬持久化（不掂 data/collections）
 // ============================================================
 
-/** 每個 thread 嘅旁掛 metadata（pin / archive / model / persona / context） */
+/** 每個 thread 的旁掛 metadata（pin / archive / model / persona / context） */
 export const threadMetaCol = createCollection<ThreadMeta>('ai_thread_meta_v1', [])
 
 /** 用戶自訂 prompt 範本 */
@@ -40,7 +40,7 @@ export const PERSONAS: Persona[] = [
     id: 'socratic',
     label: '蘇格拉底',
     directive:
-      '用蘇格拉底式教學：唔好即刻俾答案，先用引導問題帶我思考，逐步啟發，最後先總結。',
+      '用蘇格拉底式教學：不要立即給答案，先用引導問題帶我思考，逐步啟發，最後先總結。',
     hint: '反問引導思考',
   },
   {

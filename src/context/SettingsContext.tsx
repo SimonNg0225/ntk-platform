@@ -18,7 +18,7 @@ import { getSubjectPack } from '../data/subjects'
 
 // ============================================================
 //  設定系統（深色模式、密度、預設模式…）
-//  存喺 localStorage，開機即套用。
+//  存在 localStorage，開機即套用。
 // ============================================================
 
 type ThemeMode = 'light' | 'dark' | 'system'
@@ -26,7 +26,7 @@ type ThemeMode = 'light' | 'dark' | 'system'
 interface Settings {
   theme: ThemeMode
   displayName: string
-  /** 上次匯出備份嘅時間戳（ISO）；未備份過 = null */
+  /** 上次匯出備份的時間戳（ISO）；未備份過 = null */
   lastBackupAt: string | null
   /** 減少動態效果（可達性偏好；預設關＝行為不變，套 .reduce-motion） */
   reduceMotion: boolean
@@ -39,7 +39,7 @@ interface Settings {
 interface SettingsApi extends Settings {
   setTheme: (t: ThemeMode) => void
   setDisplayName: (n: string) => void
-  /** 記低「啱啱成功匯出備份」嘅時間戳（設定頁匯出成功後呼叫） */
+  /** 記低「剛剛成功匯出備份」的時間戳（設定頁匯出成功後呼叫） */
   markBackup: () => void
   /** 開關「減少動態效果」 */
   setReduceMotion: (v: boolean) => void
@@ -47,7 +47,7 @@ interface SettingsApi extends Settings {
   setCompactDensity: (v: boolean) => void
   /** 設定任教科目包 */
   setSubjectPackId: (id: string) => void
-  /** 目前實際生效嘅深淺（system 會解析做 light/dark） */
+  /** 目前實際生效的深淺（system 會解析做 light/dark） */
   resolvedDark: boolean
 }
 
@@ -56,7 +56,7 @@ const DEFAULTS: Settings = {
   theme: 'system',
   displayName: '',
   lastBackupAt: null,
-  subjectPackId: '', // 未指定 —— 出廠唔預設任何科目，用戶喺設定 / onboarding 自己揀
+  subjectPackId: '', // 未指定 —— 出廠不預設任何科目，用戶在設定 / onboarding 自己選擇
   ...APPEARANCE_DEFAULTS,
 }
 
@@ -109,7 +109,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   }, [resolvedDark])
 
   // 套用外觀可達性 class（.reduce-motion / .density-compact）到 <html>。
-  // 預設全關 → 兩個 class 都唔加，行為同未加功能前一模一樣。
+  // 預設全關 → 兩個 class 都不加，行為同未加功能前一模一樣。
   useEffect(() => {
     const root = document.documentElement
     const active = new Set(
@@ -157,16 +157,16 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
 // eslint-disable-next-line react-refresh/only-export-components
 export function useSettings(): SettingsApi {
   const ctx = useContext(SettingsContext)
-  if (!ctx) throw new Error('useSettings 必須喺 <SettingsProvider> 入面用')
+  if (!ctx) throw new Error('useSettings 必須在 <SettingsProvider> 中用')
   return ctx
 }
 
 /**
- * 任教科目顯示名（跟設定）。未指定（'' / 找唔到 / custom）時回中性「本科」，
- * 全 app 用嚟取代寫死嘅科目字眼，跟用戶揀嘅科目客製化。
+ * 任教科目顯示名（跟設定）。未指定（'' / 找不到 / custom）時回中性「本科」，
+ * 全 app 用來取代寫死的科目字眼，跟用戶選擇的科目客製化。
  *   · name  完整科名（如「化學」「企會財（會計範疇）」）
  *   · short 簡短科名（如「化學」「企會財會計」）
- *   · chosen 用戶有冇揀到具體科（custom / 未揀 = false）
+ *   · chosen 用戶有沒有選擇到具體科（custom / 未選擇 = false）
  */
 // eslint-disable-next-line react-refresh/only-export-components
 export function useSubjectLabel(): { name: string; short: string; chosen: boolean } {

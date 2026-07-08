@@ -7,9 +7,9 @@ import { track } from './observability'
 //  前端只負責：
 //    - 顯示方案（PLANS）
 //    - 叫 Edge Function `stripe-billing` 開 Checkout / 客戶中心，
-//      攞返 Stripe 嘅 redirect URL 然後跳轉。
-//  Stripe secret key / webhook secret 全部喺 Edge Function secret，
-//  前端永遠掂唔到。未接 Supabase / 未設 price → 當免費版。
+//      取得返 Stripe 的 redirect URL 然後跳轉。
+//  Stripe secret key / webhook secret 全部在 Edge Function secret，
+//  前端永遠掂不到。未接 Supabase / 未設 price → 當免費版。
 // ============================================================
 
 export type PlanId = 'free' | 'plus' | 'pro'
@@ -20,12 +20,12 @@ export interface Plan {
   id: PlanId
   name: string
   priceLabel: string
-  /** 月費（HKD 數字，0 = 免費）；用嚟計 AI 成本佔比。 */
+  /** 月費（HKD 數字，0 = 免費）；用來計 AI 成本佔比。 */
   priceHkd: number
   /** 每月 AI 點數池（見 credits.ts；池 × 點價 ≤ 月費 30%）。 */
   monthlyCredits: number
   tagline: string
-  /** Stripe Price ID（月繳；喺 .env 設定）。免費版冇。 */
+  /** Stripe Price ID（月繳；在 .env 設定）。免費版沒有。 */
   priceId?: string
   /** Stripe Price ID（年繳，選用）。 */
   annualPriceId?: string
@@ -48,7 +48,7 @@ const PRO_PRICE_ID = import.meta.env.VITE_STRIPE_PRO_PRICE_ID as
 const PRO_ANNUAL_PRICE_ID = import.meta.env
   .VITE_STRIPE_PRO_ANNUAL_PRICE_ID as string | undefined
 
-/** 按結算週期攞 plan 嘅 priceId / 顯示價（年繳未設就 fallback 月繳）。 */
+/** 按結算週期取得 plan 的 priceId / 顯示價（年繳未設就 fallback 月繳）。 */
 export function priceForCycle(
   plan: Plan,
   cycle: BillingCycle,
@@ -66,7 +66,7 @@ export const PLANS: Plan[] = [
     priceLabel: 'HK$0',
     priceHkd: 0,
     monthlyCredits: 30,
-    tagline: '試吓 AI 備課',
+    tagline: '嘗試 AI 備課',
     features: [
       '全部備課工具：出題、教案、簡報、DSE 操練、文件摘要…',
       '每月 30 AI 點數（試用）',
@@ -108,14 +108,14 @@ export const PLANS: Plan[] = [
     features: [
       'Plus 全部功能',
       '每月 1000 AI 點數（約 1000 份教材 / 333 套簡報 / 62 段錄音）',
-      '可用 Pro 高階 AI 模型（出靚啲）',
+      '可用 Pro 高階 AI 模型（出靚些）',
       '錄音額度更多',
       '優先客服支援',
     ],
   },
 ]
 
-/** 收費功能有冇接好（Supabase + Stripe price 都齊先算）。 */
+/** 收費功能有沒有接好（Supabase + Stripe price 都齊先算）。 */
 export const isBillingConfigured =
   isSupabaseConfigured && Boolean(PRO_PRICE_ID)
 
@@ -132,7 +132,7 @@ async function callBilling(
   const {
     data: { session },
   } = await supabase.auth.getSession()
-  if (!session) throw new Error('請先登入先可以管理訂閱。')
+  if (!session) throw new Error('請先登入以管理訂閱。')
 
   const res = await fetch(billingFunctionUrl(), {
     method: 'POST',

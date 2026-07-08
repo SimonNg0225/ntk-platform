@@ -147,7 +147,7 @@ describe('seedDemo — goal ↔ meta ↔ milestone 關聯完整', () => {
     expect(byGoal.size).toBeGreaterThan(0)
 
     // 揀一個「部分完成」嘅 goal：加權進度應落喺 (0,100) 開區間，
-    // 證明係由 done/weight 真正算出，唔係吞 fallback。
+    // 證明係由 done/weight 真正算出，不是吞 fallback。
     const partial = [...byGoal.values()].find(
       (list) => list.some((m) => m.done) && list.some((m) => !m.done),
     )

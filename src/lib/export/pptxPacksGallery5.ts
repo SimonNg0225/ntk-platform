@@ -134,7 +134,7 @@ const comic: Pack = {
   cover(slide, deck, brand, img) {
     slide.background = { color: COM.bg }
     const hasImg = Boolean(img)
-    // 招牌半調網點紋理底圖（瀏覽器 Canvas raster；冇 canvas 時 fallback 漸層底）
+    // 招牌半調網點紋理底圖（瀏覽器 Canvas raster；沒有 canvas 時 fallback 漸層底）
     const tex = coverTextureUri('comic')
     const coverBg = gradLinear(90, [
       { pos: 0, color: mix(COM.bg, 'FFFFFF', 0.04) },
@@ -314,7 +314,7 @@ const manuscript: Pack = {
   cover(slide, deck, brand, img, title) {
     slide.background = { color: MAN.bg }
     const hasImg = Boolean(img)
-    // 招牌羊皮紙紋理底圖（瀏覽器 Canvas raster；冇 canvas 時 fallback 全版極淡羊皮紙深度漸層）
+    // 招牌羊皮紙紋理底圖（瀏覽器 Canvas raster；沒有 canvas 時 fallback 全版極淡羊皮紙深度漸層）
     const tex = coverTextureUri('manuscript')
     if (tex) {
       slide.addImage({ data: tex, x: 0, y: 0, w: 13.333, h: 7.5, sizing: { type: 'cover', w: 13.333, h: 7.5 } })
@@ -420,7 +420,7 @@ function isoBlock(slide: PptxGenJS.Slide, x: number, y: number, w: number, h: nu
 /**
  * 招牌：stats 渲染成「積木彈出塊」——
  * 各 stat 一塊 pop-out 積木（白／panel 面 + 粗墨邊 + 後偏移鮮藍硬陰影），
- * 巨號 Arial-bold 值居中，標籤喺塊下。積木彈出感。2–4 項。
+ * 巨號 Arial-bold 值居中，標籤在塊下。積木彈出感。2–4 項。
  */
 function renderIsometricBlocks(slide: PptxGenJS.Slide, body: Rect, pack: Pack, s: Slide): void {
   const items = (s.stats ?? []).slice(0, 4)
@@ -487,7 +487,7 @@ const isometric: Pack = {
   cover(slide, deck, brand, img) {
     slide.background = { color: ISO.bg }
     const hasImg = Boolean(img)
-    // 招牌等距積木格紋理底圖（瀏覽器 Canvas raster；冇 canvas 時 fallback 全版極淺灰深度漸層）
+    // 招牌等距積木格紋理底圖（瀏覽器 Canvas raster；沒有 canvas 時 fallback 全版極淺灰深度漸層）
     const tex = coverTextureUri('isometric')
     if (tex) {
       slide.addImage({ data: tex, x: 0, y: 0, w: 13.333, h: 7.5, sizing: { type: 'cover', w: 13.333, h: 7.5 } })
@@ -687,7 +687,7 @@ const glitch: Pack = {
       slide.addShape('rect', { x: 0, y: 0, w: 13.33, h: 7.5, fill: { color: GLI.bg, transparency: 28 }, line: { type: 'none' } })
       photoCreditOnImage(slide, img.credit, { x: 0, y: 0, w: 13.33, h: 7.5 })
     }
-    // 無相時：招牌故障掃描紋理底圖（瀏覽器 Canvas raster；冇 canvas 時 fallback 洋紅→青斜向漸層）
+    // 無相時：招牌故障掃描紋理底圖（瀏覽器 Canvas raster；沒有 canvas 時 fallback 洋紅→青斜向漸層）
     if (!img) {
       const tex = coverTextureUri('glitch')
       if (tex) {

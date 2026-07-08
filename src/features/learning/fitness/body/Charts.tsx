@@ -7,7 +7,7 @@ import { fmtDate, round } from './util'
 //  自製折線圖（純 SVG，零 npm 依賴；深色 + 海軍藍 accent）
 //  ------------------------------------------------------------
 //  TrendChart：單指標逐日折線（含漸層面積、缺值斷線、min/max 軸標）。
-//  每個指標各用自己嘅 y 軸（體重 / 體脂% / 骨骼肌 量級唔同，唔可硬疊）。
+//  每個指標各用自己的 y 軸（體重 / 體脂% / 骨骼肌 量級不同，不可硬疊）。
 // ============================================================
 
 export interface SeriesPoint {
@@ -26,7 +26,7 @@ export function TrendChart({
   color: string
   unit?: string
   height?: number
-  /** 無障礙用：指標名（畀 SVG aria-label，例「體重」） */
+  /** 無障礙用：指標名（給 SVG aria-label，例「體重」） */
   label?: string
 }) {
   const gid = useId().replace(/[:]/g, '')
@@ -41,7 +41,7 @@ export function TrendChart({
         style={{ height }}
       >
         <Activity size={20} className="opacity-60" aria-hidden="true" />
-        呢個區間未有記錄，記多幾日就見到走勢。
+        此區間未有記錄，記多幾日就見到走勢。
       </div>
     )
   }
@@ -142,8 +142,8 @@ export interface DualPoint {
 }
 
 /**
- * 兩條線疊喺同一坐標（脂肪量 kg / 瘦體重 kg —— 同單位先合理共軸）。
- * 各自缺值斷線；y 軸範圍涵蓋兩線。畀人睇 recomp（脂肪落、瘦體重升）趨勢。
+ * 兩條線疊在同一坐標（脂肪量 kg / 瘦體重 kg —— 同單位先合理共軸）。
+ * 各自缺值斷線；y 軸範圍涵蓋兩線。給人查看 recomp（脂肪落、瘦體重升）趨勢。
  */
 export function DualLineChart({
   data,
@@ -152,7 +152,7 @@ export function DualLineChart({
   height = 200,
 }: {
   data: DualPoint[]
-  /** 兩條線嘅標籤 + 顏色（a / b 對應 DualPoint.a / .b） */
+  /** 兩條線的標籤 + 顏色（a / b 對應 DualPoint.a / .b） */
   series: { a: { label: string; color: string }; b: { label: string; color: string } }
   unit?: string
   height?: number
@@ -172,7 +172,7 @@ export function DualLineChart({
         className="flex items-center justify-center text-center text-sm text-slate-400 dark:text-slate-500"
         style={{ height }}
       >
-        呢個區間未有「體重＋體脂率」記錄 — 兩樣齊備先計到脂肪量同瘦體重。
+        此區間未有「體重＋體脂率」記錄 — 兩樣齊備先計到脂肪量同瘦體重。
       </div>
     )
   }
@@ -272,7 +272,7 @@ export function DualLineChart({
           preserveAspectRatio="none"
           className="absolute inset-0 ml-9 h-full w-[calc(100%-2.25rem)] overflow-visible"
           role="img"
-          aria-label={`${series.a.label}同${series.b.label}隨時間嘅雙線趨勢圖`}
+          aria-label={`${series.a.label}同${series.b.label}隨時間的雙線趨勢圖`}
         >
           <defs>
             <linearGradient id={`dual-${gid}`} x1="0" y1="0" x2="0" y2="1">

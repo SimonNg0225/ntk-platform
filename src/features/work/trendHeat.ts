@@ -1,11 +1,11 @@
 // ============================================================
 //  待辦趨勢 / 熱力 / 連續日：共用純函式核心（零 npm 依賴）
 //  ------------------------------------------------------------
-//  dashboard/util 同 todo/util 本來各自有一套近乎逐行相同嘅
-//  buildTrend / buildHeat / completionStreak。呢度抽出單一核心：
+//  dashboard/util 同 todo/util 本來各自有一套近乎逐行相同的
+//  buildTrend / buildHeat / completionStreak。這裡抽出單一核心：
 //   - completionStreak：兩邊實作完全相同，直接共用。
 //   - buildTrendCore / buildHeatCore：骨架（建 N 日 bucket、localDay
-//     歸日、idx 累加）一致，只差「建立 / 完成時間」嘅讀法 →
+//     歸日、idx 累加）一致，只差「建立 / 完成時間」的讀法 →
 //     由呼叫方傳入 accessor（createdAtIso / completedAtIso）。
 //  日期工具（localISO 歸日、addDays 推窗口）由呼叫方注入，因為
 //  dashboard 用 localKey/addKey、todo 用 localISO/addDays，兩者
@@ -24,9 +24,9 @@ export interface HeatCell {
   count: number
 }
 
-// 注入嘅本地日期工具（dashboard / todo 各自傳入自家但等價嘅實作）
+// 注入的本地日期工具（dashboard / todo 各自傳入自家但等價的實作）
 export interface DateHelpers {
-  /** 今日嘅本地 YYYY-MM-DD */
+  /** 今日的本地 YYYY-MM-DD */
   todayKey: () => string
   /** key + n 日（本地，跨月年） */
   addDays: (key: string, n: number) => string
@@ -86,12 +86,12 @@ export function buildHeatCore<T>(
   return cells
 }
 
-// ───────── 連續完成日數（streak，由今日／尋日起計）─────────
+// ───────── 連續完成日數（streak，由今日／昨天起計）─────────
 export function completionStreak(cells: HeatCell[]): number {
   let streak = 0
   for (let i = cells.length - 1; i >= 0; i--) {
     if (cells[i].count > 0) streak++
-    else if (i === cells.length - 1) continue // 今日未做都唔斷
+    else if (i === cells.length - 1) continue // 今日未做都不斷
     else break
   }
   return streak

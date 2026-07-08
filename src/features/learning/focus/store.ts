@@ -64,10 +64,10 @@ export function isCountable(l: FocusLog): boolean {
 export interface DayStat {
   key: string
   minutes: number
-  sessions: number // 完成嘅專注節
+  sessions: number // 完成的專注節
 }
 
-/** [from, to] 內逐日聚合（只計 completed 嘅 focus；minutes 同 sessions 同一基數，
+/** [from, to] 內逐日聚合（只計 completed 的 focus；minutes 同 sessions 同一基數，
  *  同 totalsOf.focusMin 對齊）。回傳由舊到新。 */
 export function dailySeries(logs: FocusLog[], from: Date, to: Date): DayStat[] {
   const map = new Map<string, DayStat>()
@@ -90,14 +90,14 @@ export function dailySeries(logs: FocusLog[], from: Date, to: Date): DayStat[] {
 }
 
 // ───────── 連續達標天數（streak）─────────
-/** 由今日往回數，連續「有完成至少一節專注」嘅日數 */
+/** 由今日往回數，連續「有完成至少一節專注」的日數 */
 export function currentStreak(logs: FocusLog[]): number {
   const done = new Set(
     logs.filter((l) => isCountable(l) && l.completed).map((l) => keyOf(l.startedAt)),
   )
   let streak = 0
   let cur = new Date()
-  // 今日未做唔即刻斷：由今日計，今日無就睇尋日係咪 streak 起點
+  // 今日未做不立即斷：由今日計，今日無就查看昨天係咪 streak 內容來源
   if (!done.has(dayKey(cur))) cur = addDays(cur, -1)
   while (done.has(dayKey(cur))) {
     streak += 1

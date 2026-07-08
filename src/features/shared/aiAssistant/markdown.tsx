@@ -9,13 +9,13 @@ import './i18n'
 //  ------------------------------------------------------------
 //  支援：# 標題、**粗** *斜* `inline code`、```fenced code```（連
 //  複製掣）、- / 1. 列表、> 引用、--- 分隔線、| 表格 |、[連結]()。
-//  足夠靚仔地顯示 LLM 輸出，唔引入任何 markdown library。
+//  足夠靚仔地顯示 LLM 輸出，不引入任何 markdown library。
 // ============================================================
 
 // ───────── inline：粗體 / 斜體 / code / 連結 ─────────
 function renderInline(text: string, keyBase: string): ReactNode[] {
   const nodes: ReactNode[] = []
-  // 先處理 inline code（最高優先，避免 code 入面嘅 * 被當格式）
+  // 先處理 inline code（最高優先，避免 code 中的 * 被當格式）
   const codeParts = text.split(/(`[^`]+`)/g)
   codeParts.forEach((part, ci) => {
     if (part.startsWith('`') && part.endsWith('`') && part.length >= 2) {
@@ -144,8 +144,8 @@ function MdTable({ rows }: { rows: string[] }) {
   )
 }
 
-// 表格分隔行：以 | 開頭結尾，中間淨係 - : 空白 |（用逐字檢查，
-// 避免喺 source 出現會被 Tailwind 誤掃嘅 regex 字元類）
+// 表格分隔行：以 | 開頭結尾，中間只 - : 空白 |（用逐字檢查，
+// 避免在 source 出現會被 Tailwind 誤掃的 regex 字元類）
 function isTableDivider(line: string): boolean {
   const s = line.trim()
   if (s.length < 3 || s[0] !== '|' || s[s.length - 1] !== '|') return false
@@ -305,6 +305,6 @@ function MarkdownImpl({ text, className }: { text: string; className?: string })
   return <div className={cx('space-y-1', className)}>{blocks}</div>
 }
 
-// memo：text 係字串，shallow compare 完美 —— 打字時 content 無變嘅訊息唔會重新解析
-// markdown（之前每打一字都重解析所有訊息，造成「跳/唔連貫」）。
+// memo：text 係字串，shallow compare 完美 —— 打字時 content 無變的訊息不會重新解析
+// markdown（之前每打一字都重解析所有訊息，造成「跳/不連貫」）。
 export const Markdown = memo(MarkdownImpl)

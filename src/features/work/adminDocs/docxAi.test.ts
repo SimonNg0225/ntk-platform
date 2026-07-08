@@ -87,7 +87,7 @@ describe('docxAi · parseSuggestedFields', () => {
   })
 
   it('非 JSON / 空 → 回空陣列（唔拋）', () => {
-    expect(parseSuggestedFields('完全唔係 JSON')).toEqual([])
+    expect(parseSuggestedFields('完全不是 JSON')).toEqual([])
     expect(parseSuggestedFields('')).toEqual([])
   })
 })
@@ -117,7 +117,7 @@ describe('docxAi · parseDraftContent', () => {
   })
 
   it('非物件 / 空 → 回空物件', () => {
-    expect(parseDraftContent('唔係 JSON', fields)).toEqual({})
+    expect(parseDraftContent('不是 JSON', fields)).toEqual({})
     expect(parseDraftContent('[1,2,3]', fields)).toEqual({}) // 陣列唔收
   })
 })

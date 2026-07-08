@@ -51,7 +51,7 @@ async function callRefund<T>(
   return data.data
 }
 
-/** 試算退款額（唔會真係退）。 */
+/** 試算退款額（不會真的退）。 */
 export const refundEstimate = () => callRefund<RefundEstimate>('estimate')
 
 /** 正式申請退款（細額即退、大額待審）。 */

@@ -67,7 +67,7 @@ describe('expandOccurrences — 無重複 / freq none', () => {
     ).toEqual([])
   })
 
-  it('事件 date 啱啱喺窗口邊界（含頭含尾）', () => {
+  it('事件 date 剛剛喺窗口邊界（含頭含尾）', () => {
     expect(
       expandOccurrences(ev({ date: '2026-05-01' }), '2026-05-01', '2026-05-31'),
     ).toEqual(['2026-05-01'])
@@ -164,7 +164,7 @@ describe('expandOccurrences — count（series 位置計，非窗口內數量）
   it('count cap 計埋窗口外嘅 occurrence：窗口由第 3 日先開始，第 3 次後就停', () => {
     // 由 5/1 每日 count=4 → series = 5/1,5/2,5/3,5/4。
     // 窗口 5/3–5/31：count 由 series 位置數（5/1、5/2 都食咗 cap），
-    // 所以窗口內只見 5/3、5/4（唔係 5/3..5/6）。
+    // 所以窗口內只見 5/3、5/4（不是 5/3..5/6）。
     expect(
       expandOccurrences(
         ev({ date: '2026-05-01', recurrence: { freq: 'daily', count: 4 } }),
@@ -242,7 +242,7 @@ describe('expandOccurrences — weekly + byWeekday', () => {
     ).toEqual(['2026-05-06', '2026-05-08', '2026-05-11'])
   })
 
-  it('series 開始日唔係選中星期幾（開始日本身唔出現）', () => {
+  it('series 開始日不是選中星期幾（開始日本身唔出現）', () => {
     // series 由星期一 5/04 開始，但 byWeekday=[2,4]（二、四）
     // 5/04 唔喺選中集 → 由 5/05(二)、5/07(四) 起
     expect(

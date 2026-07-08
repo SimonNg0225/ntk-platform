@@ -32,20 +32,20 @@ export function addDays(iso: string, n: number): string {
   return localISO(dt)
 }
 
-// 由今日起 +N 日嘅 ISO
+// 由今日起 +N 日的 ISO
 export function offsetFromToday(n: number): string {
   return addDays(todayISO(), n)
 }
 
 // 將一個完整 ISO 時間戳（UTC，如 createdAt / completedAt）轉成「本地」
-// 嘅 YYYY-MM-DD。直接 slice(0,10) 會攞到 UTC 日期，喺 UTC+8 等時區會
-// 偏差一日（例如本地凌晨完成 → UTC 仲係尋日）。要同 todayISO()/到期日
+// 的 YYYY-MM-DD。直接 slice(0,10) 會取得到 UTC 日期，在 UTC+8 等時區會
+// 偏差一日（例如本地凌晨完成 → UTC 仍是昨天）。要同 todayISO()/到期日
 // 等本地日期一致比較，必須先轉本地。
 export function localDay(iso: string): string {
   return localISO(new Date(iso))
 }
 
-// 兩個 ISO 相差幾多日（b - a，正=b 喺後）
+// 兩個 ISO 相差幾多日（b - a，正=b 在後）
 export function daysBetween(a: string, b: string): number {
   const pa = a.split('-').map(Number)
   const pb = b.split('-').map(Number)
@@ -78,7 +78,7 @@ export const DUE_BUCKET_ORDER: DueBucket[] = [
 
 // 一次過將任務按到期分桶（智能分組視圖）。預設只計未完成（done 過濾），
 // 同 UpcomingView 行為一致；single-pass，避免逐桶重掃。回傳每個桶（含空桶，
-// 鍵齊全方便 view 直接攞）。傳入 sorter 即每桶內排序。
+// 鍵齊全方便 view 直接取得）。傳入 sorter 即每桶內排序。
 export function groupByDue(
   tasks: FullTask[],
   ref = todayISO(),
@@ -107,12 +107,12 @@ export function groupByDue(
 
 const WEEKDAY = ['日', '一', '二', '三', '四', '五', '六']
 
-// 人類可讀嘅到期文字（相對 + 星期）
+// 人類可讀的到期文字（相對 + 星期）
 export function dueLabel(due: string, ref = todayISO()): string {
   const diff = daysBetween(ref, due)
   if (diff === 0) return '今日'
-  if (diff === 1) return '聽日'
-  if (diff === -1) return '尋日'
+  if (diff === 1) return '明天'
+  if (diff === -1) return '昨天'
   const [y, m, d] = due.split('-').map(Number)
   const dt = new Date(y, (m ?? 1) - 1, d ?? 1)
   const wd = `週${WEEKDAY[dt.getDay()]}`
@@ -126,7 +126,7 @@ export function dueLabel(due: string, ref = todayISO()): string {
 //   !!!  → P1（!! → P2，! → P3）
 //   #專案名 → 配對現有專案（大小寫 / 部分相符）
 //   @標籤  → 加標籤（可多個）
-//   today / tdy / 今日 / 聽日 / tmr / +N（N 日後）→ 到期日
+//   today / tdy / 今日 / 明天 / tmr / +N（N 日後）→ 到期日
 export interface ParsedQuickAdd {
   text: string
   priority?: Priority
@@ -172,7 +172,7 @@ export function parseQuickAdd(raw: string, projects: Project[]): ParsedQuickAdd 
   // 到期：關鍵字 / +N
   const dueRules: { re: RegExp; days: number }[] = [
     { re: /(?:^|\s)(today|tdy|今日|今天)(?=\s|$)/i, days: 0 },
-    { re: /(?:^|\s)(tmr|tomorrow|聽日|明日|明天)(?=\s|$)/i, days: 1 },
+    { re: /(?:^|\s)(tmr|tomorrow|明天|明日|明天)(?=\s|$)/i, days: 1 },
   ]
   for (const r of dueRules) {
     const m = text.match(r.re)
@@ -205,7 +205,7 @@ export const PRIORITY_META: Record<
   { label: string; short: string; dot: string; text: string; flag: string }
 > = {
   1: {
-    label: '最緊要',
+    label: '最重要',
     short: 'P1',
     dot: 'bg-rose-500',
     text: 'text-rose-600 dark:text-rose-400',
@@ -234,7 +234,7 @@ export const PRIORITY_META: Record<
   },
 }
 
-// ───────── 專案色盤（自家定義，唔依賴行事曆）─────────
+// ───────── 專案色盤（自家定義，不依賴行事曆）─────────
 export type ProjColor = 'accent' | 'blue' | 'green' | 'amber' | 'rose' | 'violet'
 export const PROJ_COLORS: ProjColor[] = [
   'accent',

@@ -43,19 +43,19 @@ const MODEL_OPTS: { id: AIModel; label: string }[] = [
 ]
 const MAX_MB = 18
 
-// 教學引導（3 步：揀錄音 → 撳轉錄 → 用成果）
+// 教學引導（3 步：選擇錄音 → 按轉錄 → 用成果）
 const GUIDE_STEPS: FeatureGuideStep[] = [
   {
-    title: '揀一段錄音檔',
-    desc: '撳上載框揀 mp3 / m4a / wav / ogg；手機語音備忘、錄音 App 都得，' + MAX_MB + 'MB 以下。',
+    title: '選擇一段錄音檔',
+    desc: '按上載框選擇 mp3 / m4a / wav / ogg；手機語音備忘、錄音 App 都得，' + MAX_MB + 'MB 以下。',
   },
   {
-    title: '撳「轉錄」交畀 AI',
-    desc: 'AI 會逐句轉文字，再幫你抽重點、列決議同待跟進。錄音越長等耐啲。',
+    title: '按「轉錄」交給 AI',
+    desc: 'AI 會逐句轉文字，再幫你抽重點、列決議同待跟進。錄音越長等耐些。',
   },
   {
     title: '複製、下載或存入會議筆記',
-    desc: '一鍵複製、出 Word，或直接存入會議筆記接住跟進，唔使再打過。',
+    desc: '一鍵複製、出 Word，或直接存入會議筆記接住跟進，不用再打過。',
   },
 ]
 
@@ -99,7 +99,7 @@ export default function Transcribe() {
       const raw = await complete({
         system: buildTranscribeSystem(),
         messages: [
-          { role: 'user', content: '請處理呢段錄音。', images: [audio] as AIMessage['images'] },
+          { role: 'user', content: '請處理這段錄音。', images: [audio] as AIMessage['images'] },
         ],
         model,
         temperature: 0.2,
@@ -124,7 +124,7 @@ export default function Transcribe() {
   }
 
   async function del(id: string) {
-    const ok = await confirm({ title: '刪除呢個轉錄？', tone: 'danger', confirmText: '刪除' })
+    const ok = await confirm({ title: '刪除這個轉錄？', tone: 'danger', confirmText: '刪除' })
     if (!ok) return
     transcribeCol.remove(id)
     if (current?.id === id) setCurrent(null)
@@ -155,10 +155,10 @@ export default function Transcribe() {
         })}
       />
 
-      {/* ───────── 教學引導：點用呢個功能（可摺疊 / 永久收起）───────── */}
+      {/* ───────── 教學引導：如何使用此功能（可摺疊 / 永久收起）───────── */}
       <FeatureGuide
         storageKey="transcribe"
-        title={t('transcribe.guide.title', { defaultValue: '錄音轉文字點用？' })}
+        title={t('transcribe.guide.title', { defaultValue: '錄音轉文字使用說明' })}
         steps={GUIDE_STEPS}
       />
 
@@ -182,7 +182,7 @@ export default function Transcribe() {
         <button
           type="button"
           onClick={pick}
-          aria-label={t('transcribe.upload.pick', { defaultValue: '揀錄音檔' })}
+          aria-label={t('transcribe.upload.pick', { defaultValue: '選擇錄音檔' })}
           className="flex w-full flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-accent/40 bg-accent-soft/50 px-4 py-8 text-center transition duration-200 hover:border-accent hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.99] dark:border-accent/40 dark:bg-accent/10 dark:hover:border-accent"
         >
           <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-accent text-white">
@@ -191,11 +191,11 @@ export default function Transcribe() {
           <span className="text-sm font-medium text-slate-700 dark:text-slate-200">
             {file
               ? `${file.name}（${sizeMB.toFixed(1)}MB）`
-              : t('transcribe.upload.pickHint', { defaultValue: '揀錄音檔（mp3 / m4a / wav / ogg）' })}
+              : t('transcribe.upload.pickHint', { defaultValue: '選擇錄音檔（mp3 / m4a / wav / ogg）' })}
           </span>
           <span className="text-[11px] text-slate-400 dark:text-slate-500">
             {file
-              ? t('transcribe.upload.replace', { defaultValue: '撳呢度換另一段' })
+              ? t('transcribe.upload.replace', { defaultValue: '按這裡換另一段' })
               : t('transcribe.upload.note', {
                   defaultValue: '手機語音備忘 / 錄音 App 都得，' + MAX_MB + 'MB 以下',
                 })}
@@ -276,11 +276,11 @@ export default function Transcribe() {
           icon={Mic}
           title={t('transcribe.empty.title', { defaultValue: '未有任何轉錄' })}
           hint={t('transcribe.empty.hint', {
-            defaultValue: '上載第一段會議或觀課錄音，AI 即刻幫你整理成重點、決議同待跟進。',
+            defaultValue: '上載第一段會議或觀課錄音，AI 立即幫你整理成重點、決議同待跟進。',
           })}
           action={
             <Button size="sm" variant="secondary" icon={Upload} onClick={pick}>
-              {t('transcribe.empty.cta', { defaultValue: '揀錄音檔開始' })}
+              {t('transcribe.empty.cta', { defaultValue: '選擇錄音檔開始' })}
             </Button>
           }
         />
@@ -310,7 +310,7 @@ function recToDoc(rec: TranscriptRecord): ExportDoc {
   return { title: rec.title, blocks }
 }
 
-// 三段成果嘅語意色（重點=accent 中性主指標、決議=emerald 良好、待跟進=amber 跟進）
+// 三段成果的語意色（重點=accent 中性主指標、決議=emerald 良好、待跟進=amber 跟進）
 const DOT_TONE = {
   accent: 'bg-accent',
   emerald: 'bg-emerald-500',
@@ -419,7 +419,7 @@ function ResultCard({ rec }: { rec: TranscriptRecord }) {
         <div className="flex items-center gap-2.5 rounded-xl bg-slate-50/60 px-3 py-2.5 text-sm text-slate-400 dark:bg-slate-800/40 dark:text-slate-500">
           <ListChecks size={16} className="shrink-0" />
           {t('transcribe.result.noPoints', {
-            defaultValue: '今次抽唔到明顯重點，可展開下面完整轉錄睇返內容。',
+            defaultValue: '今次抽不到明顯重點，可展開下面完整轉錄查看內容。',
           })}
         </div>
       )}

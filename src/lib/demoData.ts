@@ -1,12 +1,12 @@
 // ============================================================
 //  示範資料聚合器
 //  ------------------------------------------------------------
-//  各功能喺自己資料夾嘅 demo.ts export seedDemo()（idempotent —
-//  只喺該 collection 係空先種）。呢度集中一次過叫晒，畀首次
+//  各功能在自己資料夾的 demo.ts export seedDemo()（idempotent —
+//  只在該 collection 係空先種）。這裡集中一次過叫全部，給首次
 //  onboarding 同設定頁「載入示範資料」用。
 // ============================================================
-// 動態載入各功能 seeder（唔 eager import，避免把功能 store 拉入主 bundle；
-// 示範資料只係一次性動作，撳「載入」先至載入呢啲 code）。
+// 動態載入各功能 seeder（不 eager import，避免把功能 store 拉入主 bundle；
+// 示範資料只係一次性動作，按「載入」先至載入這些 code）。
 const SEEDER_LOADERS: (() => Promise<{ seedDemo: () => number }>)[] = [
   () => import('../features/learning/notes/demo'),
   () => import('../features/learning/goals/demo'),
@@ -21,8 +21,8 @@ const SEEDER_LOADERS: (() => Promise<{ seedDemo: () => number }>)[] = [
 ]
 
 /**
- * 載入示範資料：動態載入並逐個功能 seed（各自 idempotent，只喺空時種）。
- * 單一功能拋錯唔影響其餘。回傳總共新增嘅 row 數。
+ * 載入示範資料：動態載入並逐個功能 seed（各自 idempotent，只在空時種）。
+ * 單一功能拋錯不影響其餘。回傳總共新增的 row 數。
  */
 export async function seedAllDemo(): Promise<number> {
   const mods = await Promise.all(SEEDER_LOADERS.map((load) => load().catch(() => null)))
@@ -45,7 +45,7 @@ export function hasOnboarded(): boolean {
   try {
     return localStorage.getItem(ONBOARD_KEY) === '1'
   } catch {
-    return true // 讀唔到就當睇過，唔好阻住用戶
+    return true // 讀不到就當查看過，不要阻住用戶
   }
 }
 

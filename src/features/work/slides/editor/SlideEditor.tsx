@@ -34,10 +34,10 @@ import { aiConvertSlide, rewriteSlide } from './slideAi'
 // ============================================================
 //  逐版編輯器 — 全套控制
 //  ------------------------------------------------------------
-//  · 版式 chips：規則即時互轉（convert.ts），唔夠料就 toast 唔切換
+//  · 版式 chips：規則即時互轉（convert.ts），不夠料就 toast 不切換
 //  · 按版式 render 對應表單（bullets／stats／compare／steps／quote／cards／section）
 //  · 圖表數據表（type／categories／series／unit），value 非數字 disable 儲存
-//  · 「AI 重寫呢版」「AI 幫我轉」：成功覆蓋 draft，有一步 undo
+//  · 「AI 重寫此頁」「AI 幫我轉」：成功覆蓋 draft，有一步 undo
 // ============================================================
 
 const LAYOUT_OPTS: { id: SlideLayout; label: string; icon: LucideIcon }[] = [
@@ -50,7 +50,7 @@ const LAYOUT_OPTS: { id: SlideLayout; label: string; icon: LucideIcon }[] = [
   { id: 'section', label: '章節', icon: Heading1 },
 ]
 
-/** 編輯中嘅 chart 文字形態（categories／values 用「、」「,」分隔輸入） */
+/** 編輯中的 chart 文字形態（categories／values 用「、」「,」分隔輸入） */
 interface ChartDraft {
   type: 'bar' | 'line' | 'pie'
   unit: string
@@ -146,7 +146,7 @@ export default function SlideEditor({
       snapshot()
       setDraft(out)
       setChartDraft(chartToDraft(out.chart))
-      toast.success(t('slides.aiDone', { defaultValue: 'AI 執好咗，可以再手執' }))
+      toast.success(t('slides.aiDone', { defaultValue: 'AI 執好了，可以再手執' }))
     } catch (e) {
       toast.error(classifyAIError(e).message, { label: '重試', onClick: () => runAi(kind, target) })
     } finally {
@@ -233,7 +233,7 @@ export default function SlideEditor({
               {t('slides.cancel', { defaultValue: '取消' })}
             </Button>
             <Button icon={Check} onClick={save} disabled={chartInvalid}>
-              {t('slides.save', { defaultValue: '儲存呢版' })}
+              {t('slides.save', { defaultValue: '儲存此頁' })}
             </Button>
           </div>
         </div>
@@ -256,7 +256,7 @@ export default function SlideEditor({
             <SlidePreview slide={previewSlide} index={index} theme={theme} />
           </div>
           <p className="text-[11px] leading-relaxed text-slate-400 dark:text-slate-500">
-            {t('slides.previewHint', { defaultValue: '儲存前可先睇文字密度同版式節奏。' })}
+            {t('slides.previewHint', { defaultValue: '儲存前可先查看文字密度同版式節奏。' })}
           </p>
         </aside>
 
@@ -285,7 +285,7 @@ export default function SlideEditor({
           <Input value={draft.title} onChange={(e) => patch({ title: e.target.value })} />
         </Field>
 
-        {/* 章節版唔使內容欄位 */}
+        {/* 章節版不用內容欄位 */}
         {layout !== 'section' && (
           <>
             <Field
@@ -413,7 +413,7 @@ export default function SlideEditor({
                 />
               </Field>
             </div>
-            <Field label={t('slides.fTakeaway', { defaultValue: '包底重點（選填，≤40 字，會做版底色帶）' })}>
+            <Field label={t('slides.fTakeaway', { defaultValue: '總結重點（選填，≤40 字，會做版底色帶）' })}>
               <Input
                 value={draft.takeaway ?? ''}
                 onChange={(e) => patch({ takeaway: e.target.value.trim() ? e.target.value : undefined })}
@@ -491,7 +491,7 @@ export default function SlideEditor({
                   </Field>
                   <Field
                     label={t('slides.chartVals', { defaultValue: '數值（用「、」分隔，要同標籤一樣多）' })}
-                    error={chartInvalid ? t('slides.chartInvalid', { defaultValue: '數值要係數字、標籤同數值都唔可以空' }) : undefined}
+                    error={chartInvalid ? t('slides.chartInvalid', { defaultValue: '數值要係數字、標籤同數值都不可以空' }) : undefined}
                   >
                     <Input
                       invalid={chartInvalid}
@@ -508,7 +508,7 @@ export default function SlideEditor({
             <div className="flex flex-wrap items-center gap-2 rounded-xl border border-accent/20 bg-accent-soft/40 p-3 dark:bg-accent/10">
               <Input
                 value={aiNote}
-                placeholder={t('slides.aiHint', { defaultValue: '指示（選填）：例「淺白啲，俾中一學生」' })}
+                placeholder={t('slides.aiHint', { defaultValue: '指示（選填）：例「淺白些，給中一學生」' })}
                 onChange={(e) => setAiNote(e.target.value)}
                 className="min-w-0 flex-1"
               />
@@ -518,7 +518,7 @@ export default function SlideEditor({
                 onClick={() => void runAi('rewrite')}
                 loading={aiBusy}
               >
-                {t('slides.aiRewrite', { defaultValue: 'AI 重寫呢版' })}
+                {t('slides.aiRewrite', { defaultValue: 'AI 重寫此頁' })}
               </Button>
               {layout !== 'bullets' && (
                 <Button
@@ -526,7 +526,7 @@ export default function SlideEditor({
                   icon={Sparkles}
                   onClick={() => void runAi('convert', layout)}
                   loading={aiBusy}
-                  title={t('slides.aiConvertHint', { defaultValue: '規則轉完唔靚？交畀 AI 重組做呢個版式' })}
+                  title={t('slides.aiConvertHint', { defaultValue: '規則轉完不靚？交給 AI 重組做此版面式' })}
                 >
                   {t('slides.aiConvert', { defaultValue: 'AI 幫我轉' })}
                 </Button>

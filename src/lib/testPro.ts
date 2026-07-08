@@ -2,7 +2,7 @@
 //  測試 Pro（推廣代碼）
 //  ------------------------------------------------------------
 //  ⚠️ 只限本地開發模式：方便未接付款前試 Pro UI / 功能 gating。
-//  Production bundle 必須唔提供 client-side 解鎖，避免變成收入漏洞。
+//  Production bundle 必須不提供 client-side 解鎖，避免變成收入漏洞。
 // ============================================================
 
 const KEY = 'ntk.testPro'
@@ -35,7 +35,7 @@ function set(on: boolean): void {
   if (typeof window !== 'undefined') window.dispatchEvent(new Event(EVENT))
 }
 
-/** 套用推廣代碼；啱「NTK」就解鎖測試 Pro，回 true。 */
+/** 套用推廣代碼；適合「NTK」就解鎖測試 Pro，回 true。 */
 export function redeemTestCode(code: string): boolean {
   if (!isTestProEnabled) return false
   if (code.trim().toUpperCase() === TEST_CODE) {
@@ -49,7 +49,7 @@ export function clearTestPro(): void {
   set(false)
 }
 
-/** 畀 React 訂閱測試 Pro 變化（同頁 custom event + 跨分頁 storage）。 */
+/** 給 React 訂閱測試 Pro 變化（同頁 custom event + 跨分頁 storage）。 */
 export function onTestProChange(cb: () => void): () => void {
   if (typeof window === 'undefined') return () => {}
   window.addEventListener(EVENT, cb)

@@ -43,20 +43,20 @@ import {
 } from './util'
 
 // ============================================================
-//  任務詳情 — 改簿檯抽出嘅「批改卷宗」
+//  任務詳情 — 改簿檯抽出的「批改卷宗」
 //  ------------------------------------------------------------
-//  訂造概念：呼應主畫面（TodoWidget）嘅改簿檯——checklist + 批改紅筆。
+//  訂造概念：呼應主畫面（TodoWidget）的改簿檯——checklist + 批改紅筆。
 //  彈窗似老師由簿堆裡抽出一張卷宗攤開逐項處理：頁眉用 serif 標題 +
-//  uppercase kicker + 雙線封面分隔；屬「批改」嘅任務披返同一套紅筆
+//  uppercase kicker + 雙線封面分隔；屬「批改」的任務披返同一套紅筆
 //  accent（紅 margin 邊欄 + 紅「批改」章 + 方剔格），同主畫面卡片一眼
 //  對得返。每個分區用 icon chip + 向右散開 hairline 做冊頁分段。
 //
 //  邏輯完全沿用：改 tasksCol（text / done）+ upsertMeta（優先級 / 到期 /
-//  專案 / 標籤 / 備註）+ subtasksCol（子任務）。淨係動外觀 / 排版 / 文案。
+//  專案 / 標籤 / 備註）+ subtasksCol（子任務）。只動外觀 / 排版 / 文案。
 // ============================================================
 
 // 「批改任務」純表現層偵測（與 TodoWidget 同一套語意：標籤 / 任務文字
-// 命中即披紅筆 accent）。本檔自帶一份，唔跨檔 import 主畫面內部 helper。
+// 命中即披紅筆 accent）。本檔自帶一份，不跨檔 import 主畫面內部 helper。
 const MARK_RE = /(批改|批卷|改卷|改簿|派卷|評卷|marking|mark\b)/i
 function isMarkingTask(t: FullTask): boolean {
   if (t.meta.tags.some((tag) => MARK_RE.test(tag))) return true
@@ -72,7 +72,7 @@ const PR_OPTIONS = [
 
 // ───────── 冊頁分區頁眉（icon chip + 向右散開 hairline）─────────
 //  改簿檯概念：每個分區（屬性 / 子任務 / 標籤 / 備註）似簿冊上一段
-//  分節——左邊一個方形 icon 牌，右邊一條淡到透明嘅尺線，數字計點。
+//  分節——左邊一個方形 icon 牌，右邊一條淡到透明的尺線，數字計點。
 //  同主畫面 Group / 任務冊頁眉同一套視覺語言。
 function CardSection({
   icon: Icon,
@@ -135,7 +135,7 @@ export function TaskEditor({
   const [tagDraft, setTagDraft] = useState('')
   const subInputId = `todo-sub-input-${task.id}`
 
-  // task 換咗（外部）就同步本地草稿
+  // task 換了（外部）就同步本地草稿
   useEffect(() => {
     setText(task.text)
     setNote(task.meta.note ?? '')
@@ -188,7 +188,7 @@ export function TaskEditor({
 
   const askDelete = async () => {
     const ok = await confirm({
-      title: '刪除呢項待辦？',
+      title: '刪除此項待辦？',
       message: `「${task.text}」連同 ${subtasks.length} 個子任務會被刪除，無法復原。`,
       confirmText: '刪除',
       tone: 'danger',
@@ -208,7 +208,7 @@ export function TaskEditor({
     .filter((t) => (tagDraft.trim() ? t.includes(tagDraft.trim().replace(/^[#@]/, '')) : true))
     .slice(0, 6)
 
-  // 頁眉狀態副題（似卷宗封面下嘅一行批註）
+  // 頁眉狀態副題（似卷宗封面下的一行批註）
   const stateLine = task.done
     ? '已剔 · 完成'
     : marking
@@ -218,8 +218,8 @@ export function TaskEditor({
         : '未剔'
 
   return (
-    // 唔傳 title → 唔用 Modal 通用粗體頁眉；改喺內文自管「批改卷宗」頁眉，
-    // 令彈窗用返主畫面改簿檯嘅 serif + kicker + 雙線視覺語言。
+    // 不傳 title → 不用 Modal 通用粗體頁眉；改在內文自管「批改卷宗」頁眉，
+    // 令彈窗使用主畫面改簿檯的 serif + kicker + 雙線視覺語言。
     <Modal open onClose={onClose} size="lg">
       <div className="space-y-5">
         {/* ───────── 卷宗頁眉：kicker + serif 標題狀態 + 雙線封面分隔 ───────── */}
@@ -264,7 +264,7 @@ export function TaskEditor({
                 : 'border-slate-200/80 bg-slate-50/60 dark:border-slate-700/60 dark:bg-slate-800/40',
           )}
         >
-          {/* 批改任務：紅筆雙邊欄（似改簿嘅紅 margin）。未完成先顯示。*/}
+          {/* 批改任務：紅筆雙邊欄（似改簿的紅 margin）。未完成先顯示。*/}
           {marking && !task.done && (
             <span aria-hidden className="absolute inset-y-0 left-0 flex gap-[3px] pl-1">
               <span className="w-[3px] rounded-full bg-rose-400 dark:bg-rose-500/70" />
@@ -289,7 +289,7 @@ export function TaskEditor({
             {task.done && <Check size={14} strokeWidth={3} />}
           </button>
           <div className="min-w-0 flex-1">
-            {/* 批改章（呼應主畫面 MarkPen）：未完成嘅批改任務先掛 */}
+            {/* 批改章（呼應主畫面 MarkPen）：未完成的批改任務先掛 */}
             {marking && !task.done && (
               <span className="mb-1 inline-flex shrink-0 items-center gap-1 rounded-md border border-rose-300/70 bg-rose-50/80 px-1.5 py-0.5 text-[10px] font-semibold text-rose-600 dark:border-rose-500/40 dark:bg-rose-500/10 dark:text-rose-300">
                 <Highlighter size={10} className="opacity-80" />
@@ -310,7 +310,7 @@ export function TaskEditor({
           </div>
         </div>
 
-        {/* 屬性：優先級 / 專案 / 到期（一組柔和卡，唔似散開嘅表單）*/}
+        {/* 屬性：優先級 / 專案 / 到期（一組柔和卡，不似散開的表單）*/}
         <div className="space-y-3 rounded-2xl border border-slate-200/80 p-4 dark:border-slate-700/60">
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             <Field label="優先級">
@@ -351,7 +351,7 @@ export function TaskEditor({
           {/* 到期快捷 + 狀態 */}
           <div className="flex flex-wrap items-center gap-2 border-t border-slate-100 pt-3 dark:border-slate-700/60">
             <QuickDue label="今日" icon={Sun} onClick={() => setDue(offsetFromToday(0))} />
-            <QuickDue label="聽日" icon={Sunrise} onClick={() => setDue(offsetFromToday(1))} />
+            <QuickDue label="明天" icon={Sunrise} onClick={() => setDue(offsetFromToday(1))} />
             <QuickDue
               label="3 日後"
               icon={CalendarClock}
@@ -440,7 +440,7 @@ export function TaskEditor({
               value={subDraft}
               onChange={(e) => setSubDraft(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && addSub()}
-              placeholder="拆解成更細嘅步驟…"
+              placeholder="拆解成更細的步驟…"
               className="flex-1"
             />
             <Button variant="secondary" icon={Plus} onClick={addSub}>

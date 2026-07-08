@@ -72,7 +72,7 @@ export default function MyShares({ onPublish }: { onPublish: () => void }) {
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <p className="text-sm text-slate-500 dark:text-slate-400">你上載過嘅資源同數據。</p>
+        <p className="text-sm text-slate-500 dark:text-slate-400">你上載過的資源同數據。</p>
         <Button size="sm" icon={Plus} onClick={onPublish}>
           分享資源
         </Button>
@@ -81,7 +81,7 @@ export default function MyShares({ onPublish }: { onPublish: () => void }) {
       {loading ? (
         <p className="py-12 text-center text-sm text-slate-400">載入中…</p>
       ) : rows.length === 0 ? (
-        <EmptyState icon={Upload} title="未分享過資源" hint="可以先瀏覽同收藏；準備好再分享第一份有權分享嘅教材。" action={<Button icon={Plus} onClick={onPublish}>分享資源</Button>} />
+        <EmptyState icon={Upload} title="未分享過資源" hint="可以先瀏覽同收藏；準備好再分享第一份有權分享的教材。" action={<Button icon={Plus} onClick={onPublish}>分享資源</Button>} />
       ) : (
         <ul className="space-y-2">
           {rows.map((r) => {
@@ -125,7 +125,7 @@ export default function MyShares({ onPublish }: { onPublish: () => void }) {
       )}
       {!isCommunityConfigured && (
         <p className="flex items-center justify-center gap-1 pt-1 text-[11px] text-amber-600 dark:text-amber-400">
-          <RefreshCw size={11} /> 試用資料；完成雲端連線後顯示你真實嘅分享。
+          <RefreshCw size={11} /> 試用資料；完成雲端連線後顯示你真實的分享。
         </p>
       )}
     </div>

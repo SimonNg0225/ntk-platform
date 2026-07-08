@@ -231,11 +231,11 @@ describe('assembleDraft — tf', () => {
     ).toBeNull()
   })
 
-  it("answer 係 'yes' → 唔係 true/false → null", () => {
+  it("answer 係 'yes' → 不是 true/false → null", () => {
     expect(assembleDraft('tf', { statement: '命題', answer: 'yes' })).toBeNull()
   })
 
-  it("answer 係 '1' → 唔係 true/false → null", () => {
+  it("answer 係 '1' → 不是 true/false → null", () => {
     expect(assembleDraft('tf', { statement: '命題', answer: '1' })).toBeNull()
   })
 
@@ -272,7 +272,7 @@ describe('buildUserPrompt', () => {
   it('avoidFronts 非空 → 用「、」連接附在後面', () => {
     const p = buildUserPrompt('主題', 5, ['卡A', '卡B', '卡C'])
     expect(p).toContain('請根據以上材料生成 5 張知識卡。')
-    expect(p).toContain('以下卡已經存在，唔好重複生成相同或極相似嘅卡：卡A、卡B、卡C')
+    expect(p).toContain('以下卡已經存在，不要重複生成相同或極相似的卡：卡A、卡B、卡C')
   })
 
   it('count 最小邊界 5 原樣出現', () => {
@@ -338,7 +338,7 @@ describe('buildSystemPrompt — 卡型 SHAPE_INSTRUCT 嵌入', () => {
   it('tf：含「true 或 false」+ 真假各半提示', () => {
     const p = buildSystemPrompt('tf', 'basic', 'zh')
     expect(p).toContain('true 或 false')
-    expect(p).toContain('唔好全部都係真')
+    expect(p).toContain('不要全部都是真')
   })
 
   it('term：含名詞/定義描述', () => {
@@ -381,9 +381,9 @@ describe('buildSystemPrompt — 難度 DIFFICULTY_INSTRUCT 嵌入', () => {
     const basic = buildSystemPrompt('qa', 'basic', 'zh')
     const inter = buildSystemPrompt('qa', 'intermediate', 'zh')
     const chal = buildSystemPrompt('qa', 'challenge', 'zh')
-    // basic 專屬「啱啱接觸」唔應出現喺進階 / 挑戰
-    expect(inter).not.toContain('啱啱接觸')
-    expect(chal).not.toContain('啱啱接觸')
+    // basic 專屬「剛剛接觸」唔應出現喺進階 / 挑戰
+    expect(inter).not.toContain('剛剛接觸')
+    expect(chal).not.toContain('剛剛接觸')
     // challenge 專屬「容易混淆」唔應出現喺基礎 / 進階
     expect(basic).not.toContain('容易混淆')
     expect(inter).not.toContain('容易混淆')
@@ -420,7 +420,7 @@ describe('buildSystemPrompt — 語言 LANG_INSTRUCT 嵌入', () => {
 describe('buildSystemPrompt — 固定頭尾段（與 type/difficulty/lang 無關）', () => {
   it('永遠含開首角色設定', () => {
     const p = buildSystemPrompt('tf', 'challenge', 'en')
-    expect(p).toContain('你係一個專業嘅知識卡')
+    expect(p).toContain('你是一位專業的知識卡')
   })
 
   it('永遠含『只輸出一個 JSON 陣列』固定尾段', () => {
@@ -434,9 +434,9 @@ describe('buildSystemPrompt — 固定頭尾段（與 type/difficulty/lang 無�
           expect(buildSystemPrompt(t, d, l)).toContain('只輸出一個 JSON 陣列')
   })
 
-  it('永遠含『唔好加 ``` 圍欄』反 markdown 指示', () => {
+  it('永遠含『不要加 ``` 圍欄』反 markdown 指示', () => {
     expect(buildSystemPrompt('cloze', 'intermediate', 'bi')).toContain(
-      '唔好加 ``` 圍欄',
+      '不要加 ``` 圍欄',
     )
   })
 
@@ -457,8 +457,8 @@ describe('buildSystemPrompt — cross-product sanity（確認唔串表）', () =
     expect(p).toContain('English only') // en lang
     // 唔應夾帶其他維度嘅專屬句
     expect(p).toContain('卡型：')
-    expect(p).not.toContain('兩重花括號') // 唔係 cloze
-    expect(p).not.toContain('啱啱接觸') // 唔係 basic
+    expect(p).not.toContain('兩重花括號') // 不是 cloze
+    expect(p).not.toContain('剛剛接觸') // 不是 basic
   })
 
   it('(cloze, basic, bi)：cloze shape + basic 措辭 + 雙語，三者並存', () => {
@@ -466,8 +466,8 @@ describe('buildSystemPrompt — cross-product sanity（確認唔串表）', () =
     expect(p).toContain('兩重花括號') // cloze shape
     expect(p).toContain('核心定義') // basic difficulty
     expect(p).toContain('繁體中文（English）') // bi lang
-    expect(p).not.toContain('true 或 false') // 唔係 tf
-    expect(p).not.toContain('容易混淆') // 唔係 challenge
+    expect(p).not.toContain('true 或 false') // 不是 tf
+    expect(p).not.toContain('容易混淆') // 不是 challenge
   })
 
   it('同 difficulty/lang 下唔同 type 只係「卡型：」行有別', () => {

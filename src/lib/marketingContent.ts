@@ -1,11 +1,11 @@
 // ============================================================
 //  行銷內容資產：共用型別 + 標籤
 //  ------------------------------------------------------------
-//  雲端共享版：資料存喺 Supabase `marketing_content` 表（migration
+//  雲端共享版：資料存在 Supabase `marketing_content` 表（migration
 //  0016），經 `admin` Edge Function（service_role）讀寫,全部管理員
-//  共用。CRUD API 喺 src/lib/admin.ts：
+//  共用。CRUD API 在 src/lib/admin.ts：
 //    adminListMarketing / adminSaveMarketing / adminDeleteMarketing
-//  呢個檔只放 UI 同 API 共用嘅型別同標籤（單一 source of truth）。
+//  這個檔只放 UI 同 API 共用的型別同標籤（單一 source of truth）。
 // ============================================================
 
 export type MarketingAssetType =
@@ -48,7 +48,7 @@ export const STATUS_LABEL: Record<MarketingStatus, string> = {
   published: '已發佈',
 }
 
-// 對應 ui Badge 嘅 BadgeTone 子集
+// 對應 ui Badge 的 BadgeTone 子集
 export const STATUS_TONE: Record<MarketingStatus, 'slate' | 'amber' | 'blue' | 'green'> = {
   idea: 'slate',
   draft: 'amber',

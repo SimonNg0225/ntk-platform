@@ -5,17 +5,17 @@ import { BRAND_EXPORT } from '../../../lib/brand'
 // ============================================================
 //  會議 / 行政筆記 — 深化資料模型 + 工具（媲美 Notion / Fellow）
 //  ------------------------------------------------------------
-//  共用 meetingNotesCol（MeetingNote）唔改：title / date / content /
+//  共用 meetingNotesCol（MeetingNote）不改：title / date / content /
 //  tags / createdAt 維持原樣，舊筆記照樣顯示。
-//  本功能需要而 MeetingNote 冇嘅結構化欄位 —— 會議類型、出席者、
+//  本功能需要而 MeetingNote 沒有的結構化欄位 —— 會議類型、出席者、
 //  行動項目（action items）、決議、置頂、完成狀態、地點、時間 ——
-//  全部存喺自家「擴充表」meeting_note_meta（id == MeetingNote.id）。
+//  全部存在自家「擴充表」meeting_note_meta（id == MeetingNote.id）。
 //  另開 meeting_note_templates（議程範本）。
-//  唯一 key（已喺 newCollections 申報）：
+//  唯一 key（已在 newCollections 申報）：
 //    meeting_note_meta / meeting_note_templates
 // ============================================================
 
-// ───────── 會議類型（color-coded，似 Notion 嘅 select）─────────
+// ───────── 會議類型（color-coded，似 Notion 的 select）─────────
 export type MeetingType =
   | 'staff' // 教職員 / 全體會議
   | 'panel' // 科組會議
@@ -40,7 +40,7 @@ export const MEETING_TYPE_META: Record<
   other: { label: '其他', tone: 'slate', short: '其他' },
 }
 
-// Badge tone（同 ui/index.tsx BadgeTone 對齊，唔 import 內部型別）
+// Badge tone（同 ui/index.tsx BadgeTone 對齊，不 import 內部型別）
 export type BadgeTone = 'slate' | 'accent' | 'green' | 'amber' | 'rose' | 'blue'
 
 export const MEETING_TYPE_ORDER: MeetingType[] = [
@@ -54,7 +54,7 @@ export const MEETING_TYPE_ORDER: MeetingType[] = [
   'other',
 ]
 
-// ───────── 行動項目（會議筆記嘅核心：跟進事項）─────────
+// ───────── 行動項目（會議筆記的核心：跟進事項）─────────
 export interface ActionItem {
   id: string
   text: string
@@ -178,7 +178,7 @@ export const noteTemplatesCol = createCollection<NoteTemplate>(
       createdAt: new Date().toISOString(),
       content: `【對象】
 
-一、做得好嘅地方
+一、做得好的地方
 
 
 二、可改善之處
@@ -266,7 +266,7 @@ export function pruneMeta(validIds: Set<string>) {
 //  內容解析：由 Markdown-ish 筆記抽行動項目 / 決議
 //  - 行動項目語法： - [ ] 文字 @負責人 !YYYY-MM-DD
 //  - 決議語法：     > 文字
-//  俾「由內容自動建立結構化項目」用（似 Granola / Fellow 嘅抽取）。
+//  給「由內容自動建立結構化項目」用（似 Granola / Fellow 的抽取）。
 // ============================================================
 export interface ParsedContent {
   actions: { text: string; owner?: string; due?: string; done: boolean }[]
@@ -311,7 +311,7 @@ export function parseContent(content: string): ParsedContent {
 }
 
 // ============================================================
-//  輕量 Markdown 渲染（純資料 → 區段陣列；零依賴，畀元件畫）
+//  輕量 Markdown 渲染（純資料 → 區段陣列；零依賴，給元件畫）
 //  支援：標題行（中文「一、」/「1.」/【標題】）、決議 >、
 //  行動項目 - [ ]、無序列表 -、空行、普通段落。
 // ============================================================
@@ -408,7 +408,7 @@ export function collectActions(merged: MergedNote[]): OpenAction[] {
   return out
 }
 
-// ───────── 月度會議數（近 N 個月，畀長條圖）─────────
+// ───────── 月度會議數（近 N 個月，給長條圖）─────────
 export interface MonthBar {
   key: string // YYYY-MM
   label: string // M月
@@ -434,7 +434,7 @@ export function monthlyMeetingBars(
   return bars
 }
 
-// ───────── 按類型分布（畀甜甜圈）─────────
+// ───────── 按類型分布（給甜甜圈）─────────
 export interface TypeSlice {
   type: MeetingType
   label: string
@@ -493,10 +493,10 @@ export function actionStats(actions: OpenAction[]): ActionStats {
   }
 }
 
-// ───────── 按負責人分組（問責視圖：邊個欠咩跟進）─────────
-// 媲美 Fellow / Asana 嘅「My / per-person」匯總：跨所有會議攤平行動，
+// ───────── 按負責人分組（問責視圖：誰負責什麼跟進）─────────
+// 媲美 Fellow / Asana 的「My / per-person」匯總：跨所有會議攤平行動，
 // 以負責人 (owner) 收口；無負責人歸入「未指派」桶。每組計未完成 / 逾期 /
-// 完成數，並保留該組仍未完成嘅項目（已按 OpenAction 排序）。
+// 完成數，並保留該組仍未完成的項目（已按 OpenAction 排序）。
 export const UNASSIGNED_OWNER = '__unassigned__'
 
 export interface OwnerGroup {
@@ -506,7 +506,7 @@ export interface OwnerGroup {
   overdue: number // 未完成且已逾期
   done: number // 已完成數
   total: number // 該組總數
-  items: OpenAction[] // 該組仍未完成嘅項目（傳入次序保留）
+  items: OpenAction[] // 該組仍未完成的項目（傳入次序保留）
 }
 
 export function actionsByOwner(actions: OpenAction[]): OwnerGroup[] {
@@ -666,7 +666,7 @@ export function printNote(input: PrintInput): boolean {
   return true
 }
 
-// ───────── 複製做純文字（畀「複製」用）─────────
+// ───────── 複製做純文字（給「複製」用）─────────
 export function noteToPlainText(note: MeetingNote, meta: NoteMeta): string {
   const lines: string[] = []
   lines.push(note.title)

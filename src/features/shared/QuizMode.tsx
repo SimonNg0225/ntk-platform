@@ -21,7 +21,7 @@ import { DEFAULT_SETTINGS, mistakesCol, pct, type QuizSettings } from './quiz/ut
 //  • 跨次統計：命中率走勢 / 課題掌握 / 難度占比 / 練習熱力圖
 //  • 錯題本：自動收集答錯題、集中操練、標記掌握
 //  零 AI、零新 npm；圖表全自製 SVG/div。
-//  唔改 data/collections.ts；錯題本用自家 quiz.mistakes collection。
+//  不改 data/collections.ts；錯題本用自家 quiz.mistakes collection。
 // ============================================================
 
 type Tab = 'quiz' | 'stats' | 'mistakes'
@@ -50,18 +50,18 @@ export default function QuizMode() {
     setTab('quiz')
     setView({ name: 'quiz', questionIds, settings })
   }
-  // 由統計「課題掌握度」撳一下 → 返 setup 並預選該課題範圍（畀用家揀題數）
+  // 由統計「課題掌握度」按一下 → 返 setup 並預選該課題範圍（給用家選擇題數）
   const practiceTopic = (topicId: string) => {
     setTab('quiz')
     setView({ name: 'setup', topicId })
   }
 
-  // 教學引導步驟（3 步；defaultValue 廣東話，唔改 i18n 檔）
+  // 教學引導步驟（3 步；defaultValue 廣東話，不改 i18n 檔）
   const GUIDE_STEPS: FeatureGuideStep[] = [
     {
-      title: t('quiz.guide1Title', { defaultValue: '揀賽制同範圍' }),
+      title: t('quiz.guide1Title', { defaultValue: '選擇賽制同範圍' }),
       desc: t('quiz.guide1Desc', {
-        defaultValue: '揀練習 / 測驗 / 搶分，再揀課題、難度同題數，題目由你嘅題庫即時抽。',
+        defaultValue: '選擇練習 / 測驗 / 搶分，再選擇課題、難度同題數，題目由你的題庫即時抽。',
       }),
     },
     {
@@ -71,14 +71,14 @@ export default function QuizMode() {
       }),
     },
     {
-      title: t('quiz.guide3Title', { defaultValue: '睇統計、操練錯題' }),
+      title: t('quiz.guide3Title', { defaultValue: '查看統計、操練錯題' }),
       desc: t('quiz.guide3Desc', {
-        defaultValue: '喺「統計」睇命中率走勢同課題掌握度，答錯嘅自動入「錯題本」集中重做。',
+        defaultValue: '在「統計」查看命中率走勢同課題掌握度，答錯的自動入「錯題本」集中重做。',
       }),
     },
   ]
 
-  // ── 做題中 / 結果頁：全屏接管（唔顯示 tabs）──
+  // ── 做題中 / 結果頁：全屏接管（不顯示 tabs）──
   if (view.name === 'quiz') {
     return (
       <QuizRunner
@@ -107,10 +107,10 @@ export default function QuizMode() {
       <PageHero
         guideKey="quiz"
         icon={Swords}
-        kicker={t('quiz.kicker', { defaultValue: '自學工具 · 由你嘅題庫即時出題' })}
+        kicker={t('quiz.kicker', { defaultValue: '自學工具 · 由你的題庫即時出題' })}
         title={t('quiz.title', { defaultValue: '自我測驗' })}
         description={t('quiz.subtitle', {
-          defaultValue: '揀個賽制即刻開始，自動批改，即睇命中率同課題掌握度。',
+          defaultValue: '選擇一個賽制立即開始，自動批改，即查看命中率同課題掌握度。',
         })}
         actions={
           attempts.length > 0 ? (
@@ -157,10 +157,10 @@ export default function QuizMode() {
         })}
       />
 
-      {/* ───────── 教學引導：點用呢個功能 ───────── */}
+      {/* ───────── 教學引導：如何使用此功能 ───────── */}
       <FeatureGuide
         storageKey="quiz"
-        title={t('quiz.guideTitle', { defaultValue: '自我測驗點用？' })}
+        title={t('quiz.guideTitle', { defaultValue: '自我測驗使用說明' })}
         steps={GUIDE_STEPS}
       />
 

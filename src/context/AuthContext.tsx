@@ -31,11 +31,11 @@ interface AuthContextValue {
   user: User | null
   session: Session | null
   loading: boolean
-  /** 有冇接好 Supabase（即係可唔可以登入） */
+  /** 有沒有接好 Supabase（即係可不可以登入） */
   configured: boolean
   /** 當前用戶係咪管理員（env 白名單 OR app_admins 表）。 */
   isAdmin: boolean
-  /** 管理員身份查完未（DB 慢查；未查完時 gate 應顯示載入中而非「冇權限」）。 */
+  /** 管理員身份查完未（DB 慢查；未查完時 gate 應顯示載入中而非「沒有權限」）。 */
   adminChecked: boolean
   signInWithGoogle: () => Promise<void>
   signOut: () => Promise<void>
@@ -49,11 +49,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!supabase) {
-      // 冇接 Supabase：本機 dev 登入時還原上次撳過嘅假 session（refresh 唔甩）。
+      // 沒有接 Supabase：本機 dev 登入時還原上次按過的假 session（refresh 不甩）。
       if (isDevAuth) setSession(loadDevSession())
       return
     }
-    // 開頁先攞返現有 session
+    // 開頁先取得返現有 session
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session)
       setLoading(false)
@@ -83,7 +83,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => detachSync()
   }, [authProvider, userId])
 
-  // 管理員身份：env 白名單即時知（唔閃），否則查 app_admins 表（DB 名單）
+  // 管理員身份：env 白名單即時知（不閃），否則查 app_admins 表（DB 名單）
   const email = session?.user?.email ?? null
   const [isAdmin, setIsAdmin] = useState(false)
   const [adminChecked, setAdminChecked] = useState(false)
@@ -128,7 +128,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       adminChecked,
       signInWithGoogle: async () => {
         if (!supabase) {
-          // 本機 dev：唔行真 OAuth，即刻以假帳戶登入（存 localStorage）。
+          // 本機 dev：不行真 OAuth，立即以假帳戶登入（存 localStorage）。
           if (isDevAuth) {
             const s = makeDevSession()
             saveDevSession(s)
@@ -164,6 +164,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 // eslint-disable-next-line react-refresh/only-export-components
 export function useAuth(): AuthContextValue {
   const ctx = useContext(AuthContext)
-  if (!ctx) throw new Error('useAuth 必須喺 <AuthProvider> 入面用')
+  if (!ctx) throw new Error('useAuth 必須在 <AuthProvider> 中用')
   return ctx
 }

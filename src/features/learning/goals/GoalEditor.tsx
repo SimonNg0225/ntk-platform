@@ -101,7 +101,7 @@ export default function GoalEditor({
     return total ? Math.round((done / total) * 100) : 0
   }, [milestones])
 
-  // 揀咗嘅分類做路線色票（呼應主畫面卡片以分類上色）
+  // 選擇了的分類做路線色票（呼應主畫面卡片以分類上色）
   const cat = catMeta(category)
   const doneMsCount = milestones.filter((m) => m.done).length
 
@@ -164,7 +164,7 @@ export default function GoalEditor({
     onClose()
   }
 
-  // 把 draft 里程碑寫返 collection（按 id upsert：保留原 createdAt，
+  // 把 draft 里程碑寫回 collection（按 id upsert：保留原 createdAt，
   // 只在 done 狀態真正轉換時改 doneAt，避免每次儲存都重設時間戳）
   function syncMilestones(goalId: string) {
     syncMilestonesInto(milestonesCol, goalId, milestones)
@@ -198,7 +198,7 @@ export default function GoalEditor({
         <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
           {editing
             ? '改名、調日子，或重排沿途里程碑。'
-            : '揀座山頭、拆里程碑，一步步攀上去。'}
+            : '選擇座山頭、拆里程碑，一步步攀上去。'}
         </p>
       </header>
 
@@ -393,7 +393,7 @@ export default function GoalEditor({
         </div>
 
         <Field label="登山筆記" hint="動機、策略、資源…（可留空）">
-          <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="寫低點解想登呢座山、打算點行…" />
+          <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="記錄為什麼想達成這個目標，以及打算如何推進…" />
         </Field>
       </div>
     </Modal>

@@ -28,7 +28,7 @@ const keysOf = (o: object) => Object.keys(o).sort()
 const persistedKeysOf = (o: object) => keysOf(JSON.parse(JSON.stringify(o)))
 
 describe('createCollection.add（寫入時剷走顯式 undefined）', () => {
-  it('剷走值為 undefined 嘅 optional 欄位（key 真係唔存在，唔係 = undefined）', () => {
+  it('剷走值為 undefined 嘅 optional 欄位（key 真係唔存在，不是 = undefined）', () => {
     const col = createCollection<Item>('test-add-strip')
     const item = col.add({ id: 'x', name: 'a', note: undefined, count: undefined })
     expect(item).toEqual({ id: 'x', name: 'a' })

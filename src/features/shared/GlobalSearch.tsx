@@ -24,7 +24,7 @@ import {
   inboxCol,
   type SavedPaper,
 } from '../../data/collections'
-// 深化功能嘅真資料喺各自 feature-local collection（唔係 legacy core col）
+// 深化功能的真資料在各自 feature-local collection（不是 legacy core col）
 import { richNotesCol, type RichNote } from '../learning/notes/store'
 import { journalDocsCol } from '../learning/journal/store'
 import type { JournalDoc } from '../learning/journal/util'
@@ -119,7 +119,7 @@ import {
 //  全域搜尋 — Spotlight / Raycast 級
 //  ------------------------------------------------------------
 //  • 跨 20 個資料源即時模糊搜尋（子序列比對 + 評分 + 高亮）
-//  • 鍵盤全操控：↑↓ 揀、↵ 開、⌘↵ 主動作、Tab 切類別、Esc 清空
+//  • 鍵盤全操控：↑↓ 選擇、↵ 開、⌘↵ 主動作、Tab 切類別、Esc 清空
 //  • 分類群組 / 統一排序兩種視圖、類別過濾、type: 運算子
 //  • 桌面右側即時預覽面板（全文 + 中繼資料 + 動作）
 //  • 最近搜尋（持久化）+ 釘選常用搜尋
@@ -135,8 +135,8 @@ interface Hit {
   icon: LucideIcon
   badgeTone: 'slate' | 'accent' | 'green' | 'amber' | 'rose' | 'blue'
   title: string // 主標題（高亮命中欄位）
-  matchedField: string // 命中文字（用嚟高亮 + snippet）
-  indices: number[] // 命中 index（喺 matchedField 上）
+  matchedField: string // 命中文字（用來高亮 + snippet）
+  indices: number[] // 命中 index（在 matchedField 上）
   score: number
   subtitle?: string // 次要資訊（日期、分類…）
   body?: string // 預覽全文
@@ -177,7 +177,7 @@ const KIND_META: Record<string, Omit<SourceKind, 'id'>> = {
 
 const ALL_KIND_IDS = Object.keys(KIND_META)
 
-// 給某 kind 整一條 Hit（先做 fuzzy；唔匹配回 null）
+// 給某 kind 整一條 Hit（先做 fuzzy；不匹配回 null）
 function buildHit(
   kindId: string,
   entityId: string,
@@ -188,7 +188,7 @@ function buildHit(
   opts?: { ts?: number; pinned?: boolean },
 ): Hit | null {
   const m = KIND_META[kindId]
-  // 對每個欄位做 fuzzy，攞最高分嗰個做命中欄位
+  // 對每個欄位做 fuzzy，取得最高分那個做命中欄位
   let best: { field: string; score: number; indices: number[] } | null = null
   let titleField = fields[0]?.title ?? ''
   for (const f of fields) {
@@ -203,8 +203,8 @@ function buildHit(
   if (query && !best) return null
   if (!titleField) titleField = best?.field ?? ''
 
-  // matchedField = 評分最高嗰個欄位；indices 永遠對應 matchedField
-  // （標題高亮喺 ResultRow 內自行 fuzzyMatch，避免 index 錯位）
+  // matchedField = 評分最高那個欄位；indices 永遠對應 matchedField
+  // （標題高亮在 ResultRow 內自行 fuzzyMatch，避免 index 錯位）
   const matchedField = best?.field ?? titleField
   return {
     id: `${kindId}:${entityId}`,
@@ -225,7 +225,7 @@ function buildHit(
   }
 }
 
-// ISO / 日期字串 → ms epoch（畀 in:recent / sort:recent 排序用）；無效回 undefined
+// ISO / 日期字串 → ms epoch（給 in:recent / sort:recent 排序用）；無效回 undefined
 function toMs(s?: string): number | undefined {
   if (!s) return undefined
   const t = Date.parse(s)
@@ -235,19 +235,19 @@ function toMs(s?: string): number | undefined {
 // 視圖模式（grouped 分類 / ranked 最相關 / recent 最近——按 hit 既有 ts 排）
 type ViewMode = 'grouped' | 'ranked' | 'recent'
 
-// 教學引導：教用家「點用」呢個功能（2–4 步，FeatureGuide 只取頭 4 步）。
+// 教學引導：教用家「如何使用」此功能（2–4 步，FeatureGuide 只取頭 4 步）。
 const GUIDE_STEPS: FeatureGuideStep[] = [
   {
     title: '打幾個字',
-    desc: '喺上方一格打關鍵字，即時掃晒筆記、題庫、資源、教案、Inbox、行事曆…',
+    desc: '在上方一格打關鍵字，即時掃全部筆記、題庫、資源、教案、Inbox、行事曆…',
   },
   {
     title: '收窄範圍',
-    desc: '撳「分類／最相關／最近」切換排序，或用下方類別 pill 揀返一種資料。',
+    desc: '按「分類／最相關／最近」切換排序，或用下方類別 pill 重新選擇一種資料。',
   },
   {
     title: '鍵盤直達',
-    desc: '↑↓ 揀、↵ 開、⌘1–9 快速跳；右邊預覽即時睇內容。',
+    desc: '↑↓ 選擇、↵ 開、⌘1–9 快速跳；右邊預覽即時查看內容。',
   },
   {
     title: '進階搜尋',
@@ -301,8 +301,8 @@ export default function GlobalSearch() {
 
   const parsed = useMemo(() => parseQuery(raw.trim(), ALL_KIND_IDS), [raw])
   const query = parsed.text
-  // type: 自動完成建議（睇原始 raw，唔 trim——尾隨空格代表 token 已完成）。
-  // 只喺目前模式 scope 下提示相關 kind，貼合使用者實際睇到嘅結果。
+  // type: 自動完成建議（查看原始 raw，不 trim——尾隨空格代表 token 已完成）。
+  // 只在目前模式 scope 下提示相關 kind，貼合使用者實際查看到的結果。
   const typeSugs = useMemo(() => {
     const valid = scopeMode ? ALL_KIND_IDS.filter((k) => KIND_META[k].modes.includes(mode)) : ALL_KIND_IDS
     return typeSuggestions(raw, valid, (id) => KIND_META[id]?.label ?? id)
@@ -312,7 +312,7 @@ export default function GlobalSearch() {
   // 輸入框即時更新、重運算延後一拍跟上。輸入鍵盤 chrome 仍用即時 query。
   const deferredQuery = useDeferredValue(query)
 
-  // 課題 對照（畀題目、教案做副標）
+  // 課題 對照（給題目、教案做副標）
   const topicById = useMemo(() => new Map(topics.map((t) => [t.id, t.topic])), [topics])
   const deckById = useMemo(() => new Map(decks.map((d) => [d.id, d.name])), [decks])
 
@@ -431,7 +431,7 @@ export default function GlobalSearch() {
         { label: '擷取', value: fmtDate(it.createdAt) },
       ], q, { ts: toMs(it.createdAt) })),
     )
-    // 私隱閘：被 gate 嘅功能（同其資料實體）一律唔出搜尋結果。
+    // 私隱閘：被 gate 的功能（同其資料實體）一律不出搜尋結果。
     // 每條 Hit 都帶 featureId，用 isFeatureAvailable 一次過濾掉功能入口 + 實體。
     return out.filter((h) => isFeatureAvailable(h.featureId))
   }, [
@@ -441,7 +441,7 @@ export default function GlobalSearch() {
   ])
 
   // 「最近」排序生效條件：view='recent' 視圖 或 sort:recent 運算子（兩者共用同一
-  // applyOperators 路徑，避免重複實作排序）。grouped 視圖唔受影響（仍按類別分組）。
+  // applyOperators 路徑，避免重複實作排序）。grouped 視圖不受影響（仍按類別分組）。
   const sortRecent = parsed.sortRecent || view === 'recent'
 
   // 過濾：mode scope + type 運算子 + 類別 pill；is:pinned / in:recent 過濾；
@@ -451,9 +451,9 @@ export default function GlobalSearch() {
     if (scopeMode) list = list.filter((h) => KIND_META[h.kindId].modes.includes(mode))
     if (parsed.typeFilter) list = list.filter((h) => h.kindId === parsed.typeFilter)
     if (kindFilter !== 'all') list = list.filter((h) => h.kindId === kindFilter)
-    // is:pinned / in:recent 過濾 + 最近排序（純函式，唔 mutate）
+    // is:pinned / in:recent 過濾 + 最近排序（純函式，不 mutate）
     list = applyOperators(list, { ...parsed, sortRecent }, Date.now())
-    // 最近排序已喺 applyOperators 內排好；否則按既有規則排
+    // 最近排序已在 applyOperators 內排好；否則按既有規則排
     if (!sortRecent) {
       if (deferredQuery) list = list.slice().sort((a, b) => b.score - a.score)
       else
@@ -467,8 +467,8 @@ export default function GlobalSearch() {
     sortRecent, kindFilter, deferredQuery,
   ])
 
-  // 統計：每類命中數（畀 Pills 顯示）。要計埋 is:pinned / in:recent 運算子過濾
-  // （但唔計 type: / kindFilter 本身），令 pill 數同實際結果一致。
+  // 統計：每類命中數（給 Pills 顯示）。要計埋 is:pinned / in:recent 運算子過濾
+  // （但不計 type: / kindFilter 本身），令 pill 數同實際結果一致。
   const kindCounts = useMemo(() => {
     let base = scopeMode
       ? allHits.filter((h) => KIND_META[h.kindId].modes.includes(mode))
@@ -495,7 +495,7 @@ export default function GlobalSearch() {
     }))
   }, [filtered])
 
-  // 鍵盤導航用嘅「扁平可見序」（三種視圖都要一致 index）
+  // 鍵盤導航用的「扁平可見序」（三種視圖都要一致 index）
   // ranked / recent 同樣係扁平清單；grouped 先按類別分組
   const flatVisible = useMemo(() => {
     if (view !== 'grouped') return filtered
@@ -527,8 +527,8 @@ export default function GlobalSearch() {
     (text: string) => {
       try {
         const p = navigator.clipboard?.writeText(text)
-        // writeText 回 Promise；async 失敗（權限／非安全內容）唔會行 sync catch，
-        // 要顯式接住 rejection，先唔會誤報「已複製」+ 避免 unhandled rejection
+        // writeText 回 Promise；async 失敗（權限／非安全內容）不會行 sync catch，
+        // 要顯式接住 rejection，先不會誤報「已複製」+ 避免 unhandled rejection
         if (p) {
           p.then(
             () => toast.success('已複製到剪貼簿'),
@@ -653,7 +653,7 @@ export default function GlobalSearch() {
         icon={Radar}
         kicker={t('globalSearch.kicker', { defaultValue: 'Global Search' })}
         title={t('globalSearch.title', { defaultValue: '全域搜尋' })}
-        description={t('globalSearch.subtitle', { defaultValue: '一格搜尋，掃晒成個平台' })}
+        description={t('globalSearch.subtitle', { defaultValue: '一格搜尋，掃全部成個平台' })}
         actions={
           <span className="hidden items-center gap-1 rounded-lg bg-white/15 px-2.5 py-1 font-mono text-xs font-medium text-white backdrop-blur-sm sm:inline-flex">
             <Command size={11} /> K
@@ -686,7 +686,7 @@ export default function GlobalSearch() {
               type="text"
               value={raw}
               onChange={(e) => setRaw(e.target.value)}
-              placeholder="搵筆記、題庫、資源、教案、Inbox、行事曆…"
+              placeholder="搜尋筆記、題庫、資源、教案、Inbox、行事曆…"
               aria-label="全域搜尋"
               className="min-w-0 flex-1 bg-transparent text-base text-slate-800 outline-none placeholder:text-slate-400 dark:text-slate-100 dark:placeholder:text-slate-500 sm:text-[15px]"
             />
@@ -708,7 +708,7 @@ export default function GlobalSearch() {
             )}
           </div>
 
-        {/* type: 自動完成 — 打緊 type: 即喺輸入框下彈輕量建議列，撳即補全 */}
+        {/* type: 自動完成 — 打緊 type: 即在輸入框下彈輕量建議列，按即補全 */}
         {typeSugs.length > 0 && (
           <div
             className="mt-2 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800"
@@ -825,11 +825,11 @@ export default function GlobalSearch() {
         </div>
       </section>
 
-      {/* ───────── 教學引導：點用呢個功能（只喺未輸入時出，唔阻搜尋流程） ───────── */}
+      {/* ───────── 教學引導：如何使用此功能（只在未輸入時出，不阻搜尋流程） ───────── */}
       {!hasQuery && (
         <FeatureGuide
           storageKey="global-search"
-          title={t('globalSearch.guideTitle', { defaultValue: '全域搜尋點用？' })}
+          title={t('globalSearch.guideTitle', { defaultValue: '全域搜尋使用說明' })}
           steps={GUIDE_STEPS}
         />
       )}
@@ -850,11 +850,11 @@ export default function GlobalSearch() {
       ) : total === 0 ? (
         <EmptyState
           icon={Radar}
-          title={`掃唔到「${query || raw}」`}
+          title={`掃不到「${query || raw}」`}
           hint={
             scopeMode
-              ? '換個關鍵字、清除類別過濾，或者撳「搜全部模式」擴大探照範圍。又或者就用呢句字，即刻開一筆：'
-              : '換個關鍵字、清除類別過濾。又或者就用呢句字，即刻開一筆：'
+              ? '換個關鍵字、清除類別過濾，或者按「搜全部模式」擴大探照範圍。又或者就用這句文字，立即開一筆：'
+              : '換個關鍵字、清除類別過濾。又或者就用這句文字，立即開一筆：'
           }
           action={
             <div className="flex flex-wrap items-center justify-center gap-2">
@@ -1006,10 +1006,10 @@ function ResultRow({
   rowRef: (el: HTMLButtonElement | null) => void
 }) {
   const Icon = hit.icon
-  // 標題高亮：獨立 fuzzyMatch（index 永遠對應標題本身，唔會錯位）
+  // 標題高亮：獨立 fuzzyMatch（index 永遠對應標題本身，不會錯位）
   const titleHit = query ? fuzzyMatch(hit.title, query) : null
   const titleSegs = highlightSegments(hit.title, titleHit?.indices ?? [])
-  // 命中欄位同標題唔同（例如命中內文）→ 額外顯示 snippet
+  // 命中欄位同標題不同（例如命中內文）→ 額外顯示 snippet
   const showSnippet = Boolean(query) && hit.matchedField !== hit.title && hit.indices.length > 0
   const snip = showSnippet ? snippetAround(hit.matchedField, hit.indices) : null
   const snipSegs = snip
@@ -1233,7 +1233,7 @@ function StartScreen({
           </h2>
           <p className="mt-1 max-w-xs text-xs text-slate-400 dark:text-slate-500">
             {t('globalSearch.startHint', {
-              defaultValue: '打幾個字即時掃晒全平台，或撳下面例子試下：',
+              defaultValue: '打幾個字即時掃全部全平台，或按下面例子嘗試：',
             })}
           </p>
           <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
@@ -1329,10 +1329,10 @@ function StartScreen({
         </UICard>
       )}
 
-      {/* 試下搵（fresh 時 hero 已示範，呢度只喺有歷史時補充） */}
+      {/* 嘗試搜尋（fresh 時 hero 已示範，這裡只在有歷史時補充） */}
       {!isFresh && (
         <div className="flex flex-wrap items-center gap-2 px-1 text-xs text-slate-400 dark:text-slate-500">
-          <span>試下搵：</span>
+          <span>嘗試搜尋：</span>
           {examples.map((ex) => (
             <button
               key={ex}
@@ -1346,7 +1346,7 @@ function StartScreen({
         </div>
       )}
 
-      {/* 進階搜尋（Raycast 風 power-user 提示）— 撳一下即套入搜尋框 */}
+      {/* 進階搜尋（Raycast 風 power-user 提示）— 按一下即套入搜尋框 */}
       <div className="flex flex-wrap items-center gap-2 px-1 text-xs text-slate-400 dark:text-slate-500">
         <span>進階搜尋：</span>
         {OPERATOR_HINTS.map((op) => (
@@ -1365,7 +1365,7 @@ function StartScreen({
   )
 }
 
-// 進階搜尋提示（StartScreen 顯示；token = 標籤，fill = 撳落去套入搜尋框嘅字）
+// 進階搜尋提示（StartScreen 顯示；token = 標籤，fill = 按落去套入搜尋框的字）
 const OPERATOR_HINTS: { token: string; fill: string; desc: string }[] = [
   { token: 'type:note', fill: 'type:note ', desc: '只看筆記類資料' },
   { token: 'is:pinned', fill: 'is:pinned ', desc: '只看已釘選項目' },
@@ -1373,8 +1373,8 @@ const OPERATOR_HINTS: { token: string; fill: string; desc: string }[] = [
   { token: 'sort:recent', fill: 'sort:recent ', desc: '按最近更新排序' },
 ]
 
-// 分組標頭嘅 icon chip 軟色（沿用既有 6 個 tone，畀每個類別一個鮮明身份，
-// 避免「一排一模一樣 slate chip」嘅 spreadsheet 感）。
+// 分組標頭的 icon chip 軟色（沿用既有 6 個 tone，給每個類別一個鮮明身份，
+// 避免「一排一模一樣 slate chip」的 spreadsheet 感）。
 const TONE_CHIP: Record<Hit['badgeTone'], string> = {
   slate: 'bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-300',
   accent: 'bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent',
@@ -1414,8 +1414,8 @@ function daysToLabel(dateStr: string): string {
   today.setHours(0, 0, 0, 0)
   const days = Math.round((target - today.getTime()) / 864e5)
   if (days === 0) return ' · 今日'
-  if (days > 0) return ` · 仲有 ${days} 日`
-  return ` · 過咗 ${-days} 日`
+  if (days > 0) return ` · 還有 ${days} 日`
+  return ` · 過了 ${-days} 日`
 }
 
 const QTYPE: Record<string, string> = { mc: '選擇題', short: '短答', long: '長答', case: '個案' }

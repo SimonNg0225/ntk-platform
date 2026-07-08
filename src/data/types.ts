@@ -1,7 +1,7 @@
 import type { Entity } from '../lib/store'
 
 // ============================================================
-//  網域資料型別（欄位對齊 Supabase 將來嘅表）
+//  網域資料型別（欄位對齊 Supabase 將來的表）
 // ============================================================
 
 // ───── 共用骨幹 ─────
@@ -131,7 +131,7 @@ export interface CalendarEvent extends Entity {
   location?: string
   url?: string
   recurrence?: RecurrenceRule
-  exDates?: string[] // 重複事件被刪 / 改嘅 occurrence（YYYY-MM-DD）
+  exDates?: string[] // 重複事件被刪 / 改的 occurrence（YYYY-MM-DD）
   alertMinutes?: number // 提前提醒（分鐘；顯示用）
   mode?: 'learning' | 'work' | 'both'
   type?: string // 舊欄位（測驗 / 會議 / 死線 / 提醒…）
@@ -182,7 +182,7 @@ export interface TimetableSlot extends Entity {
 }
 
 /** 日循環校曆：某真實日期 → cycle day（1..6 = A..F）。id = date 'YYYY-MM-DD'。
- *  跳過嘅日子（週末/假期/考試）唔會有記錄。 */
+ *  跳過的日子（週末/假期/考試）不會有記錄。 */
 export interface CycleCalendarEntry extends Entity {
   date: string // YYYY-MM-DD
   cycleDay: number // 1..6
@@ -197,7 +197,7 @@ export interface MeetingNote extends Entity {
   createdAt: string
 }
 
-// 觀課／評課工具（零學生 PII —— 觀嘅係老師嘅課）
+// 觀課／評課工具（零學生 PII —— 觀的係老師的課）
 export type ObservationCriterionKey =
   | 'objectives'
   | 'classroom'
@@ -206,7 +206,7 @@ export type ObservationCriterionKey =
   | 'timing'
   | 'differentiation'
 
-// 單一準則嘅 AI 觀察（每準則一兩句）
+// 單一準則的 AI 觀察（每準則一兩句）
 export interface ObservationCriterion {
   key: ObservationCriterionKey
   note: string
@@ -215,17 +215,17 @@ export interface ObservationCriterion {
 export interface Observation extends Entity {
   createdAt: string
   teacher: string // 被觀老師
-  klass: string // 班別（自由文字，零學生 PII，唔接 classesCol）
+  klass: string // 班別（自由文字，零學生 PII，不接 classesCol）
   subject: string // 科目
   date: string // YYYY-MM-DD 觀課日子
   period: string // 節次（自由文字，例：第3節 / Day A P5）
   topic: string // 課題
-  source: string // 課堂內容原文（貼上嘅文字稿 或 transcribe 出嘅 transcript）
+  source: string // 課堂內容原文（貼上的文字稿 或 transcribe 出的 transcript）
   // ── AI 撮要結果（未跑 AI 前全空）──
   criteria: ObservationCriterion[] // 六準則逐項觀察
   highlights: string[] // 整體亮點 2-3
   improvements: string[] // 改進建議 2-3
-  model?: string // 用咗邊個 model（顯示用）
+  model?: string // 用了哪個 model（顯示用）
 }
 
 // 快速擷取 Inbox（共用）
@@ -242,9 +242,9 @@ export interface Countdown extends Entity {
   date: string // YYYY-MM-DD（目標日子）
   time?: string // HH:mm（選填，顯示用）
   category?: CountdownCategory
-  mode?: 'learning' | 'work' | 'both' // 同 CalendarEvent 一致；用嚟過濾
+  mode?: 'learning' | 'work' | 'both' // 同 CalendarEvent 一致；用來過濾
   notes?: string
-  /** 標記「到達」(即完成) 嘅時間 (ISO)。早於 date 當日 = 提前到達；
+  /** 標記「到達」(即完成) 的時間 (ISO)。早於 date 當日 = 提前到達；
    *  未設且已過 date = 航班延誤。 */
   arrivedAt?: string
   createdAt: string
@@ -273,7 +273,7 @@ export interface Transaction extends Entity {
   categoryId: string // 對應 TxCategory.id；可指向已刪分類，UI fallback「未分類」
   date: string // YYYY-MM-DD（記帳日）
   note?: string
-  createdAt: string // ISO，用嚟同日多筆排序
+  createdAt: string // ISO，用來同日多筆排序
 }
 
 export interface TxCategory extends Entity {
@@ -284,11 +284,11 @@ export interface TxCategory extends Entity {
 }
 
 // ───── 自我測驗（題庫做題存檔，learning + work 共用）─────
-// 每題答題快照：把當時題目內容一齊存落，將來題庫改咗都唔影響歷史紀錄
+// 每題答題快照：把當時題目內容一起存落，將來題庫改了都不影響歷史紀錄
 export interface QuizAttemptItem {
   questionId: string
   topicId: string
-  difficulty: Difficulty // 重用現有 Difficulty type，唔使新增
+  difficulty: Difficulty // 重用現有 Difficulty type，不用新增
   stem: string
   options: string[]
   answerIndex: number // 正確答案 index
@@ -298,12 +298,12 @@ export interface QuizAttemptItem {
 
 export interface QuizAttempt extends Entity {
   createdAt: string // ISO，當交卷一刻
-  mode: 'learning' | 'work' // 喺邊個模式做（對齊 InboxItem / CalendarEvent 嘅 mode 慣例）
+  mode: 'learning' | 'work' // 在哪個模式做（對齊 InboxItem / CalendarEvent 的 mode 慣例）
   title: string // 自動產生，例如「全部課題 · 中 · 10 題」
   topicIds: string[] // 測驗範圍（空陣列 = 全部課題）
   difficulty: Difficulty | 'all' // 範圍難度（'all' = 不限）
   total: number // 題數
-  correctCount: number // 答啱數
+  correctCount: number // 答對數
   durationSec: number // 用時（秒）
-  items: QuizAttemptItem[] // 逐題快照（用嚟對答案 + 弱項分析 + 重做錯題）
+  items: QuizAttemptItem[] // 逐題快照（用來對答案 + 弱項分析 + 重做錯題）
 }

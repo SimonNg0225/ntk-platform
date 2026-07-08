@@ -74,11 +74,11 @@ import type { Card } from '../../data/types'
 //  ------------------------------------------------------------
 //  三大區：牌組（study）/ 瀏覽器（browse）/ 統計（stats）
 //  共用 decksCol / cardsCol 不變；標籤、暫停、複習歷史等
-//  全部喺 features/learning/flashcards/ 自家 collection。
+//  全部在 features/learning/flashcards/ 自家 collection。
 //  零新 npm，圖表全 SVG/div 自製。
 // ============================================================
 
-// metaById.get() 揾唔到時嘅 fallback，shape 同 metaOf() 內部 fallback 一致
+// metaById.get() 揾不到時的 fallback，shape 同 metaOf() 內部 fallback 一致
 const EMPTY_META: CardMeta = {
   id: '',
   tags: [],
@@ -98,12 +98,12 @@ export default function Flashcards() {
   const [screen, setScreen] = useState<Screen>({ name: 'home' })
   const [topView, setTopView] = useState<TopView>('decks')
 
-  // 教學引導步驟（inline t；唔改共用 i18n 檔）
+  // 教學引導步驟（inline t；不改共用 i18n 檔）
   const FLASHCARDS_GUIDE: FeatureGuideStep[] = [
     {
       title: t('flashcards.guideStep1Title', { defaultValue: '開個牌組' }),
       desc: t('flashcards.guideStep1Desc', {
-        defaultValue: '喺「牌組」頁打個科目／主題名，就建立得一疊卡。',
+        defaultValue: '在「牌組」頁打個科目／主題名，就建立得一疊卡。',
       }),
     },
     {
@@ -115,22 +115,22 @@ export default function Flashcards() {
     {
       title: t('flashcards.guideStep3Title', { defaultValue: '每日複習到期卡' }),
       desc: t('flashcards.guideStep3Desc', {
-        defaultValue: '撳「複習」逐張翻開，按記得幾熟評分，系統自動排下次。',
+        defaultValue: '按「複習」逐張翻開，按記得幾熟評分，系統自動排下次。',
       }),
     },
     {
-      title: t('flashcards.guideStep4Title', { defaultValue: '睇統計追進度' }),
+      title: t('flashcards.guideStep4Title', { defaultValue: '查看統計追進度' }),
       desc: t('flashcards.guideStep4Desc', {
         defaultValue: '「統計」頁有熱力圖、留存率同到期預測，掌握溫習節奏。',
       }),
     },
   ]
 
-  // 清理孤兒中繼（卡刪咗）
+  // 清理孤兒中繼（卡刪了）
   const allCards = useCollection(cardsCol)
   useEffect(() => {
     pruneMeta(new Set(allCards.map((c) => c.id)))
-    // 只喺卡集合變動時跑
+    // 只在卡集合變動時跑
   }, [allCards])
 
   if (screen.name === 'detail')
@@ -160,14 +160,14 @@ export default function Flashcards() {
         kicker={t('flashcards.kicker', { defaultValue: 'Spaced Repetition' })}
         title={t('flashcards.pageTitle', { defaultValue: '知識卡 + 複習' })}
         description={t('flashcards.pageDesc', {
-          defaultValue: '一張張寫低重點，間隔重複幫你記得牢；到期先彈出嚟溫故知新。',
+          defaultValue: '一張張記錄重點，間隔重複幫你記得牢；到期先彈出來溫故知新。',
         })}
       />
 
-      {/* ───────── 教學引導：點用呢個功能 ───────── */}
+      {/* ───────── 教學引導：如何使用此功能 ───────── */}
       <FeatureGuide
         storageKey="flashcards"
-        title={t('flashcards.guideTitle', { defaultValue: '知識卡點用？' })}
+        title={t('flashcards.guideTitle', { defaultValue: '知識卡使用說明' })}
         steps={FLASHCARDS_GUIDE}
       />
 
@@ -244,7 +244,7 @@ function DeckHome({
     toast.success(t('flashcards.deckCreated', { defaultValue: '已新增牌組' }))
   }
 
-  // 今日複習進度：已複習 / (已複習 + 仲到期)，畀 hero 進度條用
+  // 今日複習進度：已複習 / (已複習 + 還到期)，給 hero 進度條用
   const todayTotal = reviewedToday + totalDue
   const todayPct = todayTotal > 0 ? Math.round((reviewedToday / todayTotal) * 100) : 0
 
@@ -266,9 +266,9 @@ function DeckHome({
           </p>
           <p className="mt-3 max-w-md text-sm text-white/80" aria-live="polite">
             {totalDue > 0
-              ? t('flashcards.heroDue', { defaultValue: '揀一疊，逐張翻開，溫故知新。' })
+              ? t('flashcards.heroDue', { defaultValue: '選擇一疊，逐張翻開，溫故知新。' })
               : reviewedToday > 0
-                ? t('flashcards.heroCleared', { defaultValue: '今日已清晒到期卡，做得好 ✨' })
+                ? t('flashcards.heroCleared', { defaultValue: '今日已清全部到期卡，做得好 ✨' })
                 : t('flashcards.heroIdle', {
                     defaultValue: '暫時無到期卡，可以衝刺或者開新牌組。',
                   })}
@@ -554,7 +554,7 @@ function DeckHome({
               })}
               hint={t('flashcards.emptyDecksHint', {
                 defaultValue:
-                  '上面打個名就建立得；或者用「匯入」貼一批 CSV / JSON，一次過入晒。',
+                  '上面打個名就建立得；或者用「匯入」貼一批 CSV / JSON，一次過入全部。',
               })}
               action={
                 <Button variant="secondary" icon={Upload} onClick={() => setIoOpen(true)}>
@@ -569,7 +569,7 @@ function DeckHome({
       {/* 匯入匯出 Modal */}
       <ImportExport decks={decks} open={ioOpen} onClose={() => setIoOpen(false)} />
 
-      {/* 揀學習模式 Modal */}
+      {/* 選擇學習模式 Modal */}
       {studyFor && (
         <StudyModeModal
           deckId={studyFor}
@@ -632,7 +632,7 @@ function StudyModeModal({
       mode: 'cram',
       icon: Zap,
       title: t('flashcards.modeCram', { defaultValue: '衝刺' }),
-      desc: t('flashcards.modeCramDesc', { defaultValue: '全部卡，唔影響排程' }),
+      desc: t('flashcards.modeCramDesc', { defaultValue: '全部卡，不影響排程' }),
       count: cards.length,
       unit: t('flashcards.unitAll', { defaultValue: '張全部' }),
     },
@@ -651,12 +651,12 @@ function StudyModeModal({
     <Modal
       open
       onClose={onClose}
-      title={t('flashcards.pickModeTitle', { defaultValue: '揀練習模式' })}
+      title={t('flashcards.pickModeTitle', { defaultValue: '選擇練習模式' })}
       size="sm"
     >
       <p className="-mt-1 mb-3 text-xs text-slate-500 dark:text-slate-400">
         {t('flashcards.pickModeHint', {
-          defaultValue: '想點樣翻呢疊卡？揀一個模式就開始。',
+          defaultValue: '想如何溫習這疊卡？選擇一個模式即可開始。',
         })}
       </p>
       <div className="grid gap-2">
@@ -990,10 +990,10 @@ function DeckDetail({
           <li>
             <EmptyState
               icon={Sparkles}
-              title={t('flashcards.emptyCardsTitle', { defaultValue: '呢疊卡仲係空白' })}
+              title={t('flashcards.emptyCardsTitle', { defaultValue: '這疊卡仍是空白' })}
               hint={t('flashcards.emptyCardsHint', {
                 defaultValue:
-                  '喺上面寫低正面同背面，撳「加入卡片」就有第一張。可以連續加，唔使逐張開。',
+                  '在上方記錄正面同背面，按「加入卡片」就有第一張。可以連續加，不用逐張開。',
               })}
             />
           </li>
@@ -1097,7 +1097,7 @@ function DeckSettingsModal({
           />
           <p className="mt-1 text-[11px] text-slate-400 dark:text-slate-500">
             {t('flashcards.newPerDayHint', {
-              defaultValue: '每次複習最多引入幾多張未學過嘅新卡（避免一下子太多）。',
+              defaultValue: '每次複習最多引入幾多張未學過的新卡（避免一下子太多）。',
             })}
           </p>
         </div>

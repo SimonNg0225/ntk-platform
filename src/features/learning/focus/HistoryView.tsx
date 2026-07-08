@@ -103,7 +103,7 @@ export default function HistoryView({
     return out
   }, [logs, q, kindFilter, projectFilter, sort])
 
-  // 按日分組（只喺時間排序時）
+  // 按日分組（只在時間排序時）
   const grouped = useMemo(() => {
     if (sort !== 'time-desc' && sort !== 'time-asc') return null
     const map = new Map<string, FocusLog[]>()
@@ -118,7 +118,7 @@ export default function HistoryView({
 
   async function del(l: FocusLog) {
     const ok = await confirm({
-      title: '刪除呢節紀錄？',
+      title: '刪除此節紀錄？',
       message: '統計數據會即時更新，此操作無法復原。',
       tone: 'danger',
       confirmText: '刪除',
@@ -159,11 +159,11 @@ export default function HistoryView({
           專注日誌 · Log
         </p>
         <h2 className="mt-2 text-[22px] font-semibold leading-none tracking-tight text-slate-800 dark:text-slate-100 sm:text-[26px]">
-          每一節，都記低咗
+          每一節，都記低了
         </h2>
       </header>
 
-      {/* ── 搜尋欄：似計時頁嘅安靜捕捉欄（中性底、無重邊） ── */}
+      {/* ── 搜尋欄：似計時頁的安靜捕捉欄（中性底、無重邊） ── */}
       <Input
         value={q}
         onChange={(e) => setQ(e.target.value)}
@@ -172,7 +172,7 @@ export default function HistoryView({
         className="rounded-xl border-slate-200/80 bg-slate-50/60 shadow-none focus:bg-white dark:border-slate-700/60 dark:bg-slate-800/50 dark:focus:bg-slate-800"
       />
 
-      {/* ── 篩選 / 排序：低調一行，唔搶日誌風頭 ── */}
+      {/* ── 篩選 / 排序：低調一行，不搶日誌風頭 ── */}
       <div className="flex flex-wrap items-center justify-between gap-2.5">
         <div className="flex flex-wrap items-center gap-2">
           <SegmentedControl<KindFilter>
@@ -237,7 +237,7 @@ export default function HistoryView({
         <EmptyState
           icon={Calendar}
           title="未有符合的紀錄"
-          hint="調整篩選，或喺計時器完成一節專注。"
+          hint="調整篩選，或在計時器完成一節專注。"
         />
       ) : grouped ? (
         <div className="space-y-6">
@@ -427,7 +427,7 @@ function EditModal({
     <Modal
       open
       onClose={onClose}
-      title="修訂呢一節"
+      title="修訂此節"
       footer={
         <>
           <Button variant="ghost" onClick={onClose}>
@@ -479,7 +479,7 @@ function EditModal({
           </div>
         </div>
         <Field label="反思筆記">
-          <Textarea value={note} onChange={(e) => setNote(e.target.value)} rows={2} placeholder="完成咗啲咩？有咩可以改善？" />
+          <Textarea value={note} onChange={(e) => setNote(e.target.value)} rows={2} placeholder="完成了什麼？有什麼可以改善？" />
         </Field>
       </div>
     </Modal>
@@ -555,10 +555,10 @@ function AddModal({ projects, onClose }: { projects: FocusProject[]; onClose: ()
           </Field>
         </div>
 
-        {/* 做緊咩：歸類資訊另成一組，hairline 分隔 */}
+        {/* 正在做什麼：歸類資訊另成一組，hairline 分隔 */}
         <div className="space-y-3 border-t border-slate-200/70 pt-4 dark:border-slate-700/50">
           <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
-            做緊咩
+            正在做什麼
           </p>
           <Field label="任務（選填）">
             <Input value={label} onChange={(e) => setLabel(e.target.value)} placeholder="專注內容" />

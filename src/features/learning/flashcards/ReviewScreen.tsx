@@ -39,7 +39,7 @@ import type { StudyMode } from './types'
 //  - 多模式（srs / cram / typed / starred）
 //  - 鍵盤捷徑（Space 翻面、1-4 評分、F 標記、S 暫停、Z 撤銷）
 //  - 撤銷上一答（還原排程 + 刪 log）
-//  - 答題即時寫 ReviewLog（heatmap / 留存率靠佢）
+//  - 答題即時寫 ReviewLog（heatmap / 留存率靠他）
 //  - typed 模式自動對比答案
 //  - session 完結統計（答對率 + 答題分布）
 // ============================================================
@@ -56,13 +56,13 @@ const RATING_UI: Record<
   { label: string; cls: string; dot: string; key: string }
 > = {
   again: {
-    label: '唔記得',
+    label: '不記得',
     key: '1',
     dot: 'bg-rose-500',
     cls: 'border-rose-200 bg-rose-50/40 text-rose-600 hover:border-rose-300 hover:bg-rose-50 dark:border-rose-500/30 dark:bg-rose-500/5 dark:text-rose-400 dark:hover:bg-rose-500/10',
   },
   hard: {
-    label: '有啲難',
+    label: '有些難',
     key: '2',
     dot: 'bg-amber-500',
     cls: 'border-amber-200 bg-amber-50/40 text-amber-600 hover:border-amber-300 hover:bg-amber-50 dark:border-amber-500/30 dark:bg-amber-500/5 dark:text-amber-400 dark:hover:bg-amber-500/10',
@@ -186,7 +186,7 @@ export default function ReviewScreen({
 
       setQueue((q) => {
         const [, ...rest] = q
-        // again（或 cram）→ 排返隊尾今次再睇
+        // again（或 cram）→ 排返隊尾今次再查看
         const next = rating === 'again' ? [...rest, card.id] : rest
         return next
       })
@@ -213,7 +213,7 @@ export default function ReviewScreen({
   const suspendCurrent = useCallback(() => {
     if (!card) return
     upsertMeta(card.id, { suspended: true })
-    toast.info('已暫停呢張，唔再出現')
+    toast.info('已暫停這張，不再出現')
     setQueue((q) => q.slice(1))
   }, [card, toast])
 
@@ -227,7 +227,7 @@ export default function ReviewScreen({
   // ── 鍵盤捷徑 ──────────────────────────────────
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      // typed 模式喺輸入框打字時，唔搶數字鍵
+      // typed 模式在輸入框打字時，不搶數字鍵
       const inInput =
         e.target instanceof HTMLInputElement ||
         e.target instanceof HTMLTextAreaElement
@@ -269,7 +269,7 @@ export default function ReviewScreen({
         ? Math.round((correct / sessionRatings.length) * 100)
         : 0
     const cheer =
-      acc >= 90 ? '記得好穩，繼續保持 ✨' : acc >= 70 ? '進步緊，明天再溫鞏固記憶。' : '記憶要時間，慢慢嚟一定得。'
+      acc >= 90 ? '記得好穩，繼續保持 ✨' : acc >= 70 ? '進步緊，明天再溫鞏固記憶。' : '記憶要時間，慢慢來一定得。'
     return (
       <div className="mx-auto max-w-md animate-fade-in-up">
         <div className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-sm dark:border-slate-700/60 dark:bg-slate-800 dark:shadow-none">
@@ -356,7 +356,7 @@ export default function ReviewScreen({
 
       {/* 卡片（centrepiece：實體索引卡 — 背後卡疊呈隊列深度、翻面有觸感） */}
       <div className="relative">
-        {/* 背後卡疊：剩越多、疊越厚（最多 2 層），呈現「有序隊列」嘅實體感 */}
+        {/* 背後卡疊：剩越多、疊越厚（最多 2 層），呈現「有序隊列」的實體感 */}
         {remaining > 2 && (
           <div
             aria-hidden="true"
@@ -388,7 +388,7 @@ export default function ReviewScreen({
           >
             <Flag size={15} className={meta?.flagged ? 'fill-current' : ''} />
           </IconButton>
-          <IconButton label="暫停呢張 (S)" size="sm" onClick={suspendCurrent}>
+          <IconButton label="暫停這張 (S)" size="sm" onClick={suspendCurrent}>
             <Ban size={15} />
           </IconButton>
         </div>
@@ -396,7 +396,7 @@ export default function ReviewScreen({
         <button
           type="button"
           onClick={() => !flipped && setFlipped(true)}
-          aria-label={flipped ? '已翻面' : '撳一下翻面睇答案'}
+          aria-label={flipped ? '已翻面' : '按一下翻面查看答案'}
           className={cx(
             'group relative flex min-h-[300px] w-full flex-col items-center justify-center gap-4 overflow-hidden rounded-3xl border bg-white px-8 pb-12 pt-9 text-center transition duration-200 dark:bg-slate-800',
             flipped
@@ -447,10 +447,10 @@ export default function ReviewScreen({
               )}
             </div>
           ) : (
-            // 翻面 affordance：貼底細提示，撳卡任何位都翻得
+            // 翻面 affordance：貼底細提示，按卡任何位都翻得
             <span className="pointer-events-none absolute inset-x-0 bottom-3.5 flex items-center justify-center gap-1.5 text-[11px] font-medium text-slate-400 transition group-hover:text-accent dark:text-slate-500">
               <RotateCcw size={12} />
-              撳一下翻開背面
+              按一下翻開背面
             </span>
           )}
         </button>
@@ -463,7 +463,7 @@ export default function ReviewScreen({
             value={typed}
             onChange={(e) => setTyped(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && setFlipped(true)}
-            placeholder="打你嘅答案，Enter 對答案"
+            placeholder="打你的答案，Enter 對答案"
             autoFocus
             className="flex-1"
           />
@@ -491,7 +491,7 @@ export default function ReviewScreen({
           >
             {typedCorrect ? <Check size={13} strokeWidth={3} /> : <X size={13} strokeWidth={3} />}
           </span>
-          {typedCorrect ? '答啱！記憶穩固。' : `你答：${typed.trim() || '（空白）'}`}
+          {typedCorrect ? '答對！記憶穩固。' : `你答：${typed.trim() || '（空白）'}`}
         </div>
       )}
 

@@ -13,14 +13,14 @@ import { BRAND_NAME } from '../lib/brand'
 // ============================================================
 //  首次使用導覽（onboarding）—— 教師導向功能教學 + 一鍵載入示範資料。
 //  以「工作模式」教學流程行先（商業化對象＝全港老師），個人模式作輔。
-//  純 UI；載入示範資料嘅實際動作由 onLoadDemo（接 seedAllDemo）傳入。
+//  純 UI；載入示範資料的實際動作由 onLoadDemo（接 seedAllDemo）傳入。
 // ============================================================
 
 const TRUST_POINTS: { icon: typeof Sparkles; title: string; desc: string }[] = [
   {
     icon: UserRound,
     title: '個人先用',
-    desc: '不用先開學校或科組帳戶，一位老師都可以即刻開始。',
+    desc: '不用先開學校或科組帳戶，一位老師都可以立即開始。',
   },
   {
     icon: ShieldCheck,
@@ -42,8 +42,8 @@ const START_STEPS: { icon: typeof Sparkles; title: string; desc: string }[] = [
   },
   {
     icon: FileText,
-    title: '揀一個任務包',
-    desc: '教案、小測、簡報或課後回饋，先做最急嗰一件。',
+    title: '選擇一個任務包',
+    desc: '教案、小測、簡報或課後回饋，先處理最急的一件。',
   },
   {
     icon: PenLine,
@@ -73,7 +73,7 @@ export function OnboardingModal({
               先由下一堂課開始
             </h2>
             <p className="mt-1 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
-              不用先理解全部功能；輸入一個課題，揀一個任務包，再逐步把備課、
+              不用先理解全部功能；輸入一個課題，選擇一個任務包，再逐步把備課、
               出題、簡報同回饋收回同一個工作台。
             </p>
             <div className="mt-3 flex flex-col gap-2 sm:flex-row">

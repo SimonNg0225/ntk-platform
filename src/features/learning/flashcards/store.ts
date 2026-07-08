@@ -2,11 +2,11 @@ import { createCollection } from '../../../lib/store'
 import type { CardMeta, DeckPref, ReviewLog } from './types'
 
 // ============================================================
-//  知識卡功能專屬持久化（唔掂 data/collections.ts）
+//  知識卡功能專屬持久化（不掂 data/collections.ts）
 //  ------------------------------------------------------------
-//  共用 decksCol / cardsCol 維持唔變；本功能需要而 Card 型別冇嘅
-//  屬性（標籤 / 暫停 / leech）+ 複習歷史，全部存呢度。
-//  唯一 key（已喺 newCollections 申報）：
+//  共用 decksCol / cardsCol 維持不變；本功能需要而 Card 型別沒有的
+//  屬性（標籤 / 暫停 / leech）+ 複習歷史，全部存這裡。
+//  唯一 key（已在 newCollections 申報）：
 //    flashcard_card_meta / flashcard_review_log / flashcard_deck_pref
 // ============================================================
 

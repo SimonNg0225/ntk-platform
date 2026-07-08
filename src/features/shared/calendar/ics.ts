@@ -15,7 +15,7 @@ import { fromKey, getOccurrences, isAllDay, minutesOf, toKey } from './util'
 
 /**
  * RFC 5545 文字轉義：反斜線、分號、逗號要 escape，換行轉 \n。
- * 用喺 SUMMARY / DESCRIPTION / LOCATION 等 TEXT 值。
+ * 用在 SUMMARY / DESCRIPTION / LOCATION 等 TEXT 值。
  */
 export function escapeICSText(s: string): string {
   return s
@@ -33,7 +33,7 @@ export function toICSDate(key: string): string {
 
 /**
  * 砌一個「本地時間」DATE-TIME 值：YYYYMMDDTHHMMSS（無 Z，無 TZID）。
- * 唔加 Z（UTC）—— 因為 app 全程用本地時區語意，加 Z 會令匯入後偏移時差。
+ * 不加 Z（UTC）—— 因為 app 全程用本地時區語意，加 Z 會令匯入後偏移時差。
  * 用 floating local time，匯入到任何行事曆都當作機主本地時間，貼合原意。
  */
 export function toICSDateTime(key: string, time: string): string {
@@ -59,8 +59,8 @@ const BYDAY_CODES = ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'] as const
 
 /**
  * 把 RecurrenceRule.until（YYYY-MM-DD）轉做 RRULE UNTIL 值（YYYYMMDD）；
- * 畸形或唔係真實日子（如 2026-13-40）→ ''（呼叫端唔出 UNTIL）。
- * toICSDate 只校驗形狀，故呢度額外用 Date 確認月/日真實，免污染 feed。
+ * 畸形或不是真實日子（如 2026-13-40）→ ''（呼叫端不出 UNTIL）。
+ * toICSDate 只校驗形狀，故這裡額外用 Date 確認月/日真實，免污染 feed。
  */
 function rruleUntil(until: string): string {
   const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(until)
@@ -75,12 +75,12 @@ function rruleUntil(until: string): string {
 }
 
 /**
- * 由 CalendarEvent.recurrence 砌一條 RRULE 值（唔含 "RRULE:" 前綴）。
- *  · freq = none / 無 recurrence → 回 ''（呼叫端唔出 RRULE 行）。
+ * 由 CalendarEvent.recurrence 砌一條 RRULE 值（不含 "RRULE:" 前綴）。
+ *  · freq = none / 無 recurrence → 回 ''（呼叫端不出 RRULE 行）。
  *  · 永遠輸出 FREQ；interval > 1 先輸出 INTERVAL（=1 係預設，慳行）。
  *  · weekly + byWeekday → BYDAY=SU,MO,…（去重、跟 0..6 升序，過濾越界）。
  *  · until（YYYY-MM-DD）→ UNTIL=YYYYMMDD；同時有 count 時兩者都會出（RFC 5545
- *    建議二擇一，但呢度尊重資料；UI 一般只設其一）。
+ *    建議二擇一，但這裡尊重資料；UI 一般只設其一）。
  *  · count > 0 → COUNT=n。
  * 順序固定 FREQ;INTERVAL;BYDAY;UNTIL;COUNT，令輸出可重現（方便測試 / diff）。
  */
@@ -112,15 +112,15 @@ export function recurrenceToRRule(rec?: RecurrenceRule): string {
   return parts.join(';')
 }
 
-/** 由 DATE key 推下一日（給 all-day VEVENT 嘅 DTEND，iCal 用 exclusive end）。 */
+/** 由 DATE key 推下一日（給 all-day VEVENT 的 DTEND，iCal 用 exclusive end）。 */
 function nextDayKey(key: string): string {
   const d = fromKey(key)
   return toKey(new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1, 12))
 }
 
 /**
- * 計一個 occurrence 嘅結束 DATE-TIME（同一日，加 durationMin 分鐘）。
- * 只用喺有時間嘅事件。會自動跨日 carry（用本地 Date 運算）。
+ * 計一個 occurrence 的結束 DATE-TIME（同一日，加 durationMin 分鐘）。
+ * 只用在有時間的事件。會自動跨日 carry（用本地 Date 運算）。
  */
 function endDateTime(key: string, time: string, durationMin: number): string {
   const base = fromKey(key)
@@ -140,7 +140,7 @@ function endDateTime(key: string, time: string, durationMin: number): string {
 }
 
 /**
- * 一個事件「同一個 occurrence」嘅持續分鐘數：
+ * 一個事件「同一個 occurrence」的持續分鐘數：
  * - 有 endTime → endTime − time（同日；負或 0 當 0）
  * - 否則 → 0（即 DTEND = DTSTART，零長度，匯入後多數顯示為該時間點）
  */
@@ -150,13 +150,13 @@ function durationMinutes(ev: CalendarEvent): number {
   return diff > 0 ? diff : 0
 }
 
-/** 安全 UID：用穩定碎片組成，唔靠隨機（同一資料匯出多次 UID 一致，方便重匯更新）。 */
+/** 安全 UID：用穩定碎片組成，不靠隨機（同一資料匯出多次 UID 一致，方便重匯更新）。 */
 function uidFor(prefix: string, id: string, dateKey: string): string {
   const safe = String(id).replace(/[^A-Za-z0-9_-]/g, '')
   return `${prefix}-${safe}-${dateKey.replace(/-/g, '')}@ntk-platform`
 }
 
-/** 砌一個 VEVENT 嘅行陣列（唔含 BEGIN/END 以外嘅尾部換行；後面統一 join）。 */
+/** 砌一個 VEVENT 的行陣列（不含 BEGIN/END 以外的尾部換行；後面統一 join）。 */
 function veventLines(opts: {
   uid: string
   dtstamp: string
@@ -168,9 +168,9 @@ function veventLines(opts: {
   location?: string
   url?: string
   alertMinutes?: number
-  /** 重複規則值（已由 recurrenceToRRule 砌好，唔含 "RRULE:" 前綴）；空 = 唔出。 */
+  /** 重複規則值（已由 recurrenceToRRule 砌好，不含 "RRULE:" 前綴）；空 = 不出。 */
   rrule?: string
-  /** 被刪 / 改走嘅 occurrence（YYYY-MM-DD）；只喺 master VEVENT 出 EXDATE。 */
+  /** 被刪 / 改走的 occurrence（YYYY-MM-DD）；只在 master VEVENT 出 EXDATE。 */
   exDates?: string[]
 }): string[] {
   const lines: string[] = ['BEGIN:VEVENT', `UID:${opts.uid}`, `DTSTAMP:${opts.dtstamp}`]
@@ -183,7 +183,7 @@ function veventLines(opts: {
   }
   if (opts.rrule) lines.push(`RRULE:${opts.rrule}`)
   if (opts.exDates && opts.exDates.length) {
-    // EXDATE 對齊 DTSTART 嘅 VALUE 類型：全日用 DATE、有時間用 DATE-TIME。
+    // EXDATE 對齊 DTSTART 的 VALUE 類型：全日用 DATE、有時間用 DATE-TIME。
     const ds = [...new Set(opts.exDates)]
       .map((k) => toICSDate(k))
       .filter(Boolean)
@@ -192,7 +192,7 @@ function veventLines(opts: {
       if (opts.allDay) {
         lines.push(`EXDATE;VALUE=DATE:${ds.join(',')}`)
       } else {
-        // 用 master 嘅時分（由 dtstart 尾段 THHMMSS 取）。
+        // 用 master 的時分（由 dtstart 尾段 THHMMSS 取）。
         const t = opts.dtstart.includes('T') ? opts.dtstart.slice(opts.dtstart.indexOf('T')) : ''
         lines.push(`EXDATE:${ds.map((d) => `${d}${t}`).join(',')}`)
       }
@@ -216,16 +216,16 @@ function veventLines(opts: {
   return lines
 }
 
-/** 事件有冇「真正」嘅重複（recurrence 存在且 freq 唔係 none）。 */
+/** 事件有沒有「真正」的重複（recurrence 存在且 freq 不是 none）。 */
 function hasRecurrence(ev: CalendarEvent): boolean {
   return !!ev.recurrence && ev.recurrence.freq !== 'none'
 }
 
 /**
- * 砌「重複事件」嘅單一 master VEVENT（帶 RRULE）。錨定喺事件本身嘅
- * ev.date（= series 真正開始日），唔展開逐個 occurrence —— 交畀行事曆
+ * 砌「重複事件」的單一 master VEVENT（帶 RRULE）。錨定在事件本身的
+ * ev.date（= series 真正開始日），不展開逐個 occurrence —— 交給行事曆
  * app 按 RRULE 自行展開（Apple/Google 訂閱式 feed 需要係樣，先會永續彈提醒）。
- * exDates → EXDATE。range 喺呢條路徑唔適用（RRULE 由 app 無限展開）。
+ * exDates → EXDATE。range 在呢條路徑不適用（RRULE 由 app 無限展開）。
  */
 function recurringMasterLines(
   ev: CalendarEvent,
@@ -269,9 +269,9 @@ function recurringMasterLines(
  * 把可見事件轉成 VEVENT 行。
  * 兩條路徑：
  *  · 重複事件（recurrence.freq !== 'none'）→ 單一 master VEVENT + RRULE
- *    （錨定 series 開始日，交畀行事曆 app 按 RRULE 無限展開；EXDATE 帶被刪日）。
+ *    （錨定 series 開始日，交給行事曆 app 按 RRULE 無限展開；EXDATE 帶被刪日）。
  *  · 非重複事件 → 沿用範圍展開（getOccurrences 逐個 occurrence 出一個 VEVENT）。
- * 兩者都尊重行事曆開關（隱藏行事曆嘅事件唔出）。
+ * 兩者都尊重行事曆開關（隱藏行事曆的事件不出）。
  * 範圍 [startKey, endKey]（YYYY-MM-DD）只框住非重複路徑，避免無限爆檔。
  */
 export function eventsToVevents(
@@ -291,7 +291,7 @@ export function eventsToVevents(
 
   const out: string[] = []
 
-  // ── 路徑一：重複事件 → master + RRULE（每事件一條，唔展開）──
+  // ── 路徑一：重複事件 → master + RRULE（每事件一條，不展開）──
   const recurring = events
     .filter((ev) => hasRecurrence(ev) && isVisible(ev))
     .slice()
@@ -321,7 +321,7 @@ export function eventsToVevents(
     const ev = o.event
     const allDay = isAllDay(ev)
     const catName = o.category?.name
-    // 把行事曆名 / 舊 type 併入描述，匯入後仍睇得返脈絡。
+    // 把行事曆名 / 舊 type 併入描述，匯入後仍查看得返脈絡。
     const descParts = [ev.notes?.trim(), catName ? `行事曆：${catName}` : '']
       .filter(Boolean)
       .join('\n')
@@ -370,7 +370,7 @@ const COUNTDOWN_CAT_LABEL: Record<string, string> = {
 }
 
 /**
- * 把倒數轉成 VEVENT 行。倒數本質係「某日（可選時間）嘅大日子」：
+ * 把倒數轉成 VEVENT 行。倒數本質係「某日（可選時間）的大日子」：
  * - 有時間 → 該時間點（零長度 DATE-TIME 事件）
  * - 無時間 → 全日事件
  */
@@ -431,8 +431,8 @@ export function wrapCalendar(veventLineGroups: string[], calName?: string): stri
 }
 
 /**
- * RFC 5545 行摺疊：超過 75 個八位元組（這裡用字元近似）嘅行要摺，
- * 續行以一個空格開頭。多數短行唔受影響；長 SUMMARY / DESCRIPTION 先觸發。
+ * RFC 5545 行摺疊：超過 75 個八位元組（這裡用字元近似）的行要摺，
+ * 續行以一個空格開頭。多數短行不受影響；長 SUMMARY / DESCRIPTION 先觸發。
  */
 export function foldLine(line: string): string {
   if (line.length <= 75) return line
@@ -452,7 +452,7 @@ export interface BuildICSOptions {
   events: CalendarEvent[]
   cats: CalendarCategory[]
   countdowns: Countdown[]
-  /** 展開重複事件嘅範圍（含頭含尾，YYYY-MM-DD）。 */
+  /** 展開重複事件的範圍（含頭含尾，YYYY-MM-DD）。 */
   rangeStart: string
   rangeEnd: string
   includeEvents: boolean
@@ -486,7 +486,7 @@ export function buildICS(opts: BuildICSOptions): string {
   return wrapCalendar(groups, opts.calName)
 }
 
-/** 用喺檔名嘅日期戳：YYYY-MM-DD（本地）。 */
+/** 用在檔名的日期戳：YYYY-MM-DD（本地）。 */
 export function exportStamp(d: Date): string {
   return toKey(d)
 }

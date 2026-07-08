@@ -36,6 +36,6 @@ describe('parseDse', () => {
 
   it('冇題 throw', () => {
     expect(() => parseDse('[]')).toThrow()
-    expect(() => parseDse('唔係 JSON')).toThrow()
+    expect(() => parseDse('不是 JSON')).toThrow()
   })
 })

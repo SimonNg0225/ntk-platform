@@ -5,12 +5,12 @@ import type { Habit as LegacyHabit, HabitLog as LegacyHabitLog } from '../../../
 // ============================================================
 //  習慣追蹤（Streaks / Habitify 級）— 功能專屬資料層
 //  ------------------------------------------------------------
-//  鐵則：唔可以改 data/types.ts / data/collections.ts。
-//  所以喺呢度定義「擴充版」型別，並用自己嘅 collection key 持久化。
-//  首次載入會由舊嘅 habits / habit_logs 一次性遷移過嚟（保住現有資料）。
+//  鐵則：不可以改 data/types.ts / data/collections.ts。
+//  所以在這裡定義「擴充版」型別，並用自己的 collection key 持久化。
+//  首次載入會由舊的 habits / habit_logs 一次性遷移過來（保住現有資料）。
 // ============================================================
 
-// ───────── 顏色（自帶調色盤，唔 import 共用色檔，避免耦合）─────────
+// ───────── 顏色（自帶調色盤，不 import 共用色檔，避免耦合）─────────
 export type HabitColor =
   | 'accent'
   | 'blue'
@@ -158,9 +158,9 @@ export const HABIT_COLORS: Record<HabitColor, HabitColorSpec> = {
 export const HABIT_COLOR_KEYS = Object.keys(HABIT_COLORS) as HabitColor[]
 
 export function colorOf(c: string | undefined): HabitColorSpec {
-  // 用 own-property 檢查：唔可以靠 `HABIT_COLORS[c] ?? accent`，因為原型鍵
+  // 用 own-property 檢查：不可以靠 `HABIT_COLORS[c] ?? accent`，因為原型鍵
   // （如 'toString' / 'constructor'）會撞穿物件原型回傳函式（非 nullish），
-  // ?? 兜唔到，caller 會收到函式而非 HabitColorSpec，讀 spec.heat[i] 即 crash。
+  // ?? 兜不到，caller 會收到函式而非 HabitColorSpec，讀 spec.heat[i] 即 crash。
   if (c && Object.prototype.hasOwnProperty.call(HABIT_COLORS, c)) {
     return HABIT_COLORS[c as HabitColor]
   }
@@ -182,14 +182,14 @@ export function freqLabel(f: HabitFrequency): string {
   return `逢週 ${f.days.slice().sort((a, b) => a - b).map((d) => names[d]).join('、')}`
 }
 
-/** 某星期（0-6）係咪「應做日」（用嚟計排程完成率 / 顯示是否 due）。 */
+/** 某星期（0-6）係咪「應做日」（用來計排程完成率 / 顯示是否 due）。 */
 export function isScheduledDay(f: HabitFrequency, weekday: number): boolean {
   if (f.kind === 'daily') return true
   if (f.kind === 'weekly') return true // 每週 N 次：任何日都可以做
   return f.days.includes(weekday)
 }
 
-// ───────── 擴充版型別（喺自己檔定義）─────────
+// ───────── 擴充版型別（在自己檔定義）─────────
 export type HabitGoalKind = 'build' | 'quit' // 養成 / 戒除
 
 export interface Habit extends Entity {
@@ -214,7 +214,7 @@ export interface HabitLog extends Entity {
   note?: string
 }
 
-// ───────── 自己嘅持久化集合（新 key；自動存 localStorage）─────────
+// ───────── 自己的持久化集合（新 key；自動存 localStorage）─────────
 export const habitV2Col = createCollection<Habit>('habits_v2', [])
 export const habitLogV2Col = createCollection<HabitLog>('habit_logs_v2', [])
 
@@ -231,7 +231,7 @@ export function migrateLegacyHabits(): void {
     const legacyLogs = habitLogsCol.get() as LegacyHabitLog[]
     const existing = habitV2Col.get()
 
-    // 只喺 v2 仲空 + 舊資料有嘢時遷移，避免覆蓋
+    // 只在 v2 還空 + 舊資料有嘢時遷移，避免覆蓋
     if (existing.length === 0 && legacyHabits.length > 0) {
       const palette = HABIT_COLOR_KEYS
       const migratedHabits: Habit[] = legacyHabits.map((h, i) => ({

@@ -5,12 +5,12 @@ import { isCollectionSyncable } from './featureFlags'
 // ============================================================
 //  雲端同步 (Supabase ⇄ 本地集合)
 //  ------------------------------------------------------------
-//  - 未登入：完全唔郁，照用 localStorage（訪客模式）。
+//  - 未登入：完全不郁，照用 localStorage（訪客模式）。
 //  - 登入後 attachSync(userId)：
-//      1. 一次過由 app_rows 拉晒呢個 user 嘅所有集合。
-//      2. 雲端「有」嘅集合 → 覆蓋本地（cloud 優先）。
-//         雲端「冇」嘅集合 → 將本地資料 seed 上雲（first-login 自動上傳）。
-//      3. 之後監聽每個集合嘅本地改動 → debounce 寫返上雲 (upsert)。
+//      1. 一次過由 app_rows 拉全部這個 user 的所有集合。
+//      2. 雲端「有」的集合 → 覆蓋本地（cloud 優先）。
+//         雲端「沒有」的集合 → 將本地資料 seed 上雲（first-login 自動上傳）。
+//      3. 之後監聽每個集合的本地改動 → debounce 寫回上雲 (upsert)。
 //  - 登出 detachSync()：停止同步，localStorage 保留做訪客資料。
 //
 //  衝突策略：以「集合」為單位 last-write-wins。個人用途、
@@ -50,24 +50,24 @@ function schedulePush(userId: string, key: string, getData: () => unknown[]): vo
 /** 登入後啟動同步 */
 export async function attachSync(userId: string): Promise<void> {
   if (!supabase) return
-  if (attachedUserId === userId) return // 已經喺同步緊同一個 user
-  detachSync() // 清走舊 user 嘅訂閱／timer
+  if (attachedUserId === userId) return // 已經在同步緊同一個 user
+  detachSync() // 清走舊 user 的訂閱／timer
 
   attachedUserId = userId
   hydrating = true
 
-  // 0) 確保所有 lazy-load feature 嘅 collection 都登記齊，先 hydrate / 訂閱；
-  //    否則只覆蓋早期登記嘅核心 collection（feature 資料跨裝置會漏同步，
-  //    第一次本地寫入仲會反過嚟覆蓋雲端）。用動態 import 避免 lib→features 靜態循環。
+  // 0) 確保所有 lazy-load feature 的 collection 都登記齊，先 hydrate / 訂閱；
+  //    否則只覆蓋早期登記的核心 collection（feature 資料跨裝置會漏同步，
+  //    第一次本地寫入還會反過來覆蓋雲端）。用動態 import 避免 lib→features 靜態循環。
   try {
     const reg = await import('../features/registry')
     await reg.preloadAllFeatures()
   } catch {
-    /* 預載失敗唔阻同步：照用已登記嘅 collection */
+    /* 預載失敗不阻同步：照用已登記的 collection */
   }
   if (attachedUserId !== userId) return // preload 期間若已登出 / 切 user 就停
 
-  // 1) 一次過拉晒雲端資料（RLS 已保證只會攞到自己嘅 row）
+  // 1) 一次過拉全部雲端資料（RLS 已保證只會取得到自己的 row）
   const cloud = new Map<string, unknown[]>()
   try {
     const { data, error } = await supabase
@@ -84,9 +84,9 @@ export async function attachSync(userId: string): Promise<void> {
     return
   }
 
-  // 2) 套用：雲端有 → 覆蓋本地；雲端冇 → seed 本地上雲
+  // 2) 套用：雲端有 → 覆蓋本地；雲端沒有 → seed 本地上雲
   for (const [key, col] of collectionRegistry) {
-    // 學生／家長 PII collection 喺旗標關閉時唔上雲（收費版未過 PDPO 合規）。
+    // 學生／家長 PII collection 在旗標關閉時不上雲（收費版未過 PDPO 合規）。
     if (!isCollectionSyncable(key)) continue
     if (cloud.has(key)) {
       col.set(cloud.get(key) as never[]) // cloud 優先
@@ -97,7 +97,7 @@ export async function attachSync(userId: string): Promise<void> {
 
   hydrating = false
 
-  // 3) 監聽本地改動 → 寫返上雲（hydration 期間唔會 push）
+  // 3) 監聽本地改動 → 寫回上雲（hydration 期間不會 push）
   for (const [key, col] of collectionRegistry) {
     if (!isCollectionSyncable(key)) continue
     const unsub = col.subscribe(() => {

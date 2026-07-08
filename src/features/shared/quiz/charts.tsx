@@ -41,7 +41,7 @@ export function ScoreLineChart({ points }: { points: ScorePoint[] }) {
   if (points.length === 0) {
     return (
       <p className="py-8 text-center text-sm text-slate-400 dark:text-slate-500">
-        做多幾次測驗，呢度就會畫出你嘅命中率走勢。
+        做多幾次測驗，這裡就會畫出你的命中率走勢。
       </p>
     )
   }
@@ -116,7 +116,7 @@ export function TopicMasteryBars({
   if (rows.length === 0)
     return (
       <p className="py-6 text-center text-sm text-slate-400 dark:text-slate-500">
-        測驗多幾次，就會見到邊個課題要加把勁。
+        測驗多幾次，就會見到哪個課題要加把勁。
       </p>
     )
   return (
@@ -196,7 +196,7 @@ export function DifficultyDonut({
   if (total === 0)
     return (
       <p className="py-6 text-center text-sm text-slate-400 dark:text-slate-500">
-        仲未夠資料分難度，做多幾題先。
+        尚未夠資料分難度，做多幾題先。
       </p>
     )
 

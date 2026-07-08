@@ -197,7 +197,7 @@ describe('pct（命中率，除零保護）', () => {
     expect(pct(0, 4)).toBe(0)
   })
 
-  it('total = 0 → 0（唔係 NaN）', () => {
+  it('total = 0 → 0（不是 NaN）', () => {
     expect(pct(0, 0)).toBe(0)
     expect(pct(5, 0)).toBe(0)
     expect(Number.isNaN(pct(1, 0))).toBe(false)
@@ -286,7 +286,7 @@ describe('timedPoints（計時搶分，除零保護）', () => {
     expect(timedPoints(false, 20, 20)).toBe(0)
     expect(timedPoints(false, 0, 20)).toBe(0)
   })
-  it('答啱：基本分 + 速度比例獎勵', () => {
+  it('答對：基本分 + 速度比例獎勵', () => {
     // 剩足 100% 時間 → BASE + SPEED
     expect(timedPoints(true, 20, 20)).toBe(BASE_POINTS + SPEED_BONUS)
     // 剩 0 → 淨基本分
@@ -300,7 +300,7 @@ describe('timedPoints（計時搶分，除零保護）', () => {
     // 剩餘負 → 當 0
     expect(timedPoints(true, -5, 20)).toBe(BASE_POINTS)
   })
-  it('limit = 0（除零保護）→ 答啱只得基本分', () => {
+  it('limit = 0（除零保護）→ 答對只得基本分', () => {
     expect(timedPoints(true, 10, 0)).toBe(BASE_POINTS)
     expect(Number.isNaN(timedPoints(true, 10, 0))).toBe(false)
   })
@@ -308,7 +308,7 @@ describe('timedPoints（計時搶分，除零保護）', () => {
 
 // ============================================================
 describe('itemFromFrozen（frozen + 答案 → 計分快照）', () => {
-  it('MC 答啱', () => {
+  it('MC 答對', () => {
     const r = itemFromFrozen(frozen({ kind: 'mc', answerIndex: 1 }), 1, undefined)
     expect(r.correct).toBe(true)
     expect(r.selectedIndex).toBe(1)
@@ -325,7 +325,7 @@ describe('itemFromFrozen（frozen + 答案 → 計分快照）', () => {
     expect(r.correct).toBe(false)
     expect(r.selectedIndex).toBe(null)
   })
-  it('短答答啱 → selectedIndex=0，options 清空', () => {
+  it('短答答對 → selectedIndex=0，options 清空', () => {
     const r = itemFromFrozen(
       frozen({ kind: 'short', answerIndex: 0, explanation: '需求定律', options: ['需求定律'] }),
       null,
@@ -475,7 +475,7 @@ describe('attemptsToCsvRows（匯出試算表：成績 + 逐題對錯）', () =>
       '範圍',
       '難度',
       '題數',
-      '答啱',
+      '答對',
       '命中率%',
       '用時',
       '逐題對錯',

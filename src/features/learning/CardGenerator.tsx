@@ -97,7 +97,7 @@ import type {
 //   ① 多卡型：問答 / 詞彙 / 填空 / 是非（各自 JSON shape + 映射）
 //   ② 串流生成（streamChat）+ 即時進度 + 可中止；逐張入草稿
 //   ③ 生成參數：數量 / 難度 / 語言 / 模型 / 去重（對目標牌組）
-//   ④ 筆記做 context：揀一篇學習筆記做主題種子
+//   ④ 筆記做 context：選擇一篇學習筆記做主題種子
 //   ⑤ Prompt 範本庫：一 click 填主題 + 卡型
 //   ⑥ 草稿工作室：翻面預覽、inline 編輯、單卡 AI 重生、前後互換、
 //      複製、批量剔/取消、搜尋過濾、重複偵測（撞目標牌組）
@@ -127,9 +127,9 @@ export function normFront(s: string): string {
     .trim()
 }
 
-// 重算每張草稿嘅 dup 旗標：撞目標牌組現有 front 或撞前面草稿（normFront 後）即重複。
-// 純函式（畀 effect + 測試共用）：seen-set 去重係跨整個 list、有次序性，故喺此一次過算。
-// 若冇任何 flag 反轉就原樣回傳同一個 array ref（changed guard），令 setState 短路、唔會多餘 re-render。
+// 重算每張草稿的 dup 旗標：撞目標牌組現有 front 或撞前面草稿（normFront 後）即重複。
+// 純函式（給 effect + 測試共用）：seen-set 去重係跨整個 list、有次序性，故在此一次過算。
+// 若沒有任何 flag 反轉就原樣回傳同一個 array ref（changed guard），令 setState 短路、不會多餘 re-render。
 export function recomputeDup(
   drafts: DraftCard[],
   targetFronts: Set<string>,
@@ -148,7 +148,7 @@ export function recomputeDup(
 }
 
 // 一鍵全部前後互換：每張草稿 front ⇄ back 對調（同單卡 swap 一致，只動 front/back）。
-// front 同 back 完全一樣嗰張係無實際變化，保留原 object ref（同 recomputeDup 嘅 changed
+// front 同 back 完全一樣那張係無實際變化，保留原 object ref（同 recomputeDup 的 changed
 // guard 同調，慳多餘 re-render）；全部都係 no-op（或空陣列）就原樣回傳同一 array ref。
 export function swapAllDrafts(drafts: DraftCard[]): DraftCard[] {
   if (drafts.length === 0) return drafts
@@ -161,9 +161,9 @@ export function swapAllDrafts(drafts: DraftCard[]): DraftCard[] {
   return changed ? next : drafts
 }
 
-// 去除完全重複草稿：front + back 都完全一樣（各自 trim 後比較）只留最先出現嗰張。
-// 補既有「去重」只睇 normFront（撞目標牌組 / 相似）嘅不足 —— 呢度係草稿之間嘅
-// 逐字重複。維持原本次序；冇任何重複就原樣回傳同一 array ref（changed guard）。
+// 去除完全重複草稿：front + back 都完全一樣（各自 trim 後比較）只留最先出現那張。
+// 補既有「去重」只查看 normFront（撞目標牌組 / 相似）的不足 —— 這裡係草稿之間的
+// 逐字重複。維持原本次序；沒有任何重複就原樣回傳同一 array ref（changed guard）。
 export function dropExactDuplicates(drafts: DraftCard[]): DraftCard[] {
   if (drafts.length < 2) return drafts
   const seen = new Set<string>()
@@ -202,7 +202,7 @@ export default function CardGenerator() {
 
   // ── 生成狀態 ──────────────────────────────────────────────
   const [busy, setBusy] = useState(false)
-  const [progress, setProgress] = useState(0) // 已串流入嘅草稿數
+  const [progress, setProgress] = useState(0) // 已串流入的草稿數
   const abortRef = useRef<AbortController | null>(null)
 
   // ── 草稿 ──────────────────────────────────────────────────
@@ -221,7 +221,7 @@ export default function CardGenerator() {
   const [notePickOpen, setNotePickOpen] = useState(false)
   const [copiedId, setCopiedId] = useState<string | null>(null)
   const [lastRecordId, setLastRecordId] = useState<string | null>(null)
-  // 純表現層：邊幾張草稿展開咗 inline 編輯（預設淨係顯示卡面，撳鉛筆先改）
+  // 純表現層：邊幾張草稿展開了 inline 編輯（預設只顯示卡面，按鉛筆先改）
   const [editingIds, setEditingIds] = useState<Set<string>>(new Set())
   const toggleEditing = (id: string) =>
     setEditingIds((prev) => {
@@ -231,7 +231,7 @@ export default function CardGenerator() {
       return next
     })
 
-  // 目標牌組現有卡嘅 front 正規化集合（去重用）
+  // 目標牌組現有卡的 front 正規化集合（去重用）
   const targetFronts = useMemo(() => {
     const id = deckTab === 'existing' ? chosenDeckId : '__none__'
     const set = new Set<string>()
@@ -240,13 +240,13 @@ export default function CardGenerator() {
   }, [allCards, deckTab, chosenDeckId])
 
   // 草稿 front 簽名：任何 front 改動（inline 編輯 / swap / regenOne）都要重算 dup。
-  // 用 normFront 入簽名 → 淨係 dup 相關（正規化後）front 真正變先觸發 effect。
+  // 用 normFront 入簽名 → 只 dup 相關（正規化後）front 真正變先觸發 effect。
   const draftFrontsSig = useMemo(
     () => drafts.map((d) => d.id + ':' + normFront(d.front)).join('|'),
     [drafts],
   )
   // 草稿變 / 目標牌組變 → 重算重複旗標。
-  // recomputeDup 嘅 changed guard 喺冇 flag 反轉時回傳同一 array ref，令 setState 短路、唔會多餘 re-render。
+  // recomputeDup 的 changed guard 在沒有 flag 反轉時回傳同一 array ref，令 setState 短路、不會多餘 re-render。
   useEffect(() => {
     setDrafts((ds) => recomputeDup(ds, targetFronts))
   }, [targetFronts, draftFrontsSig])
@@ -272,7 +272,7 @@ export default function CardGenerator() {
     )
   }, [drafts, query])
 
-  // 最近 40 條歷史（新→舊）：用已 subscribe 嘅 history memo，
+  // 最近 40 條歷史（新→舊）：用已 subscribe 的 history memo，
   // 避免每次 render 經 recentHistory 重新由 collection 複製 + 排序
   const recent = useMemo(
     () => [...history].sort((a, b) => b.ts.localeCompare(a.ts)).slice(0, 40),
@@ -299,10 +299,10 @@ export default function CardGenerator() {
       <EmptyState
         icon={Lock}
         title={t('cardGen.guard.notLoggedIn.title', {
-          defaultValue: '請先登入先可以用 AI',
+          defaultValue: '請先登入以使用 AI',
         })}
         hint={t('cardGen.guard.notLoggedIn.hint', {
-          defaultValue: '喺左下角用 Google 登入後就用得。',
+          defaultValue: '在左下角使用 Google 登入後即可使用。',
         })}
       />
     )
@@ -339,14 +339,14 @@ export default function CardGenerator() {
         source: 'card-gen',
       })) {
         full += chunk
-        // 邊串邊試 parse，畀使用者睇住張數慢慢起
+        // 邊串邊試 parse，給使用者查看住張數慢慢起
         const partial = parseJsonArray<RawCard>(full)
         if (partial) setProgress(partial.length)
       }
 
       const parsed = parseJsonArray<RawCard>(full)
       if (!parsed) {
-        toast.error('AI 回覆格式唔啱，請再試或換 Pro 模型')
+        toast.error('AI 回覆格式不正確，請再試或換 Pro 模型')
         return
       }
 
@@ -372,7 +372,7 @@ export default function CardGenerator() {
       }
 
       if (valid.length === 0) {
-        toast.error('AI 回覆格式唔啱，請再試或換 Pro 模型')
+        toast.error('AI 回覆格式不正確，請再試或換 Pro 模型')
         return
       }
 
@@ -391,7 +391,7 @@ export default function CardGenerator() {
       })
       setLastRecordId(rec.id)
 
-      toast.success(`生成咗 ${valid.length} 張，下面校對下就可以入牌組`)
+      toast.success(`生成了 ${valid.length} 張，下面校對下就可以入牌組`)
     } catch (e) {
       const err = e as Error
       if (err.name === 'AbortError') toast.info('已停止生成')
@@ -422,10 +422,10 @@ export default function CardGenerator() {
     try {
       const sys =
         buildSystemPrompt(d.type, difficulty, lang) +
-        '\n今次只生成「1」張卡，回一個只有一項嘅 JSON 陣列。'
+        '\n今次只生成「1」張卡，回一個只有一項的 JSON 陣列。'
       const userMsg =
         `主題 / 筆記材料：\n${topic.trim() || d.front}\n\n` +
-        `請就以下卡再生成一張更好、唔同角度嘅替代卡（唔好同呢張一樣）：\n` +
+        `請就以下卡再生成一張更好、不同角度的替代卡（不要同這張一樣）：\n` +
         `正面：${d.front}\n背面：${d.back}`
       let full = ''
       for await (const chunk of streamChat({
@@ -439,7 +439,7 @@ export default function CardGenerator() {
       const first = parsed && parsed.length > 0 ? parsed[0] : null
       const a = first ? assembleDraft(d.type, first as RawCard) : null
       if (!a) {
-        toast.error('重新生成失敗，再試下')
+        toast.error('重新生成失敗，再嘗試')
         return
       }
       patchDraft(d.id, { front: a.front, back: a.back, flipped: false })
@@ -474,7 +474,7 @@ export default function CardGenerator() {
       setCopiedId(d.id)
       setTimeout(() => setCopiedId((c) => (c === d.id ? null : c)), 1200)
     } catch {
-      toast.error('複製唔到')
+      toast.error('複製不到')
     }
   }
   function setAllInclude(v: boolean) {
@@ -489,16 +489,16 @@ export default function CardGenerator() {
     const removed = drafts.length - next.length
     if (removed > 0) {
       setDrafts(next)
-      toast.info(`已移除 ${removed} 張完全相同嘅草稿`)
+      toast.info(`已移除 ${removed} 張完全相同的草稿`)
     } else {
-      toast.info('冇完全相同嘅草稿')
+      toast.info('沒有完全相同的草稿')
     }
   }
   async function clearDrafts() {
     if (drafts.length === 0) return
     const ok = await confirm({
       title: '清走全部草稿？',
-      message: '未存入牌組嘅草稿會冇咗。',
+      message: '未存入牌組的草稿會沒有了。',
       tone: 'danger',
       confirmText: '清走',
     })
@@ -546,11 +546,11 @@ export default function CardGenerator() {
     setLang(r.lang)
     setModel(r.model)
     setTab('generate')
-    toast.info('已帶返當時設定，可直接再生成')
+    toast.info('已帶入當時設定，可直接再生成')
   }
   async function deleteRecord(id: string) {
     const ok = await confirm({
-      title: '刪除呢條歷史？',
+      title: '刪除此筆歷史？',
       tone: 'danger',
       confirmText: '刪除',
     })
@@ -592,7 +592,7 @@ export default function CardGenerator() {
           dueDate: todayStr(),
           createdAt: new Date().toISOString(),
         })
-        // tag → 寫去 flashcards cardMetaCol（重用，唔重複造）
+        // tag → 寫去 flashcards cardMetaCol（重用，不重複造）
         if (d.tags.length > 0) upsertMeta(card.id, { tags: d.tags })
       }
       // 補回歷史 saved
@@ -613,7 +613,7 @@ export default function CardGenerator() {
     !saving &&
     (deckTab === 'new' ? newDeckName.trim() !== '' : chosenDeckId !== '')
 
-  // 揀筆記 Modal：只列未刪嘅個人筆記，最近編輯排前
+  // 選擇筆記 Modal：只列未刪的個人筆記，最近編輯排前
   const pickableNotes = useMemo(
     () =>
       notes
@@ -644,7 +644,7 @@ export default function CardGenerator() {
         kicker={t('cardGen.kicker', { defaultValue: 'Card Studio' })}
         title={t('cardGen.title', { defaultValue: 'AI 生成知識卡' })}
         description={t('cardGen.subtitle', {
-          defaultValue: '落個主題，AI 即刻幫你出一疊溫習卡，校對啱就一鍵入牌組。',
+          defaultValue: '輸入主題，AI 立即幫你出一疊溫習卡，校對完成就一鍵入牌組。',
         })}
         actions={
           totalGen > 0 ? (
@@ -687,27 +687,27 @@ export default function CardGenerator() {
         })}
       />
 
-      {/* ── 教學引導：教用家「點用」呢個功能（可摺疊 + 可永久收起）── */}
+      {/* ── 教學引導：教用家「如何使用」此功能（可摺疊 + 可永久收起）── */}
       <FeatureGuide
         storageKey="cardGen"
-        title={t('cardGen.guide.title', { defaultValue: '生成知識卡點用？' })}
+        title={t('cardGen.guide.title', { defaultValue: '生成知識卡使用說明' })}
         steps={[
           {
-            title: t('cardGen.guide.s1.title', { defaultValue: '揀卡型、落材料' }),
+            title: t('cardGen.guide.s1.title', { defaultValue: '選擇卡型、輸入材料' }),
             desc: t('cardGen.guide.s1.desc', {
-              defaultValue: '揀問答／詞彙等卡型，貼上主題或筆記內容（越具體越好）。',
+              defaultValue: '選擇問答／詞彙等卡型，貼上主題或筆記內容（越具體越好）。',
             }),
           },
           {
             title: t('cardGen.guide.s2.title', { defaultValue: '生成同校對' }),
             desc: t('cardGen.guide.s2.desc', {
-              defaultValue: '撳「生成」，AI 出卡後逐張翻面對答案，改錯字、剔走唔啱嘅。',
+              defaultValue: '按「生成」，AI 出卡後逐張翻面對答案，改錯字、剔走不正確的。',
             }),
           },
           {
             title: t('cardGen.guide.s3.title', { defaultValue: '入牌組溫習' }),
             desc: t('cardGen.guide.s3.desc', {
-              defaultValue: '揀現有牌組或起新牌組，一鍵加入，就可以開始複習。',
+              defaultValue: '選擇現有牌組或起新牌組，一鍵加入，就可以開始複習。',
             }),
           },
         ]}
@@ -721,7 +721,7 @@ export default function CardGenerator() {
             <SectionTitle
               icon={Sparkles}
               description={t('cardGen.setup.desc', {
-                defaultValue: '揀卡型、落材料，調好數量同難度',
+                defaultValue: '選擇卡型、輸入材料，調好數量同難度',
               })}
               right={
                 <Tooltip
@@ -794,7 +794,7 @@ export default function CardGenerator() {
               label={t('cardGen.topic.label', { defaultValue: '主題 / 筆記內容' })}
               hint={t('cardGen.topic.hint', {
                 defaultValue:
-                  '貼上你想做成知識卡嘅內容，越具體越好。⌘/Ctrl + Enter 即生成。',
+                  '貼上你想做成知識卡的內容，越具體越好。⌘/Ctrl + Enter 即生成。',
               })}
             >
               <Textarea
@@ -816,12 +816,12 @@ export default function CardGenerator() {
               />
             </Field>
 
-            {/* 範例主題：一撳即填，降低開始門檻 */}
+            {/* 範例主題：一按即填，降低開始門檻 */}
             <div>
               <p className="mb-2 flex items-center gap-1.5 text-xs font-medium text-slate-500 dark:text-slate-400">
                 <Lightbulb size={13} className="text-amber-500" />
                 {t('cardGen.presets.heading', {
-                  defaultValue: '諗唔到主題？撳個範例即填',
+                  defaultValue: '想不到主題？按個範例即填',
                 })}
               </p>
               <div className="flex flex-wrap gap-2">
@@ -906,7 +906,7 @@ export default function CardGenerator() {
             {/* 標籤 */}
             <Field
               label={t('cardGen.tags.label', {
-                defaultValue: '標籤（可選，落卡時一齊寫入）',
+                defaultValue: '標籤（可選，落卡時一起寫入）',
               })}
               hint={t('cardGen.tags.hint', {
                 defaultValue: '以逗號分隔，例如：DSE, 寫作',
@@ -969,17 +969,17 @@ export default function CardGenerator() {
                     {t('cardGen.generate', { defaultValue: '生成知識卡' })}
                   </Button>
                   <span className="hidden items-center gap-1.5 text-xs text-slate-400 dark:text-slate-500 sm:flex">
-                    {t('cardGen.orPress', { defaultValue: '或撳' })}
+                    {t('cardGen.orPress', { defaultValue: '或按' })}
                     <Kbd>⌘</Kbd>
                     <Kbd>↵</Kbd>
-                    {t('cardGen.toGenerate', { defaultValue: '即刻生成' })}
+                    {t('cardGen.toGenerate', { defaultValue: '立即生成' })}
                   </span>
                 </div>
               )}
             </div>
           </Card>
 
-          {/* 串流進行緊嘅 skeleton（未有草稿時）— 卡喺爐入面逐張成形 */}
+          {/* 串流進行緊的 skeleton（未有草稿時）— 卡在爐中逐張成形 */}
           {busy && drafts.length === 0 && (
             <Card className="space-y-4 p-5">
               <div className="flex items-center gap-2.5">
@@ -996,7 +996,7 @@ export default function CardGenerator() {
                     {progress > 0 ? (
                       <span className="tabular-nums slashed-zero">
                         {t('cardGen.streaming.count', {
-                          defaultValue: '已出 {{n}} 張，仲有得嚟',
+                          defaultValue: '已出 {{n}} 張，還有得來',
                           n: progress,
                         })}
                       </span>
@@ -1022,16 +1022,16 @@ export default function CardGenerator() {
             </Card>
           )}
 
-          {/* 未生成又冇草稿：引導式空狀態（icon + 標題 + 提示 + CTA 直接落第一步）*/}
+          {/* 未生成又沒有草稿：引導式空狀態（icon + 標題 + 提示 + CTA 直接落第一步）*/}
           {!busy && drafts.length === 0 && (
             <EmptyState
               icon={Sparkles}
               title={t('cardGen.empty.title', {
-                defaultValue: '落個主題，開始生成知識卡',
+                defaultValue: '輸入主題，開始生成知識卡',
               })}
               hint={t('cardGen.empty.hint', {
                 defaultValue:
-                  '喺上面貼上主題或筆記、撳「生成知識卡」，AI 就會出一疊卡畀你校對。唔知點起步？撳下面用個範例。',
+                  '在上方貼上主題或筆記、按「生成知識卡」，AI 就會出一疊卡給你校對。不知點起步？按下面用個範例。',
               })}
               action={
                 PRESETS.length > 0 ? (
@@ -1060,7 +1060,7 @@ export default function CardGenerator() {
               <SectionTitle
                 icon={Eye}
                 description={t('cardGen.review.desc', {
-                  defaultValue: '翻面對下答案、改返啱，唔啱嘅就剔走',
+                  defaultValue: '翻面對下答案、改正，不正確的就剔走',
                 })}
                 right={
                   <div className="flex items-center gap-1.5">
@@ -1070,7 +1070,7 @@ export default function CardGenerator() {
                       </Badge>
                     )}
                     <Badge tone="accent">
-                      已揀{' '}
+                      已選擇{' '}
                       <span className="nums">
                         {selectedCount} / {drafts.length}
                       </span>{' '}
@@ -1126,7 +1126,7 @@ export default function CardGenerator() {
                 </Tooltip>
                 <Tooltip
                   label={t('cardGen.tools.dropExact', {
-                    defaultValue: '去除完全相同嘅草稿（正面＋背面一樣只留一張）',
+                    defaultValue: '去除完全相同的草稿（正面＋背面一樣只留一張）',
                   })}
                 >
                   <IconButton
@@ -1145,7 +1145,7 @@ export default function CardGenerator() {
                 )}
                 <Tooltip
                   label={t('cardGen.tools.exportCsv', {
-                    defaultValue: '匯出剔選嘅做 CSV',
+                    defaultValue: '匯出剔選的做 CSV',
                   })}
                 >
                   <IconButton
@@ -1175,11 +1175,11 @@ export default function CardGenerator() {
                 <EmptyState
                   icon={Search}
                   title={t('cardGen.noResults.title', {
-                    defaultValue: '搵唔到「{{q}}」',
+                    defaultValue: '搜尋不到「{{q}}」',
                     q: query,
                   })}
                   hint={t('cardGen.noResults.hint', {
-                    defaultValue: '試下換個關鍵字，或者清空搜尋框睇返全部草稿。',
+                    defaultValue: '嘗試換個關鍵字，或者清空搜尋框查看全部草稿。',
                   })}
                   action={
                     <Button
@@ -1220,7 +1220,7 @@ export default function CardGenerator() {
                                 patchDraft(d.id, { include: e.target.checked })
                               }
                               aria-label={t('cardGen.card.includeAria', {
-                                defaultValue: '是否加入呢張',
+                                defaultValue: '是否加入這張',
                               })}
                               className="h-4 w-4 shrink-0 cursor-pointer rounded accent-accent"
                             />
@@ -1319,7 +1319,7 @@ export default function CardGenerator() {
                               >
                                 <Eye size={13} className="shrink-0" />
                                 {t('cardGen.card.reveal', {
-                                  defaultValue: '撳一下睇答案',
+                                  defaultValue: '按一下查看答案',
                                 })}
                               </button>
                             )}
@@ -1331,8 +1331,8 @@ export default function CardGenerator() {
                           <Tooltip
                             label={
                               d.flipped
-                                ? t('cardGen.card.hideAnswer', { defaultValue: '收返答案' })
-                                : t('cardGen.card.flip', { defaultValue: '翻面睇答案' })
+                                ? t('cardGen.card.hideAnswer', { defaultValue: '收回答案' })
+                                : t('cardGen.card.flip', { defaultValue: '翻面查看答案' })
                             }
                           >
                             <IconButton
@@ -1355,7 +1355,7 @@ export default function CardGenerator() {
                           </Tooltip>
                           <Tooltip
                             label={t('cardGen.card.regen', {
-                              defaultValue: 'AI 重新生成呢張',
+                              defaultValue: 'AI 重新生成這張',
                             })}
                           >
                             <IconButton
@@ -1385,7 +1385,7 @@ export default function CardGenerator() {
                               )}
                             </IconButton>
                           </Tooltip>
-                          <Tooltip label={t('cardGen.card.remove', { defaultValue: '移除呢張' })}>
+                          <Tooltip label={t('cardGen.card.remove', { defaultValue: '移除這張' })}>
                             <IconButton
                               label={t('cardGen.card.removeShort', { defaultValue: '移除' })}
                               tone="danger"
@@ -1408,7 +1408,7 @@ export default function CardGenerator() {
               <SectionTitle
                 icon={Layers}
                 description={t('cardGen.save.desc', {
-                  defaultValue: '揀個牌組，或者起一個新嘅嚟收呢批卡',
+                  defaultValue: '選擇一個牌組，或者起一個新的來收這批卡',
                 })}
               >
                 {t('cardGen.save.title', { defaultValue: '加入牌組' })}
@@ -1434,11 +1434,11 @@ export default function CardGenerator() {
                   <Select
                     value={chosenDeckId}
                     onChange={(e) => setChosenDeckId(e.target.value)}
-                    aria-label={t('cardGen.deck.pick', { defaultValue: '揀現有牌組' })}
+                    aria-label={t('cardGen.deck.pick', { defaultValue: '選擇現有牌組' })}
                   >
                     <option value="">
                       {t('cardGen.deck.pickPlaceholder', {
-                        defaultValue: '（揀一個牌組）',
+                        defaultValue: '（選擇一個牌組）',
                       })}
                     </option>
                     {decks.map((d) => (
@@ -1451,7 +1451,7 @@ export default function CardGenerator() {
                 ) : (
                   <p className="text-xs text-slate-400 dark:text-slate-500">
                     {t('cardGen.deck.noneHint', {
-                      defaultValue: '仲未有牌組，切去「新牌組」起一個。',
+                      defaultValue: '尚未有牌組，切去「新牌組」起一個。',
                     })}
                   </p>
                 )
@@ -1469,7 +1469,7 @@ export default function CardGenerator() {
                 <p className="flex items-center gap-1.5 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-700 dark:bg-amber-500/10 dark:text-amber-300">
                   <span className="font-medium tabular-nums">{dupCount}</span>{' '}
                   {t('cardGen.save.dupWarn', {
-                    defaultValue: '張勾選緊嘅卡同目標牌組已有卡相似，可按「去重」一鍵取消。',
+                    defaultValue: '張勾選緊的卡同目標牌組已有卡相似，可按「去重」一鍵取消。',
                   })}
                 </p>
               )}
@@ -1477,7 +1477,7 @@ export default function CardGenerator() {
               <div className="rounded-2xl border border-accent/20 bg-accent-soft/40 p-3 dark:border-accent/25 dark:bg-accent/10">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <Button variant="ghost" onClick={() => void clearDrafts()}>
-                    {t('cardGen.save.clear', { defaultValue: '清空重嚟' })}
+                    {t('cardGen.save.clear', { defaultValue: '清空重來' })}
                   </Button>
                   <Button onClick={save} loading={saving} disabled={!canSave} icon={Plus}>
                     {t('cardGen.save.cta', { defaultValue: '加入牌組' })}（
@@ -1491,7 +1491,7 @@ export default function CardGenerator() {
                 >
                   <Brain size={14} className="shrink-0" />
                   {t('cardGen.save.goReview', {
-                    defaultValue: '加入後去「知識卡 + 複習」即刻溫',
+                    defaultValue: '加入後去「知識卡 + 複習」立即溫',
                   })}
                   <ArrowRight size={13} className="shrink-0" />
                 </button>
@@ -1507,7 +1507,7 @@ export default function CardGenerator() {
           <SectionTitle
             icon={History}
             description={t('cardGen.history.desc', {
-              defaultValue: '每次生成都記低設定，撳重跑即可再嚟一次',
+              defaultValue: '每次生成都記低設定，按重跑即可再來一次',
             })}
           >
             {t('cardGen.history.title', { defaultValue: '生成歷史' })}
@@ -1516,11 +1516,11 @@ export default function CardGenerator() {
             <EmptyState
               icon={History}
               title={t('cardGen.history.empty.title', {
-                defaultValue: '仲未有生成紀錄',
+                defaultValue: '尚未有生成紀錄',
               })}
               hint={t('cardGen.history.empty.hint', {
                 defaultValue:
-                  '去「生成」整第一批知識卡，呢度會記低每次嘅設定，方便重跑。',
+                  '去「生成」整第一批知識卡，這裡會記低每次的設定，方便重跑。',
               })}
               action={
                 <Button
@@ -1577,7 +1577,7 @@ export default function CardGenerator() {
                   <div className="flex shrink-0 items-center gap-1">
                     <Tooltip
                       label={t('cardGen.history.rerunTip', {
-                        defaultValue: '帶返設定再生成',
+                        defaultValue: '帶入設定再生成',
                       })}
                     >
                       <IconButton
@@ -1656,21 +1656,21 @@ export default function CardGenerator() {
         </div>
       )}
 
-      {/* ── 揀筆記 Modal ── */}
+      {/* ── 選擇筆記 Modal ── */}
       <Modal
         open={notePickOpen}
         onClose={() => setNotePickOpen(false)}
-        title={t('cardGen.notePick.title', { defaultValue: '揀一篇筆記做主題' })}
+        title={t('cardGen.notePick.title', { defaultValue: '選擇一篇筆記做主題' })}
         size="lg"
       >
         {pickableNotes.length === 0 ? (
           <EmptyState
             icon={StickyNote}
             title={t('cardGen.notePick.empty.title', {
-              defaultValue: '仲未有個人筆記',
+              defaultValue: '尚未有個人筆記',
             })}
             hint={t('cardGen.notePick.empty.hint', {
-              defaultValue: '去「個人筆記」記低重點，呢度就可以一鍵帶入做生成材料。',
+              defaultValue: '去「個人筆記」記低重點，這裡就可以一鍵帶入做生成材料。',
             })}
             action={
               <Button

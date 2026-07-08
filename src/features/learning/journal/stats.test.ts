@@ -111,7 +111,7 @@ describe('moodTrend（今日=2026-05-31）', () => {
 
   it('近 30 日邊界：start = today-(n-1) = 2026-05-02 inclusive；today-n=05-01 排除', () => {
     const docs = [
-      doc({ id: 'in', date: '2026-05-02', mood: '😀' }), // 啱啱喺邊界內
+      doc({ id: 'in', date: '2026-05-02', mood: '😀' }), // 剛剛喺邊界內
       doc({ id: 'out', date: '2026-05-01', mood: '🙂' }), // 邊界外（排除）
       doc({ id: 'today', date: '2026-05-31', mood: '😐' }), // 含今日
     ]
@@ -268,12 +268,12 @@ describe('relativeTime（now=2026-05-31T12:00 本地）', () => {
     expect(relativeTime('')).toBe('')
   })
 
-  it('剛好 0 秒 → 啱啱', () => {
-    expect(relativeTime(isoAgo(0))).toBe('啱啱')
+  it('剛好 0 秒 → 剛剛', () => {
+    expect(relativeTime(isoAgo(0))).toBe('剛剛')
   })
 
-  it('<60 秒 → 啱啱', () => {
-    expect(relativeTime(isoAgo(59_000))).toBe('啱啱')
+  it('<60 秒 → 剛剛', () => {
+    expect(relativeTime(isoAgo(59_000))).toBe('剛剛')
   })
 
   it('剛好 60 秒 → 1 分鐘前', () => {
@@ -293,15 +293,15 @@ describe('relativeTime（now=2026-05-31T12:00 本地）', () => {
   it('29 日 → 29 日前；30 日 → 落本地日期格式（非相對措辭）', () => {
     expect(relativeTime(isoAgo(29 * 86_400_000))).toBe('29 日前')
     const at30 = relativeTime(isoAgo(30 * 86_400_000))
-    // 30 日（含）以上走 toLocaleDateString 分支：唔再係「啱啱 / …前」措辭，
+    // 30 日（含）以上走 toLocaleDateString 分支：唔再係「剛剛 / …前」措辭，
     // 且包含年份。唔硬編 ICU 確切格式（隨環境而異），只驗語意。
-    expect(at30).not.toBe('啱啱')
+    expect(at30).not.toBe('剛剛')
     expect(at30).not.toMatch(/前$/)
     expect(at30).toContain('2026')
   })
 
-  it('未來時間（時鐘偏移，sec 為負）→ <60 → 啱啱', () => {
-    // updatedAt 比此刻遲 5 秒（例如多機時鐘有偏差）：sec = -5 < 60 → 啱啱
-    expect(relativeTime(new Date(nowMs + 5_000).toISOString())).toBe('啱啱')
+  it('未來時間（時鐘偏移，sec 為負）→ <60 → 剛剛', () => {
+    // updatedAt 比此刻遲 5 秒（例如多機時鐘有偏差）：sec = -5 < 60 → 剛剛
+    expect(relativeTime(new Date(nowMs + 5_000).toISOString())).toBe('剛剛')
   })
 })

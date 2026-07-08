@@ -103,7 +103,7 @@ export default function ProfileTab() {
         <div>
           <h2 className="text-sm font-semibold text-slate-800 dark:text-slate-100">公開身份</h2>
           <p className="mt-0.5 text-[12px] text-slate-500 dark:text-slate-400">
-            其他老師喺資源分享區見到你嘅署名。私隱你話事 —— 唔使露全名同學校。
+            其他老師在資源分享區見到你的署名。私隱你話事 —— 不用露全名同學校。
           </p>
         </div>
 
@@ -111,7 +111,7 @@ export default function ProfileTab() {
           on={anonymous}
           onChange={setAnonymous}
           label="匿名分享"
-          hint="開咗就一律顯示「匿名老師」（管理員仍可追溯帳戶以防濫用）"
+          hint="開了就一律顯示「匿名老師」（管理員仍可追溯帳戶以防濫用）"
         />
 
         <div className={cx('space-y-4', anonymous && 'pointer-events-none opacity-40')}>
@@ -137,10 +137,10 @@ export default function ProfileTab() {
           <Field label="學校">
             <Input value={school} onChange={(e) => setSchool(e.target.value)} placeholder="例：聖文德書院" maxLength={30} />
           </Field>
-          <Toggle on={showSchool} onChange={setShowSchool} label="喺署名顯示學校" hint="關咗就淨係顯示你個署名" />
+          <Toggle on={showSchool} onChange={setShowSchool} label="在署名顯示學校" hint="關了就只顯示你個署名" />
 
           <Field label="簡介（選填）">
-            <Textarea rows={2} value={bio} onChange={(e) => setBio(e.target.value)} placeholder="一兩句介紹你教咩 / 風格" maxLength={120} />
+            <Textarea rows={2} value={bio} onChange={(e) => setBio(e.target.value)} placeholder="一兩句介紹你教什麼 / 風格" maxLength={120} />
           </Field>
 
           <Field label="頭像顏色">
@@ -176,7 +176,7 @@ export default function ProfileTab() {
             <Avatar profile={preview} size={44} />
             <div className="min-w-0">
               <p className="truncate text-sm font-semibold text-slate-800 dark:text-slate-100">{publicName(preview)}</p>
-              <p className="text-[11px] text-slate-400">資源上會咁顯示</p>
+              <p className="text-[11px] text-slate-400">資源上會這樣顯示</p>
             </div>
           </div>
           {!anonymous && bio.trim() && (
@@ -187,7 +187,7 @@ export default function ProfileTab() {
               ? '匿名：所有分享顯示「匿名老師」。'
               : showSchool && school.trim()
                 ? `署名：「${school.trim()} ${publicName({ ...preview, showSchool: false })}」`
-                : `署名：「${publicName(preview)}」（唔顯示學校）`}
+                : `署名：「${publicName(preview)}」（不顯示學校）`}
           </div>
         </Card>
       </div>

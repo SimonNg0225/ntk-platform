@@ -95,7 +95,7 @@ describe('colorOf（顏色查找 + fallback）', () => {
   it('已知 key 回對應 spec（同 HABIT_COLORS[key] 為同一引用）', () => {
     expect(colorOf('blue')).toBe(HABIT_COLORS.blue)
     expect(colorOf('rose')).toBe(HABIT_COLORS.rose)
-    // 抽查欄位值，確保唔係意外指錯 spec
+    // 抽查欄位值，確保不是意外指錯 spec
     expect(colorOf('blue').label).toBe('藍')
     expect(colorOf('rose').heat).toEqual(HABIT_COLORS.rose.heat)
   })
@@ -125,7 +125,7 @@ describe('colorOf（顏色查找 + fallback）', () => {
     for (const evil of ['toString', 'constructor', 'hasOwnProperty', 'valueOf', '__proto__', 'isPrototypeOf']) {
       const spec = colorOf(evil)
       expect(spec).toBe(HABIT_COLORS.accent)
-      expect(typeof spec).toBe('object') // 唔係函式
+      expect(typeof spec).toBe('object') // 不是函式
       expect(spec.heat).toHaveLength(5) // caller 讀 spec.heat[i] 唔會炸
     }
   })

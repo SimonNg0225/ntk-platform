@@ -95,8 +95,8 @@ function stripSearchIntent(input: string): string {
   return (
     input
       .trim()
-      .replace(/^(幫我|請|please)?\s*(全域搜尋|搜尋|搜索|搵返|搵|找回|找|查找|search|find)\s*/i, '')
-      .replace(/^(一下|吓|下)\s*/i, '')
+      .replace(/^(幫我|請|please)?\s*(全域搜尋|搜尋|搜索|搜尋返|搜尋|找回|找|查找|search|find)\s*/i, '')
+      .replace(/^(一下|一下|下)\s*/i, '')
       .trim() || input.trim()
   )
 }
@@ -105,7 +105,7 @@ function stripAskDataIntent(input: string): string {
   return (
     input
       .trim()
-      .replace(/^(幫我|請|please)?\s*(問我嘅資料\s*AI|問我資料\s*AI|問我嘅資料|問我資料|根據我嘅資料|根據我的資料|用我嘅資料|用我的資料|查我嘅資料|查我的資料)\s*[:：,，]?\s*/i, '')
+      .replace(/^(幫我|請|please)?\s*(問我的資料\s*AI|問我資料\s*AI|問我的資料|問我資料|根據我的資料|根據我的資料|用我的資料|用我的資料|查我的資料|查我的資料)\s*[:：,，]?\s*/i, '')
       .trim() || input.trim()
   )
 }
@@ -126,16 +126,16 @@ function inferWorkComposerRoute(input: string): ComposerRoute {
 
   if (
     hasIntent(text, [
-      /問我.*資料|我的資料|我嘅資料|根據.*資料|用.*資料.*答|資料.*ai/i,
-      /我(今|本)?(個)?星期.*(要做|跟進|待辦)|我最近.*(做過|記低|安排)|我有咩(待辦|日程|目標)/i,
+      /問我.*資料|我的資料|我的資料|根據.*資料|用.*資料.*答|資料.*ai/i,
+      /我(今|本)?(個)?星期.*(要做|跟進|待辦)|我最近.*(做過|記低|安排)|我有什麼(待辦|日程|目標)/i,
     ])
   ) {
-    return { featureId: 'ask-data', label: '問我嘅資料 AI', handoffText: stripAskDataIntent(input) }
+    return { featureId: 'ask-data', label: '資料問答 AI', handoffText: stripAskDataIntent(input) }
   }
   if (
     hasIntent(text, [
-      /^(幫我|請|please)?\s*(全域搜尋|搜尋|搜索|搵返|搵|找回|找|查找|search|find)/i,
-      /全域搜尋|平台入面.*(搜尋|搵|找)|搵返.*(筆記|教案|題目|資源|會議|待辦)/i,
+      /^(幫我|請|please)?\s*(全域搜尋|搜尋|搜索|搜尋返|搜尋|找回|找|查找|search|find)/i,
+      /全域搜尋|平台中.*(搜尋|搜尋|找)|搜尋返.*(筆記|教案|題目|資源|會議|待辦)/i,
     ])
   ) {
     return { featureId: 'search', label: '全域搜尋', handoffText: stripSearchIntent(input) }
@@ -186,7 +186,7 @@ function inferWorkComposerRoute(input: string): ComposerRoute {
   if (hasIntent(text, [/批改|待辦|todo|功課|作業|改卷|行政事項|跟進/i])) {
     return { featureId: 'work-tasks', label: '待辦 / 批改' }
   }
-  if (hasIntent(text, [/點教|教學指引|教學步驟|常見誤解|差異化|引導|提問/i])) {
+  if (hasIntent(text, [/如何教|教學指引|教學步驟|常見誤解|差異化|引導|提問/i])) {
     return { featureId: 'work-teach-guide', label: '教學指引' }
   }
   if (hasIntent(text, [/教案|備課|下一堂|一堂|課堂|lesson|教學目標|教學活動|分鐘課|40\s*分鐘/i])) {
@@ -204,16 +204,16 @@ function inferLearningComposerRoute(input: string): ComposerRoute {
   if (!text) return { featureId: 'learning-ai', label: '個人 AI 助手' }
   if (
     hasIntent(text, [
-      /問我.*資料|我的資料|我嘅資料|根據.*資料|用.*資料.*答|資料.*ai/i,
-      /我最近.*(記低|學過|安排)|我有咩(目標|日程|待辦)/i,
+      /問我.*資料|我的資料|我的資料|根據.*資料|用.*資料.*答|資料.*ai/i,
+      /我最近.*(記低|學過|安排)|我有什麼(目標|日程|待辦)/i,
     ])
   ) {
-    return { featureId: 'ask-data', label: '問我嘅資料 AI', handoffText: stripAskDataIntent(input) }
+    return { featureId: 'ask-data', label: '資料問答 AI', handoffText: stripAskDataIntent(input) }
   }
   if (
     hasIntent(text, [
-      /^(幫我|請|please)?\s*(全域搜尋|搜尋|搜索|搵返|搵|找回|找|查找|search|find)/i,
-      /全域搜尋|平台入面.*(搜尋|搵|找)|搵返.*(筆記|知識卡|日誌|目標|日程)/i,
+      /^(幫我|請|please)?\s*(全域搜尋|搜尋|搜索|搜尋返|搜尋|找回|找|查找|search|find)/i,
+      /全域搜尋|平台中.*(搜尋|搜尋|找)|搜尋返.*(筆記|知識卡|日誌|目標|日程)/i,
     ])
   ) {
     return { featureId: 'search', label: '全域搜尋', handoffText: stripSearchIntent(input) }
@@ -640,7 +640,7 @@ export default function Home({ onOpen }: Props) {
               常用任務
             </h2>
             <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-              想快一點開始，可以直接揀一個任務方向。
+              想快一點開始，可以直接選擇一個任務方向。
             </p>
           </div>
 

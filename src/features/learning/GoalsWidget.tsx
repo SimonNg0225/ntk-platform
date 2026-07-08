@@ -64,7 +64,7 @@ type ViewId = 'board' | 'list' | 'insights'
 type SortId = 'recent' | 'progress' | 'due' | 'priority' | 'momentum' | 'name'
 type CatFilter = GoalCategory | 'all'
 
-// 一個目標 + 佢嘅元資料 + 里程碑（運算用）
+// 一個目標 + 他的元資料 + 里程碑（運算用）
 interface EnrichedGoal {
   goal: Goal
   meta?: GoalMeta
@@ -75,7 +75,7 @@ interface EnrichedGoal {
   momentum: number
 }
 
-// 進度區間對應一句簡短狀態（清晰、唔花巧）
+// 進度區間對應一句簡短狀態（清晰、不花巧）
 function progressLabel(progress: number, isDone: boolean): string {
   if (isDone) return '已完成'
   if (progress >= 75) return '快完成'
@@ -88,7 +88,7 @@ function progressLabel(progress: number, isDone: boolean): string {
 const GUIDE_STEPS: FeatureGuideStep[] = [
   {
     title: '新增一個目標',
-    desc: '撳「新目標」，或喺上方輸入框打個名快速加。',
+    desc: '按「新目標」，或在上方輸入框打個名快速加。',
   },
   {
     title: '拆做里程碑',
@@ -99,8 +99,8 @@ const GUIDE_STEPS: FeatureGuideStep[] = [
     desc: '完成里程碑或簽到打卡，保持動力。',
   },
   {
-    title: '睇統計',
-    desc: '切去「統計」分頁，一眼睇晒狀態同各分類進度。',
+    title: '查看統計',
+    desc: '切去「統計」分頁，一眼查看全部狀態同各分類進度。',
   },
 ]
 
@@ -134,7 +134,7 @@ export default function GoalsWidget() {
     return map
   }, [allMilestones])
 
-  // 每個目標嘅簽到（按時間遞增排好，畀 momentumGain 用）
+  // 每個目標的簽到（按時間遞增排好，給 momentumGain 用）
   const checkinsByGoal = useMemo(() => {
     const map = new Map<string, typeof checkins>()
     for (const c of checkins) {
@@ -166,7 +166,7 @@ export default function GoalsWidget() {
     const active = enriched.filter((e) => e.status === 'active').length
     const paused = enriched.filter((e) => e.status === 'paused').length
     const avg = total ? Math.round(enriched.reduce((s, e) => s + e.progress, 0) / total) : 0
-    // 近 7 日有簽到嘅日數（動量）— 用本地日曆日做 key（避免 UTC slice 喺 UTC+8 落錯日）
+    // 近 7 日有簽到的日數（動量）— 用本地日曆日做 key（避免 UTC slice 在 UTC+8 落錯日）
     const recent = new Set<string>()
     const cut = Date.now() - 7 * 864e5
     for (const c of checkins) {
@@ -224,7 +224,7 @@ export default function GoalsWidget() {
     return list
   }, [enriched, query, catFilter, statusFilter, sort])
 
-  // 分類計數（畀 Pills 顯示）
+  // 分類計數（給 Pills 顯示）
   const catCounts = useMemo(() => {
     const counts: Partial<Record<CatFilter, number>> = { all: enriched.length }
     for (const e of enriched) {
@@ -234,7 +234,7 @@ export default function GoalsWidget() {
     return counts
   }, [enriched])
 
-  // 狀態 + 到期視窗計數（每個 pill 各自跑 matchesStatusFilter，定義一致唔走樣）
+  // 狀態 + 到期視窗計數（每個 pill 各自跑 matchesStatusFilter，定義一致不走樣）
   const statusCounts = useMemo(() => {
     const counts: Partial<Record<StatusFilter, number>> = {}
     for (const f of STATUS_FILTERS) {
@@ -306,10 +306,10 @@ export default function GoalsWidget() {
         }
       />
 
-      {/* ───────── 教學引導：點用呢個功能 ───────── */}
+      {/* ───────── 教學引導：如何使用此功能 ───────── */}
       <FeatureGuide
         storageKey="goals"
-        title="個人目標點用？"
+        title="個人目標使用說明"
         steps={GUIDE_STEPS}
       />
 
@@ -333,7 +333,7 @@ export default function GoalsWidget() {
             value={quick}
             onChange={(e) => setQuick(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && quickAdd()}
-            placeholder="想達成啲咩？寫低一個目標…"
+            placeholder="想達成什麼？記錄一個目標…"
             icon={Plus}
             className="min-w-[12rem] flex-1 border-transparent bg-white shadow-none dark:bg-slate-900/40"
           />
@@ -381,7 +381,7 @@ export default function GoalsWidget() {
             <Input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="搵目標、備註…"
+              placeholder="搜尋目標、備註…"
               icon={Search}
               className="flex-1"
             />
@@ -397,10 +397,10 @@ export default function GoalsWidget() {
         </div>
       )}
 
-      {/* 動態結果數（畀螢幕閱讀器播報；篩選時生效）*/}
+      {/* 動態結果數（給螢幕閱讀器播報；篩選時生效）*/}
       {view !== 'insights' && isFiltering && enriched.length > 0 && (
         <p className="sr-only" role="status" aria-live="polite">
-          搵到 {filtered.length} 個符合嘅目標
+          找到 {filtered.length} 個符合的目標
         </p>
       )}
 
@@ -409,8 +409,8 @@ export default function GoalsWidget() {
         <EmptyState
           icon={Target}
           art="empty-goals"
-          title="仲未有目標"
-          hint="訂一個想達成嘅目標，拆成幾個小里程碑，逐步行落去。"
+          title="尚未有目標"
+          hint="訂一個想達成的目標，拆成幾個小里程碑，逐步行落去。"
           action={
             <Button onClick={openNew} icon={Plus}>
               新增第一個目標
@@ -420,7 +420,7 @@ export default function GoalsWidget() {
       ) : view === 'insights' ? (
         <InsightsView donutSegments={donutSegments} total={stats.total} categoryRows={categoryRows} avg={stats.avg} />
       ) : filtered.length === 0 ? (
-        <EmptyState icon={Search} title="冇符合嘅目標" hint="試吓換個分類，或者清除搜尋。" />
+        <EmptyState icon={Search} title="沒有符合的目標" hint="嘗試換個分類，或者清除搜尋。" />
       ) : view === 'board' ? (
         <BoardView items={filtered} onOpen={setDetailId} grouped={!isFiltering} />
       ) : (
@@ -464,14 +464,14 @@ function GoalsHero({
     total > 0 && done === total
       ? '所有目標都完成喇，做得好！'
       : overdue > 0
-        ? `有 ${overdue} 個目標已逾期，今日追返少少？`
+        ? `有 ${overdue} 個目標已逾期，今天先補上一點進度？`
         : dueSoon > 0
           ? `${dueSoon} 個目標快到期，加把勁衝刺。`
           : avg >= 75
             ? '大部分已接近完成，最後一段最關鍵。'
             : avg >= 40
               ? '穩步推進中，保持節奏。'
-              : '啱啱起步，行多步得多步。'
+              : '剛剛起步，行多步得多步。'
 
   const headline = done === total && total > 0 ? '全部完成' : `進行中 ${active} 個目標`
 
@@ -550,21 +550,21 @@ function BoardView({
     {
       id: 'active',
       label: '進行中',
-      empty: '冇進行中嘅目標',
+      empty: '沒有進行中的目標',
       icon: CircleDashed,
       chip: 'bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent',
     },
     {
       id: 'paused',
       label: '暫停',
-      empty: '冇暫停嘅目標',
+      empty: '沒有暫停的目標',
       icon: PauseCircle,
       chip: 'bg-amber-50 text-amber-600 dark:bg-amber-500/15 dark:text-amber-300',
     },
     {
       id: 'done',
       label: '已完成',
-      empty: '仲未完成任何目標',
+      empty: '尚未完成任何目標',
       icon: CheckCircle2,
       chip: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-300',
     },

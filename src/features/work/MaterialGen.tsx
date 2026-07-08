@@ -30,7 +30,7 @@ import type { GenKind } from './materialGen/engine'
 // ============================================================
 //  MaterialGen — 「教材生成」hub（Phase C）
 //  ------------------------------------------------------------
-//  一個教材工作枱：上面排住六款生成「工具」。撳入即開對應 generator
+//  一個教材工作枱：上面排住六款生成「工具」。按入即開對應 generator
 //  （全部共用 engine.ts + questionsCol / papersCol）：
 //    · MC 生成        → QuestionGeneratorModal kind='mc'
 //    · 短答題生成      → kind='short'
@@ -43,11 +43,11 @@ import type { GenKind } from './materialGen/engine'
 //  FeatureGuide 教學引導、標準互動磚（hover:shadow-md + focus ring + active
 //  scale）、語意 tone chip、引導式收尾卡。主色用 --accent token 跟模式切換。
 //  AI 未接（isAIConfigured false）→ 友善降級橫額；各 generator 亦有自己
-//  嘅 AI gate（雙重保險）。
+//  的 AI gate（雙重保險）。
 //  ⚠️ 只改呈現層，功能 / 資料流 / collection 讀寫一概不動。
 // ============================================================
 
-// 開啟邊個 generator（modal 形式覆蓋）
+// 開啟哪個 generator（modal 形式覆蓋）
 type ActiveTool =
   | { kind: 'question'; gen: GenKind }
   | { kind: 'worksheet' }
@@ -89,7 +89,7 @@ const TOOLS: ToolCard[] = [
   {
     id: 'mc',
     title: 'MC 生成',
-    blurb: '一鍵草擬選擇題：題幹、選項同正解齊備，逐條揀入題庫。',
+    blurb: '一鍵草擬選擇題：題幹、選項同正解齊備，逐條選擇入題庫。',
     icon: ListChecks,
     tone: 'accent',
     open: { kind: 'question', gen: 'mc' },
@@ -126,7 +126,7 @@ const TOOLS: ToolCard[] = [
   {
     id: 'worksheet',
     title: '教學練習生成',
-    blurb: '一份混合（MC ＋ 短答）課堂練習，可逐條揀入題庫或直接列印。',
+    blurb: '一份混合（MC ＋ 短答）課堂練習，可逐條選擇入題庫或直接列印。',
     icon: ClipboardList,
     tone: 'emerald',
     open: { kind: 'worksheet' },
@@ -135,7 +135,7 @@ const TOOLS: ToolCard[] = [
   {
     id: 'paper',
     title: '試卷生成',
-    blurb: '揀課題範圍同各題型題數，先抽題庫、唔夠先生成，組成一份試卷。',
+    blurb: '選擇課題範圍同各題型題數，先抽題庫、不夠先生成，組成一份試卷。',
     icon: FileStack,
     tone: 'rose',
     open: { kind: 'paper' },
@@ -151,7 +151,7 @@ export default function MaterialGen() {
   const topicsRaw = useCollection(topicsCol)
   const questions = useCollection(questionsCol)
 
-  // 課題（依大綱次序），傳俾各 generator 的下拉 / 範圍
+  // 課題（依大綱次序），傳給各 generator 的下拉 / 範圍
   const topics = useMemo(
     () => [...topicsRaw].sort((a, b) => a.order - b.order),
     [topicsRaw],
@@ -162,25 +162,25 @@ export default function MaterialGen() {
   )
   const [initialInstruction, setInitialInstruction] = useState(composerHandoff?.text ?? '')
 
-  // 題庫中由教材生成（AI）入庫嘅大約條數（source 含 AI），純展示
+  // 題庫中由教材生成（AI）入庫的大約條數（source 含 AI），純展示
   const aiCount = useMemo(
     () => questions.filter((q) => q.source?.includes('AI')).length,
     [questions],
   )
 
-  // 教學引導（3 步：揀工具 → 設定生成 → 入庫重用）
+  // 教學引導（3 步：選擇工具 → 設定生成 → 入庫重用）
   const guideSteps: FeatureGuideStep[] = [
     {
-      title: '揀一款生成工具',
-      desc: '由下面六張卡揀返要做嘅題型（MC、短答、個案、長題、練習、試卷）。',
+      title: '選擇一款生成工具',
+      desc: '由下面六張卡重新選擇要做的題型（MC、短答、個案、長題、練習、試卷）。',
     },
     {
       title: '設定範圍同題數',
-      desc: '喺彈出視窗揀課題、難度同題數，撳生成，AI 即時草擬好成份。',
+      desc: '在彈出視窗選擇課題、難度同題數，按生成，AI 即時草擬好成份。',
     },
     {
       title: '入庫、再重用',
-      desc: '逐條揀入題庫，之後可組卷、出自測或備課重用，唔使再由零開始。',
+      desc: '逐條選擇入題庫，之後可組卷、出自測或備課重用，不用再由零開始。',
     },
   ]
 
@@ -195,14 +195,14 @@ export default function MaterialGen() {
         description={`一個工作枱，集齊${subjShort}出題、個案、練習同試卷生成；生成完直接入題庫，再可組卷、出自測、重用。`}
       />
 
-      {/* ───────── 教學引導：點用呢個功能（可摺疊 / 永久收起） ───────── */}
+      {/* ───────── 教學引導：如何使用此功能（可摺疊 / 永久收起） ───────── */}
       <FeatureGuide
         storageKey="material-gen"
-        title="教材生成點用？"
+        title="教材生成使用說明"
         steps={guideSteps}
       />
 
-      {/* ───────── AI 未接友善降額（接咗就改顯示 AI 助手捷徑）───────── */}
+      {/* ───────── AI 未接友善降額（接了就改顯示 AI 助手捷徑）───────── */}
       {!isAIConfigured ? (
         <div className="flex items-start gap-3 rounded-2xl border border-amber-300/50 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-500/25 dark:bg-amber-500/10 dark:text-amber-200">
           <Bot size={18} className="mt-0.5 shrink-0" />
@@ -224,13 +224,13 @@ export default function MaterialGen() {
             onClick={() => nav.open('work-ai')}
             className="inline-flex min-h-11 items-center gap-1 rounded-lg px-3 text-xs font-semibold text-accent-strong transition hover:bg-accent-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98] dark:text-accent dark:hover:bg-accent/15"
           >
-            喺 AI 助手繼續傾
+            在 AI 助手繼續傾
             <ArrowUpRight size={14} />
           </button>
         </div>
       )}
 
-      {/* ───────── 工具卡（揀一款生成工具）───────── */}
+      {/* ───────── 工具卡（選擇一款生成工具）───────── */}
       <section aria-label="生成工具" className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
         {TOOLS.map((tool) => {
           const Icon = tool.icon
@@ -271,7 +271,7 @@ export default function MaterialGen() {
         })}
       </section>
 
-      {/* ───────── 題庫收尾卡（引導式：去題庫睇 / 重用生成成果）───────── */}
+      {/* ───────── 題庫收尾卡（引導式：去題庫查看 / 重用生成成果）───────── */}
       <button
         type="button"
         onClick={() => nav.open('work-questions')}
@@ -300,10 +300,10 @@ export default function MaterialGen() {
           ) : (
             <>
               <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
-                題庫仲未有題目
+                題庫尚未有題目
               </p>
               <p className="mt-0.5 text-[11px] text-slate-400 dark:text-slate-500">
-                用上面任何一款工具生成，揀入題庫後就會喺呢度集齊。
+                用上面任何一款工具生成，選擇入題庫後就會在這裡集齊。
               </p>
             </>
           )}

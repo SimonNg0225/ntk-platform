@@ -17,7 +17,7 @@ import type {
 //  資源分享區 — Supabase I/O（query / RPC / storage）
 //  ------------------------------------------------------------
 //  全部經登入 session（RLS gating）；未接 Supabase 一律 throw。
-//  純函式（署名 / 驗證 / 篩選排序）喺 features/work/community/util.ts。
+//  純函式（署名 / 驗證 / 篩選排序）在 features/work/community/util.ts。
 // ============================================================
 
 export const isCommunityConfigured = isSupabaseConfigured
@@ -62,7 +62,7 @@ export interface CommunityResource {
   thumbPath?: string | null
   /** 縮圖簽名 URL（listResources / getResource 會帶；gallery 顯示用） */
   thumbUrl?: string | null
-  /** join 落嚟嘅發佈者檔案（listResources / getResource 會帶） */
+  /** join 落來的發佈者檔案（listResources / getResource 會帶） */
   owner?: CommunityProfile
 }
 
@@ -278,7 +278,7 @@ export async function myResources(): Promise<CommunityResource[]> {
 // ───────── 發佈 / 管理 ─────────
 
 export interface PublishPayload extends PublishInput {
-  /** 上載嘅檔案（檔案型先有） */
+  /** 上載的檔案（檔案型先有） */
   file?: Blob & { name?: string }
   fileName?: string
   status?: 'published' | 'draft'
@@ -304,7 +304,7 @@ export async function publishResource(p: PublishPayload): Promise<string> {
     if (thumbBlob) {
       thumbPath = await uploadCommunityThumb(thumbBlob, ownerId, id)
     } else {
-      console.warn('[thumb] 冇生成到縮圖（type=', p.file.type, '）')
+      console.warn('[thumb] 沒有生成到縮圖（type=', p.file.type, '）')
     }
   }
   const { error } = await need()
@@ -404,19 +404,19 @@ export async function reportResource(resourceId: string, reason: string, detail?
   if (error) throw new Error(error.message)
 }
 
-/** 攞檔案嘅短期下載/預覽連結（private bucket → 要登入 session 簽名）。 */
+/** 取得檔案的短期下載/預覽連結（private bucket → 要登入 session 簽名）。 */
 export async function resourceFileUrl(filePath: string): Promise<string | null> {
   return communitySignedUrl(filePath)
 }
 
 /**
- * 下載資源檔案：先 fetch 成 blob 再喺 app 自己 origin 觸發下載
- * （避免「允許 xxx.supabase.co 下載」嘅 cross-origin prompt，兼用返靚檔名）。
+ * 下載資源檔案：先 fetch 成 blob 再在 app 自己 origin 觸發下載
+ * （避免「允許 xxx.supabase.co 下載」的 cross-origin prompt，兼使用靚檔名）。
  * CORS / 網絡失敗 → 退返開新分頁（至少開到）。
  */
 export async function downloadResourceFile(filePath: string, fileName?: string): Promise<void> {
   const url = await communitySignedUrl(filePath)
-  if (!url) throw new Error('攞唔到下載連結')
+  if (!url) throw new Error('取得不到下載連結')
   try {
     const res = await fetch(url)
     if (!res.ok) throw new Error('下載失敗')

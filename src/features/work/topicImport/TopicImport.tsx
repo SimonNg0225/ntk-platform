@@ -37,20 +37,20 @@ const MODEL_OPTS: { id: AIModel; label: string }[] = [
 
 const GUIDE_STEPS: FeatureGuideStep[] = [
   {
-    title: '揀來源',
+    title: '選擇來源',
     desc: '上載 PDF／Word 課程文件、貼上課題文字，或直接影相。',
   },
   {
     title: '抽取課題',
-    desc: '撳「抽取課題」，AI 會讀內容、整理成一條條課題。',
+    desc: '按「抽取課題」，AI 會讀內容、整理成一條條課題。',
   },
   {
     title: '預覽確認',
-    desc: '按範疇分組睇清楚，確認抽得啱先載入。',
+    desc: '按範疇分組查看，確認抽取正確先載入。',
   },
   {
     title: '載入做課題',
-    desc: '「附加」加喺後面；「智能切換」按課題名保留題庫／進度連繫。',
+    desc: '「附加」加在後面；「智能切換」按課題名保留題庫／進度連繫。',
   },
 ]
 
@@ -95,7 +95,7 @@ export default function TopicImport() {
         const ex = await extractFromFile(file)
         content = ex.text
         if (ex.image) images = [ex.image]
-        if (!content && !ex.image) throw new Error('檔案抽唔到文字（可能係掃描件），試吓影相。')
+        if (!content && !ex.image) throw new Error('檔案抽不到文字（可能係掃描件），嘗試影相。')
       }
       const raw = await complete({
         system: buildImportSystem(subjectName),
@@ -116,7 +116,7 @@ export default function TopicImport() {
   function loadAppend() {
     if (!imported) return
     const added = appendTopicsByText(imported)
-    toast.success(added > 0 ? `已附加 ${added} 個課題` : '呢啲課題已經喺清單入面')
+    toast.success(added > 0 ? `已附加 ${added} 個課題` : '這些課題已經在清單中')
     setImported(null)
     setText('')
     setFile(null)
@@ -143,7 +143,7 @@ export default function TopicImport() {
           icon={Inbox}
           kicker="Topic Import"
           title="課題匯入"
-          description="上載官方課程指引，AI 抽出課題，一鍵載入做你科嘅課題。"
+          description="上載官方課程指引，AI 抽出課題，一鍵載入做你科的課題。"
         />
         <EmptyState
           icon={Inbox}
@@ -160,12 +160,12 @@ export default function TopicImport() {
         icon={Inbox}
         kicker="Topic Import"
         title="課題匯入"
-        description="上載官方課程指引／補充資料／syllabus，AI 抽出課題，一鍵載入做你科嘅課題（題庫、進度、出題、指引都會用）。"
+        description="上載官方課程指引／補充資料／syllabus，AI 抽出課題，一鍵載入做你科的課題（題庫、進度、出題、指引都會用）。"
       />
 
       <FeatureGuide
         storageKey="topicImport"
-        title="課題匯入點用？"
+        title="課題匯入使用說明"
         steps={GUIDE_STEPS}
       />
 
@@ -203,11 +203,11 @@ export default function TopicImport() {
                 {mode === 'photo' ? <Camera size={22} strokeWidth={1.75} /> : <Upload size={22} strokeWidth={1.75} />}
               </span>
               <span className="text-sm font-medium text-slate-600 dark:text-slate-300">
-                {file ? file.name : mode === 'photo' ? '影相 / 揀相片' : '揀 PDF / Word 課程文件'}
+                {file ? file.name : mode === 'photo' ? '影相 / 選擇相片' : '選擇 PDF / Word 課程文件'}
               </span>
               <span className="text-xs text-slate-400 dark:text-slate-500">
                 {file
-                  ? '撳「抽取課題」開始'
+                  ? '按「抽取課題」開始'
                   : mode === 'photo'
                     ? '對住課程文件影一張清晰相片'
                     : '支援 PDF · Word · 純文字'}
@@ -218,7 +218,7 @@ export default function TopicImport() {
 
         <div className="flex flex-wrap items-center justify-between gap-2">
           <p className="text-xs text-slate-400 dark:text-slate-500">
-            {hasInput ? '準備好喇，撳右邊抽取課題。' : '先揀來源（上載／貼文字／影相）。'}
+            {hasInput ? '準備好喇，按右邊抽取課題。' : '先選擇來源（上載／貼文字／影相）。'}
           </p>
           <div className="flex items-center gap-2">
             <CreditMeter source="topic-import" model={model} />
@@ -266,8 +266,8 @@ export default function TopicImport() {
         ) : (
           <EmptyState
             icon={FileText}
-            title="抽唔到課題"
-            hint="可能來源唔係課程文件，或者內容太少。換另一份文件，或試吓影相再抽。"
+            title="抽不到課題"
+            hint="可能來源不是課程文件，或者內容太少。換另一份文件，或嘗試影相再抽。"
             action={
               <Button size="sm" variant="secondary" icon={Sparkles} onClick={() => setImported(null)}>
                 再試一次
@@ -282,9 +282,9 @@ export default function TopicImport() {
           <span className="flex h-12 w-12 items-center justify-center rounded-full bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
             <Inbox size={22} strokeWidth={1.75} />
           </span>
-          <p className="text-sm font-medium text-slate-600 dark:text-slate-300">你科仲未有課題</p>
+          <p className="text-sm font-medium text-slate-600 dark:text-slate-300">你科尚未有課題</p>
           <p className="max-w-xs text-xs text-slate-400 dark:text-slate-500">
-            上面抽取一份課程文件就會載入；或者去設定揀返任教科目，帶出官方課程大綱。
+            上面抽取一份課程文件就會載入；或者去設定重新選擇任教科目，帶出官方課程大綱。
           </p>
           <button
             type="button"
@@ -292,14 +292,14 @@ export default function TopicImport() {
             className="mt-1 inline-flex min-h-11 items-center gap-1 rounded-lg px-3 text-xs font-medium text-accent transition hover:bg-accent-soft hover:text-accent-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98] dark:hover:bg-accent/15"
           >
             <Settings size={13} />
-            去設定揀科目 →
+            去設定選擇科目 →
           </button>
         </section>
       ) : (
         <p className="text-xs text-slate-400 dark:text-slate-500">
           現時課題：
           <span className="font-semibold tabular-nums slashed-zero text-slate-500 dark:text-slate-300">{existing.length}</span>
-          {' '}個。「附加」會加喺後面；「智能切換」會按課題名保留連繫（題庫／進度唔甩號），冇用嘅先清走。
+          {' '}個。「附加」會加在後面；「智能切換」會按課題名保留連繫（題庫／進度不甩號），沒有用的先清走。
         </p>
       )}
     </div>

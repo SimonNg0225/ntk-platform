@@ -44,7 +44,7 @@ interface Props {
   onOpenSettings?: () => void
   /** 開後台管理（只 admin 顯示入口） */
   onOpenAdmin?: () => void
-  /** 喺手機抽屜入面用：揀完一項就關抽屜 */
+  /** 在手機抽屜中用：選擇完一項就關抽屜 */
   onClose?: () => void
   className?: string
   /** 桌面幼條（icon-only）模式 */
@@ -55,7 +55,7 @@ interface Props {
   onExpand?: () => void
 }
 
-// 側邊欄 — 品牌 / 模式切換 / 該模式嘅功能導覽（分組 + 篩選 + 釘選）
+// 側邊欄 — 品牌 / 模式切換 / 該模式的功能導覽（分組 + 篩選 + 釘選）
 export default function Sidebar({
   activeId,
   onSelect,
@@ -74,7 +74,7 @@ export default function Sidebar({
   const groups = groupedFeatures(modeDef.id)
   const allItems = useMemo(() => groups.flatMap((g) => g.items), [groups])
 
-  // 釘選 / 最近：解析返「目前模式、ready」嘅功能，保留各自次序、去重。
+  // 釘選 / 最近：解析返「目前模式、ready」的功能，保留各自次序、去重。
   const pins = useCollection(pinnedFeaturesCol)
   const recents = useCollection(recentFeaturesCol)
   const pinnedIds = useMemo(() => new Set(pins.map((p) => p.featureId)), [pins])
@@ -94,7 +94,7 @@ export default function Sidebar({
     return out
   }
   const pinnedFeatures = resolveFeatures(pins, 8)
-  // 最近：隔走已釘嘅（已喺上面顯示），最多補夠 4 個。
+  // 最近：隔走已釘的（已在上方顯示），最多補夠 4 個。
   const recentFeatures = resolveFeatures(recents, 12)
     .filter((f) => !pinnedIds.has(f.id))
     .slice(0, 4)
@@ -143,7 +143,7 @@ export default function Sidebar({
           className,
         )}
         >
-        {/* 品牌：撳 logo 展開 */}
+        {/* 品牌：按 logo 展開 */}
         <div className="flex justify-center px-2 py-3">
           <button
             onClick={onExpand}
@@ -160,7 +160,7 @@ export default function Sidebar({
           </button>
         </div>
 
-        {/* 功能 icon 列：rail 只放核心快捷，完整列表喺展開側欄 / 首頁功能庫。 */}
+        {/* 功能 icon 列：rail 只放核心快捷，完整列表在展開側欄 / 首頁功能庫。 */}
         <nav className="flex-1 space-y-0.5 px-2 py-1">
           <RailButton
             active={activeId === null}
@@ -325,7 +325,7 @@ export default function Sidebar({
             </div>
           ) : (
             <p className="px-3 pt-6 text-center text-[13px] text-slate-400 dark:text-slate-500">
-              {t('shell.noFeatureMatch', { defaultValue: '搵唔到對應功能' })}
+              {t('shell.noFeatureMatch', { defaultValue: '搜尋不到對應功能' })}
             </p>
           )
         ) : (
@@ -510,7 +510,7 @@ function LockBadge() {
 }
 
 // 導覽列：icon chip + 標籤 + active 左條 + （選用）釘選掣 + （選用）badge。
-// 主按鈕同釘選掣係兄弟（唔係巢狀 button），釘選掣 z-10 浮喺上面，撳佢唔會觸發跳轉。
+// 主按鈕同釘選掣係兄弟（不是巢狀 button），釘選掣 z-10 浮在上方，按他不會觸發跳轉。
 function NavRow({
   active,
   icon,
@@ -592,7 +592,7 @@ function navClass(active: boolean) {
   )
 }
 
-// 幼條模式嘅單個 icon 掣（置中、native title tooltip、active 有 ring）
+// 幼條模式的單個 icon 掣（置中、native title tooltip、active 有 ring）
 function RailButton({
   active,
   title,

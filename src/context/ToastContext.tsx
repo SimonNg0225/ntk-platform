@@ -14,7 +14,7 @@ import {
 
 type ToastType = 'success' | 'error' | 'info'
 
-/** 可選行動按鈕（例如「檢視」），撳咗會執行 onClick 並關閉該 toast */
+/** 可選行動按鈕（例如「檢視」），按了會執行 onClick 並關閉該 toast */
 export interface ToastAction {
   label: string
   onClick: () => void
@@ -64,7 +64,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         () => {
           setToasts((t) => t.filter((x) => x.id !== id))
         },
-        // 有行動掣時畀耐少少時間畀用戶撳
+        // 有行動掣時給耐少少時間給用戶按
         action ? 6000 : 3000,
       )
     },
@@ -118,6 +118,6 @@ export function ToastProvider({ children }: { children: ReactNode }) {
 // eslint-disable-next-line react-refresh/only-export-components
 export function useToast(): ToastApi {
   const ctx = useContext(ToastContext)
-  if (!ctx) throw new Error('useToast 必須喺 <ToastProvider> 入面用')
+  if (!ctx) throw new Error('useToast 必須在 <ToastProvider> 中用')
   return ctx
 }

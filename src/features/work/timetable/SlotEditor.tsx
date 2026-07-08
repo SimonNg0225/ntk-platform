@@ -37,10 +37,10 @@ export interface EditorDraft {
 //  課堂編輯器 — 呼應「週記時間網格 / 堂卡」概念
 //  ------------------------------------------------------------
 //  • Masthead = 一張「課堂座標」票根：serif Day token + serif 節數 + 鐘聲時間，
-//    跟返 WeekGrid 欄頭 / 堂卡嘅視覺語言（serif、accent token、tabular 時間）。
-//  • 欄位分組：每組一個 hairline kicker（細體大寫字距），唔再係散亂 form grid。
+//    跟返 WeekGrid 欄頭 / 堂卡的視覺語言（serif、accent token、tabular 時間）。
+//  • 欄位分組：每組一個 hairline kicker（細體大寫字距），不再係散亂 form grid。
 //  • 預覽 = 真‧堂卡：1:1 重現 WeekGrid 嗰塊 chip（左色脊 + 科目 + 班別/課室 pill），
-//    令用戶睇住「呢張卡真係落格係咁」。
+//    令用戶查看住「這張卡真的落格係這樣」。
 //  資料流 / props / state / handler / onSave / onClose / onRemove 簽名一律不變。
 // ============================================================
 
@@ -297,7 +297,7 @@ export default function SlotEditor({
             <div className="rounded-2xl border border-slate-200/70 bg-slate-50/50 p-3 dark:border-slate-700/60 dark:bg-slate-900/30">
               <p className="mb-2.5 flex items-center gap-1.5 text-xs font-medium text-slate-600 dark:text-slate-300">
                 <Copy size={13} className="text-slate-400" />
-                同一節（第 {d.period} 節）一併排入呢幾日
+                同一節（第 {d.period} 節）一併排入這幾天
               </p>
               <div className="flex flex-wrap gap-1.5">
                 {DAY_DEFS.map((dd) => {
@@ -332,7 +332,7 @@ export default function SlotEditor({
               </div>
               {applyDays.length > 1 && (
                 <p className="mt-2.5 text-[11px] text-amber-600 dark:text-amber-400">
-                  會覆寫所揀日子嘅同一節（已有課堂會被取代）。
+                  會覆寫所選擇日子的同一節（已有課堂會被取代）。
                 </p>
               )}
             </div>

@@ -34,7 +34,7 @@ type EntryPatch = Partial<Omit<BodyEntry, 'id' | 'date' | 'createdAt' | 'updated
 
 /**
  * 記錄某日身體組成（按本地日期 key upsert，一日一條）。
- * patch 採 merge 語意：傳 undefined 唔會清除已存值；要清空某欄請明確傳該欄。
+ * patch 採 merge 語意：傳 undefined 不會清除已存值；要清空某欄請明確傳該欄。
  */
 export function logBody(date: string, patch: EntryPatch): void {
   const now = new Date().toISOString()

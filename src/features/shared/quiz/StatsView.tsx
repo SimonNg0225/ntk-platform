@@ -91,8 +91,8 @@ export function StatsView({ onPractice }: { onPractice: (topicId: string) => voi
     return (
       <EmptyState
         icon={Activity}
-        title="仲未有測驗資料"
-        hint="去「測驗」做幾份卷，呢度就會出命中率走勢、課題掌握度同練習熱力圖。"
+        title="尚未有測驗資料"
+        hint="去「測驗」做幾份卷，這裡就會出命中率走勢、課題掌握度同練習熱力圖。"
       />
     )
   }
@@ -134,7 +134,7 @@ export function StatsView({ onPractice }: { onPractice: (topicId: string) => voi
 
       {/* 命中率走勢 */}
       <Card className="p-4">
-        <SectionTitle icon={TrendingUp} description="每次測驗嘅命中率（虛線 = 60% 及格）">
+        <SectionTitle icon={TrendingUp} description="每次測驗的命中率（虛線 = 60% 及格）">
           命中率走勢
         </SectionTitle>
         <ScoreLineChart points={series} />
@@ -143,7 +143,7 @@ export function StatsView({ onPractice }: { onPractice: (topicId: string) => voi
       <div className="grid gap-4 lg:grid-cols-2">
         {/* 課題掌握度 */}
         <Card className="p-4">
-          <SectionTitle icon={Layers} description="弱在前，撳一下即練該課題">
+          <SectionTitle icon={Layers} description="弱在前，按一下即練該課題">
             課題掌握度
           </SectionTitle>
           <TopicMasteryBars rows={topics_} nameOf={topicName} onPick={onPractice} />

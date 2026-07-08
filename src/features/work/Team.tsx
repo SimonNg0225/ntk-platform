@@ -47,7 +47,7 @@ import {
 //  需登入（接 Supabase）；訪客模式顯示提示。
 // ============================================================
 
-// ───────── 團隊教學引導（FeatureGuide：3 步「點用」）─────────
+// ───────── 團隊教學引導（FeatureGuide：3 步「如何使用」）─────────
 const TEAM_GUIDE: FeatureGuideStep[] = [
   {
     title: '先開一個空間',
@@ -55,11 +55,11 @@ const TEAM_GUIDE: FeatureGuideStep[] = [
   },
   {
     title: '邀請同事',
-    desc: '入同事電郵產生加入連結，傳俾佢開啟即加入同一個空間。',
+    desc: '入同事電郵產生加入連結，傳給他開啟即加入同一個空間。',
   },
   {
     title: '管理座位同成員',
-    desc: '座位用盡可加購；隨時喺成員清單調整或移除。',
+    desc: '座位用盡可加購；隨時在成員清單調整或移除。',
   },
 ]
 
@@ -120,7 +120,7 @@ export default function Team() {
         .then((joinedId) => {
           toast.success('已加入團隊。')
           setOrgId(joinedId)
-          // 清走 URL 上嘅 token
+          // 清走 URL 上的 token
           const u = new URL(window.location.href)
           u.searchParams.delete('invite')
           window.history.replaceState({}, '', u.toString())
@@ -156,9 +156,9 @@ export default function Team() {
     return (
       <EmptyState
         icon={Users}
-        title={t('team.gateSignInTitle', { defaultValue: '登入先可以用團隊功能' })}
+        title={t('team.gateSignInTitle', { defaultValue: '請先登入以使用團隊功能' })}
         hint={t('team.gateSignInHint', {
-          defaultValue: '建立學校 / 科組團隊、邀請同事、共用座位一齊備課。',
+          defaultValue: '建立學校 / 科組團隊、邀請同事、共用座位一起備課。',
         })}
         action={
           <Button onClick={() => void signInWithGoogle()}>
@@ -213,7 +213,7 @@ export default function Team() {
     if (
       !(await confirm({
         title: `移除 ${m.email}？`,
-        message: '佢將會失去此團隊嘅存取權。',
+        message: '他將會失去此團隊的存取權。',
         confirmText: '移除',
         tone: 'danger',
       }))
@@ -283,14 +283,14 @@ export default function Team() {
                 total: seatsTotal,
               })
             : t('team.subtitleDefault', {
-                defaultValue: '先建立你自己的備課空間；需要時用連結邀請同事，共用座位一齊整理教材。',
+                defaultValue: '先建立你自己的備課空間；需要時用連結邀請同事，共用座位一起整理教材。',
               })
         }
       />
 
       <FeatureGuide
         storageKey="team"
-        title={t('team.guideTitle', { defaultValue: '團隊點用？' })}
+        title={t('team.guideTitle', { defaultValue: '團隊使用說明' })}
         steps={TEAM_GUIDE}
       />
 
@@ -312,7 +312,7 @@ export default function Team() {
           </h2>
           <p className="mt-1 max-w-xs text-xs text-slate-400 dark:text-slate-500">
             {t('team.emptyHint', {
-              defaultValue: '可以先只俾自己用；之後想同科同事共用教材，再用連結邀請佢哋加入。',
+              defaultValue: '可以先只給自己用；之後想同科同事共用教材，再用連結邀請他們加入。',
             })}
           </p>
           <div className="mt-4 flex w-full max-w-sm gap-2">
@@ -331,7 +331,7 @@ export default function Team() {
           </div>
         </section>
       ) : (
-        // ── 團隊揀選列 + 新增 ──
+        // ── 團隊選擇選列 + 新增 ──
         <section className="rounded-2xl border border-slate-200/80 bg-white p-4 dark:border-slate-700/60 dark:bg-slate-800">
           <h2 className="mb-3 flex items-center gap-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400">
             <Building2 size={14} className="shrink-0" />
@@ -402,7 +402,7 @@ export default function Team() {
                 {seatsFull && (
                   <p className="mt-0.5 text-[11px] text-rose-500">
                     {t('team.seatsFullHint', {
-                      defaultValue: '座位已滿，加購先可以再邀請。',
+                      defaultValue: '座位已滿，加購後即可再邀請。',
                     })}
                   </p>
                 )}
@@ -430,7 +430,7 @@ export default function Team() {
               <p className="mb-3 mt-1 text-sm text-slate-500 dark:text-slate-400">
                 {t('team.inviteHint', {
                   defaultValue:
-                    '輸入同事電郵，產生加入連結（自動複製），傳俾佢開啟即加入。',
+                    '輸入同事電郵，產生加入連結（自動複製），傳給他開啟即加入。',
                 })}
               </p>
               <div className="flex gap-2">
@@ -498,7 +498,7 @@ export default function Team() {
                 <p className="mt-3 flex items-center gap-2 text-xs text-slate-400 dark:text-slate-500">
                   <ArrowRight size={13} className="shrink-0" />
                   {t('team.invitesEmptyHint', {
-                    defaultValue: '未有待接受邀請。產生連結後會喺呢度顯示。',
+                    defaultValue: '未有待接受邀請。產生連結後會在這裡顯示。',
                   })}
                 </p>
               )}
@@ -524,7 +524,7 @@ export default function Team() {
                 </p>
                 <p className="max-w-xs text-xs text-slate-400 dark:text-slate-500">
                   {t('team.membersEmptyHint', {
-                    defaultValue: '用上面嘅邀請連結叫同事加入，名單就會喺呢度出現。',
+                    defaultValue: '用上面的邀請連結叫同事加入，名單就會在這裡出現。',
                   })}
                 </p>
               </div>

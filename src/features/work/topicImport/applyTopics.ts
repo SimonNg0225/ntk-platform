@@ -14,8 +14,8 @@ import {
 } from './reconcile'
 
 // ============================================================
-//  Smart 套用課題 — 執行 reconcile 計劃喺 topicsCol
-//  同名保留 id（題庫/備課 連繫唔甩）；舊有有資料連住就保留，否則清走。
+//  Smart 套用課題 — 執行 reconcile 計劃在 topicsCol
+//  同名保留 id（題庫/備課 連繫不甩）；舊有有資料連住就保留，否則清走。
 // ============================================================
 
 function referencedIds(): Set<string> {
@@ -45,10 +45,10 @@ export function smartApplyTopics(next: TopicInput[]): ApplyResult {
 // ============================================================
 //  任教科目 → 課題自動同步（additive · load-once）
 //  ------------------------------------------------------------
-//  老師喺個人資料揀任教科目後，自動將該科 pack 課題補入 topicsCol，
-//  令「課程進度 / 備課 / AI 教案」即刻揀得到。設計上唔搞 smartApply 嗰套
+//  老師在個人資料選擇任教科目後，自動將該科 pack 課題補入 topicsCol，
+//  令「課程進度 / 備課 / AI 教案」立即選擇得到。設計上不搞 smartApply 嗰套
 //  replace（怕誤刪手動課題）：純 additive，而且每科只自動載入一次
-//  （記低喺 localStorage），之後老師自由增刪都唔會被翻撈返。
+//  （記低在 localStorage），之後老師自由增刪都不會被翻撈返。
 // ============================================================
 const SYNCED_SUBJECTS_KEY = 'ntk.topics_synced_subjects'
 
@@ -72,11 +72,11 @@ function markSubjectsSynced(ids: string[]): void {
 }
 
 /**
- * 將 subjectIds 入面「未自動載入過」嘅科目課題補入 topicsCol。
- * - additive：只加唔減（按文字 / id 去重，唔會整 legacy/拆科課題重覆）。
+ * 將 subjectIds 中「未自動載入過」的科目課題補入 topicsCol。
+ * - additive：只加不減（按文字 / id 去重，不會整 legacy/拆科課題重覆）。
  * - load-once：每科記低已同步，重複呼叫（每次開首頁）都係 no-op。
- * - 保留 pack id（令分組 / 題庫連繫對得返）；order 接喺現有最大值之後。
- * 回傳實際新增嘅課題數。
+ * - 保留 pack id（令分組 / 題庫連繫對得返）；order 接在現有最大值之後。
+ * 回傳實際新增的課題數。
  */
 export function loadTopicsForSubjects(subjectIds: string[]): number {
   const done = syncedSubjectIds()
@@ -99,7 +99,7 @@ export function loadTopicsForSubjects(subjectIds: string[]): number {
 // ============================================================
 //  附加課題（按課題名去重）— Settings / TopicImport 「附加」共用
 //  ------------------------------------------------------------
-//  舊版「附加」淨係 by id 去重（或冇去重），但同一課題喺唔同 flow 會有唔同
+//  舊版「附加」只 by id 去重（或沒有去重），但同一課題在不同 flow 會有不同
 //  id（pack id vs 隨機 uid），令同名課題重複入庫。改為按課題名 norm 去重。
 //  incoming 帶 id 就保留（維持 pack 分組）；回傳實際新增數。
 // ============================================================
@@ -114,8 +114,8 @@ export function appendTopicsByText(incoming: (TopicInput & { id?: string })[]): 
 // ============================================================
 //  去重整理 topicsCol（self-heal）
 //  ------------------------------------------------------------
-//  剷走同名（norm）又冇資料連住嘅重複課題；referenced 嘅一律保留唔郁，
-//  唔會斷開題庫／備課嘅連繫。每次開首頁跑一次，止住歷史污染。
+//  剷走同名（norm）又沒有資料連住的重複課題；referenced 的一律保留不郁，
+//  不會斷開題庫／備課的連繫。每次開首頁跑一次，止住歷史污染。
 //  回傳實際剷走數。
 // ============================================================
 export function dedupeTopicsCol(): number {

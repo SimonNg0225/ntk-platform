@@ -16,7 +16,7 @@ import {
 //  客服掣（浮動）+ 聯絡表單 + 我的查詢
 //  ------------------------------------------------------------
 //  即裝即用：登入用戶 → support Edge Function（存 ticket + email 客服）；
-//  未接 Supabase / 未登入 → mailto fallback。有 Crisp → 讓位畀 Crisp。
+//  未接 Supabase / 未登入 → mailto fallback。有 Crisp → 讓位給 Crisp。
 // ============================================================
 
 export default function SupportButton() {
@@ -54,7 +54,7 @@ export default function SupportButton() {
       try {
         setBusy(true)
         await submitSupportTicket(s, m)
-        toast.success('已收到你嘅查詢，我哋會盡快回覆。')
+        toast.success('已收到你的查詢，我們會盡快回覆。')
         setSubject('')
         setMessage('')
         setTab('mine')
@@ -104,7 +104,7 @@ export default function SupportButton() {
         {tab === 'new' ? (
           <div className="space-y-4">
             <p className="text-sm text-slate-500 dark:text-slate-400">
-              有問題或建議？留低訊息，我哋會
+              有問題或建議？留低訊息，我們會
               {user?.email ? `以 ${user.email} ` : ''}盡快回覆。
             </p>
             <Field label="主題">
@@ -119,7 +119,7 @@ export default function SupportButton() {
                 rows={5}
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
-                placeholder="詳細描述你嘅問題或建議…"
+                placeholder="詳細描述你的問題或建議…"
               />
             </Field>
             <div className="flex justify-end gap-2">
@@ -136,7 +136,7 @@ export default function SupportButton() {
             {loadingTickets ? (
               <p className="py-6 text-center text-sm text-slate-400">載入中…</p>
             ) : tickets.length === 0 ? (
-              <EmptyState icon={Headset} title="仲未有查詢記錄。" />
+              <EmptyState icon={Headset} title="尚未有查詢記錄。" />
             ) : (
               <ul className="max-h-80 space-y-2 overflow-y-auto">
                 {tickets.map((t) => (

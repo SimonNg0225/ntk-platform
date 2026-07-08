@@ -79,8 +79,8 @@ export default function ThreadView({ threadId, onBack }: { threadId: string; onB
       {backLink}
       <EmptyState
         icon={FileX}
-        title={t('forum.threadGone', { defaultValue: '主題唔存在或已刪除' })}
-        hint={t('forum.threadGoneHint', { defaultValue: '可能已被作者刪除，返回版面睇下其他帖。' })}
+        title={t('forum.threadGone', { defaultValue: '主題不存在或已刪除' })}
+        hint={t('forum.threadGoneHint', { defaultValue: '可能已被作者刪除，請返回版面查看其他帖。' })}
         action={<Button size="sm" variant="secondary" icon={ArrowLeft} onClick={onBack}>{t('forum.backToBoard', { defaultValue: '返回版面' })}</Button>}
       />
     </div>
@@ -120,8 +120,8 @@ export default function ThreadView({ threadId, onBack }: { threadId: string; onB
       {posts.length === 0 && thread.status !== 'locked' && (
         <div className="flex flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-black/[0.1] bg-slate-50/60 px-6 py-10 text-center dark:border-white/[0.12] dark:bg-slate-800/40">
           <span className="flex h-12 w-12 items-center justify-center rounded-full bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent"><MessageSquare size={22} strokeWidth={1.75} /></span>
-          <p className="text-sm font-medium text-slate-600 dark:text-slate-300">{t('forum.noReplies', { defaultValue: '仲未有回覆' })}</p>
-          <p className="max-w-xs text-xs text-slate-400">{t('forum.noRepliesHint', { defaultValue: '做第一個回應嘅老師，喺下面寫低你嘅諗法。' })}</p>
+          <p className="text-sm font-medium text-slate-600 dark:text-slate-300">{t('forum.noReplies', { defaultValue: '尚未有回覆' })}</p>
+          <p className="max-w-xs text-xs text-slate-400">{t('forum.noRepliesHint', { defaultValue: '做第一個回應的老師，在下方記錄你的想法。' })}</p>
         </div>
       )}
 
@@ -141,11 +141,11 @@ export default function ThreadView({ threadId, onBack }: { threadId: string; onB
 
       {thread.status === 'locked' ? (
         <p className="flex items-center justify-center gap-1.5 rounded-2xl bg-slate-50 py-3 text-center text-sm text-slate-400 dark:bg-slate-800/50">
-          <Lock size={14} /> {t('forum.locked', { defaultValue: '此主題已鎖，唔接受回覆。' })}
+          <Lock size={14} /> {t('forum.locked', { defaultValue: '此主題已鎖，不接受回覆。' })}
         </p>
       ) : (
         <Card className="p-4">
-          <Textarea value={reply} onChange={(e) => setReply(e.target.value)} rows={3} placeholder={t('forum.replyPlaceholder', { defaultValue: '寫低你嘅回覆…' })} />
+          <Textarea value={reply} onChange={(e) => setReply(e.target.value)} rows={3} placeholder={t('forum.replyPlaceholder', { defaultValue: '記錄你的回覆…' })} />
           <div className="mt-2 flex justify-end"><Button icon={Send} onClick={send} disabled={sending}>{sending ? t('forum.sending', { defaultValue: '發送中…' }) : t('forum.reply', { defaultValue: '回覆' })}</Button></div>
         </Card>
       )}

@@ -20,13 +20,13 @@ export function uid(): string {
 }
 
 /**
- * 淺層去走「值為 undefined」嘅 key，回傳新物件（唔改原物件）。
+ * 淺層去走「值為 undefined」的 key，回傳新物件（不改原物件）。
  * 只去 undefined —— null / 0 / '' / false 等 falsy 值一律保留。
  *
- * 寫入 collection 前用：清走 optional 欄位嘅顯式 undefined（常見寫法
+ * 寫入 collection 前用：清走 optional 欄位的顯式 undefined（常見寫法
  * `field: value || undefined`）。否則 in-memory item 會帶住 `key: undefined`，
- * 但 persist（JSON.stringify）會 drop 咗，造成 reload 前後 shape 唔一致
- * （用 Object.keys / exactOptionalPropertyTypes 式 narrowing 嘅 consumer 行為不定）。
+ * 但 persist（JSON.stringify）會 drop 了，造成 reload 前後 shape 不一致
+ * （用 Object.keys / exactOptionalPropertyTypes 式 narrowing 的 consumer 行為不定）。
  * add / update 內部已自動套用，各 collection 一致，毋須各 call site 自行清。
  */
 export function stripUndefined<T extends object>(obj: T): T {
@@ -48,9 +48,9 @@ export interface Collection<T extends Entity> {
 }
 
 /**
- * 全部 createCollection 出嚟嘅 collection 自動登記喺度（key = 去咗 ntk. 前綴
- * 嘅 storage key）。畀雲端同步 / 匯出匯入 / 清除資料統一枚舉 —— 各功能自家喺
- * 自己檔建立嘅 collection 都會自動納入，唔使手動逐個登記。
+ * 全部 createCollection 出來的 collection 自動登記在這裡（key = 去了 ntk. 前綴
+ * 的 storage key）。給雲端同步 / 匯出匯入 / 清除資料統一枚舉 —— 各功能自家在
+ * 自己檔建立的 collection 都會自動納入，不用手動逐個登記。
  */
 export const collectionRegistry = new Map<string, Collection<Entity>>()
 
@@ -99,8 +99,8 @@ export function createCollection<T extends Entity>(
       emit()
     },
     add: (data) => {
-      // 剷走 optional 欄位嘅顯式 undefined（見 stripUndefined）：保持 in-memory
-      // 同 persist 後 reload 嘅 shape 一致。id 必有值，唔會被剷。
+      // 剷走 optional 欄位的顯式 undefined（見 stripUndefined）：保持 in-memory
+      // 同 persist 後 reload 的 shape 一致。id 必有值，不會被剷。
       const item = stripUndefined({ id: data.id ?? uid(), ...data }) as T
       items = [...items, item]
       persist()
@@ -110,9 +110,9 @@ export function createCollection<T extends Entity>(
     update: (id, patch) => {
       items = items.map((i) => {
         if (i.id !== id) return i
-        // merge；patch 內明確設為 undefined 嘅欄位 = 「清除」→ 真正剷走個 key
-        // （而唔係留 key:undefined），令 in-memory 同 persist 後 reload shape 一致。
-        // patch 無提及嘅 key 一律保留（維持原有 merge 語義）。
+        // merge；patch 內明確設為 undefined 的欄位 = 「清除」→ 真正剷走個 key
+        // （而不是留 key:undefined），令 in-memory 同 persist 後 reload shape 一致。
+        // patch 無提及的 key 一律保留（維持原有 merge 語義）。
         const merged = { ...i, ...patch }
         const rec = merged as unknown as Record<string, unknown>
         for (const k of Object.keys(patch)) {

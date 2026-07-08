@@ -1,18 +1,18 @@
-// 懶載 Tesseract（npm 套件 v7，但字庫由 CDN 攞）。
-// 跟設計 Q4：OCR 走 CDN，當 bonus；冇網 → caller catch 後出純掃描 PDF。
+// 懶載 Tesseract（npm 套件 v7，但字庫由 CDN 取得）。
+// 跟設計 Q4：OCR 走 CDN，當 bonus；沒有網 → caller catch 後出純掃描 PDF。
 //
 // v7 備註：
 // - createWorker(langs, oem, options) 仍有效；oem=1 = LSTM_ONLY。
-// - worker / core 由 tesseract.js 自己解析（用已裝版本 v7.0.0 嘅 jsDelivr URL），
-//   所以唔使手動寫死 @7 CDN（避免同實際 patch 版本飄移）。只set langPath。
-// - ⚠️ v7 已冇頂層 data.words；要攞 word-level bbox 必須喺 recognize 傳
+// - worker / core 由 tesseract.js 自己解析（用已裝版本 v7.0.0 的 jsDelivr URL），
+//   所以不用手動寫死 @7 CDN（避免同實際 patch 版本飄移）。只set langPath。
+// - ⚠️ v7 已沒有頂層 data.words；要取得 word-level bbox 必須在 recognize 傳
 //   output { blocks: true }，再由 blocks[].paragraphs[].lines[].words[] 攤平。
 // 註：tesseract.js 用 `export = Tesseract` + `export as namespace Tesseract`，
-// 所以型別由全域 `Tesseract` namespace 攞（唔可以 named import）；
-// runtime 值（createWorker / OEM）就由 dynamic import() 攞。
+// 所以型別由全域 `Tesseract` namespace 取得（不可以 named import）；
+// runtime 值（createWorker / OEM）就由 dynamic import() 取得。
 import type { OcrWord } from './types'
 
-// chi_tra（繁中，~15MB）+ eng；gzip 字庫由呢個 CDN 攞（v7 預設 gzip:true → .traineddata.gz）。
+// chi_tra（繁中，~15MB）+ eng；gzip 字庫由這個 CDN 取得（v7 預設 gzip:true → .traineddata.gz）。
 const LANG_PATH = 'https://tessdata.projectnaptha.com/4.0.0'
 
 let workerP: Promise<Tesseract.Worker> | null = null
@@ -21,7 +21,7 @@ async function getWorker(): Promise<Tesseract.Worker> {
   if (workerP) return workerP
   workerP = (async () => {
     const { createWorker, OEM } = await import('tesseract.js')
-    // 只覆寫 langPath；workerPath / corePath 留俾 tesseract.js 自己解析（版本對齊）。
+    // 只覆寫 langPath；workerPath / corePath 留給 tesseract.js 自己解析（版本對齊）。
     const worker = await createWorker('chi_tra+eng', OEM.LSTM_ONLY, {
       langPath: LANG_PATH,
     })

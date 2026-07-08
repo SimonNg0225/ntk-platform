@@ -9,7 +9,7 @@
 //    收 r 當且僅當 r 真值 && typeof i==='number' && 0<=i<texts.length
 //      && VALID(6 個 kind).includes(kind)；其餘整條丟棄。
 //    why：係 string 就 slice(0,20)，否則 ''。
-//    parseJsonArray 回 null（raw 唔係 JSON）→ throw 友善中文 Error。
+//    parseJsonArray 回 null（raw 不是 JSON）→ throw 友善中文 Error。
 //    重複 i：Map.set 後者覆蓋前者。
 // ============================================================
 
@@ -228,20 +228,20 @@ describe('aiTriage — 重複 i：後者覆蓋前者（Map.set 語意）', () =>
 })
 
 describe('aiTriage — parse 失敗 → throw 友善中文 Error', () => {
-  it('raw 唔係 JSON（parseJsonArray 回 null）：throw 友善 message', async () => {
-    completeMock.mockResolvedValueOnce('我幫你分類好喇！不過唔係 JSON 格式 🙂')
-    await expect(aiTriage(['a'])).rejects.toThrow('AI 回應唔係有效 JSON，請再試一次。')
+  it('raw 不是 JSON（parseJsonArray 回 null）：throw 友善 message', async () => {
+    completeMock.mockResolvedValueOnce('我幫你分類好喇！不過不是 JSON 格式 🙂')
+    await expect(aiTriage(['a'])).rejects.toThrow('AI 回應不是有效 JSON，請再試一次。')
   })
 
   it('raw 係 JSON object（非陣列）：parseJsonArray 回 null → throw', async () => {
     // parseJsonArray 只收 Array；object 會回 null。
     completeMock.mockResolvedValueOnce('{"i":0,"kind":"task"}')
-    await expect(aiTriage(['a'])).rejects.toThrow('AI 回應唔係有效 JSON')
+    await expect(aiTriage(['a'])).rejects.toThrow('AI 回應不是有效 JSON')
   })
 
   it('raw 空字串：parseJsonArray 回 null → throw', async () => {
     completeMock.mockResolvedValueOnce('')
-    await expect(aiTriage(['a'])).rejects.toThrow('AI 回應唔係有效 JSON')
+    await expect(aiTriage(['a'])).rejects.toThrow('AI 回應不是有效 JSON')
   })
 
   it('raw 帶 ```json fence 包住合法陣列：仍 parse 得（經 stripJsonFence）', async () => {

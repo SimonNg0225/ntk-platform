@@ -1,8 +1,8 @@
 // ============================================================
 //  匯出 — 統一內容模型
 //  ------------------------------------------------------------
-//  各功能將自己嘅資料轉成 ExportDoc（文件）或 Deck（簡報），
-//  再交畀 docx / print / pptx 砌成檔案。Gemini 只負責出內容。
+//  各功能將自己的資料轉成 ExportDoc（文件）或 Deck（簡報），
+//  再交給 docx / print / pptx 砌成檔案。Gemini 只負責出內容。
 // ============================================================
 
 export type ExportBlock =
@@ -88,9 +88,9 @@ export interface Slide {
   cards?: SlideCard[]
   /** 包底重點（選填）— 一句 ≤46 字，render 做版底色帶 */
   takeaway?: string
-  /** 英文 Pexels 搜尋詞（1-4 個字），值得配相嘅版先有 */
+  /** 英文 Pexels 搜尋詞（1-4 個字），值得配相的版先有 */
   imageQuery?: string
-  /** 重點版（選填）— AI 標全套 1-3 版最重要嘅，引擎加重處理（accent L-frame）造輕重節奏 */
+  /** 重點版（選填）— AI 標全套 1-3 版最重要的，引擎加重處理（accent L-frame）造輕重節奏 */
   emphasis?: boolean
 }
 
@@ -102,7 +102,7 @@ export interface Deck {
   coverImageQuery?: string
 }
 
-/** 高擬真標題圖（Canvas 用招牌字體 render 嘅標題 PNG）— 高擬真模式封面用 */
+/** 高擬真標題圖（Canvas 用招牌字體 render 的標題 PNG）— 高擬真模式封面用 */
 export interface CoverTitle {
   /** PNG data URI */
   dataUri: string

@@ -44,7 +44,7 @@ export function avgRating(r: Pick<CommunityResource, 'ratingSum' | 'ratingCount'
 
 // ───────── 檔案驗證 ─────────
 
-/** 容許嘅副檔名 → MIME（白名單）。 */
+/** 容許的副檔名 → MIME（白名單）。 */
 export const ALLOWED_FILE_TYPES: Record<string, string> = {
   pdf: 'application/pdf',
   pptx: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
@@ -68,7 +68,7 @@ export function validateFile(file: { name: string; size: number }): { ok: boolea
   if (!ext || !(ext in ALLOWED_FILE_TYPES)) {
     return { ok: false, error: '只支援 PDF / PPTX / Word / 圖片檔。' }
   }
-  if (file.size <= 0) return { ok: false, error: '檔案似乎係空嘅。' }
+  if (file.size <= 0) return { ok: false, error: '檔案似乎是空的。' }
   if (file.size > MAX_FILE_BYTES) {
     return { ok: false, error: `檔案太大（上限 ${Math.floor(MAX_FILE_BYTES / 1024 / 1024)}MB）。` }
   }
@@ -101,11 +101,11 @@ function isHttpUrl(s: string): boolean {
   return /^https?:\/\/\S+$/i.test(s.trim())
 }
 
-/** 驗證發佈 payload；唔合格回 error 訊息。 */
+/** 驗證發佈 payload；不合格回 error 訊息。 */
 export function validatePublish(input: PublishInput): { ok: boolean; error?: string } {
   if (!input.title.trim()) return { ok: false, error: '請填寫標題。' }
   if (input.title.trim().length > 120) return { ok: false, error: '標題太長（上限 120 字）。' }
-  if (!RESOURCE_TYPES.includes(input.type)) return { ok: false, error: '請揀資源類型。' }
+  if (!RESOURCE_TYPES.includes(input.type)) return { ok: false, error: '請選擇資源類型。' }
   if (input.license !== 'original' && input.license !== 'shareable') {
     return { ok: false, error: '請確認版權聲明。' }
   }
@@ -117,7 +117,7 @@ export function validatePublish(input: PublishInput): { ok: boolean; error?: str
   return { ok: true }
 }
 
-// ───────── 篩選 + 排序（純函式，亦俾測試用）─────────
+// ───────── 篩選 + 排序（純函式，亦給測試用）─────────
 
 export interface ResourceFilter {
   q?: string

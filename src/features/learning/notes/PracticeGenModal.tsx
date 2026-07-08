@@ -55,9 +55,9 @@ export default function PracticeGenModal({
         topicName: noteTitle,
         difficulty,
         count,
-        extra: `根據以下筆記內容出題，要緊扣內容、唔好離題：\n\n${note.content}`,
+        extra: `根據以下筆記內容出題，要緊扣內容、不要離題：\n\n${note.content}`,
       })
-      if (out.length === 0) throw new Error('生成唔到題目，試吓換題型或補多啲筆記內容。')
+      if (out.length === 0) throw new Error('生成不到題目，嘗試換題型或補多些筆記內容。')
       setDrafts(out)
     } catch (e) {
       toast.error((e as Error).message || '生成失敗，請再試。')
@@ -131,7 +131,7 @@ export default function PracticeGenModal({
         </div>
 
         <Button icon={Sparkles} onClick={gen} loading={busy} fullWidth>
-          {busy ? '生成緊…' : drafts ? '重新生成' : '生成題目'}
+          {busy ? '生成中…' : drafts ? '重新生成' : '生成題目'}
         </Button>
 
         {busy && (
@@ -204,7 +204,7 @@ export default function PracticeGenModal({
         )}
 
         <p className="flex items-center gap-1.5 text-[11px] text-slate-400">
-          <Badge tone="slate">來自筆記</Badge> 存入後可去「自我測驗」自測，或喺題庫出卷畀學生。
+          <Badge tone="slate">來自筆記</Badge> 存入後可去「自我測驗」自測，或在題庫出卷給學生。
         </p>
       </div>
     </Modal>

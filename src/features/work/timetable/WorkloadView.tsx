@@ -27,9 +27,9 @@ export default function WorkloadView({
   freeSegments = [],
 }: {
   workload: Workload
-  // 班別 → 用嚟畀甜甜圈上色（key = classId 或 undefined）
+  // 班別 → 用來給甜甜圈上色（key = classId 或 undefined）
   classColorKey: (classId?: string) => string
-  // 日循環模式：日子標籤用 Day A–F 而唔係星期一至六
+  // 日循環模式：日子標籤用 Day A–F 而不是星期一至六
   cycle?: boolean
   // 空堂時段（連續成段，含鐘聲時間）— 純衍生自 slots/bells/days
   freeSegments?: FreeSegment[]
@@ -38,8 +38,8 @@ export default function WorkloadView({
     return (
       <EmptyState
         icon={PieChart}
-        title="仲未有課堂可以分析"
-        hint="返去「週課表」撳吓格仔加堂，呢度就會幫你算好每日節數、最忙一日同空堂時段。"
+        title="尚未有課堂可以分析"
+        hint="回到「週課表」按一下格仔加堂，這裡就會幫你算好每日節數、最忙一日同空堂時段。"
       />
     )
   }
@@ -122,7 +122,7 @@ export default function WorkloadView({
       <Card padded>
         <SectionTitle
           icon={CupSoda}
-          description="邊日邊節有得抖／改簿／開會（連續節數會合成一段）"
+          description="邊日邊節有得休息／改簿／開會（連續節數會合成一段）"
           right={
             <span className="text-[11px] tabular-nums text-slate-400">
               共 {freeSegments.length} 段
@@ -341,7 +341,7 @@ function FreeSegments({
   if (segments.length === 0) {
     return (
       <p className="py-4 text-center text-sm text-slate-400 dark:text-slate-500">
-        顯示範圍內冇空堂 — 堂堂爆滿。
+        顯示範圍內沒有空堂 — 堂堂爆滿。
       </p>
     )
   }

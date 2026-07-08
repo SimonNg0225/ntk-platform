@@ -115,9 +115,9 @@ export default function Community() {
 
 // 教學引導步驟（zh-HK source；正式翻譯可加 i18n key）
 const BROWSE_GUIDE: FeatureGuideStep[] = [
-  { title: '搜尋 / 篩選', desc: '用上面搜尋框，或揀科目、類型同排序，快手搵到啱用嘅教材。' },
-  { title: '預覽同下載', desc: '撳資源卡睇詳情；撳「下載」即取檔案，連結型就直接開啟。' },
-  { title: '評分同收藏', desc: '好用就畀星支持作者；「收藏」會同時加入你嘅資源庫。' },
+  { title: '搜尋 / 篩選', desc: '用上面搜尋框，或選擇科目、類型同排序，快速找到適合用的教材。' },
+  { title: '預覽同下載', desc: '按資源卡查看詳情；按「下載」即取檔案，連結型就直接開啟。' },
+  { title: '評分同收藏', desc: '好用就給星支持作者；「收藏」會同時加入你的資源庫。' },
 ]
 
 function BrowseTab({ onPublish }: { onPublish: () => void }) {
@@ -156,7 +156,7 @@ function BrowseTab({ onPublish }: { onPublish: () => void }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filter, sort])
 
-  // 快捷下載（卡片直接撳，唔使開詳情）；試用模式提示稍後連線。
+  // 快捷下載（卡片直接按，不用開詳情）；試用模式提示稍後連線。
   async function handleDownload(r: CommunityResource) {
     if (!isCommunityConfigured) return toast.error('試用資料暫未提供下載；完成雲端連線及登入後可用。')
     try {
@@ -178,10 +178,10 @@ function BrowseTab({ onPublish }: { onPublish: () => void }) {
 
   return (
     <div className="space-y-4">
-      {/* 教學引導：教用家點搵 + 點用資源 */}
+      {/* 教學引導：教用家點搜尋 + 如何使用資源 */}
       <FeatureGuide
         storageKey="community"
-        title={t('community.guideTitle', { defaultValue: '資源分享區點用？' })}
+        title={t('community.guideTitle', { defaultValue: '資源分享區使用說明' })}
         steps={BROWSE_GUIDE}
       />
 
@@ -245,8 +245,8 @@ function BrowseTab({ onPublish }: { onPublish: () => void }) {
         hasFilter ? (
           <EmptyState
             icon={SearchX}
-            title={t('community.emptyFilteredTitle', { defaultValue: '搵唔到符合嘅資源' })}
-            hint={t('community.emptyFilteredHint', { defaultValue: '試吓換個科目或關鍵字，或清除晒篩選再睇。' })}
+            title={t('community.emptyFilteredTitle', { defaultValue: '搜尋不到符合的資源' })}
+            hint={t('community.emptyFilteredHint', { defaultValue: '嘗試換個科目或關鍵字，或清除全部篩選再查看。' })}
             action={
               <Button size="sm" variant="secondary" icon={SearchX} onClick={clearFilters}>
                 {t('community.clearFilters', { defaultValue: '清除篩選' })}
@@ -256,7 +256,7 @@ function BrowseTab({ onPublish }: { onPublish: () => void }) {
         ) : (
           <EmptyState
             icon={Share2}
-            title={t('community.emptyTitle', { defaultValue: '仲未有資源' })}
+            title={t('community.emptyTitle', { defaultValue: '尚未有資源' })}
             hint={t('community.emptyHint', { defaultValue: '可以先由你第一份可分享教材開始；記得確認版權同移除學生個人資料。' })}
             action={
               <Button size="sm" variant="secondary" icon={Plus} onClick={onPublish}>
@@ -330,7 +330,7 @@ function ResourceCard({
 
   return (
     <Card hover clip onClick={onOpen} className="group flex cursor-pointer flex-col">
-      {/* 有縮圖：真圖做 16:9 封面 + 類型 badge 疊上；冇縮圖：body 用 type tile。 */}
+      {/* 有縮圖：真圖做 16:9 封面 + 類型 badge 疊上；沒有縮圖：body 用 type tile。 */}
       {r.thumbUrl && (
         <div className="relative aspect-[16/9] w-full overflow-hidden bg-slate-100 dark:bg-slate-800">
           <img
@@ -457,7 +457,7 @@ function ResourceDetail({ r, onClose }: { r: CommunityResource | null; onClose: 
       await bumpDownload(r.id)
       setStat((x) => ({ ...x, down: x.down + 1 }))
       if (r.filePath) {
-        // 檔案：blob 下載（唔彈 cross-origin prompt、用返靚檔名）
+        // 檔案：blob 下載（不彈 cross-origin prompt、使用靚檔名）
         await downloadResourceFile(r.filePath, r.fileName ?? undefined)
       } else if (r.externalUrl) {
         // 純連結：照開新分頁
@@ -483,7 +483,7 @@ function ResourceDetail({ r, onClose }: { r: CommunityResource | null; onClose: 
         await saveResource(r.id)
         setSaved(true)
         setStat((x) => ({ ...x, save: x.save + 1 }))
-        // 同時加入本地個人資源庫（連結型存 URL；檔案型留書籤，喺社群再下載）
+        // 同時加入本地個人資源庫（連結型存 URL；檔案型留書籤，在社群再下載）
         resourcesCol.add({
           title: r.title,
           type: r.type,
@@ -493,7 +493,7 @@ function ResourceDetail({ r, onClose }: { r: CommunityResource | null; onClose: 
           notes: '來自資源分享區',
           createdAt: new Date().toISOString(),
         })
-        toast.success('已收藏，亦加入咗你嘅資源庫')
+        toast.success('已收藏，亦加入了你的資源庫')
       }
     } catch (e) {
       toast.error(e instanceof Error ? e.message : '操作失敗')
@@ -621,9 +621,9 @@ function ResourceDetail({ r, onClose }: { r: CommunityResource | null; onClose: 
             ))}
           </div>
 
-          {/* 你嘅評分 */}
+          {/* 你的評分 */}
           <div className="flex items-center justify-between rounded-xl border border-slate-200/80 px-3 py-2.5 dark:border-slate-700/60">
-            <span className="text-[12px] text-slate-500 dark:text-slate-400">{myRating ? '你嘅評分' : '畀個評分'}</span>
+            <span className="text-[12px] text-slate-500 dark:text-slate-400">{myRating ? '你的評分' : '給個評分'}</span>
             <StarPicker value={myRating ?? 0} onPick={onRate} />
           </div>
 

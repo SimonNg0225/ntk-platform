@@ -145,7 +145,7 @@ const marble: Pack = {
 
   cover(slide, deck, brand, img, title) {
     slide.background = { color: MAR.bg }
-    // 招牌雲石紋理底圖（瀏覽器 Canvas raster；冇 canvas 時 fallback 全版極淡畫廊紙深度漸層）
+    // 招牌雲石紋理底圖（瀏覽器 Canvas raster；沒有 canvas 時 fallback 全版極淡畫廊紙深度漸層）
     const tex = coverTextureUri('marble')
     if (tex) {
       slide.addImage({ data: tex, x: 0, y: 0, w: 13.333, h: 7.5, sizing: { type: 'cover', w: 13.333, h: 7.5 } })
@@ -243,8 +243,8 @@ function oriTri(slide: PptxGenJS.Slide, x: number, y: number, size: number, colo
 /**
  * 招牌：steps 渲染成「摺序圖」——
  * 摺紙說明書語言：細 sysDash 摺線做基線，各步一塊摺疊三角節點
- * （按序旋轉 0/90/180/270、紅 tint 逐步加深），步號喺節點上，
- * 摺向小三角指住下一步，title+desc 喺節點下。2–5 步。
+ * （按序旋轉 0/90/180/270、紅 tint 逐步加深），步號在節點上，
+ * 摺向小三角指住下一步，title+desc 在節點下。2–5 步。
  */
 function renderOrigamiFoldSequence(slide: PptxGenJS.Slide, body: Rect, pack: Pack, s: Slide): void {
   const items = (s.steps ?? []).slice(0, 5)
@@ -254,7 +254,7 @@ function renderOrigamiFoldSequence(slide: PptxGenJS.Slide, body: Rect, pack: Pac
   const x1 = body.x + body.w - 0.6
   const seg = (x1 - x0) / (n - 1)
   const baseY = body.y + Math.min(1.9, body.h * 0.42)
-  // 細摺線基線（sysDash = 摺紙圖嘅谷摺虛線）
+  // 細摺線基線（sysDash = 摺紙圖的谷摺虛線）
   slide.addShape('line', { x: x0, y: baseY, w: x1 - x0, h: 0, line: { color: pack.hair, width: 1, dashType: 'sysDash' } })
   const node = 0.62
   items.forEach((st, i) => {
@@ -346,12 +346,12 @@ const origami: Pack = {
 
   cover(slide, deck, brand, img) {
     slide.background = { color: 'FFFFFF' }
-    // 招牌摺紙紋理底圖（瀏覽器 Canvas raster；冇 canvas 時 fallback 純白底）
+    // 招牌摺紙紋理底圖（瀏覽器 Canvas raster；沒有 canvas 時 fallback 純白底）
     const tex = coverTextureUri('origami')
     if (tex) slide.addImage({ data: tex, x: 0, y: 0, w: 13.333, h: 7.5, sizing: { type: 'cover', w: 13.333, h: 7.5 } })
     const hasImg = Boolean(img)
     if (img) {
-      // 右側相 + 髮線框 + 紅摺角（似摺起咗嘅頁角）
+      // 右側相 + 髮線框 + 紅摺角（似摺起了的頁角）
       const frame: Rect = { x: 7.9, y: 1.5, w: 4.7, h: 4.0 }
       addCoverImage(slide, img, frame)
       slide.addShape('rect', { x: frame.x, y: frame.y, w: frame.w, h: frame.h, fill: { type: 'none' }, line: { color: ORI.hair, width: 1 } })
@@ -397,7 +397,7 @@ const origami: Pack = {
 
   contentFrame(slide, ctx) {
     slide.background = { color: 'FFFFFF' }
-    // kicker 前小紅摺角（指向右嘅摺記）
+    // kicker 前小紅摺角（指向右的摺記）
     oriTri(slide, 0.62, 0.6, 0.16, ORI.accent, 90)
     const { body } = scaffold(slide, origami, ctx, { kickerY: 0.58, titleY: 0.9, hairline: true })
     // 右上摺痕三角對（配圖出血版省略）
@@ -466,7 +466,7 @@ function renderCinemaStoryboard(slide: PptxGenJS.Slide, body: Rect, pack: Pack, 
     slide.addShape('rect', { x: fx, y: stripY, w: fw, h: fh, fill: { color: pack.panel }, line: { color: pack.ink, width: 1 } })
     // SC 場號 tag（格內左上琥珀）
     tx(slide, `SC ${pad2(i + 1)}`, { x: fx + 0.12, y: stripY + 0.1, w: fw - 0.24, h: 0.24, fontSize: 9, bold: true, color: pack.accent, charSpacing: 2, fontFace: pack.displayFont })
-    // 格中央 ghost 大序號（似底片入面隱約嘅畫面）
+    // 格中央 ghost 大序號（似底片中隱約的畫面）
     tx(slide, String(i + 1), { x: fx, y: stripY + 0.2, w: fw, h: fh - 0.3, fontSize: 44, bold: true, color: mix(pack.ink, pack.panel, 0.3), align: 'center', valign: 'middle', fontFace: pack.displayFont })
     // 格下 title + desc
     const labelY = stripY + fh + 0.34
@@ -542,7 +542,7 @@ const cinema: Pack = {
       slide.addShape('rect', { x: 0, y: 0, w: 13.33, h: 7.5, fill: { color: CIN.bg, transparency: 30 }, line: { type: 'none' } })
       photoCreditOnImage(slide, img.credit, { x: 0, y: 0, w: 13.33, h: 7.5 })
     } else {
-      // 招牌菲林／戲院紋理底圖（瀏覽器 Canvas raster；冇 canvas 時 fallback 純色底）
+      // 招牌菲林／戲院紋理底圖（瀏覽器 Canvas raster；沒有 canvas 時 fallback 純色底）
       const tex = coverTextureUri('cinema')
       if (tex) slide.addImage({ data: tex, x: 0, y: 0, w: 13.333, h: 7.5, sizing: { type: 'cover', w: 13.333, h: 7.5 } })
       // 題後 marquee 琥珀暈：放射漸層由中央淡琥珀淡出至底色（戲院聚光感）
@@ -616,7 +616,7 @@ function fesLantern(slide: PptxGenJS.Slide, cx: number, cy: number, d: number, c
 /**
  * 招牌：cards 渲染成「利是封」——
  * 每卡一個深紅圓角利是封（mix 黑入紅做封身）+ 金頂帶 +
- * 騎住頂帶嘅金圓封印（內序號），金題、米白正文。2–6 封。
+ * 騎住頂帶的金圓封印（內序號），金題、米白正文。2–6 封。
  */
 function renderFestivalLaisee(slide: PptxGenJS.Slide, body: Rect, pack: Pack, s: Slide): void {
   const items = (s.cards ?? []).slice(0, 6)
@@ -704,7 +704,7 @@ const festival: Pack = {
 
   cover(slide, deck, brand, img) {
     slide.background = { color: FES.bg }
-    // 招牌節慶紋理底圖（瀏覽器 Canvas raster；冇 canvas 時 fallback 純色底）
+    // 招牌節慶紋理底圖（瀏覽器 Canvas raster；沒有 canvas 時 fallback 純色底）
     const tex = coverTextureUri('festival')
     if (tex) slide.addImage({ data: tex, x: 0, y: 0, w: 13.333, h: 7.5, sizing: { type: 'cover', w: 13.333, h: 7.5 } })
     // 全版金細框（外 1.5pt + 內 0.5pt 淡金）

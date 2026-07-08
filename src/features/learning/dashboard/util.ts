@@ -4,8 +4,8 @@
 //  參考：Notion Home / Apple 健康摘要 — 可配置 widget、KPI + 趨勢、
 //  今日聚焦環、活動時間線、跨功能 roll-up。
 //
-//  鐵則：唔掂任何共用檔。呢度只「讀」現有共用 col + 各功能自家 col，
-//  自己一個 createCollection 存「儀表板偏好」（widget 開關 / 次序 / KPI 揀選）。
+//  鐵則：不掂任何共用檔。這裡只「讀」現有共用 col + 各功能自家 col，
+//  自己一個 createCollection 存「儀表板偏好」（widget 開關 / 次序 / KPI 選擇選）。
 // ============================================================
 import { createCollection, type Entity } from '../../../lib/store'
 import type { Card } from '../../../data/types'
@@ -20,8 +20,8 @@ import type { JournalDoc } from '../journal/util'
 import { moodScore } from '../journal/util'
 import { isDue } from '../../../lib/srs'
 
-// 日誌真實資料源 journalDocsCol 喺 ../journal/store（單一 canonical instance）；
-// LearningDashboard 直接由嗰度 import，同其他功能 col 一致，唔再經呢度轉手。
+// 日誌真實資料源 journalDocsCol 在 ../journal/store（單一 canonical instance）；
+// LearningDashboard 直接由嗰度 import，同其他功能 col 一致，不再經這裡轉手。
 
 // ───────── 日期工具（本地時區，避開 toISOString 時差）─────────
 export const WEEKDAYS = ['日', '一', '二', '三', '四', '五', '六'] as const
@@ -45,7 +45,7 @@ export function todayKey(): string {
 export function keyOf(iso: string): string {
   return dayKey(new Date(iso))
 }
-/** [from, to] 範圍內每一日嘅 key（由舊到新，含頭尾） */
+/** [from, to] 範圍內每一日的 key（由舊到新，含頭尾） */
 export function rangeKeys(from: Date, to: Date): string[] {
   const out: string[] = []
   let cur = new Date(from.getFullYear(), from.getMonth(), from.getDate(), 12)
@@ -73,7 +73,7 @@ export function longToday(): string {
 export function relTime(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime()
   const mins = Math.floor(diff / 60000)
-  if (mins < 1) return '啱啱'
+  if (mins < 1) return '剛剛'
   if (mins < 60) return `${mins} 分鐘前`
   const hrs = Math.floor(mins / 60)
   if (hrs < 24) return `${hrs} 小時前`
@@ -150,7 +150,7 @@ export interface DashInput {
   journal: JournalDoc[]
 }
 
-// ───────── 每日活動分數（用嚟砌 sparkline / 熱圖）─────────
+// ───────── 每日活動分數（用來砌 sparkline / 熱圖）─────────
 export interface DaySignal {
   key: string
   label: string // 1/5 之類
@@ -379,7 +379,7 @@ export function buildActivity(
     out.push({
       id: `c-${c.id}`,
       kind: 'review',
-      text: `複習咗一張卡：${truncate(c.front, 24)}`,
+      text: `複習了一張卡：${truncate(c.front, 24)}`,
       // 統一用本地日正午（同習慣/日誌/書事件一致），避免 UTC instant 同
       // 本地正午字串混排令時間線次序錯亂（lastReviewed 由 srs.ts 寫 UTC）。
       at: `${keyOf(c.lastReviewed)}T12:00:00`,
@@ -400,7 +400,7 @@ export function buildActivity(
     out.push({
       id: `j-${j.id}`,
       kind: 'journal',
-      text: `寫咗日誌${j.title ? `：${truncate(j.title, 24)}` : ''}`,
+      text: `寫了日誌${j.title ? `：${truncate(j.title, 24)}` : ''}`,
       at: j.updatedAt || j.createdAt || `${j.date}T12:00:00`,
       target: 'learning-journal',
     })
@@ -455,7 +455,7 @@ export const WIDGET_DEFS: WidgetDef[] = [
   { id: 'agenda', label: '今日日程', desc: '行事曆事件 + 倒數' },
   { id: 'flashcards', label: '知識卡複習', desc: '到期卡 + 記憶曲線' },
   { id: 'goals', label: '個人目標', desc: '加權進度 + 到期' },
-  { id: 'habits', label: '習慣打卡', desc: '今日應做習慣，一撳完成' },
+  { id: 'habits', label: '習慣打卡', desc: '今日應做習慣，一按完成' },
   { id: 'health', label: '健康快照', desc: '飲水 · 睡眠 · 運動 · 心情' },
   { id: 'reading', label: '在讀書籍', desc: '進度 + 本週頁數' },
   { id: 'mood', label: '心情走勢', desc: '近 14 日日誌心情' },
@@ -509,7 +509,7 @@ export const DEFAULT_KPIS: KpiId[] = ['due', 'streak', 'focusWeek', 'habitRate']
 
 /** 儀表板偏好（單一 record，id 固定） */
 export interface DashPrefs extends Entity {
-  hiddenWidgets: WidgetId[] // 隱藏咗嘅 widget
+  hiddenWidgets: WidgetId[] // 隱藏了的 widget
   widgetOrder: WidgetId[] // 顯示次序
   kpis: KpiId[] // KPI 卡（最多 4 個顯示）
   range: number // 趨勢圖天數（14 / 30 / 90）
@@ -533,7 +533,7 @@ export const dashPrefsCol = createCollection<DashPrefs>('learning_dashboard_pref
 export function readPrefs(all: DashPrefs[]): DashPrefs {
   const raw = all.find((p) => p.id === PREFS_ID)
   const merged = { id: PREFS_ID, ...DEFAULT_PREFS, ...raw }
-  // 確保 order 包含全部已知 widget（新加嘅排去尾），剔走未知 id
+  // 確保 order 包含全部已知 widget（新加的排去尾），剔走未知 id
   const known = new Set(DEFAULT_WIDGET_ORDER)
   const order = merged.widgetOrder.filter((w) => known.has(w))
   for (const w of DEFAULT_WIDGET_ORDER) if (!order.includes(w)) order.push(w)

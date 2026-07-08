@@ -27,7 +27,7 @@ export default function DeckPreview(props: {
   activeIndex?: number
   onSelect?: (i: number) => void
   streaming?: boolean
-  /** 固定欄數（窄面板用）；唔傳就跟 viewport 響應式 1/2/3 欄 */
+  /** 固定欄數（窄面板用）；不傳就跟 viewport 響應式 1/2/3 欄 */
   cols?: 1 | 2 | 3
 }): JSX.Element {
   const { deck, pack, activeIndex, onSelect, streaming, cols } = props
@@ -88,7 +88,7 @@ export default function DeckPreview(props: {
           )
         })}
 
-        {/* streaming：生成緊…骨架卡 */}
+        {/* streaming：生成中…骨架卡 */}
         {streaming && (
           <div
             className="flex aspect-[16/9] items-center justify-center gap-2 rounded-xl ring-1 ring-dashed ring-accent/30"
@@ -96,7 +96,7 @@ export default function DeckPreview(props: {
           >
             <Loader2 className="h-4 w-4 animate-spin" style={{ color: 'var(--pv-accent)' }} />
             <span className="text-xs" style={{ color: 'var(--pv-faint)' }}>
-              生成緊…
+              生成中…
             </span>
           </div>
         )}

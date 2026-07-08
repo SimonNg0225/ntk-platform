@@ -4,9 +4,9 @@ import type { Entity } from '../../../lib/store'
 // ============================================================
 //  閱讀庫資料模型（Goodreads / StoryGraph 級）
 //  ------------------------------------------------------------
-//  刻意自成一格（唔掂 data/types.ts）：新增評分、頁數、進度、
-//  書架標籤、閱讀時段（用嚟砌活動熱圖同統計圖表）。
-//  舊 reading_items 嘅資料會喺 ReadingList 首次載入時自動遷移入嚟。
+//  刻意自成一格（不掂 data/types.ts）：新增評分、頁數、進度、
+//  書架標籤、閱讀時段（用來砌活動熱圖同統計圖表）。
+//  舊 reading_items 的資料會在 ReadingList 首次載入時自動遷移入來。
 // ============================================================
 
 export type BookStatus = 'to_read' | 'reading' | 'done' | 'dnf'
@@ -14,7 +14,7 @@ export type BookStatus = 'to_read' | 'reading' | 'done' | 'dnf'
 export interface ReadingSession {
   id: string
   date: string // YYYY-MM-DD
-  pages: number // 當次讀咗幾多頁
+  pages: number // 當次讀了幾多頁
   minutes?: number // 當次用時（分鐘，選填）
 }
 
@@ -55,7 +55,7 @@ export const STATUS_LABEL: Record<BookStatus, string> = {
 
 export const STATUS_ORDER: BookStatus[] = ['to_read', 'reading', 'done', 'dnf']
 
-// Badge tone 對應（只用 UI kit 容許嘅 tone）
+// Badge tone 對應（只用 UI kit 容許的 tone）
 export const STATUS_TONE: Record<BookStatus, 'slate' | 'accent' | 'green' | 'amber'> = {
   to_read: 'slate',
   reading: 'accent',

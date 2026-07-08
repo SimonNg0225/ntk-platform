@@ -3,7 +3,7 @@
 //  ------------------------------------------------------------
 //  固定 16:9，內層用 em 為單位做 padding-based 縮放（card / full 兩 mode
 //  靠外層 font-size 控制比例）。螢幕係近似：takeaway 色帶／emphasis L-frame／
-//  imageQuery 圖位都係仿引擎示意，唔係像素對齊。
+//  imageQuery 圖位都係仿引擎示意，不是像素對齊。
 // ============================================================
 
 import { Image as ImageIcon } from 'lucide-react'
@@ -92,7 +92,7 @@ export function SlidePreview(props: {
         )}
       </div>
 
-      {/* imageQuery 角落小圖位（螢幕唔 fetch，慳 API） */}
+      {/* imageQuery 角落小圖位（螢幕不 fetch，慳 API） */}
       {slide.imageQuery && (
         <span
           className="pointer-events-none absolute right-[0.5em] top-[0.5em] inline-flex items-center gap-[0.2em] rounded-[0.2em] px-[0.3em] py-[0.15em] text-[0.36em]"

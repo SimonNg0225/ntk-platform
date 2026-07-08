@@ -11,7 +11,7 @@ import type { Entity } from '../../../lib/store'
 // ───────── 型別 ─────────
 /** 一篇日誌（自家擴充，欄位對齊將來 Supabase 表） */
 export interface JournalDoc extends Entity {
-  date: string // YYYY-MM-DD（這篇日誌記錄嘅日子）
+  date: string // YYYY-MM-DD（這篇日誌記錄的日子）
   title?: string // 標題（選填）
   content: string // 內文（支援多行 + #標籤）
   mood?: string // 心情 emoji（見 MOODS）
@@ -62,16 +62,16 @@ export const WEATHER = ['☀️', '⛅', '☁️', '🌧️', '⛈️', '❄️'
 
 // ───────── 反思提示（隨機輪換，新建空白日誌時顯示）─────────
 export const PROMPTS = [
-  '今日學咗啲咩？有冇邊個概念終於通咗？',
-  '今日最大嘅突破或心得係咩？',
-  '邊一忽仲未明？聽日想點跟進？',
-  '今日嘅學習，最值得記低嘅一件事係…',
-  '如果同琴日嘅自己講一句話，你會講…',
-  '今日邊個習慣 / 練習做得最好？',
-  '有冇遇到困難？你係點克服（或打算點克服）？',
+  '今日學了什麼？有沒有哪個概念終於通了？',
+  '今日最大的突破或心得係什麼？',
+  '哪一部分尚未明白？明天想如何跟進？',
+  '今日的學習，最值得記低的一件事係…',
+  '如果要對昨天的自己講一句話，你會說…',
+  '今日哪個習慣 / 練習做得最好？',
+  '有沒有遇到困難？你是如何克服（或打算如何克服）？',
 ]
 
-/** 由日期 key 穩定地揀一句提示（同一日永遠同一句） */
+/** 由日期 key 穩定地選擇一句提示（同一日永遠同一句） */
 export function promptOfDay(key: string): string {
   let h = 0
   for (let i = 0; i < key.length; i++) h = (h * 31 + key.charCodeAt(i)) >>> 0
@@ -123,7 +123,7 @@ export function relativeTime(iso: string): string {
   const then = new Date(iso).getTime()
   if (Number.isNaN(then)) return ''
   const sec = Math.floor((Date.now() - then) / 1000)
-  if (sec < 60) return '啱啱'
+  if (sec < 60) return '剛剛'
   const min = Math.floor(sec / 60)
   if (min < 60) return `${min} 分鐘前`
   const hr = Math.floor(min / 60)
@@ -180,10 +180,10 @@ export function excerpt(text: string, len = 140): string {
 
 // ───────── 物件 / store 寫入工具 ─────────
 /**
- * 淺層去走「值為 undefined」嘅 key，回傳同型別嘅新物件（唔改原物件）。
- * 寫入 collection 前用：清走 optional 欄位嘅顯式 undefined。否則 in-memory
- * 物件會帶住 `key: undefined`，但 persist（JSON.stringify）會 drop 咗，造成
- * reload 前後唔一致（Object.keys / exactOptional 式 narrowing 會行為不定）。
+ * 淺層去走「值為 undefined」的 key，回傳同型別的新物件（不改原物件）。
+ * 寫入 collection 前用：清走 optional 欄位的顯式 undefined。否則 in-memory
+ * 物件會帶住 `key: undefined`，但 persist（JSON.stringify）會 drop 了，造成
+ * reload 前後不一致（Object.keys / exactOptional 式 narrowing 會行為不定）。
  * 只去 undefined —— null / 0 / '' / false 等 falsy 值一律保留。
  */
 export function stripUndefined<T extends object>(obj: T): T {
@@ -196,7 +196,7 @@ export function stripUndefined<T extends object>(obj: T): T {
 }
 
 // ───────── 連續天數（streak）─────────
-/** 由今日起連續有日誌嘅日數（今日未寫就由琴日計起，唔斷 streak） */
+/** 由今日起連續有日誌的日數（今日未寫就由琴日計起，不斷 streak） */
 export function currentStreak(dateSet: Set<string>): number {
   let streak = 0
   let cur = todayKey()
@@ -232,7 +232,7 @@ export interface MoodPoint {
   emoji: string
 }
 
-/** 近 n 日（含今日）有心情嘅資料點，由舊到新 */
+/** 近 n 日（含今日）有心情的資料點，由舊到新 */
 export function moodTrend(docs: JournalDoc[], days: number): MoodPoint[] {
   const start = addDays(todayKey(), -(days - 1))
   const byDate = new Map<string, JournalDoc>()
@@ -262,22 +262,22 @@ export function moodDistribution(docs: JournalDoc[]): { def: MoodDef; count: num
 
 // ───────── 標籤洞察（按標籤聚合：篇數 / 累積字數 / 平均心情）─────────
 export interface TagInsight {
-  tag: string // 顯示用標籤（保留首次出現嘅大小寫）
-  count: number // 用咗呢個標籤嘅篇數
-  words: number // 該標籤所有篇章嘅累積字數
+  tag: string // 顯示用標籤（保留首次出現的大小寫）
+  count: number // 用了這個標籤的篇數
+  words: number // 該標籤所有篇章的累積字數
   avgWords: number // 平均每篇字數（四捨五入）
-  /** 有標心情嘅篇章平均分（1..5），全部無心情則 null */
+  /** 有標心情的篇章平均分（1..5），全部無心情則 null */
   avgMood: number | null
-  /** avgMood 對應嘅最近心情級別定義（著色 / emoji 用），null 則無 */
+  /** avgMood 對應的最近心情級別定義（著色 / emoji 用），null 則無 */
   moodDef: MoodDef | null
 }
 
 /**
  * 按標籤聚合洞察：每個標籤計篇數、累積字數、平均心情分。
  * - 標籤合併「明文 + 內文 #標籤」（allTagsOf），同一篇同一標籤只計一次。
- * - case-insensitive 歸併（'#React' 同 '#react' 當同一個），顯示用首次出現嘅寫法。
- * - avgMood 只計有標心情嘅篇章；moodDef 取最接近平均分嘅量表級別（同 SVG 軸一致），
- *   方便 UI 以該級別嘅 hex 著色。
+ * - case-insensitive 歸併（'#React' 同 '#react' 當同一個），顯示用首次出現的寫法。
+ * - avgMood 只計有標心情的篇章；moodDef 取最接近平均分的量表級別（同 SVG 軸一致），
+ *   方便 UI 以該級別的 hex 著色。
  * - 依篇數降序、同分再依累積字數降序（穩定、可重現）；limit 截斷（≤0 全回）。
  * 純函式，零依賴，可獨立單元測試。
  */
@@ -350,14 +350,14 @@ export function weekdayCounts(docs: JournalDoc[]): number[] {
 // ───────── 歷年今日 / 回顧 ─────────
 export interface Anniversary {
   doc: JournalDoc
-  /** 距今幾多年（today 嘅年份 − 該篇年份；一定 ≥ 1） */
+  /** 距今幾多年（today 的年份 − 該篇年份；一定 ≥ 1） */
   yearsAgo: number
 }
 
 /**
- * 「歷年今日」：揾返同月同日（MM-DD 相同）但唔同年嘅舊日誌。
+ * 「歷年今日」：揾返同月同日（MM-DD 相同）但不同年的舊日誌。
  * - 排除「今日」嗰篇（同年同月同日）同所有未來日子（yearsAgo ≤ 0）。
- * - 最近嗰年喺最前；同年多篇按 updatedAt 新→舊（穩定）。
+ * - 最近嗰年在最前；同年多篇按 updatedAt 新→舊（穩定）。
  * - 純函式：要邊一日由 caller 用功能本地 key helper（todayKey）傳入，避開 UTC 漂移。
  */
 export function anniversaryEntries(docs: JournalDoc[], today: string): Anniversary[] {
@@ -390,7 +390,7 @@ export interface HeatGrid {
   activeDays: number
 }
 
-/** 砌指定年份嘅熱力圖（由該年 1 月 1 號嗰個星期日開始，到 12 月 31 號嗰個星期六） */
+/** 砌指定年份的熱力圖（由該年 1 月 1 號那個星期日開始，到 12 月 31 號那個星期六） */
 export function buildHeatGrid(docs: JournalDoc[], year: number): HeatGrid {
   const countByDate = new Map<string, number>()
   let total = 0
@@ -445,23 +445,23 @@ export interface MoodDay {
   day: number // 該月第幾日（1..31）；padding 格亦填真實日數
   inMonth: boolean // 是否屬當前顯示月份
   mood?: string // 當日代表心情 emoji（同日多篇 → 取最後修改嗰篇）
-  def?: MoodDef // 對應心情定義（含 hex / chip，畀月曆著色）
+  def?: MoodDef // 對應心情定義（含 hex / chip，給月曆著色）
   count: number // 當日日誌篇數
 }
 export interface MoodMonth {
   year: number
   month: number // 0..11
   weeks: MoodDay[][] // 每週一行，7 格（日→六），首尾補鄰月 padding
-  /** 該月有心情紀錄嘅日數 */
+  /** 該月有心情紀錄的日數 */
   moodDays: number
-  /** 該月有日誌嘅日數（唔理有冇心情） */
+  /** 該月有日誌的日數（不論有沒有心情） */
   activeDays: number
-  /** 該月有心情嘅日子平均分（1..5），無則 null */
+  /** 該月有心情的日子平均分（1..5），無則 null */
   avgScore: number | null
 }
 
 /**
- * 砌一個月嘅心情月曆 grid：由該月 1 號嗰個星期日起、補到尾週星期六，
+ * 砌一個月的心情月曆 grid：由該月 1 號那個星期日起、補到尾週星期六，
  * 每格帶當日「代表心情」（同日多篇取 updatedAt 最新）。沿用本地日期
  * helper（toKey/fromKey），避開 UTC 漂移；純函式可獨立測試。
  */
@@ -530,7 +530,7 @@ export function buildMoodMonth(docs: JournalDoc[], year: number, month: number):
 }
 
 // ───────── 匯出 ─────────
-/** 整批日誌 → Markdown（最新喺上） */
+/** 整批日誌 → Markdown（最新在上） */
 export function toMarkdown(docs: JournalDoc[]): string {
   const sorted = [...docs].sort((a, b) =>
     a.date === b.date ? 0 : a.date < b.date ? 1 : -1,

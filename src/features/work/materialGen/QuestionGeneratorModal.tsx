@@ -31,14 +31,14 @@ import {
 import { generate, type GenDraft, type GenKind } from './engine'
 
 // ============================================================
-//  QuestionGeneratorModal — 可重用嘅 AI 教材生成 modal
+//  QuestionGeneratorModal — 可重用的 AI 教材生成 modal
 //  ------------------------------------------------------------
-//  鎖定單一題型（kind），跑共用引擎 generate() → 預覽逐條揀／改 →
-//  存入題庫（questionsCol）。同 QuestionBank 嘅 AIGenerateModal 共用
+//  鎖定單一題型（kind），跑共用引擎 generate() → 預覽逐條選擇／改 →
+//  存入題庫（questionsCol）。同 QuestionBank 的 AIGenerateModal 共用
 //  engine.ts，但本元件完全獨立（直接 import 引擎 + collections），
-//  畀 Phase C「教材生成」hub 重用而唔會牽動題庫。
+//  給 Phase C「教材生成」hub 重用而不會牽動題庫。
 //
-//  · 行為 / gate / 文案對齊題庫嘅 AI 出題流程。
+//  · 行為 / gate / 文案對齊題庫的 AI 出題流程。
 //  · mode 色用 --accent（工作模式 = teal），深色 / 375px OK。
 // ============================================================
 
@@ -59,7 +59,7 @@ export interface QuestionGeneratorModalProps {
   topics: { id: string; topic: string }[]
   initialExtra?: string
   onClose: () => void
-  /** 成功存入題庫後回呼（傳新增條數），畀 hub 更新計數 / toast */
+  /** 成功存入題庫後回呼（傳新增條數），給 hub 更新計數 / toast */
   onSaved?: (count: number) => void
 }
 
@@ -107,7 +107,7 @@ export function QuestionGeneratorModal({
         _selected: true,
       }))
       if (parsed.length === 0) {
-        toast.error('AI 出嘅題目格式唔啱，請再試一次。')
+        toast.error('AI 出的題目格式不正確，請再試一次。')
         return
       }
       setDrafts(parsed)
@@ -167,8 +167,8 @@ export function QuestionGeneratorModal({
           ) : (
             <EmptyState
               icon={Lock}
-              title="請先登入先可以用 AI 出題"
-              hint="喺左下角用 Google 登入後就用得。"
+              title="請先登入以使用 AI 出題"
+              hint="在左下角使用 Google 登入後即可使用。"
             />
           )}
           <div className="flex justify-end">
@@ -190,8 +190,8 @@ export function QuestionGeneratorModal({
               <Sparkles size={16} />
             </span>
             <p className="text-xs leading-relaxed text-slate-600 dark:text-slate-300">
-              揀好課題同難度，AI 會幫你草擬一批貼合香港{subjectName ?? '中學'}課程嘅
-              {TYPE_LABEL[kind]}。生成後可以逐條揀返要邊條先加入題庫。
+              選擇好課題同難度，AI 會幫你草擬一批貼合香港{subjectName ?? '中學'}課程的
+              {TYPE_LABEL[kind]}。生成後可以逐條重新選擇要邊條先加入題庫。
             </p>
           </div>
 
@@ -261,7 +261,7 @@ export function QuestionGeneratorModal({
             >
               <p className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
                 <Sparkles size={15} className="animate-pulse text-accent" />
-                AI 諗緊題目，請等一等…
+                AI 想緊題目，請等一等…
               </p>
               <div className="h-2.5 w-full animate-pulse rounded-full bg-slate-200 dark:bg-slate-700" />
               <div className="h-2.5 w-4/5 animate-pulse rounded-full bg-slate-200 dark:bg-slate-700" />

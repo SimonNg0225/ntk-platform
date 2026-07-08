@@ -3,18 +3,18 @@ import { expandOccurrences } from '../../shared/calendar/util'
 
 // ============================================================
 //  工作週報／月報 — 時段解析 + 聚合（純函式，可單元測試）
-//  令組件薄：時段解析、過濾、分桶、計數都集中喺度。
+//  令組件薄：時段解析、過濾、分桶、計數都集中在這裡。
 // ============================================================
 
 export type RangePreset = 'week' | 'month' | 'custom'
 
-/** 解析後嘅時段（含頭含尾，YYYY-MM-DD）。 */
+/** 解析後的時段（含頭含尾，YYYY-MM-DD）。 */
 export interface ResolvedRange {
   start: string // YYYY-MM-DD（含）
   end: string // YYYY-MM-DD（含）
 }
 
-// ── 本地日期工具（避開時區：全部用 local 年月日，唔經 UTC）──
+// ── 本地日期工具（避開時區：全部用 local 年月日，不經 UTC）──
 
 function pad2(n: number): string {
   return String(n).padStart(2, '0')
@@ -58,8 +58,8 @@ export function resolveRange(
 }
 
 /**
- * 用 YYYY-MM-DD 字串 lexicographic 比較（安全）過濾落 range 內嘅項目。
- * getDate 抽唔到日期（undefined / 非標準格式）嘅項目會被剔除。
+ * 用 YYYY-MM-DD 字串 lexicographic 比較（安全）過濾落 range 內的項目。
+ * getDate 抽不到日期（undefined / 非標準格式）的項目會被剔除。
  */
 export function filterByRange<T>(
   items: T[],
@@ -74,7 +74,7 @@ export function filterByRange<T>(
   })
 }
 
-/** 聚合結果（純讀，唔 persist）。 */
+/** 聚合結果（純讀，不 persist）。 */
 export interface AggregatedData {
   events: CalendarEvent[]
   tasksDone: Task[]
@@ -95,7 +95,7 @@ export interface AggregatedData {
  *   （MVP 仍以起始日為準，跨多日事件只算起始 occurrence。）
  * - 待辦：Task 只有 `createdAt`（無到期 / 完成日），MVP 以 **建立日期** 落 range，再按 `done` 分桶。
  * - 會議筆記：按 `.date` 落 range。
- * counts 畀 UI 即時預覽 + 判斷零資料（唔使等 AI）。
+ * counts 給 UI 即時預覽 + 判斷零資料（不用等 AI）。
  */
 export function aggregate(
   events: CalendarEvent[],
@@ -103,7 +103,7 @@ export function aggregate(
   notes: MeetingNote[],
   range: ResolvedRange,
 ): AggregatedData {
-  // 展開週期性事件：每個落 range 內嘅 occurrence 當一條記錄（尊重 exDates）。
+  // 展開週期性事件：每個落 range 內的 occurrence 當一條記錄（尊重 exDates）。
   const evs: CalendarEvent[] = []
   for (const e of events) {
     const occ = expandOccurrences(e, range.start, range.end)
@@ -128,7 +128,7 @@ export function aggregate(
   }
 }
 
-/** 該時段係咪完全冇紀錄（畀 UI 判斷零資料空狀態 / 慳 AI 額度）。 */
+/** 該時段係咪完全沒有紀錄（給 UI 判斷零資料空狀態 / 慳 AI 額度）。 */
 export function isEmptyAggregate(agg: AggregatedData): boolean {
   const c = agg.counts
   return c.events === 0 && c.done === 0 && c.open === 0 && c.notes === 0

@@ -15,7 +15,7 @@ import {
 
 // ============================================================
 //  學習日誌 — 自製圖表（SVG / div，零 npm 依賴）
-//  全部吃彙整好嘅資料，theme 用 accent + 各色 dark: 變體
+//  全部吃彙整好的資料，theme 用 accent + 各色 dark: 變體
 // ============================================================
 
 const moodByScore = new Map<number, MoodDef>(MOODS.map((m) => [m.score, m]))
@@ -309,7 +309,7 @@ export function MoodCalendar({
       <div className="grid grid-cols-7 gap-1.5">
         {month.weeks.flat().map((cell) => {
           if (!cell.inMonth) {
-            // 鄰月補格：留空、低調，唔可點
+            // 鄰月補格：留空、低調，不可點
             return (
               <div
                 key={cell.key}

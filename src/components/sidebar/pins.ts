@@ -3,11 +3,11 @@ import { createCollection, type Entity } from '../../lib/store'
 // ============================================================
 //  側邊欄「釘選」功能（個人化）
 //  ------------------------------------------------------------
-//  同「最近使用」（commandPalette/util 嘅 recentFeaturesCol）一套機制：
-//  記低用戶釘起嘅功能 id，喺側邊欄頂「已釘選 · 最近」一區長期顯示，
+//  同「最近使用」（commandPalette/util 的 recentFeaturesCol）一套機制：
+//  記低用戶釘起的功能 id，在側邊欄頂「已釘選 · 最近」一區長期顯示，
 //  毋須每次碌成條長 list。純 localStorage 持久化、跨元件即時同步。
 //
-//  排序：按釘選次序（at 由細到大 = 先釘嘅排前），唔會跳動。
+//  排序：按釘選次序（at 由細到大 = 先釘的排前），不會跳動。
 // ============================================================
 
 export interface PinnedFeature extends Entity {
@@ -22,14 +22,14 @@ export const pinnedFeaturesCol = createCollection<PinnedFeature>(
   [],
 )
 
-/** 某功能而家釘咗未。 */
+/** 某功能現在釘了未。 */
 export function isPinned(featureId: string): boolean {
   return pinnedFeaturesCol.get().some((p) => p.featureId === featureId)
 }
 
 /**
  * 釘 / 取消釘（toggle）。寫 collection + 用 Date.now（薄 wrapper）。
- * 已釘 → 移除；未釘 → append 喺最後（保持先釘先排嘅穩定次序）。
+ * 已釘 → 移除；未釘 → append 在最後（保持先釘先排的穩定次序）。
  */
 export function togglePin(featureId: string): void {
   const id = featureId.trim()

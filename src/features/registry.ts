@@ -4,7 +4,7 @@ import type { ModeId } from '../modes/modes'
 import { isFeatureAvailable } from '../lib/featureFlags'
 
 // 動態載入 feature 元件 → 各功能拆獨立 chunk，到用先 load（縮細初始 bundle）。
-// .preload：App idle 時背景預載全部，確保所有功能嘅 collection 都登記（同步 / 匯出完整）。
+// .preload：App idle 時背景預載全部，確保所有功能的 collection 都登記（同步 / 匯出完整）。
 type LazyFeature = LazyExoticComponent<ComponentType> & {
   preload: () => Promise<unknown>
 }
@@ -67,7 +67,7 @@ const WorkReport = lazyFeature(() => import('./work/workReport/WorkReport'))
 
 // ============================================================
 //  功能註冊表 (Feature Registry) — 平台擴充中心
-//  加新功能：整個元件 → 喺下面加一項（填 group）→ 完成。
+//  加新功能：整個元件 → 在下方加一項（填 group）→ 完成。
 // ============================================================
 
 export const FEATURES: Feature[] = [
@@ -108,7 +108,7 @@ export const FEATURES: Feature[] = [
     selfManagedHeader: true,
     modes: ['learning'],
     name: '個人筆記',
-    description: '隨手記低學到嘅重點，自動儲存。',
+    description: '隨手記低學到的重點，自動儲存。',
     icon: '📝',
     group: '知識管理',
     component: NotesWidget,
@@ -119,7 +119,7 @@ export const FEATURES: Feature[] = [
     selfManagedHeader: true,
     modes: ['learning'],
     name: '知識卡 + 複習',
-    description: '間隔重複（SRS），到期先彈出嚟複習。',
+    description: '間隔重複（SRS），到期先彈出來複習。',
     icon: '🧠',
     group: '知識管理',
     component: Flashcards,
@@ -130,7 +130,7 @@ export const FEATURES: Feature[] = [
     selfManagedHeader: true,
     modes: ['learning'],
     name: '閱讀清單',
-    description: '收藏想睇嘅書同文章，分狀態追蹤。',
+    description: '收藏想查看的書同文章，分狀態追蹤。',
     icon: '📖',
     group: '知識管理',
     component: ReadingList,
@@ -185,7 +185,7 @@ export const FEATURES: Feature[] = [
     selfManagedHeader: true,
     modes: ['learning'],
     name: '健康追蹤',
-    description: '記錄體重、睡眠、運動、飲水、心情，睇趨勢同達標進度。',
+    description: '記錄體重、睡眠、運動、飲水、心情，查看趨勢同達標進度。',
     icon: '🫀',
     group: '健康',
     component: HealthTracker,
@@ -273,7 +273,7 @@ export const FEATURES: Feature[] = [
     selfManagedHeader: true,
     modes: ['work'],
     name: '教學指引',
-    description: '揀課題，AI 教你點教：重點、學生常見誤解、教學步驟、活動、差異化、評估。',
+    description: '選擇課題，AI 協助整理教學指引：重點、學生常見誤解、教學步驟、活動、差異化、評估。',
     icon: '🧭',
     group: '教學',
     component: TeachGuide,
@@ -284,7 +284,7 @@ export const FEATURES: Feature[] = [
     selfManagedHeader: true,
     modes: ['work'],
     name: '簡報工作室',
-    description: '四步引導整 PowerPoint：揀課題／貼內容／上載教材 → 揀設計 → 設定 → 即時預覽生成。34 套模板、自動配圖，一鍵下載 .pptx。',
+    description: '四步引導整 PowerPoint：選擇課題／貼上內容／上載教材 → 選擇設計 → 設定 → 即時預覽生成。34 套模板、自動配圖，一鍵下載 .pptx。',
     icon: '📽️',
     group: '教學',
     component: SlideGen,
@@ -329,7 +329,7 @@ export const FEATURES: Feature[] = [
     selfManagedHeader: true,
     modes: ['work'],
     name: '課題匯入',
-    description: '上載官方課程指引／syllabus，AI 抽出課題，一鍵載入做你科嘅課題（對齊真實 DSE）。',
+    description: '上載官方課程指引／syllabus，AI 抽出課題，一鍵載入做你科的課題（對齊真實 DSE）。',
     icon: '📥',
     group: '教學',
     component: TopicImport,
@@ -418,7 +418,7 @@ export const FEATURES: Feature[] = [
     selfManagedHeader: true,
     modes: ['work'],
     name: '文件速讀',
-    description: '貼上 / 上載 / 影低行政文件，AI 即刻歸類、抽重點、列出要跟進事項。',
+    description: '貼上 / 上載 / 影低行政文件，AI 立即歸類、抽重點、列出要跟進事項。',
     icon: '📑',
     group: '行政',
     component: DocDigest,
@@ -453,7 +453,7 @@ export const FEATURES: Feature[] = [
     modes: ['work'],
     name: '工作週報',
     description:
-      '揀時段一鍵聚合行事曆、待辦、會議筆記，AI 撮要成一頁「做咗咩 / 待跟進 / 重點」。',
+      '選擇時段一鍵聚合行事曆、待辦、會議筆記，AI 撮要成一頁「已完成事項 / 待跟進 / 重點」。',
     icon: '🗞️',
     group: '行政',
     component: WorkReport,
@@ -477,8 +477,8 @@ export const FEATURES: Feature[] = [
     id: 'ask-data',
     selfManagedHeader: true,
     modes: ['learning', 'work'],
-    name: '問我嘅資料 AI',
-    description: 'AI 根據你嘅筆記 / 待辦 / 目標 / 日程回答你嘅問題。',
+    name: '資料問答 AI',
+    description: 'AI 根據你的筆記 / 待辦 / 目標 / 日程回答你的問題。',
     icon: '✨',
     group: 'AI',
     component: AskData,
@@ -501,7 +501,7 @@ export const FEATURES: Feature[] = [
     selfManagedHeader: true,
     modes: ['learning', 'work'],
     name: '全域搜尋',
-    description: '一次過搵晒筆記、題目、資源、教案…',
+    description: '一次過搜尋全部筆記、題目、資源、教案…',
     icon: '🔍',
     group: '工具',
     component: GlobalSearch,
@@ -512,7 +512,7 @@ export const FEATURES: Feature[] = [
     id: 'inbox',
     modes: ['learning', 'work'],
     name: '快速擷取',
-    description: '一秒掉低諗法，遲啲轉成待辦或筆記。',
+    description: '一秒記下想法，遲些轉成待辦或筆記。',
     icon: '📥',
     group: '工具',
     component: Inbox,
@@ -524,7 +524,7 @@ export const FEATURES: Feature[] = [
     selfManagedHeader: true,
     modes: ['learning', 'work'],
     name: '重要日子倒數',
-    description: '考試、死線、評估倒數，大數字一眼睇晒仲有幾多日。',
+    description: '考試、死線、評估倒數，大數字一眼查看全部還有幾多日。',
     icon: '⏳',
     group: '工具',
     component: Countdown,
@@ -543,14 +543,14 @@ export const FEATURES: Feature[] = [
   },
 ]
 
-// 攞返某個模式可以見到嘅功能
+// 取得返某個模式可以見到的功能
 export function featuresForMode(mode: ModeId): Feature[] {
   return FEATURES.filter(
     (f) => f.modes.includes(mode) && isFeatureAvailable(f.id) && !f.hideFromNavigation,
   )
 }
 
-// 攞返某個模式嘅功能，按 group 分組（保持註冊次序）
+// 取得返某個模式的功能，按 group 分組（保持註冊次序）
 export function groupedFeatures(mode: ModeId): { group: string; items: Feature[] }[] {
   const groups: { group: string; items: Feature[] }[] = []
   for (const f of featuresForMode(mode)) {
@@ -564,13 +564,13 @@ export function groupedFeatures(mode: ModeId): { group: string; items: Feature[]
   return groups
 }
 
-// 用 id 攞返一個功能
+// 用 id 取得返一個功能
 export function getFeature(id: string): Feature | undefined {
   if (!isFeatureAvailable(id)) return undefined
   return FEATURES.find((f) => f.id === id)
 }
 
-// 背景預載全部功能 chunk（App idle 時呼叫）：令所有 lazy 功能嘅 collection
+// 背景預載全部功能 chunk（App idle 時呼叫）：令所有 lazy 功能的 collection
 // 都會建立並登記入 collectionRegistry，確保雲端同步 / 匯出匯入覆蓋齊全。
 export function preloadAllFeatures(): Promise<void> {
   const loaders: Promise<unknown>[] = []

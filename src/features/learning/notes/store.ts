@@ -3,9 +3,9 @@ import { createCollection, uid, type Entity } from '../../../lib/store'
 // ============================================================
 //  Notes（Apple Notes / Notion 級）— 功能專屬資料層
 //  ------------------------------------------------------------
-//  共用 data/types 嘅 Note 只有 { content, createdAt }，太薄。
-//  呢度自定義較豐富嘅 RichNote + 自己嘅 collection（自動存
-//  localStorage），唔掂任何共用檔。
+//  共用 data/types 的 Note 只有 { content, createdAt }，太薄。
+//  這裡自定義較豐富的 RichNote + 自己的 collection（自動存
+//  localStorage），不掂任何共用檔。
 //  欄位刻意對齊將來 Supabase 表（id/createdAt/updatedAt）。
 // ============================================================
 
@@ -117,7 +117,7 @@ function seedNotes(): RichNote[] {
       title: '英文寫作連接詞',
       notebookId: 'nb-dse',
       content:
-        'Essay 連接詞 #英文 #DSE\n\n對比：however, on the other hand, whereas\n遞進：moreover, furthermore, in addition\n結論：therefore, consequently, to sum up\n\n用連接詞前要確定前後句關係，唔好為用而用。',
+        'Essay 連接詞 #英文 #DSE\n\n對比：however, on the other hand, whereas\n遞進：moreover, furthermore, in addition\n結論：therefore, consequently, to sum up\n\n用連接詞前要確定前後句關係，不要為用而用。',
     }),
     mk(5, {
       title: '一本好書：深度工作',
@@ -128,7 +128,7 @@ function seedNotes(): RichNote[] {
     }),
     mk(9, {
       title: '隨手靈感',
-      content: '可以整一個自己嘅溫習計劃表 app #idea\n配合番茄鐘同知識卡。',
+      content: '可以整一個自己的溫習計劃表 app #idea\n配合番茄鐘同知識卡。',
     }),
   ]
 }
@@ -163,7 +163,7 @@ function migrateNeutralDemoNotes() {
         ...note,
         title: '英文寫作連接詞',
         content:
-          'Essay 連接詞 #英文 #DSE\n\n對比：however, on the other hand, whereas\n遞進：moreover, furthermore, in addition\n結論：therefore, consequently, to sum up\n\n用連接詞前要確定前後句關係，唔好為用而用。',
+          'Essay 連接詞 #英文 #DSE\n\n對比：however, on the other hand, whereas\n遞進：moreover, furthermore, in addition\n結論：therefore, consequently, to sum up\n\n用連接詞前要確定前後句關係，不要為用而用。',
       }
     }
     return note

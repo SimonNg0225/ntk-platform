@@ -37,7 +37,7 @@ import { WEEKDAY_LABELS } from './util'
 //  習慣編輯器（新增 / 編輯共用）
 //  ------------------------------------------------------------
 //  美學：呼應主畫面「老黃曆 + 連續鏈條」——
-//  整張表編成一頁待落印嘅曆書：serif 抬頭、hairline 分節、
+//  整張表編成一頁待落印的曆書：serif 抬頭、hairline 分節、
 //  即時預覽做曆書條目首行、戳印式圖示。功能/驗證/鍵盤一律不變。
 // ============================================================
 
@@ -135,7 +135,7 @@ export default function HabitEditor({
   const canSave = d.name.trim().length > 0
   const spec = colorOf(d.color)
 
-  // 預覽用頻率字串（純衍生，唔影響儲存）
+  // 預覽用頻率字串（純衍生，不影響儲存）
   const previewFreq = freqLabel(buildFrequency())
 
   function handleSave() {
@@ -369,7 +369,7 @@ export default function HabitEditor({
         <Almanac
           label="分類"
           icon={Tag}
-          hint="自由填，或揀下面常用分類"
+          hint="自由填，或選擇下面常用分類"
         >
           <Input
             value={d.category}
@@ -423,7 +423,7 @@ export default function HabitEditor({
           <Textarea
             value={d.notes}
             onChange={(e) => patch('notes', e.target.value)}
-            placeholder="為何想養成 / 戒除呢個習慣？寫低提醒自己。"
+            placeholder="為何想養成 / 戒除這個習慣？記錄提醒自己。"
             rows={2}
           />
         </Almanac>

@@ -43,7 +43,7 @@ import {
 
 // ============================================================
 //  教案編輯器 — 完整備課表（目標 / 環節時間軸 / 教材清單 / 狀態）
-//  喺呢度只負責「收集 draft」並交返 onSubmit；持久化由父層處理。
+//  在這裡只負責「收集 draft」並交返 onSubmit；持久化由父層處理。
 // ============================================================
 
 export interface PlanDraft {
@@ -196,7 +196,7 @@ export default function PlanEditor({
   const canSubmit = d.title.trim().length > 0
   const matDone = d.materials.filter((m) => m.done).length
 
-  // ── masthead 即時情境（粉筆寫喺黑板上嘅課堂頭）──
+  // ── masthead 即時情境（粉筆寫在黑板上的課堂頭）──
   const topicName = topics.find((t) => t.id === d.topicId)?.topic
   const dateLabel = d.date
     ? new Date(d.date + 'T00:00:00').toLocaleDateString('zh-HK', {
@@ -207,7 +207,7 @@ export default function PlanEditor({
     : ''
   const sMeta = STATUS_META[d.status]
 
-  // ── 章節（黑板上嘅分欄；用返同一個 tab state）──
+  // ── 章節（黑板上的分欄；使用同一個 tab state）──
   const SECTIONS: {
     id: typeof tab
     label: string
@@ -241,7 +241,7 @@ export default function PlanEditor({
         <>
           <div className="mr-auto flex items-center gap-2">
             {mode === 'edit' && (
-              <Tooltip label="將呢個教案嘅環節 / 教材存成可重用範本">
+              <Tooltip label="將這個教案的環節 / 教材存成可重用範本">
                 <Button
                   variant="ghost"
                   size="sm"
@@ -275,7 +275,7 @@ export default function PlanEditor({
             aria-hidden="true"
             className="pointer-events-none absolute -bottom-16 -left-8 h-36 w-36 rounded-full bg-amber-400/10 blur-3xl"
           />
-          {/* 自家關閉鍵（Modal 唔再畫 header；Esc / focus-trap 照常） */}
+          {/* 自家關閉鍵（Modal 不再畫 header；Esc / focus-trap 照常） */}
           <button
             type="button"
             onClick={onClose}
@@ -414,7 +414,7 @@ export default function PlanEditor({
             {templates.length > 0 && mode === 'create' && (
               <Field
                 label="由範本開始（選填）"
-                hint="套用後可再修改；唔會覆蓋已填嘅標題"
+                hint="套用後可再修改；不會覆蓋已填的標題"
               >
                 <Select defaultValue="" onChange={(e) => applyTemplate(e.target.value)}>
                   <option value="">不使用範本</option>
@@ -540,10 +540,10 @@ export default function PlanEditor({
                   <Clock size={20} strokeWidth={1.75} />
                 </span>
                 <p className="mt-3 text-sm font-medium text-slate-600 dark:text-slate-300">
-                  鋪排返堂課嘅節奏
+                  鋪排課堂節奏
                 </p>
                 <p className="mt-1 max-w-xs text-xs text-slate-400 dark:text-slate-500">
-                  撳「套用三段式」即刻有引入、講解、活動框架，或自行逐個環節加。
+                  按「套用三段式」立即有引入、講解、活動框架，或自行逐個環節加。
                 </p>
                 <Button
                   size="sm"
@@ -691,10 +691,10 @@ export default function PlanEditor({
                   <PackageOpen size={20} strokeWidth={1.75} />
                 </span>
                 <p className="mt-3 text-sm font-medium text-slate-600 dark:text-slate-300">
-                  列齊上堂要用嘅嘢
+                  列齊上課所需物資
                 </p>
                 <p className="mt-1 max-w-xs text-xs text-slate-400 dark:text-slate-500">
-                  簡報、工作紙、影片連結都寫低；準備好就剔一剔，一眼睇晒進度。
+                  簡報、工作紙、影片連結都記錄；準備好就剔一剔，一眼查看全部進度。
                 </p>
               </div>
             ) : (

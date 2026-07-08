@@ -1,8 +1,8 @@
 // ============================================================
 //  Work 區共用 CSV 工具
 //  ------------------------------------------------------------
-//  同一份 CSV 轉義 + Blob 下載邏輯原本喺多個 work 模組逐字重複
-//  （gradebook / budget / curriculum / attendance）。呢度抽一份，
+//  同一份 CSV 轉義 + Blob 下載邏輯原本在多個 work 模組逐字重複
+//  （gradebook / budget / curriculum / attendance）。這裡抽一份，
 //  行為與原實作完全一致：
 //    - csvEscape：含 " , \n 先加引號，引號 double（RFC-ish）
 //    - downloadCsv：BOM（令 Excel 正確讀中文）、\r\n 行尾、

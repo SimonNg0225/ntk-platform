@@ -274,7 +274,7 @@ export function Donut({
   )
 }
 
-// ───────── 4. 水平條（畀「按專案」分布用）─────────
+// ───────── 4. 水平條（給「按專案」分布用）─────────
 export function HBars({
   data,
 }: {
@@ -284,7 +284,7 @@ export function HBars({
   if (total === 0)
     return (
       <p className="py-6 text-center text-sm text-slate-400 dark:text-slate-500">
-        全部專案都清空咗
+        全部專案都清空了
       </p>
     )
   const max = Math.max(1, ...data.map((d) => d.value))

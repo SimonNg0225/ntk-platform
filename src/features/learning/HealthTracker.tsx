@@ -29,29 +29,29 @@ import { LineTrend, WeekBars, GoalRing, TONE_COLOR } from './health/Charts'
 
 type Range = '14' | '30'
 
-// 心情 1–5 對應嘅友善廣東話描述（配 MOOD_EMOJI 同序）
-const MOOD_LABELS = ['好攰', '麻麻', '一般', '幾好', '好正'] as const
+// 心情 1–5 對應的友善廣東話描述（配 MOOD_EMOJI 同序）
+const MOOD_LABELS = ['好攰', '一般', '一般', '幾好', '好正'] as const
 
-// 教學引導步驟（3 步：設定目標 → 每日入錄 → 睇趨勢）
+// 教學引導步驟（3 步：設定目標 → 每日入錄 → 查看趨勢）
 const GUIDE_STEPS: FeatureGuideStep[] = [
   {
     title: '設定健康目標',
-    desc: '撳右上「目標」，定低每晚睡眠、每週運動、每日飲水（同可選嘅目標體重）。',
+    desc: '按右上「目標」，定低每晚睡眠、每週運動、每日飲水（同可選的目標體重）。',
   },
   {
     title: '入錄今日讀數',
-    desc: '喺「今日入錄」填體重、睡眠，撳掣加運動／飲水，再揀一個心情面色。',
+    desc: '在「今日入錄」填體重、睡眠，按掣加運動／飲水，再選擇一個心情面色。',
   },
   {
-    title: '睇趨勢同連續',
-    desc: '上方「今日讀數」即時對住目標；下面「趨勢圖譜」睇 14／30 日變化。',
+    title: '查看趨勢同連續',
+    desc: '上方「今日讀數」即時對住目標；下面「趨勢圖譜」查看 14／30 日變化。',
   },
 ]
 
 // 指標色調 chip（淺底深字 + 深色 /15，跟 WorkDashboard TONE map）。
 // 註：tone key 'indigo' 係資料層（health/types.ts MetricDef）同 Charts TONE_COLOR
-// 鎖死嘅契約（睡眠折線色），唔郁；但 chip 視覺改用設計系統 6 色之一嘅 violet
-// （睡眠／休息語意槽），避免寫死非設計系統嘅 indigo-* utility。
+// 鎖死的契約（睡眠折線色），不郁；但 chip 視覺改用設計系統 6 色之一的 violet
+// （睡眠／休息語意槽），避免寫死非設計系統的 indigo-* utility。
 type Tone = 'accent' | 'indigo' | 'emerald' | 'amber' | 'sky' | 'rose'
 const TONE_CHIP: Record<Tone, string> = {
   accent: 'bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent',
@@ -62,7 +62,7 @@ const TONE_CHIP: Record<Tone, string> = {
   rose: 'bg-rose-50 text-rose-600 dark:bg-rose-500/15 dark:text-rose-300',
 }
 
-// ───────── 微縮趨勢線（sparkline，純裝飾；接 seriesOf 出嘅逐日值）─────────
+// ───────── 微縮趨勢線（sparkline，純裝飾；接 seriesOf 出的逐日值）─────────
 //  跳過 null 斷成段，最新點加實心端子；無資料留一條柔和基線（生命徵象空讀）。
 function Sparkline({
   points,
@@ -234,7 +234,7 @@ export default function HealthTracker() {
   const logs = useHealthLogs()
   const goals = useHealthGoals()
   const toast = useToast()
-  // today 由定時器推動：長開唔 reload 嘅 PWA 過咗午夜亦會跟住換日（每分鐘 tick，跟其餘畫面慣例）
+  // today 由定時器推動：長開不 reload 的 PWA 過了午夜亦會跟住換日（每分鐘 tick，跟其餘畫面慣例）
   const [today, setToday] = useState(() => todayKey())
   const [range, setRange] = useState<Range>('14')
   const [goalsOpen, setGoalsOpen] = useState(false)
@@ -264,11 +264,11 @@ export default function HealthTracker() {
       sleep: l?.sleepHrs != null ? String(l.sleepHrs) : '',
       note: l?.note ?? '',
     })
-    // 只喺換日時重置，避免覆蓋打字中內容
+    // 只在換日時重置，避免覆蓋打字中內容
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [today])
 
-  // 寫入永遠用即時計算嘅日期 key，避免 stale closure 把資料寫落舊日（跨午夜安全）
+  // 寫入永遠用即時計算的日期 key，避免 stale closure 把資料寫落舊日（跨午夜安全）
   const set = (patch: Partial<Parameters<typeof logDay>[1]>) => logDay(todayKey(), patch)
 
   const commitNum = (raw: string, key: 'weightKg' | 'sleepHrs', max: number) => {
@@ -306,7 +306,7 @@ export default function HealthTracker() {
 
   const hasAny = logs.length > 0
 
-  // 生命徵象 sparkline 序列（近 14 日逐日；運動用 7 日柱列嘅值）。純衍生。
+  // 生命徵象 sparkline 序列（近 14 日逐日；運動用 7 日柱列的值）。純衍生。
   const spark = useMemo(
     () => ({
       weight: seriesOf(logs, 'weightKg', 14).map((p) => p.value),
@@ -347,8 +347,8 @@ export default function HealthTracker() {
         }
       />
 
-      {/* ───────── 教學引導：點用呢個功能（可摺疊 + 永久收起） ───────── */}
-      <FeatureGuide storageKey="health" title="健康追蹤點用？" steps={GUIDE_STEPS} />
+      {/* ───────── 教學引導：如何使用此功能（可摺疊 + 永久收起） ───────── */}
+      <FeatureGuide storageKey="health" title="健康追蹤使用說明" steps={GUIDE_STEPS} />
 
       {/* ───────── 生命徵象面板（vitals monitor：hairline 分隔 + sparkline 讀數） ───────── */}
       <Card clip className="animate-fade-in">
@@ -525,7 +525,7 @@ export default function HealthTracker() {
               <Smile size={15} className="text-amber-500" aria-hidden="true" /> 今日心情
             </div>
             <span className="text-xs text-amber-600 dark:text-amber-400" aria-live="polite">
-              {todayLog?.mood ? MOOD_LABELS[todayLog.mood - 1] : '撳一個面色記低'}
+              {todayLog?.mood ? MOOD_LABELS[todayLog.mood - 1] : '按一個面色記低'}
             </span>
           </div>
           <div className="flex gap-2">
@@ -575,7 +575,7 @@ export default function HealthTracker() {
               </span>
               <div>
                 <h2 className="text-base font-semibold text-slate-800 dark:text-slate-100">趨勢圖譜</h2>
-                <p className="text-xs text-slate-500 dark:text-slate-400">睇吓近期變化</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">查看近期變化</p>
               </div>
             </div>
             <SegmentedControl
@@ -607,8 +607,8 @@ export default function HealthTracker() {
         <EmptyState
           icon={TrendingUp}
           art="empty-health"
-          title="開始記錄你嘅健康"
-          hint="喺上面填今日體重、睡眠、運動、飲水同心情，趨勢圖會慢慢長出嚟。"
+          title="開始記錄你的健康"
+          hint="在上方填今日體重、睡眠、運動、飲水同心情，趨勢圖會慢慢長出來。"
           action={
             <Button variant="secondary" size="sm" icon={Target} onClick={() => setGoalsOpen(true)}>
               先設定目標
@@ -709,7 +709,7 @@ function TrendBlock({
 }
 
 // ───────── 校準通道行（calibration channel：左色脊 + tone chip + serif 欄名 + 帶單位輸入）─────────
-//  呼應主畫面 VitalRow 嘅生命徵象語言：每個目標係一條色脊識別嘅通道，
+//  呼應主畫面 VitalRow 的生命徵象語言：每個目標係一條色脊識別的通道，
 //  右側用「單位戳印」收尾，輸入沿用共用 <Input>（≥16px 防 iOS zoom）。
 function GoalChannel({
   icon: Icon,
@@ -825,7 +825,7 @@ function GoalsModal({
           健康目標
         </h3>
         <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-          設定每個生命徵象嘅基準值，達標判斷同進度環都會跟住校準。
+          設定每個生命徵象的基準值，達標判斷同進度環都會跟住校準。
         </p>
       </div>
 

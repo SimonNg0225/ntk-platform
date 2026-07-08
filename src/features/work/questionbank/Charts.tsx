@@ -137,7 +137,7 @@ export function DifficultyBars({
   if (total === 0)
     return (
       <p className="py-8 text-center text-sm text-slate-400 dark:text-slate-500">
-        加入題目後，呢度會顯示易 / 中 / 難分佈。
+        加入題目後，這裡會顯示易 / 中 / 難分佈。
       </p>
     )
   return (
@@ -201,7 +201,7 @@ export function CoverageMatrix({ rows }: { rows: TopicRow[] }) {
   if (visible.length === 0)
     return (
       <p className="py-8 text-center text-sm text-slate-400 dark:text-slate-500">
-        建立課題並出題後，呢度會顯示覆蓋熱圖。
+        建立課題並出題後，這裡會顯示覆蓋熱圖。
       </p>
     )
 
@@ -279,7 +279,7 @@ export function CoverageMatrix({ rows }: { rows: TopicRow[] }) {
           <span className="text-slate-500 dark:text-slate-400">多</span>
         </span>
         <span className="inline-flex items-center gap-1">
-          <span className="font-semibold text-rose-400">紅色合計 0</span> = 仲未出題嘅課題
+          <span className="font-semibold text-rose-400">紅色合計 0</span> = 尚未出題的課題
         </span>
       </div>
     </div>

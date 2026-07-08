@@ -110,7 +110,7 @@ const WIDGET_META: Record<WidgetId, { label: string; icon: LucideIcon }> = {
   quickActions: { label: '快速動作', icon: LayoutGrid },
 }
 
-// WidgetId → wdash i18n key（畀 t() 翻譯 widget 標題；defaultValue 用返 WIDGET_META.label）
+// WidgetId → wdash i18n key（給 t() 翻譯 widget 標題；defaultValue 使用 WIDGET_META.label）
 const WIDGET_META_I18N: Record<WidgetId, string> = {
   kpi: 'metaKpi',
   focus: 'metaFocus',
@@ -139,7 +139,7 @@ const KPI_ICON: Record<Kpi['icon'], LucideIcon> = {
 
 // ─────────────────────────────────────────────
 //  Bento 共用：分類色調 + 1×1 統計磚（同個人儀表板一致；
-//  accent 自動跟模式＝青藍，唔硬寫 hex）
+//  accent 自動跟模式＝青藍，不硬寫 hex）
 // ─────────────────────────────────────────────
 type Tone = 'accent' | 'amber' | 'emerald' | 'violet' | 'sky' | 'rose'
 const TONE: Record<Tone, { chip: string; val: string }> = {
@@ -202,7 +202,7 @@ function StatTile({
   )
 }
 
-// 跳功能用嘅鍵盤捷徑（1–4）
+// 跳功能用的鍵盤捷徑（1–4）
 const SHORTCUTS: { key: string; nav: string; label: string }[] = [
   { key: '1', nav: 'work-tasks', label: '待辦' },
   { key: '2', nav: 'work-timetable', label: '時間表' },
@@ -210,7 +210,7 @@ const SHORTCUTS: { key: string; nav: string; label: string }[] = [
   { key: '4', nav: 'work-ai', label: 'AI' },
 ]
 
-// 捷徑 key → wdash i18n key（畀提示列用 t() 翻譯）
+// 捷徑 key → wdash i18n key（給提示列用 t() 翻譯）
 const SHORTCUT_I18N: Record<string, string> = {
   '1': 'scTasks',
   '2': 'scTimetable',
@@ -231,7 +231,7 @@ export default function WorkDashboard() {
   const calendars = useCollection(calendarsCol)
   const countdowns = useCollection(countdownsCol)
 
-  // ── 版面設定（自己嘅 collection）──
+  // ── 版面設定（自己的 collection）──
   useCollection(dashboardLayoutCol) // 訂閱：設定一變即 re-render
   const layout = readLayout()
 
@@ -240,13 +240,13 @@ export default function WorkDashboard() {
   const [capture, setCapture] = useState('')
 
   const cycleCalendar = useCollection(cycleCalendarCol)
-  // 常駐 PWA：分頁可開幾日唔 reload。每分鐘 + 回到前景重取現在時間，
-  // 令 todayKey / 時鐘跨午夜跟住跳（避免凍結喺首次掛載嗰一刻）。
+  // 常駐 PWA：分頁可開幾日不 reload。每分鐘 + 回到前景重取現在時間，
+  // 令 todayKey / 時鐘跨午夜跟住跳（避免凍結在首次掛載嗰一刻）。
   const [now, setNow] = useState(() => new Date())
   useEffect(() => {
     const sync = () => {
       const next = new Date()
-      // 同分鐘唔觸發 re-render（避免每秒重算）
+      // 同分鐘不觸發 re-render（避免每秒重算）
       setNow((prev) =>
         prev.getMinutes() === next.getMinutes() && prev.getHours() === next.getHours() &&
         localKey(prev) === localKey(next)
@@ -263,8 +263,8 @@ export default function WorkDashboard() {
   }, [])
   const todayKey = localKey(now)
   const jsDay = now.getDay()
-  // cycle 模式（校曆有 seed 即啟用）：今日(日期)→ 校曆 → cycle day(1..6) 用嚟篩今日堂；
-  // 唔喺校曆（週末/假期/考試/未排）→ 0 = 今日無堂。否則退回星期制。
+  // cycle 模式（校曆有 seed 即啟用）：今日(日期)→ 校曆 → cycle day(1..6) 用來篩今日堂；
+  // 不在校曆（週末/假期/考試/未排）→ 0 = 今日無堂。否則退回星期制。
   const isCycle = cycleCalendar.length > 0
   const ttDay = isCycle ? cycleDayForDate(todayKey, cycleCalendar) ?? 0 : jsDay
   const dateLabel = `${now.getMonth() + 1}月${now.getDate()}日 星期${WEEKDAY_LABELS[jsDay]}`
@@ -414,8 +414,8 @@ export default function WorkDashboard() {
     toast.success(t('wdash.taskDoneToast', { defaultValue: '已完成待辦' }))
   }
 
-  // 顯示緊嘅 widget（依次序、去除收起）。學生／班級子系統已移除，
-  // 相關 widget（課程進度 / 出席 / 成績 / 家長跟進）一律唔再渲染。
+  // 顯示緊的 widget（依次序、去除收起）。學生／班級子系統已移除，
+  // 相關 widget（課程進度 / 出席 / 成績 / 家長跟進）一律不再渲染。
   const removedWidgets: WidgetId[] = ['curriculum', 'attendance', 'grades', 'parentFollowUp']
   const visibleWidgets = layout.order.filter(
     (w) => !layout.hidden.includes(w) && !removedWidgets.includes(w),
@@ -470,7 +470,7 @@ export default function WorkDashboard() {
           <Input
             icon={InboxIcon}
             value={capture}
-            placeholder={t('wdash.capturePlaceholder', { defaultValue: '快速記低一個諗法 / 待辦…（Enter 放入 Inbox）' })}
+            placeholder={t('wdash.capturePlaceholder', { defaultValue: '快速記低一個想法 / 待辦…（Enter 放入 Inbox）' })}
             onChange={(e) => setCapture(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === 'Enter') submitCapture()
@@ -497,7 +497,7 @@ export default function WorkDashboard() {
         <EmptyState
           icon={LayoutGrid}
           title={t('wdash.noWidgetsTitle', { defaultValue: '未有顯示任何區塊' })}
-          hint={t('wdash.noWidgetsHint', { defaultValue: '喺「自訂」面板開返你想睇嘅儀表板區塊。' })}
+          hint={t('wdash.noWidgetsHint', { defaultValue: '在「自訂」面板開啟你想查看的儀表板區塊。' })}
           action={
             <Button size="sm" variant="secondary" onClick={() => setEditMode(true)}>
               {t('wdash.openCustomize', { defaultValue: '開啟自訂' })}
@@ -549,7 +549,7 @@ export default function WorkDashboard() {
 //  重型 Bento overview（不規則大小磚 + 真實彙整）
 //  ---------------------------------------------
 //  hero 2×2、今日議程 / 今日待辦 2 格闊，其餘 1×1 統計磚。
-//  全部數字由跨功能彙整而嚟；accent 跟模式自動＝青藍。
+//  全部數字由跨功能彙整而來；accent 跟模式自動＝青藍。
 // ═════════════════════════════════════════════
 function WorkBento({
   hello,
@@ -601,10 +601,10 @@ function WorkBento({
   const doneKpi = kpis.find((k) => k.key === 'done')
 
   // hero 一句話：按今日最重要嗰樣
-  let heroLine = t('wdash.heroIdle', { defaultValue: '今日未有課堂安排，把握時間備課或抖一抖。' })
+  let heroLine = t('wdash.heroIdle', { defaultValue: '今日未有課堂安排，把握時間備課或休息一休息。' })
   if (overdueToday > 0) heroLine = t('wdash.heroOverdue', { n: overdueToday, defaultValue: `有 ${overdueToday} 件待辦逾期，建議優先清理。` })
   else if (todayClassCount > 0 && taskItems.length > 0)
-    heroLine = t('wdash.heroClassAndTask', { c: todayClassCount, t: taskItems.length, defaultValue: `今日 ${todayClassCount} 堂課、${taskItems.length} 件待辦到期，逐樣搞掂。` })
+    heroLine = t('wdash.heroClassAndTask', { c: todayClassCount, t: taskItems.length, defaultValue: `今日 ${todayClassCount} 堂課、${taskItems.length} 件待辦到期，逐樣完成。` })
   else if (todayClassCount > 0) heroLine = t('wdash.heroClassOnly', { c: todayClassCount, defaultValue: `今日有 ${todayClassCount} 堂課，記得預備教材。` })
   else if (taskItems.length > 0) heroLine = t('wdash.heroTaskOnly', { t: taskItems.length, defaultValue: `今日有 ${taskItems.length} 件待辦到期，趁早完成。` })
 
@@ -696,7 +696,7 @@ function WorkBento({
               </li>
             ))}
             {agenda.length > 4 && (
-              <li className="px-1.5 pt-0.5 text-[11px] text-slate-400">{t('wdash.moreItemsN', { n: agenda.length - 4, defaultValue: `仲有 ${agenda.length - 4} 項…` })}</li>
+              <li className="px-1.5 pt-0.5 text-[11px] text-slate-400">{t('wdash.moreItemsN', { n: agenda.length - 4, defaultValue: `還有 ${agenda.length - 4} 項…` })}</li>
             )}
           </ul>
         )}
@@ -765,7 +765,7 @@ function WorkBento({
               </li>
             ))}
             {taskItems.length > 6 && (
-              <li className="px-2 pt-0.5 text-[11px] text-slate-400">{t('wdash.moreTasksN', { n: taskItems.length - 6, defaultValue: `仲有 ${taskItems.length - 6} 件…` })}</li>
+              <li className="px-2 pt-0.5 text-[11px] text-slate-400">{t('wdash.moreTasksN', { n: taskItems.length - 6, defaultValue: `還有 ${taskItems.length - 6} 件…` })}</li>
             )}
           </ul>
         )}
@@ -826,7 +826,7 @@ function LayoutEditor({
         <div className="min-w-0 flex-1">
           <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">{t('wdash.customizeDashboard', { defaultValue: '自訂儀表板' })}</p>
           <p className="text-xs text-slate-500 dark:text-slate-400">
-            {t('wdash.customizeDashboardHint', { defaultValue: '開關區塊、調整次序，或設定你想被點名嘅稱呼。' })}
+            {t('wdash.customizeDashboardHint', { defaultValue: '開關區塊、調整次序，或設定你想被點名的稱呼。' })}
           </p>
         </div>
         <Button
@@ -915,7 +915,7 @@ function LayoutEditor({
 }
 
 // ═════════════════════════════════════════════
-//  Widget 外框（編輯模式畀快速操作）
+//  Widget 外框（編輯模式給快速操作）
 // ═════════════════════════════════════════════
 function WidgetFrame({
   id,
@@ -1001,7 +1001,7 @@ function renderWidget(id: WidgetId, ctx: WidgetCtx) {
       return <AgendaWidget items={ctx.agenda} jsDay={ctx.jsDay} completeTask={ctx.completeTask} open={ctx.open} />
     case 'taskTrend':
       return <TaskTrendWidget ctx={ctx} />
-    // 學生／班級子系統已移除：以下 widget 唔再渲染（亦已喺 visibleWidgets 過濾）。
+    // 學生／班級子系統已移除：以下 widget 不再渲染（亦已在 visibleWidgets 過濾）。
     case 'curriculum':
     case 'attendance':
     case 'grades':
@@ -1081,10 +1081,10 @@ function FocusWidget({ ctx }: { ctx: WidgetCtx }) {
   const overdue = ctx.agenda.filter((a) => a.kind === 'task' && a.overdue).length
 
   // 一句話聚焦語（按情況選最重要嗰樣）
-  let line = t('wdash.focusIdle', { defaultValue: '今日無特別安排，把握時間備課或抖一抖。' })
+  let line = t('wdash.focusIdle', { defaultValue: '今日無特別安排，把握時間備課或休息一休息。' })
   if (overdue > 0) line = t('wdash.focusOverdue', { n: overdue, defaultValue: `有 ${overdue} 件待辦逾期，建議優先清理。` })
   else if (classCount > 0 && dueCount > 0)
-    line = t('wdash.focusClassAndTask', { c: classCount, t: dueCount, defaultValue: `今日 ${classCount} 堂課、${dueCount} 件待辦到期，逐樣搞掂。` })
+    line = t('wdash.focusClassAndTask', { c: classCount, t: dueCount, defaultValue: `今日 ${classCount} 堂課、${dueCount} 件待辦到期，逐樣完成。` })
   else if (classCount > 0) line = t('wdash.focusClassOnly', { c: classCount, defaultValue: `今日有 ${classCount} 堂課，記得預備教材。` })
   else if (dueCount > 0) line = t('wdash.focusTaskOnly', { t: dueCount, defaultValue: `今日有 ${dueCount} 件待辦到期，趁早完成。` })
   else if (eventCount > 0) line = t('wdash.focusEventOnly', { e: eventCount, defaultValue: `今日有 ${eventCount} 個行程，留意時間。` })
@@ -1159,7 +1159,7 @@ function AgendaWidget({
       </SectionTitle>
       {items.length === 0 ? (
         jsDay === 0 ? (
-          <EmptyState icon={Palmtree} title={t('wdash.sundayRestTitle', { defaultValue: '星期日休息' })} hint={t('wdash.sundayRestHint', { defaultValue: '今日無課堂亦無到期事項，好好抖一抖。' })} />
+          <EmptyState icon={Palmtree} title={t('wdash.sundayRestTitle', { defaultValue: '星期日休息' })} hint={t('wdash.sundayRestHint', { defaultValue: '今日無課堂亦無到期事項，好好休息一休息。' })} />
         ) : (
           <EmptyState icon={PartyPopper} title={t('wdash.quietTitle', { defaultValue: '今日一片清靜' })} hint={t('wdash.quietHint', { defaultValue: '未有課堂、到期待辦或行程。' })} />
         )

@@ -209,7 +209,7 @@ export default function TrainingView() {
   const trend = useMemo(() => volumeTrend(workouts), [workouts])
   const sinceLast = useMemo(() => daysSinceLastWorkout(workouts), [workouts])
 
-  // 一次過攞近 7 日每日 volume + RPE（避免重複 dailyVolume + 逐日重掃全表算 RPE）。
+  // 一次過取得近 7 日每日 volume + RPE（避免重複 dailyVolume + 逐日重掃全表算 RPE）。
   const days7 = useMemo(() => dailyVolumeRpe(workouts, 7), [workouts])
   const dayBars = useMemo(
     () =>
@@ -249,7 +249,7 @@ export default function TrainingView() {
 
   // ── 動作篩選 + CSV 匯出 ──
   const exNames = useMemo(() => exerciseNames(workouts), [workouts])
-  // 篩選名若已唔存在（刪/改後）→ 當「全部」，避免清單變空無法復原。
+  // 篩選名若已不存在（刪/改後）→ 當「全部」，避免清單變空無法復原。
   const activeFilter = exFilter && exNames.includes(exFilter) ? exFilter : ''
   // 清單按動作篩 + 新→舊排（圖表 / KPI / PR 仍用全歷史）。
   const filteredSorted = useMemo(
@@ -260,7 +260,7 @@ export default function TrainingView() {
   function exportCsv() {
     const rows = workoutsToSetRows(filterByExercise(workouts, activeFilter))
     if (rows.length === 0) {
-      toast.info('未有可匯出嘅組數')
+      toast.info('未有可匯出的組數')
       return
     }
     const tag = activeFilter ? `_${activeFilter}` : ''
@@ -318,7 +318,7 @@ export default function TrainingView() {
             記錄 · 週期化
           </h2>
           <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
-            記低每組重量次數，睇訓練量同疲勞趨勢，追每個動作 PR。
+            記低每組重量次數，查看訓練量同疲勞趨勢，追每個動作 PR。
           </p>
         </div>
         <div className="flex shrink-0 gap-2">
@@ -374,7 +374,7 @@ export default function TrainingView() {
           icon={Trophy}
           tone="emerald"
           onClick={prs.length > 0 ? () => setPrOpen((v) => !v) : undefined}
-          hint={prs.length > 0 ? '點擊睇全部' : '記錄後自動追蹤'}
+          hint={prs.length > 0 ? '點擊查看全部' : '記錄後自動追蹤'}
         />
       </div>
 
@@ -382,7 +382,7 @@ export default function TrainingView() {
       <Card padded>
         <SectionHead
           icon={Activity}
-          desc="訓練量（柱）對疲勞 RPE（線），睇加量定減載。"
+          desc="訓練量（柱）對疲勞 RPE（線），查看加量定減載。"
           right={
             <SegmentedControl<PeriodMode>
               size="sm"
@@ -500,7 +500,7 @@ export default function TrainingView() {
           <EmptyState
             icon={Dumbbell}
             title="未有訓練紀錄"
-            hint="撳「記錄訓練」加你第一次練習，之後會自動算訓練量同 PR。"
+            hint="按「記錄訓練」加你第一次練習，之後會自動算訓練量同 PR。"
             action={
               <Button icon={Plus} onClick={openNew}>
                 記錄訓練
@@ -511,7 +511,7 @@ export default function TrainingView() {
           <EmptyState
             icon={Dumbbell}
             title={`「${activeFilter}」未有紀錄`}
-            hint="揀返「全部動作」睇晒所有訓練。"
+            hint="重新選擇「全部動作」查看全部所有訓練。"
             action={
               <Button variant="secondary" onClick={() => setExFilter('')}>
                 清除篩選
@@ -599,7 +599,7 @@ function RestTimer({
   const [remaining, setRemaining] = useState(defaultSeconds)
   const [running, setRunning] = useState(true)
   const [finished, setFinished] = useState(false)
-  // 用 ref 攞最新 onDone，避免 effect 因 callback 身份變而重起 interval。
+  // 用 ref 取得最新 onDone，避免 effect 因 callback 身份變而重起 interval。
   const onDoneRef = useRef(onDone)
   useEffect(() => {
     onDoneRef.current = onDone
@@ -748,7 +748,7 @@ function PlateCalculator({ open, onClose }: { open: boolean; onClose: () => void
     <Modal open={open} onClose={onClose} size="md" title="槓片計算器">
       <div className="space-y-4">
         <p className="text-xs text-slate-500 dark:text-slate-400">
-          輸入目標總重同空槓重，計每邊要上嘅槓片（{DEFAULT_PLATES_KG.join('／')}
+          輸入目標總重同空槓重，計每邊要上的槓片（{DEFAULT_PLATES_KG.join('／')}
           kg）。
         </p>
         <div className="grid grid-cols-2 gap-3">
@@ -782,13 +782,13 @@ function PlateCalculator({ open, onClose }: { open: boolean; onClose: () => void
         <div className="rounded-xl border border-slate-200 p-4 dark:border-slate-700">
           {plan.belowBar ? (
             <p className="text-center text-sm text-slate-500 dark:text-slate-400">
-              目標低過空槓重（{bar || 0}kg），唔使上片。
+              目標低過空槓重（{bar || 0}kg），不用上片。
             </p>
           ) : plan.perSide.length === 0 ? (
             <p className="text-center text-sm text-slate-500 dark:text-slate-400">
               {Number(target) === Number(bar)
-                ? '啱啱好係空槓重，唔使上片。'
-                : '湊唔到任何一片（可用槓片太大）。'}
+                ? '剛好是空槓重量，不用上片。'
+                : '湊不到任何一片（可用槓片太大）。'}
             </p>
           ) : (
             <>
@@ -815,7 +815,7 @@ function PlateCalculator({ open, onClose }: { open: boolean; onClose: () => void
           </div>
           {plan.remainderKg > 0 && (
             <div className="mt-1.5 flex items-center justify-between gap-2 text-xs">
-              <span className="text-amber-600 dark:text-amber-400">湊唔齊</span>
+              <span className="text-amber-600 dark:text-amber-400">湊不齊</span>
               <Badge tone="amber">差 {fmtVol(plan.remainderKg)} kg</Badge>
             </div>
           )}
@@ -957,7 +957,7 @@ function WorkoutRow({
 }
 
 // ============================================================
-//  AI 教練分析（可選；未設定 / 失敗都唔阻功能）
+//  AI 教練分析（可選；未設定 / 失敗都不阻功能）
 // ============================================================
 function CoachInsight({ workouts }: { workouts: Workout[] }) {
   const toast = useToast()
@@ -989,13 +989,13 @@ function CoachInsight({ workouts }: { workouts: Workout[] }) {
         {
           role: 'user',
           content:
-            '你係一位健身教練。以下係我近期訓練紀錄（日期: 動作(次數x重量kg@RPE)）：\n\n' +
+            '你是一位健身教練。以下是我近期訓練紀錄（日期: 動作(次數x重量kg@RPE)）：\n\n' +
             summary +
-            '\n\n用繁體中文（廣東話書面語），俾 2-3 點具體建議：訓練量趨勢、疲勞/恢復、下一步點加量或減載。每點一句，唔好客套，唔好醫療診斷。',
+            '\n\n用繁體中文（廣東話書面語），給 2-3 點具體建議：訓練量趨勢、疲勞/恢復、下一步點加量或減載。每點一句，不要客套，不要醫療診斷。',
         },
       ]
       const out = await complete({ messages, temperature: 0.6, source: 'fitness' })
-      setInsight(out.trim() || '暫時冇建議，繼續記錄更多訓練先。')
+      setInsight(out.trim() || '暫時沒有建議，繼續記錄更多訓練先。')
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'AI 分析失敗')
     } finally {
@@ -1013,7 +1013,7 @@ function CoachInsight({ workouts }: { workouts: Workout[] }) {
               AI 教練分析
             </p>
             <p className="mt-0.5 text-xs text-slate-400 dark:text-slate-500">
-              需要先設定雲端 AI（見 docs/SETUP.md）。你照樣可以手動睇上面嘅趨勢圖同 PR。
+              需要先設定雲端 AI（見 docs/SETUP.md）。你照樣可以手動查看上面的趨勢圖同 PR。
             </p>
           </div>
         </div>
@@ -1052,7 +1052,7 @@ function CoachInsight({ workouts }: { workouts: Workout[] }) {
             <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-accent [animation-delay:-0.1s]" />
             <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-accent" />
           </span>
-          教練分析緊你嘅訓練趨勢…
+          教練正在分析你的訓練趨勢…
         </div>
       )}
       {insight && (
@@ -1179,7 +1179,7 @@ function WorkoutEditor({
         if (e.key !== exKey) return e
         const last = e.sets[e.sets.length - 1]
         // 1) 同動作有上一組 → 帶上一組重量次數（省輸入）。
-        // 2) 第一組（未填） → 由歷史搵「上次同名動作」最後一組預填。
+        // 2) 第一組（未填） → 由歷史搜尋「上次同名動作」最後一組預填。
         let next: DraftSet
         if (last && (last.reps.trim() !== '' || last.weightKg.trim() !== '')) {
           next = { reps: last.reps, weightKg: last.weightKg, rpe: '' }
@@ -1232,7 +1232,7 @@ function WorkoutEditor({
 
   function handleSubmit() {
     if (!date) {
-      toast.error('請揀日期')
+      toast.error('請選擇日期')
       return
     }
     // 過濾：有名 + 至少一組有效 set
@@ -1243,7 +1243,7 @@ function WorkoutEditor({
       for (const s of ex.sets) {
         const reps = clampNum(s.reps)
         const weightKg = clampNum(s.weightKg)
-        // 全空（冇 reps 又冇 weight）就跳過
+        // 全空（沒有 reps 又沒有 weight）就跳過
         if (s.reps.trim() === '' && s.weightKg.trim() === '') continue
         const rpeRaw = s.rpe.trim()
         const set: WorkoutSet = { reps, weightKg }
@@ -1393,7 +1393,7 @@ function WorkoutEditor({
                       className="min-w-0"
                     />
                     <IconButton
-                      label="刪除呢組"
+                      label="刪除此組"
                       size="sm"
                       tone="danger"
                       disabled={ex.sets.length === 1}
@@ -1453,7 +1453,7 @@ function WorkoutEditor({
           <Textarea
             value={note}
             onChange={(e) => setNote(e.target.value)}
-            placeholder="例：臥推手感唔錯，下次加 2.5kg"
+            placeholder="例：臥推手感不錯，下次加 2.5kg"
             rows={2}
           />
         </Field>

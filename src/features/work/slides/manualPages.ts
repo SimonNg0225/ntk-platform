@@ -1,12 +1,12 @@
 import type { Deck, Slide } from '../../../lib/export/types'
 
 // ============================================================
-//  「跟我嘅分段分版」— 分隔符分頁（純函式，可單元測試）
+//  「跟我的按段落分頁」— 分隔符分頁（純函式，可單元測試）
 //  ------------------------------------------------------------
-//  用戶貼內容時用 `---` 行或空行斬版：每段首行＝該版標題、其餘＝內文行。
-//  AI 收到呢個框架後只准精煉每版內文（buildFrameworkSystem 鎖死版數／
-//  標題／次序）；AI 失靈（版數對唔上）就用 frameworkToDeck 照搬入版，
-//  保證用戶嘅分頁永遠唔會被打亂。
+//  用戶貼上內容時用 `---` 行或空行斬版：每段首行＝該版標題、其餘＝內文行。
+//  AI 收到這個框架後只准精煉每版內文（buildFrameworkSystem 鎖死版數／
+//  標題／次序）；AI 失靈（版數對不上）就用 frameworkToDeck 照搬入版，
+//  保證用戶的分頁永遠不會被打亂。
 // ============================================================
 
 export interface ManualPage {
@@ -45,7 +45,7 @@ export function parseManualPages(text: string): ManualPage[] {
 
 /**
  * 照搬入版（AI 失靈保險）：每版標題＋內文行直接做 bullets（≤6 點、每點 ≤60 字）；
- * 冇內文行嘅段＝章節分隔版（layout 'section'、空 bullets）。
+ * 沒有內文行的段＝章節分隔版（layout 'section'、空 bullets）。
  */
 export function frameworkToDeck(pages: ManualPage[], fallbackTitle: string): Deck {
   const slides: Slide[] = pages.map((p) => {
@@ -61,8 +61,8 @@ export function frameworkToDeck(pages: ManualPage[], fallbackTitle: string): Dec
 }
 
 /**
- * 偵測內容係咪似有「自己分咗頁」：有 `---` 分隔，或者有 ≥2 段
- * （空行分隔、其中至少一段多過一行）→ 用嚟喺 UI 提示開「跟我嘅分段分版」。
+ * 偵測內容係咪似有「自己分了頁」：有 `---` 分隔，或者有 ≥2 段
+ * （空行分隔、其中至少一段多過一行）→ 用來在 UI 提示開「跟我的按段落分頁」。
  */
 export function detectManualPages(text: string): boolean {
   if (/^[ \t]*-{3,}[ \t]*$/m.test(text.replace(/\r\n?/g, '\n'))) {

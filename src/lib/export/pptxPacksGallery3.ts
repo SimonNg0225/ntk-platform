@@ -32,7 +32,7 @@ import { coverTextureUri } from './slideTextures'
 // ============================================================
 //  和紙 washi — 侘寂留白
 //  暖米和紙底、墨色字、柿色一點：成個 deck 似一疊手揭和紙 —
-//  左緣柿色簾邊、撕紙錯位淡面板做角飾，題目沉喺左下大片留白入面。
+//  左緣柿色簾邊、撕紙錯位淡面板做角飾，題目沉在左下大片留白中。
 // ============================================================
 
 const WAS = { bg: 'F7F3EA', ink: '2B2B27', soft: '6E685B', faint: 'A89F8C', hair: 'E2DAC8', accent: 'C8501F', panel: 'FDFBF5' }
@@ -45,7 +45,7 @@ function tornPair(slide: PptxGenJS.Slide, x: number, y: number, w: number, h: nu
 
 /**
  * 招牌：quote 渲染成「短冊 tanzaku」——
- * 一條高身窄直幅和紙（柿色冊頭帶 + 紐穴）偏左企喺大片留白入面，
+ * 一條高身窄直幅和紙（柿色冊頭帶 + 紐穴）偏左企在大片留白中，
  * 引文直幅內逐行落，冊腳髮線下 attribution 做落款 + 柿印方。
  * 旁邊大片空白就係侘寂設計。
  */
@@ -143,7 +143,7 @@ const washi: Pack = {
   cover(slide, deck, brand, img) {
     slide.background = { color: WAS.bg }
     const hasImg = Boolean(img)
-    // 招牌和紙紋理底圖（瀏覽器 Canvas raster；冇 canvas 時 fallback 純色底）
+    // 招牌和紙紋理底圖（瀏覽器 Canvas raster；沒有 canvas 時 fallback 純色底）
     const tex = coverTextureUri('washi')
     if (tex) slide.addImage({ data: tex, x: 0, y: 0, w: 13.333, h: 7.5, sizing: { type: 'cover', w: 13.333, h: 7.5 } })
     // 左緣柿色簾邊（直條貼死左邊；垂直漸層柿色微深淺）
@@ -159,7 +159,7 @@ const washi: Pack = {
       // 右上角撕紙錯位面板（出血落角 — 上半大片留白就係設計）
       tornPair(slide, 10.3, -0.6, 3.6, 2.7)
     }
-    // 題目沉喺左下（不對稱留白）
+    // 題目沉在左下（不對稱留白）
     tx(slide, '教學簡報 · TEACHING DECK', { x: 0.9, y: 3.95, w: 7, h: 0.3, fontSize: 9, color: WAS.accent, charSpacing: 4, bold: true })
     const titleW = hasImg ? 6.4 : 9.6
     const fit = fitTitle(deck.title, 'cover')
@@ -181,7 +181,7 @@ const washi: Pack = {
     // 右上撕紙面板 + Times New Roman 淡柿巨號（靠右）
     tornPair(slide, 10.4, -0.5, 3.5, 2.4)
     tx(slide, pad2(no), { x: 7.0, y: 1.0, w: 5.4, h: 2.6, fontSize: 140, bold: true, color: mix(WAS.accent, WAS.bg, 0.2), align: 'right', fontFace: 'Times New Roman' })
-    // 章節題沉喺左下
+    // 章節題沉在左下
     tx(slide, `SECTION ${sectionWord(no)}`, { x: 0.9, y: 4.2, w: 6, h: 0.3, fontSize: 9, color: WAS.faint, charSpacing: 5 })
     tx(slide, title, { x: 0.9, y: 4.6, w: 10.5, h: 1.2, fontSize: 32, bold: true, color: WAS.ink })
     // 柿色短刻線（毛筆一捺）
@@ -190,7 +190,7 @@ const washi: Pack = {
 
   contentFrame(slide, ctx) {
     slide.background = { color: WAS.bg }
-    // 左緣柿色頁籤（呼應封面簾邊，標記 header 高度；貼死左極邊唔撞相）
+    // 左緣柿色頁籤（呼應封面簾邊，標記 header 高度；貼死左極邊不撞相）
     slide.addShape('rect', { x: 0, y: 0.55, w: 0.09, h: 1.15, fill: { color: WAS.accent }, line: { type: 'none' } })
     const { body } = scaffold(slide, washi, ctx, { kickerY: 0.58, titleY: 0.9, hairline: false })
     // kicker 前柿印小方（無髮線 — 留白靠呼吸）
@@ -202,7 +202,7 @@ const washi: Pack = {
 
 // ============================================================
 //  終端 terminal — 程式終端
-//  近黑底、磷光綠一點：成個 deck 似一隻開咗嘅 terminal 視窗 —
+//  近黑底、磷光綠一點：成個 deck 似一隻開了的 terminal 視窗 —
 //  頂欄三點、kicker 變 ~/path、steps 變指令 scrollback 日誌。
 // ============================================================
 
@@ -219,7 +219,7 @@ function termDots(slide: PptxGenJS.Slide, x: number, y: number): void {
 /**
  * 招牌：steps 渲染成「指令日誌 scrollback」——
  * 每步一行 `$ <步題>`（Consolas 磷光綠提示符），下面一行暗階「輸出」做說明，
- * 行右細進度 [i/n]，全部冇連接線 — 就係 terminal 捲動紀錄本身。
+ * 行右細進度 [i/n]，全部沒有連接線 — 就係 terminal 捲動紀錄本身。
  * 末尾一個待命提示符 + 淡塊狀游標。2–5 步。
  */
 function renderTerminalLog(slide: PptxGenJS.Slide, body: Rect, pack: Pack, s: Slide): void {
@@ -297,7 +297,7 @@ const terminal: Pack = {
   cover(slide, deck, brand, img) {
     slide.background = { color: TRM.bg }
     const hasImg = Boolean(img)
-    // 招牌掃描線／終端紋理底圖（瀏覽器 Canvas raster；冇 canvas 時 fallback 純色底）
+    // 招牌掃描線／終端紋理底圖（瀏覽器 Canvas raster；沒有 canvas 時 fallback 純色底）
     const tex = coverTextureUri('terminal')
     if (tex) slide.addImage({ data: tex, x: 0, y: 0, w: 13.333, h: 7.5, sizing: { type: 'cover', w: 13.333, h: 7.5 } })
     // 全闊視窗頂欄 + 三點 + 視窗名（頂欄垂直漸層：頂淡綠暈 → panel）
@@ -487,7 +487,7 @@ const pixel: Pack = {
   cover(slide, deck, brand, img, title) {
     slide.background = { color: PIX.bg }
     const hasImg = Boolean(img)
-    // 招牌像素網格紋理底圖（瀏覽器 Canvas raster；冇 canvas 時 fallback 純色底）
+    // 招牌像素網格紋理底圖（瀏覽器 Canvas raster；沒有 canvas 時 fallback 純色底）
     const tex = coverTextureUri('pixel')
     if (tex) slide.addImage({ data: tex, x: 0, y: 0, w: 13.333, h: 7.5, sizing: { type: 'cover', w: 13.333, h: 7.5 } })
     // 頂部雙色像素方塊 + kicker（各自垂直漸層微亮→微深，保 8-bit 硬塊感）
@@ -523,7 +523,7 @@ const pixel: Pack = {
       addCoverImage(slide, img, frame)
       photoCreditOnImage(slide, img.credit, frame)
       slide.addShape('rect', { x: frame.x - 0.18, y: frame.y - 0.18, w: 0.2, h: 0.2, fill: { color: PIX.accent }, line: { type: 'none' } })
-      // 細梯級讓位俾相
+      // 細梯級讓位給相
       pixelStair(slide, 10.6, 6.85, 0.36, 4)
     } else {
       // 右下 chunky 像素梯級（無相時做主 motif）
@@ -587,7 +587,7 @@ function botSprig(slide: PptxGenJS.Slide, x: number, y: number, color: string): 
 
 /**
  * 招牌：cards 渲染成「標本標籤」——
- * 每卡一張白底標籤：雙細線框、頂沿一條微斜淡 tan 膠紙（似貼喺台紙上）、
+ * 每卡一張白底標籤：雙細線框、頂沿一條微斜淡 tan 膠紙（似貼在台紙上）、
  * 右上 Georgia 斜體拉丁式索引 No.{i+1}、標題髮線下接說明。2–6 卡。
  */
 function renderBotanicSpecimens(slide: PptxGenJS.Slide, body: Rect, pack: Pack, s: Slide): void {
@@ -669,7 +669,7 @@ const botanic: Pack = {
 
   cover(slide, deck, brand, img) {
     slide.background = { color: BOT.bg }
-    // 招牌植物標本台紙紋理底圖（瀏覽器 Canvas raster；冇 canvas 時 fallback 純色底）
+    // 招牌植物標本台紙紋理底圖（瀏覽器 Canvas raster；沒有 canvas 時 fallback 純色底）
     const tex = coverTextureUri('botanic')
     if (tex) slide.addImage({ data: tex, x: 0, y: 0, w: 13.333, h: 7.5, sizing: { type: 'cover', w: 13.333, h: 7.5 } })
     // 標本台紙：雙細線框 + 四角膠紙

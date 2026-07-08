@@ -1,20 +1,20 @@
 // ============================================================
 //  行政文件 — 範本欄位彩色標示引擎（純邏輯 + 薄 render wrapper）
 //  ------------------------------------------------------------
-//  目的：喺 docx-preview 渲染出嚟嘅 HTML 上面，把每個 `{標籤}` 嘅
+//  目的：在 docx-preview 渲染出來的 HTML 上面，把每個 `{標籤}` 的
 //  位置用同色 <mark> 包住，做到「視覺化彩色預覽」。
 //
 //  - TAG_COLORS / colorForIndex：欄位 ↔ 顏色配對（穩定循環）。
 //  - highlightTagsInElement：純 DOM 操作（可單元測試，jsdom）。
-//  - renderWithHighlights：薄 wrapper（render 失敗照 throw 畀上層 fallback）。
+//  - renderWithHighlights：薄 wrapper（render 失敗照 throw 給上層 fallback）。
 // ============================================================
 
 /**
  * 8 隻柔和背景色盤。
- * 用 rgba 低透明度淺色 —— docx-preview 渲染出嚟嘅文件頁係白底黑字，
- * 淺透明背景唔會蓋過黑字（light）；dark mode 下整個預覽容器通常仍係
+ * 用 rgba 低透明度淺色 —— docx-preview 渲染出來的文件頁係白底黑字，
+ * 淺透明背景不會蓋過黑字（light）；dark mode 下整個預覽容器通常仍係
  * 白頁（docx-preview 自帶頁面樣式），同樣讀到字。透明度低亦令重疊／
- * 相鄰標籤唔會太濃。色相覆蓋 amber/sky/emerald/violet/rose/teal/
+ * 相鄰標籤不會太濃。色相覆蓋 amber/sky/emerald/violet/rose/teal/
  * orange/indigo 系，方便逐欄分辨。
  */
 export const TAG_COLORS: string[] = [
@@ -41,15 +41,15 @@ const TAG_RE = /\{([^{}]+)\}/g
 const HL_CLASS = 'adoc-tag-hl'
 
 /**
- * 喺 `el` 內所有 text node 搵 `{標籤}`，若標籤喺 `tagColors`，
- * 就把該段 `{標籤}` 拆出嚟用 <mark class="adoc-tag-hl"> 包住上色；
- * 其餘文字原樣保留。唔喺 `tagColors` 嘅 `{x}` 唔郁。
+ * 在 `el` 內所有 text node 搜尋 `{標籤}`，若標籤在 `tagColors`，
+ * 就把該段 `{標籤}` 拆出來用 <mark class="adoc-tag-hl"> 包住上色；
+ * 其餘文字原樣保留。不在 `tagColors` 的 `{x}` 不郁。
  *
  * 重點：
- * - 先用 TreeWalker collect 晒所有 text node 再改 DOM（唔好邊行邊改，
- *   因為插入新節點會打亂 walker 嘅遍歷）。
- * - 已經喺 mark.adoc-tag-hl 入面嘅 text node 跳過，避免重覆包。
- * - 只拆「真正命中」嘅 text node（命中數 = 0 就唔郁，慳 DOM 操作）。
+ * - 先用 TreeWalker collect 全部所有 text node 再改 DOM（不要邊行邊改，
+ *   因為插入新節點會打亂 walker 的遍歷）。
+ * - 已經在 mark.adoc-tag-hl 中的 text node 跳過，避免重覆包。
+ * - 只拆「真正命中」的 text node（命中數 = 0 就不郁，慳 DOM 操作）。
  */
 export function highlightTagsInElement(
   el: HTMLElement,
@@ -74,7 +74,7 @@ export function highlightTagsInElement(
     node = walker.nextNode()
   }
 
-  // 第二步：逐個 text node 重建（命中嘅標籤 → <mark>，其餘 → 文字）。
+  // 第二步：逐個 text node 重建（命中的標籤 → <mark>，其餘 → 文字）。
   for (const text of targets) {
     const value = text.nodeValue ?? ''
     const frag = buildHighlightedFragment(doc, value, tagColors)
@@ -84,7 +84,7 @@ export function highlightTagsInElement(
   }
 }
 
-/** 該 text node 係咪已經喺一個 .adoc-tag-hl <mark> 入面。 */
+/** 該 text node 係咪已經在一個 .adoc-tag-hl <mark> 中。 */
 function isInsideHighlight(text: Text): boolean {
   let p: Node | null = text.parentNode
   while (p) {
@@ -100,9 +100,9 @@ function isInsideHighlight(text: Text): boolean {
 }
 
 /**
- * 由一段文字砌 DocumentFragment：命中（喺 tagColors）嘅 `{標籤}` 變
+ * 由一段文字砌 DocumentFragment：命中（在 tagColors）的 `{標籤}` 變
  * <mark>，其餘文字保留做 text node。若無任何命中標籤 → 回 null
- * （代表呢個 text node 唔使改）。
+ * （代表這個 text node 不用改）。
  */
 function buildHighlightedFragment(
   doc: Document,
@@ -118,10 +118,10 @@ function buildHighlightedFragment(
   while ((m = TAG_RE.exec(value)) !== null) {
     const tag = m[1].trim()
     const color = tagColors.get(tag)
-    if (color == null) continue // 唔喺 map 嘅 {x} 留返做純文字
+    if (color == null) continue // 不在 map 的 {x} 留返做純文字
 
     matched = true
-    // 命中前嘅純文字
+    // 命中前的純文字
     if (m.index > lastIndex) {
       frag.appendChild(doc.createTextNode(value.slice(lastIndex, m.index)))
     }
@@ -130,7 +130,7 @@ function buildHighlightedFragment(
     mark.setAttribute('data-tag', tag)
     mark.setAttribute(
       'style',
-      // 加粗 + 細邊框令彩色喺密集黑字／表格上都清楚睇到。
+      // 加粗 + 細邊框令彩色在密集黑字／表格上都清楚查看到。
       `background:${color};border-radius:3px;padding:0 2px;font-weight:600;box-shadow:0 0 0 1px rgba(0,0,0,0.10)`,
     )
     mark.textContent = m[0] // 連大括號原文（例如「{name}」）
@@ -147,9 +147,9 @@ function buildHighlightedFragment(
 }
 
 /**
- * 渲染 .docx blob 入 `container`，再喺上面套彩色標示。
+ * 渲染 .docx blob 入 `container`，再在上方套彩色標示。
  * - 動態 import docx-preview（同既有用法一致，慳首屏 bundle）。
- * - render 失敗唔吞錯，照 throw，畀上層退「純清單」fallback。
+ * - render 失敗不吞錯，照 throw，給上層退「純清單」fallback。
  */
 export async function renderWithHighlights(
   container: HTMLElement,

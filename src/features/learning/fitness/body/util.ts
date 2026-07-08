@@ -4,7 +4,7 @@ import { toKey, addDays, daysBetween } from '../common'
 // ============================================================
 //  體態數據統計引擎（純函式；本地時區 key，避開 toISOString UTC 漂移）
 //  ------------------------------------------------------------
-//  全部聚合對「無資料 / 除零 / 缺值 / 負值」有守衞，唔回 NaN / Infinity。
+//  全部聚合對「無資料 / 除零 / 缺值 / 負值」有守衞，不回 NaN / Infinity。
 //  數值指標（體重 / 體脂% / 骨骼肌）用 isNum 過濾無效值；內臟脂肪係
 //  等級數字，KPI 直接讀最新。
 // ============================================================
@@ -25,7 +25,7 @@ export function round(n: number, d = 1): number {
 
 /**
  * BMI = 體重(kg) / 身高(m)²。
- * 缺值 / 非正數（體重或身高 ≤ 0）→ null（唔回 NaN / Infinity）。
+ * 缺值 / 非正數（體重或身高 ≤ 0）→ null（不回 NaN / Infinity）。
  */
 export function bmi(weightKg?: number, heightCm?: number): number | null {
   if (!isNum(weightKg) || !isNum(heightCm)) return null
@@ -84,7 +84,7 @@ export function latestEntry(
 }
 
 /**
- * 近 n 日逐日序列（無記錄嗰日 value=null，畀折線圖斷點）。
+ * 近 n 日逐日序列（無記錄嗰日 value=null，給折線圖斷點）。
  * 由舊到新，含 anchor 當日。days ≤ 0 → 空陣列。
  */
 export function seriesOf(
@@ -105,9 +105,9 @@ export function seriesOf(
 }
 
 /**
- * 某指標趨勢：最新值 + 對比約 days 日前嘅變化。
- * 取「截止日（anchor−days）或之前最近一筆」做基準；冇就用最早一筆。
- * 唔夠兩筆（基準=最新同一筆）→ delta = null。
+ * 某指標趨勢：最新值 + 對比約 days 日前的變化。
+ * 取「截止日（anchor−days）或之前最近一筆」做基準；沒有就用最早一筆。
+ * 不夠兩筆（基準=最新同一筆）→ delta = null。
  */
 export function metricTrend(
   entries: BodyEntry[],
@@ -136,9 +136,9 @@ export type RecompVerdict =
   | 'muscleGain' // 肌肉明顯升、脂肪持平/微升
   | 'bulk' // 同升（增重期：肌肉脂肪都上）
   | 'cutLoss' // 同跌（減重期：肌肉脂肪都落）
-  | 'fatGain' // ↑脂肪 ↓肌肉：最唔理想
-  | 'stable' // 兩者變化都喺雜訊範圍
-  | 'insufficient' // 唔夠資料（首尾任一缺體重+體脂）
+  | 'fatGain' // ↑脂肪 ↓肌肉：最不論想
+  | 'stable' // 兩者變化都在雜訊範圍
+  | 'insufficient' // 不夠資料（首尾任一缺體重+體脂）
 
 export interface CompositionChange {
   /** 脂肪量變化（kg，尾−首）；缺資料 → null */
@@ -154,23 +154,23 @@ export interface CompositionChange {
   summary: string
 }
 
-// 變化「有意義」嘅門檻（kg）：低過此值視為量度雜訊 / 持平。
+// 變化「有意義」的門檻（kg）：低過此值視為量度雜訊 / 持平。
 const NOISE_KG = 0.3
 
 const VERDICT_TEXT: Record<RecompVerdict, string> = {
   recomp: '理想體態重組：脂肪下降、肌肉上升 👏',
   fatLoss: '純減脂：脂肪明顯下降，肌肉大致保住',
   muscleGain: '純增肌：肌肉明顯上升，脂肪變化不大',
-  bulk: '增重期：肌肉同脂肪一齊上升（正常 bulking）',
-  cutLoss: '減重期：脂肪同肌肉一齊下降（留意保肌）',
+  bulk: '增重期：肌肉同脂肪一起上升（正常 bulking）',
+  cutLoss: '減重期：脂肪同肌肉一起下降（留意保肌）',
   fatGain: '需調整：脂肪上升而肌肉下降',
-  stable: '大致持平：脂肪同肌肉變化都喺雜訊範圍內',
+  stable: '大致持平：脂肪同肌肉變化都在雜訊範圍內',
   insufficient: '資料不足：需要期間首尾各一筆「體重＋體脂率」先計到',
 }
 
 /**
- * 期間身體組成變化分析（用窗內首尾兩筆「同時有體重＋體脂率」嘅記錄）。
- * 算脂肪量 / 瘦體重變化並判斷增肌減脂類型，畀人話結論。
+ * 期間身體組成變化分析（用窗內首尾兩筆「同時有體重＋體脂率」的記錄）。
+ * 算脂肪量 / 瘦體重變化並判斷增肌減脂類型，給人話結論。
  * 窗內不足兩筆完整記錄 → verdict 'insufficient'，delta = null。
  */
 export function compositionChange(
@@ -188,7 +188,7 @@ export function compositionChange(
   }
   if (!Number.isFinite(days) || days <= 0) return empty
 
-  // 窗：[anchor−(days−1), anchor]（含當日），只收同時有體重+體脂嘅完整記錄。
+  // 窗：[anchor−(days−1), anchor]（含當日），只收同時有體重+體脂的完整記錄。
   const startKey = toKey(addDays(anchor, -(Math.floor(days) - 1)))
   const endKey = toKey(anchor)
   const complete = entries
@@ -241,22 +241,22 @@ export function classifyRecomp(fatDeltaKg: number, leanDeltaKg: number): RecompV
 // ───────── 目標體重：進度 + 達標預計 ─────────
 
 export interface GoalProgress {
-  /** 進度百分比（0–100，已 clamp）；起點=目標 或 缺資料 → null */
+  /** 進度百分比（0–100，已 clamp）；內容來源=目標 或 缺資料 → null */
   pct: number | null
   /** 已行幾多 kg（current − start，帶號）；缺資料 → null */
   movedKg: number | null
-  /** 仲差幾多 kg 到目標（target − current，帶號）；缺資料 → null */
+  /** 還差幾多 kg 到目標（target − current，帶號）；缺資料 → null */
   remainingKg: number | null
-  /** 係咪減重目標（target < start）；起點=目標 → null */
+  /** 係咪減重目標（target < start）；內容來源=目標 → null */
   losing: boolean | null
   /** 係咪已達標（朝目標方向行到或越過）。 */
   reached: boolean
 }
 
 /**
- * 目標體重進度（起點 → 目標 嘅完成 %）。
+ * 目標體重進度（內容來源 → 目標 的完成 %）。
  * pct = (current − start) / (target − start) × 100，朝目標方向行為正。
- * 守衞：缺值 → null；起點=目標（除零）→ pct=null + reached 依 current 判斷。
+ * 守衞：缺值 → null；內容來源=目標（除零）→ pct=null + reached 依 current 判斷。
  * pct clamp 落 0–100（行過頭當 100、行反方向當 0）。
  */
 export function goalProgress(
@@ -277,7 +277,7 @@ export function goalProgress(
   const remainingKg = round(target - current, 2)
   const denom = target - start
 
-  // 起點＝目標：無範圍可量度進度（除零守衞）。當 current 已達該值即 reached。
+  // 內容來源＝目標：無範圍可量度進度（除零守衞）。當 current 已達該值即 reached。
   if (denom === 0) {
     return { pct: null, movedKg, remainingKg, losing: null, reached: current === target }
   }
@@ -294,7 +294,7 @@ export function goalProgress(
 /**
  * 近 days 日體重變化速率（kg / 週）。
  * 用窗內首尾兩筆有效體重做線性斜率：(末−首) / 週數。
- * 唔夠兩筆 / 首尾同日（除零）/ 無效 → null（唔亂回 NaN）。
+ * 不夠兩筆 / 首尾同日（除零）/ 無效 → null（不亂回 NaN）。
  */
 export function weightRateKgPerWeek(
   entries: BodyEntry[],
@@ -317,21 +317,21 @@ export function weightRateKgPerWeek(
 }
 
 export interface GoalEta {
-  /** 預計達標日期 key（YYYY-MM-DD，本地）；推唔到 → null */
+  /** 預計達標日期 key（YYYY-MM-DD，本地）；推不到 → null */
   dateKey: string | null
-  /** 距今仲要幾多日；推唔到 → null */
+  /** 距今還要幾多日；推不到 → null */
   daysAway: number | null
-  /** 用緊嘅速率（kg/週，帶號）；推唔到 → null */
+  /** 用緊的速率（kg/週，帶號）；推不到 → null */
   rateKgPerWeek: number | null
-  /** 已達標（唔使再推）。 */
+  /** 已達標（不用再推）。 */
   reached: boolean
 }
 
 /**
  * 達標預計日：用近期體重速率線性外推到目標體重。
- * - 已達標（朝目標方向到/越過）→ reached=true，dateKey=null（唔使推）。
- * - 速率 0 / 朝遠離目標方向 / 無速率 → 全 null（唔亂推一個假日期）。
- * - 否則 daysAway = ceil(|remaining| / |perDay|)，由 anchor 加返。
+ * - 已達標（朝目標方向到/越過）→ reached=true，dateKey=null（不用推）。
+ * - 速率 0 / 朝遠離目標方向 / 無速率 → 全 null（不亂推一個假日期）。
+ * - 否則 daysAway = ceil(|remaining| / |perDay|)，由 anchor 加回。
  */
 export function projectedGoalDate(
   entries: BodyEntry[],
@@ -347,14 +347,14 @@ export function projectedGoalDate(
   const current = latest.value
   const remaining = target - current // 帶號：>0 要升、<0 要減
 
-  // 已達標（差距收窄到 0 / 越過）→ reached，唔使推日期。
+  // 已達標（差距收窄到 0 / 越過）→ reached，不用推日期。
   if (remaining === 0) return { ...empty, reached: true }
 
   const rateKgPerWeek = weightRateKgPerWeek(entries, days, anchor)
   if (rateKgPerWeek === null || rateKgPerWeek === 0) return empty
   const perDay = rateKgPerWeek / 7
 
-  // 速率方向同「要去嘅方向」相反 → 永遠到唔到，唔亂外推。
+  // 速率方向同「要去的方向」相反 → 永遠到不到，不亂外推。
   // （remaining>0 要升但 perDay<0；remaining<0 要減但 perDay>0）
   if (Math.sign(perDay) !== Math.sign(remaining)) return empty
 

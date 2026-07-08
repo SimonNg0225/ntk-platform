@@ -3,7 +3,7 @@ import { Check } from 'lucide-react'
 import { cx } from '../../../../ui'
 
 // ============================================================
-//  引導式四步進度條。已行到嘅步驟（≤ maxReached）可㩒返去改。
+//  引導式四步進度條。已行到的步驟（≤ maxReached）可㩒回到改。
 // ============================================================
 
 export interface StepDef {
@@ -19,7 +19,7 @@ export default function StepRail({
 }: {
   steps: StepDef[]
   current: number
-  /** 行到過嘅最高步驟 —— ≤ 呢個都可以㩒返去 */
+  /** 行到過的最高步驟 —— ≤ 這個都可以㩒回到 */
   maxReached: number
   onJump: (id: number) => void
 }): JSX.Element {

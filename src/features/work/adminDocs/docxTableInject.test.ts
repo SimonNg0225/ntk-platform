@@ -284,7 +284,7 @@ describe('docxTableInject · autoTagFields（inline + 表格格 合併）', () =
 
   it('純表格格：inline 失手（無 anchor 形態）→ step2 由 label 入右鄰空格', () => {
     const buf = makeDocxRaw(tbl([tr([tc('班別'), tc('')])]))
-    // anchor 唔係底線／括號／冒號形態 → step1 inline 必失手 → 靠 step2 表格格。
+    // anchor 不是底線／括號／冒號形態 → step1 inline 必失手 → 靠 step2 表格格。
     const res = autoTagFields(buf, [sf('班別', '班別', '班別')])
     expect(res.injected).toEqual(['班別'])
     expect(res.failed).toEqual([])
@@ -336,7 +336,7 @@ describe('docxTableInject · autoTagFields（inline + 表格格 合併）', () =
   })
 
   it('兩步都失手 → 該 field 入最終 failed（原檔不變）', () => {
-    // 表格格右鄰非空、無下方；anchor 又唔係 inline 形態 → 兩步皆失。
+    // 表格格右鄰非空、無下方；anchor 又不是 inline 形態 → 兩步皆失。
     const buf = makeDocxRaw(tbl([tr([tc('地點'), tc('已填內容')])]))
     const res = autoTagFields(buf, [sf('地點', '地點', '地點')])
     expect(res.injected).toEqual([])

@@ -62,7 +62,7 @@ describe('timeBucket（目標日 → 本週 / 本月 / 更遠）', () => {
   it('今日就係星期日：週尾 = 今日，淨係今日入 week', () => {
     // 2026-06-07 係星期日（getDay()=0）→ 6 - 0 = 0，週尾 = 自己。
     expect(timeBucket('2026-06-07', '2026-06-07')).toBe('week') // 今日
-    expect(timeBucket('2026-06-08', '2026-06-07')).toBe('month') // 聽日已出週
+    expect(timeBucket('2026-06-08', '2026-06-07')).toBe('month') // 明天已出週
   })
 
   it('今日就係星期一：成個 7 日窗都入 week 直到今個禮拜日', () => {

@@ -2,24 +2,24 @@
 //  串流逐版生成 — incremental slide-object boundary parser
 //  ------------------------------------------------------------
 //  Gemini 出一個大 JSON `{title,subtitle,coverImageQuery,slides:[{...},...]}`，
-//  要邊收 delta 邊抽出「已完整」嘅 slide object 做樂觀渲染。
-//  落地（存 collection）仍以 parseDeck(fullRaw) 為真相 —— 呢度淨係預覽。
+//  要邊收 delta 邊抽出「已完整」的 slide object 做樂觀渲染。
+//  落地（存 collection）仍以 parseDeck(fullRaw) 為真相 —— 這裡只預覽。
 //  純 logic，無網路／DOM，可單測。
 // ============================================================
 
 import type { Slide } from '../../../lib/export/types'
 import { parseSlideRecord } from './slidePrompts'
 
-/** 容忍未閉合 ```json fence：剝走開頭 fence，但唔砍未閉合嘅尾（中途別斷字）。 */
+/** 容忍未閉合 ```json fence：剝走開頭 fence，但不砍未閉合的尾（中途別斷字）。 */
 function stripLeadingFence(buf: string): string {
-  // 只處理開頭嘅 ```json / ``` ；結尾 fence 喺最終整段 parse 先理
+  // 只處理開頭的 ```json / ``` ；結尾 fence 在最終整段 parse 先理
   return buf.replace(/^﻿?\s*```(?:json)?\s*/i, '')
 }
 
 /**
- * 由 fromIndex 起掃描，切出所有「完整」嘅頂層 `{...}` object。
- * 用括號深度計數器，正確跳過 string literal 內嘅括號同 `\"` 轉義。
- * 回 { objects, consumed }：consumed = 已消化到嘅 buffer offset（下次由此續掃）。
+ * 由 fromIndex 起掃描，切出所有「完整」的頂層 `{...}` object。
+ * 用括號深度計數器，正確跳過 string literal 內的括號同 `\"` 轉義。
+ * 回 { objects, consumed }：consumed = 已消化到的 buffer offset（下次由此續掃）。
  */
 export function parseObjectBoundaries(
   buf: string,
@@ -31,7 +31,7 @@ export function parseObjectBoundaries(
   const n = buf.length
 
   while (i < n) {
-    // 搵下一個 object 起點 '{'
+    // 搜尋下一個 object 內容來源 '{'
     while (i < n && buf[i] !== '{') i++
     if (i >= n) break
     const start = i
@@ -69,7 +69,7 @@ export function parseObjectBoundaries(
       }
     }
     if (!closed) {
-      // 未閉合：唔郁，等下個 chunk（consumed 停喺上一個完整 object 之後）
+      // 未閉合：不郁，等下個 chunk（consumed 停在上一個完整 object 之後）
       break
     }
   }
@@ -84,11 +84,11 @@ export interface DeckStreamMeta {
 }
 
 export interface DeckStreamParser {
-  /** 餵一段 delta；回「本次新確認」嘅 slides（非累積）+ 首次解到 deck 頭嘅 meta。 */
+  /** 餵一段 delta；回「本次新確認」的 slides（非累積）+ 首次解到 deck 頭的 meta。 */
   push(chunk: string): { meta?: DeckStreamMeta; slides: Slide[] }
 }
 
-/** 喺 `"slides"` 之前抓 deck 頭嘅 title/subtitle/coverImageQuery（只認一次）。 */
+/** 在 `"slides"` 之前抓 deck 頭的 title/subtitle/coverImageQuery（只認一次）。 */
 function extractMeta(headBuf: string): DeckStreamMeta {
   const meta: DeckStreamMeta = {}
   const grab = (key: string): string | undefined => {
@@ -111,12 +111,12 @@ function extractMeta(headBuf: string): DeckStreamMeta {
 }
 
 /**
- * 砌一個串流 parser：邊收 delta 邊抽出已完整嘅 slide object。
+ * 砌一個串流 parser：邊收 delta 邊抽出已完整的 slide object。
  */
 export function createDeckStreamParser(): DeckStreamParser {
   let buffer = ''
   let metaEmitted = false
-  let slidesArrayStart = -1 // `"slides"` 之後 `[` 嘅 index
+  let slidesArrayStart = -1 // `"slides"` 之後 `[` 的 index
   let scanFrom = -1 // object 邊界掃描續掃位
 
   return {
@@ -129,13 +129,13 @@ export function createDeckStreamParser(): DeckStreamParser {
       let meta: DeckStreamMeta | undefined
       const result: Slide[] = []
 
-      // 1) 搵 slides 陣列起點
+      // 1) 搜尋 slides 陣列內容來源
       if (slidesArrayStart < 0) {
         const m = /"slides"\s*:\s*\[/.exec(buffer)
         if (m) {
           slidesArrayStart = m.index + m[0].length
           scanFrom = slidesArrayStart
-          // deck 頭 = `"slides"` 之前嘅片段
+          // deck 頭 = `"slides"` 之前的片段
           if (!metaEmitted) {
             const head = buffer.slice(0, m.index)
             const got = extractMeta(head)
@@ -145,7 +145,7 @@ export function createDeckStreamParser(): DeckStreamParser {
             }
           }
         } else if (!metaEmitted) {
-          // 仲未見 slides，但 deck 頭可能已齊 → 試抽
+          // 尚未見 slides，但 deck 頭可能已齊 → 試抽
           const got = extractMeta(buffer)
           if (got.title) {
             meta = got
@@ -163,7 +163,7 @@ export function createDeckStreamParser(): DeckStreamParser {
           try {
             obj = JSON.parse(raw)
           } catch {
-            continue // 切咗但 parse 唔到（理論上唔應發生）→ 跳過
+            continue // 切了但 parse 不到（理論上不應發生）→ 跳過
           }
           if (!obj || typeof obj !== 'object') continue
           const slide = parseSlideRecord(obj as Record<string, unknown>)

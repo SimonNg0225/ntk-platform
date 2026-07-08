@@ -36,7 +36,7 @@ function need() {
   return supabase
 }
 
-/** 我所屬嘅團隊（RLS 只回自己係成員嘅 org）。 */
+/** 我所屬的團隊（RLS 只回自己係成員的 org）。 */
 export async function listMyOrgs(): Promise<Org[]> {
   const { data, error } = await need()
     .from('orgs')
@@ -68,7 +68,7 @@ export async function listPendingInvites(orgId: string): Promise<OrgInvite[]> {
   return (data ?? []) as OrgInvite[]
 }
 
-/** 建立邀請，回傳可分享嘅加入連結。 */
+/** 建立邀請，回傳可分享的加入連結。 */
 export async function inviteMember(
   orgId: string,
   email: string,
@@ -107,7 +107,7 @@ const TEAM_PRICE_ID = import.meta.env.VITE_STRIPE_TEAM_PRICE_ID as
   | string
   | undefined
 
-/** 團隊座位收費有冇配置（要團隊 price）。 */
+/** 團隊座位收費有沒有配置（要團隊 price）。 */
 export const isSeatBillingConfigured = Boolean(TEAM_PRICE_ID)
 
 /** 開 Stripe Checkout 購買 / 調整座位（quantity = 座位數）。 */

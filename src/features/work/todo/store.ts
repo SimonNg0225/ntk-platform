@@ -2,10 +2,10 @@ import { createCollection } from '../../../lib/store'
 import type { Project, SubTask, TaskMeta, TaskTemplate } from './types'
 
 // ============================================================
-//  待辦功能專屬持久化（唔掂 data/collections.ts）
+//  待辦功能專屬持久化（不掂 data/collections.ts）
 //  ------------------------------------------------------------
-//  共用 tasksCol 維持唔變；以下係 Task 型別冇嘅延伸資料。
-//  唯一 key（已喺 newCollections 申報）：
+//  共用 tasksCol 維持不變；以下係 Task 型別沒有的延伸資料。
+//  唯一 key（已在 newCollections 申報）：
 //    todo_task_meta / todo_subtasks / todo_projects / todo_templates
 // ============================================================
 
@@ -39,7 +39,7 @@ export const templatesCol = createCollection<TaskTemplate>('todo_templates', [
       { text: '收齊全班功課', priority: 2 },
       { text: '批改 + 寫評語', priority: 1, dueOffset: 2 },
       { text: '記錄分數入成績冊', priority: 2, dueOffset: 2 },
-      { text: '派返 + 講解常見錯誤', priority: 3, dueOffset: 3 },
+      { text: '派發 + 講解常見錯誤', priority: 3, dueOffset: 3 },
     ],
     createdAt: new Date().toISOString(),
   },
@@ -47,7 +47,7 @@ export const templatesCol = createCollection<TaskTemplate>('todo_templates', [
     id: 'tmpl-lesson',
     name: '備一堂新課',
     items: [
-      { text: '睇課程綱要 + 定學習目標', priority: 2 },
+      { text: '查看課程綱要 + 定學習目標', priority: 2 },
       {
         text: '準備教材',
         priority: 1,

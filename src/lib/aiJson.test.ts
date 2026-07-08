@@ -11,7 +11,7 @@ import {
 //  ------------------------------------------------------------
 //  全部預期值由「第一性原理」人手推導（非反推 code）：
 //    stripJsonFence  — trim → 剝開頭 ```lang\n → 剝結尾 \n``` → trim
-//    parseJsonArray  — 去 fence 後 JSON.parse；唔係 Array 回 null；
+//    parseJsonArray  — 去 fence 後 JSON.parse；不是 Array 回 null；
 //                       失敗則抽第一個 '[' 至最後一個 ']' 再試。
 //    extractJsonArray— 同上，但 null 時改 throw 友善 Error。
 // ============================================================
@@ -47,7 +47,7 @@ describe('stripJsonFence', () => {
     expect(stripJsonFence(input)).toBe('[\n  {"q": "1+1"}\n]')
   })
 
-  it('結尾 fence 後仲有空白都清乾淨', () => {
+  it('結尾 fence 後還有空白都清乾淨', () => {
     expect(stripJsonFence('```json\n[1,2]\n```   ')).toBe('[1,2]')
   })
 
@@ -131,7 +131,7 @@ describe('parseJsonArray — fallback（抽第一個 [ 至最後一個 ]）', ()
   })
 
   it('物件入面包住陣列：fallback 會抽到內層陣列', () => {
-    // 設計如此：先 direct parse 失敗（頂層唔係 array），再抽 [ … ]
+    // 設計如此：先 direct parse 失敗（頂層不是 array），再抽 [ … ]
     expect(parseJsonArray('{"items":[1,2,3]}')).toEqual([1, 2, 3])
   })
 })
@@ -145,7 +145,7 @@ describe('parseJsonArray — edge / 回 null', () => {
     expect(parseJsonArray('   ')).toBeNull()
   })
 
-  it('頂層係物件（非陣列）且無可抽陣列：回 null', () => {
+  it('頂層是物件（非陣列）且無可抽陣列：回 null', () => {
     expect(parseJsonArray('{"a":1}')).toBeNull()
   })
 
@@ -157,7 +157,7 @@ describe('parseJsonArray — edge / 回 null', () => {
     expect(parseJsonArray('null')).toBeNull()
   })
 
-  it('完全唔係 JSON：回 null', () => {
+  it('完全不是 JSON：回 null', () => {
     expect(parseJsonArray('not json at all')).toBeNull()
   })
 
@@ -193,14 +193,14 @@ describe('extractJsonArray — 成功回陣列、失敗 throw', () => {
   })
 
   it('空字串 throw 友善中文 Error', () => {
-    expect(() => extractJsonArray('')).toThrow('AI 回應唔係有效 JSON，請再試一次。')
+    expect(() => extractJsonArray('')).toThrow('AI 回應不是有效 JSON，請再試一次。')
   })
 
   it('非陣列 JSON throw', () => {
     expect(() => extractJsonArray('{"a":1}')).toThrow()
   })
 
-  it('完全唔係 JSON throw', () => {
+  it('完全不是 JSON throw', () => {
     expect(() => extractJsonArray('garbage')).toThrow()
   })
 })
@@ -293,7 +293,7 @@ describe('extractJsonObject — edge / 回 null', () => {
     expect(extractJsonObject('null')).toBeNull()
   })
 
-  it('完全唔係 JSON：回 null', () => {
+  it('完全不是 JSON：回 null', () => {
     expect(extractJsonObject('not json at all')).toBeNull()
   })
 

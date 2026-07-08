@@ -33,7 +33,7 @@ export function MonthlyBars({ bars }: { bars: MonthBar[] }) {
   if (total === 0)
     return (
       <p className="py-8 text-center text-sm text-slate-400 dark:text-slate-500">
-        呢段期間未有會議紀錄
+        這段期間未有會議紀錄
       </p>
     )
   return (

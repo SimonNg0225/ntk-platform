@@ -13,8 +13,8 @@ import {
 //  AI 點數餘額 hook（顯示用）
 //  ------------------------------------------------------------
 //  權威來源 = 後端 `ai_usage_stats`（每月每功能 calls）。RLS「read own」
-//  畀用戶讀自己嗰啲。已用點數 = Σ(calls × creditCostOf(feature, model))，
-//  同 admin 後台用同一套權重，所以兩邊數一致。跨裝置準（唔靠本機 ledger）。
+//  給用戶讀自己那些。已用點數 = Σ(calls × creditCostOf(feature, model))，
+//  同 admin 後台用同一套權重，所以兩邊數一致。跨裝置準（不靠本機 ledger）。
 // ============================================================
 
 /** 當前月份 bucket，對齊 ai_usage_stats.ym（'YYYY-MM'）。 */

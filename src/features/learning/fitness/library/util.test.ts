@@ -69,7 +69,7 @@ describe('filterExercises', () => {
     expect(filterExercises(SAMPLE, { q: '   ' })).toHaveLength(3)
   })
 
-  it('q 無命中回空陣列（唔係 NaN/undefined）', () => {
+  it('q 無命中回空陣列（不是 NaN/undefined）', () => {
     const out = filterExercises(SAMPLE, { q: '唔存在嘅動作' })
     expect(out).toEqual([])
   })

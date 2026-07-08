@@ -6,23 +6,23 @@ import { PLANS, type PlanId } from './billing'
 //  每個 AI 動作按成本扣「點」；每層每月有個點數池（見 billing.ts
 //  monthlyCredits）。1 點 ≈ HK$0.023；付費層「池 × 點價 ≤ 月費 30%」。
 //  扣點：標準文字生成 1 點、簡報 3 點、🎙️錄音 16 點；用 Pro 高階模型 ×4。
-//  免費層 30 點純試用（goodwill；唔受 30% 規則限）。
+//  免費層 30 點純試用（goodwill；不受 30% 規則限）。
 //
-//  ⚠️ 呢度係前端計量 / UX（顯示餘額、唔夠就擋）。最終權威額度
-//  喺後端 Supabase「gemini」Edge Function（按 user 月度計）。
+//  ⚠️ 這裡係前端計量 / UX（顯示餘額、不夠就擋）。最終權威額度
+//  在後端 Supabase「gemini」Edge Function（按 user 月度計）。
 // ============================================================
 
-/** 1 點對應嘅 AI 成本（HKD）。 */
+/** 1 點對應的 AI 成本（HKD）。 */
 export const CREDIT_HKD = 0.023
 
-/** 特定 source / feature 嘅每次扣點（其餘 → DEFAULT_COST）。 */
+/** 特定 source / feature 的每次扣點（其餘 → DEFAULT_COST）。 */
 const COST_BY_KEY: Record<string, number> = {
   slides: 3, // 簡報生成（大 prompt + 多 slide 輸出）
   transcribe: 16, // 🎙️ 錄音轉文字（audio，最貴）
 }
 /** 標準文字生成（教案 / 出題 / DSE / 評分準則 / 文件摘要…）。 */
 export const DEFAULT_COST = 1
-/** 用 Pro 高階模型嘅倍率。 */
+/** 用 Pro 高階模型的倍率。 */
 export const PRO_MODEL_MULTIPLIER = 4
 
 export interface ChargeContext {
@@ -65,7 +65,7 @@ function thisMonth(): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
 }
 
-// 記憶體鏡：localStorage 喺測試 / 私隱模式可能唔可靠，記憶體保證同程序內一致。
+// 記憶體鏡：localStorage 在測試 / 私隱模式可能不可靠，記憶體保證同程序內一致。
 let memLedger: Ledger | null = null
 
 function readLedger(): Ledger {
@@ -110,14 +110,14 @@ export function creditsRemaining(plan: PlanId): number {
   return Math.max(0, monthlyCredits(plan) - creditsUsed())
 }
 
-/** 夠唔夠點做呢個動作。 */
+/** 夠不夠點做此動作。 */
 export function canAfford(plan: PlanId, ctx: ChargeContext): boolean {
   return creditsRemaining(plan) >= creditCost(ctx)
 }
 
 /**
- * 扣一次點。夠就扣並回傳 ok:true；唔夠回傳 ok:false（唔扣）。
- * 一併回傳今次成本同扣完之後嘅餘額。
+ * 扣一次點。夠就扣並回傳 ok:true；不夠回傳 ok:false（不扣）。
+ * 一併回傳今次成本同扣完之後的餘額。
  */
 export function chargeCredits(
   plan: PlanId,
@@ -132,7 +132,7 @@ export function chargeCredits(
   return { ok: true, cost, remaining: monthlyCredits(plan) - next.used }
 }
 
-// ───── 當前用戶層（由 useSubscription 同步，畀非 React 嘅 aiClient 讀）─────
+// ───── 當前用戶層（由 useSubscription 同步，給非 React 的 aiClient 讀）─────
 let activePlan: PlanId = 'free'
 
 /** 由訂閱狀態同步當前層（見 useSubscription）。 */

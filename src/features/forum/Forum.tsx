@@ -20,7 +20,7 @@ export default function Forum() {
           icon={Users}
           kicker={t('forum.kicker', { defaultValue: 'Community' })}
           title={t('forum.title', { defaultValue: '老師社群' })}
-          description={t('forum.subtitle', { defaultValue: '揀一個版面，同全港老師交流教學心得。' })}
+          description={t('forum.subtitle', { defaultValue: '選擇一個版面，同全港老師交流教學心得。' })}
         />
         <EmptyState
           icon={CloudOff}

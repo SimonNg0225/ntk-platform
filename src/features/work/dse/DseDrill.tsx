@@ -96,7 +96,7 @@ export default function DseDrill() {
   async function run() {
     const topic = topics.find((t) => t.id === topicId) ?? topics[0]
     if (!topic) {
-      toast.info('未有課題 — 可去設定揀任教科目')
+      toast.info('未有課題 — 可去設定選擇任教科目')
       return
     }
     setBusy(true)
@@ -126,7 +126,7 @@ export default function DseDrill() {
   }
 
   async function del(id: string) {
-    const ok = await confirm({ title: '刪除呢套操練？', tone: 'danger', confirmText: '刪除' })
+    const ok = await confirm({ title: '刪除此套操練？', tone: 'danger', confirmText: '刪除' })
     if (!ok) return
     dseCol.remove(id)
     if (current?.id === id) setCurrent(null)
@@ -138,7 +138,7 @@ export default function DseDrill() {
         icon={GraduationCap}
         title={t('dse.disabled.title', { defaultValue: 'DSE 操練未啟用' })}
         hint={t('dse.disabled.hint', {
-          defaultValue: '要喺設定接好 AI（Supabase + gemini Edge Function）先用到出題。',
+          defaultValue: '要在設定接好 AI（Supabase + gemini Edge Function）先用到出題。',
         })}
       />
     )
@@ -147,27 +147,27 @@ export default function DseDrill() {
   const noTopics = topics.length === 0
   const GUIDE_STEPS: FeatureGuideStep[] = [
     {
-      title: t('dse.guide.s1.title', { defaultValue: '揀課題同卷別' }),
+      title: t('dse.guide.s1.title', { defaultValue: '選擇課題同卷別' }),
       desc: t('dse.guide.s1.desc', {
-        defaultValue: '喺下面揀返要操練嘅課題，再揀卷別（選擇題／短答／長題）。',
+        defaultValue: '在下方重新選擇要操練的課題，再選擇卷別（選擇題／短答／長題）。',
       }),
     },
     {
       title: t('dse.guide.s2.title', { defaultValue: '調難度同數量' }),
       desc: t('dse.guide.s2.desc', {
-        defaultValue: '揀淺／中／深同題數；想快用 Flash，想深啲就揀 Pro。',
+        defaultValue: '選擇淺／中／深同題數；想快用 Flash，想深些就選擇 Pro。',
       }),
     },
     {
       title: t('dse.guide.s3.title', { defaultValue: '一鍵出題' }),
       desc: t('dse.guide.s3.desc', {
-        defaultValue: '撳「出 DSE 題」，即出公開試風格題目連評分要點同達標提示。',
+        defaultValue: '按「出 DSE 題」，即出公開試風格題目連評分要點同達標提示。',
       }),
     },
     {
       title: t('dse.guide.s4.title', { defaultValue: '下載／溫故' }),
       desc: t('dse.guide.s4.desc', {
-        defaultValue: '可下載做 Word 卷；舊操練會存落「歷史」隨時翻睇。',
+        defaultValue: '可下載做 Word 卷；舊操練會存落「歷史」隨時翻查看。',
       }),
     },
   ]
@@ -199,7 +199,7 @@ export default function DseDrill() {
               ) : dleft != null ? (
                 <span>{t('dse.countdown.past', { defaultValue: 'DSE 已過' })}（{dseDate}）</span>
               ) : (
-                <span>{t('dse.countdown.set', { defaultValue: '設定 DSE 日期睇倒數' })}</span>
+                <span>{t('dse.countdown.set', { defaultValue: '設定 DSE 日期查看倒數' })}</span>
               )}
             </span>
             <Input
@@ -219,7 +219,7 @@ export default function DseDrill() {
       {/* 教學引導 */}
       <FeatureGuide
         storageKey="dse-drill"
-        title={t('dse.guide.title', { defaultValue: 'DSE 操練點用？' })}
+        title={t('dse.guide.title', { defaultValue: 'DSE 操練使用說明' })}
         steps={GUIDE_STEPS}
       />
 
@@ -234,7 +234,7 @@ export default function DseDrill() {
               icon={GraduationCap}
               title={t('dse.empty.noTopics.title', { defaultValue: '未有課題' })}
               hint={t('dse.empty.noTopics.hint', {
-                defaultValue: '去設定揀返任教科目，就會帶入該科課題，之後即可出題。',
+                defaultValue: '去設定重新選擇任教科目，就會帶入該科課題，之後即可出題。',
               })}
             />
           ) : (
@@ -334,7 +334,7 @@ export default function DseDrill() {
             tone="accent"
             title={t('dse.empty.noDrill.title', { defaultValue: '未有操練' })}
             hint={t('dse.empty.noDrill.hint', {
-              defaultValue: '揀好上面嘅課題同設定，撳「出 DSE 題」整第一套。',
+              defaultValue: '選擇好上面的課題同設定，按「出 DSE 題」整第一套。',
             })}
           />
         </section>

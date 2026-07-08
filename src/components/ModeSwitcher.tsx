@@ -2,7 +2,7 @@ import { useMode } from '../context/ModeContext'
 import { MODES, MODE_ORDER } from '../modes/modes'
 import { FeatureIcon } from '../features/featureIcons'
 
-// 模式切換掣 — 平台核心互動：一撳就喺個人 / 工作之間切換
+// 模式切換掣 — 平台核心互動：一按就在個人 / 工作之間切換
 // size: 'full' = 側邊欄用 / 'compact' = 手機頂欄用
 export default function ModeSwitcher({
   size = 'full',
@@ -10,7 +10,7 @@ export default function ModeSwitcher({
   size?: 'full' | 'compact'
 }) {
   const { mode, setMode } = useMode()
-  // 只開放一個模式（個人模式暫時收起）→ 毋須切換掣，唔顯示。
+  // 只開放一個模式（個人模式暫時收起）→ 毋須切換掣，不顯示。
   if (MODE_ORDER.length < 2) return null
   const compact = size === 'compact'
 

@@ -12,9 +12,9 @@ import {
 
 // ============================================================
 //  emoji → lucide 線性圖示對應（由設計系統規格落實）
-//  - 用喺導航 / 功能卡 / 標題等「介面」位置，令外觀專業統一。
-//  - 用戶自選 emoji（記帳分類 / 習慣 / 心情）刻意唔放呢度，保留 emoji。
-//  - 解析唔到就回 null，呼叫方 fallback 顯示返原 emoji（向後相容）。
+//  - 用在導航 / 功能卡 / 標題等「介面」位置，令外觀專業統一。
+//  - 用戶自選 emoji（記帳分類 / 習慣 / 心情）刻意不放這裡，保留 emoji。
+//  - 解析不到就回 null，呼叫方 fallback 顯示返原 emoji（向後相容）。
 // ============================================================
 
 const EMOJI_TO_ICON: Record<string, LucideIcon> = {
@@ -119,14 +119,14 @@ const EMOJI_TO_ICON: Record<string, LucideIcon> = {
   '📰': Newspaper,
 }
 
-/** emoji → lucide 圖示元件；冇對應就回 null（呼叫方 fallback 顯示 emoji）。 */
+/** emoji → lucide 圖示元件；沒有對應就回 null（呼叫方 fallback 顯示 emoji）。 */
 export function iconForFeature(emoji: string): LucideIcon | null {
   return EMOJI_TO_ICON[emoji] ?? null
 }
 
 /**
  * 統一渲染功能 / 介面圖示：有 lucide 對應就用線性圖示，
- * 否則 fallback 顯示原 emoji（例如用戶自選嗰啲）。
+ * 否則 fallback 顯示原 emoji（例如用戶自選那些）。
  */
 export function FeatureIcon({
   icon,

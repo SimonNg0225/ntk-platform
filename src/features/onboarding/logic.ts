@@ -2,7 +2,7 @@
 //  新用戶登記 — 純邏輯（選項 + 驗證）
 //  ------------------------------------------------------------
 //  零 runtime 依賴（只 import type），可 node 直接單元測試。
-//  UI 喺 ProfileSetupModal.tsx；I/O 喺 lib/profile.ts。
+//  UI 在 ProfileSetupModal.tsx；I/O 在 lib/profile.ts。
 // ============================================================
 
 import type { TeacherRole, SchoolBand } from '../../lib/profile'
@@ -31,9 +31,9 @@ export function validateRegistration(
   agreed: boolean,
 ): { ok: boolean; error?: string } {
   if (!input.displayName.trim()) return { ok: false, error: '請填姓氏（或自訂署名）。' }
-  if (!input.role) return { ok: false, error: '請揀你嘅身份。' }
+  if (!input.role) return { ok: false, error: '請選擇你的身份。' }
   if (!input.subjects || input.subjects.length === 0) {
-    return { ok: false, error: '請揀最少一個任教科目。' }
+    return { ok: false, error: '請選擇最少一個任教科目。' }
   }
   if (!agreed) return { ok: false, error: '請先同意服務條款同社群守則。' }
   return { ok: true }

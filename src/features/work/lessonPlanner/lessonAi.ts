@@ -4,7 +4,7 @@ import { extractJsonObject } from '../../../lib/aiJson'
 // ============================================================
 //  AI 教案生成 — prompt 建構 + 解析（解析部分純函數，可單元測試）
 //  ------------------------------------------------------------
-//  揀課題 + 簡填今日教學內容/活動（可選範本骨架）→ AI 出完整教案，
+//  選擇課題 + 簡填今日教學內容/活動（可選範本骨架）→ AI 出完整教案，
 //  落到現有 LessonPlan + PlanMeta（學習目標 / 分段時間 / 教材 / 活動）。
 // ============================================================
 
@@ -21,7 +21,7 @@ export interface LessonGen {
   activities: string
 }
 
-/** 範本骨架（畀 AI 跟住填）—— 來自內建科目範本或用戶範本嘅 phases。 */
+/** 範本骨架（給 AI 跟住填）—— 來自內建科目範本或用戶範本的 phases。 */
 export interface GenSkeleton {
   name: string
   phases: { label: string; minutes: number }[]
@@ -30,9 +30,9 @@ export interface GenSkeleton {
 export interface GenInput {
   subjectName?: string
   topic: string
-  /** 老師簡填嘅今日教學內容 / 活動 */
+  /** 老師簡填的今日教學內容 / 活動 */
   brief: string
-  /** 班別名（選填，畀 AI 知對象） */
+  /** 班別名（選填，給 AI 知對象） */
   className?: string
   /** 課堂總時長（分鐘，選填） */
   durationMin?: number
@@ -50,25 +50,25 @@ function clamp(s: string, max: number): string {
 export function buildLessonSystem(input: GenInput): string {
   const subjectLine = input.subjectName ? `任教科目：${input.subjectName}。` : ''
   const lines = [
-    `你係香港中學教師嘅備課助手。${subjectLine}根據老師俾嘅課題同今日教學內容，設計一份完整、可以即刻用嘅課堂教案。`,
-    '只輸出一個 JSON 物件，唔好有任何其他文字或 markdown code fence：',
+    `你是香港中學教師的備課助手。${subjectLine}根據老師提供的課題及今日教學內容，設計一份完整、可以立即使用的課堂教案。`,
+    '只輸出一個 JSON 物件，不要有任何其他文字或 markdown code fence：',
     '{',
     '  "objectives": "學習目標（用 1. 2. 3. 分點，每點具體可評估，2-4 點）",',
     '  "phases": [',
-    '    {"label": "環節名（例 引入／講解／課堂活動／鞏固／總結）", "minutes": 分鐘數, "detail": "呢個環節老師做咩、學生做咩（具體，1-3 句）"}',
+    '    {"label": "環節名（例 引入／講解／課堂活動／鞏固／總結）", "minutes": 分鐘數, "detail": "這個環節老師做什麼、學生做什麼（具體，1-3 句）"}',
     '  ],',
     '  "materials": ["所需教材／工作紙／教具（逐項）"],',
     '  "activities": "課堂主要活動描述（學生點參與，2-4 句）"',
     '}',
     '規則：',
     '- 一律繁體中文（可書面廣東話）。',
-    '- 內容要貼香港中學課堂實況、對應課題；具體到老師可以照住教，唔好流於空泛。',
+    '- 內容要貼香港中學課堂實況、對應課題；具體到老師可以照住教，不要流於空泛。',
     '- objectives 用 1. 2. 3. 分點。',
   ]
   if (input.skeleton && input.skeleton.phases.length > 0) {
     const sk = input.skeleton.phases.map((p) => `${p.label}(${p.minutes}分)`).join(' → ')
     lines.push(
-      `- 環節骨架：必須跟住呢個分段結構嚟填內容（環節名同分鐘照用，只填 detail）：${sk}。`,
+      `- 環節骨架：必須跟住這個分段結構來填內容（環節名同分鐘照用，只填 detail）：${sk}。`,
     )
   } else {
     const dur = input.durationMin ?? 55
@@ -94,10 +94,10 @@ function buildUserMsg(input: GenInput): string {
 
 // ───────── 解析 ─────────
 
-/** 解析 AI 教案回應；格式唔正確 throw。 */
+/** 解析 AI 教案回應；格式不正確 throw。 */
 export function parseLessonGen(raw: string): LessonGen {
   const o = extractJsonObject<Record<string, unknown>>(raw)
-  if (!o || typeof o !== 'object') throw new Error('AI 回應格式唔正確，請再試一次。')
+  if (!o || typeof o !== 'object') throw new Error('AI 回應格式不正確，請再試一次。')
 
   const objectives = typeof o.objectives === 'string' ? clamp(o.objectives, 600) : ''
   const activities = typeof o.activities === 'string' ? clamp(o.activities, 600) : ''
@@ -129,7 +129,7 @@ export function parseLessonGen(raw: string): LessonGen {
   }
 
   if (!objectives && phases.length === 0) {
-    throw new Error('AI 出唔到教案內容，試吓換 Pro 或補充今日內容。')
+    throw new Error('AI 出不到教案內容，嘗試換 Pro 或補充今日內容。')
   }
 
   return { objectives, phases, materials, activities }

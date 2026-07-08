@@ -22,7 +22,7 @@ export default function BoardList({ onOpenBoard }: { onOpenBoard: (b: ForumBoard
       <PageHeader
         icon={Users}
         title={t('forum.title', { defaultValue: '老師社群' })}
-        description={t('forum.subtitle', { defaultValue: '揀一個版面，同全港老師交流教學心得。' })}
+        description={t('forum.subtitle', { defaultValue: '選擇一個版面，同全港老師交流教學心得。' })}
         actions={
           <Button variant="secondary" size="sm" icon={UserCog} onClick={() => setProfileOpen(true)}>
             {t('forum.profile', { defaultValue: '個人資料' })}
@@ -32,11 +32,11 @@ export default function BoardList({ onOpenBoard }: { onOpenBoard: (b: ForumBoard
 
       <FeatureGuide
         storageKey="forum"
-        title={t('forum.guideTitle', { defaultValue: '老師社群點用？' })}
+        title={t('forum.guideTitle', { defaultValue: '老師社群使用說明' })}
         steps={[
-          { title: t('forum.guide1Title', { defaultValue: '揀版面' }), desc: t('forum.guide1Desc', { defaultValue: '揀返你想討論嘅範疇，例如某科或教學分享。' }) },
-          { title: t('forum.guide2Title', { defaultValue: '睇帖傾偈' }), desc: t('forum.guide2Desc', { defaultValue: '入版面睇老師發嘅帖，覺得有用就撳「有用」或留言回覆。' }) },
-          { title: t('forum.guide3Title', { defaultValue: '發帖提問' }), desc: t('forum.guide3Desc', { defaultValue: '撳「發帖」開新話題；首次發言要先填顯示名。' }) },
+          { title: t('forum.guide1Title', { defaultValue: '選擇版面' }), desc: t('forum.guide1Desc', { defaultValue: '重新選擇你想討論的範疇，例如某科或教學分享。' }) },
+          { title: t('forum.guide2Title', { defaultValue: '查看帖交流' }), desc: t('forum.guide2Desc', { defaultValue: '入版面查看老師發的帖，覺得有用就按「有用」或留言回覆。' }) },
+          { title: t('forum.guide3Title', { defaultValue: '發帖提問' }), desc: t('forum.guide3Desc', { defaultValue: '按「發帖」開新話題；首次發言要先填顯示名。' }) },
         ]}
       />
 
@@ -59,7 +59,7 @@ export default function BoardList({ onOpenBoard }: { onOpenBoard: (b: ForumBoard
           <EmptyState
             icon={MessagesSquare}
             title={t('forum.emptyBoards', { defaultValue: '暫時未有討論版面' })}
-            hint={t('forum.emptyBoardsHint', { defaultValue: '版面開放後會喺度顯示，可稍後再嚟睇睇。' })}
+            hint={t('forum.emptyBoardsHint', { defaultValue: '版面開放後會在這裡顯示，可稍後再來查看查看。' })}
           />
         ) : (
           <ul className="grid gap-3 sm:grid-cols-2">

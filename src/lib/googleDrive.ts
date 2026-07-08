@@ -1,11 +1,11 @@
 // ============================================================
 //  Google Drive 整合（教學資源庫用）
 //  ------------------------------------------------------------
-//  · 純前端：GIS（Google Identity Services）token client 攞 drive.readonly
+//  · 純前端：GIS（Google Identity Services）token client 取得 drive.readonly
 //    access token（只留 memory），再用 Drive REST v3 fetch 列檔／搜尋。
-//  · 零後端、冇 client secret；client ID 由 VITE_GOOGLE_CLIENT_ID 提供。
+//  · 零後端、沒有 client secret；client ID 由 VITE_GOOGLE_CLIENT_ID 提供。
 //  · 未設定 client ID → isDriveConfigured=false，功能靜靜降級。
-//  · 唯讀：唔會改用戶 Drive。
+//  · 唯讀：不會改用戶 Drive。
 // ============================================================
 
 // ───────── 純 helper（無副作用，可單元測試）─────────
@@ -81,7 +81,7 @@ function loadGis(): Promise<void> {
   return gisPromise
 }
 
-// ───────── token（只留 memory；唔存任何 storage）─────────
+// ───────── token（只留 memory；不存任何 storage）─────────
 let accessToken: string | null = null
 let tokenExpiry = 0
 type TokenClient = { requestAccessToken: (o?: { prompt?: string }) => void }
@@ -147,7 +147,7 @@ async function driveFetch(q: string): Promise<DriveFile[]> {
     throw new Error('授權過期，請重新連接 Google Drive')
   }
   if (!res.ok) {
-    // 抽返 Google 嘅真正錯誤訊息（例如「Drive API 未啟用」），方便排查
+    // 抽返 Google 的真正錯誤訊息（例如「Drive API 未啟用」），方便排查
     let detail = ''
     try {
       const body = (await res.json()) as { error?: { message?: string } }
@@ -156,7 +156,7 @@ async function driveFetch(q: string): Promise<DriveFile[]> {
       /* 非 JSON body，略過 */
     }
     if (res.status === 403 && /not been used|disabled|accessNotConfigured/i.test(detail)) {
-      throw new Error('Google Drive API 未喺你個 Google Cloud project 啟用 —— 去 console 啟用咗、等一兩分鐘再試（見 docs/SETUP.md）')
+      throw new Error('Google Drive API 未在你個 Google Cloud project 啟用 —— 去 console 啟用了、等一兩分鐘再試（見 docs/SETUP.md）')
     }
     throw new Error(`Drive API 錯誤（${res.status}）${detail}`)
   }
@@ -186,7 +186,7 @@ export function parseDriveFolderId(input: string): string | null {
   return null
 }
 
-/** 攞單一資料夾 / 檔案 meta（驗證 ID + 攞名稱）。Computers 備份資料夾都讀得到。 */
+/** 取得單一資料夾 / 檔案 meta（驗證 ID + 取得名稱）。Computers 備份資料夾都讀得到。 */
 export async function getFileMeta(id: string): Promise<DriveFile> {
   const token = await getAccessToken()
   const url =
@@ -197,7 +197,7 @@ export async function getFileMeta(id: string): Promise<DriveFile> {
     signOutDrive()
     throw new Error('授權過期，請重新連接 Google Drive')
   }
-  if (res.status === 404) throw new Error('搵唔到呢個資料夾（檢查連結啱唔啱、你個帳戶有冇權限）')
-  if (!res.ok) throw new Error(`攞唔到資料夾資料（${res.status}）`)
+  if (res.status === 404) throw new Error('搜尋不到這個資料夾（檢查連結是否正確、你的帳戶有沒有權限）')
+  if (!res.ok) throw new Error(`取得不到資料夾資料（${res.status}）`)
   return (await res.json()) as DriveFile
 }

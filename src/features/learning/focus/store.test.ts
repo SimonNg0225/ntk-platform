@@ -208,17 +208,17 @@ describe('currentStreak（由今日往回數連續達標日；今日未做唔即
     ).toBe(3)
   })
 
-  it('今日無但尋日有 → 唔斷，由尋日起計', () => {
+  it('今日無但昨天有 → 唔斷，由昨天起計', () => {
     expect(currentStreak([logOnKey(yesterdayKey)])).toBe(1)
     expect(currentStreak([logOnKey(yesterdayKey), logOnKey(twoAgoKey)])).toBe(2)
   })
 
-  it('今日同尋日都無 → 0', () => {
+  it('今日同昨天都無 → 0', () => {
     expect(currentStreak([logOnKey(twoAgoKey), logOnKey(threeAgoKey)])).toBe(0)
   })
 
   it('中間斷一日 → 由連續段起計', () => {
-    // 今日 + 尋日有，前日無（斷） → streak = 2
+    // 今日 + 昨天有，前日無（斷） → streak = 2
     expect(currentStreak([logOnKey(tk), logOnKey(yesterdayKey), logOnKey(threeAgoKey)])).toBe(2)
   })
 
@@ -279,7 +279,7 @@ describe('longestStreak（歷來最長連續達標）', () => {
   })
 
   it('同日重複（Set 去重）→ 唔會被當成 diff=0 中斷', () => {
-    // 兩個都係 5/1 + 一個 5/2：去重後 [5/1,5/2] 連續 → 2（唔係 1）
+    // 兩個都係 5/1 + 一個 5/2：去重後 [5/1,5/2] 連續 → 2（不是 1）
     const logs = [
       focusLog({ startedAt: localISO(2026, 5, 1, 9) }),
       focusLog({ startedAt: localISO(2026, 5, 1, 15) }),

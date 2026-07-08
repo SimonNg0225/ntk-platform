@@ -7,7 +7,7 @@ import { setActivePlan } from '../lib/credits'
 // ============================================================
 //  商業化 · 訂閱狀態 hook
 //  ------------------------------------------------------------
-//  讀取目前登入用戶嘅 subscriptions 行（RLS 保證只讀到自己）。
+//  讀取目前登入用戶的 subscriptions 行（RLS 保證只讀到自己）。
 //  未登入 / 未接 Supabase / 無有效訂閱 → 一律當免費版。
 //  Webhook 先係唯一寫入者（service_role 繞過 RLS），前端只讀。
 // ============================================================
@@ -17,7 +17,7 @@ export interface SubscriptionState {
   status: string | null
   /** 嚴格 Pro 層（高階模型 / 最大額度）。 */
   isPro: boolean
-  /** 有冇有效付費訂閱（Plus 或 Pro）。 */
+  /** 有沒有有效付費訂閱（Plus 或 Pro）。 */
   isPaid: boolean
   currentPeriodEnd: string | null
   loading: boolean
@@ -91,7 +91,7 @@ export function useSubscription(): SubscriptionState {
 
   // 測試 Pro 蓋過（除非真實已經係 Pro）
   const effective = testPro && !state.isPro ? TEST_PRO : state
-  // 同步當前層畀 aiClient 點數計量讀取
+  // 同步當前層給 aiClient 點數計量讀取
   useEffect(() => {
     setActivePlan(effective.plan)
   }, [effective.plan])

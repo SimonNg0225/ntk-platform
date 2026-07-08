@@ -1,16 +1,16 @@
-// 懶載自存 OpenCV.js（注入 <script>）+ jscanify。只喺入到編輯器先 import 呢個檔。
+// 懶載自存 OpenCV.js（注入 <script>）+ jscanify。只在入到編輯器先 import 這個檔。
 import type { Corners, Filter, Pt } from './types'
 import { downscaleDims, isPlausibleQuad, orderCorners } from './geometry'
-// 用 'jscanify/client'（瀏覽器版）；bare 'jscanify' 係 Node 版（require canvas/jsdom）行唔到。
+// 用 'jscanify/client'（瀏覽器版）；bare 'jscanify' 係 Node 版（require canvas/jsdom）行不到。
 import type jscanifyType from 'jscanify/client'
 
 const OPENCV_SRC = '/vendor/opencv/opencv.js'
-// 原圖長邊上限：保留多啲細節畀 warp 高解析度取樣（12MP 相只輕微縮）。
+// 原圖長邊上限：保留多些細節給 warp 高解析度取樣（12MP 相只輕微縮）。
 const MAX_EDGE = 3200
-// JPEG 輸出質素（高啲減少文字邊糊化）。
+// JPEG 輸出質素（高些減少文字邊糊化）。
 const JPEG_Q = 0.95
-// warp 輸出目標長邊（唔夠就喺 warp 階段由原圖插值放大；只放大唔縮細）。
-// 黑白要喺高解析度先 threshold（~285 DPI A4），先冇「低 DPI」鋸齒感。
+// warp 輸出目標長邊（不夠就在 warp 階段由原圖插值放大；只放大不縮細）。
+// 黑白要在高解析度先 threshold（~285 DPI A4），先沒有「低 DPI」鋸齒感。
 const TARGET_LONG: Record<Filter, number> = { bw: 3300, gray: 2600, color: 2400 }
 
 let cvReady: Promise<void> | null = null
@@ -59,7 +59,7 @@ function imgFromDataUrl(dataUrl: string): Promise<HTMLImageElement> {
 
 /**
  * 先降採樣（慳記憶體/加快），回新 dataUrl + 像素尺寸。
- * 已經係 JPEG 又唔使縮 → 唔重新編碼（避免多一次 lossy pass，保留原畫質）。
+ * 已經係 JPEG 又不用縮 → 不重新編碼（避免多一次 lossy pass，保留原畫質）。
  */
 export async function downscaleDataUrl(dataUrl: string): Promise<{ dataUrl: string; w: number; h: number }> {
   const img = await imgFromDataUrl(dataUrl)
@@ -75,10 +75,10 @@ export async function downscaleDataUrl(dataUrl: string): Promise<{ dataUrl: stri
   return { dataUrl: c.toDataURL('image/jpeg', JPEG_Q), w, h }
 }
 
-// 偵測用嘅工作解析度（細啲快好多，搵大張紙嘅四邊形夠用）。
+// 偵測用的工作解析度（細些快很多，搜尋大張紙的四邊形夠用）。
 const DETECT_MAX = 900
 
-/** 由一個 contour 抽四角：approxPolyDP →（唔係四點）convex hull →（再唔係）minAreaRect。 */
+/** 由一個 contour 抽四角：approxPolyDP →（不是四點）convex hull →（再不是）minAreaRect。 */
 function quadFromContour(cv: any, cnt: any): Pt[] | null {
   const read = (m: any): Pt[] => {
     const d = m.data32S as Int32Array
@@ -115,10 +115,10 @@ function quadFromContour(cv: any, cnt: any): Pt[] | null {
 }
 
 /**
- * 自動偵文件四角，回**正規化**座標（0..1，相對圖片）；偵唔到 / 結果離譜回 null。
+ * 自動偵文件四角，回**正規化**座標（0..1，相對圖片）；偵不到 / 結果離譜回 null。
  *
  * 引擎次序：
- *   1. ML（DocAligner heatmap，mlDetect.ts）—— light-on-light 都食得到，主力。
+ *   1. ML（DocAligner heatmap，mlDetect.ts）—— light-on-light 都吃得到，主力。
  *   2. Classical OpenCV（下面 detectCornersClassical）—— ML 載入失敗時保底。
  */
 export async function detectCorners(dataUrl: string): Promise<Corners | null> {
@@ -127,7 +127,7 @@ export async function detectCorners(dataUrl: string): Promise<Corners | null> {
     const ml = await detectCornersML(dataUrl)
     if (ml) return ml
   } catch {
-    // ML 引擎唔得（模型/wasm 載入失敗、舊瀏覽器）→ 跌落 classical。
+    // ML 引擎不得（模型/wasm 載入失敗、舊瀏覽器）→ 跌落 classical。
   }
   return detectCornersClassical(dataUrl)
 }
@@ -143,9 +143,9 @@ export async function warmUpDetect(): Promise<void> {
 }
 
 /**
- * Classical 文件偵測（應付低對比能力有限，做 ML 嘅保底）：
+ * Classical 文件偵測（應付低對比能力有限，做 ML 的保底）：
  *   灰階 → 模糊 → Otsu 自適應 Canny → 形態學 close 駁口 → findContours
- *   → 揀面積最大（≥15%）嘅 contour → quadFromContour（approx/hull/minAreaRect）。
+ *   → 選擇面積最大（≥15%）的 contour → quadFromContour（approx/hull/minAreaRect）。
  */
 async function detectCornersClassical(dataUrl: string): Promise<Corners | null> {
   try {
@@ -171,13 +171,13 @@ async function detectCornersClassical(dataUrl: string): Promise<Corners | null> 
       // Otsu 計門檻 → Canny 跟對比自動調（捉得到淡邊）。
       const otsu = cv.threshold(blur, otsuTmp, 0, 255, cv.THRESH_BINARY + cv.THRESH_OTSU)
       cv.Canny(blur, edges, Math.max(10, otsu * 0.5), otsu)
-      // 形態學 close 駁返斷咗嘅邊（5×5）。
+      // 形態學 close 駁返斷了的邊（5×5）。
       const ker = cv.getStructuringElement(cv.MORPH_RECT, new cv.Size(5, 5))
       cv.morphologyEx(edges, edges, cv.MORPH_CLOSE, ker)
       ker.delete()
       cv.findContours(edges, contours, hier, cv.RETR_LIST, cv.CHAIN_APPROX_SIMPLE)
 
-      // 揀面積最大（且 ≥ 偵測圖 15%）嘅 contour 做文件外框。
+      // 選擇面積最大（且 ≥ 偵測圖 15%）的 contour 做文件外框。
       let bestIdx = -1
       let bestArea = dw * dh * 0.15
       for (let i = 0; i < contours.size(); i++) {
@@ -212,9 +212,9 @@ async function detectCornersClassical(dataUrl: string): Promise<Corners | null> 
  * 文件二值化（似真掃描器）：去陰影 + Sauvola 局部門檻。
  *  1. 背景估計：縮細做形態學 close（去走深色字、剩光紙背景）→ 放大 → divide
  *     令光照／陰影／暗角拉平到白底。
- *  2. Sauvola：T = μ·(1 + k·(σ/R − 1))。局部自適應，筆畫乾淨、唔會大片糊黑。
- *     μ/σ 用 boxFilter（積分式，wasm 快），最後一遍公式喺 JS 行。
- * gray = CV_8U 灰階（caller 擁有，唔 delete）；回新 CV_8U 0/255 Mat。
+ *  2. Sauvola：T = μ·(1 + k·(σ/R − 1))。局部自適應，筆畫乾淨、不會大片糊黑。
+ *     μ/σ 用 boxFilter（積分式，wasm 快），最後一遍公式在 JS 行。
+ * gray = CV_8U 灰階（caller 擁有，不 delete）；回新 CV_8U 0/255 Mat。
  */
 function binarizeDoc(cv: any, gray: any): any {
   const W = gray.cols, H = gray.rows
@@ -273,7 +273,7 @@ function binarizeDoc(cv: any, gray: any): any {
 
 /**
  * 用四角拉正透視 + 套濾鏡，回 processed dataUrl。
- * corners=null → 唔做透視，淨係套濾鏡。
+ * corners=null → 不做透視，只套濾鏡。
  */
 export async function warpEnhance(dataUrl: string, corners: Corners | null, filter: Filter): Promise<string> {
   const scanner = await getScanner()
@@ -286,8 +286,8 @@ export async function warpEnhance(dataUrl: string, corners: Corners | null, filt
   const target = TARGET_LONG[filter]
   let outCanvas: HTMLCanvasElement
   if (corners) {
-    // 基準尺寸 = 四角距離（原圖像素）；唔夠目標就喺 warp 階段直接由原圖
-    // 插值放大（warpPerspective 取樣，質素好過事後 upscale）。只放大唔縮細。
+    // 基準尺寸 = 四角距離（原圖像素）；不夠目標就在 warp 階段直接由原圖
+    // 插值放大（warpPerspective 取樣，質素好過事後 upscale）。只放大不縮細。
     const baseW = Math.hypot(corners.tr.x - corners.tl.x, corners.tr.y - corners.tl.y)
     const baseH = Math.hypot(corners.bl.x - corners.tl.x, corners.bl.y - corners.tl.y)
     const k = Math.max(1, target / Math.max(baseW, baseH))
@@ -297,10 +297,10 @@ export async function warpEnhance(dataUrl: string, corners: Corners | null, filt
       topLeftCorner: corners.tl, topRightCorner: corners.tr,
       bottomLeftCorner: corners.bl, bottomRightCorner: corners.br,
     }
-    // cps 已傳 → jscanify 唔會回 null；保險起見偵唔到就退回全幅。
+    // cps 已傳 → jscanify 不會回 null；保險起見偵不到就退回全幅。
     outCanvas = scanner.extractPaper(srcCanvas, w, h, cps) ?? srcCanvas
   } else if (Math.max(srcCanvas.width, srcCanvas.height) < target) {
-    // 全幅（無裁切）：都放大到目標，等 bw threshold 喺高解析度做。
+    // 全幅（無裁切）：都放大到目標，等 bw threshold 在高解析度做。
     const k = target / Math.max(srcCanvas.width, srcCanvas.height)
     const up = document.createElement('canvas')
     up.width = Math.round(srcCanvas.width * k)
@@ -313,7 +313,7 @@ export async function warpEnhance(dataUrl: string, corners: Corners | null, filt
     outCanvas = srcCanvas
   }
 
-  // 濾鏡：color 直接回（唔掂 OpenCV）；gray / bw 先用 OpenCV。
+  // 濾鏡：color 直接回（不掂 OpenCV）；gray / bw 先用 OpenCV。
   if (filter === 'color') return outCanvas.toDataURL('image/jpeg', JPEG_Q)
 
   const src = cv.imread(outCanvas)
@@ -322,7 +322,7 @@ export async function warpEnhance(dataUrl: string, corners: Corners | null, filt
   let dst = gray
   let png = false
   if (filter === 'bw') {
-    png = true // 二值圖用 PNG（無損）；JPEG 會喺黑白硬邊整出鋸齒/糊化，似低 DPI。
+    png = true // 二值圖用 PNG（無損）；JPEG 會在黑白硬邊整出鋸齒/糊化，似低 DPI。
     try {
       dst = binarizeDoc(cv, gray) // 去陰影 + Sauvola
     } catch {

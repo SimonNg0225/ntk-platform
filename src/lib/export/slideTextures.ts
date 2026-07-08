@@ -1,8 +1,8 @@
 // ============================================================
-//  招牌紋理 — Canvas 畫嘅非文字視覺（pptxgenjs 做唔到嘅真漸層／柔邊／噪點）
+//  招牌紋理 — Canvas 畫的非文字視覺（pptxgenjs 做不到的真漸層／柔邊／噪點）
 //  ------------------------------------------------------------
 //  每套 pack 配一個 generator + 色板（TEX 登記表）。pack cover 用
-//  coverTextureUri(pack.id) 攞 PNG data URI，addImage 做全版底圖。
+//  coverTextureUri(pack.id) 取得 PNG data URI，addImage 做全版底圖。
 //  因為係圖片，Mac/手機/Google Slides/Keynote render 都一致；文字維持原生可編輯。
 //  瀏覽器先有 canvas；node/SSR 回 null → pack fallback 原本純色／漸層底。
 // ============================================================
@@ -293,7 +293,7 @@ const TEX: Record<string, [Gen, Pal]> = {
   brutalist: [gNoise, { bg: '#F4F4F0', ink: '000000', accent: '#FF4D00' }],
 }
 
-/** 攞招牌紋理 PNG data URI（瀏覽器先有；node/SSR 或未登記 pack 回 null → fallback）。 */
+/** 取得招牌紋理 PNG data URI（瀏覽器先有；node/SSR 或未登記 pack 回 null → fallback）。 */
 export function coverTextureUri(packId: string, w = 1600, h = 900): string | null {
   if (typeof document === 'undefined') return null
   const entry = TEX[packId]

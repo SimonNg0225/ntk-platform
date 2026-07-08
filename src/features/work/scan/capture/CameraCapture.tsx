@@ -17,15 +17,15 @@ export default function CameraCapture({
   const fileRef = useRef<HTMLInputElement>(null)
   const [camErr, setCamErr] = useState(false)
 
-  // 一開鏡頭即喺背景預熱四角偵測模型，影完即用（慳冷啟動）。
+  // 一開鏡頭即在背景預熱四角偵測模型，影完即用（慳冷啟動）。
   useEffect(() => { void warmUpDetect() }, [])
 
   useEffect(() => {
     let cancelled = false
     async function start() {
       try {
-        // 要求最高解析度（ideal 唔會 throw；瀏覽器揀最接近嘅）。
-        // 唔指定 → 預設得 ~640×480/720p，文件會好糊。
+        // 要求最高解析度（ideal 不會 throw；瀏覽器選擇最接近的）。
+        // 不指定 → 預設得 ~640×480/720p，文件會好糊。
         const stream = await navigator.mediaDevices.getUserMedia({
           video: {
             facingMode: { ideal: 'environment' },
@@ -95,7 +95,7 @@ export default function CameraCapture({
           <div className="flex h-full flex-col items-center justify-center gap-4 px-6 text-center text-white/80">
             <Camera size={40} className="opacity-50" />
             <p className="text-sm">
-              {t('scan.noCamera', { defaultValue: '開唔到鏡頭，可以改為上載相片。' })}
+              {t('scan.noCamera', { defaultValue: '開不到鏡頭，可以改為上載相片。' })}
             </p>
           </div>
         ) : (

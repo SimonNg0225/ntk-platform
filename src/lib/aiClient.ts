@@ -6,22 +6,22 @@ import { chargeCredits, getActivePlan } from './credits'
 //  前端 AI client
 //  ------------------------------------------------------------
 //  叫 Supabase Edge Function "gemini"（帶住登入 token）。
-//  Gemini API key 喺 server 側，前端永遠掂唔到。
+//  Gemini API key 在 server 側，前端永遠掂不到。
 //  - streamChat()：async generator，逐段 yield 文字（打字效果）。
-//  - complete()  ：一次過攞晒成段（內部用 streamChat 收集）。
+//  - complete()  ：一次過取得全部成段（內部用 streamChat 收集）。
 // ============================================================
 
 export type AIModel = 'gemini-2.5-flash' | 'gemini-2.5-pro'
 
 export interface AIImage {
   mimeType: string
-  data: string // base64（唔含 data: 前綴）
+  data: string // base64（不含 data: 前綴）
 }
 
 export interface AIMessage {
   role: 'user' | 'model'
   content: string
-  /** 多模態：附帶圖片畀 Gemini Vision 分析（例：拍照識別器材 / 姿勢） */
+  /** 多模態：附帶圖片給 Gemini Vision 分析（例：拍照識別器材 / 姿勢） */
   images?: AIImage[]
 }
 
@@ -33,14 +33,14 @@ export interface AIChatOptions {
   signal?: AbortSignal
   /** 額度分流標記（後端按此計額度）：'transcribe' = 錄音轉文字（每月）；預設一般 AI（每日）。 */
   feature?: string
-  /** 用量分析標籤（功能名，如 'grading' / 'slides'）。唔影響額度，淨係畀後台統計每個功能成本。 */
+  /** 用量分析標籤（功能名，如 'grading' / 'slides'）。不影響額度，只給後台統計每個功能成本。 */
   source?: string
 }
 
-/** 本地 dev 繞道：.env.local 設 VITE_DEV_AI=1 → AI 改打本地 /dev-ai/gemini（免 Supabase / 免登入），方便 test。prod 唔受影響。 */
+/** 本地 dev 繞道：.env.local 設 VITE_DEV_AI=1 → AI 改打本地 /dev-ai/gemini（免 Supabase / 免登入），方便 test。prod 不受影響。 */
 const DEV_AI = import.meta.env.VITE_DEV_AI === '1'
 
-/** 有冇接好 Supabase（AI 經 Supabase function）；或開咗本地 dev 繞道 */
+/** 有沒有接好 Supabase（AI 經 Supabase function）；或開了本地 dev 繞道 */
 export const isAIConfigured = isSupabaseConfigured || DEV_AI
 
 function functionsUrl(): string {
@@ -53,7 +53,7 @@ async function authedHeaders(): Promise<Record<string, string>> {
   const {
     data: { session },
   } = await supabase.auth.getSession()
-  if (!session) throw new Error('請先登入先可以用 AI。')
+  if (!session) throw new Error('請先登入以使用 AI。')
   return {
     'Content-Type': 'application/json',
     Authorization: `Bearer ${session.access_token}`,
@@ -65,8 +65,8 @@ async function authedHeaders(): Promise<Record<string, string>> {
 export async function* streamChat(
   opts: AIChatOptions,
 ): AsyncGenerator<string, void, unknown> {
-  // AI 點數計量：只喺已配置收費（接咗 Stripe）時 enforce；未配置 → inert，
-  // 零行為改變。權威額度仍喺後端 gemini Edge Function，呢度淨係前端 UX gating。
+  // AI 點數計量：只在已配置收費（接了 Stripe）時 enforce；未配置 → inert，
+  // 零行為改變。權威額度仍在後端 gemini Edge Function，這裡只前端 UX gating。
   if (isBillingConfigured) {
     const charge = chargeCredits(getActivePlan(), {
       source: opts.source,
@@ -75,7 +75,7 @@ export async function* streamChat(
     })
     if (!charge.ok) {
       throw new Error(
-        `AI 點數唔夠：今個月剩 ${charge.remaining} 點，呢個動作要 ${charge.cost} 點。可去定價頁升級。`,
+        `AI 點數不夠：今個月剩 ${charge.remaining} 點，此動作要 ${charge.cost} 點。可去定價頁升級。`,
       )
     }
   }
@@ -125,7 +125,7 @@ export async function* streamChat(
   }
 }
 
-/** 一次過攞晒成段回應 */
+/** 一次過取得全部成段回應 */
 export async function complete(opts: AIChatOptions): Promise<string> {
   let out = ''
   for await (const chunk of streamChat(opts)) out += chunk
@@ -139,8 +139,8 @@ async function errorMessage(res: Response): Promise<string> {
   } catch {
     /* ignore */
   }
-  if (res.status === 401) return '請先登入先可以用 AI。'
+  if (res.status === 401) return '請先登入以使用 AI。'
   if (res.status === 404)
-    return 'AI 服務搵唔到（gemini function 未部署？見 docs/SETUP.md）。'
+    return 'AI 服務搜尋不到（gemini function 未部署？見 docs/SETUP.md）。'
   return `AI 請求失敗 (${res.status})。`
 }

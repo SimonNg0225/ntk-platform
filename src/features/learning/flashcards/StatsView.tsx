@@ -102,8 +102,8 @@ export default function StatsView() {
     return (
       <EmptyState
         icon={Activity}
-        title="仲未有資料做統計"
-        hint="去「牌組」整啲卡、複習幾轉，呢度就會出熱力圖、留存率、預測。"
+        title="尚未有資料做統計"
+        hint="去「牌組」整些卡、複習幾轉，這裡就會出熱力圖、留存率、預測。"
       />
     )
   }
@@ -207,7 +207,7 @@ export default function StatsView() {
       <div className="grid gap-4 lg:grid-cols-2">
         {/* 到期預測 */}
         <Card className="p-4">
-          <SectionTitle icon={CalendarRange} description="未來 14 日將到期嘅卡（按熟度）">
+          <SectionTitle icon={CalendarRange} description="未來 14 日將到期的卡（按熟度）">
             到期預測
           </SectionTitle>
           <ForecastChart bars={forecast} />
@@ -225,13 +225,13 @@ export default function StatsView() {
               centerLabel="總卡數"
             />
           ) : (
-            <p className="py-6 text-center text-sm text-slate-400">冇卡</p>
+            <p className="py-6 text-center text-sm text-slate-400">沒有卡</p>
           )}
         </Card>
 
         {/* 答題分布 */}
         <Card className="p-4">
-          <SectionTitle icon={Target} description="每個評分掣嘅次數占比">
+          <SectionTitle icon={Target} description="每個評分掣的次數占比">
             答題分布
           </SectionTitle>
           <AnswerBars data={answers} />
@@ -239,7 +239,7 @@ export default function StatsView() {
 
         {/* 間隔分布 */}
         <Card className="p-4">
-          <SectionTitle icon={TrendingUp} description="已排程卡嘅複習間隔">
+          <SectionTitle icon={TrendingUp} description="已排程卡的複習間隔">
             間隔分布
           </SectionTitle>
           <IntervalChart bins={intervals} />

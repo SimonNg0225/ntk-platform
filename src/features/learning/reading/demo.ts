@@ -5,13 +5,13 @@ import { addDays, toKey, todayKey } from './util'
 // ============================================================
 //  閱讀庫：示範資料 seeder
 //  ------------------------------------------------------------
-//  畀新用戶／示範場景一鍵填入真實感、連貫嘅樣本（一個有上進心、
-//  生活忙碌嘅人嘅書架）。只喺 collection 係空先種（idempotent）。
-//  日期一律用本地 helper（todayKey / addDays / toKey），分佈喺
-//  最近 1–4 週，唔會撞晒同一日，亦唔會落未來。
+//  給新用戶／示範場景一鍵填入真實感、連貫的樣本（一個有上進心、
+//  生活忙碌的人的書架）。只在 collection 係空先種（idempotent）。
+//  日期一律用本地 helper（todayKey / addDays / toKey），分佈在
+//  最近 1–4 週，不會撞全部同一日，亦不會落未來。
 // ============================================================
 
-/** N 日前嘅本地 key（N 為正整數） */
+/** N 日前的本地 key（N 為正整數） */
 function daysAgo(n: number): string {
   return toKey(addDays(new Date(), -n))
 }
@@ -38,7 +38,7 @@ export function seedDemo(): number {
         author: 'James Clear',
         status: 'done',
         rating: 5,
-        review: '今年到目前為止最實用嘅一本。「系統大過目標」呢個概念直接改咗我嘅晨間流程，已經連續記咗三星期閱讀。',
+        review: '今年到目前為止最實用的一本。「系統大過目標」這個概念直接改了我的晨間流程，已經連續記了三星期閱讀。',
         format: 'paper',
         shelves: ['自我提升', '習慣養成', '今年最愛'],
         totalPages: 320,
@@ -60,7 +60,7 @@ export function seedDemo(): number {
         author: 'Cal Newport',
         status: 'done',
         rating: 4.5,
-        review: '對抗分心嘅好書。已經試緊每朝開頭兩個鐘關通知做深度工作，產出明顯多咗。後半段有少少重複。',
+        review: '對抗分心的好書。正在嘗試每天早上首兩小時關閉通知做深度工作，產出明顯多了。後半段有一點重複。',
         format: 'ebook',
         shelves: ['生產力', '職涯'],
         totalPages: 296,
@@ -95,7 +95,7 @@ export function seedDemo(): number {
           session(daysAgo(2), 50, 45),
           session(todayKey(), 41, 35),
         ],
-        notes: '系統一 vs 系統二嘅例子好精彩，記低咗幾個認知偏誤想之後喺教學用。',
+        notes: '系統一 vs 系統二的例子好精彩，記低了幾個認知偏誤想之後在教學用。',
         createdAt: now,
       },
       {
@@ -113,7 +113,7 @@ export function seedDemo(): number {
           session(daysAgo(3), 32, 40),
           session(daysAgo(1), 24, 30),
         ],
-        notes: '通勤聽有聲書版，認知革命嗰章好有啟發。',
+        notes: '通勤聽有聲書版，認知革命那章好有啟發。',
         createdAt: now,
       },
 
@@ -127,7 +127,7 @@ export function seedDemo(): number {
         totalPages: 336,
         favorite: false,
         sessions: [],
-        notes: '朋友大力推薦，等手上嗰兩本讀完先開。',
+        notes: '朋友大力推薦，等手上那兩本讀完先開。',
         createdAt: now,
       },
       {
@@ -150,7 +150,7 @@ export function seedDemo(): number {
         totalPages: 592,
         favorite: false,
         sessions: [],
-        notes: '想用嚟整理自己嘅一套做事原則。',
+        notes: '想用來整理自己的一套做事原則。',
         createdAt: now,
       },
     ]

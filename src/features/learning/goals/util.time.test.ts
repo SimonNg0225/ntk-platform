@@ -80,14 +80,14 @@ describe('dueLabel（由 daysUntil 分桶出標籤 + 色票）', () => {
     expect(dueLabel('2026-05-31')).toEqual({ text: '今日到期', tone: 'amber' })
   })
 
-  it('1-7 日內 → amber + 「仲有 N 日」', () => {
-    expect(dueLabel('2026-06-01')).toEqual({ text: '仲有 1 日', tone: 'amber' })
-    expect(dueLabel('2026-06-07')).toEqual({ text: '仲有 7 日', tone: 'amber' }) // d=7 邊界仍 amber
+  it('1-7 日內 → amber + 「還有 N 日」', () => {
+    expect(dueLabel('2026-06-01')).toEqual({ text: '還有 1 日', tone: 'amber' })
+    expect(dueLabel('2026-06-07')).toEqual({ text: '還有 7 日', tone: 'amber' }) // d=7 邊界仍 amber
   })
 
   it('>7 日 → slate（d=8 過界轉 slate）', () => {
-    expect(dueLabel('2026-06-08')).toEqual({ text: '仲有 8 日', tone: 'slate' })
-    expect(dueLabel('2026-06-30')).toEqual({ text: '仲有 30 日', tone: 'slate' })
+    expect(dueLabel('2026-06-08')).toEqual({ text: '還有 8 日', tone: 'slate' })
+    expect(dueLabel('2026-06-30')).toEqual({ text: '還有 30 日', tone: 'slate' })
   })
 })
 
@@ -169,9 +169,9 @@ describe('relTime（相對時間；>30 日舊項回本地日曆日標籤）', ()
     vi.useRealTimers()
   })
 
-  it('< 1 分鐘 → 「啱啱」', () => {
+  it('< 1 分鐘 → 「剛剛」', () => {
     vi.setSystemTime(new Date('2026-05-31T12:00:00.000Z'))
-    expect(relTime(new Date('2026-05-31T11:59:40.000Z').toISOString())).toBe('啱啱')
+    expect(relTime(new Date('2026-05-31T11:59:40.000Z').toISOString())).toBe('剛剛')
   })
 
   it('分鐘 / 小時 / 日（< 30 日）桶', () => {

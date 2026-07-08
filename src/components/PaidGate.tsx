@@ -18,7 +18,7 @@ import { useNav } from '../context/NavContext'
 // ============================================================
 //  付費功能上鎖提示
 //  ------------------------------------------------------------
-//  免費用戶開到要付費嘅功能（requiresPaid）時，唔 render 功能本體，
+//  免費用戶開到要付費的功能（requiresPaid）時，不 render 功能本體，
 //  改顯示升級引導。訂閱狀態載入中 → spinner（避免閃一閃）。
 // ============================================================
 
@@ -64,7 +64,7 @@ const GATE_COPY: Record<string, GateCopy> = {
 
 const DEFAULT_GATE: GateCopy = {
   label: '進階工作流',
-  outcome: '呢個功能屬於節省時間的進階工具，升級後可配合更多 AI 點數同同步能力使用。',
+  outcome: '此功能屬於節省時間的進階工具，升級後可配合更多 AI 點數同同步能力使用。',
   included: ['更多 AI 點數', '多裝置同步', '優先支援'],
   fallbackId: 'work-lesson-plan',
   fallbackLabel: '先準備下一堂',

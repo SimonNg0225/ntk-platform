@@ -2,7 +2,7 @@ import type { ExportDoc } from './types'
 import { downloadBlob, safeFilename } from './file'
 
 // ============================================================
-//  匯出 Word (.docx) — 動態 import docx（撳先載入，唔谷大首屏）
+//  匯出 Word (.docx) — 動態 import docx（按先載入，不谷大首屏）
 //  中文由 Word 字體處理，無需嵌字型。
 // ============================================================
 

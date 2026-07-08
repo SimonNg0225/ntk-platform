@@ -1,18 +1,18 @@
 // ============================================================
 //  動作 / 器材庫 — 純函式（可測）
 //  ------------------------------------------------------------
-//  全部唔 import React，只做篩選 / 聚合 / 字串處理，方便 vitest
+//  全部不 import React，只做篩選 / 聚合 / 字串處理，方便 vitest
 //  （node 環境）直接測。空陣列 / 缺值 / 大小寫都有守衞。
 // ============================================================
 
 import type { Exercise, ExerciseCategory } from './data'
 
 export interface ExerciseFilter {
-  /** 搜尋字（對名稱做大小寫無關 substring 比對；trim 後空字串 = 唔篩） */
+  /** 搜尋字（對名稱做大小寫無關 substring 比對；trim 後空字串 = 不篩） */
   q?: string
-  /** 限定 category；'全部' / undefined = 唔篩 */
+  /** 限定 category；'全部' / undefined = 不篩 */
   category?: ExerciseCategory | '全部'
-  /** 限定器材；'全部' / undefined = 唔篩 */
+  /** 限定器材；'全部' / undefined = 不篩 */
   equipment?: string | '全部'
 }
 
@@ -47,15 +47,15 @@ export function filterExercises(
 
 export interface MuscleBucket {
   muscle: string
-  /** 以此肌群為「主」嘅動作 */
+  /** 以此肌群為「主」的動作 */
   primary: Exercise[]
-  /** 以此肌群為「次」嘅動作 */
+  /** 以此肌群為「次」的動作 */
   secondary: Exercise[]
 }
 
 /**
- * 按肌群歸類所有動作。每個出現過嘅肌群一個 bucket，分主 / 次兩格。
- * - 同一動作可出現喺多個肌群（多對多）。
+ * 按肌群歸類所有動作。每個出現過的肌群一個 bucket，分主 / 次兩格。
+ * - 同一動作可出現在多個肌群（多對多）。
  * - primaryMuscles / secondaryMuscles 缺失或非陣列會當空處理。
  * - 結果按「總出現次數（主+次）」由多到少排，次序穩定（同次數保插入序）。
  * 守衞：all 非陣列回 []。
@@ -94,8 +94,8 @@ export function muscleIndex(all: Exercise[]): MuscleBucket[] {
 }
 
 /**
- * 由動作資料歸納所有出現過嘅器材（去重、保插入序）。
- * 用嚟動態整器材篩選 chips，唔使硬寫一份清單。
+ * 由動作資料歸納所有出現過的器材（去重、保插入序）。
+ * 用來動態整器材篩選 chips，不用硬寫一份清單。
  * 守衞：all 非陣列回 []。
  */
 export function equipmentList(all: Exercise[]): string[] {
@@ -113,7 +113,7 @@ export function equipmentList(all: Exercise[]): string[] {
   return out
 }
 
-/** 每個 category 嘅動作數（用嚟顯示 chip 旁邊計數 / 確認分佈均衡）。 */
+/** 每個 category 的動作數（用來顯示 chip 旁邊計數 / 確認分佈均衡）。 */
 export function countByCategory(
   all: Exercise[],
 ): Record<ExerciseCategory, number> {

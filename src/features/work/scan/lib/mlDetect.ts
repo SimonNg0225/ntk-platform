@@ -1,10 +1,10 @@
 // ============================================================
 //  ML 文件四角偵測 —— DocAligner lcnet100（heatmap 模型，Apache-2.0）
 //  ------------------------------------------------------------
-//  Classical CV（Canny/contour）喺 light-on-light（白紙影喺淺色枱）
-//  必死；DocAligner 係專門訓練「相 → 文件四角」嘅模型，合成低對比
+//  Classical CV（Canny/contour）在 light-on-light（白紙影在淺色枱）
+//  必死；DocAligner 係專門訓練「相 → 文件四角」的模型，合成低對比
 //  場景驗證最大誤差 0.4px@256（scripts/verify-docaligner.mjs）。
-//  · 模型 + ORT wasm 全部自存 /public/vendor/（離線可用、相唔離機）。
+//  · 模型 + ORT wasm 全部自存 /public/vendor/（離線可用、相不離機）。
 //  · 懶載：入到先 import onnxruntime-web、先 fetch 模型。
 //  · 前處理跟官方：resize 256×256 → CHW float32 /255（無 mean/std）。
 //  · 後處理：4 條 channel 熱圖，門檻 0.3 加權重心 → 0..1 正規化角點。
@@ -21,7 +21,7 @@ const MODEL_URLS = [
 // ORT wasm 自存。⚠️ 要用 object 形式淨指 .wasm：
 //  · string prefix 會令 ORT 連 loader .mjs 都去嗰度 import —— vite dev
 //    禁止由 public/ 模組式 import（?import 會 fail）。
-//  · /wasm bundle 變體已內嵌 loader，淨係要 fetch .wasm 二進制（fetch 冇限制）。
+//  · /wasm bundle 變體已內嵌 loader，只要 fetch .wasm 二進制（fetch 沒有限制）。
 const ORT_WASM_URL = '/vendor/ort/ort-wasm-simd-threaded.wasm'
 const N = 256 // 模型輸入邊長
 const HEAT_THRESHOLD = 0.3 // 跟官方 postprocess
@@ -47,7 +47,7 @@ function getSession() {
         })
         return { ort, session }
       } catch (e) {
-        lastErr = e // 試下一個（sa24 落唔到 → lcnet100）
+        lastErr = e // 嘗試一個（sa24 落不到 → lcnet100）
       }
     }
     throw lastErr ?? new Error('模型載入失敗')
@@ -59,7 +59,7 @@ function getSession() {
 
 /**
  * 預熱：背景載入模型 + wasm + 跑一次 dummy 推論（JIT 編譯 kernel）。
- * 喺開鏡頭時 fire-and-forget，等用戶影完即用、慳走冷啟動延遲。
+ * 在開鏡頭時 fire-and-forget，等用戶影完即用、慳走冷啟動延遲。
  */
 export async function warmUpML(): Promise<void> {
   try {
@@ -80,7 +80,7 @@ function imgFromDataUrl(dataUrl: string): Promise<HTMLImageElement> {
   })
 }
 
-/** 圖片 → 1×3×256×256 CHW float32（/255，直接 resize 唔保比例，跟官方）。 */
+/** 圖片 → 1×3×256×256 CHW float32（/255，直接 resize 不保比例，跟官方）。 */
 function toTensorData(img: HTMLImageElement): Float32Array {
   const c = document.createElement('canvas')
   c.width = N; c.height = N
@@ -97,10 +97,10 @@ function toTensorData(img: HTMLImageElement): Float32Array {
 }
 
 /**
- * 單條 channel 熱圖 → 0..1 角點；冇訊號回 null。
+ * 單條 channel 熱圖 → 0..1 角點；沒有訊號回 null。
  * 跟官方 postprocess：門檻 0.3 → **最大連通 blob** → 重心。
- * ⚠️ 唔可以用全圖重心：真實相片有時有第二團假響應（例如表格角落），
- * 全圖重心會俾佢拉到入面（角縮入紙內）；最大 blob 先穩。
+ * ⚠️ 不可以用全圖重心：真實相片有時有第二團假響應（例如表格角落），
+ * 全圖重心會給他拉到中（角縮入紙內）；最大 blob 先穩。
  */
 function cornerFromHeatmap(hm: Float32Array, hw: number, hh: number): Pt | null {
   const n = hw * hh
@@ -142,7 +142,7 @@ function cornerFromHeatmap(hm: Float32Array, hw: number, hh: number): Pt | null 
 }
 
 /**
- * ML 偵測文件四角，回**正規化**座標（0..1）；偵唔到 / 載入失敗 throw 或回 null
+ * ML 偵測文件四角，回**正規化**座標（0..1）；偵不到 / 載入失敗 throw 或回 null
  * （caller 負責 fallback classical）。
  */
 export async function detectCornersML(dataUrl: string): Promise<Corners | null> {

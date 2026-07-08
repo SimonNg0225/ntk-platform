@@ -97,10 +97,10 @@ import {
 //   · 連續寫作天數、字數、活躍日統計
 //   · 「歷年今日」回顧
 //   · 匯出 Markdown / JSON、複製單篇
-//  資料：journal/store 嘅 journalDocsCol（'journal_v2'）；首次由舊 journal 遷移
+//  資料：journal/store 的 journalDocsCol（'journal_v2'）；首次由舊 journal 遷移
 // ============================================================
 
-// journalDocsCol 嘅 canonical instance 喺 ./journal/store（同學習儀表板共用同一個）。
+// journalDocsCol 的 canonical instance 在 ./journal/store（同學習儀表板共用同一個）。
 
 // 由舊 JournalEntry 結構安全遷移（只做一次）
 const MIGRATION_FLAG = 'ntk.journal_v2_migrated'
@@ -134,7 +134,7 @@ function migrateLegacy() {
 type ViewId = 'timeline' | 'heatmap' | 'stats'
 type SortId = 'new' | 'old' | 'words'
 
-// 安全拆日期（避免 new Date('YYYY-MM-DD') 嘅 UTC 偏移）→ 日／星期，timeline 用
+// 安全拆日期（避免 new Date('YYYY-MM-DD') 的 UTC 偏移）→ 日／星期，timeline 用
 const WD_SHORT = ['日', '一', '二', '三', '四', '五', '六']
 function dayParts(dateKey: string): { day: string; weekday: string } {
   const [y, m, d] = dateKey.split('-').map(Number)
@@ -148,19 +148,19 @@ const SORTS: { id: SortId; label: string }[] = [
   { id: 'words', label: '字數' },
 ]
 
-// 教學引導：教用家「點用」個人日誌（3 步）
+// 教學引導：教用家「如何使用」個人日誌（3 步）
 const GUIDE_STEPS: FeatureGuideStep[] = [
   {
-    title: '寫低今日一筆',
-    desc: '撳右上「寫日誌」，記低反思；可加標題、心情、天氣同 #標籤。',
+    title: '記錄今日一筆',
+    desc: '按右上「寫日誌」，記低反思；可加標題、心情、天氣同 #標籤。',
   },
   {
     title: '切換三種視圖',
-    desc: '時間軸睇逐篇、熱力圖睇成年寫作節奏、統計睇心情趨勢同字數。',
+    desc: '時間軸查看逐篇、熱力圖查看成年寫作節奏、統計查看心情趨勢同字數。',
   },
   {
     title: '搜尋・篩選・回顧',
-    desc: '用關鍵字或心情、標籤快速搵返；「歷年今日」帶你重溫舊文。',
+    desc: '用關鍵字、心情或標籤快速找回紀錄；「歷年今日」帶你重溫舊文。',
   },
 ]
 
@@ -264,7 +264,7 @@ export default function Journal() {
     return groups
   }, [visible])
 
-  // 「歷年今日」：同月同日（唔同年），最近喺上（純函式聚合）
+  // 「歷年今日」：同月同日（不同年），最近在上（純函式聚合）
   const onThisDay = useMemo(() => anniversaryEntries(docs, today), [docs, today])
 
   const hasFilter = Boolean(query.trim() || moodFilter || tagFilter || favOnly)
@@ -288,9 +288,9 @@ export default function Journal() {
   const handleSave = (d: EntryDraft) => {
     const now = new Date().toISOString()
     if (editing) {
-      // 編輯器係改「成篇」：整篇取代而非 merge patch。清空咗嘅 optional 欄位
-      // 要真正消失 —— update 嘅 {...i,...patch} 唔識刪 key，patch undefined 只
-      // 會喺 in-memory 留低顯式 undefined（persist 後又 drop，前後唔一致）。
+      // 編輯器係改「成篇」：整篇取代而非 merge patch。清空了的 optional 欄位
+      // 要真正消失 —— update 的 {...i,...patch} 不識刪 key，patch undefined 只
+      // 會在 in-memory 留低顯式 undefined（persist 後又 drop，前後不一致）。
       const next = stripUndefined<JournalDoc>({
         ...editing,
         date: d.date,
@@ -331,7 +331,7 @@ export default function Journal() {
   const remove = async (doc: JournalDoc) => {
     const ok = await confirm({
       title: '刪除日誌？',
-      message: `確定要刪除 ${mediumDate(doc.date)} 嘅日誌？呢個動作無法復原。`,
+      message: `確定要刪除 ${mediumDate(doc.date)} 的日誌？此動作無法復原。`,
       confirmText: '刪除',
       tone: 'danger',
     })
@@ -346,7 +346,7 @@ export default function Journal() {
       await navigator.clipboard.writeText(text)
       toast.success('已複製為 Markdown')
     } catch {
-      toast.error('複製失敗，瀏覽器唔支援')
+      toast.error('複製失敗，瀏覽器不支援')
     }
   }
 
@@ -372,7 +372,7 @@ export default function Journal() {
   return (
     <div className="space-y-5">
       {/* ───────── 頁面頂部：共用 PageHero（accent hero）─────────
-           host 已收起標題（selfManagedHeader），呢個係呢頁唯一頂部標題。 */}
+           host 已收起標題（selfManagedHeader），這個係這一頁唯一頂部標題。 */}
       <PageHero
         guideKey="journal"
         icon={BookText}
@@ -414,10 +414,10 @@ export default function Journal() {
         }
       />
 
-      {/* ───────── 教學引導：點用呢個功能 ───────── */}
+      {/* ───────── 教學引導：如何使用此功能 ───────── */}
       <FeatureGuide
         storageKey="journal"
-        title={t('journal.guideTitle', { defaultValue: '個人日誌點用？' })}
+        title={t('journal.guideTitle', { defaultValue: '個人日誌使用說明' })}
         steps={GUIDE_STEPS}
       />
 
@@ -427,7 +427,7 @@ export default function Journal() {
           label={t('journal.statStreak', { defaultValue: '連續天數' })}
           value={stats.streak}
           unit={t('journal.unitDay', { defaultValue: '日' })}
-          hint={stats.streak > 0 ? t('journal.statStreakHotHint', { defaultValue: '今日記得寫低！' }) : t('journal.statStreakHint', { defaultValue: '由今日開始' })}
+          hint={stats.streak > 0 ? t('journal.statStreakHotHint', { defaultValue: '今日記得記錄！' }) : t('journal.statStreakHint', { defaultValue: '由今日開始' })}
           icon={Flame}
           tone={stats.streak > 0 ? 'amber' : 'slate'}
         />
@@ -476,7 +476,7 @@ export default function Journal() {
               <button
                 key={d.id}
                 onClick={() => openEdit(d)}
-                aria-label={`${yearsAgo} 年前嘅今日：${d.title?.trim() || excerpt(d.content, 40)}`}
+                aria-label={`${yearsAgo} 年前的今日：${d.title?.trim() || excerpt(d.content, 40)}`}
                 className="flex w-full items-center gap-3 rounded-xl bg-white/70 p-2.5 text-left transition hover:bg-white active:scale-[0.98] dark:bg-slate-800/60 dark:hover:bg-slate-800"
               >
                 {d.mood ? (
@@ -489,7 +489,7 @@ export default function Journal() {
                 <div className="min-w-0">
                   <p className="flex items-baseline gap-1.5 text-accent-strong dark:text-accent">
                     <span className="text-sm font-semibold tabular-nums">{d.date.slice(0, 4)}</span>
-                    <span className="text-[11px] font-medium text-accent/80 dark:text-accent/80">· {yearsAgo} 年前嘅今日</span>
+                    <span className="text-[11px] font-medium text-accent/80 dark:text-accent/80">· {yearsAgo} 年前的今日</span>
                   </p>
                   <p className="truncate text-sm text-slate-600 dark:text-slate-300">
                     {d.title?.trim() || excerpt(d.content, 60)}
@@ -506,7 +506,7 @@ export default function Journal() {
         <button
           type="button"
           onClick={() => openNew()}
-          aria-label={t('journal.todayNudgeAria', { defaultValue: '今日仲未寫日誌，去寫一篇' })}
+          aria-label={t('journal.todayNudgeAria', { defaultValue: '今日尚未寫日誌，去寫一篇' })}
           className="group flex w-full items-center gap-3 rounded-2xl border border-dashed border-accent/40 bg-accent-soft/50 p-4 text-left transition duration-200 hover:border-accent hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98] dark:border-accent/40 dark:bg-accent/10"
         >
           <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-accent text-white">
@@ -514,7 +514,7 @@ export default function Journal() {
           </span>
           <div className="min-w-0 flex-1">
             <p className="text-sm font-medium text-accent-strong dark:text-accent">
-              {t('journal.todayNudgeTitle', { defaultValue: '今日仲未寫，記低一筆？' })}
+              {t('journal.todayNudgeTitle', { defaultValue: '今日尚未寫，記低一筆？' })}
             </p>
             <p className="mt-0.5 truncate text-xs text-slate-500 dark:text-slate-400">
               {promptOfDay(today)}
@@ -633,7 +633,7 @@ export default function Journal() {
           {hasFilter && (
             <div className="flex items-center justify-between text-xs text-slate-400">
               <span className="tabular-nums" aria-live="polite">
-                搵到 {visible.length} 篇
+                找到 {visible.length} 篇
               </span>
               <button
                 onClick={clearFilters}
@@ -650,8 +650,8 @@ export default function Journal() {
             <EmptyState
               icon={NotebookPen}
               art="empty-journal"
-              title="仲未有日誌"
-              hint="每日寫低一啲反思，慢慢就會儲落一本屬於你嘅個人日記。"
+              title="尚未有日誌"
+              hint="每日記錄一些反思，慢慢就會儲落一本屬於你的個人日記。"
               action={
                 <Button icon={Plus} onClick={() => openNew()}>
                   寫第一篇
@@ -661,8 +661,8 @@ export default function Journal() {
           ) : visible.length === 0 ? (
             <EmptyState
               icon={Search}
-              title="搵唔到相符嘅日誌"
-              hint="試下改吓關鍵字，或者清除篩選。"
+              title="搜尋不到相符的日誌"
+              hint="嘗試改一下關鍵字，或者清除篩選。"
               action={
                 <Button variant="secondary" onClick={clearFilters}>
                   清除篩選
@@ -833,7 +833,7 @@ function EntryCard({
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex min-w-0 items-start gap-3">
-          {/* 日期塊（書脊節點已帶心情色，呢度主打「邊一日」） */}
+          {/* 日期塊（書脊節點已帶心情色，這裡主打「邊一日」） */}
           <div className="flex w-10 shrink-0 flex-col items-center pt-0.5">
             <span className="text-2xl font-semibold leading-none tabular-nums slashed-zero text-slate-700 dark:text-slate-200">
               {dp.day}
@@ -954,7 +954,7 @@ function EntryCard({
 }
 
 // ============================================================
-//  熱力圖視圖（年度活動格 + 換年）+ 心情月曆（按月睇心情分佈）
+//  熱力圖視圖（年度活動格 + 換年）+ 心情月曆（按月查看心情分佈）
 // ============================================================
 function HeatmapView({
   docs,
@@ -1002,7 +1002,7 @@ function HeatmapView({
           <span>
             活躍 <span className="font-semibold tabular-nums text-slate-700 dark:text-slate-200">{grid.activeDays}</span> 日
           </span>
-          <span className="text-slate-400">撳格仔可寫 / 開該日日誌</span>
+          <span className="text-slate-400">按格仔可寫 / 開該日日誌</span>
         </div>
       </Card>
 
@@ -1029,7 +1029,7 @@ function MoodCalendarCard({
       return { y: d.getFullYear(), m: d.getMonth() }
     })
 
-  // 唔行去未來月份
+  // 不行去未來月份
   const isThisMonth = ym.y === now.getFullYear() && ym.m === now.getMonth()
 
   return (
@@ -1114,7 +1114,7 @@ function StatsView({ docs }: { docs: JournalDoc[] }) {
       <EmptyState
         icon={BarChart3}
         title="未有資料可分析"
-        hint="寫多幾篇日誌、標記心情，呢度就會出現你嘅心情趨勢同寫作統計。"
+        hint="寫多幾篇日誌、標記心情，這裡就會出現你的心情趨勢同寫作統計。"
       />
     )
   }
@@ -1219,7 +1219,7 @@ function TagInsightsList({ rows }: { rows: TagInsight[] }) {
                 </span>
               </Tooltip>
             ) : (
-              <Tooltip label="呢個標籤未標過心情">
+              <Tooltip label="這個標籤未標過心情">
                 <span className="inline-flex w-12 items-center justify-end text-slate-300 dark:text-slate-600">
                   —
                 </span>

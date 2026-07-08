@@ -24,7 +24,7 @@ import type {
 // ============================================================
 //  工作儀表板：跨功能彙整（純函式，零 npm 依賴）
 //  ------------------------------------------------------------
-//  全部讀取共用 collection（唔改），計出 widget 用嘅 view model。
+//  全部讀取共用 collection（不改），計出 widget 用的 view model。
 //  日期一律用「本地時區 YYYY-MM-DD」（同行事曆 / 待辦慣例一致）。
 // ============================================================
 
@@ -117,7 +117,7 @@ export function buildHeat(tasks: MergedTask[], days: number): HeatCell[] {
 
 export const completionStreak = completionStreakCore
 
-// 計某段日子內完成嘅待辦數（週對比用）
+// 計某段日子內完成的待辦數（週對比用）
 export function completedInRange(
   tasks: MergedTask[],
   startKey: string,
@@ -144,7 +144,7 @@ export function todaySlots(
     .sort((a, b) => a.period - b.period)
 }
 
-// 概略把「第幾節」對應到時間（08:00 起，每節 1 小時）用嚟排序入議程
+// 概略把「第幾節」對應到時間（08:00 起，每節 1 小時）用來排序入議程
 function periodToMinutes(period: number): number {
   return 8 * 60 + (period - 1) * 60
 }
@@ -165,7 +165,7 @@ export function buildAgenda(opts: {
   countdowns: Countdown[]
   todayKey: string
   jsDay: number
-  /** cycle 模式：今日嘅 cycle day(1..6)，覆寫用嚟篩今日堂；無則用 jsDay（星期制）。 */
+  /** cycle 模式：今日的 cycle day(1..6)，覆寫用來篩今日堂；無則用 jsDay（星期制）。 */
   slotDay?: number
 }): AgendaItem[] {
   const { timetable, events, calendars, tasks, countdowns, todayKey, jsDay, slotDay } = opts
@@ -225,7 +225,7 @@ export function buildAgenda(opts: {
     })
   }
 
-  // 今日嘅倒數（work / both）
+  // 今日的倒數（work / both）
   for (const cd of countdowns) {
     if (cd.mode === 'learning') continue
     if (cd.date !== todayKey) continue

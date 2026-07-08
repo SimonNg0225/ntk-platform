@@ -68,19 +68,19 @@ import StatsView from './habits/StatsView'
 type View = 'today' | 'all' | 'stats'
 type SortKey = 'order' | 'streak' | 'name'
 
-// 教學引導步驟（3 步：建立 → 每日打卡 → 睇連續/統計）
+// 教學引導步驟（3 步：建立 → 每日打卡 → 查看連續/統計）
 const GUIDE_STEPS: FeatureGuideStep[] = [
   {
     title: '新增習慣',
-    desc: '撳右上「新增習慣」，揀 emoji、顏色同頻率（每日／指定星期）。',
+    desc: '按右上「新增習慣」，選擇 emoji、顏色同頻率（每日／指定星期）。',
   },
   {
     title: '每日打卡',
-    desc: '喺「今日」分頁逐個剔返做咗嘅習慣，保持連續唔斷纜。',
+    desc: '在「今日」分頁逐個勾選已完成的習慣，保持連續紀錄。',
   },
   {
-    title: '睇連續同統計',
-    desc: '頂部睇今日完成同最長連續；「統計」分頁有 heatmap 同趨勢。',
+    title: '查看連續同統計',
+    desc: '頂部查看今日完成同最長連續；「統計」分頁有 heatmap 同趨勢。',
   },
 ]
 
@@ -147,7 +147,7 @@ export default function HabitTracker() {
     return arr
   }, [activeHabits, category, query, sort, byHabit])
 
-  // 「全部」分頁係咪有篩選緊（決定空狀態係「無習慣」定「篩唔到」）
+  // 「全部」分頁係咪有篩選緊（決定空狀態係「無習慣」定「篩不到」）
   const filtersActive = query.trim() !== '' || category !== 'all'
   function clearFilters() {
     setQuery('')
@@ -155,10 +155,10 @@ export default function HabitTracker() {
   }
 
   // 今日待辦：依「應做」分拆
-  // 用 activeHabits（而非 visible），令「今日」分頁唔受「全部」分頁殘留嘅
-  // 分類/搜尋篩選影響——今日分頁本身冇任何篩選 UI，否則用家會見到今日進度
+  // 用 activeHabits（而非 visible），令「今日」分頁不受「全部」分頁殘留的
+  // 分類/搜尋篩選影響——今日分頁本身沒有任何篩選 UI，否則用家會見到今日進度
   // 莫名其妙縮細／部分習慣消失。
-  // 斷 streak 警報：今日應做、今日未打、目前仲有連勝（一打就保、唔打清零）。
+  // 斷 streak 警報：今日應做、今日未打、目前還有連勝（一打就保、不打清零）。
   const atRisk = useMemo(
     () => streakAtRisk(activeHabits, byHabit),
     [activeHabits, byHabit],
@@ -186,14 +186,14 @@ export default function HabitTracker() {
   }, [activeHabits, byHabit, today, atRisk])
 
   // 頂部統計磚每個分頁都顯示，定位係全域 dashboard，故同樣用 activeHabits，
-  // 避免被「全部」分頁嘅篩選靜默縮細。
+  // 避免被「全部」分頁的篩選靜默縮細。
   const stats = useMemo(
     () => overallStats(activeHabits, byHabit),
     [activeHabits, byHabit],
   )
   const allDone = stats.dueToday > 0 && stats.doneToday === stats.dueToday
 
-  // 近 14 日整體節奏（鏈條 hero 用）：每日 = 當日全部排程習慣嘅完成比例（0-1）。
+  // 近 14 日整體節奏（鏈條 hero 用）：每日 = 當日全部排程習慣的完成比例（0-1）。
   // 由舊到新，最後一格 = 今日。純衍生自 activeHabits + byHabit。
   const rhythm14 = useMemo(() => {
     return recentDays(14).map((k) => {
@@ -317,10 +317,10 @@ export default function HabitTracker() {
         }
       />
 
-      {/* ───────── 教學引導：點用呢個功能 ───────── */}
+      {/* ───────── 教學引導：如何使用此功能 ───────── */}
       <FeatureGuide
         storageKey="habits"
-        title={t('habits.guideTitle', { defaultValue: '習慣追蹤點用？' })}
+        title={t('habits.guideTitle', { defaultValue: '習慣追蹤使用說明' })}
         steps={GUIDE_STEPS}
       />
 
@@ -372,9 +372,9 @@ export default function HabitTracker() {
             <EmptyState
               icon={Sprout}
               art="empty-habits"
-              title={t('habits.emptyTitle', { defaultValue: '仲未有習慣' })}
+              title={t('habits.emptyTitle', { defaultValue: '尚未有習慣' })}
               hint={t('habits.emptyHint', {
-                defaultValue: '撳「新增習慣」開始，揀 emoji、顏色同頻率，每日打卡保持連續。',
+                defaultValue: '按「新增習慣」開始，選擇 emoji、顏色同頻率，每日打卡保持連續。',
               })}
               action={
                 <Button icon={Plus} onClick={openCreate}>
@@ -503,8 +503,8 @@ export default function HabitTracker() {
             filtersActive ? (
               <EmptyState
                 icon={Search}
-                title={t('habits.noMatchTitle', { defaultValue: '搵唔到習慣' })}
-                hint={t('habits.noMatchHint', { defaultValue: '試下換個關鍵字或分類。' })}
+                title={t('habits.noMatchTitle', { defaultValue: '搜尋不到習慣' })}
+                hint={t('habits.noMatchHint', { defaultValue: '嘗試換個關鍵字或分類。' })}
                 action={
                   <Button size="sm" variant="secondary" onClick={clearFilters}>
                     {t('habits.clearFilters', { defaultValue: '清除篩選' })}
@@ -515,9 +515,9 @@ export default function HabitTracker() {
               <EmptyState
                 icon={Sprout}
                 art="empty-habits"
-                title={t('habits.emptyTitle', { defaultValue: '仲未有習慣' })}
+                title={t('habits.emptyTitle', { defaultValue: '尚未有習慣' })}
                 hint={t('habits.emptyHintAll', {
-                  defaultValue: '建立第一個習慣，之後喺「今日」分頁逐日打卡。',
+                  defaultValue: '建立第一個習慣，之後在「今日」分頁逐日打卡。',
                 })}
                 action={
                   <Button icon={Plus} onClick={openCreate}>
@@ -604,7 +604,7 @@ export default function HabitTracker() {
           {visible.length > 0 && (
             <p className="px-1 text-center text-xs text-slate-400 dark:text-slate-500">
               {t('habits.archiveTip', {
-                defaultValue: '想暫停某個習慣？喺習慣詳情可封存而唔刪除記錄。',
+                defaultValue: '想暫停某個習慣？在習慣詳情可封存而不刪除記錄。',
               })}
             </p>
           )}
@@ -661,7 +661,7 @@ function longTodayLabel(key: string): string {
 }
 
 // ───────── 區段標籤（小帽 + icon；統一節奏）─────────
-//  純中文標籤，故唔落 uppercase/tracking（doNots：CJK uppercase 無效＋字距散）。
+//  純中文標籤，故不落 uppercase/tracking（doNots：CJK uppercase 無效＋字距散）。
 function SectionLabel({
   icon: Icon,
   children,
@@ -723,9 +723,9 @@ function HabitStat({
   )
 }
 
-// ───────── 斷 streak 警報 banner（今日未保住嘅連勝）─────────
+// ───────── 斷 streak 警報 banner（今日未保住的連勝）─────────
 //  rose/amber 暖警示色，跟 HabitDetail 既有 ring/solid 風格。
-//  撳任一 chip 直接開該習慣詳情（去打卡）。最多列 4 個，其餘收成 +N。
+//  按任一 chip 直接開該習慣詳情（去打卡）。最多列 4 個，其餘收成 +N。
 function AtRiskBanner({
   items,
   onPick,
@@ -746,7 +746,7 @@ function AtRiskBanner({
             {items.length} 個連勝今日未保住
           </p>
           <p className="mt-0.5 text-xs text-rose-600/80 dark:text-rose-300/70">
-            再唔打卡今日就會清零，撳一下即去保住。
+            再不打卡今日就會清零，按一下即去保住。
           </p>
           <div className="mt-2 flex flex-wrap gap-1.5">
             {shown.map((it) => (
@@ -846,10 +846,10 @@ function TodayRing({
         </h3>
         <p className="mt-1 text-sm leading-relaxed text-slate-500 dark:text-slate-400">
           {allDone
-            ? '全部排程習慣都打咗卡，好嘢！'
+            ? '全部排程習慣都已打卡，很好！'
             : total - done > 0
-              ? `仲差 ${total - done} 個就完成今日全部排程習慣。`
-              : '今日冇排程習慣，放鬆下。'}
+              ? `還差 ${total - done} 個就完成今日全部排程習慣。`
+              : '今日沒有排程習慣，放鬆下。'}
         </p>
         <RhythmChain rhythm={rhythm} allDone={allDone} />
       </div>
@@ -859,7 +859,7 @@ function TodayRing({
 
 // ───────── 近 14 日節奏鏈條（hero 內；整體完成密度 → 鏈節深淺）─────────
 //  每節 = 一日；色深 = 當日完成比例（0-1）。連續兩日都「全達標」先以連桿駁起，
-//  令一段全達標期讀成一條完整嘅鏈，呼應「連續鏈條」主題。今日節加外框。
+//  令一段全達標期讀成一條完整的鏈，呼應「連續鏈條」主題。今日節加外框。
 function RhythmChain({ rhythm, allDone }: { rhythm: RhythmDay[]; allDone: boolean }) {
   if (rhythm.length === 0) return null
   const tone = allDone ? 'emerald' : 'accent'
@@ -894,7 +894,7 @@ function RhythmChain({ rhythm, allDone }: { rhythm: RhythmDay[]; allDone: boolea
                 />
               )}
               <span
-                title={`${d.key.slice(5)}：${d.due > 0 ? `${Math.round(d.ratio * 100)}% 完成` : '冇排程'}`}
+                title={`${d.key.slice(5)}：${d.due > 0 ? `${Math.round(d.ratio * 100)}% 完成` : '沒有排程'}`}
                 className={cx(
                   'h-2.5 w-2.5 shrink-0 rounded-full transition-colors',
                   fillClass(d.ratio),
@@ -942,7 +942,7 @@ function HabitDetailWithArchive({
         className="fixed bottom-6 left-1/2 z-[60] inline-flex min-h-11 -translate-x-1/2 items-center gap-1.5 rounded-full border border-slate-200 bg-white px-4 text-sm font-medium text-slate-600 shadow-lg transition active:scale-[0.98] hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 sm:left-auto sm:right-8 sm:translate-x-0"
       >
         <Archive size={16} />
-        封存呢個習慣
+        封存這個習慣
       </button>
     </>
   )

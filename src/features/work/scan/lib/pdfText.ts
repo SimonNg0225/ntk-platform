@@ -1,4 +1,4 @@
-// A4 長邊 842pt、短邊 595pt（72dpi）。我哋只用長邊封頂，短邊跟比例。
+// A4 長邊 842pt、短邊 595pt（72dpi）。我們只用長邊封頂，短邊跟比例。
 const A4_LONG = 842
 
 export interface Dims { w: number; h: number }

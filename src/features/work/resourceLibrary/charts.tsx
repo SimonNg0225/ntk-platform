@@ -55,7 +55,7 @@ export function TypeDonut({ stats, total }: { stats: TypeStat[]; total: number }
   if (total === 0)
     return (
       <ChartEmpty icon={PieChart}>
-        加入資源後，呢度會顯示各類型嘅占比。
+        加入資源後，這裡會顯示各類型的占比。
       </ChartEmpty>
     )
 
@@ -143,7 +143,7 @@ export function FolderBars({ stats }: { stats: FolderStat[] }) {
   if (visible.length === 0)
     return (
       <ChartEmpty icon={FolderTree}>
-        將資源放入收藏夾，就會見到每個夾嘅分佈。
+        將資源放入收藏夾，就會見到每個夾的分佈。
       </ChartEmpty>
     )
   return (
@@ -322,7 +322,7 @@ export function TagCloud({
   if (tags.length === 0)
     return (
       <ChartEmpty icon={Hash}>
-        畀資源加啲標籤，常用標籤就會喺呢度浮現。
+        給資源加些標籤，常用標籤就會在這裡浮現。
       </ChartEmpty>
     )
   return (
@@ -359,7 +359,7 @@ export function TagCloud({
   )
 }
 
-// ───────── 5. 開啟排行榜（水平條，畀 Insights 用）─────────
+// ───────── 5. 開啟排行榜（水平條，給 Insights 用）─────────
 export function OpenLeaderboard({
   rows,
 }: {
@@ -369,7 +369,7 @@ export function OpenLeaderboard({
   if (rows.length === 0)
     return (
       <ChartEmpty icon={TrendingUp}>
-        開過嘅教材會喺呢度排名，睇下邊份用得最多。
+        開過的教材會在這裡排名，查看下邊份用得最多。
       </ChartEmpty>
     )
   return (
@@ -418,7 +418,7 @@ export function CoverageBars({
   if (rows.length === 0)
     return (
       <ChartEmpty icon={Tags}>
-        將資源連結到課題，就會見到各課題嘅覆蓋情況。
+        將資源連結到課題，就會見到各課題的覆蓋情況。
       </ChartEmpty>
     )
   return (

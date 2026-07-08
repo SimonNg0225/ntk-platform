@@ -4,27 +4,27 @@ import { Lightbulb, X } from 'lucide-react'
 
 // ============================================================
 //  FeatureGuide — 統一「功能頁教學引導」
-//  顯示某功能「點用」嘅 2–4 步精簡引導（序號 chip + 標題 + 一句說明）。
-//  默認唔顯示；由 hero「點用？」掣（GuideHelpButton / PageHero guideKey）
-//  toggle 開／關（撳一下開、再撳收）。transient — 唔記 localStorage。
+//  顯示某功能「如何使用」的 2–4 步精簡引導（序號 chip + 標題 + 一句說明）。
+//  默認不顯示；由 hero「使用說明」掣（GuideHelpButton / PageHero guideKey）
+//  toggle 開／關（按一下開、再按收）。transient — 不記 localStorage。
 //  視覺跟產品首頁設計系統：白底、淡邊框、清楚步驟、低干擾。
 // ============================================================
 
 const TOGGLE_EVENT = 'featureGuide:toggle'
 
-/** Toggle 某功能嘅教學引導開／關（畀 hero「點用？」掣用）。 */
+/** Toggle 某功能的教學引導開／關（給 hero「使用說明」掣用）。 */
 export function toggleFeatureGuide(storageKey: string) {
   try {
     window.dispatchEvent(new CustomEvent(TOGGLE_EVENT, { detail: storageKey }))
   } catch {
-    /* 環境冇 window 就算 */
+    /* 環境沒有 window 就算 */
   }
 }
 
 export type FeatureGuideStep = {
   /** 步驟標題（一句短語） */
   title: string
-  /** 一句說明，講呢步具體做咩 */
+  /** 一句說明，說明這一步具體做什麼 */
   desc: string
 }
 
@@ -33,16 +33,16 @@ export function FeatureGuide({
   steps,
   storageKey,
 }: {
-  /** 卡片標題；唔傳就用預設「點用？」 */
+  /** 卡片標題；不傳就用預設「使用說明」 */
   title?: string
   /** 2–4 步引導 */
   steps: FeatureGuideStep[]
-  /** 唯一 key（每功能一個）；對應 hero guideKey，畀「點用？」掣 toggle。 */
+  /** 唯一 key（每功能一個）；對應 hero guideKey，給「使用說明」掣 toggle。 */
   storageKey: string
 }) {
   const { t } = useTranslation()
 
-  // 默認唔顯示；由 hero「點用？」掣 toggle。transient — 換頁就回復默認收起。
+  // 默認不顯示；由 hero「使用說明」掣 toggle。transient — 換頁就回復默認收起。
   const [open, setOpen] = useState(false)
 
   useEffect(() => {
@@ -55,7 +55,7 @@ export function FeatureGuide({
 
   if (!open || steps.length === 0) return null
 
-  const heading = title ?? t('featureGuide.title', { defaultValue: '點用？' })
+  const heading = title ?? t('featureGuide.title', { defaultValue: '使用說明' })
 
   return (
     <section
@@ -73,7 +73,7 @@ export function FeatureGuide({
           aria-label={t('featureGuide.close', { defaultValue: '收起教學' })}
           className="inline-flex min-h-11 shrink-0 items-center rounded-lg px-3 text-xs font-medium text-slate-400 transition hover:bg-slate-50 hover:text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98] dark:text-slate-500 dark:hover:bg-slate-800/60 dark:hover:text-slate-300"
         >
-          {t('featureGuide.dismiss', { defaultValue: '知道喇' })}
+          {t('featureGuide.dismiss', { defaultValue: '知道了' })}
           <X size={13} className="ml-1" />
         </button>
       </div>
@@ -99,7 +99,7 @@ export function FeatureGuide({
   )
 }
 
-/** Hero「點用？」掣：擺落 PageHero（guideKey），toggle 該功能嘅教學引導開／關。 */
+/** Hero「使用說明」掣：擺落 PageHero（guideKey），toggle 該功能的教學引導開／關。 */
 export function GuideHelpButton({
   storageKey,
   label,
@@ -116,7 +116,7 @@ export function GuideHelpButton({
       className="inline-flex min-h-11 items-center gap-1.5 rounded-[14px] border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-600 shadow-xs transition hover:border-accent/30 hover:text-accent active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:text-accent"
     >
       <Lightbulb size={15} />
-      {label ?? t('featureGuide.reopen', { defaultValue: '點用？' })}
+      {label ?? t('featureGuide.reopen', { defaultValue: '使用說明' })}
     </button>
   )
 }

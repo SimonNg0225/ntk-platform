@@ -191,12 +191,12 @@ describe('時區邊界：本地日 vs UTC 切日（守護 off-by-one）', () => 
     expect(new Date(2026, 4, 31, 7).getTimezoneOffset()).toBe(-480)
   })
 
-  it('todayStr()：HKT 07:00 回本地「今日」（唔係 UTC 噖日 2026-05-30）', () => {
+  it('todayStr()：HKT 07:00 回本地「今日」（不是 UTC 噖日 2026-05-30）', () => {
     expect(todayStr()).toBe('2026-05-31') // 舊 UTC 寫法會回 '2026-05-30'
     expect(todayStr()).toBe(localDateStr(new Date())) // 同 localDateStr 同源
   })
 
-  it('schedule().dueDate：good(interval 1) 回本地聽日 2026-06-01（唔係 UTC 2026-05-31）', () => {
+  it('schedule().dueDate：good(interval 1) 回本地明天 2026-06-01（不是 UTC 2026-05-31）', () => {
     const r = schedule(card(), 'good') // reps 0→1 → interval 1
     expect(r.intervalDays).toBe(1)
     expect(r.dueDate).toBe('2026-06-01') // 舊 UTC 寫法會回 '2026-05-31'（差一日）

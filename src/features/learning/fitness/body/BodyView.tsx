@@ -57,7 +57,7 @@ import { TrendChart, DualLineChart } from './Charts'
 //  ------------------------------------------------------------
 //  快速記錄今日 → KPI（體重/體脂/骨骼肌/BMI + ~30 日 trend）
 //  → 趨勢折線（14/30/90 切換）→ 增肌減脂分析 → 歷史列表（可刪）。
-//  所有計算抽喺 util.ts（已測）；本檔只負責 UI / 狀態。
+//  所有計算抽在 util.ts（已測）；本檔只負責 UI / 狀態。
 // ============================================================
 
 type RangeDays = 14 | 30 | 90
@@ -188,8 +188,8 @@ function SectionHead({
 }
 
 // ───────── 彈窗概念帶：記分牌 kicker + 用途描述 ─────────
-// 喺彈窗 body 頂部加一條呼應概念嘅 banner（唔重複 Modal title，保留 a11y
-// 嘅 aria-labelledby）。icon chip + serif uppercase kicker + 一句用途，
+// 在彈窗 body 頂部加一條呼應概念的 banner（不重複 Modal title，保留 a11y
+// 的 aria-labelledby）。icon chip + serif uppercase kicker + 一句用途，
 // 同主畫面「現正出場」面板 / 訓練計分板同一套能量語言。
 function ModalHead({
   icon: Icon,
@@ -236,7 +236,7 @@ export default function BodyView() {
   const fat = useMemo(() => metricTrend(entries, 'bodyFatPct', 30), [entries])
   const muscle = useMemo(() => metricTrend(entries, 'skeletalMuscleKg', 30), [entries])
   const visceralLatest = useMemo(() => {
-    // 內臟脂肪係等級數字，直接攞最新一筆有值嘅
+    // 內臟脂肪係等級數字，直接取得最新一筆有值的
     const withV = entries
       .filter((e) => isNum(e.visceralFat))
       .sort((a, b) => (a.date < b.date ? 1 : -1))
@@ -265,10 +265,10 @@ export default function BodyView() {
   const comp = useMemo(() => compositionChange(entries, range), [entries, range])
   const compBadge = VERDICT_BADGE[comp.verdict] ?? VERDICT_BADGE.stable
 
-  // ── 脂肪量 vs 瘦體重 雙線（同一時間軸；睇 recomp 趨勢）──
+  // ── 脂肪量 vs 瘦體重 雙線（同一時間軸；查看 recomp 趨勢）──
   const recompData = useMemo(() => recompSeries(entries, range), [entries, range])
 
-  // ── 目標體重進度（起點 fallback：profile.weightStartKg → 最早一筆體重）──
+  // ── 目標體重進度（內容來源 fallback：profile.weightStartKg → 最早一筆體重）──
   const startKg = useMemo(() => {
     if (isNum(profile.weightStartKg)) return profile.weightStartKg
     return entriesOf(entries, 'weightKg')[0]?.value
@@ -277,7 +277,7 @@ export default function BodyView() {
     () => goalProgress(weight?.latest, startKg, targetKg),
     [weight, startKg, targetKg],
   )
-  // 達標預計日：用所選區間嘅速率線性外推（速率 0 / 反方向 → null）。
+  // 達標預計日：用所選區間的速率線性外推（速率 0 / 反方向 → null）。
   const eta = useMemo(
     () => projectedGoalDate(entries, targetKg, range),
     [entries, targetKg, range],
@@ -304,7 +304,7 @@ export default function BodyView() {
             身體組成 · 趨勢
           </h2>
           <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
-            記低 InBody 式身體組成，睇增肌減脂趨勢。
+            記低 InBody 式身體組成，查看增肌減脂趨勢。
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -540,7 +540,7 @@ export default function BodyView() {
               </div>
             )}
 
-            {/* 脂肪量 vs 瘦體重 雙線疊圖（同一時間軸睇 recomp 走勢） */}
+            {/* 脂肪量 vs 瘦體重 雙線疊圖（同一時間軸查看 recomp 走勢） */}
             <div className="mt-4 border-t border-slate-100 pt-4 dark:border-slate-800">
               <h3 className="mb-2 text-xs font-semibold text-slate-600 dark:text-slate-300">
                 脂肪量 vs 瘦體重
@@ -625,7 +625,7 @@ export default function BodyView() {
 
       {/* ── 誠實私隱 ── */}
       <p className="pt-1 text-center text-xs text-slate-400 dark:text-slate-500">
-        體態數據只存喺你裝置；登入後同步到你自己嘅 Supabase。本工具僅供個人健康參考，唔構成醫療建議。
+        體態數據只存在你裝置；登入後同步到你自己的 Supabase。本工具僅供個人健康參考，不構成醫療建議。
       </p>
     </div>
   )
@@ -652,7 +652,7 @@ function GoalCard({
   eta: GoalEta
   onSetGoal: () => void
 }) {
-  // 未設目標：提示設定（唔靜靜消失）。
+  // 未設目標：提示設定（不靜靜消失）。
   if (!isNum(targetKg)) {
     return (
       <Card padded>
@@ -730,8 +730,8 @@ function GoalCard({
       {pct === null ? (
         <p className="text-xs text-slate-400 dark:text-slate-500">
           {isNum(startKg)
-            ? '起點同目標相同，未量度到進度範圍。'
-            : '需要一筆體重記錄做起點先計到進度。'}
+            ? '起點和目標相同，暫時未能量度進度範圍。'
+            : '需要一筆體重記錄作為起點，才可計算進度。'}
         </p>
       ) : (
         <>
@@ -741,10 +741,10 @@ function GoalCard({
               {reached
                 ? '已達到目標 👏'
                 : goal.remainingKg != null
-                  ? `仲差 ${Math.abs(goal.remainingKg)}kg`
+                  ? `還差 ${Math.abs(goal.remainingKg)}kg`
                   : ''}
             </span>
-            {/* 達標預計日：已達標／越過目標時唔再推「幾時達標」，免同左邊「已達到目標」對沖 */}
+            {/* 達標預計日：已達標／越過目標時不再推「幾時達標」，免同左邊「已達到目標」對沖 */}
             {!reached && (
               <span className="inline-flex items-center gap-1 text-slate-500 dark:text-slate-400">
                 <CalendarClock size={13} className="text-accent" />
@@ -901,7 +901,7 @@ function RecordModal({
   const isEdit = entry !== null
   const date = entry?.date ?? todayKey()
 
-  // 受控輸入（字串，提交時 parse；空 = 唔記該欄）
+  // 受控輸入（字串，提交時 parse；空 = 不記該欄）
   const [weight, setWeight] = useState('')
   const [bodyFat, setBodyFat] = useState('')
   const [muscle, setMuscle] = useState('')
@@ -919,7 +919,7 @@ function RecordModal({
   }
   if (!open && seeded !== null) setSeeded(null)
 
-  // 解析輸入：空字串 → undefined（唔記）；無效 → null（顯示錯誤）
+  // 解析輸入：空字串 → undefined（不記）；無效 → null（顯示錯誤）
   const parse = (s: string): number | undefined | null => {
     const t = s.trim()
     if (t === '') return undefined
@@ -977,7 +977,7 @@ function RecordModal({
         <ModalHead
           icon={isEdit ? PencilLine : Plus}
           kicker={isEdit ? `EDIT · ${fmtDate(date)}` : 'LOG TODAY'}
-          desc="各欄可留空，淨記你今日有量度嘅指標 —— 一日一條。"
+          desc="各欄可留空，只記錄你今日有量度的指標 —— 一日一條。"
         />
         {dupeToday && (
           <p className="rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-700 dark:bg-amber-500/10 dark:text-amber-300">
@@ -1091,9 +1091,9 @@ function HeightModal({
         <ModalHead
           icon={Ruler}
           kicker="HEIGHT"
-          desc="身高用嚟計 BMI —— 設一次即可，之後每筆記錄自動套用。"
+          desc="身高用來計 BMI —— 設一次即可，之後每筆記錄自動套用。"
         />
-        <Field label="身高 (cm)" hint="用嚟計 BMI">
+        <Field label="身高 (cm)" hint="用來計 BMI">
           <Input
             type="number"
             inputMode="decimal"
@@ -1137,7 +1137,7 @@ function GoalModal({
   const [seeded, setSeeded] = useState(false)
   if (open && !seeded) {
     setTarget(isNum(targetKg) ? String(targetKg) : '')
-    // 起點預填：已存起點 → 用佢；否則用最新體重（畀用家確認後落 profile）。
+    // 起點預填：已存起點 → 使用該值；否則用最新體重（給用戶確認後寫入 profile）。
     setStart(isNum(startKg) ? String(startKg) : isNum(latestKg) ? String(round(latestKg, 1)) : '')
     setSeeded(true)
   }
@@ -1152,7 +1152,7 @@ function GoalModal({
   const t = parsePos(target)
   const st = parsePos(start)
   const targetInvalid = t === null || t === undefined // 目標必填
-  const startInvalid = st === null // 起點選填，但若填咗要有效
+  const startInvalid = st === null // 起點選填，但若填了要有效
   const canSave = !targetInvalid && !startInvalid
 
   const submit = () => {
@@ -1188,7 +1188,7 @@ function GoalModal({
           kicker="GOAL"
           desc="定低目標體重，記分牌即見進度條同達標預計日。"
         />
-        <Field label="目標體重 (kg)" hint="想去到嘅體重">
+        <Field label="目標體重 (kg)" hint="想去到的體重">
           <Input
             type="number"
             inputMode="decimal"

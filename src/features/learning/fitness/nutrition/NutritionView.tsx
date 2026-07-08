@@ -85,16 +85,16 @@ import type {
 // ============================================================
 //  AI 飲食營養（自然語言 → macros）
 //  ------------------------------------------------------------
-//  ① 主輸入：用日常口語講今餐食咗咩 → AI 解析成逐項 macros
+//  ① 主輸入：用日常口語講今餐吃了什麼 → AI 解析成逐項 macros
 //     （complete() 要求只回 JSON {items:[…]}；stripJsonFence
 //      + JSON.parse，try/catch 失敗 toast）→ 逐項可微調再落地。
-//  ② 手動新增 fallback：直接填 label + 四個數（唔使 AI）。
-//  ③ 常食快速再記：由歷史去重統計最常用，一撳即加返今日（唔使再 AI）。
-//  ④ 每餐分段：揀餐段（早/午/晚/小食）落地；日誌按餐分組 + 各餐小計。
+//  ② 手動新增 fallback：直接填 label + 四個數（不用 AI）。
+//  ③ 常吃快速再記：由歷史去重統計最常用，一按即加回今日（不用再 AI）。
+//  ④ 每餐分段：選擇餐段（早/午/晚/小吃）落地；日誌按餐分組 + 各餐小計。
 //  ⑤ 當日總計 vs 目標：卡路里進度環 + 三大營養素進度條 + 剩餘。
 //  ⑥ 飲食日誌（當日按餐分組可刪）+ 近 7 日卡路里柱狀。
 //  ⑦ 目標可改（cal / P / F / C，可重設預設）。
-//  AI gate：!isAIConfigured 顯示靜態提示，但手動 / 常食照用。
+//  AI gate：!isAIConfigured 顯示靜態提示，但手動 / 常吃照用。
 //  全部計算抽去 util.ts（已測）；日期用 ../common 本地 key。
 //  舊資料無 meal → 歸入「其他」（向後相容）。
 // ============================================================
@@ -103,7 +103,7 @@ interface AIResult {
   items?: unknown
 }
 
-/** 由 AI 回應安全抽取 {items:[…]}（物件，唔係陣列，所以自家 parse）。 */
+/** 由 AI 回應安全抽取 {items:[…]}（物件，不是陣列，所以自家 parse）。 */
 function parseItemsObject(raw: string): RawFoodItem[] | null {
   const cleaned = stripJsonFence(raw)
   const tryParse = (text: string): RawFoodItem[] | null => {
@@ -130,12 +130,12 @@ function parseItemsObject(raw: string): RawFoodItem[] | null {
 }
 
 const NUTRITION_SYSTEM =
-  '你係營養師助手。使用者會用日常口語（多數係廣東話 / 中文）描述佢一餐食咗啲咩。' +
-  '請估算每一項食物嘅份量同營養，逐項輸出。' +
+  '你是營養師助手。使用者會用日常口語（多數是廣東話 / 中文）描述他一餐吃了些什麼。' +
+  '請估算每一項食物的份量同營養，逐項輸出。' +
   '只可以回一個 JSON 物件，格式：' +
   '{"items":[{"label":"食物名（簡短，含份量）","calories":數字,"proteinG":數字,"fatG":數字,"carbG":數字}]}。' +
-  'calories 單位係 kcal；proteinG / fatG / carbG 單位係克；全部用數字（唔好帶單位字串）。' +
-  '唔好輸出任何解說文字、唔好用 markdown code fence，淨係回純 JSON。'
+  'calories 單位係 kcal；proteinG / fatG / carbG 單位係克；全部用數字（不要帶單位字串）。' +
+  '不要輸出任何解說文字、不要用 markdown code fence，只回純 JSON。'
 
 type ManualForm = {
   label: string
@@ -160,24 +160,24 @@ const MEAL_META: Record<
   breakfast: { label: '早餐', icon: Coffee, color: FIT_TONE.amber },
   lunch: { label: '午餐', icon: Sun, color: FIT_TONE.emerald },
   dinner: { label: '晚餐', icon: Moon, color: FIT_TONE.indigo },
-  snack: { label: '小食', icon: Cookie, color: FIT_TONE.sky },
+  snack: { label: '小吃', icon: Cookie, color: FIT_TONE.sky },
   other: { label: '其他', icon: Utensils, color: FIT_TONE.rose },
 }
 
-// 揀餐段嘅 Pills 選項（新增飲食時揀；唔含「其他」—— 其他只係舊資料 fallback）
+// 選擇餐段的 Pills 選項（新增飲食時選擇；不含「其他」—— 其他只係舊資料 fallback）
 const MEAL_PILL_OPTIONS: { id: MealSlot; label: string }[] = [
   { id: 'breakfast', label: '早餐' },
   { id: 'lunch', label: '午餐' },
   { id: 'dinner', label: '晚餐' },
-  { id: 'snack', label: '小食' },
+  { id: 'snack', label: '小吃' },
 ]
 
-// 範例提問（撳一下即填入輸入框，降低落手門檻）
+// 範例提問（按一下即填入輸入框，降低落手門檻）
 const EXAMPLE_MEALS = [
   '半碗白飯、一塊煎雞胸、一隻烚蛋',
   '一個菠蘿包加凍奶茶',
   '兩件壽司、一碗麵豉湯',
-  '雞肉沙律加少少油醋汁',
+  '雞肉沙律加少量油醋汁',
 ] as const
 
 // 三大營養素達標小磚（記分牌讀數：色脊 + serif 大字 + 達標進度底線）
@@ -239,7 +239,7 @@ function MiniStat({
   )
 }
 
-/** 依當下時鐘估計預設餐段（純前端體驗；< 11 早 / < 15 午 / < 21 晚 / 否則小食）。 */
+/** 依當下時鐘估計預設餐段（純前端體驗；< 11 早 / < 15 午 / < 21 晚 / 否則小吃）。 */
 function guessMeal(d: Date = new Date()): MealSlot {
   const h = d.getHours()
   if (h < 11) return 'breakfast'
@@ -294,7 +294,7 @@ function CalorieRing({
         className="absolute inset-0 flex flex-col items-center justify-center text-center"
         role="status"
         aria-live="polite"
-        aria-label={`已攝取 ${Math.round(consumed)} kcal，目標 ${Math.round(goal)} kcal，${over ? `超標 ${Math.round(consumed - goal)} kcal` : `仲剩 ${left} kcal`}`}
+        aria-label={`已攝取 ${Math.round(consumed)} kcal，目標 ${Math.round(goal)} kcal，${over ? `超標 ${Math.round(consumed - goal)} kcal` : `還剩 ${left} kcal`}`}
       >
         <span className="text-[2.1rem] font-black leading-none tabular-nums slashed-zero text-slate-800 dark:text-slate-100">
           {Math.round(consumed)}
@@ -369,7 +369,7 @@ function MacroBar({
         />
       </div>
       <p className="mt-0.5 text-right text-[10px] tabular-nums text-slate-400 dark:text-slate-500">
-        {over ? `超標 ${Math.round(value - goal)}${unit}` : `仲可食 ${left}${unit}`}
+        {over ? `超標 ${Math.round(value - goal)}${unit}` : `還可吃 ${left}${unit}`}
       </p>
     </div>
   )
@@ -470,7 +470,7 @@ export default function NutritionView() {
   const [dateKey, setDateKey] = useState<string>(todayKey())
   const isToday = dateKey === todayKey()
 
-  // ── 揀餐段（AI / 手動 / 常食 共用同一個目標餐段）───────────
+  // ── 選擇餐段（AI / 手動 / 常吃 共用同一個目標餐段）───────────
   const [meal, setMeal] = useState<MealSlot>(() => guessMeal())
 
   // ── AI 自然語言輸入 ───────────────────────────────────────
@@ -491,7 +491,7 @@ export default function NutritionView() {
     carbG: String(goals.carbG),
   })
 
-  // 當日紀錄（新→舊）—— 統計卡 / 計數仍用呢個
+  // 當日紀錄（新→舊）—— 統計卡 / 計數仍用這個
   const dayEntries = useMemo(
     () =>
       entries
@@ -506,7 +506,7 @@ export default function NutritionView() {
     [dayEntries, dateKey],
   )
 
-  // 常食：由全部歷史去重統計最常用（取前 8）
+  // 常吃：由全部歷史去重統計最常用（取前 8）
   const frequent = useMemo(() => frequentFoods(entries, 8), [entries])
 
   const totals = useMemo(() => dayTotals(entries, dateKey), [entries, dateKey])
@@ -535,7 +535,7 @@ export default function NutritionView() {
       const messages: AIMessage[] = [
         {
           role: 'user',
-          content: `日期：${dateKey}\n餐食描述：${t}\n\n請逐項估算營養，只回 JSON 物件 {"items":[…]}。`,
+          content: `日期：${dateKey}\n餐吃描述：${t}\n\n請逐項估算營養，只回 JSON 物件 {"items":[…]}。`,
         },
       ]
       const out = await complete({
@@ -547,7 +547,7 @@ export default function NutritionView() {
       })
       const raw = parseItemsObject(out)
       if (!raw) {
-        toast.error('AI 回覆唔係有效 JSON，請再試或改用手動新增')
+        toast.error('AI 回覆不是有效 JSON，請再試或改用手動新增')
         return
       }
       const parsed: ParsedItem[] = []
@@ -564,11 +564,11 @@ export default function NutritionView() {
         })
       }
       if (parsed.length === 0) {
-        toast.error('AI 解析唔到食物，請講具體啲或用手動新增')
+        toast.error('AI 解析不到食物，請講更具體或用手動新增')
         return
       }
       setDrafts(parsed)
-      toast.success(`AI 解析咗 ${parsed.length} 項，校對下就可以加入日誌`)
+      toast.success(`AI 解析了 ${parsed.length} 項，校對下就可以加入日誌`)
     } catch (e) {
       toast.error((e as Error).message || 'AI 出錯，請再試')
     } finally {
@@ -583,7 +583,7 @@ export default function NutritionView() {
     setDrafts((ds) => ds.filter((d) => d.key !== key))
   }
 
-  // 落地全部草稿做當日 FoodEntry（歸入當下揀嘅餐段）
+  // 落地全部草稿做當日 FoodEntry（歸入當下選擇的餐段）
   function commitDrafts() {
     if (drafts.length === 0) return
     const now = Date.now()
@@ -606,7 +606,7 @@ export default function NutritionView() {
     toast.success(`已加入 ${n} 項到「${MEAL_META[meal].label}」`)
   }
 
-  // 常食快速再記：一撳即用同樣 macros 加返今日（歸入當下揀嘅餐段）
+  // 常吃快速再記：一按即用同樣 macros 加回今日（歸入當下選擇的餐段）
   function quickAdd(f: FrequentFood) {
     foodCol.add({
       date: dateKey,
@@ -677,7 +677,7 @@ export default function NutritionView() {
     })
   }
 
-  // 日期導航：唔畀去未來
+  // 日期導航：不給去未來
   const dayOffset = daysBetween(todayKey(), dateKey) // 0=今日, 負=過去
   const dateLabel = useMemo(() => {
     const d = fromKey(dateKey)
@@ -793,14 +793,14 @@ export default function NutritionView() {
             <Wand2 size={13} /> 入帳 · LOG
           </p>
           <h3 className="mt-1 text-base font-semibold tracking-tight text-slate-800 dark:text-slate-100">
-            講你食咗咩，AI 幫你計營養
+            描述你吃了什麼，AI 幫你計營養
           </h3>
           <p className="mt-0.5 text-[11px] text-slate-400 dark:text-slate-500">
-            例如「今日午餐食咗半碗飯、一塊雞胸、一隻蛋」
+            例如「今日午餐吃了半碗飯、一塊雞胸、一隻蛋」
           </p>
         </div>
 
-        {/* 揀餐段：AI / 手動 / 常食 加入時都歸入呢一餐 */}
+        {/* 選擇餐段：AI / 手動 / 常吃 加入時都歸入呢一餐 */}
         <div>
           <label className="mb-1.5 block text-[11px] font-medium uppercase tracking-wider text-slate-400 dark:text-slate-500">
             加入邊一餐
@@ -813,7 +813,7 @@ export default function NutritionView() {
           />
         </div>
 
-        {/* 常食快速再記：一撳即加返今日（唔使再打 / 叫 AI） */}
+        {/* 常吃快速再記：一按即加回今日（不用再打 / 叫 AI） */}
         {frequent.length > 0 && (
           <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-3 dark:border-slate-700 dark:bg-slate-800/40">
             <div className="mb-2 flex items-center gap-1.5">
@@ -823,7 +823,7 @@ export default function NutritionView() {
                 aria-hidden="true"
               />
               <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-                常食快速加（撳即記入「{MEAL_META[meal].label}」）
+                常吃快速加（按即記入「{MEAL_META[meal].label}」）
               </span>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -852,7 +852,7 @@ export default function NutritionView() {
 
         {isAIConfigured ? (
           <>
-            {/* 範例提問 chips：撳一下即填入（降低落手門檻） */}
+            {/* 範例提問 chips：按一下即填入（降低落手門檻） */}
             {!text.trim() && !busy && (
               <div className="flex flex-wrap gap-2">
                 {EXAMPLE_MEALS.map((ex) => (
@@ -874,8 +874,8 @@ export default function NutritionView() {
               onChange={(e) => setText(e.target.value)}
               disabled={busy}
               aria-busy={busy}
-              aria-label="講你食咗咩，AI 幫你計營養"
-              placeholder="今日午餐食咗半碗白飯、一塊煎雞胸、一隻烚蛋同少少西蘭花…"
+              aria-label="描述你吃了什麼，AI 幫你計營養"
+              placeholder="今日午餐吃了半碗白飯、一塊煎雞胸、一隻烚蛋和少量西蘭花…"
             />
             <div className="flex flex-wrap items-center gap-2">
               <Button
@@ -954,7 +954,7 @@ export default function NutritionView() {
                       placeholder="食物名"
                     />
                     <IconButton
-                      label="移除呢項"
+                      label="移除此項"
                       tone="danger"
                       onClick={() => removeDraft(d.key)}
                     >
@@ -1026,8 +1026,8 @@ export default function NutritionView() {
         {dayEntries.length === 0 ? (
           <EmptyState
             icon={Apple}
-            title="呢日仲未有飲食紀錄"
-            hint="用上面 AI 分析講你食咗咩，或者撳「手動新增」自己填。"
+            title="這一天尚未有飲食紀錄"
+            hint="用上面 AI 分析描述你吃了什麼，或者按「手動新增」自己填。"
           />
         ) : (
           <div className="space-y-4">

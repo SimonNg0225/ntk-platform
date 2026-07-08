@@ -10,7 +10,7 @@ import type { DayLoad, GradeBin, HeatCell, TrendPoint } from './types'
 //   - Donut：通用環形（出席率 / 課程整體進度）
 //   - GradeHistogram：成績分數區間直方圖
 //   - WeekLoadBars：本週每日課擔長條
-//   - MiniRing：單值迷你環（畀 Bento 小磚用）
+//   - MiniRing：單值迷你環（給 Bento 小磚用）
 // ============================================================
 
 const ACCENT = 'var(--accent)'

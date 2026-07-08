@@ -71,8 +71,8 @@ const SECTIONS: {
 ]
 
 const GUIDE_STEPS: FeatureGuideStep[] = [
-  { title: '揀課題', desc: '喺上方揀返今次想備課嘅課題；課題嚟自你嘅課程大綱。' },
-  { title: '補充背景（選填）', desc: '可填班級程度、節數、想強調嘅角度，AI 會貼住嚟出。' },
+  { title: '選擇課題', desc: '在上方重新選擇今次想備課的課題；課題來自你的課程大綱。' },
+  { title: '補充背景（選填）', desc: '可填班級程度、節數、想強調的角度，AI 會貼住來出。' },
   { title: '生成指引', desc: '一鍵出齊重點、學生常見誤解、教學步驟、活動、差異化同評估。' },
   { title: '下載或接落去', desc: '可匯出 Word／PDF，或直接跳去生成教材、教案或 DSE 操練。' },
 ]
@@ -115,7 +115,7 @@ export default function TeachGuide() {
   async function run() {
     const topic = topics.find((t) => t.id === topicId) ?? topics[0]
     if (!topic) {
-      toast.info('未有課題 — 可去設定揀任教科目')
+      toast.info('未有課題 — 可去設定選擇任教科目')
       return
     }
     setBusy(true)
@@ -134,7 +134,7 @@ export default function TeachGuide() {
       })
       const result = parseGuide(raw)
       if (isEmptyGuide(result)) {
-        throw new Error('AI 出唔到內容，試吓換 Pro 或補充課題說明。')
+        throw new Error('AI 出不到內容，嘗試換 Pro 或補充課題說明。')
       }
       const rec = teachGuideCol.add({
         createdAt: new Date().toISOString(),
@@ -153,7 +153,7 @@ export default function TeachGuide() {
   }
 
   async function del(id: string) {
-    const ok = await confirm({ title: '刪除呢份指引？', tone: 'danger', confirmText: '刪除' })
+    const ok = await confirm({ title: '刪除此份指引？', tone: 'danger', confirmText: '刪除' })
     if (!ok) return
     teachGuideCol.remove(id)
     if (current?.id === id) setCurrent(null)
@@ -168,7 +168,7 @@ export default function TeachGuide() {
           kicker={t('teachGuide.kicker', { defaultValue: 'Teaching Guide' })}
           title={t('teachGuide.title', { defaultValue: '教學指引' })}
           description={t('teachGuide.subtitle', {
-            defaultValue: '揀一個課題，AI 教你「點教」：重點、誤解、步驟、活動、差異化、評估。',
+            defaultValue: '選擇一個課題，AI 協助整理「如何教」：重點、誤解、步驟、活動、差異化、評估。',
           })}
         />
         <EmptyState
@@ -190,22 +190,22 @@ export default function TeachGuide() {
         kicker={t('teachGuide.kicker', { defaultValue: 'Teaching Guide' })}
         title={t('teachGuide.title', { defaultValue: '教學指引' })}
         description={t('teachGuide.subtitle', {
-          defaultValue: '揀一個課題，AI 教你「點教」：重點、誤解、步驟、活動、差異化、評估。',
+          defaultValue: '選擇一個課題，AI 協助整理「如何教」：重點、誤解、步驟、活動、差異化、評估。',
         })}
       />
 
       <FeatureGuide
         storageKey="teachGuide"
-        title={t('teachGuide.guideTitle', { defaultValue: '教學指引點用？' })}
+        title={t('teachGuide.guideTitle', { defaultValue: '教學指引使用說明' })}
         steps={GUIDE_STEPS}
       />
 
       {topics.length === 0 ? (
         <EmptyState
           icon={Compass}
-          title={t('teachGuide.noTopicTitle', { defaultValue: '仲未有課題' })}
+          title={t('teachGuide.noTopicTitle', { defaultValue: '尚未有課題' })}
           hint={t('teachGuide.noTopicHint', {
-            defaultValue: '先去設定揀返你嘅任教科目，就會帶出課程大綱嘅課題畀你備課。',
+            defaultValue: '先去設定重新選擇你的任教科目，就會帶出課程大綱的課題給你備課。',
           })}
           action={
             <Button
@@ -214,13 +214,13 @@ export default function TeachGuide() {
               icon={Settings}
               onClick={() => nav.open('__settings__')}
             >
-              {t('teachGuide.goSettings', { defaultValue: '去設定揀科目' })}
+              {t('teachGuide.goSettings', { defaultValue: '去設定選擇科目' })}
             </Button>
           }
         />
       ) : (
         <>
-          {/* 輸入：揀課題 → 補充 → 生成（純展示卡） */}
+          {/* 輸入：選擇課題 → 補充 → 生成（純展示卡） */}
           <section className="rounded-2xl border border-slate-200/80 bg-white p-4 dark:border-slate-700/60 dark:bg-slate-800">
             <div className="mb-3 flex items-center gap-1.5 text-xs font-semibold text-slate-500 dark:text-slate-300">
               <Wand2 size={13} />
@@ -246,7 +246,7 @@ export default function TeachGuide() {
               <Field
                 label={t('teachGuide.extraLabel', { defaultValue: '補充（選填）' })}
                 hint={t('teachGuide.extraHint', {
-                  defaultValue: '例如班級程度、想強調嘅角度、節數',
+                  defaultValue: '例如班級程度、想強調的角度、節數',
                 })}
               >
                 <Textarea
@@ -254,7 +254,7 @@ export default function TeachGuide() {
                   value={extra}
                   onChange={(e) => setExtra(e.target.value)}
                   placeholder={t('teachGuide.extraPlaceholder', {
-                    defaultValue: '例：中四基礎班，2 節，想多啲生活例子',
+                    defaultValue: '例：中四基礎班，2 節，想多些生活例子',
                   })}
                 />
               </Field>
@@ -262,7 +262,7 @@ export default function TeachGuide() {
                 <CreditMeter source="teach-guide" model={model} />
                 <Button icon={Sparkles} onClick={run} loading={busy}>
                   {busy
-                    ? t('teachGuide.generating', { defaultValue: '生成緊…' })
+                    ? t('teachGuide.generating', { defaultValue: '生成中…' })
                     : t('teachGuide.generate', { defaultValue: '生成指引' })}
                 </Button>
               </div>
@@ -374,7 +374,7 @@ export default function TeachGuide() {
           icon={Compass}
           title={t('teachGuide.emptyTitle', { defaultValue: '未有教學指引' })}
           hint={t('teachGuide.emptyHint', {
-            defaultValue: '喺上面揀一個課題，撳「生成指引」整第一份「點教」備課。',
+            defaultValue: '在上方選擇一個課題，按「生成指引」建立第一份「如何教」備課。',
           })}
         />
       )}

@@ -6,7 +6,7 @@ import { extractFromFile } from '../../docDigest/extract'
 // ============================================================
 //  上載教材 → 抽文字（複用 docDigest/extractFromFile）
 //  支援 PDF（pdf.js 逐頁）/ Word(.docx) / 純文字。
-//  抽好嘅文字合併後經 onChange 交俾 SlideGen 餵 AI 生成。
+//  抽好的文字合併後經 onChange 交給 SlideGen 餵 AI 生成。
 // ============================================================
 
 type FileStatus = 'reading' | 'done' | 'error'
@@ -70,7 +70,7 @@ export default function UploadDrop({
                   : {
                       ...f,
                       status: 'error',
-                      error: '抽唔到文字（可改用 PDF / Word / 文字檔）',
+                      error: '抽不到文字（可改用 PDF / Word / 文字檔）',
                     }
                 : f,
             ),
@@ -129,7 +129,7 @@ export default function UploadDrop({
           <Upload size={20} />
         </span>
         <span className="text-sm font-medium text-slate-700 dark:text-slate-200">
-          拖放教材到呢度，或㩒嚟揀檔
+          拖放教材到這裡，或㩒來選擇檔
         </span>
         <span className="text-[11px] text-slate-400 dark:text-slate-500">
           支援 PDF · Word(.docx) · 文字檔　最多 {MAX_FILES} 份

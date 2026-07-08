@@ -16,7 +16,7 @@ import type { PdfPreviewField } from './PdfTemplatePreview'
 import { extractPdfFields } from './pdfEngine'
 
 // 動態載入：PdfTemplatePreview 會 import pdfPreview（pdfjs-dist，依賴瀏覽器
-// DOMMatrix / canvas）。lazy 令 pdfjs 唔入 feature 模組圖（preloadAllFeatures /
+// DOMMatrix / canvas）。lazy 令 pdfjs 不入 feature 模組圖（preloadAllFeatures /
 // SSR 安全），到真正要顯示 PDF 預覽先載。
 const PdfTemplatePreview = lazy(() => import('./PdfTemplatePreview'))
 import {
@@ -32,17 +32,17 @@ import {
 // ============================================================
 //  行政文件 — 上載 .docx 範本（兩步：upload → preview）
 //  ------------------------------------------------------------
-//  step='upload'：揀 .docx → file.arrayBuffer() → extractTags：
+//  step='upload'：選擇 .docx → file.arrayBuffer() → extractTags：
 //    · 已有標籤 → 直接入 TemplatePreview（fields = 既有 tags，anchor=''）。
-//    · 冇／少標籤 → 顯示「AI 識別欄位」掣（gate isAIConfigured + 登入）→
+//    · 沒有／少標籤 → 顯示「AI 識別欄位」掣（gate isAIConfigured + 登入）→
 //      suggestFields(extractText) → fields = 建議（帶 anchor）→ 入 preview。
-//  step='preview'：交畀 TemplatePreview（兩欄視覺化編輯 + 儲存）。
-//  ⚠️ 手動 {標籤} 永遠係可靠後路：上載已含標籤嘅檔即直接見彩色預覽。
+//  step='preview'：交給 TemplatePreview（兩欄視覺化編輯 + 儲存）。
+//  ⚠️ 手動 {標籤} 永遠係可靠後路：上載已含標籤的檔即直接見彩色預覽。
 // ============================================================
 
 // 單個範本大小 guard（base64 後 ~1.33×；localStorage 通常 ~5MB / origin）。
 const MAX_DOCX_BYTES = 1_000_000 // ~1MB 原始檔（Word）
-// PDF 體積通常較大（含字型 / 圖），畀鬆啲；仍要顧 localStorage 配額。
+// PDF 體積通常較大（含字型 / 圖），給鬆些；仍要顧 localStorage 配額。
 const MAX_PDF_BYTES = 3_000_000 // ~3MB 原始檔（PDF）
 
 type Step = 'upload' | 'preview' | 'pdf-preview'
@@ -61,20 +61,20 @@ export default function TemplateUpload({
 
   const [step, setStep] = useState<Step>('upload')
 
-  // 上載到嘅檔（base64 + 原檔名），未揀 = null。
+  // 上載到的檔（base64 + 原檔名），未選擇 = null。
   const [docx, setDocx] = useState<{ base64: string; fileName: string } | null>(
     null,
   )
-  // 上載到嘅 PDF（base64 + 抽出嘅欄位），未揀 = null；走獨立 pdf-preview step。
+  // 上載到的 PDF（base64 + 抽出的欄位），未選擇 = null；走獨立 pdf-preview step。
   const [pdf, setPdf] = useState<{
     base64: string
     fields: PdfPreviewField[]
   } | null>(null)
   // 預填範本名（去 .docx 副檔名）。
   const [name, setName] = useState('')
-  // 既有標籤（extractTags 認到）；用嚟「已有標籤 → 直接預覽」。
+  // 既有標籤（extractTags 認到）；用來「已有標籤 → 直接預覽」。
   const [existingTags, setExistingTags] = useState<string[]>([])
-  // 入 TemplatePreview 嘅初始欄位（既有 / AI 建議）。
+  // 入 TemplatePreview 的初始欄位（既有 / AI 建議）。
   const [previewFields, setPreviewFields] = useState<PreviewField[]>([])
   const [busy, setBusy] = useState(false)
   const [aiBusy, setAiBusy] = useState(false)
@@ -99,14 +99,14 @@ export default function TemplateUpload({
       await handleDocx(file)
       return
     }
-    toast.error('請揀 Word（.docx）或 PDF（.pdf）檔。舊 .doc 暫不支援。')
+    toast.error('請選擇 Word（.docx）或 PDF（.pdf）檔。舊 .doc 暫不支援。')
   }
 
   // ── PDF 管線：讀 AcroForm 欄位 → 0 欄位友善提示；否則入 PdfTemplatePreview ──
   async function handlePdf(file: File) {
     if (file.size > MAX_PDF_BYTES) {
       toast.error(
-        `PDF 太大（${(file.size / 1024 / 1024).toFixed(1)}MB），請用 3MB 以內嘅範本。`,
+        `PDF 太大（${(file.size / 1024 / 1024).toFixed(1)}MB），請用 3MB 以內的範本。`,
       )
       return
     }
@@ -116,7 +116,7 @@ export default function TemplateUpload({
       let pdfFields
       try {
         // extractPdfFields 會 detach buffer（pdf-lib load）→ 故先取 base64 再抽。
-        // 為穩陣，base64 用獨立 copy（toBase64 內部唔 detach）。
+        // 為穩陣，base64 用獨立 copy（toBase64 內部不 detach）。
         pdfFields = await extractPdfFields(buf.slice(0))
       } catch (e) {
         // 壞檔 / 加密 PDF → extractPdfFields 拋友善中文 Error。
@@ -130,7 +130,7 @@ export default function TemplateUpload({
 
       if (pdfFields.length === 0) {
         toast.error(
-          '此 PDF 冇填寫欄位（需 fillable PDF 或改用 Word 範本）。',
+          '此 PDF 沒有填寫欄位（需 fillable PDF 或改用 Word 範本）。',
         )
         return
       }
@@ -159,7 +159,7 @@ export default function TemplateUpload({
   async function handleDocx(file: File) {
     if (file.size > MAX_DOCX_BYTES) {
       toast.error(
-        `檔案太大（${(file.size / 1024 / 1024).toFixed(1)}MB），請用 1MB 以內嘅範本。`,
+        `檔案太大（${(file.size / 1024 / 1024).toFixed(1)}MB），請用 1MB 以內的範本。`,
       )
       return
     }
@@ -171,11 +171,11 @@ export default function TemplateUpload({
       try {
         tags = extractTags(buf)
       } catch (e) {
-        // 壞檔 / 標籤錯（未閉合 {）→ docxtemplater 喺解析就拋。
+        // 壞檔 / 標籤錯（未閉合 {）→ docxtemplater 在解析就拋。
         toast.error(
           e instanceof Error
             ? e.message
-            : '無法讀取此範本，請確認係有效嘅 .docx 且 { } 成對。',
+            : '無法讀取此範本，請確認係有效的 .docx 且 { } 成對。',
         )
         setBusy(false)
         return
@@ -199,7 +199,7 @@ export default function TemplateUpload({
         )
         setStep('preview')
       }
-      // 冇標籤 → 留喺 upload step，顯示 AI 入口 / 手動引導。
+      // 沒有標籤 → 留在 upload step，顯示 AI 入口 / 手動引導。
     } catch {
       toast.error('讀取檔案失敗，請再試一次。')
     } finally {
@@ -217,7 +217,7 @@ export default function TemplateUpload({
     if (fileInputRef.current) fileInputRef.current.value = ''
   }
 
-  // ── 撳「AI 識別欄位」→ 餵範本純文字畀 AI → autoTagFields 落原檔 → 入 TemplatePreview ──
+  // ── 按「AI 識別欄位」→ 餵範本純文字給 AI → autoTagFields 落原檔 → 入 TemplatePreview ──
   async function handleSuggest() {
     if (!docx) return
     setAiBusy(true)
@@ -228,8 +228,8 @@ export default function TemplateUpload({
       const fields: SuggestedField[] = detectTemplateFields(buf)
       const have = new Set(fields.map((f) => f.tag))
 
-      // 2. AI 補充（best-effort）：接咗 AI 先試，補非表格 / inline 欄位；
-      //    AI 失敗或截斷都唔阻 —— 已有結構偵測結果兜底。
+      // 2. AI 補充（best-effort）：接了 AI 先試，補非表格 / inline 欄位；
+      //    AI 失敗或截斷都不阻 —— 已有結構偵測結果兜底。
       if (aiReady) {
         try {
           const ai = await suggestFields(extractText(buf))
@@ -240,12 +240,12 @@ export default function TemplateUpload({
             }
           }
         } catch {
-          /* AI 失敗唔阻流程 */
+          /* AI 失敗不阻流程 */
         }
       }
 
       if (fields.length === 0) {
-        toast.error('偵測唔到欄位 —— 可喺 Word 將要填嘅位置改成 {標籤} 後重新上載。')
+        toast.error('偵測不到欄位 —— 可在 Word 將要填的位置改成 {標籤} 後重新上載。')
         return
       }
 
@@ -259,19 +259,19 @@ export default function TemplateUpload({
 
       // ── 自動落標籤：inline（底線／空括號／冒號）＋ 表格格（label 格右鄰／
       //    下方空格）兩段式合併。安全：autoTagFields 內部各步重砌＋sanity，
-      //    任何失敗只係「冇加到」、唔會整爛 docx。 ──
+      //    任何失敗只係「沒有加到」、不會整爛 docx。 ──
       let taggedBase64 = docx.base64
       try {
         const injected = autoTagFields(buf, suggested)
         taggedBase64 = injected.base64
       } catch {
-        // 理論上 autoTagFields 唔會拋（內部保守）；萬一拋就退回原檔，
+        // 理論上 autoTagFields 不會拋（內部保守）；萬一拋就退回原檔，
         // 仍可入 preview（已落標籤 = 0，全部靠 TemplatePreview 手動補）。
         taggedBase64 = docx.base64
       }
 
       // 已把標籤實際寫入 docx；故所有欄位 anchor 留空（TemplatePreview
-      // 唔再重跑 inject，直接以 extractTags 判斷 placed / 未對應）。
+      // 不再重跑 inject，直接以 extractTags 判斷 placed / 未對應）。
       // 既有標籤（罕有同時有）放前。
       const merged: PreviewField[] = [
         ...existingTags.map((tag) => ({
@@ -288,11 +288,11 @@ export default function TemplateUpload({
         })),
       ]
 
-      // 用已落標籤嘅檔做 preview 來源（與儲存內容一致）。
+      // 用已落標籤的檔做 preview 來源（與儲存內容一致）。
       setDocx({ base64: taggedBase64, fileName: docx.fileName })
       setPreviewFields(merged)
       setStep('preview')
-      toast.success(`偵測咗 ${suggested.length} 個欄位，請喺預覽核對。`)
+      toast.success(`偵測了 ${suggested.length} 個欄位，請在預覽核對。`)
     } catch (e) {
       toast.error(
         e instanceof Error ? e.message : 'AI 識別欄位失敗，請再試一次。',
@@ -302,7 +302,7 @@ export default function TemplateUpload({
     }
   }
 
-  // ───────── step='pdf-preview'：交畀 PdfTemplatePreview（PDF 路徑，lazy）─────────
+  // ───────── step='pdf-preview'：交給 PdfTemplatePreview（PDF 路徑，lazy）─────────
   if (step === 'pdf-preview' && pdf) {
     return (
       <Suspense
@@ -324,7 +324,7 @@ export default function TemplateUpload({
     )
   }
 
-  // ───────── step='preview'：交畀 TemplatePreview（docx 路徑）─────────
+  // ───────── step='preview'：交給 TemplatePreview（docx 路徑）─────────
   if (step === 'preview' && docx) {
     return (
       <TemplatePreview
@@ -365,10 +365,10 @@ export default function TemplateUpload({
               <FileUp size={22} />
             </span>
             <span className="text-sm font-medium text-slate-700 dark:text-slate-200">
-              {busy ? '讀取中…' : '揀範本（Word .docx 或 PDF .pdf）'}
+              {busy ? '讀取中…' : '選擇範本（Word .docx 或 PDF .pdf）'}
             </span>
             <span className="max-w-xs text-xs text-slate-400 dark:text-slate-500">
-              Word：自動認出 {'{標籤}'} 做欄位（認唔到可用 AI 識別）；PDF：直接讀出填寫欄位
+              Word：自動認出 {'{標籤}'} 做欄位（認不到可用 AI 識別）；PDF：直接讀出填寫欄位
             </span>
           </button>
         ) : (
@@ -401,7 +401,7 @@ export default function TemplateUpload({
         )}
       </div>
 
-      {/* ───────── 認唔到標籤：引導 + AI 識別入口 ───────── */}
+      {/* ───────── 認不到標籤：引導 + AI 識別入口 ───────── */}
       {showAiEntry && (
         <>
           <div className="flex gap-2.5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">
@@ -409,8 +409,8 @@ export default function TemplateUpload({
             <div className="space-y-1">
               <p className="font-medium">範本未見 {'{標籤}'}</p>
               <p className="text-xs leading-relaxed text-amber-700 dark:text-amber-300/90">
-                你可以撳下面「自動偵測欄位」由表格結構自動標出填寫位置（免 AI）；或喺 Word
-                入面將要填嘅位置改成大括號標籤（例如{' '}
+                你可以按下面「自動偵測欄位」由表格結構自動標出填寫位置（免 AI）；或在 Word
+                中將要填的位置改成大括號標籤（例如{' '}
                 <code className="rounded bg-amber-100 px-1 py-0.5 font-mono dark:bg-amber-500/20">
                   {'{學生姓名}'}
                 </code>
@@ -429,7 +429,7 @@ export default function TemplateUpload({
                   自動偵測欄位
                 </p>
                 <p className="mt-0.5 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
-                  由表格結構自動標出要填欄位（免 AI、即時）；接咗 AI 仲會補充非表格欄位。再喺視覺化預覽核對與調整。
+                  由表格結構自動標出要填欄位（免 AI、即時）；接了 AI 還會補充非表格欄位。再在視覺化預覽核對與調整。
                 </p>
               </div>
             </div>

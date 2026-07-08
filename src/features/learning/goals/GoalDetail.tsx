@@ -53,9 +53,9 @@ import {
 } from './util'
 import { MomentumChart, ProgressRing } from './Charts'
 
-// util 嘅 Tone（含 violet / cyan）比 Badge 支援嘅多；
-// 收窄到 Badge 接受嘅 tone，唔支援嘅（violet / cyan）對應做 blue，
-// 避免傳咗 Badge 無定義嘅 key 而渲染出無樣式嘅 badge。
+// util 的 Tone（含 violet / cyan）比 Badge 支援的多；
+// 收窄到 Badge 接受的 tone，不支援的（violet / cyan）對應做 blue，
+// 避免傳了 Badge 無定義的 key 而渲染出無樣式的 badge。
 type BadgeTone = 'slate' | 'accent' | 'green' | 'amber' | 'rose' | 'blue'
 function badgeTone(tone: string): BadgeTone {
   switch (tone) {
@@ -80,7 +80,7 @@ function altitudeLabel(progress: number, isDone: boolean): string {
   if (progress >= 75) return '逼近山頂'
   if (progress >= 40) return '穩步上山'
   if (progress > 0) return '剛起步'
-  return '喺山腳'
+  return '在山腳'
 }
 
 export default function GoalDetail({
@@ -137,7 +137,7 @@ export default function GoalDetail({
       if (g.progress < 100) toast.success('恭喜達成目標')
     } else if (meta?.status === 'done') {
       // 進度跌返 <100（uncheck 里程碑 / 手動 −%）：撤銷 done，回復進行中，
-      // 令 meta.status 同 progress 一致；唔掂 'paused' 等非終態。
+      // 令 meta.status 同 progress 一致；不掂 'paused' 等非終態。
       ensureMeta({ status: 'active' })
     }
   }
@@ -156,7 +156,7 @@ export default function GoalDetail({
 
   function toggleMilestone(id: string, done: boolean) {
     milestonesCol.update(id, { done: !done, doneAt: !done ? new Date().toISOString() : undefined })
-    // 重算加權進度並寫返 goal
+    // 重算加權進度並寫回 goal
     const next = milestones.map((m) => (m.id === id ? { ...m, done: !done } : m))
     const prog = computeProgress(next, goal!.progress)
     persistProgress(goal!, prog)
@@ -377,9 +377,9 @@ export default function GoalDetail({
             </ul>
           ) : (
             <div className="rounded-xl border border-dashed border-slate-200/80 bg-slate-50/50 px-4 py-5 text-center dark:border-slate-700/60 dark:bg-slate-800/30">
-              <p className="text-sm text-slate-500 dark:text-slate-400">仲未標下沿途路標</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400">尚未標下沿途路標</p>
               <p className="mt-0.5 text-xs text-slate-400 dark:text-slate-500">
-                撳右上「編輯」拆幾個路標，海拔就會自動跟住行。
+                按右上「編輯」拆幾個路標，海拔就會自動跟住行。
               </p>
             </div>
           )}
@@ -428,7 +428,7 @@ export default function GoalDetail({
           </div>
           {checkins.length === 0 ? (
             <div className="mt-3">
-              <EmptyState icon={History} title="攀登日誌仲係白紙" hint="每次行多幾步就記一筆，砌出你嘅攀升動量。" />
+              <EmptyState icon={History} title="攀登日誌仍是白紙" hint="每次行多幾步就記一筆，砌出你的攀升動量。" />
             </div>
           ) : (
             <ul className="mt-3 space-y-2">

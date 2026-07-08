@@ -152,11 +152,11 @@ describe('buildTrend', () => {
 
   it('createdAt 係 UTC ISO，本地凌晨 → 行 localDay 配對本地桶（唔 off-by-one）', () => {
     // 用「今日本地午夜」嘅完整時間戳。localDay 會 parse 成本地時間 →
-    // 必然係今日，唔會因 UTC slice 漂去尋日。
+    // 必然係今日，唔會因 UTC slice 漂去昨天。
     const todayLocalMidnight = `${todayISO()}T00:00:00`
     const out = buildTrend([task({ createdAt: todayLocalMidnight })], 7)
     expect(out.find((p) => p.key === todayISO())!.created).toBe(1)
-    // 尋日桶唔應該被誤記
+    // 昨天桶唔應該被誤記
     expect(out.find((p) => p.key === addDays(todayISO(), -1))!.created).toBe(0)
   })
 

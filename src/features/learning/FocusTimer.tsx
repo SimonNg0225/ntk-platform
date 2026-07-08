@@ -59,15 +59,15 @@ export default function FocusTimer() {
 
   const guideSteps: FeatureGuideStep[] = [
     {
-      title: t('focus.guide1Title', { defaultValue: '揀時長同事項' }),
+      title: t('focus.guide1Title', { defaultValue: '選擇時長同事項' }),
       desc: t('focus.guide1Desc', {
-        defaultValue: '喺「計時」揀番專注時長，想記錄做緊邊樣就揀返專案。',
+        defaultValue: '在「計時」選擇番專注時長，想記錄做緊邊樣就重新選擇專案。',
       }),
     },
     {
       title: t('focus.guide2Title', { defaultValue: '開始專注' }),
       desc: t('focus.guide2Desc', {
-        defaultValue: '撳開始，期間放低手機；完成一節會自動入「紀錄」。',
+        defaultValue: '按開始，期間放低手機；完成一節會自動入「紀錄」。',
       }),
     },
     {
@@ -77,9 +77,9 @@ export default function FocusTimer() {
       }),
     },
     {
-      title: t('focus.guide4Title', { defaultValue: '睇返成果' }),
+      title: t('focus.guide4Title', { defaultValue: '查看成果' }),
       desc: t('focus.guide4Desc', {
-        defaultValue: '去「數據」睇專注趨勢同連續日，保持節奏。',
+        defaultValue: '去「數據」查看專注趨勢同連續日，保持節奏。',
       }),
     },
   ]
@@ -149,14 +149,14 @@ export default function FocusTimer() {
         })}
       />
 
-      {/* ───────── 教學引導：點用呢個功能 ───────── */}
+      {/* ───────── 教學引導：如何使用此功能 ───────── */}
       <FeatureGuide
         storageKey="focus-timer"
-        title={t('focus.guideTitle', { defaultValue: '專注計時器點用？' })}
+        title={t('focus.guideTitle', { defaultValue: '專注計時器使用說明' })}
         steps={guideSteps}
       />
 
-      {/* 計時盤要多啲留白；其餘數據頁回到常規節奏 */}
+      {/* 計時盤要多些留白；其餘數據頁回到常規節奏 */}
       <div className={cx('animate-fade-in', onTimer && 'pt-1 sm:pt-3')}>
         {tab === 'timer' && (
           <TimerView

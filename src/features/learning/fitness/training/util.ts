@@ -2,12 +2,12 @@ import { recentDays, daysBetween } from '../common'
 import type { Workout, WorkoutSet, Exercise } from './types'
 
 // ============================================================
-//  訓練記錄 — 純函式（全部可單元測試，唔掂 React / DOM）
+//  訓練記錄 — 純函式（全部可單元測試，不掂 React / DOM）
 //  ------------------------------------------------------------
 //  設計守則：
 //   - 空陣列 / 0 / 負值 / 缺 rpe 都有守衞，永不 NaN / Infinity。
 //   - 重量 / 次數一律 clamp 落 >= 0（防手動亂填負數污染統計）。
-//   - 日期一律用本地 key（由 common 攞），唔用 toISOString。
+//   - 日期一律用本地 key（由 common 取得），不用 toISOString。
 // ============================================================
 
 /** 安全數值：NaN / 非有限 → 0；可選 clamp 最小值。 */
@@ -23,19 +23,19 @@ export function setVolume(set: WorkoutSet): number {
   return num(set.reps, 0) * num(set.weightKg, 0)
 }
 
-/** 一個動作所有 set 嘅總 volume。 */
+/** 一個動作所有 set 的總 volume。 */
 export function exerciseVolume(ex: Exercise): number {
   if (!ex || !Array.isArray(ex.sets)) return 0
   return ex.sets.reduce((s, set) => s + setVolume(set), 0)
 }
 
-/** 一次訓練嘅總 volume（所有動作所有 set）。 */
+/** 一次訓練的總 volume（所有動作所有 set）。 */
 export function workoutVolume(w: Workout): number {
   if (!w || !Array.isArray(w.exercises)) return 0
   return w.exercises.reduce((s, ex) => s + exerciseVolume(ex), 0)
 }
 
-/** 一次訓練嘅總 set 數。 */
+/** 一次訓練的總 set 數。 */
 export function workoutSetCount(w: Workout): number {
   if (!w || !Array.isArray(w.exercises)) return 0
   return w.exercises.reduce(
@@ -56,7 +56,7 @@ export function est1RM(weightKg: number, reps: number): number {
 }
 
 /**
- * 由 anchor 起回推 n 日（含當日）嘅每日 volume，由舊到新。
+ * 由 anchor 起回推 n 日（含當日）的每日 volume，由舊到新。
  * 回 { key, volume }[]，長度恒為 n。
  */
 export function dailyVolume(
@@ -76,7 +76,7 @@ export function dailyVolume(
 }
 
 /**
- * 由 anchor 起回推 n 日（含當日）嘅每日 volume + 平均 RPE，由舊到新。
+ * 由 anchor 起回推 n 日（含當日）的每日 volume + 平均 RPE，由舊到新。
  * 一次過 group-by-date 計，避免逐日重掃全部 workouts。
  * 回 { key, volume, avgRpe }[]，長度恒為 n。
  * （每日 avgRpe 等同 avgRpe(workouts, 1, fromKey(key))，行為一致。）
@@ -108,7 +108,7 @@ export function dailyVolumeRpe(
 }
 
 /**
- * 由 anchor 起回推 weeks 個「7 日週」嘅每週 volume + 平均 RPE，由舊到新。
+ * 由 anchor 起回推 weeks 個「7 日週」的每週 volume + 平均 RPE，由舊到新。
  * 每週 = [anchor-7k-6 .. anchor-7k]。回 { label, volume, avgRpe, sessions }[]。
  */
 export function weeklyTrend(
@@ -158,7 +158,7 @@ export function weeklyVolume(
 }
 
 /**
- * 本週 session 數（anchor 當日及之前 6 日內有記錄嘅 workout 筆數）。
+ * 本週 session 數（anchor 當日及之前 6 日內有記錄的 workout 筆數）。
  */
 export function weeklySessions(
   workouts: Workout[],
@@ -170,8 +170,8 @@ export function weeklySessions(
 }
 
 /**
- * 近 `days` 日（含當日）所有有填 RPE 嘅 set 嘅平均值（四捨五入到 0.1）。
- * 完全冇 RPE → 0。
+ * 近 `days` 日（含當日）所有有填 RPE 的 set 的平均值（四捨五入到 0.1）。
+ * 完全沒有 RPE → 0。
  */
 export function avgRpe(
   workouts: Workout[],
@@ -185,7 +185,7 @@ export function avgRpe(
   return avgRpeOf(within)
 }
 
-/** 內部：一批 workouts 所有有填 RPE 嘅 set 平均（四捨五入 0.1）。 */
+/** 內部：一批 workouts 所有有填 RPE 的 set 平均（四捨五入 0.1）。 */
 function avgRpeOf(workouts: Workout[]): number {
   let sum = 0
   let count = 0
@@ -211,7 +211,7 @@ export interface ExercisePR {
 }
 
 /**
- * 每個動作（按 name）嘅 PR：最大單組 weightKg + 最佳估算 1RM。
+ * 每個動作（按 name）的 PR：最大單組 weightKg + 最佳估算 1RM。
  * 名以 trim 後做 key（空名跳過）。回 Map<name, {maxWeight, best1RM}>。
  */
 export function prByExercise(workouts: Workout[]): Map<string, ExercisePR> {
@@ -237,7 +237,7 @@ export function prByExercise(workouts: Workout[]): Map<string, ExercisePR> {
 }
 
 /**
- * 由全部訓練紀錄抽出曾練過嘅動作名（trim 後去重），用嚟做篩選下拉。
+ * 由全部訓練紀錄抽出曾練過的動作名（trim 後去重），用來做篩選下拉。
  * 空名跳過；按本地（zh）字序排，順序穩定。
  */
 export function exerciseNames(workouts: Workout[]): string[] {
@@ -254,9 +254,9 @@ export function exerciseNames(workouts: Workout[]): string[] {
 }
 
 /**
- * 篩選：只保留含某動作（trim 後同名）嘅 workout。
- * name 空白 → 當「全部」，原樣回傳（唔過濾）。唔改原陣列、唔排序
- * （排序交畀呼叫者，行為同既有清單一致）。
+ * 篩選：只保留含某動作（trim 後同名）的 workout。
+ * name 空白 → 當「全部」，原樣回傳（不過濾）。不改原陣列、不排序
+ * （排序交給呼叫者，行為同既有清單一致）。
  */
 export function filterByExercise(workouts: Workout[], name: string): Workout[] {
   const list = Array.isArray(workouts) ? workouts : []
@@ -282,11 +282,11 @@ export const SET_ROW_HEADER = [
 ] as const
 
 /**
- * 攤平所有訓練成「每組 set 一行」嘅二維資料（畀 CSV 匯出）。
+ * 攤平所有訓練成「每組 set 一行」的二維資料（給 CSV 匯出）。
  * 欄序對齊 SET_ROW_HEADER：日期 / 動作 / 組序 / 次數 / 重量 / RPE / 估算1RM。
  *  - 順序：date 新→舊（同 sortWorkoutsDesc），同筆內按動作 → set 原序，組序由 1 起。
- *  - 缺 RPE → ''（空格，唔當 0）。est1RM 四捨五入 0.1；reps/weight 守 NaN/負 → 0。
- *  - 空名動作標「動作」（同列表顯示一致）。冇 set 嘅動作唔出行。
+ *  - 缺 RPE → ''（空格，不當 0）。est1RM 四捨五入 0.1；reps/weight 守 NaN/負 → 0。
+ *  - 空名動作標「動作」（同列表顯示一致）。沒有 set 的動作不出行。
  */
 export function workoutsToSetRows(
   workouts: Workout[],
@@ -312,7 +312,7 @@ export function workoutsToSetRows(
   return rows
 }
 
-/** 一次訓練嘅最高單組 RPE（用嚟標疲勞，缺則 null）。 */
+/** 一次訓練的最高單組 RPE（用來標疲勞，缺則 null）。 */
 export function maxRpe(w: Workout): number | null {
   if (!w || !Array.isArray(w.exercises)) return null
   let max: number | null = null
@@ -327,7 +327,7 @@ export function maxRpe(w: Workout): number | null {
   return max
 }
 
-/** 按日期倒序（新→舊）排序，tie 用 createdAt 倒序。唔改原陣列。 */
+/** 按日期倒序（新→舊）排序，tie 用 createdAt 倒序。不改原陣列。 */
 export function sortWorkoutsDesc(workouts: Workout[]): Workout[] {
   const list = Array.isArray(workouts) ? [...workouts] : []
   return list.sort((a, b) => {
@@ -370,10 +370,10 @@ export function daysSinceLastWorkout(
 }
 
 /**
- * 由全部訓練紀錄搵某動作（按 trim 後同名）最近一次嘅最後一組 set。
- * 用嚟記錄新一組時預填 reps / weightKg（加快輸入）。
+ * 由全部訓練紀錄搜尋某動作（按 trim 後同名）最近一次的最後一組 set。
+ * 用來記錄新一組時預填 reps / weightKg（加快輸入）。
  * 「最近」= date 最新；同日 tie 用 createdAt 最新；同筆內取 sets 最後一組。
- * 搵唔到（無同名 / 嗰次無 set）→ null。rpe 故意唔帶（每組自覺費力唔同）。
+ * 搜尋不到（無同名 / 嗰次無 set）→ null。rpe 故意不帶（每組自覺費力不同）。
  */
 export function lastSetOf(
   workouts: Workout[],
@@ -396,19 +396,19 @@ export function lastSetOf(
 
 /**
  * 槓片計算器：目標總重 targetKg、空槓 barKg、每邊可用槓片（kg，預設標準片）。
- * 回每邊要上嘅槓片組合（由重到輕）+ 實際可達總重 + 差額（湊唔齊嘅餘數）。
+ * 回每邊要上的槓片組合（由重到輕）+ 實際可達總重 + 差額（湊不齊的餘數）。
  * 守則：
  *  - targetKg <= barKg（含等於 / 低過槓重）→ plates 空、差額即 target-bar（負或 0）。
  *  - 每邊重量 = (target - bar) / 2；用貪心由大到細擺片。
- *  - 「奇數 / 唔夠片」→ remainderKg > 0（湊唔到部分），achievableKg 為實際可達。
+ *  - 「奇數 / 不夠片」→ remainderKg > 0（湊不到部分），achievableKg 為實際可達。
  *  - 全程守 NaN / 負 → 0；available 會過濾非正值並由大到細排。
  */
 export interface PlatePlan {
-  /** 每邊由重到輕嘅槓片（kg）。total = bar + 2×Σ。 */
+  /** 每邊由重到輕的槓片（kg）。total = bar + 2×Σ。 */
   perSide: number[]
   /** 實際可達總重（kg）：bar + 2 × 每邊片總和。 */
   achievableKg: number
-  /** 湊唔齊嘅餘數（kg，>= 0）；0 = 啱啱好。 */
+  /** 湊不齊的餘數（kg，>= 0）；0 = 剛剛好。 */
   remainderKg: number
   /** 是否低過空槓（target < bar）。 */
   belowBar: boolean
@@ -433,7 +433,7 @@ export function computePlates(
       belowBar,
     }
   }
-  // 每邊需要嘅重量（總額外重量除以二）。
+  // 每邊需要的重量（總額外重量除以二）。
   let perSideRemaining = (target - bar) / 2
   // 只收正值、由大到細（複製避免改原陣列）。
   const plates = [...available]
@@ -451,7 +451,7 @@ export function computePlates(
   }
   const perSideUsed = perSide.reduce((s, p) => s + p, 0)
   const achievableKg = bar + perSideUsed * 2
-  // 餘數 = 目標 - 實際（每邊湊唔到嘅 ×2）；clamp 微負為 0。
+  // 餘數 = 目標 - 實際（每邊湊不到的 ×2）；clamp 微負為 0。
   const remainderKg = Math.max(0, Math.round((target - achievableKg) * 1e6) / 1e6)
   return {
     perSide,
@@ -462,7 +462,7 @@ export function computePlates(
 }
 
 /**
- * 秒數格式化做 M:SS（畀組間休息計時器顯示）。
+ * 秒數格式化做 M:SS（給組間休息計時器顯示）。
  * 負 / NaN → '0:00'；會向下取整秒。
  */
 export function formatClock(totalSeconds: number): string {

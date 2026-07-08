@@ -171,7 +171,7 @@ function ViewSwitcher({
 }
 
 // ─────────────────────────────────────────────
-//  生動 overview（參考工作儀表板）：accent hero banner + 彩色可撳統計磚。
+//  生動 overview（參考工作儀表板）：accent hero banner + 彩色可按統計磚。
 //  icon chip + 大 tabular 數字 + hover 升起 + tone 配色（accent/amber/…）。
 // ─────────────────────────────────────────────
 type Tone = 'accent' | 'amber' | 'emerald' | 'violet' | 'sky' | 'rose'
@@ -184,7 +184,7 @@ const TONE: Record<Tone, { chip: string; val: string }> = {
   rose: { chip: 'bg-rose-50 text-rose-600 dark:bg-rose-500/15 dark:text-rose-300', val: 'text-rose-500' },
 }
 
-// 可撳統計磚（撳一下即跳對應智能視圖；hover icon chip 放大 + 卡片升起）
+// 可按統計磚（按一下即跳對應智能視圖；hover icon chip 放大 + 卡片升起）
 function StatTile({
   label, value, unit, hint, icon: Icon, tone, active, onClick,
 }: {
@@ -227,7 +227,7 @@ function StatTile({
   )
 }
 
-// 彩色可撳統計磚一行（每粒對應一個智能視圖，撳一下即跳）
+// 彩色可按統計磚一行（每粒對應一個智能視圖，按一下即跳）
 function StatTilesRow({
   census, smartCounts, activeSmart, jump,
 }: {
@@ -240,7 +240,7 @@ function StatTilesRow({
     <section aria-label="快速統計" className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
       <StatTile
         label="收藏" value={census.favorites} unit="項" icon={Star} tone="amber"
-        hint={census.favorites > 0 ? '加星嘅常用教材' : '撳星收藏常用'}
+        hint={census.favorites > 0 ? '加星的常用教材' : '按星收藏常用'}
         active={activeSmart === 'favorites'} onClick={() => jump('favorites')}
       />
       <StatTile
@@ -250,18 +250,18 @@ function StatTilesRow({
       />
       <StatTile
         label="需要整理" value={smartCounts.stale} unit="項" icon={CalendarClock} tone="violet"
-        hint={smartCounts.stale > 0 ? '好耐冇用過' : '全部貼貼服服'}
+        hint={smartCounts.stale > 0 ? '好耐沒有用過' : '全部貼貼服服'}
         active={activeSmart === 'stale'} onClick={() => jump('stale')}
       />
       <StatTile
         label="未分類" value={smartCounts.unsorted} unit="項" icon={Inbox} tone="emerald"
-        hint={smartCounts.unsorted > 0 ? '未入收藏夾' : '全部歸咗檔'}
+        hint={smartCounts.unsorted > 0 ? '未入收藏夾' : '全部歸了檔'}
         active={activeSmart === 'unsorted'} onClick={() => jump('unsorted')}
       />
       <StatTile
         label="連結健康" value={census.broken > 0 ? census.broken : '良好'} unit={census.broken > 0 ? '失效' : undefined}
         icon={Link2Off} tone={census.broken > 0 ? 'rose' : 'emerald'}
-        hint={census.broken > 0 ? '撳入去整理' : '未見失效連結'}
+        hint={census.broken > 0 ? '按入去整理' : '未見失效連結'}
         active={activeSmart === 'broken'} onClick={() => jump('broken')}
       />
     </section>
@@ -289,7 +289,7 @@ export default function ResourceLibrary() {
   const topicName = (id?: string) =>
     id ? (topics.find((t) => t.id === id)?.topic ?? '') : ''
 
-  // 清孤兒 meta（資源刪咗）
+  // 清孤兒 meta（資源刪了）
   useEffect(() => {
     pruneOrphans(new Set(resources.map((r) => r.id)))
   }, [resources])
@@ -337,26 +337,26 @@ export default function ResourceLibrary() {
     }
   }, [allRows])
 
-  // hero 動態語：按來源 / 庫狀態揀最該講嗰句（生動 + 有指引）
+  // hero 動態語：按來源 / 庫狀態選擇最該講那句（生動 + 有指引）
   const heroLine =
     source === 'drive'
-      ? '正瀏覽 Google Drive（live 唯讀）。想永久收藏、評分或歸類，切返「我的庫」。'
+      ? '正瀏覽 Google Drive（live 唯讀）。想永久收藏、評分或歸類，請切換到「我的庫」。'
       : census.total === 0
         ? '由第一條連結或一份講義開始 —— 貼上就自動幫你猜類型、建檔歸類。'
         : census.broken > 0
-          ? `有 ${census.broken} 條失效連結，撳下面「連結健康」清理返。`
+          ? `有 ${census.broken} 條失效連結，按下面「連結健康」清理。`
           : smartCounts.stale > 0
-            ? `${smartCounts.stale} 項好耐冇用過，得閒整理下保持貼服。`
-            : `館藏 ${census.total} 項、累計借閱 ${census.opens} 次 —— 幾時想用，一搜即返。`
+            ? `${smartCounts.stale} 項好耐沒有用過，有空整理下保持貼服。`
+            : `館藏 ${census.total} 項、累計借閱 ${census.opens} 次 —— 需要時，一搜即得。`
 
-  // 目前生效嘅智能視圖（folderId 為 all 先當 smart 生效）→ 畀統計磚高亮
+  // 目前生效的智能視圖（folderId 為 all 先當 smart 生效）→ 給統計磚高亮
   const activeSmart: SmartView | null = filter.folderId === 'all' ? filter.smart : null
 
-  // 教學引導步驟：講清「點用」呢個資源庫（新增 → 歸類 → 搜尋取用）
+  // 教學引導步驟：說清楚「如何使用」這個資源庫（新增 → 歸類 → 搜尋取用）
   const LIB_GUIDE: FeatureGuideStep[] = [
-    { title: '貼連結即收藏', desc: '撳「新增資源」貼上網址或加講義，系統自動猜類型、抽網域。' },
+    { title: '貼連結即收藏', desc: '按「新增資源」貼上網址或加講義，系統自動猜類型、抽網域。' },
     { title: '分收藏夾歸類', desc: '開收藏夾分門別類；用卡片視圖加星標記常用教材。' },
-    { title: '一搜即取用', desc: '頂部搜尋或撳統計磚（收藏／需要整理）快速篩出要嘅資源。' },
+    { title: '一搜即取用', desc: '頂部搜尋或按統計磚（收藏／需要整理）快速篩出要的資源。' },
   ]
 
   // 鍵盤：/ 聚焦搜尋、n 新增
@@ -416,7 +416,7 @@ export default function ResourceLibrary() {
   const removeOne = async (id: string, title: string) => {
     const ok = await confirm({
       title: '刪除資源？',
-      message: `「${title}」將會被永久刪除，呢個動作無法復原。`,
+      message: `「${title}」將會被永久刪除，此動作無法復原。`,
       confirmText: '刪除',
       tone: 'danger',
     })
@@ -451,7 +451,7 @@ export default function ResourceLibrary() {
   const bulkDelete = async () => {
     const ok = await confirm({
       title: `刪除 ${selected.size} 項資源？`,
-      message: '呢個動作無法復原。',
+      message: '此動作無法復原。',
       confirmText: '刪除',
       tone: 'danger',
     })
@@ -531,14 +531,14 @@ export default function ResourceLibrary() {
         <DriveView />
       ) : (
       <>
-      {/* ───────── 教學引導：教用家「點用」呢個資源庫（可摺疊 / 永久收起） ───────── */}
+      {/* ───────── 教學引導：教用家「如何使用」這個資源庫（可摺疊 / 永久收起） ───────── */}
       <FeatureGuide
         storageKey="resourceLibrary"
-        title="資源庫點用？"
+        title="資源庫使用說明"
         steps={LIB_GUIDE}
       />
 
-      {/* ───────── 彩色可撳統計磚（撳一下即跳對應智能視圖） ───────── */}
+      {/* ───────── 彩色可按統計磚（按一下即跳對應智能視圖） ───────── */}
       <StatTilesRow
         census={census}
         smartCounts={smartCounts}
@@ -697,7 +697,7 @@ export default function ResourceLibrary() {
               <EmptyState
                 icon={CalendarClock}
                 title="資源庫好乾淨"
-                hint="冇久未開啟或者從未用過嘅資源，全部都整理得貼貼服服。"
+                hint="沒有久未開啟或者從未用過的資源，全部都整理得貼貼服服。"
                 action={
                   <Button
                     size="sm"
@@ -705,7 +705,7 @@ export default function ResourceLibrary() {
                     icon={BookMarked}
                     onClick={() => patch({ smart: 'all', folderId: 'all' })}
                   >
-                    睇全部資源
+                    查看全部資源
                   </Button>
                 }
               />
@@ -713,8 +713,8 @@ export default function ResourceLibrary() {
               <EmptyState
                 icon={BookMarked}
                 art="empty-resources"
-                title="呢格抽屜暫時係空嘅"
-                hint="撳「新增資源」開始建檔，貼條連結就會自動幫你猜類型歸類；又或者調整下篩選，睇返其他抽屜。"
+                title="此抽屜暫時是空的"
+                hint="按「新增資源」開始建檔，貼條連結就會自動幫你猜類型歸類；又或者調整下篩選，查看其他抽屜。"
                 action={
                   <Button icon={Plus} onClick={() => setShowAdd(true)}>
                     新增資源
@@ -1371,7 +1371,7 @@ function BoardView({
             <div className="flex-1 space-y-2 overflow-y-auto p-2" style={{ maxHeight: '60vh' }}>
               {items.length === 0 ? (
                 <p className="px-3 py-8 text-center text-xs leading-relaxed text-slate-400 dark:text-slate-500">
-                  呢個抽屜仲空，喺其他卡片嘅選單揀「移到呢度」歸檔。
+                  這個抽屜還空，在其他卡片的選單選擇「移到這裡」歸檔。
                 </p>
               ) : (
                 items.map(({ res, meta, domain }) => (
@@ -1565,13 +1565,13 @@ function FolderManager({
       title: `刪除收藏夾「${f.name}」？`,
       message:
         n > 0
-          ? `入面 ${n} 項資源唔會被刪，只會變返「未分類」。`
+          ? `中 ${n} 項資源不會被刪除，只會重設為「未分類」。`
           : '此收藏夾沒有資源。',
       confirmText: '刪除',
       tone: 'danger',
     })
     if (!ok) return
-    // 把該夾下嘅資源 meta 解除歸屬
+    // 把該夾下的資源 meta 解除歸屬
     for (const m of resourceMetaCol.get())
       if (m.folderId === f.id) upsertMeta(m.id, { folderId: undefined })
     resourceFoldersCol.remove(f.id)
@@ -1623,7 +1623,7 @@ function FolderManager({
         {/* 列表 */}
         {ordered.length === 0 ? (
           <p className="py-6 text-center text-sm text-slate-400 dark:text-slate-500">
-            仲未有收藏抽屜，喺上面開一個開始歸類。
+            尚未有收藏抽屜，在上方開一個開始歸類。
           </p>
         ) : (
           <ul className="space-y-1.5">
@@ -1696,7 +1696,7 @@ function FolderManager({
 
         <p className="flex items-center gap-1.5 text-[11px] text-slate-400">
           <Sparkles size={12} />
-          提示：喺看板視圖可以用卡片選單把資源移到收藏夾。
+          提示：在看板視圖可以用卡片選單把資源移到收藏夾。
         </p>
       </div>
     </Modal>

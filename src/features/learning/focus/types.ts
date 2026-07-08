@@ -1,16 +1,16 @@
 import type { Entity } from '../../../lib/store'
 
 // ============================================================
-//  專注番茄鐘 — 功能專屬型別（喺自己檔定義，唔掂 data/types.ts）
+//  專注番茄鐘 — 功能專屬型別（在自己檔定義，不掂 data/types.ts）
 //  ------------------------------------------------------------
 //  設計參考：Forest / Focus To-Do / Be Focused
-//  - 共用嘅 FocusSession（data/types）只有 4 欄，太淺；
-//    呢度自己一套更深嘅 FocusLog（標籤 / 專案 / 中斷 / 評分 / 筆記）。
-//  - 完成嘅專注節同時寫返共用 focusCol（向後相容、儀表板可見），
-//    再喺呢度寫一份富資料版本做統計。
+//  - 共用的 FocusSession（data/types）只有 4 欄，太淺；
+//    這裡自己一套更深的 FocusLog（標籤 / 專案 / 中斷 / 評分 / 筆記）。
+//  - 完成的專注節同時寫回共用 focusCol（向後相容、儀表板可見），
+//    再在這裡寫一份富資料版本做統計。
 // ============================================================
 
-// ───────── 專案（番茄歸類；類似 Focus To-Do 嘅 Project）─────────
+// ───────── 專案（番茄歸類；類似 Focus To-Do 的 Project）─────────
 export interface FocusProject extends Entity {
   name: string
   color: string // CalColor key（自家 PALETTE）

@@ -85,9 +85,9 @@ describe('stripTags', () => {
 })
 
 describe('relativeTime（epoch diff，與時區無關）', () => {
-  it('<1 分鐘 → 啱啱', () => {
-    expect(relativeTime(minus(30 * 1000), NOW)).toBe('啱啱')
-    expect(relativeTime(minus(0), NOW)).toBe('啱啱')
+  it('<1 分鐘 → 剛剛', () => {
+    expect(relativeTime(minus(30 * 1000), NOW)).toBe('剛剛')
+    expect(relativeTime(minus(0), NOW)).toBe('剛剛')
   })
   it('分鐘 / 小時 / 日', () => {
     expect(relativeTime(minus(5 * 60000), NOW)).toBe('5 分鐘前')
@@ -115,8 +115,8 @@ describe('relativeTime（epoch diff，與時區無關）', () => {
   it('無效 iso → 空字串', () => {
     expect(relativeTime('not-a-date', NOW)).toBe('')
   })
-  it('未來時間（now < t）→ 啱啱', () => {
-    expect(relativeTime(new Date(NOW + 5 * 60000).toISOString(), NOW)).toBe('啱啱')
+  it('未來時間（now < t）→ 剛剛', () => {
+    expect(relativeTime(new Date(NOW + 5 * 60000).toISOString(), NOW)).toBe('剛剛')
   })
 })
 
@@ -157,7 +157,7 @@ describe('guessKind（離線規則式）', () => {
     expect(guessKind('下星期五考試 deadline')).toBe('countdown')
   })
   it('行事曆：時間 / 開會', () => {
-    expect(guessKind('聽日下午 3:30 開會')).toBe('event')
+    expect(guessKind('明天下午 3:30 開會')).toBe('event')
   })
   it('待辦：行動詞', () => {
     expect(guessKind('記得買牛奶')).toBe('task')

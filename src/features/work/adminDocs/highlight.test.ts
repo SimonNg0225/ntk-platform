@@ -39,7 +39,7 @@ describe('highlightTagsInElement', () => {
 
     highlightTagsInElement(el, tagColors)
 
-    // 1) 啱啱 2 個 mark.adoc-tag-hl（name / date）
+    // 1) 剛剛 2 個 mark.adoc-tag-hl（name / date）
     const marks = el.querySelectorAll('mark.adoc-tag-hl')
     expect(marks.length).toBe(2)
 

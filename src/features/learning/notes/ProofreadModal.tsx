@@ -15,7 +15,7 @@ export default function ProofreadModal({
   onClose,
 }: {
   content: string
-  /** 套用後嘅完整內文 */
+  /** 套用後的完整內文 */
   onApply: (next: string) => void
   onClose: () => void
 }) {
@@ -55,7 +55,7 @@ export default function ProofreadModal({
     const iss = issues?.[i]
     if (!iss) return
     if (!content.includes(iss.quote)) {
-      toast.info('搵唔到原文，可能已經改咗')
+      toast.info('搜尋不到原文，可能已經改了')
       return
     }
     onApply(content.replace(iss.quote, iss.suggestion))
@@ -77,7 +77,7 @@ export default function ProofreadModal({
       }
     })
     if (count === 0) {
-      toast.info('冇可套用嘅修改')
+      toast.info('沒有可套用的修改')
       return
     }
     onApply(next)
@@ -97,15 +97,15 @@ export default function ProofreadModal({
         <div className="py-10 text-center">
           <Check size={28} className="mx-auto text-emerald-500" />
           <p className="mt-2 text-sm font-medium text-slate-600 dark:text-slate-300">
-            冇發現明顯問題 ✅
+            沒有發現明顯問題 ✅
           </p>
-          <p className="mt-1 text-xs text-slate-400">錯字同知識點都睇唔出問題。</p>
+          <p className="mt-1 text-xs text-slate-400">錯字同知識點都查看不出問題。</p>
         </div>
       ) : (
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <p className="text-xs text-slate-500 dark:text-slate-400">
-              搵到 {issues.length} 項，{pending} 項待處理
+              找到 {issues.length} 項，{pending} 項待處理
             </p>
             {pending > 0 && (
               <Button size="sm" variant="secondary" onClick={applyAll}>

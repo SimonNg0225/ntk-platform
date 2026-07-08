@@ -69,7 +69,7 @@ export function parseTags(text: string): string[] {
   return out
 }
 
-/** 把文字中嘅 #標籤起首符號剝走（轉做正式資料時用）*/
+/** 把文字中的 #標籤起首符號剝走（轉做正式資料時用）*/
 export function stripTags(text: string): string {
   return text.replace(TAG_RE, '$1').trim()
 }
@@ -80,7 +80,7 @@ export function relativeTime(iso: string, now = Date.now()): string {
   if (Number.isNaN(t)) return ''
   const diff = now - t
   const min = Math.floor(diff / 60000)
-  if (min < 1) return '啱啱'
+  if (min < 1) return '剛剛'
   if (min < 60) return `${min} 分鐘前`
   const hr = Math.floor(min / 60)
   if (hr < 24) return `${hr} 小時前`
@@ -90,8 +90,8 @@ export function relativeTime(iso: string, now = Date.now()): string {
   if (wk < 5) return `${wk} 週前`
   const mo = Math.floor(day / 30)
   if (mo < 12) return `${mo} 個月前`
-  // 用月份基準換算年（避免 day/30 與 day/365 唔一致，喺第 360–364 日
-  // 出現「0 年前」嘅錯值）
+  // 用月份基準換算年（避免 day/30 與 day/365 不一致，在第 360–364 日
+  // 出現「0 年前」的錯值）
   return `${Math.floor(mo / 12)} 年前`
 }
 
@@ -131,33 +131,33 @@ export function dayGroupLabel(key: string, now = Date.now()): string {
   return sameYear ? `${m}月${d}日` : `${y}年${m}月${d}日`
 }
 
-// ───────── 離線啟發式分類建議（唔使 AI 都有得用）─────────
+// ───────── 離線啟發式分類建議（不用 AI 都有得用）─────────
 interface Rule {
   kind: InboxKind
   re: RegExp
 }
 // 次序 = 優先（先 match 先用）
 const RULES: Rule[] = [
-  { kind: 'question', re: /[?？]\s*$|^(?:點解|為何|為什麼|乜嘢|什麼|如何|whether|explain|解釋|計算|證明)/i },
+  { kind: 'question', re: /[?？]\s*$|^(?:為什麼|為何|點解|乜嘢|什麼|如何|是否|係咪|識唔識|whether|explain|解釋|計算|證明)/i },
   { kind: 'countdown', re: /(倒數|deadline|死線|限期|考試|測驗|exam|due|到期|限\s*\d|還有.*日)/i },
-  { kind: 'event', re: /(\d{1,2}\s*[:：]\s*\d{2}|\d{1,2}\s*月\s*\d{1,2}|今晚|聽日|明天|下午|上午|早上|傍晚|開會|會議|約|meeting|appointment|預約|星期[一二三四五六日])/i },
+  { kind: 'event', re: /(\d{1,2}\s*[:：]\s*\d{2}|\d{1,2}\s*月\s*\d{1,2}|今晚|明天|明天|下午|上午|早上|傍晚|開會|會議|約|meeting|appointment|預約|星期[一二三四五六日])/i },
   { kind: 'task', re: /(記得|要|做|交|買|寄|聯絡|跟進|完成|批改|預備|準備|todo|follow\s*up|回覆|提交|安排|處理)/i },
-  { kind: 'reference', re: /(https?:\/\/|www\.|參考|reference|連結|link|睇下|bookmark)/i },
+  { kind: 'reference', re: /(https?:\/\/|www\.|參考|reference|連結|link|查看下|bookmark)/i },
 ]
 
-/** 由文字猜分類（離線、規則式）；猜唔到回 'note' */
+/** 由文字猜分類（離線、規則式）；猜不到回 'note' */
 export function guessKind(text: string): InboxKind {
   const t = text.trim()
   for (const r of RULES) if (r.re.test(t)) return r.kind
   return 'note'
 }
 
-// ───────── 合併 item + meta（畀 UI 用）─────────
+// ───────── 合併 item + meta（給 UI 用）─────────
 export interface InboxRow {
   item: InboxItem
   meta?: InboxMeta
   kind?: InboxKind // meta.kind ?? guessKind()
-  guessed: boolean // kind 係咪靠估（meta 冇 kind）
+  guessed: boolean // kind 係咪靠估（meta 沒有 kind）
   tags: string[] // meta.tags ?? parseTags(text)
   pinned: boolean
   archived: boolean
@@ -212,7 +212,7 @@ export function computeStats(rows: InboxRow[], now = Date.now()): InboxStats {
   const byKind = EMPTY_BY_KIND()
   for (const r of inbox) if (r.kind) byKind[r.kind] += 1
 
-  // 近 14 日擷取量（用全部 rows 嘅 createdAt）
+  // 近 14 日擷取量（用全部 rows 的 createdAt）
   const days: { key: string; label: string; count: number }[] = []
   for (let i = 13; i >= 0; i--) {
     const d = new Date(now - i * 864e5)
@@ -261,13 +261,13 @@ export function computeStats(rows: InboxRow[], now = Date.now()): InboxStats {
   }
 }
 
-// ───────── 「拖延中」：久未處理嘅待處理項 ─────────
-// GTD inbox 大忌係嘢掉咗入去就沉底。揾出擱置超過 N 日嘅待處理項，
-// 喺頂顯示輕量提示並可一 click 揭最舊。純衍生、零 schema 改動。
+// ───────── 「拖延中」：久未處理的待處理項 ─────────
+// GTD inbox 大忌係嘢掉了入去就沉底。揾出擱置超過 N 日的待處理項，
+// 在頂顯示輕量提示並可一 click 揭最舊。純衍生、零 schema 改動。
 export const STALE_DAYS = 7
 
 /**
- * 篩出擱置超過 `days` 日嘅「待處理」項目（已歸檔不計），按最舊→最新排。
+ * 篩出擱置超過 `days` 日的「待處理」項目（已歸檔不計），按最舊→最新排。
  * `days <= 0` 視為「全部待處理」。無效 createdAt 一律排除。
  */
 export function staleInboxRows(
@@ -285,12 +285,12 @@ export function staleInboxRows(
     .sort(byOldest)
 }
 
-/** 純粹按時間舊→新（最舊排頭），畀「按最舊排」用 */
+/** 純粹按時間舊→新（最舊排頭），給「按最舊排」用 */
 export function byOldest(a: InboxRow, b: InboxRow): number {
   return a.item.createdAt.localeCompare(b.item.createdAt)
 }
 
-// ───────── 全部已用標籤（畀 filter 用）─────────
+// ───────── 全部已用標籤（給 filter 用）─────────
 export function allTags(rows: InboxRow[]): string[] {
   const set = new Set<string>()
   for (const r of rows) for (const t of r.tags) set.add(t)

@@ -3,9 +3,9 @@ import i18n from '../../../i18n'
 // ============================================================
 //  AI 助手 — 介面英文資源（side-effect bundle）
 //  ------------------------------------------------------------
-//  解耦設計：呢個檔淨係 addResourceBundle('en', …) 注入英文，
-//  唔郁共用 i18n/index.ts。namespace 用 'aiasst'，deepMerge +
-//  overwrite = true。zh-HK 保持原樣（唔加 bundle）—— 元件度用
+//  解耦設計：這個檔只 addResourceBundle('en', …) 注入英文，
+//  不郁共用 i18n/index.ts。namespace 用 'aiasst'，deepMerge +
+//  overwrite = true。zh-HK 保持原樣（不加 bundle）—— 元件度用
 //  t('aiasst.<key>', { defaultValue: '<原文廣東話>' }) 取值，
 //  廣東話介面 byte-identical。
 // ============================================================

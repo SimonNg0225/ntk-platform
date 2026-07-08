@@ -41,12 +41,12 @@ export default function FillForm({
 //  ------------------------------------------------------------
 //  按 template.fields 出表單（text=Input / multiline=Textarea / date=date）
 //  →「生成文件」fillDocx → Blob：
-//    (a) docx-preview renderAsync 入預覽容器（失敗只警告、唔阻下載）；
+//    (a) docx-preview renderAsync 入預覽容器（失敗只警告、不阻下載）；
 //    (b)「下載 .docx」Blob→anchor download（檔名 = 範本名.docx）。
 //  fillDocx 拋錯 → toast.error。
 //  Phase 2：「AI 草擬內容」—— 輸入指示（如「家長通知：下週三停課」）→
 //  draftContent 餵欄位 label + 指示 → 回 { tag: 內容 } 填入表單（可再改）。
-//  ⚠️ AI 草擬只填空欄，唔覆蓋用戶已填內容；未接 AI 時 gate 住、Phase 1
+//  ⚠️ AI 草擬只填空欄，不覆蓋用戶已填內容；未接 AI 時 gate 住、Phase 1
 //  手動填寫不受影響。
 // ============================================================
 
@@ -67,7 +67,7 @@ function FillFormDocx({
   )
   // 輸出文件標題（= 下載檔名）；預設 = 範本名，可逐次自訂。
   const [docTitle, setDocTitle] = useState(template.name)
-  // 已生成嘅 Blob（畀下載用）。
+  // 已生成的 Blob（給下載用）。
   const [blob, setBlob] = useState<Blob | null>(null)
   const [generating, setGenerating] = useState(false)
   const [previewing, setPreviewing] = useState(false)
@@ -92,7 +92,7 @@ function FillFormDocx({
   }, [template.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   function invalidateOutput() {
-    // 改咗欄位 → 舊預覽 / Blob 過時，清走以免下載到舊版。
+    // 改了欄位 → 舊預覽 / Blob 過時，清走以免下載到舊版。
     if (blob) {
       setBlob(null)
       if (previewRef.current) previewRef.current.innerHTML = ''
@@ -120,7 +120,7 @@ function FillFormDocx({
       return
     }
     setBlob(outBlob)
-    // 必填提示：漏填欄位 docxtemplater 會靜默留空白，故喺度主動提醒（唔阻生成）。
+    // 必填提示：漏填欄位 docxtemplater 會靜默留空白，故在這裡主動提醒（不阻生成）。
     const empties = template.fields.filter((f) => !(values[f.tag] ?? '').trim())
     if (empties.length > 0) {
       const names = empties.map((f) => f.label || f.tag).slice(0, 5).join('、')
@@ -132,11 +132,11 @@ function FillFormDocx({
     }
     setGenerating(false)
 
-    // 預覽係輔助：render 失敗只警告、唔阻下載。
+    // 預覽係輔助：render 失敗只警告、不阻下載。
     void renderPreview(outBlob)
   }
 
-  // ── Phase 2：AI 草擬內容 → 填入表單（只填空欄，唔覆蓋已填）──
+  // ── Phase 2：AI 草擬內容 → 填入表單（只填空欄，不覆蓋已填）──
   async function handleDraft() {
     if (!aiReady) return
     if (!instruction.trim()) {
@@ -148,10 +148,10 @@ function FillFormDocx({
       const result = await draftContent(template.fields, instruction)
       const keys = Object.keys(result).filter((k) => result[k]?.trim())
       if (keys.length === 0) {
-        toast.info('AI 暫時草擬唔到內容，可改下指示再試，或自行輸入。')
+        toast.info('AI 暫時草擬不到內容，可改下指示再試，或自行輸入。')
         return
       }
-      // 只填「目前空白」嘅欄位，保留用戶已輸入內容。
+      // 只填「目前空白」的欄位，保留用戶已輸入內容。
       let filled = 0
       setValues((prev) => {
         const next = { ...prev }
@@ -167,7 +167,7 @@ function FillFormDocx({
       if (filled > 0) {
         toast.success(`AI 已草擬 ${filled} 個欄位，可再修改後生成文件。`)
       } else {
-        toast.info('相關欄位你已填咗內容，AI 冇覆蓋。可清空欄位再草擬。')
+        toast.info('相關欄位你已填了內容，AI 沒有覆蓋。可清空欄位再草擬。')
       }
     } catch (e) {
       toast.error(
@@ -208,7 +208,7 @@ function FillFormDocx({
     document.body.appendChild(a)
     a.click()
     a.remove()
-    // 釋放：畀瀏覽器完成下載後 revoke。
+    // 釋放：給瀏覽器完成下載後 revoke。
     setTimeout(() => URL.revokeObjectURL(url), 1000)
   }
 
@@ -267,7 +267,7 @@ function FillFormDocx({
               <p className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400">
                 {!isAIConfigured
                   ? 'AI 助手未啟用（需設定 Supabase + 部署 gemini Edge Function，見 docs/SETUP.md）。你仍可直接逐欄手動填寫。'
-                  : '請先喺左下角用 Google 登入，先可以用 AI 草擬。手動填寫不受影響。'}
+                  : '請先在左下角使用 Google 登入，以使用 AI 草擬。手動填寫不受影響。'}
               </p>
             )}
           </div>
@@ -356,7 +356,7 @@ function FillFormDocx({
                 載入預覽中…
               </div>
             )}
-            {/* docx-preview 會將文件渲染入此容器；自身有頁面樣式，畀佢捲動。 */}
+            {/* docx-preview 會將文件渲染入此容器；自身有頁面樣式，給他捲動。 */}
             <div
               ref={previewRef}
               className="admin-doc-preview max-h-[60vh] overflow-auto p-3 sm:p-4"
@@ -383,13 +383,13 @@ function sanitizeFileName(name: string): string {
 //    text → Input、multiline → Textarea、checkbox → 切換、
 //    dropdown → Select（用 field.options；空選項退 Input）。
 //  「生成 PDF」→ fillPdf（async）→ Blob：
-//    (a) renderPdfWithFieldBoxes 渲染填好版入預覽（失敗只警告、唔阻下載）；
+//    (a) renderPdfWithFieldBoxes 渲染填好版入預覽（失敗只警告、不阻下載）；
 //    (b)「下載 PDF」Blob→anchor download（檔名 = 標題.pdf）。
-//  fillPdf 拋錯 → toast.error。版面 100% 保留（唔 flatten）。
+//  fillPdf 拋錯 → toast.error。版面 100% 保留（不 flatten）。
 //  ⚠️ docx 路徑（FillFormDocx）完全獨立、不受影響。
 // ============================================================
 
-// checkbox「勾」時寫入嘅值（對齊 pdfEngine 嘅 TRUTHY，'yes' 屬之）。
+// checkbox「勾」時寫入的值（對齊 pdfEngine 的 TRUTHY，'yes' 屬之）。
 const CHECKBOX_ON = 'yes'
 const CHECKBOX_OFF = 'no'
 
@@ -463,7 +463,7 @@ function FillFormPdf({
     }
     setBlob(outBlob)
 
-    // 必填提示：漏填欄位會留空（checkbox 唔計）；主動提醒，唔阻生成。
+    // 必填提示：漏填欄位會留空（checkbox 不計）；主動提醒，不阻生成。
     const empties = template.fields.filter(
       (f) => f.type !== 'checkbox' && !(values[f.tag] ?? '').trim(),
     )
@@ -477,11 +477,11 @@ function FillFormPdf({
     }
     setGenerating(false)
 
-    // 預覽係輔助：render 失敗只警告、唔阻下載。
+    // 預覽係輔助：render 失敗只警告、不阻下載。
     void renderFilledPreview(outBlob)
   }
 
-  // 用 pdf.js 渲染「填好版」PDF（唔疊欄位框，純睇結果）。
+  // 用 pdf.js 渲染「填好版」PDF（不疊欄位框，純查看結果）。
   async function renderFilledPreview(b: Blob) {
     const container = previewRef.current
     if (!container) return
@@ -490,10 +490,10 @@ function FillFormPdf({
     container.innerHTML = ''
     try {
       // 動態 import：pdfjs-dist 體積大 + 依賴瀏覽器 API（DOMMatrix / canvas），
-      // 到要預覽先載 —— 令 pdfjs 唔入 feature 模組圖（preloadAllFeatures / SSR 安全）。
+      // 到要預覽先載 —— 令 pdfjs 不入 feature 模組圖（preloadAllFeatures / SSR 安全）。
       const { renderPdfWithFieldBoxes } = await import('./pdfPreview')
       const buf = await b.arrayBuffer()
-      // 傳空欄位陣列 + 空色表 → 只渲染頁面、唔疊彩色框（填好嘅值已喺頁面上）。
+      // 傳空欄位陣列 + 空色表 → 只渲染頁面、不疊彩色框（填好的值已在頁面上）。
       await renderPdfWithFieldBoxes(container, buf, [], new Map())
     } catch {
       setPreviewFailed(true)
@@ -524,7 +524,7 @@ function FillFormPdf({
       <div className="flex items-start gap-2.5 rounded-xl border border-accent/20 bg-accent-soft/40 px-3.5 py-3 text-sm text-slate-600 dark:border-accent/25 dark:bg-accent/10 dark:text-slate-300">
         <FileCheck2 size={16} className="mt-0.5 shrink-0 text-accent" />
         <p className="leading-relaxed">
-          逐欄填寫後撳「生成 PDF」，系統會將內容填入原 PDF 表單，
+          逐欄填寫後按「生成 PDF」，系統會將內容填入原 PDF 表單，
           <span className="font-medium text-accent-strong dark:text-accent">
             版面原樣保留
           </span>
@@ -547,7 +547,7 @@ function FillFormPdf({
 
         {template.fields.map((f) => {
           const label = f.label || f.tag
-          // checkbox：標題列右側放切換，唔用 Field 包（自有 layout）。
+          // checkbox：標題列右側放切換，不用 Field 包（自有 layout）。
           if (f.type === 'checkbox') {
             const checked = isCheckboxOn(values[f.tag])
             return (
@@ -604,7 +604,7 @@ function FillFormPdf({
                     ))}
                   </Select>
                 ) : (
-                  // 下拉但冇選項（罕有）→ 退純文字輸入。
+                  // 下拉但沒有選項（罕有）→ 退純文字輸入。
                   <Input
                     value={values[f.tag] ?? ''}
                     onChange={(e) => setVal(f.tag, e.target.value)}

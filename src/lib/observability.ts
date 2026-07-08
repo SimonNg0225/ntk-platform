@@ -3,9 +3,9 @@
 //  ------------------------------------------------------------
 //  設計同 Supabase / Gemini 一致：未設 env 變數就完全 no-op。
 //  重點：
-//   - Sentry / PostHog 用「動態 import」—— 未設 key 連 JS chunk 都唔落。
-//   - PostHog（產品分析）受 Cookie 同意 gating：用戶未「接受」前唔載入、
-//     唔追蹤（私隱合規）。Sentry（錯誤監控，正當利益）照常。
+//   - Sentry / PostHog 用「動態 import」—— 未設 key 連 JS chunk 都不落。
+//   - PostHog（產品分析）受 Cookie 同意 gating：用戶未「接受」前不載入、
+//     不追蹤（私隱合規）。Sentry（錯誤監控，正當利益）照常。
 //    env：VITE_SENTRY_DSN / VITE_POSTHOG_KEY (+ VITE_POSTHOG_HOST)
 // ============================================================
 
@@ -39,7 +39,7 @@ function storeConsent(v: Consent): void {
   }
 }
 
-// 動態載入後快取返嘅 module reference（未 init → null → 所有呼叫 no-op）
+// 動態載入後快取返的 module reference（未 init → null → 所有呼叫 no-op）
 let sentry: typeof import('@sentry/react') | null = null
 let posthog: (typeof import('posthog-js'))['default'] | null = null
 const queuedEvents: { event: string; props?: Record<string, unknown> }[] = []
@@ -124,14 +124,14 @@ export async function initObservability(): Promise<void> {
   if (POSTHOG_KEY && getConsent() === 'accepted') await initPosthog()
 }
 
-/** 用戶喺 Cookie 橫額「接受」時呼叫：記低同意 + 即時啟用分析。 */
+/** 用戶在 Cookie 橫額「接受」時呼叫：記低同意 + 即時啟用分析。 */
 export async function acceptAnalytics(): Promise<void> {
   storeConsent('accepted')
   await initPosthog()
   trackPageView({ source: 'cookie_accept' })
 }
 
-/** 用戶「拒絕」時呼叫：記低拒絕（唔載入分析）。 */
+/** 用戶「拒絕」時呼叫：記低拒絕（不載入分析）。 */
 export function rejectAnalytics(): void {
   storeConsent('rejected')
 }

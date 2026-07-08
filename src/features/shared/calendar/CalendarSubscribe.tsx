@@ -26,11 +26,11 @@ import {
 
 // ============================================================
 //  訂閱到手機日曆 —— 顯示 webcal:// 連結，iPhone/iPad 點一下即訂閱，
-//  之後 Apple 日曆自動同步 + 到時間原生彈提醒（靠 .ics feed 嘅 VALARM）。
+//  之後 Apple 日曆自動同步 + 到時間原生彈提醒（靠 .ics feed 的 VALARM）。
 //  · 未接雲端 / 未登入 → 友善提示（訂閱日曆要雲端 + 登入先有意義）。
-//  · token 由 crypto 生成、存 calendarFeedCol（sync 上 Supabase 畀 feed
+//  · token 由 crypto 生成、存 calendarFeedCol（sync 上 Supabase 給 feed
 //    function 反查）；可「重新產生」即時失效舊連結。
-//  · 雙語：i18n（zh-HK 預設靠 defaultValue；en 喺 appEn.calSub）。
+//  · 雙語：i18n（zh-HK 預設靠 defaultValue；en 在 appEn.calSub）。
 //  詳見 docs/superpowers/specs/2026-06-04-calendar-feed-reminders-design.md
 // ============================================================
 
@@ -121,10 +121,10 @@ export default function CalendarSubscribe({ onClose }: { onClose: () => void }) 
 
   const ready = configured && !!user
 
-  // 由 subscribed collection 直接讀 token（render 唔寫 store）。
+  // 由 subscribed collection 直接讀 token（render 不寫 store）。
   const token = feedRows.find((r) => r.id === FEED_TOKEN_ID)?.token ?? null
 
-  // 「可用」（已接雲端 + 已登入）但未有 token → 生成一個（喺 effect 寫，唔喺
+  // 「可用」（已接雲端 + 已登入）但未有 token → 生成一個（在 effect 寫，不在
   // render 期間 mutate store）。生成後 collection 變 → 重 render → 顯示連結。
   useEffect(() => {
     if (ready && !token) getOrCreateToken()
@@ -142,8 +142,8 @@ export default function CalendarSubscribe({ onClose }: { onClose: () => void }) 
         )
       try {
         const p = navigator.clipboard?.writeText(text)
-        // writeText 回 Promise；async 失敗（權限／非安全內容）唔會行 sync catch，
-        // 要顯式接住 rejection，先唔會誤報「已複製」。
+        // writeText 回 Promise；async 失敗（權限／非安全內容）不會行 sync catch，
+        // 要顯式接住 rejection，先不會誤報「已複製」。
         if (p) p.then(ok, fail)
         else fail()
       } catch {
@@ -158,7 +158,7 @@ export default function CalendarSubscribe({ onClose }: { onClose: () => void }) 
       title: t('calSub.regenTitle', { defaultValue: '重新產生連結？' }),
       message: t('calSub.regenMsg', {
         defaultValue:
-          '舊連結會即時失效。已經喺手機／iPad 訂閱咗嘅，要刪除舊訂閱再用新連結重新訂閱。',
+          '舊連結會即時失效。已經在手機／iPad 訂閱了的，要刪除舊訂閱再用新連結重新訂閱。',
       }),
       confirmText: t('calSub.regenConfirm', { defaultValue: '重新產生' }),
       tone: 'danger',
@@ -169,7 +169,7 @@ export default function CalendarSubscribe({ onClose }: { onClose: () => void }) 
   }
 
   return (
-    // 唔傳 title → 自管「週記」masthead，令彈窗用返主畫面 serif + kicker + 雙線語言
+    // 不傳 title → 自管「週記」masthead，令彈窗使用主畫面 serif + kicker + 雙線語言
     <Modal open onClose={onClose} size="md">
       <Masthead onClose={onClose} />
 
@@ -177,11 +177,11 @@ export default function CalendarSubscribe({ onClose }: { onClose: () => void }) 
       {!configured ? (
         <GuardCard
           icon={CloudOff}
-          title={t('calSub.needCloudTitle', { defaultValue: '需要連接雲端先可以訂閱' })}
+          title={t('calSub.needCloudTitle', { defaultValue: '需要連接雲端才能訂閱' })}
         >
           {t('calSub.needCloudBody', {
             defaultValue:
-              '訂閱式日曆需要先完成雲端連線，手機／iPad 先可以自動同步同原生提醒。暫時可以先用行事曆頁嘅「匯出 .ics」一次過匯入。',
+              '訂閱式日曆需要先完成雲端連線，手機／iPad 才能自動同步及使用原生提醒。暫時可以先用行事曆頁的「匯出 .ics」一次過匯入。',
           })}
         </GuardCard>
       ) : !user ? (
@@ -203,10 +203,10 @@ export default function CalendarSubscribe({ onClose }: { onClose: () => void }) 
           </div>
         </GuardCard>
       ) : !webcalUrl ? (
-        /* ───────── 狀態 3：已登入但 URL 拆唔到（理論上罕見）───────── */
+        /* ───────── 狀態 3：已登入但 URL 拆不到（理論上罕見）───────── */
         <GuardCard
           icon={CloudOff}
-          title={t('calSub.noUrlTitle', { defaultValue: '連結暫時組唔到' })}
+          title={t('calSub.noUrlTitle', { defaultValue: '連結暫時組不到' })}
         >
           {t('calSub.noUrlBody', {
             defaultValue: '暫時未能建立訂閱連結。請稍後再試，或聯絡管理員／支援團隊檢查雲端設定。',
@@ -218,7 +218,7 @@ export default function CalendarSubscribe({ onClose }: { onClose: () => void }) 
           <p className="text-sm leading-relaxed text-slate-500 dark:text-slate-400">
             {t('calSub.intro', {
               defaultValue:
-                '喺 iPhone／iPad 點一下下面嘅連結就可以訂閱。之後行事曆事件同重要日子會自動同步入 Apple 日曆，到時間用原生提醒通知你。',
+                '在 iPhone／iPad 點一下下面的連結就可以訂閱。之後行事曆事件同重要日子會自動同步入 Apple 日曆，到時間用原生提醒通知你。',
             })}
           </p>
 
@@ -255,13 +255,13 @@ export default function CalendarSubscribe({ onClose }: { onClose: () => void }) 
           {/* 步驟 */}
           <div className="space-y-3 rounded-2xl border border-slate-200/80 bg-white p-4 dark:border-slate-700/60 dark:bg-slate-800/40">
             <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">
-              {t('calSub.stepsHeader', { defaultValue: '喺 iPhone／iPad 訂閱' })}
+              {t('calSub.stepsHeader', { defaultValue: '在 iPhone／iPad 訂閱' })}
             </p>
             <Steps
               items={[
                 t('calSub.step1', {
                   defaultValue:
-                    '喺 iPhone／iPad 上點一下上面個連結 → 跳出「訂閱日曆」→ 撳「訂閱」。',
+                    '在 iPhone／iPad 上點一下上面個連結 → 跳出「訂閱日曆」→ 按「訂閱」。',
                 }),
                 t('calSub.step2', {
                   defaultValue:
@@ -269,7 +269,7 @@ export default function CalendarSubscribe({ onClose }: { onClose: () => void }) 
                 }),
                 t('calSub.step3', {
                   defaultValue:
-                    '訂閱完，到時間 Apple 日曆就會自動彈原生提醒（提前幾耐跟你喺事件設定嘅提醒）。',
+                    '訂閱完，到時間 Apple 日曆就會自動彈原生提醒（提前幾耐跟你在事件設定的提醒）。',
                 }),
               ]}
             />
@@ -280,7 +280,7 @@ export default function CalendarSubscribe({ onClose }: { onClose: () => void }) 
             <p className="text-xs leading-relaxed text-slate-400 dark:text-slate-500">
               {t('calSub.securityNote', {
                 defaultValue:
-                  '連結唯讀、只曝露你自己嘅事件標題同時間。覺得連結外洩咗，可以隨時重新產生 —— 舊連結會即時失效。',
+                  '連結唯讀、只曝露你自己的事件標題同時間。覺得連結外洩了，可以隨時重新產生 —— 舊連結會即時失效。',
               })}
             </p>
             <div className="flex justify-end">

@@ -4,8 +4,8 @@ import type { Difficulty, Question, QuizAttempt, QuizAttemptItem } from '../../.
 // ============================================================
 //  QuizMode — 純函式 / 型別 / 自家持久化（Quizlet / Kahoot 級）
 //  ------------------------------------------------------------
-//  零外部依賴；所有計分、洗牌、文字正規化、統計彙整集中喺呢度。
-//  AttemptItem 共用 data/types（向後相容），唔改 collections.ts。
+//  零外部依賴；所有計分、洗牌、文字正規化、統計彙整集中在這裡。
+//  AttemptItem 共用 data/types（向後相容），不改 collections.ts。
 // ============================================================
 
 // ───── 標籤 / 樣式對照（本地，跟 QuestionBank 同一慣例）─────
@@ -38,8 +38,8 @@ export const QUIZ_MODE_LABEL: Record<QuizMode, string> = {
   timed: '計時搶分（Kahoot）',
 }
 export const QUIZ_MODE_HINT: Record<QuizMode, string> = {
-  practice: '揀完即見對錯同解釋，無壓力鞏固',
-  classic: '答晒先一次過批改，模擬考試',
+  practice: '選擇完即見對錯同解釋，無壓力鞏固',
+  classic: '答全部先一次過批改，模擬考試',
   timed: '每題限時，答得快分數越高',
 }
 
@@ -87,16 +87,16 @@ export const DEFAULT_SETTINGS: QuizSettings = {
   timeLimit: 20,
 }
 
-// ───── 做題快照（凍結內容，題庫之後改都唔影響）─────
+// ───── 做題快照（凍結內容，題庫之後改都不影響）─────
 export interface FrozenQuestion {
   questionId: string
   kind: QuizItemKind
   topicId: string
   difficulty: Difficulty
   stem: string
-  options: string[] // mc：（可能已洗牌嘅）選項；short：[正確答案]
+  options: string[] // mc：（可能已洗牌的）選項；short：[正確答案]
   answerIndex: number // mc：正確 index；short：0
-  explanation: string // Question.answer（mc 通常空）/ short 嘅參考答案
+  explanation: string // Question.answer（mc 通常空）/ short 的參考答案
 }
 
 // 計時搶分：滿分基準（答對基本分 + 速度獎勵）
@@ -226,7 +226,7 @@ export function shortMatches(input: string, answer: string): boolean {
   return false
 }
 
-// timed 模式單題得分：答啱先有分；剩餘時間比例帶速度獎勵
+// timed 模式單題得分：答對先有分；剩餘時間比例帶速度獎勵
 export function timedPoints(
   correct: boolean,
   remainingSec: number,
@@ -237,7 +237,7 @@ export function timedPoints(
   return Math.round(BASE_POINTS + ratio * SPEED_BONUS)
 }
 
-// 由 frozen + 答案計分（同一邏輯畀做題 / 結果共用）
+// 由 frozen + 答案計分（同一邏輯給做題 / 結果共用）
 export function itemFromFrozen(
   q: FrozenQuestion,
   selectedIndex: number | null,
@@ -275,7 +275,7 @@ export function settingsFromAttempt(a: QuizAttempt): QuizSettings {
 
 // ============================================================
 //  自家持久化：錯題本（跨次彙整，可標記已掌握）
-//  唔掂 data/collections.ts；喺 newCollections 申報。
+//  不掂 data/collections.ts；在 newCollections 申報。
 // ============================================================
 export interface MistakeEntry {
   id: string
@@ -291,7 +291,7 @@ export interface MistakeEntry {
 
 export const mistakesCol = createCollection<MistakeEntry>('quiz.mistakes', [])
 
-// 由一份 attempt 把「答錯」題更新入錯題本（答啱會減 wrongCount / 自動標記掌握）
+// 由一份 attempt 把「答錯」題更新入錯題本（答對會減 wrongCount / 自動標記掌握）
 export function syncMistakesFromAttempt(attempt: QuizAttempt): void {
   const list = mistakesCol.get()
   const byQid = new Map(list.map((m) => [m.questionId, m]))
@@ -323,7 +323,7 @@ export function syncMistakesFromAttempt(attempt: QuizAttempt): void {
         })
       }
     } else if (existing && !existing.mastered) {
-      // 答啱：連續答啱兩次即自動標記掌握，否則 wrongCount 減一
+      // 答對：連續答對兩次即自動標記掌握，否則 wrongCount 減一
       const next = existing.wrongCount - 1
       if (next <= 0) {
         mistakesCol.update(existing.id, {
@@ -339,7 +339,7 @@ export function syncMistakesFromAttempt(attempt: QuizAttempt): void {
 }
 
 // ============================================================
-//  統計彙整（畀 StatsView + charts 用）
+//  統計彙整（給 StatsView + charts 用）
 // ============================================================
 export interface ScorePoint {
   attemptId: string
@@ -349,7 +349,7 @@ export interface ScorePoint {
   correct: number
 }
 
-// 由 attempts（任意次序）→ 按時間升序嘅命中率折線資料
+// 由 attempts（任意次序）→ 按時間升序的命中率折線資料
 export function scoreSeries(attempts: QuizAttempt[]): ScorePoint[] {
   return [...attempts]
     .sort((a, b) =>
@@ -364,7 +364,7 @@ export function scoreSeries(attempts: QuizAttempt[]): ScorePoint[] {
     }))
 }
 
-// 課題掌握度（合併所有 attempt 嘅逐題）
+// 課題掌握度（合併所有 attempt 的逐題）
 export interface TopicMastery {
   topicId: string
   correct: number
@@ -404,7 +404,7 @@ export function difficultyMastery(
   }).filter((r) => r.total > 0)
 }
 
-// 練習熱力圖：近 N 日每日做題數（題數，唔係次數）
+// 練習熱力圖：近 N 日每日做題數（題數，不是次數）
 export interface HeatCell {
   key: string // YYYY-MM-DD
   count: number
@@ -412,7 +412,7 @@ export interface HeatCell {
 export function practiceHeatmap(attempts: QuizAttempt[], days: number): HeatCell[] {
   const counts = new Map<string, number>()
   for (const a of attempts) {
-    // 用本地日期分桶，對齊下面用 getFullYear/getMonth/getDate 砌嘅格仔
+    // 用本地日期分桶，對齊下面用 getFullYear/getMonth/getDate 砌的格仔
     // （直接 slice ISO 係 UTC，凌晨做題會落錯日 / 「今日」格永遠 0）
     const ad = new Date(a.createdAt)
     const key = Number.isNaN(ad.getTime())
@@ -435,7 +435,7 @@ export function practiceHeatmap(attempts: QuizAttempt[], days: number): HeatCell
 // ============================================================
 //  匯出 CSV（成績 + 逐題對錯）——同 AIAssistant 匯出文化一致
 //  ------------------------------------------------------------
-//  純函式核心：QuizAttempt[] → 試算表二維陣列（含表頭，最新喺前）。
+//  純函式核心：QuizAttempt[] → 試算表二維陣列（含表頭，最新在前）。
 //  CSV 轉義 / Blob 下載沿用 work/shared/csv（零新依賴、Excel BOM）。
 // ============================================================
 
@@ -451,19 +451,19 @@ export const QUIZ_CSV_HEADER = [
   '範圍',
   '難度',
   '題數',
-  '答啱',
+  '答對',
   '命中率%',
   '用時',
   '逐題對錯',
 ] as const
 
-// 逐題對錯 → 緊湊字串（✓ = 啱、✗ = 錯），保留作答次序
+// 逐題對錯 → 緊湊字串（✓ = 正確、✗ = 錯誤），保留作答次序
 export function itemsResultString(items: QuizAttemptItem[]): string {
   return items.map((it) => (it.correct ? '✓' : '✗')).join('')
 }
 
-// QuizAttempt[] → 試算表（表頭 + 每次一行，最新喺前）。
-// topicName：把 topicId 還原做課題名（找唔到 → '未分類'，對齊 StatsView）。
+// QuizAttempt[] → 試算表（表頭 + 每次一行，最新在前）。
+// topicName：把 topicId 還原做課題名（找不到 → '未分類'，對齊 StatsView）。
 export function attemptsToCsvRows(
   attempts: QuizAttempt[],
   topicName: (id: string) => string,
@@ -493,7 +493,7 @@ export function attemptsToCsvRows(
 // CSV 轉義 + 下載：共用 work/shared 嗰份（行為與其他匯出完全一致）。
 export { csvEscape, downloadCsv } from '../../work/shared/csv'
 
-// 連續練習日數（current / best）—— 以「有做題嘅日」計
+// 連續練習日數（current / best）—— 以「有做題的日」計
 export function practiceStreak(attempts: QuizAttempt[]): { current: number; best: number } {
   // 用本地日期 key 砌「有做題的日」Set（對齊 practiceHeatmap / calendar；
   // createdAt 係 UTC ISO，直接 slice 會令凌晨做題塌入前一日、低估連續日數）。

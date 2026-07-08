@@ -46,7 +46,7 @@ describe('catMeta（分類 → 元資料，含 fallback）', () => {
   })
 
   it('未知 id → fallback 到最後一項（other）', () => {
-    // 強制傳一個唔喺列表嘅 id：應回最後一項而唔係 undefined
+    // 強制傳一個唔喺列表嘅 id：應回最後一項而不是 undefined
     expect(catMeta('nope' as never).id).toBe('other')
     expect(catMeta('nope' as never)).toBe(CATEGORIES[CATEGORIES.length - 1])
   })

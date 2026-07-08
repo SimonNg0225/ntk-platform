@@ -30,6 +30,6 @@ describe('parseTopics', () => {
   })
   it('空 / 垃圾 throw', () => {
     expect(() => parseTopics('[]')).toThrow()
-    expect(() => parseTopics('唔係 JSON')).toThrow()
+    expect(() => parseTopics('不是 JSON')).toThrow()
   })
 })

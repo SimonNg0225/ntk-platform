@@ -5,8 +5,8 @@ import { listActiveAnnouncements, type PublicAnnouncement } from '../lib/announc
 import { cx } from '../ui'
 
 // ============================================================
-//  全站公告橫額 — 登入用戶頂部顯示生效中嘅公告。
-//  關閉狀態記喺 localStorage（按公告 id），唔會再彈。
+//  全站公告橫額 — 登入用戶頂部顯示生效中的公告。
+//  關閉狀態記在 localStorage（按公告 id），不會再彈。
 // ============================================================
 
 const TONE: Record<PublicAnnouncement['level'], { wrap: string; icon: typeof Info }> = {

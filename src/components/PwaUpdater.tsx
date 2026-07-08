@@ -5,9 +5,9 @@ import { RefreshCw, X } from 'lucide-react'
 // ──────────────────────────────────────────────────────────────
 //  PWA 更新提示
 //  - 自己 registerSW（vite.config injectRegister:false）。
-//  - 定期 + 重新聚焦時 r.update()：Safari 唔會主動頻密檢查新 SW，
+//  - 定期 + 重新聚焦時 r.update()：Safari 不會主動頻密檢查新 SW，
 //    加上 vercel.json 將 sw.js 設 no-cache，先至偵測到新部署。
-//  - 偵測到新版 → onNeedRefresh → 彈 banner，用戶撳「更新」先 reload，
+//  - 偵測到新版 → onNeedRefresh → 彈 banner，用戶按「更新」先 reload，
 //    避免打字途中突然 reload 丟資料。
 // ──────────────────────────────────────────────────────────────
 export default function PwaUpdater() {

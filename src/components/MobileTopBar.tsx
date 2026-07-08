@@ -5,7 +5,7 @@ import { IconButton } from '../ui'
 import ModeSwitcher from './ModeSwitcher'
 import { BRAND_NAME } from '../lib/brand'
 
-// 手機頂欄（只喺細螢幕顯示）：漢堡選單 + 品牌 + 快速記低 + 搜尋 + 緊湊模式切換
+// 手機頂欄（只在細螢幕顯示）：漢堡選單 + 品牌 + 快速記低 + 搜尋 + 緊湊模式切換
 export default function MobileTopBar({
   onMenu,
   onSearch,

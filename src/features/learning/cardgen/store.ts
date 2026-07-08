@@ -2,12 +2,12 @@ import { createCollection } from '../../../lib/store'
 import type { GenRecord } from './types'
 
 // ============================================================
-//  AI 生成知識卡 — 本功能專屬持久化（唔掂 data/collections.ts）
+//  AI 生成知識卡 — 本功能專屬持久化（不掂 data/collections.ts）
 //  ------------------------------------------------------------
-//  只新增「生成歷史」一個 collection，記低每次生成嘅參數同結果，
-//  畀歷史列表 + 統計圖表用。卡本身仍然寫去共用 cardsCol；卡嘅
-//  tag 寫去 flashcards 嘅 cardMetaCol（重用，唔重複造）。
-//  唯一 key（已喺 newCollections 申報）：cardgen_history
+//  只新增「生成歷史」一個 collection，記低每次生成的參數同結果，
+//  給歷史列表 + 統計圖表用。卡本身仍然寫去共用 cardsCol；卡的
+//  tag 寫去 flashcards 的 cardMetaCol（重用，不重複造）。
+//  唯一 key（已在 newCollections 申報）：cardgen_history
 // ============================================================
 
 export const genHistoryCol = createCollection<GenRecord>('cardgen_history', [])

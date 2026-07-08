@@ -19,7 +19,7 @@ export default function PageEditor({
   const [detecting, setDetecting] = useState(false)
   const [detectStatus, setDetectStatus] = useState<'idle' | 'ok' | 'none'>('idle')
 
-  // detectCorners 回正規化座標（0..1）→ 直接 set，唔使再除尺寸（避免 race）。
+  // detectCorners 回正規化座標（0..1）→ 直接 set，不用再除尺寸（避免 race）。
   const runDetect = useCallback(() => {
     setDetecting(true)
     let alive = true
@@ -27,13 +27,13 @@ export default function PageEditor({
       .then((c) => {
         if (!alive) return
         if (c) { setCorners(c); setDetectStatus('ok') }
-        else setDetectStatus('none') // 偵唔到 → 留全頁，等用戶手動拖
+        else setDetectStatus('none') // 偵不到 → 留全頁，等用戶手動拖
       })
       .finally(() => { if (alive) setDetecting(false) })
     return () => { alive = false }
   }, [page.rawDataUrl])
 
-  // 載入時量圖 + 自動偵邊（偵唔到 / 離譜 → 留喺 FULL，等用戶手動調）。
+  // 載入時量圖 + 自動偵邊（偵不到 / 離譜 → 留在 FULL，等用戶手動調）。
   useEffect(() => {
     let alive = true
     const img = new Image()
@@ -77,7 +77,7 @@ export default function PageEditor({
           ? t('scan.detecting', { defaultValue: '偵測中…' })
           : detectStatus === 'ok'
             ? t('scan.detectOkHint', { defaultValue: '已自動偵測四角 · 拖白點微調（會放大）' })
-            : t('scan.detectNoneHint', { defaultValue: '偵唔到紙邊 · 拖四角白點手動框（拖時會放大對準）' })}
+            : t('scan.detectNoneHint', { defaultValue: '偵不到紙邊 · 拖四角白點手動框（拖時會放大對準）' })}
       </p>
 
       {/* 四角偵測救援 + 來源解析度（診斷） */}

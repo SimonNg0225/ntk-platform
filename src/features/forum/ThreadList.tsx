@@ -88,15 +88,15 @@ export default function ThreadList({ board, onBack, onOpenThread }: {
         searched ? (
           <EmptyState
             icon={SearchX}
-            title={t('forum.noResults', { defaultValue: '搵唔到相關帖子' })}
-            hint={t('forum.noResultsHint', { defaultValue: '試下換個關鍵字，或者清空搜尋睇晒成版。' })}
+            title={t('forum.noResults', { defaultValue: '搜尋不到相關帖子' })}
+            hint={t('forum.noResultsHint', { defaultValue: '嘗試換個關鍵字，或清空搜尋查看全部結果。' })}
             action={<Button size="sm" variant="secondary" onClick={() => { setQ(''); load() }}>{t('forum.clearSearch', { defaultValue: '清空搜尋' })}</Button>}
           />
         ) : (
           <EmptyState
             icon={PenLine}
-            title={t('forum.emptyThreads', { defaultValue: '呢個版仲未有帖' })}
-            hint={t('forum.emptyThreadsHint', { defaultValue: '做第一個開話題嘅老師，分享你嘅教學經驗啦！' })}
+            title={t('forum.emptyThreads', { defaultValue: '此版面尚未有帖' })}
+            hint={t('forum.emptyThreadsHint', { defaultValue: '做第一個開話題的老師，分享你的教學經驗啦！' })}
             action={<Button size="sm" icon={Plus} onClick={openCompose}>{t('forum.startFirst', { defaultValue: '發第一帖' })}</Button>}
           />
         )
@@ -125,10 +125,10 @@ export default function ThreadList({ board, onBack, onOpenThread }: {
         </ul>
       )}
 
-      <Modal open={composing} onClose={() => setComposing(false)} title={t('forum.postIn', { defaultValue: `喺「${board.name}」發帖` })} size="lg">
+      <Modal open={composing} onClose={() => setComposing(false)} title={t('forum.postIn', { defaultValue: `在「${board.name}」發帖` })} size="lg">
         <div className="space-y-3">
-          <Field label={t('forum.fieldTitle', { defaultValue: '標題' })}><Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder={t('forum.titlePlaceholder', { defaultValue: '一句講清你想討論咩' })} /></Field>
-          <Field label={t('forum.fieldBody', { defaultValue: '內文' })}><Textarea value={body} onChange={(e) => setBody(e.target.value)} rows={6} placeholder={t('forum.bodyPlaceholder', { defaultValue: '寫低你嘅問題或分享，講多啲背景會易回應啲。' })} /></Field>
+          <Field label={t('forum.fieldTitle', { defaultValue: '標題' })}><Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder={t('forum.titlePlaceholder', { defaultValue: '一句說清楚你想討論什麼' })} /></Field>
+          <Field label={t('forum.fieldBody', { defaultValue: '內文' })}><Textarea value={body} onChange={(e) => setBody(e.target.value)} rows={6} placeholder={t('forum.bodyPlaceholder', { defaultValue: '記錄你的問題或分享，補充更多背景會易回應些。' })} /></Field>
           <Field label={t('forum.fieldTags', { defaultValue: '標籤（選填，逗號分隔，最多 5）' })}><Input value={tags} onChange={(e) => setTags(e.target.value)} placeholder={t('forum.tagsPlaceholder', { defaultValue: '中六、應試技巧' })} /></Field>
           <div className="flex justify-end gap-2"><Button variant="ghost" onClick={() => setComposing(false)}>{t('forum.cancel', { defaultValue: '取消' })}</Button><Button onClick={submit} disabled={posting}>{posting ? t('forum.posting', { defaultValue: '發布中…' }) : t('forum.publish', { defaultValue: '發布' })}</Button></div>
         </div>

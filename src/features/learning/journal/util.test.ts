@@ -87,9 +87,9 @@ describe('toKey / fromKey（本地時區）', () => {
     expect(toKey(fromKey('2024-02-29'))).toBe('2024-02-29') // 閏日
   })
 
-  it('toKey 由本地日曆欄位取值，唔係 UTC', () => {
+  it('toKey 由本地日曆欄位取值，不是 UTC', () => {
     // 用明確本地 Date：2026-01-01 00:30 本地 → key 一定係 2026-01-01，
-    // 而唔係 UTC 退一日嘅 2025-12-31（toISOString 嘅典型 off-by-one）。
+    // 而不是 UTC 退一日嘅 2025-12-31（toISOString 嘅典型 off-by-one）。
     expect(toKey(new Date(2026, 0, 1, 0, 30, 0))).toBe('2026-01-01')
     // 本地 23:30 → 仍係同一本地日（UTC 可能已跳去下一日）
     expect(toKey(new Date(2026, 11, 31, 23, 30, 0))).toBe('2026-12-31')
@@ -252,7 +252,7 @@ describe('stripUndefined', () => {
   it('去走值為 undefined 嘅 key（其餘原樣保留）', () => {
     const out = stripUndefined({ a: 1, b: undefined, c: 'x' })
     expect(out).toEqual({ a: 1, c: 'x' })
-    expect(Object.keys(out)).toEqual(['a', 'c']) // b 嘅 key 真係唔存在（唔係 = undefined）
+    expect(Object.keys(out)).toEqual(['a', 'c']) // b 嘅 key 真係唔存在（不是 = undefined）
   })
 
   it('只去 undefined：null / 0 / "" / false 等 falsy 值一律保留', () => {

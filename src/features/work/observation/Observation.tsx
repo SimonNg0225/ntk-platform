@@ -53,11 +53,11 @@ const MODEL: AIModel = 'gemini-2.5-flash'
 const GUIDE_STEPS: FeatureGuideStep[] = [
   {
     title: '開新觀課，填好基本資料',
-    desc: '記低被觀老師、班別／科目、日期、節次同課題；觀嘅係同事嘅課，唔涉學生個人資料。',
+    desc: '記低被觀老師、班別／科目、日期、節次同課題；觀的係同事的課，不涉學生個人資料。',
   },
   {
     title: '貼上課堂內容文字稿',
-    desc: '將觀課筆記或錄音轉出嘅文字稿貼入去；越具體 AI 撮要越準。',
+    desc: '將觀課筆記或錄音轉出的文字稿貼入去；越具體 AI 撮要越準。',
   },
   {
     title: '一鍵 AI 撮要，再儲存／列印',
@@ -118,12 +118,12 @@ export default function Observation() {
 
   const canRun = teacher.trim() !== '' && subject.trim() !== '' && source.trim() !== ''
 
-  // 最新表單值放 ref：retry（toast onClick）唔會攞到舊 closure 快照，
-  // 用家改完表單再撳「重試」會用返最新值。
+  // 最新表單值放 ref：retry（toast onClick）不會取得到舊 closure 快照，
+  // 用家改完表單再按「重試」會使用最新值。
   const formRef = useRef({ teacher, subject, klass, date, period, topic, source })
   formRef.current = { teacher, subject, klass, date, period, topic, source }
 
-  // unmount 後唔再 setState（SPA 切走功能頁時 in-flight 請求 resolve）
+  // unmount 後不再 setState（SPA 切走功能頁時 in-flight 請求 resolve）
   const aliveRef = useRef(true)
   useEffect(() => {
     aliveRef.current = true
@@ -185,7 +185,7 @@ export default function Observation() {
 
   async function del(id: string) {
     const ok = await confirm({
-      title: t('observation.del.title', { defaultValue: '刪除呢個觀課記錄？' }),
+      title: t('observation.del.title', { defaultValue: '刪除這個觀課記錄？' }),
       tone: 'danger',
       confirmText: t('observation.del.confirm', { defaultValue: '刪除' }),
     })
@@ -218,13 +218,13 @@ export default function Observation() {
         title={t('observation.title', { defaultValue: '觀課評課' })}
         description={t('observation.subtitle', {
           defaultValue:
-            '記低觀同事課堂嘅內容，AI 對住六大準則逐項觀察，列出亮點同改進建議，一鍵存檔／列印。',
+            '記低觀同事課堂的內容，AI 對住六大準則逐項觀察，列出亮點同改進建議，一鍵存檔／列印。',
         })}
       />
 
       <FeatureGuide
         storageKey="observation"
-        title={t('observation.guide.title', { defaultValue: '觀課評課點用？' })}
+        title={t('observation.guide.title', { defaultValue: '觀課評課使用說明' })}
         steps={GUIDE_STEPS}
       />
 
@@ -303,7 +303,7 @@ function ListView({
           icon={Eye}
           title={t('observation.empty.title', { defaultValue: '未有任何觀課記錄' })}
           hint={t('observation.empty.hint', {
-            defaultValue: '開第一個觀課記錄，貼上課堂文字稿，AI 即刻幫你對住六大準則撮要。',
+            defaultValue: '開第一個觀課記錄，貼上課堂文字稿，AI 立即幫你對住六大準則撮要。',
           })}
           action={
             <Button size="sm" variant="secondary" icon={Plus} onClick={onNew}>
@@ -449,7 +449,7 @@ function FormView(props: {
         <Field
           label={t('observation.form.source', { defaultValue: '課堂內容（文字稿）' })}
           hint={t('observation.form.sourceHint', {
-            defaultValue: '貼上觀課筆記或錄音轉出嘅文字稿；越具體 AI 撮要越準。',
+            defaultValue: '貼上觀課筆記或錄音轉出的文字稿；越具體 AI 撮要越準。',
           })}
           required
         >
@@ -602,7 +602,7 @@ function DetailView({
           <div className="flex items-center gap-2.5 rounded-xl bg-amber-50/60 px-3 py-2.5 text-sm text-amber-700 dark:bg-amber-500/10 dark:text-amber-400">
             <Sparkles size={16} className="shrink-0" />
             {t('observation.result.notAnalyzed', {
-              defaultValue: '今次未抽到準則觀察，可返回列表重新開一個記錄再試。',
+              defaultValue: '這次未能抽取準則觀察，可返回列表重新開一個記錄再試。',
             })}
           </div>
         )}

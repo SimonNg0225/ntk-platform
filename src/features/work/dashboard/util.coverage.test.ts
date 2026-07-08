@@ -183,7 +183,7 @@ describe('buildHeat', () => {
 //  令 createdAt / completedAt 一律先轉「本地」日 key 再入桶 / 比較。
 //  ------------------------------------------------------------
 //  以 localDay() 推導預期，任何時區皆成立；喺 UTC+8 更會明確踩中
-//  「UTC 仲係尋日、本地已經今日」嘅邊界（修前 slice 會記錯一日）。
+//  「UTC 仲係昨天、本地已經今日」嘅邊界（修前 slice 會記錯一日）。
 // ============================================================
 describe('localDay 對齊：趨勢 / 熱力 / 週對比 唔再 off-by-one（防回歸）', () => {
   // UTC 子夜後不久（00:30Z）→ 喺 UTC+8 已經係同日上午 08:30，但喺 UTC 仍係該日。
@@ -240,7 +240,7 @@ describe('localDay 對齊：趨勢 / 熱力 / 週對比 唔再 off-by-one（防�
       const tasks: MergedTask[] = [mtask({ id: 'a', done: true, completedAt: utcTs })]
       // 用本地日做單日閉區間 → 必數到
       expect(completedInRange(tasks, localDayKey, localDayKey)).toBe(1)
-      // 用「本地日嘅前一日」做單日閉區間 → 必數唔到（確認對齊本地、唔係 UTC slice）
+      // 用「本地日嘅前一日」做單日閉區間 → 必數唔到（確認對齊本地、不是 UTC slice）
       const prev = addKey(localDayKey, -1)
       expect(completedInRange(tasks, prev, prev)).toBe(0)
     })

@@ -267,7 +267,7 @@ describe('practiceHeatmap — 近 N 日每日題數', () => {
     ])
   })
 
-  it('同一日多次 attempt：累加題數（用 a.total，唔係次數）', () => {
+  it('同一日多次 attempt：累加題數（用 a.total，不是次數）', () => {
     pinToday()
     const a = [
       attempt({ id: 'a1', createdAt: localISO(2026, 5, 30, 9), total: 3 }),
@@ -387,7 +387,7 @@ describe('syncMistakesFromAttempt — 錯題本累加 / 遞減 / 掌握判斷', 
     expect(m.stem).toBe('新題幹') // 更新成最新題幹
   })
 
-  it('既有 wrongCount=1 答啱 → next=0 → 即標 mastered（一次即 master）', () => {
+  it('既有 wrongCount=1 答對 → next=0 → 即標 mastered（一次即 master）', () => {
     mistakesCol.set([
       {
         id: 'm1',
@@ -409,7 +409,7 @@ describe('syncMistakesFromAttempt — 錯題本累加 / 遞減 / 掌握判斷', 
     expect(m.masteredAt).toBe(NOW)
   })
 
-  it('既有 wrongCount=3 答啱 → wrongCount=2、仍未 master', () => {
+  it('既有 wrongCount=3 答對 → wrongCount=2、仍未 master', () => {
     mistakesCol.set([
       {
         id: 'm1',
@@ -431,7 +431,7 @@ describe('syncMistakesFromAttempt — 錯題本累加 / 遞減 / 掌握判斷', 
     expect(m.masteredAt).toBeUndefined()
   })
 
-  it('已 mastered 題再答啱 → 唔郁（existing && !mastered 守衛）', () => {
+  it('已 mastered 題再答對 → 唔郁（existing && !mastered 守衛）', () => {
     const before = {
       id: 'm1',
       questionId: 'q1',
@@ -473,7 +473,7 @@ describe('syncMistakesFromAttempt — 錯題本累加 / 遞減 / 掌握判斷', 
     expect(m.masteredAt).toBeUndefined()
   })
 
-  it('答啱一條未喺錯題本嘅題 → 唔新增（只跟錯題走）', () => {
+  it('答對一條未喺錯題本嘅題 → 唔新增（只跟錯題走）', () => {
     syncMistakesFromAttempt(
       attempt({ createdAt: NOW, items: [item({ questionId: 'qNew', correct: true })] }),
     )
@@ -515,7 +515,7 @@ describe('syncMistakesFromAttempt — 錯題本累加 / 遞減 / 掌握判斷', 
       attempt({
         createdAt: NOW,
         items: [
-          item({ questionId: 'q1', correct: true }), // 既有 wrongCount=1 答啱 → master
+          item({ questionId: 'q1', correct: true }), // 既有 wrongCount=1 答對 → master
           item({ questionId: 'q2', correct: false, stem: '題2' }), // 新答錯 → 新增
         ],
       }),

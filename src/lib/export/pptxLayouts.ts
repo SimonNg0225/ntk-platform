@@ -1,5 +1,5 @@
 // ============================================================
-//  pptx 版式 renderer — 6 款內容版式（pack-agnostic，只問 pack 攞 tokens）
+//  pptx 版式 renderer — 6 款內容版式（pack-agnostic，只問 pack 取得 tokens）
 //  ------------------------------------------------------------
 //  · bullets — row 引擎：每點 = pack marker + 獨立 text box（嚴禁 bullet API）
 //  · stats   — 2-4 個大數字 tile
@@ -8,7 +8,7 @@
 //  · quote   — 大引文 + pack 引號裝飾
 //  · section — 由 pack.section() 處理（pptx.ts dispatch）
 //  行高 = pt × 1.32 / 72；row 推進用 estimateLines，寧鬆勿迫，
-//  超估自動降一級 pt（唔俾爆框，fit:'shrink' 只做最後兜底）。
+//  超估自動降一級 pt（不給爆框，fit:'shrink' 只做最後兜底）。
 // ============================================================
 
 import type PptxGenJS from 'pptxgenjs'
@@ -40,7 +40,7 @@ interface RowOpts {
   startNo?: number
 }
 
-/** 估算一組 row 嘅總高（行高 + 間距），用嚟揀字級 */
+/** 估算一組 row 的總高（行高 + 間距），用來選擇字級 */
 function rowsHeight(items: string[], pt: number, gap: number, textW: number): number {
   const lineH = lineHeightIn(pt)
   const linesTotal = items.reduce((acc, t) => acc + estimateLines(t, pt, textW), 0)
@@ -68,7 +68,7 @@ function drawRows(slide: PptxGenJS.Slide, pack: Pack, items: string[], o: RowOpt
     const item = items[i]
     const lines = estimateLines(item, o.pt, o.w - indent)
     const h = lines * lineH
-    if (y + h > o.maxY + 0.05) break // 防爆框（fitRowsPt 已盡量避免行到呢度）
+    if (y + h > o.maxY + 0.05) break // 防爆框（fitRowsPt 已盡量避免行到這裡）
     if (m.kind === 'number') {
       tx(slide, `${(o.startNo ?? 1) + i}.`, {
         x: o.x,
@@ -161,10 +161,10 @@ function renderChartPanel(slide: PptxGenJS.Slide, pack: Pack, chart: SlideChart,
       showLegend: true,
       legendPos: 'r',
       legendFontSize: 10,
-      legendColor: pack.ink, // QA：inkSoft 喺深底 pack 讀唔到
+      legendColor: pack.ink, // QA：inkSoft 在深底 pack 讀不到
       legendFontFace: FONT,
       showPercent: true,
-      // label 拉出扇形外（落喺版底色上），用 pack 主文字色 — 淺色扇形白字隱形嘅問題一次過解決
+      // label 拉出扇形外（落在版底色上），用 pack 主文字色 — 淺色扇形白字隱形的問題一次過解決
       dataLabelPosition: 'outEnd',
       dataLabelColor: pack.ink,
       dataLabelFontSize: 10,
@@ -190,7 +190,7 @@ function renderChartPanel(slide: PptxGenJS.Slide, pack: Pack, chart: SlideChart,
         catAxisLabelFontFace: FONT,
         valAxisLabelFontFace: FONT,
         catAxisLineColor: pack.chartGridColor,
-        // 單位直接寫入 y 軸刻度（例 80%），唔好做孤兒浮字
+        // 單位直接寫入 y 軸刻度（例 80%），不要做孤兒浮字
         ...(chart.unit ? { valAxisLabelFormatCode: `General"${chart.unit.replace(/"/g, '')}"` } : {}),
         valGridLine: { style: 'solid', color: pack.chartGridColor, size: 0.5 },
         catGridLine: { style: 'none' },
@@ -209,7 +209,7 @@ function renderChartPanel(slide: PptxGenJS.Slide, pack: Pack, chart: SlideChart,
 
 function renderPhotoPanel(slide: PptxGenJS.Slide, pack: Pack, photo: SlideImage): void {
   if (pack.splitPhoto === 'circle') {
-    // 青瓷：圓相嵌白底（唔 full-bleed），署名喺圓相下方
+    // 青瓷：圓相嵌白底（不 full-bleed），署名在圓相下方
     addCoverImage(slide, photo, { x: 8.15, y: 1.3, w: 4.9, h: 4.9 }, true)
     tx(slide, photo.credit, { x: 8.15, y: 6.32, w: 4.9, h: 0.26, fontSize: 8, color: pack.faint, align: 'center' })
     return
@@ -222,7 +222,7 @@ function renderPhotoPanel(slide: PptxGenJS.Slide, pack: Pack, photo: SlideImage)
     // 夜讀：深底 scrim 統一暗調（shape fill transparency 正常 work）
     slide.addShape('rect', { x: frame.x, y: frame.y, w: frame.w, h: frame.h, fill: { color: pack.bg, transparency: 35 }, line: { type: 'none' } })
   } else if (pack.splitPhoto === 'bleedMotif') {
-    // 騎縫 accent 圓角方 motif — 貼住版底先似出血，半天吊會似跌咗嘢
+    // 騎縫 accent 圓角方 motif — 貼住版底先似出血，半天吊會似跌了嘢
     slide.addShape('roundRect', { x: 7.45, y: 6.68, w: 0.9, h: 0.82, rectRadius: 0.12, fill: { color: pack.accent }, line: { type: 'none' } })
   }
   photoCreditOnImage(slide, photo.credit, frame)
@@ -305,12 +305,12 @@ export function renderBullets(slide: PptxGenJS.Slide, body: Rect, pack: Pack, s:
   } else if (hasPhoto) {
     basePt = Math.min(basePt, 16)
   }
-  // 起始 y：4 點微調，5-6 點頂住起；疏版用光學中心（中線偏上）俾個版有錨點
+  // 起始 y：4 點微調，5-6 點頂住起；疏版用光學中心（中線偏上）給個版有錨點
   let startY = body.y + (n <= 2 ? 0.4 : n <= 4 ? 0.05 : 0)
   const { pt, gap } = fitRowsPt(bullets, basePt, baseGap, textW, pack.marker.indent, body.y + body.h - startY)
   if (sparse) {
     const blockH = rowsHeight(bullets, pt, gap, textW - pack.marker.indent)
-    const factor = n <= 2 ? 0.34 : 0.2 // 3 點輕推就夠，唔好變咗死板置中
+    const factor = n <= 2 ? 0.34 : 0.2 // 3 點輕推就夠，不要變了死板置中
     startY = body.y + Math.min(1.6, Math.max(0.3, (body.h - blockH) * factor))
   }
   drawRows(slide, pack, bullets, { x: body.x, y: startY, w: textW, maxY: body.y + body.h, pt, gap, color: pack.ink })
@@ -321,7 +321,7 @@ export function renderBullets(slide: PptxGenJS.Slide, body: Rect, pack: Pack, s:
 // ───────── stats（2-4 個大數字 tile）─────────
 
 /**
- * stat value 專用字級：display 字體（Georgia italic / Arial bold）嘅 latin 闊過內文，
+ * stat value 專用字級：display 字體（Georgia italic / Arial bold）的 latin 闊過內文，
  * 用獨立系數（latin 0.7em / CJK 1.05em，總係數 1.08）保證單行收得落。
  */
 function statValuePt(value: string, availW: number): number {
@@ -436,7 +436,7 @@ export function renderCompare(slide: PptxGenJS.Slide, body: Rect, pack: Pack, s:
   const inset = carded ? 0.3 : 0
 
   if (carded) {
-    // radius 0 嘅 pack 用直角 rect（roundRect + rectRadius:0 會跌返去 pptxgenjs 預設圓角）
+    // radius 0 的 pack 用直角 rect（roundRect + rectRadius:0 會跌回到 pptxgenjs 預設圓角）
     const shape = pack.cardRadius > 0 ? 'roundRect' : 'rect'
     const radiusOpt = pack.cardRadius > 0 ? { rectRadius: pack.cardRadius } : {}
     // 右欄可用 panelAlt 做 A/B 對照（粉彩）；缺省兩卡同色
@@ -470,7 +470,7 @@ export function renderCompare(slide: PptxGenJS.Slide, body: Rect, pack: Pack, s:
     const startY = headerY + 0.68
     const maxY = body.y + body.h - (carded ? 0.15 : 0)
     const { pt, gap } = fitRowsPt(side.points, 15, 0.2, colW - inset * 2, pack.marker.indent, maxY - startY)
-    // 兩邊點數唔對稱：短嗰邊保持頂對齊，唔拉伸
+    // 兩邊點數不對稱：短嗰邊保持頂對齊，不拉伸
     drawRows(slide, pack, side.points, { x: side.x + inset, y: startY, w: colW - inset * 2, maxY, pt, gap, color: pack.ink, startNo: 1 })
   })
 }
@@ -482,7 +482,7 @@ function drawStepNode(slide: PptxGenJS.Slide, pack: Pack, cx: number, cy: number
   const node = pack.stepNode
   const size = node.size * scale
   if (node.kind === 'bare') {
-    // 墨韻：display 字體序號喺線上方，唔畫 shape
+    // 墨韻：display 字體序號在線上方，不畫 shape
     tx(slide, String(no), {
       x: cx - 0.4,
       y: cy - 0.62,
@@ -559,7 +559,7 @@ export function renderSteps(slide: PptxGenJS.Slide, body: Rect, pack: Pack, s: S
     return
   }
 
-  // 5 步：直排 timeline（rail 只去到尾節點，唔拖尾）
+  // 5 步：直排 timeline（rail 只去到尾節點，不拖尾）
   // 成個區塊向中靠（縮排 + 限闊）— 全闊版面下靠死左邊會似得半版嘢
   const lineX = body.x + 1.25
   const rowH = (body.h - 0.2) / n
@@ -572,7 +572,7 @@ export function renderSteps(slide: PptxGenJS.Slide, body: Rect, pack: Pack, s: S
     const rowY = body.y + 0.1 + i * rowH
     const cy = rowY + 0.18
     if (pack.stepNode.kind === 'bare') {
-      // 墨韻直排：序號擺喺線左
+      // 墨韻直排：序號擺在線左
       tx(slide, String(i + 1), {
         x: lineX - 0.45 - 0.1,
         y: rowY - 0.02,
@@ -629,7 +629,7 @@ export function renderCards(slide: PptxGenJS.Slide, body: Rect, pack: Pack, s: S
     } else {
       slide.addShape('rect', { x: cx, y: cy, w: cardW, h: cardH, fill: { color: pack.panel }, line: { type: 'none' } })
     }
-    // accent 頂邊（研討 deck 卡片標誌）— 內縮對齊卡框/圓角，唔好戴歪帽
+    // accent 頂邊（研討 deck 卡片標誌）— 內縮對齊卡框/圓角，不要戴歪帽
     const barInset = bordered ? 0.01 : Math.max(0.01, pack.cardRadius * 0.9)
     slide.addShape('rect', { x: cx + barInset, y: cy, w: cardW - barInset * 2, h: 0.035, fill: { color: pack.accent }, line: { type: 'none' } })
     const inset = 0.22
@@ -662,8 +662,8 @@ export function renderCards(slide: PptxGenJS.Slide, body: Rect, pack: Pack, s: S
 
 /**
  * 重點版強調：accent「L-frame」（頂色帶 + 左脊）。
- * AI 標 emphasis 嘅版先畫，令成套有明確輕重節奏。
- * 只擺最邊位（x0 / y0），唔壓內容區（x≥0.9, y≥0.5）。
+ * AI 標 emphasis 的版先畫，令成套有明確輕重節奏。
+ * 只擺最邊位（x0 / y0），不壓內容區（x≥0.9, y≥0.5）。
  */
 export function renderEmphasisFrame(slide: PptxGenJS.Slide, pack: Pack): void {
   // 講堂 pack 本身已有深藍 header band 撐起版面結構，再疊頂帶＋全高左脊會重複又突兀 → 跳過
@@ -710,7 +710,7 @@ export function renderTakeaway(slide: PptxGenJS.Slide, pack: Pack, text: string,
 
 // ───────── quote（大引文）─────────
 
-/** 簡單亮度判斷（俾引號徽章揀字色） */
+/** 簡單亮度判斷（給引號徽章選擇字色） */
 function isLightColor(hex: string): boolean {
   const h = hex.replace('#', '')
   return parseInt(h.slice(0, 2), 16) + parseInt(h.slice(2, 4), 16) + parseInt(h.slice(4, 6), 16) > 380
@@ -724,7 +724,7 @@ export function renderQuote(slide: PptxGenJS.Slide, body: Rect, pack: Pack, s: S
   const lines = estimateLines(text, pt, 10)
   const textH = (lines * pt * 1.5) / 72 + 0.15
 
-  // 成個 quote 組（徽章 + 引文 + 署名）計總高，喺 body 內光學置中（中線偏上）
+  // 成個 quote 組（徽章 + 引文 + 署名）計總高，在 body 內光學置中（中線偏上）
   const markH = pack.quoteMark.kind === 'glyph' ? 0.95 : 0.78
   const attrH = q.attribution ? 0.62 : 0
   const blockH = markH + textH + attrH
@@ -734,7 +734,7 @@ export function renderQuote(slide: PptxGenJS.Slide, body: Rect, pack: Pack, s: S
   if (m.kind === 'glyph') {
     tx(slide, '“', { x: 1.55, y: topY - 0.2, w: 1.2, h: 1.05, fontSize: 60, bold: true, color: m.color, fontFace: pack.displayFont, italic: pack.displayItalic })
   } else if (m.kind === 'circle') {
-    // 圈內配引號 — 空心淨圈會似漏咗嘢
+    // 圈內配引號 — 空心淨圈會似漏了嘢
     const size = Math.max(m.size, 0.5)
     slide.addShape('ellipse', { x: 1.6, y: topY, w: size, h: size, fill: { type: 'none' }, line: { color: m.color, width: m.linePt } })
     tx(slide, '“', { x: 1.6, y: topY + 0.07, w: size, h: size, fontSize: 26, bold: true, color: m.color, align: 'center', valign: 'middle', fontFace: 'Georgia' })
@@ -750,7 +750,7 @@ export function renderQuote(slide: PptxGenJS.Slide, body: Rect, pack: Pack, s: S
     tx(slide, '“', { x: 1.6, y: topY + 0.09, w: size, h: size, fontSize: 30, bold: true, color: glyphColor, align: 'center', valign: 'middle', fontFace: 'Georgia' })
   }
 
-  // 引文靠左唔置中（編輯紀律），行距 1.5 鬆排
+  // 引文靠左不置中（編輯紀律），行距 1.5 鬆排
   const textY = topY + markH
   tx(slide, text, {
     x: 1.6,

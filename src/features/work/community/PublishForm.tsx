@@ -40,7 +40,7 @@ export default function PublishForm({
   function pickFile(f: File | null) {
     if (!f) { setFile(null); return }
     const v = validateFile(f)
-    if (!v.ok) { toast.error(v.error ?? '檔案唔合格'); return }
+    if (!v.ok) { toast.error(v.error ?? '檔案不合格'); return }
     setFile(f)
     if (!title.trim()) setTitle(f.name.replace(/\.[^.]+$/, ''))
   }
@@ -88,7 +88,7 @@ export default function PublishForm({
           <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="例：供求曲線互動工作紙（連答案）" maxLength={120} />
         </Field>
 
-        <Field label="描述（選填）" hint="講下內容、用法、啱邊個程度">
+        <Field label="描述（選填）" hint="說明內容、用法、適合哪個程度">
           <Textarea rows={3} value={description} onChange={(e) => setDescription(e.target.value)} maxLength={600} />
         </Field>
 
@@ -151,7 +151,7 @@ export default function PublishForm({
                   )}
                 >
                   {file ? <FileCheck2 size={16} /> : <Upload size={16} />}
-                  <span className="truncate">{file ? file.name : '揀檔案（PDF / PPTX / Word / 圖片，上限 25MB）'}</span>
+                  <span className="truncate">{file ? file.name : '選擇檔案（PDF / PPTX / Word / 圖片，上限 25MB）'}</span>
                 </button>
               </div>
             ) : (
@@ -167,12 +167,12 @@ export default function PublishForm({
         {/* 版權聲明 */}
         <Field label="版權聲明">
           <Select value={license} onChange={(e) => setLicense(e.target.value as ResourceLicense)}>
-            <option value="original">我原創 / 有權分享呢份資源</option>
+            <option value="original">我原創 / 有權分享此份資源</option>
             <option value="shareable">已獲授權、可自由分享</option>
           </Select>
         </Field>
         <p className="-mt-1 text-[11px] leading-relaxed text-slate-400">
-          請確認冇侵犯版權（例如出版社課本），並先移除學生姓名、相片、成績等個人資料。被檢舉成立會下架。
+          請確認沒有侵犯版權（例如出版社課本），並先移除學生姓名、相片、成績等個人資料。被檢舉成立會下架。
         </p>
 
         <div className="flex justify-end gap-2 pt-1">

@@ -5,7 +5,7 @@ import type { TimetableSlot } from '../../../data/types'
 //  ------------------------------------------------------------
 //  - 香港中學情境：星期一至六 × 多節，含小息/午膳/班主任堂
 //  - 鐘聲時間 (bell times) 令格仔有真實上下課時間
-//  - 循環週 (A/B 週) — 部分學校隔週上唔同堂
+//  - 循環週 (A/B 週) — 部分學校隔週上不同堂
 //  - 衝突偵測：同一節同時段被佔用、同班/同室撞堂
 //  - 工作量統計：每日堂數、每班堂數、時段分佈、空堂
 // ============================================================
@@ -30,7 +30,7 @@ export function dayShort(day: number): string {
 
 // ───────── 日循環（Day A–F）─────────
 // 部分學校（如本校）用 6 日循環取代固定星期：A=1 … F=6，直接對上 slot.day。
-// 邊個真實日期屬邊個 cycle day，由校曆決定（跳過週末/假期），存喺 cycleCalendar。
+// 哪個真實日期屬哪個 cycle day，由校曆決定（跳過週末/假期），存在 cycleCalendar。
 export const CYCLE_LABELS = ['A', 'B', 'C', 'D', 'E', 'F'] as const
 
 /** day(1..6) → 'Day A'..'Day F'（cycle 模式欄標題用）。 */
@@ -42,7 +42,7 @@ export function cycleShort(day: number): string {
   return CYCLE_LABELS[day - 1] ?? String(day)
 }
 
-/** 由校曆查某日期(YYYY-MM-DD)係邊個 cycle day(1..6)；無記錄（假期/未排）回 null。 */
+/** 由校曆查某日期(YYYY-MM-DD)係哪個 cycle day(1..6)；無記錄（假期/未排）回 null。 */
 export function cycleDayForDate(
   dateKey: string,
   calendar: { date: string; cycleDay: number }[],
@@ -60,7 +60,7 @@ export function weekCycleLabel(w?: WeekCycle): string {
   return '每週'
 }
 
-/** 兩個 slot 嘅循環週會唔會同時發生（衝突判斷用）。all 同任何都重疊。 */
+/** 兩個 slot 的循環週會不會同時發生（衝突判斷用）。all 同任何都重疊。 */
 export function weeksOverlap(a?: WeekCycle, b?: WeekCycle): boolean {
   const x = a ?? 'all'
   const y = b ?? 'all'
@@ -113,8 +113,8 @@ export function durationMin(b: BellRow): number {
 }
 
 /**
- * 當日最後一節（lesson）嘅放學時間（由 0:00 起嘅分鐘）。
- * 用嚟判斷「今日課堂已完」而唔好寫死 16:00（鐘聲可由用家自訂，含晚課）。
+ * 當日最後一節（lesson）的放學時間（由 0:00 起的分鐘）。
+ * 用來判斷「今日課堂已完」而不要寫死 16:00（鐘聲可由用家自訂，含晚課）。
  * 無任何 lesson → 0。
  */
 export function lastLessonEndMin(bells: BellRow[]): number {
@@ -210,7 +210,7 @@ export function autoColorFor(key: string): SlotColor {
   return SLOT_COLOR_KEYS[h % SLOT_COLOR_KEYS.length]
 }
 
-// ───────── 每格附加資料（我哋自己嘅 collection；唔改共用 TimetableSlot）─────────
+// ───────── 每格附加資料（我們自己的 collection；不改共用 TimetableSlot）─────────
 // 用 slotKey = `${day}-${period}` 對應到一格
 export interface SlotMeta {
   id: string // = slotKey
@@ -225,10 +225,10 @@ export function slotKey(day: number, period: number): string {
 }
 
 /**
- * 把「批量套用」嘅目標日子夾到顯示範圍(visibleDays)內。
+ * 把「批量套用」的目標日子夾到顯示範圍(visibleDays)內。
  * 批量 picker 用 DAY_DEFS（永遠一至六），但顯示範圍可被設定收窄（如一至五），
- * 範圍外嘅日子若寫入會變成永不顯示、亦唔入工作量統計、無法由 WeekGrid 點開刪除嘅孤兒 slot。
- * 喺寫入前夾範圍即可堵塞。保留原次序、去重。
+ * 範圍外的日子若寫入會變成永不顯示、亦不入工作量統計、無法由 WeekGrid 點開刪除的孤兒 slot。
+ * 在寫入前夾範圍即可堵塞。保留原次序、去重。
  */
 export function clampApplyDays(
   applyDays: number[],
@@ -257,12 +257,12 @@ export interface Conflict {
 }
 
 /**
- * 偵測撞堂：同一時段（day+period+重疊週）唔應該有兩格指向同一班別或同一課室。
+ * 偵測撞堂：同一時段（day+period+重疊週）不應該有兩格指向同一班別或同一課室。
  * 本資料模型每格 (day,period) 唯一，所以實際衝突來自「跨日同名課室／同班於同一節」
- * → 這裡偵測「同一 (day, period) 區間內」唔可能重複；改為偵測整週層面嘅資源重用：
+ * → 這裡偵測「同一 (day, period) 區間內」不可能重複；改為偵測整週層面的資源重用：
  *   - 同一節 (period) + 同一日 (day) 已唯一；
  *   - 但同一格 vs 另一格若 day 相同 period 相同係 Map 唯一，故衝突主要係「資料匯入」造成。
- * 我哋更實用地偵測：同一 (day, period) 下，如果使用者用「批量套用」整到兩條 slot
+ * 我們更實用地偵測：同一 (day, period) 下，如果使用者用「批量套用」整到兩條 slot
  *   指向同班同室但週重疊 → 標示。
  */
 export function detectConflicts(
@@ -335,7 +335,7 @@ export interface Workload {
   busiestDay?: { day: number; count: number }
   freeByDay: { day: number; free: number; busy: number }[] // 每日空堂 vs 上堂
   maxConsecutive: number // 最長連堂
-  daysWithLessons: number // 有上堂嘅日數
+  daysWithLessons: number // 有上堂的日數
 }
 
 export function computeWorkload(
@@ -346,8 +346,8 @@ export function computeWorkload(
 ): Workload {
   const periods = lessonPeriods(bells)
   const bellMap = bellByPeriod(bells)
-  // 只計落喺顯示星期(days)範圍內嘅 slot，令 total / byDay / byClass / 分鐘一致
-  // （否則範圍外嘅堂會入 total 但唔入 byDay，總數同每日分佈對唔上）
+  // 只計落在顯示星期(days)範圍內的 slot，令 total / byDay / byClass / 分鐘一致
+  // （否則範圍外的堂會入 total 但不入 byDay，總數同每日分佈對不上）
   const daySet = new Set(days)
   const inRange = slots.filter((s) => daySet.has(s.day))
   const occupied = new Set(inRange.map((s) => slotKey(s.day, s.period)))
@@ -397,7 +397,7 @@ export function computeWorkload(
   let maxConsecutive = 0
   for (const day of days) {
     let run = 0
-    // 行返整個鐘聲序列：遇到小息/午膳要斷開 run（嗰刻有得抖，唔算連堂）
+    // 行返整個鐘聲序列：遇到小息/午膳要斷開 run（嗰刻有得休息，不算連堂）
     for (const b of bells) {
       if (b.kind !== 'lesson') {
         run = 0
@@ -428,24 +428,24 @@ export function computeWorkload(
 }
 
 // ───────── 空堂時段查詢（free-period finder）─────────
-// computeWorkload 只計每日空堂「數量」；老師仲想知邊日邊節有得抖／改簿／開會，
+// computeWorkload 只計每日空堂「數量」；老師還想知邊日邊節有得休息／改簿／開會，
 // 以及邊幾節係連續成一段（例如星期三 第3–4節 09:55–11:15 連續 2 節）。
-// 純衍生自已有 slots + bells + 顯示日子，唔改任何持久化資料。
+// 純衍生自已有 slots + bells + 顯示日子，不改任何持久化資料。
 export interface FreeSegment {
   day: number
-  periods: number[] // 連續嘅 lesson 節數（升序，例如 [3, 4]）
+  periods: number[] // 連續的 lesson 節數（升序，例如 [3, 4]）
   start: string // 段首節開始時間 HH:mm
   end: string // 段尾節結束時間 HH:mm
-  minutes: number // 由 start 到 end 嘅總分鐘（含段內可能夾住嘅 break）
+  minutes: number // 由 start 到 end 的總分鐘（含段內可能夾住的 break）
 }
 
 /**
- * 列出全部空嘅 (day, period)，並按「連續成段」分組。
- * 連續性同 maxConsecutive 一致：遇到小息/午膳會斷段（嗰刻已經有得抖，
- * 唔當同一段連續空檔），亦會被任何有堂嘅節打斷。
- * - 只考慮顯示範圍(days)內、且鐘聲序列中嘅 lesson 節。
- * - 範圍外或唔喺鐘聲嘅 slot 唔影響空堂判斷。
- * 回傳已排序（先 day 升序，後段首 period 升序）嘅 FreeSegment 陣列。
+ * 列出全部空的 (day, period)，並按「連續成段」分組。
+ * 連續性同 maxConsecutive 一致：遇到小息/午膳會斷段（嗰刻已經有得休息，
+ * 不當同一段連續空檔），亦會被任何有堂的節打斷。
+ * - 只考慮顯示範圍(days)內、且鐘聲序列中的 lesson 節。
+ * - 範圍外或不在鐘聲的 slot 不影響空堂判斷。
+ * 回傳已排序（先 day 升序，後段首 period 升序）的 FreeSegment 陣列。
  */
 export function computeFreePeriods(
   slots: TimetableSlot[],
@@ -471,7 +471,7 @@ export function computeFreePeriods(
       })
       run = []
     }
-    // 行返整個鐘聲序列：break 斷段、有堂嘅 lesson 斷段，連住嘅空 lesson 歸一段
+    // 行返整個鐘聲序列：break 斷段、有堂的 lesson 斷段，連住的空 lesson 歸一段
     for (const b of bells) {
       if (b.kind !== 'lesson') {
         flush()
@@ -496,7 +496,7 @@ export interface UpNext {
   startsInMin: number
 }
 
-/** 計今日「下一堂 / 現正上緊」。nowMin = 由 0:00 起嘅分鐘。 */
+/** 計今日「下一堂 / 現正上緊」。nowMin = 由 0:00 起的分鐘。 */
 export function findUpNext(
   slots: TimetableSlot[],
   bells: BellRow[],

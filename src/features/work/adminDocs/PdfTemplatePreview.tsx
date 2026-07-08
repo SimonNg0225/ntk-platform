@@ -20,9 +20,9 @@ import {
 // ============================================================
 //  行政文件 — PDF 範本「視覺化兩欄預覽」（平行 TemplatePreview）
 //  ------------------------------------------------------------
-//  PDF 欄位由 AcroForm 直接嚟（pdf-lib 已抽好），唔使 injectTags、唔改原檔。
+//  PDF 欄位由 AcroForm 直接來（pdf-lib 已抽好），不用 injectTags、不改原檔。
 //  左／主欄：pdf.js 渲染原 PDF 每頁 + 按 widget 座標疊彩色欄位框。
-//  右／側欄：欄位清單（色 swatch + 顯示名可改 + 類型顯示 + 撳一下捲到/閃對應框）。
+//  右／側欄：欄位清單（色 swatch + 顯示名可改 + 類型顯示 + 按一下捲到/閃對應框）。
 //  底：範本名 + 儲存（呼 adminDocStore addTemplate，kind='pdf'，base64=原 PDF）。
 //
 //  render 失敗 → 退純清單（仍可改名/儲存）。teal/dark/375px。
@@ -39,7 +39,7 @@ const PDF_TYPE_META: Record<
   dropdown: { label: '下拉選單', icon: ChevronDownSquare },
 }
 
-/** 編輯中嘅 PDF 欄位（tag = PDF AcroForm field name，不可改；label 可改）。 */
+/** 編輯中的 PDF 欄位（tag = PDF AcroForm field name，不可改；label 可改）。 */
 export interface PdfPreviewField {
   /** PDF field name —— 填值 key，不可改。 */
   tag: string
@@ -50,7 +50,7 @@ export interface PdfPreviewField {
   options?: string[]
   /**
    * widget 座標（連頁 index，PDF 單位）。由 extractPdfFields 帶入，
-   * 畀左欄疊彩色框。缺省（空 / 未帶）→ 仍渲染頁面、只係冇彩色框。
+   * 給左欄疊彩色框。缺省（空 / 未帶）→ 仍渲染頁面、只係沒有彩色框。
    */
   rects?: PdfFieldRect[]
 }
@@ -64,9 +64,9 @@ export default function PdfTemplatePreview({
 }: {
   /** 上載原 PDF（base64）；存範本時原樣存返（版面 100% 保留）。 */
   originalBase64: string
-  /** 由 extractPdfFields 抽出嘅欄位（tag=name、label、type、options）。 */
+  /** 由 extractPdfFields 抽出的欄位（tag=name、label、type、options）。 */
   initialFields: PdfPreviewField[]
-  /** 預填範本名（通常 = 去副檔名嘅檔名）。 */
+  /** 預填範本名（通常 = 去副檔名的檔名）。 */
   initialName?: string
   onBack: () => void
   onSaved: () => void
@@ -92,7 +92,7 @@ export default function PdfTemplatePreview({
     [fields],
   )
 
-  // 重渲染信號 = name→色 序列化（次序敏感）。改 label 唔影響 → 唔重渲染。
+  // 重渲染信號 = name→色 序列化（次序敏感）。改 label 不影響 → 不重渲染。
   const colorKey = useMemo(
     () => fields.map((f, i) => `${f.tag}:${colorForIndex(i)}`).join('|'),
     [fields],
@@ -105,8 +105,8 @@ export default function PdfTemplatePreview({
     let cancelled = false
     setRendering(true)
     setRenderFailed(false)
-    // 傳 buffer copy：pdf.js 會 detach buffer，唔好整爛 useMemo 緩存個 buffer。
-    // 映射成 renderer 要嘅 { name, rects } 形狀（name = PDF field name = tag）。
+    // 傳 buffer copy：pdf.js 會 detach buffer，不要整爛 useMemo 緩存個 buffer。
+    // 映射成 renderer 要的 { name, rects } 形狀（name = PDF field name = tag）。
     const renderable = fields.map((f) => ({
       name: f.tag,
       rects: f.rects ?? [],
@@ -130,7 +130,7 @@ export default function PdfTemplatePreview({
       cancelled = true
     }
     // 依 pdfBuffer + colorKey 重渲染；fieldColors 每 render 都係新 Map
-    // （內容相同時 colorKey 不變 → 唔會重複渲染）。改 label 唔觸發。
+    // （內容相同時 colorKey 不變 → 不會重複渲染）。改 label 不觸發。
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pdfBuffer, colorKey])
 
@@ -138,7 +138,7 @@ export default function PdfTemplatePreview({
     setFields((prev) => prev.map((f) => (f.tag === tag ? { ...f, label } : f)))
   }
 
-  // 撳側欄一行 → 捲到對應 .adoc-pdf-box[data-tag] 並閃一閃（重用 adoc-tag-flash）。
+  // 按側欄一行 → 捲到對應 .adoc-pdf-box[data-tag] 並閃一閃（重用 adoc-tag-flash）。
   function focusTag(tag: string) {
     const container = containerRef.current
     if (!container) return
@@ -161,7 +161,7 @@ export default function PdfTemplatePreview({
       return
     }
     if (fields.length === 0) {
-      toast.error('此 PDF 冇可填欄位，無法儲存。請改用有填寫欄位嘅 PDF。')
+      toast.error('此 PDF 沒有可填欄位，無法儲存。請改用有填寫欄位的 PDF。')
       return
     }
     setSaving(true)
@@ -169,7 +169,7 @@ export default function PdfTemplatePreview({
       // kind / checkbox / dropdown / options 已正式收斂入 adminDocStore 型別。
       addTemplate({
         name: trimmedName,
-        base64: originalBase64, // 原 PDF，唔改。
+        base64: originalBase64, // 原 PDF，不改。
         kind: 'pdf',
         fields: fields.map((f) => ({
           tag: f.tag,
@@ -226,11 +226,11 @@ export default function PdfTemplatePreview({
                   預覽未能載入
                 </p>
                 <p className="max-w-xs text-xs text-slate-400 dark:text-slate-500">
-                  仍可喺右邊清單核對欄位並儲存範本；最終以 PDF 開啟為準。
+                  仍可在右邊清單核對欄位並儲存範本；最終以 PDF 開啟為準。
                 </p>
               </div>
             )}
-            {/* pdf.js 渲染容器（逐頁 canvas + 彩色框），畀佢捲動。 */}
+            {/* pdf.js 渲染容器（逐頁 canvas + 彩色框），給他捲動。 */}
             <div
               ref={containerRef}
               className={`max-h-[75vh] overflow-auto p-2 sm:p-3 ${
@@ -240,7 +240,7 @@ export default function PdfTemplatePreview({
           </div>
         </div>
 
-        {/* 右／側：欄位清單（PDF 欄位唔可增刪，只改顯示名） */}
+        {/* 右／側：欄位清單（PDF 欄位不可增刪，只改顯示名） */}
         <div className="space-y-3">
           <div className="flex items-center justify-between gap-2">
             <p className="flex items-center gap-1.5 text-xs font-medium text-slate-600 dark:text-slate-300">
@@ -252,7 +252,7 @@ export default function PdfTemplatePreview({
           <div className="space-y-2">
             {fields.length === 0 && (
               <p className="rounded-lg border border-dashed border-amber-300 bg-amber-50/60 px-3 py-4 text-center text-xs text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300">
-                此 PDF 冇填寫欄位（AcroForm）。請改用有填寫欄位嘅 PDF，或用 Word
+                此 PDF 沒有填寫欄位（AcroForm）。請改用有填寫欄位的 PDF，或用 Word
                 範本。
               </p>
             )}
@@ -269,7 +269,7 @@ export default function PdfTemplatePreview({
                     onClick={() => focusTag(f.tag)}
                     disabled={renderFailed}
                     className="flex w-full items-center gap-2 text-left disabled:cursor-default"
-                    title="撳一下捲到預覽對應位置"
+                    title="按一下捲到預覽對應位置"
                   >
                     <span
                       aria-hidden
@@ -294,7 +294,7 @@ export default function PdfTemplatePreview({
                     />
                   </div>
 
-                  {/* dropdown 選項預覽（唯讀，畀老師核對選項冇缺）。 */}
+                  {/* dropdown 選項預覽（唯讀，給老師核對選項沒有缺）。 */}
                   {f.type === 'dropdown' &&
                     f.options &&
                     f.options.length > 0 && (
@@ -354,7 +354,7 @@ export default function PdfTemplatePreview({
   )
 }
 
-// ── 本地小工具（避免依賴 docxEngine 嘅 base64 helper，PDF 路徑自足）──
+// ── 本地小工具（避免依賴 docxEngine 的 base64 helper，PDF 路徑自足）──
 
 /** base64（PDF）→ ArrayBuffer。 */
 function base64ToArrayBuffer(base64: string): ArrayBuffer {
@@ -366,7 +366,7 @@ function base64ToArrayBuffer(base64: string): ArrayBuffer {
 }
 
 /**
- * CSS attribute-selector value escape（用喺 `[data-tag="..."]`）。
+ * CSS attribute-selector value escape（用在 `[data-tag="..."]`）。
  * 用 CSS.escape（瀏覽器都有）；否則保守 escape 雙引號 / 反斜線。
  */
 function cssEscape(value: string): string {

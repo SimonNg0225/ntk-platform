@@ -6,7 +6,7 @@ import { useSubscription } from '../hooks/useSubscription'
 import PlanBadge from './PlanBadge'
 
 // 帳戶區（側邊欄底）：方案徽章 + 升級 / 管理 + 帳戶。
-// 企業級訂閱慣例：永遠睇到自己係「免費版」定「Pro」，免費版有升級入口。
+// 企業級訂閱慣例：永遠查看到自己係「免費版」定「Pro」，免費版有升級入口。
 export default function AccountBox() {
   const { t } = useTranslation()
   const { user, configured, signOut, loading } = useAuth()
@@ -49,7 +49,7 @@ export default function AccountBox() {
             to="/pricing"
             className="inline-flex min-h-11 items-center rounded-lg px-2 text-[11px] font-medium text-slate-400 transition hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
           >
-            {t('shell.seePro', { defaultValue: '睇 Pro 方案' })}
+            {t('shell.seePro', { defaultValue: '查看 Pro 方案' })}
           </Link>
         </div>
       </div>
@@ -113,7 +113,7 @@ function PlanRow() {
             to="/pricing"
             className="inline-flex min-h-11 items-center gap-0.5 rounded-lg bg-accent px-2 text-[11px] font-semibold text-white transition hover:bg-accent-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
           >
-            {t('shell.seePlans', { defaultValue: '睇方案' })}
+            {t('shell.seePlans', { defaultValue: '查看方案' })}
             <ArrowUpRight size={12} strokeWidth={2.25} />
           </Link>
         )}

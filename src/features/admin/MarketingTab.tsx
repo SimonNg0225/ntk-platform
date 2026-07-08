@@ -27,7 +27,7 @@ import {
 } from '../../lib/marketingContent'
 
 // ════════════ 行銷內容管理（雲端共享）════════════
-// 資料存喺 Supabase marketing_content,經 admin Edge Function 讀寫;
+// 資料存在 Supabase marketing_content,經 admin Edge Function 讀寫;
 // 全部管理員共用。只後台 admin 見到（Admin 頁面整體已 gate）。
 
 const fmtDateTime = (s: string) =>
@@ -161,7 +161,7 @@ export default function MarketingTab() {
       </SectionTitle>
 
       <p className="mb-3 text-xs text-slate-400 dark:text-slate-500">
-        集中管理推廣 campaign 嘅內容草稿（Landing 文案、示範腳本、SEO 文…）。雲端共享,全部管理員睇到同一份。
+        集中管理推廣 campaign 的內容草稿（Landing 文案、示範腳本、SEO 文…）。雲端共享,全部管理員查看到同一份。
       </p>
 
       <div className="mb-3 flex flex-wrap items-center gap-1.5">
@@ -284,7 +284,7 @@ export default function MarketingTab() {
               placeholder="內容草稿…"
             />
           </Field>
-          <Field label="內部備註" hint="拍攝提示、SEO 關鍵詞、to-do（唔會出街）。">
+          <Field label="內部備註" hint="拍攝提示、SEO 關鍵詞、to-do（不會出街）。">
             <Textarea
               value={form.notes}
               onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}

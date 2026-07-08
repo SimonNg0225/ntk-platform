@@ -561,8 +561,8 @@ describe('computeKpis — 到期卡 + streak/longestStreak 串接', () => {
 //  relTime（相對時間）
 // ═══════════════════════════════════════════════════════════
 describe('relTime', () => {
-  it('< 1 分鐘 → 啱啱', () => {
-    expect(relTime(new Date(TODAY.getTime() - 30 * 1000).toISOString())).toBe('啱啱')
+  it('< 1 分鐘 → 剛剛', () => {
+    expect(relTime(new Date(TODAY.getTime() - 30 * 1000).toISOString())).toBe('剛剛')
   })
   it('59 分鐘前 / 60 分鐘 = 1 小時邊界', () => {
     expect(relTime(new Date(TODAY.getTime() - 59 * 60000).toISOString())).toBe('59 分鐘前')
@@ -590,7 +590,7 @@ describe('relTime', () => {
 //  lastReviewed 由 srs.ts 用 new Date().toISOString()（UTC）寫入；
 //  其餘所有來源（focus startedAt / 習慣 date / 日誌 date）一律用本地日。
 //  computeKpis 的 reviewsWeek/reviewsPrevWeek、buildDaySignals 的 reviews、
-//  streakOf 都應該用本地日 keyOf(c.lastReviewed)，而唔係 .slice(0,10)。
+//  streakOf 都應該用本地日 keyOf(c.lastReviewed)，而不是 .slice(0,10)。
 //  在 UTC+8（HKT）下，夜晚（本地）的複習 UTC 仍屬前一日，會落錯格。
 // ═══════════════════════════════════════════════════════════
 describe('BUG 1 — lastReviewed 應計本地日（非 UTC slice）', () => {
@@ -671,7 +671,7 @@ describe('BUG 2 — buildActivity 排序應統一本地基準', () => {
     // 複習本地 2026-05-26（= UTC 2026-05-25T19:00:00.000Z，UTC 仲係 25 號！）
     // 習慣 2026-05-24。本地次序：複習(26) > 習慣(24)。
     // 舊 bug：複習 at = '2026-05-25T19:00:00.000Z'，習慣 = '2026-05-24T12:00:00'，
-    //         字串比較啱啱啱（25>24）→ 呢個 case 本身唔會錯；
+    //         字串比較剛剛啱（25>24）→ 呢個 case 本身唔會錯；
     // 但統一基準後複習 at = '2026-05-26T12:00:00' 更貼真實本地日，次序仍正確。
     const items = buildActivity(
       emptyInput({

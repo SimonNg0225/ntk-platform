@@ -166,7 +166,7 @@ describe('totalPagesRead', () => {
 
 // ============================================================
 //  computeStreaks — longestStreak（deterministic）
-//  currentStreak 用 2020 古早日期 → 一定唔係今日/尋日 → 0
+//  currentStreak 用 2020 古早日期 → 一定不是今日/昨天 → 0
 // ============================================================
 describe('computeStreaks', () => {
   it('完全冇 session → 兩者都 0', () => {
@@ -194,7 +194,7 @@ describe('computeStreaks', () => {
     ]
     const r = computeStreaks(books)
     expect(r.longestStreak).toBe(3)
-    expect(r.currentStreak).toBe(0) // 2020 唔可能係 2026 嘅今日/尋日
+    expect(r.currentStreak).toBe(0) // 2020 唔可能係 2026 嘅今日/昨天
   })
 
   it('同一日重複 session 唔會撐大 streak', () => {

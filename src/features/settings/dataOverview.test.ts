@@ -121,14 +121,14 @@ describe('backupAgeDays（now = 本地 2026-06-02 12:00）', () => {
     expect(backupAgeDays('not-a-date')).toBeNull()
   })
 
-  it('用日曆日差：今日稍早備份 → 0（唔係 24 小時整除）', () => {
+  it('用日曆日差：今日稍早備份 → 0（不是 24 小時整除）', () => {
     // 今朝 08:00 備份，而家中午 → 同一日曆日 → 0
     expect(backupAgeDays(new Date(2026, 5, 2, 8, 0, 0).toISOString())).toBe(0)
     // 今日凌晨剛過 00:01 都係 0
     expect(backupAgeDays(new Date(2026, 5, 2, 0, 1, 0).toISOString())).toBe(0)
   })
 
-  it('尋日任何時間 → 1', () => {
+  it('昨天任何時間 → 1', () => {
     expect(backupAgeDays(new Date(2026, 5, 1, 23, 59, 0).toISOString())).toBe(1)
     expect(backupAgeDays(new Date(2026, 5, 1, 0, 0, 0).toISOString())).toBe(1)
   })
@@ -171,10 +171,10 @@ describe('formatBackupReminder（now = 本地 2026-06-02 12:00）', () => {
     expect(r.text).toBe('今日已備份')
   })
 
-  it('尋日 → 文案「上次備份：尋日」、唔 stale', () => {
+  it('昨天 → 文案「上次備份：昨天」、唔 stale', () => {
     const r = formatBackupReminder(new Date(2026, 5, 1, 10, 0, 0).toISOString())
     expect(r.ageDays).toBe(1)
-    expect(r.text).toBe('上次備份：尋日')
+    expect(r.text).toBe('上次備份：昨天')
     expect(r.stale).toBe(false)
   })
 

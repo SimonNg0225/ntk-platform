@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 //  useLocalStorage
 //  ------------------------------------------------------------
 //  同 useState 一樣，但會自動將資料存落瀏覽器 (localStorage)，
-//  refresh 或者下次開返都仲喺度。示範功能（筆記、待辦）用緊佢。
+//  refresh 或者下次開返都還在這裡。示範功能（筆記、待辦）用緊他。
 // ============================================================
 
 export function useLocalStorage<T>(key: string, initial: T) {

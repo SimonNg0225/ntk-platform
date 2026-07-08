@@ -42,7 +42,7 @@ export function printDoc(doc: ExportDoc): void {
   @media print { .hint { display:none; } }
   .hint { background:#eff6ff; color:#2563eb; padding:8px 12px; border-radius:8px; font-size:12px; margin-bottom:14px; }
 </style></head><body>
-<div class="hint">喺列印對話框揀「另存為 PDF / Save as PDF」就可以下載成 PDF。</div>
+<div class="hint">在列印對話框選擇「另存為 PDF / Save as PDF」就可以下載成 PDF。</div>
 <h1>${esc(doc.title)}</h1>
 ${doc.subtitle ? `<p class="sub">${esc(doc.subtitle)}</p>` : ''}
 ${blocksHtml(doc)}
@@ -51,7 +51,7 @@ ${blocksHtml(doc)}
 
   const w = window.open('', '_blank')
   if (!w) {
-    throw new Error('瀏覽器擋咗彈出視窗，請允許後再試。')
+    throw new Error('瀏覽器擋了彈出視窗，請允許後再試。')
   }
   w.document.write(html)
   w.document.close()

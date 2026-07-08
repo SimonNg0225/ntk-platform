@@ -5,8 +5,8 @@
 //  · CJK metrics（pptxText）：行高估算 + 長題階梯 + 預混色
 //  · 無 slide master／placeholder — 每版背景、頁尾、頁碼 engine 自己畫
 //  · 出檔後用 pizzip patch theme1.xml：a:ea 字體軌補 Microsoft JhengHei
-//    （chart 文字 + 冇 fontFace 嘅 run 先有正確中文字體）
-//  pptxgenjs 同 pizzip 都係動態 import，唔拖慢首屏。
+//    （chart 文字 + 沒有 fontFace 的 run 先有正確中文字體）
+//  pptxgenjs 同 pizzip 都係動態 import，不拖慢首屏。
 // ============================================================
 
 import type { CoverTitle, Deck, Slide, SlideLayout } from './types'
@@ -25,7 +25,7 @@ import { BRAND_EXPORT } from '../brand'
 
 export type { SlidePackId, SlideImage } from './pptxPacks'
 
-/** 全部 pack（6 核心 + 28 gallery）；揀選 UI 按此排序 */
+/** 全部 pack（6 核心 + 28 gallery）；選擇選 UI 按此排序 */
 const PACK_LIST: Pack[] = [
   ...CORE_PACKS,
   ...GALLERY_PACKS_1,
@@ -39,20 +39,20 @@ const PACK_LIST: Pack[] = [
 const PACKS = Object.fromEntries(PACK_LIST.map((p) => [p.id, p])) as Record<SlidePackId, Pack>
 
 /**
- * 揀選卡 UI 用嘅 pack 清單。swatches 連 #，可直接入 style；
- * bg/ink/accent 係引擎 token（純 hex，冇 #）俾 <PackPreview> 砌代表性封面縮圖
- * （唔係真 pptx engine render — 純前端 token-driven mock）；dark = 深底 pack。
+ * 選擇選卡 UI 用的 pack 清單。swatches 連 #，可直接入 style；
+ * bg/ink/accent 係引擎 token（純 hex，沒有 #）給 <PackPreview> 砌代表性封面縮圖
+ * （不是真 pptx engine render — 純前端 token-driven mock）；dark = 深底 pack。
  */
 export interface SlidePackOption {
   id: SlidePackId
   name: string
   hint: string
   swatches: [string, string, string]
-  /** 引擎 token（純 hex，冇 #）：背景色 */
+  /** 引擎 token（純 hex，沒有 #）：背景色 */
   bg: string
-  /** 引擎 token（純 hex，冇 #）：墨／文字色 */
+  /** 引擎 token（純 hex，沒有 #）：墨／文字色 */
   ink: string
-  /** 引擎 token（純 hex，冇 #）：點睛色 */
+  /** 引擎 token（純 hex，沒有 #）：點睛色 */
   accent: string
   /** 深底 pack（縮圖按此調對比） */
   dark: boolean
@@ -92,8 +92,8 @@ function isBrowser(): boolean {
 }
 
 /**
- * 決定一版實際行邊款版式：bullets 留空 = 章節；其他 layout 嘅
- * 資料唔合格一律靜默回退 'bullets'（永不 throw — 舊紀錄照出）。
+ * 決定一版實際行邊款版式：bullets 留空 = 章節；其他 layout 的
+ * 資料不合格一律靜默回退 'bullets'（永不 throw — 舊紀錄照出）。
  */
 function effectiveLayout(s: Slide): SlideLayout {
   const bullets = s.bullets ?? []
@@ -108,7 +108,7 @@ function effectiveLayout(s: Slide): SlideLayout {
     case 'steps':
       return s.steps && s.steps.length >= 2 && s.steps.length <= 5 && s.steps.every((t) => t.title) ? 'steps' : 'bullets'
     case 'quote':
-      // 超長引文做唔大 — 降級行 bullets 路
+      // 超長引文做不大 — 降級行 bullets 路
       return s.quote?.text && [...s.quote.text].length <= 80 ? 'quote' : 'bullets'
     case 'cards':
       return s.cards && s.cards.length >= 2 && s.cards.length <= 6 && s.cards.every((c) => c.title) ? 'cards' : 'bullets'
@@ -120,10 +120,10 @@ function effectiveLayout(s: Slide): SlideLayout {
 export { effectiveLayout }
 
 /**
- * 螢幕預覽用嘅輕量主題抽取（on-screen renderer 對齊 .pptx 配色／字體用）。
+ * 螢幕預覽用的輕量主題抽取（on-screen renderer 對齊 .pptx 配色／字體用）。
  * ------------------------------------------------------------
- * 只抽純資料 token（全部 hex 無 `#`，UI 用自己加），唔抽 cover/section/
- * contentFrame/overrides/deco 等 function 欄位（螢幕版唔行真引擎 render）。
+ * 只抽純資料 token（全部 hex 無 `#`，UI 用自己加），不抽 cover/section/
+ * contentFrame/overrides/deco 等 function 欄位（螢幕版不行真引擎 render）。
  * 鐵律：未知 id 回退 inkwell，永不 undefined。
  */
 export interface PackTheme {
@@ -162,7 +162,7 @@ export interface PackTheme {
   chartGridColor: string
 }
 
-/** 抽出某 pack 嘅螢幕預覽主題；未知 id 回退 inkwell。 */
+/** 抽出某 pack 的螢幕預覽主題；未知 id 回退 inkwell。 */
 export function packTheme(id: SlidePackId): PackTheme {
   const p = PACKS[id] ?? PACKS.inkwell
   return {
@@ -188,7 +188,7 @@ export function packTheme(id: SlidePackId): PackTheme {
 }
 
 /**
- * 修正非法負 extent：OOXML 嘅 <a:ext cx/cy> 必須 ≥ 0，但斜線／向上線經 pptxgenjs
+ * 修正非法負 extent：OOXML 的 <a:ext cx/cy> 必須 ≥ 0，但斜線／向上線經 pptxgenjs
  * 可能出負值，令 PowerPoint「無法讀取」。將負 ext 轉成正 ext + 對應 flip + 平移 off
  * （外觀不變）。逐 slide XML 套用。
  */
@@ -221,7 +221,7 @@ function normalizeNegExt(xml: string): string {
   )
 }
 
-/** §6 theme patch：theme1.xml 嘅空 a:ea 軌 + Hant script 表換做 CJK 字體 */
+/** §6 theme patch：theme1.xml 的空 a:ea 軌 + Hant script 表換做 CJK 字體 */
 async function patchThemeAndPackage(buf: ArrayBuffer): Promise<Blob | Uint8Array> {
   const PizZip = (await import('pizzip')).default
   const zip = new PizZip(buf)
@@ -234,15 +234,15 @@ async function patchThemeAndPackage(buf: ArrayBuffer): Promise<Blob | Uint8Array
       if (patched !== xml) zip.file(themePath, patched)
     }
   } catch {
-    // 搵唔到目標就照原樣出檔（唔好 throw）
+    // 搜尋不到目標就照原樣出檔（不要 throw）
   }
-  // 漸層注入：將 pack 登記咗的 sentinel solid fill 換成 OOXML gradFill
+  // 漸層注入：將 pack 登記了的 sentinel solid fill 換成 OOXML gradFill
   try {
     injectGradients(zip)
   } catch {
-    // 注入失敗就照原樣出檔（漸層變番 sentinel 純色，唔好 throw）
+    // 注入失敗就照原樣出檔（漸層變番 sentinel 純色，不要 throw）
   }
-  // 修正非法負 extent（斜線／向上線），否則 PowerPoint 讀唔到檔
+  // 修正非法負 extent（斜線／向上線），否則 PowerPoint 讀不到檔
   try {
     const names = Object.keys((zip as unknown as { files: Record<string, unknown> }).files)
     for (const name of names) {
@@ -253,7 +253,7 @@ async function patchThemeAndPackage(buf: ArrayBuffer): Promise<Blob | Uint8Array
       if (fixed !== sx) zip.file(name, fixed)
     }
   } catch {
-    // 正規化失敗就照原樣出檔（唔好 throw）
+    // 正規化失敗就照原樣出檔（不要 throw）
   }
   if (isBrowser()) {
     return zip.generate({ type: 'blob', mimeType: PPTX_MIME })
@@ -281,13 +281,13 @@ export async function buildPptxFile(deck: Deck, opts: PptxOptions = {}): Promise
 
   // ── 內容 / 章節 ──
   let sectionNo = 0
-  let contentSeq = 0 // 內容版序（0-based，唔計章節）— 版面節奏 + 逐版母題用
+  let contentSeq = 0 // 內容版序（0-based，不計章節）— 版面節奏 + 逐版母題用
   deck.slides.forEach((s, i) => {
     const slide = pptx.addSlide()
     const layout = effectiveLayout(s)
 
     if (layout === 'section') {
-      sectionNo += 1 // 章節序 = 章節喺 deck 入面嘅次序，唔係 slide index
+      sectionNo += 1 // 章節序 = 章節在 deck 中的次序，不是 slide index
       pack.section(slide, sectionNo, s.title)
       if (s.notes) slide.addNotes(s.notes)
       return
@@ -309,12 +309,12 @@ export async function buildPptxFile(deck: Deck, opts: PptxOptions = {}): Promise
       seq,
     }
     const fullBody = pack.contentFrame(slide, ctx)
-    // 逐版母題（喺 frame 之後、內容之前）— pack 自選，缺省冇
+    // 逐版母題（在 frame 之後、內容之前）— pack 自選，缺省沒有
     pack.deco?.(slide, ctx)
-    // 重點版強調：AI 標 emphasis 嘅版畫 accent L-frame，造輕重節奏
+    // 重點版強調：AI 標 emphasis 的版畫 accent L-frame，造輕重節奏
     if (s.emphasis) renderEmphasisFrame(slide, pack)
 
-    // 包底帶：預留版底 0.74"，版式喺收窄咗嘅 body 入面排
+    // 包底帶：預留版底 0.74"，版式在收窄了的 body 中排
     const takeaway = s.takeaway?.trim()
     const body = takeaway ? { ...fullBody, h: fullBody.h - 0.74 } : fullBody
 
@@ -358,7 +358,7 @@ export async function buildPptxFile(deck: Deck, opts: PptxOptions = {}): Promise
   return patchThemeAndPackage(buf)
 }
 
-/** 砌檔 + 觸發瀏覽器下載（safeFilename 防唔合法字元） */
+/** 砌檔 + 觸發瀏覽器下載（safeFilename 防不合法字元） */
 export async function downloadPptx(deck: Deck, name?: string, opts?: PptxOptions): Promise<void> {
   const file = await buildPptxFile(deck, opts)
   const blob = file instanceof Blob ? file : new Blob([file as BlobPart], { type: PPTX_MIME })

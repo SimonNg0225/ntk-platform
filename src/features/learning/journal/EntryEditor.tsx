@@ -30,7 +30,7 @@ function blankDraft(date: string): EntryDraft {
   return { date, title: '', content: '', mood: '', weather: '', gratitude: '', favorite: false }
 }
 
-// 天氣 emoji 嘅可讀名（無障礙標籤用）
+// 天氣 emoji 的可讀名（無障礙標籤用）
 const WEATHER_LABEL: Record<string, string> = {
   '☀️': '晴天',
   '⛅': '多雲',
@@ -66,7 +66,7 @@ export function EntryEditor({
   initial?: JournalDoc
   /** 新建時預設日子 */
   initialDate?: string
-  /** 已有日誌嘅日子集合（提示同日已有紀錄） */
+  /** 已有日誌的日子集合（提示同日已有紀錄） */
   existingDates: Set<string>
   onClose: () => void
   onSave: (draft: EntryDraft) => void
@@ -115,7 +115,7 @@ export function EntryEditor({
     >
       <div className="space-y-5">
         {/* ───────── 日記扉頁 dateline：kicker + serif 長日期，呼應主畫面 masthead。
-             日期 input 同精選戳收喺右側細控件，唔搶 serif 標題 ───────── */}
+             日期 input 同精選戳收在右側細控件，不搶 serif 標題 ───────── */}
         <header className="flex flex-wrap items-end justify-between gap-x-4 gap-y-3 border-b border-slate-200/80 pb-4 dark:border-slate-700/60">
           <div className="min-w-0">
             <p className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.3em] text-accent/70">
@@ -140,7 +140,7 @@ export function EntryEditor({
                 className="h-[38px]"
               />
             </label>
-            {/* 精選＝書頁角上嘅蠟印（press-toggle） */}
+            {/* 精選＝書頁角上的蠟印（press-toggle） */}
             <button
               type="button"
               onClick={() => set('favorite', !draft.favorite)}
@@ -160,12 +160,12 @@ export function EntryEditor({
 
         {dupDate && (
           <p className="rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-700 dark:bg-amber-500/10 dark:text-amber-300">
-            呢一日已經有日誌，新建呢篇會同日並存（你亦可改返做其他日子）。
+            這一天已經有日誌；新建此篇會與同日紀錄並存，你也可以改為其他日期。
           </p>
         )}
 
-        {/* 標題：日誌嘅標頭，serif 寫出書頁標題感。只加/字重（唔掂字級，
-             保留共用 FIELD 嘅手機 16px → 唔觸發 iOS zoom） */}
+        {/* 標題：日誌的標頭，serif 寫出書頁標題感。只加/字重（不掂字級，
+             保留共用 FIELD 的手機 16px → 不觸發 iOS zoom） */}
         <Field label="標題（選填）">
           <Input
             value={draft.title}
@@ -257,7 +257,7 @@ export function EntryEditor({
             }}
             rows={7}
             autoFocus={!editing}
-            placeholder="寫低今日學到嘅嘢、突破、困難…（⌘/Ctrl + Enter 儲存）"
+            placeholder="記錄今日學到的事、突破、困難…（⌘/Ctrl + Enter 儲存）"
             className="leading-relaxed"
           />
 
@@ -280,11 +280,11 @@ export function EntryEditor({
           </div>
         </div>
 
-        {/* ───────── 今日感恩：emerald 紙籤框，呼應日誌卡嘅感恩條（input 用回共用樣式） ───────── */}
+        {/* ───────── 今日感恩：emerald 紙籤框，呼應日誌卡的感恩條（input 用回共用樣式） ───────── */}
         <div className="rounded-2xl border border-emerald-200/70 bg-emerald-50/50 p-3.5 dark:border-emerald-500/25 dark:bg-emerald-500/5">
           <Field
             label="今日感恩（選填）"
-            hint="一句話，記低一件值得感恩嘅小事"
+            hint="一句話，記低一件值得感恩的小事"
           >
             <Input
               value={draft.gratitude}

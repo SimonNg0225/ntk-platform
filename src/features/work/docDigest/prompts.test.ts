@@ -73,7 +73,7 @@ describe('parseDigest', () => {
   })
 
   it('垃圾輸入會 throw', () => {
-    expect(() => parseDigest('完全唔係 JSON')).toThrow()
+    expect(() => parseDigest('完全不是 JSON')).toThrow()
     expect(() => parseDigest('')).toThrow()
   })
 })

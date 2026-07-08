@@ -5,14 +5,14 @@ import { addDaysKey, todayKey } from './util'
 // ============================================================
 //  習慣追蹤 — 示範資料 seeder
 //  ------------------------------------------------------------
-//  一鍵填入一個「有上進心、生活忙碌」嘅人嘅習慣 + 近期打卡 log，
-//  令畫面即刻有 streak、heatmap、完成率睇。
+//  一鍵填入一個「有上進心、生活忙碌」的人的習慣 + 近期打卡 log，
+//  令畫面立即有 streak、heatmap、完成率查看。
 //
 //  鐵則：
-//   - idempotent —— 每個 collection 只喺佢而家係空（length === 0）先種。
-//   - 日期一律行 util 嘅本地日期 helper（todayKey / addDaysKey），
-//     分佈喺最近約 4 週，唔會用未來日。
-//   - 純資料，唔掂 UI / 唔 import React。
+//   - idempotent —— 每個 collection 只在他現在係空（length === 0）先種。
+//   - 日期一律行 util 的本地日期 helper（todayKey / addDaysKey），
+//     分佈在最近約 4 週，不會用未來日。
+//   - 純資料，不掂 UI / 不 import React。
 // ============================================================
 
 /** 由近期某段日子連續打卡（含今日回推），回傳 log rows。
@@ -51,7 +51,7 @@ function pick(habitId: string, backs: number[]): HabitLog[] {
 export function seedDemo(): number {
   let added = 0
 
-  // ── 1. 習慣本身（只喺空先種）──────────────────────────────
+  // ── 1. 習慣本身（只在空先種）──────────────────────────────
   // 預先派 id，下面打卡 log 直接引用，毋須先 .add() 再查。
   const idMorningRun = uid()
   const idRead = uid()
@@ -76,7 +76,7 @@ export function seedDemo(): number {
         goalKind: 'build',
         targetStreak: 30,
         category: '運動',
-        notes: '六點半起身落樓跑 3 公里，趁返工前清醒個腦。',
+        notes: '六點半起身落樓跑 3 公里，趁上班前清醒個腦。',
         reminderTime: '06:30',
         archived: false,
         order: 0,
@@ -91,7 +91,7 @@ export function seedDemo(): number {
         goalKind: 'build',
         targetStreak: 21,
         category: '學習',
-        notes: '放低手機，讀返幾頁書先瞓，今個月睇《原子習慣》。',
+        notes: '放低手機，睡前讀幾頁書，今個月閱讀《原子習慣》。',
         reminderTime: '22:30',
         archived: false,
         order: 1,
@@ -106,7 +106,7 @@ export function seedDemo(): number {
         goalKind: 'build',
         targetStreak: 0,
         category: '健康',
-        notes: '枱面放個 1L 水樽，飲完添，唔好淨係飲咖啡。',
+        notes: '枱面放個 1L 水樽，飲完添，不要只飲咖啡。',
         reminderTime: '10:00',
         archived: false,
         order: 2,
@@ -121,7 +121,7 @@ export function seedDemo(): number {
         goalKind: 'build',
         targetStreak: 14,
         category: '正念',
-        notes: '用 app 跟住做 10 分鐘呼吸練習，減返啲返工嘅焦慮。',
+        notes: '用 app 跟着做 10 分鐘呼吸練習，減少上班焦慮。',
         reminderTime: '07:00',
         archived: false,
         order: 3,
@@ -151,7 +151,7 @@ export function seedDemo(): number {
         goalKind: 'quit',
         targetStreak: 30,
         category: '健康',
-        notes: '九點後唔再食嘢，想減返兩磅同瞓得好啲。',
+        notes: '九點後不再進食，目標是減兩磅並睡得好些。',
         archived: false,
         order: 5,
         createdAt: born(20),
@@ -165,7 +165,7 @@ export function seedDemo(): number {
         goalKind: 'build',
         targetStreak: 0,
         category: '運動',
-        notes: '推 / 拉 / 腳 三分化，跟住健身中心嘅課表做。',
+        notes: '推 / 拉 / 腳 三分化，跟住健身中心的課表做。',
         reminderTime: '19:00',
         archived: false,
         order: 6,
@@ -177,31 +177,31 @@ export function seedDemo(): number {
     added += habits.length
   }
 
-  // ── 2. 近期打卡 log（只喺空先種）──────────────────────────
-  // 設計成有真實感：有正喺進行嘅 streak、有偶爾跣一兩日、
-  // 非每日習慣只喺合理日子打卡。全部分佈喺最近約 4 週。
+  // ── 2. 近期打卡 log（只在空先種）──────────────────────────
+  // 設計成有真實感：有正在進行的 streak、有偶爾跣一兩日、
+  // 非每日習慣只在合理日子打卡。全部分佈在最近約 4 週。
   if (habitLogV2Col.get().length === 0) {
     const logs: HabitLog[] = [
-      // 晨早跑步（逢一三五）：過去四週幾乎全勤，只漏咗一次。
-      // 距今日數揀啱對應星期，毋須準確；StreakUtil 會跳過非排程日。
+      // 晨早跑步（逢一三五）：過去四週幾乎全勤，只漏了一次。
+      // 距今日數選擇適合對應星期，毋須準確；StreakUtil 會跳過非排程日。
       ...pick(idMorningRun, [25, 23, 21, 18, 16, 11, 9, 4, 2, 0]),
 
-      // 睡前閱讀（每日）：正喺一段健康 streak — 最近 9 日連續無斷。
+      // 睡前閱讀（每日）：正在一段健康 streak — 最近 9 日連續無斷。
       ...streak(idRead, 8, 0, {
         8: '《原子習慣》第 4 章：習慣堆疊',
-        3: '改睇《深度工作力》，停唔到手。',
-        0: '今晚睇咗 30 分鐘，超額完成。',
+        3: '改查看《深度工作力》，停不到手。',
+        0: '今晚查看了 30 分鐘，超額完成。',
       }),
-      // 再加之前一段（中間斷咗一兩日，顯得真實）。
+      // 再加之前一段（中間斷了一兩日，顯得真實）。
       ...streak(idRead, 16, 11),
 
       // 飲水（每日）：最近 6 日連續，之前散散哋。
       ...streak(idWater, 5, 0),
       ...pick(idWater, [12, 11, 9, 8, 7]),
 
-      // 正念冥想（每日）：最近 4 日 streak，重頭嚟過嘅感覺。
+      // 正念冥想（每日）：最近 4 日 streak，重頭來過的感覺。
       ...streak(idMeditate, 3, 0, {
-        3: '返工前坐低十分鐘，成日順咗好多。',
+        3: '上班前坐下十分鐘，整天順了很多。',
       }),
       ...pick(idMeditate, [13, 12, 10]),
 
@@ -210,7 +210,7 @@ export function seedDemo(): number {
 
       // 戒夜宵（戒除型，每日）：連續 7 日成功忍口。
       ...streak(idNoLateSnack, 6, 0, {
-        6: '今晚好想食薯片，飲咗杯水頂住。',
+        6: '今晚好想吃薯片，飲了杯水頂住。',
         0: '一個禮拜未破戒，撐住！',
       }),
 

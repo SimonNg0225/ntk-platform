@@ -159,7 +159,7 @@ function TypeChip({ type }: { type: QuestionType }) {
 }
 
 // ───────── 分數印章（marking-scheme 右欄語氣：[ N 分 ]）─────────
-//  考評檔案概念：分數似改卷員喺題旁打嘅 marks 章。無分（唔計分）時退成低調灰章。
+//  考評檔案概念：分數似改卷員在題旁打的 marks 章。無分（不計分）時退成低調灰章。
 function MarksStamp({ marks }: { marks?: number }) {
   if (marks)
     return (
@@ -176,7 +176,7 @@ function MarksStamp({ marks }: { marks?: number }) {
 }
 
 // ───────── 卷面題號牌（serif Q01）──────────
-//  畀每條題目一個「卷面編號感」——細牌、serif、tabular，題型色做底光。
+//  給每條題目一個「卷面編號感」——細牌、serif、tabular，題型色做底光。
 function QuestionPlate({
   index,
   type,
@@ -373,59 +373,59 @@ export default function QuestionBank() {
     })
   const clearSelection = () => setSelected(new Set())
 
-  // ───── 教學引導（跟視圖換內容；defaultValue 廣東話，唔改 i18n 檔）─────
+  // ───── 教學引導（跟視圖換內容；defaultValue 廣東話，不改 i18n 檔）─────
   const BANK_GUIDE: FeatureGuideStep[] = [
     {
       title: '入題：擬題、AI 出題或匯入',
-      desc: '撳「新增題目」逐條擬，或者「AI 出題」一鍵草擬，又或者「匯入」貼上 CSV。',
+      desc: '按「新增題目」逐條擬，或者「AI 出題」一鍵草擬，又或者「匯入」貼上 CSV。',
     },
     {
       title: '分類好：課題 · 題型 · 難度',
-      desc: '每條題標返課題同難度，之後篩選、組卷同統計先準。',
+      desc: '每條題目標記課題及難度，之後篩選、組卷及統計才準確。',
     },
     {
-      title: '篩選 + 查重執靚題庫',
-      desc: '用上方搜尋同篩選快速搵題；「查重」幫你揪出重複，保持題庫乾淨。',
+      title: '篩選 + 查重整理題庫',
+      desc: '用上方搜尋同篩選快速搜尋題；「查重」幫你揪出重複，保持題庫乾淨。',
     },
     {
-      title: '揀「組卷」就能出卷',
-      desc: '題庫夠料之後，切去「組卷」手揀或藍圖自動抽題，一鍵列印。',
+      title: '選擇「組卷」就能出卷',
+      desc: '題庫夠料之後，切去「組卷」手選擇或藍圖自動抽題，一鍵列印。',
     },
   ]
   const ANALYTICS_GUIDE: FeatureGuideStep[] = [
     {
-      title: '睇題型同難度分佈',
-      desc: '一眼睇晒 MC／長題佔比同深淺比例，留意份卷會唔會太淺或太深。',
+      title: '查看題型同難度分佈',
+      desc: '一眼查看全部 MC／長題佔比同深淺比例，留意份卷會不會太淺或太深。',
     },
     {
       title: '查課題覆蓋矩陣',
-      desc: '熱圖顯示邊個課題夠題、邊個係空白，補題前先睇呢度。',
+      desc: '熱圖顯示哪個課題題量足夠、哪個仍未有題目，補題前可先查看這裡。',
     },
     {
       title: '對住缺口補題',
-      desc: '「覆蓋缺口」列出未有題嘅課題；返去「題庫」針對性出題補返。',
+      desc: '「覆蓋缺口」列出未有題目的課題；回到「題庫」針對性補上題目。',
     },
   ]
   const PAPER_GUIDE: FeatureGuideStep[] = [
     {
       title: '填卷面資料',
-      desc: '輸入試卷標題、班別同時限，會印喺卷頭。',
+      desc: '輸入試卷標題、班別同時限，會印在卷頭。',
     },
     {
-      title: '揀題：手動或藍圖自動',
-      desc: '由題池逐條揀，或者用「藍圖自動組卷」設定各難度題數一鍵抽題。',
+      title: '選擇題：手動或藍圖自動',
+      desc: '由題池逐條選擇，或者用「藍圖自動組卷」設定各難度題數一鍵抽題。',
     },
     {
       title: '排序、列印、儲存',
-      desc: '調好題目次序後，可列印（連／唔連答案）或儲存試卷下次再用。',
+      desc: '調好題目次序後，可列印（連／不連答案）或儲存試卷下次再用。',
     },
   ]
   const guideProps =
     view === 'analytics'
-      ? { title: '卷面分析點睇？', steps: ANALYTICS_GUIDE }
+      ? { title: '如何查看卷面分析？', steps: ANALYTICS_GUIDE }
       : view === 'paper'
-        ? { title: '組卷點用？', steps: PAPER_GUIDE }
-        : { title: '題庫點用？', steps: BANK_GUIDE }
+        ? { title: '組卷使用說明', steps: PAPER_GUIDE }
+        : { title: '題庫使用說明', steps: BANK_GUIDE }
 
   const openAdd = () => {
     setEditing(null)
@@ -569,7 +569,7 @@ export default function QuestionBank() {
         />
       </section>
 
-      {/* 教學引導：跟視圖換內容（同一 storageKey，「知道喇」後三個視圖都收起） */}
+      {/* 教學引導：跟視圖換內容（同一 storageKey，「知道了」後三個視圖都收起） */}
       <FeatureGuide storageKey="questionbank" {...guideProps} />
 
       {view === 'bank' && (
@@ -797,7 +797,7 @@ function BankView(props: {
         </div>
       </div>
 
-      {/* 篩選 + 排序 — 分層：課題/排序揀單 + 題型/難度 pill 各自一行 */}
+      {/* 篩選 + 排序 — 分層：課題/排序選擇單 + 題型/難度 pill 各自一行 */}
       <Card className="space-y-3 p-4">
         <div className="flex flex-wrap items-center gap-2">
           <Select
@@ -1054,7 +1054,7 @@ function BankView(props: {
                 {q.type !== 'mc' && !q.answer && (
                   <p className="flex items-center gap-1.5 text-xs italic text-slate-400 dark:text-slate-500">
                     <PenLine size={13} />
-                    仲未擬好評卷參考——撳編輯補上。
+                    尚未擬好評卷參考——按編輯補上。
                   </p>
                 )}
               </div>
@@ -1068,10 +1068,10 @@ function BankView(props: {
       {filtered.length === 0 && (
         <EmptyState
           icon={filterActive ? Search : ScrollText}
-          title={filterActive ? '篩唔到相符嘅題目' : '題庫仲係一張白卷'}
+          title={filterActive ? '篩不到相符的題目' : '題庫仍是一張白卷'}
           hint={
             filterActive
-              ? '試吓放寬篩選條件，或者用 AI 出題 / 匯入 CSV 補充題量。'
+              ? '嘗試放寬篩選條件，或者用 AI 出題 / 匯入 CSV 補充題量。'
               : '由零開始入第一條題：手動擬卷、叫 AI 幫你草擬，或者匯入現成 CSV。'
           }
           action={
@@ -1168,8 +1168,8 @@ function AnalyticsView({
     return (
       <EmptyState
         icon={BarChart3}
-        title="未有題目，畫唔到卷面分析"
-        hint="入幾條題之後，呢度會出現題型佔比、難度分佈同課題覆蓋熱圖，幫你睇住份卷夠唔夠均衡。"
+        title="未有題目，畫不到卷面分析"
+        hint="入幾條題之後，這裡會出現題型佔比、難度分佈同課題覆蓋熱圖，幫你查看住份卷夠不夠均衡。"
         action={
           <div className="flex flex-wrap justify-center gap-2">
             <Button icon={BookMarked} onClick={onGoBank}>
@@ -1217,7 +1217,7 @@ function AnalyticsView({
 
       <div className="grid gap-4 lg:grid-cols-2">
         <Card className="p-4 sm:p-5">
-          <ChartHead icon={Sparkles} tone="violet">題目最多嘅課題</ChartHead>
+          <ChartHead icon={Sparkles} tone="violet">題目最多的課題</ChartHead>
           {topTopics.length === 0 ? (
             <p className="py-4 text-center text-sm text-slate-400 dark:text-slate-500">
               未有資料
@@ -1281,7 +1281,7 @@ function AnalyticsView({
           ) : (
             <>
               <p className="mb-2.5 text-xs text-slate-400 dark:text-slate-500">
-                以下課題仲未有任何題目，建議補題：
+                以下課題尚未有任何題目，建議補題：
               </p>
               <ul className="flex flex-wrap gap-1.5">
                 {gaps.map((g) => (
@@ -1314,7 +1314,7 @@ function PaperStudio({
   const confirm = useConfirm()
   const papers = useCollection(papersCol)
   const subj = useSubjectLabel()
-  // 預設卷名：跟任教科目（未指定就唔加科名前綴）
+  // 預設卷名：跟任教科目（未指定就不加科名前綴）
   const defaultPaperTitle = subj.chosen ? `${subj.short} 自擬試卷` : '自擬試卷'
 
   const [mode, setMode] = useState<'manual' | 'auto'>('manual')
@@ -1365,7 +1365,7 @@ function PaperStudio({
   const runAuto = () => {
     const { picked: chosen, shortfall } = assemblePaper(questions, bp)
     if (chosen.length === 0) {
-      toast.error('題池唔夠，抽唔到題目。試吓放寬範圍或補題。')
+      toast.error('題池不夠，抽不到題目。嘗試放寬範圍或補題。')
       return
     }
     setPicked(chosen.map((q) => q.id))
@@ -1407,7 +1407,7 @@ function PaperStudio({
   const deletePaper = async (p: SavedPaper) => {
     const ok = await confirm({
       title: '刪除試卷？',
-      message: `將會刪除「${p.title}」（唔影響題庫題目）。`,
+      message: `將會刪除「${p.title}」（不影響題庫題目）。`,
       confirmText: '刪除',
       tone: 'danger',
     })
@@ -1428,7 +1428,7 @@ function PaperStudio({
       withAnswers,
     )
     const ok = openPrintWindow(html)
-    if (!ok) toast.error('瀏覽器擋咗彈出視窗，請允許後再試。')
+    if (!ok) toast.error('瀏覽器擋了彈出視窗，請允許後再試。')
   }
 
   const setCount = (d: Difficulty, v: string) =>
@@ -1484,7 +1484,7 @@ function PaperStudio({
 
         <SegmentedControl<'manual' | 'auto'>
           options={[
-            { id: 'manual', label: '手動揀題', icon: FolderOpen },
+            { id: 'manual', label: '手動選擇題', icon: FolderOpen },
             { id: 'auto', label: '藍圖自動組卷', icon: Wand2 },
           ]}
           value={mode}
@@ -1494,7 +1494,7 @@ function PaperStudio({
         {mode === 'auto' && (
           <div className="space-y-3.5 rounded-2xl border border-slate-200/80 bg-slate-50/60 p-4 dark:border-slate-700/60 dark:bg-slate-900/40">
             <p className="text-xs leading-relaxed text-slate-500 dark:text-slate-400">
-              設定每個難度想出幾題，系統會喺範圍內隨機抽題並盡量平均覆蓋課題。
+              設定每個難度想出幾題，系統會在範圍內隨機抽題並盡量平均覆蓋課題。
             </p>
             <div className="grid grid-cols-3 gap-2">
               {DIFF_ORDER.map((d) => (
@@ -1520,7 +1520,7 @@ function PaperStudio({
             </Field>
             <div>
               <p className="mb-1.5 text-xs font-medium text-slate-600 dark:text-slate-300">
-                限定課題（唔揀 = 全部 {topics.length} 個）
+                限定課題（不選擇 = 全部 {topics.length} 個）
               </p>
               <div className="flex max-h-32 flex-wrap gap-1.5 overflow-y-auto">
                 {topics.map((t) => {
@@ -1565,7 +1565,7 @@ function PaperStudio({
                 題池
               </h3>
               <span className="text-xs tabular-nums text-slate-400 dark:text-slate-500">
-                {candidatePool.length} 條可揀
+                {candidatePool.length} 條可選擇
               </span>
             </div>
             <div className="space-y-2">
@@ -1651,7 +1651,7 @@ function PaperStudio({
               })}
               {candidatePool.length === 0 && (
                 <li className="py-6 text-center text-xs text-slate-400 dark:text-slate-500">
-                  未有符合條件嘅題目
+                  未有符合條件的題目
                 </li>
               )}
             </ul>
@@ -1678,11 +1678,11 @@ function PaperStudio({
           {pickedQuestions.length === 0 ? (
             <EmptyState
               icon={FileText}
-              title="試卷仲係空白卷"
+              title="試卷仍是空白卷"
               hint={
                 mode === 'manual'
-                  ? '由左邊題池揀題入卷，或者切去「藍圖自動組卷」一鍵抽題。'
-                  : '設定每個難度想出幾題，撳「自動組卷」就幫你抽好。'
+                  ? '由左邊題池選擇題入卷，或者切去「藍圖自動組卷」一鍵抽題。'
+                  : '設定每個難度想出幾題，按「自動組卷」就幫你抽好。'
               }
               action={
                 mode === 'manual' ? (
@@ -1691,7 +1691,7 @@ function PaperStudio({
                     icon={Wand2}
                     onClick={() => setMode('auto')}
                   >
-                    試吓藍圖自動組卷
+                    嘗試藍圖自動組卷
                   </Button>
                 ) : (
                   <Button
@@ -1699,7 +1699,7 @@ function PaperStudio({
                     icon={FolderOpen}
                     onClick={() => setMode('manual')}
                   >
-                    改用手動揀題
+                    改用手動選擇題
                   </Button>
                 )
               }
@@ -1873,7 +1873,7 @@ function QuestionFormModal({
     <Modal open onClose={onClose} size="lg">
       {/* ───────── 試卷封面：kicker + serif 標題 + 擬題戳（呼應主畫面 masthead）───────── */}
       <header className="relative -mx-5 -mt-5 overflow-hidden px-5 pb-4 pt-5 sm:-mx-6 sm:-mt-6 sm:px-6 sm:pt-6">
-        {/* 右上擬題戳裝飾（純裝飾，唔搶主次；手機收起） */}
+        {/* 右上擬題戳裝飾（純裝飾，不搶主次；手機收起） */}
         <span
           aria-hidden
           className="pointer-events-none absolute -right-5 top-3 hidden -rotate-6 select-none flex-col items-center rounded-xl border-2 border-dashed border-accent/20 px-4 py-2 text-[9px] font-semibold uppercase tracking-[0.28em] text-accent/25 dark:border-accent/25 dark:text-accent/25 sm:flex"
@@ -1908,7 +1908,7 @@ function QuestionFormModal({
       </header>
 
       <div className="space-y-5">
-        {/* 試題檔頭 — 課題／題型／難度，收喺柔和子面板（同題幹分區） */}
+        {/* 試題檔頭 — 課題／題型／難度，收在柔和子面板（同題幹分區） */}
         <section className="rounded-2xl border border-slate-200/80 bg-slate-50/60 p-4 dark:border-slate-700/60 dark:bg-slate-900/40">
           <SectionLabel icon={Layers}>試題檔頭 · Classification</SectionLabel>
           <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
@@ -1949,7 +1949,7 @@ function QuestionFormModal({
               </Select>
             </Field>
           </div>
-          {/* 卷面標籤即時預覽 — 同列表卡一模一樣嘅題型膠囊／難度／分章語言 */}
+          {/* 卷面標籤即時預覽 — 同列表卡一模一樣的題型膠囊／難度／分章語言 */}
           <div className="mt-3 flex flex-wrap items-center gap-1.5 border-t border-dashed border-slate-200/80 pt-3 dark:border-slate-700/50">
             <TypeChip type={form.type} />
             <Badge tone={DIFF_TONE[form.difficulty]} dot>
@@ -1976,7 +1976,7 @@ function QuestionFormModal({
         {form.type === 'mc' ? (
           <Field
             label="選項與正確答案 · Options"
-            hint="撳左邊 serif 字母圈，揀邊個係正確答案。"
+            hint="按左邊 serif 字母圈，選擇哪個係正確答案。"
           >
             <div className="space-y-2">
               {form.options.map((o, i) => {
@@ -1999,7 +1999,7 @@ function QuestionFormModal({
                         onChange={() => set('answerIndex', i)}
                         className="peer sr-only"
                       />
-                      {/* serif 答案圈 — 對齊評卷參考嘅卷面字母牌 */}
+                      {/* serif 答案圈 — 對齊評卷參考的卷面字母牌 */}
                       <span
                         className={cx(
                           'flex h-11 w-11 cursor-pointer items-center justify-center rounded-full text-sm font-bold transition peer-focus-visible:ring-2 peer-focus-visible:ring-accent/40',
@@ -2042,7 +2042,7 @@ function QuestionFormModal({
         ) : (
           <Field
             label="評卷參考 · Marking Scheme"
-            hint="改卷員對照嘅標準答案／給分要點。"
+            hint="改卷員對照的標準答案／給分要點。"
           >
             <Textarea
               value={form.answer}
@@ -2054,7 +2054,7 @@ function QuestionFormModal({
         )}
 
         {/* 配分 — 對齊卷面「分章」語言（Scale icon · serif tabular） */}
-        <Field label="配分 · Marks" hint="留空 = 此題唔計分。">
+        <Field label="配分 · Marks" hint="留空 = 此題不計分。">
           <div className="relative w-28">
             <Scale
               size={14}
@@ -2118,7 +2118,7 @@ function ImportModal({
 
   const commit = () => {
     if (preview.parsed.length === 0) {
-      toast.error('未有可匯入嘅題目')
+      toast.error('未有可匯入的題目')
       return
     }
     for (const r of preview.parsed) {
@@ -2148,7 +2148,7 @@ function ImportModal({
           </span>
           <p className="text-xs leading-relaxed text-slate-600 dark:text-slate-300">
             CSV 欄位：課題、題型、難度、題幹、選項 A–D、答案、分數。題型 / 難度可用中英；MC
-            答案用 A/B/C/D；課題名稱會自動對應到最相近嘅課題。第一次用建議先下載範本。
+            答案用 A/B/C/D；課題名稱會自動對應到最相近的課題。第一次用建議先下載範本。
           </p>
         </div>
 
@@ -2215,7 +2215,7 @@ function ImportModal({
               ))}
               {preview.parsed.length > 8 && (
                 <li className="text-xs text-slate-400 dark:text-slate-500">
-                  …仲有 {preview.parsed.length - 8} 條
+                  …還有 {preview.parsed.length - 8} 條
                 </li>
               )}
             </ul>
@@ -2261,7 +2261,7 @@ function DuplicatesModal({
     const g = groups[gi]
     if (!g) return
     // 保留 id 必須屬於本組；若 state 落後（組別重算後 index 偏移）就 fallback
-    // 保留第一條，避免「揀嘅 id 唔喺組入面」而刪走成組（連應保留嗰條）。
+    // 保留第一條，避免「選擇的 id 不在組中」而刪走成組（連應保留嗰條）。
     const keepId = g.questions.some((q) => q.id === keep[gi])
       ? keep[gi]
       : g.questions[0].id
@@ -2269,7 +2269,7 @@ function DuplicatesModal({
     if (toRemove.length === 0) return
     const ok = await confirm({
       title: '合併重複題？',
-      message: `將會刪除 ${toRemove.length} 條重複題，只保留你揀嘅一條。`,
+      message: `將會刪除 ${toRemove.length} 條重複題，只保留你選擇的一條。`,
       confirmText: '合併',
       tone: 'danger',
     })
@@ -2285,13 +2285,13 @@ function DuplicatesModal({
           <div className="flex flex-col items-center justify-center py-8 text-center">
             <Check size={32} className="text-emerald-500" />
             <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
-              冇發現重複或高度相似嘅題目！
+              沒有發現重複或高度相似的題目！
             </p>
           </div>
         ) : (
           <>
             <p className="text-xs text-slate-500 dark:text-slate-400">
-              發現 {groups.length} 組可能重複嘅題目。每組揀返一條保留，其餘可一鍵移除。
+              發現 {groups.length} 組可能重複的題目。每組重新選擇一條保留，其餘可一鍵移除。
             </p>
             {groups.map((g, gi) => (
               <Card key={gi} className="p-3">
@@ -2322,7 +2322,7 @@ function DuplicatesModal({
                           setKeep((prev) => ({ ...prev, [gi]: q.id }))
                         }
                         className="mt-1 h-4 w-4 shrink-0 accent-[color:var(--accent)]"
-                        aria-label="保留呢條"
+                        aria-label="保留此題"
                       />
                       <div className="min-w-0 flex-1">
                         <p className="text-xs text-slate-700 dark:text-slate-200">

@@ -10,14 +10,14 @@ import type {
 } from './types'
 
 // ============================================================
-//  本功能專屬 SRS 衍生工具（建喺 lib/srs 之上，零改共用檔）
+//  本功能專屬 SRS 衍生工具（建在 lib/srs 之上，零改共用檔）
 //  - 卡片狀態推導（new / learning / young / mature / suspended）
 //  - 隊列建構（含每日新卡上限、暫停、排序）
 //  - 統計：留存率、預測、答題分布、連續日數、heatmap
 // ============================================================
 
 export const MATURE_DAYS = 21 // Anki 慣例：interval ≥ 21 日 = 熟卡
-export const LEECH_LAPSES = 4 // 累計唔記得達此數 = leech（難頂卡）
+export const LEECH_LAPSES = 4 // 累計不記得達此數 = leech（難頂卡）
 
 // ───────── 本地日期工具（避開時區，對齊 calendar/util）─────────
 export function dayKey(d: Date): string {
@@ -106,34 +106,34 @@ export interface QueueOpts {
   metas: CardMeta[]
   pref: DeckPref
   mode: StudyMode
-  typedAnswer?: string // typed 模式答案比對提示用（此處唔需要）
+  typedAnswer?: string // typed 模式答案比對提示用（此處不需要）
 }
 
 /**
  * 起一條複習隊列（回傳 card id 陣列）。
- * - srs：到期卡 + 受每日新卡上限規限嘅新卡；排除暫停
- * - cram：全部卡（除暫停）；唔理到期
- * - typed：同 srs，但只揀有清晰答案嘅卡（背面短）
- * - starred：只揀 flagged
+ * - srs：到期卡 + 受每日新卡上限規限的新卡；排除暫停
+ * - cram：全部卡（除暫停）；不論到期
+ * - typed：同 srs，但只選擇有清晰答案的卡（背面短）
+ * - starred：只選擇 flagged
  */
 export function buildQueue(opts: QueueOpts): string[] {
   const { deckId, cards, metas, pref, mode } = opts
   const metaById = new Map(metas.map((m) => [m.id, m]))
   let pool = cards.filter((c) => c.deckId === deckId)
 
-  // 暫停卡永遠唔入（cram 都唔出，符合 Anki）
+  // 暫停卡永遠不入（cram 都不出，符合 Anki）
   pool = pool.filter((c) => !metaById.get(c.id)?.suspended)
 
   if (mode === 'starred') {
     pool = pool.filter((c) => metaById.get(c.id)?.flagged)
   } else if (mode === 'srs' || mode === 'typed') {
     const due = pool.filter(isDueToday)
-    // 已複習過（repetitions>0）嘅到期卡，受每日複習上限規限（0 = 不限）
+    // 已複習過（repetitions>0）的到期卡，受每日複習上限規限（0 = 不限）
     let reviewDue = due.filter((c) => c.repetitions > 0)
     if (pref.reviewPerDay > 0) {
       reviewDue = reviewDue.slice(0, pref.reviewPerDay)
     }
-    // 未學過嘅新卡，受每日新卡上限規限
+    // 未學過的新卡，受每日新卡上限規限
     const newDue = due
       .filter((c) => c.repetitions === 0)
       .slice(0, Math.max(0, pref.newPerDay))
@@ -162,8 +162,8 @@ function sortQueue(cards: Card[], order: DeckPref['order']): Card[] {
   return arr.sort((a, b) => a.dueDate.localeCompare(b.dueDate))
 }
 
-// ───────── 答題後的「下次間隔預估」（顯示喺評分掣上）─────────
-// 重用 lib/srs schedule 嘅邏輯結果：呢度只係輕量預估，畀用家睇。
+// ───────── 答題後的「下次間隔預估」（顯示在評分掣上）─────────
+// 重用 lib/srs schedule 的邏輯結果：這裡只係輕量預估，給用家查看。
 export function previewIntervals(card: Card): Record<Rating, string> {
   const ease = card.ease
   const reps = card.repetitions
@@ -173,7 +173,7 @@ export function previewIntervals(card: Card): Record<Rating, string> {
     if (rating === 'again') return 0
     if (reps === 0) return rating === 'easy' ? 3 : 1
     if (reps === 1) return rating === 'easy' ? 8 : 6
-    // easy：對齊 lib/srs.schedule —— 佢對 easy 會先 ease += 0.15 再乘 1.3，
+    // easy：對齊 lib/srs.schedule —— 他對 easy 會先 ease += 0.15 再乘 1.3，
     // 故此處同樣用 (ease + 0.15) * 1.3，避免預估永遠少報約 1 日。
     const factor =
       rating === 'hard' ? 1.2 : rating === 'easy' ? (ease + 0.15) * 1.3 : ease
@@ -201,7 +201,7 @@ export function fmtInterval(days: number): string {
 }
 
 // ============================================================
-//  統計（全部自家計，畀 charts.tsx 畫）
+//  統計（全部自家計，給 charts.tsx 畫）
 // ============================================================
 
 // ───── 連續學習日數（streak）─────
@@ -251,7 +251,7 @@ export function reviewHeatmap(logs: ReviewLog[], days = 119): HeatCell[] {
   return out
 }
 
-// ───── 預測：未來 N 日將到期嘅卡數（按 dueDate）─────
+// ───── 預測：未來 N 日將到期的卡數（按 dueDate）─────
 export interface ForecastBar {
   key: string
   label: string
@@ -270,7 +270,7 @@ export function dueForecast(
     const k = addDaysKey(today, i)
     buckets.push({
       key: k,
-      label: i === 0 ? '今日' : i === 1 ? '聽日' : `+${i}`,
+      label: i === 0 ? '今日' : i === 1 ? '明天' : `+${i}`,
       young: 0,
       mature: 0,
     })
@@ -278,8 +278,8 @@ export function dueForecast(
   const idx = new Map(buckets.map((b, i) => [b.key, i]))
   for (const c of cards) {
     if (metaById.get(c.id)?.suspended) continue
-    if (c.repetitions === 0) continue // 新卡唔計入預測
-    // 到期日早過今日嘅，全部歸今日
+    if (c.repetitions === 0) continue // 新卡不計入預測
+    // 到期日早過今日的，全部歸今日
     const key = c.dueDate < today ? today : c.dueDate
     const i = idx.get(key)
     if (i === undefined) continue
@@ -290,7 +290,7 @@ export function dueForecast(
 }
 
 // ───── 到期負荷日曆（未來 N 週，7 欄 × N 列，按當日到期卡數著色）─────
-// 對齊 dueForecast 語意：新卡 / 暫停卡唔計；逾期卡歸今日。
+// 對齊 dueForecast 語意：新卡 / 暫停卡不計；逾期卡歸今日。
 // 由今日（含）起向後鋪 weeks×7 日，再補頭部空白令第一格落正確星期（日=0）。
 export interface DueCalCell {
   key: string
@@ -312,13 +312,13 @@ export function dueLoadCalendar(
   for (let i = 0; i < span; i++) counts.set(addDaysKey(today, i), 0)
   for (const c of cards) {
     if (metaById.get(c.id)?.suspended) continue
-    if (c.repetitions === 0) continue // 新卡唔計
+    if (c.repetitions === 0) continue // 新卡不計
     const key = c.dueDate < today ? today : c.dueDate
     if (!counts.has(key)) continue // 超出區間
     counts.set(key, (counts.get(key) ?? 0) + 1)
   }
 
-  // 頭部補白：令今日落喺正確星期欄（日=0 … 六=6）
+  // 頭部補白：令今日落在正確星期欄（日=0 … 六=6）
   const [y, m, d] = today.split('-').map(Number)
   const dow = new Date(y, (m ?? 1) - 1, d ?? 1).getDay()
   const cells: DueCalCell[] = []
@@ -363,7 +363,7 @@ export function retention(logs: ReviewLog[]): {
   total: number
   pass: number
 } {
-  // 只計複習過嘅卡（prevInterval>0），符合 Anki「true retention」
+  // 只計複習過的卡（prevInterval>0），符合 Anki「true retention」
   const real = logs.filter((l) => l.prevInterval > 0)
   if (real.length === 0) return { rate: 0, total: 0, pass: 0 }
   const pass = real.filter((l) => l.rating !== 'again').length
@@ -394,7 +394,7 @@ export function stateBreakdown(
   return out
 }
 
-// ───── 間隔分布直方圖（成熟卡 interval 嘅分布）─────
+// ───── 間隔分布直方圖（成熟卡 interval 的分布）─────
 export interface IntervalBin {
   label: string
   count: number
@@ -417,7 +417,7 @@ export function intervalHistogram(cards: Card[]): IntervalBin[] {
   return bins.map((b, i) => ({ label: b.label, count: counts[i] }))
 }
 
-// ───── 每日複習量（過去 N 日，畀長條趨勢圖）─────
+// ───── 每日複習量（過去 N 日，給長條趨勢圖）─────
 export function dailyReviewCounts(
   logs: ReviewLog[],
   days = 14,

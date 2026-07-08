@@ -42,17 +42,17 @@ export function buildDseSystem(
       ? '每題提供 4 個選項（options）同正確答案索引（answerIndex，0 起）。'
       : '適當使用 command word（解釋／分析／評估／比較／論證），並標明分數。'
   return [
-    `你係香港 DSE ${subj} 資深考評老師。根據用家俾嘅課題，出 ${count} 條 DSE 公開試風格嘅${PAPER_WORD[paper]}。`,
+    `你是香港 DSE ${subj} 資深考評老師。根據老師提供的課題，設計 ${count} 條 DSE 公開試風格的${PAPER_WORD[paper]}。`,
     mcLine,
     '只輸出一個 JSON 陣列，每個元素：',
-    '{"stem":"題幹","marks":分數,"options":["A…","B…"](MC才需要),"answerIndex":0(MC才需要),"markingPoints":["評分／答題要點"],"levelHint":"高分（達標）答案嘅特徵，一兩句"}',
-    `規則：繁體中文；貼香港 DSE 課程同評卷標準；難度＝${difficulty}；只輸出 JSON 陣列，唔好其他文字或 code fence。`,
+    '{"stem":"題幹","marks":分數,"options":["A…","B…"](MC才需要),"answerIndex":0(MC才需要),"markingPoints":["評分／答題要點"],"levelHint":"高分（達標）答案的特徵，一兩句"}',
+    `規則：繁體中文；貼香港 DSE 課程同評卷標準；難度＝${difficulty}；只輸出 JSON 陣列，不要其他文字或 code fence。`,
   ].join('\n')
 }
 
 export function parseDse(raw: string): DseQuestion[] {
   const rows = parseJsonArray<unknown>(raw)
-  if (rows === null) throw new Error('AI 回應格式唔正確，請再試一次。')
+  if (rows === null) throw new Error('AI 回應格式不正確，請再試一次。')
   const out: DseQuestion[] = []
   for (const r of rows) {
     if (!r || typeof r !== 'object') continue
@@ -78,6 +78,6 @@ export function parseDse(raw: string): DseQuestion[] {
       ...(answerIndex != null ? { answerIndex } : {}),
     })
   }
-  if (out.length === 0) throw new Error('AI 出唔到題目，試吓換 Pro 或補充課題。')
+  if (out.length === 0) throw new Error('AI 出不到題目，嘗試換 Pro 或補充課題。')
   return out
 }

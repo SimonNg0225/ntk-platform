@@ -42,44 +42,44 @@ import CreditMeter from '../../components/CreditMeter'
 import { clearComposerHandoff, readComposerHandoff } from './composerHandoff'
 
 // ============================================================
-//  「問我嘅資料 AI」— 用你自己嘅資料嚟問 AI
+//  「資料問答 AI」— 用你自己的資料來問 AI
 //  ------------------------------------------------------------
-//  AI 淨係根據你親手記低嘅資料（筆記 / 待辦 / 目標 / 日程 / 日誌）作答，
-//  唔靠估、唔捏造。發問前先攤開「可參考資料」清單，等你知佢手頭有啲咩。
+//  AI 只根據你親手記低的資料（筆記 / 待辦 / 目標 / 日程 / 日誌）作答，
+//  不靠估、不捏造。發問前先攤開「可參考資料」清單，等你知他手頭有些什麼。
 //  收集跨功能資料做 context，經 Supabase Edge Function 問 Gemini。
 //  未啟用 / 未登入優雅守門。
 //  ※ 本檔只負責呈現層；資料流 / collection 讀寫 / API 一律不變。
 // ============================================================
 
-// 教學引導：教用家「點用」呢個功能（2–4 步，FeatureGuide 只取頭 4 步）。
+// 教學引導：教用家「如何使用」此功能（2–4 步，FeatureGuide 只取頭 4 步）。
 const GUIDE_STEPS: FeatureGuideStep[] = [
   {
-    title: '揀條問題或者自己打',
-    desc: '撳下面嘅範例問題即刻問，或者喺底部輸入框打你想知嘅嘢。',
+    title: '選擇條問題或者自己打',
+    desc: '按下面的範例問題立即查詢，或在底部輸入框輸入你想了解的內容。',
   },
   {
-    title: 'AI 翻你嘅資料作答',
-    desc: '佢只會睇你記低嘅筆記、待辦、目標同日程，唔會捏造其他資料。',
+    title: 'AI 翻你的資料作答',
+    desc: '他只會查看你記低的筆記、待辦、目標同日程，不會捏造其他資料。',
   },
   {
     title: '追問落去',
-    desc: '答完可以再撳範例或者繼續打，一步步問深入啲。',
+    desc: '答完可以再按範例或者繼續打，一步步問深入些。',
   },
 ]
 
-// 範例問題：撳一下即刻發問。配一隻 lucide icon 暗示會參考邊類資料。
+// 範例問題：按一下立即發問。配一隻 lucide icon 暗示會參考邊類資料。
 const SUGGESTIONS: { text: string; icon: LucideIcon }[] = [
-  { text: '我今個星期有咩重要事？', icon: CalendarDays },
-  { text: '總結我最近嘅筆記重點', icon: NotebookPen },
-  { text: '我仲有咩未完成待辦？', icon: ListTodo },
-  { text: '根據我嘅目標，建議下一步點做', icon: Target },
+  { text: '我今個星期有什麼重要事？', icon: CalendarDays },
+  { text: '總結我最近的筆記重點', icon: NotebookPen },
+  { text: '我還有什麼未完成待辦？', icon: ListTodo },
+  { text: '根據我的目標，建議下一步點做', icon: Target },
 ]
 
 const SYSTEM =
-  `你係用戶「${BRAND_NAME}」嘅私人 AI 助理。下面係佢嘅個人資料摘要，請主要根據呢啲資料（配合常識）用繁體中文（可書面廣東話）扼要、有條理咁回答。如果資料唔夠就照答並提一句。唔好捏造唔存在嘅具體資料。`
+  `你是「${BRAND_NAME}」的私人 AI 助理。以下是使用者的個人資料摘要，請主要根據這些資料（配合常識）用繁體中文（可書面廣東話）扼要、有條理地回答。如果資料不足，可以先回答並簡短說明限制。不要捏造不存在的具體資料。`
 
 // 「可參考資料」類別（配語意色；向用戶顯示 AI 手上有幾多份資料可查）。
-// 純展示用，數法對齊 buildContext() 嘅篩選，令清單係真實 context 預覽。
+// 純展示用，數法對齊 buildContext() 的篩選，令清單係真實 context 預覽。
 type EvidenceKind = {
   key: string
   label: string
@@ -89,7 +89,7 @@ type EvidenceKind = {
   count: number
 }
 
-/** 本地時區 YYYY-MM-DD（避開 toISOString 當 UTC 嘅時差） */
+/** 本地時區 YYYY-MM-DD（避開 toISOString 當 UTC 的時差） */
 function todayKey(): string {
   const d = new Date()
   const y = d.getFullYear()
@@ -197,14 +197,14 @@ export default function AskData() {
 
   const [q, setQ] = useState(() => composerHandoff?.text ?? '')
   const [answer, setAnswer] = useState<string | null>(null)
-  // askedQuestion：已送出嘅問題（用嚟喺對話度顯示「你」嗰格），同 q 輸入框分開。
+  // askedQuestion：已送出的問題（用來在對話度顯示「你」嗰格），同 q 輸入框分開。
   const [askedQuestion, setAskedQuestion] = useState('')
   const [busy, setBusy] = useState(false)
   const [handoffAsked, setHandoffAsked] = useState(false)
   const abortRef = useRef<AbortController | null>(null)
   const inputRef = useRef<HTMLTextAreaElement | null>(null)
 
-  // ── 證據在案：即時統計手頭可查嘅卷宗份數（純展示，數法對齊 buildContext）──
+  // ── 證據在案：即時統計手頭可查的卷宗份數（純展示，數法對齊 buildContext）──
   //    依賴 notes / tasks（已訂閱）令新增資料即時反映；其餘 collection 即取即數。
   const evidence = useMemo<EvidenceKind[]>(() => {
     const today = todayKey()
@@ -263,8 +263,8 @@ export default function AskData() {
     return (
       <EmptyState
         icon={Lock}
-        title="請先登入先可以用 AI"
-        hint="喺左下角用 Google 登入後就用得。"
+        title="請先登入以使用 AI"
+        hint="在左下角使用 Google 登入後即可使用。"
       />
     )
   }
@@ -282,7 +282,7 @@ export default function AskData() {
     const messages: AIMessage[] = [
       {
         role: 'user',
-        content: `我嘅資料摘要：\n${context || '（暫時未有資料）'}\n\n問題：${text}`,
+        content: `我的資料摘要：\n${context || '（暫時未有資料）'}\n\n問題：${text}`,
       },
     ]
     let full = ''
@@ -312,7 +312,7 @@ export default function AskData() {
     }
   }
 
-  // 渲染期判斷：answer 由 ask() 設成 `出錯：…` 時當錯誤氣泡顯示（唔改邏輯）。
+  // 渲染期判斷：answer 由 ask() 設成 `出錯：…` 時當錯誤氣泡顯示（不改邏輯）。
   const isError = answer != null && answer.startsWith('出錯：')
   const errorText = isError ? answer.replace(/^出錯：/, '') : ''
   const started = answer !== null
@@ -325,18 +325,18 @@ export default function AskData() {
         guideKey="ask-data"
         icon={Sparkles}
         kicker="AI · Ask Your Data"
-        title="問我嘅資料 AI"
-        description="只根據你記低嘅筆記、待辦、目標同日程作答，唔靠估。"
+        title="資料問答 AI"
+        description="只根據你記低的筆記、待辦、目標同日程作答，不靠估。"
       />
 
-      {/* ───────── 教學引導：點用呢個功能 ───────── */}
+      {/* ───────── 教學引導：如何使用此功能 ───────── */}
       <FeatureGuide
         storageKey="ask-data"
-        title="問我嘅資料 AI 點用？"
+        title="資料問答 AI 使用說明"
         steps={GUIDE_STEPS}
       />
 
-      {/* ───────── 可參考資料：手頭資料份數（發問前先攤開，等用家知 AI 睇緊咩） ───────── */}
+      {/* ───────── 可參考資料：手頭資料份數（發問前先攤開，等用家知 AI 查看緊什麼） ───────── */}
       {!started && (
         <section aria-label="可參考資料" className="space-y-3">
           <div className="flex items-center justify-between gap-2">
@@ -353,8 +353,8 @@ export default function AskData() {
             // 引導式空狀態：icon + 標題 + 提示 + CTA 直接跳去下一步
             <EmptyState
               icon={NotebookPen}
-              title="仲未有資料可以參考"
-              hint="去記低幾條筆記、待辦或者目標，AI 就有嘢可以幫你查。你亦可以直接喺下面問問題。"
+              title="尚未有資料可以參考"
+              hint="先記錄幾條筆記、待辦或目標，AI 就有資料可以協助你查詢。你亦可以直接在下方提問。"
               action={
                 <Button
                   size="sm"
@@ -380,7 +380,7 @@ export default function AskData() {
       {/* ───────── 對話：你 / AI（柔和氣泡，跟 dashboard 色階） ───────── */}
       {started && (
         <div className="space-y-4">
-          {/* 你嘅問題 */}
+          {/* 你的問題 */}
           {askedQuestion && (
             <div className="flex justify-end gap-2.5">
               <div className="max-w-[85%]">
@@ -415,7 +415,7 @@ export default function AskData() {
               {isError ? (
                 <div className="max-w-[85%] rounded-2xl border border-rose-200/70 bg-rose-50/70 px-4 py-3 dark:border-rose-500/30 dark:bg-rose-500/10">
                   <p className="text-sm font-medium text-rose-700 dark:text-rose-300">
-                    唔好意思，啱啱有啲問題
+                    不要意思，剛剛有些問題
                   </p>
                   <p className="mt-1 break-words text-xs leading-relaxed text-rose-600/90 dark:text-rose-300/80">
                     {errorText}
@@ -441,7 +441,7 @@ export default function AskData() {
                   <span className="h-2 w-2 animate-bounce rounded-full bg-accent [animation-delay:-0.15s]" />
                   <span className="h-2 w-2 animate-bounce rounded-full bg-accent" />
                   <span className="ml-1.5 text-xs text-slate-400 dark:text-slate-500">
-                    翻緊你嘅資料…
+                    翻緊你的資料…
                   </span>
                 </div>
               ) : (
@@ -465,12 +465,12 @@ export default function AskData() {
         </div>
       )}
 
-      {/* ───────── 範例問題（撳一下即發問）───────── */}
+      {/* ───────── 範例問題（按一下即發問）───────── */}
       {(!started || (!busy && !isError)) && (
         <div className={cx(started && 'border-t border-slate-200 pt-4 dark:border-slate-700')}>
           <p className="mb-2.5 flex items-center gap-1.5 text-xs font-medium text-slate-400 dark:text-slate-500">
             <Sparkles size={12} className="shrink-0" />
-            {started ? '繼續問落去' : '試下問呢啲'}
+            {started ? '繼續問落去' : '嘗試問這些'}
           </p>
           <div className="flex flex-wrap gap-2">
             {SUGGESTIONS.map((s) => (
@@ -504,8 +504,8 @@ export default function AskData() {
             ref={inputRef}
             rows={1}
             className="max-h-40 min-h-11 flex-1 resize-none border-0 bg-transparent px-0 py-2 shadow-none focus:border-0 focus:ring-0 dark:bg-transparent"
-            aria-label="問你嘅資料"
-            placeholder="想問啲咩？例如：我今個星期最緊要做咩？"
+            aria-label="問你的資料"
+            placeholder="想問什麼？例如：我今個星期最重要做什麼？"
             value={q}
             onChange={(e) => setQ(e.target.value)}
             onKeyDown={onKeyDown}
@@ -531,7 +531,7 @@ export default function AskData() {
           </span>
           <span aria-hidden="true" className="text-slate-300 dark:text-slate-600">·</span>
           <span className="inline-flex items-center gap-1">
-            <Sparkles size={11} /> 只引用你自己嘅資料
+            <Sparkles size={11} /> 只引用你自己的資料
           </span>
         </p>
       </div>

@@ -10,7 +10,7 @@ import {
 } from '../lib/support'
 
 // ============================================================
-//  客服收件箱（管理員）— 只喺 admin（VITE_ADMIN_EMAILS）顯示。
+//  客服收件箱（管理員）— 只在 admin（VITE_ADMIN_EMAILS）顯示。
 //  真正權限由 support-admin Edge Function 用 ADMIN_EMAILS 驗。
 // ============================================================
 

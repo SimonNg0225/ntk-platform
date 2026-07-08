@@ -1,12 +1,12 @@
 // ============================================================
 //  免費圖庫（Pexels）— 簡報封面 / 內頁配相（marketing 級，零至低成本）
 //  ------------------------------------------------------------
-//  · 未設 VITE_PEXELS_KEY → 一律回 null（簡報照用純色版面，唔影響）。
+//  · 未設 VITE_PEXELS_KEY → 一律回 null（簡報照用純色版面，不影響）。
 //  · 免費 key：https://www.pexels.com/api/
-//  · Pexels 規定：盡量注明 Pexels + 攝影師（engine 會喺相旁加署名）。
-//  · 回傳原圖 width/height（engine 計 cover 裁切必需 — addImage 嘅 w/h
+//  · Pexels 規定：盡量注明 Pexels + 攝影師（engine 會在相旁加署名）。
+//  · 回傳原圖 width/height（engine 計 cover 裁切必需 — addImage 的 w/h
 //    要係真實長寬比）；large2x / large / medium 都係等比例縮圖，
-//    揀邊個 src 唔影響長寬比。
+//    選擇哪個 src 不影響長寬比。
 // ============================================================
 
 const PEXELS_KEY = import.meta.env.VITE_PEXELS_KEY as string | undefined
@@ -14,7 +14,7 @@ const PEXELS_KEY = import.meta.env.VITE_PEXELS_KEY as string | undefined
 export const isStockConfigured = Boolean(PEXELS_KEY)
 
 export interface StockPhoto {
-  /** base64 data URI（已嵌入，可直接交畀 pptxgenjs addImage） */
+  /** base64 data URI（已嵌入，可直接交給 pptxgenjs addImage） */
   dataUri: string
   /** 署名（Pexels 規定注明攝影師 + Pexels） */
   credit: string
@@ -26,7 +26,7 @@ export interface StockPhoto {
   height: number
 }
 
-/** Pexels search API 回應入面我哋用到嘅欄位 */
+/** Pexels search API 回應中我們用到的欄位 */
 interface PexelsPhoto {
   width?: number
   height?: number
@@ -45,7 +45,7 @@ function blobToDataUri(blob: Blob): Promise<string> {
 }
 
 /**
- * 共用核心：按關鍵字搜一張橫向相片 → pickSrc 揀解像度 → 嵌成 data URI。
+ * 共用核心：按關鍵字搜一張橫向相片 → pickSrc 選擇解像度 → 嵌成 data URI。
  * 未設 key / 搜尋失敗 / 缺尺寸 / CORS 失敗 → 回 null（呼叫方降級用純色版面）。
  * 函式 stateless，多版並行 call 安全。
  */
@@ -87,7 +87,7 @@ export async function fetchCoverPhoto(query: string): Promise<StockPhoto | null>
 }
 
 /**
- * 內頁配相：用 large（缺就退 medium）— 側欄面板夠用，檔案細好多。
+ * 內頁配相：用 large（缺就退 medium）— 側欄面板夠用，檔案細很多。
  */
 export async function fetchSlidePhoto(query: string): Promise<StockPhoto | null> {
   return fetchPhoto(query, (src) => src.large || src.medium)

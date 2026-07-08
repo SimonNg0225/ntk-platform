@@ -116,7 +116,7 @@ describe('sortQuestions', () => {
 //  computeStats — 含除法 / 難度指數映射 / 空輸入
 // ============================================================
 describe('computeStats', () => {
-  it('空題庫：所有值 0，difficultyIndex 唔係 NaN', () => {
+  it('空題庫：所有值 0，difficultyIndex 不是 NaN', () => {
     const s = computeStats([], 5)
     expect(s.total).toBe(0)
     expect(s.totalMarks).toBe(0)
@@ -696,7 +696,7 @@ describe('rowsToQuestions', () => {
     expect(parsed[0].difficulty).toBe('medium')
   })
 
-  it('marks 非數字 → undefined（唔係 NaN）', () => {
+  it('marks 非數字 → undefined（不是 NaN）', () => {
     const rows = [['T', 'short', 'easy', '題幹', '', '', '', '', '', 'abc']]
     const { parsed } = rowsToQuestions(rows, topics)
     expect(parsed[0].marks).toBeUndefined()

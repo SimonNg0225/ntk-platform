@@ -15,7 +15,7 @@ import Assess from './Assess'
 //   2) 動作姿勢問答 — streamChat() 串流對話（打字效果）
 //   3) 體態目標診斷 — 表單 → complete() → 個人化建議
 //  全部 gate：!isAIConfigured / 未登入 → 友善提示；call 包
-//  try/catch + toast.error（喺各子元件處理）。
+//  try/catch + toast.error（在各子元件處理）。
 // ============================================================
 
 type ToolId = 'plan' | 'qa' | 'assess'
@@ -52,8 +52,8 @@ export default function CoachView() {
     return (
       <EmptyState
         icon={Lock}
-        title="請先登入先可以用 AI 教練"
-        hint="喺左下角用 Google 登入後就用得，生成嘅課表亦會同步到你自己嘅雲端。"
+        title="請先登入以使用 AI 教練"
+        hint="在左下角使用 Google 登入後即可使用，生成的課表亦會同步到你自己的雲端。"
       />
     )
   }

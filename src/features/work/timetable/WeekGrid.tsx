@@ -14,9 +14,9 @@ import {
 //  週課表網格（去 Excel 化：循環日 token 欄頭 + 柔和堂 chip）
 //  ------------------------------------------------------------
 //  - 欄頭 = 圓潤 Day A–F token（serif 字母），今日填實 accent 一條 lane
-//  - 細線格改成淡 hairline + 大留白，唔再似 spreadsheet
+//  - 細線格改成淡 hairline + 大留白，不再似 spreadsheet
 //  - 每堂 = 柔色 chip（左側色棒 + 科目 + 班別/課室 pill）
-//  - 小息/午膳 = 中央 hairline 分隔，唔搶視覺
+//  - 小息/午膳 = 中央 hairline 分隔，不搶視覺
 // ============================================================
 
 export default function WeekGrid({
@@ -39,7 +39,7 @@ export default function WeekGrid({
   metaByKey: Map<string, SlotMeta>
   classNameById: Map<string, string>
   conflictKeys: Set<string>
-  dimClassId: string // '' = 全部；否則非此班別嘅格淡化
+  dimClassId: string // '' = 全部；否則非此班別的格淡化
   onOpenCell: (day: number, period: number) => void
 }) {
   return (
@@ -76,7 +76,7 @@ export default function WeekGrid({
                     <span
                       className={cx(
                         'text-[10px] font-semibold',
-                        // 「Day」係英文先 uppercase；「今日／星期」純中文唔好 uppercase（字距會散）
+                        // 「Day」係英文先 uppercase；「今日／星期」純中文不要 uppercase（字距會散）
                         cycle && !isToday && 'uppercase tracking-wide',
                       )}
                     >
@@ -91,7 +91,7 @@ export default function WeekGrid({
         <tbody>
           {bells.map((bell, idx) => {
             if (bell.kind !== 'lesson') {
-              // 小息 / 午膳：中央 hairline 分隔（唔再用整條實 bar 搶視覺）
+              // 小息 / 午膳：中央 hairline 分隔（不再用整條實 bar 搶視覺）
               const Icon = bell.kind === 'lunch' ? Utensils : Coffee
               return (
                 <tr key={`break-${idx}`}>

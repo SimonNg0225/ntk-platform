@@ -7,7 +7,7 @@ import { CRITERIA } from './observationPrompts'
 export { observationsCol }
 export type { Observation }
 
-// 判斷一個記錄有冇實際分析到（六準則任一有 note）；list/detail/匯出共用，避免重複組裝
+// 判斷一個記錄有沒有實際分析到（六準則任一有 note）；list/detail/匯出共用，避免重複組裝
 export function hasCriteriaNotes(rec: Observation): boolean {
   return rec.criteria.some((c) => c.note.trim() !== '')
 }

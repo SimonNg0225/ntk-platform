@@ -4,7 +4,7 @@ import { createCollection, type Entity } from '../../../lib/store'
 //  文件速讀 — 本機儲存
 //  ------------------------------------------------------------
 //  只存「速讀結果」（類別 / 標題 / 摘要 / 跟進事項 + 原文頭一截），
-//  唔存成份原文或相片，慳 localStorage。
+//  不存成份原文或相片，慳 localStorage。
 // ============================================================
 
 export interface DigestAction {
@@ -22,7 +22,7 @@ export interface DigestRecord extends Entity {
   summary: string[]
   actions: DigestAction[]
   sourceType: DigestSource
-  /** 原文頭 ~500 字（畀返去重溫；相片來源則為空/標題） */
+  /** 原文頭 ~500 字（給回到重溫；相片來源則為空/標題） */
   snippet: string
   model: string
 }

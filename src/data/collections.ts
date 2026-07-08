@@ -76,7 +76,7 @@ export const goalsCol = createCollection<Goal>('learning_goals', [
   },
   {
     id: 'goal-2',
-    title: '睇完一本管理學書',
+    title: '查看完一本管理學書',
     progress: 25,
     createdAt: new Date().toISOString(),
   },
@@ -90,8 +90,8 @@ export const tasksCol = createCollection<Task>('work_tasks', [
 // ───── 新一批功能 ─────
 export const eventsCol = createCollection<CalendarEvent>('events', [])
 
-// 訂閱式 .ics 日曆 feed 嘅 token（一行：{ id:'token', token }）。
-// 會 sync 上 Supabase（app_rows，collection='calendar_feed'），畀 Edge Function
+// 訂閱式 .ics 日曆 feed 的 token（一行：{ id:'token', token }）。
+// 會 sync 上 Supabase（app_rows，collection='calendar_feed'），給 Edge Function
 // calendar-feed 反查 user_id。token 由 crypto 隨機生成、可重新產生即失效舊連結。
 // 詳見 src/features/shared/calendar/calendarFeed.ts。
 export interface CalendarFeedToken extends Entity {
@@ -223,8 +223,8 @@ function migrateNeutralSeedData() {
 }
 
 // ============================================================
-//  全部集合登記表（用嚟匯出 / 匯入 / 清除資料）
-//  key 對應 localStorage 名稱（唔含 ntk. 前綴）
+//  全部集合登記表（用來匯出 / 匯入 / 清除資料）
+//  key 對應 localStorage 名稱（不含 ntk. 前綴）
 // ============================================================
 // 匯出全部資料做一個 JSON 物件
 export function exportAllData() {
@@ -233,14 +233,14 @@ export function exportAllData() {
   return { version: 1, exportedAt: new Date().toISOString(), data }
 }
 
-// 由 JSON 物件匯入（覆寫對應集合）。回傳成功匯入嘅集合數。
+// 由 JSON 物件匯入（覆寫對應集合）。回傳成功匯入的集合數。
 export function importAllData(payload: unknown): number {
   if (
     typeof payload !== 'object' ||
     payload === null ||
     !('data' in payload)
   )
-    throw new Error('檔案格式唔啱')
+    throw new Error('檔案格式不正確')
   const data = (payload as { data: Record<string, unknown[]> }).data
   let count = 0
   for (const [key, col] of collectionRegistry) {

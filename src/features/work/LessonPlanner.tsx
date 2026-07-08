@@ -86,7 +86,7 @@ import GenerateModal, { type GeneratedLesson } from './lessonPlanner/GenerateMod
 import { templatesForSubject } from './lessonPlanner/subjectTemplates'
 
 // ============================================================
-//  備課 / 教案 — 媲美 Planbook / Common Curriculum 嘅教師備課工具
+//  備課 / 教案 — 媲美 Planbook / Common Curriculum 的教師備課工具
 //  ------------------------------------------------------------
 //  · 三視圖：教案卡列表 / 週備課格 / 課程覆蓋分析
 //  · 結構化教學環節時間軸 + 教材清單 + 備課狀態工作流
@@ -125,10 +125,10 @@ export default function LessonPlanner() {
   // 功能教學引導（2–4 步，針對備課流程）
   const guideSteps: FeatureGuideStep[] = [
     {
-      title: t('lessonPlanner.guide1Title', { defaultValue: '新增或揀範本' }),
+      title: t('lessonPlanner.guide1Title', { defaultValue: '新增或選擇範本' }),
       desc: t('lessonPlanner.guide1Desc', {
         defaultValue:
-          '撳「新增」由零開始，或撳「範本」套用現成教學環節骨架，慳返時間。',
+          '按「新增」由零開始，或按「範本」套用現成教學環節骨架，節省時間。',
       }),
     },
     {
@@ -142,13 +142,13 @@ export default function LessonPlanner() {
       title: t('lessonPlanner.guide3Title', { defaultValue: '切換備課狀態' }),
       desc: t('lessonPlanner.guide3Desc', {
         defaultValue:
-          '撳教案上嘅狀態章，由「草稿 → 就緒 → 已授」推進，一眼睇晒進度。',
+          '按教案上的狀態章，由「草稿 → 就緒 → 已授」推進，一眼查看全部進度。',
       }),
     },
     {
-      title: t('lessonPlanner.guide4Title', { defaultValue: '睇覆蓋分析' }),
+      title: t('lessonPlanner.guide4Title', { defaultValue: '查看覆蓋分析' }),
       desc: t('lessonPlanner.guide4Desc', {
-        defaultValue: '轉去「覆蓋分析」睇邊啲課題未備，撳一下即建立對應教案。',
+        defaultValue: '轉去「覆蓋分析」查看邊些課題未備，按一下即建立對應教案。',
       }),
     },
   ]
@@ -468,7 +468,7 @@ export default function LessonPlanner() {
     setEditingId(null)
     setAiOpen(false)
     setEditorOpen(true)
-    toast.success('AI 教案已生成，可以再逐項執靚再儲存')
+    toast.success('AI 教案已生成，可以再逐項潤飾再儲存')
   }
 
   // ── 複製 / 複製到指定日 / 狀態切換 / 刪除 / 列印 ──
@@ -530,7 +530,7 @@ export default function LessonPlanner() {
   const remove = async (p: LessonPlan) => {
     const ok = await confirm({
       title: '刪除教案？',
-      message: `「${p.title}」將會被永久刪除，呢個動作無法復原。`,
+      message: `「${p.title}」將會被永久刪除，此動作無法復原。`,
       confirmText: '刪除',
       tone: 'danger',
     })
@@ -547,7 +547,7 @@ export default function LessonPlanner() {
       topicName: topicName(p.topicId),
       area: topicArea(p.topicId),
     })
-    if (!ok) toast.error('瀏覽器封鎖咗彈窗，請允許後再試')
+    if (!ok) toast.error('瀏覽器封鎖了彈窗，請允許後再試')
   }
 
   const hasFilter =
@@ -610,10 +610,10 @@ export default function LessonPlanner() {
         }
       />
 
-      {/* ───────── 教學引導：教用家點用備課功能（可摺疊・可永久收起） ───────── */}
+      {/* ───────── 教學引導：教用家如何使用備課功能（可摺疊・可永久收起） ───────── */}
       <FeatureGuide
         storageKey="lesson-planner"
-        title={t('lessonPlanner.guideTitle', { defaultValue: '備課 / 教案點用？' })}
+        title={t('lessonPlanner.guideTitle', { defaultValue: '備課 / 教案使用說明' })}
         steps={guideSteps}
       />
 
@@ -635,7 +635,7 @@ export default function LessonPlanner() {
           label="已授課"
           value={stats.taught}
           icon={CheckCircle2}
-          hint={stats.ready ? `另有 ${stats.ready} 個已就緒` : '完成授課嘅教案'}
+          hint={stats.ready ? `另有 ${stats.ready} 個已就緒` : '完成授課的教案'}
         />
         <AlmanacStat
           label="課程覆蓋"
@@ -736,11 +736,11 @@ export default function LessonPlanner() {
           {visible.length === 0 ? (
             <EmptyState
               icon={NotebookPen}
-              title={hasFilter ? '揾唔到符合條件嘅教案' : '一齊開始第一份教案'}
+              title={hasFilter ? '揾不到符合條件的教案' : '一起開始第一份教案'}
               hint={
                 hasFilter
-                  ? '試吓放寬篩選或搜尋條件，再睇睇。'
-                  : '備課由一份教案開始 — 寫低教學環節同教材，亦可由範本快速套用。'
+                  ? '嘗試放寬篩選或搜尋條件，再查看查看。'
+                  : '備課由一份教案開始 — 記錄教學環節同教材，亦可由範本快速套用。'
               }
               action={
                 hasFilter ? (
@@ -959,7 +959,7 @@ export default function LessonPlanner() {
                 <>
                   <h3 className="mb-2.5 flex items-center gap-1.5 text-lg font-semibold tracking-tight text-slate-800 dark:text-slate-100">
                     <Circle size={15} className="text-slate-400" />
-                    未備課嘅課題
+                    未備課的課題
                     {missing.length > 0 && (
                       <Badge tone="slate" className="ml-0.5">
                         <span className="tabular-nums">{missing.length}</span>
@@ -983,7 +983,7 @@ export default function LessonPlanner() {
                   ) : (
                     <>
                       <p className="mb-2.5 text-xs text-slate-400 dark:text-slate-500">
-                        撳一下即建立呢個課題嘅教案。
+                        按一下即建立這個課題的教案。
                       </p>
                       <div className="flex flex-wrap gap-1.5">
                         {missing.map((t) => (
@@ -1087,13 +1087,13 @@ export default function LessonPlanner() {
             <Sparkles size={13} /> 我的範本
           </div>
           <p className="text-xs text-slate-500 dark:text-slate-400">
-            範本包含教學環節同教材骨架。喺編輯教案時撳「存為範本」可加入更多。
+            範本包含教學環節同教材骨架。在編輯教案時按「存為範本」可加入更多。
           </p>
           {templates.length === 0 ? (
             <EmptyState
               icon={Sparkles}
-              title="仲未有範本"
-              hint="編輯任何教案時，於底部撳「存為範本」即可建立。"
+              title="尚未有範本"
+              hint="編輯任何教案時，於底部按「存為範本」即可建立。"
             />
           ) : (
             <ul className="space-y-2">
@@ -1169,7 +1169,7 @@ export default function LessonPlanner() {
       >
         <div className="space-y-3">
           <p className="text-sm text-slate-600 dark:text-slate-300">
-            複製「{dupTarget?.title}」並設定新嘅授課日期（新副本狀態為草稿）。
+            複製「{dupTarget?.title}」並設定新的授課日期（新副本狀態為草稿）。
           </p>
           <Field label="授課日期">
             <Input
@@ -1281,7 +1281,7 @@ function PlanCard({
   const mat = materialsDone(meta?.materials ?? [])
   const matPct = mat.total ? Math.round((mat.done / mat.total) * 100) : 0
   const period = meta?.period
-  // 左側「粉筆書脊」狀態色條 — 實色棒 + 淡色軌道，令卡片似一張歸檔嘅教案
+  // 左側「粉筆書脊」狀態色條 — 實色棒 + 淡色軌道，令卡片似一張歸檔的教案
   const spineTrack =
     status === 'taught'
       ? 'bg-emerald-100/70 dark:bg-emerald-500/10'
@@ -1322,11 +1322,11 @@ function PlanCard({
             </button>
           </div>
           <div className="mt-2 flex flex-wrap items-center gap-1.5">
-            <Tooltip label="撳一下切換狀態">
+            <Tooltip label="按一下切換狀態">
               <button
                 type="button"
                 onClick={onCycleStatus}
-                aria-label={`狀態：${sMeta.label}，撳一下切換`}
+                aria-label={`狀態：${sMeta.label}，按一下切換`}
               >
                 <Badge tone={sMeta.tone} icon={SIcon}>
                   {sMeta.label}

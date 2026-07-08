@@ -1,10 +1,10 @@
 // ============================================================
-//  行政文件 — 範本本機 store（重要：唔同步）
+//  行政文件 — 範本本機 store（重要：不同步）
 //  ------------------------------------------------------------
-//  ⚠️ 刻意「唔用 createCollection」：createCollection 會自動登記入
+//  ⚠️ 刻意「不用 createCollection」：createCollection 會自動登記入
 //  collectionRegistry，而 attachSync 會 loop 成個 registry 同步**全部**集合。
 //  範本 base64 .docx 體積大，會谷爆 Supabase sync → 故自管 localStorage
-//  key + useSyncExternalStore，唔登記入 registry → 唔同步（MVP 本機）。
+//  key + useSyncExternalStore，不登記入 registry → 不同步（MVP 本機）。
 //  跨裝置留作將來（可選：接 Drive 或專屬表）。
 // ============================================================
 
@@ -12,7 +12,7 @@ import { useSyncExternalStore } from 'react'
 import { uid } from '../../../lib/store'
 
 // text / multiline / date：docx + pdf 共用。
-// checkbox / dropdown：只 PDF（AcroForm）會出現；docx 範本永遠唔會用到。
+// checkbox / dropdown：只 PDF（AcroForm）會出現；docx 範本永遠不會用到。
 export type AdminDocFieldType =
   | 'text'
   | 'multiline'
@@ -73,7 +73,7 @@ function persist(): void {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(templates))
   } catch (e) {
-    // localStorage 滿 / 配額爆 → 拋出畀 UI 提示（刪舊範本 / 範本太大）。
+    // localStorage 滿 / 配額爆 → 拋出給 UI 提示（刪舊範本 / 範本太大）。
     throw new Error(
       '儲存失敗：本機儲存空間可能已滿，請刪除舊範本後再試（單個範本不宜過大）。',
     )
@@ -100,7 +100,7 @@ export function useAdminDocTemplates(): AdminDocTemplate[] {
   return useSyncExternalStore(subscribe, getSnapshot, getSnapshot)
 }
 
-/** 新增範本；回傳建立咗嘅範本（已含 id / createdAt）。 */
+/** 新增範本；回傳建立了的範本（已含 id / createdAt）。 */
 export function addTemplate(
   data: Omit<AdminDocTemplate, 'id' | 'createdAt'> & {
     id?: string

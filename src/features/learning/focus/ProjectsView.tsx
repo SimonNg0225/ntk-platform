@@ -94,7 +94,7 @@ export default function ProjectsView({
         </p>
       </header>
 
-      {/* 動作列：纖細 hairline，唔搶卡片風頭 */}
+      {/* 動作列：纖細 hairline，不搶卡片風頭 */}
       <div className="flex items-center justify-between border-b border-slate-200/70 pb-3 dark:border-slate-700/50">
         <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-slate-400 dark:text-slate-500">
           進行中 <span className="text-sm tabular-nums text-slate-600 dark:text-slate-300">{active.length}</span>

@@ -5,7 +5,7 @@ import { BRAND_EXPORT } from '../../../lib/brand'
 // ============================================================
 //  備課 / 教案 — 深化資料模型 + 工具
 //  ------------------------------------------------------------
-//  共用 LessonPlan（lessonPlansCol）保留唔改，喺呢度用「擴充表」
+//  共用 LessonPlan（lessonPlansCol）保留不改，在這裡用「擴充表」
 //  lesson_plan_meta（key = LessonPlan.id）存結構化教學環節、狀態、
 //  教學節數、教材清單。範本（templates）獨立一個 collection。
 // ============================================================
@@ -52,7 +52,7 @@ export interface MaterialItem {
 export interface PlanMeta {
   id: string // == LessonPlan.id
   status: PlanStatus
-  period?: number // 第幾節（配合時間表，用嚟週視圖排序）
+  period?: number // 第幾節（配合時間表，用來週視圖排序）
   durationMin?: number // 課堂總時長（分鐘）
   taughtDate?: string // 實際授課日（YYYY-MM-DD）
   phases: LessonPhase[]
@@ -71,7 +71,7 @@ export interface PlanTemplate {
   createdAt: string
 }
 
-// ───────── Collections（自己嘅 key，自動存 localStorage）─────────
+// ───────── Collections（自己的 key，自動存 localStorage）─────────
 export const planMetaCol = createCollection<PlanMeta>('lesson_plan_meta', [])
 
 export const planTemplatesCol = createCollection<PlanTemplate>(
@@ -231,13 +231,13 @@ export interface AreaCoverage {
   area: string
   part: string
   totalTopics: number
-  plannedTopics: number // 範疇下有教案嘅課題數
-  taughtTopics: number // 範疇下已授課嘅課題數
+  plannedTopics: number // 範疇下有教案的課題數
+  taughtTopics: number // 範疇下已授課的課題數
 }
 
 /**
  * 按課題範疇統計覆蓋率。
- * plannedTopicIds：有教案連住嘅課題；taughtTopicIds：教案狀態為已授課。
+ * plannedTopicIds：有教案連住的課題；taughtTopicIds：教案狀態為已授課。
  */
 export function computeCoverage(
   topics: Topic[],
@@ -271,7 +271,7 @@ export function computeCoverage(
   )
 }
 
-// ───────── 列印（生成獨立 HTML 文件，零依賴，唔靠全域 print CSS）─────────
+// ───────── 列印（生成獨立 HTML 文件，零依賴，不靠全域 print CSS）─────────
 function esc(s: string): string {
   return s
     .replace(/&/g, '&amp;')

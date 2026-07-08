@@ -24,11 +24,11 @@ interface Props {
   open: boolean
   onClose: () => void
   onNavigate: (featureId: string | null) => void
-  /** 開「快速記低」modal（自然語言 → 待辦／提醒／行事曆）；唔記入最近 */
+  /** 開「快速記低」modal（自然語言 → 待辦／提醒／行事曆）；不記入最近 */
   onQuickAdd?: () => void
 }
 
-// 一個可跳轉項目（功能 / 首頁 / 模式切換）。id 對齊 resolveRecentItems 嘅 featureId。
+// 一個可跳轉項目（功能 / 首頁 / 模式切換）。id 對齊 resolveRecentItems 的 featureId。
 interface Item {
   id: string
   label: string
@@ -44,7 +44,7 @@ const FEATURE_SEARCH_ALIASES: Record<string, string[]> = {
   'work-ai': ['AI 助手', 'chat', '問 AI', '家長信', '電郵', 'email', '評語', '課堂活動'],
   'work-lesson-plan': ['備課', '教案', 'lesson plan', '下一堂', '教學目標', '教學流程'],
   'work-generate': ['出題', '小測', 'quiz', 'worksheet', '練習', '試卷', '題目', 'MC'],
-  'work-teach-guide': ['點教', '教法', '教學指引', '學生誤解', '活動設計'],
+  'work-teach-guide': ['如何教', '教法', '教學指引', '學生誤解', '活動設計'],
   'work-slides': ['PPT', 'PowerPoint', 'slides', '簡報', '教學簡報'],
   'work-rubric': ['rubric', '評分', '評分點', '評分準則', '參考答案', 'marking'],
   'work-dse': ['DSE', '公開試', '操練', 'past paper', '考試題'],
@@ -66,7 +66,7 @@ const FEATURE_SEARCH_ALIASES: Record<string, string[]> = {
   'learning-goals': ['目標', 'goal', '計劃'],
   'ask-data': ['問資料', '我的資料', '搜尋資料', 'AI search'],
   calendar: ['日曆', 'calendar', '排程', '提醒', 'deadline', '日程'],
-  search: ['搜尋', 'search', '搵資料', '全域'],
+  search: ['搜尋', 'search', '搜尋資料', '全域'],
   inbox: ['快速擷取', 'inbox', '記低', '收件箱', 'capture'],
   countdown: ['倒數', 'deadline', '重要日子', '考試'],
   quiz: ['測驗', 'quiz', 'MC', '自測', '做題'],
@@ -101,8 +101,8 @@ export default function CommandPalette({
     }
   }, [open])
 
-  // 組合所有可跳轉項目：目前模式嘅功能 + 模式切換
-  // recordable：跳去一個「目的地」（首頁 / 功能）先記入最近；模式切換唔記。
+  // 組合所有可跳轉項目：目前模式的功能 + 模式切換
+  // recordable：跳去一個「目的地」（首頁 / 功能）先記入最近；模式切換不記。
   const baseItems = useMemo(() => {
     const list: Item[] = []
 
@@ -116,7 +116,7 @@ export default function CommandPalette({
       action: () => onNavigate(null),
     })
 
-    // 快速記低（自然語言 → 待辦／提醒／行事曆）；非導航目的地，唔記入最近
+    // 快速記低（自然語言 → 待辦／提醒／行事曆）；非導航目的地，不記入最近
     if (onQuickAdd) {
       list.push({
         id: 'quick-add',
@@ -163,8 +163,8 @@ export default function CommandPalette({
     return list
   }, [mode, onNavigate, setMode, onQuickAdd, t])
 
-  // 未輸入關鍵字時，喺最頂顯示「最近使用」（按開啟次序解析返目前有效項，
-  // 隔走已唔屬目前模式 / 已移除嘅）。有輸入則照舊純搜尋、唔分區。
+  // 未輸入關鍵字時，在最頂顯示「最近使用」（按開啟次序解析返目前有效項，
+  // 隔走已不屬目前模式 / 已移除的）。有輸入則照舊純搜尋、不分區。
   const recentItems = useMemo(
     () =>
       query.trim()
@@ -173,8 +173,8 @@ export default function CommandPalette({
     [query, recentFeatures, baseItems],
   )
 
-  // 鍵盤導航用嘅扁平序：最近區（如有）排頭、之後全部項目（去除已喺最近區嘅，
-  // 避免重複）。recentCount = 最近區喺扁平序裡頭佔嘅項數（畀渲染畫分隔線）。
+  // 鍵盤導航用的扁平序：最近區（如有）排頭、之後全部項目（去除已在最近區的，
+  // 避免重複）。recentCount = 最近區在扁平序裡頭佔的項數（給渲染畫分隔線）。
   const { items, recentCount } = useMemo(() => {
     const q = query.trim().toLowerCase()
     if (q) {
@@ -253,13 +253,13 @@ export default function CommandPalette({
         >
           {items.length === 0 && (
             <li className="px-3 py-6 text-center text-sm text-slate-400">
-              搵唔到「{query}」
+              搜尋不到「{query}」
             </li>
           )}
           {items.map((item, idx) => {
             const on = idx === active
             // 未輸入時分區：第 0 項前加「最近使用」標題；最近區之後第一項前加
-            // 「全部功能」標題（recentCount === 0 即無最近區，唔顯示任何標題）。
+            // 「全部功能」標題（recentCount === 0 即無最近區，不顯示任何標題）。
             const header =
               recentCount > 0 && idx === 0
                 ? '最近使用'

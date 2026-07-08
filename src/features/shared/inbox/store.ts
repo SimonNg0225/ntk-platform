@@ -1,8 +1,8 @@
 // ============================================================
 //  Inbox meta store（功能專屬持久化）
 //  ------------------------------------------------------------
-//  並行於共用 inboxCol 嘅 meta 集合。key = InboxItem.id。
-//  唔郁 data/collections.ts；新 collection 喺 newCollections 申報。
+//  並行於共用 inboxCol 的 meta 集合。key = InboxItem.id。
+//  不郁 data/collections.ts；新 collection 在 newCollections 申報。
 // ============================================================
 
 import { createCollection } from '../../../lib/store'
@@ -11,12 +11,12 @@ import type { InboxMeta, InboxKind, InboxStatus } from './types'
 /** InboxItem.id → InboxMeta（並行 meta）*/
 export const inboxMetaCol = createCollection<InboxMeta>('inbox_meta_v2', [])
 
-/** 攞某 item 嘅 meta（冇就回 undefined）*/
+/** 取得某 item 的 meta（沒有就回 undefined）*/
 export function getMeta(id: string): InboxMeta | undefined {
   return inboxMetaCol.get().find((m) => m.id === id)
 }
 
-/** upsert：有就 update，冇就 add（id 與 InboxItem 對齊）*/
+/** upsert：有就 update，沒有就 add（id 與 InboxItem 對齊）*/
 export function patchMeta(id: string, patch: Partial<Omit<InboxMeta, 'id'>>): void {
   const existing = inboxMetaCol.get().find((m) => m.id === id)
   if (existing) inboxMetaCol.update(id, patch)

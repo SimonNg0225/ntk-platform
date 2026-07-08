@@ -39,7 +39,7 @@ import { featName, featDesc } from './i18n/appEn'
 const SIDEBAR_MODE_KEY = 'ntk.sidebarMode.v2'
 
 // 主框架：側邊欄 + 主內容區。
-// - 桌面（md 以上）：側邊欄固定喺左
+// - 桌面（md 以上）：側邊欄固定在左
 // - 手機：側邊欄收埋，改用頂欄漢堡掣 + 滑出式抽屜
 // - ⌘K / Ctrl+K：指令面板
 export function AppShell() {
@@ -52,7 +52,7 @@ export function AppShell() {
   const [quickAddOpen, setQuickAddOpen] = useState(false)
   const [shortcutsOpen, setShortcutsOpen] = useState(false)
   const [onboardOpen, setOnboardOpen] = useState(false)
-  // 桌面側欄三態：展開（w-72）→ 幼條（icon rail）→ 完全收起。記喺 localStorage。
+  // 桌面側欄三態：展開（w-72）→ 幼條（icon rail）→ 完全收起。記在 localStorage。
   const [sidebarMode, setSidebarMode] = useState<'expanded' | 'rail' | 'hidden'>(() => {
     try {
       const v = localStorage.getItem(SIDEBAR_MODE_KEY)
@@ -65,8 +65,8 @@ export function AppShell() {
   const toast = useToast()
   const drawerRef = useRef<HTMLDivElement>(null)
   const appOpenedRef = useRef(false)
-  // iOS：開抽屜嗰下 tap，遮罩瞬間彈出喺手指底，touch→mouse 相容 click 會打中遮罩即關。
-  // 開啟後短暫「未武裝」，等開掣嗰下 ghost click 食唔到自己（要撳兩次先開到嘅元兇）。
+  // iOS：開抽屜嗰下 tap，遮罩瞬間彈出在手指底，touch→mouse 相容 click 會打中遮罩即關。
+  // 開啟後短暫「未武裝」，等開掣嗰下 ghost click 吃不到自己（要按兩次先開到的元兇）。
   const dismissArmedRef = useRef(false)
 
   useEffect(() => {
@@ -81,7 +81,7 @@ export function AppShell() {
   const cycleSidebar = () =>
     setSidebarMode((m) => (m === 'expanded' ? 'rail' : m === 'rail' ? 'hidden' : 'expanded'))
 
-  // 切換模式時，返返去首頁（因為功能會唔同）
+  // 切換模式時，返回到首頁（因為功能會不同）
   useEffect(() => {
     setActiveId(null)
   }, [mode])
@@ -92,7 +92,7 @@ export function AppShell() {
     const prevActive = document.activeElement as HTMLElement | null
     const panel = drawerRef.current
     panel?.focus()
-    // 開啟瞬間遮罩唔武裝，350ms 後先可點擊關閉（過濾掉開掣嗰下 ghost click）
+    // 開啟瞬間遮罩不武裝，350ms 後先可點擊關閉（過濾掉開掣嗰下 ghost click）
     dismissArmedRef.current = false
     const armTimer = window.setTimeout(() => {
       dismissArmedRef.current = true
@@ -177,7 +177,7 @@ export function AppShell() {
     return () => window.removeEventListener('keydown', handler)
   }, [])
 
-  // ? (Shift+/) 彈出鍵盤快捷鍵速查；喺輸入框 / 可編輯區聚焦時唔觸發
+  // ? (Shift+/) 彈出鍵盤快捷鍵速查；在輸入框 / 可編輯區聚焦時不觸發
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.key !== '?' || e.metaKey || e.ctrlKey || e.altKey) return
@@ -233,7 +233,7 @@ export function AppShell() {
   return (
     <NavProvider open={navigate}>
       <div className="flex h-screen overflow-hidden bg-[color:var(--app-bg)] text-slate-900 dark:text-slate-100">
-        {/* 桌面側邊欄（展開 / 幼條 rail；收起時唔 render，改用浮掣展開）*/}
+        {/* 桌面側邊欄（展開 / 幼條 rail；收起時不 render，改用浮掣展開）*/}
         {sidebarMode !== 'hidden' && (
           <Sidebar
             activeId={activeId}
@@ -296,12 +296,12 @@ export function AppShell() {
             onQuickAdd={() => setQuickAddOpen(true)}
           />
 
-          {/* 全站公告橫額（登入用戶；admin 喺後台出） */}
+          {/* 全站公告橫額（登入用戶；admin 在後台出） */}
           <AnnouncementBanner />
 
           {/* 桌面右上角固定「快速記低」浮掣（手機改用頂欄 icon）。
-              絕對定位喺 <main> 右上，z-30 浮喺內容之上；位於右邊內距區，
-              唔會撞到內容區左上嘅「← 返回概覽」同標題。 */}
+              絕對定位在 <main> 右上，z-30 浮在內容之上；位於右邊內距區，
+              不會撞到內容區左上的「← 返回概覽」同標題。 */}
           {activeId !== null && (
             <QuickAddButton
               onClick={() => setQuickAddOpen(true)}
@@ -321,7 +321,7 @@ export function AppShell() {
             </button>
           )}
 
-          {/* overflow-x-hidden：杜絕任何過寬子元素令整頁可左右捲（iOS 尤甚）；寬表格各自有 overflow-x-auto 內捲，唔受影響 */}
+          {/* overflow-x-hidden：杜絕任何過寬子元素令整頁可左右捲（iOS 尤甚）；寬表格各自有 overflow-x-auto 內捲，不受影響 */}
           <div
             className="min-w-0 flex-1 overflow-x-hidden overflow-y-auto"
           >
@@ -375,7 +375,7 @@ export function AppShell() {
                       defaultValue: `返回${modeDef.name}概覽`,
                     })}
                   </button>
-                  {/* 標準 header；selfManagedHeader 嘅功能自管 masthead，host 唔重複出標題 */}
+                  {/* 標準 header；selfManagedHeader 的功能自管 masthead，host 不重複出標題 */}
                   {!feature.selfManagedHeader && (
                     <div>
                       <h1 className="flex items-center gap-2.5 text-2xl font-semibold text-slate-900 dark:text-slate-100 sm:text-[28px]">
@@ -468,8 +468,8 @@ export function AppShell() {
   )
 }
 
-// 共用 Provider 樹：行銷頁（Landing / Pricing）同產品（AppShell）一齊用，
-// 令主題、登入狀態、Toast 喺成個 App（包括路由）一致。
+// 共用 Provider 樹：行銷頁（Landing / Pricing）同產品（AppShell）一起用，
+// 令主題、登入狀態、Toast 在成個 App（包括路由）一致。
 export function Providers({ children }: { children: ReactNode }) {
   return (
     <SettingsProvider>

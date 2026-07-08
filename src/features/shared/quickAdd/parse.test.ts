@@ -170,7 +170,7 @@ describe('toDraft — date 正規化', () => {
 
   it('非日期字串 → undefined', () => {
     expect(
-      toDraft({ kind: 'task', title: 'x', date: '聽日' }, 'work', TODAY)?.date,
+      toDraft({ kind: 'task', title: 'x', date: '明天' }, 'work', TODAY)?.date,
     ).toBeUndefined()
   })
 

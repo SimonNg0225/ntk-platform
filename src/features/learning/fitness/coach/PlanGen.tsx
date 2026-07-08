@@ -29,8 +29,8 @@ import { coachPlansCol, type CoachDay, type CoachPlan } from './store'
 // ============================================================
 //  工具一：AI 課表生成
 //  ------------------------------------------------------------
-//  揀目標 + 勾器材 + 每週日數 → complete() 一次過要 JSON →
-//  靚卡顯示 → 可撳「存做計劃」寫去 coachPlansCol。
+//  選擇目標 + 勾器材 + 每週日數 → complete() 一次過要 JSON →
+//  靚卡顯示 → 可按「存做計劃」寫去 coachPlansCol。
 // ============================================================
 
 const GOALS = [
@@ -75,7 +75,7 @@ export function str(v: unknown, fallback = ''): string {
   return fallback
 }
 
-/** 將 AI 回應安全解析成 CoachDay[]（缺值有守衞，唔會擲）。回 null = 解析失敗。 */
+/** 將 AI 回應安全解析成 CoachDay[]（缺值有守衞，不會擲）。回 null = 解析失敗。 */
 export function parsePlan(raw: string): CoachDay[] | null {
   let obj: RawPlan
   try {
@@ -108,13 +108,13 @@ export function parsePlan(raw: string): CoachDay[] | null {
 export function buildPrompt(goalLabel: string, equip: string[], daysPerWeek: number): string {
   const eq = equip.length > 0 ? equip.join('、') : '徒手'
   return [
-    `你係專業健身教練。請為一位訓練者設計一份「每週 ${daysPerWeek} 日」嘅訓練課表。`,
+    `你是專業健身教練。請為一位訓練者設計一份「每週 ${daysPerWeek} 日」的訓練課表。`,
     `主要目標：${goalLabel}。`,
-    `只可以用以下器材：${eq}（唔好用清單以外嘅器材）。`,
+    `只可以用以下器材：${eq}（不要用清單以外的器材）。`,
     `要求：每日有清晰部位/主題（focus）；每日 4 至 6 個動作；每個動作標明組數(sets)、次數(reps)同一句簡短提示(note，繁體中文，講安全或要點)。`,
     `動作名同所有文字都用繁體中文。`,
     '',
-    '只回 JSON，唔好任何解說文字、唔好 markdown code fence。格式必須係：',
+    '只回 JSON，不要任何解說文字、不要 markdown code fence。格式必須是：',
     '{"days":[{"day":"星期一","focus":"胸 + 三頭","exercises":[{"name":"槓鈴臥推","sets":"4","reps":"6-8","note":"手肘約45度，肩胛收緊"}]}]}',
   ].join('\n')
 }
@@ -138,7 +138,7 @@ export default function PlanGen({ model }: { model: AIModel }) {
     const reader = new FileReader()
     reader.onerror = () => {
       setRecog(false)
-      toast.error('讀唔到相，請再試')
+      toast.error('讀不到相，請再試')
     }
     reader.onload = async () => {
       const dataUrl = String(reader.result)
@@ -147,7 +147,7 @@ export default function PlanGen({ model }: { model: AIModel }) {
       const b64 = comma >= 0 ? dataUrl.slice(comma + 1) : ''
       const mimeType = semi > 5 ? dataUrl.slice(5, semi) : 'image/jpeg'
       if (!b64) {
-        toast.error('讀唔到相，請再試')
+        toast.error('讀不到相，請再試')
         return
       }
       setRecog(true)
@@ -157,7 +157,7 @@ export default function PlanGen({ model }: { model: AIModel }) {
           messages: [
             {
               role: 'user',
-              content: `睇呢張健身房／器材相，從以下清單揀出相入面真係見到嘅器材：${EQUIPMENT.join('、')}。只回 JSON 字串陣列（只可以用清單內嘅名），唔好任何解說文字。例：["槓鈴","啞鈴"]`,
+              content: `查看這張健身房／器材相，從以下清單選擇出相中真的見到的器材：${EQUIPMENT.join('、')}。只回 JSON 字串陣列（只可以用清單內的名），不要任何解說文字。例：["槓鈴","啞鈴"]`,
               images: [{ mimeType, data: b64 }],
             },
           ],
@@ -171,7 +171,7 @@ export default function PlanGen({ model }: { model: AIModel }) {
           setEquip(matched)
           toast.success(`識別到：${matched.join('、')}`)
         } else {
-          toast.info('相中認唔到清單內嘅器材，請手動揀')
+          toast.info('相中認不到清單內的器材，請手動選擇')
         }
       } catch (e) {
         toast.error((e as Error).message || '識別失敗，請再試')
@@ -214,11 +214,11 @@ export default function PlanGen({ model }: { model: AIModel }) {
       })
       const parsed = parsePlan(raw)
       if (!parsed) {
-        toast.error('AI 回覆格式唔啱，請再試一次或換 Pro 模型')
+        toast.error('AI 回覆格式不正確，請再試一次或換 Pro 模型')
         return
       }
       setResult(parsed)
-      toast.success(`生成咗 ${parsed.length} 日課表`)
+      toast.success(`生成了 ${parsed.length} 日課表`)
     } catch (e) {
       toast.error((e as Error).message || 'AI 出錯，請再試')
     } finally {
@@ -296,7 +296,7 @@ export default function PlanGen({ model }: { model: AIModel }) {
           </div>
         </Field>
 
-        <Field label="可用器材" hint="揀你練得到嘅；AI 只會用你揀嘅器材">
+        <Field label="可用器材" hint="選擇你練得到的；AI 只會用你選擇的器材">
           <div className="flex flex-wrap gap-2">
             {EQUIPMENT.map((item) => {
               const on = equip.includes(item)
@@ -377,7 +377,7 @@ export default function PlanGen({ model }: { model: AIModel }) {
           {busy ? 'AI 生成中…' : '生成課表'}
         </Button>
         {equip.length === 0 && (
-          <p className="text-center text-xs text-rose-500">最少揀一樣器材</p>
+          <p className="text-center text-xs text-rose-500">最少選擇一樣器材</p>
         )}
       </Card>
 
@@ -434,8 +434,8 @@ export default function PlanGen({ model }: { model: AIModel }) {
         {sortedPlans.length === 0 ? (
           <EmptyState
             icon={Save}
-            title="仲未有已存計劃"
-            hint="生成課表後撳「存做計劃」，就會喺度列出，方便日後翻睇。"
+            title="尚未有已存計劃"
+            hint="生成課表後按「存做計劃」，就會在這裡列出，方便日後翻查看。"
           />
         ) : (
           <div className="space-y-2">

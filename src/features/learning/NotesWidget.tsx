@@ -175,7 +175,7 @@ export default function NotesWidget() {
     }
   }, [scope, active, notes])
 
-  // 該範圍嘅標籤（供標籤列）
+  // 該範圍的標籤（供標籤列）
   const scopeTags = useMemo(() => tagCounts(scoped), [scoped])
 
   // 搜尋 + 標籤 + 排序
@@ -197,7 +197,7 @@ export default function NotesWidget() {
       .sort((a, b) => compareNotes(a, b, sort))
   }, [scoped, query, activeTag, sort])
 
-  // 維持 selectedId 有效；無就揀第一個
+  // 維持 selectedId 有效；無就選擇第一個
   useEffect(() => {
     if (selectedId && visible.some((n) => n.id === selectedId)) return
     setSelectedId(visible[0]?.id ?? null)
@@ -241,7 +241,7 @@ export default function NotesWidget() {
     setMobilePane('detail')
   }
 
-  // 跳去任何一則筆記（自動切到能見到佢嘅範圍 + 清走篩選），反向連結用
+  // 跳去任何一則筆記（自動切到能見到他的範圍 + 清走篩選），反向連結用
   function revealNote(id: string) {
     const n = notes.find((x) => x.id === id)
     if (!n) return
@@ -252,7 +252,7 @@ export default function NotesWidget() {
     setMobilePane('detail')
   }
 
-  // 撳 [[標題]]：解析現有（非垃圾桶）筆記就跳去；冇就以該標題建立並連結
+  // 按 [[標題]]：解析現有（非垃圾桶）筆記就跳去；沒有就以該標題建立並連結
   function openLink(title: string) {
     const found = resolveNoteByTitle(notes.filter((n) => !n.trashed), title)
     if (found) {
@@ -286,7 +286,7 @@ export default function NotesWidget() {
     const tag = activeTag
     if (!q && !tag) return
     if (savedFiltersCol.get().some((f) => f.tag === tag && f.query === q)) {
-      toast.info('已經儲存過呢個篩選')
+      toast.info('已經儲存過這個篩選')
       return
     }
     const name = tag ? (q ? `#${tag} · ${q}` : `#${tag}`) : `「${q}」`
@@ -364,7 +364,7 @@ export default function NotesWidget() {
     toast.success('已匯出 JSON 備份')
   }
 
-  // 揀檔匯入：按 id 去重略過已有（筆記 + 筆記本各自去重後合併）
+  // 選擇檔匯入：按 id 去重略過已有（筆記 + 筆記本各自去重後合併）
   function onPickFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
@@ -372,7 +372,7 @@ export default function NotesWidget() {
     reader.onload = () => {
       const parsed = parseNotesImport(String(reader.result))
       if (!parsed) {
-        toast.error('檔案格式唔啱')
+        toast.error('檔案格式不正確')
         return
       }
       const noteIds = new Set(richNotesCol.get().map((n) => n.id))
@@ -512,22 +512,22 @@ export default function NotesWidget() {
         }
       />
 
-      {/* 點用教學引導（可摺疊 + 可永久收起） */}
+      {/* 如何使用教學引導（可摺疊 + 可永久收起） */}
       <FeatureGuide
         storageKey="notes"
-        title={t('notes.guideTitle', { defaultValue: '個人筆記點用？' })}
+        title={t('notes.guideTitle', { defaultValue: '個人筆記使用說明' })}
         steps={[
           {
-            title: t('notes.guide1Title', { defaultValue: '開一頁，寫低重點' }),
-            desc: t('notes.guide1Desc', { defaultValue: '撳「寫一頁」即刻落筆；或揀「範本」用課堂筆記、會議記錄等框架快速開始。' }),
+            title: t('notes.guide1Title', { defaultValue: '開一頁，記錄重點' }),
+            desc: t('notes.guide1Desc', { defaultValue: '按「寫一頁」立即落筆；或選擇「範本」用課堂筆記、會議記錄等框架快速開始。' }),
           },
           {
             title: t('notes.guide2Title', { defaultValue: '用 #標籤 同待辦歸類' }),
-            desc: t('notes.guide2Desc', { defaultValue: '內文打 #關鍵字 自動變標籤；打 - [ ] 變待辦剔格。撳左邊標籤即可篩選。' }),
+            desc: t('notes.guide2Desc', { defaultValue: '內文打 #關鍵字 自動變標籤；打 - [ ] 變待辦剔格。按左邊標籤即可篩選。' }),
           },
           {
             title: t('notes.guide3Title', { defaultValue: '用卷冊收納、搜尋翻揭' }),
-            desc: t('notes.guide3Desc', { defaultValue: '建立卷冊分門別類；頂部搜尋框跨全部筆記搵字，常用條件可儲成智能檢視。' }),
+            desc: t('notes.guide3Desc', { defaultValue: '建立卷冊分門別類；頂部搜尋框跨全部筆記搜尋字，常用條件可儲成智能檢視。' }),
           },
         ]}
       />
@@ -631,7 +631,7 @@ export default function NotesWidget() {
             <nav className="space-y-0.5">
               {notebooks.length === 0 && (
                 <p className="px-3 py-1.5 text-xs text-slate-400 dark:text-slate-500">
-                  {t('notes.noNotebookHint', { defaultValue: '撳上面 ＋，開一卷收納相關筆記。' })}
+                  {t('notes.noNotebookHint', { defaultValue: '按上面 ＋，開一卷收納相關筆記。' })}
                 </p>
               )}
               {notebooks.map((nb) => {
@@ -823,7 +823,7 @@ export default function NotesWidget() {
               }
               title={
                 hasFilter
-                  ? t('notes.emptyFilterTitle', { defaultValue: '搵唔到相符筆記' })
+                  ? t('notes.emptyFilterTitle', { defaultValue: '搜尋不到相符筆記' })
                   : scope.kind === 'trash'
                     ? t('notes.emptyTrashTitle', { defaultValue: '垃圾桶乾乾淨淨' })
                     : scope.kind === 'archived'
@@ -832,7 +832,7 @@ export default function NotesWidget() {
               }
               hint={
                 hasFilter
-                  ? t('notes.emptyFilterHint', { defaultValue: '試下換個關鍵字，或者清除標籤篩選。' })
+                  ? t('notes.emptyFilterHint', { defaultValue: '嘗試換個關鍵字，或者清除標籤篩選。' })
                   : scope.kind === 'all' || scope.kind === 'notebook'
                     ? t('notes.emptyHint', { defaultValue: '記低靈感、課堂重點或待辦——用 #標籤 歸類、- [ ] 整待辦剔格。' })
                     : undefined
@@ -918,10 +918,10 @@ export default function NotesWidget() {
                 <PenLine size={24} strokeWidth={1.75} />
               </span>
               <p className="mt-3 text-sm font-medium text-slate-600 dark:text-slate-300">
-                {t('notes.detailEmptyTitle', { defaultValue: '揀一則筆記翻開' })}
+                {t('notes.detailEmptyTitle', { defaultValue: '選擇一則筆記翻開' })}
               </p>
               <p className="mt-1 max-w-xs text-xs text-slate-400 dark:text-slate-500">
-                {t('notes.detailEmptyHint', { defaultValue: '喺左邊揀任何一則睇內容，或者開一張新筆記。' })}
+                {t('notes.detailEmptyHint', { defaultValue: '在左邊選擇任何一則查看內容，或者開一張新筆記。' })}
               </p>
               <button
                 type="button"
@@ -1381,12 +1381,12 @@ function NotebookManager({
   async function del(nb: Notebook) {
     const ok = await confirm({
       title: '刪除筆記本？',
-      message: `「${nb.name}」會被刪除，入面嘅筆記會變成未分類（仍保留）。`,
+      message: `「${nb.name}」會被刪除，中的筆記會變成未分類（仍保留）。`,
       confirmText: '刪除',
       tone: 'danger',
     })
     if (!ok) return
-    // 把該筆記本嘅筆記設為未分類
+    // 把該筆記本的筆記設為未分類
     const now = new Date().toISOString()
     richNotesCol
       .get()

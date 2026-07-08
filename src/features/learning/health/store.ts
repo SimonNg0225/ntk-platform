@@ -32,7 +32,7 @@ type MetricPatch = Partial<Omit<HealthLog, 'id' | 'date' | 'createdAt' | 'update
 
 /**
  * 記錄某日指標（按本地日期 key upsert，一日一條）。
- * patch 內某欄位設為 undefined 唔會清除已存值（用 update 合併語意）；
+ * patch 內某欄位設為 undefined 不會清除已存值（用 update 合併語意）；
  * 要清空請明確傳該欄位（呼叫端自行決定）。
  */
 export function logDay(date: string, patch: MetricPatch): void {

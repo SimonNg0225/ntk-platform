@@ -10,10 +10,10 @@ import type {
 //  版式互轉 — 規則預填（純函式，可單元測試）
 //  ------------------------------------------------------------
 //  轉版式時即時用規則將現有內容搬入新結構（離線、零 AI），用戶再手執；
-//  唔靚可以再㩒「AI 幫我轉」（slideAi.aiConvertSlide）。
+//  不靚可以再㩒「AI 幫我轉」（slideAi.aiConvertSlide）。
 //  約定：任何版式先攤平做 lines[]，再按目標版式入結構；
 //  bullets 永遠保留做後備（引擎 fallback／講義用）；
-//  舊結構欄位清走、其他欄位（notes/chart/imageQuery/subtitle/takeaway/emphasis）唔郁。
+//  舊結構欄位清走、其他欄位（notes/chart/imageQuery/subtitle/takeaway/emphasis）不郁。
 // ============================================================
 
 export type ConvertResult =
@@ -32,8 +32,8 @@ function splitLine(line: string): { head: string; rest?: string } {
 }
 
 /**
- * 將現有版式內容攤平做 lines[]（轉換用嘅內容池）。
- * 結構欄位同後備 bullets 兩個池都睇，揀**較豐富**嗰個（行數多者）——
+ * 將現有版式內容攤平做 lines[]（轉換用的內容池）。
+ * 結構欄位同後備 bullets 兩個池都查看，選擇**較豐富**那個（行數多者）——
  * 例如卡片版得 2 張卡但 bullets 有 4 點，轉對比版就應該用 bullets。
  */
 export function flattenSlide(s: Slide): string[] {
@@ -64,7 +64,7 @@ export function flattenSlide(s: Slide): string[] {
   return s.title ? [s.title] : []
 }
 
-/** 清走所有結構欄位嘅底版（保留共通欄位）。 */
+/** 清走所有結構欄位的底版（保留共通欄位）。 */
 function baseSlide(s: Slide): Slide {
   return {
     title: s.title,
@@ -84,7 +84,7 @@ function baseSlide(s: Slide): Slide {
   }
 }
 
-/** 行 → stat：抽第一個數字 token（$1,200／75%／2100萬…）做 value，剩餘做 label；冇數字 value='—'。 */
+/** 行 → stat：抽第一個數字 token（$1,200／75%／2100萬…）做 value，剩餘做 label；沒有數字 value='—'。 */
 function lineToStat(line: string): SlideStat {
   const m = line.match(/[$＄]?\d[\d,.]*\s?[%％萬億千]?/)
   if (!m) return { value: '—', label: clamp(line.trim(), 20) }
@@ -94,7 +94,7 @@ function lineToStat(line: string): SlideStat {
 }
 
 /**
- * 規則轉版式。內容唔夠（例如 steps/compare 嘅最低項數）→ { ok:false, reason }，
+ * 規則轉版式。內容不夠（例如 steps/compare 的最低項數）→ { ok:false, reason }，
  * caller 保持原版式並提示。
  */
 export function convertSlide(s: Slide, target: SlideLayout): ConvertResult {
@@ -105,7 +105,7 @@ export function convertSlide(s: Slide, target: SlideLayout): ConvertResult {
 
   switch (target) {
     case 'bullets': {
-      if (lines.length === 0) return { ok: false, reason: '呢版冇內容可以做要點' }
+      if (lines.length === 0) return { ok: false, reason: '此頁沒有內容可以做要點' }
       return { ok: true, slide: { ...base, bullets: backup } }
     }
     case 'section': {

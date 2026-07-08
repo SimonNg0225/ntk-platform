@@ -3,13 +3,13 @@
 //  ------------------------------------------------------------
 //  針對港式「表格型」未填表單：一格 label + 隔離格填寫。
 //  injectTags（docxAi）只做同 run inline（底線／空括號／冒號），對
-//  「label 喺一格、空格喺右鄰／下方」嘅表完全失手（真檔命中率 22%）。
-//  本檔補上：parse <w:tbl>/<w:tr>/<w:tc>，搵到 label 格 → 喺右鄰／正下方
+//  「label 在一格、空格在右鄰／下方」的表完全失手（真檔命中率 22%）。
+//  本檔補上：parse <w:tbl>/<w:tr>/<w:tc>，找到 label 格 → 在右鄰／正下方
 //  空格塞 {標籤}。
 //
 //  安全第一（沿用 injectTags 原則）：全部插完先重砌 zip + sanity 重讀；
-//  任何 throw / 重讀失敗 → 放棄全部、回原檔 + 全 failed。寧願唔改，
-//  唔好整爛 docx。純字串／XML 操作，唔 import React / UI。
+//  任何 throw / 重讀失敗 → 放棄全部、回原檔 + 全 failed。寧願不改，
+//  不要整爛 docx。純字串／XML 操作，不 import React / UI。
 // ============================================================
 
 import PizZip from 'pizzip'
@@ -23,7 +23,7 @@ import { base64ToArrayBuffer } from './docxEngine'
 
 // ───────── XML helpers（本檔自帶細份，避免改 docxAi export 面） ─────────
 
-/** XML escape（寫返 document.xml 前；只處理會搞亂 XML 嘅 5 個字元）。 */
+/** XML escape（寫回 document.xml 前；只處理會搞亂 XML 的 5 個字元）。 */
 function escapeXml(s: string): string {
   return s
     .replace(/&/g, '&amp;')
@@ -33,7 +33,7 @@ function escapeXml(s: string): string {
     .replace(/'/g, '&apos;')
 }
 
-/** 解基本 XML entity（淨係為咗比對格文字；唔會寫返呢個解碼結果）。 */
+/** 解基本 XML entity（只為了比對格文字；不會寫回這個解碼結果）。 */
 function decodeXmlEntities(s: string): string {
   return s
     .replace(/&lt;/g, '<')
@@ -56,19 +56,19 @@ function arrayBufferToBase64Safe(buf: ArrayBuffer): string {
   return btoa(binary)
 }
 
-// ───────── 表格 parse（regex；唔掂 XML，只記 offset） ─────────
+// ───────── 表格 parse（regex；不掂 XML，只記 offset） ─────────
 
-/** 一個 <w:tc>…</w:tc> 格嘅位置 + 抽到嘅資料。 */
+/** 一個 <w:tc>…</w:tc> 格的位置 + 抽到的資料。 */
 interface Cell {
-  /** 喺 document.xml 入面，<w:tc> 開標籤起點。 */
+  /** 在 document.xml 中，<w:tc> 開標籤內容來源。 */
   start: number
   /** </w:tc> 之後（exclusive）。 */
   end: number
   /** 完整 <w:tc>…</w:tc> 內容（含標籤）。 */
   xml: string
-  /** 格內所有 <w:t> 文字 concat + decode + trim（用嚟比對 label）。 */
+  /** 格內所有 <w:t> 文字 concat + decode + trim（用來比對 label）。 */
   text: string
-  /** 是否空格（冇任何非空白 <w:t> 文字）。 */
+  /** 是否空格（沒有任何非空白 <w:t> 文字）。 */
   empty: boolean
   /** <w:gridSpan w:val> 值（無則 1）。 */
   gridSpan: number
@@ -78,16 +78,16 @@ interface Cell {
  * 由 <w:tr>…</w:tr> 內文抽出所有 <w:tc>…</w:tc>。
  *
  * 注意：
- *  - <w:tc> 開標籤喺真檔一律係 `<w:tc>`（無屬性、非 self-close），
- *    但我哋仍用 `<w:tc\b` 容錯（萬一有屬性）；關鍵係**唔好**撈到
- *    `<w:tcPr>`（開標籤係 `<w:tcPr`，`\b` 後面係 `P`，唔會中
- *    `<w:tc>` 嘅 `>` 或空白，所以用 `<w:tc(?=[ >])` 精準分辨）。
- *  - 用「開／閉計數」配對，容許 <w:tc> 內部理論上嵌套（實際唔會，
+ *  - <w:tc> 開標籤在真檔一律係 `<w:tc>`（無屬性、非 self-close），
+ *    但我們仍用 `<w:tc\b` 容錯（萬一有屬性）；關鍵係**不要**撈到
+ *    `<w:tcPr>`（開標籤係 `<w:tcPr`，`\b` 後面係 `P`，不會中
+ *    `<w:tc>` 的 `>` 或空白，所以用 `<w:tc(?=[ >])` 精準分辨）。
+ *  - 用「開／閉計數」配對，容許 <w:tc> 內部理論上嵌套（實際不會，
  *    但穩陣）。offset 相對 trInner。
  */
 function parseCells(trInner: string): Cell[] {
   const cells: Cell[] = []
-  // 同時搵 tc 開（非 tcPr）同 tc 閉。
+  // 同時搜尋 tc 開（非 tcPr）同 tc 閉。
   const re = /<w:tc(?=[ >])(?:[^>]*)>|<\/w:tc>/g
   let m: RegExpExecArray | null
   let depth = 0
@@ -134,7 +134,7 @@ function stripTrailingColon(s: string): string {
   return s.replace(/[：:︰﹕︓]\s*$/u, '').trim()
 }
 
-/** 收斂內部空白（真檔有「日    期」呢類兩字中間落空格嘅 label）。 */
+/** 收斂內部空白（真檔有「日    期」呢類兩字中間落空格的 label）。 */
 function collapseWs(s: string): string {
   return s.replace(/[\s　]+/gu, '').trim()
 }
@@ -157,25 +157,25 @@ function cellMatchesLabel(cellText: string, label: string): boolean {
   return false
 }
 
-// ───────── 插入：喺目標格第一個 <w:p> 塞 run ───────── //
+// ───────── 插入：在目標格第一個 <w:p> 塞 run ───────── //
 
 /**
- * 喺一個 <w:tc>…</w:tc> 格 xml 入面，第一個 <w:p> 的
+ * 在一個 <w:tc>…</w:tc> 格 xml 中，第一個 <w:p> 的
  * （<w:pPr>…</w:pPr> 之後、否則 <w:p…> 開標籤之後）、</w:p> 之前，
  * 加 <w:r><w:t xml:space="preserve">{escapedTag}</w:t></w:r>。
  *
- * 回新 xml；若搵唔到 <w:p> 對（理論上每格都至少一個 <w:p>）→ 回 null。
+ * 回新 xml；若搜尋不到 <w:p> 對（理論上每格都至少一個 <w:p>）→ 回 null。
  */
 function insertRunInFirstParagraph(cellXml: string, tagText: string): string | null {
   const runXml = `<w:r><w:t xml:space="preserve">${tagText}</w:t></w:r>`
 
-  // 搵第一個 <w:p …> 開標籤（非 <w:pPr>、非 <w:pict> 等：用 (?=[ >])）。
+  // 搜尋第一個 <w:p …> 開標籤（非 <w:pPr>、非 <w:pict> 等：用 (?=[ >])）。
   const pOpen = /<w:p(?=[ >])[^>]*>/.exec(cellXml)
   if (!pOpen) return null
   const pOpenEnd = pOpen.index + pOpen[0].length
 
-  // 喺呢個 <w:p> 範圍內搵對應 </w:p>（取開標籤之後第一個 </w:p>；
-  // 格內第一個段落唔會嵌套另一段落，安全）。
+  // 在這個 <w:p> 範圍內搜尋對應 </w:p>（取開標籤之後第一個 </w:p>；
+  // 格內第一個段落不會嵌套另一段落，安全）。
   const pCloseIdx = cellXml.indexOf('</w:p>', pOpenEnd)
   if (pCloseIdx < 0) return null
 
@@ -184,7 +184,7 @@ function insertRunInFirstParagraph(cellXml: string, tagText: string): string | n
   const innerEnd = pCloseIdx
   const inner = cellXml.slice(innerStart, innerEnd)
 
-  // 若有 <w:pPr>…</w:pPr>，run 要喺佢之後（pPr 必須係段落第一個子節點）。
+  // 若有 <w:pPr>…</w:pPr>，run 要在他之後（pPr 必須係段落第一個子節點）。
   let insertAt = innerStart
   const pPr = /^\s*<w:pPr\b[^>]*>[\s\S]*?<\/w:pPr>/.exec(inner)
   if (pPr) {
@@ -201,16 +201,16 @@ function insertRunInFirstParagraph(cellXml: string, tagText: string): string | n
 // ───────── 主 API ───────── //
 
 /**
- * 把每個 field 嘅 {標籤} 插入「表格內 label 格旁邊嘅空格」。
+ * 把每個 field 的 {標籤} 插入「表格內 label 格旁邊的空格」。
  *
  * 流程：
  *  1. 讀 word/document.xml；抽 <w:tbl> → <w:tr> → <w:tc>。
  *  2. 每格 trimmed 文字 vs field.label（含去尾冒號 / 收斂空白變體）。
  *  3. 目標格：(a) 同行右鄰空格 → 用；(b) 否則正下方（下一行同 tc index）
- *     空格 → 用；(c) 都唔得 → failed。
+ *     空格 → 用；(c) 都不得 → failed。
  *  4. 插入 <w:r><w:t>{tag}</w:t></w:r>（escapeXml(sanitizeTag(tag))）。
  *  5. gridSpan / 合併格保守：行 tc 數不一致或目標牽涉 gridSpan 時，
- *     below 規則跳過（寧 failed 唔錯插）。
+ *     below 規則跳過（寧 failed 不錯插）。
  *  6. 安全：插完重砌 + sanity 重讀；任何 throw / 重讀失敗 / injected=0
  *     → 回原檔 + 全 failed。
  *
@@ -237,20 +237,20 @@ export function injectTagsIntoCells(
   }
   if (!xml) return fallback()
 
-  // ── 抽所有表 → 行 → 格（記 absolute offset 喺 document.xml）──
-  // 注意：用 regex 抽 <w:tbl>…</w:tbl> / <w:tr>…</w:tr>；表唔會喺 cell
-  // 文字層出現呢啲標籤，故 split-by-tag 安全。為咗保留 absolute offset，
-  // 我哋用 matchAll + index。
+  // ── 抽所有表 → 行 → 格（記 absolute offset 在 document.xml）──
+  // 注意：用 regex 抽 <w:tbl>…</w:tbl> / <w:tr>…</w:tr>；表不會在 cell
+  // 文字層出現這些標籤，故 split-by-tag 安全。為了保留 absolute offset，
+  // 我們用 matchAll + index。
   const rowsAbs: { cells: Cell[] }[] = []
-  // 表格嵌套（表入面有表）罕見；用簡單方法：逐個 <w:tr ...>…</w:tr>。
-  // tr 唔會嵌套 tr（OOXML 唔容許表格直接嵌 tr），故 non-greedy 配對安全，
-  // 但表中表會令外層 tr 含內層 tr —— 我哋用「最內」策略：直接全局抽所有
+  // 表格嵌套（表中有表）罕見；用簡單方法：逐個 <w:tr ...>…</w:tr>。
+  // tr 不會嵌套 tr（OOXML 不容許表格直接嵌 tr），故 non-greedy 配對安全，
+  // 但表中表會令外層 tr 含內層 tr —— 我們用「最內」策略：直接全局抽所有
   // <w:tr …>…</w:tr>（non-greedy 取最短，即最內層先中），足夠本用途。
   const trRe = /<w:tr\b[^>]*>([\s\S]*?)<\/w:tr>/g
   let trm: RegExpExecArray | null
   while ((trm = trRe.exec(xml)) !== null) {
     const trInner = trm[1]
-    // trInner 起點 = trm.index + 開標籤長度
+    // trInner 內容來源 = trm.index + 開標籤長度
     const innerOffset = trm.index + (trm[0].length - trInner.length - '</w:tr>'.length)
     const cells = parseCells(trInner).map((c) => ({
       ...c,
@@ -261,21 +261,21 @@ export function injectTagsIntoCells(
   }
 
   if (rowsAbs.length === 0) {
-    // 冇表格 → 全 failed（呢個引擎只處理表格；inline 由 injectTags 負責）。
+    // 沒有表格 → 全 failed（這個引擎只處理表格；inline 由 injectTags 負責）。
     return { base64: arrayBufferToBase64Safe(buf), injected: [], failed: allTags }
   }
 
-  // ── 為每個 field 搵目標格，紀錄一個「插入動作」（先唔改 xml）──
+  // ── 為每個 field 搜尋目標格，紀錄一個「插入動作」（先不改 xml）──
   interface Plan {
     tag: string
     sanitized: string
-    cellStart: number // 目標格 start offset（拎嚟排序 + 切片）
+    cellStart: number // 目標格 start offset（拎來排序 + 切片）
     cellXml: string
   }
   const plans: Plan[] = []
   const injected: string[] = []
   const failed: string[] = []
-  // 已被佔用嘅目標格（同一格唔好畀兩個 tag 搶）。
+  // 已被佔用的目標格（同一格不要給兩個 tag 搶）。
   const usedCellStarts = new Set<number>()
 
   for (const field of fields) {
@@ -287,7 +287,7 @@ export function injectTagsIntoCells(
 
     let target: Cell | null = null
 
-    // 逐行逐格搵 label 格
+    // 逐行逐格搜尋 label 格
     outer: for (let ri = 0; ri < rowsAbs.length; ri++) {
       const row = rowsAbs[ri]
       for (let ci = 0; ci < row.cells.length; ci++) {
@@ -308,8 +308,8 @@ export function injectTagsIntoCells(
         // (b) 正下方（下一行同 tc index）空格 —— 保守處理合併格
         const below = rowsAbs[ri + 1]
         if (below) {
-          // 保守：兩行 tc 數一致、且 label 格與目標格都冇 gridSpan，
-          // 先當 column 對齊得住；否則跳過（寧 failed 唔錯插）。
+          // 保守：兩行 tc 數一致、且 label 格與目標格都沒有 gridSpan，
+          // 先當 column 對齊得住；否則跳過（寧 failed 不錯插）。
           const sameWidth = below.cells.length === row.cells.length
           const labelHasSpan = cell.gridSpan > 1
           const belowCell = below.cells[ci]
@@ -326,7 +326,7 @@ export function injectTagsIntoCells(
           }
         }
 
-        // 呢個 label 格搵唔到目標 → 繼續搵其他相同 label 格（罕有）
+        // 這個 label 格搜尋不到目標 → 繼續搜尋其他相同 label 格（罕有）
       }
     }
 
@@ -356,9 +356,9 @@ export function injectTagsIntoCells(
     return { base64: arrayBufferToBase64Safe(buf), injected: [], failed }
   }
 
-  // ── 套用所有插入：由後向前切片，offset 唔會位移 ──
-  // 重新由原 cell 範圍切（用 target.start + 原 cell 長度）。我哋喺 plan
-  // 只存咗 cellStart 同新 cellXml；需要原 cell 長度 → 由 rowsAbs 搵返。
+  // ── 套用所有插入：由後向前切片，offset 不會位移 ──
+  // 重新由原 cell 範圍切（用 target.start + 原 cell 長度）。我們在 plan
+  // 只存了 cellStart 同新 cellXml；需要原 cell 長度 → 由 rowsAbs 搜尋返。
   const startToCell = new Map<number, Cell>()
   for (const row of rowsAbs) for (const c of row.cells) startToCell.set(c.start, c)
 
@@ -375,7 +375,7 @@ export function injectTagsIntoCells(
       working = working.slice(0, orig.start) + p.cellXml + working.slice(orig.end)
     }
 
-    // 寫返 + 重砌 + sanity 重讀
+    // 寫回 + 重砌 + sanity 重讀
     zip.file('word/document.xml', working)
     const outBuf = zip.generate({
       type: 'arraybuffer',
@@ -398,29 +398,29 @@ export function injectTagsIntoCells(
 // ───────── 合併策略：inline + 表格格 ───────── //
 
 /**
- * 對整批 AI 建議欄位做「兩段式」自動加標籤，合併兩種引擎嘅命中：
+ * 對整批 AI 建議欄位做「兩段式」自動加標籤，合併兩種引擎的命中：
  *
- *  步驟 1（inline，docxAi.injectTags）：用每個 field 嘅 anchor，喺同一個
+ *  步驟 1（inline，docxAi.injectTags）：用每個 field 的 anchor，在同一個
  *    `<w:t>` run 內把明顯空格（連續底線／空括號／冒號後空白）換成 `{tag}`。
- *    呢步覆蓋「label 同填寫位喺同一格／同一段」嘅情況（如 ROW3/4 嘅
+ *    呢步覆蓋「label 同填寫位在同一格／同一段」的情況（如 ROW3/4 的
  *    「老師︰」「學生︰」，靠冒號後補）。
  *
  *  步驟 2（表格格，injectTagsIntoCells）：對步驟 1 **失手** 嗰批 field，
- *    用 field 嘅 label 喺表格裏面搵 label 格 → 右鄰／正下方空格塞 `{tag}`。
- *    呢步覆蓋港式「一格 label + 隔離格填寫」嘅大宗（ROW0-2、5-13、
+ *    用 field 的 label 在表格裏面搜尋 label 格 → 右鄰／正下方空格塞 `{tag}`。
+ *    呢步覆蓋港式「一格 label + 隔離格填寫」的大宗（ROW0-2、5-13、
  *    14-19 等）。
  *
  * 合併：
- *  - base64 = 步驟 2 之後嘅檔（若步驟 2 冇任何命中，injectTagsIntoCells
- *    會回返「步驟 1 之後嘅檔」原樣 base64，故鏈式安全）。
+ *  - base64 = 步驟 2 之後的檔（若步驟 2 沒有任何命中，injectTagsIntoCells
+ *    會回返「步驟 1 之後的檔」原樣 base64，故鏈式安全）。
  *  - injected = injected1 ∪ injected2（兩步任一成功即算成功）。
  *  - failed = failed2（兩步都失手嗰批先入最終 failed）。
  *
  * 兩步都各自守安全原則（內部重砌 zip + sanity 重讀；任何 throw → 該步
  * 放棄全部、回該步輸入檔 + 全 failed）。因此即使其中一步整體失敗，
- * 都只會「冇加到嘢」，唔會整爛 docx。
+ * 都只會「沒有加到嘢」，不會整爛 docx。
  *
- * 注意：步驟 2 以「fields 入面 tag 對應嘅原始 tag 字串」做配對 key，
+ * 注意：步驟 2 以「fields 中 tag 對應的原始 tag 字串」做配對 key，
  * 確保兩步 injected/failed 清單用同一套 tag 命名（injectTags /
  * injectTagsIntoCells 內部都會 sanitizeTag，但兩者一致，故對得返）。
  */
@@ -434,25 +434,25 @@ export function autoTagFields(
     fields.map((f) => ({ tag: f.tag, anchor: f.anchor })),
   )
 
-  // 邊啲 field 喺步驟 1 失手？（injected1 用 sanitizeTag 後嘅 tag 入清單，
+  // 邊些 field 在步驟 1 失手？（injected1 用 sanitizeTag 後的 tag 入清單，
   // 故用同一 sanitize 規則判斷某 field 係咪已命中。）
   const injectedSet1 = new Set(res1.injected)
   const failedFields = fields.filter(
     (f) => !injectedSet1.has(sanitizeTag(f.tag)),
   )
 
-  // 全部 inline 已搞掂 → 唔使再開表格引擎，直接回步驟 1 結果。
+  // 全部 inline 已完成 → 不用再開表格引擎，直接回步驟 1 結果。
   if (failedFields.length === 0) {
     return res1
   }
 
-  // 步驟 2：表格格（只試 inline 失手嗰批）。由步驟 1 之後嘅檔接力，
-  // 令兩步嘅插入累積喺同一份 docx。
+  // 步驟 2：表格格（只試 inline 失手嗰批）。由步驟 1 之後的檔接力，
+  // 令兩步的插入累積在同一份 docx。
   let buf1: ArrayBuffer
   try {
     buf1 = base64ToArrayBuffer(res1.base64)
   } catch {
-    // 理論上唔會（injectTags 永遠回有效 base64）；保守：當步驟 2 全失手。
+    // 理論上不會（injectTags 永遠回有效 base64）；保守：當步驟 2 全失手。
     return {
       base64: res1.base64,
       injected: res1.injected,
@@ -466,7 +466,7 @@ export function autoTagFields(
   )
 
   // 合併：base64 取步驟 2（已累積步驟 1）；injected 兩步相加；
-  // failed 只取步驟 2 仲失手嗰批。
+  // failed 只取步驟 2 還失手嗰批。
   return {
     base64: res2.base64,
     injected: res1.injected.concat(res2.injected),
@@ -483,7 +483,7 @@ function inferFieldType(label: string): SuggestedField['type'] {
   return 'text'
 }
 
-/** 格文字似唔似「填寫欄位 label」（短、非區段標題、非純數字／列號）。 */
+/** 格文字似不似「填寫欄位 label」（短、非區段標題、非純數字／列號）。 */
 function isLikelyFieldLabel(text: string): boolean {
   const t = text.trim()
   if (t.length < 1 || t.length > 30) return false
@@ -493,12 +493,12 @@ function isLikelyFieldLabel(text: string): boolean {
 }
 
 /**
- * 免 AI 結構偵測：掃表格，搵「非空 label 格 → 右鄰／正下方空格」對，
+ * 免 AI 結構偵測：掃表格，搜尋「非空 label 格 → 右鄰／正下方空格」對，
  * 列出候選欄位（label = 格文字、tag = sanitize、type 由字眼推斷、
- * anchor = 原 label）。對港式表格表單最準、即時、唔靠 AI、唔會截斷。
+ * anchor = 原 label）。對港式表格表單最準、即時、不靠 AI、不會截斷。
  *
- * 同 injectTagsIntoCells 用同一套表格解析 / 目標格規則，故偵測到嘅
- * 欄位之後交畀 autoTagFields 亦會成功落標籤（一致）。
+ * 同 injectTagsIntoCells 用同一套表格解析 / 目標格規則，故偵測到的
+ * 欄位之後交給 autoTagFields 亦會成功落標籤（一致）。
  */
 export function detectTemplateFields(buf: ArrayBuffer): SuggestedField[] {
   let xml: string | undefined

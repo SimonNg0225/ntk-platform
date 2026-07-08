@@ -76,20 +76,20 @@ export default function DriveView() {
   const [loading, setLoading] = useState(false)
   const [term, setTerm] = useState('')
   const [err, setErr] = useState<string | null>(null)
-  // 自訂起點資料夾（畀「電腦 / Computers」備份等 My Drive 根以外嘅資料夾用）
+  // 自訂內容來源資料夾（給「電腦 / Computers」備份等 My Drive 根以外的資料夾用）
   const [showRoot, setShowRoot] = useState(false)
   const [folderInput, setFolderInput] = useState('')
   const [settingRoot, setSettingRoot] = useState(false)
 
   const cur = path[path.length - 1]
 
-  // 已綁定到我的庫嘅 url（用嚟標示「已加入」+ 防重複）
+  // 已綁定到我的庫的 url（用來標示「已加入」+ 防重複）
   const resources = useCollection(resourcesCol)
   const addedUrls = new Set(resources.map((r) => r.url).filter((u): u is string => !!u))
 
   function addToLib(f: DriveFile) {
     if (!f.webViewLink) {
-      toast.error('呢個檔冇開啟連結，加唔到')
+      toast.error('這個檔沒有開啟連結，加不到')
       return
     }
     if (addedUrls.has(f.webViewLink)) return
@@ -158,18 +158,18 @@ export default function DriveView() {
     setPath((p) => p.slice(0, i + 1))
   }
 
-  // 把貼上嘅 Drive 資料夾連結 / ID 設做起點（支援 My Drive 以外，如 Computers 備份）
+  // 把貼上的 Drive 資料夾連結 / ID 設做內容來源（支援 My Drive 以外，如 Computers 備份）
   async function applyRoot() {
     const id = parseDriveFolderId(folderInput)
     if (!id) {
-      toast.error('貼唔到資料夾 ID —— 請貼 Drive 資料夾連結（含 /folders/…）或資料夾 ID')
+      toast.error('貼不到資料夾 ID —— 請貼 Drive 資料夾連結（含 /folders/…）或資料夾 ID')
       return
     }
     setSettingRoot(true)
     try {
       const meta = await getFileMeta(id)
       if (!isFolder(meta.mimeType)) {
-        toast.error('呢個連結唔係資料夾')
+        toast.error('這個連結不是資料夾')
         return
       }
       if (cfg) driveConfigCol.update(cfg.id, { rootFolderId: meta.id, rootFolderName: meta.name })
@@ -178,7 +178,7 @@ export default function DriveView() {
       setTerm('')
       setFolderInput('')
       setShowRoot(false)
-      toast.success(`起點已設為：${meta.name}`)
+      toast.success(`內容來源已設為：${meta.name}`)
     } catch (e) {
       toast.error((e as Error).message)
     } finally {
@@ -200,7 +200,7 @@ export default function DriveView() {
       <EmptyState
         icon={CloudOff}
         title="未連接 Google Drive"
-        hint="要喺環境變數設定 VITE_GOOGLE_CLIENT_ID（步驟見 docs/SETUP.md「Google Drive」一節）先用得。設定好之後，呢度就可以直接瀏覽你 Drive 嘅教材。"
+        hint="要在環境變數設定 VITE_GOOGLE_CLIENT_ID（步驟見 docs/SETUP.md「Google Drive」一節）先用得。設定好之後，這裡就可以直接瀏覽你 Drive 的教材。"
       />
     )
   }
@@ -210,8 +210,8 @@ export default function DriveView() {
     return (
       <EmptyState
         icon={FolderOpen}
-        title="連接你嘅 Google Drive"
-        hint="授權後可以喺度直接瀏覽、搜尋同開你 Drive 嘅教材（唯讀，唔會改你啲檔）。"
+        title="連接你的 Google Drive"
+        hint="授權後可以在這裡直接瀏覽、搜尋同開你 Drive 的教材（唯讀，不會改你些檔）。"
         action={
           <Button icon={LogIn} onClick={connect}>
             連接 Google Drive
@@ -262,9 +262,9 @@ export default function DriveView() {
           >
             重新整理
           </Button>
-          <Tooltip label="設定起點資料夾（連 電腦 / Computers 備份）">
+          <Tooltip label="設定內容來源資料夾（連 電腦 / Computers 備份）">
             <IconButton
-              label="設定起點資料夾"
+              label="設定內容來源資料夾"
               size="sm"
               active={showRoot}
               onClick={() => setShowRoot((v) => !v)}
@@ -289,12 +289,12 @@ export default function DriveView() {
               className="h-9 w-full"
             />
             <p className="mt-1.5 text-[11px] leading-relaxed text-slate-400">
-              想睇「電腦 / 其他電腦」嘅備份？喺 Google Drive 網頁開嗰個資料夾 → 複製網址 → 貼上面。
+              想查看「電腦 / 其他電腦」的備份？在 Google Drive 網頁開那個資料夾 → 複製網址 → 貼上面。
             </p>
           </div>
           <div className="flex shrink-0 items-center gap-1.5">
             <Button size="sm" icon={Check} onClick={() => void applyRoot()} disabled={settingRoot}>
-              {settingRoot ? '設定中…' : '設為起點'}
+              {settingRoot ? '設定中…' : '設為內容來源'}
             </Button>
             {cfg?.rootFolderId && (
               <Button size="sm" variant="secondary" icon={Home} onClick={resetRoot}>
@@ -318,8 +318,8 @@ export default function DriveView() {
       ) : files.length === 0 ? (
         <EmptyState
           icon={Search}
-          title={term.trim() ? '搵唔到相符檔案' : '呢個資料夾係空'}
-          hint={term.trim() ? '試下改吓關鍵字。' : undefined}
+          title={term.trim() ? '搜尋不到相符檔案' : '這個資料夾是空的'}
+          hint={term.trim() ? '嘗試改一下關鍵字。' : undefined}
         />
       ) : (
         <div className="overflow-hidden rounded-2xl border border-slate-200/80 dark:border-slate-700/60">
@@ -362,9 +362,9 @@ export default function DriveView() {
                   <ChevronRight size={15} className="mr-1.5 shrink-0 text-slate-300 dark:text-slate-600" />
                 ) : (
                   <div className="flex shrink-0 items-center">
-                    <Tooltip label={added ? '已喺我的庫' : '加入我的庫'}>
+                    <Tooltip label={added ? '已在我的庫' : '加入我的庫'}>
                       <IconButton
-                        label={added ? '已喺我的庫' : '加入我的庫'}
+                        label={added ? '已在我的庫' : '加入我的庫'}
                         size="sm"
                         active={added}
                         onClick={() => addToLib(f)}
@@ -376,7 +376,7 @@ export default function DriveView() {
                         )}
                       </IconButton>
                     </Tooltip>
-                    <Tooltip label="喺 Drive 開啟">
+                    <Tooltip label="在 Drive 開啟">
                       <IconButton label="開啟" size="sm" onClick={() => openItem(f)}>
                         <ExternalLink size={14} />
                       </IconButton>

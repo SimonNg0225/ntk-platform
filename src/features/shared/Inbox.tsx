@@ -42,8 +42,8 @@ import {
   countdownsCol,
   topicsCol,
 } from '../../data/collections'
-// 筆記真資料喺 feature-local richNotesCol（notes_rich_v2）；legacy notesCol
-// 已無人讀，轉「筆記」要寫呢度先會喺筆記功能見到（同 GlobalSearch 一致）。
+// 筆記真資料在 feature-local richNotesCol（notes_rich_v2）；legacy notesCol
+// 已無人讀，轉「筆記」要寫這裡先會在筆記功能見到（同 GlobalSearch 一致）。
 import { richNotesCol } from '../learning/notes/store'
 import type { CountdownCategory } from '../../data/types'
 import {
@@ -145,7 +145,7 @@ const KIND_CHIP: Record<InboxKind, string> = {
 }
 
 // 便條「色脊」：分類實色（便條紙物理邊／索引標籤感）。
-// 用喺擷取框左脊同每張便條卡左緣，令一堆卡有「已分類色標」嘅秩序而非均勻 grid。
+// 用在擷取框左脊同每張便條卡左緣，令一堆卡有「已分類色標」的秩序而非均勻 grid。
 // ⚠️ 寫足整串 class（Tailwind 靠掃源碼字面值）。
 const CHIP_SPINE: Record<InboxKind, string> = {
   task: 'bg-blue-400 dark:bg-blue-500/70',
@@ -156,19 +156,19 @@ const CHIP_SPINE: Record<InboxKind, string> = {
   reference: 'bg-slate-300 dark:bg-slate-600',
 }
 
-// ───────── 快速擷取教學引導（FeatureGuide：3 步「點用」）─────────
+// ───────── 快速擷取教學引導（FeatureGuide：3 步「如何使用」）─────────
 const INBOX_GUIDE: FeatureGuideStep[] = [
   {
-    title: '即刻掉低',
-    desc: '諗到啲咩就喺上面個框寫低，撳「掉低」收起，唔使即刻分類。',
+    title: '立即記下',
+    desc: '想到什麼就在上方個框記錄，按「記下」收起，不用立即分類。',
   },
   {
-    title: '得閒先分類',
-    desc: '撳一張便條，揀去待辦／筆記／行事曆／題庫／倒數，一 click 歸位。',
+    title: '有空先分類',
+    desc: '按一張便條，選擇去待辦／筆記／行事曆／題庫／倒數，一 click 歸位。',
   },
   {
     title: '清空收件匣',
-    desc: '處理完就歸檔，保持收件匣清爽；擱得耐嘅會提你優先清。',
+    desc: '處理完就歸檔，保持收件匣清爽；擱得耐的會提你優先清。',
   },
 ]
 
@@ -214,7 +214,7 @@ export default function Inbox() {
 
   const tagOptions = useMemo(() => allTags(allRows), [allRows])
   const stats = useMemo(() => computeStats(allRows), [allRows])
-  // 「拖延中」：擱置超過 N 日嘅待處理項（提示 + 一 click 按最舊排）
+  // 「拖延中」：擱置超過 N 日的待處理項（提示 + 一 click 按最舊排）
   const staleRows = useMemo(() => staleInboxRows(allRows, STALE_DAYS), [allRows])
 
   // ── 過濾（tab / kind / tag / 文字）+ 排序 ─────────────────
@@ -248,7 +248,7 @@ export default function Inbox() {
     return out
   }, [visible])
 
-  // 扁平次序（畀鍵盤導航）
+  // 扁平次序（給鍵盤導航）
   const flat = useMemo(() => visible, [visible])
 
   // cursor 越界修正
@@ -314,7 +314,7 @@ export default function Inbox() {
         createdAt: iso,
       })
     } else if (kind === 'event') {
-      // 行事曆需要日期 → 開抽屜畀用家揀（見 eventDraft）
+      // 行事曆需要日期 → 開抽屜給用家選擇（見 eventDraft）
       setEventDraft({ row })
       return
     } else if (kind === 'countdown') {
@@ -401,7 +401,7 @@ export default function Inbox() {
 
   function bulkConvert(kind: InboxKind) {
     if (kind === 'event') {
-      toast.info('行事曆需要逐項填日期，請喺項目度逐個轉。')
+      toast.info('行事曆需要逐項填日期，請在項目度逐個轉。')
       return
     }
     const rows = selectedRows
@@ -446,7 +446,7 @@ export default function Inbox() {
   async function runAiTriage() {
     const pending = allRows.filter((r) => !r.archived).slice(0, 40)
     if (!pending.length) {
-      toast.info('冇待處理項目可以分類。')
+      toast.info('沒有待處理項目可以分類。')
       return
     }
     setAiBusy(true)
@@ -480,7 +480,7 @@ export default function Inbox() {
         n++
       }
     }
-    toast.success(n ? `已套用 ${n} 項 AI 建議` : '冇可套用嘅建議')
+    toast.success(n ? `已套用 ${n} 項 AI 建議` : '沒有可套用的建議')
   }
 
   // ── 全域鍵盤導航 ────────────────────────────────────────
@@ -555,13 +555,13 @@ export default function Inbox() {
   return (
     <div className="w-full p-4 sm:p-6">
       {/* 頁首 accent hero（共用 PageHero）。host 已收起標題（selfManagedHeader），
-          呢個係呢頁唯一頂部標題。右上：統計切換掣。 */}
+          這個係這一頁唯一頂部標題。右上：統計切換掣。 */}
       <PageHero
         guideKey="inbox"
         icon={InboxIcon}
         kicker={t('inbox.kicker', { defaultValue: 'Quick Capture' })}
         title={t('inbox.title', { defaultValue: '快速擷取' })}
-        description={t('inbox.subtitle', { defaultValue: '一秒記低個諗法，得閒先慢慢分類。' })}
+        description={t('inbox.subtitle', { defaultValue: '一秒記低個想法，有空先慢慢分類。' })}
         actions={
           <button
             type="button"
@@ -577,11 +577,11 @@ export default function Inbox() {
         }
       />
 
-      {/* 教學引導：教用家「點用」呢個功能（可摺疊 + 可永久收起） */}
+      {/* 教學引導：教用家「如何使用」此功能（可摺疊 + 可永久收起） */}
       <div className="mt-4">
         <FeatureGuide
           storageKey="inbox"
-          title={t('inbox.guideTitle', { defaultValue: '快速擷取點用？' })}
+          title={t('inbox.guideTitle', { defaultValue: '快速擷取使用說明' })}
           steps={INBOX_GUIDE}
         />
       </div>
@@ -595,7 +595,7 @@ export default function Inbox() {
             : 'border-slate-200/80 shadow-[0_1px_2px_rgba(15,23,42,0.04)] hover:border-slate-300 dark:border-slate-700/60 dark:hover:border-slate-600',
         )}
       >
-        {/* 便條左脊：未打字溫和 accent，打字時跟「睇似」分類色 */}
+        {/* 便條左脊：未打字溫和 accent，打字時跟「查看似」分類色 */}
         <span
           aria-hidden="true"
           className={cx(
@@ -620,7 +620,7 @@ export default function Inbox() {
                   capture()
                 }
               }}
-              placeholder={t('inbox.capturePlaceholder', { defaultValue: '諗到啲咩，就喺度寫低…　例如「記得交 IES 初稿 #功課」' })}
+              placeholder={t('inbox.capturePlaceholder', { defaultValue: '想到什麼，就在這裡記錄…　例如「記得交 IES 初稿 #功課」' })}
               className="min-h-0 resize-none border-0 bg-transparent px-0 text-base leading-relaxed shadow-none placeholder:text-slate-400 focus:ring-0 dark:bg-transparent dark:placeholder:text-slate-500"
             />
           </div>
@@ -629,7 +629,7 @@ export default function Inbox() {
           <div className="flex min-w-0 flex-wrap items-center gap-1.5">
             {livePreviewKind && (
               <Badge tone={KIND_TONE[livePreviewKind]} icon={KIND_ICON[livePreviewKind]}>
-                睇似{kindLabel(livePreviewKind)}
+                查看似{kindLabel(livePreviewKind)}
               </Badge>
             )}
             {livePreviewTags.map((t) => (
@@ -651,12 +651,12 @@ export default function Inbox() {
             disabled={!text.trim()}
             className="shrink-0"
           >
-            {t('inbox.captureBtn', { defaultValue: '掉低' })}
+            {t('inbox.captureBtn', { defaultValue: '記下' })}
           </Button>
         </div>
       </div>
 
-      {/* 「拖延中」提示：擱置超過 N 日嘅待處理項，一 click 按最舊排 */}
+      {/* 「拖延中」提示：擱置超過 N 日的待處理項，一 click 按最舊排 */}
       {staleRows.length > 0 && tab === 'inbox' && !sortOldest && (
         <button
           type="button"
@@ -669,9 +669,9 @@ export default function Inbox() {
           <span className="min-w-0 flex-1 text-sm leading-snug">
             有{' '}
             <span className="font-semibold tabular-nums">{staleRows.length}</span>{' '}
-            件擱咗超過{' '}
+            件擱了超過{' '}
             <span className="font-semibold tabular-nums">{STALE_DAYS}</span>{' '}
-            日仲未處理，唔好等佢哋沉底。
+            日尚未處理，不要等他們沉底。
           </span>
           <span className="flex shrink-0 items-center gap-1 text-xs font-medium text-amber-700 dark:text-amber-300">
             <ArrowDownWideNarrow size={14} />
@@ -680,12 +680,12 @@ export default function Inbox() {
         </button>
       )}
 
-      {/* 正喺「按最舊排」清拖延：畀返一鍵還原預設排序 */}
+      {/* 正在「按最舊排」清拖延：給返一鍵還原預設排序 */}
       {sortOldest && tab === 'inbox' && (
         <div className="mt-4 flex items-center justify-between gap-2 rounded-2xl border border-amber-200 bg-amber-50 px-3.5 py-2 text-sm text-amber-800 dark:border-amber-500/25 dark:bg-amber-500/10 dark:text-amber-200">
           <span className="flex items-center gap-1.5">
             <ArrowDownWideNarrow size={14} className="shrink-0" />
-            正按最舊排，由擱得最耐嗰件做起。
+            正按最舊排序，由最早擱置的項目開始。
           </span>
           <Button
             type="button"
@@ -702,10 +702,10 @@ export default function Inbox() {
       {showStats && (
         <div className="mt-4 grid grid-cols-2 gap-px overflow-hidden rounded-2xl bg-slate-200/70 ring-1 ring-slate-200/80 dark:bg-slate-700/50 dark:ring-slate-700/60 sm:grid-cols-4">
           {[
-            { label: '待處理', icon: InboxIcon, value: stats.inboxCount, hint: stats.inboxCount > 0 ? '抽時間清吓佢' : '清空晒，舒服', hot: stats.inboxCount > 0 },
-            { label: '今日掉低', icon: Plus, value: stats.todayCaptured, hint: '今日記低嘅諗法', hot: false },
+            { label: '待處理', icon: InboxIcon, value: stats.inboxCount, hint: stats.inboxCount > 0 ? '抽時間清一下他' : '清空全部，舒服', hot: stats.inboxCount > 0 },
+            { label: '今日記下', icon: Plus, value: stats.todayCaptured, hint: '今日記低的想法', hot: false },
             { label: '近 7 日', icon: BarChart3, value: stats.weekCaptured, hint: '一週擷取量', hot: false },
-            { label: '已歸檔', icon: Archive, value: stats.archivedCount, hint: '整理好嘅都喺度', hot: false },
+            { label: '已歸檔', icon: Archive, value: stats.archivedCount, hint: '整理好的都在這裡', hot: false },
           ].map((s) => {
             const I = s.icon
             return (
@@ -756,7 +756,7 @@ export default function Inbox() {
         <div className="mt-3 flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-300">
           <AlertTriangle size={14} className="shrink-0" />
           <span>
-            最舊一項已喺 inbox 放咗{' '}
+            最舊一項已在 inbox 放了{' '}
             <span className="font-semibold tabular-nums">
               {relativeTime(stats.oldestInboxIso)}
             </span>
@@ -969,7 +969,7 @@ export default function Inbox() {
               <p className="mt-1 max-w-xs text-xs text-slate-400 dark:text-slate-500">
                 {t('inbox.emptyHint', {
                   defaultValue:
-                    '諗到啲咩就即刻記低，唔使諗點分類。得閒先逐張揀去待辦、筆記或行事曆。',
+                    '想到什麼就立即記低，不用想點分類。有空先逐張選擇去待辦、筆記或行事曆。',
                 })}
               </p>
               <div className="mt-4 flex flex-wrap items-center justify-center gap-1.5">
@@ -978,7 +978,7 @@ export default function Inbox() {
                 </span>
                 <Badge tone="blue" icon={KIND_ICON.task}>記得收測驗卷</Badge>
                 <Badge tone="rose" icon={KIND_ICON.countdown}>期末考試 5月8日</Badge>
-                <Badge tone="accent" icon={KIND_ICON.note}>一個 app 嘅靈感 #idea</Badge>
+                <Badge tone="accent" icon={KIND_ICON.note}>一個 app 的靈感 #idea</Badge>
               </div>
               <Button
                 className="mt-4"
@@ -987,7 +987,7 @@ export default function Inbox() {
                 icon={Plus}
                 onClick={() => captureRef.current?.focus()}
               >
-                {t('inbox.emptyCta', { defaultValue: '掉低第一個諗法' })}
+                {t('inbox.emptyCta', { defaultValue: '記下第一個想法' })}
               </Button>
             </div>
           ) : (
@@ -995,13 +995,13 @@ export default function Inbox() {
               icon={tab === 'archived' ? Archive : Search}
               title={
                 tab === 'archived'
-                  ? t('inbox.emptyArchivedTitle', { defaultValue: '仲未有歸檔嘅項目' })
-                  : t('inbox.emptyFilterTitle', { defaultValue: '搵唔到符合嘅項目' })
+                  ? t('inbox.emptyArchivedTitle', { defaultValue: '尚未有歸檔的項目' })
+                  : t('inbox.emptyFilterTitle', { defaultValue: '搜尋不到符合的項目' })
               }
               hint={
                 tab === 'archived'
-                  ? t('inbox.emptyArchivedHint', { defaultValue: '整理好嘅項目會收喺呢度，隨時可以還原。' })
-                  : t('inbox.emptyFilterHint', { defaultValue: '試下清除搜尋或過濾條件，再睇多次。' })
+                  ? t('inbox.emptyArchivedHint', { defaultValue: '整理好的項目會收在這裡，隨時可以還原。' })
+                  : t('inbox.emptyFilterHint', { defaultValue: '嘗試清除搜尋或過濾條件，再查看多次。' })
               }
               action={
                 tab !== 'archived' && (kindFilter !== 'all' || tagFilter || search) ? (
@@ -1151,7 +1151,7 @@ function InboxRowCard({
         row.pinned && !focused && !selected && 'border-accent/30 dark:border-accent/30',
       )}
     >
-      {/* 便條左脊：已分類 → 實色索引邊；未分類（估）→ 柔和虛線，示意「仲未歸位」 */}
+      {/* 便條左脊：已分類 → 實色索引邊；未分類（估）→ 柔和虛線，示意「尚未歸位」 */}
       <span
         aria-hidden="true"
         className={cx(
@@ -1312,7 +1312,7 @@ function InboxRowCard({
         )}
       </div>
 
-      {/* 分類選擇器（focused 且待處理時展開）— triage 核心：每類帶自己色，撳一下即歸位 */}
+      {/* 分類選擇器（focused 且待處理時展開）— triage 核心：每類帶自己色，按一下即歸位 */}
       {focused && !selectMode && !row.archived && (
         <div
           className="mt-3 flex flex-wrap items-center gap-1.5 border-t border-dashed border-slate-200/80 pt-3 dark:border-slate-700/60"
@@ -1394,7 +1394,7 @@ function EventDraftModal({
   const tags = draft.row.tags
 
   return (
-    // 唔傳 title → 唔用 Modal 通用粗體頁眉；改喺內文自管「便條歸去行事曆」頁眉
+    // 不傳 title → 不用 Modal 通用粗體頁眉；改在內文自管「便條歸去行事曆」頁眉
     // （kicker + serif），呼應主畫面便條桌面語言。close X 自管（見 header）。
     <Modal
       open={!!draft}
@@ -1403,7 +1403,7 @@ function EventDraftModal({
       footer={
         <>
           <Button variant="secondary" onClick={onClose}>
-            留喺收件匣
+            留在收件匣
           </Button>
           <Button
             icon={CalendarPlus}
@@ -1428,10 +1428,10 @@ function EventDraftModal({
                   歸去行事曆
                 </p>
                 <h2 className="mt-0.5 text-[17px] font-semibold tracking-tight text-slate-800 dark:text-slate-100">
-                  揀個日子
+                  選擇一個日子
                 </h2>
                 <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
-                  畀張便條揀返個日子同時間，加入行事曆。
+                  給張便條重新選擇個日子同時間，加入行事曆。
                 </p>
               </div>
             </div>
@@ -1443,8 +1443,8 @@ function EventDraftModal({
           <div className="mt-4 border-t border-slate-200 dark:border-slate-700" aria-hidden />
         </header>
 
-        {/* 便條預覽 — 真係披返一張「便條紙」：事件色脊（emerald）+ 圖示 chip + 標籤，
-            呼應主畫面擷取框 / 卡片。令用戶睇得到「我正喺度歸呢張便條」。*/}
+        {/* 便條預覽 — 真的披返一張「便條紙」：事件色脊（emerald）+ 圖示 chip + 標籤，
+            呼應主畫面擷取框 / 卡片。令用戶查看得到「我正在這裡歸這張便條」。*/}
         <div className="relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-slate-700/60 dark:bg-slate-800/60 dark:shadow-none">
           <span
             aria-hidden="true"
@@ -1489,8 +1489,8 @@ function EventDraftModal({
               className="h-4 w-4 rounded border-slate-300 text-accent focus:ring-accent/40 dark:border-slate-600"
             />
             <Sun size={15} className="shrink-0 text-amber-500 dark:text-amber-400" />
-            <span className="flex-1">成日嘅事</span>
-            <span className="text-xs text-slate-400 dark:text-slate-500">唔使定時間</span>
+            <span className="flex-1">整天的事</span>
+            <span className="text-xs text-slate-400 dark:text-slate-500">不用定時間</span>
           </label>
           {!allDay && (
             <Field label="時間">

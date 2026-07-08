@@ -46,7 +46,7 @@ const ALERT_OPTIONS: { v: number; l: string }[] = [
 
 export function plusHour(t: string): string {
   const [h, m] = t.split(':').map(Number)
-  // 加 1 小時作結束時間預設；clamp 喺 23:59 唔好 wrap 過午夜，
+  // 加 1 小時作結束時間預設；clamp 在 23:59 不要 wrap 過午夜，
   // 否則結束時間預設會早過開始（如 23:30 變 00:30）。
   const tot = Math.min(23 * 60 + 59, ((h || 0) + 1) * 60 + (m || 0))
   const hh = Math.floor(tot / 60)
@@ -56,8 +56,8 @@ export function plusHour(t: string): string {
 
 /**
  * 「整體編輯」儲存用：將完整 payload 套落原事件，並真正剔走被清空（undefined）
- * 嘅 optional 欄位 —— store.update() 係 merge `{...old, ...patch}`，剷唔到 key，
- * 所以呢度自己砌返一個乾淨物件再用 set() 整體取代。保留原 id 同 exDates。
+ * 的 optional 欄位 —— store.update() 係 merge `{...old, ...patch}`，剷不到 key，
+ * 所以這裡自己砌返一個乾淨物件再用 set() 整體取代。保留原 id 同 exDates。
  */
 export function applyFullEdit(
   existing: CalendarEvent,
@@ -76,8 +76,8 @@ export function applyFullEdit(
 }
 
 // ───────── 週記分區頁眉（方形 icon 牌 + uppercase 小題 + 向右散開 hairline）─────────
-//  呼應主畫面行事曆嘅冊頁分段語言：每個分區（時間 / 重複 / 提醒…）似週記
-//  上一段分節——左邊一個方形 icon 牌，右邊一條淡到透明嘅尺線。
+//  呼應主畫面行事曆的冊頁分段語言：每個分區（時間 / 重複 / 提醒…）似週記
+//  上一段分節——左邊一個方形 icon 牌，右邊一條淡到透明的尺線。
 function Section({
   icon: Icon,
   title,
@@ -188,10 +188,10 @@ export default function EventEditor({
   const valid = title.trim().length > 0 && startDate !== ''
 
   function buildPayload(): Omit<CalendarEvent, 'id'> {
-    // 「整體編輯」嘅 payload：每個 optional 欄位都顯式表達（空 = undefined），
-    // 唔好「省略 key」。否則用 merge 儲存時，清空咗嘅欄位會殘留舊值
+    // 「整體編輯」的 payload：每個 optional 欄位都顯式表達（空 = undefined），
+    // 不要「省略 key」。否則用 merge 儲存時，清空了的欄位會殘留舊值
     // （最嚴重：改成『不重複』後 recurrence 殘留 → 事件永遠繼續重複）。
-    // saveThis() 係新增獨立事件（fresh add），唔受 merge 影響。
+    // saveThis() 係新增獨立事件（fresh add），不受 merge 影響。
     const payload: Omit<CalendarEvent, 'id'> = {
       title: title.trim(),
       date: startDate,
@@ -221,14 +221,14 @@ export default function EventEditor({
 
   function save() {
     if (!valid) return
-    // 編輯緊「重複事件嘅某次」→ 問改此 / 全部
+    // 編輯緊「重複事件的某次」→ 問改此 / 全部
     if (editing && editing.recurrence && occurrenceKey) {
       setScopeAction('save')
       return
     }
     const payload = buildPayload()
     if (editing) {
-      // 整體取代（剔走清空欄位），唔可以用 merge update —— 見 applyFullEdit
+      // 整體取代（剔走清空欄位），不可以用 merge update —— 見 applyFullEdit
       const next = applyFullEdit(editing, payload)
       eventsCol.set(eventsCol.get().map((e) => (e.id === editing.id ? next : e)))
       toast.success('已儲存活動')
@@ -243,7 +243,7 @@ export default function EventEditor({
   function saveAll() {
     if (!editing) return
     const payload = buildPayload()
-    // 整體取代（剔走清空欄位）—— 見 applyFullEdit；唔可以用 merge update
+    // 整體取代（剔走清空欄位）—— 見 applyFullEdit；不可以用 merge update
     const next = applyFullEdit(editing, payload)
     eventsCol.set(eventsCol.get().map((e) => (e.id === editing.id ? next : e)))
     toast.success('已更新所有活動')
@@ -253,14 +253,14 @@ export default function EventEditor({
 
   function saveThis() {
     if (!editing || !occurrenceKey) return
-    // 原系列：將此 occurrence 加入例外（嗰日唔再出現）
+    // 原系列：將此 occurrence 加入例外（嗰日不再出現）
     const ex = Array.from(new Set([...(editing.exDates ?? []), occurrenceKey]))
     eventsCol.update(editing.id, { exDates: ex })
     // 建立此日獨立（非重複）事件，帶新值。
-    // 編輯器嘅日期欄預設係「系列開始日」(editing.date)，而非今次被編輯嗰個
-    // occurrence；若照用 startDate，新事件會錯誤落喺系列開始日（重複咗 +
-    // 被編輯嗰日反而消失）。所以以 occurrenceKey 為基準，套返用戶喺日期欄
-    // 相對系列開始日所作嘅位移，保留時長。
+    // 編輯器的日期欄預設係「系列開始日」(editing.date)，而非今次被編輯那個
+    // occurrence；若照用 startDate，新事件會錯誤落在系列開始日（重複了 +
+    // 被編輯嗰日反而消失）。所以以 occurrenceKey 為基準，套返用戶在日期欄
+    // 相對系列開始日所作的位移，保留時長。
     const payload = buildPayload()
     delete payload.recurrence
     delete payload.exDates
@@ -361,7 +361,7 @@ export default function EventEditor({
           </div>
         </header>
 
-        {/* 標題 — 放大作主焦點，左邊披返所選行事曆嘅柔和色脊（呼應事件 chip）*/}
+        {/* 標題 — 放大作主焦點，左邊披返所選行事曆的柔和色脊（呼應事件 chip）*/}
         <div className="flex items-stretch gap-3">
           <span
             aria-hidden
@@ -370,7 +370,7 @@ export default function EventEditor({
           <input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="想安排啲咩？"
+            placeholder="想安排什麼？"
             autoFocus
             className="w-full border-0 border-b border-slate-200 bg-transparent pb-2 text-lg font-semibold text-slate-800 outline-none transition-colors placeholder:font-normal placeholder:text-slate-400 focus:border-accent dark:border-slate-700 dark:text-slate-100 dark:placeholder:text-slate-500 sm:text-xl"
           />
@@ -381,11 +381,11 @@ export default function EventEditor({
             icon={MapPin}
             value={location}
             onChange={(e) => setLocation(e.target.value)}
-            placeholder="喺邊度？（選填）"
+            placeholder="在邊度？（選填）"
           />
         </Field>
 
-        {/* 時間 — 分區頁眉 + 分組卡片，留多啲呼吸位 */}
+        {/* 時間 — 分區頁眉 + 分組卡片，留多些呼吸位 */}
         <div className="space-y-3">
           <Section icon={Clock} title="時間" />
           <div className="space-y-3 rounded-2xl border border-slate-200/80 bg-slate-50/50 p-4 dark:border-slate-700/60 dark:bg-slate-800/40">
@@ -451,7 +451,7 @@ export default function EventEditor({
           </div>
         </Field>
 
-        {/* 重複 — 分區頁眉 + 分組卡片，揀咗先展開細節 */}
+        {/* 重複 — 分區頁眉 + 分組卡片，選擇了先展開細節 */}
         <div className="space-y-3">
           <Section icon={Repeat} title="重複" />
           <div
@@ -500,7 +500,7 @@ export default function EventEditor({
           </div>
 
           {freq === 'weekly' && (
-            <Field label="揀邊幾日重複（留空就跟開始日）">
+            <Field label="選擇邊幾日重複（留空就跟開始日）">
               <div className="flex flex-wrap gap-1.5">
                 {WEEKDAYS.map((w, i) => {
                   const on = byWeekday.includes(i)
@@ -578,17 +578,17 @@ export default function EventEditor({
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             rows={2}
-            placeholder="想補充啲咩？（選填）"
+            placeholder="想補充什麼？（選填）"
           />
         </Field>
 
-        {/* ───────── 週記事件預覽：此刻會點樣落喺日程上嘅一枚柔和 chip ───────── */}
+        {/* ───────── 週記事件預覽：此刻會如何落在日程上的一枚柔和 chip ───────── */}
         <div className="space-y-2.5 border-t border-slate-200/70 pt-4 dark:border-slate-700/60">
           <p className="flex items-center gap-1.5 px-0.5 text-[11px] font-medium uppercase tracking-[0.18em] text-accent/70">
             <CalendarDays size={12} className="shrink-0" />
             落在日程上
           </p>
-          {/* 一枚事件 chip：戴返所選行事曆嘅柔和色衣 + 色脊（同主畫面月／週視圖一致）*/}
+          {/* 一枚事件 chip：戴返所選行事曆的柔和色衣 + 色脊（同主畫面月／週視圖一致）*/}
           <div
             className={cx(
               'relative overflow-hidden rounded-xl py-2 pl-3.5 pr-3 ring-1 ring-inset ring-black/5 dark:ring-white/10',
@@ -643,7 +643,7 @@ export default function EventEditor({
               {scopeAction === 'delete' ? '刪除重複活動' : '更新重複活動'}
             </h3>
             <p className="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
-              「{editing.title}」係重複活動，你想{scopeAction === 'delete' ? '刪除' : '更新'}邊一啲？
+              「{editing.title}」是重複活動，你想{scopeAction === 'delete' ? '刪除' : '更新'}哪一些？
             </p>
           </div>
           <div className="flex flex-col gap-2">
@@ -653,7 +653,7 @@ export default function EventEditor({
                 fullWidth
                 onClick={scopeAction === 'delete' ? deleteThis : saveThis}
               >
-                只{scopeAction === 'delete' ? '刪除' : '更新'}呢一日（{occurrenceKey}）
+                只{scopeAction === 'delete' ? '刪除' : '更新'}這一天（{occurrenceKey}）
               </Button>
             )}
             <Button
@@ -661,7 +661,7 @@ export default function EventEditor({
               fullWidth
               onClick={scopeAction === 'delete' ? deleteAll : saveAll}
             >
-              {scopeAction === 'delete' ? '刪除' : '更新'}成個系列
+              {scopeAction === 'delete' ? '刪除' : '更新'}整個系列
             </Button>
             <Button variant="ghost" fullWidth onClick={() => setScopeAction(null)}>
               取消

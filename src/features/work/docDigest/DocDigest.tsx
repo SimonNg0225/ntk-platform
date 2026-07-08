@@ -106,7 +106,7 @@ export default function DocDigest() {
         if (ex.image) image = [ex.image]
         sourceType = ex.sourceType
         if (!inputText && !ex.image) {
-          throw new Error('呢個檔抽唔到文字。請確認檔案有可讀內容，或試吓改用「影相」。')
+          throw new Error('這個檔抽不到文字。請確認檔案有可讀內容，或嘗試改用「影相」。')
         }
         if (ex.scanPagesDropped && ex.scanPagesDropped > 0) {
           toast.info(
@@ -119,7 +119,7 @@ export default function DocDigest() {
 
       const system = buildDigestSystem(new Date().toISOString().slice(0, 10))
       const messages: AIMessage[] = [
-        { role: 'user', content: inputText || '（請閱讀附圖嘅文件）', images: image },
+        { role: 'user', content: inputText || '（請閱讀附圖的文件）', images: image },
       ]
       const raw = await complete({ messages, system, model, temperature: 0.2, source: 'doc-digest' })
       const result = parseDigest(raw)
@@ -165,7 +165,7 @@ export default function DocDigest() {
 
   async function del(id: string) {
     const ok = await confirm({
-      title: t('docDigest.confirm.del', { defaultValue: '刪除呢個速讀記錄？' }),
+      title: t('docDigest.confirm.del', { defaultValue: '刪除這個速讀記錄？' }),
       tone: 'danger',
       confirmText: t('docDigest.confirm.delOk', { defaultValue: '刪除' }),
     })
@@ -176,15 +176,15 @@ export default function DocDigest() {
 
   const guideSteps: FeatureGuideStep[] = [
     {
-      title: t('docDigest.guide.s1.title', { defaultValue: '揀輸入方式' }),
+      title: t('docDigest.guide.s1.title', { defaultValue: '選擇輸入方式' }),
       desc: t('docDigest.guide.s1.desc', {
         defaultValue: '貼上通告文字、上載 PDF／Word，或直接影低紙本文件。',
       }),
     },
     {
-      title: t('docDigest.guide.s2.title', { defaultValue: '撳「速讀」' }),
+      title: t('docDigest.guide.s2.title', { defaultValue: '按「速讀」' }),
       desc: t('docDigest.guide.s2.desc', {
-        defaultValue: 'AI 即刻幫你歸類、抽幾條重點，同列出要跟進嘅事項。',
+        defaultValue: 'AI 立即幫你歸類、抽幾條重點，同列出要跟進的事項。',
       }),
     },
     {
@@ -204,7 +204,7 @@ export default function DocDigest() {
           kicker={t('docDigest.kicker', { defaultValue: 'Doc Digest' })}
           title={t('docDigest.title', { defaultValue: '文件速讀' })}
           description={t('docDigest.subtitle', {
-            defaultValue: '貼上、上載或影低行政文件，AI 即刻幫你歸類、抽重點、列出要跟進事項。',
+            defaultValue: '貼上、上載或影低行政文件，AI 立即幫你歸類、抽重點、列出要跟進事項。',
           })}
         />
         <EmptyState
@@ -227,14 +227,14 @@ export default function DocDigest() {
         kicker={t('docDigest.kicker', { defaultValue: 'Doc Digest' })}
         title={t('docDigest.title', { defaultValue: '文件速讀' })}
         description={t('docDigest.subtitle', {
-          defaultValue: '貼上、上載或影低行政文件，AI 即刻幫你歸類、抽重點、列出要跟進事項。',
+          defaultValue: '貼上、上載或影低行政文件，AI 立即幫你歸類、抽重點、列出要跟進事項。',
         })}
       />
 
-      {/* ───────── 教學引導：點用呢個功能（可摺疊 / 永久收起） ───────── */}
+      {/* ───────── 教學引導：如何使用此功能（可摺疊 / 永久收起） ───────── */}
       <FeatureGuide
         storageKey="doc-digest"
-        title={t('docDigest.guide.title', { defaultValue: '文件速讀點用？' })}
+        title={t('docDigest.guide.title', { defaultValue: '文件速讀使用說明' })}
         steps={guideSteps}
       />
 
@@ -292,8 +292,8 @@ export default function DocDigest() {
                   {file
                     ? file.name
                     : mode === 'photo'
-                      ? t('docDigest.upload.photo', { defaultValue: '影相 / 揀相片' })
-                      : t('docDigest.upload.file', { defaultValue: '揀 PDF / Word 檔' })}
+                      ? t('docDigest.upload.photo', { defaultValue: '影相 / 選擇相片' })
+                      : t('docDigest.upload.file', { defaultValue: '選擇 PDF / Word 檔' })}
                 </span>
                 {!file && (
                   <span className="text-[11px] text-slate-400 dark:text-slate-500">
@@ -388,7 +388,7 @@ export default function DocDigest() {
           icon={FileText}
           title={t('docDigest.empty.title', { defaultValue: '未有速讀記錄' })}
           hint={t('docDigest.empty.hint', {
-            defaultValue: '貼上、上載或影低第一份行政文件，撳「速讀」即刻見到歸類同重點。',
+            defaultValue: '貼上、上載或影低第一份行政文件，按「速讀」立即見到歸類同重點。',
           })}
         />
       )}
@@ -514,7 +514,7 @@ function ResultCard({
       {rec.summary.length === 0 && rec.actions.length === 0 && (
         <p className="text-sm text-slate-400 dark:text-slate-500">
           {t('docDigest.result.none', {
-            defaultValue: 'AI 抽唔到明顯重點，試吓換 Pro 模型或補多啲內容。',
+            defaultValue: 'AI 抽不到明顯重點，嘗試換 Pro 模型或補多些內容。',
           })}
         </p>
       )}

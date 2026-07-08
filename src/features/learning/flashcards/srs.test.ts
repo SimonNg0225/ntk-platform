@@ -73,7 +73,7 @@ const mkPref = (over: Partial<DeckPref>): DeckPref => ({
 //  本地日期工具（時區安全 — 明確日期字串，確認本地、無 UTC 漂移）
 // ═════════════════════════════════════════════════════════════
 describe('dayKey（本地日期，無 UTC off-by-one）', () => {
-  it('用本地年月日，唔係 UTC：2026-05-04 本地 00:30 仍係 05-04', () => {
+  it('用本地年月日，不是 UTC：2026-05-04 本地 00:30 仍係 05-04', () => {
     // new Date(2026, 4, 4, 0, 30) 係本地時間。若用 toISOString（UTC）喺 UTC+X
     // 時區會變成前一日 → 呢度確認用本地欄位，永遠 2026-05-04。
     expect(dayKey(new Date(2026, 4, 4, 0, 30, 0))).toBe('2026-05-04')
@@ -104,7 +104,7 @@ describe('addDaysKey（純日曆加減，跨月跨年跨閏）', () => {
     expect(addDaysKey('2024-02-28', 1)).toBe('2024-02-29')
     expect(addDaysKey('2024-02-29', 1)).toBe('2024-03-01')
   })
-  it('平年 2 月（2026 唔係閏年）：2-28 +1 = 3-1', () => {
+  it('平年 2 月（2026 不是閏年）：2-28 +1 = 3-1', () => {
     expect(addDaysKey('2026-02-28', 1)).toBe('2026-03-01')
   })
   it('大跨度', () => {
@@ -431,7 +431,7 @@ describe('retention（只計複習過嘅卡 prevInterval > 0）', () => {
     expect(r.pass).toBe(2)
     expect(r.rate).toBeCloseTo(66.6667, 3)
   })
-  it('全部答啱 → 100%', () => {
+  it('全部答對 → 100%', () => {
     const r = retention([
       mkLog({ prevInterval: 6, rating: 'good' }),
       mkLog({ prevInterval: 10, rating: 'hard' }),

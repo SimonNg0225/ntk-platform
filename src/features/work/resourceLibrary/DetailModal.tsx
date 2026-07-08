@@ -114,7 +114,7 @@ export function DetailModal({
 
   const saveEdit = () => {
     if (!title.trim()) {
-      toast.error('標題唔可以空白')
+      toast.error('標題不可以空白')
       return
     }
     resourcesCol.update(res.id, {
@@ -556,7 +556,7 @@ export function AddResourceModal({
     setTypeTouched(false)
   }
 
-  // URL 改變 → 自動猜類型（除非用家已手動揀過）
+  // URL 改變 → 自動猜類型（除非用家已手動選擇過）
   const onUrlChange = (v: string) => {
     setUrl(v)
     if (!typeTouched) {
@@ -628,7 +628,7 @@ export function AddResourceModal({
             label="索書連結 URL"
             hint={
               domain
-                ? `偵測到網域：${domain}，已幫你著錄咗類別`
+                ? `偵測到網域：${domain}，已幫你著錄了類別`
                 : '貼上連結（如 YouTube、PDF、Google Docs），會自動著錄類別。'
             }
           >

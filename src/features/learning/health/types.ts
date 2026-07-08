@@ -6,7 +6,7 @@ import { Scale, Moon, Dumbbell, Droplet, Smile, type LucideIcon } from 'lucide-r
 //  ------------------------------------------------------------
 //  每日一條 HealthLog（按本地日期 key upsert）；五個核心指標
 //  （體重 / 睡眠 / 運動 / 飲水 / 心情）+ 備註。
-//  目標（HealthGoals）係單例，畀進度環/達標判斷用。
+//  目標（HealthGoals）係單例，給進度環/達標判斷用。
 //  欄位刻意扁平、可選，方便對齊 Supabase jsonb + 部分日子只記部分指標。
 // ============================================================
 

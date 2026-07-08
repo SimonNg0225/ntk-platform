@@ -155,7 +155,7 @@ const CATEGORY_OPTIONS: CountdownCategory[] = [
   'other',
 ]
 
-/** 將 Date 轉成本地時區嘅 YYYY-MM-DD（避免 toISOString 時差問題）。 */
+/** 將 Date 轉成本地時區的 YYYY-MM-DD（避免 toISOString 時差問題）。 */
 export function toKey(d: Date): string {
   const y = d.getFullYear()
   const mm = String(d.getMonth() + 1).padStart(2, '0')
@@ -170,7 +170,7 @@ export function fromKey(key: string): Date {
   return new Date(y, m - 1, d, 12, 0, 0, 0)
 }
 
-/** 仲有幾多日：同一日 = 0、明日 = 1、琴日 = -1。today 同 target 同基準（當地中午）。 */
+/** 還有幾多日：同一日 = 0、明日 = 1、琴日 = -1。today 同 target 同基準（當地中午）。 */
 export function daysUntil(dateKey: string, todayKey: string): number {
   const target = fromKey(dateKey)
   const today = fromKey(todayKey)
@@ -184,20 +184,20 @@ export function formatDate(dateKey: string, time?: string): string {
   return time ? `${base} ${time}` : base
 }
 
-/** 親切嘅一句註腳，按緊急度變語氣。 */
+/** 親切的一句註腳，按緊急度變語氣。 */
 function urgencyHint(days: number): string {
   if (days === 0) return '就係今日，加油！'
-  if (days === 1) return '聽日就到喇'
+  if (days === 1) return '明天就到了'
   if (days <= 3) return '只剩幾日，做最後衝刺'
   if (days <= 7) return '一星期內，記得預備'
   if (days <= 14) return '兩星期內，可以開始準備'
   if (days <= 30) return '一個月內，慢慢計劃'
-  return '時間充裕，放鬆啲'
+  return '時間充裕，放鬆些'
 }
 
 type TabId = 'upcoming' | 'past'
 
-/** 頂部分類篩選 pill（SegmentedControl 風格嘅輕量分類掣）。 */
+/** 頂部分類篩選 pill（SegmentedControl 風格的輕量分類掣）。 */
 function FilterPill({
   label,
   count,
@@ -249,7 +249,7 @@ export default function Countdown() {
   const todayKey = useMemo(() => toKey(new Date()), [])
 
   const [tab, setTab] = useState<TabId>('upcoming')
-  // 分類篩選（'all' = 唔篩）；只作用喺「即將到嚟」一頁。
+  // 分類篩選（'all' = 不篩）；只作用在「即將到來」一頁。
   const [catFilter, setCatFilter] = useState<CategoryFilter>('all')
 
   // 新增 Modal 狀態
@@ -269,7 +269,7 @@ export default function Countdown() {
     [items, mode],
   )
 
-  // 即將到嚟（未到達 且 今日／未來）：升序，最近喺前。已標記到達嘅唔再算。
+  // 即將到來（未到達 且 今日／未來）：升序，最近在前。已標記到達的不再算。
   const upcoming = useMemo(
     () =>
       visible
@@ -279,7 +279,7 @@ export default function Countdown() {
     [visible, todayKey],
   )
 
-  // 已過去 / 已完成（已標記到達，或已過 date）：降序，最近喺前。
+  // 已過去 / 已完成（已標記到達，或已過 date）：降序，最近在前。
   const past = useMemo(
     () =>
       visible
@@ -289,20 +289,20 @@ export default function Countdown() {
     [visible, todayKey],
   )
 
-  // 頂部統計：最近一項（最快到嚟嘅未過事件 N 日）。用全部 upcoming（唔受篩選影響）。
+  // 頂部統計：最近一項（最快到來的未過事件 N 日）。用全部 upcoming（不受篩選影響）。
   const nearestDays = upcoming.length > 0 ? daysUntil(upcoming[0].date, todayKey) : null
   const nearest = upcoming.length > 0 ? upcoming[0] : null
 
-  // 分類 pill 計數（用全部 upcoming，篩走邊個都仍見到總量）。
+  // 分類 pill 計數（用全部 upcoming，篩走哪個都仍見到總量）。
   const counts = useMemo(() => categoryCounts(upcoming), [upcoming])
 
-  // 套用分類篩選後嘅 upcoming（已排序，filterByCategory 保次序）。
+  // 套用分類篩選後的 upcoming（已排序，filterByCategory 保次序）。
   const filteredUpcoming = useMemo(
     () => filterByCategory(upcoming, catFilter),
     [upcoming, catFilter],
   )
 
-  // 即將到嚟：按曆法分成 本週內 / 本月內 / 更遠 三段（只回有內容嘅段）。
+  // 即將到來：按曆法分成 本週內 / 本月內 / 更遠 三段（只回有內容的段）。
   const groups = useMemo(
     () => groupByTime(filteredUpcoming, todayKey),
     [filteredUpcoming, todayKey],
@@ -335,7 +335,7 @@ export default function Countdown() {
     if (trimmedNotes) payload.notes = trimmedNotes
     const created = countdownsCol.add(payload)
     // 同步去「行事曆」：建立一個全日活動，id = cd-<countdownId> 連住個倒數，
-    // 之後刪倒數時一齊清走，避免行事曆殘留孤兒事件。
+    // 之後刪倒數時一起清走，避免行事曆殘留孤兒事件。
     eventsCol.add({
       id: `cd-${created.id}`,
       title: trimmed,
@@ -361,7 +361,7 @@ export default function Countdown() {
     })
     if (!ok) return
     countdownsCol.remove(c.id)
-    eventsCol.remove(`cd-${c.id}`) // 同步清走行事曆嗰個連結事件
+    eventsCol.remove(`cd-${c.id}`) // 同步清走行事曆那個連結事件
     toast.success('已刪除倒數')
   }
 
@@ -376,7 +376,7 @@ export default function Countdown() {
     )
   }
 
-  // 取消完成（撳錯／要重開倒數）。
+  // 取消完成（按錯／要重開倒數）。
   function undoArrived(c: CountdownItem) {
     countdownsCol.update(c.id, { arrivedAt: undefined })
   }
@@ -396,7 +396,7 @@ export default function Countdown() {
     const CatIcon = meta ? meta.icon : CalendarClock
     const isToday = !arrived && days === 0
     const isPast = days < 0
-    // 30 日內畫一條「逼近」進度條（越近越滿）；已完成 / 已過去唔畫。
+    // 30 日內畫一條「逼近」進度條（越近越滿）；已完成 / 已過去不畫。
     const progress = !isPast && !arrived && days <= 30 ? Math.round((1 - days / 30) * 100) : null
 
     const statusText = arrived
@@ -517,10 +517,10 @@ export default function Countdown() {
     )
   }
 
-  // hero 副題：跟最近一項倒數動態變（無 → 引導句；今日 → 就係今日；其餘 → 仲有 N 日）。
+  // hero 副題：跟最近一項倒數動態變（無 → 引導句；今日 → 就係今日；其餘 → 還有 N 日）。
   const heroDescription =
     nearestDays === null
-      ? t('countdown.subtitleEmpty', { defaultValue: '記低考試、死線、評估同活動，一眼睇到仲爭幾耐。' })
+      ? t('countdown.subtitleEmpty', { defaultValue: '記低考試、死線、評估同活動，一眼查看到還爭幾耐。' })
       : nearestDays === 0
         ? t('countdown.subtitleToday', {
             title: nearest?.title ?? '',
@@ -529,7 +529,7 @@ export default function Countdown() {
         : t('countdown.subtitleNext', {
             n: nearestDays,
             title: nearest?.title ?? '',
-            defaultValue: `下一個「${nearest?.title ?? ''}」仲有 ${nearestDays} 日 · ${urgencyHint(nearestDays)}`,
+            defaultValue: `下一個「${nearest?.title ?? ''}」還有 ${nearestDays} 日 · ${urgencyHint(nearestDays)}`,
           })
 
   return (
@@ -561,31 +561,31 @@ export default function Countdown() {
         }
       />
 
-      {/* ───────── 教學引導：教用家點用倒數（可摺疊 + 可永久收起）───────── */}
+      {/* ───────── 教學引導：教用家如何使用倒數（可摺疊 + 可永久收起）───────── */}
       <FeatureGuide
         storageKey="countdown"
-        title={t('countdown.guideTitle', { defaultValue: '重要日子倒數點用？' })}
+        title={t('countdown.guideTitle', { defaultValue: '重要日子倒數使用說明' })}
         steps={[
           {
             title: t('countdown.guideStep1Title', { defaultValue: '新增重要日子' }),
-            desc: t('countdown.guideStep1Desc', { defaultValue: '撳「新增倒數」，填返名同日期；可選分類（考試／死線／活動）同時間。' }),
+            desc: t('countdown.guideStep1Desc', { defaultValue: '按「新增倒數」，填寫名稱及日期；可選分類（考試／死線／活動）及時間。' }),
           },
           {
-            title: t('countdown.guideStep2Title', { defaultValue: '一眼睇剩幾多日' }),
+            title: t('countdown.guideStep2Title', { defaultValue: '一眼查看剩幾多日' }),
             desc: t('countdown.guideStep2Desc', { defaultValue: '每張卡顯示尚餘日數，越接近顏色越緊張；上面數字話你知最近一個幾時到。' }),
           },
           {
             title: t('countdown.guideStep3Title', { defaultValue: '完成就標記低' }),
-            desc: t('countdown.guideStep3Desc', { defaultValue: '搞掂咗撳「標記完成」，佢會搬去「已完成」一頁；撳錯可隨時取消。' }),
+            desc: t('countdown.guideStep3Desc', { defaultValue: '完成了按「標記完成」，他會搬去「已完成」一頁；按錯可隨時取消。' }),
           },
           {
             title: t('countdown.guideStep4Title', { defaultValue: '同步入手機日曆' }),
-            desc: t('countdown.guideStep4Desc', { defaultValue: '新增嘅倒數會自動入行事曆；撳「訂閱到手機」可一拉同步入電話。' }),
+            desc: t('countdown.guideStep4Desc', { defaultValue: '新增的倒數會自動入行事曆；按「訂閱到手機」可一拉同步入電話。' }),
           },
         ]}
       />
 
-      {/* ───────── KPI：三項統計（即將到嚟 / 最近一項 / 已完成）───────── */}
+      {/* ───────── KPI：三項統計（即將到來 / 最近一項 / 已完成）───────── */}
       <section aria-label={t('countdown.statsLabel', { defaultValue: '倒數統計' })}>
         <SectionTitle icon={Hourglass}>
           {t('countdown.statsTitle', { defaultValue: '概覽' })}
@@ -594,10 +594,10 @@ export default function Countdown() {
           {[
             {
               key: 'upcoming',
-              label: t('countdown.statUpcoming', { defaultValue: '即將到嚟' }),
+              label: t('countdown.statUpcoming', { defaultValue: '即將到來' }),
               value: upcoming.length,
               unit: t('countdown.unitItems', { defaultValue: '項' }),
-              hint: t('countdown.statUpcomingHint', { defaultValue: '尚未到嘅日子' }),
+              hint: t('countdown.statUpcomingHint', { defaultValue: '尚未到的日子' }),
               icon: CalendarDays,
               tone: 'accent' as SemTone,
             },
@@ -615,7 +615,7 @@ export default function Countdown() {
               label: t('countdown.statDone', { defaultValue: '已完成' }),
               value: past.length,
               unit: t('countdown.unitItems', { defaultValue: '項' }),
-              hint: t('countdown.statDoneHint', { defaultValue: '過去 / 已搞掂' }),
+              hint: t('countdown.statDoneHint', { defaultValue: '過去 / 已完成' }),
               icon: CheckCircle2,
               tone: 'emerald' as SemTone,
             },
@@ -652,10 +652,10 @@ export default function Countdown() {
         </div>
       </section>
 
-      {/* 分頁（即將到嚟 / 已完成） */}
+      {/* 分頁（即將到來 / 已完成） */}
       <Tabs<TabId>
         tabs={[
-          { id: 'upcoming', label: t('countdown.tabUpcoming', { defaultValue: '即將到嚟' }) },
+          { id: 'upcoming', label: t('countdown.tabUpcoming', { defaultValue: '即將到來' }) },
           { id: 'past', label: t('countdown.tabPast', { defaultValue: '已完成' }) },
         ]}
         active={tab}
@@ -663,7 +663,7 @@ export default function Countdown() {
         icons={{ upcoming: CalendarDays, past: CheckCircle2 }}
       />
 
-      {/* 分類篩選 pill（只喺「即將到嚟」一頁；有兩個或以上分類先值得顯示） */}
+      {/* 分類篩選 pill（只在「即將到來」一頁；有兩個或以上分類先值得顯示） */}
       {tab === 'upcoming' && upcoming.length > 0 && (
         <div className="-mt-1 flex flex-wrap gap-2">
           <FilterPill
@@ -695,11 +695,11 @@ export default function Countdown() {
             catFilter !== 'all' ? (
               <EmptyState
                 icon={CalendarHeart}
-                title={t('countdown.emptyFilterTitle', { defaultValue: '呢個分類暫時冇倒數' })}
-                hint={t('countdown.emptyFilterHint', { defaultValue: '揀返「全部」，或者撳上面其他分類睇下。' })}
+                title={t('countdown.emptyFilterTitle', { defaultValue: '這個分類暫時沒有倒數' })}
+                hint={t('countdown.emptyFilterHint', { defaultValue: '重新選擇「全部」，或者按上面其他分類查看下。' })}
                 action={
                   <Button size="sm" variant="secondary" onClick={() => setCatFilter('all')}>
-                    {t('countdown.seeAll', { defaultValue: '睇全部' })}
+                    {t('countdown.seeAll', { defaultValue: '查看全部' })}
                   </Button>
                 }
               />
@@ -707,8 +707,8 @@ export default function Countdown() {
               <EmptyState
                 icon={CalendarClock}
                 art="empty-countdown"
-                title={t('countdown.emptyTitle', { defaultValue: '仲未有倒數，加返第一個' })}
-                hint={t('countdown.emptyHint', { defaultValue: '考試、交功課、生日、旅行⋯⋯記低個日子，之後就一眼睇到仲爭幾耐。' })}
+                title={t('countdown.emptyTitle', { defaultValue: '尚未有倒數，加回第一個' })}
+                hint={t('countdown.emptyHint', { defaultValue: '考試、交功課、生日、旅行⋯⋯記低個日子，之後就一眼查看到還爭幾耐。' })}
                 action={
                   <Button size="sm" icon={Plus} onClick={openAddModal}>
                     {t('countdown.emptyCta', { defaultValue: '新增第一個倒數' })}
@@ -719,12 +719,12 @@ export default function Countdown() {
           ) : (
             <EmptyState
               icon={CheckCircle2}
-              title={t('countdown.emptyPastTitle', { defaultValue: '暫時未有已完成嘅倒數' })}
-              hint={t('countdown.emptyPastHint', { defaultValue: '日子過咗或者標記完成之後，會搬嚟呢度等你回望。' })}
+              title={t('countdown.emptyPastTitle', { defaultValue: '暫時未有已完成的倒數' })}
+              hint={t('countdown.emptyPastHint', { defaultValue: '日子過了或者標記完成之後，會搬來這裡等你回望。' })}
             />
           )
         ) : tab === 'upcoming' ? (
-          // 即將到嚟：按 本週內 / 本月內 / 更遠 分段。
+          // 即將到來：按 本週內 / 本月內 / 更遠 分段。
           groups.map((g) => (
             <div key={g.bucket} className="space-y-3">
               <SectionTitle
@@ -756,7 +756,7 @@ export default function Countdown() {
       {/* 新增 Modal */}
       <Modal open={modalOpen} onClose={() => setModalOpen(false)} size="md">
         {(() => {
-          // 純表現用：由表單日期即時推算倒數，餵返同卡片一致嘅預覽。
+          // 純表現用：由表單日期即時推算倒數，餵返同卡片一致的預覽。
           const draftDays = fDate ? daysUntil(fDate, todayKey) : null
           const draftSem = SEM_TONE[draftDays === null ? 'slate' : semOf(toneOf(draftDays))]
           return (
@@ -768,11 +768,11 @@ export default function Countdown() {
                 {t('countdown.modalTitle', { defaultValue: '新增倒數' })}
               </h3>
               <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                {t('countdown.modalDesc', { defaultValue: '填返想倒數嘅日子，之後會自動同步入行事曆。' })}
+                {t('countdown.modalDesc', { defaultValue: '填寫想倒數的日子，之後會自動同步到行事曆。' })}
               </p>
 
               <div className="mt-5 space-y-5">
-                <Field label={t('countdown.fieldTitle', { defaultValue: '名稱（想倒數啲咩？）' })}>
+                <Field label={t('countdown.fieldTitle', { defaultValue: '名稱（想倒數些什麼？）' })}>
                   <Input
                     type="text"
                     icon={PenLine}
@@ -838,7 +838,7 @@ export default function Countdown() {
                     value={fNotes}
                     onChange={(e) => setFNotes(e.target.value)}
                     rows={2}
-                    placeholder={t('countdown.fieldNotesPh', { defaultValue: '想記低嘅細節，例如地點、範圍⋯⋯' })}
+                    placeholder={t('countdown.fieldNotesPh', { defaultValue: '想記低的細節，例如地點、範圍⋯⋯' })}
                   />
                 </Field>
               </div>
@@ -848,7 +848,7 @@ export default function Countdown() {
                 <span className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-400 dark:text-slate-500">
                   <span className={cx('h-1.5 w-1.5 rounded-full', draftSem.dot)} />
                   {draftDays === null
-                    ? t('countdown.previewNoDate', { defaultValue: '揀返日期' })
+                    ? t('countdown.previewNoDate', { defaultValue: '重新選擇日期' })
                     : draftDays === 0
                       ? t('countdown.previewToday', { defaultValue: '就在今日' })
                       : draftDays > 0

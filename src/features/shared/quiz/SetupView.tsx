@@ -110,7 +110,7 @@ export function SetupView({
   const takeCount = Math.min(wantCount, matched.length)
   const cappedByPool = settings.count !== 'all' && wantCount > matched.length
 
-  // 各題數可取量（畀 Pills counts）
+  // 各題數可取量（給 Pills counts）
   const countAvail = useMemo(() => {
     const out: Partial<Record<CountId, number>> = {}
     for (const o of COUNT_OPTIONS) {
@@ -141,7 +141,7 @@ export function SetupView({
   const removeAttempt = async (a: QuizAttempt) => {
     const ok = await confirm({
       title: '刪除測驗紀錄？',
-      message: `「${a.title}」嘅成績會被永久刪除，無法復原。`,
+      message: `「${a.title}」的成績會被永久刪除，無法復原。`,
       confirmText: '刪除',
       tone: 'danger',
     })
@@ -152,7 +152,7 @@ export function SetupView({
 
   return (
     <div className="animate-fade-in space-y-6">
-      {/* ── 概覽：三個迷你統計（細圖示 chip，唔搶 CTA 風頭）── */}
+      {/* ── 概覽：三個迷你統計（細圖示 chip，不搶 CTA 風頭）── */}
       <div className="grid grid-cols-3 gap-3">
         <MiniStat label="可測題目" value={totalPool} unit="題" icon={BookMarked} tone="accent" />
         <MiniStat label="完成測驗" value={attempts.length} unit="次" icon={FolderOpen} tone="sky" />
@@ -168,16 +168,16 @@ export function SetupView({
       {totalPool === 0 ? (
         <EmptyState
           icon={BookMarked}
-          title="題庫仲未有可以測嘅題目"
-          hint="去『題庫』加幾條有正確答案嘅選擇題（或者有參考答案嘅短答題），返嚟就可以即刻開始自測。"
+          title="題庫尚未有可以測的題目"
+          hint="到「題庫」加入幾條有正確答案的選擇題（或有參考答案的短答題），回來後即可開始自測。"
         />
       ) : (
         <section className="space-y-5">
-          {/* 主行動入口：揀賽制（最大、最搶眼，似遊戲大堂揀玩法） */}
+          {/* 主行動入口：選擇賽制（最大、最搶眼，似遊戲大堂選擇玩法） */}
           <div>
             <p className="mb-1 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-accent/70 dark:text-accent/80">
               <Sparkles size={12} className="shrink-0" />
-              揀賽制
+              選擇賽制
             </p>
             <p className="mb-3 text-xl font-semibold tracking-tight text-slate-800 dark:text-slate-100">
               今次想點挑戰？
@@ -336,7 +336,7 @@ export function SetupView({
             </div>
             {cappedByPool && (
               <p className="relative mt-2 text-xs text-amber-600 dark:text-amber-400">
-                呢個範圍題目唔夠 {wantCount} 題，實際出 {takeCount} 題。
+                這個範圍題目不夠 {wantCount} 題，實際出 {takeCount} 題。
               </p>
             )}
             <Button
@@ -347,7 +347,7 @@ export function SetupView({
               onClick={start}
               className="relative mt-3"
             >
-              {takeCount === 0 ? '冇符合條件嘅題目' : `開始挑戰 · ${takeCount} 題`}
+              {takeCount === 0 ? '沒有符合條件的題目' : `開始挑戰 · ${takeCount} 題`}
             </Button>
           </div>
         </section>
@@ -367,8 +367,8 @@ export function SetupView({
         {historyDesc.length === 0 ? (
           <EmptyState
             icon={FolderOpen}
-            title="仲未有測驗紀錄"
-            hint="完成第一次自測之後，每次成績都會喺呢度，方便你重溫同重做錯題。"
+            title="尚未有測驗紀錄"
+            hint="完成第一次自測之後，每次成績都會在這裡，方便你重溫同重做錯題。"
           />
         ) : (
           <ul className="space-y-2.5">
@@ -401,7 +401,7 @@ export function SetupView({
                       </p>
                       <div className="mt-2 flex flex-wrap gap-1.5">
                         <Badge tone={scoreTone(p)}>
-                          <span className="tabular-nums">{a.correctCount}/{a.total}</span> 答啱
+                          <span className="tabular-nums">{a.correctCount}/{a.total}</span> 答對
                         </Badge>
                         <Badge tone="slate" icon={Timer}>
                           <span className="tabular-nums">{fmtDuration(a.durationSec)}</span>
@@ -437,7 +437,7 @@ export function SetupView({
   )
 }
 
-// ── 迷你統計（細圖示 chip + 數字，輔助資訊，唔搶主行動）──
+// ── 迷你統計（細圖示 chip + 數字，輔助資訊，不搶主行動）──
 type StatTone = 'accent' | 'sky' | 'emerald'
 const STAT_CHIP: Record<StatTone, string> = {
   accent: 'bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent',

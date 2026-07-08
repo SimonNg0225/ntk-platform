@@ -34,6 +34,6 @@ describe('parseTranscript', () => {
     expect(r.summary).toEqual(['ok'])
   })
   it('格式錯 throw', () => {
-    expect(() => parseTranscript('唔係 JSON')).toThrow()
+    expect(() => parseTranscript('不是 JSON')).toThrow()
   })
 })

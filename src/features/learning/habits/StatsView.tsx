@@ -66,7 +66,7 @@ export default function StatsView({
   }, [habits, byHabit])
 
   // ─── 星期分佈洞察（最易堅持／最易甩底 + 逐習慣最常完成日）───
-  // 與上面星期長條圖同窗口（84 日 = 12 週），淨係加總結 + 排行。
+  // 與上面星期長條圖同窗口（84 日 = 12 週），只加總結 + 排行。
   const insights = useMemo(() => weekdayInsights(habits, byHabit), [habits, byHabit])
 
   // ─── 近 12 週每週完成總次數 ───
@@ -120,8 +120,8 @@ export default function StatsView({
     return (
       <EmptyState
         icon={BarChart3}
-        title="仲未有數據"
-        hint="新增習慣並開始打卡，呢度就會出現完成趨勢、星期分佈同每週統計圖表。"
+        title="尚未有數據"
+        hint="新增習慣並開始打卡，這裡就會出現完成趨勢、星期分佈同每週統計圖表。"
       />
     )
   }
@@ -335,10 +335,10 @@ function WeekdayInsightCard({
     return m
   }, [habits])
 
-  // 完全冇排程日（best=null）兼且冇任何完成 → 唔顯示卡（避免空殼）。
+  // 完全沒有排程日（best=null）兼且沒有任何完成 → 不顯示卡（避免空殼）。
   if (!best && perHabitBest.length === 0) return null
 
-  // best === worst（得一個有排程嘅星期幾）就唔重複出 worst chip。
+  // best === worst（得一個有排程的星期幾）就不重複出 worst chip。
   const showWorst = worst != null && best != null && worst.weekday !== best.weekday
   const topHabits = perHabitBest.slice(0, 5)
 
@@ -391,7 +391,7 @@ function WeekdayInsightCard({
       {topHabits.length > 0 && (
         <div className="mt-4">
           <p className="mb-2 text-xs font-medium text-slate-400 dark:text-slate-500">
-            各習慣最常完成嘅日子
+            各習慣最常完成的日子
           </p>
           <div className="space-y-1">
             {topHabits.map((p) => {

@@ -31,13 +31,13 @@ import { coverTextureUri } from './slideTextures'
 
 // ============================================================
 //  手帳 scrapbook — 拼貼手帳
-//  暖牛皮卡紙底 + 炭墨：成個 deck 似一本貼滿嘢嘅手帳 ——
+//  暖牛皮卡紙底 + 炭墨：成個 deck 似一本貼滿嘢的手帳 ——
 //  washi 紙膠帶（薄薄旋轉 rect，mix tint 做半透感）貼住嘢、
 //  白紙片（roundRect + 柔外陰影 + 微旋）做卡、塗鴉箭（line + chevron 頭）指方向。
 // ============================================================
 
 const SCR = { bg: 'EFE7D6', ink: '3A352C', soft: '6E6557', faint: 'A39A88', hair: 'DCD2BF', accent: '5BB0A6', coral: 'EF7D6A', panel: 'FFFFFF' }
-/** 紙片圓角（同 pack.cardRadius；cover/section 唔收 pack 形參，提早定義） */
+/** 紙片圓角（同 pack.cardRadius；cover/section 不收 pack 形參，提早定義） */
 const SCR_RADIUS = 0.06
 
 /** washi 紙膠帶：一條薄旋轉 rect（mix tint 做半透感 + 兩端深少少做撕口暗示） */
@@ -47,7 +47,7 @@ function washiTape(slide: PptxGenJS.Slide, x: number, y: number, w: number, h: n
   slide.addShape('rect', { x: x + w * 0.86, y, w: w * 0.14, h, fill: { color: mix(color, SCR.bg, 0.78) }, line: { type: 'none' }, rotate })
 }
 
-/** 白紙片：白 roundRect + 柔外陰影 + 微旋（手帳貼上去嘅紙仔） */
+/** 白紙片：白 roundRect + 柔外陰影 + 微旋（手帳貼上去的紙仔） */
 function paperScrap(slide: PptxGenJS.Slide, r: Rect, rotate: number, radius: number): void {
   slide.addShape('roundRect', {
     x: r.x,
@@ -96,7 +96,7 @@ function renderScrapbookTapedCards(slide: PptxGenJS.Slide, body: Rect, pack: Pac
     const c = i % cols
     const cx = body.x + c * (cw + gap)
     const cy = body.y + r * (ch + gap)
-    // 紙片本身收身少少俾陰影／旋轉位
+    // 紙片本身收身少少給陰影／旋轉位
     const pad = 0.12
     const scrap: Rect = { x: cx + pad, y: cy + pad, w: cw - pad * 2, h: ch - pad * 2 }
     const rot = (i % 2 === 0 ? -2.4 : 2.6)
@@ -181,7 +181,7 @@ const scrapbook: Pack = {
   cover(slide, deck, brand, img) {
     slide.background = { color: SCR.bg }
     const hasImg = Boolean(img)
-    // 無相時：招牌手帳紋理底圖（瀏覽器 Canvas raster；冇 canvas 時 fallback 漸層底）
+    // 無相時：招牌手帳紋理底圖（瀏覽器 Canvas raster；沒有 canvas 時 fallback 漸層底）
     const tex = hasImg ? null : coverTextureUri('scrapbook')
     if (tex) {
       slide.addImage({ data: tex, x: 0, y: 0, w: 13.333, h: 7.5, sizing: { type: 'cover', w: 13.333, h: 7.5 } })
@@ -307,15 +307,15 @@ function flyingWhite(slide: PptxGenJS.Slide, x: number, y: number, w: number, pt
 
 /**
  * 招牌：quote 渲染成「水墨題字」——
- * 一大塊柔灰水墨筆 blob（層疊 roundRect）墊喺大黑引文後，
- * 朱砂方印 + 出處做落款（attribution）喺腳，四圍大量留白。
+ * 一大塊柔灰水墨筆 blob（層疊 roundRect）墊在大黑引文後，
+ * 朱砂方印 + 出處做落款（attribution）在腳，四圍大量留白。
  */
 function renderSumiInkQuote(slide: PptxGenJS.Slide, body: Rect, pack: Pack, s: Slide): void {
   const q = s.quote
   if (!q || !q.text.trim()) return
   const cw = Math.min(8.4, body.w - 2.2)
   const cx = body.x + (body.w - cw) / 2
-  // 柔灰水墨筆 blob（墊喺引文後、偏左上掃過）
+  // 柔灰水墨筆 blob（墊在引文後、偏左上掃過）
   inkStroke(slide, { x: cx - 0.3, y: body.y + 0.3, w: cw * 0.62, h: 1.5 }, -8)
   // 大黑引文（書名號夾住）
   const quoteY = body.y + 0.5
@@ -398,7 +398,7 @@ const sumi: Pack = {
   cover(slide, deck, brand, img, title) {
     slide.background = { color: SUM.bg }
     const hasImg = Boolean(img)
-    // 招牌水墨紋理底圖（瀏覽器 Canvas raster；冇 canvas 時 fallback 漸層底）
+    // 招牌水墨紋理底圖（瀏覽器 Canvas raster；沒有 canvas 時 fallback 漸層底）
     const tex = coverTextureUri('sumi')
     if (tex) {
       slide.addImage({ data: tex, x: 0, y: 0, w: 13.333, h: 7.5, sizing: { type: 'cover', w: 13.333, h: 7.5 } })
@@ -454,7 +454,7 @@ const sumi: Pack = {
 
   section(slide, no, title) {
     slide.background = { color: SUM.bg }
-    // 大水墨筆掃過 + Georgia 淡灰巨號喺留白
+    // 大水墨筆掃過 + Georgia 淡灰巨號在留白
     inkStroke(slide, { x: -0.8, y: 1.0, w: 5.2, h: 2.4 }, -10)
     tx(slide, pad2(no), { x: 0.85, y: 1.2, w: 6, h: 2.9, fontSize: 150, bold: true, color: mix(SUM.ink, SUM.bg, 0.16), fontFace: 'Georgia' })
     flyingWhite(slide, 0.95, 4.4, 3.6, 3)
@@ -478,7 +478,7 @@ const sumi: Pack = {
 // ============================================================
 //  粗獷 brutalist — Brutalist
 //  慘白米底 + 純黑墨 + 一抹刺橙：硬粗框（3pt）零圓角、超大字、
-//  巨頁碼、mono 微標籤（Consolas）。冇半粒柔。
+//  巨頁碼、mono 微標籤（Consolas）。沒有半粒柔。
 // ============================================================
 
 const BRU = { bg: 'F4F4F0', ink: '000000', soft: '3A3A38', faint: '8A8A86', hair: '000000', accent: 'FF4D00', panel: 'FFFFFF' }
@@ -593,7 +593,7 @@ const brutalist: Pack = {
   cover(slide, deck, brand, img) {
     slide.background = { color: BRU.bg }
     const hasImg = Boolean(img)
-    // 無相時：招牌粗獷紋理底圖（瀏覽器 Canvas raster；冇 canvas 時 fallback 漸層底）
+    // 無相時：招牌粗獷紋理底圖（瀏覽器 Canvas raster；沒有 canvas 時 fallback 漸層底）
     const tex = hasImg ? null : coverTextureUri('brutalist')
     if (tex) {
       slide.addImage({ data: tex, x: 0, y: 0, w: 13.333, h: 7.5, sizing: { type: 'cover', w: 13.333, h: 7.5 } })

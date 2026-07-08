@@ -55,7 +55,7 @@ export function QuizRunner({
   const topics = useCollection(topicsCol)
   const topicName = (id: string) => topics.find((t) => t.id === id)?.topic ?? '未分類'
 
-  // 鎖定題目快照（只喺開場一次）— 連洗牌都凍結
+  // 鎖定題目快照（只在開場一次）— 連洗牌都凍結
   const [quizItems] = useState<FrozenQuestion[]>(() => {
     const all = questionsCol.get()
     const out: FrozenQuestion[] = []
@@ -123,13 +123,13 @@ export function QuizRunner({
 
   const total = quizItems.length
 
-  // 防呆：快照後一條都唔合資格
+  // 防呆：快照後一條都不合資格
   if (total === 0) {
     return (
       <Card className="space-y-4 p-8 text-center">
         <BookMarked size={32} strokeWidth={1.75} className="mx-auto text-slate-300 dark:text-slate-600" />
         <p className="text-sm font-medium text-slate-600 dark:text-slate-300">
-          呢批題目已經唔喺題庫，無法做題。
+          這批題目已經不在題庫，無法做題。
         </p>
         <Button onClick={onAbort}>返回設定</Button>
       </Card>
@@ -159,7 +159,7 @@ export function QuizRunner({
     [points],
   )
 
-  // timed 超時：當未答（MC null / short 空），鎖定並揭曉（已答嘅就唔郁，保住分數）
+  // timed 超時：當未答（MC null / short 空），鎖定並揭曉（已答的就不郁，保住分數）
   const timeUp = () => {
     const q = quizItems[currentIdx]
     if (q.kind === 'mc') {
@@ -172,7 +172,7 @@ export function QuizRunner({
     setPoints((p) => (q.questionId in p ? p : { ...p, [q.questionId]: 0 }))
   }
 
-  // ── 計時器（timed 模式，逐題倒數；答咗即停，唔會覆寫分數）──
+  // ── 計時器（timed 模式，逐題倒數；答了即停，不會覆寫分數）──
   useEffect(() => {
     if (!isTimed || isAnswered) return
     setRemaining(settings.timeLimit)
@@ -252,7 +252,7 @@ export function QuizRunner({
     if (unanswered > 0 && !isTimed) {
       const ok = await confirm({
         title: '提早交卷？',
-        message: `仲有 ${unanswered} 題未答，當錯計，確定交卷？`,
+        message: `還有 ${unanswered} 題未答，當錯計，確定交卷？`,
         confirmText: '交卷',
       })
       if (!ok) return
@@ -284,7 +284,7 @@ export function QuizRunner({
     })
     // 更新跨次錯題本
     syncMistakesFromAttempt(created)
-    toast.success(`完成！${correctCount}/${total} 答啱`)
+    toast.success(`完成！${correctCount}/${total} 答對`)
     onFinish(created.id)
   }
 
@@ -315,7 +315,7 @@ export function QuizRunner({
         if (isLast) void submit()
         else if (!isInstant || isAnswered) goNext()
       } else if (isMc && !graded) {
-        // A-D / 1-9 揀選項
+        // A-D / 1-9 選擇選項
         const up = e.key.toUpperCase()
         let idx = -1
         if (up >= 'A' && up <= 'Z') idx = up.charCodeAt(0) - 65
@@ -509,7 +509,7 @@ export function QuizRunner({
                     ? 'bg-amber-50 text-amber-500 dark:bg-amber-500/10'
                     : 'text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-700',
                 )}
-                aria-label="標記呢題"
+                aria-label="標記此題"
                 aria-pressed={!!flags[current.questionId]}
                 title="標記（F）"
               >
@@ -545,7 +545,7 @@ export function QuizRunner({
               autoFocus={!isAnswered}
               value={shortVal}
               disabled={isAnswered}
-              placeholder="輸入你嘅答案，按 Enter 提交…"
+              placeholder="輸入你的答案，按 Enter 提交…"
               onChange={(e) =>
                 setShortInputs((s) => ({ ...s, [current.questionId]: e.target.value }))
               }
@@ -567,7 +567,7 @@ export function QuizRunner({
               >
                 <p className="flex items-center gap-1.5 font-semibold">
                   {shortCorrect ? <Check size={15} /> : null}
-                  {shortCorrect ? '答啱（自動比對）' : '參考答案'}
+                  {shortCorrect ? '答對（自動比對）' : '參考答案'}
                 </p>
                 <p className="mt-1 text-slate-700 dark:text-slate-200 break-words [overflow-wrap:anywhere]">{current.explanation}</p>
                 {!shortCorrect && (
@@ -588,7 +588,7 @@ export function QuizRunner({
           </div>
         )}
 
-          {/* timed：呢題得分回饋（答中 ＝ accent 喜悅帶，答唔中 ＝ 收斂灰帶） */}
+          {/* timed：此題得分回饋（答中 ＝ accent 喜悅帶，答不中 ＝ 收斂灰帶） */}
           {isTimed && isAnswered && (
             <div
               aria-live="polite"
@@ -648,7 +648,7 @@ export function QuizRunner({
 
       {/* 鍵盤提示 */}
       <p className="hidden text-center text-[11px] text-slate-400 dark:text-slate-500 sm:block">
-        鍵盤：{isMc ? 'A–D / 1–9 揀答案 · ' : ''}← → 切題 · F 標記 · Enter {isLast ? '交卷' : '下一題'}
+        鍵盤：{isMc ? 'A–D / 1–9 選擇答案 · ' : ''}← → 切題 · F 標記 · Enter {isLast ? '交卷' : '下一題'}
       </p>
     </div>
   )

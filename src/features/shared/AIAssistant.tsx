@@ -134,8 +134,8 @@ import CreditMeter from '../../components/CreditMeter'
 //   • 輕量 Markdown 渲染（標題 / 列表 / 表格 / code+複製）
 //   • 命令面板（⌘K）+ 全鍵盤操作
 //   • 用量統計（活躍圖、用/答比例、streak）+ 匯出 Markdown
-//  共用 aiThreadsCol / aiMessagesCol 做 source of truth（唔改），
-//  附加 metadata 旁掛喺自家 threadMetaCol。
+//  共用 aiThreadsCol / aiMessagesCol 做 source of truth（不改），
+//  附加 metadata 旁掛在自家 threadMetaCol。
 // ============================================================
 
 const MODE_AI: Record<
@@ -144,14 +144,14 @@ const MODE_AI: Record<
 > = {
   learning: {
     system:
-      `你係「${BRAND_NAME}」嘅 AI 個人助手，協助一位用家。請用繁體中文回答（可以用書面廣東話）。風格：精簡、有條理、有重點，適當用列點同例子。如果問題太模糊，先簡短澄清再答。可以用 Markdown（標題、列點、表格、程式碼區塊）令答案更清楚。`,
-    greeting: '今日想學啲咩？',
+      `你是「${BRAND_NAME}」的 AI 個人助手，協助一位使用者。請用繁體中文回答（可以用書面廣東話）。風格：精簡、有條理、有重點，適當使用列點及例子。如果問題太模糊，先簡短澄清再回答。可以用 Markdown（標題、列點、表格、程式碼區塊）令答案更清楚。`,
+    greeting: '今日想學些什麼？',
     tagline: '解釋概念 · 總結筆記 · 出練習 · 規劃溫習',
   },
   work: {
     system:
-      `你係「${BRAND_NAME}」嘅教學助手，協助一位香港中學老師（任教科目不限）。可以幫手出題（連參考答案同評分指引）、寫教案大綱、擬批改評語、設計課堂活動。請用繁體中文，內容貼合香港中學課程，專業、實用、有條理。如老師有指明科目或課題，請按其科目作答。可以用 Markdown（標題、列點、表格）令內容更清楚。`,
-    greeting: '今日想備啲咩？',
+      `你是「${BRAND_NAME}」的教學助手，協助一位香港中學老師（任教科目不限）。可以協助出題（包括參考答案及評分指引）、撰寫教案大綱、擬定批改評語、設計課堂活動。請用繁體中文，內容貼合香港中學課程，專業、實用、有條理。如老師有指明科目或課題，請按其科目作答。可以用 Markdown（標題、列點、表格）令內容更清楚。`,
+    greeting: '今日想備些什麼？',
     tagline: '出題 · 寫教案 · 擬評語 · 設計活動',
   },
 }
@@ -176,7 +176,7 @@ const isMac =
   typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform)
 const MOD = isMac ? '⌘' : 'Ctrl'
 
-// 人格標籤經 i18n（zh-HK 用 store 原文做 defaultValue；唔郁 store 數據層）
+// 人格標籤經 i18n（zh-HK 用 store 原文做 defaultValue；不郁 store 數據層）
 const PERSONA_LABEL_KEY: Record<PersonaId, string> = {
   default: 'personaDefault',
   concise: 'personaConcise',
@@ -209,7 +209,7 @@ export default function AIAssistant() {
   const { subjectPackId } = useSettings()
 
   const cfg = MODE_AI[mode]
-  // 問候 / 標語經 i18n（zh-HK 用原文做 defaultValue）。system prompt 留返 LLM 指令唔譯。
+  // 問候 / 標語經 i18n（zh-HK 用原文做 defaultValue）。system prompt 留返 LLM 指令不譯。
   const greeting = t(`aiasst.greeting${mode === 'work' ? 'Work' : 'Learning'}`, {
     defaultValue: cfg.greeting,
   })
@@ -224,7 +224,7 @@ export default function AIAssistant() {
     ],
     [t],
   )
-  // 工作模式：把老師任教科目注入語境（'custom' / 找唔到包就唔注入）。
+  // 工作模式：把老師任教科目注入語境（'custom' / 找不到包就不注入）。
   const subjectName =
     mode === 'work' && subjectPackId !== 'custom'
       ? getSubjectPack(subjectPackId)?.name
@@ -253,8 +253,8 @@ export default function AIAssistant() {
 
   // ── 本地 UI 狀態 ──
   const [currentThreadId, setCurrentThreadId] = useState<string | null>(null)
-  // Composer 自管輸入 state；呢度只用 seed 餵佢（填範本/清空，n 一變先載入）。
-  // 打字唔再 setState 喺呢個父組件 → 唔會 re-render 訊息/側欄（連 IME 都唔被打斷）。
+  // Composer 自管輸入 state；這裡只用 seed 餵他（填範本/清空，n 一變先載入）。
+  // 打字不再 setState 在這個父組件 → 不會 re-render 訊息/側欄（連 IME 都不被打斷）。
   const [seed, setSeed] = useState<{ text: string; n: number }>({ text: '', n: 0 })
   const [streaming, setStreaming] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
@@ -273,22 +273,22 @@ export default function AIAssistant() {
 
   // modal flags
   const [templateOpen, setTemplateOpen] = useState(false)
-  // Welcome chip 帶變數時：開範本庫即直接跳去「填寫」表單（唔使再揀多次）
+  // Welcome chip 帶變數時：開範本庫即直接跳去「填寫」表單（不用再選擇多次）
   const [tplInitialFill, setTplInitialFill] = useState<{ title: string; body: string } | null>(null)
   const [contextOpen, setContextOpen] = useState(false)
   const [statsOpen, setStatsOpen] = useState(false)
   const [paletteOpen, setPaletteOpen] = useState(false)
   const [renameTarget, setRenameTarget] = useState<string | null>(null)
-  // 「加入筆記」目標：要存做筆記嘅 AI 回覆內容（null = 冇開揀筆記本彈窗）
+  // 「加入筆記」目標：要存做筆記的 AI 回覆內容（null = 沒有開選擇筆記本彈窗）
   const [noteFor, setNoteFor] = useState<string | null>(null)
-  // Dev-only：跳過 Supabase / 登入 gate 嚟測試 UI（尤其打字 bug）。
-  // import.meta.env.DEV 喺 vite build 時為 false → 生產環境永遠睇唔到，亦觸發唔到。
+  // Dev-only：跳過 Supabase / 登入 gate 來測試 UI（尤其打字 bug）。
+  // import.meta.env.DEV 在 vite build 時為 false → 生產環境永遠查看不到，亦觸發不到。
   const [devBypass, setDevBypass] = useState(false)
 
   const abortRef = useRef<AbortController | null>(null)
   const scrollRef = useRef<HTMLDivElement | null>(null)
 
-  // 現對話嘅 meta（若有）
+  // 現對話的 meta（若有）
   const currentMeta = currentThreadId ? metaMap.get(currentThreadId) : undefined
   const activeModel = currentMeta?.model ?? draftModel
   const activePersona = currentMeta?.persona ?? draftPersona
@@ -385,7 +385,7 @@ export default function AIAssistant() {
         const ctxText = contexts
           .map((c, i) => `〔資料 ${i + 1}：${c.title}〕\n${c.content}`)
           .join('\n\n')
-        sys += `\n\n以下係用戶提供嘅參考資料，回答時請優先參考、引用、扣連返呢啲內容：\n\n${ctxText}`
+        sys += `\n\n以下是用戶提供的參考資料，回答時請優先參考、引用並連繫這些內容：\n\n${ctxText}`
       }
       return sys
     },
@@ -426,7 +426,7 @@ export default function AIAssistant() {
         else toast.error(err.message || t('aiasst.toastError', { defaultValue: 'AI 出錯' }))
       } finally {
         // 串流被 abort（切對話／開新對話／封存／停止掣）時丟棄半截回覆，
-        // 唔好把截斷訊息持久化落 thread（避免殘留半截 AI 訊息 / 資料不一致）。
+        // 不要把截斷訊息持久化落 thread（避免殘留半截 AI 訊息 / 資料不一致）。
         if (!aborted && full.trim()) {
           aiMessagesCol.add({
             threadId,
@@ -481,7 +481,7 @@ export default function AIAssistant() {
         content: text,
         createdAt: new Date().toISOString(),
       })
-      // 輸入框由 Composer 自己清空（佢 submit 後 setText('')）
+      // 輸入框由 Composer 自己清空（他 submit 後 setText('')）
       await runCompletion(threadId, model, persona, temp, contexts)
     },
     [
@@ -513,7 +513,7 @@ export default function AIAssistant() {
     await runCompletion(currentThreadId, activeModel, activePersona, activeTemp, activeContexts)
   }, [currentThreadId, busy, runCompletion, activeModel, activePersona, activeTemp, activeContexts])
 
-  // 編輯並重發某條 user 訊息（刪除佢之後嘅所有訊息）
+  // 編輯並重發某條 user 訊息（刪除他之後的所有訊息）
   const editAndResend = useCallback(
     async (msg: AiMessage, newText: string) => {
       if (!currentThreadId) return
@@ -554,10 +554,10 @@ export default function AIAssistant() {
   )
 
   // 將 AI 回覆內容存做一篇個人筆記（標題由內文首行自動推導）。
-  // 對齊 Inbox / 全域搜尋「轉筆記」嘅寫法：寫入 richNotesCol（notes_rich_v2）。
-  //  · notebookId：由「揀筆記本」彈窗傳入（null = 未分類）
-  //  · 自動加 #AI助手 標籤（來源註記），方便日後喺筆記度篩選
-  //  · 成功後彈出帶「檢視」捷徑嘅 toast，撳一下跳去筆記頁
+  // 對齊 Inbox / 全域搜尋「轉筆記」的寫法：寫入 richNotesCol（notes_rich_v2）。
+  //  · notebookId：由「選擇筆記本」彈窗傳入（null = 未分類）
+  //  · 自動加 #AI助手 標籤（來源註記），方便日後在筆記度篩選
+  //  · 成功後彈出帶「檢視」捷徑的 toast，按一下跳去筆記頁
   const saveAsNote = useCallback(
     (content: string, notebookId: string | null) => {
       const text = content.trim()
@@ -583,7 +583,7 @@ export default function AIAssistant() {
     [toast, goToFeature, t],
   )
 
-  // 手機（<sm）揀完／開新對話後收埋抽屜，避免遮住對話內容
+  // 手機（<sm）選擇完／開新對話後收埋抽屜，避免遮住對話內容
   function closeSidebarOnMobile() {
     if (typeof window !== 'undefined' && window.innerWidth < 640) setSidebarOpen(false)
   }
@@ -606,7 +606,7 @@ export default function AIAssistant() {
 
   async function deleteThread(id: string) {
     const ok = await confirm({
-      title: t('aiasst.toastDeleteThreadTitle', { defaultValue: '刪除呢個對話？' }),
+      title: t('aiasst.toastDeleteThreadTitle', { defaultValue: '刪除這個對話？' }),
       message: t('aiasst.toastDeleteThreadMsg', { defaultValue: '對話同所有訊息會永久刪除。' }),
       tone: 'danger',
       confirmText: t('aiasst.toastDeleteThreadConfirm', { defaultValue: '刪除' }),
@@ -630,12 +630,12 @@ export default function AIAssistant() {
     if (currentThreadId === id) newConversation()
   }
 
-  // 範本 / Welcome chip 填入輸入框：透過 seed 餵畀 Composer（佢會載入 + focus + 游標到尾）
+  // 範本 / Welcome chip 填入輸入框：透過 seed 餵給 Composer（他會載入 + focus + 游標到尾）
   function applyText(text: string) {
     setSeed((s) => ({ text, n: s.n + 1 }))
   }
 
-  // 改 model / persona / temp：寫返現對話 meta（或 draft）
+  // 改 model / persona / temp：寫回現對話 meta（或 draft）
   function setModel(m: AIModel) {
     if (currentThreadId) patchMeta(currentThreadId, { model: m })
     else setDraftModel(m)
@@ -655,7 +655,7 @@ export default function AIAssistant() {
 
   function exportConversation() {
     if (messages.length === 0) {
-      toast.info(t('aiasst.toastEmptyConversation', { defaultValue: '呢個對話仲未有內容' }))
+      toast.info(t('aiasst.toastEmptyConversation', { defaultValue: '這個對話尚未有內容' }))
       return
     }
     const md = conversationToMarkdown(threadTitle, messages)
@@ -691,17 +691,17 @@ export default function AIAssistant() {
     [threadsForMode, allMessages],
   )
 
-  // ── Composer handlers：包成 stable refs，畀 React.memo 真正生效 ──
+  // ── Composer handlers：包成 stable refs，給 React.memo 真正生效 ──
   // 之前係 inline arrow（onSend={(t)=>send(t)}…），每次父組件 render 都產生新 fn ref
-  // → memo 失效 → Composer 無謂 re-render（雖然唔影響打字，但 IME / iOS 嗰啲 edge case
-  // 可能間接踫上）。而家用 useCallback 鎖住 ref，父組件就算 re-render，Composer props
+  // → memo 失效 → Composer 無謂 re-render（雖然不影響打字，但 IME / iOS 那些 edge case
+  // 可能間接踫上）。現在用 useCallback 鎖住 ref，父組件就算 re-render，Composer props
   // 全部 same-by-shallow，memo 真正擋到。
   const onSendStable = useCallback((t: string) => void send(t), [send])
   const onStopStable = useCallback(() => abortRef.current?.abort(), [])
   const onOpenTemplateStable = useCallback(() => setTemplateOpen(true), [])
   const onOpenContextStable = useCallback(() => setContextOpen(true), [])
 
-  // ── 守門（dev 可一鍵 bypass 嚟測試 UI）──
+  // ── 守門（dev 可一鍵 bypass 來測試 UI）──
   if (!isAIConfigured && !devBypass) {
     return (
       <EmptyState
@@ -724,8 +724,8 @@ export default function AIAssistant() {
     return (
       <EmptyState
         icon={Lock}
-        title={t('aiasst.gateLoginTitle', { defaultValue: '請先登入先可以用 AI 助手' })}
-        hint={t('aiasst.gateLoginHint', { defaultValue: '喺左下角用 Google 登入後就用得。' })}
+        title={t('aiasst.gateLoginTitle', { defaultValue: '請先登入以使用 AI 助手' })}
+        hint={t('aiasst.gateLoginHint', { defaultValue: '在左下角使用 Google 登入後即可使用。' })}
         action={
           import.meta.env.DEV ? (
             <Button variant="secondary" size="sm" onClick={() => setDevBypass(true)}>
@@ -740,43 +740,43 @@ export default function AIAssistant() {
   const personaLabel = personaLabelOf(activePersona, t)
   const modelShort = models.find((m) => m.id === activeModel)?.short ?? activeModel
 
-  // 「點用」教學引導步驟（按模式微調文案；只渲染頭 4 步）
+  // 「如何使用」教學引導步驟（按模式微調文案；只渲染頭 4 步）
   const guideSteps: FeatureGuideStep[] =
     mode === 'work'
       ? [
           {
-            title: t('aiasst.guideWorkStep1Title', { defaultValue: '揀個落手位' }),
-            desc: t('aiasst.guideWorkStep1Desc', { defaultValue: '由首頁卡片揀「出題 / 寫教案 / 擬評語」，或直接打低你想備嘅課。' }),
+            title: t('aiasst.guideWorkStep1Title', { defaultValue: '選擇起點' }),
+            desc: t('aiasst.guideWorkStep1Desc', { defaultValue: '由首頁卡片選擇「出題 / 寫教案 / 擬評語」，或直接輸入你想準備的課題。' }),
           },
           {
             title: t('aiasst.guideWorkStep2Title', { defaultValue: '連結教材做上下文' }),
-            desc: t('aiasst.guideWorkStep2Desc', { defaultValue: '撳「上下文」連結筆記或會議紀錄，AI 答嘢就會貼返你嘅教材。' }),
+            desc: t('aiasst.guideWorkStep2Desc', { defaultValue: '按「上下文」連結筆記或會議紀錄，AI 回答時會貼合你的教材。' }),
           },
           {
             title: t('aiasst.guideWorkStep3Title', { defaultValue: '調回應風格' }),
-            desc: t('aiasst.guideWorkStep3Desc', { defaultValue: '「精準 / 平衡 / 創意」按需要揀；想換深入啲就揀「深入」模型。' }),
+            desc: t('aiasst.guideWorkStep3Desc', { defaultValue: '「精準 / 平衡 / 創意」按需要選擇；想換深入些就選擇「深入」模型。' }),
           },
           {
-            title: t('aiasst.guideWorkStep4Title', { defaultValue: '存起好嘢' }),
-            desc: t('aiasst.guideWorkStep4Desc', { defaultValue: '滿意嘅回覆可「加入筆記」，或整段對話匯出做 Markdown。' }),
+            title: t('aiasst.guideWorkStep4Title', { defaultValue: '儲存有用內容' }),
+            desc: t('aiasst.guideWorkStep4Desc', { defaultValue: '滿意的回覆可「加入筆記」，或整段對話匯出做 Markdown。' }),
           },
         ]
       : [
           {
-            title: t('aiasst.guideLearnStep1Title', { defaultValue: '揀個落手位' }),
-            desc: t('aiasst.guideLearnStep1Desc', { defaultValue: '由首頁卡片揀「解釋概念 / 出練習 / 規劃溫習」，或直接打低你想問嘅嘢。' }),
+            title: t('aiasst.guideLearnStep1Title', { defaultValue: '選擇起點' }),
+            desc: t('aiasst.guideLearnStep1Desc', { defaultValue: '由首頁卡片選擇「解釋概念 / 出練習 / 規劃溫習」，或直接輸入你想查詢的內容。' }),
           },
           {
             title: t('aiasst.guideLearnStep2Title', { defaultValue: '連結筆記做上下文' }),
-            desc: t('aiasst.guideLearnStep2Desc', { defaultValue: '撳「上下文」連結你嘅筆記，AI 就會就住你嘅內容嚟答。' }),
+            desc: t('aiasst.guideLearnStep2Desc', { defaultValue: '按「上下文」連結你的筆記，AI 就會就住你的內容來答。' }),
           },
           {
             title: t('aiasst.guideLearnStep3Title', { defaultValue: '調回應風格' }),
-            desc: t('aiasst.guideLearnStep3Desc', { defaultValue: '想答案精簡就揀「精準」，想多啲例子就揀「創意」。' }),
+            desc: t('aiasst.guideLearnStep3Desc', { defaultValue: '想答案精簡就選擇「精準」，想多些例子就選擇「創意」。' }),
           },
           {
             title: t('aiasst.guideLearnStep4Title', { defaultValue: '存起重點' }),
-            desc: t('aiasst.guideLearnStep4Desc', { defaultValue: '有用嘅答案可「加入筆記」一鍵收藏，方便日後溫習。' }),
+            desc: t('aiasst.guideLearnStep4Desc', { defaultValue: '有用的答案可「加入筆記」一鍵收藏，方便日後溫習。' }),
           },
         ]
 
@@ -802,12 +802,12 @@ export default function AIAssistant() {
             : tagline
         }
       />
-      {/* 教學引導：未開對話（landing）時喺頂顯示「點用」；可摺疊 + 可永久收起。
-          開咗對話後讓位畀對話工作枱（避免食用垂直空間）。 */}
+      {/* 教學引導：未開對話（landing）時在頂顯示「如何使用」；可摺疊 + 可永久收起。
+          開了對話後讓位給對話工作枱（避免吃用垂直空間）。 */}
       {!currentThreadId && (
         <FeatureGuide
           storageKey={`aiAssistant.${mode}`}
-          title={t('aiasst.guideTitle', { defaultValue: '個人 AI 助手點用？' })}
+          title={t('aiasst.guideTitle', { defaultValue: '個人 AI 助手使用說明' })}
           steps={guideSteps}
         />
       )}
@@ -847,10 +847,10 @@ export default function AIAssistant() {
             {visibleThreads.length === 0 ? (
               <p className="px-2 py-6 text-center text-xs text-slate-400">
                 {showArchived
-                  ? t('aiasst.emptyArchived', { defaultValue: '冇封存對話' })
+                  ? t('aiasst.emptyArchived', { defaultValue: '沒有封存對話' })
                   : search
-                    ? t('aiasst.emptyNoMatch', { defaultValue: '搵唔到對話' })
-                    : t('aiasst.emptyNoThreads', { defaultValue: '仲未有對話，開始傾啦' })}
+                    ? t('aiasst.emptyNoMatch', { defaultValue: '搜尋不到對話' })
+                    : t('aiasst.emptyNoThreads', { defaultValue: '尚未有對話，開始傾啦' })}
               </p>
             ) : (
               <>
@@ -908,7 +908,7 @@ export default function AIAssistant() {
                   : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300',
               )}
             >
-              <Archive size={13} /> {showArchived ? t('aiasst.backToConversations', { defaultValue: '返對話' }) : t('aiasst.archive', { defaultValue: '封存' })}
+              <Archive size={13} /> {showArchived ? t('aiasst.backToConversations', { defaultValue: '返回對話' }) : t('aiasst.archive', { defaultValue: '封存' })}
             </button>
             <button
               type="button"
@@ -931,7 +931,7 @@ export default function AIAssistant() {
             </IconButton>
           </Tooltip>
 
-          {/* 模型（輕量 segmented，唔似表單 select） */}
+          {/* 模型（輕量 segmented，不似表單 select） */}
           <SegmentedControl
             size="sm"
             value={activeModel}
@@ -1042,8 +1042,8 @@ export default function AIAssistant() {
               tagline={tagline}
               templates={welcomeTemplatesForMode(mode)}
               onPick={(t) => {
-                // 帶變數：直接開「填寫」表單（之前係開成個範本庫，要喺度再揀多次先填到）。
-                // 冇變數：直接填入 Composer。
+                // 帶變數：直接開「填寫」表單（之前係開成個範本庫，要在這裡再選擇多次先填到）。
+                // 沒有變數：直接填入 Composer。
                 if (t.body.includes('{{')) {
                   setTplInitialFill({ title: t.title, body: t.body })
                   setTemplateOpen(true)
@@ -1116,7 +1116,7 @@ export default function AIAssistant() {
           </div>
         )}
 
-        {/* 輸入區（貼底）— 獨立 Composer：自管輸入 state，打字完全唔會 re-render 父組件 */}
+        {/* 輸入區（貼底）— 獨立 Composer：自管輸入 state，打字完全不會 re-render 父組件 */}
         {/* 註：handlers 走 stable refs（onSendStable / onStopStable …），令 memo 真正生效。 */}
         <Composer
           seed={seed}
@@ -1212,8 +1212,8 @@ export default function AIAssistant() {
 // ════════════════════════════════════════════════════════════
 
 // ───────── 輸入區（獨立組件，自管 state）─────────
-// 關鍵修復：輸入 state 留喺呢度，打字唔會 re-render 父組件（訊息 / 側欄 / welcome 都唔郁），
-// 連中文 IME 組字都唔會被父組件嘅 re-render 打斷（之前每打一字都重 render → 「跳」）。
+// 關鍵修復：輸入 state 留在這裡，打字不會 re-render 父組件（訊息 / 側欄 / welcome 都不郁），
+// 連中文 IME 組字都不會被父組件的 re-render 打斷（之前每打一字都重 render → 「跳」）。
 // seed.n 一變 = 父組件要求載入文字（範本填入 / 開新對話清空 / 切模式）。
 const Composer = memo(function Composer({
   seed,
@@ -1235,17 +1235,17 @@ const Composer = memo(function Composer({
   onOpenContext: () => void
 }) {
   const { t } = useTranslation()
-  // 「完全非受控」輸入區：打字唔會引起任何 React state 改變／re-render。
-  // 之前就算抽咗去 Composer，每打一字都仲 setText → Composer subtree（連個 textarea）
-  // 重新 render；iOS Safari／中文 IME 喺呢個 subtree 重 render 嗰刻會中斷組字、
-  // 收埋鍵盤（「每打一字就彈走輸入法／打唔到字」）。
-  // 而家文字 100% 以 DOM（ref.current.value）為準；字數同送出掣狀態用 ref 直接改 DOM，
-  // 完全唔行 React state，所以打字途中個 subtree 一次都唔會 re-render。
+  // 「完全非受控」輸入區：打字不會引起任何 React state 改變／re-render。
+  // 之前就算抽了去 Composer，每打一字都還 setText → Composer subtree（連個 textarea）
+  // 重新 render；iOS Safari／中文 IME 在這個 subtree 重 render 嗰刻會中斷組字、
+  // 收埋鍵盤（「每打一字就彈走輸入法／打不到字」）。
+  // 現在文字 100% 以 DOM（ref.current.value）為準；字數同送出掣狀態用 ref 直接改 DOM，
+  // 完全不行 React state，所以打字途中個 subtree 一次都不會 re-render。
   const ref = useRef<HTMLTextAreaElement | null>(null)
   const countRef = useRef<HTMLSpanElement | null>(null)
   const sendRef = useRef<HTMLSpanElement | null>(null)
 
-  // 依家嘅輸入內容 → 即時更新「字數」同「送出掣」可否撳（純 DOM，唔 setState）
+  // 依家的輸入內容 → 即時更新「字數」同「送出掣」可否按（純 DOM，不 setState）
   const syncUi = () => {
     const v = ref.current?.value ?? ''
     const has = v.trim().length > 0
@@ -1273,7 +1273,7 @@ const Composer = memo(function Composer({
       node.focus()
       node.selectionStart = node.selectionEnd = node.value.length
     })
-    // 只喺 seed.n（父組件信號）變先載入；唔包 seed.text 入 deps 係刻意。
+    // 只在 seed.n（父組件信號）變先載入；不包 seed.text 入 deps 係刻意。
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [seed.n])
 
@@ -1287,7 +1287,7 @@ const Composer = memo(function Composer({
   }
 
   function onKeyDown(e: KeyboardEvent<HTMLTextAreaElement>) {
-    // 中文 IME 組字中（揀緊候選字）唔好攔截 Enter
+    // 中文 IME 組字中（選擇緊候選字）不要攔截 Enter
     if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
       e.preventDefault()
       submit()
@@ -1296,15 +1296,15 @@ const Composer = memo(function Composer({
 
   return (
     <div className="sticky bottom-0 rounded-2xl border border-slate-200/80 bg-white p-2 shadow-sm transition focus-within:border-accent/50 focus-within:ring-2 focus-within:ring-accent/20 dark:border-slate-700/70 dark:bg-slate-800 dark:shadow-none">
-      {/* ⚠️ iOS Safari：input/textarea font-size < 16px 會喺 focus 自動放大頁面，
+      {/* ⚠️ iOS Safari：input/textarea font-size < 16px 會在 focus 自動放大頁面，
          每次 focus 都引起 viewport zoom → 用戶見到「跳一跳」。所以手機強制 ≥16px。
-         desktop (sm:) 先回到原本嘅 13.5px 設計尺寸。 */}
+         desktop (sm:) 先回到原本的 13.5px 設計尺寸。 */}
       <Textarea
         ref={ref}
         rows={2}
         className="resize-none border-0 bg-transparent px-2.5 py-1.5 text-[16px] leading-relaxed shadow-none focus:ring-0 sm:text-[13.5px] dark:bg-transparent"
         placeholder={t('aiasst.composerPlaceholder', {
-          defaultValue: `打你想問嘅嘢…（Enter 送出 · Shift+Enter 換行 · ${MOD}/ 範本）`,
+          defaultValue: `輸入你想問的內容…（Enter 送出 · Shift+Enter 換行 · ${MOD}/ 範本）`,
           mod: MOD,
         })}
         defaultValue={seed.text}
@@ -1455,7 +1455,7 @@ function Welcome({
             {t('aiasst.welcomeGreeting', { defaultValue: greeting, greeting })}
           </h2>
           <p className="mx-auto max-w-md text-sm leading-relaxed text-slate-500 dark:text-slate-400">
-            {t('aiasst.welcomeSub', { defaultValue: '想由邊度開始？揀一個落手位，或者直接打低你想備嘅課、想出嘅題。' })}
+            {t('aiasst.welcomeSub', { defaultValue: '想從哪裡開始？選擇起點，或直接輸入你想準備的課題、想出的題目。' })}
           </p>
           <p className="pt-0.5 text-xs font-medium text-slate-400 dark:text-slate-500">
             {tagline}
@@ -1466,7 +1466,7 @@ function Welcome({
       <div className="w-full">
         <div className="mb-3 flex items-center gap-3 px-0.5 text-left">
           <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-            {t('aiasst.welcomeTryAsking', { defaultValue: '由呢度開始' })}
+            {t('aiasst.welcomeTryAsking', { defaultValue: '由這裡開始' })}
           </span>
           <span className="h-px flex-1 bg-slate-200/70 dark:bg-slate-700/60" />
         </div>
@@ -1498,7 +1498,7 @@ function Welcome({
         onClick={onOpenLibrary}
         className="inline-flex min-h-11 items-center gap-1.5 rounded-full px-3 text-xs font-medium text-slate-500 transition hover:bg-slate-100 hover:text-accent active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-accent"
       >
-        <Library size={14} /> {t('aiasst.welcomeSeeAllTemplates', { defaultValue: '睇晒全部範本' })}
+        <Library size={14} /> {t('aiasst.welcomeSeeAllTemplates', { defaultValue: '查看全部全部範本' })}
       </button>
     </div>
   )
@@ -1514,7 +1514,7 @@ const WELCOME_TONES = [
   'bg-rose-50 text-rose-600 dark:bg-rose-500/15 dark:text-rose-300',
 ]
 
-// temperature → 老師語言嘅「回應風格」（去 LLM jargon；唔再見 0–1 數字）
+// temperature → 老師語言的「回應風格」（去 LLM jargon；不再見 0–1 數字）
 type AiStyle = 'precise' | 'balanced' | 'creative'
 const STYLE_TEMP: Record<AiStyle, number> = { precise: 0.3, balanced: 0.6, creative: 0.9 }
 function tempToStyle(temp: number): AiStyle {
@@ -1523,7 +1523,7 @@ function tempToStyle(temp: number): AiStyle {
   return 'balanced'
 }
 
-// 落手位卡：按分類俾專屬 icon（取代一式一樣嘅 Sparkles 火花）
+// 落手位卡：按分類給專屬 icon（取代一式一樣的 Sparkles 火花）
 const CATEGORY_ICON: Record<string, typeof Sparkles> = {
   出題: ListChecks,
   教學: NotebookPen,
@@ -1640,7 +1640,7 @@ function MessageBubble({
       {!streaming && (
         <div
           className={cx(
-            // 一直可見（觸控裝置冇 hover）：靜止時於桌面淡淡地，hover / 鍵盤聚焦變實
+            // 一直可見（觸控裝置沒有 hover）：靜止時於桌面淡淡地，hover / 鍵盤聚焦變實
             'flex items-center gap-0.5 opacity-100 transition focus-within:opacity-100 [@media(hover:hover)]:opacity-50 [@media(hover:hover)]:group-hover:opacity-100',
             isUser ? 'pr-1' : 'pl-[42px]',
           )}
@@ -1700,7 +1700,7 @@ function TypingDots() {
   )
 }
 
-// ───────── 加入筆記 Modal（揀筆記本後存做個人筆記）─────────
+// ───────── 加入筆記 Modal（選擇筆記本後存做個人筆記）─────────
 function SaveNoteModal({
   open,
   content,
@@ -1715,7 +1715,7 @@ function SaveNoteModal({
   onSave: (notebookId: string | null) => void
 }) {
   const { t } = useTranslation()
-  // 預設揀「未分類」；每次開彈窗都重設
+  // 預設選擇「未分類」；每次開彈窗都重設
   const [nbId, setNbId] = useState<string | null>(null)
   useEffect(() => {
     if (open) setNbId(null)
@@ -1796,7 +1796,7 @@ function TemplateLibrary({
 }: {
   open: boolean
   onClose: () => void
-  /** 開庫時若帶此範本（且含變數），直接跳去「填寫」表單，唔使再喺 grid 揀多次。 */
+  /** 開庫時若帶此範本（且含變數），直接跳去「填寫」表單，不用再在 grid 選擇多次。 */
   initialFill?: { title: string; body: string } | null
   mode: ModeId
   custom: import('./aiAssistant/types').PromptTemplate[]
@@ -1811,7 +1811,7 @@ function TemplateLibrary({
   const [varValues, setVarValues] = useState<Record<string, string>>({})
 
   // 外部要求直接填寫某範本（Welcome chip 帶變數）：開庫即跳「填寫」子畫面。
-  // 用 useLayoutEffect 喺 paint 前 set 好 varFor，避免閃一閃 grid。
+  // 用 useLayoutEffect 在 paint 前 set 好 varFor，避免閃一閃 grid。
   useLayoutEffect(() => {
     if (!open || !initialFill) return
     const vars = extractVars(initialFill.body)
@@ -1876,7 +1876,7 @@ function TemplateLibrary({
   }
 
   async function delTpl(id: string) {
-    const ok = await confirm({ title: t('aiasst.tplDeleteConfirmTitle', { defaultValue: '刪除呢個範本？' }), tone: 'danger', confirmText: t('aiasst.tplDeleteConfirm', { defaultValue: '刪除' }) })
+    const ok = await confirm({ title: t('aiasst.tplDeleteConfirmTitle', { defaultValue: '刪除這個範本？' }), tone: 'danger', confirmText: t('aiasst.tplDeleteConfirm', { defaultValue: '刪除' }) })
     if (ok) {
       promptTemplatesCol.remove(id)
       toast.success(t('aiasst.tplToastDeleted', { defaultValue: '已刪除' }))
@@ -1894,7 +1894,7 @@ function TemplateLibrary({
         size="md"
         footer={
           <>
-            <Button variant="ghost" onClick={() => setVarFor(null)}>{t('aiasst.tplBackToTemplates', { defaultValue: '返範本' })}</Button>
+            <Button variant="ghost" onClick={() => setVarFor(null)}>{t('aiasst.tplBackToTemplates', { defaultValue: '返回範本' })}</Button>
             <Button
               icon={Check}
               onClick={() => {
@@ -1985,7 +1985,7 @@ function TemplateLibrary({
             )}
 
             {mine.length === 0 && !creating ? (
-              <EmptyState icon={Library} title={t('aiasst.tplEmptyMineTitle', { defaultValue: '仲未有自訂範本' })} hint={t('aiasst.tplEmptyMineHint', { defaultValue: '將常用要求存起，下次一按即用。' })} />
+              <EmptyState icon={Library} title={t('aiasst.tplEmptyMineTitle', { defaultValue: '尚未有自訂範本' })} hint={t('aiasst.tplEmptyMineHint', { defaultValue: '儲存常用要求，下次一按即用。' })} />
             ) : (
               <div className="grid max-h-[42vh] grid-cols-1 gap-2 overflow-y-auto sm:grid-cols-2">
                 {mine.map((tpl) => (
@@ -2080,7 +2080,7 @@ function ContextPicker({
   function addFree() {
     const b = freeBody.trim()
     if (!b) {
-      toast.error(t('aiasst.ctxToastEmpty', { defaultValue: '內容唔可以空白' }))
+      toast.error(t('aiasst.ctxToastEmpty', { defaultValue: '內容不可以空白' }))
       return
     }
     onChange([
@@ -2097,7 +2097,7 @@ function ContextPicker({
   return (
     <Modal open={open} onClose={onClose} title={t('aiasst.ctxLinkTitle', { defaultValue: '連結上下文資料' })} size="lg">
       <p className="mb-3 text-xs text-slate-400">
-        {t('aiasst.ctxIntro', { defaultValue: `揀啲筆記 / 紀錄做參考，AI 回答時會優先扣連呢啲內容。已揀 ${current.length} 份。`, count: current.length })}
+        {t('aiasst.ctxIntro', { defaultValue: `選擇些筆記 / 紀錄做參考，AI 回答時會優先扣連這些內容。已選擇 ${current.length} 份。`, count: current.length })}
       </p>
       <div className="mb-3 flex flex-wrap items-center gap-2">
         <SegmentedControl
@@ -2177,7 +2177,7 @@ function ContextPicker({
         {tab === 'text' && (
           <div className="space-y-2">
             <Input placeholder={t('aiasst.ctxFreeTitlePlaceholder', { defaultValue: '標題（選填）' })} value={freeTitle} onChange={(e) => setFreeTitle(e.target.value)} />
-            <Textarea rows={5} placeholder={t('aiasst.ctxFreeBodyPlaceholder', { defaultValue: '貼上你想 AI 參考嘅文字…' })} value={freeBody} onChange={(e) => setFreeBody(e.target.value)} />
+            <Textarea rows={5} placeholder={t('aiasst.ctxFreeBodyPlaceholder', { defaultValue: '貼上你想 AI 參考的文字…' })} value={freeBody} onChange={(e) => setFreeBody(e.target.value)} />
             <Button size="sm" icon={Plus} onClick={addFree}>{t('aiasst.ctxAddContext', { defaultValue: '加入上下文' })}</Button>
           </div>
         )}
@@ -2411,14 +2411,14 @@ function CommandPalette({
               else if (e.key === 'Enter') { e.preventDefault(); run(clampedHi) }
               else if (e.key === 'Escape') onClose()
             }}
-            placeholder={t('aiasst.palettePlaceholder', { defaultValue: '搵指令或對話…' })}
+            placeholder={t('aiasst.palettePlaceholder', { defaultValue: '搜尋指令或對話…' })}
             className="flex-1 bg-transparent py-3 text-base sm:text-sm text-slate-700 outline-none placeholder:text-slate-400 dark:text-slate-200"
           />
           <Kbd>esc</Kbd>
         </div>
         <div className="max-h-[50vh] overflow-y-auto p-1.5">
           {flat.length === 0 ? (
-            <p className="py-6 text-center text-sm text-slate-400">{t('aiasst.paletteEmpty', { defaultValue: '搵唔到嘢' })}</p>
+            <p className="py-6 text-center text-sm text-slate-400">{t('aiasst.paletteEmpty', { defaultValue: '搜尋不到內容' })}</p>
           ) : (
             <>
               {actItems.length > 0 && <PaletteLabel>{t('aiasst.paletteSectionCommands', { defaultValue: '指令' })}</PaletteLabel>}

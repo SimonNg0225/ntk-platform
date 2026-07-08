@@ -13,15 +13,15 @@ import ExportBar from './ExportBar'
 let seq = 0
 const newId = () => `scan-${Date.now()}-${seq++}`
 
-// ───────── 掃描教學引導（FeatureGuide：3 步「點用」）─────────
+// ───────── 掃描教學引導（FeatureGuide：3 步「如何使用」）─────────
 const SCAN_GUIDE: FeatureGuideStep[] = [
   {
     title: '影低或上載',
-    desc: '撳「開始掃描」用鏡頭影文件，或上載相片，逐頁加入。',
+    desc: '按「開始掃描」用鏡頭影文件，或上載相片，逐頁加入。',
   },
   {
     title: '拉正＋執相',
-    desc: '系統自動偵測四角拉正；可手動微調邊界、揀濾鏡令字更清。',
+    desc: '系統自動偵測四角拉正；可手動微調邊界、選擇濾鏡令字更清。',
   },
   {
     title: '輸出 PDF',
@@ -87,7 +87,7 @@ export default function Scan() {
         <>
           <FeatureGuide
             storageKey="scan"
-            title={t('scan.guideTitle', { defaultValue: '掃描 PDF 點用？' })}
+            title={t('scan.guideTitle', { defaultValue: '掃描 PDF 使用說明' })}
             steps={SCAN_GUIDE}
           />
           <EmptyState

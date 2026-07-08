@@ -85,7 +85,7 @@ interface SlashCommand {
   keywords: string[]
   /** 插入文字（可為函式，apply 時先計，例如日期） */
   insert: string | (() => string)
-  /** 插入後游標相對插入起點嘅位置（預設 = 插入文字長度，即末尾） */
+  /** 插入後游標相對插入內容來源的位置（預設 = 插入文字長度，即末尾） */
   caret?: number
 }
 const SLASH_COMMANDS: SlashCommand[] = [
@@ -111,7 +111,7 @@ const SLASH_COMMANDS: SlashCommand[] = [
 // ───────── AI × 筆記（一次過 complete） ─────────
 type AiKind = 'summary' | 'points' | 'tags' | 'polish'
 const AI_NOTE_SYSTEM =
-  '你係一個筆記助理。用繁體中文（可書面廣東話），簡潔、實用、貼題，唔好多餘客套。'
+  '你是一位筆記助理。用繁體中文（可書面廣東話），簡潔、實用、貼題，不要多餘客套。'
 const AI_NOTE_TASKS: Record<
   AiKind,
   { label: string; verb: string; apply: 'append' | 'replace'; prompt: (c: string) => string }
@@ -135,14 +135,14 @@ const AI_NOTE_TASKS: Record<
     verb: '加到筆記末',
     apply: 'append',
     prompt: (c) =>
-      `為以下筆記建議 3-6 個分類標籤。淨係回傳以空格分隔嘅標籤，每個前面加 #，唔好任何其他文字：\n\n${c}`,
+      `為以下筆記建議 3-6 個分類標籤。只回傳以空格分隔的標籤，每個前面加 #，不要任何其他文字：\n\n${c}`,
   },
   polish: {
     label: '潤飾文字',
     verb: '取代內文',
     apply: 'replace',
     prompt: (c) =>
-      `潤飾以下筆記嘅文字，令佢更清晰流暢，保留原意同 Markdown 結構。直接回傳潤飾後嘅全文，唔好加任何解釋：\n\n${c}`,
+      `潤飾以下筆記的文字，令他更清晰流暢，保留原意同 Markdown 結構。直接回傳潤飾後的全文，不要加任何解釋：\n\n${c}`,
   },
 }
 
@@ -158,9 +158,9 @@ export default function Editor({
   notebooks: Notebook[]
   /** 全部筆記（解析 [[連結]] / 反向連結用） */
   allNotes: RichNote[]
-  /** 撳 [[標題]]：解析現有筆記就開，冇就建立 */
+  /** 按 [[標題]]：解析現有筆記就開，沒有就建立 */
   onOpenLink: (title: string) => void
-  /** 撳反向連結：直接以 id 開該筆記 */
+  /** 按反向連結：直接以 id 開該筆記 */
   onOpenNote: (id: string) => void
   onClose?: () => void
 }) {
@@ -171,17 +171,17 @@ export default function Editor({
   const [title, setTitle] = useState(note.title)
   const [content, setContent] = useState(note.content)
   const [mode, setMode] = useState<'edit' | 'preview'>('edit')
-  // / 斜線指令選單（at = '/' 喺內文嘅 index；top = 相對編輯區嘅大約 px）
+  // / 斜線指令選單（at = '/' 在內文的 index；top = 相對編輯區的大約 px）
   const [slash, setSlash] = useState<{ query: string; at: number; top: number } | null>(null)
   const [slashIdx, setSlashIdx] = useState(0)
-  // AI × 筆記：開緊邊個任務（null = 冇）
+  // AI × 筆記：開緊哪個任務（null = 沒有）
   const [aiKind, setAiKind] = useState<AiKind | null>(null)
   // 校對 / 出練習 modal
   const [proofOpen, setProofOpen] = useState(false)
   const [practiceOpen, setPracticeOpen] = useState(false)
 
   // 持有「目前 title/content 屬於邊一則筆記」+ 已寫入快照。
-  // 用嚟喺切走 / 卸載時即時 flush 未存內容（避免遺失），同時
+  // 用來在切走 / 卸載時即時 flush 未存內容（避免遺失），同時
   // 靠 saved 快照避免重複 / 多餘寫入。
   const live = useRef({
     id: note.id,
@@ -283,7 +283,7 @@ export default function Editor({
 
   function runAi(kind: AiKind) {
     if (!content.trim()) {
-      toast.info('未有內容可以畀 AI 處理')
+      toast.info('未有內容可以給 AI 處理')
       return
     }
     if (!isAIConfigured) {
@@ -303,7 +303,7 @@ export default function Editor({
   // 校對 / 出練習：共用守門（要有內容 + AI 已啟用）
   function openTool(tool: 'proof' | 'practice') {
     if (!content.trim()) {
-      toast.info('未有內容可以畀 AI 處理')
+      toast.info('未有內容可以給 AI 處理')
       return
     }
     if (!isAIConfigured) {
@@ -359,7 +359,7 @@ export default function Editor({
   }
 
   const preview = useMemo(() => parseLines(content), [content])
-  // [[雙向連結]]：本篇射出去嘅連結 + 反向連結（用 live title/content 配對）
+  // [[雙向連結]]：本篇射出去的連結 + 反向連結（用 live title/content 配對）
   const outgoing = useMemo(() => parseWikiLinks(content), [content])
   const backlinks = useMemo(
     () => backlinksOf(allNotes.filter((n) => !n.trashed), { ...note, title, content }),
@@ -567,7 +567,7 @@ export default function Editor({
         <input
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder="畀個標題…"
+          placeholder="給個標題…"
           className="relative w-full bg-transparent text-2xl font-semibold tracking-tight text-slate-800 outline-none placeholder:text-slate-300 dark:text-slate-100 dark:placeholder:text-slate-600"
         />
         <div className="relative mb-3 mt-1 text-[11px] italic tabular-nums text-slate-400 dark:text-slate-500">
@@ -632,7 +632,7 @@ export default function Editor({
               }}
               onBlur={() => setTimeout(() => setSlash(null), 150)}
               rows={Math.max(12, Math.min(28, content.split('\n').length + 2))}
-              placeholder="由呢度落筆……　可以用 #標籤 歸類、- [ ] 整待辦，打 / 插入區塊。"
+              placeholder="由這裡落筆……　可以用 #標籤 歸類、- [ ] 整待辦，打 / 插入區塊。"
               className="border-0 bg-transparent px-0 text-[15px] leading-7 shadow-none focus:ring-0 dark:bg-transparent"
             />
             {slash && slashItems.length > 0 && (
@@ -855,7 +855,7 @@ function PreviewBody({
 }
 
 // 簡易 inline 渲染：高亮 #標籤 + 可點 [[雙向連結]]
-// 註：用 <span role="link"> 而非 <button>，因為呢個可能渲染喺待辦行嘅 <button> 入面（避免巢狀 button）。
+// 註：用 <span role="link"> 而非 <button>，因為這個可能渲染在待辦行的 <button> 中（避免巢狀 button）。
 function renderInline(text: string, onLink?: (title: string) => void) {
   const parts = text.split(/(\[\[[^[\]]+\]\]|#[\p{L}\p{N}_-]+)/gu)
   return parts.map((p, i) => {
@@ -974,7 +974,7 @@ function AINoteModal({
     >
       {loading ? (
         <div className="flex items-center gap-2 py-10 text-sm text-slate-500 dark:text-slate-400">
-          <Sparkles size={16} className="animate-pulse text-accent" /> AI 生成緊…
+          <Sparkles size={16} className="animate-pulse text-accent" /> AI 生成中…
         </div>
       ) : error ? (
         <p className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700 dark:bg-rose-500/10 dark:text-rose-300">

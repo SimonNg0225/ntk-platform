@@ -37,7 +37,7 @@ import {
 //  行政文件 — hub feature（selfManagedHeader）
 //  ------------------------------------------------------------
 //  · hero：共用 PageHero accent 色塊（統一各功能頁頂部語言）
-//  · FeatureGuide：教用家三步點用（上載 → 填寫 → 下載）
+//  · FeatureGuide：教用家三步如何使用（上載 → 填寫 → 下載）
 //  · 範本庫：useAdminDocTemplates 出卡，每張「填寫」/「刪除」
 //  · 「＋ 新範本」開 TemplateUpload；空狀態引導式 CTA
 //  老師上載 Word（{標籤}）或 PDF（填寫欄位）範本 → 逐欄填 →
@@ -62,7 +62,7 @@ export default function AdminDocs() {
   const confirm = useConfirm()
 
   const [uploadOpen, setUploadOpen] = useState(false)
-  // 正在填寫嘅範本 id；null = 唔喺填寫畫面。
+  // 正在填寫的範本 id；null = 不在填寫畫面。
   const [fillingId, setFillingId] = useState<string | null>(null)
 
   const filling = useMemo<AdminDocTemplate | undefined>(
@@ -70,27 +70,27 @@ export default function AdminDocs() {
     [templates, fillingId],
   )
 
-  // 教學引導步驟（inline t；唔改共用 i18n 檔）
+  // 教學引導步驟（inline t；不改共用 i18n 檔）
   const ADMIN_DOCS_GUIDE: FeatureGuideStep[] = [
     {
       title: t('adminDocs.guideStep1Title', { defaultValue: '上載範本' }),
       desc: t('adminDocs.guideStep1Desc', {
         defaultValue:
-          '撳「新範本」，揀一份 Word（句子入面寫 {標籤}）或有填寫欄位嘅 PDF，例如通告、申請表。',
+          '按「新範本」，選擇一份 Word（句子中寫 {標籤}）或有填寫欄位的 PDF，例如通告、申請表。',
       }),
     },
     {
       title: t('adminDocs.guideStep2Title', { defaultValue: '逐欄填寫' }),
       desc: t('adminDocs.guideStep2Desc', {
         defaultValue:
-          '撳範本上嘅「填寫」，系統自動認出每個欄位，逐格填返學生／日期／內容。',
+          '按範本上的「填寫」，系統自動認出每個欄位，逐格填上學生／日期／內容。',
       }),
     },
     {
       title: t('adminDocs.guideStep3Title', { defaultValue: '原格式下載去印' }),
       desc: t('adminDocs.guideStep3Desc', {
         defaultValue:
-          '即時生成 .docx / .pdf，100% 保留原本排版同字體，下載出嚟直接印。',
+          '即時生成 .docx / .pdf，100% 保留原本排版同字體，下載出來直接印。',
       }),
     },
   ]
@@ -131,10 +131,10 @@ export default function AdminDocs() {
         }
       />
 
-      {/* ───────── 教學引導：點用呢個功能 ───────── */}
+      {/* ───────── 教學引導：如何使用此功能 ───────── */}
       <FeatureGuide
         storageKey="work-admin-docs"
-        title={t('adminDocs.guideTitle', { defaultValue: '行政文件點用？' })}
+        title={t('adminDocs.guideTitle', { defaultValue: '行政文件使用說明' })}
         steps={ADMIN_DOCS_GUIDE}
       />
 
@@ -145,7 +145,7 @@ export default function AdminDocs() {
           title={t('adminDocs.emptyTitle', { defaultValue: '未有任何範本' })}
           hint={t('adminDocs.emptyHint', {
             defaultValue:
-              '上載一份 Word 範本（句子入面寫 {標籤}）或有填寫欄位的 PDF，例如家長通告、申請表，之後逐欄填寫即可一鍵生成。',
+              '上載一份 Word 範本（句子中寫 {標籤}）或有填寫欄位的 PDF，例如家長通告、申請表，之後逐欄填寫即可一鍵生成。',
           })}
           action={
             <Button onClick={() => setUploadOpen(true)} icon={Plus}>
@@ -155,7 +155,7 @@ export default function AdminDocs() {
         />
       ) : (
         <section>
-          {/* 區段小標頭（純中文：用 text-slate-500，唔落 uppercase/tracking 免字距散）*/}
+          {/* 區段小標頭（純中文：用 text-slate-500，不落 uppercase/tracking 免字距散）*/}
           <div className="mb-3">
             <h2 className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400">
               <FileStack size={14} />
@@ -166,7 +166,7 @@ export default function AdminDocs() {
             </h2>
             <p className="mt-0.5 text-xs text-slate-400 dark:text-slate-500">
               {t('adminDocs.libraryDesc', {
-                defaultValue: '撳「填寫」逐欄填好，即可下載去印。',
+                defaultValue: '按「填寫」逐欄填好，即可下載去印。',
               })}
             </p>
           </div>

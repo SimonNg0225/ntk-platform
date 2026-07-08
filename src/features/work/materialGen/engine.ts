@@ -6,18 +6,18 @@ import { DIFF_LABEL } from '../questionbank/util'
 // ============================================================
 //  教材生成共用引擎（materialGen/engine）
 //  ------------------------------------------------------------
-//  由題庫（QuestionBank）原有 AI 出題流程抽出嚟嘅共用 module：
+//  由題庫（QuestionBank）原有 AI 出題流程抽出來的共用 module：
 //    buildPrompt → complete() → extractJsonArray → parseDrafts
 //  支援 4 種 kind：mc / short / long / case，全部產出 GenDraft，
 //  GenDraft 同 Question model 相容，可直接 spread 入 questionsCol.add。
 //
-//  · mc / short：行為同題庫原本完全一致（題庫 inline 出題沿用呢度）。
+//  · mc / short：行為同題庫原本完全一致（題庫 inline 出題沿用這裡）。
 //  · long（結構式長題）／case（個案）：AI 回多部分 JSON，parse 時把
-//    parts 嘅小題平鋪入 stem（題幹／情境 + 換行 + "(a) … (b) …"），
+//    parts 的小題平鋪入 stem（題幹／情境 + 換行 + "(a) … (b) …"），
 //    marking scheme 入 answer，marks 為總分 —— 維持 Question model 不變
-//    （YAGNI，唔加新欄）。
+//    （YAGNI，不加新欄）。
 //
-//  本檔純邏輯，唔 import 任何 React / UI。
+//  本檔純邏輯，不 import 任何 React / UI。
 // ============================================================
 
 /** 生成題型；同 QuestionType 完全一致，方便直接落 questionsCol */
@@ -44,7 +44,7 @@ export interface GenOptions {
   count: number
   extra: string
   model?: AIModel
-  /** 科目名（令出題貼返科；唔傳就用通用高中語境）。 */
+  /** 科目名（令出題貼返科；不傳就用通用高中語境）。 */
   subject?: string
 }
 
@@ -59,8 +59,8 @@ const KIND_WORD: Record<GenKind, string> = {
 }
 
 // ───────── buildPrompt ─────────
-// 每個 kind 要 AI 回唔同 shape 嘅 JSON 陣列；全部繁中、貼香港高中課堂，
-// 並明確要求「只回 JSON 陣列、陣列以外冇任何文字」。
+// 每個 kind 要 AI 回不同 shape 的 JSON 陣列；全部繁中、貼香港高中課堂，
+// 並明確要求「只回 JSON 陣列、陣列以外沒有任何文字」。
 export function buildPrompt(
   kind: GenKind,
   topicName: string,
@@ -69,7 +69,7 @@ export function buildPrompt(
   const diffWord = DIFF_LABEL[opts.difficulty]
   const extra = opts.extra.trim()
   const subj = opts.subject?.trim()
-  const persona = subj ? `你係香港高中「${subj}」科老師` : '你係香港高中老師'
+  const persona = subj ? `你是香港高中「${subj}」科老師` : '你是香港高中老師'
 
   let shape: string
   switch (kind) {
@@ -86,7 +86,7 @@ export function buildPrompt(
       break
     case 'case':
       shape =
-        '{ "scenario": "個案情境描述（貼合該科嘅真實情境）", "parts": [{ "label": "(a)", "q": "引導小題", "marks": 4 }, { "label": "(b)", "q": "引導小題", "marks": 6 }], "marking": "整體評分準則 / 參考答案" }（parts 至少 2 個引導小題）'
+        '{ "scenario": "個案情境描述（貼合該科的真實情境）", "parts": [{ "label": "(a)", "q": "引導小題", "marks": 4 }, { "label": "(b)", "q": "引導小題", "marks": 6 }], "marking": "整體評分準則 / 參考答案" }（parts 至少 2 個引導小題）'
       break
   }
 
@@ -101,8 +101,8 @@ export function buildPrompt(
       : '',
     extra ? `額外要求：${extra}` : '',
     '',
-    `只回一個 JSON 陣列（唔好有任何解釋文字、唔好 markdown），每個元素格式：${shape}`,
-    '陣列以外唔好有任何文字。',
+    `只回一個 JSON 陣列（不要有任何解釋文字、不要 markdown），每個元素格式：${shape}`,
+    '陣列以外不要有任何文字。',
   ]
     .filter(Boolean)
     .join('\n')
@@ -110,7 +110,7 @@ export function buildPrompt(
 
 // ───────── parseDrafts ─────────
 // 寬鬆容錯：逐項嘗試解析；任何無效項（無題幹 / 選項不足等）一律略過。
-// long / case 喺呢度做「平鋪」：把 parts 嘅小題拼入 stem，marking 入 answer。
+// long / case 在這裡做「平鋪」：把 parts 的小題拼入 stem，marking 入 answer。
 
 function trimStr(v: unknown): string {
   return typeof v === 'string' ? v.trim() : ''

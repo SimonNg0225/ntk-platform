@@ -2,7 +2,7 @@ import type { HealthLog, HealthGoals, MetricKey } from './types'
 
 // ============================================================
 //  健康統計引擎（純函式；本地時區 key，避開 toISOString UTC 漂移）
-//  全部聚合對「無資料」「除零」「空窗」有守衞，唔會回 NaN / Infinity。
+//  全部聚合對「無資料」「除零」「空窗」有守衞，不會回 NaN / Infinity。
 // ============================================================
 
 export const WEEKDAY_LABELS = ['日', '一', '二', '三', '四', '五', '六'] as const
@@ -72,7 +72,7 @@ export function latestEntry(
   return e.length ? e[e.length - 1] : null
 }
 
-/** 近 n 日逐日序列（無資料嗰日 value=null，畀圖表斷點） */
+/** 近 n 日逐日序列（無資料嗰日 value=null，給圖表斷點） */
 export function seriesOf(
   logs: HealthLog[],
   key: MetricKey,
@@ -86,7 +86,7 @@ export function seriesOf(
   })
 }
 
-/** 近 n 日該指標平均（只計有記錄嘅日；全無 → null，唔回 NaN） */
+/** 近 n 日該指標平均（只計有記錄的日；全無 → null，不回 NaN） */
 export function average(
   logs: HealthLog[],
   key: MetricKey,
@@ -111,8 +111,8 @@ export function waterOn(logs: HealthLog[], date: string): number {
 }
 
 /**
- * 體重趨勢：最新體重 + 對比約 days 日前嘅變化（kg）。
- * 唔夠兩筆（或只得當日一筆）→ delta = null。
+ * 體重趨勢：最新體重 + 對比約 days 日前的變化（kg）。
+ * 不夠兩筆（或只得當日一筆）→ delta = null。
  */
 export function weightTrend(
   logs: HealthLog[],
@@ -123,7 +123,7 @@ export function weightTrend(
   if (entries.length === 0) return null
   const latest = entries[entries.length - 1]
   const cutoff = toKey(addDays(anchor, -days))
-  // 取截止日或之前最近一筆做比較基準；冇就用最早一筆。
+  // 取截止日或之前最近一筆做比較基準；沒有就用最早一筆。
   let prev: { date: string; value: number } | undefined
   for (const e of entries) {
     if (e.date <= cutoff) prev = e
@@ -134,7 +134,7 @@ export function weightTrend(
 }
 
 /**
- * 達標百分比（value / target）。target<=0 → 0；可超過 100（呼叫端決定要唔要封頂）。
+ * 達標百分比（value / target）。target<=0 → 0；可超過 100（呼叫端決定要不要封頂）。
  * 負值 value → 0。
  */
 export function goalPct(value: number, target: number): number {
@@ -144,7 +144,7 @@ export function goalPct(value: number, target: number): number {
 }
 
 /**
- * 記錄連續日數（streak）：由今日（無記錄則由琴日）往前數，連續有「任何指標記錄」嘅日。
+ * 記錄連續日數（streak）：由今日（無記錄則由琴日）往前數，連續有「任何指標記錄」的日。
  * 用日曆連續日定義（最直觀）。
  */
 export function loggingStreak(logs: HealthLog[], anchor: Date = new Date()): number {
@@ -162,7 +162,7 @@ export function loggingStreak(logs: HealthLog[], anchor: Date = new Date()): num
 
 // ───────── CSV 匯出 ─────────
 /**
- * 健康每日記錄 → CSV（UTF-8，呼叫端自行加 BOM 畀 Excel）。
+ * 健康每日記錄 → CSV（UTF-8，呼叫端自行加 BOM 給 Excel）。
  * 表頭固定 5 指標 + 備註，按 date 升序，缺值留空白；
  * 備註換行轉空格。CSV 砌法（esc 雙引號跳脫 + 每格包引號 + join）
  * 對齊 focus/store.ts logsToCsv，全 repo 同一風格。
@@ -205,7 +205,7 @@ export interface HealthSummary {
   loggedToday: boolean
 }
 
-/** 儀表板 / 概覽用嘅一站式快照。 */
+/** 儀表板 / 概覽用的一站式快照。 */
 export function summarize(
   logs: HealthLog[],
   goals: HealthGoals,

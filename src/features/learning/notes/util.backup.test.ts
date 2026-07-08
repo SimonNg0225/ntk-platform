@@ -176,7 +176,7 @@ describe('parseNotesImport（寬鬆）', () => {
     expect(parseNotesImport('123')).toBeNull()
     expect(parseNotesImport('"str"')).toBeNull()
     expect(parseNotesImport('null')).toBeNull()
-    expect(parseNotesImport('[]')).toBeNull() // 陣列頂層唔係備份信封
+    expect(parseNotesImport('[]')).toBeNull() // 陣列頂層不是備份信封
     expect(parseNotesImport('{}')).toBeNull() // 無 notes 又無 notebooks
   })
 })

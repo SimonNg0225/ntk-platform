@@ -1,11 +1,11 @@
 // ============================================================
 //  工作儀表板：功能專屬型別
 //  ------------------------------------------------------------
-//  儀表板本身唔產生新資料（除咗版面設定，見 store.ts），
-//  以下純粹係「彙整後嘅記憶體 view model」型別。
+//  儀表板本身不產生新資料（除了版面設定，見 store.ts），
+//  以下純粹係「彙整後的記憶體 view model」型別。
 // ============================================================
 
-// 可配置 widget 嘅穩定 id（順序見 store DEFAULT_WIDGET_ORDER）
+// 可配置 widget 的穩定 id（順序見 store DEFAULT_WIDGET_ORDER）
 export type WidgetId =
   | 'kpi' // 四宮格 KPI（含週對比趨勢）
   | 'focus' // 今日聚焦（一句話 + 重點數字）
@@ -33,7 +33,7 @@ export interface AgendaItem {
   overdue?: boolean
   done?: boolean
   taskId?: string // kind=task：可一鍵完成
-  navTo?: string // 點擊跳去邊個功能
+  navTo?: string // 點擊跳去哪個功能
 }
 
 // ───────── 趨勢資料點（待辦完成）─────────

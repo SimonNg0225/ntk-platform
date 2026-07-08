@@ -273,7 +273,7 @@ describe("buildQueue（order='random' —— Fisher–Yates 洗牌）", () => {
   it('回傳同一組 id：長度一致、無重複、無遺漏（與 random 值無關）', () => {
     const ids = ['a', 'b', 'c', 'd', 'e']
     const cards: Card[] = ids.map((id) => mkCard({ id }))
-    // 用一條「亂數」序列（非全 0），確保真係有打亂而唔係剛好原樣
+    // 用一條「亂數」序列（非全 0），確保真係有打亂而不是剛好原樣
     stubRandom([0.7, 0.1, 0.9, 0.3])
     const q = buildQueue({
       deckId: 'd',
@@ -500,9 +500,9 @@ describe('dueForecast（未來 N 日將到期卡數，分 young / mature）', ()
     expect(f.every((b) => b.young === 0 && b.mature === 0)).toBe(true)
   })
 
-  it('label：i0 = 今日、i1 = 聽日、其餘 = +i', () => {
+  it('label：i0 = 今日、i1 = 明天、其餘 = +i', () => {
     const f = dueForecast([], [], 5)
-    expect(f.map((b) => b.label)).toEqual(['今日', '聽日', '+2', '+3', '+4'])
+    expect(f.map((b) => b.label)).toEqual(['今日', '明天', '+2', '+3', '+4'])
     expect(f[0].key).toBe(TODAY)
     expect(f[1].key).toBe(addDaysKey(TODAY, 1))
   })

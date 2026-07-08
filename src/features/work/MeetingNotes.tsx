@@ -85,14 +85,14 @@ import {
 } from './meetingNotes/util'
 
 // ============================================================
-//  會議 / 行政筆記 — 媲美 Notion / Fellow.app 嘅會議工作枱
+//  會議 / 行政筆記 — 媲美 Notion / Fellow.app 的會議工作枱
 //  ------------------------------------------------------------
 //  · 三視圖：筆記 / 行動中心 / 統計分析
 //  · 結構化會議：類型、出席者、時間地點、議決、行動項目（負責人+到期）
 //  · 議程範本 · 由內容自動抽取行動 / 決議 · 置頂 · 列印 · 複製
 //  · 跨會議「行動中心」追蹤所有跟進事項（逾期 / 即將到期 / 篩選 / 勾選）
 //  · 自製 SVG 圖表（月度會議數、類型分布、完成率環）
-//  · 共用 MeetingNote 唔改；擴充欄位存自家 meeting_note_meta
+//  · 共用 MeetingNote 不改；擴充欄位存自家 meeting_note_meta
 // ============================================================
 
 type View = 'notes' | 'actions' | 'stats'
@@ -130,7 +130,7 @@ function dueBadgeTone(due: string | undefined, done: boolean) {
   return { tone: 'slate' as const, label: '' }
 }
 
-// 筆記卡左側類型色脊（對應 MEETING_TYPE_META 嘅 BadgeTone）
+// 筆記卡左側類型色脊（對應 MEETING_TYPE_META 的 BadgeTone）
 const TYPE_RAIL: Record<string, string> = {
   accent: 'bg-accent',
   blue: 'bg-sky-500',
@@ -281,7 +281,7 @@ export default function MeetingNotes() {
   // ───────── 合併資料 ─────────
   const merged = useMemo(() => mergeNotes(notes, metas), [notes, metas])
 
-  // 常用出席者：彙總過往記事嘅出席者，按出現次數排（畀編輯器快速一撳加）。
+  // 常用出席者：彙總過往記事的出席者，按出現次數排（給編輯器快速一按加）。
   const suggestedAttendees = useMemo(() => {
     const freq = new Map<string, number>()
     for (const m of metas) {
@@ -306,14 +306,14 @@ export default function MeetingNotes() {
   const allActions = useMemo(() => collectActions(merged), [merged])
   const stats = useMemo(() => actionStats(allActions), [allActions])
 
-  // 各類型數量（畀 Pills 顯示）
+  // 各類型數量（給 Pills 顯示）
   const typeCounts = useMemo(() => {
     const c: Partial<Record<MeetingType | 'all', number>> = { all: merged.length }
     for (const { meta } of merged) c[meta.type] = (c[meta.type] ?? 0) + 1
     return c
   }, [merged])
 
-  // ───────── 篩選 + 排序後嘅筆記 ─────────
+  // ───────── 篩選 + 排序後的筆記 ─────────
   const openCountOf = (m: MergedNote) =>
     m.meta.actions.filter((a) => !a.done).length
 
@@ -342,7 +342,7 @@ export default function MeetingNotes() {
     return filtered.slice().sort(cmp[sortKey])
   }, [merged, search, typeFilter, activeTag, sortKey])
 
-  // 置頂 / 一般分組（只喺預設日期排序時拆置頂，避免同其他排序打架）
+  // 置頂 / 一般分組（只在預設日期排序時拆置頂，避免同其他排序打架）
   const pinned = useMemo(
     () => visibleNotes.filter((m) => m.meta.pinned),
     [visibleNotes],
@@ -382,7 +382,7 @@ export default function MeetingNotes() {
   }, [allActions, actionFilter])
 
   // ───────── 行動中心：按負責人問責分組（只計未完成）─────────
-  // 「按負責人」本身就係篩選維度，固定睇全部未完成項目，唔受上方 segment 影響。
+  // 「按負責人」本身就係篩選維度，固定查看全部未完成項目，不受上方 segment 影響。
   const ownerGroups = useMemo(
     () => actionsByOwner(allActions).filter((g) => g.open > 0),
     [allActions],
@@ -519,7 +519,7 @@ export default function MeetingNotes() {
     }
   }
 
-  // 喺行動中心 / 詳情勾選行動項目（直接寫返 meta）
+  // 在行動中心 / 詳情勾選行動項目（直接寫回 meta）
   function toggleAction(noteId: string, actionId: string) {
     const m = mergedById.get(noteId)
     if (!m) return
@@ -535,7 +535,7 @@ export default function MeetingNotes() {
   // ============================================================
   //  Render
   // ============================================================
-  // 行動中心提示：撳統計磚跳去對應篩選
+  // 行動中心提示：按統計磚跳去對應篩選
   function openActions(filter: ActionFilter) {
     setActionGroupBy('list')
     setActionFilter(filter)
@@ -549,16 +549,16 @@ export default function MeetingNotes() {
         guideKey="meetingNotes"
         icon={NotebookPen}
         kicker={t('meetingNotes.kicker', { defaultValue: '會議筆記' })}
-        title={t('meetingNotes.title', { defaultValue: '記低每場會議，跟進唔甩' })}
+        title={t('meetingNotes.title', { defaultValue: '記低每場會議，跟進不甩' })}
         description={
           stats.open > 0
             ? t('meetingNotes.heroOpen', {
                 n: stats.open,
-                defaultValue: `仲有 ${stats.open} 項跟進等緊你處理。`,
+                defaultValue: `還有 ${stats.open} 項跟進等緊你處理。`,
               })
             : stats.total > 0
-              ? t('meetingNotes.heroClear', { defaultValue: '所有跟進都搞掂晒，乾淨企理。' })
-              : t('meetingNotes.heroEmpty', { defaultValue: '由第一場會議開始，建立你嘅會議紀錄。' })
+              ? t('meetingNotes.heroClear', { defaultValue: '所有跟進都完成全部，乾淨企理。' })
+              : t('meetingNotes.heroEmpty', { defaultValue: '由第一場會議開始，建立你的會議紀錄。' })
         }
         actions={
           <button
@@ -655,15 +655,15 @@ export default function MeetingNotes() {
         />
       </section>
 
-      {/* ───────── 教學引導：點用會議筆記 ───────── */}
+      {/* ───────── 教學引導：如何使用會議筆記 ───────── */}
       <FeatureGuide
         storageKey="meetingNotes"
-        title={t('meetingNotes.guideTitle', { defaultValue: '會議筆記點用？' })}
+        title={t('meetingNotes.guideTitle', { defaultValue: '會議筆記使用說明' })}
         steps={[
           {
             title: t('meetingNotes.guideStep1Title', { defaultValue: '新增會議' }),
             desc: t('meetingNotes.guideStep1Desc', {
-              defaultValue: '撳「新增筆記」記低會議類型、時間、出席者；可套用議程範本快速開始。',
+              defaultValue: '按「新增筆記」記低會議類型、時間、出席者；可套用議程範本快速開始。',
             }),
           },
           {
@@ -675,7 +675,7 @@ export default function MeetingNotes() {
           {
             title: t('meetingNotes.guideStep3Title', { defaultValue: '跨會議追跟進' }),
             desc: t('meetingNotes.guideStep3Desc', {
-              defaultValue: '去「行動中心」一覽所有跟進，按逾期 / 負責人分類，剔咗即更新。',
+              defaultValue: '去「行動中心」一覽所有跟進，按逾期 / 負責人分類，剔了即更新。',
             }),
           },
         ]}
@@ -760,11 +760,11 @@ export default function MeetingNotes() {
             <EmptyState
               icon={NotebookPen}
               art={notes.length === 0 ? 'empty-meeting' : undefined}
-              title={notes.length === 0 ? '記事簿仲係新嘅一頁' : '揭唔到相符嘅記事'}
+              title={notes.length === 0 ? '記事簿仍是新的一頁' : '揭不到相符的記事'}
               hint={
                 notes.length === 0
-                  ? '由第一條議程開始——撳「新增筆記」記低今場會議，或先套用一個議程範本。'
-                  : '試吓清除搜尋字眼、類型或標籤篩選，再揭一次。'
+                  ? '由第一條議程開始——按「新增筆記」記低今場會議，或先套用一個議程範本。'
+                  : '嘗試清除搜尋字眼、類型或標籤篩選，再揭一次。'
               }
               action={
                 notes.length === 0 ? (
@@ -860,14 +860,14 @@ export default function MeetingNotes() {
                   icon={ListChecks}
                   title={
                     stats.total === 0
-                      ? '行動清單仲係空白'
+                      ? '行動清單仍是空白'
                       : actionFilter === 'open'
-                        ? '所有跟進都剔晒，乾淨企理！'
-                        : '冇符合條件嘅項目'
+                        ? '所有跟進都剔全部，乾淨企理！'
+                        : '沒有符合條件的項目'
                   }
                   hint={
                     stats.total === 0
-                      ? '喺記事內容用 - [ ] 寫低行動項目，或者喺編輯器逐項加入，呢度就會幫你追住。'
+                      ? '在記事內容用 - [ ] 記錄行動項目，或者在編輯器逐項加入，這裡就會幫你追住。'
                       : undefined
                   }
                 />
@@ -890,8 +890,8 @@ export default function MeetingNotes() {
           ) : ownerGroups.length === 0 ? (
             <EmptyState
               icon={UserRound}
-              title="人人都清咗待辦，good job！"
-              hint="所有行動都跟進完成，或者仲未分派任何跟進事項。"
+              title="人人都清了待辦，good job！"
+              hint="所有行動都跟進完成，或者尚未分派任何跟進事項。"
             />
           ) : (
             <div className="space-y-3">
@@ -920,8 +920,8 @@ export default function MeetingNotes() {
           {notes.length === 0 ? (
             <EmptyState
               icon={PieChart}
-              title="統計頁仲未開簿"
-              hint="記低幾場會議之後，呢度會慢慢長出趨勢同分布圖表。"
+              title="統計頁尚未開簿"
+              hint="記低幾場會議之後，這裡會慢慢長出趨勢同分布圖表。"
             />
           ) : (
             <>
@@ -1056,7 +1056,7 @@ function NoteRow({
           aria-label={`開啟筆記：${note.title}`}
           onClick={onOpen}
           onKeyDown={(e) => {
-            // 只當焦點喺呢個容器本身先觸發（避免內嵌標籤按鈕嘅 Enter/Space 冒泡）
+            // 只當焦點在這個容器本身先觸發（避免內嵌標籤按鈕的 Enter/Space 冒泡）
             if (e.target !== e.currentTarget) return
             if (e.key === 'Enter' || e.key === ' ') {
               e.preventDefault()
@@ -1260,7 +1260,7 @@ function ActionRow({
 }
 
 // ============================================================
-//  行動中心 · 按負責人分組卡（問責視圖：邊個欠咩跟進）
+//  行動中心 · 按負責人分組卡（問責視圖：誰負責什麼跟進）
 // ============================================================
 function OwnerGroupCard({
   group,
@@ -1306,7 +1306,7 @@ function OwnerGroupCard({
           <Badge tone="amber">{group.open} 待跟進</Badge>
         </div>
       </div>
-      {/* 該負責人嘅未完成項目 */}
+      {/* 該負責人的未完成項目 */}
       <div className="space-y-2 p-3">
         {group.items.map((a) => (
           <ActionRow
@@ -1544,7 +1544,7 @@ function NoteDetail({
       {/* 若未結構化但內容有，提示 */}
       {!hasStructuredActions && inlineParsed.actions.length > 0 && (
         <p className="rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-700 dark:bg-amber-500/10 dark:text-amber-300">
-          內容偵測到 {inlineParsed.actions.length} 個行動項目。編輯時撳「抽取」可轉成可勾選清單，並進入行動中心追蹤。
+          內容偵測到 {inlineParsed.actions.length} 個行動項目。編輯時按「抽取」可轉成可勾選清單，並進入行動中心追蹤。
         </p>
       )}
 

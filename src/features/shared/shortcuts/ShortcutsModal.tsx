@@ -9,8 +9,8 @@ import {
 
 // ============================================================
 //  鍵盤快捷鍵速查 Modal — 全域按 ?（Shift+/）彈出
-//  分區列出成個 app 嘅鍵盤快捷，附搜尋過濾。
-//  純展示：資料同篩選邏輯喺 ./util（已有單元測試）。
+//  分區列出成個 app 的鍵盤快捷，附搜尋過濾。
+//  純展示：資料同篩選邏輯在 ./util（已有單元測試）。
 // ============================================================
 
 interface Props {
@@ -52,7 +52,7 @@ export default function ShortcutsModal({ open, onClose }: Props) {
           <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed border-slate-200 bg-slate-50/60 px-6 py-10 text-center dark:border-slate-700 dark:bg-slate-800/40">
             <Keyboard size={24} className="text-slate-400" />
             <p className="text-sm text-slate-500 dark:text-slate-400">
-              搵唔到「{query}」相關嘅快捷
+              搜尋不到「{query}」相關的快捷
             </p>
           </div>
         ) : (
@@ -101,7 +101,7 @@ export default function ShortcutsModal({ open, onClose }: Props) {
             <>顯示 {shown} / {total} 個快捷</>
           ) : (
             <>
-              共 {total} 個快捷 · 按 <Kbd>?</Kbd> 隨時開呢個速查
+              共 {total} 個快捷 · 按 <Kbd>?</Kbd> 隨時開這個速查
             </>
           )}
         </p>

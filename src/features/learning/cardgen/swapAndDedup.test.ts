@@ -81,7 +81,7 @@ describe('swapAllDrafts', () => {
     expect(d.dup).toBe(true)
   })
 
-  it('對調有變化 → 回新 array（唔係同一 ref）', () => {
+  it('對調有變化 → 回新 array（不是同一 ref）', () => {
     const ds = [draft('A', 'B')]
     expect(swapAllDrafts(ds)).not.toBe(ds)
   })
@@ -137,7 +137,7 @@ describe('dropExactDuplicates', () => {
     expect(next[0].id).toBe('first')
   })
 
-  it('front 一樣但 back 唔同 → 兩張都保留（唔係完全相同）', () => {
+  it('front 一樣但 back 唔同 → 兩張都保留（不是完全相同）', () => {
     const ds = [draft('Q', 'A1'), draft('Q', 'A2')]
     expect(dropExactDuplicates(ds)).toHaveLength(2)
   })

@@ -5,7 +5,7 @@ import { isFeatureEnabled, onFeatureFlags } from '../lib/observability'
 //  Feature flag hook（PostHog 灰度發佈 / A-B 測試）
 //  ------------------------------------------------------------
 //  未配置 PostHog / 未同意 Cookie → 一律回 fallback（預設關），
-//  即係新功能可以喺 PostHog dashboard 逐步開，唔使出新版。
+//  即係新功能可以在 PostHog dashboard 逐步開，不用出新版。
 // ============================================================
 
 export function useFeatureFlag(key: string, fallback = false): boolean {

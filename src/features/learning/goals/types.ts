@@ -1,10 +1,10 @@
 // ============================================================
 //  學習目標（OKR / Strides 級）— 功能專屬型別 + 持久化
 //  ------------------------------------------------------------
-//  鐵則：唔可以改 data/types.ts 或 data/collections.ts。
+//  鐵則：不可以改 data/types.ts 或 data/collections.ts。
 //  做法：共用 goalsCol（Goal: title/progress/createdAt）保持向後相容，
 //        所有「深化」欄位（分類、目標日、優先、狀態、里程碑、簽到）
-//        放喺呢度自己嘅 createCollection，用 goalId 關聯。
+//        放在這裡自己的 createCollection，用 goalId 關聯。
 // ============================================================
 import { createCollection } from '../../../lib/store'
 import type { Entity } from '../../../lib/store'
@@ -33,7 +33,7 @@ export interface GoalMeta extends Entity {
   /** YYYY-MM-DD 開始日（選填；預設 = Goal.createdAt 當日） */
   startDate?: string
   notes?: string
-  /** 是否被封存（完成後收起；唔影響 status） */
+  /** 是否被封存（完成後收起；不影響 status） */
   archived?: boolean
 }
 
@@ -42,7 +42,7 @@ export interface Milestone extends Entity {
   goalId: string
   title: string
   done: boolean
-  /** 權重（1-5；用嚟加權計目標總進度），預設 1 */
+  /** 權重（1-5；用來加權計目標總進度），預設 1 */
   weight: number
   order: number
   createdAt: string
@@ -52,7 +52,7 @@ export interface Milestone extends Entity {
 // ───────── 進度簽到（Check-in；建立動量時間線）─────────
 export interface GoalCheckin extends Entity {
   goalId: string
-  /** 簽到當下嘅進度快照 0-100 */
+  /** 簽到當下的進度快照 0-100 */
   progress: number
   note?: string
   /** ISO datetime */

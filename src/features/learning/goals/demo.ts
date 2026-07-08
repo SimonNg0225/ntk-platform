@@ -1,17 +1,17 @@
 // ============================================================
 //  學習目標 — 示範資料 seeder
 //  ------------------------------------------------------------
-//  一鍵填入真實感、連貫嘅樣本（一個有上進心、生活忙碌嘅人）：
+//  一鍵填入真實感、連貫的樣本（一個有上進心、生活忙碌的人）：
 //  目標 + 元資料（分類/優先/狀態/目標日）+ 里程碑 + 進度簽到。
 //
 //  鐵則：
-//   - 純資料，唔 import React、唔掂 UI。
-//   - 每個 collection 各自 idempotent：只喺佢而家係空先種，
-//     已有資料就跳過嗰個 collection。
-//   - 日期一律經功能本地 helper（todayKey/fromKey）產生，分佈喺最近 1–4 週。
+//   - 純資料，不 import React、不掂 UI。
+//   - 每個 collection 各自 idempotent：只在他現在係空先種，
+//     已有資料就跳過那個 collection。
+//   - 日期一律經功能本地 helper（todayKey/fromKey）產生，分佈在最近 1–4 週。
 //   - goalsCol / goalMetaCol / milestonesCol 出廠已有種子，故預設情況
-//     淨係 goalCheckinsCol 係空：嗰陣簽到會掛喺出廠目標（goal-1 / goal-2）
-//     令動量曲線即刻有嘢睇。若用戶清空咗目標，則會種一套完整連貫嘅目標。
+//     只 goalCheckinsCol 係空：嗰陣簽到會掛在出廠目標（goal-1 / goal-2）
+//     令動量曲線立即有嘢查看。若用戶清空了目標，則會種一套完整連貫的目標。
 // ============================================================
 import { uid } from '../../../lib/store'
 import { goalsCol } from '../../../data/collections'
@@ -27,10 +27,10 @@ import {
 import { todayKey, fromKey } from './util'
 
 // ───────── 本地日期 helper（錨定中午，避 DST / UTC 漂移）─────────
-// 跟 util.fromKey/todayKey 同一套本地日曆日語意，唔自己砌時區邏輯。
+// 跟 util.fromKey/todayKey 同一套本地日曆日語意，不自己砌時區邏輯。
 const TODAY = fromKey(todayKey())
 
-/** 今日往前 n 日、指定鐘數嘅 ISO datetime（n=0 即今日） */
+/** 今日往前 n 日、指定鐘數的 ISO datetime（n=0 即今日） */
 function daysAgoISO(n: number, hour = 21, minute = 0): string {
   const d = new Date(TODAY)
   d.setDate(d.getDate() - n)
@@ -38,7 +38,7 @@ function daysAgoISO(n: number, hour = 21, minute = 0): string {
   return d.toISOString()
 }
 
-/** 今日往前 n 日嘅 YYYY-MM-DD key（過去）；正數 = 未來（倒數用） */
+/** 今日往前 n 日的 YYYY-MM-DD key（過去）；正數 = 未來（倒數用） */
 function dayKeyOffset(offset: number): string {
   const d = new Date(TODAY)
   d.setDate(d.getDate() + offset)
@@ -46,9 +46,9 @@ function dayKeyOffset(offset: number): string {
 }
 
 // ============================================================
-//  示範目標藍本（一個忙碌而有上進心嘅人）
+//  示範目標藍本（一個忙碌而有上進心的人）
 //  注意：goalsCol / goalMetaCol / milestonesCol 出廠已有 goal-1 / goal-2，
-//  以下淨係喺三者皆空（用戶清空過資料）先會用到。
+//  以下只在三者皆空（用戶清空過資料）先會用到。
 // ============================================================
 interface DemoGoalBlueprint {
   goal: Goal
@@ -67,7 +67,7 @@ function buildBlueprints(): DemoGoalBlueprint[] {
         status: 'active',
         startDate: dayKeyOffset(-24),
         targetDate: dayKeyOffset(26),
-        notes: '報咗 6 月底嘅試。每晚至少溫一個知識領域，週末做模擬題。',
+        notes: '報了 6 月底的試。每晚至少溫一個知識領域，週末做模擬題。',
       },
       milestones: [
         { title: '報名 + 完成 35 小時培訓時數', done: true, weight: 2, order: 0, createdAt: daysAgoISO(24, 9), doneAt: daysAgoISO(18, 22) },
@@ -101,8 +101,8 @@ function buildBlueprints(): DemoGoalBlueprint[] {
         notes: '跟官方 Handbook，邊學邊砌一個記帳 PWA。',
       },
       milestones: [
-        { title: '睇完官方 Handbook 基礎章節', done: true, weight: 2, order: 0, createdAt: daysAgoISO(18, 22), doneAt: daysAgoISO(11, 23) },
-        { title: '搞掂 strict mode + 泛型', done: true, weight: 2, order: 1, createdAt: daysAgoISO(18, 22), doneAt: daysAgoISO(4, 22) },
+        { title: '查看完官方 Handbook 基礎章節', done: true, weight: 2, order: 0, createdAt: daysAgoISO(18, 22), doneAt: daysAgoISO(11, 23) },
+        { title: '完成 strict mode + 泛型', done: true, weight: 2, order: 1, createdAt: daysAgoISO(18, 22), doneAt: daysAgoISO(4, 22) },
         { title: '部署第一個版本上線', done: false, weight: 3, order: 2, createdAt: daysAgoISO(18, 22) },
       ],
     },
@@ -114,7 +114,7 @@ function buildBlueprints(): DemoGoalBlueprint[] {
         priority: 'low',
         status: 'paused',
         startDate: dayKeyOffset(-20),
-        notes: '近排忙住溫 PMP，暫停吓。已讀 7 本。',
+        notes: '近排忙住溫 PMP，暫停一下。已讀 7 本。',
       },
       milestones: [],
     },
@@ -140,22 +140,22 @@ function buildBlueprints(): DemoGoalBlueprint[] {
 
 // ============================================================
 //  簽到藍本：(goalId, 進度快照, 備註, 幾多日前)
-//  喺預設情況掛喺出廠目標 goal-1（DSE 溫習）/ goal-2（睇管理書）,
-//  令動量曲線即刻有嘢睇。
+//  在預設情況掛在出廠目標 goal-1（DSE 溫習）/ goal-2（查看管理書）,
+//  令動量曲線立即有嘢查看。
 // ============================================================
 function buildDefaultCheckins(): Omit<GoalCheckin, 'id'>[] {
   return [
     // goal-1：DSE 溫習（出廠 progress 60）— 一路向上
     { goalId: 'goal-1', progress: 35, note: '溫完第一輪重點，開始整理錯題。', createdAt: daysAgoISO(22, 22) },
-    { goalId: 'goal-1', progress: 48, note: '中文閱讀框架整理好，做咗一份舊試題。', createdAt: daysAgoISO(15, 21) },
-    { goalId: 'goal-1', progress: 60, note: '模擬卷拎到不錯分數，信心返晒嚟。', createdAt: daysAgoISO(6, 23) },
-    // goal-2：睇管理學書（出廠 progress 25）— 慢慢嚟
-    { goalId: 'goal-2', progress: 12, note: '揀咗《從 A 到 A+》，睇咗頭三章。', createdAt: daysAgoISO(19, 23) },
-    { goalId: 'goal-2', progress: 25, note: '通勤時間多睇咗兩章，做咗筆記。', createdAt: daysAgoISO(8, 8) },
+    { goalId: 'goal-1', progress: 48, note: '中文閱讀框架整理好，做了一份舊試題。', createdAt: daysAgoISO(15, 21) },
+    { goalId: 'goal-1', progress: 60, note: '模擬卷取得不錯分數，信心逐步回來。', createdAt: daysAgoISO(6, 23) },
+    // goal-2：查看管理學書（出廠 progress 25）— 慢慢來
+    { goalId: 'goal-2', progress: 12, note: '選擇了《從 A 到 A+》，查看了頭三章。', createdAt: daysAgoISO(19, 23) },
+    { goalId: 'goal-2', progress: 25, note: '通勤時間多查看了兩章，做了筆記。', createdAt: daysAgoISO(8, 8) },
   ]
 }
 
-// 為自種目標配套嘅簽到（只喺種咗新目標先用）
+// 為自種目標配套的簽到（只在種了新目標先用）
 function buildCheckinsForSeeded(blueprints: DemoGoalBlueprint[]): Omit<GoalCheckin, 'id'>[] {
   const byTitle = (t: string) => blueprints.find((b) => b.goal.title.includes(t))?.goal.id
   const pmp = byTitle('PMP')
@@ -165,19 +165,19 @@ function buildCheckinsForSeeded(blueprints: DemoGoalBlueprint[]): Omit<GoalCheck
   if (pmp) {
     out.push(
       { goalId: pmp, progress: 25, note: '培訓時數砌夠，開始通讀 PMBOK。', createdAt: daysAgoISO(18, 22) },
-      { goalId: pmp, progress: 50, note: 'PMBOK 讀完一次，落手做模擬題。', createdAt: daysAgoISO(9, 23) },
+      { goalId: pmp, progress: 50, note: 'PMBOK 讀完一次，開始做模擬題。', createdAt: daysAgoISO(9, 23) },
       { goalId: pmp, progress: 50, note: '第一份模擬卷 72%，敏捷部分要再溫。', createdAt: daysAgoISO(2, 22) },
     )
   }
   if (run) {
     out.push(
       { goalId: run, progress: 20, note: '第一週跑足三次，腳痠到死。', createdAt: daysAgoISO(17, 7) },
-      { goalId: run, progress: 45, note: '磅咗 69.7kg，宵夜戒到八成。', createdAt: daysAgoISO(5, 7) },
+      { goalId: run, progress: 45, note: '磅了 69.7kg，宵夜戒到八成。', createdAt: daysAgoISO(5, 7) },
     )
   }
   if (ts) {
     out.push(
-      { goalId: ts, progress: 40, note: 'strict + 泛型搞掂，砌緊記帳 app 雛形。', createdAt: daysAgoISO(4, 22) },
+      { goalId: ts, progress: 40, note: 'strict + 泛型完成，砌緊記帳 app 雛形。', createdAt: daysAgoISO(4, 22) },
     )
   }
   return out
@@ -218,7 +218,7 @@ export function seedDemo(): number {
   }
 
   if (goalCheckinsCol.get().length === 0) {
-    // 種咗新目標 → 簽到掛新目標；否則掛出廠目標（goal-1 / goal-2）。
+    // 種了新目標 → 簽到掛新目標；否則掛出廠目標（goal-1 / goal-2）。
     const checkins =
       blueprints.length > 0
         ? buildCheckinsForSeeded(blueprints)

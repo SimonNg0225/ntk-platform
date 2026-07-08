@@ -160,7 +160,7 @@ export default function Pricing() {
         title: '申請退款',
         tone: 'danger',
         confirmText: '確認退款',
-        message: `你可退 ${hkd(est.refundCents)}（本期已用 ${Math.round(est.usagePct * 100)}% AI 點數；已扣付款平台手續費 ${hkd(est.feeCents)}）。確認後會即時取消訂閱、收返付費功能。`,
+        message: `你可退 ${hkd(est.refundCents)}（本期已用 ${Math.round(est.usagePct * 100)}% AI 點數；已扣付款平台手續費 ${hkd(est.feeCents)}）。確認後會即時取消訂閱、收回付費功能。`,
       })
       if (!ok) return
       setBusy('refund')
@@ -386,7 +386,7 @@ export default function Pricing() {
                 方案建議
               </p>
               <h2 className="mt-1 text-lg font-semibold tracking-tight text-slate-800 dark:text-slate-100">
-                一眼睇清邊個方案啱你
+                一眼看清哪個方案適合你
               </h2>
             </div>
             <span className="inline-flex items-center gap-1 rounded-full bg-accent-soft px-3 py-1 text-xs font-semibold text-accent-strong dark:bg-accent/15 dark:text-accent">

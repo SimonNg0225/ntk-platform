@@ -77,17 +77,17 @@ import {
 //   • 班別篩選聚焦、撞堂偵測橫額
 //   • 批量套用（一鍵填到多日同節）
 //   • CSV 匯出（Excel / 列印友善）
-//  共用 timetableCol（向後相容）；額外資料存自己嘅 collection。
+//  共用 timetableCol（向後相容）；額外資料存自己的 collection。
 // ============================================================
 
-// ── 自己嘅持久化資料（唔掂 data/collections）──
+// ── 自己的持久化資料（不掂 data/collections）──
 // 每格附加資料（循環週 / 顏色 / 備註 / 協作）
 const timetableMetaCol = createCollection<SlotMeta>('timetable_meta', [])
 
 // 設定（鐘聲時間 + 顯示日子）— 單一 row（id='config'）
 interface TimetableConfig extends Entity {
   bells: BellRow[]
-  days: number[] // 顯示嘅日子（1..6；cycle 模式 = Day A..F）
+  days: number[] // 顯示的日子（1..6；cycle 模式 = Day A..F）
   cycle?: boolean // 日循環模式：欄變 Day A–F，「今日」由校曆決定
 }
 const timetableConfigCol = createCollection<TimetableConfig>('timetable_config', [
@@ -109,7 +109,7 @@ export default function Timetable() {
   const [draft, setDraft] = useState<EditorDraft | null>(null)
   const [showSettings, setShowSettings] = useState(false)
 
-  // 現在分鐘（每分鐘更新一次，畀「下一堂」用）
+  // 現在分鐘（每分鐘更新一次，給「下一堂」用）
   const [nowMin, setNowMin] = useState(() => {
     const d = new Date()
     return d.getHours() * 60 + d.getMinutes()
@@ -167,7 +167,7 @@ export default function Timetable() {
     }
   }, [classNameById])
 
-  // ── 篩選後嘅 slots（畀統計同篩選聚焦）──
+  // ── 篩選後的 slots（給統計同篩選聚焦）──
   const visibleSlots = useMemo(
     () => slots.filter((s) => days.includes(s.day)),
     [slots, days],
@@ -208,7 +208,7 @@ export default function Timetable() {
 
   const bellMap = useMemo(() => bellByPeriod(bells), [bells])
 
-  // 今日最後一節放學時間（畀「今日課堂已完」文案用，唔好寫死 16:00）
+  // 今日最後一節放學時間（給「今日課堂已完」文案用，不要寫死 16:00）
   const lastEndMin = useMemo(() => lastLessonEndMin(bells), [bells])
 
   // ── 編輯器 ──
@@ -245,9 +245,9 @@ export default function Timetable() {
   }
 
   function saveDraft(d: EditorDraft, applyDays: number[]) {
-    // 只套用到顯示範圍(days)內嘅日子，避免寫入永不顯示／無法刪除嘅孤兒 slot。
+    // 只套用到顯示範圍(days)內的日子，避免寫入永不顯示／無法刪除的孤兒 slot。
     // 批量 picker 永遠列一至六，但顯示範圍可被收窄（如設定還原為一至五）。
-    // 當前格 d.day 必定喺 days 內（格只由 WeekGrid 範圍內可開），夾完至少保留當前日。
+    // 當前格 d.day 必定在 days 內（格只由 WeekGrid 範圍內可開），夾完至少保留當前日。
     const targetDays = clampApplyDays(applyDays, days)
     if (targetDays.length === 0) {
       setDraft(null)
@@ -301,7 +301,7 @@ export default function Timetable() {
     if (!draft?.slotId) return
     const ok = await confirm({
       title: '刪除課堂？',
-      message: '呢節課堂將會喺時間表移除，呢個動作無法復原。',
+      message: '此節課堂將會在時間表移除，此動作無法復原。',
       confirmText: '刪除',
       tone: 'danger',
     })
@@ -389,27 +389,27 @@ export default function Timetable() {
         </div>
       )}
 
-      {/* ───────── 教學引導：教用家點用時間表（可摺疊 + 可永久收起） ───────── */}
+      {/* ───────── 教學引導：教用家如何使用時間表（可摺疊 + 可永久收起） ───────── */}
       <div className="print:hidden">
         <FeatureGuide
           storageKey="timetable"
-          title={t('timetable.guideTitle', { defaultValue: '時間表點用？' })}
+          title={t('timetable.guideTitle', { defaultValue: '時間表使用說明' })}
           steps={[
             {
-              title: t('timetable.guideStep1Title', { defaultValue: '撳格仔加堂' }),
-              desc: t('timetable.guideStep1Desc', { defaultValue: '喺週課表撳任何一格，填科目、班別同課室就加到一節。' }),
+              title: t('timetable.guideStep1Title', { defaultValue: '按格仔加堂' }),
+              desc: t('timetable.guideStep1Desc', { defaultValue: '在週課表按任何一格，填科目、班別同課室就加到一節。' }),
             },
             {
               title: t('timetable.guideStep2Title', { defaultValue: '一次填多日' }),
-              desc: t('timetable.guideStep2Desc', { defaultValue: '同一節重複出現？喺編輯窗揀「套用到多日」，一次過填齊。' }),
+              desc: t('timetable.guideStep2Desc', { defaultValue: '同一節重複出現？在編輯窗選擇「套用到多日」，一次過填齊。' }),
             },
             {
               title: t('timetable.guideStep3Title', { defaultValue: '設定鐘聲時間' }),
-              desc: t('timetable.guideStep3Desc', { defaultValue: '撳右上齒輪改每節上下課時間、小息午膳同顯示日子。' }),
+              desc: t('timetable.guideStep3Desc', { defaultValue: '按右上齒輪改每節上下課時間、小息午膳同顯示日子。' }),
             },
             {
-              title: t('timetable.guideStep4Title', { defaultValue: '睇工作量同列印' }),
-              desc: t('timetable.guideStep4Desc', { defaultValue: '切去「工作量」睇每日節數同空堂；「列印」可印出或匯出 CSV。' }),
+              title: t('timetable.guideStep4Title', { defaultValue: '查看工作量同列印' }),
+              desc: t('timetable.guideStep4Desc', { defaultValue: '切去「工作量」查看每日節數同空堂；「列印」可印出或匯出 CSV。' }),
             },
           ]}
         />
@@ -473,14 +473,14 @@ export default function Timetable() {
       {/* 視圖內容 */}
       {view === 'grid' && (
         <>
-          {/* 引導式空狀態：未有任何課堂時，引導落第一步（撳格加堂 / 設定鐘聲）。
-              網格保留喺下面，所以用家可以直接撳格開始。 */}
+          {/* 引導式空狀態：未有任何課堂時，引導落第一步（按格加堂 / 設定鐘聲）。
+              網格保留在下方，所以用家可以直接按格開始。 */}
           {slots.length === 0 && (
             <EmptyState
               icon={CalendarPlus}
               title={t('timetable.emptyTitle', { defaultValue: '由第一節課開始排' })}
               hint={t('timetable.emptyHint', {
-                defaultValue: '撳下面網格任何一格就可以加堂；或先設定每節上下課鐘聲時間。',
+                defaultValue: '按下面網格任何一格就可以加堂；或先設定每節上下課鐘聲時間。',
               })}
               action={
                 <Button size="sm" variant="secondary" icon={Settings2} onClick={() => setShowSettings(true)}>
@@ -551,7 +551,7 @@ export default function Timetable() {
           setShowSettings(false)
         }}
         onReset={() => {
-          // 還原鐘聲 + 顯示日子，但保留目前嘅循環／星期模式（唔再跌返星期）。
+          // 還原鐘聲 + 顯示日子，但保留目前的循環／星期模式（不再跌返星期）。
           timetableConfigCol.update('config', {
             bells: DEFAULT_BELLS,
             days: [1, 2, 3, 4, 5, 6],
@@ -583,7 +583,7 @@ function TodayPanel({
   lastEndMin: number
   classNameById: Map<string, string>
 }) {
-  // cycle 模式：todayDay 0 = 今日唔喺校曆（週末/假期/未排）→ 當休息日。
+  // cycle 模式：todayDay 0 = 今日不在校曆（週末/假期/未排）→ 當休息日。
   const isWeekend = cycle ? todayDay < 1 : todayDay === 0
   const upColor = upNext
     ? colorOf(autoColorFor(upNext.slot.subject || upNext.slot.classId || 'x'))
@@ -618,11 +618,11 @@ function TodayPanel({
           <div className="min-w-0">
             <p className="text-xs font-medium text-accent dark:text-accent">
               {isWeekend
-                ? cycle ? '今日唔使返學' : '今日休息'
+                ? cycle ? '今日不用上學' : '今日休息'
                 : `今日 · ${cycle ? `Day ${cycleShort(todayDay)}` : dayLabel(todayDay)}`}
             </p>
             <p className="mt-0.5 text-xl font-semibold leading-tight text-slate-800 dark:text-slate-100">
-              {isWeekend ? '好好抖一抖 ☕' : `今日有 ${todayCount} 節`}
+              {isWeekend ? '好好休息一休息 ☕' : `今日有 ${todayCount} 節`}
             </p>
           </div>
         </div>
@@ -669,7 +669,7 @@ function TodayPanel({
           !isWeekend && (
             <p className="flex items-center gap-1.5 rounded-2xl bg-white/50 px-3.5 py-2.5 text-sm text-slate-500 dark:bg-slate-800/40 dark:text-slate-400">
               <Sparkles size={14} className="text-accent/60" />
-              {nowMin >= lastEndMin ? '今日課堂已完，辛苦晒！' : '今日未有更多課堂'}
+              {nowMin >= lastEndMin ? '今日課堂已完，辛苦全部！' : '今日未有更多課堂'}
             </p>
           )
         )}
@@ -680,7 +680,7 @@ function TodayPanel({
 
 // ───────── Cycle 緞帶（六日循環導航：Day A–F，今日嗰節高亮）─────────
 //  將「循環週」概念由抽象變視覺：一排圓潤 Day token，今日填實 accent，
-//  其餘柔底；非顯示範圍（被設定收窄）嘅日子淡化。純導覽 / 概念展示，唔改資料。
+//  其餘柔底；非顯示範圍（被設定收窄）的日子淡化。純導覽 / 概念展示，不改資料。
 function CycleRibbon({
   todayDay,
   days,
@@ -846,7 +846,7 @@ function SettingsModal({
         {/* 顯示日子（cycle 模式 = Day A–F；否則星期） */}
         <Field
           label={cycleOn ? '顯示循環日' : '顯示星期'}
-          hint={cycleOn ? '揀邊幾個 cycle day 出現喺課表（通常 A–F 全部）' : undefined}
+          hint={cycleOn ? '選擇邊幾個 cycle day 出現在課表（通常 A–F 全部）' : undefined}
         >
           <div className="flex flex-wrap gap-1.5">
             {DAY_DEFS.map((d) => {
@@ -924,7 +924,7 @@ function SettingsModal({
           </div>
           <p className="mt-2 flex items-center gap-1 text-[11px] text-slate-400">
             <ChevronRight size={12} />
-            改時間即時反映喺週課表同列印視圖。
+            改時間即時反映在週課表同列印視圖。
           </p>
         </div>
       </div>

@@ -45,7 +45,7 @@ import {
 //  ------------------------------------------------------------
 //  概念：呼應主畫面「會議記事簿（Minute Book）/ 議程」——
 //    · 彈窗 = 一頁記事擬稿：裝訂線孔 + kicker + serif 簿名 + 雙線封面分隔
-//    · 欄位分組似議程條款（serif § 號牌 + uppercase kicker），唔似散開表單
+//    · 欄位分組似議程條款（serif § 號牌 + uppercase kicker），不似散開表單
 //    · 議決 = serif R-NN 決議章；內容 = 朱紅起始線稿紙面（同詳情一致）
 //  ------------------------------------------------------------
 //  · 標題 / 類型 / 日期 / 時間 / 時長 / 地點
@@ -100,7 +100,7 @@ export function toDraft(note: MeetingNote, meta: NoteMeta): EditorDraft {
 }
 
 // 類型色脊（同主畫面 TYPE_RAIL 對齊）——卷首左側貼一條會議類型色脊，
-// 令「揀類型」似為議程定一條色脊（呼應筆記卡左脊）。
+// 令「選擇類型」似為議程定一條色脊（呼應筆記卡左脊）。
 const TYPE_RAIL: Record<string, string> = {
   accent: 'bg-accent',
   blue: 'bg-blue-500',
@@ -146,7 +146,7 @@ export default function NoteEditor({
   mode: 'create' | 'edit'
   initial: EditorDraft
   templates: NoteTemplate[]
-  /** 常見出席者建議（由過往記事彙總），畀快速一撳加 */
+  /** 常見出席者建議（由過往記事彙總），給快速一按加 */
   suggestedAttendees?: string[]
   onClose: () => void
   onSave: (draft: EditorDraft) => void
@@ -174,21 +174,21 @@ export default function NoteEditor({
   const canSave =
     draft.title.trim().length > 0 && draft.content.trim().length > 0
 
-  // 有未儲存改動？（同初值比 + 仲未 Enter 入嘅出席者／議決輸入）
+  // 有未儲存改動？（同初值比 + 尚未 Enter 入的出席者／議決輸入）
   const dirty =
     JSON.stringify(draft) !== JSON.stringify(initial) ||
     attendeeInput.trim().length > 0 ||
     decisionInput.trim().length > 0
 
-  // 防誤關：有改動先彈確認，避免撳背景／Esc／取消 一下就無咗成份草稿。
+  // 防誤關：有改動先彈確認，避免按背景／Esc／取消 一下就無了成份草稿。
   async function guardedClose() {
     if (!dirty) {
       onClose()
       return
     }
     const ok = await confirm({
-      title: '放棄未儲存嘅記事？',
-      message: '你打咗嘅議程內容仲未儲存，離開就會冇咗。',
+      title: '放棄未儲存的記事？',
+      message: '你打了的議程內容尚未儲存，離開就會沒有了。',
       confirmText: '放棄離開',
       cancelText: '繼續編輯',
       tone: 'danger',
@@ -198,7 +198,7 @@ export default function NoteEditor({
 
   const patch = (p: Partial<EditorDraft>) => setDraft((d) => ({ ...d, ...p }))
 
-  // 一撳喺游標所在處插入行首標記（行動項目 / 決議），免用戶記 markdown 語法。
+  // 一按在游標所在處插入行首標記（行動項目 / 決議），免用戶記 markdown 語法。
   function insertLinePrefix(prefix: string) {
     const ta = contentRef.current
     const cur = draft.content
@@ -264,7 +264,7 @@ export default function NoteEditor({
     setDraft((d) => ({
       ...d,
       type: tpl.type,
-      // 若內容空 → 直接套；否則喺尾巴接落去
+      // 若內容空 → 直接套；否則在尾巴接落去
       content: d.content.trim() ? `${d.content}\n\n${tpl.content}` : tpl.content,
     }))
     // 套範本後自動聚焦內容
@@ -273,7 +273,7 @@ export default function NoteEditor({
 
   // ───────── 由內容抽取行動 / 決議（似 Granola）─────────
   const parsed = useMemo(() => parseContent(draft.content), [draft.content])
-  // 只計「未抽取」嘅新項目（以 text 去重）—— 抽取過後加新內容都認得到。
+  // 只計「未抽取」的新項目（以 text 去重）—— 抽取過後加新內容都認得到。
   const newActionCount = useMemo(() => {
     const existing = new Set(draft.actions.map((a) => a.text.trim()))
     return parsed.actions.filter((a) => !existing.has(a.text.trim())).length
@@ -319,8 +319,8 @@ export default function NoteEditor({
   const doneActions = draft.actions.filter((a) => a.done).length
 
   return (
-    // 唔傳 title → 唔用 Modal 通用粗體頁眉；改喺內文自管「記事擬稿」頁眉，
-    // 令彈窗用返主畫面記事簿嘅 serif + kicker + 裝訂線 + 雙線視覺語言。
+    // 不傳 title → 不用 Modal 通用粗體頁眉；改在內文自管「記事擬稿」頁眉，
+    // 令彈窗使用主畫面記事簿的 serif + kicker + 裝訂線 + 雙線視覺語言。
     <Modal
       open={open}
       onClose={guardedClose}
@@ -493,7 +493,7 @@ export default function NoteEditor({
               className="min-w-[8rem] flex-1 bg-transparent py-1 text-base sm:text-sm text-slate-800 outline-none placeholder:text-slate-400 dark:text-slate-100 dark:placeholder:text-slate-500"
             />
           </div>
-          {/* 常用出席者：一撳加，慳重複輸入 */}
+          {/* 常用出席者：一按加，慳重複輸入 */}
           {suggestedAttendees.filter((n) => !draft.attendees.includes(n)).length > 0 && (
             <div className="mt-1.5 flex flex-wrap items-center gap-1">
               <span className="text-[11px] text-slate-400 dark:text-slate-500">常用：</span>
@@ -529,7 +529,7 @@ export default function NoteEditor({
                   }
                   items={tpItems}
                 />
-                <Tooltip label="由內容嘅 - [ ] / &gt; 自動整理出未加入嘅行動同決議">
+                <Tooltip label="由內容的 - [ ] / &gt; 自動整理出未加入的行動同決議">
                   <button
                     type="button"
                     onClick={extractFromContent}
@@ -554,10 +554,10 @@ export default function NoteEditor({
               className="min-h-[320px] resize-y border-0 bg-transparent px-3.5 py-3 font-[450] leading-relaxed shadow-none focus:ring-0"
               value={draft.content}
               onChange={(e) => patch({ content: e.target.value })}
-              placeholder={'會議重點、討論、跟進…\n\n喺下面撳「＋ 行動項目」或「＋ 決議」就會自動加好格式，你淨係要打內容。'}
+              placeholder={'會議重點、討論、跟進…\n\n在下方按「＋ 行動項目」或「＋ 決議」就會自動加好格式，你只要打內容。'}
             />
           </div>
-          {/* 一撳插入：免記 markdown 語法 */}
+          {/* 一按插入：免記 markdown 語法 */}
           <div className="mt-2 flex flex-wrap items-center gap-1.5">
             <button
               type="button"
@@ -575,7 +575,7 @@ export default function NoteEditor({
             </button>
             <span className="text-[11px] text-slate-400 dark:text-slate-500">
               行動項目可加 <code className="rounded bg-slate-100 px-1 dark:bg-slate-800">@負責人</code>{' '}
-              <code className="rounded bg-slate-100 px-1 dark:bg-slate-800">!日期</code> · 寫好撳右上「抽取」整理成清單
+              <code className="rounded bg-slate-100 px-1 dark:bg-slate-800">!日期</code> · 寫好按右上「抽取」整理成清單
             </span>
           </div>
         </section>
@@ -650,7 +650,7 @@ export default function NoteEditor({
                     {doneActions}/{draft.actions.length}
                   </span>
                 )}
-                {/* 已有項目 + 內容仲有未抽取嘅 → 直接喺度整理新項目 */}
+                {/* 已有項目 + 內容還有未抽取的 → 直接在這裡整理新項目 */}
                 {draft.actions.length > 0 && newActionCount > 0 && (
                   <Button size="sm" variant="ghost" icon={Sparkles} onClick={extractFromContent}>
                     整理 {newActionCount} 個新項目
@@ -685,12 +685,12 @@ export default function NoteEditor({
                 </>
               ) : (
                 <>
-                  <p className="text-xs text-slate-400 dark:text-slate-500">仲未有跟進項目</p>
+                  <p className="text-xs text-slate-400 dark:text-slate-500">尚未有跟進項目</p>
                   <Button size="sm" variant="secondary" icon={Plus} onClick={addAction}>
                     手動加項目
                   </Button>
                   <p className="text-[11px] text-slate-400 dark:text-slate-500">
-                    或喺上面記事內容撳「＋ 行動項目」寫低，再喺度整理成清單
+                    或在上方記事內容按「＋ 行動項目」記錄，再在這裡整理成清單
                   </p>
                 </>
               )}

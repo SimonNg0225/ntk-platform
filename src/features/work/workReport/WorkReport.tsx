@@ -59,19 +59,19 @@ const MODEL_OPTS: { id: AIModel; label: string }[] = [
   { id: 'gemini-2.5-pro', label: 'Pro' },
 ]
 
-// 教學引導（3 步：揀時段 → 一鍵生成 → 複製/列印/匯出）
+// 教學引導（3 步：選擇時段 → 一鍵生成 → 複製/列印/匯出）
 const GUIDE_STEPS: FeatureGuideStep[] = [
   {
-    title: '揀一個時段',
-    desc: '本週、本月，或者自訂日期範圍。下面即刻見到嗰段時間有幾多事件、待辦同筆記。',
+    title: '選擇一個時段',
+    desc: '本週、本月，或者自訂日期範圍。下面立即見到那段時間有幾多事件、待辦同筆記。',
   },
   {
     title: '一鍵生成報告',
-    desc: 'AI 會聚合你嘅 行事曆／待辦／會議筆記，撮要成「做咗咩 / 待跟進 / 重點同建議」一頁。',
+    desc: 'AI 會聚合你的 行事曆／待辦／會議筆記，撮要成「已完成事項 / 待跟進 / 重點同建議」一頁。',
   },
   {
     title: '複製、列印或匯出 Word',
-    desc: '完成後可一鍵複製、列印，或出 Word 交畀科主任 / 存底。',
+    desc: '完成後可一鍵複製、列印，或出 Word 交給科主任 / 存底。',
   },
 ]
 
@@ -108,7 +108,7 @@ export default function WorkReport() {
   const [reportPreset, setReportPreset] = useState<RangePreset>('week')
   const [error, setError] = useState<string | null>(null)
 
-  // 即時聚合（唔使等 AI）：畀預覽小計 + 判斷零資料
+  // 即時聚合（不用等 AI）：給預覽小計 + 判斷零資料
   const range = useMemo(
     () => resolveRange(preset, customStart, customEnd),
     [preset, customStart, customEnd],
@@ -119,7 +119,7 @@ export default function WorkReport() {
   )
   const isEmpty = isEmptyAggregate(agg)
 
-  // 重試讀返最新 UI 揀嘅時段／模型（避免閉包鎖死出錯嗰刻嘅舊值）。
+  // 重試讀返最新 UI 選擇的時段／模型（避免閉包鎖死出錯嗰刻的舊值）。
   const latest = useRef({ agg, range, preset, model, isEmpty })
   latest.current = { agg, range, preset, model, isEmpty }
 
@@ -129,7 +129,7 @@ export default function WorkReport() {
     if (empty) {
       toast.error(
         t('workReport.empty.noRecords', {
-          defaultValue: '呢段時間冇行事曆／待辦／會議紀錄，揀闊啲時段或先加資料。',
+          defaultValue: '這段時間沒有行事曆／待辦／會議紀錄，選擇闊些時段或先加資料。',
         }),
       )
       return
@@ -180,14 +180,14 @@ export default function WorkReport() {
         kicker={t('workReport.kicker', { defaultValue: 'Work Report' })}
         title={t('workReport.title', { defaultValue: '工作週報／月報' })}
         description={t('workReport.subtitle', {
-          defaultValue: '一鍵聚合你嘅行事曆、待辦同會議筆記，AI 撮要成一頁報告。',
+          defaultValue: '一鍵聚合你的行事曆、待辦同會議筆記，AI 撮要成一頁報告。',
         })}
       />
 
       {/* ───────── 教學引導 ───────── */}
       <FeatureGuide
         storageKey="work-report"
-        title={t('workReport.guide.title', { defaultValue: '工作週報／月報點用？' })}
+        title={t('workReport.guide.title', { defaultValue: '工作週報／月報使用說明' })}
         steps={GUIDE_STEPS}
       />
 
@@ -207,7 +207,7 @@ export default function WorkReport() {
             <span
               className="text-[11px] font-medium text-slate-400 dark:text-slate-500"
               title={t('workReport.model.hint', {
-                defaultValue: 'Flash = 快；Pro = 較詳細但慢啲',
+                defaultValue: 'Flash = 快；Pro = 較詳細但慢些',
               })}
             >
               {t('workReport.model.label', { defaultValue: 'AI 模型' })}
@@ -247,7 +247,7 @@ export default function WorkReport() {
           </div>
         )}
 
-        {/* 即時聚合預覽（唔使等 AI）*/}
+        {/* 即時聚合預覽（不用等 AI）*/}
         <div
           role="group"
           aria-label={t('workReport.preview.aria', {
@@ -294,12 +294,12 @@ export default function WorkReport() {
         </div>
         {busy && (
           <p className="text-center text-[11px] text-slate-400 dark:text-slate-500">
-            {t('workReport.action.wait', { defaultValue: '整理緊你嘅紀錄…' })}
+            {t('workReport.action.wait', { defaultValue: '整理緊你的紀錄…' })}
           </p>
         )}
       </Card>
 
-      {/* ───────── 失敗（常駐 inline，唔靠 toast）───────── */}
+      {/* ───────── 失敗（常駐 inline，不靠 toast）───────── */}
       {error && (
         <Card padded className="ring-1 ring-rose-300/40 dark:ring-rose-500/30">
           <div className="flex items-start gap-3">
@@ -322,13 +322,13 @@ export default function WorkReport() {
         <ResultCard report={report} range={reportRange} preset={reportPreset} agg={agg} />
       )}
 
-      {/* ───────── 空狀態（出錯 / 已有結果時唔顯示）───────── */}
+      {/* ───────── 空狀態（出錯 / 已有結果時不顯示）───────── */}
       {!report && !error && isEmpty && (
         <EmptyState
           icon={CalendarRange}
-          title={t('workReport.zero.title', { defaultValue: '呢段時間冇紀錄' })}
+          title={t('workReport.zero.title', { defaultValue: '這段時間沒有紀錄' })}
           hint={t('workReport.zero.hint', {
-            defaultValue: '呢段時間冇行事曆／待辦／會議紀錄，揀闊啲時段或先加資料再生成。',
+            defaultValue: '這段時間沒有行事曆／待辦／會議紀錄，選擇闊些時段或先加資料再生成。',
           })}
           action={
             preset !== 'month' ? (
@@ -344,7 +344,7 @@ export default function WorkReport() {
           icon={Sparkles}
           title={t('workReport.prompt.title', { defaultValue: '準備好生成報告' })}
           hint={t('workReport.prompt.hint', {
-            defaultValue: '撳上面「生成報告」，AI 即刻幫你撮要成「做咗咩 / 待跟進 / 重點同建議」。',
+            defaultValue: '按上面「生成報告」，AI 立即幫你撮要成「已完成事項 / 待跟進 / 重點同建議」。',
           })}
         />
       )}
@@ -356,7 +356,7 @@ export default function WorkReport() {
 function reportToDoc(report: WorkReportResult, range: ResolvedRange, preset: RangePreset): ExportDoc {
   const blocks: ExportBlock[] = []
   if (report.done.length) {
-    blocks.push({ kind: 'heading', text: '做咗咩', level: 1 })
+    blocks.push({ kind: 'heading', text: '已完成事項', level: 1 })
     blocks.push({ kind: 'bullets', items: report.done })
   }
   if (report.followUps.length) {
@@ -370,7 +370,7 @@ function reportToDoc(report: WorkReportResult, range: ResolvedRange, preset: Ran
   return { title: `${PRESET_BADGE[preset]} ${rangeLabel(range)}`, blocks }
 }
 
-// 三段語意色（做咗咩=accent、待跟進=amber、重點同建議=emerald）
+// 三段語意色（已完成事項=accent、待跟進=amber、重點同建議=emerald）
 const DOT_TONE = {
   accent: 'bg-accent',
   amber: 'bg-amber-500',
@@ -412,7 +412,7 @@ function ResultCard({
     } catch {
       toast.error(
         t('workReport.result.copyFail', {
-          defaultValue: '複製唔到（瀏覽器唔支援或冇權限），請手動選取內文複製。',
+          defaultValue: '複製不到（瀏覽器不支援或沒有權限），請手動選取內文複製。',
         }),
       )
     }
@@ -484,7 +484,7 @@ function ResultCard({
       </div>
 
       <Section
-        title={t('workReport.section.done', { defaultValue: '做咗咩' })}
+        title={t('workReport.section.done', { defaultValue: '已完成事項' })}
         items={report.done}
         tone="accent"
       />
@@ -505,7 +505,7 @@ function ResultCard({
             <Clock size={16} />
           </span>
           {t('workReport.result.noPoints', {
-            defaultValue: '今次撮唔到明顯重點，可展開下面原始紀錄核對。',
+            defaultValue: '今次撮不到明顯重點，可展開下面原始紀錄核對。',
           })}
         </div>
       )}

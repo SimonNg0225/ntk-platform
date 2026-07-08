@@ -9,7 +9,7 @@ import { greeting, longToday, fmtMin, trendOf, type KpiData, type DaySignal } fr
 // ============================================================
 //  個人儀表板 — 「重型」Bento overview（不規則大小磚 + 真實統計）
 //  ------------------------------------------------------------
-//  全部數字由 computeKpis(真實資料層) 而嚟；磚塊大小唔一，
+//  全部數字由 computeKpis(真實資料層) 而來；磚塊大小不一，
 //  hero 2×2、活動走勢 / 今日任務 2 格闊，其餘 1×1 統計磚。
 // ============================================================
 
@@ -136,7 +136,7 @@ export default function BentoOverview({
       {/* ── 1×1 統計磚 ── */}
       <StatTile
         label="今日要複習" value={kpis.dueCards} unit="張" icon={Brain} tone="accent"
-        hint={kpis.dueCards === 0 ? '已清晒 🎉' : '間隔重複到期'}
+        hint={kpis.dueCards === 0 ? '已清全部 🎉' : '間隔重複到期'}
         onClick={() => open('learning-flashcards')}
       />
       {/* 習慣環 */}

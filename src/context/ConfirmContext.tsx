@@ -36,7 +36,7 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
   const titleId = useId()
 
   const confirm = useCallback<ConfirmFn>((options) => {
-    // 若有未決對話框，先以 false 結算舊嗰個，避免前一個 Promise 永久 pending（孤兒）
+    // 若有未決對話框，先以 false 結算舊那個，避免前一個 Promise 永久 pending（孤兒）
     resolver.current?.(false)
     setOpts(options)
     return new Promise<boolean>((resolve) => {
@@ -84,7 +84,7 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
       document.removeEventListener('keydown', onKey)
       prevActive?.focus?.()
     }
-    // 只跟 opts 是否存在；close 喺 render 內穩定引用，唔加入 deps 以免重跑搶焦點
+    // 只跟 opts 是否存在；close 在 render 內穩定引用，不加入 deps 以免重跑搶焦點
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [opts])
 
@@ -145,6 +145,6 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
 // eslint-disable-next-line react-refresh/only-export-components
 export function useConfirm(): ConfirmFn {
   const ctx = useContext(ConfirmContext)
-  if (!ctx) throw new Error('useConfirm 必須喺 <ConfirmProvider> 入面用')
+  if (!ctx) throw new Error('useConfirm 必須在 <ConfirmProvider> 中用')
   return ctx
 }

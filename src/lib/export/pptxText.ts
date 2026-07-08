@@ -1,12 +1,12 @@
 // ============================================================
 //  pptx 文字 metrics — 純函式層（有單元測試）
 //  ------------------------------------------------------------
-//  · mix()           — 預混色：pptxgenjs text transparency 靠唔住，
-//                      所有「淡色」一律喺 build 時預混做實色
+//  · mix()           — 預混色：pptxgenjs text transparency 靠不住，
+//                      所有「淡色」一律在 build 時預混做實色
 //  · estimateLines() — CJK 行數估算（row 引擎排版用，寧鬆勿迫）
 //  · fitTitle()      — 長題階梯（版題 / 封面兩條梯）
 //  · clampText()     — 截長加省略號
-//  本檔唔准 import pptxgenjs（保持純函式、node 直接測）。
+//  本檔不准 import pptxgenjs（保持純函式、node 直接測）。
 // ============================================================
 
 /** 行高（吋）— 全引擎統一 1.32 倍行距 */
@@ -20,7 +20,7 @@ function hexChannel(hex: string, i: number): number {
 
 /**
  * 預混色：將前景色按 t（前景比重 0-1）混入背景色，輸出 6 位 hex（無 #）。
- * 用嚟取代 text transparency（pptxgenjs 冇 color 配對時會略過 alpha）。
+ * 用來取代 text transparency（pptxgenjs 沒有 color 配對時會略過 alpha）。
  */
 export function mix(fgHex: string, bgHex: string, t: number): string {
   const fg = fgHex.replace('#', '').toUpperCase()
@@ -41,7 +41,7 @@ function charEm(ch: string): number {
 }
 
 /**
- * 估算一段文字喺指定字級／欄闊下佔幾多行（≥1）。
+ * 估算一段文字在指定字級／欄闊下佔幾多行（≥1）。
  * 估闊 = Σem × pt/72 × 1.06（1.06 係保守係數：字距 + 標點擠壓）。
  */
 export function estimateLines(text: string, fontPt: number, widthIn: number): number {
@@ -54,14 +54,14 @@ export function estimateLines(text: string, fontPt: number, widthIn: number): nu
 
 export interface TitleFit {
   fontPt: number
-  /** 階梯分配嘅行數上限（實際行數另用 estimateLines 計） */
+  /** 階梯分配的行數上限（實際行數另用 estimateLines 計） */
   lines: 1 | 2
 }
 
 /**
- * 長題階梯 — 字級全部 code 計死，唔依賴 fit:'shrink'。
+ * 長題階梯 — 字級全部 code 計死，不依賴 fit:'shrink'。
  * 版題：≤12 字 30pt/1 行、13-16 字 28pt/1 行、17-22 字 26pt/2 行、>22 字 24pt/2 行。
- * 封面：≤14 字 44pt、15-20 字 40pt、>20 字 36pt（一律俾 2 行位）。
+ * 封面：≤14 字 44pt、15-20 字 40pt、>20 字 36pt（一律給 2 行位）。
  */
 export function fitTitle(title: string, mode: 'content' | 'cover' = 'content'): TitleFit {
   const len = [...title.trim()].length

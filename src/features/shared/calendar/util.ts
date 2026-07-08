@@ -42,7 +42,7 @@ export function weekKeys(d: Date): string[] {
   return Array.from({ length: 7 }, (_, i) => toKey(addDays(s, i)))
 }
 
-/** 某年某月嘅 6×7 = 42 格（由當月第一日嗰個星期日開始） */
+/** 某年某月的 6×7 = 42 格（由當月第一日那個星期日開始） */
 export function monthMatrix(year: number, month: number): Date[] {
   const first = new Date(year, month, 1)
   const start = addDays(first, -first.getDay())
@@ -96,16 +96,16 @@ export function colorOf(color: string | undefined) {
 }
 
 // ───────── 重複展開 ─────────
-/** 某年某月（month 0-indexed）嘅日數 */
+/** 某年某月（month 0-indexed）的日數 */
 function daysInMonth(year: number, month: number): number {
   return new Date(year, month + 1, 0).getDate()
 }
 
 /**
  * 由 series 開始日計第 i 個 occurrence（i 由 0 起）。
- * monthly/yearly 由 seriesStart 嘅 day-of-month 作基準逐步推算，跨短月時
- * clamp 返當月最後一日（如 1/31 → 2/28 → 3/31…），唔會由 roll 後嘅日期繼續
- * 漂移；yearly 由閏日 2/29 起非閏年同樣 clamp 到 2/28，唔會永久變 3/1。
+ * monthly/yearly 由 seriesStart 的 day-of-month 作基準逐步推算，跨短月時
+ * clamp 返當月最後一日（如 1/31 → 2/28 → 3/31…），不會由 roll 後的日期繼續
+ * 漂移；yearly 由閏日 2/29 起非閏年同樣 clamp 到 2/28，不會永久變 3/1。
  */
 function nthOccurrence(
   seriesStart: Date,
@@ -136,7 +136,7 @@ function nthOccurrence(
   }
 }
 
-/** 展開一個事件喺 [startKey, endKey] 內嘅所有 occurrence 開始日（YYYY-MM-DD） */
+/** 展開一個事件在 [startKey, endKey] 內的所有 occurrence 開始日（YYYY-MM-DD） */
 export function expandOccurrences(
   ev: CalendarEvent,
   startKey: string,
@@ -173,7 +173,7 @@ export function expandOccurrences(
     return 'cont'
   }
 
-  // 每週 + 指定星期幾（例如逢一三五）：每 interval 週，喺選中嘅星期出現
+  // 每週 + 指定星期幾（例如逢一三五）：每 interval 週，在選中的星期出現
   if (rec.freq === 'weekly' && rec.byWeekday && rec.byWeekday.length) {
     const days = [...new Set(rec.byWeekday)].sort((a, b) => a - b)
     let weekStart = startOfWeek(seriesStart)
@@ -193,7 +193,7 @@ export function expandOccurrences(
     return out
   }
 
-  // 其餘：由開始日逐步推算第 i 個 occurrence（monthly/yearly clamp，唔漂移）
+  // 其餘：由開始日逐步推算第 i 個 occurrence（monthly/yearly clamp，不漂移）
   let i = 0
   while (guard++ < 3000) {
     if (consider(nthOccurrence(seriesStart, rec.freq, interval, i)) === 'stop') break
@@ -260,7 +260,7 @@ export function sortOccurrences(a: Occurrence, b: Occurrence): number {
   return (a.event.time ?? '').localeCompare(b.event.time ?? '')
 }
 
-/** 把某日嘅 occurrence 索引化（dateKey → Occurrence[]，已排序） */
+/** 把某日的 occurrence 索引化（dateKey → Occurrence[]，已排序） */
 export function indexByDate(occurrences: Occurrence[]): Map<string, Occurrence[]> {
   const map = new Map<string, Occurrence[]>()
   for (const occ of occurrences) {

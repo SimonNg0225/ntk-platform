@@ -51,7 +51,7 @@ describe('computeStats — 空陣列', () => {
     expect(s.trashed).toBe(0)
   })
 
-  it('totalWords = 0、avgWords 防除零 = 0（唔係 NaN）', () => {
+  it('totalWords = 0、avgWords 防除零 = 0（不是 NaN）', () => {
     expect(s.totalWords).toBe(0)
     expect(s.avgWords).toBe(0)
     expect(Number.isNaN(s.avgWords)).toBe(false)

@@ -19,7 +19,7 @@ const WEEKDAYS = ['日', '一', '二', '三', '四', '五', '六']
 // ───────── 1. 複習熱力圖（GitHub 草地風，17 週）─────────
 export function Heatmap({ cells }: { cells: HeatCell[] }) {
   const max = useMemo(() => Math.max(1, ...cells.map((c) => c.count)), [cells])
-  // 切成「週」直欄：由第一格嘅星期幾頂部補白
+  // 切成「週」直欄：由第一格的星期幾頂部補白
   const weeks: (HeatCell | null)[][] = useMemo(() => {
     if (cells.length === 0) return []
     const first = cells[0]
@@ -110,7 +110,7 @@ export function ForecastChart({ bars }: { bars: ForecastBar[] }) {
   if (totalDue === 0) {
     return (
       <p className="py-8 text-center text-sm text-slate-500 dark:text-slate-400">
-        未來冇卡到期，輕鬆一下 🎉
+        未來沒有卡到期，輕鬆一下 🎉
       </p>
     )
   }
@@ -201,7 +201,7 @@ export function DueCalendar({
   if (total === 0) {
     return (
       <p className="py-8 text-center text-sm text-slate-500 dark:text-slate-400">
-        未來幾週都冇卡到期，唞下啦 🎉
+        未來幾週都沒有卡到期，休息下啦 🎉
       </p>
     )
   }
@@ -349,8 +349,8 @@ export function Donut({
 
 // ───────── 4. 答題掣分布（水平條）─────────
 const RATING_META: Record<Rating, { label: string; bar: string; text: string }> = {
-  again: { label: '唔記得', bar: 'bg-rose-500', text: 'text-rose-600 dark:text-rose-400' },
-  hard: { label: '有啲難', bar: 'bg-amber-500', text: 'text-amber-600 dark:text-amber-400' },
+  again: { label: '不記得', bar: 'bg-rose-500', text: 'text-rose-600 dark:text-rose-400' },
+  hard: { label: '有些難', bar: 'bg-amber-500', text: 'text-amber-600 dark:text-amber-400' },
   good: { label: '記得', bar: 'bg-accent', text: 'text-accent-strong dark:text-accent' },
   easy: { label: '好易', bar: 'bg-emerald-500', text: 'text-emerald-600 dark:text-emerald-400' },
 }
@@ -361,7 +361,7 @@ export function AnswerBars({ data }: { data: Record<Rating, number> }) {
   if (total === 0)
     return (
       <p className="py-6 text-center text-sm text-slate-500 dark:text-slate-400">
-        做多一節複習，就見到你嘅評分分布。
+        做多一節複習，就見到你的評分分布。
       </p>
     )
   return (
@@ -404,7 +404,7 @@ export function IntervalChart({ bins }: { bins: IntervalBin[] }) {
   if (total === 0)
     return (
       <p className="py-6 text-center text-sm text-slate-500 dark:text-slate-400">
-        開始複習後，呢度會顯示卡片間隔分布。
+        開始複習後，這裡會顯示卡片間隔分布。
       </p>
     )
   return (
@@ -497,7 +497,7 @@ function Legend({ items }: { items: { color: string; label: string }[] }) {
   )
 }
 
-// ───────── 狀態色（畀 Donut 用）─────────
+// ───────── 狀態色（給 Donut 用）─────────
 export const STATE_DONUT_COLOR: Record<CardState, string> = {
   new: 'stroke-blue-500',
   learning: 'stroke-amber-500',
@@ -506,7 +506,7 @@ export const STATE_DONUT_COLOR: Record<CardState, string> = {
   suspended: 'stroke-slate-400',
 }
 
-// 小工具：可重用嘅互動切換（給 stats 時間範圍）
+// 小工具：可重用的互動切換（給 stats 時間範圍）
 export function RangeToggle({
   value,
   onChange,

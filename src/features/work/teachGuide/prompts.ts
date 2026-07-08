@@ -27,29 +27,29 @@ export function buildGuideSystem(subjectName?: string): string {
     ? `任教科目：${subjectName}。`
     : ''
   return [
-    `你係香港資深教師嘅備課顧問。${subjectLine}用家會俾你一個課題，請出一份「教學指引」，幫老師諗清楚「點教」，唔係淨係出材料。`,
-    '只輸出一個 JSON 物件，唔好有任何其他文字或 markdown code fence：',
+    `你是香港資深教師的備課顧問。${subjectLine}老師會提供一個課題，請產出一份「教學指引」，協助老師想清楚「如何教」，不是只提供材料。`,
+    '只輸出一個 JSON 物件，不要有任何其他文字或 markdown code fence：',
     '{',
-    '  "keyPoints": ["3-5 個教學重點（學生最需要掌握嘅核心）"],',
-    '  "misconceptions": ["3-5 個學生常見誤解／錯概念，每個簡述點解會錯"],',
+    '  "keyPoints": ["3-5 個教學重點（學生最需要掌握的核心）"],',
+    '  "misconceptions": ["3-5 個學生常見誤解／錯概念，每個簡述為什麼會錯"],',
     '  "steps": ["建議教學步驟，由淺入深（導入→講解→練習→總結），每步一句"],',
-    '  "activities": ["2-3 個可落地嘅課堂活動（簡述點做）"],',
-    '  "differentiation": ["對能力強同弱嘅學生分別點調整（2-4 點）"],',
-    '  "assessment": ["2-3 個檢視學生係咪學識嘅方法（口頭／小測／觀察等）"]',
+    '  "activities": ["2-3 個可落地的課堂活動（簡述點做）"],',
+    '  "differentiation": ["對能力強同弱的學生分別點調整（2-4 點）"],',
+    '  "assessment": ["2-3 個檢視學生係咪學識的方法（口頭／小測／觀察等）"]',
     '}',
     '規則：',
     '- 一律用繁體中文（可書面廣東話）。',
-    '- 貼香港課程同實際課堂情況；具體、可落地，唔好空泛。',
-    '- 每個陣列至少 2 項；冇就回空陣列 []。',
-    '- 只輸出 JSON，唔好有多餘文字。',
+    '- 貼香港課程同實際課堂情況；具體、可落地，不要空泛。',
+    '- 每個陣列至少 2 項；沒有就回空陣列 []。',
+    '- 只輸出 JSON，不要有多餘文字。',
   ].join('\n')
 }
 
-/** 解析 AI 教學指引回應；格式唔正確 throw。 */
+/** 解析 AI 教學指引回應；格式不正確 throw。 */
 export function parseGuide(raw: string): GuideResult {
   const o = extractJsonObject<Record<string, unknown>>(raw)
   if (!o || typeof o !== 'object') {
-    throw new Error('AI 回應格式唔正確，請再試一次。')
+    throw new Error('AI 回應格式不正確，請再試一次。')
   }
   const arr = (v: unknown): string[] =>
     Array.isArray(v)
@@ -65,7 +65,7 @@ export function parseGuide(raw: string): GuideResult {
   }
 }
 
-/** 一份指引係咪完全空（六段都冇內容）。 */
+/** 一份指引係咪完全空（六段都沒有內容）。 */
 export function isEmptyGuide(g: GuideResult): boolean {
   return GUIDE_KEYS.every((k) => g[k].length === 0)
 }

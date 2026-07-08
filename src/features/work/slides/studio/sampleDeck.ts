@@ -1,12 +1,12 @@
 import type { Deck } from '../../../../lib/export/types'
 
 // ============================================================
-//  風格示意 deck —— steps 1-3 右邊預覽用，揀模板即時換色睇設計感。
+//  風格示意 deck —— steps 1-3 右邊預覽用，選擇模板即時換色查看設計感。
 //  純示意內容；step 4 生成後會換成用戶真 deck。
 // ============================================================
 
 export const SAMPLE_DECK: Deck = {
-  title: '示範簡報 — 揀個設計風格',
+  title: '示範簡報 — 選擇一個設計風格',
   subtitle: 'Choose your design',
   coverImageQuery: 'classroom learning',
   slides: [
@@ -30,7 +30,7 @@ export const SAMPLE_DECK: Deck = {
         { value: '100%', label: '課堂適用' },
         { value: '幾分鐘', label: '完成生成' },
       ],
-      takeaway: '一份簡報，幾分鐘搞掂',
+      takeaway: '一份簡報，幾分鐘完成',
     },
   ],
 }

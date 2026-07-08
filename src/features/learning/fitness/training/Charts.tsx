@@ -28,7 +28,7 @@ export function VolumeBars({
         記低一次訓練就見到訓練量。
       </p>
     )
-  // 畀讀屏軟件嘅文字摘要（純視覺柱狀圖否則無資訊）。
+  // 給讀屏軟件的文字摘要（純視覺柱狀圖否則無資訊）。
   const total = bars.reduce((s, b) => s + (b.volume > 0 ? b.volume : 0), 0)
   const peak = bars.reduce(
     (best, b) => (b.volume > best.volume ? b : best),
@@ -36,7 +36,7 @@ export function VolumeBars({
   )
   const chartLabel = hasData
     ? `總訓練量柱狀圖，共 ${bars.length} 段，合計 ${fmtVol(total)} kg，最高 ${peak.label} ${fmtVol(peak.volume)} kg`
-    : `總訓練量柱狀圖，共 ${bars.length} 段，呢段時間未有訓練量`
+    : `總訓練量柱狀圖，共 ${bars.length} 段，這段時間未有訓練量`
   return (
     <div role="img" aria-label={chartLabel}>
       <div className="flex h-40 items-end gap-1.5" aria-hidden="true">
@@ -80,7 +80,7 @@ export function VolumeBars({
       </div>
       {!hasData && (
         <p className="mt-2 text-center text-xs text-slate-400 dark:text-slate-500">
-          呢段時間未有訓練量。
+          這段時間未有訓練量。
         </p>
       )}
     </div>
@@ -104,7 +104,7 @@ export function RpeTrend({
         className="flex items-center justify-center text-sm text-slate-400 dark:text-slate-500"
         style={{ height }}
       >
-        未有 RPE 資料 — 喺 set 填 1-10 即見疲勞走勢。
+        未有 RPE 資料 — 在 set 填 1-10 即見疲勞走勢。
       </div>
     )
 
@@ -119,7 +119,7 @@ export function RpeTrend({
     return 92 - ((clamped - 1) / 9) * 84
   }
 
-  // 只連有資料（value>0）嘅相鄰點，缺值處斷開
+  // 只連有資料（value>0）的相鄰點，缺值處斷開
   const segs: string[] = []
   let cur = ''
   points.forEach((p, i) => {
@@ -132,7 +132,7 @@ export function RpeTrend({
   })
   if (cur !== '') segs.push(cur.trim())
 
-  // 讀屏摘要：有資料嘅點數 + 最新值 + 高疲勞（>=8）段數。
+  // 讀屏摘要：有資料的點數 + 最新值 + 高疲勞（>=8）段數。
   const withData = points.filter((p) => p.value > 0)
   const latest = withData[withData.length - 1]
   const highCount = withData.filter((p) => p.value >= 8).length
@@ -227,7 +227,7 @@ export function RpeTrend({
 }
 
 // ───────── 共用格式化 ─────────
-/** volume 千位分隔；過萬用 k 簡寫畀軸 / tooltip 用。 */
+/** volume 千位分隔；過萬用 k 簡寫給軸 / tooltip 用。 */
 export function fmtVol(v: number): string {
   if (!Number.isFinite(v)) return '0'
   return Math.round(v).toLocaleString('en-US')

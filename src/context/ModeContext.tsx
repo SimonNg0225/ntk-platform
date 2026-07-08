@@ -17,8 +17,8 @@ import {
 // ============================================================
 //  ModeContext
 //  ------------------------------------------------------------
-//  全 App 共用嘅「目前模式」狀態。
-//  - 會記住你揀過嘅模式 (localStorage)，下次開返一樣
+//  全 App 共用的「目前模式」狀態。
+//  - 會記住你選擇過的模式 (localStorage)，下次開返一樣
 //  - 切換模式時，自動將主題色寫入 CSS 變數
 // ============================================================
 
@@ -36,7 +36,7 @@ const ModeContext = createContext<ModeContextValue | null>(null)
 function readInitialMode(): ModeId {
   if (typeof localStorage === 'undefined') return DEFAULT_MODE
   const saved = localStorage.getItem(STORAGE_KEY) as ModeId | null
-  // 只接受「目前開放」嘅模式（MODE_ORDER）；舊用戶揀過而家收起咗嘅模式
+  // 只接受「目前開放」的模式（MODE_ORDER）；舊用戶選擇過現在收起了的模式
   // （例如 learning）→ 回預設工作模式。
   return saved && MODE_ORDER.includes(saved) ? saved : DEFAULT_MODE
 }
@@ -44,7 +44,7 @@ function readInitialMode(): ModeId {
 export function ModeProvider({ children }: { children: ReactNode }) {
   const [mode, setModeState] = useState<ModeId>(readInitialMode)
 
-  // 將主題色套落 <html> 嘅 CSS 變數
+  // 將主題色套落 <html> 的 CSS 變數
   useEffect(() => {
     const def = MODES[mode]
     const root = document.documentElement
@@ -62,7 +62,7 @@ export function ModeProvider({ children }: { children: ReactNode }) {
   }, [mode])
 
   const value = useMemo<ModeContextValue>(() => {
-    // 收起咗嘅模式（唔喺 MODE_ORDER）唔畀切換過去；防止任何 caller 跳入隱藏模式。
+    // 收起了的模式（不在 MODE_ORDER）不給切換過去；防止任何 caller 跳入隱藏模式。
     const setMode = (next: ModeId) => {
       if (MODE_ORDER.includes(next)) setModeState(next)
     }
@@ -80,6 +80,6 @@ export function ModeProvider({ children }: { children: ReactNode }) {
 // eslint-disable-next-line react-refresh/only-export-components
 export function useMode(): ModeContextValue {
   const ctx = useContext(ModeContext)
-  if (!ctx) throw new Error('useMode 必須喺 <ModeProvider> 入面用')
+  if (!ctx) throw new Error('useMode 必須在 <ModeProvider> 中用')
   return ctx
 }

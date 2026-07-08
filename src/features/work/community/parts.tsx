@@ -14,7 +14,7 @@ export const subjectName = (id: string | null | undefined): string | null =>
 /** 縮寫頭像（匿名 → 灰底「匿」；否則 pack avatarColor + 署名首字）。 */
 export function Avatar({ profile, size = 28 }: { profile?: CommunityProfile | null; size?: number }) {
   const name = profile ? publicName(profile) : '老師'
-  // 取署名最後一段（去學校前綴）嘅首字做縮寫
+  // 取署名最後一段（去學校前綴）的首字做縮寫
   const initial = [...name.replace(/^.*\s/, '')][0] ?? '師'
   const bg = profile?.anonymous ? '64748B' : (profile?.avatarColor ?? '4F46E5')
   return (
@@ -43,7 +43,7 @@ export function Stars({ value, count }: { value: number; count?: number }) {
   )
 }
 
-/** 可撳星評（揀星）。 */
+/** 可按星評（選擇星）。 */
 export function StarPicker({ value, onPick }: { value: number; onPick: (n: number) => void }) {
   return (
     <span className="inline-flex items-center gap-1">

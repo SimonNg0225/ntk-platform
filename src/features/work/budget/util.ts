@@ -9,9 +9,9 @@ import type { Transaction, TxCategory, TxKind } from '../../../data/types'
 //   - 定期收支（薪金 / 訂閱 / 租金…）自動到期入帳
 //   - 儲蓄率、日均支出、最大單筆、月對月升跌、月底預測
 //   - 分類佔比、收支趨勢、現金流、每日支出、支出熱力圖
-//  共用 transactionsCol / txCategoriesCol 維持唔變；本功能需要而
-//  Transaction / TxCategory 冇嘅資料（預算、定期）存喺呢度自家 collection。
-//  唯一 key（已喺 newCollections 申報）：
+//  共用 transactionsCol / txCategoriesCol 維持不變；本功能需要而
+//  Transaction / TxCategory 沒有的資料（預算、定期）存在這裡自家 collection。
+//  唯一 key（已在 newCollections 申報）：
 //    budget_envelopes / budget_recurring
 // ============================================================
 
@@ -175,7 +175,7 @@ export interface MonthStats {
   count: number
   /** 儲蓄率 = (收入-支出)/收入 *100；無收入 = null */
   savingsRate: number | null
-  /** 截至「今日」嘅日均支出（本月先用已過日數，過去月用全月日數） */
+  /** 截至「今日」的日均支出（本月先用已過日數，過去月用全月日數） */
   dailyAvg: number
   /** 最大單筆支出 */
   topExpense: number
@@ -306,7 +306,7 @@ export interface BudgetRow {
   rollover: boolean
 }
 
-/** 計某月各分類預算使用狀況（只計有設預算嘅支出分類） */
+/** 計某月各分類預算使用狀況（只計有設預算的支出分類） */
 export function budgetRows(
   envelopes: BudgetEnvelope[],
   monthTxs: Transaction[],
@@ -413,13 +413,13 @@ export interface DueInfo {
   overdueDays: number // >0 = 已過期未入；0 = 今日；<0 = 將來
 }
 
-/** 篩出「到今日為止應入帳但未入」嘅定期項目 */
+/** 篩出「到今日為止應入帳但未入」的定期項目 */
 export function dueRecurring(list: RecurringTx[]): DueInfo[] {
   const today = todayIso()
   const out: DueInfo[] = []
   for (const r of list) {
     if (!r.active) continue
-    // 真正「下次到期」= 由 lastPosted / startDate 推到 <= today 嘅最後一個
+    // 真正「下次到期」= 由 lastPosted / startDate 推到 <= today 的最後一個
     const due = lastDueOnOrBefore(r, today)
     if (!due) continue
     out.push({ recurring: r, dueDate: due, overdueDays: daysBetween(due, today) })
@@ -429,7 +429,7 @@ export function dueRecurring(list: RecurringTx[]): DueInfo[] {
   )
 }
 
-/** 推算某定期項目「將來下一次」到期日（用嚟顯示未到期項目嘅預告） */
+/** 推算某定期項目「將來下一次」到期日（用來顯示未到期項目的預告） */
 export function upcomingDue(r: RecurringTx): string {
   const today = todayIso()
   let cursor = r.lastPosted
@@ -498,7 +498,7 @@ export function filtersActive(f: Filters): boolean {
   )
 }
 
-/** 應用篩選（在已選月份嘅交易上） */
+/** 應用篩選（在已選月份的交易上） */
 export function applyFilters(
   txs: Transaction[],
   f: Filters,
@@ -548,16 +548,16 @@ export function txToCsvRows(
 }
 
 // ============================================================
-//  CSV 匯入（鏡像題庫零依賴 parser；解析→fuzzy 對分類→草稿，畀用戶預覽確認）
+//  CSV 匯入（鏡像題庫零依賴 parser；解析→fuzzy 對分類→草稿，給用戶預覽確認）
 //  ------------------------------------------------------------
 //  欄位（與匯出鏡像）：日期 / 類型(收/支) / 分類 / 金額 / 備註。
 //  - 類型：收入/income/收 → income；支出/expense/支 → expense；
 //    留空時由金額正負推斷（負 = 支出）。
 //  - 金額：去除貨幣符號/千分位，取絕對值（正負只代表類型）。
-//  - 分類：先喺同類型 fuzzy 對應現有 TxCategory，再跨類型；
-//    對唔到 → categoryId 留空（UI fallback「未分類」）。
+//  - 分類：先在同類型 fuzzy 對應現有 TxCategory，再跨類型；
+//    對不到 → categoryId 留空（UI fallback「未分類」）。
 //  - 日期接受 YYYY-MM-DD / YYYY/M/D，正規化成 YYYY-MM-DD；
-//    無法解析成有效日期嘅行會略過。
+//    無法解析成有效日期的行會略過。
 // ============================================================
 
 /** 簡易 CSV parser（支援引號包欄位 + 逃逸雙引號 + 換行；零依賴）。 */
@@ -637,14 +637,14 @@ function normalizeDate(raw: string): string | null {
   return `${y}-${String(mo).padStart(2, '0')}-${String(d).padStart(2, '0')}`
 }
 
-/** 匯入解析出嚟嘅一筆交易草稿（未寫入；categoryId 空 = 未對應到分類）。 */
+/** 匯入解析出來的一筆交易草稿（未寫入；categoryId 空 = 未對應到分類）。 */
 export interface ParsedTx {
   kind: TxKind
   amount: number
   categoryId: string
   date: string
   note?: string
-  /** 原 CSV 分類名（畀預覽顯示，尤其對唔到分類時）。 */
+  /** 原 CSV 分類名（給預覽顯示，尤其對不到分類時）。 */
   rawCategory: string
   /** 係咪成功對應到現有分類（false = 落「未分類」）。 */
   matched: boolean
@@ -656,7 +656,7 @@ export interface ParsedTxResult {
 }
 
 /**
- * 把 CSV rows（可含表頭）轉成可入帳嘅交易草稿 + 略過行數。
+ * 把 CSV rows（可含表頭）轉成可入帳的交易草稿 + 略過行數。
  * fuzzy 對應規則：完全同名 > 包含關係（同類型優先，再跨類型）。
  */
 export function csvRowsToTx(rows: string[][], cats: TxCategory[]): ParsedTxResult {
@@ -745,7 +745,7 @@ export function csvRowsToTx(rows: string[][], cats: TxCategory[]): ParsedTxResul
   return { parsed, skipped }
 }
 
-/** CSV 匯入範本（畀使用者下載對照；與匯出欄位一致）。 */
+/** CSV 匯入範本（給使用者下載對照；與匯出欄位一致）。 */
 export function txCsvTemplate(): string {
   return [
     '日期,類型,分類,金額,備註',

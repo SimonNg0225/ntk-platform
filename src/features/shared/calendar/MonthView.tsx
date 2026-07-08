@@ -91,7 +91,7 @@ export default function MonthView({
                       : isWeekend
                         ? 'bg-slate-50/40 hover:bg-slate-100/60 dark:bg-slate-800/40 dark:hover:bg-slate-800/70'
                         : 'bg-white hover:bg-slate-50 dark:bg-slate-800 dark:hover:bg-slate-800/60',
-                // 選中態：內襯 accent 細框，輕巧唔搶
+                // 選中態：內襯 accent 細框，輕巧不搶
                 isSelected && !isToday && 'ring-1 ring-inset ring-accent/30',
               )}
             >

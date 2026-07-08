@@ -1,8 +1,8 @@
 // ============================================================
 //  行政文件 — docx 引擎（純邏輯，可測）
 //  ------------------------------------------------------------
-//  保留原 .docx 格式，淨係換 `{標籤}` 文字（佔位填充）：
-//  輸出係真正 .docx，格式 100% 不變（唔做 HTML 重 render）。
+//  保留原 .docx 格式，只換 `{標籤}` 文字（佔位填充）：
+//  輸出係真正 .docx，格式 100% 不變（不做 HTML 重 render）。
 //  全部 client-side：PizZip 讀 / 砌 zip、docxtemplater 抽標籤 + 填充。
 // ============================================================
 
@@ -14,7 +14,7 @@ const DOCX_MIME =
 
 /**
  * 建立 docxtemplater 實例（統一設定）。
- * - delimiters `{` … `}`：對齊老師手動寫嘅 `{標籤}`。
+ * - delimiters `{` … `}`：對齊老師手動寫的 `{標籤}`。
  * - paragraphLoop / linebreaks：對 Word 段落結構較友善。
  */
 function makeDoc(buf: ArrayBuffer): Docxtemplater {
@@ -27,10 +27,10 @@ function makeDoc(buf: ArrayBuffer): Docxtemplater {
 }
 
 /**
- * 抽出範本入面所有 `{標籤}`（去重、保留首次出現次序）。
+ * 抽出範本中所有 `{標籤}`（去重、保留首次出現次序）。
  *
- * docxtemplater 嘅 `getFullText()` 會把分散喺多個 `<w:t>` run 嘅文字接返一齊，
- * 解決 Word 將一個標籤拆散落唔同 run 嘅問題；再用正則抽 `{…}` 內容。
+ * docxtemplater 的 `getFullText()` 會把分散在多個 `<w:t>` run 的文字接返一起，
+ * 解決 Word 將一個標籤拆散落不同 run 的問題；再用正則抽 `{…}` 內容。
  */
 export function extractTags(buf: ArrayBuffer): string[] {
   const doc = makeDoc(buf)
@@ -50,7 +50,7 @@ export function extractTags(buf: ArrayBuffer): string[] {
 }
 
 /**
- * 以 `data` 填充範本，回傳填好嘅 .docx Blob（格式原封不動）。
+ * 以 `data` 填充範本，回傳填好的 .docx Blob（格式原封不動）。
  *
  * @throws 友善 Error —— 當 docxtemplater 因標籤錯誤（如未閉合 `{`、
  *         未知標籤等）拋 TemplateError 時，盡量列出問題標籤。
@@ -58,9 +58,9 @@ export function extractTags(buf: ArrayBuffer): string[] {
 export function fillDocx(buf: ArrayBuffer, data: Record<string, string>): Blob {
   let doc: Docxtemplater
   try {
-    // 注意：docxtemplater v3 喺 constructor 階段就 parse/compile 範本，
-    // 未閉合 `{` 等標籤錯誤會喺 `new Docxtemplater` 拋（唔係喺 render），
-    // 故 construction + render 一齊包喺 try 入面。
+    // 注意：docxtemplater v3 在 constructor 階段就 parse/compile 範本，
+    // 未閉合 `{` 等標籤錯誤會在 `new Docxtemplater` 拋（不是在 render），
+    // 故 construction + render 一起包在 try 中。
     doc = makeDoc(buf)
     doc.render(data)
   } catch (e) {
@@ -74,8 +74,8 @@ export function fillDocx(buf: ArrayBuffer, data: Record<string, string>): Blob {
 }
 
 /**
- * 把 docxtemplater TemplateError 轉成畀用戶睇得明嘅 Error。
- * docxtemplater 會喺 `e.properties.errors[]` 列出每個有問題嘅標籤
+ * 把 docxtemplater TemplateError 轉成給用戶查看得明的 Error。
+ * docxtemplater 會在 `e.properties.errors[]` 列出每個有問題的標籤
  * （每項通常有 `.properties.id` / `.properties.context` / `.message`）。
  */
 function toFriendlyTemplateError(e: unknown): Error {
@@ -106,9 +106,9 @@ function toFriendlyTemplateError(e: unknown): Error {
 }
 
 /**
- * 抽範本嘅純文字（畀 Phase 2 AI 讀範本內容用）。
+ * 抽範本的純文字（給 Phase 2 AI 讀範本內容用）。
  * 直接讀 `word/document.xml` → strip `<…>` tag → 解基本 XML entity。
- * 失敗（壞檔 / 冇 document.xml）回空字串，唔拋錯。
+ * 失敗（壞檔 / 沒有 document.xml）回空字串，不拋錯。
  */
 export function extractText(buf: ArrayBuffer): string {
   try {

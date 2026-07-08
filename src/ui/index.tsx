@@ -21,7 +21,7 @@ import type { LucideIcon } from 'lucide-react'
 // ============================================================
 //  EziTeach AI UI Kit — 精煉海軍藍設計系統
 //  俐落圓角、克制陰影、線性圖示、完整深色 + focus-visible。
-//  全部元件向後相容（保留 export 名 + prop 簽名，只加有預設嘅新 prop）。
+//  全部元件向後相容（保留 export 名 + prop 簽名，只加有預設的新 prop）。
 // ============================================================
 
 function cx(...parts: (string | false | null | undefined)[]) {
@@ -116,10 +116,10 @@ export function Button({
 }
 
 // ───────── Input / Textarea / Select（共用 FIELD）─────────
-// ⚠️ 字級：手機強制 16px（text-base），sm: 以上先收返 14px（text-sm）。
-//    原因：iOS Safari 撞到 font-size < 16px 嘅 input/textarea/select，focus
-//    嗰刻會自動放大 viewport → 用戶見到「每 focus 跳一跳」。≥16px 就唔會 zoom。
-//    全 app 表單共用呢個 FIELD，所以喺源頭修一次就全部受惠。
+// ⚠️ 字級：手機強制 16px（text-base），sm: 以上先收回 14px（text-sm）。
+//    原因：iOS Safari 撞到 font-size < 16px 的 input/textarea/select，focus
+//    嗰刻會自動放大 viewport → 用戶見到「每 focus 跳一跳」。≥16px 就不會 zoom。
+//    全 app 表單共用這個 FIELD，所以在源頭修一次就全部受惠。
 const FIELD =
   'w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-base sm:text-sm text-slate-800 shadow-xs outline-none transition placeholder:text-slate-400 focus:border-accent focus:ring-2 focus:ring-accent/30 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-500 dark:shadow-none dark:disabled:bg-slate-900'
 
@@ -618,22 +618,22 @@ export function Modal({
   size?: 'sm' | 'md' | 'lg' | 'xl'
   footer?: ReactNode
   closeOnBackdrop?: boolean
-  /** 無障礙名稱：當唔傳 title（自管 masthead）時用。唔傳就自動由面板第一個標題推導。 */
+  /** 無障礙名稱：當不傳 title（自管 masthead）時用。不傳就自動由面板第一個標題推導。 */
   ariaLabel?: string
 }) {
   const panelRef = useRef<HTMLDivElement>(null)
   const titleId = useId()
 
-  // onClose 經 ref 取最新值。⚠️ 千祈唔好將 onClose 放入下面 effect 嘅 deps：
-  // 好多 caller 傳 inline arrow（onClose={() => {…}}），每次父組件 render 都係新
-  // ref。若入 deps，喺 modal 入面打字（每個 keystroke setState → 父 re-render →
-  // 新 onClose）就會令 effect 重跑：cleanup 嘅 prevActive.focus() 同 effect 嘅
-  // panel.focus() 會喺每一下打字搶走輸入框焦點 → 用戶見到「每打一字跳一跳／
-  // 打唔到字」。改用 ref 後，focus 管理 effect 只喺 open 真正切換先跑一次。
+  // onClose 經 ref 取最新值。⚠️ 千祈不要將 onClose 放入下面 effect 的 deps：
+  // 很多 caller 傳 inline arrow（onClose={() => {…}}），每次父組件 render 都係新
+  // ref。若入 deps，在 modal 中打字（每個 keystroke setState → 父 re-render →
+  // 新 onClose）就會令 effect 重跑：cleanup 的 prevActive.focus() 同 effect 的
+  // panel.focus() 會在每一下打字搶走輸入框焦點 → 用戶見到「每打一字跳一跳／
+  // 打不到字」。改用 ref 後，focus 管理 effect 只在 open 真正切換先跑一次。
   const onCloseRef = useRef(onClose)
   onCloseRef.current = onClose
 
-  // 開啟時：鎖 body 捲動、初始焦點入面板、Esc 關閉、Tab focus-trap；
+  // 開啟時：鎖 body 捲動、初始焦點中板、Esc 關閉、Tab focus-trap；
   // 關閉/卸載時還原焦點同捲動（無障礙對話框標準行為）。
   useEffect(() => {
     if (!open) return
@@ -641,11 +641,11 @@ export function Modal({
     const prevOverflow = document.body.style.overflow
     document.body.style.overflow = 'hidden'
 
-    // 無障礙名稱（dialog accessible name）：完全由呢個 effect 以 DOM 管理，
-    // JSX 唔再宣告 aria-labelledby/aria-label，咁 parent re-render（例如喺 modal
-    // 入面打字）就唔會 reconcile 清走佢。title 模式 → 指返個預設 h3；自管 masthead
+    // 無障礙名稱（dialog accessible name）：完全由這個 effect 以 DOM 管理，
+    // JSX 不再宣告 aria-labelledby/aria-label，這樣 parent re-render（例如在 modal
+    // 中打字）就不會 reconcile 清走他。title 模式 → 指返個預設 h3；自管 masthead
     // （無 title）模式 → 指面板第一個標題（h1/h2/h3 或 [data-modal-title]），
-    // 冇標題就用 ariaLabel prop / 通用 fallback。喺 focus 前 set，focus 入嚟即讀到。
+    // 沒有標題就用 ariaLabel prop / 通用 fallback。在 focus 前 set，focus 入來即讀到。
     const panel = panelRef.current
     if (panel) {
       let labelId: string | null = null
@@ -699,7 +699,7 @@ export function Modal({
       document.body.style.overflow = prevOverflow
       prevActive?.focus?.()
     }
-    // 只跟 open；onClose 走 ref（見上）。唔好加返 onClose 入 deps。
+    // 只跟 open；onClose 走 ref（見上）。不要加回 onClose 入 deps。
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open])
 
@@ -1224,11 +1224,11 @@ export function SegmentedControl<T extends string>({
   )
 }
 
-// ───────── OptionButtons（滿寬描邊選項；揀一個；generic）─────────
-// 同 SegmentedControl 唔同：呢個係 flex-1 平分嘅描邊大按鈕，選中用 accent 實色填充，
-// 適合放入 Field 做表單揀選（性別、就讀狀態…）。
-// clearable=true：再撳返已選嗰個會清空（onChange 收 ''），用喺可有可無嘅欄位（如性別）；
-// clearable=false（預設）：淨係切換，唔會取消，用喺必填欄位（如就讀狀態）。
+// ───────── OptionButtons（滿寬描邊選項；選擇一個；generic）─────────
+// 同 SegmentedControl 不同：這個係 flex-1 平分的描邊大按鈕，選中用 accent 實色填充，
+// 適合放入 Field 做表單選擇選（性別、就讀狀態…）。
+// clearable=true：再按返已選那個會清空（onChange 收 ''），用在可有可無的欄位（如性別）；
+// clearable=false（預設）：只切換，不會取消，用在必填欄位（如就讀狀態）。
 export function OptionButtons<T extends string>({
   options,
   value,
@@ -1267,7 +1267,7 @@ export function OptionButtons<T extends string>({
 
 // ───────── Avatar ─────────
 //  顯示優先：上載圖 src → 預設 persona preset（疊 color 底）→ 文字（署名首字）+ color。
-//  color 係 6-hex（無 #）；冇 color 時文字頭像用品牌 accent 色。
+//  color 係 6-hex（無 #）；沒有 color 時文字頭像用品牌 accent 色。
 export function Avatar({
   name,
   src,

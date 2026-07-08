@@ -18,7 +18,7 @@ import { generateLesson, type LessonGen, type GenSkeleton } from './lessonAi'
 import { templatesForSubject, type BuiltinLessonTemplate } from './subjectTemplates'
 
 // ============================================================
-//  AI 教案生成 Modal —— 揀課題 + 簡填今日內容（可選範本骨架）→ AI 出教案
+//  AI 教案生成 Modal —— 選擇課題 + 簡填今日內容（可選範本骨架）→ AI 出教案
 //  ------------------------------------------------------------
 //  成功後 onGenerated 將結果 + 課題/班別交返 LessonPlanner，預填編輯器。
 // ============================================================
@@ -33,7 +33,7 @@ export interface GeneratedLesson {
   gen: LessonGen
   topic: Topic
   classId: string
-  /** 用咗邊個範本（顯示用，可選） */
+  /** 用了哪個範本（顯示用，可選） */
   templateName?: string
 }
 
@@ -56,7 +56,7 @@ export default function GenerateModal({
 }) {
   const toast = useToast()
   const builtinTemplates = useMemo(() => templatesForSubject(subjectId), [subjectId])
-  // 課題按科目分組（老師可同時載入多科 → 用 optgroup 分區，唔好一鋪過撈埋）
+  // 課題按科目分組（老師可同時載入多科 → 用 optgroup 分區，不要一鋪過撈埋）
   const topicGroups = useMemo(() => groupTopicsBySubject(topics), [topics])
 
   const [topicId, setTopicId] = useState(topics[0]?.id ?? '')
@@ -64,7 +64,7 @@ export default function GenerateModal({
   const [classId, setClassId] = useState('')
   const [durationMin, setDurationMin] = useState(55)
   const [model, setModel] = useState<AIModel>(defaultModel)
-  const [tplId, setTplId] = useState('') // '' = 唔用範本骨架
+  const [tplId, setTplId] = useState('') // '' = 不用範本骨架
   const [busy, setBusy] = useState(false)
 
   const topic = topics.find((t) => t.id === topicId)
@@ -108,7 +108,7 @@ export default function GenerateModal({
             取消
           </Button>
           <Button icon={Sparkles} onClick={run} loading={busy} disabled={!topic}>
-            {busy ? '生成緊…' : '生成教案'}
+            {busy ? '生成中…' : '生成教案'}
           </Button>
         </div>
       }
@@ -116,7 +116,7 @@ export default function GenerateModal({
       <div className="space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <p className="text-[13px] text-slate-500 dark:text-slate-400">
-            揀課題、簡單寫低今日想教咩，AI 幫你出一份完整教案（學習目標、分段時間、活動、教材），出咗仲可以逐項改。
+            選擇課題、簡單記錄今日想教什麼，AI 幫你出一份完整教案（學習目標、分段時間、活動、教材），出了還可以逐項改。
           </p>
           <Tooltip label="Flash 快 · Pro 強">
             <SegmentedControl size="sm" options={MODEL_OPTS} value={model} onChange={setModel} />
@@ -139,7 +139,7 @@ export default function GenerateModal({
               </Select>
             ) : (
               <p className="text-[13px] text-amber-600 dark:text-amber-400">
-                未有課題 —— 去「課程進度」加課題，或喺設定揀任教科目。
+                未有課題 —— 去「課程進度」加課題，或在設定選擇任教科目。
               </p>
             )}
           </Field>
@@ -190,7 +190,7 @@ export default function GenerateModal({
           label={
             subjectName ? `範本骨架（選填 · ${subjectName}）` : '範本骨架（選填）'
           }
-          hint="揀一個範本，AI 會跟住佢嘅分段結構填內容；唔揀就由 AI 自由設計。"
+          hint="選擇一個範本，AI 會跟住他的分段結構填內容；不選擇就由 AI 自由設計。"
         >
           <div className="flex flex-wrap gap-1.5">
             <button

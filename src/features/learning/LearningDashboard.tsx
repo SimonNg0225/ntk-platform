@@ -78,7 +78,7 @@ import {
 // ============================================================
 //  學習儀表板（Notion Home / Apple 摘要 級）
 //  ------------------------------------------------------------
-//  · 可配置 widget（顯示 / 隱藏 / 排序）+ KPI 揀選
+//  · 可配置 widget（顯示 / 隱藏 / 排序）+ KPI 選擇選
 //  · KPI 卡含本週 vs 上週趨勢箭咀
 //  · 今日聚焦三環、活動走勢面積圖、跨功能 roll-up
 //  · 全部資料由各功能「真實」資料層彙整（rich notes / books /
@@ -168,7 +168,7 @@ export default function LearningDashboard() {
   const journaledToday = journalDocs.some((j) => j.date === today)
   const tasks: TaskItem[] = [
     {
-      label: kpis.dueCards > 0 ? `溫習 ${kpis.dueCards} 張到期知識卡` : '知識卡已清晒',
+      label: kpis.dueCards > 0 ? `溫習 ${kpis.dueCards} 張到期知識卡` : '知識卡已清全部',
       done: kpis.dueCards === 0 && cards.length > 0,
       target: 'learning-flashcards',
       icon: Brain,
@@ -195,7 +195,7 @@ export default function LearningDashboard() {
       icon: BookText,
     },
   ]
-  // ── 習慣打卡（直接喺儀表板完成）──
+  // ── 習慣打卡（直接在儀表板完成）──
   function toggleHabit(habitId: string, done: boolean) {
     const existing = habitLogs.find((l) => l.habitId === habitId && l.date === today)
     if (done && !existing) {
@@ -241,22 +241,22 @@ export default function LearningDashboard() {
         }
       />
 
-      {/* 教學引導：教用家點睇 / 點配置呢個總覽 */}
+      {/* 教學引導：教用家點查看 / 點配置這個總覽 */}
       <FeatureGuide
         storageKey="learning-dashboard"
-        title="個人總覽點用？"
+        title="個人總覽使用說明"
         steps={[
           {
-            title: '一眼睇晒今日',
+            title: '一眼查看全部今日',
             desc: '上方大格顯示問候、今日專注進度同今日任務；統計磚係本週學習數字。',
           },
           {
-            title: '撳磚直接跳功能',
-            desc: '撳任何一塊磚（知識卡 / 習慣 / 專注 / 目標…）就會去返嗰個功能頁。',
+            title: '按磚直接跳功能',
+            desc: '按任何一塊磚（知識卡 / 習慣 / 專注 / 目標…）即可前往該功能頁。',
           },
           {
             title: '自訂版面',
-            desc: '撳右上「自訂」開關面板、調次序，或切換舒適 / 緊湊密度，啱自己就得。',
+            desc: '按右上「自訂」開關面板、調次序，或切換舒適 / 緊湊密度，適合自己就得。',
           },
         ]}
       />
@@ -277,11 +277,11 @@ export default function LearningDashboard() {
       {visible.length === 0 ? (
         <EmptyState
           icon={LayoutGrid}
-          title="所有面板都收埋咗"
-          hint="喺「自訂」開返你想睇嘅卡片，或調整顯示次序。"
+          title="所有面板都收埋了"
+          hint="在「自訂」開啟你想查看的卡片，或調整顯示次序。"
           action={
             <Button size="sm" variant="secondary" onClick={() => setCustomizing(true)}>
-              開返面板
+              開啟面板
             </Button>
           }
         />
@@ -447,7 +447,7 @@ function CustomizeModal({
 
         {/* widget 顯示 / 排序 */}
         <section>
-          <SectionTitle description="撳眼睛收起，上下箭咀調次序">面板（卡片）</SectionTitle>
+          <SectionTitle description="按眼睛收起，上下箭咀調次序">面板（卡片）</SectionTitle>
           <ul className="divide-y divide-slate-100 overflow-hidden rounded-xl border border-slate-200 dark:divide-slate-800 dark:border-slate-700">
             {defByOrder.map((w, i) => {
               const off = hidden.has(w.id)

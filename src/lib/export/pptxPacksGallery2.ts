@@ -232,12 +232,12 @@ const blueprint: Pack = {
   cover(slide, deck, brand, img) {
     slide.background = { color: BLU.bg }
     const hasImg = Boolean(img)
-    // 招牌藍曬圖紙紋理底圖（瀏覽器 Canvas raster；冇 canvas 時 fallback 漸層底）
+    // 招牌藍曬圖紙紋理底圖（瀏覽器 Canvas raster；沒有 canvas 時 fallback 漸層底）
     const tex = coverTextureUri('blueprint')
     if (tex) {
       slide.addImage({ data: tex, x: 0, y: 0, w: 13.333, h: 7.5, sizing: { type: 'cover', w: 13.333, h: 7.5 } })
     } else {
-      // 藍曬紙微微受光：頂部一抹淡藍 accent → 底部沉藍，俾圖紙底一點縱深
+      // 藍曬紙微微受光：頂部一抹淡藍 accent → 底部沉藍，給圖紙底一點縱深
       slide.addShape('rect', {
         x: 0,
         y: 0,
@@ -307,7 +307,7 @@ const blueprint: Pack = {
 
 // ============================================================
 //  翠廬 ivy — 常春藤學院
-//  森綠 × 米金嘅老學院書卷氣：封面左綠右白雙欄似精裝書封，
+//  森綠 × 米金的老學院書卷氣：封面左綠右白雙欄似精裝書封，
 //  學刊雙細線做分隔、細金菱形做徽記，Georgia 巨號照應學報排版。
 // ============================================================
 
@@ -437,7 +437,7 @@ function renderIvyTimeline(slide: PptxGenJS.Slide, body: Rect, pack: Pack, s: Sl
   items.forEach((st, i) => {
     const cy = body.y + 0.1 + i * rowH
     const nodeC = cy + rowH * 0.28
-    // 金菱形節點（壓喺主線上）
+    // 金菱形節點（壓在主線上）
     ivyDiamond(slide, lineX - 0.1, nodeC - 0.1, 0.2)
     // 步序（金號小字）
     tx(slide, pad2(i + 1), { x: textX, y: cy, w: textW, h: 0.24, fontSize: 10, bold: true, color: pack.statColor, charSpacing: 3, fontFace: pack.displayFont })
@@ -493,7 +493,7 @@ const ivy: Pack = {
 
   cover(slide, deck, brand, img, title) {
     slide.background = { color: 'FFFFFF' }
-    // 招牌學報紙紋底圖（瀏覽器 Canvas raster；冇 canvas 時 fallback 純色底）
+    // 招牌學報紙紋底圖（瀏覽器 Canvas raster；沒有 canvas 時 fallback 純色底）
     const tex = coverTextureUri('ivy')
     if (tex) slide.addImage({ data: tex, x: 0, y: 0, w: 13.333, h: 7.5, sizing: { type: 'cover', w: 13.333, h: 7.5 } })
     // 左綠欄（書脊）：徽記 + kicker + 白雙細線 + 底部日期／brand
@@ -576,7 +576,7 @@ function tianGrid(slide: PptxGenJS.Slide, x: number, y: number, size: number, li
 
 /**
  * 招牌：stats 渲染成「雜誌大數字」——
- * 各 stat 一個 module，頂部朱紅粗條，displayFont 巨號數字，標籤喺下，
+ * 各 stat 一個 module，頂部朱紅粗條，displayFont 巨號數字，標籤在下，
  * module 間以粗朱紅 rule 分隔。編輯雜誌版面感。2–4 項。
  */
 function renderRedgridBigNumbers(slide: PptxGenJS.Slide, body: Rect, pack: Pack, s: Slide): void {
@@ -737,12 +737,12 @@ const redgrid: Pack = {
   cover(slide, deck, brand, img) {
     slide.background = { color: 'FFFFFF' }
     const hasImg = Boolean(img)
-    // 招牌習字簿格紙紋理底圖（瀏覽器 Canvas raster；冇 canvas 時 fallback 漸層底）
+    // 招牌習字簿格紙紋理底圖（瀏覽器 Canvas raster；沒有 canvas 時 fallback 漸層底）
     const tex = coverTextureUri('redgrid')
     if (tex) {
       slide.addImage({ data: tex, x: 0, y: 0, w: 13.333, h: 7.5, sizing: { type: 'cover', w: 13.333, h: 7.5 } })
     } else {
-      // 習字簿宣紙微微泛色：頂部一抹暖白 → 底部極淡朱墨，俾白底一點縱深
+      // 習字簿宣紙微微泛色：頂部一抹暖白 → 底部極淡朱墨，給白底一點縱深
       slide.addShape('rect', {
         x: 0,
         y: 0,
@@ -780,7 +780,7 @@ const redgrid: Pack = {
 
   section(slide, no, title) {
     slide.background = { color: 'FFFFFF' }
-    // 大田字格內寫章節號（唔 pad — 似格仔入面寫咗一個字）
+    // 大田字格內寫章節號（不 pad — 似格仔中寫了一個字）
     tianGrid(slide, 0.9, 1.2, 3.0, 1.5, RED.gridline)
     tx(slide, String(no), { x: 0.9, y: 1.2, w: 3.0, h: 3.0, fontSize: 132, bold: true, color: RED.accent, align: 'center', valign: 'middle' })
     tx(slide, title, { x: 0.9, y: 4.85, w: 11.2, h: 0.85, fontSize: 30, bold: true, color: RED.ink })
@@ -802,7 +802,7 @@ const redgrid: Pack = {
 // ============================================================
 //  月台 transit — 交通指示
 //  車站指示系統語言：黑站牌 pill 載住版題、信號黃 chevron 指方向、
-//  月台邊黃粗線壓陣；kicker 喺內容版變成迷你站牌。
+//  月台邊黃粗線壓陣；kicker 在內容版變成迷你站牌。
 // ============================================================
 
 const TRN = { ink: '17191C', soft: '5F6670', faint: '9CA3AC', hair: 'E3E5E8', accent: 'F2B705', panel: 'F5F6F8' }
@@ -829,8 +829,8 @@ function roundel(slide: PptxGenJS.Slide, cx: number, cy: number, r: number): voi
 
 /**
  * 招牌：steps 渲染成「地鐵線路圖」——
- * 站點沿信號黃主線排，起點實心、終點 roundel、站間方向 chevron、
- * 站號黑牌喺線上，站名／說明喺線下。2–5 站。
+ * 站點沿信號黃主線排，內容來源實心、終點 roundel、站間方向 chevron、
+ * 站號黑牌在線上，站名／說明在線下。2–5 站。
  */
 function renderTransitMetro(slide: PptxGenJS.Slide, body: Rect, pack: Pack, s: Slide): void {
   const items = (s.steps ?? []).slice(0, 5)
@@ -847,7 +847,7 @@ function renderTransitMetro(slide: PptxGenJS.Slide, body: Rect, pack: Pack, s: S
     // 站號黑牌（線上方）
     slide.addShape('roundRect', { x: cx - 0.16, y: lineY - 0.74, w: 0.32, h: 0.3, rectRadius: 0.05, fill: { color: pack.ink }, line: { type: 'none' } })
     tx(slide, String(i + 1), { x: cx - 0.16, y: lineY - 0.74, w: 0.32, h: 0.3, fontSize: 13, bold: true, color: pack.accent, align: 'center', valign: 'middle', fontFace: pack.displayFont })
-    // 站點：起點實心 / 終點 roundel / 中途白圓黑環
+    // 站點：內容來源實心 / 終點 roundel / 中途白圓黑環
     if (i === 0) {
       slide.addShape('ellipse', { x: cx - 0.13, y: lineY - 0.13, w: 0.26, h: 0.26, fill: { color: pack.ink }, line: { type: 'none' } })
     } else if (i === n - 1) {
@@ -995,13 +995,13 @@ const transit: Pack = {
   cover(slide, deck, brand, img) {
     slide.background = { color: 'FFFFFF' }
     const hasImg = Boolean(img)
-    // 招牌交通柔霧紋理底圖（瀏覽器 Canvas raster；冇 canvas 時 fallback 純色底）
+    // 招牌交通柔霧紋理底圖（瀏覽器 Canvas raster；沒有 canvas 時 fallback 純色底）
     const tex = coverTextureUri('transit')
     if (tex) slide.addImage({ data: tex, x: 0, y: 0, w: 13.333, h: 7.5, sizing: { type: 'cover', w: 13.333, h: 7.5 } })
     // kicker 行：chevron 隊 + 字
     chevronRow(slide, 0.9, 1.85, 0.2, 0.26)
     tx(slide, 'TEACHING DECK · 教學簡報', { x: 1.75, y: 1.82, w: 7, h: 0.3, fontSize: 10, color: TRN.ink, charSpacing: 2, bold: true })
-    // 站牌式 title：黑 pill 載白字（有相時 pill 上移收薄讓位俾橫幅相）
+    // 站牌式 title：黑 pill 載白字（有相時 pill 上移收薄讓位給橫幅相）
     const pillY = hasImg ? 2.2 : 2.4
     const pillH = hasImg ? 1.5 : 1.7
     // 黑站牌微微縱深漸層（頂部一絲信號黃暖光 → 底部沉黑），似搪瓷站牌受光
@@ -1024,13 +1024,13 @@ const transit: Pack = {
       tx(slide, deck.subtitle, { x: 0.9, y: edgeY + 0.3, w: 10.5, h: 0.45, fontSize: 15, color: TRN.soft })
     }
     if (img) {
-      // 右側站牌式相卡（AR 合理先唔會裁到淨低天空 — 全闊窄條係 QA major 教訓）
+      // 右側站牌式相卡（AR 合理先不會裁到淨低天空 — 全闊窄條係 QA major 教訓）
       const frame: Rect = { x: 8.0, y: 4.85, w: 4.43, h: 2.1 }
       addCoverImage(slide, img, frame)
       slide.addShape('rect', { x: frame.x, y: frame.y, w: frame.w, h: frame.h, fill: { type: 'none' }, line: { color: TRN.ink, width: 1 } })
       photoCreditOnImage(slide, img.credit, frame)
     }
-    // 「開往下一站」資訊牌（有相無相都喺左下）
+    // 「開往下一站」資訊牌（有相無相都在左下）
     tx(slide, '前往 NEXT', { x: 0.9, y: 6.4, w: 4, h: 0.26, fontSize: 9, color: TRN.soft, charSpacing: 2 })
     tx(slide, dateLabel(), { x: 0.9, y: 6.66, w: 5, h: 0.34, fontSize: 12, bold: true, color: TRN.ink })
     tx(slide, brand, { x: 0.9, y: 7.05, w: 5, h: 0.3, fontSize: 9, color: TRN.faint })
@@ -1048,7 +1048,7 @@ const transit: Pack = {
 
   contentFrame(slide, ctx) {
     slide.background = { color: 'FFFFFF' }
-    // kicker 站牌 pill：scaffold 傳空格（唔顯示），pill 自畫黑底白字
+    // kicker 站牌 pill：scaffold 傳空格（不顯示），pill 自畫黑底白字
     const w = pillW(ctx.kicker)
     slide.addShape('roundRect', { x: 0.9, y: 0.5, w, h: 0.36, rectRadius: 0.18, fill: { color: TRN.ink }, line: { type: 'none' } })
     tx(slide, ctx.kicker, { x: 0.9, y: 0.5, w, h: 0.36, fontSize: 9, bold: true, color: 'FFFFFF', align: 'center', valign: 'middle', charSpacing: 1 })
@@ -1121,7 +1121,7 @@ function renderOceanDescent(slide: PptxGenJS.Slide, body: Rect, pack: Pack, s: S
 
 /**
  * 第二招牌：stats 渲染成「深度計氣泡」——
- * 各 stat 一粒實心海色氣泡（由淺入深逐粒下沉），值入圓內、標籤喺下，
+ * 各 stat 一粒實心海色氣泡（由淺入深逐粒下沉），值入圓內、標籤在下，
  * 小上升氣泡點綴。深度計讀數意象。2–4 項。
  */
 function renderOceanDepthGauge(slide: PptxGenJS.Slide, body: Rect, pack: Pack, s: Slide): void {
@@ -1144,7 +1144,7 @@ function renderOceanDepthGauge(slide: PptxGenJS.Slide, body: Rect, pack: Pack, s
     // 小上升氣泡點綴（圓上方）
     bubble(slide, cx + d / 2 - 0.18, cy - 0.18, 0.14, fillColor)
     bubble(slide, cx + d / 2 - 0.02, cy - 0.42, 0.09, fillColor)
-    // 標籤喺圓下
+    // 標籤在圓下
     tx(slide, clampText(st.label.trim(), 22), { x: cx - cw / 2, y: cy + d + 0.14, w: cw, h: 0.6, fontSize: 13, color: pack.inkSoft, align: 'center', lineSpacingMultiple: 1.15, fit: 'shrink' })
   })
 }
@@ -1231,18 +1231,18 @@ const ocean: Pack = {
     slide.background = { color: 'FFFFFF' }
     const hasImg = Boolean(img)
     if (img) {
-      // full-bleed 相 + 深海 scrim，文字轉白（浪照畫 — 實色疊喺 scrim 上）
+      // full-bleed 相 + 深海 scrim，文字轉白（浪照畫 — 實色疊在 scrim 上）
       addCoverImage(slide, img, { x: 0, y: 0, w: 13.33, h: 7.5 })
       slide.addShape('rect', { x: 0, y: 0, w: 13.33, h: 7.5, fill: { color: OCE.deep, transparency: 40 }, line: { type: 'none' } })
     } else {
-      // 招牌海浪紋理底圖（瀏覽器 Canvas raster；冇 canvas 時 fallback 純色底）
+      // 招牌海浪紋理底圖（瀏覽器 Canvas raster；沒有 canvas 時 fallback 純色底）
       const tex = coverTextureUri('ocean')
       if (tex) slide.addImage({ data: tex, x: 0, y: 0, w: 13.333, h: 7.5, sizing: { type: 'cover', w: 13.333, h: 7.5 } })
     }
     // 版底三層浪：由淺到深逐層疊上
     wave(slide, -1.5, 5.9, 16.3, 3.4, OCE.band1)
     wave(slide, -2.2, 6.45, 17.7, 3.4, OCE.band2)
-    // 最前一層浪：頂弧受光提亮 → 深處沉入 accent 海色，俾招牌浪帶縱深
+    // 最前一層浪：頂弧受光提亮 → 深處沉入 accent 海色，給招牌浪帶縱深
     slide.addShape('ellipse', {
       x: -1.0,
       y: 7.0,
@@ -1265,7 +1265,7 @@ const ocean: Pack = {
       const subY = 2.3 + (lines * fit.fontPt * 1.08) / 72 + 0.22
       tx(slide, deck.subtitle, { x: 0.9, y: subY, w: 10.5, h: 0.5, fontSize: 15, color: hasImg ? 'FFFFFF' : OCE.soft })
     }
-    // 日期浮喺浪上、brand 沉喺中浪 — 用深海色字先讀到（白字喺 band2/3 上隱形係 QA major）
+    // 日期浮在浪上、brand 沉在中浪 — 用深海色字先讀到（白字在 band2/3 上隱形係 QA major）
     tx(slide, dateLabel(), { x: 0.9, y: 5.5, w: 5, h: 0.3, fontSize: 10, color: hasImg ? OCE.band1 : OCE.soft })
     if (img) photoCreditOnImage(slide, img.credit, { x: 0, y: 0, w: 13.33, h: 7.5 })
     tx(slide, brand, { x: 0.9, y: 7.06, w: 5, h: 0.3, fontSize: 9, bold: true, color: OCE.deep })
@@ -1273,7 +1273,7 @@ const ocean: Pack = {
 
   section(slide, no, title) {
     slide.background = { color: OCE.deep }
-    // 巨號要夠白先似透光水面（淡 ghost 喺深海底會蒸發）
+    // 巨號要夠白先似透光水面（淡 ghost 在深海底會蒸發）
     tx(slide, pad2(no), { x: 0.8, y: 1.2, w: 6, h: 2.9, fontSize: 150, bold: true, color: mix('FFFFFF', OCE.deep, 0.65), fontFace: 'Arial' })
     tx(slide, title, { x: 0.9, y: 4.55, w: 11.2, h: 1.2, fontSize: 32, bold: true, color: 'FFFFFF' })
     // 深海版底兩層浪 + 白氣泡
@@ -1291,7 +1291,7 @@ const ocean: Pack = {
       bubble(slide, 12.15, 0.55, 0.2, OCE.accent)
       bubble(slide, 12.0, 0.95, 0.12, OCE.accent)
     }
-    // 版底極矮浪 — 必須先畫，footer 字浮喺浪上面
+    // 版底極矮浪 — 必須先畫，footer 字浮在浪上面
     wave(slide, -1.5, 7.28, 16.3, 0.7, OCE.band1)
     drawFooter(slide, ocean, ctx)
     return body

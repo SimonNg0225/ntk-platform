@@ -84,7 +84,7 @@ import UploadDrop from './studio/UploadDrop'
 import { SAMPLE_DECK } from './studio/sampleDeck'
 
 type Mode = 'topic' | 'text'
-/** 起點：揀課題 / 貼內容 / 上載教材（mode 由佢 derive：topic→topic，其餘→text） */
+/** 內容來源：選擇課題 / 貼上內容 / 上載教材（mode 由他 derive：topic→topic，其餘→text） */
 type Source = 'topic' | 'paste' | 'upload'
 
 const MODEL_OPTS: { id: AIModel; label: string }[] = [
@@ -93,22 +93,22 @@ const MODEL_OPTS: { id: AIModel; label: string }[] = [
 ]
 
 const STEPS: StepDef[] = [
-  { id: 1, label: '起點' },
-  { id: 2, label: '設計' },
+  { id: 1, label: '輸入' },
+  { id: 2, label: '風格' },
   { id: 3, label: '設定' },
   { id: 4, label: '生成' },
 ]
 
 const SOURCE_CARDS: { id: Source; icon: LucideIcon; title: string; desc: string }[] = [
-  { id: 'topic', icon: ListTree, title: '揀課題', desc: '由你嘅課題庫一鍵帶入' },
-  { id: 'paste', icon: ClipboardList, title: '貼內容', desc: '大綱、筆記、教學重點' },
-  { id: 'upload', icon: Upload, title: '上載教材', desc: 'PDF · Word · 文字檔，AI 抽重點' },
+  { id: 'topic', icon: ListTree, title: '輸入課題', desc: '由課題庫建立簡報大綱' },
+  { id: 'paste', icon: ClipboardList, title: '貼上內容', desc: '大綱、筆記、教學重點' },
+  { id: 'upload', icon: Upload, title: '上載教材', desc: 'PDF · Word · 文字檔，AI 整理重點' },
 ]
 
-/** 內頁配圖上限 — 同一 deck 最多攞 4 張內頁相（控制檔案大細＋API 用量） */
+/** 內頁配圖上限 — 同一 deck 最多取得 4 張內頁相（控制檔案大細＋API 用量） */
 const MAX_SLIDE_PHOTOS = 4
 
-/** 預覽列表嘅版式 badge — 對應引擎特別版式（section 由空 bullets 推斷，唔標） */
+/** 預覽列表的版式 badge — 對應引擎特別版式（section 由空 bullets 推斷，不標） */
 const LAYOUT_BADGES: Record<string, { label: string; icon: LucideIcon }> = {
   stats: { label: '數據', icon: Hash },
   compare: { label: '對比', icon: Columns2 },
@@ -146,7 +146,7 @@ export default function SlideGen() {
   // 引導步驟
   const [step, setStep] = useState(() => (handoffText ? 2 : 1))
   const [maxStep, setMaxStep] = useState(() => (handoffText ? 2 : 1))
-  // 起點 → 衍生生成模式
+  // 內容來源 → 衍生生成模式
   const [source, setSource] = useState<Source>(() => (handoffText ? 'paste' : 'topic'))
   const mode: Mode = source === 'topic' ? 'topic' : 'text'
 
@@ -163,11 +163,11 @@ export default function SlideGen() {
   const [useSlidePhotos, setUseSlidePhotos] = useState(true)
   // 高擬真標題：用招牌字體 Canvas render 封面標題（圖，跨平台一致；中文 latin 字體會自動 fallback）
   const [highFi, setHighFi] = useState(false)
-  // 「跟我嘅分段分版」：--- 或空行斬版，AI 只執靚唔改分頁
+  // 「按段落固定分頁」：--- 或空行斬版，AI 只潤飾文字不改分頁
   const [followPages, setFollowPages] = useState(false)
   // 逐版編輯器
   const [editingIndex, setEditingIndex] = useState<number | null>(null)
-  // 同內容自動重用：當前顯示緊嘅係呢個 key 嘅重用版本（用嚟顯示「重新生成」退路）
+  // 同內容自動重用：當前顯示緊的係這個 key 的重用版本（用來顯示「重新生成」退路）
   const [reusedKey, setReusedKey] = useState<string | null>(null)
   // 串流逐版生成：邊收 delta 邊砌預覽（落地仍以 parseDeck 為真相）
   const [streamSlides, setStreamSlides] = useState<Slide[]>([])
@@ -183,7 +183,7 @@ export default function SlideGen() {
     if (composerHandoff) clearComposerHandoff('work-slides')
   }, [composerHandoff])
 
-  // 上載抽取嘅文字交返嚟（穩定 ref，UploadDrop effect 用）
+  // 上載抽取的文字交返來（穩定 ref，UploadDrop effect 用）
   const handleUploadText = useCallback((txt: string, b: boolean) => {
     setText(txt)
     setUploadBusy(b)
@@ -195,7 +195,7 @@ export default function SlideGen() {
     if (s !== 'upload') setUploadBusy(false)
   }
 
-  // 當前輸入嘅內容指紋（同 run 入面計法一致）
+  // 當前輸入的內容指紋（同 run 中計法一致）
   const currentKey = useMemo(() => {
     const topic = topics.find((t) => t.id === topicId) ?? topics[0]
     const pages = source === 'paste' && followPages ? parseManualPages(text) : []
@@ -216,18 +216,18 @@ export default function SlideGen() {
     const topic = topics.find((t) => t.id === topicId) ?? topics[0]
     const aiInput = mode === 'topic' ? `課題：${topic?.topic ?? ''}` : text.trim()
     const fallbackTitle = mode === 'topic' ? (topic?.topic ?? '教學簡報') : '教學簡報'
-    // 「跟我嘅分段分版」：要 ≥2 段先有意義（只限「貼內容」）
+    // 「按段落固定分頁」：要 ≥2 段先有意義（只限「貼上內容」）
     const pages = source === 'paste' && followPages ? parseManualPages(text) : []
     const frameworkMode = pages.length >= 2
 
-    // 同內容自動重用：搵返最新一份同指紋嘅舊簡報，直接攞唔再行 AI。
+    // 同內容自動重用：搜尋返最新一份同指紋的舊簡報，直接取得不再行 AI。
     if (!force) {
       const cached = history.find((r) => r.sourceKey === currentKey)
       if (cached) {
         setCurrent(cached)
         setReusedKey(currentKey)
         setEditingIndex(null)
-        toast.success('用回之前生成咗的版本（慳 AI；想重新做可㩒「重新生成」）')
+        toast.success('用回之前生成了的版本（慳 AI；想重新做可㩒「重新生成」）')
         return
       }
     }
@@ -270,10 +270,10 @@ export default function SlideGen() {
         return
       }
       let deck = parseDeck(raw, fallbackTitle)
-      // 鐵律保險：AI 版數對唔上 → 照你嘅分段直接入版，分頁永遠唔會被打亂
+      // 鐵律保險：AI 版數對不上 → 照你的分段直接入版，分頁永遠不會被打亂
       if (frameworkMode && deck.slides.length !== pages.length) {
         deck = { ...frameworkToDeck(pages, deck.title || fallbackTitle), subtitle: deck.subtitle, coverImageQuery: deck.coverImageQuery }
-        toast.info('AI 分版對唔上你嘅分段，已照你嘅分段直接入版（可逐版再執）')
+        toast.info('AI 分頁與你的段落不一致，已按原段落建立頁面，可逐頁再編輯。')
       }
       const rec = slideDecksCol.add({
         createdAt: new Date().toISOString(),
@@ -283,7 +283,7 @@ export default function SlideGen() {
         subtitle: deck.subtitle,
         slides: deck.slides,
         coverImageQuery: deck.coverImageQuery,
-        sourceKey: currentKey, // 內容指紋：下次同內容直接重用、唔再行 AI
+        sourceKey: currentKey, // 內容指紋：下次同內容直接重用、不再行 AI
       })
       setCurrent(rec)
       setLastBeforeRefine(null)
@@ -306,7 +306,7 @@ export default function SlideGen() {
     if (busy) return
     if (!hasInput) {
       goStep(1)
-      toast.error('先揀課題、貼內容或上載教材，就可以一鍵生成')
+      toast.error('先選擇課題、貼上內容或上載教材，就可以一鍵生成')
       return
     }
     setStep(4)
@@ -317,7 +317,7 @@ export default function SlideGen() {
   async function download(rec: DeckRecord) {
     setDownloading(true)
     try {
-      // 封面相 — 優先用 AI 出嘅英文搜尋詞，冇就退返副題／科目／標題
+      // 封面相 — 優先用 AI 出的英文搜尋詞，沒有就退返副題／科目／標題
       let coverPhoto: SlideImage | undefined
       if (usePhoto && isStockConfigured) {
         const photo = await fetchCoverPhoto(
@@ -325,7 +325,7 @@ export default function SlideGen() {
         )
         if (photo) coverPhoto = photo
       }
-      // 內頁配圖 — AI 標咗 imageQuery 嘅頭 4 版並行攞相，攞唔到嗰版靜默略過
+      // 內頁配圖 — AI 標了 imageQuery 的頭 4 版並行取得相，取得不到該頁靜默略過
       let slidePhotos: Record<number, SlideImage> | undefined
       if (useSlidePhotos && isStockConfigured) {
         const targets = rec.slides
@@ -366,7 +366,7 @@ export default function SlideGen() {
   }
 
   async function del(id: string) {
-    const ok = await confirm({ title: '刪除呢套簡報？', tone: 'danger', confirmText: '刪除' })
+    const ok = await confirm({ title: '刪除此份簡報？', tone: 'danger', confirmText: '刪除' })
     if (!ok) return
     slideDecksCol.remove(id)
     if (current?.id === id) setCurrent(null)
@@ -469,7 +469,7 @@ export default function SlideGen() {
         icon={Presentation}
         title={t('slideGen.aiOff.title', { defaultValue: '簡報工作室暫未開放' })}
         hint={t('slideGen.aiOff.hint', {
-          defaultValue: '目前環境未接上 AI 生成服務。正式開放後，可由課題、筆記或教材直接生成可編輯 PowerPoint。',
+          defaultValue: '目前環境未接上 AI 生成服務。正式開放後，可由課題、筆記或教材立即生成草稿可編輯 PowerPoint。',
         })}
       />
     )
@@ -503,30 +503,30 @@ export default function SlideGen() {
       : SAMPLE_DECK
   const previewIsSample = !current && streamSlides.length === 0
 
-  // 教學引導（4 步：揀起點 → 揀設計 → 設定 → 生成下載）
+  // 教學引導（4 步：輸入內容 → 選擇風格 → 調整設定 → 生成下載）
   const guideSteps: FeatureGuideStep[] = [
     {
-      title: t('slideGen.guide.s1.title', { defaultValue: '揀返起點' }),
+      title: t('slideGen.guide.s1.title', { defaultValue: '輸入內容' }),
       desc: t('slideGen.guide.s1.desc', {
-        defaultValue: '由課題庫帶入、貼上你嘅大綱筆記，或上載 PDF/Word 教材畀 AI 抽重點。',
+        defaultValue: '可輸入課題、貼上大綱筆記，或上載 PDF / Word 教材讓 AI 整理重點。',
       }),
     },
     {
-      title: t('slideGen.guide.s2.title', { defaultValue: '揀個設計' }),
+      title: t('slideGen.guide.s2.title', { defaultValue: '選擇風格' }),
       desc: t('slideGen.guide.s2.desc', {
-        defaultValue: `由 ${SLIDE_PACKS.length} 套模板揀一套，揀完即刻喺右邊預覽睇到風格。`,
+        defaultValue: `從 ${SLIDE_PACKS.length} 套模板選擇合適風格，右側會即時顯示預覽。`,
       }),
     },
     {
-      title: t('slideGen.guide.s3.title', { defaultValue: '設定版數同配圖' }),
+      title: t('slideGen.guide.s3.title', { defaultValue: '調整設定' }),
       desc: t('slideGen.guide.s3.desc', {
-        defaultValue: '揀大約版數、AI 模型，需要就開封面相／內頁配圖。',
+        defaultValue: '設定頁數、AI 模型，以及是否加入封面相片或內頁配圖。',
       }),
     },
     {
-      title: t('slideGen.guide.s4.title', { defaultValue: '生成、執靚、下載' }),
+      title: t('slideGen.guide.s4.title', { defaultValue: '生成與下載' }),
       desc: t('slideGen.guide.s4.desc', {
-        defaultValue: 'AI 逐版砌出嚟，可逐版編輯或 AI 再潤飾，啱晒一鍵下載 .pptx。',
+        defaultValue: 'AI 會逐頁生成簡報草稿；你可逐頁編輯、再潤飾，最後下載 .pptx。',
       }),
     },
   ]
@@ -538,16 +538,16 @@ export default function SlideGen() {
         guideKey="slide-gen"
         icon={Presentation}
         kicker={t('slideGen.kicker', { defaultValue: 'Slide Studio' })}
-        title={t('slideGen.title', { defaultValue: '簡報工作室' })}
+        title={t('slideGen.title', { defaultValue: 'AI 簡報生成器' })}
         description={t('slideGen.subtitle', {
-          defaultValue: '四步引導砌好教學簡報：揀起點、揀設計、設定、生成。右邊即時睇效果，一鍵下載 .pptx。',
+          defaultValue: '輸入課題、貼上內容或上載教材，EziTeach AI 會協助你生成可編輯的教學簡報，並可下載為 PowerPoint。',
         })}
       />
 
-      {/* ───────── 教學引導：點用呢個功能（可摺疊 / 永久收起） ───────── */}
+      {/* ───────── 教學引導：如何使用此功能（可摺疊 / 永久收起） ───────── */}
       <FeatureGuide
         storageKey="slide-gen"
-        title={t('slideGen.guide.title', { defaultValue: '簡報工作室點用？' })}
+        title={t('slideGen.guide.title', { defaultValue: 'AI 簡報生成器使用說明' })}
         steps={guideSteps}
       />
 
@@ -555,20 +555,20 @@ export default function SlideGen() {
         <div className="min-w-0">
           <p className="flex items-center gap-1.5 text-sm font-semibold text-emerald-800 dark:text-emerald-200">
             <Sparkles size={15} />
-            {t('slideGen.fast.title', { defaultValue: '趕住明天上堂？' })}
+            {t('slideGen.fast.title', { defaultValue: '明天要上堂？' })}
           </p>
           <p className="mt-0.5 text-xs leading-relaxed text-emerald-700/80 dark:text-emerald-200/80">
             {t('slideGen.fast.desc', {
-              defaultValue: '用推薦設定先生成 8 版草稿；完成後仍可逐版改、換模板，再下載 PowerPoint。',
+              defaultValue: '使用推薦設定，先生成 8 頁簡報草稿；完成後可逐頁修改、轉換風格，再下載 PowerPoint。',
             })}
           </p>
         </div>
         <div className="flex shrink-0 flex-wrap items-center gap-2">
           <Button size="sm" icon={Sparkles} onClick={fastGenerate} disabled={!hasInput || busy} loading={busy}>
-            {t('slideGen.fast.cta', { defaultValue: '直接生成' })}
+            {t('slideGen.fast.cta', { defaultValue: '立即生成草稿' })}
           </Button>
           <Button size="sm" variant="ghost" icon={ArrowRight} onClick={() => goStep(3)}>
-            {t('slideGen.fast.tune', { defaultValue: '先調設定' })}
+            {t('slideGen.fast.tune', { defaultValue: '先調整設定' })}
           </Button>
         </div>
       </div>
@@ -590,14 +590,14 @@ export default function SlideGen() {
                   onClick={() => goStep(1)}
                   className="shrink-0 rounded-lg px-2 py-1 font-semibold text-accent-strong transition hover:bg-accent-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:text-accent dark:hover:bg-accent/15"
                 >
-                  {t('slideGen.handoff.edit', { defaultValue: '修改起點' })}
+                  {t('slideGen.handoff.edit', { defaultValue: '修改輸入內容' })}
                 </button>
               </div>
             )}
             {step === 1 && (
               <div className="space-y-4">
                 <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
-                  {t('slideGen.step1.heading', { defaultValue: '你想點開始？' })}
+                  {t('slideGen.step1.heading', { defaultValue: '你想如何開始？' })}
                 </h3>
                 <div className="grid gap-2.5 sm:grid-cols-3">
                   {SOURCE_CARDS.map((c) => {
@@ -653,7 +653,7 @@ export default function SlideGen() {
                   ) : (
                     <p className="rounded-xl bg-amber-50 px-3 py-2 text-[12px] text-amber-700 dark:bg-amber-500/10 dark:text-amber-300">
                       {t('slideGen.topic.empty', {
-                        defaultValue: '仲未有課題。去「課題」加返，或改用「貼內容 / 上載教材」開始。',
+                        defaultValue: '尚未有課題。你可先到「課題」新增，或改用「貼上內容 / 上載教材」開始。',
                       })}
                     </p>
                   ))}
@@ -666,7 +666,7 @@ export default function SlideGen() {
                       onChange={(e) => setText(e.target.value)}
                       placeholder={t('slideGen.paste.placeholder', {
                         defaultValue:
-                          '貼上課題大綱、筆記或教學重點…\n想自己控制分頁：用 --- 或空行分段，每段首行做該版標題，再開「跟我嘅分段分版」。',
+                          '貼上課題大綱、筆記或教學重點…\n如要自行控制分頁，可用 --- 或空行分段，每段首行作該頁標題，再開啟「按段落固定分頁」。',
                       })}
                     />
                   </Field>
@@ -677,7 +677,7 @@ export default function SlideGen() {
                 {source === 'paste' && (
                   <div className="flex flex-wrap items-center gap-2">
                     <ToggleChip active={followPages} onClick={() => setFollowPages((v) => !v)} icon={ListTree}>
-                      {t('slideGen.followPages.chip', { defaultValue: '跟我嘅分段分版' })}
+                      {t('slideGen.followPages.chip', { defaultValue: '按段落固定分頁' })}
                     </ToggleChip>
                     {followPages ? (
                       <span className="text-[11px] text-slate-400">
@@ -685,11 +685,11 @@ export default function SlideGen() {
                           const n = parseManualPages(text).length
                           return n >= 2
                             ? t('slideGen.followPages.ok', {
-                                defaultValue: `會出剛好 ${n} 版（分頁鎖死，AI 只執靚每版文字）`,
+                                defaultValue: `會生成剛好 ${n} 頁（分頁固定，AI 只潤飾每頁文字）`,
                                 n,
                               })
                             : t('slideGen.followPages.need', {
-                                defaultValue: '要至少 2 段（--- 或空行分隔）先生效',
+                                defaultValue: '至少需要 2 段內容（以 --- 或空行分隔）才會生效',
                               })
                         })()}
                       </span>
@@ -697,7 +697,7 @@ export default function SlideGen() {
                       detectManualPages(text) && (
                         <span className="text-[11px] text-amber-600 dark:text-amber-400">
                           {t('slideGen.followPages.detected', {
-                            defaultValue: '偵測到你嘅內容有分段 — 開呢個掣可以鎖住你嘅分頁',
+                            defaultValue: '偵測到內容已分段；開啟後可固定你的分頁安排',
                           })}
                         </span>
                       )
@@ -711,11 +711,11 @@ export default function SlideGen() {
               <div className="space-y-3">
                 <div className="flex items-baseline justify-between gap-2">
                   <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
-                    {t('slideGen.step2.heading', { defaultValue: '揀個設計' })}
+                    {t('slideGen.step2.heading', { defaultValue: '選擇風格' })}
                   </h3>
                   <span className="text-[11px] text-slate-400">
                     {t('slideGen.step2.hint', {
-                      defaultValue: `${SLIDE_PACKS.length} 套 · 揀完睇右邊預覽`,
+                      defaultValue: `${SLIDE_PACKS.length} 套模板 · 選擇後可在右側預覽`,
                     })}
                   </span>
                 </div>
@@ -726,7 +726,7 @@ export default function SlideGen() {
             {step === 3 && (
               <div className="space-y-4">
                 <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
-                  {t('slideGen.step3.heading', { defaultValue: '設定' })}
+                  {t('slideGen.step3.heading', { defaultValue: '調整設定' })}
                 </h3>
                 <div className="flex flex-wrap items-end gap-4">
                   <Field label={t('slideGen.count.label', { defaultValue: '版數' })}>
@@ -736,7 +736,7 @@ export default function SlideGen() {
                       disabled={source === 'paste' && followPages}
                       title={
                         source === 'paste' && followPages
-                          ? t('slideGen.count.lockedTip', { defaultValue: '分版跟你嘅分段，版數唔使揀' })
+                          ? t('slideGen.count.lockedTip', { defaultValue: '頁數會按你的段落固定，不用另選頁數' })
                           : undefined
                       }
                     >
@@ -756,7 +756,7 @@ export default function SlideGen() {
                 {source === 'paste' && followPages && (
                   <p className="text-[11px] text-slate-400">
                     {t('slideGen.count.lockedNote', {
-                      defaultValue: '已開「跟我嘅分段分版」：版數鎖住跟你嘅分段。',
+                      defaultValue: '已開啟「按段落固定分頁」：頁數會按照你的段落固定。',
                     })}
                   </p>
                 )}
@@ -787,7 +787,7 @@ export default function SlideGen() {
                       title={
                         isStockConfigured
                           ? t('slideGen.images.innerTip', {
-                              defaultValue: 'AI 標咗配圖嘅內頁自動配 Pexels 相片（最多 4 版）',
+                              defaultValue: 'AI 標了配圖的內頁自動配 Pexels 相片（最多 4 版）',
                             })
                           : t('slideGen.images.needKey', { defaultValue: '相片庫暫未啟用' })
                       }
@@ -863,17 +863,17 @@ export default function SlideGen() {
                     <Loader2 size={16} className="animate-spin text-accent" />
                     {streamSlides.length > 0
                       ? t('slideGen.busy.progress', {
-                          defaultValue: `由 AI 設計緊… 已生成 ${streamSlides.length} 版`,
+                          defaultValue: `AI 正在設計… 已生成 ${streamSlides.length} 頁`,
                           n: streamSlides.length,
                         })
-                      : t('slideGen.busy.start', { defaultValue: '由 AI 設計緊…' })}
+                      : t('slideGen.busy.start', { defaultValue: 'AI 正在設計…' })}
                   </p>
                 )}
 
                 {current && !busy && (
                   <div className="flex flex-wrap items-center gap-2 rounded-xl border border-slate-200/70 bg-slate-50/60 px-3 py-2 dark:border-slate-700/60 dark:bg-slate-800/40">
                     <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
-                      {t('slideGen.restyle.label', { defaultValue: '換風格下載' })}
+                      {t('slideGen.restyle.label', { defaultValue: '轉換風格' })}
                     </span>
                     <Select
                       value={pack}
@@ -888,7 +888,7 @@ export default function SlideGen() {
                     </Select>
                     <span className="text-[11px] text-slate-400 dark:text-slate-500">
                       {t('slideGen.restyle.hint', {
-                        defaultValue: '即時換版面，唔使再生成、唔扣點',
+                        defaultValue: '即時套用新版面，不用重新生成、不扣點數',
                       })}
                     </span>
                   </div>
@@ -920,7 +920,7 @@ export default function SlideGen() {
                     </p>
                     <p className="max-w-xs text-xs text-slate-400 dark:text-slate-500">
                       {t('slideGen.step4.empty.hint', {
-                        defaultValue: 'AI 會即時逐版砌出嚟，右邊睇住效果；生成後可逐版執靚。',
+                        defaultValue: 'AI 會即時逐頁生成，右側同步預覽；完成後可逐頁編輯和潤飾。',
                       })}
                     </p>
                     <Button
@@ -935,7 +935,7 @@ export default function SlideGen() {
                     {!hasInput && (
                       <p className="text-[11px] text-amber-600 dark:text-amber-400">
                         {t('slideGen.step4.empty.needInput', {
-                          defaultValue: '返第 1 步揀返起點先（課題／貼內容／上載教材）。',
+                          defaultValue: '請先回到第 1 步輸入內容（課題／貼上內容／上載教材）。',
                         })}
                       </p>
                     )}
@@ -961,10 +961,10 @@ export default function SlideGen() {
             ) : (
               <span className="text-[11px] text-slate-400">
                 {busy
-                  ? t('slideGen.nav.busy', { defaultValue: '生成緊…' })
+                  ? t('slideGen.nav.busy', { defaultValue: '生成中…' })
                   : current
-                    ? t('slideGen.nav.done', { defaultValue: '可下載，或返上一步改設定再生成' })
-                    : t('slideGen.nav.idle', { defaultValue: '撳「生成簡報」開始' })}
+                    ? t('slideGen.nav.done', { defaultValue: '可下載，或回到上一步調整設定後再生成' })
+                    : t('slideGen.nav.idle', { defaultValue: '按「生成簡報」開始' })}
               </span>
             )}
           </div>
@@ -978,10 +978,10 @@ export default function SlideGen() {
             </span>
             <span className="text-[11px] text-slate-400 dark:text-slate-500">
               {previewIsSample
-                ? t('slideGen.preview.sample', { defaultValue: '風格示意（揀模板睇效果）' })
+                ? t('slideGen.preview.sample', { defaultValue: '風格預覽（選擇模板後查看效果）' })
                 : busy
-                  ? t('slideGen.preview.busy', { defaultValue: '生成緊…' })
-                  : t('slideGen.preview.yours', { defaultValue: '你嘅簡報' })}
+                  ? t('slideGen.preview.busy', { defaultValue: '生成中…' })
+                  : t('slideGen.preview.yours', { defaultValue: '你的簡報' })}
             </span>
           </div>
           <DeckPreview
@@ -1085,7 +1085,7 @@ function ToggleChip({
   )
 }
 
-/** 結果面板 — 生成後嘅 actions（再潤飾／還原／下載）+ 可逐版編輯嘅清單。 */
+/** 結果面板 — 生成後的 actions（再潤飾／還原／下載）+ 可逐版編輯的清單。 */
 function ResultPanel({
   rec,
   downloading,
@@ -1126,7 +1126,7 @@ function ResultPanel({
             {t('slideGen.result.restore', { defaultValue: '還原' })}
           </Button>
         )}
-        <Tooltip label={t('slideGen.result.refineTip', { defaultValue: '用 AI 重整結構／文案（可還原，唔影響主生成）' })}>
+        <Tooltip label={t('slideGen.result.refineTip', { defaultValue: '用 AI 重整結構／文案（可還原，不影響主生成）' })}>
           <Button variant="ghost" icon={Wand2} onClick={onRefine} loading={refining}>
             {t('slideGen.result.refine', { defaultValue: 'AI 再潤飾' })}
           </Button>
@@ -1176,11 +1176,11 @@ function ResultPanel({
                   >
                     <ChevronDown size={14} />
                   </IconButton>
-                  <IconButton label={t('slideGen.slide.delete', { defaultValue: '刪除呢版' })} size="sm" tone="danger" onClick={() => onDelete(i)}>
+                  <IconButton label={t('slideGen.slide.delete', { defaultValue: '刪除此頁' })} size="sm" tone="danger" onClick={() => onDelete(i)}>
                     <Trash2 size={14} />
                   </IconButton>
                 </span>
-                <IconButton label={t('slideGen.slide.edit', { defaultValue: '編輯呢版' })} size="sm" onClick={() => onEdit(i)}>
+                <IconButton label={t('slideGen.slide.edit', { defaultValue: '編輯此頁' })} size="sm" onClick={() => onEdit(i)}>
                   <Pencil size={14} />
                 </IconButton>
                 {layoutBadge && (

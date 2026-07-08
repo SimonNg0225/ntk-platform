@@ -3,11 +3,11 @@ import type { AggregatedData, ResolvedRange } from './reportRange'
 
 // ============================================================
 //  工作週報／月報 — Prompt + 解析（純函式，可單元測試）
-//  輸入係老師自己嘅 行事曆／待辦／會議筆記聚合（零學生 PII）。
+//  輸入係老師自己的 行事曆／待辦／會議筆記聚合（零學生 PII）。
 // ============================================================
 
 export interface WorkReportResult {
-  done: string[] // 做咗咩
+  done: string[] // 已完成事項
   followUps: string[] // 待跟進
   highlights: string[] // 重點同建議
 }
@@ -23,18 +23,18 @@ function clip(s: string, max: number): string {
 
 export function buildWorkReportSystem(): string {
   return [
-    '你係香港老師嘅「工作週報／月報」助手。用家會俾你佢自己嘅 行事曆事件、待辦、會議筆記 聚合資料。',
-    '請扼要撮要成一頁報告。只輸出一個 JSON 物件，唔好有任何其他文字或 markdown code fence：',
+    '你是香港老師的「工作週報／月報」助手。使用者會提供自己的行事曆事件、待辦、會議筆記聚合資料。',
+    '請扼要撮要成一頁報告。只輸出一個 JSON 物件，不要有任何其他文字或 markdown code fence：',
     '{',
-    '  "done": ["做咗咩（已發生／已完成，3-8 點）"],',
+    '  "done": ["已完成事項（已發生／已完成，3-8 點）"],',
     '  "followUps": ["待跟進（未完成待辦、會議跟進事項，3-8 點）"],',
-    '  "highlights": ["重點同建議（值得留意嘅事 + 下一步建議，3-8 點）"]',
+    '  "highlights": ["重點同建議（值得留意的事 + 下一步建議，3-8 點）"]',
     '}',
     '規則：',
     '- 繁體中文（廣東話 OK）、扼要、每段 3-8 點。',
-    '- 只根據俾你嘅資料，唔好杜撰冇出現過嘅嘢。',
-    '- 唔好包含或推斷學生個人姓名（資料本身已零學生個人資料，請保持）。',
-    '- 冇內容嘅欄位用空陣列 []。',
+    '- 只根據給你的資料，不要杜撰沒有出現過的內容。',
+    '- 不要包含或推斷學生個人姓名（資料本身已零學生個人資料，請保持）。',
+    '- 沒有內容的欄位用空陣列 []。',
     '- 只輸出 JSON。',
   ].join('\n')
 }
@@ -96,7 +96,7 @@ export function buildWorkReportUser(agg: AggregatedData, range: ResolvedRange): 
 
 export function parseWorkReport(raw: string): WorkReportResult {
   const o = extractJsonObject<Record<string, unknown>>(raw)
-  if (!o || typeof o !== 'object') throw new Error('AI 回應格式唔正確，請再試一次。')
+  if (!o || typeof o !== 'object') throw new Error('AI 回應格式不正確，請再試一次。')
   const arr = (v: unknown): string[] =>
     Array.isArray(v)
       ? v.filter((x): x is string => typeof x === 'string').map((s) => s.trim()).filter(Boolean)

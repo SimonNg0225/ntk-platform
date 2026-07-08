@@ -8,8 +8,8 @@ const ZOOM = 2.6 // 放大倍率
 
 /**
  * 四角可拖裁切框（0..1 正規化座標）。
- * 拖角時顯示放大鏡（loupe）—— 喺難偵測場景靠手動都拖得到啱啱貼紙邊。
- * src = 底圖（畀放大鏡用），通常 = page.rawDataUrl。
+ * 拖角時顯示放大鏡（loupe）—— 在難偵測場景靠手動都拖得到剛剛貼紙邊。
+ * src = 底圖（給放大鏡用），通常 = page.rawDataUrl。
  */
 export default function CornerOverlay({
   corners, onChange, src,
@@ -47,9 +47,9 @@ export default function CornerOverlay({
 
   const pts: [Key, Pt][] = [['tl', corners.tl], ['tr', corners.tr], ['br', corners.br], ['bl', corners.bl]]
 
-  // 放大鏡：跟住正喺拖嘅角，顯示底圖放大、十字對準。
+  // 放大鏡：跟住正在拖的角，顯示底圖放大、十字對準。
   const ap = active ? corners[active] : null
-  const loupeOnRight = ap ? ap.x < 0.5 : false // 角喺左半 → 放大鏡擺右上（唔遮手指）
+  const loupeOnRight = ap ? ap.x < 0.5 : false // 角在左半 → 放大鏡擺右上（不遮手指）
 
   return (
     <div ref={boxRef} className="absolute inset-0 touch-none">

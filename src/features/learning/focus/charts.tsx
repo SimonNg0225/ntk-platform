@@ -8,7 +8,7 @@ import { fmtDuration } from './store'
 //  - 數字 tabular-nums；hover tooltip 用純 state
 // ============================================================
 
-// 8 色調色盤（對齊 calendar CalColor，但喺自己檔重新定義以免 import 共用）
+// 8 色調色盤（對齊 calendar CalColor，但在自己檔重新定義以免 import 共用）
 export const PALETTE = {
   accent: { dot: 'bg-accent', text: 'text-accent-strong dark:text-accent', fill: 'var(--accent)', soft: 'bg-accent/15' },
   blue: { dot: 'bg-blue-500', text: 'text-blue-700 dark:text-blue-300', fill: '#3b82f6', soft: 'bg-blue-500/15' },

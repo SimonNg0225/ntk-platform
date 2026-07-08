@@ -6,20 +6,20 @@ import { addDaysKey, todayKey } from '../common'
 // ============================================================
 //  訓練記錄 — 示範資料 seeder
 //  ------------------------------------------------------------
-//  一鍵填入一個「有上進心、生活忙碌」嘅人近三週嘅重訓記錄：
+//  一鍵填入一個「有上進心、生活忙碌」的人近三週的重訓記錄：
 //  跟「推 / 拉 / 腳」三分化，每週練三至四次，主項（臥推、硬舉、
 //  深蹲）隨週數穩步加重（漸進超負荷），RPE 多落 7-9，趕工嗰週
-//  練得少啲、感覺攰啲。令畫面即刻有 volume 趨勢、PR、平均 RPE
-//  同槓片計算可以睇。
+//  練得少些、感覺攰些。令畫面立即有 volume 趨勢、PR、平均 RPE
+//  同槓片計算可以查看。
 //
 //  鐵則：
-//   - idempotent —— workoutCol 只喺佢而家係空（length === 0）先種。
-//   - 日期一律行 common 嘅本地日期 helper（todayKey / addDaysKey），
-//     分佈喺最近約三週，唔會用未來日。
-//   - 純資料，唔掂 UI / 唔 import React。
+//   - idempotent —— workoutCol 只在他現在係空（length === 0）先種。
+//   - 日期一律行 common 的本地日期 helper（todayKey / addDaysKey），
+//     分佈在最近約三週，不會用未來日。
+//   - 純資料，不掂 UI / 不 import React。
 // ============================================================
 
-/** 一次訓練嘅精簡描述（日後攤平成 Workout）。`back` = 距今日數（0 = 今日）。 */
+/** 一次訓練的精簡描述（日後攤平成 Workout）。`back` = 距今日數（0 = 今日）。 */
 interface SessionPlan {
   back: number
   title: string
@@ -57,7 +57,7 @@ const PLAN: SessionPlan[] = [
         ],
       },
     ],
-    note: '重新開季第一練，重量保守，搵返手感。',
+    note: '重新開季第一課，重量保守，先找回手感。',
   },
   {
     back: 18,
@@ -110,7 +110,7 @@ const PLAN: SessionPlan[] = [
     note: '蹲完落樓梯都軟，但好爽。',
   },
 
-  // ── 第二週（約兩星期前，趕工撞正得閒練兩次）──────────────
+  // ── 第二週（約兩星期前，趕工撞正有空練兩次）──────────────
   {
     back: 13,
     title: '推日 · 胸肩三頭',
@@ -131,7 +131,7 @@ const PLAN: SessionPlan[] = [
         ],
       },
     ],
-    note: '趕 deadline 冇乜時間，做晒大項就走。',
+    note: '趕 deadline 沒有乜時間，做全部大項就走。',
   },
   {
     back: 10,
@@ -160,7 +160,7 @@ const PLAN: SessionPlan[] = [
         ],
       },
     ],
-    note: '捱完夜返嚟練，狀態麻麻但都頂硬上。',
+    note: '熬夜後回來訓練，狀態一般但仍然堅持完成。',
   },
 
   // ── 本週（最近，狀態回勇、再加重）──────────────────────
@@ -220,7 +220,7 @@ const PLAN: SessionPlan[] = [
         ],
       },
     ],
-    note: '臥推破咗 PR，70kg 終於上到，超開心！',
+    note: '臥推破了 PR，70kg 終於上到，超開心！',
   },
   {
     back: 0,
@@ -249,14 +249,14 @@ const PLAN: SessionPlan[] = [
         ],
       },
     ],
-    note: '硬舉衝咗個單次 120kg，今期狀態最好。',
+    note: '硬舉衝了個單次 120kg，今期狀態最好。',
   },
 ]
 
 export function seedDemo(): number {
   let added = 0
 
-  // ── 訓練記錄（只喺空先種）────────────────────────────────
+  // ── 訓練記錄（只在空先種）────────────────────────────────
   if (workoutCol.get().length === 0) {
     const today = todayKey()
     const rows: Workout[] = PLAN.map((p) => ({

@@ -2,20 +2,20 @@
 //  掃描 PDF → Supabase Storage（private bucket「scans」）
 //  ------------------------------------------------------------
 //  資源庫只存 metadata + 連結，無 blob 儲存。要真・雲端存檔，
-//  就將 PDF 上載去 Storage（檔案物件，唔係塞落 collection 同步），
+//  就將 PDF 上載去 Storage（檔案物件，不是塞落 collection 同步），
 //  路徑 `${userId}/<timestamp>-<safe>.pdf`，回傳長效「簽名連結」
-//  （bucket 不公開；簽名 URL 喺有效期內任何人有連結都打得開）。
+//  （bucket 不公開；簽名 URL 在有效期內任何人有連結都打得開）。
 //  需要已接雲端 + 已登入；否則 throw，呼叫端降級返本機 metadata + 下載。
-//  ⚠️ 要先喺 Supabase 跑 migration 0008（開 bucket + RLS）。
+//  ⚠️ 要先在 Supabase 跑 migration 0008（開 bucket + RLS）。
 // ============================================================
 
 import { supabase, isSupabaseConfigured } from './supabase'
 
 export const SCAN_BUCKET = 'scans'
 
-// Supabase Storage 物件 key 唔收非 ASCII（中文 → "Invalid key"）。
-// 將檔名轉做 ASCII-safe 片段；全部唔合 → fallback 'scan'。
-// （人類可讀中文標題照樣存喺資源庫 Resource.title，唔靠 storage key。）
+// Supabase Storage 物件 key 不收非 ASCII（中文 → "Invalid key"）。
+// 將檔名轉做 ASCII-safe 片段；全部不合 → fallback 'scan'。
+// （人類可讀中文標題照樣存在資源庫 Resource.title，不靠 storage key。）
 function asciiKeySegment(name: string): string {
   const base = name
     .replace(/\.pdf$/i, '')
@@ -75,7 +75,7 @@ export async function uploadScanPdf(
 //  資源分享區（private bucket「community」）
 //  ------------------------------------------------------------
 //  老師上載教學資源檔案；private bucket → 只有登入老師簽名先下載到
-//  （未登入冇 session → 簽唔到 → 下載唔到）。⚠️ 要先跑 migration 0012。
+//  （未登入沒有 session → 簽不到 → 下載不到）。⚠️ 要先跑 migration 0012。
 // ============================================================
 
 export const COMMUNITY_BUCKET = 'community'
@@ -95,7 +95,7 @@ export interface UploadedCommunityFile {
 
 /**
  * 上載資源檔案去 community bucket。路徑 `<userId>/<resourceId>-<safe>.<ext>`
- * 對應 RLS 只准存自己 uid 資料夾。唔即時簽 URL（下載時先用 communitySignedUrl 短期簽）。
+ * 對應 RLS 只准存自己 uid 資料夾。不即時簽 URL（下載時先用 communitySignedUrl 短期簽）。
  */
 export async function uploadCommunityFile(
   blob: Blob,
@@ -118,7 +118,7 @@ export async function uploadCommunityFile(
   return { path }
 }
 
-/** 攞短期（1 個鐘）簽名連結；private bucket 要登入 session（RLS）。失敗回 null。 */
+/** 取得短期（1 個鐘）簽名連結；private bucket 要登入 session（RLS）。失敗回 null。 */
 export async function communitySignedUrl(path: string): Promise<string | null> {
   if (!supabase) return null
   const signed = await supabase.storage.from(COMMUNITY_BUCKET).createSignedUrl(path, COMMUNITY_URL_TTL)

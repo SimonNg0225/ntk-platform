@@ -4,7 +4,7 @@ import type { CommunityProfile, CommunityResource } from '../../../lib/community
 //  資源分享區 — demo 資料
 //  ------------------------------------------------------------
 //  未接 Supabase（本機 / preview）時用，令個設計 render 到。
-//  接咗雲端就用真資料（listResources）。
+//  接了雲端就用真資料（listResources）。
 // ============================================================
 
 const P = {
@@ -108,7 +108,7 @@ export const DEMO_RESOURCES: CommunityResource[] = [
   r({
     id: 'd3',
     title: '中文卷二議論文範文 + 評分示例',
-    description: '三篇不同等級範文，附 5** / 5 / 4 拆解，俾學生睇得失。',
+    description: '三篇不同等級範文，附 5** / 5 / 4 拆解，給學生查看得失。',
     type: 'paper',
     subjectPackId: 'chin',
     grade: '中六',
@@ -127,8 +127,8 @@ export const DEMO_RESOURCES: CommunityResource[] = [
   }),
   r({
     id: 'd4',
-    title: 'YouTube：10 分鐘搞掂機會成本',
-    description: '自製動畫短片，課堂引入或翻轉教室都啱。',
+    title: 'YouTube：10 分鐘完成機會成本',
+    description: '自製動畫短片，課堂引入或翻轉教室都適合。',
     type: 'video',
     subjectPackId: 'econ',
     grade: '中四',
@@ -162,7 +162,7 @@ export const DEMO_RESOURCES: CommunityResource[] = [
   r({
     id: 'd6',
     title: '通識／公民：專題研習備忘筆記',
-    description: '由選題到匯報嘅 checklist，學生人手一份唔會甩漏。',
+    description: '由選題到匯報的 checklist，學生人手一份不會甩漏。',
     type: 'note',
     subjectPackId: 'ls',
     grade: '中五',

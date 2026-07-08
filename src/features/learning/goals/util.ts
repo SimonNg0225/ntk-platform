@@ -80,7 +80,7 @@ export function fromKey(key: string): Date {
   return new Date(y, (m ?? 1) - 1, d ?? 1, 12, 0, 0, 0)
 }
 
-/** 距離目標日嘅日數（正 = 仲有；負 = 已過期；undefined = 無設目標日） */
+/** 距離目標日的日數（正 = 還有；負 = 已過期；undefined = 無設目標日） */
 export function daysUntil(targetDate?: string): number | undefined {
   if (!targetDate) return undefined
   const target = fromKey(targetDate).getTime()
@@ -93,8 +93,8 @@ export function dueLabel(targetDate?: string): { text: string; tone: Tone } | nu
   if (d === undefined) return null
   if (d < 0) return { text: `逾期 ${Math.abs(d)} 日`, tone: 'rose' }
   if (d === 0) return { text: '今日到期', tone: 'amber' }
-  if (d <= 7) return { text: `仲有 ${d} 日`, tone: 'amber' }
-  return { text: `仲有 ${d} 日`, tone: 'slate' }
+  if (d <= 7) return { text: `還有 ${d} 日`, tone: 'amber' }
+  return { text: `還有 ${d} 日`, tone: 'slate' }
 }
 
 // ───────── 里程碑加權進度 ─────────
@@ -117,7 +117,7 @@ export function computeProgress(
   return Math.round((done / total) * 100)
 }
 
-// ───────── 里程碑寫返（upsert，保留時間戳）─────────
+// ───────── 里程碑寫回（upsert，保留時間戳）─────────
 /** GoalEditor 草稿里程碑（只帶 UI 可編輯欄位） */
 export interface DraftMilestone {
   id: string
@@ -126,7 +126,7 @@ export interface DraftMilestone {
   weight: number
 }
 
-/** syncMilestonesInto 需要嘅最小 collection 介面（方便測試 / 解耦） */
+/** syncMilestonesInto 需要的最小 collection 介面（方便測試 / 解耦） */
 export interface MilestoneStore {
   get: () => Milestone[]
   add: (data: Omit<Milestone, 'id'> & { id?: string }) => unknown
@@ -135,11 +135,11 @@ export interface MilestoneStore {
 }
 
 /**
- * 把草稿里程碑寫返 collection（按 id upsert）。
+ * 把草稿里程碑寫回 collection（按 id upsert）。
  * - 既有里程碑：update，保留原 createdAt；只在 done 由 false→true 時寫
  *   doneAt、true→false 時清 doneAt，其餘沿用舊 doneAt。
  * - 新里程碑：add（createdAt = now）。
- * - 草稿已移除嘅：remove。
+ * - 草稿已移除的：remove。
  * 避免「先全刪再重 add」會把所有 createdAt/doneAt 重設為當刻的資料污染。
  */
 export function syncMilestonesInto(
@@ -151,9 +151,9 @@ export function syncMilestonesInto(
   const old = col.get().filter((m) => m.goalId === goalId)
   const oldById = new Map(old.map((m) => [m.id, m]))
   const keep = new Set(drafts.map((m) => m.id))
-  // 1) 刪走草稿已移除嘅
+  // 1) 刪走草稿已移除的
   for (const m of old) if (!keep.has(m.id)) col.remove(m.id)
-  // 2) upsert：既有就 update（唔郁 createdAt），新嘅先 add
+  // 2) upsert：既有就 update（不郁 createdAt），新的先 add
   drafts.forEach((m, i) => {
     const prev = oldById.get(m.id)
     const weight = Math.max(1, m.weight || 1)
@@ -170,7 +170,7 @@ export function syncMilestonesInto(
 // ───────── 動量（最近進度趨勢）─────────
 export interface MomentumPoint {
   key: string // YYYY-MM-DD
-  value: number // 0-100（當日結束時嘅進度）
+  value: number // 0-100（當日結束時的進度）
 }
 
 /**
@@ -183,8 +183,8 @@ export function buildMomentum(
   days: number,
 ): MomentumPoint[] {
   // 用「本地日曆日」做 key（同下面時間軸一致）。
-  // 用 createdAt.slice(0,10) 會攞到 UTC 日：喺 UTC+8 等時區，凌晨簽到會
-  // 落錯一日、對唔到時間軸而被遺漏。改用本地日期分量保持一致。
+  // 用 createdAt.slice(0,10) 會取得到 UTC 日：在 UTC+8 等時區，凌晨簽到會
+  // 落錯一日、對不到時間軸而被遺漏。改用本地日期分量保持一致。
   const localKey = (iso: string): string => {
     const d = new Date(iso)
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
@@ -197,7 +197,7 @@ export function buildMomentum(
   const out: MomentumPoint[] = []
   const today = new Date()
   let last = 0
-  // 先搵起始基線：days 之前最後一筆簽到值
+  // 先搜尋起始基線：days 之前最後一筆簽到值
   const startBoundary = new Date(today)
   startBoundary.setDate(today.getDate() - (days - 1))
   const startKey = `${startBoundary.getFullYear()}-${String(startBoundary.getMonth() + 1).padStart(2, '0')}-${String(startBoundary.getDate()).padStart(2, '0')}`
@@ -217,10 +217,10 @@ export function buildMomentum(
 }
 
 /**
- * 近 `days` 日嘅「淨推進」（動量排序用）。
- * = current − 窗口起點前嘅基線進度（窗前最後一筆簽到；無則 0）。
+ * 近 `days` 日的「淨推進」（動量排序用）。
+ * = current − 窗口內容來源前的基線進度（窗前最後一筆簽到；無則 0）。
  * 取值範圍可正可負（倒退就負），無簽到時退為 0（無資料 ≠ 有推進）。
- * 用本地日曆日界定窗口起點，同 buildMomentum 一致（避 UTC slice 漂移）。
+ * 用本地日曆日界定窗口內容來源，同 buildMomentum 一致（避 UTC slice 漂移）。
  */
 export function momentumGain(
   checkins: { createdAt: string; progress: number }[],
@@ -252,7 +252,7 @@ export function momentumGain(
 // ───────── 狀態 + 到期視窗 篩選 ─────────
 export type StatusFilter = 'all' | 'active' | 'due7' | 'overdue' | 'paused' | 'done'
 
-/** 篩選預測所需嘅最小目標形狀（狀態 + 目標日）。 */
+/** 篩選預測所需的最小目標形狀（狀態 + 目標日）。 */
 export interface StatusFilterTarget {
   status: GoalStatus
   targetDate?: string
@@ -271,9 +271,9 @@ export const STATUS_FILTERS: { id: StatusFilter; label: string }[] = [
  * 一個目標是否符合「狀態 + 到期視窗」篩選。
  * - all：全部
  * - active / paused / done：純按狀態
- * - due7：未完成 + 目標日喺今日起 7 日內（0..7，inclusive）
+ * - due7：未完成 + 目標日在今日起 7 日內（0..7，inclusive）
  * - overdue：未完成 + 目標日已過（< 0）
- * 到期類視窗會排除已完成（done）目標——已達成嘅唔當「快到期/逾期」。
+ * 到期類視窗會排除已完成（done）目標——已達成的不當「快到期/逾期」。
  */
 export function matchesStatusFilter(
   t: StatusFilterTarget,
@@ -312,14 +312,14 @@ export function clampPct(n: number): number {
 export function relTime(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime()
   const mins = Math.floor(diff / 60000)
-  if (mins < 1) return '啱啱'
+  if (mins < 1) return '剛剛'
   if (mins < 60) return `${mins} 分鐘前`
   const hrs = Math.floor(mins / 60)
   if (hrs < 24) return `${hrs} 小時前`
   const days = Math.floor(hrs / 24)
   if (days < 30) return `${days} 日前`
-  // 用本地日曆日（同 buildMomentum 一致）：iso.slice(0,10) 攞嘅係 UTC 日，
-  // 喺 UTC+8 等時區，本地凌晨但 UTC 未過午夜嘅簽到會顯示錯一日。
+  // 用本地日曆日（同 buildMomentum 一致）：iso.slice(0,10) 取得的係 UTC 日，
+  // 在 UTC+8 等時區，本地凌晨但 UTC 未過午夜的簽到會顯示錯一日。
   const d = new Date(iso)
   return new Date(d.getFullYear(), d.getMonth(), d.getDate(), 12).toLocaleDateString('zh-HK', { month: 'short', day: 'numeric' })
 }

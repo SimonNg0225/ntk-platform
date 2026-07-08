@@ -108,7 +108,7 @@ export function parseWikiLinks(content: string): string[] {
   return out
 }
 
-/** 以顯示標題（deriveTitle）配對筆記，case-insensitive；配唔到回 undefined */
+/** 以顯示標題（deriveTitle）配對筆記，case-insensitive；配不到回 undefined */
 export function resolveNoteByTitle(
   notes: RichNote[],
   title: string,
@@ -118,7 +118,7 @@ export function resolveNoteByTitle(
   return notes.find((n) => deriveTitle(n).toLowerCase() === t)
 }
 
-/** 反向連結：邊啲筆記嘅內文 [[...]] 指住 target（按顯示標題配對，排除自己） */
+/** 反向連結：邊些筆記的內文 [[...]] 指住 target（按顯示標題配對，排除自己） */
 export function backlinksOf(notes: RichNote[], target: RichNote): RichNote[] {
   const title = deriveTitle(target).toLowerCase()
   if (!title) return []
@@ -180,7 +180,7 @@ function dayKey(iso: string): string {
 // ───────── 排序 ─────────
 export type SortKey = 'updated' | 'created' | 'title' | 'words'
 export function compareNotes(a: RichNote, b: RichNote, key: SortKey): number {
-  // 釘選永遠喺前（主列表）
+  // 釘選永遠在前（主列表）
   if (a.pinned !== b.pinned) return a.pinned ? -1 : 1
   switch (key) {
     case 'created':
@@ -230,7 +230,7 @@ export interface NotesStats {
   todoTotal: number
   todoDone: number
   tagCount: number
-  activeDays: number // 過去 30 日有新增/更新嘅日數
+  activeDays: number // 過去 30 日有新增/更新的日數
   last7: number // 過去 7 日新增
   prev7: number // 之前 7 日新增（趨勢比較）
   topTags: TagCount[]
@@ -344,7 +344,7 @@ export interface NotesBackup {
 
 const NOTES_BACKUP_VERSION = 1
 
-/** 把筆記 + 筆記本打包成可完整還原嘅 JSON（pretty） */
+/** 把筆記 + 筆記本打包成可完整還原的 JSON（pretty） */
 export function exportNotesJson(notes: RichNote[], notebooks: Notebook[]): string {
   const payload: NotesBackup = {
     version: NOTES_BACKUP_VERSION,
@@ -393,7 +393,7 @@ function normalizeNotebook(d: Record<string, unknown>): Notebook {
 /**
  * 寬鬆解析匯入的備份 JSON（仿 reading/util.ts parseImport）。
  * 容忍舊格式 / 缺欄位：逐欄補預設（false / 空字串 / now ISO），
- * 非陣列欄位過濾成空陣列。完全唔似備份（無 notes 又無 notebooks 陣列）→ null。
+ * 非陣列欄位過濾成空陣列。完全不似備份（無 notes 又無 notebooks 陣列）→ null。
  */
 export function parseNotesImport(
   raw: string,

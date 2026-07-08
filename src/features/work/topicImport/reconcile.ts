@@ -2,10 +2,10 @@
 //  Smart 切換課題 — 純函式調和（reconcile）
 //  ------------------------------------------------------------
 //  按「課題名」配對：
-//   · 同名 → 保留原 id（題庫／進度／評估／備課 嘅連繫唔甩）
-//   · 新版有、舊冇 → 新增
-//   · 舊有、新版冇 → 有資料連住就保留（排到後面），否則刪走（清走垃圾）
-//  純函式，唔掂 collection，方便單元測試。
+//   · 同名 → 保留原 id（題庫／進度／評估／備課 的連繫不甩）
+//   · 新版有、舊沒有 → 新增
+//   · 舊有、新版沒有 → 有資料連住就保留（排到後面），否則刪走（清走垃圾）
+//  純函式，不掂 collection，方便單元測試。
 // ============================================================
 
 export interface TopicInput {
@@ -23,9 +23,9 @@ export interface ReconcilePlan {
   updates: { id: string; part: string; area: string; topic: string; order: number }[]
   /** 新增 */
   adds: { part: string; area: string; topic: string; order: number }[]
-  /** 舊有但新版冇、又有資料連住 → 保留（更新 order 排後面）*/
+  /** 舊有但新版沒有、又有資料連住 → 保留（更新 order 排後面）*/
   keeps: { id: string; order: number }[]
-  /** 舊有但新版冇、又無資料連住 → 刪走 */
+  /** 舊有但新版沒有、又無資料連住 → 刪走 */
   removes: string[]
 }
 
@@ -91,19 +91,19 @@ export function planSummary(plan: ReconcilePlan): ApplyResult {
 // ============================================================
 //  去重（dedupe）— 純函式
 //  ------------------------------------------------------------
-//  同一課題（按課題名 norm 去重）唔同 flow 會有唔同 id（pack id `chin-01`
-//  vs smartApply / 手動附加嘅隨機 uid），令「淨係 by id」去重漏網、重複入庫。
-//  呢度按課題名揾出要剷走嘅「重複垃圾」：
-//   · 有資料連住（referenced）嘅一律保留（題庫／進度等唔斷連）；
-//   · 同名又冇資料連住嘅多出條 → 剷（保留首條佔位嗰個）。
-//  回傳要移除嘅 id 清單。純函式，唔掂 collection。
+//  同一課題（按課題名 norm 去重）不同 flow 會有不同 id（pack id `chin-01`
+//  vs smartApply / 手動附加的隨機 uid），令「只 by id」去重漏網、重複入庫。
+//  這裡按課題名揾出要剷走的「重複垃圾」：
+//   · 有資料連住（referenced）的一律保留（題庫／進度等不斷連）；
+//   · 同名又沒有資料連住的多出條 → 剷（保留首條佔位那個）。
+//  回傳要移除的 id 清單。純函式，不掂 collection。
 // ============================================================
 export function planDedupe(
   topics: { id: string; topic: string }[],
   isReferenced: (id: string) => boolean,
 ): string[] {
   const seen = new Set<string>()
-  // referenced 條一律保留並先佔位（佢哋係 canonical）
+  // referenced 條一律保留並先佔位（他們係 canonical）
   for (const t of topics) {
     const k = norm(t.topic)
     if (k && isReferenced(t.id)) seen.add(k)
@@ -121,8 +121,8 @@ export function planDedupe(
 // ============================================================
 //  附加（append）— 純函式，按課題名去重
 //  ------------------------------------------------------------
-//  「附加」課題時跳過同名（norm）已存在嘅，回傳實際要 add 嘅項（order 接喺
-//  現有最大值之後）。incoming 帶 id 就保留（維持 pack 分組），冇就由 store 補。
+//  「附加」課題時跳過同名（norm）已存在的，回傳實際要 add 的項（order 接在
+//  現有最大值之後）。incoming 帶 id 就保留（維持 pack 分組），沒有就由 store 補。
 // ============================================================
 export function planAppendByText(
   existing: { topic: string; order: number }[],

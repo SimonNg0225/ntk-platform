@@ -71,13 +71,13 @@ export function buildPrompt(f: FormState, bmiValue: number | null): string {
     `受傷史 / 限制：${f.injury.trim() || '無'}`,
   ].filter(Boolean)
   return [
-    '你係一位專業健身教練。根據以下訓練者資料，畀一份個人化建議。',
+    '你是一位專業健身教練。根據以下訓練者資料，提供一份個人化建議。',
     '安全為先；如有受傷史，要特別針對性提醒同建議避開高風險動作。',
     '所有文字用繁體中文（可用書面廣東話）。',
     '',
     lines.join('\n'),
     '',
-    '只回 JSON、唔好任何解說文字、唔好 markdown code fence。格式：',
+    '只回 JSON、不要任何解說文字、不要 markdown code fence。格式：',
     '{"bullets":["訓練重點/方向，5 至 7 點，每點一句具體可行"],"cautions":["注意事項/安全提醒，3 至 5 點"]}',
   ].join('\n')
 }
@@ -138,7 +138,7 @@ export default function Assess({ model }: { model: AIModel }) {
       })
       const parsed = parseAdvice(raw)
       if (!parsed) {
-        toast.error('AI 回覆格式唔啱，請再試一次或換 Pro 模型')
+        toast.error('AI 回覆格式不正確，請再試一次或換 Pro 模型')
         return
       }
       setAdvice(parsed)
@@ -196,7 +196,7 @@ export default function Assess({ model }: { model: AIModel }) {
           </Field>
         </div>
 
-        <Field label="受傷史 / 身體限制" hint="例如：膝頭舊患、腰椎間盤、肩膊撞擊（冇就留空）">
+        <Field label="受傷史 / 身體限制" hint="例如：膝頭舊患、腰椎間盤、肩膊撞擊（沒有就留空）">
           <Textarea
             rows={2}
             placeholder="講低任何傷患或限制，AI 會幫你避開高風險動作"
@@ -209,7 +209,7 @@ export default function Assess({ model }: { model: AIModel }) {
           <StatCard
             label="BMI（參考）"
             value={bmiValue}
-            hint={`分類：${band.label} · BMI 只作粗略參考，唔反映肌肉量`}
+            hint={`分類：${band.label} · BMI 只作粗略參考，不反映肌肉量`}
             icon={ClipboardList}
           />
         )}

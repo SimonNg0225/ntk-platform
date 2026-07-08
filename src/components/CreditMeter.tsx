@@ -2,11 +2,11 @@ import { Coins } from 'lucide-react'
 import { useCredits } from '../hooks/useCredits'
 
 // ============================================================
-//  AI 點數計量條（擺喺 AI 生成掣附近）
+//  AI 點數計量條（擺在 AI 生成掣附近）
 //  ------------------------------------------------------------
-//  顯示「呢次要幾多點 + 本月剩餘 / 總額」，畀用戶心裡有數。
-//  source = complete() 嘅 source tag；transcribe 要傳 feature="transcribe"；
-//  有 model 揀（Flash/Pro）就傳 model，Pro 會 ×4 反映成本。
+//  顯示「呢次要幾多點 + 本月剩餘 / 總額」，給用戶心裡有數。
+//  source = complete() 的 source tag；transcribe 要傳 feature="transcribe"；
+//  有 model 選擇（Flash/Pro）就傳 model，Pro 會 ×4 反映成本。
 // ============================================================
 
 export default function CreditMeter({
@@ -21,7 +21,7 @@ export default function CreditMeter({
   className?: string
 }) {
   const { remaining, pool, costOf, loading } = useCredits()
-  if (pool <= 0) return null // 未有方案（理論上唔會）— 唔顯示
+  if (pool <= 0) return null // 未有方案（理論上不會）— 不顯示
   const cost = costOf({ source, feature, model })
   const insufficient = !loading && remaining < cost
   const low = !loading && !insufficient && remaining <= Math.max(cost * 2, Math.ceil(pool * 0.15))
@@ -33,8 +33,8 @@ export default function CreditMeter({
   return (
     <span
       className={`inline-flex min-h-7 items-center gap-1.5 rounded-full border px-2 py-0.5 text-[11px] ${tone} ${className}`}
-      title={`呢個動作扣 ${cost} 點；本月 AI 點數剩 ${loading ? '…' : remaining} / ${pool}`}
-      aria-label={`AI 點數：呢個動作扣 ${cost} 點，本月剩 ${loading ? '載入中' : remaining} / ${pool}`}
+      title={`此動作扣 ${cost} 點；本月 AI 點數剩 ${loading ? '…' : remaining} / ${pool}`}
+      aria-label={`AI 點數：此動作扣 ${cost} 點，本月剩 ${loading ? '載入中' : remaining} / ${pool}`}
     >
       <Coins size={12} className="shrink-0" />
       <span>

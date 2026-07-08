@@ -3,9 +3,9 @@ import { calendarFeedCol, type CalendarFeedToken } from '../../../data/collectio
 // ============================================================
 //  訂閱式 .ics 日曆 feed —— token 生成 + webcal 連結組裝
 //  ------------------------------------------------------------
-//  - token：≥128-bit、URL-safe 隨機字串，存喺 calendarFeedCol（單行
+//  - token：≥128-bit、URL-safe 隨機字串，存在 calendarFeedCol（單行
 //    id='token'）。會 sync 上 Supabase（app_rows，collection='calendar_feed'），
-//    畀 Edge Function calendar-feed 反查 user_id。
+//    給 Edge Function calendar-feed 反查 user_id。
 //  - webcal 連結：webcal://<configured-supabase-host>/functions/v1/
 //    calendar-feed?token=<token>（host 由 VITE_SUPABASE_URL 拆）。支援
 //    Supabase custom domain，例如 auth.eziteach.hk。
@@ -13,7 +13,7 @@ import { calendarFeedCol, type CalendarFeedToken } from '../../../data/collectio
 //  詳見 docs/superpowers/specs/2026-06-04-calendar-feed-reminders-design.md
 // ============================================================
 
-/** 單行 token 喺 collection 內固定用呢個 id。 */
+/** 單行 token 在 collection 內固定用這個 id。 */
 export const FEED_TOKEN_ID = 'token'
 
 /** token 位元組數（16 bytes = 128-bit；base64url 後約 22 字）。 */
@@ -21,7 +21,7 @@ const TOKEN_BYTES = 24 // 192-bit，留足餘裕（> 128-bit 規範下限）
 
 /**
  * 用 crypto 生成一個 URL-safe（base64url，去 padding）隨機 token。
- * 至少 128-bit 亂數。crypto.getRandomValues 喺瀏覽器同 Node ≥16 都有。
+ * 至少 128-bit 亂數。crypto.getRandomValues 在瀏覽器同 Node ≥16 都有。
  */
 export function generateFeedToken(bytes: number = TOKEN_BYTES): string {
   const buf = new Uint8Array(bytes)
@@ -33,19 +33,19 @@ export function generateFeedToken(bytes: number = TOKEN_BYTES): string {
   return b64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
 }
 
-/** Node fallback（測試 / SSR 等無 btoa 嘅環境）。 */
+/** Node fallback（測試 / SSR 等無 btoa 的環境）。 */
 function bufToBase64Node(buf: Uint8Array): string {
-  // 避免直接靠 Buffer 型別（瀏覽器 build 唔想拉入 node typings）。
+  // 避免直接靠 Buffer 型別（瀏覽器 build 不想拉入 node typings）。
   const G = globalThis as unknown as {
     Buffer?: { from(d: Uint8Array): { toString(enc: string): string } }
   }
   if (G.Buffer) return G.Buffer.from(buf).toString('base64')
-  // 極端 fallback：手寫 base64（理論上唔會行到，btoa/Buffer 至少有一個）。
+  // 極端 fallback：手寫 base64（理論上不會行到，btoa/Buffer 至少有一個）。
   return ''
 }
 
 /**
- * 攞現有 token；無就生成一個、存入 collection、回傳。
+ * 取得現有 token；無就生成一個、存入 collection、回傳。
  * 多次呼叫穩定回同一個（除非 rotateToken）。
  */
 export function getOrCreateToken(): string {
@@ -66,7 +66,7 @@ export function rotateToken(): string {
   return token
 }
 
-/** 讀現有 token（唔生成）；無就回 null。畀 UI 判斷「未訂閱過」。 */
+/** 讀現有 token（不生成）；無就回 null。給 UI 判斷「未訂閱過」。 */
 export function peekToken(): string | null {
   return calendarFeedCol.get().find((r) => r.id === FEED_TOKEN_ID)?.token ?? null
 }
@@ -75,7 +75,7 @@ export function peekToken(): string | null {
  * 由 Supabase URL 拆 host：
  *   https://abcdefgh.supabase.co       → abcdefgh
  *   https://auth.eziteach.hk           → auth.eziteach.hk
- * 拆唔到（空 / localhost / 單段 host）→ null。
+ * 拆不到（空 / localhost / 單段 host）→ null。
  */
 export function supabaseHostFromUrl(url: string | undefined | null): string | null {
   if (!url) return null
@@ -83,7 +83,7 @@ export function supabaseHostFromUrl(url: string | undefined | null): string | nu
   try {
     host = new URL(url.includes('://') ? url : `https://${url}`).host
   } catch {
-    // 唔係完整 URL，當佢可能淨係 host
+    // 不是完整 URL，當他可能只 host
     host = String(url).replace(/^https?:\/\//, '').replace(/\/.*$/, '')
   }
   if (!host) return null
@@ -108,7 +108,7 @@ export function projectRefFromUrl(url: string | undefined | null): string | null
 /**
  * 組 webcal 連結：
  * webcal://<configured-supabase-host>/functions/v1/calendar-feed?token=<token>
- * host 拆唔到 → null。
+ * host 拆不到 → null。
  */
 export function buildWebcalUrl(
   supabaseUrl: string | undefined | null,
@@ -121,7 +121,7 @@ export function buildWebcalUrl(
   )}`
 }
 
-/** 同 webcal 連結，但用 https://（畀「複製」之後手動貼、或非 Apple 裝置用）。 */
+/** 同 webcal 連結，但用 https://（給「複製」之後手動貼、或非 Apple 裝置用）。 */
 export function buildHttpsUrl(
   supabaseUrl: string | undefined | null,
   token: string,

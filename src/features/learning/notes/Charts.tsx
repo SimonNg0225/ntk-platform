@@ -143,7 +143,7 @@ export function TagBars({
   if (!tags.length)
     return (
       <p className="py-6 text-center text-xs text-slate-400 dark:text-slate-500">
-        仲未有 #標籤
+        尚未有 #標籤
       </p>
     )
   return (
@@ -182,7 +182,7 @@ export function TagBars({
 export interface DonutSlice {
   label: string
   value: number
-  color: string // tailwind text-* 用嚟取 stroke
+  color: string // tailwind text-* 用來取 stroke
 }
 const DONUT_STROKE: Record<string, string> = {
   slate: 'stroke-slate-400',
@@ -212,7 +212,7 @@ export function DonutChart({ slices }: { slices: DonutSlice[] }) {
   if (!total)
     return (
       <p className="py-6 text-center text-xs text-slate-400 dark:text-slate-500">
-        仲未有資料
+        尚未有資料
       </p>
     )
   return (

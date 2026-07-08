@@ -16,7 +16,7 @@ export const SUPPORT_MAILTO =
   (import.meta.env.VITE_SUPPORT_EMAIL as string | undefined) ??
   'support@eziteach.hk'
 
-/** in-app 聯絡表單可唔可以直接提交（要 Supabase）；否則用 mailto。 */
+/** in-app 聯絡表單可不可以直接提交（要 Supabase）；否則用 mailto。 */
 export const isContactConfigured = isSupabaseConfigured
 
 /** 提交客服查詢（登入用戶 → Edge Function）。 */
@@ -28,7 +28,7 @@ export async function submitSupportTicket(
   const {
     data: { session },
   } = await supabase.auth.getSession()
-  if (!session) throw new Error('請先登入先可以聯絡客服。')
+  if (!session) throw new Error('請先登入以聯絡客服。')
   const base = (import.meta.env.VITE_SUPABASE_URL as string).replace(/\/$/, '')
   const res = await fetch(`${base}/functions/v1/support`, {
     method: 'POST',
@@ -62,7 +62,7 @@ export interface SupportTicket {
   created_at: string
 }
 
-/** 我的查詢（RLS 只回自己提交嘅 ticket）。 */
+/** 我的查詢（RLS 只回自己提交的 ticket）。 */
 export async function listMyTickets(): Promise<SupportTicket[]> {
   if (!supabase) return []
   const { data, error } = await supabase

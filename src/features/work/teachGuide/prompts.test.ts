@@ -47,7 +47,7 @@ describe('parseGuide', () => {
   })
 
   it('格式唔正確會 throw', () => {
-    expect(() => parseGuide('唔係 JSON')).toThrow()
+    expect(() => parseGuide('不是 JSON')).toThrow()
   })
 })
 

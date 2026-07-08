@@ -3,10 +3,10 @@ import { supabase, isSupabaseConfigured } from './supabase'
 // ============================================================
 //  全 app 統一身份 — Supabase I/O（首次登記 / 讀檔）
 //  ------------------------------------------------------------
-//  讀寫 public.profiles（0012 建 + 0014 擴充）。同一張表畀資源分享區
-//  （lib/community.ts）共用，所以呢度只負責「登記相關」嘅讀寫，唔重複
+//  讀寫 public.profiles（0012 建 + 0014 擴充）。同一張表給資源分享區
+//  （lib/community.ts）共用，所以這裡只負責「登記相關」的讀寫，不重複
 //  community 嗰套瀏覽 / 發佈邏輯。
-//  純選項 / 驗證喺 features/onboarding/logic.ts。
+//  純選項 / 驗證在 features/onboarding/logic.ts。
 // ============================================================
 
 export const isProfileConfigured = isSupabaseConfigured
@@ -26,9 +26,9 @@ export interface AppProfile {
   avatarColor: string | null
   /** 預設 persona id（m-01.. / f-01..；null = 文字頭像） */
   avatarPreset: string | null
-  /** 自訂上載頭像 URL（留畀下一階段；今期未啟用） */
+  /** 自訂上載頭像 URL（留給下一階段；今期未啟用） */
   avatarUrl: string | null
-  /** 完成首次登記嘅時間（null = 未登記） */
+  /** 完成首次登記的時間（null = 未登記） */
   onboardedAt: string | null
   acceptedTermsAt: string | null
 }
@@ -96,7 +96,7 @@ function toAppProfile(r: AppProfileRow): AppProfile {
   }
 }
 
-/** 攞目前登入用戶嘅檔案（未接 / 未登入 / 查唔到 → null）。 */
+/** 取得目前登入用戶的檔案（未接 / 未登入 / 查不到 → null）。 */
 export async function getMyAppProfile(): Promise<AppProfile | null> {
   if (!supabase) return null
   const {
@@ -113,8 +113,8 @@ export async function getMyAppProfile(): Promise<AppProfile | null> {
 }
 
 /**
- * 只攞顯示名（輕量；唔依賴 0015 新欄位，migration 未跑都安全）。
- * 用嚟登入時 hydrate 本機歡迎訊息，令本機同 Supabase canonical 一致。
+ * 只取得顯示名（輕量；不依賴 0015 新欄位，migration 未跑都安全）。
+ * 用來登入時 hydrate 本機歡迎訊息，令本機同 Supabase canonical 一致。
  */
 export async function getMyDisplayName(): Promise<string | null> {
   if (!supabase) return null
@@ -134,7 +134,7 @@ export async function getMyDisplayName(): Promise<string | null> {
 /**
  * 已登入但未完成登記（onboarded_at 為 NULL / 無 profile）→ true。
  * 任何情況（未接 Supabase / 未登入 / 未跑 0014 migration / 查詢出錯）一律
- * 回 false，務求「唔好阻住用戶用 app」。
+ * 回 false，務求「不要阻住用戶用 app」。
  */
 export async function needsRegistration(): Promise<boolean> {
   if (!supabase) return false
@@ -154,7 +154,7 @@ export async function needsRegistration(): Promise<boolean> {
 /**
  * 完成首次登記：寫 canonical profiles（即時標記 onboarded_at / accepted_terms_at），
  * 並 best-effort 同步論壇公開檔案（forum_profiles），令論壇即時有正確署名。
- * 論壇同步失敗（表唔存在 / 網絡）唔影響登記成功。
+ * 論壇同步失敗（表不存在 / 網絡）不影響登記成功。
  */
 export async function completeRegistration(input: RegistrationInput): Promise<void> {
   const id = await uid()
@@ -184,7 +184,7 @@ export async function completeRegistration(input: RegistrationInput): Promise<vo
   await syncForumProfile(id, input)
 }
 
-/** best-effort 同步論壇公開檔案（forum_profiles）；失敗唔阻主流程。 */
+/** best-effort 同步論壇公開檔案（forum_profiles）；失敗不阻主流程。 */
 async function syncForumProfile(id: string, input: RegistrationInput): Promise<void> {
   try {
     await need()
@@ -199,13 +199,13 @@ async function syncForumProfile(id: string, input: RegistrationInput): Promise<v
         { onConflict: 'user_id' },
       )
   } catch {
-    /* 論壇同步係加分項，失敗都唔阻主流程 */
+    /* 論壇同步係加分項，失敗都不阻主流程 */
   }
 }
 
 /**
- * 編輯個人資料：更新 canonical profiles，但**唔郁** onboarded_at / accepted_terms_at
- * （已登記用戶改料唔應該重新同意條款）。同樣 best-effort 同步論壇公開檔案。
+ * 編輯個人資料：更新 canonical profiles，但**不郁** onboarded_at / accepted_terms_at
+ * （已登記用戶改料不應該重新同意條款）。同樣 best-effort 同步論壇公開檔案。
  */
 export async function updateMyProfile(input: RegistrationInput): Promise<void> {
   const id = await uid()

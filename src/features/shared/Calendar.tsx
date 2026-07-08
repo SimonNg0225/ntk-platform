@@ -33,7 +33,7 @@ const VIEWS: { id: View; label: string }[] = [
   { id: 'year', label: '年' },
 ]
 
-// 工具列嘅小字眉題（slate kicker，純中文唔用 uppercase；點明而家睇緊邊個範圍）
+// 工具列的小字眉題（slate kicker，純中文不用 uppercase；點明現在查看緊哪個範圍）
 const VIEW_EYEBROW: Record<View, string> = {
   day: '當日',
   week: '本週',
@@ -45,7 +45,7 @@ function addMonths(d: Date, n: number): Date {
   return new Date(d.getFullYear(), d.getMonth() + n, d.getDate(), 12)
 }
 
-// 是否 ≥ sm 斷點（640px）。手機週視圖塞唔落 7 欄，改逐日睇。
+// 是否 ≥ sm 斷點（640px）。手機週視圖塞不落 7 欄，改逐日查看。
 function useIsWide(): boolean {
   const query = '(min-width: 640px)'
   const [wide, setWide] = useState(
@@ -68,11 +68,11 @@ export default function Calendar() {
   const countdowns = useCollection(countdownsCol)
   const toast = useToast()
 
-  // 拖拉移動：重複事件唔好盲改 master（會搬郁／重錨成個系列，繞過「僅此次/全部」）。
+  // 拖拉移動：重複事件不要盲改 master（會搬郁／重錨成個系列，繞過「僅此次/全部」）。
   // 暫擋住 + 引導去編輯器處理，避免破壞重複規則。
   const blockRecurringDrag = (ev: CalendarEvent): boolean => {
     if (ev.recurrence) {
-      toast.info('重複事件請開編輯器調整（可揀「僅此次」或「全部」）')
+      toast.info('重複事件請開編輯器調整（可選擇「僅此次」或「全部」）')
       return true
     }
     return false
@@ -120,7 +120,7 @@ export default function Calendar() {
     if (view === 'month') return monthLabel(cursor.getFullYear(), cursor.getMonth())
     if (view === 'day') return longDateLabel(cursorKey)
     if (view === 'year') return `${cursor.getFullYear()}年`
-    // 週視圖喺手機收成單日，標題跟住顯示嗰一日。
+    // 週視圖在手機收成單日，標題跟住顯示嗰一日。
     if (!isWide) return longDateLabel(cursorKey)
     const wk = weekKeys(cursor)
     const a = fromKey(wk[0])
@@ -157,10 +157,10 @@ export default function Calendar() {
     calendarsCol.update(id, { visible: !visible })
   }
 
-  // 副題用嘅事件統計（顯示中行事曆嘅事件數；純呈現，唔影響資料流）
+  // 副題用的事件統計（顯示中行事曆的事件數；純呈現，不影響資料流）
   const visibleEventCount = useMemo(() => {
     const hidden = new Set(cals.filter((c) => !c.visible).map((c) => c.id))
-    // 未指定行事曆嘅事件當顯示；其餘睇所屬行事曆有冇被收起
+    // 未指定行事曆的事件當顯示；其餘查看所屬行事曆有沒有被收起
     return events.filter((e) => !e.calendarId || !hidden.has(e.calendarId)).length
   }, [events, cals])
   const calendarSubtitle =
@@ -184,22 +184,22 @@ export default function Calendar() {
         guideKey="calendar"
       />
 
-      {/* ───────── 教學引導：教用家點用行事曆（可摺疊 + 可永久收起）───────── */}
+      {/* ───────── 教學引導：教用家如何使用行事曆（可摺疊 + 可永久收起）───────── */}
       <FeatureGuide
         storageKey="calendar"
-        title={t('cal.guideTitle', { defaultValue: '行事曆點用？' })}
+        title={t('cal.guideTitle', { defaultValue: '行事曆使用說明' })}
         steps={[
           {
-            title: t('cal.guideStep1Title', { defaultValue: '揀檢視範圍' }),
-            desc: t('cal.guideStep1Desc', { defaultValue: '右上揀「日 / 週 / 月 / 年」，用箭咀前後翻，按「今日」即刻跳返今天。' }),
+            title: t('cal.guideStep1Title', { defaultValue: '選擇檢視範圍' }),
+            desc: t('cal.guideStep1Desc', { defaultValue: '右上選擇「日 / 週 / 月 / 年」，用箭頭前後切換，按「今日」立即跳回今天。' }),
           },
           {
             title: t('cal.guideStep2Title', { defaultValue: '加活動' }),
-            desc: t('cal.guideStep2Desc', { defaultValue: '撳「新增」，或喺週／日格直接撳一格揀時段；要重複嘅喺編輯窗設定。' }),
+            desc: t('cal.guideStep2Desc', { defaultValue: '按「新增」，或在週／日格直接按一格選擇時段；要重複的在編輯窗設定。' }),
           },
           {
             title: t('cal.guideStep3Title', { defaultValue: '用顏色分類' }),
-            desc: t('cal.guideStep3Desc', { defaultValue: '撳色標籤可即時收起／顯示該類行事曆；按「管理」改名同顏色。' }),
+            desc: t('cal.guideStep3Desc', { defaultValue: '按色標籤可即時收起／顯示該類行事曆；按「管理」改名同顏色。' }),
           },
           {
             title: t('cal.guideStep4Title', { defaultValue: '匯出或訂閱手機' }),
@@ -245,7 +245,7 @@ export default function Calendar() {
         </Button>
       </div>
 
-      {/* 行事曆開關 — 顯示中嘅戴返自己嘅柔和色衣；隱藏嘅退做灰底刪線 */}
+      {/* 行事曆開關 — 顯示中的戴返自己的柔和色衣；隱藏的退做灰底刪線 */}
       <div className="flex flex-wrap items-center gap-2">
         {cals.map((c) => (
           <button
@@ -313,7 +313,7 @@ export default function Calendar() {
         />
       )}
 
-      {/* 手機：月view 下方列出「揀中嗰日」嘅事件（月格太細淨見點點，喺度補返內容）*/}
+      {/* 手機：月view 下方列出「選擇中嗰日」的事件（月格太細淨見點點，在這裡補返內容）*/}
       {view === 'month' && (
         <div className="max-h-[40%] shrink-0 space-y-1.5 overflow-y-auto sm:hidden">
           <div className="flex items-center justify-between px-1 pt-0.5">
@@ -334,10 +334,10 @@ export default function Calendar() {
                 <CalendarPlus size={22} strokeWidth={1.75} />
               </span>
               <p className="text-sm font-medium text-slate-600 dark:text-slate-300">
-                {t('cal.emptyDayTitle', { defaultValue: '呢日仲未有安排' })}
+                {t('cal.emptyDayTitle', { defaultValue: '這一天尚未有安排' })}
               </p>
               <p className="max-w-xs text-xs text-slate-400 dark:text-slate-500">
-                {t('cal.emptyDayHint', { defaultValue: '撳一下加返課堂、deadline 或家長會，今日就一目了然。' })}
+                {t('cal.emptyDayHint', { defaultValue: '按一下加回課堂、deadline 或家長會，今日就一目了然。' })}
               </p>
               <button
                 type="button"

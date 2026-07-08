@@ -3,13 +3,13 @@ import type { Entity } from '../../../lib/store'
 
 // ============================================================
 //  全域搜尋核心：模糊比對、評分、高亮、最近 / 釘選持久化
-//  純函式 + 自家 collection（零新 npm，唔掂任何共用檔）
+//  純函式 + 自家 collection（零新 npm，不掂任何共用檔）
 // ============================================================
 
 // ───────── 持久化：最近搜尋 + 釘選關鍵字 ─────────
 export interface RecentSearch extends Entity {
   q: string
-  at: number // timestamp（用嚟排序 + 去舊）
+  at: number // timestamp（用來排序 + 去舊）
 }
 export interface PinnedSearch extends Entity {
   q: string
@@ -59,14 +59,14 @@ export function isPinned(raw: string, pins: PinnedSearch[]): boolean {
 // ───────── 模糊比對（子序列 + 連續加分；Raycast / VSCode 風）─────────
 export interface MatchResult {
   score: number
-  // 命中字元喺原字串嘅 index（用嚟高亮）
+  // 命中字元在原字串的 index（用來高亮）
   indices: number[]
 }
 
 /**
- * 喺 text 入面搵 query 嘅子序列。
+ * 在 text 中搜尋 query 的子序列。
  * 計分：連續命中、字頭（詞首 / camelCase）、越前命中分越高。
- * 回傳 null = 唔匹配。
+ * 回傳 null = 不匹配。
  */
 export function fuzzyMatch(text: string, query: string): MatchResult | null {
   if (!query) return { score: 0, indices: [] }
@@ -99,7 +99,7 @@ export function fuzzyMatch(text: string, query: string): MatchResult | null {
       }
       ti++
     }
-    if (found === -1) return null // 有字元搵唔到 → 唔匹配
+    if (found === -1) return null // 有字元搜尋不到 → 不匹配
     indices.push(found)
     // 連續命中 → streak 加分
     if (found > 0 && indices[qi - 1] === found - 1) {
@@ -157,7 +157,7 @@ export function snippetAround(
   indices: number[],
   pad = 36,
 ): { text: string; offset: number } {
-  // 逐字元換成空格（唔用 + 合併連續空白），確保長度 1:1，令高亮 index 精準映射
+  // 逐字元換成空格（不用 + 合併連續空白），確保長度 1:1，令高亮 index 精準映射
   const flatten = (s: string) => s.replace(/[\n\r\t]/g, ' ')
   if (indices.length === 0) {
     const cut = flatten(text.slice(0, pad * 2))
@@ -170,26 +170,26 @@ export function snippetAround(
   const prefix = start > 0 ? '…' : ''
   const body = flatten(text.slice(start, end)) // 1:1 長度
   const suffix = end < text.length ? '…' : ''
-  // body 內 index j 對應原文 start + j；加咗前綴「…」後再 +prefix.length
+  // body 內 index j 對應原文 start + j；加了前綴「…」後再 +prefix.length
   return { text: `${prefix}${body}${suffix}`, offset: start - prefix.length }
 }
 
 // ───────── 搜尋運算子解析（type: / is:pinned / in:recent / sort:recent）─────────
 //  Raycast 風 power-user 運算子。全部 additive、大細階無關：
-//    type:<kind>  → 限定某類資料（kind 要喺 validTypes 先生效，否則當普通字）
-//    is:pinned    → 淨係顯示「釘選」嘅命中（底層實體 pinned = true）
-//    in:recent    → 淨係喺「最近更新／建立」嘅嘢入面搵（RECENT_DAYS 內）
-//    sort:recent  → 改用「最近」排序（依時間戳）而唔係相關度
-//  認唔到嘅運算子（例如 is:foo / sort:bar）一律當普通關鍵字保留，唔報錯。
+//    type:<kind>  → 限定某類資料（kind 要在 validTypes 先生效，否則當普通字）
+//    is:pinned    → 只顯示「釘選」的命中（底層實體 pinned = true）
+//    in:recent    → 只在「最近更新／建立」的嘢中搜尋（RECENT_DAYS 內）
+//    sort:recent  → 改用「最近」排序（依時間戳）而不是相關度
+//  認不到的運算子（例如 is:foo / sort:bar）一律當普通關鍵字保留，不報錯。
 export interface ParsedQuery {
-  text: string // 去除運算子後嘅關鍵字
+  text: string // 去除運算子後的關鍵字
   typeFilter: string | null // 例如 'note'（對應 SourceKind.id）
   pinnedOnly: boolean // is:pinned
   recentOnly: boolean // in:recent
   sortRecent: boolean // sort:recent
 }
 
-// in:recent 嘅「最近」窗口（日）。純資料：方便測試 + UI 顯示一致。
+// in:recent 的「最近」窗口（日）。純資料：方便測試 + UI 顯示一致。
 export const RECENT_DAYS = 14
 
 export function parseQuery(raw: string, validTypes: string[]): ParsedQuery {
@@ -216,46 +216,46 @@ export function parseQuery(raw: string, validTypes: string[]): ParsedQuery {
   return { text: rest.join(' ').trim(), typeFilter, pinnedOnly, recentOnly, sortRecent }
 }
 
-// 有任何運算子生效（除咗淨打關鍵字）→ 用嚟判斷「應唔應該顯示結果區」。
+// 有任何運算子生效（除了淨打關鍵字）→ 用來判斷「應不應該顯示結果區」。
 export function hasOperators(p: ParsedQuery): boolean {
   return p.typeFilter !== null || p.pinnedOnly || p.recentOnly || p.sortRecent
 }
 
 // ───────── type: 運算子自動完成（輸入框下方輕量 suggestion 列）─────────
-//  使用者「正喺度打」最後一個 token 形如 type:<partial> 時，提示匹配嘅 kind。
-//  純函式：純粹睇 raw 字串嘅最後一個 token，回相關 kind + 補全後嘅完整 raw。
+//  使用者「正在這裡打」最後一個 token 形如 type:<partial> 時，提示匹配的 kind。
+//  純函式：純粹查看 raw 字串的最後一個 token，回相關 kind + 補全後的完整 raw。
 //  設計取捨：
-//    • 只認「最後一個 token」做活躍輸入（貼合一般由右邊打字嘅心智模型）。
-//    • partial 大細階無關，用「子字串包含」配 id 或 label（中文 label 都搵到）。
-//    • partial 為空（啱啱打完 "type:"）→ 列出全部 kind（畀人揀）。
-//    • 已經係完整有效 type:<id>（partial === 某 id）→ 唔再提示（避免冗餘彈層）。
+//    • 只認「最後一個 token」做活躍輸入（貼合一般由右邊打字的心智模型）。
+//    • partial 大細階無關，用「子字串包含」配 id 或 label（中文 label 都找到）。
+//    • partial 為空（剛剛打完 "type:"）→ 列出全部 kind（給人選擇）。
+//    • 已經係完整有效 type:<id>（partial === 某 id）→ 不再提示（避免冗餘彈層）。
 export interface TypeSuggestion {
   id: string // kind id（補入 type: 後面）
   label: string // 顯示用中文標籤
-  /** 撳落去後，成個搜尋框應變成嘅 raw 值（補全當前 token 為 type:<id> 並加尾空格） */
+  /** 按落去後，成個搜尋框應變成的 raw 值（補全當前 token 為 type:<id> 並加尾空格） */
   fill: string
 }
 
 /**
- * 根據 raw 嘅「最後一個 token」判斷係咪正喺度打 type:，回匹配建議。
+ * 根據 raw 的「最後一個 token」判斷係咪正在這裡打 type:，回匹配建議。
  * @param raw        搜尋框原文
  * @param validTypes 所有合法 kind id
- * @param labelOf    kind id → 中文標籤（用嚟顯示 + 比對）
- * @returns          匹配嘅建議陣列；唔係喺度打 type: → 空陣列
+ * @param labelOf    kind id → 中文標籤（用來顯示 + 比對）
+ * @returns          匹配的建議陣列；不是在這裡打 type: → 空陣列
  */
 export function typeSuggestions(
   raw: string,
   validTypes: string[],
   labelOf: (id: string) => string,
 ): TypeSuggestion[] {
-  // 末端係空白 → 當前 token 已「完成」，唔提示（避免打完空格仍彈層）
+  // 末端係空白 → 當前 token 已「完成」，不提示（避免打完空格仍彈層）
   if (raw.length > 0 && /\s$/.test(raw)) return []
   const tokens = raw.split(/\s+/)
   const last = tokens[tokens.length - 1] ?? ''
   const m = /^type:(.*)$/i.exec(last)
   if (!m) return []
   const partial = m[1].toLowerCase()
-  // 已經係完整且有效嘅 type:<id> → 唔重複提示
+  // 已經係完整且有效的 type:<id> → 不重複提示
   if (partial && validTypes.includes(partial)) return []
   const prefix = tokens.slice(0, -1).join(' ')
   const head = prefix ? prefix + ' ' : ''
@@ -265,9 +265,9 @@ export function typeSuggestions(
 }
 
 // ───────── 運算子套用：過濾（is:pinned / in:recent）+ 排序（sort:recent）─────────
-//  收一個極輕量 shape（唔綁死 Hit），方便純函式測試。
+//  收一個極輕量 shape（不綁死 Hit），方便純函式測試。
 //    score：相關度（query 命中分；無 query 時為 0）
-//    ts：可排序時間戳（ms epoch）；undefined = 冇時間資訊（例如班別 / 課題）
+//    ts：可排序時間戳（ms epoch）；undefined = 沒有時間資訊（例如班別 / 課題）
 //    pinned：底層實體係咪釘選
 export interface OperableHit {
   score: number
@@ -276,10 +276,10 @@ export interface OperableHit {
 }
 
 /**
- * 按已解析運算子過濾 + 排序一批命中。純函式（唔 mutate 入參）。
+ * 按已解析運算子過濾 + 排序一批命中。純函式（不 mutate 入參）。
  *  • is:pinned  → 只留 pinned === true
- *  • in:recent  → 只留 ts 喺 [now - RECENT_DAYS, now] 內（冇 ts 嘅一律隔走）
- *  • sort:recent → 依 ts 由新到舊排（冇 ts 嘅沉底）；否則維持入參次序（交由呼叫方按 score / 字母排）
+ *  • in:recent  → 只留 ts 在 [now - RECENT_DAYS, now] 內（沒有 ts 的一律隔走）
+ *  • sort:recent → 依 ts 由新到舊排（沒有 ts 的沉底）；否則維持入參次序（交由呼叫方按 score / 字母排）
  * 回傳全新陣列。
  */
 export function applyOperators<T extends OperableHit>(
@@ -294,12 +294,12 @@ export function applyOperators<T extends OperableHit>(
     list = list.filter((h) => h.ts != null && h.ts >= floor && h.ts <= now)
   }
   if (parsed.sortRecent) {
-    // 穩定排序：依 ts 由新到舊；冇 ts（undefined）視為最舊沉底。
+    // 穩定排序：依 ts 由新到舊；沒有 ts（undefined）視為最舊沉底。
     list = list
       .slice()
       .sort((a, b) => (b.ts ?? -Infinity) - (a.ts ?? -Infinity))
   } else if (list === hits) {
-    // 冇做過任何過濾 → 回新陣列避免外部誤改原陣列
+    // 沒有做過任何過濾 → 回新陣列避免外部誤改原陣列
     list = hits.slice()
   }
   return list
@@ -312,7 +312,7 @@ export function relativeTime(iso?: string): string | null {
   if (Number.isNaN(t)) return null
   const diff = Date.now() - t
   const day = 864e5
-  if (diff < 6e4) return '啱啱'
+  if (diff < 6e4) return '剛剛'
   if (diff < 36e5) return `${Math.floor(diff / 6e4)} 分鐘前`
   if (diff < day) return `${Math.floor(diff / 36e5)} 小時前`
   if (diff < 7 * day) return `${Math.floor(diff / day)} 日前`

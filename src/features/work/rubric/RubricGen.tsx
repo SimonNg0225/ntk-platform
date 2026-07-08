@@ -119,7 +119,7 @@ export default function RubricGen() {
   }
 
   async function del(id: string) {
-    const ok = await confirm({ title: '刪除呢個準則？', tone: 'danger', confirmText: '刪除' })
+    const ok = await confirm({ title: '刪除這個準則？', tone: 'danger', confirmText: '刪除' })
     if (!ok) return
     rubricCol.remove(id)
     if (current?.id === id) setCurrent(null)
@@ -144,33 +144,33 @@ export default function RubricGen() {
     )
   }
 
-  // 教學引導：跟住模式換內容（同一 storageKey，「知道喇」後兩個都收起）
+  // 教學引導：跟住模式換內容（同一 storageKey，「知道了」後兩個都收起）
   const SCHEME_GUIDE: FeatureGuideStep[] = [
     {
       title: '貼題目或任務',
-      desc: '將要批改嘅題目、寫作任務或專題要求貼入下面，愈具體 AI 出得愈準。',
+      desc: '將要批改的題目、寫作任務或專題要求貼入下面，愈具體 AI 出得愈準。',
     },
     {
-      title: '揀總分',
-      desc: 'set 返呢題嘅總分，AI 會將分數分配落各個評分點。',
+      title: '選擇總分',
+      desc: '設定此題的總分，AI 會把分數分配到各個評分點。',
     },
     {
       title: '生成 + 取用',
-      desc: '撳生成即出參考答案同評分點，滿意就複製或下載做 Word。',
+      desc: '按生成即出參考答案同評分點，滿意就複製或下載做 Word。',
     },
   ]
   const RUBRIC_GUIDE: FeatureGuideStep[] = [
     {
       title: '貼題目或任務',
-      desc: '將要評分嘅題目、寫作任務或專題要求貼入下面，愈具體 AI 出得愈準。',
+      desc: '將要評分的題目、寫作任務或專題要求貼入下面，愈具體 AI 出得愈準。',
     },
     {
-      title: '揀等級數',
-      desc: '選 3–5 級，AI 會為每個準則寫由高到低嘅表現描述。',
+      title: '選擇等級數',
+      desc: '選 3–5 級，AI 會為每個準則寫由高到低的表現描述。',
     },
     {
       title: '生成 + 取用',
-      desc: '撳生成即出「準則 × 等級」量表，滿意就複製或下載做 Word。',
+      desc: '按生成即出「準則 × 等級」量表，滿意就複製或下載做 Word。',
     },
   ]
 
@@ -185,10 +185,10 @@ export default function RubricGen() {
         description="貼上題目或任務，AI 一鍵擬「評分指引」（參考答案＋評分點）或「評分量表」（準則 × 等級），可複製或下載做 Word。"
       />
 
-      {/* 教學引導：點用呢個功能（可摺疊 / 永久收起） */}
+      {/* 教學引導：如何使用此功能（可摺疊 / 永久收起） */}
       <FeatureGuide
         storageKey="rubric-gen"
-        title={mode === 'scheme' ? '評分指引點用？' : '評分量表點用？'}
+        title={mode === 'scheme' ? '評分指引使用說明' : '評分量表使用說明'}
         steps={mode === 'scheme' ? SCHEME_GUIDE : RUBRIC_GUIDE}
       />
 
@@ -206,7 +206,7 @@ export default function RubricGen() {
 
         <Field
           label="要做邊種？"
-          hint={mode === 'scheme' ? '評分指引：適合有標準答案嘅題目（如計算、簡答）。' : '評分量表：適合開放式作答（如寫作、專題、匯報）。'}
+          hint={mode === 'scheme' ? '評分指引：適合有標準答案的題目（如計算、簡答）。' : '評分量表：適合開放式作答（如寫作、專題、匯報）。'}
         >
           <SegmentedControl options={MODE_OPTS} value={mode} onChange={setMode} />
         </Field>
@@ -218,7 +218,7 @@ export default function RubricGen() {
             onChange={(e) => setQuestion(e.target.value)}
             placeholder={
               mode === 'scheme'
-                ? '例：解釋光合作用嘅過程同重要性。'
+                ? '例：解釋光合作用的過程同重要性。'
                 : '例：就「全球暖化」寫一篇 400 字議論文。'
             }
           />
@@ -249,7 +249,7 @@ export default function RubricGen() {
           <div className="flex items-center gap-3">
             <CreditMeter source="rubric" model={model} />
             <Button icon={Sparkles} onClick={run} loading={busy} disabled={!canRun}>
-              {busy ? '生成緊…' : mode === 'scheme' ? '生成評分指引' : '生成評分量表'}
+              {busy ? '生成中…' : mode === 'scheme' ? '生成評分指引' : '生成評分量表'}
             </Button>
           </div>
         </div>
@@ -259,7 +259,7 @@ export default function RubricGen() {
 
       {history.length > 0 && (
         <section>
-          <SectionTitle icon={Clock} description="撳返任何一條即重新查看">
+          <SectionTitle icon={Clock} description="按任何一條即可重新查看">
             歷史紀錄
           </SectionTitle>
           <div className="space-y-2">
@@ -296,8 +296,8 @@ export default function RubricGen() {
           title="未有評分準則"
           hint={
             mode === 'scheme'
-              ? '喺上面貼第一條題目，揀返總分，AI 即幫你出參考答案同評分點。'
-              : '喺上面貼第一條任務，揀返等級數，AI 即幫你出「準則 × 等級」量表。'
+              ? '在上方貼第一條題目，重新選擇總分，AI 即幫你出參考答案同評分點。'
+              : '在上方貼第一條任務，重新選擇等級數，AI 即幫你出「準則 × 等級」量表。'
           }
           action={
             <Button

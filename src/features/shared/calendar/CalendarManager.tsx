@@ -74,7 +74,7 @@ export default function CalendarManager({
   }
 
   return (
-    // 唔傳 title → 自管「週記」頁眉，令彈窗用返主畫面 serif + kicker + 雙線語言
+    // 不傳 title → 自管「週記」頁眉，令彈窗使用主畫面 serif + kicker + 雙線語言
     <Modal open onClose={onClose} size="md">
       {/* ───────── 週記頁眉：kicker + serif 標題 + 雙線封面分隔 ───────── */}
       <header className="-mx-5 -mt-5 mb-5 px-5 pt-5 sm:-mx-6 sm:-mt-6 sm:px-6 sm:pt-6">

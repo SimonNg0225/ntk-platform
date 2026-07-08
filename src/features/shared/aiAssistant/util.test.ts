@@ -231,7 +231,7 @@ describe('computeStats（整體統計）', () => {
     expect(s.userMsgs).toBe(0)
     expect(s.modelMsgs).toBe(0)
     expect(s.totalWords).toBe(0)
-    expect(s.avgPerThread).toBe(0) // 除零保護：threads = 0 → 0（唔係 NaN）
+    expect(s.avgPerThread).toBe(0) // 除零保護：threads = 0 → 0（不是 NaN）
     expect(s.streak).toBe(0)
     expect(s.busiestDay).toBeNull()
     expect(s.daily).toHaveLength(14)

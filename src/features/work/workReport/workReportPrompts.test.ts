@@ -35,7 +35,7 @@ describe('parseWorkReport', () => {
     expect(r.done).toEqual(['ok', 'trim'])
   })
   it('非物件 throw', () => {
-    expect(() => parseWorkReport('唔係 JSON')).toThrow()
+    expect(() => parseWorkReport('不是 JSON')).toThrow()
   })
 })
 

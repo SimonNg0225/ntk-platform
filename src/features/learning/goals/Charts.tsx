@@ -289,7 +289,7 @@ export function CategoryBars({
   )
 }
 
-// ───────── ⑤ 海拔儀錶（Hero 用，鋪喺 accent 漸變底 → 純白色系）─────────
+// ───────── ⑤ 海拔儀錶（Hero 用，鋪在 accent 漸變底 → 純白色系）─────────
 // 半圓「攀升軌跡」：底軌虛、已攀升段實白、山頂位放面旗。中央 serif 大海拔數字。
 export function AscentMeter({ value }: { value: number }) {
   const v = Math.max(0, Math.min(100, Math.round(value)))

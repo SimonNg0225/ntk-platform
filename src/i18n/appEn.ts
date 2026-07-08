@@ -4,11 +4,11 @@ import { BRAND_NAME, BRAND_TAGLINE_EN } from '../lib/brand'
 // ============================================================
 //  i18n · app 導航 / 外殼 英文資源（en）
 //  ------------------------------------------------------------
-//  zh-HK 一律靠 t(key, { defaultValue: 原廣東話 }) 回退，故唔喺度重覆
-//  中文；呢度淨係補 en。功能名 / 描述用 feature id 做 key。
+//  zh-HK 一律靠 t(key, { defaultValue: 原廣東話 }) 回退，故不在這裡重覆
+//  中文；這裡只補 en。功能名 / 描述用 feature id 做 key。
 // ============================================================
 
-// 輕量 t 型別（同 react-i18next 嘅 t 結構相容）
+// 輕量 t 型別（同 react-i18next 的 t 結構相容）
 type TFn = (key: string, opts?: { defaultValue?: string }) => string
 
 /** 功能名稱（en 由 feat.<id>.name；其餘語言回退原 registry 名）。 */

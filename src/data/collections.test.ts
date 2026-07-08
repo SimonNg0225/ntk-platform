@@ -65,7 +65,7 @@ describe('exportAllData / importAllData ＋ preloadAllFeatures', () => {
 //  importAllData — 壞檔守衞（throw 分支）＋ 跳過/未登記 key 邊界
 //  ------------------------------------------------------------
 //  既有測試只覆蓋 happy path。importAllData 係匯入壞檔嘅第一道防線：
-//  payload 唔係物件 / null / 缺 'data' 欄位都要 throw '檔案格式唔啱'。
+//  payload 不是物件 / null / 缺 'data' 欄位都要 throw '檔案格式不正確'。
 //  另外覆蓋兩條靜默分支：data[key] 非陣列嗰啲 key 要被跳過（唔覆寫、
 //  唔計入 count）；data 含未登記 key 唔崩、count 唔加。
 //
@@ -74,31 +74,31 @@ describe('exportAllData / importAllData ＋ preloadAllFeatures', () => {
 //  persist（try/catch 包住），node 無 localStorage 亦照運作（同上文一致）。
 // ============================================================
 describe('importAllData — 壞檔守衞 throw 分支', () => {
-  it('payload === null → throw 檔案格式唔啱', () => {
+  it('payload === null → throw 檔案格式不正確', () => {
     // typeof null === 'object'，靠 payload === null 一句兜住
-    expect(() => importAllData(null)).toThrow('檔案格式唔啱')
+    expect(() => importAllData(null)).toThrow('檔案格式不正確')
   })
 
-  it('payload 係原始型別（number / string / boolean / undefined）→ throw', () => {
-    expect(() => importAllData(42)).toThrow('檔案格式唔啱')
-    expect(() => importAllData('not an object')).toThrow('檔案格式唔啱')
-    expect(() => importAllData(true)).toThrow('檔案格式唔啱')
-    expect(() => importAllData(undefined)).toThrow('檔案格式唔啱')
+  it('payload 是原始型別（number / string / boolean / undefined）→ throw', () => {
+    expect(() => importAllData(42)).toThrow('檔案格式不正確')
+    expect(() => importAllData('not an object')).toThrow('檔案格式不正確')
+    expect(() => importAllData(true)).toThrow('檔案格式不正確')
+    expect(() => importAllData(undefined)).toThrow('檔案格式不正確')
   })
 
-  it('payload 係物件但缺 data 欄位 → throw（即使有其他欄位）', () => {
-    expect(() => importAllData({})).toThrow('檔案格式唔啱')
+  it('payload 是物件但缺 data 欄位 → throw（即使有其他欄位）', () => {
+    expect(() => importAllData({})).toThrow('檔案格式不正確')
     // 似真匯出檔但漏咗 data（例如手改壞 / 舊格式）
     expect(() => importAllData({ version: 1, exportedAt: '2026-06-01' })).toThrow(
-      '檔案格式唔啱',
+      '檔案格式不正確',
     )
   })
 
-  it('守衞短路次序正確：("data" in payload) 唔會喺 null/原始型別上爆 TypeError', () => {
+  it('守衞短路次序正確：("data" in payload) 唔會在 null/原始型別上爆 TypeError', () => {
     // 'in' 用喺非物件會掟 TypeError；靠前兩個 clause 短路擋住，
-    // 故掟出嘅一定係我哋自訂嘅「檔案格式唔啱」而唔係 TypeError。
+    // 故拋出的一定係我們自訂的「檔案格式不正確」而不是 TypeError。
     for (const bad of [null, undefined, 0, '', NaN, false]) {
-      expect(() => importAllData(bad)).toThrowError(/檔案格式唔啱/)
+      expect(() => importAllData(bad)).toThrowError(/檔案格式不正確/)
     }
   })
 })
@@ -112,7 +112,7 @@ describe('importAllData — 跳過非陣列 / 未登記 key（靜默分支）', 
     expect(topicsCol.get()).toEqual(seed)
   })
 
-  it('data[key] 唔係陣列（物件 / 字串 / 數字 / null）→ 唔覆寫、唔計入 count', () => {
+  it('data[key] 不是陣列（物件 / 字串 / 數字 / null）→ 唔覆寫、唔計入 count', () => {
     // 先放一個 sentinel 落已登記嘅 topics col，之後驗證冇被改
     const sentinel = [{ id: 'keep-me' }]
     topicsCol.set(sentinel as never[])
@@ -148,7 +148,7 @@ describe('importAllData — 跳過非陣列 / 未登記 key（靜默分支）', 
     // 只有 topics（唯一登記 + 陣列）被算入；未登記 key 完全被忽略
     expect(count).toBe(1)
     expect(topicsCol.get()).toEqual([{ id: 'real-1' }])
-    // 確認真係改咗（sanity：唔係 before）
+    // 確認真係改咗（sanity：不是 before）
     expect(topicsCol.get()).not.toEqual(before)
   })
 

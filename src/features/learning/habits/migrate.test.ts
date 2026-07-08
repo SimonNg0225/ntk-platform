@@ -275,7 +275,7 @@ describe('migrateLegacyHabits — 舊資料空（唔遷移）', () => {
 //  ④ localStorage 旗標已 '1' → 直接 return，唔再遷移
 // ════════════════════════════════════════════════════════════════
 describe('migrateLegacyHabits — localStorage 旗標已 1（早 return）', () => {
-  it('旗標已 1：即使 v2 空 + 舊有嘢，都唔遷移（守衞係旗標，唔係資料）', async () => {
+  it('旗標已 1：即使 v2 空 + 舊有嘢，都唔遷移（守衞係旗標，不是資料）', async () => {
     ls.setItem(FLAG_KEY, '1') // 預先當「之前已遷移過」
     seedCol('habits', [{ id: 'h1', name: '舊', createdAt: '2026-01-01T00:00:00.000Z' }])
     seedCol('habit_logs', [{ id: 'l1', habitId: 'h1', date: '2026-05-30' }])

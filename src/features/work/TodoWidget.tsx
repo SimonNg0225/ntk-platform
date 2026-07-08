@@ -82,7 +82,7 @@ import {
 } from './todo/util'
 
 // ============================================================
-//  待辦 / 批改 — 老師嘅任務清單
+//  待辦 / 批改 — 老師的任務清單
 //  ------------------------------------------------------------
 //  呈現層跟「工作儀表板」統一設計語言：PageHeader masthead、
 //  StatTile 統計磚（TONE map）、rounded-2xl 卡、slate 字階、
@@ -90,14 +90,14 @@ import {
 //  同其餘待辦一眼分得開。
 //
 //  邏輯完全沿用：共用 tasksCol（Task）做真相來源；優先級 / 到期 /
-//  專案 / 標籤 / 備註 / 子任務存喺 feature 自己嘅 collection
+//  專案 / 標籤 / 備註 / 子任務存在 feature 自己的 collection
 //  （見 todo/store.ts）。視圖：今日 · 之後 · 所有（按專案）· 統計。
 //  Power：智能快速輸入、優先級、到期分組、子任務、標籤、專案、
 //  搜尋、批量、範本、生產力圖表。
 // ============================================================
 
 // 「批改任務」純表現層偵測：由現有資料（標籤 / 任務文字）推斷，
-// 唔改任何資料流。命中即披紅筆 accent（紅邊欄 + 紅「批」章）。
+// 不改任何資料流。命中即披紅筆 accent（紅邊欄 + 紅「批」章）。
 // 關鍵字覆蓋老師日常用語：批改 / 改卷 / 改簿 / 批卷 / 派卷 / marking。
 const MARK_RE = /(批改|批卷|改卷|改簿|派卷|評卷|marking|mark\b)/i
 function isMarkingTask(t: FullTask): boolean {
@@ -119,19 +119,19 @@ const SORT_LABEL: Record<SortMode, string> = {
 const GUIDE_STEPS: FeatureGuideStep[] = [
   {
     title: '記低一筆',
-    desc: '喺上方輸入框打任務即可。可加符號：! 優先級、# 專案、@ 標籤、今日／聽日／+N 到期。',
+    desc: '在上方輸入框打任務即可。可加符號：! 優先級、# 專案、@ 標籤、今日／明天／+N 到期。',
   },
   {
     title: '逐項打剔',
-    desc: '撳左邊圓格就當完成；批改類任務會自動披紅筆，喺清單一眼分得出。',
+    desc: '按左邊圓格就當完成；批改類任務會自動披紅筆，在清單一眼分得出。',
   },
   {
     title: '切換視圖',
-    desc: '「今日」睇逾期同今日到期，「之後」按日期分組，「所有」按專案睇。',
+    desc: '「今日」查看逾期同今日到期，「之後」按日期分組，「所有」按專案查看。',
   },
   {
-    title: '睇統計',
-    desc: '「統計」分頁有完成率、連續打剔同熱力圖，睇返自己嘅生產力走勢。',
+    title: '查看統計',
+    desc: '「統計」分頁有完成率、連續打剔同熱力圖，查看自己的生產力走勢。',
   },
 ]
 
@@ -150,7 +150,7 @@ const TONE: Record<Tone, { chip: string; val: string }> = {
 }
 
 // ───────── 統計磚（StatTile，整段照 WorkDashboard）─────────
-//  可撳就跳對應視圖；純展示（無 onClick）就去 cursor/hover/ring。
+//  可按就跳對應視圖；純展示（無 onClick）就去 cursor/hover/ring。
 function StatTile({
   label,
   value,
@@ -201,8 +201,8 @@ function StatTile({
 }
 
 // ───────── 紅筆「批」章（批改任務專屬 accent）─────────
-//  改簿檯概念：批改任務似老師喺簿邊用紅筆寫個「批」字。細牌、紅墨、
-//  手寫感（serif）。純標示，唔搶剔格主次。
+//  改簿檯概念：批改任務似老師在簿邊用紅筆寫個「批」字。細牌、紅墨、
+//  手寫感（serif）。純標示，不搶剔格主次。
 function MarkPen({ className }: { className?: string }) {
   return (
     <span
@@ -256,7 +256,7 @@ export default function TodoWidget() {
   const [tmplModal, setTmplModal] = useState(false)
 
   const QUICK_INPUT_ID = 'todo-quick-add'
-  // 引導式空狀態 CTA：聚焦快速輸入框（純 UI，唔改資料）
+  // 引導式空狀態 CTA：聚焦快速輸入框（純 UI，不改資料）
   const focusQuickAdd = () => document.getElementById(QUICK_INPUT_ID)?.focus()
 
   // ───────── 合併成 FullTask（補底 meta）─────────
@@ -288,7 +288,7 @@ export default function TodoWidget() {
     })
   }, [tasks, metas, subs])
 
-  // 一次性補底：為冇 meta 嘅舊任務 / Inbox 建立嘅任務建 meta；清孤兒
+  // 一次性補底：為沒有 meta 的舊任務 / Inbox 建立的任務建 meta；清孤兒
   const ranBackfill = useRef(false)
   useEffect(() => {
     if (ranBackfill.current) return
@@ -327,7 +327,7 @@ export default function TodoWidget() {
     let todayDue = 0
     let active = 0
     let done = 0
-    let marking = 0 // 未完成嘅批改任務（紅筆 accent；masthead surfacing）
+    let marking = 0 // 未完成的批改任務（紅筆 accent；masthead surfacing）
     for (const t of full) {
       if (t.done) {
         done++
@@ -425,7 +425,7 @@ export default function TodoWidget() {
   const removeTask = async (t: FullTask) => {
     const ok = await confirm({
       title: '刪除待辦？',
-      message: `「${t.text}」將會被刪除，呢個動作無法復原。`,
+      message: `「${t.text}」將會被刪除，此動作無法復原。`,
       confirmText: '刪除',
       tone: 'danger',
     })
@@ -479,7 +479,7 @@ export default function TodoWidget() {
   const bulkDelete = async () => {
     const ok = await confirm({
       title: `刪除 ${selected.size} 項待辦？`,
-      message: '呢個動作無法復原。',
+      message: '此動作無法復原。',
       confirmText: '刪除',
       tone: 'danger',
     })
@@ -496,7 +496,7 @@ export default function TodoWidget() {
     if (doneTasks.length === 0) return
     const ok = await confirm({
       title: `清除 ${doneTasks.length} 項已完成？`,
-      message: '所有已完成嘅待辦會被刪除，呢個動作無法復原。',
+      message: '所有已完成的待辦會被刪除，此動作無法復原。',
       confirmText: '清除',
       tone: 'danger',
     })
@@ -563,10 +563,10 @@ export default function TodoWidget() {
         }
       />
 
-      {/* ───────── 教學引導：點用呢個功能（可摺疊 + 永久收起）───────── */}
-      <FeatureGuide storageKey="todo" title="待辦 / 批改點用？" steps={GUIDE_STEPS} />
+      {/* ───────── 教學引導：如何使用此功能（可摺疊 + 永久收起）───────── */}
+      <FeatureGuide storageKey="todo" title="待辦 / 批改使用說明" steps={GUIDE_STEPS} />
 
-      {/* ───────── 統計磚：4 張 StatTile（可撳跳視圖）───────── */}
+      {/* ───────── 統計磚：4 張 StatTile（可按跳視圖）───────── */}
       <section className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <StatTile
           label="逾期"
@@ -586,7 +586,7 @@ export default function TodoWidget() {
           unit="項"
           icon={Sun}
           tone="amber"
-          hint={counts.todayDue > 0 ? '今日搞掂佢' : '今日好輕鬆'}
+          hint={counts.todayDue > 0 ? '今日完成他' : '今日好輕鬆'}
           onClick={() => setView('today')}
         />
         <StatTile
@@ -595,7 +595,7 @@ export default function TodoWidget() {
           unit="項"
           icon={ListTodo}
           tone="accent"
-          hint={counts.marking > 0 ? `含 ${counts.marking} 項批改` : '清單仲有嘢做'}
+          hint={counts.marking > 0 ? `含 ${counts.marking} 項批改` : '清單仍有待辦事項'}
           onClick={() => setView('all')}
         />
         <StatTile
@@ -608,7 +608,7 @@ export default function TodoWidget() {
         />
       </section>
 
-      {/* ───────── 新一筆：似喺改簿邊用紅筆寫低待辦（accent focus 環）───────── */}
+      {/* ───────── 新一筆：似在改簿邊用紅筆記錄待辦（accent focus 環）───────── */}
       <div className="space-y-2 rounded-2xl border border-slate-200/80 bg-slate-50/60 p-3 transition focus-within:border-accent/40 focus-within:bg-white dark:border-slate-700/60 dark:bg-slate-800/40 dark:focus-within:bg-slate-800">
         <div className="flex gap-2">
           <Input
@@ -617,7 +617,7 @@ export default function TodoWidget() {
             value={quick}
             onChange={(e) => setQuick(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && addQuick()}
-            placeholder="記低一筆… 試吓「批改 5A 練習 !! #教學 @批改 +2」"
+            placeholder="記低一筆… 嘗試「批改 5A 練習 !! #教學 @批改 +2」"
             className="flex-1 border-transparent bg-white shadow-none dark:bg-slate-900/40"
           />
           <Button onClick={addQuick} icon={Plus}>
@@ -628,7 +628,7 @@ export default function TodoWidget() {
           <SyntaxHint sym="!" label="優先級" />
           <SyntaxHint sym="#" label="專案" />
           <SyntaxHint sym="@" label="標籤" />
-          <SyntaxHint sym="今日 / 聽日 / +N" label="到期" />
+          <SyntaxHint sym="今日 / 明天 / +N" label="到期" />
         </p>
       </div>
 
@@ -850,7 +850,7 @@ function TaskRow({
     <div
       className={cx(
         'group relative flex items-start gap-3 py-2.5 pr-3 transition-colors',
-        // 批改任務向左讓位畀紅邊欄（似改簿嘅紅 margin）
+        // 批改任務向左讓位給紅邊欄（似改簿的紅 margin）
         marking ? 'pl-5 sm:pl-6' : 'pl-4 sm:pl-5',
         selected && 'bg-accent-soft/60 dark:bg-accent/10',
         marking && !selected && 'bg-rose-50/40 dark:bg-rose-500/[0.06]',
@@ -987,7 +987,7 @@ function TaskRow({
 }
 
 // 一組（改簿冊頁眉 + 任務冊）—— icon chip 標頭 + 計數 + 向右延伸 hairline；
-// 卡片帶柔和 tone 左緣，似簿冊嘅分段。
+// 卡片帶柔和 tone 左緣，似簿冊的分段。
 function Group({
   title,
   tone = 'slate',
@@ -1076,14 +1076,14 @@ function TodayView(props: {
       <EmptyState
         icon={PartyPopper}
         title="今日好清爽"
-        hint="冇逾期或今日到期嘅任務。記低一筆，或睇吓將來嘅安排。"
+        hint="沒有逾期或今日到期的任務。記低一筆，或查看將來的安排。"
         action={
           <div className="flex flex-wrap items-center justify-center gap-2">
             <Button size="sm" icon={Plus} onClick={props.onAddFocus}>
               記低一筆
             </Button>
             <Button size="sm" variant="secondary" icon={CalendarDays} onClick={props.onGoUpcoming}>
-              睇之後
+              查看之後
             </Button>
           </div>
         }
@@ -1112,7 +1112,7 @@ function TodayView(props: {
 }
 
 // ============================================================
-//  之後視圖（按到期分組：逾期 / 聽日 / 7 日內 / 之後 / 無到期）
+//  之後視圖（按到期分組：逾期 / 明天 / 7 日內 / 之後 / 無到期）
 // ============================================================
 function UpcomingView(props: {
   tasks: FullTask[]
@@ -1145,7 +1145,7 @@ function UpcomingView(props: {
       <EmptyState
         icon={CalendarDays}
         title="日程一片空白"
-        hint="所有任務都搞掂咗。記低一筆，喺輸入框用「+N」就排到將來。"
+        hint="所有任務都完成了。記低一筆，在輸入框用「+N」就排到將來。"
         action={
           <Button size="sm" icon={Plus} onClick={props.onAddFocus}>
             記低一筆
@@ -1166,7 +1166,7 @@ function UpcomingView(props: {
           <TaskRow key={t.id} task={t} project={projOf(t)} {...rowProps(props, t.id)} />
         ))}
       </Group>
-      <Group title="聽日" tone="accent" icon={CalendarDays} count={buckets.tomorrow.length}>
+      <Group title="明天" tone="accent" icon={CalendarDays} count={buckets.tomorrow.length}>
         {buckets.tomorrow.map((t) => (
           <TaskRow key={t.id} task={t} project={projOf(t)} {...rowProps(props, t.id)} />
         ))}
@@ -1328,8 +1328,8 @@ function AllView(props: {
         {visible.length === 0 ? (
           <EmptyState
             icon={InboxIcon}
-            title={activeProject === 'inbox' ? '收件匣空空如也' : '呢個專案仲未有任務'}
-            hint="記低一筆就會出現喺度，或者揀返第個專案睇睇。"
+            title={activeProject === 'inbox' ? '收件匣空空如也' : '此專案尚未有任務'}
+            hint="記低一筆就會出現在這裡，或者重新選擇第個專案查看查看。"
             action={
               <Button size="sm" icon={Plus} onClick={onAddFocus}>
                 記低一筆
@@ -1424,7 +1424,7 @@ function ScopeChip({
   )
 }
 
-// 共用 handler bundle 型別（畀各視圖傳落 TaskRow）
+// 共用 handler bundle 型別（給各視圖傳落 TaskRow）
 interface RowHandlers {
   selecting: boolean
   selected: Set<string>
@@ -1434,7 +1434,7 @@ interface RowHandlers {
   onRemove: (t: FullTask) => void
 }
 
-// 把視圖 props 收窄成 TaskRow 需要嘅 props（按 task 計 selected）
+// 把視圖 props 收窄成 TaskRow 需要的 props（按 task 計 selected）
 function rowProps(p: RowHandlers, taskId: string) {
   return {
     selecting: p.selecting,
@@ -1506,8 +1506,8 @@ function StatsView({
     return (
       <EmptyState
         icon={BarChart3}
-        title="統計仲係一張白紙"
-        hint="加幾項待辦、逐一完成，呢度就會慢慢長出你嘅生產力走勢同熱力圖。"
+        title="統計仍是一張白紙"
+        hint="加幾項待辦、逐一完成，這裡就會慢慢長出你的生產力走勢同熱力圖。"
         action={
           <Button size="sm" icon={Plus} onClick={onAddFocus}>
             記低一筆
@@ -1571,7 +1571,7 @@ function StatsView({
             />
           ) : (
             <p className="py-8 text-center text-sm text-slate-400 dark:text-slate-500">
-              冇未完成任務
+              沒有未完成任務
             </p>
           )}
         </Card>
@@ -1629,7 +1629,7 @@ function BulkBar({
         }
         items={[
           { id: 'd0', label: '今日', icon: Sun, onSelect: () => onDue(0) },
-          { id: 'd1', label: '聽日', icon: CalendarDays, onSelect: () => onDue(1) },
+          { id: 'd1', label: '明天', icon: CalendarDays, onSelect: () => onDue(1) },
           { id: 'd7', label: '一週後', icon: CalendarDays, onSelect: () => onDue(7) },
         ]}
       />
@@ -1707,19 +1707,19 @@ function ProjectManager({
   }
 
   const removeProject = async (p: Project) => {
-    // 該專案下任務數（讀 taskMetaCol，唔改 tasksCol）
+    // 該專案下任務數（讀 taskMetaCol，不改 tasksCol）
     const cnt = taskMetaCol.get().filter((m) => m.projectId === p.id).length
     const ok = await confirm({
       title: `刪除專案「${p.name}」？`,
       message:
         cnt > 0
-          ? `專案內 ${cnt} 項任務唔會被刪，會移返去收件匣。`
-          : '呢個動作無法復原。',
+          ? `專案內 ${cnt} 項任務不會被刪，會移回到收件匣。`
+          : '此動作無法復原。',
       confirmText: '刪除',
       tone: 'danger',
     })
     if (!ok) return
-    // 任務移返收件匣（清 projectId）
+    // 任務移回收件匣（清 projectId）
     for (const m of taskMetaCol.get().filter((m) => m.projectId === p.id)) {
       upsertMeta(m.id, { projectId: undefined })
     }
@@ -1733,7 +1733,7 @@ function ProjectManager({
         <div className="space-y-2">
           {ordered.length === 0 && (
             <p className="rounded-lg bg-slate-50 px-3 py-4 text-center text-sm text-slate-400 dark:bg-slate-800/60 dark:text-slate-500">
-              仲未有專案，喺下面加一個。
+              尚未有專案，在下方加一個。
             </p>
           )}
           {ordered.map((p) => (
@@ -1832,7 +1832,7 @@ function TemplatePicker({
   return (
     <Modal open onClose={onClose} title="由範本快速建立" size="md">
       <p className="mb-3 text-sm text-slate-500 dark:text-slate-400">
-        揀個常用流程，一鍵鋪好成組任務（含優先級、相對到期、子任務）—— 例如批改一份練習嘅完整步驟。
+        選擇一個常用流程，一鍵鋪好成組任務（含優先級、相對到期、子任務）—— 例如批改一份練習的完整步驟。
       </p>
       <div className="space-y-2">
         {templates.map((t) => {

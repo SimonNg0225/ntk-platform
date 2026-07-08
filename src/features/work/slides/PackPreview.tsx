@@ -3,21 +3,21 @@ import { SLIDE_PACKS } from '../../../lib/export'
 /**
  * 模板 pack 縮圖 —— token-driven 代表性封面 mock（16:9）。
  *
- * 注意：呢個唔係真 pptx 引擎 render（引擎喺瀏覽器跑唔抵），
+ * 注意：這個不是真 pptx 引擎 render（引擎在瀏覽器跑不抵），
  * 只係用 pack 設計 token（bg / ink / accent / dark / displayFont）砌
- * 一個會視覺上分得開每套 pack 嘅 SVG 模擬封面：背景、faux kicker 點睛條、
+ * 一個會視覺上分得開每套 pack 的 SVG 模擬封面：背景、faux kicker 點睛條、
  * 大標題色塊、幾條內文線同一粒 accent 結構 motif。零依賴、純 inline SVG。
  */
 
-/** SLIDE_PACKS 元素型 —— 縮圖只食 design token，避過引擎欄位 */
+/** SLIDE_PACKS 元素型 —— 縮圖只吃 design token，避過引擎欄位 */
 type PackOption = (typeof SLIDE_PACKS)[number]
 
-/** token 係純 hex（冇 #）—— SVG fill 需要補返 */
+/** token 係純 hex（沒有 #）—— SVG fill 需要補返 */
 function hex(c: string): string {
   return c.startsWith('#') ? c : `#${c}`
 }
 
-/** 喺淡／深底之間揀一隻夠對比嘅 muted 線色（faux 內文線用） */
+/** 在淡／深底之間選擇一隻夠對比的 muted 線色（faux 內文線用） */
 function lineColor(dark: boolean): string {
   return dark ? 'rgba(255,255,255,0.18)' : 'rgba(0,0,0,0.12)'
 }

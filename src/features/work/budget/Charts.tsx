@@ -23,7 +23,7 @@ import {
 
 const ACCENT = 'var(--accent)'
 
-// 圖表內柔和空狀態（細 icon + 一句友善文案，唔好淨係寫「無資料」）
+// 圖表內柔和空狀態（細 icon + 一句友善文案，不要只寫「無資料」）
 function ChartEmpty({ message, height }: { message: string; height?: number }) {
   return (
     <div
@@ -42,7 +42,7 @@ function ChartEmpty({ message, height }: { message: string; height?: number }) {
   )
 }
 
-// 分類佔比循環色（HEX，畀 SVG stroke / fill 用）
+// 分類佔比循環色（HEX，給 SVG stroke / fill 用）
 export const SLICE_HEX = [
   ACCENT,
   '#60a5fa', // blue-400
@@ -207,7 +207,7 @@ export function BalanceTrend({ rows, height = 168 }: { rows: TrendRow[]; height?
   const values = rows.map((r) => r.balance)
   const hasData = rows.some((r) => r.income > 0 || r.expense > 0)
   const max = Math.max(1, ...values.map((v) => Math.abs(v)))
-  if (!hasData) return <ChartEmpty message="記低幾個月收支，淨結餘走勢會喺度顯示。" height={height} />
+  if (!hasData) return <ChartEmpty message="記低幾個月收支，淨結餘走勢會在這裡顯示。" height={height} />
   const W = 100
   const padX = 3
   const usableW = W - padX * 2
@@ -294,7 +294,7 @@ export function DailySpendChart({
 }) {
   const max = useMemo(() => Math.max(1, ...cells.map((c) => c.expense)), [cells])
   const hasData = cells.some((c) => c.expense > 0)
-  if (!hasData) return <ChartEmpty message="今個月仲未有支出，記低第一筆就見到走勢。" height={112} />
+  if (!hasData) return <ChartEmpty message="今個月尚未有支出，記低第一筆就見到走勢。" height={112} />
   return (
     <div>
       <div className="flex h-28 items-end gap-px">

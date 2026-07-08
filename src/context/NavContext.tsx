@@ -1,6 +1,6 @@
 import { createContext, useContext, type ReactNode } from 'react'
 
-// 簡單導航 context：畀任何功能可以叫 App 開啟另一個功能（null = 首頁概覽）
+// 簡單導航 context：給任何功能可以叫 App 開啟另一個功能（null = 首頁概覽）
 interface NavValue {
   open: (featureId: string | null) => void
 }

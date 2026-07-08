@@ -107,7 +107,7 @@ import {
 //  定期收支自動到期入帳、搜尋 + 進階篩選、批量刪除、CSV 匯出、
 //  儲蓄率 / 日均 / 月底預測 / 月對月升跌等統計。
 //  共用 transactionsCol / txCategoriesCol（讀寫公開 API），新型別 + 預算 /
-//  定期持久化全部喺 ./budget/* 自家檔，唔掂 data/collections.ts。
+//  定期持久化全部在 ./budget/* 自家檔，不掂 data/collections.ts。
 // ============================================================
 
 type TopTab = 'overview' | 'list' | 'budgets' | 'analysis' | 'recurring' | 'categories'
@@ -173,7 +173,7 @@ export default function BudgetTracker() {
     setShowForm(true)
   }
 
-  // 月對月升跌（畀 StatCard trend）
+  // 月對月升跌（給 StatCard trend）
   const expenseTrend = useMemo(() => {
     if (prevStats.expense <= 0) return undefined
     const diff = ((stats.expense - prevStats.expense) / prevStats.expense) * 100
@@ -318,7 +318,7 @@ export default function BudgetTracker() {
 // ───────── 結餘對帳單（單張帳本：左頁帳本側欄結餘 + 右頁 ledger 過帳行）─────────
 //  概念：一張收支對帳單。左欄係 accent「帳本封皮」印住淨結餘大數；右欄係
 //  收入 / 支出 / 儲蓄率三條 ledger 行（leader dots + 右對齊 tabular-nums 金額），
-//  最後一條雙底線收結，呼應傳統手寫帳簿嘅「結算」儀式。
+//  最後一條雙底線收結，呼應傳統手寫帳簿的「結算」儀式。
 function LedgerStatement({
   stats,
   expenseTrend,
@@ -503,8 +503,8 @@ function OverviewTab({
       <div className="animate-fade-in">
         <EmptyState
           icon={Receipt}
-          title="呢個月暫時冇記錄"
-          hint="撳「記一筆」開始記低你嘅收支，總覽會即時計出分類佔比、預算同每日走勢。"
+          title="這個月暫時沒有記錄"
+          hint="按「記一筆」開始記低你的收支，總覽會即時計出分類佔比、預算同每日走勢。"
           action={
             <div className="flex gap-2">
               <Button icon={Plus} onClick={() => onAdd('expense')}>
@@ -539,7 +539,7 @@ function OverviewTab({
           <SectionTitle icon={PieChart}>本月支出分類</SectionTitle>
           {donutSegs.length === 0 ? (
             <p className="py-8 text-center text-sm text-slate-500 dark:text-slate-400">
-              今個月仲未有支出記錄。
+              今個月尚未有支出記錄。
             </p>
           ) : (
             <CategoryDonut
@@ -567,7 +567,7 @@ function OverviewTab({
           </SectionTitle>
           {bRows.length === 0 ? (
             <div className="flex flex-col items-center gap-2 py-6 text-center">
-              <p className="text-sm text-slate-500 dark:text-slate-400">仲未為分類設預算。</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400">尚未為分類設預算。</p>
               <Button size="sm" variant="secondary" icon={Target} onClick={onGoBudgets}>
                 設定分類預算
               </Button>
@@ -576,7 +576,7 @@ function OverviewTab({
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <span className="text-sm text-slate-600 dark:text-slate-300">
-                  總預算用咗{' '}
+                  總預算用了{' '}
                   <span className="font-semibold tabular-nums text-slate-800 dark:text-slate-100">
                     {bSummary.pct}%
                   </span>
@@ -727,7 +727,7 @@ function RecordsTab({
     [monthTxs, filters, catName],
   )
 
-  // 月份 / 篩選變化時清走唔再見嘅選取
+  // 月份 / 篩選變化時清走不再見的選取
   useEffect(() => {
     setSelected((prev) => {
       const valid = new Set(visible.map((t) => t.id))
@@ -761,7 +761,7 @@ function RecordsTab({
   const bulkDelete = async () => {
     const ok = await confirm({
       title: `刪除 ${selected.size} 筆記錄？`,
-      message: '揀咗嘅收支記錄會永久移除，無法復原。',
+      message: '選擇了的收支記錄會永久移除，無法復原。',
       confirmText: '刪除',
       tone: 'danger',
     })
@@ -900,7 +900,7 @@ function RecordsTab({
               onChange={toggleAll}
               className="h-3.5 w-3.5 cursor-pointer rounded border-slate-300 text-accent focus:ring-accent/40 dark:border-slate-600 dark:bg-slate-700"
             />
-            {selected.size > 0 ? `已揀 ${selected.size} 筆` : `全選（${visible.length}）`}
+            {selected.size > 0 ? `已選擇 ${selected.size} 筆` : `全選（${visible.length}）`}
           </label>
           <span
             className="flex items-center gap-3 tabular-nums text-slate-400"
@@ -920,7 +920,7 @@ function RecordsTab({
       {selected.size > 0 && (
         <div className="sticky top-2 z-10 flex items-center gap-2 rounded-lg border border-accent/30 bg-accent-soft px-3 py-2 shadow-sm dark:border-accent/40 dark:bg-accent/15 animate-fade-in">
           <span className="text-sm font-medium text-accent-strong dark:text-accent">
-            已揀 {selected.size} 筆
+            已選擇 {selected.size} 筆
           </span>
           <Button size="sm" variant="danger" icon={Trash2} onClick={bulkDelete} className="ml-auto">
             刪除
@@ -934,12 +934,12 @@ function RecordsTab({
       {/* 列表 */}
       {visible.length === 0 ? (
         active ? (
-          <EmptyState icon={Search} title="冇符合篩選嘅記錄" hint="試吓放寬條件或清除篩選。" />
+          <EmptyState icon={Search} title="沒有符合篩選的記錄" hint="嘗試放寬條件或清除篩選。" />
         ) : (
           <EmptyState
             icon={Receipt}
-            title="呢個月暫時冇記錄"
-            hint="撳「記一筆」開始記低你嘅收支。"
+            title="這個月暫時沒有記錄"
+            hint="按「記一筆」開始記低你的收支。"
             action={<Button icon={Plus} onClick={onAdd}>記一筆</Button>}
           />
         )
@@ -971,7 +971,7 @@ function RecordsTab({
                   checked={checked}
                   onChange={() => toggle(t.id)}
                   className="ml-0.5 h-4 w-4 shrink-0 cursor-pointer rounded border-slate-300 text-accent focus:ring-accent/40 dark:border-slate-600 dark:bg-slate-700"
-                  aria-label="揀選記錄"
+                  aria-label="選擇選記錄"
                 />
                 <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-lg dark:bg-slate-700/60">
                   {cat?.icon ?? '🏷️'}
@@ -1096,7 +1096,7 @@ function BudgetsTab({
           </div>
           {!isCurrent && (
             <p className="mt-2 text-xs text-slate-400">
-              註：預算上限為固定設定，呢度顯示 {monthLabel(month)} 嘅實際使用情況。
+              註：預算上限為固定設定，這裡顯示 {monthLabel(month)} 的實際使用情況。
             </p>
           )}
         </Card>
@@ -1106,8 +1106,8 @@ function BudgetsTab({
       {bRows.length === 0 ? (
         <EmptyState
           icon={Target}
-          title="仲未設分類預算"
-          hint="為支出分類設定每月上限，就可以追蹤超支同剩餘。揀下面任何一個分類開始。"
+          title="尚未設分類預算"
+          hint="為支出分類設定每月上限，就可以追蹤超支同剩餘。選擇下面任何一個分類開始。"
         />
       ) : (
         <div className="space-y-2">
@@ -1177,7 +1177,7 @@ function BudgetsTab({
         </div>
       )}
 
-      {/* 未設預算嘅分類 */}
+      {/* 未設預算的分類 */}
       {unbudgeted.length > 0 && (
         <div className="space-y-2">
           <SectionTitle>未設預算</SectionTitle>
@@ -1309,7 +1309,7 @@ function BudgetEditModal({
               結轉至下月
             </span>
             <span className="block text-xs text-slate-400">
-              用剩 / 超支會喺概念上帶落下個月（標示用）。
+              用剩 / 超支會在概念上帶落下個月（標示用）。
             </span>
           </span>
         </label>
@@ -1392,7 +1392,7 @@ function AnalysisTab({
           </SectionTitle>
           {catStats.length === 0 ? (
             <p className="py-8 text-center text-sm text-slate-500 dark:text-slate-400">
-              今個月仲未有{kind === 'expense' ? '支出' : '收入'}記錄。
+              今個月尚未有{kind === 'expense' ? '支出' : '收入'}記錄。
             </p>
           ) : (
             <ul className="space-y-3">
@@ -1532,7 +1532,7 @@ function RecurringTab({
   const remove = async (r: RecurringTx) => {
     const ok = await confirm({
       title: '刪除定期項目？',
-      message: '只會刪除呢個範本，已入帳嘅記錄唔受影響。',
+      message: '只會刪除這個範本，已入帳的記錄不受影響。',
       confirmText: '刪除',
       tone: 'danger',
     })
@@ -1576,7 +1576,7 @@ function RecurringTab({
                       應於 {fmtDate(info.dueDate)}
                       {info.overdueDays > 0 && (
                         <span className="ml-1 text-amber-600 dark:text-amber-400">
-                          （遲咗 {info.overdueDays} 日）
+                          （遲了 {info.overdueDays} 日）
                         </span>
                       )}
                     </p>
@@ -1619,8 +1619,8 @@ function RecurringTab({
       {sorted.length === 0 ? (
         <EmptyState
           icon={Repeat}
-          title="仲未有定期收支"
-          hint="設定薪金、訂閱、租金等定期收支，到期就可以一鍵入帳，唔使每次手動記。"
+          title="尚未有定期收支"
+          hint="設定薪金、訂閱、租金等定期收支，到期就可以一鍵入帳，不用每次手動記。"
           action={
             <Button
               icon={Plus}
@@ -1851,7 +1851,7 @@ function RecurringFormModal({
         <Field label="分類">
           {kindCats.length === 0 ? (
             <p className="rounded-xl border border-dashed border-slate-200 px-3 py-2 text-xs text-slate-400 dark:border-slate-700">
-              呢個類型仲未有分類，請先去「分類」頁新增。
+              這個類型尚未有分類，請先去「分類」頁新增。
             </p>
           ) : (
             <Select value={categoryId} onChange={(e) => setCategoryId(e.target.value)}>
@@ -2027,7 +2027,7 @@ function TxFormModal({
         <Field label="分類">
           {kindCats.length === 0 ? (
             <p className="rounded-xl border border-dashed border-slate-200 px-3 py-2 text-xs text-slate-400 dark:border-slate-700">
-              呢個類型仲未有分類，請先去「分類」頁新增。
+              這個類型尚未有分類，請先去「分類」頁新增。
             </p>
           ) : (
             <div className="grid grid-cols-4 gap-1.5 sm:grid-cols-5">
@@ -2076,7 +2076,7 @@ function TxFormModal({
           </Field>
         </div>
 
-        {/* 結算線：帳簿雙底線收結，呼應 LedgerStatement 嘅 ruled 行 */}
+        {/* 結算線：帳簿雙底線收結，呼應 LedgerStatement 的 ruled 行 */}
         <div className="-mx-5 mt-1 flex items-center justify-end gap-2 border-t-2 border-double border-slate-200 px-5 pt-4 dark:border-slate-700 sm:-mx-6 sm:px-6">
           <Button variant="secondary" onClick={onClose}>
             取消
@@ -2091,7 +2091,7 @@ function TxFormModal({
 }
 
 // ============================================================
-//  CSV 匯入交易 Modal（鏡像題庫匯入：揀檔 / 貼上 → 預覽 → 確認入帳）
+//  CSV 匯入交易 Modal（鏡像題庫匯入：選擇檔 / 貼上 → 預覽 → 確認入帳）
 // ============================================================
 function ImportTxModal({
   cats,
@@ -2128,7 +2128,7 @@ function ImportTxModal({
 
   const commit = () => {
     if (preview.parsed.length === 0) {
-      toast.error('未有可匯入嘅交易')
+      toast.error('未有可匯入的交易')
       return
     }
     const now = new Date().toISOString()
@@ -2175,7 +2175,7 @@ function ImportTxModal({
             <Upload size={18} />
           </span>
           <p className="text-xs leading-relaxed text-slate-600 dark:text-slate-300">
-            CSV 欄位：日期、類型（收入／支出）、分類、金額、備註，同匯出格式一樣。類型留空會按金額正負推斷；分類名會自動對應到最相近嘅現有分類，對唔到就落「未分類」。第一次用建議先下載範本。
+            CSV 欄位：日期、類型（收入／支出）、分類、金額、備註，同匯出格式一樣。類型留空會按金額正負推斷；分類名會自動對應到最相近的現有分類，對不到就落「未分類」。第一次用建議先下載範本。
           </p>
         </div>
 
@@ -2253,7 +2253,7 @@ function ImportTxModal({
               ))}
               {preview.parsed.length > 8 && (
                 <li className="text-xs text-slate-400 dark:text-slate-500">
-                  …仲有 {preview.parsed.length - 8} 筆
+                  …還有 {preview.parsed.length - 8} 筆
                 </li>
               )}
             </ul>
@@ -2319,7 +2319,7 @@ function CategoryManager({
   const remove = async (cat: TxCategory) => {
     const ok = await confirm({
       title: '刪除分類？',
-      message: '已用咗呢個分類嘅記錄會變成「未分類」，但唔會被刪。分類嘅預算亦會一併移除。',
+      message: '已用了這個分類的記錄會變成「未分類」，但不會被刪。分類的預算亦會一併移除。',
       confirmText: '刪除',
       tone: 'danger',
     })
@@ -2335,7 +2335,7 @@ function CategoryManager({
       <div>
         <SectionTitle>{title}</SectionTitle>
         {list.length === 0 ? (
-          <p className="text-sm text-slate-500 dark:text-slate-400">下面加返個分類就得。</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400">下面加回個分類就得。</p>
         ) : (
           <Card>
             <ul className="divide-y divide-slate-100 dark:divide-slate-700">
@@ -2413,7 +2413,7 @@ function CategoryManager({
               type="button"
               onClick={() => setIcon(choice)}
               aria-pressed={choice === icon}
-              aria-label={`揀 emoji ${choice}`}
+              aria-label={`選擇 emoji ${choice}`}
               className={cx(
                 'flex h-11 w-11 cursor-pointer items-center justify-center rounded-xl border text-lg transition active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
                 choice === icon

@@ -110,7 +110,7 @@ export default function Admin() {
   if (!isAdmin) {
     return (
       <Card className="p-8">
-        <EmptyState icon={Lock} title="冇權限" hint="呢個後台只限管理員存取。" />
+        <EmptyState icon={Lock} title="沒有權限" hint="此後台只限管理員存取。" />
       </Card>
     )
   }
@@ -184,7 +184,7 @@ function Toolbar({ loading, onReload, children }: { loading: boolean; onReload: 
 function LoadErr({ loading, err, empty }: { loading: boolean; err: string | null; empty?: boolean }) {
   if (loading) return <p className="py-8 text-center text-sm text-slate-400">載入中…</p>
   if (err) return <p className="py-8 text-center text-sm text-rose-500">{err}</p>
-  if (empty) return <EmptyState icon={Inbox} title="暫時冇資料。" />
+  if (empty) return <EmptyState icon={Inbox} title="暫時沒有資料。" />
   return null
 }
 
@@ -213,7 +213,7 @@ function OverviewTab({ onJump }: { onJump: (t: TabId) => void }) {
             <StatCard label="生效公告" value={data.announcements.active} unit="則" onClick={() => onJump('content')} />
           </div>
           <p className="mt-4 text-xs text-slate-400">
-            ⓘ AI 成本按真實 token × 單價計（由開始記錄之後嘅呼叫）。MRR 為估算（假設全部 Pro 按月費）。實數以 Stripe / Google Cloud 帳單為準。
+            ⓘ AI 成本按真實 token × 單價計（由開始記錄之後的呼叫）。MRR 為估算（假設全部 Pro 按月費）。實數以 Stripe / Google Cloud 帳單為準。
           </p>
         </>
       )}
@@ -362,7 +362,7 @@ function UsersTab() {
 }
 
 // ════════════ 用量 + AI 成本 ════════════
-// 功能 source → 中文標籤（顯示用；未覆蓋嘅就照原樣顯示）
+// 功能 source → 中文標籤（顯示用；未覆蓋的就照原樣顯示）
 const FEATURE_LABEL: Record<string, string> = {
   general: '一般 AI',
   transcribe: '錄音轉文字',
@@ -417,7 +417,7 @@ function UsageTab() {
           {/* 按功能 */}
           <p className="mb-2 mt-5 text-sm font-medium text-slate-600 dark:text-slate-300">按功能（成本排序）</p>
           {data.features.length === 0 ? (
-            <EmptyState icon={BarChart3} title="本月暫無 AI 用量記錄。" hint="開始記錄之後嘅 AI 呼叫先會喺度顯示。" />
+            <EmptyState icon={BarChart3} title="本月暫無 AI 用量記錄。" hint="開始記錄之後的 AI 呼叫先會在這裡顯示。" />
           ) : (
             <Table>
               <Thead>
@@ -449,7 +449,7 @@ function UsageTab() {
           {data.top.length > 0 && (
             <>
               <p className="mb-2 mt-5 text-sm font-medium text-slate-600 dark:text-slate-300">
-                每位用戶成本（Top {data.top.length}）· 撳一行睇用咗咩功能
+                每位用戶成本（Top {data.top.length}）· 按一行查看用了什麼功能
               </p>
               <Table>
                 <Thead>
@@ -504,7 +504,7 @@ function UsageTab() {
           )}
 
           <p className="mt-3 text-xs text-slate-400">
-            ⓘ 點數 = 用戶方案額度權重（標準 1 / 簡報 3 / 錄音 16；Pro 模型 ×4），同用戶端見到嘅一致。真實成本 = token × 單價（Flash US${data.pricing.flashIn}/{data.pricing.flashOut}、Pro US${data.pricing.proIn}/{data.pricing.proOut} 每 1M in/out，可由 Edge Function 環境變數調整）。
+            ⓘ 點數 = 用戶方案額度權重（標準 1 / 簡報 3 / 錄音 16；Pro 模型 ×4），同用戶端見到的一致。真實成本 = token × 單價（Flash US${data.pricing.flashIn}/{data.pricing.flashOut}、Pro US${data.pricing.proIn}/{data.pricing.proOut} 每 1M in/out，可由 Edge Function 環境變數調整）。
             記錄由本功能上線後開始累積；舊有呼叫無 token 資料。實數以 Google Cloud 帳單為準。
           </p>
         </>
@@ -545,7 +545,7 @@ function RefundsTab() {
       {!data ? (
         <LoadErr loading={loading} err={err} />
       ) : data.length === 0 ? (
-        <EmptyState icon={CheckCircle2} title="冇待審退款。" hint="細額退款自動處理；大額先會喺度等審批。" />
+        <EmptyState icon={CheckCircle2} title="沒有待審退款。" hint="細額退款自動處理；大額先會在這裡等審批。" />
       ) : (
         <Table>
           <Thead>
@@ -596,7 +596,7 @@ function RefundsTab() {
         </Table>
       )}
       <p className="mt-3 text-xs text-slate-400">
-        ⓘ 退款額 = 未用份額（按 AI 點數用量）× 已付 − Stripe 手續費（用戶承擔）。批准 = 即時 Stripe 退款 + 取消訂閱。細額已自動處理，唔會喺度出現。
+        ⓘ 退款額 = 未用份額（按 AI 點數用量）× 已付 − Stripe 手續費（用戶承擔）。批准 = 即時 Stripe 退款 + 取消訂閱。細額已自動處理，不會在這裡出現。
       </p>
     </Card>
   )
@@ -610,7 +610,7 @@ function OrgsTab() {
       {!data ? (
         <LoadErr loading={loading} err={err} />
       ) : data.length === 0 ? (
-        <EmptyState icon={School} title="暫時未有團隊。" hint="老師喺「團隊」建立學校 / 科組後會喺度顯示。" />
+        <EmptyState icon={School} title="暫時未有團隊。" hint="老師在「團隊」建立學校 / 科組後會在這裡顯示。" />
       ) : (
         <Table>
           <Thead>
@@ -669,7 +669,7 @@ const REPORT_REASON_LABEL: Record<string, string> = {
   other: '其他',
 }
 
-// 社群檢舉收件箱：審核資源分享區嘅檢舉，可下架資源（連 storage 檔一齊刪）或標唔成立。
+// 社群檢舉收件箱：審核資源分享區的檢舉，可下架資源（連 storage 檔一起刪）或標不成立。
 function ReportsCard() {
   const { data, loading, err, reload } = useAsync<CommunityReport[]>(adminListReports)
   const toast = useToast()
@@ -710,7 +710,7 @@ function ReportsCard() {
       {!data ? (
         <LoadErr loading={loading} err={err} empty={rows.length === 0} />
       ) : rows.length === 0 ? (
-        <EmptyState icon={ShieldCheck} title="冇待審檢舉。" />
+        <EmptyState icon={ShieldCheck} title="沒有待審檢舉。" />
       ) : (
         <ul className="space-y-2">
           {rows.map((rep) => (
@@ -733,7 +733,7 @@ function ReportsCard() {
                 </div>
                 <div className="flex shrink-0 items-center gap-1.5">
                   <Button size="sm" variant="ghost" disabled={busy === rep.id} onClick={() => resolve(rep, 'dismiss')}>
-                    唔成立
+                    不成立
                   </Button>
                   <Button size="sm" variant="danger" icon={Trash2} disabled={busy === rep.id} onClick={() => resolve(rep, 'remove')}>
                     下架
@@ -748,8 +748,8 @@ function ReportsCard() {
   )
 }
 
-// 管理員名單（DB 管理）：加一個 email，嗰位即時可以喺後台睇到全部客服查詢，
-// 唔使改 ADMIN_EMAILS 環境變數或重新部署。env 白名單嗰啲標「環境變數」唯讀。
+// 管理員名單（DB 管理）：加一個 email，那位即時可以在後台查看到全部客服查詢，
+// 不用改 ADMIN_EMAILS 環境變數或重新部署。env 白名單那些標「環境變數」唯讀。
 function AdminsCard() {
   const { data, loading, err, reload } = useAsync<AdminEntry[]>(adminListAdmins)
   const toast = useToast()
@@ -798,7 +798,7 @@ function AdminsCard() {
     <Card className="p-5">
       <SectionTitle right={<RefreshBtn loading={loading} onClick={reload} />}>管理員名單</SectionTitle>
       <p className="mb-3 text-sm text-slate-500 dark:text-slate-400">
-        加一個 email，嗰位老師即時可以喺後台睇到全部客服查詢（唔使改環境變數或重新部署）。標「環境變數」嗰啲喺 ADMIN_EMAILS 設定，唔可以喺度移除。
+        加一個 email，那位老師即時可以在後台查看到全部客服查詢（不用改環境變數或重新部署）。標「環境變數」那些在 ADMIN_EMAILS 設定，不可以在這裡移除。
       </p>
       <div className="mb-4 flex items-end gap-2">
         <div className="flex-1">
@@ -901,7 +901,7 @@ function ForumReportsCard() {
       {!data ? (
         <LoadErr loading={loading} err={err} empty={rows.length === 0} />
       ) : rows.length === 0 ? (
-        <EmptyState icon={CheckCircle2} title="冇待處理檢舉。" />
+        <EmptyState icon={CheckCircle2} title="沒有待處理檢舉。" />
       ) : (
         <ul className="space-y-2">
           {rows.map((r) => (
@@ -985,7 +985,7 @@ function AnnouncementsCard() {
           <Megaphone size={16} /> 全站公告
         </span>
       </SectionTitle>
-      <p className="mb-3 text-sm text-slate-500 dark:text-slate-400">生效中嘅公告會喺所有登入用戶頂部顯示橫額。</p>
+      <p className="mb-3 text-sm text-slate-500 dark:text-slate-400">生效中的公告會在所有登入用戶頂部顯示橫額。</p>
       {!data ? (
         <LoadErr loading={loading} err={err} />
       ) : data.length === 0 ? (

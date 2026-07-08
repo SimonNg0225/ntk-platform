@@ -4,15 +4,15 @@ import type { Resource, ResourceType } from '../../../data/types'
 // ============================================================
 //  教學資源庫（Raindrop.io 級書籤 / 教材管理）— 功能專屬資料 + 工具
 //  ------------------------------------------------------------
-//  共用 resourcesCol / Resource 型別「不可改」。凡係要「加落資源」嘅
+//  共用 resourcesCol / Resource 型別「不可改」。凡係要「加落資源」的
 //  豐富屬性（收藏、封存、評分、所屬收藏夾、開啟次數、最後開啟…）一律
-//  存喺本功能自家擴充表 resource_meta（key = Resource.id）。
+//  存在本功能自家擴充表 resource_meta（key = Resource.id）。
 //  收藏夾（folders / collections）同開啟歷史亦各自獨立 collection。
-//  唯一 key（已喺 newCollections 申報）：
+//  唯一 key（已在 newCollections 申報）：
 //    resourceLib_meta / resourceLib_collections / resourceLib_open_log
 // ============================================================
 
-// ───────── 類型標籤 / 圖示 key（圖示喺元件度對應 lucide）─────────
+// ───────── 類型標籤 / 圖示 key（圖示在元件度對應 lucide）─────────
 export const TYPE_LABEL: Record<ResourceType, string> = {
   handout: '講義',
   slides: '簡報',
@@ -30,7 +30,7 @@ export const TYPE_ORDER: ResourceType[] = [
   'note',
 ]
 
-// 每個類型一隻色（畀 badge / 圖表 / 圓點 用，全部有 dark）
+// 每個類型一隻色（給 badge / 圖表 / 圓點 用，全部有 dark）
 export interface TypeColor {
   dot: string
   chipBg: string
@@ -140,11 +140,11 @@ export function folderColor(key: string | undefined): FolderColor {
 //  功能專屬型別
 // ============================================================
 
-/** 資源擴充中繼（id === Resource.id，唔使另一層對照） */
+/** 資源擴充中繼（id === Resource.id，不用另一層對照） */
 export interface ResourceMeta {
   id: string // == Resource.id
   favorite: boolean // 收藏（星）
-  archived: boolean // 封存（唔出現喺主清單）
+  archived: boolean // 封存（不出現在主清單）
   broken: boolean // 連結已失效（手動標記）
   folderId?: string // 所屬收藏夾
   rating?: number // 0–5 星評分（0 = 未評）
@@ -277,7 +277,7 @@ export function domainOf(url?: string): string | undefined {
   }
 }
 
-/** 由 URL 猜資源類型（YouTube → 影片、pdf → 試題/講義…），畀快速新增提示用 */
+/** 由 URL 猜資源類型（YouTube → 影片、pdf → 試題/講義…），給快速新增提示用 */
 export function guessTypeFromUrl(url: string): ResourceType | undefined {
   const u = url.toLowerCase()
   if (/youtube\.com|youtu\.be|vimeo\.com|\.mp4|bilibili/.test(u)) return 'video'
@@ -313,7 +313,7 @@ export function shortDate(key: string): string {
   return `${m}/${d}`
 }
 
-/** 「今日 / 昨日 / N 日前 / 日期」相對標籤（畀列表 / 詳情用） */
+/** 「今日 / 昨日 / N 日前 / 日期」相對標籤（給列表 / 詳情用） */
 export function relativeDate(iso?: string): string {
   if (!iso) return '—'
   const then = new Date(iso)
@@ -326,12 +326,12 @@ export function relativeDate(iso?: string): string {
     if (hrs < 1) return '剛剛'
     return `${hrs} 小時前`
   }
-  // 以「本地午夜到午夜」嘅日曆日差計（非經過毫秒），避免跨午夜 <24h
-  // 誤出『0 日前』；Math.round 抵銷 DST 嘅 ±1 小時偏移。
+  // 以「本地午夜到午夜」的日曆日差計（非經過毫秒），避免跨午夜 <24h
+  // 誤出『0 日前』；Math.round 抵銷 DST 的 ±1 小時偏移。
   const startThen = new Date(then.getFullYear(), then.getMonth(), then.getDate())
   const startNow = new Date(now.getFullYear(), now.getMonth(), now.getDate())
   const days = Math.round((startNow.getTime() - startThen.getTime()) / day)
-  if (days < 0) return '剛剛' // 未來時戳（時鐘偏差）→ clamp，唔出負日
+  if (days < 0) return '剛剛' // 未來時戳（時鐘偏差）→ clamp，不出負日
   if (days === 1) return '昨日'
   if (days < 7) return `${days} 日前`
   if (days < 30) return `${Math.floor(days / 7)} 週前`
@@ -341,7 +341,7 @@ export function relativeDate(iso?: string): string {
 /**
  * 兩個時刻相隔幾多「日曆日」（向下取整，負數 clamp 至 0）。
  * 以本地午夜計，避免跨午夜 <24h 出 0；缺值回 undefined。
- * @param iso 起點 ISO；@param now 參考點（預設此刻，注入方便測試）
+ * @param iso 內容來源 ISO；@param now 參考點（預設此刻，注入方便測試）
  */
 export function daysSince(iso: string | undefined, now: Date = new Date()): number | undefined {
   if (!iso) return undefined
@@ -365,21 +365,21 @@ export function tagFrequency(resources: Resource[]): { tag: string; count: numbe
 }
 
 // ============================================================
-//  「需要整理」偵測（久未開啟 / 加咗好耐都未開過）
+//  「需要整理」偵測（久未開啟 / 加了好耐都未開過）
 //  ------------------------------------------------------------
-//  純衍生（唔加任何資料欄位，全部靠現有 createdAt / lastOpened /
-//  opens），向後相容。畀「整理你嘅資源庫」呢類維護動作用。
+//  純衍生（不加任何資料欄位，全部靠現有 createdAt / lastOpened /
+//  opens），向後相容。給「整理你的資源庫」呢類維護動作用。
 // ============================================================
 
-/** 一條資源「最後有活動」嘅時刻：開過就用 lastOpened，否則 fallback 加入時間 */
+/** 一條資源「最後有活動」的時刻：開過就用 lastOpened，否則 fallback 加入時間 */
 export function lastActivityIso(row: ResourceRow): string {
   return row.meta.lastOpened ?? row.res.createdAt
 }
 
 export interface StaleOpts {
-  /** 視為「久未開啟」嘅日數門檻（含邊界：>= 即算） */
+  /** 視為「久未開啟」的日數門檻（含邊界：>= 即算） */
   staleDays: number
-  /** 「加咗咁多日都未開過一次」即當需要整理（含邊界） */
+  /** 「加了太多日都未開過一次」即當需要整理（含邊界） */
   neverOpenedDays: number
 }
 /** 預設門檻：60 日未掂 = 過時；加入超過 30 日仍 0 開啟 = 應檢視 */
@@ -389,7 +389,7 @@ export const DEFAULT_STALE_OPTS: StaleOpts = {
 }
 
 /**
- * 判斷一條資源係咪「需要整理」（封存 / 失效嘅唔當 stale，交返各自視圖處理）。
+ * 判斷一條資源係咪「需要整理」（封存 / 失效的不當 stale，交返各自視圖處理）。
  * 規則（符合任一即係）：
  *   1. 從未開啟（opens 0）且加入已達 neverOpenedDays。
  *   2. 開過，但距上次開啟已達 staleDays。
@@ -410,7 +410,7 @@ export function isStale(
 }
 
 /**
- * 全部「需要整理」資源，排序：最耐冇活動嘅排最前（最迫切先整理）。
+ * 全部「需要整理」資源，排序：最耐沒有活動的排最前（最迫切先整理）。
  * 同活動時刻再以標題穩定排序。
  */
 export function staleRows(
@@ -477,7 +477,7 @@ export const DEFAULT_FILTER: FilterState = {
   sort: 'recent',
 }
 
-/** 一條資源連同其 meta（join 後畀 UI 用） */
+/** 一條資源連同其 meta（join 後給 UI 用） */
 export interface ResourceRow {
   res: Resource
   meta: ResourceMeta
@@ -575,7 +575,7 @@ export function sortRows(rows: ResourceRow[], sort: SortKey): ResourceRow[] {
 }
 
 // ============================================================
-//  統計（畀 Insights 圖表 / KPI 用）
+//  統計（給 Insights 圖表 / KPI 用）
 // ============================================================
 export interface TypeStat {
   type: ResourceType
@@ -622,7 +622,7 @@ export function folderBreakdown(
   return ordered
 }
 
-/** 每張資源被開啟次數排行（top N，只計有開過嘅） */
+/** 每張資源被開啟次數排行（top N，只計有開過的） */
 export function topOpened(rows: ResourceRow[], n = 6): ResourceRow[] {
   return rows
     .filter((r) => r.meta.opens > 0)
@@ -668,7 +668,7 @@ export function openTrend(
   }))
 }
 
-/** 各課題下嘅資源數（top，畀覆蓋條用） */
+/** 各課題下的資源數（top，給覆蓋條用） */
 export function topicCoverage(
   rows: ResourceRow[],
   topicName: (id: string) => string,

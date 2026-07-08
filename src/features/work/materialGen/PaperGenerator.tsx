@@ -51,20 +51,20 @@ import { generate } from './engine'
 //  ------------------------------------------------------------
 //  流程：表單（試卷名 / 課題範圍 / 各題型題數 / 難度 / 補充指示）
 //    → 組卷：每個題型先由題庫（questionsCol）抽現有符合題
-//      （topicId 喺範圍 + type + 難度），唔夠先用 engine.generate()
+//      （topicId 在範圍 + type + 難度），不夠先用 engine.generate()
 //      生成補足，並把新題 questionsCol.add（連 topicId/type/
 //      difficulty/marks），收集全部 question id。
-//    → 建立 papersCol.add（同 QuestionBank 嘅 SavedPaper 同 storage
+//    → 建立 papersCol.add（同 QuestionBank 的 SavedPaper 同 storage
 //      key 完全一致，組卷工作室可載入；createAt = ISO runtime 時間）。
 //    → 預覽逐題（題幹 / 分數）＋「列印」（重用 util.buildPrintHtml）。
 //
-//  · 純抽題唔需要 AI；只有「唔夠要生成」嗰刻先用 complete()，
-//    所以 AI gate 只係喺需要生成時阻擋；冇 AI 都可以淨抽題組卷。
+//  · 純抽題不需要 AI；只有「不夠要生成」嗰刻先用 complete()，
+//    所以 AI gate 只係在需要生成時阻擋；沒有 AI 都可以淨抽題組卷。
 //  · mode 色用 --accent（工作模式 = teal），深色 / 375px OK。
 // ============================================================
 
 // SavedPaper / papersCol 由 data/collections 共用 export（同題庫組卷工作室
-// 同一 instance）→ 喺度存卷，組卷工作室會實時更新，唔使 reload。
+// 同一 instance）→ 在這裡存卷，組卷工作室會實時更新，不用 reload。
 type TopicLite = { id: string; topic: string }
 
 export interface PaperGeneratorProps {
@@ -72,7 +72,7 @@ export interface PaperGeneratorProps {
   initialExtra?: string
   initialTitle?: string
   onClose: () => void
-  /** 成功存卷後回呼（傳新卷標題 + 題數），畀 hub 更新 / toast */
+  /** 成功存卷後回呼（傳新卷標題 + 題數），給 hub 更新 / toast */
   onSaved?: (info: { title: string; count: number }) => void
 }
 
@@ -100,12 +100,12 @@ function shuffle<T>(arr: T[]): T[] {
   return a
 }
 
-// 組卷結果（畀預覽用）
+// 組卷結果（給預覽用）
 interface BuildOutcome {
   questionIds: string[]
-  pulled: number // 由題庫抽到嘅數
-  generated: number // 新生成入庫嘅數
-  shortfall: number // 仍欠（生成失敗 / 無 AI）嘅數
+  pulled: number // 由題庫抽到的數
+  generated: number // 新生成入庫的數
+  shortfall: number // 仍欠（生成失敗 / 無 AI）的數
 }
 
 export function PaperGenerator({
@@ -165,7 +165,7 @@ export function PaperGenerator({
       prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
     )
 
-  // 每個有要求嘅題型，需要幾條
+  // 每個有要求的題型，需要幾條
   const plan = useMemo(
     () =>
       TYPE_ORDER.map((type) => ({
@@ -176,7 +176,7 @@ export function PaperGenerator({
   )
   const totalNeeded = plan.reduce((s, p) => s + p.n, 0)
 
-  // 需唔需要 AI（若題庫現有題已夠晒，就唔使）
+  // 需不需要 AI（若題庫現有題已夠全部，就不用）
   const needsAI = useMemo(() => {
     if (plan.length === 0) return false
     const scopeSet = new Set(scope)
@@ -191,7 +191,7 @@ export function PaperGenerator({
     })
   }, [plan, scope, allQuestions, diffMode, overallDiff, perTypeDiff])
 
-  // 由題庫抽某題型符合範圍嘅題（已洗牌）
+  // 由題庫抽某題型符合範圍的題（已洗牌）
   const pullFromBank = (type: QuestionType, diff: Difficulty): Question[] => {
     const scopeSet = new Set(scope)
     return shuffle(
@@ -204,13 +204,13 @@ export function PaperGenerator({
     )
   }
 
-  // 揀生成用嘅 topic 池（範圍內；空範圍 = 全部課題）
+  // 選擇生成用的 topic 池（範圍內；空範圍 = 全部課題）
   const genTopicPool = (): TopicLite[] =>
     scope.length === 0 ? topics : topics.filter((t) => scope.includes(t.id))
 
   // 為單一題型生成 gap 條，逐條入題庫，把新 id push 入 sink；
-  // 回傳實際生成嘅條數（生成失敗會 throw，由呼叫端 catch）。
-  // pool 為輪流分配嘅 topic 池，rr 為共用 round-robin 指標（用 box 傳引用）。
+  // 回傳實際生成的條數（生成失敗會 throw，由呼叫端 catch）。
+  // pool 為輪流分配的 topic 池，rr 為共用 round-robin 指標（用 box 傳引用）。
   const generateForType = async (
     type: QuestionType,
     diff: Difficulty,
@@ -261,12 +261,12 @@ export function PaperGenerator({
       toast.error('請最少為一個題型設定題數')
       return
     }
-    // 若要生成但未接 AI / 未登入 → 友善阻擋（純抽題唔會行到呢度）
+    // 若要生成但未接 AI / 未登入 → 友善阻擋（純抽題不會行到這裡）
     if (needsAI && (!isAIConfigured || !user)) {
       toast.error(
         !isAIConfigured
-          ? '題庫現有題目唔夠，需要 AI 補足，但 AI 未啟用（見 docs/SETUP.md）。可減少題數或先補題。'
-          : '題庫現有題目唔夠，需要 AI 補足，請先登入。',
+          ? '題庫現有題目不夠，需要 AI 補足，但 AI 未啟用（見 docs/SETUP.md）。可減少題數或先補題。'
+          : '題庫現有題目不夠，需要 AI 補足，請先登入。',
       )
       return
     }
@@ -288,7 +288,7 @@ export function PaperGenerator({
         existing.forEach((q) => pickedIds.push(q.id))
         pulled += existing.length
 
-        // 2) 唔夠 → 用引擎生成補足，逐條入題庫
+        // 2) 不夠 → 用引擎生成補足，逐條入題庫
         let gap = n - existing.length
         if (gap > 0 && isAIConfigured && user) {
           try {
@@ -304,7 +304,7 @@ export function PaperGenerator({
       }
 
       if (pickedIds.length === 0) {
-        toast.error('組唔到題目，請調整範圍 / 題數，或先補題。')
+        toast.error('組不到題目，請調整範圍 / 題數，或先補題。')
         return
       }
 
@@ -327,7 +327,7 @@ export function PaperGenerator({
     }
   }
 
-  // 只補足 shortfall：唔重抽、唔重洗牌；按而家 outcome 仲欠幾多就生成幾多，
+  // 只補足 shortfall：不重抽、不重洗牌；按現在 outcome 還欠幾多就生成幾多，
   // 把新題 append 落 outcome.questionIds（preview 即時更新）。
   const topUp = async () => {
     if (busy || !outcome) return
@@ -335,19 +335,19 @@ export function PaperGenerator({
       toast.error(
         !isAIConfigured
           ? 'AI 未啟用（見 docs/SETUP.md），無法生成補足。可返回減少題數，或先補題。'
-          : '請先登入先可以用 AI 生成補足。',
+          : '請先登入以使用 AI 生成補足。',
       )
       return
     }
     const pool = genTopicPool()
     if (pool.length === 0) {
-      toast.error('範圍內冇課題可生成，請返回設定調整範圍。')
+      toast.error('範圍內沒有課題可生成，請返回設定調整範圍。')
       return
     }
 
     setBusy(true)
     try {
-      // 數而家 outcome 入面每個題型 + 難度已有幾多條
+      // 數現在 outcome 中每個題型 + 難度已有幾多條
       const byId = new Map(allQuestions.map((q) => [q.id, q]))
       const have = (type: QuestionType, diff: Difficulty) =>
         outcome.questionIds.reduce((acc, id) => {
@@ -375,7 +375,7 @@ export function PaperGenerator({
       }
 
       if (made === 0) {
-        toast.error('今次補足生成唔到新題，遲少少再試，或返回減少題數。')
+        toast.error('這次補足未能生成新題，請稍後再試，或返回設定減少題數。')
         return
       }
 
@@ -387,7 +387,7 @@ export function PaperGenerator({
         shortfall: stillShort,
       })
       if (stillShort > 0) {
-        toast.success(`已補足 ${made} 題，仲欠 ${stillShort} 題。`)
+        toast.success(`已補足 ${made} 題，還欠 ${stillShort} 題。`)
       } else {
         toast.success(`已補足 ${made} 題，題數已齊。`)
       }
@@ -410,7 +410,7 @@ export function PaperGenerator({
       questionIds: outcome.questionIds,
       createdAt: new Date().toISOString(), // runtime ISO 時間，永不留空
     })
-    toast.success('已儲存試卷（可喺組卷工作室載入）')
+    toast.success('已儲存試卷（可在組卷工作室載入）')
     onSaved?.({ title: paper.title, count: outcome.questionIds.length })
   }
 
@@ -427,7 +427,7 @@ export function PaperGenerator({
     }
     const html = buildPrintHtml(meta, previewQuestions, topicName, withAnswers)
     const ok = openPrintWindow(html)
-    if (!ok) toast.error('瀏覽器擋咗彈出視窗，請允許後再試。')
+    if (!ok) toast.error('瀏覽器擋了彈出視窗，請允許後再試。')
   }
 
   const reset = () => {
@@ -552,7 +552,7 @@ function SetupView(props: {
           <span className="font-semibold text-accent-strong dark:text-accent">
             先由題庫抽現有題
           </span>
-          ，唔夠先用 AI 生成補足（生成嘅題會一齊入庫）。組好可預覽同列印。
+          ，不夠先用 AI 生成補足（生成的題會一起入庫）。組好可預覽同列印。
         </p>
       </div>
 
@@ -594,7 +594,7 @@ function SetupView(props: {
             課題範圍
           </span>
           <span className="text-xs text-slate-400 dark:text-slate-500">
-            {scope.length === 0 ? '全部課題' : `已揀 ${scope.length} 個`}
+            {scope.length === 0 ? '全部課題' : `已選擇 ${scope.length} 個`}
           </span>
         </div>
         <div className="flex max-h-44 flex-wrap gap-1.5 overflow-y-auto rounded-2xl border border-slate-200/80 bg-white p-3 dark:border-slate-700/60 dark:bg-slate-800/40">
@@ -619,7 +619,7 @@ function SetupView(props: {
           })}
         </div>
         <p className="text-xs text-slate-400 dark:text-slate-500">
-          唔揀 = 全部課題。
+          不選擇 = 全部課題。
         </p>
       </section>
 
@@ -718,18 +718,18 @@ function SetupView(props: {
         aiReady ? (
           <p className="flex items-start gap-2 rounded-xl border border-accent/20 bg-accent-soft/40 px-3 py-2 text-xs text-slate-600 dark:border-accent/25 dark:bg-accent/10 dark:text-slate-300">
             <Sparkles size={14} className="mt-0.5 shrink-0 text-accent" />
-            題庫現有題目唔夠，組卷時會用 AI 自動生成補足並一齊入庫。
+            題庫現有題目不夠，組卷時會用 AI 自動生成補足並一起入庫。
           </p>
         ) : (
           <p className="flex items-start gap-2 rounded-xl border border-amber-300/50 bg-amber-50 px-3 py-2 text-xs text-amber-700 dark:border-amber-500/25 dark:bg-amber-500/10 dark:text-amber-300">
             <Lock size={14} className="mt-0.5 shrink-0" />
-            題庫現有題目唔夠，需要 AI 補足，但 AI 未啟用 / 未登入。可減少題數，或先到題庫補題後再組卷。
+            題庫現有題目不夠，需要 AI 補足，但 AI 未啟用 / 未登入。可減少題數，或先到題庫補題後再組卷。
           </p>
         )
       ) : totalNeeded > 0 ? (
         <p className="flex items-start gap-2 rounded-xl border border-emerald-300/50 bg-emerald-50 px-3 py-2 text-xs text-emerald-700 dark:border-emerald-500/25 dark:bg-emerald-500/10 dark:text-emerald-300">
           <CheckCircle2 size={14} className="mt-0.5 shrink-0" />
-          題庫現有題目已足夠，直接抽題組卷（唔需要 AI）。
+          題庫現有題目已足夠，直接抽題組卷（不需要 AI）。
         </p>
       ) : null}
 
@@ -798,8 +798,8 @@ function PreviewView({
       <div className="space-y-4">
         <EmptyState
           icon={FileText}
-          title="未有組好嘅題目"
-          hint="返回設定，揀課題範圍同題數再組卷。"
+          title="未有組好的題目"
+          hint="返回設定，選擇課題範圍及題數後再組卷。"
         />
         <div className="flex justify-end">
           <Button variant="secondary" icon={ArrowLeft} onClick={onBack}>
@@ -840,7 +840,7 @@ function PreviewView({
       {outcome.shortfall > 0 && (
         <div className="flex flex-wrap items-center gap-2 rounded-xl border border-amber-300/50 bg-amber-50 px-3 py-2.5 text-xs text-amber-700 dark:border-amber-500/25 dark:bg-amber-500/10 dark:text-amber-300">
           <span className="flex-1">
-            仍欠 {outcome.shortfall} 題（題池不足或部分生成失敗）。可即場叫 AI 補足，唔使返去重組。
+            仍欠 {outcome.shortfall} 題（題池不足或部分生成失敗）。可即場叫 AI 補足，不用回到重組。
           </span>
           <Button
             size="sm"
@@ -855,7 +855,7 @@ function PreviewView({
         </div>
       )}
 
-      {/* 逐題預覽（含列印用 print 區，但 util 列印係開新視窗，呢度只係螢幕預覽） */}
+      {/* 逐題預覽（含列印用 print 區，但 util 列印係開新視窗，這裡只係螢幕預覽） */}
       <ol className="space-y-2">
         {questions.map((q, i) => (
           <Card key={q.id} className="p-3">

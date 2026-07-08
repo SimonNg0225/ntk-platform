@@ -3,14 +3,14 @@ import type { Session, User } from '@supabase/supabase-js'
 // ============================================================
 //  本機 dev 登入繞道（.env.local 設 VITE_DEV_AUTH=1）
 //  ------------------------------------------------------------
-//  唔使 Supabase、唔使真 Google OAuth：撳「用 Google 登入」即刻以一個本機
-//  測試帳戶登入，方便喺本機 test 晒所有需要登入嘅功能。搭配 VITE_DEV_AI=1
-//  就連 AI 都唔使 Supabase。
+//  不用 Supabase、不用真 Google OAuth：按「用 Google 登入」立即以一個本機
+//  測試帳戶登入，方便在本機 test 全部所有需要登入的功能。搭配 VITE_DEV_AI=1
+//  就連 AI 都不用 Supabase。
 //
-//  · isSupabaseConfigured 維持 false → 唔會打任何後端：雲端同步、訂閱、首次
+//  · isSupabaseConfigured 維持 false → 不會打任何後端：雲端同步、訂閱、首次
 //    登記、admin DB 查詢全部已 guard 住 supabase null，照樣 no-op。
-//  · 假 session 只存喺呢部機 localStorage（refresh 唔甩），永遠唔出後端。
-//  · 只喺本機 dev 有意義；prod 唔應該設呢個 flag（vercel build 唔會帶 .env.local）。
+//  · 假 session 只存在呢部機 localStorage（refresh 不甩），永遠不出後端。
+//  · 只在本機 dev 有意義；prod 不應該設這個 flag（vercel build 不會帶 .env.local）。
 // ============================================================
 
 export const isDevAuth = import.meta.env.VITE_DEV_AUTH === '1'
@@ -26,7 +26,7 @@ const DEV_NAME =
   (import.meta.env.VITE_DEV_AUTH_NAME as string | undefined)?.trim() ||
   '本機測試老師'
 
-/** 砌一個「夠用」嘅假 Supabase session（夠 app 各處讀 user.id / email / 名 / 頭像）。 */
+/** 砌一個「夠用」的假 Supabase session（夠 app 各處讀 user.id / email / 名 / 頭像）。 */
 export function makeDevSession(): Session {
   const user: User = {
     id: '00000000-0000-4000-8000-000000000001',

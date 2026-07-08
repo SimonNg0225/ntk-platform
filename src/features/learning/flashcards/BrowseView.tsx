@@ -56,7 +56,7 @@ import type { BrowseSort, BrowseStateFilter, CardMeta, CardState } from './types
 //  （暫停 / 標記 / 加標籤 / 移牌組 / 重設排程 / 刪除）
 // ============================================================
 
-// metaById.get() 揾唔到時嘅 fallback，shape 同 metaOf() 內部 fallback 一致
+// metaById.get() 揾不到時的 fallback，shape 同 metaOf() 內部 fallback 一致
 const EMPTY_META: CardMeta = {
   id: '',
   tags: [],
@@ -89,7 +89,7 @@ const STATE_FILTERS: { id: BrowseStateFilter; label: string }[] = [
 ]
 
 // 卡spine 色：同主畫面卡片身份脊一致（mature 熟＝綠、young 生＝accent、
-// learning 學習＝琥珀、suspended 暫停＝灰、new 新＝藍），喺表列左緣呈現
+// learning 學習＝琥珀、suspended 暫停＝灰、new 新＝藍），在表列左緣呈現
 const SPINE: Record<CardState, string> = {
   mature: 'border-emerald-400 dark:border-emerald-500/60',
   young: 'border-accent/70',
@@ -118,7 +118,7 @@ export default function BrowseView() {
   const metaById = useMemo(() => new Map(metas.map((m) => [m.id, m])), [metas])
   const deckById = useMemo(() => new Map(decks.map((d) => [d.id, d])), [decks])
 
-  // 所有用過嘅標籤
+  // 所有用過的標籤
   const allTags = useMemo(() => {
     const s = new Set<string>()
     metas.forEach((m) => m.tags.forEach((t) => s.add(t)))
@@ -209,7 +209,7 @@ export default function BrowseView() {
     if (
       !(await confirm({
         title: '重設排程？',
-        message: `${selectedCards.length} 張卡會變返「新卡」，由今日重新開始學。`,
+        message: `${selectedCards.length} 張卡會重設為「新卡」，由今日重新開始學習。`,
         confirmText: '重設',
       }))
     )
@@ -378,11 +378,11 @@ export default function BrowseView() {
       {sorted.length === 0 ? (
         <EmptyState
           icon={Search}
-          title="搵唔到符合嘅卡"
+          title="搜尋不到符合的卡"
           hint={
             allCards.length === 0
-              ? '仲未有任何卡片——去「牌組」加幾張，或匯入一批先。'
-              : '試下換個關鍵字，或者放寬上面嘅篩選。'
+              ? '尚未有任何卡片——去「牌組」加幾張，或匯入一批先。'
+              : '嘗試換個關鍵字，或者放寬上面的篩選。'
           }
         />
       ) : (
@@ -426,7 +426,7 @@ export default function BrowseView() {
                 const checked = selected.has(c.id)
                 return (
                   <Tr key={c.id}>
-                    {/* 卡spine：跟狀態色（呼應主畫面卡片身份脊）；放喺勾選格左緣 */}
+                    {/* 卡spine：跟狀態色（呼應主畫面卡片身份脊）；放在勾選格左緣 */}
                     <Td className={cx('border-l-2', SPINE[st])}>
                       <input
                         type="checkbox"

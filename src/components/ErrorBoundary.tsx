@@ -2,10 +2,10 @@ import { Component, type ReactNode } from 'react'
 import { AlertTriangle, RotateCcw } from 'lucide-react'
 
 // ============================================================
-//  Error Boundary — 隔離單一功能嘅 runtime 錯誤
+//  Error Boundary — 隔離單一功能的 runtime 錯誤
 //  ------------------------------------------------------------
-//  一個功能 throw 唔會再令成個 app 白畫面；只喺該功能位置顯示
-//  友善錯誤 + 重試。用喺 App 包住每個 feature 渲染（key=featureId，
+//  一個功能 throw 不會再令成個 app 白畫面；只在該功能位置顯示
+//  友善錯誤 + 重試。用在 App 包住每個 feature 渲染（key=featureId，
 //  切功能自動 reset）。
 // ============================================================
 
@@ -26,7 +26,7 @@ export default class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error) {
-    // 純前端：log 出嚟方便除錯（將來可接 Sentry 等）
+    // 純前端：log 出來方便除錯（將來可接 Sentry 等）
     console.error('[ErrorBoundary]', error)
   }
 
@@ -44,7 +44,7 @@ export default class ErrorBoundary extends Component<Props, State> {
           <AlertTriangle size={24} strokeWidth={1.75} />
         </span>
         <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
-          呢個功能出咗錯
+          此功能出了錯
         </p>
         <p className="max-w-md break-words text-xs text-slate-400 dark:text-slate-500">
           {error.message || '發生未知錯誤'}

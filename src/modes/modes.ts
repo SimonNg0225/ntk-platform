@@ -1,12 +1,12 @@
 // ============================================================
 //  模式定義 (Modes)
 //  ------------------------------------------------------------
-//  呢個平台核心就係「模式切換」：個人模式 vs 工作模式。
-//  每個模式有自己嘅名稱、主題色、標語。
+//  這個平台核心就係「模式切換」：個人模式 vs 工作模式。
+//  每個模式有自己的名稱、主題色、標語。
 //  切換模式時，主題色會經 CSS 變數套用落成個介面。
 //
 //  日後想加多一個模式（例如「研究模式」）？
-//  喺 MODES 加多一個項目，再喺 ModeId 加多個 id 就得。
+//  在 MODES 加多一個項目，再在 ModeId 加多個 id 就得。
 // ============================================================
 
 export type ModeId = 'learning' | 'work'
@@ -15,9 +15,9 @@ export interface ModeDef {
   id: ModeId
   /** 完整名稱，例如「個人模式」 */
   name: string
-  /** 短名，用喺切換掣 */
+  /** 短名，用在切換掣 */
   short: string
-  /** 一句標語，講出呢個模式嘅目標 */
+  /** 一句標語，講出這個模式的目標 */
   tagline: string
   /** emoji 圖示 */
   icon: string
@@ -27,7 +27,7 @@ export interface ModeDef {
   accentSoft: string
   /** 深色 (hover / 強調) — --accent-strong */
   accentStrong: string
-  /** Hero 漸變起點 — --accent-grad-from */
+  /** Hero 漸變內容來源 — --accent-grad-from */
   gradFrom: string
   /** Hero 漸變終點 — --accent-grad-to */
   gradTo: string
@@ -35,7 +35,7 @@ export interface ModeDef {
 
 // 雙模式主色（「Indigo × Teal on Slate」配色方案）：
 // 個人＝青藍 teal，工作＝靛藍 indigo。
-// 兩色都係「學習＋生產力」類產品嘅典型主色，一眼分得出兩個模式；中性色用 slate（喺 index.css）。
+// 兩色都係「學習＋生產力」類產品的典型主色，一眼分得出兩個模式；中性色用 slate（在 index.css）。
 export const MODES: Record<ModeId, ModeDef> = {
   learning: {
     id: 'learning',
@@ -53,7 +53,7 @@ export const MODES: Record<ModeId, ModeDef> = {
     id: 'work',
     name: '工作模式',
     short: '工作',
-    tagline: '備課、批改、成績、家長溝通　一站搞掂',
+    tagline: '備課、批改、成績、家長溝通　一站完成',
     icon: '💼',
     accent: '#4f46e5', // indigo-600
     accentSoft: '#eef2ff', // indigo-50
@@ -64,11 +64,11 @@ export const MODES: Record<ModeId, ModeDef> = {
 }
 
 /**
- * 對用戶開放（可切換）嘅模式次序 —— 用喺切換掣 / 指令面板 / 預設模式 /
+ * 對用戶開放（可切換）的模式次序 —— 用在切換掣 / 指令面板 / 預設模式 /
  * 初始模式 clamp。
  *
- * 暫時淨係開「工作」；「個人模式」（learning）嘅 MODES 定義、功能、所有代碼
- * 全部保留，純粹係唔對用戶開放。想開返畀用戶：喺下面加返 'learning' 即可，
+ * 暫時只開「工作」；「個人模式」（learning）的 MODES 定義、功能、所有代碼
+ * 全部保留，純粹係不對用戶開放。想開返給用戶：在下方加回 'learning' 即可，
  * 切換掣 / 指令面板 / 手機底欄會自動恢復雙模式，毋須改其他地方。
  */
 export const MODE_ORDER: ModeId[] = ['work']

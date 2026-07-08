@@ -41,7 +41,7 @@ import { coverTextureUri } from './slideTextures'
 const VAP = { bg: '271B3F', ink: 'FDE9F4', soft: 'CBB6D6', faint: '8E7AA3', hair: '4A3A66', pink: 'FF6AD5', cyan: '05D9E8', panel: '3A2A57' }
 
 /**
- * 透視地網格：橫線（地平線下逐條收窄間距）+ 多條由底邊射向消失點嘅斜線。
+ * 透視地網格：橫線（地平線下逐條收窄間距）+ 多條由底邊射向消失點的斜線。
  * 全部極淡（grid color）。cx = 消失點橫座標，vy = 消失點縱座標（=地平線）。
  */
 function perspGrid(slide: PptxGenJS.Slide, x: number, vy: number, w: number, bottom: number, color: string): void {
@@ -62,7 +62,7 @@ function perspGrid(slide: PptxGenJS.Slide, x: number, vy: number, w: number, bot
 }
 
 /**
- * 橫紋落日：喺一個圓形範圍內由上而下疊短 hline，桃／青交替。
+ * 橫紋落日：在一個圓形範圍內由上而下疊短 hline，桃／青交替。
  * 落日下半截條紋逐條變短（模擬圓邊收窄）。cx/cy = 圓心，r = 半徑。
  */
 function bandedSun(slide: PptxGenJS.Slide, cx: number, cy: number, r: number): void {
@@ -100,7 +100,7 @@ function memphisBit(slide: PptxGenJS.Slide, x: number, y: number, size: number, 
 /**
  * 招牌：stats 渲染成「落日條紋 tile」——
  * 各 stat 一塊 tile，tile 底由幾條桃／青交替橫帶鋪滿（retrowave 落日），
- * 巨號值疊喺條紋之上、標籤喺下。Y2K 海報數字感。2–4 項。
+ * 巨號值疊在條紋之上、標籤在下。Y2K 海報數字感。2–4 項。
  */
 function renderVaporSunsetTiles(slide: PptxGenJS.Slide, body: Rect, pack: Pack, s: Slide): void {
   const items = (s.stats ?? []).slice(0, 4)
@@ -122,7 +122,7 @@ function renderVaporSunsetTiles(slide: PptxGenJS.Slide, body: Rect, pack: Pack, 
       { pos: 100, color: VAP.cyan },
     ])
     slide.addShape('rect', { x: cx + 0.08, y: ty + 0.08, w: cw - 0.16, h: bandZone - 0.02, fill: { color: sunset }, line: { type: 'none' } })
-    // 巨號值（疊喺條紋之上）
+    // 巨號值（疊在條紋之上）
     tx(slide, clampText(st.value.trim(), 8), { x: cx + 0.1, y: ty + 0.12, w: cw - 0.2, h: bandZone, fontSize: 52, bold: true, color: pack.ink, align: 'center', valign: 'middle', fontFace: pack.displayFont, fit: 'shrink' })
     // 標籤（條紋下）
     tx(slide, clampText(st.label.trim(), 22), { x: cx + 0.14, y: ty + bandZone + 0.12, w: cw - 0.28, h: th - bandZone - 0.24, fontSize: 13, color: pack.inkSoft, align: 'center', valign: 'middle', lineSpacingMultiple: 1.16, fit: 'shrink' })
@@ -160,7 +160,7 @@ const vapor: Pack = {
   overrides: { stats: renderVaporSunsetTiles },
 
   // 逐版母題：一束極淡 Memphis 小碎片（短 chevron／triangle），
-  // 形態按 seq % 4 輪換、角位亦按 seq 走（似海報飄過嘅貼紙）。
+  // 形態按 seq % 4 輪換、角位亦按 seq 走（似海報飄過的貼紙）。
   deco(slide, ctx: FrameCtx) {
     const spots: [number, number][] = [
       [12.5, 0.5], // 右上
@@ -176,7 +176,7 @@ const vapor: Pack = {
   cover(slide, deck, brand, img) {
     slide.background = { color: VAP.bg }
     const hasImg = Boolean(img)
-    // 無相時：招牌 Y2K 紋理底圖（瀏覽器 Canvas raster；冇 canvas 時純底色）
+    // 無相時：招牌 Y2K 紋理底圖（瀏覽器 Canvas raster；沒有 canvas 時純底色）
     if (!hasImg) {
       const tex = coverTextureUri('vapor')
       if (tex) {
@@ -187,7 +187,7 @@ const vapor: Pack = {
     perspGrid(slide, 0, 4.7, 13.33, 7.5, mix(VAP.cyan, VAP.bg, 0.7))
     // 橫紋落日（右上，無相時擺大）
     if (!hasImg) {
-      // 真放射落日輝光：桃紅中心 → 青淡出（墊喺橫紋落日後）
+      // 真放射落日輝光：桃紅中心 → 青淡出（墊在橫紋落日後）
       const sunR = 1.7 * 1.5
       slide.addShape('ellipse', {
         x: 10.4 - sunR,
@@ -238,7 +238,7 @@ const vapor: Pack = {
     // 版底透視網格 + 大橫紋落日（章節 = 海報 hero）
     perspGrid(slide, 0, 5.1, 13.33, 7.5, mix(VAP.cyan, VAP.bg, 0.72))
     bandedSun(slide, 6.665, 2.4, 2.0)
-    // 巨號（青色 offset + 桃本體，疊喺落日上）
+    // 巨號（青色 offset + 桃本體，疊在落日上）
     tx(slide, pad2(no), { x: 0.87, y: 1.27, w: 6, h: 2.9, fontSize: 150, bold: true, color: mix(VAP.cyan, VAP.bg, 0.25), fontFace: 'Arial Black' })
     tx(slide, pad2(no), { x: 0.8, y: 1.2, w: 6, h: 2.9, fontSize: 150, bold: true, color: mix(VAP.pink, VAP.bg, 0.15), fontFace: 'Arial Black' })
     tx(slide, title, { x: 0.9, y: 5.4, w: 11.2, h: 1.2, fontSize: 32, bold: true, color: VAP.ink })
@@ -287,8 +287,8 @@ function bauBar(slide: PptxGenJS.Slide, cx: number, cy: number, len: number, thi
 }
 
 /**
- * 招牌母題：喺卡角畫一個 primitive（圓／三角／方按 index 輪換、三原色按 index 輪換）。
- * 統一接口俾 renderBauhausBlocks 同 deco 用。
+ * 招牌母題：在卡角畫一個 primitive（圓／三角／方按 index 輪換、三原色按 index 輪換）。
+ * 統一接口給 renderBauhausBlocks 同 deco 用。
  */
 function bauPrimitive(slide: PptxGenJS.Slide, x: number, y: number, size: number, idx: number, color: string): void {
   const k = idx % 3
@@ -363,8 +363,8 @@ const bauhaus: Pack = {
   splitPhoto: 'bleedHair',
   overrides: { cards: renderBauhausBlocks },
 
-  // 逐版母題：一個小 primitive（圓／三角／方按 seq % 3 揀），
-  // 三原色按 seq 輪換，角位按 seq 走（似構成練習嘅角落基本形）。
+  // 逐版母題：一個小 primitive（圓／三角／方按 seq % 3 選擇），
+  // 三原色按 seq 輪換，角位按 seq 走（似構成練習的角落基本形）。
   deco(slide, ctx: FrameCtx) {
     const spots: [number, number][] = [
       [12.55, 0.5],
@@ -380,7 +380,7 @@ const bauhaus: Pack = {
   cover(slide, deck, brand, img) {
     slide.background = { color: BAU.bg }
     const hasImg = Boolean(img)
-    // 無相時：招牌包浩斯紋理底圖（瀏覽器 Canvas raster；冇 canvas 時 fallback 漸層底）
+    // 無相時：招牌包浩斯紋理底圖（瀏覽器 Canvas raster；沒有 canvas 時 fallback 漸層底）
     const tex = hasImg ? null : coverTextureUri('bauhaus')
     if (tex) {
       slide.addImage({ data: tex, x: 0, y: 0, w: 13.333, h: 7.5, sizing: { type: 'cover', w: 13.333, h: 7.5 } })
@@ -477,7 +477,7 @@ const bauhaus: Pack = {
 //  星圖 cosmos — 星空宇宙
 //  午夜藍底 + 星光墨 + 金／青點睛：天文星圖意象 —— 散落細星點
 //  （細實心 ellipse）作星野、細線連星成星座、同心 ellipse 框作軌道環。
-//  封面題目浮喺星野上、一條金軌道弧掃過。
+//  封面題目浮在星野上、一條金軌道弧掃過。
 // ============================================================
 
 const COS = { bg: '0B1026', ink: 'E8ECFF', soft: 'B4BCDB', faint: '7480A8', hair: '2A335A', gold: 'F4C95D', cyan: '6BD0E0', panel: '161C3A' }
@@ -527,9 +527,9 @@ function glowStar(slide: PptxGenJS.Slide, cx: number, cy: number, d: number, col
 
 /**
  * 招牌：steps 渲染成「星座」——
- * 各步一粒星（細實心 ellipse + 光暈環）沿一條輕微起伏嘅路徑排，
+ * 各步一粒星（細實心 ellipse + 光暈環）沿一條輕微起伏的路徑排，
  * 星與星之間以細金「星座線」連起（似將星連成一個圖形），
- * 步號 tag + title + desc 喺各星附近。連星成座意象。2–5 步。
+ * 步號 tag + title + desc 在各星附近。連星成座意象。2–5 步。
  */
 function renderCosmosConstellation(slide: PptxGenJS.Slide, body: Rect, pack: Pack, s: Slide): void {
   const items = (s.steps ?? []).slice(0, 5)
@@ -603,7 +603,7 @@ const cosmos: Pack = {
   splitPhoto: 'bleedScrim',
   overrides: { steps: renderCosmosConstellation },
 
-  // 逐版母題：幾粒極淡星野點 + 一粒較大有標籤嘅星，
+  // 逐版母題：幾粒極淡星野點 + 一粒較大有標籤的星，
   // 星位按 seq 沿頂邊推進（似逐版升起一顆新星），極淡。
   deco(slide, ctx: FrameCtx) {
     // 角落小星野
@@ -617,12 +617,12 @@ const cosmos: Pack = {
     slide.background = { color: COS.bg }
     const hasImg = Boolean(img)
     if (img) {
-      // full-bleed 相 + 午夜 scrim（星空疊喺暗景上）
+      // full-bleed 相 + 午夜 scrim（星空疊在暗景上）
       addCoverImage(slide, img, { x: 0, y: 0, w: 13.33, h: 7.5 })
       slide.addShape('rect', { x: 0, y: 0, w: 13.33, h: 7.5, fill: { color: COS.bg, transparency: 32 }, line: { type: 'none' } })
       photoCreditOnImage(slide, img.credit, { x: 0, y: 0, w: 13.33, h: 7.5 })
     }
-    // 無相時：招牌星雲紋理底圖（瀏覽器 Canvas raster；冇 canvas 時 fallback 漸層底）
+    // 無相時：招牌星雲紋理底圖（瀏覽器 Canvas raster；沒有 canvas 時 fallback 漸層底）
     if (!img) {
       const tex = coverTextureUri('cosmos')
       if (tex) {
@@ -668,7 +668,7 @@ const cosmos: Pack = {
     }
     // kicker
     tx(slide, 'TEACHING DECK · 教學簡報', { x: 0.9, y: 1.0, w: 8, h: 0.3, fontSize: 10, color: COS.gold, charSpacing: 4, bold: true })
-    // 題 + 副題（浮喺星野上）
+    // 題 + 副題（浮在星野上）
     const titleW = hasImg ? 7.6 : 9.4
     const fit = fitTitle(deck.title, 'cover')
     const lines = Math.max(1, Math.min(2, estimateLines(deck.title, fit.fontPt, titleW)))

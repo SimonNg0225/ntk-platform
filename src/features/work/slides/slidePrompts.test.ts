@@ -45,7 +45,7 @@ describe('buildSlideSystem', () => {
     // dawn 初小：少字大圖 + 唔出英文副題
     const dawn = buildSlideSystem('常識', 8, 'dawn')
     expect(dawn).toContain('寧少而精')
-    expect(dawn).toContain('唔好出英文對照')
+    expect(dawn).toContain('不要出英文對照')
     // press 報章：較密
     expect(buildSlideSystem('通識', 8, 'press')).toContain('較密')
     // ivy 學院：高雙語
@@ -125,7 +125,7 @@ describe('parseDeck', () => {
 
   it('冇 slides 會 throw', () => {
     expect(() => parseDeck(JSON.stringify({ title: 'T', slides: [] }), 'X')).toThrow()
-    expect(() => parseDeck('唔係 JSON', 'X')).toThrow()
+    expect(() => parseDeck('不是 JSON', 'X')).toThrow()
   })
 
   it('舊格式（無新欄位）照舊 parse', () => {

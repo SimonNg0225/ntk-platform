@@ -1,5 +1,5 @@
 // 用 'jscanify/client'（瀏覽器版，靠全域 cv + document.createElement）。
-// 注意：bare 'jscanify' 會 resolve 去 Node 版（require canvas/jsdom），瀏覽器行唔到。
+// 注意：bare 'jscanify' 會 resolve 去 Node 版（require canvas/jsdom），瀏覽器行不到。
 declare module 'jscanify/client' {
   /** 角點，每個有 x / y。 */
   export interface CornerPoint {
@@ -20,7 +20,7 @@ declare module 'jscanify/client' {
     findPaperContour(img: any): any | null
     /** 由 contour 計四角。 */
     getCornerPoints(contour: any): CornerPoints
-    /** 拉正透視；冇 cornerPoints 又偵唔到紙會回 null。image 可以係 canvas/img。 */
+    /** 拉正透視；沒有 cornerPoints 又偵不到紙會回 null。image 可以係 canvas/img。 */
     extractPaper(
       image: HTMLCanvasElement | HTMLImageElement,
       resultWidth: number,

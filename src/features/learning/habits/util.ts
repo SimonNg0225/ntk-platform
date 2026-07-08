@@ -73,7 +73,7 @@ export function logsByHabit(logs: HabitLog[]): Map<string, Set<string>> {
 }
 
 // ───────── 連續日（streak）─────────
-// 計法尊重頻率：對於「指定星期」習慣，跳過非排程日唔會中斷連續。
+// 計法尊重頻率：對於「指定星期」習慣，跳過非排程日不會中斷連續。
 // 「每日」「每週 N 次」就用日曆連續（最直觀）。
 // anchor 預設 new Date()（即真實今日）；可傳明確日期把「今日」釘死，
 // 方便 streakAtRisk 在同一錨點計算，亦方便測試。屬純增量：既有 2-arg
@@ -84,7 +84,7 @@ export function currentStreak(
   anchor: Date = new Date(),
 ): number {
   const today = toKey(anchor)
-  // 起點：今日完成 → 由今日計；否則由琴日計（保住琴日 streak）。
+  // 內容來源：今日完成 → 由今日計；否則由琴日計（保住琴日 streak）。
   let cursor = done.has(today) ? today : addDaysKey(today, -1)
   let streak = 0
   let guard = 0
@@ -92,7 +92,7 @@ export function currentStreak(
     const wd = weekdayOf(cursor)
     const scheduled = freq.kind === 'weekdays' ? freq.days.includes(wd) : true
     if (!scheduled) {
-      // 非排程日：唔計、唔中斷，繼續向前。
+      // 非排程日：不計、不中斷，繼續向前。
       cursor = addDaysKey(cursor, -1)
       continue
     }
@@ -150,7 +150,7 @@ export function rateOverDays(
   }
   if (freq.kind === 'weekly') {
     // 每週 N 次：分母 = 週數 × N，分子 = 實際完成（封頂）。
-    // 用精確週數（windowDays / 7），唔取整：30 日橫跨 4.29 週而非 4，
+    // 用精確週數（windowDays / 7），不取整：30 日橫跨 4.29 週而非 4，
     // 取整會少計分母、令部分完成率偏高。target=0（windowDays/times=0）由下方守衞。
     const weeks = windowDays / 7
     const target = weeks * freq.times
@@ -170,8 +170,8 @@ export function thisWeekProgress(
   for (let i = 0; i <= today.getDay(); i += 1) {
     const day = addDays(start, i)
     const k = toKey(day)
-    // 只數「排程日」嘅完成，令分子基數同 target（排程日數）一致：
-    // weekdays 模式喺非排程日（如逢一至五習慣嘅星期日）打卡唔應計入。
+    // 只數「排程日」的完成，令分子基數同 target（排程日數）一致：
+    // weekdays 模式在非排程日（如逢一至五習慣的星期日）打卡不應計入。
     if (isScheduledDay(freq, day.getDay()) && done.has(k)) count += 1
   }
   let target = 7
@@ -190,7 +190,7 @@ export function isDueToday(freq: HabitFrequency): boolean {
 // 0=未完成，1-4 = 完成 + 周邊 7 日完成密度愈高愈深，似 Streaks 火焰感。
 export function heatLevel(done: Set<string>, key: string): number {
   if (!done.has(key)) return 0
-  // 計呢日連同前 6 日嘅完成密度（0-1），映射 1-4。
+  // 計這一天連同前 6 日的完成密度（0-1），映射 1-4。
   let around = 0
   for (let i = 0; i < 7; i += 1) {
     if (done.has(addDaysKey(key, -i))) around += 1
@@ -226,7 +226,7 @@ export function buildHeatGrid(endKey: string, weeks: number): HeatGrid {
       const cell = addDays(firstSun, w * 7 + d)
       const inRange = cell <= end
       col.push({ key: toKey(cell), inRange })
-      // 月份標籤：每欄第一格（週日）若月份變咗就標
+      // 月份標籤：每欄第一格（週日）若月份變了就標
       if (d === 0) {
         const m = cell.getMonth()
         if (m !== lastMonth) {
@@ -254,7 +254,7 @@ export interface OverallStat {
   doneToday: number
   bestCurrentStreak: number
   todayRate: number // 0-100（按今日 due 計）
-  perfectDays7: number // 過去 7 日全 due 都完成嘅日數
+  perfectDays7: number // 過去 7 日全 due 都完成的日數
 }
 
 export function overallStats(
@@ -302,7 +302,7 @@ export function overallStats(
   }
 }
 
-// ───────── 星期分佈洞察（最易堅持／最易甩底 + 逐習慣最常完成嘅星期）─────────
+// ───────── 星期分佈洞察（最易堅持／最易甩底 + 逐習慣最常完成的星期）─────────
 export interface WeekdayRate {
   weekday: number // 0=日 … 6=六
   label: string
@@ -316,27 +316,27 @@ export interface HabitBestWeekday {
   name: string
   weekday: number // 完成次數最多嗰日（0-6）
   label: string
-  count: number // 喺嗰日完成幾多次
+  count: number // 在嗰日完成幾多次
 }
 
 export interface WeekdayInsights {
   /** 7 個星期幾各自完成率（由日到六，方便對齊既有長條圖）。 */
   perWeekday: WeekdayRate[]
-  /** 完成率最高嘅星期幾（只計有排程嘅日；全無排程 → null）。 */
+  /** 完成率最高的星期幾（只計有排程的日；全無排程 → null）。 */
   best: WeekdayRate | null
-  /** 完成率最低嘅星期幾（最易甩底；只計有排程嘅日）。 */
+  /** 完成率最低的星期幾（最易甩底；只計有排程的日）。 */
   worst: WeekdayRate | null
-  /** 逐習慣最常完成嘅星期幾（零完成嘅習慣略過；按完成次數由多到少）。 */
+  /** 逐習慣最常完成的星期幾（零完成的習慣略過；按完成次數由多到少）。 */
   perHabitBest: HabitBestWeekday[]
 }
 
 /**
  * 由 byHabit 完成集合衍生「星期分佈洞察」：
  *   ① 每個星期幾整體完成率（尊重 weekdays 排程，分母只計排程日）
- *   ② 完成率最高 / 最低嘅星期幾（best / worst，只比有排程嘅日）
- *   ③ 逐習慣最常完成嘅星期幾（按該習慣喺各日嘅完成次數）
+ *   ② 完成率最高 / 最低的星期幾（best / worst，只比有排程的日）
+ *   ③ 逐習慣最常完成的星期幾（按該習慣在各日的完成次數）
  * windowDays 預設 84（12 週），同 StatsView 既有星期長條圖一致。
- * anchor 預設真實今日；測試可傳明確日期釘死。純讀取，唔改任何狀態。
+ * anchor 預設真實今日；測試可傳明確日期釘死。純讀取，不改任何狀態。
  * 同分一律按星期 index（0→6）穩定排序，令結果 deterministic。
  */
 export function weekdayInsights(
@@ -360,7 +360,7 @@ export function weekdayInsights(
         acc[wd].due += 1
         if (done) acc[wd].done += 1
       }
-      // 逐習慣最常完成日：數實際完成（即使係非排程日嘅補打卡都算「呢日做咗」）
+      // 逐習慣最常完成日：數實際完成（即使係非排程日的補打卡都算「這一天做了」）
       if (done) {
         const counts = perHabitCounts.get(h.id)
         if (counts) counts[wd] += 1
@@ -376,7 +376,7 @@ export function weekdayInsights(
     done: a.done,
   }))
 
-  // best / worst 只比「有排程」嘅星期幾；同分按 weekday index 升序（穩定）。
+  // best / worst 只比「有排程」的星期幾；同分按 weekday index 升序（穩定）。
   const scheduledDays = perWeekday.filter((d) => d.due > 0)
   let best: WeekdayRate | null = null
   let worst: WeekdayRate | null = null
@@ -410,7 +410,7 @@ export function weekdayInsights(
   return { perWeekday, best, worst, perHabitBest }
 }
 
-// ───────── 斷 streak 警報（今日未保住嘅連勝）─────────
+// ───────── 斷 streak 警報（今日未保住的連勝）─────────
 export interface AtRiskHabit {
   id: string
   name: string
@@ -418,12 +418,12 @@ export interface AtRiskHabit {
 }
 
 /**
- * 揀出「今日就會斷」嘅連勝習慣：
+ * 選擇出「今日就會斷」的連勝習慣：
  *   ① 今日係排程日（應做）
- *   ② 今日未完成（done 內冇 anchor 當日 key）
- *   ③ 目前 currentStreak >= 1（即仲有連勝可保 / 可斷）
+ *   ② 今日未完成（done 內沒有 anchor 當日 key）
+ *   ③ 目前 currentStreak >= 1（即還有連勝可保 / 可斷）
  * 已封存習慣略過。回傳按 streak 由大到小排（同分按名稱穩定排序）。
- * anchor 預設真實今日；測試可傳明確日期釘死。純讀取，唔改任何狀態。
+ * anchor 預設真實今日；測試可傳明確日期釘死。純讀取，不改任何狀態。
  */
 export function streakAtRisk(
   habits: Habit[],
@@ -439,7 +439,7 @@ export function streakAtRisk(
     const done = byHabit.get(h.id) ?? new Set<string>()
     if (done.has(todayK)) continue // 今日已保住
     const streak = currentStreak(done, h.frequency, anchor)
-    if (streak < 1) continue // 冇連勝可斷
+    if (streak < 1) continue // 沒有連勝可斷
     out.push({ id: h.id, name: h.name, streak })
   }
   out.sort((a, b) => b.streak - a.streak || a.name.localeCompare(b.name))

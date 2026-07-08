@@ -1,8 +1,8 @@
 // ============================================================
 //  行政文件 — PDF 引擎（pdf-lib，純邏輯，可測）
 //  ------------------------------------------------------------
-//  支援有填寫欄位嘅 PDF（AcroForm）：讀欄位（名 / 類型 / 選項 / 座標）
-//  → 按類型填值 → 存返 PDF Blob，版面 100% 保留（唔 flatten、唔重排）。
+//  支援有填寫欄位的 PDF（AcroForm）：讀欄位（名 / 類型 / 選項 / 座標）
+//  → 按類型填值 → 存返 PDF Blob，版面 100% 保留（不 flatten、不重排）。
 //  全部 client-side。docx 路徑（docxEngine）獨立，互不影響。
 // ============================================================
 
@@ -19,12 +19,12 @@ import {
 
 const PDF_MIME = 'application/pdf'
 
-/** PDF 表單欄位類型（對齊 adminDocStore 將擴充嘅 AdminDocFieldType）。 */
+/** PDF 表單欄位類型（對齊 adminDocStore 將擴充的 AdminDocFieldType）。 */
 export type PdfFieldType = 'text' | 'multiline' | 'checkbox' | 'dropdown'
 
-/** 單個 widget 喺某頁嘅矩形（PDF 單位，原點左下）。 */
+/** 單個 widget 在某頁的矩形（PDF 單位，原點左下）。 */
 export interface PdfFieldRect {
-  /** 頁 index（0-based）；搵唔到對應頁嘅 widget 唔會收錄。 */
+  /** 頁 index（0-based）；搜尋不到對應頁的 widget 不會收錄。 */
   page: number
   x: number
   y: number
@@ -34,12 +34,12 @@ export interface PdfFieldRect {
 
 /** 一個 AcroForm 欄位（可跨多頁有多個 widget）。 */
 export interface PdfField {
-  /** PDF field 全名（填值時用呢個 key）。 */
+  /** PDF field 全名（填值時用這個 key）。 */
   name: string
   type: PdfFieldType
-  /** dropdown 嘅選項（其餘類型 undefined）。 */
+  /** dropdown 的選項（其餘類型 undefined）。 */
   options?: string[]
-  /** 每個 widget 嘅位置（畀預覽疊彩色框用）。 */
+  /** 每個 widget 的位置（給預覽疊彩色框用）。 */
   rects: PdfFieldRect[]
 }
 
@@ -48,15 +48,15 @@ export interface PdfField {
 // ------------------------------------------------------------
 
 /**
- * 讀 PDF 嘅 AcroForm，抽出所有欄位（名 / 類型 / 選項 / widget 座標）。
+ * 讀 PDF 的 AcroForm，抽出所有欄位（名 / 類型 / 選項 / widget 座標）。
  *
- * - 冇 AcroForm 欄位（普通 / 掃描 PDF）→ 回空陣列（唔當錯誤）。
+ * - 沒有 AcroForm 欄位（普通 / 掃描 PDF）→ 回空陣列（不當錯誤）。
  * - 壞檔 / 加密 PDF → 拋友善中文 Error。
  *
- * 座標：每個欄位可能有多個 widget（同名跨頁）。用 widget 嘅
- * `getRectangle()` 取 x/y/w/h；頁 index 先試 widget 嘅 `P()`（指向頁嘅 ref），
- * 失敗就掃每頁 `node.Annots()` 搵含該 widget dict 嗰頁。兩者皆搵唔到 → 略過
- * 該 widget 嘅座標（欄位仍會收錄，照樣可填，只係冇得疊框）。
+ * 座標：每個欄位可能有多個 widget（同名跨頁）。用 widget 的
+ * `getRectangle()` 取 x/y/w/h；頁 index 先試 widget 的 `P()`（指向頁的 ref），
+ * 失敗就掃每頁 `node.Annots()` 搜尋含該 widget dict 嗰頁。兩者皆搜尋不到 → 略過
+ * 該 widget 的座標（欄位仍會收錄，照樣可填，只係沒有得疊框）。
  */
 export async function extractPdfFields(
   buf: ArrayBuffer,
@@ -67,11 +67,11 @@ export async function extractPdfFields(
   try {
     fields = doc.getForm().getFields()
   } catch {
-    // getForm 對某些壞 AcroForm 結構可能拋錯 → 當冇欄位處理。
+    // getForm 對某些壞 AcroForm 結構可能拋錯 → 當沒有欄位處理。
     return []
   }
 
-  // 頁 ref.tag → index，畀 widget.P() 快速對應。
+  // 頁 ref.tag → index，給 widget.P() 快速對應。
   const pages = doc.getPages()
   const pageIndexByRefTag = new Map<string, number>()
   pages.forEach((page, idx) => {
@@ -97,7 +97,7 @@ export async function extractPdfFields(
   return out
 }
 
-/** 判斷欄位類型；唔支援嘅類型回 undefined（由 caller 略過）。 */
+/** 判斷欄位類型；不支援的類型回 undefined（由 caller 略過）。 */
 function classifyField(field: PdfLibField): PdfFieldType | undefined {
   if (field instanceof PDFTextField) {
     return field.isMultiline() ? 'multiline' : 'text'
@@ -122,8 +122,8 @@ function safeGetOptions(field: PDFDropdown | PDFOptionList): string[] {
 }
 
 /**
- * 收集一個欄位所有 widget 嘅 rect（連頁 index）。
- * 搵唔到頁 index 嘅 widget 唔收錄（避免錯頁疊框）。
+ * 收集一個欄位所有 widget 的 rect（連頁 index）。
+ * 搜尋不到頁 index 的 widget 不收錄（避免錯頁疊框）。
  */
 function collectRects(
   field: PdfLibField,
@@ -165,7 +165,7 @@ function collectRects(
   return rects
 }
 
-/** 決定 widget 喺邊一頁：先用 P()，再退而掃 Annots。 */
+/** 決定 widget 在邊一頁：先用 P()，再退而掃 Annots。 */
 function resolveWidgetPage(
   widget: { P: () => { tag: string } | undefined; dict: unknown },
   pages: ReturnType<PDFDocument['getPages']>,
@@ -181,7 +181,7 @@ function resolveWidgetPage(
     /* 落 fallback */
   }
 
-  // 2) 掃每頁 Annots，比對 widget 嘅 dict（dereference 後做身份比較）。
+  // 2) 掃每頁 Annots，比對 widget 的 dict（dereference 後做身份比較）。
   for (let i = 0; i < pages.length; i++) {
     const node = pages[i].node as {
       Annots?: () => { size: () => number; lookup: (idx: number) => unknown } | undefined
@@ -212,17 +212,17 @@ function resolveWidgetPage(
 //  填值
 // ------------------------------------------------------------
 
-/** checkbox 當「勾」嘅值（大小寫不敏感）。 */
+/** checkbox 當「勾」的值（大小寫不敏感）。 */
 const TRUTHY = new Set(['yes', 'true', '1', 'on', '是', '✓', 'x'])
 
 /**
- * 按 `values`（field name → 字串）逐欄填值，回傳填好嘅 PDF Blob。
+ * 按 `values`（field name → 字串）逐欄填值，回傳填好的 PDF Blob。
  *
  * - text / multiline → `setText`
  * - checkbox → 值屬 TRUTHY 就 `check()`，否則 `uncheck()`
- * - dropdown → `select(value)`；值唔喺 options 就 try/catch 略過（保留原值）
- * - 缺對應欄位 / 個別欄位填值出錯 → 略過該欄，唔中斷其餘欄位。
- * - **唔 flatten**：保持欄位可再編輯。
+ * - dropdown → `select(value)`；值不在 options 就 try/catch 略過（保留原值）
+ * - 缺對應欄位 / 個別欄位填值出錯 → 略過該欄，不中斷其餘欄位。
+ * - **不 flatten**：保持欄位可再編輯。
  *
  * @throws 友善中文 Error（壞檔 / 加密 / save 失敗）。
  */
@@ -238,7 +238,7 @@ export async function fillPdf(
     try {
       field = form.getField(name)
     } catch {
-      continue // 範本冇呢個欄位 → 略過。
+      continue // 範本沒有這個欄位 → 略過。
     }
 
     const value = rawValue ?? ''
@@ -252,8 +252,8 @@ export async function fillPdf(
         field instanceof PDFDropdown ||
         field instanceof PDFOptionList
       ) {
-        // pdf-lib 嘅 select() 對唔喺 options 嘅值唔會拋錯（會照加落去），
-        // 故要主動比對 options：值唔喺選項就略過（保留原狀），免得寫入無效值。
+        // pdf-lib 的 select() 對不在 options 的值不會拋錯（會照加落去），
+        // 故要主動比對 options：值不在選項就略過（保留原狀），免得寫入無效值。
         // 空字串當「清除選擇」處理（亦只係略過 select）。
         const opts = safeGetOptions(field)
         if (value !== '' && opts.includes(value)) {
@@ -273,13 +273,13 @@ export async function fillPdf(
 
   // CJK（中文）填值：pdf-lib 內建 standard font（Helvetica/WinAnsi）無法 encode
   // 中文字，若 save 時重新生成欄位 appearance 會拋「WinAnsi cannot encode」。
-  // 故設 AcroForm 嘅 NeedAppearances=true（指示 PDF 閱讀器自行用自身字型重繪），
-  // 並 save 時關閉 pdf-lib 嘅 appearance 生成——欄位「值」(/V) 照樣寫入，
+  // 故設 AcroForm 的 NeedAppearances=true（指示 PDF 閱讀器自行用自身字型重繪），
+  // 並 save 時關閉 pdf-lib 的 appearance 生成——欄位「值」(/V) 照樣寫入，
   // Adobe / Chrome / 預覽程式打開時會正確顯示中文，版面不受影響。
   try {
     form.acroForm.dict.set(PDFName.of('NeedAppearances'), PDFBool.True)
   } catch {
-    /* 個別 PDF 結構特殊：設唔到就算，唔影響填值本身 */
+    /* 個別 PDF 結構特殊：設不到就算，不影響填值本身 */
   }
 
   let bytes: Uint8Array
@@ -301,7 +301,7 @@ export async function fillPdf(
 /** 載入 PDF；壞檔 / 加密 → 拋友善中文 Error。 */
 async function loadPdf(buf: ArrayBuffer): Promise<PDFDocument> {
   try {
-    // ignoreEncryption: 容許部分加密 PDF 仍可讀；真正壞檔仍會喺 load 拋。
+    // ignoreEncryption: 容許部分加密 PDF 仍可讀；真正壞檔仍會在 load 拋。
     return await PDFDocument.load(buf, { ignoreEncryption: true })
   } catch (e) {
     const msg = (e as Error)?.message ?? ''

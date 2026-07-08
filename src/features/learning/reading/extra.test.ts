@@ -54,10 +54,10 @@ describe('relativeLabel', () => {
     expect(relativeLabel('')).toBe('')
   })
 
-  it('今日 / 聽日 / 尋日 三個臨界字串', () => {
+  it('今日 / 明天 / 昨天 三個臨界字串', () => {
     expect(relativeLabel('2026-05-15')).toBe('今日')
-    expect(relativeLabel('2026-05-16')).toBe('聽日')
-    expect(relativeLabel('2026-05-14')).toBe('尋日')
+    expect(relativeLabel('2026-05-16')).toBe('明天')
+    expect(relativeLabel('2026-05-14')).toBe('昨天')
   })
 
   it('過去：diff < 0 用 -diff 顯示「N 日前」（負號處理）', () => {
@@ -327,7 +327,7 @@ describe('progressPct — 99.5% 邊界（bug#2）', () => {
 //  computeStreaks — currentStreak「數到正數」分支
 //  ------------------------------------------------------------
 //  既有 util.test.ts / extra.test.ts 全用 2020 古早 session 日期，
-//  currentStreak 永遠 0，故「今日往回數 / 今日無但尋日有 / 遇斷裂即停」
+//  currentStreak 永遠 0，故「今日往回數 / 今日無但昨天有 / 遇斷裂即停」
 //  三條 current 路徑同 longest 嘅互動完全未行。
 //  此處鎖死「今日」= 本地 2026-05-31（跟 extra.test.ts 做法），
 //  全部用相對今日嘅 session.date 斷言正確 currentStreak（同 longest 互動）。
@@ -358,13 +358,13 @@ describe('computeStreaks — currentStreak 正數分支（鎖今日 2026-05-31�
     expect(r.longestStreak).toBe(3)
   })
 
-  it('(2) 今日無 session 但尋日有、再前一日亦有 → 由尋日計起 currentStreak=2', () => {
-    // 今日(5-31)無；尋日(5-30)有 → cursor 退到尋日往回數：5-30、5-29 → 2
+  it('(2) 今日無 session 但昨天有、再前一日亦有 → 由昨天計起 currentStreak=2', () => {
+    // 今日(5-31)無；昨天(5-30)有 → cursor 退到昨天往回數：5-30、5-29 → 2
     const books = [
       book({
         sessions: [
           session({ id: '1', date: '2026-05-29' }),
-          session({ id: '2', date: '2026-05-30' }), // 尋日（最近一日）
+          session({ id: '2', date: '2026-05-30' }), // 昨天（最近一日）
         ],
       }),
     ]
@@ -373,8 +373,8 @@ describe('computeStreaks — currentStreak 正數分支（鎖今日 2026-05-31�
     expect(r.longestStreak).toBe(2)
   })
 
-  it('(3) 今日同尋日都無 → currentStreak=0，但 longest 仍係舊段長度', () => {
-    // 舊段 5-20..5-22 連續 3：current 因今日/尋日皆無 → 0；longest 唔受影響仍 3
+  it('(3) 今日同昨天都無 → currentStreak=0，但 longest 仍係舊段長度', () => {
+    // 舊段 5-20..5-22 連續 3：current 因今日/昨天皆無 → 0；longest 唔受影響仍 3
     const books = [
       book({
         sessions: [
@@ -389,8 +389,8 @@ describe('computeStreaks — currentStreak 正數分支（鎖今日 2026-05-31�
     expect(r.longestStreak).toBe(3)
   })
 
-  it('(4) 今日有、尋日無（中間斷）→ currentStreak=1（longest 取舊長段）', () => {
-    // 今日(5-31)有但尋日(5-30)無 → 今日往回即斷 → current 1。
+  it('(4) 今日有、昨天無（中間斷）→ currentStreak=1（longest 取舊長段）', () => {
+    // 今日(5-31)有但昨天(5-30)無 → 今日往回即斷 → current 1。
     // 另有舊連續段 5-24..5-26（長 3）→ longest 3，與 current 1 並存。
     const books = [
       book({
@@ -408,7 +408,7 @@ describe('computeStreaks — currentStreak 正數分支（鎖今日 2026-05-31�
   })
 
   it('(5) 跨書同日 session 去重唔會撐大 current（兩本書同日 → 當一日）', () => {
-    // 兩本書都喺今日(5-31)有 session；加埋尋日(5-30)一次 → current 應為 2，唔係 3。
+    // 兩本書都喺今日(5-31)有 session；加埋昨天(5-30)一次 → current 應為 2，不是 3。
     const books = [
       book({ id: 'A', sessions: [session({ id: 'a1', date: '2026-05-31' })] }),
       book({ id: 'B', sessions: [session({ id: 'b1', date: '2026-05-31' })] }), // 同日另一本

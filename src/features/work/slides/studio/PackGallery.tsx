@@ -5,8 +5,8 @@ import { cx } from '../../../../ui'
 import PackPreview from '../PackPreview'
 
 // ============================================================
-//  視覺模板廊 —— 34 套 pack 用 PackPreview SVG 縮圖排成可揀 gallery。
-//  揀邊套，右邊即時預覽就用嗰套設計 token 換色（Canva feel）。
+//  視覺模板廊 —— 34 套 pack 用 PackPreview SVG 縮圖排成可選擇 gallery。
+//  選擇邊套，右邊即時預覽就用嗰套設計 token 換色（Canva feel）。
 // ============================================================
 
 type PackGroupId = 'recommended' | 'formal' | 'dark' | 'primary' | 'data' | 'story' | 'all'

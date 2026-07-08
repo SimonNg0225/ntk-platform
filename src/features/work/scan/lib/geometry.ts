@@ -35,13 +35,13 @@ export function quadArea(c: Corners): number {
   return Math.abs(a) / 2
 }
 
-// 自動偵測四角嘅合理性門檻（避免 jscanify 回離譜結果照用）。
+// 自動偵測四角的合理性門檻（避免 jscanify 回離譜結果照用）。
 const MIN_AREA_FRAC = 0.1 // 面積至少佔全圖 10%
 const MIN_SIDE_FRAC = 0.08 // 每邊至少 = 短邊 8%（擋退化長條）
 const BOUND_TOL_FRAC = 0.02 // 角點容許超出畫面 2%（長邊計）
 
 /**
- * 自動偵測出嚟嘅四邊形係咪「靠譜」（畀 detectCorners 過濾）。
+ * 自動偵測出來的四邊形係咪「靠譜」（給 detectCorners 過濾）。
  * 擋走：非有限座標、明顯出界、太細（< 10% 面積）、退化（有邊極短）。
  * 全頁／合理文件 → true；離譜 → false（caller 退回全頁，等用戶手動調）。
  */

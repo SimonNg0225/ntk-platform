@@ -55,7 +55,7 @@ describe('parseLessonGen', () => {
   })
 
   it('壞 JSON → throw', () => {
-    expect(() => parseLessonGen('唔係 json')).toThrow()
+    expect(() => parseLessonGen('不是 json')).toThrow()
   })
 
   it('完全冇 objectives 同 phases → throw', () => {

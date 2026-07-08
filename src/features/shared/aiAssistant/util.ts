@@ -4,7 +4,7 @@ import type { AiThread, AiMessage } from '../../../data/types'
 //  AI 助手 — 純函式 helpers（時間分組 / 統計 / 匯出）
 // ============================================================
 
-/** 約略字數（中文逐字 + 英文逐詞），用嚟做「對話長度」指標 */
+/** 約略字數（中文逐字 + 英文逐詞），用來做「對話長度」指標 */
 export function approxWords(text: string): number {
   if (!text) return 0
   const cjk = (text.match(/[一-鿿぀-ヿ]/g) || []).length
@@ -63,7 +63,7 @@ export interface AiStats {
   avgPerThread: number
   /** 最近 14 日每日訊息數（畫 sparkline 用），由舊到新 */
   daily: { key: string; label: string; count: number }[]
-  /** 連續有用嘅日數（streak） */
+  /** 連續有用的日數（streak） */
   streak: number
   busiestDay: { label: string; count: number } | null
 }
@@ -94,7 +94,7 @@ export function computeStats(
     if (i !== undefined) buckets[i].count++
   }
 
-  // streak：由今日往回數連續有訊息嘅日數
+  // streak：由今日往回數連續有訊息的日數
   let streak = 0
   for (let i = buckets.length - 1; i >= 0; i--) {
     if (buckets[i].count > 0) streak++

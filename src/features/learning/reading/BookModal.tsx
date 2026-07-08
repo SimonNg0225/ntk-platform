@@ -148,7 +148,7 @@ export default function BookModal({
 
   async function delBook() {
     const ok = await confirm({
-      title: '刪除呢本書？',
+      title: '刪除此書？',
       message: `「${book.title}」連同所有評分、筆記、閱讀記錄會被永久刪除。`,
       confirmText: '刪除',
       tone: 'danger',
@@ -490,7 +490,7 @@ export default function BookModal({
               onChange={(e) => setReview(e.target.value)}
               onBlur={() => patch({ review: review.trim() || undefined })}
               rows={3}
-              placeholder="呢本書帶俾你嘅嘢…"
+              placeholder="這本書帶給你的收穫…"
             />
           </div>
 

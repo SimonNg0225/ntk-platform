@@ -19,7 +19,7 @@ import { ROLES, BANDS, validateRegistration } from './logic'
 import { PERSONAS_BY_GENDER, type PersonaGender } from '../../lib/personas'
 
 // ============================================================
-//  新用戶註冊 — 首次登入嘅個人資料登記表單（硬 gate，填好先入到 app）。
+//  新用戶註冊 — 首次登入的個人資料登記表單（硬 gate，填好先入到 app）。
 //  必填：署名、身份、任教科目、同意條款。其餘選填。
 //  寫一份去 profiles（lib/profile），論壇 / 資源分享區共用。
 // ============================================================
@@ -55,7 +55,7 @@ function Chip({ on, onClick, children }: { on: boolean; onClick: () => void; chi
   )
 }
 
-/** 單個 persona 頭像揀掣（顯示喺已揀底色上，揀中描邊）。 */
+/** 單個 persona 頭像選擇掣（顯示在已選擇底色上，選擇中描邊）。 */
 function PersonaTile({
   id,
   selected,
@@ -123,7 +123,7 @@ export default function ProfileSetupModal({
     if (open) setAdvancedOpen(isEdit)
   }, [open, isEdit])
 
-  // 已有 profile（0014 前嘅舊用戶 / 喺資源分享區填過）→ 預填，免重新輸入。
+  // 已有 profile（0014 前的舊用戶 / 在資源分享區填過）→ 預填，免重新輸入。
   useEffect(() => {
     if (!open || !isProfileConfigured) return
     let cancelled = false
@@ -182,9 +182,9 @@ export default function ProfileSetupModal({
       else await completeRegistration(input)
       // 同步本機顯示名（歡迎訊息用），令本機同 Supabase 一致。
       setDisplayName(displayName)
-      // 首次登記：順手將主科設做課題大綱預設（編輯時唔覆蓋用戶當前選擇）。
+      // 首次登記：順手將主科設做課題大綱預設（編輯時不覆蓋用戶當前選擇）。
       if (!isEdit && subjects[0]) setSubjectPackId(subjects[0])
-      // 任教科目 → 課題自動同步：每科只首次載入（additive，唔覆蓋手動課題）。
+      // 任教科目 → 課題自動同步：每科只首次載入（additive，不覆蓋手動課題）。
       loadTopicsForSubjects(subjects)
       toast.success(isEdit ? '個人資料已更新。' : '老師檔案已建立，歡迎加入。')
       onDone()
@@ -195,7 +195,7 @@ export default function ProfileSetupModal({
     }
   }
 
-  // 硬 gate：onClose / 背景撳一律唔關，填好撳掣先走。
+  // 硬 gate：onClose / 背景按一律不關，填好按掣先走。
   return (
     <Modal
       open={open}
@@ -215,7 +215,7 @@ export default function ProfileSetupModal({
               data-modal-title
               className="text-[17px] font-semibold tracking-tight text-slate-800 dark:text-slate-100"
             >
-              {isEdit ? '編輯個人資料' : '建立你嘅老師檔案'}
+              {isEdit ? '編輯個人資料' : '建立你的老師檔案'}
             </h2>
             <p className="mt-0.5 text-sm leading-relaxed text-slate-500 dark:text-slate-400">
               {isEdit ? (
@@ -245,7 +245,7 @@ export default function ProfileSetupModal({
         </Field>
 
         {/* 身份 */}
-        <Field label="你嘅身份" required>
+        <Field label="你的身份" required>
           <div className="flex flex-wrap gap-2">
             {ROLES.map((r) => (
               <Chip key={r.id} on={role === r.id} onClick={() => setRole(r.id)}>
@@ -256,7 +256,7 @@ export default function ProfileSetupModal({
         </Field>
 
         {/* 任教科目 */}
-        <Field label="任教科目" required hint="可揀多科">
+        <Field label="任教科目" required hint="可選擇多科">
           <div className="flex max-h-36 flex-wrap gap-2 overflow-y-auto rounded-xl border border-[color:var(--border)] p-2.5">
             {SUBJECT_PACKS.map((p) => (
               <Chip key={p.id} on={subjects.includes(p.id)} onClick={() => toggle(subjects, setSubjects, p.id)}>
@@ -278,7 +278,7 @@ export default function ProfileSetupModal({
                 {isEdit ? '公開資料' : '選填資料'}
               </span>
               <span className="mt-0.5 block text-xs leading-relaxed text-slate-500 dark:text-slate-400">
-                學制、學校、簡介、頭像；唔填都可以先開始使用。
+                學制、學校、簡介、頭像；不填都可以先開始使用。
               </span>
             </span>
             <ChevronDown
@@ -311,15 +311,15 @@ export default function ProfileSetupModal({
                   onChange={(e) => setShowSchool(e.target.checked)}
                   className="h-5 w-5 rounded border-slate-300 text-accent focus:ring-accent/40 dark:border-slate-600 dark:bg-slate-700"
                 />
-                喺署名顯示學校（預設唔顯示，保障私隱）
+                在署名顯示學校（預設不顯示，保障私隱）
               </label>
 
               {/* 簡介（選填） */}
               <Field label="簡介（選填）">
-                <Textarea rows={2} value={bio} onChange={(e) => setBio(e.target.value)} placeholder="一兩句介紹你教咩 / 風格" maxLength={120} />
+                <Textarea rows={2} value={bio} onChange={(e) => setBio(e.target.value)} placeholder="一兩句介紹你教什麼 / 風格" maxLength={120} />
               </Field>
 
-              {/* 揀頭像（教師形象 persona） */}
+              {/* 選擇頭像（教師形象 persona） */}
               <Field label="頭像">
                 <div className="flex items-start gap-4">
                   <div className="flex shrink-0 flex-col items-center gap-1">
@@ -350,7 +350,7 @@ export default function ProfileSetupModal({
                       onClick={() => setAvatarPreset(null)}
                       className="inline-flex min-h-11 items-center rounded-lg px-3 text-xs font-medium text-slate-500 underline underline-offset-2 transition hover:bg-accent-soft hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98] dark:text-slate-400 dark:hover:bg-accent/15"
                     >
-                      唔用形象 · 用文字頭像（署名首字）
+                      不用形象 · 用文字頭像（署名首字）
                     </button>
                   </div>
                 </div>
@@ -379,7 +379,7 @@ export default function ProfileSetupModal({
           )}
         </div>
 
-        {/* 同意條款（連結開新分頁，唔會誤觸 checkbox）—— 只首次登記要 */}
+        {/* 同意條款（連結開新分頁，不會誤觸 checkbox）—— 只首次登記要 */}
         {!isEdit && (
           <div className="flex items-start gap-2 rounded-xl bg-[color:var(--surface-2)] p-3 text-xs leading-relaxed text-slate-600 dark:text-slate-300">
           <input
@@ -409,7 +409,7 @@ export default function ProfileSetupModal({
               社群守則
             </a>
             <label htmlFor="reg-agree" className="cursor-pointer">
-              {' '}—— 尊重版權、友善交流，唔上載侵權或不當內容。
+              {' '}—— 尊重版權、友善交流，不上載侵權或不當內容。
             </label>
           </span>
           </div>

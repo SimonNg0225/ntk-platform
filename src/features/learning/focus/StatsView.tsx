@@ -102,7 +102,7 @@ export default function StatsView({
       <EmptyState
         icon={Activity}
         title="未有專注紀錄"
-        hint="完成第一節專注後，呢度就會顯示你嘅趨勢、熱力圖、黃金時段同專案分析。"
+        hint="完成第一節專注後，這裡就會顯示你的趨勢、熱力圖、黃金時段同專案分析。"
       />
     )
   }

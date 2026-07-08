@@ -12,9 +12,9 @@ export interface DeckRecord extends Entity {
   title: string
   subtitle?: string
   slides: Slide[]
-  /** AI 出嘅英文封面搜尋詞（選填）— 下載時攞 Pexels 封面相用 */
+  /** AI 出的英文封面搜尋詞（選填）— 下載時取得 Pexels 封面相用 */
   coverImageQuery?: string
-  /** 內容指紋（選填）— 同一內容再生成時自動攞返呢份、唔再行 AI（slideSourceKey） */
+  /** 內容指紋（選填）— 同一內容再生成時自動取得返呢份、不再行 AI（slideSourceKey） */
   sourceKey?: string
 }
 
