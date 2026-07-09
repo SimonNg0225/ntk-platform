@@ -201,6 +201,7 @@ export function AppShell() {
   const isSettings = activeId === '__settings__'
   const isAdmin = activeId === '__admin__'
   const feature = activeId && !isSettings && !isAdmin ? getFeature(activeId) : undefined
+  const featureFullHeight = Boolean(feature?.fullHeight)
 
   useEffect(() => {
     const screen = isSettings ? 'settings' : isAdmin ? 'admin' : feature ? 'feature' : 'overview'
@@ -234,7 +235,7 @@ export function AppShell() {
     <NavProvider open={navigate}>
       <div className="flex h-screen overflow-hidden bg-[color:var(--app-bg)] text-slate-900 dark:text-slate-100">
         {/* 桌面側邊欄（展開 / 幼條 rail；收起時不 render，改用浮掣展開）*/}
-        {sidebarMode !== 'hidden' && (
+        {sidebarMode !== 'hidden' && !featureFullHeight && (
           <Sidebar
             activeId={activeId}
             onSelect={navigate}
@@ -285,7 +286,7 @@ export function AppShell() {
           id="main-content"
           tabIndex={-1}
           className={`relative flex flex-1 flex-col overflow-hidden focus:outline-none ${
-            sidebarMode === 'expanded'
+            sidebarMode === 'expanded' && !featureFullHeight
               ? 'et-main-panel md:my-3 md:mr-3'
               : ''
           }`}
@@ -302,7 +303,7 @@ export function AppShell() {
           {/* 桌面右上角固定「快速記低」浮掣（手機改用頂欄 icon）。
               絕對定位在 <main> 右上，z-30 浮在內容之上；位於右邊內距區，
               不會撞到內容區左上的「← 返回概覽」同標題。 */}
-          {activeId !== null && (
+          {activeId !== null && !featureFullHeight && (
             <QuickAddButton
               onClick={() => setQuickAddOpen(true)}
               className="absolute right-5 top-5 z-30 hidden md:inline-flex lg:right-8"
@@ -310,7 +311,7 @@ export function AppShell() {
           )}
 
           {/* 側欄收起時：桌面左上角浮出「展開側欄」掣 */}
-          {sidebarMode === 'hidden' && (
+          {sidebarMode === 'hidden' && !featureFullHeight && (
             <button
               onClick={() => setSidebarMode('expanded')}
               title={t('shell.expandSidebar', { defaultValue: '展開側欄（⌘B）' })}
@@ -323,11 +324,17 @@ export function AppShell() {
 
           {/* overflow-x-hidden：杜絕任何過寬子元素令整頁可左右捲（iOS 尤甚）；寬表格各自有 overflow-x-auto 內捲，不受影響 */}
           <div
-            className="min-w-0 flex-1 overflow-x-hidden overflow-y-auto"
+            className={`min-w-0 flex-1 overflow-x-hidden ${
+              featureFullHeight ? 'overflow-y-hidden' : 'overflow-y-auto'
+            }`}
           >
             <div
-              className={`app-content mx-auto w-full px-4 py-5 sm:px-6 sm:py-6 lg:px-8 ${
-                !isSettings && !isAdmin && !feature ? 'max-w-none' : 'max-w-[1800px]'
+              className={`app-content mx-auto w-full ${
+                featureFullHeight
+                  ? 'h-full max-w-none px-2 py-2 sm:px-3 sm:py-3'
+                  : `px-4 py-5 sm:px-6 sm:py-6 lg:px-8 ${
+                      !isSettings && !isAdmin && !feature ? 'max-w-none' : 'max-w-[1800px]'
+                    }`
               }`}
             >
               {isSettings ? (
@@ -364,10 +371,10 @@ export function AppShell() {
               ) : !feature ? (
                 <Home onOpen={navigate} />
               ) : (
-                <div className="space-y-5">
+                <div className={featureFullHeight ? 'flex h-full min-h-0 flex-col' : 'space-y-5'}>
                   <button
                     onClick={() => navigate(null)}
-                    className="inline-flex min-h-11 items-center gap-1.5 rounded-lg px-1 text-[13px] font-medium text-slate-500 transition hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+                    className="inline-flex min-h-10 shrink-0 items-center gap-1.5 rounded-lg px-1 text-[13px] font-medium text-slate-500 transition hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
                   >
                     <ArrowLeft size={15} strokeWidth={1.9} />
                     {t('shell.backToMode', {
@@ -387,7 +394,7 @@ export function AppShell() {
                       </p>
                     </div>
                   )}
-                  <div className="feature-runtime">
+                  <div className={featureFullHeight ? 'feature-runtime min-h-0 flex-1' : 'feature-runtime'}>
                     {feature.requiresPaid && !isPaid ? (
                       <PaidGate feature={feature} loading={subLoading} />
                     ) : feature.status === 'ready' && feature.component ? (
@@ -406,7 +413,7 @@ export function AppShell() {
                       <ComingSoon name={featName(t, feature)} />
                     )}
                   </div>
-                  {feature.status === 'ready' && (
+                  {feature.status === 'ready' && !feature.hideNextSteps && (
                     <NextStepsBar
                       activeId={feature.id}
                       mode={modeDef.id}

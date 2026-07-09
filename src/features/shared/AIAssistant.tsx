@@ -52,9 +52,6 @@ import {
   StatCard,
   SectionTitle,
   Card,
-  FeatureGuide,
-  PageHero,
-  type FeatureGuideStep,
   cx,
 } from '../../ui'
 import {
@@ -748,82 +745,17 @@ export default function AIAssistant() {
     )
   }
 
-  const personaLabel = personaLabelOf(activePersona, t)
   const modelShort = models.find((m) => m.id === activeModel)?.short ?? activeModel
-
-  // 「如何使用」教學引導步驟（按模式微調文案；只渲染頭 4 步）
-  const guideSteps: FeatureGuideStep[] =
-    mode === 'work'
-      ? [
-          {
-            title: t('aiasst.guideWorkStep1Title', { defaultValue: '選擇起點' }),
-            desc: t('aiasst.guideWorkStep1Desc', { defaultValue: '由首頁卡片選擇「出題 / 寫教案 / 擬評語」，或直接輸入你想準備的課題。' }),
-          },
-          {
-            title: t('aiasst.guideWorkStep2Title', { defaultValue: '連結教材做上下文' }),
-            desc: t('aiasst.guideWorkStep2Desc', { defaultValue: '按「上下文」連結筆記或會議紀錄，AI 回答時會貼合你的教材。' }),
-          },
-          {
-            title: t('aiasst.guideWorkStep3Title', { defaultValue: '調回應風格' }),
-            desc: t('aiasst.guideWorkStep3Desc', { defaultValue: '「精準 / 平衡 / 創意」按需要選擇；想換深入些就選擇「深入」模型。' }),
-          },
-          {
-            title: t('aiasst.guideWorkStep4Title', { defaultValue: '儲存有用內容' }),
-            desc: t('aiasst.guideWorkStep4Desc', { defaultValue: '滿意的回覆可「加入筆記」，或整段對話匯出做 Markdown。' }),
-          },
-        ]
-      : [
-          {
-            title: t('aiasst.guideLearnStep1Title', { defaultValue: '選擇起點' }),
-            desc: t('aiasst.guideLearnStep1Desc', { defaultValue: '由首頁卡片選擇「解釋概念 / 出練習 / 規劃溫習」，或直接輸入你想查詢的內容。' }),
-          },
-          {
-            title: t('aiasst.guideLearnStep2Title', { defaultValue: '連結筆記做上下文' }),
-            desc: t('aiasst.guideLearnStep2Desc', { defaultValue: '按「上下文」連結你的筆記，AI 就會就住你的內容來答。' }),
-          },
-          {
-            title: t('aiasst.guideLearnStep3Title', { defaultValue: '調回應風格' }),
-            desc: t('aiasst.guideLearnStep3Desc', { defaultValue: '想答案精簡就選擇「精準」，想多些例子就選擇「創意」。' }),
-          },
-          {
-            title: t('aiasst.guideLearnStep4Title', { defaultValue: '存起重點' }),
-            desc: t('aiasst.guideLearnStep4Desc', { defaultValue: '有用的答案可「加入筆記」一鍵收藏，方便日後溫習。' }),
-          },
-        ]
+  const activeStyle = tempToStyle(activeTemp)
+  const styleOptions: { id: AiStyle; label: string }[] = [
+    { id: 'precise', label: t('aiasst.stylePrecise', { defaultValue: '精準' }) },
+    { id: 'balanced', label: t('aiasst.styleBalanced', { defaultValue: '平衡' }) },
+    { id: 'creative', label: t('aiasst.styleCreative', { defaultValue: '創意' }) },
+  ]
 
   return (
-    <div className="flex flex-col gap-3">
-      {/* 頁頂：統一共用 PageHero（accent hero）。標題/副題按模式微調，
-          有對話時副題帶對話數，否則用模式標語。 */}
-      <PageHero
-        icon={Sparkles}
-        kicker={t('aiasst.heroKicker', { defaultValue: 'AI Assistant' })}
-        title={
-          mode === 'work'
-            ? t('aiasst.heroTitleWork', { defaultValue: '教學助手' })
-            : t('aiasst.heroTitleLearning', { defaultValue: '個人 AI 助手' })
-        }
-        description={
-          stats.threads > 0
-            ? t('aiasst.heroSubtitleHas', {
-                n: stats.threads,
-                tagline,
-                defaultValue: `${stats.threads} 個對話 · ${tagline}`,
-              })
-            : tagline
-        }
-      />
-      {/* 教學引導：未開對話（landing）時在頂顯示「如何使用」；可摺疊 + 可永久收起。
-          開了對話後讓位給對話工作枱（避免吃用垂直空間）。 */}
-      {!currentThreadId && (
-        <FeatureGuide
-          storageKey={`aiAssistant.${mode}`}
-          title={t('aiasst.guideTitle', { defaultValue: '個人 AI 助手使用說明' })}
-          steps={guideSteps}
-        />
-      )}
-
-      <div className="flex h-[78vh] min-h-0 gap-3">
+    <div className="flex h-full min-h-0 overflow-hidden rounded-[20px] border border-slate-200 bg-white shadow-sm dark:border-slate-700/70 dark:bg-slate-900">
+      <div className="flex min-h-0 flex-1">
       {/* ───────── 側欄：對話清單（手機=抽屜 overlay；sm+=inline）───────── */}
       {sidebarOpen && (
         <button
@@ -834,7 +766,7 @@ export default function AIAssistant() {
         />
       )}
       {sidebarOpen && (
-        <aside className="fixed inset-y-0 left-0 z-40 flex w-64 max-w-[82vw] shrink-0 flex-col border-r border-slate-200/80 bg-white shadow-overlay dark:border-slate-700/70 dark:bg-slate-800 sm:static sm:z-auto sm:max-w-none sm:rounded-2xl sm:border sm:shadow-none sm:dark:bg-slate-800/60">
+        <aside className="fixed inset-y-0 left-0 z-40 flex w-64 max-w-[82vw] shrink-0 flex-col border-r border-slate-200/80 bg-white shadow-overlay dark:border-slate-700/70 dark:bg-slate-900 sm:static sm:z-auto sm:h-full sm:w-72 sm:max-w-none sm:shadow-none">
           <div className="space-y-2 border-b border-slate-200/70 p-2.5 dark:border-slate-700/60">
             <div className="flex items-center justify-between sm:hidden">
               <span className="px-0.5 text-xs font-semibold text-slate-500 dark:text-slate-400">{t('aiasst.sidebarConversations', { defaultValue: '對話' })}</span>
@@ -933,53 +865,28 @@ export default function AIAssistant() {
       )}
 
       {/* ───────── 主對話區 ───────── */}
-      <div className="flex min-w-0 flex-1 flex-col gap-3">
+      <div className="flex min-w-0 flex-1 flex-col bg-white dark:bg-slate-900">
         {/* 工具列 */}
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex min-h-[58px] shrink-0 items-center gap-2 border-b border-slate-200/80 px-3 dark:border-slate-700/70 sm:px-4">
           <Tooltip label={t('aiasst.sidebarTooltip', { defaultValue: `側欄（${MOD}+B）`, mod: MOD })}>
             <IconButton label={t('aiasst.toggleSidebar', { defaultValue: '切換側欄' })} onClick={() => setSidebarOpen((v) => !v)} active={sidebarOpen}>
               <PanelLeft size={18} />
             </IconButton>
           </Tooltip>
 
-          {/* 模型（輕量 segmented，不似表單 select） */}
-          <SegmentedControl
-            size="sm"
-            value={activeModel}
-            onChange={(id) => setModel(id as AIModel)}
-            options={models.map((m) => ({ id: m.id, label: m.label }))}
-          />
-
-          {/* 人格 */}
-          <Menu
-            align="start"
-            trigger={
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200/80 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 transition hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700">
-                <MessageCircle size={13} className="text-slate-400" /> {personaLabel}
-                <ChevronDown size={12} className="text-slate-400" />
-              </span>
-            }
-            items={PERSONAS.map((p) => ({
-              id: p.id,
-              label: personaLabelOf(p.id, t),
-              icon: activePersona === p.id ? Check : undefined,
-              onSelect: () => setPersona(p.id),
-            }))}
-          />
-
-          {/* 回應風格（取代 temperature 數字滑桿；用老師語言、無 0–1 jargon） */}
-          <SegmentedControl
-            size="sm"
-            value={tempToStyle(activeTemp)}
-            onChange={(s) => setTemp(STYLE_TEMP[s as AiStyle])}
-            options={[
-              { id: 'precise', label: t('aiasst.stylePrecise', { defaultValue: '精準' }) },
-              { id: 'balanced', label: t('aiasst.styleBalanced', { defaultValue: '平衡' }) },
-              { id: 'creative', label: t('aiasst.styleCreative', { defaultValue: '創意' }) },
-            ]}
-          />
-
-          <div className="flex-1" />
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2">
+              <h1 className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
+                {mode === 'work'
+                  ? t('aiasst.heroTitleWork', { defaultValue: '教學助手' })
+                  : t('aiasst.heroTitleLearning', { defaultValue: '個人 AI 助手' })}
+              </h1>
+              <Badge tone="slate">{modelShort}</Badge>
+            </div>
+            <p className="mt-0.5 truncate text-xs text-slate-500 dark:text-slate-400">
+              {currentThreadId ? threadTitle : tagline}
+            </p>
+          </div>
 
           {/* 上下文 */}
           <Tooltip label={t('aiasst.contextTooltip', { defaultValue: '連結資料做上下文' })}>
@@ -988,6 +895,7 @@ export default function AIAssistant() {
               size="sm"
               icon={Paperclip}
               onClick={() => setContextOpen(true)}
+              className="hidden sm:inline-flex"
             >
               {t('aiasst.context', { defaultValue: '上下文' })}
               {activeContexts.length > 0 && (
@@ -1008,44 +916,46 @@ export default function AIAssistant() {
               </span>
             }
             items={[
+              ...models.map((m) => ({
+                id: `model-${m.id}`,
+                label: t('aiasst.menuModel', {
+                  model: m.label,
+                  defaultValue: `模型：${m.label}`,
+                }),
+                icon: activeModel === m.id ? Check : undefined,
+                onSelect: () => setModel(m.id),
+              })),
+              ...PERSONAS.map((p) => ({
+                id: `persona-${p.id}`,
+                label: t('aiasst.menuPersona', {
+                  persona: personaLabelOf(p.id, t),
+                  defaultValue: `身份：${personaLabelOf(p.id, t)}`,
+                }),
+                icon: activePersona === p.id ? Check : undefined,
+                onSelect: () => setPersona(p.id),
+              })),
+              ...styleOptions.map((s) => ({
+                id: `style-${s.id}`,
+                label: t('aiasst.menuStyle', {
+                  style: s.label,
+                  defaultValue: `語氣：${s.label}`,
+                }),
+                icon: activeStyle === s.id ? Check : undefined,
+                onSelect: () => setTemp(STYLE_TEMP[s.id]),
+              })),
               { id: 'palette', label: t('aiasst.menuPalette', { defaultValue: `命令面板  ${MOD}K`, mod: MOD }), icon: Command, onSelect: () => setPaletteOpen(true) },
               { id: 'tpl', label: t('aiasst.menuTemplates', { defaultValue: `範本庫  ${MOD}/`, mod: MOD }), icon: Library, onSelect: () => setTemplateOpen(true) },
+              { id: 'ctx', label: t('aiasst.paletteActionCtx', { defaultValue: '連結上下文' }), icon: Paperclip, onSelect: () => setContextOpen(true) },
               { id: 'export', label: t('aiasst.menuExport', { defaultValue: '匯出對話 (.md)' }), icon: Download, onSelect: exportConversation, disabled: !currentThreadId },
               { id: 'stats', label: t('aiasst.menuStats', { defaultValue: '用量統計' }), icon: BarChart3, onSelect: () => setStatsOpen(true) },
             ]}
           />
         </div>
 
-        {/* 對話標題列（有對話時） */}
-        {currentThreadId && (
-          <div className="flex items-center gap-2 px-1">
-            <h2 className="truncate text-sm font-semibold text-slate-700 dark:text-slate-200">
-              {threadTitle}
-            </h2>
-            <Badge tone="slate">{modelShort}</Badge>
-            {activeContexts.length > 0 && (
-              <Badge tone="accent" icon={Paperclip}>
-                {t('aiasst.filesCount', { defaultValue: `${activeContexts.length} 份資料`, count: activeContexts.length })}
-              </Badge>
-            )}
-            <div className="flex-1" />
-            <Tooltip label={t('aiasst.rename', { defaultValue: '重新命名' })}>
-              <IconButton label={t('aiasst.rename', { defaultValue: '重新命名' })} size="sm" onClick={() => setRenameTarget(currentThreadId)}>
-                <Pencil size={14} />
-              </IconButton>
-            </Tooltip>
-            <Tooltip label={t('aiasst.exportMarkdown', { defaultValue: '匯出 Markdown' })}>
-              <IconButton label={t('aiasst.export', { defaultValue: '匯出' })} size="sm" onClick={exportConversation}>
-                <Download size={14} />
-              </IconButton>
-            </Tooltip>
-          </div>
-        )}
-
         {/* 訊息區 */}
         <div
           ref={scrollRef}
-          className="flex-1 space-y-6 overflow-y-auto rounded-2xl border border-slate-200/80 bg-slate-50/60 p-4 dark:border-slate-700/60 dark:bg-slate-900/30 sm:px-5 sm:py-5"
+          className="min-h-0 flex-1 space-y-4 overflow-y-auto bg-slate-50/70 px-3 py-4 dark:bg-slate-950/30 sm:px-5"
         >
           {messages.length === 0 && streaming === null ? (
             <Welcome
@@ -1306,14 +1216,14 @@ const Composer = memo(function Composer({
   }
 
   return (
-    <div className="sticky bottom-0 rounded-2xl border border-slate-200/80 bg-white p-2 shadow-sm transition focus-within:border-accent/50 focus-within:ring-2 focus-within:ring-accent/20 dark:border-slate-700/70 dark:bg-slate-800 dark:shadow-none">
+    <div className="shrink-0 border-t border-slate-200/80 bg-white p-2 transition focus-within:border-accent/50 dark:border-slate-700/70 dark:bg-slate-900">
       {/* ⚠️ iOS Safari：input/textarea font-size < 16px 會在 focus 自動放大頁面，
          每次 focus 都引起 viewport zoom → 用戶見到「跳一跳」。所以手機強制 ≥16px。
          desktop (sm:) 先回到原本的 13.5px 設計尺寸。 */}
       <Textarea
         ref={ref}
-        rows={2}
-        className="resize-none border-0 bg-transparent px-2.5 py-1.5 text-[16px] leading-relaxed shadow-none focus:ring-0 sm:text-[13.5px] dark:bg-transparent"
+        rows={1}
+        className="max-h-28 min-h-11 resize-none border-0 bg-transparent px-2.5 py-1.5 text-[16px] leading-relaxed shadow-none focus:ring-0 sm:text-[14px] dark:bg-transparent"
         placeholder={t('aiasst.composerPlaceholder', {
           defaultValue: `輸入你想問的內容…（Enter 送出 · Shift+Enter 換行 · ${MOD}/ 範本）`,
           mod: MOD,
@@ -1323,7 +1233,7 @@ const Composer = memo(function Composer({
         onKeyDown={onKeyDown}
         disabled={busy}
       />
-      <div className="flex items-center gap-1 px-0.5 pt-1">
+      <div className="flex items-center gap-1 px-0.5 pt-0.5">
         <Tooltip label={t('aiasst.templateLibraryTooltip', { defaultValue: `範本庫（${MOD}/）`, mod: MOD })}>
           <IconButton label={t('aiasst.templateLibrary', { defaultValue: '範本庫' })} size="sm" onClick={onOpenTemplate}>
             <Library size={16} />

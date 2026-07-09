@@ -31,6 +31,13 @@ export interface Feature {
    * 返回掣仍然由 host 提供。預設 false / undefined = host render 標準 header。
    */
   selfManagedHeader?: boolean
+  /**
+   * 功能需要吃滿主內容高度，由功能內部管理捲動。
+   * 適合 chat / canvas / editor 類介面，避免 App 外層再出現頁面捲動。
+   */
+  fullHeight?: boolean
+  /** 不顯示 App host 的 NextStepsBar。 */
+  hideNextSteps?: boolean
   /** 要付費方案（Plus / Pro）先用得；免費用戶會見到升級提示。 */
   requiresPaid?: boolean
   /**

@@ -92,6 +92,9 @@ export const FEATURES: Feature[] = [
     group: 'AI',
     component: AIAssistant,
     status: 'ready',
+    selfManagedHeader: true,
+    fullHeight: true,
+    hideNextSteps: true,
   },
   {
     id: 'learning-card-generator',
@@ -225,6 +228,9 @@ export const FEATURES: Feature[] = [
     component: AIAssistant,
     status: 'ready',
     hideFromNavigation: true,
+    selfManagedHeader: true,
+    fullHeight: true,
+    hideNextSteps: true,
   },
   {
     id: 'work-prompt-library',
