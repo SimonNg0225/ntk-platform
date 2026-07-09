@@ -28,7 +28,14 @@ import type { ModeId } from '../modes/modes'
 import { BRAND_NAME, BRAND_TAGLINE_ZH } from '../lib/brand'
 
 const DEFAULT_SIDEBAR_IDS: Record<ModeId, readonly string[]> = {
-  work: ['work-dashboard', 'work-ai', 'work-lesson-plan', 'work-generate', 'work-tasks', 'calendar'],
+  work: [
+    'work-dashboard',
+    'work-prompt-library',
+    'work-lesson-plan',
+    'work-generate',
+    'work-tasks',
+    'calendar',
+  ],
   learning: ['learning-dashboard', 'learning-ai', 'learning-flashcards', 'learning-notes', 'learning-goals', 'calendar'],
 }
 

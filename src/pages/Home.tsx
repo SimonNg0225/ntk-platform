@@ -49,17 +49,20 @@ import { getSubjectPack, type SubjectPack } from '../data/subjects'
 import { loadTopicsForSubjects, dedupeTopicsCol } from '../features/work/topicImport/applyTopics'
 import { useToast } from '../context/ToastContext'
 import { writeAiHandoff } from '../features/shared/aiAssistant/handoff'
-import {
-  writeComposerHandoff,
-  type ComposerMaterialTool,
-} from '../features/shared/composerHandoff'
+import { writeComposerHandoff } from '../features/shared/composerHandoff'
 
 interface Props {
   onOpen: (id: string) => void
 }
 
 const MODE_QUICK_IDS: Record<ModeId, readonly string[]> = {
-  work: ['work-dashboard', 'work-ai', 'work-timetable', 'work-questions', 'work-doc-digest'],
+  work: [
+    'work-dashboard',
+    'work-prompt-library',
+    'work-timetable',
+    'work-questions',
+    'work-doc-digest',
+  ],
   learning: ['learning-dashboard', 'learning-ai', 'learning-card-generator', 'learning-goals', 'calendar'],
 }
 
@@ -85,7 +88,6 @@ type RecentWork = {
 type ComposerRoute = {
   featureId: string
   label: string
-  materialTool?: ComposerMaterialTool
   handoffText?: string
 }
 
@@ -110,93 +112,37 @@ function stripAskDataIntent(input: string): string {
   )
 }
 
-function inferMaterialTool(text: string): ComposerMaterialTool {
-  if (hasIntent(text, [/試卷|組卷|mock|paper|卷[一二三四1-4]?/i])) return 'paper'
-  if (hasIntent(text, [/工作紙|練習|worksheet|exercise|小測|測驗|quiz|test/i])) return 'worksheet'
-  if (hasIntent(text, [/mc|選擇題|multiple choice/i])) return 'mc'
-  if (hasIntent(text, [/短答|short/i])) return 'short'
-  if (hasIntent(text, [/個案|case study|case/i])) return 'case'
-  if (hasIntent(text, [/長題|結構式|long/i])) return 'long'
-  return 'worksheet'
-}
-
-function inferWorkComposerRoute(input: string): ComposerRoute {
+function inferWorkToolRoute(input: string): ComposerRoute | null {
   const text = input.trim().toLowerCase()
-  if (!text) return { featureId: 'work-lesson-plan', label: '備課 / 教案' }
+  if (!text) return null
 
   if (
     hasIntent(text, [
-      /問我.*資料|我的資料|我的資料|根據.*資料|用.*資料.*答|資料.*ai/i,
-      /我(今|本)?(個)?星期.*(要做|跟進|待辦)|我最近.*(做過|記低|安排)|我有什麼(待辦|日程|目標)/i,
+      /(整|做|製作|生成|設計|準備|建立|create|make|build).{0,18}(ppt|powerpoint|簡報|投影片|slides?|deck|presentation)/i,
+      /^(ppt|powerpoint|簡報|投影片|slides?|deck|presentation)\s*(製作|生成|設計|create|make)?/i,
     ])
   ) {
-    return { featureId: 'ask-data', label: '資料問答 AI', handoffText: stripAskDataIntent(input) }
+    return { featureId: 'work-slides', label: '簡報工作室' }
   }
+
   if (
     hasIntent(text, [
-      /^(幫我|請|please)?\s*(全域搜尋|搜尋|搜索|搜尋返|搜尋|找回|找|查找|search|find)/i,
-      /全域搜尋|平台中.*(搜尋|搜尋|找)|搜尋返.*(筆記|教案|題目|資源|會議|待辦)/i,
+      /^(幫我|請|please)?\s*(全域搜尋|搜尋|搜索|搜尋返|找回|找|查找|search|find)/i,
+      /搜尋返.*(筆記|教案|題目|資源|會議|待辦)/i,
     ])
   ) {
     return { featureId: 'search', label: '全域搜尋', handoffText: stripSearchIntent(input) }
   }
+
   if (hasIntent(text, [/錄音|轉文字|逐字稿|transcrib|audio|聲音|mp3|m4a/i])) {
     return { featureId: 'work-transcribe', label: '錄音轉文字' }
   }
+
   if (hasIntent(text, [/掃描|影低|影相|相片|scan|拍照|pdf\s*掃描/i])) {
     return { featureId: 'work-scan', label: '掃描 PDF' }
   }
-  if (hasIntent(text, [/簡報|powerpoint|ppt|投影片|slide|deck|presentation/i])) {
-    return { featureId: 'work-slides', label: '簡報工作室' }
-  }
-  if (hasIntent(text, [/成績|分數|得分|測驗表現|考試表現|學生表現|弱項|等級預測|預測等級|成績預測|分數分佈|grade|score|analytics/i])) {
-    return { featureId: 'work-grade-analytics', label: '成績分析' }
-  }
-  if (
-    hasIntent(text, [
-      /生成|出題|題目|工作紙|練習|小測|測驗|quiz|test|試卷|組卷|mc|選擇題|短答|長題|個案|case|dse\s*風格/i,
-    ])
-  ) {
-    return { featureId: 'work-generate', label: '教材生成', materialTool: inferMaterialTool(text) }
-  }
-  if (hasIntent(text, [/評分準則|rubric|marking|評分點|參考答案|量表|評語|回饋/i])) {
-    return { featureId: 'work-rubric', label: '評分準則' }
-  }
-  if (hasIntent(text, [/會議|meeting|議程|minutes|決議|會議記錄|會議紀錄|跟進清單/i])) {
-    return { featureId: 'work-meeting-notes', label: '會議筆記' }
-  }
-  if (hasIntent(text, [/時間表|課表|行事曆|日程|排程|calendar|schedule/i])) {
-    return { featureId: 'calendar', label: '行事曆' }
-  }
-  if (hasIntent(text, [/文件速讀|通告|摘要|撮要|歸納|行政文件|pdf|docx|word|表格|document/i])) {
-    return { featureId: 'work-doc-digest', label: '文件速讀' }
-  }
-  if (hasIntent(text, [/觀課|評課|聽課|observation/i])) {
-    return { featureId: 'work-observation', label: '觀課 / 評課' }
-  }
-  if (hasIntent(text, [/週報|周報|工作報告|報告|總結本週|weekly report/i])) {
-    return { featureId: 'work-report', label: '工作週報' }
-  }
-  if (hasIntent(text, [/課程指引|syllabus|curriculum|課題匯入|課綱/i])) {
-    return { featureId: 'work-topic-import', label: '課題匯入' }
-  }
-  if (hasIntent(text, [/資源庫|收藏|教材連結|存檔|resource|library/i])) {
-    return { featureId: 'work-resources', label: '教學資源庫' }
-  }
-  if (hasIntent(text, [/批改|待辦|todo|功課|作業|改卷|行政事項|跟進/i])) {
-    return { featureId: 'work-tasks', label: '待辦 / 批改' }
-  }
-  if (hasIntent(text, [/如何教|教學指引|教學步驟|常見誤解|差異化|引導|提問/i])) {
-    return { featureId: 'work-teach-guide', label: '教學指引' }
-  }
-  if (hasIntent(text, [/教案|備課|下一堂|一堂|課堂|lesson|教學目標|教學活動|分鐘課|40\s*分鐘/i])) {
-    return { featureId: 'work-lesson-plan', label: '備課 / 教案' }
-  }
-  if (hasIntent(text, [/dse|公開試|文憑試|操練|drill/i])) {
-    return { featureId: 'work-dse', label: 'DSE 操練' }
-  }
 
-  return { featureId: 'work-ai', label: '教學 AI' }
+  return null
 }
 
 function inferLearningComposerRoute(input: string): ComposerRoute {
@@ -505,7 +451,7 @@ export default function Home({ onOpen }: Props) {
         ]
 
   const composerPlaceholder = isWorkMode
-    ? '輸入課題、任務、搜尋或資料問題'
+    ? '輸入問題或任務，直接開始對話'
     : '輸入內容、目標、搜尋或資料問題'
 
   useEffect(() => {
@@ -526,20 +472,17 @@ export default function Home({ onOpen }: Props) {
   const dispatchComposerPrompt = (input?: string) => {
     const raw = (input ?? lessonTopic).trim()
     if (isWorkMode) {
-      const route = inferWorkComposerRoute(raw)
       const taskText = raw || `幫我準備「${topicSuggestion}」一堂課`
-      if (route.featureId === 'work-ai') {
-        writeAiHandoff('work', taskText)
-        toast.success('已帶入教學 AI')
-      } else {
-        writeComposerHandoff({
-          featureId: route.featureId,
-          text: route.handoffText ?? taskText,
-          materialTool: route.materialTool,
-        })
+      const route = inferWorkToolRoute(raw)
+      if (route) {
+        writeComposerHandoff({ featureId: route.featureId, text: route.handoffText ?? taskText })
         toast.success(`已按內容打開「${route.label}」`)
+        onOpen(route.featureId)
+        return
       }
-      onOpen(route.featureId)
+      writeAiHandoff('work', taskText, { autoSend: true })
+      toast.success('正在開始教學助手對話')
+      onOpen('work-ai')
       return
     }
 
@@ -577,7 +520,7 @@ export default function Home({ onOpen }: Props) {
               {isWorkMode ? '想準備哪一堂課？' : '今日想整理什麼？'}
             </h1>
             <p className="mt-3 max-w-2xl text-[15px] leading-7 text-slate-600 sm:text-[16px] dark:text-slate-300">
-              {greeting}。由一句課題或任務開始，EziTeach AI 會把你帶到最合適的教學工具。
+              {greeting}。由一句問題或任務開始，教學助手會先直接回應；需要時再帶你去合適工具。
             </p>
 
             <form
@@ -607,7 +550,7 @@ export default function Home({ onOpen }: Props) {
                   className="min-h-11 min-w-0 flex-1 bg-transparent text-[15px] text-slate-900 outline-none placeholder:text-slate-400 dark:text-slate-100 dark:placeholder:text-slate-500"
                 />
                 <span className="hidden min-h-11 shrink-0 items-center rounded-full bg-indigo-50 px-3 text-sm font-semibold text-indigo-700 dark:bg-indigo-500/15 dark:text-indigo-200 sm:inline-flex">
-                  {isWorkMode ? '教師 AI' : '學習 AI'}
+                  {isWorkMode ? '教學助手' : '學習 AI'}
                 </span>
                 <button
                   type="button"

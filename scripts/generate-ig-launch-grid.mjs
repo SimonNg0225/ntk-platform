@@ -5,7 +5,7 @@ import { chromium } from 'playwright'
 
 const root = process.cwd()
 const outDir = path.join(root, 'marketing/ig/launch-grid')
-const icon = pathToFileURL(path.join(root, 'marketing/app-icon-source.png')).href
+const icon = pathToFileURL(path.join(root, 'marketing/app-icon-source-transparent.png')).href
 const visual = pathToFileURL(path.join(root, 'marketing/eziteach-ai-poster-visual.png')).href
 
 const posts = [

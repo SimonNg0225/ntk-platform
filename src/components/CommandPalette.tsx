@@ -41,7 +41,8 @@ interface Item {
 }
 
 const FEATURE_SEARCH_ALIASES: Record<string, string[]> = {
-  'work-ai': ['AI 助手', 'chat', '問 AI', '家長信', '電郵', 'email', '評語', '課堂活動'],
+  'work-ai': ['助手對話', 'chat', '追問', '修改答案', '繼續生成'],
+  'work-prompt-library': ['教學助手', 'prompt', 'prompt 大全', 'AI 助手', '家長信', '電郵', 'email', '評語', '課堂活動'],
   'work-lesson-plan': ['備課', '教案', 'lesson plan', '下一堂', '教學目標', '教學流程'],
   'work-generate': ['出題', '小測', 'quiz', 'worksheet', '練習', '試卷', '題目', 'MC'],
   'work-teach-guide': ['如何教', '教法', '教學指引', '學生誤解', '活動設計'],

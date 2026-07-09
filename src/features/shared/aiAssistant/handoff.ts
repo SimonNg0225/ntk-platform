@@ -6,23 +6,33 @@ const MAX_HANDOFF_AGE_MS = 10 * 60 * 1000
 interface AiHandoff {
   mode: ModeId
   text: string
+  autoSend?: boolean
   createdAt: string
 }
 
-export function writeAiHandoff(mode: ModeId, text: string): void {
+export function writeAiHandoff(
+  mode: ModeId,
+  text: string,
+  options: { autoSend?: boolean } = {},
+): void {
   const value = text.trim()
   if (!value) return
   try {
     localStorage.setItem(
       AI_HANDOFF_KEY,
-      JSON.stringify({ mode, text: value, createdAt: new Date().toISOString() } satisfies AiHandoff),
+      JSON.stringify({
+        mode,
+        text: value,
+        autoSend: options.autoSend,
+        createdAt: new Date().toISOString(),
+      } satisfies AiHandoff),
     )
   } catch {
     /* ignore */
   }
 }
 
-export function consumeAiHandoff(mode: ModeId): string | null {
+export function consumeAiHandoff(mode: ModeId): Pick<AiHandoff, 'text' | 'autoSend'> | null {
   try {
     const raw = localStorage.getItem(AI_HANDOFF_KEY)
     if (!raw) return null
@@ -31,7 +41,8 @@ export function consumeAiHandoff(mode: ModeId): string | null {
     if (parsed.mode !== mode || typeof parsed.text !== 'string') return null
     const createdAt = parsed.createdAt ? new Date(parsed.createdAt).getTime() : 0
     if (!Number.isFinite(createdAt) || Date.now() - createdAt > MAX_HANDOFF_AGE_MS) return null
-    return parsed.text.trim() || null
+    const text = parsed.text.trim()
+    return text ? { text, autoSend: parsed.autoSend === true } : null
   } catch {
     return null
   }

@@ -92,7 +92,7 @@ i18n.addResourceBundle(
       scAttendance: 'Take attendance',
       scGradebook: 'Grades',
       scCalendar: 'Calendar',
-      scAi: 'AI',
+      scAi: 'Assistant',
       customizeLayout: 'Customize layout',
 
       // ── WIDGET_META labels ──
@@ -133,7 +133,7 @@ i18n.addResourceBundle(
       moreTasksN: '{{n}} more…',
 
       // ── AI CTA ──
-      askTeachingAi: 'Ask the teaching AI',
+      askTeachingAi: 'Ask the teaching assistant',
       aiSubtitle: 'Prep · Generate questions · Grade',
 
       // ── Layout editor ──
@@ -223,7 +223,7 @@ i18n.addResourceBundle(
       qaLessonPlan: 'Lesson planning',
       qaTimetable: 'Timetable',
       qaCalendar: 'Calendar',
-      qaAi: 'Teaching AI',
+      qaAi: 'Teaching assistant',
       qaParentComms: 'Parent communication',
     },
   },

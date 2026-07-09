@@ -256,6 +256,7 @@ export default function AIAssistant() {
   // Composer 自管輸入 state；這裡只用 seed 餵他（填範本/清空，n 一變先載入）。
   // 打字不再 setState 在這個父組件 → 不會 re-render 訊息/側欄（連 IME 都不被打斷）。
   const [seed, setSeed] = useState<{ text: string; n: number }>({ text: '', n: 0 })
+  const [pendingAutoSend, setPendingAutoSend] = useState<string | null>(null)
   const [streaming, setStreaming] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   // 手機（<sm）預設收埋側欄（避免抽屜開頁即遮住內容）；sm 以上維持展開
@@ -287,6 +288,7 @@ export default function AIAssistant() {
 
   const abortRef = useRef<AbortController | null>(null)
   const scrollRef = useRef<HTMLDivElement | null>(null)
+  const canUseAssistant = (isAIConfigured || devBypass) && (Boolean(user) || devBypass)
 
   // 現對話的 meta（若有）
   const currentMeta = currentThreadId ? metaMap.get(currentThreadId) : undefined
@@ -343,16 +345,18 @@ export default function AIAssistant() {
       t('aiasst.defaultThreadTitle', { defaultValue: '對話' }))
     : t('aiasst.newConversationTitle', { defaultValue: '新對話' })
 
-  // 切模式 → 重設
+  // 切模式 / 通過 AI gate → 重設；只有 composer 可顯示時才消耗外部 handoff，
+  // 避免 prompt 在登入 / AI 設定閘口被讀走後無法帶入輸入框。
   useEffect(() => {
-    const handoffText = consumeAiHandoff(mode)
+    const handoff = canUseAssistant ? consumeAiHandoff(mode) : null
     setCurrentThreadId(null)
-    setSeed((s) => ({ text: handoffText ?? '', n: s.n + 1 }))
+    setSeed((s) => ({ text: handoff && !handoff.autoSend ? handoff.text : '', n: s.n + 1 }))
+    setPendingAutoSend(handoff?.autoSend ? handoff.text : null)
     setStreaming(null)
     setSearch('')
     setShowArchived(false)
     setDraftContexts([])
-  }, [mode])
+  }, [mode, canUseAssistant])
 
   // 自動捲到底
   useEffect(() => {
@@ -700,6 +704,13 @@ export default function AIAssistant() {
   const onStopStable = useCallback(() => abortRef.current?.abort(), [])
   const onOpenTemplateStable = useCallback(() => setTemplateOpen(true), [])
   const onOpenContextStable = useCallback(() => setContextOpen(true), [])
+
+  useEffect(() => {
+    if (!pendingAutoSend || !canUseAssistant || busy) return
+    const text = pendingAutoSend
+    setPendingAutoSend(null)
+    void send(text)
+  }, [pendingAutoSend, canUseAssistant, busy, send])
 
   // ── 守門（dev 可一鍵 bypass 來測試 UI）──
   if (!isAIConfigured && !devBypass) {

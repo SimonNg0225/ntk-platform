@@ -486,7 +486,7 @@ export default function Settings() {
             icon={BookOpen}
             eyebrow="Teaching Context"
             title={t('settings.subjects')}
-            description="任教科目會影響教學 AI 語境，亦可一鍵載入起始課題大綱。"
+            description="任教科目會影響教學助手語境，亦可一鍵載入起始課題大綱。"
             right={<SmallPill icon={BookOpen}>現有 {topics.length} 課題</SmallPill>}
           >
             <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_280px]">

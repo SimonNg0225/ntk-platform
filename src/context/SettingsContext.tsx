@@ -32,7 +32,7 @@ interface Settings {
   reduceMotion: boolean
   /** 緊湊密度（可達性偏好；預設關＝行為不變，套 .density-compact） */
   compactDensity: boolean
-  /** 任教科目包 id（驅動課題大綱 / 教學 AI 語境）；'' = 未指定（全 app 顯示中性字眼） */
+  /** 任教科目包 id（驅動課題大綱 / 教學助手語境）；'' = 未指定（全 app 顯示中性字眼） */
   subjectPackId: string
 }
 

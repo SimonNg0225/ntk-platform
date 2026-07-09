@@ -207,7 +207,7 @@ const SHORTCUTS: { key: string; nav: string; label: string }[] = [
   { key: '1', nav: 'work-tasks', label: '待辦' },
   { key: '2', nav: 'work-timetable', label: '時間表' },
   { key: '3', nav: 'calendar', label: '行事曆' },
-  { key: '4', nav: 'work-ai', label: 'AI' },
+  { key: '4', nav: 'work-ai', label: '助手' },
 ]
 
 // 捷徑 key → wdash i18n key（給提示列用 t() 翻譯）
@@ -794,7 +794,7 @@ function WorkBento({
           <Zap size={18} />
         </span>
         <div>
-          <p className="text-sm font-semibold text-accent-strong dark:text-accent">{t('wdash.askTeachingAi', { defaultValue: '問教學 AI' })}</p>
+          <p className="text-sm font-semibold text-accent-strong dark:text-accent">{t('wdash.askTeachingAi', { defaultValue: '問教學助手' })}</p>
           <p className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">{t('wdash.aiSubtitle', { defaultValue: '備課 · 出題 · 批改' })}</p>
         </div>
       </button>
@@ -1374,7 +1374,7 @@ const QUICK_ACTIONS: { key: string; label: string; i18n: string; icon: LucideIco
   { key: 'work-lesson-plan', label: '備課教案', i18n: 'qaLessonPlan', icon: ClipboardList },
   { key: 'work-timetable', label: '時間表', i18n: 'qaTimetable', icon: CalendarDays },
   { key: 'calendar', label: '行事曆', i18n: 'qaCalendar', icon: Calendar },
-  { key: 'work-ai', label: '教學 AI', i18n: 'qaAi', icon: Sparkles },
+  { key: 'work-ai', label: '教學助手', i18n: 'qaAi', icon: Sparkles },
 ]
 
 function QuickActionsWidget({ open }: { open: (id: string) => void }) {

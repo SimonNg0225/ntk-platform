@@ -50,6 +50,7 @@ const Scan = lazyFeature(() => import('./work/scan/Scan'))
 const DocDigest = lazyFeature(() => import('./work/docDigest/DocDigest'))
 const WorkDashboard = lazyFeature(() => import('./work/WorkDashboard'))
 const Team = lazyFeature(() => import('./work/Team'))
+const PromptLibrary = lazyFeature(() => import('./work/PromptLibrary'))
 
 // 社群功能
 const Forum = lazyFeature(() => import('./forum/Forum'))
@@ -217,11 +218,23 @@ export const FEATURES: Feature[] = [
   {
     id: 'work-ai',
     modes: ['work'],
-    name: '教學 AI',
-    description: '出題、教案大綱、批改評語、課堂活動。',
+    name: '助手對話',
+    description: '由教學助手帶入任務後，繼續追問、修改和生成。',
     icon: '🤖',
     group: 'AI',
     component: AIAssistant,
+    status: 'ready',
+    hideFromNavigation: true,
+  },
+  {
+    id: 'work-prompt-library',
+    selfManagedHeader: true,
+    modes: ['work'],
+    name: '教學助手',
+    description: '按工作情境選擇助手：電郵、備課、出題、評語、簡報、家長溝通、行政整理等。',
+    icon: '📚',
+    group: 'AI',
+    component: PromptLibrary,
     status: 'ready',
   },
   {
