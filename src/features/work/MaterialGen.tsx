@@ -88,12 +88,13 @@ interface ToolCard {
 const TOOLS: ToolCard[] = [
   {
     id: 'mc',
-    title: 'MC 生成',
-    blurb: '一鍵草擬選擇題：題幹、選項同正解齊備，逐條選擇入題庫。',
+    title: 'DSE-style MC 生成',
+    blurb: '先做出題藍圖，再生成題幹、合理干擾項、正解同選項解釋，方便老師審題入庫。',
     icon: ListChecks,
     tone: 'accent',
     open: { kind: 'question', gen: 'mc' },
     dest: '題庫',
+    badge: '校準',
   },
   {
     id: 'short',

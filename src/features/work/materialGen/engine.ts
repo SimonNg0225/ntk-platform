@@ -2,6 +2,7 @@ import { complete, type AIModel } from '../../../lib/aiClient'
 import { extractJsonArray } from '../../../lib/aiJson'
 import type { Difficulty } from '../../../data/types'
 import { DIFF_LABEL } from '../questionbank/util'
+import { examSpecForSubject, formatSpecForPrompt } from './examSpecs'
 
 // ============================================================
 //  教材生成共用引擎（materialGen/engine）
@@ -36,6 +37,13 @@ export interface GenDraft {
   answerIndex?: number // mc 正確答案（0-based）
   answer?: string // 非 mc 參考答案 / marking scheme
   marks?: number
+  /** DSE-style 審題資料：只用於預覽 / 老師覆核；落題庫時可轉成 answer。 */
+  examSkill?: string
+  testedConcept?: string
+  trap?: string
+  rationales?: string[]
+  followUp?: string
+  qualityCheck?: string
 }
 
 export interface GenOptions {
@@ -75,7 +83,7 @@ export function buildPrompt(
   switch (kind) {
     case 'mc':
       shape =
-        '{ "stem": "題幹", "options": ["選項A", "選項B", "選項C", "選項D"], "answerIndex": 0, "marks": 1 }（answerIndex 由 0 起，指向正確選項；至少 3 個選項）'
+        '{ "stem": "題幹", "options": ["選項A", "選項B", "選項C", "選項D"], "answerIndex": 0, "marks": 1, "examSkill": "概念辨析 / 情境應用 / 資料判斷 / 決策評估", "testedConcept": "考核概念", "trap": "主要干擾點或常見錯因", "rationales": ["A 選項為何對/錯", "B 選項為何對/錯", "C 選項為何對/錯", "D 選項為何對/錯"], "followUp": "老師可如何跟進" }（answerIndex 由 0 起，指向唯一最佳答案；必須 4 個選項；rationales 必須與 options 數量一致）'
       break
     case 'short':
       shape = '{ "stem": "題幹", "answer": "參考答案", "marks": 3 }'
@@ -90,9 +98,22 @@ export function buildPrompt(
       break
   }
 
+  const spec = examSpecForSubject(subj)
+  const dseCalibration = kind === 'mc' ? formatSpecForPrompt(spec, opts.difficulty) : ''
+
   return [
     `${persona}。請就課題「${topicName}」出 ${opts.count} 條${KIND_WORD[kind]}，難度為「${diffWord}」。`,
     `內容要貼合香港高中${subj ? `「${subj}」` : ''}課程，用繁體中文。`,
+    dseCalibration,
+    kind === 'mc'
+      ? [
+          'MC 題目要求：',
+          '- 每題要像公開試原創題，而不是普通溫習問答。',
+          '- 題幹應自然、精準、可被學生在有限時間內讀懂。',
+          '- 每題只可有一個最佳答案；不要使用「以上皆是／以上皆非」。',
+          '- 必須輸出 examSkill、testedConcept、trap、rationales、followUp，方便老師覆核。',
+        ].join('\n')
+      : '',
     kind === 'long'
       ? '長題目要分結構式小題（a / b / c…），逐小題標分，並附整體評分準則。'
       : '',
@@ -118,6 +139,12 @@ function trimStr(v: unknown): string {
 
 function numOrUndef(v: unknown): number | undefined {
   return typeof v === 'number' && v > 0 ? v : undefined
+}
+
+function strArray(v: unknown): string[] {
+  return Array.isArray(v)
+    ? v.filter((x): x is string => typeof x === 'string').map((x) => x.trim()).filter(Boolean)
+    : []
 }
 
 interface RawPart {
@@ -159,12 +186,19 @@ function parseOne(kind: GenKind, raw: unknown): GenDraft | null {
     if (options.length < 2) return null
     const idx = typeof o.answerIndex === 'number' ? o.answerIndex : 0
     const answerIndex = idx >= 0 && idx < options.length ? idx : 0
+    const rationales = strArray(o.rationales ?? o.optionRationales ?? o.explanations)
     return {
       type: 'mc',
       stem,
       options,
       answerIndex,
       marks: numOrUndef(o.marks),
+      examSkill: trimStr(o.examSkill) || undefined,
+      testedConcept: trimStr(o.testedConcept) || trimStr(o.concept) || undefined,
+      trap: trimStr(o.trap) || trimStr(o.misconception) || undefined,
+      rationales: rationales.length > 0 ? rationales : undefined,
+      followUp: trimStr(o.followUp) || trimStr(o.followup) || undefined,
+      qualityCheck: trimStr(o.qualityCheck) || undefined,
     }
   }
 

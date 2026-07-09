@@ -1,5 +1,16 @@
 import { useState } from 'react'
-import { ArrowLeft, Bot, Check, Lock, Plus, RotateCcw, Sparkles } from 'lucide-react'
+import {
+  ArrowLeft,
+  Bot,
+  Brain,
+  Check,
+  Lock,
+  Plus,
+  RotateCcw,
+  ShieldCheck,
+  Sparkles,
+  Target,
+} from 'lucide-react'
 import CreditMeter from '../../../components/CreditMeter'
 import { uid } from '../../../lib/store'
 import { useToast } from '../../../context/ToastContext'
@@ -29,6 +40,7 @@ import {
   TYPE_LABEL,
 } from '../questionbank/util'
 import { generate, type GenDraft, type GenKind } from './engine'
+import { examSpecForSubject } from './examSpecs'
 
 // ============================================================
 //  QuestionGeneratorModal — 可重用的 AI 教材生成 modal
@@ -51,6 +63,13 @@ const PROMPT_EXAMPLES = [
   '連埋常見錯誤分析',
 ]
 
+const MC_PROMPT_EXAMPLES = [
+  '每題要有商業情境',
+  '干擾選項要似學生常犯錯',
+  '加入 DSE 風格判斷題',
+  '每個選項都要解釋',
+]
+
 type Draft = GenDraft & { _key: string; _selected: boolean }
 
 export interface QuestionGeneratorModalProps {
@@ -70,6 +89,30 @@ const KIND_TITLE: Record<GenKind, string> = {
   case: 'AI 生成教學個案',
 }
 
+function letter(i: number): string {
+  return String.fromCharCode(65 + i)
+}
+
+function formatMcAnswerGuide(d: GenDraft): string | undefined {
+  if (!d.options?.length) return undefined
+  const lines: string[] = []
+  if (typeof d.answerIndex === 'number') {
+    lines.push(`正確答案：${letter(d.answerIndex)}`)
+  }
+  if (d.testedConcept) lines.push(`考核概念：${d.testedConcept}`)
+  if (d.examSkill) lines.push(`能力要求：${d.examSkill}`)
+  if (d.trap) lines.push(`常見錯因：${d.trap}`)
+  if (d.rationales?.length) {
+    lines.push('選項解釋：')
+    d.options.forEach((option, i) => {
+      const rationale = d.rationales?.[i]
+      lines.push(`${letter(i)}. ${option}${rationale ? ` — ${rationale}` : ''}`)
+    })
+  }
+  if (d.followUp) lines.push(`跟進建議：${d.followUp}`)
+  return lines.length > 0 ? lines.join('\n') : undefined
+}
+
 export function QuestionGeneratorModal({
   kind,
   topics,
@@ -81,6 +124,7 @@ export function QuestionGeneratorModal({
   const { user } = useAuth()
   const { subjectPackId } = useSettings()
   const subjectName = getSubjectPack(subjectPackId)?.name
+  const examSpec = examSpecForSubject(subjectName)
 
   const [topicId, setTopicId] = useState(topics[0]?.id ?? '')
   const [difficulty, setDifficulty] = useState<Difficulty>('medium')
@@ -95,6 +139,7 @@ export function QuestionGeneratorModal({
   const topicName = topics.find((t) => t.id === topicId)?.topic ?? ''
   const selectedCount = drafts.filter((d) => d._selected).length
   const isLongForm = kind === 'long' || kind === 'case'
+  const promptExamples = kind === 'mc' ? MC_PROMPT_EXAMPLES : PROMPT_EXAMPLES
 
   const run = async () => {
     if (!topicId || busy) return
@@ -143,9 +188,16 @@ export function QuestionGeneratorModal({
         stem: d.stem.trim(),
         options: mc ? mc.options : undefined,
         answerIndex: mc ? mc.answerIndex : undefined,
-        answer: kind !== 'mc' ? d.answer?.trim() : undefined,
+        answer:
+          kind === 'mc'
+            ? formatMcAnswerGuide({
+                ...d,
+                options: mc?.options ?? d.options,
+                answerIndex: mc?.answerIndex ?? d.answerIndex,
+              })
+            : d.answer?.trim(),
         marks: d.marks ?? undefined,
-        source: 'AI 生成',
+        source: kind === 'mc' ? `AI 生成 · ${examSpec.shortLabel}` : 'AI 生成',
         createdAt: new Date().toISOString(),
       })
     }
@@ -195,6 +247,53 @@ export function QuestionGeneratorModal({
             </p>
           </div>
 
+          {kind === 'mc' && (
+            <section className="rounded-2xl border border-slate-200/80 bg-white p-4 dark:border-slate-700/60 dark:bg-slate-900/40">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
+                      <ShieldCheck size={16} />
+                    </span>
+                    <div>
+                      <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+                        {examSpec.label}已啟用
+                      </p>
+                      <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+                        生成前先做出題藍圖，生成後附考核點、陷阱和選項解釋。
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <Badge tone={examSpec.id === 'bafs-dse' ? 'accent' : 'blue'}>
+                  {examSpec.shortLabel}
+                </Badge>
+              </div>
+              <div className="mt-3 grid gap-2 sm:grid-cols-3">
+                {[
+                  ['出題藍圖', '先定考核概念與能力層次'],
+                  ['合理干擾項', '每個錯項都有常見錯因'],
+                  ['教師審核', '逐項解釋，方便快速修題'],
+                ].map(([title, desc]) => (
+                  <div
+                    key={title}
+                    className="rounded-xl border border-slate-200/70 bg-slate-50/70 px-3 py-2 dark:border-slate-700/70 dark:bg-slate-800/60"
+                  >
+                    <p className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+                      {title}
+                    </p>
+                    <p className="mt-0.5 text-[11px] leading-4 text-slate-500 dark:text-slate-400">
+                      {desc}
+                    </p>
+                  </div>
+                ))}
+              </div>
+              <p className="mt-3 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+                {examSpec.teacherReviewHint}
+              </p>
+            </section>
+          )}
+
           <section className="space-y-3 rounded-2xl border border-slate-200/80 bg-slate-50/60 p-4 dark:border-slate-700/60 dark:bg-slate-900/40">
             <Field label="課題">
               <Select value={topicId} onChange={(e) => setTopicId(e.target.value)}>
@@ -240,7 +339,7 @@ export function QuestionGeneratorModal({
             />
           </Field>
           <div className="-mt-2.5 flex flex-wrap gap-1.5">
-            {PROMPT_EXAMPLES.map((ex) => (
+            {promptExamples.map((ex) => (
               <button
                 key={ex}
                 type="button"
@@ -320,25 +419,67 @@ export function QuestionGeneratorModal({
                       className="whitespace-pre-wrap text-sm"
                     />
                     {kind === 'mc' && d.options && (
-                      <ul className="space-y-0.5 pl-1 text-sm">
+                      <ul className="grid gap-1.5 text-sm sm:grid-cols-2">
                         {d.options.map((o, i) => (
                           <li
                             key={i}
                             className={
                               i === d.answerIndex
-                                ? 'flex items-center gap-1 font-semibold text-emerald-700 dark:text-emerald-400'
-                                : 'text-slate-600 dark:text-slate-300'
+                                ? 'flex items-start gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 font-semibold text-emerald-800 dark:border-emerald-500/25 dark:bg-emerald-500/10 dark:text-emerald-300'
+                                : 'flex items-start gap-2 rounded-xl border border-slate-200 bg-slate-50/80 px-3 py-2 text-slate-600 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-300'
                             }
                           >
-                            <span>
-                              {String.fromCharCode(65 + i)}. {o}
+                            <span className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-white text-[11px] font-bold text-slate-500 ring-1 ring-slate-200 dark:bg-slate-900 dark:text-slate-400 dark:ring-slate-700">
+                              {letter(i)}
                             </span>
+                            <span className="leading-5">{o}</span>
                             {i === d.answerIndex && (
-                              <Check size={14} className="shrink-0" aria-label="正確答案" />
+                              <Check size={14} className="mt-0.5 shrink-0" aria-label="正確答案" />
                             )}
                           </li>
                         ))}
                       </ul>
+                    )}
+                    {kind === 'mc' && (
+                      <div className="space-y-2 rounded-2xl border border-slate-200/80 bg-slate-50/70 p-3 dark:border-slate-700/70 dark:bg-slate-800/45">
+                        <div className="flex flex-wrap gap-1.5">
+                          {d.examSkill && (
+                            <Badge tone="blue" icon={Brain}>
+                              {d.examSkill}
+                            </Badge>
+                          )}
+                          {d.testedConcept && (
+                            <Badge tone="accent" icon={Target}>
+                              {d.testedConcept}
+                            </Badge>
+                          )}
+                          {d.trap && <Badge tone="amber">陷阱：{d.trap}</Badge>}
+                        </div>
+                        {d.rationales?.length ? (
+                          <div className="grid gap-1.5 text-xs text-slate-600 dark:text-slate-300 sm:grid-cols-2">
+                            {d.options?.map((option, i) => {
+                              const rationale = d.rationales?.[i]
+                              if (!rationale) return null
+                              return (
+                                <p key={`${option}-${i}`} className="leading-5">
+                                  <span className="font-semibold text-slate-700 dark:text-slate-200">
+                                    {letter(i)}.
+                                  </span>{' '}
+                                  {rationale}
+                                </p>
+                              )
+                            })}
+                          </div>
+                        ) : null}
+                        {d.followUp && (
+                          <p className="border-t border-slate-200 pt-2 text-xs leading-5 text-slate-500 dark:border-slate-700 dark:text-slate-400">
+                            <span className="font-semibold text-slate-700 dark:text-slate-200">
+                              跟進：
+                            </span>
+                            {d.followUp}
+                          </p>
+                        )}
+                      </div>
                     )}
                     {kind !== 'mc' && d.answer && (
                       <p className="whitespace-pre-wrap text-sm text-slate-600 dark:text-slate-300">
