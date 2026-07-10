@@ -53,13 +53,23 @@ const ICON_BG: Record<ToastType, string> = {
   info: 'bg-accent',
 }
 
+const TECHNICAL_CONFIG_PATTERN =
+  /supabase|edge function|gemini|vite_[a-z0-9_]+|docs\/setup|google cloud project|api (?:未啟用|not enabled)|未部署|environment variable/i
+
+export function publicToastMessage(type: ToastType, message: string) {
+  if (type !== 'success' && TECHNICAL_CONFIG_PATTERN.test(message)) {
+    return '服務暫時未能使用，請稍後再試或聯絡管理員。'
+  }
+  return message
+}
+
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([])
 
   const push = useCallback(
     (type: ToastType, message: string, action?: ToastAction) => {
       const id = Date.now() + Math.random()
-      setToasts((t) => [...t, { id, type, message, action }])
+      setToasts((t) => [...t, { id, type, message: publicToastMessage(type, message), action }])
       setTimeout(
         () => {
           setToasts((t) => t.filter((x) => x.id !== id))

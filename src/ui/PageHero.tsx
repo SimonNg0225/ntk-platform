@@ -4,8 +4,7 @@ import { GuideHelpButton } from './FeatureGuide'
 
 // ============================================================
 //  PageHero — 功能頁標準 masthead
-//  白底、淡邊框、清晰標題層級；視覺跟產品首頁一致，讓所有功能頁少一點
-//  marketing hero 感，多一點可長時間使用的工作台感。
+//  以留白和底部分隔線建立層次，避免每個功能頁都由一張大型卡片開始。
 // ============================================================
 
 export type PageHeroProps = {
@@ -57,7 +56,7 @@ export function PageHero({
   return (
     <header
       className={cx(
-        'et-feature-hero relative overflow-hidden rounded-[18px] border border-slate-200/80 bg-white px-4 py-4 text-slate-900 shadow-xs dark:border-slate-700/70 dark:bg-slate-900 dark:text-slate-100 sm:px-5 sm:py-5',
+        'et-feature-hero relative border-b border-slate-200/80 px-1 pb-5 pt-1 text-slate-900 dark:border-slate-800 dark:text-slate-100 sm:pb-6',
         className,
       )}
     >
@@ -65,13 +64,13 @@ export function PageHero({
         {/* icon chip + 標題（永遠同一行；手機不會給操作掣逼到爆行斷字） */}
         <div className="flex min-w-0 items-start gap-3.5 sm:flex-1">
           {/* icon chip */}
-          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[14px] bg-accent-soft text-accent-strong ring-1 ring-inset ring-accent/15 dark:bg-accent/15 dark:text-accent dark:ring-accent/25">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
             <IconCmp size={22} strokeWidth={1.75} />
           </span>
 
           <div className="min-w-0 flex-1">
             {kicker && (
-              <p className="text-[11px] font-semibold uppercase text-accent">
+              <p className="text-xs font-semibold text-accent">
                 {kicker}
               </p>
             )}

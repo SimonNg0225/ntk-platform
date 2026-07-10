@@ -1,142 +1,225 @@
+import { useState } from 'react'
 import {
-  Sparkles,
-  Database,
+  ArrowRight,
+  BarChart3,
   ClipboardList,
+  Database,
   FileText,
-  PenLine,
-  ShieldCheck,
-  UserRound,
+  Files,
+  type LucideIcon,
 } from 'lucide-react'
-import { Modal, Button } from '../ui'
-import { BRAND_NAME } from '../lib/brand'
+import { Modal } from '../ui'
+import { SUBJECT_PACKS } from '../data/subjects'
+import { useSettings } from '../context/SettingsContext'
+import { loadTopicsForSubjects } from '../features/work/topicImport/applyTopics'
+import type { ComposerMaterialTool } from '../features/shared/composerHandoff'
 
-// ============================================================
-//  首次使用導覽（onboarding）—— 教師導向功能教學 + 一鍵載入示範資料。
-//  以「工作模式」教學流程行先（商業化對象＝全港老師），個人模式作輔。
-//  純 UI；載入示範資料的實際動作由 onLoadDemo（接 seedAllDemo）傳入。
-// ============================================================
+export interface OnboardingStart {
+  taskId: StartTaskId
+  featureId: string
+  prompt?: string
+  materialTool?: ComposerMaterialTool
+  hasSubject: boolean
+  hasTopic: boolean
+}
 
-const TRUST_POINTS: { icon: typeof Sparkles; title: string; desc: string }[] = [
-  {
-    icon: UserRound,
-    title: '個人先用',
-    desc: '不用先開學校或科組帳戶，一位老師都可以立即開始。',
-  },
-  {
-    icon: ShieldCheck,
-    title: '私隱先行',
-    desc: '先處理課題、教案、教材；避免輸入可識別學生資料。',
-  },
-  {
-    icon: PenLine,
-    title: '教師覆核',
-    desc: 'AI 幫你出初稿，教學判斷同最後版本仍然由老師決定。',
-  },
-]
+type StartTaskId = 'lesson' | 'worksheet' | 'grades' | 'admin'
 
-const START_STEPS: { icon: typeof Sparkles; title: string; desc: string }[] = [
+type StartTask = {
+  id: StartTaskId
+  title: string
+  outcome: string
+  icon: LucideIcon
+  featureId: string
+  materialTool?: ComposerMaterialTool
+}
+
+const START_TASKS: StartTask[] = [
   {
+    id: 'lesson',
+    title: '準備下一堂',
+    outcome: '教學目標、流程和活動',
     icon: ClipboardList,
-    title: '輸入下一堂課題',
-    desc: '例如「議論文結構」或「百分比應用」，不用先設定全個學期。',
+    featureId: 'work-lesson-plan',
   },
   {
+    id: 'worksheet',
+    title: '出工作紙 / 小測',
+    outcome: '題目、答案和評分準則',
     icon: FileText,
-    title: '選擇一個任務包',
-    desc: '教案、小測、簡報或課後回饋，先處理最急的一件。',
+    featureId: 'work-generate',
+    materialTool: 'worksheet',
   },
   {
-    icon: PenLine,
-    title: '用 AI 初稿起步',
-    desc: '結果會接到對應工具，之後再整理到 Inbox 或功能庫。',
+    id: 'grades',
+    title: '分析成績',
+    outcome: '弱項、預測和跟進',
+    icon: BarChart3,
+    featureId: 'work-grade-analytics',
+  },
+  {
+    id: 'admin',
+    title: '整理行政文件',
+    outcome: '摘要、重點和待辦',
+    icon: Files,
+    featureId: 'work-doc-digest',
   },
 ]
+
+function promptFor(task: StartTaskId, topic: string): string | undefined {
+  const subject = topic.trim() || '下一個課題'
+  if (task === 'lesson') return undefined
+  if (task === 'worksheet') {
+    return `生成一份「${subject}」工作紙，連答案和評分準則`
+  }
+  if (task === 'grades') return '分析今次測驗成績、預測等級和找出弱項'
+  return '把這份行政文件摘要成重點和待辦'
+}
 
 export function OnboardingModal({
   open,
   onClose,
   onLoadDemo,
+  onStart,
 }: {
   open: boolean
   onClose: () => void
   onLoadDemo: () => void
+  onStart: (task: OnboardingStart) => void
 }) {
+  const { subjectPackId, setSubjectPackId } = useSettings()
+  const [subject, setSubject] = useState(subjectPackId)
+  const [topic, setTopic] = useState('')
+  const [taskId, setTaskId] = useState<StartTaskId>('lesson')
+
+  const start = () => {
+    const task = START_TASKS.find((item) => item.id === taskId) ?? START_TASKS[0]
+    setSubjectPackId(subject)
+    if (subject) loadTopicsForSubjects([subject])
+    try {
+      const value = topic.trim()
+      if (value) localStorage.setItem('eziteach.nextLessonTopic', value)
+    } catch {
+      /* ignore */
+    }
+    onStart({
+      taskId: task.id,
+      featureId: task.featureId,
+      prompt: promptFor(task.id, topic),
+      materialTool: task.materialTool,
+      hasSubject: Boolean(subject),
+      hasTopic: Boolean(topic.trim()),
+    })
+  }
+
   return (
-    <Modal open={open} onClose={onClose} title={`歡迎使用 ${BRAND_NAME}`} size="lg">
+    <Modal open={open} onClose={onClose} title="設定你的教學工作台" size="lg">
       <div className="space-y-5">
-        <div className="flex items-start gap-3">
-          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-accent text-lg font-bold text-white shadow-sm">
-            E
-          </span>
-          <div>
-            <h2 className="text-lg font-semibold tracking-tight text-slate-800 dark:text-slate-100">
-              先由下一堂課開始
-            </h2>
-            <p className="mt-1 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
-              不用先理解全部功能；輸入一個課題，選擇一個任務包，再逐步把備課、
-              出題、簡報同回饋收回同一個工作台。
-            </p>
-            <div className="mt-3 flex flex-col gap-2 sm:flex-row">
-              <Button icon={ClipboardList} onClick={onClose}>
-                開始準備下一堂
-              </Button>
-              <Button variant="secondary" icon={Database} onClick={onLoadDemo}>
-                載入試用資料
-              </Button>
-            </div>
-            <p className="mt-2 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
-              試用資料日後可在設定清除。
-            </p>
+        <div>
+          <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100">
+            先完成今晚最急的一件事
+          </h2>
+          <p className="mt-1.5 text-sm leading-6 text-slate-600 dark:text-slate-300">
+            告訴我任教科目和課題，EziTeach 會直接打開最合適的工作區。
+          </p>
+        </div>
+
+        <div className="grid gap-3 sm:grid-cols-2">
+          <label className="block">
+            <span className="mb-1.5 block text-sm font-semibold text-slate-700 dark:text-slate-200">
+              任教科目
+            </span>
+            <select
+              value={subject}
+              onChange={(event) => setSubject(event.target.value)}
+              className="min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3 text-base text-slate-900 outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/25 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+            >
+              <option value="">稍後設定</option>
+              {SUBJECT_PACKS.filter((pack) => pack.id !== 'custom').map((pack) => (
+                <option key={pack.id} value={pack.id}>
+                  {pack.name}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className="block">
+            <span className="mb-1.5 block text-sm font-semibold text-slate-700 dark:text-slate-200">
+              今晚的課題
+            </span>
+            <input
+              value={topic}
+              onChange={(event) => setTopic(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter') start()
+              }}
+              placeholder="例如：百分比應用"
+              className="min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3 text-base text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-accent focus:ring-2 focus:ring-accent/25 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+            />
+          </label>
+        </div>
+
+        <fieldset>
+          <legend className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+            你想先完成什麼？
+          </legend>
+          <div className="mt-2 grid gap-2 sm:grid-cols-2">
+            {START_TASKS.map((task) => {
+              const Icon = task.icon
+              const selected = task.id === taskId
+              return (
+                <button
+                  key={task.id}
+                  type="button"
+                  onClick={() => setTaskId(task.id)}
+                  aria-pressed={selected}
+                  className={`flex min-h-[72px] items-center gap-3 rounded-xl border px-3.5 py-3 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 ${
+                    selected
+                      ? 'border-accent bg-accent-soft/70 text-accent-strong dark:bg-accent/15 dark:text-accent'
+                      : 'border-slate-200 bg-white text-slate-800 hover:border-accent/35 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100'
+                  }`}
+                >
+                  <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${selected ? 'bg-accent text-white' : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-300'}`}>
+                    <Icon size={18} strokeWidth={1.8} />
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block text-sm font-semibold">{task.title}</span>
+                    <span className={`mt-0.5 block text-xs ${selected ? 'text-accent-strong/75 dark:text-accent/80' : 'text-slate-500 dark:text-slate-400'}`}>
+                      {task.outcome}
+                    </span>
+                  </span>
+                </button>
+              )
+            })}
           </div>
-        </div>
+        </fieldset>
 
-        <div className="grid gap-2 sm:grid-cols-3">
-          {START_STEPS.map((h, index) => {
-            const I = h.icon
-            return (
-              <div
-                key={h.title}
-                className="rounded-xl border border-accent/20 bg-accent-soft/40 p-3 dark:border-accent/25 dark:bg-accent/10"
-              >
-                <div className="flex items-center gap-2">
-                  <span className="nums rounded-md bg-white px-1.5 py-0.5 text-[11px] font-semibold text-accent-strong dark:bg-slate-800 dark:text-accent">
-                    {index + 1}
-                  </span>
-                  <I size={16} strokeWidth={1.75} className="text-accent" aria-hidden="true" />
-                </div>
-                <p className="mt-2 text-sm font-semibold text-slate-800 dark:text-slate-100">
-                  {h.title}
-                </p>
-                <p className="mt-0.5 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
-                  {h.desc}
-                </p>
-              </div>
-            )
-          })}
-        </div>
-
-        <div className="grid gap-2 sm:grid-cols-3">
-          {TRUST_POINTS.map((h) => {
-            const I = h.icon
-            return (
-              <div
-                key={h.title}
-                className="rounded-xl border border-[color:var(--border)] p-3"
-              >
-                <div className="flex items-center gap-2">
-                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
-                    <I size={16} strokeWidth={1.75} aria-hidden="true" />
-                  </span>
-                  <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">
-                    {h.title}
-                  </p>
-                </div>
-                <p className="mt-2 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
-                  {h.desc}
-                </p>
-              </div>
-            )
-          })}
+        <div className="flex flex-col-reverse gap-2 border-t border-slate-200 pt-4 dark:border-slate-800 sm:flex-row sm:items-center sm:justify-between">
+          <button
+            type="button"
+            onClick={onLoadDemo}
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg px-3 text-sm font-medium text-slate-500 transition hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+          >
+            <Database size={16} strokeWidth={1.8} />
+            載入試用資料
+          </button>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="min-h-11 flex-1 rounded-lg px-4 text-sm font-semibold text-slate-600 transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:text-slate-300 dark:hover:bg-slate-800 sm:flex-none"
+            >
+              先看看工作台
+            </button>
+            <button
+              type="button"
+              onClick={start}
+              className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg bg-accent px-5 text-sm font-semibold text-white transition hover:bg-accent-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 sm:flex-none"
+            >
+              開始準備
+              <ArrowRight size={16} strokeWidth={2} />
+            </button>
+          </div>
         </div>
       </div>
     </Modal>

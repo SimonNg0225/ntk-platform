@@ -147,6 +147,22 @@ export function track(event: string, props?: Record<string, unknown>): void {
   queuedEvents.push({ event, props: payload })
 }
 
+/**
+ * 同一瀏覽器只送一次的產品事件（例如首次見 onboarding）。
+ * 未同意分析前不會寫標記，避免用戶之後接受 Cookie 時永久漏掉事件。
+ */
+export function trackOnce(event: string, props?: Record<string, unknown>): void {
+  if (!POSTHOG_KEY || getConsent() !== 'accepted') return
+  const key = `ntk.analytics.once.${event}`
+  try {
+    if (localStorage.getItem(key)) return
+    localStorage.setItem(key, new Date().toISOString())
+  } catch {
+    /* localStorage 不可用時照常送，寧願少量重複亦不阻產品 */
+  }
+  track(event, props)
+}
+
 /** 追蹤頁面瀏覽；React Router / app 內虛擬頁面切換用。 */
 export function trackPageView(props?: Record<string, unknown>): void {
   track('$pageview', props)

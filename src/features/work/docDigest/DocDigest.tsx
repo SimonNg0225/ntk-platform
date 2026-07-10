@@ -2,7 +2,6 @@ import { useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   FileSearch,
-  Sparkles,
   Upload,
   Camera,
   CheckSquare,
@@ -201,7 +200,7 @@ export default function DocDigest() {
         <PageHero
           guideKey="doc-digest"
           icon={FileSearch}
-          kicker={t('docDigest.kicker', { defaultValue: 'Doc Digest' })}
+          kicker={t('docDigest.kicker', { defaultValue: '行政整理' })}
           title={t('docDigest.title', { defaultValue: '文件速讀' })}
           description={t('docDigest.subtitle', {
             defaultValue: '貼上、上載或影低行政文件，AI 立即幫你歸類、抽重點、列出要跟進事項。',
@@ -209,10 +208,10 @@ export default function DocDigest() {
         />
         <EmptyState
           icon={FileSearch}
-          title={t('docDigest.disabled.title', { defaultValue: '文件速讀未啟用' })}
+          title={t('docDigest.disabled.title', { defaultValue: '文件速讀暫時未能使用' })}
           hint={t('docDigest.disabled.hint', {
             defaultValue:
-              '要設定好 Supabase 並部署 gemini Edge Function 先用到，步驟見 docs/SETUP.md。',
+              '文件處理服務暫時未連接，請稍後再試或聯絡管理員。',
           })}
         />
       </div>
@@ -224,7 +223,7 @@ export default function DocDigest() {
       {/* ───────── Page hero（共用 accent hero） ───────── */}
       <PageHero
         icon={FileSearch}
-        kicker={t('docDigest.kicker', { defaultValue: 'Doc Digest' })}
+        kicker={t('docDigest.kicker', { defaultValue: '行政整理' })}
         title={t('docDigest.title', { defaultValue: '文件速讀' })}
         description={t('docDigest.subtitle', {
           defaultValue: '貼上、上載或影低行政文件，AI 立即幫你歸類、抽重點、列出要跟進事項。',
@@ -241,7 +240,7 @@ export default function DocDigest() {
       {/* ───────── 輸入 ───────── */}
       <section aria-label={t('docDigest.input.aria', { defaultValue: '輸入文件' })}>
         <SectionTitle
-          icon={Sparkles}
+          icon={FileSearch}
           right={
             <Tooltip label={t('docDigest.model.hint', { defaultValue: 'Flash 快 · Pro 強' })}>
               <SegmentedControl size="sm" options={MODEL_OPTIONS} value={model} onChange={setModel} />
@@ -310,7 +309,7 @@ export default function DocDigest() {
 
           <div className="flex items-center justify-end gap-2">
             <CreditMeter source="doc-digest" model={model} className="mr-auto" />
-            <Button icon={Sparkles} onClick={run} loading={busy} disabled={!hasInput}>
+            <Button icon={FileSearch} onClick={run} loading={busy} disabled={!hasInput}>
               {busy
                 ? t('docDigest.run.busy', { defaultValue: '速讀中…' })
                 : t('docDigest.run.label', { defaultValue: '速讀' })}

@@ -11,7 +11,6 @@ import {
   AlertTriangle,
   ChevronRight,
   MapPin,
-  Sparkles,
   CalendarDays,
   CalendarPlus,
 } from 'lucide-react'
@@ -668,7 +667,7 @@ function TodayPanel({
         ) : (
           !isWeekend && (
             <p className="flex items-center gap-1.5 rounded-2xl bg-white/50 px-3.5 py-2.5 text-sm text-slate-500 dark:bg-slate-800/40 dark:text-slate-400">
-              <Sparkles size={14} className="text-accent/60" />
+              <CalendarDays size={14} className="text-accent/60" />
               {nowMin >= lastEndMin ? '今日課堂已完，辛苦全部！' : '今日未有更多課堂'}
             </p>
           )

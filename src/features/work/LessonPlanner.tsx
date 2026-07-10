@@ -40,7 +40,6 @@ import {
   LayoutGrid,
   CalendarRange,
   PieChart,
-  Sparkles,
   FileText,
   MoreVertical,
   ListChecks,
@@ -602,7 +601,7 @@ export default function LessonPlanner() {
                 onClick={() => setAiOpen(true)}
                 className="inline-flex min-h-11 items-center gap-1.5 rounded-xl bg-white px-3.5 text-sm font-semibold !text-accent-strong shadow-sm transition hover:bg-accent-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
               >
-                <Sparkles size={16} />
+                <NotebookPen size={16} />
                 AI 生成教案
               </button>
             )}
@@ -1084,14 +1083,14 @@ export default function LessonPlanner() {
           </div>
 
           <div className="mb-1.5 mt-3 flex items-center gap-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400">
-            <Sparkles size={13} /> 我的範本
+            <NotebookPen size={13} /> 我的範本
           </div>
           <p className="text-xs text-slate-500 dark:text-slate-400">
             範本包含教學環節同教材骨架。在編輯教案時按「存為範本」可加入更多。
           </p>
           {templates.length === 0 ? (
             <EmptyState
-              icon={Sparkles}
+              icon={NotebookPen}
               title="尚未有範本"
               hint="編輯任何教案時，於底部按「存為範本」即可建立。"
             />

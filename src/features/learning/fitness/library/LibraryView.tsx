@@ -661,7 +661,7 @@ function DetailModal({
           {!isAIConfigured ? (
             <p className="flex items-start gap-1.5 text-xs text-slate-500 dark:text-slate-400">
               <Bot size={14} className="mt-0.5 shrink-0" aria-hidden="true" />
-              需要先設定雲端 AI（見 docs/SETUP.md）。
+              智能解說暫時未能使用，請稍後再試。
             </p>
           ) : aiText ? (
             <p className="whitespace-pre-wrap text-sm text-slate-700 dark:text-slate-200">

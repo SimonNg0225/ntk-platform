@@ -118,6 +118,7 @@ import {
 import { Markdown } from './aiAssistant/markdown'
 import { ActivityBars, RatioBar } from './aiAssistant/charts'
 import CreditMeter from '../../components/CreditMeter'
+import { useSubscription } from '../../hooks/useSubscription'
 
 // ============================================================
 //  AI 助手 — ChatGPT / Claude 級對話工作枱
@@ -204,6 +205,8 @@ export default function AIAssistant() {
   const confirm = useConfirm()
   const { open: goToFeature } = useNav()
   const { subjectPackId } = useSettings()
+  const subscription = useSubscription()
+  const canUseProModel = subscription.isPro || import.meta.env.VITE_DEV_AI === '1'
 
   const cfg = MODE_AI[mode]
   // 問候 / 標語經 i18n（zh-HK 用原文做 defaultValue）。system prompt 留返 LLM 指令不譯。
@@ -216,8 +219,18 @@ export default function AIAssistant() {
   // 模型標籤（segmented control + 標題列短標）
   const models = useMemo(
     () => [
-      { id: 'gemini-2.5-flash' as AIModel, label: t('aiasst.modelFlash', { defaultValue: '快速' }), short: '快速' },
-      { id: 'gemini-2.5-pro' as AIModel, label: t('aiasst.modelPro', { defaultValue: '深入' }), short: '深入' },
+      {
+        id: 'gemini-2.5-flash' as AIModel,
+        label: t('aiasst.modelFlash', { defaultValue: '快速' }),
+        short: '快速',
+        requiresPro: false,
+      },
+      {
+        id: 'gemini-2.5-pro' as AIModel,
+        label: t('aiasst.modelPro', { defaultValue: '深入' }),
+        short: '深入',
+        requiresPro: true,
+      },
     ],
     [t],
   )
@@ -289,7 +302,11 @@ export default function AIAssistant() {
 
   // 現對話的 meta（若有）
   const currentMeta = currentThreadId ? metaMap.get(currentThreadId) : undefined
-  const activeModel = currentMeta?.model ?? draftModel
+  const storedModel = currentMeta?.model ?? draftModel
+  const activeModel =
+    storedModel === 'gemini-2.5-pro' && !canUseProModel
+      ? 'gemini-2.5-flash'
+      : storedModel
   const activePersona = currentMeta?.persona ?? draftPersona
   const activeTemp = currentMeta?.temperature ?? draftTemp
   const activeContexts = currentMeta?.contexts ?? draftContexts
@@ -638,6 +655,10 @@ export default function AIAssistant() {
 
   // 改 model / persona / temp：寫回現對話 meta（或 draft）
   function setModel(m: AIModel) {
+    if (m === 'gemini-2.5-pro' && !canUseProModel) {
+      toast.info('深入模型只限 Pro 方案使用。')
+      return
+    }
     if (currentThreadId) patchMeta(currentThreadId, { model: m })
     else setDraftModel(m)
   }
@@ -919,8 +940,8 @@ export default function AIAssistant() {
               ...models.map((m) => ({
                 id: `model-${m.id}`,
                 label: t('aiasst.menuModel', {
-                  model: m.label,
-                  defaultValue: `模型：${m.label}`,
+                  model: `${m.label}${m.requiresPro && !canUseProModel ? ' · Pro' : ''}`,
+                  defaultValue: `模型：${m.label}${m.requiresPro && !canUseProModel ? ' · Pro' : ''}`,
                 }),
                 icon: activeModel === m.id ? Check : undefined,
                 onSelect: () => setModel(m.id),

@@ -1013,7 +1013,7 @@ function CoachInsight({ workouts }: { workouts: Workout[] }) {
               AI 教練分析
             </p>
             <p className="mt-0.5 text-xs text-slate-400 dark:text-slate-500">
-              需要先設定雲端 AI（見 docs/SETUP.md）。你照樣可以手動查看上面的趨勢圖同 PR。
+              智能分析暫時未能使用；你仍可手動查看上面的趨勢圖和個人紀錄。
             </p>
           </div>
         </div>

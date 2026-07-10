@@ -26,6 +26,8 @@ import AccountBox from './AccountBox'
 import { useAuth } from '../context/AuthContext'
 import type { ModeId } from '../modes/modes'
 import { BRAND_NAME, BRAND_TAGLINE_ZH } from '../lib/brand'
+import { FEATURE_SEARCH_ALIASES, matchesSearchQuery } from './featureSearch'
+import { track } from '../lib/observability'
 
 const DEFAULT_SIDEBAR_IDS: Record<ModeId, readonly string[]> = {
   work: [
@@ -37,6 +39,40 @@ const DEFAULT_SIDEBAR_IDS: Record<ModeId, readonly string[]> = {
     'calendar',
   ],
   learning: ['learning-dashboard', 'learning-ai', 'learning-flashcards', 'learning-notes', 'learning-goals', 'calendar'],
+}
+
+const RELATED_SIDEBAR_IDS: Record<string, readonly string[]> = {
+  'work-prompt-library': ['work-lesson-plan', 'work-generate', 'work-rubric', 'work-slides'],
+  'work-lesson-plan': ['work-teach-guide', 'work-generate', 'work-slides', 'work-prompt-library'],
+  'work-teach-guide': ['work-lesson-plan', 'work-generate', 'work-dse', 'work-slides'],
+  'work-generate': ['work-questions', 'work-rubric', 'work-lesson-plan', 'work-slides'],
+  'work-questions': ['work-generate', 'work-rubric', 'work-dse', 'work-lesson-plan'],
+  'work-rubric': ['work-generate', 'work-questions', 'work-tasks', 'work-lesson-plan'],
+  'work-slides': ['work-lesson-plan', 'work-generate', 'work-resources', 'work-prompt-library'],
+  'work-doc-digest': ['work-tasks', 'work-meeting-notes', 'work-admin-docs', 'search'],
+  'work-transcribe': ['work-meeting-notes', 'work-doc-digest', 'work-observation', 'work-report'],
+  'work-meeting-notes': ['work-tasks', 'work-report', 'work-doc-digest', 'search'],
+  'work-tasks': ['work-dashboard', 'calendar', 'work-report', 'work-lesson-plan'],
+  'work-resources': ['work-lesson-plan', 'work-generate', 'work-slides', 'search'],
+  'learning-ai': ['learning-notes', 'learning-card-generator', 'learning-goals', 'learning-flashcards'],
+  'learning-notes': ['learning-card-generator', 'learning-flashcards', 'learning-ai', 'learning-goals'],
+  'learning-flashcards': ['learning-card-generator', 'learning-notes', 'learning-goals', 'learning-ai'],
+}
+
+export function sidebarGroupPreview(items: Feature[], activeId: string | null, limit = 5) {
+  const byId = new Map(items.map((item) => [item.id, item]))
+  const active = activeId ? byId.get(activeId) : undefined
+  const related = activeId
+    ? (RELATED_SIDEBAR_IDS[activeId] ?? []).map((id) => byId.get(id)).filter(Boolean)
+    : []
+  const ordered = [active, ...related, ...items].filter((item): item is Feature => Boolean(item))
+  const seen = new Set<string>()
+
+  return ordered.filter((item) => {
+    if (seen.has(item.id)) return false
+    seen.add(item.id)
+    return true
+  }).slice(0, limit)
 }
 
 function resolveDefaultFeatures(ids: readonly string[], mode: ModeId): Feature[] {
@@ -120,15 +156,28 @@ export default function Sidebar({
   const filtered = useMemo(() => {
     if (!q) return []
     return allItems.filter(
-      (f) =>
-        featName(t, f).toLowerCase().includes(q) ||
-        f.description.toLowerCase().includes(q),
+      (f) => matchesSearchQuery(q, [
+        featName(t, f),
+        f.description,
+        groupLabel(t, f.group),
+        ...(FEATURE_SEARCH_ALIASES[f.id] ?? []),
+      ]),
     )
   }, [q, allItems, t])
 
   const [openGroups, setOpenGroups] = useState<Set<string>>(() => new Set())
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(() => new Set())
   const toggleOpenGroup = (group: string) => {
     setOpenGroups((prev) => {
+      const next = new Set(prev)
+      if (next.has(group)) next.delete(group)
+      else next.add(group)
+      return next
+    })
+  }
+
+  const toggleExpandedGroup = (group: string) => {
+    setExpandedGroups((prev) => {
       const next = new Set(prev)
       if (next.has(group)) next.delete(group)
       else next.add(group)
@@ -317,7 +366,14 @@ export default function Sidebar({
                   active={activeId === f.id}
                   icon={f.icon}
                   label={featName(t, f)}
-                  onSelect={() => choose(f.id)}
+                  onSelect={() => {
+                    track('navigation_item_opened', {
+                      navigation_source: 'sidebar_search',
+                      destination: f.id,
+                      used_search: true,
+                    })
+                    choose(f.id)
+                  }}
                   pinId={f.id}
                   pinned={pinnedIds.has(f.id)}
                   badge={
@@ -403,6 +459,8 @@ export default function Sidebar({
             {groups.map((g) => {
               const hasActive = g.items.some((f) => f.id === activeId)
               const isOpen = openGroups.has(g.group) || hasActive
+              const showAll = expandedGroups.has(g.group)
+              const visibleItems = showAll ? g.items : sidebarGroupPreview(g.items, activeId)
               return (
                 <div key={g.group}>
                   <button
@@ -427,7 +485,7 @@ export default function Sidebar({
                     )}
                   >
                     <div className="space-y-0.5 overflow-hidden pl-2">
-                      {g.items.map((f) => (
+                      {visibleItems.map((f) => (
                         <NavRow
                           key={f.id}
                           active={activeId === f.id}
@@ -446,6 +504,16 @@ export default function Sidebar({
                           }
                         />
                       ))}
+                      {g.items.length > visibleItems.length || showAll ? (
+                        <button
+                          type="button"
+                          onClick={() => toggleExpandedGroup(g.group)}
+                          tabIndex={isOpen ? undefined : -1}
+                          className="flex min-h-10 w-full items-center px-3 text-left text-xs font-semibold text-accent-strong transition hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:text-accent"
+                        >
+                          {showAll ? '收起至相關工具' : `查看全部 ${g.items.length} 項`}
+                        </button>
+                      ) : null}
                     </div>
                   </div>
                 </div>
@@ -556,7 +624,13 @@ function NavRow({
       </button>
       {pinId && (
         <button
-          onClick={() => togglePin(pinId)}
+          onClick={() => {
+            togglePin(pinId)
+            track('feature_pin_toggled', {
+              feature_id: pinId,
+              pinned: !pinned,
+            })
+          }}
           aria-label={
             pinned
               ? t('shell.unpin', { defaultValue: '取消釘選' })

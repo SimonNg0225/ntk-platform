@@ -11,7 +11,6 @@ import {
   Clock,
   ListTodo,
   NotebookPen,
-  Sparkles,
   ChevronRight,
   AlertTriangle,
 } from 'lucide-react'
@@ -163,9 +162,9 @@ export default function WorkReport() {
     return (
       <EmptyState
         icon={FileBarChart2}
-        title={t('workReport.notReady.title', { defaultValue: '工作週報／月報未啟用' })}
+        title={t('workReport.notReady.title', { defaultValue: '工作報告暫時未能生成' })}
         hint={t('workReport.notReady.hint', {
-          defaultValue: '要設定好 Supabase 並部署 gemini Edge Function 先用到（步驟見 docs/SETUP.md）。',
+          defaultValue: '生成服務暫時未連接，請稍後再試或聯絡管理員。',
         })}
       />
     )
@@ -177,7 +176,7 @@ export default function WorkReport() {
       <PageHero
         guideKey="work-report"
         icon={FileBarChart2}
-        kicker={t('workReport.kicker', { defaultValue: 'Work Report' })}
+        kicker={t('workReport.kicker', { defaultValue: '工作整理' })}
         title={t('workReport.title', { defaultValue: '工作週報／月報' })}
         description={t('workReport.subtitle', {
           defaultValue: '一鍵聚合你的行事曆、待辦同會議筆記，AI 撮要成一頁報告。',
@@ -282,7 +281,7 @@ export default function WorkReport() {
         <div className="flex items-center justify-end gap-3">
           <CreditMeter source="work-report" model={model} />
           <Button
-            icon={busy ? Loader2 : Sparkles}
+            icon={busy ? Loader2 : FileBarChart2}
             onClick={run}
             loading={busy}
             disabled={isEmpty}
@@ -309,7 +308,7 @@ export default function WorkReport() {
                 {t('workReport.error.title', { defaultValue: '生成失敗' })}
               </p>
               <p className="text-sm text-slate-600 dark:text-slate-300">{error}</p>
-              <Button variant="secondary" size="sm" icon={Sparkles} onClick={run} disabled={busy}>
+              <Button variant="secondary" size="sm" icon={FileBarChart2} onClick={run} disabled={busy}>
                 {t('common.retry', { defaultValue: '重試' })}
               </Button>
             </div>
@@ -341,7 +340,7 @@ export default function WorkReport() {
       )}
       {!report && !error && !isEmpty && (
         <EmptyState
-          icon={Sparkles}
+          icon={FileBarChart2}
           title={t('workReport.prompt.title', { defaultValue: '準備好生成報告' })}
           hint={t('workReport.prompt.hint', {
             defaultValue: '按上面「生成報告」，AI 立即幫你撮要成「已完成事項 / 待跟進 / 重點同建議」。',

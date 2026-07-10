@@ -65,10 +65,14 @@ async function authedHeaders(): Promise<Record<string, string>> {
 export async function* streamChat(
   opts: AIChatOptions,
 ): AsyncGenerator<string, void, unknown> {
+  const plan = getActivePlan()
+  if (!DEV_AI && opts.model === 'gemini-2.5-pro' && plan !== 'pro') {
+    throw new Error('Pro 高階 AI 模型只限 Pro 方案使用。')
+  }
   // AI 點數計量：只在已配置收費（接了 Stripe）時 enforce；未配置 → inert，
   // 零行為改變。權威額度仍在後端 gemini Edge Function，這裡只前端 UX gating。
   if (isBillingConfigured) {
-    const charge = chargeCredits(getActivePlan(), {
+    const charge = chargeCredits(plan, {
       source: opts.source,
       feature: opts.feature,
       model: opts.model,

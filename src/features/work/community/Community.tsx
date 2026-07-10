@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Share2, Search, SearchX, Download, Bookmark, BookmarkCheck, Flag, ExternalLink, Users, Sparkles, Plus, FileText, Presentation, ClipboardList, Link2, Video, StickyNote, Info, type LucideIcon } from 'lucide-react'
+import { Share2, Search, SearchX, Download, Bookmark, BookmarkCheck, Flag, ExternalLink, Users, Plus, FileText, Presentation, ClipboardList, Link2, Video, StickyNote, Info, type LucideIcon } from 'lucide-react'
 import {
   Badge,
   Button,
@@ -95,7 +95,7 @@ export default function Community() {
           { id: 'mine', label: t('community.tabMine', { defaultValue: '我的分享' }) },
           { id: 'profile', label: t('community.tabProfile', { defaultValue: '我的身份' }) },
         ]}
-        icons={{ browse: Search, mine: Sparkles, profile: Users }}
+        icons={{ browse: Search, mine: Bookmark, profile: Users }}
       />
 
       {tab === 'browse' && <BrowseTab key={`b${reloadKey}`} onPublish={openPublish} />}

@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react
 import { useTranslation } from 'react-i18next'
 import {
   Presentation,
-  Sparkles,
   Download,
   Trash2,
   Clock,
@@ -537,7 +536,7 @@ export default function SlideGen() {
       <PageHero
         guideKey="slide-gen"
         icon={Presentation}
-        kicker={t('slideGen.kicker', { defaultValue: 'Slide Studio' })}
+        kicker={t('slideGen.kicker', { defaultValue: '教學簡報' })}
         title={t('slideGen.title', { defaultValue: 'AI 簡報生成器' })}
         description={t('slideGen.subtitle', {
           defaultValue: '輸入課題、貼上內容或上載教材，EziTeach AI 會協助你生成可編輯的教學簡報，並可下載為 PowerPoint。',
@@ -554,7 +553,7 @@ export default function SlideGen() {
       <div className="flex flex-col gap-3 rounded-2xl border border-emerald-200/70 bg-emerald-50/70 px-4 py-3 dark:border-emerald-500/25 dark:bg-emerald-500/10 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
           <p className="flex items-center gap-1.5 text-sm font-semibold text-emerald-800 dark:text-emerald-200">
-            <Sparkles size={15} />
+            <Presentation size={15} />
             {t('slideGen.fast.title', { defaultValue: '明天要上堂？' })}
           </p>
           <p className="mt-0.5 text-xs leading-relaxed text-emerald-700/80 dark:text-emerald-200/80">
@@ -564,7 +563,7 @@ export default function SlideGen() {
           </p>
         </div>
         <div className="flex shrink-0 flex-wrap items-center gap-2">
-          <Button size="sm" icon={Sparkles} onClick={fastGenerate} disabled={!hasInput || busy} loading={busy}>
+          <Button size="sm" icon={Presentation} onClick={fastGenerate} disabled={!hasInput || busy} loading={busy}>
             {t('slideGen.fast.cta', { defaultValue: '立即生成草稿' })}
           </Button>
           <Button size="sm" variant="ghost" icon={ArrowRight} onClick={() => goStep(3)}>
@@ -798,7 +797,7 @@ export default function SlideGen() {
                       <ToggleChip
                         active={highFi}
                         onClick={() => setHighFi(!highFi)}
-                        icon={Sparkles}
+                        icon={Presentation}
                         title={t('slideGen.images.highFiTip', {
                           defaultValue: '封面標題以固定視覺輸出，適合重視版面一致的簡報。',
                         })}
@@ -848,7 +847,7 @@ export default function SlideGen() {
                             {t('slideGen.action.regen', { defaultValue: '重新生成' })}
                           </Button>
                         )}
-                        <Button icon={Sparkles} onClick={() => void run()} loading={busy} disabled={!hasInput}>
+                        <Button icon={Presentation} onClick={() => void run()} loading={busy} disabled={!hasInput}>
                           {current
                             ? t('slideGen.action.again', { defaultValue: '再生成' })
                             : t('slideGen.action.generate', { defaultValue: '生成簡報' })}
@@ -925,7 +924,7 @@ export default function SlideGen() {
                     </p>
                     <Button
                       size="sm"
-                      icon={Sparkles}
+                      icon={Presentation}
                       onClick={() => void run()}
                       disabled={!hasInput}
                       className="mt-1"

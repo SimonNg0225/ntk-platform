@@ -12,7 +12,6 @@ import {
   FileCheck2,
   Eye,
   Loader2,
-  Sparkles,
   Wand2,
 } from 'lucide-react'
 
@@ -223,7 +222,7 @@ function FillFormDocx({
           aria-expanded={aiOpen}
         >
           <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-accent text-white">
-            <Sparkles size={16} />
+            <FileCheck2 size={16} />
           </span>
           <span className="min-w-0 flex-1">
             <span className="block text-sm font-medium text-slate-700 dark:text-slate-200">
@@ -266,7 +265,7 @@ function FillFormDocx({
             ) : (
               <p className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400">
                 {!isAIConfigured
-                  ? 'AI 助手未啟用（需設定 Supabase + 部署 gemini Edge Function，見 docs/SETUP.md）。你仍可直接逐欄手動填寫。'
+                  ? '智能填寫暫時未能使用，你仍可直接逐欄手動填寫。'
                   : '請先在左下角使用 Google 登入，以使用 AI 草擬。手動填寫不受影響。'}
               </p>
             )}

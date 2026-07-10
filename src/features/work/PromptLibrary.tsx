@@ -1,22 +1,17 @@
 import { useMemo, useState } from 'react'
 import {
+  ArrowRight,
   BarChart3,
   BookOpenCheck,
-  CheckSquare,
-  ClipboardCheck,
   ClipboardList,
-  Copy,
   FileText,
   Mail,
   MessageSquare,
-  PenLine,
   Presentation,
   Scale,
   Search,
   Send,
-  Sparkles,
   Users,
-  WandSparkles,
   type LucideIcon,
 } from 'lucide-react'
 import { useMode } from '../../context/ModeContext'
@@ -24,15 +19,15 @@ import { useNav } from '../../context/NavContext'
 import { useToast } from '../../context/ToastContext'
 import { writeAiHandoff } from '../shared/aiAssistant/handoff'
 import PageHero from '../../ui/PageHero'
-import { Badge, Button, Card, Input, Textarea, cx } from '../../ui'
+import { Button, Input, cx } from '../../ui'
 
 type PromptAgent = {
   id: string
+  task: string
   name: string
   specialty: string
   portrait: string
   icon: LucideIcon
-  tone: 'accent' | 'green' | 'amber' | 'blue' | 'rose' | 'slate'
   tags: string[]
   starter: string
   bestFor: string
@@ -42,11 +37,11 @@ type PromptAgent = {
 const PROMPT_AGENTS: PromptAgent[] = [
   {
     id: 'email-reply',
+    task: '回覆一封電郵',
     name: '電郵回覆助理',
     specialty: '家長 / 同事 / 學校電郵',
-    portrait: '/assets/prompt-agents/email-reply.jpg',
+    portrait: '/assets/prompt-agents/editorial/email-reply.png',
     icon: Mail,
-    tone: 'blue',
     tags: ['行政', '溝通'],
     starter: '貼上對方電郵、你的立場、希望語氣。',
     bestFor: '回覆家長查詢、活動通知、同事協調、禮貌拒絕。',
@@ -67,11 +62,11 @@ const PROMPT_AGENTS: PromptAgent[] = [
   },
   {
     id: 'lesson-plan',
+    task: '準備下一堂課',
     name: '教案準備師',
     specialty: '一堂課由目標到活動',
-    portrait: '/assets/prompt-agents/lesson-plan.jpg',
+    portrait: '/assets/prompt-agents/editorial/lesson-plan.png',
     icon: ClipboardList,
-    tone: 'accent',
     tags: ['備課', '課堂'],
     starter: '輸入課題、年級、課時、學生能力。',
     bestFor: '快速整理教學目標、流程、活動和延伸練習。',
@@ -95,11 +90,11 @@ const PROMPT_AGENTS: PromptAgent[] = [
   },
   {
     id: 'worksheet-maker',
+    task: '製作工作紙或小測',
     name: '練習設計師',
     specialty: '工作紙 / 小測 / 分層題目',
-    portrait: '/assets/prompt-agents/worksheet-maker.jpg',
-    icon: WandSparkles,
-    tone: 'green',
+    portrait: '/assets/prompt-agents/editorial/worksheet-maker.png',
+    icon: FileText,
     tags: ['出題', '練習'],
     starter: '給課題、題型、題數、難度比例。',
     bestFor: '生成由易到難的工作紙、小測和延伸挑戰。',
@@ -123,11 +118,11 @@ const PROMPT_AGENTS: PromptAgent[] = [
   },
   {
     id: 'rubric-feedback',
+    task: '寫評語與評分準則',
     name: '評分與評語助理',
     specialty: 'Rubric / 批改評語 / 改善建議',
-    portrait: '/assets/prompt-agents/rubric-feedback.jpg',
+    portrait: '/assets/prompt-agents/editorial/rubric-feedback.png',
     icon: Scale,
-    tone: 'amber',
     tags: ['批改', '評語'],
     starter: '貼題目、學生答案或表現描述。',
     bestFor: '把批改變成具體、可跟進的回饋。',
@@ -150,11 +145,11 @@ const PROMPT_AGENTS: PromptAgent[] = [
   },
   {
     id: 'slide-architect',
+    task: '整理簡報大綱',
     name: '簡報架構師',
     specialty: 'PowerPoint 大綱 / 頁面安排',
-    portrait: '/assets/prompt-agents/slide-architect.jpg',
+    portrait: '/assets/prompt-agents/editorial/slide-architect.png',
     icon: Presentation,
-    tone: 'rose',
     tags: ['簡報', '教材'],
     starter: '輸入課題、時間、重點和想要的風格。',
     bestFor: '由零散內容變成一份有節奏的簡報大綱。',
@@ -177,11 +172,11 @@ const PROMPT_AGENTS: PromptAgent[] = [
   },
   {
     id: 'activity-designer',
+    task: '設計課堂活動',
     name: '課堂活動設計師',
     specialty: '討論 / 小組 / Exit Ticket',
-    portrait: '/assets/prompt-agents/activity-designer.jpg',
+    portrait: '/assets/prompt-agents/editorial/activity-designer.png',
     icon: Users,
-    tone: 'green',
     tags: ['活動', '互動'],
     starter: '提供課題、班級氣氛、時間和活動限制。',
     bestFor: '把沉悶內容轉成可操作的課堂活動。',
@@ -205,11 +200,11 @@ const PROMPT_AGENTS: PromptAgent[] = [
   },
   {
     id: 'differentiation-coach',
+    task: '安排分層學習',
     name: '分層支援教練',
     specialty: '照顧學習差異',
-    portrait: '/assets/prompt-agents/differentiation-coach.jpg',
+    portrait: '/assets/prompt-agents/editorial/differentiation-coach.png',
     icon: BookOpenCheck,
-    tone: 'blue',
     tags: ['分層', '支援'],
     starter: '描述班內學生程度差異和任務要求。',
     bestFor: '同一課題設計基礎、標準、挑戰三層支援。',
@@ -232,11 +227,11 @@ const PROMPT_AGENTS: PromptAgent[] = [
   },
   {
     id: 'parent-communication',
+    task: '準備家長溝通',
     name: '家長溝通顧問',
     specialty: '學生表現 / 跟進訊息',
-    portrait: '/assets/prompt-agents/parent-communication.jpg',
+    portrait: '/assets/prompt-agents/editorial/parent-communication.png',
     icon: MessageSquare,
-    tone: 'amber',
     tags: ['家長', '班務'],
     starter: '輸入學生情況、事實、想達成的下一步。',
     bestFor: '處理敏感訊息時保持中性、具體、可跟進。',
@@ -258,11 +253,11 @@ const PROMPT_AGENTS: PromptAgent[] = [
   },
   {
     id: 'admin-docs',
+    task: '整理行政文件',
     name: '行政文件整理員',
     specialty: '通告 / 會議 / 報告摘要',
-    portrait: '/assets/prompt-agents/admin-docs.jpg',
+    portrait: '/assets/prompt-agents/editorial/admin-docs.png',
     icon: FileText,
-    tone: 'slate',
     tags: ['行政', '摘要'],
     starter: '貼上文件、會議紀錄或零散要點。',
     bestFor: '快速抽重點、待辦、風險和可直接發出的版本。',
@@ -284,11 +279,11 @@ const PROMPT_AGENTS: PromptAgent[] = [
   },
   {
     id: 'data-reflection',
+    task: '分析成績與弱項',
     name: '成績反思分析師',
     specialty: '測考數據 / 弱項 / 跟進分組',
-    portrait: '/assets/prompt-agents/data-reflection.jpg',
+    portrait: '/assets/prompt-agents/editorial/data-reflection.png',
     icon: BarChart3,
-    tone: 'accent',
     tags: ['成績', '跟進'],
     starter: '貼上分數、題目表現或班級觀察。',
     bestFor: '由測考結果推導下一步教學跟進。',
@@ -311,215 +306,144 @@ const PROMPT_AGENTS: PromptAgent[] = [
   },
 ]
 
+const COMMON_AGENT_IDS = [
+  'lesson-plan',
+  'worksheet-maker',
+  'rubric-feedback',
+  'email-reply',
+] as const
+
 export default function PromptLibrary() {
   const { mode } = useMode()
   const nav = useNav()
   const toast = useToast()
   const [query, setQuery] = useState('')
-  const [selectedId, setSelectedId] = useState(PROMPT_AGENTS[0].id)
+  const [showAll, setShowAll] = useState(false)
 
-  const filteredAgents = useMemo(() => {
+  const commonAgents = useMemo(
+    () =>
+      COMMON_AGENT_IDS.map((id) => PROMPT_AGENTS.find((agent) => agent.id === id)).filter(
+        (agent): agent is PromptAgent => Boolean(agent),
+      ),
+    [],
+  )
+
+  const visibleAgents = useMemo(() => {
+    if (!showAll) return commonAgents
     const q = query.trim().toLowerCase()
     if (!q) return PROMPT_AGENTS
-    return PROMPT_AGENTS.filter((agent) => {
-      const haystack = [
-        agent.name,
-        agent.specialty,
-        agent.starter,
-        agent.bestFor,
-        ...agent.tags,
-      ]
+    return PROMPT_AGENTS.filter((agent) =>
+      [agent.task, agent.name, agent.specialty, agent.starter, agent.bestFor, ...agent.tags]
         .join(' ')
         .toLowerCase()
-      return haystack.includes(q)
-    })
-  }, [query])
-
-  const selected =
-    filteredAgents.find((agent) => agent.id === selectedId) ??
-    PROMPT_AGENTS.find((agent) => agent.id === selectedId) ??
-    PROMPT_AGENTS[0]
-  const SelectedIcon = selected.icon
-
-  async function copyPrompt(prompt: string) {
-    try {
-      await navigator.clipboard.writeText(prompt)
-      toast.success('已複製 prompt')
-    } catch {
-      toast.error('複製失敗')
-    }
-  }
+        .includes(q),
+    )
+  }, [commonAgents, query, showAll])
 
   function openInAi(agent: PromptAgent) {
     writeAiHandoff(mode, agent.prompt)
     nav.open(mode === 'work' ? 'work-ai' : 'learning-ai')
-    toast.success(`已開啟「${agent.name}」`)
+    toast.success(`已開始：${agent.task}`)
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       <PageHero
-        icon={Sparkles}
-        kicker="Teaching Assistants"
+        icon={Users}
+        kicker="日常教學任務"
         title="教學助手"
-        description="按工作情境選擇一位助手，系統會把對應 prompt 帶到對話畫面。老師補資料後即可生成。"
+        description="選擇你要完成的工作，系統會直接開啟對話並準備好所需資料。"
+        actions={
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={() => {
+              setShowAll((value) => !value)
+              setQuery('')
+            }}
+          >
+            {showAll ? '返回常用任務' : '全部助手'}
+          </Button>
+        }
       />
 
-      <section className="space-y-3">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+      <section aria-labelledby="assistant-tasks-title" className="space-y-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-accent">
-              Assistant Library
+            <p className="text-xs font-semibold text-accent">
+              {showAll ? '十位助手' : '最常使用'}
             </p>
-            <h2 className="mt-1 text-lg font-semibold text-slate-950 dark:text-slate-100">
-              點擊助手直接開始
+            <h2
+              id="assistant-tasks-title"
+              className="mt-1 text-xl font-semibold text-slate-950 dark:text-slate-100"
+            >
+              {showAll ? '全部助手' : '你想先完成甚麼？'}
             </h2>
-            <p className="mt-1 max-w-2xl text-sm leading-6 text-slate-500 dark:text-slate-400">
-              按工作情境選擇：備課、出題、評語、簡報、家長溝通、行政整理等。
+            <p className="mt-1 text-sm leading-6 text-slate-500 dark:text-slate-400">
+              {showAll
+                ? '按任務搜尋；人物只作識別，成果格式已預先設定。'
+                : '四個常用入口，一按便開始，不用先研究提示詞。'}
             </p>
           </div>
 
-          <div className="w-full lg:max-w-sm">
-            <Input
-              icon={Search}
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="搜尋：電郵、教案、評語、家長..."
-              aria-label="搜尋 prompt agent"
-            />
-          </div>
+          {showAll && (
+            <div className="w-full sm:max-w-sm">
+              <Input
+                icon={Search}
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder="搜尋電郵、教案、評語、家長..."
+                aria-label="搜尋教學助手"
+              />
+            </div>
+          )}
         </div>
 
-        {filteredAgents.length > 0 ? (
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5">
-            {filteredAgents.map((agent) => (
-              <ExpertCard
-                key={agent.id}
-                agent={agent}
-                active={selected.id === agent.id}
-                onPreview={() => setSelectedId(agent.id)}
-                onStart={() => openInAi(agent)}
-              />
-            ))}
-          </div>
-        ) : (
-          <Card padded className="text-sm text-slate-500 dark:text-slate-400">
-            找不到相關助手。試試搜尋「備課」、「行政」、「家長」或「成績」。
-          </Card>
-        )}
-      </section>
-
-      <section className="grid gap-4 xl:grid-cols-[minmax(0,390px)_minmax(0,1fr)]">
-        <Card clip className="overflow-hidden">
-          <div className="aspect-[5/4] bg-slate-100 p-2 dark:bg-slate-800">
-            <img
-              src={selected.portrait}
-              alt={`${selected.name}形象`}
-              className="h-full w-full object-contain"
-            />
-          </div>
-          <div className="space-y-4 p-4 sm:p-5">
-            <div className="flex items-start gap-3">
-              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[14px] bg-accent-soft text-accent-strong ring-1 ring-inset ring-accent/20 dark:bg-accent/15 dark:text-accent">
-                <SelectedIcon size={22} strokeWidth={1.8} />
-              </span>
-              <div className="min-w-0">
-                <h2 className="text-xl font-semibold leading-tight text-slate-950 dark:text-slate-100">
-                  {selected.name}
-                </h2>
-                <p className="mt-1 text-sm leading-6 text-slate-500 dark:text-slate-400">
-                  {selected.specialty}
-                </p>
-              </div>
-            </div>
-
-            <div className="space-y-3 border-t border-slate-200/80 pt-4 dark:border-slate-700/70">
-              <div>
-                <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 dark:text-slate-400">
-                  <CheckSquare size={14} strokeWidth={1.8} />
-                  起手資料
-                </div>
-                <p className="mt-1 text-sm leading-6 text-slate-700 dark:text-slate-200">
-                  {selected.starter}
-                </p>
-              </div>
-              <div>
-                <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 dark:text-slate-400">
-                  <ClipboardCheck size={14} strokeWidth={1.8} />
-                  最適合
-                </div>
-                <p className="mt-1 text-sm leading-6 text-slate-700 dark:text-slate-200">
-                  {selected.bestFor}
-                </p>
-              </div>
-            </div>
-
-            <div className="flex flex-wrap gap-1.5">
-              {selected.tags.map((tag) => (
-                <Badge key={tag} tone={selected.tone} className="px-2 py-0.5 text-[11px]">
-                  {tag}
-                </Badge>
+        {visibleAgents.length > 0 ? (
+          <div className="overflow-hidden rounded-[16px] bg-white shadow-xs dark:bg-slate-900">
+            <div className="grid sm:grid-cols-2 sm:divide-x sm:divide-slate-100 dark:sm:divide-slate-800">
+              {visibleAgents.map((agent, index) => (
+                <TaskRow
+                  key={agent.id}
+                  agent={agent}
+                  onStart={() => openInAi(agent)}
+                  className={cx(
+                    index >= 2 && 'border-t border-slate-100 dark:border-slate-800',
+                    index === 1 && 'border-t border-slate-100 sm:border-t-0 dark:border-slate-800',
+                  )}
+                />
               ))}
             </div>
-
-            <Button type="button" icon={Send} onClick={() => openInAi(selected)} fullWidth>
-              開始任務
-            </Button>
           </div>
-        </Card>
-
-        <Card padded className="space-y-4">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-            <div>
-              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-accent">
-                <PenLine size={14} strokeWidth={1.8} />
-                Prompt setup
-              </div>
-              <h3 className="mt-1 text-lg font-semibold text-slate-950 dark:text-slate-100">
-                {selected.name}的預設任務
-              </h3>
-              <p className="mt-1 text-sm leading-6 text-slate-500 dark:text-slate-400">
-                保留完整身份、輸入欄位和輸出格式。老師可以先複製，或者直接送去 AI 後補資料。
-              </p>
-            </div>
-
-            <div className="flex shrink-0 flex-wrap gap-2">
-              <Button
-                type="button"
-                variant="secondary"
-                icon={Copy}
-                onClick={() => void copyPrompt(selected.prompt)}
-              >
-                複製
-              </Button>
-              <Button type="button" icon={Send} onClick={() => openInAi(selected)}>
-                送去 AI
-              </Button>
-            </div>
+        ) : (
+          <div className="border-y border-slate-200 py-10 text-center text-sm text-slate-500 dark:border-slate-800 dark:text-slate-400">
+            找不到相關助手。試試搜尋「備課」、「行政」、「家長」或「成績」。
           </div>
+        )}
 
-          <Textarea
-            readOnly
-            value={selected.prompt}
-            className="h-[420px] resize-none font-mono text-[13px] leading-6"
-            aria-label={`${selected.name} prompt`}
-          />
-        </Card>
+        {!showAll && (
+          <button
+            type="button"
+            onClick={() => setShowAll(true)}
+            className="group flex min-h-11 items-center gap-2 text-sm font-semibold text-accent-strong transition hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:text-accent"
+          >
+            查看全部 10 位助手
+            <ArrowRight size={16} className="transition group-hover:translate-x-0.5" />
+          </button>
+        )}
       </section>
     </div>
   )
 }
 
-function ExpertCard({
+function TaskRow({
   agent,
-  active,
-  onPreview,
   onStart,
+  className,
 }: {
   agent: PromptAgent
-  active: boolean
-  onPreview: () => void
   onStart: () => void
+  className?: string
 }) {
   const Icon = agent.icon
 
@@ -527,50 +451,33 @@ function ExpertCard({
     <button
       type="button"
       onClick={onStart}
-      onFocus={onPreview}
-      onMouseEnter={onPreview}
-      aria-label={`${agent.name}，開始任務`}
+      aria-label={`${agent.task}，由${agent.name}開始`}
       className={cx(
-        'group flex min-h-[300px] cursor-pointer flex-col overflow-hidden rounded-[16px] border bg-white text-left shadow-xs transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:bg-slate-900 dark:focus-visible:ring-offset-slate-950',
-        active
-          ? 'border-accent/45 dark:border-accent/50'
-          : 'border-slate-200/80 hover:border-accent/35 hover:shadow-md dark:border-slate-700/70 dark:hover:border-accent/40',
+        'group flex min-h-[138px] w-full cursor-pointer items-center gap-4 p-4 text-left transition duration-150 hover:bg-slate-50 focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent/40 active:bg-slate-100 dark:hover:bg-slate-800/70 dark:active:bg-slate-800',
+        className,
       )}
     >
-      <div className="relative aspect-[5/4] w-full overflow-hidden bg-slate-100 p-2 dark:bg-slate-800">
-        <img
-          src={agent.portrait}
-          alt={`${agent.name}形象`}
-          loading="lazy"
-          className="h-full w-full object-contain"
-        />
-        <span className="absolute left-3 top-3 flex h-9 w-9 items-center justify-center rounded-[12px] bg-white/90 text-accent-strong shadow-sm ring-1 ring-inset ring-white/70 backdrop-blur dark:bg-slate-900/85 dark:text-accent dark:ring-white/10">
-          <Icon size={18} strokeWidth={1.8} />
+      <img
+        src={agent.portrait}
+        alt=""
+        loading="lazy"
+        className="h-[72px] w-[72px] shrink-0 rounded-[14px] bg-slate-100 object-cover object-center dark:bg-slate-800"
+      />
+      <span className="min-w-0 flex-1">
+        <span className="flex items-center gap-2 text-xs font-medium text-slate-500 dark:text-slate-400">
+          <Icon size={14} strokeWidth={1.8} className="text-accent" />
+          {agent.name}
         </span>
-      </div>
-
-      <div className="flex flex-1 flex-col p-3.5">
-        <div className="min-h-[74px]">
-          <h3 className="text-base font-semibold leading-tight text-slate-950 dark:text-slate-100">
-            {agent.name}
-          </h3>
-          <p className="mt-1 text-sm leading-5 text-slate-500 dark:text-slate-400">
-            {agent.specialty}
-          </p>
-        </div>
-
-        <p className="mt-2 min-h-[40px] text-xs leading-5 text-slate-600 dark:text-slate-300">
+        <span className="mt-1.5 block text-base font-semibold text-slate-950 dark:text-slate-100">
+          {agent.task}
+        </span>
+        <span className="mt-1 line-clamp-2 block text-xs leading-5 text-slate-500 dark:text-slate-400">
           {agent.bestFor}
-        </p>
-
-        <div className="mt-auto flex flex-wrap gap-1.5 pt-3">
-          {agent.tags.map((tag) => (
-            <Badge key={tag} tone={agent.tone} className="px-2 py-0.5 text-[11px]">
-              {tag}
-            </Badge>
-          ))}
-        </div>
-      </div>
+        </span>
+      </span>
+      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-400 transition group-hover:bg-accent group-hover:text-white dark:bg-slate-800 dark:text-slate-400">
+        <Send size={16} strokeWidth={1.8} />
+      </span>
     </button>
   )
 }

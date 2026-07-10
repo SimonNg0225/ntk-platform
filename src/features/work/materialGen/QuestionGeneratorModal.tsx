@@ -8,7 +8,6 @@ import {
   Plus,
   RotateCcw,
   ShieldCheck,
-  Sparkles,
   Target,
 } from 'lucide-react'
 import CreditMeter from '../../../components/CreditMeter'
@@ -213,8 +212,8 @@ export function QuestionGeneratorModal({
           {!isAIConfigured ? (
             <EmptyState
               icon={Bot}
-              title="AI 助手未啟用"
-              hint="要設定好 Supabase 並部署 gemini Edge Function 先用到。步驟見 docs/SETUP.md。"
+              title="智能生成暫時未能使用"
+              hint="生成服務暫時未連接，請稍後再試或聯絡管理員。"
             />
           ) : (
             <EmptyState
@@ -239,7 +238,7 @@ export function QuestionGeneratorModal({
         <div className="space-y-5">
           <div className="flex items-start gap-3 rounded-2xl border border-accent/20 bg-accent-soft/50 p-3.5 dark:border-accent/25 dark:bg-accent/10">
             <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-accent text-white">
-              <Sparkles size={16} />
+              <Brain size={16} />
             </span>
             <p className="text-xs leading-relaxed text-slate-600 dark:text-slate-300">
               選擇好課題同難度，AI 會幫你草擬一批貼合香港{subjectName ?? '中學'}課程的
@@ -359,7 +358,7 @@ export function QuestionGeneratorModal({
               aria-live="polite"
             >
               <p className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
-                <Sparkles size={15} className="animate-pulse text-accent" />
+                <Brain size={15} className="animate-pulse text-accent" />
                 AI 想緊題目，請等一等…
               </p>
               <div className="h-2.5 w-full animate-pulse rounded-full bg-slate-200 dark:bg-slate-700" />
@@ -373,7 +372,7 @@ export function QuestionGeneratorModal({
             <Button variant="secondary" onClick={onClose}>
               取消
             </Button>
-            <Button icon={Sparkles} loading={busy} onClick={run} disabled={busy || !topicId}>
+            <Button icon={Brain} loading={busy} onClick={run} disabled={busy || !topicId}>
               {busy ? '生成中…' : '生成'}
             </Button>
           </div>

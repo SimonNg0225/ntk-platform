@@ -32,6 +32,7 @@ import {
 import { useToast } from '../../../context/ToastContext'
 import { useConfirm } from '../../../context/ConfirmContext'
 import { complete, isAIConfigured } from '../../../lib/aiClient'
+import { classifyAIError } from '../../../lib/aiError'
 import ProofreadModal from './ProofreadModal'
 import PracticeGenModal from './PracticeGenModal'
 import {
@@ -287,7 +288,7 @@ export default function Editor({
       return
     }
     if (!isAIConfigured) {
-      toast.info('AI 未啟用 — 要設定好 Supabase + Gemini（見 docs/SETUP.md）')
+      toast.info('智能整理暫時未能使用，請稍後再試。')
       return
     }
     setAiKind(kind)
@@ -307,7 +308,7 @@ export default function Editor({
       return
     }
     if (!isAIConfigured) {
-      toast.info('AI 未啟用 — 要設定好 Supabase + Gemini（見 docs/SETUP.md）')
+      toast.info('智能整理暫時未能使用，請稍後再試。')
       return
     }
     if (tool === 'proof') setProofOpen(true)
@@ -933,7 +934,7 @@ function AINoteModal({
       })
       .catch((e) => {
         if (cancelled) return
-        setError((e as Error).message || 'AI 出錯')
+        setError(classifyAIError(e).message)
         setLoading(false)
       })
     return () => {

@@ -1,3 +1,4 @@
+import { useCallback, useSyncExternalStore } from 'react'
 import { ArrowRight, CheckCircle2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { getFeature } from '../features/registry'
@@ -5,6 +6,8 @@ import { FeatureIcon } from '../features/featureIcons'
 import type { ModeId } from '../modes/modes'
 import { featDesc, featName } from '../i18n/appEn'
 import { cx } from '../ui'
+import { track } from '../lib/observability'
+import { collectionRegistry } from '../lib/store'
 
 type Step = {
   id: string
@@ -169,6 +172,45 @@ const DEFAULT_WORK_FLOW: Flow = {
   ],
 }
 
+const OUTPUT_COLLECTION_KEYS: Record<string, readonly string[]> = {
+  'work-lesson-plan': ['lesson_plans'],
+  'work-teach-guide': ['work_teach_guide'],
+  'work-generate': ['questions', 'questionbank.papers'],
+  'work-questions': ['questions', 'questionbank.papers'],
+  'work-rubric': ['work_rubric'],
+  'work-slides': ['work_slide_decks'],
+  'work-doc-digest': ['work_doc_digest'],
+  'work-transcribe': ['work_transcribe'],
+  'work-meeting-notes': ['meeting_notes'],
+  'work-resources': ['resources'],
+  'work-dse': ['work_dse'],
+  'work-observation': ['observations'],
+  'learning-card-generator': ['cardgen_history', 'cards'],
+  'learning-flashcards': ['decks', 'cards'],
+}
+
+export function hasSavedFeatureOutput(activeId: string) {
+  const keys = OUTPUT_COLLECTION_KEYS[activeId] ?? []
+  return keys.some((key) => (collectionRegistry.get(key)?.get().length ?? 0) > 0)
+}
+
+function useHasSavedFeatureOutput(activeId: string) {
+  const keysKey = (OUTPUT_COLLECTION_KEYS[activeId] ?? []).join('|')
+  const subscribe = useCallback(
+    (listener: () => void) => {
+      const keys = keysKey ? keysKey.split('|') : []
+      const unsubscribers = keys
+        .map((key) => collectionRegistry.get(key)?.subscribe(listener))
+        .filter((unsubscribe): unsubscribe is () => void => Boolean(unsubscribe))
+      return () => unsubscribers.forEach((unsubscribe) => unsubscribe())
+    },
+    [keysKey],
+  )
+  const getSnapshot = useCallback(() => hasSavedFeatureOutput(activeId), [activeId])
+
+  return useSyncExternalStore(subscribe, getSnapshot, getSnapshot)
+}
+
 export default function NextStepsBar({
   activeId,
   mode,
@@ -179,11 +221,12 @@ export default function NextStepsBar({
   onOpen: (id: string) => void
 }) {
   const { t } = useTranslation()
+  const hasOutput = useHasSavedFeatureOutput(activeId)
   const flow =
     mode === 'work'
       ? WORK_FLOWS[activeId] ?? DEFAULT_WORK_FLOW
       : LEARNING_FLOWS[activeId]
-  if (!flow) return null
+  if (!flow || !hasOutput) return null
 
   const steps = flow.steps
     .filter((step) => step.id !== activeId)
@@ -196,12 +239,12 @@ export default function NextStepsBar({
   if (steps.length === 0) return null
 
   return (
-    <section className="rounded-[18px] border border-slate-200/80 bg-white p-4 shadow-xs dark:border-slate-800 dark:bg-slate-900 sm:p-5">
+    <section className="border-t border-slate-200/80 px-1 pb-1 pt-5 dark:border-slate-800 sm:pt-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase text-accent">
+          <p className="inline-flex items-center gap-1.5 text-xs font-semibold text-accent">
             <CheckCircle2 size={13} strokeWidth={2} />
-            Next step
+            下一步
           </p>
           <h2 className="mt-1 text-base font-semibold text-slate-900 dark:text-slate-100">
             {flow.title}
@@ -217,12 +260,19 @@ export default function NextStepsBar({
           <button
             key={step.id}
             type="button"
-            onClick={() => onOpen(step.id)}
+            onClick={() => {
+              track('next_step_clicked', {
+                from_feature_id: activeId,
+                to_feature_id: step.id,
+                position: index + 1,
+              })
+              onOpen(step.id)
+            }}
             className={cx(
-              'group flex min-h-[76px] cursor-pointer items-center gap-3 rounded-[15px] border px-3.5 py-3 text-left transition duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
+              'group flex min-h-[76px] cursor-pointer items-center gap-3 rounded-[12px] px-3.5 py-3 text-left transition duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
               index === 0
-                ? 'border-accent/35 bg-accent-soft/70 hover:border-accent/45 dark:bg-accent/15'
-                : 'border-slate-200 bg-white hover:border-accent/35 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:hover:bg-slate-800',
+                ? 'bg-accent-soft/70 hover:bg-accent-soft dark:bg-accent/15'
+                : 'bg-slate-100/75 hover:bg-slate-100 dark:bg-slate-800/70 dark:hover:bg-slate-800',
             )}
           >
             <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[14px] bg-white text-accent shadow-xs dark:bg-slate-800">

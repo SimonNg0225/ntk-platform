@@ -10,7 +10,7 @@ import ProfileSetupModal from './ProfileSetupModal'
 //  - needsRegistration 任何錯誤一律當「不用登記」，不阻住用戶。
 // ============================================================
 
-export default function ProfileGate() {
+export default function ProfileGate({ suspended = false }: { suspended?: boolean }) {
   const { user, configured, loading } = useAuth()
   const { setDisplayName } = useSettings()
   const [open, setOpen] = useState(false)
@@ -38,6 +38,6 @@ export default function ProfileGate() {
     }
   }, [configured, loading, uid])
 
-  if (!open) return null
+  if (!open || suspended) return null
   return <ProfileSetupModal open={open} onDone={() => setOpen(false)} />
 }

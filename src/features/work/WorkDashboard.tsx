@@ -56,8 +56,9 @@ import {
   Flame,
   Check,
   ChevronRight,
-  Sparkles,
+  Crosshair,
   ClipboardList,
+  MessageCircle,
   Pencil,
   Zap,
 } from 'lucide-react'
@@ -98,7 +99,7 @@ import type { AgendaItem, Kpi, WidgetId } from './dashboard/types'
 // ─────────────────────────────────────────────
 const WIDGET_META: Record<WidgetId, { label: string; icon: LucideIcon }> = {
   kpi: { label: '關鍵指標', icon: TrendingUp },
-  focus: { label: '今日聚焦', icon: Sparkles },
+  focus: { label: '今日聚焦', icon: Crosshair },
   agenda: { label: '今日議程', icon: Clock },
   taskTrend: { label: '待辦完成趨勢', icon: CheckSquare },
   curriculum: { label: '各班課程進度', icon: School },
@@ -1099,7 +1100,7 @@ function FocusWidget({ ctx }: { ctx: WidgetCtx }) {
     <Card clip className="p-0">
       <div className="bg-accent px-5 py-4 text-white">
         <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-white/80">
-          <Sparkles size={14} />
+          <Crosshair size={14} />
           {t('wdash.focusTitle', { defaultValue: '今日聚焦' })}
         </div>
         <p className="mt-1.5 text-base font-semibold leading-snug" aria-live="polite">{line}</p>
@@ -1374,7 +1375,7 @@ const QUICK_ACTIONS: { key: string; label: string; i18n: string; icon: LucideIco
   { key: 'work-lesson-plan', label: '備課教案', i18n: 'qaLessonPlan', icon: ClipboardList },
   { key: 'work-timetable', label: '時間表', i18n: 'qaTimetable', icon: CalendarDays },
   { key: 'calendar', label: '行事曆', i18n: 'qaCalendar', icon: Calendar },
-  { key: 'work-ai', label: '教學助手', i18n: 'qaAi', icon: Sparkles },
+  { key: 'work-ai', label: '教學助手', i18n: 'qaAi', icon: MessageCircle },
 ]
 
 function QuickActionsWidget({ open }: { open: (id: string) => void }) {

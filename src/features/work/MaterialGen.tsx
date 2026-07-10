@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react'
 import {
   ArrowUpRight,
-  Bot,
   ChevronRight,
   ClipboardList,
   FileStack,
@@ -9,7 +8,7 @@ import {
   FolderOpen,
   Layers,
   ListChecks,
-  Sparkles,
+  MessageCircle,
   SquareStack,
   Briefcase,
   type LucideIcon,
@@ -26,6 +25,7 @@ import { QuestionGeneratorModal } from './materialGen/QuestionGeneratorModal'
 import { WorksheetGenerator } from './materialGen/WorksheetGenerator'
 import { PaperGenerator } from './materialGen/PaperGenerator'
 import type { GenKind } from './materialGen/engine'
+import ServiceStatus from '../../components/ServiceStatus'
 
 // ============================================================
 //  MaterialGen — 「教材生成」hub（Phase C）
@@ -191,7 +191,7 @@ export default function MaterialGen() {
       <PageHero
         guideKey="material-gen"
         icon={Layers}
-        kicker="Material Studio"
+        kicker="課堂教材"
         title="教材生成"
         description={`一個工作枱，集齊${subjShort}出題、個案、練習同試卷生成；生成完直接入題庫，再可組卷、出自測、重用。`}
       />
@@ -205,34 +205,33 @@ export default function MaterialGen() {
 
       {/* ───────── AI 未接友善降額（接了就改顯示 AI 助手捷徑）───────── */}
       {!isAIConfigured ? (
-        <div className="flex items-start gap-3 rounded-2xl border border-amber-300/50 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-500/25 dark:bg-amber-500/10 dark:text-amber-200">
-          <Bot size={18} className="mt-0.5 shrink-0" />
-          <div className="space-y-0.5">
-            <p className="font-medium">AI 生成功能未啟用</p>
-            <p className="text-xs leading-relaxed text-amber-700 dark:text-amber-300/90">
-              要設定好 Supabase 並部署 gemini Edge Function 先用到 AI 生成（步驟見 docs/SETUP.md）。未接 AI 都可以照用「試卷生成」由題庫抽現有題組卷。
-            </p>
-          </div>
-        </div>
+        <ServiceStatus
+          title="智能生成服務暫時未連接"
+          message="你仍可使用「試卷生成」整理題庫現有題目；其他生成工具稍後再試。"
+          adminDetails="請檢查 Supabase 連線及 gemini Edge Function 部署狀態；設定步驟見 docs/SETUP.md。"
+        />
       ) : (
-        <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-accent/20 bg-accent-soft/40 px-4 py-2.5 text-sm dark:border-accent/25 dark:bg-accent/10">
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-[14px] bg-accent-soft/45 px-4 py-2.5 text-sm dark:bg-accent/10">
           <span className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
-            <Sparkles size={15} className="text-accent" />
-            想自由追問、調教題目？
+            <MessageCircle size={15} className="text-accent" />
+            想繼續調整題目內容？
           </span>
           <button
             type="button"
             onClick={() => nav.open('work-ai')}
             className="inline-flex min-h-11 items-center gap-1 rounded-lg px-3 text-xs font-semibold text-accent-strong transition hover:bg-accent-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98] dark:text-accent dark:hover:bg-accent/15"
           >
-            在 AI 助手繼續傾
+            開啟助手對話
             <ArrowUpRight size={14} />
           </button>
         </div>
       )}
 
       {/* ───────── 工具卡（選擇一款生成工具）───────── */}
-      <section aria-label="生成工具" className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+      <section
+        aria-label="生成工具"
+        className="grid gap-1 rounded-[16px] bg-slate-100/80 p-1 sm:grid-cols-2 xl:grid-cols-3 dark:bg-slate-800/50"
+      >
         {TOOLS.map((tool) => {
           const Icon = tool.icon
           return (
@@ -241,10 +240,10 @@ export default function MaterialGen() {
               type="button"
               onClick={() => setActive(tool.open)}
               aria-label={`${tool.title}：${tool.blurb}`}
-              className="group flex h-full cursor-pointer flex-col rounded-2xl border border-slate-200/80 bg-white p-4 text-left transition duration-200 hover:border-slate-300 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98] dark:border-slate-700/60 dark:bg-slate-800 dark:hover:border-slate-600"
+              className="group flex h-full cursor-pointer flex-col rounded-[12px] bg-white p-4 text-left shadow-xs transition duration-200 hover:bg-slate-50 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98] dark:bg-slate-900 dark:hover:bg-slate-800"
             >
               <div className="flex items-start justify-between gap-2">
-                <span className={cx('flex h-9 w-9 shrink-0 items-center justify-center rounded-xl', TONE[tool.tone])}>
+                <span className={cx('flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px]', TONE[tool.tone])}>
                   <Icon size={16} />
                 </span>
                 {tool.badge ? <Badge tone="slate">{tool.badge}</Badge> : null}
@@ -276,7 +275,7 @@ export default function MaterialGen() {
       <button
         type="button"
         onClick={() => nav.open('work-questions')}
-        className="group flex w-full items-center gap-3 rounded-2xl border border-slate-200/80 bg-white p-4 text-left transition duration-200 hover:border-slate-300 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98] dark:border-slate-700/60 dark:bg-slate-800 dark:hover:border-slate-600"
+        className="group flex w-full items-center gap-3 border-y border-slate-200/80 bg-transparent px-1 py-4 text-left transition duration-200 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:bg-slate-100 dark:border-slate-800 dark:hover:bg-slate-900"
       >
         <span className={cx('flex h-9 w-9 shrink-0 items-center justify-center rounded-xl', TONE.accent)}>
           <FolderOpen size={16} />

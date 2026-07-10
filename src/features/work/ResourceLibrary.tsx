@@ -17,7 +17,6 @@ import {
   Pencil,
   Plus,
   Search,
-  Sparkles,
   SquareKanban,
   Star,
   Trash2,
@@ -474,7 +473,7 @@ export default function ResourceLibrary() {
       <PageHero
         guideKey="resourceLibrary"
         icon={Library}
-        kicker="Resource Library"
+        kicker="教學資源"
         title="教學資源庫"
         description={heroLine}
         actions={
@@ -1695,7 +1694,7 @@ function FolderManager({
         )}
 
         <p className="flex items-center gap-1.5 text-[11px] text-slate-400">
-          <Sparkles size={12} />
+          <BookMarked size={12} />
           提示：在看板視圖可以用卡片選單把資源移到收藏夾。
         </p>
       </div>

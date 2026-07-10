@@ -152,7 +152,7 @@ export function DetailModal({
         }
       >
         <CatalogueHeader
-          kicker="著錄 · Cataloguing"
+          kicker="資源著錄"
           icon={Pencil}
           title="修訂館藏條目"
           type={type}
@@ -611,7 +611,7 @@ export function AddResourceModal({
       }
     >
       <CatalogueHeader
-        kicker="入冊 · Accession"
+        kicker="資源入冊"
         icon={BookMarked}
         title="登錄新館藏"
         type={type}

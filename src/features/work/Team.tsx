@@ -35,10 +35,13 @@ import {
   removeMember,
   startSeatCheckout,
   isSeatBillingConfigured,
+  isValidInviteEmail,
+  buildInviteLink,
   type Org,
   type OrgMember,
   type OrgInvite,
 } from '../../lib/team'
+import { track, trackOnce } from '../../lib/observability'
 
 // ============================================================
 //  團隊 / 多座位（學校 · 科組）
@@ -62,6 +65,15 @@ const TEAM_GUIDE: FeatureGuideStep[] = [
     desc: '座位用盡可加購；隨時在成員清單調整或移除。',
   },
 ]
+
+function inviteExpiryLabel(iso: string): string {
+  const date = new Date(iso)
+  if (Number.isNaN(date.getTime())) return '7 日內有效'
+  return `${new Intl.DateTimeFormat('zh-HK', {
+    month: 'numeric',
+    day: 'numeric',
+  }).format(date)} 到期`
+}
 
 export default function Team() {
   const { t } = useTranslation()
@@ -98,18 +110,28 @@ export default function Team() {
     }
   }, [toast])
 
-  const reloadOrgDetail = useCallback(async (id: string) => {
-    try {
-      const [m, inv] = await Promise.all([
-        listMembers(id),
-        listPendingInvites(id),
-      ])
-      setMembers(m)
-      setInvites(inv)
-    } catch {
-      /* RLS / 權限：靜默 */
-    }
-  }, [])
+  const reloadOrgDetail = useCallback(
+    async (id: string) => {
+      try {
+        const nextMembers = await listMembers(id)
+        setMembers(nextMembers)
+        setInvites([])
+        const canManageInvites = nextMembers.some(
+          (member) =>
+            member.user_id === user?.id &&
+            (member.role === 'owner' || member.role === 'admin'),
+        )
+        if (canManageInvites) {
+          setInvites(await listPendingInvites(id))
+        } else {
+          setInvites([])
+        }
+      } catch {
+        /* RLS / 權限：靜默 */
+      }
+    },
+    [user?.id],
+  )
 
   // 首載 + 處理 ?invite=token
   useEffect(() => {
@@ -118,6 +140,8 @@ export default function Team() {
     if (token) {
       acceptInvite(token)
         .then((joinedId) => {
+          track('team_invite_accepted')
+          trackOnce('activation_team_joined')
           toast.success('已加入團隊。')
           setOrgId(joinedId)
           // 清走 URL 上的 token
@@ -144,10 +168,10 @@ export default function Team() {
       <EmptyState
         icon={Building2}
         title={t('team.gateNoSupabaseTitle', {
-          defaultValue: '團隊功能需要接好 Supabase',
+          defaultValue: '團隊功能暫時未能使用',
         })}
         hint={t('team.gateNoSupabaseHint', {
-          defaultValue: '團隊 / 多座位靠雲端帳戶運作。設定見 docs/SETUP.md。',
+          defaultValue: '團隊帳戶服務暫時未連接，請稍後再試或聯絡管理員。',
         })}
       />
     )
@@ -178,6 +202,7 @@ export default function Team() {
       setNewOrgName('')
       await reloadOrgs()
       setOrgId(id)
+      track('team_created')
       toast.success('已建立團隊')
     } catch (e) {
       toast.error(e instanceof Error ? e.message : '建立失敗')
@@ -190,7 +215,11 @@ export default function Team() {
     if (!org) return
     const email = inviteEmail.trim()
     if (!email) return
-    if (members.length >= org.seats) {
+    if (!isValidInviteEmail(email)) {
+      toast.error('請輸入有效的同事電郵。')
+      return
+    }
+    if (members.length + invites.length >= org.seats) {
       toast.error(`座位已滿（${org.seats}）。請先增加座位。`)
       return
     }
@@ -200,6 +229,7 @@ export default function Team() {
       setInviteEmail('')
       await reloadOrgDetail(org.id)
       await navigator.clipboard.writeText(link).catch(() => {})
+      track('team_invite_created')
       toast.success('已建立邀請連結，並複製到剪貼簿')
     } catch (e) {
       toast.error(e instanceof Error ? e.message : '邀請失敗')
@@ -222,6 +252,7 @@ export default function Team() {
     try {
       await removeMember(org.id, m.user_id)
       await reloadOrgDetail(org.id)
+      track('team_member_removed')
       toast.success('已移除成員')
     } catch (e) {
       toast.error(e instanceof Error ? e.message : '移除失敗')
@@ -244,13 +275,14 @@ export default function Team() {
   }
 
   const seatsUsed = members.length
+  const seatsReserved = members.length + invites.length
   const seatsTotal = org?.seats ?? 0
-  const seatsFull = !!org && seatsUsed >= seatsTotal
+  const seatsFull = !!org && seatsReserved >= seatsTotal
   const seatTone = !org
     ? 'accent'
     : seatsFull
       ? 'rose'
-      : seatsUsed / Math.max(seatsTotal, 1) >= 0.75
+      : seatsReserved / Math.max(seatsTotal, 1) >= 0.75
         ? 'amber'
         : 'emerald'
   const seatToneChip: Record<string, string> = {
@@ -406,6 +438,11 @@ export default function Team() {
                     })}
                   </p>
                 )}
+                {!seatsFull && invites.length > 0 && (
+                  <p className="mt-0.5 text-[11px] text-amber-600 dark:text-amber-300">
+                    另有 {invites.length} 個座位等待接受邀請
+                  </p>
+                )}
               </div>
             </div>
             {isOwnerAdmin && (
@@ -430,7 +467,7 @@ export default function Team() {
               <p className="mb-3 mt-1 text-sm text-slate-500 dark:text-slate-400">
                 {t('team.inviteHint', {
                   defaultValue:
-                    '輸入同事電郵，產生加入連結（自動複製），傳給他開啟即加入。',
+                    '邀請連結只限指定電郵登入使用，7 日後到期；產生後會自動複製。',
                 })}
               </p>
               <div className="flex gap-2">
@@ -473,7 +510,10 @@ export default function Team() {
                           {t('team.pendingBadge', { defaultValue: '待接受' })}
                         </Badge>
                         <span className="flex-1 truncate text-slate-600 dark:text-slate-300">
-                          {inv.email}
+                          <span className="block truncate">{inv.email}</span>
+                          <span className="mt-0.5 block text-[11px] text-slate-400 dark:text-slate-500">
+                            {inviteExpiryLabel(inv.expires_at)}
+                          </span>
                         </span>
                         <IconButton
                           label={t('team.copyInviteLabel', {
@@ -483,7 +523,7 @@ export default function Team() {
                           className="min-h-11 min-w-11"
                           onClick={() => {
                             void navigator.clipboard.writeText(
-                              `${window.location.origin}/app?invite=${inv.token}`,
+                              buildInviteLink(inv.token),
                             )
                             toast.success('已複製邀請連結')
                           }}

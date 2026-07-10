@@ -651,7 +651,7 @@ export default function GlobalSearch() {
       <PageHero
         guideKey="global-search"
         icon={Radar}
-        kicker={t('globalSearch.kicker', { defaultValue: 'Global Search' })}
+        kicker={t('globalSearch.kicker', { defaultValue: '全站資料' })}
         title={t('globalSearch.title', { defaultValue: '全域搜尋' })}
         description={t('globalSearch.subtitle', { defaultValue: '一格搜尋，掃全部成個平台' })}
         actions={

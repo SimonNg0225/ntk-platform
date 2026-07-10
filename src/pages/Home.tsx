@@ -14,7 +14,6 @@ import {
   Plus,
   Search,
   Send,
-  Sparkles,
   type LucideIcon,
 } from 'lucide-react'
 import { useMode } from '../context/ModeContext'
@@ -50,6 +49,8 @@ import { loadTopicsForSubjects, dedupeTopicsCol } from '../features/work/topicIm
 import { useToast } from '../context/ToastContext'
 import { writeAiHandoff } from '../features/shared/aiAssistant/handoff'
 import { writeComposerHandoff } from '../features/shared/composerHandoff'
+import { inferLearningComposerRoute, inferWorkToolRoute } from './homeRouting'
+import { track, trackOnce } from '../lib/observability'
 
 interface Props {
   onOpen: (id: string) => void
@@ -83,100 +84,6 @@ type RecentWork = {
   meta: string
   createdAt: string
   icon: LucideIcon
-}
-
-type ComposerRoute = {
-  featureId: string
-  label: string
-  handoffText?: string
-}
-
-const hasIntent = (text: string, patterns: readonly RegExp[]) => patterns.some((re) => re.test(text))
-
-function stripSearchIntent(input: string): string {
-  return (
-    input
-      .trim()
-      .replace(/^(幫我|請|please)?\s*(全域搜尋|搜尋|搜索|搜尋返|搜尋|找回|找|查找|search|find)\s*/i, '')
-      .replace(/^(一下|一下|下)\s*/i, '')
-      .trim() || input.trim()
-  )
-}
-
-function stripAskDataIntent(input: string): string {
-  return (
-    input
-      .trim()
-      .replace(/^(幫我|請|please)?\s*(問我的資料\s*AI|問我資料\s*AI|問我的資料|問我資料|根據我的資料|根據我的資料|用我的資料|用我的資料|查我的資料|查我的資料)\s*[:：,，]?\s*/i, '')
-      .trim() || input.trim()
-  )
-}
-
-function inferWorkToolRoute(input: string): ComposerRoute | null {
-  const text = input.trim().toLowerCase()
-  if (!text) return null
-
-  if (
-    hasIntent(text, [
-      /(整|做|製作|生成|設計|準備|建立|create|make|build).{0,18}(ppt|powerpoint|簡報|投影片|slides?|deck|presentation)/i,
-      /^(ppt|powerpoint|簡報|投影片|slides?|deck|presentation)\s*(製作|生成|設計|create|make)?/i,
-    ])
-  ) {
-    return { featureId: 'work-slides', label: '簡報工作室' }
-  }
-
-  if (
-    hasIntent(text, [
-      /^(幫我|請|please)?\s*(全域搜尋|搜尋|搜索|搜尋返|找回|找|查找|search|find)/i,
-      /搜尋返.*(筆記|教案|題目|資源|會議|待辦)/i,
-    ])
-  ) {
-    return { featureId: 'search', label: '全域搜尋', handoffText: stripSearchIntent(input) }
-  }
-
-  if (hasIntent(text, [/錄音|轉文字|逐字稿|transcrib|audio|聲音|mp3|m4a/i])) {
-    return { featureId: 'work-transcribe', label: '錄音轉文字' }
-  }
-
-  if (hasIntent(text, [/掃描|影低|影相|相片|scan|拍照|pdf\s*掃描/i])) {
-    return { featureId: 'work-scan', label: '掃描 PDF' }
-  }
-
-  return null
-}
-
-function inferLearningComposerRoute(input: string): ComposerRoute {
-  const text = input.trim().toLowerCase()
-  if (!text) return { featureId: 'learning-ai', label: '個人 AI 助手' }
-  if (
-    hasIntent(text, [
-      /問我.*資料|我的資料|我的資料|根據.*資料|用.*資料.*答|資料.*ai/i,
-      /我最近.*(記低|學過|安排)|我有什麼(目標|日程|待辦)/i,
-    ])
-  ) {
-    return { featureId: 'ask-data', label: '資料問答 AI', handoffText: stripAskDataIntent(input) }
-  }
-  if (
-    hasIntent(text, [
-      /^(幫我|請|please)?\s*(全域搜尋|搜尋|搜索|搜尋返|搜尋|找回|找|查找|search|find)/i,
-      /全域搜尋|平台中.*(搜尋|搜尋|找)|搜尋返.*(筆記|知識卡|日誌|目標|日程)/i,
-    ])
-  ) {
-    return { featureId: 'search', label: '全域搜尋', handoffText: stripSearchIntent(input) }
-  }
-  if (hasIntent(text, [/知識卡|flashcard|卡片|溫習卡/i])) {
-    return { featureId: 'learning-card-generator', label: 'AI 生成知識卡' }
-  }
-  if (hasIntent(text, [/筆記|整理|總結|note|notes/i])) {
-    return { featureId: 'learning-notes', label: '個人筆記' }
-  }
-  if (hasIntent(text, [/複習|溫習|到期|記憶|srs|flashcard/i])) {
-    return { featureId: 'learning-flashcards', label: '知識卡 + 複習' }
-  }
-  if (hasIntent(text, [/目標|計劃|plan|下一步|goal/i])) {
-    return { featureId: 'learning-goals', label: '個人目標' }
-  }
-  return { featureId: 'learning-ai', label: '個人 AI 助手' }
 }
 
 function resolveFeatures(ids: readonly string[], mode: ModeId): Feature[] {
@@ -269,39 +176,39 @@ export default function Home({ onOpen }: Props) {
     ? [
         {
           id: 'prep',
-          title: '備課',
+          title: '準備下一堂',
           desc: '由課題變成教學目標、流程和課堂活動。',
-          prompt: `幫我準備「${topicSuggestion}」一堂 40 分鐘課`,
+          prompt: `幫我準備「${topicSuggestion}」一堂 40 分鐘課的教案`,
           outcome: '教案初稿',
           steps: ['教學指引', '教案', '活動'],
           icon: ClipboardList,
         },
         {
           id: 'assessment',
-          title: '出題與評核',
+          title: '出工作紙 / 小測',
           desc: '生成工作紙、小測、答案和評分準則。',
-          prompt: '生成一份 DSE 風格工作紙，連答案和評分準則',
+          prompt: `生成一份「${topicSuggestion}」工作紙，連答案和評分準則`,
           outcome: '題目＋答案',
           steps: ['工作紙', '題庫', '評分'],
           icon: FileText,
         },
         {
-          id: 'knowledge',
-          title: '整理資料',
-          desc: '找回教案、資源、會議記錄，再用資料回答問題。',
-          prompt: `搜尋我存過的${topicSuggestion}教案`,
-          outcome: '資料定位',
-          steps: ['搜尋', '問資料', '存檔'],
-          icon: Search,
+          id: 'grades',
+          title: '分析成績',
+          desc: '找出班級弱項、預測等級和安排跟進。',
+          prompt: '分析今次測驗成績、預測等級和找出弱項',
+          outcome: '弱項＋跟進',
+          steps: ['分析', '預測', '跟進'],
+          icon: BookOpenCheck,
         },
         {
-          id: 'follow-up',
-          title: '批改跟進',
-          desc: '把批改、會議和課後觀察變成下一步清單。',
-          prompt: '根據我的資料列出本週要跟進事項',
-          outcome: '待辦清單',
-          steps: ['批改', '回饋', '跟進'],
-          icon: CheckSquare,
+          id: 'admin',
+          title: '整理行政文件',
+          desc: '把通告、報告和會議文件變成重點與待辦。',
+          prompt: '把這份行政文件摘要成重點和待辦',
+          outcome: '摘要＋待辦',
+          steps: ['摘要', '行動', '存檔'],
+          icon: ClipboardList,
         },
       ]
     : [
@@ -469,17 +376,44 @@ export default function Home({ onOpen }: Props) {
     onOpen(featureId)
   }
 
-  const dispatchComposerPrompt = (input?: string) => {
+  const dispatchComposerPrompt = (
+    input?: string,
+    source: 'composer' | 'shortcut' = 'composer',
+  ) => {
     const raw = (input ?? lessonTopic).trim()
     if (isWorkMode) {
       const taskText = raw || `幫我準備「${topicSuggestion}」一堂課`
       const route = inferWorkToolRoute(raw)
       if (route) {
-        writeComposerHandoff({ featureId: route.featureId, text: route.handoffText ?? taskText })
+        track('home_task_submitted', {
+          source,
+          destination: route.featureId,
+          route_kind: 'tool',
+          has_input: Boolean(raw),
+        })
+        trackOnce('activation_task_started', {
+          source,
+          destination: route.featureId,
+        })
+        writeComposerHandoff({
+          featureId: route.featureId,
+          text: route.handoffText ?? taskText,
+          materialTool: route.materialTool,
+        })
         toast.success(`已按內容打開「${route.label}」`)
         onOpen(route.featureId)
         return
       }
+      track('home_task_submitted', {
+        source,
+        destination: 'work-ai',
+        route_kind: 'assistant',
+        has_input: Boolean(raw),
+      })
+      trackOnce('activation_task_started', {
+        source,
+        destination: 'work-ai',
+      })
       writeAiHandoff('work', taskText, { autoSend: true })
       toast.success('正在開始教學助手對話')
       onOpen('work-ai')
@@ -488,6 +422,16 @@ export default function Home({ onOpen }: Props) {
 
     const prompt = raw || '幫我整理今日筆記重點，列出要記住的概念、可測自己的問題，以及下一步學習安排。'
     const route = inferLearningComposerRoute(raw)
+    track('home_task_submitted', {
+      source,
+      destination: route.featureId,
+      route_kind: route.featureId === 'learning-ai' ? 'assistant' : 'tool',
+      has_input: Boolean(raw),
+    })
+    trackOnce('activation_task_started', {
+      source,
+      destination: route.featureId,
+    })
     if (route.featureId === 'learning-ai') {
       writeAiHandoff('learning', prompt)
       toast.success('已帶入 AI 助手')
@@ -504,23 +448,22 @@ export default function Home({ onOpen }: Props) {
 
   const startTaskFlow = (flow: TaskFlow) => {
     setLessonTopic(flow.prompt)
-    dispatchComposerPrompt(flow.prompt)
+    dispatchComposerPrompt(flow.prompt, 'shortcut')
   }
 
   return (
     <div className="-mx-4 -my-5 sm:-mx-6 sm:-my-6 lg:-mx-8">
-      <section className="relative isolate flex min-h-[calc(100svh-6.75rem)] overflow-hidden border-b border-slate-200/80 bg-[linear-gradient(180deg,#fff_0%,#f8fbff_58%,#fff_100%)] px-4 dark:border-slate-800 dark:bg-slate-950 dark:bg-none sm:px-6 md:min-h-[100svh] lg:px-8">
-        <div className="relative mx-auto flex w-full max-w-[1180px] flex-1 flex-col">
-          <div className="flex flex-1 flex-col items-center justify-center py-8 text-center sm:py-10">
+      <section className="border-b border-slate-200/80 bg-white px-4 dark:border-slate-800 dark:bg-slate-950 sm:px-6 lg:px-8">
+        <div className="mx-auto w-full max-w-[1180px] py-7 sm:py-9">
+          <div className="flex flex-col items-center text-center">
             <span className="inline-flex min-h-9 items-center gap-2 rounded-full border border-indigo-200 bg-indigo-50/70 px-3 text-[13px] font-semibold text-indigo-800 shadow-xs dark:border-indigo-400/20 dark:bg-indigo-500/10 dark:text-indigo-200">
-              <Sparkles size={16} strokeWidth={1.9} />
               EziTeach AI
             </span>
-            <h1 className="mt-5 max-w-4xl text-[36px] font-semibold leading-[1.08] text-slate-950 sm:text-[48px] lg:text-[56px] dark:text-white">
-              {isWorkMode ? '想準備哪一堂課？' : '今日想整理什麼？'}
+            <h1 className="mt-4 max-w-4xl text-[32px] font-semibold leading-[1.12] text-slate-950 sm:text-[38px] lg:text-[42px] dark:text-white">
+              {isWorkMode ? '今日想先完成什麼？' : '今日想整理什麼？'}
             </h1>
-            <p className="mt-3 max-w-2xl text-[15px] leading-7 text-slate-600 sm:text-[16px] dark:text-slate-300">
-              {greeting}。由一句問題或任務開始，教學助手會先直接回應；需要時再帶你去合適工具。
+            <p className="mt-2.5 max-w-2xl text-[15px] leading-6 text-slate-600 sm:text-[16px] dark:text-slate-300">
+              {greeting}。輸入課題或任務，我會直接打開最合適的工作區。
             </p>
 
             <form
@@ -528,12 +471,12 @@ export default function Home({ onOpen }: Props) {
                 event.preventDefault()
                 askTeachingAi()
               }}
-              className="mt-8 w-full max-w-[860px] rounded-[28px] bg-white p-1 shadow-[0_24px_72px_-52px_rgba(79,70,229,0.75)] ring-1 ring-slate-200/90 dark:bg-slate-900 dark:ring-slate-700/80"
+              className="mt-6 w-full max-w-[880px] rounded-[20px] bg-white p-1 shadow-sm ring-1 ring-slate-200/90 focus-within:ring-2 focus-within:ring-accent/35 dark:bg-slate-900 dark:ring-slate-700/80"
             >
               <label htmlFor="home-ai-composer" className="sr-only">
                 {isWorkMode ? '輸入課題或教學任務' : '輸入學習內容或問題'}
               </label>
-              <div className="flex min-h-[64px] items-center gap-1.5 rounded-[24px] border border-slate-100 bg-white p-2 text-left dark:border-slate-700/70 dark:bg-slate-900">
+              <div className="flex min-h-[62px] items-center gap-1.5 rounded-[17px] border border-slate-100 bg-white p-2 text-left dark:border-slate-700/70 dark:bg-slate-900">
                 <button
                   type="button"
                   onClick={() => onOpen('inbox')}
@@ -547,10 +490,10 @@ export default function Home({ onOpen }: Props) {
                   value={lessonTopic}
                   onChange={(event) => setLessonTopic(event.target.value)}
                   placeholder={composerPlaceholder}
-                  className="min-h-11 min-w-0 flex-1 bg-transparent text-[15px] text-slate-900 outline-none placeholder:text-slate-400 dark:text-slate-100 dark:placeholder:text-slate-500"
+                  className="min-h-11 min-w-0 flex-1 bg-transparent text-base text-slate-900 outline-none placeholder:text-slate-400 dark:text-slate-100 dark:placeholder:text-slate-500"
                 />
                 <span className="hidden min-h-11 shrink-0 items-center rounded-full bg-indigo-50 px-3 text-sm font-semibold text-indigo-700 dark:bg-indigo-500/15 dark:text-indigo-200 sm:inline-flex">
-                  {isWorkMode ? '教學助手' : '學習 AI'}
+                  {isWorkMode ? '自動分流' : '學習 AI'}
                 </span>
                 <button
                   type="button"
@@ -569,35 +512,21 @@ export default function Home({ onOpen }: Props) {
                 </button>
               </div>
             </form>
+
+            <div className="mt-5 grid w-full gap-2.5 text-left sm:grid-cols-2 lg:grid-cols-4">
+              {taskFlows.map((flow) => (
+                <HeroTaskShortcut
+                  key={flow.id}
+                  flow={flow}
+                  onStart={() => startTaskFlow(flow)}
+                />
+              ))}
+            </div>
           </div>
         </div>
       </section>
 
       <div className="mx-auto w-full max-w-[1420px] space-y-6 px-4 py-5 sm:px-6 sm:py-6 lg:px-8">
-        <section className="space-y-4">
-          <div>
-            <p className="text-xs font-semibold uppercase text-accent">
-              常用
-            </p>
-            <h2 className="mt-1 text-xl font-semibold text-slate-900 dark:text-slate-100">
-              常用任務
-            </h2>
-            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-              想快一點開始，可以直接選擇一個任務方向。
-            </p>
-          </div>
-
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            {taskFlows.map((flow) => (
-              <HeroTaskShortcut
-                key={flow.id}
-                flow={flow}
-                onStart={() => startTaskFlow(flow)}
-              />
-            ))}
-          </div>
-        </section>
-
         <section className="space-y-4">
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
@@ -722,24 +651,24 @@ function HeroTaskShortcut({
     <button
       type="button"
       onClick={onStart}
-      className="group flex min-h-[92px] w-full cursor-pointer flex-col rounded-[18px] border border-slate-200 bg-white p-3 shadow-xs transition duration-150 hover:-translate-y-0.5 hover:border-accent/35 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:border-slate-700 dark:bg-slate-900"
+      className="group flex min-h-[84px] w-full cursor-pointer items-center gap-3 rounded-[16px] border border-slate-200 bg-white p-3 text-left shadow-xs transition duration-150 hover:border-accent/35 hover:bg-indigo-50/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:border-slate-700 dark:bg-slate-900 dark:hover:bg-indigo-500/10"
     >
-      <span className="flex items-center justify-between gap-3">
-        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[15px] bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
-          <Icon size={18} strokeWidth={1.8} />
+      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[13px] bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
+        <Icon size={18} strokeWidth={1.8} />
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block text-sm font-semibold text-slate-900 dark:text-slate-100">
+          {flow.title}
         </span>
-        <ArrowRight
-          size={15}
-          className="text-slate-300 transition group-hover:translate-x-0.5 group-hover:text-accent"
-          strokeWidth={2}
-        />
+        <span className="mt-0.5 block text-xs font-medium text-slate-500 dark:text-slate-400">
+          {flow.outcome}
+        </span>
       </span>
-      <span className="mt-3 block text-sm font-semibold text-slate-900 dark:text-slate-100">
-        {flow.title}
-      </span>
-      <span className="mt-0.5 block text-xs font-medium text-slate-500 dark:text-slate-400">
-        {flow.outcome}
-      </span>
+      <ArrowRight
+        size={15}
+        className="shrink-0 text-slate-300 transition group-hover:translate-x-0.5 group-hover:text-accent"
+        strokeWidth={2}
+      />
     </button>
   )
 }

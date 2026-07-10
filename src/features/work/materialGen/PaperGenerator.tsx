@@ -7,7 +7,6 @@ import {
   Printer,
   RotateCcw,
   Save,
-  Sparkles,
   Wand2,
 } from 'lucide-react'
 import CreditMeter from '../../../components/CreditMeter'
@@ -265,7 +264,7 @@ export function PaperGenerator({
     if (needsAI && (!isAIConfigured || !user)) {
       toast.error(
         !isAIConfigured
-          ? '題庫現有題目不夠，需要 AI 補足，但 AI 未啟用（見 docs/SETUP.md）。可減少題數或先補題。'
+          ? '題庫現有題目不足，而智能補題暫時未能使用。可減少題數或先到題庫補題。'
           : '題庫現有題目不夠，需要 AI 補足，請先登入。',
       )
       return
@@ -334,7 +333,7 @@ export function PaperGenerator({
     if (!isAIConfigured || !user) {
       toast.error(
         !isAIConfigured
-          ? 'AI 未啟用（見 docs/SETUP.md），無法生成補足。可返回減少題數，或先補題。'
+          ? '智能補題暫時未能使用。可返回減少題數，或先到題庫補題。'
           : '請先登入以使用 AI 生成補足。',
       )
       return
@@ -717,13 +716,13 @@ function SetupView(props: {
       {needsAI ? (
         aiReady ? (
           <p className="flex items-start gap-2 rounded-xl border border-accent/20 bg-accent-soft/40 px-3 py-2 text-xs text-slate-600 dark:border-accent/25 dark:bg-accent/10 dark:text-slate-300">
-            <Sparkles size={14} className="mt-0.5 shrink-0 text-accent" />
+            <FileText size={14} className="mt-0.5 shrink-0 text-accent" />
             題庫現有題目不夠，組卷時會用 AI 自動生成補足並一起入庫。
           </p>
         ) : (
           <p className="flex items-start gap-2 rounded-xl border border-amber-300/50 bg-amber-50 px-3 py-2 text-xs text-amber-700 dark:border-amber-500/25 dark:bg-amber-500/10 dark:text-amber-300">
             <Lock size={14} className="mt-0.5 shrink-0" />
-            題庫現有題目不夠，需要 AI 補足，但 AI 未啟用 / 未登入。可減少題數，或先到題庫補題後再組卷。
+            題庫現有題目不足，而智能補題暫時未能使用。可減少題數，或先到題庫補題後再組卷。
           </p>
         )
       ) : totalNeeded > 0 ? (
@@ -844,7 +843,7 @@ function PreviewView({
           </span>
           <Button
             size="sm"
-            icon={Sparkles}
+            icon={FileText}
             loading={busy}
             onClick={onTopUp}
             disabled={busy}

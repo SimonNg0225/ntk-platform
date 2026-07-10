@@ -176,6 +176,7 @@ Deno.serve(async (req: Request) => {
   // 注意：read-then-check，極端並發下可能輕微超用（可接受；目的係防失控，唔係分毫不差）。
   const callerEmail = (user.email ?? '').toLowerCase()
   const whitelisted = !!callerEmail && UNLIMITED_EMAILS.includes(callerEmail)
+  let effectivePlan: 'free' | 'plus' | 'pro' = whitelisted ? 'pro' : 'free'
   if (SERVICE_ROLE_KEY && !whitelisted) {
     const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY)
     const { data: sub } = await admin
@@ -184,10 +185,16 @@ Deno.serve(async (req: Request) => {
       .eq('user_id', user.id)
       .maybeSingle()
     const active = sub?.status === 'active' || sub?.status === 'trialing'
-    const pool =
+    effectivePlan =
       active && sub?.plan === 'pro'
-        ? POINTS_PRO
+        ? 'pro'
         : active && sub?.plan === 'plus'
+          ? 'plus'
+          : 'free'
+    const pool =
+      effectivePlan === 'pro'
+        ? POINTS_PRO
+        : effectivePlan === 'plus'
           ? POINTS_PLUS
           : POINTS_FREE
 
@@ -213,6 +220,15 @@ Deno.serve(async (req: Request) => {
         429,
       )
     }
+  }
+  if (model === 'gemini-2.5-pro' && effectivePlan !== 'pro') {
+    return json(
+      {
+        error: 'Pro 高階 AI 模型只限 Pro 方案使用。',
+        code: 'pro_model_required',
+      },
+      403,
+    )
   }
   const wantStream = body.stream !== false // 預設 streaming
   const temperature =

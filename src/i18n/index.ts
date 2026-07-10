@@ -173,7 +173,7 @@ const resources = {
         },
         pricing: {
           q: '免費版和付費版最大分別是什麼？',
-          a: '免費版讓你先試核心工作流；Plus / Pro 是個人訂閱，主要增加每月 AI 點數、雲端同步和高階能力，適合每星期穩定使用或密集備課。',
+          a: '免費版讓你先試核心工作流；Plus / Pro 是個人訂閱，主要增加每月 AI 點數、解鎖進階產出工具和高階模型，適合每星期穩定使用或密集備課。',
         },
         export: {
           q: '資料可以帶走嗎？',
@@ -250,9 +250,9 @@ const resources = {
 
       pricing: {
         metaTitle: `定價 · ${BRAND_NAME}`,
-        metaDesc: `${BRAND_NAME} 方案與定價：免費版可試 AI 備課，Plus / Pro 提供更多 AI 點數同多裝置同步。`,
+        metaDesc: `${BRAND_NAME} 方案與定價：免費版可試 AI 備課，Plus / Pro 提供更多 AI 點數、進階產出工具和高階模型。`,
         title: '一位老師都用得起',
-        subtitle: '先免費試完整個備課流程；需要更多 AI 點數、同步或高階模型時先升級。',
+        subtitle: '先免費試完整個備課流程；需要更多 AI 點數、進階工具或高階模型時先升級。',
         monthly: '月繳',
         annual: '年繳',
         annualSave: '慳 2 個月',

@@ -21,7 +21,6 @@ import {
   Plus,
   Rows3,
   Search,
-  Sparkles,
   Star,
   Tag,
   Trash2,
@@ -443,7 +442,7 @@ export default function Journal() {
           label={t('journal.statWords', { defaultValue: '累積字數' })}
           value={stats.totalWords.toLocaleString()}
           hint={t('journal.statAvgWords', { n: stats.avgWords, defaultValue: `平均 ${stats.avgWords} 字／篇` })}
-          icon={Sparkles}
+          icon={NotebookPen}
           tone="sky"
         />
         <JournalStat
@@ -938,7 +937,7 @@ function EntryCard({
         })}
         <span className="ml-auto inline-flex items-center gap-2 text-[11px] text-slate-400">
           <span className="inline-flex items-center gap-0.5 tabular-nums">
-            <Sparkles size={11} />
+            <NotebookPen size={11} />
             {words} 字
           </span>
           <Tooltip label={`最後修改 ${relativeTime(doc.updatedAt)}`} side="left">
@@ -1123,7 +1122,7 @@ function StatsView({ docs }: { docs: JournalDoc[] }) {
     <div className="space-y-4">
       <Card className="rounded-2xl p-4">
         <SectionTitle
-          icon={Sparkles}
+          icon={NotebookPen}
           right={
             avgMood !== null ? (
               <Badge tone="accent">
@@ -1207,7 +1206,7 @@ function TagInsightsList({ rows }: { rows: TagInsight[] }) {
             </Tooltip>
             <Tooltip label={`累積 ${r.words.toLocaleString()} 字 · 平均 ${r.avgWords} 字／篇`}>
               <span className="inline-flex w-14 items-center justify-end gap-0.5">
-                <Sparkles size={11} />
+                <NotebookPen size={11} />
                 {r.words.toLocaleString()}
               </span>
             </Tooltip>

@@ -21,7 +21,6 @@ import {
   ListChecks,
   MapPin,
   Plus,
-  Sparkles,
   Square,
   Trash2,
   X,
@@ -539,7 +538,7 @@ export default function NoteEditor({
                       'text-accent hover:bg-accent-soft dark:hover:bg-accent/15',
                     )}
                   >
-                    <Sparkles size={13} />
+                    <ListChecks size={13} />
                     抽取 {newCount > 0 ? `(${newCount})` : ''}
                   </button>
                 </Tooltip>
@@ -652,7 +651,7 @@ export default function NoteEditor({
                 )}
                 {/* 已有項目 + 內容還有未抽取的 → 直接在這裡整理新項目 */}
                 {draft.actions.length > 0 && newActionCount > 0 && (
-                  <Button size="sm" variant="ghost" icon={Sparkles} onClick={extractFromContent}>
+                  <Button size="sm" variant="ghost" icon={ListChecks} onClick={extractFromContent}>
                     整理 {newActionCount} 個新項目
                   </Button>
                 )}
@@ -675,7 +674,7 @@ export default function NoteEditor({
                     個行動項目
                   </p>
                   <div className="flex flex-wrap items-center justify-center gap-2">
-                    <Button size="sm" icon={Sparkles} onClick={extractFromContent}>
+                    <Button size="sm" icon={ListChecks} onClick={extractFromContent}>
                       一鍵整理成跟進項目
                     </Button>
                     <Button size="sm" variant="ghost" icon={Plus} onClick={addAction}>

@@ -28,7 +28,30 @@ export interface OrgInvite {
   role: string
   token: string
   created_at: string
+  expires_at: string
   accepted_at: string | null
+}
+
+export function isValidInviteEmail(value: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim())
+}
+
+export function buildInviteLink(
+  token: string,
+  origin = window.location.origin,
+): string {
+  return `${origin}/app/work-team?invite=${encodeURIComponent(token)}`
+}
+
+export function teamInviteErrorMessage(message: string): string {
+  const text = message.toLowerCase()
+  if (text.includes('invite email mismatch')) return '這個邀請只限指定電郵帳戶使用。'
+  if (text.includes('invite expired')) return '邀請連結已過期，請管理員重新發出。'
+  if (text.includes('invite invalid or used')) return '邀請連結無效或已使用。'
+  if (text.includes('seat limit reached')) return '團隊座位已滿，請管理員先增加座位。'
+  if (text.includes('invalid invite email')) return '請輸入有效的同事電郵。'
+  if (text.includes('already a member')) return '這個電郵已經是團隊成員。'
+  return message
 }
 
 function need() {
@@ -60,9 +83,10 @@ export async function listMembers(orgId: string): Promise<OrgMember[]> {
 export async function listPendingInvites(orgId: string): Promise<OrgInvite[]> {
   const { data, error } = await need()
     .from('org_invites')
-    .select('id, email, role, token, created_at, accepted_at')
+    .select('id, email, role, token, created_at, expires_at, accepted_at')
     .eq('org_id', orgId)
     .is('accepted_at', null)
+    .gt('expires_at', new Date().toISOString())
     .order('created_at', { ascending: false })
   if (error) throw new Error(error.message)
   return (data ?? []) as OrgInvite[]
@@ -79,16 +103,16 @@ export async function inviteMember(
     p_email: email,
     p_role: role,
   })
-  if (error) throw new Error(error.message)
+  if (error) throw new Error(teamInviteErrorMessage(error.message))
   const token = data as string
-  return `${window.location.origin}/app?invite=${token}`
+  return buildInviteLink(token)
 }
 
 export async function acceptInvite(token: string): Promise<string> {
   const { data, error } = await need().rpc('accept_org_invite', {
     p_token: token,
   })
-  if (error) throw new Error(error.message)
+  if (error) throw new Error(teamInviteErrorMessage(error.message))
   return data as string
 }
 

@@ -23,7 +23,6 @@ import {
   Rows3,
   Search,
   SortDesc,
-  Sparkles,
   Star,
   Tag as TagIcon,
   Trash2,
@@ -1291,7 +1290,7 @@ function StatsPanel({
         <StatCard
           label="總字數"
           value={stats.totalWords.toLocaleString()}
-          icon={Sparkles}
+          icon={NotebookIcon}
           hint={`平均 ${stats.avgWords} 字/則`}
         />
         <StatCard

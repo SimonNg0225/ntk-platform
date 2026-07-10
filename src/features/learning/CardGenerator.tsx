@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next'
 import {
   Bot,
   Lock,
-  Sparkles,
   Brain,
   Plus,
   X,
@@ -289,7 +288,7 @@ export default function CardGenerator() {
         })}
         hint={t('cardGen.guard.notConfigured.hint', {
           defaultValue:
-            '要設定好 Supabase 並部署 gemini Edge Function 先用到。步驟見 docs/SETUP.md。',
+            '知識卡生成服務暫時未連接，請稍後再試或聯絡管理員。',
         })}
       />
     )
@@ -640,8 +639,8 @@ export default function CardGenerator() {
       {/* ── 頂部 accent hero（共用 PageHero）：icon chip + 標題 + 副題；右上放已生成總量；底部放視圖分頁 ── */}
       <PageHero
         guideKey="cardGen"
-        icon={Sparkles}
-        kicker={t('cardGen.kicker', { defaultValue: 'Card Studio' })}
+        icon={Brain}
+        kicker={t('cardGen.kicker', { defaultValue: '知識整理' })}
         title={t('cardGen.title', { defaultValue: 'AI 生成知識卡' })}
         description={t('cardGen.subtitle', {
           defaultValue: '輸入主題，AI 立即幫你出一疊溫習卡，校對完成就一鍵入牌組。',
@@ -719,7 +718,7 @@ export default function CardGenerator() {
           {/* ① 生成設定 */}
           <Card className="space-y-5 p-5">
             <SectionTitle
-              icon={Sparkles}
+              icon={Brain}
               description={t('cardGen.setup.desc', {
                 defaultValue: '選擇卡型、輸入材料，調好數量同難度',
               })}
@@ -938,7 +937,7 @@ export default function CardGenerator() {
                     aria-live="polite"
                     className="flex flex-1 items-center gap-2.5 rounded-xl bg-accent-soft/60 px-3 py-2 dark:bg-accent/10"
                   >
-                    <Sparkles size={15} className="shrink-0 animate-pulse text-accent" />
+                    <Brain size={15} className="shrink-0 animate-pulse text-accent" />
                     <div className="relative h-1.5 flex-1 overflow-hidden rounded-full bg-accent/15">
                       <span className="absolute inset-y-0 -left-1/3 w-1/3 animate-[shimmer_1.2s_infinite] rounded-full bg-accent/70" />
                     </div>
@@ -984,7 +983,7 @@ export default function CardGenerator() {
             <Card className="space-y-4 p-5">
               <div className="flex items-center gap-2.5">
                 <span className="relative flex h-11 w-11 items-center justify-center rounded-xl bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
-                  <Sparkles size={18} className="animate-pulse" />
+                  <Brain size={18} className="animate-pulse" />
                 </span>
                 <div className="leading-tight">
                   <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
@@ -1025,7 +1024,7 @@ export default function CardGenerator() {
           {/* 未生成又沒有草稿：引導式空狀態（icon + 標題 + 提示 + CTA 直接落第一步）*/}
           {!busy && drafts.length === 0 && (
             <EmptyState
-              icon={Sparkles}
+              icon={Brain}
               title={t('cardGen.empty.title', {
                 defaultValue: '輸入主題，開始生成知識卡',
               })}
@@ -1616,7 +1615,7 @@ export default function CardGenerator() {
               label={t('cardGen.stats.total', { defaultValue: '總生成' })}
               value={totalGen}
               unit="張"
-              icon={Sparkles}
+              icon={Brain}
             />
             <StatCard
               label={t('cardGen.stats.saved', { defaultValue: '已存入牌組' })}

@@ -1,5 +1,6 @@
 import { Suspense, useEffect, useRef, useState, type ReactNode } from 'react'
 import { ArrowLeft, PanelLeft, Settings as SettingsIcon, Wrench } from 'lucide-react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { ModeProvider, useMode } from './context/ModeContext'
 import { AuthProvider } from './context/AuthContext'
 import { NavProvider } from './context/NavContext'
@@ -22,7 +23,7 @@ import PwaInstallPrompt from './components/PwaInstallPrompt'
 import SupportButton from './components/SupportButton'
 import AnnouncementBanner from './components/AnnouncementBanner'
 import { useToast } from './context/ToastContext'
-import { seedAllDemo, markOnboarded } from './lib/demoData'
+import { hasOnboarded, seedAllDemo, markOnboarded } from './lib/demoData'
 import Home from './pages/Home'
 import Settings from './pages/Settings'
 import Admin from './pages/Admin'
@@ -30,11 +31,13 @@ import ComingSoon from './components/ComingSoon'
 import ErrorBoundary from './components/ErrorBoundary'
 import PaidGate from './components/PaidGate'
 import { useSubscription } from './hooks/useSubscription'
-import { getFeature, preloadAllFeatures } from './features/registry'
+import { getFeature } from './features/registry'
 import { FeatureIcon } from './features/featureIcons'
-import { track, trackPageView } from './lib/observability'
+import { track, trackOnce, trackPageView } from './lib/observability'
 import { useTranslation } from 'react-i18next'
 import { featName, featDesc } from './i18n/appEn'
+import { writeComposerHandoff } from './features/shared/composerHandoff'
+import { appRouteId } from './lib/appRoute'
 
 const SIDEBAR_MODE_KEY = 'ntk.sidebarMode.v2'
 
@@ -44,14 +47,18 @@ const SIDEBAR_MODE_KEY = 'ntk.sidebarMode.v2'
 // - ⌘K / Ctrl+K：指令面板
 export function AppShell() {
   const { t } = useTranslation()
-  const { mode, modeDef } = useMode()
+  const { modeDef } = useMode()
+  const location = useLocation()
+  const routerNavigate = useNavigate()
   const { isPaid, loading: subLoading } = useSubscription()
-  const [activeId, setActiveId] = useState<string | null>(null)
+  const activeId = appRouteId(location.pathname)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [paletteOpen, setPaletteOpen] = useState(false)
   const [quickAddOpen, setQuickAddOpen] = useState(false)
   const [shortcutsOpen, setShortcutsOpen] = useState(false)
-  const [onboardOpen, setOnboardOpen] = useState(false)
+  const [onboardOpen, setOnboardOpen] = useState(
+    () => !hasOnboarded() && !new URLSearchParams(window.location.search).has('invite'),
+  )
   // 桌面側欄三態：展開（w-72）→ 幼條（icon rail）→ 完全收起。記在 localStorage。
   const [sidebarMode, setSidebarMode] = useState<'expanded' | 'rail' | 'hidden'>(() => {
     try {
@@ -80,11 +87,6 @@ export function AppShell() {
   // 連續切換：展開 → 幼條 → 收起 →（回）展開
   const cycleSidebar = () =>
     setSidebarMode((m) => (m === 'expanded' ? 'rail' : m === 'rail' ? 'hidden' : 'expanded'))
-
-  // 切換模式時，返回到首頁（因為功能會不同）
-  useEffect(() => {
-    setActiveId(null)
-  }, [mode])
 
   // 手機抽屜開啟時：初始焦點入抽屜、Esc 關閉、Tab focus-trap、關閉還原焦點（無障礙對話框）
   useEffect(() => {
@@ -127,12 +129,6 @@ export function AppShell() {
       prevActive?.focus?.()
     }
   }, [drawerOpen])
-
-  // 背景預載全部功能 chunk（idle）→ 導航即時 + 所有 collection 登記齊（同步/匯出完整）
-  useEffect(() => {
-    const id = setTimeout(() => preloadAllFeatures(), 1200)
-    return () => clearTimeout(id)
-  }, [])
 
   // 漏斗：進入產品（一次）
   useEffect(() => {
@@ -193,10 +189,27 @@ export function AppShell() {
   }, [])
 
   const navigate = (id: string | null) => {
-    setActiveId(id)
     setDrawerOpen(false)
     if (id && id !== '__settings__' && id !== '__admin__') pushRecentFeature(id)
+    if (id === '__settings__') routerNavigate('/app/settings')
+    else if (id === '__admin__') routerNavigate('/app/admin')
+    else if (id) routerNavigate(`/app/${id}`)
+    else routerNavigate('/app')
   }
+
+  useEffect(() => {
+    if (!onboardOpen) return
+    trackOnce('onboarding_viewed', { onboarding_version: 'task_first_v2' })
+  }, [onboardOpen])
+
+  // 舊版邀請連結指向 /app?invite=...；自動帶到真正會處理 token 的團隊工作區。
+  useEffect(() => {
+    if (!new URLSearchParams(location.search).has('invite')) return
+    setOnboardOpen(false)
+    if (location.pathname === '/app') {
+      routerNavigate(`/app/work-team${location.search}`, { replace: true })
+    }
+  }, [location.pathname, location.search, routerNavigate])
 
   const isSettings = activeId === '__settings__'
   const isAdmin = activeId === '__admin__'
@@ -413,7 +426,9 @@ export function AppShell() {
                       <ComingSoon name={featName(t, feature)} />
                     )}
                   </div>
-                  {feature.status === 'ready' && !feature.hideNextSteps && (
+                  {feature.status === 'ready' &&
+                    !feature.hideNextSteps &&
+                    !(feature.requiresPaid && !isPaid) && (
                     <NextStepsBar
                       activeId={feature.id}
                       mode={modeDef.id}
@@ -453,19 +468,43 @@ export function AppShell() {
         <OnboardingModal
           open={onboardOpen}
           onClose={() => {
+            track('onboarding_skipped', { onboarding_version: 'task_first_v2' })
             markOnboarded()
             setOnboardOpen(false)
           }}
           onLoadDemo={async () => {
             const n = await seedAllDemo()
+            track('onboarding_demo_loaded', {
+              onboarding_version: 'task_first_v2',
+              rows_added: n,
+            })
             markOnboarded()
             setOnboardOpen(false)
             toast.success(n > 0 ? `已載入 ${n} 筆試用資料。` : '已有資料，毋須載入')
           }}
+          onStart={(task) => {
+            track('onboarding_task_started', {
+              onboarding_version: 'task_first_v2',
+              task_id: task.taskId,
+              feature_id: task.featureId,
+              has_subject: task.hasSubject,
+              has_topic: task.hasTopic,
+            })
+            if (task.prompt) {
+              writeComposerHandoff({
+                featureId: task.featureId,
+                text: task.prompt,
+                materialTool: task.materialTool,
+              })
+            }
+            markOnboarded()
+            setOnboardOpen(false)
+            navigate(task.featureId)
+          }}
         />
 
         {/* 新用戶首次登入：彈出個人資料登記（已登入 + 未登記先出） */}
-        <ProfileGate />
+        <ProfileGate suspended={onboardOpen} />
 
         <PwaUpdater />
         <PwaInstallPrompt />

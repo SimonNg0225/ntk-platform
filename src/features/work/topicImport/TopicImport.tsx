@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from 'react'
-import { Inbox, Upload, Camera, Sparkles, Check, Loader2, ListPlus, Replace, FileText, Settings } from 'lucide-react'
+import { Inbox, Upload, Camera, Check, Loader2, ListPlus, Replace, FileText, Settings } from 'lucide-react'
 import {
   Badge,
   Button,
@@ -141,14 +141,14 @@ export default function TopicImport() {
         <PageHero
           guideKey="topicImport"
           icon={Inbox}
-          kicker="Topic Import"
+          kicker="課程資料"
           title="課題匯入"
           description="上載官方課程指引，AI 抽出課題，一鍵載入做你科的課題。"
         />
         <EmptyState
           icon={Inbox}
-          title="課題匯入未啟用"
-          hint="要設定好 Supabase 並部署 gemini Edge Function 先用到。步驟見 docs/SETUP.md。"
+          title="課題匯入暫時未能使用"
+          hint="匯入服務暫時未連接，請稍後再試或聯絡管理員。"
         />
       </div>
     )
@@ -158,7 +158,7 @@ export default function TopicImport() {
     <div className="space-y-5">
       <PageHero
         icon={Inbox}
-        kicker="Topic Import"
+        kicker="課程資料"
         title="課題匯入"
         description="上載官方課程指引／補充資料／syllabus，AI 抽出課題，一鍵載入做你科的課題（題庫、進度、出題、指引都會用）。"
       />
@@ -222,7 +222,7 @@ export default function TopicImport() {
           </p>
           <div className="flex items-center gap-2">
             <CreditMeter source="topic-import" model={model} />
-            <Button icon={busy ? Loader2 : Sparkles} onClick={extract} loading={busy} disabled={!hasInput}>
+            <Button icon={busy ? Loader2 : ListPlus} onClick={extract} loading={busy} disabled={!hasInput}>
               {busy ? '抽取中…' : '抽取課題'}
             </Button>
           </div>
@@ -269,7 +269,7 @@ export default function TopicImport() {
             title="抽不到課題"
             hint="可能來源不是課程文件，或者內容太少。換另一份文件，或嘗試影相再抽。"
             action={
-              <Button size="sm" variant="secondary" icon={Sparkles} onClick={() => setImported(null)}>
+              <Button size="sm" variant="secondary" icon={ListPlus} onClick={() => setImported(null)}>
                 再試一次
               </Button>
             }

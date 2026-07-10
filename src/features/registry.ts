@@ -242,6 +242,7 @@ export const FEATURES: Feature[] = [
     group: 'AI',
     component: PromptLibrary,
     status: 'ready',
+    hideNextSteps: true,
   },
   {
     id: 'work-lesson-plan',

@@ -44,6 +44,9 @@ const FRIENDLY: Record<AIErrorKind, string> = {
   unknown: 'AI 出了一點問題，請再試一次。',
 }
 
+const TECHNICAL_CONFIG_PATTERN =
+  /supabase|edge function|gemini|vite_[a-z0-9_]+|docs\/setup|未部署|environment variable/i
+
 /** 以 navigator.onLine 為主判斷裝置離線；non-browser 環境當作有線（false）。 */
 export function isOffline(): boolean {
   return typeof navigator !== 'undefined' && navigator.onLine === false
@@ -85,7 +88,10 @@ export function classifyAIError(e: unknown): AIErrorInfo {
     kind,
     retryable,
     // 後端已有可讀中文就使用原文，否則用預設友善文案
-    message: hasReadableChinese(raw) ? raw : FRIENDLY[kind],
+    message:
+      hasReadableChinese(raw) && !TECHNICAL_CONFIG_PATTERN.test(raw)
+        ? raw
+        : FRIENDLY[kind],
   })
 
   // 1) 主動取消 / 逾時：fetch abort 係 DOMException(name='AbortError')

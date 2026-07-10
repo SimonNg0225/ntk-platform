@@ -20,7 +20,6 @@ import {
   Pencil,
   Plus,
   Search,
-  Sparkles,
   Sun,
   Tag,
   Trash2,
@@ -514,7 +513,7 @@ export default function TodoWidget() {
       <PageHero
         guideKey="todo"
         icon={ClipboardCheck}
-        kicker="Tasks & Grading"
+        kicker="待辦與批改"
         title="待辦 / 批改"
         description={
           `未剔 ${counts.active} 項 · 今日到期 ${counts.todayDue} 項` +
@@ -527,7 +526,7 @@ export default function TodoWidget() {
               onClick={() => setTmplModal(true)}
               className="inline-flex min-h-11 items-center gap-1.5 rounded-xl bg-white/15 px-3 text-sm font-medium backdrop-blur-sm transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
             >
-              <Sparkles size={15} /> 範本
+              <ClipboardCheck size={15} /> 範本
             </button>
             <Menu
               align="end"
@@ -1523,7 +1522,7 @@ function StatsView({
           label="連續完成"
           value={streak}
           unit="日"
-          icon={Sparkles}
+          icon={ClipboardCheck}
           tone="accent"
           hint={streak > 0 ? '繼續保持！' : '今日完成一項就開始'}
         />

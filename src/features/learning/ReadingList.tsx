@@ -371,7 +371,7 @@ export default function ReadingList() {
       <PageHero
         guideKey="reading-list"
         icon={Library}
-        kicker={t('reading.kicker', { defaultValue: 'Reading Log' })}
+        kicker={t('reading.kicker', { defaultValue: '閱讀進度' })}
         title={t('reading.title', { defaultValue: '閱讀清單' })}
         description={
           stats.total > 0

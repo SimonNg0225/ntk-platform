@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Check, Info, Sparkles, Wand2, FileText, X } from 'lucide-react'
+import { Check, Info, Wand2, FileText, X } from 'lucide-react'
 import {
   Button,
   Field,
@@ -124,7 +124,7 @@ export default function GenerateModal({
           <Button variant="secondary" onClick={onClose}>
             取消
           </Button>
-          <Button icon={Sparkles} onClick={run} loading={busy} disabled={!topic}>
+          <Button icon={FileText} onClick={run} loading={busy} disabled={!topic}>
             {busy ? '生成中…' : '生成教案'}
           </Button>
         </div>

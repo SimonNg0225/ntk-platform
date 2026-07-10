@@ -4,7 +4,6 @@ import {
   Lock,
   Search,
   Send,
-  Sparkles,
   Square,
   CornerDownLeft,
   AlertTriangle,
@@ -323,8 +322,8 @@ export default function AskData() {
       {/* ───────── Masthead：共用 PageHero（accent hero） ───────── */}
       <PageHero
         guideKey="ask-data"
-        icon={Sparkles}
-        kicker="AI · Ask Your Data"
+        icon={Send}
+        kicker="資料問答"
         title="資料問答 AI"
         description="只根據你記低的筆記、待辦、目標同日程作答，不靠估。"
       />
@@ -404,7 +403,7 @@ export default function AskData() {
                   : 'bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent',
               )}
             >
-              {isError ? <AlertTriangle size={16} /> : <Sparkles size={16} />}
+              {isError ? <AlertTriangle size={16} /> : <Send size={16} />}
             </span>
 
             <div className="min-w-0 flex-1">
@@ -469,7 +468,7 @@ export default function AskData() {
       {(!started || (!busy && !isError)) && (
         <div className={cx(started && 'border-t border-slate-200 pt-4 dark:border-slate-700')}>
           <p className="mb-2.5 flex items-center gap-1.5 text-xs font-medium text-slate-400 dark:text-slate-500">
-            <Sparkles size={12} className="shrink-0" />
+            <Send size={12} className="shrink-0" />
             {started ? '繼續問落去' : '嘗試問這些'}
           </p>
           <div className="flex flex-wrap gap-2">
@@ -531,7 +530,7 @@ export default function AskData() {
           </span>
           <span aria-hidden="true" className="text-slate-300 dark:text-slate-600">·</span>
           <span className="inline-flex items-center gap-1">
-            <Sparkles size={11} /> 只引用你自己的資料
+            <Lock size={11} /> 只引用你自己的資料
           </span>
         </p>
       </div>

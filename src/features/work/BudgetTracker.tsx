@@ -17,7 +17,6 @@ import {
   Receipt,
   Repeat,
   Search,
-  Sparkles,
   Target,
   Trash2,
   TrendingDown,
@@ -374,7 +373,7 @@ function LedgerStatement({
             note={stats.count > 0 ? `${stats.count} 筆` : undefined}
           />
           <LedgerLine
-            icon={Sparkles}
+            icon={PieChart}
             tone="accent"
             label="儲蓄率"
             amount={stats.savingsRate == null ? '—' : `${stats.savingsRate}%`}
@@ -636,7 +635,7 @@ function OverviewTab({
         <DailySpendChart cells={cells} todayDay={todayDay} />
         {todayDay != null && stats.projectedExpense > stats.expense && (
           <p className="mt-3 flex items-center gap-1.5 rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-500 dark:bg-slate-800/60 dark:text-slate-400">
-            <Sparkles size={13} className="text-accent" />
+            <PieChart size={13} className="text-accent" />
             按目前速度，本月底支出預計約{' '}
             <span className="font-semibold tabular-nums text-slate-700 dark:text-slate-200">
               {fmtMoney(stats.projectedExpense)}
@@ -1437,7 +1436,7 @@ function AnalysisTab({
 
       {/* 統計摘要 */}
       <Card className="rounded-2xl p-4">
-        <SectionTitle icon={Sparkles}>本月數據</SectionTitle>
+        <SectionTitle icon={PieChart}>本月數據</SectionTitle>
         <div className="grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-4">
           <Stat label="日均支出" value={fmtMoney(stats.dailyAvg)} />
           <Stat label="最大單筆" value={fmtMoney(stats.topExpense)} />

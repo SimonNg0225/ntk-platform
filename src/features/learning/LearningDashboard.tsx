@@ -216,7 +216,7 @@ export default function LearningDashboard() {
       <PageHero
         guideKey="learning-dashboard"
         icon={LayoutDashboard}
-        kicker={t('dashboard.kicker', { defaultValue: 'Personal Overview' })}
+        kicker={t('dashboard.kicker', { defaultValue: '個人概覽' })}
         title={t('dashboard.title', { defaultValue: '個人總覽' })}
         description={
           kpis.streak > 0

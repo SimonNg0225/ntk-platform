@@ -5,7 +5,7 @@ test.describe('行銷與付費入口', () => {
   test('首頁 Landing 正常顯示 + 導航去定價', async ({ page }) => {
     await page.goto('/')
     await expect(
-      page.getByRole('heading', { name: /香港老師的 AI 工作台/ }),
+      page.getByRole('heading', { name: /一句課題，備課到跟進一站做/ }),
     ).toBeVisible()
     // 頂欄定價連結
     await page.getByRole('link', { name: '定價' }).first().click()

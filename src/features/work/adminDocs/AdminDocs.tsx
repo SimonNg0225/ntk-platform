@@ -113,7 +113,7 @@ export default function AdminDocs() {
       <PageHero
         guideKey="work-admin-docs"
         icon={FileStack}
-        kicker={t('adminDocs.kicker', { defaultValue: 'Admin Docs' })}
+        kicker={t('adminDocs.kicker', { defaultValue: '行政文件' })}
         title={t('adminDocs.pageTitle', { defaultValue: '行政文件' })}
         description={t('adminDocs.pageDesc', {
           defaultValue:

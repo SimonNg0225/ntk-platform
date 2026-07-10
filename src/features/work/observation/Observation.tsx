@@ -9,7 +9,6 @@ import {
   Trash2,
   Clock,
   Loader2,
-  Sparkles,
   ChevronRight,
   ArrowLeft,
 } from 'lucide-react'
@@ -203,7 +202,7 @@ export default function Observation() {
         icon={Eye}
         title={t('observation.notReady.title', { defaultValue: '觀課工具未啟用' })}
         hint={t('observation.notReady.hint', {
-          defaultValue: '要設定好 Supabase 並部署 gemini Edge Function 先用到（步驟見 docs/SETUP.md）。',
+          defaultValue: '觀課整理服務暫時未連接，請稍後再試或聯絡管理員。',
         })}
       />
     )
@@ -214,7 +213,7 @@ export default function Observation() {
       <PageHero
         guideKey="observation"
         icon={Eye}
-        kicker={t('observation.kicker', { defaultValue: 'Observation' })}
+        kicker={t('observation.kicker', { defaultValue: '觀課記錄' })}
         title={t('observation.title', { defaultValue: '觀課評課' })}
         description={t('observation.subtitle', {
           defaultValue:
@@ -467,7 +466,7 @@ function FormView(props: {
         <div className="flex flex-col items-end gap-1.5">
           <CreditMeter source="observation" />
           <Button
-            icon={props.busy ? Loader2 : Sparkles}
+            icon={props.busy ? Loader2 : Eye}
             onClick={props.onRun}
             loading={props.busy}
             disabled={!props.canRun}
@@ -600,7 +599,7 @@ function DetailView({
 
         {!analyzed && (
           <div className="flex items-center gap-2.5 rounded-xl bg-amber-50/60 px-3 py-2.5 text-sm text-amber-700 dark:bg-amber-500/10 dark:text-amber-400">
-            <Sparkles size={16} className="shrink-0" />
+            <Eye size={16} className="shrink-0" />
             {t('observation.result.notAnalyzed', {
               defaultValue: '這次未能抽取準則觀察，可返回列表重新開一個記錄再試。',
             })}

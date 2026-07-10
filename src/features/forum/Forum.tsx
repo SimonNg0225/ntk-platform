@@ -18,14 +18,14 @@ export default function Forum() {
       <div className="space-y-5">
         <PageHero
           icon={Users}
-          kicker={t('forum.kicker', { defaultValue: 'Community' })}
+          kicker={t('forum.kicker', { defaultValue: '教師交流' })}
           title={t('forum.title', { defaultValue: '老師社群' })}
           description={t('forum.subtitle', { defaultValue: '選擇一個版面，同全港老師交流教學心得。' })}
         />
         <EmptyState
           icon={CloudOff}
           title={t('forum.needCloud', { defaultValue: '社群需要連接雲端先用到' })}
-          hint={t('forum.needCloudHint', { defaultValue: '未接 Supabase；登入帳戶後就可以加入老師社群討論。' })}
+          hint={t('forum.needCloudHint', { defaultValue: '社群服務暫時未連接；服務恢復後即可加入討論。' })}
         />
       </div>
     )

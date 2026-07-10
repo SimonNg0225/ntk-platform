@@ -2,7 +2,6 @@ import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   GraduationCap,
-  Sparkles,
   FileText,
   Trash2,
   Clock,
@@ -136,9 +135,9 @@ export default function DseDrill() {
     return (
       <EmptyState
         icon={GraduationCap}
-        title={t('dse.disabled.title', { defaultValue: 'DSE 操練未啟用' })}
+        title={t('dse.disabled.title', { defaultValue: 'DSE 操練暫時未能生成' })}
         hint={t('dse.disabled.hint', {
-          defaultValue: '要在設定接好 AI（Supabase + gemini Edge Function）先用到出題。',
+          defaultValue: '出題服務暫時未連接，請稍後再試或聯絡管理員。',
         })}
       />
     )
@@ -272,7 +271,7 @@ export default function DseDrill() {
               </div>
               <div className="flex items-center justify-end gap-3">
                 <CreditMeter source="dse-drill" model={model} />
-                <Button icon={Sparkles} onClick={run} loading={busy}>
+                <Button icon={GraduationCap} onClick={run} loading={busy}>
                   {busy
                     ? t('dse.cta.busy', { defaultValue: '出題中…' })
                     : t('dse.cta.run', { defaultValue: '出 DSE 題' })}
@@ -330,7 +329,7 @@ export default function DseDrill() {
       {history.length === 0 && !current && !noTopics && (
         <section>
           <GuidedEmpty
-            icon={Sparkles}
+            icon={GraduationCap}
             tone="accent"
             title={t('dse.empty.noDrill.title', { defaultValue: '未有操練' })}
             hint={t('dse.empty.noDrill.hint', {
@@ -408,7 +407,7 @@ function DseView({ rec }: { rec: DseRecord }) {
   }
   return (
     <section>
-      <SectionTitle icon={Sparkles}>
+      <SectionTitle icon={GraduationCap}>
         {t('dse.view.title', { defaultValue: '今次操練' })}
       </SectionTitle>
       <Card className="space-y-4 rounded-2xl border border-accent/40 p-4 ring-1 ring-accent/20 dark:border-accent/40">

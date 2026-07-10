@@ -17,6 +17,7 @@ import {
 } from '../../lib/profile'
 import { ROLES, BANDS, validateRegistration } from './logic'
 import { PERSONAS_BY_GENDER, type PersonaGender } from '../../lib/personas'
+import { track, trackOnce } from '../../lib/observability'
 
 // ============================================================
 //  新用戶註冊 — 首次登入的個人資料登記表單（硬 gate，填好先入到 app）。
@@ -102,13 +103,15 @@ export default function ProfileSetupModal({
 }) {
   const isEdit = mode === 'edit'
   const toast = useToast()
-  const { setDisplayName, setSubjectPackId } = useSettings()
+  const { subjectPackId, setDisplayName, setSubjectPackId } = useSettings()
 
   const [surname, setSurname] = useState('')
   const [honorific, setHonorific] = useState<string>('老師')
   const [custom, setCustom] = useState('')
   const [role, setRole] = useState<TeacherRole | ''>('')
-  const [subjects, setSubjects] = useState<string[]>([])
+  const [subjects, setSubjects] = useState<string[]>(() =>
+    subjectPackId && subjectPackId !== 'custom' ? [subjectPackId] : [],
+  )
   const [bands, setBands] = useState<SchoolBand[]>([])
   const [school, setSchool] = useState('')
   const [showSchool, setShowSchool] = useState(false)
@@ -186,6 +189,18 @@ export default function ProfileSetupModal({
       if (!isEdit && subjects[0]) setSubjectPackId(subjects[0])
       // 任教科目 → 課題自動同步：每科只首次載入（additive，不覆蓋手動課題）。
       loadTopicsForSubjects(subjects)
+      track(isEdit ? 'profile_updated' : 'profile_registration_completed', {
+        role: input.role,
+        subject_count: input.subjects.length,
+        band_count: input.bands.length,
+        has_school: Boolean(input.school),
+        has_avatar: Boolean(input.avatarPreset),
+      })
+      if (!isEdit) {
+        trackOnce('activation_profile_completed', {
+          subject_count: input.subjects.length,
+        })
+      }
       toast.success(isEdit ? '個人資料已更新。' : '老師檔案已建立，歡迎加入。')
       onDone()
     } catch (e) {

@@ -905,7 +905,7 @@ export default function NutritionView() {
             <div className="flex items-start gap-2 rounded-lg border border-dashed border-slate-200 bg-slate-50/60 px-3 py-2.5 text-xs text-slate-500 dark:border-slate-700 dark:bg-slate-800/40 dark:text-slate-400">
               <Bot size={15} className="mt-0.5 shrink-0" aria-hidden="true" />
               <span>
-                需要先設定雲端 AI（見 docs/SETUP.md）。未設定都可以用下面「手動新增」記錄飲食。
+                智能分析暫時未能使用；你仍可用下面「手動新增」記錄飲食。
               </span>
             </div>
             <Button

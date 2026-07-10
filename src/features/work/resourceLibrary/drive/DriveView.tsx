@@ -20,7 +20,7 @@ import {
   Check,
 } from 'lucide-react'
 import { Button, Input, EmptyState, IconButton, Tooltip, cx } from '../../../../ui'
-import { useToast } from '../../../../context/ToastContext'
+import { publicToastMessage, useToast } from '../../../../context/ToastContext'
 import { useCollection } from '../../../../lib/store'
 import { resourcesCol } from '../../../../data/collections'
 import type { ResourceType } from '../../../../data/types'
@@ -108,7 +108,7 @@ export default function DriveView() {
     try {
       setFiles(await listFolder(folderId))
     } catch (e) {
-      setErr((e as Error).message)
+      setErr(publicToastMessage('error', (e as Error).message))
       setConnected(isDriveConnected())
     } finally {
       setLoading(false)
@@ -139,7 +139,7 @@ export default function DriveView() {
     try {
       setFiles(await searchByName(t))
     } catch (e) {
-      setErr((e as Error).message)
+      setErr(publicToastMessage('error', (e as Error).message))
     } finally {
       setLoading(false)
     }
@@ -200,7 +200,7 @@ export default function DriveView() {
       <EmptyState
         icon={CloudOff}
         title="未連接 Google Drive"
-        hint="要在環境變數設定 VITE_GOOGLE_CLIENT_ID（步驟見 docs/SETUP.md「Google Drive」一節）先用得。設定好之後，這裡就可以直接瀏覽你 Drive 的教材。"
+        hint="雲端硬碟服務暫時未連接，請稍後再試或聯絡管理員。"
       />
     )
   }

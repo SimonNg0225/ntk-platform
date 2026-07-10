@@ -24,7 +24,6 @@ import {
   FilePlus2,
   CircleAlert,
   Loader2,
-  Sparkles,
   Trash2,
   Wand2,
 } from 'lucide-react'
@@ -422,7 +421,7 @@ export default function TemplateUpload({
           <div className="space-y-3 rounded-xl border border-accent/20 bg-accent-soft/40 p-3.5 dark:border-accent/25 dark:bg-accent/10">
             <div className="flex items-start gap-2.5">
               <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-accent text-white">
-                <Sparkles size={16} />
+                <FilePlus2 size={16} />
               </span>
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
@@ -447,7 +446,7 @@ export default function TemplateUpload({
             {!aiReady && (
               <p className="text-xs leading-relaxed text-slate-400 dark:text-slate-500">
                 {!isAIConfigured
-                  ? '（未接 AI：表格結構偵測照用；AI 補充非表格欄位則需設定 Supabase + gemini）'
+                  ? '（目前可偵測表格結構；其他欄位的智能補充暫時未能使用）'
                   : '（未登入：表格結構偵測照用；登入後 AI 會補充非表格欄位）'}
               </p>
             )}

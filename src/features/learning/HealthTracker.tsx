@@ -323,7 +323,7 @@ export default function HealthTracker() {
       <PageHero
         guideKey="health"
         icon={HeartPulse}
-        kicker="Health Tracker"
+        kicker="健康記錄"
         title="健康追蹤"
         description={`${longDateLabel(today)}${summary.streak > 0 ? ` · 連續記錄 ${summary.streak} 日` : ''}`}
         actions={

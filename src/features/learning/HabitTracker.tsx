@@ -22,7 +22,6 @@ import {
   Plus,
   Search,
   Flame,
-  Sparkles,
   Sprout,
   Archive,
   ArchiveRestore,
@@ -352,7 +351,7 @@ export default function HabitTracker() {
           label={t('habits.statPerfect7', { defaultValue: '近 7 日完美' })}
           value={stats.perfectDays7}
           unit={t('habits.unitDay', { defaultValue: '日' })}
-          icon={Sparkles}
+          icon={Flame}
           tone="violet"
           hint={t('habits.statAllHit', { defaultValue: '全部達標' })}
         />

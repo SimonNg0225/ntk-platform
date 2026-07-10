@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import {
   ArrowRight,
@@ -6,14 +7,15 @@ import {
   FileText,
   Lock,
   Loader2,
+  Presentation,
   ScanLine,
-  Sparkles,
   type LucideIcon,
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { FeatureIcon } from '../features/featureIcons'
 import type { Feature } from '../features/types'
 import { useNav } from '../context/NavContext'
+import { track } from '../lib/observability'
 
 // ============================================================
 //  付費功能上鎖提示
@@ -40,7 +42,7 @@ const GATE_COPY: Record<string, GateCopy> = {
     fallbackId: 'work-generate',
     fallbackLabel: '先生成教材',
     fallbackDesc: '先用免費教材生成，把內容整理好再手動製作簡報。',
-    icon: Sparkles,
+    icon: Presentation,
   },
   'work-admin-docs': {
     label: '行政文件自動套版',
@@ -64,8 +66,8 @@ const GATE_COPY: Record<string, GateCopy> = {
 
 const DEFAULT_GATE: GateCopy = {
   label: '進階工作流',
-  outcome: '此功能屬於節省時間的進階工具，升級後可配合更多 AI 點數同同步能力使用。',
-  included: ['更多 AI 點數', '多裝置同步', '優先支援'],
+  outcome: '此功能屬於節省時間的進階工具，升級後可配合更多 AI 點數和完整產出流程使用。',
+  included: ['解鎖進階工具', '更多 AI 點數', '優先支援'],
   fallbackId: 'work-lesson-plan',
   fallbackLabel: '先準備下一堂',
   fallbackDesc: '先用免費備課流程完成最核心工作。',
@@ -83,6 +85,10 @@ export default function PaidGate({
   const nav = useNav()
   const copy = GATE_COPY[feature.id] ?? DEFAULT_GATE
   const CopyIcon = copy.icon
+
+  useEffect(() => {
+    if (!loading) track('paywall_viewed', { feature_id: feature.id })
+  }, [feature.id, loading])
 
   if (loading) {
     return (
@@ -147,7 +153,13 @@ export default function PaidGate({
             </p>
             <button
               type="button"
-              onClick={() => nav.open(copy.fallbackId)}
+              onClick={() => {
+                track('paywall_fallback_clicked', {
+                  feature_id: feature.id,
+                  fallback_feature_id: copy.fallbackId,
+                })
+                nav.open(copy.fallbackId)
+              }}
               className="mt-4 inline-flex min-h-11 cursor-pointer items-center gap-1.5 rounded-xl border border-slate-300 px-3 text-sm font-semibold text-slate-700 transition hover:border-accent hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:border-slate-700 dark:text-slate-200"
             >
               {copy.fallbackLabel}
@@ -162,9 +174,10 @@ export default function PaidGate({
           </p>
           <Link
             to="/pricing"
+            onClick={() => track('paywall_upgrade_clicked', { feature_id: feature.id })}
             className="inline-flex min-h-11 cursor-pointer items-center justify-center gap-1.5 rounded-xl bg-accent px-4 text-sm font-semibold text-white transition hover:bg-accent-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
           >
-            <Sparkles size={16} strokeWidth={2.25} />
+            <ArrowRight size={16} strokeWidth={2.25} />
             {t('gate.cta', { defaultValue: '比較方案' })}
           </Link>
         </div>

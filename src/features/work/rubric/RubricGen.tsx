@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Scale, Sparkles, FileText, Copy, Trash2, Clock, ListChecks, Grid3x3 } from 'lucide-react'
+import { Scale, FileText, Copy, Trash2, Clock, ListChecks, Grid3x3 } from 'lucide-react'
 import {
   Badge,
   Button,
@@ -131,14 +131,14 @@ export default function RubricGen() {
         <PageHero
           guideKey="rubric-gen"
           icon={Scale}
-          kicker="Rubric Studio"
+          kicker="評分設計"
           title="評分準則"
           description="貼上題目或任務，AI 一鍵擬「評分指引」（參考答案＋評分點）或「評分量表」（準則 × 等級），可複製或下載做 Word。"
         />
         <EmptyState
           icon={Scale}
           title="評分準則未啟用"
-          hint="要設定好 Supabase 並部署 gemini Edge Function 先用到 AI 生成（步驟見 docs/SETUP.md）。"
+          hint="評分準則生成服務暫時未連接，請稍後再試或聯絡管理員。"
         />
       </div>
     )
@@ -180,7 +180,7 @@ export default function RubricGen() {
     <div className="space-y-5">
       <PageHero
         icon={Scale}
-        kicker="Rubric Studio"
+        kicker="評分設計"
         title="評分準則"
         description="貼上題目或任務，AI 一鍵擬「評分指引」（參考答案＋評分點）或「評分量表」（準則 × 等級），可複製或下載做 Word。"
       />
@@ -248,7 +248,7 @@ export default function RubricGen() {
           )}
           <div className="flex items-center gap-3">
             <CreditMeter source="rubric" model={model} />
-            <Button icon={Sparkles} onClick={run} loading={busy} disabled={!canRun}>
+            <Button icon={Scale} onClick={run} loading={busy} disabled={!canRun}>
               {busy ? '生成中…' : mode === 'scheme' ? '生成評分指引' : '生成評分量表'}
             </Button>
           </div>
@@ -303,7 +303,7 @@ export default function RubricGen() {
             <Button
               size="sm"
               variant="secondary"
-              icon={Sparkles}
+              icon={Scale}
               onClick={() => {
                 document.querySelector<HTMLTextAreaElement>('textarea')?.focus()
               }}

@@ -1,4 +1,4 @@
-import { Menu as MenuIcon, Search, Sparkles } from 'lucide-react'
+import { Menu as MenuIcon, Plus, Search } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useMode } from '../context/ModeContext'
 import { IconButton } from '../ui'
@@ -41,7 +41,7 @@ export default function MobileTopBar({
       <div className="ml-auto flex items-center gap-1">
         {onQuickAdd && (
           <IconButton label="快速記低" onClick={onQuickAdd}>
-            <Sparkles size={20} strokeWidth={1.75} />
+            <Plus size={20} strokeWidth={1.75} />
           </IconButton>
         )}
         {onSearch && (

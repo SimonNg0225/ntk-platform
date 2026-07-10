@@ -4,6 +4,7 @@ import { Helmet } from 'react-helmet-async'
 import { CheckCircle2, Loader2 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { BRAND_FULL_ZH, BRAND_NAME } from '../lib/brand'
+import { readAuthReturnTo } from '../lib/authReturn'
 
 export default function AuthCallback() {
   const { user, loading, signInWithGoogle } = useAuth()
@@ -11,7 +12,7 @@ export default function AuthCallback() {
   const [timedOut, setTimedOut] = useState(false)
 
   useEffect(() => {
-    if (user) navigate('/app', { replace: true })
+    if (user) navigate(readAuthReturnTo(), { replace: true })
   }, [navigate, user])
 
   useEffect(() => {

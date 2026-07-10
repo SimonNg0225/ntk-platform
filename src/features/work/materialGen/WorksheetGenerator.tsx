@@ -10,7 +10,6 @@ import {
   Printer,
   RotateCcw,
   Save,
-  Sparkles,
 } from 'lucide-react'
 import CreditMeter from '../../../components/CreditMeter'
 import { uid } from '../../../lib/store'
@@ -389,8 +388,8 @@ export function WorksheetGenerator({
           {!isAIConfigured ? (
             <EmptyState
               icon={Bot}
-              title="AI 助手未啟用"
-              hint="要設定好 Supabase 並部署 gemini Edge Function 先用到。步驟見 docs/SETUP.md。"
+              title="智能生成暫時未能使用"
+              hint="生成服務暫時未連接，請稍後再試或聯絡管理員。"
             />
           ) : (
             <EmptyState
@@ -552,7 +551,7 @@ export function WorksheetGenerator({
               aria-live="polite"
             >
               <p className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
-                <Sparkles size={15} className="animate-pulse text-accent" />
+                <ClipboardList size={15} className="animate-pulse text-accent" />
                 AI 想緊練習，請等一等…
               </p>
               <div className="h-2.5 w-full animate-pulse rounded-full bg-slate-200 dark:bg-slate-700" />
@@ -567,7 +566,7 @@ export function WorksheetGenerator({
               取消
             </Button>
             <Button
-              icon={Sparkles}
+              icon={ClipboardList}
               loading={busy}
               onClick={differentiated ? runDifferentiated : run}
               disabled={busy || !topicId || split.mc + split.short === 0}
@@ -789,7 +788,7 @@ function DifferentiatedPreview({
             >
               <span>{label}</span>
               {r.status === 'loading' && (
-                <Sparkles size={13} className="animate-pulse text-accent" aria-hidden="true" />
+                <ClipboardList size={13} className="animate-pulse text-accent" aria-hidden="true" />
               )}
               {r.status === 'done' && (
                 <span
@@ -812,7 +811,7 @@ function DifferentiatedPreview({
       {cur.status === 'idle' ? (
         <div className="rounded-2xl border border-slate-200/80 bg-slate-50/60 p-4 dark:border-slate-700/80 dark:bg-slate-900/40">
           <p className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
-            <Sparkles size={15} className="text-slate-400 dark:text-slate-500" aria-hidden="true" />
+            <ClipboardList size={15} className="text-slate-400 dark:text-slate-500" aria-hidden="true" />
             {t('worksheet.diffMode.queued', {
               defaultValue: '排緊隊，會接住生成…',
             })}
@@ -824,7 +823,7 @@ function DifferentiatedPreview({
           aria-live="polite"
         >
           <p className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
-            <Sparkles size={15} className="animate-pulse text-accent" aria-hidden="true" />
+            <ClipboardList size={15} className="animate-pulse text-accent" aria-hidden="true" />
             {t('worksheet.diffMode.loading', {
               defaultValue: 'AI 想緊這個程度的練習，請等一等…',
             })}

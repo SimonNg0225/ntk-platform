@@ -23,7 +23,6 @@ import {
   Scale,
   ScrollText,
   Search,
-  Sparkles,
   Square,
   Target,
   Trash2,
@@ -509,7 +508,7 @@ export default function QuestionBank() {
       <PageHero
         guideKey="questionbank"
         icon={BookMarked}
-        kicker="Question Bank"
+        kicker="題庫與組卷"
         title={`${subj.short} 題庫`}
         description={`存題 ${stats.total} 條 · 覆蓋 ${stats.topicsCovered}/${topics.length} 個課題`}
         tabs={(
@@ -788,7 +787,7 @@ function BankView(props: {
             匯出
           </Button>
           <span className="mx-0.5 hidden h-5 w-px bg-slate-200 dark:bg-slate-700/60 sm:block" />
-          <Button variant="secondary" size="sm" icon={Sparkles} onClick={onShowAI}>
+          <Button variant="secondary" size="sm" icon={ClipboardList} onClick={onShowAI}>
             AI 出題
           </Button>
           <Button size="sm" icon={Plus} onClick={openAdd}>
@@ -1085,7 +1084,7 @@ function BankView(props: {
                   <Button icon={Plus} onClick={openAdd}>
                     擬第一條題
                   </Button>
-                  <Button variant="secondary" icon={Sparkles} onClick={onShowAI}>
+                  <Button variant="secondary" icon={ClipboardList} onClick={onShowAI}>
                     AI 出題
                   </Button>
                 </>
@@ -1175,7 +1174,7 @@ function AnalyticsView({
             <Button icon={BookMarked} onClick={onGoBank}>
               去題庫加題
             </Button>
-            <Button variant="secondary" icon={Sparkles} onClick={onShowAI}>
+            <Button variant="secondary" icon={ClipboardList} onClick={onShowAI}>
               AI 出題
             </Button>
           </div>
@@ -1217,7 +1216,7 @@ function AnalyticsView({
 
       <div className="grid gap-4 lg:grid-cols-2">
         <Card className="p-4 sm:p-5">
-          <ChartHead icon={Sparkles} tone="violet">題目最多的課題</ChartHead>
+          <ChartHead icon={BarChart3} tone="violet">題目最多的課題</ChartHead>
           {topTopics.length === 0 ? (
             <p className="py-4 text-center text-sm text-slate-400 dark:text-slate-500">
               未有資料

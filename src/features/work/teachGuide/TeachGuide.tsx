@@ -8,7 +8,6 @@ import {
   Users,
   SlidersHorizontal,
   ClipboardCheck,
-  Sparkles,
   Trash2,
   Clock,
   NotebookPen,
@@ -165,7 +164,7 @@ export default function TeachGuide() {
         <PageHero
           guideKey="teachGuide"
           icon={Compass}
-          kicker={t('teachGuide.kicker', { defaultValue: 'Teaching Guide' })}
+          kicker={t('teachGuide.kicker', { defaultValue: '教學設計' })}
           title={t('teachGuide.title', { defaultValue: '教學指引' })}
           description={t('teachGuide.subtitle', {
             defaultValue: '選擇一個課題，AI 協助整理「如何教」：重點、誤解、步驟、活動、差異化、評估。',
@@ -173,10 +172,10 @@ export default function TeachGuide() {
         />
         <EmptyState
           icon={Compass}
-          title={t('teachGuide.aiOffTitle', { defaultValue: '教學指引未啟用' })}
+          title={t('teachGuide.aiOffTitle', { defaultValue: '教學指引暫時未能生成' })}
           hint={t('teachGuide.aiOffHint', {
             defaultValue:
-              '要設定好 Supabase 並部署 gemini Edge Function 先用到。步驟見 docs/SETUP.md。',
+              '生成服務暫時未連接，請稍後再試或聯絡管理員。',
           })}
         />
       </div>
@@ -187,7 +186,7 @@ export default function TeachGuide() {
     <div className="space-y-5">
       <PageHero
         icon={Compass}
-        kicker={t('teachGuide.kicker', { defaultValue: 'Teaching Guide' })}
+        kicker={t('teachGuide.kicker', { defaultValue: '教學設計' })}
         title={t('teachGuide.title', { defaultValue: '教學指引' })}
         description={t('teachGuide.subtitle', {
           defaultValue: '選擇一個課題，AI 協助整理「如何教」：重點、誤解、步驟、活動、差異化、評估。',
@@ -260,7 +259,7 @@ export default function TeachGuide() {
               </Field>
               <div className="flex items-center justify-end gap-3">
                 <CreditMeter source="teach-guide" model={model} />
-                <Button icon={Sparkles} onClick={run} loading={busy}>
+                <Button icon={Compass} onClick={run} loading={busy}>
                   {busy
                     ? t('teachGuide.generating', { defaultValue: '生成中…' })
                     : t('teachGuide.generate', { defaultValue: '生成指引' })}
@@ -272,7 +271,7 @@ export default function TeachGuide() {
           {/* 接落去：跳去其他教材功能（純展示卡） */}
           <section className="rounded-2xl border border-slate-200/80 bg-white p-4 dark:border-slate-700/60 dark:bg-slate-800">
             <div className="mb-0.5 flex items-center gap-1.5 text-xs font-semibold text-slate-500 dark:text-slate-300">
-              <Sparkles size={13} />
+              <Compass size={13} />
               {t('teachGuide.nextSteps', { defaultValue: '接落去' })}
             </div>
             <p className="mb-3 text-[11px] text-slate-400 dark:text-slate-500">
@@ -284,7 +283,7 @@ export default function TeachGuide() {
               <Button
                 variant="secondary"
                 size="sm"
-                icon={Sparkles}
+                icon={Compass}
                 onClick={() => nav.open('work-generate')}
               >
                 {t('teachGuide.toGenerate', { defaultValue: '教材生成' })}

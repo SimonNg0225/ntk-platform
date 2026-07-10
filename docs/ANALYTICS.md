@@ -25,11 +25,23 @@ Tracking starts only after the visitor accepts the cookie banner.
 | `app_opened` | Product shell opened |
 | `app_screen_viewed` | App overview/settings/admin/feature screen viewed |
 | `feature_opened` | Specific product feature opened |
+| `onboarding_viewed` | Task-first onboarding shown for the first time |
+| `onboarding_task_started` | User chose an onboarding task and entered its workspace |
+| `activation_task_started` | First home task started on this browser |
+| `activation_profile_completed` | First teacher profile completed on this browser |
+| `home_task_submitted` | Home composer/shortcut routed to a tool or assistant |
+| `navigation_item_opened` | Sidebar or command-palette destination opened |
+| `next_step_clicked` | User continued from one feature to a suggested next step |
+| `paywall_viewed` | A locked paid feature was viewed |
+| `paywall_upgrade_clicked` | Pricing CTA clicked from a paid-feature gate |
+| `paywall_fallback_clicked` | Free alternative chosen from a paid-feature gate |
 | `pricing_cta_click` | Pricing plan CTA clicked |
 | `checkout_started` | Stripe checkout started |
 | `outbound_link_clicked` | External link clicked through helper |
 
-Every event includes page path, title, referrer, and any URL attribution params
+No task text, document content, email address, school name, or invite token is
+sent in these product events. Every event includes page path, title, referrer,
+and any URL attribution params
 such as `utm_source`, `utm_medium`, `utm_campaign`, `gclid`, and `fbclid`.
 
 ## UTM Links
@@ -42,6 +54,16 @@ https://eziteach.hk/?utm_source=threads&utm_medium=post&utm_campaign=teacher_lau
 https://eziteach.hk/?utm_source=meta&utm_medium=ad&utm_campaign=teacher_launch
 ```
 
-In PostHog, filter events by `utm_source` or build a funnel:
+In PostHog, filter events by `utm_source` or build these funnels:
 
-`$pageview` -> `landing_cta_click` -> `app_opened` -> `feature_opened` -> `checkout_started`
+Acquisition to activation:
+
+`$pageview` -> `landing_cta_click` -> `app_opened` -> `activation_task_started`
+
+Onboarding quality:
+
+`onboarding_viewed` -> `onboarding_task_started` -> `feature_opened`
+
+Paid conversion:
+
+`paywall_viewed` -> `paywall_upgrade_clicked` -> `pricing_cta_click` -> `checkout_started`

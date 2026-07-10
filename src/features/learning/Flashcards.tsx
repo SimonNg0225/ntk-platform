@@ -41,7 +41,6 @@ import {
   Play,
   Plus,
   Settings2,
-  Sparkles,
   Trash2,
   Upload,
   Zap,
@@ -157,7 +156,7 @@ export default function Flashcards() {
       <PageHero
         guideKey="flashcards"
         icon={BookMarked}
-        kicker={t('flashcards.kicker', { defaultValue: 'Spaced Repetition' })}
+        kicker={t('flashcards.kicker', { defaultValue: '間隔複習' })}
         title={t('flashcards.pageTitle', { defaultValue: '知識卡 + 複習' })}
         description={t('flashcards.pageDesc', {
           defaultValue: '一張張記錄重點，間隔重複幫你記得牢；到期先彈出來溫故知新。',
@@ -989,7 +988,7 @@ function DeckDetail({
         {cards.length === 0 && (
           <li>
             <EmptyState
-              icon={Sparkles}
+              icon={Play}
               title={t('flashcards.emptyCardsTitle', { defaultValue: '這疊卡仍是空白' })}
               hint={t('flashcards.emptyCardsHint', {
                 defaultValue:

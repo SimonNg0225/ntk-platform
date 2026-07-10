@@ -15,7 +15,6 @@ import {
   GripVertical,
   Plus,
   Save,
-  Sparkles,
   Trash2,
   Clock,
   GraduationCap,
@@ -245,7 +244,7 @@ export default function PlanEditor({
                 <Button
                   variant="ghost"
                   size="sm"
-                  icon={Sparkles}
+                  icon={NotebookPen}
                   onClick={() => onSaveAsTemplate(d)}
                   disabled={!d.phases.length && !d.materials.length}
                 >
@@ -430,7 +429,7 @@ export default function PlanEditor({
             {/* 歸檔資料卡（hairline · 紙質，呼應教案卡）*/}
             <section className="space-y-3 rounded-2xl border border-slate-200/80 bg-slate-50/50 p-3.5 dark:border-slate-700/60 dark:bg-slate-800/40">
               <SectionHeading
-                kicker="Filing"
+                kicker="歸檔"
                 title="歸檔與排程"
                 icon={CalendarDays}
               />
@@ -496,7 +495,7 @@ export default function PlanEditor({
             {/* 教學目標（serif 引導）*/}
             <div className="space-y-2.5">
               <SectionHeading
-                kicker="Objectives"
+                kicker="學習目標"
                 title="教學目標"
                 icon={NotebookPen}
               />
@@ -516,7 +515,7 @@ export default function PlanEditor({
         {tab === 'flow' && (
           <div className="space-y-3">
             <SectionHeading
-              kicker="Lesson flow"
+              kicker="課堂流程"
               title="課堂節奏"
               icon={ListChecks}
               trailing={
@@ -548,7 +547,7 @@ export default function PlanEditor({
                 <Button
                   size="sm"
                   variant="secondary"
-                  icon={Sparkles}
+                  icon={NotebookPen}
                   onClick={fillPreset}
                   className="mt-4"
                 >
@@ -663,7 +662,7 @@ export default function PlanEditor({
         {tab === 'materials' && (
           <div className="space-y-3">
             <SectionHeading
-              kicker="Prep checklist"
+              kicker="準備清單"
               title="備課清單"
               icon={PackageOpen}
               trailing={
@@ -755,7 +754,7 @@ export default function PlanEditor({
             {/* 課後反思（serif 引導，呼應反思隨筆）*/}
             <div className="space-y-2.5 pt-1">
               <SectionHeading
-                kicker="Reflection"
+                kicker="課後反思"
                 title="課後反思"
                 icon={NotebookPen}
               />

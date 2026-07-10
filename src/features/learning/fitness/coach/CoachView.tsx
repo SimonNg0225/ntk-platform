@@ -42,7 +42,7 @@ export default function CoachView() {
       <EmptyState
         icon={Bot}
         title="需要先設定雲端 AI"
-        hint="AI 健身教練要接好 Supabase 並部署 gemini Edge Function 先用到。步驟見 docs/SETUP.md。"
+        hint="智能教練服務暫時未連接，請稍後再試或聯絡管理員。"
       />
     )
   }

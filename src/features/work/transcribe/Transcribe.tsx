@@ -134,9 +134,9 @@ export default function Transcribe() {
     return (
       <EmptyState
         icon={Mic}
-        title={t('transcribe.notReady.title', { defaultValue: '錄音轉文字未啟用' })}
+        title={t('transcribe.notReady.title', { defaultValue: '錄音轉文字暫時未能使用' })}
         hint={t('transcribe.notReady.hint', {
-          defaultValue: '要設定好 Supabase 並部署 gemini Edge Function 先用到（步驟見 docs/SETUP.md）。',
+          defaultValue: '轉錄服務暫時未連接，請稍後再試或聯絡管理員。',
         })}
       />
     )
@@ -148,7 +148,7 @@ export default function Transcribe() {
       <PageHero
         guideKey="transcribe"
         icon={Mic}
-        kicker={t('transcribe.kicker', { defaultValue: 'Transcribe' })}
+        kicker={t('transcribe.kicker', { defaultValue: '會議與觀課' })}
         title={t('transcribe.title', { defaultValue: '錄音轉文字' })}
         description={t('transcribe.subtitle', {
           defaultValue: '上載會議／觀課錄音，AI 轉文字、抽重點、列決議同待跟進，一鍵存入會議筆記。',

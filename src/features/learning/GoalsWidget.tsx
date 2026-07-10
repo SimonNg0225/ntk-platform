@@ -13,7 +13,6 @@ import {
   ChevronRight,
   CheckCircle2,
   PauseCircle,
-  Sparkles,
 } from 'lucide-react'
 import { useCollection, uid } from '../../lib/store'
 import { goalsCol } from '../../data/collections'
@@ -290,7 +289,7 @@ export default function GoalsWidget() {
       <PageHero
         guideKey="goals"
         icon={Target}
-        kicker="Goals"
+        kicker="學習目標"
         title="個人目標"
         description="訂目標、拆里程碑，逐步達成。"
         actions={
@@ -497,7 +496,7 @@ function GoalsHero({
           </span>
           <span aria-hidden="true" className="h-3 w-px bg-white/20" />
           <span className="inline-flex items-center gap-1.5">
-            <Sparkles size={13} className="text-white/60" />
+            <Target size={13} className="text-white/60" />
             本週打卡 <span className="text-base font-semibold tabular-nums slashed-zero">{checkinDays}</span> 日
           </span>
         </div>

@@ -9,7 +9,6 @@ import {
   ListTodo,
   Plus,
   Repeat,
-  Sparkles,
   X,
 } from 'lucide-react'
 import { useToast } from '../../../context/ToastContext'
@@ -277,7 +276,7 @@ export function QuickAddModal({ open, onClose }: QuickAddModalProps) {
               <Bot size={18} />
             </span>
             <div>
-              <p className="text-sm font-semibold">AI 分析暫時未啟用</p>
+              <p className="text-sm font-semibold">智能分析暫時未能使用</p>
               <p className="mt-1 text-xs leading-relaxed text-amber-800/80 dark:text-amber-100/75">
                 你仍然可以先記低內容，系統會放入 Inbox，之後再分類成待辦、提醒或行事曆。
                 請避免輸入可識別學生資料；需要時先用班別、座號或代號代替。
@@ -314,7 +313,7 @@ export function QuickAddModal({ open, onClose }: QuickAddModalProps) {
         <div className="space-y-4">
           <div className="flex items-start gap-3 rounded-2xl border border-accent/20 bg-accent-soft/50 p-3.5 dark:border-accent/25 dark:bg-accent/10">
             <span className="mt-0.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-accent text-white">
-              <Sparkles size={18} />
+              <Plus size={18} />
             </span>
             <p className="text-xs leading-relaxed text-slate-600 dark:text-slate-300">
               打一句自然語言，AI 會幫你自動分流做{' '}
@@ -367,7 +366,7 @@ export function QuickAddModal({ open, onClose }: QuickAddModalProps) {
               aria-live="polite"
             >
               <p className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
-                <Sparkles size={15} className="animate-pulse text-accent" />
+                <Plus size={15} className="animate-pulse text-accent" />
                 AI 分析緊，請等一等…
               </p>
               <div className="h-2.5 w-full animate-pulse rounded-full bg-slate-200 dark:bg-slate-700" />
@@ -380,7 +379,7 @@ export function QuickAddModal({ open, onClose }: QuickAddModalProps) {
               取消
             </Button>
             <Button
-              icon={Sparkles}
+              icon={Plus}
               loading={busy}
               onClick={analyze}
               disabled={busy || !text.trim()}

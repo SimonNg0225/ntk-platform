@@ -10,7 +10,6 @@ import {
   Heading1,
   Plus,
   Trash2,
-  Sparkles,
   Undo2,
   Check,
   BarChart3,
@@ -514,7 +513,7 @@ export default function SlideEditor({
               />
               <Button
                 variant="secondary"
-                icon={Sparkles}
+                icon={LayoutGrid}
                 onClick={() => void runAi('rewrite')}
                 loading={aiBusy}
               >
@@ -523,7 +522,7 @@ export default function SlideEditor({
               {layout !== 'bullets' && (
                 <Button
                   variant="ghost"
-                  icon={Sparkles}
+                  icon={LayoutGrid}
                   onClick={() => void runAi('convert', layout)}
                   loading={aiBusy}
                   title={t('slides.aiConvertHint', { defaultValue: '規則轉完不靚？交給 AI 重組做此版面式' })}

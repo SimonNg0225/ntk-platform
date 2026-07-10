@@ -19,6 +19,7 @@ import { attachSync, detachSync } from '../lib/sync'
 import { identifyUser, resetIdentity, track } from '../lib/observability'
 import { isAdminEmail } from '../lib/support'
 import { checkIsAdmin } from '../lib/admin'
+import { rememberAuthReturnTo } from '../lib/authReturn'
 
 // ============================================================
 //  AuthContext
@@ -137,6 +138,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           return
         }
         track('signup_started', { provider: 'google' })
+        rememberAuthReturnTo(`${window.location.pathname}${window.location.search}`)
         await supabase.auth.signInWithOAuth({
           provider: 'google',
           // 回流去品牌化中繼頁，等登入中 / 登入失敗狀態都保持 EziTeach 介面。

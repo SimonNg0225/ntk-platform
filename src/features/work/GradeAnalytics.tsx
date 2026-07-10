@@ -20,7 +20,6 @@ import {
   Settings2,
   ShieldCheck,
   SlidersHorizontal,
-  Sparkles,
   Target,
   TrendingUp,
   Upload,
@@ -1795,7 +1794,7 @@ export default function GradeAnalytics() {
               <StudentTable students={analysis.students} totalMax={analysis.totalMax} />
             </Card>
             <Card className="p-4 sm:p-5">
-              <SectionTitle icon={Sparkles} description="可直接轉化為課後行動">
+              <SectionTitle icon={Lightbulb} description="可直接轉化為課後行動">
                 分組策略
               </SectionTitle>
               <div className="space-y-3">

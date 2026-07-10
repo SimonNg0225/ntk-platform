@@ -16,7 +16,6 @@ import {
   Archive,
   ArchiveRestore,
   Hash,
-  Sparkles,
   Loader2,
   BarChart3,
   ArrowRight,
@@ -559,7 +558,7 @@ export default function Inbox() {
       <PageHero
         guideKey="inbox"
         icon={InboxIcon}
-        kicker={t('inbox.kicker', { defaultValue: 'Quick Capture' })}
+        kicker={t('inbox.kicker', { defaultValue: '快速收集' })}
         title={t('inbox.title', { defaultValue: '快速擷取' })}
         description={t('inbox.subtitle', { defaultValue: '一秒記低個想法，有空先慢慢分類。' })}
         actions={
@@ -784,7 +783,7 @@ export default function Inbox() {
             type="button"
             size="sm"
             variant="secondary"
-            icon={aiBusy ? Loader2 : Sparkles}
+            icon={aiBusy ? Loader2 : InboxIcon}
             onClick={runAiTriage}
             disabled={aiBusy}
             className="shrink-0"
@@ -1235,7 +1234,7 @@ function InboxRowCard({
               }}
               className="group/ai mt-2 inline-flex min-h-11 max-w-full items-center gap-1.5 rounded-lg bg-accent-soft px-2.5 text-[11px] font-medium text-accent-strong transition active:scale-[0.98] hover:bg-accent/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:bg-accent/10 dark:text-accent"
             >
-              <Sparkles size={12} className="shrink-0" />
+              <InboxIcon size={12} className="shrink-0" />
               <span className="truncate">
                 AI 覺得似{kindLabel(aiKind!)}
                 {row.meta?.aiReason ? `：${row.meta.aiReason}` : ''}
