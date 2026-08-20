@@ -1,0 +1,89 @@
+import { useCallback, useEffect, useRef, useState } from 'react'
+import {
+  GeminiLiveVoiceSession,
+  LiveVoiceError,
+  isLiveVoiceBrowserSupported,
+  type LiveToolCall,
+  type LiveTranscriptUpdate,
+  type LiveVoiceStatus,
+} from './liveVoice'
+import type { VoiceLanguage } from './speech'
+
+export function useLiveVoice({
+  onTranscript,
+  onToolCall,
+  onError,
+}: {
+  onTranscript: (update: LiveTranscriptUpdate) => void
+  onToolCall: (call: LiveToolCall) => Promise<unknown>
+  onError: (message: string) => void
+}) {
+  const [status, setStatus] = useState<LiveVoiceStatus>('idle')
+  const [inputMuted, setInputMutedState] = useState(false)
+  const sessionRef = useRef<GeminiLiveVoiceSession | null>(null)
+  const transcriptHandlerRef = useRef(onTranscript)
+  const toolHandlerRef = useRef(onToolCall)
+  const errorHandlerRef = useRef(onError)
+
+  useEffect(() => {
+    transcriptHandlerRef.current = onTranscript
+  }, [onTranscript])
+  useEffect(() => {
+    toolHandlerRef.current = onToolCall
+  }, [onToolCall])
+  useEffect(() => {
+    errorHandlerRef.current = onError
+  }, [onError])
+
+  const stop = useCallback(() => {
+    sessionRef.current?.stop()
+    sessionRef.current = null
+    setStatus('idle')
+    setInputMutedState(false)
+  }, [])
+
+  const start = useCallback(async (language: VoiceLanguage, context: string) => {
+    stop()
+    const session = new GeminiLiveVoiceSession({
+      onStatus: setStatus,
+      onTranscript: (update) => transcriptHandlerRef.current(update),
+      onToolCall: (call) => toolHandlerRef.current(call),
+      onError: (message) => errorHandlerRef.current(message),
+    })
+    sessionRef.current = session
+    try {
+      await session.start(language, context)
+    } catch (error) {
+      if (sessionRef.current === session) {
+        sessionRef.current = null
+        setStatus(error instanceof LiveVoiceError && error.code === 'cancelled' ? 'idle' : 'error')
+      }
+      throw error
+    }
+  }, [stop])
+
+  const setInputMuted = useCallback((muted: boolean) => {
+    sessionRef.current?.setInputMuted(muted)
+    setInputMutedState(muted)
+  }, [])
+
+  const setOutputMuted = useCallback((muted: boolean) => {
+    sessionRef.current?.setOutputMuted(muted)
+  }, [])
+
+  const sendText = useCallback((text: string) => sessionRef.current?.sendText(text) ?? false, [])
+
+  useEffect(() => stop, [stop])
+
+  return {
+    supported: isLiveVoiceBrowserSupported(),
+    status,
+    active: status !== 'idle' && status !== 'error',
+    inputMuted,
+    start,
+    stop,
+    sendText,
+    setInputMuted,
+    setOutputMuted,
+  }
+}

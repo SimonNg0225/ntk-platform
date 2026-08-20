@@ -1,0 +1,34 @@
+import { describe, expect, it } from 'vitest'
+import {
+  float32ToPcm16Base64,
+  mergeLiveTranscript,
+  pcm16Base64ToFloat32,
+} from './liveVoice'
+
+describe('即時語音音訊轉換', () => {
+  it('把浮點聲音轉成 PCM16 後可還原主要振幅', () => {
+    const source = new Float32Array([-1, -0.5, 0, 0.5, 1])
+    const restored = pcm16Base64ToFloat32(float32ToPcm16Base64(source))
+    expect(Array.from(restored)).toEqual(
+      expect.arrayContaining([
+        expect.closeTo(-1, 3),
+        expect.closeTo(-0.5, 3),
+        expect.closeTo(0, 3),
+        expect.closeTo(0.5, 3),
+        expect.closeTo(1, 3),
+      ]),
+    )
+  })
+})
+
+describe('即時逐字稿合併', () => {
+  it('接受累積式逐字稿而不重複文字', () => {
+    expect(mergeLiveTranscript('我想整', '我想整一份簡報')).toBe('我想整一份簡報')
+  })
+
+  it('合併分段逐字稿並補上空格', () => {
+    expect(mergeLiveTranscript('Please prepare', 'a worksheet')).toBe(
+      'Please prepare a worksheet',
+    )
+  })
+})

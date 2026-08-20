@@ -17,6 +17,7 @@ import {
   ListTodo,
   MessageCircle,
   Mic,
+  MicOff,
   RotateCcw,
   Send,
   Square,
@@ -49,10 +50,17 @@ import {
 import { buildModelAgentPlan } from './voiceAssistant/modelPlanner'
 import {
   VOICE_LANGUAGES,
+  createSpeechQueue,
   speakText,
   stopSpeaking,
   type VoiceLanguage,
 } from './voiceAssistant/speech'
+import {
+  LiveVoiceError,
+  type LiveToolCall,
+  type LiveTranscriptUpdate,
+} from './voiceAssistant/liveVoice'
+import { useLiveVoice } from './voiceAssistant/useLiveVoice'
 import { useSpeechRecognition } from './voiceAssistant/useSpeechRecognition'
 
 type VoiceTurn = {
@@ -104,6 +112,14 @@ function readSpeakReplies(): boolean {
 function turnId(): string {
   if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) return crypto.randomUUID()
   return `voice-${Date.now()}-${Math.random().toString(36).slice(2)}`
+}
+
+function upsertTurn(current: VoiceTurn[], next: VoiceTurn): VoiceTurn[] {
+  const index = current.findIndex((turn) => turn.id === next.id)
+  if (index < 0) return [...current, next]
+  const updated = [...current]
+  updated[index] = next
+  return updated
 }
 
 function readSessionTurns(): VoiceTurn[] {
@@ -170,6 +186,9 @@ export default function VoiceAssistant() {
   const [receipt, setReceipt] = useState<MutationReceipt | null>(null)
   const transcriptBaseRef = useRef('')
   const speechWasUsedRef = useRef(false)
+  const conversationLoopRef = useRef(false)
+  const promptHandlerRef = useRef<(prompt: string) => void>(() => {})
+  const startListeningRef = useRef<() => void>(() => {})
   const abortRef = useRef<AbortController | null>(null)
   const conversationRef = useRef<HTMLDivElement>(null)
 
@@ -204,6 +223,97 @@ export default function VoiceAssistant() {
     [assistantContext],
   )
 
+  const liveContext = useMemo(() => {
+    const taskLines = assistantContext.activeTasks
+      .slice(0, 8)
+      .map((task) => `- 待辦：${task.text}${task.due ? `（限期 ${task.due}）` : ''}`)
+    const eventLines = assistantContext.todayEvents
+      .slice(0, 8)
+      .map((event) => `- 今日日程：${event.time ? `${event.time} ` : ''}${event.title}`)
+    return [
+      `今日日期：${assistantContext.todayKey}`,
+      `目前有 ${assistantContext.overdueCount} 項逾期工作。`,
+      ...taskLines,
+      ...eventLines,
+    ].join('\n')
+  }, [assistantContext])
+
+  const handleLiveTranscript = useCallback((update: LiveTranscriptUpdate) => {
+    setTurns((current) =>
+      upsertTurn(current, {
+        id: update.id,
+        role: update.role,
+        content: update.text,
+      }),
+    )
+    if (update.role === 'model') {
+      setStatusMessage(update.final ? '回覆完成' : '正在回覆…')
+    }
+  }, [])
+
+  const handleLiveToolCall = useCallback(
+    async (call: LiveToolCall) => {
+      if (call.name !== 'prepare_platform_task') {
+        return { status: 'unsupported', message: '這項操作暫時未開放。' }
+      }
+      const request = typeof call.args.request === 'string' ? call.args.request.trim() : ''
+      const plan = buildLocalAgentPlan(request)
+      if (!request || !plan) {
+        return { status: 'unsupported', message: '未能配對到合適的教學工具。' }
+      }
+
+      const directStep = plan.steps.length === 1 ? plan.steps[0] : null
+      if (!plan.needsConfirmation && directStep?.kind === 'open_tool') {
+        writeComposerHandoff({
+          featureId: directStep.featureId,
+          text: directStep.handoffText ?? request,
+          materialTool: directStep.materialTool,
+        })
+        track('voice_tool_opened', {
+          destination: directStep.featureId,
+          input_mode: 'live-speech',
+          source: 'live-agent',
+        })
+        trackOnce('activation_task_started', {
+          source: 'voice-assistant',
+          destination: directStep.featureId,
+        })
+        toast.success(`已打開「${directStep.toolLabel}」並帶入內容`)
+        nav.open(directStep.featureId)
+        return { status: 'opened', tool: directStep.toolLabel }
+      }
+
+      conversationLoopRef.current = false
+      setActivePlan(plan)
+      setStepStates(Object.fromEntries(plan.steps.map((step) => [step.id, 'pending'])))
+      setPlanCompleted(false)
+      setPlanResult('')
+      setReceipt(null)
+      setStatusMessage('已整理執行計劃，請確認。')
+      track('voice_agent_plan_created', {
+        source: 'live-model',
+        step_count: plan.steps.length,
+        needs_confirmation: plan.needsConfirmation,
+      })
+      return {
+        status: 'awaiting_confirmation',
+        message: '執行計劃已顯示在畫面，等候使用者確認。',
+      }
+    },
+    [nav, toast],
+  )
+
+  const handleLiveError = useCallback((message: string) => {
+    setStatusMessage(message)
+    track('voice_live_session_failed', { error_kind: 'live_connection' })
+  }, [])
+
+  const liveVoice = useLiveVoice({
+    onTranscript: handleLiveTranscript,
+    onToolCall: handleLiveToolCall,
+    onError: handleLiveError,
+  })
+
   const handleTranscript = useCallback(
     ({ combinedText, interimText: interim }: { combinedText: string; interimText: string }) => {
       speechWasUsedRef.current = true
@@ -219,9 +329,20 @@ export default function VoiceAssistant() {
     if (message) track('voice_recognition_failed', { error_kind: 'browser_recognition' })
   }, [])
 
+  const handleUtteranceEnd = useCallback((finalText: string) => {
+    const prompt = [transcriptBaseRef.current, finalText].filter(Boolean).join(' ').trim()
+    if (!prompt || !conversationLoopRef.current) return
+    speechWasUsedRef.current = true
+    setDraft(prompt)
+    setInterimText('')
+    setStatusMessage('已收到，正在回應…')
+    window.setTimeout(() => promptHandlerRef.current(prompt), 0)
+  }, [])
+
   const recognition = useSpeechRecognition({
     language,
     onTranscript: handleTranscript,
+    onUtteranceEnd: handleUtteranceEnd,
     onError: handleRecognitionError,
   })
 
@@ -229,19 +350,32 @@ export default function VoiceAssistant() {
   const briefingPreview = useMemo(() => isBriefingRequest(draft), [draft])
   const working = busy || planning || executing
 
-  const assistantState = recognition.listening
-    ? '正在聆聽'
-    : planning
-      ? '正在理解'
-      : executing
-        ? '正在執行'
-        : activePlan && !planCompleted
-          ? '等待確認'
-          : busy
-            ? '正在回覆'
-            : speaking
-              ? '正在朗讀'
-              : '待命'
+  const liveStateLabel =
+    liveVoice.status === 'connecting'
+      ? '正在連接'
+      : liveVoice.status === 'thinking'
+        ? '正在理解'
+        : liveVoice.status === 'speaking'
+          ? '正在回覆'
+          : liveVoice.inputMuted
+            ? '咪高峰已靜音'
+            : '正在聆聽'
+
+  const assistantState = liveVoice.active
+    ? liveStateLabel
+    : recognition.listening
+      ? '正在聆聽'
+      : planning
+        ? '正在理解'
+        : executing
+          ? '正在執行'
+          : activePlan && !planCompleted
+            ? '等待確認'
+            : busy
+              ? '正在回覆'
+              : speaking
+                ? '正在朗讀'
+                : '待命'
 
   useEffect(() => {
     try {
@@ -261,7 +395,8 @@ export default function VoiceAssistant() {
       stopSpeaking()
       setSpeaking(false)
     }
-  }, [speakReplies])
+    liveVoice.setOutputMuted(!speakReplies)
+  }, [liveVoice.setOutputMuted, speakReplies])
 
   useEffect(() => {
     try {
@@ -285,10 +420,11 @@ export default function VoiceAssistant() {
     [],
   )
 
-  const startListening = () => {
+  const startListening = (message = '') => {
+    conversationLoopRef.current = true
     stopSpeaking()
     setSpeaking(false)
-    setStatusMessage('')
+    setStatusMessage(message)
     setInterimText('')
     transcriptBaseRef.current = draft.trim()
     if (recognition.start()) {
@@ -296,23 +432,68 @@ export default function VoiceAssistant() {
       trackOnce('activation_voice_assistant_started', { language })
     }
   }
+  startListeningRef.current = () => startListening()
+
+  const startVoiceConversation = async () => {
+    stopSpeaking()
+    setSpeaking(false)
+    setStatusMessage('')
+    setInterimText('')
+    recognition.abort()
+
+    if (liveVoice.supported) {
+      conversationLoopRef.current = false
+      try {
+        await liveVoice.start(language, liveContext)
+        setStatusMessage('直接說話即可，我會自動回應。')
+        track('voice_live_session_started', { language })
+        trackOnce('activation_voice_assistant_started', { language, mode: 'live' })
+        return
+      } catch (error) {
+        if (error instanceof LiveVoiceError && error.code === 'cancelled') return
+        track('voice_live_session_fallback', {
+          error_kind: error instanceof Error ? error.name : 'Error',
+        })
+      }
+    }
+
+    startListening('已切換至快速語音，講完會自動送出。')
+  }
 
   const toggleListening = () => {
+    if (liveVoice.active) {
+      liveVoice.stop()
+      setStatusMessage('自然對話已結束')
+      track('voice_live_session_stopped', { language })
+      return
+    }
     if (recognition.listening) {
+      conversationLoopRef.current = false
       recognition.stop()
-      setStatusMessage('已停止聆聽，可修改文字或送出。')
+      setStatusMessage('已停止聆聽')
       track('voice_listening_stopped', { language, has_transcript: Boolean(draft.trim()) })
     } else {
-      startListening()
+      void startVoiceConversation()
     }
   }
 
-  const readResponse = (text: string) => {
+  const resumeStandardConversation = () => {
+    if (!conversationLoopRef.current) return
+    window.setTimeout(() => {
+      if (conversationLoopRef.current) startListeningRef.current()
+    }, 260)
+  }
+
+  const readResponse = (text: string, resumeAfter = false) => {
     const started = speakText(text, language, {
       onStart: () => setSpeaking(true),
-      onEnd: () => setSpeaking(false),
+      onEnd: () => {
+        setSpeaking(false)
+        if (resumeAfter) resumeStandardConversation()
+      },
     })
     if (started) track('voice_response_spoken', { language })
+    else if (resumeAfter) resumeStandardConversation()
     else toast.info('此瀏覽器暫時未能朗讀回覆。')
   }
 
@@ -343,6 +524,17 @@ export default function VoiceAssistant() {
     let full = ''
     let aborted = false
     const localContext = relevantContextFor(prompt)
+    const spokenInput = speechWasUsedRef.current
+    const resumeAfterReply = spokenInput && conversationLoopRef.current
+    const speechQueue = speakReplies
+      ? createSpeechQueue(language, {
+          onStart: () => setSpeaking(true),
+          onEnd: () => {
+            setSpeaking(false)
+            if (resumeAfterReply) resumeStandardConversation()
+          },
+        })
+      : null
 
     track('voice_assistant_request_started', {
       language,
@@ -366,6 +558,7 @@ export default function VoiceAssistant() {
       })) {
         full += chunk
         setStreaming(full)
+        speechQueue?.push(chunk)
       }
     } catch (error) {
       const err = error as Error
@@ -387,7 +580,10 @@ export default function VoiceAssistant() {
           response_chars: full.length,
         })
         trackOnce('activation_voice_response_completed', { language })
-        if (speakReplies) readResponse(full)
+        speechQueue?.finish()
+        if (!speechQueue && resumeAfterReply) resumeStandardConversation()
+      } else {
+        speechQueue?.cancel()
       }
       speechWasUsedRef.current = false
       setBusy(false)
@@ -397,6 +593,7 @@ export default function VoiceAssistant() {
   }
 
   const showPlan = (plan: AgentPlan, conversation: VoiceTurn[]) => {
+    conversationLoopRef.current = false
     setTurns(conversation)
     setActivePlan(plan)
     setStepStates(Object.fromEntries(plan.steps.map((step) => [step.id, 'pending'])))
@@ -563,6 +760,7 @@ export default function VoiceAssistant() {
 
   const handlePrompt = async (prompt: string) => {
     if (!prompt || working) return
+    if (liveVoice.active) liveVoice.stop()
     if (recognition.listening) recognition.stop()
     stopSpeaking()
     setSpeaking(false)
@@ -571,6 +769,7 @@ export default function VoiceAssistant() {
     setReceipt(null)
 
     const inputMode = speechWasUsedRef.current ? 'speech' : 'text'
+    if (inputMode === 'text') conversationLoopRef.current = false
     const localPlan = buildLocalAgentPlan(prompt)
     const briefing = isBriefingRequest(prompt)
     track('voice_command_submitted', {
@@ -595,7 +794,8 @@ export default function VoiceAssistant() {
         task_count: assistantContext.activeTasks.length,
         event_count: assistantContext.todayEvents.length,
       })
-      if (speakReplies) readResponse(answer)
+      if (speakReplies) readResponse(answer, inputMode === 'speech' && conversationLoopRef.current)
+      else if (inputMode === 'speech' && conversationLoopRef.current) resumeStandardConversation()
       return
     }
 
@@ -649,20 +849,41 @@ export default function VoiceAssistant() {
 
     await askAssistant(prompt)
   }
+  promptHandlerRef.current = (prompt) => void handlePrompt(prompt)
 
   const submit = (event?: FormEvent) => {
     event?.preventDefault()
     const prompt = draft.trim()
     if (!prompt || working) return
+    if (liveVoice.active && liveVoice.sendText(prompt)) {
+      setTurns((current) => [
+        ...current,
+        { id: turnId(), role: 'user' as const, content: prompt },
+      ])
+      setDraft('')
+      setInterimText('')
+      setStatusMessage('正在理解…')
+      track('voice_command_submitted', {
+        language,
+        input_mode: 'live-text',
+        intent_kind: 'assistant',
+      })
+      return
+    }
     void handlePrompt(prompt)
   }
 
   const stopResponse = () => {
+    conversationLoopRef.current = false
     abortRef.current?.abort()
+    stopSpeaking()
+    setSpeaking(false)
     setStatusMessage('已停止')
   }
 
   const clearSession = () => {
+    conversationLoopRef.current = false
+    liveVoice.stop()
     recognition.abort()
     abortRef.current?.abort()
     stopSpeaking()
@@ -703,6 +924,8 @@ export default function VoiceAssistant() {
   const hasConversation =
     turns.length > 0 || Boolean(responseInProgress) || Boolean(activePlan) || Boolean(planResult)
   const canSubmitWithoutAI = Boolean(previewPlan || briefingPreview)
+  const voiceSessionActive = liveVoice.active || recognition.listening
+  const voiceInputSupported = liveVoice.supported || recognition.supported
   const submitLabel = briefingPreview
     ? '整理今日簡報'
     : previewPlan?.needsConfirmation
@@ -742,8 +965,8 @@ export default function VoiceAssistant() {
             id="voice-language"
             value={language}
             onChange={(event) => setLanguage(event.target.value as VoiceLanguage)}
-            disabled={recognition.listening}
-            className="h-10 cursor-pointer rounded-lg border border-slate-200 bg-white px-2.5 text-sm font-medium text-slate-700 outline-none transition focus-visible:ring-2 focus-visible:ring-accent/40 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+            disabled={voiceSessionActive}
+            className="h-11 cursor-pointer rounded-lg border border-slate-200 bg-white px-2.5 text-sm font-medium text-slate-700 outline-none transition focus-visible:ring-2 focus-visible:ring-accent/40 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
           >
             {VOICE_LANGUAGES.map((option) => (
               <option key={option.id} value={option.id}>
@@ -752,22 +975,33 @@ export default function VoiceAssistant() {
             ))}
           </select>
 
-          <Tooltip label={speakReplies ? '關閉朗讀回覆' : '開啟朗讀回覆'}>
+          {liveVoice.active && (
+            <Tooltip label={liveVoice.inputMuted ? '開啟咪高峰' : '暫停咪高峰'}>
+              <IconButton
+                label={liveVoice.inputMuted ? '開啟咪高峰' : '暫停咪高峰'}
+                onClick={() => liveVoice.setInputMuted(!liveVoice.inputMuted)}
+              >
+                {liveVoice.inputMuted ? <MicOff size={18} /> : <Mic size={18} />}
+              </IconButton>
+            </Tooltip>
+          )}
+
+          <Tooltip label={speakReplies ? '關閉回覆聲音' : '開啟回覆聲音'}>
             <button
               type="button"
               role="switch"
               aria-checked={speakReplies}
-              aria-label="朗讀回覆"
+              aria-label="回覆聲音"
               onClick={() => setSpeakReplies((value) => !value)}
               className={cx(
-                'flex h-10 min-w-10 cursor-pointer items-center justify-center gap-2 rounded-lg px-2.5 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
+                'flex h-11 min-w-11 cursor-pointer items-center justify-center gap-2 rounded-lg px-2.5 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
                 speakReplies
                   ? 'bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent'
                   : 'text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800',
               )}
             >
               {speakReplies ? <Volume2 size={18} /> : <VolumeX size={18} />}
-              <span className="hidden lg:inline">朗讀</span>
+              <span className="hidden lg:inline">聲音</span>
             </button>
           </Tooltip>
 
@@ -781,7 +1015,7 @@ export default function VoiceAssistant() {
             <IconButton
               label="清除對話"
               onClick={clearSession}
-              disabled={!hasConversation && !draft}
+              disabled={!hasConversation && !draft && !liveVoice.active}
             >
               <RotateCcw size={18} />
             </IconButton>
@@ -810,22 +1044,24 @@ export default function VoiceAssistant() {
               <button
                 type="button"
                 onClick={toggleListening}
-                disabled={!recognition.supported}
-                aria-label={recognition.listening ? '停止聆聽' : '開始語音輸入'}
+                disabled={!voiceInputSupported}
+                aria-label={voiceSessionActive ? '結束語音對話' : '開始自然語音對話'}
                 className={cx(
                   'flex h-14 w-14 cursor-pointer items-center justify-center rounded-full text-white shadow-sm transition duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-accent/25 motion-reduce:transition-none disabled:cursor-not-allowed disabled:bg-slate-300 dark:disabled:bg-slate-700 sm:h-16 sm:w-16',
-                  recognition.listening
+                  voiceSessionActive
                     ? 'bg-rose-600 hover:bg-rose-700 motion-safe:animate-pulse'
                     : 'bg-accent hover:bg-accent-strong',
                 )}
               >
-                {recognition.listening ? <Square size={22} fill="currentColor" /> : <Mic size={26} />}
+                {voiceSessionActive ? <Square size={22} fill="currentColor" /> : <Mic size={26} />}
               </button>
               <h2 className="mt-3 text-[22px] font-semibold text-slate-950 dark:text-white sm:mt-5 sm:text-[28px]">
                 {greeting()}
               </h2>
               <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
-                說出目標，我會先理解，再安排執行次序。
+                {liveVoice.active
+                  ? '直接說話即可；你插話時，我會立即停下來聽。'
+                  : '按一下開始。講完會自動回應，不用再按送出。'}
               </p>
 
               <div className="mt-4 grid w-full max-w-2xl grid-cols-3 border-y border-slate-200 dark:border-slate-800 sm:mt-6">
@@ -983,10 +1219,17 @@ export default function VoiceAssistant() {
               onChange={(event) => {
                 setDraft(event.target.value)
                 speechWasUsedRef.current = false
+                if (!liveVoice.active) conversationLoopRef.current = false
               }}
               readOnly={recognition.listening}
               rows={2}
-              placeholder={recognition.listening ? '正在聆聽…' : '說出目標、問題或要執行的工作'}
+              placeholder={
+                voiceSessionActive
+                  ? liveVoice.active
+                    ? '直接說話，或在這裡輸入補充'
+                    : '正在聆聽…'
+                  : '說出目標、問題或要執行的工作'
+              }
               className="max-h-28 min-h-[52px] resize-none border-0 bg-transparent px-2 py-1.5 shadow-none focus:ring-0 dark:bg-transparent"
             />
 
@@ -995,13 +1238,15 @@ export default function VoiceAssistant() {
                 <p
                   className={cx(
                     'truncate text-xs',
-                    recognition.listening
+                    voiceSessionActive
                       ? 'font-medium text-rose-600 dark:text-rose-400'
                       : 'text-slate-600 dark:text-slate-300',
                   )}
                 >
-                  {recognition.listening
-                    ? interimText || '正在聆聽…'
+                  {liveVoice.active
+                    ? liveStateLabel
+                    : recognition.listening
+                      ? interimText || '正在聆聽…'
                     : statusMessage || 'Ezi 待命中'}
                 </p>
               </div>
@@ -1024,26 +1269,26 @@ export default function VoiceAssistant() {
 
                 <Tooltip
                   label={
-                    recognition.supported
-                      ? recognition.listening
-                        ? '停止聆聽'
-                        : '開始語音輸入'
-                      : '此瀏覽器不支援即時語音辨識'
+                    voiceInputSupported
+                      ? voiceSessionActive
+                        ? '結束語音對話'
+                        : '開始自然語音對話'
+                      : '此瀏覽器不支援語音輸入'
                   }
                 >
                   <button
                     type="button"
                     onClick={toggleListening}
-                    disabled={!recognition.supported || working}
-                    aria-label={recognition.listening ? '停止聆聽' : '開始語音輸入'}
+                    disabled={!voiceInputSupported || working}
+                    aria-label={voiceSessionActive ? '結束語音對話' : '開始自然語音對話'}
                     className={cx(
                       'flex h-11 w-11 cursor-pointer items-center justify-center rounded-full transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 disabled:cursor-not-allowed disabled:opacity-40',
-                      recognition.listening
+                      voiceSessionActive
                         ? 'bg-rose-600 text-white hover:bg-rose-700 motion-safe:animate-pulse'
                         : 'bg-white text-slate-600 shadow-sm ring-1 ring-slate-200 hover:text-accent dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700',
                     )}
                   >
-                    {recognition.listening ? <Square size={17} fill="currentColor" /> : <Mic size={19} />}
+                    {voiceSessionActive ? <Square size={17} fill="currentColor" /> : <Mic size={19} />}
                   </button>
                 </Tooltip>
 
@@ -1054,7 +1299,10 @@ export default function VoiceAssistant() {
                 ) : (
                   <button
                     type="submit"
-                    disabled={!draft.trim() || (!isAIConfigured && !canSubmitWithoutAI)}
+                    disabled={
+                      !draft.trim() ||
+                      (!liveVoice.active && !isAIConfigured && !canSubmitWithoutAI)
+                    }
                     aria-label={submitLabel}
                     className="flex h-11 w-11 cursor-pointer items-center justify-center rounded-full bg-accent text-white shadow-sm transition hover:bg-accent-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 disabled:cursor-not-allowed disabled:bg-slate-300 dark:disabled:bg-slate-700"
                   >

@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { plainTextForSpeech, speechRecognitionErrorMessage } from './speech'
+import {
+  plainTextForSpeech,
+  selectSpeechVoice,
+  speechRecognitionErrorMessage,
+  speechVoiceScore,
+} from './speech'
 import { resolveVoiceIntent } from './intent'
 
 describe('語音助手文字處理', () => {
@@ -12,6 +17,28 @@ describe('語音助手文字處理', () => {
   it('把咪高峰權限錯誤轉成普通狀態訊息', () => {
     expect(speechRecognitionErrorMessage('not-allowed')).toContain('允許咪高峰權限')
     expect(speechRecognitionErrorMessage('aborted')).toBe('')
+  })
+
+  it('同語言時優先選用自然或增強聲線', () => {
+    const basic = {
+      default: true,
+      lang: 'zh-HK',
+      localService: true,
+      name: 'Sinji',
+      voiceURI: 'basic',
+    } as SpeechSynthesisVoice
+    const natural = {
+      default: false,
+      lang: 'zh-HK',
+      localService: false,
+      name: 'Natural Cantonese',
+      voiceURI: 'natural',
+    } as SpeechSynthesisVoice
+
+    expect(speechVoiceScore(natural, 'zh-HK')).toBeGreaterThan(
+      speechVoiceScore(basic, 'zh-HK'),
+    )
+    expect(selectSpeechVoice([basic, natural], 'zh-HK')).toBe(natural)
   })
 })
 

@@ -87,39 +87,183 @@ export function plainTextForSpeech(input: string): string {
     .trim()
 }
 
-export function speakText(
-  input: string,
+const NATURAL_VOICE_HINTS = [
+  'premium',
+  'enhanced',
+  'natural',
+  'neural',
+  'siri',
+  'google',
+  'sin-ji',
+  'ting-ting',
+  'mei-jia',
+]
+
+export function speechVoiceScore(voice: Pick<SpeechSynthesisVoice, 'default' | 'lang' | 'localService' | 'name'>, language: VoiceLanguage): number {
+  const voiceLanguage = voice.lang.toLowerCase()
+  const targetLanguage = language.toLowerCase()
+  const languageRoot = targetLanguage.split('-')[0]
+  let score = 0
+
+  if (voiceLanguage === targetLanguage) score += 100
+  else if (voiceLanguage.startsWith(`${languageRoot}-`)) score += 45
+  else return -1
+
+  const voiceName = voice.name.toLowerCase()
+  if (NATURAL_VOICE_HINTS.some((hint) => voiceName.includes(hint))) score += 24
+  if (voice.localService) score += 5
+  if (voice.default) score += 2
+  return score
+}
+
+export function selectSpeechVoice(
+  voices: SpeechSynthesisVoice[],
+  language: VoiceLanguage,
+): SpeechSynthesisVoice | null {
+  return (
+    voices
+      .map((voice, index) => ({ voice, index, score: speechVoiceScore(voice, language) }))
+      .filter(({ score }) => score >= 0)
+      .sort((a, b) => b.score - a.score || a.index - b.index)[0]?.voice ?? null
+  )
+}
+
+export type SpeechQueue = {
+  push: (text: string) => void
+  finish: () => void
+  cancel: () => void
+}
+
+let activeSpeechCancel: (() => void) | null = null
+
+function takeSpeakableSentence(buffer: string, flush: boolean): [string, string] | null {
+  const sentenceEnd = buffer.search(/[。！？!?；;\n]/)
+  if (sentenceEnd >= 0) {
+    return [buffer.slice(0, sentenceEnd + 1), buffer.slice(sentenceEnd + 1)]
+  }
+  if (buffer.length >= 90) {
+    const clauseEnd = Math.max(buffer.lastIndexOf('，'), buffer.lastIndexOf(','))
+    if (clauseEnd >= 35) return [buffer.slice(0, clauseEnd + 1), buffer.slice(clauseEnd + 1)]
+  }
+  if (flush && buffer.trim()) return [buffer, '']
+  return null
+}
+
+export function createSpeechQueue(
   language: VoiceLanguage,
   handlers: { onStart?: () => void; onEnd?: () => void } = {},
-): boolean {
+): SpeechQueue | null {
   if (
     typeof window === 'undefined' ||
     !('speechSynthesis' in window) ||
     typeof SpeechSynthesisUtterance === 'undefined'
   ) {
-    return false
+    return null
   }
 
+  activeSpeechCancel?.()
+  window.speechSynthesis.cancel()
+
+  let buffer = ''
+  let queue: string[] = []
+  let active = false
+  let finished = false
+  let cancelled = false
+  let started = false
+  let ended = false
+
+  const complete = () => {
+    if (ended || cancelled || active || queue.length > 0 || !finished) return
+    ended = true
+    activeSpeechCancel = null
+    handlers.onEnd?.()
+  }
+
+  const pump = () => {
+    if (cancelled || active) return
+    const text = queue.shift()
+    if (!text) {
+      complete()
+      return
+    }
+
+    const utterance = new SpeechSynthesisUtterance(text)
+    utterance.lang = language
+    utterance.rate = language === 'en-HK' ? 1.02 : 0.98
+    utterance.pitch = 1
+    utterance.voice = selectSpeechVoice(window.speechSynthesis.getVoices(), language)
+    utterance.onstart = () => {
+      if (!started) {
+        started = true
+        handlers.onStart?.()
+      }
+    }
+    const advance = () => {
+      if (cancelled) return
+      active = false
+      pump()
+    }
+    utterance.onend = advance
+    utterance.onerror = advance
+    active = true
+    window.speechSynthesis.speak(utterance)
+  }
+
+  const drain = (flush: boolean) => {
+    let next = takeSpeakableSentence(buffer, flush)
+    while (next) {
+      const [sentence, remainder] = next
+      const cleaned = plainTextForSpeech(sentence)
+      if (cleaned) queue.push(cleaned)
+      buffer = remainder
+      next = takeSpeakableSentence(buffer, flush)
+    }
+    pump()
+  }
+
+  const cancel = () => {
+    if (cancelled) return
+    cancelled = true
+    queue = []
+    buffer = ''
+    activeSpeechCancel = null
+    window.speechSynthesis.cancel()
+  }
+  activeSpeechCancel = cancel
+
+  return {
+    push(text) {
+      if (cancelled || finished || !text) return
+      buffer += text
+      drain(false)
+    },
+    finish() {
+      if (cancelled || finished) return
+      finished = true
+      drain(true)
+      complete()
+    },
+    cancel,
+  }
+}
+
+export function speakText(
+  input: string,
+  language: VoiceLanguage,
+  handlers: { onStart?: () => void; onEnd?: () => void } = {},
+): boolean {
   const text = plainTextForSpeech(input)
   if (!text) return false
-
-  window.speechSynthesis.cancel()
-  const utterance = new SpeechSynthesisUtterance(text)
-  utterance.lang = language
-  utterance.rate = language === 'en-HK' ? 1 : 0.96
-  const voices = window.speechSynthesis.getVoices()
-  const exactVoice = voices.find((voice) => voice.lang.toLowerCase() === language.toLowerCase())
-  const languageRoot = language.split('-')[0].toLowerCase()
-  utterance.voice =
-    exactVoice ?? voices.find((voice) => voice.lang.toLowerCase().startsWith(languageRoot)) ?? null
-  utterance.onstart = () => handlers.onStart?.()
-  utterance.onend = () => handlers.onEnd?.()
-  utterance.onerror = () => handlers.onEnd?.()
-  window.speechSynthesis.speak(utterance)
+  const queue = createSpeechQueue(language, handlers)
+  if (!queue) return false
+  queue.push(text)
+  queue.finish()
   return true
 }
 
 export function stopSpeaking(): void {
+  activeSpeechCancel?.()
+  activeSpeechCancel = null
   if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
     window.speechSynthesis.cancel()
   }

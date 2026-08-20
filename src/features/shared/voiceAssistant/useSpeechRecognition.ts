@@ -15,15 +15,23 @@ type TranscriptUpdate = {
 export function useSpeechRecognition({
   language,
   onTranscript,
+  onUtteranceEnd,
   onError,
+  utteranceDelay = 700,
 }: {
   language: VoiceLanguage
   onTranscript: (update: TranscriptUpdate) => void
+  onUtteranceEnd?: (finalText: string) => void
   onError: (message: string) => void
+  utteranceDelay?: number
 }) {
   const recognitionRef = useRef<BrowserSpeechRecognition | null>(null)
   const transcriptHandlerRef = useRef(onTranscript)
+  const utteranceHandlerRef = useRef(onUtteranceEnd)
   const errorHandlerRef = useRef(onError)
+  const deliveryTimerRef = useRef<number | null>(null)
+  const finalTextRef = useRef('')
+  const deliveredTextRef = useRef('')
   const [listening, setListening] = useState(false)
   const supported = Boolean(speechRecognitionConstructor())
 
@@ -35,15 +43,35 @@ export function useSpeechRecognition({
     errorHandlerRef.current = onError
   }, [onError])
 
+  useEffect(() => {
+    utteranceHandlerRef.current = onUtteranceEnd
+  }, [onUtteranceEnd])
+
+  const clearDeliveryTimer = useCallback(() => {
+    if (deliveryTimerRef.current !== null) {
+      window.clearTimeout(deliveryTimerRef.current)
+      deliveryTimerRef.current = null
+    }
+  }, [])
+
+  const deliverFinalText = useCallback(() => {
+    clearDeliveryTimer()
+    const text = finalTextRef.current.trim()
+    if (!text || deliveredTextRef.current === text) return
+    deliveredTextRef.current = text
+    utteranceHandlerRef.current?.(text)
+  }, [clearDeliveryTimer])
+
   const stop = useCallback(() => {
     recognitionRef.current?.stop()
   }, [])
 
   const abort = useCallback(() => {
+    clearDeliveryTimer()
     recognitionRef.current?.abort()
     recognitionRef.current = null
     setListening(false)
-  }, [])
+  }, [clearDeliveryTimer])
 
   const start = useCallback(() => {
     const Recognition = speechRecognitionConstructor()
@@ -53,6 +81,9 @@ export function useSpeechRecognition({
     }
 
     recognitionRef.current?.abort()
+    clearDeliveryTimer()
+    finalTextRef.current = ''
+    deliveredTextRef.current = ''
     const recognition = new Recognition()
     recognitionRef.current = recognition
     recognition.lang = language
@@ -72,11 +103,16 @@ export function useSpeechRecognition({
       }
       const finalValue = finalText.trim()
       const interimValue = interimText.trim()
+      finalTextRef.current = finalValue
       transcriptHandlerRef.current({
         finalText: finalValue,
         interimText: interimValue,
         combinedText: [finalValue, interimValue].filter(Boolean).join(' '),
       })
+      clearDeliveryTimer()
+      if (finalValue && !interimValue && utteranceHandlerRef.current) {
+        deliveryTimerRef.current = window.setTimeout(deliverFinalText, utteranceDelay)
+      }
     }
     recognition.onerror = (event) => {
       const message = speechRecognitionErrorMessage(event.error)
@@ -85,6 +121,9 @@ export function useSpeechRecognition({
     recognition.onend = () => {
       setListening(false)
       recognitionRef.current = null
+      if (finalTextRef.current && deliveredTextRef.current !== finalTextRef.current) {
+        deliveryTimerRef.current = window.setTimeout(deliverFinalText, 0)
+      }
     }
 
     try {
@@ -96,7 +135,7 @@ export function useSpeechRecognition({
       errorHandlerRef.current('未能啟動咪高峰，請稍後再試。')
       return false
     }
-  }, [language])
+  }, [clearDeliveryTimer, deliverFinalText, language, utteranceDelay])
 
   useEffect(() => abort, [abort])
 
