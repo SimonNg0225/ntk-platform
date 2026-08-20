@@ -163,6 +163,60 @@ export function trackOnce(event: string, props?: Record<string, unknown>): void 
   track(event, props)
 }
 
+/** 記錄可再次打開的成果；只送成果類型和入口，不送內容。 */
+export function trackOutputSaved(
+  outputKind: string,
+  source: string,
+  props?: Record<string, unknown>,
+): void {
+  track('output_saved', {
+    output_kind: outputKind,
+    source,
+    ...props,
+  })
+  trackOnce('activation_first_useful_output_created', {
+    output_kind: outputKind,
+    source,
+  })
+}
+
+/** 記錄老師把成果帶離平台使用。 */
+export function trackOutputExported(
+  outputKind: string,
+  format: string,
+  source: string,
+): void {
+  track('output_exported', {
+    output_kind: outputKind,
+    format,
+    source,
+  })
+}
+
+/**
+ * 以同一瀏覽器首次接受分析後的產品使用作基準，量度 D1 / D7 / D30 回訪。
+ * 每個里程碑只送一次；未同意分析時完全不讀寫這組標記。
+ */
+export function trackRetentionMilestones(now = Date.now()): void {
+  if (!POSTHOG_KEY || getConsent() !== 'accepted') return
+  const firstSeenKey = 'ntk.analytics.firstSeenAt'
+  try {
+    const stored = Number(localStorage.getItem(firstSeenKey))
+    const firstSeenAt = Number.isFinite(stored) && stored > 0 ? stored : now
+    if (firstSeenAt === now) localStorage.setItem(firstSeenKey, String(now))
+    const elapsedDays = Math.floor((now - firstSeenAt) / 86_400_000)
+    for (const day of [1, 7, 30]) {
+      if (elapsedDays < day) continue
+      const key = `ntk.analytics.retention.day${day}`
+      if (localStorage.getItem(key)) continue
+      localStorage.setItem(key, new Date(now).toISOString())
+      track('retention_milestone_reached', { day })
+    }
+  } catch {
+    /* localStorage 不可用時不量度留存，亦不影響產品使用 */
+  }
+}
+
 /** 追蹤頁面瀏覽；React Router / app 內虛擬頁面切換用。 */
 export function trackPageView(props?: Record<string, unknown>): void {
   track('$pageview', props)

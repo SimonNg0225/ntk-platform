@@ -32,8 +32,9 @@ import { track } from '../lib/observability'
 const DEFAULT_SIDEBAR_IDS: Record<ModeId, readonly string[]> = {
   work: [
     'work-dashboard',
+    'work-classroom-pack',
+    'work-voice-assistant',
     'work-prompt-library',
-    'work-lesson-plan',
     'work-generate',
     'work-tasks',
     'calendar',
@@ -42,15 +43,17 @@ const DEFAULT_SIDEBAR_IDS: Record<ModeId, readonly string[]> = {
 }
 
 const RELATED_SIDEBAR_IDS: Record<string, readonly string[]> = {
+  'work-classroom-pack': ['work-lesson-plan', 'work-questions', 'work-slides', 'work-teach-guide'],
+  'work-voice-assistant': ['work-prompt-library', 'work-classroom-pack', 'work-transcribe', 'work-meeting-notes'],
   'work-prompt-library': ['work-lesson-plan', 'work-generate', 'work-rubric', 'work-slides'],
-  'work-lesson-plan': ['work-teach-guide', 'work-generate', 'work-slides', 'work-prompt-library'],
+  'work-lesson-plan': ['work-classroom-pack', 'work-teach-guide', 'work-generate', 'work-slides'],
   'work-teach-guide': ['work-lesson-plan', 'work-generate', 'work-dse', 'work-slides'],
-  'work-generate': ['work-questions', 'work-rubric', 'work-lesson-plan', 'work-slides'],
+  'work-generate': ['work-classroom-pack', 'work-questions', 'work-rubric', 'work-lesson-plan'],
   'work-questions': ['work-generate', 'work-rubric', 'work-dse', 'work-lesson-plan'],
   'work-rubric': ['work-generate', 'work-questions', 'work-tasks', 'work-lesson-plan'],
-  'work-slides': ['work-lesson-plan', 'work-generate', 'work-resources', 'work-prompt-library'],
+  'work-slides': ['work-classroom-pack', 'work-lesson-plan', 'work-generate', 'work-resources'],
   'work-doc-digest': ['work-tasks', 'work-meeting-notes', 'work-admin-docs', 'search'],
-  'work-transcribe': ['work-meeting-notes', 'work-doc-digest', 'work-observation', 'work-report'],
+  'work-transcribe': ['work-voice-assistant', 'work-meeting-notes', 'work-doc-digest', 'work-observation'],
   'work-meeting-notes': ['work-tasks', 'work-report', 'work-doc-digest', 'search'],
   'work-tasks': ['work-dashboard', 'calendar', 'work-report', 'work-lesson-plan'],
   'work-resources': ['work-lesson-plan', 'work-generate', 'work-slides', 'search'],

@@ -29,6 +29,7 @@ import type {
   QuizAttempt,
   CalendarCategory,
   CycleCalendarEntry,
+  TeachingContentTrust,
 } from './types'
 
 // ============================================================
@@ -50,7 +51,7 @@ export const topicsCol = createCollection<Topic>('topics', DEFAULT_TOPICS)
 // 工作模式
 export const questionsCol = createCollection<Question>('questions', [])
 // 已儲存試卷（題庫組卷工作室 + 教材生成「試卷生成」共用同一 instance，跨組件實時同步）
-export interface SavedPaper extends Entity {
+export interface SavedPaper extends Entity, TeachingContentTrust {
   title: string
   className: string
   durationMin: string

@@ -37,10 +37,10 @@ type StartTask = {
 const START_TASKS: StartTask[] = [
   {
     id: 'lesson',
-    title: '準備下一堂',
-    outcome: '教學目標、流程和活動',
+    title: '建立課堂套裝',
+    outcome: '教案、工作紙和簡報',
     icon: ClipboardList,
-    featureId: 'work-lesson-plan',
+    featureId: 'work-classroom-pack',
   },
   {
     id: 'worksheet',
@@ -68,7 +68,9 @@ const START_TASKS: StartTask[] = [
 
 function promptFor(task: StartTaskId, topic: string): string | undefined {
   const subject = topic.trim() || '下一個課題'
-  if (task === 'lesson') return undefined
+  if (task === 'lesson') {
+    return `為「${subject}」建立課堂套裝，包括教案、工作紙及簡報`
+  }
   if (task === 'worksheet') {
     return `生成一份「${subject}」工作紙，連答案和評分準則`
   }

@@ -14,10 +14,9 @@ import {
   CalendarDays,
   CalendarPlus,
 } from 'lucide-react'
-import { createCollection, useCollection } from '../../lib/store'
+import { useCollection } from '../../lib/store'
 import { timetableCol, cycleCalendarCol } from '../../data/collections'
 import { NTK_BELLS } from '../../data/ntk-seed'
-import type { Entity } from '../../lib/store'
 import {
   Badge,
   Button,
@@ -64,6 +63,7 @@ import {
   type SlotMeta,
   type WeekCycle,
 } from './timetable/util'
+import { timetableConfigCol, timetableMetaCol } from './timetable/store'
 
 // ============================================================
 //  時間表（學校週課表）— 真實參考：學校排課系統（如 Untis / iTeacher）
@@ -78,20 +78,6 @@ import {
 //   • CSV 匯出（Excel / 列印友善）
 //  共用 timetableCol（向後相容）；額外資料存自己的 collection。
 // ============================================================
-
-// ── 自己的持久化資料（不掂 data/collections）──
-// 每格附加資料（循環週 / 顏色 / 備註 / 協作）
-const timetableMetaCol = createCollection<SlotMeta>('timetable_meta', [])
-
-// 設定（鐘聲時間 + 顯示日子）— 單一 row（id='config'）
-interface TimetableConfig extends Entity {
-  bells: BellRow[]
-  days: number[] // 顯示的日子（1..6；cycle 模式 = Day A..F）
-  cycle?: boolean // 日循環模式：欄變 Day A–F，「今日」由校曆決定
-}
-const timetableConfigCol = createCollection<TimetableConfig>('timetable_config', [
-  { id: 'config', bells: NTK_BELLS, days: [1, 2, 3, 4, 5, 6], cycle: true },
-])
 
 type ViewId = 'grid' | 'workload' | 'print'
 

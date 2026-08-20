@@ -25,7 +25,7 @@ import {
   SegmentedControl,
   cx,
 } from '../../../../ui'
-import { createCollection, useCollection, type Entity } from '../../../../lib/store'
+import { useCollection } from '../../../../lib/store'
 import { useToast } from '../../../../context/ToastContext'
 import { useAuth } from '../../../../context/AuthContext'
 import { complete, isAIConfigured } from '../../../../lib/aiClient'
@@ -38,12 +38,7 @@ import {
   filterExercises,
   muscleIndex,
 } from './util'
-
-// ───────── 收藏 collection（登入後雲端同步）─────────
-interface FavRow extends Entity {
-  exerciseId: string
-}
-const favCol = createCollection<FavRow>('fitness_library_favs_v1')
+import { exerciseFavoritesCol } from './store'
 
 // ───────── category chips（含「全部」）─────────
 const CATEGORIES: ExerciseCategory[] = ['胸', '背', '腿', '肩', '手臂', '核心', '全身']
@@ -160,7 +155,7 @@ function MiniStat({
 }
 
 export default function LibraryView() {
-  const favs = useCollection(favCol)
+  const favs = useCollection(exerciseFavoritesCol)
   const toast = useToast()
 
   const [q, setQ] = useState('')
@@ -183,9 +178,9 @@ export default function LibraryView() {
   const toggleFav = (exerciseId: string) => {
     const existing = favs.find((f) => f.exerciseId === exerciseId)
     if (existing) {
-      favCol.remove(existing.id)
+      exerciseFavoritesCol.remove(existing.id)
     } else {
-      favCol.add({ exerciseId })
+      exerciseFavoritesCol.add({ exerciseId })
     }
   }
 

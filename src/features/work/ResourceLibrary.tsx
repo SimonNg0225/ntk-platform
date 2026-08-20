@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { useLocation } from 'react-router-dom'
 import {
   Archive,
   BarChart3,
@@ -268,6 +269,7 @@ function StatTilesRow({
 }
 
 export default function ResourceLibrary() {
+  const location = useLocation()
   const resources = useCollection(resourcesCol)
   const topics = useCollection(topicsCol)
   const metas = useCollection(resourceMetaCol)
@@ -284,6 +286,7 @@ export default function ResourceLibrary() {
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [showFolderMgr, setShowFolderMgr] = useState(false)
   const searchRef = useRef<HTMLInputElement>(null)
+  const resumeRef = useRef('')
 
   const topicName = (id?: string) =>
     id ? (topics.find((t) => t.id === id)?.topic ?? '') : ''
@@ -292,6 +295,15 @@ export default function ResourceLibrary() {
   useEffect(() => {
     pruneOrphans(new Set(resources.map((r) => r.id)))
   }, [resources])
+
+  useEffect(() => {
+    const item = new URLSearchParams(location.search).get('item')
+    if (!item || resumeRef.current === item) return
+    if (!resources.some((resource) => resource.id === item)) return
+    resumeRef.current = item
+    setSource('lib')
+    setDetailId(item)
+  }, [location.search, resources])
 
   // 全部資源 join meta
   const allRows = useMemo(() => joinMeta(resources, metas), [resources, metas])

@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import {
   Presentation,
@@ -70,6 +71,7 @@ import {
 import type { Slide } from '../../../lib/export/types'
 import { slideDecksCol, type DeckRecord } from './slideStore'
 import { buildSlideSystem, buildFrameworkSystem, parseDeck } from './slidePrompts'
+import { trackOutputExported, trackOutputSaved } from '../../../lib/observability'
 import { createDeckStreamParser, type DeckStreamMeta } from './streamDeck'
 import { refineDeck, mergeRefinedDeck } from './refineDeck'
 import { parseManualPages, frameworkToDeck, detectManualPages } from './manualPages'
@@ -126,6 +128,7 @@ function fmtDate(iso: string): string {
 }
 
 export default function SlideGen() {
+  const location = useLocation()
   const { t } = useTranslation()
   const toast = useToast()
   const confirm = useConfirm()
@@ -175,12 +178,27 @@ export default function SlideGen() {
   // AI 再潤飾（可選、可還原）
   const [refining, setRefining] = useState(false)
   const [lastBeforeRefine, setLastBeforeRefine] = useState<DeckRecord | null>(null)
+  const resumeRef = useRef('')
 
   const hasInput = mode === 'topic' ? topics.length > 0 : text.trim().length > 0
 
   useEffect(() => {
     if (composerHandoff) clearComposerHandoff('work-slides')
   }, [composerHandoff])
+
+  useEffect(() => {
+    const item = new URLSearchParams(location.search).get('item')
+    if (!item || resumeRef.current === item) return
+    const record = records.find((entry) => entry.id === item)
+    if (!record) return
+    resumeRef.current = item
+    setCurrent(record)
+    setStep(4)
+    setMaxStep(4)
+    setEditingIndex(null)
+    setLastBeforeRefine(null)
+    setReusedKey(null)
+  }, [location.search, records])
 
   // 上載抽取的文字交返來（穩定 ref，UploadDrop effect 用）
   const handleUploadText = useCallback((txt: string, b: boolean) => {
@@ -284,6 +302,7 @@ export default function SlideGen() {
         coverImageQuery: deck.coverImageQuery,
         sourceKey: currentKey, // 內容指紋：下次同內容直接重用、不再行 AI
       })
+      trackOutputSaved('presentation', 'slide_studio')
       setCurrent(rec)
       setLastBeforeRefine(null)
       toast.success(`簡報已生成（${deck.slides.length} 版）`)
@@ -356,6 +375,7 @@ export default function SlideGen() {
         rec.title,
         { pack, coverPhoto, slidePhotos, coverTitle },
       )
+      trackOutputExported('presentation', 'pptx', 'slide_studio')
       toast.success('已下載 PowerPoint')
     } catch (e) {
       toast.error((e as Error).message || '下載失敗')

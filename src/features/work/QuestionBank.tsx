@@ -1,5 +1,6 @@
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
+import { useLocation } from 'react-router-dom'
 import {
   ArrowLeft,
   BarChart3,
@@ -84,6 +85,7 @@ import {
   type SortKey,
 } from './questionbank/util'
 import { CoverageMatrix, DifficultyBars, TypeDonut } from './questionbank/Charts'
+import { trackOutputExported, trackOutputSaved } from '../../lib/observability'
 
 // ───────── 表單狀態 ─────────
 type FormState = {
@@ -284,12 +286,14 @@ function TallyStat({
 }
 
 export default function QuestionBank() {
+  const location = useLocation()
   const toast = useToast()
   const confirm = useConfirm()
   const nav = useNav()
   const subj = useSubjectLabel()
   const questions = useCollection(questionsCol)
   const topics = useCollection(topicsCol)
+  const papers = useCollection(papersCol)
 
   const [view, setView] = useState<ViewId>('bank')
 
@@ -306,6 +310,8 @@ export default function QuestionBank() {
   const [showForm, setShowForm] = useState(false)
   const [showImport, setShowImport] = useState(false)
   const [showDup, setShowDup] = useState(false)
+  const [resumePaperId, setResumePaperId] = useState<string | null>(null)
+  const resumeRef = useRef('')
 
   // 多選（批量 / 組卷共用）
   const [selectMode, setSelectMode] = useState(false)
@@ -435,6 +441,28 @@ export default function QuestionBank() {
     setShowForm(true)
   }
 
+  useEffect(() => {
+    const params = new URLSearchParams(location.search)
+    const item = params.get('item')
+    if (!item) return
+    const resumeKey = `${params.get('view') ?? ''}:${item}`
+    if (resumeRef.current === resumeKey) return
+    if (params.get('view') === 'paper') {
+      if (!papers.some((paper) => paper.id === item)) return
+      resumeRef.current = resumeKey
+      setView('paper')
+      setResumePaperId(item)
+      return
+    }
+    const question = questions.find((entry) => entry.id === item)
+    if (!question) return
+    resumeRef.current = resumeKey
+    setView('bank')
+    setExpanded(question.id)
+    setEditing(question)
+    setShowForm(true)
+  }, [location.search, papers, questions])
+
   const removeQuestion = async (q: Question) => {
     const ok = await confirm({
       title: '刪除題目？',
@@ -500,6 +528,7 @@ export default function QuestionBank() {
       `eziteach-題庫-${new Date().toISOString().slice(0, 10)}.csv`,
       questionsToCsv(list, topicName),
     )
+    trackOutputExported('question_bank', 'csv', 'question_bank')
     toast.success(`已匯出 ${list.length} 條題目（CSV）`)
   }
 
@@ -630,6 +659,7 @@ export default function QuestionBank() {
           questions={questions}
           topics={topics}
           topicName={topicName}
+          initialPaperId={resumePaperId}
         />
       )}
 
@@ -1304,10 +1334,12 @@ function PaperStudio({
   questions,
   topics,
   topicName,
+  initialPaperId,
 }: {
   questions: Question[]
   topics: { id: string; topic: string }[]
   topicName: (id: string) => string
+  initialPaperId?: string | null
 }) {
   const toast = useToast()
   const confirm = useConfirm()
@@ -1328,6 +1360,7 @@ function PaperStudio({
 
   // 藍圖
   const [bp, setBp] = useState<Blueprint>(emptyBlueprint)
+  const resumePaperRef = useRef('')
 
   const pickedSet = useMemo(() => new Set(picked), [picked])
   const pickedQuestions = useMemo(
@@ -1393,6 +1426,7 @@ function PaperStudio({
       questionIds: picked,
       createdAt: new Date().toISOString(),
     })
+    trackOutputSaved('paper', 'question_bank')
     toast.success('已儲存試卷')
   }
 
@@ -1402,6 +1436,14 @@ function PaperStudio({
     setMode('manual')
     toast.success(`已載入「${p.title}」`)
   }
+
+  useEffect(() => {
+    if (!initialPaperId || resumePaperRef.current === initialPaperId) return
+    const paper = papers.find((entry) => entry.id === initialPaperId)
+    if (!paper) return
+    resumePaperRef.current = initialPaperId
+    loadPaper(paper)
+  }, [initialPaperId, papers, questions])
 
   const deletePaper = async (p: SavedPaper) => {
     const ok = await confirm({
@@ -1427,6 +1469,7 @@ function PaperStudio({
       withAnswers,
     )
     const ok = openPrintWindow(html)
+    if (ok) trackOutputExported('paper', 'print', 'question_bank')
     if (!ok) toast.error('瀏覽器擋了彈出視窗，請允許後再試。')
   }
 

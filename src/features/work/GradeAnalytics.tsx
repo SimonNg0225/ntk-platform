@@ -1,6 +1,5 @@
 import { useMemo, useRef, useState } from 'react'
-import JSZip from 'jszip'
-import * as XLSX from 'xlsx'
+import type { CellObject, ExcelDataType, WorkSheet } from 'xlsx'
 import {
   AlertTriangle,
   Activity,
@@ -725,7 +724,20 @@ function parseScoreCsv(text: string): StudentScore[] {
   })
 }
 
-type ExcelCellWithStyle = XLSX.CellObject & {
+type XlsxModule = typeof import('xlsx')
+let xlsxModule: XlsxModule | null = null
+
+async function loadXlsx(): Promise<XlsxModule> {
+  xlsxModule ??= await import('xlsx')
+  return xlsxModule
+}
+
+function getXlsx(): XlsxModule {
+  if (!xlsxModule) throw new Error('Excel 工具尚未載入，請再試一次。')
+  return xlsxModule
+}
+
+type ExcelCellWithStyle = CellObject & {
   s?: Record<string, unknown>
 }
 
@@ -754,13 +766,14 @@ function studentsToCsv(students: StudentScore[]): string {
   return [header, ...rows].map((row) => row.join(',')).join('\n')
 }
 
-function setCellStyle(sheet: XLSX.WorkSheet, address: string, style: Record<string, unknown>): void {
+function setCellStyle(sheet: WorkSheet, address: string, style: Record<string, unknown>): void {
   const cell = sheet[address] as ExcelCellWithStyle | undefined
   if (!cell) return
   cell.s = { ...(cell.s ?? {}), ...style }
 }
 
-function setRangeStyle(sheet: XLSX.WorkSheet, rangeRef: string, style: Record<string, unknown>): void {
+function setRangeStyle(sheet: WorkSheet, rangeRef: string, style: Record<string, unknown>): void {
+  const XLSX = getXlsx()
   const range = XLSX.utils.decode_range(rangeRef)
   for (let row = range.s.r; row <= range.e.r; row += 1) {
     for (let col = range.s.c; col <= range.e.c; col += 1) {
@@ -769,7 +782,8 @@ function setRangeStyle(sheet: XLSX.WorkSheet, rangeRef: string, style: Record<st
   }
 }
 
-function setRangeNumberFormat(sheet: XLSX.WorkSheet, rangeRef: string, format: string): void {
+function setRangeNumberFormat(sheet: WorkSheet, rangeRef: string, format: string): void {
+  const XLSX = getXlsx()
   const range = XLSX.utils.decode_range(rangeRef)
   for (let row = range.s.r; row <= range.e.r; row += 1) {
     for (let col = range.s.c; col <= range.e.c; col += 1) {
@@ -781,10 +795,10 @@ function setRangeNumberFormat(sheet: XLSX.WorkSheet, rangeRef: string, format: s
 }
 
 function setFormulaCell(
-  sheet: XLSX.WorkSheet,
+  sheet: WorkSheet,
   address: string,
   formula: string,
-  type: XLSX.ExcelDataType = 'n',
+  type: ExcelDataType = 'n',
   format?: string,
 ): void {
   sheet[address] = { f: formula, t: type, z: format } as ExcelCellWithStyle
@@ -934,6 +948,7 @@ function helpSheetStyle(ref: string): number | undefined {
 }
 
 async function applyMarkTemplateStyles(payload: ArrayBuffer): Promise<Blob> {
+  const { default: JSZip } = await import('jszip')
   const zip = await JSZip.loadAsync(payload)
   zip.file('xl/styles.xml', MARK_TEMPLATE_STYLES_XML)
   const styleTargets: [string, (ref: string) => number | undefined][] = [
@@ -957,7 +972,8 @@ async function applyMarkTemplateStyles(payload: ArrayBuffer): Promise<Blob> {
   })
 }
 
-function buildMarkInputSheet(profile: SubjectProfile, meta: ReportMeta): XLSX.WorkSheet {
+function buildMarkInputSheet(profile: SubjectProfile, meta: ReportMeta): WorkSheet {
+  const XLSX = getXlsx()
   const headers = [
     '學生編號',
     '姓名/代號',
@@ -1090,7 +1106,8 @@ function buildMarkInputSheet(profile: SubjectProfile, meta: ReportMeta): XLSX.Wo
   return sheet
 }
 
-function buildMarkConfigSheet(profile: SubjectProfile, meta: ReportMeta): XLSX.WorkSheet {
+function buildMarkConfigSheet(profile: SubjectProfile, meta: ReportMeta): WorkSheet {
+  const XLSX = getXlsx()
   const rows = [
     ['EziTeach AI Cal Mark 設定'],
     ['本頁用作標記科目、評估及題目結構。上載平台時會按「輸入分數」工作表的題號讀取。'],
@@ -1130,7 +1147,8 @@ function buildMarkConfigSheet(profile: SubjectProfile, meta: ReportMeta): XLSX.W
   return sheet
 }
 
-function buildMarkSummarySheet(): XLSX.WorkSheet {
+function buildMarkSummarySheet(): WorkSheet {
+  const XLSX = getXlsx()
   const rows = [
     ['EziTeach AI 成績摘要'],
     ['此頁會根據「輸入分數」自動計算，方便老師在上載前快速檢查分數是否合理。'],
@@ -1175,7 +1193,8 @@ function buildMarkSummarySheet(): XLSX.WorkSheet {
   return sheet
 }
 
-function buildMarkHelpSheet(): XLSX.WorkSheet {
+function buildMarkHelpSheet(): WorkSheet {
+  const XLSX = getXlsx()
   const rows = [
     ['EziTeach AI Cal Mark 使用說明'],
     [],
@@ -1202,6 +1221,7 @@ function buildMarkHelpSheet(): XLSX.WorkSheet {
 }
 
 async function downloadMarkTemplate(profile: SubjectProfile, meta: ReportMeta): Promise<void> {
+  const XLSX = await loadXlsx()
   const workbook = XLSX.utils.book_new()
   workbook.Props = {
     Title: 'EziTeach AI Cal Mark Template',
@@ -1288,6 +1308,7 @@ function parseScoreRows(rows: unknown[][]): StudentScore[] {
 }
 
 function parseScoreWorkbook(buffer: ArrayBuffer): StudentScore[] {
+  const XLSX = getXlsx()
   const workbook = XLSX.read(buffer, { type: 'array' })
   const sheetName =
     workbook.SheetNames.find((name) => normalizeHeader(name) === normalizeHeader(MARK_INPUT_SHEET)) ??
@@ -1544,6 +1565,7 @@ export default function GradeAnalytics() {
         return
       }
       const buffer = await file.arrayBuffer()
+      await loadXlsx()
       applyImportedScores(parseScoreWorkbook(buffer), file.name)
     } catch (error) {
       toast.error(error instanceof Error ? error.message : '上載失敗，請檢查 Excel 欄位及分數格式。')

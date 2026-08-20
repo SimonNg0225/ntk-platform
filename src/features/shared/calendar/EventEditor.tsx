@@ -143,6 +143,7 @@ export default function EventEditor({
   editing,
   defaultDate,
   defaultTime,
+  defaultTitle,
   occurrenceKey,
   calendars,
   onClose,
@@ -151,6 +152,7 @@ export default function EventEditor({
   editing: CalendarEvent | null
   defaultDate: string
   defaultTime?: string
+  defaultTitle?: string
   occurrenceKey?: string
   calendars: CalendarCategory[]
   onClose: () => void
@@ -159,7 +161,7 @@ export default function EventEditor({
   const toast = useToast()
   const confirm = useConfirm()
 
-  const [title, setTitle] = useState(editing?.title ?? '')
+  const [title, setTitle] = useState(editing?.title ?? defaultTitle ?? '')
   const [location, setLocation] = useState(editing?.location ?? '')
   const [allDay, setAllDay] = useState(editing ? editing.allDay === true : false)
   const [startDate, setStartDate] = useState(editing?.date ?? defaultDate)

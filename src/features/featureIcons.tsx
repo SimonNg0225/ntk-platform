@@ -8,6 +8,7 @@ import {
   Handshake, MessageSquare, FileText, FileSearch, Presentation, Dices, PenLine, Scale, Mic, Link, Clapperboard, BookMarked, Bookmark, WandSparkles,
   Dumbbell, Zap, RotateCcw, Printer, Download, Lock, HelpCircle, Sprout, Star,
   Receipt, Tag, HeartPulse, ClipboardCheck, Globe, ScanLine, Eye, Newspaper, Wrench,
+  Headphones, Layers3,
 } from 'lucide-react'
 
 // ============================================================
@@ -86,6 +87,7 @@ const EMOJI_TO_ICON: Record<string, LucideIcon> = {
   '🎙️': Mic,
   '🎙': Mic,
   '🎤': Mic,
+  '🎧': Headphones,
   '⚖': Scale,
   '🔗': Link,
   '🎬': Clapperboard,
@@ -112,6 +114,7 @@ const EMOJI_TO_ICON: Record<string, LucideIcon> = {
   '🪄': WandSparkles, // 教材生成（AI 出題）
   '🌐': Globe, // 資源分享區（社群）
   '📷': ScanLine, // 掃描 PDF
+  '📦': Layers3, // 課堂套裝
   '👁️': Eye, // 觀課 / 評課
   '👁': Eye,
   '🗞️': Newspaper, // 工作週報

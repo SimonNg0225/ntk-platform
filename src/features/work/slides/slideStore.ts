@@ -1,11 +1,12 @@
 import { createCollection, type Entity } from '../../../lib/store'
 import type { Slide } from '../../../lib/export'
+import type { TeachingContentTrust } from '../../../data/types'
 
 // ============================================================
 //  教學簡報 — 本機儲存（存簡報大綱，可重溫 / 再下載）
 // ============================================================
 
-export interface DeckRecord extends Entity {
+export interface DeckRecord extends Entity, TeachingContentTrust {
   createdAt: string
   topicName: string
   model: string

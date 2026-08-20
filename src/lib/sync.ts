@@ -56,12 +56,12 @@ export async function attachSync(userId: string): Promise<void> {
   attachedUserId = userId
   hydrating = true
 
-  // 0) 確保所有 lazy-load feature 的 collection 都登記齊，先 hydrate / 訂閱；
+  // 0) 確保所有 feature collection 都登記齊，先 hydrate / 訂閱；
   //    否則只覆蓋早期登記的核心 collection（feature 資料跨裝置會漏同步，
   //    第一次本地寫入還會反過來覆蓋雲端）。用動態 import 避免 lib→features 靜態循環。
   try {
-    const reg = await import('../features/registry')
-    await reg.preloadAllFeatures()
+    const data = await import('../features/preloadData')
+    await data.preloadFeatureData()
   } catch {
     /* 預載失敗不阻同步：照用已登記的 collection */
   }

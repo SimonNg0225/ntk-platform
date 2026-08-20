@@ -885,7 +885,7 @@ export function SkeletonText({
   )
 }
 
-// ───────── Tooltip（純 CSS group-hover）─────────
+// ───────── Tooltip（命名 group，避免被外層卡片 / 訊息的 group hover 誤觸）─────────
 export function Tooltip({
   label,
   side = 'top',
@@ -904,12 +904,12 @@ export function Tooltip({
           ? 'left-full top-1/2 ml-1.5 -translate-y-1/2'
           : 'bottom-full left-1/2 mb-1.5 -translate-x-1/2'
   return (
-    <span className="group relative inline-flex">
+    <span className="group/tooltip relative inline-flex">
       {children}
       <span
         role="tooltip"
         className={cx(
-          'pointer-events-none absolute z-50 whitespace-nowrap rounded-md bg-slate-900 px-2 py-1 text-xs font-medium text-white opacity-0 shadow-md transition-opacity group-hover:opacity-100 dark:bg-slate-700',
+          'pointer-events-none absolute z-50 whitespace-nowrap rounded-md bg-slate-900 px-2 py-1 text-xs font-medium text-white opacity-0 shadow-md transition-opacity group-hover/tooltip:opacity-100 group-focus-within/tooltip:opacity-100 dark:bg-slate-700',
           pos,
         )}
       >

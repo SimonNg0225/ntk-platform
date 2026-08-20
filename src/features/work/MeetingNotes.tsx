@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useCollection } from '../../lib/store'
 import { meetingNotesCol } from '../../data/collections'
@@ -83,6 +84,10 @@ import {
   type OpenAction,
   type OwnerGroup,
 } from './meetingNotes/util'
+import {
+  clearComposerHandoff,
+  readComposerHandoff,
+} from '../shared/composerHandoff'
 
 // ============================================================
 //  會議 / 行政筆記 — 媲美 Notion / Fellow.app 的會議工作枱
@@ -250,12 +255,14 @@ function StatTile({
 }
 
 export default function MeetingNotes() {
+  const location = useLocation()
   const { t } = useTranslation()
   const notes = useCollection(meetingNotesCol)
   const metas = useCollection(noteMetaCol)
   const templates = useCollection(noteTemplatesCol)
   const toast = useToast()
   const confirm = useConfirm()
+  const composerHandoff = useMemo(() => readComposerHandoff('work-meeting-notes'), [])
 
   const [view, setView] = useState<View>('notes')
 
@@ -270,13 +277,22 @@ export default function MeetingNotes() {
   const [actionGroupBy, setActionGroupBy] = useState<'list' | 'owner'>('list')
 
   // 編輯器
-  const [editorOpen, setEditorOpen] = useState(false)
+  const [editorOpen, setEditorOpen] = useState(() => Boolean(composerHandoff))
   const [editorMode, setEditorMode] = useState<'create' | 'edit'>('create')
-  const [editorInitial, setEditorInitial] = useState<EditorDraft>(emptyDraft())
+  const [editorInitial, setEditorInitial] = useState<EditorDraft>(() => {
+    const draft = emptyDraft()
+    if (composerHandoff?.text) draft.title = composerHandoff.text
+    return draft
+  })
   const [editingId, setEditingId] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (composerHandoff) clearComposerHandoff('work-meeting-notes')
+  }, [composerHandoff])
 
   // 詳情
   const [detailId, setDetailId] = useState<string | null>(null)
+  const resumeRef = useRef('')
 
   // ───────── 合併資料 ─────────
   const merged = useMemo(() => mergeNotes(notes, metas), [notes, metas])
@@ -296,6 +312,15 @@ export default function MeetingNotes() {
     () => new Map(merged.map((m) => [m.note.id, m])),
     [merged],
   )
+
+  useEffect(() => {
+    const item = new URLSearchParams(location.search).get('item')
+    if (!item || resumeRef.current === item) return
+    if (!notes.some((note) => note.id === item)) return
+    resumeRef.current = item
+    setView('notes')
+    setDetailId(item)
+  }, [location.search, notes])
 
   const allTags = useMemo(() => {
     const set = new Set<string>()

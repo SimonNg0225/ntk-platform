@@ -31,6 +31,20 @@ export interface ContextRef {
 }
 
 /**
+ * 由「教學助手」任務入口帶入的背景角色設定。
+ * instruction 只會加入 system prompt，不會顯示或塞入用戶輸入框。
+ */
+export interface TeachingAssistantProfile {
+  id: string
+  name: string
+  task: string
+  summary: string
+  starter: string
+  instruction: string
+  privacyNote?: string
+}
+
+/**
  * 每個 thread 的附加設定（旁掛，用 threadId 做主鍵）。
  * 不存在 AiThread 度，避免改共用型別。
  */
@@ -43,6 +57,8 @@ export interface ThreadMeta extends Entity {
   persona?: PersonaId
   /** 注入的上下文 */
   contexts?: ContextRef[]
+  /** 任務型教學助手；保存後重開對話仍沿用同一角色 */
+  assistant?: TeachingAssistantProfile
   /** 手動改過的標題（覆蓋自動標題） */
   customTitle?: string
   updatedAt?: string

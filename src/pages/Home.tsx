@@ -10,8 +10,8 @@ import {
   Clock,
   FileText,
   Highlighter,
+  Inbox,
   Mic,
-  Plus,
   Search,
   Send,
   type LucideIcon,
@@ -51,9 +51,12 @@ import { writeAiHandoff } from '../features/shared/aiAssistant/handoff'
 import { writeComposerHandoff } from '../features/shared/composerHandoff'
 import { inferLearningComposerRoute, inferWorkToolRoute } from './homeRouting'
 import { track, trackOnce } from '../lib/observability'
+import type { AppNavParams } from '../context/NavContext'
+import { classroomPacksCol } from '../features/work/classroomPack/store'
+import { slideDecksCol } from '../features/work/slides/slideStore'
 
 interface Props {
-  onOpen: (id: string) => void
+  onOpen: (id: string, params?: AppNavParams) => void
 }
 
 const MODE_QUICK_IDS: Record<ModeId, readonly string[]> = {
@@ -84,6 +87,7 @@ type RecentWork = {
   meta: string
   createdAt: string
   icon: LucideIcon
+  resume?: AppNavParams
 }
 
 function resolveFeatures(ids: readonly string[], mode: ModeId): Feature[] {
@@ -116,6 +120,8 @@ export default function Home({ onOpen }: Props) {
   const resources = useCollection(resourcesCol)
   const meetingNotes = useCollection(meetingNotesCol)
   const papers = useCollection(papersCol)
+  const classroomPacks = useCollection(classroomPacksCol)
+  const slideDecks = useCollection(slideDecksCol)
   const [lessonTopic, setLessonTopic] = useState(() => {
     try {
       return localStorage.getItem('eziteach.nextLessonTopic') ?? ''
@@ -141,6 +147,15 @@ export default function Home({ onOpen }: Props) {
   }, [])
 
   const now = useMemo(() => new Date(), [])
+  const todayLabel = useMemo(
+    () =>
+      new Intl.DateTimeFormat('zh-HK', {
+        month: 'long',
+        day: 'numeric',
+        weekday: 'long',
+      }).format(now),
+    [now],
+  )
   const todayKey = localKey(now)
   const slotDay = cycleCalendar.length
     ? cycleDayForDate(todayKey, cycleCalendar) ?? 0
@@ -173,14 +188,14 @@ export default function Home({ onOpen }: Props) {
   const topicSuggestion =
     todayLessons[0]?.subject || subjects[0]?.name || subjects[0]?.short || 'DSE 課題'
   const taskFlows: TaskFlow[] = isWorkMode
-    ? [
+      ? [
         {
-          id: 'prep',
-          title: '準備下一堂',
-          desc: '由課題變成教學目標、流程和課堂活動。',
-          prompt: `幫我準備「${topicSuggestion}」一堂 40 分鐘課的教案`,
-          outcome: '教案初稿',
-          steps: ['教學指引', '教案', '活動'],
+          id: 'classroom-pack',
+          title: '建立課堂套裝',
+          desc: '一次建立互相一致的教案、工作紙及簡報。',
+          prompt: `為「${topicSuggestion}」建立課堂套裝，包括教案、工作紙及簡報`,
+          outcome: '教案＋工作紙＋簡報',
+          steps: ['教案', '工作紙', '簡報'],
           icon: ClipboardList,
         },
         {
@@ -251,6 +266,15 @@ export default function Home({ onOpen }: Props) {
       ]
   const recentWorkItems = useMemo<RecentWork[]>(() => {
     const rows: RecentWork[] = [
+      ...classroomPacks.map((item) => ({
+        id: `pack-${item.id}`,
+        featureId: 'work-classroom-pack',
+        title: item.topic || '未命名課堂套裝',
+        meta: `課堂套裝 · ${item.reviewedOutputs.length}/3 已覆核`,
+        createdAt: item.updatedAt,
+        icon: ClipboardList,
+        resume: { item: item.id },
+      })),
       ...lessonPlans.map((item) => ({
         id: `lesson-${item.id}`,
         featureId: 'work-lesson-plan',
@@ -258,6 +282,7 @@ export default function Home({ onOpen }: Props) {
         meta: '教案 · 待覆核',
         createdAt: item.createdAt,
         icon: ClipboardList,
+        resume: { item: item.id },
       })),
       ...papers.map((item) => ({
         id: `paper-${item.id}`,
@@ -266,6 +291,7 @@ export default function Home({ onOpen }: Props) {
         meta: `${item.questionIds.length} 題 · 試卷`,
         createdAt: item.createdAt,
         icon: FileText,
+        resume: { view: 'paper', item: item.id },
       })),
       ...questions.map((item) => ({
         id: `question-${item.id}`,
@@ -274,6 +300,7 @@ export default function Home({ onOpen }: Props) {
         meta: `${item.type.toUpperCase()} · 題庫`,
         createdAt: item.createdAt,
         icon: FileText,
+        resume: { view: 'question', item: item.id },
       })),
       ...resources.map((item) => ({
         id: `resource-${item.id}`,
@@ -282,6 +309,7 @@ export default function Home({ onOpen }: Props) {
         meta: '資源庫 · 可重用',
         createdAt: item.createdAt,
         icon: Search,
+        resume: { item: item.id },
       })),
       ...meetingNotes.map((item) => ({
         id: `meeting-${item.id}`,
@@ -290,6 +318,16 @@ export default function Home({ onOpen }: Props) {
         meta: '會議記錄 · 跟進',
         createdAt: item.createdAt,
         icon: ClipboardList,
+        resume: { item: item.id },
+      })),
+      ...slideDecks.map((item) => ({
+        id: `slides-${item.id}`,
+        featureId: 'work-slides',
+        title: item.title || '未命名簡報',
+        meta: `${item.slides.length} 頁 · 簡報`,
+        createdAt: item.createdAt,
+        icon: FileText,
+        resume: { item: item.id },
       })),
       ...inboxItems
         .filter((item) => item.mode === 'work')
@@ -305,7 +343,7 @@ export default function Home({ onOpen }: Props) {
     return rows
       .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
       .slice(0, 5)
-  }, [inboxItems, lessonPlans, meetingNotes, papers, questions, resources])
+  }, [classroomPacks, inboxItems, lessonPlans, meetingNotes, papers, questions, resources, slideDecks])
   const name = displayName.trim()
   const greeting = name ? `${timeGreeting(now.getHours())}，${name}` : `${timeGreeting(now.getHours())}，老師`
   const flowItems =
@@ -371,9 +409,9 @@ export default function Home({ onOpen }: Props) {
     }
   }, [lessonTopic])
 
-  const openFeature = (featureId?: string) => {
+  const openFeature = (featureId?: string, params?: AppNavParams) => {
     if (!featureId) return
-    onOpen(featureId)
+    onOpen(featureId, params)
   }
 
   const dispatchComposerPrompt = (
@@ -454,16 +492,17 @@ export default function Home({ onOpen }: Props) {
   return (
     <div className="-mx-4 -my-5 sm:-mx-6 sm:-my-6 lg:-mx-8">
       <section className="border-b border-slate-200/80 bg-white px-4 dark:border-slate-800 dark:bg-slate-950 sm:px-6 lg:px-8">
-        <div className="mx-auto w-full max-w-[1180px] py-7 sm:py-9">
-          <div className="flex flex-col items-center text-center">
-            <span className="inline-flex min-h-9 items-center gap-2 rounded-full border border-indigo-200 bg-indigo-50/70 px-3 text-[13px] font-semibold text-indigo-800 shadow-xs dark:border-indigo-400/20 dark:bg-indigo-500/10 dark:text-indigo-200">
-              EziTeach AI
-            </span>
-            <h1 className="mt-4 max-w-4xl text-[32px] font-semibold leading-[1.12] text-slate-950 sm:text-[38px] lg:text-[42px] dark:text-white">
+        <div className="mx-auto w-full max-w-[1180px] py-6 sm:py-8">
+          <div>
+            <p className="inline-flex items-center gap-2 text-sm font-medium text-slate-500 dark:text-slate-400">
+              <CalendarDays size={16} strokeWidth={1.8} />
+              {todayLabel}
+            </p>
+            <h1 className="mt-2 max-w-4xl text-[30px] font-semibold leading-[1.15] text-slate-950 sm:text-[34px] lg:text-[36px] dark:text-white">
               {isWorkMode ? '今日想先完成什麼？' : '今日想整理什麼？'}
             </h1>
-            <p className="mt-2.5 max-w-2xl text-[15px] leading-6 text-slate-600 sm:text-[16px] dark:text-slate-300">
-              {greeting}。輸入課題或任務，我會直接打開最合適的工作區。
+            <p className="mt-2 max-w-2xl text-[15px] leading-6 text-slate-600 dark:text-slate-300">
+              {greeting}。由課題開始，或選一個常用任務。
             </p>
 
             <form
@@ -471,7 +510,7 @@ export default function Home({ onOpen }: Props) {
                 event.preventDefault()
                 askTeachingAi()
               }}
-              className="mt-6 w-full max-w-[880px] rounded-[20px] bg-white p-1 shadow-sm ring-1 ring-slate-200/90 focus-within:ring-2 focus-within:ring-accent/35 dark:bg-slate-900 dark:ring-slate-700/80"
+              className="mt-5 w-full rounded-[18px] bg-white p-1 shadow-sm ring-1 ring-slate-200/90 focus-within:ring-2 focus-within:ring-accent/35 dark:bg-slate-900 dark:ring-slate-700/80"
             >
               <label htmlFor="home-ai-composer" className="sr-only">
                 {isWorkMode ? '輸入課題或教學任務' : '輸入學習內容或問題'}
@@ -480,10 +519,11 @@ export default function Home({ onOpen }: Props) {
                 <button
                   type="button"
                   onClick={() => onOpen('inbox')}
-                  aria-label="打開收件匣"
+                  aria-label="打開快速擷取"
+                  title="快速擷取"
                   className="flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-full text-slate-500 transition hover:bg-slate-100 hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:text-slate-300 dark:hover:bg-slate-800"
                 >
-                  <Plus size={23} strokeWidth={1.8} />
+                  <Inbox size={20} strokeWidth={1.8} />
                 </button>
                 <input
                   id="home-ai-composer"
@@ -492,14 +532,11 @@ export default function Home({ onOpen }: Props) {
                   placeholder={composerPlaceholder}
                   className="min-h-11 min-w-0 flex-1 bg-transparent text-base text-slate-900 outline-none placeholder:text-slate-400 dark:text-slate-100 dark:placeholder:text-slate-500"
                 />
-                <span className="hidden min-h-11 shrink-0 items-center rounded-full bg-indigo-50 px-3 text-sm font-semibold text-indigo-700 dark:bg-indigo-500/15 dark:text-indigo-200 sm:inline-flex">
-                  {isWorkMode ? '自動分流' : '學習 AI'}
-                </span>
                 <button
                   type="button"
-                  onClick={() => onOpen(isWorkMode ? 'work-transcribe' : aiFeature?.id ?? 'learning-ai')}
-                  aria-label={isWorkMode ? '打開錄音轉文字' : '打開語音輸入'}
-                  className="hidden h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-full text-slate-500 transition hover:bg-slate-100 hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:text-slate-300 dark:hover:bg-slate-800 sm:flex"
+                  onClick={() => onOpen(isWorkMode ? 'work-voice-assistant' : aiFeature?.id ?? 'learning-ai')}
+                  aria-label={isWorkMode ? '打開語音助手' : '打開語音輸入'}
+                  className="flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-full text-slate-500 transition hover:bg-slate-100 hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:text-slate-300 dark:hover:bg-slate-800"
                 >
                   <Mic size={20} strokeWidth={1.9} />
                 </button>
@@ -513,7 +550,7 @@ export default function Home({ onOpen }: Props) {
               </div>
             </form>
 
-            <div className="mt-5 grid w-full gap-2.5 text-left sm:grid-cols-2 lg:grid-cols-4">
+            <div className="mt-4 grid w-full gap-2 text-left sm:grid-cols-2 lg:grid-cols-4">
               {taskFlows.map((flow) => (
                 <HeroTaskShortcut
                   key={flow.id}
@@ -536,7 +573,7 @@ export default function Home({ onOpen }: Props) {
               <h2 className="mt-1 text-xl font-semibold text-slate-900 dark:text-slate-100">
                 今日重點
               </h2>
-              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+              <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
                 只保留現在最有用的三件事，其他工具需要時才打開。
               </p>
             </div>
@@ -550,7 +587,7 @@ export default function Home({ onOpen }: Props) {
             </button>
           </div>
 
-          <div className="grid gap-3 md:grid-cols-3">
+          <div className="grid divide-y divide-slate-200/80 overflow-hidden rounded-[16px] bg-white shadow-xs ring-1 ring-inset ring-slate-200/80 dark:divide-slate-700/70 dark:bg-slate-800 dark:ring-slate-700/70 md:grid-cols-3 md:divide-x md:divide-y-0 md:divide-slate-200/80 dark:md:divide-slate-700/70">
             {flowItems.map((item, index) => (
               <FocusCard
                 key={`${item.time}-${item.title}`}
@@ -565,65 +602,73 @@ export default function Home({ onOpen }: Props) {
           </div>
         </section>
 
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,1.35fr)_minmax(320px,0.65fr)]">
-          <section className="rounded-[18px] border border-[color:var(--border)] bg-white p-4 shadow-xs dark:bg-slate-800 sm:p-5">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <p className="text-xs font-semibold uppercase text-accent">
-                  覆核
-                </p>
-                <h2 className="mt-1 text-xl font-semibold text-slate-900 dark:text-slate-100">
-                  最近產出 / 待覆核
-                </h2>
-                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                  回來時先接住上次做到哪裡，再決定下一步。
-                </p>
+        <div
+          className={cx(
+            'grid gap-6 border-t border-slate-200/80 pt-5 dark:border-slate-800',
+            recentWorkItems.length > 0 &&
+              'lg:grid-cols-[minmax(0,1.35fr)_minmax(320px,0.65fr)]',
+          )}
+        >
+          {recentWorkItems.length > 0 && (
+            <section>
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p className="text-xs font-semibold uppercase text-accent">
+                    最近
+                  </p>
+                  <h2 className="mt-1 text-xl font-semibold text-slate-900 dark:text-slate-100">
+                    繼續上次工作
+                  </h2>
+                  <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                    直接接回上次的教案、題目和記錄。
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => openFeature('search')}
+                  className="inline-flex min-h-11 cursor-pointer items-center gap-1.5 rounded-full border border-[color:var(--border)] bg-white px-4 text-sm font-semibold text-slate-600 transition hover:border-accent/35 hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:bg-slate-800 dark:text-slate-300"
+                >
+                  查看全部
+                  <ArrowRight size={14} strokeWidth={2} />
+                </button>
               </div>
-              <button
-                type="button"
-                onClick={() => openFeature('search')}
-                className="inline-flex min-h-11 cursor-pointer items-center gap-1.5 rounded-full border border-[color:var(--border)] bg-white px-4 text-sm font-semibold text-slate-600 transition hover:border-accent/35 hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:bg-slate-800 dark:text-slate-300"
-              >
-                搜尋全部
-                <ArrowRight size={14} strokeWidth={2} />
-              </button>
-            </div>
 
-            <div className="mt-4 space-y-2">
-              {recentWorkItems.length > 0 ? (
-                recentWorkItems.map((item) => (
+              <div className="mt-4 space-y-2">
+                {recentWorkItems.map((item) => (
                   <RecentWorkRow
                     key={item.id}
                     item={item}
-                    onOpen={() => openFeature(item.featureId)}
+                    onOpen={() => {
+                      track('recent_work_opened', {
+                        feature_id: item.featureId,
+                        item_kind: item.id.split('-')[0],
+                      })
+                      openFeature(item.featureId, item.resume)
+                    }}
                   />
-                ))
-              ) : (
-                <div className="rounded-[16px] border border-dashed border-slate-200 bg-[color:var(--surface-2)] px-4 py-8 text-center dark:border-slate-700">
-                  <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
-                    暫時未有產出需要覆核
-                  </p>
-                  <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                    由上方捷徑開始，完成的教案、題目和記錄會在這裡浮現。
-                  </p>
-                </div>
-              )}
-            </div>
-          </section>
+                ))}
+              </div>
+            </section>
+          )}
 
-          <section className="rounded-[18px] border border-[color:var(--border)] bg-white p-4 shadow-xs dark:bg-slate-800 sm:p-5">
+          <section>
             <div className="mb-4">
-              <p className="text-xs font-semibold uppercase text-slate-400 dark:text-slate-500">
-                工具
+              <p className="text-xs font-semibold uppercase text-slate-600 dark:text-slate-300">
+                其他
               </p>
               <h2 className="mt-1 text-xl font-semibold text-slate-900 dark:text-slate-100">
-                工具庫
+                更多工具
               </h2>
-              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+              <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
                 低頻工具收在這裡，需要時才打開。
               </p>
             </div>
-            <div className="space-y-2">
+            <div
+              className={cx(
+                'grid gap-2',
+                recentWorkItems.length === 0 && 'sm:grid-cols-2 lg:grid-cols-3',
+              )}
+            >
               {quickFeatures.map((feature) => (
                 <ToolShelfRow
                   key={feature.id}
@@ -651,7 +696,7 @@ function HeroTaskShortcut({
     <button
       type="button"
       onClick={onStart}
-      className="group flex min-h-[84px] w-full cursor-pointer items-center gap-3 rounded-[16px] border border-slate-200 bg-white p-3 text-left shadow-xs transition duration-150 hover:border-accent/35 hover:bg-indigo-50/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:border-slate-700 dark:bg-slate-900 dark:hover:bg-indigo-500/10"
+      className="group flex min-h-[80px] w-full cursor-pointer items-center gap-3 rounded-[14px] bg-slate-50/90 p-3 text-left transition duration-150 hover:bg-white hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:bg-slate-900 dark:hover:bg-slate-800"
     >
       <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[13px] bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
         <Icon size={18} strokeWidth={1.8} />
@@ -685,7 +730,7 @@ function RecentWorkRow({
     <button
       type="button"
       onClick={onOpen}
-      className="group flex min-h-[64px] w-full cursor-pointer items-center gap-3 rounded-[15px] border border-slate-200 bg-white px-3.5 py-3 text-left transition hover:border-accent/35 hover:bg-[color:var(--surface-2)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:border-slate-700 dark:bg-slate-800"
+      className="group flex min-h-[64px] w-full cursor-pointer items-center gap-3 rounded-[13px] bg-white px-3.5 py-3 text-left shadow-xs transition hover:bg-[color:var(--surface-2)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:bg-slate-800"
     >
       <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[13px] bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
         <Icon size={17} strokeWidth={1.8} />
@@ -718,7 +763,7 @@ function ToolShelfRow({
     <button
       type="button"
       onClick={onOpen}
-      className="group flex min-h-[68px] w-full cursor-pointer items-center gap-3 rounded-[15px] border border-slate-200 bg-white px-3.5 py-3 text-left transition hover:border-accent/35 hover:bg-[color:var(--surface-2)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:border-slate-700 dark:bg-slate-800"
+      className="group flex min-h-[68px] w-full cursor-pointer items-center gap-3 rounded-[13px] bg-white px-3.5 py-3 text-left shadow-xs transition hover:bg-[color:var(--surface-2)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:bg-slate-800"
     >
       <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[13px] bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-300">
         <FeatureIcon icon={feature.icon} size={17} strokeWidth={1.75} />
@@ -759,10 +804,10 @@ function FocusCard({
       type="button"
       onClick={onClick}
       className={cx(
-        'group flex min-h-[104px] w-full cursor-pointer items-center gap-3 rounded-[18px] border px-4 py-4 text-left shadow-xs transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
+        'group flex min-h-[104px] w-full cursor-pointer items-center gap-3 px-4 py-4 text-left transition focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent/40',
         active
-          ? 'border-accent/25 bg-accent-soft/60 hover:border-accent/40 dark:bg-accent/15'
-          : 'border-[color:var(--border)] bg-white hover:border-accent/35 hover:bg-[color:var(--surface-2)] dark:bg-slate-800',
+          ? 'bg-accent-soft/60 hover:bg-accent-soft dark:bg-accent/15'
+          : 'bg-white hover:bg-[color:var(--surface-2)] dark:bg-slate-800',
       )}
     >
       <span
@@ -776,7 +821,7 @@ function FocusCard({
         <Icon size={19} strokeWidth={1.8} />
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block text-xs font-semibold text-slate-400 dark:text-slate-500">
+        <span className="block text-xs font-semibold text-slate-600 dark:text-slate-300">
           {time}
         </span>
         <span className="mt-1 block truncate text-base font-semibold text-slate-900 dark:text-slate-100">

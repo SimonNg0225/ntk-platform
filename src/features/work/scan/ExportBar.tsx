@@ -7,7 +7,6 @@ import { useAuth } from '../../../context/AuthContext'
 import { downloadBlob } from '../../../lib/export/file'
 import { isScanStorageConfigured, uploadScanPdf } from '../../../lib/supabaseStorage'
 import type { OutputMode, ScanPage } from './lib/types'
-import { buildScanPdf, buildPerPagePdfs } from './lib/buildPdf'
 import { outputFilenames } from './lib/naming'
 import { registerScanResource } from './scanStore'
 
@@ -29,6 +28,7 @@ export default function ExportBar({
     if (!pages.length) return
     setBusy(true)
     try {
+      const { buildScanPdf, buildPerPagePdfs } = await import('./lib/buildPdf')
       const names = outputFilenames(baseName, mode, pages.length)
       if (mode === 'merged') {
         const bytes = await buildScanPdf(pages, { ocr })
@@ -60,6 +60,7 @@ export default function ExportBar({
     if (!pages.length) return
     setBusy(true)
     try {
+      const { buildScanPdf } = await import('./lib/buildPdf')
       const names = outputFilenames(baseName, 'merged', pages.length)
       const bytes = await buildScanPdf(pages, { ocr })
       const blob = new Blob([bytes as BlobPart], { type: 'application/pdf' })

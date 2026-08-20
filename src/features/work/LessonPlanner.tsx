@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useCollection } from '../../lib/store'
 import { lessonPlansCol, topicsCol } from '../../data/collections'
@@ -83,6 +84,7 @@ import { getSubjectPack } from '../../data/subjects'
 import { isAIConfigured } from '../../lib/aiClient'
 import GenerateModal, { type GeneratedLesson } from './lessonPlanner/GenerateModal'
 import { templatesForSubject } from './lessonPlanner/subjectTemplates'
+import { trackOutputExported, trackOutputSaved } from '../../lib/observability'
 
 // ============================================================
 //  備課 / 教案 — 媲美 Planbook / Common Curriculum 的教師備課工具
@@ -102,6 +104,7 @@ const STATUS_ICON: Record<PlanStatus, typeof Circle> = {
 }
 
 export default function LessonPlanner() {
+  const location = useLocation()
   const plans = useCollection(lessonPlansCol)
   const topics = useCollection(topicsCol)
   const metas = useCollection(planMetaCol)
@@ -168,6 +171,7 @@ export default function LessonPlanner() {
   const [aiOpen, setAiOpen] = useState(false)
   const [dupTarget, setDupTarget] = useState<LessonPlan | null>(null)
   const [dupDate, setDupDate] = useState(todayKey())
+  const resumeRef = useRef('')
 
   // 週視圖：當前週開始（星期一）
   const [weekStart, setWeekStart] = useState(() => startOfWeekKey(new Date()))
@@ -362,6 +366,20 @@ export default function LessonPlanner() {
     setEditingId(p.id)
     setEditorOpen(true)
   }
+
+  useEffect(() => {
+    const item = new URLSearchParams(location.search).get('item')
+    if (!item || resumeRef.current === item) return
+    const plan = plans.find((entry) => entry.id === item)
+    if (!plan) return
+    resumeRef.current = item
+    setView('list')
+    setEditorMode('edit')
+    setEditorInitial(planToDraft(plan, metaById.get(plan.id)))
+    setEditingId(plan.id)
+    setEditorOpen(true)
+  }, [location.search, metaById, plans])
+
   const closeEditor = () => setEditorOpen(false)
 
   const submitEditor = (d: PlanDraft) => {
@@ -372,10 +390,12 @@ export default function LessonPlanner() {
         createdAt: new Date().toISOString(),
       })
       writeMeta(created.id, d)
+      trackOutputSaved('lesson_plan', 'lesson_planner')
       toast.success('已新增教案')
     } else if (editingId) {
       lessonPlansCol.update(editingId, toPlanPayload(d))
       writeMeta(editingId, d)
+      trackOutputSaved('lesson_plan', 'lesson_planner')
       toast.success('已儲存教案')
     }
     setEditorOpen(false)
@@ -546,6 +566,7 @@ export default function LessonPlanner() {
       topicName: topicName(p.topicId),
       area: topicArea(p.topicId),
     })
+    if (ok) trackOutputExported('lesson_plan', 'print', 'lesson_planner')
     if (!ok) toast.error('瀏覽器封鎖了彈窗，請允許後再試')
   }
 

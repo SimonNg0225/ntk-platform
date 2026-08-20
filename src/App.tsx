@@ -4,6 +4,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { ModeProvider, useMode } from './context/ModeContext'
 import { AuthProvider } from './context/AuthContext'
 import { NavProvider } from './context/NavContext'
+import type { AppNavParams } from './context/NavContext'
 import { SettingsProvider } from './context/SettingsContext'
 import { ToastProvider } from './context/ToastContext'
 import { ConfirmProvider } from './context/ConfirmContext'
@@ -33,7 +34,12 @@ import PaidGate from './components/PaidGate'
 import { useSubscription } from './hooks/useSubscription'
 import { getFeature } from './features/registry'
 import { FeatureIcon } from './features/featureIcons'
-import { track, trackOnce, trackPageView } from './lib/observability'
+import {
+  track,
+  trackOnce,
+  trackPageView,
+  trackRetentionMilestones,
+} from './lib/observability'
 import { useTranslation } from 'react-i18next'
 import { featName, featDesc } from './i18n/appEn'
 import { writeComposerHandoff } from './features/shared/composerHandoff'
@@ -50,7 +56,7 @@ export function AppShell() {
   const { modeDef } = useMode()
   const location = useLocation()
   const routerNavigate = useNavigate()
-  const { isPaid, loading: subLoading } = useSubscription()
+  const { isPaid, loading: subLoading, plan, isTest } = useSubscription()
   const activeId = appRouteId(location.pathname)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [paletteOpen, setPaletteOpen] = useState(false)
@@ -135,7 +141,13 @@ export function AppShell() {
     if (appOpenedRef.current) return
     appOpenedRef.current = true
     track('app_opened')
+    trackRetentionMilestones()
   }, [])
+
+  useEffect(() => {
+    if (subLoading || !isPaid || isTest) return
+    trackOnce('subscription_activated', { plan })
+  }, [isPaid, isTest, plan, subLoading])
 
   // ⌘K / Ctrl+K 開指令面板
   useEffect(() => {
@@ -188,12 +200,21 @@ export function AppShell() {
     return () => window.removeEventListener('keydown', handler)
   }, [])
 
-  const navigate = (id: string | null) => {
+  const navigate = (id: string | null, params?: AppNavParams) => {
     setDrawerOpen(false)
     if (id && id !== '__settings__' && id !== '__admin__') pushRecentFeature(id)
     if (id === '__settings__') routerNavigate('/app/settings')
     else if (id === '__admin__') routerNavigate('/app/admin')
-    else if (id) routerNavigate(`/app/${id}`)
+    else if (id) {
+      const search = new URLSearchParams()
+      for (const [key, value] of Object.entries(params ?? {})) {
+        if (value !== undefined && value !== null && value !== '') {
+          search.set(key, String(value))
+        }
+      }
+      const suffix = search.size ? `?${search.toString()}` : ''
+      routerNavigate(`/app/${id}${suffix}`)
+    }
     else routerNavigate('/app')
   }
 
@@ -387,7 +408,7 @@ export function AppShell() {
                 <div className={featureFullHeight ? 'flex h-full min-h-0 flex-col' : 'space-y-5'}>
                   <button
                     onClick={() => navigate(null)}
-                    className="inline-flex min-h-10 shrink-0 items-center gap-1.5 rounded-lg px-1 text-[13px] font-medium text-slate-500 transition hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+                    className="inline-flex min-h-10 shrink-0 items-center gap-1.5 rounded-lg px-1 text-[13px] font-medium text-slate-600 transition hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:text-slate-300"
                   >
                     <ArrowLeft size={15} strokeWidth={1.9} />
                     {t('shell.backToMode', {
@@ -508,7 +529,7 @@ export function AppShell() {
 
         <PwaUpdater />
         <PwaInstallPrompt />
-        {activeId !== null && <SupportButton />}
+        {activeId !== null && !featureFullHeight && <SupportButton />}
       </div>
     </NavProvider>
   )

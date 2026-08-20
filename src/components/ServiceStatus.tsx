@@ -22,7 +22,7 @@ export default function ServiceStatus({
       <CircleDashed size={18} className="mt-0.5 shrink-0 text-slate-400" />
       <div className="min-w-0 flex-1">
         <p className="text-sm font-semibold">{title}</p>
-        <p className="mt-0.5 text-xs leading-5 text-slate-500 dark:text-slate-400">
+        <p className="mt-0.5 text-xs leading-5 text-slate-600 dark:text-slate-300">
           {message}
         </p>
 

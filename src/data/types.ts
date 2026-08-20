@@ -16,7 +16,20 @@ export interface Topic extends Entity {
 export type QuestionType = 'mc' | 'short' | 'long' | 'case'
 export type Difficulty = 'easy' | 'medium' | 'hard'
 
-export interface Question extends Entity {
+export type TeacherReviewStatus = 'draft' | 'reviewed'
+
+export interface TeachingContentTrust {
+  /** 由課堂套裝建立時，用來返回同一套教學成果。 */
+  packId?: string
+  /** 老師選擇的課程框架或校本依據。 */
+  curriculumBasis?: string
+  /** 老師提供的教材、章節、連結或來源摘要。 */
+  sourceNote?: string
+  /** AI 產出預設 draft，必須由老師主動標記 reviewed。 */
+  reviewStatus?: TeacherReviewStatus
+}
+
+export interface Question extends Entity, TeachingContentTrust {
   topicId: string
   type: QuestionType
   difficulty: Difficulty
@@ -161,7 +174,7 @@ export interface HabitLog extends Entity {
 }
 
 // 備課 / 教案（工作）
-export interface LessonPlan extends Entity {
+export interface LessonPlan extends Entity, TeachingContentTrust {
   title: string
   classId?: string
   topicId?: string

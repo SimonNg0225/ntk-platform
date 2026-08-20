@@ -24,6 +24,7 @@ import {
   toKey,
   weekKeys,
 } from './calendar/util'
+import { clearComposerHandoff, readComposerHandoff } from './composerHandoff'
 
 type View = 'day' | 'week' | 'month' | 'year'
 const VIEWS: { id: View; label: string }[] = [
@@ -67,6 +68,7 @@ export default function Calendar() {
   const cals = useCollection(calendarsCol)
   const countdowns = useCollection(countdownsCol)
   const toast = useToast()
+  const composerHandoff = useMemo(() => readComposerHandoff('calendar'), [])
 
   // 拖拉移動：重複事件不要盲改 master（會搬郁／重錨成個系列，繞過「僅此次/全部」）。
   // 暫擋住 + 引導去編輯器處理，避免破壞重複規則。
@@ -84,13 +86,18 @@ export default function Calendar() {
   const cursorKey = toKey(cursor)
   const isOnToday = cursorKey === toKey(new Date())
 
-  const [editorOpen, setEditorOpen] = useState(false)
+  const [editorOpen, setEditorOpen] = useState(() => Boolean(composerHandoff))
   const [editing, setEditing] = useState<CalendarEvent | null>(null)
   const [editingOcc, setEditingOcc] = useState<string | undefined>(undefined)
   const [createTime, setCreateTime] = useState<string | undefined>(undefined)
+  const [createTitle, setCreateTitle] = useState(() => composerHandoff?.text ?? '')
   const [managerOpen, setManagerOpen] = useState(false)
   const [exportOpen, setExportOpen] = useState(false)
   const [subscribeOpen, setSubscribeOpen] = useState(false)
+
+  useEffect(() => {
+    if (composerHandoff) clearComposerHandoff('calendar')
+  }, [composerHandoff])
 
   // 視圖範圍
   const { rangeStart, rangeEnd } = useMemo(() => {
@@ -140,17 +147,20 @@ export default function Calendar() {
   function openCreate() {
     setEditing(null)
     setCreateTime(undefined)
+    setCreateTitle('')
     setEditorOpen(true)
   }
   function openEdit(ev: CalendarEvent, dateKey?: string) {
     setEditing(ev)
     setEditingOcc(dateKey)
+    setCreateTitle('')
     setEditorOpen(true)
   }
   function createAt(dateKey: string, time: string) {
     setCursor(fromKey(dateKey))
     setEditing(null)
     setCreateTime(time)
+    setCreateTitle('')
     setEditorOpen(true)
   }
   function toggleCal(id: string, visible: boolean) {
@@ -415,6 +425,7 @@ export default function Calendar() {
           editing={editing}
           defaultDate={cursorKey}
           defaultTime={createTime}
+          defaultTitle={createTitle}
           occurrenceKey={editingOcc}
           calendars={cals}
           onClose={() => setEditorOpen(false)}

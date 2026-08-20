@@ -4,7 +4,6 @@ import type { ModeId } from '../modes/modes'
 import { isFeatureAvailable } from '../lib/featureFlags'
 
 // 動態載入 feature 元件 → 各功能拆獨立 chunk，到用先 load（縮細初始 bundle）。
-// .preload：App idle 時背景預載全部，確保所有功能的 collection 都登記（同步 / 匯出完整）。
 type LazyFeature = LazyExoticComponent<ComponentType> & {
   preload: () => Promise<unknown>
 }
@@ -51,6 +50,7 @@ const DocDigest = lazyFeature(() => import('./work/docDigest/DocDigest'))
 const WorkDashboard = lazyFeature(() => import('./work/WorkDashboard'))
 const Team = lazyFeature(() => import('./work/Team'))
 const PromptLibrary = lazyFeature(() => import('./work/PromptLibrary'))
+const ClassroomPack = lazyFeature(() => import('./work/ClassroomPack'))
 
 // 社群功能
 const Forum = lazyFeature(() => import('./forum/Forum'))
@@ -62,6 +62,7 @@ const GlobalSearch = lazyFeature(() => import('./shared/GlobalSearch'))
 const Inbox = lazyFeature(() => import('./shared/Inbox'))
 const QuizMode = lazyFeature(() => import('./shared/QuizMode'))
 const AIAssistant = lazyFeature(() => import('./shared/AIAssistant'))
+const VoiceAssistant = lazyFeature(() => import('./shared/VoiceAssistant'))
 const AskData = lazyFeature(() => import('./shared/AskData'))
 const Observation = lazyFeature(() => import('./work/observation/Observation'))
 const WorkReport = lazyFeature(() => import('./work/workReport/WorkReport'))
@@ -89,7 +90,7 @@ export const FEATURES: Feature[] = [
     name: '個人 AI 助手',
     description: '問答、解釋概念、總結筆記、出練習。',
     icon: '🤖',
-    group: 'AI',
+    group: '助手',
     component: AIAssistant,
     status: 'ready',
     selfManagedHeader: true,
@@ -103,7 +104,7 @@ export const FEATURES: Feature[] = [
     name: 'AI 生成知識卡',
     description: '貼上主題或筆記，AI 一鍵生成知識卡，直接存入牌組複習。',
     icon: '✨',
-    group: 'AI',
+    group: '助手',
     component: CardGenerator,
     status: 'ready',
   },
@@ -219,15 +220,40 @@ export const FEATURES: Feature[] = [
     status: 'ready',
   },
   {
+    id: 'work-classroom-pack',
+    selfManagedHeader: true,
+    modes: ['work'],
+    name: '課堂套裝',
+    description: '輸入一個課題，一次建立互相一致的教案、工作紙及簡報，逐份編輯和覆核。',
+    icon: '📦',
+    group: '教學',
+    component: ClassroomPack,
+    status: 'ready',
+    hideNextSteps: true,
+  },
+  {
     id: 'work-ai',
     modes: ['work'],
     name: '助手對話',
     description: '由教學助手帶入任務後，繼續追問、修改和生成。',
     icon: '🤖',
-    group: 'AI',
+    group: '助手',
     component: AIAssistant,
     status: 'ready',
     hideFromNavigation: true,
+    selfManagedHeader: true,
+    fullHeight: true,
+    hideNextSteps: true,
+  },
+  {
+    id: 'work-voice-assistant',
+    modes: ['work'],
+    name: 'Ezi 智能助手',
+    description: '說出目標，由助手理解上下文、規劃步驟，並在確認後執行教學工作。',
+    icon: '🎧',
+    group: '助手',
+    component: VoiceAssistant,
+    status: 'ready',
     selfManagedHeader: true,
     fullHeight: true,
     hideNextSteps: true,
@@ -239,7 +265,7 @@ export const FEATURES: Feature[] = [
     name: '教學助手',
     description: '按工作情境選擇助手：電郵、備課、出題、評語、簡報、家長溝通、行政整理等。',
     icon: '📚',
-    group: 'AI',
+    group: '助手',
     component: PromptLibrary,
     status: 'ready',
     hideNextSteps: true,
@@ -588,16 +614,4 @@ export function groupedFeatures(mode: ModeId): { group: string; items: Feature[]
 export function getFeature(id: string): Feature | undefined {
   if (!isFeatureAvailable(id)) return undefined
   return FEATURES.find((f) => f.id === id)
-}
-
-// 背景預載全部功能 chunk（App idle 時呼叫）：令所有 lazy 功能的 collection
-// 都會建立並登記入 collectionRegistry，確保雲端同步 / 匯出匯入覆蓋齊全。
-export function preloadAllFeatures(): Promise<void> {
-  const loaders: Promise<unknown>[] = []
-  for (const f of FEATURES) {
-    if (!isFeatureAvailable(f.id)) continue
-    const c = f.component as Partial<LazyFeature> | undefined
-    if (c && typeof c.preload === 'function') loaders.push(c.preload())
-  }
-  return Promise.all(loaders).then(() => undefined)
 }

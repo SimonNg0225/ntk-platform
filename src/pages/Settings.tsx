@@ -37,7 +37,7 @@ import {
   getSubjectPack,
   packTopics,
 } from '../data/subjects'
-import { preloadAllFeatures } from '../features/registry'
+import { preloadFeatureData } from '../features/preloadData'
 import { smartApplyTopics, appendTopicsByText } from '../features/work/topicImport/applyTopics'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabase'
@@ -109,7 +109,7 @@ export default function Settings() {
       if (alive) setOverview(summarizeData(exportAllData().data))
     }
     const unsubs: (() => void)[] = []
-    preloadAllFeatures()
+    preloadFeatureData()
       .catch(() => {})
       .finally(() => {
         if (!alive) return
@@ -127,7 +127,7 @@ export default function Settings() {
 
   const doExport = async () => {
     try {
-      await preloadAllFeatures()
+      await preloadFeatureData()
     } catch {
       /* ignore：照匯出已登記的 collection */
     }
@@ -194,7 +194,7 @@ export default function Settings() {
     }
     try {
       const text = await file.text()
-      await preloadAllFeatures()
+      await preloadFeatureData()
       const n = importAllData(JSON.parse(text))
       toast.success(`已匯入 ${n} 類資料`)
     } catch {
@@ -211,7 +211,7 @@ export default function Settings() {
       tone: 'danger',
     })))
       return
-    await preloadAllFeatures()
+    await preloadFeatureData()
     for (const col of collectionRegistry.values()) col.set([] as never[])
     toast.success('已清除所有資料')
   }
@@ -233,7 +233,7 @@ export default function Settings() {
         method: 'POST',
       })
       if (error) throw error
-      await preloadAllFeatures()
+      await preloadFeatureData()
       for (const col of collectionRegistry.values()) col.set([] as never[])
       await signOut()
       toast.success('帳戶已永久刪除')

@@ -1,20 +1,21 @@
-import { StrictMode, useEffect } from 'react'
+import { lazy, StrictMode, Suspense, useEffect } from 'react'
 import { createRoot } from 'react-dom/client'
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { HelmetProvider } from 'react-helmet-async'
 import { Providers, AppShell } from './App.tsx'
-import Landing from './marketing/Landing.tsx'
-import Login from './marketing/Login.tsx'
-import AuthCallback from './marketing/AuthCallback.tsx'
-import Pricing from './marketing/Pricing.tsx'
-import Privacy from './marketing/Privacy.tsx'
-import Terms from './marketing/Terms.tsx'
-import Guidelines from './marketing/Guidelines.tsx'
 import CookieConsent from './components/CookieConsent.tsx'
 import SupportWidget from './components/SupportWidget.tsx'
 import { initObservability, trackPageView } from './lib/observability.ts'
 import './i18n'
 import './index.css'
+
+const Landing = lazy(() => import('./marketing/Landing.tsx'))
+const Login = lazy(() => import('./marketing/Login.tsx'))
+const AuthCallback = lazy(() => import('./marketing/AuthCallback.tsx'))
+const Pricing = lazy(() => import('./marketing/Pricing.tsx'))
+const Privacy = lazy(() => import('./marketing/Privacy.tsx'))
+const Terms = lazy(() => import('./marketing/Terms.tsx'))
+const Guidelines = lazy(() => import('./marketing/Guidelines.tsx'))
 
 // 商業化：啟動可觀測性（未設 env → no-op）
 initObservability()
@@ -46,17 +47,19 @@ createRoot(document.getElementById('root')!).render(
       <BrowserRouter>
         <Providers>
           <RouteAnalytics />
-          <Routes>
-            <Route path="/" element={<Landing />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/auth/callback" element={<AuthCallback />} />
-            <Route path="/pricing" element={<Pricing />} />
-            <Route path="/privacy" element={<Privacy />} />
-            <Route path="/terms" element={<Terms />} />
-            <Route path="/guidelines" element={<Guidelines />} />
-            <Route path="/app/*" element={<AppShell />} />
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
+          <Suspense fallback={<div className="min-h-screen bg-white" aria-busy="true" />}>
+            <Routes>
+              <Route path="/" element={<Landing />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/auth/callback" element={<AuthCallback />} />
+              <Route path="/pricing" element={<Pricing />} />
+              <Route path="/privacy" element={<Privacy />} />
+              <Route path="/terms" element={<Terms />} />
+              <Route path="/guidelines" element={<Guidelines />} />
+              <Route path="/app/*" element={<AppShell />} />
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </Suspense>
           <CookieConsent />
           <SupportWidget />
         </Providers>

@@ -68,7 +68,6 @@ import {
   RefreshCw,
   Check,
   PanelLeft,
-  Sparkles,
   Paperclip,
   FileText,
   Download,
@@ -91,6 +90,7 @@ import {
   Users,
   BookOpen,
   Library,
+  ShieldCheck,
 } from 'lucide-react'
 import {
   threadMetaCol,
@@ -99,7 +99,12 @@ import {
   personaById,
 } from './aiAssistant/store'
 import { consumeAiHandoff } from './aiAssistant/handoff'
-import type { ContextRef, ThreadMeta, PersonaId } from './aiAssistant/types'
+import type {
+  ContextRef,
+  ThreadMeta,
+  PersonaId,
+  TeachingAssistantProfile,
+} from './aiAssistant/types'
 import {
   builtinTemplates,
   extractVars,
@@ -119,6 +124,7 @@ import { Markdown } from './aiAssistant/markdown'
 import { ActivityBars, RatioBar } from './aiAssistant/charts'
 import CreditMeter from '../../components/CreditMeter'
 import { useSubscription } from '../../hooks/useSubscription'
+import { track, trackOnce } from '../../lib/observability'
 
 // ============================================================
 //  AI 助手 — ChatGPT / Claude 級對話工作枱
@@ -157,9 +163,7 @@ const MODE_AI: Record<
 const WORK_WELCOME_TEMPLATE_IDS = [
   'w-next-lesson',
   'w-differentiated-worksheet',
-  'w-mc',
   'w-feedback',
-  'w-parent-followup',
   'w-admin-email',
 ]
 
@@ -281,6 +285,7 @@ export default function AIAssistant() {
   const [draftPersona, setDraftPersona] = useState<PersonaId>('default')
   const [draftTemp, setDraftTemp] = useState(0.7)
   const [draftContexts, setDraftContexts] = useState<ContextRef[]>([])
+  const [draftAssistant, setDraftAssistant] = useState<TeachingAssistantProfile | undefined>()
 
   // modal flags
   const [templateOpen, setTemplateOpen] = useState(false)
@@ -310,6 +315,7 @@ export default function AIAssistant() {
   const activePersona = currentMeta?.persona ?? draftPersona
   const activeTemp = currentMeta?.temperature ?? draftTemp
   const activeContexts = currentMeta?.contexts ?? draftContexts
+  const activeAssistant = currentThreadId ? currentMeta?.assistant : draftAssistant
 
   // ── threads（按模式 + 封存過濾 + 搜尋 + 置頂排序）──
   const threadsForMode = useMemo(
@@ -364,12 +370,16 @@ export default function AIAssistant() {
   useEffect(() => {
     const handoff = canUseAssistant ? consumeAiHandoff(mode) : null
     setCurrentThreadId(null)
-    setSeed((s) => ({ text: handoff && !handoff.autoSend ? handoff.text : '', n: s.n + 1 }))
-    setPendingAutoSend(handoff?.autoSend ? handoff.text : null)
+    setSeed((s) => ({
+      text: handoff?.text && !handoff.autoSend ? handoff.text : '',
+      n: s.n + 1,
+    }))
+    setPendingAutoSend(handoff?.autoSend && handoff.text ? handoff.text : null)
     setStreaming(null)
     setSearch('')
     setShowArchived(false)
     setDraftContexts([])
+    setDraftAssistant(handoff?.assistant)
   }, [mode, canUseAssistant])
 
   // 自動捲到底
@@ -391,12 +401,20 @@ export default function AIAssistant() {
     [],
   )
 
-  // ── 組裝完整 system prompt（模式 + 人格 + 上下文）──
+  // ── 組裝完整 system prompt（模式 + 任務助手 + 語氣 + 參考資料）──
   const buildSystem = useCallback(
-    (contexts: ContextRef[], persona: PersonaId): string => {
+    (
+      contexts: ContextRef[],
+      persona: PersonaId,
+      assistant?: TeachingAssistantProfile,
+    ): string => {
       let sys = cfg.system
       if (subjectName)
         sys += `\n\n【任教科目】老師任教科目係「${subjectName}」，出題、教案、課題請以此科為主，貼合香港中學課程。`
+      if (assistant) {
+        sys += `\n\n【目前任務：${assistant.task}｜${assistant.name}】\n${assistant.instruction}`
+        if (assistant.privacyNote) sys += `\n\n【私隱要求】${assistant.privacyNote}`
+      }
       const dir = personaById(persona).directive
       if (dir) sys += `\n\n【語氣要求】${dir}`
       if (contexts.length > 0) {
@@ -412,7 +430,14 @@ export default function AIAssistant() {
 
   // ── 核心：送出 / 串流 ──
   const runCompletion = useCallback(
-    async (threadId: string, model: AIModel, persona: PersonaId, temp: number, contexts: ContextRef[]) => {
+    async (
+      threadId: string,
+      model: AIModel,
+      persona: PersonaId,
+      temp: number,
+      contexts: ContextRef[],
+      assistant?: TeachingAssistantProfile,
+    ) => {
       const history: AIMessage[] = aiMessagesCol
         .get()
         .filter((m) => m.threadId === threadId)
@@ -426,10 +451,17 @@ export default function AIAssistant() {
 
       let full = ''
       let aborted = false
+      const startedAt = Date.now()
+      track('assistant_request_started', {
+        assistant_id: assistant?.id,
+        assistant_task: assistant?.task,
+        model,
+        has_reference_material: contexts.length > 0,
+      })
       try {
         for await (const chunk of streamChat({
           messages: history,
-          system: buildSystem(contexts, persona),
+          system: buildSystem(contexts, persona, assistant),
           model,
           temperature: temp,
           signal: controller.signal,
@@ -440,8 +472,21 @@ export default function AIAssistant() {
         }
       } catch (e) {
         const err = e as Error
-        if (err.name === 'AbortError') aborted = true
-        else toast.error(err.message || t('aiasst.toastError', { defaultValue: 'AI 出錯' }))
+        if (err.name === 'AbortError') {
+          aborted = true
+          track('assistant_request_stopped', {
+            assistant_id: assistant?.id,
+            model,
+          })
+        } else {
+          track('assistant_response_failed', {
+            assistant_id: assistant?.id,
+            assistant_task: assistant?.task,
+            model,
+            error_kind: err.name || 'Error',
+          })
+          toast.error(err.message || t('aiasst.toastError', { defaultValue: 'AI 出錯' }))
+        }
       } finally {
         // 串流被 abort（切對話／開新對話／封存／停止掣）時丟棄半截回覆，
         // 不要把截斷訊息持久化落 thread（避免殘留半截 AI 訊息 / 資料不一致）。
@@ -451,6 +496,17 @@ export default function AIAssistant() {
             role: 'model',
             content: full,
             createdAt: new Date().toISOString(),
+          })
+          track('assistant_response_completed', {
+            assistant_id: assistant?.id,
+            assistant_task: assistant?.task,
+            model,
+            latency_ms: Date.now() - startedAt,
+            response_chars: full.length,
+          })
+          trackOnce('activation_ai_response_completed', {
+            assistant_id: assistant?.id,
+            source: assistant ? 'teaching_assistant' : 'open_chat',
           })
         }
         setBusy(false)
@@ -471,11 +527,13 @@ export default function AIAssistant() {
       let persona = activePersona
       let temp = activeTemp
       let contexts = activeContexts
+      let assistant = activeAssistant
+      const startingThread = !threadId
 
       if (!threadId) {
         const t = aiThreadsCol.add({
           mode,
-          title: text.slice(0, 36),
+          title: draftAssistant?.task ?? text.slice(0, 36),
           createdAt: new Date().toISOString(),
         })
         threadId = t.id
@@ -485,11 +543,13 @@ export default function AIAssistant() {
           persona: draftPersona,
           temperature: draftTemp,
           contexts: draftContexts,
+          assistant: draftAssistant,
         })
         model = draftModel
         persona = draftPersona
         temp = draftTemp
         contexts = draftContexts
+        assistant = draftAssistant
         setCurrentThreadId(threadId)
       }
 
@@ -499,8 +559,21 @@ export default function AIAssistant() {
         content: text,
         createdAt: new Date().toISOString(),
       })
+      if (startingThread) {
+        track('assistant_conversation_started', {
+          assistant_id: assistant?.id,
+          assistant_task: assistant?.task,
+          source: assistant ? 'teaching_assistant' : 'open_chat',
+        })
+        if (assistant) {
+          trackOnce('activation_teaching_assistant_started', {
+            assistant_id: assistant.id,
+            assistant_task: assistant.task,
+          })
+        }
+      }
       // 輸入框由 Composer 自己清空（他 submit 後 setText('')）
-      await runCompletion(threadId, model, persona, temp, contexts)
+      await runCompletion(threadId, model, persona, temp, contexts, assistant)
     },
     [
       busy,
@@ -509,11 +582,13 @@ export default function AIAssistant() {
       activePersona,
       activeTemp,
       activeContexts,
+      activeAssistant,
       mode,
       draftModel,
       draftPersona,
       draftTemp,
       draftContexts,
+      draftAssistant,
       patchMeta,
       runCompletion,
     ],
@@ -528,8 +603,24 @@ export default function AIAssistant() {
       .sort((a, b) => a.createdAt.localeCompare(b.createdAt))
     const lastModel = [...msgs].reverse().find((m) => m.role === 'model')
     if (lastModel) aiMessagesCol.remove(lastModel.id)
-    await runCompletion(currentThreadId, activeModel, activePersona, activeTemp, activeContexts)
-  }, [currentThreadId, busy, runCompletion, activeModel, activePersona, activeTemp, activeContexts])
+    await runCompletion(
+      currentThreadId,
+      activeModel,
+      activePersona,
+      activeTemp,
+      activeContexts,
+      activeAssistant,
+    )
+  }, [
+    currentThreadId,
+    busy,
+    runCompletion,
+    activeModel,
+    activePersona,
+    activeTemp,
+    activeContexts,
+    activeAssistant,
+  ])
 
   // 編輯並重發某條 user 訊息（刪除他之後的所有訊息）
   const editAndResend = useCallback(
@@ -551,9 +642,24 @@ export default function AIAssistant() {
         content: text,
         createdAt: new Date().toISOString(),
       })
-      await runCompletion(currentThreadId, activeModel, activePersona, activeTemp, activeContexts)
+      await runCompletion(
+        currentThreadId,
+        activeModel,
+        activePersona,
+        activeTemp,
+        activeContexts,
+        activeAssistant,
+      )
     },
-    [currentThreadId, runCompletion, activeModel, activePersona, activeTemp, activeContexts],
+    [
+      currentThreadId,
+      runCompletion,
+      activeModel,
+      activePersona,
+      activeTemp,
+      activeContexts,
+      activeAssistant,
+    ],
   )
 
   // 由某條訊息開始往下刪
@@ -611,6 +717,7 @@ export default function AIAssistant() {
     abortRef.current?.abort()
     setCurrentThreadId(null)
     setStreaming(null)
+    setDraftAssistant(undefined)
     setSeed((s) => ({ text: '', n: s.n + 1 })) // Composer 清空 + 自動 focus
     closeSidebarOnMobile()
   }
@@ -905,12 +1012,16 @@ export default function AIAssistant() {
               <Badge tone="slate">{modelShort}</Badge>
             </div>
             <p className="mt-0.5 truncate text-xs text-slate-500 dark:text-slate-400">
-              {currentThreadId ? threadTitle : tagline}
+              {currentThreadId
+                ? threadTitle
+                : activeAssistant
+                  ? `${activeAssistant.name} · ${activeAssistant.task}`
+                  : tagline}
             </p>
           </div>
 
-          {/* 上下文 */}
-          <Tooltip label={t('aiasst.contextTooltip', { defaultValue: '連結資料做上下文' })}>
+          {/* 參考資料 */}
+          <Tooltip label={t('aiasst.contextTooltip', { defaultValue: '加入筆記或文件作參考' })}>
             <Button
               variant="secondary"
               size="sm"
@@ -918,7 +1029,7 @@ export default function AIAssistant() {
               onClick={() => setContextOpen(true)}
               className="hidden sm:inline-flex"
             >
-              {t('aiasst.context', { defaultValue: '上下文' })}
+              {t('aiasst.context', { defaultValue: '參考資料' })}
               {activeContexts.length > 0 && (
                 <span className="ml-1 rounded-full bg-accent px-1.5 text-[10px] font-semibold text-white tabular-nums">
                   {activeContexts.length}
@@ -966,7 +1077,7 @@ export default function AIAssistant() {
               })),
               { id: 'palette', label: t('aiasst.menuPalette', { defaultValue: `命令面板  ${MOD}K`, mod: MOD }), icon: Command, onSelect: () => setPaletteOpen(true) },
               { id: 'tpl', label: t('aiasst.menuTemplates', { defaultValue: `範本庫  ${MOD}/`, mod: MOD }), icon: Library, onSelect: () => setTemplateOpen(true) },
-              { id: 'ctx', label: t('aiasst.paletteActionCtx', { defaultValue: '連結上下文' }), icon: Paperclip, onSelect: () => setContextOpen(true) },
+              { id: 'ctx', label: t('aiasst.paletteActionCtx', { defaultValue: '加入參考資料' }), icon: Paperclip, onSelect: () => setContextOpen(true) },
               { id: 'export', label: t('aiasst.menuExport', { defaultValue: '匯出對話 (.md)' }), icon: Download, onSelect: exportConversation, disabled: !currentThreadId },
               { id: 'stats', label: t('aiasst.menuStats', { defaultValue: '用量統計' }), icon: BarChart3, onSelect: () => setStatsOpen(true) },
             ]}
@@ -981,7 +1092,7 @@ export default function AIAssistant() {
           {messages.length === 0 && streaming === null ? (
             <Welcome
               greeting={greeting}
-              tagline={tagline}
+              assistant={activeAssistant}
               templates={welcomeTemplatesForMode(mode)}
               onPick={(t) => {
                 // 帶變數：直接開「填寫」表單（之前係開成個範本庫，要在這裡再選擇多次先填到）。
@@ -994,6 +1105,7 @@ export default function AIAssistant() {
                 }
               }}
               onOpenLibrary={() => setTemplateOpen(true)}
+              onChangeTask={() => goToFeature('work-prompt-library')}
             />
           ) : (
             <>
@@ -1032,11 +1144,11 @@ export default function AIAssistant() {
           )}
         </div>
 
-        {/* 上下文 chip 列（有就顯示） */}
+        {/* 參考資料 chip 列（有就顯示） */}
         {activeContexts.length > 0 && (
           <div className="flex flex-wrap items-center gap-1.5 px-1">
             <span className="inline-flex items-center gap-1 text-[11px] font-medium text-slate-400 dark:text-slate-500">
-              <Paperclip size={11} /> {t('aiasst.context', { defaultValue: '上下文' })}
+              <Paperclip size={11} /> {t('aiasst.context', { defaultValue: '參考資料' })}
             </span>
             {activeContexts.map((c) => (
               <span
@@ -1049,7 +1161,7 @@ export default function AIAssistant() {
                   type="button"
                   onClick={() => setContexts(activeContexts.filter((x) => x.id !== c.id))}
                   className="flex h-4 w-4 items-center justify-center rounded-full text-accent-strong/70 transition hover:bg-accent/15 hover:text-accent-strong active:scale-[0.98] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent/50 dark:text-accent/70 dark:hover:bg-accent/20 dark:hover:text-accent"
-                  aria-label={t('aiasst.ctxRemoveChip', { defaultValue: `移除上下文：${c.title}`, title: c.title })}
+                  aria-label={t('aiasst.ctxRemoveChip', { defaultValue: `移除參考資料：${c.title}`, title: c.title })}
                 >
                   <X size={11} />
                 </button>
@@ -1065,6 +1177,7 @@ export default function AIAssistant() {
           busy={busy}
           contextCount={activeContexts.length}
           model={activeModel}
+          placeholder={activeAssistant?.starter}
           onSend={onSendStable}
           onStop={onStopStable}
           onOpenTemplate={onOpenTemplateStable}
@@ -1135,7 +1248,7 @@ export default function AIAssistant() {
         actions={[
           { id: 'new', label: t('aiasst.paletteActionNew', { defaultValue: '開新對話' }), icon: MessageSquarePlus, run: newConversation },
           { id: 'tpl', label: t('aiasst.paletteActionTpl', { defaultValue: '開範本庫' }), icon: Library, run: () => setTemplateOpen(true) },
-          { id: 'ctx', label: t('aiasst.paletteActionCtx', { defaultValue: '連結上下文' }), icon: Paperclip, run: () => setContextOpen(true) },
+          { id: 'ctx', label: t('aiasst.paletteActionCtx', { defaultValue: '加入參考資料' }), icon: Paperclip, run: () => setContextOpen(true) },
           { id: 'stats', label: t('aiasst.paletteActionStats', { defaultValue: '用量統計' }), icon: BarChart3, run: () => setStatsOpen(true) },
           { id: 'export', label: t('aiasst.paletteActionExport', { defaultValue: '匯出對話' }), icon: Download, run: exportConversation },
           { id: 'sidebar', label: t('aiasst.paletteActionSidebar', { defaultValue: '切換側欄' }), icon: PanelLeft, run: () => setSidebarOpen((v) => !v) },
@@ -1162,6 +1275,7 @@ const Composer = memo(function Composer({
   busy,
   contextCount,
   model,
+  placeholder,
   onSend,
   onStop,
   onOpenTemplate,
@@ -1171,6 +1285,7 @@ const Composer = memo(function Composer({
   busy: boolean
   contextCount: number
   model: AIModel
+  placeholder?: string
   onSend: (text: string) => void
   onStop: () => void
   onOpenTemplate: () => void
@@ -1245,23 +1360,25 @@ const Composer = memo(function Composer({
         ref={ref}
         rows={1}
         className="max-h-28 min-h-11 resize-none border-0 bg-transparent px-2.5 py-1.5 text-[16px] leading-relaxed shadow-none focus:ring-0 sm:text-[14px] dark:bg-transparent"
-        placeholder={t('aiasst.composerPlaceholder', {
-          defaultValue: `輸入你想問的內容…（Enter 送出 · Shift+Enter 換行 · ${MOD}/ 範本）`,
-          mod: MOD,
-        })}
+        placeholder={
+          placeholder ??
+          t('aiasst.composerPlaceholder', {
+            defaultValue: '輸入課題、要求或貼上內容…',
+          })
+        }
         defaultValue={seed.text}
         onInput={syncUi}
         onKeyDown={onKeyDown}
         disabled={busy}
       />
       <div className="flex items-center gap-1 px-0.5 pt-0.5">
-        <Tooltip label={t('aiasst.templateLibraryTooltip', { defaultValue: `範本庫（${MOD}/）`, mod: MOD })}>
-          <IconButton label={t('aiasst.templateLibrary', { defaultValue: '範本庫' })} size="sm" onClick={onOpenTemplate}>
+        <Tooltip label={t('aiasst.templateLibraryTooltip', { defaultValue: `任務範本（${MOD}/）`, mod: MOD })}>
+          <IconButton label={t('aiasst.templateLibrary', { defaultValue: '任務範本' })} size="sm" onClick={onOpenTemplate}>
             <Library size={16} />
           </IconButton>
         </Tooltip>
-        <Tooltip label={t('aiasst.linkContext', { defaultValue: '連結上下文' })}>
-          <IconButton label={t('aiasst.context', { defaultValue: '上下文' })} size="sm" active={contextCount > 0} onClick={onOpenContext}>
+        <Tooltip label={t('aiasst.linkContext', { defaultValue: '加入參考資料' })}>
+          <IconButton label={t('aiasst.context', { defaultValue: '參考資料' })} size="sm" active={contextCount > 0} onClick={onOpenContext}>
             <Paperclip size={16} />
           </IconButton>
         </Tooltip>
@@ -1374,20 +1491,67 @@ function ThreadRow({
 
 function Welcome({
   greeting,
-  tagline,
+  assistant,
   templates,
   onPick,
   onOpenLibrary,
+  onChangeTask,
 }: {
   greeting: string
-  tagline: string
+  assistant?: TeachingAssistantProfile
   templates: BuiltinTemplate[]
   onPick: (t: BuiltinTemplate) => void
   onOpenLibrary: () => void
+  onChangeTask: () => void
 }) {
   const { t } = useTranslation()
+
+  if (assistant) {
+    return (
+      <div className="mx-auto flex h-full max-w-xl flex-col items-center justify-center px-3 py-6 text-center sm:py-10">
+        <span className="flex h-12 w-12 items-center justify-center rounded-[14px] bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent">
+          <NotebookPen size={22} strokeWidth={1.75} />
+        </span>
+        <p className="mt-4 text-xs font-semibold text-accent">
+          {assistant.name}
+        </p>
+        <h2 className="mt-1.5 text-2xl font-semibold tracking-tight text-slate-900 dark:text-slate-100 sm:text-[28px]">
+          {assistant.task}
+        </h2>
+        <p className="mt-2 max-w-md text-sm leading-6 text-slate-500 dark:text-slate-400">
+          {assistant.summary}
+        </p>
+
+        <div className="mt-6 w-full rounded-[14px] bg-white px-4 py-4 text-left shadow-xs dark:bg-slate-800">
+          <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+            先告訴我
+          </p>
+          <p className="mt-1.5 text-sm leading-6 text-slate-700 dark:text-slate-200">
+            {assistant.starter}
+          </p>
+        </div>
+
+        {assistant.privacyNote && (
+          <p className="mt-3 inline-flex max-w-md items-start gap-2 text-left text-xs leading-5 text-slate-500 dark:text-slate-400">
+            <ShieldCheck size={15} className="mt-0.5 shrink-0 text-emerald-600 dark:text-emerald-400" />
+            {assistant.privacyNote}
+          </p>
+        )}
+
+        <button
+          type="button"
+          onClick={onChangeTask}
+          className="mt-4 inline-flex min-h-11 items-center gap-1.5 rounded-lg px-3 text-xs font-semibold text-slate-500 transition hover:bg-white hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-accent"
+        >
+          <Users size={14} />
+          選擇其他助手
+        </button>
+      </div>
+    )
+  }
+
   return (
-    <div className="mx-auto flex h-full max-w-2xl flex-col items-center justify-center gap-6 px-2 py-6 text-center sm:py-8">
+    <div className="mx-auto flex h-full max-w-2xl flex-col items-center justify-center gap-5 px-2 py-6 text-center sm:py-8">
       <div className="flex flex-col items-center gap-4">
         <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-accent-soft text-accent-strong ring-1 ring-accent/15 dark:bg-accent/15 dark:text-accent dark:ring-accent/25">
           <NotebookPen size={22} strokeWidth={1.75} />
@@ -1398,9 +1562,6 @@ function Welcome({
           </h2>
           <p className="mx-auto max-w-md text-sm leading-relaxed text-slate-500 dark:text-slate-400">
             {t('aiasst.welcomeSub', { defaultValue: '想從哪裡開始？選擇起點，或直接輸入你想準備的課題、想出的題目。' })}
-          </p>
-          <p className="pt-0.5 text-xs font-medium text-slate-400 dark:text-slate-500">
-            {tagline}
           </p>
         </div>
       </div>
@@ -1420,7 +1581,7 @@ function Welcome({
               <button
                 key={tpl.id}
                 onClick={() => onPick(tpl)}
-                className="group flex items-center gap-3 rounded-2xl border border-slate-200/80 bg-white p-3.5 text-left shadow-xs transition duration-200 hover:border-slate-300 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98] dark:border-slate-700/60 dark:bg-slate-800 dark:shadow-none dark:hover:border-slate-600"
+                className="group flex items-center gap-3 rounded-[14px] bg-white p-3.5 text-left shadow-xs ring-1 ring-inset ring-slate-200/70 transition duration-150 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 active:scale-[0.98] dark:bg-slate-800 dark:ring-slate-700/70 dark:hover:bg-slate-800/80"
               >
                 <span className={cx('flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition', tone)}>
                   <Icon size={18} strokeWidth={1.9} />
@@ -1440,7 +1601,7 @@ function Welcome({
         onClick={onOpenLibrary}
         className="inline-flex min-h-11 items-center gap-1.5 rounded-full px-3 text-xs font-medium text-slate-500 transition hover:bg-slate-100 hover:text-accent active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-accent"
       >
-        <Library size={14} /> {t('aiasst.welcomeSeeAllTemplates', { defaultValue: '查看全部全部範本' })}
+        <Library size={14} /> {t('aiasst.welcomeSeeAllTemplates', { defaultValue: '查看全部範本' })}
       </button>
     </div>
   )
@@ -1466,7 +1627,7 @@ function tempToStyle(temp: number): AiStyle {
 }
 
 // 落手位卡：按分類給專屬 icon（取代一式一樣的 Sparkles 火花）
-const CATEGORY_ICON: Record<string, typeof Sparkles> = {
+const CATEGORY_ICON: Record<string, typeof NotebookPen> = {
   出題: ListChecks,
   教學: NotebookPen,
   批改: PenLine,
@@ -1476,8 +1637,8 @@ const CATEGORY_ICON: Record<string, typeof Sparkles> = {
   規劃: CalendarRange,
   溝通: MessageCircle,
 }
-function categoryIcon(category: string): typeof Sparkles {
-  return CATEGORY_ICON[category] ?? Sparkles
+function categoryIcon(category: string): typeof NotebookPen {
+  return CATEGORY_ICON[category] ?? NotebookPen
 }
 
 function MessageBubble({
@@ -1502,6 +1663,7 @@ function MessageBubble({
   onSaveNote: () => void
 }) {
   const { t } = useTranslation()
+  const { mode } = useMode()
   const isUser = msg.role === 'user'
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(msg.content)
@@ -1532,6 +1694,10 @@ function MessageBubble({
   }
 
   const waiting = streaming && msg.content.length === 0
+  const assistantLabel =
+    mode === 'work'
+      ? t('aiasst.teachingAssistant', { defaultValue: '教學助手' })
+      : t('aiasst.learningAssistant', { defaultValue: '學習助手' })
 
   return (
     <div className={cx('group flex flex-col gap-1.5', isUser ? 'items-end' : 'items-start')}>
@@ -1553,7 +1719,7 @@ function MessageBubble({
               isUser ? 'text-right' : 'text-left',
             )}
           >
-            {isUser ? t('aiasst.you', { defaultValue: '你' }) : t('aiasst.aiAssistant', { defaultValue: 'AI 助手' })}
+            {isUser ? t('aiasst.you', { defaultValue: '你' }) : assistantLabel}
           </span>
           <div
             className={
@@ -1630,7 +1796,7 @@ function MessageBubble({
 function TypingDots() {
   const { t } = useTranslation()
   return (
-    <span className="flex items-center gap-1.5 py-0.5" aria-label={t('aiasst.aiTyping', { defaultValue: 'AI 正在輸入' })}>
+    <span className="flex items-center gap-1.5 py-0.5" aria-label={t('aiasst.aiTyping', { defaultValue: '助手正在輸入' })}>
       {[0, 1, 2].map((i) => (
         <span
           key={i}
@@ -1878,7 +2044,7 @@ function TemplateLibrary({
   }
 
   return (
-    <Modal open={open} onClose={onClose} title={t('aiasst.tplPromptLibrary', { defaultValue: '常用指令庫' })} size="lg">
+    <Modal open={open} onClose={onClose} title={t('aiasst.tplPromptLibrary', { defaultValue: '任務範本' })} size="lg">
       <div className="space-y-3">
         <div className="flex items-center gap-2">
           <SegmentedControl
@@ -1980,7 +2146,7 @@ function TemplateCard({
           {hasVars && <Badge tone="blue">{t('aiasst.tplHasVars', { defaultValue: '含變數' })}</Badge>}
           <span>{category}</span>
         </span>
-        <Button size="sm" variant="secondary" onClick={onUse}>{t('aiasst.tplInsert', { defaultValue: '插入' })}</Button>
+        <Button size="sm" variant="secondary" onClick={onUse}>{t('aiasst.tplInsert', { defaultValue: '使用' })}</Button>
       </div>
     </Card>
   )
@@ -2031,15 +2197,15 @@ function ContextPicker({
     ])
     setFreeTitle('')
     setFreeBody('')
-    toast.success(t('aiasst.ctxToastAdded', { defaultValue: '已加上下文' }))
+    toast.success(t('aiasst.ctxToastAdded', { defaultValue: '已加入參考資料' }))
   }
 
   const filt = (s: string) => !q.trim() || s.toLowerCase().includes(q.trim().toLowerCase())
 
   return (
-    <Modal open={open} onClose={onClose} title={t('aiasst.ctxLinkTitle', { defaultValue: '連結上下文資料' })} size="lg">
+    <Modal open={open} onClose={onClose} title={t('aiasst.ctxLinkTitle', { defaultValue: '加入參考資料' })} size="lg">
       <p className="mb-3 text-xs text-slate-400">
-        {t('aiasst.ctxIntro', { defaultValue: `選擇些筆記 / 紀錄做參考，AI 回答時會優先扣連這些內容。已選擇 ${current.length} 份。`, count: current.length })}
+        {t('aiasst.ctxIntro', { defaultValue: `選擇筆記或紀錄作參考，助手回答時會優先連繫這些內容。已選擇 ${current.length} 份。`, count: current.length })}
       </p>
       <div className="mb-3 flex flex-wrap items-center gap-2">
         <SegmentedControl
@@ -2119,8 +2285,8 @@ function ContextPicker({
         {tab === 'text' && (
           <div className="space-y-2">
             <Input placeholder={t('aiasst.ctxFreeTitlePlaceholder', { defaultValue: '標題（選填）' })} value={freeTitle} onChange={(e) => setFreeTitle(e.target.value)} />
-            <Textarea rows={5} placeholder={t('aiasst.ctxFreeBodyPlaceholder', { defaultValue: '貼上你想 AI 參考的文字…' })} value={freeBody} onChange={(e) => setFreeBody(e.target.value)} />
-            <Button size="sm" icon={Plus} onClick={addFree}>{t('aiasst.ctxAddContext', { defaultValue: '加入上下文' })}</Button>
+            <Textarea rows={5} placeholder={t('aiasst.ctxFreeBodyPlaceholder', { defaultValue: '貼上你想助手參考的文字…' })} value={freeBody} onChange={(e) => setFreeBody(e.target.value)} />
+            <Button size="sm" icon={Plus} onClick={addFree}>{t('aiasst.ctxAddContext', { defaultValue: '加入參考資料' })}</Button>
           </div>
         )}
       </div>

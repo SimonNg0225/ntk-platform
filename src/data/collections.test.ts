@@ -1,11 +1,11 @@
 import { describe, it, expect } from 'vitest'
 import { collectionRegistry } from '../lib/store'
-import { preloadAllFeatures } from '../features/registry'
+import { preloadFeatureData } from '../features/preloadData'
 import { exportAllData, importAllData, topicsCol } from './collections'
 
 // 各 feature 嘅 collection 係 lazy 動態 import 先 createCollection 並登記入
 // collectionRegistry。exportAllData / importAllData 都係枚舉 collectionRegistry，
-// 所以呼叫前必須 await preloadAllFeatures()（同 Settings 匯出/匯入/清除、sync.ts
+// 所以呼叫前必須 await preloadFeatureData()（同 Settings 匯出/匯入/清除、sync.ts
 // 一致），否則匯出殘缺、匯入靜靜跳過未登記嘅 feature col。
 //
 // 呢條 test 鎖住嗰個前置條件：preload 後 registry 一定含齊代表性 feature col，
@@ -19,10 +19,10 @@ const LAZY_FEATURE_KEYS = [
   'journal_v2',
 ]
 
-describe('exportAllData / importAllData ＋ preloadAllFeatures', () => {
+describe('exportAllData / importAllData ＋ preloadFeatureData', () => {
   it('preload 後 collectionRegistry 含齊 lazy feature collection', async () => {
     const before = collectionRegistry.size
-    await preloadAllFeatures()
+    await preloadFeatureData()
     const after = collectionRegistry.size
 
     // preload 真係多登記咗 lazy feature collection（唔止靜態核心清單）
@@ -33,7 +33,7 @@ describe('exportAllData / importAllData ＋ preloadAllFeatures', () => {
   })
 
   it('preload 後 exportAllData 含 feature collection（唔會殘缺）', async () => {
-    await preloadAllFeatures()
+    await preloadFeatureData()
     const { data } = exportAllData()
     for (const key of LAZY_FEATURE_KEYS) {
       expect(key in data).toBe(true)
@@ -41,7 +41,7 @@ describe('exportAllData / importAllData ＋ preloadAllFeatures', () => {
   })
 
   it('preload 後 importAllData 會寫入 feature collection（唔會靜靜跳過）', async () => {
-    await preloadAllFeatures()
+    await preloadFeatureData()
     const payload = {
       data: Object.fromEntries(
         LAZY_FEATURE_KEYS.map((key, i) => [key, [{ id: `imported-${i}` }]]),
@@ -106,7 +106,7 @@ describe('importAllData — 壞檔守衞 throw 分支', () => {
 describe('importAllData — 跳過非陣列 / 未登記 key（靜默分支）', () => {
   it('合法 payload（data 含登記 key 嘅陣列）會覆寫並回正確 count', async () => {
     // 確保 registry 含齊（同 happy-path 一致先 preload）
-    await preloadAllFeatures()
+    await preloadFeatureData()
     const seed = [{ id: 'sentinel-topic' }]
     importAllData({ data: { topics: seed } })
     expect(topicsCol.get()).toEqual(seed)

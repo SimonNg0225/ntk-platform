@@ -16,11 +16,18 @@ const PAGES = [
   { name: '定價頁', path: '/pricing' },
   { name: '私隱政策', path: '/privacy' },
   { name: 'App 主畫面（訪客）', path: '/app' },
+  { name: '語音助手', path: '/app/work-voice-assistant' },
 ]
 
 test.describe('無障礙 axe-core 掃描', () => {
   for (const { name, path } of PAGES) {
     test(`${name} 無 serious/critical a11y 違規`, async ({ page }) => {
+      if (path.startsWith('/app')) {
+        await page.addInitScript(() => {
+          localStorage.setItem('ntk.onboarded_v1', '1')
+          localStorage.setItem('ntk.cookieConsent', 'rejected')
+        })
+      }
       await page.goto(path)
       await page.waitForLoadState('networkidle')
 

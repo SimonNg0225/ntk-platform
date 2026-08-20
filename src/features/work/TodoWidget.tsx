@@ -79,6 +79,10 @@ import {
   smartSort,
   todayISO,
 } from './todo/util'
+import {
+  clearComposerHandoff,
+  readComposerHandoff,
+} from '../shared/composerHandoff'
 
 // ============================================================
 //  待辦 / 批改 — 老師的任務清單
@@ -236,9 +240,10 @@ export default function TodoWidget() {
   const templates = useCollection(templatesCol)
   const toast = useToast()
   const confirm = useConfirm()
+  const composerHandoff = useMemo(() => readComposerHandoff('work-tasks'), [])
 
   const [view, setView] = useState<ViewId>('today')
-  const [quick, setQuick] = useState('')
+  const [quick, setQuick] = useState(() => composerHandoff?.text ?? '')
   const [search, setSearch] = useState('')
   const [activeProject, setActiveProject] = useState<string | 'all' | 'inbox'>('all')
   const [activeTag, setActiveTag] = useState<string | null>(null)
@@ -257,6 +262,12 @@ export default function TodoWidget() {
   const QUICK_INPUT_ID = 'todo-quick-add'
   // 引導式空狀態 CTA：聚焦快速輸入框（純 UI，不改資料）
   const focusQuickAdd = () => document.getElementById(QUICK_INPUT_ID)?.focus()
+
+  useEffect(() => {
+    if (!composerHandoff) return
+    clearComposerHandoff('work-tasks')
+    window.requestAnimationFrame(focusQuickAdd)
+  }, [composerHandoff])
 
   // ───────── 合併成 FullTask（補底 meta）─────────
   const full: FullTask[] = useMemo(() => {

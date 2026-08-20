@@ -1,6 +1,8 @@
 export const FEATURE_SEARCH_ALIASES: Record<string, string[]> = {
+  'work-classroom-pack': ['課堂套裝', '整套備課', '一堂課', '教案 工作紙 簡報', 'lesson pack', 'classroom pack'],
   'work-ai': ['助手對話', 'chat', '追問', '修改答案', '繼續生成'],
   'work-prompt-library': ['教學助手', 'prompt', 'prompt 大全', 'AI 助手', '家長信', '電郵', 'email', '評語', '課堂活動'],
+  'work-voice-assistant': ['Ezi 助手', '智能助手', '語音助手', '智能語音', 'voice assistant', '講嘢', '咪高峰', '廣東話', 'Friday'],
   'work-lesson-plan': ['備課', '教案', 'lesson plan', '下一堂', '教學目標', '教學流程'],
   'work-generate': ['出題', '小測', 'quiz', 'worksheet', '練習', '試卷', '題目', 'MC'],
   'work-teach-guide': ['如何教', '教法', '教學指引', '學生誤解', '活動設計'],
@@ -16,7 +18,7 @@ export const FEATURE_SEARCH_ALIASES: Record<string, string[]> = {
   'work-admin-docs': ['行政文件', 'docx', '範本', '通告', '表格'],
   'work-scan': ['掃描', 'scan', '相片', 'PDF'],
   'work-doc-digest': ['文件摘要', '速讀', 'PDF', '行政文件', '重點'],
-  'work-transcribe': ['錄音', '逐字稿', 'transcribe', 'meeting audio'],
+  'work-transcribe': ['長錄音', '錄音檔', '逐字稿', 'transcribe', 'meeting audio'],
   'work-observation': ['觀課', '評課', 'lesson observation'],
   'work-report': ['週報', '工作報告', '回顧', 'report'],
   'learning-ai': ['AI 助手', 'chat', '問 AI', '解釋', '總結'],

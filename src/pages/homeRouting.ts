@@ -35,6 +35,37 @@ function stripAskDataIntent(input: string): string {
   )
 }
 
+function stripTaskIntent(input: string): string {
+  return (
+    input
+      .trim()
+      .replace(/^(幫我|請)?\s*(提醒我|記得要|新增待辦|加入待辦|加待辦)\s*[:：,，]?\s*/i, '')
+      .trim() || input.trim()
+  )
+}
+
+function stripCalendarIntent(input: string): string {
+  return (
+    input
+      .trim()
+      .replace(/^(幫我|請)?\s*(把|將)?\s*/i, '')
+      .replace(/\s*(加入|加到|放入|記入)\s*(我的)?\s*(行事曆|日曆|calendar).*$/i, '')
+      .replace(/^(行事曆|日曆|calendar)\s*(新增|加入|加)?\s*/i, '')
+      .trim() || input.trim()
+  )
+}
+
+function stripMeetingIntent(input: string): string {
+  return (
+    input
+      .trim()
+      .replace(/^(幫我|請)?\s*(開|新增|建立|整|做)\s*(一份|一個)?\s*/i, '')
+      .replace(/\s*(會議記錄|會議筆記|meeting notes?)\s*$/i, '')
+      .replace(/^[:：,，]\s*/, '')
+      .trim() || input.trim()
+  )
+}
+
 function materialToolFor(text: string): ComposerMaterialTool {
   if (/試卷|exam paper|paper/i.test(text)) return 'paper'
   if (/工作紙|worksheet/i.test(text)) return 'worksheet'
@@ -48,6 +79,59 @@ function materialToolFor(text: string): ComposerMaterialTool {
 export function inferWorkToolRoute(input: string): ComposerRoute | null {
   const text = input.trim().toLowerCase()
   if (!text) return null
+
+  if (hasIntent(text, [/ezi\s*(智能)?助手|智能助手|語音助手|智能語音|voice assistant|用語音.{0,8}(操作|問|開始)/i])) {
+    return { featureId: 'work-voice-assistant', label: 'Ezi 智能助手' }
+  }
+
+  if (hasIntent(text, [/(文件|通告|報告).{0,12}(摘要|撮要|重點|待辦|速讀)/i, /文件速讀|document digest/i])) {
+    return { featureId: 'work-doc-digest', label: '文件速讀' }
+  }
+
+  if (hasIntent(text, [/會議筆記|會議記錄|meeting notes?|minutes/i])) {
+    return {
+      featureId: 'work-meeting-notes',
+      label: '會議筆記',
+      handoffText: stripMeetingIntent(input),
+    }
+  }
+
+  if (hasIntent(text, [/待辦|todo|to-do|提醒我|記得要|批改.{0,8}(功課|練習|試卷)/i])) {
+    return {
+      featureId: 'work-tasks',
+      label: '待辦 / 批改',
+      handoffText: stripTaskIntent(input),
+    }
+  }
+
+  if (hasIntent(text, [/行事曆|日程|排程|calendar|加入.{0,8}(日期|活動|日曆)/i])) {
+    return {
+      featureId: 'calendar',
+      label: '行事曆',
+      handoffText: stripCalendarIntent(input),
+    }
+  }
+
+  if (
+    hasIntent(text, [
+      /課堂套裝|classroom pack|lesson pack/i,
+      /(一套|整套|一次).{0,12}(教案|備課).{0,18}(工作紙|練習).{0,18}(簡報|ppt|slides?)/i,
+      /(教案|備課).{0,18}(工作紙|練習).{0,18}(簡報|ppt|slides?)/i,
+    ])
+  ) {
+    return { featureId: 'work-classroom-pack', label: '課堂套裝' }
+  }
+
+  const hasRubricIntent = hasIntent(text, [
+    /評分準則|評分量表|rubric|marking scheme|評分指引/i,
+  ])
+  const hasMaterialIntent = hasIntent(text, [
+    /工作紙|小測|出題|試卷|練習題|題目|選擇題|多項選擇|短答|長題|個案題|worksheet|quiz|exam paper|mcq/i,
+    /(生成|設計|準備|製作).{0,16}(教材|練習|測驗|考核)/i,
+  ])
+  const createsMaterial = hasIntent(text, [
+    /(生成|設計|準備|製作|建立|出).{0,18}(工作紙|小測|試卷|練習題|題目|教材|練習|測驗|考核|worksheet|quiz|exam paper)/i,
+  ])
 
   if (
     hasIntent(text, [
@@ -67,21 +151,19 @@ export function inferWorkToolRoute(input: string): ComposerRoute | null {
     return { featureId: 'work-grade-analytics', label: '成績分析' }
   }
 
-  if (hasIntent(text, [/評分準則|評分量表|rubric|marking scheme|評分指引/i])) {
-    return { featureId: 'work-rubric', label: '評分準則' }
-  }
-
-  if (
-    hasIntent(text, [
-      /工作紙|小測|出題|試卷|練習題|題目|選擇題|多項選擇|短答|長題|個案題|worksheet|quiz|exam paper|mcq/i,
-      /(生成|設計|準備|製作).{0,16}(教材|練習|測驗|考核)/i,
-    ])
-  ) {
+  // A generated worksheet may include a rubric as one of its outputs. Keep the
+  // main object (the worksheet) in MaterialGen; rubric-only requests still route
+  // to the dedicated rubric workspace below.
+  if (hasMaterialIntent && (!hasRubricIntent || createsMaterial)) {
     return {
       featureId: 'work-generate',
       label: '教材生成',
       materialTool: materialToolFor(text),
     }
+  }
+
+  if (hasRubricIntent) {
+    return { featureId: 'work-rubric', label: '評分準則' }
   }
 
   if (
@@ -103,10 +185,6 @@ export function inferWorkToolRoute(input: string): ComposerRoute | null {
 
   if (hasIntent(text, [/word.{0,8}(範本|模板|套版)|行政文件.{0,8}(生成|套版)|填寫.{0,8}範本/i])) {
     return { featureId: 'work-admin-docs', label: '行政文件' }
-  }
-
-  if (hasIntent(text, [/(文件|通告|報告).{0,12}(摘要|撮要|重點|待辦|速讀)/i, /文件速讀|document digest/i])) {
-    return { featureId: 'work-doc-digest', label: '文件速讀' }
   }
 
   if (hasIntent(text, [/家長.{0,12}(訊息|電郵|回覆|溝通)|電郵回覆|email reply/i])) {
