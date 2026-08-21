@@ -26,12 +26,13 @@ type LiveVoiceCallbacks = {
   onStatus: (status: LiveVoiceStatus) => void
   onTranscript: (update: LiveTranscriptUpdate) => void
   onToolCall: (call: LiveToolCall) => Promise<unknown>
-  onError: (message: string) => void
+  onError: (message: string, code?: string) => void
 }
 
 type LiveTokenResponse = {
   token: string
   setup: Record<string, unknown>
+  apiVersion?: 'v1alpha' | 'v1beta'
 }
 
 type AudioWindow = Window & {
@@ -62,8 +63,9 @@ type LiveServerMessage = {
   }
 }
 
-const LIVE_SOCKET_URL =
-  'wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1alpha.GenerativeService.BidiGenerateContentConstrained'
+const LIVE_SOCKET_BASE =
+  'wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage'
+const LIVE_INPUT_SAMPLE_RATE = 16_000
 const MAX_SESSION_MS = 10 * 60 * 1000
 
 export class LiveVoiceError extends Error {
@@ -112,6 +114,33 @@ export function float32ToPcm16Base64(samples: Float32Array): string {
     binary += String.fromCharCode(bytes[index] ?? 0)
   }
   return btoa(binary)
+}
+
+export function resampleFloat32(
+  samples: Float32Array,
+  inputSampleRate: number,
+  outputSampleRate = LIVE_INPUT_SAMPLE_RATE,
+): Float32Array {
+  if (!samples.length || inputSampleRate <= 0 || outputSampleRate <= 0) {
+    return new Float32Array()
+  }
+  if (inputSampleRate === outputSampleRate) return samples.slice()
+
+  const ratio = inputSampleRate / outputSampleRate
+  const outputLength = Math.max(1, Math.round(samples.length / ratio))
+  const output = new Float32Array(outputLength)
+
+  for (let outputIndex = 0; outputIndex < outputLength; outputIndex += 1) {
+    const start = Math.floor(outputIndex * ratio)
+    const end = Math.min(samples.length, Math.max(start + 1, Math.floor((outputIndex + 1) * ratio)))
+    let total = 0
+    for (let inputIndex = start; inputIndex < end; inputIndex += 1) {
+      total += samples[inputIndex] ?? 0
+    }
+    output[outputIndex] = total / Math.max(1, end - start)
+  }
+
+  return output
 }
 
 export function pcm16Base64ToFloat32(base64: string): Float32Array {
@@ -261,11 +290,11 @@ export class GeminiLiveVoiceSession {
       this.ensureSessionActive()
       await this.player.start()
       this.ensureSessionActive()
-      const { token, setup } = await requestLiveToken(language, context)
+      const { token, setup, apiVersion = 'v1alpha' } = await requestLiveToken(language, context)
       this.ensureSessionActive()
-      await this.openSocket(token, setup)
+      await this.openSocket(token, setup, apiVersion)
       this.ensureSessionActive()
-      this.startCapture()
+      await this.startCapture()
       this.callbacks.onStatus('listening')
       this.sessionTimer = window.setTimeout(() => {
         this.stop()
@@ -278,31 +307,37 @@ export class GeminiLiveVoiceSession {
     }
   }
 
-  private openSocket(token: string, setup: Record<string, unknown>): Promise<void> {
+  private openSocket(
+    token: string,
+    setup: Record<string, unknown>,
+    apiVersion: 'v1alpha' | 'v1beta',
+  ): Promise<void> {
     return new Promise((resolve, reject) => {
       this.setupResolver = resolve
       this.setupRejecter = reject
-      const socket = new WebSocket(`${LIVE_SOCKET_URL}?access_token=${encodeURIComponent(token)}`)
+      const socketUrl = `${LIVE_SOCKET_BASE}.${apiVersion}.GenerativeService.BidiGenerateContentConstrained`
+      const socket = new WebSocket(`${socketUrl}?access_token=${encodeURIComponent(token)}`)
       this.socket = socket
       socket.onopen = () => socket.send(JSON.stringify({ setup }))
       socket.onmessage = (event) => void this.handleMessage(event.data)
-      socket.onerror = () => reject(new LiveVoiceError('自然語音暫時未能連接。'))
-      socket.onclose = () => {
+      socket.onerror = () => reject(new LiveVoiceError('即時語音暫時未能連接。', 'socket_error'))
+      socket.onclose = (event) => {
         if (this.closedByUser) return
-        const error = new LiveVoiceError('自然語音連線已中斷，可重新開始。')
+        const code = `socket_close_${event.code || 'unknown'}`
+        const error = new LiveVoiceError('即時語音連線已中斷，可重新開始。', code)
         this.setupRejecter?.(error)
         this.stop()
-        this.callbacks.onError('自然語音連線已中斷，可重新開始。')
+        this.callbacks.onError(error.message, code)
         this.callbacks.onStatus('error')
       }
       this.setupTimer = window.setTimeout(
-        () => reject(new LiveVoiceError('自然語音連接需時較長，請再試一次。')),
+        () => reject(new LiveVoiceError('即時語音連接需時較長，請再試一次。', 'setup_timeout')),
         12_000,
       )
     })
   }
 
-  private startCapture(): void {
+  private async startCapture(): Promise<void> {
     if (!this.stream || !this.socket) return
     const AudioContextClass = audioContextConstructor()
     if (!AudioContextClass) return
@@ -315,11 +350,16 @@ export class GeminiLiveVoiceSession {
       if (this.inputMuted || this.socket?.readyState !== WebSocket.OPEN) return
       if ((this.socket.bufferedAmount ?? 0) > 1_000_000) return
       const samples = event.inputBuffer.getChannelData(0)
+      const resampled = resampleFloat32(
+        samples,
+        this.captureContext?.sampleRate ?? 48_000,
+        LIVE_INPUT_SAMPLE_RATE,
+      )
       this.send({
         realtimeInput: {
           audio: {
-            data: float32ToPcm16Base64(samples),
-            mimeType: `audio/pcm;rate=${this.captureContext?.sampleRate ?? 48_000}`,
+            data: float32ToPcm16Base64(resampled),
+            mimeType: `audio/pcm;rate=${LIVE_INPUT_SAMPLE_RATE}`,
           },
         },
       })
@@ -327,7 +367,7 @@ export class GeminiLiveVoiceSession {
     this.captureSource.connect(this.processor)
     this.processor.connect(this.silentGain)
     this.silentGain.connect(this.captureContext.destination)
-    void this.captureContext.resume()
+    await this.captureContext.resume()
   }
 
   private async handleMessage(raw: unknown): Promise<void> {

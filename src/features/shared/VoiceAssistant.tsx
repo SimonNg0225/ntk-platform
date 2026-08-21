@@ -303,9 +303,12 @@ export default function VoiceAssistant() {
     [nav, toast],
   )
 
-  const handleLiveError = useCallback((message: string) => {
+  const handleLiveError = useCallback((message: string, code?: string) => {
     setStatusMessage(message)
-    track('voice_live_session_failed', { error_kind: 'live_connection' })
+    track('voice_live_session_failed', {
+      error_kind: 'live_connection',
+      error_code: code ?? 'unknown',
+    })
   }, [])
 
   const liveVoice = useLiveVoice({
@@ -445,7 +448,7 @@ export default function VoiceAssistant() {
       conversationLoopRef.current = false
       try {
         await liveVoice.start(language, liveContext)
-        setStatusMessage('直接說話即可，我會自動回應。')
+        setStatusMessage('即時對話已連線，直接說話即可。')
         track('voice_live_session_started', { language })
         trackOnce('activation_voice_assistant_started', { language, mode: 'live' })
         return
@@ -453,11 +456,12 @@ export default function VoiceAssistant() {
         if (error instanceof LiveVoiceError && error.code === 'cancelled') return
         track('voice_live_session_fallback', {
           error_kind: error instanceof Error ? error.name : 'Error',
+          error_code: error instanceof LiveVoiceError ? error.code : 'unknown',
         })
       }
     }
 
-    startListening('已切換至快速語音，講完會自動送出。')
+    startListening('即時對話暫時未能連線，已改用逐句語音；講完會自動送出。')
   }
 
   const toggleListening = () => {
@@ -1045,7 +1049,7 @@ export default function VoiceAssistant() {
                 type="button"
                 onClick={toggleListening}
                 disabled={!voiceInputSupported}
-                aria-label={voiceSessionActive ? '結束語音對話' : '開始自然語音對話'}
+                aria-label={voiceSessionActive ? '結束語音對話' : '開始即時語音對話'}
                 className={cx(
                   'flex h-14 w-14 cursor-pointer items-center justify-center rounded-full text-white shadow-sm transition duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-accent/25 motion-reduce:transition-none disabled:cursor-not-allowed disabled:bg-slate-300 dark:disabled:bg-slate-700 sm:h-16 sm:w-16',
                   voiceSessionActive
@@ -1272,7 +1276,7 @@ export default function VoiceAssistant() {
                     voiceInputSupported
                       ? voiceSessionActive
                         ? '結束語音對話'
-                        : '開始自然語音對話'
+                        : '開始即時語音對話'
                       : '此瀏覽器不支援語音輸入'
                   }
                 >
@@ -1280,7 +1284,7 @@ export default function VoiceAssistant() {
                     type="button"
                     onClick={toggleListening}
                     disabled={!voiceInputSupported || working}
-                    aria-label={voiceSessionActive ? '結束語音對話' : '開始自然語音對話'}
+                    aria-label={voiceSessionActive ? '結束語音對話' : '開始即時語音對話'}
                     className={cx(
                       'flex h-11 w-11 cursor-pointer items-center justify-center rounded-full transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 disabled:cursor-not-allowed disabled:opacity-40',
                       voiceSessionActive

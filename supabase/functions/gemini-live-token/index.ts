@@ -62,8 +62,6 @@ ${localContext || '暫時沒有相關待辦或日程。'}
         prefixPaddingMs: 160,
         silenceDurationMs: 600,
       },
-      activityHandling: 'START_OF_ACTIVITY_INTERRUPTS',
-      turnCoverage: 'TURN_INCLUDES_ONLY_ACTIVITY',
     },
     inputAudioTranscription: {},
     outputAudioTranscription: {},
@@ -150,7 +148,7 @@ Deno.serve(async (request: Request) => {
         502,
       )
     }
-    return json({ token: result.name, setup })
+    return json({ token: result.name, setup, apiVersion: 'v1alpha' })
   } catch (error) {
     console.error('Gemini Live token request failed', error)
     return json(

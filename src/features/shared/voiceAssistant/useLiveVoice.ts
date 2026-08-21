@@ -16,7 +16,7 @@ export function useLiveVoice({
 }: {
   onTranscript: (update: LiveTranscriptUpdate) => void
   onToolCall: (call: LiveToolCall) => Promise<unknown>
-  onError: (message: string) => void
+  onError: (message: string, code?: string) => void
 }) {
   const [status, setStatus] = useState<LiveVoiceStatus>('idle')
   const [inputMuted, setInputMutedState] = useState(false)
@@ -48,7 +48,7 @@ export function useLiveVoice({
       onStatus: setStatus,
       onTranscript: (update) => transcriptHandlerRef.current(update),
       onToolCall: (call) => toolHandlerRef.current(call),
-      onError: (message) => errorHandlerRef.current(message),
+      onError: (message, code) => errorHandlerRef.current(message, code),
     })
     sessionRef.current = session
     try {

@@ -3,6 +3,7 @@ import {
   float32ToPcm16Base64,
   mergeLiveTranscript,
   pcm16Base64ToFloat32,
+  resampleFloat32,
 } from './liveVoice'
 
 describe('即時語音音訊轉換', () => {
@@ -18,6 +19,14 @@ describe('即時語音音訊轉換', () => {
         expect.closeTo(1, 3),
       ]),
     )
+  })
+
+  it('把瀏覽器音訊重採樣成 Gemini Live 要求的 16 kHz', () => {
+    const source = new Float32Array(4_800).fill(0.5)
+    const resampled = resampleFloat32(source, 48_000, 16_000)
+    expect(resampled).toHaveLength(1_600)
+    expect(resampled[0]).toBeCloseTo(0.5)
+    expect(resampled.at(-1)).toBeCloseTo(0.5)
   })
 })
 
