@@ -2,7 +2,13 @@ import type { Task, CalendarEvent } from '../../../data/types'
 import type { ComposerMaterialTool } from '../composerHandoff'
 import { inferWorkToolRoute } from '../../../pages/homeRouting'
 
-export type AgentStepKind = 'open_tool' | 'create_task' | 'create_event'
+export type AgentStepKind =
+  | 'open_tool'
+  | 'create_task'
+  | 'create_event'
+  | 'complete_tasks'
+  | 'reopen_tasks'
+  | 'delete_tasks'
 
 type AgentStepBase = {
   id: string
@@ -32,7 +38,16 @@ export type AgentCreateEventStep = AgentStepBase & {
   time?: string
 }
 
-export type AgentStep = AgentOpenToolStep | AgentCreateTaskStep | AgentCreateEventStep
+export type AgentTaskMutationStep = AgentStepBase & {
+  kind: 'complete_tasks' | 'reopen_tasks' | 'delete_tasks'
+  taskIds: string[]
+}
+
+export type AgentStep =
+  | AgentOpenToolStep
+  | AgentCreateTaskStep
+  | AgentCreateEventStep
+  | AgentTaskMutationStep
 
 export type AgentPlan = {
   id: string
@@ -46,27 +61,43 @@ export type AgentPlan = {
 
 export type AssistantContext = {
   activeTasks: Array<Pick<Task, 'id' | 'text'> & { due?: string }>
+  completedTasks: Array<Pick<Task, 'id' | 'text'> & { due?: string }>
   todayEvents: Array<Pick<CalendarEvent, 'id' | 'title' | 'time'>>
   overdueCount: number
   todayKey: string
 }
 
 export const AGENT_TOOLS = {
+  'work-dashboard': '工作台首頁',
   'work-classroom-pack': '課堂套裝',
   'work-slides': '簡報工作室',
   'work-generate': '教材生成',
   'work-lesson-plan': '備課 / 教案',
+  'work-timetable': '時間表',
+  'work-questions': '題庫組卷',
+  'work-teach-guide': '課堂流程',
   'work-rubric': '評分準則',
+  'work-dse': '公開試操練',
   'work-grade-analytics': '成績分析',
+  'work-topic-import': '課題匯入',
+  'work-resources': '教學資源',
+  'work-community': '教師社群',
   'work-meeting-notes': '會議筆記',
+  'work-team': '團隊協作',
   'work-doc-digest': '文件速讀',
   'work-admin-docs': '行政文件',
   'work-prompt-library': '教學助手',
   'work-transcribe': '錄音轉文字',
   'work-scan': '掃描 PDF',
+  'work-observation': '觀課記錄',
+  'work-report': '報告生成',
   search: '全域搜尋',
   calendar: '行事曆',
   'work-tasks': '待辦 / 批改',
+  inbox: '收件匣',
+  countdown: '倒數事項',
+  'community-forum': '討論區',
+  'ask-data': '資料問答',
 } as const
 
 export type AgentToolId = keyof typeof AGENT_TOOLS
@@ -269,7 +300,131 @@ function addToolStep(
   })
 }
 
-export function buildLocalAgentPlan(input: string, now = new Date()): AgentPlan | null {
+const EXPLICIT_TOOL_ALIASES: ReadonlyArray<[AgentToolId, RegExp]> = [
+  ['work-dashboard', /工作台(?:首頁)?|主頁|首頁/i],
+  ['work-classroom-pack', /課堂套裝/i],
+  ['work-prompt-library', /教學助手|專家助手/i],
+  ['work-lesson-plan', /備課|教案/i],
+  ['work-timetable', /時間表|timetable/i],
+  ['work-questions', /題庫|組卷/i],
+  ['work-generate', /教材生成|工作紙|試卷生成/i],
+  ['work-teach-guide', /課堂流程|教學流程/i],
+  ['work-slides', /簡報工作室|簡報|投影片|ppt|powerpoint/i],
+  ['work-rubric', /評分準則|評分量表|rubric/i],
+  ['work-dse', /公開試操練|dse/i],
+  ['work-grade-analytics', /成績分析|分數分析/i],
+  ['work-topic-import', /課題匯入|匯入課題/i],
+  ['work-resources', /教學資源|資源庫/i],
+  ['work-community', /教師社群/i],
+  ['work-tasks', /待辦|批改清單|任務清單/i],
+  ['work-meeting-notes', /會議筆記|會議記錄/i],
+  ['work-team', /團隊協作|團隊/i],
+  ['work-admin-docs', /行政文件/i],
+  ['work-scan', /掃描\s*pdf|文件掃描/i],
+  ['work-doc-digest', /文件速讀|文件摘要/i],
+  ['work-transcribe', /錄音轉文字|逐字稿/i],
+  ['work-observation', /觀課記錄|觀課/i],
+  ['work-report', /報告生成|工作報告/i],
+  ['calendar', /行事曆|日曆|calendar/i],
+  ['search', /全域搜尋|搜尋/i],
+  ['inbox', /收件匣|inbox/i],
+  ['countdown', /倒數事項|倒數/i],
+  ['community-forum', /討論區|forum/i],
+  ['ask-data', /資料問答|問我的資料/i],
+]
+
+function explicitlyRequestedTool(input: string): AgentToolId | null {
+  const command = input.match(
+    /(?:打開|開啟|前往|去到|進入|查看|睇|顯示|open|show|(?<!重)開)\s*(.+)$/i,
+  )
+  if (!command?.[1]) return null
+  return EXPLICIT_TOOL_ALIASES.find(([, aliases]) => aliases.test(command[1]))?.[0] ?? null
+}
+
+function compactTaskText(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/[\s，。！？、,.!?：:；;「」『』()（）\[\]]+/g, '')
+}
+
+function taskIdsMentioned(
+  request: string,
+  tasks: AssistantContext['activeTasks'],
+): string[] {
+  const compactRequest = compactTaskText(request)
+  const direct = tasks.filter((task) => {
+    const compactText = compactTaskText(task.text)
+    return compactText.length >= 2 && compactRequest.includes(compactText)
+  })
+  if (direct.length > 0) return direct.map((task) => task.id)
+  if (tasks.length === 1 && /(呢(?:一)?項|這(?:一)?項|嗰(?:一)?項|那(?:一)?項|佢)/.test(request)) {
+    return [tasks[0].id]
+  }
+  return []
+}
+
+function taskSelectionDetail(
+  taskIds: string[],
+  tasks: Array<Pick<Task, 'id' | 'text'>>,
+): string {
+  const selected = taskIds
+    .map((id) => tasks.find((task) => task.id === id)?.text)
+    .filter((value): value is string => Boolean(value))
+  const preview = selected.slice(0, 2).join('、')
+  if (!preview) return `${taskIds.length} 項待辦`
+  return `${taskIds.length} 項待辦：${preview}${selected.length > 2 ? ` 等 ${selected.length} 項` : ''}`
+}
+
+function addTaskMutationStep(
+  steps: AgentStep[],
+  request: string,
+  context: AssistantContext | undefined,
+): boolean {
+  const bareAllCompletion = /^(全部|所有)(都)?(已)?(完成|搞掂|做完)(咗|了)?$/i.test(request.trim())
+  if (!context || (!bareAllCompletion && !/(待辦|任務|事項|todo|to-do)/i.test(request))) {
+    return false
+  }
+  const asksDelete = /(刪除|刪走|移除|清除|清空|delete)/i.test(request)
+  const asksReopen = /(重新開啟|重開|恢復|還原|改回未完成|標記(?:為|做)?未完成|設為未完成|reopen)/i.test(request)
+  const asksComplete = /(完成|已完成|搞掂|處理晒|處理好|標記|done|complete)/i.test(request)
+  if (!asksDelete && !asksReopen && !asksComplete) return false
+
+  const allRequested = /(全部|所有|成個|整個|清空|all)/i.test(request)
+  const candidates = asksReopen
+    ? context.completedTasks
+    : asksDelete
+      ? [...context.activeTasks, ...context.completedTasks]
+      : context.activeTasks
+  const taskIds = allRequested
+    ? candidates.map((task) => task.id)
+    : taskIdsMentioned(request, candidates)
+  if (taskIds.length === 0) return false
+
+  const kind: AgentTaskMutationStep['kind'] = asksDelete
+    ? 'delete_tasks'
+    : asksReopen
+      ? 'reopen_tasks'
+      : 'complete_tasks'
+  const labels = {
+    complete_tasks: { title: `完成 ${taskIds.length} 項待辦`, verb: '標記為完成' },
+    reopen_tasks: { title: `重開 ${taskIds.length} 項待辦`, verb: '改回未完成' },
+    delete_tasks: { title: `刪除 ${taskIds.length} 項待辦`, verb: '從待辦清單刪除' },
+  } as const
+  steps.push({
+    id: stepId(steps.length),
+    kind,
+    taskIds,
+    title: labels[kind].title,
+    detail: `${taskSelectionDetail(taskIds, candidates)} · 將${labels[kind].verb}`,
+  })
+  return true
+}
+
+export function buildLocalAgentPlan(
+  input: string,
+  now = new Date(),
+  context?: AssistantContext,
+): AgentPlan | null {
   const request = stripAssistantWakeWord(input)
   if (!request) return null
   const steps: AgentStep[] = []
@@ -277,6 +432,8 @@ export function buildLocalAgentPlan(input: string, now = new Date()): AgentPlan 
   const wantsTask = /提醒我|記得要|新增待辦|加入待辦|加待辦|todo|to-do/i.test(request)
   const wantsEvent = /行事曆|日曆|加入日程|排入日程|calendar/i.test(request)
   const wantsPack = classroomPackRequested(request)
+
+  const hasTaskMutation = addTaskMutationStep(steps, request, context)
 
   if (wantsPack) {
     addToolStep(steps, 'work-classroom-pack', request, { title: '建立完整課堂套裝' })
@@ -292,7 +449,7 @@ export function buildLocalAgentPlan(input: string, now = new Date()): AgentPlan 
     }
   }
 
-  if (wantsTask) {
+  if (wantsTask && !hasTaskMutation) {
     const fallback = wantsPack ? '完成課堂套裝' : '完成這項工作'
     const taskText = extractTaskText(request, fallback)
     steps.push({
@@ -305,7 +462,7 @@ export function buildLocalAgentPlan(input: string, now = new Date()): AgentPlan 
     })
   }
 
-  if (wantsEvent) {
+  if (wantsEvent && !hasTaskMutation) {
     const eventTitle = extractEventTitle(request) || '新活動'
     if (temporal.date) {
       steps.push({
@@ -322,6 +479,11 @@ export function buildLocalAgentPlan(input: string, now = new Date()): AgentPlan 
     }
   }
 
+  const explicitTool = explicitlyRequestedTool(request)
+  if (explicitTool) {
+    addToolStep(steps, explicitTool, request, { title: `開啟${AGENT_TOOLS[explicitTool]}` })
+  }
+
   if (steps.length === 0) {
     const route = inferWorkToolRoute(request)
     if (route && route.featureId !== 'work-voice-assistant' && route.featureId in AGENT_TOOLS) {
@@ -336,10 +498,17 @@ export function buildLocalAgentPlan(input: string, now = new Date()): AgentPlan 
   const mutations = steps.filter((step) => step.kind !== 'open_tool').length
   const needsConfirmation = mutations > 0 || steps.length > 1
   const title = steps.length === 1 ? steps[0].title : `我會分 ${steps.length} 步完成`
-  const summary =
-    mutations > 0
-      ? '我會先建立所需項目，再把其餘工作準備好。'
-      : '我已整理好執行次序，確認後便逐步開始。'
+  const deletesData = steps.some((step) => step.kind === 'delete_tasks')
+  const changesExistingData = steps.some((step) =>
+    ['complete_tasks', 'reopen_tasks', 'delete_tasks'].includes(step.kind),
+  )
+  const summary = deletesData
+    ? '這會刪除現有資料；確認後才會執行，完成後仍可撤回。'
+    : changesExistingData
+      ? '我會按目前清單更新實際狀態；確認後才會寫入，完成後仍可撤回。'
+      : mutations > 0
+        ? '我會先建立所需項目，再把其餘工作準備好。'
+        : '我已整理好執行次序，確認後便逐步開始。'
 
   return {
     id: agentPlanId(),
@@ -350,6 +519,20 @@ export function buildLocalAgentPlan(input: string, now = new Date()): AgentPlan 
     source: 'local',
     needsConfirmation,
   }
+}
+
+export function isPlanConfirmation(input: string): boolean {
+  const text = stripAssistantWakeWord(input)
+    .toLowerCase()
+    .replace(/[\s，。！？、,.!?]+/g, '')
+  return /^(係|係呀|係啊|是|好|好呀|好啊|好的|可以|確認|確定|確認執行|確定執行|執行|執行啦|立即執行|開始|開始啦|做啦|幫我做|全部已完成|全部都完成|全部搞掂|ok|okay|yes|confirm)$/.test(text)
+}
+
+export function isPlanCancellation(input: string): boolean {
+  const text = stripAssistantWakeWord(input)
+    .toLowerCase()
+    .replace(/[\s，。！？、,.!?]+/g, '')
+  return /^(取消|不要|唔好|唔使|不用|算了|停|停止|cancel|no)$/.test(text)
 }
 
 export function isBriefingRequest(input: string): boolean {
@@ -382,6 +565,6 @@ export function buildDailyBriefing(context: AssistantContext): string {
 
 export function shouldUseModelPlanner(input: string): boolean {
   const text = stripAssistantWakeWord(input)
-  return /^(幫我|請|我要|我想|安排|建立|準備|製作|新增|整理|處理)/.test(text) &&
+  return /^(幫我|請|我要|我想|安排|建立|準備|製作|新增|整理|處理|完成|重開|恢復|刪除|移除|打開|開啟|前往)/.test(text) &&
     !/[?？]$/.test(text)
 }

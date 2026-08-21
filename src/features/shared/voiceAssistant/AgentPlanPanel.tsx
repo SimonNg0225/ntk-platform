@@ -3,6 +3,7 @@ import {
   ArrowUpRight,
   CalendarPlus,
   CheckCircle2,
+  CircleCheckBig,
   Circle,
   LayoutGrid,
   ListChecks,
@@ -10,6 +11,7 @@ import {
   LoaderCircle,
   RotateCcw,
   ShieldCheck,
+  Trash2,
 } from 'lucide-react'
 import { Button, cx } from '../../../ui'
 import type { AgentOpenToolStep, AgentPlan } from './agent'
@@ -26,6 +28,9 @@ const STEP_ICON = {
   open_tool: LayoutGrid,
   create_task: ListTodo,
   create_event: CalendarPlus,
+  complete_tasks: CircleCheckBig,
+  reopen_tasks: RotateCcw,
+  delete_tasks: Trash2,
 } as const
 
 function StepStatus({ state }: { state: AgentStepState }) {
@@ -60,7 +65,15 @@ export default function AgentPlanPanel({
   onOpenTool: (step: AgentOpenToolStep) => void
   onUndo: () => void
 }) {
-  const statusLabel = executing ? '正在執行' : completed ? '已完成' : '等你確認'
+  const hasFailed = Object.values(states).some((state) => state === 'failed')
+  const statusLabel = executing
+    ? '正在執行'
+    : completed
+      ? hasFailed
+        ? '部分完成'
+        : '已完成'
+      : '等你確認'
+  const deletesData = plan.steps.some((step) => step.kind === 'delete_tasks')
 
   return (
     <article
@@ -83,7 +96,9 @@ export default function AgentPlanPanel({
           className={cx(
             'shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold',
             completed
-              ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300'
+              ? hasFailed
+                ? 'bg-rose-50 text-rose-700 dark:bg-rose-500/10 dark:text-rose-300'
+                : 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300'
               : executing
                 ? 'bg-accent-soft text-accent-strong dark:bg-accent/15 dark:text-accent'
                 : 'bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300',
@@ -136,9 +151,20 @@ export default function AgentPlanPanel({
 
       {!completed && !executing && (
         <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-5">
-          <span className="flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-300">
-            <ShieldCheck size={15} className="text-emerald-600" />
-            寫入資料前由你確認
+          <span
+            className={cx(
+              'flex items-center gap-1.5 text-xs',
+              deletesData
+                ? 'text-rose-700 dark:text-rose-300'
+                : 'text-slate-600 dark:text-slate-300',
+            )}
+          >
+            {deletesData ? (
+              <Trash2 size={15} aria-hidden />
+            ) : (
+              <ShieldCheck size={15} className="text-emerald-600" aria-hidden />
+            )}
+            {deletesData ? '將刪除現有資料，完成後可撤回' : '寫入資料前由你確認'}
           </span>
           <div className="flex items-center gap-2">
             <Button type="button" size="sm" variant="ghost" onClick={onCancel}>
@@ -154,7 +180,7 @@ export default function AgentPlanPanel({
       {completed && canUndo && (
         <div className="flex justify-end px-4 py-3 sm:px-5">
           <Button type="button" size="sm" variant="ghost" icon={RotateCcw} onClick={onUndo}>
-            撤回新增項目
+            撤回剛才操作
           </Button>
         </div>
       )}

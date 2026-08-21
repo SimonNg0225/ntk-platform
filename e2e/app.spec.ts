@@ -84,7 +84,7 @@ test.describe('產品外殼', () => {
     await expect(page.getByText('寫入資料前由你確認')).toBeVisible()
     await page.getByRole('button', { name: '確認並執行' }).click()
 
-    await expect(page.getByText(/已新增 1 個項目/)).toBeVisible()
+    await expect(page.getByText('已新增 1 項待辦。')).toBeVisible()
     await expect(page.getByRole('button', { name: '開啟課堂套裝' })).toBeVisible()
     await expect
       .poll(() =>
@@ -96,8 +96,8 @@ test.describe('產品外殼', () => {
       )
       .toBe(true)
 
-    await page.getByRole('button', { name: '撤回新增項目' }).click()
-    await expect(page.getByText('已撤回剛才新增的待辦及日程。')).toBeVisible()
+    await page.getByRole('button', { name: '撤回剛才操作' }).click()
+    await expect(page.getByText('已撤回剛才操作：移除剛新增的 1 項待辦。')).toBeVisible()
     await expect
       .poll(() =>
         page.evaluate(() =>
@@ -109,7 +109,61 @@ test.describe('產品外殼', () => {
       .toBe(false)
   })
 
-  test('語音辨識會顯示可修改逐字稿，再執行任務', async ({ page }) => {
+  test('智能助手經文字確認後會真正完成現有待辦，而非只口頭回覆', async ({ page }) => {
+    await page.addInitScript(() => {
+      localStorage.setItem(
+        'ntk.work_tasks',
+        JSON.stringify([
+          {
+            id: 'task-agent-a',
+            text: '批改 5A 班練習',
+            done: false,
+            createdAt: '2026-08-20T08:00:00.000Z',
+          },
+          {
+            id: 'task-agent-b',
+            text: '預備下星期寫作課堂',
+            done: false,
+            createdAt: '2026-08-20T09:00:00.000Z',
+          },
+        ]),
+      )
+    })
+    await page.goto('/app/work-voice-assistant')
+
+    const composer = page.getByLabel('語音逐字稿或文字指令')
+    await composer.fill('全部待辦事項都處理，幫我搞掂佢')
+    await page.getByRole('button', { name: '預覽執行計劃' }).click()
+
+    await expect(page.getByRole('heading', { name: '完成 2 項待辦' })).toBeVisible()
+    await expect(page.getByText(/2 項待辦：批改 5A 班練習、預備下星期寫作課堂/)).toBeVisible()
+
+    await composer.fill('係')
+    await page.getByRole('button', { name: '確認並執行' }).last().click()
+    await expect(page.getByText('已將 2 項待辦標記為完成。')).toBeVisible()
+    await expect
+      .poll(() =>
+        page.evaluate(() =>
+          (JSON.parse(localStorage.getItem('ntk.work_tasks') ?? '[]') as Array<{ done: boolean }>).every(
+            (task) => task.done,
+          ),
+        ),
+      )
+      .toBe(true)
+
+    await page.getByRole('button', { name: '撤回剛才操作' }).click()
+    await expect
+      .poll(() =>
+        page.evaluate(() =>
+          (JSON.parse(localStorage.getItem('ntk.work_tasks') ?? '[]') as Array<{ done: boolean }>).every(
+            (task) => !task.done,
+          ),
+        ),
+      )
+      .toBe(true)
+  })
+
+  test('逐句語音辨識會在講完後自動執行工具指令', async ({ page }) => {
     await page.addInitScript(() => {
       class FakeSpeechRecognition {
         lang = ''
@@ -147,16 +201,9 @@ test.describe('產品外殼', () => {
     })
 
     await page.goto('/app/work-voice-assistant')
-    await page.getByRole('button', { name: '開始語音輸入' }).first().click()
-    await expect(page.getByLabel('語音逐字稿或文字指令')).toHaveValue(
-      '幫我整一份中二百分比簡報',
-    )
-    await page.getByRole('button', { name: '停止聆聽' }).first().click()
-    await page.getByLabel('語音逐字稿或文字指令').fill('幫我整一份中三百分比簡報')
-
-    await expect(page.getByText('將開啟：簡報工作室')).toBeVisible()
-    await page.getByRole('button', { name: '開啟簡報工作室' }).click()
+    await page.getByRole('button', { name: '開始即時語音對話' }).first().click()
     await expect(page).toHaveURL(/\/app\/work-slides$/)
+    await expect(page.getByRole('heading', { name: '簡報工作室' })).toBeVisible()
   })
 
   test('一個課題可直接進入課堂套裝主流程', async ({ page }) => {

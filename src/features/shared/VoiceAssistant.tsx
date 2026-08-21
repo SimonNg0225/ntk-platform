@@ -34,7 +34,7 @@ import { eventsCol, tasksCol } from '../../data/collections'
 import ServiceStatus from '../../components/ServiceStatus'
 import { Button, IconButton, Textarea, Tooltip, cx } from '../../ui'
 import { writeComposerHandoff } from './composerHandoff'
-import { taskMetaCol, upsertMeta } from '../work/todo/store'
+import { taskMetaCol } from '../work/todo/store'
 import AgentPlanPanel, {
   type AgentStepState,
 } from './voiceAssistant/AgentPlanPanel'
@@ -42,12 +42,22 @@ import {
   buildDailyBriefing,
   buildLocalAgentPlan,
   isBriefingRequest,
+  isPlanCancellation,
+  isPlanConfirmation,
   shouldUseModelPlanner,
   type AgentOpenToolStep,
   type AgentPlan,
   type AssistantContext,
 } from './voiceAssistant/agent'
 import { buildModelAgentPlan } from './voiceAssistant/modelPlanner'
+import {
+  createMutationReceipt,
+  executePlatformStep,
+  receiptMutationCount,
+  receiptSummary,
+  undoPlatformMutations,
+  type PlatformMutationReceipt,
+} from './voiceAssistant/platformExecutor'
 import {
   VOICE_LANGUAGES,
   createSpeechQueue,
@@ -69,19 +79,14 @@ type VoiceTurn = {
   content: string
 }
 
-type MutationReceipt = {
-  taskIds: string[]
-  eventIds: string[]
-}
-
 const LANGUAGE_KEY = 'eziteach.voice.language.v1'
 const SPEAK_REPLY_KEY = 'eziteach.voice.speakReplies.v1'
 const SESSION_KEY = 'eziteach.voice.session.v2'
 
 const EXAMPLES = [
   'Ezi，今日有咩要處理？',
+  '將所有未完成待辦標記為完成',
   '準備中二百分比教案、工作紙和簡報，再提醒我星期五前完成',
-  '下星期二下午三點家長晚會加入日曆',
 ] as const
 
 const SYSTEM_PROMPT = `你是 Ezi，EziTeach 的智能教學工作助手，服務香港老師。
@@ -89,7 +94,7 @@ const SYSTEM_PROMPT = `你是 Ezi，EziTeach 的智能教學工作助手，服�
 請使用清楚自然的繁體中文回答；如果使用者以英文提問，可以用英文回答。
 回覆需要適合朗讀：先直接回答，再列出最多五個具體重點。不要使用表格，不要加入冗長開場。
 涉及香港課程、評核或政策時，清楚區分一般建議與已核實資料；不確定時提醒老師查核官方來源。
-不要聲稱已替使用者完成未實際執行的操作。涉及寫入、刪除、傳送或發布時，必須先取得確認。`
+平台操作只能透過畫面上的執行計劃完成。不要把使用者的「係／確認」當成操作結果，也不要聲稱已替使用者完成未實際執行的操作。涉及寫入、刪除、傳送或發布時，必須先取得確認；若沒有實際操作回條，只可說明你能如何協助。`
 
 function readLanguage(): VoiceLanguage {
   try {
@@ -183,12 +188,18 @@ export default function VoiceAssistant() {
   const [stepStates, setStepStates] = useState<Record<string, AgentStepState>>({})
   const [planCompleted, setPlanCompleted] = useState(false)
   const [planResult, setPlanResult] = useState('')
-  const [receipt, setReceipt] = useState<MutationReceipt | null>(null)
+  const [receipt, setReceipt] = useState<PlatformMutationReceipt | null>(null)
   const transcriptBaseRef = useRef('')
   const speechWasUsedRef = useRef(false)
   const conversationLoopRef = useRef(false)
   const promptHandlerRef = useRef<(prompt: string) => void>(() => {})
   const startListeningRef = useRef<() => void>(() => {})
+  const activePlanRef = useRef<AgentPlan | null>(null)
+  const executingRef = useRef(false)
+  const executePlanRef = useRef<(plan?: AgentPlan) => Promise<unknown>>(async () => ({
+    status: 'unavailable',
+  }))
+  const cancelPlanRef = useRef<() => void>(() => {})
   const abortRef = useRef<AbortController | null>(null)
   const conversationRef = useRef<HTMLDivElement>(null)
 
@@ -205,23 +216,28 @@ export default function VoiceAssistant() {
       }))
       .sort((a, b) => (a.due ?? '9999').localeCompare(b.due ?? '9999') || a.createdAt.localeCompare(b.createdAt))
       .map(({ id, text, due }) => ({ id, text, due }))
+    const completedTasks = tasks
+      .filter((task) => task.done)
+      .map((task) => ({
+        id: task.id,
+        text: task.text,
+        due: metaById.get(task.id)?.due,
+        completedAt: metaById.get(task.id)?.completedAt ?? task.createdAt,
+      }))
+      .sort((a, b) => b.completedAt.localeCompare(a.completedAt))
+      .map(({ id, text, due }) => ({ id, text, due }))
     const todayEvents = events
       .filter((event) => event.date === todayKey)
       .sort((a, b) => (a.time ?? '').localeCompare(b.time ?? ''))
       .map(({ id, title, time }) => ({ id, title, time }))
     return {
       activeTasks,
+      completedTasks,
       todayEvents,
       todayKey,
       overdueCount: activeTasks.filter((task) => task.due && task.due < todayKey).length,
     }
   }, [events, taskMetas, tasks])
-
-  const contextSummary = useMemo(
-    () =>
-      `${assistantContext.activeTasks.length} 項未完成待辦、${assistantContext.todayEvents.length} 個今日日程、${assistantContext.overdueCount} 項逾期`,
-    [assistantContext],
-  )
 
   const liveContext = useMemo(() => {
     const taskLines = assistantContext.activeTasks
@@ -230,11 +246,15 @@ export default function VoiceAssistant() {
     const eventLines = assistantContext.todayEvents
       .slice(0, 8)
       .map((event) => `- 今日日程：${event.time ? `${event.time} ` : ''}${event.title}`)
+    const completedTaskLines = assistantContext.completedTasks
+      .slice(0, 5)
+      .map((task) => `- 最近完成：${task.text}`)
     return [
       `今日日期：${assistantContext.todayKey}`,
       `目前有 ${assistantContext.overdueCount} 項逾期工作。`,
       ...taskLines,
       ...eventLines,
+      ...completedTaskLines,
     ].join('\n')
   }, [assistantContext])
 
@@ -253,13 +273,26 @@ export default function VoiceAssistant() {
 
   const handleLiveToolCall = useCallback(
     async (call: LiveToolCall) => {
+      if (call.name === 'confirm_platform_action') {
+        if (!activePlanRef.current) {
+          return { status: 'no_pending_action', message: '目前沒有等待確認的操作。' }
+        }
+        return executePlanRef.current(activePlanRef.current)
+      }
+      if (call.name === 'cancel_platform_action') {
+        if (!activePlanRef.current) {
+          return { status: 'no_pending_action', message: '目前沒有等待確認的操作。' }
+        }
+        cancelPlanRef.current()
+        return { status: 'cancelled', message: '已取消，沒有改動平台資料。' }
+      }
       if (call.name !== 'prepare_platform_task') {
         return { status: 'unsupported', message: '這項操作暫時未開放。' }
       }
       const request = typeof call.args.request === 'string' ? call.args.request.trim() : ''
-      const plan = buildLocalAgentPlan(request)
+      const plan = buildLocalAgentPlan(request, new Date(), assistantContext)
       if (!request || !plan) {
-        return { status: 'unsupported', message: '未能配對到合適的教學工具。' }
+        return { status: 'unsupported', message: '未能配對到可安全執行的平台操作。' }
       }
 
       const directStep = plan.steps.length === 1 ? plan.steps[0] : null
@@ -284,6 +317,7 @@ export default function VoiceAssistant() {
       }
 
       conversationLoopRef.current = false
+      activePlanRef.current = plan
       setActivePlan(plan)
       setStepStates(Object.fromEntries(plan.steps.map((step) => [step.id, 'pending'])))
       setPlanCompleted(false)
@@ -298,9 +332,12 @@ export default function VoiceAssistant() {
       return {
         status: 'awaiting_confirmation',
         message: '執行計劃已顯示在畫面，等候使用者確認。',
+        title: plan.title,
+        summary: plan.summary,
+        steps: plan.steps.map((step) => ({ title: step.title, detail: step.detail })),
       }
     },
-    [nav, toast],
+    [assistantContext, nav, toast],
   )
 
   const handleLiveError = useCallback((message: string, code?: string) => {
@@ -349,7 +386,10 @@ export default function VoiceAssistant() {
     onError: handleRecognitionError,
   })
 
-  const previewPlan = useMemo(() => buildLocalAgentPlan(draft), [draft])
+  const previewPlan = useMemo(
+    () => buildLocalAgentPlan(draft, new Date(), assistantContext),
+    [assistantContext, draft],
+  )
   const briefingPreview = useMemo(() => isBriefingRequest(draft), [draft])
   const working = busy || planning || executing
 
@@ -599,6 +639,7 @@ export default function VoiceAssistant() {
   const showPlan = (plan: AgentPlan, conversation: VoiceTurn[]) => {
     conversationLoopRef.current = false
     setTurns(conversation)
+    activePlanRef.current = plan
     setActivePlan(plan)
     setStepStates(Object.fromEntries(plan.steps.map((step) => [step.id, 'pending'])))
     setPlanCompleted(false)
@@ -647,50 +688,32 @@ export default function VoiceAssistant() {
     openTool(step)
   }
 
-  const executePlan = async () => {
-    if (!activePlan || executing) return
+  const executePlan = async (planOverride?: AgentPlan) => {
+    const plan = planOverride ?? activePlanRef.current
+    if (!plan) return { status: 'no_pending_action', message: '目前沒有等待確認的操作。' }
+    if (executingRef.current) return { status: 'busy', message: '操作仍在執行。' }
+    activePlanRef.current = null
+    executingRef.current = true
     setExecuting(true)
     setStatusMessage('正在逐步執行…')
     track('voice_agent_plan_confirmed', {
-      source: activePlan.source,
-      step_count: activePlan.steps.length,
+      source: plan.source,
+      step_count: plan.steps.length,
     })
-    const nextReceipt: MutationReceipt = { taskIds: [], eventIds: [] }
+    const nextReceipt = createMutationReceipt()
+    const summaries: string[] = []
     let failed = false
 
-    for (const step of activePlan.steps) {
+    for (const step of plan.steps) {
       setStepStates((current) => ({ ...current, [step.id]: 'running' }))
       await pause(120)
       try {
-        if (step.kind === 'create_task') {
-          const task = tasksCol.add({
-            text: step.text,
-            done: false,
-            createdAt: new Date().toISOString(),
-          })
-          upsertMeta(task.id, {
-            due: step.due,
-            priority: 3,
-            tags: ['智能助手'],
-            order: Date.now(),
-          })
-          nextReceipt.taskIds.push(task.id)
-          setStepStates((current) => ({ ...current, [step.id]: 'done' }))
-        } else if (step.kind === 'create_event') {
-          const event = eventsCol.add({
-            title: step.eventTitle,
-            date: step.date,
-            time: step.time,
-            allDay: !step.time,
-            calendarId: 'cal-work',
-            alertMinutes: step.time ? 30 : undefined,
-            mode: 'work',
-            type: '智能助手',
-          })
-          nextReceipt.eventIds.push(event.id)
-          setStepStates((current) => ({ ...current, [step.id]: 'done' }))
-        } else {
+        if (step.kind === 'open_tool') {
           setStepStates((current) => ({ ...current, [step.id]: 'ready' }))
+        } else {
+          const stepResult = executePlatformStep(step, nextReceipt)
+          summaries.push(stepResult.summary)
+          setStepStates((current) => ({ ...current, [step.id]: 'done' }))
         }
         track('voice_agent_step_completed', { step_kind: step.kind })
       } catch (error) {
@@ -704,36 +727,39 @@ export default function VoiceAssistant() {
       }
     }
 
-    const createdCount = nextReceipt.taskIds.length + nextReceipt.eventIds.length
-    const readyTools = activePlan.steps.filter((step) => step.kind === 'open_tool').length
+    const mutationCount = receiptMutationCount(nextReceipt)
+    const readyTools = plan.steps.filter((step) => step.kind === 'open_tool').length
     const result = failed
       ? '執行期間遇到問題，未完成的步驟已停止。'
       : [
-          createdCount ? `已新增 ${createdCount} 個項目。` : '',
+          ...[...new Set(summaries)],
           readyTools ? `${readyTools} 個工作區已準備好，可以繼續開啟。` : '',
         ]
           .filter(Boolean)
           .join(' ')
-    setReceipt(createdCount ? nextReceipt : null)
+    setReceipt(mutationCount ? nextReceipt : null)
     setPlanResult(result || '計劃已完成。')
-    setPlanCompleted(!failed)
+    setPlanCompleted(true)
+    executingRef.current = false
     setExecuting(false)
     setStatusMessage(failed ? '部分步驟未完成' : '執行完成')
     track('voice_agent_plan_completed', {
       success: !failed,
-      created_count: createdCount,
+      mutation_count: mutationCount,
       ready_tools: readyTools,
     })
     if (!failed && speakReplies) readResponse(result || '計劃已完成。')
+    return {
+      status: failed ? 'partial_failure' : 'completed',
+      message: result || '計劃已完成。',
+      affected: mutationCount,
+    }
   }
+  executePlanRef.current = executePlan
 
   const undoPlan = () => {
     if (!activePlan || !receipt) return
-    receipt.taskIds.forEach((id) => {
-      tasksCol.remove(id)
-      taskMetaCol.remove(id)
-    })
-    receipt.eventIds.forEach((id) => eventsCol.remove(id))
+    undoPlatformMutations(receipt)
     const mutationIds = new Set(
       activePlan.steps
         .filter((step) => step.kind !== 'open_tool')
@@ -744,37 +770,69 @@ export default function VoiceAssistant() {
         Object.entries(current).map(([id, state]) => [id, mutationIds.has(id) ? 'undone' : state]),
       ),
     )
+    const undoMessage = receiptSummary(receipt)
     setReceipt(null)
-    setPlanResult('已撤回剛才新增的待辦及日程。')
-    setStatusMessage('已撤回新增項目')
+    setPlanResult(undoMessage)
+    setStatusMessage('已撤回剛才操作')
     track('voice_agent_plan_undone', {
-      task_count: receipt.taskIds.length,
-      event_count: receipt.eventIds.length,
+      mutation_count: receiptMutationCount(receipt),
     })
   }
 
   const cancelPlan = () => {
-    if (!activePlan) return
-    track('voice_agent_plan_cancelled', { step_count: activePlan.steps.length })
+    const plan = activePlanRef.current
+    if (!plan) return
+    track('voice_agent_plan_cancelled', { step_count: plan.steps.length })
+    activePlanRef.current = null
     setActivePlan(null)
     setStepStates({})
     setPlanResult('')
     setStatusMessage('已取消，沒有寫入任何資料。')
   }
+  cancelPlanRef.current = cancelPlan
 
   const handlePrompt = async (prompt: string) => {
     if (!prompt || working) return
+    const pendingPlan = activePlanRef.current
+    if (pendingPlan && !planCompleted && isPlanConfirmation(prompt)) {
+      if (liveVoice.active) liveVoice.stop()
+      if (recognition.listening) recognition.stop()
+      stopSpeaking()
+      setSpeaking(false)
+      setTurns((current) => [
+        ...current,
+        { id: turnId(), role: 'user' as const, content: prompt },
+      ])
+      setDraft('')
+      setInterimText('')
+      speechWasUsedRef.current = false
+      await executePlan(pendingPlan)
+      return
+    }
+    if (pendingPlan && !planCompleted && isPlanCancellation(prompt)) {
+      if (liveVoice.active) liveVoice.stop()
+      if (recognition.listening) recognition.stop()
+      setTurns((current) => [
+        ...current,
+        { id: turnId(), role: 'user' as const, content: prompt },
+      ])
+      setDraft('')
+      setInterimText('')
+      cancelPlan()
+      return
+    }
     if (liveVoice.active) liveVoice.stop()
     if (recognition.listening) recognition.stop()
     stopSpeaking()
     setSpeaking(false)
+    activePlanRef.current = null
     setActivePlan(null)
     setPlanResult('')
     setReceipt(null)
 
     const inputMode = speechWasUsedRef.current ? 'speech' : 'text'
     if (inputMode === 'text') conversationLoopRef.current = false
-    const localPlan = buildLocalAgentPlan(prompt)
+    const localPlan = buildLocalAgentPlan(prompt, new Date(), assistantContext)
     const briefing = isBriefingRequest(prompt)
     track('voice_command_submitted', {
       language,
@@ -821,7 +879,7 @@ export default function VoiceAssistant() {
       const controller = new AbortController()
       abortRef.current = controller
       try {
-        const modelPlan = await buildModelAgentPlan(prompt, contextSummary, controller.signal)
+        const modelPlan = await buildModelAgentPlan(prompt, assistantContext, controller.signal)
         if (modelPlan) {
           showPlan(modelPlan, conversation)
           return
@@ -859,6 +917,14 @@ export default function VoiceAssistant() {
     event?.preventDefault()
     const prompt = draft.trim()
     if (!prompt || working) return
+    if (
+      activePlanRef.current &&
+      !planCompleted &&
+      (isPlanConfirmation(prompt) || isPlanCancellation(prompt))
+    ) {
+      void handlePrompt(prompt)
+      return
+    }
     if (liveVoice.active && liveVoice.sendText(prompt)) {
       setTurns((current) => [
         ...current,
@@ -897,7 +963,9 @@ export default function VoiceAssistant() {
     setInterimText('')
     setSpeaking(false)
     setPlanning(false)
+    executingRef.current = false
     setExecuting(false)
+    activePlanRef.current = null
     setActivePlan(null)
     setStepStates({})
     setPlanCompleted(false)
@@ -927,16 +995,28 @@ export default function VoiceAssistant() {
     : null
   const hasConversation =
     turns.length > 0 || Boolean(responseInProgress) || Boolean(activePlan) || Boolean(planResult)
-  const canSubmitWithoutAI = Boolean(previewPlan || briefingPreview)
+  const confirmsPendingPlan = Boolean(
+    activePlan && !planCompleted && isPlanConfirmation(draft),
+  )
+  const cancelsPendingPlan = Boolean(
+    activePlan && !planCompleted && isPlanCancellation(draft),
+  )
+  const canSubmitWithoutAI = Boolean(
+    previewPlan || briefingPreview || confirmsPendingPlan || cancelsPendingPlan,
+  )
   const voiceSessionActive = liveVoice.active || recognition.listening
   const voiceInputSupported = liveVoice.supported || recognition.supported
-  const submitLabel = briefingPreview
-    ? '整理今日簡報'
-    : previewPlan?.needsConfirmation
-      ? '預覽執行計劃'
-      : previewPlan?.steps[0]?.kind === 'open_tool'
-        ? `開啟${previewPlan.steps[0].toolLabel}`
-        : '送出給智能助手'
+  const submitLabel = confirmsPendingPlan
+    ? '確認並執行'
+    : cancelsPendingPlan
+      ? '取消操作'
+      : briefingPreview
+        ? '整理今日簡報'
+        : previewPlan?.needsConfirmation
+          ? '預覽執行計劃'
+          : previewPlan?.steps[0]?.kind === 'open_tool'
+            ? `開啟${previewPlan.steps[0].toolLabel}`
+            : '送出給智能助手'
 
   return (
     <section className="flex h-full min-h-0 flex-col overflow-hidden bg-white dark:bg-slate-950">
@@ -1310,7 +1390,11 @@ export default function VoiceAssistant() {
                     aria-label={submitLabel}
                     className="flex h-11 w-11 cursor-pointer items-center justify-center rounded-full bg-accent text-white shadow-sm transition hover:bg-accent-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 disabled:cursor-not-allowed disabled:bg-slate-300 dark:disabled:bg-slate-700"
                   >
-                    {previewPlan?.needsConfirmation ? (
+                    {confirmsPendingPlan ? (
+                      <Check size={18} />
+                    ) : cancelsPendingPlan ? (
+                      <X size={18} />
+                    ) : previewPlan?.needsConfirmation ? (
                       <ListChecks size={18} />
                     ) : previewPlan?.steps[0]?.kind === 'open_tool' ? (
                       <ArrowRight size={19} />

@@ -3,11 +3,24 @@ import {
   buildDailyBriefing,
   buildLocalAgentPlan,
   isBriefingRequest,
+  isPlanCancellation,
+  isPlanConfirmation,
   parseNaturalDateTime,
   stripAssistantWakeWord,
+  type AssistantContext,
 } from './agent'
 
 const NOW = new Date(2026, 7, 20, 9, 0, 0)
+const CONTEXT: AssistantContext = {
+  todayKey: '2026-08-20',
+  overdueCount: 1,
+  activeTasks: [
+    { id: 't1', text: '批改 5A 班練習', due: '2026-08-20' },
+    { id: 't2', text: '預備下星期寫作課堂' },
+  ],
+  completedTasks: [{ id: 't3', text: '上載功課到學校平台' }],
+  todayEvents: [{ id: 'e1', title: '科會', time: '15:30' }],
+}
 
 describe('智能助手日期理解', () => {
   it('理解最近的星期與下星期時間', () => {
@@ -65,6 +78,65 @@ describe('智能助手規劃', () => {
       steps: [{ kind: 'open_tool', featureId: 'work-slides' }],
     })
   })
+
+  it('把「處理所有待辦」變成有明確項目數的真實更新', () => {
+    expect(
+      buildLocalAgentPlan('全部待辦事項都處理，幫我搞掂佢', NOW, CONTEXT),
+    ).toMatchObject({
+      needsConfirmation: true,
+      steps: [
+        {
+          kind: 'complete_tasks',
+          taskIds: ['t1', 't2'],
+          title: '完成 2 項待辦',
+        },
+      ],
+    })
+    expect(
+      buildLocalAgentPlan('將所有未完成待辦標記為完成', NOW, CONTEXT),
+    ).toMatchObject({
+      steps: [{ kind: 'complete_tasks', taskIds: ['t1', 't2'] }],
+    })
+    expect(buildLocalAgentPlan('全部已完成', NOW, CONTEXT)).toMatchObject({
+      steps: [{ kind: 'complete_tasks', taskIds: ['t1', 't2'] }],
+    })
+  })
+
+  it('可重開或刪除已知待辦，但仍要確認', () => {
+    expect(buildLocalAgentPlan('將所有已完成待辦改回未完成', NOW, CONTEXT)).toMatchObject({
+      steps: [{ kind: 'reopen_tasks', taskIds: ['t3'] }],
+    })
+    expect(buildLocalAgentPlan('刪除所有待辦事項', NOW, CONTEXT)).toMatchObject({
+      steps: [{ kind: 'delete_tasks', taskIds: ['t1', 't2', 't3'] }],
+    })
+  })
+
+  it('可以直接開啟完整白名單內的工具', () => {
+    expect(buildLocalAgentPlan('打開時間表', NOW, CONTEXT)).toMatchObject({
+      needsConfirmation: false,
+      steps: [{ kind: 'open_tool', featureId: 'work-timetable' }],
+    })
+    expect(buildLocalAgentPlan('完成所有待辦，再打開時間表', NOW, CONTEXT)).toMatchObject({
+      needsConfirmation: true,
+      steps: [
+        { kind: 'complete_tasks', taskIds: ['t1', 't2'] },
+        { kind: 'open_tool', featureId: 'work-timetable' },
+      ],
+    })
+    expect(buildLocalAgentPlan('完成所有待辦，再打開討論區', NOW, CONTEXT)).toMatchObject({
+      steps: [
+        { kind: 'complete_tasks' },
+        { kind: 'open_tool', featureId: 'community-forum' },
+      ],
+    })
+  })
+
+  it('辨認文字及語音確認與取消', () => {
+    expect(isPlanConfirmation('係')).toBe(true)
+    expect(isPlanConfirmation('確認執行')).toBe(true)
+    expect(isPlanCancellation('唔好')).toBe(true)
+    expect(isPlanCancellation('取消')).toBe(true)
+  })
 })
 
 describe('智能助手上下文', () => {
@@ -76,6 +148,7 @@ describe('智能助手上下文', () => {
         todayKey: '2026-08-20',
         overdueCount: 1,
         activeTasks: [{ id: 't1', text: '批改試卷', due: '2026-08-20' }],
+        completedTasks: [],
         todayEvents: [{ id: 'e1', title: '科會', time: '15:30' }],
       }),
     ).toContain('今日有 1 項未完成待辦，1 個日程')
