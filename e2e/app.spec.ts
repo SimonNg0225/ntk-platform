@@ -206,6 +206,126 @@ test.describe('產品外殼', () => {
     await expect(page.getByRole('heading', { name: '簡報工作室' })).toBeVisible()
   })
 
+  test('語音通話模式在手機只保留必要控制並可返回文字對話', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 })
+    await page.addInitScript(() => {
+      class FakeSpeechRecognition {
+        lang = ''
+        continuous = false
+        interimResults = false
+        maxAlternatives = 1
+        onstart: ((event: Event) => void) | null = null
+        onresult: ((event: unknown) => void) | null = null
+        onerror: ((event: unknown) => void) | null = null
+        onend: ((event: Event) => void) | null = null
+
+        start() {
+          this.onstart?.(new Event('start'))
+        }
+
+        stop() {
+          this.onend?.(new Event('end'))
+        }
+
+        abort() {
+          this.onend?.(new Event('end'))
+        }
+      }
+
+      Object.defineProperty(window, 'SpeechRecognition', {
+        configurable: true,
+        value: FakeSpeechRecognition,
+      })
+    })
+
+    await page.goto('/app/work-voice-assistant')
+    await page.getByRole('button', { name: '開始即時語音對話' }).first().click()
+
+    await expect(page.getByRole('region', { name: 'Ezi 語音通話' })).toBeVisible()
+    await expect(page.getByText('正在聆聽')).toBeVisible()
+    await expect(page.getByRole('button', { name: '靜音' })).toBeVisible()
+    await expect(page.getByRole('button', { name: '對話記錄' })).toBeVisible()
+    await expect(page.getByRole('button', { name: '關閉聲音' })).toBeVisible()
+    await expect(page.getByLabel('語音逐字稿或文字指令')).toHaveCount(0)
+
+    await page.getByRole('button', { name: '對話記錄' }).click()
+    await expect(page.getByRole('complementary', { name: '對話記錄' })).toBeVisible()
+    await expect
+      .poll(() =>
+        page.evaluate(
+          () => document.documentElement.scrollWidth <= document.documentElement.clientWidth,
+        ),
+      )
+      .toBe(true)
+
+    await page.getByRole('button', { name: '關閉側欄' }).click()
+    await page.getByRole('button', { name: '結束' }).click()
+    await expect(page.getByLabel('語音逐字稿或文字指令')).toBeVisible()
+  })
+
+  test('語音通話可確認平台操作，完成後會繼續聆聽', async ({ page }) => {
+    await page.addInitScript(() => {
+      localStorage.setItem('eziteach.voice.speakReplies.v1', '0')
+      localStorage.setItem(
+        'ntk.work_tasks',
+        JSON.stringify([
+          { id: 'call-task-a', text: '批改練習', done: false, createdAt: '2026-08-20T08:00:00.000Z' },
+          { id: 'call-task-b', text: '準備教案', done: false, createdAt: '2026-08-20T09:00:00.000Z' },
+        ]),
+      )
+      let delivered = false
+      class FakeSpeechRecognition {
+        onstart: ((event: Event) => void) | null = null
+        onresult: ((event: unknown) => void) | null = null
+        onend: ((event: Event) => void) | null = null
+
+        start() {
+          this.onstart?.(new Event('start'))
+          if (delivered) return
+          delivered = true
+          window.setTimeout(() => {
+            this.onresult?.({
+              resultIndex: 0,
+              results: [{ 0: { transcript: '將全部待辦標記為完成' }, isFinal: true }],
+            })
+          }, 20)
+        }
+
+        stop() {
+          this.onend?.(new Event('end'))
+        }
+
+        abort() {
+          this.onend?.(new Event('end'))
+        }
+      }
+
+      Object.defineProperty(window, 'SpeechRecognition', {
+        configurable: true,
+        value: FakeSpeechRecognition,
+      })
+    })
+
+    await page.goto('/app/work-voice-assistant')
+    await page.getByRole('button', { name: '開始即時語音對話' }).first().click()
+
+    await expect(page.getByRole('complementary', { name: '執行前確認' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: '完成 2 項待辦' })).toBeVisible()
+    await page.getByRole('button', { name: '確認並執行' }).click()
+
+    await expect
+      .poll(() =>
+        page.evaluate(() =>
+          (JSON.parse(localStorage.getItem('ntk.work_tasks') ?? '[]') as Array<{ done: boolean }>).every(
+            (task) => task.done,
+          ),
+        ),
+      )
+      .toBe(true)
+    await expect(page.getByRole('region', { name: 'Ezi 語音通話' })).toBeVisible()
+    await expect(page.getByText('正在聆聽')).toBeVisible()
+  })
+
   test('一個課題可直接進入課堂套裝主流程', async ({ page }) => {
     await page.goto('/app')
     await page

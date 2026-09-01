@@ -1,5 +1,10 @@
 import { describe, it, expect } from 'vitest'
-import { toDraft, buildQuickAddPrompt, type ParsedDraft } from './parse'
+import {
+  toDraft,
+  buildQuickAddPrompt,
+  parseOcrScheduleTable,
+  type ParsedDraft,
+} from './parse'
 
 // ============================================================
 //  快速加入 — 解析引擎純函式測試
@@ -17,6 +22,40 @@ import { toDraft, buildQuickAddPrompt, type ParsedDraft } from './parse'
 // ============================================================
 
 const TODAY = '2026-06-03'
+
+describe('parseOcrScheduleTable — 圖片表格後備解析', () => {
+  it('把 Staff Meeting 六行日期與時段拆成六個 event', () => {
+    const text = `
+二、8Staf Meeting
+日期                                         時間
+16/9/2026                                  1600 - 1800
+30/10/2026                                 1600 - 1800
+23/11/2026                                 1200 - 1330
+19/2/2027                                  1600 - 1800
+19/3/2027                                  1600 - 1800
+21/5/2027                                  1600 - 1800
+`
+    const drafts = parseOcrScheduleTable(text, 'work')
+    expect(drafts).toHaveLength(6)
+    expect(drafts[0]).toMatchObject({
+      kind: 'event',
+      title: 'Staff Meeting',
+      date: '2026-09-16',
+      time: '16:00',
+      endTime: '18:00',
+    })
+    expect(drafts[2]).toMatchObject({
+      date: '2026-11-23',
+      time: '12:00',
+      endTime: '13:30',
+    })
+    expect(drafts[5].date).toBe('2027-05-21')
+  })
+
+  it('普通單一日期句子不會誤判成表格', () => {
+    expect(parseOcrScheduleTable('家長會 16/9/2026 1600 - 1800', 'work')).toEqual([])
+  })
+})
 
 describe('toDraft — 三類正常路徑', () => {
   it('event：有明確時間 → kind=event、time 正規化', () => {
@@ -535,6 +574,12 @@ describe('buildQuickAddPrompt — 內容包含關鍵指示', () => {
     expect(prompt).toContain('JSON 陣列')
     expect(prompt).toContain('拆成獨立項目')
     expect(prompt).toContain('```')
+  })
+
+  it('懂得把 OCR 表格逐列拆成獨立行事曆事件', () => {
+    expect(prompt).toContain('OCR 表格')
+    expect(prompt).toContain('每一列日期／時間')
+    expect(prompt).toContain('Staff Meeting')
   })
 
   it('含重複偵測指示（recurrence + freq daily/weekly + byWeekday）', () => {

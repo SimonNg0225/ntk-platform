@@ -1,6 +1,12 @@
 import { supabase } from './supabase'
 import { collectionRegistry } from './store'
 import { isCollectionSyncable } from './featureFlags'
+import {
+  mergeNtkSchoolEvents,
+  upgradeNtkCycleCalendarSeed,
+  upgradeNtkTimetableSeed,
+} from '../data/ntk-seed'
+import type { CalendarEvent, CycleCalendarEntry, TimetableSlot } from '../data/types'
 
 // ============================================================
 //  雲端同步 (Supabase ⇄ 本地集合)
@@ -85,17 +91,36 @@ export async function attachSync(userId: string): Promise<void> {
   }
 
   // 2) 套用：雲端有 → 覆蓋本地；雲端沒有 → seed 本地上雲
+  const migratedCloudCollections = new Map<string, unknown[]>()
   for (const [key, col] of collectionRegistry) {
     // 學生／家長 PII collection 在旗標關閉時不上雲（收費版未過 PDPO 合規）。
     if (!isCollectionSyncable(key)) continue
     if (cloud.has(key)) {
-      col.set(cloud.get(key) as never[]) // cloud 優先
+      let incoming = cloud.get(key) ?? []
+      if (key === 'timetable') {
+        const upgrade = upgradeNtkTimetableSeed(incoming as TimetableSlot[])
+        incoming = upgrade.slots
+        if (upgrade.migrated) migratedCloudCollections.set(key, incoming)
+      } else if (key === 'cycle_calendar') {
+        const upgrade = upgradeNtkCycleCalendarSeed(incoming as CycleCalendarEntry[])
+        incoming = upgrade.entries
+        if (upgrade.migrated) migratedCloudCollections.set(key, incoming)
+      } else if (key === 'events') {
+        const upgrade = mergeNtkSchoolEvents(incoming as CalendarEvent[])
+        incoming = upgrade.events
+        if (upgrade.migrated) migratedCloudCollections.set(key, incoming)
+      }
+      col.set(incoming as never[]) // cloud 優先，舊學年 NTK 校曆資料會先升級
     } else {
       void pushCollection(userId, key, col.get()) // first-login：本地 seed 上雲
     }
   }
 
   hydrating = false
+
+  for (const [key, data] of migratedCloudCollections) {
+    void pushCollection(userId, key, data)
+  }
 
   // 3) 監聽本地改動 → 寫回上雲（hydration 期間不會 push）
   for (const [key, col] of collectionRegistry) {

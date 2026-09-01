@@ -54,6 +54,7 @@ export default function AgentPlanPanel({
   onCancel,
   onOpenTool,
   onUndo,
+  embedded = false,
 }: {
   plan: AgentPlan
   states: Record<string, AgentStepState>
@@ -64,6 +65,7 @@ export default function AgentPlanPanel({
   onCancel: () => void
   onOpenTool: (step: AgentOpenToolStep) => void
   onUndo: () => void
+  embedded?: boolean
 }) {
   const hasFailed = Object.values(states).some((state) => state === 'failed')
   const statusLabel = executing
@@ -78,7 +80,10 @@ export default function AgentPlanPanel({
   return (
     <article
       aria-label="執行計劃"
-      className="overflow-hidden rounded-lg border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900"
+      className={cx(
+        'overflow-hidden bg-white dark:bg-slate-900',
+        !embedded && 'rounded-lg border border-slate-200 dark:border-slate-700',
+      )}
     >
       <div className="flex items-start justify-between gap-3 px-4 py-4 sm:px-5">
         <div className="flex min-w-0 gap-3">

@@ -53,6 +53,19 @@ export async function recognize(dataUrl: string): Promise<OcrWord[]> {
   return out
 }
 
+/** 對圖片做 OCR 並保留 Tesseract 重建的換行，供表格／快速記低等文字解析使用。 */
+export async function recognizeText(dataUrl: string): Promise<string> {
+  const worker = await getWorker()
+  const { PSM } = await import('tesseract.js')
+  // 預設 SINGLE_BLOCK 會把表格線當成一大段，只讀到標題；AUTO 可保留各欄與列。
+  await worker.setParameters({
+    tessedit_pageseg_mode: PSM.AUTO,
+    preserve_interword_spaces: '1',
+  })
+  const { data } = await worker.recognize(dataUrl)
+  return (data.text ?? '').replace(/\r\n/g, '\n').trim()
+}
+
 /** 釋放 worker（離開功能時叫）。 */
 export async function disposeOcr(): Promise<void> {
   if (!workerP) return

@@ -27,6 +27,21 @@ describe('expandOccurrences 重複展開', () => {
     ).toEqual([])
   })
 
+  it('跨日全日事項：每日都顯示，並正確裁切查詢範圍', () => {
+    const range = ev({ date: '2026-05-04', endDate: '2026-05-08', allDay: true })
+    expect(expandOccurrences(range, '2026-05-01', '2026-05-31')).toEqual([
+      '2026-05-04',
+      '2026-05-05',
+      '2026-05-06',
+      '2026-05-07',
+      '2026-05-08',
+    ])
+    expect(expandOccurrences(range, '2026-05-06', '2026-05-07')).toEqual([
+      '2026-05-06',
+      '2026-05-07',
+    ])
+  })
+
   it('每日 + interval', () => {
     expect(
       expandOccurrences(

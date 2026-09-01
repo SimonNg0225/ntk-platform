@@ -50,6 +50,63 @@ export interface ParsedDraft {
   mode: 'learning' | 'work'
 }
 
+/**
+ * Deterministic fallback for OCR schedules: pairs D/M/YYYY rows with HHMM-HHMM rows.
+ * Requiring at least two complete rows avoids mistaking ordinary prose for a timetable.
+ */
+export function parseOcrScheduleTable(
+  text: string,
+  mode: 'learning' | 'work',
+): ParsedDraft[] {
+  const dateMatches = [...text.matchAll(/\b(\d{1,2})[/.\-](\d{1,2})[/.\-](20\d{2})\b/g)]
+  const timeMatches = [
+    ...text.matchAll(/\b([01]?\d|2[0-3]):?([0-5]\d)\s*[-–—]\s*([01]?\d|2[0-3]):?([0-5]\d)\b/g),
+  ]
+  if (dateMatches.length < 2 || dateMatches.length !== timeMatches.length) return []
+
+  const headingArea = text.slice(0, dateMatches[0].index ?? 0)
+  const heading = headingArea
+    .split('\n')
+    .map((line) => line.trim())
+    .filter((line) => {
+      const compact = line.replace(/\s/g, '').toLowerCase()
+      return line && !['日期', '時間', '日期時間', 'date', 'time', 'datetime'].includes(compact)
+    })
+    .at(-1)
+  let title = (heading || '圖片行程')
+    .replace(/^[一二三四五六七八九十百\d]+\s*[、.．:：-]\s*/, '')
+    .replace(/^\d+\s*/, '')
+    .replace(/^[~_\s]+/, '')
+    .trim()
+  if (/^staf\s+meeting$/i.test(title)) title = 'Staff Meeting'
+  if (!title) title = '圖片行程'
+
+  const drafts: ParsedDraft[] = []
+  for (let index = 0; index < dateMatches.length; index += 1) {
+    const date = dateMatches[index]
+    const time = timeMatches[index]
+    const day = Number(date[1])
+    const month = Number(date[2])
+    const year = Number(date[3])
+    const check = new Date(year, month - 1, day)
+    if (
+      check.getFullYear() !== year ||
+      check.getMonth() !== month - 1 ||
+      check.getDate() !== day
+    ) return []
+    drafts.push({
+      kind: 'event',
+      title,
+      date: `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`,
+      time: `${String(Number(time[1])).padStart(2, '0')}:${time[2]}`,
+      endTime: `${String(Number(time[3])).padStart(2, '0')}:${time[4]}`,
+      notes: '由圖片文字識別',
+      mode,
+    })
+  }
+  return drafts
+}
+
 const WEEKDAYS = ['日', '一', '二', '三', '四', '五', '六'] as const
 const KINDS: QuickAddKind[] = ['task', 'countdown', 'event']
 const CATEGORIES: CountdownCategory[] = [
@@ -103,6 +160,7 @@ export function buildQuickAddPrompt(
     '· interval 係正整數（每 N 日/週，預設 1）；byWeekday 只在 weekly 用，daily 不要填。',
     '',
     '若輸入包含多件事（多個時間／多項任務／用逗號、頓號、換行分隔），請逐件拆成獨立項目，每件一個物件、各自獨立分類同抽日期時間。',
+    '若輸入似 OCR 表格，請用章節標題或表格標題作共同事件名稱；每一列日期／時間必須拆成獨立 event。例如 Staff Meeting 表格有六列日期，就回六個 Staff Meeting event。',
     '只回一個 JSON 陣列（不要有任何解說文字，不要用 markdown，不要加 ``` 圍欄）；只有一件事就回單元素陣列。每個元素格式如下：',
     '{"kind":"task|countdown|event","title":"...","date":"YYYY-MM-DD|null","time":"HH:mm|null","endTime":"HH:mm|null","category":"exam|deadline|assessment|event|other|null","recurrence":{"freq":"daily|weekly","interval":1,"byWeekday":[1,3]}|null,"notes":"...|null"}',
     '',

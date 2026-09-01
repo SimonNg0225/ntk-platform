@@ -433,6 +433,21 @@ body {
     transform: scale(1);
   }
 }
+
+@keyframes eziVoiceBar {
+  0%,
+  100% {
+    transform: scaleY(0.58);
+  }
+  50% {
+    transform: scaleY(1.08);
+  }
+}
+
+.ezi-voice-bar {
+  animation: eziVoiceBar 1.05s ease-in-out infinite;
+  transform-origin: center;
+}
 .animate-fade-in {
   animation: fadeIn 0.25s ease-out;
 }

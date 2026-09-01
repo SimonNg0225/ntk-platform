@@ -72,6 +72,9 @@ import {
 } from './voiceAssistant/liveVoice'
 import { useLiveVoice } from './voiceAssistant/useLiveVoice'
 import { useSpeechRecognition } from './voiceAssistant/useSpeechRecognition'
+import VoiceCallStage, {
+  type VoiceCallStageStatus,
+} from './voiceAssistant/VoiceCallStage'
 
 type VoiceTurn = {
   id: string
@@ -189,6 +192,8 @@ export default function VoiceAssistant() {
   const [planCompleted, setPlanCompleted] = useState(false)
   const [planResult, setPlanResult] = useState('')
   const [receipt, setReceipt] = useState<PlatformMutationReceipt | null>(null)
+  const [callModeActive, setCallModeActive] = useState(false)
+  const [callPanelOpen, setCallPanelOpen] = useState(false)
   const transcriptBaseRef = useRef('')
   const speechWasUsedRef = useRef(false)
   const conversationLoopRef = useRef(false)
@@ -455,6 +460,10 @@ export default function VoiceAssistant() {
     if (area && (turns.length > 0 || streaming || activePlan)) area.scrollTop = area.scrollHeight
   }, [activePlan, planResult, streaming, turns])
 
+  useEffect(() => {
+    if (callModeActive && activePlan && !planCompleted) setCallPanelOpen(true)
+  }, [activePlan, callModeActive, planCompleted])
+
   useEffect(
     () => () => {
       abortRef.current?.abort()
@@ -463,21 +472,25 @@ export default function VoiceAssistant() {
     [],
   )
 
-  const startListening = (message = '') => {
+  const startListening = (message = ''): boolean => {
     conversationLoopRef.current = true
     stopSpeaking()
     setSpeaking(false)
     setStatusMessage(message)
     setInterimText('')
     transcriptBaseRef.current = draft.trim()
-    if (recognition.start()) {
+    const started = recognition.start()
+    if (started) {
       track('voice_listening_started', { language })
       trackOnce('activation_voice_assistant_started', { language })
     }
+    return started
   }
   startListeningRef.current = () => startListening()
 
   const startVoiceConversation = async () => {
+    setCallModeActive(true)
+    setCallPanelOpen(false)
     stopSpeaking()
     setSpeaking(false)
     setStatusMessage('')
@@ -501,24 +514,31 @@ export default function VoiceAssistant() {
       }
     }
 
-    startListening('即時對話暫時未能連線，已改用逐句語音；講完會自動送出。')
+    const fallbackStarted = startListening(
+      '即時對話暫時未能連線，已改用逐句語音；講完會自動送出。',
+    )
+    if (!fallbackStarted) setCallModeActive(false)
+  }
+
+  const endVoiceConversation = () => {
+    const usedLiveVoice = liveVoice.active
+    conversationLoopRef.current = false
+    liveVoice.stop()
+    recognition.abort()
+    stopSpeaking()
+    setSpeaking(false)
+    setCallModeActive(false)
+    setCallPanelOpen(false)
+    setStatusMessage('語音通話已結束')
+    track(usedLiveVoice ? 'voice_live_session_stopped' : 'voice_listening_stopped', {
+      language,
+      has_transcript: Boolean(draft.trim() || turns.length),
+    })
   }
 
   const toggleListening = () => {
-    if (liveVoice.active) {
-      liveVoice.stop()
-      setStatusMessage('自然對話已結束')
-      track('voice_live_session_stopped', { language })
-      return
-    }
-    if (recognition.listening) {
-      conversationLoopRef.current = false
-      recognition.stop()
-      setStatusMessage('已停止聆聽')
-      track('voice_listening_stopped', { language, has_transcript: Boolean(draft.trim()) })
-    } else {
-      void startVoiceConversation()
-    }
+    if (callModeActive) endVoiceConversation()
+    else void startVoiceConversation()
   }
 
   const resumeStandardConversation = () => {
@@ -748,7 +768,13 @@ export default function VoiceAssistant() {
       mutation_count: mutationCount,
       ready_tools: readyTools,
     })
-    if (!failed && speakReplies) readResponse(result || '計劃已完成。')
+    const shouldResumeCall = callModeActive && !liveVoice.active
+    if (shouldResumeCall) conversationLoopRef.current = true
+    if (!failed && speakReplies) {
+      readResponse(result || '計劃已完成。', shouldResumeCall)
+    } else if (shouldResumeCall) {
+      resumeStandardConversation()
+    }
     return {
       status: failed ? 'partial_failure' : 'completed',
       message: result || '計劃已完成。',
@@ -788,6 +814,10 @@ export default function VoiceAssistant() {
     setStepStates({})
     setPlanResult('')
     setStatusMessage('已取消，沒有寫入任何資料。')
+    if (callModeActive && !liveVoice.active) {
+      conversationLoopRef.current = true
+      resumeStandardConversation()
+    }
   }
   cancelPlanRef.current = cancelPlan
 
@@ -953,6 +983,8 @@ export default function VoiceAssistant() {
 
   const clearSession = () => {
     conversationLoopRef.current = false
+    setCallModeActive(false)
+    setCallPanelOpen(false)
     liveVoice.stop()
     recognition.abort()
     abortRef.current?.abort()
@@ -1004,7 +1036,7 @@ export default function VoiceAssistant() {
   const canSubmitWithoutAI = Boolean(
     previewPlan || briefingPreview || confirmsPendingPlan || cancelsPendingPlan,
   )
-  const voiceSessionActive = liveVoice.active || recognition.listening
+  const voiceSessionActive = callModeActive
   const voiceInputSupported = liveVoice.supported || recognition.supported
   const submitLabel = confirmsPendingPlan
     ? '確認並執行'
@@ -1017,6 +1049,75 @@ export default function VoiceAssistant() {
           : previewPlan?.steps[0]?.kind === 'open_tool'
             ? `開啟${previewPlan.steps[0].toolLabel}`
             : '送出給智能助手'
+
+  const callStatus: VoiceCallStageStatus = executing
+    ? 'executing'
+    : activePlan && !planCompleted
+      ? 'awaiting-confirmation'
+      : speaking
+        ? 'speaking'
+        : liveVoice.active
+          ? liveVoice.status
+          : recognition.listening
+            ? 'listening'
+            : planning || busy
+              ? 'thinking'
+              : liveVoice.status === 'error'
+                ? 'error'
+                : 'listening'
+  const latestUserText =
+    interimText ||
+    draft ||
+    [...turns].reverse().find((turn) => turn.role === 'user')?.content ||
+    ''
+  const latestModelText =
+    streaming ||
+    planResult ||
+    [...turns].reverse().find((turn) => turn.role === 'model')?.content ||
+    ''
+  const callTurns = responseInProgress ? [...turns, responseInProgress] : turns
+  const languageLabel =
+    VOICE_LANGUAGES.find((option) => option.id === language)?.label ?? '廣東話'
+
+  if (callModeActive) {
+    return (
+      <VoiceCallStage
+        status={callStatus}
+        inputLevel={liveVoice.inputLevel}
+        inputMuted={liveVoice.inputMuted}
+        outputMuted={!speakReplies}
+        canMute={liveVoice.active}
+        languageLabel={languageLabel}
+        statusMessage={statusMessage}
+        latestUserText={latestUserText}
+        latestModelText={latestModelText}
+        turns={callTurns}
+        panelOpen={callPanelOpen}
+        actionPending={Boolean(activePlan && !planCompleted)}
+        actionPanel={
+          activePlan ? (
+            <AgentPlanPanel
+              embedded
+              plan={activePlan}
+              states={stepStates}
+              executing={executing}
+              completed={planCompleted}
+              canUndo={Boolean(receipt)}
+              onConfirm={() => void executePlan()}
+              onCancel={cancelPlan}
+              onOpenTool={openTool}
+              onUndo={undoPlan}
+            />
+          ) : undefined
+        }
+        onTogglePanel={() => setCallPanelOpen((value) => !value)}
+        onToggleInputMute={() => liveVoice.setInputMuted(!liveVoice.inputMuted)}
+        onToggleOutputMute={() => setSpeakReplies((value) => !value)}
+        onRetry={() => void startVoiceConversation()}
+        onEnd={endVoiceConversation}
+      />
+    )
+  }
 
   return (
     <section className="flex h-full min-h-0 flex-col overflow-hidden bg-white dark:bg-slate-950">

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   float32ToPcm16Base64,
   mergeLiveTranscript,
+  normalizedAudioLevel,
   pcm16Base64ToFloat32,
   resampleFloat32,
 } from './liveVoice'
@@ -27,6 +28,12 @@ describe('即時語音音訊轉換', () => {
     expect(resampled).toHaveLength(1_600)
     expect(resampled[0]).toBeCloseTo(0.5)
     expect(resampled.at(-1)).toBeCloseTo(0.5)
+  })
+
+  it('把咪高峰振幅正規化成可供介面使用的 0 至 1 音量', () => {
+    expect(normalizedAudioLevel(new Float32Array(32))).toBe(0)
+    expect(normalizedAudioLevel(new Float32Array(32).fill(0.05))).toBeGreaterThan(0)
+    expect(normalizedAudioLevel(new Float32Array(32).fill(1))).toBe(1)
   })
 })
 

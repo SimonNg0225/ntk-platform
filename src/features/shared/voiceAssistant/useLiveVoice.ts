@@ -20,6 +20,7 @@ export function useLiveVoice({
 }) {
   const [status, setStatus] = useState<LiveVoiceStatus>('idle')
   const [inputMuted, setInputMutedState] = useState(false)
+  const [inputLevel, setInputLevel] = useState(0)
   const sessionRef = useRef<GeminiLiveVoiceSession | null>(null)
   const transcriptHandlerRef = useRef(onTranscript)
   const toolHandlerRef = useRef(onToolCall)
@@ -40,12 +41,14 @@ export function useLiveVoice({
     sessionRef.current = null
     setStatus('idle')
     setInputMutedState(false)
+    setInputLevel(0)
   }, [])
 
   const start = useCallback(async (language: VoiceLanguage, context: string) => {
     stop()
     const session = new GeminiLiveVoiceSession({
       onStatus: setStatus,
+      onInputLevel: setInputLevel,
       onTranscript: (update) => transcriptHandlerRef.current(update),
       onToolCall: (call) => toolHandlerRef.current(call),
       onError: (message, code) => errorHandlerRef.current(message, code),
@@ -80,6 +83,7 @@ export function useLiveVoice({
     status,
     active: status !== 'idle' && status !== 'error',
     inputMuted,
+    inputLevel,
     start,
     stop,
     sendText,

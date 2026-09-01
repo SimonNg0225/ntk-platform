@@ -1,10 +1,13 @@
-import { useState } from 'react'
+import { useRef, useState, type ChangeEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   ArrowLeft,
   Bot,
+  Camera,
   CalendarClock,
   CalendarDays,
+  FileText,
+  ImagePlus,
   Inbox as InboxIcon,
   ListTodo,
   Plus,
@@ -29,6 +32,7 @@ import {
 } from '../../../ui'
 import {
   parseQuickAdd,
+  parseOcrScheduleTable,
   type ParsedDraft,
   type QuickAddKind,
   type RecurrenceDraft,
@@ -140,6 +144,37 @@ const MODE_EXAMPLES = {
   ],
 } as const
 
+const MAX_IMAGE_BYTES = 20 * 1024 * 1024
+const MAX_OCR_EDGE = 2200
+
+/** Normalize camera uploads to a bounded JPEG so OCR stays responsive on mobile. */
+async function prepareImageForOcr(file: File): Promise<string> {
+  if (!file.type.startsWith('image/')) throw new Error('請選擇 JPG、PNG、WebP 或相機相片。')
+  if (file.size > MAX_IMAGE_BYTES) throw new Error('圖片大於 20 MB，請先裁剪或降低解像度。')
+
+  const url = URL.createObjectURL(file)
+  try {
+    const image = await new Promise<HTMLImageElement>((resolve, reject) => {
+      const img = new Image()
+      img.onload = () => resolve(img)
+      img.onerror = () => reject(new Error('未能讀取圖片，請改用 JPG 或 PNG。'))
+      img.src = url
+    })
+    const scale = Math.min(1, MAX_OCR_EDGE / Math.max(image.naturalWidth, image.naturalHeight))
+    const canvas = document.createElement('canvas')
+    canvas.width = Math.max(1, Math.round(image.naturalWidth * scale))
+    canvas.height = Math.max(1, Math.round(image.naturalHeight * scale))
+    const context = canvas.getContext('2d')
+    if (!context) throw new Error('瀏覽器未能處理圖片，請再試一次。')
+    context.fillStyle = '#ffffff'
+    context.fillRect(0, 0, canvas.width, canvas.height)
+    context.drawImage(image, 0, 0, canvas.width, canvas.height)
+    return canvas.toDataURL('image/jpeg', 0.92)
+  } finally {
+    URL.revokeObjectURL(url)
+  }
+}
+
 export function QuickAddModal({ open, onClose }: QuickAddModalProps) {
   const { t } = useTranslation()
   const toast = useToast()
@@ -149,8 +184,13 @@ export function QuickAddModal({ open, onClose }: QuickAddModalProps) {
   const [step, setStep] = useState<'input' | 'preview'>('input')
   const [text, setText] = useState('')
   const [busy, setBusy] = useState(false)
+  const [busyLabel, setBusyLabel] = useState('')
+  const [imagePreview, setImagePreview] = useState('')
+  const [imageName, setImageName] = useState('')
   // 一段文字可拆出多項 → 多張預覽卡。
   const [drafts, setDrafts] = useState<ParsedDraft[]>([])
+  const uploadInputRef = useRef<HTMLInputElement>(null)
+  const cameraInputRef = useRef<HTMLInputElement>(null)
   const examples = MODE_EXAMPLES[mode]
 
   // 關閉時重設，下次開返乾淨一張（用在 onClose 同成功加入後）
@@ -158,6 +198,9 @@ export function QuickAddModal({ open, onClose }: QuickAddModalProps) {
     setStep('input')
     setText('')
     setBusy(false)
+    setBusyLabel('')
+    setImagePreview('')
+    setImageName('')
     setDrafts([])
   }
   const close = () => {
@@ -171,6 +214,7 @@ export function QuickAddModal({ open, onClose }: QuickAddModalProps) {
     const input = text.trim()
     if (!input || busy) return
     setBusy(true)
+    setBusyLabel('正在整理事項…')
     try {
       const parsed = await parseQuickAdd(input, mode)
       if (parsed.length > 0) {
@@ -184,6 +228,60 @@ export function QuickAddModal({ open, onClose }: QuickAddModalProps) {
       toast.error((e as Error).message || 'AI 分析失敗，請再試一次。')
     } finally {
       setBusy(false)
+      setBusyLabel('')
+    }
+  }
+
+  const chooseImage = (ref: typeof uploadInputRef) => {
+    if (busy) return
+    if (ref.current) {
+      ref.current.value = ''
+      ref.current.click()
+    }
+  }
+
+  const readImage = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file || busy) return
+    setBusy(true)
+    setImageName(file.name || '相機相片')
+    try {
+      setBusyLabel('正在準備圖片…')
+      const dataUrl = await prepareImageForOcr(file)
+      setImagePreview(dataUrl)
+
+      setBusyLabel('正在識別圖片文字…')
+      const { recognizeText } = await import('../../work/scan/lib/ocr')
+      const recognized = await recognizeText(dataUrl)
+      if (!recognized.trim()) throw new Error('圖片內未找到清晰文字，請重新拍攝或裁剪。')
+      setText(recognized)
+
+      const tableDrafts = parseOcrScheduleTable(recognized, mode)
+      if (tableDrafts.length > 0) {
+        setDrafts(tableDrafts)
+        setStep('preview')
+        toast.success(`已從圖片整理 ${tableDrafts.length} 項行事曆事項。`)
+        return
+      }
+
+      if (!isAIConfigured) {
+        toast.success('已擷取圖片文字，可先修改後放入 Inbox。')
+        return
+      }
+
+      setBusyLabel('正在拆分日期與事項…')
+      const parsed = await parseQuickAdd(recognized, mode)
+      if (parsed.length === 0) {
+        toast.info('已擷取圖片文字，請檢查內容後再按「分析」。')
+        return
+      }
+      setDrafts(parsed)
+      setStep('preview')
+    } catch (error) {
+      toast.error((error as Error).message || '圖片識別失敗，請再試一次。')
+    } finally {
+      setBusy(false)
+      setBusyLabel('')
     }
   }
 
@@ -266,8 +364,80 @@ export function QuickAddModal({ open, onClose }: QuickAddModalProps) {
     close()
   }
 
+  const imageCaptureControls = (
+    <div className="space-y-2">
+      <div className="flex flex-wrap gap-2">
+        <input
+          ref={uploadInputRef}
+          type="file"
+          accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
+          className="sr-only"
+          aria-label="上載圖片識別文字"
+          onChange={(event) => void readImage(event)}
+        />
+        <input
+          ref={cameraInputRef}
+          type="file"
+          accept="image/*"
+          capture="environment"
+          className="sr-only"
+          aria-label="拍照識別文字"
+          onChange={(event) => void readImage(event)}
+        />
+        <Button
+          variant="secondary"
+          icon={ImagePlus}
+          onClick={() => chooseImage(uploadInputRef)}
+          disabled={busy}
+        >
+          上載圖片
+        </Button>
+        <Button
+          variant="secondary"
+          icon={Camera}
+          onClick={() => chooseImage(cameraInputRef)}
+          disabled={busy}
+        >
+          拍照
+        </Button>
+        <span className="self-center text-[11px] leading-relaxed text-slate-500 dark:text-slate-400">
+          圖片在裝置內識字，再交由 AI 整理事項
+        </span>
+      </div>
+
+      {imagePreview && (
+        <div className="flex items-center gap-3 border-l-2 border-accent bg-slate-50/70 px-3 py-2 dark:bg-slate-900/40">
+          <img
+            src={imagePreview}
+            alt="待識別圖片預覽"
+            className="h-14 w-20 shrink-0 rounded object-cover"
+          />
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-xs font-semibold text-slate-700 dark:text-slate-200">
+              {imageName}
+            </p>
+            <p className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
+              已擷取文字，可在下方修改
+            </p>
+          </div>
+          <IconButton
+            label="移除圖片"
+            size="sm"
+            disabled={busy}
+            onClick={() => {
+              setImagePreview('')
+              setImageName('')
+            }}
+          >
+            <X size={15} />
+          </IconButton>
+        </div>
+      )}
+    </div>
+  )
+
   // ───────── 未接 AI：友善 gate（同題庫 AI 出題一致）─────────
-  if (!isAIConfigured) {
+  if (!isAIConfigured && step === 'input') {
     return (
       <Modal open={open} onClose={close} title="快速記低">
         <div className="space-y-4">
@@ -293,6 +463,15 @@ export function QuickAddModal({ open, onClose }: QuickAddModalProps) {
               autoFocus
             />
           </Field>
+
+          {imageCaptureControls}
+
+          {busy && (
+            <p className="flex items-center gap-2 text-sm text-slate-500" aria-live="polite">
+              <FileText size={16} className="animate-pulse text-accent" />
+              {busyLabel}
+            </p>
+          )}
 
           <div className="flex flex-col justify-end gap-2 sm:flex-row">
             <Button variant="secondary" onClick={close}>
@@ -345,6 +524,8 @@ export function QuickAddModal({ open, onClose }: QuickAddModalProps) {
             />
           </Field>
 
+          {imageCaptureControls}
+
           <div className="-mt-1.5 flex flex-wrap gap-1.5">
             {examples.map((ex) => (
               <button
@@ -367,7 +548,7 @@ export function QuickAddModal({ open, onClose }: QuickAddModalProps) {
             >
               <p className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
                 <Plus size={15} className="animate-pulse text-accent" />
-                AI 分析緊，請等一等…
+                {busyLabel || 'AI 分析緊，請等一等…'}
               </p>
               <div className="h-2.5 w-full animate-pulse rounded-full bg-slate-200 dark:bg-slate-700" />
               <div className="h-2.5 w-3/5 animate-pulse rounded-full bg-slate-200 dark:bg-slate-700" />
@@ -390,6 +571,24 @@ export function QuickAddModal({ open, onClose }: QuickAddModalProps) {
         </div>
       ) : (
         <div className="space-y-4">
+          {imagePreview && (
+            <div className="flex items-center gap-3 border-b border-slate-100 pb-3 dark:border-slate-700/60">
+              <img
+                src={imagePreview}
+                alt="已識別圖片預覽"
+                className="h-12 w-16 shrink-0 rounded object-cover"
+              />
+              <FileText size={17} className="shrink-0 text-accent" />
+              <div className="min-w-0">
+                <p className="truncate text-xs font-semibold text-slate-700 dark:text-slate-200">
+                  {imageName}
+                </p>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                  圖片文字已拆成以下事項
+                </p>
+              </div>
+            </div>
+          )}
           <p className="text-xs text-slate-500 dark:text-slate-400">
             AI 拆了{' '}
             <span className="font-semibold text-accent-strong dark:text-accent">

@@ -24,6 +24,7 @@ export type LiveToolCall = {
 
 type LiveVoiceCallbacks = {
   onStatus: (status: LiveVoiceStatus) => void
+  onInputLevel: (level: number) => void
   onTranscript: (update: LiveTranscriptUpdate) => void
   onToolCall: (call: LiveToolCall) => Promise<unknown>
   onError: (message: string, code?: string) => void
@@ -143,6 +144,17 @@ export function resampleFloat32(
   return output
 }
 
+export function normalizedAudioLevel(samples: Float32Array): number {
+  if (!samples.length) return 0
+  let sum = 0
+  for (let index = 0; index < samples.length; index += 1) {
+    const sample = samples[index] ?? 0
+    sum += sample * sample
+  }
+  const rms = Math.sqrt(sum / samples.length)
+  return Math.min(1, Math.max(0, (rms - 0.008) * 8))
+}
+
 export function pcm16Base64ToFloat32(base64: string): Float32Array {
   const binary = atob(base64)
   const bytes = new Uint8Array(binary.length)
@@ -260,6 +272,7 @@ export class GeminiLiveVoiceSession {
   private setupTimer: number | null = null
   private sessionTimer: number | null = null
   private transcriptTimer: number | null = null
+  private lastInputLevelAt = 0
   private turnNumber = 1
   private userTranscript = ''
   private modelTranscript = ''
@@ -347,9 +360,14 @@ export class GeminiLiveVoiceSession {
     this.silentGain = this.captureContext.createGain()
     this.silentGain.gain.value = 0
     this.processor.onaudioprocess = (event) => {
+      const samples = event.inputBuffer.getChannelData(0)
+      const now = performance.now()
+      if (now - this.lastInputLevelAt >= 50) {
+        this.callbacks.onInputLevel(this.inputMuted ? 0 : normalizedAudioLevel(samples))
+        this.lastInputLevelAt = now
+      }
       if (this.inputMuted || this.socket?.readyState !== WebSocket.OPEN) return
       if ((this.socket.bufferedAmount ?? 0) > 1_000_000) return
-      const samples = event.inputBuffer.getChannelData(0)
       const resampled = resampleFloat32(
         samples,
         this.captureContext?.sampleRate ?? 48_000,
@@ -494,6 +512,7 @@ export class GeminiLiveVoiceSession {
 
   setInputMuted(muted: boolean): void {
     this.inputMuted = muted
+    if (muted) this.callbacks.onInputLevel(0)
     this.stream?.getAudioTracks().forEach((track) => {
       track.enabled = !muted
     })
@@ -531,6 +550,7 @@ export class GeminiLiveVoiceSession {
     this.stream?.getTracks().forEach((track) => track.stop())
     this.stream = null
     this.player.close()
+    this.callbacks.onInputLevel(0)
     this.callbacks.onStatus('idle')
   }
 }

@@ -1,6 +1,13 @@
 import { createCollection, collectionRegistry, type Entity } from '../lib/store'
 import { localDateStr } from '../lib/srs'
-import { NTK_SLOTS, NTK_CYCLE_CALENDAR } from './ntk-seed'
+import {
+  NTK_SLOTS,
+  NTK_CYCLE_CALENDAR,
+  NTK_SCHOOL_EVENTS,
+  mergeNtkSchoolEvents,
+  upgradeNtkCycleCalendarSeed,
+  upgradeNtkTimetableSeed,
+} from './ntk-seed'
 import type {
   Topic,
   Question,
@@ -89,7 +96,7 @@ export const tasksCol = createCollection<Task>('work_tasks', [
 ])
 
 // ───── 新一批功能 ─────
-export const eventsCol = createCollection<CalendarEvent>('events', [])
+export const eventsCol = createCollection<CalendarEvent>('events', NTK_SCHOOL_EVENTS)
 
 // 訂閱式 .ics 日曆 feed 的 token（一行：{ id:'token', token }）。
 // 會 sync 上 Supabase（app_rows，collection='calendar_feed'），給 Edge Function
@@ -203,24 +210,22 @@ function migrateNeutralSeedData() {
     )
   }
 
-  const slots = timetableCol.get()
-  let changedSlots = false
-  const nextSlots = slots.map((slot) => {
+  const timetableUpgrade = upgradeNtkTimetableSeed(timetableCol.get())
+  let changedSlots = timetableUpgrade.migrated
+  const nextSlots = timetableUpgrade.slots.map((slot) => {
     if (slot.subject === '3A · ASB') {
       changedSlots = true
       return { ...slot, subject: '3A · 班務' }
     }
-    if (slot.subject === '3A · BAFS') {
-      changedSlots = true
-      return { ...slot, subject: '3A · 初中課' }
-    }
-    if (slot.subject.endsWith('· BAFS')) {
-      changedSlots = true
-      return { ...slot, subject: slot.subject.replace('BAFS', '高中課') }
-    }
     return slot
   })
   if (changedSlots) timetableCol.set(nextSlots)
+
+  const cycleUpgrade = upgradeNtkCycleCalendarSeed(cycleCalendarCol.get())
+  if (cycleUpgrade.migrated) cycleCalendarCol.set(cycleUpgrade.entries)
+
+  const schoolEventsUpgrade = mergeNtkSchoolEvents(eventsCol.get())
+  if (schoolEventsUpgrade.migrated) eventsCol.set(schoolEventsUpgrade.events)
 }
 
 // ============================================================

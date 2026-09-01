@@ -136,7 +136,7 @@ function nthOccurrence(
   }
 }
 
-/** 展開一個事件在 [startKey, endKey] 內的所有 occurrence 開始日（YYYY-MM-DD） */
+/** 展開一個事件在 [startKey, endKey] 內的所有顯示日（YYYY-MM-DD）。 */
 export function expandOccurrences(
   ev: CalendarEvent,
   startKey: string,
@@ -147,8 +147,17 @@ export function expandOccurrences(
   const out: string[] = []
 
   if (!rec || rec.freq === 'none') {
-    if (ev.date >= startKey && ev.date <= endKey && !ex.has(ev.date)) {
-      out.push(ev.date)
+    const eventEnd = ev.endDate && ev.endDate >= ev.date ? ev.endDate : ev.date
+    const visibleStart = ev.date > startKey ? ev.date : startKey
+    const visibleEnd = eventEnd < endKey ? eventEnd : endKey
+    if (visibleStart <= visibleEnd) {
+      let cursor = fromKey(visibleStart)
+      const last = fromKey(visibleEnd)
+      while (cursor <= last) {
+        const key = toKey(cursor)
+        if (!ex.has(key)) out.push(key)
+        cursor = addDays(cursor, 1)
+      }
     }
     return out
   }

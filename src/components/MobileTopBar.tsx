@@ -32,7 +32,7 @@ export default function MobileTopBar({
         />
         <span className="truncate text-sm font-bold text-slate-800 dark:text-slate-100">
           {t('shell.brandName', { defaultValue: BRAND_NAME })}
-          <span className="ml-1 font-medium text-slate-400 dark:text-slate-500">
+          <span className="ml-1 font-medium text-slate-600 dark:text-slate-300">
             · {t(`mode.${modeDef.id}.short`, { defaultValue: modeDef.short })}
           </span>
         </span>
